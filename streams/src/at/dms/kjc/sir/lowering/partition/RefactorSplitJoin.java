@@ -431,6 +431,23 @@ public class RefactorSplitJoin {
 		if (sj2.getSplitter().getType()==SIRSplitType.DUPLICATE) {
 		    continue;
 		}
+		// if the splitjoin above has more than one splitjoin
+		// component, then this has the potential to add
+		// tiles, since the joiners in the splitjoin above
+		// will not be collapsed
+		int upperSJCount = 0;
+		boolean shouldAbort = false;
+		for (int j=0; j<sj1.size() && !(shouldAbort); j++) {
+		    if (sj1.get(j) instanceof SIRSplitJoin) {
+			upperSJCount++;
+			if (upperSJCount>1) {
+			    shouldAbort = true;
+			}
+		    }
+		}
+		if (shouldAbort) {
+		    continue;
+		}
 		// get weights
 		int[] w1 = sj1.getJoiner().getWeights();
 		int[] w2 = sj2.getSplitter().getWeights();

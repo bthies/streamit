@@ -782,6 +782,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		initCount--;
 	}
 
+	//!!!!   initCount will be -1 if this is a two stage and 
+	//      it does not execute in the init sched
+
 	int prevInitCount = 0;
 	int prevPush = 0;
 	
@@ -813,7 +816,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	//subtract the number of items the initWork took from the previous 
 	//stream for the initialization code.
-	if (filter instanceof SIRTwoStageFilter) {
+	if (filter instanceof SIRTwoStageFilter && initCount >= 0) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
 	    if (!(two.getInitPeek() == 0 && two.getInitPush() == 0 &&
 		  two.getInitPop() == 0)) {
@@ -824,25 +827,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    remainingItemsToReceive -= (peek -pop);
 	
 	remainingItemsToReceive -= (initCount * pop);
-	
-	// keep in mind that a two-stage filter might already have
-	// peeked some items from the network.  in this case, only
-	// peek the extra that haven't been peeked yet.
-	int bottomPeek;
-	if (filter instanceof SIRTwoStageFilter) {
-	    bottomPeek = ((SIRTwoStageFilter)filter).getInitPeek();
-	} else {
-	    bottomPeek = 0;
-	}
-	if (bottomPeek < peek) {
-	    //print("int i, " + TAPE_INDEX + " = -1;\n");
-	    print("/* work header */\n");
-	    //	print(filter.getInputType() + 
-	    //       " buffer[" + filter.getPeekInt() + "];\n");
-	    print(" for (" + exeIndex + " = " + bottomPeek + "; " + exeIndex + " < " + 
-		  peek + "; " + exeIndex + "++) \n");
-	    printReceive();
-	}
 
 	//execute the work function
 	if (initCount > 0) {
@@ -864,7 +848,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	
 	//receive the rest of the items
-	if (remainingItemsToReceive > 0) {
+	if (remainingItemsToReceive > 0 && !((filter instanceof SIRTwoStageFilter) && initCount < 0)) {
 	     print("for (" + exeIndex + " = 0; " + exeIndex + " < " + remainingItemsToReceive +
 		  "; " + exeIndex + "++)\n");
 	    printReceive();

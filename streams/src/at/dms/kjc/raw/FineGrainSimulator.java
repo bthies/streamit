@@ -300,23 +300,27 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters) 
     {
-	if (initSimulation && !counters.hasFired(fire)) {
-	    if (fire.contents instanceof SIRTwoStageFilter){
-		//if the twostage does nothing in its initWork()
-		//then the initWork should not count as an execution
-		//return peek items as the needed items
-		SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
-		if (two.getInitPeek() == 0 &&
-		    two.getInitPush() == 0 &&
-		    two.getInitPop() == 0) {
-		    return two.getPeekInt();
+	if (initSimulation) {
+	    if (!counters.hasFired(fire)) {
+		if (fire.contents instanceof SIRTwoStageFilter){
+		    //if the twostage does nothing in its initWork()
+		    //then the initWork should not count as an execution
+		    //return peek items as the needed items
+		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
+		    if (two.getInitPeek() == 0 &&
+			two.getInitPush() == 0 &&
+			two.getInitPop() == 0) {
+			return two.getPeekInt();
+		    }
+		    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
 		}
-		return ((SIRTwoStageFilter)fire.contents).getInitPeek();
+		else 
+		    return ((SIRFilter)fire.contents).getPeekInt();
 	    }
 	    else 
-		return ((SIRFilter)fire.contents).getPeekInt();
+		return ((SIRFilter)fire.contents).getPopInt();
 	}
-	else
+	else 
 	    return ((SIRFilter)fire.contents).getPopInt();
     }
    
@@ -345,7 +349,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //if the filter is a two stage, and it has not fired
 	    //return the initPush() unless the initWork does nothing
 	    if (fire.contents instanceof SIRTwoStageFilter)
-		if (!counters.hasFired(fire) && initSimulation) {
+		if (!counters.hasFired(fire)) {
 		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
 		    if (!(two.getInitPeek() == 0 &&
 			  two.getInitPush() == 0 &&

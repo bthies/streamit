@@ -174,6 +174,13 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /**
+     * gets the methods of this stream
+     */
+    public JMethodDeclaration[] getMethods() {
+	return methods;
+    }
+
+    /**
      * gets the init function
      */
     public JMethodDeclaration getInit() {

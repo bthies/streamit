@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.19 2002-07-20 17:29:02 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.20 2002-07-20 17:38:59 dmaze Exp $
  */
 
 header {
@@ -234,12 +234,17 @@ stream_param returns [VariableDeclaration var]
 			symTab.register(name.getText(), type); }
 	;
 
-data_type returns [Type t] {t = null;}
+data_type returns [Type t] {t = null; Expression x;}
+	: #(LSQUARE t=primitive_type (x=expression { t = new TypeArray(t, x); })+)
+	| TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
+	| t=primitive_type
+	;
+
+primitive_type returns [Type t] {t = null;}
 	:	TK_int { t = new TypePrimitive(TypePrimitive.TYPE_INT); }
 	|	TK_float { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT); }
 	|	TK_double { t = new TypePrimitive(TypePrimitive.TYPE_DOUBLE); }
 	// |	TK_char { t = "char"; } -- do we actually want this?  --dzm
-	|	TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
 	|	TK_complex { t = new TypePrimitive(TypePrimitive.TYPE_COMPLEX); }
 	|	cust_name:ID { t = (Type)structs.get(cust_name.getText()); }
 	;

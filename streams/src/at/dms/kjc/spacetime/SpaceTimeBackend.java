@@ -422,14 +422,14 @@ public class SpaceTimeBackend
 		//on the corresponding tile.
 		CommunicateAddrs.doit(rawChip);
 	    }
+	    TraceDotGraph.dumpGraph(initList, "inittraces.dot");
+	    TraceDotGraph.dumpGraph(steadyList, "steadyforrest.dot");
 	    //create the raw execution code and switch code for the initialization phase
 	    System.out.println("Creating Initialization Stage");
 	    Rawify.run(initList.iterator(), rawChip, true); 
 	    //create the raw execution code and switch for the steady-state
 	    System.out.println("Creating Steady-State Stage");
 	    Rawify.run(steadyList.iterator(), rawChip, false);
-	    TraceDotGraph.dumpGraph(initList, "inittraces.dot");
-	    TraceDotGraph.dumpGraph(steadyList, "steadyforrest.dot");
 	    //generate the switch code assembly files...
 	    GenerateSwitchCode.run(rawChip);
 	    //generate the compute code from the SIR

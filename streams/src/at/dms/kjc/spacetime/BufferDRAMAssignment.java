@@ -84,13 +84,16 @@ public class BufferDRAMAssignment
 	HashMap ass = assignment((OutputTraceNode)traceNode, chip);
 	Iterator inputTs = ass.keySet().iterator();
 	
+	SpaceTimeBackend.println("Assigning Output Buffers for: " + traceNode + " " + traceNode.getDestSet().size());
+
 	//commit the assignment
 	while (inputTs.hasNext()) {
 	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
+	    SpaceTimeBackend.println("  " + inputT + " ...");
 	    //if already assigned do nothing
 	    if (OffChipBuffer.getBuffer(traceNode, inputT).isAssigned())
 		continue;
-	    SpaceTimeBackend.println("Assigning (" + (OutputTraceNode)traceNode + "->" + 
+	    SpaceTimeBackend.println("  Assigning (" + (OutputTraceNode)traceNode + "->" + 
 				     inputT + ") to " + ass.get(inputT));
 	    
 	    OffChipBuffer.getBuffer((OutputTraceNode)traceNode,
@@ -188,9 +191,11 @@ public class BufferDRAMAssignment
 	    
 	}
 	//assign the rest
-	needToAssign.iterator();
+	SpaceTimeBackend.println("  Need to assign (normally): " + needToAssign.size());
+	inputTs = needToAssign.iterator();
 	while (inputTs.hasNext()) {
 	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
+	    SpaceTimeBackend.println("    Getting assignment for " + inputT);
 	    //now assign the buffer to the first available port that show up 
 	    //in the iterator
 	    Iterator portOrder = assignmentOrder(output, inputT, chip);

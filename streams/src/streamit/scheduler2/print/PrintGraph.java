@@ -36,53 +36,11 @@ public class PrintGraph extends streamit.misc.AssertedClass
         }
     }
 
-    public void printStream(Iterator iter, DataOutputStream outputStream)
+    void printStream(Iterator iter, DataOutputStream outputStream)
     {
-        String iterType;
-        if (iter.isFilter() != null)
-        {
-            iterType = "Filter";
-        }
-        else if (iter.isPipeline() != null)
-        {
-            iterType = "Pipeline";
-        }
-        else if (iter.isSplitJoin() != null)
-        {
-            iterType = "SplitJoin";
-        }
-        else if (iter.isFeedbackLoop() != null)
-        {
-            iterType = "FeedbackLoop";
-        }
-        else
-        {
-            ERROR("Invalid type of an iterator!");
-            iterType = null;
-        }
-
-        File outputFile;
-        FileOutputStream fileOutputStream;
 
         try
         {
-            if (outputStream == null)
-            {
-                outputFile = new File(getName(iter) + ".java");
-                fileOutputStream = new FileOutputStream(outputFile);
-                outputStream = new DataOutputStream(fileOutputStream);
-            }
-
-            outputStream.writeBytes("import streamit.*;\n\n");
-
-            outputStream.writeBytes(
-                "public class "
-                    + getName(iter)
-                    + " extends "
-                    + iterType
-                    + "\n");
-            outputStream.writeBytes("{\n");
-
             if (iter.isFilter() != null)
             {
                 printFilter(iter.isFilter(), outputStream);
@@ -99,8 +57,6 @@ public class PrintGraph extends streamit.misc.AssertedClass
             {
                 printFL(iter.isFeedbackLoop(), outputStream);
             }
-
-            outputStream.writeBytes("}\n");
         }
         catch (Throwable e)
         {
@@ -109,7 +65,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
 
     }
 
-    public String getName(Object obj)
+    String getName(Object obj)
     {
         String name = obj.toString();
         return name
@@ -121,17 +77,17 @@ public class PrintGraph extends streamit.misc.AssertedClass
             .replace(',', '_');
     }
 
-    public String getName(IteratorBase iter)
+    String getName(IteratorBase iter)
     {
         return getName(iter.getObject());
     }
 
-    public String getUniqueName(IteratorBase iter)
+    String getUniqueName(IteratorBase iter)
     {
         return getName(iter.getObject()) + "_" + iter.getObject().hashCode();
     }
 
-    public void printFilter(FilterIter filter, DataOutputStream outputStream)
+    void printFilter(FilterIter filter, DataOutputStream outputStream)
     {
         try
         {
@@ -147,7 +103,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
         }
     }
 
-    public void printPipe(PipelineIter pipeline, DataOutputStream outputStream)
+    void printPipe(PipelineIter pipeline, DataOutputStream outputStream)
     {
         try
         {
@@ -159,13 +115,10 @@ public class PrintGraph extends streamit.misc.AssertedClass
             outputStream.writeBytes("label = \"" + getName(pipeline) + "\";\n");
 
             // Walk through each of the elements in the pipeline.
-            int nChild;
-            for (nChild = 1; nChild < pipeline.getNumChildren(); nChild++)
+            for (int nChild = 0; nChild < pipeline.getNumChildren(); nChild++)
             {
                 Iterator child = pipeline.getChild(nChild);
                 ASSERT(child);
-
-                printStream(child, outputStream);
 
                 String topChild = getUniqueTopStreamName(child);
                 String bottomChild = getUniqueBottomStreamName(child);
@@ -176,19 +129,20 @@ public class PrintGraph extends streamit.misc.AssertedClass
                 lastPrinted = bottomChild;
             }
 
+            for (int nChild = 0; nChild < pipeline.getNumChildren(); nChild++)
+            {
+                printStream(pipeline.getChild(nChild), outputStream);
+            }
+
             outputStream.writeBytes("}\n");
         }
         catch (Throwable e)
         {
             ERROR(e);
         }
-        for (int nChild = 0; nChild < pipeline.getNumChildren(); nChild++)
-        {
-            printStream(pipeline.getChild(nChild), outputStream);
-        }
     }
 
-    public void printSJ(SplitJoinIter sj, DataOutputStream outputStream)
+    void printSJ(SplitJoinIter sj, DataOutputStream outputStream)
     {
         try
         {
@@ -239,7 +193,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
         }
     }
 
-    public void printFL(FeedbackLoopIter fl, DataOutputStream outputStream)
+    void printFL(FeedbackLoopIter fl, DataOutputStream outputStream)
     {
         try
         {
@@ -289,7 +243,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
         }
     }
 
-    public void printEdge(
+    void printEdge(
         String from,
         String to,
         DataOutputStream outputStream)
@@ -306,7 +260,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
         }
     }
 
-    public String getUniqueTopStreamName(Iterator iter)
+    String getUniqueTopStreamName(Iterator iter)
     {
         if (iter.isFilter() != null)
         {
@@ -329,7 +283,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
         return null;
     }
 
-    public String getUniqueBottomStreamName(Iterator iter)
+    String getUniqueBottomStreamName(Iterator iter)
     {
         if (iter.isFilter() != null)
         {

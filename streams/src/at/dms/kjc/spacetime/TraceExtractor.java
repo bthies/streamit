@@ -26,7 +26,6 @@ public class TraceExtractor {
 	    else
 		content=new FilterContent(filter);
 	    boolean linear=content.getArray()!=null;
-	    System.out.println("IS LINEAR: "+linear);
 	    /*if(content.isLinear()) {
 	      FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
 	      for(int i=0;i<linearStuff.length;i++)
@@ -48,10 +47,23 @@ public class TraceExtractor {
 		    //node=new InputTraceNode(filter.inWeights,getInNodes(outNodes,filter.in));
 		    node=getInNode(outNodes,inNodes,filter);
 		    trace=new Trace((InputTraceNode)node);
-		    FilterTraceNode filterNode=new FilterTraceNode(content);
-		    node.setNext(filterNode);
-		    filterNode.setPrevious(node);
-		    node=filterNode;
+		    if(content.isLinear()) {
+			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
+			for(int i=0;i<linearStuff.length;i++)
+			    System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
+			for(int i=0;i<linearStuff.length;i++) {
+			    FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
+			    node.setNext(filterNode);
+			    filterNode.setPrevious(node);
+			    node=filterNode;
+			    //filter=newFilter;
+			}
+		    } else {
+			FilterTraceNode filterNode=new FilterTraceNode(content);
+			node.setNext(filterNode);
+			filterNode.setPrevious(node);
+			node=filterNode;
+		    }
 		} else {
 		    node=new FilterTraceNode(content);
 		    trace=new Trace(node);
@@ -68,19 +80,20 @@ public class TraceExtractor {
 		    else
 			content=new FilterContent(newFilter);
 		    System.out.println("IS LINEAR: "+linear);
-		    /*if(content.isLinear()) {
-			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length/2);
-			for(int i=0;i<linearStuff.length;i++)
-			    System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
-			for(int i=0;i<linearStuff.length;i++) {
-			    FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
-			    node.setNext(filterNode);
-			    filterNode.setPrevious(node);
-			    node=filterNode;
-			    filter=newFilter;
-			}
-			} else {*/
-			if(!((newFilter.filter instanceof SIRPredefinedFilter)||(filter.filter instanceof SIRPredefinedFilter))) {
+		    if(!(filter.filter instanceof SIRPredefinedFilter)) {
+			System.out.println("CONTENT: "+newFilter+" "+content.isLinear());
+			if(content.isLinear()) {
+			    FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
+			    for(int i=0;i<linearStuff.length;i++)
+				System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
+			    for(int i=0;i<linearStuff.length;i++) {
+				FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
+				node.setNext(filterNode);
+				filterNode.setPrevious(node);
+				node=filterNode;
+				filter=newFilter;
+			    }
+			} else if(!(newFilter.filter instanceof SIRPredefinedFilter)) {
 			    //if((content.getArray()!=null)==linear) {
 			    
 			    //if(content.isLinear()) {
@@ -92,10 +105,10 @@ public class TraceExtractor {
 			    node=filterNode;
 			    //}
 			    filter=newFilter;
-			    
 			} else
 			    cont=false;
-			//}
+		    } else
+			cont=false;
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=null;

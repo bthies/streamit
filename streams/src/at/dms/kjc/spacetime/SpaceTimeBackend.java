@@ -396,7 +396,6 @@ public class SpaceTimeBackend
 
 	Trace[] traceForrest = new Trace[1];
 	//traceForrest[0] = traces[0];
-
 	if(REAL) {
 	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	    System.out.println("TracesGraph: "+traceGraph.length);
@@ -408,13 +407,14 @@ public class SpaceTimeBackend
 	    Trace realTrace=traceGraph[0];
 	    while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
 		realTrace=traceGraph[++index];
-	    TraceNode node=traceGraph[0].getHead();
+	    TraceNode node=realTrace.getHead();
 	    FilterTraceNode currentNode=null;
 	    if(node instanceof InputTraceNode)
 		currentNode=(FilterTraceNode)node.getNext();
 	    else
 		currentNode=(FilterTraceNode)node;
 	    currentNode.setXY(0,0);
+	    System.out.println("SETTING: "+currentNode+" (0,0)");
 	    int curX=1;
 	    int curY=0;
 	    int forward=1;
@@ -424,6 +424,7 @@ public class SpaceTimeBackend
 	    TraceNode nextNode=currentNode.getNext();
 	    while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
 		currentNode=(FilterTraceNode)nextNode;
+		System.out.println("SETTING: "+nextNode+" ("+curX+","+curY+")");
 		currentNode.setXY(curX,curY);
 		if(curX>=rawColumns-1&&forward>0) {
 		    forward=-1;

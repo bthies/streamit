@@ -126,6 +126,7 @@ public class Linear extends RawExecutionCode implements Constants {
 		popNum--;
 	else if(!src&&elem==popCount-1&&popNum==idx.length-1)
 	    return "$csto";
+	System.out.println("Array: "+array.length+" "+popNum+" "+regs.length);
 	return regs[array.length+popNum];
     }
     

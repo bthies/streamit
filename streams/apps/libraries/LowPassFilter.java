@@ -36,7 +36,7 @@ public class LowPassFilter extends Filter {
     public void init(float sampleRate, float cutFreq, int numTaps, int decimation)
     {
 	mDecimation = decimation;
-        input = new Channel (Float.TYPE, 1+mDecimation);
+        input = new Channel (Float.TYPE, 1+mDecimation, numTaps);
         output = new Channel (Float.TYPE, 1);
 
         //all frequencies are in hz

@@ -104,3 +104,5 @@ at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOP
 
 at/dms/kjc/KjcOptions.java : at/dms/kjc/KjcOptions.opt $(KOPI_OPTGEN_TARGET)
 
+streamit/frontend/ToJava.java : streamit/frontend/StreamItLex.java \
+	streamit/frontend/StreamItParserFE.java

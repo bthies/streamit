@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.41 2003-01-10 18:53:13 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.42 2003-01-10 18:59:42 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -590,9 +590,26 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtPhase(StmtPhase stmt)
     {
-        // Oops, probably need the target.
-        return "phase(new WorkFunction(0,0,0) { public void work() { " +
-            stmt.getFunCall().accept(this) + "; } })";
+        ExprFunCall fc = stmt.getFunCall();
+        // ASSERT: the target is always a phase function.
+        FuncWork target = (FuncWork)ss.getFuncNamed(fc.getName());
+        StmtExpr call = new StmtExpr(stmt.getContext(), fc);
+        String peek, pop, push;
+        if (target.getPeekRate() == null)
+            peek = "0";
+        else
+            peek = (String)target.getPeekRate().accept(this);
+        if (target.getPopRate() == null)
+            pop = "0";
+        else
+            pop = (String)target.getPopRate().accept(this);
+        if (target.getPushRate() == null)
+            push = "0";
+        else
+            push = (String)target.getPushRate().accept(this);
+        
+        return "phase(new WorkFunction(" + peek + "," + pop + "," + push +
+            ") { public void work() { " + call.accept(this) + "; } })";
     }
 
     public Object visitStmtPush(StmtPush stmt)

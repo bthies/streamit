@@ -2,7 +2,7 @@
 <!--
   benchall.xsl: convert an XML listing of StreamIt benchmarks to HTML
   David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
-  $Id: benchall.xsl,v 1.4 2003-10-16 17:09:09 dmaze Exp $
+  $Id: benchall.xsl,v 1.5 2003-10-18 08:50:06 rabbah Exp $
 
   Notes for the uninitiated: this is an XSL Transform stylesheet.  Use
   an XSLT processor, such as xsltproc, to convert XML to XML using this;
@@ -25,9 +25,20 @@
     <html>
       <head>
         <title>StreamIt Benchmarks</title>
+        <style fprolloverstyle="0">A:hover {color: #990000}</style>
       </head>
       <body>
-        <h1>StreamIt Benchmarks</h1>
+        <table border="0" width="700" cellpadding="2" align="center">
+          <colgroup> 
+            <col align="left" />
+            <col align="char" char="."/> 
+          </colgroup> 
+          <tbody> 
+ 	      <tr height="150">
+	      <h3>StreamIt Benchmarks</h3>
+            </tr>
+          </tbody> 
+        </table>
         <xsl:apply-templates/>
       </body>
     </html>
@@ -40,7 +51,7 @@
          directory node, but only if there are subdirectories. -->
     <xsl:if test="dir and @name != '.'">
       <xsl:element name="h{$depth}">
-        <xsl:value-of select="@name"/>
+	  <!-- <xsl:value-of select="@name"/> -->
       </xsl:element>
     </xsl:if>
     <xsl:apply-templates>
@@ -55,22 +66,22 @@
     <xsl:param name="subdir">.</xsl:param>
     <xsl:param name="depth">3</xsl:param>
     <xsl:element name="h{$depth}">
-      <table border="1"> 
+      <table border="1" width="700" align="center"> 
         <colgroup> 
           <col align="left" />
           <col align="char" char="."/> 
         </colgroup> 
         <thead> 
           <tr>
-            <th colspan="2" bgcolor="#C0C0C0">
+            <th colspan="2" bgcolor="#C0C0C0" align="left">
 	      <xsl:value-of select="name"/> - <xsl:value-of select="desc"/>
    	    </th> 
           </tr> 
         </thead> 
         <tbody> 
           <tr>
-            <td><b>Description</b></td> 
-            <td><xsl:value-of select="description"/></td>
+            <td width="15%" valign="top" align="left"><b>Description</b></td> 
+            <td align="justify"><xsl:value-of select="description"/></td>
           </tr> 
 	  <xsl:apply-templates select="reference"/>
 	  <xsl:apply-templates select="implementations">
@@ -83,7 +94,7 @@
 
   <xsl:template match="reference">
     <tr>
-      <td><b>Reference</b></td> 
+      <td valign="top" align="left"><b>Reference</b></td> 
       <td><xsl:apply-templates/></td>
     </tr> 
   </xsl:template>
@@ -108,8 +119,8 @@
       <xsl:text>/</xsl:text>
     </xsl:variable>
     <tr>
-      <td><b><xsl:value-of select="@lang"/></b></td>
-      <td>
+      <td valign="top" align="left"><b><xsl:value-of select="@lang"/></b></td>
+      <td valign="top" align="left">
 	<xsl:for-each select="file">
 	  <xsl:element name="a">
             <xsl:attribute name="href">

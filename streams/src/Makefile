@@ -52,6 +52,11 @@ KOPI_TOOL_SRCS = \
   $(KOPI_OPTGEN_SRCS) \
   $(KOPI_LEXGEN_SRCS)
 
+STREAMIT_GENERATED = \
+  streamit/frontend/StreamItLex.java \
+  streamit/frontend/StreamItParser.java \
+  streamit/frontend/StreamItParserFE.java
+
 JAVA_TARGET = \
   $(KOPI_TARGET) \
   $(KOPI_TOOL_TARGET) \
@@ -62,6 +67,7 @@ JAVA_SRCS = \
   $(KOPI_SRCS) \
   $(KOPI_GENERATED) \
   $(KOPI_TOOL_SRCS) \
+  $(STREAMIT_GENERATED) \
   $(STREAMIT_HOME)/library/java/streamit/StreamIt.java
 
 DEBUG_OPT = -g

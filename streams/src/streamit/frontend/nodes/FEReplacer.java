@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.22 2003-05-19 20:23:17 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.23 2003-05-21 16:03:29 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -81,7 +81,9 @@ public class FEReplacer implements FEVisitor
      * Accept an arbitrary <code>Expression</code>.  This by default
      * just asks <code>expr</code> to accept <code>this</code>, but if
      * a derived class needs to do extra processing on every
-     * expression, it can override this method.
+     * expression, it can override this method.  This function is
+     * always called in a statement context; <code>addStatement</code>
+     * will add a statement before the current statement.
      * 
      * @param expr  Expression to visit
      * @return      Expression to replace <code>expr</code>
@@ -93,8 +95,8 @@ public class FEReplacer implements FEVisitor
 
     public Object visitExprArray(ExprArray exp)
     {
-        Expression base = (Expression)exp.getBase().accept(this);
-        Expression offset = (Expression)exp.getOffset().accept(this);
+        Expression base = doExpression(exp.getBase());
+        Expression offset = doExpression(exp.getOffset());
         if (base == exp.getBase() && offset == exp.getOffset())
             return exp;
         else
@@ -103,8 +105,8 @@ public class FEReplacer implements FEVisitor
     
     public Object visitExprBinary(ExprBinary exp)
     {
-        Expression left = (Expression)exp.getLeft().accept(this);
-        Expression right = (Expression)exp.getRight().accept(this);
+        Expression left = doExpression(exp.getLeft());
+        Expression right = doExpression(exp.getRight());
         if (left == exp.getLeft() && right == exp.getRight())
             return exp;
         else
@@ -114,9 +116,9 @@ public class FEReplacer implements FEVisitor
     public Object visitExprComplex(ExprComplex exp)
     {
         Expression real = exp.getReal();
-        if (real != null) real = (Expression)real.accept(this);
+        if (real != null) real = doExpression(real);
         Expression imag = exp.getImag();
-        if (imag != null) imag = (Expression)imag.accept(this);
+        if (imag != null) imag = doExpression(imag);
         if (real == exp.getReal() && imag == exp.getImag())
             return exp;
         else
@@ -131,7 +133,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitExprField(ExprField exp)
     {
-        Expression left = (Expression)exp.getLeft().accept(this);
+        Expression left = doExpression(exp.getLeft());
         if (left == exp.getLeft())
             return exp;
         else
@@ -145,7 +147,7 @@ public class FEReplacer implements FEVisitor
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
         {
             Expression param = (Expression)iter.next();
-            Expression newParam = (Expression)param.accept(this);
+            Expression newParam = doExpression(param);
             newParams.add(newParam);
             if (param != newParam) hasChanged = true;
         }
@@ -155,7 +157,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitExprPeek(ExprPeek exp)
     {
-        Expression expr = (Expression)exp.getExpr().accept(this);
+        Expression expr = doExpression(exp.getExpr());
         if (expr == exp.getExpr())
             return exp;
         else
@@ -166,9 +168,9 @@ public class FEReplacer implements FEVisitor
     
     public Object visitExprTernary(ExprTernary exp)
     {
-        Expression a = (Expression)exp.getA().accept(this);
-        Expression b = (Expression)exp.getB().accept(this);
-        Expression c = (Expression)exp.getC().accept(this);
+        Expression a = doExpression(exp.getA());
+        Expression b = doExpression(exp.getB());
+        Expression c = doExpression(exp.getC());
         if (a == exp.getA() && b == exp.getB() && c == exp.getC())
             return exp;
         else
@@ -177,7 +179,7 @@ public class FEReplacer implements FEVisitor
     
     public Object visitExprTypeCast(ExprTypeCast exp)
     {
-        Expression expr = (Expression)exp.getExpr().accept(this);
+        Expression expr = doExpression(exp.getExpr());
         if (expr == exp.getExpr())
             return exp;
         else
@@ -186,7 +188,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitExprUnary(ExprUnary exp)
     {
-        Expression expr = (Expression)exp.getExpr().accept(this);
+        Expression expr = doExpression(exp.getExpr());
         if (expr == exp.getExpr())
             return exp;
         else
@@ -202,7 +204,7 @@ public class FEReplacer implements FEVisitor
         {
             Expression init = field.getInit(i);
             if (init != null)
-                init = doExpression(init);
+                init = (Expression)init.accept(this);
             newInits.add(init);
         }
         return new FieldDecl(field.getContext(), field.getTypes(),
@@ -256,7 +258,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitSJRoundRobin(SJRoundRobin sj)
     {
-        Expression newWeight = (Expression)sj.getWeight().accept(this);
+        Expression newWeight = doExpression(sj.getWeight());
         if (newWeight == sj.getWeight()) return sj;
         return new SJRoundRobin(sj.getContext(), newWeight);
     }
@@ -268,7 +270,7 @@ public class FEReplacer implements FEVisitor
         for (Iterator iter = sj.getWeights().iterator(); iter.hasNext(); )
         {
             Expression oldWeight = (Expression)iter.next();
-            Expression newWeight = (Expression)oldWeight.accept(this);
+            Expression newWeight = doExpression(oldWeight);
             if (newWeight != oldWeight) changed = true;
             newWeights.add(newWeight);
         }
@@ -383,7 +385,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitStmtPhase(StmtPhase stmt)
     {
-        Expression newFc = (Expression)stmt.getFunCall().accept(this);
+        Expression newFc = doExpression(stmt.getFunCall());
         if (newFc == stmt.getFunCall())
             return stmt;
         // We lose if the new expression isn't a function call.

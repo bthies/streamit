@@ -69,7 +69,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     //Uncomment the println for debugging
     private void printMe(String str) {
-	System.out.println(str);
+	// System.out.println(str);
     }
 
     public Kopi2SIR() {

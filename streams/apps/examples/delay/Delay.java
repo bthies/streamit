@@ -11,7 +11,7 @@ class Delay extends FeedbackLoop {
 	setDelay(N);
 	setBody(new Filter() {
                 public void init() {
-		    setInput(Integer.TYPE);setOutput(Integer.TYPE);
+		    setInput(Float.TYPE);setOutput(Float.TYPE);
 		    setPush(2); setPop(2);
                 }
                 public void work() {

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.59 2002-03-11 23:33:56 thies Exp $
+ * $Id: LIRToC.java,v 1.60 2002-03-12 01:18:38 karczma Exp $
  */
 
 package at.dms.kjc.lir;
@@ -358,13 +358,32 @@ public class LIRToC
         */
 
         newLine();
-        // print(CModifier.toString(modifiers));
-        print(type);
-        print(" ");
-        print(ident);
-        if (expr != null) {
-            print("\t= ");
-            expr.accept(this);
+
+        // if printing a field decl and it's array and it's
+        // initialized, I want to use a special printer that
+        // will just declare an array, instead of a pointer
+        if (expr == null || !(expr instanceof JNewArrayExpression))
+        {
+            // nope - not an array, or not initialized.  just
+            // print it normally - if an array, it'll become  a
+            // pointer and the init function better allocate it
+            print (type);
+            print (" ");
+            print (ident);
+            if (expr != null)
+            {
+                print ("\t= ");
+                expr.accept (this);
+            }
+        } else 
+        {
+            // yep.  use the local printing functions to print
+            // the correct type and array size
+            printLocalType (type);
+            print (" ");
+            print (ident);
+            print(" ");
+            printLocalArrayDecl((JNewArrayExpression)expr);
         }
         print(";");
     }

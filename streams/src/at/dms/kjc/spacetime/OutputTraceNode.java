@@ -15,16 +15,16 @@ import java.util.List;
 public class OutputTraceNode extends TraceNode
 {
     private int[] weights;
-    private InputTraceNode[][] dests;
+    private Edge[][] dests;
     private String ident;
     private static int unique = 0;
     private static int[] EMPTY_WEIGHTS=new int[0];
-    private static InputTraceNode[][] EMPTY_DESTS=new InputTraceNode[0][0];
+    private static Edge[][] EMPTY_DESTS=new Edge[0][0];
     private List sortedOutputs;
     private Set destSet;
 
     public OutputTraceNode(int[] weights,
-			   InputTraceNode[][] dests) {
+			   Edge[][] dests) {
 	//this.parent = parent;
 	assert weights.length == dests.length : 
 	    "weights must equal sources";
@@ -60,11 +60,11 @@ public class OutputTraceNode extends TraceNode
     }
     
     
-    public InputTraceNode[][] getDests() {
+    public Edge[][] getDests() {
 	return dests;
     }
     
-    public void setDests(InputTraceNode[][] dests) {
+    public void setDests(Edge[][] dests) {
 	this.dests=dests;
     }
 
@@ -85,7 +85,7 @@ public class OutputTraceNode extends TraceNode
      * return the number of items sent to this inputtracenode
      * for on iteration of the weights..
      **/
-    public int getWeight(InputTraceNode in) 
+    public int getWeight(Edge in) 
     {
 	int sum = 0;
 	
@@ -155,17 +155,17 @@ public class OutputTraceNode extends TraceNode
 	    //add one element
 	    sorted.add(dests.next());
 	    while (dests.hasNext()) {
-		InputTraceNode current = (InputTraceNode)dests.next();
+		Edge current = (Edge)dests.next();
 		//add to end if it is less then everything
 		if (getWeight(current) <= 
-		    getWeight((InputTraceNode)sorted.get(sorted.size() - 1))) 		  
+		    getWeight((Edge)sorted.get(sorted.size() - 1))) 		  
 		    sorted.add(current);
 		else {  //otherwise find the correct place to add it
 		    for (int i = 0; i < sorted.size(); i++) {
 			//if this is the correct place to insert it, 
 			//add it and break
 			if (getWeight(current) > 
-			    getWeight((InputTraceNode)sorted.get(i))) {
+			    getWeight((Edge)sorted.get(i))) {
 			    sorted.add(i, current);
 			    break;
 			}

@@ -139,12 +139,12 @@ public class TraceExtractor {
 	for(int i=0;i<outArray.length;i++) {
 	    UnflatFilter outFilter=outArray[i];
 	    OutputTraceNode outNode=(OutputTraceNode)outNodes.get(outFilter);
-	    InputTraceNode[][] dests=new InputTraceNode[outFilter.out.length][0];
+	    Edge[][] dests=new Edge[outFilter.out.length][0];
 	    for(int j=0;j<dests.length;j++) {
 		UnflatEdge[] destFilters=outFilter.out[j];
-		InputTraceNode[] subDests=new InputTraceNode[destFilters.length];
+		Edge[] subDests=new Edge[destFilters.length];
 		for(int k=0;k<destFilters.length;k++) {
-		    subDests[k]=(InputTraceNode)inNodes.get(destFilters[k].dest);
+		    subDests[k]=(Edge)inNodes.get(destFilters[k].dest);
 		}
 		dests[j]=subDests;
 	    }
@@ -157,9 +157,9 @@ public class TraceExtractor {
     
     private static InputTraceNode getInNode(HashMap outNodes,HashMap inNodes,UnflatFilter filter) {
 	UnflatEdge[] in=filter.in;
-	OutputTraceNode[] inNode=new OutputTraceNode[in.length];
+	Edge[] inNode=new Edge[in.length];
 	for(int i=0;i<in.length;i++)
-	    inNode[i]=(OutputTraceNode)outNodes.get(in[i].src);
+	    inNode[i]=(Edge)outNodes.get(in[i].src);
 	InputTraceNode output=null;
 	//if(filter.filter instanceof SIRFileWriter) {
 	//SIRFileWriter write=(SIRFileWriter)filter.filter;
@@ -236,10 +236,10 @@ public class TraceExtractor {
 	    node=node.getNext();
 	}
 	if(node instanceof OutputTraceNode) {
-	    InputTraceNode[][] dests=((OutputTraceNode)node).getDests();
+	    Edge[][] dests=((OutputTraceNode)node).getDests();
 	    ArrayList output=new ArrayList();
 	    for(int i=0;i<dests.length;i++) {
-		InputTraceNode[] inner=dests[i];
+		Edge[] inner=dests[i];
 		for(int j=0;j<inner.length;j++) {
 		    Object next=parent.get(inner[j]);
 		    if(!output.contains(next))

@@ -8,14 +8,14 @@ import at.dms.util.Utils;
 public class InputTraceNode extends TraceNode
 {
     private int[] weights;
-    private OutputTraceNode[] sources;
+    private Edge[] sources;
     private static int unique = 0;
     private String ident;
     private static int[] EMPTY_WEIGHTS=new int[0];
-    private static OutputTraceNode[] EMPTY_SRCS=new OutputTraceNode[0];
+    private static Edge[] EMPTY_SRCS=new Edge[0];
 
     public InputTraceNode(int[] weights,
-			  OutputTraceNode[] sources) {
+			  Edge[] sources) {
 	//this.parent = parent;
 	if (weights.length != sources.length)
 	    Utils.fail("Add comment later");
@@ -55,11 +55,11 @@ public class InputTraceNode extends TraceNode
 	return weights;
     }
 
-    public OutputTraceNode[] getSources() {
+    public Edge[] getSources() {
 	return sources;
     }
 
-    public void setSources(OutputTraceNode[] sources) {
+    public void setSources(Edge[] sources) {
 	this.sources=sources;
     }
 
@@ -71,12 +71,12 @@ public class InputTraceNode extends TraceNode
 	return sum;
     }
 
-    public int getWeight(OutputTraceNode out) 
+    public int getWeight(Edge out) 
     {
 	for (int i = 0; i < sources.length; i++)
 	    if (sources[i] == out)
 		return weights[i];
-	Utils.fail(this + " cannot find weight for OutputTraceNode " + out);
+	Utils.fail(this + " cannot find weight for Edge " + out);
 	return -1;
     }
     

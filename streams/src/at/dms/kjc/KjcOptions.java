@@ -39,6 +39,7 @@ public class KjcOptions extends at.dms.util.Options {
     public boolean sync = false;
     public boolean ratematch = false;
     public boolean simplesjfusion = false;
+    public boolean noanneal = false;
     public boolean linearanalysis = false;
     public boolean linearreplacement = false;
     public boolean viram = false;
@@ -95,13 +96,14 @@ public class KjcOptions extends at.dms.util.Options {
 	    ratematch = !false;return true;
 	case 'S':
 	    simplesjfusion = !false;return true;
+	case 'N':
+	    noanneal = true;return true;
 	case 'i':
 	    linearanalysis = !false;return true;
 	case 'I':
 	    linearreplacement = !false;return true;
 	case 'V':
 	    viram = !false;return true;
-	    
 	default:
 	    return super.processOption(code, g);
 	}
@@ -109,7 +111,7 @@ public class KjcOptions extends at.dms.util.Options {
 
     public String[] getOptions() {
 	String[]	parent = super.getOptions();
-	String[]	total = new String[parent.length + 28];
+	String[]	total = new String[parent.length + 29];
 	System.arraycopy(parent, 0, total, 0, parent.length);
 	total[parent.length + 0] = "  --beautify, -b:       Beautifies the source code [false]";
 	total[parent.length + 1] = "  --verbose, -v:        Prints out information during compilation [false]";
@@ -137,15 +139,16 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 22] = "  --sync, -k:            Turn on sync removal";
 	total[parent.length + 23] = "  --ratematch, -x:       Turn on rate matching for raw";
 	total[parent.length + 24] = "  --simplesjfusion, -S:  Revert to the old, simple SplitJoin fusion algorithm";
-	total[parent.length + 25] = "  --linearanalysis, -i:  Perform linear analysis";
-	total[parent.length + 26] = "  --linearreplacement, -I:  Perform linear transformations based on linear analysis.";
-	total[parent.length + 27] = "  --viram, -V:           Compile for VIRAM, a vector uniprocessor";
+	total[parent.length + 25] = "  --noanneal, -N:        Do not run simulated annealing for layout";
+	total[parent.length + 26] = "  --linearanalysis, -i:  Perform linear analysis";
+	total[parent.length + 27] = "  --linearreplacement, -I:  Perform linear transformations based on linear analysis.";
+	total[parent.length + 28] = "  --viram, -V:           Compile for VIRAM, a vector uniprocessor";
 	return total; 
     }
 
 
     public String getShortOptions() {
-	return "Sackxuosbvje:nw::*O::mDp:d:C:gl:f:" + super.getShortOptions();
+	return "NSackxuosbvje:nw::*O::mDp:d:C:gl:f:" + super.getShortOptions();
     }
 
 
@@ -205,6 +208,7 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("sync", LongOpt.NO_ARGUMENT, null, 'k'),
 	new LongOpt("ratematch", LongOpt.NO_ARGUMENT, null, 'x'),
 	new LongOpt("simplesjfusion", LongOpt.NO_ARGUMENT, null, 'S'),
+	new LongOpt("noanneal", LongOpt.NO_ARGUMENT, null, 'N'),
 	new LongOpt("linearanalysis", LongOpt.NO_ARGUMENT, null, 'i'),
 	new LongOpt("linearreplacement", LongOpt.NO_ARGUMENT, null, 'I'),
 	new LongOpt("viram", LongOpt.NO_ARGUMENT, null, 'V')

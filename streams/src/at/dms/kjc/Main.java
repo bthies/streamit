@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.15 2002-09-11 17:02:50 aalamb Exp $
+ * $Id: Main.java,v 1.16 2002-09-15 17:03:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -173,6 +173,7 @@ public class Main extends Compiler {
 	StreamItOptions.sync = options.sync;
 	StreamItOptions.ratematch = options.ratematch;
 	StreamItOptions.simplesjfusion = options.simplesjfusion;
+	StreamItOptions.noanneal = options.noanneal;
 	StreamItOptions.linearanalysis = options.linearanalysis;
 	StreamItOptions.linearreplacement = options.linearreplacement;
 	StreamItOptions.viram = options.viram;

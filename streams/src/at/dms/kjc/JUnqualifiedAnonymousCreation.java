@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedAnonymousCreation.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JUnqualifiedAnonymousCreation.java,v 1.3 2003-01-20 20:12:56 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -62,6 +62,22 @@ public class JUnqualifiedAnonymousCreation extends JExpression {
    */
   public CType getType() {
     return type;
+  }
+
+  /**
+   * Returns the parameter list for the object.
+   * @return the parameter list
+   */
+  public JExpression[] getParams() {
+    return params;
+  }
+    
+  /**
+   * Returns the class declaration for the object.
+   * @return the class declaration
+   */
+  public JClassDeclaration getDecl() {
+    return decl;
   }
 
   /**

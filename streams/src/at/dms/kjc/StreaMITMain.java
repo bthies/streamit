@@ -78,7 +78,7 @@ public class StreaMITMain {
             } else {
                 backendClass = "at.dms.kjc.raw.RawBackend";
             }
-        } else if (KjcOptions.cluster) {
+        } else if (KjcOptions.cluster != -1) {
             System.out.println("*/");
             backendClass = "at.dms.kjc.cluster.ClusterBackend";
         } else {

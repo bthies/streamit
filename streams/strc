@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.30 2003-10-28 03:16:42 mgordon Exp $
+# $Id: strc,v 1.31 2003-10-31 19:07:28 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -95,7 +95,7 @@ Options:
   --output, -o file   Write a binary to given filename
   --raw n, -r n       Compile for RAW, with an n-by-n grid
   --standalone, -S    Generate C file without library dependencies
-* --cluster           Compile for a networked cluster
+* --cluster n         Compile for a networked cluster with n nodes
 * --viram             Compile for VIRAM, a vector uniprocessor
   --library           Run in the Java library instead of compiling
   --memory, -Xmx      Specify Java runtime heap limit
@@ -231,7 +231,7 @@ sub get_options
 			    "unroll|u=i",
 			    "viram",
 			    "wbs!",
-			    "cluster!",
+			    "cluster=i",
 			    "destroyfieldarray!");
     return $result if !$result;
     # Figure out which partitioning is in use, if any:
@@ -445,7 +445,7 @@ sub get_kjc_opts
     $opts{sync} && ($kjcopts .= " --sync");
     defined $opts{unroll} && ($kjcopts .= " --unroll " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " --viram");
-    $opts{cluster} && ($kjcopts .= " --cluster");
+    $opts{cluster} && ($kjcopts .= " --cluster " . $opts{cluster});
     $opts{destroyfieldarray} && ($kjcopts .= " --destroyfieldarray");
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");

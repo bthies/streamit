@@ -252,7 +252,7 @@ public class StreamItDot implements AttributeStreamVisitor
         np = (NamePair)self.getBody().accept(this);
         printEdge(joinName, np.first);
         printEdge(np.last, splitName);
-        self.getLoop().accept(this);
+        np = (NamePair)self.getLoop().accept(this);
         printEdge(splitName, np.first);
         printEdge(np.last, joinName);
 

@@ -98,6 +98,12 @@ public class RemoveGlobals extends at.dms.util.Utils
 	JMethodDeclaration rawMain = RemoveGlobals.getRawMain(filter);
 	
 	for (int i = 0; i < methods.length; i++) {
+	    //this pass does causes some strange behavior with 
+	    //multidimensional arrays, so just punt
+	    //do not convert if there are multidimensional arrays 
+	    if (MultiDimensionalArrays.exists(methods[i]))
+	    	return false;
+	    
 	    if (methods[i].getName().startsWith("work") ||
 		methods[i].getName().startsWith("init") ||
 		methods[i].getName().startsWith("initWork") ||
@@ -106,12 +112,6 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    
 	    //see if there are any function calls in the other methods
 	    if (FunctionCall.exists(methods[i], filter))
-		return false;
-	    
-	    //this pass does causes some strange behavior with 
-	    //multidimensional arrays, so just punt
-	    //do not convert if there are multidimensional arrays 
-	    if (MultiDimensionalArrays.exists(methods[i]))
 		return false;
 	}
 
@@ -161,6 +161,8 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    if (type.isArrayType()) {
 		if (((CArrayType)type).getArrayBound() > 1)
 		    found = true;
+		if (((CArrayType)type).getBaseType().isArrayType())
+		    found = true;		
 	    }
 	}
 	
@@ -174,7 +176,10 @@ public class RemoveGlobals extends at.dms.util.Utils
 		if (self.getField().getType().isArrayType()) {
 		    if (((CArrayType)self.getField().getType()).getArrayBound() > 1)
 			found = true;
+		    if (((CArrayType)self.getField().getType()).getBaseType().isArrayType())
+			found = true;
 		}
+		
 	    }
 	    catch (Exception e) {
 		//it is easier to catch the null pointer exceptions then check for

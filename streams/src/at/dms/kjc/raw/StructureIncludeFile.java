@@ -14,7 +14,7 @@ import java.util.*;
 import java.io.*;
 import at.dms.util.Utils;
 
-class StructureIncludeFile
+public class StructureIncludeFile
 {
 
     /**

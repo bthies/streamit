@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.1 2001-10-02 19:15:08 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.2 2001-10-02 19:58:45 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,8 +25,9 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits an init statement.
      */
-    void visitInitStatement(SIRInitStatement self);
-
+    void visitInitStatement(SIRInitStatement self,
+			    JExpression[] args,
+			    SIRStream target);
     /**
      * Visits a latency.
      */
@@ -50,12 +51,17 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a message statement.
      */
-    void visitMessageStatement(SIRMessageStatement self);
+    void visitMessageStatement(SIRMessageStatement self,
+			       SIRPortal portal,
+			       String ident,
+			       JExpression[] args,
+			       SIRLatency latency);
 
     /**
      * Visits a peek expression.
      */
-    void visitPeekExpression(SIRPeekExpression self);
+    void visitPeekExpression(SIRPeekExpression self,
+			     JExpression arg);
 
     /**
      * Visits a pop expression.
@@ -65,22 +71,27 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a print statement.
      */
-    void visitPrintStatement(SIRPrintStatement self);
+    void visitPrintStatement(SIRPrintStatement self,
+			     JExpression arg);
 
     /**
      * Visits a push expression.
      */
-    void visitPushExpression(SIRPushExpression self);
+    void visitPushExpression(SIRPushExpression self,
+			     JExpression arg);
 
     /**
      * Visits a register-receiver statement.
      */
-    void visitRegReceiverStatement(SIRRegReceiverStatement self);
+    void visitRegReceiverStatement(SIRRegReceiverStatement self,
+				   String portal);
 
     /**
      * Visits a register-sender statement.
      */
-    void visitRegSenderStatement(SIRRegSenderStatement self);
+    void visitRegSenderStatement(SIRRegSenderStatement self,
+				 String portal,
+				 SIRLatency latency);
 
     /**
      * LIR NODES.

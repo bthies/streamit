@@ -15,6 +15,13 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 
 public class PartitionUtil {
+    /** output stream to send data to. **/
+    static PrintStream outputStream = System.out;
+    /** gets the current output stream. **/
+    public static PrintStream getOutputStream() {return outputStream;}
+    /** sets the current output stream. **/
+    public static void setOutputStream(PrintStream newStream) {outputStream=newStream;}
+    
 
     /**
      * Prints a listing of the work for each tile, given that
@@ -25,6 +32,7 @@ public class PartitionUtil {
      * then it has a target of -1.
      */
     public static void printTileWork(HashMap partitions, WorkEstimate work, int numTiles) {
+
 	int[] tileWork = new int[numTiles];
 
 	String[] tileContents = new String[numTiles];
@@ -56,11 +64,11 @@ public class PartitionUtil {
 	for (int i=0; i<tileWork.length; i++) {
 	    double util = ((double)tileWork[i]) / ((double)maxWork);
 	    totalUtil += util / ((double)tileWork.length);
-	    System.out.println("tile " + i + " has work:\t" + tileWork[i] 
+	    outputStream.println("tile " + i + " has work:\t" + tileWork[i] 
 			       + "\t Estimated utilization:\t" + Utils.asPercent(util));
 	    //System.out.print(tileContents[i]);
 	}
 
-	System.out.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
+	outputStream.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
     }
 }

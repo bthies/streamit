@@ -125,7 +125,7 @@ public class ILPPartitioner extends ListPartitioner {
     /**
      * Constructs <nodes>, <first> and <last> out of <str>.
      */
-    private void buildNodesList() {
+    protected void buildNodesList() {
 	// add dummy start node
 	nodes.add(new DummyNode());
 

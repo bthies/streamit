@@ -37,25 +37,73 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
     
     public void toplevelFusion() {
+	// first, we want calculate partitions for the various different tile sizes (for the paper)
+	// then we will calculate the actual transform that we want to do.
+
+	try {
+	    // save old numtiles and old output stream from partition utils
+	    int oldNumTiles = numTiles;
+	    PrintStream oldStream = PartitionUtil.getOutputStream();
+	    
+	    // redirect output from PartitionUtil to a file
+	    FileOutputStream fos = new FileOutputStream("dp_scaling.txt");
+	    PrintStream outStream = new PrintStream(fos);
+	    PartitionUtil.setOutputStream(outStream);
+	    
+	    // try the transform for tile partitionings of 1-10 tiles.
+	    for (int i=1; i<256; i++) {
+		outStream.println("Partitioning with " + i + " partitions:");
+		System.out.println("Partitioning with " + i + " partitions:");
+		numTiles = i;
+		long start = System.currentTimeMillis();
+		StreamTransform st = calcPartitions(outStream);
+		long end = System.currentTimeMillis();
+		outStream.println("Dynamic programming partitioner took " + 
+				  ((end-start)/1000) + ":" + ((end-start)%1000) + " sec:ms to calculate partitions.");
+	    	
+		// reset the configMap and the uniformSJ fields
+		this.str = str;
+		this.numTiles = numTiles;
+		this.nodes = new LinkedList();
+		this.first = new HashMap();
+		this.last = new HashMap();
+		this.work = WorkEstimate.getWorkEstimate(str);
+		buildNodesList();
+		this.configMap = new HashMap();
+		this.uniformSJ = new HashSet();
+		// flush the output stream
+		outStream.flush();
+		
+	    }
+
+	    // restore the old output stream
+	    PartitionUtil.setOutputStream(oldStream);
+	    // restore the numTiles
+	    numTiles = oldNumTiles;
+	} catch (IOException e) {e.printStackTrace(); throw new RuntimeException("fileio error: " + e.getMessage());}
+
+	// now, run the partitioning that we actually care about.
 	long start = System.currentTimeMillis();
-	StreamTransform st = calcPartitions();
+	StreamTransform st = calcPartitions(System.err);
 	System.err.println("Dynamic programming partitioner took " + 
 			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
 	st.doTransform(str);
     }
 
+
+    
     /**
      * Returns a stream transform that will perform the partitioning
      * for <str>.
      */
-    private StreamTransform calcPartitions() {
+    private StreamTransform calcPartitions(PrintStream pStream) {
 	this.work = WorkEstimate.getWorkEstimate(str);
 
 	// build stream config
 	DPConfig topConfig = buildStreamConfig();
 	// build up tables
 	int bottleneck = topConfig.get(numTiles);
-	System.err.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
+	pStream.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
 	// expand config stubs that were shared for symmetry optimizations
 	expandSharedConfigs();
 	

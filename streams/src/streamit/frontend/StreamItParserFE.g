@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.17 2002-11-19 20:28:53 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.18 2002-11-19 21:34:12 dmaze Exp $
  */
 
 header {
@@ -233,10 +233,13 @@ variable_decl returns [Statement s] { s = null; Type t; Expression x = null; }
 		// a context.  This is probably okay in the grand scheme of things.
 	;
 
-function_decl returns [Function f] { Type t; List l; Statement s; f = null; }
-	:	t=data_type id:ID^
+function_decl returns [Function f] { Type t; List l; Statement s; f = null;
+int cls = Function.FUNC_HELPER; }
+	:	t=data_type (tc:TK_const { cls = Function.FUNC_CONST_HELPER; })?
+		TK_helper id:ID
 		l=param_decl_list
 		s=block
+		{ f = new Function(getContext(tc), cls, id.getText(), t, l, s); }
 	;
 
 param_decl_list returns [List l] { l = new ArrayList(); Parameter p; }

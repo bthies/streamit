@@ -54,9 +54,6 @@ public class Flattener {
 	ConstantProp.propagateAndUnroll(str);
 	System.err.println("done.");
 
-        // resolve phases in phased filters
-        // FilterPhaser.resolvePhasedFilters(str);
-        
 	// Convert Peeks to Pops
 	if (KjcOptions.poptopeek) {
 	    System.err.print("Converting pop to peek... ");
@@ -119,6 +116,12 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 
+    /* dzm -- note phase ordering issue here.  In particular, we
+     * probably want to form filter phases before fusing the world, but we need
+     * to run field prop before forming phases. */
+    // resolve phases in phased filters
+    FilterPhaser.resolvePhasedFilters(str);    
+        
 	// move field initializations into init function
 	System.err.print("Moving initial assignments... ");
 	FieldInitMover.moveStreamInitialAssignments(str);

@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.17 2003-05-12 21:07:58 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.18 2003-05-13 19:32:50 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -171,11 +171,16 @@ public class FEReplacer implements FEVisitor
 
     public Object visitFieldDecl(FieldDecl field)
     {
-        Expression newInit = field.getInit() == null ? null :
-            doExpression(field.getInit());
-        if (newInit == field.getInit()) return field;
-        return new FieldDecl(field.getContext(), field.getType(),
-                             field.getName(), newInit);
+        List newInits = new ArrayList();
+        for (int i = 0; i < field.getNumFields(); i++)
+        {
+            Expression init = field.getInit(i);
+            if (init != null)
+                init = doExpression(init);
+            newInits.add(init);
+        }
+        return new FieldDecl(field.getContext(), field.getTypes(),
+                             field.getNames(), newInits);
     }
 
     public Object visitFunction(Function func)

@@ -298,6 +298,9 @@ public class FineGrainSimulator extends Simulator
  		(ComputeNode[])layout.router.
 		getRoute(ssg, layout.getComputeNode(fire), layout.getComputeNode(dest)).toArray(new ComputeNode[0]);
 
+	    assert hops.length > 1 : "Error: Bad Layout (could not find route from " + fire.toString() + " -> " +
+		dest.toString();
+
 	    //for (int i = 0; i < hops.length; i++)
 	    //		System.out.println("     " + hops[i]);
 	    

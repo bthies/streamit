@@ -31,7 +31,7 @@ import java.util.ArrayList;
  * inserted in <code>NodesToJava</code>.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertIODecls.java,v 1.8 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: InsertIODecls.java,v 1.9 2003-10-14 15:41:24 dmaze Exp $
  */
 public class InsertIODecls extends InitMunger
 {
@@ -158,21 +158,25 @@ public class InsertIODecls extends InitMunger
         // call to set the types.
         if (work.getPopRate() == null && work.getPushRate() == null)
             newStmts.add(new StmtSetTypes(work.getContext(), st));
-        if (!(st.getIn() instanceof TypePrimitive) ||
-            ((TypePrimitive)st.getIn()).getType() !=
-            TypePrimitive.TYPE_VOID)
+        else
         {
-            newStmts.add(new StmtIODecl(work.getContext(), "input",
-                                        st.getIn(), work.getPopRate(),
-                                        work.getPeekRate()));
+            if (!(st.getIn() instanceof TypePrimitive) ||
+                ((TypePrimitive)st.getIn()).getType() !=
+                TypePrimitive.TYPE_VOID)
+            {
+                newStmts.add(new StmtIODecl(work.getContext(), "input",
+                                            st.getIn(), work.getPopRate(),
+                                            work.getPeekRate()));
+            }
+            if (!(st.getOut() instanceof TypePrimitive) ||
+                ((TypePrimitive)st.getOut()).getType() !=
+                TypePrimitive.TYPE_VOID)
+            {
+                newStmts.add(new StmtIODecl(work.getContext(), "output",
+                                            st.getOut(), work.getPushRate()));
+            }
         }
-        if (!(st.getOut() instanceof TypePrimitive) ||
-            ((TypePrimitive)st.getOut()).getType() !=
-            TypePrimitive.TYPE_VOID)
-        {
-            newStmts.add(new StmtIODecl(work.getContext(), "output",
-                                        st.getOut(), work.getPushRate()));
-        }
+        
         if (newStmts.isEmpty())
             return spec;
         

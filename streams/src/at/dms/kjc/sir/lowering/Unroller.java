@@ -56,6 +56,31 @@ class Unroller extends SLIRReplacingVisitor {
     }
 
     /**
+     * Returns the number of times a for-loop with the given
+     * characteristics will execute, or -1 if the count cannot be
+     * determined.
+     */
+    public static int getNumExecutions(JStatement init,
+				       JExpression cond,
+				       JStatement incr,
+				       JStatement body) {
+	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
+	// if we didn't get any unroll info, return -1
+	if (info==null) { return -1; }
+	// get the initial value of the counter
+	int counter = info.initVal;
+	// track number of executions
+	int result = 0;
+	// simulate execution of the loop...
+	while (counter < info.finalVal) {
+	    // increment counters
+	    counter = incrementCounter(counter, info);
+	    result++;
+	}
+	return result;
+    }
+
+    /**
      * Given the loop <self> and original unroll info <info>, perform
      * the unrolling and return a statement block of the new
      * statements.
@@ -98,7 +123,7 @@ class Unroller extends SLIRReplacingVisitor {
      * Given the UnrollInfo <info> and that <counter> was the old
      * value of the count, returns the new value of the count.
      */
-    private int incrementCounter(int counter, UnrollInfo info) {
+    private static int incrementCounter(int counter, UnrollInfo info) {
 	switch(info.oper) {
 	case OPE_PLUS: 
         case OPE_POSTINC:
@@ -119,7 +144,7 @@ class Unroller extends SLIRReplacingVisitor {
     public boolean hasUnrolled() {
 	return hasUnrolled;
     }
-    
+
     /**
      * Gets unroll info for this loop.  Right now, we check that:
      *
@@ -135,7 +160,7 @@ class Unroller extends SLIRReplacingVisitor {
      *
      * This will return <null> if the loop can not be unrolled. 
      */
-    private UnrollInfo getUnrollInfo(JStatement init,
+    private static UnrollInfo getUnrollInfo(JStatement init,
 				     JExpression cond,
 				     JStatement incr,
 				     JStatement body) {
@@ -234,7 +259,7 @@ class Unroller extends SLIRReplacingVisitor {
 	}
     }
 
-    class UnrollInfo {
+    static class UnrollInfo {
 	/**
 	 * The induction variable in the loop.
 	 */

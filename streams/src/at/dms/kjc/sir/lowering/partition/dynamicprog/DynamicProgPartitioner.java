@@ -16,22 +16,22 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * The overhead of work estimated for each fissed node.
      */
-    static final int FISSION_OVERHEAD = 1;
+    static final int FISSION_OVERHEAD = 10;
     /**
      * The maximum amount to fiss (before network takes over).
      */
     static final int MAX_FISSION_FACTOR = 2;
     /**
-     * The overhead of work estimated for horizontal fission of
-     * containers (could calculate more precisely; only doing
-     * horizontal filter fusion precisely for now.)
-     */
-    static final int HORIZONTAL_CONTAINER_OVERHEAD = 0; //100;
-    /**
      * The factor by which a filter's input or output rate should be
      * multiplied to estimate the horizontal fusion overhead.
      */
     static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 5;
+    /**
+     * When estimating overhead of horizontal fusion, this is added if
+     * the top or bottommost elements of child pipelines are also
+     * containers, instead of filters.
+     */
+    static final int HORIZONTAL_CONTAINER_OVERHEAD = 10;
     /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.26 2003-05-12 21:07:55 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.27 2003-05-13 19:35:11 dmaze Exp $
  */
 
 header {
@@ -87,9 +87,17 @@ returns [StreamSpec ss]
 				st, name, params, vars, funcs); }
 	;
 
-field_decl returns [FieldDecl f] { f = null; Type t; Expression x = null; }
+field_decl returns [FieldDecl f] { f = null; Type t; Expression x = null;
+	List ts = new ArrayList(); List ns = new ArrayList();
+	List xs = new ArrayList(); FEContext ctx = null; }
 	:	t=data_type id:ID (ASSIGN x=right_expr)?
-		{ f = new FieldDecl(getContext(id), t, id.getText(), x); }
+		{ ctx = getContext(id); ts.add(t); ns.add(id.getText()); xs.add(x); }
+		(
+			{ x = null; }
+			COMMA id2:ID (ASSIGN x=right_expr)?
+			{ ts.add(t); ns.add(id2.getText()); xs.add(x); }
+		)*
+		{ f = new FieldDecl(ctx, ts, ns, xs); }
 	;
 
 

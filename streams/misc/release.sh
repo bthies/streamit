@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.40 2003-10-17 20:33:21 dmaze Exp $
+# $Id: release.sh,v 1.41 2003-10-17 21:15:18 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -114,6 +114,9 @@ rm -rf $WORKING/streams/src/streamit/stair
 # remove cluster library
 rm -rf $WORKING/streams/library/cluster
 
+# la la la
+rm -rf $WORKING/misc/release.sh
+
 # Some parts of the language notes we don't want to be visible
 rm -f $WORKING/streams/docs/syntax/02-04-24-additions
 rm -f $WORKING/streams/docs/syntax/02-08-additions
@@ -140,7 +143,7 @@ rm $WORKING/streams/apps/benchall.xml
 cp -R $WORKING/streams $BINDIR
 rm -rf $BINDIR/src $BINDIR/README.source
 rm -rf $BINDIR/include/dot-bashrc
-rm -rf $BINDIR/include/dot-cshrc $BINDIR/misc/release.sh
+rm -rf $BINDIR/include/dot-cshrc
 rm -rf $BINDIR/misc/get-antlr
 find $BINDIR/docs \( -name '*.hva' -o -name '*.tex' -o -name Makefile \
   -o -name '*.mp' \) -print0 | xargs -0 rm

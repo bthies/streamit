@@ -199,6 +199,20 @@ public class Pipeline extends Stream
 	super(i1, i2, i3, i4, i5, f);
     }
 
+    /**
+     * Constructor with six integers followed by two floats
+     **/
+    public Pipeline(int i1, int i2, int i3, int i4, int i5, int i6, float f1, float f2) {
+	super(i1, i2, i3, i4, i5, i6, f1, f2);
+    }
+
+    /**
+     * Constructor with seven integers followed by two floats
+     **/
+    public Pipeline(int i1, int i2, int i3, int i4, int i5, int i6, int i7, float f1, float f2) {
+	super(i1, i2, i3, i4, i5, i6, i7, f1, f2);
+    }
+
     /** 
      * Constructor with two integers and two floats
      **/

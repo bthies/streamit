@@ -23,7 +23,8 @@ class NullSink extends Filter {
 	i =0;
     }
     public void work() {
-	System.out.println(input.popFloat());
+	//System.out.println(input.popFloat());
+	input.popFloat();
     }
 }
 
@@ -43,6 +44,7 @@ public class FMStep extends StreamIt {
 	add(new TestSource());
 	add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps, 4));
 	add(new FMDemodulator(samplingRate, maxAmplitude, bandwidth));
+	add(new Equalizer(samplingRate));
 	add(new NullSink());
     }
 }

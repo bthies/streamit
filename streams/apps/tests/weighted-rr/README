@@ -1,0 +1,4 @@
+WeightedRR.java - a simple splitjoin 
+TwoWeightedRR.java - two back-to-back simple splitjoins with matching splitter/joiner weights to test SJ sync-removal transformation. 
+
+

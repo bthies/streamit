@@ -35,6 +35,7 @@ public class MakefileGenerator
 	    Iterator tilesIterator = tiles.iterator();
 	    
 	    fw.write("#Makefile\n\n");
+	    fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");

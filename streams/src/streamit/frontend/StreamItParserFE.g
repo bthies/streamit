@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.41 2003-10-01 18:19:20 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.42 2003-10-08 21:07:51 dmaze Exp $
  */
 
 header {
@@ -79,7 +79,7 @@ returns [StreamSpec ss]
 	:	LCURLY
 		( fn=init_decl { funcs.add(fn); }
 		| fn=work_decl { funcs.add(fn); }
-		| (function_decl) => fn=function_decl { funcs.add(fn); }
+		| (data_type ID LPAREN) => fn=function_decl { funcs.add(fn); }
 		| fn=handler_decl { funcs.add(fn); }
 		| decl=field_decl SEMI { vars.add(decl); }
 		)*

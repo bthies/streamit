@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.23 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.24 2003-10-13 18:31:18 jasperln Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -194,7 +194,7 @@ public class DoComplexProp extends SymbolTableVisitor
         if (getType(exp.getLeft()).isComplex())
             return exp;
         // Perhaps this field is complex.
-        if (getType(exp).isComplex())
+        if (getType(exp)!=null&&getType(exp).isComplex())
             return makeComplexPair(exp);
         // Otherwise recurse normally.
         return super.visitExprField(exp);

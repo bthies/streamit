@@ -34,6 +34,10 @@ public class StreaMITMain {
 	    KjcOptions.raw = 1;
 	    KjcOptions.partition_dp = true;
 	}
+	
+	if (KjcOptions.altcodegen &&
+	    KjcOptions.standalone)
+	    at.dms.util.Utils.fail("The options altcodegen and standalone are mutually exclusive.");
 
 	if (KjcOptions.altcodegen &&
 	    KjcOptions.decoupled)

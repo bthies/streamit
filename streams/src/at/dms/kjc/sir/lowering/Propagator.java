@@ -96,6 +96,14 @@ public class Propagator extends SLIRReplacingVisitor {
 	return changed;
     }
 
+    private int getIntLiteral(JExpression expr)
+    {
+        if (expr instanceof JShortLiteral)
+            return expr.shortValue();
+        else
+            return expr.intValue();
+    }
+
     // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------
@@ -825,14 +833,14 @@ public class Propagator extends SLIRReplacingVisitor {
 	if (newLeft.isConstant() && newRight.isConstant()) {
 	    switch (oper) {
 	    case OPE_SL:
-		return new JIntLiteral(newLeft.intValue() << 
-				       newRight.intValue());
+		return new JIntLiteral(getIntLiteral(newLeft) << 
+				       getIntLiteral(newRight));
 	    case OPE_SR:
-		return new JIntLiteral(newLeft.intValue() >>
-				       newRight.intValue());
+		return new JIntLiteral(getIntLiteral(newLeft) >>
+				       getIntLiteral(newRight));
 	    case OPE_BSR:
-		return new JIntLiteral(newLeft.intValue() >>>
-				       newRight.intValue());
+		return new JIntLiteral(getIntLiteral(newLeft) >>>
+				       getIntLiteral(newRight));
 	    default:
 		throw new InconsistencyException();
 	    }

@@ -381,7 +381,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 
         SchedPipeline myLoop = (SchedPipeline) getLoopFeedbackPath ();
         SchedSplitJoin LTPSplitJoin = (SchedSplitJoin) myLoop.getChild (0);
-        SchedFilter LTPFilter = (SchedFilter) myLoop.getChild (1);
+        SchedStream LTPFilter = (SchedStream) myLoop.getChild (1);
 
         steadySchedule.add (((SimpleSchedStream)LTPSplitJoin.getChild (0)).getSteadySchedule ());
 

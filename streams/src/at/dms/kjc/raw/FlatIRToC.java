@@ -2,6 +2,7 @@ package at.dms.kjc.raw;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.List;
 import java.util.ListIterator;
@@ -58,7 +59,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
 	
-        ((SIRFilter)node.contents).accept(toC);
+        IterFactory.createIter((SIRFilter)node.contents).accept(toC);
     }
     
     public FlatIRToC() 
@@ -99,6 +100,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         this.pos = pos;
     }
 
+    /*  
     public void visitStructure(SIRStructure self,
                                SIRStream parent,
                                JFieldDeclaration[] fields)
@@ -108,14 +110,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
             fields[i].accept(this);
         print("};\n");
     }
+    */
     
     public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) {
+			    SIRFilterIter iter) {
 	if (self.getPeekInt() > 4 * self.getPopInt()) 
 	    circular = false;
       
@@ -167,11 +165,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	//Visit fields declared in the filter class
+	JFieldDeclaration[] fields = self.getFields();
 	for (int i = 0; i < fields.length; i++)
 	   fields[i].accept(this);
 	
 	//visit methods of filter, print the declaration first
 	declOnly = true;
+	JMethodDeclaration[] methods = self.getMethods();
 	for (int i =0; i < methods.length; i++)
 	    methods[i].accept(this);
 	//now print the functions with body
@@ -181,10 +181,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
-	print("  " + init.getName() + "(");
+	print("  " + self.getInit().getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
-	print("  " + work.getName() + "();\n");
+	print("  " + self.getWork().getName() + "();\n");
 	print("}\n");
 	
 	System.out.println("Code for " + self.getName() +
@@ -1659,55 +1659,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     // UNUSED STREAM VISITORS
     // ----------------------------------------------------------------------
 
-     /* visit a splitter */
-    public void visitSplitter(SIRSplitter self,
-		       SIRStream parent,
-		       SIRSplitType type,
-		       JExpression[] weights)
-    {
-    }
-    
-    
-    /* visit a joiner */
-    public void visitJoiner(SIRJoiner self,
-		     SIRStream parent,
-		     SIRJoinType type,
-		     JExpression[] weights)
-    {
-    }
-    
-    
-    /**
-     * PRE-VISITS 
-     */
-	    
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-			  SIRStream parent,
-			  JFieldDeclaration[] fields,
-			  JMethodDeclaration[] methods,
-				 JMethodDeclaration init)
+				 SIRPipelineIter iter) 
     {
     }
     
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-			   SIRStream parent,
-			   JFieldDeclaration[] fields,
-			   JMethodDeclaration[] methods,
-			   JMethodDeclaration init)
+				  SIRSplitJoinIter iter)
     {
     }
     
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-			      SIRStream parent,
-			      JFieldDeclaration[] fields,
-			      JMethodDeclaration[] methods,
-			      JMethodDeclaration init,
-			      JMethodDeclaration initPath)
+				     SIRFeedbackLoopIter iter)
     {
     }
     
@@ -1718,32 +1686,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-			   SIRStream parent,
-			   JFieldDeclaration[] fields,
-			   JMethodDeclaration[] methods,
-				  JMethodDeclaration init)
-    {
+				  SIRPipelineIter iter) {
     }
     
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init)
-    {
+				   SIRSplitJoinIter iter) {
     }
     
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-			       SIRStream parent,
-			       JFieldDeclaration[] fields,
-			       JMethodDeclaration[] methods,
-			       JMethodDeclaration init,
-			       JMethodDeclaration initPath)
-    {
+				      SIRFeedbackLoopIter iter) {
     }
 
 }

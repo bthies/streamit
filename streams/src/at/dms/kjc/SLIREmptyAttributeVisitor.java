@@ -133,15 +133,6 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
     
     /**
-     * Visits a special work function call.
-     */
-    public Object visitRunSpecialWork(LIRRunSpecialWork self) {
-	self.getStreamContext().accept(this);
-	return self;
-    }
-    
-
-    /**
      * Visits a pop expression.
      */
     public Object visitPopExpression(SIRPopExpression self,

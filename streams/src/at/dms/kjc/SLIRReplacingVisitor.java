@@ -214,14 +214,6 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     }
     
     /**
-     * Visits a special work function call.
-     */
-    public Object visitRunSpecialWork(LIRRunSpecialWork self) {
-	self.getStreamContext().accept(this);
-	return self;
-    }
-    
-    /**
      * Visits a decoder registration node.
      */
     public Object visitSetDecode(LIRSetDecode self,

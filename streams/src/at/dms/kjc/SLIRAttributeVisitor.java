@@ -191,11 +191,6 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     Object visitFileWriter(LIRFileWriter self);
     
     /**
-     * Visits a special work function call.
-     */
-    Object visitRunSpecialWork(LIRRunSpecialWork self);
-    
-    /**
      * Visits a splitter-setting node.
      */
     Object visitSetSplitter(LIRSetSplitter self,

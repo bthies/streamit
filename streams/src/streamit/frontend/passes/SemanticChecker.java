@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.23 2004-08-06 18:05:20 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.24 2004-11-15 06:12:03 thies Exp $
  */
 public class SemanticChecker
 {
@@ -792,13 +792,18 @@ public class SemanticChecker
 		public Object visitFieldDecl(FieldDecl field) {
 		    // check that array sizes match
 		    for (int i=0; i<field.getNumFields(); i++) {
+			// the types are backwards from the initializers
 			Type type = field.getType(i);
 			Expression init = field.getInit(i);
-			if (type instanceof TypeArray && init!=null) {
+			// deep-check the array types (to deal with multi-dim arrays)
+			boolean recurse = true;
+			while (type instanceof TypeArray && init!=null && recurse) {
 			    // check that initializer is array initializer
 			    // (I guess it could also be conditional expression?  Don't bother.)
 			    if (!(init instanceof ExprArrayInit)) {
 				report (field, "array initialized to non-array type");
+				// stop looking deeper into array decl
+				recurse = false;
 			    } else {
 				// check that lengths match
 				Expression lengthExpr = ((TypeArray)type).getLength();
@@ -810,6 +815,16 @@ public class SemanticChecker
 					       "declared array length does not match " +
 					       "array initializer");
 				    }
+				}
+				// update for next check.  Check as
+				// long as there are array
+				// initializers to match.
+				type = ((TypeArray)type).getBase();
+				List elems = ((ExprArrayInit)init).getElements();
+				if (elems.size()>0) {
+				    init = (Expression)elems.get(0);
+				} else {
+				    recurse = false;
 				}
 			    }
 			}

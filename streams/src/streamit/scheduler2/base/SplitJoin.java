@@ -69,6 +69,26 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         ASSERT(nChild >= 0 && nChild < nChildren);
         return children[nChild];
     }
+    
+    /**
+     * get the fan-out of a splitter
+     * @return fan-out of a splitter
+     */
+
+    public int getSplitFanOut()
+    {
+        return nChildren;
+    }
+
+    /**
+     * get the fan-in of a joiner
+     * @return fan-in of a joiner
+     */
+
+    public int getJoinFanIn()
+    {
+        return nChildren;
+    }
 
     /**
      * stores how many times each child needs to be executed for the

@@ -124,4 +124,32 @@ public interface StreamInterfaceWithSnJ extends StreamInterface
      * @return joiner's phase flow
      */
     public JoinFlow getJoinFlow(int nPhase);
+
+    /**
+     * get the fan-out of a splitter
+     * @return fan-out of a splitter
+     */
+
+    public int getSplitFanOut();
+
+    /**
+     * get the fan-in of a joiner
+     * @return fan-in of a joiner
+     */
+
+    public int getJoinFanIn();
+
+    /**
+     * get the number of phases the splitter has
+     * @return number of phases the splitter has
+     */
+
+    public int getNumSplitPhases();
+
+    /**
+     * get the number of phases the joiner has
+     * @return number of phases the joiner has
+     */
+
+    public int getNumJoinPhases();
 }

@@ -111,6 +111,22 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return newNode;
     }
 
+    LatencyNode addSplitter(FeedbackLoop fl)
+    {
+        LatencyNode newNode =
+            new LatencyNode(fl, true, getAncestorList(fl));
+        nodes.pushBack(newNode);
+        return newNode;
+    }
+
+    LatencyNode addJoiner(FeedbackLoop fl)
+    {
+        LatencyNode newNode =
+            new LatencyNode(fl, false, getAncestorList(fl));
+        nodes.pushBack(newNode);
+        return newNode;
+    }
+
     public SDEPData computeSDEP(
         LatencyNode upstreamNode,
         LatencyNode downstreamNode)
@@ -151,7 +167,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 for (; !edgesIter.equals(edgesLastIter); edgesIter.next())
                 {
                     // if the edgesUpstream set doesn't have this edge,
-                    // store it to be removee it from the set
+                    // store it to be removed from the set
                     if (edgesUpstream
                         .find(edgesIter.get())
                         .equals(upstreamEdgesLastIter))
@@ -167,6 +183,20 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
                 // now edgesToTraverse holds all edges that can be traversed
                 // between upstreamNode and downstreamNode
+            }
+
+            // remove the backward pointing edges:
+            {
+                OSet backwardPointingEdges =
+                    findBackPointingEdges(upstreamNode, ancestor);
+                OSetIterator backEdgeLastIter = backwardPointingEdges.end();
+                for (OSetIterator backEdgeIter =
+                    backwardPointingEdges.begin();
+                    !backEdgeIter.equals(backEdgeLastIter);
+                    backEdgeIter.next())
+                {
+                    edgesToTraverse.erase(backEdgeIter.get());
+                }
             }
 
             // make sure that there are SOME edges between the two nodes
@@ -227,7 +257,6 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
         // compute the dependency list for all the nodes
         // wrt to the upstreamNode
-        // BUGBUG this will not deal correctly with loops!
         while (!nodesToVisit.empty())
         {
             OSetIterator nodesToVisitIter = nodesToVisit.begin();
@@ -424,5 +453,131 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         }
 
         return resultNodesNEdges;
+    }
+
+    public OSet findBackPointingEdges(
+        LatencyNode startNode,
+        StreamInterface withinStream)
+    {
+        // first find all the nodes in the stream (just to count them!)
+        OSet nodesInStream = new OSet();
+        OSetIterator nodeInStreamLastIter = nodesInStream.end();
+        {
+            DLList nodesToVisit = new DLList();
+            nodesToVisit.pushBack(startNode);
+
+            OSetIterator lastNodeToVisitIter = nodesInStream.end();
+            while (!nodesToVisit.empty())
+            {
+                LatencyNode node = (LatencyNode)nodesToVisit.front().get();
+                nodesToVisit.popFront();
+
+                // have I visited the node already?
+                if (!nodesInStream.find(node).equals(lastNodeToVisitIter))
+                    continue;
+
+                // is the node within the minimal ancestor?                    
+                if (withinStream != null
+                    && !node.hasAncestor(withinStream))
+                    continue;
+
+                // add the node as in the stream
+                nodesInStream.insert(node);
+
+                // visit all the downstream nodes of this node
+                DLList_const dependants = node.getDependants();
+                DLListIterator lastDependantIter = dependants.end();
+                for (DLListIterator depIter = dependants.begin();
+                    !depIter.equals(lastDependantIter);
+                    depIter.next())
+                {
+                    nodesToVisit.pushBack(
+                        ((LatencyEdge)depIter.get()).getDst());
+                }
+            }
+        }
+        int nNodesInStream = nodesInStream.size();
+
+        // set up the backwards-pointing edge computation
+        OMap node2int = new OMap();
+        OMap int2node = new OMap();
+        int nodeVectors[][] = new int[nNodesInStream][nNodesInStream];
+        {
+            OSetIterator nodeInStreamIter = nodesInStream.begin();
+
+            for (int nNode = 0;
+                nNode < nNodesInStream;
+                nNode++, nodeInStreamIter.next())
+            {
+                LatencyNode node = (LatencyNode)nodeInStreamIter.get();
+                Integer idx = new Integer(nNode);
+                node2int.insert(node, idx);
+                int2node.insert(idx, node);
+                nodeVectors[nNode][nNode] = 1;
+            }
+        }
+
+        // find the backward pointing edges
+        OSet backwardPointingEdges = new OSet();
+        DLList nodesToVisit = new DLList();
+        for (nodesToVisit.pushBack(startNode);
+            !nodesToVisit.empty();
+            nodesToVisit.popFront())
+        {
+            LatencyNode srcNode = (LatencyNode)nodesToVisit.front().get();
+            DLList_const edgeList = srcNode.getDependants();
+            DLListIterator edgeListIterLast = edgeList.end();
+            for (DLListIterator edgeListIter = edgeList.begin();
+                !edgeListIter.equals(edgeListIterLast);
+                edgeListIter.next())
+            {
+                LatencyEdge edge = (LatencyEdge)edgeListIter.get();
+                LatencyNode dstNode = edge.getDst();
+
+                // is my dst within my desired stream?
+                if (nodesInStream
+                    .find(dstNode)
+                    .equals(nodeInStreamLastIter))
+                    // no? skip it!
+                    continue;
+
+                // get the vectors for both my src and dst nodes
+                int srcIdx =
+                    ((Integer)node2int.find(srcNode).getData()).intValue();
+                int srcVector[] = nodeVectors[srcIdx];
+
+                int dstIdx =
+                    ((Integer)node2int.find(dstNode).getData()).intValue();
+                int dstVector[] = nodeVectors[dstIdx];
+
+                // have I visited dst already?
+                if (srcVector[dstIdx] != 0)
+                {
+                    // yes! add edge to backwardPointingEdges and skip it
+                    backwardPointingEdges.insert(edge);
+                    continue;
+                }
+
+                // okay, propagate the visited nodes:
+                int oldTotal = 0;
+                int newTotal = 0;
+                for (int nIdx = 0; nIdx < nNodesInStream; nIdx++)
+                {
+                    oldTotal += dstVector[nIdx];
+                    dstVector[nIdx] |= srcVector[nIdx];
+                    newTotal += dstVector[nIdx];
+                }
+
+                if (newTotal != oldTotal)
+                {
+                    // I've added nodes to the dst node vector
+                    // will have to visit this node in near future!
+                    nodesToVisit.pushBack(dstNode);
+                }
+            }
+
+        }
+
+        return backwardPointingEdges;
     }
 }

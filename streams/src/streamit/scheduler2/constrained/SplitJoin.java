@@ -17,13 +17,6 @@ public class SplitJoin
 {
     final private LatencyGraph latencyGraph;
 
-    /*
-    class ConstrainedSplitter { }
-    class ConstrainedJoiner { }
-    
-    final ConstrainedSplitter splitter = new ConstrainedSplitter ();
-    final ConstrainedJoiner joiner = new ConstrainedJoiner ();
-    */
     LatencyNode latencySplitter, latencyJoiner;
 
     public SplitJoin(

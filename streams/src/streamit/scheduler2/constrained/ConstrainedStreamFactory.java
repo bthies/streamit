@@ -40,7 +40,13 @@ public class ConstrainedStreamFactory
         }
         else if (streamIter.isSplitJoin() != null)
         {
-            newStream = new SplitJoin(streamIter.isSplitJoin(), parent, this);
+            newStream =
+                new SplitJoin(streamIter.isSplitJoin(), parent, this);
+        }
+        else if (streamIter.isFeedbackLoop() != null)
+        {
+            newStream =
+                new FeedbackLoop(streamIter.isFeedbackLoop(), parent, this);
         }
         else
         {

@@ -56,6 +56,26 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
     }
 
     /**
+     * get the fan-out of a splitter
+     * @return fan-out of a splitter
+     */
+
+    public int getSplitFanOut()
+    {
+        return 2;
+    }
+
+    /**
+     * get the fan-in of a joiner
+     * @return fan-in of a joiner
+     */
+
+    public int getJoinFanIn()
+    {
+        return 2;
+    }
+    
+    /**
      * these store how many times the body and loop need to
      * go be executed to execute a full steady state of this FeedbackLoop.
      * These are initialized by computeSteadySchedule

@@ -3,6 +3,7 @@ package streamit.scheduler2.constrained;
 import streamit.misc.DLList;
 import streamit.misc.DLList_const;
 import streamit.misc.DLListIterator;
+import streamit.scheduler2.hierarchical.StreamInterfaceWithSnJ;
 
 public class LatencyNode extends streamit.misc.AssertedClass
 {
@@ -83,19 +84,22 @@ public class LatencyNode extends streamit.misc.AssertedClass
         }
     }
 
-    LatencyNode(SplitJoin sj, boolean isSplitter, DLList _ancestors)
+    LatencyNode(
+        StreamInterfaceWithSnJ sj,
+        boolean isSplitter,
+        DLList _ancestors)
     {
         ancestors = _ancestors;
 
         if (isSplitter)
         {
-            initNodePhases = new OperatorPhases(0, 1, sj.getNumChildren());
+            initNodePhases = new OperatorPhases(0, 1, sj.getSplitFanOut());
 
             steadyNodePhases =
                 new OperatorPhases(
                     sj.getNumSplitPhases(),
                     1,
-                    sj.getNumChildren());
+                    sj.getSplitFanOut());
 
             int nPhase;
             for (nPhase = 0; nPhase < sj.getNumSplitPhases(); nPhase++)
@@ -106,29 +110,29 @@ public class LatencyNode extends streamit.misc.AssertedClass
                     nPhase,
                     0);
 
+                steadyNodePhases.setOperatorPhase(
+                    sj.getSplitPhase(nPhase),
+                    nPhase);
+
                 for (int nOutChannel = 0;
-                    nOutChannel < sj.getNumChildren();
+                    nOutChannel < sj.getSplitFanOut();
                     nOutChannel++)
                 {
                     steadyNodePhases.setPhaseOutput(
                         sj.getSplitFlow(nPhase).getPushWeight(nOutChannel),
                         nPhase,
                         nOutChannel);
-
-                    steadyNodePhases.setOperatorPhase(
-                        sj.getSplitPhase(nPhase),
-                        nPhase);
                 }
             }
         }
         else
         {
-            initNodePhases = new OperatorPhases(0, sj.getNumChildren(), 1);
+            initNodePhases = new OperatorPhases(0, sj.getJoinFanIn(), 1);
 
             steadyNodePhases =
                 new OperatorPhases(
                     sj.getNumJoinPhases(),
-                    sj.getNumChildren(),
+                    sj.getJoinFanIn(),
                     1);
 
             int nPhase;
@@ -139,8 +143,12 @@ public class LatencyNode extends streamit.misc.AssertedClass
                     nPhase,
                     0);
 
+                steadyNodePhases.setOperatorPhase(
+                    sj.getSplitPhase(nPhase),
+                    nPhase);
+
                 for (int nOutChannel = 0;
-                    nOutChannel < sj.getNumChildren();
+                    nOutChannel < sj.getJoinFanIn();
                     nOutChannel++)
                 {
                     steadyNodePhases.setPhaseInput(
@@ -148,10 +156,6 @@ public class LatencyNode extends streamit.misc.AssertedClass
                         sj.getJoinFlow(nPhase).getPopWeight(nOutChannel),
                         nPhase,
                         nOutChannel);
-
-                    steadyNodePhases.setOperatorPhase(
-                        sj.getSplitPhase(nPhase),
-                        nPhase);
                 }
             }
         }

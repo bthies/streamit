@@ -1,0 +1,19 @@
+<benchmark>
+  <name>fm</name>
+  <desc>Software FM radio with equalizer</desc>
+  <description>
+FM radio with multi-band equalizer.  The input passes through a demodulator
+to produce an audio signal, and then an equalizer.  The equalizer is
+implemented as a split-join with a number of band-pass filters; each band-pass
+filter is in turn the difference of a pair of low-pass filters.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="C" dir="c">
+      <file>fmref.c</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>FMRadio.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -249,7 +249,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	}
 	
 	//create the appropriate amount of rou
-	int elements = getTypeSize(Util.getOutputType(fire));
+	int elements = Util.getTypeSize(Util.getOutputType(fire));
 	for (int i = 0; i < elements; i++)
 	    asm(Layout.getTile(fire), prev, next);
     }
@@ -669,26 +669,4 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	
     }
 
-    /*
-      for a given CType return the size (number of elements that need to be sent
-      when routing).
-    */
-    public static int getTypeSize(CType type) {
-
-	if (!(type.isArrayType() || type.isClassType()))
-	    return 1;
-	
-	if (type instanceof CArrayType) {
-	    int elements = 1;
-	    int dims[] = Util.makeInt(((CArrayType)type).getDims());
-	    
-	    for (int i = 0; i < dims.length; i++) 
-		elements *= dims[i];
-
-	    return elements;
-	}
-	
-	System.out.println("should not be here");
-	return 1;
-    }
 }

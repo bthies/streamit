@@ -173,7 +173,7 @@ class Unroller extends SLIRReplacingVisitor {
 	    // increment counter
 	    counter = incrementCounter(counter, info);
 	}
-	statementList.add(new JExpressionStatement(self.getTokenReference(),new JAssignmentExpression(self.getTokenReference(),new JLocalVariableExpression(self.getTokenReference(),info.var),new JIntLiteral(info.finalVal)),null));
+	statementList.add(new JExpressionStatement(self.getTokenReference(),new JAssignmentExpression(self.getTokenReference(),new JLocalVariableExpression(self.getTokenReference(),info.var),new JIntLiteral(counter)),null));
 	// mark that we've unrolled
 	this.hasUnrolled = true;
 	// return new block instead of the for loop
@@ -187,14 +187,17 @@ class Unroller extends SLIRReplacingVisitor {
     private static boolean done(int counter, UnrollInfo info) {
 	switch(info.oper) {
 	case OPE_PLUS: 
-        case OPE_POSTINC:
-        case OPE_PREINC:
+	case OPE_POSTINC:
+	case OPE_PREINC:
 	case OPE_STAR: 
 	    return counter < info.finalVal;
+	case OPE_MINUS: 
+        case OPE_POSTDEC:
+        case OPE_PREDEC:   
 	case OPE_SLASH:
 	    return counter > info.finalVal;
-	default: 
-	    Utils.fail("Can only unroll add/mul increments for now.");
+	default:
+	    Utils.fail("Can only unroll add/sub/mul/div increments for now.");
 	    // dummy value
 	    return false;
 	}
@@ -210,12 +213,16 @@ class Unroller extends SLIRReplacingVisitor {
         case OPE_POSTINC:
         case OPE_PREINC:
 	    return counter + info.incrVal;
+	case OPE_MINUS: 
+        case OPE_POSTDEC:
+        case OPE_PREDEC:
+	    return counter - info.incrVal;
 	case OPE_STAR: 
 	    return counter * info.incrVal;
 	case OPE_SLASH:
 	    return counter / info.incrVal;
 	default: 
-	    Utils.fail("Can only unroll add/mul increments for now.");
+	    Utils.fail("Can only unroll add/sub/mul/div increments for now.");
 	    // dummy value
 	    return 0;
 	}
@@ -253,8 +260,10 @@ class Unroller extends SLIRReplacingVisitor {
 	    JLocalVariable var;
 	    int initVal=0;
 	    int finalVal=0;
+	    boolean incrementing;
 	    // inspect condition...
 	    JRelationalExpression condExpr = (JRelationalExpression)cond;
+	    int relation=condExpr.getOper();
 	    var=((JLocalVariableExpression)condExpr.getLeft()).getVariable();
 	    if(init instanceof JExpressionListStatement) {
 		JAssignmentExpression initExpr 
@@ -272,8 +281,13 @@ class Unroller extends SLIRReplacingVisitor {
 	    else
 		throw new Exception("Not Constant!");
 	    // get the upper limit
-	    if(condExpr.getRight() instanceof JIntLiteral)
+	    if(condExpr.getRight() instanceof JIntLiteral) {
 		finalVal = ((JIntLiteral)condExpr.getRight()).intValue();
+		if(relation==OPE_LE)
+		    finalVal++;
+		else if(relation==OPE_GE)
+		    finalVal--;
+	    }
 	    //else
 	    //System.err.println("Cond: "+((JFieldAccessExpression)condExpr.getRight()).isConstant());
 	    // inspect increment...
@@ -310,7 +324,6 @@ class Unroller extends SLIRReplacingVisitor {
 		    incrVal=((JIntLiteral)expr.getRight()).intValue();
 		    oper=OPE_SLASH;
 		} else if(expr instanceof JMultExpression) {
-		    JLocalVariableExpression multiplier;
 		    oper=OPE_STAR;
 		    if(expr.getLeft() instanceof JLocalVariableExpression) {
 			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar))
@@ -320,8 +333,27 @@ class Unroller extends SLIRReplacingVisitor {
 			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar))
 			    return null;
 			incrVal=((JIntLiteral)expr.getLeft()).intValue();
-		    } else
+		    } else 
 			return null;
+		} else if(expr instanceof JAddExpression) {
+		    oper=OPE_PLUS;
+		    if(expr.getLeft() instanceof JLocalVariableExpression) {
+			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar))
+			    return null;
+			incrVal=((JIntLiteral)expr.getRight()).intValue();
+		    } else if(expr.getRight() instanceof JLocalVariableExpression) {
+			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar))
+			    return null;
+			incrVal=((JIntLiteral)expr.getLeft()).intValue();
+		    } else 
+			return null;
+		} else if(expr instanceof JMinusExpression) {
+		    if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar)) {
+			//System.err.println("Vars don't match!");
+			return null;
+		    }
+		    incrVal=((JIntLiteral)expr.getRight()).intValue();
+		    oper=OPE_MINUS;
 		} else
 		    return null;
 	    } else if (incrExpr instanceof JPrefixExpression)
@@ -344,7 +376,28 @@ class Unroller extends SLIRReplacingVisitor {
 	    // make sure the variable is the same
 	    if (var != incrVar.getVariable())
 		return null;
+
+	    //Not have to worry about weird cases
+	    if(incrVal==0)
+		return null;
+	    else if(((oper==OPE_STAR)||(oper==OPE_SLASH))&&incrVal<2)
+		return null;
 	    
+	    //Normalize + and -
+	    if((oper==OPE_PLUS)&&(incrVal<0)) {
+		oper=OPE_MINUS;
+		incrVal*=-1;
+	    } else if((oper==OPE_MINUS)&&(incrVal<0)) {
+		oper=OPE_PLUS;
+		incrVal*=-1;
+	    }
+
+	    //Check to make sure we are incrementing to a ceiling
+	    //or decrementing to a floor
+	    if((((oper==OPE_PLUS)||(oper==OPE_STAR)||(oper==OPE_POSTINC)||(oper==OPE_PREINC))&&((relation==OPE_GE)||(relation==OPE_GT)))||
+	       (((oper==OPE_MINUS)||(oper==OPE_SLASH)||(oper==OPE_POSTDEC)||(oper==OPE_PREDEC))&&((relation==OPE_LE)||(relation==OPE_LT))))
+		return null;
+
 	    // return result
 	    return new UnrollInfo(var, initVal, finalVal, oper, incrVal);
 	} catch (Exception e) {
@@ -366,8 +419,11 @@ class Unroller extends SLIRReplacingVisitor {
     private int calcUnrollFactor(UnrollInfo info) {
 	switch(info.oper) {
 	case OPE_PLUS: 
-        case OPE_POSTINC:
-        case OPE_PREINC:
+	case OPE_POSTINC:
+	case OPE_PREINC:
+	case OPE_MINUS: 
+	case OPE_POSTDEC:
+	case OPE_PREDEC:
 	    return (info.finalVal-info.initVal)/info.incrVal;
 	case OPE_STAR: 
 	    // simulate execution of multiplication
@@ -388,7 +444,7 @@ class Unroller extends SLIRReplacingVisitor {
 	    }
 	    return count2;
 	default: 
-	    Utils.fail("Can only unroll add/mul/div increments for now.");
+	    Utils.fail("Can only unroll add/sub/mul/div increments for now.");
 	    // dummy value
 	    return 0;
 	}

@@ -1,0 +1,15 @@
+<benchmark>
+  <name>file</name>
+  <desc>Demonstration of file writer</desc>
+  <description>
+Demonstration of a FileWriter filter.  This generates a sequence of
+even integers as floating-point numbers, and writes them to
+float.test in binary form.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>FileTest.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.4 2003-11-21 19:59:56 dmaze Exp $
+# $Id: build-qmtest.py,v 1.5 2005-03-11 00:40:12 jasperln Exp $
 #
 
 import os
@@ -123,6 +123,14 @@ def DoQMTestDir(path, control):
         if not os.path.exists(benchdir):
             os.makedirs(benchdir)
 
+        # Run appropriate Makefile if any
+        makes=impl.getElementsByTagName('make')
+        for make in makes:
+            mnode=make.firstChild
+            mn=mnode.data
+            run=os.popen("cd "+srcdir+";make -f "+mn,'r')
+            run.close()
+            
         # Walk through the files.  Classify them by their class
         # attribute, and also copy them into benchdir.
         fileset = {}

@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.82 2004-01-30 19:04:30 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.83 2004-02-13 21:25:17 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -240,7 +240,8 @@ public class NodesToJava implements FEVisitor
         // properly decompose the right-hand side.
         // We can use a null stream type here since the left-hand
         // side shouldn't contain pushes, pops, or peeks.
-        GetExprType eType = new GetExprType(symtab, ss.getStreamType());
+        GetExprType eType = new GetExprType(symtab, ss.getStreamType(),
+                                            new java.util.HashMap());
         Type lhsType = (Type)lhs.accept(eType);
         if (lhsType.isComplex())
         {

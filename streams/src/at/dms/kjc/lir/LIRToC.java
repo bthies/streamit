@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.84 2003-09-17 20:01:24 dmaze Exp $
+ * $Id: LIRToC.java,v 1.85 2003-10-04 02:26:04 jasperln Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1764,14 +1764,20 @@ public class LIRToC
 	if (self.getNumPop()>1) {
 	    print("(POP_DEFAULTB_N( ");
 	    if (tapeType != null)
-		print(tapeType);
+		if(tapeType instanceof CArrayType)
+		    print(tapeType.toString());
+		else
+		    print(tapeType);
 	    else
 		print("/* null tapeType! */ int");
 	    print(", " + self.getNumPop() + " ))");
 	} else {
 	    print("(POP_DEFAULTB( ");
 	    if (tapeType != null)
-		print(tapeType);
+		if(tapeType instanceof CArrayType)
+		    print(tapeType.toString());
+		else
+		    print(tapeType);
 	    else
 		print("/* null tapeType! */ int");
 	    print("))");
@@ -1829,9 +1835,12 @@ public class LIRToC
                                     JExpression val)
     {
         print("(PUSH_DEFAULTB(");
-        if (tapeType != null)
-            print(tapeType);
-        else
+        if (tapeType != null) {
+	    if(tapeType instanceof CArrayType)
+		print(tapeType.toString());
+	    else
+		print(tapeType);
+        } else
             print("/* null tapeType! */ int");
         print(", ");
         val.accept(this);
@@ -2535,16 +2544,16 @@ public class LIRToC
         {
             print(((CArrayType)s).getBaseType());
             JExpression[] dims = ((CArrayType)s).getDims();
-            if (dims != null)
-                for (int i = 0; i < dims.length; i++)
-                {
-                    print("[");
-                    dims[i].accept(this);
-                    print("]");
-                }
-            else
-                for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
-                    print("*");
+	    if (dims != null)
+		for (int i = 0; i < dims.length; i++)
+		    {
+			print("[");
+			dims[i].accept(this);
+			print("]");
+		    }
+	    else
+		for (int i = 0; i < ((CArrayType)s).getArrayBound(); i++)
+		    print("*");
         }
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");

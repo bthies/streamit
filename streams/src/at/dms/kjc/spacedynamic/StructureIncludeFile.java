@@ -109,7 +109,7 @@ public class StructureIncludeFile
 		fw.write("\t//" + current.getFields()[j].getType() + "\n");
 		if (current.getFields()[j].getType().isArrayType()) {
 		    System.out.println(((CArrayType)current.getFields()[j].getType()).getDims());
-		    assert false;
+		    //assert false;
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
 		 
@@ -131,7 +131,7 @@ public class StructureIncludeFile
 		     current.getIdent() + "* temp) {\n");
 	    for (int j = 0; j < current.getFields().length; j++) {
 		if (current.getFields()[j].getType().isArrayType()) {
-		    assert false;
+		    //assert false;
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
 		    //if this is struct field, call the struct's popPointer method
@@ -161,8 +161,8 @@ public class StructureIncludeFile
 	    for (int j = 0; j < current.getFields().length; j++) {
 		//if this field is a struct type, use its method to push the field
 		if (current.getFields()[j].getType().isArrayType()) {
-		    System.out.println(((CArrayType)current.getFields()[j].getType()).getDims()[0]);
-		    assert false;
+		    //System.out.println(((CArrayType)current.getFields()[j].getType()).getDims()[0]);
+		    //assert false;
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
 		    fw.write("push" + network + current.getFields()[j].getType() + "(&temp->" +

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.4 2001-10-02 18:38:23 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.5 2001-10-02 19:25:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -73,6 +73,15 @@ public class JClassDeclaration extends JTypeDeclaration {
   // ----------------------------------------------------------------------
   // INTERFACE CHECKING
   // ----------------------------------------------------------------------
+
+
+
+  /**
+   * Gets the CSourceClass
+   */
+  public CSourceClass getSourceClass() {
+      return sourceClass;
+  }
 
   /**
    * Sets the super class
@@ -562,6 +571,23 @@ public class JClassDeclaration extends JTypeDeclaration {
 			    methods,
 			    inners);
   }
+
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+   Object trash = super.accept(p);
+   return p.visitClassDeclaration(this,
+			    modifiers,
+			    ident,
+			    superName,
+			    interfaces,
+			    body,
+			    methods,
+			    inners);
+  }
+
 
   /**
    * Generate the code in pure java form

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompoundAssignmentExpression.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JCompoundAssignmentExpression.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -171,6 +171,14 @@ public class JCompoundAssignmentExpression extends JAssignmentExpression {
    */
   public void accept(KjcVisitor p) {
     p.visitCompoundAssignmentExpression(this, oper, left, right);
+  }
+
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+      return    p.visitCompoundAssignmentExpression(this, oper, left, right);
   }
 
   /**

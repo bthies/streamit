@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMemberDeclaration.java,v 1.1 2001-08-30 16:32:52 thies Exp $
+ * $Id: JMemberDeclaration.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -90,7 +90,29 @@ public abstract class JMemberDeclaration extends JPhylum {
     genComments(p);
   }
 
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+      return genComments1(p);
+  }
+
   /**
+   * Generate the code in pure java form
+   * It is useful to debug and tune compilation process
+   * @param	p		the printwriter into the code is generated
+   */
+  public Object genComments1(AttributeVisitor p) {
+    if (comments != null) {
+      return p.visitComments(comments);
+    }
+    if (javadoc != null) {
+      return p.visitJavadoc(javadoc);
+    }
+    return null;
+  }
+     /**
    * Generate the code in pure java form
    * It is useful to debug and tune compilation process
    * @param	p		the printwriter into the code is generated

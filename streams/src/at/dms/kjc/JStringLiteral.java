@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JStringLiteral.java,v 1.1 2001-08-30 16:32:52 thies Exp $
+ * $Id: JStringLiteral.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -165,6 +165,32 @@ public class JStringLiteral extends JLiteral {
     value = s.toString();
     p.visitStringLiteral(value);
   }
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+    public Object accept(AttributeVisitor p) {
+	StringBuffer s = new StringBuffer();
+	for (int i = 0; i < value.length(); i++) {
+	    char c = value.charAt(i);
+	    switch (c) {
+	    case '\n' : s.append("\\n"); break;
+	    case '\r' : s.append("\\r"); break;
+	    case '\t' : s.append("\\t"); break;
+	    case '\b' : s.append("\\b"); break;
+	    case '\f' : s.append("\\f"); break;
+	    case '\"' : s.append("\\\""); break;
+	    case '\'' : s.append("\\\'"); break;
+	    case '\\' : s.append("\\\\"); break;
+	    default:
+		s.append(c);
+	    }
+	}
+	value = s.toString();
+	return p.visitStringLiteral(value);
+    }
+
+    
 
   /**
    * Generates JVM bytecode to evaluate this expression.

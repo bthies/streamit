@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclarationStatement.java,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: JTypeDeclarationStatement.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -82,6 +82,15 @@ public class JTypeDeclarationStatement extends JStatement {
   public void accept(KjcVisitor p) {
     super.accept(p);
     p.visitTypeDeclarationStatement(this, decl);
+  }
+
+     /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+      Object trash = super.accept(p);
+      return p.visitTypeDeclarationStatement(this, decl);
   }
 
   /**

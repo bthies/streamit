@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAssignmentExpression.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JAssignmentExpression.java,v 1.2 2001-10-02 19:25:03 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -113,6 +113,15 @@ public class JAssignmentExpression extends JBinaryExpression {
     p.visitAssignmentExpression(this, left, right);
   }
 
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+    return p.visitAssignmentExpression(this, left, right);
+ }
+
+    
   /**
    * Generates JVM bytecode to evaluate this expression.
    *

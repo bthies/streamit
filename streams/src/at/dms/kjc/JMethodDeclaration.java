@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.5 2001-10-02 18:38:24 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.6 2001-10-02 19:25:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -350,6 +350,26 @@ public class JMethodDeclaration extends JMemberDeclaration {
 			     exceptions,
 		     body);
   }
+
+
+     /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+     Object trash =  super.accept(p);
+
+    return p.visitMethodDeclaration(this,
+			     modifiers,
+			     returnType,
+			     ident,
+			     parameters,
+			     exceptions,
+			     body);
+  }
+
+
+
 
   /**
    * Generates a sequence of bytescodes

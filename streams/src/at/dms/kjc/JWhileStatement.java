@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JWhileStatement.java,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: JWhileStatement.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
  */ 
 
 package at.dms.kjc;
@@ -118,6 +118,16 @@ public class JWhileStatement extends JLoopStatement {
     super.accept(p);
     p.visitWhileStatement(this, cond, body);
   }
+    
+     /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+      Object trash = super.accept(p);
+      return p.visitWhileStatement(this, cond, body);
+  }
+
 
   /**
    * Generates a sequence of bytescodes

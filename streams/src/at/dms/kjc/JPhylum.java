@@ -15,11 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.1 2001-08-30 16:32:52 thies Exp $
+ * $Id: JPhylum.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
  */
 
 package at.dms.kjc;
 
+
+import java.util.Vector;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
 import at.dms.util.MessageDescription;
@@ -28,6 +30,19 @@ import at.dms.util.MessageDescription;
  * This class represents the root class for all elements of the parsing tree
  */
 public abstract class JPhylum extends at.dms.compiler.Phylum implements Constants {
+
+    static Vector registry = new Vector (200);
+    
+    public static void add(JPhylum j) {
+	registry.add(j);
+    }
+    
+    public static JPhylum get(int index) {
+	return ((JPhylum) registry.get(index));
+    }
+    public static int regSize() {
+	return registry.size();
+    }
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
@@ -39,6 +54,8 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
    */
   public JPhylum(TokenReference where) {
     super(where);
+
+    this.add(this);
   }
 
   // ----------------------------------------------------------------------

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldDeclaration.java,v 1.2 2001-10-02 18:38:24 thies Exp $
+ * $Id: JFieldDeclaration.java,v 1.3 2001-10-02 19:25:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -189,6 +189,19 @@ public class JFieldDeclaration extends JMemberDeclaration {
   public void accept(KjcVisitor p) {
     super.accept(p);
     p.visitFieldDeclaration(this,
+			    variable.getModifiers(),
+			    variable.getType(),
+			    variable.getIdent(),
+			    variable.getValue());
+  }
+
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+    Object Trash = super.accept(p);
+    return p.visitFieldDeclaration(this,
 			    variable.getModifiers(),
 			    variable.getType(),
 			    variable.getIdent(),

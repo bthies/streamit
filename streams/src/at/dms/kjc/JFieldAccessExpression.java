@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.2 2001-09-27 23:28:34 thies Exp $
+ * $Id: JFieldAccessExpression.java,v 1.3 2001-10-02 19:25:04 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -325,6 +325,14 @@ public class JFieldAccessExpression extends JExpression {
     public void accept(KjcVisitor p) {
 	p.visitFieldExpression(this, prefix, getIdent());
     }
+
+ /**
+   * Accepts the specified attribute visitor
+   * @param	p		the visitor
+   */
+  public Object accept(AttributeVisitor p) {
+      return	p.visitFieldExpression(this, prefix, getIdent());
+  }
 
     /**
      * Generates JVM bytecode to evaluate this expression.

@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.4 2002-05-08 14:36:18 dmaze Exp $
+ * $Id: fmref.c,v 1.5 2002-05-08 17:52:26 dmaze Exp $
  */
 
 #ifdef raw
@@ -105,7 +105,7 @@ void begin(void)
   /* run_demod needs 1 input, OK here. */
   /* run_equalizer needs 51 inputs (same reason as for LPF).  This means
    * running the pipeline up to demod 50 times in advance: */
-  for (i = 0; i < 50; i++)
+  for (i = 0; i < 49; i++)
   {
     if (fb1.rlen - fb1.rpos < NUM_TAPS + 1)
       get_floats(&fb1);    
@@ -168,7 +168,7 @@ void init_lpf_data(LPFData *data, float freq, int taps, int decimation)
    * StreamIt LowPassFilter.java for origin. */
   float w = 2 * M_PI * freq / SAMPLING_RATE;
   int i;
-  float m = NUM_TAPS - 1.0;
+  float m = taps - 1.0;
 
   data->freq = freq;
   data->taps = taps;
@@ -188,6 +188,11 @@ void run_lpf(FloatBuffer *fbin, FloatBuffer *fbout, LPFData *data)
 {
   float sum = 0.0;
   int i = 0;
+
+#ifndef raw
+  if (fbin->rpos + data->taps - 1 >= fbin->rlen)
+    printf("WARNING: upcoming underflow in run_lpf()\n");
+#endif
 
   for (i = 0; i < data->taps; i++)
     sum += fbin->buff[fbin->rpos + i] * data->coeff[i];

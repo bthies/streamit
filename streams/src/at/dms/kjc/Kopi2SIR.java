@@ -1308,10 +1308,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    /*Channel declaration, treat the args as special */
 	{
 	    Vector v = new Vector(3);
-	    v.add((JStringLiteral)params[0].accept(this));
-	    v.add((JExpression)params[1].accept(this));
+            v.add(params[0].accept(this));
+	    v.add(params[1].accept(this));
 	    if (params.length > 2) { 
-		v.add((JExpression)params[2].accept(this));
+		v.add(params[2].accept(this));
 	    }
 	    return v;
 	}
@@ -1940,7 +1940,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
 		filter.setPush((JExpression)v.elementAt(1));
-		filter.setOutputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
+                if (v.elementAt(0) instanceof JClassExpression)
+                    filter.setOutputType(((JClassExpression)v.elementAt(0)).getType());
+                else
+                    filter.setOutputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
 		return null;
 	    }
 

@@ -11,7 +11,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.68 2003-07-30 20:31:55 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.69 2003-08-12 13:48:06 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -314,7 +314,7 @@ public class NodesToJava implements FEVisitor
     
     public Object visitExprConstStr(ExprConstStr exp)
     {
-        return "\"" + exp.getVal() + "\"";
+        return exp.getVal();
     }
 
     public Object visitExprField(ExprField exp)

@@ -1,6 +1,6 @@
 package streamit.scheduler2.print;
 
-/* $Id: PrintProgram.java,v 1.1 2003-03-19 15:22:40 karczma Exp $ */
+/* $Id: PrintProgram.java,v 1.2 2003-03-22 22:24:47 thies Exp $ */
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -126,7 +126,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
     public String getName(Object obj)
     {
         String name = obj.toString();
-        return name.replace('@', '_').replace('$', '_').replace('.','_');
+        return name.replace('@', '_').replace('$', '_').replace('.','_').replace(' ','_').replace('=','_').replace(',','_');
     }
 
     public String getName(IteratorBase iter)

@@ -1,9 +1,5 @@
 package streamit.misc;
 
-/*
- * (c) Copyright Michal Karczmarek, 2002
- */
-
 /**
  * 
  * ListIterator is the Java equivalent of STL list::iterator.

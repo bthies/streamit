@@ -97,7 +97,7 @@ public class Trace
 	node.setParent(this);
     }
     
-    public TraceNode getHead() 
+    public InputTraceNode getHead() 
     {
 	return head;
     }

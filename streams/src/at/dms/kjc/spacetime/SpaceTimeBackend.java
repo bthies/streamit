@@ -428,7 +428,7 @@ public class SpaceTimeBackend
 	    List steadyList = TraceTraversal.getTraversal(traceForrest);
 	    TraceDotGraph.dumpGraph(steadyList, "preDRAMsteady.dot", false);
 	    //assign the buffers not assigned by Jasp to drams
-	    BufferDRAMAssignment.run(steadyList, rawChip);
+	    BufferDRAMAssignment.run(steadyList, rawChip, io);
 	    //communicate the addresses for the off-chip buffers
 	    if (!KjcOptions.magicdram) {
 		//so right now, this pass does not communicate addresses

@@ -135,13 +135,6 @@ public class Rawify
 	    if (buf.getDRAM().isFileReader() &&
 		buf.getDRAM().getFileReader().isVisited(init, primepump))
 		continue;
-	    //create the file reader if it is not attached to the dram
-	    if (!buf.getDRAM().isFileReader()) {
-		buf.getDRAM().setFileReader(fileIC);
-	    }	    
-	    else
-		assert buf.getDRAM().getFileReader().getContent() == fileIC : 
-		    "Trying to add a different file reader to DRAM";
 	    
 	    //now generate the code, both the dram commands and the switch code
 	    //to perform the splitting, if there is only one output, do nothing
@@ -181,13 +174,7 @@ public class Rawify
 	    if (buf.getDRAM().isFileWriter() &&
 		buf.getDRAM().getFileWriter().isVisited(init, primepump))
 		continue;
-	    //create the file reader if it is not attached to the dram
-	    if (!buf.getDRAM().isFileWriter()) {
-		buf.getDRAM().setFileWriter(fileOC);
-	    }	    
-	    else
-		assert buf.getDRAM().getFileWriter().getContent() == fileOC : 
-		    "Trying to add a different file writer to DRAM";
+	  
 	    if (!OffChipBuffer.unnecessary(fileI)) {
 		//generate the dram commands
 		generateInputDRAMCommands(fileI, init, primepump);

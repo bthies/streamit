@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.Random;
-
+import at.dms.kjc.flatgraph2.*;
 
 public class BufferDRAMAssignment
 {
@@ -24,9 +24,12 @@ public class BufferDRAMAssignment
     /** 
      * Assign the buffers to ports
      **/
-    public static void run(List steadyList, RawChip chip) 
+    public static void run(List steadyList, RawChip chip, Trace[] files) 
     {
-	//first go thru the traversal and assign
+	//take care of the file readers and writes
+	fileStuff(files, chip);
+	
+	//go thru the traversal and assign
 	//input->filter and filter->output buffers to drams 
 	//based on jasper's placement
 	Iterator traceNodeTrav = Util.traceNodeTraversal(steadyList);
@@ -75,6 +78,53 @@ public class BufferDRAMAssignment
 	
     }
     
+    private static void fileStuff(Trace[] files, RawChip chip) 
+    {
+	//first go thru the file, reader and writers and assign their 
+	//input->file and file->output buffers
+	for (int i = 0; i < files.length; i++) {
+	    //these traces should have only one filter, make sure
+	    assert files[i].getHead().getNext().getNext() == files[i].getTail() :
+		"File Trace incorrectly generated";
+	    FilterTraceNode filter = (FilterTraceNode)files[i].getHead().getNext();
+
+	    if (files[i].getHead().isFileWriter()) {
+		assert files[i].getHead().oneInput() : 
+		    "buffer assignment of a joined file writer not implemented " +
+		    "everthing else should be done";
+		FilterTraceNode downstream = 
+		    (FilterTraceNode)files[i].getHead().getSingleEdge().getDest().getNext();
+		FileOutputContent fileOC = (FileOutputContent)downstream.getFilter();
+		RawTile tile = chip.getTile(downstream.getX(), downstream.getY());
+		IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i].getHead(), filter);
+		//the dram of the tile where we want to add the file writer 
+		StreamingDram dram = null;
+		//get the correct port if there are two connected
+		for (int j = 0; j < tile.getIODevices().length ;j++) {
+		    if (!((StreamingDram)tile.getIODevices()[j]).isFileWriter()) {
+			dram = (StreamingDram)tile.getIODevices()[j];
+			break;
+		    }
+		}
+		assert dram != null : "Could not find a dram to attach file reader to";
+
+		//set the port for the buffer
+		buf.setDRAM(dram);
+
+		//attach the file writer to the port  DO MORE HERE!!!!!
+		dram.setFileWriter(fileOC);
+	    }
+	    else if (files[i].getTail().isFileReader()) {
+		assert files[i].getTail().oneOutput() :
+		    "buffer assignment of a split file reader not implemented " +
+		    "everthing else should be done";
+	    }
+	    else 
+		assert false : "File trace is neither reader or writer";
+	}
+    }
+    
+
     //get the assignment and set the assignment in OffChipBuffer
     //perform assign will not assign anything that has 
     //an assignment already

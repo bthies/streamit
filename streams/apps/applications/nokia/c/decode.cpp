@@ -5,10 +5,10 @@
 
 
 
-const int K=7;
-const int N=20;
-const int Q=15;
-const int W=7;
+const int K=4;
+const int N=5;
+const int Q=4;
+const int W=3;
 const int m=N*Q+W-1;
 const int n=K*N;
 
@@ -23,7 +23,7 @@ void DelMat(float B[Q+W-1][K], float A[Q*N+W-1][K*N]);
 void chold(float A[Q*N+W-1][K*N],float L[K*N][K*N],int n);
 void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K]);
 void PrintD(int n, float *d);
-void Print2D(int m,int n, float Mat[n][n]);
+void Print2D(int m,int n, float B[Q+W-1][K]);
 
 
 main() {
@@ -45,6 +45,8 @@ main() {
 		h[j][i]=1+i+j+j*j/(i+1);
 	    }
 	}
+
+	cout << h[1][1]<<endl;
 
 
 	
@@ -76,7 +78,9 @@ void Decode(float C[Q][K], float h[W][K], float *r)
   ConvMat(C,B,h);
  
   DelMat(B,A);
- 
+
+  //Print2D(Q+W-1,K,B);
+
   MatchFilt(m,n,r,Ahr,A);
 
   //PrintD(n,Ahr);
@@ -84,8 +88,7 @@ void Decode(float C[Q][K], float h[W][K], float *r)
 
   SelfMult(Q*N+W-1,K*N,A,AhA);
 
-  //Print2D(Q*N+W-1,K*N,A);
-
+  
   chold(AhA,L,n);
 
   //Print2D(n,n,L);
@@ -116,7 +119,7 @@ void Decode(float C[Q][K], float h[W][K], float *r)
 
 
 
-void Print2D(int m,int n, float Mat[n][n]){
+void Print2D(int m,int n, float Mat[Q+W-1][K]){
   int i;
   int j;
   for (i=0; i <m;i++)
@@ -130,10 +133,10 @@ void Print2D(int m,int n, float Mat[n][n]){
 
 
 //Prints elements of a vector of size n;
-
+// in reverse order
 void PrintD(int n, float *d){
   int i;
-  for (i=0 ; i <n ;i++){
+  for (i=n-1 ; i >=0 ;--i){
     cout <<i<<":"<< d[i] << endl;
   }
 }
@@ -246,7 +249,7 @@ void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K])
       B[j][i]=0;
     for (j=0;j < W ;j++)
       for (l=0;l<Q;l++)
-	B[j+l][i]+=h[l][i]*C[j][i];
+	B[j+l][i]+=h[j][i]*C[l][i];
     }
 }
 

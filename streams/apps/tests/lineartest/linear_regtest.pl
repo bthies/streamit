@@ -29,7 +29,9 @@ my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest13.str",
 	     "regtests/LinearTest14.str",
 	     "regtests/LinearTest15.str",
-	     "regtests/LinearTest16.str",);
+	     "regtests/LinearTest16.str",
+	     "regtests/LinearTest17.str",);
+
 
 my $current_test;
 foreach $current_test (@tests) {
@@ -51,7 +53,7 @@ foreach $current_test (@tests) {
     `$command`;
 
     # compare the parsed output against the expected output
-    my $result = `perl -I$CMP_PATH $CMP $base.parsed $base.expected`;
+    my $result = `cmp $base.parsed $base.expected`;
     chomp($result);
     if ($result ne "") {
 	print "$base(analysis): failure\n";

@@ -19,7 +19,7 @@ import streamit.io.*;
 
 	public void init(int M, int N){
 	    setSplitter(DUPLICATE());
-	    add (new FloatIdentity());
+	    add (new Identity(Float.TYPE));
 	    add (new GenL(M,N));
 	    setJoiner(WEIGHTED_ROUND_ROBIN(M*N,N*(N+1)));
 	    }
@@ -45,7 +45,7 @@ class choldAhA extends SplitJoin{// the input is AhA, the output is cholskey dec
     public void init(int N){
         setSplitter(DUPLICATE());
 	add (new chold(N));
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));
 	setJoiner(WEIGHTED_ROUND_ROBIN(N*(N+1)/2,N*(N+1)/2));
     }
 }

@@ -7,7 +7,7 @@ class DelMat extends SplitJoin {// genrates the proper delays for the convolutio
 
     public void init(int Q,int N) {
 	setSplitter(DUPLICATE());
-	add(new FloatIdentity());
+	add(new Identity(Float.TYPE));
 	for(int i=1;i<N;i++){
 	    add(new Delay(i*Q));
 	}
@@ -28,7 +28,7 @@ class ConvMat extends SplitJoin{// generates the matrix consisting of the convol
 	    
 	    }
 	     add(new extFilt(W,W+N*Q-1,Crow));
-	     //add(new FloatIdentity());
+	     //add(new Identity(Float.TYPE));
 	}	
 	setJoiner(ROUND_ROBIN(W+N*Q-1));
     }
@@ -51,7 +51,7 @@ class AddZeroEnd extends SplitJoin{// adds (M-L)zeros to a sequence of length L 
     public AddZeroEnd(int L, int M) {super (L,M);}
     public void init(int L,int M) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(L,0));
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));
 	add (new ZeroGen());
 	setJoiner(WEIGHTED_ROUND_ROBIN(L,M-L));
     }
@@ -64,7 +64,7 @@ class AddZeroBeg extends SplitJoin{// adds M zeros to the begining of a sequence
     public void init(int M,int L) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(0,L));
 	add (new ZeroGen());
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));
 	setJoiner(WEIGHTED_ROUND_ROBIN(M,L));
     }
 

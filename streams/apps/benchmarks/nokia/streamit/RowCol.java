@@ -11,7 +11,7 @@ public RowCol(int M, int N){ super (M,N);}
           public void init ( int M, int N) {
 	      setSplitter(ROUND_ROBIN());
 	      for (int i=0; i< N;i++)
-		  add(new FloatIdentity());
+		  add(new Identity(Float.TYPE));
 	      setJoiner(ROUND_ROBIN(M));
 	  
           } 

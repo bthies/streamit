@@ -7,7 +7,7 @@ class LrL extends SplitJoin{// performes the forward substitution
     public void init(int N) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(N+N*(N+1)/2,N*(N+1)/2));
 	add (new forw(N));
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));
 	setJoiner(WEIGHTED_ROUND_ROBIN(N,N*(N+1)/2));
     }
 
@@ -94,7 +94,7 @@ class AddAHLAhA extends SplitJoin{// calculates the matrix AH (row oriented?) an
     public AddAHLAhA(int W,int Q,int N, int K, float[][] h, float[][] C   ) {super (W,Q,N,K,h,C);}
     public void init(int W,int Q,int N, int K, float[][] h, float [][] C) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(Q*N+W-1,0));
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));
 	add (new SourceAHL(W,Q,N,K,h,C));
 	setJoiner(WEIGHTED_ROUND_ROBIN(Q*N+W-1,K*N*(Q*N+W-1)+(K*N)*(K*N+1)));
     }
@@ -106,8 +106,8 @@ class vectdouble extends SplitJoin{// duplicates a vector
     public vectdouble( int M) {super (M);}
     public void init(int M) {
 	setSplitter(DUPLICATE());
-	add (new FloatIdentity());     
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));     
+	add (new Identity(Float.TYPE));
 	setJoiner(ROUND_ROBIN(M));
     }
 
@@ -168,7 +168,7 @@ class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,Ah
     public void init(int M,int N) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1)+N*(N+1)/2,N*(N+1)/2));
 	add (new Ahrd(M,N));
-	add (new FloatIdentity());                
+	add (new Identity(Float.TYPE));                
 	setJoiner(WEIGHTED_ROUND_ROBIN(3*N,N*(N+1)/2));
     }
 
@@ -328,7 +328,7 @@ class error_split extends SplitJoin{// performs error estimation for the first 2
     public void init(int N) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)/2));
 	add (new error_est(N));     
-	add (new FloatIdentity());
+	add (new Identity(Float.TYPE));
 	setJoiner(WEIGHTED_ROUND_ROBIN(1,N*(N+1)/2));
     }
 }
@@ -349,7 +349,7 @@ class  Ahrchold extends SplitJoin{// copies Ahr to its out put and performes the
     public Ahrchold( int N) {super (N);}
     public void init(int N) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(N,2*N+N*(N+1)/2));
-	add (new FloatIdentity());     
+	add (new Identity(Float.TYPE));     
 	add (new Lest(N));
 	setJoiner(WEIGHTED_ROUND_ROBIN(N,N*(N+1)));
     }

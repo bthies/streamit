@@ -21,7 +21,7 @@ class Delay extends FeedbackLoop {
 		    this.input.popFloat();
                 }
 	    });
-	setLoop(new FloatIdentity());
+	setLoop(new Identity(Float.TYPE));
 	setJoiner(ROUND_ROBIN());
     }
 

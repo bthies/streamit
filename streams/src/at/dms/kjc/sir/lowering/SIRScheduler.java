@@ -9,9 +9,10 @@ import streamit.scheduler2.Schedule;
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
-import at.dms.kjc.iterator.*;
+import at.dms.kjc.sir.lowering.partition.PartitionDot;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -81,17 +82,47 @@ public class SIRScheduler implements Constants {
 
 	// get the schedule
 	StreamInterface schedInterface = computeSchedule(str);
-	
+
 	// fill in the init schedule
 	fillExecutionCounts(schedInterface.getInitSchedule(), result[0]);
 	// fill in the steady-state schedule
 	fillExecutionCounts(schedInterface.getSteadySchedule(), result[1]);
+
+	checkSchedule(str, schedInterface, result);
 
 	// debug
 	//printSchedules(schedInterface);
 	//printExecutionCounts(result);
 
 	return result;
+    }
+
+    /*
+     * Try making buffer sizes just to see if there's an exception.
+     * This is to detect an invalid schedule without depending on the
+     * compiler.
+     */
+    private static int numSchedErrors = 0;
+    private static void checkSchedule(SIRStream str, StreamInterface schedInterface, HashMap[] execCounts) {
+	// this only works if <str> is stand-alone -- that is, it
+	// starts with a source and ends with a sink
+	if (str.getInputType()!=CStdType.Null || str.getOutputType()!=CStdType.Null) {
+	    return;
+	}
+	try {
+	    ScheduleBuffers buffers = new ScheduleBuffers(IterFactory.createIter(str));
+	    buffers.computeBuffersFor(schedInterface.getInitSchedule());
+	    buffers.computeBuffersFor(schedInterface.getSteadySchedule());
+	} catch (Exception e) {
+	    String filename = "bad-schedule-" + (++numSchedErrors) + ".dot";
+	    PartitionDot.printScheduleGraph(str, filename, execCounts);
+	    System.err.println("\n" + 
+			       "WARNING:  Scheduler throws exception trying to compute buffer sizes.\n" +
+			       "  We don't need the buffer sizes, but this could indicate an invalid schedule.\n" +
+			       "  The bad schedule is in " + filename + ".  The stack trace is as follows:");
+	    e.printStackTrace();
+	    System.err.println();
+	}
     }
 
     private static void printExecutionCounts(HashMap[] result) {

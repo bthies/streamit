@@ -15,7 +15,8 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
 
 # the current version of starsearch we're using
-export TOPDIR=/home/bits7/NO_BACKUP/streamit/starsearch-11-1-02
+export STARSEARCH_HOME=/home/bits7/NO_BACKUP/streamit/starsearch-11-1-02
+export TOPDIR=${STARSEARCH_HOME}
 
 # add STREAMIT_HOME to the path in order to find "knit"
 if [ -z "$PATH" ]

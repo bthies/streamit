@@ -102,6 +102,9 @@ public class SIRFilter extends SIRStream {
     public void setOutputType(CType t) {
 	this.outputType = t;
     }
+    public CType getOutputType() {
+	return this.outputType;
+    }
     
 
 }

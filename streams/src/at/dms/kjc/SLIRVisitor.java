@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.5 2001-10-03 12:32:23 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.6 2001-10-03 13:29:12 thies Exp $
  */
 
 package at.dms.kjc;
@@ -168,5 +168,15 @@ public interface SLIRVisitor extends KjcVisitor
     void visitSetWork(LIRSetWork self,
                       JExpression streamContext,
                       LIRFunctionPointer fn);
+
+    /**
+     * Visits a tape registerer.
+     */
+    void visitSetTape(LIRSetTape self,
+                      JExpression streamContext,
+		      JExpression srcStruct,
+		      JExpression dstStruct,
+		      CType type,
+		      int size);
 }
 

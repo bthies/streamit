@@ -1,5 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
+import streamit.scheduler.*;
+
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
@@ -15,13 +17,20 @@ import java.util.ListIterator;
  */
 public class LowerInitFunctions implements StreamVisitor {
 
-    private LowerInitFunctions() {}
+    private final Schedule schedule;
+
+    /**
+     * Construct one of these with schedule <schedule>
+     */
+    private LowerInitFunctions(Schedule schedule) {
+	this.schedule = schedule;
+    }
 
     /**
      * Lowers the init functions in <str>.
      */
-    public static void lower(SIRStream str) {
-	str.accept(new LowerInitFunctions());
+    public static void lower(SIRStream str, Schedule schedule) {
+	str.accept(new LowerInitFunctions(schedule));
     }
 
     //
@@ -66,6 +75,41 @@ public class LowerInitFunctions implements StreamVisitor {
      */
     private void registerTapes(SIRStream str, 
 			       JMethodDeclaration init) {
+	// assume <str> is a pipeline
+	Utils.assert(str instanceof SIRPipeline, "Can only do pipes now.");
+	SIRPipeline pipe = (SIRPipeline)str;
+	// if empty pipeline, return
+	if (pipe.size()==0) {
+	    return;
+	}
+	// assume components are filters for now . . . 
+	// go through children of <pipe>, keeping track of filter1 and
+	// filter2, which have a tape between them
+	SIRFilter filter1, filter2;
+	// get filter1
+	filter1 = (SIRFilter)pipe.get(0);
+	// for all the pairs of children...
+	for (int i=1; i<pipe.size(); i++) {
+	    // get filter2
+	    filter2 = (SIRFilter)pipe.get(i);
+	    // declare a tape from filter1 to filter2
+	    init.addStatementFirst(new LIRSetTape(LoweringConstants.
+						  getStreamContext(),
+						  /* stream struct 1 */
+						  LoweringConstants.
+						  getChildStruct(i-1),
+						  /* stream struct 2 */
+						  LoweringConstants.
+						  getChildStruct(i), 
+						  /* type on tape */
+						  filter1.getOutputType(), 
+						  /* size of buffer */
+						  10
+			   //schedule.getBufferSizeBetween(ack,SchedStreams!),
+						  ));
+	    // re-assign filter1 for next step
+	    filter1 = filter2;
+	}
     }
 
     /**
@@ -99,16 +143,10 @@ public class LowerInitFunctions implements StreamVisitor {
 	JExpression[] args = initStatement.getArgs();
 	// get target of initialization
 	SIRStream target = initStatement.getTarget();
+	
 	// create the new argument--the reference to the child's state
-	JExpression childState = 
-	    new JFieldAccessExpression(
-                      null,
-		      /* prefix */
-		      new JNameExpression(null, 
-					  null, 
-					  LoweringConstants.STATE_PARAM_NAME),
-		      /* ident */
-		      LoweringConstants.getChildName(pipe.indexOf(target)));
+	JExpression childState 
+	    = LoweringConstants.getChildStruct(pipe.indexOf(target));
 	// create new argument list
 	JExpression[] newArgs = new JExpression[args.length + 1];
 	// set new arg
@@ -177,12 +215,12 @@ public class LowerInitFunctions implements StreamVisitor {
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
 				 List elements) {
-	// register children
-	registerChildren(init, elements);
-
 	// register tapes between children
 	registerTapes(self, init);
 	
+	// register children
+	registerChildren(init, elements);
+
 	// translate init statements to function calls with context
 	lowerInitStatements(self, init);
 

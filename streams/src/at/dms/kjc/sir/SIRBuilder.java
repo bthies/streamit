@@ -40,8 +40,11 @@ public class SIRBuilder {
 				    /* javadoc  */ null, 
 				    /* comments */ null) };
 
-	JStatement[] emptybody = new JStatement[0];
-	JBlock emptyblock = new JBlock(null, emptybody, null);
+	JStatement[] emptybody1 = new JStatement[0];
+	JBlock emptyblock1 = new JBlock(null, emptybody1, null);
+
+	JStatement[] emptybody2 = new JStatement[0];
+	JBlock emptyblock2 = new JBlock(null, emptybody2, null);
 
 	JStatement[] work1body = { 
 	 new JExpressionStatement(
@@ -70,7 +73,7 @@ public class SIRBuilder {
 				    /* identifier */ "init",
 				    /* parameters */ JFormalParameter.EMPTY,
 				    /* exceptions */ CClassType.EMPTY,
-				    /* body       */ emptyblock,
+				    /* body       */ emptyblock1,
 				    /* javadoc    */ null,
 					/* comments   */ null),
 	    /* work*/ new JMethodDeclaration( /* tokref     */ null,
@@ -115,7 +118,7 @@ public class SIRBuilder {
 				    /* identifier */ "init",
 				    /* parameters */ JFormalParameter.EMPTY,
 				    /* exceptions */ CClassType.EMPTY,
-				    /* body       */ emptyblock,
+				    /* body       */ emptyblock2,
 				    /* javadoc    */ null,
 					/* comments   */ null),
 	    /* work*/

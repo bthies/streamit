@@ -296,7 +296,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	for (int i = 0; i < decls.length ; i++)
 	    decls[i].accept(this);
         for (int i = 0; i < methods.length ; i++)
-            methods[i].accept(this);
+	    methods[i].accept(this);
         for (int i = 0; i < fields.length ; i++)
             fields[i].accept(this);
 	if (body!=null) {
@@ -1701,6 +1701,30 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("work_function");
 	fn.accept(this);
 	attrEnd();
+	blockEnd();
+    }
+
+    /**
+     * Visits a tape-setter.
+     */
+    public void visitSetTape(LIRSetTape self,
+			     JExpression streamContext,
+			     JExpression srcStruct,
+			     JExpression dstStruct,
+			     CType type,
+			     int size) {
+	blockStart("LIRSetTape");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrStart("srcStruct");
+	srcStruct.accept(this);
+	attrEnd();
+	attrStart("dstStruct");
+	dstStruct.accept(this);
+	attrEnd();
+	attrPrint("type", type.toString());
+	attrPrint("size", String.valueOf(size));
 	blockEnd();
     }
 }

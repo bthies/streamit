@@ -21,8 +21,8 @@ public class SIRScheduler {
      * Does the scheduling, adding a work function corresponding to
      * <toplevel> to <flatClass>.
      */
-    public static void schedule(SIRStream toplevel, 
-				JClassDeclaration flatClass) {
+    public static Schedule schedule(SIRStream toplevel, 
+				    JClassDeclaration flatClass) {
 	// get a representation of the stream structure
 	SchedStream schedStream 
 	    = (SchedStream)toplevel.accept(new SIRSchedBuilder());
@@ -34,6 +34,8 @@ public class SIRScheduler {
 	JMethodDeclaration work = buildToplevelWork(schedule, toplevel);
 	// add <work> to <flatClass>
 	flatClass.addMethod(work);
+	// return schedule for future reference
+	return schedule;
     }
 
     /**

@@ -55,6 +55,21 @@ public class LoweringConstants {
     }
 
     /**
+     * Returns a field access to child struct number <n>, as for use
+     * within an init function referencing a child.  
+     */
+    public static JFieldAccessExpression getChildStruct(int n) {
+	return new JFieldAccessExpression(
+					  null,
+					  /* prefix */
+					  new JNameExpression(null, 
+							     null, 
+							     STATE_PARAM_NAME),
+					  /* ident */
+					  getChildName(n));
+    }
+
+    /**
      * Returns the field declaration declaring a stream context.
      */
     public static JFieldDeclaration getContextField() {

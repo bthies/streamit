@@ -1,5 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
+import streamit.scheduler.*;
+
 import at.dms.util.IRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
@@ -19,9 +21,9 @@ public class Flattener {
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str);
 	// build schedule as set of higher-level work functions
-	SIRScheduler.schedule(str, flatClass);
+	Schedule schedule = SIRScheduler.schedule(str, flatClass);
 	// add LIR hooks to init functions
-	LowerInitFunctions.lower(str);
+	LowerInitFunctions.lower(str, schedule);
 	
 	// DEBUGGING PRINTING
 	IRPrinter printer = new IRPrinter();

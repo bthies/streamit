@@ -15,6 +15,10 @@ import at.dms.kjc.sir.lowering.fission.*;
 
 public class ILPPartitioner {
     /**
+     * The timeout of the ILP solver (in seconds).
+     */
+    protected static final long SOLVER_TIMEOUT = 15;
+    /**
      * The work estimate that is given to joiner nodes.
      */
     protected static final int JOINER_WORK_ESTIMATE = 1;
@@ -294,17 +298,21 @@ class CalcPartitions {
 	// constraints, derived from the paper
 	int numConstraints = 1 + (int)(8.25 * numTiles * nodes.size()) + 2*numTiles + nodes.size();
 	System.err.println("nodes.size()=" + nodes.size());
-	System.err.println("numVars = " + numVars);
-	System.err.println("numConstraints <= " + numConstraints);
-	LinearProgramSolver lp = new GLPKSolve(numVars);
+	//System.err.println("numVars = " + numVars);
+	//System.err.println("numConstraints <= " + numConstraints);
+	LinearProgramSolver lp = new CPLEXSolve(numVars, ILPPartitioner.SOLVER_TIMEOUT);
 	
 	setupObjective(lp);
 	setupConstraints(lp);
 
 	// get solution, including objective function
-	System.err.print("Solving integer linear program...");
-	double[] sol = lp.solve();
-	System.err.println("done.");
+	System.err.println("Solving integer linear program...");
+	double[] sol = null;
+	try {
+	    sol = lp.solve();
+	} catch (LPSolverFailedException e) {
+	    e.printStackTrace();
+	}
 	return sol;
     }
 
@@ -330,12 +338,12 @@ class CalcPartitions {
     }
 
     private void constrainZeroOneVars(LinearProgram lp) {
-	// set the indicator variables to be integral, and to be
-	// between zero and one (we need extra constraints since there
-	// isn't a "boolean" var type in the interace.)
+	// set the indicator variables to be integral and to be
+	// between zero and one
 	for (int i=0; i<nodes.size(); i++) {
 	    for (int j=0; j<numTiles; j++) {
 		lp.setBoolVar(pNum(i, j));
+		/* now that "bool var" works, we don't need extra constraints
 		// P_i,j >= 0
 		double[] con = lp.getEmptyConstraint();
 		con[pNum(i,j)] = 1;
@@ -344,6 +352,7 @@ class CalcPartitions {
 		con = lp.getEmptyConstraint();
 		con[pNum(i,j)] = -1;
 		lp.addConstraintGE(con, -1);
+		*/
 	    }
 	}
     }
@@ -517,28 +526,31 @@ class PartitionDot extends StreamItDot {
 	this.partitions = partitions;
     }
 
-    /**
-     * Override to color filters.
-     */
-    public String makeLabelledNode(String label)
+    /* visit a filter */
+    public Object visitFilter(SIRFilter self,
+                              JFieldDeclaration[] fields,
+                              JMethodDeclaration[] methods,
+                              JMethodDeclaration init,
+                              JMethodDeclaration work,
+                              CType inputType, CType outputType)
     {
-        String name = getName();
-        if (label == null) label = name;
-        print(name + " [ color=blue, style=filled, label=\"" + label + "\" ]\n");
-        return name;
+        // Return a name pair with both ends pointing to this.
+	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
+	String label = self.getName();
+	label += "\\ntile=" + ((Integer)partitions.get(self)).intValue();
+	return new NamePair(makeLabelledNode(label));
     }
-    
 
     /**
-     * Override to color partitions.
+     * Override to show partitions.
      */
     public String getClusterString(SIRStream self) {
 	// if we have a linear rep of this object, color the resulting dot graph rose.
 	Utils.assert(partitions.containsKey(self), "No partition for " + self);
-	if (((Integer)partitions.get(self)).intValue()!=-1) {
+	int tile = ((Integer)partitions.get(self)).intValue();
+	if (tile!=-1) {
 	    return "subgraph cluster_" + getName() + " {" + 
-		"\n color=blue;\n style=filled;" + 
-		"\n label=\"" + self.getIdent() + "\";\n";
+		"\n label=\"" + self.getIdent() + "\\n tile=" + tile + "\";\n";
 	} else {
 	    // otherwise, return boring white
 	    return "subgraph cluster_" + getName() + " {" + 

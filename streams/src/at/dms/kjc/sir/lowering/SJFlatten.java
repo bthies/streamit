@@ -167,7 +167,7 @@ public class SJFlatten
                                             // For now, pop fixed at 1.
                                             new JIntLiteral(1),
                                             new JIntLiteral(pushes),
-                                            null,
+                                            newWork,
                                             sj.getInputType(),
                                             sj.getOutputType());
         

@@ -1,5 +1,6 @@
 package at.dms.kjc.sir.lowering;
 
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import java.util.List;
@@ -88,7 +89,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				     /* JMethodDeclaration[] methods */
 				     (JMethodDeclaration[])
 				     flatMethods.toArray(JMethodDeclaration.
-							 EMPTY),
+							 EMPTY()),
 				     /* JTypeDeclaration[] inners */
 				     (JTypeDeclaration[])
 				     structs.toArray(new JTypeDeclaration[0]),
@@ -137,6 +138,9 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    String typeName = ((SIROperator)children.get(i)).getName();
 	    // the name for the variable in the structure
 	    String varName = ((SIROperator)children.get(i)).getRelativeName();
+	    Utils.assert(varName!=null, "Relative name null for " + 
+			 children.get(i) + " ; might be a child with a " + 
+			 "wrong parent field?");
 	    // define a variable of the structure
 	    JVariableDefinition var = 
 		new JVariableDefinition(/* tokenref */ null, 
@@ -169,7 +173,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  /* JFieldDeclaration[] fields, */
 				  classFields,
 				  /* JMethodDeclaration[] methods, */
-				  JMethodDeclaration.EMPTY,
+				  JMethodDeclaration.EMPTY(),
 				  /* JTypeDeclaration[] inners, */
 				  JClassDeclaration.EMPTY,
 				  /* JPhylum[] initializers, */

@@ -37,7 +37,7 @@ public class SIRScheduler implements Constants {
      * scheduler--any list starting with something as a key in this
      * map can be replaced with the corresponding value in the map.
      */
-    protected HashMap twoStageFilters;
+   protected HashMap twoStageFilters;
 
     /**
      * The destination flatClass that we're working on.
@@ -50,6 +50,14 @@ public class SIRScheduler implements Constants {
      * we're building the steady-state work function.
      */
     private boolean initMode;    
+
+    /**
+     * Creates one of these, not suitable for building work functions
+     * for a flatclass.  Only useful for scheduling purposes.
+     */
+    public SIRScheduler() {
+	this(null);
+    }
 
     /**
      * Creates one of these.
@@ -95,7 +103,7 @@ public class SIRScheduler implements Constants {
      * Interface with the scheduler to get a schedule for <toplevel>.
      * Records all associations of two-stage filters in <twoStageFilters>.
      */
-    private Schedule computeSchedule(SIRStream toplevel) {
+    public Schedule computeSchedule(SIRStream toplevel) {
 	// make a scheduler
 	Scheduler scheduler = new SimpleHierarchicalSchedulerPow2();
 	// get a representation of the stream structure
@@ -249,7 +257,7 @@ public class SIRScheduler implements Constants {
      * <schedObject>, or <null> if <schedObject> does not represent a
      * two-stage filter.
      */
-    protected SIRTwoStageFilter getTwoStageFilter(List schedObject) {
+    public SIRTwoStageFilter getTwoStageFilter(List schedObject) {
 	// see if the first element in the list corresponds to a
 	// two-stage filter.
 	if (schedObject.size()>0 && 
@@ -432,7 +440,7 @@ public class SIRScheduler implements Constants {
 	    // get the count for the for loop
 	    int count = repSched.getTotalExecutions().intValue();
 	    // return a for loop
-	    return makeForLoop(body, count);
+	    return Utils.makeForLoop(body, count);
 	} else {
 	    // otherwise, get name of work function associated with
 	    // <schedObject>
@@ -440,57 +448,6 @@ public class SIRScheduler implements Constants {
 	    // make the work statement
 	    return makeWorkCall(schedObject, workName, toplevel);
 	}
-    }
-
-    /**
-     * Returns a block with a loop counter declaration and a for loop
-     * that executes <contents> for <count> number of times.  If the
-     * count is just one, then return the body instead of a loop.
-     */
-    private JStatement makeForLoop(JStatement body, int count) {
-	if (count<=0) {
-	    // if the count isn't positive, return an empty statement
-	    return new JEmptyStatement(null, null); 
-	} else if (count==1) {
-	    // if the count is one, then just return the body
-	    return body;
-	}
-	// define a variable to be our loop counter
-	JVariableDefinition var = 
-	    new JVariableDefinition(/* where */ null,
-				    /* modifiers */ 0,
-				    /* type */ CStdType.Integer,
-				    /* ident */ 
-				    LoweringConstants.getUniqueVarName(),
-				    /* initializer */
-				    new JIntLiteral(0));
-	// make a declaration statement for our new variable
-	JVariableDeclarationStatement varDecl =
-	    new JVariableDeclarationStatement(null, var, null);
-	// make a test if our variable is less than <count>
-	JExpression cond = 
-	    new JRelationalExpression(null,
-				      OPE_LT,
-				      new JLocalVariableExpression(null, var),
-				      new JIntLiteral(count));
-	// make an increment for <var>
-	JStatement incr = 
-	    new JExpressionStatement(null,
-				     new JPostfixExpression(null,
-							    OPE_POSTINC,
-			       new JLocalVariableExpression(null, var)),
-				     null);
-	// make the for statement
-	JStatement forStatement = 
-	    new JForStatement(/* tokref */ null,
-			      /* init */ new JEmptyStatement(null, null),
-			      cond,
-			      incr,
-			      body,
-			      /* comments */ null);
-	// return the block
-	JStatement[] statements = {varDecl, forStatement};
-	return new JBlock(null, statements, null);
     }
 
     /**

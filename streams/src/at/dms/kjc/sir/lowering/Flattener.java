@@ -3,6 +3,7 @@ package at.dms.kjc.sir.lowering;
 import streamit.scheduler.*;
 
 import at.dms.kjc.sir.lowering.fusion.*;
+import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -34,6 +35,14 @@ public class Flattener {
 
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
+
+	/*
+	SIRFilter toDuplicate = ((SIRFilter)
+				 ((SIRPipeline)
+				  ((SIRPipeline)str).get(1)).get(0));
+	System.err.println("Trying to duplicate " + toDuplicate);
+	StatelessDuplicate.doit(toDuplicate, 2);
+	*/
 
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running Fusion");

@@ -254,6 +254,7 @@ public class FilterContent {
     }
 
     public int getPopInt() {
+	if (linear) return getPopCount();
 	return steady[0].getPopInt();
     }
 

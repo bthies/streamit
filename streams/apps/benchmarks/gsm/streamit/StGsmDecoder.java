@@ -499,7 +499,8 @@ class ShortTermSynthFilter extends Filter
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
 		    }
-		sr[k] = sri;
+                output.pushShort(sri);
+		// sr[k] = sri;
 		v[0] = sri;
 	    }
 
@@ -511,7 +512,8 @@ class ShortTermSynthFilter extends Filter
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
 		    }
-		sr[k] = sri;
+                output.pushShort(sri);
+		// sr[k] = sri;
 		v[0] = sri;
 	    }
 
@@ -523,7 +525,8 @@ class ShortTermSynthFilter extends Filter
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
 		    }
-		sr[k] = sri;
+                output.pushShort(sri);
+		// sr[k] = sri;
 		v[0] = sri;
 	    }	
 
@@ -535,14 +538,17 @@ class ShortTermSynthFilter extends Filter
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
 		    }
-		sr[k] = sri;
+                output.pushShort(sri);
+		// sr[k] = sri;
 		v[0] = sri;
 	    }
 
+        /*
 	for (j = 0; j < SR_LENGTH; j++)
 	    {
 		output.pushShort(sr[j]);
 	    }
+        */
 	//System.err.println("Got to ShortTermSynth Filter!");
     }
 }//ShortTermSynthFilter
@@ -604,23 +610,14 @@ class LARInputFilter extends Filter
 }
 class PostProcessingFilter extends Filter 
 {
-    short[] mSr;  //input
-    short[] sro; //output of PostProcessing, input to upscaling/truncation
-    short[] srop; //output
     short msr;
 
 #include "Helper.java"
-#define MSR_LENGTH 160
-#define SRO_LENGTH 160
-#define SROP_LENGTH 160
 
     public void init() 
     {
-	input = new Channel(Short.TYPE, 160);
-	output = new Channel(Short.TYPE, 160);
-	mSr = new short[MSR_LENGTH];
-	sro = new short[SRO_LENGTH];
-	srop = new short[SROP_LENGTH];
+	input = new Channel(Short.TYPE, 1);
+	output = new Channel(Short.TYPE, 1);
 	msr = 0; //initial condition
     }
 
@@ -628,40 +625,21 @@ class PostProcessingFilter extends Filter
     {
 	int a;
 	short i, k, temp;
-	for (i = 0; i < MSR_LENGTH; i++)
-	    {
-		mSr[i] = input.popShort();
-	    }
+        
+        temp = input.popShort();
 
 	//De-emphasis filtering!
-	for (k = 0; k < MSR_LENGTH; k++)
-	    {
-		temp = gsm_add(mSr[k], gsm_mult_r(msr, (short) 28180));
-		msr = temp;
-		sro[k] = msr;
-	    }
+        temp = gsm_add(temp, gsm_mult_r(msr, (short) 28180));
+        msr = temp; // to next execution
 
 	//upscaling of output signal:
-	for (k = 0; k < SROP_LENGTH; k++)
-	    {
-		srop[k] = gsm_add(sro[k], sro[k]);
-	    }
-
+        temp = gsm_add(temp, temp);
+        
 	//truncation of the output variable:
-	for (k = 0; k < SROP_LENGTH; k++)
-	    {
-		srop[k] = shortify(srop[k] / 8);
-		srop[k] = gsm_mult(srop[k], (short) 8);
-	    }
-	
-	for (a = 0; a < SROP_LENGTH; a++)
-	    {
-		if(a == SROP_LENGTH - 1)
-		    {
-			//System.out.println("Running last iteration of PostProcess!");
-		    }
-		output.pushShort(srop[a]);
-	    }
+        temp = shortify(temp / 8);
+        temp = gsm_mult(temp, (short)8);
+        
+        output.pushShort(temp);
     }
 }
 

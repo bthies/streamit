@@ -38,7 +38,7 @@ class FusionTransform extends IdentityTransform {
 	}
 	// call fusion
 	SIRStream result = str;
-	int[] childPart = calcPartitionArray();
+	PartitionGroup childPart = calcPartitionArray();
 	if (str instanceof SIRPipeline) {
 	    FusePipe.fuse((SIRPipeline)str, childPart);
 	} else if (str instanceof SIRSplitJoin) {
@@ -67,7 +67,7 @@ class FusionTransform extends IdentityTransform {
      * Transforms this.partitions into an array that is suitable for
      * the fusion passes.
      */
-    private int[] calcPartitionArray() {
+    private PartitionGroup calcPartitionArray() {
 	Utils.assert(partitions.size()>=2, "Require >= 2 partitions in fusion.");
 	int[] result = new int[partitions.size()-1];
 	Iterator it = partitions.iterator();
@@ -77,7 +77,7 @@ class FusionTransform extends IdentityTransform {
 	    result[i] = next - last;
 	    last = next;
 	}
-	return result;
+	return PartitionGroup.createFromArray(result);
     }
 
 }

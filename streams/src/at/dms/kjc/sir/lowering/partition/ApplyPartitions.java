@@ -59,39 +59,6 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 	}
     }
 
-    /**
-     * Returns an array suitable for the fusers that indicates the
-     * groupings of children into partitions, according to
-     * this.partitions.  For instance, if input is:
-     *
-     *  <children> = {0, 0, 5, 7, 7, 7}
-     *
-     * then output is {2, 1, 3}
-     */
-    private int[] calcChildPartitions(List children) {
-	List resultList = new LinkedList();
-	int pos = 0;
-	while (pos<children.size()) {
-	    int count = 0;
-	    int cur = getPartition(children.get(pos));
-	    do {
-		pos++;
-		count++;
-	    } while (pos<children.size() && 
-		     getPartition(children.get(pos))==cur && 
-		     // don't conglomerate -1 children, as they are
-		     // containers with differing tile content
-		     cur!=-1);
-	    resultList.add(new Integer(count));
-	}
-	// copy results into int array
-	int[] result = new int[resultList.size()];
-	for (int i=0; i<result.length; i++) {
-	    result[i] = ((Integer)resultList.get(i)).intValue();
-	}
-	return result;
-    }
-
     /******************************************************************/
     // these are methods of empty attribute visitor
 
@@ -100,13 +67,10 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 			 JFieldDeclaration[] fields,
 			 JMethodDeclaration[] methods,
 			 JMethodDeclaration init) {
-	//System.err.println("visiting " + self);
-	// build partition array based on orig children
-	int[] childPart = calcChildPartitions(self.getChildren());
 	// replace children
 	replaceChildren(self);
 	// fuse children internally
-	FusePipe.fuse(self, childPart);
+	FusePipe.fuse(self, PartitionGroup.createFromAssignments(self.getChildren(), partitions));
 	return self;
     }
 
@@ -118,12 +82,11 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 			  SIRSplitter splitter,
 			  SIRJoiner joiner) {
 	//System.err.println("visiting " + self);
-	// build partition array based on orig children
-	int[] childPart = calcChildPartitions(self.getParallelStreams());
 	// replace children
 	replaceChildren(self);
 	// fuse
-	SIRStream result = FuseSplit.fuse(self, childPart);
+	SIRStream result = FuseSplit.fuse(self, 
+					  PartitionGroup.createFromAssignments(self.getParallelStreams(), partitions));
 	// if we got a pipeline back, that means we used old fusion,
 	// and we should fuse the pipe again
 	if (result instanceof SIRPipeline) {

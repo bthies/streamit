@@ -11,9 +11,9 @@ package streamit.misc;
  * 
  */
 
-public class ListIterator extends AssertedClass
+public class DLListIterator extends AssertedClass
 {
-    ListElement element;
+    DLListElement element;
     
     /**
      * The only constructor.  It's protected from the
@@ -22,7 +22,7 @@ public class ListIterator extends AssertedClass
      * yourself, you have to clone it from an existing
      * iterator using copy() method.
      */    
-    ListIterator (ListElement element)
+    DLListIterator (DLListElement element)
     {
         // check that the element is actually valid
         ASSERT (element != null);
@@ -36,6 +36,10 @@ public class ListIterator extends AssertedClass
      */
     public void next ()
     {
+        // make sure that I'm not on the "root" element.
+        // the "root" element has no next - it's treated as the "last"
+        // element
+        ASSERT (element.data != element);
         element = element.next ();
     }
     
@@ -45,6 +49,10 @@ public class ListIterator extends AssertedClass
     public void prev ()
     {
         element = element.prev ();
+        
+        // make sure that I'm not on the "root" element.
+        // the "root" element indicates I've wrapped around the list
+        ASSERT (element.data != element);
     }
     
     /**
@@ -58,8 +66,16 @@ public class ListIterator extends AssertedClass
     /**
      * make a copy of this iterator and return it
      */
-    ListIterator copy ()
+    public DLListIterator copy ()
     {
-        return new ListIterator (element);
+        return new DLListIterator (element);
+    }
+    
+    /**
+     * check if this iterator points to same data as some other iterator.
+     */
+    public boolean equals (DLListIterator other)
+    {
+        return element == other.element;
     }
 }

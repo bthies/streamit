@@ -1,6 +1,6 @@
 package streamit.misc;
 
-/* $Id: RBNode.java,v 1.1 2003-02-14 19:00:47 karczma Exp $ */
+/* $Id: RBNode.java,v 1.2 2003-02-19 20:18:39 karczma Exp $ */
 
 public class RBNode extends AssertedClass 
 {
@@ -12,6 +12,11 @@ public class RBNode extends AssertedClass
     {
         ASSERT (data);
         nodeData = data;
+    }
+    
+    public Object getData ()
+    {
+        return nodeData;
     }
     
     boolean isRed ()

@@ -11,17 +11,17 @@ package streamit.misc;
  * 
  */
 
-public class ListElement extends AssertedClass
+public class DLListElement extends AssertedClass
 {
     final Object data;
     
-    ListElement prevElem;
-    ListElement nextElem;
+    DLListElement prevElem;
+    DLListElement nextElem;
     
     /**
      * Standard constructor.  Requires all the data.
      */
-    ListElement (ListElement prev, Object data)
+    DLListElement (DLListElement prev, Object data)
     {
         // check that both prev and next are valid
         ASSERT (prev != null);
@@ -44,7 +44,7 @@ public class ListElement extends AssertedClass
      * data == this - that's how it is distinguished from
      * all other elements.
      */
-    ListElement ()
+    DLListElement ()
     {
         prevElem = this;
         nextElem = this;
@@ -56,14 +56,15 @@ public class ListElement extends AssertedClass
      * Checks that the current element is not the root
      * of the list (the root does not have a next element!)
      */
-    public ListElement next ()
+    public DLListElement next ()
     {
         // check that this is not the root
         ASSERT (data != this);
         
         // and that there exists a next element
         // if there is no next element, then the
-        // list is corrupt!
+        // list is corrupt or the element has been
+        // removed from the list already!
         ASSERT (nextElem != null);
     
     	// and return the nextElement    
@@ -76,10 +77,12 @@ public class ListElement extends AssertedClass
      * of the list (root element is not a prev element
      * for any element)
      */
-    public ListElement prev ()
+    public DLListElement prev ()
     {
-        // check that the prev element exists
-        // if it doesn't, then the list is corrupt!
+        // check that the prev element exists.
+        // if it doesn't, then the list is corrupt
+        // or the element has been removed from 
+        // the list already!
         ASSERT (prevElem != null);
         
         // make sure that the previous element is 

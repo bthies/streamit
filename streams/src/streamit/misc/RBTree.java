@@ -1,15 +1,15 @@
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.1 2003-02-14 19:00:48 karczma Exp $ */
+/* $Id: RBTree.java,v 1.2 2003-02-19 20:18:40 karczma Exp $ */
 
 public class RBTree extends AssertedClass
 {
-    public RBNode root;
+    private RBNode root;
 
     private static HashComperator defaultComperator = new HashComperator();
     private final Comperator myComperator;
 
-    int size = 0;
+    private int size = 0;
     private final RBNode NULL;
 
     RBTree()
@@ -38,6 +38,39 @@ public class RBTree extends AssertedClass
         return size == 0;
     }
 
+    public RBNode getNULL()
+    {
+        return NULL;
+    }
+    
+    public RBNode getMin ()
+    {
+        RBNode min = root;
+        
+        if (min == NULL) return min;
+        
+        while (min.left != NULL)
+        {
+            min = min.left;
+        }
+        
+        return min;
+    }
+    
+    public RBNode getMax ()
+    {
+        RBNode max = root;
+        
+        if (max == NULL) return max;
+        
+        while (max.right != NULL)
+        {
+            max = max.right;
+        }
+        
+        return max;
+    }
+
     public RBNode find(Object data)
     {
         ASSERT(data);
@@ -59,9 +92,6 @@ public class RBTree extends AssertedClass
                 break;
             }
         }
-
-        if (node == NULL)
-            node = null;
 
         return node;
     }
@@ -229,7 +259,7 @@ public class RBTree extends AssertedClass
             splicedNode = node;
         else
         {
-            // know there is successor 'cause right != null
+            // know there is successor 'cause right != NULL
             splicedNode = successor(node);
         }
 
@@ -255,13 +285,40 @@ public class RBTree extends AssertedClass
                 splicedNode.parent.right = splicedChild;
             }
         }
+        
+        boolean splicedBlack = splicedNode.isBlack();
 
         if (node != splicedNode)
         {
-            node.nodeData = splicedNode.nodeData;
+            // now swap the splicedNode into the place of node
+            // I can't just exchange their data, because
+            // then iterators might get messed up!
+            splicedNode.parent = node.parent;
+            splicedNode.black = node.black;
+            splicedNode.left = node.left;
+            splicedNode.right = node.right;
+            
+            // fix node's children:
+            splicedNode.left.parent = splicedNode;
+            splicedNode.right.parent = splicedNode;
+            
+            // and node's parent:
+            if (splicedNode.parent.left == node)
+            {
+                splicedNode.parent.left = splicedNode;
+            } else {
+                splicedNode.parent.right = splicedNode;
+            }
+            
+            // set node's left, right, parent AND nodeData
+            // to be null (not even NULL)
+            node.left = null;
+            node.right = null;
+            node.parent = null;
+            node.nodeData = null;
         }
 
-        if (splicedNode.isBlack())
+        if (splicedBlack)
         {
             // perform the fixup from CLR
             RBDeleteFixup(splicedChild);
@@ -316,7 +373,7 @@ public class RBTree extends AssertedClass
         pivot.parent = left;
     }
 
-    RBNode successor(RBNode node)
+    public RBNode successor(RBNode node)
     {
         ASSERT(node != NULL);
 
@@ -339,7 +396,7 @@ public class RBTree extends AssertedClass
         return parent;
     }
 
-    RBNode predecessor(RBNode node)
+    public RBNode predecessor(RBNode node)
     {
         ASSERT(node);
 
@@ -499,7 +556,7 @@ public class RBTree extends AssertedClass
         node.black = true;
     }
 
-    public void printTree()
+    void printTree()
     {
         printTree(root, 0);
         System.out.println("-----------");

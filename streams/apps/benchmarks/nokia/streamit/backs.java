@@ -13,17 +13,17 @@ class backs extends Filter // this Filter performs back substition LTd=y.
              
 public backs(int N){ super (N);}
           public void init (int N) {
-	      //	      input = new Channel(Float.TYPE, N+N*(N+1)/2);
-	      //output = new Channel(Float.TYPE, N+N);
-           setInput(Float.TYPE);
-	   setOutput(Float.TYPE);
-	   setPush(N);
-	   setPop(N+N*(N+1)/2);
-           y=new float[N];
-	  d=new float[N];
-	  LT=new float[N][N];
-	  this.LT=LT;
-          this.N=N;
+	      input = new Channel(Float.TYPE, N+N*(N+1)/2);
+	      output = new Channel(Float.TYPE, N);
+	      //setInput(Float.TYPE);
+	      //setOutput(Float.TYPE);
+	      //setPush(N);
+	      //setPop(N+N*(N+1)/2);
+	      y=new float[N];
+	      d=new float[N];
+	      LT=new float[N][N];
+	      //this.LT=LT;
+	      this.N=N;
           } 
  
 

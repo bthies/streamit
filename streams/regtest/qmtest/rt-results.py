@@ -2,7 +2,7 @@
 #
 # rt-results.py: present QMTest results in CAG RT
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: rt-results.py,v 1.1 2003-12-16 20:54:07 dmaze Exp $
+# $Id: rt-results.py,v 1.2 2003-12-16 21:12:49 dmaze Exp $
 
 import os
 import os.path
@@ -18,6 +18,7 @@ execfile(os.path.join(qm_home, 'lib/qm/qm', 'setup_path.py'))
 # Now, be a normal script from here on in.
 import qm.test.base
 from   qm.test.result import Result
+import re
 
 def main():
     result_file = 'results.qmr'
@@ -205,7 +206,9 @@ def print_rt_details(resname, rt_root):
             for k in result.keys():
                 f.write('<tr class="%s"><td colspan=2><b>%s</b><br>\n' %
                         (line, k))
-                f.write('<p>%s</p></td></tr>\n' % (result[k]))
+                val = result[k]
+                val = re.sub('\n', '<br>\n', val)
+                f.write('<p>%s</p></td></tr>\n' % val)
                 line = nextline(line)
             f.write('<& /Elements/TitleBoxEnd &>')
 

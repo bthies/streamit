@@ -31,7 +31,7 @@ void PC_create(PC_Data* this)
   this->rsltRow       = vsip_mrowview_f(this->result, 0);
   this->filteredRow   = vsip_cvcreate_f((NUM_RANGES/(FINE_DECIMATION_RATIO*
 						   COARSE_DECIMATION_RATIO))*NUM_SEGMENTS, VSIP_MEM_NONE);
-//  createMf(pulseShape, predecPulseShape, this->matchedFilter);
+  /**  createMf(pulseShape, predecPulseShape, this->matchedFilter); **/
   createLpf1(this->matchedFilter);
 #ifndef PC_IN_TIME
   this->fft           = vsip_ccfftop_create_f(MF_SIZE, 1.0,
@@ -118,11 +118,11 @@ void PC_processPulse(PC_Data* this, vsip_cmview_f* inputMat)
     /* Pulse Compression is done, now do detection. For efficiency - move detection
      * into above loop.  For clarity, we put it here.
      */
-//    for(i = 0; i < nRows; i++)
-//    {
-//      for(j = 0; j < nCols; j++)
-//      {
-//	value = vsip_mget_f(this->result, i, j);
+    /**    for(i = 0; i < nRows; i++) **/
+    /**    { **/
+    /**      for(j = 0; j < nCols; j++) **/
+	     /**      {**/
+	     /**	value = vsip_mget_f(this->result, i, j);**/
 #ifdef PRINT_RESULT
 	printf("%f\n", value);
 #endif
@@ -151,13 +151,13 @@ void PC_processPulse(PC_Data* this, vsip_cmview_f* inputMat)
 /* 	  else */
 /* 	    success = success && 1;; */
 /* 	} */
-	//    }
-	// }
+	/**    } **/
+	       /** } **/
   }
-  //if( success )
-  //  printf( "SUCCESS!!!!\n");
+  /**if( success )**/
+  /*  printf( "SUCCESS!!!!\n"); **/
   this->numPulses++;
-  //vsip_cmcopy_f_f(this->sndHalfData, this->fstHalfData);
+  /**vsip_cmcopy_f_f(this->sndHalfData, this->fstHalfData);**/
   stop = clock();
   this->time += ((double)(stop-start))/CLOCKS_PER_SEC;
 }

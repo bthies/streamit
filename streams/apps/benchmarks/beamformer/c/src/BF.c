@@ -32,7 +32,6 @@ void BF_create(BF_Data* this)
       z.i = ((float) count)/2.449489743;
       count++;
       vsip_cmput_f(this->bfWeights,i,j,z);
-      //  printf("(%f, %f)\n", z.r, z.i);
     }
   }
   vsip_cmalldestroy_f(steeringVectors);

@@ -28,7 +28,7 @@ void DIT_create(DIT_Data* this)
       z.i = ((float) count)/2.718281828;
       count++;
       vsip_cmput_f(this->steeringVectors,i,j,z);
-//      printf("(%f, %f)\n", z.r, z.i);
+      /**      printf("(%f, %f)\n", z.r, z.i); **/
     }
   }
   count = 0;
@@ -40,7 +40,7 @@ void DIT_create(DIT_Data* this)
     z.i = ((float) count)/1.414213562;
     count++;
     vsip_cvput_f(this->predecPulseShape, i, z);
-    //    printf("(%f, %f)\n", z.r, z.i);
+    /*    printf("(%f, %f)\n", z.r, z.i); */
   }
 
   createBf(this->steeringVectors, bfWeightsTrans);

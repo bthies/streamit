@@ -76,7 +76,7 @@ public class FuseSimpleSplit {
 	// not a null split
 	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE &&
 	    rep.splitter!=0) {
-	    pipe.add(makeFilter(sj.getParent(),
+	    pipe.add(makeFilter(pipe,
 				"Pre_" + sj.getIdent(),
 				makeSplitFilterBody(sj.getSplitter(), 
 						    rep,
@@ -91,7 +91,7 @@ public class FuseSimpleSplit {
 	
 	// make a joinFilter only if it's not a not a null join
 	if (rep.joiner!=0) {
-	    pipe.add(makeFilter(sj.getParent(),
+	    pipe.add(makeFilter(pipe,
 				"Post_" + sj.getIdent(),
 				makeJoinFilterBody(sj.getJoiner(), 
 						   rep,

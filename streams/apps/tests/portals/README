@@ -1,7 +1,7 @@
 
 to build the tests do:
 
-strc --cluster Ptest1.str
+strc --cluster 1 Ptest1.str
 make -f Makefile.cluster
 ./run_cluster
 

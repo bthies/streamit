@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.20 2004-01-27 20:56:47 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.21 2004-01-27 23:20:59 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -934,8 +934,7 @@ public class SemanticChecker
         // could have a void input or output type).
 
         Function init = ss.getInitFunc();
-        // ASSERT: init != null; this mostly implies you're not
-        // calling this on a filter.
+        assert init != null;
         CFG cfg = CFGBuilder.buildCFG(init);
         Map typeMap = new DataFlow() {
                 public Lattice getInit()
@@ -1117,8 +1116,7 @@ public class SemanticChecker
                                      StatementCounter sc)
     {
         Function init = ss.getInitFunc();
-        // ASSERT: init != null; this mostly implies you're not
-        // calling this on a filter.
+        assert init != null;
         CFG cfg = CFGBuilder.buildCFG(init);
         Map splitCounts = sc.run(cfg);
         // TODO: modularize this analysis; report the first place

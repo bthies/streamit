@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPostfixExpression.java,v 1.3 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JPostfixExpression.java,v 1.4 2001-11-15 22:01:19 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -58,6 +58,20 @@ public class JPostfixExpression extends JExpression {
    */
   public CType getType() {
     return type;
+  }
+
+  /**
+   * Return the operation for this.
+   */
+  public int getOper() {
+    return oper;
+  }
+    
+  /**
+   * Return the expression.
+   */
+  public JExpression getExpr() {
+    return expr;
   }
 
   /**

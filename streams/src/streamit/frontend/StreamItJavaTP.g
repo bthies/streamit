@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.30 2002-08-16 15:26:47 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.31 2002-08-16 16:01:57 dmaze Exp $
  */
 
 header {
@@ -210,6 +210,7 @@ struct_stream_decl2[String superclass] returns [String t]
 				name.getText(), n2j);
 			t += getIndent() + "}\n";
 			symTab = symTab.getParent();
+			cur_class_params = null;
 		}
 	;
 

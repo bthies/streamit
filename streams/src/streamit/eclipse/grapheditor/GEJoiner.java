@@ -31,7 +31,26 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 		return this.weights;
 	}
 	
-	public void draw(){};
-	public GEStreamNode construct(){return null;};
+	
+	
+	/**
+	 * Contructs the joiner and returns itself since Joiners have no children.
+	 */
+	public GEStreamNode construct()
+	{
+		System.out.println("Constructing the Joiner " +this.getName());
+		this.draw();
+		return this;
+	}
+
+	/**
+	 * Draw this Joiner
+	 */
+	public void draw()
+	{
+		System.out.println("Drawing the Joiner " +this.getName());
+		// TO BE ADDED
+	}
+	
 	public void collapse(){};
 }

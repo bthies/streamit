@@ -62,24 +62,26 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			return this.workFunctions.size();
 		}
 	
+	
+	
+	/**
+	 * Contructs the filter and returns itself since Filters have no children.
+	 */
+	public GEStreamNode construct()
+	{
+		System.out.println("Constructing the filter " +this.getName());
+		this.draw();	
+		return this;
+	}
+	
 	/**
 	 * Draw this filter.
 	 */
 	public void draw()
 	{
 		System.out.println("Drawing the filter " +this.getName());
+		// TO BE ADDED
 	}
-	
-	
-	/**
-	 * Contructs the filter and returns itself since Filters have no children.
-	 */
-	
-	public GEStreamNode construct()
-	{
-		System.out.println("Constructing the filter " +this.getName());	
-		return this;
-	}
-	
+
 	public void collapse(){};
 }

@@ -394,7 +394,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		System.out.println("\t Split = "+ splitjoin.getSplitter().getName());
 		System.out.println("\t Join = "+ splitjoin.getJoiner().getName());
 		
-		ArrayList sjChildren = splitjoin.getSplitter().getChildren();
+		ArrayList sjChildren = splitjoin.getChildren();
 		
 		for (int i = 0; i < sjChildren.size(); i++)
 		{

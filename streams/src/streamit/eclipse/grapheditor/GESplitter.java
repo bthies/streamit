@@ -31,8 +31,24 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	{
 		return this.weights;
 	}
+
+	/**
+	 * Contructs the Splitter 
+	 */
+	public GEStreamNode construct()
+	{
+		System.out.println("Constructing the Splitter " +this.getName());
+		this.draw();
+		return this;
+	}
 	
-	public void draw(){};
-	public GEStreamNode construct(){return null;};
+	/**
+	 * Draw this Splitter
+	 */
+	public void draw()
+	{
+		System.out.println("Drawing the Splitter " +this.getName());
+	}
+		
 	public void collapse(){};
 }

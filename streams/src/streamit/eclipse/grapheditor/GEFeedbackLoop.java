@@ -65,9 +65,38 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		return this.loop;
 	}
 	
-	 
-	public void draw(){};
-	public GEStreamNode construct(){return null;};
+	
+	/**
+	 * Draw this Pipeline
+  	 */	
+	public void draw()
+	{
+		System.out.println("Drawing the pipeline " +this.getName());
+		// TO BE ADDED
+	}
+	
+	
+	public GEStreamNode construct()
+	{
+		System.out.println("Constructing the feedback loop " +this.getName());
+		this.draw();
+		joiner.construct();
+		GEStreamNode lastBody = body.construct();
+				
+		System.out.println("Connecting " + joiner.getName()+  " to "+ body.getName());		
+		//connect(joiner, lastBody );
+		System.out.println("Connecting " + body.getName()+  " to "+ splitter.getName());
+		//connect(body, splitter);
+		
+		splitter.construct();
+		GEStreamNode lastLoop = loop.construct(); 
+		System.out.println("Connecting " + splitter.getName()+  " to "+ loop.getName());
+		//connect(splitter, loop);
+		System.out.println("Connecting " + loop.getName()+  " to "+ joiner.getName());
+		//connect(loop, joiner);
+		
+		return splitter;
+	}
 	public void collapse(){};
 	
 }

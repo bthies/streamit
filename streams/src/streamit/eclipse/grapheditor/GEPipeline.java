@@ -24,7 +24,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 
 
 /**
- * Constructs the pipeline and returns the last node in the pipeline that wil be connecting
+ * Constructs the pipeline and returns the last node in the pipeline that will be connecting
  * to the next graph structure.
  */
 	public GEStreamNode construct()
@@ -38,23 +38,29 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
+			GEStreamNode lastTemp = strNode.construct();
+			
 			if(!first)
 			{
-				// TO BE ADDED
-				//connectDraw(lastNode, strNode);
 				System.out.println("Connecting " + lastNode.getName()+  " to "+ strNode.getName());
+				
+				// TO BE ADDED
+				// connectDraw(lastNode, strNode);
 			}
 			
-			lastNode = strNode.construct();
+			lastNode = lastTemp;
 			first = false;
 		}
 		return this.lastNode;
 	}	
 	
-	
+	/**
+	 * Draw this Pipeline
+	 */	
 	public void draw()
 	{
 		System.out.println("Drawing the pipeline " +this.getName());
+		// TO BE ADDED
 	}
 	public void collapse()
 	{

@@ -213,8 +213,10 @@ class CConfigSplitJoin extends CConfigContainer {
 
 	//System.out.println("\n[s-mult: "+s_mult+" j-mult: "+j_mult+"]");
 
-	code += s_sum * s_mult * 10; // Nov-15-2004 was 20
-	code += j_sum * j_mult * 10; // Nov-15-2004 was 20
+	// Nov-15-2004 was 20
+	// Nov-29-2004 was 10
+	code += s_sum * s_mult * 20; 
+	code += j_sum * j_mult * 20;
 
 	FusionInfo child0 = childConfig(0).getFusionInfo();
 

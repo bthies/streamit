@@ -1,0 +1,27 @@
+pipeline AutoCor {
+    int N = 32;
+    int NLAGS = 8;
+    add Source();
+    splitjoin {
+	split Duplicate();
+	for (int lag=0; lag<NLAGS; lag++)
+	    add float->float filter {
+		work push N pop N {
+		    float sum = 0;
+		    for (int i=0; i<N-lag; i++) {
+			sum += peek(0) * peek(lag);
+			pop();
+		    }
+		    for (int i=0; i<lag; i++) {
+			pop();
+		    }
+		    push(sum);
+		}
+	    };
+	join RoundRobin();
+    }
+    add Adder(NLAGS);
+    add Printer();
+}
+
+

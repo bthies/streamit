@@ -1,7 +1,8 @@
-# test fft {
-#   directory docs/examples/hand/fft
-#   source FFT.java
-# }
+test fft {
+  directory docs/examples/hand/fft
+  source FFT.java
+  disabled
+}
 
 test fft-local {
   directory docs/examples/hand/fft
@@ -59,4 +60,11 @@ test unroll {
 test updown {
   directory docs/examples/hand/updown
   source UpDown.java
+}
+
+test fmtest {
+  directory apps/FMRadio
+  make
+  source LinkedFMTest.java
+  disabled
 }

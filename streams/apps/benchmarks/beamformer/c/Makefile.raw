@@ -21,18 +21,15 @@ ifndef TOPDIR
 $(error TOPDIR not defined, make sure to include Makefile.include)
 endif
 
-OBJECT_FILES_00 = $(SRC)/main_raw.o
+VSIPL_DIR = vsipl/TASP_VSIPL_Core_Plus
+INCLUDE_DIRS += -I$(VSIPL_DIR)/include -I$(INC)
+
+OBJECT_FILES_00 = $(SRC)/main_raw.o $(SRC)/LPF.o $(SRC)/DIT.o $(SRC)/BF.o $(SRC)/PC.o $(SRC)/Utils.o
 
 include $(COMMONDIR)/Makefile.all
 
 BTL-ARGS += -host
+SPEC-IMEM-SIZE = -imem_size 131072
+SPEC-SMEM-SIZE = -smem_size 262144
 
-VSIPL_DIR = vsipl/TASP_VSIPL_Core_Plus
-INCLUDE_DIRS += -I$(VSIPL_DIR)/include -I$(INC)
-LIBS   += $(SRC)/LPF.o
-LIBS   += $(SRC)/DIT.o 
-LIBS   += $(SRC)/BF.o 
-LIBS   += $(SRC)/PC.o 
-LIBS   += $(SRC)/Utils.o 
-LIBS   += $(SRC)/main_raw.o
-LIBS   += $(VSIPL_DIR)/lib/libvsip_raw_c.a
+BTL-ARGS += $(SPEC-IMEM-SIZE) $(SPEC-SMEM-SIZE)

@@ -18,6 +18,7 @@ package streamit.library;
 
 import streamit.scheduler2.Scheduler;
 import java.util.Vector;
+import java.util.HashMap;
 
 // a filter is the lowest-level block of streams
 public abstract class Filter extends Stream
@@ -682,5 +683,31 @@ public abstract class Filter extends Stream
         return null;
     }
      
+
+    /**
+     * Propagate scheduling info into fields of filters, so they can
+     * be inspected from Eclipse debugger.
+     */
+    private int initExecutionCount;
+    private int steadyExecutionCount;
+    public static void fillScheduleFields(Scheduler scheduler) {
+	HashMap[] counts = scheduler.getExecutionCounts();
+	for (int i=0; i<2; i++) {
+	    java.util.Set keys = counts[i].keySet();
+	    for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
+		Object obj = it.next();
+		if (obj instanceof Filter) {
+		    int count = ((int[])counts[i].get(obj))[0];
+		    if (i==0) {
+			((Filter)obj).initExecutionCount = count;
+			//System.out.println("init for " + obj + " = " + count);
+		    } else {
+			((Filter)obj).steadyExecutionCount = count;
+			//System.out.println("steady for " + obj + " = " + count);
+		    }
+		}
+	    }
+	}
+    }
 
 }

@@ -814,6 +814,11 @@ public abstract class Stream extends Operator
             int mlSize = totalSize;
             int mlBuffer = totalBuffer;
 
+	    // fill all filter fields with the initial and steady
+	    // execution count, so that they can be inspected from
+	    // Eclipse debugger
+	    Filter.fillScheduleFields(scheduler);
+
             if (printsched)
             {
                 scheduler.printOptimizedSchedule();

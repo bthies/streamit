@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.66 2002-06-28 16:47:59 dmaze Exp $
+ * $Id: LIRToC.java,v 1.67 2002-06-28 20:11:29 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1298,8 +1298,21 @@ public class LIRToC
         } else {
 	    print("(");
             left.accept(this);
-            if (left.getType() != null &&
-                left.getType().getCClass().getSuperClass().getIdent().equals("Structure"))
+            // I hate Kopi.  getType() doesn't necessarily work, since some
+            // things (e.g. JFieldAccessExpressions) determine their CType
+            // based on the CType of their components, which might not be
+            // well-defined.  So let's do this...
+            boolean isStructField = false;
+            try
+            {
+                if (left.getType().getCClass().getSuperClass().getIdent().equals("Structure"))
+                    isStructField = true;
+            }
+            catch (NullPointerException e)
+            {
+                // do nothing
+            }
+            if (isStructField)
                 print(".");
             else
                 print("->");

@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.13 2003-06-30 14:59:23 dmaze Exp $
+ * $Id: CompilerHarness.java,v 1.14 2003-08-01 18:13:50 dmaze Exp $
  **/
 package streamittest;
 
@@ -22,6 +22,8 @@ public class CompilerHarness extends Harness {
     static final String JAVA_MAIN = "at.dms.kjc.Main";
     // syntax converter java class
     static final String JAVA_CONVERTER = "streamit.frontend.ToJava";
+    // direct-to-SIR java class
+    static final String JAVA_TOKOPI = "streamit.frontend.ToKopi";
     // java memory option
     static final String JAVA_OPTION_MEM = "-Xmx1700M";
 
@@ -118,6 +120,59 @@ public class CompilerHarness extends Harness {
     }
 
     /**
+     * Run the streamit compiler via the front-end-to-SIR converter
+     * with the options specified in the passed array. Returns true if
+     * compliation is successful false otherwise.
+     **/
+    static boolean streamItToSIRCompile(String[] options,
+                                        String root,
+                                        String inFileName,
+                                        String outFileName) {
+
+	// result of running the streamit compiler
+	boolean compilerResult = false;
+
+	// expand input streamit files
+	String[] expandedFileNames = expandFileName(inFileName);
+
+	// if no filenames returned, signal error via stderr and return false
+	if (expandedFileNames.length < 1) {
+	    ResultPrinter.printError(":filename " + inFileName +
+				     " did not expand");
+	    ResultPrinter.flushFileWriter();
+	    return false;
+	}
+		
+	
+	// new array for options and for filename
+	String[] cmdLineArgs =
+            getToKopiCommandArray(options, expandedFileNames);
+
+	try {
+
+	    // set up a java file i/o stream so we can save
+	    // the output of the streamit compiler into a file (which we
+	    // can then compile with gcc)
+	    FileOutputStream fileOut = new FileOutputStream(outFileName);
+	    
+	    // execute natively
+	    compilerResult = executeNative(cmdLineArgs, fileOut,
+                                           new File(root));
+
+	    // close file descriptor
+	    fileOut.close();
+	    
+	} catch (Exception e) {
+	    ResultPrinter.printError("Caught exception compiling with streamit : " + e.getMessage());
+	    e.printStackTrace();
+	    return false;
+	}
+
+	return compilerResult;
+
+    }
+
+    /**
      * Run the gcc compiler (uniprocessor path)
      * to convert the source file to the exeFile.
      **/
@@ -164,9 +219,10 @@ public class CompilerHarness extends Harness {
     }    
 
     /**
-     * Get command line options for running the streamit compiler
-     * with the specified options and the specified file names.
-     * root path is needed to change dir so raw stuff ends up in the correct place
+     * Get command line options for running the streamit compiler with
+     * the specified options and the specified file names.  root path
+     * is needed to change dir so raw stuff ends up in the correct
+     * place
      **/
     public static String[] getJavaCommandArray(String[] options,
 					       String root, 
@@ -179,6 +235,30 @@ public class CompilerHarness extends Harness {
         cmdLineArgs[0] = JAVA_COMMAND;
         cmdLineArgs[1] = JAVA_OPTION_MEM;
         cmdLineArgs[2] = JAVA_MAIN;
+        System.arraycopy(options, 0, cmdLineArgs, 3, options.length);
+        System.arraycopy(expandedFileNames, 0,
+                         cmdLineArgs, 3+options.length,
+                         expandedFileNames.length);
+
+	return cmdLineArgs;
+    }
+
+    /**
+     * Get command line options for running the streamit compiler with
+     * the specified options and the specified file names.  root path
+     * is needed to change dir so raw stuff ends up in the correct
+     * place
+     **/
+    public static String[] getToKopiCommandArray(String[] options,
+                                                 String[] expandedFileNames) {
+	// expand the filename that was passed in to multiple filenames
+	// if that is necessary
+	String[] cmdLineArgs =
+            new String[3 + options.length + expandedFileNames.length];
+
+        cmdLineArgs[0] = JAVA_COMMAND;
+        cmdLineArgs[1] = JAVA_OPTION_MEM;
+        cmdLineArgs[2] = JAVA_TOKOPI;
         System.arraycopy(options, 0, cmdLineArgs, 3, options.length);
         System.arraycopy(expandedFileNames, 0,
                          cmdLineArgs, 3+options.length,

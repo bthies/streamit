@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.7 2002-10-04 14:35:45 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.8 2002-10-04 14:43:20 dmaze Exp $
  **/
 package streamittest;
 
@@ -112,6 +112,7 @@ public class TestBenchmarks extends StreamITTestCase {
         String root = BENCH_ROOT + "gsm/streamit/";
         doMake(root);
         doCompileTest(root, "Gsm.java");
+        doMake(root, "more-imem");
         doRunTest(root, "Gsm.java", 0, 20);
     }
 

@@ -325,5 +325,18 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public JMethodDeclaration getInit() {
 	return init;
     }
+
+    public boolean insideFeedbackLoop() {
+	SIRContainer currentParent = this.getParent();
+	
+	while (currentParent != null) {
+	    if (currentParent instanceof SIRFeedbackLoop)
+		return true;
+	    currentParent = currentParent.getParent();
+	}
+	//did not hit a feedback loop 
+	return false;
+    }
+	    
 }
 

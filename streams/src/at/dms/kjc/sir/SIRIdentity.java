@@ -123,7 +123,10 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
      * Returns the C type of the object, which is always a stream_context.
      */
     public String getName() {
-        return "ContextContainer";
+	//change this back later
+	return "Identity";
+	//        return "ContextContainer";
+	
     }
 }
 

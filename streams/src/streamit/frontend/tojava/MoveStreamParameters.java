@@ -1,9 +1,3 @@
-/*
- * MoveStreamParameters.java: make constructors and init functions
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MoveStreamParameters.java,v 1.8 2003-04-16 13:34:46 dmaze Exp $
- */
-
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
@@ -14,12 +8,28 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * MoveStreamParameters moves stream parameters into fields of stream
- * classes, and creates constructors and populates init functions as
- * necessary.
+ * Move stream parameters into fields, and generate constructors and
+ * init functions.  A StreamIt stream parameter is converted into a
+ * class field in Java syntax.  The constructor and init function are
+ * both modified to take the stream parameters as function parameters.
+ * This pass creates constructors for all objects that have stream
+ * parameters as well.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: MoveStreamParameters.java,v 1.9 2003-07-01 20:15:53 dmaze Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
+    private Type objectType;
+    
+    public MoveStreamParameters()
+    {
+        super();
+        objectType = new TypeStruct("Object",
+                                    Collections.EMPTY_LIST,
+                                    Collections.EMPTY_LIST);
+    }
+    
     private Function makeConstructor(FEContext context, String name,
                                      List params)
     {
@@ -52,14 +62,21 @@ public class MoveStreamParameters extends InitMunger
         // completely replace its parameter list with params.  This
         // means we just need to replace the body.
         List body = new ArrayList();
+        List newParams = new ArrayList();
         for (Iterator iter = params.iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
             Expression eThis = new ExprVar(context, "this");
             Expression lhs = new ExprField(context, eThis, param.getName());
             Expression rhs = new ExprVar(context, param.getName());
+            if (param.getType() instanceof TypeStruct)
+            {
+                rhs = new ExprTypeCast(context, param.getType(), rhs);
+                param = new Parameter(objectType, param.getName());
+            }
             Statement stmt = new StmtAssign(context, lhs, rhs);
             body.add(stmt);
+            newParams.add(param);
         }
         StmtBlock oldBody = (StmtBlock)init.getBody();
         body.addAll(oldBody.getStmts());
@@ -67,17 +84,43 @@ public class MoveStreamParameters extends InitMunger
         
         // Too many parts here, don't use Function.newInit().
         return new Function(context, init.getCls(), init.getName(),
-                            init.getReturnType(), params, newBody);
+                            init.getReturnType(), newParams, newBody);
     }
 
     // Return a function just like init, but with params as its
     // parameter list, doing no special work.
     private Function addInitParamsOnly(Function init, List params)
     {
-        // As noted above, the init function has no parameters coming
-        // in.  This makes this trivial:
-        return new Function(init.getContext(), init.getCls(), init.getName(),
-                            init.getReturnType(), params, init.getBody());
+        FEContext context = init.getContext();
+
+        // As before.  We do actually need to make changes here,
+        // if there are stream parameters that are Object type.
+        // In that case, the parameters to the init function need
+        // to be Object, and we need to make locals with the
+        // right types.
+        List body = new ArrayList();
+        List newParams = new ArrayList();
+        for (Iterator iter = params.iterator(); iter.hasNext(); )
+        {
+            Parameter param = (Parameter)iter.next();
+            if (param.getType() instanceof TypeStruct)
+            {
+                String newName = "_obj_" + param.getName();
+                Expression rhs = new ExprVar(context, newName);
+                Expression cast =
+                    new ExprTypeCast(context, param.getType(), rhs);
+                body.add(new StmtVarDecl(context, param.getType(),
+                                         param.getName(), cast));
+                param = new Parameter(objectType, newName);
+            }
+            newParams.add(param);
+        }
+        StmtBlock oldBody = (StmtBlock)init.getBody();
+        body.addAll(oldBody.getStmts());
+        Statement newBody = new StmtBlock(oldBody.getContext(), body);
+        
+        return new Function(context, init.getCls(), init.getName(),
+                            init.getReturnType(), newParams, newBody);
     }
 
     public Object visitStreamSpec(StreamSpec spec)

@@ -54,7 +54,7 @@ $(LIBRARYP): $(OBJSP)
 
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -g -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 %_p.o: %.c
 	$(CC) $(CFLAGS) -g -pg -a -c -o $@ $<

@@ -14,11 +14,16 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.20 2003-03-30 21:50:56 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.21 2003-04-01 00:11:04 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
-    /** Mapping from filters to linear representations. never would have guessed that, would you? **/
-    HashMap filtersToLinearRepresentation;
+    /** Mapping from streams to linear representations. never would have guessed that, would you? **/
+    HashMap streamsToLinearRepresentation;
+
+    /** Set of streams that we've already explored and determined to
+     * be non-linear, or that we couldn't convert into a linear
+     * form (do to errors or whatever).  **/
+    HashSet nonLinearStreams;
 
     /** Whether or not we should refactor linear children into a
      * separate pipeline, if some of their siblings are not linear.
@@ -32,7 +37,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     int feedbackLoopsSeen  = 0;
 
     public LinearAnalyzer(boolean refactorLinearChildren) {
-	this.filtersToLinearRepresentation = new HashMap();
+	this.streamsToLinearRepresentation = new HashMap();
+	this.nonLinearStreams = new HashSet();
 	this.refactorLinearChildren = refactorLinearChildren;
 	checkRep();
     }
@@ -42,7 +48,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public boolean hasLinearRepresentation(SIRStream stream) {
 	checkRep();
 	// just check to see if the hash set has a mapping to something other than null.
-	return (this.filtersToLinearRepresentation.get(stream) != null);
+	return (this.streamsToLinearRepresentation.get(stream) != null);
     }
     /**
      * returns the mapping from stream to linear representation that we have. Returns
@@ -50,7 +56,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      **/
     public LinearFilterRepresentation getLinearRepresentation(SIRStream stream) {
 	checkRep();
-	return (LinearFilterRepresentation)this.filtersToLinearRepresentation.get(stream);
+	return (LinearFilterRepresentation)this.streamsToLinearRepresentation.get(stream);
     }
     
     /** removes the specified SIRStream from the linear represention list. **/
@@ -59,7 +65,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	if (!this.hasLinearRepresentation(stream)) {
 	    throw new IllegalArgumentException("Don't know anything about " + stream);
 	}
-	this.filtersToLinearRepresentation.remove(stream);
+	this.streamsToLinearRepresentation.remove(stream);
     }
     /** adds a mapping from sir stream to linear filter rep. **/
     public void addLinearRepresentation(SIRStream key, LinearFilterRepresentation rep) {
@@ -67,18 +73,18 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	if ((key == null) || (rep == null)) {
 	    throw new IllegalArgumentException("null in add linear rep");
 	}
-	if (this.filtersToLinearRepresentation.containsKey(key)) {
+	if (this.streamsToLinearRepresentation.containsKey(key)) {
 	    throw new IllegalArgumentException("tried to add key mapping.");
 	}
-	if (this.filtersToLinearRepresentation.containsValue(rep)) {
+	if (this.streamsToLinearRepresentation.containsValue(rep)) {
 	    throw new IllegalArgumentException("tried to add rep second time.");
 	}
-	this.filtersToLinearRepresentation.put(key,rep);
+	this.streamsToLinearRepresentation.put(key,rep);
 	checkRep();
     }
     /** gets an iterator over all of the linear representations that this LinearAnalyzer knows about **/
     public Iterator getFilterIterator() {
-	return this.filtersToLinearRepresentation.keySet().iterator();
+	return this.streamsToLinearRepresentation.keySet().iterator();
     }
     
     /**
@@ -121,7 +127,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
 	// short-circuit the case where we've already seen this stream
 	// (for dynamic programming partitioner)
-	if (filtersToLinearRepresentation.containsKey(self)) {
+	if (streamsToLinearRepresentation.containsKey(self) || nonLinearStreams.contains(self)) {
 	    return;
 	}
 
@@ -139,6 +145,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// so only try and visit the filter if both are non-zero
 	if ((peekRate == 0) || (pushRate == 0)) {
 	    LinearPrinter.println("  " + self.getIdent() + " is source/sink.");
+	    nonLinearStreams.add(self);
 	    return;
 	}
 
@@ -167,9 +174,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 				      "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
 	    }
 	    // add a mapping from the filter to its linear form.
-	    this.filtersToLinearRepresentation.put(self,
+	    this.streamsToLinearRepresentation.put(self,
 						   theVisitor.getLinearRepresentation());
-	} 
+	} else {
+	    nonLinearStreams.add(self);
+	}
 	// check that we have not violated the rep invariant
 	checkRep();
     }
@@ -180,7 +189,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
 	// short-circuit the case where we've already seen this stream
 	// (for dynamic programming partitioner)
-	if (filtersToLinearRepresentation.containsKey(self)) {
+	if (streamsToLinearRepresentation.containsKey(self) || nonLinearStreams.contains(self)) {
 	    return;
 	}
 
@@ -197,7 +206,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
 	// short-circuit the case where we've already seen this stream
 	// (for dynamic programming partitioner)
-	if (filtersToLinearRepresentation.containsKey(self)) {
+	if (streamsToLinearRepresentation.containsKey(self) || nonLinearStreams.contains(self)) {
 	    return;
 	}
 
@@ -224,8 +233,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 		childrenToWrap.add(currentKid);
 		LinearPrinter.println(" adding linear child:(" + currentKid + ")");
 	    } else {
-		// kid was non-linear.  If we're not refactoring
-		// linear children, then just quit here
+		// kid was non-linear.  This means that we won't be linear, so mark as such
+		nonLinearStreams.add(self);
+		// If we're not refactoring linear children, then just quit here
 		if (!refactorLinearChildren) {
 		    break;
 		} else {
@@ -233,7 +243,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 		    // and update the mapping from filters to LinearFilterRepresentations.
 		    LinearPrinter.println(" non-linear child:(" + currentKid + ")");
 		    LinearPrinter.println(" wrapping children.");
-		    doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
+		    doPipelineAdd(self, childrenToWrap, this.streamsToLinearRepresentation);
 		    // reset our list
 		    childrenToWrap = new LinkedList();
 		}
@@ -245,7 +255,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// whole pipeline as linear.)  Note: this doesn't add empty
 	// pipelines
 	if (refactorLinearChildren || childrenToWrap.size()==self.size()) {
-	    doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
+	    doPipelineAdd(self, childrenToWrap, this.streamsToLinearRepresentation);
 	}
 	// check to make sure that we didn't foobar ourselves.
 	checkRep();
@@ -371,7 +381,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
 	// short-circuit the case where we've already seen this stream
 	// (for dynamic programming partitioner)
-	if (filtersToLinearRepresentation.containsKey(self)) {
+	if (streamsToLinearRepresentation.containsKey(self) || nonLinearStreams.contains(self)) {
 	    return;
 	}
 
@@ -409,6 +419,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// if we had any non-linear children, give up.
 	if (nonLinearFlag) {
 	    LinearPrinter.println(" aborting split join combination  -- non-linear child stream detected.");
+	    nonLinearStreams.add(self);
 	    return;
 	}
 
@@ -449,6 +460,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// if we don't have a transform, we are done and return here
 	if (sjTransform == null) {  
 	    LinearPrinter.println(" no transform found. stop");
+	    nonLinearStreams.add(self);
 	    return;
 	}
 
@@ -459,6 +471,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    newRep = sjTransform.transform();
 	} catch (NoTransformPossibleException e) {
 	    LinearPrinter.println(" error performing transform: " + e.getMessage());
+	    nonLinearStreams.add(self);
 	    return;
 	}
 	
@@ -470,7 +483,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 				  "\n-->Constant Vector:\n" + newRep.getb());
 	}
 	// add a mapping from this split join to the new linear representation
-	this.filtersToLinearRepresentation.put(self, newRep);
+	this.streamsToLinearRepresentation.put(self, newRep);
     }
     
     
@@ -641,7 +654,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of filters that we have linear reps for. **/
     private int getFilterReps() {
 	int filterCount = 0;
-	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    if (keyIter.next() instanceof SIRFilter) {filterCount++;}
 	}
@@ -650,7 +663,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of pipelines that we have linear reps for. **/
     private int getPipelineReps() {
 	int count = 0;
-	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    if (keyIter.next() instanceof SIRPipeline) {count++;}
 	}
@@ -659,7 +672,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of splitjoins that we have linear reps for. **/
     private int getSplitJoinReps() {
 	int count = 0;
-	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    if (keyIter.next() instanceof SIRSplitJoin) {count++;}
 	}
@@ -668,7 +681,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** returns the number of feedbackloops that we have linear reps for. **/
     private int getFeedbackLoopReps() {
 	int count = 0;
-	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    if (keyIter.next() instanceof SIRFeedbackLoop) {count++;}
 	}
@@ -688,13 +701,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     private void checkRep() {
 	// make sure that all keys in FiltersToMatricies are strings, and that all
 	// values are LinearForms.
-	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	Iterator keyIter = this.streamsToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    Object o = keyIter.next();
 	    if (o == null) {throw new RuntimeException("Null key in LinearAnalyzer.");}
 	    if (!(o instanceof SIRStream)) {throw new RuntimeException("Non stream key in LinearAnalyzer");}
 	    SIRStream key = (SIRStream)o;
-	    Object val = this.filtersToLinearRepresentation.get(key);
+	    Object val = this.streamsToLinearRepresentation.get(key);
 	    if (val == null) {throw new RuntimeException("Null value found in LinearAnalyzer");}
 	    if (!(val instanceof LinearFilterRepresentation)) {
 		throw new RuntimeException("Non LinearFilterRepresentation found in LinearAnalyzer");

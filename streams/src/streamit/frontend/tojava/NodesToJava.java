@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.94 2005-03-28 18:29:30 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.95 2005-04-04 07:05:53 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -429,6 +429,9 @@ public class NodesToJava implements FEVisitor
             result = "setDelay(";
         } else if (name.startsWith("enqueue")) {
             result = name + "(";
+	} else if (name.startsWith("init_array")) {
+	    // take care of, e.g., init_array_1D_float(String filename, int size)
+	    result = name + "(";
 	} else {
 	    // Math.sqrt will return a double, but we're only supporting
 	    // float's now, so add a cast to float.  Not sure if this is

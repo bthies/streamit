@@ -18,6 +18,9 @@ package streamit.library;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import streamit.misc.DestroyedClass;
 
@@ -1712,6 +1715,70 @@ public class Operator extends DestroyedClass
 	}
 	return result;
     }
+
+    /**
+     * FILE READING FUNCTIONS -----------------------------------------------------------
+     */
+
+    /**
+     * Returns int[size] array of elements read from <filename>, which
+     * should be text with one value per line.
+     */
+    public int[] init_array_1D_int(String filename, int size) {
+	int[] result = new int[size];
+	try {
+	    BufferedReader reader = new BufferedReader(new java.io.FileReader(filename));
+	    for (int i=0; i<size; i++) {
+		String line = reader.readLine();
+		if (line==null) {
+		    throw new RuntimeException("File \"" + filename + "\" contains fewer than " + size + " elements.");
+		}
+		result[i] = Integer.parseInt(line);
+	    }
+	    if (reader.readLine()!=null) {
+		System.err.println("WARNING: file \"" + filename + "\" contains more elements than were read (" + size + " were read)");
+	    }
+	    reader.close();
+	} catch (FileNotFoundException e) {
+	    System.err.println("Could not find file \"" + filename + "\", needed to initialize an array.");
+	    System.exit(1);
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+	return result;
+    }
+    
+    /**
+     * Returns float[size] array of elements read from <filename>,
+     * which should be text with one value per line.
+     */
+    public float[] init_array_1D_float(String filename, int size) {
+	float[] result = new float[size];
+	try {
+	    BufferedReader reader = new BufferedReader(new java.io.FileReader(filename));
+	    for (int i=0; i<size; i++) {
+		String line = reader.readLine();
+		if (line==null) {
+		    throw new RuntimeException("File \"" + filename + "\" contains fewer than " + size + " elements.");
+		}
+		result[i] = Float.parseFloat(line);
+	    }
+	    if (reader.readLine()!=null) {
+		System.err.println("WARNING: file \"" + filename + "\" contains more elements than were read (" + size + " were read)");
+	    }
+	    reader.close();
+	} catch (FileNotFoundException e) {
+	    System.err.println("Could not find file \"" + filename + "\", needed to initialize an array.");
+	    System.exit(1);
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
+	return result;
+    }
+    
+    /**
+     * END FILE READING FUNCTIONS -----------------------------------------------------------
+     */
 
     /**
      * This is what shows up on nodes in the dot graph output of the

@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.18 2005-02-17 00:12:58 thies Exp $
+ * @version $Id: GetExprType.java,v 1.19 2005-04-04 07:05:45 thies Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -176,6 +176,23 @@ public class GetExprType extends FENullVisitor
 	// which ones are polymorphic.  --BFT
 	if (exp.getName().equals("abs")) {
 	    return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+	}
+
+	// account for array initializers:
+	//
+	//   int[size] init_array_1D_int(String filename, int size);
+	//   float[size] init_array_1D_float(String filename, int size);
+	//
+	// The length is the second argument.
+	if (exp.getName().indexOf("1D_int")>0) {
+	    Type base = new TypePrimitive(TypePrimitive.TYPE_INT);
+	    Expression length = (Expression)exp.getParams().get(1);
+	    return new TypeArray(base, length);
+	}
+	if (exp.getName().indexOf("1D_float")>0) {
+	    Type base = new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+	    Expression length = (Expression)exp.getParams().get(1);
+	    return new TypeArray(base, length);
 	}
         
         // Otherwise, we can assume that the only function calls are

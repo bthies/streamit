@@ -222,6 +222,7 @@ fn gather_numbers_init()
   fprintf(outputFile, "Performance Results\n\n");
   fprintf(outputFile, "Tiles in configuration: %d\n", gStreamItTiles);
   fprintf(outputFile, "Tiles assigned (to filters or joiners): %d\n", gStreamItTilesUsed);
+  fprintf(outputFile, "Final unroll factor used: %d\n", gStreamItUnrollFactor);
   fprintf(outputFile, "Run for %d steady state cycles.\n", quitAfter);
   fprintf(outputFile, "With %d items skipped for init.\n", skipPrints);
   fprintf(outputFile, "With %d items printed per steady state in sink.\n\n", printsPerSteady);

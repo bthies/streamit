@@ -168,6 +168,7 @@ public class MakefileGenerator
 	fw.write("global gStreamItTilesUsed = " + Layout.getTilesAssigned() + ";\n");
 	fw.write("global gStreamItTiles = " + RawBackend.rawRows * RawBackend.rawColumns +
 		 ";\n");
+	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 	
 	if (KjcOptions.outputs > 0) 

@@ -1300,6 +1300,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                           JExpression left,
                                           JExpression right) {
 
+	//do not print class creation expression
+	if (passParentheses(right) instanceof JQualifiedInstanceCreation ||
+	    passParentheses(right) instanceof JUnqualifiedInstanceCreation ||
+	    passParentheses(right) instanceof JQualifiedAnonymousCreation ||
+	    passParentheses(right) instanceof JUnqualifiedAnonymousCreation)
+	    return;
+
 	//print the correct code for array assignment
 	//this must be run after renaming!!!!!!
 	if (left.getType() == null || right.getType() == null) {
@@ -1430,6 +1437,15 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         prefix.accept(this);
         print(".length");
     }
+
+    public JExpression passParentheses(JExpression exp) 
+    {
+	while (exp instanceof JParenthesedExpression)
+	    exp = ((JParenthesedExpression)exp).getExpr();
+	
+	return exp;
+    }
+    
 
     /**
      * prints an array length expression

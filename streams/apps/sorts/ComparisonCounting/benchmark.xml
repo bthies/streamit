@@ -6,7 +6,6 @@
   the ordered index for each of the N elements by comparing it to every other
   element.
   </description>
-  <reference></reference>
   <implementations>  
     <impl lang="StreamIt">
       <file>ComparisonCounting.str</file>

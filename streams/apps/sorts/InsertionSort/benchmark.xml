@@ -7,7 +7,6 @@
   sort except that it tries to make larger jumps to minimize data
   reorderings.  
   </description>
-  <reference></reference>
   <implementations>  
     <impl lang="StreamIt">
       <file>InsertionSort.str</file>

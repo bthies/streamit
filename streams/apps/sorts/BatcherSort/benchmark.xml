@@ -5,7 +5,6 @@
   Identical to a Bitonic Sort, compares and swaps pairs of 
   elements in parallel. 
   </description>
-  <reference></reference>
   <implementations>  
     <impl lang="StreamIt">
       <file>BatcherSort.str</file>

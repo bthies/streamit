@@ -46,6 +46,18 @@ public class SIRFilter extends SIRStream {
 	this.outputType = outputType;
     }
 
+    /**
+     * Accepts visitor <v> at this node.
+     */
+    public void accept(SIRVisitor v) {
+	v.visitFilter(this,
+		      fields,
+		      methods,
+		      init,
+		      peek, pop, push,
+		      work,
+		      inputType, outputType);
+    }
 }
 
 

@@ -63,5 +63,14 @@ public class SIRJoiner extends SIROperator {
 	    return equalArrays(weights, obj.weights);
 	}
     }
+
+    /**
+     * Accepts visitor <v> at this node.
+     */
+    public void accept(SIRVisitor v) {
+	v.visitJoiner(this,
+		      type,
+		      weights);
+    }
 }
 

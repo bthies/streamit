@@ -15,12 +15,14 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.4 2001-09-25 14:19:25 thies Exp $
+## $Id: Makefile,v 1.5 2001-09-25 19:01:13 thies Exp $
 ##
 
 TOPDIR =	../..
 
 PACKAGE =	at/dms/kjc/sir
+
+SUBDIRS =	lowering
 
 ## ----------------------------------------------------------------------
 ## TOOLS
@@ -33,7 +35,8 @@ GRM1DEP =
 SCANNER1 =	../Kjc
 
 # classes
-JAVAFILES +=	SIRBuilder \
+JAVAFILES +=	SIRVisitor \
+		SIRBuilder \
 		SIRPrintStatement \
 		SIRLatency \
 		SIRLatencyMax \

@@ -36,4 +36,29 @@ public class SIRFeedbackLoop extends SIRStream {
      * item to be read by the joiner.
      */
     private JMethodDeclaration initPath;
+
+    /**
+     * Construct a new SIRPipeline with the given fields and methods.
+     */
+    public SIRFeedbackLoop(JFieldDeclaration[] fields,
+			   JMethodDeclaration[] methods) {
+	super(fields, methods);
+    }
+
+    /**
+     * Accepts visitor <v> at this node.
+     */
+    public void accept(SIRVisitor v) {
+	v.visitFeedbackLoop(this,
+			    fields,
+			    methods,
+			    init,
+			    delay,
+			    initPath);
+	/* visit components */
+	joiner.accept(v);
+	body.accept(v);
+	splitter.accept(v);
+	loop.accept(v);
+    }
 }

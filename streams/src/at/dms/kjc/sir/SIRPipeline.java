@@ -1,7 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
-import java.util.Vector;
+import java.util.LinkedList;
 
 /**
  * This represents a pipeline of stream structures, as would be
@@ -11,7 +11,7 @@ public class SIRPipeline extends SIRStream {
     /**
      * The elements of the pipeline.  Each element should be an SIRStream.
      */
-    private Vector elements;
+    private LinkedList elements;
 
     /**
      * Construct a new SIRPipeline with the given fields and methods.
@@ -20,7 +20,7 @@ public class SIRPipeline extends SIRStream {
 			JMethodDeclaration[] methods) {
 	super(fields, methods);
 	// initialize elements array
-	this.elements = new Vector();
+	this.elements = new LinkedList();
     }
 
     /**
@@ -33,8 +33,22 @@ public class SIRPipeline extends SIRStream {
     /**
      * Return i'th stream in this pipeline.
      */
-    public SIRStream elementAt(int i) {
-	return (SIRStream)elements.elementAt(i);
+    public SIRStream get(int i) {
+	return (SIRStream)elements.get(i);
+    }
+
+    /**
+     * Accepts visitor <v> at this node.
+     */
+    public void accept(SIRVisitor v) {
+	v.visitPipeline(this,
+			fields,
+			methods,
+			init);
+	/* visit components */
+	for (int i=0; i<elements.size(); i++) {
+	    ((SIRStream)elements.get(i)).accept(v);
+	}
     }
 }
 

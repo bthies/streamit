@@ -44,7 +44,7 @@ public class SinkUnroller extends at.dms.util.Utils
 		// unroll maximally
 		int oldUnroll = KjcOptions.unroll;
 		KjcOptions.unroll = 100000;
-		FieldProp.doPropagate((SIRStream)node.contents);
+		FieldProp.doPropagate((SIRStream)node.contents, true);
 		KjcOptions.unroll = KjcOptions.unroll;
 		/*
 		Unroller unroller;

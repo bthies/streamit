@@ -28,7 +28,7 @@ public class LinearOptimizer {
                      |C'  0 |
 
     */
-    public LinearOptimizer(LinearFilterRepresentation orig) {
+    public LinearOptimizer(LinearFilterRepresentation orig, boolean doStoreInputs) {
 	/*	
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
@@ -64,9 +64,10 @@ public class LinearOptimizer {
         }
 	*/
 
-	if(!orig.getD().isZero()) {	   
-	    orig.changeStoredInputs(orig.getStoredInputCount() + orig.getPopCount());
+	if((!orig.getD().isZero())&&doStoreInputs) {	   
+	    orig = orig.changeStoredInputs(orig.getStoredInputCount() + orig.getPopCount());
 	}
+	LinearPrinter.println("Added input states: \n" + orig);
 
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
@@ -78,7 +79,7 @@ public class LinearOptimizer {
 	totalMatrix.copyAt(0,states,orig.getB());
 	totalMatrix.copyAt(states,0,orig.getC());
 	totalMatrix.copyAt(states,states,orig.getD());
-	D = new FilterMatrix(outputs,inputs);
+	D = orig.getD();
 
 	initVec = new FilterVector(states);
 	initVec.copyAt(0,0,orig.getInit());
@@ -93,16 +94,11 @@ public class LinearOptimizer {
 	}
     }
 
-    private void addInputs() {
-
-
-    }
-
     // main function that does all the optimizations
     public LinearFilterRepresentation optimize() {
 
 	int s1, s2;
-				
+					
 	// remove unobservable states
 	transposeSystem();
 	s1 = reduceParameters(false);
@@ -115,15 +111,15 @@ public class LinearOptimizer {
 	if(s1 >= 0) {	   
 	    removeUnobservableStates(s1);
 	}
-	
-	LinearPrinter.println("After observable reduction, before reachable reduction: " + totalMatrix); 
+		
+	LinearPrinter.println("After observable reduction, before reachable reduction: \n" + totalMatrix + "\n" + initVec); 
 
 	// remove unreachable states 
 	s2 = reduceParameters(true);
 	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s2); 
 
-	LinearPrinter.println("Before QR algorithm: " + totalMatrix);
+	LinearPrinter.println("Before QR algorithm: \n" + totalMatrix + "\n" + initVec);
 
 	// for now, leave at least 1 state
 	s2 = Math.min(s2,states-2);			
@@ -136,7 +132,7 @@ public class LinearOptimizer {
 	}  		
 	cleanAll();
 
-	LinearPrinter.println("After state reduction, before min param: " + totalMatrix);
+	LinearPrinter.println("After state reduction, before min param: \n" + totalMatrix + "\n" + initVec);
 	
 	// minimally parametrize the system
 		
@@ -232,17 +228,26 @@ public class LinearOptimizer {
 	states = newStates;
     }
     
+
     // add constant state 1
     // makes all other init vector entries zero    
     private void zeroInitEntries() {
 	addConstantState();
 	
+	ComplexNumber tempComplex;
 	double temp;
 	
 	for(int i=0; i<states-1;i++) {
-	    temp = initVec.getElement(i).getReal();
-	    if(temp != 0.0) {		
-		addMultiple(states-1,i,-temp,true);
+	    tempComplex = initVec.getElement(i);
+	    if(!tempComplex.equals(ComplexNumber.ZERO)) {
+		// do NOT do row operations with values too close to MAX_PRECISION
+		// therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
+		if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
+		    temp = tempComplex.getReal();
+		    addMultiple(states-1,i,-temp,true);
+		    // set the value to be exactly zero (in case it is very small but non-zero)
+		    initVec.setElement(i,ComplexNumber.ZERO);
+		}	
 	    }
 	}		
     }
@@ -268,6 +273,8 @@ public class LinearOptimizer {
 		removeState(i);
 		temp_index--;
 	    }
+	    else
+		LinearPrinter.println("Did Not Remove Unreachable State");
 	}
     }
 
@@ -389,7 +396,9 @@ public class LinearOptimizer {
     // also does the appropriate transform to matrix C
     private void qr_Algorithm(int end_index) {
 
+	LinearPrinter.println("Start Off Diagonalize");
 	off_diagonalize(end_index);
+	LinearPrinter.println("Finished Off Diagonalize");
 
 	int total_entries = end_index + 1;
 
@@ -483,49 +492,52 @@ public class LinearOptimizer {
     }
 
 
-    // eliminates all zeros below the "off-diagonal" in A[0..end_index, 0..index]
+    // zeros out entries below the "off-diagonal" in A[0..end_index, 0..index]
     // the off-diagonal is the diagonal below the main diagonal
     private void off_diagonalize(int end_index) {
 
-	int j = 0;
 	double curr, temp, val;
-	boolean found = false;
+	int max_index; 
+	double max_val, temp_val;
+	ComplexNumber tempComplex;
 
-	for(int i=0; i<end_index-1; i++) {
+	for(int i=0; i<end_index; i++) {
 
-	    curr = totalMatrix.getElement(i+1,i).getReal();
-	    if(curr == 0.0) {
-		j = i+2;
-		found = false;
-		while((!found)&&(j<end_index)) {
-		    temp = totalMatrix.getElement(j,i).getReal();
-		    if(temp != 0.0) {
-			swap(j,i+1);
-			found = true;
-		    }
-		    j++;
+	    //partial pivoting
+	    max_index = i+1;
+	    max_val = Math.abs(totalMatrix.getElement(i+1,i).getReal());
+	    for(int l=i+2; l<=end_index; l++) {
+		temp_val = Math.abs(totalMatrix.getElement(l,i).getReal());
+		if(temp_val > max_val) {
+		    max_val = temp_val;
+		    max_index=l;
 		}
 	    }
-	    else {
-		found = true;
-	    }
+	    swap(max_index,i+1);
+
 		
-	    if(found) {
+	    if(!totalMatrix.getElement(i+1,i).equals(ComplexNumber.ZERO)) {
 		curr = totalMatrix.getElement(i+1,i).getReal();
 
-		for(int k=i+2; k<end_index; k++) {
-
-		    temp = totalMatrix.getElement(k,i).getReal();
-		    if(temp != 0.0) {
-			val = -temp/curr;
-			addMultiple(i+1,k,val,true);
+		for(int k=i+2; k<=end_index; k++) {
+		    tempComplex = totalMatrix.getElement(k,i);
+		    if((!tempComplex.equals(ComplexNumber.ZERO))) {
+			// do NOT do row operations with values too close to MAX_PRECISION
+			// therefore, we will use MAX_PRECISION_BUFFER, which is greater			    
+			if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {			
+			    temp = tempComplex.getReal();
+			    val = -temp/curr;
+			    addMultiple(i+1,k,val,true);
+			    
+			    // set the value to be exactly zero (in case it is very small but non-zero)
+			    totalMatrix.setElement(k,i,ComplexNumber.ZERO);
+			}
 		    }
 		}
-		
-	    }
+
+	    }	    
 	}
     }
-
 
 
     // eliminates entries in totalMatrix, totalPreMatrix

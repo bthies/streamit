@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.17 2004-08-16 02:48:03 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.18 2004-08-17 21:00:05 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -89,6 +89,12 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	// generate a new implementation as a single filter
 	LinearFilterRepresentation linearRep;
 	linearRep = this.linearityInformation.getLinearRepresentation(self);
+	boolean doStoreInputs;
+
+	if(self.insideFeedbackLoop())
+	    doStoreInputs = false;
+	else
+	    doStoreInputs = true;
 
 	LinearPrinter.println("AFTER getLinearRepresentation");
 
@@ -98,7 +104,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 		
 	LinearCost oldCost = linearRep.getCost();
 
-	LinearOptimizer opt = new LinearOptimizer(linearRep);
+	LinearOptimizer opt = new LinearOptimizer(linearRep,doStoreInputs);
 	LinearFilterRepresentation newRep = opt.optimize();
 	LinearCost newCost = newRep.getCost();
 

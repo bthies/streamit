@@ -80,7 +80,9 @@ class InitializationHoister extends SLIRReplacingVisitor {
 	}
 	
 	// to simplify compilation, remove constant arguments.
-	removeConstantArgs(self);
+	if (self.getTarget().needsInit()) {
+	    removeConstantArgs(self);
+	}
 				
 	// add <child, params> to parent
 	parent.add(self.getTarget(), self.getArgs());

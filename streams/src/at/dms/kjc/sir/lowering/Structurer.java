@@ -165,9 +165,9 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	// fill in the children
 	for (int i=0; i<children.size(); i++) {
 	    // the name of the type in the structure
-	    String typeName = ((SIROperator)children.get(i)).getName();
+	    String typeName = ((SIRStream)children.get(i)).getTypeNameInC();
 	    // the name for the variable in the structure
-	    String varName = ((SIROperator)children.get(i)).getRelativeName();
+	    String varName = ((SIRStream)children.get(i)).getRelativeName();
 	    Utils.assert(varName!=null, "Relative name null for " + 
 			 children.get(i) + " ; might be a child with a " + 
 			 "wrong parent field?");
@@ -233,15 +233,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				JMethodDeclaration[] methods) {
 	// flatten each method
 	for (int i=0; i<methods.length; i++) {
-	    /*
-	    System.out.println("renaming method... old name: " + 
-			       methods[i].getName());
-	    */
             flattenMethod(streamName, methods[i]);
-	    /*
-	    System.out.println("                   new name: " + 
-			       methods[i].getName());
-	    */
 	}
 	// change method calls to refer to new name, and to pass a
 	// data structure as the first argument
@@ -376,11 +368,11 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    return;
 	}
 	// create struct type
-	createStruct(self.getName(), self.getFields(), EMPTY_LIST);
+	createStruct(self.getTypeNameInC(), self.getFields(), EMPTY_LIST);
 	// add tape parameters to work function
 	//addTapeParameters(work);
 	// add closure-referencing to methods
-	flattenMethods(self.getName(), self.getMethods());
+	flattenMethods(self.getTypeNameInC(), self.getMethods());
     }
   
     /**
@@ -427,13 +419,13 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
-	postVisit(self.getName(), self.getFields(), self.getMethods(), self.getChildren());
+	postVisit(self.getTypeNameInC(), self.getFields(), self.getMethods(), self.getChildren());
     }
   
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
-	postVisit(self.getName(), self.getFields(), self.getMethods(), self.getParallelStreams());
+	postVisit(self.getTypeNameInC(), self.getFields(), self.getMethods(), self.getParallelStreams());
     }
   
     /* post-visit a feedbackloop */
@@ -444,9 +436,9 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	children.add(self.getBody());
 	children.add(self.getLoop());
 	// do visit
-	postVisit(self.getName(), self.getFields(), self.getMethods(), children);
+	postVisit(self.getTypeNameInC(), self.getFields(), self.getMethods(), children);
         // deal with initPath, too
-        //flattenMethod(self.getName(), initPath);
+        //flattenMethod(self.getTypeNameInC(), initPath);
     }
 }
 

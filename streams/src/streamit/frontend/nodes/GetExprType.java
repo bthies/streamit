@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.1 2002-07-15 19:52:48 dmaze Exp $
+ * $Id: GetExprType.java,v 1.2 2002-07-15 19:59:46 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -64,6 +64,9 @@ public class GetExprType implements FEVisitor
     public Object visitExprField(ExprField exp)
     {
         Type base = (Type)exp.getLeft().accept(this);
+        // If the base is a complex type, a field of it is double.
+        if (base.isComplex())
+            return new TypePrimitive(TypePrimitive.TYPE_DOUBLE);
         // ASSERT: base is a TypeStruct.
         return ((TypeStruct)base).getType(exp.getName());
     }

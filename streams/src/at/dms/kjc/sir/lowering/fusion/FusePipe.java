@@ -265,13 +265,13 @@ public class FusePipe {
      */
     private static boolean isFusable(SIRStream str) {
 	// don't allow two-stage filters that peek
-	if (str instanceof SIRTwoStageFilter) {
+	/*if (str instanceof SIRTwoStageFilter) {
 	    // can fuse in this specific case
 	    if ((str.getParent().indexOf(str)==0) && (((SIRTwoStageFilter)str).getInitPush()==0)) {
 		return true;
-	    }
+		}
 	    return false;
-	}
+	    }*/
 	if ((str instanceof SIRFilter) && ((SIRFilter)str).getWork()!=null) {
 	    return true;
 	} else {
@@ -581,7 +581,7 @@ public class FusePipe {
 			((JStatement)it.next()).accept(fuser);
 		    }
 		    statements.addStatement(initBody);
-		    if(curPhase.num-1>0)
+		    if(curPhase.num>1)
 			statements.addStatement(makeForLoop(body,
 							    curPhase.loopCounter,
 							    new 
@@ -596,6 +596,9 @@ public class FusePipe {
 							    JIntLiteral(curPhase.num))
 					    );
 		}
+	    } else {
+		if(init&&(cur.filter instanceof SIRTwoStageFilter))
+		    System.err.println("Warning: Two-Stage filter "+cur.filter+" did not fire in init phase.");
 	    }
 	    // if there's any peek buffer, store items to it
 	    if (cur.peekBufferSize>0) {
@@ -960,10 +963,20 @@ public class FusePipe {
 	} else {
 	    // calculate the peek, pop, and push count for the fused
 	    // filter in the INITIAL state
+	    /*int initPop = first.init.num * first.filter.getPopInt();
+	      int initPeek =
+	      (first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
+	      int initPush = last.init.num * last.filter.getPushInt();*/
+	    
+	    
 	    int initPop = first.init.num * first.filter.getPopInt();
+	    if(first.filter instanceof SIRTwoStageFilter)
+		initPop = ((SIRTwoStageFilter)first.filter).getInitPop()+(first.init.num-1) * first.filter.getPopInt();
 	    int initPeek =
 		(first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
 	    int initPush = last.init.num * last.filter.getPushInt();
+	    if(last.filter instanceof SIRTwoStageFilter)
+		initPush = ((SIRTwoStageFilter)last.filter).getInitPush()+(last.init.num-1) * last.filter.getPushInt();
 	    
 	    // make a new filter to represent the fused combo
 	    result = new SIRTwoStageFilter(first.filter.getParent(),

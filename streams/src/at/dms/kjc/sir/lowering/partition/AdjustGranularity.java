@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering;
 
 import java.util.*;
 import at.dms.util.*;
+import at.dms.kjc.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
@@ -73,6 +74,7 @@ public class AdjustGranularity {
     private static void doFFT(SIRStream str) {
 	RawFlattener rawFlattener;
 
+	StreamItDot.printGraph(str, "before.dot");
 	System.err.println("Working on FFT...");
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("before-adjust.dot");
@@ -80,7 +82,13 @@ public class AdjustGranularity {
 			   " tiles");
 	WorkEstimate.getWorkEstimate(str).printWork();
 
-	SJFlatten.doFlatten(str);
+	//FuseSplit.fuse((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get(1)).get(2));
+	//	FuseSplit.fuse((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get(1)).get(1));
+
+	FuseSplit.doFlatten(str);
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+	FuseAll.fuse(str);
 
 	Namer.assignNames(str);
 	rawFlattener = new RawFlattener(str);
@@ -88,6 +96,7 @@ public class AdjustGranularity {
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
 			   " tiles");
 	WorkEstimate.getWorkEstimate(str).printWork();
+	StreamItDot.printGraph(str, "after.dot");
     }
 
     private static void doFM16_2(SIRStream str) {

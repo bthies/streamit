@@ -36,6 +36,8 @@ public class Flattener {
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
 
+	AdjustGranularity.doit(str, -1);
+
 	/*
 	SIRFilter toDuplicate = ((SIRFilter)
 				 ((SIRPipeline)

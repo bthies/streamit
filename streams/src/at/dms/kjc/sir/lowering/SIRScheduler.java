@@ -164,12 +164,12 @@ public class SIRScheduler implements Constants {
 	// set it to compute the schedule of <schedStream>
 	scheduler.useStream(schedStream);
 	// debugging output
-	scheduler.print(System.out);
+	//scheduler.print(System.out);
 	// compute a schedule
 	Schedule result = (Schedule)scheduler.computeSchedule();
 	// debugging output
-	printSchedule(result.getSteadySchedule(), "sirscheduler steady state");
-	printSchedule(result.getInitSchedule(), "sirscheduler initialization");
+	//printSchedule(result.getSteadySchedule(), "sirscheduler steady state");
+	//printSchedule(result.getInitSchedule(), "sirscheduler initialization");
 	// return schedule
 	return result;
     }

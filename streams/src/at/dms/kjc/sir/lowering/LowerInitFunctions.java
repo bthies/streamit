@@ -335,8 +335,10 @@ public class LowerInitFunctions implements StreamVisitor {
 	init.addStatement(new LIRSetWork(LoweringConstants.
 					 getStreamContext(),
 					 new LIRFunctionPointer(
+					 self.getWork().getName())));
+					 /*
 					 LoweringConstants.
-					 getWorkName(self))));
+					 getWorkName(self))));*/
     }
 
     /* visit a splitter */

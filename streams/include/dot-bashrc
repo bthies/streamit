@@ -56,3 +56,5 @@ CLASSPATH=${CLASSPATH}:${PRE}ui.views${VER}/views.jar
 CLASSPATH=${CLASSPATH}:${PRE}core.runtime${VER}/runtime.jar
 CLASSPATH=${CLASSPATH}:${PRE}ui.workbench${VER}/workbench.jar
 CLASSPATH=${CLASSPATH}:${PRE}text${VER}/text.jar
+CLASSPATH=${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
+CLASSPATH=${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar

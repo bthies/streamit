@@ -55,5 +55,7 @@ setenv CLASSPATH ${CLASSPATH}:${PRE}ui.views${VER}/views.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}core.runtime${VER}/runtime.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}ui.workbench${VER}/workbench.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}text${VER}/text.jar
+setenv CLASSPATH ${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
+setenv CLASSPATH ${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar
 unset PRE
 unset VER

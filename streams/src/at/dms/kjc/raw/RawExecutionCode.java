@@ -230,7 +230,11 @@ public class RawExecutionCode extends at.dms.util.Utils
 	     bottomPeek + 
 	     Math.max((initFire - 2), 0) * pop);
 	
-	//System.out.println(remaining);
+	System.out.println("Remaining for " + filter + " " + remaining + 
+			   "(" + upStreamItems + " >>> " + 
+			   (prePeek + 
+			    bottomPeek + 
+			    Math.max((initFire - 2), 0) * pop) + ")");
     }
     
     /* node is not directly connected upstream to a splitter, this function
@@ -310,7 +314,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//get the number of item current produces
 	int currentUpStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
 						 current.edges[0]);
-
+	System.out.println(currentUpStreamItems);
 	/*
 	  if (getUpStreamItems(RawBackend.initExecutionCounts, node) != 
 	  ((int)(currentUpStreamItems * roundRobinMult)))

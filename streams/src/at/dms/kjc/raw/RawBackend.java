@@ -199,6 +199,10 @@ public class RawBackend {
 	    //create the execution counts for other passes
 	    createExecutionCounts(str, graphFlattener);
 
+	    //dump the flatgraph of the application, must be called after createExecutionCounts
+	    graphFlattener.dumpGraph("flatgraph.dot");
+
+
 	    //Generate number gathering simulator code
 	    if (KjcOptions.numbers > 0) {
 		// do this on demand from NumberGathering
@@ -465,5 +469,15 @@ public class RawBackend {
 	return parents[parents.length -1];
     }
 
+    public static int getMult(FlatNode node, boolean init)
+    {
+	Integer val = 
+	    ((Integer)(init ? initExecutionCounts.get(node) : steadyExecutionCounts.get(node)));
+	if (val == null)
+	    return 0;
+	else 
+	    return val.intValue();
+    }
+    
 }
 

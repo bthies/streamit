@@ -209,6 +209,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
 	    current.setIdent(clazz.getIdent());
+	    current.setInputType(CStdType.Null);
+	    current.setOutputType(CStdType.Null);
 	    parentStream = current;
 	    return current;
 	}

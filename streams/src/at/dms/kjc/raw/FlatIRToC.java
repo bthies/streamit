@@ -391,12 +391,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//right now array var definition is separate from allocation
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition
-	
-
 	if (isWork && type.isArrayType()) {
-	     return;
+	    String[] dims = ArrayDim.findDim(filter, ident);
+	    //but only do this if the array has corresponding 
+	    //new expression, otherwise print the def... 
+	    if (!(dims == null)) {
+		return;
+	    }
 	}
-	
 	
 	if (expr!=null) {
 	    printLocalType(type);

@@ -44,7 +44,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	//convert the communication
 	//all the communication is in the work function
 	filter.getWork().accept(new DirectConvertCommunication());
-	
+	//generate the raw main function 
 	rawMainFunction(filter);
 	return true;
     }

@@ -93,8 +93,6 @@ public class RemoveGlobals extends at.dms.util.Utils
 	//loop thru all helper methods and see if any has a
 	//call
 	
-	System.out.println(filter.getName());
-
 	JMethodDeclaration rawMain = RemoveGlobals.getRawMain(filter);
 	
 	for (int i = 0; i < methods.length; i++) {
@@ -344,6 +342,9 @@ public class RemoveGlobals extends at.dms.util.Utils
 		JVariableDefinition def = fields[i].getVariable();
 		localVariables.add(def);
 		
+		if(f.getName().startsWith("source")) {
+		    System.out.println(def.getIdent());
+		}
 		rawMainBlock.addStatementFirst
 		    (new JVariableDeclarationStatement
 		     (null, def, null));

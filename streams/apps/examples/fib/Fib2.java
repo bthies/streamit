@@ -1,15 +1,15 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib2.java,v 1.2 2001-10-12 20:17:31 dmaze Exp $
+ * $Id: Fib2.java,v 1.3 2001-10-12 20:25:41 dmaze Exp $
  */
 
 import streamit.*;
 
-class Fib extends Pipeline
+public class Fib2 extends Pipeline
 {
     static public void main (String[] t)
     {
-        Fib test = new Fib();
+        Fib2 test = new Fib2();
         test.run();
     }
     
@@ -23,8 +23,8 @@ class Fib extends Pipeline
                     setJoiner(WEIGHTED_ROUND_ROBIN(0, 1));
                     setBody(new Filter()
                         {
-                            Channel input = new Channel(Integer.TYPE, 1, 1);
-                            Channel output = new Channel(Integer.TYPE, 1);
+                            Channel input = new Channel(Integer.TYPE, 2);
+                            Channel output = new Channel(Integer.TYPE, 3);
                             public void work()
                             {
                                 int a = input.popInt();
@@ -33,6 +33,15 @@ class Fib extends Pipeline
                                 output.pushInt(result);
                                 output.pushInt(b);
                                 output.pushInt(result);
+                            }
+                        });
+                    setLoop(new Filter()
+                        {
+                            Channel input = new Channel(Integer.TYPE, 1);
+                            Channel output = new Channel(Integer.TYPE, 1);
+                            public void work()
+                            {
+                                output.pushInt(input.popInt());
                             }
                         });
                     setSplitter(WEIGHTED_ROUND_ROBIN(1, 2));

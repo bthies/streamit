@@ -223,7 +223,7 @@ public class LatencyEdge extends Misc implements SDEPData
     {
         dstChannel = -1;
         srcChannel = -1;
-        
+
         srcUpstream = true;
 
         if (edge1.getSrc() == edge2.getSrc()
@@ -392,10 +392,13 @@ public class LatencyEdge extends Misc implements SDEPData
         }
         else
         {
+            int nSteadyStates =
+                (nDstPhase - numInitDstExec) / numSteadyDstExec;
             int nSmallerDstPhase =
                 ((nDstPhase - numInitDstExec) % numSteadyDstExec)
                     + numInitDstExec;
-            return dst2srcDependency[nSmallerDstPhase];
+            return dst2srcDependency[nSmallerDstPhase]
+                + nSteadyStates * numSteadySrcExec;
         }
     }
 

@@ -95,13 +95,16 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         return newNode;
     }
 
-    public SDEPData computeSDEP(LatencyNode upstreamNode, LatencyNode downstreamNode)
+    public SDEPData computeSDEP(
+        LatencyNode upstreamNode,
+        LatencyNode downstreamNode)
     {
         // first find all the edges that need to be traversed when figuring
         // out the dependencies between nodes
         OSet edgesToTraverse;
         {
-            StreamInterface ancestor = findLowestCommonAncestor(upstreamNode, downstreamNode);
+            StreamInterface ancestor =
+                findLowestCommonAncestor(upstreamNode, downstreamNode);
 
             edgesToTraverse =
                 visitGraph(
@@ -127,14 +130,23 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 OSetIterator edgesLastIter = edgesToTraverse.end();
                 OSetIterator upstreamEdgesLastIter = edgesUpstream.end();
 
+                DLList uselessEdges = new DLList();
+
                 for (; !edgesIter.equals(edgesLastIter); edgesIter.next())
                 {
                     // if the edgesUpstream set doesn't have this edge,
-                    // remove it from the set
+                    // store it to be removee it from the set
                     if (edgesUpstream
                         .find(edgesIter.get())
                         .equals(upstreamEdgesLastIter))
-                        edgesToTraverse.erase(edgesIter);
+                        uselessEdges.pushBack(edgesIter.get());
+                }
+
+                // remove useless edges
+                while (!uselessEdges.empty())
+                {
+                    edgesToTraverse.erase(uselessEdges.front().get());
+                    uselessEdges.popFront();
                 }
 
                 // now edgesToTraverse holds all edges that can be traversed
@@ -204,6 +216,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         {
             OSetIterator nodesToVisitIter = nodesToVisit.begin();
             LatencyNode node = (LatencyNode)nodesToVisitIter.get();
+            nodesToVisit.erase (nodesToVisitIter);
 
             DLList_const dependants = node.getDependants();
             DLListIterator dependantIter = dependants.begin();
@@ -217,6 +230,11 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 LatencyEdge edge = (LatencyEdge)dependantIter.get();
                 LatencyNode edgeSrc = edge.getSrc();
                 LatencyNode edgeDst = edge.getDst();
+
+                // if this edge doesn't need to be traversed, don't
+                OSetIterator edgeDstNodeIter = edgesToTraverse.find(edge);
+                if (edgeDstNodeIter.equals(edgesLastIter))
+                    continue;
 
                 // create an edge from upstreamNode to edgeDst
                 {
@@ -260,11 +278,6 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                     nodes2latencyEdges.insert(edgeDst, newEdge);
                 }
 
-                // if this edge doesn't need to be traversed, don't
-                OSetIterator edgeDstNodeIter = edgesToTraverse.find(edge);
-                if (edgeDstNodeIter.equals(edgesLastIter))
-                    continue;
-
                 // find how many more edges need to lead to this node
                 int nodeNumEdges =
                     ((Integer)nodes2numEdges.find(edge.getDst()).getData())
@@ -287,8 +300,8 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             }
         }
 
-        ERROR("Not done yet");
-        return (LatencyEdge)(nodes2latencyEdges.find(downstreamNode).getData());
+        return (LatencyEdge)
+            (nodes2latencyEdges.find(downstreamNode).getData());
     }
 
     public OSet visitGraph(
@@ -322,7 +335,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 DLListIterator edgeIter = upstreamEdges.begin();
                 DLListIterator lastEdgeIter = upstreamEdges.end();
 
-                for (; edgeIter.equals(lastEdgeIter); edgeIter.next())
+                for (; !edgeIter.equals(lastEdgeIter); edgeIter.next())
                 {
                     LatencyEdge edge = (LatencyEdge)edgeIter.get();
                     ASSERT(edge.getDst() == node);
@@ -337,7 +350,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
                     // visit the edge                        
                     if (visitEdges)
-                        nodesVisited.insert(edge);
+                        resultNodesNEdges.insert(edge);
 
                     // if I've visited the node already once, there's no point
                     // in visiting it again!
@@ -361,7 +374,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 DLListIterator edgeIter = downstreamEdges.begin();
                 DLListIterator lastEdgeIter = downstreamEdges.end();
 
-                for (; edgeIter.equals(lastEdgeIter); edgeIter.next())
+                for (; !edgeIter.equals(lastEdgeIter); edgeIter.next())
                 {
                     LatencyEdge edge = (LatencyEdge)edgeIter.get();
                     ASSERT(edge.getSrc() == node);
@@ -376,7 +389,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
                     // visit the edge                        
                     if (visitEdges)
-                        nodesVisited.insert(edge);
+                        resultNodesNEdges.insert(edge);
 
                     // if I've visited the node already once, there's no point
                     // in visiting it again!

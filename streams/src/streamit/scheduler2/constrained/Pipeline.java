@@ -56,7 +56,7 @@ public class Pipeline
 
             // add self to the two nodes
             topNode.addDependency(edge);
-            topNode.addDependency(edge);
+            bottomNode.addDependency(edge);
         }
     }
 

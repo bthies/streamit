@@ -25,6 +25,14 @@ public class SIRPipeline extends SIRStream {
     }
 
     /**
+     * Returns the output type of this.
+     */
+    public CType getOutputType() {
+	// output type is output type of last element in list
+	return ((SIRStream)elements.getLast()).getOutputType();
+    }
+    
+    /**
      * Add a stream to the pipeline.
      */
     public void add(SIRStream str) {

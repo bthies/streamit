@@ -39,7 +39,13 @@ public abstract class SIRStream extends SIROperator {
 	this.methods = null;
     }
 
-       /*
+    
+    /**
+     * Returns the output type of this.
+     */
+    public abstract CType getOutputType();
+    
+    /*
      * Set the fields member variable 
      */
     public void setFields (JFieldDeclaration[] f) {

@@ -54,6 +54,14 @@ public class SIRFeedbackLoop extends SIRStream {
     }
 
     /**
+     * Returns the output type of this.
+     */
+    public CType getOutputType() {
+	// return output type of body
+	return body.getOutputType();
+    }
+    
+    /**
      * Accepts visitor <v> at this node.
      */
     public void accept(StreamVisitor v) {

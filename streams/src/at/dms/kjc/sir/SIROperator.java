@@ -3,6 +3,9 @@ package at.dms.kjc.sir;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.lowering.Namer;
 
+import java.util.List;
+import java.util.LinkedList;
+
 /**
  * This represents an operator in the stream graph.
  */
@@ -54,4 +57,21 @@ public abstract class SIROperator extends at.dms.util.Utils {
     public SIRStream getParent() {
 	return parent;
     }
+    
+    /**
+     * Returns list of all parents.  The first element of the list is
+     * the immediate parent of this, and the last element is the final
+     * non-null ancestor of this.
+     */
+    public SIRStream[] getParents() {
+	LinkedList result = new LinkedList();
+	SIRStream parent = getParent();
+	// make list of parents
+	while (parent!=null) {
+	    result.add(parent);
+	    parent = parent.getParent();
+	}
+	return (SIRStream[])result.toArray(new SIRStream[0]);
+    }
+
 }

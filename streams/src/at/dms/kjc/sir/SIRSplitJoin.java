@@ -21,6 +21,16 @@ public class SIRSplitJoin extends SIRStream {
     private SIRStream elements[];
 
     /**
+     * Returns the output type of this.
+     */
+    public CType getOutputType() {
+	// output type should be output type of any of the elements.
+	// Assume that this is checked by semantic checker, and here
+	// just return the output type of the first element.
+	return elements[0].getOutputType();
+    }
+    
+    /**
      * Accepts visitor <v> at this node.
      */
     public void accept(StreamVisitor v) {

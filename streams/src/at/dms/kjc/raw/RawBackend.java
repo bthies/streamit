@@ -158,8 +158,6 @@ public class RawBackend {
 	//Layout.handAssign(graphFlattener.top);
 	System.out.println("Assign End.");
 
-	//Generate the switch code	
-	CalcBufferSize.createBufferSizePow2(graphFlattener.top);
 
 	//if rate matching is requested, check if we can do it
 	//if we can, then keep KjcOptions.rateMatch as true, 

@@ -14,12 +14,14 @@ import at.dms.compiler.TokenReference;
  * This class breaks up arrays into local vars as much as possible
  */
 public class ArrayDestroyer extends SLIRReplacingVisitor {
-    private HashMap targets;    
+    private HashMap targets;
+    private final HashMap targetsField;
     private HashMap replaced;
-    private HashMap varDefs;
+    //private HashMap varDefs;
     private boolean deadend;
 
     public ArrayDestroyer() {
+	targetsField=new HashMap();
 	replaced=new HashMap();
 	deadend=false;
     }
@@ -70,16 +72,15 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 			destroyArrays(child);
 		    }
 	    }
-	if (str instanceof SIRFilter)
+	if (str instanceof SIRFilter) {
 	    for (int i = 0; i < str.getMethods().length; i++) {
-		varDefs=new HashMap();
+		//varDefs=new HashMap();
 		str.getMethods()[i].accept(this);
 	    }
+	    destroyFieldArrays((SIRFilter)str);
+	}
     }
     
-    /**
-     * prints a method declaration
-     */
     public Object visitMethodDeclaration(JMethodDeclaration self,
 					 int modifiers,
 					 CType returnType,
@@ -87,6 +88,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 					 JFormalParameter[] parameters,
 					 CClassType[] exceptions,
 					 JBlock body) {
+	replaced.clear();
+	final boolean init=ident.startsWith("init");
 	for (int i = 0; i < parameters.length; i++) {
 	    if (!parameters[i].isGenerated()) {
 		parameters[i].accept(this);
@@ -97,7 +100,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    final HashMap unsafe=new HashMap();
 	    body.accept(new SLIRReplacingVisitor() {
 		    /**
-		     * If arrays used in any way except in array access then remove from targets
+		     * If vars used in any way except in array access then remove from targets
 		     */
 		    public Object visitLocalVariableExpression(JLocalVariableExpression self2,
 							       String ident2) {
@@ -106,6 +109,20 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 			return self2;
 		    }
 
+		    /**
+		     * If fields used in any way except in array access then remove from targets
+		     */
+		    public Object visitFieldExpression(JFieldAccessExpression self,
+						       JExpression left,
+						       String ident) {
+			if(!init) {
+			    targetsField.remove(self.getIdent());
+			    unsafe.put(self.getIdent(),Boolean.TRUE);
+			    return self;
+			}
+			return super.visitFieldExpression(self,left,ident);
+		    }
+		    
 		    /**
 		     * Considers target
 		     */
@@ -116,17 +133,32 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 			    accessor.accept(this);
 			    //if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
 			    if(prefix instanceof JLocalVariableExpression) {
-				if(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable()))
+				JLocalVariable var=((JLocalVariableExpression)prefix).getVariable();
+				if(!unsafe.containsKey(var))
 				    if(accessor instanceof JIntLiteral) {
-					HashMap map=(HashMap)targets.get(((JLocalVariableExpression)prefix).getVariable());
+					HashMap map=(HashMap)targets.get(var);
 					if(map==null) {
 					    map=new HashMap();
-					    targets.put(((JLocalVariableExpression)prefix).getVariable(),map);
+					    targets.put(var,map);
 					}
 					map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
 				    } else {
-					targets.remove(((JLocalVariableExpression)prefix).getVariable());
-					unsafe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
+					targets.remove(var);
+					unsafe.put(var,Boolean.TRUE);
+				    }
+			    } else if(!init&&(prefix instanceof JFieldAccessExpression)&&(((JFieldAccessExpression)prefix).getPrefix() instanceof JThisExpression)) {
+				String ident=((JFieldAccessExpression)prefix).getIdent();
+				if(!unsafe.containsKey(ident))
+				    if(accessor instanceof JIntLiteral) {
+					HashMap map=(HashMap)targetsField.get(ident);
+					if(map==null) {
+					    map=new HashMap();
+					    targetsField.put(ident,map);
+					}
+					map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
+				    } else {
+					targetsField.remove(ident);
+					unsafe.put(ident,Boolean.TRUE);
 				    }
 			    } else {
 				deadend=true;
@@ -169,10 +201,59 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	return self;
     }
 
+    public void destroyFieldArrays(SIRFilter filter) {
+	replaced.clear();
+	Set keySet=targetsField.keySet();
+	String[] names=new String[keySet.size()];
+	keySet.toArray(names);
+	for(int i=0;i<names.length;i++) {
+	    String name=names[i];
+	    //CType type=(CType)((HashMap)targetsField.get(name)).remove(Boolean.TRUE);
+	    CType type=getType(name,filter);
+	    keySet=((HashMap)targetsField.get(name)).keySet();
+	    Integer[] ints=new Integer[keySet.size()];
+	    keySet.toArray(ints);
+	    int top=0;
+	    for(int j=0;j<ints.length;j++) {
+		int newInt=ints[j].intValue();
+		if(newInt>top)
+		    top=newInt;
+	    }
+	    String[] newFields=new String[top+1];
+	    for(int j=0;j<ints.length;j++) {
+		int newInt=ints[j].intValue();
+		JFieldDeclaration newField=toField(name,newInt,type);
+		filter.addField(newField);
+		newFields[newInt]=newField.getVariable().getIdent();
+	    }
+	    replaced.put(name,newFields);
+	}
+	JMethodDeclaration[] methods=filter.getMethods();
+	for(int i=0;i<methods.length;i++) {
+	    JMethodDeclaration method=methods[i];
+	    if(!(method.getName().startsWith("work")||method.getName().startsWith("init")))
+		method.getBody().accept(this);
+	}
+    }
+
+    private CType getType(String name,SIRFilter filter) {
+	JFieldDeclaration[] fields=filter.getFields();
+	for(int i=0;i<fields.length;i++) {
+	    JVariableDefinition var=fields[i].getVariable();
+	    if(var.getIdent().equals(name))
+		return var.getType();
+	}
+	return null;
+    }
+
     private JVariableDefinition toVar(JLocalVariable var,int idx) {
 	return new JVariableDefinition(null,0,((CArrayType)var.getType()).getBaseType(),var.getIdent()+"__destroyed_"+idx,null);
     }
 
+    private JFieldDeclaration toField(String name,int idx,CType type) {
+	return new JFieldDeclaration(null,new JVariableDefinition(null,0,((CArrayType)type).getBaseType(),name+"__destroyed_"+idx,null),null,null);
+    }
+    
     public Object visitArrayAccessExpression(JArrayAccessExpression self,
 					     JExpression prefix,
 					     JExpression accessor) {
@@ -184,6 +265,11 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    JLocalVariable[] varArray=(JLocalVariable[])replaced.get(((JLocalVariableExpression)prefix).getVariable());
 	    if(varArray!=null)
 		return new JLocalVariableExpression(null,varArray[((JIntLiteral)accessor).intValue()]);
+	}
+	if((prefix instanceof JFieldAccessExpression)&&(((JFieldAccessExpression)prefix).getPrefix() instanceof JThisExpression)&&(accessor instanceof JIntLiteral)) {
+	    String[] fieldArray=(String[])replaced.get(((JFieldAccessExpression)prefix).getIdent());
+	    if(fieldArray!=null)
+		return new JFieldAccessExpression(null,((JFieldAccessExpression)prefix).getPrefix(),fieldArray[((JIntLiteral)accessor).intValue()],null);
 	}
 	return self;
     }

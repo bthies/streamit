@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.44 2003-10-14 20:59:42 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.45 2003-10-14 21:08:31 dmaze Exp $
  **/
 package streamittest;
 
@@ -169,6 +169,13 @@ public class TestBenchmarks extends StreamITTestCase {
         doMake(root, "more-imem"); 
         doRunTest(root, "LinkedVocoderToplevel.java", 0, 1);
         doCompareTest(root, "LinkedVocoderToplevel.java", "LinkedVocoderToplevel.out");
+
+        doSyntaxConvertTest(root, "VocoderTopLevel.str",
+                            "VocoderTopLevel.java");
+        doCompileTest(root, "VocoderTopLevel.java");
+        doRunTest(root, "VocoderTopLevel.java", 0, 1);
+        doCompareTest(root, "VocoderTopLevel.java",
+                      "LinkedVocoderToplevel.out");
    }
 
     public void testMatMulBlock()

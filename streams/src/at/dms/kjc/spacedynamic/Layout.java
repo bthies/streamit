@@ -309,43 +309,47 @@ public class Layout extends at.dms.util.Utils implements
 
     public void handAssign() 
     {
-	System.out.println("Enter desired tile for each filter...");
+	System.out.println("Enter desired tile for each filter of " + 
+			   streamGraph.getStaticSubGraphs().length + " subgraphs: ");
 	inputBuffer = new BufferedReader(new InputStreamReader(System.in));
-	Iterator keys = assigned.iterator();
-	while (keys.hasNext()) {
-	    handAssignNode((FlatNode)keys.next());
-	}
-	//System.out.println("Final Cost: " + placementCost());
-	dumpLayout("layout.dot");
-    }
 
-    private void handAssignNode(FlatNode node) 
-    {
-	//Assign a filter, joiner to a tile 
-	//perform some error checking.
-	while (true) {
-	    int tileNumber;
-	    System.out.print(node.getName() + " of " + streamGraph.getParentSSG(node) + ": ");
-	    try {
-		tileNumber = Integer.valueOf(inputBuffer.readLine()).intValue();
-	    }
-	    catch (Exception e) {
-		System.out.println("Bad number!");
-		continue;
-	    }
-	    if (tileNumber < 0 || tileNumber >= rawChip.getTotalTiles()) {
-		System.out.println("Bad tile number!");
-		continue;
-	    }
-	    RawTile tile = rawChip.getTile(tileNumber);
-	    if (SIRassignment.values().contains(tile)) {
-		System.out.println("Tile Already Assigned!");
-		continue;
-	    }
-	    //other wise the assignment is valid, assign and return!!
-	    assign(tile, node);
-	    return;
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    Iterator flatNodes = ssg.getFlatNodes().iterator();
+	    while (flatNodes.hasNext()) {
+		FlatNode node = (FlatNode)flatNodes.next();
+	    
+		//do not try to assign a node that should not be assigned
+		if (!assigned.contains(node))
+		    continue;
+		//Assign a filter, joiner to a tile 
+		//perform some error checking.
+		while (true) {
+		    int tileNumber;
+		    System.out.print(node.getName() + " of " + ssg + ": ");
+		    try {
+			tileNumber = Integer.valueOf(inputBuffer.readLine()).intValue();
+		    }
+		    catch (Exception e) {
+			System.out.println("Bad number!");
+			continue;
+		    }
+		    if (tileNumber < 0 || tileNumber >= rawChip.getTotalTiles()) {
+			System.out.println("Bad tile number!");
+			continue;
+		    }
+		    RawTile tile = rawChip.getTile(tileNumber);
+		    if (SIRassignment.values().contains(tile)) {
+			System.out.println("Tile Already Assigned!");
+			continue;
+		    }
+		    //other wise the assignment is valid, assign and break!!
+		    assign(tile, node);
+		    break;
+		}
+	    }    
 	}
+	dumpLayout("layout.dot");
     }
     
     //return true if the node should be assigned to a tile

@@ -190,7 +190,14 @@ public class SpaceDynamicBackend {
 		
 		if (partitioning) {
 		    System.err.println("Running Partitioning...");
-		    ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), count, numTiles, true, false));
+		    System.err.println("  Do not fuse: ");
+		    HashSet doNotHorizFuse = ssg.getIOFilters();
+		    Iterator it = doNotHorizFuse.iterator();
+		    while (it.hasNext())
+			System.out.println("   * " + it.next());
+		    
+		    ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), count, 
+							numTiles, true, false, doNotHorizFuse));
 		    System.err.println("Done Partitioning...");
 		}
 		

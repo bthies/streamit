@@ -197,10 +197,12 @@ public class StreamGraph
 	
 	//reset upstream	
 	upFilter.setPush(new JIntLiteral(0));
+	upFilter.setOutputType(CStdType.Void);
 	upstream.removeEdges();
 	//reset downstream
 	downFilter.setPop(new JIntLiteral(0));
 	downFilter.setPeek(new JIntLiteral(0));
+	downFilter.setInputType(CStdType.Void);
 	downstream.removeIncoming();
     }
     

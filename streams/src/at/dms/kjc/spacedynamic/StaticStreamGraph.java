@@ -402,6 +402,20 @@ public class StaticStreamGraph
 	}
     }
 	    
+    public HashSet getIOFilters() 
+    {
+	HashSet filters = new HashSet();
+	
+	for (int i = 0; i < inputs.length; i++) {
+	    assert inputs[i].isFilter();
+	    filters.add(inputs[i].contents);
+	}
+	for (int i = 0; i < outputs.length; i++) {
+	    assert outputs[i].isFilter();
+	    filters.add(outputs[i].contents);
+	}
+	return filters;
+    }
     
 
     /** set a new TopLevelSIR stream and flatten it **/
@@ -417,10 +431,6 @@ public class StaticStreamGraph
 	StreamItDot.printGraph(topLevelSIR, 
 			      SpaceDynamicBackend.makeDotFileName("setTLSIR", topLevelSIR));
      
-	assert topLevelSIR instanceof SIRContainer;
-       
-	((SIRContainer)topLevelSIR).reclaimChildren();
-	
 	//remove the old nodes from the global parent map
 	Iterator fns = flatNodes.iterator();
 	while (fns.hasNext()) {

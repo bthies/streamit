@@ -145,12 +145,9 @@ class ToJava
             }
             outWriter.flush();
         }
-        catch (Exception e)
-        {
-            e.printStackTrace(System.err);
-            return;
-        }
-        
+        catch (java.io.IOException e) {e.printStackTrace(System.err);}
+        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
+        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
     }
     
     public static void main(String[] args)

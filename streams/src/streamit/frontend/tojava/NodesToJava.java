@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.34 2002-09-24 21:19:08 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.35 2002-09-26 19:26:49 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -505,7 +505,7 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtBody(StmtBody stmt)
     {
-        return "body(" + (String)stmt.getCreator().accept(this) + ")";
+        return "setBody(" + (String)stmt.getCreator().accept(this) + ")";
     }
     
     public Object visitStmtBreak(StmtBreak stmt)
@@ -577,7 +577,7 @@ public class NodesToJava implements FEVisitor
     
     public Object visitStmtLoop(StmtLoop stmt)
     {
-        return "loop(" + (String)stmt.getCreator().accept(this) + ")";
+        return "setLoop(" + (String)stmt.getCreator().accept(this) + ")";
     }
 
     public Object visitStmtPush(StmtPush stmt)

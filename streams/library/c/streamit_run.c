@@ -67,7 +67,7 @@ void connect_tapes (stream_context *c)
     }
 }
 
-void streamit_run (stream_context *c)
+void streamit_run (stream_context *c, int argc, char **argv)
 {
     connect_tapes (c);
 

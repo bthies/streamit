@@ -156,6 +156,6 @@ void register_receiver(portal p, stream_context *receiver,
 /* void register_sender(portal p, stream_context *sender, latency l); */
 void send_message(portal p, int msgid, latency l, void *params);
 void connect_tapes(stream_context *c);
-void streamit_run(stream_context *c);
+void streamit_run(stream_context *c, int argc, char **argv);
 
 #endif /* STREAMIT_H */

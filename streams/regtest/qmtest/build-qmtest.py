@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.3 2003-11-20 18:11:46 dmaze Exp $
+# $Id: build-qmtest.py,v 1.4 2003-11-21 19:59:56 dmaze Exp $
 #
 
 import os
@@ -95,42 +95,47 @@ def DoQMTestDir(path, control):
     implementationss = dom.getElementsByTagName('implementations')
     implementations = implementationss[0]
     impls = implementations.getElementsByTagName('impl')
+    # Only StreamIt implementations are interesting.
+    impls = filter(lambda i: i.getAttribute('lang') == 'StreamIt', impls)
     seq = 0
     for impl in impls:
-        # Only StreamIt implementations are interesting.
-        if impl.getAttribute('lang') == 'StreamIt':
-            # Where are the source files?  If the implementation has
-            # a dir attribute, they're in that subdirectory.
-            srcdir = path
-            subdir = impl.getAttribute('dir')
-            if subdir: srcdir = os.path.join(srcdir, subdir)
+        # Where are the source files?  If the implementation has
+        # a dir attribute, they're in that subdirectory.
+        srcdir = path
+        subdir = impl.getAttribute('dir')
+        if subdir: srcdir = os.path.join(srcdir, subdir)
 
-            # What is the name of this implementation?  Number them
-            # sequentially, but override if the implementation has an
-            # id attribute.
+        # What is the name of this implementation?  Number them
+        # sequentially, but override if the implementation has an
+        # id attribute.  Don't use a separate name if there's only
+        # one implementation.
+        if len(impls) == 1:
+            benchname = qmname
+            benchdir = qmdir
+        else:
             seq = seq + 1
             id = impl.getAttribute('id')
             if not id: id = "impl%d" % seq
             benchname = qmname + "." + id
-
-            # Create the benchmark directory.
             benchdir = os.path.join(qmdir, id + ".qms")
-            if not os.path.exists(benchdir):
-                os.makedirs(benchdir)
 
-            # Walk through the files.  Classify them by their class
-            # attribute, and also copy them into benchdir.
-            fileset = {}
-            files = impl.getElementsByTagName('file')
-            for file in files:
-                fnode = file.firstChild
-                fn = fnode.data
-                cls = file.getAttribute('class')
-                if not cls: cls = 'source'
-                if cls not in fileset: fileset[cls] = []
-                fileset[cls].append(fn)
+        # Create the benchmark directory.
+        if not os.path.exists(benchdir):
+            os.makedirs(benchdir)
 
-            ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control)
+        # Walk through the files.  Classify them by their class
+        # attribute, and also copy them into benchdir.
+        fileset = {}
+        files = impl.getElementsByTagName('file')
+        for file in files:
+            fnode = file.firstChild
+            fn = fnode.data
+            cls = file.getAttribute('class')
+            if not cls: cls = 'source'
+            if cls not in fileset: fileset[cls] = []
+            fileset[cls].append(fn)
+
+        ActuallyBuildTests(srcdir, benchdir, fileset, benchname, control)
 
     dom.unlink()
 

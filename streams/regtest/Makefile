@@ -13,6 +13,7 @@ all-tests: compile
 compile:
 	$(COMPILER) streamittest/*.java
 
-fieldprop:
-	$(TESTER) streamittest.TestFieldProp
-
+clean:
+	rm -rf streamittest/*.class
+	rm -rf after.dot
+	rm -rf before.dot

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.51 2001-11-09 22:14:36 thies Exp $
+ * $Id: LIRToC.java,v 1.52 2001-11-11 03:19:27 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1978,17 +1978,21 @@ public class LIRToC
          * already happened; we just need to connect tapes.
          * Use the position'th slot on the splitter output and
          * joiner input. */
-        print("create_splitjoin_tape(");
-        streamContext.accept(this);
-        print(", SPLITTER, OUTPUT, " + position + ", ");
-        childContext.accept(this);
-        print(", sizeof(" + inputType + "), " + inputSize + ");");
-        newLine();
-        print("create_splitjoin_tape(");
-        streamContext.accept(this);
-        print(", JOINER, INPUT, " + position + ", ");
-        childContext.accept(this);
-        print(", sizeof(" + outputType + "), " + outputSize + ");");
+	if (inputSize!=0) {
+	    print("create_splitjoin_tape(");
+	    streamContext.accept(this);
+	    print(", SPLITTER, OUTPUT, " + position + ", ");
+	    childContext.accept(this);
+	    print(", sizeof(" + inputType + "), " + inputSize + ");");
+	    newLine();
+	}
+	if (outputSize!=0) {
+	    print("create_splitjoin_tape(");
+	    streamContext.accept(this);
+	    print(", JOINER, INPUT, " + position + ", ");
+	    childContext.accept(this);
+	    print(", sizeof(" + outputType + "), " + outputSize + ");");
+	}
     }
 
 

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.65 2002-06-20 17:45:02 thies Exp $
+ * $Id: LIRToC.java,v 1.66 2002-06-28 16:47:59 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -116,6 +116,7 @@ public class LIRToC
                                       JTypeDeclaration[] decls) {
         LIRToC that = new LIRToC();
         that.className = ident;
+        that.isStruct = ((modifiers & ACC_STATIC) == ACC_STATIC);
         that.visitClassBody(decls, fields, methods, body);
     
         print(that.getString());
@@ -157,7 +158,10 @@ public class LIRToC
 
         pos -= TAB_SIZE;
         newLine();
-        print("} _" + className + ", *" + className + ";");
+        if (isStruct)
+            print("} " + className + ";");
+        else
+            print("} _" + className + ", *" + className + ";");
 
         // Print function prototypes for each of the methods.
         declOnly = true;
@@ -1294,7 +1298,12 @@ public class LIRToC
         } else {
 	    print("(");
             left.accept(this);
-            print("->" + ident);
+            if (left.getType() != null &&
+                left.getType().getCClass().getSuperClass().getIdent().equals("Structure"))
+                print(".");
+            else
+                print("->");
+            print(ident);
 	    print(")");
         }
     }
@@ -2418,6 +2427,7 @@ public class LIRToC
     protected int				WIDTH = 80;
     protected int				pos;
     protected String                      className;
+    protected boolean isStruct;
 
     protected TabbedPrintWriter		p;
     protected StringWriter                str;

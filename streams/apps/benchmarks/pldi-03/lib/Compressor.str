@@ -1,0 +1,12 @@
+/**
+ * This filter compresses the signal at its input by a factor M.
+ * Eg it inputs M samples, and only outputs the first sample.
+ **/
+float->float filter Compressor(int M) {
+  work peek M pop M push 1 {
+    push(pop());
+    for (int i=0; i<(M-1); i++) {
+      pop();
+    }
+  }
+}

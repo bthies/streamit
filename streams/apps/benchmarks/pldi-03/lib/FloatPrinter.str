@@ -1,0 +1,8 @@
+/**
+ * Simple sink that just prints the data that is fed to it.
+ **/
+float->void filter FloatPrinter {
+  work pop 1 {
+    println(pop());
+  }
+}

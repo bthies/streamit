@@ -1,13 +1,15 @@
 /*
  * ExprFunCall.java: a function call expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprFunCall.java,v 1.1 2002-07-10 19:43:09 dmaze Exp $
+ * $Id: ExprFunCall.java,v 1.2 2002-07-15 20:38:51 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
 
 import java.util.Collections;
 import java.util.List;
+
+import java.util.ArrayList;
 
 /**
  * A call to a particular named function.  This contains the name of the
@@ -25,6 +27,16 @@ public class ExprFunCall extends Expression
     {
         this.name = name;
         this.params = Collections.unmodifiableList(params);
+    }
+
+    /** Creates a new function call with the specified name and
+     * specified single parameter. */
+    public ExprFunCall(String name, Expression param)
+    {
+        this.name = name;
+        this.params = new ArrayList();
+        this.params.add(param);
+        this.params = Collections.unmodifiableList(this.params);
     }
 
     /** Returns the name of the function being called. */

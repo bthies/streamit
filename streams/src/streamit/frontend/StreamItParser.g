@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.4 2002-07-11 20:59:14 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.5 2002-07-20 17:34:33 dmaze Exp $
  */
 
 header {
@@ -40,9 +40,7 @@ filter_decl
 	;
 
 stream_type_decl
-	:	data_type (array_modifiers)?
-		ARROW^
-		data_type (array_modifiers)?
+	:	data_type ARROW^ data_type
 	;
 
 struct_stream_decl
@@ -155,16 +153,19 @@ print_statement
 	;
 
 data_type
-	:	primitive_type
-	|	TK_complex
+	:	(primitive_type LSQUARE) =>
+			primitive_type LSQUARE^ right_expr RSQUARE!
+				(LSQUARE! right_expr RSQUARE!)*
+	|	primitive_type
 	|	TK_void
-	|	id:ID
 	;
 
 primitive_type
 	:	TK_int
 	|	TK_float
 	|	TK_double
+	|	TK_complex
+	|	id:ID
 	;
 
 global_declaration
@@ -174,7 +175,7 @@ global_declaration
 	;
 
 variable_decl
-	:	data_type id:ID^ (array_modifiers)? (variable_init)?
+	:	data_type id:ID^ (variable_init)?
 	;
 
 array_modifiers

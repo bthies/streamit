@@ -152,6 +152,10 @@ public class SIRSplitter extends SIROperator {
 	return type.toString() + "_Splitter";
     }
 
+    public String toString() {
+	return "SIRSplitter:"+getIdent();
+    }
+
     /**
      * Returns JExpression weights of this.
      */

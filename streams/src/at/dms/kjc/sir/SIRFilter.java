@@ -14,15 +14,15 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * pops two and peeks 3, then it looks at a total of 3 elements,
      * not 5 elements.
      */
-    private JExpression peek;
+    protected JExpression peek;
     /**
      * The number of items that are popped per invocation.
      */
-    private JExpression pop;
+    protected JExpression pop;
     /**
      * The number of items that are pushed per invocation.
      */
-    private JExpression push;
+    protected JExpression push;
     /**
      * The input and output types.  That is, the type of the items on
      * the input and output channels, respectively.  Each type is void

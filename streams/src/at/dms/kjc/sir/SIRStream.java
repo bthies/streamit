@@ -166,9 +166,10 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * in <m> are non-null.
      */
     public void setMethods (JMethodDeclaration[] m) {
-	for (int i=0; i<m.length; i++) {
-	    Utils.assert(m[i]!=null, "Detected a null method in SIRStream.setMethods");
-	}
+	if(m!=null)
+	    for (int i=0; i<m.length; i++) {
+		Utils.assert(m[i]!=null, "Detected a null method in SIRStream.setMethods");
+	    }
 	this.methods = m;
     }
 

@@ -9,13 +9,15 @@ import at.dms.util.*;
  * This represents a StreaMIT filter that just read 1 item and sends it along
  */
 public class SIRIdentity extends SIRFilter implements Cloneable {
-
     /**
      * The filename of the data source.
      */
 
     public SIRIdentity() {
 	super();
+	pop = new JIntLiteral(1);
+	push = new JIntLiteral(1);
+	peek = new JIntLiteral(1);
     }
 
     private static 	JMethodDeclaration fns[];
@@ -53,7 +55,9 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
 	      /* work */ null,
 	      /* input type */ type,
 	      /* output type */ type);	
-
+	pop = new JIntLiteral(1);
+	push = new JIntLiteral(1);
+	peek = new JIntLiteral(1);
 
 	setInit(fns[1]);
     }
@@ -120,13 +124,12 @@ public class SIRIdentity extends SIRFilter implements Cloneable {
     }
 
     /**
-     * Returns the C type of the object, which is always a stream_context.
+     * Returns name just so can possibly show up on dot file
      */
     public String getName() {
 	//change this back later
 	return "Identity";
 	//        return "ContextContainer";
-	
     }
 }
 

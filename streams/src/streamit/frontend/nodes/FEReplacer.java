@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.9 2002-09-20 15:09:55 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.10 2003-01-09 19:42:23 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -164,7 +164,7 @@ public class FEReplacer implements FEVisitor
         if (newBody == func.getBody() && newPeek == func.getPeekRate() &&
             newPop == func.getPopRate() && newPush == func.getPushRate())
             return func;
-        return new FuncWork(func.getContext(), func.getName(),
+        return new FuncWork(func.getContext(), func.getCls(), func.getName(),
                             newBody, newPeek, newPop, newPush);
     }
     

@@ -1,7 +1,7 @@
 /*
  * MakeBodiesBlocks.java: force the bodies of compound statements into blocks
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MakeBodiesBlocks.java,v 1.1 2002-09-12 21:24:48 dmaze Exp $
+ * $Id: MakeBodiesBlocks.java,v 1.2 2003-01-09 19:41:53 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -40,7 +40,7 @@ public class MakeBodiesBlocks extends FEReplacer
         newBody = buildBlock(newBody);
         if (newBody == func.getBody())
             return func;
-        return new FuncWork(func.getContext(), func.getName(),
+        return new FuncWork(func.getContext(), func.getCls(), func.getName(),
                             newBody, func.getPeekRate(), func.getPopRate(),
                             func.getPushRate());
     }

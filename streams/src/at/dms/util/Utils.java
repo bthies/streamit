@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.5 2001-10-29 16:10:26 thies Exp $
+ * $Id: Utils.java,v 1.6 2002-03-03 03:08:36 thies Exp $
  */
 
 package at.dms.util;
@@ -150,6 +150,20 @@ public abstract class Utils implements Serializable {
       int[] result = new int[n];
       for (int i=0; i<n; i++) {
 	  result[i] = val;
+      }
+      return result;
+  }
+
+  /**
+   * Returns a new array of length n with all values set to val
+   *
+   * @param	n		the desired number of elements in the array
+   * @param	val		the value of each element
+   */
+  public static JExpression[] initArray(int n, JExpression exp) {
+      JExpression[] result = new JExpression[n];
+      for (int i=0; i<n; i++) {
+	  result[i] = exp;
       }
       return result;
   }

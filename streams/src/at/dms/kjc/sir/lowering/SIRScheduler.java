@@ -84,11 +84,14 @@ public class SIRScheduler implements Constants {
      *  result[1] = map for steady-state schedule
      */ 
     public static HashMap[] getExecutionCounts(SIRStream str) {
+	return getExecutionCounts(str, computeSchedule(str));
+    }
+    /**
+     * Internal routine for getting execution counts given a scheduler.
+     */
+    private static HashMap[] getExecutionCounts(SIRStream str, Scheduler scheduler) {
 	// make the result
 	HashMap[] result = { new HashMap(), new HashMap() } ;
-
-	// get the schedule
-	Scheduler scheduler = computeSchedule(str);
 
 	// fill in the init schedule
 	fillExecutionCounts(scheduler.getOptimizedInitSchedule(), result[0], 1);
@@ -176,7 +179,8 @@ public class SIRScheduler implements Constants {
 	Scheduler scheduler = computeSchedule(this.toplevel);
 	// debugging printing
 	System.err.print("got schedule, interpreting... ");
-	//printSchedules(schedule);
+	// print schedule to dot graph
+	PartitionDot.printScheduleGraph(this.toplevel, "schedule.dot", getExecutionCounts(this.toplevel, scheduler));
 	// do steady-state scheduling
 	scheduleSteady(scheduler);
 	// do initial scheduling

@@ -75,7 +75,7 @@ public class Flattener {
 
 	Lifter.liftAggressiveSync(str);
 	// dump the original graph to a dot format
-	StreamItDot.printGraph(str, "before.dot");
+	StreamItDot.printGraph(str, "before-partition.dot");
 
 	// gather application-characterization statistics
 	if (KjcOptions.stats) {
@@ -133,7 +133,7 @@ public class Flattener {
 	str = doLinearAnalysis(str);
 
 	// dump the partitioned graph to a dot format
-	StreamItDot.printGraph(str, "after.dot");
+	StreamItDot.printGraph(str, "after-partition.dot");
 
 	// if we have don't have a container, wrap it in a pipeline
 	// for the sake of SIRScheduler.

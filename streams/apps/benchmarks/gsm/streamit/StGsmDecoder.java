@@ -360,6 +360,7 @@ class RPEDecodeFilter extends Filter
 	{
 	    output.pushShort(ep[i]);
 	}
+	System.err.println("Got to RPEDecode!");
     }
 }
 
@@ -402,6 +403,7 @@ class LTPFilter extends Filter
 	} 
 	
 	output.pushShort(drpp);   
+	System.err.println("Got to LTPFilter!");
     }
 }
 
@@ -443,6 +445,7 @@ class AdditionUpdateFilter extends Filter
 	{
 	    output.pushShort(drp[i]);
 	}
+	System.err.println("Got to Addition Update Filter!");
     }
 }
 
@@ -451,7 +454,7 @@ class ShortTermSynthFilter extends Filter
 
     static short[] INVA = {13107, 13107, 13107, 13107, 19223, 17476, 31454, 29708};
     static short[] MIC = {-32, -32, -16, -16, -8, -8, -4, -4};
-    static short[] B = {0, 0, 2048, -2560, 94, -1792};
+    static short[] B = {0, 0, 2048, -2560, 94, -1792, -341, -1144};
     
     short[] mdrpin; //input
     short[] mdrp;   //shortened input
@@ -494,10 +497,10 @@ class ShortTermSynthFilter extends Filter
 	{
 	    mdrpin[i] = input.popShort();
 	}
-	//truncate to only get mdrpin[121...160]
+	//truncate to only get mdrpin[120...159]
 	for (int i = 0; i < mdrp.length; i++)
 	{
-	    mdrp[i] = mdrpin[i + 121];
+	    mdrp[i] = mdrpin[i + 120];
 	}
 	for (short i = 0; i < mLARc.length; i++)
 	{
@@ -651,6 +654,7 @@ class ShortTermSynthFilter extends Filter
 	{
 	    output.pushShort(sr[j]);
 	}
+	System.err.println("Got to ShortTermSynth Filter!");
     }
 }
 
@@ -700,9 +704,13 @@ class PostProcessingFilter extends Filter
 	    srop[k] = Helper.gsm_mult(srop[k], (short) 8);
 	}
 	
-	for (short j = 0; j < srop.length; j++)
+	for (int a = 0; a < srop.length; a++)
 	{
-	    //output.pushShort(srop[j]);
+	    if(a == srop.length - 1)
+	    {
+		System.out.println("Running last iteration of PostProcess!");
+	    }
+	    output.pushShort(srop[a]);
 	}
     }
 }
@@ -723,7 +731,7 @@ class DecoderFeedback extends FeedbackLoop
 
     public short initPathShort(int index)
     {
-	return 40;
+	return 0;
     }
 	
 }
@@ -797,6 +805,7 @@ class RPEInputFilter extends Filter
 
     public void work()
     {
+	System.err.println("I get here!!!");
 	for (int i = 0; i < mdata.length; i++)
 	{
 	    mdata[i] = input.popShort();
@@ -804,11 +813,11 @@ class RPEInputFilter extends Filter
 
 	if (donepushing)
 	{
-	    AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
+	    //AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
 	}
 
 	int frame_index = 0;
-	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
+	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	  {
 	    for (int k = 0; k < single_frame.length; k++)
 	      {
@@ -816,19 +825,21 @@ class RPEInputFilter extends Filter
 	      }
 	    mdecodefile.getParameters(single_frame);
 	    frame_index += 260;
-	  }
-
-	//now, push the stuff on!
-	for (int i = 0; i < 4; i++)
-	{
-	    for (int j = 0; j < 13; j++)
+	  
+	  
+	    //now, push the stuff on!
+	    for (int i = 0; i < 4; i++)
 	    {
-		output.pushShort(mdecodefile.mSequence[i][j]);
+		for (int a = 0; a < 13; a++)
+		{
+		    output.pushShort(mdecodefile.mSequence[i][a]);
+		}
+		output.pushShort(mdecodefile.mRpeMagnitude[i]);
+		output.pushShort(mdecodefile.mRpeGridPosition[i]);
 	    }
-	    output.pushShort(mdecodefile.mRpeMagnitude[i]);
-	    output.pushShort(mdecodefile.mRpeGridPosition[i]);
-	}
-	donepushing = true;
+	    donepushing = true;
+	  }
+	//System.err.println("RPE Input Filter yeah!");
     }
 }
 class LARInputFilter extends Filter
@@ -858,10 +869,10 @@ class LARInputFilter extends Filter
 
 	if (donepushing)
 	{
-	    AssertedClass.SERROR("Done Pushing at LARInputFilter!");
+	    //AssertedClass.SERROR("Done Pushing at LARInputFilter!");
 	}
 	int frame_index = 0;
-	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
+	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	  {
 	    for (int k = 0; k < single_frame.length; k++)
 	      {
@@ -869,17 +880,19 @@ class LARInputFilter extends Filter
 	      }
 	    mdecodefile.getParameters(single_frame);
 	    frame_index += 260;
-	  }
+	  
 	
-	//now, push the stuff on!
-	for (int i = 0; i < 8; i++)
-	{
-	    output.pushShort(mdecodefile.mLarParameters[i]);
-	}
-	donepushing = true;
+	    //now, push the stuff on!
+	    for (int i = 0; i < 8; i++)
+	    {
+		output.pushShort(mdecodefile.mLarParameters[i]);
+	    }
+	    donepushing = true;
+	  }
+	//System.err.println("LARinputFilter gooo!");
+
     }
 }
-
 class LTPInputFilter extends Filter
 {
     //order of output: mLtpGain[4], mLtpOffset[4]
@@ -908,10 +921,10 @@ class LTPInputFilter extends Filter
 
 	if (donepushing)
 	{
-	    AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
+	    //AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
 	}
 	int frame_index = 0;
-	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
+	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	  {
 	    for (int k = 0; k < single_frame.length; k++)
 	      {
@@ -919,15 +932,17 @@ class LTPInputFilter extends Filter
 	      }
 	    mdecodefile.getParameters(single_frame);
 	    frame_index += 260;
+	  	  
+	  
+	    //now, push the stuff on!
+	    for (int i = 0; i < 4; i++)
+	    {
+		output.pushShort(mdecodefile.mLtpGain[i]);
+		output.pushShort(mdecodefile.mLtpOffset[i]);
+	    }
 	  }
-	
-	//now, push the stuff on!
-	for (int i = 0; i < 4; i++)
-	{
-	    output.pushShort(mdecodefile.mLtpGain[i]);
-	    output.pushShort(mdecodefile.mLtpOffset[i]);
-	}
 	donepushing = true;
+	//System.err.println("LTP Input filter gooooo!");
     }
 }
 
@@ -958,6 +973,7 @@ class HoldFilter extends Filter
 	{
 	    output.pushShort(mDrp[j + 120]);
 	}
+	System.err.println("Hold filter go!");
     }
     
 }
@@ -980,7 +996,7 @@ public class StGsmDecoder extends StreamIt
 	this.add(new LARInputSplitJoin());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
-	this.add(new streamit.io.FileWriter("blahblah", Short.TYPE));
+	this.add(new streamit.io.FileWriter("blahblah", Short.TYPE));	
     }
 }
  

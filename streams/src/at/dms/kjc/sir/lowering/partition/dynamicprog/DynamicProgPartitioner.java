@@ -40,11 +40,29 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     private static final boolean SHARING_CONFIGS = false;
     /**
+     * Whether or not we should collapse all identity nodes before
+     * starting to partition.  This would be only for the sake of
+     * getting a better work estimate for the collapsed nodes, as they
+     * are likely to be collapsed anyway.
+     */
+    private static final boolean COLLAPSE_IDENTITIES = false;
+    /**
+     * Whether or not we're collapsing extra horizontal nodes when
+     * they do not exceed the bottleneck.  This happens during
+     * traceback.
+     */
+    static final boolean pruningOnTraceback = true;
+    
+    /**
      * Whether or not we're transforming the stream on traceback.  If
      * not, then we're just gathering the partition info for dot
      * output.
      */
     static boolean transformOnTraceback;
+    /**
+     * Bottleneck in current run.
+     */
+    private int bottleneck;
     
     /**
      * Map from stream structures to DPConfig's.
@@ -126,6 +144,14 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * left alone and only <partitions> are filled up.
      */
     private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
+	if (COLLAPSE_IDENTITIES) {
+	    // to deal with cases like matmul, fuse all identity's in the
+	    // stream
+	    str = fuseIdentities(str);
+	    // rebuild work estimate since we introduced new nodes
+	    work = WorkEstimate.getWorkEstimate(str);
+	}
+
 	// build stream config
 	System.out.println("  Building stream config... ");
 	DPConfig topConfig = buildStreamConfig();
@@ -137,13 +163,14 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	work = WorkEstimate.getWorkEstimate(str);
 	// build up tables.
 	System.out.println("  Calculating partition info...");
-	int bottleneck = topConfig.get(numTiles, 0).getMaxCost();
+	bottleneck = topConfig.get(numTiles, 0).getMaxCost();
+	System.err.println("  Partitioner thinks bottleneck is " + bottleneck);
 	int tilesUsed = numTiles;
 	// decrease the number of tiles to the fewest that we need for
 	// a given bottleneck.  This is in an attempt to decrease
 	// synchronization and improve utilization.
 	/*
-	while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0)) {
+	while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1, 0).getMaxCost()) {
 	    tilesUsed--;
 	}
 	if (tilesUsed<numTiles) {
@@ -186,6 +213,66 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	}
 	
     	return result;
+    }
+
+    private SIRStream fuseIdentities(SIRStream str) {
+	final HashSet allIdentities = new HashSet();
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void postVisitStream(SIRStream self,
+					    SIRIterator iter) {
+		    if (self instanceof SIRFilter) {
+			// for filters, add if an identity
+			if (self instanceof SIRIdentity) {
+			    allIdentities.add(self);
+			}
+		    } else if (self instanceof SIRContainer) {
+			// for containers, add if children are all identities
+			boolean all = true;
+			SIRContainer cont = (SIRContainer)self;
+			for (int i=0; i<cont.size(); i++) {
+			    if (!allIdentities.contains(cont.get(i))) {
+				all = false;
+				break;
+			    }
+			}
+			if (all) {
+			    allIdentities.add(self);
+			}
+		    }
+		}
+	    });
+	// now fuse top-most nodes that are in all-identities
+	return fuseIdentitiesHelper(str, allIdentities);
+    }
+
+    private SIRStream fuseIdentitiesHelper(SIRStream str, HashSet allIdentities) {
+	if (str instanceof SIRContainer) {
+	    // fuse it if it is all identities
+	    if (allIdentities.contains(str)) {
+		//  This wrapper business is a mess.  Could probably be
+		//  simplified -- just moving legacy code out of end of
+		//  FuseAll, being sure to preserve functionality.
+		SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+		wrapper.reclaimChildren();
+		SIRPipeline wrapper2 = FuseAll.fuse(str);
+		Lifter.eliminatePipe(wrapper2);
+		Lifter.lift(wrapper);
+		// return child
+		Lifter.eliminatePipe(wrapper);
+		SIRStream result = wrapper.get(0);
+		return result;	
+	    } else {
+		// otherwise recurse
+		SIRContainer cont = (SIRContainer)str;
+		for (int i=0; i<cont.size(); i++) {
+		    cont.set(i, fuseIdentitiesHelper(cont.get(i), allIdentities));
+		}
+		return cont;
+	    }
+	} else {
+	    // if not a container, just return the node
+	    return str;
+	}
     }
 
     /**
@@ -248,6 +335,10 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     public boolean joinersNeedTiles() {
 	return this.joinersNeedTiles;
+    }
+
+    int getBottleneck() {
+	return this.bottleneck;
     }
 
     public DPConfig getConfig(SIRStream str) {

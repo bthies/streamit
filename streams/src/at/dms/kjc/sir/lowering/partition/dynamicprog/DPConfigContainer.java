@@ -512,7 +512,7 @@ abstract class DPConfigContainer extends DPConfig {
     }
 
     /**
-     * Assuming a uniform with across y1...y2 of this, return estimate
+     * Assuming a uniform width across y1...y2 of this, return estimate
      * of overhead of fusing the contents.
      */
     private int getHorizontalFusionOverhead(int x1, int x2, int y1, int y2) {
@@ -702,6 +702,24 @@ abstract class DPConfigContainer extends DPConfig {
 
 			// all done
 			indent--;
+
+			if (DynamicProgPartitioner.pruningOnTraceback) {
+			    // if the sum is less than the bottleneck,
+			    // fuse the result to avoid communication
+			    // overhead.  While just a heuristic, this
+			    // improves bitonic (for example).
+			    if (sum<partitioner.getBottleneck()) {
+				SIRPipeline wrapper = new SIRPipeline(null, sj.getIdent()+"_wrapper");
+				wrapper.add(sj);
+				SIRPipeline wrapper2 = FuseAll.fuse(sj);
+				Lifter.eliminatePipe(wrapper2);
+				Lifter.lift(wrapper);
+				// return child
+				Lifter.eliminatePipe(wrapper);
+				return wrapper.get(0);
+			    }
+			}
+
 			return sj;
 		    }
 		}

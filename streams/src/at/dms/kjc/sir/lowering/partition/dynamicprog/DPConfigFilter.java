@@ -71,6 +71,12 @@ class DPConfigFilter extends DPConfig {
      * Add this to the map and return.
      */
     public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
+	if (DynamicProgPartitioner.pruningOnTraceback && partitioner.getWorkEstimate().getWork(filter)<partitioner.getBottleneck()) {
+	    // don't fiss if doesn't exceed bottleneck
+	    curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
+	    return filter;
+	}
+
 	// consider ourselves to be next to a joiner if we don't care about joiners
 	if (!partitioner.joinersNeedTiles()) {
 	    nextToJoiner = 1;

@@ -18,6 +18,9 @@ public class Partitioner {
      */
     private final int target;
     
+    //How many times to attempt fissing till use up all space
+    private final int MAX_FISS_ITER=5;
+
     private Partitioner(SIRStream str, int target) {
 	this.str = str;
 	this.target = target;
@@ -48,10 +51,14 @@ public class Partitioner {
 	int count = new RawFlattener(str).getNumTiles();
 	System.out.println("done:"+count);
 	if (count < target) {
-	    fissAll();
-	    System.out.print("count tiles again... ");
-	    count = new RawFlattener(str).getNumTiles();
-	    System.out.println("done:"+count);
+	    for(int i=0;i<MAX_FISS_ITER;i++) {
+		fissAll();
+		System.out.print("count tiles again... ");
+		count = new RawFlattener(str).getNumTiles();
+		System.out.println("done:"+count);
+		if(count>=target)
+		    break;
+	    }
 	    if(count>target)
 		fuseAll();
 	} else {
@@ -67,10 +74,15 @@ public class Partitioner {
     private void fissAll() {
 	// get work sorted by work
 	WorkList sorted = WorkEstimate.getWorkEstimate(str).getSortedFilterWork();
+	//System.out.println("Sorted:"+sorted);
 	// keep track of the position of who we've tried to split
 	int pos = sorted.size()-1;
 
 	while (pos>=0) {
+	    if((sorted.getFilter(pos) instanceof SIRIdentity)||(sorted.getFilter(pos).getIdent().startsWith("FileWriter"))) { //Hack to not fuse file writer
+		pos--;
+		continue;
+	    }
 	    StreamItDot.printGraph(str, "during-fission.dot");
 	    // make raw flattener for latest version of stream graph
 	    RawFlattener flattener = new RawFlattener(str);
@@ -78,6 +90,7 @@ public class Partitioner {
 	    int work = sorted.getWork(pos);
 	    // make a list of candidates that have the same amount of work
 	    LinkedList candidates = new LinkedList();
+	    //System.out.println("Trying:"+pos+" "+sorted.getFilter(pos));
 	    while (pos>=0 && sorted.getWork(pos)==work) {
 		candidates.add(sorted.getFilter(pos));
 		pos--;
@@ -85,10 +98,10 @@ public class Partitioner {
 	    // try fissing the candidates
 	    if (canFiss(candidates, flattener)) {
 		doFission(candidates);
-	    } else {
+	    } /*else {
 		// if illegal, quit
 		break;
-	    }
+		}*/
 	}
     }
 
@@ -155,6 +168,7 @@ public class Partitioner {
 	int count = 0;
 	// whether or not we're done trying to fuse
 	boolean done = false;
+	boolean aggressive = false;
 	do {
 	    // get how many tiles we have
 	    RawFlattener flattener = new RawFlattener(str);
@@ -171,9 +185,24 @@ public class Partitioner {
 		    SIRContainer cont = list.getContainer(i);
 		    if (cont instanceof SIRSplitJoin) {
 			System.out.println("trying to fuse " + cont.size() + "-way split " + cont);
-			SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
-			// if we fused something, quit loop
-			if (newstr!=cont) { break; }
+			List children=cont.getChildren();
+			boolean attempt=false;
+			for(int j=0;j<children.size();j++) {
+			    SIROperator child=(SIROperator)children.get(j);
+			    if((!(child instanceof SIRSplitter))&&(!(child instanceof SIRJoiner))&&!(child instanceof SIRIdentity)) {
+				//System.out.println("FOUND:"+children.get(j));
+				attempt=true;
+			    }
+			} if(aggressive||attempt) {
+			    SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
+			    // if we fused something, quit loop
+			    if (newstr!=cont) { 
+				aggressive=false;
+				break;
+			    }
+			} else {
+			    System.out.println("Children All Identities! Ignoring.");
+			}
 		    } else if (cont instanceof SIRPipeline) {
 			System.out.println("trying to fuse " + (count-target) + " from " 
 					   + cont.size() + "-long pipe " + cont);
@@ -182,10 +211,18 @@ public class Partitioner {
 		    }
 		    // if we made it to the end of the last loop, then
 		    // we're done trying to fuse (we didn't reach target.)
-		    if (i==list.size()-1) { done = true; }
+		    if (i==list.size()-1) { 
+			if(aggressive)
+			    done=true;
+			else
+			    aggressive = true;
+		    }
 		}
 	    }
 	} while (count>target && !done);
     }
 
 }
+
+
+

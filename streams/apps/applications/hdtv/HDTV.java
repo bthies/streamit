@@ -37,7 +37,7 @@ class HDTVEncodePipeline extends Pipeline {
 	this.add(new IntegerSplitter());
 
 	// encode using reed-solomon encoder
-	this.add(new ReedSolomonEncoder());
+	//this.add(new ReedSolomonEncoder());
 
 	// split "bytes" into "bits"
 	this.add(new Bitifier());

@@ -18,7 +18,10 @@ public class Test extends StreamIt
 	//this.add(new PreCoder());
 	//this.add(new PreDecoder());
 
+	//this.add(new TestDataSnooper("input",1));	
 	this.add(new UngerboeckEncoder());
+	this.add(new UngerboeckDecoder());
+	//this.add(new TestDataSnooper("output",1));
 	
 	//this.add(new TrellisEncoder());
 	//this.add(new TrellisDecoder());
@@ -56,6 +59,7 @@ class TestDataSource extends Filter {
 	this.i = (this.i + 1) % 10;
     }
 }
+
 class TestDataSink extends Filter {
     public void init() {
 	input = new Channel(Integer.TYPE,1);
@@ -65,3 +69,27 @@ class TestDataSink extends Filter {
     }
 }
 
+/**
+ * Prints integers on the way by.
+ **/
+class TestDataSnooper extends Filter {
+    String label;
+    int num;
+    public TestDataSnooper(String l, int n) {
+	this.label = l;
+	this.num = n;
+    }
+    public void init() {
+	input  = new Channel(Integer.TYPE, this.num);
+	output = new Channel(Integer.TYPE, this.num);
+    }
+    public void work() {
+	for (int i=0; i<this.num; i++) {
+	    int t = input.popInt();
+	    System.out.println(this.label + ": " + t);
+	    output.pushInt(t);
+	}
+    }
+}	
+	    
+	 

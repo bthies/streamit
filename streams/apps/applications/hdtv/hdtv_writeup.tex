@@ -1,6 +1,6 @@
 \documentclass{article}
-\usepackage{doublespace}
-\usepackage{fullpage}
+%\usepackage{doublespace}
+%\usepackage{fullpage}
 \usepackage{epsfig}
 
 \title{HDTV Encoder/Decoder writeup/description}
@@ -16,9 +16,6 @@
 This article presents a partial implementation in StreamIT of the HDTV standard 
 for transmitting digital television signals as described in 
 the ASTC Standard\cite{atsc:a53b}.
-
-
-
 
 \section{Background on Encoding/Decoding}
 
@@ -66,7 +63,7 @@ theoritcal background to explain exactly what the properties are, or why they ar
 so you will have to take it on faith as have I.
 
 
-\subsubsection{Precoding}
+\subsection{Precoding}
 \begin{figure}
 \center
 \epsfxsize=3.5in
@@ -77,7 +74,7 @@ so you will have to take it on faith as have I.
 
 \begin{table}
 \center
-\begin{tabular}{c|c|c}
+	\begin{tabular}{c|c|c}
 input(x2) & output(y2) & state  \\
 \hline
 0 & 0 & 0 \\
@@ -137,9 +134,60 @@ implemented, and Table~\ref{tbl:de_precoding_example} contains a worked out exam
 for the data \texttt{0100110100}.
 
 
-\subsubsection{"Optimal 4 state Ungerboeck code"}
-The internal Ungerboeck trellis encoder used in the HDTV encoder is
-a 1/2 trellis code with a reach of 3. 
+\subsection{``Optimal 4 state Ungerboeck code''}
+
+\subsubsection{Encoder}
+
+\begin{figure}
+\center
+\epsfxsize=3.5in
+\epsfbox{images/ungerboeck.eps}
+\caption{Optimal 4 state Ungerboeck Encoder}
+\label{fig:ungerboeck}
+\end{figure}
+
+\begin{figure}
+\center
+\epsfxsize=3.5in
+\epsfbox{images/trellis-state-transition.eps}
+\caption{Trellis Encoder State transition diagram.}
+\label{fig:trellis-state-diagram}
+\end{figure}
+
+The internal Ungerboeck encoder used in the HDTV encoder is
+a 1/2 convolution code with a reach of 3. Figure~\ref{fig:ungerboeck}
+shows a schematic diagram of an Ungerboeck encoder. For each input bit
+that appears at the input Y1, two output bits are produces at Z1 and Z0.
+The internal D (delay) blocks are registers which each hold state, marked
+S0 and S1. We can also think about the encoder as a finite state machine.
+Figure~\ref{fig:trellis-state-diagram} is a fsm representation of the ungerboeck
+encoder used in HDTV. Note that the initial state is 00, corresponding to 
+both registers in Figure~\ref{fig:ungerboeck} being set to zero.
+
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-blank.eps}
+\caption{Trellis diagram for the 4 state Ungerboeck Code}
+\label{fig:trellis-blank}
+\end{figure}
+
+The reason that convolution codes are often called trellis codes is shown by 
+Figure~\ref{fig:trellis-example}. The x axis represents time (discrete points)
+and the y axis represents the possible states of the encoder. The solid lines
+represent state transitions for an input of 0. The dashed lines represent
+state transitions for an input of 1. As the input
+data is encoded, a path is traced through the trellis. Each input sequence maps 
+to exactly one path and each path maps exactly to one input sequence. It
+is also important to note that each state only has 
+
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-example.eps}
+\caption{Path traced through the trellis for input sequence 01101011110}
+\label{fig:trellis-example}
+\end{figure}
 
 \begin{table}
 \center
@@ -162,34 +210,140 @@ input & state   & output  \\
 \label{tbl:ungerboeck_example}
 \end{table}
 
-Decoding a bit stream that has been encoded with a trellis encoder is usually
+Table~\ref{tbl:ungerboeck_example} works out an example of encoding 
+the data \texttt{0110101110} with our encoder,
+and Figure~\ref{fig:trellis-example} shows the corresponding path through
+the trellis. The grey states correspond to the state of the encoder 
+at that time. 
+
+\subsubsection{Decoding}
+
+Decoding a bit stream that has been encoded with a convolution code is usually
 done using the Virterbi decoding algorithm. The Virterbi decoding algorithm
-is a well known algorithm in communication coding which uses a dynamic programming
-approach to determine the sent signal. Chip Fleming has a great 
-tutorial\cite{fleming:tutorial} which contains a walk through of the implementation
-of a trellis encoder and a Viterbi decoder for a slightly different 1/2 trellis code. 
+is a well known algorithm in communication coding which is used in CDMA cellphones
+and satellite receivers among other things. The Viterbi algorithm uses a dynamic programming
+approach to determine the most likely signal sent given a recieved (possibly corrupted) signal. 
+Chip Fleming has a great tutorial\cite{fleming:tutorial} which contains a walk 
+through of the implementation of a trellis encoder and a Viterbi decoder 
+for a slightly different 1/2 trellis code. His tutorial was the inspiration for this document.
+
+Since each input bit in a convolution code affects several output bits
+the Viterbi decoding algorithm reads in several input symbols in order to determine
+several output symbols (eg it processes several symbols at a timie). In the
+signal processing literature (reference?) it appears that one can get most
+of the error correcting advantages of the convolution code by processing 7K input symbols
+(where K is the reach of the code as described above). 5K symbols also yields
+acceptable results.
+
+Since each input sequence maps to a particular path through the trellis,
+The main idea of the Vertibi decoding algorithm is to determine the most
+likely path throught the trellis given the received symbols. The straightforward
+approach would be to examine \textbf{all} possible paths through the trellis, and
+choose the path's whose output is closest to the received symbols. The
+straightforward approach is rediculously computationally intensive, 
+and totally uncecessary. The Viterbi algorithm (named after Andrew Viterbi, a founder of Qualcomm)
+uses a dynamic programming aproach to trace out the paths of the encoder's state. 
+
+We will perform 7K steps in each iteration of the algorithm. 
+At each step, we read 7K 2-bit symbol
+from the input and we output 7K 1-bit symbols at the output. 
+We are tasked with filling out a table: each element in the table, $c[s,t]$, 
+represents the accumulated error if the encoder were in state s at time t. 
+Accumulated error is definied as hamming distance
+(or euclidian distance) of received symbol to the expected symbol.
+
+Our problem: we are sitting at the decoder, and we receive symbol $R_t$ at time $t$. We want to fill in 
+$c[s,t*]$ for all possible states $\mathcal{S}$ (the Ungerboeck encoder we have 4 states).
+
+Algorithm:
+\begin{enumerate}
+\item For each received Symbol $R_t$ at time $t$
+	\begin{enumerate}
+	\item Compute $c[s,t] \forall s \in \mathcal{S}$ (eg compute the entries
+ 	       of c[s,t] for each of the possible 4 states.)
+	\item Remember which predecessor state was used to compute each $c[s,t]$ in
+	       a predecessor table.
+	\end{enumerate}
+\item Reconstruct the path through the trellis with c and the predecessor states.
+	\begin{enumerate}
+	\item find $s^*$ such that $c[s^*,7K]$ is minimum. (eg at the end of the trellis, 
+	       after we have looked at all input symbols, choose the state we would 
+	       be in at the last time. 
+	\item We then use the predecessor table to walk back through the trellis
+	       along the path which yields the least possible error (which we have 
+	       been calculating along the way.
+	\item Once we have recovered our most likely path, we can recreate the
+	       input sequence that was most likely sent.
+	\end{enumerate} 
+\end{enumerate}
+
+Determining $c[s,t]$ for all possible states (in 1(a) above) is not obvious.
+The algorithm to determine it is explained below.  
+
+\begin{enumerate}
+\item For each received symbol $R_t$ received at time $t$ we compute 
+       $c[s,t] \forall s \in \mathcal{S}$ by using the entries of $c$ for 
+       the previous time (eg $c[s,t-1]$).
+	\begin{enumerate}
+	\item For each $s \in \mathcal{S}$
+		\begin{enumerate}
+		\item Let $q^0$ and $q^1$ be the two possible previous states
+		       that lead to $s$. $q^0\rightarrow s$ when an input of 0
+		       was received, and $q^1\rightarrow s$ when an input of 1 
+		       was received. These transitions produce symbols $R^0$ and $R^1$
+		       respectively.
+		\item Let $e^0$ be the hamming distance between $R_t$ and $R^0$ (eg the hamming
+		       distance between the received symbol and the expected symbol if the input was 0). 
+		       Similarly, let $e^1$ be the hamming distance between $R_t$ and $R^1$.
+		\item Now, calculate $c[s,t] = min(c[q^0,t-1] + e^0, c[q^1,t-1] + e^1)$
+		\item And remember which state ($q^0$ or $q^1$) was a predecessor state to s in the 
+		       predecessor table.
+		\end{enumerate}
+	\end{enumerate}
+\end{enumerate}
+
+Since that discussion was filled with lots of math and symbols, 
+lets make the algorithm concrete with a worked through example.
+
+\input{hdtv_writeup_decoding_example}
 
 
 
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-state-transition.eps}
-\caption{Trellis Encoder State transition diagram.}
-\label{fig:trellis-state-diagram}
-\end{figure}
+
+
 
 
 
 \section{StreamIT Implementation}
 
 
+\subsection{Trellis Encoder/Decoder Implementation}
+
+\subsubsection{Ungerboeck Decoder Implementation}
+Each table is two dimensional: states and time. Each unit of time corresponds to
+receiving 1 symbol (so in this case receiving 2 bits). Each cell represents something
+for a particular state at a particular time. The algorithm fills up both tables as
+time progresses. When the tables are full, it traces back through the table and finds the
+path that results in the fewest errors occuring.
+
+The error metric that is used can either be hamming distance or euclidian distance (basically
+hamming distance squared).
+
+The first table keeps track of accumulated errors. accumulated\_error[s,t] is the hamming distance
+between the output that the current min path to state s at time t would generate and the
+symbols that have been received. 
+
+The second table keeps track of the previous states, so that the min path
+can be reconstructed. predecessor\_states[s,t] represents the state s' of the encoder
+in the minimum path that leads to s at time (t-1) 
+
+
 
 \begin{small}
-\begin{singlespace}
+%\begin{singlespace}
 \bibliographystyle{abbrv}
 \bibliography{references}
-\end{singlespace}
+%\end{singlespace}
 \end{small}
 
 

@@ -53,8 +53,12 @@ public class TraceExtractor {
 		    for(int i=0;i<unflatEdges.length;i++) {
 			UnflatEdge unflatEdge=unflatEdges[i];
 			Edge edge=(Edge)edges.get(unflatEdge);
-			assert edge!=null:"Edge Null";
-			edge.setDest((InputTraceNode)node);
+			//assert edge!=null:"Edge Null "+filter;
+			if(edge==null) {
+			    edge=new Edge((InputTraceNode)node);
+			    edges.put(unflatEdge,edge);
+			} else
+			    edge.setDest((InputTraceNode)node);
 			inEdges[i]=edge;
 		    }
 		    trace=new Trace((InputTraceNode)node);
@@ -145,7 +149,8 @@ public class TraceExtractor {
 			    if(edge==null) {
 				edge=new Edge(outNode);
 				edges.put(unflatEdge,edge);
-			    }
+			    } else
+				edge.setSrc(outNode);
 			    innerEdges[j]=edge;
 			}
 		    }

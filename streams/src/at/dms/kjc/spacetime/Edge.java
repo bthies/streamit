@@ -15,12 +15,20 @@ public class Edge {
 	this.src=src;
     }
 
+    public Edge(InputTraceNode dest) {
+	this.dest=dest;
+    }
+
     public OutputTraceNode getSrc() {
 	return src;
     }
 
     public InputTraceNode getDest() {
 	return dest;
+    }
+
+    public void setSrc(OutputTraceNode src) {
+	this.src=src;
     }
 
     public void setDest(InputTraceNode dest) {

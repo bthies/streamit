@@ -76,6 +76,9 @@ public class RawBackend {
 	ConstantProp.propagateAndUnroll(str);
 	System.out.println("Done Constant Prop and Unroll...");
 
+        // add initPath functions
+        EnqueueToInitPath.doInitPath(str);
+
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 

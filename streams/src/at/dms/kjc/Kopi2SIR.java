@@ -1177,7 +1177,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (SIROp instanceof JUnqualifiedInstanceCreation) {
 		SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
 						       getType().getCClass().getIdent());
-		((SIRPipeline)parentStream).add(st);
+		SIRStream newST = (SIRStream) st.clone();
+		newST.setParent(parentStream);
+		((SIRPipeline)parentStream).add(newST);
 	    }
 	} else if (ident.equals("setDelay")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop))

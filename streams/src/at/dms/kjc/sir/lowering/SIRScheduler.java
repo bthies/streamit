@@ -734,7 +734,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
     }
 
     /* visit a phased filter */
-    public Object visitPhasedFilter(SIRFilter self,
+    public Object visitPhasedFilter(SIRPhasedFilter self,
                                     JFieldDeclaration[] fields,
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,

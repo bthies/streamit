@@ -39,7 +39,7 @@ public interface AttributeStreamVisitor {
 		       CType inputType, CType outputType);
   
     /* visit a phased filter */
-    Object visitPhasedFilter(SIRFilter self,
+    Object visitPhasedFilter(SIRPhasedFilter self,
                              JFieldDeclaration[] fields,
                              JMethodDeclaration[] methods,
                              JMethodDeclaration init,

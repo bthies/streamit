@@ -11,7 +11,7 @@ import java.util.List;
  * portals that the newly created child is registered with.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamCreator.java,v 1.2 2003-07-07 15:48:18 dmaze Exp $
+ * @version $Id: StreamCreator.java,v 1.3 2003-07-24 16:58:37 dmaze Exp $
  * @see     streamit.frontend.nodes.SCAnon, streamit.frontend.nodes.SCSimple
  */
 public abstract class StreamCreator extends FENode
@@ -36,8 +36,8 @@ public abstract class StreamCreator extends FENode
     /**
      * Get the list of portals the new stream is registered with.
      *
-     * @returns  list of <code>Expression</code> giving the portals to
-     *           register the new stream with
+     * @return  list of <code>Expression</code> giving the portals to
+     *          register the new stream with
      */
     public List getPortals()
     {

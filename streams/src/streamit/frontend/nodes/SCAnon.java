@@ -9,7 +9,7 @@ import java.util.List;
  * stream being created.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SCAnon.java,v 1.4 2003-07-07 15:48:18 dmaze Exp $
+ * @version $Id: SCAnon.java,v 1.5 2003-07-24 16:58:37 dmaze Exp $
  */
 public class SCAnon extends StreamCreator
 {
@@ -50,7 +50,7 @@ public class SCAnon extends StreamCreator
     /**
      * Returns the stream specification this creates.
      *
-     * @returns  specification of the child stream
+     * @return  specification of the child stream
      */
     public StreamSpec getSpec()
     {

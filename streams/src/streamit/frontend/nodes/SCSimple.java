@@ -8,7 +8,7 @@ import java.util.List;
  * and a parameter list.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SCSimple.java,v 1.4 2003-07-07 15:48:18 dmaze Exp $
+ * @version $Id: SCSimple.java,v 1.5 2003-07-24 16:58:37 dmaze Exp $
  */
 public class SCSimple extends StreamCreator
 {
@@ -49,7 +49,7 @@ public class SCSimple extends StreamCreator
      * is used by templated stream types, such as the built-in
      * <code>Identity</code> stream.
      *
-     * @returns  list of <code>Type</code>
+     * @return  list of <code>Type</code>
      */
     public List getTypes()
     {
@@ -59,7 +59,7 @@ public class SCSimple extends StreamCreator
     /**
      * Return the parameter list of the stream.
      *
-     * @returns  list of <code>Expression</code>
+     * @return  list of <code>Expression</code>
      */
     public List getParams()
     {

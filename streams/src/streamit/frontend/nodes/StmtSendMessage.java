@@ -11,7 +11,7 @@ import java.util.List;
  * to be sent to all filters registered with the portal.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtSendMessage.java,v 1.1 2003-07-07 18:59:50 dmaze Exp $
+ * @version $Id: StmtSendMessage.java,v 1.2 2003-07-24 16:58:37 dmaze Exp $
  */
 public class StmtSendMessage extends Statement
 {
@@ -50,7 +50,7 @@ public class StmtSendMessage extends Statement
     /**
      * Get the portal receiving the message.
      *
-     * @returns expression naming the portal receiving the message
+     * @return expression naming the portal receiving the message
      */
     public Expression getReceiver()
     {
@@ -60,7 +60,7 @@ public class StmtSendMessage extends Statement
     /**
      * Get the name of the message.
      *
-     * @returns the name of the message being sent
+     * @return the name of the message being sent
      */
     public String getName()
     {
@@ -70,7 +70,7 @@ public class StmtSendMessage extends Statement
     /**
      * Get the parameter list of the message.
      *
-     * @returns list of <code>Expression</code> containing the parameters
+     * @return list of <code>Expression</code> containing the parameters
      */
     public List getParams()
     {
@@ -83,7 +83,7 @@ public class StmtSendMessage extends Statement
      * receiver actually receives the message.  If <code>null</code>,
      * there is no minimum latency.
      *
-     * @returns expression giving the minimum message latency
+     * @return expression giving the minimum message latency
      */
     public Expression getMinLatency()
     {
@@ -96,7 +96,7 @@ public class StmtSendMessage extends Statement
      * receiver actually receives the message.  If <code>null</code>,
      * there is no maximum latency.
      *
-     * @returns expression giving the maximum message latency
+     * @return expression giving the maximum message latency
      */
     public Expression getMaxLatency()
     {
@@ -109,7 +109,7 @@ public class StmtSendMessage extends Statement
      * on the visitor.
      *
      * @param v  visitor to accept
-     * @returns  defined by the visitor object
+     * @return   defined by the visitor object
      */
     public Object accept(FEVisitor v)
     {

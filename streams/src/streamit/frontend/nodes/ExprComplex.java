@@ -10,7 +10,7 @@ package streamit.frontend.nodes;
  * fully-expanded real and imaginary parts.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprComplex.java,v 1.4 2003-07-16 15:53:26 dmaze Exp $
+ * @version $Id: ExprComplex.java,v 1.5 2003-07-24 16:58:37 dmaze Exp $
  */
 public class ExprComplex extends Expression
 {
@@ -36,7 +36,7 @@ public class ExprComplex extends Expression
      * Returns the real part of this.  May return null if this is a
      * purely imaginary expression.
      *
-     * @returns the real part of the expression, or null
+     * @return the real part of the expression, or null
      */
     public Expression getReal() { return real; }  
 
@@ -45,7 +45,7 @@ public class ExprComplex extends Expression
      * this is a purely imaginary expression, returns an expression
      * corresponding to zero.
      *
-     * @returns the real part of the expression
+     * @return the real part of the expression
      */
     public Expression getRealExpr()
     {
@@ -58,7 +58,7 @@ public class ExprComplex extends Expression
      * Returns the imaginary part of this.  May return null if this is
      * a purely real expression.
      *
-     * @returns the imaginary part of the expression, or null
+     * @return the imaginary part of the expression, or null
      */
     public Expression getImag() { return imag; }
 
@@ -67,7 +67,7 @@ public class ExprComplex extends Expression
      * If this is a purely real expression, returns an expression
      * corresponding to zero.
      *
-     * @returns the imaginary part of the expression
+     * @return the imaginary part of the expression
      */
     public Expression getImagExpr()
     {

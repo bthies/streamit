@@ -15,7 +15,7 @@ import java.util.Collections;
  * @see     StmtVarDecl
  * @see     Parameter
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FieldDecl.java,v 1.3 2003-05-13 19:32:50 dmaze Exp $
+ * @version $Id: FieldDecl.java,v 1.4 2003-07-24 16:58:37 dmaze Exp $
  */
 public class FieldDecl extends FENode
 {
@@ -75,7 +75,7 @@ public class FieldDecl extends FENode
      * Get the type of the nth field declared by this.
      *
      * @param  n  Number of field to retrieve (zero-indexed)
-     * @returns   Type of the nth field
+     * @return    Type of the nth field
      */
     public Type getType(int n)
     {
@@ -86,8 +86,8 @@ public class FieldDecl extends FENode
      * Get an immutable list of the types of all of the fields
      * declared by this.
      *
-     * @returns  Unmodifiable list of <code>Type</code> of the
-     *           fields in this
+     * @return  Unmodifiable list of <code>Type</code> of the
+     *          fields in this
      */
     public List getTypes()
     {
@@ -98,7 +98,7 @@ public class FieldDecl extends FENode
      * Get the name of the nth field declared by this.
      *
      * @param  n  Number of field to retrieve (zero-indexed)
-     * @returns   Name of the nth field
+     * @return    Name of the nth field
      */
     public String getName(int n)
     {
@@ -109,8 +109,8 @@ public class FieldDecl extends FENode
      * Get an immutable list of the names of all of the fields
      * declared by this.
      *
-     * @returns  Unmodifiable list of <code>String</code> of the
-     *           names of the fields in this
+     * @return  Unmodifiable list of <code>String</code> of the
+     *          names of the fields in this
      */
     public List getNames()
     {
@@ -121,7 +121,7 @@ public class FieldDecl extends FENode
      * Get the initializer of the nth field declared by this.
      *
      * @param  n  Number of field to retrieve (zero-indexed)
-     * @returns   Expression initializing the nth field, or
+     * @return    Expression initializing the nth field, or
      *            <code>null</code> if the field is
      *            uninitialized
      */
@@ -135,9 +135,9 @@ public class FieldDecl extends FENode
      * declared by this.  Members of the list may be <code>null</code>
      * if a particular field is uninitialized.
      *
-     * @returns  Unmodifiable list of <code>Expression</code> (or
-     *           <code>null</code>) of the initializers of the
-     *           fields in this
+     * @return  Unmodifiable list of <code>Expression</code> (or
+     *          <code>null</code>) of the initializers of the
+     *          fields in this
      */
     public List getInits()
     {
@@ -148,7 +148,7 @@ public class FieldDecl extends FENode
      * Get the number of fields declared by this.  This value should
      * always be at least 1.
      *
-     * @returns  Number of fields declared
+     * @return  Number of fields declared
      */
     public int getNumFields()
     {

@@ -12,7 +12,7 @@ package streamit.frontend.nodes;
  * the name.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePortal.java,v 1.1 2003-07-07 20:57:27 dmaze Exp $
+ * @version $Id: TypePortal.java,v 1.2 2003-07-24 16:58:37 dmaze Exp $
  */
 public class TypePortal extends Type
 {
@@ -33,7 +33,7 @@ public class TypePortal extends Type
      * needed to resolve this to the actual <code>StreamSpec</code>
      * object.
      *
-     * @returns  name of the target filter type
+     * @return  name of the target filter type
      */
     public String getName()
     {

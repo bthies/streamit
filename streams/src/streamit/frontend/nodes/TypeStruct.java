@@ -12,7 +12,7 @@ import java.util.HashMap;
  * must be unique within a given structure.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeStruct.java,v 1.2 2003-07-08 20:44:24 dmaze Exp $
+ * @version $Id: TypeStruct.java,v 1.3 2003-07-24 16:58:37 dmaze Exp $
  */
 public class TypeStruct extends Type
 {
@@ -46,7 +46,7 @@ public class TypeStruct extends Type
     /**
      * Returns the context of the structure in the original source code.
      *
-     * @returns file name and line number the structure was declared in
+     * @return file name and line number the structure was declared in
      */
     public FEContext getContext()
     {
@@ -56,7 +56,7 @@ public class TypeStruct extends Type
     /**
      * Returns the name of the structure.
      *
-     * @returns the name of the structure
+     * @return the name of the structure
      */
     public String getName()
     {
@@ -66,7 +66,7 @@ public class TypeStruct extends Type
     /**
      * Returns the number of fields.
      *
-     * @returns the number of fields in the structure
+     * @return the number of fields in the structure
      */
     public int getNumFields()
     {
@@ -77,7 +77,7 @@ public class TypeStruct extends Type
      * Returns the name of the specified field.
      *
      * @param n zero-based index of the field to get the name of
-     * @returns the name of the nth field
+     * @return  the name of the nth field
      */
     public String getField(int n)
     {
@@ -88,7 +88,7 @@ public class TypeStruct extends Type
      * Returns the type of the field with the specified name.
      *
      * @param f the name of the field to get the type of
-     * @returns the type of the field named f
+     * @return  the type of the field named f
      */
     public Type getType(String f)
     {

@@ -120,7 +120,10 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                 ASSERT (child);
 
                 // add the initialization schedule:
-                initSchedule.add (child.getInitSchedule ());
+                if (child.getInitSchedule () != null)
+                {
+                    initSchedule.add (child.getInitSchedule ());
+                }
 
                 // add the steady schedule an appropriate number of times:
                 Integer numExecutions = (Integer)numExecutionsForInit.get (child);

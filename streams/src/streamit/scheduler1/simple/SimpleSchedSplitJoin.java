@@ -120,7 +120,10 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
                 ASSERT (child);
 
                 // get child's init schedule and append it
-                initSchedule.add (child.getInitSchedule ());
+                if (child.getInitSchedule () != null)
+                {
+                    initSchedule.add (child.getInitSchedule ());
+                }
             }
         }
 

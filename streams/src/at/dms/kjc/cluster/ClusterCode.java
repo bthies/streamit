@@ -395,10 +395,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <stdio.h>\n");
 	p.println();
 	p.print("#include <mysocket.h>\n");
+	p.print("#include <open_socket.h>\n");
 	p.print("#include <init_instance.h>\n");
+	p.print("#include <thread_list_element.h>\n");
 	p.println();
 
 	p.print("int __number_of_iterations = 20;\n");
+	p.print("thread_list_element *thread_list_top = NULL;\n");
 	p.println();
 
 	for (int i = 0; i < threadNumber; i++) {
@@ -427,6 +430,18 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
+	p.print("void listern_for_server() {\n");
+	p.print("  mysocket *sock;\n");
+	p.print("  sock = open_socket::listen(22223);\n");
+        p.print("  if (sock == NULL) return;\n");
+
+	p.print("}\n");
+	p.println();
+
+	p.print("void handle_server_command(char *command) {\n");
+	p.print("}\n");
+	p.println();
+
 	p.print("int main(int argc, char **argv) {\n");
 
 	p.print("  master_pid = getpid();\n");
@@ -434,7 +449,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  if (argc > 2 && strcmp(argv[1], \"-i\") == 0) {\n"); 
 	p.print("     int tmp;\n");
 	p.print("     sscanf(argv[2], \"%d\", &tmp);\n");
-	p.print("     printf(\"Argument is: %d\\n\", tmp);"); 
+	p.print("     printf(\"Argument is: %d\\n\", tmp);\n"); 
 	p.print("     __number_of_iterations = tmp;"); 
 	p.print("  }\n");
 
@@ -456,6 +471,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("  if (get_myip() == lookup_ip(init_instance::get_node_name("+i+"))) {\n");
 
 	    p.print("    pthread_create(&id, NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
+
+	    p.print("    thread_list_top = new thread_list_element("+i+", id, thread_list_top);\n");
 	
 	    p.print("  }\n");
 	}

@@ -27,9 +27,11 @@ public class UnflatFilter {
 	if(out!=null) {
 	    for(int i=0;i<out.length;i++) {
 		UnflatEdge[] inner=out[i];
-		for(int j=0;j<out.length;j++)
-		    inner[j]=null;
-		out[i]=null;
+		if(inner!=null) {
+		    for(int j=0;j<out.length;j++)
+			inner[j]=null;
+		    out[i]=null;
+		}
 	    }
 	    out=null;
 	}

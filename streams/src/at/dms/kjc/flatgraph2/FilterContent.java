@@ -4,6 +4,7 @@ import at.dms.kjc.CType;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import java.util.*;
+import at.dms.kjc.sir.linear.*;
 
 /**
  * Intended to reflect all the content of a filter needed by a backend
@@ -24,6 +25,7 @@ public class FilterContent {
     private JMethodDeclaration initFunction;
     private boolean is2stage;
     private JFieldDeclaration[] fields;
+    private LinearFilterRepresentation linear;
 
     /*public FilterContent(String name,SIRWorkFunction[] init,SIRWorkFunction[] work,CType inputType,CType outputType,int initMult,int steadyMult,JMethodDeclaration[] methods,List paramList) {
       this.name=name;
@@ -37,7 +39,7 @@ public class FilterContent {
       this.paramList=paramList;
       }*/
     
-    public FilterContent(SIRPhasedFilter filter,HashMap[] execCounts) {
+    public FilterContent(SIRPhasedFilter filter,HashMap[] execCounts,LinearAnalyzer lfa) {
 	name=filter.getName();
 	init=filter.getInitPhases();
 	steady=filter.getPhases();
@@ -54,8 +56,18 @@ public class FilterContent {
 	paramList=filter.getParams();
 	initFunction = filter.getInit();
 	is2stage = steady.length > 1;
+	if(lfa!=null)
+	    linear=lfa.getLinearRepresentation(filter);
     }
     
+    public LinearFilterRepresentation getLinear() {
+	return linear;
+    }
+
+    /*public void setLinear(LinearFilterRepresentation linear) {
+      this.linear=linear;
+      }*/
+
     public void setPrimePump(int pp) 
     {
 	primePump = pp;
@@ -72,7 +84,10 @@ public class FilterContent {
     }
     
     public String toString() {
-	return name;
+	if(linear==null)
+	    return name;
+	else
+	    return name+" *";
     }
 
     public String getName() {

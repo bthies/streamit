@@ -6,7 +6,7 @@
 
 void->void pipeline TemplateBeamFormer {
     int numChannels           = 12;//48;
-    int numSamples            = 64;//4096;
+    int numSamples            = 1024;//4096;
     int numBeams              = 4;//16;
     int numCoarseFilterTaps   = 64;//
     int numFineFilterTaps     = 64;//

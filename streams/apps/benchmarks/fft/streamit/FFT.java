@@ -25,12 +25,12 @@ class Butterfly extends Pipeline {
                     this.add(new Filter() {
                             Channel input = new Channel(Float.TYPE, 1);
                             Channel output = new Channel(Float.TYPE, 1);
-                            float weights[] = new float[W];
+                            //float weights[] = new float[W];
                             int curr;
 
                             public void init() {
-                                for (int i=0; i<W; i++)
-                                    weights[i] = calcWeight(i, N, W);
+                                //for (int i=0; i<W; i++)
+                                //    weights[i] = calcWeight(i, N, W);
                                 curr = 0;
                             }
 
@@ -45,7 +45,7 @@ class Butterfly extends Pipeline {
 
                             public void work() {
                                 output.pushFloat(input.popFloat()*
-                                                 weights[curr++]);
+                                                 2); //weights[curr++]);
                                 if(curr>= W) curr = 0;
                             }
 

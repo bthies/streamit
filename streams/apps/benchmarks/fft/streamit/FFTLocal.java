@@ -174,7 +174,7 @@ class FloatPrinterLocal extends Filter
     }
     public void work ()
     {
-        input.popFloat ();
+        System.out.println(input.popFloat ());
     }
 }
 
@@ -185,7 +185,7 @@ public class FFTLocal extends StreamIt {
 
     public void init() {
         this.add(new OneSourceLocal());
-        this.add(new FFTKernelLocal(8192));
+        this.add(new FFTKernelLocal(32));
         this.add(new FloatPrinterLocal());
     }
 }

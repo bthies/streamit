@@ -34,7 +34,18 @@ public final class VerticalCutTransform extends IdempotentTransform {
 	    // add one because of indexing convention in partitiongroup
 	    int[] partitions = { cutPos + 1, sj.size() - cutPos - 1};
 	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
-	    return RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
+	    SIRSplitJoin factored = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
+	    // now we have to add back any synchronization, since
+	    // that's the canonical form of the partitioner
+	    for (int i=0; i<factored.size(); i++) {
+		if (factored.get(i) instanceof SIRSplitJoin) {
+		    SIRSplitJoin toSync = (SIRSplitJoin)factored.get(i);
+		    if (toSync.getRectangularHeight()>1) {
+			factored.set(i, RefactorSplitJoin.addSyncPoints(toSync, PartitionGroup.createUniformPartition(toSync.getRectangularHeight())));
+		    }
+		}
+	    }
+	    return factored;
 	} else if (str instanceof SIRFeedbackLoop) {
 	    Utils.assert(cutPos==0, "Trying to vertical cut feedbackloop at position " + cutPos);
 	    // a cut at pos 1 is equivalent to breaking this guy in half

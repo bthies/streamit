@@ -19,9 +19,9 @@ class FieldInit4 extends StreamIt {
 }
 
 class SimplePipe extends Pipeline {
-    int offset = 7;
+    final int offset = 7;
     public void init() {
-	int x = 3 + offset;
+	final int x = 3 + offset;
 	add (new DataSource(x));
 	add (new DataSink());
     }

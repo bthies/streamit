@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.27 2003-05-28 17:31:34 dmaze Exp $
+# $Id: knit,v 1.28 2003-05-28 17:50:56 dmaze Exp $
 #
 
 use strict;
@@ -70,8 +70,8 @@ Options available for all backends:
                       Do not combine filters with linear replacement
 * --print-partitioned-source, -c
 *                     Print equivalent source after partitioning
-  --redundantreplacement, -t
-                      Create linear filters without redundant computation
+* --redundantreplacement, -t
+*                     Create linear filters without redundant computation
 * --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
   --sjtopipe, -J      Convert split-joins to pipelines
 * --stats             Gather statistics for program characterization

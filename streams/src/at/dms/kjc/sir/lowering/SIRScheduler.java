@@ -1,8 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import streamit.scheduler2.iriter.Iterator;
-import streamit.scheduler2.base.StreamInterface;
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 import streamit.scheduler2.Schedule;
 import streamit.StreamIt;
 
@@ -71,8 +70,8 @@ public class SIRScheduler implements Constants {
      */
     public static SIRSchedule buildWorkFunctions(SIRContainer toplevel, 
 						 JClassDeclaration flatClass) {
-	StreamInterface schedInterface = new SIRScheduler(toplevel, flatClass).buildWorkFunctions();
-	return new SIRSchedule(toplevel, schedInterface);
+	Scheduler scheduler = new SIRScheduler(toplevel, flatClass).buildWorkFunctions();
+	return new SIRSchedule(toplevel, scheduler);
     }
 
     /**
@@ -89,18 +88,18 @@ public class SIRScheduler implements Constants {
 	HashMap[] result = { new HashMap(), new HashMap() } ;
 
 	// get the schedule
-	StreamInterface schedInterface = computeSchedule(str);
+	Scheduler scheduler = computeSchedule(str);
 
 	// fill in the init schedule
-	fillExecutionCounts(schedInterface.getInitSchedule(), result[0], 1);
+	fillExecutionCounts(scheduler.getOptimizedInitSchedule(), result[0], 1);
 	// fill in the steady-state schedule
-	fillExecutionCounts(schedInterface.getSteadySchedule(), result[1], 1);
+	fillExecutionCounts(scheduler.getOptimizedSteadySchedule(), result[1], 1);
 
-	checkSchedule(str, schedInterface, result);
+	checkSchedule(str, scheduler, result);
 
 	// debug
-	//printSchedules(schedInterface);
-	//printSchedulesViaLibrary(schedInterface);
+	//printSchedules(schedule);
+	//printSchedulesViaLibrary(schedule);
 	//printExecutionCounts(result);
 
 	return result;
@@ -112,16 +111,14 @@ public class SIRScheduler implements Constants {
      * compiler.
      */
     private static int numSchedErrors = 0;
-    private static void checkSchedule(SIRStream str, StreamInterface schedInterface, HashMap[] execCounts) {
+    private static void checkSchedule(SIRStream str, Scheduler scheduler, HashMap[] execCounts) {
 	// this only works if <str> is stand-alone -- that is, it
 	// starts with a source and ends with a sink
 	if (str.getInputType()!=CStdType.Null || str.getOutputType()!=CStdType.Null) {
 	    return;
 	}
 	try {
-	    ScheduleBuffers buffers = new ScheduleBuffers(IterFactory.createIter(str));
-	    buffers.computeBuffersFor(schedInterface.getInitSchedule());
-	    buffers.computeBuffersFor(schedInterface.getSteadySchedule());
+	    scheduler.computeBufferUse();
 	} catch (Exception e) {
 	    String filename = "bad-schedule-" + (++numSchedErrors) + ".dot";
 	    PartitionDot.printScheduleGraph(str, filename, execCounts);
@@ -174,42 +171,40 @@ public class SIRScheduler implements Constants {
      * The private, instance-wise version of <schedule>, to do the
      * scheduling.
      */
-    private StreamInterface buildWorkFunctions() {
+    private Scheduler buildWorkFunctions() {
 	// get the schedule
-	StreamInterface schedInterface = computeSchedule(this.toplevel);
+	Scheduler scheduler = computeSchedule(this.toplevel);
 	// debugging printing
 	System.err.print("got schedule, interpreting... ");
-	//printSchedules(schedInterface);
+	//printSchedules(schedule);
 	// do steady-state scheduling
-	scheduleSteady(schedInterface);
+	scheduleSteady(scheduler);
 	// do initial scheduling
-	scheduleInit(schedInterface);
+	scheduleInit(scheduler);
 	// return schedule
-	return schedInterface;
+	return scheduler;
     }
     
     /**
      * Interface with the scheduler to get a schedule for <str>.
      */
-    private static StreamInterface computeSchedule(SIRStream str) {
-	streamit.scheduler2.base.StreamFactory factory = new streamit.scheduler2.minlatency.StreamFactory(0);
-	//SIRIterator parentIter = str.getParent()==null ? null : IterFactory.createIter(str.getParent());
-	StreamInterface schedInterface = factory.newFrom(IterFactory.createIter(str), null);
-	schedInterface.computeSchedule();
+    private static Scheduler computeSchedule(SIRStream str) {
+	streamit.scheduler2.Scheduler scheduler = new streamit.scheduler2.minlatency.Scheduler(IterFactory.createIter(str));
+	scheduler.computeSchedule();
 	//System.err.println("Back from scheduler package.");
-	return schedInterface;
+	return scheduler;
     }
 
     /**
      * Given the schedule <schedule>, do the steady-state scheduling
      * for <this.toplevel>.
      */
-    private void scheduleSteady(StreamInterface schedInterface) {
+    private void scheduleSteady(Scheduler scheduler) {
 	// indicate we're working on steady schedule
 	this.initMode = false;
 
 	// get steady schedule
-	Schedule schedule = schedInterface.getSteadySchedule();
+	Schedule schedule = scheduler.getOptimizedSteadySchedule();
 	// make the steady work
 	JMethodDeclaration steadyWork = makeHierWork(schedule);
 	// set <steadyWork> as the work function of <toplevel>
@@ -220,12 +215,12 @@ public class SIRScheduler implements Constants {
      * Given the schedule <schedule>, do the initial scheduling for
      * <this.toplevel>.
      */
-    private void scheduleInit(StreamInterface schedInterface) {
+    private void scheduleInit(Scheduler scheduler) {
 	// indicate we're working on init schedule
 	this.initMode = true;
 
 	// get init schedule
-	Schedule schedule = schedInterface.getInitSchedule();
+	Schedule schedule = scheduler.getOptimizedInitSchedule();
 
 	// make the init work
 	JMethodDeclaration initWork = makeHierWork(schedule);
@@ -272,24 +267,24 @@ public class SIRScheduler implements Constants {
      * give the same results as the other printSchedules if everything
      * is sane.
      */
-    private static void printSchedulesViaLibrary(StreamInterface schedInterface) {
+    private static void printSchedulesViaLibrary(Scheduler scheduler) {
 	StreamIt s = new StreamIt ();
 	System.out.println ("\nInit schedule:");
-	s.computeSize(schedInterface.getInitSchedule(), true);
+	s.computeSize(scheduler.getOptimizedInitSchedule(), true);
 	System.out.println("\nSteady schedule:");
-	s.computeSize(schedInterface.getSteadySchedule(), true);
+	s.computeSize(scheduler.getOptimizedSteadySchedule(), true);
 	System.out.println();
     }
 
     /**
-     * Prints initial and steady-state schedules of <schedInterface>
+     * Prints initial and steady-state schedules of <schedule>
      */
-    private static void printSchedules(StreamInterface schedInterface) {
+    private static void printSchedules(Scheduler scheduler) {
 	System.err.println();
 	System.err.println("Init schedule:");
-	printSchedule(schedInterface.getInitSchedule(), 1, 1);
+	printSchedule(scheduler.getOptimizedInitSchedule(), 1, 1);
 	System.err.println("Steady schedule:");
-	printSchedule(schedInterface.getSteadySchedule(), 1, 1);
+	printSchedule(scheduler.getOptimizedSteadySchedule(), 1, 1);
     }
 
     /**

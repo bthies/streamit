@@ -1,7 +1,6 @@
 package at.dms.kjc.sir.lowering;
 
-import streamit.scheduler2.base.StreamInterface;
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
@@ -18,12 +17,10 @@ public class SIRSchedule  {
     /**
      * The scheduler interface for buffer sizes.
      */
-    private ScheduleBuffers buffers;
+    private Scheduler scheduler;
 
-    public SIRSchedule(SIRStream toplevel, StreamInterface schedInterface) {
-	buffers = new ScheduleBuffers(IterFactory.createIter(toplevel));
-	buffers.computeBuffersFor(schedInterface.getInitSchedule());
-	buffers.computeBuffersFor(schedInterface.getSteadySchedule());
+    public SIRSchedule(SIRStream toplevel, Scheduler scheduler) {
+	scheduler.computeBufferUse();
     }
 
     /**
@@ -46,7 +43,7 @@ public class SIRSchedule  {
 	SIRIterator iter2 = IterFactory.createIter((SIRStream)op2);
 	// call scheduler
 	//System.err.println("Looking for schedule between " + op1 + " and " + op2);
-	return buffers.getBufferSizeBetween(iter1, iter2);
+	return scheduler.getBufferSizeBetween(iter1, iter2);
     }
 
 }

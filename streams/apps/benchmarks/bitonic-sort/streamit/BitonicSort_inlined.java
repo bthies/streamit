@@ -1,5 +1,9 @@
-/** 
- * BitonicSort.java - Batcher's bitonic sort network 
+/**
+ * Warning: This inlined version of BitonicSort.java works only with the library. 
+ *          For the latest complete working version, see BitonicSort.java. 
+ *          This file is kept only for showcase purposes! 
+ *  
+ * BitonicSort_inlined.java - Batcher's bitonic sort network 
  *                    Implementation works only for power-of-2 sizes starting from 2. 
  * 
  * Note: 

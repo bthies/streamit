@@ -102,8 +102,8 @@ public class FileReader extends Filter
             }
             catch (EOFException e) {
                 // try closing and opening file, to try again
-                closeFile();
-                openFile();
+                // closeFile();
+                // openFile();
             }
             catch (Throwable e)
             {

@@ -460,7 +460,8 @@ public class SpaceTimeBackend
 	    ListIterator initTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
 	    ListIterator steadyTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
 
-
+	    //assign the buffers not assigned by Jasp to drams
+	    OIBufferAssignment.run(steadyTrav, rawChip);
 	    //create the raw execution code and switch code for the initialization phase
 	    System.out.println("Creating Initialization Stage");
 	    Rawify.run(initTrav, rawChip, true); 
@@ -468,9 +469,12 @@ public class SpaceTimeBackend
 	    System.out.println("Creating Steady-State Stage");
 	    Rawify.run(steadyTrav, rawChip, false);
 	    //communicate the addresses for the off-chip buffers
-	    //if (!KjcOptions.magicdram) {
-	    //CommunicateAddrs.doit(rawChip);
-	    //}
+	    if (!KjcOptions.magicdram) {
+		//so right now, this pass does not communicate addresses
+		//but it generates the declarations of the buffers
+		//on the corresponding tile.
+		CommunicateAddrs.doit(rawChip);
+	    }
 	    //generate the switch code assembly files...
 	    GenerateSwitchCode.run(rawChip);
 	    //generate the compute code from the SIR

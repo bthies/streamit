@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.45 2003-12-01 22:16:41 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.46 2003-12-01 22:45:34 dmaze Exp $
  */
 
 header {
@@ -385,9 +385,10 @@ do_while_statement returns [Statement s]
 	;
 
 for_statement returns [Statement s]
-{ s = null; Expression x; Statement a, b, c; }
-	:	t:TK_for LPAREN a=for_init_statement SEMI x=right_expr SEMI
-		b=for_incr_statement RPAREN c=statement
+{ s = null; Expression x=null; Statement a, b, c; }
+	:	t:TK_for LPAREN a=for_init_statement SEMI
+		(x=right_expr | { x = new ExprConstBoolean(getContext(t), true); })
+		SEMI b=for_incr_statement RPAREN c=statement
 		{ s = new StmtFor(getContext(t), a, x, b, c); }
 	;
 

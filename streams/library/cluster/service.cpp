@@ -19,4 +19,5 @@ void service::start() {
 
 void *__start_service_method(void *) {
   __start_service_instance->unlock_and_run();
+  return NULL;
 }

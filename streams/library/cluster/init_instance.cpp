@@ -47,6 +47,7 @@ void *accept_thread(void *param) {
 
   UNLOCK(&init_instance::accept_lock);
 
+  return NULL;
 }
 
 void init_instance::reset_all() {

@@ -512,7 +512,7 @@ class ClusterCodeGenerator {
 	    r.add("  "+out.producer_name()+".get_socket()->close();\n");
 	}
 
-	r.add("  sleep(3);\n");
+	r.add("  pthread_exit(NULL);\n");
 
 	r.add("}\n");
 

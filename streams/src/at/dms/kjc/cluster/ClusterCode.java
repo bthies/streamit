@@ -501,11 +501,26 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("extern void __declare_sockets_"+i+"();\n");
 	    p.print("extern thread_info *__get_thread_info_"+i+"();\n");
 	    p.print("extern void run_"+i+"();\n");
+	    p.print("pthread_t __pthread_"+i+";\n");
 	    p.print("static void *run_thread_"+i+"(void *param) {\n");
 	    p.print("  run_"+i+"();\n");
 	    p.print("}\n");
 
 	}
+
+	p.println();
+
+	p.print("static void *run_join(void *param) {\n");
+
+	for (int i = 0; i < threadNumber; i++) {
+	    p.print("  if (get_myip() == init_instance::get_thread_ip("+i+")) {\n");
+	    p.print("    pthread_join(__pthread_"+i+", NULL);\n");
+	    p.print("  }\n");
+	}
+	p.print("  sleep(1);\n");
+	p.print("  exit(0);\n");
+
+	p.print("}\n");
 
 	p.println();
 
@@ -539,7 +554,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("  init_instance::initialize_sockets();\n");
 
-	p.print("  pthread_t id;\n");
+	//p.print("  pthread_t id;\n");
 
 	for (int i = 0; i < threadNumber; i++) {
 
@@ -548,14 +563,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("    thread_info *info = __get_thread_info_"+i+"();\n"); 
 	    p.print("    int *state = info->get_state_flag();\n");
 	    p.print("    *state = RUN_STATE;\n");
-	    p.print("    pthread_create(&id, NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
-	    p.print("    info->set_pthread(id);\n");
+	    p.print("    pthread_create(&__pthread_"+i+", NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
+	    p.print("    info->set_pthread(__pthread_"+i+");\n");
 	    p.print("    info->set_active(true);\n");
 
 	    p.print("  }\n");
 	}
-	p.print("}\n");
 
+	p.print("  pthread_t id;\n");
+	p.print("  pthread_create(&id, NULL, run_join, NULL);\n");
+
+	p.print("}\n");
 
 	p.println();
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.4 2001-09-27 23:28:34 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.5 2001-10-02 18:38:24 thies Exp $
  */
 
 package at.dms.kjc;
@@ -348,7 +348,7 @@ public class JMethodDeclaration extends JMemberDeclaration {
 			     ident,
 			     parameters,
 			     exceptions,
-			     body);
+		     body);
   }
 
   /**
@@ -369,6 +369,9 @@ public class JMethodDeclaration extends JMemberDeclaration {
     public JStatement[] getStatements() {
 	return body.getStatements();
     }
+
+    // bft:  added for streamit passes
+    public static final JMethodDeclaration[] EMPTY = new JMethodDeclaration[0];
 
   // $$$ MOVE TO BE PRIVATE
   protected int				modifiers;

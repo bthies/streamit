@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.3 2001-09-28 03:08:56 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.4 2001-10-02 18:38:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -588,4 +588,8 @@ public class JClassDeclaration extends JTypeDeclaration {
   private CClassType		superClass;
   private CClassContext		self;
   protected String		superName;
+
+    // bft:  added for streamit passes
+    public static final JClassDeclaration[] EMPTY = new JClassDeclaration[0];
+    
 }

@@ -42,7 +42,6 @@ public class Rawify
 			//switch code for the trace
 			//generate switchcode based on the presence of buffering		    
 			int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
-			
 			if(filterInfo.isLinear())
 			    createSwitchCodeLinear(filterNode,
 						   trace,filterInfo,init,false,tile,rawChip,mult);
@@ -383,23 +382,9 @@ public class Rawify
 	//after the initialization phase if the upstream filter produces more than
 	//we consume in init
 	if (init && filterInfo.remaining > 0) {
-	    for (int i = 0; 
-		 i < filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()); 
-		 i++) {
-		if (node.getPrevious().isFilterTrace()) {
-		    RouteIns ins = new RouteIns(tile);
-		    //add the route from the source tile to this
-		    //tile's compute processor
-		    ins.addRoute(rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
-						 ((FilterTraceNode)node.getPrevious()).getY()),
-				 tile);
-		    tile.getSwitchCode().appendIns(ins, init);
-		}   
-		else if (KjcOptions.magicdram) {
-		    InputTraceNode input = (InputTraceNode)node.getPrevious();
-		    createMagicDramLoad(input, node, init, rawChip);
-		}
-	    }
+	    appendReceiveInstructions(node, 
+				      filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()),
+				      filterInfo, init, false, tile, rawChip);
 	}
     }
     
@@ -415,6 +400,15 @@ public class Rawify
 	int itemsReceiving = filterInfo.itemsNeededToFire(iteration, init) *
 	    Util.getTypeSize(node.getFilter().getInputType());
 
+	appendReceiveInstructions(node, itemsReceiving, filterInfo, init, 
+				  primePump, tile, rawChip);
+    }
+    
+    private static void appendReceiveInstructions(FilterTraceNode node, int itemsReceiving,
+						  FilterInfo filterInfo,
+						  boolean init, boolean primePump, RawTile tile,
+						  RawChip rawChip) 
+    {
 	//the source of the data, either a device or another raw tile
 	ComputeNode sourceNode = null;
 	

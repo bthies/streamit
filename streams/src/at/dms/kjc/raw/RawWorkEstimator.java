@@ -128,7 +128,22 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 		cmdArray[5] = "run";
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
+		//dump the output so that the process does not hang on it
+		InputStream output = jProcess.getInputStream();
+		try {
+		    InputStreamReader isr = new InputStreamReader(output);
+		    BufferedReader br = new BufferedReader(isr);
+		    String line = null;
+		    while ((line = br.readLine()) != null) {
+		    }
+		}
+		catch (Exception e) {
+		    e.printStackTrace();
+		}
+		
 	    }
+
+	    
 	    
 	    //open the results file and return the stats
 	    work = readCycleCount(dir);

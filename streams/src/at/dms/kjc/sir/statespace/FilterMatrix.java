@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.3 2004-02-24 19:56:11 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.4 2004-02-25 20:55:44 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -190,6 +190,77 @@ public class FilterMatrix {
 	}
 	return copyMatrix;
     }
+
+
+    /** swap row1, row2 with each other */
+
+    public void swapRows(int row1, int row2) {
+
+	int totalRows = this.getRows();
+
+	if((row1 < 0)||(row1 >= totalRows)) 
+	   throw new IllegalArgumentException("invalid parameter row1 = " + row1);
+	if((row2 < 0)||(row2 >= totalRows)) 
+	   throw new IllegalArgumentException("invalid parameter row1 = " + row1);
+
+	int totalCols = this.getCols();
+	double swap_r, swap_i;
+
+	for(int j=0; j<totalCols; j++) {
+	    swap_r = this.internalMatrixReal[row1][j];
+	    this.internalMatrixReal[row1][j] = this.internalMatrixReal[row2][j];
+	    this.internalMatrixReal[row2][j] = swap_r;
+
+	    swap_i = this.internalMatrixImag[row1][j];
+	    this.internalMatrixImag[row1][j] = this.internalMatrixImag[row2][j];
+	    this.internalMatrixImag[row2][j] = swap_r;
+	}
+    }
+
+
+
+    /** swap col1, col2 with each other */
+
+    public void swapCols(int col1, int col2) {
+
+	int totalCols = this.getCols();
+
+	if((col1 < 0)||(col1 >= totalCols)) 
+	   throw new IllegalArgumentException("invalid parameter col1 = " + col1);
+	if((col2 < 0)||(col2 >= totalCols)) 
+	   throw new IllegalArgumentException("invalid parameter col1 = " + col1);
+
+	int totalRows = this.getRows();
+	double swap_r, swap_i;
+
+	for(int i=0; i<totalRows; i++) {
+	    swap_r = this.internalMatrixReal[i][col1];
+	    this.internalMatrixReal[i][col1] = this.internalMatrixReal[i][col2];
+	    this.internalMatrixReal[i][col2] = swap_r;
+
+	    swap_i = this.internalMatrixImag[i][col1];
+	    this.internalMatrixImag[i][col1] = this.internalMatrixImag[i][col2];
+	    this.internalMatrixImag[i][col2] = swap_r;
+	}
+    }
+
+
+    /** swap rows val1, val2 and swap cols val1, val2 - Note that order does not matter **/
+
+    public void swapRowsAndCols(int val1, int val2) {
+
+	int totalRows = this.getRows();
+	int totalCols = this.getCols();
+
+	if((val1 < 0)||(val1 > totalRows)||(val1 > totalCols))
+	    throw new IllegalArgumentException("invalid parameter val1 = " + val1);
+	if((val2 < 0)||(val2 > totalRows)||(val2 > totalCols))
+	    throw new IllegalArgumentException("invalid parameter val2 = " + val2);
+
+	swapRows(val1,val2);
+	swapCols(val1,val2);
+    }
+
 
     /**
      * Copies the source matrix into this FilterMatrix such that the

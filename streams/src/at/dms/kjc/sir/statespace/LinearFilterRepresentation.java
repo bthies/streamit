@@ -7,7 +7,7 @@ package at.dms.kjc.sir.statespace;
  * This class holds the A, B, C, D in the equations y = Ax+Bu, x' = Cx + Du which calculates the output
  * vector y and new state vector x' using the input vector u and the old state vector x.<br>
  *
- * $Id: LinearFilterRepresentation.java,v 1.5 2004-02-24 19:56:12 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.6 2004-02-25 20:55:44 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -152,23 +152,19 @@ public class LinearFilterRepresentation {
 	for(int i=0; i<factor; i++) 
 	  newD.copyAt(oldPush*i,oldPop*i,oldD);
 
-	for(int i=1; i<factor; i++)
-	  newD.copyAt(oldPush*i,oldPop*(i-1),tempD);
-
 	for(int i=1; i<factor; i++) {
 	  tempB = newA.times(oldB);
 	  tempC = oldC.times(newA);
-	  tempD = tempC.times(oldB); 
 
 	  newB.copyAt(0,oldPop*(factor-i-1),tempB);
-	  newC.copyAt(oldPush*(factor-i-1),0,tempC);
+	  newC.copyAt(oldPush*i,0,tempC);
 
-	  if(i < factor-1) {
-	    for(int j=i; j<factor; j++)
-	      newD.copyAt(oldPush*(i+1),oldPop*i,tempD);
-	  }
-
+	  for(int j=0; j<factor-i; j++)
+	    newD.copyAt(oldPush*(i+j),oldPop*j,tempD);
+	  
 	  newA = newA.times(oldA);
+	  tempD = tempC.times(oldB); 
+	  
 	}
 
 	
@@ -182,6 +178,16 @@ public class LinearFilterRepresentation {
 	//System.err.println("old pop: "  + oldPop);
 	//System.err.println("num copies: " + numCompleteCopies);
 	
+
+	LinearPrinter.println("Matrix A:");
+	LinearPrinter.println(newA.toString());
+	LinearPrinter.println("Matrix B:");
+	LinearPrinter.println(newB.toString());
+	LinearPrinter.println("Matrix C:");
+	LinearPrinter.println(newC.toString());
+	LinearPrinter.println("Matrix D:");
+	LinearPrinter.println(newD.toString());
+
 
 	// initial vector is the same
 	FilterVector newInitVec = (FilterVector)this.getInit().copy();

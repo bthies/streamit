@@ -138,18 +138,23 @@ public class StreamItDot implements AttributeStreamVisitor
     /**
      * Returns the rate information for a filter.
      */
-    protected static String makeFilterLabel(SIRFilter self) {
+    protected static String makeFilterLabel(SIRPhasedFilter self) {
 	String label = "";
 	try {
-	    label += "\\npush=" + self.getPushInt();
-	    label += "\\npop=" + self.getPopInt();
-	    label += "\\npeek=" + self.getPeekInt();
-	    if (self instanceof SIRTwoStageFilter) {
-		SIRTwoStageFilter two = (SIRTwoStageFilter)self;
-		label += "\\ninitPush=" + two.getInitPush();
-		label += "\\ninitPop=" + two.getInitPop();
-		label += "\\ninitPeek=" + two.getInitPeek();
-	    }
+            SIRWorkFunction[] phases = self.getPhases();
+            for (int i = 0; i < phases.length; i++)
+            {
+                label += "\\npush" + i + "=" + phases[i].getPushInt();
+                label += "\\npop" + i + "=" + phases[i].getPopInt();
+                label += "\\npeek" + i + " =" + phases[i].getPeekInt();
+            }
+            phases = self.getInitPhases();
+            for (int i = 0; i < phases.length; i++)
+            {
+                label += "\\ninitPush" + i + "=" + phases[i].getPushInt();
+                label += "\\ninitPop" + i + "=" + phases[i].getPopInt();
+                label += "\\ninitPeek" + i + " =" + phases[i].getPeekInt();
+            }
 	} catch (Exception e) {
 	    // if constants not resolved for the ints, will get an exception
 	}

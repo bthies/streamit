@@ -15,13 +15,15 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.1 2001-08-30 16:32:58 thies Exp $
+ * $Id: Utils.java,v 1.2 2001-09-27 18:49:16 thies Exp $
  */
 
 package at.dms.util;
 
 import java.lang.reflect.Array;
 import java.util.Vector;
+import java.util.List;
+import java.util.LinkedList;
 
 /**
  * This class defines severals utilities methods used in source code
@@ -41,6 +43,26 @@ public abstract class Utils {
     if (!b) {
       throw new InconsistencyException();
     }
+  }
+
+  /**
+   * Check if an assertion is valid with a given error message
+   *
+   * @exception	RuntimeException	the entire token reference
+   */
+  public static final void assert(boolean b, String str) {
+    if (!b) {
+      throw new InconsistencyException(str);
+    }
+  }
+
+  /**
+   * Signal a failure with given error message
+   *
+   * @exception	RuntimeException	the entire token reference
+   */
+  public static final void fail(String str) {
+      throw new InconsistencyException(str);
   }
 
   /**
@@ -105,6 +127,36 @@ public abstract class Utils {
   }
 
   /**
+   * Returns a new array of length n with all values set to val
+   *
+   * @param	n		the desired number of elements in the array
+   * @param	val		the value of each element
+   */
+  public static int[] initArray(int n, int val) {
+      int[] result = new int[n];
+      for (int i=0; i<n; i++) {
+	  result[i] = val;
+      }
+      return result;
+  }
+
+  /**
+   * Returns whether or not two integer arrays have the same length
+   * and entries
+   */
+    public static boolean equalArrays(int[] a1, int[] a2) {
+	if (a1.length!=a2.length) {
+	    return false;
+	} else {
+	    boolean ok = true;
+	    for (int i=0; i<a1.length; i++) {
+		ok = ok && a1[i]==a2[i];
+	    }
+	    return ok;
+	}
+    }
+
+  /**
    * Splits a string like:
    *   "java/lang/System/out"
    * into two strings:
@@ -142,5 +194,7 @@ public abstract class Utils {
   // ----------------------------------------------------------------------
   // DATA MEMBERS
   // ----------------------------------------------------------------------
+
+    public static final List EMPTY_LIST = new LinkedList();
 
 }

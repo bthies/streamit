@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.8 2001-10-09 17:20:44 dmaze Exp $
+ * $Id: LIRToC.java,v 1.9 2001-10-09 18:21:00 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1496,7 +1496,7 @@ public class LIRToC
                               String childName)
     {
         // Pay attention, three statements!
-        print("data->" + childName + " = malloc(sizeof(" + childType + "));");
+        print("data->" + childName + " = malloc(sizeof(_" + childType + "));");
         newLine();
         print("data->" + childName + "->context = " +
               "create_context(data->" + childName + ");");

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.25 2003-04-16 13:34:43 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.26 2003-05-12 21:07:55 dmaze Exp $
  */
 
 header {
@@ -236,11 +236,22 @@ primitive_type returns [Type t] { t = null; }
 	|	id:ID { t = new TypeStructRef(id.getText()); }
 	;
 
-variable_decl returns [Statement s] { s = null; Type t; Expression x = null; }
-	:	t=data_type id:ID (ASSIGN x=right_expr)?
-		{ s = new StmtVarDecl(getContext(id), t, id.getText(), x); }
+variable_decl returns [Statement s] { s = null; Type t; Expression x = null; 
+	List ts = new ArrayList(); List ns = new ArrayList();
+	List xs = new ArrayList(); FEContext ctx = null; }
+	:	t=data_type
+		id:ID { ctx = getContext(id); }
+		(ASSIGN x=right_expr)?
+		{ ts.add(t); ns.add(id.getText()); xs.add(x); }
+		(
+			{ x = null; }
+			COMMA id2:ID (ASSIGN x=right_expr)?
+			{ ts.add(t); ns.add(id2.getText()); xs.add(x); }
+		)*
+		{ s = new StmtVarDecl(ctx, ts, ns, xs); }
 		// NB: we'd use the context of t, except Type doesn't include
 		// a context.  This is probably okay in the grand scheme of things.
+		// We explicitly use the context of the first identifier.
 	;
 
 function_decl returns [Function f] { Type t; List l; Statement s; f = null;

@@ -11,7 +11,7 @@ import java.util.Iterator;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.2 2003-04-15 19:22:17 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.3 2003-05-12 21:07:58 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -71,8 +71,9 @@ public class SymbolTableVisitor extends FEReplacer
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        symtab.registerVar(stmt.getName(), stmt.getType(), stmt,
-                           SymbolTable.KIND_LOCAL);
+        for (int i = 0; i < stmt.getNumVars(); i++)
+            symtab.registerVar(stmt.getName(i), stmt.getType(i), stmt,
+                               SymbolTable.KIND_LOCAL);
         return stmt;
     }
 

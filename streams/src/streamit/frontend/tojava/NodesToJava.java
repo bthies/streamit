@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.51 2003-04-18 15:57:19 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.52 2003-05-12 21:07:58 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -644,20 +644,25 @@ public class NodesToJava implements FEVisitor
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
         String result = "";
-        // Hack: if the variable name begins with "_final_", the
+        // Hack: if the first variable name begins with "_final_", the
         // variable declaration should be final.
-        if (stmt.getName().startsWith("_final_"))
+        if (stmt.getName(0).startsWith("_final_"))
             result += "final ";
-        result += convertType(stmt.getType()) + " " + stmt.getName();
-        if (stmt.getInit() != null)
-            result += " = " + (String)stmt.getInit().accept(this);
-        else
+        for (int i = 0; i < stmt.getNumVars(); i++)
         {
-            // If the type of the statement isn't a primitive type
-            // (or is complex), emit a constructor.
-            Type type = stmt.getType();
-            if (type.isComplex() || !(type instanceof TypePrimitive))
-                result += " = " + makeConstructor(type);
+            if (i > 0)
+                result += ", ";
+            result += convertType(stmt.getType(i)) + " " + stmt.getName(i);
+            if (stmt.getInit(i) != null)
+                result += " = " + (String)stmt.getInit(i).accept(this);
+            else
+            {
+                // If the type of the statement isn't a primitive type
+                // (or is complex), emit a constructor.
+                Type type = stmt.getType(i);
+                if (type.isComplex() || !(type instanceof TypePrimitive))
+                    result += " = " + makeConstructor(type);
+            }
         }
         return result;
     }

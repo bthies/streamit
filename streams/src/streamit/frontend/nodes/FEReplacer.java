@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.16 2003-04-16 13:34:45 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.17 2003-05-12 21:07:58 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -396,11 +396,16 @@ public class FEReplacer implements FEVisitor
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        Expression newInit = stmt.getInit() == null ? null :
-            doExpression(stmt.getInit());
-        if (newInit == stmt.getInit()) return stmt;
-        return new StmtVarDecl(stmt.getContext(), stmt.getType(),
-                               stmt.getName(), newInit);
+        List newInits = new ArrayList();
+        for (int i = 0; i < stmt.getNumVars(); i++)
+        {
+            Expression init = stmt.getInit(i);
+            if (init != null)
+                init = doExpression(init);
+            newInits.add(init);
+        }
+        return new StmtVarDecl(stmt.getContext(), stmt.getTypes(),
+                               stmt.getNames(), newInits);
     }
     
     public Object visitStmtWhile(StmtWhile stmt)

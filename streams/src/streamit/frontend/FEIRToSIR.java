@@ -112,20 +112,26 @@ public class FEIRToSIR implements FEVisitor {
 
   public JFieldDeclaration stmtVarDeclToJFieldDeclaration(StmtVarDecl decl) {
     debug("In stmtVarDeclToJFieldDeclaration\n");
-    JVariableDefinition def;
+    JVariableDefinition def = null;
+    /* We no longer use StmtVarDecls for field declarations, there are
+     * separate frontend FieldDecl objects instead.  This code is
+     * incompatible with changing StmtVarDecl to have multiple
+     * declarations, so I'm leaving it commented out; FieldDecl will
+     * probably change the same way soon enough, though.  --dzm
     if (decl.getInit() != null) {
-      def = new JVariableDefinition(null, /* token reference */
+      def = new JVariableDefinition(null, // token reference
 				    at.dms.kjc.Constants.ACC_PUBLIC,
 				    feirTypeToSirType(decl.getType()),
 				    decl.getName(),
 				    (JExpression) decl.getInit().accept(this));
     } else {
-      def = new JVariableDefinition(null, /* token reference */
+      def = new JVariableDefinition(null, // token reference
 				    at.dms.kjc.Constants.ACC_PUBLIC,
 				    feirTypeToSirType(decl.getType()),
 				    decl.getName(),
 				    null);
     }
+*/
     JFieldDeclaration fDecl = new JFieldDeclaration(null, /* token reference */
 						    def,
 						    null, /* javadoc */
@@ -920,19 +926,23 @@ public class FEIRToSIR implements FEVisitor {
 
   public Object visitStmtVarDecl(StmtVarDecl stmt) {
     debug("In visitStmtVarDecl\n");
-    if (stmt.getInit() == null) {
-      return new JVariableDefinition(null,
-				     at.dms.kjc.Constants.ACC_PUBLIC,
-				     feirTypeToSirType(stmt.getType()),
-				     stmt.getName(),
-				     null);
-    } else {
-      return new JVariableDefinition(null,
-				     at.dms.kjc.Constants.ACC_PUBLIC,
-				     feirTypeToSirType(stmt.getType()),
-				     stmt.getName(),
-				     (JExpression) stmt.getInit().accept(this));
+    List defs = new ArrayList();
+    for (int i = 0; i < stmt.getNumVars(); i++)
+    {
+        Expression init = stmt.getInit(i);
+        JExpression jinit = null;
+        if (init != null)
+            jinit = (JExpression)init.accept(this);
+        defs.add(new JVariableDefinition(null,
+                                         at.dms.kjc.Constants.ACC_PUBLIC,
+                                         feirTypeToSirType(stmt.getType(i)),
+                                         stmt.getName(i),
+                                         jinit));
     }
+    return new JVariableDeclarationStatement
+        (null, // token reference
+         (JVariableDefinition[])defs.toArray(new JVariableDefinition[1]),
+         null); // comments
   }
 
   public Object visitStmtWhile(StmtWhile stmt) {

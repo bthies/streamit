@@ -3,6 +3,7 @@ package streamit.frontend.passes;
 import streamit.frontend.nodes.*;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Front-end visitor passes that renames variables of type
@@ -11,7 +12,7 @@ import java.util.Iterator;
  * infrastructure to understand bit types.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: RenameBitVars.java,v 1.3 2003-04-09 15:26:49 dmaze Exp $
+ * @version $Id: RenameBitVars.java,v 1.4 2003-05-12 21:07:58 dmaze Exp $
  */
 public class RenameBitVars extends SymbolTableVisitor
 {
@@ -32,16 +33,22 @@ public class RenameBitVars extends SymbolTableVisitor
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
         // Register the variable in the symbol table;
-        symtab.registerVar(stmt.getName(), stmt.getType());
+        stmt = (StmtVarDecl)super.visitStmtVarDecl(stmt);
         // Then change the name if appropriate
-        if ((stmt.getType() instanceof TypePrimitive) &&
-            (((TypePrimitive)(stmt.getType())).getType() ==
-             TypePrimitive.TYPE_BIT))
+        List newNames = new java.util.ArrayList();
+        for (int i = 0; i < stmt.getNumVars(); i++)
         {
-            stmt = new StmtVarDecl(stmt.getContext(), stmt.getType(),
-                                   "_bit_" + stmt.getName(), stmt.getInit());
-            symtab.registerVar(stmt.getName(), stmt.getType());
+            String name = stmt.getName(i);
+            Type type = stmt.getType(i);
+            if ((type instanceof TypePrimitive) &&
+                (((TypePrimitive)(type)).getType() == TypePrimitive.TYPE_BIT))
+            {
+                name = "_bit_" + name;
+                symtab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
+            }
+            newNames.add(name);
         }
-        return stmt;
+        return new StmtVarDecl(stmt.getContext(), stmt.getTypes(),
+                               newNames, stmt.getInits());
     }
 }

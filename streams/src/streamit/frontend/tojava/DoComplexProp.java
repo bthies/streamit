@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.11 2003-04-15 19:22:18 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.12 2003-05-12 21:07:58 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -283,49 +283,70 @@ public class DoComplexProp extends FEReplacer
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        // Go ahead and do propagation:
         stmt = (StmtVarDecl)super.visitStmtVarDecl(stmt);
-        symTab.registerVar(stmt.getName(), stmt.getType());
-        // Now check to see if this is initialized,
-        if (stmt.getInit() == null) return stmt;
-        // and if so, if the type is complex,
-        if (!stmt.getType().isComplex()) return stmt;
-        // and if then, if the right-hand side is complex too,
-        Expression exprVar = new ExprVar(stmt.getContext(), stmt.getName());
-        if (stmt.getInit() instanceof ExprComplex)
+
+        // Save the context, we'll need it later.
+        FEContext ctx = stmt.getContext();
+        // Go ahead and do propagation:
+        List newTypes = new java.util.ArrayList();
+        List newNames = new java.util.ArrayList();
+        List newInits = new java.util.ArrayList();
+        for (int i = 0; i < stmt.getNumVars(); i++)
         {
-            // Right.  Create the separate initialization statements.
-            ExprComplex cplx = (ExprComplex)stmt.getInit();
-            addStatement(new StmtVarDecl(stmt.getContext(), stmt.getType(),
-                                         stmt.getName(), null));
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(stmt.getContext(),
-                                                      exprVar, "real"),
-                                        cplx.getReal()));
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(stmt.getContext(),
-                                                      exprVar, "imag"),
-                                        cplx.getImag()));
-            return null;
+            String name = stmt.getName(i);
+            Type type = stmt.getType(i);
+            Expression init = stmt.getInit(i);
+            symTab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
+
+            // If this is uninitialized, or the type isn't complex,
+            // go on with our lives.
+            //
+            // (But what about things like float foo=abs(a+bi)?  --dzm)
+            if (init == null || !type.isComplex())
+            {
+                newTypes.add(type);
+                newNames.add(name);
+                newInits.add(init);
+                continue;
+            }
+
+            // Is the right-hand side complex too?
+            Expression exprVar = new ExprVar(ctx, name);
+            if (init instanceof ExprComplex)
+            {
+                // Right.  Create the separate initialization statements.
+                ExprComplex cplx = (ExprComplex)init;
+                addStatement(new StmtVarDecl(ctx, type, name, null));
+                addStatement(new StmtAssign(ctx,
+                                            new ExprField(ctx,
+                                                          exprVar, "real"),
+                                            cplx.getReal()));
+                addStatement(new StmtAssign(ctx,
+                                            new ExprField(ctx,
+                                                          exprVar, "imag"),
+                                            cplx.getImag()));
+                continue;
+            }
+            // Maybe the right-hand side isn't complex at all.
+            if (!((Type)init.accept(getExprType)).isComplex())
+            {
+                addStatement(new StmtVarDecl(ctx, type, name, null));
+                addStatement(new StmtAssign(ctx,
+                                            new ExprField(ctx,
+                                                          exprVar, "real"),
+                                            init));
+                addStatement(new StmtAssign(ctx,
+                                            new ExprField(ctx,
+                                                          exprVar, "imag"),
+                                            new ExprConstInt(ctx, 0)));
+                continue;
+            }
+            // Otherwise, we have complex foo = (complex)bar(), which is fine.
+            newTypes.add(type);
+            newNames.add(name);
+            newInits.add(init);
         }
-        // or if the right-hand side isn't complex at all.
-        if (!((Type)stmt.getInit().accept(getExprType)).isComplex())
-        {
-            addStatement(new StmtVarDecl(stmt.getContext(), stmt.getType(),
-                                         stmt.getName(), null));
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(stmt.getContext(),
-                                                      exprVar, "real"),
-                                        stmt.getInit()));
-            addStatement(new StmtAssign(stmt.getContext(),
-                                        new ExprField(stmt.getContext(),
-                                                      exprVar, "imag"),
-                                        new ExprConstInt(stmt.getContext(),
-                                                         0)));
-            return null;
-        }
-        // Otherwise, we have complex foo = (complex)bar(), which is fine.
-        return stmt;
+        return new StmtVarDecl(ctx, newTypes, newNames, newInits);
     }
 
     public Object visitStreamSpec(StreamSpec spec)

@@ -95,11 +95,10 @@ public class SIRInitStatement extends JStatement {
     }
 
     /**
-     * Accepts the specified attribute visitor - NOT SUPPORTED YET.
+     * Accepts the specified attribute visitor - just returns this for now.
      */
     public Object accept(AttributeVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
-	return null;
+	return this;
     }
 
     /**

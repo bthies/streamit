@@ -138,10 +138,9 @@ public class SIRMessageStatement extends JStatement {
     }
 
     /*
-     * Accepts the specified attributed visitor - NOT SUPPORTED YET.
+     * Accepts the specified attributed visitor - just returns this for now.
      */
     public Object accept(AttributeVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
-	return null;
+	return this;
     }
 }

@@ -89,12 +89,11 @@ public class SIRPopExpression extends JExpression {
     }
 
     /**
-     * Accepts the specified attribute visitor.  NOT SUPPORTED YET.
+     * Accepts the specified attribute visitor - just returns this for now.
      * @param	p		the visitor
      */
     public Object accept(AttributeVisitor p) {
-	at.dms.util.Utils.fail("Visitors to custom nodes not supported yet.");
-	return null;
+	return this;
     }
 
     /**

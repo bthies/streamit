@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.24 2004-11-15 06:12:03 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.25 2005-02-01 05:17:47 rabbah Exp $
  */
 public class SemanticChecker
 {
@@ -522,7 +522,7 @@ public class SemanticChecker
                             new TypePrimitive(TypePrimitive.TYPE_INT);
                         Type bittype =
                             new TypePrimitive(TypePrimitive.TYPE_BIT);
-                    
+
                         switch(expr.getOp())
                         {
                         case ExprUnary.UNOP_NEG:
@@ -547,6 +547,11 @@ public class SemanticChecker
 			    // same as negation, regarding bits
                             if (!bittype.promotesTo(ot))
                                 report(expr, "cannot perform ++/-- on " + ot);
+                            break;
+
+                        case ExprUnary.UNOP_COMPLEMENT:
+                            if (!bittype.promotesTo(ot)) 
+                                report(expr, "cannot complement " + ot);
                             break;
                         }
                     }
@@ -587,6 +592,14 @@ public class SemanticChecker
                             if (!ct.promotesTo(cplxtype))
                                 report(expr,
                                        "cannot perform arithmetic on " + ct);
+                            break;
+
+                        case ExprBinary.BINOP_LSHIFT:
+                        case ExprBinary.BINOP_RSHIFT:
+                            if (!inttype.promotesTo(ct))
+                                report(expr,
+                                       "1cannot perform shift operations on "
+                                       + ct);
                             break;
 
                         // Bitwise and integer operations:

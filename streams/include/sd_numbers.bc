@@ -191,7 +191,7 @@ fn print_final_stats() {
   fprintf(outputFile, "Avg Cycles for Last 5 Steady-States: %d\n", gLastFiveCycles/5); 
   fprintf(outputFile, "Thruput per 10^5: %d\n",  
 	  (100000) / (totalCycles/gSteadyStatePrints)); 
-  fprintf(outputFile, "Total Non-Blocked Cycles: %d\n\n",  
+  fprintf(outputFile, "Total Instructions issued: %d\n\n",  
 	  (gWorkCountTotal)); 
   // The following should no longer be necessary 
   // - ((gNumProc - gStreamItTilesUsed) * totalCycles))); 
@@ -271,7 +271,7 @@ fn gather_numbers_init()
   fprintf(outputFile, "Tiles assigned (to filters or joiners): %d\n", gStreamItTilesUsed);
   fprintf(outputFile, "Final unroll factor used: %d\n", gStreamItUnrollFactor);
   fprintf(outputFile, "With %d items outputted per steady state.\n\n", printsPerCycle);
-  fprintf(outputFile, "cycles MFLOPS cache_misses work_count ins_fired(tile 0...%d)\n", (gNumProc - 1));
+  fprintf(outputFile, "cycles MFLOPS cache_misses tot_ins_fired ins_fired(tile 0...%d)\n", (gNumProc - 1));
   fprintf(outputFile, "--------------------------\n");
 
   //register the workcount event

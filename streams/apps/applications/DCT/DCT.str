@@ -91,8 +91,8 @@ float->float filter TwoPointDCT() {
 	a=pop();
 	b=pop();
 
-	println(a);
-	println(b);
+	//println(a);
+	//println(b);
 	
 	push((a+b)/scale);
 	push((a-b)/scale);

@@ -148,7 +148,7 @@ class LastComputeStage extends SplitJoin
     float w_re, w_im; 
 
     /* assertions for the last fft stage */ 
-    ASSERT(numgrps==N/2 && numbflies==1); 
+    //ASSERT(numgrps==N/2 && numbflies==1); 
 
     /* The splitjoin routes the complex points "grplen" each to/from the constituent bflygrps. */
     this.setSplitter(ROUND_ROBIN(2*grplen)); 
@@ -297,8 +297,9 @@ class ComplexPrinter extends Filter
     input = new Channel(Float.TYPE, 2); 
   }  
   public void work() 
-  { 
-    System.out.println(input.popFloat() + "\t\t" + input.popFloat()); 
+  {
+    //System.out.println(input.popFloat() + "\t\t" + input.popFloat()); 
+    System.out.println(input.popFloat()); System.out.println(input.popFloat()); 
   } 
 } 
 

@@ -294,7 +294,8 @@ public class SimplePartitioner extends Partitioner
     private int getWorkEstimate(UnflatFilter unflat) 
     {
 	if (unflat.isLinear())
-	    return 0;
+	    //return 0;
+	    return unflat.array.length*2;
 	return getWorkEstimate(unflat.filter);
     }
 

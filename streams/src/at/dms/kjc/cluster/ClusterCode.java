@@ -546,16 +546,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("       __init_iter = tmp;"); 
 	p.print("    }\n");
 
-	/*
-
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n"); 
 	p.print("       int tmp;\n");
 	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
 	p.print("       printf(\"Number of Iterations: %d\\n\", tmp);\n"); 
-	p.print("       __number_of_iterations = tmp;"); 
+	p.print("       __max_iteration = tmp;"); 
 	p.print("    }\n");
-
-	*/
 
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-ccp\") == 0) {\n");
 	p.print("       printf(\"CCP address: %s\\n\", argv[a + 1]);\n"); 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.45 2003-09-30 18:22:07 thies Exp $
+ * $Id: KjcOptions.opt,v 1.46 2003-10-02 04:12:35 thies Exp $
  */
 
 prefix Kjc
@@ -76,14 +76,6 @@ longname		"nowarn"
 	type		boolean
 	default		"false"
 	help		"Not used, for compatibility purpose"
-
-longname		"optimize"
-	shortcut	"O"
-	type		int
-	default		"1"
-	optionalDefault	"2"
-  //	enum		"0", "1", "2", "3"
-	help		"Optimizes X times"
 
 longname		"multi"
 	shortcut	"m"

@@ -1420,13 +1420,13 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits an init statement.
      */
     public void visitInitStatement(SIRInitStatement self,
-			    JExpression[] args,
-			    SIRStream target) {
+				   SIRStream target) {
 	blockStart("SIRInitStatement");
 	attrPrint("target ", target.toString());
 	attrStart("args");
-	for (int i=0; i<args.length; i++) {
-	    args[i].accept(this);
+	List args = self.getArgs();
+	for (int i=0; i<args.size(); i++) {
+	    ((JExpression)args.get(i)).accept(this);
 	}
 	attrEnd();
 	blockEnd();

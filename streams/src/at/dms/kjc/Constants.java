@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Constants.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: Constants.java,v 1.2 2003-04-06 00:51:40 aalamb Exp $
  */
 
 package at.dms.kjc;
@@ -42,7 +42,7 @@ public interface Constants extends at.dms.classfile.Constants {
   int TID_CLASS			= 9;
   int TID_ARRAY			= 10;
   int TID_BOOLEAN		= 11;
-
+  int TID_BIT                   = 12;
 
   // ----------------------------------------------------------------------
   // COMPILER FLAGS

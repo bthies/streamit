@@ -92,9 +92,9 @@ public class SIRScheduler implements Constants {
 	StreamInterface schedInterface = computeSchedule(str);
 
 	// fill in the init schedule
-	fillExecutionCounts(schedInterface.getInitSchedule(), result[0]);
+	fillExecutionCounts(schedInterface.getInitSchedule(), result[0], 1);
 	// fill in the steady-state schedule
-	fillExecutionCounts(schedInterface.getSteadySchedule(), result[1]);
+	fillExecutionCounts(schedInterface.getSteadySchedule(), result[1], 1);
 
 	checkSchedule(str, schedInterface, result);
 
@@ -148,24 +148,24 @@ public class SIRScheduler implements Constants {
     // Creates execution counts of filters in graph.  Requires that
     // <schedule> results from a schedule built with this instance of
     // the scheduler.
-    private static void fillExecutionCounts(Schedule schedule, HashMap counts) {
+    private static void fillExecutionCounts(Schedule schedule, HashMap counts, int numReps) {
 	if (schedule.isBottomSchedule()) {
 	    // tally up for this node.
 	    SIROperator str = getTarget(schedule);
 	    if (!counts.containsKey(str)) {
 		// initialize counter
-		int[] wrapper = { schedule.getNumReps() };
+		int[] wrapper = { numReps };
 		counts.put(str, wrapper);
 	    } else {
 		// add to counter
 		int[] wrapper = (int[])counts.get(str);
-		wrapper[0] += schedule.getNumReps();
+		wrapper[0] += numReps;
 	    }	    
 	} else {
 	    // otherwise we have a container, so simulate execution of
 	    // children
 	    for (int i=0; i<schedule.getNumPhases(); i++) {
-		fillExecutionCounts(schedule.getSubSched(i), counts);
+		fillExecutionCounts(schedule.getSubSched(i), counts, schedule.getSubSchedNumExecs(i));
 	    }
 	}
     }
@@ -192,8 +192,9 @@ public class SIRScheduler implements Constants {
      * Interface with the scheduler to get a schedule for <str>.
      */
     private static StreamInterface computeSchedule(SIRStream str) {
-	SIRStreamFactory factory = new SIRStreamFactory();
-	StreamInterface schedInterface = factory.newFrom(IterFactory.createIter(str));
+	streamit.scheduler2.base.StreamFactory factory = new streamit.scheduler2.minlatency.StreamFactory(0);
+	//SIRIterator parentIter = str.getParent()==null ? null : IterFactory.createIter(str.getParent());
+	StreamInterface schedInterface = factory.newFrom(IterFactory.createIter(str), null);
 	schedInterface.computeSchedule();
 	//System.err.println("Back from scheduler package.");
 	return schedInterface;
@@ -286,15 +287,15 @@ public class SIRScheduler implements Constants {
     private static void printSchedules(StreamInterface schedInterface) {
 	System.err.println();
 	System.err.println("Init schedule:");
-	printSchedule(schedInterface.getInitSchedule(), 1);
+	printSchedule(schedInterface.getInitSchedule(), 1, 1);
 	System.err.println("Steady schedule:");
-	printSchedule(schedInterface.getSteadySchedule(), 1);
+	printSchedule(schedInterface.getSteadySchedule(), 1, 1);
     }
 
     /**
      * Prints a <schedule> with indentation <tabs>.
      */
-    private static void printSchedule(Schedule schedule, int tabs) {
+    private static void printSchedule(Schedule schedule, int tabs, int numExecs) {
 	// print indentation
 	for (int i=0; i<tabs; i++) {
 	    System.err.print("  ");
@@ -305,12 +306,12 @@ public class SIRScheduler implements Constants {
 		Utils.assert(((SIRStream)getTarget(schedule)).getWork()==schedule.getWorkFunc());
 	    }
 	    */
-	    System.err.println("Repeat " + schedule.getNumReps() + ": " + getTarget(schedule).getName() + " (BOTTOM)");
+	    System.err.println("Repeat " + numExecs + ": " + getTarget(schedule).getName() + " (BOTTOM)");
 	} else {
-	    System.err.println("Repeat " + schedule.getNumReps() + 
+	    System.err.println("Repeat " + numExecs +
 			       ":  (" + schedule.getNumPhases() + " child" + (schedule.getNumPhases()!=1 ? "ren)" : ")"));
 	    for (int i=0; i<schedule.getNumPhases(); i++) {
-		printSchedule(schedule.getSubSched(i), tabs+1);
+		printSchedule(schedule.getSubSched(i), tabs+1, schedule.getSubSchedNumExecs(i));
 	    }
 	}
     }
@@ -396,8 +397,7 @@ public class SIRScheduler implements Constants {
 	// for each phase of <schedule>
 	for (int i=0; i<schedule.getNumPhases(); i++) {
 	    // make work statement for sub-schedule
-	    Schedule subSched = schedule.getSubSched(i);
-	    JStatement workStatement = makeWorkStatement(subSched);
+	    JStatement workStatement = makeWorkStatement(schedule.getSubSched(i), schedule.getSubSchedNumExecs(i));
 	    // add work statement to list
 	    statementList.add(workStatement);
 	}
@@ -410,7 +410,7 @@ public class SIRScheduler implements Constants {
      * schedule.  This statement is either a for loop or a call to
      * another work function.
      */
-    private JStatement makeWorkStatement(Schedule schedule) {
+    private JStatement makeWorkStatement(Schedule schedule, int numExecs) {
 	/*
 	System.err.print("making work name for call to " + getTarget(schedule).getName());
 	if (schedule.isBottomSchedule()) {
@@ -428,9 +428,9 @@ public class SIRScheduler implements Constants {
 					   workName,
 					   schedule.isBottomSchedule());
 	
-	if (schedule.getNumReps()>1) {
+	if (numExecs>1) {
 	    // if we execute multiple times, return a loop
-	    return Utils.makeForLoop(workCall, schedule.getNumReps());
+	    return Utils.makeForLoop(workCall, numExecs);
 	} else {
 	    // otherwise, return single call
 	    return workCall;
@@ -550,34 +550,5 @@ public class SIRScheduler implements Constants {
 
 	// return reference to context of parent
 	return LoweringConstants.getStreamContext(parent);
-    }
-}
-
-/**
- * Controls which scheduler is used for each of the stream constructs.
- */
-class SIRStreamFactory implements streamit.scheduler2.base.StreamFactory {
-
-    public StreamInterface newFrom(Iterator streamIter) {
-        if (streamIter.isFilter() != null) {
-            return new streamit.scheduler2.minlatency.Filter(streamIter.isFilter());
-        }
-
-        if (streamIter.isPipeline() != null) {
-            return new streamit.scheduler2.minlatency.Pipeline(streamIter.isPipeline(), this);
-        }
-        
-        if (streamIter.isSplitJoin() != null) {
-            return new streamit.scheduler2.minlatency.SplitJoin(streamIter.isSplitJoin(), this);
-        }
-
-        if (streamIter.isFeedbackLoop() != null) {
-            return new streamit.scheduler2.minlatency.FeedbackLoop(streamIter.isFeedbackLoop(), this);
-        }
-	
-	// not implemented yet
-	Utils.fail("Unimplemented stream: " + streamIter);
-
-        return null;
     }
 }

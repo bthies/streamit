@@ -1,0 +1,13 @@
+<benchmark>
+  <name>beamformer</name>
+  <desc> </desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>TemplateBeamFormer.str</file>
+    </impl>
+  </implementations>
+</benchmark>

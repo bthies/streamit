@@ -83,15 +83,36 @@ public class ClusterBackend {
 	new VarDeclRaiser().raiseVars(str);
 
         // do constant propagation on fields
-        if (KjcOptions.nofieldprop) {
-	} else {
-	    System.out.print("Running Constant Field Propagation...");
-	    FieldProp.doPropagate(str);
-	    System.out.println(" done.");
-	    //System.out.println("Analyzing Branches..");
-	    //new BlockFlattener().flattenBlocks(str);
-	    //new BranchAnalyzer().analyzeBranches(str);
+	System.out.print("Running Constant Field Propagation...");
+	FieldProp.doPropagate(str);
+	System.out.println(" done.");
+	//System.out.println("Analyzing Branches..");
+	//new BlockFlattener().flattenBlocks(str);
+	//new BranchAnalyzer().analyzeBranches(str);
+
+	SIRPortal.findMessageStatements(str);
+
+	SIRPortal portals[] = SIRPortal.getPortals();
+
+	for (int t = 0; t < portals.length; t++) {
+	    
+	    SIRPortalSender senders[] = portals[t].getSenders();
+	    SIRStream receivers[] = portals[t].getReceivers();
+
+	    System.out.println("\n    Portal: "+portals[t]);
+
+	    for (int i = 0; i < senders.length; i++) {
+		System.out.println("        sender: ("+senders[i].getStream()+")\n"+
+				   "            with latency: ("+senders[i].getLatency()+")");
+	    }
+
+	    for (int i = 0; i < receivers.length; i++) {
+		System.out.println("        receiver: ("+receivers[i]+")");
+	    }
+
+	    System.out.println();
 	}
+
 
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before.dot");

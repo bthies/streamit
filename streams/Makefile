@@ -1,3 +1,3 @@
 all:
-	test -d src && $(MAKE) -C src
+	if test -d src; then $(MAKE) -C src; fi
 	$(MAKE) -C library/c

@@ -63,7 +63,7 @@ public class RenameAll extends SLIRReplacingVisitor
         }
     }
 
-    private RASymbolTable symtab;
+    private RASymbolTable symtab, classsymtab;
 
     public RenameAll()
     {
@@ -87,6 +87,7 @@ public class RenameAll extends SLIRReplacingVisitor
     {
         RASymbolTable ost = symtab;
         symtab = new RASymbolTable(ost);
+        classsymtab = symtab;
         findDecls(str.getFields());
         findDecls(str.getMethods());
         JFieldDeclaration[] newFields =
@@ -237,7 +238,7 @@ public class RenameAll extends SLIRReplacingVisitor
             newArgs[i] = (JExpression)args[i].accept(this);
         return new JMethodCallExpression(self.getTokenReference(),
                                          (JExpression)prefix.accept(this),
-                                         symtab.nameFor(ident),
+                                         classsymtab.nameFor(ident),
                                          newArgs);
     }
 
@@ -277,7 +278,7 @@ public class RenameAll extends SLIRReplacingVisitor
     {
 	return new JFieldAccessExpression(self.getTokenReference(),
 					  (JExpression)left.accept(this),
-                                          symtab.nameFor(ident),
+                                          classsymtab.nameFor(ident),
 					  self.getField());
     }
 }

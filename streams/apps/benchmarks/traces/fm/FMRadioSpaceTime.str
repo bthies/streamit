@@ -237,7 +237,7 @@ float->float pipeline FMRadioCore {
 }
 
 
-void->void pipeline FMRadio {
+void->void pipeline FMRadioSpaceTime {
 
     //add FloatOneSource();
    add FileReader<float>("input");

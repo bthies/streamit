@@ -3,7 +3,7 @@
  * M frequency bands. It then performs some processing on them (the exact
  * processing is yet to be determined, and then reconstructs them.
  **/
-void->void pipeline FilterBank {
+void->void pipeline FilterBankSpaceTime {
     add FilterBankPipeline(3);
     //add FloatPrinter();
     add FileWriter<float>("output");

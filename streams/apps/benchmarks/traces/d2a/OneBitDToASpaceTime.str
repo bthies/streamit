@@ -4,7 +4,7 @@
  * to enable using a cheap d to a converter and still keep performance
  * acceptable.
  **/
-void->void pipeline OneBitDToA {
+void->void pipeline OneBitDToASpaceTime {
     // the source of data (eventually, this should be an audio stream)
     //add DataSource();
     add FileReader<float>("input");

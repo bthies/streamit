@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.2 2001-10-03 09:15:09 thies Exp $
+ * $Id: JTypeDeclaration.java,v 1.3 2001-10-25 01:30:17 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -146,9 +146,13 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
     return getCClass().isNested();
   }
 
-  public JFieldDeclaration[] getFields() {
-    return fields;
-  }
+    public JFieldDeclaration[] getFields() {
+	return fields;
+    }
+
+    public JMethodDeclaration[] getMethods() {
+	return methods;
+    }
 
   public JConstructorDeclaration getDefaultConstructor() {
     return defaultConstructor;

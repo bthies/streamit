@@ -41,6 +41,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //This hashtable acts as a symbol table to store named (not anonymous)
     //SIR classes
     private Hashtable visitedSIROps;
+    //This hashtable acts as a symbol table for local variables and 
+    //field variables, it is indexed by the JLocalVariable or JFieldVariable
+    //and store the corresponding SIR object
+    private Hashtable symbolTable;
 
     //globals to store the split and join type so they can be set in the
     //post visit of the class declaration
@@ -52,6 +56,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	topLevel = null;
 	currentMethod = null;
 	visitedSIROps = new Hashtable(100);
+	symbolTable = new Hashtable(300);
     }
 
     private void addVisitedOp(String className, SIROperator sirop) {
@@ -62,8 +67,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIROperator getVisitedOp(String className) 
     {
 	SIROperator ret = (SIROperator)visitedSIROps.get(className);
-	if (ret == null)
-	    at.dms.util.Utils.fail("Named SIR Operator not found in the symbol table");
 	return ret;
     }
     
@@ -221,7 +224,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
        
     }
 
-
     private boolean supportedType(String type) {
 	if (type.equals("Integer") ||
 	    type.equals("Character") ||
@@ -238,8 +240,36 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 	  
 
-
-
+    private JMethodDeclaration[] buildPortalMethodArray(JClassDeclaration portal, JClassDeclaration clazz) 
+    {
+	JMethodDeclaration[] portalMethods = portal.getMethods();
+	JMethodDeclaration[] clazzMethods = clazz.getMethods();
+	JMethodDeclaration[] handlerMethods = new JMethodDeclaration[portalMethods.length];
+	
+	//For each method declared in the portal class
+	//find the corresponding method in the given clazz
+	//build the handlerMethods as we go
+	for (int i = 0; i < portalMethods.length; i++) {
+	    JMethodDeclaration handlerMethod = null;
+	    for (int j = 0; j < clazzMethods.length; j++) {
+		//Check if the signature of the current method equals the portal method
+		//this may not work, I will try it!
+		if (portalMethods[i].getMethod().equals(clazzMethods[j].getMethod())) 
+		    handlerMethod = clazzMethods[j];
+	    }
+	    if (handlerMethod == null)
+		at.dms.util.Utils.fail("Cannot find a method declaration for portal method " + 
+				       portalMethods[i].getName() + " in class " + 
+				       clazz.getSourceClass().getIdent());
+	    handlerMethods[i] = handlerMethod;
+	}
+	return handlerMethods;
+    }
+    
+		    
+		    
+	    
+	    
     public Object visitClassDeclaration(JClassDeclaration self,
                                       int modifiers,
                                       String ident,
@@ -257,10 +287,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	blockStart("ClassDeclaration");
 	printMe("Class Name: " + ident);
-	if (self.getSourceClass() != null)
-	    printMe(self.getSourceClass().getSuperClass().getIdent());
-
-
+	printMe(self.getSourceClass().getSuperClass().getIdent());
+	
+	if (ident.endsWith("Portal"))
+	return null;
+	
 	// if the name of the class being declared is the same
 	// as the name of the superclass then it is anonymous
 	if (self.getSourceClass().getSuperClass().getIdent().equals(ident))
@@ -496,6 +527,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                        JBlock body)
     {
         printMe("MethodDeclaration: " + ident);
+	//ignore main method
+	if (ident.equals("main") && CModifier.contains(CModifier.ACC_STATIC, modifiers)
+		 && CModifier.contains(CModifier.ACC_PUBLIC, modifiers)) {
+	    printMe("Main ignored");
+	    return self;
+	}
+
 	for (int i = 0; i < parameters.length; i++)
             trash = parameters[i].accept(this);
         
@@ -545,11 +583,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 									       body,
 									       null,
 									       null)); 
-	}             //Ignore Main Method of class
-       	else if (ident.equals("main") && CModifier.contains(CModifier.ACC_STATIC, modifiers)
-		 && CModifier.contains(CModifier.ACC_PUBLIC, modifiers)) {
-	    printMe("Main ignored");
-	}
+	}            
 	else if (!ignoreMethodDeclaration(ident) && (parentStream instanceof SIRStream))
 	    ((SIRStream)parentStream).addMethod(new JMethodDeclaration(null,
 								       modifiers,
@@ -613,7 +647,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
         
 	for (int i = 0; i < vars.length; i++)
             vars[i] = (JVariableDefinition)vars[i].accept(this);	
-	return new JVariableDeclarationStatement(null, vars, null);
+	for (int i = 0; i < vars.length; i++)
+	    if (vars[i] != null)
+		return new JVariableDeclarationStatement(null, vars, null);
+	return null;
     }
 
     /**
@@ -626,9 +663,36 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                         JExpression expr)
     {
         blockStart("VariableDefinition: " + self.getIdent());
+	printMe(type.toString());
+
 	if (expr != null) 
 	    expr = (JExpression)expr.accept(this);
-        return new JVariableDefinition(null, modifiers, type, ident, expr);
+
+	//we are defining a new variable with a "new" in the code
+ 	if (expr instanceof JUnqualifiedInstanceCreation) {
+	    //If the class of this variable is in the SIR table then
+	    //we need to add this definition to the symbol table
+	    if (getVisitedOp(type.toString()) != null) {
+		SIRStream ST = (SIRStream)ObjectDeepCloner.deepCopy(getVisitedOp(type.toString()));
+		printMe("Adding " + ident + " to symbol table");
+		
+		SIRInitStatement newSIRInit = new SIRInitStatement(null, 
+								   null, 
+								   ((JUnqualifiedInstanceCreation)expr).
+								   getParams(), 
+								   ST);
+		symbolTable.put(self, newSIRInit);
+		return null;
+		//return new JVariableDefinition(null, modifiers, type, ident, expr);
+	    }
+	    else if (type.toString().endsWith("Portal")) {
+		//Portal Definition , SIRCreatePortal add to symbol Table
+	    }
+	    else 
+		at.dms.util.Utils.fail("Definition of Stream " + type.toString() + 
+				       " not seen before definition of " + ident);
+	}
+	return new JVariableDefinition(null, modifiers, type, ident, expr);
     }
     
     /**
@@ -1070,7 +1134,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    }
 	    return v;
 	}
-	else {     /* Not a channel, trash args */
+	else {     /* Not a channel */
 	    for (int i = 0; i < params.length; i++) 
 		params[i] = (JExpression)params[i].accept(this);
 	}
@@ -1141,6 +1205,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //with the Stream
     private SIRInitStatement createInitStatement(Object SIROp, String regMethod) 
     {
+	SIRStream newST = null;
+	//Already an SIRinit statement
+	if (SIROp instanceof SIRInitStatement) {
+	    return (SIRInitStatement)SIROp;
+	}
+	//Using a local variable that has been already defined as a stream construct
+	if (SIROp instanceof SIRStream)
+	    newST = (SIRStream)SIROp;
 	//Creating a named class
 	//if it is a named creation, lookup in the symbol table for the visited
 	//node and add it to the pipeline
@@ -1148,31 +1220,31 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
 						   getType().getCClass().getIdent());
 	    
-	    SIRStream newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
+	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
 	    //SIRStream newST = (SIRStream) st.clone();
 	    newST.setParent((SIRContainer)parentStream);
-	    if (regMethod.equals("add")) {
-		if (parentStream instanceof SIRPipeline)
-		    ((SIRPipeline)parentStream).add(newST);
-		else 
-		    ((SIRSplitJoin)parentStream).add(newST);
-	    }
-	    else if (regMethod.equals("setBody"))
-		((SIRFeedbackLoop)parentStream).setBody(newST);
-	    else if (regMethod.equals("setLoop"))
-		((SIRFeedbackLoop)parentStream).setLoop(newST);
-	    else
-		at.dms.util.Utils.fail("Invalid Registration Method");
-	    
-	    return new SIRInitStatement(null, null, 
-					((JUnqualifiedInstanceCreation)SIROp).getParams(),
-					newST);
 	}
-	if (SIROp instanceof SIRInitStatement) {
-	    return (SIRInitStatement)SIROp;
+	//Die if it is none of the above case
+	if (newST == null)
+	    at.dms.util.Utils.fail("Illegal Arg to Stream Add Construct");
+	
+	//now find the registration method
+	if (regMethod.equals("add")) {
+	    if (parentStream instanceof SIRPipeline)
+		((SIRPipeline)parentStream).add(newST);
+	    else 
+		((SIRSplitJoin)parentStream).add(newST);
 	}
-	at.dms.util.Utils.fail("Illegal Arg to Stream Add Construct");
-	return null;
+	else if (regMethod.equals("setBody"))
+	    ((SIRFeedbackLoop)parentStream).setBody(newST);
+	else if (regMethod.equals("setLoop"))
+	    ((SIRFeedbackLoop)parentStream).setLoop(newST);
+	else
+	    at.dms.util.Utils.fail("Invalid Registration Method");
+	
+	return new SIRInitStatement(null, null, 
+				    ((JUnqualifiedInstanceCreation)SIROp).getParams(),
+				    newST);
     }
     
     /**
@@ -1203,6 +1275,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
 	    //Visit the argument (Exactly one)
 	    Object SIROp = args[0].accept(this);
+	    
+	    
 	    //reset currentMethod on all returns
 	    currentMethod = parentMethod;
 	    //create the init statement to return
@@ -1361,6 +1435,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                              String ident)
     {
         blockStart("LocalVariableExpression");
+	//Lookup the current local variable in the symbol table
+	//if it exists then this is a variable of a streamit type
+	if (symbolTable.get(self.getVariable()) != null) {
+	    printMe("Using symbol table entry for " + ident);
+	    return symbolTable.get(self.getVariable());
+	}
 	return self;
     }
 
@@ -1729,7 +1809,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	blockStart("visitInterfaceDeclaration");
 	/*visitClassBody(new JTypeDeclaration[0], methods, body);*/
-	at.dms.util.Utils.fail("Should be no interfaces!");
 	return self;
     }
   

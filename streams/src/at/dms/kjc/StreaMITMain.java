@@ -12,10 +12,21 @@ public class StreaMITMain {
     /**
      * Prints out C code for the program being compiled.
      */
-    public static void compile(JCompilationUnit top) {
+    public static void compile(JCompilationUnit[] app) {
 	System.out.println("/*");
-	Kopi2SIR k2s = new Kopi2SIR();
-        SIRStream stream = (SIRStream)top.accept(k2s);
+	Kopi2SIR k2s = new Kopi2SIR(app);
+	SIRStream stream = null;
+	for (int i = 0; i < app.length; i++) {
+	    SIRStream top = (SIRStream)app[i].accept(k2s);
+	    if (top != null)
+		stream = top;
+	}
+
+	if (stream == null) {
+	    System.err.println("No Top-Level Stream defined!");
+	    System.exit(-1);
+	}
+
         JClassDeclaration flat = Flattener.flatten(stream, 
 						   k2s.getInterfaces(),
 						   k2s.getInterfaceTables());

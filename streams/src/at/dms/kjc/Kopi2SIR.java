@@ -23,11 +23,14 @@ import java.util.*;
 
 public class Kopi2SIR extends Utils implements AttributeVisitor
 {
+    /* The entire application */
+    private JCompilationUnit[] application;
+
     /* The  one to one parent*/
     private SIRStream parentStream;
     /* The Top Level SIR Operator */
     private SIRStream topLevel;
-
+    
     /*Object used to disregard the return values from the attributed
       visitor methods */
     private Object trash;
@@ -61,6 +64,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIRSplitType splitType;
     private SIRJoinType joinType;
 
+    //The current dependency chain we are following when 
+    //trying to resolve a class instantiation to a stream
+    //stores strings of the stream names
+    private LinkedList searchList;
 
     //Uncomment the println for debugging
     private void printMe(String str) {
@@ -76,6 +83,21 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	symbolTable = new Hashtable(300);
 	interfaceList = new Vector(100);
 	interfaceTableList = new Vector(100);
+	searchList = new LinkedList();
+	application = null;
+    }
+
+    public Kopi2SIR(JCompilationUnit[] app) {
+	parentStream = null;
+	topLevel = null;
+
+	currentMethod = null;
+	visitedSIROps = new Hashtable(100);
+	symbolTable = new Hashtable(300);
+	interfaceList = new Vector(100);
+	interfaceTableList = new Vector(100);
+	searchList = new LinkedList();
+	this.application = app;
     }
 
     private String printLine(JPhylum l) {
@@ -89,8 +111,44 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
     private SIROperator getVisitedOp(String className) 
     {
-	SIROperator ret = (SIROperator)visitedSIROps.get(className);
-	return ret;
+	//return the stream if it is in the table
+	if (visitedSIROps.get(className) != null) {
+	    return (SIROperator)visitedSIROps.get(className);
+	}
+	//if not look for it over the entire application (if given)
+	else if (application != null) {
+	    //if this class name is already trying to be resolved then
+	    //we have a mutually recursive defintion
+	    if (searchList.contains(className)) 
+		at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
+				       className);
+	    //add this class name to the list of streams we are resolving
+	    searchList.add(className);
+	    for (int unit = 0; unit < application.length; unit++) {
+		JTypeDeclaration[] decls = application[unit].getTypeDeclarations();
+		for (int i = 0; i < decls.length; i++) {
+		    if (decls[i] instanceof JClassDeclaration) {
+			//if this class declaration is a match, visit it and 
+			//get the SIRStream
+			if (((JClassDeclaration)decls[i]).
+			    getSourceClass().getIdent().equals(className)) {
+			    //visit the class declaration and return the stream
+			    SIROperator sir = (SIROperator)decls[i].accept(this);
+			    //visitClassDecl will add the stream to the table
+			    
+			    //remove the name from the resolve list
+			    searchList.remove(className);
+			    //return the stream
+			    return sir;
+			}
+		    }
+		}
+	    }
+	}
+	
+	at.dms.util.Utils.fail(lineNumber + ": Cannot find declaration of stream " +
+			       className);
+	return null;
     }
     
     private void blockStart(String str)  {
@@ -351,6 +409,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	//number
 	try {
 	    blockStart("CompilationUnit", self);
+	    boolean isTopLevel = false;
 	    
 	    /*if (packageName.getName().length() > 0)
 	      packageName.accept(this);*/
@@ -360,11 +419,28 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    
 	    /*  for (int i = 0; i < importedClasses.length ; i++)
 		importedClasses[i].accept(this);*/
+
+
+	    //check to see if this is the top level compilation unit
+	    //by checking all of the class declarations
+	    for (int i = 0; i < typeDeclarations.length ; i++) {
+		if (typeDeclarations[i] instanceof JClassDeclaration) {
+		    JClassDeclaration decl = (JClassDeclaration)
+			typeDeclarations[i];
+		    if (decl.getSourceClass().getSuperClass().
+			getIdent().equals("StreamIt")) {
+			if (isTopLevel)
+			    at.dms.util.Utils.fail(printLine(decl) + 
+						   "Top level stream already twice.");
+			isTopLevel = true;
+		    }
+		}
+	    }
 	    
-	
-	    
-	    for (int i = 0; i < typeDeclarations.length ; i++)
-		trash = typeDeclarations[i].accept(this);
+	    //visit the file only if it is the top level!!!!
+	    if (isTopLevel)	    
+		for (int i = 0; i < typeDeclarations.length ; i++)
+		    trash = typeDeclarations[i].accept(this);
 	    
 	    
 	    
@@ -682,6 +758,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    //If the class of this variable is in the SIR table then
 	    //we need to add this definition to the symbol table
 	    else if (getVisitedOp(type.toString()) != null) {
+		
 		SIRStream ST = (SIRStream)ObjectDeepCloner.
 		    deepCopy(getVisitedOp(type.toString()));
 		printMe("Adding " + ident + " to symbol table");

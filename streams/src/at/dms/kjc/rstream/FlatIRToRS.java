@@ -118,7 +118,7 @@ public class FlatIRToRS extends ToC
 	//we have an array declaration
 	if (type.isArrayType()) {
 	    //print the declaration and get the number of dimensions
-	    int dim = handleArrayDecl(ident, type);
+	    int dim = handleArrayDecl(ident, type);   
 	    //now, get the new array expression
 	    if (expr == null) { //if their isn't a new array expression in the declaration
 		expr = getNewArrayExpr(ident);
@@ -134,9 +134,9 @@ public class FlatIRToRS extends ToC
 		    "Trying to initialize array with something other than NewArrayExpression";
 	    }
 	    
-	    //print the = for the absarray();
-	    if (KjcOptions.absarray)
-		print(" = ");
+	    //print the = for the absarray(); not used anymore
+	    //if (KjcOptions.absarray)
+	    //print(" = ");
 	    
 	    //visit the new array expression
 	    expr.accept(this);
@@ -201,8 +201,8 @@ public class FlatIRToRS extends ToC
 	print(currentType);
 	print(" ");
 	print(ident);
-	if (KjcOptions.absarray) 
-	    print(brackets);
+	//if (KjcOptions.absarray)  old absarray stuff
+	//    print(brackets);
 	return dim;
     }
     
@@ -271,7 +271,7 @@ public class FlatIRToRS extends ToC
 	//we have an array declaration
 	if (type.isArrayType()) {
 	    //print the declaration and get the number of dimensions
-	    int dim = handleArrayDecl(ident, type);
+	    int dim = handleArrayDecl(ident, type); 
 	    //now, get the new array expression
 	    if (expr == null) {//if their isn't a new array expression in the declaration
 		expr = getNewArrayExpr(self);
@@ -288,9 +288,9 @@ public class FlatIRToRS extends ToC
 	    }
 	    
 	    
-	    if (KjcOptions.absarray) {
-		print(" = ");
-	    }
+	    //if (KjcOptions.absarray) { old abs array() stuff
+	    //print(" = ");
+	    //}
 	    
 	    if (expr != null)
 		expr.accept(this);
@@ -330,13 +330,24 @@ public class FlatIRToRS extends ToC
 	if (KjcOptions.absarray) {
 	    //we are generating abstract arrays
 	    //print the absarray call with the dimensions...
-	    print(" absarray" + dims.length + "(");
+	    /*old absarray stuff 
+	      print(" absarray" + dims.length + "(");
 	    dims[0].accept(this);
 	    for (int i = 1; i < dims.length; i++) {
 		print(",");
 		dims[i].accept(this);
 	    }
 	    print(")");
+	    */
+	    //new abs array declaration
+	    assert dims.length > 0;	    
+	    print("[[");
+	    dims[0].accept(this);
+	    for (int i = 1; i < dims.length; i++) {
+		print(", ");
+		dims[i].accept(this);
+	    }
+	    print("]]");
 	}
 	else {
 	    //normal c arrays

@@ -146,5 +146,10 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 			       methods,
 			       init);
     }
+
+    public String toString() {
+	return "SIRPipeline name=" + getName() + " ident=" + getIdent();
+    }
+
 }
 

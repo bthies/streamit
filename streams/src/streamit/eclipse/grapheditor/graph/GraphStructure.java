@@ -327,10 +327,10 @@ public class GraphStructure implements Serializable{
 		this.topLevel.construct(this, 0);
 		//model.insert(cells.toArray(), globalAttributes, cs, null, null);
 		
-		
 		model.edit(globalAttributes, cs, null, null);
 		
 		this.jgraph.getGraphLayoutCache().setVisible(jgraph.getRoots(), true);
+		this.jgraph.getGraphLayoutCache().setVisible(this.containerNodes.getAllContainers().toArray(), false);
 				
 		JGraphLayoutManager manager = new JGraphLayoutManager(this);
 		manager.arrange();	
@@ -372,6 +372,7 @@ public class GraphStructure implements Serializable{
 	 */
 	public void connectDraw(GEStreamNode lastNode, GEStreamNode currentNode)
 	{
+		System.out.println("Connecting " + lastNode.getName()+  " to "+ currentNode.getName());
 		DefaultEdge edge = new DefaultEdge(); 
 			
 		Map edgeAttrib = GraphConstants.createMap();

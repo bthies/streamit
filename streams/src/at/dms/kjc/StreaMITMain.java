@@ -30,10 +30,11 @@ public class StreaMITMain {
         JClassDeclaration flat = Flattener.flatten(stream, 
 						   k2s.getInterfaces(),
 						   k2s.getInterfaceTables());
-        System.out.println("*/\n");
-	System.out.println("#include \"streamit.h\"\n");
-	System.out.println("#include <stdio.h>\n");
-	System.out.println("#include <stdlib.h>\n");
+        System.out.println("*/");
+	System.out.println("#include \"streamit.h\"");
+	System.out.println("#include <stdio.h>");
+	System.out.println("#include <stdlib.h>");
+        System.out.println("#include <math.h>");
         LIRToC l2c = new LIRToC();
         flat.accept(l2c);
         l2c.close();

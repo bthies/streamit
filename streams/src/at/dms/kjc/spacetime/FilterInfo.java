@@ -60,7 +60,7 @@ public class FilterInfo
 	//multiply the primepump number by the
 	//steady state multiplicity to get the true 
 	//primepump multiplicity
-	this.primePump = filter.getPrimePump() * this.steadyMult;
+	this.primePump = traceNode.getParent().getPrimePump() * this.steadyMult;
 	prePeek = 0;
 	prePush = 0;
 	prePop = 0;
@@ -242,7 +242,6 @@ public class FilterInfo
 	    //add all the upstream filters items that reach this filter
 	    for (int i = 0; i < previous.length; i++) {
 		OutputTraceNode out = (OutputTraceNode)previous[i].getNext();
-		System.out.println("Previous: " + previous[i]);
 		upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
 		    ((double)out.getWeight(in) / out.totalWeights()));
 	    }

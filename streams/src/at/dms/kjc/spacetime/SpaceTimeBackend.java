@@ -412,7 +412,7 @@ public class SpaceTimeBackend
 	    ListIterator steadyTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
 		
 	    //assign the buffers not assigned by Jasp to drams
-	    OIBufferAssignment.run(steadyTrav, rawChip);
+	    BufferDRAMAssignment.run(steadyTrav, rawChip);
 	    //create the raw execution code and switch code for the initialization phase
 	    System.out.println("Creating Initialization Stage");
 	    Rawify.run(initTrav, rawChip, true); 

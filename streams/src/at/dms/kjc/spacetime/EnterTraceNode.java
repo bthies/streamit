@@ -35,6 +35,15 @@ public class EnterTraceNode extends OutputTraceNode {
 	return samples;
     }
     
+    public String getIdent() 
+    {
+	return filename;
+    }
+
+    public String getFileHandle() 
+    {
+	return "file_" + getFileName();
+    }
 
     public String getFileName() {
 	return filename;

@@ -12,7 +12,12 @@ public class MagicDram extends IODevice
     //the list of instructions
     public LinkedList steadyInsList;
     public LinkedList initInsList;
-
+    
+    //the entertracenodes of input files in the dram
+    public HashSet inputFiles;
+    //the exittracenodes of outputs files in this dram
+    public HashSet outputFiles;
+    
     //the names of the buffer indices
     private HashSet indices;
     //the names and sizes of the buffers
@@ -43,10 +48,47 @@ public class MagicDram extends IODevice
 	try {
 	    FileWriter fw = new FileWriter("magicdram" + port + ".bc");
 	    
+	    //write the global file handlers
+	    Iterator outfiles = outputFiles.iterator();
+	    while (outfiles.hasNext()) {
+		ExitTraceNode exit = (ExitTraceNode)outfiles.next();
+		fw.write("global " + exit.getFileHandle() + ";\n");
+		fw.write("global outputs_" + exit.getFileName() + " = 0;\n");
+	    }
+	    
+	    Iterator infiles = inputFiles.iterator();
+	    while (infiles.hasNext()) {
+		EnterTraceNode enter = (EnterTraceNode)infiles.next();
+		fw.write("global " + enter.getFileHandle() + ";\n");
+	    }
+	    
 	    fw.write("fn dev_magic_dram" + port + "_init(ioPort)\n");
 	    fw.write("{\n");
 	    fw.write("local result;\n");
 	    fw.write("local port = ioPort;\n");
+	    //open the input and output file(s)
+	    outfiles = outputFiles.iterator();
+	    while (outfiles.hasNext()) {
+		ExitTraceNode exit = (ExitTraceNode)outfiles.next();
+		fw.write(exit.getFileHandle() + " = fopen(" + exit.getFileName() +
+			 ", \"w\");\n");
+		fw.write("if (file_" + exit.getFileName() + " == 0) {\n");
+		fw.write("\tprintf(\"Error opening file " + exit.getFileName() + "\")\n");
+		fw.write("\treturn 0;\n");
+		fw.write("}\n");
+	    }
+	    
+	    infiles = inputFiles.iterator();
+	    while (infiles.hasNext()) {
+		EnterTraceNode enter = (EnterTraceNode)infiles.next();
+		fw.write(enter.getFileHandle() + " = fopen(" + enter.getFileName() +
+			 ", \"r\");\n");
+		fw.write("if (file_" + enter.getFileName() + " == 0) {\n");
+		fw.write("\tprintf(\"Error reading from file " + enter.getFileName() + "\")\n");
+		fw.write("\treturn 0;\n");
+		fw.write("}\n");
+	    }
+
 	    fw.write("result = SimAddDevice(\"Magic DRAM" + port + "\",\n");
 	    fw.write("			\"dev_magic_dram" + port + "_reset\",\n");
 	    fw.write("			\"dev_magic_dram" + port + "_calc\",\n");

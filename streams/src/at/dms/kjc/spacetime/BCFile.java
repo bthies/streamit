@@ -40,6 +40,12 @@ public class BCFile
 		 ";\n");
 	buf.append("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 
+	buf.append("fn quit_sim()\n{\n");
+	buf.append("\tgInterrupted = 1;\n");
+	buf.append("\texit_now(0);\n");
+	buf.append("}\n");
+	
+
 	if (KjcOptions.decoupled)
 	    decoupled();
 	mappedFunction();

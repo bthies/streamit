@@ -59,11 +59,11 @@ public class Rawify
 		}
 		else if (traceNode instanceof EnterTraceNode) {
 		    if (init) 
-			openInputFile((EnterTraceNode)traceNode);
+			openInputFile((EnterTraceNode)traceNode, rawChip);
 		}
 		else if (traceNode instanceof ExitTraceNode) {
 		    if (init)
-			openOutputFile((ExitTraceNode)traceNode);
+			openOutputFile((ExitTraceNode)traceNode, rawChip);
 		}
 		
 		
@@ -75,14 +75,23 @@ public class Rawify
 	
     }
 
-    private static void openInputFile(EnterTraceNode enterNode) 
+    private static void openInputFile(EnterTraceNode enterNode, RawChip rawChip) 
     {
-	
+	FilterTraceNode next = (FilterTraceNode)enterNode.getDests()[0][0].getNext();
+	if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
+	    Utils.fail("Tile not connected to io device");
+	MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
+	dram.inputFiles.add(enterNode);
     }
     
-    private static void openOutputFile(ExitTraceNode exitNode) 
+    private static void openOutputFile(ExitTraceNode exitNode, RawChip rawChip) 
     {
-	
+	FilterTraceNode prev = (FilterTraceNode)exitNode.getSources()[0].getPrevious();
+	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
+	    Utils.fail("Tile not connected to io device");
+	//get the dram
+	MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
+	dram.outputFiles.add(exitNode);
     }
     
     
@@ -106,7 +115,6 @@ public class Rawify
 	OutputTraceNode output = TraceBufferSchedule.getOutputBuffer(node);
 	insList.add(new MagicDramLoad(node, output));
 	dram.addBuffer(output, node);
-
     }
 
     /**
@@ -127,74 +135,74 @@ public class Rawify
 				       TraceBufferSchedule.getInputBuffers(node)));
     }
     
-    private static void createSwitchCodeLinear(FilterTraceNode node,Trace parent,
-					       FilterInfo filterInfo,boolean init,boolean primePump,
-					       RawTile tile,RawChip rawChip,int mult) {
-	//createReceiveCode(0, node, parent, filterInfo, init, primePump, tile, rawChip);
-	ComputeNode sourceNode=null;
+    private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
+					       FilterInfo filterInfo, boolean init, boolean primePump, 
+					       RawTile tile, RawChip rawChip, int mult) {
+	//createReceiveCode(0,  node,  parent,  filterInfo,  init,  primePump,  tile,  rawChip);
+	ComputeNode sourceNode = null;
 	if (node.getPrevious().isFilterTrace())
-	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
+	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(),  
 					 ((FilterTraceNode)node.getPrevious()).getY());
 	else {
-	    if (KjcOptions.magicdram && node.getPrevious() != null &&
+	    if (KjcOptions.magicdram && node.getPrevious() !=  null &&
 		node.getPrevious().isInputTrace() &&
 		tile.hasIODevice()) 
 		sourceNode = tile.getIODevice();
 	    else 
 		return;
 	}
-	SwitchIPort src=rawChip.getIPort(sourceNode,tile);
-	sourceNode=null;
-	ComputeNode destNode=null;
+	SwitchIPort src = rawChip.getIPort(sourceNode, tile);
+	sourceNode = null;
+	ComputeNode destNode = null;
 	if (node.getNext().isFilterTrace())
-	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
+	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(),  
 				       ((FilterTraceNode)node.getNext()).getY());
 	else {
-	    if (KjcOptions.magicdram && node.getNext() != null &&
+	    if (KjcOptions.magicdram && node.getNext() !=  null &&
 		node.getNext().isOutputTrace() && tile.hasIODevice())
 		destNode = tile.getIODevice();
 	    else
 		return;
 	}
-	SwitchOPort dest=rawChip.getOPort(tile,destNode);
-	destNode=null;
-	FilterContent content=node.getFilter();
-	final int peek=content.getArray().length;
-	final int pop=content.getPopCount();
-	final int numPop=peek/pop;
+	SwitchOPort dest = rawChip.getOPort(tile, destNode);
+	destNode = null;
+	FilterContent content = node.getFilter();
+	final int peek = content.getArray().length;
+	final int pop = content.getPopCount();
+	final int numPop = peek/pop;
 	System.out.println("SRC: "+src);
 	System.out.println("DEST: "+dest);
-	SwitchCodeStore code=tile.getSwitchCode();
-	for(int i=0;i<numPop-1;i++)
-	    for(int j=0;j<pop;j++) {
-		FullIns ins=new FullIns(tile,new MoveIns(SwitchReg.R1,src));
-		ins.addRoute(src,SwitchOPort.CSTI);
-		code.appendIns(ins,init||primePump);
-		for(int k=i-1;k>=0;k--) {
-		    FullIns newIns=new FullIns(tile);
-		    newIns.addRoute(SwitchReg.R1,SwitchOPort.CSTI);
-		    code.appendIns(newIns,init||primePump);
+	SwitchCodeStore code = tile.getSwitchCode();
+	for(int i = 0; i<numPop-1; i++)
+	    for(int j = 0; j<pop; j++) {
+		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		ins.addRoute(src, SwitchOPort.CSTI);
+		code.appendIns(ins, init||primePump);
+		for(int k = i-1; k>= 0; k--) {
+		    FullIns newIns = new FullIns(tile);
+		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+		    code.appendIns(newIns, init||primePump);
 		}
 	    }
-	Label label=code.getFreshLabel();
-	code.appendIns(label,init||primePump);
-	final int numTimes=Linear.getMult(peek);
-	for(int i=0;i<numTimes*pop;i++) {
-	    FullIns ins=new FullIns(tile,new MoveIns(SwitchReg.R1,src));
-	    ins.addRoute(src,SwitchOPort.CSTI);
-	    code.appendIns(ins,init||primePump);
-	    for(int j=1;j<numPop;j++) {
-		FullIns newIns=new FullIns(tile);
-		newIns.addRoute(SwitchReg.R1,SwitchOPort.CSTI);
-		code.appendIns(newIns,init||primePump);
+	Label label = code.getFreshLabel();
+	code.appendIns(label, init||primePump);
+	final int numTimes = Linear.getMult(peek);
+	for(int i = 0;i<numTimes*pop;i++) {
+	    FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+	    ins.addRoute(src, SwitchOPort.CSTI);
+	    code.appendIns(ins, init||primePump);
+	    for(int j = 1;j<numPop;j++) {
+		FullIns newIns = new FullIns(tile);
+		newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+		code.appendIns(newIns, init||primePump);
 	    }
 	}
-	for(int i=0;i<numTimes;i++) {
-	    FullIns newIns=new FullIns(tile);
-	    newIns.addRoute(SwitchIPort.CSTO,dest);
-	    code.appendIns(newIns,init||primePump);
+	for(int i = 0;i<numTimes;i++) {
+	    FullIns newIns = new FullIns(tile);
+	    newIns.addRoute(SwitchIPort.CSTO, dest);
+	    code.appendIns(newIns, init||primePump);
 	}	    
-	code.appendIns(new JumpIns(label.getLabel()),init||primePump);
+	code.appendIns(new JumpIns(label.getLabel()), init||primePump);
     }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 

@@ -33,7 +33,17 @@ public class ExitTraceNode extends InputTraceNode {
 	return fp;
     }
 
+    public String getIdent() 
+    {
+	return filename;
+    }
+
     public String getFileName() {
 	return filename;
+    }
+
+    public String getFileHandle() 
+    {
+	return "file_" + getFileName();
     }
 }

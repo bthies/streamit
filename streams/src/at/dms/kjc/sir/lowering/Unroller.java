@@ -193,31 +193,51 @@ public class Unroller extends SLIRReplacingVisitor {
 	// to do the right thing if someone set an unroll factor of 0
 	// (or 1, which means to do nothing)
 	if((KjcOptions.unroll>1 || inContainerInit) && !self.getUnrolled()) { //Ignore if already unrolled
-	    // first recurse into body
+	    // first recurse into body...
 	    Hashtable saveModified=currentModified;
 	    currentModified=new Hashtable();
+	    // we're going to see if any child unrolls, to avoid
+	    // unrolling doubly-nested loops
+	    boolean saveHasUnrolled = hasUnrolled;
+	    hasUnrolled = false;
+
 	    JStatement newStmt = (JStatement)body.accept(this);
 	    if (newStmt!=null && newStmt!=body) {
 		self.setBody(newStmt);
 	    }
-	    // check for loop induction variable
 	    
-	    UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
-	    // see if we can unroll...
-	    if(shouldUnroll(info, body, currentModified)) {
-		// Set modified
-		saveModified.putAll(currentModified);
-		currentModified=saveModified;
-		currentModified.put(info.var,Boolean.TRUE);
-		// do unrolling
-		return doUnroll(info, self);
-	    } else if(canUnroll(info,currentModified)) {
-		// Set modified
-		saveModified.putAll(currentModified);
-		currentModified=saveModified;
-		currentModified.put(info.var,Boolean.TRUE);
-		// do unrolling
-		return doPartialUnroll(info, self);
+	    boolean childHasUnrolled = hasUnrolled;
+	    // restore this way because you want to propagate child
+	    // unrollings up, but don't want to eliminate record of
+	    // previous unrolling
+	    hasUnrolled = saveHasUnrolled || childHasUnrolled;
+	    
+	    // only unroll if child hasn't, or if we're doing the init function
+	    if (!childHasUnrolled || inContainerInit) {
+		// check for loop induction variable
+		UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
+		// see if we can unroll...
+		if(shouldUnroll(info, body, currentModified)) {
+		    // Set modified
+		    saveModified.putAll(currentModified);
+		    currentModified=saveModified;
+		    currentModified.put(info.var,Boolean.TRUE);
+		    // do unrolling
+		    return doUnroll(info, self);
+		} else if(canUnroll(info,currentModified)) {
+		    // Set modified
+		    saveModified.putAll(currentModified);
+		    currentModified=saveModified;
+		    currentModified.put(info.var,Boolean.TRUE);
+		    // do unrolling
+		    return doPartialUnroll(info, self);
+		}
+	    } else {
+		// otherwise, still mark the loop as having unrolled,
+		// because we don't want to consider it again and
+		// unroll it when children were unrolled by a
+		// different unroller
+		self.setUnrolled(true);
 	    }
 	    saveModified.putAll(currentModified);
 	    currentModified=saveModified;
@@ -427,6 +447,8 @@ public class Unroller extends SLIRReplacingVisitor {
 					       null);
 	newFor.setUnrolled(true);
 	newStatements[newStatements.length-1]=newFor;
+	// mark that we've unrolled
+	this.hasUnrolled = true;
 	return new JBlock(null,
 			  newStatements,
 			  null);

@@ -112,6 +112,7 @@ public class FilterContent {
 	    total=1;
 	    methods=filter.getMethods(); //Keep nonlinear rep
 	    steady=filter.getPhases(); //Keep nonlinear rep
+	    initFunction=filter.getInit();
 	} else {
 	    linear=false;
 	    init=filter.getInitPhases();

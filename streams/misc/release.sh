@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.6 2003-03-13 23:27:56 dmaze Exp $
+# $Id: release.sh,v 1.7 2003-03-21 15:25:32 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -20,7 +20,7 @@ Usage:
 
 Options:
   --version (-v)   Use a particular exported version ($VERSION)
-  --tag (-t)       Build a release from a CVS tag ($TAG)
+  --tag (-r)       Build a release from a CVS tag ($TAG)
   --cvsroot (-d)   Specify the CVS root directory ($CVSROOT)
   --tmpdir         Use a different build directory ($TMPDIR)
   --antlr          Location of the ANTLR jar file ($ANTLRJAR)
@@ -34,7 +34,7 @@ do
   OPT="$1"; shift
   case $OPT in
     --version|-v) VERSION="$1"; shift;;
-    --tag|-t) TAG="$1"; shift;;
+    --tag|-r) TAG="$1"; shift;;
     --tmpdir) TMPDIR="$1"; shift;;
     --cvsroot|-d) CVSROOT="$1"; export CVSROOT; shift;;
     --precious|-k) PRECIOUS=yes;;

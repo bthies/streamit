@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIntLiteral.java,v 1.8 2003-05-28 05:58:44 thies Exp $
+ * $Id: JIntLiteral.java,v 1.9 2005-04-06 12:01:52 thies Exp $
  */
 
 package at.dms.kjc;
@@ -147,6 +147,10 @@ public class JIntLiteral extends JLiteral {
     buffer.append("]");
     return buffer.toString();
   }
+
+    public String convertToString() {
+	return ""+value;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

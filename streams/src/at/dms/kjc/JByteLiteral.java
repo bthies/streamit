@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JByteLiteral.java,v 1.7 2003-05-28 05:58:43 thies Exp $
+ * $Id: JByteLiteral.java,v 1.8 2005-04-06 12:01:52 thies Exp $
  */
 
 package at.dms.kjc;
@@ -72,6 +72,10 @@ public class JByteLiteral extends JLiteral {
   public boolean isDefault() {
     return value == 0;
   }
+
+    public String convertToString() {
+	return ""+value;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNullLiteral.java,v 1.7 2003-05-28 05:58:44 thies Exp $
+ * $Id: JNullLiteral.java,v 1.8 2005-04-06 12:01:52 thies Exp $
  */
 
 package at.dms.kjc;
@@ -71,6 +71,10 @@ public class JNullLiteral extends JLiteral {
   public boolean isConstant() {
     return false;
   }
+
+    public String convertToString() {
+	return "null";
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

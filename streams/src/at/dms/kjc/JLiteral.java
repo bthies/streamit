@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLiteral.java,v 1.4 2003-05-28 05:58:44 thies Exp $
+ * $Id: JLiteral.java,v 1.5 2005-04-06 12:01:52 thies Exp $
  */
 
 package at.dms.kjc;
@@ -101,6 +101,11 @@ public abstract class JLiteral extends JExpression {
   public JLiteral getLiteral() {
     return this;
   }
+
+    /**
+     * For up-casting into a string type.
+     */
+    public abstract String convertToString();
 
   /**
    * Returns true iff the value of this literal is the

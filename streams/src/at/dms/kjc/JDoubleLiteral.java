@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoubleLiteral.java,v 1.8 2003-05-28 05:58:43 thies Exp $
+ * $Id: JDoubleLiteral.java,v 1.9 2005-04-06 12:01:52 thies Exp $
  */
 
 package at.dms.kjc;
@@ -127,6 +127,10 @@ public class JDoubleLiteral extends JLiteral {
   public boolean isDefault() {
     return Double.doubleToLongBits(value) == ZERO_BITS;
   }
+
+    public String convertToString() {
+	return ""+value;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

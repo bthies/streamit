@@ -2058,7 +2058,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    return createMessageStatement(self, ((JFieldAccessExpression)prefix).getType(), prefix, args);
 	}	    
       	else {             //Not an SIR call
-	    prefix = (JExpression)prefix.accept(this);
+	    if (prefix==null) {
+		prefix = new JThisExpression();
+	    } else {
+		prefix = (JExpression)prefix.accept(this);
+	    }
 	    for (int i = 0; i < args.length; i++)
 		args[i] = (JExpression) args[i].accept(this);
 	    //reset currentMethod

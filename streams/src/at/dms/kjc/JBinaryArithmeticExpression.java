@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryArithmeticExpression.java,v 1.5 2003-05-28 05:58:43 thies Exp $
+ * $Id: JBinaryArithmeticExpression.java,v 1.6 2005-04-06 12:01:52 thies Exp $
  */
 
 package at.dms.kjc;
@@ -123,7 +123,10 @@ public abstract class JBinaryArithmeticExpression extends JBinaryExpression {
 	      return new JDoubleLiteral(getTokenReference(), compute(val1, val2));
 	  }
 	  default:
-	      throw new InconsistencyException("unexpected type " + myType);
+	      // convert as strings
+	      String val1 = ((JLiteral)left).convertToString();
+	      String val2 = ((JLiteral)right).convertToString();
+	      return new JStringLiteral(getTokenReference(), val1+val2);
 	  }
       } else
 	  throw new InconsistencyException("unexpected type " + myType);

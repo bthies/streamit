@@ -19,6 +19,7 @@ my @files = (
 	     
 	     #"$benchmark_path/beamformer/streamit/BeamFormer.java",
 	     "$benchmark_path/bitonic-sort/streamit/BitonicSort.java",
+
 	     # has some sort of problem with the lowering phase -- non constant
 	     # something...
 	     #"$benchmark_path/bitonic-sort/streamit/BitonicSort_inlined.java",
@@ -127,27 +128,27 @@ foreach $current_file (@files) {
 
 
     # Set up the section reserved for the linearity report
-    print GFILE "\\section{Linearity Report for $section_name}\n";
+    print GFILE tex("\\section{Linearity Report for $section_name}\n");
 
     # add the data from parsing the output with the parse_lienar_tex.pl part
-    print GFILE "\\subsection{Matrix Representations of $section_name}\n";
-    print GFILE `parse_linear_tex.pl $base_filename.output`;
+    print GFILE tex("\\subsection{Matrix Representations of $section_name}\n");
+    print GFILE tex(`parse_linear_tex.pl $base_filename.output`);
 
     # add a section with the linearity report
-    print GFILE "\\subsection{Filter breakdown for $section_name}\n";
-    print GFILE "\\begin{verbatim}\n";
-    print GFILE "$report\n";
-    print GFILE "\\end{verbatim}\n\n";
+    print GFILE tex("\\subsection{Filter breakdown for $section_name}\n");
+    print GFILE tex("\\begin{verbatim}\n");
+    print GFILE tex("$report\n");
+    print GFILE tex("\\end{verbatim}\n\n");
  
     # add data to the latex graph file to import this figure
-    print GFILE "\\subsection{Stream Graph for $section_name}\n";
-    print GFILE "\\begin{figure}\n\\center\n";    
-    print GFILE "\\epsfxsize=\\hsize\n";
-    print GFILE "\\epsfysize=\\vsize\n";
-    print GFILE "\\epsfbox{$base_filename.ps}\n";
-    print GFILE "\\caption{Linearity graph for $current_file}\n";
-    print GFILE "\\end{figure}\n";
-    print GFILE "\\clearpage\n\n";
+    print GFILE tex("\\subsection{Stream Graph for $section_name}\n");
+    print GFILE tex("\\begin{figure}\n\\center\n");    
+    print GFILE tex("\\epsfxsize=\\hsize\n");
+    print GFILE tex("\\epsfysize=\\vsize\n");
+    print GFILE tex("\\epsfbox{$base_filename.ps}\n");
+    print GFILE tex("\\caption{Linearity graph for $current_file}\n");
+    print GFILE tex("\\end{figure}\n");
+    print GFILE tex("\\clearpage\n\n");
      
     # delete the output to conserve disk space.
     print `rm $base_filename.output`;
@@ -157,6 +158,17 @@ foreach $current_file (@files) {
 # close up the graph file
 print GFILE make_latex_footer();
 close(GFILE);
+
+
+
+# format the passed in string for tex (eg convert all _ to \_)
+sub tex {
+    my $data = shift || die ("no data passed to tex\n");
+    # do _ --> \_
+    $data =~ s/\_/\\\_/gi;
+    return $data;
+}
+
 
 
 # header for latex file

@@ -21,7 +21,7 @@ sub main {
     my $filename = shift(@ARGV) || die("usage: parse_linear_tex.pl filename");
 
     # read in the contents to a scalar
-    my $_output_contents = read_file($filename);
+    my $output_contents = read_file($filename);
 
     my @filter_contents;
     my @pipeline_contents;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.9 2002-11-10 21:44:23 mgordon Exp $
+ * $Id: JMethodCallExpression.java,v 1.10 2002-11-10 21:45:43 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -70,7 +70,7 @@ public class JMethodCallExpression extends JExpression {
 	  return method.getReturnType();
       //ADDED BY GORDO, I need a way to 
       //keep the type of a method call where
-      //the caller method is not defined
+      //the callee method is not defined
       //this should not affect anything...
       //famous last words
       return tapeType;
@@ -308,6 +308,6 @@ public class JMethodCallExpression extends JExpression {
   protected CMethod		method;
     //added by gordon
     //I needed a way to store the type of a methodcall expression
-    //where the caller is not defined
+    //where the callee is not defined
     protected CType tapeType;
 }

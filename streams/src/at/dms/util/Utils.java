@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.9 2002-07-29 11:01:48 thies Exp $
+ * $Id: Utils.java,v 1.10 2002-11-07 07:56:15 thies Exp $
  */
 
 package at.dms.util;
@@ -70,6 +70,14 @@ public abstract class Utils implements Serializable {
   }
 
     
+    /**
+     * Returns <val> as a percentage with maximum of 4 digits
+     */
+    public static String asPercent(double val) {
+	String result = "" + (100*val);
+	return result.substring(0, Math.min(5, result.length())) + "%";
+    }
+
     /**
      * Returns a list of Integers containing same elements as <arr>
      */

@@ -15,44 +15,50 @@ import java.lang.reflect.*;
 class DecoderInput
 {
   //member variables!
-  public int[] mLarParameters = new int[8];
-  public int[] mLtpOffset = new int[4];
-  public int[] mLtpGain = new int[4];
-  public int[] mRpeGridPosition = new int[4];
-  public int[] mRpeMagnitude = new int[4];
-  public int[][] mSequence = new int[4][13];
+  public short[] mLarParameters = new short[8];
+  public short[] mLtpOffset = new short[4];
+  public short[] mLtpGain = new short[4];
+  public short[] mRpeGridPosition = new short[4];
+  public short[] mRpeMagnitude = new short[4];
+  public short[][] mSequence = new short[4][13];
 
-  public int[] readFile() throws IOException, FileNotFoundException
+
+  public short[] readFile() 
   {
-    
-    
-    File f1 = new File("SpeechEncoderOutputBits1");
-    FileReader fr = new FileReader(f1);
-    BufferedReader br = new BufferedReader(fr);
-    //DataInputStream data = new DataInputStream(new FileInputStream(f1));
-    //read the sucker!
-    //boolean[] input = new boolean[4];
-    int[] input = new int[151840];
-    for(int i = 0; i < input.length; i++)
-      {
-	String j = br.readLine();
-	
-		if (j.equals("1"))
-		  {
-		    input[i] = 1;
-		  }
-		else
-		  { 
-		    input[i] = 0;
-		  }		
+    short[] input = new short[151840];
+    try
+    {
+	File f1 = new File("SpeechEncoderOutputBits1");
+	FileReader fr = new FileReader(f1);
+	BufferedReader br = new BufferedReader(fr);
+	//DataInputStream data = new DataInputStream(new FileInputStream(f1));
+	//read the sucker!
+	//boolean[] input = new boolean[4];
+	for(int i = 0; i < input.length; i++)
+	    {
+		String j = br.readLine();
 		
-      }
-    br.close();	
-    return input;
-    
+		if (j.equals("1"))
+		    {
+			input[i] = 1;
+		    }
+		else
+		    { 
+			input[i] = 0;
+		    }		
+		
+	    }
+	br.close();
+    }
+    catch (IOException e)
+    {
+	System.out.println("Blah! IO error!");
+    }
+   
+    return input; 
   }
   
-  public void getParameters(int[] input)
+  public void getParameters(short[] input)
   {
     int input_index = 0;
     int num_bits = 0;
@@ -255,8 +261,6 @@ class Helper
 }
 class RPEDecodeFilter extends Filter 
 {
-    Channel input = new Channel(Short.TYPE, 1);
-    Channel output = new Channel(Short.TYPE, 1);
     short[] mXmc;
     static short[] FAC = {29218, 26215, 23832, 21846, 20165, 18725, 17476, 16384};
     short[] xmp;
@@ -264,6 +268,8 @@ class RPEDecodeFilter extends Filter
 
     public void init() 
     {
+	input = new Channel(Short.TYPE, 15);
+	output = new Channel(Short.TYPE, 40);
 	mXmc = new short[13];   //mSequence
 	//others are in work() method	
 	xmp = new short[13]; //intermediary
@@ -359,14 +365,14 @@ class RPEDecodeFilter extends Filter
 
 class LTPFilter extends Filter 
 {
-    Channel input = new Channel(Short.TYPE, 1);
-    Channel output = new Channel(Short.TYPE, 1);
-
     static short[] QLB = {3277, 11469, 21299, 32767};
     short[] drp;
     short nrp;
    
-    public void init() {
+    public void init() 
+    {
+	input = new Channel(Short.TYPE, 162);
+	output = new Channel(Short.TYPE, 1);
 	drp = new short[160];
 	nrp = 40;   //initial condition
     }
@@ -400,14 +406,13 @@ class LTPFilter extends Filter
 }
 
 class AdditionUpdateFilter extends Filter 
-{
-    Channel input = new Channel(Short.TYPE, 1);
-    Channel output = new Channel(Short.TYPE, 1);
-    
+{       
     short[] ep;
     short[] drp;
     public void init() 
     {
+	input = new Channel(Short.TYPE, 41);
+	output = new Channel(Short.TYPE, 1);
 	ep = new short[40]; //input
 	drp = new short[160];  //output
 	for (short i = 0; i < drp.length; i++)
@@ -443,8 +448,6 @@ class AdditionUpdateFilter extends Filter
 
 class ShortTermSynthFilter extends Filter 
 {
-    Channel input = new Channel(Short.TYPE, 1);
-    Channel output = new Channel(Short.TYPE, 1);
 
     static short[] INVA = {13107, 13107, 13107, 13107, 19223, 17476, 31454, 29708};
     static short[] MIC = {-32, -32, -16, -16, -8, -8, -4, -4};
@@ -463,6 +466,8 @@ class ShortTermSynthFilter extends Filter
 
     public void init() 
     {
+	input = new Channel(Short.TYPE, 168);
+	output = new Channel(Short.TYPE, 160);
 	mdrpin = new short[160];
 	mdrp = new short[40];
 	mLARc = new short[8];
@@ -656,11 +661,11 @@ class PostProcessingFilter extends Filter
     short[] srop; //output
     short msr;
 
-    Channel input = new Channel(Short.TYPE, 1);
-    Channel output = new Channel(Short.TYPE, 1);
 
     public void init() 
     {
+	input = new Channel(Short.TYPE, 160);
+	output = new Channel(Short.TYPE, 160);
 	mSr = new short[160];
 	sro = new short[160];
 	srop = new short[160];
@@ -748,29 +753,150 @@ class LARInputSplitJoin extends SplitJoin
     }
 }
 
-class LARInputFilter extends Filter
+class RPEInputFilter extends Filter
 {
+    //order of output: mSequence[0..13], mRpeMagnitude, mRpeGridPosition
+    short[] mdata;
+    short[] single_frame;
+    DecoderInput mdecodefile;
+    
     public void init()
     {
+	mdata = new short[151840];
+	single_frame = new short[260];
+	mdecodefile = new DecoderInput();
+	output = new Channel(Short.TYPE, 60); 
     }
 
     public void work()
     {
+	mdata = mdecodefile.readFile();
+	int frame_index = 0;
+	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
+	  {
+	    for (int k = 0; k < single_frame.length; k++)
+	      {
+		single_frame[k] = mdata[frame_index + k];
+	      }
+	    mdecodefile.getParameters(single_frame);
+	    frame_index += 260;
+	  }
+
+	//now, push the stuff on!
+	for (int i = 0; i < 4; i++)
+	{
+	    for (int j = 0; j < 13; j++)
+	    {
+		output.pushShort(mdecodefile.mSequence[i][j]);
+	    }
+	    output.pushShort(mdecodefile.mRpeMagnitude[i]);
+	    output.pushShort(mdecodefile.mRpeGridPosition[i]);
+	}
+    }
+}
+class LARInputFilter extends Filter
+{
+    //order of output: mLarParameters[0...8]
+    short[] mdata;
+    short[] single_frame;
+    DecoderInput mdecodefile;
+    public void init()
+    {
+	mdata = new short[151840];
+	single_frame = new short[260];
+	mdecodefile = new DecoderInput();
+	output = new Channel(Short.TYPE, 8); 
+    }
+
+    public void work()
+    {
+	mdata = mdecodefile.readFile();
+	int frame_index = 0;
+	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
+	  {
+	    for (int k = 0; k < single_frame.length; k++)
+	      {
+		single_frame[k] = mdata[frame_index + k];
+	      }
+	    mdecodefile.getParameters(single_frame);
+	    frame_index += 260;
+	  }
+	
+	//now, push the stuff on!
+	for (int i = 0; i < 8; i++)
+	{
+	    output.pushShort(mdecodefile.mLarParameters[i]);
+	}
     }
 }
 
 class LTPInputFilter extends Filter
 {
+    //order of output: mLtpGain[4], mLtpOffset[4]
+    short[] mdata;
+    short[] single_frame;
+    DecoderInput mdecodefile;
     public void init()
     {
+	mdata = new short[151840];
+	single_frame = new short[260];
+	mdecodefile = new DecoderInput();
+	output = new Channel(Short.TYPE, 8); 
     }
 
     public void work()
     {
+	mdata = mdecodefile.readFile();
+	int frame_index = 0;
+	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
+	  {
+	    for (int k = 0; k < single_frame.length; k++)
+	      {
+		single_frame[k] = mdata[frame_index + k];
+	      }
+	    mdecodefile.getParameters(single_frame);
+	    frame_index += 260;
+	  }
+	
+	//now, push the stuff on!
+	for (int i = 0; i < 4; i++)
+	{
+	    output.pushShort(mdecodefile.mLtpGain[i]);
+	    output.pushShort(mdecodefile.mLtpOffset[i]);
+	}
     }
 }
 
+/**
+ *  Temporary addition:  
+ *  takes in short[160] array, pushes out 40 bits at a time 
+ *  so that LAR filtering is only applied after all four subframes
+ *  are processed.
+ */
+class HoldFilter extends Filter
+{
+    short[] mDrp;    
 
+    public void init()
+    {
+	input = new Channel(Short.TYPE, 160);
+	output = new Channel(Short.TYPE, 40);
+	mDrp = new short[160];
+    }
+
+    public void work()
+    {
+	for (int i = 0; i < mDrp.length; i++)
+	{
+	    mDrp[i] = input.popShort();
+	}
+	for (int j = 0; j < 40; j++)
+	{
+	    output.pushShort(mDrp[j + 120]);
+	}
+    }
+    
+}
 public class StGsmDecoder extends StreamIt 
 {
     //include variables for parsing here!
@@ -781,9 +907,11 @@ public class StGsmDecoder extends StreamIt
     }
 
     public void init() {
+	this.add(new RPEInputFilter());
 	this.add(new RPEDecodeFilter());
 	this.add(new DecoderFeedback());
 	this.add(new LARInputSplitJoin());
+	this.add(new HoldFilter());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
     }

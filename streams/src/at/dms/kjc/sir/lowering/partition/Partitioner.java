@@ -158,7 +158,7 @@ public class Partitioner {
 			if (newstr!=cont) { break; }
 		    } else if (cont instanceof SIRPipeline) {
 			System.out.println("trying to fuse pipe " + cont);
-			int num = FusePipe.fuse((SIRPipeline)cont);
+			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
 			if (num!=0) { break; }
 		    }
 		    // if we made it to the end of the last loop, then

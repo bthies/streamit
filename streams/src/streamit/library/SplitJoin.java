@@ -9,6 +9,8 @@ public class SplitJoin extends Stream
     Splitter splitter;
     Joiner joiner;
 
+    SplitJoinType splitType, joinType;
+
     List outputStreams;
 
     public SplitJoin()
@@ -137,6 +139,8 @@ public class SplitJoin extends Stream
     {
         ASSERT (splitter == null && type != null);
         splitter = type.GetSplitter ();
+
+        splitType = type;
     }
 
     // specify the joiner
@@ -155,6 +159,8 @@ public class SplitJoin extends Stream
 
             joiner.Add (s);
         }
+
+        joinType = type;
     }
 
     // add a stream to the parallel section between the splitter and the joiner

@@ -2,6 +2,7 @@ package streamit;
 
 import java.util.*;
 import java.lang.reflect.*;
+import streamit.scheduler.*;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
 public class Stream extends Operator
@@ -69,6 +70,15 @@ public class Stream extends Operator
     public void Run()
     {
         SetupOperator ();
+
+        // setup the scheduler
+        {
+            Scheduler.SchedStream stream;
+            stream = (Scheduler.SchedStream) constructSchedule ();
+            ASSERT (stream);
+
+            scheduler = new Scheduler (stream);
+        }
 
         ASSERT (input == null);
         ASSERT (output == null);
@@ -174,5 +184,32 @@ public class Stream extends Operator
         SetIOField (fieldName, 0, newChannel);
     }
 
+    // ----------------------------------------------------------------
+    // This code constructs an independent graph for the scheduler
+    // ----------------------------------------------------------------
+
+    Scheduler scheduler;
+
+    Scheduler.SchedStream constructSchedule ()
+    {
+        // go through my children and dispatch on their
+        Scheduler.SchedStream stream = new Scheduler.SchedStream ();
+
+        ListIterator childIter;
+        childIter = (ListIterator) streamElements.iterator ();
+
+        while (childIter.hasNext ())
+        {
+            // advance the iterator:
+            Stream child = (Stream) childIter.next ();
+            ASSERT (child);
+
+            Scheduler.SchedStream childStream;
+            childStream = child.constructSchedule ();
+            stream.addStream (childStream);
+        }
+
+        return stream;
+    }
 
 }

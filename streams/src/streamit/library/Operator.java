@@ -5,7 +5,7 @@ import java.util.*;
 
 // an operator takes N inputs and produces N outputs.
 // Never explicitly instantiated
-class Operator extends DestroyedClass
+public class Operator extends DestroyedClass
 {
     ParameterContainer initParams;
     boolean initialized = false;

@@ -6,7 +6,7 @@ import at.dms.kjc.lir.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.cluster.*;
-import grapheditor.GraphEncoder;
+import streamit.eclipse.grapheditor.GraphEncoder;
 import java.lang.reflect.*;
 
 /**

@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.19 2003-07-30 19:53:09 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.20 2003-07-30 20:01:58 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -62,6 +62,21 @@ public class DoComplexProp extends SymbolTableVisitor
         if (!(expr instanceof ExprComplex))
             return expr;
         ExprComplex cplx = (ExprComplex)expr;
+        // Check: do we have (c.real)+i(c.imag)?  If so, just return c.
+        if (cplx.getReal() instanceof ExprField &&
+            cplx.getImag() instanceof ExprField)
+        {
+            ExprField fr = (ExprField)cplx.getReal();
+            ExprField fi = (ExprField)cplx.getImag();
+            if (fr.getName().equals("real") &&
+                fr.getLeft() instanceof ExprVar &&
+                fi.getName().equals("imag") &&
+                fi.getLeft() instanceof ExprVar &&
+                fr.getLeft().equals(fi.getLeft()))
+            {
+                return fi.getLeft();
+            }
+        }
         // This code path almost certainly isn't going to follow
         // the path tojava.TempVarGen was written for, so we can
         // ignore the type parameter.

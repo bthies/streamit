@@ -59,8 +59,20 @@ public class FuseSplit {
 	JMethodDeclaration newInitWork = makeInitWorkFunction(sj, childInfo, rep, rate);
         JMethodDeclaration newWork = makeWorkFunction(sj, childInfo, rep, rate);
 
-        // Build the new filter.
-        SIRFilter newFilter = new SIRTwoStageFilter(sj.getParent(), "Fused_" + sj.getIdent(),
+        // Build the new filter.  If there's no pushing or peeking
+        // from initwork, then just inline the initwork in the init function
+	SIRFilter newFilter;
+	if (rate.initPeek==0 && rate.initPush==0) {
+	    newInit.getBody().addAllStatements(newInitWork.getBody().getStatements());
+	    newFilter = new SIRFilter(sj.getParent(), "Fused_" + sj.getIdent(),
+						    newFields, newMethods, 
+						    new JIntLiteral(rate.peek),
+						    new JIntLiteral(rate.pop), 
+						    new JIntLiteral(rate.push),
+						    newWork, 
+						    sj.getInputType(), sj.getOutputType());
+	} else {
+	    newFilter = new SIRTwoStageFilter(sj.getParent(), "Fused_" + sj.getIdent(),
 						    newFields, newMethods, 
 						    new JIntLiteral(rate.peek),
 						    new JIntLiteral(rate.pop), 
@@ -69,6 +81,8 @@ public class FuseSplit {
 						    rate.initPeek, rate.initPop, rate.initPush,
 						    newInitWork,
 						    sj.getInputType(), sj.getOutputType());
+	}
+
         // Use the new init function
         newFilter.setInit(newInit);
 
@@ -317,60 +331,6 @@ public class FuseSplit {
 	    */
         }
 	return true;
-    }
-
-    /**
-     * Returns a filter with empty init function and work function
-     * having parent <parent>, name <ident>, statements <block>, i/o
-     * type <type>, and i/o rates <peek>, <pop>, <push> suitable for
-     * reorderers that emulate splitters and joiners in the fused
-     * construct.
-     */
-    private static SIRFilter makeFilter(SIRContainer parent,
-					String ident,
-					JBlock block, 
-					int push, int pop, int peek,
-					CType type) {
-
-	// make empty init function
-	JMethodDeclaration init = new JMethodDeclaration(null,
-							 at.dms.kjc.Constants.ACC_PUBLIC,
-							 CStdType.Void,
-							 "init",
-							 JFormalParameter.EMPTY,
-							 CClassType.EMPTY,
-							 new JBlock(null, new LinkedList(), null),
-							 null,
-							 null);
-	
-	// make work function
-	JMethodDeclaration work = new JMethodDeclaration(null,
-							 at.dms.kjc.Constants.ACC_PUBLIC,
-							 CStdType.Void,
-							 "work",
-							 JFormalParameter.EMPTY,
-							 CClassType.EMPTY,
-							 block,
-							 null,
-							 null);
-
-	// make method array
-	JMethodDeclaration[] methods = { init, work} ;
-
-	// return new filter
-	SIRFilter result = new SIRFilter(parent,
-					 ident,
-					 JFieldDeclaration.EMPTY(),
-					 methods, 
-					 new JIntLiteral(peek), 
-					 new JIntLiteral(pop), 
-					 new JIntLiteral(push), 
-					 work, 
-					 type,
-					 type);
-	result.setInit(init);
-
-	return result;
     }
 
     /**

@@ -27,6 +27,7 @@ public class FileReader extends SIRFilter
 	String fileVar = "__file__" + uniqueID++;
 	
 	//set I/O rates
+	this.setParent(sirFR.getParent());
 	this.setPush(1);
 	this.setPeek(0);
 	this.setPop(0);
@@ -92,20 +93,20 @@ public class FileReader extends SIRFilter
 	    
 
 	//create a temp variable to hold the value we are reading
-	JExpression[] workParams = new JExpression[3];
+	JExpression[] fscanfParams = new JExpression[3];
 	//create the params for fscanf
-	workParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+	fscanfParams[0] = new JFieldAccessExpression(null, new JThisExpression(null),
 						   file.getVariable().getIdent());
-	workParams[1] = new JStringLiteral(null,
+	fscanfParams[1] = new JStringLiteral(null,
 					   sirFR.getOutputType().isFloatingPoint() ?
 					   "%f\\n" : "%d\\n");
-	workParams[2] = new JLocalVariableExpression(null, value);
+	fscanfParams[2] = new JLocalVariableExpression(null, value);
 
 	//fscanf call
 	JMethodCallExpression fread = 
 	    new JMethodCallExpression(null, new JThisExpression(null),
 				      Names.fscanf,
-				      workParams);
+				      fscanfParams);
 	workBlock.addStatement(new JExpressionStatement(null, fread, null));
 
 	SIRPushExpression pexp = 

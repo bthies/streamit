@@ -45,5 +45,6 @@ public class Names
     public static String main = "__MAIN__";
 
     public static String fscanf = "fscanf";
+    public static String fprintf = "fprintf";
 }
 

@@ -72,6 +72,10 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
 	Iterator childIter = self.getChildren().iterator();
 	while(childIter.hasNext()) {
 	    SIROperator currentChild = (SIROperator)childIter.next();
+	    //don't visit splitter or joiner again.
+	    if (currentChild instanceof SIRSplitter || 
+		currentChild instanceof SIRJoiner)
+		continue;
 	    newChildren.add(currentChild.accept(this));
 	}
 	// visit joiner 
@@ -117,7 +121,7 @@ public class ConvertFileFilters extends EmptyAttributeStreamVisitor
 	else if (self instanceof SIRFileWriter) {
 	    //do something here...
 	    System.out.println("Replacing file writer " + self);	    
-	    return null;
+	    return new File_Writer((SIRFileWriter)self);
 	}
 	else {
 	    return self;

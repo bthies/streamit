@@ -86,7 +86,7 @@ float->float pipeline FFT_Kernel(int n)
     for (int j = 2; j <= n; j *= 2) {
 	  add CombineDFT(j);
     }
- }
+}
 
 
 // we  need this  now  since  the cluster  backend  doesn't deal  with
@@ -103,9 +103,9 @@ void->float filter Read_From_AtoD(int N)
 {
     work pop 0 push N {
 	  for(int i = 1; i <= N; i++) {
-		push((float) pow((float) sin(i * pi / N), 2.0));
-	  }
-    }
+		float val = (float) sin(i * pi / N);
+		push(val * val);
+	  }    }
 }
 
 
@@ -181,8 +181,9 @@ float->float filter Inject_Hop(int N, float hop_threshold)
 }
 
 
-float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, float channel_bandwidth, float hop_threshold, 
-						  portal<RFtoIF> port0, portal<RFtoIF> port1, portal<RFtoIF> port2, portal<RFtoIF> port3)
+float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, 
+						  float channel_bandwidth, float hop_threshold, 
+						  portal<RFtoIF> port0)
 {
     // of N incoming values,  one of the data items in
     // [N/2 - 2, N/2 + 2] may indicate a frequency hop
@@ -208,15 +209,15 @@ float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, flo
 				if (frequency_index >= channels) frequency_index = 0;
 			  }
 			  else if (i == 3) {
-				port1.set_frequency(hops[frequency_index++]) [4 : 6];
+				port0.set_frequency(hops[frequency_index++]) [4 : 6];
 				if (frequency_index >= channels) frequency_index = 0;
 			  }
 			  else if (i == 5) {
-				port2.set_frequency(hops[frequency_index++]) [4 : 6];
+				port0.set_frequency(hops[frequency_index++]) [4 : 6];
 				if (frequency_index >= channels) frequency_index = 0;
 			  }
 			  else if (i == 6) {
-				port3.set_frequency(hops[frequency_index++]) [4 : 6];
+				port0.set_frequency(hops[frequency_index++]) [4 : 6];
 				if (frequency_index >= channels) frequency_index = 0;
 			  }
 		    }
@@ -231,7 +232,7 @@ float->float splitjoin Check_Freq_Hop(int N, float start_freq, int channels, flo
 float->void filter __Output_Filter__
 {
     work peek 1 pop 1 push 0 {
-	  print(peek(0));
+	  //	  print(peek(0));
 	  pop();
     }
 }
@@ -240,7 +241,7 @@ float->void filter __Output_Filter__
 void->void pipeline FHR
 {
     // CONSTANTS {
-    int   N             = 32;
+    int   N             = 256;
     // will operate in the 2.402GHz to 2.481 GHz range
     // with 79 channels each with 1MHz bandwidth 
     float START_FREQ    = 2402000000;
@@ -251,9 +252,6 @@ void->void pipeline FHR
     // } CONSTANTS
 
     portal <RFtoIF> port0;
-    portal <RFtoIF> port1;
-    portal <RFtoIF> port2;
-    portal <RFtoIF> port3;
 
     add Read_From_AtoD(N);
 
@@ -265,7 +263,7 @@ void->void pipeline FHR
 
     add Inject_Hop(N, HOP_THRESHOLD);
     
-    add Check_Freq_Hop(N, START_FREQ, CHANNELS, CHANNEL_BAND, HOP_THRESHOLD, port0, port1, port2, port3);
+    add Check_Freq_Hop(N, START_FREQ, CHANNELS, CHANNEL_BAND, HOP_THRESHOLD, port0);
 
     add __Output_Filter__();
 }

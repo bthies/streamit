@@ -1,0 +1,61 @@
+/* Here are the set of recommended contraints for the program to work in a predictable manner
+
+N_dn usually is the same as N_sub
+N_rg/N_dn=integer:
+N_ch>N_bm;
+N_dop=N_pri+1-N_stg=2^N
+
+*/
+
+complex[N_ch][N_rg][N_pri]->float[N_dop][N_rg][N_dop] pipeline FAT(int N_sub,int N_ch,int N_rg,int N_pri,int N_bm,int N_dn,int N_dop, int N_fdn, int N_fup, int N_td,int N_pc,int N_ts,int G, int N_cfar,float alpha,float mu,int[] T_stap,float[] a, float[] b, float[] d,complex[] h_lp,complex[] h_td, complex[] h_pc,complex[] f_lp) {
+    add WideBand(N_sub,N_ch,N_rg,N_rg,N_pri,N_bm,N_dn,N_dop,N_fd,N_fup,N_td,N_pc,N_ts,alpha,T_stap,a,b,d,h_lp,h_td,h_pc,f_lp);
+    add CFAR(N_dop,N_rg,N_dop,N_cfar,G,mu);
+    add Target(N_dop,N_rg,N_dop);
+}
+
+
+void->complex[N_ch][N_rg][N_pri] filter IntSource(int N_ch,int N_rg,int N_pri) {
+    init{}
+
+    work pop 0 push 1 {
+	int dummy=0;
+	complex[N_ch][N_rg][N_pri] OutArr;
+	for (int i=0;i<N_ch;i++)
+	    for (int j=0; j < N_rg; j++)
+		for (int k=0; k < N_pri; k++){
+		    dummy++;
+		    OutArr[i][j][k]=dummy;
+		}
+	push(OutArr);
+    }
+}
+
+
+
+float[N_cnb][N_rg][N_dop]-> void filter Print3d(int N_cnb, int N_rg, int N_dop){
+    init {}
+
+    work pop 1 push 0 {
+	complex[N_cnb][N_rg][N_dop] InArr;
+	for (int i=0; i < N_cnb; i++)
+	    for (int j=0; j < N_rg; j++)
+		for (int k=0; k < N_dop; k++)
+		    {
+			print(i);
+			print(":");
+			print(j);
+			print(":");
+			print(k);
+			print("=");
+			println(InArr[i][j][k]);
+			
+		    }
+    }
+}
+
+			    
+		       
+		       
+		    
+		    
+		

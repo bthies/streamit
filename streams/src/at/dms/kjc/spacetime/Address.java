@@ -73,6 +73,12 @@ public class Address
 	result += (32 - (result % 32));
 	return new Address(result);
     }
+
+    public Address ceil32() 
+    {
+	return this.add32Byte(0);
+    }
+    
     
     public Address div(int i) 
     {

@@ -20,6 +20,7 @@ public class Util {
     public static String CSTOFPVAR = "__csto_float__";
     public static String CSTIFPVAR = "__csti_float__";
     public static String CSTIINTVAR = "__csti_integer__";
+    public static String CGNOINTVAR = "__slgcc_cgno_integer__";
     
     //unique ID for each file reader/writer used to
     //generate var names...

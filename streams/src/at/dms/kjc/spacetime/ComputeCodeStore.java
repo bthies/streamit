@@ -56,6 +56,49 @@ public class ComputeCodeStore {
 	addMethod(rawMain);
     }
 
+    //add a dram command to the compute code at the current time
+    //if read is false, then it is a write
+    //
+    public void addDRAMCommand(boolean read, boolean init, 
+			       int bytes, OffChipBuffer buffer) 
+    {
+	String functName = "raw_streaming_dram_request_" +
+	    (read ? "read" : "write") + "_presynched";
+
+	//the args for the streaming dram command
+	
+	//cachelines that are needed
+	int cacheLines = bytes / RawChip.cacheLineBytes;
+	JExpression[] args = {new JIntLiteral(1),
+			      new JIntLiteral(cacheLines)};
+
+	//the dram command
+	JMethodCallExpression call = 
+	    new JMethodCallExpression(null, functName, args);
+	
+	//send over the address
+	JFieldAccessExpression dynNetSend = 
+	    new JFieldAccessExpression(null, Util.CSTOINTVAR);
+	
+	JFieldAccessExpression bufAccess = 
+	    new JFieldAccessExpression(null, buffer.getIdent());
+	
+	JAssignmentExpression assExp = 
+	    new JAssignmentExpression(null, dynNetSend, bufAccess);
+
+	//add the statements to the appropriate stage
+	if (init) {
+	    initBlock.addStatement(new JExpressionStatement(null, call, null));
+	    initBlock.addStatement(new JExpressionStatement(null, assExp, null));
+	}
+	else {
+	    steadyLoop.addStatement(steadyIndex ++, 
+				    new JExpressionStatement(null, call, null));
+	    steadyLoop.addStatement(steadyIndex ++, 
+				    new JExpressionStatement(null, assExp, null));
+	}
+    }
+
     public void addTraceSteady(FilterInfo filterInfo)
     {
 	parent.setComputes();

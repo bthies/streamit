@@ -1,6 +1,6 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.8 2002-12-04 20:09:36 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.9 2003-01-26 12:34:08 thies Exp $ */
 
 import streamit.misc.DestroyedClass;
 

@@ -76,7 +76,7 @@ public class FusePipe {
 	// get num that are fusable
 	int numElim = getNumElim(pipe);
 	int maxLength;
-	if (targetElim > numElim) {
+	if (targetElim >= numElim) {
 	    maxLength = pipe.size();
 	} else {
 	    maxLength = (int)Math.ceil(numElim/(numElim-targetElim));

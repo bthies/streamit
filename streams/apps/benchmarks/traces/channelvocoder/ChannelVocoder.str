@@ -1,0 +1,167 @@
+/** 
+ * This is a channel vocoder as described in 6.555 Lab 2.
+ * It's salient features are a filterbank each of which
+ * contains a decimator after a bandpass filter. 
+ * 
+ * Sampling Rate is 8000 Hz. 
+ * First the signal is conditioned using a lowpass filter with
+ * cutoff at 5000 Hz. Then the signal is "center clipped" which
+ * basically means that very high and very low values are removed.
+ *
+ * Then, the signal is sent both to a pitch detector and to a 
+ * filter bank with 200 Hz wide windows (18 overall)
+ * 
+ * Thus, each output is the combination of 18 band envelope values
+ * from the filter bank and a single pitch detector value. This
+ * value is either the pitch if the sound was voiced or 0 if the
+ * sound was unvoiced.
+ **/
+void->void pipeline ChannelVocoder {
+    //add DataSource();
+    add FileReader<float>("input");
+    // low pass filter to filter out high freq noise
+    add LowPassFilter(1, (2*pi*5000)/8000, 64); 
+    add MainSplitjoin();
+    //add FloatPrinter();
+    add FileWriter<float>("output");
+}
+
+/** This class is just a wrapper so that we don't have anonymous inner classes. **/
+float->float splitjoin MainSplitjoin {
+  int PITCH_WINDOW = 100; // the number of samples to base the pitch detection on
+  int DECIMATION   = 50; // decimation factor
+  int NUM_FILTERS  = 4; //18;
+  
+  split duplicate;
+  add PitchDetector(PITCH_WINDOW, DECIMATION);
+  add VocoderFilterBank(NUM_FILTERS, DECIMATION);
+  join roundrobin(1,4); // can't be NUM_FILTERS b/c const prop didn't work
+}
+
+
+/** a simple data source. **/
+void->float filter DataSource() {
+  int SIZE = 11;
+  int index;
+  float[SIZE] x;
+
+
+  init {
+    index = 0;
+    x[0] = -0.70867825;
+    x[1] = 0.9750938;
+    x[2] = -0.009129746;
+    x[3] = 0.28532153;
+    x[4] = -0.42127264;
+    x[5] = -0.95795095;
+    x[6] = 0.68976873;
+    x[7] = 0.99901736;
+    x[8] = -0.8581795;
+    x[9] = 0.9863592;
+    x[10] = 0.909825;
+  }
+
+  
+  work push 1 {
+    push(x[index]);
+    index = (index+1)%SIZE;
+  }
+}
+
+/** 
+ * Pitch detector.
+ **/
+float->float pipeline PitchDetector(int winsize, int decimation) {
+  add CenterClip();
+  add CorrPeak(winsize, decimation);
+}
+
+
+
+
+/** The channel vocoder filterbank. **/
+float->float splitjoin VocoderFilterBank(int N, int decimation) {
+
+  split duplicate;
+  for (int i=0; i<N; i++) {
+    add FilterDecimate(i, decimation);
+  }
+  join roundrobin;
+}
+
+
+/** 
+ * A channel of the vocoder filter bank -- has a 
+ * band pass filter centered at i*200 Hz followed
+ * by a decimator with decimation rate of decimation.
+ **/
+float->float pipeline FilterDecimate(int i, int decimation) {
+  //add VocoderBandPassFilter(i, 64); // 64 tap filter
+  add BandPassFilter(2, 400*i, 400*(i+1), 64); 
+  add Compressor(decimation);
+
+
+}
+
+/** 
+ * This filter "center clips" the input value so that it is always
+ * within the range of -.75 to .75
+ **/
+float->float filter CenterClip {
+  float MIN = -0.75;
+  float MAX =  0.75;
+  work pop 1 push 1 {
+    float t = pop();
+    if (t<MIN) {
+      push(MIN); 
+    } else if (t>MAX) {
+      push(MAX);
+    } else {
+      push(t);
+    }
+  }
+}
+
+/** 
+ * This filter calculates the autocorrelation of the next winsize elements
+ * and then chooses the max peak. If the max peak is under a threshold we
+ * output a zero. If the max peak is above the threshold, we simply output 
+ * its value.
+ **/
+float->float filter CorrPeak(int winsize, int decimation) {
+  float THRESHOLD = 0.07;
+  work peek winsize push 1 pop decimation {
+    float[winsize] autocorr; // auto correlation
+    for (int i=0; i<winsize; i++) {
+      float sum = 0;
+      for (int j=i; j<winsize; j++) {
+	sum += peek(i)*peek(j);
+      }
+      autocorr[i] = sum/winsize;
+    }
+
+    // armed with the auto correlation, find the max peak
+    // in a real vocoder, we would restrict our attention to
+    // the first few values of the auto corr to catch the initial peak
+    // due to the fundamental frequency.
+    float maxpeak = 0;
+    for (int i=0; i<winsize; i++) {
+      if (autocorr[i]>maxpeak) {
+	maxpeak = autocorr[i];
+      }
+    }
+
+    //println("max peak" + maxpeak);
+    
+    // output the max peak if it is above the threshold.
+    // otherwise output zero;
+    if (maxpeak > THRESHOLD) {
+      push(maxpeak);
+    } else {
+      push(0);
+    }
+    for (int i=0; i<decimation; i++) {
+      pop();
+    }
+  }
+}	   

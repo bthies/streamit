@@ -137,8 +137,20 @@ public class FuseSplit {
 	} else {
 	    pop = rep.splitter * sj.getSplitter().getSumOfWeights();;
 	}
-	// require pop == peek for now
-	int peek = pop;
+
+	// calculate the peek amount...
+	// get the max peeked by a child, in excess of its popping
+        children = sj.getParallelStreams();
+        iter = children.iterator();
+	int maxPeek = 0;
+        while (iter.hasNext()) {
+	    maxPeek = Math.max(maxPeek, 
+			       ((SIRFilter)iter.next()).getPeekInt()-
+			       ((SIRFilter)iter.next()).getPopInt());
+	}
+	// calculate the peek as the amount we'll look into the input
+	// during execution
+	int peek = rep.splitter*pop+maxPeek;
 
         // Build the new filter.
         SIRFilter newFilter = new SIRFilter(sj.getParent(),
@@ -477,7 +489,7 @@ public class FuseSplit {
 				    /* ident */ 
 				    LoweringConstants.getUniqueVarName(),
 				    /* initializer */
-				    new JIntLiteral(-1));
+				    new JIntLiteral(0));
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
 	    new JVariableDeclarationStatement(null, var, null);

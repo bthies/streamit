@@ -1,0 +1,11 @@
+The FIR bank was based on Matlab code implemented by a third party.
+The code is part of this benchmark suite on CAG:
+
+/projects/streamit/3rdparty/specs/pca-kernel-benchmarks/
+
+The specific file modeled is
+
+/projects/streamit/3rdparty/specs/pca-kernel-benchmarks/benchmarks/FIR/FirBank.m
+
+The files are not included in the CVS tree since we were asked not to
+distribute them.

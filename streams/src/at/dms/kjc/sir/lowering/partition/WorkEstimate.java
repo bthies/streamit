@@ -304,8 +304,8 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 	// try to determine how many times the loop executes
 	int loopCount = Unroller.getNumExecutions(init, cond, incr, body);
 	if (loopCount==-1) {
-	    System.err.println("WARNING:  Estimating work in loop, assume N=" +
-			       LOOP_COUNT);
+	    //System.err.println("WARNING:  Estimating work in loop, assume N=" +
+	    //LOOP_COUNT);
 	    loopCount = LOOP_COUNT;
 	}
 	int oldWork = work;
@@ -326,8 +326,8 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     public void visitDoStatement(JDoStatement self,
 				 JExpression cond,
 				 JStatement body) {
-	System.err.println("WARNING:  Estimating work in loop, assume N=" +
-			   LOOP_COUNT);
+	//System.err.println("WARNING:  Estimating work in loop, assume N=" +
+	//LOOP_COUNT);
 	int oldWork = work;
 	super.visitDoStatement(self, cond, body);
 	int newWork = work;

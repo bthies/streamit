@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryPromote.java,v 1.3 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JUnaryPromote.java,v 1.4 2003-01-20 22:05:25 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -56,6 +56,13 @@ public class JUnaryPromote extends JExpression {
    */
   public CType getType() {
     return type;
+  }
+
+  /**
+   * Return the expression being promoted.
+   */
+  public JExpression getExpr() {
+    return expr;
   }
 
   // ----------------------------------------------------------------------

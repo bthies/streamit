@@ -17,6 +17,8 @@
 @literal	else
 @literal	extends
 @literal	false
+@literal	feedback
+@literal	filter
 @literal	final
 @literal	finally
 @literal	float
@@ -33,11 +35,13 @@
 @literal	new
 @literal	null
 @literal	package
+@literal	pipeline
 @literal	private
 @literal	protected
 @literal	public
 @literal	return
 @literal	short
+@literal	splitjoin
 @literal	static
 @literal	strictfp
 @literal	super

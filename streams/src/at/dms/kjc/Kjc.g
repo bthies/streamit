@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Kjc.g,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: Kjc.g,v 1.2 2001-10-23 16:22:47 dmaze Exp $
  */
 
 /*
@@ -354,6 +354,7 @@ jModifier []
 jClassDefinition[int modifiers]
   returns [JClassDeclaration self = null]
 {
+  Token			ident = null;
   CClassType		superClass = null;
   CClassType[]		interfaces = CClassType.EMPTY;
   CParseClassContext	context = CParseClassContext.getInstance();
@@ -362,8 +363,22 @@ jClassDefinition[int modifiers]
   JavaStyleComment[]	comments = getStatementComment();
 }
 :
-  "class" ident:IDENT
-  superClass = jSuperClassClause[]
+  (
+    "class" ident1:IDENT { ident = ident1; }
+    superClass = jSuperClassClause[]
+  |
+    "filter" { superClass = CClassType.lookup("Filter"); }
+    ident2:IDENT { ident = ident2; }
+  |
+    "feedback" { superClass = CClassType.lookup("FeedbackLoop"); }
+    ident3:IDENT { ident = ident3; }
+  |
+    "pipeline" { superClass = CClassType.lookup("Pipeline"); }
+    ident4:IDENT { ident = ident4; }
+  |
+    "splitjoin" { superClass = CClassType.lookup("SplitJoin"); }
+    ident5:IDENT { ident = ident5; }
+  )
   interfaces = jImplementsClause[]
   jClassBlock[context]
     {

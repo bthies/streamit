@@ -17,89 +17,93 @@ LITERAL_double = "double" = 16
 LITERAL_else = "else" = 17
 LITERAL_extends = "extends" = 18
 LITERAL_false = "false" = 19
-LITERAL_final = "final" = 20
-LITERAL_finally = "finally" = 21
-LITERAL_float = "float" = 22
-LITERAL_for = "for" = 23
-LITERAL_goto = "goto" = 24
-LITERAL_if = "if" = 25
-LITERAL_implements = "implements" = 26
-LITERAL_import = "import" = 27
-LITERAL_instanceof = "instanceof" = 28
-LITERAL_int = "int" = 29
-LITERAL_interface = "interface" = 30
-LITERAL_long = "long" = 31
-LITERAL_native = "native" = 32
-LITERAL_new = "new" = 33
-LITERAL_null = "null" = 34
-LITERAL_package = "package" = 35
-LITERAL_private = "private" = 36
-LITERAL_protected = "protected" = 37
-LITERAL_public = "public" = 38
-LITERAL_return = "return" = 39
-LITERAL_short = "short" = 40
-LITERAL_static = "static" = 41
-LITERAL_strictfp = "strictfp" = 42
-LITERAL_super = "super" = 43
-LITERAL_switch = "switch" = 44
-LITERAL_synchronized = "synchronized" = 45
-LITERAL_this = "this" = 46
-LITERAL_throw = "throw" = 47
-LITERAL_throws = "throws" = 48
-LITERAL_transient = "transient" = 49
-LITERAL_true = "true" = 50
-LITERAL_try = "try" = 51
-LITERAL_void = "void" = 52
-LITERAL_volatile = "volatile" = 53
-LITERAL_while = "while" = 54
-ASSIGN("=") = 55
-BAND("&") = 56
-BAND_ASSIGN("&=") = 57
-BNOT("~") = 58
-BOR("|") = 59
-BOR_ASSIGN("|=") = 60
-BSR(">>>") = 61
-BSR_ASSIGN(">>>=") = 62
-BXOR("^") = 63
-BXOR_ASSIGN("^=") = 64
-COLON(":") = 65
-COMMA(",") = 66
-DEC("--") = 67
-DOT(".") = 68
-EQUAL("==") = 69
-GE(">=") = 70
-GT(">") = 71
-INC("++") = 72
-LAND("&&") = 73
-LBRACK("[") = 74
-LCURLY("{") = 75
-LE("<=") = 76
-LNOT("!") = 77
-LOR("||") = 78
-LPAREN("(") = 79
-LT("<") = 80
-MINUS("-") = 81
-MINUS_ASSIGN("-=") = 82
-NOT_EQUAL("!=") = 83
-PERCENT("%") = 84
-PERCENT_ASSIGN("%=") = 85
-PLUS("+") = 86
-PLUS_ASSIGN("+=") = 87
-QUESTION("?") = 88
-RBRACK("]") = 89
-RCURLY("}") = 90
-RPAREN(")") = 91
-SEMI(";") = 92
-SL("<<") = 93
-SLASH("/") = 94
-SLASH_ASSIGN("/=") = 95
-SL_ASSIGN("<<=") = 96
-SR(">>") = 97
-SR_ASSIGN(">>=") = 98
-STAR("*") = 99
-STAR_ASSIGN("*=") = 100
-CHARACTER_LITERAL("a character literal (inside simple quote)") = 101
-IDENT("an identifier") = 102
-INTEGER_LITERAL("an integer literal") = 103
-REAL_LITERAL("a real literal") = 104
-STRING_LITERAL("a string literal (inside double quote)") = 105
+LITERAL_feedback = "feedback" = 20
+LITERAL_filter = "filter" = 21
+LITERAL_final = "final" = 22
+LITERAL_finally = "finally" = 23
+LITERAL_float = "float" = 24
+LITERAL_for = "for" = 25
+LITERAL_goto = "goto" = 26
+LITERAL_if = "if" = 27
+LITERAL_implements = "implements" = 28
+LITERAL_import = "import" = 29
+LITERAL_instanceof = "instanceof" = 30
+LITERAL_int = "int" = 31
+LITERAL_interface = "interface" = 32
+LITERAL_long = "long" = 33
+LITERAL_native = "native" = 34
+LITERAL_new = "new" = 35
+LITERAL_null = "null" = 36
+LITERAL_package = "package" = 37
+LITERAL_pipeline = "pipeline" = 38
+LITERAL_private = "private" = 39
+LITERAL_protected = "protected" = 40
+LITERAL_public = "public" = 41
+LITERAL_return = "return" = 42
+LITERAL_short = "short" = 43
+LITERAL_splitjoin = "splitjoin" = 44
+LITERAL_static = "static" = 45
+LITERAL_strictfp = "strictfp" = 46
+LITERAL_super = "super" = 47
+LITERAL_switch = "switch" = 48
+LITERAL_synchronized = "synchronized" = 49
+LITERAL_this = "this" = 50
+LITERAL_throw = "throw" = 51
+LITERAL_throws = "throws" = 52
+LITERAL_transient = "transient" = 53
+LITERAL_true = "true" = 54
+LITERAL_try = "try" = 55
+LITERAL_void = "void" = 56
+LITERAL_volatile = "volatile" = 57
+LITERAL_while = "while" = 58
+ASSIGN("=") = 59
+BAND("&") = 60
+BAND_ASSIGN("&=") = 61
+BNOT("~") = 62
+BOR("|") = 63
+BOR_ASSIGN("|=") = 64
+BSR(">>>") = 65
+BSR_ASSIGN(">>>=") = 66
+BXOR("^") = 67
+BXOR_ASSIGN("^=") = 68
+COLON(":") = 69
+COMMA(",") = 70
+DEC("--") = 71
+DOT(".") = 72
+EQUAL("==") = 73
+GE(">=") = 74
+GT(">") = 75
+INC("++") = 76
+LAND("&&") = 77
+LBRACK("[") = 78
+LCURLY("{") = 79
+LE("<=") = 80
+LNOT("!") = 81
+LOR("||") = 82
+LPAREN("(") = 83
+LT("<") = 84
+MINUS("-") = 85
+MINUS_ASSIGN("-=") = 86
+NOT_EQUAL("!=") = 87
+PERCENT("%") = 88
+PERCENT_ASSIGN("%=") = 89
+PLUS("+") = 90
+PLUS_ASSIGN("+=") = 91
+QUESTION("?") = 92
+RBRACK("]") = 93
+RCURLY("}") = 94
+RPAREN(")") = 95
+SEMI(";") = 96
+SL("<<") = 97
+SLASH("/") = 98
+SLASH_ASSIGN("/=") = 99
+SL_ASSIGN("<<=") = 100
+SR(">>") = 101
+SR_ASSIGN(">>=") = 102
+STAR("*") = 103
+STAR_ASSIGN("*=") = 104
+CHARACTER_LITERAL("a character literal (inside simple quote)") = 105
+IDENT("an identifier") = 106
+INTEGER_LITERAL("an integer literal") = 107
+REAL_LITERAL("a real literal") = 108
+STRING_LITERAL("a string literal (inside double quote)") = 109

@@ -152,6 +152,7 @@ public class MakefileGenerator
 	if (KjcOptions.decoupled) {
 	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");
 	    fw.write("global gFilterNames;\n");
+	   
 	    fw.write("{\n");
 	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
 	    fw.write("  gFilterNames = listi_new();\n");
@@ -177,6 +178,21 @@ public class MakefileGenerator
 	    fw.write("}\n");
 	    
 	}
+
+	 //create the function to tell the simulator what tiles are mapped
+	fw.write("fn mapped_tile(tileNumber) {\n");
+	fw.write("if (");
+	Iterator tilesIterator = tiles.iterator();
+	//generate the if statement with all the tile numbers of mapped tiles
+	while (tilesIterator.hasNext()) {
+	    fw.write("tileNumber == " + 
+		     Layout.getTileNumber((Coordinate)tilesIterator.next()));
+	    if (tilesIterator.hasNext())
+		fw.write(" ||\n");
+	}
+	fw.write(") {return 1; }\n");
+	fw.write("return 0;\n");
+	fw.write("}\n");
 
 	//number gathering code
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {

@@ -80,7 +80,7 @@ public class FlatIRToRS extends ToC
 	//we are assigning an array to an array in C, we want to do 
 	//element-wise copy!!
 	
-	if (!StrToRStream.GENERATE_ABSARRAY && 
+	if (!KjcOptions.absarray && 
 	    ((left.getType() != null && left.getType().isArrayType()) ||
 	    (right.getType() != null && right.getType().isArrayType()))) {
 	    
@@ -135,7 +135,7 @@ public class FlatIRToRS extends ToC
 	    }
 	    
 	    //print the = for the absarray();
-	    if (StrToRStream.GENERATE_ABSARRAY)
+	    if (KjcOptions.absarray)
 		print(" = ");
 	    
 	    //visit the new array expression
@@ -180,7 +180,7 @@ public class FlatIRToRS extends ToC
     private int handleArrayDecl(String ident, CType type)
     {
 	
-	String brackets = StrToRStream.GENERATE_ABSARRAY ? "[[" : "";
+	String brackets = KjcOptions.absarray ? "[[" : "";
 	int dim = 1;
 
 	CType currentType = ((CArrayType)type).getElementType();
@@ -188,11 +188,11 @@ public class FlatIRToRS extends ToC
 	while (currentType.isArrayType()) {
 	    dim++;
 	    brackets = brackets + 
-		(StrToRStream.GENERATE_ABSARRAY ? "," : "[]");
+		(KjcOptions.absarray ? "," : "[]");
 	    currentType = ((CArrayType)currentType).getElementType();
 	}
 	
-	if (StrToRStream.GENERATE_ABSARRAY)
+	if (KjcOptions.absarray)
 	    brackets = brackets + "]]";
 	else
 	    brackets = brackets + "[]";
@@ -201,7 +201,7 @@ public class FlatIRToRS extends ToC
 	print(currentType);
 	print(" ");
 	print(ident);
-	if (StrToRStream.GENERATE_ABSARRAY) 
+	if (KjcOptions.absarray) 
 	    print(brackets);
 	return dim;
     }
@@ -209,17 +209,17 @@ public class FlatIRToRS extends ToC
     
     private void printArrayType(CArrayType type) 
     {
-	String brackets = StrToRStream.GENERATE_ABSARRAY ? "[[" : "";
+	String brackets = KjcOptions.absarray ? "[[" : "";
 	
 	CType currentType = ((CArrayType)type).getElementType();
 	//keep stripping off array types until we get a base type
 	while (currentType.isArrayType()) {
 	    brackets = brackets + 
-		(StrToRStream.GENERATE_ABSARRAY ? "," : "*");
+		(KjcOptions.absarray ? "," : "*");
 	    currentType = ((CArrayType)currentType).getElementType();
 	}
 	
-	if (StrToRStream.GENERATE_ABSARRAY)
+	if (KjcOptions.absarray)
 	    brackets = brackets + "]]";
 	else 
 	    brackets = brackets + "*";
@@ -288,7 +288,7 @@ public class FlatIRToRS extends ToC
 	    }
 	    
 	    
-	    if (StrToRStream.GENERATE_ABSARRAY) {
+	    if (KjcOptions.absarray) {
 		print(" = ");
 	    }
 	    
@@ -327,7 +327,7 @@ public class FlatIRToRS extends ToC
 	assert dims.length > 0 : "Zero Dimension array" ;
 	//and no initializer
 	assert init == null : "Initializers of Abstract Arrays not supported in RStream yet";
-	if (StrToRStream.GENERATE_ABSARRAY) {
+	if (KjcOptions.absarray) {
 	    //we are generating abstract arrays
 	    //print the absarray call with the dimensions...
 	    print(" absarray" + dims.length + "(");
@@ -458,7 +458,7 @@ public class FlatIRToRS extends ToC
                                   JStatement incr,
                                   JStatement body) {
 
-	if (StrToRStream.GENERATE_DO_LOOPS && self instanceof JDoLoopStatement) {
+	if (KjcOptions.doloops && self instanceof JDoLoopStatement) {
 	    visitDoLoopStatement((JDoLoopStatement)self);
 	    return;
 	}
@@ -512,7 +512,7 @@ public class FlatIRToRS extends ToC
     public void visitArrayAccessExpression(JArrayAccessExpression self,
                                            JExpression prefix,
                                            JExpression accessor) {
-	if (StrToRStream.GENERATE_ABSARRAY) {
+	if (KjcOptions.absarray) {
 	    String access = "[[";
 	    JExpression exp = prefix;
 	    
@@ -802,7 +802,7 @@ public class FlatIRToRS extends ToC
     {
 	//hack, if we not generating abstract arrays
 	//then don't print array casts for C
-	if (!StrToRStream.GENERATE_ABSARRAY && type.isArrayType()) {
+	if (!KjcOptions.absarray && type.isArrayType()) {
 	    expr.accept(this);
 	    return;
 	}

@@ -256,7 +256,6 @@ class Phase2 extends SLIRReplacingVisitor
 
 	assert topLevelExpr.containsKey(self);
 	//now add the expression that represents everything that executed so far in the top level loop
-	//that happened before this expression and was not enclosed in a shared loop (except the outermost)
 	access =
 	    Util.newIntAddExpr(access,
 			       new JIntLiteral(((Integer)topLevelExpr.get(self)).intValue()));

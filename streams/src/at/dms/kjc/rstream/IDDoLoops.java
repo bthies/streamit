@@ -75,7 +75,7 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 	    
 	    //now go back thru the statements and delete the var defs
 	    //for the induction variables, but only if we are generating do loops
-	    if (StrToRStream.GENERATE_DO_LOOPS) {
+	    if (KjcOptions.doloops) {
 		JStatement[] statements = methods[i].getBody().getStatementArray();
 		for (int k = 0; k < statements.length; k++) {
 		    if (!(statements[k] instanceof JEmptyStatement || 

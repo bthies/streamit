@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.4 2001-10-03 18:10:56 dmaze Exp $
+ * $Id: LIRToC.java,v 1.5 2001-10-09 16:57:05 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1416,9 +1416,46 @@ public class LIRToC
     {
         print("/* dzm: this is non-portable! */");
         newLine();
-        print("printf(\"%d\\n\", ");
-        exp.accept(this);
-        print(");");
+        print("printf(\"");
+        switch (exp.getType().getTypeID())
+        {
+        case TID_BOOLEAN:
+            print("printf(\"%s\\n\", ");
+            exp.accept(this);
+            print(" ? \"true\" : \"false\");");
+            break;
+            
+        case TID_BYTE:
+        case TID_INT:
+            print("printf(\"%d\\n\", ");
+            exp.accept(this);
+            print(");");
+            break;
+            
+        case TID_CHAR:
+            print("printf(\"%c\\n\", ");
+            exp.accept(this);
+            print(");");
+            break;
+            
+        case TID_DOUBLE:
+        case TID_FLOAT:
+        case TID_SHORT:
+            print("printf(\"%f\\n\", ");
+            exp.accept(this);
+            print(");");
+            break;
+            
+        case TID_LONG:
+            print("printf(\"%ld\\n\", ");
+            exp.accept(this);
+            print(");");
+            break;
+            
+        default:
+            print("printf(\"(unprintable type)\\n\");");
+            break;
+        }
     }
     
     public void visitPushExpression(SIRPushExpression self,

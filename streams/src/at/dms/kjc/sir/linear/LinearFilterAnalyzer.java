@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.7 2002-09-03 21:28:24 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.8 2002-09-04 19:05:59 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear forms. never would have guessed that, would you? **/
@@ -179,7 +179,12 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     /** Returns true of the filter computes a linear function. **/
     public boolean computesLinearFunction() {
-	return !this.nonLinearFlag;
+	// check the flag (which is set when we hit a non linear function in a push expression)
+	// and check that we have seen the correct number of pushes.
+	boolean enoughPushesSeen = (this.pushSize == this.pushOffset); // last push was to pushSize-1
+	if (!(enoughPushesSeen)) {LinearPrinter.warn("Insufficient pushes detected in filter");}
+	// if both the non linear flag is unset and there are enough pushes, return true
+	return ((!this.nonLinearFlag) && enoughPushesSeen);
     }
     /** get the matrix representing this filter. **/
     public FilterMatrix getMatrixRepresentation() {
@@ -199,11 +204,27 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 
 //     public Object visitArgs(JExpression[] args) {return null;}
-//     public Object visitArrayAccessExpression(JArrayAccessExpression self,
-// 					     JExpression prefix,
-// 					     JExpression accessor) {return null;}
-//     public Object visitArrayInitializer(JArrayInitializer self, JExpression[] elems){return null;}
-//     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
+    /**
+     * Visit an a ArrayAccessExpression. Currently just warn the user if we see one of these.
+     * Constant prop should have removed all resolvable array expressions, so if we see one
+     * then it is not linear and therefore we should return null;
+     **/
+    public Object visitArrayAccessExpression(JArrayAccessExpression self,
+					     JExpression prefix,
+					     JExpression accessor) {
+	LinearPrinter.warn("Ignoring access expression: "+ self);
+	return null; 
+    }
+    /**
+     * When we visit an array initializer, we  simply need to return null, as we are currently
+     * ignoring arrays on the principle that constprop gets rid of all the ones that are known at compile time.
+     **/
+    public Object visitArrayInitializer(JArrayInitializer self, JExpression[] elems){
+	LinearPrinter.warn("Ignoring access expression: " + self);
+	return null;
+    }
+
+    //     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
 
     /**
      * Visit's an assignment statement. If the LHS is a variable (local or field)
@@ -216,16 +237,13 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	LinearPrinter.println("   left side: " + left);
 	LinearPrinter.println("   right side: " + right);
 
+
+	//// NOTE !!!!
+	//// This doesn't handle th case of aliasing yet. Oh dearie.
+	
 	// make sure that we start with legal state
 	checkRep();
 
-	// if the RHS of the expression is a field expression, bomb an error
-	// for the moment. Eventually we have to worry about aliasing.
-	if (right instanceof JFieldAccessExpression) {
-	    throw new RuntimeException("Assigning values _from_ fields is not yet supported");
-	}
-
-	
 	// check the RHS to see if it is a linear form -- pump us through it
 	LinearForm rightLinearForm = (LinearForm)right.accept(this);
 
@@ -251,7 +269,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 	if (left instanceof JFieldAccessExpression) {
 	    // wrap the access expression so that the equals methods work out
-	    FieldAccessWrapper wrapper = FieldAccessWrapper.wrapFieldAccess((JFieldAccessExpression)left);
+	    AccessWrapper wrapper = AccessWrapper.wrapFieldAccess((JFieldAccessExpression)left);
 	    LinearPrinter.println("   adding a field mapping from " + wrapper +
 				  " to " + rightLinearForm);
 
@@ -486,7 +504,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	// wrap the field access and then use that wrapper as the
 	// key into the variables->linearform mapping
-	FieldAccessWrapper wrapper = FieldAccessWrapper.wrapFieldAccess(self);
+	AccessWrapper wrapper = AccessWrapper.wrapFieldAccess(self);
 
 	// if we have a mapping, return it. Otherwise return null.
 	if (this.variablesToLinearForms.containsKey(wrapper)) {
@@ -551,10 +569,21 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 					 JFormalParameter[] parameters, CClassType[] exceptions,
 // 					 JBlock body){return null;}
 //     public Object visitNameExpression(JNameExpression self, JExpression prefix, String ident){return null;}
-//     public Object visitNewArrayExpression(JNewArrayExpression self, CType type,
-// 					  JExpression[] dims, JArrayInitializer init){return null;}
-//     public Object visitPackageImport(String name){return null;}
-//     public Object visitPackageName(String name){return null;}
+
+    /**
+     * Visit a NewArrayExpression, creating mappings for all entries of the array to
+     * a zero linear form (corresponding to initializing all array entries to zero
+     * in StreamIt semantics.
+     **/
+    public Object visitNewArrayExpression(JNewArrayExpression self, CType type,
+ 					  JExpression[] dims, JArrayInitializer init){
+	LinearPrinter.warn("Ignoring new array expression " + self);
+	return null;
+    }
+    
+
+    //     public Object visitPackageImport(String name){return null;}
+    //     public Object visitPackageName(String name){return null;}
     public Object visitParenthesedExpression(JParenthesedExpression self, JExpression expr){
 	LinearPrinter.println("  visiting parenthesized expression");
 	// pass ourselves through the parenthesized expression to generate the approprate constant forms
@@ -627,9 +656,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    argLinearForm.copyToColumn(this.representationMatrix, pushColumn);
 	    // update the constant vector with the offset from the linear form
 	    this.representationVector.setElement(pushColumn, argLinearForm.getOffset());
-	    // increment the push offset (for the next push statement)
-	    this.pushOffset++;
 	}
+
+	// increment the push offset (for the next push statement)
+	this.pushOffset++;
+
 	// make sure we didn't screw up anything.
 	checkRep();
 	// push expressions don't return values, so they also certainly don't return linear forms
@@ -835,7 +866,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    if (key == null) {throw new RuntimeException("Null key in linear form map");}
 	    // make sure that they key is a JLocalVariable or a JFieldAccessExpression
 	    if (!((key instanceof JLocalVariable) ||
-		  (key instanceof FieldAccessWrapper))) {
+		  (key instanceof AccessWrapper))) {
 		throw new RuntimeException("Non local or field access wrapper in linear form map.");
 	    }
 	    Object val = this.variablesToLinearForms.get(key);
@@ -903,6 +934,9 @@ class LinearPrinter {
 	if (outputEnabled) {
 	    System.out.print(message);
 	}
+    }
+    public static void warn(String message) {
+	System.err.println("WARNING: " + message);
     }
 }
     

@@ -8,8 +8,11 @@ import at.dms.kjc.iterator.*;
 
 
 /**
- * This class represents a field access expression. The field access expressions
+ * This class represents an access expression to a field or array.
+ * The field access expressions
  * provided by KOPI don't seem to do the right thing for equals.
+ * (and I haven't tested the behavior of ArrayAccessExpressions, but I assume that
+ * they also don't do the right thing for equals).
  * Basically, JFieldAccessExpressions are compared using object equality
  * and I want them to be compared using value equality (eg two wrappers that
  * represent the same field should be equal).<p>
@@ -23,17 +26,19 @@ import at.dms.kjc.iterator.*;
  * If the prefix is not one of the above things, then we give up and don't
  * wrap it.
  *
- * $Id: FieldAccessWrapper.java,v 1.1 2002-09-03 21:28:24 aalamb Exp $
+ * Also, we can wrap array accesses, but it gets tricky when combinations of arrays and fields are used....
+ *
+ * $Id: AccessWrapper.java,v 1.1 2002-09-04 19:05:59 aalamb Exp $
  **/
 
-class FieldAccessWrapper {
+class AccessWrapper {
     /** space to hold the field name **/
     String fieldIdentifier;
 
     /**
      * Create a new access wrapper for the specified field name.
      **/
-    FieldAccessWrapper(String ident) {
+    AccessWrapper(String ident) {
 	this.fieldIdentifier = ident;
     }
 
@@ -44,16 +49,16 @@ class FieldAccessWrapper {
      * if the field can not be wrapper (see rules in main class description)
      * otherwise returns a wrapper for this field.
      **/
-    public static FieldAccessWrapper wrapFieldAccess(JFieldAccessExpression expr) {
+    public static AccessWrapper wrapFieldAccess(JFieldAccessExpression expr) {
 	if (expr == null) {throw new RuntimeException("null arg passed to wrapFieldAccess");}
 	// get the prefix of the field access (eg the structure/object that it belongs to)
 	JExpression prefix = expr.getPrefix();
 
 	// dispatch on type (bad OO, so sue me).
 	if (prefix instanceof JThisExpression) {
-	    return new ThisFieldAccessWrapper(expr.getIdent());
+	    return new ThisAccessWrapper(expr.getIdent());
 	} else if (prefix instanceof JLocalVariableExpression) {
-	    return new LocalVariableFieldAccessWrapper(expr.getIdent(),
+	    return new LocalVariableAccessWrapper(expr.getIdent(),
 						       ((JLocalVariableExpression)prefix).getVariable());
 	} else {
 	    System.err.println("Warning: can't wrap a FieldAccessExpression with prefix : " + prefix);
@@ -67,7 +72,7 @@ class FieldAccessWrapper {
      **/
     public boolean equals(Object o) {
 	if (o == null) {return false;}
-	FieldAccessWrapper other = (FieldAccessWrapper)o;
+	AccessWrapper other = (AccessWrapper)o;
 	if (other.fieldIdentifier.equals(this.fieldIdentifier)) {
 	    return true;
 	} else {
@@ -89,8 +94,8 @@ class FieldAccessWrapper {
 /**
  * Represents a local field (eg of the form this.fieldname).
  **/
-class ThisFieldAccessWrapper extends FieldAccessWrapper {
-    public ThisFieldAccessWrapper(String ident) {
+class ThisAccessWrapper extends AccessWrapper {
+    public ThisAccessWrapper(String ident) {
 	super(ident);
     }
     public String toString() {
@@ -101,10 +106,10 @@ class ThisFieldAccessWrapper extends FieldAccessWrapper {
 /**
  * Represents a field that is accessed via a local variable.
  **/
-class LocalVariableFieldAccessWrapper extends FieldAccessWrapper {
+class LocalVariableAccessWrapper extends AccessWrapper {
     JLocalVariable localVariable;
     
-    public LocalVariableFieldAccessWrapper(String ident,
+    public LocalVariableAccessWrapper(String ident,
 					   JLocalVariable var) {
 	super(ident);
 	this.localVariable = var;
@@ -119,11 +124,11 @@ class LocalVariableFieldAccessWrapper extends FieldAccessWrapper {
 	}
 
 	// check for the correct type
-	if (!(o instanceof LocalVariableFieldAccessWrapper)) {
+	if (!(o instanceof LocalVariableAccessWrapper)) {
 	    return false;
 	}
 	// casting magic
-	LocalVariableFieldAccessWrapper other = (LocalVariableFieldAccessWrapper)o;
+	LocalVariableAccessWrapper other = (LocalVariableAccessWrapper)o;
 	// remember the super class already checked the field name for us,
 	// all we have to do is to check the variable.
 	if (other.localVariable.getIdent().equals(this.localVariable.getIdent())) {

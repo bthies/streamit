@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.15 2003-06-30 20:50:25 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.16 2003-07-01 13:39:19 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -45,7 +45,6 @@ public class DoComplexProp extends SymbolTableVisitor
     private Expression doExprProp(Expression expr)
     {
         expr = (Expression)expr.accept(this);
-        expr = (Expression)expr.accept(new VarToComplex(symtab, streamType));
         expr = (Expression)expr.accept(cplxProp);
         return expr;
     }
@@ -97,6 +96,17 @@ public class DoComplexProp extends SymbolTableVisitor
         return exprVar;
     }
 
+    /**
+     * Given an Expression, return a new Expression that is a
+     * ExprComplex explicitly referencing its real and imaginary parts.
+     */
+    private static Expression makeComplexPair(Expression exp)
+    {
+        Expression real = new ExprField(exp.getContext(), exp, "real");
+        Expression imag = new ExprField(exp.getContext(), exp, "imag");
+        return new ExprComplex(exp.getContext(), real, imag);
+    }
+
     protected Expression doExpression(Expression expr)
     {
         return doExprProp(expr);
@@ -120,6 +130,37 @@ public class DoComplexProp extends SymbolTableVisitor
         // if (streamType.getIn().isComplex())
         //     x = makeAnyTemporary(x);
         return x;
+    }
+
+    public Object visitExprVar(ExprVar exp)
+    {
+        if (getType(exp).isComplex())
+            return makeComplexPair(exp);
+        else
+            return exp;
+    }
+
+    public Object visitExprField(ExprField exp)
+    {
+        // If the expression is already visiting a field of a Complex
+        // object, don't recurse further.
+        if (getType(exp.getLeft()).isComplex())
+            return exp;
+        // Perhaps this field is complex.
+        if (getType(exp).isComplex())
+            return makeComplexPair(exp);
+        // Otherwise recurse normally.
+        return super.visitExprField(exp);
+    }
+
+    public Object visitExprArray(ExprArray exp)
+    {
+        // If the type of the expression is complex, decompose it;
+        // otherwise, move on.
+        if (getType(exp).isComplex())
+            return makeComplexPair(exp);
+        else
+            return exp;
     }
 
     public Object visitStmtAssign(StmtAssign stmt)

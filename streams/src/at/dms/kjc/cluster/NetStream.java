@@ -24,4 +24,12 @@ public class NetStream {
 	return new String("__stream_"+source+"_"+dest);	
     }
 
+    public String producer_name() {
+	return new String("__producer_"+source+"_"+dest);	
+    }
+
+    public String consumer_name() {
+	return new String("__consumer_"+source+"_"+dest);	
+    }
+
 }

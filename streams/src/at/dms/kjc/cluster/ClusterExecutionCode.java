@@ -757,6 +757,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
+
 	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "check_status", new JExpression[0]), null));
 
 	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "check_messages", new JExpression[0]), null));
@@ -823,6 +824,20 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 				    "__counter_"+nodeID, 
 				    new JIntLiteral(0));
 
+
+	//block.addStatement();
+
+
+	JVariableDefinition var_steady = 
+	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
+				    "__steady_"+nodeID, 
+				    new JIntLiteral(0));
+
+	JVariableDefinition var_tmp = 
+	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
+				    "__tmp_"+nodeID, 
+				    new JIntLiteral(0));
+
 	JVariableDefinition var2 = 
 	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
 				    "__number_of_iterations", 
@@ -830,14 +845,6 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JVariableDeclarationStatement var_st = 
 	    new JVariableDeclarationStatement( null, var, null);
-
-
-	JStatement init_stmt = new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JLocalVariableExpression
-					    (null, var),
-					    new JIntLiteral(1))), null);
 
 	// num iters = init + num_steady_iterations_specified_by_user * steady
 	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
@@ -847,6 +854,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	} else {
 	    init = initCounts.intValue();
 	}
+
 	int counts;
 	// hack to get identities to work for now -- we might not know
 	// how many times they execute (since GraphFlattener inserts
@@ -861,6 +869,70 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	    Utils.fail("don't know how many times to execute node " + node.contents);
 	}
 
+
+	// for ((__counter_0 = 1); (__counter_0 <= init); __counter_0++) {}
+	// for ((__steady_0 = 1); (__steady_0 <= num_iter; __steady_0++) 
+	//    for (__tmp = 1; __tmp <= count; __tmp++) {
+	//       counter++;
+	//       ....
+	//    }
+
+	JStatement init_stmt1 = new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JLocalVariableExpression
+					    (null, var),
+					    new JIntLiteral(1))), null);
+
+
+	JExpression relation1 = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var), new JIntLiteral(init));
+	
+	JStatement incr_expr1 = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
+
+
+new JEmptyStatement(null, null);
+
+	JStatement init_stmt2 = new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JLocalVariableExpression
+					    (null, var_steady),
+					    new JIntLiteral(1))), null);
+
+
+	JExpression relation2 = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var_steady), new JLocalVariableExpression(null, var2));
+	
+	JStatement incr_expr2 = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var_steady)), null);
+
+
+
+	JStatement init_stmt3 = new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JLocalVariableExpression
+					    (null, var_tmp),
+					    new JIntLiteral(1))), null);
+
+	JExpression relation3 = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var_tmp),  new JIntLiteral(counts));
+	
+
+
+
+	JExpression ll[] = new JExpression[2];
+
+	ll[0] = new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var_tmp));
+
+	ll[1] = new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var));
+
+
+	JStatement incr_expr3 = new JExpressionListStatement(null, ll, null);
+
+
+
+
+
+	/*
+
 	JExpression numIters = new JAddExpression(null,
 						  new JIntLiteral(init),
 						  new JMultExpression(null,
@@ -869,18 +941,50 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JExpression relation = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var), numIters);
 
-	JStatement incr_expr = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
+	*/
+
 
 
 	JBlock for_block = new JBlock(null, new JStatement[0], null);
 
 	for_block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "send_credits", new JExpression[0]), null));
+
+
+	
+
+	
+	for_block.addStatement(new JForStatement(null,
+						 init_stmt1,
+						 relation1,
+						 incr_expr1,
+						 block,
+						 null));
+
+
+
+	JStatement sss[] = new JStatement[2];
+
+	sss[0] = new JForStatement(null,
+				   init_stmt3,
+				   relation3,
+				   incr_expr3,
+				   block,
+				   null);
+
+	sss[1] = new JExpressionStatement(null, new JMethodCallExpression(null, "__save_thread", new JExpression[0]), null);
+
+	
+	JBlock steady_state = new JBlock(null, sss, null);
+
+
 	for_block.addStatement(new JForStatement(null,  
-					init_stmt, 
-					relation,
-					incr_expr,
-					block,
-					null));
+						 init_stmt2, 
+						 relation2,
+						 incr_expr2,
+						 
+						 steady_state,
+
+						 null));
 
 
 	return for_block;

@@ -221,6 +221,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <peek_stream.h>\n");
+	p.print("#include <data_consumer.h>\n");
+	p.print("#include <data_producer.h>\n");
+	p.print("#include <object_write_buffer.h>\n");
+	p.print("#include <save_state.h>\n");
 	p.print("#include <sdep.h>\n");
 	p.print("#include <message.h>\n");
 	p.print("#include <timer.h>\n");
@@ -231,6 +235,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("extern int __number_of_iterations;\n");
 	p.print("message *__msg_stack_"+selfID+";\n");
 	p.print("int __counter_"+selfID+" = 0;\n");
+	p.print("int __steady_"+selfID+" = 0;\n");
+	p.print("int __tmp_"+selfID+" = 0;\n");
 	p.print("int *__state_flag_"+selfID+" = NULL;\n");
 	p.print("thread_info *__thread_"+selfID+" = NULL;\n");
 
@@ -261,12 +267,6 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("\n");
 
-	print("\n");
-	print("int get_serialize_size__"+selfID+"() {\n");
-	print("  return "+filed_size+";\n");
-	print("}\n");
-	print("\n");
-
 	//////////////////////////////////////////////
 	// Declare Socket Variables
 
@@ -276,11 +276,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	NetStream out = RegisterStreams.getFilterOutStream(self);
 
 	if (in != null) {	    
+	    print("data_consumer __consumer_"+in.getSource()+"_"+in.getDest()+";\n");
 	    print("peek_stream<"+self.getInputType().toString()+"> *"+in.name()+"in;\n");
 	}
 
 	if (out != null) {	    
-	    print("mysocket *"+out.name()+"out;\n");
+	    print("data_producer __producer_"+out.getSource()+"_"+out.getDest()+";\n");
+	    //print("mysocket *"+out.name()+"out;\n");
 	}
 
 	{
@@ -298,20 +300,70 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 
+
+	//////////////////////////////////////////////
+	// Serialize Functions
+
+	print("\n");
+	print("void __write_fields__"+selfID+"(object_write_buffer *buf) {\n");
+
+	for (int i = 0; i < fields.length; i++) {
+
+	    CType type = fields[i].getType();
+	    String ident = fields[i].getVariable().getIdent();
+
+	    print("  buf->write(&"+ident+"__"+selfID+", sizeof("+type+"));\n");
+	}
+
+	print("}\n");
+	print("\n");
+
+	print("void __write_thread__"+selfID+"(object_write_buffer *buf) {\n");
+
+	if (in != null) {
+	    print("  "+in.consumer_name()+".write_object(buf);\n");
+	    print("  "+in.name()+"in->write_object(buf);\n");
+	}
+	print("  __write_fields__"+selfID+"(buf);\n");
+	if (out != null) {
+	    print("  "+out.producer_name()+".write_object(buf);\n");
+	}
+
+	print("}\n");
+
+	print("\n");	
+
+
+
+	print("void __save_thread__"+selfID+"() {\n");
+
+	print("  save_state::save_to_file("+selfID+", __steady_"+selfID+", __write_thread__"+selfID+");\n");
+
+	print("}\n");
+
+	print("\n");	
+
+
+
+
 	//////////////////////////////////////////////
 	// thread info
 
-	print("\nthread_info *__get_thread_info_"+selfID+"() {\n");
+	print("void check_status_during_io__"+selfID+"();\n");
+
+	print("\n");	
+
+	print("thread_info *__get_thread_info_"+selfID+"() {\n");
 
 	print("  if (__thread_"+selfID+" != NULL) return __thread_"+selfID+";\n");
-	print("  __thread_"+selfID+" = new thread_info("+selfID+");\n");
+	print("  __thread_"+selfID+" = new thread_info("+selfID+", check_status_during_io__"+selfID+");\n");
 
 	if (in != null) {
-	    print("  __thread_"+selfID+"->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",NULL));\n");
+	    print("  __thread_"+selfID+"->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",&__consumer_"+in.getSource()+"_"+in.getDest()+"));\n");
 	}
 
 	if (out != null) {
-	    print("  __thread_"+selfID+"->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",NULL));\n");
+	    print("  __thread_"+selfID+"->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",&__producer_"+out.getSource()+"_"+out.getDest()+"));\n");
 	}
 	
 	print("  return __thread_"+selfID+";\n");
@@ -680,11 +732,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("  __state_flag_"+selfID+" = state_ptr;\n");
 
 	if (in != null) {
-	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+"));\n");
+
+	    print("  __consumer_"+in.getSource()+"_"+in.getDest()+".set_socket(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+"));\n");
+	    
+	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(&__consumer_"+in.getSource()+"_"+in.getDest()+");\n");
 	}
 
 	if (out != null) {
-	    print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+");\n");
+
+
+	    print("  __producer_"+out.getSource()+"_"+out.getDest()+".set_socket(new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+"));\n");
+	    
 	}
 
 	{
@@ -868,7 +926,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	else if (type.isFloatingPoint())
 	    print(" = 0.0f");
 
-        print(";/* "+type+" size: "+byteSize(type)+" */");
+        print(";/* "+type+" size: "+byteSize(type)+" */\n");
     }
 
     /**
@@ -2147,13 +2205,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	if (tapeType.equals(CStdType.Integer)) {
 
-	    print(out.name()+"out->write_int(");
+	    print("__producer_"+out.getSource()+"_"+out.getDest()+".write_int(");
 	    val.accept(this);
 	    print(")");
 	    
 	} else if (tapeType.equals(CStdType.Float)) {
 
-	    print(out.name()+"out->write_float(");
+	    print("__producer_"+out.getSource()+"_"+out.getDest()+".write_float(");
 	    val.accept(this);
 	    print(")");
 

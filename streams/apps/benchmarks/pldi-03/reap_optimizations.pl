@@ -43,12 +43,12 @@ if (@ARGV) {
 } else {
     @programs = (
 		 ".:FIRProgram",
-		 ".:SamplingRateConverter",
-		 ".:FilterBank",
-		 ".:TargetDetect",
-		 ".:LinkedFMTest",
-		 ".:CoarseSerializedBeamFormer",
-		 ".:OneBitDToA",
+		 #".:SamplingRateConverter",
+		 #".:FilterBank",
+		 #".:TargetDetect",
+		 #".:LinkedFMTest",
+		 #".:CoarseSerializedBeamFormer",
+		 #".:OneBitDToA",
 		 );
 }
 
@@ -62,8 +62,9 @@ push(@result_lines,
      "Program\t" .
      "normal flops\tnormal fadds\tnormal fmuls\tnormal outputs\t" .
      "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t" .
-     "freq 2 flops\tfreq 2 fadds\tfreq 2 fmuls\tfreq 2 outputs\t" .
-     "both flops\tboth fadds\tboth fmuls\tboth outputs\t");
+     "freq 3 flops\tfreq 3 fadds\tfreq 3 fmuls\tfreq 3 outputs\t" .
+     "both flops\tboth fadds\tboth fmuls\tboth outputs\t" .
+     "redund flops\tredund fadds\tredund fmuls\tredund outputs\t");
 
 # determine the next available results directory (eg results0, results1, etc.)
 my $results_dir_num = 0;
@@ -100,11 +101,11 @@ foreach $current_program (@programs) {
    
 
    # now, do the compilation with (leet fftw) frequency replacement
-   my ($freq2_outputs, $freq2_flops, 
-       $freq2_fadds, $freq2_fmuls) = do_test($path, $base_filename, 
+   my ($freq3_outputs, $freq3_flops, 
+       $freq3_fadds, $freq3_fmuls) = do_test($path, $base_filename, 
 					     "--unroll 100000 --debug --frequencyreplacement 3",
-					     "$base_filename(freq 1)");
-   save_output($path, $base_filename, "freq2");
+					     "$base_filename(freq 3)");
+   save_output($path, $base_filename, "freq3");
    
    # now, run with both optimizations (fftw and linear)
    my ($both_outputs, $both_flops, 
@@ -112,12 +113,21 @@ foreach $current_program (@programs) {
 					   "--unroll 100000 --debug --linearreplacement --frequencyreplacement 3",
 					   "$base_filename(both)");
    save_output($path, $base_filename, "both");
+
+   # now, run with redundant elimination
+   my ($redund_outputs, $redund_flops, 
+       $redund_fadds, $redund_fmuls) = do_test($path, $base_filename, 
+					       "--unroll 100000 --debug --redundantreplacement",
+					       "$base_filename(redund)");
+   save_output($path, $base_filename, "redund");
+
    
    my $new_data_line = 	     ("$base_filename\t".
 			      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
 			      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
-			      "$freq2_flops\t$freq2_fadds\t$freq2_fmuls\t$freq2_outputs\t" .
-			      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
+			      "$freq3_flops\t$freq3_fadds\t$freq3_fmuls\t$freq3_outputs\t" .
+			      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t" .
+			      "$redund_flops\t$redund_fadds\t$redund_fmuls\t$redund_outputs\t");
    
    open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename)\"");
    print MHMAIL $new_data_line;

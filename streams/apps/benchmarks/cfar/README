@@ -1,0 +1,68 @@
+-*- Text -*-
+
+Constant False Alarm Rate (CFAR) Detection Benchmark
+(From "Polymorphous Computing Architecture (PCA) Kernel-Level
+Benchmarks", sect. 3.3)
+
+$Id: README,v 1.1 2002-11-13 18:26:26 dmaze Exp $
+
+This benchmark essentially calculates a moving average across rows of
+data.  This is a part of the PCA/Lincoln Labs integrated
+radar-tracking system.  As such, the input data is presented as a
+cube; the calculation goes from an N_bm by N_rg by N_dop cube to a new
+cube of the same dimensions.  Within the cube, each calculation is
+only variant within a row; that is, T(i,j,k) depends on some elements
+C(i,j-G-N_cfar:j+G+N_cfar,k).
+
+For our purposes, then, it is sufficient to turn the cube C(i,j,k)
+into a series of rows R(j).  The benchmark code assumes this will have
+happened.  The filter is parameterized by three factors: the length of
+the row N_rg ("number of range gates"), the number of "guard" elements
+skipped G, and the number of elements examined N_cfar.  The output is
+the average of the elements considered.  If G=4 and N_cfar=5, then the
+calculation would look like:
+
+               v
+    +++++++++++++++++++++++
+      ^^^^^         ^^^^^
+      +++++----+----+++++
+               v
+
+That is, at a given position, the current element and G elements
+before and after it are ignored, and the next N_cfar are summed
+together and averaged.  At boundaries, elements off the end of the
+current row are assumed to be zero; the Lincoln Labs document says
+this is specified in the MATLAB code.
+
+The C implementation uses the optimization described to calculate each
+element in O(1) time.  The StreamIt implementation, in contrast, does
+a brute-force summation of the 2*N_cfar elements.  As of this writing,
+the StreamIt implementation is quite stateful; it keeps around an
+array of the last N_cfar+G elements that have been seen as a way of
+looking both forward and backward on the tape.
+
+There are a number of ways this could be made more parallel.  One is
+to make the calculation filter parameterized on the number of elements
+to skip at each iteration, so the same code could be used with
+explicit parallelism.  Another approach would be to use a phased
+filter; in this case, there could be five phases:
+
+  for (i = 0; i < G; i++) doAheadOnly(i);
+  for (i = 0; i < N_cfar; i++) doSomeBehind(i);
+  for (i = 0; i < N_rg - 2 * (G + N_cfar); i++) doBoth();
+  for (i = 0; i < N_cfar; i++) doSomeAhead(i);
+  for (i = 0; i < G; i++) doBehindOnly();
+  for (i = 0; i < N_cfar + G; i++) doCleanUp();
+
+  work doAheadOnly pop 0 push 1 peek N_cfar+G+i+1 { ... }
+  work doSomeBehind pop 0 push 1 peek N_cfar+2*G+i+1 { ... }
+  work doBoth pop 1 push 1 peek 2*(N_cfar+G)+1 { ... }
+  work doSomeAhead pop 1 push 1 peek 2*(N_cfar+G)+1-i { ... }
+  work doBehindOnly pop 1 push 1 peek G { ... }
+  work doCleanUp pop 1 push 0 { pop(); }
+
+(Drawing a diagram of what elements are considered is helpful in
+understanding this.)  The advantage is that each stage gets to be
+stateless in this model, which may be advantageous.  A similar
+implementation may be possible in the current system using a
+split-join.

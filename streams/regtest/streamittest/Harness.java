@@ -21,6 +21,8 @@ public class Harness {
 	if (home == null) {
 	    throw new RuntimeException("null streamit root property");
 	}
+	if (!home.endsWith("/"))
+	    home = home + "/";
 	return home;
     }
 

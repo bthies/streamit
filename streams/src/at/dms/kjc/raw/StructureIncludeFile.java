@@ -55,7 +55,7 @@ class StructureIncludeFile
     {
 	for (int i = 0; i < structs.length; i++) {
 	    SIRStructure current = structs[i];
-	    fw.write("typedef struct _" + current.getIdent() + " {\n");
+	    fw.write("typedef struct __" + current.getIdent() + " {\n");
 	    for (int j = 0; j < current.getFields().length; j++) {
 		fw.write("\t" + current.getFields()[j].getType() + " " +
 			 current.getFields()[j].getVariable().getIdent() +

@@ -429,7 +429,8 @@ public class RemoveGlobals extends at.dms.util.Utils
 		    return def;
 	    }
 	    
-	    Utils.fail("Could not find var def for global variable");
+	    Utils.fail("Could not find var def for global variable " + 
+		       ident);
 	    
 	    return null;
 	}
@@ -438,8 +439,14 @@ public class RemoveGlobals extends at.dms.util.Utils
 					   JExpression left,
 					   String ident)
 	{
-	    //we should not have to worry about left just ignore it	    
-	    return new JLocalVariableExpression(null, getVarDef(ident));
+	    //if this field access is just a this expression, convert it
+	    //to a local variable access
+	    //otherwise it is accessing a field of a variable, so just
+	    //keep the name, it does not matter what it is...
+	    if (left instanceof JThisExpression)
+		return new JLocalVariableExpression(null, getVarDef(ident));
+	    else 
+		return self;
 	}
 	
     }

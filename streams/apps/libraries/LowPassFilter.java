@@ -35,6 +35,13 @@ public class LowPassFilter extends Filter {
 
     public void init(float sampleRate, float cutFreq, int numTaps, int decimation)
     {
+        float pi = (float)java.lang.Math.PI;
+        //build the taps, and call super.init(taps[])
+        float temptaps[] = new float[numberOfTaps];
+
+        float m = numberOfTaps -1;
+        //from Oppenheim and Schafer, m is the order of filter
+
 	mDecimation = decimation;
         input = new Channel (Float.TYPE, 1+decimation, numTaps);
         output = new Channel (Float.TYPE, 1);
@@ -45,26 +52,20 @@ public class LowPassFilter extends Filter {
         numberOfTaps = numTaps;
         COEFF = new float[numTaps];
 
-        float pi = (float)java.lang.Math.PI;
-        //build the taps, and call super.init(taps[])
-        float temptaps[] = new float[numberOfTaps];
-
-        float m = numberOfTaps -1;
-        //from Oppenheim and Schafer, m is the order of filter
-
         if(cutoffFreq == 0.0)
             {
                 //Using a Hamming window for filter taps:
                 float tapTotal = 0;
+                int i;
 
-                for(int i=0;i<numberOfTaps;i++)
+                for(i=0;i<numberOfTaps;i++)
                     {
                         temptaps[i] = (float)(0.54 - 0.46*java.lang.Math.cos((2*pi)*(i/m)));
                         tapTotal += temptaps[i];
                     }
 
                 //normalize all the taps to a sum of 1
-                for(int i=0;i<numberOfTaps;i++)
+                for(i=0;i<numberOfTaps;i++)
                     {
                         temptaps[i] = temptaps[i]/tapTotal;
                     }
@@ -75,8 +76,9 @@ public class LowPassFilter extends Filter {
             //reference: Oppenheim and Schafer
 
             float w = (2*pi) * cutoffFreq/samplingRate;
+            int i;
 
-            for(int i=0;i<numberOfTaps;i++)
+            for(i=0;i<numberOfTaps;i++)
                 {
                     //check for div by zero
                     if(i-m/2 == 0)
@@ -88,17 +90,21 @@ public class LowPassFilter extends Filter {
                 }
         }
         COEFF = temptaps;
-        numberOfTaps = COEFF.length;
+        // Is this actually useful?  StreamIt doesn't like .length,
+        // and at any rate, COEFF.length will always be numTaps, which
+        // will always have the same value as numberOfTaps.  --dzm
+        // numberOfTaps = COEFF.length;
     }
 
     public void work() {
         float sum = 0;
-        for (int i=0; i<numberOfTaps; i++) {
+        int i;
+        for (i=0; i<numberOfTaps; i++) {
             sum += input.peekFloat(i)*COEFF[i];
         }
 
         input.popFloat();
-        for(int i=0;i<mDecimation;i++)
+        for(i=0;i<mDecimation;i++)
             input.popFloat();
         output.pushFloat(sum);
     }

@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.1 2003-02-10 21:25:40 dmaze Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.2 2003-02-12 15:53:57 dmaze Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -40,8 +40,9 @@ public class TranslateEnqueue extends FEReplacer
 
     /** Creates a helper <code>Function</code> that returns a value out of
      * <code>vals</code>. */
-    private Function makeInitPath(FEContext context)
+    private Function makeInitPath(StreamSpec ss)
     {
+        FEContext context = ss.getContext();
         List stmts = new ArrayList();
         Expression n = new ExprVar(context, "n");
         int i = 0;
@@ -55,19 +56,20 @@ public class TranslateEnqueue extends FEReplacer
             i++;
         }
         StmtBlock body = new StmtBlock(context, stmts);
-        // Figure out the return type and name; guess from the type of
-        // the first value.
-        Type returnType = null;
+        // Figure out the return type and name; guess from the input type of
+        // the stream specification.  (This implies that typeless anonymous
+        // feedback loops won't work, at least for now.)
+        Type returnType = ss.getStreamType().getIn();
+        // Claim: it's a primitive type, we can't deal otherwise.
+        TypePrimitive tp = (TypePrimitive)returnType;
         String name = null;
-        Expression first = (Expression)vals.get(0);
-        if (first instanceof ExprConstFloat)
+        if (tp.getType() == TypePrimitive.TYPE_FLOAT)
         {
-            returnType = new TypePrimitive(TypePrimitive.TYPE_FLOAT);
             name = "initPathFloat";
             stmts.add(new StmtReturn(context,
                                      new ExprConstFloat(context, 0.0)));
         }
-        else if (first instanceof ExprConstInt)
+        else if (tp.getType() == TypePrimitive.TYPE_INT)
         {
             returnType = new TypePrimitive(TypePrimitive.TYPE_INT);
             name = "initPathInt";
@@ -90,7 +92,7 @@ public class TranslateEnqueue extends FEReplacer
         if (!vals.isEmpty())
         {
             List fns = new ArrayList(ssNew.getFuncs());
-            fns.add(makeInitPath(ss.getContext()));
+            fns.add(makeInitPath(ss));
             ssNew = new StreamSpec(ssNew.getContext(), ssNew.getType(),
                                    ssNew.getStreamType(), ssNew.getName(),
                                    ssNew.getParams(), ssNew.getVars(), fns);

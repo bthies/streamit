@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.75 2002-09-26 19:14:02 thies Exp $
+ * $Id: LIRToC.java,v 1.76 2002-11-19 22:27:26 aalamb Exp $
  */
 
 package at.dms.kjc.lir;
@@ -729,13 +729,13 @@ public class LIRToC
                                   JStatement incr,
                                   JStatement body) {
         print("for (");
-        forInit = true;
+        //forInit = true;
         if (init != null) {
             init.accept(this);
-        } else {
-            print(";");
-        }
-        forInit = false;
+	} else {
+	    print(";");
+	}
+	//forInit = false;
 
         print(" ");
         if (cond != null) {
@@ -803,9 +803,9 @@ public class LIRToC
     public void visitExpressionStatement(JExpressionStatement self,
                                          JExpression expr) {
         expr.accept(this);
-        if (!forInit) {
+        //if (!forInit) {
             print(";");
-        }
+	    //}
     }
 
     /**
@@ -2521,7 +2521,7 @@ public class LIRToC
     // DATA MEMBERS
     // ----------------------------------------------------------------------
 
-    protected boolean			forInit;	// is on a for init
+    //protected boolean			forInit;	// is on a for init
     protected int				TAB_SIZE = 2;
     protected int				WIDTH = 80;
     protected int				pos;

@@ -15,20 +15,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenReference.java,v 1.1 2001-08-30 16:32:31 thies Exp $
+ * $Id: TokenReference.java,v 1.2 2001-10-24 17:41:30 mgordon Exp $
  */
 
 package at.dms.compiler;
 
 import java.io.File;
-
+import java.io.*;
 import at.dms.util.Utils;
 
 /**
  * This class defines objets that hold a reference to a file and a position
  * in the file.
  */
-public class TokenReference {
+public class TokenReference implements Serializable {
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS

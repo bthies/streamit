@@ -36,6 +36,10 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 		     CType inputType, CType outputType){
 	
 	blockStart("Filter");
+	attrStart("Parent");
+	if (parent == null)
+	    printData("null");
+	attrEnd();
 	for (int i = 0; i < fields.length; i++)
 	    fields[i].accept(this);
 	for (int i = 0; i < methods.length; i++)
@@ -99,6 +103,10 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			  JMethodDeclaration init,
 			  List elements){
 	blockStart("Pipeline");
+	attrStart("Parent");
+	if (parent == null)
+	    printData("null");
+	attrEnd();
 	for (int i = 0; i < fields.length; i++)
 	    fields[i].accept(this);
 	for (int i = 0; i < methods.length; i++)
@@ -120,7 +128,25 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			      JMethodDeclaration[] methods,
 			      JMethodDeclaration init,
 			      int delay,
-			      JMethodDeclaration initPath){}
+			      JMethodDeclaration initPath){
+	blockStart("FeedbackLoop");
+	attrStart("Parent");
+	if (parent == null)
+	    printData("null");
+	attrEnd();
+	attrPrint("delay", (new Integer(delay)).toString());
+	attrStart("init");
+	init.accept(this);
+	attrEnd();
+	attrStart("InitPath");
+	initPath.accept(this);
+	attrEnd();
+	for (int i = 0; i < fields.length; i++)
+	    fields[i].accept(this);
+	for (int i = 0; i < methods.length; i++)
+	    methods[i].accept(this);
+	blockEnd();
+    }
 
     /**
      * POST-VISITS 

@@ -1,6 +1,6 @@
 /**
  * Class which runs defines which tests are run using the nightly regtest.
- * $Id: TestNightly.java,v 1.3 2003-06-27 18:18:03 dmaze Exp $
+ * $Id: TestNightly.java,v 1.4 2003-07-10 18:04:12 dmaze Exp $
  **/
 package streamittest;
 
@@ -18,7 +18,9 @@ public class TestNightly extends TestCase {
      * each of which is run using the specified options.
      **/
     public static Test makeTestSuite(int flags) {
-	TestSuite suite = new TestSuite();
+        CompilerInterface cif =
+            CompilerInterface.createCompilerInterface(flags);
+	TestSuite suite = new TestSuite("Nightly " + cif.getOptionsString());
 	suite.addTest(TestTests.suite(flags));
 	suite.addTest(TestExamples.suite(flags));
 	suite.addTest(TestApps.suite(flags));

@@ -90,7 +90,7 @@ class ModuloPipelineFusion {
     /**
      * The name of the initial work function.
      */
-    public static final String INIT_WORK_NAME = "___initWork";
+    public static final String INIT_WORK_NAME() { return FusePipe.INIT_WORK_NAME; }
 
     /**
      * Prefix for name of parameters in fused init function.
@@ -242,7 +242,7 @@ class ModuloPipelineFusion {
 	} else {
 	    // return result
 	    return new JMethodDeclaration(CStdType.Void,
-					  init ? INIT_WORK_NAME : "work",
+					  init ? INIT_WORK_NAME() : "work",
 					  JFormalParameter.EMPTY,
 					  statements);
 

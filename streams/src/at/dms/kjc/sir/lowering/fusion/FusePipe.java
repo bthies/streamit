@@ -23,6 +23,10 @@ import java.util.ListIterator;
  * stream graph.
  */
 public class FusePipe {
+    /**
+     * Name of init work, fused across fusion and fission.
+     */
+    public static final String INIT_WORK_NAME = "___initWork";
 
     /**
      * Fuses all eligibles portions of <pipe>, returning the number of

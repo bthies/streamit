@@ -241,202 +241,195 @@ class AdditionUpdateFilter extends Filter
     }
 }
 
-class ReflectionCoeffFilter extends Filter 
+class ReflectionCoeffLARppInternal extends Filter
 {
-
-    short[] INVA;
-    short[] MIC;
-    short[] B;
-    
-    short[] mdrpin; //input
-    short[] mdrp;   //output
-    short[] mLARc;  //input
-    short[] mLARpp; //intermediary
-    short[] mprevLARpp; //intermediary
-    short[] mLARp;  //intermediary
-    short[] mrrp; //output
-
 #include "Helper.java"
-#define MPREVLARPP_LENGTH 8
-#define MDRPIN_LENGTH 160
-#define MDRP_LENGTH 40
-#define MLARC_LENGTH 8
-#define MLARPP_LENGTH 8
-#define MRRP_LENGTH 8
 
-    public void init() 
+    short INVA, MIC, B;
+
+    public ReflectionCoeffLARppInternal(short INVA, short MIC, short B)
     {
-	short i;
-	input = new Channel(Short.TYPE, 168);
-	output = new Channel(Short.TYPE, 48);
-	mdrpin = new short[MDRPIN_LENGTH];
-	mdrp = new short[MDRP_LENGTH];
-	mLARc = new short[MLARC_LENGTH];
-	mLARpp = new short[MLARPP_LENGTH];
-	mprevLARpp = new short[MPREVLARPP_LENGTH];
-	for(i = 0; i < MPREVLARPP_LENGTH; i++)
-	    {
-		mprevLARpp[i] = 0;
-	    }
-	mLARp = new short[8];
-	mrrp = new short[MRRP_LENGTH];
-
-
-	//////////////////////////////////////////////////
-	// assign elements of INVA array
-	INVA = new short[8];
-	INVA[0] = 13107;
-	INVA[1] = 13107;
-	INVA[2] = 13107;
-	INVA[3] = 13107;
-	INVA[4] = 19223;
-	INVA[5] = 17476;
-	INVA[6] = 31454;
-	INVA[7] = 29708;
-	//////////////////////////////////////////////////
-
-	//////////////////////////////////////////////////
-	// assign elements of MIC array
-	MIC = new short[8];
-	MIC[0] = -32;
-	MIC[1] = -32;
-	MIC[2] = -16;
-	MIC[3] = -16;
-	MIC[4] = -8;
-	MIC[5] = -8;
-	MIC[6] = -4;
-	MIC[7] = -4;
-	//////////////////////////////////////////////////
-
-	//////////////////////////////////////////////////
-	// assign elements of B array
-	B = new short[8];
-	B[0] = 0;
-	B[1] = 0;
-	B[2] = 2048;
-	B[3] = -2560;
-	B[4] = 94;
-	B[5] = -1792;
-	B[6] = -341;
-	B[7] = -1144;
-	//////////////////////////////////////////////////
+        super(INVA, MIC, B);
+    }
+    
+    public void init(final short INVA, final short MIC, final short B)
+    {
+        input = new Channel(Short.TYPE, 1);
+        output = new Channel(Short.TYPE, 1);
+        this.INVA = INVA;
+        this.MIC = MIC;
+        this.B = B;
     }
 
-    public void work() 
+    public void work()
     {
-	int i;
-	short j, temp, temp1, temp2, k, sri;
-	for (i = 0; i < MDRPIN_LENGTH; i++)
-	    {
-		mdrpin[i] = input.popShort();
-	    }
-	//truncate to only get mdrpin[120...159]
-	for (i = 0; i < MDRP_LENGTH; i++)
-	    {
-		mdrp[i] = mdrpin[i + 120];
-	    }
-	for (i = 0; i < MLARC_LENGTH; i++)
-	    {
-		mLARc[i] = input.popShort();   //fix inputs!!
-	    }
-	
-	
-	//Decoding of the coded Log-Area ratios:
-	for (i = 0; i < 8; i++)
-	    {
-		temp1 = shortify((gsm_add(mLARc[i], MIC[i])) << 10);
-		temp2 = shortify(B[i] << 10);
-		temp1 = gsm_sub(temp1, temp2);
-		temp1 = gsm_mult_r(INVA[i], temp1);
-		mLARpp[i] = gsm_add(temp1, temp1);
-	    }
-	//Computation of the quantized reflection coefficients
+        short LARc, LARpp, temp1, temp2;
+        
+        LARc = input.popShort();
+        temp1 = shortify((gsm_add(LARc, MIC)) << 10);
+        temp2 = shortify(B << 10);
+        temp1 = gsm_sub(temp1, temp2);
+        temp1 = gsm_mult_r(INVA, temp1);
+        LARpp = gsm_add(temp1, temp1);
+        output.pushShort(LARpp);
+    }
+}   
+
+class ReflectionCoeffLARpp extends SplitJoin
+{
+    public void init()
+    {
+        setSplitter(ROUND_ROBIN());
+        // NB: these numbers are all magic.
+        add(new ReflectionCoeffLARppInternal((short)13107, (short)-32, (short)0));
+        add(new ReflectionCoeffLARppInternal((short)13107, (short)-32, (short)0));
+        add(new ReflectionCoeffLARppInternal((short)13107, (short)-16, (short)2048));
+        add(new ReflectionCoeffLARppInternal((short)13107, (short)-16, (short)-2560));
+        add(new ReflectionCoeffLARppInternal((short)19223, (short)-8, (short)94));
+        add(new ReflectionCoeffLARppInternal((short)17476, (short)-8, (short)-1792));
+        add(new ReflectionCoeffLARppInternal((short)31454, (short)-4, (short)-341));
+        add(new ReflectionCoeffLARppInternal((short)29708, (short)-4, (short)-1144));
+        setJoiner(ROUND_ROBIN());
+    }
+}
+
+class ReflectionCoeffLARpInternal extends Filter
+{
+#include "Helper.java"
+
+    short mprevLARpp;
+
+    public void init()
+    {
+        input = new Channel(Short.TYPE, 1);
+        output = new Channel(Short.TYPE, 1);
+        mprevLARpp = 0;
+    }
+    
+    public void work()
+    {
+        int i, j, k;
+        short mLARp, mLARpp;
+        
+        mLARpp = input.popShort();
+        // Jikes can't do a data-flow analysis.  Sigh.
+        mLARp = 0;
+
+        // The remainder of this could almost certainly be broken down
+        // nicely into component filters with feedback loops.  Think
+        // about this more later.  --dzm
 
 	//Interpolation of mLARpp to get mLARp:
 	for (k = 0; k < 13; k++)
-	    {
-		for(i = 0; i < 8; i++)
-		    {
-			mLARp[i] = gsm_add(shortify(mprevLARpp[i] >> 2), shortify(mLARpp[i] >> 2));
-			mLARp[i] = gsm_add(mLARp[i],  shortify(mprevLARpp[i] >> 1));
-		    }
-	    }
-	for (k = 13; k < 27; k++)
-	    {
-		for (i = 0; i < 8; i++)
-		    {
-			mLARp[i] = gsm_add(shortify(mprevLARpp[i] >> 1), shortify(mLARpp[i] >> 1));
-		    }
-	    }
-	for (k = 27; k < 39; k++)
-	    {
-		for (i = 0; i < 8; i++)
-		    {
-			mLARp[i] = gsm_add(shortify(mprevLARpp[i] >> 2), shortify(mLARpp[i] >> 2));
-			mLARp[i] = gsm_add(mLARp[i], shortify(mLARpp[i] >> 1));
-		    }
-	    }
-	for (k = 40; k < 160; k++)
-	    {
-		for (i = 0; i < 8; i++)
-		    {
-			mLARp[i] = mLARpp[i];
-		    }
-	    }
-	//set current LARpp to previous:
-	for (j = 0; j < MPREVLARPP_LENGTH; j++)
-	    {
-		mprevLARpp[j] = mLARpp[j];
-	    }
+        {
+            mLARp = gsm_add(shortify(mprevLARpp >> 2), shortify(mLARpp >> 2));
+            mLARp = gsm_add(mLARp,  shortify(mprevLARpp >> 1));
+        }
 
-	//Compute mrrp[0..7] from mLARp[0...7]
-	for (i = 0; i < 8; i++)
-	    {
-		temp = gsm_abs(mLARp[i]);
-		if (temp < 11059)
-		    {
-			temp = shortify(temp << 1);
-		    }
-		else 
-		    {
-			if (temp < 20070)
-			    {
-				temp = gsm_add(temp, (short) 11059);
-			    }
-			else
-			    {
-				temp = gsm_add((short) (temp >> 2), (short) 26112);
-			    }
-		    }
-		mrrp[i] = temp;
-		if (mLARp[i] < 0)
-		    {
-			mrrp[i] = gsm_sub((short) 0, mrrp[i]);
-		    }
-		
-	    }
-	//push outputs
-	for (j = 0; j < MDRP_LENGTH; j++)
-	    {
-		output.pushShort(mdrp[j]);
-	    }
-	for (j = 0; j < MRRP_LENGTH; j++)
-	    {
-		output.pushShort(mrrp[j]);
-	    }
+	for (k = 13; k < 27; k++)
+            mLARp = gsm_add(shortify(mprevLARpp >> 1), shortify(mLARpp >> 1));
+
+	for (k = 27; k < 39; k++)
+        {
+            mLARp = gsm_add(shortify(mprevLARpp >> 2), shortify(mLARpp >> 2));
+            mLARp = gsm_add(mLARp, shortify(mLARpp >> 1));
+        }
+
+        /* Visibly wrong; I think it's supposed to be mLARp = mLARp,
+           which is a nop, so punt this loop entirely.  --dzm
+	for (k = 40; k < 160; k++)
+            mLARp = mLARpp;
+        */
+
+        mprevLARpp = mLARpp;
+        output.pushShort(mLARp);
+    }
+}
+
+class ReflectionCoeffLARp extends SplitJoin
+{
+    public void init()
+    {
+        setSplitter(ROUND_ROBIN());
+        // Not just explicit parallelization; each of these is stateful.
+        for (int i = 0; i < 8; i++)
+            add(new ReflectionCoeffLARpInternal());
+        setJoiner(ROUND_ROBIN());
+    }
+}
+
+class ReflectionCoeffmrrp extends Filter
+{
+#include "Helper.java"
+
+    public void init()
+    {
+        input = new Channel(Short.TYPE, 1);
+        output = new Channel(Short.TYPE, 1);
     }
 
+    public void work()
+    {
+        short mLARp, temp, mrrp;
+        mLARp = input.popShort();
+        temp = gsm_abs(mLARp);
+        if (temp < 11059)
+            temp = shortify(temp << 1);
+        else if (temp < 20070)
+            temp = gsm_add(temp, (short) 11059);
+        else
+            temp = gsm_add((short) (temp >> 2), (short) 26112);
+        mrrp = temp;
+        if (mLARp < 0)
+            mrrp = gsm_sub((short)0, mrrp);
+        output.pushShort(mrrp);
+    }
+}
 
-}//ReflectionCoeffFilter
+class ReflectionCoeffCalc extends Pipeline
+{
+    public void init()
+    {
+        add(new ReflectionCoeffLARpp());
+        add(new ReflectionCoeffLARp());
+        add(new ReflectionCoeffmrrp());
+    }
+}
+
+class ReflectionCoeff extends SplitJoin
+{
+    public void init()
+    {
+        setSplitter(WEIGHTED_ROUND_ROBIN(120, 40, 8));
+        // Decimate first 120:
+        add(new Filter() {
+                public void init() 
+                {
+                    this.input = new Channel(Short.TYPE, 1);
+                }
+                public void work()
+                {
+                    this.input.popShort();
+                }
+            });
+        // Copy next 40 (mdrp):
+        add(new Identity(Short.TYPE));
+        // And generate mrrp from last 8.
+        add(new ReflectionCoeffCalc());
+        setJoiner(WEIGHTED_ROUND_ROBIN(0, 40, 8));
+    }
+}
 
 class ShortTermReorder extends Filter
 {
+    short mdrp[];
     short mrrp[];
     
     public void init()
     {
         input = new Channel(Short.TYPE, 8 + 40);
         output = new Channel(Short.TYPE, (8 + 1) * 40);
+        mdrp = new short[40];
         mrrp = new short[8];
     }
     
@@ -445,15 +438,18 @@ class ShortTermReorder extends Filter
         short val;
         int i, j;
         
-        // Read in mrrp:
+        // Read in mdrp and mrrp:
+        for (j = 0; j < 40; j++)
+            mdrp[j] = input.popShort();
         for (j = 0; j < 8; j++)
             mrrp[j] = input.popShort();
 
+        // Now write out (mrrp, element of mdrp):
         for (i = 0; i < 40; i++)
         {
             for (j = 0; j < 8; j++)
                 output.pushShort(mrrp[j]);
-            output.pushShort(input.popShort());
+            output.pushShort(mdrp[i]);
         }
     }
 }
@@ -875,7 +871,7 @@ public class StGsmDecoder extends StreamIt
 	//this.add(new ShortPrinter());
 	this.add(new HoldFilter());
 	this.add(new LARInputSplitJoin());
-	this.add(new ReflectionCoeffFilter());
+	this.add(new ReflectionCoeff());
 	this.add(new ShortTermSynth());
 	this.add(new PostProcessingFilter());
 	//this.add(new ShortPrinter());

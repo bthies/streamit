@@ -1,5 +1,7 @@
-#include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "streamit.h"
 #include "streamit_internal.h"
@@ -69,12 +71,28 @@ void connect_tapes (stream_context *c)
 
 void streamit_run (stream_context *c, int argc, char **argv)
 {
+    int niters = -1;
+    int flag;
+    
+    while ((flag = getopt(argc, argv, "i:")) != -1)
+        switch (flag)
+        {
+        case 'i':
+            niters = atoi(optarg);
+            break;
+        case '?':
+            fprintf(stderr, "Unrecognized option '-%c'\n", optopt);
+            return;
+        }
+    
     connect_tapes (c);
 
     // run the work function indefinitely
-    while (1)
+    while (niters != 0)
     {
         c->work_function (c->stream_data);
         dispatch_messages();
+        if (niters > 0)
+            niters--;
     }
 }

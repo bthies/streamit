@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.FilterContent;
+import at.dms.util.Utils;
 
 /** 
     A class to hold all the various information for a filter
@@ -20,7 +21,7 @@ public class FilterInfo
     public int primePump;
     public int peek;
 
-    private FilterTraceNode traceNode;
+    public FilterTraceNode traceNode;
     public FilterContent filter;
 
     public FilterInfo(FilterTraceNode traceNode)
@@ -49,12 +50,37 @@ public class FilterInfo
 	
     }
     
-
     public boolean isTwoStage() 
     {
 	//return (filter instanceof SIRTwoStageFilter);
 	return filter.isTwoStage();
     }
+
+    //for the filter trace node, get all upstream filter trace nodes,
+    //going thru input and output trace nodes
+    public FilterTraceNode[] getPreviousFilters() 
+    {
+	FilterTraceNode[] ret;
+	
+	if (traceNode.getPrevious() == null)
+	    return new FilterTraceNode[0];
+	
+	if (traceNode.getPrevious().isFilterTrace()) {
+	    ret = new FilterTraceNode[1];
+	    ret[0] = (FilterTraceNode)traceNode.getPrevious();
+	}
+	else { //input trace node
+	    InputTraceNode input = (InputTraceNode)traceNode.getPrevious();
+
+	    //here we assume each trace has at least one filter trace node
+	    ret = new FilterTraceNode[input.getSources().length];
+	    for (int i = 0; i < ret.length; i++) {
+		ret[i] = (FilterTraceNode)input.getSources()[i].getPrevious();
+	    }
+	}    
+	return ret;
+    }
+    
 
     private int calculateRemaining() 
     {
@@ -62,7 +88,7 @@ public class FilterInfo
 	//schedule
 	int initFire = initMult;
 	//for now assume it is a filter trace node
-	FilterTraceNode previous = (FilterTraceNode)traceNode.getPrevious();
+	FilterTraceNode[] previous = getPreviousFilters();
 
 	//if this is not a twostage, fake it by adding to initFire,
 	//so we always think the preWork is called
@@ -74,18 +100,19 @@ public class FilterInfo
 	//initialization
 	int upStreamItems = 0;
 	
-	if (previous != null) {
+	if (previous.length == 1) {
 	    //calculate upstream items received during init  SPLITTER?
-	    upStreamItems = previous.getFilter().getPushInt() * 
-		previous.getInitMult();
-	    //if (previous.getFilter() instanceof SIRTwoStageFilter) {
-	    if (previous.getFilter().isTwoStage()) {
+	    upStreamItems = previous[0].getFilter().getPushInt() * 
+		previous[0].getInitMult();
+	    if (previous[0].getFilter().isTwoStage()) {
 		/*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
 		  upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
-		upStreamItems -= previous.getFilter().getPushInt();
-		upStreamItems += previous.getFilter().getInitPush();
+		upStreamItems -= previous[0].getFilter().getPushInt();
+		upStreamItems += previous[0].getFilter().getInitPush();
 	    }
 	}
+	else if (previous.length > 1)
+	    Utils.fail("Splits/Joins not supported");
 	
 	//see my thesis for an explanation of this calculation
 	if (initFire  - 1 > 0) {

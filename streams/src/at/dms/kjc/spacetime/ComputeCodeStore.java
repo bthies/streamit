@@ -126,7 +126,7 @@ public class ComputeCodeStore {
 	//if we can run direct communication, run it
 	if (DirectCommunication.testDC(filterInfo))
 	    exeCode = new DirectCommunication(filterInfo);
-	else
+	else 
 	    exeCode = new BufferedCommunication(filterInfo);
 	
 	//add this raw IR code to the rawCode hashmap

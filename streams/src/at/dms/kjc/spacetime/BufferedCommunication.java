@@ -29,16 +29,11 @@ public class BufferedCommunication extends RawExecutionCode
     //add one to the init multiplicity of the filter 
     private int initFire;
 
-    private GeneratedVariables generatedVariables;
-    private FilterInfo filterInfo;
-
     public BufferedCommunication(FilterInfo filterInfo) 
     {
+	super(filterInfo);
 	System.out.println("Generating code for " + filterInfo.filter + " using Buffered Comm.");
 	//set the unique id to append to each variable name
-	uniqueID = getUniqueID();
-	generatedVariables = new GeneratedVariables();
-	this.filterInfo = filterInfo;
 	//treat all the filters as two stages, i.e.
 	//initWork is always called, so add one to non-2 stages
 	//init multiplicity
@@ -144,16 +139,28 @@ public class BufferedCommunication extends RawExecutionCode
 		decls.add(new JFieldDeclaration(null, simpleIndexVar, null, null));
 	    }
 	    else { //filter with remaing items on the buffer after initialization 
-		//see Mgordon's thesis for explanation (Code Generation Section)
-		if (KjcOptions.ratematch)
-		    buffersize = 
-			Util.nextPow2(Math.max((filterInfo.steadyMult - 1) * 
-						filterInfo.pop + filterInfo.peek, filterInfo.prePeek)
-				      + filterInfo.remaining);
-		else
-		    buffersize = Util.nextPow2(maxpeek + filterInfo.remaining);
+		buffersize = Util.nextPow2(maxpeek + filterInfo.remaining);
+	    }
+
+	    //adjust the size of the buffer if this is the first traceNode of a trace
+	    if (filterInfo.traceNode.getPrevious().isInputTrace()) {
+		//compute how many items the previous filter generates
+		FilterTraceNode[] previousFilters = filterInfo.getPreviousFilters();
+		if (previousFilters.length == 1) {
+		    FilterInfo prevInfo = new FilterInfo(previousFilters[0]);
+		    
+		    //find the stage with the max number of executions
+		    int maxExe = Math.max(Math.max(prevInfo.initMult, prevInfo.steadyMult),
+					  prevInfo.primePump);
+		    //now mult the previous buffersize calc by the stage with the 
+		    //greatest number of executions...
+		    buffersize *= maxExe;
+		}
+		else 
+		    Utils.fail("Split/joins not supported");
 	    }
 	    
+
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????

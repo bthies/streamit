@@ -24,7 +24,7 @@ public class Rawify
 	    TraceNode traceNode = trace.getHead();
 	    while (traceNode != null) {
 		//do the appropiate code generation
-		if (traceNode instanceof FilterTraceNode) {
+		if (traceNode.isFilterTrace()) {
 		    RawTile tile = rawChip.getTile(((FilterTraceNode)traceNode).getX(), 
 						   ((FilterTraceNode)traceNode).getY());
 		    //create the filter info class
@@ -64,7 +64,7 @@ public class Rawify
 	
 	for (int i = 0; i < mult; i++) {
 	    //append the receive code
-	    if (node.getPrevious() != null && node.getPrevious() instanceof FilterTraceNode) {
+	    if (node.getPrevious() != null && node.getPrevious().isFilterTrace()) {
 		//if this is the init and it is the first time executing
 		//and a twostage filter, use initpop and multiply this
 		//by the size of the type it is receiving
@@ -82,7 +82,7 @@ public class Rawify
 		}
 	    }
 	    //append the send code
-	    if (node.getNext() != null && node.getNext() instanceof FilterTraceNode) {
+	    if (node.getNext() != null && node.getNext().isFilterTrace()) {
 		//get the items needed to fire and multiply it by the type 
 		//size
 		int items = itemsFiring(filterInfo, i, init) * 
@@ -104,7 +104,7 @@ public class Rawify
 	//after the initialization phase if the upstream filter produces more than
 	//we consume in init
 	if (init) {
-	    if (node.getPrevious() instanceof FilterTraceNode) {		
+	    if (node.getPrevious().isFilterTrace()) {		
 		if (filterInfo.remaining > 0) {
 		    for (int i = 0; 
 			 i < filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()); 

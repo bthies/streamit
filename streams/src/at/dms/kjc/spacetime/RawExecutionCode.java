@@ -59,7 +59,18 @@ public abstract class RawExecutionCode
     //so var names do not clash
     private static int globalID = 0;
     protected int uniqueID;
+
+    protected GeneratedVariables generatedVariables;
+    protected FilterInfo filterInfo;
+
+    public RawExecutionCode(FilterInfo filterInfo) 
+    {
+	this.filterInfo = filterInfo;
+	generatedVariables = new GeneratedVariables();
+	uniqueID = getUniqueID();
+    }
     
+
     public static int getUniqueID() 
     {
 	return globalID++;

@@ -23,4 +23,20 @@ abstract public class TraceNode
     public void setNext(TraceNode next) {
 	this.next = next;
     }
+    
+    public boolean isInputTrace() 
+    {
+	return this instanceof InputTraceNode;
+    }
+    
+    public boolean isFilterTrace() 
+    {
+	return this instanceof FilterTraceNode;
+    }
+    
+    public boolean isOutputTrace() 
+    {
+	return this instanceof OutputTraceNode;
+    }
+    
 }

@@ -27,16 +27,14 @@ import at.dms.kjc.flatgraph2.FilterContent;
 public class DirectCommunication extends RawExecutionCode 
     implements Constants 
 { 
-    FilterInfo filterInfo;
-    GeneratedVariables generatedVariables;
-    int uniqueID;
-
     public static boolean testDC(FilterInfo fi) 
     {
 	FilterContent filter = fi.filter;
 	
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
+	if (fi.traceNode.getPrevious().isInputTrace())
+	    return false;
 	if (KjcOptions.ratematch)
 	    return false;
 	if (fi.isTwoStage())
@@ -64,10 +62,8 @@ public class DirectCommunication extends RawExecutionCode
 
     public DirectCommunication(FilterInfo filterInfo) 
     {
-	this.filterInfo = filterInfo;
+	super(filterInfo);
 	System.out.println("Generating code for " + filterInfo.filter + " using Direct Comm.");
-	generatedVariables = new GeneratedVariables();
-	uniqueID = getUniqueID();
     }
 
     public JFieldDeclaration[] getVarDecls() 

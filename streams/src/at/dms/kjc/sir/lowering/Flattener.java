@@ -95,15 +95,19 @@ public class Flattener {
 	printer1 = new SIRPrinter();
 	str.accept(printer1);
 	printer1.close();
-
+	
+	//Flatten Blocks
+	new BlockFlattener().flattenBlocks(str);
+	//Analyze Branches
+	new BranchAnalyzer().analyzeBranches(str);
 	//Destroys arrays into local variables if possible
 	new ArrayDestroyer().destroyArrays(str);
 	//Raise variables to the top of their block
 	new VarDeclRaiser().raiseVars(str);
-
+	
 	// name the components
 	Namer.assignNames(str);
-
+	
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str, 
 							   interfaces,

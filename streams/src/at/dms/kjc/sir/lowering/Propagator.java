@@ -37,16 +37,6 @@ class Propagator extends SLIRReplacingVisitor {
      */
     private static int propNum=0;
 
-    /**
-     * Parent of all blocks currently being analyzed
-     */
-    private static JBlock parent;
-
-    /**
-     * VerDecls to be added to the parent block
-     */
-    private static LinkedList parentStatements;
-
     private static int loopDepth=0;
 
     /**

@@ -214,7 +214,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//if there are structures in the code, include
 	//the structure definition header files
 	if (SpaceDynamicBackend.structures.length > 0) {
-	    //print("#include \"structs.h\"\n");
+	    print("#include \"structs.h\"\n");
 	}
 
 	//print the extern for the function to init the 
@@ -926,7 +926,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     {
 	//turn the push statement into a call of
 	//the structure's push method
-	assert false;
+	assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
 	print("push" + tapeType + "(&");
 	val.accept(this);
 	print(")");
@@ -937,7 +937,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 			   CType tapeType,
 			   JExpression val) 
     {
-	assert false;
+	assert !dynamicOutput : "pushing of non-scalars at SSG boundary not supported yet";
 	CType baseType = ((CArrayType)tapeType).getBaseType();
 	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
 	

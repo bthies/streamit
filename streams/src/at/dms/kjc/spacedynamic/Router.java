@@ -37,8 +37,6 @@ public class Router {
 	int column = fromCoord.getX();
 	//For now just route the packets in a stupid manner
 	//row then column
-
-
 	if (fromCoord.getY() != toCoord.getY()) {
 	    if (fromCoord.getY() < toCoord.getY()) {
 		for (row = fromCoord.getY() + 1; 

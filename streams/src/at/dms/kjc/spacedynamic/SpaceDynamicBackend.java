@@ -327,7 +327,8 @@ public class SpaceDynamicBackend {
 	    new VarDeclRaiser().raiseVars
 		(streamGraph.getStaticSubGraphs()[i].getTopLevelSIR());
 	
-	//	StructureIncludeFile.doit(structures, ssg.getTopLevel());
+	//create the structure include file for the application
+	StructureIncludeFile.doit(structures);
 
 	
 	System.out.println("Tile Code begin...");

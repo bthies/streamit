@@ -111,8 +111,6 @@ public class MakefileGenerator
 	    while(tilesIterator.hasNext()) {
 		int tile = 
 		    ((RawTile)tilesIterator.next()).getTileNumber();
-		FlatNode node = layout.getNode(rawChip.getTile(tile));
-		StaticStreamGraph ssg = streamGraph.getParentSSG(node);
 
 		if (tile < 10) 
 		    fw.write("OBJECT_FILES_0");

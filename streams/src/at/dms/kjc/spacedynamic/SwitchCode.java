@@ -68,17 +68,15 @@ public class SwitchCode extends at.dms.util.Utils
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
 	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.initSchedules.keySet());
 	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.steadySchedules.keySet());
-	    
+
 	    //now add any tiles that don't perform any switching and were assigned filters
 	    FlatNode node;
 	    Iterator flatNodes = ssg.getFlatNodes().iterator(); 
 	    while (flatNodes.hasNext()) {
 		node = (FlatNode)flatNodes.next();
-		if (node.isFilter() && !tiles.contains(layout.getTile(node)))
+		if (node.isFilter() && tiles.contains(layout.getTile(node)))
 		    tiles.add(layout.getTile(node));
 	    }
-	    
-	    
 
 	    //do not generate switchcode for Tiles assigned to file readers/writers
 	    //they are just dummy tiles
@@ -92,6 +90,7 @@ public class SwitchCode extends at.dms.util.Utils
 	    //for each tiles dump the code
 	    while(tileIterator.hasNext()) {
 		RawTile tile = (RawTile) tileIterator.next();
+		assert tile != null;
 		
 		assert !tilesGenerated.contains(tile) : 
 		    "Trying to generated switch code for a tile that has already been seen";
@@ -122,7 +121,7 @@ public class SwitchCode extends at.dms.util.Utils
 			big3init = threeBiggestRepetitions(initCode);
 			big3work = threeBiggestRepetitions(steadyCode);
 		    }
-		    
+		   
 		    FileWriter fw =
 			new FileWriter("sw" + tile.getTileNumber() 
 				       + ".s");

@@ -15,66 +15,49 @@ import java.io.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph.*;
 
-public class StructureIncludeFile implements FlatVisitor
+public class StructureIncludeFile
 {
-    private HashSet passedTypes;
-    
-     /**
+    /**
      * Create structures include file in current directory.
      */
-    public static void doit(SIRStructure[] structs, FlatNode toplevel) 
+    public static void doit(SIRStructure[] structs) 
     {
-	doit(structs, toplevel, ".");
+	doit(structs, ".");
     }
 
     /**
      * Create structures include file in directory <dir>.
      */
-    public static void doit(SIRStructure[] structs, FlatNode toplevel, String dir) 
+    public static void doit(SIRStructure[] structs, String dir) 
     {
 	if (structs.length == 0) 
 	    return;
 	
-	new StructureIncludeFile(structs, toplevel, dir);
+	new StructureIncludeFile(structs, dir);
     }
 
-    public StructureIncludeFile(SIRStructure[] structs, FlatNode toplevel, String dir) 
+    public StructureIncludeFile(SIRStructure[] structs, String dir) 
     {
 	try {
 	    FileWriter fw = new FileWriter(dir + "/structs.h");
-	    passedTypes = new HashSet();
-
-	    //determine which struct types are actually passed over channels
-	    toplevel.accept(this, null, true);
 
 	    createStructureDefs(structs, fw);
-	    if (!KjcOptions.standalone)
-		createPushPopFunctions(structs, fw);
+	    //if (!KjcOptions.standalone)
+	    //createPushPopFunctions(structs, fw);
 	    fw.close();
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
-	    System.err.println("Error creating structure include file");
+ 	    System.err.println("Error creating structure include file");
 	}
     }
-    
-    public void visitNode(FlatNode node) 
-    {
-	if (node.isFilter()) {
-	    passedTypes.add(((SIRFilter)node.contents).getOutputType());
-	    System.out.println(((SIRFilter)node.contents).getOutputType());
-	    passedTypes.add(((SIRFilter)node.contents).getInputType());
-	    System.out.println(((SIRFilter)node.contents).getInputType());
-	}
-    }
-    
 
     /** 
      * create a c header file with all the structure definitions
      * as typedef'ed structs.
      **/
     private void createStructureDefs(SIRStructure[] structs, 
-					    FileWriter fw) throws Exception
+				     FileWriter fw) throws Exception
     {
 	for (int i = 0; i < structs.length; i++) {
 	    SIRStructure current = structs[i];
@@ -86,7 +69,7 @@ public class StructureIncludeFile implements FlatVisitor
 	    }
 	    fw.write("} " + current.getIdent() + ";\n");
 	    //write the defs for the push/pop functions
-	    if (!KjcOptions.standalone && passedTypes.contains(current)) {
+	    if (!KjcOptions.standalone){
 		fw.write("inline void push" + current.getIdent() + "(" + current.getIdent() +
 			 "*);\n");
 		fw.write("inline " + current.getIdent() + " pop" + current.getIdent() + "();\n");
@@ -103,10 +86,6 @@ public class StructureIncludeFile implements FlatVisitor
 	//create the pop functions
 	for (int i = 0; i < structs.length; i++) {
 	    SIRStructure current = structs[i];
-	    //if this type is not passed over a channel, then don't generate the push
-	    //pop functions for it...
-	    if (!passedTypes.contains(current))
-		continue;
 	    fw.write("inline " + current.getIdent() + " pop" + current.getIdent() + "() {\n");
 	    fw.write("\t" + current.getIdent() + " temp;\n");
 	    for (int j = 0; j < current.getFields().length; j++) {

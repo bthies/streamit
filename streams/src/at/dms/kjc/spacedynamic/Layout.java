@@ -200,15 +200,17 @@ public class Layout extends at.dms.util.Utils implements
 	    buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
 		       //getTileNumber(node) + "\"];\n");
 		       shortName(node.getName()) + "\"];\n");
-	     
+
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
 	     Iterator downstream = getDownStream(node).iterator();
+	     //	     System.out.println("Getting downstream of " + node);
 	     int y=getTile(node).getY();
 	     while(downstream.hasNext()) {
 		 FlatNode n = (FlatNode)downstream.next();
 		 if (!tileAssignment.values().contains(n))
 		     continue;
+		 //		 System.out.println(" " + n);
 		 buf.append("tile" + getTileNumber(node) + 
 			    " -> tile" +
 			    getTileNumber(n) + " [weight = 1]");
@@ -220,6 +222,19 @@ public class Layout extends at.dms.util.Utils implements
 	     }
 	     
 	}
+
+	//put in the dynamic connections in blue
+	buf.append("edge[color = blue,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg =  streamGraph.getStaticSubGraphs()[i];
+	    for (int out = 0; out < ssg.getOutputs().length; out++) {
+		assert getTile(ssg.getOutputs()[out]) != null;
+		buf.append("tile" + getTileNumber(ssg.getOutputs()[out]) + " -> tile" +
+			   getTileNumber(ssg.getNext(ssg.getOutputs()[out])) + "[weight = 1];");
+	    }
+	}
+	
+	
 	buf.append("}\n");
 	
 	try {
@@ -267,7 +282,7 @@ public class Layout extends at.dms.util.Utils implements
 	    for (int i = 0; i < node.edges.length; i++) {
 		if (node.weights[i] != 0)
 		    SpaceDynamicBackend.addAll(ret, 
-					       getDownStream(node.edges[i]));
+					       getDownStreamHelper(node.edges[i]));
 	    }
 	    return ret;
 	}
@@ -306,12 +321,15 @@ public class Layout extends at.dms.util.Utils implements
 		//perform some error checking.
 		while (true) {
 		    int tileNumber;
+		    String str = null;
+		    
 		    System.out.print(node.getName() + " of " + ssg + ": ");
 		    try {
-			tileNumber = Integer.valueOf(inputBuffer.readLine()).intValue();
+			str = inputBuffer.readLine();			
+			tileNumber = Integer.valueOf(str).intValue();
 		    }
 		    catch (Exception e) {
-			System.out.println("Bad number!");
+			System.out.println("Bad number " + str);
 			continue;
 		    }
 		    if (tileNumber < 0 || tileNumber >= rawChip.getTotalTiles()) {
@@ -330,10 +348,9 @@ public class Layout extends at.dms.util.Utils implements
 	    }    
 	}
 	double cost = placementCost(true);
-	System.out.println("Layout cost: " + cost);
-	assert cost >= 0.0 : "Illegal Layout";
-
 	dumpLayout("layout.dot");
+	System.out.println("Layout cost: " + cost);
+	//assert cost >= 0.0 : "Illegal Layout";
     }
     
     /** return the cost of this layout calculated by the cost function, 
@@ -355,7 +372,7 @@ public class Layout extends at.dms.util.Utils implements
 	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
 	    double dynamicCost = 0.0;
 	    double staticCost = 0.0;
-
+	    
 	    dynamicCost = getDynamicCost(ssg, dynTilesUsed);
 	    if (dynamicCost < 0.0) {
 		if (debug)
@@ -394,14 +411,21 @@ public class Layout extends at.dms.util.Utils implements
 	//the ssg
 	while (nodes.hasNext()) {
 	    FlatNode src = (FlatNode)nodes.next();
+	    if (!(assigned.contains(src)))
+		continue;
+	    
+	    assert getTile(src) != null;
+
 	    //add the src tile to the list of tiles used by this SSG
 	    tiles.add(getTile(src));
 	    
 	    //make sure we have not previously tried to route through this tile
 	    //in a previous SSG
-	    if (usedTiles.contains(getTile(src)))
+	    if (usedTiles.contains(getTile(src))) {
+		System.out.println(getTile(src));
 		return -1.0;
-
+	    }
+	    
 	    //don't worry about nodes that aren't assigned tiles
 	    if (!assigned.contains(src))
 		continue;
@@ -412,13 +436,16 @@ public class Layout extends at.dms.util.Utils implements
 	    while (dsts.hasNext()) {
 		FlatNode dst = (FlatNode)dsts.next();
 		assert assigned.contains(dst);
+		assert getTile(dst) != null;
 		//add the dst tile to the list of tiles used by this SSG
 		tiles.add(getTile(dst));
 		
 		//make sure we have not previously (in another SSG) tried to route 
 		//thru the tile assigned to the dst
-		if (usedTiles.contains(getTile(dst)))
+		if (usedTiles.contains(getTile(dst))) {
+		    //System.out.println(getTile(dst));
 		    return -1.0;
+		}
 		
 		RawTile[] route = 
 		    (RawTile[])Router.getRoute(ssg, src, dst).toArray(new RawTile[0]);
@@ -516,16 +543,30 @@ public class Layout extends at.dms.util.Utils implements
 	    FlatNode dst = ssg.getNext(src);
 	    
 	    Iterator route = XYRouter.getRoute(getTile(src), getTile(dst)).iterator();
-	    
+	    //System.out.print("Dynamic Route: ");
+
+	    //********* TURNS IN DYNAMIC NETWORK COST IN TERMS OF LATENCY ****//
+	    //*** ADD THIS COMPONENT ***//
+
+	    //** Don't share links, could lead to starvation?? ***///
+
+	    // ** but below is too restrictive so relax it **//
+
 	    while (route.hasNext()) {
 		ComputeNode tile = (ComputeNode)route.next();
+		assert tile != null;
+		//System.out.print(tile);
 		//add to cost only if these an no endpoints of the route
 		if (tile != getTile(src) && tile != getTile(dst))
 		    cost += 1.0;
-		if (usedTiles.contains(tile))
+		if (usedTiles.contains(tile)) {
+		    System.out.println("tile uesd twice for dynamic route: " + tile);
 		    return -1.0;
+		}
+		
 		usedTiles.add(tile);
 	    }
+	    //System.out.println();
 	}
 	return cost;
     }

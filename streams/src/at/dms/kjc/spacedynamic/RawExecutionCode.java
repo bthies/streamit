@@ -63,7 +63,8 @@ public class RawExecutionCode extends at.dms.util.Utils
     private int initFire = 0;
     //number of items to receive after initialization
     private int remaining = 0;
-    
+    /** true if this filter is the source of a static stream graph **/
+    private boolean dynamicInput;
 
     //class to hold the local variables we create 
     //so we can pass these across functions
@@ -123,8 +124,11 @@ public class RawExecutionCode extends at.dms.util.Utils
 		return;
 	    }
 	    
-	    assert false : "Peeking filters not support yet";
+	    //if this is a source of an ssg then set dynamicInput
+	    dynamicInput = ssg.isInput(node);
 	    
+	    assert !dynamicInput : "Complicated filters not supported at SSG boundaries as of yet.";
+
 	    //otherwise generate code the old way
 	    LocalVariables localVariables = new LocalVariables();
 	    

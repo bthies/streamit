@@ -280,6 +280,8 @@ public class FineGrainSimulator extends Simulator
     //this way we can route multiple dests per route instruction
     private void generateSwitchCode(FlatNode fire, List dests) 
     {
+	assert !(layout.getIdentities().contains(fire));
+	
 	//should only have one previous
 	HashMap prev = new HashMap();
 	HashMap next = new HashMap();
@@ -287,6 +289,7 @@ public class FineGrainSimulator extends Simulator
 	ListIterator destsIt = dests.listIterator();
 	while (destsIt.hasNext()) {
  	    FlatNode dest = (FlatNode)destsIt.next();
+	    assert !(layout.getIdentities().contains(dest));
 	    //	    System.out.println("Dest: " + dest.getName());
 	    if (dest == null) 
 		System.out.println("Yup dest is null");
@@ -324,6 +327,7 @@ public class FineGrainSimulator extends Simulator
     
     private void asm(RawTile fire, HashMap previous, HashMap next) 
     {
+	assert fire != null;
 	//generate the sends
 	if (!switchSchedules.containsKey(fire))
 	    switchSchedules.put(fire, new StringBuffer());
@@ -343,6 +347,7 @@ public class FineGrainSimulator extends Simulator
 	Iterator tiles = next.keySet().iterator();
 	while (tiles.hasNext()) {
 	    RawTile tile = (RawTile)tiles.next();
+	    assert tile != null;
 	    if (tile == fire) 
 		continue;
 	    if (!switchSchedules.containsKey(tile))

@@ -44,17 +44,20 @@ public class LowerInitFunctions implements StreamVisitor {
     private void registerChildren(JMethodDeclaration init, 
 				  List children) {
 	int childCount = 0;
-	for (ListIterator it = children.listIterator(); 
-	     it.hasNext(); 
-	     childCount++) {
-	    Object next = it.next();
-	    if (next instanceof List) {
+	// iterate in reverse order so they come out right
+	ListIterator it = children.listIterator(); 
+	// find the end of the list (to get it from an index you need
+	// a linked list... is there a better way to iterate backwards?)
+	for (; it.hasNext(); it.next());
+	for (; it.hasPrevious(); childCount++) {
+	    Object o = it.previous();
+	    if (o instanceof List) {
 		Utils.fail("No support for hierarchical streams yet");
 	    }
-	    Utils.assert(next instanceof SIRFilter, 
+	    Utils.assert(o instanceof SIRFilter, 
 			 "Can only lower filters for now, but got a " + 
-			 next.getClass() + " instead.");
-	    SIRFilter filter = (SIRFilter)next;
+			 o.getClass() + " instead.");
+	    SIRFilter filter = (SIRFilter)o;
 
 	    // register the child
 	    init.addStatementFirst(new LIRSetChild(LoweringConstants.

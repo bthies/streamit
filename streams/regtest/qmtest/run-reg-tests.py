@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.9 2004-01-08 18:48:49 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.10 2004-01-21 22:10:18 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -70,7 +70,7 @@ class RunRegTests:
         class_path = map(lambda p: os.path.join(self.streamit_home, p),
                          class_path)
         class_path = ['.',
-                      '/usr/uns/jdk1.3.1_01/jre/lib/rt.jar',
+                      '/usr/uns/jre/lib/rt.jar',
                       '/usr/uns/java/antlr.jar'] + class_path
         os.environ['CLASSPATH'] = ':'.join(class_path)
 

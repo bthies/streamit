@@ -13,11 +13,11 @@ import java.util.*;
 
 public class Renamer extends EmptyStreamVisitor 
 {
-    public static RenameAll SIRRenamer;
+    public static RenameAll renamer;
     
     static 
     {
-	SIRRenamer = new RenameAll();
+	renamer = new RenameAll();
     }
     
 
@@ -34,6 +34,6 @@ public class Renamer extends EmptyStreamVisitor
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
-	SIRRenamer.renameFilterContents(self);
+	renamer.renameFilterContents(self);
     }
 }

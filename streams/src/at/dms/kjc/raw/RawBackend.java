@@ -42,6 +42,8 @@ public class RawBackend {
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();
+
+	StreamItDot.printGraph(str, "before.dot");
 	
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running SJFusion...");
@@ -67,6 +69,8 @@ public class RawBackend {
 			     StreamItOptions.rawRows *
 			     StreamItOptions.rawColumns);
 	}
+
+	StreamItDot.printGraph(str, "after.dot");
 
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);
@@ -125,11 +129,17 @@ public class RawBackend {
 		SIROperator obj = (SIROperator)it.next();
 		if (!(obj instanceof SIRSplitter)) {
 		    int val = ((int[])executionCounts[i].get(obj))[0];
+		    //System.err.println("execution count for " + obj + ": " + val);
+		    /** This bug doesn't show up in the new version of
+		     * FM Radio - but leaving the comment here in case
+		     * we need to special case any other scheduler bugs.
+		      
 		    if (val==25) { 
 			System.err.println("Warning: catching scheduler bug with special-value "
 					   + "overwrite in RawBackend");
 			val=26;
 		    }
+		    */
 		    result[i].put(rawFlattener.getFlatNode(obj), 
 				  new Integer(val));
 		}

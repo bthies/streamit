@@ -70,7 +70,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new ArrayDestroyer());
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
-	
+
         IterFactory.createIter((SIRFilter)node.contents).accept(toC);
     }
     
@@ -188,14 +188,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    methods[i].accept(this);
 	//now print the functions with body
 	declOnly = false;
-	for (int i =0; i < methods.length; i++)
+	for (int i =0; i < methods.length; i++) {
 	    methods[i].accept(this);	
+	}
 	
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
 	print("  " + self.getInit().getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
+	if (self instanceof SIRTwoStageFilter) {
+	    print("  " + ((SIRTwoStageFilter)self).getInitWork().getName() + "();\n");
+	}
 	print("  " + self.getWork().getName() + "();\n");
 	print("}\n");
 	
@@ -251,8 +255,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
-	// !!! for now, don't generate code for initWork (TODO)
-	if (ident.endsWith("initWork")) { return; }
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);
@@ -284,23 +286,31 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    //see if this is the work function
 	    //if it is print the work header and trailer
 	    if (filter != null) {
-		if (filter.getWork() == self) {
+		boolean isWork = filter.getWork() == self;
+		boolean isInitWork = (filter instanceof SIRTwoStageFilter && 
+				      ((SIRTwoStageFilter)filter).getInitWork() == self);
+		if (isWork || isInitWork) {
+		    int pop = isWork ? filter.getPopInt() : 
+			((SIRTwoStageFilter)filter).getInitPop();
+		    int peek = isWork ? filter.getPeekInt() : 
+			((SIRTwoStageFilter)filter).getInitPeek();
 		    if (circular) {
-			printCircularWorkHeader();
+			printCircularWorkHeader(isWork, pop, peek);
 			body.accept(this);
-			printCircularWorkTrailer();
-		    }
-		    else {
-			printWorkHeader();
+			printCircularWorkTrailer(isWork, pop, peek);
+		    } else {
+			printWorkHeader(isWork, pop, peek);
 			body.accept(this);
-			printWorkTrailer();
+			printWorkTrailer(isWork, pop, peek);
 		    }
-		}
-		else 
+		} else {
+		    // not the work function
 		    body.accept(this);
-	    }
-	    else //not the work function
+		}
+	    } else {
+		// no filter?
 		body.accept(this);
+	    }
         } else {
             print(";");
         }
@@ -315,72 +325,43 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	return (int)Math.pow(2, bit);
     }
 
-    private void printCircularTwoStageInitWork() 
-    {
-	SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	/*int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
-	  two.getPeekInt();
-	  buffersize = nextPow2(buffersize + 1);
-	  print ("#define __BUFFERSIZE__ " + buffersize + "\n");
-	  print ("#define __BITS__ " + (buffersize - 1) + "\n");
-	  print(two.getInputType() + 
-	  " __buffer__[__BUFFERSIZE__];\n");*/
-	print(" for (i = 0; i < " + two.getInitPeek() + "; i++)\n");
-	print("   __buffer__[i] = ");
-	if (two.getInputType().equals(CStdType.Float))
-	    print("static_receive_f();\n");
-	else 
-	    print("static_receive();\n");
-	two.getInitWork().getBody().accept(this);
-	
-	//now 
-	 print("\n __count__ = 0;\n");
-	 if (two.getInitPeek() != two.getInitPop()) {
-	     print(" for (i = __count__ + 1 + " + (two.getInitPeek() - two.getInitPop()) + "; i < __count__ + 1 + " +
-		   two.getInitPeek() +
-		   "; i++)\n");
-	     print("   __buffer__[i & __BITS__] = ");
-	     if (two.getInputType().equals(CStdType.Float)) 
-		 print("static_receive_f();\n");
-	     else
-		 print("static_receive();\n");
-	 }
-	 print(" __count__ = -1;\n");
-    }
-    
-    private void printCircularWorkHeader() 
+    private void printCircularWorkHeader(boolean isSteadyState, int pop, int peek) 
     {
 	print("{\n");
-	if (filter.getPeekInt() > 0) {
+	print("int i;\n");
+	// don't print the header for "work" functions in a two-stage
+	// filter, since it should go in initWork instead.  Here we
+	// calculate if we're already printed this header in initWork.
+	boolean alreadyPrinted = isSteadyState && 
+	    filter instanceof SIRTwoStageFilter &&
+	    ((SIRTwoStageFilter)filter).getInitPeek() > 0;
+	if (peek > 0 && !alreadyPrinted) {
 	    //	    print("int i, __count__ = -1;\n");
-	    print("int i;\n");
-	    if (filter instanceof SIRTwoStageFilter) 
-		printCircularTwoStageInitWork();
-	    else {
-		/*int buffersize = nextPow2(filter.getPeekInt());
-		  print ("#define __BUFFERSIZE__ " + buffersize + "\n");
-		print ("#define __BITS__ " + (buffersize - 1) + "\n");
-		print(filter.getInputType() + 
-		" __buffer__[__BUFFERSIZE__];\n");*/
-		print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
-		print("   __buffer__[i] = ");
-		if (filter.getInputType().equals(CStdType.Float))
-		    print("static_receive_f();\n");
-		else 
-		    print("static_receive();\n");
-	    }
+	    /*int buffersize = nextPow2(filter.getPeekInt());
+	      print ("#define __BUFFERSIZE__ " + buffersize + "\n");
+	      print ("#define __BITS__ " + (buffersize - 1) + "\n");
+	      print(filter.getInputType() + 
+	      " __buffer__[__BUFFERSIZE__];\n");*/
+	    print(" for (i = 0; i < " + peek + "; i++)\n");
+	    print("   __buffer__[i] = ");
+	    if (filter.getInputType().equals(CStdType.Float))
+		print("static_receive_f();\n");
+	    else 
+		print("static_receive();\n");
 	}
-	print(" while (1) {\n");
+	if (isSteadyState) {
+	    print(" while (1) {\n");
+	}
 	if (debug) print("   print_int("+ Layout.getTileNumber(filter) + ");\n");
     }
     
-    private void printCircularWorkTrailer() 
+    private void printCircularWorkTrailer(boolean loop, int pop, int peek) 
     {
 	
-	if (filter.getPeekInt() > 0) {
+	if (peek > 0) {
 	    print("__count__ = __count__ & __BITS__;\n");
-	    print(" for (i = __count__ + 1 + " + (filter.getPeekInt() - filter.getPopInt()) + 
-		  "; i < __count__ + 1 + " + filter.getPeekInt() + "; i++) \n");
+	    print(" for (i = __count__ + 1 + " + (peek - pop) + 
+		  "; i < __count__ + 1 + " + peek + "; i++) \n");
 	    print("   __buffer__[i & __BITS__] = ");
 	    if (filter.getInputType().equals(CStdType.Float)) 
 		print("static_receive_f();\n");
@@ -388,76 +369,56 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print("static_receive();\n");
 	    
 	}
-	print(" }\n}\n");
+	if (loop) {
+	    print(" }\n");
+	}
+	print("}\n");
     }
     
-
-    private void printTwoStageInitWork() 
-    {
-	SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	//	int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
-	//   two.getPeekInt();
-	//	
-	//	print(two.getInputType() + 
-	//	       " buffer[" + buffersize + "];\n");
-	print(" for (i = 0; i < " + two.getInitPeek() + "; i++)\n");
-	print("   __buffer__[i] = ");
-	if (two.getInputType().equals(CStdType.Float))
-	    print("static_receive_f();\n");
-	else 
-	    print("static_receive();\n");
-	two.getInitWork().getBody().accept(this);
-	
-	//now 
-	 print("\n __count__ = 0;\n");
-	 print(" for (i = " + two.getInitPop() + "; i < " +
-	       two.getInitPeek() +
-	       "; i++)\n");
-	 print("   __buffer__[__count__++] = __buffer__[i];\n");
-	 
-	 print(" for (i = __count__; i < " + two.getPeekInt() + "; i++) \n");
-	 print("   __buffer__[i] = ");
-	 if (two.getInputType().equals(CStdType.Float)) 
-	     print("static_receive_f();\n");
-	 else
-	     print("static_receive();\n");
-	 print(" __count__ = -1;\n");
-    }
-    
-    private void printWorkHeader() 
+    private void printWorkHeader(boolean isSteadyState, int pop, int peek) 
     {
 	print("{\n");
-	if (filter.getPeekInt() > 0) {
+	print("int i;\n");
+	// don't print the header for "work" functions in a two-stage
+	// filter, since it should go in initWork instead.  Here we
+	// calculate if we're already printed this header in initWork.
+	boolean alreadyPrinted = isSteadyState && 
+	    filter instanceof SIRTwoStageFilter &&
+	    ((SIRTwoStageFilter)filter).getInitPeek() > 0;
+	if (peek > 0 && !alreadyPrinted) {
 	    //print("int i, __count__ = -1;\n");
-	    print("int i;\n");
-	    if (filter instanceof SIRTwoStageFilter) 
-		printTwoStageInitWork();
-	    else {
-		//	print(filter.getInputType() + 
-		//       " buffer[" + filter.getPeekInt() + "];\n");
-		print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
-		print("   __buffer__[i] = ");
-		if (filter.getInputType().equals(CStdType.Float))
-		    print("static_receive_f();\n");
-		else 
-		    print("static_receive();\n");
-	    }
+	    print("/* work header */\n");
+	    //	print(filter.getInputType() + 
+	    //       " buffer[" + filter.getPeekInt() + "];\n");
+	    print(" for (i = 0; i < " + peek + "; i++)\n");
+	    print("   __buffer__[i] = ");
+	    if (filter.getInputType().equals(CStdType.Float))
+		print("static_receive_f();\n");
+	    else 
+		print("static_receive();\n");
 	}
-	print(" while (1) {\n");
+	if (isSteadyState) {
+	    print(" while (1) {\n");
+	}
 	if (debug) print("   print_int("+   Layout.getTileNumber(filter) + ");\n");
     }
     
-    private void printWorkTrailer() 
+    private void printWorkTrailer(boolean loop, int pop, int peek) 
     {
-	if (filter.getPeekInt() > 0) {
+	if (peek > 0) {
 	    print("\n __count__ = 0;\n");
-	    if (filter.getPeekInt() != filter.getPopInt()) {
-		print(" for (i = " + filter.getPopInt() + "; i < " +
-		      filter.getPeekInt() +
+	    if (peek != pop) {
+		print("/* work trailer 0 */\n");
+		print(" for (i = " + pop + "; i < " +
+		      peek +
 		      "; i++)\n");
 		print("   __buffer__[__count__++] = __buffer__[i];\n");
 	    }
 	    
+	    print("/* work trailer 1 */\n");
+	    // this should be filter.peek (not initPeek) regardless of
+	    // whether we're generating code for the init or
+	    // steady-state work functions
 	    print(" for (i = __count__; i < " + filter.getPeekInt() + "; i++) \n");
 	    print("   __buffer__[i] = ");
 	    if (filter.getInputType().equals(CStdType.Float)) 
@@ -466,7 +427,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print("static_receive();\n");
 	    print(" __count__ = -1;\n");
 	}
-	print(" }\n}\n");
+	if (loop) {
+	    print(" }\n");
+	}
+	print ("}\n");
     }
     
     // ----------------------------------------------------------------------

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.33 2003-10-17 15:18:23 dmaze Exp $
+# $Id: release.sh,v 1.34 2003-10-17 16:10:06 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -101,7 +101,7 @@ rm -rf $WORKING/streams/src/at/dms/kjc/flatgraph2
 rm -rf $WORKING/streams/src/at/dms/kjc/raw2
 rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
 rm -rf $WORKING/streams/src/com
-rm -rf $WORKING/streams/src/eclipse
+rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
 
 # Some parts of the language notes we don't want to be visible

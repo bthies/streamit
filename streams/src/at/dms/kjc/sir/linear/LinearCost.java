@@ -16,10 +16,12 @@ public class LinearCost {
     private int multiplyCount;
     /** the number of adds **/
     private int addCount;
-    /** the number of elements in the matrix from which this was derived **/
-    private int originalMatrixSize;
+    /** the number of rows (peek count) in the matrix from which this was derived **/
+    private int rows;
+    /** the number of columns (push count) in the matrix from which this was derived **/
+    private int cols;
     /** LinearCost with 0 multiplies and 0 adds. **/
-    public static final LinearCost ZERO = new LinearCost(0,0,0);
+    public static final LinearCost ZERO = new LinearCost(0,0,0,0);
     
     /**
      * Note that <muls> and <adds> do NOT count
@@ -27,10 +29,11 @@ public class LinearCost {
      * gives the number of elements (including zero and one) that were
      * in the original matrix.
      */
-    public LinearCost(int muls, int adds, int originalMatrixSize) {
+    public LinearCost(int muls, int adds, int rows, int cols) {
 	this.multiplyCount = muls;
 	this.addCount = adds;
-	this.originalMatrixSize = originalMatrixSize;
+	this.rows = rows;
+	this.cols = cols;
 	checkRep();
     }
 
@@ -51,7 +54,8 @@ public class LinearCost {
     public LinearCost plus(LinearCost other) {
 	return new LinearCost(this.getMultiplies() + other.getMultiplies(), // muls
 			      this.getAdds() + other.getAdds(),
-			      this.originalMatrixSize + other.originalMatrixSize); // adds
+			      this.rows,
+			      this.cols);
     }
 
     
@@ -83,10 +87,13 @@ public class LinearCost {
      * Must be comparable to values returned by getDirectCost().
      */
     public int getFrequencyCost() {
-	// factor of 4 because above we count multilies 3 times and
-	// adds once.  Even though we only add N-1 times for a column
-	// of N, we add again for the constant vector, so it's not off
-	// by one.
-	return 4 * originalMatrixSize;
+	// Multiply by factor of 4 because above we count multilies 3
+	// times and adds once.  Even though we only add N-1 times for
+	// a column of N, we add again for the constant vector, so
+	// it's not off by one.  Then add the rows to represent the
+	// overhead of copying input items, and of doing the FFT (it
+	// might actually be cols*log(cols) or something, but
+	// disregard this.)
+	return 4 * rows * cols + rows;
     }
 }

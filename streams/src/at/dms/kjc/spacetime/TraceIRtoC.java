@@ -1812,7 +1812,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
     /**
      * prints InlineAssembly code
      */
-    public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input) {
+    public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input,String[] clobber) {
 	print("asm volatile(\"");
 	if(asm.length>0)
 	    print(asm[0]);
@@ -1823,6 +1823,12 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    print(input[0]);
 	for(int i=1;i<input.length;i++)
 	    print(","+input[i]);
+	if(clobber.length>0) {
+	    print(":\""+clobber[0]);
+	    for(int i=1;i<clobber.length;i++)
+		print("\",\""+clobber[i]);
+	    print("\"");
+	}
 	print(");");
     }
 

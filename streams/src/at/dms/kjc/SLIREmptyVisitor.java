@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.14 2003-12-08 22:34:41 dmaze Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.15 2004-06-04 16:54:52 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -404,6 +404,6 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
     /**
      * Visits InlineAssembly
      */
-    public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input) {}
+    public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input,String[] clobber) {}
 }
 

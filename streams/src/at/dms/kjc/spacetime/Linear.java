@@ -166,6 +166,16 @@ public class Linear extends BufferedCommunication implements Constants {
 	    body=new JStatement[array.length+6];
 	//Filling register with Constants
 	InlineAssembly inline=new InlineAssembly();
+	//Adding clobber
+	inline.addClobber("$1");
+	inline.addClobber("$2");
+	inline.addClobber("$3");
+	inline.addClobber("$4");
+	inline.addClobber("$5");
+	if(begin)
+	    inline.addClobber(regs[regs.length-1]);
+	for(int i=0;i<array.length+num;i++)
+	    inline.addClobber(regs[i]);
 	inline.add(".set noat");
 	int turns=pos*num; //Default number of turns
 	int extra=0; //Extra turns needed

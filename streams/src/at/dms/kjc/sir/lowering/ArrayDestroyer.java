@@ -282,7 +282,15 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
     }
 
     private JVariableDefinition toVar(JLocalVariable var,int idx) {
-	return new JVariableDefinition(null,0,((CArrayType)var.getType()).getBaseType(),var.getIdent()+"__destroyed_"+idx,null);
+	JExpression init = null;
+	// extract array initializer expression at given index.  Right
+	// now this is only designed to work when the initializer is a
+	// constant.
+	if (var instanceof JVariableDefinition && ((JVariableDefinition)var).getValue() instanceof JArrayInitializer) { 
+	    JArrayInitializer arr = (JArrayInitializer)((JVariableDefinition)var).getValue();
+	    init = arr.getElems()[idx];
+	}
+	return new JVariableDefinition(null,0,((CArrayType)var.getType()).getBaseType(),var.getIdent()+"__destroyed_"+idx,init);
     }
 
     private JFieldDeclaration toField(String name,int idx,CType type) {

@@ -52,54 +52,20 @@ public class SplitJoin extends Stream
     // add a stream to the parallel section between the splitter and the joiner
     public void Add(Stream s)
     {
-        Channel newInput = s.GetIOField ("input");
-        Channel newOutput = s.GetIOField ("output");
-        
         ASSERT (joiner == null);
-        
-        // figure out the input and output types
-        if (newInput != null)
-        {
-            if (input == null)
-            {
-                input = new Channel (newInput);
-                ASSERT (input != null);
-            } else {
-                // check that the input types agree
-                ASSERT (newInput.GetType ().getName ().equals (input.GetType ().getName ()));
-            }
-        }
-        
-        if (newOutput != null)
-        {
-            if (output == null)
-            {
-                output = new Channel (newOutput);
-                ASSERT (output != null);
-            } else {
-                // check that the output types agree
-                ASSERT (newOutput.GetType ().getName ().equals (output.GetType ().getName ()));
-            }
-        }
-        
+
         // add the stream to the Split
         if (splitter != null)
         {
             splitter.Add (s);
-        } else {
-            ASSERT (newInput == null);
         }
 
-        if (newOutput != null) 
+        // save the stream to add to the Join
+        if (outputStreams == null)
         {
-            if (outputStreams == null)
-            {
-                outputStreams = new LinkedList ();
-            }
-            outputStreams.add (s);
+            outputStreams = new LinkedList ();
         }
-            
-        
+        outputStreams.add (s);
     }
     
     public void ConnectGraph ()

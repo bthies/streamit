@@ -27,6 +27,7 @@ public class Joiner extends Operator
 
     LinkedList srcs = new LinkedList ();
     int [] srcsWeight;
+    int inputIndex = 0, inputCount = 0;
     
     public Channel input [] = null;
     public Channel output = null;
@@ -71,16 +72,21 @@ public class Joiner extends Operator
                 if (output == null)
                 {
                     output = new Channel (channel);
+                    output.SetSource (this);
                 } else {
                     // check that the input types agree
                     ASSERT (channel.GetType ().getName ().equals (output.GetType ().getName ()));
                 }
+                
+                // now connect the channel to me
+                channel.SetSink (this);
+                
+                ASSERT (srcsWeight [inputIndx] > 0);
+            } else 
+            {
+                ASSERT (srcsWeight [inputIndx] == 0);
             }
 
-            // now connect the in and out
-            channel.SetSource (s);
-            channel.SetSink (this);
-            
             inputIndx ++;
         }
     }

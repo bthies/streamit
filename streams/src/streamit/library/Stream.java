@@ -22,7 +22,7 @@ public class Stream extends Operator
     public Stream(int n) 
     {
         StreamInit ();
-	    Init(n);
+	Init(n);
     }
 
     public Stream(String str) 
@@ -34,7 +34,7 @@ public class Stream extends Operator
     public Stream(Stream str) 
     {
         StreamInit ();
-	    Init(str);
+	Init(str);
     }
 
     // INIT FUNCTIONS ---------------------------------------------------------------------
@@ -140,12 +140,6 @@ public class Stream extends Operator
         // make sure I have some elements - not sure what to do otherwise
         ASSERT (streamElements.isEmpty () == false);
         
-        // set myself up with proper input and output
-        {
-            input = ((Stream)streamElements.getFirst ()).GetIOField ("input");
-            output = ((Stream)streamElements.getFirst ()).GetIOField ("output");
-        }
-        
         // go through the list and connect it together:
         try
         {
@@ -169,10 +163,6 @@ public class Stream extends Operator
                     Channel in = source.GetIOField ("output");
                     Channel out = sink.GetIOField ("input");
                     connect.UseChannels (in, out);
-                    
-                    // connect the channels to their filters
-                    in.SetSource (source);
-                    out.SetSink (sink);
                 } else
                 {
                     ASSERT (sink.GetIOField ("input") == null);
@@ -184,6 +174,12 @@ public class Stream extends Operator
         {
             // this should never happen
             ASSERT (false);
+        }
+
+        // set myself up with proper input and output
+        {
+            input = ((Stream)streamElements.getFirst ()).GetIOField ("input");
+            output = ((Stream)streamElements.getFirst ()).GetIOField ("output");
         }
     }
 

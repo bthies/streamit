@@ -28,11 +28,22 @@ public abstract class Filter extends Stream
     
     // ConnectGraph doesn't connect anything for a Filter,
     // but it can register all sinks:
+    // also make sure that any input/output point to the filter itself
     public void ConnectGraph ()
     {
-        if (GetIOField ("output") == null)
+        Channel myInput = GetIOField ("input");
+        Channel myOutput = GetIOField ("output");
+        
+        if (myOutput != null)
         {
+            myOutput.SetSource (this);
+        } else {
             AddSink ();
+        }
+        
+        if (myInput != null)
+        {
+            myInput.SetSink (this);
         }
     }
 

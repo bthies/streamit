@@ -70,15 +70,19 @@ public abstract class Splitter extends Operator
                 if (input == null)
                 {
                     input = new Channel (channel);
+                    input.SetSink (this);
                 } else {
                     // check that the input types agree
                     ASSERT (channel.GetType ().getName ().equals (input.GetType ().getName ()));
                 }
+                
+                // now connect the channel to the Splitter
+                channel.SetSource (this);
+                
+                ASSERT (((Integer)destWeight.get (outputIndx)).intValue () > 0);
+            } else {
+                ASSERT (((Integer)destWeight.get (outputIndx)).intValue () == 0);
             }
-            
-            // now connect the in and out
-            channel.SetSource (this);
-            channel.SetSink (s);
             
             outputIndx ++;
         }

@@ -7,6 +7,13 @@ public class RoundRobinJoiner extends Joiner {
     
     public void Work ()
     {
-        ASSERT (false);
+        while (inputCount == srcsWeight [inputIndex])
+        {
+            inputCount = 0;
+            inputIndex = (inputIndex + 1) % srcs.size ();
+        }
+        
+        PassOneData (input [inputIndex], output);
+        inputCount++;
     }
 }

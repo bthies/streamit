@@ -4,15 +4,10 @@ public class RoundRobinSplitter extends Splitter
 {
     public void Work ()
     {
-        if (outputCount == ((Integer)destWeight.get (outputIndex)).intValue ())
+        while (outputCount == ((Integer)destWeight.get (outputIndex)).intValue ())
         {
             outputCount = 0;
-            outputIndex++;
-        }
-        
-        if (outputIndex == dest.size ())
-        {
-            outputIndex = 0;
+            outputIndex = (outputIndex + 1) % dest.size ();
         }
         
         PassOneData (input, output [outputIndex]);

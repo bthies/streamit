@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   W_im = (double*)malloc(sizeof(double)*n/2); 
   assert(A_re != NULL && A_im != NULL && W_re != NULL && W_im != NULL); 
   
-  for (i=0; i<1000000; i++) {
+  for (i=0; i<10000000; i++) {
     init_array(n, A_re, A_im); 
     compute_W(n, W_re, W_im); 
     fft(n, A_re, A_im, W_re, W_im);

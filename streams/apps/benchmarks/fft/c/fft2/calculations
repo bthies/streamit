@@ -15,3 +15,11 @@ flops reported are 11390 flops, which is (11390/85057) * 250 = 33.47755 MFLOPS
 workCount = 1387868 / 1422512 = 0.9756459
 workCount = 1329065 / 1360912 = 0.97659878
 workCount = 1329065 / 1360912 = 0.97659878
+
+Uniprocessor (7/29/2002):
+(Xenon 2.2 GHz, 512MB cache)
+10 million iterations (128 outputs/iteration)
+99.% utilization
+runtime for 10^7 iterations = 226.36 seconds
+We want cycles/iteration:
+226.36 sec/10^7 iterations * 128 outputs/1 iteration * 10^5/10^7 outputs * 2.2x10^9 cycles/sec = 6296.576 thoruhgput

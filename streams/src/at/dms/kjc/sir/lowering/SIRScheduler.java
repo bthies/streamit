@@ -178,6 +178,7 @@ public class SIRScheduler implements Constants {
 	// get the schedule
 	StreamInterface schedInterface = computeSchedule(this.toplevel);
 	// debugging printing
+	System.err.print("got schedule, interpreting... ");
 	//printSchedules(schedInterface);
 	// do steady-state scheduling
 	scheduleSteady(schedInterface);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CCompilationUnit.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CCompilationUnit.java,v 1.2 2002-08-16 20:47:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -27,7 +27,7 @@ import at.dms.compiler.UnpositionedError;
 /**
  * This class represents a compilation unit
  */
-public class CCompilationUnit {
+public class CCompilationUnit implements java.io.Serializable {
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS

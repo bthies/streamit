@@ -174,12 +174,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	addVisitedOp("Identity", sirId);
     }	
 		     
-						    
-	
-
     private void addVisitedOp(String className, SIROperator sirop)  {
+	/* Don't worry about duplicates; this will be caught by the
+	 * type checker of Kopi, since you can only have one Java
+	 * class defined per package.  In the case of recursive
+	 * streams, adding an op a second time will obliterate the
+	 * first one, although nothing should rely on this.
+	 * 
 	if (visitedSIROps.get(className) != null)
 	    at.dms.util.Utils.fail("Duplicate Definition of " + className);
+	*/
 	visitedSIROps.put(className, sirop);
     }
 
@@ -187,11 +191,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     {
 	SIROperator visitedOp=(SIROperator)visitedSIROps.get(className);
 	if((visitedOp instanceof SIRContainer)&&(searchList.contains(className))) {
+	    /*
 	    at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
 				       className);
-	    SIRContainer out=(SIRContainer)ObjectDeepCloner.deepCopy((SIRContainer)visitedOp);
-	    out.setRecurse((Kopi2SIR)this.clone());
-	    return out;
+	    */
+	    SIRRecursiveStub stub = new SIRRecursiveStub(className,
+							 (Kopi2SIR)this.clone());
+	    return stub;
 	}
 	if (visitedOp!=null) {
 	    return visitedOp;
@@ -205,32 +211,41 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
 				       className);
 	    }
-	    //add this class name to the list of streams we are resolving
-	    searchList.add(className);
-	    for (int unit = 0; unit < application.length; unit++) {
-		JTypeDeclaration[] decls = application[unit].getTypeDeclarations();
-		for (int i = 0; i < decls.length; i++) {
-		    if (decls[i] instanceof JClassDeclaration) {
-			//if this class declaration is a match, visit it and 
-			//get the SIRStream
-			if (((JClassDeclaration)decls[i]).
-			    getSourceClass().getIdent().equals(className)) {
-			    //visit the class declaration and return the stream
-			    SIROperator sir = (SIROperator)decls[i].accept(this);
-			    //visitClassDecl will add the stream to the table
-			    
-			    //remove the name from the resolve list
-			    searchList.remove(className);
-			    //return the stream
-			    return sir;
-			}
+	    return searchForOp(className);
+	}
+	at.dms.util.Utils.fail(lineNumber + ": Cannot find declaration of stream " +
+			       className);
+	return null;
+    }
+
+    /**
+     * Searches for <className> and returns associated op.  Does not
+     * worry about anything recursive--should call getVisitedOp in the
+     * general case.
+     */
+    public SIROperator searchForOp(String className) {
+	//add this class name to the list of streams we are resolving
+	searchList.add(className);
+	for (int unit = 0; unit < application.length; unit++) {
+	    JTypeDeclaration[] decls = application[unit].getTypeDeclarations();
+	    for (int i = 0; i < decls.length; i++) {
+		if (decls[i] instanceof JClassDeclaration) {
+		    //if this class declaration is a match, visit it and 
+		    //get the SIRStream
+		    if (((JClassDeclaration)decls[i]).
+			getSourceClass().getIdent().equals(className)) {
+			//visit the class declaration and return the stream
+			SIROperator sir = (SIROperator)decls[i].accept(this);
+			//visitClassDecl will add the stream to the table
+			
+			//remove the name from the resolve list
+			searchList.remove(className);
+			//return the stream
+			return sir;
 		    }
 		}
 	    }
 	}
-	
-	at.dms.util.Utils.fail(lineNumber + ": Cannot find declaration of stream " +
-			       className);
 	return null;
     }
     
@@ -1654,6 +1669,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 				       ((JUnqualifiedInstanceCreation)SIROp).
 				       getType().getCClass().getIdent());
 
+	    // don't clone recursive stubs
 	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
 	    //if this is a builtin filter, set the args
 	    setBuiltinArgs(newST, ((JUnqualifiedInstanceCreation)SIROp).getParams());

@@ -155,10 +155,12 @@ class ToJava
 
             for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
             {
-                InputStream inStream = new FileInputStream((String)iter.next());
+                String fileName = (String)iter.next();
+                InputStream inStream = new FileInputStream(fileName);
                 DataInputStream dis = new DataInputStream(inStream);
                 StreamItLex lexer = new StreamItLex(dis);
                 parser = new StreamItParserFE(lexer);
+                parser.fileName = fileName;
                 prog = parser.program();
                 /* What's the right order for these?  Clearly generic
                  * things like MakeBodiesBlocks need to happen first.

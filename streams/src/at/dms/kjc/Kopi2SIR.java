@@ -110,18 +110,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //when they are added, they will be cloned and any parameters that need to be set
     //will be set...
     private void initBuiltinFilters() {
-	addVisitedOp("FileReader", new SIRFileReader(null, 
-						     new JIntLiteral(null, 0),
-						     new JIntLiteral(null, 0),
-						     new JIntLiteral(null, 1),
-						     null, 
-						     ""));
-	addVisitedOp("FileWriter", new SIRFileWriter(null, 
-						     new JIntLiteral(null, 0),
-						     new JIntLiteral(null, 1),
-						     new JIntLiteral(null, 0),
-						     null, 
-						     ""));
+	SIRFileReader fr = new SIRFileReader(null, 
+					     new JIntLiteral(null, 0),
+					     new JIntLiteral(null, 0),
+					     new JIntLiteral(null, 1),
+					     null, 
+					     "");
+	fr.setMethods(JMethodDeclaration.EMPTY);
+	fr.setFields(JFieldDeclaration.EMPTY);
+	addVisitedOp("FileReader", fr);
+	
+	SIRFileWriter fw = new SIRFileWriter(null, 
+					     new JIntLiteral(null, 1),
+					     new JIntLiteral(null, 1),
+					     new JIntLiteral(null, 0),
+					     null, 
+					     "");
+	fw.setMethods(JMethodDeclaration.EMPTY);
+	fw.setFields(JFieldDeclaration.EMPTY);
+	addVisitedOp("FileWriter", fw);
     }	
 		     
 						    

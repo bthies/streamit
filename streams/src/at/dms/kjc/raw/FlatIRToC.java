@@ -15,6 +15,7 @@ import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
+import at.dms.util.SIRPrinter;
 
 /**
  * This class dumps the tile code for each filter into a file based 
@@ -91,6 +92,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new ArrayDestroyer());
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
+	/*	
+	  try {
+	    SIRPrinter printer1 = new SIRPrinter();
+	    IterFactory.createIter((SIRFilter)node.contents).accept(printer1);
+	    printer1.close();
+	}
+	catch (Exception e) 
+	    {
+	    }
+	*/
 
         IterFactory.createIter((SIRFilter)node.contents).accept(toC);
     }
@@ -980,6 +991,35 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     }
 
     /**
+     * Generates code to receive an array type into the buffer
+     **/
+    public void popArray(JExpression arg) 
+    {
+	String dims[] = Util.makeString(((CArrayType)filter.getInputType()).getDims());
+	
+	//print the array indices
+	for (int i = 0; i < dims.length; i++) {
+	    print("for (" + RawExecutionCode.ARRAY_INDEX + i + " = 0; " +
+		  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
+		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
+	}
+	
+	print("{");
+	//print out the receive assembly
+	print(Util.staticNetworkReceivePrefix());
+	//print out the buffer variable and the index
+	arg.accept(this);
+	//now append the remaining dimensions
+	for (int i = 0; i < dims.length; i++) {
+		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+	    }
+	//finish up the receive assembly
+	print(Util.staticNetworkReceiveSuffix(((CArrayType)filter.getInputType()).getBaseType()));
+	print("}");
+    }
+    
+
+    /**
      * prints a method call expression
      */
     public void visitMethodCallExpression(JMethodCallExpression self,
@@ -1007,6 +1047,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    visitArgs(args,0);
 	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
 	    return;  
+	}
+	
+	//we are receiving an array type, call the popArray method
+	if (ident.equals(RawExecutionCode.arrayReceiveMethod)) {
+	    popArray(args[0]);
+	    return;
 	}
 	
         print(ident);
@@ -1200,11 +1246,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(")");
 	    return;
  	}
-	
+
 	if ((left.getType().isArrayType()) &&
 	     ((right.getType().isArrayType() || right instanceof SIRPopExpression) &&
 	      !(right instanceof JNewArrayExpression))) {
-	    
+	    	    
 	    String ident = "";
 	    	    
 	    if (left instanceof JFieldAccessExpression) 

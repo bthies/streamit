@@ -58,6 +58,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 
 	joinerCode = initJoinerCode;
+	
 	//	System.out.println("\n\nInit Execution Counts");
 	//RawBackend.printCounts(RawBackend.initExecutionCounts);
 	
@@ -305,7 +306,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
 	}
 	
-	//create the appropriate amount of rou
+	//create the appropriate amount of routing instructions
 	int elements = Util.getTypeSize(Util.getOutputType(fire));
 	for (int i = 0; i < elements; i++)
 	    asm(Layout.getTile(fire), prev, next);

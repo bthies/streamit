@@ -102,9 +102,9 @@ public class Util extends at.dms.util.Utils {
 		int elements = 1;
 		int dims[] = Util.makeInt(((CArrayType)type).getDims());
 		
-		for (int i = 0; i < dims.length; i++) 
+		for (int i = 0; i < dims.length; i++) {
 		    elements *= dims[i];
-		
+		}
 		return elements;
 	    }
 	else if (type.isClassType()) {

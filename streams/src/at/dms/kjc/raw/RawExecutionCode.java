@@ -43,6 +43,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     
     public static String receiveMethod = "static_receive_to_mem";
     public static String structReceiveMethodPrefix = "__popPointer";
+    public static String arrayReceiveMethod = "__array_receive__";
 
     public static String rawMain = "__RAWMAIN__";
     
@@ -321,16 +322,18 @@ public class RawExecutionCode extends at.dms.util.Utils
     private JExpression bufferInitExp(SIRFilter filter, CType inputType,
 				      int buffersize) 
     {
+	//this is an array type
 	if (inputType.isArrayType()) {
 	    CType baseType = ((CArrayType)inputType).getBaseType();
 	    //create the array to hold the dims of the buffer
 	    JExpression baseTypeDims[] = ((CArrayType)inputType).getDims();
+	    //the buffer is an array itself, so add one to the size of the input type
 	    JExpression[] dims =  new JExpression[baseTypeDims.length + 1];
 	    //the first dim is the buffersize
 	    dims[0] = new JIntLiteral(buffersize);
 	    //copy the dims for the basetype
-	    for (int i = 1; i < dims.length; i++)
-		dims[i] = baseTypeDims[i];
+	    for (int i = 0; i < baseTypeDims.length; i++)
+		dims[i+1] = baseTypeDims[i];
 	    
 	    return new JNewArrayExpression(null, baseType, dims, null);
 	}
@@ -488,39 +491,39 @@ public class RawExecutionCode extends at.dms.util.Utils
 						   recvBufVar, 
 						   null));
 	    
+	}
+	
+	//print the declarations for the array indices for pushing and popping
+	//if this filter deals with arrays
+	if (filter.getInputType().isArrayType() || 
+	    filter.getOutputType().isArrayType()) {
+	    int inputDim = 0, outputDim = 0, maxDim;
+	    //find which array has the greatest dimensionality	   
+	    if (filter.getInputType().isArrayType())
+		inputDim = 
+		    ((CArrayType)filter.getInputType()).getArrayBound();
+	    if (filter.getOutputType().isArrayType()) 
+		outputDim = 
+		    ((CArrayType)filter.getOutputType()).getArrayBound();
+	    maxDim = (inputDim > outputDim) ? inputDim : outputDim;
 	    
-	    //print the declarations for the array indices for pushing and popping
-	    //if this filter deals with arrays
-	    if (filter.getInputType().isArrayType() || 
-		filter.getOutputType().isArrayType()) {
-		int inputDim = 0, outputDim = 0, maxDim;
-		//find which array has the greatest dimensionality	   
-		if (filter.getInputType().isArrayType())
-		    inputDim = 
-			((CArrayType)filter.getInputType()).getArrayBound();
-		if (filter.getOutputType().isArrayType()) 
-		    outputDim = 
-			((CArrayType)filter.getOutputType()).getArrayBound();
-		maxDim = (inputDim > outputDim) ? inputDim : outputDim;
-
-		localVariables.ARRAY_INDEX = new JVariableDefinition[maxDim];
-				
-		//create enough index vars as max dim
-		for (int i = 0; i < maxDim; i++) {
-		    JVariableDefinition arrayIndexVar = 
-			new JVariableDefinition(null, 
-						0, 
-						CStdType.Integer,
-						ARRAY_INDEX + i,
-						null);
-		    //remember the array index vars
-		    localVariables.ARRAY_INDEX[i] = arrayIndexVar;
-		    
-		    block.addStatement
-			(new JVariableDeclarationStatement(null,
-							   arrayIndexVar, 
-							   null));
-		}
+	    localVariables.ARRAY_INDEX = new JVariableDefinition[maxDim];
+	    
+	    //create enough index vars as max dim
+	    for (int i = 0; i < maxDim; i++) {
+		JVariableDefinition arrayIndexVar = 
+		    new JVariableDefinition(null, 
+					    0, 
+					    CStdType.Integer,
+					    ARRAY_INDEX + i,
+					    null);
+		//remember the array index vars
+		localVariables.ARRAY_INDEX[i] = arrayIndexVar;
+		
+		block.addStatement
+		    (new JVariableDeclarationStatement(null,
+						       arrayIndexVar, 
+						       null));
 	    }
 	}
     }
@@ -829,12 +832,13 @@ public class RawExecutionCode extends at.dms.util.Utils
 
 	JBlock statements = new JBlock(null, new JStatement[0], null);
 	
-	//if it is not a scalar receive chane the name to the appropriate 
+	//if it is not a scalar receive change the name to the appropriate 
 	//method call, from struct.h
-	if (type.isClassType()) 
+	if (type.isArrayType()) 
+	    receiveMethodName = arrayReceiveMethod;
+	else if (type.isClassType()) {
 	    receiveMethodName = structReceiveMethodPrefix  + type.toString();
-	else if (type.isArrayType()) 
-	    receiveMethodName = "something";
+	}
 
 	//create the array access expression to access the buffer 
 	JArrayAccessExpression arrayAccess = 

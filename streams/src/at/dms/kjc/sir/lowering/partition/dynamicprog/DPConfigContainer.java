@@ -285,7 +285,6 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// if we've exceeded the width of this node, then trim down to actual width
 	if (x2>maxWidth[y1][y2]-1) {
-if(debug){System.err.println(1);}
 	    x2 = maxWidth[y1][y2]-1;
 	}
 
@@ -296,14 +295,12 @@ if(debug){System.err.println(1);}
 	      System.err.println("Found memoized A[" + child1 + "][" + child2 + "][" + tileLimit + "] = " + 
 	      A[child1][child2][tileLimit] + " for " + cont.getName());
 	    */
-if(debug){System.err.println(3);}
 	    return new DPCost(A[x1][x2][y1][y2][tileLimit][nextToJoiner],
 			      B[x1][x2][y1][y2][tileLimit][nextToJoiner]);
 	}
 
 	// if we are down to one child, then descend into child
 	if (x1==x2 && y1==y2) {
-if(debug){System.err.println(4);}
 	    DPCost childCost = childConfig(x1, y1).get(tileLimit, nextToJoiner); 
 	    A[x1][x2][y1][y2][tileLimit][nextToJoiner] = childCost.getMaxCost();
 	    B[x1][x2][y1][y2][tileLimit][nextToJoiner] = childCost.getSumCost();
@@ -314,7 +311,6 @@ if(debug){System.err.println(4);}
 	// otherwise, if <tileLimit> is 1, then just sum the work
 	// of our components
 	if (tileLimit==1) {
-if(debug){System.err.println(5);}
 	    /*
 	    int sum=0;
 	    for (int x=y1; x<=y2; x++) {
@@ -352,7 +348,6 @@ if(debug){System.err.println(5);}
 	Utils.assert(tileLimit>1);
 	if (tilesAvail==1) {
 	    // must have added a joiner if you've gotten to this point
-if(debug){System.err.println(6);}
 	    DPCost cost = get(x1, x2, y1, y2, tilesAvail, 1);
 	    A[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getMaxCost();
 	    B[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getSumCost();
@@ -363,7 +358,6 @@ if(debug){System.err.println(6);}
 	// see if we can do a vertical cut -- first, that there
 	// are two streams to cut between
 	boolean tryVertical = x1<x2 && sameWidth[y1][y2];
-if(debug){System.err.println(7);}
 
 	// then, if we're starting on a pipeline, and have more than
 	// one row, and this is our first vertical cut, that we can
@@ -371,7 +365,6 @@ if(debug){System.err.println(7);}
 	boolean firstVertCut = x1==0 && x2==width[y1]-1;
 	if (tryVertical && y1<y2) {
 	    if (cont instanceof SIRPipeline && firstVertCut) {
-if(debug){System.err.println(8);}
 		// make a copy of pipeline, to see if we can remove
 		// the sync.
 		SIRPipeline copy = new SIRPipeline(cont.getParent(),cont.getIdent()+"_copy");
@@ -396,18 +389,13 @@ if(debug){System.err.println(8);}
 	int minCost = Integer.MAX_VALUE;
 	int minSum = Integer.MAX_VALUE;
 	if (tryVertical) {
-if(debug){System.err.println(9);}
 	    for (int xPivot=x1; xPivot<x2; xPivot++) {
 		for (int tPivot=1; tPivot<tilesAvail; tPivot++) {
 		    DPCost cost1 = getWithFusionOverhead(x1, xPivot, y1, y2, tPivot, 1);
 		    DPCost cost2 = getWithFusionOverhead(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1);
 		    int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
 		    int sum = cost1.getSumCost() + cost2.getSumCost();
-		    if (x1==0&&x2==2&&y1==3&&y2==5) {
-			System.err.println("VERT xPivot=" + xPivot + " tPivot=" + tPivot + " cost=" + cost + " sum=" + sum);
-		    }
 		    if (cost < minCost || (cost==minCost && sum < minSum)) {
-			if (cost==minCost) System.err.println("tiebreaker for " + callStr);
 			//System.err.println("possible vertical cut at x=" + xPivot + " from y=" + y1 + " to y=" + y2 + " in " + cont.getName());
 			minCost = cost;
 			minSum = sum;
@@ -421,18 +409,13 @@ if(debug){System.err.println(9);}
 	// have for the bottom piece of the cut, but the top piece
 	// will need to make its own joiner.  The arguments are thus
 	// false (0) for the top, and true (1) for the bottom.
-if(debug){System.err.println(10);}
 	for (int yPivot=y1; yPivot<y2; yPivot++) {
 	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
 		DPCost cost1 = getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0);
 		DPCost cost2 = getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner);
 		int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
 		int sum = cost1.getSumCost() + cost2.getSumCost();
-		    if (x1==0&&x2==2&&y1==3&&y2==5) {
-			System.err.println("HORIZ yPivot=" + yPivot + " tPivot=" + tPivot + " cost=" + cost + " (= " + cost1.getMaxCost() + " + " + cost2.getMaxCost() + ") sum=" + sum + " (=" + cost1.getSumCost() + " + " + cost2.getSumCost() + ") (for total of " + tileLimit + " tiles, nextToJoiner=" + nextToJoiner + ")");
-		    }
 		if (cost < minCost || (cost==minCost && sum < minSum)) {
-		    if (cost==minCost) System.err.println("tiebreaker for " + callStr);
 		    //System.err.println("possible horizontal cut at y=" + yPivot + " from x=" + x1 + " to x=" + x2 + " in " + cont.getName());
 		    minCost = cost;
 		    minSum = sum;
@@ -440,13 +423,8 @@ if(debug){System.err.println(10);}
 	    }
 	}
 
-if(debug){System.err.println(11);}
 	Utils.assert(minCost!=Integer.MAX_VALUE, "Failed to make cut on container: " + cont.getName());
 
-	if (x1==0&&x2==2&&y1==3&&y2==5) {
-	    System.err.println("MINCOST=" + minCost + " minSum=" + minSum);
-	}
-	
 	A[x1][x2][y1][y2][tileLimit][nextToJoiner] = minCost;
 	B[x1][x2][y1][y2][tileLimit][nextToJoiner] = minSum;
 	return new DPCost(minCost, minSum);
@@ -589,9 +567,6 @@ if(debug){System.err.println(11);}
 		    DPCost cost2 = getWithFusionOverhead(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1);
 		    int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
 		    int sum = cost1.getSumCost() + cost2.getSumCost();
-		    if (x1==0&&x2==2&&y1==3&&y2==5) {
-			System.err.println("VERT xPivot=" + xPivot + " tPivot=" + tPivot + " cost=" + cost + " sum=" + sum);
-		    }
 		    if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner] &&
 			sum ==B[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 			// there's a division at this <xPivot>.  We'll
@@ -632,9 +607,6 @@ if(debug){System.err.println(11);}
 		DPCost cost2 = getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner);
 		int cost = Math.max(cost1.getMaxCost(), cost2.getMaxCost());
 		int sum = cost1.getSumCost() + cost2.getSumCost();
-		    if (x1==0&&x2==2&&y1==3&&y2==5) {
-			System.err.println("HORIZ yPivot=" + yPivot + " tPivot=" + tPivot + " cost=" + cost + " sum=" + sum);
-		    }
 		if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner] &&
 		    sum ==B[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 		    debugMessage("splitting horizontal range " + y1 + "-" + y2 + " into " + y1 + "-" + yPivot + "(" + getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0).getMaxCost() + ")" + 

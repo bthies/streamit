@@ -420,9 +420,9 @@ public class SpaceTimeBackend
 	    Rawify.run(steadyTrav, rawChip, false);
 	    //communicate the addresses for the off-chip buffers
 	    if (!KjcOptions.magicdram) {
-				//so right now, this pass does not communicate addresses
-				//but it generates the declarations of the buffers
-				//on the corresponding tile.
+		//so right now, this pass does not communicate addresses
+		//but it generates the declarations of the buffers
+		//on the corresponding tile.
 		CommunicateAddrs.doit(rawChip);
 	    }
 	    //generate the switch code assembly files...

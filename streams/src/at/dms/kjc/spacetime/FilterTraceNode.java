@@ -57,20 +57,6 @@ public class FilterTraceNode extends TraceNode
     public FilterContent getFilter() {
 	return filter;
     }
-
-    public int getInitMult() {
-	return filter.getInitMult();
-    }
-
-    public int getPrimePumpMult() 
-    {
-	return filter.getPrimePump();
-    }
-
-    public int getSteadyMult() {
-	return filter.getSteadyMult();
-    }
-
     public String toString() {
 	return filter.toString();
     }
@@ -84,6 +70,25 @@ public class FilterTraceNode extends TraceNode
     {
 	return (filter instanceof FileOutputContent);
     }
+
+        /*
+	  THESE FUNCTIONS SHOULD NOT BE CALLED
+	  USE FILTERINFO
+
+    public int getInitMult() {
+	return filter.getInitMult();
+    }
+
+    public int getPrimePumpMult() 
+    {
+	return filter.getPrimePump();
+    }
+
+    public int getSteadyMult() {
+	return filter.getSteadyMult();
+    }
+    */
+
 }
 
 

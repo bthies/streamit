@@ -162,19 +162,19 @@ public class Util {
     {
 	int itemsReceived, itemsSent;
 	//calculate the items the input trace receives
-	FilterTraceNode next = (FilterTraceNode)in.getNext();
-	itemsSent = (int)((next.getSteadyMult() * next.getFilter().getPopInt()) *
+	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
+	itemsSent = (int)((next.steadyMult * next.pop) *
 	    ((double)in.getWeight(out) / in.totalWeights()));
 	
 	//calculate the items the output trace sends
-	FilterTraceNode prev = (FilterTraceNode)out.getPrevious();
-	itemsReceived = (int)((prev.getSteadyMult() * prev.getFilter().getPushInt()) *
+	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
+	itemsReceived = (int)((prev.steadyMult * prev.push) *
 	    ((double)out.getWeight(in) / out.totalWeights()));
 	//see if they are different
 	if (itemsSent != itemsReceived)
 	    Utils.fail("Calculating steady state: items received != items send on buffer");
 	
-	return itemsSent * getTypeSize(next.getFilter().getInputType());
+	return itemsSent * getTypeSize(next.filter.getInputType());
     }
     
     //the size of the buffer between in / out for the init stage
@@ -208,11 +208,11 @@ public class Util {
 
 	//calculate the items the output trace sends, because
 	//the downstream filter may not receive them all
-	FilterTraceNode prev = (FilterTraceNode)out.getPrevious();
-	itemsReceived = (int)((prev.getPrimePumpMult() * prev.getFilter().getPushInt()) *
+	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
+	itemsReceived = (int)((prev.primePump * prev.push) *
 	    ((double)out.getWeight(in) / out.totalWeights()));
 
-	return itemsReceived * getTypeSize(prev.getFilter().getOutputType());
+	return itemsReceived * getTypeSize(prev.filter.getOutputType());
     }
     
     public static int magicBufferSize(InputTraceNode in, 

@@ -20,6 +20,8 @@ public class FilterInfo
     public int steadyMult;
     public int push;
     public int pop;
+    //so here primepump is the number of times
+    //the filter executes in the primepump stage
     public int primePump;
     public int peek;
 
@@ -53,9 +55,12 @@ public class FilterInfo
     {
 	filter = traceNode.getFilter();
 	this.traceNode = traceNode;
-	this.steadyMult = traceNode.getSteadyMult();
-	this.initMult = traceNode.getInitMult();
-	this.primePump = filter.getPrimePump();
+	this.steadyMult = filter.getSteadyMult();
+	this.initMult = filter.getInitMult();
+	//multiply the primepump number by the
+	//steady state multiplicity to get the true 
+	//primepump multiplicity
+	this.primePump = filter.getPrimePump() * this.steadyMult;
 	prePeek = 0;
 	prePush = 0;
 	prePop = 0;

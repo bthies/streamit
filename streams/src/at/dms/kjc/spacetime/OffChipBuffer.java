@@ -130,26 +130,26 @@ public class OffChipBuffer
 	if (source.isFilterTrace()) {
 	    //the size is the max of the multiplicities
 	    //times the push rate
-	    FilterTraceNode node = (FilterTraceNode)source;
-	    int maxItems = Math.max(node.getInitMult(),
-				    Math.max(node.getInitMult(), node.getPrimePumpMult()));
-	    maxItems *= node.getFilter().getPushInt();
+	    FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode)source);
+	    int maxItems = Math.max(fi.initMult,
+				    Math.max(fi.primePump, fi.steadyMult));
+	    maxItems *= fi.push;
 	    //account for the initpush
-	    if (node.getFilter().getPushInt() < node.getFilter().getInitPush())
-		maxItems += (node.getFilter().getInitPush() - node.getFilter().getPushInt());
+	    
+	    if (fi.push < fi.prePush)
+		maxItems += (fi.prePush - fi.push);
 	    size = (Address.ZERO.add(maxItems)).add32Byte(0);
 	}
 	else if (dest.isFilterTrace())
 	{
 	    //this is not a perfect estimation but who cares
-	    FilterTraceNode node = (FilterTraceNode)dest;
-	    int maxItems = Math.max(node.getInitMult(),
-				    Math.max(node.getInitMult(), node.getPrimePumpMult()));
+	    FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode)dest);
+	    int maxItems = Math.max(fi.steadyMult,
+				    Math.max(fi.initMult, fi.primePump));
 	   
-	    maxItems *= node.getFilter().getPopInt();
+	    maxItems *= fi.pop;
 	    //now account for initpop, initpeek, peek
-	    maxItems += (node.getFilter().getInitPeek() + node.getFilter().getInitPop() +
-			node.getFilter().getPeekInt());
+	    maxItems += (fi.prePeek + fi.prePop + fi.prePeek);
 	    
 	    size = (Address.ZERO.add(maxItems)).add32Byte(0);
 	}

@@ -931,21 +931,7 @@ public class Propagator extends SLIRReplacingVisitor {
 					    int oper,
 					    JExpression left,
 					    JExpression right) {
-	JExpression newLeft = (JExpression) left.accept(this);
-	JExpression newRight = (JExpression) right.accept(this);
-	if(write) {
-	    if (newLeft!=left) {
-		self.setLeft(newLeft);
-	    }
-	    if (newRight!=right) {
-		self.setRight(newRight);
-	    }
-	    // return the evaluated relational expression if both sides are constant
-	    if (newLeft.isConstant() && newRight.isConstant()) {
-		return self.constantFolding();
-	    }
-	}
-	return self;
+	return doBinaryExpression(self, left, right);
     }
 
     /**
@@ -955,10 +941,17 @@ public class Propagator extends SLIRReplacingVisitor {
 					     JExpression cond,
 					     JExpression left,
 					     JExpression right) {
-	cond.accept(this);
+	JExpression newCond = (JExpression)cond.accept(this);
 	JExpression newLeft = (JExpression)left.accept(this);
 	JExpression newRight = (JExpression)right.accept(this);
+        // promote constants if needed
+        newLeft = doPromote(newLeft, newRight);
+        newRight = doPromote(newRight, newLeft);
+	// set any constants that we have 
 	if(write) {
+	    if (newCond!=cond) {
+		self.setCond(newCond);
+	    }
 	    if (newLeft!=left) {
 		self.setLeft(newLeft);
 	    }
@@ -966,47 +959,27 @@ public class Propagator extends SLIRReplacingVisitor {
 		self.setRight(newRight);
 	    }
 	}
-	return self;
+	// do constant-prop if we have constants
+	if (newCond.isConstant()) {
+	    JBooleanLiteral val = (JBooleanLiteral)newCond.getLiteral();
+	    if (val.booleanValue()) {
+		return newLeft;
+	    } else {
+		return newRight;
+	    }
+	} else {
+	    return self;
+	}
     }
 
     /**
-     * Visits a binary expression
+     * prints an array allocator expression
      */
     public Object visitBinaryExpression(JBinaryExpression self,
 					String oper,
 					JExpression left,
 					JExpression right) {
-	if (self instanceof JBinaryArithmeticExpression ||
-	    self instanceof JConditionalOrExpression ||
-	    self instanceof JConditionalAndExpression) {
-	    return doBinaryArithmeticExpression(self, 
-						left, 
-						right);
-	} else {
-	    JExpression newLeft = (JExpression)left.accept(this);
-	    JExpression newRight = (JExpression)right.accept(this);
-	    if(write) {
-		if (newLeft!=left) {
-		    self.setLeft(newLeft);
-		}
-		if (newRight!=right) {
-		    self.setRight(newRight);
-		}
-	    }
-	    /*if(write) {
-	      if(self instanceof JConditionalAndExpression) {
-	      if (left.isConstant() && right.isConstant()) {
-	      return new JBooleanLiteral(null, left.booleanValue() && right.booleanValue());
-	      } else if((left.isConstant()&&left.booleanValue()==false)||(right.isConstant()&&right.booleanValue()==false))
-	      return new JBooleanLiteral(null,false);
-	      else if(left.isConstant()&&left.booleanValue()==true)
-	      return right;
-	      else if(right.isConstant()&&right.booleanValue()==true)
-	      return left;
-	      }
-	      }*/
-	}
-	return self;
+	return doBinaryExpression(self, left, right);
     }
 
     /**
@@ -1016,22 +989,22 @@ public class Propagator extends SLIRReplacingVisitor {
 					 int oper,
 					 JExpression left,
 					 JExpression right) {
-	return doBinaryArithmeticExpression(self, left, right);
+	return doBinaryExpression(self, left, right);
     }
 
     /**
-     * For processing BinaryArithmeticExpressions.  
+     * For processing BinaryExpressions.  
      */
-    private Object doBinaryArithmeticExpression(JBinaryExpression 
-						self,
-						JExpression left,
-						JExpression right) {
+    private Object doBinaryExpression(JBinaryExpression 
+				      self,
+				      JExpression left,
+				      JExpression right) {
 	JExpression newLeft = (JExpression)left.accept(this);
 	JExpression newRight = (JExpression)right.accept(this);
         // promote constants if needed
         newLeft = doPromote(newLeft, newRight);
         newRight = doPromote(newRight, newLeft);
-	// set any constants that we have (just to save at runtime)
+	// set any constants that we have
 	if(write) {
 	    if (newLeft!=left) {
 		self.setLeft(newLeft);
@@ -1065,30 +1038,7 @@ public class Propagator extends SLIRReplacingVisitor {
                                           boolean equal,
                                           JExpression left,
                                           JExpression right) {
-        // Wow, doesn't Kopi just suck?  This is the *exact* same code
-        // as in doBinaryArithmeticExpression, but JEqualityExpression
-        // is a different type.
-	JExpression newLeft = (JExpression)left.accept(this);
-	JExpression newRight = (JExpression)right.accept(this);
-        // promote constants if needed
-        newLeft = doPromote(newLeft, newRight);
-        newRight = doPromote(newRight, newLeft);
-	// set any constants that we have (just to save at runtime)
-	if(write) {
-	    if (newLeft!=left) {
-		self.setLeft(newLeft);
-	    }
-	    if (newRight!=right) {
-		self.setRight(newRight);
-	    }
-	}
-	// do constant-prop if we have both as constants
-	if (newLeft.isConstant() && newRight.isConstant()) {
-	    return new JEqualityExpression(null, equal, newLeft, newRight).constantFolding();
-	} else {
-	    // otherwise, return self
-	    return self;
-	}
+	return doBinaryExpression(self, left, right);
     }
 
     private JExpression doPromote(JExpression from, JExpression to)

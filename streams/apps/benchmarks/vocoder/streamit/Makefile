@@ -14,9 +14,10 @@ LIB_FILES =	Conv.java \
 		Phase.java \
 		Remapper.java \
 		Source.java \
-		Util.java
+		Util.java \
+		Vocoder.java
 
-MAIN	  = 	Vocoder
+MAIN	  = 	VocoderToplevel
 
 MAIN_FILE = 	${MAIN}.java
 

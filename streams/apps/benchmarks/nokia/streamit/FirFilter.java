@@ -43,7 +43,7 @@ public class FirFilter extends Filter {
     public void work(){
 	float sum=0;
 	for (int i=0; i<N ; i++)
-	    sum+=input.peekFloat(i)*COEFF[i];
+	    sum+=input.peekFloat(i)*COEFF[N-1-i];
 	input.pop();
 	output.pushFloat(sum);
     }

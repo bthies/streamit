@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.91 2004-07-12 00:54:04 thies Exp $
+ * $Id: LIRToC.java,v 1.92 2004-07-12 06:16:23 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -36,11 +36,16 @@ public class LIRToC
     // ----------------------------------------------------------------------
 
     /**
-     * construct a pretty printer object for java code
+     * construct a pretty printer object for java code, with a given
+     * set of array initializers defined.
      */
-    private LIRToC() {
+    private LIRToC(java.util.HashMap arrayInitializers) {
         this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
+	this.arrayInitializers = arrayInitializers;
+    }
+    private LIRToC() {
+	this(null);
     }
 
     /**
@@ -53,7 +58,7 @@ public class LIRToC
 	System.out.println("#include <stdlib.h>");
 	System.out.println("#include <math.h>");
 	printAtlasInterface();
-	LIRToC l2c = new LIRToC(new TabbedPrintWriter(new PrintWriter(System.out)));
+	LIRToC l2c = new LIRToC(null, new TabbedPrintWriter(new PrintWriter(System.out)));
 
         // Print all of the portals.
         for (int i = 0; i < SIRPortal.getPortals().length; i++) {
@@ -62,6 +67,9 @@ public class LIRToC
             l2c.print(";");
             l2c.newLine();
         }
+
+	// Print the static array initializers
+	l2c.gatherArrayInitializers(flat);
 
 	flat.accept(l2c);
 	l2c.close();
@@ -95,14 +103,16 @@ public class LIRToC
 
     /**
      * construct a pretty printer object for java code
+     * @param   arrayInitializers       set of array initializers detected in code
      * @param	fileName		the file into the code is generated
      */
-    private LIRToC(TabbedPrintWriter p) {
+    private LIRToC(java.util.HashMap arrayInitializers, TabbedPrintWriter p) {
         this.p = p;
         this.str = null;
         this.pos = 0;
         this.portalCount = 0;
         this.portalNames = new java.util.HashMap();
+	this.arrayInitializers = arrayInitializers;
     }
 
     /**
@@ -177,7 +187,7 @@ public class LIRToC
                                       JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
                                       JTypeDeclaration[] decls) {
-        LIRToC that = new LIRToC(this.p);
+        LIRToC that = new LIRToC(arrayInitializers, this.p);
         that.className = ident;
         that.isStruct = ((modifiers & ACC_STATIC) == ACC_STATIC);
         that.visitClassBody(decls, fields, methods, body);
@@ -446,34 +456,43 @@ public class LIRToC
 
 	
         newLine();
-        // if printing a field decl and it's array and it's
-        // initialized, I want to use a special printer that
-        // will just declare an array, instead of a pointer
-        if (expr == null || !(expr instanceof JNewArrayExpression))
-        {
-            // nope - not an array, or not initialized.
-            // just print it normally - if an array, it'll become  a
-            // pointer and the init function better allocate it	    
-	    		
-	    print (type);
-            print (" ");
-            print (ident);
-
-	    // initializing vars is legal in C as well as java.
-	    if (expr != null) {
-		print ("\t= ");
-		expr.accept (this);
-	    }
+	if (expr instanceof JArrayInitializer) {
+	    // just declare the beginning of array here; initializer copied over later
+	    declareInitializedArray(findBaseType((JArrayInitializer)expr),
+				    ident,
+				    expr,
+				    this,
+				    false);
 	} else {
-            // yep.  use the local printing functions to print
-            // the correct type and array size
-            printLocalType (type);
-            print (" ");
-            print (ident);
-            print(" ");
-            printLocalArrayDecl((JNewArrayExpression)expr);
-        }
-        print(";");
+	    // if printing a field decl and it's array and it's
+	    // initialized, I want to use a special printer that
+	    // will just declare an array, instead of a pointer
+	    if (expr == null || !(expr instanceof JNewArrayExpression)) {
+		// nope - not an array, or not initialized.
+		// just print it normally - if an array, it'll become  a
+		// pointer and the init function better allocate it	    
+		
+		print (type);
+		print (" ");
+		print (ident);
+		
+		// initializing vars is legal in C as well as java.
+		if (expr != null) {
+		    print ("\t= ");
+		    expr.accept (this);
+		}
+		print(";");
+	    } else {
+		// yep.  use the local printing functions to print
+		// the correct type and array size
+		printLocalType (type);
+		print (" ");
+		print (ident);
+		print(" ");
+		printLocalArrayDecl((JNewArrayExpression)expr);
+		print(";");
+	    }
+	}
     }
 
     /**
@@ -603,7 +622,7 @@ public class LIRToC
 	JExpression[] dims = expr.getDims();
 	for (int i = 0 ; i < dims.length; i++) {
 	    print("[");
-	    LIRToC toC = new LIRToC(this.p);
+	    LIRToC toC = new LIRToC(arrayInitializers, this.p);
 	    dims[i].accept(toC);
 	    print("]");
 	}
@@ -812,7 +831,7 @@ public class LIRToC
         print("; ");
 
         if (incr != null) {
-	    LIRToC l2c = new LIRToC();
+	    LIRToC l2c = new LIRToC(arrayInitializers);
             incr.accept(l2c);
 	    // get String
 	    String str = l2c.getString();
@@ -1515,14 +1534,27 @@ public class LIRToC
           return;
           }
         */
-
-	lastLeft=left;
-        print("(");
-        left.accept(this);
-        print(" = ");
-        right.accept(this);
-        print(")");
-	lastLeft=null;
+	if (right instanceof JArrayInitializer &&
+	    arrayInitializers.containsKey(right)) {
+	    // memcpy for arrays
+	    print("memcpy(");
+	    left.accept(this);
+	    print(",");
+	    String name = (String)arrayInitializers.get(right);
+	    print(name);
+	    print(",");
+	    print(findSize((JArrayInitializer)right) + " * sizeof(");
+	    print(findBaseType((JArrayInitializer)right));
+	    print("))");
+	} else {
+	    lastLeft=left;
+	    print("(");
+	    left.accept(this);
+	    print(" = ");
+	    right.accept(this);
+	    print(")");
+	    lastLeft=null;
+	}
     }
 
     /**
@@ -2582,15 +2614,32 @@ public class LIRToC
     public void visitArrayInitializer(JArrayInitializer self,
                                       JExpression[] elems)
     {
-        newLine();
-        print("{");
-        for (int i = 0; i < elems.length; i++) {
-            if (i != 0) {
-                print(", ");
-            }
-            elems[i].accept(this);
-        }
-        print("}");
+	/*
+	// refer to previously declared static initializers
+	if (arrayInitializers.containsKey(self)) {
+	    // cast to pointer type
+	    print("(");
+	    print(findBaseType(self));
+	    int dims = findNumDims(self);
+	    for (int i=0; i<dims; i++) {
+		print("*");
+	    }
+	    print(")");
+	    // print name of array
+	    String name = (String)arrayInitializers.get(self);
+	    print(name);
+	} else {
+	*/
+	newLine();
+	print("{");
+	for (int i = 0; i < elems.length; i++) {
+	    if (i != 0) {
+		print(", ");
+	    }
+	    elems[i].accept(this);
+	}
+	print("}");
+	//}
     }
 
     
@@ -2653,6 +2702,182 @@ public class LIRToC
         print("" + s);
     }
 
+    /**
+     * Tries to find the number of dimensions of <self>.
+     */
+    protected int findNumDims(JArrayInitializer self) {
+	int dims = 0;
+	JExpression expr = self;
+	while(true) {
+	    if (expr instanceof JArrayInitializer) {
+		dims++;
+		expr = ((JArrayInitializer)expr).getElems()[0];
+	    } else {
+		break;
+	    }
+	}
+	return dims;
+    }
+
+    /**
+     * Returns the total number of elements in a multi-dimensional
+     * array.  For example, "A[2][2]" has 4 elements.
+     */
+    protected int findSize(JArrayInitializer self) {
+	int count = 1;
+	JExpression expr = self;
+	while(true) {
+	    if (expr instanceof JArrayInitializer) {
+		count *= ((JArrayInitializer)expr).getElems().length;
+		expr = ((JArrayInitializer)expr).getElems()[0];
+	    } else {
+		break;
+	    }
+	}
+	return count;
+    }
+
+    /**
+     * Tries to find base type of <self> (sometimes getType() returns null)
+     */
+    protected CType findBaseType(JArrayInitializer self) {
+	JExpression expr = self;
+	while (true) {
+	    if (expr.getType()!=null && 
+		expr.getType() instanceof CArrayType &&
+		((CArrayType)expr.getType()).getBaseType()!=null) {
+		return ((CArrayType)expr.getType()).getBaseType();
+	    }
+	    if (expr.getType()!=null && 
+		!(expr.getType() instanceof CArrayType)) {
+		return expr.getType();
+	    }
+	    if (expr.getType()==null &&
+		expr instanceof JArrayInitializer) {
+		JExpression[] myElems = ((JArrayInitializer)expr).getElems();
+		if (myElems.length==0) {
+		    at.dms.util.Utils.fail("Can't find type of array " + self);
+		} else {
+		    expr = myElems[0];
+		}
+	    } else {
+		at.dms.util.Utils.fail("Can't find type of array " + self);
+	    }
+	}
+    }
+
+    /**
+     * If printInit is true, the initializer is actually printed;
+     * otherwise just the declaration is printed.
+     */
+    protected void declareInitializedArray(CType baseType, String ident, JExpression expr, KjcVisitor visitor, boolean printInit) {
+	print(baseType); // note this calls print(CType), not print(String)
+	print(" " + ident);
+	JArrayInitializer init = (JArrayInitializer)expr;
+	while (true) {
+	    int length = init.getElems().length;
+	    print("[" + length + "]");
+	    if (length==0) { 
+		// hope that we have a 1-dimensional array in
+		// this case.  Otherwise we won't currently
+		// get the type declarations right for the
+		// lower pieces.
+		break;
+	    }
+	    // assume rectangular arrays
+	    JExpression next = (JExpression)init.getElems()[0];
+	    if (next instanceof JArrayInitializer) {
+		init = (JArrayInitializer)next;
+	    } else {
+		break;
+	    }
+	}
+	if (printInit) {
+	    print(" = ");
+	    expr.accept(visitor);
+	}
+	print(";");
+	newLine();
+    }
+
+    /**
+     * Finds any assignments of static arrays in functions and
+     * replaces them with an assignment from a global pointer.  For
+     * example, takes this original code:
+     *
+     * void Foo_init(Foo_1 data) {
+     *  data->x = {1, 1, 1}
+     * }
+     *
+     * And produces something like this (name of generated field may
+     * differ):
+     *
+     * int _Foo_init_x[3] = {1, 1, 1}
+     *
+     * void Foo_init(Foo_1 data) {
+     *  data->x = _Foo_init_x;
+     * }
+     * 
+     * The declaration of the array is written to the output using
+     * print() methods.  The array initializer is stored in a hashmap
+     * for identification in later stages to print a reference to the
+     * variable instead of printing the static array.
+     */
+    protected java.util.HashMap arrayInitializers; // JArrayInitializer -> String
+    public void gatherArrayInitializers(JClassDeclaration flat) {
+	arrayInitializers = new java.util.HashMap();
+	flat.accept(new GatherArrayInitializers(this));
+    }
+    class GatherArrayInitializers extends SLIREmptyVisitor {
+	/**
+	 * Name for init fields generated.
+	 */
+	private static final String INITIALIZER_NAME = "__array_initializer_";
+	/**
+	 * Counter for init fields generated.
+	 */
+	private int INITIALIZER_COUNT = 0;
+	/**
+	 * The visitor doing the actual printing of stuff.
+	 */
+	private KjcVisitor printer;
+	
+	public GatherArrayInitializers(KjcVisitor printer) {
+	    this.printer = printer;
+	}
+	
+	/**
+	 * Don't visit variable defs, because these declare local
+	 * arrays.  They are stack allocated automatically.
+	 */
+	public void visitVariableDefinition(JVariableDefinition self,
+					    int modifiers,
+					    CType type,
+					    String ident,
+					    JExpression expr) {
+	    return;
+	}
+
+	public void visitAssignmentExpression(JAssignmentExpression self,
+					      JExpression left,
+					      JExpression right) {
+	    if (right instanceof JArrayInitializer) {
+		JArrayInitializer init = (JArrayInitializer)right;
+		// make new name for this reference
+		String name = INITIALIZER_NAME + (INITIALIZER_COUNT++);
+		CType baseType = findBaseType(init);
+		int numDims = findNumDims(init);
+		assert baseType!=null:"Can't find type of array " + init;
+		
+		declareInitializedArray(baseType, name, init, printer, true);
+		// important to register the name after declaring the
+		// array, so that the above statement prints the array
+		// itself rather than a reference to the name
+		arrayInitializers.put(init, name);	    
+	    }
+	}
+    }
+
     // ----------------------------------------------------------------------
     // DATA MEMBERS
     // ----------------------------------------------------------------------
@@ -2672,3 +2897,4 @@ public class LIRToC
     protected int                       portalCount;
     protected Map                       portalNames;
 }
+

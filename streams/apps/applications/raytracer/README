@@ -1,0 +1,24 @@
+Here's how to take the output of RayTracer_works and conver to a PPM
+file (viewable with XV).
+
+Do, for example,
+
+java RayTracer_works -i 1024 > out.ppm
+
+Then replace the FOO at the beggining with this text:
+
+----
+P6
+32 32
+255
+
+----
+
+(Do not include the ---.  They are used above to indicate that a blank
+line needs to come between 255 and the data.)
+
+These lines mean:
+
+P6 - Version 6 of PPM (?)
+32 32 - size of the grid
+255 - number of colors

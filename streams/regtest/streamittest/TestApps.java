@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.13 2003-09-29 20:41:05 thies Exp $
+ * $Id: TestApps.java,v 1.14 2003-10-13 23:12:47 mgordon Exp $
  **/
 package streamittest;
 
@@ -41,7 +41,50 @@ public class TestApps extends StreamITTestCase {
 	
 	suite.addTest(new TestApps("testNokiaFine", flags));
 	
+	suite.addTest(new TestApps("testDCT", flags));
+	suite.addTest(new TestApps("testIDCT", flags));
+	suite.addTest(new TestApps("testDCT2D", flags));
+	suite.addTest(new TestApps("testIDCT2D", flags));
+	//	suite.addTest(new TestApps("testFAT", flags));
+	suite.addTest(new TestApps("testforw", flags));
 	return suite;
+    }
+    
+    //cannot be called at this time
+    public void TestFAT() 
+    {
+	String root = APPS_ROOT + "FAT-new";
+	doConvertCompileRunVerifyTest(root, "", 0, 1);
+    }
+    
+    public void testforw() 
+    {
+	String root = APPS_ROOT + "video";
+	doConvertCompileRunVerifyTest(root, "forw", 0, 8);
+    }
+
+    public void testDCT() 
+    {
+	String root = APPS_ROOT + "DCT";
+	doConvertCompileRunVerifyTest(root, "DCT", 0, 8);
+    }
+    
+    public void testDCT2D() 
+    {
+	String root = APPS_ROOT + "DCT";
+	doConvertCompileRunVerifyTest(root, "DCT2D", 0, 4);
+    }
+    
+    public void testIDCT() 
+    {
+	String root = APPS_ROOT + "DCT";
+	doConvertCompileRunVerifyTest(root, "IDCT", 0, 4);
+    }
+
+    public void testIDCT2D() 
+    {
+	String root = APPS_ROOT + "DCT";
+	doConvertCompileRunVerifyTest(root, "IDCT2D", 0, 4);
     }
 
     public void testCrc() {
@@ -68,5 +111,5 @@ public class TestApps extends StreamITTestCase {
     }
 
     
-
+    
 }

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.32 2003-10-10 19:48:19 dmaze Exp $
+ * $Id: TestExamples.java,v 1.33 2003-10-13 23:12:47 mgordon Exp $
  **/
 package streamittest;
 
@@ -77,7 +77,7 @@ public class TestExamples extends StreamITTestCase {
 	    suite.addTest(new TestExamples("testMatrixMult", flags));
 	}
 
-	suite.addTest(new TestExamples("testMergeSort", flags));
+	suite.addTest(new TestExamples("testmergesort", flags));
 
 	// this one doesn't fit on any raw4, and doesn't work with fusion
 	if (!(flagsContainRaw(1, flags) || 
@@ -90,12 +90,61 @@ public class TestExamples extends StreamITTestCase {
 
 	suite.addTest(new TestExamples("testVectAdd", flags));
 	suite.addTest(new TestExamples("testVectAdd1", flags));
-
+	
+	suite.addTest(new TestExamples("testchol", flags));
+	suite.addTest(new TestExamples("testMedian", flags));
+	suite.addTest(new TestExamples("testBatcherSort", flags));
+	suite.addTest(new TestExamples("testAutoBatcherSort", flags));
+	suite.addTest(new TestExamples("testBubbleSort", flags));
+	suite.addTest(new TestExamples("testInsertionSort", flags));
+	suite.addTest(new TestExamples("testMergeSort", flags));
 	
 	return suite;
     }
+    
+    public void testMergeSort() 
+    {
+	String root = EXAMPLE_ROOT + "MergeSort";
+	doConvertCompileRunVerifyTest(root, "MergeSort", 0, 16);
+    }
 
+    public void testInsertionSort() 
+    {
+	String root = EXAMPLE_ROOT + "InsertionSort";
+	doConvertCompileRunVerifyTest(root, "InsertionSort", 0, 16);
+    }
 
+    public void testBubbleSort() 
+    {
+	String root = EXAMPLE_ROOT + "BubbleSort";
+	doConvertCompileRunVerifyTest(root, "BubbleSort", 0, 1);
+    }
+    
+    public void testBatcherSort() 
+    {
+	String root = EXAMPLE_ROOT + "BatcherSort";
+	doConvertCompileRunVerifyTest(root, "BatcherSort", 0, 16);
+    }
+    
+    public void testAutoBatcherSort() 
+    {
+	String root = EXAMPLE_ROOT + "BatcherSort";
+	doConvertCompileRunVerifyTest(root, "AutoBatcherSort", 0, 16);
+    }
+
+    public void testchol() 
+    {
+	String root = EXAMPLE_ROOT + "chol-para";
+	doConvertCompileRunVerifyTest(root, "chol", 0, 5050);
+    }
+    
+    public void testMedian() 
+    {
+	String root = EXAMPLE_ROOT + "median";
+	doConvertCompileRunVerifyTest(root, "Median", 0, 160);
+    }
+    
+    
     public void testAutoCor() {
         doSyntaxConvertTest(EXAMPLE_ROOT + "autocor/",
                             "AutoCor.str", "AutoCor.java");
@@ -190,7 +239,7 @@ public class TestExamples extends StreamITTestCase {
 
     
 
-    public void testMergeSort() {
+    public void testmergesort() {
 	String root = EXAMPLE_ROOT + "mergesort/";
         doSyntaxConvertTest(root, "MergeSort.str", "MergeSort.java");
 	doCompileRunVerifyTest(root,

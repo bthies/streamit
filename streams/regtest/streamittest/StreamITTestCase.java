@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.20 2003-10-13 16:08:35 thies Exp $
+ * $Id: StreamITTestCase.java,v 1.21 2003-10-13 23:12:47 mgordon Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "apps/examples/";
@@ -187,7 +187,18 @@ class StreamITTestCase extends TestCase {
     }
 
 	
-
+    public void doConvertCompileRunVerifyTest(String root,
+					      String filePrefix,
+					      int initOutputs,
+					      int ssOutputs) 
+    {
+	doSyntaxConvertTest(root, filePrefix + ".str", filePrefix + ".java");
+	doCompileTest(root, filePrefix + ".java");
+	doRunTest(root, filePrefix + ".java", initOutputs, ssOutputs);
+	doCompareTest(root, filePrefix + ".java", filePrefix + ".out");	
+    }
+    
+    
     public void doMake(String root) {
 	assertTrue("make for " + root,
 		   compiler.runMake(root));

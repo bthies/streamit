@@ -491,7 +491,7 @@ public class FuseSplit {
 				    /* ident */ 
 				    LoweringConstants.getUniqueVarName(),
 				    /* initializer */
-				    new JIntLiteral(0));
+				    new JIntLiteral(-1));
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
 	    new JVariableDeclarationStatement(null, var, null);

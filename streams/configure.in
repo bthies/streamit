@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.4 2003-09-26 18:01:25 dmaze Exp $
+dnl $Id: configure.in,v 1.5 2003-09-26 18:49:52 dmaze Exp $
 dnl
 
 AC_INIT([streamit], [0.0])
@@ -12,6 +12,7 @@ dnl AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PROG_CC
+AC_CHECK_TOOL(AR, ar)
 AC_PATH_PROG(PERL, perl)
 AC_PATH_PROG(PYTHON, python)
 AC_PATH_PROG(JAVA, java)

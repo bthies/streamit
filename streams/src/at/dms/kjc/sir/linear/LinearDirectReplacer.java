@@ -13,7 +13,7 @@ import at.dms.compiler.*;
  * linear filters (as determined by the linear filter analyzer) with an appripriate
  * direct implementation (eg a bunch of push statements with the specified
  * combination of input values. <p>
- * Eg a filter that had linear form [1 2 3]+4 would get a work function:
+ * Eg a filter that had linear form [1; 2; 3]+4 would get a work function:
  * <pre>
  * work {
  *   push(3*peek(0) + 2*peek(1) + 1*peek(2) + 4);
@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearDirectReplacer.java,v 1.3 2003-03-31 20:36:22 thies Exp $
+ * $Id: LinearDirectReplacer.java,v 1.4 2003-04-06 12:01:52 thies Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -31,7 +31,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the cost calculator which guides us in whether or not we should stream constructs with direct implementations. **/
     LinearReplaceCalculator replaceGuide;
     
-    private LinearDirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
+    protected LinearDirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer!");
 	}
@@ -65,11 +65,11 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * occurs if the replace calculator says that this stream should be replaced.
      **/
     public boolean makeReplacement(SIRStream self) {
-// 	if (!this.replaceGuide.shouldReplace(self)) {
-// 	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
-// 	    LinearPrinter.println(" stop.");
-// 	    return;
-// 	}
+	// 	if (!this.replaceGuide.shouldReplace(self)) {
+	// 	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
+	// 	    LinearPrinter.println(" stop.");
+	// 	    return;
+	// 	}
 	LinearPrinter.println("Creating linear replacement for " + self);
 	SIRContainer parent = self.getParent();
 	if (parent == null) {
@@ -108,15 +108,15 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * most efficient implementation and then create an IR structure that implements
      * that. For now, we always return the direct matrix multply implementation.
      **/
-    private SIRStream makeEfficientImplementation(SIRStream oldStream,
-						  LinearFilterRepresentation linearRep) {
+    protected SIRFilter makeEfficientImplementation(SIRStream oldStream,
+						    LinearFilterRepresentation linearRep) {
 	// if we have a linear representation of this filter
 	if (!linearityInformation.hasLinearRepresentation(oldStream)) {
 	    throw new RuntimeException("no linear info");
 	}
 
 	// create a new work function that calculates the linear representation directly
-	JMethodDeclaration newWork = makeDirectWork(linearRep,
+	JMethodDeclaration newWork = makeLinearWork(linearRep,
 						    oldStream.getInputType(),
 						    oldStream.getOutputType(),
 						    linearRep.getPopCount());
@@ -154,7 +154,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * ...
      * </pre>
      **/
-    JMethodDeclaration makeDirectWork(LinearFilterRepresentation representation,
+    JMethodDeclaration makeLinearWork(LinearFilterRepresentation representation,
 				      CType inputType,
 				      CType outputType,
 				      int popCount) {
@@ -199,8 +199,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * matrix multiplication represented by the linear representation.
      **/
     public Vector makePushStatementVector(LinearFilterRepresentation representation,
-					   CType inputType,
-					   CType outputType) {
+					  CType inputType,
+					  CType outputType) {
 	Vector returnVector = new Vector();
 
 	int peekCount = representation.getPeekCount();
@@ -245,7 +245,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 		    } else {
 			// make literal weight (special case if the weight is an integer)
 			JLiteral weightNode;
-			if (currentWeight.isRealInteger()) {
+			if (currentWeight.isReal() && currentWeight.isIntegral()) {
 			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
 			} else {
 			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
@@ -265,7 +265,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
 	    JLiteral offsetNode;
 	    // make the offset node for integers, and others
-	    if (currentOffset.isRealInteger()) {
+	    if (currentOffset.isReal() && currentOffset.isIntegral()) {
 		offsetNode = new JIntLiteral(null, (int)currentOffset.getReal());
 	    } else {
 		offsetNode = new JDoubleLiteral(null, currentOffset.getReal());
@@ -308,11 +308,18 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	}
 	return returnVector;
     }
-    
+
     /**
      * This visitor calculates the best way to replace filters in a stream
      * graph with direct implementations. Specifically, it calculates the
      * the replacement that has the lowest cost.
+     *
+     * The technique in this class isn't quite correct (e.g., it doesn't
+     * take into account the number of times that children execute in the
+     * steady-state schedule when considering their cost) -- the linear
+     * partitioner is now the preferred way to get the lowest cost
+     * combination.  --bft
+     *
      **/
     static class LinearReplaceCalculator extends EmptyAttributeStreamVisitor {
 	/**
@@ -350,7 +357,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    // we don't really care about feedback loops because we don't include them in our analysis
 	    return self;
 	}
-	    /* pre-visit a pipeline */
+	/* pre-visit a pipeline */
 	public Object visitPipeline(SIRPipeline self,
 				    JFieldDeclaration[] fields,
 				    JMethodDeclaration[] methods,
@@ -433,5 +440,3 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	}
     }
 }
-
-

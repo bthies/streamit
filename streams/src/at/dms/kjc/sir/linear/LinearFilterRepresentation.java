@@ -12,7 +12,7 @@ package at.dms.kjc.sir.linear;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.18 2003-02-03 20:33:40 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.19 2003-04-06 12:01:52 thies Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -215,7 +215,7 @@ public class LinearFilterRepresentation {
 	    muls += rowMuls;
 	    adds += rowAdds;
 	}
-	return new LinearCost(muls, adds);
+	return new LinearCost(muls, adds, matRows*matCols);
     }	    
 
     /** Returns true if and only if all coefficients in this filter rep are real valued. **/

@@ -11,7 +11,7 @@ package at.dms.kjc.sir.linear;
  * propage LinearForm information throughout the body of the filter and
  * hopefully construct a LinearFilterRepresentation from the filter.
  *
- * $Id: LinearForm.java,v 1.5 2003-01-23 16:27:59 aalamb Exp $
+ * $Id: LinearForm.java,v 1.6 2003-04-06 12:01:52 thies Exp $
  **/
 public class LinearForm {
     /** weights of inputs **/
@@ -33,7 +33,7 @@ public class LinearForm {
 	    // offset is a complex number, not an integer
 	    return false;
 	}
-	return this.offset.isRealInteger();
+	return this.offset.isIntegral();
     }
 
     /** Get the constant offset of this linear form. **/

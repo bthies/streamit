@@ -1,45 +1,58 @@
 package at.dms.kjc.sir.linear;
 
 import java.util.*;
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.iterator.*;
 import at.dms.compiler.*;
 
-
 /**
- * A LinearIndirectReplacer replaces the contents of the work functions for
- * linear filters (as determined by the linear filter analyzer) with an appripriate
- * direct implementation (eg a bunch of push statements with the specified
- * combination of input values. <p>
- * Eg a filter that had linear form [1 2 3]+4 would get a work function:
- * <pre>
- * work {
- *   push(3*peek(0) + 2*peek(1) + 1*peek(2) + 4);
- * }
- * </pre>
+ * A LinearIndirectReplacer replaces the contents of the work
+ * functions for linear filters (as determined by the linear filter
+ * analyzer) with a sparse matrix multiply, using indirection through
+ * an array (see makeLinearWork for example).  It also can replace
+ * splitjoins and pipelines with linear representations with a single
+ * filter that computes the same function.
  *
- * It also can replace splitjoins and pipelines with linear representations
- * with a single filter that computes the same function.
- * <p>
- * $Id: LinearIndirectReplacer.java,v 1.1 2003-04-04 03:09:51 aalamb Exp $
+ * $Id: LinearIndirectReplacer.java,v 1.2 2003-04-06 12:01:52 thies Exp $
  **/
-public class LinearIndirectReplacer extends LinearReplacer implements Constants{
-    /** the linear analyzier which keeps mappings from filters-->linear representations**/
-    LinearAnalyzer linearityInformation;
-    /** the cost calculator which guides us in whether or not we should stream constructs with direct implementations. **/
-    LinearReplaceCalculator replaceGuide;
+public class LinearIndirectReplacer extends LinearDirectReplacer implements Constants{
+    // names of fields
+    private static final String NAME_A = "sparseA";
+    private static final String NAME_B = "b";
+    private static final String NAME_INDEX = "index";
+    private static final String NAME_LENGTH = "length";
+    /**
+     * Base type of A.
+     */
+    private CType sparseABaseType;
     
-    private LinearIndirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
-	if (lfa == null){
-	    throw new IllegalArgumentException("Null linear filter analyzer!");
-	}
-	if (costs == null) {
-	    throw new IllegalArgumentException("Null linear replace calculator!");
-	}
-	this.linearityInformation = lfa;
-	this.replaceGuide = costs;
+    /**
+     * Base type of b.
+     */
+    private CType bBaseType;
+    
+    /**
+     * Two-dimensional coefficient field referenced in generated code.
+     */
+    private JFieldDeclaration sparseAField;
+    /**
+     * One-dimensional constant field referenced in generated code.
+     */
+    private JFieldDeclaration bField;
+    /**
+     * Two-dimensional array of indices that gives the locations to peek at.
+     */
+    private JFieldDeclaration indexField;
+    /**
+     * lengthField[i] == sparseAField[i].length == indexField[i].length
+     */
+    private JFieldDeclaration lengthField;
+    
+    protected LinearIndirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
+	super(lfa, costs);
     }
 
     /** start the process of replacement on str using the Linearity information in lfa. **/
@@ -59,379 +72,241 @@ public class LinearIndirectReplacer extends LinearReplacer implements Constants{
 	IterFactory.createIter(str).accept(replacer);
     }
 
-    /**
-     * Visit a pipeline, splitjoin or filter, replacing them with a new filter
-     * that directly implements the linear representation. This only
-     * occurs if the replace calculator says that this stream should be replaced.
-     **/
-    public boolean makeReplacement(SIRStream self) {
-// 	if (!this.replaceGuide.shouldReplace(self)) {
-// 	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
-// 	    LinearPrinter.println(" stop.");
-// 	    return;
-// 	}
-	LinearPrinter.println("Creating linear replacement for " + self);
-	SIRContainer parent = self.getParent();
-	if (parent == null) {
-	    // we are done, this is the top level stream
-	    LinearPrinter.println(" aborting, top level stream: " + self);
-	    LinearPrinter.println(" stop.");
-	    return false;
-	}
-	LinearPrinter.println(" parent: " + parent);
-	if (!this.linearityInformation.hasLinearRepresentation(self)) {
-	    LinearPrinter.println(" no linear information about: " + self);
-	    LinearPrinter.println(" stop.");
-	    return false;
-	}
-	
-	// generate a new implementation as a single filter
-	LinearFilterRepresentation linearRep;
-	linearRep = this.linearityInformation.getLinearRepresentation(self);
-	SIRStream newImplementation;
-	newImplementation = makeEfficientImplementation(self, linearRep);
-	newImplementation.setParent(parent);
-	// do the acutal replacment of the current pipeline with the new implementation
-	parent.replace(self, newImplementation);
-
-	LinearPrinter.println("Relative child name: " + newImplementation.getRelativeName());
-
-	// return that we replaced something
-	return true;
+    protected SIRFilter makeEfficientImplementation(SIRStream oldStream,
+						    LinearFilterRepresentation linearRep) {
+	// only deal with real things for now
+	Utils.assert(linearRep.getA().isReal() && linearRep.getb().isReal(),
+		     "Don't support linear replacement of complex coefficients for now.");
+	// make coefficient and index fields
+	makeFields(linearRep);
+	// make actual filter
+	SIRFilter result = super.makeEfficientImplementation(oldStream, linearRep);
+	// set fields
+	JFieldDeclaration[] fields = { this.sparseAField, 
+				       this.bField,
+				       this.indexField,
+				       this.lengthField };
+	result.setFields(fields);
+	// add initialization of fields to init function 
+	addInitialization(result.getInit(), linearRep);
+	return result;
     }
 
     /**
-     * Creates a filter that has a work function that directly implements
-     * the linear representation that is passed in.<p>
-     *
-     * Eventually, this will determine (by some yet to be determined method) the
-     * most efficient implementation and then create an IR structure that implements
-     * that. For now, we always return the direct matrix multply implementation.
-     **/
-    private SIRStream makeEfficientImplementation(SIRStream oldStream,
-						  LinearFilterRepresentation linearRep) {
-	// if we have a linear representation of this filter
-	if (!linearityInformation.hasLinearRepresentation(oldStream)) {
-	    throw new RuntimeException("no linear info");
-	}
-
-	// create a new work function that calculates the linear representation directly
-	JMethodDeclaration newWork = makeDirectWork(linearRep,
-						    oldStream.getInputType(),
-						    oldStream.getOutputType(),
-						    linearRep.getPopCount());
-	JMethodDeclaration newInit = SIRStream.makeEmptyInit();
-	
-	// create a new filter with the new work and init functions
-	
-	SIRFilter newFilter = new SIRFilter("Linear" + oldStream.getIdent());
-	newFilter.setWork(newWork);
-	newFilter.setInit(newInit);
-	newFilter.setPeek(linearRep.getPeekCount());
-	newFilter.setPop (linearRep.getPopCount());
-	newFilter.setPush(linearRep.getPushCount());
-	newFilter.setInputType(oldStream.getInputType());
-	newFilter.setOutputType(oldStream.getOutputType());
-
-	LinearPrinter.println(" created new filter: " + newFilter);
-	return newFilter;
+     * Builds field declarations for generated filter, storing them in
+     * fields of this.
+     */
+    private void makeFields(LinearFilterRepresentation linearRep) {
+	CClassType arrayType;
+	this.sparseABaseType = linearRep.getA().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
+	// for some reason we need to set the class of 2-dimensional
+	// arrays to a plain object, since Kopi isn't analyzing them
+	// for us
+	arrayType = new CArrayType(sparseABaseType, 2);
+	arrayType.setClass(CStdType.Object.getCClass());
+	this.sparseAField = new JFieldDeclaration(null,
+						  new JVariableDefinition(null,
+									  0,
+									  arrayType,
+									  NAME_A, 
+								     null),
+						  null,
+						  null);
+	this.bBaseType = linearRep.getb().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
+	this.bField = new JFieldDeclaration(null,
+					    new JVariableDefinition(null,
+								    0,
+								    new CArrayType(bBaseType, 1),
+								    NAME_B, 
+								    null),
+					    null,
+					    null);
+	// do same trick as above
+	arrayType = new CArrayType(CStdType.Integer, 2);
+	arrayType.setClass(CStdType.Object.getCClass());
+	this.indexField = new JFieldDeclaration(null,
+						new JVariableDefinition(null,
+									0,
+									arrayType,
+									NAME_INDEX, 
+									null),
+						null,
+						null);
+	this.lengthField = new JFieldDeclaration(null,
+						 new JVariableDefinition(null,
+									 0,
+									 new CArrayType(CStdType.Integer, 1),
+									 NAME_LENGTH, 
+									 null),
+						 null,
+						 null);
     }
 
+    /**
+     * Adds field initialization functions to init function <init>.
+     */
+    private void addInitialization(JMethodDeclaration init, LinearFilterRepresentation linearRep) {
+	JBlock block = init.getBody();
+	FilterMatrix A = linearRep.getA();
+	int rows = A.getRows();
+	int cols = A.getCols();
+	// first build length, index arrays.  note that this
+	// allocation of index is the full size of A for the sake of
+	// simplicity here, but when we generate code we will cut its
+	// dimension to the bounding box of the irregular indices
+	int[] length = new int[cols];
+	int[][] index = new int[cols][rows];
+	// keep track of max length
+	int maxLength = 0;
+	// for each column of the matrix...
+	for (int j=0; j<cols; j++) {
+	    // length will count the number of non-zero elements
+	    for (int i=0; i<rows; i++) {
+		if (!A.getElement(i, j).equals(ComplexNumber.ZERO)) {
+		    // store the peek index here
+		    index[j][length[j]] = rows - i - 1;
+		    length[j]++;
+		}
+	    }
+	    if (length[j] > maxLength) {
+		maxLength = length[j];
+	    }
+	}
+	// allocate sparseA
+	JExpression[] dims = { new JIntLiteral(maxLength), new JIntLiteral(cols) };
+	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
+						   new JNewArrayExpression(null, sparseABaseType, dims, null)));
+	// allocate index
+	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_INDEX),
+						   new JNewArrayExpression(null, CStdType.Integer, dims, null)));
+	// allocate b
+	JExpression[] dims2 = { new JIntLiteral(cols) };
+	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
+						   new JNewArrayExpression(null, bBaseType, dims2, null)));
+	// allocate length
+	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
+						   new JNewArrayExpression(null, CStdType.Integer, dims2, null)));
+
+	// initialize the entries.  Note that here we are substituting
+	// "cols-j-1" for "cols" in the LHS of each assignment that is
+	// being generated.  This is because we want to push the
+	// high-numbered columns first when we loop through in
+	// increasing order in the work function.
+	for (int j=0; j<cols; j++) {
+	    JExpression rhs;
+	    for (int i=0; i<length[j]; i++) {
+		JExpression inner;
+		// "sparseA"[i][j] = A.getElement(i, index[j][i])
+		rhs = ( sparseAField.getVariable().getType()==CStdType.Integer ? 
+			(JExpression)new JIntLiteral((int)A.getElement(rows - index[j][i] - 1, j).getReal()) :
+			(JExpression)new JFloatLiteral((float)A.getElement(rows - index[j][i] - 1, j).getReal()) );
+
+		block.addStatement(makeAssignmentStatement(new JArrayAccessExpression(null,
+										      makeArrayFieldAccessExpr(sparseAField.getVariable(), i),
+										      new JIntLiteral(cols-j-1)),
+							   rhs));
+		// "index"[i][j] = index[i][j]
+		block.addStatement(makeAssignmentStatement(new JArrayAccessExpression(null,
+										      makeArrayFieldAccessExpr(indexField.getVariable(), i),
+										      new JIntLiteral(cols-j-1)),
+							   new JIntLiteral(index[j][i])));
+	    }
+	    // "b"[j] = b.getElement(j)
+	    rhs = ( bField.getVariable().getType()==CStdType.Integer ?
+		    (JExpression)new JIntLiteral((int)linearRep.getb().getElement(j).getReal()) :
+		    (JExpression)new JFloatLiteral((float)linearRep.getb().getElement(j).getReal()) );
+	    block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(bField.getVariable(), cols-j-1), rhs));
+	    // "length"[j] = length[j]
+	    block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(lengthField.getVariable(), cols-j-1), new JIntLiteral(length[j])));
+	}
+    }
 
     /**
-     * Create a method that computes the function represented in the
-     * linear form. (Eg it pushes the direct sum of inputs to the output.)
-     * inputType is the variable type of the peek/pop expression that this filter uses
-     * and output type is the type of the pushExpressions.<p>
+     * Generate a Vector of Statements which implement (directly) the
+     * matrix multiplication represented by the linear representation.
      *
-     * The basic format of the resulting method is:<p>
+     * The basic format of the resulting statements is:<p>
      * <pre>
-     * push(a1*peek(0) + b1*peek(1) + ... + x1*peek(n));
-     * push(a2*peek(0) + b2*peek(1) + ... + x2*peek(n));
-     * ...
-     * pop();
-     * pop();
-     * ...
+     * int sum, count;
+     * for (int j=0; j<numPush; j++) {
+     *   float sum = 0.0;
+     *   int count = length[j]
+     *   for (int i=0; i<count; i++) {
+     *     sum += sparseA[i][j] * peek(index[i][j]);
+     *   }
+     *   sum += b[j];
+     *   push (sum);
+     * }
      * </pre>
      **/
-    JMethodDeclaration makeDirectWork(LinearFilterRepresentation representation,
-				      CType inputType,
-				      CType outputType,
-				      int popCount) {
-	// generate the push expressions that will make up the body of the
-	// new work method.
-	Vector pushStatements = makePushStatementVector(representation, inputType, outputType);
-	// make a vector filled with the appropriate number of pop expressions
-	Vector popStatements  = new Vector();
-	for (int i=0; i<popCount; i++) {
-	    SIRPopExpression popExpr = new SIRPopExpression(inputType);
-	    // wrap the pop expression so it is a statement.
-	    JExpressionStatement popWrapper = new JExpressionStatement(null, // token reference,
-								       popExpr, // expr
-								       new JavaStyleComment[0]);  // comments
-	    popStatements.add(popWrapper);
-	}
+    public Vector makePushStatementVector(LinearFilterRepresentation linearRep,
+					  CType inputType,
+					  CType outputType) {
+	Vector result = new Vector();
 
-	// now, generate the body of the new method, concatenating push then pop expressions
-	JBlock body = new JBlock();
-	body.addAllStatements(pushStatements);
-	body.addAllStatements(popStatements);
+	// declare our sum and count variables
+	String NAME_SUM = "sum";
+	String NAME_COUNT = "count";
+	JVariableDefinition sumVar = new JVariableDefinition(null, 0, outputType, NAME_SUM, null);
+	JVariableDefinition[] def1 = { sumVar };
+	result.add(new JVariableDeclarationStatement(null, def1, null));
+	JVariableDefinition countVar = new JVariableDefinition(null, 0, CStdType.Integer, NAME_COUNT, null);
+	JVariableDefinition[] def2 = { countVar };
+	result.add(new JVariableDeclarationStatement(null, def2, null));
 
-	// now, assemble the pieces needed for a new JMethod.
+	// make loop bodies and loop counters
+	JBlock outerLoop = new JBlock();
+	JBlock innerLoop = new JBlock();
+	JVariableDefinition iVar = new JVariableDefinition(/* where */ null,  /* modifiers */ 0, /* type */ CStdType.Integer,
+							   /* ident */ "i", /* initializer */ new JIntLiteral(0));
+	JVariableDefinition jVar = new JVariableDefinition(/* where */ null,  /* modifiers */ 0, /* type */ CStdType.Integer,
+							   /* ident */ "j", /* initializer */ new JIntLiteral(0));
 
-	return new JMethodDeclaration(null, // tokenReference
-				      ACC_PUBLIC,//modifiers
-				      CStdType.Void, // returnType
-				      "work",
-				      new JFormalParameter[0], // params
-				      new CClassType[0], // exceptions
-				      body, // body (obviously)
-				      null, // javadoc
-				      new JavaStyleComment[0]); // comments
-				      
-				      
-
-    }
-
-    /**
-     * Generate a Vector of JExprssionStatements which wrap
-     * SIRPushExpressions that implement (directly) the
-     * matrix multiplication represented by the linear representation.
-     **/
-    public Vector makePushStatementVector(LinearFilterRepresentation representation,
-					   CType inputType,
-					   CType outputType) {
-	Vector returnVector = new Vector();
-
-	int peekCount = representation.getPeekCount();
-	int pushCount = representation.getPushCount();
-
-	// for each output value (eg push count), construct push expression
-	for (int i = 0; i < pushCount; i++) {
-	    // the first push will have index pushCount, etc.
-	    int currentPushIndex = pushCount - 1 - i;
-	    
-	    // go through each of the elements in this column of the matrix. If the element
-	    // is non zero, then we want to produce a peek(index)*weight term (which we will then add together).
-	    // Currently bomb out if we have a non real number (no way to generate non-reals at the present).
-	    Vector combinationExpressions = new Vector();
-
-	    // a note about indexes: the matrix [[0] [1] [2]] implies peek(0)*2 + peek(1)*1 + peek(2)*0.
-	    for (int j = 0; j < peekCount; j++) {
-		int currentPeekIndex = peekCount - 1 - j;
-		ComplexNumber currentWeight = representation.getA().getElement(currentPeekIndex,
-									       currentPushIndex);
-		// if we have a non real number, bomb Mr. Exception
-		if (!currentWeight.isReal()) {
-		    throw new RuntimeException("Direct implementation with complex " +
-					       "numbers is not yet implemented.");
-		}
-
-		// if we have a non zero weight, add a weight*peek node
-		if (currentWeight.equals(ComplexNumber.ZERO)) {
-		    // do nothing for a zero weight
-		} else {
-		    // make an integer IR node for the appropriate peek index (peek (0) corresponds to
-		    // to the array row of  at peekSize-1
-		    JIntLiteral peekOffsetNode = new JIntLiteral(j);
-		    // make a peek expression with the appropriate index
-		    SIRPeekExpression peekNode = new SIRPeekExpression(peekOffsetNode, inputType);
-
-		    // IR node for the expression (either peek, or weight*peek)
-		    JExpression exprNode;
-		    // If we have a one, no need to do a multiply
-		    if (currentWeight.equals(ComplexNumber.ONE)) {
-			exprNode = peekNode;
-		    } else {
-			// make literal weight (special case if the weight is an integer)
-			JLiteral weightNode;
-			if (currentWeight.isRealInteger()) {
-			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
-			} else {
-			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
-			}
-			// make a JMultExpression with weight*peekExpression
-			exprNode = new JMultExpression(null,        // tokenReference
-						       weightNode,  // left
-						       peekNode);   // right
-		    }
-		    // add in the new expression node
-		    combinationExpressions.add(exprNode);
-		}
-	    }
-	    
-	    // now, we need to create the appropriate constant to represent the offset
-	    ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
-	    if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
-	    JLiteral offsetNode;
-	    // make the offset node for integers, and others
-	    if (currentOffset.isRealInteger()) {
-		offsetNode = new JIntLiteral(null, (int)currentOffset.getReal());
-	    } else {
-		offsetNode = new JDoubleLiteral(null, currentOffset.getReal());
-	    }
-	    
-	    // now we have all of the combination nodes and the offset node.
-	    // What we want to do is to is to combine them all together using addition.
-	    // To do this, we create an add expression tree expanding downward to the right as we go.
-	    JExpression pushArgument;
-	    // if no combination expressions, then the push arg is only the offset
-	    if (combinationExpressions.size() == 0) {
-		// if we have no combination expressions, it means we should simply output a zero
-		pushArgument = offsetNode;
-	    } else {
-		// combination expressions need to be nested.
-		// Start with the right most node
-		int numCombos = combinationExpressions.size();
-		pushArgument = new JAddExpression(null, // tokenReference
-						  ((JExpression)combinationExpressions.get(numCombos-1)), // left
-						  offsetNode); // right
-		// now, for all of the other combinations, make new add nodes with the
-		// comb. exprs as the left argument and the current add expr as the right
-		// argument.
-		for (int k=2; k<=numCombos; k++) {
-		    pushArgument = new JAddExpression(null, // tokenReference,
-						      ((JExpression)combinationExpressions.get(numCombos-k)), // left
-						      pushArgument); // right (use the previous expression)
-		}
-	    }
-	    	    	    
-	    // now, armed with the appropriate push argument, we can
-	    // simply generate the appropriate push expression and stick it in our list.
-	    SIRPushExpression pushExpr = new SIRPushExpression(pushArgument, // arg
-							       outputType); // output tape type (eg push type)
-	    // wrap the push expression in a expression statement
-	    JExpressionStatement pushWrapper = new JExpressionStatement(null, // tokenReference
-									pushExpr, // expr
-									new JavaStyleComment[0]); // comments
-	    returnVector.add(pushWrapper);
-	}
-	return returnVector;
-    }
-    
-    /**
-     * This visitor calculates the best way to replace filters in a stream
-     * graph with direct implementations. Specifically, it calculates the
-     * the replacement that has the lowest cost.
-     **/
-    static class LinearReplaceCalculator extends EmptyAttributeStreamVisitor {
-	/**
-	 * Maps SIRStreams-->Boolean. If the value is true, we want to replace this member, and
-	 * if the value is false, we do not want to do the replacement.
-	 **/
-	HashMap doReplace;
-	LinearAnalyzer linearInformation;
-	public LinearReplaceCalculator(LinearAnalyzer la) {
-	    doReplace = new HashMap();
-	    linearInformation = la;
-	}
-	/**
-	 * visiting a filter is easy. There are no children, and by assumption we want to
-	 * replace the generic code given with our matrix code. Stick in the appropriate
-	 * mapping in doReplace and then return.
-	 **/
-	public Object visitFilter(SIRFilter self,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  JMethodDeclaration work,
-				  CType inputType, CType outputType) {
-	    if (linearInformation.hasLinearRepresentation(self)) {
-		doReplace.put(self, new Boolean(true));
-	    } 
-	    return self;
-	}
-
-	public Object visitFeedbackLoop(SIRFeedbackLoop self,
-					JFieldDeclaration[] fields,
-					JMethodDeclaration[] methods,
-					JMethodDeclaration init,
-					JMethodDeclaration initPath) {
-	    // we don't really care about feedback loops because we don't include them in our analysis
-	    return self;
-	}
-	    /* pre-visit a pipeline */
-	public Object visitPipeline(SIRPipeline self,
-				    JFieldDeclaration[] fields,
-				    JMethodDeclaration[] methods,
-				    JMethodDeclaration init) {
-	    return visitContainer(self);
-	}
-	public Object visitSplitJoin(SIRSplitJoin self,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     SIRSplitter splitter,
-				     SIRJoiner joiner) {
-	    return visitContainer(self);
-	}
+	// we'll return the outer loop
+	result.add(Utils.makeForLoop(outerLoop, new JIntLiteral(linearRep.getPushCount()), jVar));
 	
-	/**
-	 * generic method for visiting container streams:<p>
-	 * If we have linear information for the container, we calculate the cost
-	 * of using the linear representation of the container, and recursively
-	 * calculate the cost of using the linear information of the children.
-	 * We then use the solution which generates minimal cost.
-	 **/
-	public Object visitContainer(SIRContainer self) {
-	    LinearPrinter.println(" calculating cost of: " + self);
-	    // if we don't know anything about this container, we are done, though we need
-	    // to do the recursion to the children
-	    if (!linearInformation.hasLinearRepresentation(self)) {
-		Iterator childIter = self.getChildren().iterator();
-		while (childIter.hasNext()) {
-		    ((SIROperator)childIter.next()).accept(this);
-		}
-		return self;
-	    }
+	// build up outer loop...
+	// sum = 0
+	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, sumVar), 
+						       new JIntLiteral(0)));
+	// count = length[i]
+	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, countVar), 
+						       new JArrayAccessExpression(null,
+										    new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
+										    new JLocalVariableExpression(null, jVar))));
+	// add the inner for loop
+	outerLoop.addStatement(Utils.makeForLoop(innerLoop, new JLocalVariableExpression(null, countVar), iVar));
+	
+	// sum += b[i]
+	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, sumVar),
+						       new JAddExpression(null,
+									  new JLocalVariableExpression(null, sumVar),
+									  new JArrayAccessExpression(null,
+												     new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
+												     new JLocalVariableExpression(null, jVar)))));
+	// push (sum)
+	outerLoop.addStatement(new JExpressionStatement(null, new SIRPushExpression(new JLocalVariableExpression(null, sumVar), outputType), null));
 
-	    // calcuate the cost of doing a direct replacement of this container
-	    LinearCost containerCost = linearInformation.getLinearRepresentation(self).getCost();
-
-	    // calculate the cost of doing the optimal replacement of the children.
-	    LinearReplaceCalculator childCalculator = new LinearReplaceCalculator(linearInformation);
-	    Iterator childIter = self.getChildren().iterator();
-	    while(childIter.hasNext()) {
-		((SIROperator)childIter.next()).accept(childCalculator);
-	    }
-	    LinearCost childCost = childCalculator.getTotalCost();
-
-	    // now, if the container cost is less than the child cost, use the
-	    // container, otherwise use the child
-	    if (containerCost.lessThan(childCost)) {
-		doReplace.put(self, new Boolean(true));
-	    } else {
-		doReplace.putAll(childCalculator.getDoReplace()); // remember which children were used
-	    }
-	    return self;
-	}
-
-	/** get the mappings from streams to true if we want to replace them. **/
-	HashMap getDoReplace() {return this.doReplace;}
-
-	/** calculate the total cost of doing the replacements that is described in doReplace. **/
-	LinearCost getTotalCost() {
-	    LinearCost currentCost = LinearCost.ZERO;
-	    
-	    Iterator keyIter = this.doReplace.keySet().iterator();
-	    while(keyIter.hasNext()) {
-		// the only mappings that we have in the map are the streams we want to include
-		SIRStream currentStream = (SIRStream)keyIter.next();
-		LinearFilterRepresentation currentChildRep = linearInformation.getLinearRepresentation(currentStream);
-		LinearCost currentChildCost = currentChildRep.getCost();
-		currentCost = currentCost.plus(currentChildCost);
-	    }
-	    return currentCost;
-	}
-
-	/**
-	 * returns true if we should replace this filter with a direct implementation (eg if
-	 * we have a mapping from the stream to Boolean(true) in doReplace.
-	 **/
-	public boolean shouldReplace(SIRStream str) {
-	    return this.doReplace.containsKey(str);
-	}
+	// now build up the inner loop...
+	// sum += sparseA[i][j] * peek(index[i][j]);
+	JExpression sparseAij = new JArrayAccessExpression(null,
+							   makeArrayFieldAccessExpr(sparseAField.getVariable(),
+										    new JLocalVariableExpression(null, iVar)),
+							   new JLocalVariableExpression(null, jVar));
+	JExpression indexij =   new JArrayAccessExpression(null,
+							   makeArrayFieldAccessExpr(indexField.getVariable(),
+										    new JLocalVariableExpression(null, iVar)),
+							   new JLocalVariableExpression(null, jVar));
+	innerLoop.addStatement(new JExpressionStatement(null, 
+							new JAssignmentExpression(null,
+										  new JLocalVariableExpression(null, sumVar),
+										  new JAddExpression(null,
+												     new JLocalVariableExpression(null, sumVar),
+												     new JMultExpression(null, 
+															 sparseAij, 
+															 new SIRPeekExpression(indexij, inputType)))),
+							null));
+	
+	return result;
     }
 }
-
-

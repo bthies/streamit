@@ -11,7 +11,7 @@ import at.dms.compiler.*;
 /**
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.
- * $Id: LinearReplacer.java,v 1.14 2003-03-30 21:50:56 thies Exp $
+ * $Id: LinearReplacer.java,v 1.15 2003-04-06 12:01:52 thies Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // in visitors of containers, clear the children if we make a
@@ -121,6 +121,13 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     public JExpression makeFieldAccessExpression(String name) {
 	return new JFieldAccessExpression(null, new JThisExpression(null), name);
     }
+
+    /**
+     * Creates a statement assigning <right> to <left>
+     */
+    public JStatement makeAssignmentStatement(JExpression left, JExpression right) {
+	return new JExpressionStatement(null, new JAssignmentExpression(null, left, right), null);
+    }
     
 
     
@@ -148,13 +155,21 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 
     /* makes a field array access expression of the form this.arrField[index] */
     public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
-	/* first, make the this.arr1[index] expression */
+	return makeArrayFieldAccessExpr(arrField, new JIntLiteral(index));
+    }
+
+    /* makes a field array access expression of the form
+     * <prefix>-arrField[index], where user can set prefix.  (For
+     * example, prefix could be "this", or another array access
+     * expression.)  */
+    public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, JExpression index) {
+	/* first, make the prefix-arr1[index] expression */
 	JExpression fieldAccessExpr;
 	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
 	JExpression fieldArrayAccessExpr;
 	fieldArrayAccessExpr = new JArrayAccessExpression(null,
 							  fieldAccessExpr,
-							  new JIntLiteral(index),
+							  index,
 							  arrField.getType());
 	
 	return fieldArrayAccessExpr;

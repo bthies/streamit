@@ -9,7 +9,7 @@ package at.dms.kjc.sir.linear;
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
  *
- * $Id: ComplexNumber.java,v 1.7 2002-10-28 15:22:00 aalamb Exp $
+ * $Id: ComplexNumber.java,v 1.8 2003-04-06 12:01:52 thies Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
@@ -40,8 +40,11 @@ public class ComplexNumber {
     public double getImaginary() {return this.imaginaryPart;}
     /** returns true of abs(imaginary part) is less than MAX_PRECISION **/
     public boolean isReal() {return (Math.abs(this.getImaginary()) < MAX_PRECISION);}
-    /** returns true if the real part of this is an integer **/
-    public boolean isRealInteger() { return (Math.floor(this.getReal()) == this.getReal());}
+    /** returns true if both the real and imaginary parts of this are integers **/
+    public boolean isIntegral() { 
+	return ( Math.abs(Math.abs(Math.round(this.getReal())) - Math.abs(this.getReal())) < MAX_PRECISION &&
+		 Math.abs(Math.abs(Math.round(this.getImaginary())) - Math.abs(this.getImaginary())) < MAX_PRECISION );
+    }
 
     /////// Arithemetic Operations
     /** compute the negative of this complex number **/

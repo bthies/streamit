@@ -9,16 +9,28 @@ package at.dms.kjc.sir.linear;
  * Obviously, all of the multiplies and adds refer to floating point operations.
  **/
 public class LinearCost {
+    /** the factor by which operations are more expensive in time than
+     * frequency (from empirical observations) **/
+    private static final int FREQUENCY_BENEFIT = 50;
     /** the number of multiplies. **/
     private int multiplyCount;
     /** the number of adds **/
     private int addCount;
+    /** the number of elements in the matrix from which this was derived **/
+    private int originalMatrixSize;
     /** LinearCost with 0 multiplies and 0 adds. **/
-    public static final LinearCost ZERO = new LinearCost(0,0);
+    public static final LinearCost ZERO = new LinearCost(0,0,0);
     
-    public LinearCost(int muls, int adds) {
+    /**
+     * Note that <muls> and <adds> do NOT count
+     * multiplication/addition by zero, whereas <originalMatrixSize>
+     * gives the number of elements (including zero and one) that were
+     * in the original matrix.
+     */
+    public LinearCost(int muls, int adds, int originalMatrixSize) {
 	this.multiplyCount = muls;
 	this.addCount = adds;
+	this.originalMatrixSize = originalMatrixSize;
 	checkRep();
     }
 
@@ -38,7 +50,8 @@ public class LinearCost {
     /** returns a new LinearCost that represents the sum (element wise) of this and other. **/
     public LinearCost plus(LinearCost other) {
 	return new LinearCost(this.getMultiplies() + other.getMultiplies(), // muls
-			      this.getAdds() + other.getAdds()); // adds
+			      this.getAdds() + other.getAdds(),
+			      this.originalMatrixSize + other.originalMatrixSize); // adds
     }
 
     
@@ -48,12 +61,17 @@ public class LinearCost {
     }
 
     /**
-     * Returns the cost of this (in terms of estimated execution time,
-     * relative to any metric) if implemented directly in the time
-     * domain.
+     * Returns the cost of this (in units proportional of estimated
+     * execution time, relative to any metric) if implemented directly
+     * in the time domain.  We assume that the number and cost of adds
+     * is proportional to the number of multiplies, and just count the
+     * multiplies.
+     *
+     * We scale up by FREQ_BENEFIT here instead of dividing in
+     * getFrequencyCost so that eveverything stays integral.
      */
     public int getDirectCost() {
-	return 3 * multiplyCount + addCount;
+	return FREQUENCY_BENEFIT * multiplyCount;
     }
 
     /**
@@ -63,11 +81,6 @@ public class LinearCost {
      * Must be comparable to values returned by getDirectCost().
      */
     public int getFrequencyCost() {
-	return getDirectCost() / 3;
+	return originalMatrixSize;
     }
-    
-
-
 }
-	
-	

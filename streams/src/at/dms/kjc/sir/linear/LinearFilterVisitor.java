@@ -814,7 +814,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	
 	// if the right side is a constant, figure it out at compile time,
 	// and accept the equivalant multiplication or division.
-	if (rightForm.getOffset().isRealInteger()) {
+	if (rightForm.getOffset().isReal() && rightForm.getOffset().isIntegral()) {
 	    int rightInt = (int)rightForm.getOffset().getReal(); // get the real part
 	    // calculate the power of two.
 	    // this probably won't handle _large_ powers of two.

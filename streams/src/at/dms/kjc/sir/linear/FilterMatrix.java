@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.13 2002-11-19 19:55:45 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.14 2003-04-06 12:01:52 thies Exp $
  **/
 
 public class FilterMatrix {
@@ -287,7 +287,36 @@ public class FilterMatrix {
 	}
 	return sum;
     }	
-    
+
+    /**
+     * Return whether or not all the elements of this have integral
+     * components.
+     */
+    public boolean isIntegral() {
+	for (int i=0; i<getRows(); i++) {
+	    for (int j=0; j<getCols(); j++) {
+		if (!getElement(i, j).isIntegral()) {
+		    return false;
+		}
+	    }
+	}
+	return true;
+    }
+
+    /**
+     * Return whether or not all the elements of this are real.
+     */
+    public boolean isReal() {
+	for (int i=0; i<getRows(); i++) {
+	    for (int j=0; j<getCols(); j++) {
+		if (!getElement(i, j).isReal()) {
+		    return false;
+		}
+	    }
+	}
+	return true;
+    }
+
     /**
      * Return true if the passed object is a FilterMatrix and represents the same matrix as this,
      * on an element by element basis.

@@ -160,6 +160,12 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				  List elements) {
 	// stop counting children by removing a digit from namePrefix
 	namePrefix.removeLast();
+	// if we are still counting, increment the numbering so the
+	// next element is one higher
+	if (namePrefix.size()!=0) {
+	  Integer old = (Integer)namePrefix.removeLast();
+	  namePrefix.add(new Integer(old.intValue()+1));
+	}
     }
 
     /* post-visit a splitjoin */

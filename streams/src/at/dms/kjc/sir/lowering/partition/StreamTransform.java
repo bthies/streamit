@@ -52,6 +52,7 @@ public abstract class StreamTransform {
 	}
 	// do this transform
 	SIRStream result = doMyTransform(str);
+
 	// do succ's (if we have children and there are any transforms)
 	if (result instanceof SIRContainer && succ.size()>0) {
 	    doSuccTransforms((SIRContainer)result);
@@ -126,7 +127,7 @@ public abstract class StreamTransform {
 	// make sure we have the same number of transforms to apply as
 	// we have children
 	Utils.assert(transforms.size() == cont.size(),
-		     "Have " + transforms.size() + " transforms but " + cont.size() + " children for " + cont.getName());
+		     "Have " + transforms.size() + " transforms but " + cont.size() + " children for " + cont.getName() + ".  Transforms are children of " + this);
 	
 	// visit transforms
 	for (int i=0; i<cont.size(); i++) {

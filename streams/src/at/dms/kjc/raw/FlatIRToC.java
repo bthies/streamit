@@ -109,8 +109,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("  " + init.getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
-	if (self instanceof SIRTwoStageFilter) 
-	    print("  " + ((SIRTwoStageFilter)self).getInitWork().getName() + "();\n");
 	print("  " + work.getName() + "();\n");
 	print("}\n");
 	
@@ -215,21 +213,58 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         newLine();
     }
 
+    private void printTwoStageInitWork() 
+    {
+	SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+	int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
+	    two.getPeekInt();
+	
+	print(two.getInputType() + 
+		       " buffer[" + buffersize + "];\n");
+	print(" for (i = 0; i < " + two.getInitPeek() + "; i++)\n");
+	print("   buffer[i] = ");
+	if (two.getInputType().equals(CStdType.Float))
+	    print("static_receive_f();\n");
+	else 
+	    print("static_receive();\n");
+	two.getInitWork().getBody().accept(this);
+	
+	//now 
+	 print("\n count = 0;\n");
+	 if (two.getInitPeek() != two.getInitPop()) {
+	     print(" for (i = " + two.getInitPop() + "; i < " +
+		   two.getInitPeek() +
+		   "; i++)\n");
+	     print("   buffer[count++] = buffer[i];\n");
+	 }
+	 
+	 print(" for (i = count; i < " + two.getPeekInt() + "; i++) \n");
+	 print("   buffer[i] = ");
+	 if (two.getInputType().equals(CStdType.Float)) 
+	     print("static_receive_f();\n");
+	 else
+	     print("static_receive();\n");
+	 print(" count = -1;\n");
+    }
+    
     private void printWorkHeader() 
     {
 	print("{\n");
 	if (filter.getPeekInt() > 0) {
 	    print("int i, count = -1;\n");
-	    print(filter.getInputType() + 
-		  " buffer[" + filter.getPeekInt() + "];\n");
-	    print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
-	    print("   buffer[i] = ");
-	    if (filter.getInputType().equals(CStdType.Float))
-		print("static_receive_f();\n");
-	    else 
-		print("static_receive();\n");
+	    if (filter instanceof SIRTwoStageFilter) 
+		printTwoStageInitWork();
+	    else {
+		print(filter.getInputType() + 
+		       " buffer[" + filter.getPeekInt() + "];\n");
+		print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
+		print("   buffer[i] = ");
+		if (filter.getInputType().equals(CStdType.Float))
+		    print("static_receive_f();\n");
+		else 
+		    print("static_receive();\n");
+	    }
 	}
-	
 	print(" while (1) {\n");
     }
     
@@ -282,6 +317,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         }
     }
 
+    private void printLocalArrayDecl(JNewArrayExpression expr) 
+    {
+	JExpression[] dims = expr.getDims();
+	for (int i = 0 ; i < dims.length; i++) {
+	    FlatIRToC toC = new FlatIRToC();
+	    dims[i].accept(toC);
+	    print("[" + toC.getString() + "]");
+	}
+    }
+    
+
     /**
      * prints a variable declaration statement
      */
@@ -291,13 +337,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                         String ident,
                                         JExpression expr) {
         // print(CModifier.toString(modifiers));
-        print(type);
+        printLocalType(type);
         print(" ");
         print(ident);
         if (expr != null) {
-            print(" = ");
-            expr.accept(this);
-        }
+            if (expr instanceof JNewArrayExpression) {
+		printLocalArrayDecl((JNewArrayExpression)expr);
+	    }
+	    else {
+		print(" = ");
+		expr.accept(this);
+	    }
+	}
         print(";");
     }
 
@@ -1376,11 +1427,24 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
-        if (s instanceof CArrayType)
-        {
+	if (s instanceof CArrayType){
             print(((CArrayType)s).getElementType());
             print("*");
         }
+        else if (s.getTypeID() == TID_BOOLEAN)
+            print("int");
+        else if (s.toString().endsWith("Portal"))
+	    // ignore the specific type of portal in the C library
+	    print("portal");
+	else
+            print(s.toString());
+    }
+
+    protected void printLocalType(CType s) 
+    {
+	if (s instanceof CArrayType){
+	    print(((CArrayType)s).getElementType());
+	}
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");
         else if (s.toString().endsWith("Portal"))

@@ -90,12 +90,11 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //	    System.out.println(Namer.getName(fire.contents));
 
 	    //keep track of everything needed when a node fires
-	    consumeData(fire, counters, counts);
+	    int items = fireMe(fire, counters, counts);
 	    //simulate the firings
 	    //1 item for a joiner, push items for a filter
-	    int items = 1;
-	    if (fire.contents instanceof SIRFilter)
-		items = ((SIRFilter)fire.contents).getPushInt();
+	    
+	  
 	    
 	    for (int i = 0; i < items; i++) {
 		//get the destinations of this item
@@ -197,9 +196,20 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	}
     }
     
-
+    private int itemsNeededToFire(FlatNode fire, SimulationCounter counters) 
+    {
+	if (!counters.hasFired(fire)) {
+	    if (fire.contents instanceof SIRTwoStageFilter)
+		return ((SIRTwoStageFilter)fire.contents).getInitPeek();
+	    else 
+		return ((SIRFilter)fire.contents).getPeekInt();
+	}
+	else
+	    return ((SIRFilter)fire.contents).getPopInt();
+    }
    
-    private void consumeData(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
+    //consume the data and return the number of items produced
+    private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
 	//System.out.println("Firing " + Namer.getName(fire.contents));
 	
@@ -211,23 +221,24 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		Utils.fail("Executed too much");
 	    executionCounts.put(fire, new Integer(oldVal - 1));
 	    
-	    //take the values off the buffer
-	    //take off peek values on the first invocation
-	    if (!counters.hasFired(fire))
-		counters.decrementBufferCount(fire, 
-					      ((SIRFilter)fire.contents).
-					      getPeekInt());
-	    else 
-		counters.decrementBufferCount(fire, 
-					      ((SIRFilter)fire.contents).
-					      getPopInt());
+	    counters.decrementBufferCount(fire, 
+					  itemsNeededToFire(fire, counters));
+	    
+	    //for a steady state execution return the normal push
+	    int ret = ((SIRFilter)fire.contents).getPushInt();
+	    //if the filter is a two stage, and it has not fired
+	    //return the initPush()
+	    if (fire.contents instanceof SIRTwoStageFilter)
+		if (!counters.hasFired(fire))
+		    ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
 	    
 	    //now this node has fired
 	    counters.setFired(fire);
+	    return ret;
 	}
 	else if (fire.contents instanceof SIRJoiner) {
 	    //System.out.println("Firing a joiner");
-
+	    
 	    //determine if this joiner fired because of an initpath call
 	    //if so just increment the number of calls to the initpath
 	    if (counters.canFeedbackJoinerFire(fire)) {
@@ -248,7 +259,11 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		//step the schedule
 		counters.incrementJoinerSchedule(fire);
 	    }
+	    //joiners produce one item per firing
+	    return 1;
 	}
+	Utils.fail("Trying to fire a non-filter or joiner");
+	return -1;
     }
     
     //get the destination of the data item
@@ -395,20 +410,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    if (count.intValue() == 0)
 		return false;
 	    
-	    //on the first execution we must consume peek items
-	    //counters.fired tells us if we have fired already
-	    int requirement;
-	    if (!counters.hasFired(node))
-		requirement = ((SIRFilter)node.contents).getPeekInt();
-	    else
-		requirement = ((SIRFilter)node.contents).getPopInt();
-	    
-	    //System.out.println("canFire: " + Namer.getName(node.contents) +
-	    //		       " req: " + requirement + " buf: " + 
-	    //		       counters.getBufferCount(node));
-	    
-
-	    if (counters.getBufferCount(node) >= requirement) {
+	    if (counters.getBufferCount(node) >= itemsNeededToFire(node, counters)) {
 		return true;
 	    }
 	    else

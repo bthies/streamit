@@ -58,7 +58,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	
     }
     
-   
+    public static Set getTiles() {
+	return tileAssignment.keySet();
+    }
+
     /**
      * Returns the tile number assignment for <str>, or null if none has been assigned.
      */

@@ -34,7 +34,8 @@ public class SwitchCode extends at.dms.util.Utils
 	    keySet());
 	
 	RawBackend.addAll(tiles, Simulator.steadySchedules.keySet());
-	
+	RawBackend.addAll(tiles, Layout.getTiles());
+
 	Iterator tileIterator = tiles.iterator();
 			
 	//for each tiles dump the code

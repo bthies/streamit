@@ -68,15 +68,24 @@ class PlateauSource extends Filter
 class StepSource extends Filter
 {
   int x, length;
-  int up = 1;
+  int up;
 
   public void work() {
     output.pushInt(x);
     if (x == length) { up = 0;} else if (x == 0) { up = 1; }
-    x = x + ((up == 1) ? 1 : -1);
+//      x = x + ((up == 1) ? 1 : -1);
+    if (up == 1) {
+      x += 1;
+    } else {
+      x -= 1;
+    }
+//      x = x + 1;
+//      x = (x + 1) % length;
   }
-  public void init(int length) {
-    this.length = length;
+  public void init(int len) {
+    this.length = len;
+    this.up = 1;
+    this.x = 0;
     output = new Channel(Integer.TYPE, 1);
   }
   public StepSource(int length) {
@@ -92,12 +101,12 @@ class AddSource extends Filter
     output.pushFloat(x);
     x += length;
   }
-  public void init(float length) {
-    this.length = length;
+  public void init(float len) {
+    this.length = len;
     output = new Channel(Float.TYPE, 1);
   }
-  public AddSource(float length) {
-    super(length);
+  public AddSource(float len) {
+    super(len);
   }
 }
 
@@ -132,9 +141,7 @@ class FunkySource extends Pipeline {
 	  input = new Channel(Float.TYPE, 2);
 	}
 	public void work() {
-	  output.pushFloat(input.peekFloat(0) + input.peekFloat(1));
-	  input.popFloat();
-	  input.popFloat();
+	  output.pushFloat(input.popFloat() + input.popFloat());
 	}
       });
   }

@@ -1,7 +1,7 @@
 import streamit.*;
 import streamit.io.*;
 
-class MagnitudeStuff extends Pipeline {
+class MagnitudeStuff extends Pipeline implements Constants {
   public void init(final int DFTLen, final int newLen, final float speed) {
 //      final int interpolate = (int) ((speed * 10) + 0.5f; 
     //with this uncommented and used down in the split join, it was
@@ -32,8 +32,9 @@ class MagnitudeStuff extends Pipeline {
 	  public void init() {
 	    setSplitter(ROUND_ROBIN());
 	    for(int i=0; i < DFTLen; i++) {
-	      add(new Remapper(1,  2));
+//  	      add(new Remapper(1,  2));
 //  	      add(new Remapper(10,  (int) ((speed * 10) + 0.5f)));
+	      add(new Remapper(n_LENGTH,  m_LENGTH));
 	    }
 	    setJoiner(ROUND_ROBIN());
 	  }

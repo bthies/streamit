@@ -8,9 +8,7 @@ class Multiplier extends Filter {
   }
 
   public void work() {
-    output.pushFloat(input.peekFloat(0) * input.peekFloat(1));
-    input.popFloat();
-    input.popFloat();
+    output.pushFloat(input.popFloat() * input.popFloat());
   }
 }
 
@@ -18,8 +16,8 @@ class ConstMultiplier extends Filter {
   float c;
   boolean first = true;
 
-  public void init(float c) {
-    this.c = c;
+  public void init(float mult) {
+    this.c = mult;
     input = new Channel(Float.TYPE, 1);
     output = new Channel(Float.TYPE, 1);
   }

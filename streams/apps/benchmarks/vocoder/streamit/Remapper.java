@@ -9,8 +9,8 @@ class LinearInterpolator extends Filter {
   public void init(int interpFactor) {
     this.interp = interpFactor;
     input = new Channel(Float.TYPE, 1,2);
-    output = new Channel(Float.TYPE, 2);
-//      output = new Channel(Float.TYPE, interpFactor);
+//      output = new Channel(Float.TYPE, 2);
+    output = new Channel(Float.TYPE, interpFactor);
   }
 
   public void work() {
@@ -28,15 +28,15 @@ class LinearInterpolator extends Filter {
     super(interp);
   }
 }
-  
-/** Linear Interpolater just takes two neighbouring points and creates
- * <interp - 1> points linearly between the two **/
+
+/** Linear Decimator just passes on one point and pops the next
+ * decimFactor - 1 **/
 class Decimator extends Filter {
   int decim;
 
-  public void init(int decim) {
-    this.decim = decim;
-    input = new Channel(Float.TYPE, decim);
+  public void init(int decimFactor) {
+    this.decim = decimFactor;
+    input = new Channel(Float.TYPE, decimFactor);
 //      input = new Channel(Float.TYPE, 1);
     output = new Channel(Float.TYPE, 1);
   }
@@ -72,9 +72,14 @@ class Remapper extends Pipeline {
 //      add(new LinearInterpolator(m_LENGTH));
 //      add(new Decimator(n_LENGTH));
 
-    add(new LinearInterpolator(20));
-    add(new Decimator(oldLen));
-
+    if (newLen == oldLen) {
+      add(new IdentityFloat());
+    } else {
+      if (newLen != 1)
+	add(new LinearInterpolator(newLen));
+      if (oldLen != 1)
+	add(new Decimator(oldLen));
+    }
 //      add(new LinearInterpolator(1));
 //      add(new Decimator(1));
   }
@@ -95,11 +100,11 @@ class Duplicator extends Filter {
     super(oldLen, newLen);
   }
 
-  public void init(int oldLen, int newLen) {
-    this.oldLen = oldLen;
-    this.newLen = newLen;
-    output = new Channel(Float.TYPE, newLen);
-    input = new Channel(Float.TYPE, oldLen);
+  public void init(int oldLength, int newLength) {
+    this.oldLen = oldLength;
+    this.newLen = newLength;
+    output = new Channel(Float.TYPE, newLength);
+    input = new Channel(Float.TYPE, oldLength);
   }
 
   public void work() {

@@ -1,6 +1,69 @@
 import streamit.*;
 import streamit.io.*;
 
+//  class Delay extends FeedbackLoop {
+
+//      public Delay(int N) {
+//  	super(N);
+//      }
+
+//      public void init(int N) {
+//  	setSplitter(ROUND_ROBIN());
+//  	setDelay(N);
+//  	setBody(new IdentityFloat());
+//  	setLoop(new IdentityFloat());
+//  	setJoiner(ROUND_ROBIN());
+//      }
+
+//      public float initPathFloat(int index) {
+//  	return 0.0f;
+//      }
+//  }
+class Delay extends Filter {
+  float delay[];
+  int length;
+
+    public Delay(int N) {
+	super(N);
+    }
+
+    public void init(int N) {
+      delay = new float[N];
+      for(int i=0; i < N; i++)
+	delay[i] = 0;
+      length = N;
+      input = new Channel(Float.TYPE, 1);
+      output = new Channel(Float.TYPE, 1);
+    }
+
+  public void work() {
+    output.pushFloat(delay[0]);
+    for(int i=0; i < length - 1; i++)
+      delay[i] = delay[i+1];
+    delay[length - 1] = input.popFloat();
+  }
+}
+
+class InvDelay extends Filter {
+  float delay[];
+  int length;
+
+    public InvDelay(int N) {
+	super(N);
+    }
+
+    public void init(int N) {
+      delay = new float[N];
+      length = N;
+      input = new Channel(Float.TYPE, 1,N+1);
+      output = new Channel(Float.TYPE, 1);
+    }
+
+  public void work() {
+    output.pushFloat(input.peekFloat(length));
+    input.popFloat();
+  }
+}
 /** RecToPolar **/
 class RectangularToPolar extends Filter {
   public void init() {
@@ -10,14 +73,21 @@ class RectangularToPolar extends Filter {
 
   public void work() {
     float x, y;
+    float r, theta;
 //      Complex c;
     x = input.popFloat(); y = input.popFloat();
 //      c = new Complex(x,y);
 
-    //output.pushFloat(c.real());
-    output.pushFloat((float)Math.sqrt(x*x + y*y));
-    //output.pushFloat(c.imag());
-    output.pushFloat((float)Math.atan2(y, x));
+    r = (float)Math.sqrt(x * x + y * y);
+    theta = (float)Math.atan2(y, x);
+
+//      if (y < 0 || (y == 0 && x < 0)) {
+//        theta += Math.PI;
+//        r = -r;
+//      }
+      
+    output.pushFloat(r);
+    output.pushFloat(theta);
   }
 }
 
@@ -152,7 +222,7 @@ class IntToFloat extends Filter {
     output = new Channel(Float.TYPE, 1);
   }
   public void work() {
-    output.pushFloat(input.popInt());
+    output.pushFloat((float)input.popInt());
   }
 }
 
@@ -186,20 +256,53 @@ class DoubleToShort extends Filter {
   }
 }
 
+class Timer extends Filter {
+  private int count, length, num;
+  private long lastTime;
+
+  public void init(int N) {
+    this.length = N;
+    this.count = 0;
+    this.num = 0;
+//      lastTime = System.currentTimeMillis();
+    input = new Channel(Short.TYPE, 1);
+    output = new Channel(Short.TYPE, 1);
+  }
+
+  public void work() {
+    output.pushShort(input.popShort());
+    count++;
+    if (count == length) {
+      count = 0;
+//        System.out.println(System.currentTimeMillis() - lastTime);
+//        lastTime = System.currentTimeMillis();
+      System.out.println(num++);
+    }
+  }
+
+  public Timer(int N) {
+    super(N);
+  }
+}    
+
 class CountDown extends Filter {
-  private int length;
+  private int length, count;
+
   CountDown(int length) {
     super(length);
   }
-  public void init(int length) {
-    this.length = length;
+  public void init(int len) {
+    this.length = len;
+    this.count = len;
     input = new Channel(Float.TYPE, 1);
   }
   public void work() {
-    length--;
+    count--;
     input.popFloat();
-    if (length == 0)
+    if (count == 0) {
+      count = length;
       System.out.println("done");
+    }
   }
 }
 
@@ -258,10 +361,21 @@ class ShortVoid extends Filter {
   public void init() {input = new Channel(Short.TYPE, 1); }
 }
 
+class IntVoid extends Filter {
+  public void work() {input.popInt();}
+  public void init() {input = new Channel(Integer.TYPE, 1); }
+}
+
 class FloatToShort extends Filter {
   public void work() {output.pushShort((short) (input.popFloat() + 0.5f)); }
   public void init() {input = new Channel(Float.TYPE, 1);
                       output = new Channel(Short.TYPE, 1);}
+}
+
+class FloatToInt extends Filter {
+  public void work() {output.pushInt((int) (input.popFloat() + 0.5f)); }
+  public void init() {input = new Channel(Float.TYPE, 1);
+                      output = new Channel(Integer.TYPE, 1);}
 }
 
 class ShortToFloat extends Filter {

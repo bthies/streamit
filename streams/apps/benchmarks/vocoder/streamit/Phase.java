@@ -17,12 +17,14 @@ class PhaseUnwrapper extends Filter {
     unwrapped += estimate;
     float delta = unwrapped - previous;
     while (delta > 2 * Math.PI * (11f / 16f)) {
+//      while (delta > 2 * Math.PI * (11f / 16f)) {
 //        System.out.println("subtracting: " + unwrapped + " + " + estimate + " - " + previous + " is > 2PI");
       unwrapped -= 2 * Math.PI;
       delta -= 2 * Math.PI;
       estimate -= 2 * Math.PI;
     }
     while (delta < -2 * Math.PI * (11f / 16f)) {
+//      while (delta < -2 * Math.PI * (11f / 16f)) {
 //        System.out.println("adding: " + unwrapped + " + " + estimate + " - " + previous + " is < -2PI");
       unwrapped += 2 * Math.PI;
       delta += 2 * Math.PI;
@@ -40,6 +42,7 @@ class PhaseUnwrapper extends Filter {
 /**/
 class FirstDifference extends Filter {
   private float prev;
+//    private boolean first;
 
   public FirstDifference() {
     super();
@@ -48,17 +51,18 @@ class FirstDifference extends Filter {
   public void init() {
     input = new Channel(Float.TYPE, 1, 1);
     output = new Channel(Float.TYPE, 1);
-    prev = 0f;//intput.peekFloat(0);
+    prev = 0f;//input.peekFloat(0);
+//      first = false;
   }
 
   public void work() {
-    float base = input.popFloat();
-    output.pushFloat(base - prev);
-    prev = base;
+//      output.pushFloat(prev - input.peekFloat(0));
+    output.pushFloat(input.peekFloat(0) - prev);
+    prev = input.popFloat();
   }
 }
 
-class InnerPhaseStuff extends Pipeline {
+class InnerPhaseStuff extends Pipeline implements Constants {
 
   public void init(float c, float speed) {
     add(new PhaseUnwrapper());
@@ -67,8 +71,10 @@ class InnerPhaseStuff extends Pipeline {
       add(new ConstMultiplier(c));
     }
     if (speed != 1.0) {
-//        add(new Remapper(10, speed * 10));
-      add(new Remapper(1, 2));
+      add(new Remapper(n_LENGTH, m_LENGTH));
+//  //        add(new FloatPrinter());
+//  //        add(new Remapper(10, (int) (speed * 10)));
+//  //        add(new Remapper(1, 2));
     }
     add(new Accumulator());
     //  		  add(new FloatPrinter("(phase " + fi + "):", "\n"));
@@ -82,12 +88,12 @@ class PhaseStuff extends Pipeline {
 
   public void init(final int DFTLen, final int newLen, final float c,
 		   final float speed) {
-    if (!(c == 1.0 && speed == 1.0)) {
+
+    if (speed != 1.0 || c != 1.0) {
       add(new SplitJoin() {
 	  public void init() {
 	    setSplitter(ROUND_ROBIN());
 	    for(int i=0; i < DFTLen; i++) {
-	      final int fi = i;
 	      add(new InnerPhaseStuff(c, speed));
 	    }
 	    setJoiner(ROUND_ROBIN());
@@ -106,6 +112,33 @@ class PhaseStuff extends Pipeline {
   }
 }
 
+/**/
+/**
+class FirstDifference extends Filter {
+  private float prev;
+  private boolean first;
+
+  public FirstDifference() {
+    super();
+  }
+
+  public void init() {
+    input = new Channel(Float.TYPE, 1, 2);
+    output = new Channel(Float.TYPE, 1);
+//      prev = 0f;//input.peekFloat(0);
+    first = false;
+  }
+
+  public void work() {
+    float base = input.popFloat();
+    if (first) {
+      first = false;
+      prev = base;
+    }
+    output.pushFloat(base - prev);
+    prev = base;
+  }
+}
 /**/
 /**
 class FirstDifference extends Filter {

@@ -26,7 +26,7 @@ package grapheditor;
 				   
 				   Shell shell = activeWindow.getShell();
 				   System.out.println("Before the creation of the pipeline");
-				   GEPipeline.test(); 
+
 				   //GEPipeline pipe = new GEPipeline("Juan's Pipeline");
 				  // StreamItEditor.Test();
 				  // at.dms.kjc.StreaMITMain.test();

@@ -6,6 +6,8 @@
  */
 package grapheditor;
 import java.io.*;
+import com.jgraph.JGraph;
+
 
 /**
  * @author jcarlos
@@ -100,6 +102,6 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		
 		return splitter;
 	}
-	public void collapse(){};
+	public void collapseExpand(JGraph jgraph){};
 	
 }

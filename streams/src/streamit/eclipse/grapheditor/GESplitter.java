@@ -9,6 +9,8 @@ package grapheditor;
 import java.io.*;
 
 import com.jgraph.graph.*;
+import com.jgraph.JGraph;
+
 import java.awt.Color;
 import javax.swing.BorderFactory; 
 
@@ -67,5 +69,5 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		System.out.println("Drawing the Splitter " +this.getName());
 	}
 		
-	public void collapse(){};
+	public void collapseExpand(JGraph jgraph){};
 }

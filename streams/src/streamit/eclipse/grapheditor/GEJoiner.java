@@ -10,6 +10,8 @@ import java.awt.Color;
 import javax.swing.BorderFactory; 
 
 import java.awt.Point;
+import com.jgraph.JGraph;
+
 /**
  * GEJoiner is the graph editor's internal representation of a joiner.
  * @author jcarlos
@@ -71,5 +73,5 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 		// TO BE ADDED
 	}
 	
-	public void collapse(){};
+	public void collapseExpand(JGraph jgraph){};
 }

@@ -12,6 +12,7 @@ import grapheditor.jgraphextension.*;
 import com.jgraph.graph.*;
 import java.awt.Color;
 import javax.swing.BorderFactory; 
+import com.jgraph.JGraph;
 
 /**
  *  GEPhasedFilter is the graph editor's internal representation of a phased filter.
@@ -87,13 +88,15 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		System.out.println("Constructing the filter " +this.getName());
 		
 		
-		if (this.getNumberOfWFs() > 0)
+		if (this.getNumberOfWFs() > 0) 
 		{
 			GEWorkFunction wf = this.getWorkFunction(0);
-			this.setUserObject("<HTML><H5>"+ this.getName() +"<BR>Push = " + wf.getPushValue() + 
+			
+			this.setInfo("<HTML><H5>"+ this.getName() +"<BR>Push = " + wf.getPushValue() + 
 														  "<BR>Pop = " + wf.getPopValue() + 
 														  "<BR>Peek = " + wf.getPeekValue() + 
 														  "</H5></HTML>");
+			this.setUserObject(this.getInfo());
 		}
 		else
 		{
@@ -130,5 +133,30 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		// TO BE ADDED
 	}
 
-	public void collapse(){};
+	public void collapseExpand(JGraph jgraph)
+	{
+		if (this.isInfoDisplayed)
+		{
+			Map change = GraphConstants.createMap();
+			GraphConstants.setValue(change, "<HTML><H5>"+this.getName()+"</H5></HTML>");
+			Map nest = new Hashtable ();
+			nest.put(this, change);
+			jgraph.getModel().edit(nest, null, null, null);
+						
+			this.isInfoDisplayed = false;
+		}
+		else
+		{
+			Map change = GraphConstants.createMap();
+			GraphConstants.setValue(change, this.getInfo());
+			Map nest = new Hashtable ();
+			nest.put(this, change);
+			jgraph.getModel().edit(nest, null, null, null);
+																	
+			this.isInfoDisplayed = true;
+		}
+		System.out.println("The user object is " +this.getUserObject().toString());
+		System.out.println(jgraph.convertValueToString(this)); 
+				
+	}
 }

@@ -10,6 +10,7 @@ import java.io.*;
 
 import com.jgraph.graph.*;
 import com.jgraph.graph.DefaultGraphCell;
+import com.jgraph.JGraph;
 
 /**
  * GEStremaNode is the graph internal representation of a node. .
@@ -22,7 +23,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	protected String name;
 	protected DefaultPort port;
 	protected GEStreamNode encapsulatingNode;
-
+	protected String info;
+	protected boolean isInfoDisplayed;
 
 	public GEStreamNode(String type, String name)
 	{
@@ -31,6 +33,8 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		this.type = type;
 		this.children = new ArrayList();
 		this.name = name;
+		this.setInfo(name);
+		this.isInfoDisplayed = true;
 		this.encapsulatingNode = null;
 	}
 
@@ -95,10 +99,19 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 		return this.encapsulatingNode;
 	}
 	
+	public String getInfo()
+	{
+		return this.info;	
+	}
+	
+	public void setInfo(String info)
+	{
+		this.info = info;
+	}
 	
 
 	abstract public void draw();
 	abstract GEStreamNode construct(GraphStructure graphStruct);
-	abstract public void collapse();
+	abstract public void collapseExpand(JGraph jgraph);
 	
 }

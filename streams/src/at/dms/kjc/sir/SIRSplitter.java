@@ -43,8 +43,10 @@ public class SIRSplitter extends SIROperator {
      */
     private boolean uniform;
 
+    /**
+     * No-argument constructor just for cloning.
+     */
     private SIRSplitter() {
-	new RuntimeException("calling no-arg constructor").printStackTrace();
     }
 
     private SIRSplitter(SIRContainer parent, 
@@ -223,4 +225,24 @@ public class SIRSplitter extends SIROperator {
 		     "it hasn't been run yet) or orig program");
 	return ((JIntLiteral)weights[i]).intValue();
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRSplitter other = new at.dms.kjc.sir.SIRSplitter();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRSplitter other) {
+  super.deepCloneInto(other);
+  other.type = (at.dms.kjc.sir.SIRSplitType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights);
+  other.uniform = this.uniform;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

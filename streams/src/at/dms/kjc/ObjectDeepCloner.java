@@ -42,54 +42,46 @@ public class ObjectDeepCloner
      * Deep copy a stream structure.
      */
     static public Object deepCopy(SIRStream oldObj) {
-	// set the list of what we should clone
-	CloningVisitor visitor = new CloningVisitor();
-	IterFactory.createIter(oldObj).accept(visitor);
-	toBeCloned = visitor.getToBeCloned();
-	return doCopy(oldObj);
-    }
-
-    /**
-     * Deep copy a stream container, except do not clone any of its
-     * child streams.  This means that the LIST of children is copied,
-     * but the children themselves are not duplicated.  Splitters and
-     * joiners are not considered as children - only SIRStreams.  If
-     * <oldObj> is not an SIRContainer, then this has the same effect
-     * as deepCopy.  
-     *
-     * This is only intended for use from the iterator package, and
-     * should not be called from within the IR.
-     */
-    static public Object shallowCopy(SIRStream oldObj) {
-	// only do something different for containers
-	if (!(oldObj instanceof SIRContainer)) {
-	    return deepCopy(oldObj);
-	} 
-	SIRContainer parent = (SIRContainer)oldObj;
-	// set the list of what we should clone
-	CloningVisitor visitor = new CloningVisitor();
-	IterFactory.createIter(parent).accept(visitor);
-	toBeCloned = visitor.getToBeCloned();
-	// subtract the list of <parent>'s children from the
-	// toBeCloned list.
-	for (ListIterator it=parent.getChildren().listIterator(); it.hasNext(); ) {
-	    Object o = it.next();
-	    if (toBeCloned.contains(o)) {
-		toBeCloned.remove(o);
-	    }
+	if (!KjcOptions.clone_with_serialization) {
+	    return AutoCloner.deepCopy(oldObj);
+	} else {
+	    // set the list of what we should clone
+	    CloningVisitor visitor = new CloningVisitor();
+	    IterFactory.createIter(oldObj).accept(visitor);
+	    toBeCloned = visitor.getToBeCloned();
+	    return doCopy(oldObj);
 	}
-	return doCopy(parent);
     }
 
     /**
      * Deep copy a KJC structure.
      */
     static public Object deepCopy(JPhylum oldObj) {
-	// set the list of what we should clone
-	CloningVisitor visitor = new CloningVisitor();
-	oldObj.accept(visitor);
-	toBeCloned = visitor.getToBeCloned();
-	return doCopy(oldObj);
+	if (!KjcOptions.clone_with_serialization) {
+	    return AutoCloner.deepCopy(oldObj);
+	} else {
+	    // set the list of what we should clone
+	    CloningVisitor visitor = new CloningVisitor();
+	    oldObj.accept(visitor);
+	    toBeCloned = visitor.getToBeCloned();
+	    return doCopy(oldObj);
+	}
+    }
+
+    /**
+     * Clone everything starting from this offset of the block
+     * Useful in BranchAnalyzer
+     */
+    static public Object deepCopy(int offset,JBlock oldObj) {
+	if (!KjcOptions.clone_with_serialization) {
+	    return AutoCloner.deepCopy(offset, oldObj);
+	} else {
+	    // set the list of what we should clone
+	    CloningVisitor visitor = new CloningVisitor();
+	    visitor.visitBlockStatement(offset,oldObj,oldObj.getComments());
+	    toBeCloned = visitor.getToBeCloned();
+	    return doCopy(oldObj);
+	}
     }
 
     /**
@@ -107,16 +99,36 @@ public class ObjectDeepCloner
     }
 
     /**
-     * Clone everything starting from this offset of the block
-     * Useful in BranchAnalyzer
-     */
-    static public Object deepCopy(int offset,JBlock oldObj) {
-	// set the list of what we should clone
-	CloningVisitor visitor = new CloningVisitor();
-	visitor.visitBlockStatement(offset,oldObj,oldObj.getComments());
-	toBeCloned = visitor.getToBeCloned();
-	return doCopy(oldObj);
-    }
+     * Deep copy a stream container, except do not clone any of its
+     * child streams.  This means that the LIST of children is copied,
+     * but the children themselves are not duplicated.  Splitters and
+     * joiners are not considered as children - only SIRStreams.  If
+     * <oldObj> is not an SIRContainer, then this has the same effect
+     * as deepCopy.  
+     *
+     * This is only intended for use from the iterator package, and
+     * should not be called from within the IR.
+     static public Object shallowCopy(SIRStream oldObj) {
+     // only do something different for containers
+     if (!(oldObj instanceof SIRContainer)) {
+     return deepCopy(oldObj);
+     } 
+     SIRContainer parent = (SIRContainer)oldObj;
+     // set the list of what we should clone
+     CloningVisitor visitor = new CloningVisitor();
+     IterFactory.createIter(parent).accept(visitor);
+     toBeCloned = visitor.getToBeCloned();
+     // subtract the list of <parent>'s children from the
+     // toBeCloned list.
+     for (ListIterator it=parent.getChildren().listIterator(); it.hasNext(); ) {
+     Object o = it.next();
+     if (toBeCloned.contains(o)) {
+     toBeCloned.remove(o);
+     }
+     }
+     return doCopy(parent);
+     }
+    */
 
     /**
      * Return a handle for <oldInstance> that it can store to protect
@@ -146,12 +158,12 @@ public class ObjectDeepCloner
 	// if the instance was not preserved, then return current instance
 	if (index==-1) {
 	    /*
-	    System.err.println("Cloning container " + newInstance);
+	      System.err.println("Cloning container " + newInstance);
 	    */
 	    return newInstance;
 	} else {
 	    /*
-	    System.err.println("Preserving container " + preserved.get(index));
+	      System.err.println("Preserving container " + preserved.get(index));
 	    */
 	    // otherwise, return our old preserved version
 	    return preserved.get(index);

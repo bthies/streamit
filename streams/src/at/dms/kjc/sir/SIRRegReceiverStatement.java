@@ -135,4 +135,24 @@ public class SIRRegReceiverStatement extends JStatement {
     public void genCode(CodeSequence code) {
 	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRRegReceiverStatement other = new at.dms.kjc.sir.SIRRegReceiverStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRRegReceiverStatement other) {
+  super.deepCloneInto(other);
+  other.portal = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
+  other.receiver = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.receiver);
+  other.itable = (at.dms.kjc.sir.SIRInterfaceTable)at.dms.kjc.AutoCloner.cloneToplevel(this.itable);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -133,5 +133,26 @@ public class SIRPhaseInvocation extends JStatement {
             push.accept(p);
         }
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRPhaseInvocation other = new at.dms.kjc.sir.SIRPhaseInvocation();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRPhaseInvocation other) {
+  super.deepCloneInto(other);
+  other.call = (at.dms.kjc.JMethodCallExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.call);
+  other.peek = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.peek);
+  other.pop = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.pop);
+  other.push = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.push);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.15 2003-05-16 21:58:35 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.16 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -474,6 +474,29 @@ public class JMethodDeclaration extends JMemberDeclaration {
   protected JFormalParameter[]		parameters;
   protected CClassType[]		exceptions;
   protected JBlock			body;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JMethodDeclaration other = new at.dms.kjc.JMethodDeclaration();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JMethodDeclaration other) {
+  super.deepCloneInto(other);
+  other.modifiers = this.modifiers;
+  other.returnType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.returnType);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.parameters = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);
+  other.exceptions = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.exceptions);
+  other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

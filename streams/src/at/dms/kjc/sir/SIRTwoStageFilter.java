@@ -20,7 +20,7 @@ import at.dms.util.*;
  * of the compiler aware of phases.  In some places this is easier
  * than in others; big changes show up in the backends.
  *
- * @version $Id: SIRTwoStageFilter.java,v 1.7 2003-05-28 05:53:48 thies Exp $
+ * @version $Id: SIRTwoStageFilter.java,v 1.8 2003-05-28 05:58:53 thies Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
     /* Internal invariant: the init and work phases arrays each have
@@ -151,4 +151,21 @@ public class SIRTwoStageFilter extends SIRFilter {
                 ("SIRTwoStageFilters have exactly one init phase");
         super.setInitPhases(initPhases);
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRTwoStageFilter other = new at.dms.kjc.sir.SIRTwoStageFilter();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRTwoStageFilter other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

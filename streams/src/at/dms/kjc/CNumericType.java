@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CNumericType.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CNumericType.java,v 1.2 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -161,4 +161,16 @@ public abstract class CNumericType extends CType {
    * @param	code		the code sequence
    */
   public abstract void genCastTo(CNumericType dest, CodeSequence code);
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CNumericType other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

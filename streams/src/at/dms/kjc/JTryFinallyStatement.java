@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTryFinallyStatement.java,v 1.3 2003-05-16 21:58:36 thies Exp $
+ * $Id: JTryFinallyStatement.java,v 1.4 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -249,4 +249,27 @@ public class JTryFinallyStatement extends JStatement {
    * of the finally clause if a return statement is enclosed in the try clause.
    */
   private JLocalVariable	returnVar;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JTryFinallyStatement other = new at.dms.kjc.JTryFinallyStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JTryFinallyStatement other) {
+  super.deepCloneInto(other);
+  other.finallyLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.finallyLabel);
+  other.tryClause = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.tryClause);
+  other.finallyClause = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.finallyClause);
+  other.exceptionVar = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.exceptionVar);
+  other.addressVar = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.addressVar);
+  other.returnVar = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.returnVar);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

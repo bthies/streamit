@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLoopStatement.java,v 1.2 2003-05-16 21:58:35 thies Exp $
+ * $Id: JLoopStatement.java,v 1.3 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -70,4 +70,18 @@ public abstract class JLoopStatement extends JStatement {
 
   private CodeLabel		contLabel = new CodeLabel();
   private CodeLabel		endLabel = new CodeLabel();
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JLoopStatement other) {
+  super.deepCloneInto(other);
+  other.contLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.contLabel);
+  other.endLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.endLabel);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBodyContext.java,v 1.2 2003-05-16 21:58:34 thies Exp $
+ * $Id: CBodyContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -568,4 +568,20 @@ public abstract class CBodyContext extends CContext {
   private CVariableInfo		variableInfo;
   private CVariableInfo		fieldInfo;
   private Hashtable		throwables;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CBodyContext other) {
+  super.deepCloneInto(other);
+  other.flowState = this.flowState;
+  other.variableInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.variableInfo);
+  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo);
+  other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

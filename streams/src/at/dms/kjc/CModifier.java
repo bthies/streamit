@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CModifier.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CModifier.java,v 1.2 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -26,7 +26,7 @@ import at.dms.util.InconsistencyException;
  * This class represents all modifiers token
  * <pre> public protected private static final synchronized transient volatile native </pre>
  */
-public class CModifier implements Constants {
+public class CModifier implements Constants, DeepCloneable {
 
   /**
    * generate a list of modifiers
@@ -228,4 +228,20 @@ public class CModifier implements Constants {
     ACC_ABSTRACT,
     ACC_STRICT
   };
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CModifier other = new at.dms.kjc.CModifier();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CModifier other) {
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

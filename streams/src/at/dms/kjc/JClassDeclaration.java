@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.8 2003-05-16 21:58:35 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.9 2003-05-28 05:58:43 thies Exp $
  */
 
 package at.dms.kjc;
@@ -623,4 +623,24 @@ public class JClassDeclaration extends JTypeDeclaration {
     // bft:  added for streamit passes
     public static final JClassDeclaration[] EMPTY = new JClassDeclaration[0];
     
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JClassDeclaration other = new at.dms.kjc.JClassDeclaration();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JClassDeclaration other) {
+  super.deepCloneInto(other);
+  other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass);
+  other.self = (at.dms.kjc.CClassContext)at.dms.kjc.AutoCloner.cloneToplevel(this.self);
+  other.superName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.superName);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -43,6 +43,23 @@ public class SIRPredefinedFilter extends SIRFilter implements Cloneable {
     public String getTypeNameInC() {
         return "ContextContainer";
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRPredefinedFilter other = new at.dms.kjc.sir.SIRPredefinedFilter();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRPredefinedFilter other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethodContext.java,v 1.2 2003-05-16 21:58:34 thies Exp $
+ * $Id: CMethodContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -177,4 +177,24 @@ public class CMethodContext extends CContext {
   protected	Hashtable	throwables = new Hashtable();
   protected	Hashtable	labels;		// Hashtable<String, String>
   private	CMethod		self;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CMethodContext other = new at.dms.kjc.CMethodContext();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CMethodContext other) {
+  super.deepCloneInto(other);
+  other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables);
+  other.labels = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
+  other.self = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.self);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

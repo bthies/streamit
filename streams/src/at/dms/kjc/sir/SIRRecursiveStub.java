@@ -101,4 +101,24 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
 	Utils.fail("Can't visit RecursiveStub.");
 	return null;
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRRecursiveStub other = new at.dms.kjc.sir.SIRRecursiveStub();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRRecursiveStub other) {
+  super.deepCloneInto(other);
+  other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className);
+  other.kopi2SIR = (at.dms.kjc.Kopi2SIR)at.dms.kjc.AutoCloner.cloneToplevel(this.kopi2SIR);
+  other.expanded = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.expanded);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

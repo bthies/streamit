@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MethodSignatureParser.java,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: MethodSignatureParser.java,v 1.2 2003-05-28 05:58:45 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,7 +25,7 @@ import java.util.Vector;
 import at.dms.util.InconsistencyException;
 import at.dms.util.Utils;
 
-public class MethodSignatureParser {
+public class MethodSignatureParser implements DeepCloneable {
 
   /**
    * Parses a VM-standard type signature.
@@ -126,4 +126,20 @@ public class MethodSignatureParser {
 
     return (CType[])Utils.toArray(container, CType.class);
   }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.MethodSignatureParser other = new at.dms.kjc.MethodSignatureParser();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.MethodSignatureParser other) {
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

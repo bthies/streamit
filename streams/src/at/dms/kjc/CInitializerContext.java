@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CInitializerContext.java,v 1.2 2003-05-16 21:58:34 thies Exp $
+ * $Id: CInitializerContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -110,4 +110,22 @@ public class CInitializerContext extends CMethodContext {
   // ----------------------------------------------------------------------
 
   private CVariableInfo		fieldInfo;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CInitializerContext other = new at.dms.kjc.CInitializerContext();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CInitializerContext other) {
+  super.deepCloneInto(other);
+  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

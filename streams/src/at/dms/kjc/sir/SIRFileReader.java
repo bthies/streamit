@@ -33,6 +33,24 @@ public class SIRFileReader extends SIRPredefinedFilter implements Cloneable {
     public String getFileName() {
 	return this.fileName;
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRFileReader other = new at.dms.kjc.sir.SIRFileReader();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRFileReader other) {
+  super.deepCloneInto(other);
+  other.fileName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

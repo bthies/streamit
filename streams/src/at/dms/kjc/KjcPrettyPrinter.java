@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcPrettyPrinter.java,v 1.3 2001-10-30 17:32:36 thies Exp $
+ * $Id: KjcPrettyPrinter.java,v 1.4 2003-05-28 05:58:45 thies Exp $
  */
 
 package at.dms.kjc;
@@ -1611,4 +1611,27 @@ public class KjcPrettyPrinter extends at.dms.util.Utils implements Constants, Kj
 
   protected TabbedPrintWriter		p;
   protected boolean			nl = true;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.KjcPrettyPrinter other = new at.dms.kjc.KjcPrettyPrinter();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.KjcPrettyPrinter other) {
+  super.deepCloneInto(other);
+  other.forInit = this.forInit;
+  other.TAB_SIZE = this.TAB_SIZE;
+  other.WIDTH = this.WIDTH;
+  other.pos = this.pos;
+  other.p = (at.dms.compiler.TabbedPrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p);
+  other.nl = this.nl;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Phylum.java,v 1.3 2003-05-16 21:58:31 thies Exp $
+ * $Id: Phylum.java,v 1.4 2003-05-28 05:58:39 thies Exp $
  */
 
 package at.dms.compiler;
@@ -57,4 +57,17 @@ public abstract class Phylum extends Utils {
   // ----------------------------------------------------------------------
 
     private /* final */ TokenReference	where;		// position in the source text.  removed "final" for cloner.
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.compiler.Phylum other) {
+  super.deepCloneInto(other);
+  other.where = (at.dms.compiler.TokenReference)at.dms.kjc.AutoCloner.cloneToplevel(this.where);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

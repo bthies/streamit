@@ -11,7 +11,7 @@ import java.io.*;
 /**
  * This represents an operator in the stream graph.
  */
-public abstract class SIROperator implements Finalizable, Serializable {
+public abstract class SIROperator implements Finalizable, Serializable, DeepCloneable {
     /**
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
@@ -220,4 +220,17 @@ public abstract class SIROperator implements Finalizable, Serializable {
 	    }
 	}
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIROperator other) {
+  other.parent = (at.dms.kjc.sir.SIRContainer)at.dms.kjc.AutoCloner.cloneToplevel(this.parent);
+  other.serializationHandle = this.serializationHandle;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompilationUnit.java,v 1.4 2003-05-16 22:07:35 thies Exp $
+ * $Id: JCompilationUnit.java,v 1.5 2003-05-28 05:58:43 thies Exp $
  */
 
 package at.dms.kjc;
@@ -242,4 +242,27 @@ public class JCompilationUnit extends JPhylum {
 
   private Hashtable			allLoadedClasses = new Hashtable(); // $$$ DEFAULT VALUE IS OKAY ???
   private CCompilationUnit		export;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JCompilationUnit other = new at.dms.kjc.JCompilationUnit();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JCompilationUnit other) {
+  super.deepCloneInto(other);
+  other.packageName = (at.dms.kjc.JPackageName)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
+  other.importedClasses = (at.dms.kjc.JClassImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedClasses);
+  other.importedPackages = (at.dms.kjc.JPackageImport[])at.dms.kjc.AutoCloner.cloneToplevel(this.importedPackages);
+  other.typeDeclarations = (at.dms.kjc.JTypeDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.typeDeclarations);
+  other.allLoadedClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.allLoadedClasses);
+  other.export = (at.dms.kjc.CCompilationUnit)at.dms.kjc.AutoCloner.cloneToplevel(this.export);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

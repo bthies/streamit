@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.7 2003-05-16 21:58:35 thies Exp $
+ * $Id: JPhylum.java,v 1.8 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -173,4 +173,16 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
   public void setLineNumber(CodeSequence code) {
     code.setLineNumber(getTokenReference().getLine());
   }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JPhylum other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenReference.java,v 1.4 2003-05-16 21:58:31 thies Exp $
+ * $Id: TokenReference.java,v 1.5 2003-05-28 05:58:39 thies Exp $
  */
 
 package at.dms.compiler;
@@ -28,7 +28,7 @@ import at.dms.util.Utils;
  * This class defines objets that hold a reference to a file and a position
  * in the file.
  */
-public class TokenReference implements Serializable {
+public class TokenReference implements Serializable, at.dms.kjc.DeepCloneable {
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
@@ -106,4 +106,22 @@ public class TokenReference implements Serializable {
 
     private /* final */ String		file;  // removed final for cloner
 	     private /* final */ int		line;  // removed final for cloner
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.compiler.TokenReference other = new at.dms.compiler.TokenReference();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.compiler.TokenReference other) {
+  other.file = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.file);
+  other.line = this.line;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

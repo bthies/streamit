@@ -10,7 +10,7 @@ import java.io.Serializable;
  *    - a (min,max) range for delivery
  *    - a set of discrete times for delivery
  */
-public class SIRLatency implements Serializable {
+public class SIRLatency implements Serializable, DeepCloneable {
     /**
      * This signifies a best-effort latency.
      */
@@ -41,4 +41,20 @@ public class SIRLatency implements Serializable {
 	}
     }
 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRLatency other = new at.dms.kjc.sir.SIRLatency();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRLatency other) {
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

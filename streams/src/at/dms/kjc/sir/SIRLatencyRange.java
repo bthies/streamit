@@ -64,4 +64,22 @@ public class SIRLatencyRange extends SIRLatencyMax {
 	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
 	}
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRLatencyRange other = new at.dms.kjc.sir.SIRLatencyRange();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRLatencyRange other) {
+  super.deepCloneInto(other);
+  other.min = this.min;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

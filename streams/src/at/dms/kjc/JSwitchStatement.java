@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchStatement.java,v 1.5 2003-05-16 21:58:36 thies Exp $
+ * $Id: JSwitchStatement.java,v 1.6 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -208,4 +208,25 @@ public class JSwitchStatement extends JStatement {
   private JSwitchGroup[]	groups;
   private boolean		hasBreak;
   private CodeLabel		endLabel = new CodeLabel();
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JSwitchStatement other = new at.dms.kjc.JSwitchStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JSwitchStatement other) {
+  super.deepCloneInto(other);
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+  other.groups = (at.dms.kjc.JSwitchGroup[])at.dms.kjc.AutoCloner.cloneToplevel(this.groups);
+  other.hasBreak = this.hasBreak;
+  other.endLabel = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.endLabel);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

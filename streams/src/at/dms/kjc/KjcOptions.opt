@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.35 2003-04-15 06:39:17 thies Exp $
+ * $Id: KjcOptions.opt,v 1.36 2003-05-28 05:58:45 thies Exp $
  */
 
 prefix Kjc
@@ -353,4 +353,10 @@ longname		"simulatework"
 	type		boolean
 	default		"false"
 	help		"Uses simulator to measure work required by filters."
+
+longname		"clone_with_serialization"
+	shortcut	"K"
+	type		boolean
+	default		"false"
+	help		"Uses the OLD cloning method that relies on serialization."
 

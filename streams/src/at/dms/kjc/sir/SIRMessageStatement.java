@@ -154,4 +154,26 @@ public class SIRMessageStatement extends JStatement {
 	}
     }
 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRMessageStatement other = new at.dms.kjc.sir.SIRMessageStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRMessageStatement other) {
+  super.deepCloneInto(other);
+  other.portal = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
+  other.iname = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.iname);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.args = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.args);
+  other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -150,4 +150,25 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
 	Utils.fail("Don't yet support getPopForSchedule for phased filters.");
 	return -1;
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRPhasedFilter other = new at.dms.kjc.sir.SIRPhasedFilter();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRPhasedFilter other) {
+  super.deepCloneInto(other);
+  other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
+  other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
+  other.initPhases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);
+  other.phases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

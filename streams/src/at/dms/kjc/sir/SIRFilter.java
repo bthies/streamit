@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.30 2003-05-16 20:45:04 dmaze Exp $
+ * @version $Id: SIRFilter.java,v 1.31 2003-05-28 05:58:53 thies Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -179,6 +179,23 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     public String toString() {
 	return "SIRFilter name=" + getName();
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRFilter other = new at.dms.kjc.sir.SIRFilter();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRFilter other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

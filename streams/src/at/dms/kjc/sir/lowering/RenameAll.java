@@ -149,6 +149,8 @@ public class RenameAll extends SLIRReplacingVisitor
 
 	SIRFilter nf;
 	if (str instanceof SIRTwoStageFilter) {
+	    Utils.assert(oldInitWork!=null);
+	    Utils.assert(newInitWork!=null);
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)str;
 	    nf = new SIRTwoStageFilter(two.getParent(),
 				       newName(two.getIdent()),

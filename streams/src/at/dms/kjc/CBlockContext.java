@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBlockContext.java,v 1.2 2003-05-16 21:58:34 thies Exp $
+ * $Id: CBlockContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -267,4 +267,26 @@ public class CBlockContext extends CBodyContext {
   private int					localsIndex;
 
   private int					localsPosition;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CBlockContext other = new at.dms.kjc.CBlockContext();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CBlockContext other) {
+  super.deepCloneInto(other);
+  other.localClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.localClasses);
+  other.localVars = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.localVars);
+  other.parentIndex = this.parentIndex;
+  other.localsIndex = this.localsIndex;
+  other.localsPosition = this.localsPosition;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

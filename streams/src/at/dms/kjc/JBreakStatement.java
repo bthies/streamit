@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBreakStatement.java,v 1.5 2003-05-16 21:58:35 thies Exp $
+ * $Id: JBreakStatement.java,v 1.6 2003-05-28 05:58:43 thies Exp $
  */
 
 package at.dms.kjc;
@@ -112,4 +112,23 @@ public class JBreakStatement extends JStatement {
 
     private /* final */ String		label; // removed final for cloner
   private JStatement		target;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JBreakStatement other = new at.dms.kjc.JBreakStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JBreakStatement other) {
+  super.deepCloneInto(other);
+  other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
+  other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

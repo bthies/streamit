@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryExpression.java,v 1.3 2003-05-16 21:58:36 thies Exp $
+ * $Id: JUnaryExpression.java,v 1.4 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -65,4 +65,18 @@ public abstract class JUnaryExpression extends JExpression {
 
   protected JExpression		expr;
   protected CType		type;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JUnaryExpression other) {
+  super.deepCloneInto(other);
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

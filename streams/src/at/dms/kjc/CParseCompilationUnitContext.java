@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CParseCompilationUnitContext.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CParseCompilationUnitContext.java,v 1.2 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -26,7 +26,7 @@ import java.util.Stack;
 import at.dms.compiler.Compiler;
 import at.dms.util.Utils;
 
-public class CParseCompilationUnitContext {
+public class CParseCompilationUnitContext implements DeepCloneable {
   public static CParseCompilationUnitContext getInstance() {
     return stack.size() == 0 ?
       new CParseCompilationUnitContext() :
@@ -108,4 +108,25 @@ public class CParseCompilationUnitContext {
   private Vector		typeDeclarations = new Vector();
 
   private static Stack		stack = new Stack();
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CParseCompilationUnitContext other = new at.dms.kjc.CParseCompilationUnitContext();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CParseCompilationUnitContext other) {
+  other.pack = (at.dms.kjc.JPackageName)at.dms.kjc.AutoCloner.cloneToplevel(this.pack);
+  other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
+  other.packageImports = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.packageImports);
+  other.classImports = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classImports);
+  other.typeDeclarations = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.typeDeclarations);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSwitchBodyContext.java,v 1.3 2003-05-16 21:58:34 thies Exp $
+ * $Id: CSwitchBodyContext.java,v 1.4 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -136,4 +136,24 @@ public class CSwitchBodyContext extends CBodyContext {
     private /* final */ JSwitchStatement	stmt; // removed final for cloner
     private /* final */ Hashtable		labels = new Hashtable(); // removed final for cloner
     private boolean			defaultExist;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CSwitchBodyContext other = new at.dms.kjc.CSwitchBodyContext();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CSwitchBodyContext other) {
+  super.deepCloneInto(other);
+  other.stmt = (at.dms.kjc.JSwitchStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
+  other.labels = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
+  other.defaultExist = this.defaultExist;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

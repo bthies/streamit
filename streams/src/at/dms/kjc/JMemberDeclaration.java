@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMemberDeclaration.java,v 1.4 2003-05-16 21:58:35 thies Exp $
+ * $Id: JMemberDeclaration.java,v 1.5 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -143,5 +143,20 @@ public abstract class JMemberDeclaration extends JPhylum {
   private CMember			export;
     private /* final */ JavadocComment		javadoc;  // removed final for cloner
     private /* final */ JavaStyleComment[]	comments; // removed final for cloner
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JMemberDeclaration other) {
+  super.deepCloneInto(other);
+  other.export = (at.dms.kjc.CMember)at.dms.kjc.AutoCloner.cloneToplevel(this.export);
+  other.javadoc = (at.dms.compiler.JavadocComment)at.dms.kjc.AutoCloner.cloneToplevel(this.javadoc);
+  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
  

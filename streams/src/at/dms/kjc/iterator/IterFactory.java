@@ -71,17 +71,16 @@ public class IterFactory {
      *
      * - does cloning
      * - replaces in parents by shallowclone and replacement
-     */
     public static SIRIterator getMutableCopy(SIRIterator iter) { 
 	SIRStream result = (SIRStream)ObjectDeepCloner.shallowCopy(iter.getStream());
 	return replace(iter, result); 
     }
+     */
 
     /**
      * - does finalization of contained stream structures
      * - does structural equality test
      * - replaces in parents by shallowclone and replacement
-     */
     public static SIRIterator finalize(SIRIterator iter) {
 	SIRStream str = (SIRStream)iter.getObject();
 	// replace all methods with finalized version
@@ -103,6 +102,7 @@ public class IterFactory {
 	// do the replacement in parents
 	return replace(iter, result);
     }
+     */
 
     /**
      * Returns whether or not object <o> has been finalized.
@@ -120,7 +120,6 @@ public class IterFactory {
      * clone of any parent that is immutable, until it reaches a
      * mutable parent.  At this parent, it just adjusts the child to
      * point to the new tree.
-     */
     private static SIRIterator replace(SIRIterator iter, SIRStream str) {
 	// get parent of <iter>
 	SIRIterator parentIter = iter.getParent();
@@ -159,6 +158,7 @@ public class IterFactory {
 	    } 
 	}
     }
+     */
 
     /**
      * For building a child iterator, internal only to the iterator

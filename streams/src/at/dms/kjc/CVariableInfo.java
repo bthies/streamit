@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CVariableInfo.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CVariableInfo.java,v 1.2 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -23,7 +23,7 @@ package at.dms.kjc;
 /**
  * This class represents a local variable information during check
  */
-public final class CVariableInfo {
+public final class CVariableInfo implements DeepCloneable {
 
   public CVariableInfo() {
     infos = new int[1];
@@ -122,4 +122,21 @@ public final class CVariableInfo {
   public static final int	INITIALIZED = INF_INITIALIZED | INF_MAYBE_INITIALIZED;
 
   private int[]			infos;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CVariableInfo other = new at.dms.kjc.CVariableInfo();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CVariableInfo other) {
+  other.infos = (int[])at.dms.kjc.AutoCloner.cloneToplevel(this.infos);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.10 2003-05-16 21:58:35 thies Exp $
+ * $Id: JLocalVariable.java,v 1.11 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -275,4 +275,27 @@ public abstract class JLocalVariable extends JPhylum {
 
   // position in method local vars
   private int			position;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JLocalVariable other) {
+  super.deepCloneInto(other);
+  other.serializationHandle = this.serializationHandle;
+  other.kind = this.kind;
+  other.used = this.used;
+  other.assigned = this.assigned;
+  other.loopVariable = this.loopVariable;
+  other.modifiers = this.modifiers;
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+  other.index = this.index;
+  other.position = this.position;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

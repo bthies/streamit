@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * This class enumerates the types of joiners.
  */
-public class SIRJoinType implements Serializable {
+public class SIRJoinType implements Serializable, DeepCloneable {
     /**
      * A combining splitter.
      */
@@ -64,4 +64,21 @@ public class SIRJoinType implements Serializable {
 	return name;
     }
 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRJoinType other = new at.dms.kjc.sir.SIRJoinType();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRJoinType other) {
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

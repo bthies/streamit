@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConditionalExpression.java,v 1.6 2003-05-16 21:58:35 thies Exp $
+ * $Id: JConditionalExpression.java,v 1.7 2003-05-28 05:58:43 thies Exp $
  */
 
 package at.dms.kjc;
@@ -243,4 +243,25 @@ public class JConditionalExpression extends JExpression {
   private JExpression   cond;
   private JExpression   left;
   private JExpression   right;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JConditionalExpression other = new at.dms.kjc.JConditionalExpression();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JConditionalExpression other) {
+  super.deepCloneInto(other);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond);
+  other.left = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.left);
+  other.right = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.right);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

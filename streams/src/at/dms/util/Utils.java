@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.16 2003-05-16 04:11:09 thies Exp $
+ * $Id: Utils.java,v 1.17 2003-05-28 05:58:59 thies Exp $
  */
 
 package at.dms.util;
@@ -34,7 +34,7 @@ import java.math.BigInteger;
 /**
  * This class defines severals utilities methods used in source code
  */
-public abstract class Utils implements Serializable {
+public abstract class Utils implements Serializable, DeepCloneable {
 
   // ----------------------------------------------------------------------
   // UTILITIES
@@ -486,4 +486,15 @@ public abstract class Utils implements Serializable {
 
     public static final LinkedList EMPTY_LIST = new LinkedList();
 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.util.Utils other) {
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

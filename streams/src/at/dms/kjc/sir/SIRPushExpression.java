@@ -136,4 +136,23 @@ public class SIRPushExpression extends JExpression {
     public void genCode(CodeSequence code, boolean discardValue) {
 	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRPushExpression other = new at.dms.kjc.sir.SIRPushExpression();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRPushExpression other) {
+  super.deepCloneInto(other);
+  other.arg = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.arg);
+  other.tapeType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.tapeType);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchGroup.java,v 1.3 2003-05-16 21:58:36 thies Exp $
+ * $Id: JSwitchGroup.java,v 1.4 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -157,4 +157,24 @@ public class JSwitchGroup extends JPhylum {
   private JSwitchLabel[]	labels;
   private JStatement[]		stmts;
   private CodeLabel		pos;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JSwitchGroup other = new at.dms.kjc.JSwitchGroup();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JSwitchGroup other) {
+  super.deepCloneInto(other);
+  other.labels = (at.dms.kjc.JSwitchLabel[])at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
+  other.stmts = (at.dms.kjc.JStatement[])at.dms.kjc.AutoCloner.cloneToplevel(this.stmts);
+  other.pos = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.pos);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

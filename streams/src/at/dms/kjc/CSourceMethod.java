@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceMethod.java,v 1.3 2003-05-16 21:58:34 thies Exp $
+ * $Id: CSourceMethod.java,v 1.4 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -157,4 +157,23 @@ public class CSourceMethod extends CMethod {
 
   private JBlock		body;
   private boolean		used;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CSourceMethod other = new at.dms.kjc.CSourceMethod();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CSourceMethod other) {
+  super.deepCloneInto(other);
+  other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+  other.used = this.used;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -121,11 +121,58 @@ public class CloneGenerator {
 		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
 		// otherwise call toplevel cloning method
-		sb.append("  other." + name + " = (" + type.getName() + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");
+		sb.append("  other." + name + " = (" + printSourceType(type) + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");
 	    }
 	}
 	sb.append("}\n");
 	return sb.toString();
+    }
+
+    /**
+     * Returns the name of the type of <c> in a format that you would
+     * find in source code, e.g. int[][] or at.dms.kjc.Main[].
+     */
+    private static String printSourceType(Class c) {
+	// get encoded name -- see sun javadoc
+	String name = c.getName();
+	// first parse the number of array dims
+	int dims = 0;
+	while (name.charAt(dims)=='[') {
+	    dims++;
+	}
+	// if dims is 0, then it's just the fully-qualified name of the type
+	if (dims==0) {
+	    // ... unless it's an inner class, in which case we can
+	    // strip out everything before the $ sign.
+	    int index = name.indexOf("$");
+	    if (index>0) {
+		return name.substring(index+1, name.length());
+	    } else {
+		return name;
+	    }
+	}
+	// now get the basic type
+	String base;
+	switch(name.charAt(dims)) {
+	case 'B': base = "byte"; break;
+	case 'C': base = "char"; break;
+	case 'D': base = "double"; break;
+	case 'F': base = "float"; break;
+	case 'I': base = "int"; break;
+	case 'J': base = "long"; break;
+	case 'L': base = name.substring(dims+1, name.length()-1); break;
+	case 'S': base = "short"; break;
+	case 'Z': base = "boolean"; break;
+	default: {
+	    Utils.fail("Unrecognized type indicator in class name: " + name.charAt(dims) + " at pos " + dims + " of " + name);
+	    base = null;
+	}
+	}
+	// build up result
+	for (int i=0; i<dims; i++) {
+	    base += "[]";
+	}
+	return base;
     }
 
     /**
@@ -418,9 +465,52 @@ public class CloneGenerator {
 	"at.dms.classfile.AbstractInstructionAccessor",
 	//"at.dms.util.FormattedException",
 	"at.dms.util.Message",
-	"at.dms.util.MessageDescription"
+	"at.dms.util.ConstList",
+	"at.dms.util.MutableList",
+	"at.dms.util.MessageDescription",
 	//"at.dms.util.Options" -- shouldn't have references to this
 	//"at.dms.kjc.SimpleDot",  -- don't do this because it has lots of open, close braces
 	//"at.dms.kjc.CloneGenerator", -- don't do this because it has lots of open, close braces
+	// "at.dms.kjc.sir.AttributeStreamVisitor", -- shouldn't have references to this
+	//"at.dms.kjc.sir.EmptyAttributeStreamVisitor",  -- shouldn't have references to this
+	//"at.dms.kjc.sir.EmptyStreamVisitor",  -- shouldn't have references to this
+	//"at.dms.kjc.sir.SemanticChecker",  -- shouldn't have references to this
+	//"at.dms.kjc.sir.SIRBuilder",  -- shouldn't have references to this
+	"at.dms.kjc.sir.SIRContainer",
+	"at.dms.kjc.sir.SIRCreatePortal",
+	"at.dms.kjc.sir.SIRFeedbackLoop",
+	"at.dms.kjc.sir.SIRFileReader",
+	"at.dms.kjc.sir.SIRFileWriter",
+	"at.dms.kjc.sir.SIRFilter",
+	"at.dms.kjc.sir.SIRIdentity",
+	"at.dms.kjc.sir.SIRInitStatement",
+	"at.dms.kjc.sir.SIRInterfaceTable",
+	"at.dms.kjc.sir.SIRJoiner",
+	"at.dms.kjc.sir.SIRJoinType",
+	"at.dms.kjc.sir.SIRLatency",
+	"at.dms.kjc.sir.SIRLatencyMax",
+	"at.dms.kjc.sir.SIRLatencyRange",
+	"at.dms.kjc.sir.SIRLatencySet",
+	"at.dms.kjc.sir.SIRMessageStatement",
+	"at.dms.kjc.sir.SIROperator",
+	"at.dms.kjc.sir.SIRPeekExpression",
+	"at.dms.kjc.sir.SIRPhasedFilter",
+	"at.dms.kjc.sir.SIRPhaseInvocation",
+	"at.dms.kjc.sir.SIRPipeline",
+	"at.dms.kjc.sir.SIRPopExpression",
+	"at.dms.kjc.sir.SIRPredefinedFilter",
+	"at.dms.kjc.sir.SIRPrintStatement",
+	"at.dms.kjc.sir.SIRPushExpression",
+	"at.dms.kjc.sir.SIRRecursiveStub",
+	"at.dms.kjc.sir.SIRRegReceiverStatement",
+	"at.dms.kjc.sir.SIRRegSenderStatement",
+	"at.dms.kjc.sir.SIRSplitJoin",
+	"at.dms.kjc.sir.SIRSplitter",
+	"at.dms.kjc.sir.SIRSplitType",
+	"at.dms.kjc.sir.SIRStream",
+	"at.dms.kjc.sir.SIRStructure",
+	"at.dms.kjc.sir.SIRTwoStageFilter",
+	"at.dms.kjc.sir.SIRWorkFunction"
+	//"at.dms.kjc.sir.StreamVisitor"  -- shouldn't have references to this
     };
 }

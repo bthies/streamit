@@ -8,7 +8,7 @@ import java.util.*;
  * means that elements can't be added or removed from the list.  They
  * can, however, be set to different elements.
  */
-public class ConstList implements Serializable {
+public class ConstList implements Serializable, at.dms.kjc.DeepCloneable {
 
     protected List list;
 
@@ -109,4 +109,21 @@ public class ConstList implements Serializable {
     public Object[] toArray(Object[] a) {
 	return list.toArray(a);
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.util.ConstList other = new at.dms.util.ConstList();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.util.ConstList other) {
+  other.list = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.list);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassImport.java,v 1.4 2003-05-16 21:58:35 thies Exp $
+ * $Id: JClassImport.java,v 1.5 2003-05-28 05:58:43 thies Exp $
  */
 
 package at.dms.kjc;
@@ -140,4 +140,25 @@ public class JClassImport extends JPhylum {
     private /* final */ String			ident;  // removed final for cloner
   private /* final */ JavaStyleComment[]	comments;  // removed final for cloner
   private boolean			used;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JClassImport other = new at.dms.kjc.JClassImport();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JClassImport other) {
+  super.deepCloneInto(other);
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
+  other.used = this.used;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

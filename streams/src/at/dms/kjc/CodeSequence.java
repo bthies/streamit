@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CodeSequence.java,v 1.2 2003-05-28 05:58:42 thies Exp $
  */
 
 /**
@@ -503,4 +503,29 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
   private Stack				contexts = new Stack();
 
   private static final Stack		stack = new Stack();
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CodeSequence other = new at.dms.kjc.CodeSequence();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CodeSequence other) {
+  super.deepCloneInto(other);
+  other.instructions = (at.dms.classfile.Instruction[])at.dms.kjc.AutoCloner.cloneToplevel(this.instructions);
+  other.handlers = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.handlers);
+  other.lines = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.lines);
+  other.pc = this.pc;
+  other.labelAtEnd = this.labelAtEnd;
+  other.lineNumber = this.lineNumber;
+  other.lastLine = this.lastLine;
+  other.contexts = (java.util.Stack)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

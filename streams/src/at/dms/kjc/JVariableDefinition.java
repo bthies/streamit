@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDefinition.java,v 1.7 2003-05-16 21:58:36 thies Exp $
+ * $Id: JVariableDefinition.java,v 1.8 2003-05-28 05:58:45 thies Exp $
  */
 
 package at.dms.kjc;
@@ -165,4 +165,21 @@ public class JVariableDefinition extends JLocalVariable {
       return    p.visitVariableDefinition(this, modifiers, type, getIdent(), expr);
   }
 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JVariableDefinition other = new at.dms.kjc.JVariableDefinition();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JVariableDefinition other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

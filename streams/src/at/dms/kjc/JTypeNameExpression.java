@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeNameExpression.java,v 1.3 2003-05-16 21:58:36 thies Exp $
+ * $Id: JTypeNameExpression.java,v 1.4 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -140,4 +140,22 @@ public class JTypeNameExpression extends JExpression {
   // ----------------------------------------------------------------------
 
   private	CClassType		type;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JTypeNameExpression other = new at.dms.kjc.JTypeNameExpression();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JTypeNameExpression other) {
+  super.deepCloneInto(other);
+  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * This class enumerates the types of splitters.
  */
-public class SIRSplitType implements Serializable {
+public class SIRSplitType implements Serializable, DeepCloneable {
     /**
      * A duplicating splitter.
      */
@@ -63,4 +63,21 @@ public class SIRSplitType implements Serializable {
     public String toString() {
 	return name;
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRSplitType other = new at.dms.kjc.sir.SIRSplitType();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRSplitType other) {
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CThrowableInfo.java,v 1.3 2003-05-16 21:58:34 thies Exp $
+ * $Id: CThrowableInfo.java,v 1.4 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -93,4 +93,24 @@ public class CThrowableInfo extends at.dms.util.Utils {
     private /* final*/ CClassType	throwable; // removed final for cloner
     private /* final*/ JPhylum		location; // removed final for cloner
     private boolean		catched;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CThrowableInfo other = new at.dms.kjc.CThrowableInfo();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CThrowableInfo other) {
+  super.deepCloneInto(other);
+  other.throwable = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.throwable);
+  other.location = (at.dms.kjc.JPhylum)at.dms.kjc.AutoCloner.cloneToplevel(this.location);
+  other.catched = this.catched;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

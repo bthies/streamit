@@ -33,7 +33,7 @@ public class SIRInitStatement extends JStatement {
     public SIRInitStatement(List args, 
 			    SIRStream str) {
 	super(null, null);
-	this.args = new Vector(args);
+	this.args = new LinkedList(args);
 	this.target = str;
     }
     
@@ -51,7 +51,7 @@ public class SIRInitStatement extends JStatement {
 	this.target = null;
     }
     
-    public void setArgs(LinkedList args) {
+    public void setArgs(List args) {
 	this.args = args;
     }
 
@@ -116,6 +116,25 @@ public class SIRInitStatement extends JStatement {
     public void genCode(CodeSequence code) {
 	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRInitStatement other = new at.dms.kjc.sir.SIRInitStatement();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRInitStatement other) {
+  super.deepCloneInto(other);
+  other.args = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.args);
+  other.target = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CType.java,v 1.3 2003-05-16 21:58:34 thies Exp $
+ * $Id: CType.java,v 1.4 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -399,4 +399,18 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
   protected int	type;
 
   protected static MethodSignatureParser instance = new MethodSignatureParser();
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CType other) {
+  super.deepCloneInto(other);
+  other.serializationHandle = this.serializationHandle;
+  other.type = this.type;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

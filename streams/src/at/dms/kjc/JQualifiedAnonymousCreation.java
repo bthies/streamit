@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JQualifiedAnonymousCreation.java,v 1.5 2003-05-16 21:58:35 thies Exp $
+ * $Id: JQualifiedAnonymousCreation.java,v 1.6 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -335,4 +335,28 @@ public class JQualifiedAnonymousCreation extends JExpression {
   private CClass		local;
   private CMethod		constructor;
   private JClassDeclaration	decl;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JQualifiedAnonymousCreation other = new at.dms.kjc.JQualifiedAnonymousCreation();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JQualifiedAnonymousCreation other) {
+  super.deepCloneInto(other);
+  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.params = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
+  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.local = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.local);
+  other.constructor = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.constructor);
+  other.decl = (at.dms.kjc.JClassDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

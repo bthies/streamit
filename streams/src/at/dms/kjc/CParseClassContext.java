@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CParseClassContext.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CParseClassContext.java,v 1.2 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -25,7 +25,7 @@ import java.util.Stack;
 
 import at.dms.util.Utils;
 
-public class CParseClassContext {
+public class CParseClassContext implements DeepCloneable {
   public static CParseClassContext getInstance() {
     return stack.size() == 0 ?
       new CParseClassContext() :
@@ -105,4 +105,24 @@ public class CParseClassContext {
   private Vector body = new Vector();
 
   private static Stack stack = new Stack();
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.CParseClassContext other = new at.dms.kjc.CParseClassContext();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CParseClassContext other) {
+  other.fields = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+  other.methods = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+  other.inners = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.inners);
+  other.body = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

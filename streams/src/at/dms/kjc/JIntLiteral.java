@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIntLiteral.java,v 1.7 2003-05-16 21:58:35 thies Exp $
+ * $Id: JIntLiteral.java,v 1.8 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -266,4 +266,23 @@ public class JIntLiteral extends JLiteral {
 	// value = MAX_VALUE + 1, valid only as argument to unary minus
     private /* final */ boolean		invert;  // removed final for cloner
     private /* final */ int		value;  // removed final for cloner
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JIntLiteral other = new at.dms.kjc.JIntLiteral();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JIntLiteral other) {
+  super.deepCloneInto(other);
+  other.invert = this.invert;
+  other.value = this.value;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

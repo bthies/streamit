@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassFieldDeclarator.java,v 1.3 2003-05-16 21:58:35 thies Exp $
+ * $Id: JClassFieldDeclarator.java,v 1.4 2003-05-28 05:58:43 thies Exp $
  */
 
 package at.dms.kjc;
@@ -95,4 +95,22 @@ public class JClassFieldDeclarator extends JStatement {
   // ----------------------------------------------------------------------
 
   private JFieldDeclaration	decl;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JClassFieldDeclarator other = new at.dms.kjc.JClassFieldDeclarator();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JClassFieldDeclarator other) {
+  super.deepCloneInto(other);
+  other.decl = (at.dms.kjc.JFieldDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

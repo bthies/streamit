@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.3 2003-05-16 21:58:40 thies Exp $
+ * $Id: Message.java,v 1.4 2003-05-28 05:58:59 thies Exp $
  */
 
 package at.dms.util;
@@ -23,7 +23,7 @@ package at.dms.util;
 /**
  * This class represents the root class for all kopic errors
  */
-public class Message {
+public class Message implements at.dms.kjc.DeepCloneable {
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
@@ -107,4 +107,22 @@ public class Message {
 
     private /* final */ MessageDescription	description; // removed final for cloner
 	     private /* final */ Object[]		parameters; // removed final for cloner
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.util.Message other = new at.dms.util.Message();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.util.Message other) {
+  other.description = (at.dms.util.MessageDescription)at.dms.kjc.AutoCloner.cloneToplevel(this.description);
+  other.parameters = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNullLiteral.java,v 1.6 2003-05-16 21:58:35 thies Exp $
+ * $Id: JNullLiteral.java,v 1.7 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -132,4 +132,21 @@ public class JNullLiteral extends JLiteral {
     public JExpression convertType(CType dest, CExpressionContext context) {
 	throw new InconsistencyException("cannot convert NullType");
     }
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JNullLiteral other = new at.dms.kjc.JNullLiteral();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JNullLiteral other) {
+  super.deepCloneInto(other);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

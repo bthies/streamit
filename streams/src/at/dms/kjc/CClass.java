@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.4 2003-05-16 21:58:34 thies Exp $
+ * $Id: CClass.java,v 1.5 2003-05-28 05:58:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -797,4 +797,27 @@ public abstract class CClass extends CMember {
   private Hashtable		fields;
   private CMethod[]		methods;
   private boolean               qualifiedAndAnonymous; 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.CClass other) {
+  super.deepCloneInto(other);
+  other.sourceFile = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceFile);
+  other.qualifiedName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.qualifiedName);
+  other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
+  other.interfaces = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.interfaces);
+  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.innerClasses = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.innerClasses);
+  other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass);
+  other.hasOuterThis = this.hasOuterThis;
+  other.fields = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+  other.methods = (at.dms.kjc.CMethod[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+  other.qualifiedAndAnonymous = this.qualifiedAndAnonymous;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

@@ -344,4 +344,25 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	return "SIRFeedbackLoop name=" + getName();
     }
 
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.sir.SIRFeedbackLoop other = new at.dms.kjc.sir.SIRFeedbackLoop();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.sir.SIRFeedbackLoop other) {
+  super.deepCloneInto(other);
+  other.joiner = (at.dms.kjc.sir.SIRJoiner)at.dms.kjc.AutoCloner.cloneToplevel(this.joiner);
+  other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter);
+  other.delay = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.delay);
+  other.initPath = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.initPath);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

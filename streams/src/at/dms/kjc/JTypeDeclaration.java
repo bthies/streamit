@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.5 2003-05-16 21:58:36 thies Exp $
+ * $Id: JTypeDeclaration.java,v 1.6 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -401,5 +401,30 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
   // Definitive data
   protected	CSourceClass		sourceClass;
   private	boolean			uniqueSourceClass = true;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JTypeDeclaration other) {
+  super.deepCloneInto(other);
+  other.modifiers = this.modifiers;
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.body = (at.dms.kjc.JPhylum[])at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+  other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+  other.inners = (at.dms.kjc.JTypeDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.inners);
+  other.interfaces = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.interfaces);
+  other.outerThis = (at.dms.kjc.JFieldDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.outerThis);
+  other.defaultConstructor = (at.dms.kjc.JConstructorDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.defaultConstructor);
+  other.statInit = (at.dms.kjc.JInitializerDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.statInit);
+  other.instanceInit = (at.dms.kjc.JInitializerDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.instanceInit);
+  other.sourceClass = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceClass);
+  other.uniqueSourceClass = this.uniqueSourceClass;
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPrefixExpression.java,v 1.6 2003-05-16 21:58:35 thies Exp $
+ * $Id: JPrefixExpression.java,v 1.7 2003-05-28 05:58:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -196,4 +196,24 @@ public class JPrefixExpression extends JExpression {
   protected int			oper;
   protected JExpression		expr;
   protected CType		type;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() {
+  at.dms.kjc.JPrefixExpression other = new at.dms.kjc.JPrefixExpression();
+  at.dms.kjc.AutoCloner.register(this, other);
+  deepCloneInto(other);
+  return other;
+}
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.kjc.JPrefixExpression other) {
+  super.deepCloneInto(other);
+  other.oper = this.oper;
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

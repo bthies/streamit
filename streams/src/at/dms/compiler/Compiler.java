@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.2 2003-05-16 21:06:35 thies Exp $
+ * $Id: Compiler.java,v 1.3 2003-05-28 05:58:39 thies Exp $
  */
 
 package at.dms.compiler;
@@ -35,7 +35,7 @@ import at.dms.util.Utils;
 /**
  * This class defines the common behaviour of all KOPI compilers.
  */
-public abstract class Compiler {
+public abstract class Compiler implements at.dms.kjc.DeepCloneable {
 
   /**
    * Creates a new compiler instance.
@@ -277,4 +277,18 @@ public abstract class Compiler {
 
   // the directory where to search source files
   private String		workingDirectory;
+
+/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+/** Returns a deep clone of this object. */
+public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated cloning methods - deepClone was called on an abstract class."); return null; }
+
+/** Clones all fields of this into <other> */
+protected void deepCloneInto(at.dms.compiler.Compiler other) {
+  other.timestamp = this.timestamp;
+  other.err = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.err);
+  other.workingDirectory = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.workingDirectory);
+}
+
+/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
 }

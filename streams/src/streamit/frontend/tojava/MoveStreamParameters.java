@@ -32,7 +32,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.13 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.14 2003-12-15 22:49:34 dmaze Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -46,30 +46,6 @@ public class MoveStreamParameters extends InitMunger
                                     Collections.EMPTY_LIST);
     }
     
-    private Function makeConstructor(FEContext context, String name,
-                                     List params)
-    {
-        // Create a helper function with a call to super().
-        // Work from the bottom up.  Create the parameter list to the
-        // call:
-        List superParams = new ArrayList();
-        for (Iterator iter = params.iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            Expression sp = new ExprVar(context, param.getName());
-            superParams.add(sp);
-        }
-        Expression funCall = new ExprFunCall(context, "super", superParams);
-        Statement stmtSuper = new StmtExpr(context, funCall);
-        Statement stmtBlock =
-            new StmtBlock(context, Collections.singletonList(stmtSuper));
-        Function fn =
-            Function.newHelper(context, name,
-                               new TypePrimitive(TypePrimitive.TYPE_VOID),
-                               params, stmtBlock);
-        return fn;
-    }
-
     private Function addInitParams(Function init, List params)
     {
         FEContext context = init.getContext();
@@ -155,12 +131,6 @@ public class MoveStreamParameters extends InitMunger
             List newFuncs = new ArrayList(spec.getFuncs());
             List newVars = new ArrayList(spec.getVars());
 
-            // Create a constructor:
-            Function constructor = makeConstructor(spec.getContext(),
-                                                   spec.getName(),
-                                                   spec.getParams());
-            newFuncs.add(constructor);
-            
             if (spec.getType() == StreamSpec.STREAM_FILTER)
             {
                 // Okay, we have some parameters.  We need to add this

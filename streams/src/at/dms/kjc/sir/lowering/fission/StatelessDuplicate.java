@@ -144,7 +144,7 @@ public class StatelessDuplicate {
 	/*
 	if (origFilter.getPeekInt()==origFilter.getPopInt()) {
 	    // without peeking, it's a round-robin 
-	    JExpression[] splitWeight = { new JIntLiteral(origFilter.getPopInt()) } ;
+	    JExpression splitWeight = new JIntLiteral(origFilter.getPopInt());
 	    result.setSplitter(SIRSplitter.
 			       createUniformRR(result, splitWeight));
 	} else {
@@ -157,7 +157,7 @@ public class StatelessDuplicate {
 	// create the joiner
 	int pushCount = origFilter.getPushInt();
 	if (pushCount > 0) {
-	    JExpression[] joinWeight = { new JIntLiteral(pushCount) } ;
+	    JExpression joinWeight = new JIntLiteral(pushCount);
 	    result.setJoiner(SIRJoiner.
 			     createUniformRR(result, joinWeight));
 	} else {

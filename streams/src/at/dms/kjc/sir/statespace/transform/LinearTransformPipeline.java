@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.3 2004-02-24 19:56:36 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.4 2004-02-25 20:56:20 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -128,6 +128,17 @@ public class LinearTransformPipeline extends LinearTransform {
 	    initprime.copyAt(0,0,init1);
 	    initprime.copyAt(0,state1,init2);
 
+
+	    /* Here a subtlety must be taken care of. If representation2 has a peek value more than its pop value, it will have state variables associated with those extra peeked elements. Those variables need to be initialized */
+
+
+
+
+
+
+
+
+
 	    // now, assemble the overall linear rep.
 	    LinearFilterRepresentation combinedRep;
 	    combinedRep = new LinearFilterRepresentation(Aprime, Bprime, Cprime, Dprime, initprime, newPop1 + offset1 + offset2);
@@ -154,14 +165,6 @@ public class LinearTransformPipeline extends LinearTransform {
      * Sets up the calculation of the overall linear representation of
      * a sequential list of linear representations.<br>
      *
-     * If filter one computes y = xA1 + b1 and filter 2 computes y=xA2 + b2 then
-     * the overall filter filter1 --> filter 2 will compute
-     * y = (xA1 + b1)A2 + b2 = xA1A2 + (b1A2 + b2), which itself can be represented  
-     * with the LFR: A = A1A2 and b = (b1A2 + b2).<br>
-     *
-     * There are a bunch of subtlties involved with computing the overall representation
-     * due to various size restrictions (eg the sizes of the matrices have to be
-     * compatible. See the pldi-03-linear paper for the gory details.<p> 
      **/
     public static LinearTransform calculate(List linearRepList) {
 	// we punt any actual work until the "transform" method is called.

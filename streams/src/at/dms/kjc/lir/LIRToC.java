@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.55 2001-11-16 23:03:57 dmaze Exp $
+ * $Id: LIRToC.java,v 1.56 2001-11-16 23:05:32 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -2040,6 +2040,7 @@ public class LIRToC
      */
     public void visitWorkEntry(LIRWorkEntry self)
     {
+        print("VARS_DEFAULTB();");
         print("LOCALIZE_DEFAULTB(");
         self.getStreamContext().accept(this);
         print(");");

@@ -1,0 +1,17 @@
+<benchmark>
+  <name>lattice</name>
+  <desc>Ten-stage lattice filter</desc>
+  <description>
+Constructs a ten-stage lattice filter.  The first and last stages are
+special; otherwise, a series of mostly-identical stages are
+constructed in order and fed into a pipeline.  Two items are carried
+between each stage of the lattice filter, with the second item delayed
+by one element.
+  </description>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>Lattice.str</file>
+      <file class="lib">../delay/DelayOne.str</file>
+    </impl>
+  </implementations>
+</benchmark>

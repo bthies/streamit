@@ -979,7 +979,7 @@ public class Rawify
 	if (node.getPrevious() instanceof InputTraceNode) {
 	    OffChipBuffer buf = IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
 							   node).getNonRedundant();
-	    if (buf.getDest() instanceof OutputTraceNode &&
+	    if (buf != null && buf.getDest() instanceof OutputTraceNode &&
 		((OutputTraceNode)buf.getDest()).isFileReader())
 		cacheAlignSource = false;
 	}

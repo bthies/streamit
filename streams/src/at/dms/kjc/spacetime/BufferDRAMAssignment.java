@@ -27,6 +27,7 @@ public class BufferDRAMAssignment
     public static void run(List steadyList, RawChip chip, Trace[] files) 
     {
 	//take care of the file readers and writes
+	//assign the reader->output buffer and the input->writer buffer
 	fileStuff(files, chip);
 	
 	//go thru the traversal and assign
@@ -41,7 +42,7 @@ public class BufferDRAMAssignment
 		inputFilterAssignment((InputTraceNode)traceNode, chip);
 	    //assign the buffer between the output trace node and the filter
 	    if (traceNode.isOutputTrace())
-		    filterOutputAssignment((OutputTraceNode)traceNode, chip);
+		filterOutputAssignment((OutputTraceNode)traceNode, chip);
 	    traceNode = traceNode.getNext();
 	}
 
@@ -56,6 +57,14 @@ public class BufferDRAMAssignment
 	    }
 	}
 	
+	//assign all the output nodes of file readers with one output
+	for (int i = 0; i < files.length; i++) {
+	    if (files[i].getTail().isFileReader() && 
+		files[i].getTail().oneOutput())
+		performAssignment(files[i].getTail(), chip);
+	}
+	
+
 	//cycle thru the steady state trav...
 	//when we hit an output trace node
 	//assign its output buffers to
@@ -76,6 +85,12 @@ public class BufferDRAMAssignment
 	    }
 	}
 	
+	//assign remaining file readers
+	for (int i = 0; i < files.length; i++) {
+	    if (files[i].getTail().isFileReader() && 
+		!files[i].getTail().oneOutput())
+		performAssignment(files[i].getTail(), chip);
+	}
     }
     
     private static void fileStuff(Trace[] files, RawChip chip) 
@@ -92,10 +107,11 @@ public class BufferDRAMAssignment
 		assert files[i].getHead().oneInput() : 
 		    "buffer assignment of a joined file writer not implemented " +
 		    "everthing else should be done";
-		FilterTraceNode downstream = 
-		    (FilterTraceNode)files[i].getHead().getSingleEdge().getDest().getNext();
-		FileOutputContent fileOC = (FileOutputContent)downstream.getFilter();
-		RawTile tile = chip.getTile(downstream.getX(), downstream.getY());
+		FilterTraceNode upstream = 
+		    files[i].getHead().getSingleEdge().getSrc().getPrevFilter();
+		FileOutputContent fileOC = 
+		    (FileOutputContent)filter.getFilter();
+		RawTile tile = chip.getTile(upstream.getX(), upstream.getY());
 		IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i].getHead(), filter);
 		//the dram of the tile where we want to add the file writer 
 		StreamingDram dram = null;
@@ -106,18 +122,37 @@ public class BufferDRAMAssignment
 			break;
 		    }
 		}
-		assert dram != null : "Could not find a dram to attach file reader to";
+		assert dram != null : "Could not find a dram to attach file writer to";
 
 		//set the port for the buffer
 		buf.setDRAM(dram);
-
-		//attach the file writer to the port  DO MORE HERE!!!!!
+		//assign the other buffer to the same port
+		//this should not affect anything
+		IntraTraceBuffer.getBuffer(filter, files[i].getTail()).setDRAM(dram);
+		//attach the file writer to the port
 		dram.setFileWriter(fileOC);
 	    }
 	    else if (files[i].getTail().isFileReader()) {
 		assert files[i].getTail().oneOutput() :
 		    "buffer assignment of a split file reader not implemented " +
 		    "everthing else should be done";
+		FilterTraceNode downstream = 
+		    files[i].getTail().getSingleEdge().getDest().getNextFilter();
+		FileInputContent fileIC = (FileInputContent)filter.getFilter();
+		RawTile tile = chip.getTile(downstream.getX(), downstream.getY());
+		IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter, files[i].getTail());
+		StreamingDram dram = null;
+		for (int j = 0; j < tile.getIODevices().length; j++) {
+		    if (!((StreamingDram)tile.getIODevices()[j]).isFileReader()) {
+			dram = (StreamingDram)tile.getIODevices()[j];
+			break;
+		    }
+		}
+		assert dram != null : "Could not find a dram to attach the file Reader to";
+		
+		buf.setDRAM(dram);
+		IntraTraceBuffer.getBuffer(files[i].getHead(), filter).setDRAM(dram);
+		dram.setFileReader(fileIC);
 	    }
 	    else 
 		assert false : "File trace is neither reader or writer";
@@ -156,11 +191,27 @@ public class BufferDRAMAssignment
 	
 	RawTile tile = chip.getTile(filter.getX(), filter.getY());
 	//the neighboring dram of the tile we are assigning this buffer to
-	int index = 0;
+	int index = -1;
 	//if there is more than one neighboring dram, randomly pick one
 	if (tile.getIODevices().length > 1) {
-	    index = rand.nextInt(tile.getIODevices().length);
-	}
+	    //do something smarter if we need to 
+	    //if this input trace has one input, assign this port to the same
+	    //port as the upstream file->output buffer, if assigned to same tile
+	    if (input.oneInput() && 
+		IntraTraceBuffer.getBuffer(input.getSingleEdge().getSrc().getPrevFilter(),
+					   input.getSingleEdge().getSrc()).isAssigned()) {
+		StreamingDram dram = 
+		    IntraTraceBuffer.getBuffer(input.getSingleEdge().getSrc().getPrevFilter(),
+					       input.getSingleEdge().getSrc()).getDRAM();
+		if (tile.isAttached(dram))
+		    index = tile.getIOIndex(dram);
+		else  //otherwise choose randomly
+		    index = rand.nextInt(tile.getIODevices().length);
+	    }
+	    else 
+		index = rand.nextInt(tile.getIODevices().length);
+	} else //use the only streaming dram
+	    index = 0;
 	//assign the buffer to the dram
 	SpaceTimeBackend.println("Assigning (" + input + "->" + 
 				 input.getNext() + " to " + tile.getIODevices()[index] + ")");
@@ -177,7 +228,19 @@ public class BufferDRAMAssignment
 	int index = 0;
 	//if there is more than one neighboring dram, randomly pick one
 	if (tile.getIODevices().length > 1) {
-	    index = rand.nextInt(tile.getIODevices().length);
+	    if (output.oneOutput() &&
+		IntraTraceBuffer.getBuffer(output.getSingleEdge().getDest(),
+					   output.getSingleEdge().getDest().getNextFilter()).isAssigned()) {
+		StreamingDram dram = 
+		    IntraTraceBuffer.getBuffer(output.getSingleEdge().getDest(),
+					       output.getSingleEdge().getDest().getNextFilter()).getDRAM();
+		if (tile.isAttached(dram))
+		    index = tile.getIOIndex(dram);
+		else 
+		    index = rand.nextInt(tile.getIODevices().length);
+	    }
+	    else 
+		index = rand.nextInt(tile.getIODevices().length);
 	}
 	//assign the buffer to the dram
 	SpaceTimeBackend.println("Assigning (" + output.getPrevious() + "->" + 

@@ -89,7 +89,7 @@ public abstract class OffChipBuffer
     
     public StreamingDram getDRAM() 
     {
-	assert dram != null: "need to assign buffer to streaming dram";
+	assert dram != null: "need to assign buffer to streaming dram " + this.toString();
 	//assert !redundant() : "calling getDRAM() on redundant buffer";
 	return dram;
     }

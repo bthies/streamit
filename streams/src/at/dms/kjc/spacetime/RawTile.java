@@ -72,6 +72,23 @@ public class RawTile extends ComputeNode {
 	dram = sd;
     }
     
+    public boolean isAttached(IODevice dev) 
+    {
+	for (int i = 0; i < IODevices.length; i++)
+	    if (dev == IODevices[i])
+		return true;
+	return false;
+    }
+    
+    public int getIOIndex(IODevice dev) 
+    {
+	for (int i = 0; i < IODevices.length; i++)
+	    if (dev == IODevices[i])
+		return i;
+	assert false : "IODevice not attached to tile";
+	return -1;
+    }
+    
 
     public IODevice[] getIODevices() 
     {

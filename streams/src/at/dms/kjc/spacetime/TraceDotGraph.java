@@ -6,12 +6,13 @@ import at.dms.kjc.flatgraph2.*;
 import java.io.FileWriter;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Iterator;
 
 
 public class TraceDotGraph 
 {
-    public static void dumpGraph(List steadyTrav, String fileName, boolean DRAM) 
+    public static void dumpGraph(List steadyTrav, Trace[] io, String fileName, boolean DRAM) 
     {
 	try {
 	    boolean first = true;
@@ -19,7 +20,13 @@ public class TraceDotGraph
 	    FileWriter fw = new FileWriter(fileName);
 	    fw.write("digraph TraceDotGraph {\n");
 	    fw.write("size = \"8, 10.5\";\n");
-	    Iterator traces = steadyTrav.iterator();
+	    HashSet traceSet = new HashSet();
+	    Util.addAll(traceSet, steadyTrav);
+	    //add the file readers and writes if they exist
+	    for (int i = 0; i < io.length; i++)
+		traceSet.add(io[i]);
+
+	    Iterator traces = traceSet.iterator();
 	    while (traces.hasNext()) {
 		Trace trace = (Trace)traces.next();
 		TraceNode node = trace.getHead();

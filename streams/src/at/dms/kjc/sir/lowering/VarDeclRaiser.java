@@ -22,6 +22,10 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
      */
     private LinkedList varDefs;
     /**
+     * List of JNewArrayExpression to move to the front of the block
+     */
+    private LinkedList newArrays;
+    /**
      * Int used to rename conflicting variable names
      */
     private int conflict;
@@ -81,6 +85,7 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	if(parent==null) {
 	    parent=self;
 	    varDefs=new LinkedList();
+	    newArrays=new LinkedList();
 	}
 	//LinkedList saveDefs=varDefs;
 	int size=self.size();
@@ -99,7 +104,9 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		    if(val!=null) {
 			def.setValue(null);
 			TokenReference ref=((JVariableDeclarationStatement)newBody).getTokenReference();
-			self.addStatement(i,new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null));
+			newBody=new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null);
+			self.addStatement(i,(JStatement)newBody);
+			i++;
 			size++;
 		    }
 		}
@@ -108,8 +115,31 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	    } else if (newBody!=null && newBody!=oldBody) {
 		self.setStatement(i,(JStatement)newBody);
 	    }
+	    if(newBody instanceof JExpressionStatement) {
+		JExpressionStatement exp=(JExpressionStatement)newBody;
+		if(exp.getExpression() instanceof JAssignmentExpression) {
+		    JAssignmentExpression assign=(JAssignmentExpression)exp.getExpression();
+		    if(assign.getRight() instanceof JNewArrayExpression) {
+			JNewArrayExpression newArray=(JNewArrayExpression)assign.getRight();
+			//Make sure all dimensions are IntLiterals
+			JExpression[] dims=newArray.getDims();
+			boolean ok=true;
+			for(int j=0;j<dims.length;j++)
+			    if(!(dims[j] instanceof JIntLiteral))
+				ok=false;
+			if(ok) {
+			    newArrays.add(newBody);
+			    self.removeStatement(i);
+			    i--;
+			    size--;
+			}
+		    }
+		}		    
+	    }
 	}
 	if(parent==self) {
+	    for(int i=newArrays.size()-1;i>=0;i--)
+		self.addStatementFirst((JStatement)newArrays.get(i));
 	    Hashtable visitedVars=new Hashtable();
 	    for(int i=varDefs.size()-1;i>=0;i--) {
 		JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
@@ -186,3 +216,4 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	return self;
     }
 }
+

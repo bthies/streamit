@@ -221,7 +221,7 @@ public class ClusterBackend implements FlatVisitor {
 	executionCounts = SIRScheduler.getExecutionCounts(str);
 	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
 	GraphFlattener graphFlattener = new GraphFlattener(str);
-	graphFlattener.dumpGraph("flatgraph.dot");
+	//graphFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
 
 	//create the execution counts for other passes

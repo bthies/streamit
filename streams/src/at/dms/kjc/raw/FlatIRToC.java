@@ -65,21 +65,21 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		Unroller unroller;
 		do {
 		    do {
-			System.out.println("Unrolling..");
+			//System.out.println("Unrolling..");
 			unroller = new Unroller(new Hashtable());
 			((SIRFilter)node.contents).getMethods()[i].accept(unroller);
 		    } while(unroller.hasUnrolled());
-		    System.out.println("Constant Propagating..");
+		    //System.out.println("Constant Propagating..");
 		    ((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
-		    System.out.println("Unrolling..");
+		    //System.out.println("Unrolling..");
 		    unroller = new Unroller(new Hashtable());
 		    ((SIRFilter)node.contents).getMethods()[i].accept(unroller);
 		} while(unroller.hasUnrolled());
-		System.out.println("Flattening..");
+		//System.out.println("Flattening..");
 		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
 		//System.out.println("Analyzing Branches..");
 		//((SIRFilter)node.contents).getMethods()[i].accept(new BranchAnalyzer());
-		System.out.println("Constant Propagating..");
+		//System.out.println("Constant Propagating..");
 		((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
 	    } else
 		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());

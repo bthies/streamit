@@ -539,7 +539,7 @@ public class SIRScheduler implements Constants {
 /**
  * Controls which scheduler is used for each of the stream constructs.
  */
-public class SIRStreamFactory implements streamit.scheduler2.base.StreamFactory {
+class SIRStreamFactory implements streamit.scheduler2.base.StreamFactory {
 
     public StreamInterface newFrom(Iterator streamIter) {
         if (streamIter.isFilter() != null) {

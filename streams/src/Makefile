@@ -92,9 +92,10 @@ jar:
 	rm -f streamit.jar streamit-lib.jar
 	$(MAKE) streamit.jar streamit-lib.jar
 
-streamit.jar: $(JAVA_TARGET)
+streamit.jar: $(JAVA_TARGET) antlr.jar
 	rm -rf classes
 	mkdir classes
+	cd classes && jar xf ../antlr.jar
 	find . -name '*.class' | cpio -p -d -V classes
 	find . -name '*.properties' | cpio -d -p -V classes
 	cd $(STREAMIT_HOME)/library/java && \
@@ -106,15 +107,23 @@ streamit.jar: $(JAVA_TARGET)
 	rm -rf classes
 	rm -rf manifest.streamit
 
-streamit-lib.jar: $(JAVA_TARGET)
+streamit-lib.jar: $(JAVA_TARGET) antlr.jar
 	rm -rf classes
 	mkdir classes
+	cd classes && jar xf ../antlr.jar
 	find streamit -name '*.class' | cpio -d -p -V classes
 	cd $(STREAMIT_HOME)/library/java && \
 		find . -name '*.class' | \
 		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
 	jar cf $@ -C classes .
 	rm -rf classes
+
+antlr.jar:
+	wget http://www.antlr.org/download/antlr-2.7.2.tar.gz
+	gunzip antlr-2.7.2.tar.gz
+	tar xf antlr-2.7.2.tar antlr-2.7.2/antlr.jar
+	mv antlr-2.7.2/antlr.jar $@
+	rm -rf antlr-2.7.2 antlr-2.7.2.tar
 
 at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex $(KOPI_JFLEX_TARGET)
 	@rm -f at/dms/kjc/KjcScanner.java

@@ -1223,12 +1223,13 @@ public class Rawify
 	    pendingSends=0;
 	}
 	//Postloop
-	//turns=index*numPop+extra;
+	turns=index*numPop+extra;
 	//turns=pos*numPop;
-	turns=index*numPop;//+(int)Math.ceil(((double)bufferSize)/pop); //Make sure to fill peekbuffer
+	//turns=index*numPop;//+(int)Math.ceil(((double)bufferSize)/pop); //Make sure to fill peekbuffer
 	System.out.println("SWITCH TURNS: "+turns);
 	if(begin) {
-	    //int emptySpots=pop*(turns+numPop-1)-bufferSize;
+	    int bufferRemaining=bufferSize;
+	    //int emptySpots=pop*(turns+numPop-1+pos*numPop)-bufferSize;
  	    if(turns>0) {
 		throw new AssertionError("Shouldn't go in here!");
 		//Order between values (from peek buffer) and partial sums is reversed
@@ -1239,17 +1240,18 @@ public class Rawify
 
 		/*for(int turn=0;turn<turns;turn++)
 		    for(int j = 0; j<pop; j++) {
-			    //Pass first value
-			    ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-			    ins.addRoute(src, SwitchOPort.CSTI);
+			//Pass first value
+			ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+			ins.addRoute(src, SwitchOPort.CSTI);
+			if(!end)
 			    ins.addRoute(src,dest); //Send to next tile
-			    code.appendIns(ins, false);
-			    //Repeat first value
-			    for(int k=numPop-2;k>=0;k--) {
-				FullIns newIns = new FullIns(tile);
-				newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-				code.appendIns(newIns, false);
-			    }
+			code.appendIns(ins, false);
+			//Repeat first value
+			for(int k=numPop-2;k>=0;k--) {
+			    FullIns newIns = new FullIns(tile);
+			    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			    code.appendIns(newIns, false);
+			}
 			if(j==0) { //Partial sum
 			    //Save partial sum
 			    FullIns newIns=new FullIns(tile);
@@ -1263,6 +1265,7 @@ public class Rawify
 	    }
 	    for(int i=0;i<numPop-1;i++)
 		for(int j=0;j<pop;j++) {
+		    bufferRemaining--;
 		    /*if(emptySpots>0)
 			emptySpots--;
 			else {*/
@@ -1298,8 +1301,18 @@ public class Rawify
 	    //Pass remaining values to filters downstream
 	    for(int i=0;i<pos*numPop;i++) {
 		ins = new FullIns(tile);
-		ins.addRoute(src,dest);
-		//Pass up to tile to put into peekbuffer
+		if(bufferRemaining>0) {
+		    ins.addRoute(src,dest);
+		    //Pass up to tile to put into peekbuffer
+		    ins.addRoute(src,SwitchOPort.CSTI);
+		    bufferRemaining--;
+		} else //Pass dummy value
+		    ins.addRoute(SwitchReg.R1,dest);
+		code.appendIns(ins, false);
+	    }
+	    //Buffer up remaining
+	    for(;bufferRemaining>0;bufferRemaining--) {
+		ins = new FullIns(tile);
 		ins.addRoute(src,SwitchOPort.CSTI);
 		code.appendIns(ins, false);
 	    }

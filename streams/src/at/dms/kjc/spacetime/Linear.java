@@ -170,7 +170,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	int extra=0; //Extra turns needed
 	int excess=bufferSize-popCount*(int)Math.ceil(((double)peek)/popCount);//popCount*(num+turns);
 	if(excess>0) { //Handle excess items on peekbuffer
-	    System.err.println("WARNING: EXCESS ITEMS ON PEEKBUFFER DETECTED!");
+	    System.err.println("WARNING: EXCESS ITEMS ON PEEKBUFFER DETECTED!!!!!!!");
 	    extra=(int)Math.ceil(((double)excess)/popCount);
 	    turns+=extra;
 	}
@@ -304,55 +304,45 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
-	    int emptySpots=popCount*(turns+topPopNum)-bufferSize;
+	    int bufferRemaining=bufferSize;
+	    //int emptySpots=popCount*(turns+topPopNum+pos*num)-bufferSize;
 	    //Order reversed
 	    for(int turn=0;turn<turns;turn++) { //Last iteration may not be from buffer
 		throw new AssertionError("Shouldn't go in here!");
-		/*for(int j=0;j<popCount;j++)
-		    if(true||emptySpots>0) {
-			for(int k=topPopNum;k>=0;k--) {
-			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-			}
-			emptySpots--;
-		    } else {
-			//Read value from switch
-			//inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			inline.add("move  "+tempRegs[0]+",\\t$csti");
-			inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			index+=4;
-			for(int k=topPopNum;k>=0;k--) {
-			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
-			}
-			}*/
+		/*for(int j=0;j<popCount;j++) {
+		  inline.add("move  "+tempRegs[0]+",\\t$csti");
+		  inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+		  index+=4;
+		  for(int k=topPopNum;k>=0;k--) {
+		  inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+		  inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+		  }
+		  }*/
 	    }
 	    for(int i=0;i<topPopNum;i++)
 		for(int j=0;j<popCount;j++) {
+		    /*if(emptySpots>0){
+		      for(int k=topPopNum;k>i;k--) {
+		      inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+		      inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		      }
+		      emptySpots--;
+		      } else {*/
+		    assert bufferRemaining>0:"Buffer should not run out here";
 		    inline.add("move  "+tempRegs[0]+",\\t$csti");
 		    inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
 		    index+=4;
-		    if(true||emptySpots>0) {
-			for(int k=topPopNum;k>i;k--) {
-			    //inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
-			}
-			emptySpots--;
-		    } else {
-			//Read value from switch
-			//inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			inline.add("move  "+tempRegs[0]+",\\t$csti");
-			inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			index+=4;
-			for(int k=topPopNum;k>i;k--) {
-			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
-			}
+		    bufferRemaining--;
+		    for(int k=topPopNum;k>i;k--) {
+			//inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 		    }
 		}
+	    //assert emptySpots==0:"Unused empty spots";
 	    //Fill peekBuffer
-	    for(int i=0;i<pos*num;i++) {
+	    //for(int i=0;i<pos*num;i++) {
+	    for(;bufferRemaining>0;bufferRemaining--) {
 		inline.add("sw    $csti,\\t"+index+"("+tempReg+")");
 		index+=4;
 	    }

@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.6 2002-09-12 15:53:45 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.7 2002-09-16 20:30:03 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -13,14 +13,35 @@ import java.util.ArrayList;
 
 /**
  * Replace nodes in a front-end tree.  This is a skeleton for writing
- * replacing passes, which implements FEVisitor.  On its own it does nothing,
- * but it is a convenice class for deriving your own replacers from.  All
- * of the member functions of FEReplacer return Expressions; an attempt is
- * made to not create new objects if they would be identical to the
- * original objects.
+ * replacing passes, which implements FEVisitor.  On its own it does
+ * nothing, but it is a convenice class for deriving your own
+ * replacers from.  All of the member functions of FEReplacer return
+ * objects of appropriate types (Expression subclasses return
+ * Expressions; Statement subclasses return Statements; other objects
+ * return their own types); an attempt is made to not create new
+ * objects if they would be identical to the original objects.
+ *
+ * For Statements, this class also keeps a list of statements in the
+ * current block.  Calling the addStatement() method will add a
+ * statement to the end of the list; a statement visitor can return
+ * a statement, or can call addStatement() itself and return null.
+ * Derived classes should take care to only call addStatement() for
+ * statements inside a block; practically, this means that any pass
+ * that adds or removes statements should be called after the
+ * MakeBodiesBlocks pass.
  */
 public class FEReplacer implements FEVisitor
 {
+    // No direct accessor.  If derived classes need access to this
+    // more than addStatement() provides, change this to protected
+    // visibility.
+    private List newStatements;
+
+    protected void addStatement(Statement stmt)
+    {
+        newStatements.add(stmt);
+    }
+
     public Object visitExprArray(ExprArray exp)
     {
         Expression base = (Expression)exp.getBase().accept(this);
@@ -200,16 +221,22 @@ public class FEReplacer implements FEVisitor
     public Object visitStmtBlock(StmtBlock stmt)
     {
         boolean changed = false;
-        List newStmts = new ArrayList();
+        List oldStatements = newStatements;
+        newStatements = new ArrayList();
         for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
         {
             Statement oldStmt = (Statement)iter.next();
             Statement newStmt = (Statement)oldStmt.accept(this);
             if (newStmt != oldStmt) changed = true;
-            newStmts.add(newStmt);
+            if (newStmt != null) addStatement(newStmt);
         }
-        if (!changed) return stmt;
-        return new StmtBlock(stmt.getContext(), newStmts);
+        Statement result;
+        if (!changed)
+            result = stmt;
+        else
+            result = new StmtBlock(stmt.getContext(), newStatements);
+        newStatements = oldStatements;
+        return result;
     }
     
     public Object visitStmtBody(StmtBody stmt)

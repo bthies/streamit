@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.47 2004-10-07 22:03:45 janiss Exp $
+# $Id: strc,v 1.48 2004-10-20 03:30:28 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -162,7 +162,7 @@ Options available for all backends:
 + --sync              Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
 
-Options specific to RAW backend:
+Options specific to Raw backend:
   --partition, -p     Automatically partition stream graph
 +   --partition-dp       Dynamic programming partitioner (default)
 +   --partition-greedy   Greedy partitioner
@@ -171,6 +171,7 @@ Options specific to RAW backend:
 * --decoupled         Generate dummy communication code
 * --dpscaling         Collect theoretical scaling statistics
 * --forceunroll       Force unroll to -u amount (even if overflows IMEM)
+* --manual            Specify Java class for performing manual optimizations
   --magic-net, -M     Generate RAW "magic network" code
 * --noanneal          Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
@@ -245,6 +246,7 @@ sub get_options
 			    "linearreplacement2",
 			    "linearreplacement3",
 			    "magic-net|magic_net|M",
+			    "manual=s",
 			    "memory|Xmx=s",
 			    "noanneal",
 			    "nofieldprop",
@@ -511,6 +513,7 @@ sub get_kjc_opts
     $opts{linearreplacement2} && ($kjcopts .= " --linearreplacement2");
     $opts{linearreplacement3} && ($kjcopts .= " --linearreplacement3");
     $opts{'magic-net'} && ($kjcopts .= " --magic_net");
+    $opts{manual} && ($kjcopts .= " --manual " . $opts{manual});
     $opts{noanneal} && ($kjcopts .= " --noanneal");
     $opts{nofieldprop} && ($kjcopts .= " --nofieldprop");
     $opts{nolinearcollapse} && ($kjcopts .= " --nolinearcollapse");

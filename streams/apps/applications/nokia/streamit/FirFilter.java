@@ -31,6 +31,7 @@ public class FirFilter extends Filter {
     }
 
     public void init(float[] COEFF) {
+	int n = COEFF.length;
 	this.N=COEFF.length;
 	//this.COEFF=COEFF;
 	this.COEFF=new float[COEFF.length];
@@ -38,7 +39,7 @@ public class FirFilter extends Filter {
 
 	for (int i=0; i<N;i++)
 	    this.COEFF[i]=COEFF[i];
-	input = new Channel(Float.TYPE, 1, N);
+	input = new Channel(Float.TYPE, 1, n);
 	output = new Channel(Float.TYPE, 1);
     }
 

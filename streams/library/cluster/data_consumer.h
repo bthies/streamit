@@ -7,6 +7,9 @@
 
 class data_consumer : public socket_holder, public serializable {
 
+  char *data_buffer;
+  int buf_offset;
+
   int items_read;
 
  public:

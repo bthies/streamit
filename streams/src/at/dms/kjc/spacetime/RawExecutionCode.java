@@ -68,12 +68,15 @@ public class RawExecutionCode extends at.dms.util.Utils
     private GeneratedVariables generatedVariables;
     private FilterInfo filterInfo;
 
-    
+    public static int getUniqueID() 
+    {
+	return globalID++;
+    }
 
     public RawExecutionCode(FilterInfo filterInfo) 
     {
 	//set the unique id to append to each variable name
-	uniqueID = globalID++;
+	uniqueID = getUniqueID();
 	generatedVariables = new GeneratedVariables();
 	this.filterInfo = filterInfo;
 	//treat all the filters as two stages, i.e.
@@ -315,8 +318,13 @@ public class RawExecutionCode extends at.dms.util.Utils
     {
 	Vector methods = new Vector();
 
-	//add all helper methods, except work function
-	
+	//add all helper methods, except work function and initWork
+	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
+	    if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork()) ||
+		(filterInfo.isTwoStage() && 
+		 ((SIRTwoStageFilter)filterInfo.filter).getInitWork().
+		 equals(filterInfo.filter.getMethods()[i]))))
+		methods.add(filterInfo.filter.getMethods()[i]);
 	
 	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);
     }
@@ -618,7 +626,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 			new JMethodCallExpression(null, new JThisExpression(null),
 						  RawExecutionCode.rateMatchSendMethod,
 						  args);
-		    
+		    //set the type of the method call
+		    ratematchsend.setTapeType(tapeType);
 		    return ratematchsend;
 		}
 	    });
@@ -781,6 +790,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    new JMethodCallExpression(null,  new JThisExpression(null),
 				      receiveMethodName,
 				      bufferAccess);
+	
+	((JMethodCallExpression)exp).setTapeType(filter.getInputType());
 
 	//return a statement
 	return new JExpressionStatement(null, exp, null);
@@ -791,7 +802,7 @@ public class RawExecutionCode extends at.dms.util.Utils
      * <count> times with the body of the loop being <body>.  If count
      * is non-positive, just returns empty (!not legal in the general case)
      */
-    private static JStatement makeForLoop(JStatement body,
+    public static JStatement makeForLoop(JStatement body,
 					  JLocalVariable var,
 					  JExpression count) {
 	if (body == null)

@@ -79,4 +79,65 @@ public class Util {
 	    return ((CArrayType)type).getBaseType();
 	return type;
     }
+
+     public static String[] makeString(JExpression[] dims) {
+	String[] ret = new String[dims.length];
+	
+	
+	for (int i = 0; i < dims.length; i++) {
+	    TraceIRtoC ttoc = new TraceIRtoC();
+	    dims[i].accept(ttoc);
+	    ret[i] = ttoc.getString();
+	}
+	return ret;
+    }
+
+     public static String staticNetworkReceivePrefix() {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) 
+	    return "";
+	else 
+	    return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
+    }
+
+    public static String staticNetworkReceiveSuffix(CType tapeType) {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    if (tapeType.isFloatingPoint())
+		return "= " + CSTIFPVAR + ";";
+	    else
+		return "= " + CSTIINTVAR + ";";
+	}
+	else 
+	    return "));";
+    }
+
+    public static String staticNetworkSendPrefix(CType tapeType) {
+	StringBuffer buf = new StringBuffer();
+	
+	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    if (tapeType.isFloatingPoint())
+		buf.append(CSTOFPVAR);
+	    else
+		buf.append(CSTOINTVAR);
+	    //temporary fix for type changing filters
+	    buf.append(" = (" + tapeType + ")");
+	} 
+	else {
+	    buf.append("(");
+	    if (SpaceTimeBackend.FILTER_DEBUG_MODE)
+		buf.append("static_send_print");
+	    else
+		buf.append("static_send");
+	    buf.append("(");    
+	    //temporary fix for type changing filters
+	    buf.append("(" + tapeType + ")");
+	}
+	return buf.toString();
+    }
+
+    public static String staticNetworkSendSuffix() {
+	if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+	    return "";
+	else 
+	    return "))";
+    }
 }

@@ -3,13 +3,14 @@ package streamittest;
 import junit.framework.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.linear.frequency.*;
+import at.dms.kjc.sir.linear.transform.*;
 
 import java.util.*;
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.13 2002-11-25 15:16:51 aalamb Exp $
+ * $Id: TestLinear.java,v 1.14 2002-11-25 21:32:38 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -56,6 +57,7 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testLinearTransformGcd"));
 
 	suite.addTest(new TestLinear("testLinearFilterRepresentation"));
+	suite.addTest(new TestLinear("testLinearFilterRepresentationExpand"));
 	
 	return suite;
     }
@@ -979,7 +981,79 @@ public class TestLinear extends TestCase {
 	assertEquals((SIZE*(SIZE-1) + SIZE)-2, lfr.getCost().getAdds());
 	
     }
+
+
+    /** Test the expand operation on a LinearFilterRepresentation **/
+    public void testLinearFilterRepresentationExpand() {
+	FilterMatrix mat1 = parseMatrix("[[1 2 3][4 5 6]]");
+	FilterVector vec1 = FilterVector.toVector(parseMatrix("[[7 8 9]]"));
+
+	LinearFilterRepresentation filterRep;
+	filterRep = new LinearFilterRepresentation(mat1, vec1, 2); // pop of 2
 	
+	FilterMatrix expandedMatrix = parseMatrix("[[1 2 3 0 0 0 0 0 0][4 5 6 0 0 0 0 0 0][0 0 0 1 2 3 0 0 0][0 0 0 4 5 6 0 0 0][0 0 0 0 0 0 1 2 3][0 0 0 0 0 0 4 5 6]]");
+	FilterVector expandedVector = FilterVector.toVector(parseMatrix("[[7 8 9 7 8 9 7 8 9]]"));
+
+	// try expanding to sizes that are too small and expect an exception
+	try {filterRep.expand(1,6,9);fail();} catch (IllegalArgumentException e) {}
+	try {filterRep.expand(6,1,9);fail();} catch (IllegalArgumentException e) {}
+	try {filterRep.expand(6,6,2);fail();} catch (IllegalArgumentException e) {}
+	    
+
+	
+
+	// expand the rep by a factor of three for all three dimensions and compare results
+	LinearFilterRepresentation expandedRep = filterRep.expand(filterRep.getPeekCount() * 3,
+								  filterRep.getPopCount() * 3,
+								  filterRep.getPushCount() * 3);
+
+	assertTrue("peek count", expandedRep.getPeekCount() == 6);
+	assertTrue("pop count", expandedRep.getPopCount() == 6);
+	assertTrue("push count", expandedRep.getPushCount() == 9);
+	assertTrue("expanded matrix", expandedRep.getA().equals(expandedMatrix));	
+	assertTrue("expanded vector", expandedRep.getb().equals(expandedVector));
+
+
+	// now, lets try expanding the matrix so that it peeks 2 more than necessary
+	// (eg going to have 2 extra rows of zeros at the top of the rep, so redef expandedMatrix)
+	expandedMatrix = parseMatrix("[[0 0 0 0 0 0 0 0 0][0 0 0 0 0 0 0 0 0][1 2 3 0 0 0 0 0 0][4 5 6 0 0 0 0 0 0][0 0 0 1 2 3 0 0 0][0 0 0 4 5 6 0 0 0][0 0 0 0 0 0 1 2 3][0 0 0 0 0 0 4 5 6]]");
+
+	// expand the rep by a factor of three for all three dimensions and compare results, but 2 more peeks
+	expandedRep = filterRep.expand(filterRep.getPeekCount() * 3 + 2,
+				       filterRep.getPopCount() * 3,
+				       filterRep.getPushCount() * 3);
+
+	assertTrue("peek count", expandedRep.getPeekCount() == 8);
+	assertTrue("pop count", expandedRep.getPopCount() == 6);
+	assertTrue("push count", expandedRep.getPushCount() == 9);
+	assertTrue("expanded matrix", expandedRep.getA().equals(expandedMatrix));
+	assertTrue("expanded vector", expandedRep.getb().equals(expandedVector));
+
+
+	// now, expand the rep to the left (eg have it push one extra 
+	// output
+	expandedMatrix = parseMatrix("[[3 0 0 0 0 0 0 0 0 0][6 0 0 0 0 0 0 0 0 0][0 1 2 3 0 0 0 0 0 0][0 4 5 6 0 0 0 0 0 0][0 0 0 0 1 2 3 0 0 0][0 0 0 0 4 5 6 0 0 0][0 0 0 0 0 0 0 1 2 3][0 0 0 0 0 0 0 4 5 6]]");
+	expandedVector = FilterVector.toVector(parseMatrix("[[9 7 8 9 7 8 9 7 8 9]]"));
+
+
+	// expand the rep by a factor of three for all three dimensions and compare results, but 1 more push
+	expandedRep = filterRep.expand(filterRep.getPeekCount() * 3 + 2,
+				       filterRep.getPopCount() * 3,
+				       filterRep.getPushCount() * 3+1);
+
+	assertTrue("peek count", expandedRep.getPeekCount() == 8);
+	assertTrue("pop count", expandedRep.getPopCount() == 6);
+	assertTrue("push count", expandedRep.getPushCount() == 10);
+	assertTrue("expanded matrix", expandedRep.getA().equals(expandedMatrix));
+	assertTrue("expanded vector", expandedRep.getb().equals(expandedVector));
+	
+	
+	
+    }
+      
+
+
+    
 
 
 

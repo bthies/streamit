@@ -188,8 +188,9 @@ public class RawBackend {
 	    RemoveGlobals.doit(rawFlattener.top);
 	}
 	
+	//VarDecl Raise to move array assignments down?
+	new VarDeclRaiser().raiseVars(str);
 	
-
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(rawFlattener.top);
 	System.out.println("Tile Code End.");

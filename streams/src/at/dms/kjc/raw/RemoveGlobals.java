@@ -105,6 +105,12 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    //see if there are any function calls in the other methods
 	    if (FunctionCall.exists(methods[i], filter))
 		return false;
+	    
+	    //this pass does causes some strange behavior with 
+	    //multidimensional arrays, so just punt
+	    //do not convert if there are multidimensional arrays 
+	    if (MultiDimensionalArrays.exists(methods[i]))
+		return false;
 	}
 
 	//see if all the function calls in raw main are 
@@ -114,6 +120,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 	//this function also decides which calls need to be inlined
 	if (FunctionCallInExpression(rawMain, filter))
 	    return false;
+
 	//all passed return true
 	return true;
     }
@@ -128,6 +135,67 @@ public class RemoveGlobals extends at.dms.util.Utils
 						    filter);
     }
     
+    static class MultiDimensionalArrays extends KjcEmptyVisitor 
+    {
+	private static boolean found;
+	
+	public static boolean exists(JMethodDeclaration method) 
+	{
+	    found = false;
+	    
+	    method.accept(new MultiDimensionalArrays());
+	    return found;
+	}
+
+	public void visitVariableDefinition(JVariableDefinition self,
+					    int modifiers,
+					    CType type,
+					    String ident,
+					    JExpression expr) {
+	    if (expr != null) {
+		expr.accept(this);
+	    }
+	    
+	    if (type.isArrayType()) {
+		if (((CArrayType)type).getArrayBound() > 1)
+		    found = true;
+	    }
+	}
+	
+	//something here that checks array dimensions
+	public void visitFieldExpression(JFieldAccessExpression self,
+					 JExpression left,
+					 String ident)
+	{
+	    try {
+		left.accept(this);
+		if (self.getField().getType().isArrayType()) {
+		    if (((CArrayType)self.getField().getType()).getArrayBound() > 1)
+			found = true;
+		}
+	    }
+	    catch (Exception e) {
+		//it is easier to catch the null pointer exceptions then check for
+		//them
+	    }
+	}
+	
+	public void visitLocalVariableExpression(JLocalVariableExpression self,
+						 String ident) {
+	    try {
+		if (self.getVariable().getType().isArrayType()) {
+		    if (((CArrayType)self.getVariable().getType()).getArrayBound() > 1)
+			found = true;
+		}
+	    }
+	    catch (Exception e) {
+		//it is easier to catch the null pointer exceptions then check for
+		//them
+	    }
+	}
+    }
+    
+
     static class CheckFunctionCallInExpression extends KjcEmptyVisitor 
     {
 	private static HashSet children;

@@ -25,11 +25,10 @@ CC_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT)
 CXX_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT) 
 LINK_OPT += $(DEBUG_OPT) $(LINK_LIBS)
 JAVA_OPT += $(DEBUG_OPT) $(CLASSPATH_OPT)
-JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_SRCS:%.java=%.java.deps))
+JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_TARGET:%.class=%.java.deps))
 
 # compile .java files
 %.class : %.java
-	@rm -f $*.class
 	$(JAVAC) $(JAVA_OPT) $<
 
 %.o : %.c 
@@ -44,7 +43,12 @@ JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_SRCS:%.java=%.java.deps))
 	@rm -f $*.o
 	$(CXX) -c $(CXX_OPT) $<
 
-all: $(C_TARGET) $(CXX_TARGET) $(JAVA_TARGET) Makefile.deps 
+%.java : %.opt
+	@rm -f $*.java
+	@cd `dirname $<` ; \
+	java at.dms.compiler.tools.optgen.Main `basename $<`
+
+all: $(C_TARGET) $(CXX_TARGET) $(JAVA_TARGET) java_class_compile Makefile.deps 
 
 commit: all
 	cvs commit
@@ -53,7 +57,7 @@ $(C_TARGET) : $(OBJ_FILES)
 	@rm -f $(TARGET)
 	$(CXX) -o $(TARGET) $(LINK_OPT) $(OBJ_FILES) $(LINK_LIBS) 
 
-Makefile.deps: $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS)
+Makefile.deps: $(MAKEFILE_DEPS) $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS)
 	@rm -f Makefile.deps
 	@echo > Makefile.deps
 ifneq ($(strip $(CXXSRCS)),)
@@ -77,11 +81,18 @@ endif
 
 # create .deps files from .java files
 %.java.deps : %.java
-	jikes +M +F $(JAVAC_DEPS_OPT) $(JAVA_OPT) $*.java
+	jikes +M -nowarn $(JAVAC_DEPS_OPT) $(JAVA_OPT) $*.java
 	@rm -f $*.java.deps
+	@# append dependecies from all sources to $*.class
+	@grep '.java$$' $*.u > $*.java.deps
+	@grep '.class$$' $*.u | sed 's/class$$/java/' | diff $*.java.deps - | grep \> | sed 's/> //' | sed 's/.java$$/.class/' >> $*.java.deps
+	@# append misc dependecies
 	@echo $*.class : $*.java.deps >> $*.java.deps
-	@cat $*.u >> $*.java.deps
 	@echo java_deps_clean : $*.u $*.class $*.java.deps >> $*.java.deps
+	@# append dependecies for all .class files from their .java files
+	@cat $*.u | grep .java$$ | sed 's/\(.*\) : \(.*\).java$$/\2.class : \2.java/' >> $*.java.deps
+	@# append dependecies for all classes built to java_class_compile
+	@cat $*.u | grep .java$$ | sed 's/\(.*\) : \(.*\).java$$/java_class_compile : \2.class/' >> $*.java.deps
 	@# append dependecies from java_deps_clean to all generated .u files
 	@sed 's/.*\:/java_deps_clean :/;s/\.java$$/\.u/' $*.u >> $*.java.deps
 

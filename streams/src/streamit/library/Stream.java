@@ -580,11 +580,13 @@ public abstract class Stream extends Operator
                 Operator sORj = (Operator)pair.getFirst();
                 int funcNum = ((Integer)pair.getSecond()).intValue();
 
+		sORj.prepareToWork();
                 sORj.work();
             }
             else if (oper instanceof FeedbackLoop)
             {
                 assert function instanceof Operator;
+                ((Operator)function).prepareToWork();
                 ((Operator)function).work();
             }
             else

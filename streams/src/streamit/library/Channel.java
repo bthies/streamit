@@ -94,6 +94,7 @@ public class Channel extends streamit.misc.DestroyedClass
                 " amount is: " + amount +
                 " and maxSize is: " + maxSize;
 
+	    source.prepareToWork();
             source.work ();
         }
     }
@@ -123,7 +124,10 @@ public class Channel extends streamit.misc.DestroyedClass
             "   but queue.size()==" + queue.size() + " and maxSize==" + 
             maxSize;
 		
-        if (passThrough) sink.work ();
+        if (passThrough) {
+	    sink.prepareToWork();
+	    sink.work ();
+	}
     }
 
     private Object dequeue ()
@@ -148,6 +152,7 @@ public class Channel extends streamit.misc.DestroyedClass
     public void push(Object o)
     {
         assert o.getClass () == type;
+	sink.registerPush();
 
         enqueue (o);
     }
@@ -235,6 +240,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop something of type <type>
     public Object pop()
     {
+	source.registerPop();
         ensureData ();
 
         Object data;
@@ -350,6 +356,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at something of type <type>
     public Object peek(int index)
     {
+	source.registerPeek(index);
         ensureData (index + 1);
 
         Object data;

@@ -28,6 +28,49 @@ public class Operator extends DestroyedClass
     ParameterContainer initParams;
     boolean initialized = false;
 
+    /**
+     * The number of items popped and pushed during the execution of
+     * the current work function.  Only maintained for splitters,
+     * joiners, filters (not containers).  Not designed or tested for
+     * multi-phase filters (this is for Eclipse debugger inspection).
+     */
+    int currentPopped = 0, currentPushed = 0;
+    /**
+     * The maximum peek index referenced by the filter during the
+     * execution of its current work function.  For example, this will
+     * be "2" after the sequence "pop(); peek(1);" -- it counts the
+     * pops.
+     */
+    int currentMaxPeek = -1;
+    /**
+     * The following methods relate to maintaining the
+     * currentPopped/Pushed/MaxPeek described above...
+     */
+    /**
+     * This function should be called right before any call to work()
+     * on the operator.  (Could be cleaner by calling a delegate
+     * doWork() first, but that would require a big overhaul.)
+     * Currently, this clears the current popped, peeked, pushed
+     * rates.
+     */
+    public void prepareToWork() {
+	currentPopped = 0;
+	currentPushed = 0;
+	currentMaxPeek = -1;
+    }
+    /**
+     * Register a pop, push, or peek.
+     */
+    public void registerPop() {
+	currentPopped++;
+    }
+    public void registerPush() {
+	currentPushed++;
+    }
+    public void registerPeek(int i) {
+	currentMaxPeek = currentPopped + i;
+    }
+
     public Operator(float x1, float y1, int z1)
     {
         initParams = new ParameterContainer ("float-float-int")
@@ -909,6 +952,7 @@ public class Operator extends DestroyedClass
             int i;
             for (i = 0; i < 10; i++)
             {
+		sink.prepareToWork();
                 sink.work ();
             }
         }
@@ -925,6 +969,7 @@ public class Operator extends DestroyedClass
             Channel ch = (Channel) fullChannel.next ();
             assert ch != null;
 
+	    ch.getSink ().prepareToWork();
             ch.getSink ().work ();
              }
     }
@@ -1611,4 +1656,5 @@ public class Operator extends DestroyedClass
     public String toString() {
 	return getClass().getName();
     }
+
 }

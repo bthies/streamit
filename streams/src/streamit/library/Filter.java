@@ -533,6 +533,7 @@ public abstract class Filter extends Stream
         // execute the phase
         try
         {
+	    prepareToWork();
             if (schedName.equals ("work")) work (); else
             if (schedName.equals ("prework")) prework (); else
             getClass().getMethod(phase.name, null).invoke(this, null);

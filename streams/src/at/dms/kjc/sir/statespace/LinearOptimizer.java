@@ -1,8 +1,8 @@
 package at.dms.kjc.sir.statespace;
 
-/* The optimizer has many subroutines. 
- * 
- *
+/* The optimizer has many subroutines. First we remove unreachable and
+ * unobservable states. Then we attempt to put the system in a form with
+ * the fewest number of parameters (entries that are non-zero, non-one)
  *
  */
 
@@ -64,15 +64,25 @@ public class LinearOptimizer {
         }
 	*/
 
-	if((!orig.getD().isZero())&&doStoreInputs) {	   
-	    orig = orig.changeStoredInputs(orig.getStoredInputCount() + orig.getPopCount());
+	//if the D matrix is not empty, and we've been told to store inputs
+	if(doStoreInputs) {
+	    int max = orig.getPopCount();
+	    int counter = 0;    // this is just to make sure we don't get stuck in an infinite loop
+	    while((!orig.getD().isZero())&&(counter<max)) {	   
+		orig = orig.changeStoredInputs(orig.getStoredInputCount() + 1);
+		counter++;
+	    }
 	}
+
+	LinearPrinter.println("After adding input states: " + orig);
+
 
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
 	states = orig.getStateCount();
 	preNeeded = orig.preworkNeeded();
 
+	//save the 4 matrices into one large matrix
 	totalMatrix = new FilterMatrix(states+outputs,states+inputs);
 	totalMatrix.copyAt(0,0,orig.getA());
 	totalMatrix.copyAt(0,states,orig.getB());
@@ -141,6 +151,10 @@ public class LinearOptimizer {
 	    LinearFilterRepresentation tempReachableRep = extractRep();
 	    LinearCost tempReachableCost = tempReachableRep.getCost();
 
+	    LinearPrinter.println("Reachable rep: " + tempReachableRep);
+	    LinearPrinter.println("Cost (multiplies, adds): " + tempReachableCost.getMultiplies() + " " + tempReachableCost.getAdds());
+
+
 	    transposeSystem();
 	    minParametrize(false);     // put in observable cononical form
 	    transposeSystem();
@@ -148,6 +162,10 @@ public class LinearOptimizer {
 	
 	    LinearFilterRepresentation tempObservableRep = extractRep();
 	    LinearCost tempObservableCost = tempObservableRep.getCost();
+
+
+	    LinearPrinter.println("Observable rep: " + tempObservableRep);	
+	    LinearPrinter.println("Cost (multiplies, adds): " + tempObservableCost.getMultiplies() + " " + tempObservableCost.getAdds());
 
 	    if(tempObservableCost.lessThan(tempReachableCost)) {
 		LinearPrinter.println("Observable rep is better");
@@ -162,7 +180,7 @@ public class LinearOptimizer {
     }
 
 
-    // extract representation from matrices
+    // extract representation from total matrix
     private LinearFilterRepresentation extractRep() {
 
 	LinearFilterRepresentation newRep;
@@ -630,15 +648,14 @@ public class LinearOptimizer {
 	int currRow = 0;
 	int currCol = 0;
 	int currStage = 0;
-	int searchRow, max_index;
-	boolean found, firstTime;
-	double temp_val, max_val, remove_val;
+	int max_index;
+	boolean found;
+	double temp_val, max_val;
 	ComplexNumber tempComplex;
 
 	while((currRow < states)&&(currStage < inputs)) {
 	    
 	    found = false;
-	    searchRow = currRow;
 
 	    // find largest non-zero entry in the B matrix column and swap with the current row
 	    // (partial pivoting)
@@ -677,7 +694,8 @@ public class LinearOptimizer {
 			}
 		    }
 		}
-		scale(currRow,1.0/temp_val,normal);
+		if(Math.abs(temp_val) > 0.01) 
+		    scale(currRow,1.0/temp_val,normal);
 	    }
 
 	    currRow++;
@@ -688,7 +706,6 @@ public class LinearOptimizer {
 	    while(found && (currRow < states) && (currCol < states)) {
 
 		found = false;
-		searchRow = currRow;
 
 		// find largest non-zero entry in the A matrix column and swap with the current row
 		// (partial pivoting)
@@ -708,33 +725,19 @@ public class LinearOptimizer {
 		else
 		    found = false;
 
-		firstTime = true;
-
 		if(found) {
 		    
 		    temp_val = totalMatrix.getElement(currRow,currCol).getReal(); 
 		    
 		    // make all entries above and below it to zero
 		    for(int i=0; i<states; i++) {
-			/*
-			if((i==currRow)&&firstTime) {
-			    if((totalMatrix.getElement(states,currRow-1).getReal() > ComplexNumber.MAX_PRECISION_BUFFER)&&
-			       (totalMatrix.getElement(states,currRow).getReal()>ComplexNumber.MAX_PRECISION_BUFFER)) {
-
-				remove_val = totalMatrix.getElement(states,currRow-1).getReal()/totalMatrix.getElement(states,currRow).getReal();
-				addMultiple(currRow-1,currRow,remove_val,normal);
-				firstTime = false;
-			    }
-			    
-			}
-			*/
 			if(i!=currRow) {
 			    tempComplex = totalMatrix.getElement(i,currCol);
 			    if(!tempComplex.equals(ComplexNumber.ZERO)) {
 				// do NOT do row operations with values too close to MAX_PRECISION
 				// therefore, we will use MAX_PRECISION_BUFFER, which is greater
 				if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
-				    LinearPrinter.println("GETTING RID OF: " + totalMatrix.getElement(i,currCol).getReal());
+				    LinearPrinter.println("GETTING RID OF: " + tempComplex.getReal());
 				    addMultiple(currRow,i,-tempComplex.getReal()/temp_val,normal);	
 				    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
 				    // set the value to be exactly zero (in case it is very small but non-zero)
@@ -743,7 +746,9 @@ public class LinearOptimizer {
 			    }
 			}
 		    }
-		    scale(currRow,1.0/temp_val,normal);
+		    if(Math.abs(temp_val) > 0.01) 
+			scale(currRow,1.0/temp_val,normal);
+		   
 		    currRow++;
 		}
 

@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.18 2004-07-30 18:27:12 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.19 2004-08-19 01:34:30 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -592,18 +592,18 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
      * Calculates cost of this.
      */    
     private LinearCost calculateCost(FilterMatrix M) {
-	// add up multiplies and adds that are necessary for each column of the matrix. 
+	// add up multiplies and adds that are necessary for each *row* of the matrix. 
 	int muls = 0;
 	int adds = 0;
 
 	int matRows = M.getRows();
 	int matCols = M.getCols();
 	
-	for (int col=0; col<matCols; col++) {
-	    // counters for the colums (# muls, adds)
+	for (int row=0; row<matRows; row++) {
+	    // counters for this row (# muls, adds)
 	    int rowAdds = 0;
 	    int rowMuls =  0;
-	    for (int row=0; row<matRows; row++) {
+	    for (int col=0; col<matCols; col++) {
 		ComplexNumber currentElement = M.getElement(row,col);
 		if (!currentElement.isReal()) {
 		    throw new RuntimeException("Non real matrix elements are not supported in cost .");

@@ -53,9 +53,15 @@ public class LinearCost {
     public boolean lessThan(LinearCost other) {
 	this.checkRep();
 	other.checkRep();
+	
 	// use a simple sum of the number of operations for now
 	int thisSum  = this.getMultiplies()  + this.getAdds();
-	int otherSum = other.getMultiplies() + other.getAdds();
+	int otherSum = other.getMultiplies() + other.getAdds();	
+
+	// if they have the same sum, choose based on multiplies
+	if(thisSum == otherSum)
+	    return (this.getMultiplies() < other.getMultiplies());
+
 	return (thisSum < otherSum);
     }
 

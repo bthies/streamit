@@ -174,7 +174,7 @@ public class Filter
                 restrictions.execute(getLatencyNode(), nExecutions);
             ASSERT(executed == nExecutions);
         }
-
+        
         return phase;
     }
 

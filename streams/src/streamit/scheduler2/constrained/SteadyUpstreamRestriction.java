@@ -98,10 +98,9 @@ public class SteadyUpstreamRestriction extends Restriction
                     sdep.getSrcPhase4DstPhase(
                         sdep.getDstPhase4SrcPhase(
                             restrictions.getNumExecutions(
-                                portal.getUpstreamNode())
-                                + 1)
-                            - 1
-                            + portal.getMaxLatency());
+                                portal.getUpstreamNode()))
+                            + portal.getMaxLatency())
+                        - 1;
 
                 // and don't forget to add self to the list of restrictions
                 restrictions.add(this);

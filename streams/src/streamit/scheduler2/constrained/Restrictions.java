@@ -247,6 +247,26 @@ public class Restrictions extends streamit.misc.Misc
             (Restriction)restrictionIter.get();
         return strongestRestriction;
     }
+    
+    /**
+     * Return an OSet of all restrictions for a specific node. Restrictions
+     * are sorted by how constraining they are first, and semi-randomly
+     * second (by hashCode, which varries from execution to execution).
+     * Return null if this node doesn't have any restrictions. 
+     */
+    public OSet getAllRestrictions (LatencyNode node)
+    {
+        OMapIterator restrictionsIter = restrictions.find(node);
+        if (restrictionsIter.equals(lastRestrictionsIter))
+        {
+            return null;
+        }
+
+        OSet nodeRestrictions = (OSet)restrictionsIter.getData();
+        if (nodeRestrictions.size() == 0) return null;
+        
+        return nodeRestrictions;
+    }
 
     /**
      * Add a restriction to the existing set of restrictions. Allow only

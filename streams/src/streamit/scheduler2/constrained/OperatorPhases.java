@@ -65,6 +65,11 @@ public class OperatorPhases extends Misc
         overallValuesValid = true;
     }
 
+    public int getNumInputChannels()
+    {
+        return nInputChannels;
+    }
+
     public void setPhaseInput(int peek, int pop, int phase, int channel)
     {
         ASSERT(channel >= 0 && channel < nInputChannels);

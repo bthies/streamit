@@ -19,9 +19,12 @@ package streamit.scheduler2.constrained;
 import streamit.misc.DLList;
 import streamit.misc.DLList_const;
 import streamit.misc.DLListIterator;
+import streamit.misc.Pair;
+import streamit.misc.OMap;
+import streamit.misc.OMapIterator;
 import streamit.scheduler2.hierarchical.StreamInterfaceWithSnJ;
 
-public class LatencyNode extends streamit.misc.AssertedClass
+public class LatencyNode extends streamit.misc.Misc
 {
     /*
      * These are lists of LatencyEdges
@@ -39,6 +42,46 @@ public class LatencyNode extends streamit.misc.AssertedClass
      */
     final OperatorPhases steadyNodePhases;
     final OperatorPhases initNodePhases;
+
+    /*
+     * Store the number of executions available given a certain number
+     * of items on the tape.
+     */
+    final OMap dataItems2numExecs[];
+
+    private void computeDataItems2NumExecs()
+    {
+        Integer zero = new Integer(0);
+        for (int nChannel = 0;
+            nChannel < getNumInputChannels();
+            nChannel++)
+        {
+            dataItems2numExecs[nChannel] = new OMap();
+            int nDataNeeded = 0, nDataPopped = 0;
+
+            dataItems2numExecs[nChannel].insert(zero, zero);
+
+            // first the initalization schedule
+            int totalPhases = getInitNumPhases() + getSteadyNumPhases();
+            for (int nPhase = 0; nPhase <= totalPhases; nPhase++)
+            {
+                nDataNeeded =
+                    MAX(
+                        nDataNeeded,
+                        nDataPopped + getPhasePeek(nPhase, nChannel));
+                nDataPopped += getPhasePop(nPhase, nChannel);
+
+                Integer dataNeeded = new Integer(nDataNeeded);
+                Integer phase = new Integer(nPhase);
+
+                // force insertion of the pair <dataNeeded, phase>
+                // into the map
+                Pair insertResult =
+                    dataItems2numExecs[nChannel].insert(dataNeeded, phase);
+                ((OMapIterator)insertResult.getFirst()).setData(phase);
+            }
+        }
+    }
 
     LatencyNode(Filter filter, DLList _ancestors)
     {
@@ -98,6 +141,13 @@ public class LatencyNode extends streamit.misc.AssertedClass
                     nInitPhase);
             }
         }
+
+        // compute how many phases can be executed given a certain number
+        // of data items on the input channel
+        {
+            dataItems2numExecs = new OMap[1];
+            computeDataItems2NumExecs();
+        }
     }
 
     LatencyNode(
@@ -140,6 +190,13 @@ public class LatencyNode extends streamit.misc.AssertedClass
                         nOutChannel);
                 }
             }
+
+            // compute how many phases can be executed given a certain number
+            // of data items on the input channel
+            {
+                dataItems2numExecs = new OMap[1];
+                computeDataItems2NumExecs();
+            }
         }
         else
         {
@@ -174,6 +231,13 @@ public class LatencyNode extends streamit.misc.AssertedClass
                         nOutChannel);
                 }
             }
+
+            // compute how many phases can be executed given a certain number
+            // of data items on the input channel
+            {
+                dataItems2numExecs = new OMap[getNumInputChannels()];
+                computeDataItems2NumExecs();
+            }
         }
 
     }
@@ -181,6 +245,11 @@ public class LatencyNode extends streamit.misc.AssertedClass
     public DLList_const getAncestors()
     {
         return ancestors;
+    }
+
+    public int getNumInputChannels()
+    {
+        return steadyNodePhases.getNumInputChannels();
     }
 
     public int getInitNumPhases()
@@ -307,5 +376,42 @@ public class LatencyNode extends streamit.misc.AssertedClass
         }
 
         return false;
+    }
+
+    public int getNumPossibleExecs(int nDataItems, int nChannel)
+    {
+        int nSteadyStates = 0;
+        if (nDataItems > getInitPeek(nChannel))
+        {
+            // finished initialization
+            nDataItems -= getInitPop(nChannel);
+
+            nSteadyStates =
+                ((nDataItems - getInitPop(nChannel))
+                    - (getSteadyStatePeek(nChannel)
+                        - getSteadyStatePop(nChannel)))
+                    / getSteadyStatePop(nChannel);
+        }
+
+        nDataItems -= (nSteadyStates * getSteadyStatePop(nChannel));
+
+        int nIters;
+        Integer dataItems = new Integer(nDataItems + getInitPop(nChannel));
+        OMapIterator upperBoundIters =
+            dataItems2numExecs[nChannel].upper_bound(dataItems);
+        int upperBound = ((Integer)upperBoundIters.getData()).intValue();
+        if (upperBound == 0)
+            nIters = 0;
+        else
+        {
+            OMapIterator iters = upperBoundIters;
+            iters.prev();
+
+            nIters = ((Integer)iters.getData()).intValue();
+        }
+
+        nIters += nSteadyStates * getSteadyNumPhases();
+
+        return nIters;
     }
 }

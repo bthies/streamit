@@ -76,7 +76,7 @@ public class SteadyDownstreamRestriction extends Restriction
                 // figure out how many times I can execute the downstream
                 // filter, before having to worry about checking for its
                 // messages again
-                maxExecution += portal.getMaxLatency();
+                maxExecution += (portal.getMaxLatency() - portal.getMinLatency());
 
                 // and add self to the set of restrictoins again
                 restrictions.add(this);

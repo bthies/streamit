@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs regression tests every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_reg_tests.sh,v 1.8 2002-07-17 18:35:52 aalamb Exp $
+# $Id: run_reg_tests.sh,v 1.9 2002-07-17 21:33:27 aalamb Exp $
 
 # Environmental Variables
 # home directory for CVS
@@ -92,10 +92,8 @@ cat $TEMP | mail -s "StreamIT Regression Test Summary (with performance)" aalamb
 
 
 # now, run the performance number generator (which will also send 
-# random stuff to andrew.
+# email to andrew, as well as generating a web page).
 $STREAMIT_HOME/regtest/tools/run_results.sh
-
-
 
 # clean up temp file
 rm -rf $TEMP

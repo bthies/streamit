@@ -4,7 +4,7 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.5 2002-07-17 18:35:52 aalamb Exp $
+# $Id: reap_results.pl,v 1.6 2002-07-17 21:33:27 aalamb Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -116,6 +116,9 @@ print "parent: done waiting for all $temp_num children.\n";
 print "parent: generating summary.\n";
 generate_summary($result_directory, "$result_directory/summary.txt");
 print "parent: done generating summary.\n";
+generate_webpage($result_directory);
+print "parent: done generating webpage.\n";
+
 
 #remove all old temp directories
 print "parent: removing directories\n"; 
@@ -175,7 +178,7 @@ sub do_child_work {
     my ($start_cycles, $ss_cycles) = split(":", $parsed_cycles);
     print ("child ($temp_num): making blood graph for " .
 	   "$filename (start=$start_cycles, 1 ss=$ss_cycles)\n");
-    $btl_results = make_blood_graph($temp_dir, "$blood_graph_filename", 
+    $btl_results = make_blood_graph($temp_dir, $blood_graph_filename, 
 				    $start_cycles, $ss_cycles);
 
     # get the work and flops counts from the output (last two lines)
@@ -190,7 +193,9 @@ sub do_child_work {
 		 $ss_init_count, $ss_output_count,
 		 $start_cycles, $ss_cycles, 
 		 $work_count, $flops_count,
+		 $blood_graph_filename,
 		 $parsed_output_base_filename);
+
     print "child ($temp_num): done saving dot files and writing summary\n";    
 
     #print "child ($temp_num): generating plot $gnu_plot_filename.\n";

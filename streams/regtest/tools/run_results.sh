@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs results gatherer every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_results.sh,v 1.3 2002-07-17 18:35:52 aalamb Exp $
+# $Id: run_results.sh,v 1.4 2002-07-17 21:33:27 aalamb Exp $
 
 setenv LOGFILE /u/aalamb/streams/regtest/tools/results_log.txt
 # file that gets generated automatically by the regression test framework
@@ -29,11 +29,8 @@ date >> $LOGFILE
 echo "-------------" >> $LOGFILE
 
 
-
-
-
 # mail results to andrew
 cat $LOGFILE | mail -s "Numbers generated" aalamb@mit.edu
 
 # remove the log file
-#rm -rf $LOGFILE
+rm -rf $LOGFILE

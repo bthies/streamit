@@ -150,6 +150,7 @@ class ClusterCodeGenerator {
 	r.add("#include <thread_info.h>\n");
 	r.add("#include <consumer2.h>\n");
 	r.add("#include <producer2.h>\n");
+	r.add("#include \"fusion.h\"\n");
 	r.add("\n");
 
 	//r.add("#include <peek_stream.h>\n");

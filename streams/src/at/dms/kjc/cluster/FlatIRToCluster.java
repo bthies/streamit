@@ -375,22 +375,65 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("}\n");
 	    print("\n");
 
-	    print("inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
+	    int s = in.getSource();
+	    int d = in.getDest();
 
-	    print("  "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
+	    print("#ifdef __FUSED_"+s+"_"+d+"\n");
+	    
+	    // the filter is fused with its source 
+
+	    print("\n");
+
+	    print("  extern "+input_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
+	    print("  extern int HEAD_"+s+"_"+d+";\n");
+	    print("  extern int TAIL_"+s+"_"+d+";\n");
+	    print("\n");
+
+	    // pop from fusion buffer
+
+	    print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
+
+	    print("    "+input_type.toString()+" res=BUFFER_"+s+"_"+d+"[TAIL_"+s+"_"+d+"];");
+	    print("TAIL_"+s+"_"+d+"++;");
+	    print("TAIL_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+	    print("    return res;\n");
+
+	    print("  }\n");
+	    print("\n");
+
+	    // peek from fusion buffer
+
+	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
+	    print("    return BUFFER_"+s+"_"+d+"[(TAIL_"+s+"_"+d+"+offs)&__BUF_SIZE_MASK_"+s+"_"+d+"];");
+	    print("  }\n");
+	    print("\n");
+
+	    // the source is not fused
+
+	    print("#else //!__FUSED_"+s+"_"+d+"\n");
+	    print("\n");
+
+	    print("  inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
+
+	    print("    "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
 	    print("__tail__"+selfID+"++;");
 	    print("__tail__"+selfID+"&="+(peek_buf_size-1)+";\n");
-	    print("  return res;\n");
+	    print("    return res;\n");
 
 	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
-	    print("}\n");
+	    print("  }\n");
 	    print("\n");
 
-	    print("inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
-	    print("  return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
+	    print("  inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
+	    print("    return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
+	    
 	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+" + offs];\n");
-	    print("}\n");
+ 	    print("  }\n");
 	    print("\n");
+
+ 	    print("#endif\n");
+	    print("\n");
+
 	} else {
        
 	    print("inline "+input_type.toString()+" __init_pop_buf__"+selfID+"() {}\n");
@@ -408,7 +451,32 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    FlatNode dst_master = ClusterFusion.getLocalMaster(dst_node);
 	    FlatNode my_master = ClusterFusion.getLocalMaster(my_node);
 
-	    print("inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
+	    int s = out.getSource();
+	    int d = out.getDest();
+	    
+	    // check if the destination node is fused
+	    
+	    print("#ifdef __FUSED_"+s+"_"+d+"\n");
+
+	    print("\n");
+	    print("  extern "+output_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
+	    print("  extern int HEAD_"+s+"_"+d+";\n");
+	    print("  extern int TAIL_"+s+"_"+d+";\n");
+	    print("\n");
+
+	    print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
+
+	    print("    BUFFER_"+s+"_"+d+"[HEAD_"+s+"_"+d+"]=data;HEAD_"+s+"_"+d+"++;HEAD_"+s+"_"+d+"&=__BUF_SIZE_MASK_"+s+"_"+d+";\n");
+
+	    print("  }\n");
+	    print("\n");
+
+	    // if not fused use the producer's push function
+
+	    print("#else //!__FUSED_"+s+"_"+d+"\n");
+	    print("\n");
+
+	    print("  inline void __push__"+selfID+"("+output_type.toString()+" data) {\n");
 
 	    if (dst_master != null && dst_master.equals(my_node)) {
        		print("  "+out.push_name()+"(data);\n");		    
@@ -417,10 +485,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    } else {
 		print("  "+out.producer_name()+".push(data);\n");
 	    }
-
-	    print("}\n");
+	    
+	    print("  }\n");
 
 	    print("\n");
+	    print("#endif");
+	    print("\n");
+
 	}
 
 	if (in != null) {

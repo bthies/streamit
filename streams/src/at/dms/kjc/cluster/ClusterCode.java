@@ -237,58 +237,84 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	//  | Splitter Work               |
 	//  +=============================+
 
+	int _s = in.getSource();
+	int _d = in.getDest();
+	p.print("#ifdef __FUSED_"+_s+"_"+_d+"\n");
+	p.print("extern "+baseType.toString()+" BUFFER_"+_s+"_"+_d+"[];\n");
+	p.print("extern int HEAD_"+_s+"_"+_d+";\n");
+	p.print("extern int TAIL_"+_s+"_"+_d+";\n");
+	p.print("#endif\n");
+
+	for (int o = 0; o < out.size(); o++) {
+	    _s = ((NetStream)out.elementAt(o)).getSource();
+	    _d = ((NetStream)out.elementAt(o)).getDest();
+	    p.print("#ifdef __FUSED_"+_s+"_"+_d+"\n");
+	    p.print("extern "+baseType.toString()+" BUFFER_"+_s+"_"+_d+"[];\n");
+	    p.print("extern int HEAD_"+_s+"_"+_d+";\n");
+	    p.print("extern int TAIL_"+_s+"_"+_d+";\n");
+	    p.print("#endif\n");
+	}
+
+	p.print("\n");
+
 	p.print("void __splitter_"+thread_id+"_work() {\n");
 	FlatNode source = NodeEnumerator.getFlatNode(in.getSource());
 
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 
 	    p.print("  "+baseType.toString()+" tmp;\n");	
+
+	    _s = in.getSource();
+	    _d = in.getDest();	    
+
+	    p.print("\n");
+
+	    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
+	    p.print("  tmp = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+	    p.print("  #else\n");
+
 	    if (ClusterFusion.fusedWith(node).contains(source)) {
 		p.print("  tmp = "+in.pop_name()+"();\n");
 	    } else {	    
 		p.print("  tmp = "+in.consumer_name()+".pop();\n");	    
 	    }
+
+	    p.print("  #endif\n");
+
+	    p.print("\n");
+
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
+
+		_s = s.getSource();
+		_d = s.getDest();
+
+		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
+		p.print("  BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp;HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		p.print("  #else\n");
 		p.print("  "+s.producer_name()+".push(tmp);\n");
+		p.print("  #endif\n");
 	    }
 	    
-	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN)) {
-	    
-	    p.print("  "+baseType.toString()+" tmp;\n");
-	    for (int i = 0; i < out.size(); i++) {
-		if (ClusterFusion.fusedWith(node).contains(source)) {
-		    p.print("  tmp = "+in.pop_name()+"();\n");
-		} else {	    
-		    p.print("  tmp = "+in.consumer_name()+".pop();\n");	    
-		}
-		p.print("  tmp = "+in.consumer_name()+".pop();\n");
-		NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".push(tmp);\n");
-	    }
+	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN) ||
+		   splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
 
-	} else if (splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
-
-	    /*
-
-	    for (int i = 0; i < out.size(); i++) {
-
-		int num = splitter.getWeight(i);
-		NetStream s = (NetStream)out.elementAt(i);		
-		
-		for (int ii = 0; ii < num; ii++) {
-
-		    p.print("  tmp = "+in.consumer_name()+".read_"+baseType.toString()+"();\n");
-		    p.print("  "+s.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
-		}
-	    }
-
-	    */
-	    
 	    int sum = splitter.getSumOfWeights();
 	    int offs = 0;
 		
 	    p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
+	    p.print("\n");
+
+	    _s = in.getSource();
+	    _d = in.getDest();
+	    
+	    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
+
+	    for (int y = 0; y < sum; y++) {
+		p.print("  tmp["+y+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+	    }
+
+	    p.print("  #else\n");
 
 	    if (ClusterFusion.fusedWith(node).contains(source)) {
 		for (int y = 0; y < sum; y++) {
@@ -298,10 +324,28 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		p.print("  "+in.consumer_name()+".pop_items(tmp, "+sum+");\n");
 	    }
 
+	    p.print("  #endif\n");
+	    p.print("\n");
+	    
 	    for (int i = 0; i < out.size(); i++) {
 		int num = splitter.getWeight(i);
 		NetStream s = (NetStream)out.elementAt(i);		
+
+		_s = s.getSource();
+		_d = s.getDest();
+
+		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
+
+		for (int y = 0; y < num; y++) {
+		    p.print("  BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+(offs+y)+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		}
+
+		p.print("  #else\n");
+
 		p.print("  "+s.producer_name()+".push_items(&tmp["+offs+"], "+num+");\n");
+
+		p.print("  #endif\n");
+
 		offs += num;
 	    }
 	}
@@ -316,19 +360,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("void __splitter_"+thread_id+"_work_1k() {\n");
 
+	/*
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 	    
 	    p.print("  "+baseType.toString()+" tmp[1000 * "+steady_counts+"];\n");
 	    p.print("  "+in.consumer_name()+".pop_items(tmp, 1000 * "+steady_counts+");\n");		
 	    for (int i = 0; i < out.size(); i++) {
-		NetStream s = (NetStream)out.elementAt(i);		
+        	NetStream s = (NetStream)out.elementAt(i);		
 		p.print("  "+s.producer_name()+".push_items(tmp, 1000 * "+steady_counts+");\n");
 	    }
-
-	} else {	
-	    p.print("  for (int i = 0; i < 1000 * "+steady_counts+"; i++) __splitter_"+thread_id+"_work();\n");
-	}	
-
+	} else {
+	*/	
+	
+	p.print("  for (int i = 0; i < 1000 * "+steady_counts+"; i++) __splitter_"+thread_id+"_work();\n");
+	
 	p.print("}\n");
 	p.print("\n");
 
@@ -486,21 +531,30 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	//  | Joiner Work                 |
 	//  +=============================+
 
+	int _s = out.getSource();
+	int _d = out.getDest();
+	p.print("#ifdef __FUSED_"+_s+"_"+_d+"\n");
+	p.print("extern "+baseType.toString()+" BUFFER_"+_s+"_"+_d+"[];\n");
+	p.print("extern int HEAD_"+_s+"_"+_d+";\n");
+	p.print("extern int TAIL_"+_s+"_"+_d+";\n");
+	p.print("#endif\n");
+
+	for (int o = 0; o < in.size(); o++) {
+	    _s = ((NetStream)in.elementAt(o)).getSource();
+	    _d = ((NetStream)in.elementAt(o)).getDest();
+	    p.print("#ifdef __FUSED_"+_s+"_"+_d+"\n");
+	    p.print("extern "+baseType.toString()+" BUFFER_"+_s+"_"+_d+"[];\n");
+	    p.print("extern int HEAD_"+_s+"_"+_d+";\n");
+	    p.print("extern int TAIL_"+_s+"_"+_d+";\n");
+	    p.print("#endif\n");
+	}
+
+	p.print("\n");
+
 	p.print("void __joiner_"+thread_id+"_work() {\n");
 
-	if (joiner.getType().equals(SIRJoinType.ROUND_ROBIN)) {
-
-	    p.print("  "+baseType.toString()+" tmp;\n");
-
-	    for (int i = 0; i < in.size(); i++) {
-		NetStream s = (NetStream)in.elementAt(i);		
-		p.print("  tmp = "+s.consumer_name()+".pop();\n");
-		
-		p.print("  "+out.producer_name()+".push(tmp);\n");
-		
-	    }
-
-	} else if (joiner.getType().equals(SIRJoinType.WEIGHTED_RR)) {
+	if (joiner.getType().equals(SIRJoinType.ROUND_ROBIN) || 
+	    joiner.getType().equals(SIRJoinType.WEIGHTED_RR)) {
 
 	    if (joiner.getParent() instanceof SIRFeedbackLoop) {
 
@@ -537,20 +591,47 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		int offs = 0;
 		
 		p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
-		
+		p.print("\n");
+
 		for (int i = 0; i < in.size(); i++) {
-		    
-		    NetStream s = (NetStream)in.elementAt(i);		
+
 		    int num = joiner.getWeight(i);
-		    
+		    NetStream s = (NetStream)in.elementAt(i);		
+		    _s = s.getSource();
+		    _d = s.getDest();
+
+		    p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
+
+		    for (int y = 0; y < num; y++) {
+			p.print("  tmp["+(offs+y)+"] = BUFFER_"+_s+"_"+_d+"[TAIL_"+_s+"_"+_d+"];TAIL_"+_s+"_"+_d+"++;TAIL_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		    }
+
+		    p.print("  #else\n");
+
 		    p.print("  "+s.consumer_name()+".pop_items(&tmp["+offs+"], "+num+");\n");
+
+		    p.print("  #endif\n");
 		    
 		    offs += num;
 		    
 		}
+
+		p.print("\n");
+
+		_s = out.getSource();
+		_d = out.getDest();
+
+		p.print("  #ifdef __FUSED_"+_s+"_"+_d+"\n");
+
+		for (int y = 0; y < sum; y++) {
+		    p.print("  BUFFER_"+_s+"_"+_d+"[HEAD_"+_s+"_"+_d+"]=tmp["+y+"];HEAD_"+_s+"_"+_d+"++;HEAD_"+_s+"_"+_d+"&=__BUF_SIZE_MASK_"+_s+"_"+_d+";\n");
+		}
+
+		p.print("  #else\n");
 		
 		p.print("  "+out.producer_name()+".push_items(tmp, "+sum+");\n");
-	    
+		p.print("  #endif\n");
+
 	    }
 	}
 
@@ -871,8 +952,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 	p.println();
-	p.println();
 
+	// =============== run_cluster
+
+	p.println();
 	p.print("run_cluster: master.o");
 
 	for (int i = 0; i < threadNumber; i++) {
@@ -890,18 +973,52 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print(" -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster");
 
 	p.println();
+
+	// =============== fusion
+
+	p.println();
+	p.print("fusion: fusion.o");
+
+	for (int i = 0; i < threadNumber; i++) {
+	    p.print(" thread"+i+".o");
+	}
+
 	p.println();
 
-	p.print("master.o: master.cpp");
+	p.print("\tgcc -O3 -o fusion fusion.o");
+	
+	for (int i = 0; i < threadNumber; i++) {
+	    p.print(" thread"+i+".o");
+	}
+
+	p.print(" -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster");
+
+	p.println();
+
+	// ================= master.o
+
+	p.println();
+
+	p.print("master.o: fusion.h master.cpp");
 	p.println();
 	p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
 	p.println();
+
+	// ================= fusion.o
+
+	p.println();
+
+	p.print("fusion.o: fusion.h fusion.cpp");
+	p.println();
+	p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c fusion.cpp");
+	p.println();
+
 	p.println();
 
 
 	for (int i = 0; i < threadNumber; i++) {
 
-	    p.print("thread"+i+".o: thread"+i+".cpp");
+	    p.print("thread"+i+".o: fusion.h thread"+i+".cpp");
 	    p.println();
 	    p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
 	    p.println();

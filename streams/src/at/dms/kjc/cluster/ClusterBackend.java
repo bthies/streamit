@@ -1,4 +1,4 @@
- 
+
 package at.dms.kjc.cluster;
 
 import at.dms.kjc.flatgraph.FlatNode;
@@ -118,6 +118,9 @@ public class ClusterBackend implements FlatVisitor {
 
 	SIRPortal.findMessageStatements(str);
 
+	// Increasing filter Multiplicity
+	//IncreaseFilterMult.inc(str, 5);
+
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");
 
@@ -207,6 +210,12 @@ public class ClusterBackend implements FlatVisitor {
 	graphFlattener.top.accept(new NodeEnumerator(), new HashSet(), true);
 	graphFlattener.top.accept(new RegisterStreams(), new HashSet(), true);
 
+	DiscoverSchedule d_sched = new DiscoverSchedule();
+	graphFlattener.top.accept(d_sched, new HashSet(), true);
+	d_sched.findPhases();
+
+	FusionCode.generateFusionHeader();
+	FusionCode.generateFusionFile(d_sched);
 
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(graphFlattener.top);

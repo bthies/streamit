@@ -1,16 +1,16 @@
 float->float[M] filter Expander(int K, int M) {
     work pop K peek M push 1 {
 	int i;
-	float tmp[] = new float[M];
+	float[M] tmp;
 	for (i = 0; i < M; i++) tmp[i] = peek(i);
-	push(temp);
+	push(tmp);
 	for (i = 0; i < K; i++) pop();
     }
 }
 
 float[M]->float[M] filter VectSorter(int M) {
     work pop 1 push 1 {
-	float tmp[];
+	float[M] tmp;
 	tmp = pop();
 	for (int i = 0; i< M-1; i++) {
 	    for (int j = i+1; j < M; j++) {
@@ -27,10 +27,13 @@ float[M]->float[M] filter VectSorter(int M) {
 
 float[M]->float filter FindMedian(int K, int M) {
     work pop K peek M push 1 {
-	float tmp[] = new float[M*M];	
-	int i;
+	float[M*M] tmp;
+	int i, j;
 	for (i = 0; i < M; i++) {
-	    for (j=0; j<M; j++) tmp[M*i+j] = peek(i)[j]; 
+	    for (j = 0; j < M; j++) {
+		float[M] toPeek = peek(i);
+		tmp[M*i+j] = toPeek[j]; 
+	    }
 	}	
 	for (i = 0; i < M*M-1; i++) {
 	    for (j=i+1; j<M*M; j++) {
@@ -41,9 +44,9 @@ float[M]->float filter FindMedian(int K, int M) {
 		}
 	    }
 	}
-	Float v = tmp[0];
+	float v = tmp[0];
 	int c = 1;
-	Float vmax;
+	float vmax;
 	int cmax = 0;
 	for (i = 1; i < M*M; i++) {
 	    if (v == tmp[i]) {
@@ -62,7 +65,7 @@ float[M]->float filter FindMedian(int K, int M) {
     }
 }
 
-float->float[M] pipline medianFilter(int K, int M, int N) {
+float->float[M] pipeline medianFilter(int K, int M, int N) {
     add Expander(K, M);
     add VectSorter(M);
     add float[M]->float[M] splitjoin {
@@ -96,10 +99,3 @@ void->void pipeline Median {
     // add a printer
     add IntPrinter();
 }
-
-
-	
-	
-		
-		    
-    

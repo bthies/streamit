@@ -42,7 +42,7 @@ public class Flattener {
 	}
 	
         // flatten split/joins with duplicate splitters and RR joiners
-        //str = DupRR.doFlatten(str);
+        //str = SJFlatten.doFlatten(str);
 
         // do constant propagation on fields
         if (StreamItOptions.constprop) {

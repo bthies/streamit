@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * This flattens certain cases of split/joins into a single filter.
  */
-public class DupRR 
+public class SJFlatten 
 {
     /**
      * Performs a depth-first traversal of an SIRStream tree, and
@@ -145,7 +145,7 @@ public class DupRR
 
         // Build the new filter.
         SIRFilter newFilter = new SIRFilter(sj.getParent(),
-                                            "DupRR_" + sj.getIdent(),
+                                            "SJFlatten_" + sj.getIdent(),
                                             newFields,
                                             newMethods,
                                             new JIntLiteral(maxPeek),

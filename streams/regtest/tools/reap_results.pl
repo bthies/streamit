@@ -3,8 +3,8 @@
 # Script to run and reap raw results for asplos paper. Eventually might
 # become more general purpose (eg integrated into regtest).
 #
-# Usage: reap_results.pl
-# $Id: reap_results.pl,v 1.2 2002-07-11 21:01:28 aalamb Exp $
+# Usage: reap_results.pl [tests file]
+# $Id: reap_results.pl,v 1.3 2002-07-12 20:21:39 aalamb Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, modify the 
@@ -18,38 +18,69 @@ use strict;
 
 require "reaplib.pl";
 
-my $result_directory = "/u/aalamb/results";
+my $base_results_directory = "/u/aalamb/results";
 my $examples_dir = "/u/aalamb/streams/docs/examples/hand";
 my $apps_dir     = "/u/aalamb/streams/apps";
 
-# format: "directory:filename:initialization count:steady state count"
-my @results_wanted = ("$examples_dir/fft:FFT_inlined.java:--raw 4 --partition:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --fusion:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop --fusion:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 8:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 8 --fusion:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop:0:32",
-		      "$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop --fusion:0:32",
-		      "$examples_dir/fib:Fib.java:--raw 4:0:1",
-		      "$examples_dir/fib:Fib.java:--raw 4 --partition:0:1",
-		      "$examples_dir/fib:Fib.java:--raw 4 --partition --fusion:0:1",
-		      "$examples_dir/fib:Fib.java:--raw 4 --partition --fusion --constprop:0:1",
-		      
-		      #"$apps_dir/FMRadio:LinkedFMTest.java:--raw 8 --partition"
-		      );
+my $input_file_name = shift(@ARGV);
 
+# each line of the tests file (or the array defined below) should be of the following format:
+# format: "directory:filename:initialization count:steady state count"
+my @results_wanted;
+
+if ($input_file_name ne "") {
+    print "reading tests from input file: $input_file_name\n"; 
+    @results_wanted = split("\n", read_file($input_file_name));
+} else {
+    @results_wanted = ("$examples_dir/fft:FFT_inlined.java:--raw 4:0:32",
+		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition:0:32",
+		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --fusion:0:32",
+		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop:0:32",
+		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop --fusion:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 8:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --fusion:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop --fusion:0:32",
+		       #"$examples_dir/fib:Fib.java:--raw 4:0:1",
+		       #"$examples_dir/fib:Fib.java:--raw 4 --partition:0:1",
+		       #"$examples_dir/fib:Fib.java:--raw 4 --partition --fusion:0:1",
+		       #"$examples_dir/fib:Fib.java:--raw 4 --partition --fusion --constprop:0:1",
+		       
+		       #"$apps_dir/FMRadio:LinkedFMTest.java:--raw 8 --partition"
+		       );
+}
+
+
+
+
+
+
+################### Start Code #############################
+
+
+# create the appropriate filenames for the results    
+my $date_stamp = make_date_stamp();
+# figure out the results directory and make the directory
+my $result_directory = "$base_results_directory/$date_stamp";
+print "parent: making $result_directory\n";
+print `mkdir -p $result_directory`;
 
 # process each entry in our results wanted list
 my $temp_num = 1;
-foreach(@results_wanted) {
-    my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/);
+my $current_test;
+foreach $current_test (@results_wanted) {
+    # skip if we have a blank line
+    if ($current_test eq "") {
+	next;
+    }
+    my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/, $current_test);    
 
     # fork the process to run the simulator as its own process (and take advantage
     # of the crazy cag machines
     if (fork() == 0) {
 	# we are the child
-	do_child_work($temp_num, $dir, $filename, $options, $init_output_count, $ss_output_count);
+	do_child_work($temp_num, $dir, $filename, $options, 
+		      $result_directory, $init_output_count, $ss_output_count);
     } # otherwise we are the parent, and continue spawining kids
     
     print "parent: spawned child number ($temp_num)\n";
@@ -66,9 +97,13 @@ while ($child_pid != -1) {
     $child_pid = wait();
 }
 print "parent: done waiting.\n";
+# generate a summary
+print "parent: generating summary.\n";
+generate_summary($result_directory, "$result_directory/summary.txt");
+print "parent: done generating summary.\n";
 
 #remove all old temp directories
-#print "removing directories\n"; 
+#print "parent: removing directories\n"; 
 #print `rm -rf /tmp/resultTemp*`;
 
 
@@ -83,11 +118,21 @@ sub do_child_work {
     my $dir      = shift || die("No source dir to do_child_work");
     my $filename = shift || die("No filename to do_child_work");
     my $options  = shift || die("No options to do_child_work");
+    my $results_dir = shift || die("No results dir passed to do_child_work");
     my $ss_init_count  = shift; # || die("No steady state init count to do_child_work");
     my $ss_output_count  = shift || die("No steady state output count to do_child_work");
 
-    # make the temp directory
+    # set up the names of the files that we will use
     my $temp_dir = "/tmp/resultTemp$temp_num";
+    my $cleaned_options = $options;
+    $cleaned_options =~ s/ //g; #remove spaces
+    my $blood_graph_filename = "$results_dir/$filename$cleaned_options.png";
+    my $output_base_filename = "$results_dir/$filename$cleaned_options.output";
+    my $parsed_output_base_filename = "$results_dir/$filename$cleaned_options";
+    my $gnu_plot_filename = "$results_dir/$filename$cleaned_options.output.eps";
+
+
+    # make the temp directory
     print "child ($temp_num): creating $temp_dir" . `mkdir $temp_dir/` . "\n";
 
     # copy source file to temp dir
@@ -98,19 +143,10 @@ sub do_child_work {
     compile_to_raw($temp_dir, $filename, $options);
     print "child ($temp_num): done compiling.\n";
 
-    # create the appropriate filenames for the results    
-    my $date_stamp = make_date_stamp();
-    $options =~ s/ //g; #remove spaces
-    my $blood_graph_filename = "$result_directory/$filename$options-$date_stamp.png";
-    my $raw_output_filename = "$result_directory/$filename$options-$date_stamp.output";
-    my $parsed_output_base_filename = "$result_directory/$filename$options-$date_stamp";
-    my $gnu_plot_filename = "$result_directory/$filename$options-$date_stamp.output.eps";
-
-
     # make the blood graph by running btl (and save the output)
     print "child ($temp_num): running btl on $filename\n";
     my $btl_results = run_btl($temp_dir);
-    write_file($btl_results, $raw_output_filename);
+    write_file($btl_results, "$output_base_filename");
     print "child ($temp_num): done with btl\n";
 
     print "child ($temp_num): parsing initial btl output.\n";
@@ -122,17 +158,24 @@ sub do_child_work {
 
     # parse the starting cycle for second steady state iteration, and how many cycles per iteration
     my ($start_cycles, $ss_cycles) = split(":", $parsed_cycles);
-    print "child ($temp_num): making blood graph for $filename (start=$start_cycles, 1 ss=$ss_cycles)\n";
-    make_blood_graph($temp_dir, "$blood_graph_filename", $start_cycles, $ss_cycles);
+    print ("child ($temp_num): making blood graph for " .
+	   "$filename (start=$start_cycles, 1 ss=$ss_cycles)\n");
+    $btl_results = make_blood_graph($temp_dir, "$blood_graph_filename", 
+				    $start_cycles, $ss_cycles);
+
+    # get the work and flops counts from the output (last two lines)
+    my ($work_count, $flops_count) = $btl_results =~ m/workCount = (.*)\n(.*)/gi;
+    write_file($btl_results, "$output_base_filename.sv");
     print "child ($temp_num): done making blood graph for $filename\n";
 
     # save the output .dot files from the directory
     print "child ($temp_num): saving dot files and writing summary for $filename\n";
     save_dot_files($temp_dir, $parsed_output_base_filename);
-    write_summary($filename, $options, 
-		  $ss_init_count, $ss_output_count,
-		  $start_cycles, $ss_cycles, 
-		  $parsed_output_base_filename);
+    write_report($filename, $options, 
+		 $ss_init_count, $ss_output_count,
+		 $start_cycles, $ss_cycles, 
+		 $work_count, $flops_count,
+		 $parsed_output_base_filename);
     print "child ($temp_num): done saving dot files and writing summary\n";    
 
     #print "child ($temp_num): generating plot $gnu_plot_filename.\n";
@@ -185,8 +228,8 @@ sub make_blood_graph {
     my $start_cycles  = shift || die ("no start cycles  passed to make_blood_graph\n");
     my $ss_cycles  = shift || die ("no ss cycles  passed to make_blood_graph\n");
     
-    # make 1.1 steady state cycles worth of blood graph
-    $ss_cycles = $ss_cycles * 1.1;
+    # make 2 steady state cycles worth of blood graph
+    $ss_cycles = $ss_cycles * 2;
 
     # first of all, create a new makefile that contains the command to make the bloodgraph
     my $blood_makefile_name = make_blood_makefile($directory,
@@ -217,33 +260,6 @@ sub save_dot_files {
     print `cp $temp_dir/layout.dot $base_filename.layout.dot`;
 }
 
-# writes an executive summary of the data (eg an entry in the asplos table)
-# usage: write_summary($filename, $options, $ss_init_count, $ss_output_count,
-#                      $start_cycles, $ss_cycles, $parsed_output_base_filename);
-sub write_summary {
-    my $filename        = shift || die("No filename passed to write_summary");
-    my $options         = shift || die("No options passed to write_summary");
-    my $ss_init_count   = shift; # can produce 0 init outputs
-    my $ss_output_count = shift || die("No start_cycles passed to write_summary");
-    my $start_cycles    = shift || die("No start_cycles passed to write_summary");
-    my $ss_cycles       = shift || die("No steady state cycles passed to write_summary");
-    my $base_filename   = shift || die("No basefilename passed to write_summary");
-
-    my $report = "";
-    $report .= "Autogenerated by reap_results.pl at " . make_date_stamp() . "\n";
-    $report .= "Filename: $filename\nOptions: $options\n";
-    $report .= "Number of outputs generated by initialization: $ss_init_count\n";
-    $report .= "Number of outputs generated by steady state: $ss_output_count\n";
-    $report .= "Cycles until the start of the second steady state iteration: $start_cycles\n";
-    $report .= "Average Steady State Cycles: $ss_cycles\n";
-    $report .= "Average Cycles per output: " . ($ss_cycles/$ss_output_count) . "\n";
-    my $tput = ($ss_output_count / $ss_cycles) * 100000;
-    $report .= "Average Throughput (outputs per 10^5 cycles): $tput\n";
-
-    $report .= "\n\n\n";
-
-    write_file($report, "$base_filename.report");
-}
 
 # Generates a figure
 # Usage: generate_plot($input_filename, $output_filename)
@@ -284,6 +300,9 @@ sub fix_blood_graph {
 
 
 # creates a blood graph makfile from the makefile created by streamit
+# Runs for a startup and 1 steady state interation, and then makes a blood
+# graph for the next steady state iteration. Also instruments the code for gFLOPS
+# to calculate the mFLOPS number reported in papers
 # usage: $new_makefile_name = make_blood_makefile($dir, $old_makefile_name, $graphname, $start_cycles, $ss_cycles)
 # returns the new makefile name (in the $dir directory)
 sub make_blood_makefile {
@@ -301,9 +320,9 @@ sub make_blood_makefile {
     my $makefile_contents = read_file("$directory/$old_makefile");
     
     # replace the cycle-count line with a sim command line as well
-    # which causes the simulation to run as normal and then to print the blood graph
-    # of the remaining 5000 cycles
-    $makefile_contents =~ s/(SIM-CYCLES = .*)/$1\nSIM-COMMAND = step($start_cycles); graphical_trace_ppm(\\\"$graph_filename\\\", $ss_cycles);\n/g;
+    # which causes the simulation to run for a startup number of cycles and then to print the blood graph
+    # for the next steady state number of cycles, recording the FLOPS as necessary
+    $makefile_contents =~ s/(SIM-CYCLES = .*)/$1\nSIM-COMMAND = step($start_cycles); global gFLOPS = 0; fn __clock_handler(hms) {local i;for(i=0;i<gNumProc;i++) {gFLOPS +=imem_instr_is_fpu(get_imem_instr(i,get_pc_for_proc(i)));}}EventManager_RegisterHandler(\\\"clock\\\", \\\"__clock_handler\\\"); graphical_trace_ppm(\\\"$graph_filename\\\", $ss_cycles);? gFLOPS;\n/g;
 
     # determine the new makefile name
     my $new_makefile = "$old_makefile.blood"; 
@@ -313,4 +332,8 @@ sub make_blood_makefile {
     # return the new filename
     return $new_makefile;
 }
+
+
+
+
 

@@ -1,0 +1,13 @@
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 4:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 4 --partition:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 4 --partition --fusion:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 4 --partition --constprop:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 4 --partition --constprop --fusion:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 8:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 8 --fusion:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 8 --constprop:0:32
+/u/aalamb/streams/docs/examples/hand/fft:FFT_inlined.java:--raw 8 --constprop --fusion:0:32,
+/u/aalamb/streams/docs/examples/hand/fib:Fib.java:--raw 4:0:1,
+/u/aalamb/streams/docs/examples/hand/fib:Fib.java:--raw 4 --partition:0:1
+/u/aalamb/streams/docs/examples/hand/fib:Fib.java:--raw 4 --partition --fusion:0:1,
+		       

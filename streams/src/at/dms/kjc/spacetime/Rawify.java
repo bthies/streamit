@@ -245,7 +245,7 @@ public class Rawify
 		return;
 	    
 	    //get the number of items sent
-	    int items = filterInfo.totalItemsSent(init, primepump);	    
+	    int items = filterInfo.totalItemsSent(init, primepump);
 	    //return if there is nothing to send
 	    if (items == 0)
 		return;
@@ -253,7 +253,7 @@ public class Rawify
 	    int bytes = 
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
 				  4);
-	    
+	    SpaceTimeBackend.println("Generating DRAM store command with " + items + " items and " + bytes + " bytes");
 	    tile.getComputeCode().addDRAMCommand(false, init || primepump, bytes, buffer);
 	}
     }
@@ -792,42 +792,10 @@ public class Rawify
     {
 	for (int i = 0; i < mult; i++) {
 	    //append the receive code
-	    if (generateSwitchCodeReceive(node) && node.getPrevious() != null)
-		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+	    createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
 	    //append the send code 
-	    if (generateSwitchCodeSend(node) && node.getNext() != null)
-		createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+	    createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
 	}
-    }
-    
-    //determine whether we would generate switch code for this node, 
-    //it may be doing internal inter-trace communication
-    private static boolean generateSwitchCodeReceive(FilterTraceNode node) 
-    {
-	//always generate switch code for magic drams
-	if (KjcOptions.magicdram)
-	    return true;
-	
-	//otherwise only generate intra-trace switch code
-	if (node.getPrevious() != null && node.getPrevious().isFilterTrace()) 
-	    return true;
-	
-	return false;
-    }
-    
-    //determine whether we would generate switch code for this node, 
-    //it may be doing internal inter-trace communication
-    private static boolean generateSwitchCodeSend(FilterTraceNode node) 
-    {
-	//always generate switch code for magic drams
-	if (KjcOptions.magicdram)
-	    return true;
-	
-	//otherwise only generate intra-trace switch code
-	if (node.getNext() != null && node.getNext().isFilterTrace()) 
-	    return true;
-	
-	return false;
     }
     
     private static void createSwitchCodeBuffered(FilterTraceNode node, Trace parent, 

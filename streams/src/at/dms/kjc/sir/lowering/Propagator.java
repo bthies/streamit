@@ -1182,7 +1182,7 @@ public class Propagator extends SLIRReplacingVisitor {
 			if(array!=null) {
 			    //System.err.println("Trying to access index:"+((JIntLiteral)newExp).intValue()+" "+array.length);
 			    int index=((JIntLiteral)newExp).intValue(); //fm produces negative indexes for some reason
-			    if(index>=0) {
+			    if(index>=0&&index<array.length) {
 				Object val=array[index];
 				//System.err.println("Accessing:"+var+"["+index+"]="+val);
 				if(val!=null) {

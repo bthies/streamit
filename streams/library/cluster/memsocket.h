@@ -10,7 +10,7 @@
 
 using namespace std;
 
-#DEFINE NUMBER_OF_BLOCKS 10
+#define NUMBER_OF_BLOCKS 10
 
 class memsocket : public mysocket {
 

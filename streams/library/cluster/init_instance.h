@@ -25,11 +25,17 @@ class init_instance {
   static map<sock_dscr, bool> in_done, out_done;
 
   static map<int, unsigned> thread_machines;
+  static map<int, unsigned> thread_start_iter;
 
  public:
 
   static void read_config_file();
-  static unsigned get_node_ip(int node);
+
+  static void set_thread_ip(int thread, unsigned ip); 
+  static unsigned get_thread_ip(int thread);
+
+  static void set_thread_start_iter(int thread, unsigned iter); 
+  static unsigned get_thread_start_iter(int thread);
 
   static void add_incoming(int from, int to, int type);
   static void add_outgoing(int from, int to, int type);

@@ -32,7 +32,7 @@ map<sock_dscr, int> init_instance::out_sockets;
 short init_instance::listen_port = 22222;
 
 map<int, unsigned> init_instance::thread_machines;
-
+map<int, unsigned> init_instance::thread_start_iter;
 
 static void *accept_thread(void *param);
 
@@ -77,11 +77,32 @@ void init_instance::read_config_file() {
   fclose(f);
 }
 
-unsigned init_instance::get_node_ip(int node) {
+void init_instance::set_thread_ip(int thread, unsigned ip) {
+  thread_machines[thread] = ip;
+}
 
-  map<int, unsigned>::iterator i = thread_machines.find(node);
+void init_instance::set_thread_start_iter(int thread, unsigned iter) {
+  thread_start_iter[thread] = iter;
+}
+
+
+unsigned init_instance::get_thread_ip(int thread) {
+
+  map<int, unsigned>::iterator i = thread_machines.find(thread);
 
   if (i == thread_machines.end()) {
+    return 0;
+  } else {
+    return (unsigned)(*i).second;
+  }
+}
+
+
+unsigned init_instance::get_thread_start_iter(int thread) {
+
+  map<int, unsigned>::iterator i = thread_start_iter.find(thread);
+
+  if (i == thread_start_iter.end()) {
     return 0;
   } else {
     return (unsigned)(*i).second;
@@ -214,7 +235,7 @@ void init_instance::initialize_sockets() {
   for (int t = 0; t < num; t++) {
   
     sock_dscr sd = *i1;
-    unsigned ip_addr = init_instance::get_node_ip(sd.to);
+    unsigned ip_addr = init_instance::get_thread_ip(sd.to);
 
     int data[3];
     

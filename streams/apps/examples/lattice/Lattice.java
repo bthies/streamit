@@ -1,26 +1,13 @@
 import streamit.*;
 import streamit.io.*;
 
-class FloatIdentity extends Filter
-{
-	public void init ()
-	{
-            input = new Channel(Float.TYPE, 1);
-            output = new Channel(Float.TYPE, 1);
-	}
-	public void work ()
-	{
-		output.pushFloat (input.popFloat ());
-	}
-}
-
 class LatDel extends SplitJoin {// this generates the delays in the lattice structure
   
     
 
 public void init() {
     setSplitter(DUPLICATE());
-     add(new FloatIdentity ());
+     add(new Identity(Float.TYPE));
      add(new Delay(1));
     setJoiner(ROUND_ROBIN());
      }
@@ -52,8 +39,8 @@ class LatFilt extends Filter {// this is the intermediate stage of the lattice f
 class ZeroStage extends SplitJoin { //this stage is the first stage of a lattice filter
   public void init() {
    setSplitter(DUPLICATE());
-   add(new FloatIdentity ());
-   add(new FloatIdentity ());
+   add(new Identity(Float.TYPE));
+   add(new Identity(Float.TYPE));
    setJoiner(ROUND_ROBIN());
    }
 }
@@ -132,7 +119,7 @@ class Delay extends FeedbackLoop {
 		    this.input.popFloat();
                 }
 	    });
-	setLoop(new FloatIdentity());
+	setLoop(new Identity(Float.TYPE));
 	setJoiner(ROUND_ROBIN());
     }
 

@@ -352,7 +352,7 @@ public class StreamIt extends Pipeline
                 i.put(a,x);
                 ASSERT (i.get(b));
                 
-                System.out.println ("OK");
+                //System.out.println ("OK");
                 //System.exit (0);                
             }
             // not implemented yet. waiting for the scheduler to
@@ -401,7 +401,7 @@ public class StreamIt extends Pipeline
             // run the init schedule:
             runSchedule(initSched);
 
-            nIters = 0;
+            //nIters = 0;
 
             // and run the steady schedule forever:
             while (nIters != 0)

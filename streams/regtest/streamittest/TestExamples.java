@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.25 2002-10-29 21:58:25 thies Exp $
+ * $Id: TestExamples.java,v 1.26 2003-01-26 22:00:17 thies Exp $
  **/
 package streamittest;
 
@@ -68,9 +68,7 @@ public class TestExamples extends StreamITTestCase {
 	}
 
 	suite.addTest(new TestExamples("testMergeSort", flags));
-	suite.addTest(new TestExamples("testMergeSort16", flags));
-	
-	
+
 	// this one doesn't fit on any raw4
 	if (!(flagsContainRaw(1, flags) || 
 	      flagsContainRaw(2, flags) || 
@@ -161,18 +159,13 @@ public class TestExamples extends StreamITTestCase {
     
 
     public void testMergeSort() {
-	doCompileRunVerifyTest(EXAMPLE_ROOT + "mergesort/",
+	String root = EXAMPLE_ROOT + "mergesort/";
+        doSyntaxConvertTest(root, "MergeSort.str", "MergeSort.java");
+	doCompileRunVerifyTest(root,
 			       "MergeSort.java",
 			       "MergeSort.out",
 			       0,16);
     }
-    public void testMergeSort16() {
-	doCompileRunVerifyTest(EXAMPLE_ROOT + "mergesort/",
-			       "MergeSort16.java",
-			       "MergeSort16.out",
-			       0,16);
-    }
-
     
     public void testVectAdd() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",

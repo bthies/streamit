@@ -29,16 +29,11 @@ class DPConfigFilter extends DPConfig {
 	this.A = null;
     }
 
-    public int get(int tileLimit) {
+    public int get(int tileLimit, int nextToJoiner) {
 	int workCount = partitioner.getWorkEstimate().getWork(filter);
 	// return decreased work if we're fissable
-	if (tilesForFission(tileLimit)>1 && isFissable) {
-	    /*
-	      System.err.println("Trying " + filter + " on " + tileLimit + " tiles and splitting " + 
-	      tilesForFission(tileLimit) + " ways with bottlneck of " + 
-	      workCount / tilesForFission(tileLimit) + FISSION_OVERHEAD);
-	    */
-	    return workCount / tilesForFission(tileLimit) + DynamicProgPartitioner.FISSION_OVERHEAD;
+	if (tilesForFission(tileLimit, nextToJoiner)>1 && isFissable) {
+	    return workCount / tilesForFission(tileLimit, nextToJoiner) + DynamicProgPartitioner.FISSION_OVERHEAD;
 	} else {
 	    return workCount;
 	}
@@ -46,11 +41,8 @@ class DPConfigFilter extends DPConfig {
 
     // see how many tiles we can devote to fissed filters;
     // depends on if we need a separate tile for a joiner.
-    private int tilesForFission(int tileLimit) {
-	return (filter.getParent()!=null && 
-		filter.getParent().getSuccessor(filter) instanceof SIRJoiner ?
-		tileLimit : 
-		tileLimit - 1);
+    private int tilesForFission(int tileLimit, int nextToJoiner) {
+	return nextToJoiner==1 ? tileLimit : tileLimit - 1;
     }
 
     public SIRStream getStream() {
@@ -68,9 +60,9 @@ class DPConfigFilter extends DPConfig {
     /**
      * Add this to the map and return.
      */
-    public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit) {
+    public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner) {
 	// do fission if we can
-	int tff = tilesForFission(tileLimit);
+	int tff = tilesForFission(tileLimit, nextToJoiner);
 	if (tff>1 && isFissable) {
 	    // record fission tiles
 	    for (int i=0; i<tff; i++) {
@@ -92,7 +84,7 @@ class DPConfigFilter extends DPConfig {
 		curPartition.add(SIRJoiner.createUniformRR(filter.getParent(), new JIntLiteral(1)), 0);
 		partitions.add(curPartition);
 	    }
-	    return new FissionTransform(tilesForFission(tileLimit));
+	    return new FissionTransform(tilesForFission(tileLimit, nextToJoiner));
 	} else {
 	    curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
 	    return new IdentityTransform();

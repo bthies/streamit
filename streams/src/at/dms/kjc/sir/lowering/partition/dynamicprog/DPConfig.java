@@ -14,11 +14,13 @@ import at.dms.kjc.sir.lowering.partition.*;
 
 abstract class DPConfig implements Cloneable {
     /**  
-     * A_s[x1][x2][y1][y2][n] holds minimum cost of assigning children
-     * (x1..x2, y1..y2) of stream s to n tiles.  If this corresponds
-     * to a filter's config, then A is null.
+     * A_s[x1][x2][y1][y2][n][j] holds minimum cost of assigning
+     * children (x1..x2, y1..y2) of stream s to n tiles.  <j> is 1 if
+     * these children are next to a downstream joiner in the current
+     * configuration; <j> is zero otherwise.  If this corresponds to a
+     * filter's config, then A is null.
      */
-    protected int[][][][][] A;
+    protected int[][][][][][] A;
 
     /**
      * The partitioner this is part of.
@@ -30,10 +32,11 @@ abstract class DPConfig implements Cloneable {
     }
 
     /**
-     * Return the bottleneck work if this config is fit on
-     * <tileLimit> tiles.
+     * Return the bottleneck work if this config is fit on <tileLimit>
+     * tiles.  <nextToJoiner> is 1 iff this is next to a downstream
+     * joiner under the current arrangement.
      */
-    abstract protected int get(int tileLimit);
+    abstract protected int get(int tileLimit, int nextToJoiner);
 
     /**
      * Traceback through a pre-computed optimal solution, keeping
@@ -41,7 +44,7 @@ abstract class DPConfig implements Cloneable {
      * current partition <curPartition>, and returning stream
      * transform to perform best partitioning.
      */
-    abstract public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit);
+    abstract public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner);
 
     /**
      * Returns the stream this config is wrapping.

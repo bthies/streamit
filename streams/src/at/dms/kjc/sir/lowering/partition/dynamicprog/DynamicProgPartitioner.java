@@ -87,7 +87,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	// build stream config
 	DPConfig topConfig = buildStreamConfig();
 	// build up tables.
-	int bottleneck = topConfig.get(numTiles);
+	int bottleneck = topConfig.get(numTiles, 0);
 	int tilesUsed = numTiles;
 	// decrease the number of tiles to the fewest that we need for
 	// a given bottleneck.  This is in an attempt to decrease
@@ -110,7 +110,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	PartitionRecord curPartition = new PartitionRecord();
 	partitions.add(curPartition);
 
-	StreamTransform result = topConfig.traceback(partitions, curPartition, tilesUsed);
+	StreamTransform result = topConfig.traceback(partitions, curPartition, tilesUsed, 0);
 
 	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions),
 		     "bottleneck=" + bottleneck + " but PartitionUtil.getMaxWork(partitions)=" + PartitionUtil.getMaxWork(partitions));

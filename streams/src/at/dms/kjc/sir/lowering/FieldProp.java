@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.13 2002-06-19 21:27:31 aalamb Exp $
+ * $Id: FieldProp.java,v 1.14 2002-06-19 23:33:11 jasperln Exp $
  */
 public class FieldProp implements Constants
 {
@@ -653,8 +653,8 @@ public class FieldProp implements Constants
     
     // now, we have to add the initializing assignment statements
     // to the beginning of the init function.
-        
-    filter.getInit().getBody().addAllStatements(0, assignmentStatements);
+    if(filter.getInit()!=null)
+	filter.getInit().getBody().addAllStatements(0, assignmentStatements);
     
   }
   

@@ -63,6 +63,11 @@ public class Operator extends DestroyedClass
      */
     public void registerPop() {
 	currentPopped++;
+	// update peek index in case we've popped items without
+	// peeking them.
+	if (currentPopped-1>currentMaxPeek) {
+	    currentMaxPeek = currentPopped-1;
+	}
     }
     public void registerPush() {
 	currentPushed++;

@@ -155,7 +155,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	// Just augment the buffer size by initPush if the previous
 	// filter is an SIRTwoStageFilter
 	if (op1 instanceof SIRTwoStageFilter) {
-	    result += ((SIRTwoStageFilter)op1).getInitPush();
+	    result = Utils.nextPow2(result + ((SIRTwoStageFilter)op1).getInitPush());
 	}
 	return result;
     }

@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.1 2003-11-18 21:13:11 dmaze Exp $
+# $Id: streamit.py,v 1.2 2003-11-20 17:08:41 dmaze Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -14,6 +14,18 @@ import qm.executable
 from   qm.fields import *
 import qm.test.test
 import re
+
+class TimedExecutable(qm.executable.RedirectedExecutable):
+    # TODO: make this configurable.
+    timeout = 20 * 60
+
+    # Insert some texec in here.
+    def Run(self, arguments=[], environment=None, dir=None, path=None):
+        newpath = os.environ["STREAMIT_HOME"] + "/regtest/tools/texec/texec"
+        arguments = [newpath, '-s', str(self.timeout), path] + arguments[1:]
+        return qm.executable.RedirectedExecutable.Run(self, arguments,
+                                                      environment,
+                                                      dir, newpath)
 
 class BackendField(EnumerationField):
     """A field containing a StreamIt compiler backend."""
@@ -135,7 +147,7 @@ class RunStrcTest(qm.test.test.Test):
         arguments = [path] + backend + \
                     ["--iterations", str(self.runopts[1])] + \
                     self.options + self.filenames
-        e = qm.executable.RedirectedExecutable()
+        e = TimedExecutable()
         status = e.Run(arguments, path=path)
 
         # In all cases, save stderr.
@@ -183,7 +195,7 @@ class RunProgramTest(qm.test.test.Test):
             pass
 
     def _RunRaw(self, context, result):
-        e = qm.executable.RedirectedExecutable()
+        e = TimedExecutable()
         status = e.Run(['make', '-f', 'Makefile.streamit', 'run'])
 
         # TODO: see what processing happens on this output, if any.
@@ -197,7 +209,7 @@ class RunProgramTest(qm.test.test.Test):
         # Unless magic has happened, the binary should be a.out.
         path = os.path.join('.', 'a.out')
         arguments = [path, '-i' + str(self.runopts[1])]
-        e = qm.executable.RedirectedExecutable()
+        e = TimedExecutable()
         status = e.Run(arguments, path=path)
 
         # Dump stdout to the file; ignore stderr.

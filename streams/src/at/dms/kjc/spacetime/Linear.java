@@ -30,7 +30,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	System.out.println("Generating code for " + filterInfo.filter + " using Linear.");
 	FilterContent content=filterInfo.filter;
 	array=content.getArray();
-	begin=true;
+	begin=content.getBegin();
 	constant=content.getConstant();
 	popCount=content.getPopCount();
 	int num=array.length/popCount;
@@ -65,14 +65,23 @@ public class Linear extends RawExecutionCode implements Constants {
 	}
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
-	for(int i=0;i<idx.length-1;i++)
+	for(int i=0;i<idx.length;i++)
 	    for(int k=0;k<popCount;k++)
 		for(int j=i;j>=0;j--) {
 		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
 		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
 		}
-	inline.add(getLabel()+": #LOOP");
+	//inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
+	//inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
 	final int mult=getMult(array.length);
+	/*for(int i=0;i<mult;i++)
+	  for(int j=0;j<popCount;j++)
+	  for(int k=idx.length-1;k>=0;k--) {
+	  int offset=idx[k]+j;
+	  inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
+	  inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+	  }*/
+	inline.add(getLabel()+": #LOOP");
 	int times=0;
 	int[] oldIdx=new int[4];
 	int[] oldPop=new int[4];

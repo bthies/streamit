@@ -11,18 +11,29 @@ public class InputTraceNode extends TraceNode
     private OutputTraceNode[] sources;
     private static int unique = 0;
     private String ident;
+    private static int[] EMPTY_WEIGHTS=new int[0];
+    private static OutputTraceNode[] EMPTY_SRCS=new OutputTraceNode[0];
 
     public InputTraceNode(int[] weights,
 			  OutputTraceNode[] sources) {
-	this(weights);
-	this.sources = sources;
 	if (weights.length != sources.length)
 	    Utils.fail("Add comment later");
-
+	this.sources = sources;
+	this.weights=weights;
+	ident = "input" + unique;
+	unique++;
     }
 
     public InputTraceNode(int[] weights) {
+	sources=EMPTY_SRCS;
 	this.weights=weights;
+	ident = "input" + unique;
+	unique++;
+    }
+
+    public InputTraceNode() {
+	sources=EMPTY_SRCS;
+	weights=EMPTY_WEIGHTS;
 	ident = "input" + unique;
 	unique++;
     }

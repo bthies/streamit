@@ -6,12 +6,12 @@ package at.dms.kjc.spacetime;
 public class Trace 
 {
     private Trace[] edges;
-    private TraceNode head;
-    private TraceNode tail;
+    private InputTraceNode head;
+    private OutputTraceNode tail;
     private int len;
     private Trace[] depends;
 
-    public Trace (Trace[] edges, Trace[] depends, TraceNode head) 
+    public Trace (Trace[] edges, Trace[] depends, InputTraceNode head) 
     {
 	if (edges == null)
 	    this.edges = new Trace[0];
@@ -27,8 +27,17 @@ public class Trace
 	len=-1;
     }
 
-    public Trace(TraceNode head) {
+    public Trace(InputTraceNode head) {
 	this.head = head;
+	depends = new Trace[0];
+	edges = new Trace[0];
+	len=-1;
+    }
+
+    public Trace(TraceNode node) {
+	head = new InputTraceNode();
+	head.setNext(node);
+	node.setPrevious(head);
 	depends = new Trace[0];
 	edges = new Trace[0];
 	len=-1;
@@ -49,7 +58,7 @@ public class Trace
 	if(node!=null)
 	    end=node;
 	len=size;
-	tail=end;
+	tail=(OutputTraceNode)end;
 	return size;
     }
     
@@ -58,7 +67,7 @@ public class Trace
 	return len;
     }
 
-    public void setHead(TraceNode node) 
+    public void setHead(InputTraceNode node) 
     {
 	head = node;
     }
@@ -69,7 +78,7 @@ public class Trace
     }
 
     //finish() must have been called
-    public TraceNode getTail() {
+    public OutputTraceNode getTail() {
 	return tail;
     }
     

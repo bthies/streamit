@@ -20,6 +20,12 @@ public class TraceExtractor {
 	    UnflatFilter filter=(UnflatFilter)Q.removeFirst();
 	    FilterContent content=new FilterContent(filter);
 	    boolean linear=content.getArray()!=null;
+	    System.out.println("IS LINEAR: "+linear);
+	    if(content.isLinear()) {
+		FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
+		for(int i=0;i<linearStuff.length;i++)
+		    System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
+	    }
 	    TraceNode node;
 	    Trace trace;
 	    if(!visited.containsKey(filter)) {
@@ -43,21 +49,35 @@ public class TraceExtractor {
 		while(cont&&filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
 		    UnflatFilter newFilter=filter.out[0][0].dest;
 		    content=new FilterContent(newFilter);
-		    if(!((newFilter.filter instanceof SIRPredefinedFilter)||(filter.filter instanceof SIRPredefinedFilter))) {
-		    //if((content.getArray()!=null)==linear) {
-			
-			//if(content.isLinear()) {
+		    System.out.println("IS LINEAR: "+linear);
+		    if(content.isLinear()) {
+			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
+			for(int i=0;i<linearStuff.length;i++)
+			    System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
+			for(int i=0;i<linearStuff.length;i++) {
+			    FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
+			    node.setNext(filterNode);
+			    filterNode.setPrevious(node);
+			    node=filterNode;
+			    filter=newFilter;
+			}
+		    } else {
+			if(!((newFilter.filter instanceof SIRPredefinedFilter)||(filter.filter instanceof SIRPredefinedFilter))) {
+			    //if((content.getArray()!=null)==linear) {
 			    
-			//} else {
+			    //if(content.isLinear()) {
+			    
+			    //} else {
 			    FilterTraceNode filterNode=new FilterTraceNode(content);
 			    node.setNext(filterNode);
 			    filterNode.setPrevious(node);
 			    node=filterNode;
 			    //}
-			filter=newFilter;
-			
+			    filter=newFilter;
+			    
 			} else
 			    cont=false;
+		    }
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=null;

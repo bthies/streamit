@@ -170,13 +170,16 @@ public class Rawify
 	final int peek = content.getArray().length;
 	final int pop = content.getPopCount();
 	final int numPop = peek/pop;
+	final boolean begin=content.getBegin();
+	final boolean end=content.getEnd();
 	System.out.println("SRC: "+src);
 	System.out.println("DEST: "+dest);
 	SwitchCodeStore code = tile.getSwitchCode();
-	for(int i = 0; i<numPop-1; i++)
+	for(int i = 0; i<numPop; i++)
 	    for(int j = 0; j<pop; j++) {
 		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		ins.addRoute(src, SwitchOPort.CSTI);
+		ins.addRoute(src,dest);
 		code.appendIns(ins, init||primePump);
 		for(int k = i-1; k>= 0; k--) {
 		    FullIns newIns = new FullIns(tile);
@@ -185,27 +188,87 @@ public class Rawify
 		}
 	    }
 	Label label = code.getFreshLabel();
+	//for(int rounds=0;rounds<1;rounds++) {
+	//if(rounds>0)
 	code.appendIns(label, init||primePump);
-	final int numTimes = Linear.getMult(peek);
-	for(int i = 0;i<numTimes*pop;i++) {
-	    FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-	    ins.addRoute(src, SwitchOPort.CSTI);
-	    code.appendIns(ins, init||primePump);
-	    for(int j = 1;j<numPop;j++) {
-		FullIns newIns = new FullIns(tile);
-		newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		code.appendIns(newIns, init||primePump);
-	    }
+	    final int numTimes = Linear.getMult(peek);
+	    int pendingSends=0;
+	    int times=0;
+	    FullIns ins;
+	    for(int i = 0;i<numTimes;i++) {
+		for(int j=0;j<pop;j++) {
+		    if(numPop==1&&j==0)
+			pendingSends++;
+		    times++;
+		    ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		    ins.addRoute(src, SwitchOPort.CSTI);
+		    if(!end)
+			ins.addRoute(src,dest);
+		    code.appendIns(ins, init||primePump);
+		    if(times==4) {
+			times=0;
+			if(pendingSends>0) {
+			    if(!begin) {
+				ins=new FullIns(tile);
+				ins.addRoute(src,SwitchOPort.CSTI);
+				code.appendIns(ins,init||primePump);
+			    }
+			    for(int l=0;l<pendingSends-1;l++) {
+				ins=new FullIns(tile);
+				if(!begin)
+				    ins.addRoute(src,SwitchOPort.CSTI);
+				//if(rounds>0)
+				ins.addRoute(SwitchIPort.CSTO,dest);
+				code.appendIns(ins,init||primePump);
+			    }
+			    ins=new FullIns(tile);
+			    ins.addRoute(SwitchIPort.CSTO,dest);
+			    code.appendIns(ins,init||primePump);
+			    pendingSends=0;
+			}
+		    }
+		    for(int k = 1;k<numPop;k++) {
+			if(j==0&&k==numPop-1)
+			    pendingSends++;
+			times++;
+			ins=new FullIns(tile);
+			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			code.appendIns(ins, init||primePump);
+			if(times==4) {
+			    times=0;
+			    if(pendingSends>0) {
+				if(!begin) {
+				    ins=new FullIns(tile);
+				    ins.addRoute(src,SwitchOPort.CSTI);
+				    code.appendIns(ins,init||primePump);
+				}
+				for(int l=0;l<pendingSends-1;l++) {
+				    ins=new FullIns(tile);
+				    if(!begin)
+					ins.addRoute(src,SwitchOPort.CSTI);
+				    //if(rounds>0)
+				    ins.addRoute(SwitchIPort.CSTO,dest);
+				    code.appendIns(ins,init||primePump);
+				}
+				ins=new FullIns(tile);
+				ins.addRoute(SwitchIPort.CSTO,dest);
+				code.appendIns(ins,init||primePump);
+				pendingSends=0;
+			    }
+			}
+		    }
+		}
+		//}
 	}
-	for(int i=0;i<numTimes-1;i++) {
-	    FullIns newIns=new FullIns(tile);
-	    newIns.addRoute(SwitchIPort.CSTO,dest);
-	    code.appendIns(newIns,init||primePump);
-	}
-	FullIns newIns=new FullIns(tile,new JumpIns(label.getLabel()));
-	newIns.addRoute(SwitchIPort.CSTO,dest);
-	code.appendIns(newIns,init||primePump);
-	//code.appendIns(new JumpIns(label.getLabel()),init||primePump);
+	/*for(int i=0;i<numTimes-1;i++) {
+	  FullIns newIns=new FullIns(tile);
+	  newIns.addRoute(SwitchIPort.CSTO,dest);
+	  code.appendIns(newIns,init||primePump);
+	  }
+	  FullIns newIns=new FullIns(tile,new JumpIns(label.getLabel()));
+	  newIns.addRoute(SwitchIPort.CSTO,dest);
+	  code.appendIns(newIns,init||primePump);*/
+	code.appendIns(new JumpIns(label.getLabel()),init||primePump);
     }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 

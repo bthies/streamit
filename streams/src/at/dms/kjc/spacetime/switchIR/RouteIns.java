@@ -4,13 +4,15 @@ import java.util.Vector;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
 
-public class RouteIns extends SwitchIns {
+//Kept for backwards compatibility
+//FullIns should usually suffice
+public class RouteIns implements SwitchIns {
     Vector sources;
     Vector dests;
     RawTile tile;
 
     public RouteIns(RawTile tile) {
-	super("route");
+	//super("route");
 	sources = new Vector();
 	dests = new Vector();
 	this.tile = tile;
@@ -24,7 +26,7 @@ public class RouteIns extends SwitchIns {
     }
 
     public String toString() {
-	String ins = "nop\t" + op + " ";
+	String ins = "nop\troute ";
 	
 	for (int i = 0; i < sources.size(); i++) {
 	    //append the src, then ->, then dst
@@ -51,3 +53,7 @@ public class RouteIns extends SwitchIns {
 	return ins;
     }
 }
+
+
+
+

@@ -1,11 +1,13 @@
 package at.dms.kjc.spacetime.switchIR;
 
-abstract public class SwitchIns {
-    protected String op;
-
-    public abstract String toString();
-    
-    public SwitchIns(String op) {
-	this.op = op;
-    }
+//Anything that can be used as a switch instr
+//(FullIns,SwitchProcessorIns,RouteIns,etc)
+public interface SwitchIns {
+    /*protected String op;
+      
+      public abstract String toString();
+      
+      public SwitchIns(String op) {
+      this.op = op;
+      }*/
 }

@@ -4,11 +4,11 @@ import java.util.Vector;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
 
-public class Label extends SwitchIns {
+public class Label implements SwitchIns {
     private String label;
 
     public Label(String label) {
-	super("");
+	//super("");
 	this.label = label;
     }
 

@@ -4,15 +4,17 @@ import java.util.Vector;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
 
-public class JumpIns extends SwitchIns {
-    private String label;
+public class JumpIns extends SwitchProcessorIns {
+    //private String label;
     
     public JumpIns(String label) {
-	super("j");
-	this.label = label;
+	//super("j");
+	//this.label = label;
+	op="j";
+	arg1=label;
     }
 
-    public String toString() {
-	return op + "\t" + label;
-    }
+    /*public String toString() {
+      return "j" + "\t" + label;
+      }*/
 }

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.58 2002-02-20 16:27:34 thies Exp $
+ * $Id: LIRToC.java,v 1.59 2002-03-11 23:33:56 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -491,6 +491,31 @@ public class LIRToC
         }
     }
 
+    private void printLocalArrayDecl(JNewArrayExpression expr) 
+    {
+	JExpression[] dims = expr.getDims();
+	for (int i = 0 ; i < dims.length; i++) {
+	    LIRToC toC = new LIRToC();
+	    dims[i].accept(toC);
+	    print("[" + toC.getString() + "]");
+	}
+    }
+    
+
+    protected void printLocalType(CType s) 
+    {
+	if (s instanceof CArrayType){
+	    print(((CArrayType)s).getElementType());
+	}
+        else if (s.getTypeID() == TID_BOOLEAN)
+            print("int");
+        else if (s.toString().endsWith("Portal"))
+	    // ignore the specific type of portal in the C library
+	    print("portal");
+	else
+            print(s.toString());
+    }
+
     /**
      * prints a variable declaration statement
      */
@@ -500,13 +525,22 @@ public class LIRToC
                                         String ident,
                                         JExpression expr) {
         // print(CModifier.toString(modifiers));
-        print(type);
+	if (expr!=null) {
+	    printLocalType(type);
+	} else {
+	    print(type);
+	}	    
         print(" ");
         print(ident);
         if (expr != null) {
-            print(" = ");
-            expr.accept(this);
-        }
+            if (expr instanceof JNewArrayExpression) {
+		printLocalArrayDecl((JNewArrayExpression)expr);
+	    }
+	    else {
+		print(" = ");
+		expr.accept(this);
+	    }
+	}
         print(";");
     }
 

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.24 2003-10-14 20:34:54 dmaze Exp $
+# $Id: release.sh,v 1.25 2003-10-15 10:51:10 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -86,6 +86,9 @@ rm -rf $WORKING/streams/apps/benchmarks/cfar
 rm -rf $WORKING/streams/apps/benchmarks/gsm/c
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
+
+# phases don't work for this release
+rm -rf $WORKING/streams/apps/examples/phase
 
 # Some parts of the compiler aren't useful to release; trim those here.
 rm -rf $WORKING/streams/src/at/dms/kjc/cluster

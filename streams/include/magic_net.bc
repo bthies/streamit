@@ -49,7 +49,7 @@ fn step_receive_schedule(tileNum) {
   listi_add(newReceiveSchedules, ret.next);
   listi_walk_next(ReceiveSchedules);
 
-  for (i = tileNum + 1; i < 16; i++) {
+  for (i = tileNum + 1; i < gXSize*gYSize; i++) {
     listi_add(newReceiveSchedules, listi_walk_current_val(ReceiveSchedules));
     listi_walk_next(ReceiveSchedules);
   };
@@ -87,8 +87,8 @@ fn getTransmitSchedule(tileNum) {
   ret = listi_walk_current_val(SendSchedules);
   listi_add(newSendSchedules, ret.next);
   listi_walk_next(SendSchedules);
-
-  for (i = tileNum + 1; i < 16; i++) {
+  
+  for (i = tileNum + 1; i < gXSize*gYSize; i++) {
     listi_add(newSendSchedules, listi_walk_current_val(SendSchedules));
     listi_walk_next(SendSchedules);
   };

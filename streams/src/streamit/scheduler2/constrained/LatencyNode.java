@@ -160,7 +160,7 @@ public class LatencyNode extends streamit.misc.AssertedClass
                     0);
 
                 steadyNodePhases.setOperatorPhase(
-                    sj.getSplitPhase(nPhase),
+                    sj.getJoinPhase(nPhase),
                     nPhase);
 
                 for (int nOutChannel = 0;

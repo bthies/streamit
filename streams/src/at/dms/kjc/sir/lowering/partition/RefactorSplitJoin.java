@@ -198,7 +198,7 @@ public class RefactorSplitJoin {
 	// first lift everything
 	Lifter.lift(str);
 	// make all splitjoins rectangular and add synchronization
-	IterFactory.createIter(str).accept(new EmptyStreamVisitor() {
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
 		public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
 		    super.preVisitSplitJoin(self, iter);
 		    self.makeRectangular();

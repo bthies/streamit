@@ -77,7 +77,7 @@ public abstract class ListPartitioner {
 	nodes.add(new DummyNode());
 
 	// add nodes in stream
-	SIRIterator it = IterFactory.createIter(str);
+	SIRIterator it = IterFactory.createFactory().createIter(str);
 	it.accept(new EmptyStreamVisitor() {
 
 		public void preVisitStream(SIRStream self,

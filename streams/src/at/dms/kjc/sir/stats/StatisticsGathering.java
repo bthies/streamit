@@ -153,7 +153,7 @@ public class StatisticsGathering {
 	 */
 	public void doit(SIRStream str) {
 	    final FilterWorkVisitor me = this;
-	    IterFactory.createIter(str).accept((new EmptyStreamVisitor() {
+	    IterFactory.createFactory().createIter(str).accept((new EmptyStreamVisitor() {
 		    public void visitFilter(SIRFilter self, SIRFilterIter iter) {
 			me.filter = self;
 			if (self.needsWork()) {

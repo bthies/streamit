@@ -30,6 +30,11 @@ import streamit.scheduler2.iriter.Iterator;
 
 public class PrintGraph extends streamit.misc.AssertedClass
 {
+    /**
+     * The maximum number of phases to show (for split/join).
+     */
+    private static final int MAX_PHASES_TO_SHOW = 16;
+
     public void printProgram(Iterator iter)
     {
         ASSERT(iter.isPipeline());
@@ -114,7 +119,26 @@ public class PrintGraph extends streamit.misc.AssertedClass
 
     String getNameForSplit(SplitterIter iter) {
 	if (iter.getSplitterNumWork()>1) {
-	    return "phased splitter";
+	    StringBuffer result = new StringBuffer("splitter with " + iter.getSplitterNumWork() + " phases:\\n");
+	    int numPhasesToShow = Math.min(MAX_PHASES_TO_SHOW, iter.getSplitterNumWork());
+	    for (int j=0; j<numPhasesToShow; j++) {
+		int[] weights = iter.getSplitPushWeights(j);
+		result.append("p" + j + ": (");
+		for (int i=0; i<weights.length; i++) { 
+		    result.append(weights[i]);
+		    if (i!=weights.length-1) {
+			result.append(", ");
+		    } else {
+			result.append(")");
+			if (j!=numPhasesToShow-1) {
+			    result.append("\\n");
+			} else if (numPhasesToShow<iter.getSplitterNumWork()) {
+			    result.append("\\n(last " + (iter.getSplitterNumWork()-numPhasesToShow) + " phases not shown)\\n");
+			}
+		    }
+		}
+	    }
+	    return result.toString();
 	} else {
 	    // detect duplicate if pop is unary
 	    if (iter.getSplitPop(0)==1) {
@@ -142,7 +166,26 @@ public class PrintGraph extends streamit.misc.AssertedClass
 
     String getNameForJoin(JoinerIter iter) {
 	if (iter.getJoinerNumWork()>1) {
-	    return "phased joiner";
+	    StringBuffer result = new StringBuffer("joiner with " + iter.getJoinerNumWork() + " phases:\\n");
+	    int numPhasesToShow = Math.min(MAX_PHASES_TO_SHOW, iter.getJoinerNumWork());
+	    for (int j=0; j<numPhasesToShow; j++) {
+		int[] weights = iter.getJoinPopWeights(j);
+		result.append("p" + j + ": (");
+		for (int i=0; i<weights.length; i++) { 
+		    result.append(weights[i]);
+		    if (i!=weights.length-1) {
+			result.append(", ");
+		    } else {
+			result.append(")");
+			if (j!=numPhasesToShow-1) {
+			    result.append("\\n");
+			} else if (numPhasesToShow<iter.getJoinerNumWork()) {
+			    result.append("\\n(last " + (iter.getJoinerNumWork()-numPhasesToShow) + " phases not shown)\\n");
+			}
+		    }
+		}
+	    }
+	    return result.toString();
 	} else if (iter.getJoinPush(0)==0) {
 	    // null joiner
 	    return "roundrobin(0)";

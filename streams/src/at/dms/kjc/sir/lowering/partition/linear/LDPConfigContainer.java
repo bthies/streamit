@@ -726,7 +726,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     private void recordChildPartitons(int x1, int x2, int y1, int y2) {
 	for (int j=y1; j<=y2; j++) {
 	    for (int i=x1; i<=Math.min(x2,width[j]-1); i++) {
-		IterFactory.createIter(childConfig(i,j).getStream()).accept(new EmptyStreamVisitor() {
+		IterFactory.createFactory().createIter(childConfig(i,j).getStream()).accept(new EmptyStreamVisitor() {
 			public void visitFilter(SIRFilter self, SIRFilterIter iter) {
 			    LDPConfig.partitions.put(self, new Integer(LDPConfig.numAssigned));
 			}

@@ -86,7 +86,7 @@ public class SpaceTimeBackend
 	RenameAll.renameOverAllFilters(str);
 	
 	//SIRPrinter printer1 = new SIRPrinter();
-	//IterFactory.createIter(str).accept(printer1);
+	//IterFactory.createFactory().createIter(str).accept(printer1);
 	//printer1.close();
 	
 	//jasperln's Stuff

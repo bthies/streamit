@@ -163,12 +163,12 @@ abstract public class Scheduler extends AssertedClass
             int symbolicIdx = scheds.size();
             scheds.put(sched, new Integer (symbolicIdx));
             System.out.println(
-                "$"
-                    + symbolicIdx
-                    + " = "
-                    + sched.getStream().getObject()
-                    + "."
-                    + sched.getWorkFunc());
+			       "$"
+			       + symbolicIdx
+			       + " = "
+			       + sched.getStream().getObject() + "@" + sched.getStream().getObject().hashCode()
+			       + "."
+			       + sched.getWorkFunc());
         }
     }
 }

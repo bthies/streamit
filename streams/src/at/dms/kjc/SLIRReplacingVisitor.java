@@ -30,7 +30,8 @@ import at.dms.compiler.JavadocComment;
  * This is just like ReplacingVisitor except for SLIR nodes, too.
  * Right now it only replaces statements in children.
  */
-public class SLIRReplacingVisitor extends SLIREmptyAttributeVisitor {
+public class SLIRReplacingVisitor extends ReplacingVisitor 
+    implements SLIRAttributeVisitor {
 
     /**
      * SIR NODES.

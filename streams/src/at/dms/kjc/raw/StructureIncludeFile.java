@@ -17,13 +17,24 @@ import at.dms.util.Utils;
 class StructureIncludeFile
 {
 
+    /**
+     * Create structures include file in current directory.
+     */
     public static void doit(SIRStructure[] structs) 
+    {
+	doit(structs, ".");
+    }
+
+    /**
+     * Create structures include file in directory <dir>.
+     */
+    public static void doit(SIRStructure[] structs, String dir) 
     {
 	if (structs.length == 0) 
 	    return;
 	
 	try {
-	    FileWriter fw = new FileWriter("structs.h");
+	    FileWriter fw = new FileWriter(dir + "/structs.h");
 	    createStructureDefs(structs, fw);
 	    createPushPopFunctions(structs, fw);
 	    fw.close();

@@ -47,6 +47,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	File file = new File(dir);
 	file.mkdir();
 
+	// make structures header file in this directory
+	StructureIncludeFile.doit(RawBackend.structures, dir);
 	// set decouple execution to true
 	KjcOptions.decoupled = true;
 	// set magic net to false

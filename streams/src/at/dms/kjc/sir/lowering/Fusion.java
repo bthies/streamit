@@ -52,7 +52,7 @@ public class Fusion {
 	Schedule schedule = scheduler.computeSchedule();
 	// get the schedule -- expect it to be a list
 	List schedList = (List)schedule.getSteadySchedule();
-	SIRScheduler.printSchedule(schedList, "two fused filters");
+	//SIRScheduler.printSchedule(schedList, "two fused filters");
 	// for now, assume we have the first one executing some number
 	// of times -- get this number of times
 	int count1 = 

@@ -109,8 +109,8 @@ public class SIRScheduler implements Constants {
 	// compute a schedule
 	Schedule result = (Schedule)scheduler.computeSchedule();
 	// debugging output
-	printSchedule(result.getSteadySchedule(), "steady state");
-	printSchedule(result.getInitSchedule(), "initialization");
+	//printSchedule(result.getSteadySchedule(), "steady state");
+	//printSchedule(result.getInitSchedule(), "initialization");
 	// return schedule
 	return result;
     }
@@ -277,7 +277,6 @@ public class SIRScheduler implements Constants {
      * returns null.
      */
     private JMethodDeclaration getTwoStageWork(List schedObject) {
-	printSchedule(schedObject, "entering gettwostage: ");
 	// see if we have a list corresponding to a two-stage filter
 	SIRTwoStageFilter filter = getTwoStageFilter(schedObject);
 	if (filter!=null) {
@@ -400,7 +399,6 @@ public class SIRScheduler implements Constants {
      */
     private JStatement[] makeWorkStatements(List list, 
 					    SIRStream toplevel) {
-	printSchedule(list, "entering makeWorkStatements");
 	// build the statements for <work> ...
 	List statementList = new LinkedList();
 	// for each filter...
@@ -423,7 +421,6 @@ public class SIRScheduler implements Constants {
      */
     private JStatement makeWorkStatement(Object schedObject, 
 					 SIRStream toplevel) {
-	printSchedule(schedObject, "make work statement working on: ");
 	// see if we have a repeated scheduled object
 	if (schedObject instanceof SchedRepSchedule) {
 	    // get the repeated schedule
@@ -546,7 +543,6 @@ public class SIRScheduler implements Constants {
 	    // otherwise, have a list or filter--need to make a work function
 	    JMethodDeclaration work = makeWork(schedObject, toplevel);
 	    // return name of work function
-	    printSchedule(schedObject, "in get work name");
 	    return work.getName();
 	}
     }

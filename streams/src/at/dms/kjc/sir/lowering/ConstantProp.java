@@ -168,11 +168,16 @@ public class ConstantProp {
 	    return new InitPropagator(constants,write);
 	}
 	
-	public Object visitInitStatement(SIRInitStatement self,
-					 SIRStream target) {
-	    SIRInitStatement newSelf=(SIRInitStatement)super.visitInitStatement(self,target);
-	    recurseInto(newSelf.getTarget(), newSelf.getArgs(), constants);
-	    return newSelf;
+	public Object visitInitStatement(SIRInitStatement oldSelf,
+					 SIRStream oldTarget) {
+	    SIRInitStatement self=(SIRInitStatement)super.visitInitStatement(oldSelf,oldTarget);
+	    SIRStream target = self.getTarget();
+	    // if the target is a recursive stub, then expand it one level
+	    if (target instanceof SIRRecursiveStub) {
+		self.setTarget(((SIRRecursiveStub)target).expand());
+	    }
+	    recurseInto(self.getTarget(), self.getArgs(), constants);
+	    return self;
 	}
     }
     

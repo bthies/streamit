@@ -244,7 +244,7 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		TokenReference ref=((JVariableDeclarationStatement)newInit).getTokenReference();
 		self.setInit(new JExpressionListStatement(ref,new JExpression[] {new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val)},null));
 	    } else
-		self.setInit(null);
+		self.setInit(new JEmptyStatement(null, null));
 	}
 	return self;
     }

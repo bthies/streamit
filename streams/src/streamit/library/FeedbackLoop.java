@@ -76,21 +76,36 @@ public class FeedbackLoop extends Stream
         body.SetupOperator();
         Channel bodyInput = body.GetIOField ("input");
         Channel bodyOutput = body.GetIOField ("output");
+        ASSERT (bodyInput);
+        ASSERT (bodyOutput);
         ASSERT (bodyOutput.GetType ().getName ().equals (bodyInput.GetType ().getName ()));
 
         // if I don't have a feedback path, just give myself an identity body
         // and initialize whatever the feedback path is
         if (loop == null) loop = new Identity (bodyOutput.GetType ());
         loop.SetupOperator ();
+        Channel loopInput = loop.GetIOField ("input");
+        Channel loopOutput = loop.GetIOField ("output");
+        ASSERT (loopInput);
+        ASSERT (loopOutput);
+        ASSERT (loopOutput.GetType ().getName ().equals (loopInput.GetType ().getName ()));
 
         // create some extra Identities and give them to the split
         // and the join so they have a Filter for every input/output
         // they have to deal with
         {
             // the joiner:
-            Filter joinerIn = new Identity (bodyInput.GetType ());
-            joinerIn.SetupOperator ();
-            joiner.Add (joinerIn);
+            Channel channelIn = null;
+            if (joiner.IsInputUsed (0))
+            {
+                Filter joinerIn = new Identity (bodyInput.GetType ());
+                joinerIn.SetupOperator ();
+                joiner.Add (joinerIn);
+                channelIn = joinerIn.GetIOField ("input");
+            } else {
+                joiner.Add (null);
+            }
+
             joiner.Add (loop);
             joiner.SetupOperator ();
 
@@ -102,9 +117,16 @@ public class FeedbackLoop extends Stream
             }
 
             // the splitter:
-            Filter splitterOut = new Identity (bodyOutput.GetType ());
-            splitterOut.SetupOperator ();
-            splitter.Add (splitterOut);
+            Channel channelOut = null;
+            if (splitter.IsOutputUsed (0))
+            {
+                Filter splitterOut = new Identity (bodyOutput.GetType ());
+                splitterOut.SetupOperator ();
+                splitter.Add (splitterOut);
+                channelOut = splitterOut.GetIOField ("output");
+            } else {
+                splitter.Add (null);
+            }
             splitter.Add (loop);
             splitter.SetupOperator ();
 
@@ -117,8 +139,8 @@ public class FeedbackLoop extends Stream
 
             // copy the input/output from the identities to the input/output
             // fields of the feedback loop
-            input = joinerIn.GetIOField ("input");
-            output = splitterOut.GetIOField("output");
+            input = channelIn;
+            output = channelOut;
         }
 
         // now fill up the feedback path with precomputed data:

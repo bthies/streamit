@@ -5,14 +5,20 @@ import java.util.*;
 public class WeightedRoundRobinJoiner extends Joiner {
     List srcsWeight = new ArrayList ();
     int inputCount = 0;
-    
+
     void AddWeight (Integer weight)
     {
         ASSERT (weight != null && weight.intValue () >= 0);
-        
+
         srcsWeight.add (weight);
     }
-    
+
+    public boolean IsInputUsed (int index)
+    {
+        ASSERT (index < srcsWeight.size ());
+        return ((Integer)srcsWeight.get(index)).intValue () != 0;
+    }
+
     public void ConnectGraph ()
     {
         // do I even have anything to do?
@@ -27,7 +33,7 @@ public class WeightedRoundRobinJoiner extends Joiner {
             inputCount = 0;
             inputIndex = (inputIndex + 1) % srcs.size ();
         }
-        
+
         PassOneData (input [inputIndex], output);
         inputCount++;
     }

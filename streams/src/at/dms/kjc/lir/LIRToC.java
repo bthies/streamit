@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.95 2005-02-17 00:08:48 thies Exp $
+ * $Id: LIRToC.java,v 1.96 2005-03-10 00:08:50 rabbah Exp $
  */
 
 package at.dms.kjc.lir;
@@ -826,15 +826,15 @@ public class LIRToC
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
-	forLoopHeader++;
+	  forLoopHeader++;
         print("for (");
         //forInit = true;
         if (init != null) {
             init.accept(this);
-	} else {
-	    print(";");
-	}
-	//forInit = false;
+	  } else {
+		print(";");
+	  }
+	  //forInit = false;
 
         print(" ");
         if (cond != null) {
@@ -843,19 +843,20 @@ public class LIRToC
         print("; ");
 
         if (incr != null) {
-	    LIRToC l2c = new LIRToC(arrayInitializers);
+		LIRToC l2c = new LIRToC(arrayInitializers);
             incr.accept(l2c);
-	    // get String
-	    String str = l2c.getString();
-	    // leave off the trailing semicolon if there is one
-	    if (str.endsWith(";")) {
-		print(str.substring(0, str.length()-1));
-	    } else { 
-		print(str);
-	    }
+		// get String
+		String str = l2c.getString();
+		// leave off the trailing semicolon if there is one
+		if (str.endsWith(";")) {
+		    print(str.substring(0, str.length()-1));
+		} else { 
+		    print(str);
+		}
         }
-	forLoopHeader--;
-        print(") {\n");
+	  forLoopHeader--;
+        print(") {");
+	  newLine();
 
         pos += TAB_SIZE;
         body.accept(this);
@@ -892,7 +893,7 @@ public class LIRToC
             if (body[i] instanceof JVariableDeclarationStatement &&
                 i < body.length - 1 &&
                 !(body[i + 1] instanceof JVariableDeclarationStatement)) {
-                newLine();
+		    newLine();
             }
         }
     }
@@ -904,8 +905,8 @@ public class LIRToC
                                          JExpression expr) {
         expr.accept(this);
         //if (!forInit) {
-            print(";");
-	    //}
+	  print(";");
+	  //}
     }
 
     /**
@@ -929,7 +930,7 @@ public class LIRToC
 	//if we are inside a for loop header, we need to print 
 	//the ; of an empty statement
 	if (forLoopHeader > 0) {
-	    newLine();
+	    // RMR (don't offset the ; by a new line // newLine();
 	    print(";");
 	}
     }

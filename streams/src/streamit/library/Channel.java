@@ -15,10 +15,10 @@ public class Channel extends DestroyedClass
     
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
-    public Channel(Object dataObject) 
+    public Channel(Class channelType) 
     {
-        ASSERT (dataObject.getClass ().isArray ());
-        type = dataObject.getClass ().getComponentType ();
+        ASSERT (channelType != null);
+        type = channelType;
         queue = new LinkedList ();
     }
     
@@ -103,6 +103,14 @@ public class Channel extends DestroyedClass
         Enqueue (new Double (d));
     }
 
+    // push a float
+    public void PushFloat(float d)
+    {
+        ASSERT (type == Float.TYPE);
+        
+        Enqueue (new Float (d));
+    }
+
     // push a String
     public void PushString(String str)
     {
@@ -158,6 +166,18 @@ public class Channel extends DestroyedClass
         ASSERT (data != null);
         
         return data.doubleValue ();
+    }
+    
+    // pop a float
+    public float PopFloat()
+    {
+        ASSERT (type == Float.TYPE);
+        
+        Float data;
+        data = (Float) Pop ();
+        ASSERT (data != null);
+        
+        return data.floatValue ();
     }
     
 
@@ -218,6 +238,18 @@ public class Channel extends DestroyedClass
         ASSERT (data != null);
         
         return data.doubleValue ();
+    }
+
+    // peek at a float
+    public double PeekFloat(int index)
+    {
+        ASSERT (type == Float.TYPE);
+        
+        Float data;
+        data = (Float) Peek (index);
+        ASSERT (data != null);
+        
+        return data.floatValue ();
     }
 
     // peek at a String

@@ -1,15 +1,37 @@
 import streamit.*;
 
+class RandomSource extends Filter
+{
+    public void InitIO ()
+    {
+        output = new Channel (Float.TYPE);
+    }
+    
+    public void Work ()
+    {
+        float value = (float) java.lang.Math.random ();
+        output.PushFloat (value);
+    }
+}
+
 class Butterfly extends Stream {
-   void Init(final int N, final int W) {
+    public Butterfly (ParameterContainer params) { super (params); }
+   public void Init(ParameterContainer params) {
+       final int N = params.GetIntParam ("N");
+       final int W = params.GetIntParam ("W");
       Add(new SplitJoin() {
          public void Init() {
             SetSplitter(WEIGHTED_ROUND_ROBIN(N, N));
             Add(new Filter() {
                 public void InitIO () 
                 {
-                    input = new FloatChannel();
-                    output = new FloatChannel();
+                    input = new Channel(Float.TYPE);
+                    output = new Channel(Float.TYPE);
+                }
+                float calcWeight (int i, int N, int W)
+                {
+                    ASSERT (false); // must implement this function!
+                    return 1;
                 }
                float weights[] = new float[W];
                int curr;
@@ -19,36 +41,36 @@ class Butterfly extends Stream {
                   curr = 0;
                }
                public void Work() {
-                  output.Push(input.Pop()*weights[curr++]);
+                  output.PushFloat(input.PopFloat()*weights[curr++]);
                   if(curr>= W) curr = 0;
                }    
             });
-            Add(new Identity());
-            SetJoiner(ROUND_ROBIN);
+            Add(new Identity(Float.TYPE));
+            SetJoiner(ROUND_ROBIN ());
       }});
       Add(new SplitJoin() {
          public void Init() {
-            SetSplitter(DUPLICATE);
+            SetSplitter(DUPLICATE ());
             Add(new Filter() {   
                 public void InitIO ()
                 {
-                   input = new FloatChannel();
-                   output = new FloatChannel();
+                   input = new Channel(Float.TYPE);
+                   output = new Channel(Float.TYPE);
                 }
                public void Work() {
-                  float val = input.Pop();
-                  output.Push(val - input.Pop());
+                  float val = input.PopFloat();
+                  output.PushFloat(val - input.PopFloat());
                }
             });
             Add(new Filter() {   
                 public void InitIO ()
                 {
-                   input = new FloatChannel();
-                   output = new FloatChannel();
+                   input = new Channel(Float.TYPE);
+                   output = new Channel(Float.TYPE);
                 }
                public void Work() {
-                  float val = input.Pop();
-                  output.Push(val + input.Pop());
+                  float val = input.PopFloat();
+                  output.PushFloat(val + input.PopFloat());
                }
             });
             SetJoiner(WEIGHTED_ROUND_ROBIN(N, N));
@@ -56,32 +78,41 @@ class Butterfly extends Stream {
 }}
 
 class FFT extends Stream {
-   public void Init(int N) {
+    FFT (int N) { super (N); }
+   public void Init(final int N) {
       Add(new SplitJoin() {
          public void Init() {
+            final int M = N;
             SetSplitter(WEIGHTED_ROUND_ROBIN(N/2, N/2));
             for(int i=0; i<2; i++) 
+            
                Add(new SplitJoin() {
                   public void Init() {
-                     SetSplitter(ROUND_ROBIN);
-                     Add(new Identity());
-                     Add(new Identity());
-                     SetJoiner(WEIGHTED_ROUND_ROBIN(N/4, N/4));
+                     SetSplitter(ROUND_ROBIN ());
+                     Add(new Identity(Float.TYPE));
+                     Add(new Identity(Float.TYPE));
+                     SetJoiner (WEIGHTED_ROUND_ROBIN(M/4, M/4));
                }});
-            SetJoiner(ROUND_ROBIN);
+            SetJoiner(ROUND_ROBIN ());
       }});
       for(int i=2; i<N; i*=2)
-        Add(new Butterfly(i, N));
+        Add(new Butterfly(new ParameterContainer ("").Add ("N", i).Add ("W", N)));
     }
 }
 
 class FIR extends Filter {
+    public FIR (int N)
+    {
+        super (N);
+    }
     public void InitIO ()
     {
-       Channel input = new FloatChannel();
-       Channel output = new FloatChannel();           
+       input = new Channel(Float.TYPE);
+       output = new Channel(Float.TYPE);
     }
     
+   float FIR_COEFF[][];
+   
    int N;
    public void Init(int N) {
       this.N = N;
@@ -89,45 +120,57 @@ class FIR extends Filter {
    public void Work() {
       float sum = 0;
       for (int i=0; i<N; i++) {
-         sum += input.Peek(i)*FIR_COEFF[i][N];
+         sum += input.PeekFloat(i)*FIR_COEFF[i][N];
       }
-      input.Pop();
-      output.Push(sum);
+      input.PopFloat();
+      output.PushFloat(sum);
    }
 }
 
 class Booster extends Stream {
-   void Init(int N, boolean adds) {
-      if (adds) add(new FIR(N));
-   }
+    Booster (ParameterContainer params) { super (params); }
+    public void Init(ParameterContainer params) {
+        int N = params.GetIntParam ("N");
+        boolean adds = params.GetBoolParam ("adds");
+        if (adds) Add(new FIR(N));
+        else Add (new Identity (Float.TYPE));
+    }
 }
 
 class RFtoIF extends Filter {
     public void InitIO ()
     {
-       input = new FloatChannel();
-       output = new FloatChannel();
+       input = new Channel(Float.TYPE);
+       output = new Channel(Float.TYPE);
     }
    int size, count;
+   int CARRIER_FREQ, N;
+   double PI;
    float weight[];
-   void Init(float f) {
+   
+   RFtoIF (float f)
+   {
+       super (f);
+   }
+   
+   public void Init(float f) {
       setf(f);
    }
    public void Work() {
-      output.Push(input.Pop()*weight[i++]);
+      output.PushFloat(input.PopFloat()*weight[count++]);
       if (count==size) count = 0;
    }
    void setf(float f) {
       count = 0;
-      size = CARRIER_FREQ/f*N;
+      size = (int)(CARRIER_FREQ/f*N);
       weight = new float[size];
       for(int i=0; i<size; i++)
-         weight[i] = sine(i*PI/size);
+         weight[i] = (float) java.lang.Math.sin(i*PI/size);
    }
 }
 
 class CheckFreqHop extends SplitJoin {
-   public void Init() {
+   public void Init(int N) {
       SetSplitter(WEIGHTED_ROUND_ROBIN(N/4-2,1,1,N/2,1,1,N/4-2));
       int k = 0;
       for (int i=1; i<=5; i++) {
@@ -136,17 +179,17 @@ class CheckFreqHop extends SplitJoin {
                Add(new Filter() {
                    public void InitIO ()
                    {
-                      input = new FloatChannel();
-                      output = new FloatChannel();
+                      input = new Channel(Float.TYPE);
+                      output = new Channel(Float.TYPE);
                    }
                   public void Work() {
-                     float val = input.Pop();
-                     output.Push(val);
+                     float val = input.PopFloat();
+                     output.PushFloat(val);
                   }
                });
                k++;
             }
-         } else Add(new Identity());
+         } else Add(new Identity(Float.TYPE));
       }
       SetJoiner(WEIGHTED_ROUND_ROBIN(N/4-2,1,1,N/2,1,1,N/4-2));
    }
@@ -155,42 +198,76 @@ class CheckFreqHop extends SplitJoin {
 class CheckQuality extends Filter {
     public void InitIO ()
     {
-       input = new FloatChannel();
-       output = new FloatChannel();
+       input = new Channel(Float.TYPE);
+       output = new Channel(Float.TYPE);
     }
    float aveHi, aveLo;
+   float QUAL_BAD_THRESHOLD, QUAL_GOOD_THRESHOLD;
+   
    boolean boosterOn;
    public void Init(boolean boosterOn) {
       aveHi = 0; aveLo = 1;
       this.boosterOn = boosterOn;
    }
    public void Work() {
-      float val = input.Pop();
-      aveHi = max(0.9*aveHi, val);
-      aveLo = min(1.1*aveLo, val);
-      if (aveHi - aveLo < QUAL_BAD_THRESHOLD && !booosterOn) {
-         boosterSwitch.Init(true, BEST_EFFORT);
+      float val = input.PopFloat();
+      aveHi = java.lang.Math.max(0.9f*aveHi, val);
+      aveLo = java.lang.Math.min(1.1f*aveLo, val);
+      if (aveHi - aveLo < QUAL_BAD_THRESHOLD && !boosterOn) {
+         // BUGBUG - uncomment this line boosterSwitch.Init(true, BEST_EFFORT);
          boosterOn = true;
       }
       if(aveHi - aveLo > QUAL_GOOD_THRESHOLD & boosterOn) {
-         boosterSwitch.Init(false, BEST_EFFORT);
+         // BUGBUG - uncomment this line boosterSwitch.Init(false, BEST_EFFORT);
          boosterOn = false;
       }
-      output.Push(val);
+      output.PushFloat(val);
    }
+}
+
+class FloatPrinter extends Filter 
+{
+    public void InitIO ()
+    {
+        input = new Channel(Float.TYPE);
+    }
+
+    public void Work()
+    {
+        System.out.print(input.PopFloat() + ", ");
+    }
+
 }
 
 class TrunkedRadio extends Stream {
    int N = 64;
    public void Init() {
-      ReadFromAtoD in = Add(new ReadFromAtoD());
-      RFtoIF rf2if = Add(new RFtoIF(STARTFREQ));
-      Booster iss = Add(new Booster(N, false));
+      //ReadFromAtoD in = Add(new ReadFromAtoD());
+       Add (new RandomSource ());
+       Add(new RFtoIF(/*STARTFREQ*/ 50));
+      Add(new Booster(new ParameterContainer ("").Add ("N",N).Add ("adds", false)));
       Add(new FFT(N));
-      Add(new CheckFreqHop(freqHop));
-      Add(new CheckQuality(onOff, false));
-      AudioBackEnd out = Add(new AudioBackEnd());
+      //Add(new CheckFreqHop(freqHop));
+      //Add(new CheckQuality(onOff, false));
+      //AudioBackEnd out = Add(new AudioBackEnd());
+      Add (new FloatPrinter());
 
-      MAX_LATENCY(in, out, 10);
+      // MAX_LATENCY(in, out, 10);
    }
+}
+
+public class radio extends Stream
+{
+
+    // presumably some main function invokes the stream
+    public static void main(String args[])
+    {
+    	new radio().Run();
+    }
+    
+    // this is the defining part of the stream
+    public void Init() 
+    {
+        Add (new TrunkedRadio ());
+    }
 }

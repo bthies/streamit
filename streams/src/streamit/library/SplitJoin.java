@@ -117,6 +117,11 @@ public class SplitJoin extends Stream
         return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3);
     }
     
+    public SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7)
+    {
+        return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3).AddWeight (w4).AddWeight (w5).AddWeight (w6).AddWeight (w7);
+    }
+
     public SplitJoinType ROUND_ROBIN ()
     {
         return new SplitJoinType (1);

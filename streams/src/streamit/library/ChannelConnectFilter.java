@@ -2,18 +2,26 @@ package streamit;
 
 public class ChannelConnectFilter extends Filter 
 {
-    public ChannelConnectFilter (Object ioType)
+    Class type;
+    public ChannelConnectFilter (Class ioType)
     {
         super ();
-        input = new Channel (ioType);
-        output = new Channel (ioType);
+        type = ioType;
+        InitIO ();
     }
     
     public ChannelConnectFilter () { super (); }
     
     public void InitIO ()
     {
+        if (type != null)
+        {
+            input = new Channel (type);
+            output = new Channel (type);
+        }
     }
+    
+    public void Init () { }
 
     public void Work()
     {

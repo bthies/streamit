@@ -13,12 +13,12 @@ public abstract class Filter extends Stream
         super(i);
     }
 
-    public Filter(String str) 
+    public Filter(float f) 
     {
-        super(str);
+        super(f);
     }
 
-    public Filter(Stream str) 
+    public Filter(String str) 
     {
         super(str);
     }
@@ -48,5 +48,8 @@ public abstract class Filter extends Stream
     }
 
     public abstract void Work();
+    
+    // provide some empty functions to make writing filters a bit easier
+    public void Init () { }
 }
 

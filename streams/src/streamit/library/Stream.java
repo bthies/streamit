@@ -11,7 +11,7 @@ public class Stream extends Operator
 
     public Channel input = null;
     public Channel output = null;
-    LinkedList streamElements;
+    LinkedList streamElements = new LinkedList ();
     
     public Stream() 
     {
@@ -25,38 +25,46 @@ public class Stream extends Operator
 	Init(n);
     }
 
+    public Stream(float f) 
+    {
+        StreamInit ();
+	Init(f);
+    }
+
     public Stream(String str) 
     {
         StreamInit ();
         Init(str);
     }
     
-    public Stream(Stream str) 
+    public Stream(ParameterContainer params)
     {
         StreamInit ();
-	Init(str);
+        Init (params);
     }
 
     // INIT FUNCTIONS ---------------------------------------------------------------------
     
     // initializatoin functions, to be over-ridden
-    public void Init() {}
+    public void Init() { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(int n) {}
+    public void Init(int n) { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(String str) {}
+    public void Init(float f) { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(Stream str) {}
+    public void Init(String str) {ASSERT (false); }
+
+    // initializatoin functions, to be over-ridden
+    public void Init(ParameterContainer params) {ASSERT (false); }
     
     // general initialization function for Stream class only
     
     private void StreamInit ()
     {
         InitIO ();
-        streamElements = new LinkedList ();
     }
     
     public void InitIO () { }
@@ -76,12 +84,6 @@ public class Stream extends Operator
     }
 
     public MessageStub Reset(String str)
-    {
-    	Init(str);
-    	return MESSAGE_STUB;
-    }
-
-    public MessageStub Reset(Stream str)
     {
     	Init(str);
     	return MESSAGE_STUB;
@@ -138,7 +140,7 @@ public class Stream extends Operator
     public void ConnectGraph ()
     {
         // make sure I have some elements - not sure what to do otherwise
-        ASSERT (streamElements.isEmpty () == false);
+        ASSERT (!streamElements.isEmpty ());
         
         // go through the list and connect it together:
         try
@@ -163,9 +165,6 @@ public class Stream extends Operator
                     Channel in = source.GetIOField ("output");
                     Channel out = sink.GetIOField ("input");
                     connect.UseChannels (in, out);
-                } else
-                {
-                    ASSERT (sink.GetIOField ("input") == null);
                 }
                 source = sink;
             }
@@ -179,7 +178,7 @@ public class Stream extends Operator
         // set myself up with proper input and output
         {
             input = ((Stream)streamElements.getFirst ()).GetIOField ("input");
-            output = ((Stream)streamElements.getFirst ()).GetIOField ("output");
+            output = ((Stream)streamElements.getLast ()).GetIOField ("output");
         }
     }
 

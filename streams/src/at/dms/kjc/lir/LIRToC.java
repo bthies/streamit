@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.87 2003-12-05 21:01:09 dmaze Exp $
+ * $Id: LIRToC.java,v 1.88 2003-12-08 19:47:08 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -54,6 +54,15 @@ public class LIRToC
 	System.out.println("#include <math.h>");
 	printAtlasInterface();
 	LIRToC l2c = new LIRToC(new TabbedPrintWriter(new PrintWriter(System.out)));
+
+        // Print all of the portals.
+        for (int i = 0; i < SIRPortal.getPortals().length; i++) {
+            l2c.print("portal ");
+            SIRPortal.getPortals()[i].accept(l2c);
+            l2c.print(";");
+            l2c.newLine();
+        }
+
 	flat.accept(l2c);
 	l2c.close();
     }
@@ -228,14 +237,6 @@ public class LIRToC
         declOnly = true;
         for (int i = 0; i < methods.length; i++) {
             methods[i].accept(this);
-        }
-
-        // Print all of the portals.
-        for (int i = 0; i < SIRPortal.getPortals().length; i++) {
-            print("portal ");
-            SIRPortal.getPortals()[i].accept(this);
-            print(";");
-            newLine();
         }
 
         // Print any interface tables there might be.

@@ -13,8 +13,7 @@ void->void pipeline TargetDetect {
   add TargetDetectSplitJoin(N);
   /* there are four matched filters */
   add ThresholdDetectSplitJoin(4, 8);
-  add FloatSink();
-  //add FloatPrinter();
+  add FloatPrinter();
 }
 
 float->float splitjoin TargetDetectSplitJoin(int N) {
@@ -40,10 +39,14 @@ float->float splitjoin ThresholdDetectSplitJoin(int num, float thresh) {
  */
 float->float filter ThresholdDetector(int number, float threshold) {
   work pop 1 push 1 {
-    if (peek(0) > threshold) {
-      println(number);
+    /* pop the input value off of the input stream. */
+    float t = pop();
+    /* do the threshold test -- if it is greater, then push out number, otherwise push 0 */
+    if (t > threshold) {
+      push(number);
+    } else {
+      push(0);
     }
-    push(pop());
   }
 }
 			     

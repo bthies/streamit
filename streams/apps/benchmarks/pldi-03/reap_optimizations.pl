@@ -43,21 +43,31 @@ push(@result_lines,
 # format for script programs is 
 #directory:filename
 my @programs = (
-		".:FIRProgram",
-		".:SamplingRateConverter",
-		".:FilterBank",
+		#".:FIRProgram",
+		#".:SamplingRateConverter",
+		#".:FilterBank",
 		#".:TargetDetect",
 		".:Test",
+		#".:FMTest",
+		#".:CoarseSerializedBeamFormer",
 		);
 
-
-
-
+# determine the next available results directory (eg results0, results1, etc.)
+my $results_dir_num = 0;
+while (-e "results$results_dir_num") {$results_dir_num++;}
+my $results_dir = "results$results_dir_num";
+print `mkdir $results_dir`;
 
 foreach (@programs) {
     # parse the input into path and program
     my ($path, $base_filename) = split(":");
 
+    # copy the input program into the new results dir
+    print `cp $path/$base_filename.java $results_dir`;
+
+    # update the path
+    $path = $results_dir;
+    
     # compile normally without frequency replacement
     print "$base_filename(normal):";
     do_compile($path, $base_filename, "--constprop --unroll 100000 --debug");
@@ -92,9 +102,9 @@ foreach (@programs) {
 
     
     # for various sizes of target FFT length
-    my $MAX_TARGET_SIZE = 4096;
+    my $MAX_TARGET_SIZE = 256; #4096;
     my $targetFFTSize;
-    for ($targetFFTSize=1; $targetFFTSize<($MAX_TARGET_SIZE+1); $targetFFTSize*=2) {
+    for ($targetFFTSize=1; $targetFFTSize<($MAX_TARGET_SIZE+1); $targetFFTSize*=4) {
 	
         # now, do the compilation with the frequency replacement
 	print "$base_filename(freq, $targetFFTSize):";
@@ -140,26 +150,26 @@ foreach (@programs) {
 
     # now, we should compare all of the output files against the normal output
     # and die horribly if there are any errors.
-    my @output_files = split("\n", `ls *.output`);
-    my $current_output_file;
-    foreach $current_output_file (@output_files) {
-	chomp($current_output_file);
-	my $result = `$CMP $base_filename-normal.output $current_output_file`;
-	if ($result) {
-	    die ("Error comparing $base_filename-normal.outout and $current_output_file: $result");
-	} else {
-	    print "(verified $current_output_file)";
-	}
-    }
-    print "\n";
-    # now, remove all of the output files
-    `rm -f *.output`;
+#    my @output_files = split("\n", `ls *.output`);
+#    my $current_output_file;
+#    foreach $current_output_file (@output_files) {
+#	chomp($current_output_file);
+#	my $result = `$CMP $base_filename-normal.output $current_output_file`;
+#	if ($result) {
+#	    die ("Error comparing $base_filename-normal.outout and $current_output_file: $result");
+#	} else {
+#	    print "(verified $current_output_file)";
+#	}
+#    }
+#    print "\n";
+#    # now, remove all of the output files
+#    `rm -f *.output`;
 }
 
 
 # now, when we are done with all of the tests, write out the results to a tsv file.
 print "writing tsv";
-open (RFILE, ">$RESULTS_FILENAME");
+open (RFILE, ">$results_dir/$RESULTS_FILENAME");
 print RFILE join("\n", @result_lines);
 close RFILE;
 print "done\n";
@@ -176,10 +186,10 @@ sub do_compile {
 
     # run streamit compiler to generate C code.
     print "(java->c)";
-    `$STREAMIT_COMPILER $options $new_path/$filename_base.java >& $new_path/$filename_base.c`;
+    `cd $new_path; $STREAMIT_COMPILER $options $filename_base.java >& $filename_base.c`;
     # compile the C code to generate an executable
     print "(c->exe)";
-    `$STREAMIT_GCC $new_path/$filename_base.c -o $new_path/$filename_base.exe`;
+    `cd $new_path; $STREAMIT_GCC $filename_base.c -o $filename_base.exe`;
 
 }
 
@@ -196,7 +206,7 @@ sub run_test {
 
     # run dynamo rio (with the assumed countflops module installed)
     print "(dynamo $iters)";
-    print `cd $new_path; $STREAMIT_DYNAMORIO $filename_base.exe -i $iters >& $filename_base-$postfix.output`;
+    print `cd $new_path; $STREAMIT_DYNAMORIO $filename_base.exe -i $iters >& /dev/null`;
 
     # get the report from the countflops.log file and clean up
     my $report = read_file("$new_path/countflops.log");

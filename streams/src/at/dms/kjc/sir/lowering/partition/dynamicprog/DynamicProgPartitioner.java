@@ -175,10 +175,24 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	// rebuild our work estimate, since we might have introduced
 	// identity nodes to make things rectangular
 	work = WorkEstimate.getWorkEstimate(str);
-	// build up tables.
-	System.out.println("  Calculating partition info...");
-	bottleneck = topConfig.get(numTiles, 0).getMaxCost();
-	System.err.println("  Partitioner thinks bottleneck is " + bottleneck);
+	
+	// if we're limiting icode, start with 1 filter and work our
+	// way up to as many filters are needed.
+	if (limitICode) { numTiles = 0; }
+	DPCost cost;
+	do {
+	    if (limitICode) { numTiles++; }
+	    System.err.println("Trying " + numTiles + " tiles.");
+
+	    // build up tables.
+	    System.out.println("  Calculating partition info...");
+	    cost = topConfig.get(numTiles, 0);
+	    System.err.println("  Partitioner thinks bottleneck is " + cost.getMaxCost());
+	    if (limitICode) {
+		System.err.println("  Max iCode size: " + cost.getICodeSize());
+	    }
+ 	} while (!limitICode || cost.getICodeSize()>ICODE_THRESHOLD);
+	
 	int tilesUsed = numTiles;
 	// decrease the number of tiles to the fewest that we need for
 	// a given bottleneck.  This is in an attempt to decrease

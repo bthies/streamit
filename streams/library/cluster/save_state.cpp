@@ -62,7 +62,7 @@ void save_state::save_buffer(int thread, int steady_iter, object_write_buffer *b
 } 
 
 
-void save_state::load_from_file(int thread, 
+int save_state::load_from_file(int thread, 
 				int steady_iter, 
 				void (*read_object)(object_write_buffer *)) {
   
@@ -71,37 +71,53 @@ void save_state::load_from_file(int thread,
   char fname[256];
   sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
   
-  printf("thread: %d file: %s\n", thread, fname);
+  //printf("thread: %d file: %s\n", thread, fname);
   
   int fd = open(fname, O_RDONLY);
+  
+  if (fd == -1) {
+    perror("load_checkpoint");
+    return -1;
+  }
+  
   netsocket file_sock(fd);
+
+  int count = 0;
   
   for (;;) {
     char tmp[4];
     int retval = file_sock.read_chunk(tmp, 4);
     if (retval == -1) break;
     buf.write(tmp, 4);
-    printf("read data (4 bytes)\n");
+
+    count += 4;
+
+    //printf("read data (4 bytes)\n");
   }
-  
+
+  printf("thread: %d file: %s size: %d bytes\n", thread, fname, count);
   close(fd);
   
   buf.set_read_offset(0);
-  
   read_object(&buf);
+
+  return 0;
 }
 
 
-void save_state::load_state(int thread, int *steady, void (*read_object)(object_write_buffer *)) {
+int save_state::load_state(int thread, int *steady, void (*read_object)(object_write_buffer *)) {
   
-  unsigned iter = init_instance::get_thread_start_iter(thread);
-  
+  //unsigned iter = init_instance::get_thread_start_iter(thread);
+  unsigned iter = *steady;
+
   printf("thread: %d iteration: %d\n", thread, iter);
   
   if (iter > 0) {
     *steady = iter;
-    save_state::load_from_file(thread, iter, read_object);
+    if (save_state::load_from_file(thread, iter, read_object) == -1) return -1;
   }
+
+  return 0;
 }
 
 

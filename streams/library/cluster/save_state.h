@@ -18,11 +18,11 @@ class save_state {
 
   static void save_buffer(int thread, int steady_iter, object_write_buffer *buf);
 
-  static void load_from_file(int thread, 
+  static int load_from_file(int thread, 
 			   int steady_iter, 
 			     void (*read_object)(object_write_buffer *));
 
-  static void load_state(int thread, int *steady, void (*read_object)(object_write_buffer *));
+  static int load_state(int thread, int *steady, void (*read_object)(object_write_buffer *));
 
   static int find_max_iter(int n_threads);
 

@@ -75,6 +75,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     public static void generateSplitter(FlatNode node) {
     	
 	SIRSplitter splitter = (SIRSplitter)node.contents;
+
+	if (splitter.getSumOfWeights() == 0) {
+	    // The splitter is not doing any work
+	    
+	    return;
+	}
+
 	CType baseType = Util.getBaseType(Util.getOutputType(node));
 	int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
@@ -213,6 +220,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     public static void generateJoiner(FlatNode node) {
     	
 	SIRJoiner joiner = (SIRJoiner)node.contents;
+
+	if (joiner.getSumOfWeights() == 0) {
+	    // The joiner is not doing any work
+	    
+	    return;
+	}
+
 	CType baseType = Util.getBaseType(Util.getJoinerType(node));
 	int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 

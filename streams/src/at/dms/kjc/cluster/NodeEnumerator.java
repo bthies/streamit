@@ -27,9 +27,7 @@ public class NodeEnumerator implements FlatVisitor {
 
     public static int getNodeId(FlatNode node) {
     
-	Integer i = (Integer)nodeIds.get(node.contents);
-
-	return i.intValue();
+	return getSIROperatorId(node.contents);
     }
 
     public static SIROperator getOperator(int nodeID) {
@@ -45,7 +43,7 @@ public class NodeEnumerator implements FlatVisitor {
     public static int getSIROperatorId(SIROperator f) {
     
 	Integer i = (Integer)nodeIds.get(f);
-
+	if (i == null) return -1;
 	return i.intValue();
     }
         
@@ -59,6 +57,20 @@ public class NodeEnumerator implements FlatVisitor {
 			 (counter)+
 			 "\n");
 	*/
+
+	if (node.contents instanceof SIRSplitter) {
+	    if (((SIRSplitter)node.contents).getSumOfWeights() == 0) {
+		// The splitter is not doing any work
+		return;
+	    }
+	}
+
+	if (node.contents instanceof SIRJoiner) {
+	    if (((SIRJoiner)node.contents).getSumOfWeights() == 0) {
+		// The joiner is not doing any work
+		return;
+	    }
+	}
 
 	Integer _int = new Integer(counter); 
 

@@ -571,8 +571,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 	}
 
+	if (type.toString().compareTo("boolean") == 0) {
+	    print("bool");
+	} else {
+	    print(type);
+	}
 
-        print(type);
         print(" ");
         print(ident);
 	print("__"+selfID);

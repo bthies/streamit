@@ -38,6 +38,11 @@ class ClusterCodeGenerator {
     private boolean restrictedExecution;
     private boolean sendsCredits;
     private HashSet sendsCreditsTo;
+
+    private String TypeToC(CType t) {
+	if (t.toString().compareTo("boolean") == 0) return "bool";
+	return t.toString();
+    } 
     
     public ClusterCodeGenerator(SIROperator oper, 
 				   JFieldDeclaration fields[]) {
@@ -48,6 +53,14 @@ class ClusterCodeGenerator {
 	id = NodeEnumerator.getSIROperatorId(oper);
 	data_in = (Vector)RegisterStreams.getNodeInStreams(oper);
 	data_out = (Vector)RegisterStreams.getNodeOutStreams(oper);
+
+	if (oper instanceof SIRStream) {
+	    SIRStream stream = (SIRStream)oper;
+	    if (stream.getInputType().toString().compareTo("void") == 0) 
+		data_in.clear();
+	    if (stream.getOutputType().toString().compareTo("void") == 0) 
+		data_out.clear();
+	}
 
 	msg_from = new Vector();
 	msg_to = new Vector();
@@ -134,7 +147,7 @@ class ClusterCodeGenerator {
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
 	    String ident = fields[f].getVariable().getIdent();
-	    r.add(type+" "+ident+"__"+id+";\n");
+	    r.add(TypeToC(type)+" "+ident+"__"+id+";\n");
 	}
 	
 	//  +=============================+
@@ -189,7 +202,15 @@ class ClusterCodeGenerator {
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
 	    String ident = fields[f].getVariable().getIdent();
-	    r.add("  buf->write(&"+ident+"__"+id+", sizeof("+type+"));\n");
+	    if (type.isArrayType()) {
+		int size = 0;
+		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
+		CType base = ((CArrayType)type).getBaseType();
+		size = Integer.valueOf(dims[0]).intValue();
+		r.add("  buf->write("+ident+"__"+id+", "+size+" * sizeof("+TypeToC(base)+"));\n");
+	    } else {
+		r.add("  buf->write(&"+ident+"__"+id+", sizeof("+TypeToC(type)+"));\n");
+	    }
 	}
 
 	i = data_out.iterator();
@@ -216,7 +237,15 @@ class ClusterCodeGenerator {
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
 	    String ident = fields[f].getVariable().getIdent();
-	    r.add("  buf->read(&"+ident+"__"+id+", sizeof("+type+"));\n");
+	    if (type.isArrayType()) {
+		int size = 0;
+		String dims[] = ArrayDim.findDim((SIRFilter)oper, ident);
+		CType base = ((CArrayType)type).getBaseType();
+		size = Integer.valueOf(dims[0]).intValue();
+		r.add("  buf->read("+ident+"__"+id+", "+size+" *  sizeof("+TypeToC(base)+"));\n");
+	    } else {
+		r.add("  buf->read(&"+ident+"__"+id+", sizeof("+TypeToC(type)+"));\n");
+	    }
 	}
 
 	i = data_out.iterator();

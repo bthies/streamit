@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.6 2002-07-03 19:30:50 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.7 2002-07-17 18:35:38 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -97,12 +97,20 @@ public class CompilerInterface {
      * Runs the last compiled streamit program. Returns true if execution goes well,
      * false if something bad happened.
      **/
-    boolean streamITRun(String root, String filename) {
+    boolean streamITRun(String root, String filename, int initOutput, int ssOutput) {
 	if (rawTarget(this.compilerFlags)) {
 	    // set up the execution of the program via the raw simulator
-	    return RuntimeHarness.rawExecute(root,
-					     at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME,
-					     root + filename + SUFFIX_DATA_RAW);
+	    boolean result;
+	    result = RuntimeHarness.rawExecute(root,
+					       at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME,
+					       root + filename + SUFFIX_DATA_RAW);
+	    // if we got a good result, add a line to the performance data
+	    if (result) {
+		ResultPrinter.printPerformance(root, filename,
+					       getOptionsString(),
+					       initOutput, ssOutput);
+	    }
+	    return result;
 	} else {
 	    // execute the program directly on the uniprocessor
 	    return RuntimeHarness.uniExecute(root + filename + SUFFIX_EXE,

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.10 2002-07-15 21:42:04 aalamb Exp $
+ * $Id: TestExamples.java,v 1.11 2002-07-17 18:35:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -47,10 +47,12 @@ public class TestExamples extends StreamITTestCase {
 
 	// can't fit on raw 4 without partition
 	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
-	    suite.addTest(new TestExamples("testFFT", flags));
+	    suite.addTest(new TestExamples("testFFT3", flags));
+	    suite.addTest(new TestExamples("testFFT_inlined", flags));
 	}
 
-	suite.addTest(new TestExamples("testFusion", flags));
+	suite.addTest(new TestExamples("testFuse", flags));
+	suite.addTest(new TestExamples("testFuseTest", flags));
 	suite.addTest(new TestExamples("testFib", flags));
 	suite.addTest(new TestExamples("testFib2", flags));
 	suite.addTest(new TestExamples("testFir", flags));
@@ -82,10 +84,12 @@ public class TestExamples extends StreamITTestCase {
 	}
 	
 
-	//suite.addTest(new TestExamples("testMergeSort", flags));
+	suite.addTest(new TestExamples("testMergeSort", flags));
 	//suite.addTest(new TestExamples("testUpDown", flags));
-	//suite.addTest(new TestExamples("testVectAdd", flags));
+	suite.addTest(new TestExamples("testVectAdd", flags));
+	suite.addTest(new TestExamples("testVectAdd1", flags));
 	suite.addTest(new TestExamples("testWeightedRR", flags));
+	suite.addTest(new TestExamples("testTwoWeightedRR", flags));
 
 	// this one doesn't fit on any raw4
 	if (!flagsContainRaw4(flags)) {
@@ -106,26 +110,46 @@ public class TestExamples extends StreamITTestCase {
 			       "BitonicSort.out");
     }
 
-    public void testFFT() {
+    public void testFFT3() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "fft/",
-			       "FFT_inlined.java",
-			       "FFT.out");
+			       "FFT3.java",
+			       "FFT3.out",
+			       0, 64);
     }
 
-    public void testFusion() {
+    public void testFFT_inlined() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "fft/",
+			       "FFT_inlined.java",
+			       "FFT_inlined.out",
+			       0, 32);
+    }
+
+    public void testFuse() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "fuse/",
+			       "FusionTest.java",
+			       "FusionTest.out",
+			       0,1);
+    }
+
+    public void testFuseTest() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "fuse-test/",
 			       "FuseTest.java",
-			       "FuseTest.out");
+			       "FuseTest.out",
+			       0,3);
     }
-    
+
     public void testFib() {
-	doCompileTest(EXAMPLE_ROOT + "fib/",
-		      "Fib.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "fib/",
+			       "Fib.java",
+			       "Fib.out",
+			       0,1);
     }
     
     public void testFib2() {
-	doCompileTest(EXAMPLE_ROOT + "fib2/",
-		      "Fib2.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "fib2/",
+			       "Fib2.java",
+			       "Fib2.out",
+			       0,1);
     }
 
     public void testFir() {
@@ -133,39 +157,52 @@ public class TestExamples extends StreamITTestCase {
 	doMake(root);
 	doCompileRunVerifyTest(root,
 			       "LinkedFirTest.java",
-			       "LinkedFirTest.out");
+			       "LinkedFirTest.out",
+			       0,1);
     }
 
     public void testFlybit() {
-	doCompileTest(EXAMPLE_ROOT + "flybit/",
-		      "Flybit.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "flybit/",
+			       "Flybit.java",
+			       "Flybit.out",
+			       0,4);
+	
     }
 
     public void testHello6() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "hello6/",
 			       "HelloWorld6.java",
-			       "HelloWorld6.out");
+			       "HelloWorld6.out",
+			       0,1);
 			
     }
 
     public void testHelloSeparate() {
-	doCompileTest(EXAMPLE_ROOT + "hello-separate/",
-		      "HelloSeparate.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "hello-separate/",
+			       "HelloSeparate.java",
+			       "HelloSeparate.out",
+			       0,1);
     }
 	
     public void testPeekPipe() {
-	doCompileTest(EXAMPLE_ROOT + "peek-pipe/",
-		      "PeekPipe.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "peek-pipe/",
+			       "PeekPipe.java",
+			       "PeekPipe.out",
+			       0,1);
     }
 
     public void testSimpleSplit() {
-	doCompileTest(EXAMPLE_ROOT + "simple-split/",
-		      "SimpleSplit.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "simple-split/",
+			       "SimpleSplit.java",
+			       "SimpleSplit.out",
+			       0,4);
     }
 
     public void testUnroll() {
-	doCompileTest(EXAMPLE_ROOT + "unroll/",
-		      "Unroll.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "unroll/",
+			       "Unroll.java",
+			       "Unroll.out",
+			       0,1);
     }
     
     public void testFm() {
@@ -178,7 +215,8 @@ public class TestExamples extends StreamITTestCase {
 	// for more cycles
 	doMake(root, "extra-run");
 	doRunTest(root,
-		  "LinkedFMTest.java");
+		  "LinkedFMTest.java",
+		  0,1);
 	// do the comparison test
 	doCompareTest(root,
 		      "LinkedFMTest.java",
@@ -193,52 +231,61 @@ public class TestExamples extends StreamITTestCase {
     public void testFieldProp() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-prop/",
 			       "FieldPropTest.java",
-			       "FieldPropTest.out");
+			       "FieldPropTest.out",
+			       0,2);
     }
 
     public void testFieldProp2() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-prop/",
 			       "FieldPropTest2.java",
-			       "FieldPropTest2.out");
+			       "FieldPropTest2.out",
+			       0,2);
     }
 
     public void testFieldInit() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
 			       "FieldInit.java",
-			       "FieldInit.out");
+			       "FieldInit.out",
+			       0,1);
     }
 
     public void testFieldInit2() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
 			       "FieldInit2.java",
-			       "FieldInit2.out");
+			       "FieldInit2.out",
+			       0,1);
     }
 
     public void testFieldInit3() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
 			       "FieldInit3.java",
-			       "FieldInit3.out");
+			       "FieldInit3.out",
+			       0,1);
     }
 
     public void testFieldInit4() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "field-init/",
 			       "FieldInit4.java",
-			       "FieldInit4.out");
+			       "FieldInit4.out",
+			       0,1);
     }
 
     public void testLattice() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "lattice/",
 			       "Lattice.java",
-			       "Lattice.out");
+			       "Lattice.out",
+			       0,256);
     }
 
     public void testMergeSort() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "mergesort/",
 			       "MergeSort.java",
-			       "MergeSort.out");
+			       "MergeSort.out",
+			       0,16);
     }
 
     public void testUpDown() {
+	// who knows what this is supposed to do?
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "updown/",
 			       "UpDown.java",
 			       "UpDown.out");
@@ -247,13 +294,29 @@ public class TestExamples extends StreamITTestCase {
     public void testVectAdd() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
 			       "VectAdd.java",
-			       "VectAdd.out");
+			       "VectAdd.out",
+			       0,1);
+    }
+
+    public void testVectAdd1() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
+			       "VectAdd1.java",
+			       "VectAdd1.out",
+			       0,1);
     }
 
     public void testWeightedRR() {
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "weighted-rr/",
 			       "WeightedRR.java",
-			       "WeightedRR.out");
+			       "WeightedRR.out",
+			       0,6);
+    }
+
+    public void testTwoWeightedRR() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "weighted-rr/",
+			       "TwoWeightedRR.java",
+			       "TwoWeightedRR.out",
+			       0,6);
     }
 
     public void testNokiaFine() {

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestApps.java,v 1.5 2002-07-11 13:51:12 aalamb Exp $
+ * $Id: TestApps.java,v 1.6 2002-07-17 18:35:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -43,13 +43,16 @@ public class TestApps extends StreamITTestCase {
 	    suite.addTest(new TestApps("testMatrixMult", flags));
 	}
 
+	//suite.addTest(new TestApps("testAppsFM", flags));
 	//suite.addTest(new TestApps("testGsm", flags));
 
 	return suite;
     }
 
     /**
-     * For testing.
+     * For testing only the apps -- returns a suite of all
+     * apps test cases with the Partition and raw 4 compiler
+     * options turned on.
      **/
     public static Test suite() {
 	return suite(CompilerInterface.PARTITION |
@@ -63,6 +66,14 @@ public class TestApps extends StreamITTestCase {
 			       "MatrixMult.java",
 			       "MatrixMult.out");
     }
+
+    //public void testAppsFM() {
+    //String fmRoot = APPS_ROOT + "FMRadio/";
+    //doMake(fmRoot);
+    //doCompileRunVerifyTest(fmRoot,
+    //		       "MatrixMult.java",
+    //		       "MatrixMult.out");
+    //}
 
 
 

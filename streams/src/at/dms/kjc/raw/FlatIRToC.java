@@ -64,33 +64,39 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		("Optimizing "+
 		 ((SIRFilter)node.contents).getName()+"...");
 
+	ArrayDestroyer arrayDest=new ArrayDestroyer();
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-	    if (!KjcOptions.nofieldprop) {
+	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
+	    
+	    if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { //Already in __RAWMAIN__
+		if (!KjcOptions.nofieldprop) {
 		
-		Unroller unroller;
-		do {
+		    Unroller unroller;
 		    do {
+			do {
+			    //System.out.println("Unrolling..");
+			    unroller = new Unroller(new Hashtable());
+			    method.accept(unroller);
+			} while(unroller.hasUnrolled());
+			//System.out.println("Constant Propagating..");
+			method.accept(new Propagator(new Hashtable()));
 			//System.out.println("Unrolling..");
 			unroller = new Unroller(new Hashtable());
-			((SIRFilter)node.contents).getMethods()[i].accept(unroller);
+			method.accept(unroller);
 		    } while(unroller.hasUnrolled());
+		    //System.out.println("Flattening..");
+		    method.accept(new BlockFlattener());
+		    //System.out.println("Analyzing Branches..");
+		    //method.accept(new BranchAnalyzer());
 		    //System.out.println("Constant Propagating..");
-		    ((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
-		    //System.out.println("Unrolling..");
-		    unroller = new Unroller(new Hashtable());
-		    ((SIRFilter)node.contents).getMethods()[i].accept(unroller);
-		} while(unroller.hasUnrolled());
-		//System.out.println("Flattening..");
-		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
-		//System.out.println("Analyzing Branches..");
-		//((SIRFilter)node.contents).getMethods()[i].accept(new BranchAnalyzer());
-		//System.out.println("Constant Propagating..");
-		((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
-	    } else
-		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
-	    ((SIRFilter)node.contents).getMethods()[i].accept(new ArrayDestroyer());
-	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
+		    method.accept(new Propagator(new Hashtable()));
+		} else
+		    method.accept(new BlockFlattener());
+		method.accept(arrayDest);
+		method.accept(new VarDeclRaiser());
+	    }
 	}
+	arrayDest.destroyFieldArrays((SIRFilter)node.contents);
 	/*	
 	  try {
 	    SIRPrinter printer1 = new SIRPrinter();

@@ -40,9 +40,22 @@ public class FusePipe {
     private static final String POP_INDEX_NAME = "___POP_INDEX";
 
     /**
-     * The name of the counter that is used to count executions of a phase.
+     * The name of the counter that is used to count work executions
+     * of a phase.
      */
-    private static final String COUNTER_NAME = "___COUNTER";
+
+    private static final String COUNTER_NAME_WORK = "___COUNTER_WORK";
+    /**
+     * The name of the counter that is used to control the peek restore
+     * loop of a phase
+     */
+
+    private static final String COUNTER_NAME_RESTORE = "___COUNTER_RESTORE";
+    /**
+     * The name of the counter that is used to count executions of the 
+     * peek backup loop of a phase.
+     */
+    private static final String COUNTER_NAME_BACKUP = "___COUNTER_BACKUP";
 
     /**
      * The name of the initial work function.
@@ -393,11 +406,13 @@ public class FusePipe {
 	    JVariableDefinition popBuffer[] = new JVariableDefinition[2];
 	    JVariableDefinition popCounter[] = new JVariableDefinition[2];
 	    JVariableDefinition pushCounter[] = new JVariableDefinition[2];
-	    JVariableDefinition loopCounter[] = new JVariableDefinition[2];
+	    JVariableDefinition loopCounterWork[] = new JVariableDefinition[2];
+	    JVariableDefinition loopCounterRestore[] = new JVariableDefinition[2];
+	    JVariableDefinition loopCounterBackup[] = new JVariableDefinition[2];
 	    
 	    for (int j=0; j<2; j++) {
 		// the pop buffer
-		popBuffer[j] = makePopBuffer(filter, peekBufferSize, num[j], i);
+		popBuffer[j] = makePopBuffer(filter, peekBufferSize, j, num[j], i);
 
 		// the pop counter.
 		popCounter[j] = 
@@ -422,9 +437,21 @@ public class FusePipe {
 					    new JIntLiteral(pushInit));
 
 		// the exec counter
-		loopCounter[j] = 
+		loopCounterWork[j] = 
 		    new JVariableDefinition(null, 0, CStdType.Integer,
-					    COUNTER_NAME + "_" + j + "_" +i,
+					    COUNTER_NAME_WORK + "_" + j + "_" +i,
+					    null);
+		
+		// the peek restore counter
+		loopCounterRestore[j] = 
+		    new JVariableDefinition(null, 0, CStdType.Integer,
+					    COUNTER_NAME_RESTORE + "_" + j + "_" +i,
+					    null);
+
+		// the peek backup counter
+		loopCounterBackup[j] = 
+		    new JVariableDefinition(null, 0, CStdType.Integer,
+					    COUNTER_NAME_BACKUP + "_" + j + "_" +i,
 					    null);
 	    }
 
@@ -435,12 +462,16 @@ public class FusePipe {
 						popBuffer[0], 
 						popCounter[0], 
 						pushCounter[0],
-						loopCounter[0]),
+						loopCounterWork[0],
+						loopCounterRestore[0],
+						loopCounterBackup[0]),
 				  new PhaseInfo(num[1], 
 						popBuffer[1],
 						popCounter[1], 
 						pushCounter[1],
-						loopCounter[1])
+						loopCounterWork[1],
+						loopCounterRestore[1],
+						loopCounterBackup[1])
 				  ));
 	}
 	// return result
@@ -449,11 +480,12 @@ public class FusePipe {
 	
     /**
      * Returns a JVariableDefinition for a pop buffer for <filter>
-     * that executes <num> times in its schedule and appears in the
+     * that executes <num> times in stage <stage> and appears in the
      * <pos>'th position of its pipeline.
      */
     private static JVariableDefinition makePopBuffer(SIRFilter filter, 
 						     int peekBufferSize,
+						     int stage,
 						     int num,
 						     int pos) {
 	// get the number of items looked at in an execution round
@@ -471,7 +503,7 @@ public class FusePipe {
 				       new CArrayType(Utils.voidToInt(filter.
 								      getInputType()), 
 						      1 /* dimension */ ),
-				       POP_BUFFER_NAME + "_" + pos,
+				       POP_BUFFER_NAME + "_" + pos + "_" + stage,
 				       initializer);
     }
 
@@ -606,7 +638,7 @@ public class FusePipe {
 		    statements.addStatement(initBody);
 		    if(curPhase.num>1)
 			statements.addStatement(makeForLoop(body,
-							    curPhase.loopCounter,
+							    curPhase.loopCounterWork,
 							    new 
 							    JIntLiteral(curPhase.num-1))
 						);
@@ -614,7 +646,7 @@ public class FusePipe {
 		    
 		    // get <body> into a loop in <statements>
 		    statements.addStatement(makeForLoop(body,
-							curPhase.loopCounter,
+							curPhase.loopCounterWork,
 							new 
 							JIntLiteral(curPhase.num))
 					    );
@@ -708,7 +740,7 @@ public class FusePipe {
 	// the rhs of the source of the assignment
 	JExpression sourceRhs = 
 	    new JLocalVariableExpression(null, 
-					 phaseInfo.loopCounter);
+					 phaseInfo.loopCounterRestore);
 
 	// the lhs of the dest of the assignment
 	JExpression destLhs = 
@@ -718,7 +750,7 @@ public class FusePipe {
 	// the rhs of the dest of the assignment
 	JExpression destRhs = 
 	    new JLocalVariableExpression(null,
-					 phaseInfo.loopCounter);
+					 phaseInfo.loopCounterRestore);
 
 	// the expression that copies items from the pop buffer to the
 	// peek buffer
@@ -736,7 +768,7 @@ public class FusePipe {
 
 	// return a for loop that executes (peek-pop) times.
 	return makeForLoop(body,
-			   phaseInfo.loopCounter, 
+			   phaseInfo.loopCounterRestore, 
 			   new JIntLiteral(filterInfo.peekBufferSize));
     }
 
@@ -759,7 +791,7 @@ public class FusePipe {
 	// the rhs of the destination of the assignment
 	JExpression destRhs = 
 	    new JLocalVariableExpression(null, 
-					 phaseInfo.loopCounter);
+					 phaseInfo.loopCounterBackup);
 
 	// the lhs of the source of the assignment
 	JExpression sourceLhs = 
@@ -772,7 +804,7 @@ public class FusePipe {
 	    new
 	    JAddExpression(null, 
 			   new JLocalVariableExpression(null, 
-							phaseInfo.loopCounter),
+							phaseInfo.loopCounterBackup),
 			   new JAddExpression(null, new JIntLiteral(1),
 					      new JLocalVariableExpression(null,
 									   phaseInfo.popCounter)));
@@ -801,7 +833,7 @@ public class FusePipe {
 
 	// return a for loop that executes (peek-pop) times.
 	return makeForLoop(body,
-			   phaseInfo.loopCounter, 
+			   phaseInfo.loopCounterBackup, 
 			   new JIntLiteral(filterInfo.peekBufferSize));
     }
 
@@ -1086,20 +1118,34 @@ public class FusePipe {
 	public final JVariableDefinition pushCounter;
 
 	/**
-	 * The counter for keeping track of executions of the whole block.
+	 * The counter for keeping track of work loop executions
 	 */
-	public final JVariableDefinition loopCounter;
+	public final JVariableDefinition loopCounterWork;
+	
+	/**
+	 * The counter for keeping track of peek restore executions 
+	 */
+	public final JVariableDefinition loopCounterRestore;
+
+	/**
+	 * The counter for keeping track of peek backup executions 
+	 */
+	public final JVariableDefinition loopCounterBackup;
     
 	public PhaseInfo(int num, 
 			 JVariableDefinition popBuffer,
 			 JVariableDefinition popCounter,
 			 JVariableDefinition pushCounter,
-			 JVariableDefinition loopCounter) {
+			 JVariableDefinition loopCounterWork,
+			 JVariableDefinition loopCounterRestore,
+			 JVariableDefinition loopCounterBackup) {
 	    this.num = num;
 	    this.popBuffer = popBuffer;
 	    this.popCounter = popCounter;
 	    this.pushCounter = pushCounter;
-	    this.loopCounter = loopCounter;
+	    this.loopCounterWork = loopCounterWork;
+	    this.loopCounterRestore = loopCounterRestore;
+	    this.loopCounterBackup = loopCounterBackup;
 	}
 
 	/**
@@ -1110,7 +1156,9 @@ public class FusePipe {
 	    result.add(popBuffer);
 	    result.add(popCounter);
 	    result.add(pushCounter);
-	    result.add(loopCounter);
+	    result.add(loopCounterWork);
+	    result.add(loopCounterRestore);
+	    result.add(loopCounterBackup);
 	    return result;
 	}
     }

@@ -112,7 +112,24 @@ main(int argc, char **argv, char **envp)
     fflush(stdout);
 
 
-   
+    /* Structure of processes here:
+     * -- The main process forks a child; its process ID is pid1.
+     *    That process sets an alarm() and goes to sleep.  It wakes
+     *    up from either SIGALRM or SIGTERM (the alarm goes off or
+     *    it is killed), and in either case exits.
+     * -- The main process forks a second child; its process ID is
+     *    pid2.  That just execs the child process.
+     * -- The main process wait()s for a child to exit.  If the
+     *    pid of the exiting child is pid1, it's because there
+     *    was a timeout; if the pid is pid2, it's because the
+     *    desired program exited.
+     * We make ourself a process group leader.  Then when we want
+     * to clean up the children, we can kill pid 0 to kill everything
+     * in the current process group; since we ignore SIGTERM ourselves,
+     * this has the desired effect.
+     */
+
+    setpgid(0, 0);
     switch(pid1 = fork()) {
     case -1 :
         printf("Cannot create a new process\n");
@@ -181,7 +198,7 @@ main(int argc, char **argv, char **envp)
                     exit(-1);
 
             } else {
-                kill(pid2, SIGTERM); 
+                kill(0, SIGTERM); 
                 exit(-1);
             }
 

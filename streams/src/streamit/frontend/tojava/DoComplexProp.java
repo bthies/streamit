@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.13 2003-05-13 19:32:54 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.14 2003-05-28 18:47:42 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -347,6 +347,11 @@ public class DoComplexProp extends FEReplacer
             newNames.add(name);
             newInits.add(init);
         }
+        // It's possible that this will leave us with no variables.
+        // If so, don't return anything.  Assume all three lists are
+        // the same length.
+        if (newTypes.isEmpty())
+            return null;
         return new StmtVarDecl(ctx, newTypes, newNames, newInits);
     }
 

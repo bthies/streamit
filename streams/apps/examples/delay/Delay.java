@@ -24,10 +24,6 @@ class Delay extends FeedbackLoop {
 	setJoiner(ROUND_ROBIN());
     }
 
-    public int initPathInt(int index) {
-	return 0;
-    }
-
     public float initPathFloat(int index) {
 	return 0.0f;
     }

@@ -863,6 +863,10 @@ public class Rawify
 	//by the size of the type it is receiving
 	int itemsReceiving = filterInfo.itemsNeededToFire(iteration, init) *
 	    Util.getTypeSize(node.getFilter().getInputType());
+	
+	//do nothing if there is nothing to do
+	if (itemsReceiving == 0)
+	    return;
 
 	appendReceiveInstructions(node, itemsReceiving, filterInfo, init, 
 				  primePump, tile, rawChip);
@@ -885,7 +889,7 @@ public class Rawify
 		tile.hasIODevice()) 
 		sourceNode = tile.getIODevice();
 	    else 
-		sourceNode = OffChipBuffer.getBuffer(node.getPrevious(), node).getDRAM();
+		sourceNode = OffChipBuffer.getBuffer(node.getPrevious(), node).getNonRedundant().getDRAM();
 	}
 	
 	for (int j = 0; j < itemsReceiving; j++) {
@@ -917,6 +921,9 @@ public class Rawify
 	int items = filterInfo.itemsFiring(iteration, init) * 
 	    Util.getTypeSize(node.getFilter().getOutputType());
 	
+	if (items == 0)
+	    return;
+
 	ComputeNode destNode = null;
 	
 	if (node.getNext().isFilterTrace())
@@ -927,7 +934,7 @@ public class Rawify
 		node.getNext().isOutputTrace() && tile.hasIODevice())
 		destNode = tile.getIODevice();
 	    else {
-		destNode = OffChipBuffer.getBuffer(node, node.getNext()).getDRAM();
+		destNode = OffChipBuffer.getBuffer(node, node.getNext()).getNonRedundant().getDRAM();
 	    }
 	    
 	}

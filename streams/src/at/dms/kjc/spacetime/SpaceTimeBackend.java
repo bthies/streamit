@@ -26,7 +26,7 @@ public class SpaceTimeBackend
     public static SIRStructure[] structures;
     final private static boolean TEST_SOFT_PIPE = false; //Test Software Pipelining
     final private static boolean TEST_BEAMFORMER = false; //Test SplitJoins
-    final private static boolean REAL=true; //The Real Stuff
+    final private static boolean REAL=false; //The Real Stuff
     
     
     public static void run(SIRStream str,
@@ -326,7 +326,7 @@ public class SpaceTimeBackend
 	//content=null;
 	//executionCounts=null;
 
-	/*Trace[] traceForrest = new Trace[1];
+	Trace[] traceForrest = new Trace[1];
 	traceForrest[0] = traces[0];
 
 	//mgordon's stuff
@@ -350,7 +350,7 @@ public class SpaceTimeBackend
 	    MagicDram.GenerateCode(rawChip);
 	}
 	Makefile.generate(rawChip);
-	BCFile.generate(rawChip);*/
+	BCFile.generate(rawChip);
     }
 }
 

@@ -16,7 +16,7 @@ my $OUTPUT_FILENAME = "workFunc.tsv";
 # number of trials to run
 my $NUM_TRIALS = 5;
 # number of iterations to run the program for
-my $ITERS = 10000000;
+my $ITERS = 1000000000;
 
 
 
@@ -40,8 +40,8 @@ my @peeks_pushes;
 
 # auto generate the data set that we want
 my ($i,$j);
-for ($i=10; $i<=100; $i+=10) {
-    for ($j=2; $j<3; $j++) {    
+for ($i=10; $i<=200; $i+=10) {
+    for ($j=1; $j<2; $j++) {    
 	push(@peeks_pushes, "$i:0:$j");
     }
 }

@@ -56,7 +56,6 @@ sub do_test {
     
     # run the dynamo rio test and get back the results
     my $report = run_rio($path, $base_filename, $iters);
-    print "\n";
     
     # extract the flops, fadds and fmul count from the report
     my ($flops) =  $report =~ m/saw (.*) flops/;
@@ -175,6 +174,18 @@ sub get_N {
     return $N;
 }
 
+# gets a date/time stamp based on the output from 'date'
+# usage get_date_time_stamp
+sub get_date_time_stamp {
+    my $stamp = `date`;
+    chomp $stamp; # remove trailing new line.
+    # replace colons and spaces
+    $stamp =~ s/\s/\_/gi; # " " --> "_"
+    $stamp =~ s/\:/\-/gi; # ":" --> "-"
+
+    return $stamp;
+}
+
 # Time the execution of a program using "time"
 # returns time for execution
 # usage: time_execution($path, $program[, $num_iters]
@@ -237,6 +248,45 @@ sub read_file {
 
     return $file_contents;
 }
+
+# writes a list of lines of a tsv file
+# into the actual file, saves a copy
+# of the results in the "opt_results" directory
+# and sends andrew an email with the contents.
+# usage save_tsv($filename, $subject, @lines)
+sub save_tsv {
+    my $filename = shift || die ("no filename passed to save_tsv");
+    my $subject = shift; # the subject of the email message that we are going to send.
+    my @lines = @_;
+
+    print "(writing $filename)";
+    open (RFILE, ">$filename");
+    print RFILE join("\n", @lines);
+    close RFILE;
+
+    # now, save a copy of the tsv file to the results diectory
+    my $save_dir = "opt_results";
+    `mkdir $save_dir`;
+    my $date_stamp = get_date_time_stamp();
+    # pull out just the name from the full filename
+    my @parts = split("/", $filename);
+    my $name = pop(@parts);
+    print "(saving backup)";
+    open (RFILE, ">$save_dir/$date_stamp".$name);
+    print RFILE join("\n", @lines);
+    close RFILE;
+
+    # finally, send the email
+    print "(sending mail)";
+    open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"$subject\"");
+    print MHMAIL "auto sent by reaplib at " . `date`;
+    print MHMAIL join("\n", @lines); 
+    close(MHMAIL);
+}
+
+
+
+
 
 # writes the contents of the first scalar argument to the 
 # filename in the second argument

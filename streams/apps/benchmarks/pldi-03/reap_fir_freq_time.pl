@@ -8,7 +8,7 @@ use strict;
 require "reaplib.pl";
 
 my $STANDARD_OPTIONS = "--unroll 100000 --debug";
-my $FREQ_OPTIONS     = "--frequencyreplacement 3";
+my $FREQ_OPTIONS     = "--frequencyreplacement";
 
 # the filename to write out the results to. (append first command line arg to name)
 my $RESULTS_FILENAME = "freq_fir_timing.tsv";

@@ -151,14 +151,37 @@ public class Flattener {
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");
 
-	// if someone wants to run linear analysis (or linear replacement)
-	if (KjcOptions.linearanalysis || KjcOptions.linearreplacement) {
-	    // pass the program (str) and whether or not we want
-	    // to do direct replacement code for the work functions
-	    // of linear filters.
+	// if someone wants to run any of the linear tools/optimizations
+	// we need to run linear analysis first to extract the information
+	// we are working with.
+	if (KjcOptions.linearanalysis || KjcOptions.linearreplacement || KjcOptions.frequencyreplacement) {
+	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.print("Running linear analysis... ");
-	    runLinearAnalysis(str, KjcOptions.linearreplacement);
+	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
 	    System.err.println("done.");
+
+	    // now, print out the graph using the LinearPrinter which colors the graph
+	    // nodes based on their linearity.
+	    LinearDot.printGraph(str, "linear.dot", lfa);
+	    
+	    // if we are supposed to transform the graph
+	    // by replacing work functions with their linear forms, do so now 
+	    if (KjcOptions.linearreplacement) {
+		System.err.print("Running linear replacement... ");
+		LinearReplacer.doReplace(lfa, str);
+		System.err.println("done.");
+		// print out the stream graph after linear replacement
+		LinearDot.printGraph(str, "linear-replace.dot", lfa);
+	    }
+
+	    // and finally, if we want to run frequency analysis
+	    if (KjcOptions.frequencyreplacement) {
+		System.err.print("Running frequency replacement... ");
+		FrequencyReplacer.doReplace(lfa, str);
+		System.err.println("done.");
+		LinearDot.printGraph(str, "linear-frequency.dot", lfa);
+	    }
+
 	}
 
 	// make single structure
@@ -189,31 +212,6 @@ public class Flattener {
 	System.err.println("Generating code...");
 	LIRToC.generateCode(flatClass);
 	//System.err.println("done.");
-    }
-
-
-    /**
-     * Runs linear analysis on the passed stream. 
-     * If the transform flag is set, then we attempt to use the
-     * linear analysis information to transform the stream into 
-     **/
-    static void runLinearAnalysis(SIRStream str,
-				  boolean transform) {
-	// run the linear analysis and stores the information garnered in the lfa
-	LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
-
-	// now, print out the graph using the LinearPrinter which colors the graph
-	// nodes based on their linearity.
-	LinearDot.printGraph(str, "linear.dot", lfa);
-
-	// if we are supposed to transform the graph
-	// by replacing work functions with their linear forms, do so now 
-	if (transform == true) {
-	    LinearReplacer.doReplace(lfa, str);
-	    // print out the stream graph after linear replacement
-	    LinearDot.printGraph(str, "linear-replace.dot", lfa);
-	}
-	
     }
     
 }

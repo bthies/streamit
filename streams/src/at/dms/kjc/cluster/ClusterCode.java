@@ -179,10 +179,19 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    
 	    p.print("  "+s.name()+"out = new mysocket(init_instance::get_outgoing_socket("+s.getSource()+","+s.getDest()+"));\n");
 	}
-	
-	p.print("  for (i = 0; i < __number_of_iterations; i++) {\n");
+
+	// get int init count
+	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	int init;
+	if (initCounts==null) {
+	    init = 0;
+	} else {
+	    init = initCounts.intValue();
+	}
+	p.print("  {int __split_iter = " + init + " + " + ClusterBackend.steadyExecutionCounts.get(node) + " * __number_of_iterations;\n");
+	p.print("  for (i = 0; i < __split_iter; i++) {\n");
 	p.print("    __splitter_"+thread_id+"_work();\n");
-	p.print("  }\n");
+	p.print("  }}\n");
 	
 	p.print("}\n");
 	
@@ -339,9 +348,18 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+"));\n");
 
 
-	p.print("  for (i = 0; i < __number_of_iterations; i++) {\n");
+	// get int init count
+	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	int init;
+	if (initCounts==null) {
+	    init = 0;
+	} else {
+	    init = initCounts.intValue();
+	}
+	p.print("  {int __join_iter = " + init + " + " + ClusterBackend.steadyExecutionCounts.get(node) + " * __number_of_iterations;\n");
+	p.print("  for (i = 0; i < __join_iter; i++) {\n");
 	p.print("    __joiner_"+thread_id+"_work();\n");
-	p.print("  }\n");
+	p.print("  }}\n");
 
 	p.print("}\n");
 	

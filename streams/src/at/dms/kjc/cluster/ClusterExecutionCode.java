@@ -544,7 +544,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	}
 	
 	//add the call to the work function
-	statements.addStatement(generateSteadyStateLoop(filter,
+	statements.addStatement(generateSteadyStateLoop(node,
 							localVariables));
 	
 	
@@ -744,9 +744,10 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 
     //generate the code for the steady state loop
-    JStatement generateSteadyStateLoop(SIRFilter filter, 
+    JStatement generateSteadyStateLoop(FlatNode node, 
 				       LocalVariables localVariables) 
     {
+	SIRFilter filter = (SIRFilter)node.contents;
 	
 	//is we are rate matching generate the appropriate code
 	//if (KjcOptions.ratematch) 
@@ -834,7 +835,21 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 					    (null, var),
 					    new JIntLiteral(1))), null);
 
-	JExpression relation = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var), new JLocalVariableExpression(null, var2));
+	// num iters = init + num_steady_iterations_specified_by_user * steady
+	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	int init;
+	if (initCounts==null) {
+	    init = 0;
+	} else {
+	    init = initCounts.intValue();
+	}
+	JExpression numIters = new JAddExpression(null,
+						  new JIntLiteral(init),
+						  new JMultExpression(null,
+								      new JLocalVariableExpression(null, var2),
+								      new JIntLiteral(((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue())));
+
+	JExpression relation = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var), numIters);
 
 	JStatement incr_expr = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
 

@@ -96,13 +96,6 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 
-	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
-	    System.err.print("Partitioning...");
-	    str = Partitioner.doit(str, 
-				   KjcOptions.raw * KjcOptions.raw);
-	    System.err.println("done.");
-	}
-
 	System.err.print("Raising variable declarations... ");
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");

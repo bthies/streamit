@@ -61,6 +61,24 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
 
     /**
+     * Copies the state of filter <other> into this.  Fields that are
+     * objects will be shared instead of cloned.
+     */
+    public void copyState(SIRFilter other) {
+	this.pop = other.pop;
+	this.push = other.push;
+	this.peek = other.peek;
+	this.work = other.work;
+	this.init = other.init;
+	this.inputType = other.inputType;
+	this.outputType = other.outputType;
+	this.parent = other.parent;
+	this.fields = other.fields;
+	this.methods = other.methods;
+	this.ident = other.ident;
+    }
+
+    /**
       * Return a shallow clone of the SIRFilter
      */
     public Object clone() 

@@ -86,7 +86,7 @@ public class FuseSimpleSplit {
 	}
 	
 	int index = sj.getParent().indexOf(sj);
-	Utils.assert(index>-1, "Couldn't find " + sj.getIdent() + " in " + sj.getParent().getIdent());
+	Utils.assert(index>-1, "Couldn't find " + sj.getName() + " in " + sj.getParent().getIdent());
 	pipe.add(newFilter, new LinkedList(sj.getParent().getParams(index)));
 	
 	// make a joinFilter only if it's not a not a null join

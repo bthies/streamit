@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
+import at.dms.util.Utils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,14 +26,21 @@ public class FuseAll implements StreamVisitor {
      */
     public static void fuse(SIRStream str) {
 	// try fusing toplevel separately since noone contains it
+	SIRPipeline wrapper = SIRContainer.makeWrapper(str);
 	FuseAll fuseAll = new FuseAll();
 	boolean hasFused = true;
 	while (hasFused) {
 	    try {
-		IterFactory.createIter(str).accept(fuseAll);
+		Utils.assert(wrapper.get(0).getParent() == wrapper);
+		Lifter.lift(wrapper);
+		if (wrapper.size()>1) {
+		    wrapper = SIRContainer.makeWrapper(wrapper);
+		}
+		IterFactory.createIter(wrapper.get(0)).accept(fuseAll);
 		hasFused = false;
 	    } catch (SuccessfulFuseException e) {}
 	}
+	Lifter.eliminatePipe(wrapper);
     }
 
     /**
@@ -79,20 +87,16 @@ public class FuseAll implements StreamVisitor {
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
 	int elim = FusePipe.fuse(self);
-	// try lifting
-	Lifter.eliminatePipe(self);
-	if (elim > 0) {
-	    throw new SuccessfulFuseException();
-	}
+	Utils.assert(elim>0, "Tried to fuse " + self + " that has " + self.size() + " components, but didn't eliminate anything.");
+	throw new SuccessfulFuseException();
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
 	SIRStream result = FuseSplit.fuse(self);
-	if (result!=self) {
-	    throw new SuccessfulFuseException();
-	}
+	// should always be successful
+	throw new SuccessfulFuseException();
     }
 
     /* post-visit a feedbackloop */

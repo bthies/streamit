@@ -116,6 +116,7 @@ public class Lifter implements StreamVisitor {
 	    int index = parent.indexOf(str);
 	    for (int i=0; i<str.size(); i++) {
 		parent.add(index+1+i, str.get(i), str.getParams(i));
+		Utils.assert(str.get(i).getParent()==parent);
 	    }
 
 	    parent.remove(index);
@@ -147,6 +148,7 @@ public class Lifter implements StreamVisitor {
 			 + str.getMethods()[0]);
 	    
 	    parent.replace(str, str.get(0));
+	    Utils.assert(str.get(0).getParent()==parent);
 	    return true;
 	} else {
 	    return false;

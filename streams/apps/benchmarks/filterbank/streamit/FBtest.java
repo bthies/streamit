@@ -36,7 +36,7 @@ class FBtest extends StreamIt {
  
     static public void main(String[] t)
     {
-	FBtest test=new FBtest();
+	StreamIt test=new FBtest();
 	test.run(t);
     }
     

@@ -27,7 +27,6 @@ public class ViewContainersUnhide extends AbstractActionDefault {
 	{
 		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
 		graphStruct.containerNodes.unhideAllContainers();
-		ViewContainerVisibility.HIDE = false;
 		ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
 												get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
 				ac.actionPerformed(null);

@@ -26,7 +26,5 @@ public class ViewContainersHide extends AbstractActionDefault {
 	{
 		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
 		graphStruct.containerNodes.hideAllContainers();
-		ViewContainerVisibility.HIDE = true;
-		
 	}
 }

@@ -7,20 +7,24 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 import java.awt.event.ActionEvent;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
+import streamit.eclipse.grapheditor.editor.controllers.Controller;
+import streamit.eclipse.grapheditor.editor.controllers.GEFeedbackLoopController;
 import streamit.eclipse.grapheditor.editor.controllers.GEFilterController;
 import streamit.eclipse.grapheditor.editor.controllers.GEJoinerController;
 import streamit.eclipse.grapheditor.editor.controllers.GEPipelineController;
 import streamit.eclipse.grapheditor.editor.controllers.GESplitJoinController;
+import streamit.eclipse.grapheditor.editor.controllers.GESplitterController;
 import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GEType;
 
 /**
+ * Action to edit the properties of a GEStreamNode.
  * @author jcarlos
- *
  */
 public class EditProperties extends AbstractActionFile {
 
+	
 	/**
 	 * Constructor for EditProperties.
 	 * @param graphpad
@@ -31,7 +35,8 @@ public class EditProperties extends AbstractActionFile {
 	}
 
 	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+	 * Action to edit the properties of a GEStreamNode. The properties of the GEStreamNode will
+	 * apper and the user will be able to modify those properties.
 	 */
 	public void actionPerformed(ActionEvent e)
 	{
@@ -40,57 +45,40 @@ public class EditProperties extends AbstractActionFile {
 		if (cell != null)
 		{
 			String type = cell.getType();
+			Controller _control = null;
 			if (type == GEType.PIPELINE)
 			{
-				GEPipelineController pControl = new GEPipelineController();
-				if (pControl.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
-				{
-					GEProperties.setNodeProperties(cell, 
-					                               pControl.getConfiguration(),
-												   graphpad.getCurrentDocument().getGraphStructure().getJGraph());
-				}
+				_control = new GEPipelineController();	
 			}
 			else if (type == GEType.PHASED_FILTER)
 			{
-				GEFilterController fControl = new GEFilterController();
-				if (fControl.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
-				{
-					GEProperties.setNodeProperties(cell, 
-												   fControl.getConfiguration(),
-												   graphpad.getCurrentGraph());
-				}
+				_control = new GEFilterController();
 			}
 			else if (type == GEType.SPLIT_JOIN)
 			{
-				GESplitJoinController sjControl = new GESplitJoinController();
-				if (sjControl.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
-				{
-					GEProperties.setNodeProperties(cell, 
-												   sjControl.getConfiguration(),
-												   graphpad.getCurrentDocument().getGraphStructure().getJGraph());	
-				}
+				_control = new GESplitJoinController();
 			}
 			else if (type ==  GEType.JOINER)
 			{
-				GEJoinerController jControl = new GEJoinerController();
-				if (jControl.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
-				{
-					GEProperties.setNodeProperties(cell, 
-												   jControl.getConfiguration(),
-												   graphpad.getCurrentDocument().getGraphStructure().getJGraph());
-				}
-				
+				_control = new GEJoinerController();				
 			}
 			else if (type == GEType.SPLITTER)
 			{
-				GEJoinerController sControl = new GEJoinerController();
-				if (sControl.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
-				{
-					GEProperties.setNodeProperties(cell, 
-												   sControl.getConfiguration(),
-												   graphpad.getCurrentDocument().getGraphStructure().getJGraph());		
-				}
+				_control = new GESplitterController();
+			}
+			else if (type == GEType.FEEDBACK_LOOP)
+			{
+				_control = new GEFeedbackLoopController();
+			}
+			if (_control.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
+			{
+				GEProperties.setNodeProperties(cell, 
+											   _control.getConfiguration(),
+											   //graphpad.getCurrentGraph())
+											   //graphpad.getCurrentDocument().getGraphStructure().getJGraph()
+											   graphpad.getCurrentDocument().getGraphStructure());		
 			}
 		}
 	}
 }
+			

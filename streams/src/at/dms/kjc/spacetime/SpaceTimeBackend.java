@@ -23,8 +23,8 @@ public class SpaceTimeBackend
     public static boolean FILTER_DEBUG_MODE = false;
     
     public static SIRStructure[] structures;
-    final private static boolean TEST_SOFT_PIPE=false; //Test Software Pipelining (only works when TEST_SPLITJOIN=false right now)
-    final private static boolean TEST_SPLITJOIN=false; //Test SplitJoins
+    final private static boolean TEST_SOFT_PIPE=false; //Test Software Pipelining (only works when TEST_BEAMFORMER=false right now)
+    final private static boolean TEST_BEAMFORMER=true; //Test SplitJoins
     
     
     public static void run(SIRStream str,
@@ -97,10 +97,84 @@ public class SpaceTimeBackend
 	for(int i=0;i<topNodes.length;i++)
 	    System.out.println(topNodes[i]);
 	Trace[] traces=null;
-	if(TEST_SPLITJOIN) {
+	if(TEST_BEAMFORMER) { //Test for simple one join-split (beamformer)
 	    HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts);
 	    System.out.println("Traces: "+traceGraph.length);
+	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
+	    Trace first=null;
+	    Trace second=null;
+	    Trace firstLast=null;
+	    Trace secondLast=null;
+	    for(int i=0;i<traceGraph.length;i++) {
+		Trace trace=traceGraph[i];
+		//System.err.println(trace+" "+trace.size()+" "+trace.getHead()+" "+trace.getTail());
+		if(trace.getTail() instanceof OutputTraceNode) {
+		    if(first==null) {
+			first=trace;
+			firstLast=trace;
+		    } else {
+			firstLast.connect(trace);
+			firstLast=trace;
+		    }
+		    int x=0;
+		    TraceNode node=trace.getTail().getPrevious();
+		    ((FilterTraceNode)node).setXY(x++,0);
+		    node=node.getPrevious();
+		    while(node!=null&&node instanceof FilterTraceNode) {
+			((FilterTraceNode)node).setXY(x++,0);
+			node=node.getPrevious();
+		    }
+		} else if(trace.getHead() instanceof InputTraceNode) {
+		    if(second==null) {
+			second=trace;
+			secondLast=trace;
+		    } else {
+			secondLast.connect(trace);
+			secondLast=trace;
+		    }
+		    int x=0;
+		    TraceNode node=trace.getHead().getNext();
+		    ((FilterTraceNode)node).setXY(x++,0);
+		    node=node.getNext();
+		    while(node!=null&&node instanceof FilterTraceNode) {
+			((FilterTraceNode)node).setXY(x++,0);
+			node=node.getNext();
+		    }
+		}
+	    }
+	    traces=new Trace[] {first};
+	    //while(first.getEdges()[0]!=null)
+	    //first=first.getEdges()[0];
+	    firstLast.connect(second);
+	    System.out.println("Traces Length: "+traces.length);
+	    System.out.println("Traces:");
+	    Trace trace=traces[0];
+	    while(trace!=null) {
+		TraceNode head=trace.getHead();
+		System.err.println("START TRACE");
+		while (head != null) {
+		    if(head instanceof FilterTraceNode)
+			System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
+		    else if (head.isInputTrace()) {
+			//System.out.println(head);
+			System.out.println("InputTraceNode "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
+		    }
+		    else if(head.isOutputTrace()) {
+			//System.out.println(head);
+			System.out.println("OutputTraceNode "+((FilterTraceNode)head.getPrevious()).getX()+" "+((FilterTraceNode)head.getPrevious()).getY());
+		    } else
+			System.out.println("Unknown TraceNode!: "+head);
+		    
+		    head = head.getNext();
+		    
+		}
+		Trace[] edge=trace.getEdges();
+		if(edge.length>0)
+		    trace=trace.getEdges()[0];
+		else
+		    trace=null;
+	    }
 	} else { //Test Code with traces (Just for pipelines on raw greater than 4x4)
 	    ArrayList traceList=new ArrayList();
 	    HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
@@ -125,9 +199,9 @@ public class SpaceTimeBackend
 		    newNode.setPrevious(currentNode);
 		    currentNode=newNode;
 		    if(curX>=rawColumns-1&&forward>0) {
-			System.err.println(currentFilter);
-			System.err.println(currentFilter.outWeights);
-			System.err.println(currentFilter.out);
+			//System.err.println(currentFilter);
+			//System.err.println(currentFilter.outWeights);
+			//System.err.println(currentFilter.out);
 			if(currentFilter.outWeights.length>0&&currentFilter.out!=null) {
 			    forward=-1;
 			    curY+=downward;
@@ -186,20 +260,21 @@ public class SpaceTimeBackend
 			System.out.println(head);
 			System.out.println("Output!");
 		    }
-		
+		    
 		    head = head.getNext();
-		
+		    
 		}
-	    
-		//System.out.println(((Trace)traceList.get(i)).getHead());
+		
+	      //System.out.println(((Trace)traceList.get(i)).getHead());
 	    }
 	}
-	
+ 
+
 	//traceList=null;
 	//content=null;
 	//executionCounts=null;
 
-	Trace[] traceForrest = new Trace[1];
+	/*Trace[] traceForrest = new Trace[1];
 	traceForrest[0] = traces[0];
 
 	//mgordon's stuff
@@ -223,7 +298,7 @@ public class SpaceTimeBackend
 	    MagicDram.GenerateCode(rawChip);
 	}
 	Makefile.generate(rawChip);
-	BCFile.generate(rawChip);
+	BCFile.generate(rawChip);*/
     }
 }
 

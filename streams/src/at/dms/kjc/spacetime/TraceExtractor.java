@@ -21,7 +21,7 @@ public class TraceExtractor {
 	    TraceNode node;
 	    Trace trace;
 	    if(!visited.containsKey(filter)) {
-		System.err.println("Visiting: "+filter);
+		//System.err.println("Visiting: "+filter);
 		visited.put(filter,null);
 		if(filter.in!=null&&filter.in.length>0) {
 		    //node=new InputTraceNode(filter.inWeights,getInNodes(outNodes,filter.in));
@@ -29,6 +29,7 @@ public class TraceExtractor {
 		    trace=new Trace(node);
 		    FilterTraceNode filterNode=new FilterTraceNode(content);
 		    node.setNext(filterNode);
+		    filterNode.setPrevious(node);
 		    node=filterNode;
 		} else {
 		    node=new FilterTraceNode(content);
@@ -41,11 +42,13 @@ public class TraceExtractor {
 		    content=new FilterContent(filter.filter,execCounts);
 		    FilterTraceNode filterNode=new FilterTraceNode(content);
 		    node.setNext(filterNode);
+		    filterNode.setPrevious(node);
 		    node=filterNode;
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=new OutputTraceNode(filter.outWeights);
 		    node.setNext(outNode);
+		    outNode.setPrevious(node);
 		    outNodes.put(filter,outNode);
 		    for(int i=0;i<filter.out.length;i++) {
 			UnflatEdge[] inner=filter.out[i];
@@ -56,6 +59,7 @@ public class TraceExtractor {
 			}
 		    }
 		}
+		trace.finish();
 	    }
 	}
 	//Fix Output Nodes

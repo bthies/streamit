@@ -4,12 +4,13 @@
 
 LIMIT = TRUE
 SIM-CYCLES = 5000000
-SIM-COMMAND = sv(88907); sv(85057); sv(85057); 
+SIM-COMMAND = count_FLOPS(31085); count_FLOPS(27297); count_FLOPS(27297); 
 
 BTL-MACHINE-FILE = fileio.bc
 
 ROOT = test
 TILES = 00
+RGCCFLAGS += -O3
 
 include $(TOPDIR)/Makefile.include
 
@@ -18,7 +19,6 @@ $(error TOPDIR not defined, make sure to include Makefile.include)
 endif
 
 OBJECT_FILES_00 = rawfft.o
-
 
 include $(COMMONDIR)/Makefile.all
 

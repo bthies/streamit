@@ -1,6 +1,26 @@
 7/26/02 -- AAL 
 got rid of the code that writes to files, stuck main body in loop that runs three times, 
 
+first  iteration done at 0x00000796d (31085 cycles)
+second iteration done at 0x00000e40e (58382 cycles) (delta=27297)
+third  iteration done at 0x000014eaf (85679 cycles) (delta=27297)
+
+
+==> iter takes 27297/27297 cycles (average = 27297)
+
+since we are producing a FFT-64, we are producing 64 complex numbers, for 
+128 outputs every 27297 cycles, so normalized to 10^5 cycles, 128*(100000/27297) = 468.916
+
+flops reported are 7006 flops, which is (7006/27297) * 250 = 64.16456 MFLOPS
+
+workCount = 490843 / 497360 = 0.98689682
+workCount = 432983 / 436752 = 0.99137039
+workCount = 432983 / 436752 = 0.99137039
+
+
+
+------ Old results -------
+------ No -03 flag -------
 first  iteration done at 0x15b4b (88907 cycles)
 second iteration done at 0x2a78c (173964 cycles) (delta=85057)
 third  iteration done at 0x3f3cd (259021 cycles) (delta=85057)

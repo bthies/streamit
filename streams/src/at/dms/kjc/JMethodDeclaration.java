@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.16 2003-05-28 05:58:44 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.17 2003-07-11 15:31:53 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -90,6 +90,13 @@ public class JMethodDeclaration extends JMemberDeclaration {
      */
     public String getName() {
 	return ident;
+    }
+
+    /**
+     * Return ctype return type of this method.
+     */
+    public CType getReturnType() {
+        return returnType;
     }
 
     /**

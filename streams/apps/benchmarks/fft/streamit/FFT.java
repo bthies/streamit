@@ -15,7 +15,7 @@ class Identity extends Filter {
 }
 
 class Butterfly extends Pipeline {
-    public Butterfly(int N, int W) {}
+    public Butterfly(int N, int W) { super(N,W); }
     
     public void init(final int N, final int W) {
 	this.add(new SplitJoin() {
@@ -81,7 +81,7 @@ class Butterfly extends Pipeline {
     }}
 
 class FFTKernel extends Pipeline {
-    public FFTKernel(int N) {}
+    public FFTKernel(int N) { super (N); }
 
     public void init(final int N) {
 	add(new SplitJoin() {

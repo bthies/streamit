@@ -64,7 +64,7 @@ public class FlatNode {
     {
 	//create the edge and weight arrays only if this node is connected
 	//to something
-	if ( ways == 0) {
+	if (ways == 0) {
 	    ways = 1;
 	    edges = new FlatNode[ways];
 	    weights = new int[1];

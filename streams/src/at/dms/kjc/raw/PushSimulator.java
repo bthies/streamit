@@ -90,4 +90,10 @@ public class PushSimulator extends at.dms.util.Utils
 	}
 	
     }
+
+    private static int LCM(int a, int b) {
+	return 0;
+	
+    }
+    
 }

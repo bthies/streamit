@@ -67,6 +67,9 @@ public class RawBackend {
 	SwitchCode.generate(RawFlattener.top);
 	SwitchCode.dumpCode();
 	System.out.println("Switch Code End.");
+	System.out.println("Tile Code begin...");
+	TileCode.generateCode(RawFlattener.top);
+	System.out.println("Tile Code End.");
 	System.out.println("Exiting");
 	System.exit(0);
     }

@@ -13,6 +13,7 @@ public class RouteIns extends SwitchIns {
 	super("route");
 	sources = new Vector();
 	dests = new Vector();
+	this.tile = tile;
     }
 
     public void addRoute(RawTile source, RawTile dest) {
@@ -23,14 +24,26 @@ public class RouteIns extends SwitchIns {
     }
 
     public String toString() {
-	String ins = op + "\t";
+	String ins = "nop\t" + op + " ";
 	
 	for (int i = 0; i < sources.size(); i++) {
 	    //append the src, then ->, then dst
-	    ins += "$c" + tile.getRawChip().getDirection(tile, (RawTile)sources.get(i)) + "i" +
-		"->" + 
-		"$c" + tile.getRawChip().getDirection(tile, (RawTile)dests.get(i)) + "o";
+	    String dir;
 	    
+	    dir = tile.getRawChip().getDirection(tile, (RawTile)sources.get(i));
+	    if (dir.equals("st"))
+		ins += "$c" + dir + "o";
+	    else 
+		ins += "$c" + dir + "i";
+
+	    ins += "->";
+	    
+	    dir = tile.getRawChip().getDirection(tile, (RawTile)dests.get(i));
+	    if (dir.equals("st"))
+		ins += "$c" + dir + "i";
+	    else
+		ins += "$c" + dir + "o";
+
 	    if (i < sources.size() - 1)
 		ins += ",";
 	}

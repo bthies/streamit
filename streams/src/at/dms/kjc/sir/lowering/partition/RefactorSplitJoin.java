@@ -439,7 +439,14 @@ public class RefactorSplitJoin {
 		int upperSJCount = 0;
 		boolean shouldAbort = false;
 		for (int j=0; j<sj1.size() && !(shouldAbort); j++) {
-		    if (sj1.get(j) instanceof SIRSplitJoin) {
+		    // descend through pipeline containers that might
+		    // be on the child.  We only care if the last
+		    // container in it is a splitjoin.
+		    SIRStream str = sj1.get(j);
+		    while (str instanceof SIRPipeline) {
+			str = ((SIRPipeline)str).get(((SIRPipeline)str).size()-1);
+		    }
+		    if (str instanceof SIRSplitJoin) {
 			upperSJCount++;
 			if (upperSJCount>1) {
 			    shouldAbort = true;

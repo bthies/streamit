@@ -98,8 +98,8 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	print_final_stats();
 	if (gGenerate_BloodGraph) {
 	  printf("Generating bloodgraph for %d cycles (avg of steady-state)...\n", 
-		 (totalCycles/quitAfter) / bg_update_cycles);
-	  setup_bloodgraph("bloodgraph.ppm", (totalCycles/quitAfter) / bg_update_cycles);
+		gMaxCyclesPerSteady / bg_update_cycles);
+	  setup_bloodgraph("bloodgraph.ppm", gMaxCyclesPerSteady / bg_update_cycles);
 	}
 	else {
 	  //don't exit here unless you don't want a blood graph

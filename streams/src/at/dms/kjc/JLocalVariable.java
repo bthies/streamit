@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.8 2002-06-24 00:45:39 thies Exp $
+ * $Id: JLocalVariable.java,v 1.9 2002-06-24 07:38:40 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -211,17 +211,18 @@ public abstract class JLocalVariable extends JPhylum {
   public boolean isLoopVariable() {
     return loopVariable;
   }
-
-  public boolean equals(Object o) {
-    return o instanceof JLocalVariable &&
-	index == ((JLocalVariable)o).index&&
-	name.equals(((JLocalVariable)o).name);
-  }
-
+    
     /*
-    public int hashCode() {
-	return index+17*name.hashCode();
-    }
+      public boolean equals(Object o) {
+      return o instanceof JLocalVariable &&
+      index == ((JLocalVariable)o).index&&
+      name.equals(((JLocalVariable)o).name);
+      }
+      
+      
+      public int hashCode() {
+      return index+17*name.hashCode();
+      }
     */
 
   // ----------------------------------------------------------------------

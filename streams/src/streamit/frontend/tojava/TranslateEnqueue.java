@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.3 2003-04-04 20:36:39 dmaze Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.4 2003-08-29 17:54:29 dmaze Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -82,7 +82,12 @@ public class TranslateEnqueue extends FEReplacer
             stmts.add(new StmtReturn(context,
                                      new ExprConstFloat(context, 0.0)));
         }
-        // char, string don't have Types.  Yay corner cases.
+        else
+        {
+            // char, string don't have Types.  Yay corner cases.
+            throw new IllegalStateException("can't translate enqueue: " +
+                                            "stream's input type is " + tp);
+        }
         Parameter param =
             new Parameter(new TypePrimitive(TypePrimitive.TYPE_INT), "n");
         return Function.newHelper(context, name, returnType,

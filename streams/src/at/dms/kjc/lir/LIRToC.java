@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.31 2001-10-29 19:32:27 dmaze Exp $
+ * $Id: LIRToC.java,v 1.32 2001-10-29 20:01:59 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -226,7 +226,8 @@ public class LIRToC
             pos += TAB_SIZE;
             for (int j = 0; j < params.length; j++) {
                 newLine();
-                print(params[j] + " p" + j + ";");
+                print(params[j]);
+                print(" p" + j + ";");
             }
             pos -= TAB_SIZE;
             newLine();
@@ -236,7 +237,9 @@ public class LIRToC
             newLine();
             print("void send_" + name + "(portal *p, latency l");
             for (int j = 0; j < params.length; j++) {
-                print(", " + params[j] + " p" + j);
+                print(", ");
+                print(params[j]);
+                print(" p" + j);
             }
             print(") {");
             pos += TAB_SIZE;
@@ -249,6 +252,8 @@ public class LIRToC
             newLine();
             print("send_message(p, " + i + ", l, q);");
             pos -= TAB_SIZE;
+            newLine();
+            print("}");
         }        
     }
 
@@ -1373,22 +1378,22 @@ public class LIRToC
     
     public void visitLatency(SIRLatency self)
     {
-        print("/* Latency */");
+        print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyMax(SIRLatencyMax self)
     {
-        print("/* LatencyMax */");
+        print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencyRange(SIRLatencyRange self)
     {
-        print("/* LatencyRange */");
+        print("LATENCY_BEST_EFFORT");
     }
     
     public void visitLatencySet(SIRLatencySet self)
     {
-        print("/* LatencySet */");
+        print("LATENCY_BEST_EFFORT");
     }
 
     public void visitMessageStatement(SIRMessageStatement self,
@@ -1564,7 +1569,9 @@ public class LIRToC
         srcStruct.accept(this);
         print("->context, ");
         dstStruct.accept(this);
-        print("->context, sizeof(" + type + "), " + size + ");");
+        print("->context, sizeof(");
+        print(type);
+        print("), " + size + ");");
     }
     
     /**
@@ -1631,7 +1638,9 @@ public class LIRToC
         data.accept(this);
         print(", ");
         streamContext.accept(this);
-        print(", " + delay + ", " + type + ", ");
+        print(", " + delay + ", ");
+        print(type);
+        print(", ");
         fp.accept(this);
         print(");");
     }
@@ -1661,7 +1670,9 @@ public class LIRToC
     {
         print("set_joiner(");
         streamContext.accept(this);
-        print(", " + type + ", " + String.valueOf(ways));
+        print(", ");
+        print(type);
+        print(", " + String.valueOf(ways));
         if (weights != null)
         {
             for (int i = 0; i < weights.length; i++)

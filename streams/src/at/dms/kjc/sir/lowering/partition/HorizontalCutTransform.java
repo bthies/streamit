@@ -40,9 +40,9 @@ public final class HorizontalCutTransform extends StreamTransform {
 	} else if (str instanceof SIRSplitJoin) {
 	    // represents a cut in the children's children, since we are cutting each pipeline
 	    SIRSplitJoin sj = (SIRSplitJoin)str;
-	    Utils.assert(sj.getUniformHeight() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    Utils.assert(sj.getRectangularHeight() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
 	    // add one because of indexing convention in partitiongroup
-	    int[] partitions = { cutPos + 1 , sj.getUniformHeight() - cutPos - 1 };
+	    int[] partitions = { cutPos + 1 , sj.getRectangularHeight() - cutPos - 1 };
 	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
 	    return RefactorSplitJoin.addSyncPoints(sj, group);
 	} else {

@@ -148,7 +148,8 @@ public class GreedyPartitioner {
 	result += ways-1;
 
 	// add a tile for the joiner if it's not followed by a joiner
-	// or a null
+	// or a nullshow
+
 	FlatNode successor = flattener.getFlatNode(filter).edges[0];
 	if (successor!=null && !(successor.contents instanceof SIRJoiner)) {
 	    result += 1;

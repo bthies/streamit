@@ -118,6 +118,7 @@ public class WorkEstimate {
      * <obj> was present in the original graph used to construct this.
      */
     public int getWork(SIRFilter obj) {
+	Utils.assert(workMap.containsKey(obj), "Don't have work for " + obj);
 	return ((WorkInfo)workMap.get(obj)).totalWork();
     }
 
@@ -198,8 +199,8 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
      */
     public static int getWork(SIRFilter filter) {
         if (!filter.needsWork ()) {
-		return 0;
-	} else 	if (filter.getWork()==null) {
+	    return 0;
+	} else if (filter.getWork()==null) {
 	    System.err.println("this filter has null work function: " + filter);
 	    return 0;
 	} else {

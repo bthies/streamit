@@ -1,9 +1,10 @@
 /*
  * HelloWorld6.c: translated "hello, world" StreaMIT example
- * $Id: HelloWorld6.c,v 1.3 2001-09-25 21:36:32 dmaze Exp $
+ * $Id: HelloWorld6.c,v 1.4 2001-09-25 22:47:08 dmaze Exp $
  */
 
 #include "streamit.h"
+#include <stdlib.h>
 
 /* dzm: I expect that the code will be output in roughly this order,
  * actually. */
@@ -13,6 +14,9 @@ typedef struct HelloWorld6_1_data
   stream_context *c;
   int x;
 } HelloWorld6_1_data;
+
+void HelloWorld6_1_init(HelloWorld6_1_data *d, void *p);
+void HelloWorld6_1_work(void *dv, tape *in_tape, tape *out_tape);
 
 /* dzm: We need to tell the library the type/size of the channel. */
 void HelloWorld6_1_init(HelloWorld6_1_data *d, void *p)
@@ -31,10 +35,13 @@ void HelloWorld6_1_work(void *dv, tape *in_tape, tape *out_tape)
   PUSH(out_tape, int, d->x);
 }
 
-typedef struct HelloWorld6_2
+typedef struct HelloWorld6_2_data
 {
   stream_context *c;
-} HelloWorld6_2;
+} HelloWorld6_2_data;
+
+void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p);
+void HelloWorld6_2_work(void *dv, tape *in_tape, tape *out_tape);
 
 void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p)
 {
@@ -52,9 +59,12 @@ void HelloWorld6_2_work(void *dv, tape *in_tape, tape *out_tape)
 typedef struct HelloWorld6_data
 {
   stream_context *c;
-  HelloWorld6_1 *child1;
-  HelloWorld6_2 *child2;
+  HelloWorld6_1_data *child1;
+  HelloWorld6_2_data *child2;
 } HelloWorld6_data;
+
+void HelloWorld6_init(HelloWorld6_data *d, void *p);
+void HelloWorld6_work(void *dv, tape *in_tape, tape *out_tape);
 
 void HelloWorld6_init(HelloWorld6_data *d, void *p)
 {
@@ -76,8 +86,8 @@ void HelloWorld6_work(void *dv, tape *in_tape, tape *out_tape)
 {
   int itape[1];
   HelloWorld6_data *d = dv;
-  dv->child1->x++;
-  itape[0] = dv->child1->x;
+  d->child1->x++;
+  itape[0] = d->child1->x;
   printf("%d\n", itape[0]);
 }
 

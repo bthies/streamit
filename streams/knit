@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.30 2003-05-28 20:55:28 thies Exp $
+# $Id: knit,v 1.31 2003-05-28 21:15:52 thies Exp $
 #
 
 use strict;
@@ -52,7 +52,7 @@ Usage: knit [options] file.str ...
 Options:
   --help              Show this screen
 * --more-help         Include internal-only options
-* --java              Input file is "old" syntax
+  --java              Input file is "old" syntax (in Java)
   --output filename   Write a binary to filename
   --raw n             Compile for RAW, with an n-by-n grid
 * --viram, -V         Compile for VIRAM, a vector uniprocessor

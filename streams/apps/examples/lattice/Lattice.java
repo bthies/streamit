@@ -15,7 +15,10 @@ class FloatIdentity extends Filter
 }
 
 class LatDel extends SplitJoin {// this generates the delays in the lattice structure
-  public void init() {
+  
+    
+
+public void init() {
     setSplitter(DUPLICATE());
      add(new FloatIdentity ());
      add(new Delay(1));
@@ -55,6 +58,19 @@ class ZeroStage extends SplitJoin { //this stage is the first stage of a lattice
    }
 }
 
+class CompStage extends Pipeline {// this class combines the delaying phase and coefficients
+
+    public CompStage(float k_par) {super (k_par);}
+
+    public void init(float k_par) {
+	add(new LatDel());
+        add(new LatFilt(k_par));
+    }
+ }
+
+
+
+
 class LastStage extends Filter {   // this class is the last stage of a lattice filter
 public void init(){ 
    setInput(Float.TYPE);
@@ -88,16 +104,19 @@ class Lattice extends StreamIt {
         test.run(t);
     }
 
- public void init() {
+public void init() {
    add(new Counter());
    add(new ZeroStage());
-   add(new LatFilt(2));
+   add(new CompStage(2));
    add(new LastStage());
   }
 }
 
 
    
+
+
+
 
 
 

@@ -125,6 +125,8 @@ public class Flattener {
 
 	str = doLinearAnalysis(str);
 
+	str = doStateSpaceAnalysis(str);
+
 	// dump the partitioned graph to a dot format
 	StreamItDot.printGraph(str, "after-partition.dot");
 
@@ -236,14 +238,15 @@ public class Flattener {
 	// if someone wants to run any of the linear tools/optimizations
 	// we need to run linear analysis first to extract the information
 	// we are working with.
-	if (KjcOptions.linearanalysis ||
-	    KjcOptions.linearreplacement ||
-	    KjcOptions.linearreplacement2 ||
-	    KjcOptions.linearreplacement3 ||
-	    KjcOptions.atlas ||
-	    KjcOptions.linearpartition ||
-	    KjcOptions.frequencyreplacement ||
-	    KjcOptions.redundantreplacement) {
+	if (!KjcOptions.statespace && 
+	    (KjcOptions.linearanalysis ||
+	     KjcOptions.linearreplacement ||
+	     KjcOptions.linearreplacement2 ||
+	     KjcOptions.linearreplacement3 ||
+	     KjcOptions.atlas ||
+	     KjcOptions.linearpartition ||
+	     KjcOptions.frequencyreplacement ||
+	     KjcOptions.redundantreplacement)) {
 
 	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.println("Running linear analysis... ");
@@ -339,4 +342,52 @@ public class Flattener {
 	return str;
     }
     
+    /**
+     * Returns new value of <str>.
+     */
+    public static SIRStream doStateSpaceAnalysis(SIRStream str) {
+
+	// if someone wants to run any of the linear tools/optimizations
+	// we need to run linear analysis first to extract the information
+	// we are working with.
+	if (KjcOptions.statespace) {
+	    // catch unsupported options
+	    if (KjcOptions.linearpartition ||
+		KjcOptions.linearreplacement2 ||
+		KjcOptions.linearreplacement3 ||
+		KjcOptions.atlas ||
+		KjcOptions.linearpartition ||
+		KjcOptions.frequencyreplacement ||
+		KjcOptions.redundantreplacement) {
+		throw new RuntimeException("Option is currently unsupported with state-space analysis.");
+	    }
+
+	    // run the linear analysis and stores the information garnered in the lfa
+	    System.err.println("Running linear state-space analysis... ");
+	    // only refactor linear children if we're NOT doing the linear partitioner
+	    at.dms.kjc.sir.statespace.LinearAnalyzer lfa = at.dms.kjc.sir.statespace.LinearAnalyzer.findLinearFilters(str,
+													      KjcOptions.debug,
+													      !KjcOptions.linearpartition);
+	    System.err.println("done with linear state-space analysis.");
+
+	    // now, print out the graph using the LinearPrinter which colors the graph
+	    // nodes based on their linearity.
+	    at.dms.kjc.sir.statespace.LinearDot.printGraph(str, "linear.dot", lfa);
+	    at.dms.kjc.sir.statespace.LinearDotSimple.printGraph(str, "linear-simple.dot", lfa, null);
+
+	    // if we are supposed to transform the graph
+	    // by replacing work functions with their linear forms, do so now 
+	    if (KjcOptions.linearreplacement) {
+		System.err.print("Running state-space linear replacement... ");
+		at.dms.kjc.sir.statespace.LinearDirectReplacer.doReplace(lfa, str);
+		System.err.println("done.");
+		// print out the stream graph after linear replacement
+		at.dms.kjc.sir.statespace.LinearDot.printGraph(str, "linear-replace.dot", lfa);
+	    }
+
+	    Lifter.liftAggressiveSync(str);
+	    StreamItDot.printGraph(str, "after-linear.dot");
+	}
+	return str;
+    }
 }

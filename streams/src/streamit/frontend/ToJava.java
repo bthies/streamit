@@ -1,7 +1,13 @@
 package streamit.frontend;
 import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import antlr.BaseAST;
 import java.util.List;
+import java.util.Iterator;
 import java.util.ArrayList;
 import streamit.frontend.nodes.*;
 import streamit.frontend.tojava.*;
@@ -130,20 +136,34 @@ class ToJava
     {
         StreamItParserFE parser = null;
         Program prog = null;
+        Writer outWriter;
+
         try
         {
-            StreamItLex lexer = new StreamItLex(new DataInputStream(System.in));
-            parser = new StreamItParserFE(lexer);
-            prog = parser.program();
+            if (outputFile != null)
+                outWriter = new FileWriter(outputFile);
+            else
+                outWriter = new OutputStreamWriter(System.out);
+
+            for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
+            {
+                InputStream inStream = new FileInputStream((String)iter.next());
+                DataInputStream dis = new DataInputStream(inStream);
+                StreamItLex lexer = new StreamItLex(dis);
+                parser = new StreamItParserFE(lexer);
+                prog = parser.program();
+            }
+            String javaOut = (String)prog.accept(new NodesToJava(null));
+            outWriter.write(javaOut);
         }
         catch (Exception e)
         {
             e.printStackTrace(System.err);
             return;
         }
-        System.out.println((String)prog.accept(new NodesToJava(null)));
+        
     }
-
+    
     public static void main(String[] args)
     {
         new ToJava().run(args);

@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.14 2002-08-16 19:04:46 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.15 2002-08-16 20:41:55 dmaze Exp $
  */
 
 header {
@@ -143,7 +143,7 @@ join_statement
 	;
 
 splitter_or_joiner
-	: TK_roundrobin func_call_params // Not quite right, but...
+	: TK_roundrobin (func_call_params)?
 	| TK_duplicate
 	;
 

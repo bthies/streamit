@@ -165,6 +165,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
 	    print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
 	    print("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+	    print("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
 	}
 	
 	if (KjcOptions.decoupled) {

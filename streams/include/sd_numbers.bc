@@ -4,9 +4,6 @@ global gGenerate_BloodGraph = 1;
 //how often (in cycles) would we like to update the bloodgraph
 global bg_update_cycles = 1;
 
-//the MHz of the processor
-global gMHz_streamit = 250;
-
 //Number gathering bc code
 //the blood graph variables
 global gPPMFILE;

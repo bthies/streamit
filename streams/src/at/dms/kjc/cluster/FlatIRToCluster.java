@@ -216,6 +216,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
 	print("\n");
 
+	//int data = DataEstimate.filterDataEstimate(self);
+	//int code = CodeEstimate.estimate(self);
+	//System.out.println("globals: "+data+" code+locals: "+code);
+
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(self, self.getFields());
 
 	Vector pre = gen.generatePreamble();
@@ -260,14 +264,40 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    //	pop_expr = in.consumer_name()+".pop";
 	    //}
 
-	    print(input_type.toString()+" __pop_buf__"+selfID+"["+peek_n+"];\n");
-	    print("int __pop_index__"+selfID+";\n");
+	    int peek_buf_size = 1;
+
+	    while (peek_buf_size < peek_n) {
+		peek_buf_size *= 2;
+	    }
+
+	    print(input_type.toString()+" __pop_buf__"+selfID+"["+peek_buf_size+"];\n");
+	    print("int __head__"+selfID+";\n");
+	    print("int __tail__"+selfID+";\n");
 	    print("\n");
 
-	    print("inline "+input_type.toString()+" __init_pop_buf__"+selfID+"() {\n");
-	    if (peek_n > pop_n) {
-		int extra = peek_n - pop_n;
+	    int extra = peek_n - pop_n;
+	    
+	    assert (extra >= 0);
+
+	    print("inline void __init_pop_buf__"+selfID+"() {\n");
+			
+	    for (int i = 0; i < extra; i++) {	
 		
+		print("  __pop_buf__"+selfID+"["+i+"]=");
+		
+		if (source_fused) { 
+		    print(in.pop_name()+"();\n");
+		} else {
+		    print(in.consumer_name()+".pop();\n");
+		}
+	    }
+
+	    print("  __tail__"+selfID+"=0;\n");
+	    print("  __head__"+selfID+"="+extra+";\n");
+		
+
+		/*
+
 		if (source_fused) { 
 
 		    for (int y = 0; y < extra; y++) {
@@ -276,15 +306,42 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 			print("  __pop_buf__"+selfID+"["+index+"] = "+in.pop_name()+"();\n");
 		    }
 		} else {
-		
-		    print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+pop_n+"], "+extra+");\n");
+
+		    if (pop_n < 8) {
+			
+			for (int i = 0; i < extra; i++) {			
+			    print("  __pop_buf__"+selfID+"["+(pop_n+i)+"] = "+in.consumer_name()+".pop();\n");
+			}
+			
+		    } else {
+
+			
+			print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+pop_n+"], "+extra+");\n");
+		    }
 
 		}
-	    }
+		*/
+	    
 	    print("}\n");
 	    print("\n");
 
-	    print("inline "+input_type.toString()+" __update_pop_buf__"+selfID+"() {\n");
+	    print("inline void __update_pop_buf__"+selfID+"() {\n");
+	    
+	    for (int i = 0; i < pop_n; i++) {
+		
+		print("  __pop_buf__"+selfID+"[__head__"+selfID+"]=");
+
+		if (source_fused) { 
+		    print(in.pop_name()+"();");
+		} else {
+		    print(in.consumer_name()+".pop();");
+		}
+
+		print("__head__"+selfID+"++;");
+		print("__head__"+selfID+"&="+(peek_buf_size-1)+";\n");
+	    }
+
+	    /*
 	    print("  __pop_index__"+selfID+" = 0;\n");
 
 	    int extra = peek_n - pop_n;
@@ -301,21 +358,37 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 		}
 	    } else {
 
-		    print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+extra+"], "+pop_n+");\n");
-		
-	    }
+		if (pop_n < 8) {
+		    
+		    for (int i = 0; i < pop_n; i++) {			
+			print("  __pop_buf__"+selfID+"["+(extra+i)+"] = "+in.consumer_name()+".pop();\n");
+		    }
 
+		} else {
+		    
+		    print("  "+in.consumer_name()+".pop_items(&__pop_buf__"+selfID+"["+extra+"], "+pop_n+");\n");
+		}
+
+	    }
+	    */
 	    
 	    print("}\n");
 	    print("\n");
 
 	    print("inline "+input_type.toString()+" __pop__"+selfID+"() {\n");
-	    print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
+
+	    print("  "+input_type.toString()+" res=__pop_buf__"+selfID+"[__tail__"+selfID+"];");
+	    print("__tail__"+selfID+"++;");
+	    print("__tail__"+selfID+"&="+(peek_buf_size-1)+";\n");
+	    print("  return res;\n");
+
+	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+"++];\n");
 	    print("}\n");
 	    print("\n");
 
 	    print("inline "+input_type.toString()+" __peek__"+selfID+"(int offs) {\n");
-	    print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+" + offs];\n");
+	    print("  return __pop_buf__"+selfID+"[(__tail__"+selfID+"+offs)&"+(peek_buf_size-1)+"];\n");
+	    //print("  return __pop_buf__"+selfID+"[__pop_index__"+selfID+" + offs];\n");
 	    print("}\n");
 	    print("\n");
 	} else {

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.32 2003-11-11 21:51:19 jasperln Exp $
+# $Id: strc,v 1.33 2003-11-19 21:30:41 dmaze Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -76,7 +76,8 @@ $fns = old_to_c($fns) unless $opts{tokopi};
 exit(1) if !$fns;
 $fns = new_to_c($fns) if $opts{tokopi};
 exit(1) if !$fns;
-c_to_out($fns, $opts{output}) unless ($opts{raw} || $opts{cluster});
+$fns = c_to_out($fns, $opts{output}) unless ($opts{raw} || $opts{cluster});
+exit(1) if !$fns;
 exit(0);
 
 sub usage
@@ -382,6 +383,7 @@ sub c_to_out
   {
     my ($fns, $target) = @_;
     return [] if !@$fns;
+    my $tfn = $target || "a.out";
     $target = $target ? "-o$target" : ""; # but never undef
     my $sh = $opts{home};
     my ($gcc, $libs);
@@ -399,8 +401,10 @@ sub c_to_out
 	$libs .= "-lsrfftw -lsfftw " if $have_fftw;
 	$libs .= "-lm";
       }
-    call("$gcc -g -O2 $target -I$sh/library/c " . join(' ', @$fns) .
-	 " -L$sh/library/c $libs");
+    my $result = call("$gcc -g -O2 $target -I$sh/library/c " .
+		      join(' ', @$fns) . " -L$sh/library/c $libs");
+    return undef if $result != 0;
+    return [$tfn];
   }
 
 sub get_kjc_opts

@@ -216,7 +216,7 @@ public class Partitioner {
 		for (int i=0; i<list.size(); i++) {
 		    SIRContainer cont = list.getContainer(i);
 		    if (cont instanceof SIRSplitJoin) {
-			System.out.println("trying to fuse " + cont.size() + "-way split " + cont);
+			System.out.println("trying to fuse " + cont.size() + "-way split " + ((SIRSplitJoin)cont).getName());
 			List children=cont.getChildren();
 			if(aggressive==0) {
 			    boolean attempt=true;
@@ -267,7 +267,7 @@ public class Partitioner {
 			}
 		    } else if (cont instanceof SIRPipeline) {
 			System.out.println("trying to fuse " + (count-target) + " from " 
-					   + cont.size() + "-long pipe " + cont);
+					   + cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
 			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
 			if (num!=0) {
 			    aggressive=0;

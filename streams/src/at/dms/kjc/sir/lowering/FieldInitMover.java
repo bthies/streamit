@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.5 2002-07-02 22:50:37 thies Exp $
+ * $Id: FieldInitMover.java,v 1.6 2002-10-05 05:27:11 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
   
@@ -33,7 +33,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
      * FeedBackLoop) and move any field initialization out of the field
      * declaration into the body of the init.
      */
-    public void visitStream(SIRStream self,
+    public void preVisitStream(SIRStream self,
 			    SIRIterator iter) {
 	//System.out.println("!!visiting stream: " + self);
 	

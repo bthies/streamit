@@ -83,11 +83,9 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	JMethodDeclaration[] newMethods = 
 	    new JMethodDeclaration[methods.length + m.length];
 	for (int i=0; i<methods.length; i++) {
-	    System.err.println("adding (old) method " + methods[i].getName() + " to " + this);
 	    newMethods[i] = methods[i];
 	}
 	for (int i=0; i<m.length; i++) {
-	    System.err.println("adding (new) method " + m[i].getName() + " to " + this);
 	    newMethods[methods.length+i] = m[i];
 	}
 	this.methods = newMethods;

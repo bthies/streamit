@@ -18,10 +18,6 @@ public class ReedSolomonLibrary {
 	this.initialize_ecc();
 
     }
-	
-	
-
-
     
     /*---------------------ecc.h-------------------------*/
     

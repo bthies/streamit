@@ -3,6 +3,7 @@
  * encoding/decoding demo program
  *
  * Andrew Lamb aalamb@mit.edu 6/17/2002
+ * $Id: ReedSolomonNoise.java,v 1.2 2002-06-18 19:56:03 aalamb Exp $
  **/
 import streamit.*;
 

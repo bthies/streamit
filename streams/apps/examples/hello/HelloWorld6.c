@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.c: translated "hello, world" StreaMIT example
- * $Id: HelloWorld6.c,v 1.2 2001-09-25 18:57:01 dmaze Exp $
+ * $Id: HelloWorld6.c,v 1.3 2001-09-25 21:36:32 dmaze Exp $
  */
 
 #include "streamit.h"
@@ -10,7 +10,7 @@
 
 typedef struct HelloWorld6_1_data
 {
-  filter_context *c;
+  stream_context *c;
   int x;
 } HelloWorld6_1_data;
 
@@ -33,7 +33,7 @@ void HelloWorld6_1_work(void *dv, tape *in_tape, tape *out_tape)
 
 typedef struct HelloWorld6_2
 {
-  filter_context *c;
+  stream_context *c;
 } HelloWorld6_2;
 
 void HelloWorld6_2_init(HelloWorld6_2_data *d, void *p)
@@ -51,7 +51,7 @@ void HelloWorld6_2_work(void *dv, tape *in_tape, tape *out_tape)
 
 typedef struct HelloWorld6_data
 {
-  filter_context *c;
+  stream_context *c;
   HelloWorld6_1 *child1;
   HelloWorld6_2 *child2;
 } HelloWorld6_data;

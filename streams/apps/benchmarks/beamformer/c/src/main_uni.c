@@ -1,4 +1,3 @@
-#include <raw.h>
 #include <stdio.h>
 
 #include <vsip.h>
@@ -10,7 +9,7 @@
 #include "Utils.h"
 
 
-#define NUM_PULSES 10000
+#define NUM_PULSES 100000
 
 #define DEBUG_0
 
@@ -76,7 +75,7 @@ int main()
     LPF_processPulse(&lpf, ditLpfData, lpfBfData);
     BF_processPulse(&bf, lpfBfData, bfPcData);
     PC_processPulse(&pc, bfPcData);
-    print_string("done\n");
+    //printf("done\n");
   }
 
 #ifdef DEBUG_0

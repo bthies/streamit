@@ -115,46 +115,46 @@ void PC_processPulse(PC_Data* this, vsip_cmview_f* inputMat)
     /* Pulse Compression is done, now do detection. For efficiency - move detection
      * into above loop.  For clarity, we put it here.
      */
-    /**    for(i = 0; i < nRows; i++) **/
-    /**    { **/
-    /**      for(j = 0; j < nCols; j++) **/
-	     /**      {**/
-	     /**	value = vsip_mget_f(this->result, i, j);**/
+       for(i = 0; i < nRows; i++)
+       {
+         for(j = 0; j < nCols; j++)
+	          {
+	     	value = vsip_mget_f(this->result, i, j);
 #ifdef PRINT_RESULT
 	printf("%f\n", value);
 #endif
-/* 	if( value >= CFAR_THRESHOLD ) */
-/* 	{ */
-/* 	  if( i != TARGET_BEAM && j != TARGET_SAMPLE ) */
-/* 	  { */
-/* #ifdef PRINT_RESULT */
-/* 	    printf( "ERROR: Target found in wrong location!!!!\n"); */
-/* #endif */
-/* 	    success = success && 0; */
-/* 	  } */
-/* 	  else */
-/* 	    success = success && 1; */
-/* 	} */
-/* 	if( value < CFAR_THRESHOLD ) */
-/* 	{ */
-/* 	  if( i == TARGET_BEAM && j == TARGET_SAMPLE ) */
-/* 	  { */
-/* #ifdef PRINT_RESULT */
-/* 	    printf( "ERROR: Target not found in the proper location!!!!!\n"); */
-/* 	    printf( "       Target value was: %f, Threshold value was: %f\n", value, CFAR_THRESHOLD); */
-/* #endif */
-/* 	    success = success && 0; */
-/* 	  } */
-/* 	  else */
-/* 	    success = success && 1;; */
-/* 	} */
-	/**    } **/
-	       /** } **/
+	if( value >= CFAR_THRESHOLD )
+	  {
+	    if( i != TARGET_BEAM && j != TARGET_SAMPLE )
+	  {
+#ifdef PRINT_RESULT
+	    printf( "ERROR: Target found in wrong location!!!!\n");
+#endif
+	    success = success && 0;
+	  }
+	    else
+	      success = success && 1;
+	  }
+	if( value < CFAR_THRESHOLD )
+	  {
+	    if( i == TARGET_BEAM && j == TARGET_SAMPLE )
+	      {
+#ifdef PRINT_RESULT
+		printf( "ERROR: Target not found in the proper location!!!!!\n");
+		printf( "       Target value was: %f, Threshold value was: %f\n", value, CFAR_THRESHOLD);
+#endif
+		success = success && 0;
+	      }
+	    else
+	      success = success && 1;;
+	  }
+	   }
+       }
   }
-  /**if( success )**/
-  /*  printf( "SUCCESS!!!!\n"); **/
+  if( success )
+    printf( "SUCCESS!!!!\n");
   this->numPulses++;
-  /**vsip_cmcopy_f_f(this->sndHalfData, this->fstHalfData);**/
+  vsip_cmcopy_f_f(this->sndHalfData, this->fstHalfData);
 }
 
 void PC_destroy(PC_Data* this)

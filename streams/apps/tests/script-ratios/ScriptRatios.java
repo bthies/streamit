@@ -32,7 +32,7 @@ class ScriptFilter extends Filter {
 
 public class ScriptRatios extends StreamIt {
     public static void main(String[] args) {
-        new ScriptRatios().run();
+        new ScriptRatios().run(args);
     }
 
     public void init() {

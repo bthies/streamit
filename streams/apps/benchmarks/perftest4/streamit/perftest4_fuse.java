@@ -63,7 +63,7 @@ public class perftest4_fuse extends StreamIt
     static public void main(String[] t)
     {
         perftest4_inout test = new perftest4_inout();
-        test.run();
+        test.run(t);
     }
     
     public void init() {

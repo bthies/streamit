@@ -17,7 +17,7 @@ import streamit.*;
 public class FirTest extends StreamIt {
 
     public static void main(String[] args) {
-	new FirTest().run();
+	new FirTest().run(args);
     }
 
     public void init() {

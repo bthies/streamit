@@ -55,7 +55,7 @@ public class perftest4 extends StreamIt
     static public void main(String[] t)
     {
         perftest4 test = new perftest4();
-        test.run();
+        test.run(t);
     }
     
     public void init() {

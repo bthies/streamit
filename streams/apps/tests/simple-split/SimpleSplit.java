@@ -2,7 +2,7 @@ import streamit.*;
 
 public class SimpleSplit extends StreamIt {
     public static void main(String args[]) {
-	new SimpleSplit().run();
+	new SimpleSplit().run(args);
     }
 
     public void init() {

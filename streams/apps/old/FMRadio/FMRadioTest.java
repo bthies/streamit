@@ -9,7 +9,7 @@ public class FMRadioTest extends StreamIt
     static public void main(String[] t)
     {
         FMRadioTest test = new FMRadioTest();
-        test.run();
+        test.run(t);
     }
     
     public void init()

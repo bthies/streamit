@@ -1,6 +1,6 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib2.java,v 1.13 2001-10-31 19:06:13 karczma Exp $
+ * $Id: Fib2.java,v 1.14 2002-06-12 07:06:45 thies Exp $
  */
 
 import streamit.*;
@@ -10,7 +10,7 @@ public class Fib2 extends StreamIt
     static public void main (String[] t)
     {
         Fib2 test = new Fib2();
-        test.run();
+        test.run(t);
     }
 
     public void init()

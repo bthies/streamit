@@ -2,7 +2,7 @@ import streamit.*;
 
 public class PeekPipe extends StreamIt {
     public static void main(String args[]) {
-        new PeekPipe().run();
+        new PeekPipe().run(args);
     }
     public void init() {
         add(new Filter() {

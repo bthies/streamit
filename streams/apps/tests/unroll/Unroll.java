@@ -14,7 +14,7 @@ class Incrementer extends Filter {
 class Unroll extends StreamIt {
 
     public static void main(String[] args) {
-	new Unroll().run();
+	new Unroll().run(args);
     }
 
     public void init() {

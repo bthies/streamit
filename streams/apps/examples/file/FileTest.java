@@ -18,7 +18,7 @@ public class FileTest extends StreamIt {
     
     public static void main (String[] args) {
 	FileTest test = new FileTest();
-	test.run();
+	test.run(args);
     }
 
     public void init() {

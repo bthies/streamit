@@ -1,6 +1,6 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
- * $Id: UpDown.java,v 1.8 2001-10-31 20:40:58 dmaze Exp $
+ * $Id: UpDown.java,v 1.9 2002-06-12 07:07:10 thies Exp $
  */
 
 import streamit.*;
@@ -89,7 +89,7 @@ public class UpDown extends StreamIt
     public static void main(String[] args)
     {
         UpDown test = new UpDown();
-        test.run();
+        test.run(args);
     }
 }
 

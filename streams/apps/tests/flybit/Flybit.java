@@ -1,7 +1,7 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.8 2001-10-31 19:06:15 karczma Exp $
+ * $Id: Flybit.java,v 1.9 2002-06-12 07:06:52 thies Exp $
  */
 
 import streamit.*;
@@ -74,7 +74,7 @@ public class Flybit extends StreamIt
     static public void main(String[] t)
     {
         Flybit test = new Flybit();
-        test.run();
+        test.run(t);
     }
 
     public void init()

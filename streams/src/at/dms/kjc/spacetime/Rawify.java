@@ -988,7 +988,6 @@ public class Rawify
 	//Begin codegen
 	SwitchCodeStore code = tile.getSwitchCode();
 	//System.err.println("Getting HERE!");
-	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),false); //Getting loop counter
 	code.appendIns(new Comment("HERE!"),false);
 	boolean first=true;
 	//Preloop
@@ -1049,6 +1048,7 @@ public class Rawify
 		}
 		first=false;
 	    }
+	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),false); //Getting loop counter
 	//Innerloop
 	Label label = code.getFreshLabel();
 	code.appendIns(label,false);
@@ -1056,56 +1056,8 @@ public class Rawify
 	int pendingSends=0;
 	int times=0;
 	FullIns ins=null;
-	//final int turns2=content.getTotal()-content.getPos()+1;
-	//final int turns2=content.getPos();
-	//final int turns2=1;
-	//for(int turn=0;turn<turns2+1;turn++) {
-	//if(turn==turns2)
-	//code.appendIns(label, false);
 	for(int i = 0;i<numTimes;i++) {
 	    for(int j=0;j<pop;j++) {
-		/* preloop?
-		   if(numPop==1&&j==0)
-		   pendingSends++;
-		   times++;
-		   ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		   ins.addRoute(src, SwitchOPort.CSTI);
-		   if(!end) {
-		   ins.addRoute(src,dest);
-		   }
-		   
-		   if(times>1) { //had turn>0&&
-		   if(!end)
-		   ins.addRoute(SwitchIPort.CSTO,dest2);
-		   else
-		   ins.addRoute(SwitchIPort.CSTO,dest);
-		   }
-		   code.appendIns(ins, false);
-		   if(times==4) {
-		   times=0;
-		   if(true||!begin) {
-		   //if(turn==0)
-		   //pendingSends++;
-		   if(pendingSends>0) {
-		   for(int l=0;l<pendingSends;l++) {
-		   ins=new FullIns(tile);
-		   if(!begin) { //had OLDturn>0
-		   ins.addRoute(src2,SwitchOPort.CSTI2);
-		   }
-		   if(l<1) { // had turn>0&&
-		   if(!end)
-		   ins.addRoute(SwitchIPort.CSTO,dest2);
-		   else
-		   ins.addRoute(SwitchIPort.CSTO,dest);
-		   }
-		   
-		   //if(!begin)
-		   code.appendIns(ins,false);
-		   }
-		   pendingSends=0;
-		   }
-		   }
-		   }*/
 		for(int k=0;k<numPop;k++) {
 		    if(j==0&&k==numPop-1)
 			pendingSends++;
@@ -1116,57 +1068,28 @@ public class Rawify
 			if(!end) {
 			    ins.addRoute(src,dest);
 			}
-			/*if(times>1) {
-			  if(!end)
-			  ins.addRoute(SwitchIPort.CSTO,dest2);
-			  else
-			  ins.addRoute(SwitchIPort.CSTO,dest);
-			  }*/
 		    } else {
 			ins=new FullIns(tile);
-			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI); //Temp reg
 		    }
 		    code.appendIns(ins, false);
 		    if(times==4) {
 			times=0;
-			if(true||!begin) {
-				//if(turn==0)
-				//pendingSends++;
-			    if(pendingSends>0) {
-				for(int l=0;l<pendingSends;l++) {
-				    ins=new FullIns(tile);
-				    if(/*OLDturn>0&&*/!begin) {
-					ins.addRoute(src,SwitchOPort.CSTI); //was src2,csti2
-				    }
-				    /*if(l<1) { //had turn>0&&
-				      if(!end)
-				      ins.addRoute(SwitchIPort.CSTO,dest2);
-				      else
-				      ins.addRoute(SwitchIPort.CSTO,dest);
-				      }*/
-				    ins.addRoute(SwitchIPort.CSTO,dest);
-				    //if(!begin)
-				    code.appendIns(ins,false);
+			if(pendingSends>0) {
+			    for(int l=0;l<pendingSends;l++) {
+				ins=new FullIns(tile);
+				if(!begin) {
+				    ins.addRoute(src,SwitchOPort.CSTI); //was src2,csti2
 				}
-				pendingSends=0;
+				ins.addRoute(SwitchIPort.CSTO,dest);
+				code.appendIns(ins,false);
 			    }
+			    pendingSends=0;
 			}
 		    }
 		}
 	    }
 	}
-	//}
-	/*for(int i=0;i<numTimes-1;i++) {
-	  FullIns newIns=new FullIns(tile);
-	  newIns.addRoute(SwitchIPort.CSTO,dest);
-	  code.appendIns(newIns,init||primePump);
-	  }
-	  FullIns newIns=new FullIns(tile,new JumpIns(label.getLabel()));
-	  newIns.addRoute(SwitchIPort.CSTO,dest);
-	  code.appendIns(newIns,init||primePump);*/
-	//code.appendIns(new JumpIns(label.getLabel()),init||primePump);
-	
-	//ins.setProcessorIns(new JumpIns(label.getLabel()));
 	ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
 	//Postloop
     }

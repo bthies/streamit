@@ -19,7 +19,7 @@ public class Linear extends BufferedCommunication implements Constants {
     private static final String LABEL_PREFIX="lin_";
     private static final String zeroReg="$0";
     private static final String[] tempRegs=new String[]{"$1","$2","$3","$4"};
-    private static final String loopReg="$5";
+    private static final String tempReg="$5"; //Loop and address reg
     //The actual number of registers usable as coefficients is regs.length-array.length/popCount-1
     //The -1 can be potentially gotten rid of if constant==0
     private static final String[] regs=new String[]{"$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17","$18","$19","$20","$21","$22","$23","$28","$30","$31"};
@@ -48,6 +48,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients";
 	int num=array.length/popCount;
 	pos=content.getPos();
+	System.out.println("POS: "+pos);
 	idx=new int[num];
 	topPopNum=num-1;
 	for(int i=0,j=0;j<num;i+=popCount,j++) {
@@ -58,92 +59,92 @@ public class Linear extends BufferedCommunication implements Constants {
     }
     
     /*public JBlock getSteadyBlock() {
-	JStatement[] body;
-	if(begin)
-	    body=new JStatement[array.length+4];
-	else
-	    body=new JStatement[array.length+3];
-	//Filling register with Constants
-	InlineAssembly inline=new InlineAssembly();
-	inline.add(".set noat");
-	//TODO: Save registers here
-	body[0]=inline;
-	for(int i=0;i<array.length;i++) {
-	    inline=new InlineAssembly();
-	    inline.add("lw "+regs[i]+", %0");
-	    inline.addInput("\"m\"("+getWeight(i)+")");
-	    body[1+i]=inline;
-	}
-	if(begin) {
-	    inline=new InlineAssembly();
-	    inline.add("lw "+regs[regs.length-1]+", %0");
-	    inline.addInput("\"m\"("+getConstant()+")");
-	    body[body.length-3]=inline;
-	}
-	//Loop Counter
-	inline=new InlineAssembly();
-	body[body.length-2]=inline;
-	inline.add("addiu "+loopReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
-	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+filterInfo.steadyMult); //Send steadyMult to switch
-	//Start Template
-	inline=new InlineAssembly();
-	body[body.length-1]=inline;
-	//Preloop
-	for(int i=0;i<topPopNum;i++)
-	    for(int k=0;k<popCount;k++)
-		for(int j=i;j>=0;j--) {
-		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
-		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
-		}
-	for(int turn=0;turn<pos;turn++)
-	    for(int k=0;k<popCount;k++)
-		for(int j=topPopNum;j>=0;j--) {
-		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
-		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
-		}
-	//inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
-	//inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
-	//Innerloop
-	final int mult=getMult(array.length);
-	inline.add(getLabel()+": #LOOP");
-	int times=0;
-	int[] oldIdx=new int[4];
-	int[] oldPop=new int[4];
-	//System.out.println("Times: "+mult+" "+popCount+" "+idx.length);
-	//for(int turn=0;turn<pos+1;turn++) { //Synch up linear tiles
-	for(int i=0;i<mult;i++)
-	    for(int j=0;j<popCount;j++)
-		for(int k=topPopNum;k>=0;k--) {
-		    int offset=idx[k]+j;
-		    inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
-		    oldIdx[times]=k;
-		    oldPop[times]=j;
-		    times++;
-		    if(times==4) {
-			times=0;
-			for(int l=0;l<4;l++) {
-			    int popNum=oldIdx[l];
-			    int elem=oldPop[l];
-			    inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
-			}
-		    }
-		}
-	//if(turn==pos-1)
-	//inline.add(getLabel()+": #LOOP");
-	//}
-	//inline.add("j "+getLabel());
-	inline.add("bnea "+loopReg+",\\t"+zeroReg+",\\t"+getLabel());
-	//Postloop
-	inline.add(".set at");
-	return new JBlock(null,body,null);
-	}*/
+      JStatement[] body;
+      if(begin)
+      body=new JStatement[array.length+4];
+      else
+      body=new JStatement[array.length+3];
+      //Filling register with Constants
+      InlineAssembly inline=new InlineAssembly();
+      inline.add(".set noat");
+      //TODO: Save registers here
+      body[0]=inline;
+      for(int i=0;i<array.length;i++) {
+      inline=new InlineAssembly();
+      inline.add("lw "+regs[i]+", %0");
+      inline.addInput("\"m\"("+getWeight(i)+")");
+      body[1+i]=inline;
+      }
+      if(begin) {
+      inline=new InlineAssembly();
+      inline.add("lw "+regs[regs.length-1]+", %0");
+      inline.addInput("\"m\"("+getConstant()+")");
+      body[body.length-3]=inline;
+      }
+      //Loop Counter
+      inline=new InlineAssembly();
+      body[body.length-2]=inline;
+      inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
+      inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+filterInfo.steadyMult); //Send steadyMult to switch
+      //Start Template
+      inline=new InlineAssembly();
+      body[body.length-1]=inline;
+      //Preloop
+      for(int i=0;i<topPopNum;i++)
+      for(int k=0;k<popCount;k++)
+      for(int j=i;j>=0;j--) {
+      inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
+      inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+      }
+      for(int turn=0;turn<pos;turn++)
+      for(int k=0;k<popCount;k++)
+      for(int j=topPopNum;j>=0;j--) {
+      inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
+      inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+      }
+      //inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
+      //inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+      //Innerloop
+      final int mult=getMult(array.length);
+      inline.add(getLabel()+": #LOOP");
+      int times=0;
+      int[] oldIdx=new int[4];
+      int[] oldPop=new int[4];
+      //System.out.println("Times: "+mult+" "+popCount+" "+idx.length);
+      //for(int turn=0;turn<pos+1;turn++) { //Synch up linear tiles
+      for(int i=0;i<mult;i++)
+      for(int j=0;j<popCount;j++)
+      for(int k=topPopNum;k>=0;k--) {
+      int offset=idx[k]+j;
+      inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
+      oldIdx[times]=k;
+      oldPop[times]=j;
+      times++;
+      if(times==4) {
+      times=0;
+      for(int l=0;l<4;l++) {
+      int popNum=oldIdx[l];
+      int elem=oldPop[l];
+      inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+      }
+      }
+      }
+      //if(turn==pos-1)
+      //inline.add(getLabel()+": #LOOP");
+      //}
+      //inline.add("j "+getLabel());
+      inline.add("bnea "+tempReg+",\\t"+zeroReg+",\\t"+getLabel());
+      //Postloop
+      inline.add(".set at");
+      return new JBlock(null,body,null);
+      }*/
 
     public JBlock getSteadyBlock() {
 	JStatement[] body;
 	if(begin)
-	    body=new JStatement[array.length+4];
+	    body=new JStatement[array.length+6];
 	else
-	    body=new JStatement[array.length+3];
+	    body=new JStatement[array.length+5];
 	//Filling register with Constants
 	InlineAssembly inline=new InlineAssembly();
 	inline.add(".set noat");
@@ -159,30 +160,52 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline=new InlineAssembly();
 	    inline.add("lw "+regs[regs.length-1]+", %0");
 	    inline.addInput("\"m\"("+getConstant()+")");
-	    body[body.length-3]=inline;
+	    body[body.length-5]=inline;
 	}
-	//Loop Counter
-	inline=new InlineAssembly();
-	body[body.length-2]=inline;
-	inline.add("addiu "+loopReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
-	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+filterInfo.steadyMult); //Send steadyMult to switch
 	//Start Template
 	inline=new InlineAssembly();
-	body[body.length-1]=inline;
+	body[body.length-4]=inline;
 	//Preloop
+	inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
+	inline.add("la "+tempReg+", %0");
+	/*for(int i=0;i<topPopNum;i++)
+	  for(int j=0;j<popCount;j++)
+	  for(int k=i;k>=0;k--) {
+	  inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+	  inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+	  }
+	  for(int turn=0;turn<pos;turn++)
+	  for(int j=0;j<popCount;j++)
+	  for(int k=topPopNum;k>=0;k--) {
+	  inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+	  inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+	  }*/
+	int index=0;
 	for(int i=0;i<topPopNum;i++)
-	    for(int k=0;k<popCount;k++)
-		for(int j=i;j>=0;j--) {
-		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
-		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+	    for(int j=0;j<popCount;j++)
+		for(int k=i;k>=0;k--) {
+		    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+		    inline.add("mul.s "+tempRegs[0]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    index+=4;
 		}
 	for(int turn=0;turn<pos;turn++)
-	    for(int k=0;k<popCount;k++)
-		for(int j=topPopNum;j>=0;j--) {
-		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
-		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+	    for(int j=0;j<popCount;j++)
+		for(int k=topPopNum;k>=0;k--) {
+		    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+		    inline.add("mul.s "+tempRegs[0]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    index+=4;
 		}
+	//TODO: Handle Remaining Items
+	//Loop Counter
+	inline=new InlineAssembly();
+	body[body.length-3]=inline;
+	inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
+	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+filterInfo.steadyMult); //Send steadyMult to switch
 	//Innerloop
+	inline=new InlineAssembly();
+	body[body.length-2]=inline;
 	final int mult=getMult(array.length);
 	inline.add(getLabel()+": #LOOP");
 	int times=0;
@@ -205,10 +228,13 @@ public class Linear extends BufferedCommunication implements Constants {
 			}
 		    }
 		}
-	inline.add("bnea "+loopReg+",\\t"+zeroReg+",\\t"+getLabel());
+	inline.add("bnea "+tempReg+",\\t"+zeroReg+",\\t"+getLabel());
 	//Postloop
-
-	//TODO: Restore regs here
+	inline=new InlineAssembly();
+	body[body.length-1]=inline;
+	inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
+	inline.add("la "+tempReg+", %0");
+	//TODO: Restore regs 
 	inline.add(".set at");
 	return new JBlock(null,body,null);
     }

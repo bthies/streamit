@@ -26,15 +26,15 @@ public class LinearFission {
 	    out[0].setArray(temp);
 	    out[0].setBegin(true);
 	    out[0].setEnd(false);
-	    //out[0].setPos(realNum-1);
-	    out[0].setPos(realNum);
+	    out[0].setPos(realNum-1);
+	    //out[0].setPos(realNum);
 	    int idx=len;
 	    for(int i=1;i<realNum-1;i++,idx+=len) {
 		temp=new double[len];
 		System.arraycopy(array,idx,temp,0,len);
 		out[i].setArray(temp);
-		//out[i].setPos(realNum-i-1);
-		out[i].setPos(realNum-i);
+		out[i].setPos(realNum-i-1);
+		//out[i].setPos(realNum-i);
 		out[i].setBegin(false);
 		out[i].setEnd(false);
 	    }
@@ -43,15 +43,15 @@ public class LinearFission {
 	    out[realNum-1].setArray(temp);
 	    out[realNum-1].setBegin(false);
 	    out[realNum-1].setEnd(true);
-	    //out[realNum-1].setPos(0);
-	    out[realNum-1].setPos(1);
+	    out[realNum-1].setPos(0);
+	    //out[realNum-1].setPos(1);
 	} else {
 	    System.arraycopy(array,0,temp,0,array.length);
 	    out[0].setArray(temp);
 	    out[0].setBegin(true);
 	    out[0].setEnd(true);
-	    //out[0].setPos(0);
-	    out[0].setPos(1);
+	    out[0].setPos(0);
+	    //out[0].setPos(1);
 	}
 	return out;
     }

@@ -88,13 +88,7 @@ public class RawBackend {
 			       RawBackend.rawRows * 
 			       RawBackend.rawColumns);
 
-	if (KjcOptions.ilppartition) {
-	    ILPPartitioner.doit(str, 
-				RawBackend.rawRows *
-				RawBackend.rawColumns);
-	}
-	
-	if (KjcOptions.partition) {
+	if (KjcOptions.partition || KjcOptions.ilppartition) {
 	    Partitioner.doit(str,
 			     RawBackend.rawRows *
 			     RawBackend.rawColumns);

@@ -49,14 +49,19 @@ public class MakefileGenerator
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
 	    */
 	    
-	    if (!IMEMEstimation.TESTING_IMEM) {
+	    //if (!IMEMEstimation.TESTING_IMEM) {
+	    if (false) {
 		//fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
 		fw.write("BTL-DEVICES += -dram_freq 100\n");
 		fw.write("ATTRIBUTES += HWIC\n");
 		//add some other stuff
 		fw.write("MEMORY_LAYOUT=LEFT_RIGHT_SIDES\n");
 		fw.write("BTL-DEVICES += -enable_all_sides_for_dram -dram lhs\n");
+	    } 
+	    else {
+		fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
 	    }
+	    
 	    
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...

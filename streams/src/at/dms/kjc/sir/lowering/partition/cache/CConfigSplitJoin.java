@@ -333,7 +333,7 @@ class CConfigSplitJoin extends CConfigContainer {
 
 	    boolean duplicate = split_join.getSplitter().getType().isDuplicate();
 
-	    if (KjcOptions.peekratio == 1024) { 
+	    if (KjcOptions.peekratio >= 1024) { 
 
 		if (child instanceof CConfigFilter) {
 		    CConfigFilter fc = (CConfigFilter)child;

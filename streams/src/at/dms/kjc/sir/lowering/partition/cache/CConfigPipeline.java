@@ -196,7 +196,7 @@ class CConfigPipeline extends CConfigContainer {
 
 	    //If peek ratio is 1024 -- try to refactor partition
 
-	    if (KjcOptions.peekratio == 1024 && child instanceof CConfigFilter) {
+	    if (KjcOptions.peekratio >= 1024 && child instanceof CConfigFilter) {
 		CConfigFilter fc = (CConfigFilter)child;
 		SIRFilter filter = (SIRFilter)fc.getStream();
 		
@@ -453,7 +453,7 @@ class CConfigPipeline extends CConfigContainer {
 	    if (KjcOptions.unroll < mult[i]) work += fi.getWorkEstimate()/2;
 
 	    //If peek ratio is 1024 add fusion peek overhead!
-	    if (KjcOptions.peekratio == 1024) { 
+	    if (KjcOptions.peekratio >= 1024) { 
 		if (i > from && child instanceof CConfigFilter) {
 		    CConfigFilter fc = (CConfigFilter)child;
 		    SIRFilter filter = (SIRFilter)fc.getStream();

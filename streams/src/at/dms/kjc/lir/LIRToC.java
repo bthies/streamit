@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.61 2002-03-31 22:42:02 thies Exp $
+ * $Id: LIRToC.java,v 1.62 2002-04-23 15:51:25 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1267,8 +1267,11 @@ public class LIRToC
 	System.err.println(" left.getType()==" + left.getType());
 	System.err.println(" getCClass()=" +left.getType().getCClass());
 	*/
-        if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
-            print(left.getType().getCClass().getOwner().getType() + "->this");
+        if (ident.equals(JAV_OUTER_THIS)) {
+            // This identifier is used for the enclosing instance of
+            // inner classes; see JLS 8.1.2.
+            print("((" + left.getType().getCClass().getOwner().getType() +
+                  ")(data->context->parent->stream_data))");
             return;
         }
         int		index = ident.indexOf("_$");

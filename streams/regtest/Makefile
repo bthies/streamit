@@ -40,13 +40,18 @@ test-once: compile
 test-bed: compile
 	$(TESTER) streamittest.TestBed
 
+# run "tests"
+test-tests: compile
+	$(TESTER) streamittest.TestTests
 # run application tests
 test-apps: compile
 	$(TESTER) streamittest.TestApps
-
 # run example tests
 test-examples: compile
 	$(TESTER) streamittest.TestExamples
+# run benchmark tests
+test-benchmarks: compile
+	$(TESTER) streamittest.TestBenchmarks
 
 
 #checkin tests
@@ -60,6 +65,14 @@ do-test-checkin-raw: compile
 	$(TESTER) streamittest.TestCheckinRaw
 
 
+# linear framework tests (lower level than the regression
+# testing framework for testing the entire compiler path.
+test-linear: compile
+	$(TESTER) streamittest.TestLinear
+
+
+
+# Base functionality
 compile:
 	$(COMPILER) streamittest/*.java
 

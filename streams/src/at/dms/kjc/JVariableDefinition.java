@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDefinition.java,v 1.8 2003-05-28 05:58:45 thies Exp $
+ * $Id: JVariableDefinition.java,v 1.9 2003-10-01 00:11:31 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -53,6 +53,10 @@ public class JVariableDefinition extends JLocalVariable {
     assert(type != null);
   }
 
+    public String toString() {
+	return "VarDef["+name+"="+expr+"]";
+    }
+    
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------

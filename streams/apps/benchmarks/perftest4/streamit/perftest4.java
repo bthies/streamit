@@ -40,7 +40,7 @@ class PerftestSplitJoin extends SplitJoin {
     }
 
     public void init() {
-	setSplitter(ROUND_ROBIN());
+	setSplitter(WEIGHTED_ROUND_ROBIN(825, 825, 825, 825));
 	add(new PerftestPipeline(10370400));
 	add(new PerftestPipeline(10355400));
 	add(new PerftestPipeline(10340400));

@@ -32,8 +32,11 @@ public class QuadratureDemod extends Filter {
     }
 
     public void init(final int firingRate, float g) {
+	final int peekAmount;
+	if (2*firingRate > 4) peekAmount =2*firingRate;
+	else peekAmount = 4;
 
-        input = new Channel (Float.TYPE, 2*firingRate, 2*firingRate+2);
+        input = new Channel (Float.TYPE, 2*firingRate, 2 * firingRate/*peekAmount*/);
         output = new Channel (Float.TYPE, firingRate);
 
 	firing = firingRate;
@@ -48,7 +51,7 @@ public class QuadratureDemod extends Filter {
 	lastValReal = input.peekFloat(3);
 	lastValImag = input.peekFloat(2);
 
-	for (i = 0; i < firing; i++) {
+	for (i = firing; i > 0; i--) {
 	    valImag = input.popFloat();
 	    valReal = input.popFloat();
 	    

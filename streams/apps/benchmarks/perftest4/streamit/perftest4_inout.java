@@ -42,7 +42,7 @@ class PerftestSplitJoin extends Pipeline {
     public void init() {
 	add(new SplitJoin() {
 		public void init() {
-		    setSplitter(ROUND_ROBIN());
+		    setSplitter(WEIGHTED_ROUND_ROBIN(825, 825, 825, 825));
 		    add(new ComplexFIRFilter(33000000, 825, 400, 10370400, 2));
 		    add(new ComplexFIRFilter(33000000, 825, 400, 10355400, 2));
 		    add(new ComplexFIRFilter(33000000, 825, 400, 10340400, 2));

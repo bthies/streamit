@@ -66,13 +66,13 @@ public class RealFIRFilter extends Filter {
 	int i;
   
 	float sum = 0;
-        for (i=0; i<numTaps; i++) {
-            sum += taps[i] * input.peekFloat(i);
+        for (i=0; i < decimation; i++) {
+            sum += taps[i] * input.popFloat();
         }
 	
-	for (i = 0; i < decimation; i++)
-	    input.popFloat();
+	for (i = 0; i < numTaps - decimation; i++)
+	    sum += taps[i + decimation] + input.peekFloat(i);
 
-        output.pushFloat((short)sum);
+        output.pushShort((short)sum);
     }
 }

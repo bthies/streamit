@@ -13,7 +13,7 @@
 
 import streamit.*;
 
-public class HelloWorld2 extends Pipeline
+public class HelloWorld2 extends StreamIt
 {
 
     // presumably some main function invokes the stream
@@ -36,55 +36,67 @@ public class HelloWorld2 extends Pipeline
                 setJoiner (ROUND_ROBIN ());
             }
         });
-        add (new SplitJoin ()
+        add (new Pipeline ()
         {
             public void init ()
             {
-                setSplitter (WEIGHTED_ROUND_ROBIN (2, 1, 4, 2));
-                add (new Filter ()
+                add (new Pipeline ()
                 {
-                    Channel input = new Channel(Character.TYPE, 1);
-                    Channel output = new Channel (Character.TYPE, 2);
-
-                    public void initIO ()
+                    public void init ()
                     {
-                        streamInput = input;
-                        streamOutput = output;
-                    }
+                        add (new SplitJoin ()
+                        {
+                            public void init ()
+                            {
+                                setSplitter (WEIGHTED_ROUND_ROBIN (2, 1, 4, 2));
+                                add (new Filter ()
+                                {
+                                    Channel input = new Channel(Character.TYPE, 1);
+                                    Channel output = new Channel (Character.TYPE, 2);
 
-                    public void work()
-                    {
-                       input.popChar ();
-                       output.pushChar (input.popChar ());
+                                    public void initIO ()
+                                    {
+                                        streamInput = input;
+                                        streamOutput = output;
+                                    }
+
+                                    public void work()
+                                    {
+                                       input.popChar ();
+                                       output.pushChar (input.popChar ());
+                                    }
+                                });
+                                add (new Filter ()
+                                {
+                                    Channel input = new Channel(Character.TYPE, 1);
+                                    Channel output = new Channel (Character.TYPE, 8);
+
+                                    public void initIO ()
+                                    {
+                                        streamInput = input;
+                                        streamOutput = output;
+                                    }
+
+                                    public void work()
+                                    {
+                                        char c = input.popChar ();
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                        output.pushChar (c);
+                                    }
+                                });
+                                add (new Identity (Character.TYPE));
+                                add(new CharPrinter());
+                                setJoiner (WEIGHTED_ROUND_ROBIN (1, 2, 1, 0));
+                            }
+                        });
                     }
                 });
-                add (new Filter ()
-                {
-                    Channel input = new Channel(Character.TYPE, 1);
-                    Channel output = new Channel (Character.TYPE, 8);
-
-                    public void initIO ()
-                    {
-                        streamInput = input;
-                        streamOutput = output;
-                    }
-
-                    public void work()
-                    {
-                        char c = input.popChar ();
-                        output.pushChar (c);
-                        output.pushChar (c);
-                        output.pushChar (c);
-                        output.pushChar (c);
-                        output.pushChar (c);
-                        output.pushChar (c);
-                        output.pushChar (c);
-                        output.pushChar (c);
-                    }
-                });
-                add (new Identity (Character.TYPE));
-                add(new CharPrinter());
-                setJoiner (WEIGHTED_ROUND_ROBIN (1, 2, 1, 0));
             }
         });
         add (new CharPrinter ());

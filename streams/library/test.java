@@ -17,7 +17,7 @@ class PrintInt extends Filter
     }
 }
 
-public class test extends FeedbackLoop
+public class test extends StreamIt
 {
     static public void main (String [] t)
     {
@@ -26,31 +26,37 @@ public class test extends FeedbackLoop
     }
     public void init ()
     {
-        setDelay (2);
-        setJoiner (WEIGHTED_ROUND_ROBIN (0,1));
-        setBody (new Filter ()
+        add (new FeedbackLoop ()
         {
-            Channel input = new Channel (Integer.TYPE);
-            Channel output = new Channel (Integer.TYPE);
-            public void initIO ()
+            public void init ()
             {
-                streamInput = input;
-                streamOutput = output;
+                setDelay (2);
+                setJoiner (WEIGHTED_ROUND_ROBIN (0,1));
+                setBody (new Filter ()
+                {
+                    Channel input = new Channel (Integer.TYPE);
+                    Channel output = new Channel (Integer.TYPE);
+                    public void initIO ()
+                    {
+                        streamInput = input;
+                        streamOutput = output;
+                    }
+
+                    public void work ()
+                    {
+                        output.pushInt (input.peekInt (0) + input.peekInt (1));
+                        input.popInt ();
+                    }
+                });
+                setLoop (new PrintInt());
+                setSplitter (WEIGHTED_ROUND_ROBIN (0, 1));
             }
 
-            public void work ()
+            public void initPath (int index, Channel path)
             {
-                output.pushInt (input.peekInt (0) + input.peekInt (1));
-                input.popInt ();
+                path.pushInt(index);
             }
         });
-        setLoop (new PrintInt());
-        setSplitter (WEIGHTED_ROUND_ROBIN (0, 1));
-    }
-
-    public void initPath (int index, Channel path)
-    {
-        path.pushInt(index);
     }
 }
 

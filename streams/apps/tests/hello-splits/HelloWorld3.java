@@ -19,7 +19,7 @@
 
 import streamit.*;
 
-public class HelloWorld3 extends Stream
+public class HelloWorld3 extends StreamIt
 {
 
     // presumably some main function invokes the stream

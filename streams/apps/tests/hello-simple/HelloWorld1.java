@@ -6,9 +6,8 @@
 
 import streamit.*;
 
-public class HelloWorld1 extends Pipeline
+public class HelloWorld1 extends StreamIt
 {
-    public void initIO () { }
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
@@ -18,8 +17,45 @@ public class HelloWorld1 extends Pipeline
     // this is the defining part of the stream
     public void init()
     {
-        add(new CharGenerator("Hello World!"));
-        add(new CharPrinter());
+        add (new Pipeline ()
+        {
+            public void init ()
+            {
+                add(new CharGenerator("Hello World!"));
+            }
+        });
+        add (new Pipeline ()
+        {
+            public void init ()
+            {
+                add (new Filter ()
+                {
+                    Channel input = new Channel (Character.TYPE, 1, 2);
+                    Channel output = new Channel (Character.TYPE, 1);
+                    public void initIO ()
+                    {
+                        streamInput = input;
+                        streamOutput = output;
+                    }
+                    public void work ()
+                    {
+                        char c = input.popChar ();
+                        if (Character.isLetter (c))
+                        {
+                            c = (Character.isUpperCase (c) ? Character.toLowerCase (c) : Character.toUpperCase (c));
+                        }
+                        output.pushChar (c);
+                    }
+                });
+            }
+        });
+        add (new Pipeline ()
+        {
+            public void init ()
+            {
+                add(new CharPrinter());
+            }
+        });
     }
 }
 

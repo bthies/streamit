@@ -101,7 +101,7 @@ JAVA_SRCS = \
 
 DEBUG_OPT = -g
 
-JAVA_OPT = -nowarn +F
+JAVA_OPT = -nowarn +F -source 1.4
 
 MAKEFILE_DEPS = \
   $(JAVA_SRCS)

@@ -173,9 +173,11 @@ public class MakefileGenerator
 	
 	//let the simulation know how many tiles are mapped to 
 	//filters or joiners
+
 	fw.write("global gStreamItTilesUsed = " + layout.getTilesAssigned() + ";\n");
 	fw.write("global gStreamItTiles = " + rawChip.getTotalTiles() +
 		 ";\n");
+	fw.write("global gMHz_streamit = 250;\n");
 	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");
 

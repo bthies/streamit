@@ -84,6 +84,11 @@ public class UnflatFilter {
 	this(filter,new int[]{1},new int[]{1},new UnflatEdge[]{in},new UnflatEdge[][]{new UnflatEdge[]{out}});
     }
 
+    public boolean isLinear() 
+    {
+	return array != null;
+    }
+
     public String toString() {
 	return name;
     }

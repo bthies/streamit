@@ -382,13 +382,31 @@ public class RenameAll extends SLIRReplacingVisitor
         return newdecl;
     }        
 
+    
     public Object visitFieldExpression(JFieldAccessExpression self,
                                        JExpression left,
                                        String ident)
     {
-	return new JFieldAccessExpression(self.getTokenReference(),
-					  (JExpression)left.accept(this),
-                                          classsymtab.nameFor(ident),
-					  self.getField());
+	//visit the left expression
+	JExpression newLeft = (JExpression)left.accept(this);
+	//the identifier for this field
+	//if this field access is embedded in another field
+	//access, don't rename the variable because it is accessing
+	//a member of a class and this is not renamed
+	String newIdent = ident;
+	
+	//only rename the field access if it is not embedded in a field
+	//access
+	if (!(newLeft instanceof JFieldAccessExpression))
+	    newIdent = classsymtab.nameFor(ident);
+	
+
+	JFieldAccessExpression fieldAccess =
+	    new JFieldAccessExpression(self.getTokenReference(),
+				       newLeft,
+				       newIdent,
+				       self.getField());
+
+	return fieldAccess;
     }
 }

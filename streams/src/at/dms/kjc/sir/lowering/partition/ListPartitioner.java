@@ -142,8 +142,10 @@ public abstract class ListPartitioner {
 		int work1 = work.getWork((SIRFilter)o1);
 		int work2 = work.getWork((SIRFilter)o2);
 		if (work1!=work2) {
+		    /*
 		    System.err.println("  failed because " + o1 + " has work " + work1 + 
 				       " but " + o2 + " has work " + work2);
+		    */
 		    return false;
 		}
 	    } else if (o1 instanceof SIRJoiner &&  o2 instanceof SIRJoiner) {

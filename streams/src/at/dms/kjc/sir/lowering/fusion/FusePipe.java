@@ -126,7 +126,7 @@ public class FusePipe {
 	// fuse the filters...
 	int firstIndex = parent.indexOf(first);
 	int lastIndex = parent.indexOf(last);
-	System.err.println("Fusing " + (lastIndex-firstIndex+1) + " Pipeline filters.");
+	//System.err.println("Fusing " + (lastIndex-firstIndex+1) + " Pipeline filters.");
 	if (firstIndex==0 && lastIndex==parent.size()-1) {
 	    // optimization: if we're fusing an entire pipeline, just
 	    // call directly

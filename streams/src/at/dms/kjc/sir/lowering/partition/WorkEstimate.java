@@ -220,7 +220,7 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
         if (!filter.needsWork ()) {
 	    return 0;
 	} else if (filter.getWork()==null) {
-	    System.err.println("this filter has null work function: " + filter);
+	    //System.err.println("this filter has null work function: " + filter);
 	    return 0;
 	} else {
 	    return getWork(filter, filter.getWork());

@@ -36,9 +36,9 @@ public class GreedyPartitioner {
 	int count = startingTileCount;
 	for(int i=0;i<MAX_FISS_ITER;i++) {
 	    fissAll();
-	    System.out.print("count tiles again... ");
+	    //System.out.print("count tiles again... ");
 	    count = new RawFlattener(str).getNumTiles();
-	    System.out.println("done:"+count);
+	    //System.out.println("done:"+count);
 	    if(count>=target) {
 		break;
 	    } else {
@@ -188,7 +188,7 @@ public class GreedyPartitioner {
 	    // get how many tiles we have
 	    RawFlattener flattener = new RawFlattener(str);
 	    count = flattener.getNumTiles();
-	    System.out.println("Partitioner detects " + count + " tiles.");
+	    //System.out.println("Partitioner detects " + count + " tiles.");
 	    StreamItDot.printGraph(str, "during-fusion.dot");
 	    if (count>target) {
 		//boolean tried=false;
@@ -202,7 +202,7 @@ public class GreedyPartitioner {
 		for (int i=0; i<list.size(); i++) {
 		    SIRContainer cont = list.getContainer(i);
 		    if (cont instanceof SIRSplitJoin) {
-			System.out.println("trying to fuse " + cont.size() + "-way split " + ((SIRSplitJoin)cont).getName());
+			//System.out.println("trying to fuse " + cont.size() + "-way split " + ((SIRSplitJoin)cont).getName());
 			List children=cont.getChildren();
 			if(aggressive==0) {
 			    boolean attempt=true;
@@ -252,8 +252,10 @@ public class GreedyPartitioner {
 			    }
 			}
 		    } else if (cont instanceof SIRPipeline) {
+			/*
 			System.out.println("trying to fuse " + (count-target) + " from " 
 					   + cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
+			*/
 			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
 			// try lifting
 			Lifter.eliminatePipe((SIRPipeline)cont);

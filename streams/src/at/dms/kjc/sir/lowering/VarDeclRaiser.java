@@ -235,7 +235,7 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 	if(newInit instanceof JVariableDeclarationStatement) {
 	    JVariableDefinition[] vars=((JVariableDeclarationStatement)newInit).getVars();
 	    if(vars.length>1)
-		System.err.println("Warning: Compound Variable Declaration in for loop"); //Not handled
+		System.err.println("Warning: Compound Variable Declaration in for loop (not handled)"); //Not handled
 	    JVariableDefinition def=(JVariableDefinition)vars[0];
 	    JExpression val=def.getValue();
 	    varDefs.add(newInit);

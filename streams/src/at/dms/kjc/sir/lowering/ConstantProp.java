@@ -133,7 +133,7 @@ public class ConstantProp {
 	// recursion method depends on whether or not there are still
 	// init statements
 	if (Flattener.INIT_STATEMENTS_RESOLVED) {
-	    System.err.println("Recurse From 2:"+str);
+	    //System.err.println("Recurse From 2:"+str);
 	    for (int i=0; i<str.size(); i++) {
 		recurseInto(str.get(i), str.getParams(i), constants);
 	    }

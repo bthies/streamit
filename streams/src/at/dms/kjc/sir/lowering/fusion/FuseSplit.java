@@ -61,9 +61,11 @@ public class FuseSplit {
 		if (partition.get(i)>1) {
 		    for (int j=partition.getFirst(i); j<=partition.getLast(i); j++) {
 			if (!(sj.get(j) instanceof SIRFilter)) {
+			    /*
 			    System.err.println("Tried to fuse non-filter " + 
 					       sj.get(j).getClass() + " " + sj.get(j).getName() + 
 					       " in SJ; returning original SJ: " + sj.getName());
+			    */
 			    return sj;
 			}
 		    }
@@ -80,7 +82,7 @@ public class FuseSplit {
 	    return sj;
 	}
 
-	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + numParts + " filters..."); 
+	//System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + numParts + " filters..."); 
 
         // first refactor the splitjoin so we can do partial fusing
         RefactorSplitJoin.addHierarchicalChildren(sj, partition);
@@ -110,7 +112,7 @@ public class FuseSplit {
 	if (!isFusable(sj)) {
 	    return sj;
 	} else {
-	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters."); 
+	    //System.err.println("Fusing " + (sj.size()) + " SplitJoin filters."); 
 	}
 
 	// get copy of child streams and rename them

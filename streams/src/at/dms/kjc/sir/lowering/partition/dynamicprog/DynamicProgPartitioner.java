@@ -241,7 +241,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 		}
 		// if all were equivalent, then add them to uniform list
 		if (lastEquiv== self.get(0)) {
-		    System.out.println("Detected uniform splitjoin: " + self.getName());
+		    //System.out.println("Detected uniform splitjoin: " + self.getName());
 		    uniformSJ.add(self);
 		}
 	    } else {

@@ -217,7 +217,7 @@ public class StatelessDuplicate {
 	// otherwise we have a stage in the two-stage filter that
 	// doesn't consume anything at all
 	//newFilters.add(ObjectDeepCloner.deepCopy(origFilter));
-	System.err.println("Duplicating " + origFilter.getName() + " into a " + reps + "-way SplitJoin.");
+	//System.err.println("Duplicating " + origFilter.getName() + " into a " + reps + "-way SplitJoin.");
 	for (int i=0; i<reps; i++) {
 	    newFilters.add(makeDuplicate(i));
 	}

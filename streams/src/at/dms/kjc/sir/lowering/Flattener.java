@@ -80,10 +80,10 @@ public class Flattener {
 	}
 
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
-	    System.err.println("Partitioning...");
+	    System.err.print("Partitioning...");
 	    Partitioner.doit(str, 
 			     KjcOptions.raw * KjcOptions.raw);
-	    System.err.println("...done with Partitioning.");
+	    System.err.println("done.");
 	}
 
 	if (KjcOptions.sjtopipe) {

@@ -24,7 +24,7 @@ public class FuseSimpleSplit {
 	if (!isFusable(sj)) {
 	    return sj;
 	} else {
-	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters."); 
+	    //System.err.println("Fusing " + (sj.size()) + " SplitJoin filters."); 
 	}
 
 	// get copy of child streams
@@ -178,7 +178,7 @@ public class FuseSimpleSplit {
 	    // don't allow two-stage filters, since we aren't dealing
 	    // with how to fuse their initWork functions.
             if (filter instanceof SIRTwoStageFilter) {
-		System.err.println("Didn't fuse SJ because this child is a 2-stage filter: " + filter);
+		//System.err.println("Didn't fuse SJ because this child is a 2-stage filter: " + filter);
                 return false;
 	    }
         }

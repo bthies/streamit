@@ -84,7 +84,7 @@ public class BranchAnalyzer extends SLIRReplacingVisitor {
 				   JStatement thenClause,
 				   JStatement elseClause) {
 	ifDepth++;
-	System.out.println("Visiting If:"+ifDepth);
+	//System.out.println("Visiting If:"+ifDepth);
 	//cond.accept(this);
 	//Propagator thenProp=new Propagator(new Hashtable());
 	//Propagator elseProp=new Propagator(new Hashtable());
@@ -132,7 +132,7 @@ public class BranchAnalyzer extends SLIRReplacingVisitor {
 	  if(elseProp.added)
 	  analyzeElse=true;*/
 	if(!(cond instanceof JEqualityExpression)) {
-	    System.out.println("Rejecting:"+cond);
+	    //System.out.println("Rejecting:"+cond);
 	    ifDepth--;
 	    return self;
 	}
@@ -220,7 +220,7 @@ public class BranchAnalyzer extends SLIRReplacingVisitor {
 	if(body instanceof JBlock)
 	    body.accept(this);
 	else {
-	    System.out.println("Creating body for");
+	    //System.out.println("Creating body for");
 	    JBlock newBlock=new JBlock(body.getTokenReference(),new JStatement[]{body},null);
 	    newBlock.accept(this);
 	    self.setBody(newBlock);

@@ -28,7 +28,11 @@ abstract class DPConfigContainer extends DPConfig {
      * A value.
      */
     private int[][][][][][] B;
-
+    /**
+     * Value to initialize A, B with.
+     */
+    private int NOT_MEMOIZED = -1;
+    
     /**
      * The stream for this container.
      */
@@ -87,7 +91,7 @@ abstract class DPConfigContainer extends DPConfig {
 		    for (int i4=0; i4<arr[0][0][0].length; i4++) {
 			for (int i5=0; i5<arr[0][0][0][0].length; i5++) {
 			    for (int i6=0; i6<2; i6++) {
-				arr[i1][i2][i3][i4][i5][i6] = -1;
+				arr[i1][i2][i3][i4][i5][i6] = NOT_MEMOIZED;
 			    }
 			}
 		    }
@@ -289,8 +293,8 @@ abstract class DPConfigContainer extends DPConfig {
 	}
 
 	// if we've memoized the value before, return it
-	if (A[x1][x2][y1][y2][tileLimit][nextToJoiner]>0) {
-	    Utils.assert(B[x1][x2][y1][y2][tileLimit][nextToJoiner]>0, "B == 0");
+	if (A[x1][x2][y1][y2][tileLimit][nextToJoiner]!=NOT_MEMOIZED) {
+	    Utils.assert(B[x1][x2][y1][y2][tileLimit][nextToJoiner]!=NOT_MEMOIZED, "Memoized A but not B.");
 	    /*
 	      System.err.println("Found memoized A[" + child1 + "][" + child2 + "][" + tileLimit + "] = " + 
 	      A[child1][child2][tileLimit] + " for " + cont.getName());

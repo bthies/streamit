@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.40 2003-07-31 18:45:05 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.41 2003-08-12 13:58:14 dmaze Exp $
  */
 public class ToJava
 {
@@ -223,6 +223,7 @@ public class ToJava
             else
                 outWriter = new OutputStreamWriter(System.out);
             outWriter.write("import streamit.*;\n");
+            outWriter.write("import streamit.io.*;\n");
 
             String javaOut =
                 (String)prog.accept(new NodesToJava(null, varGen));

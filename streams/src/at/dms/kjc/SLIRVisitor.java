@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.20 2001-10-31 17:10:45 dmaze Exp $
+ * $Id: SLIRVisitor.java,v 1.21 2001-11-06 18:03:30 thies Exp $
  */
 
 package at.dms.kjc;
@@ -117,6 +117,21 @@ public interface SLIRVisitor extends KjcVisitor
      */
     void visitFunctionPointer(LIRFunctionPointer self,
                               String name);
+
+    /**
+     * Visits a file reader.
+     */
+    void visitFileReader(LIRFileReader self);
+    
+    /**
+     * Visits a file writer.
+     */
+    void visitFileWriter(LIRFileWriter self);
+    
+    /**
+     * Visits a special work function call.
+     */
+    void visitRunSpecialWork(LIRRunSpecialWork self);
     
     /**
      * Visits an LIR node.

@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.3 2001-10-31 17:10:45 dmaze Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.4 2001-11-06 18:03:30 thies Exp $
  */
 
 package at.dms.kjc;
@@ -179,6 +179,28 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 	data.accept(this);
 	streamContext.accept(this);
 	fp.accept(this);
+    }
+    
+    /**
+     * Visits a file reader.
+     */
+    public void visitFileReader(LIRFileReader self) {
+	self.getStreamContext().accept(this);
+    }
+    
+    /**
+     * Visits a file writer.
+     */
+    public void visitFileWriter(LIRFileWriter self) {
+	self.getStreamContext().accept(this);
+    }
+    
+    /**
+     * Visits a special work function call.
+     */
+    public void visitRunSpecialWork(LIRRunSpecialWork self) {
+	self.getStreamContext().accept(this);
+	self.getChildContext().accept(this);
     }
     
     /**

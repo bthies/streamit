@@ -117,6 +117,32 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
 
     /**
+     * Visits a file reader.
+     */
+    public Object visitFileReader(LIRFileReader self) {
+	self.getStreamContext().accept(this);
+	return self;
+    }
+
+    /**
+     * Visits a file writer.
+     */
+    public Object visitFileWriter(LIRFileWriter self) {
+	self.getStreamContext().accept(this);
+	return self;
+    }
+    
+    /**
+     * Visits a special work function call.
+     */
+    public Object visitRunSpecialWork(LIRRunSpecialWork self) {
+	self.getStreamContext().accept(this);
+	self.getChildContext().accept(this);
+	return self;
+    }
+    
+
+    /**
      * Visits a pop expression.
      */
     public Object visitPopExpression(SIRPopExpression self,

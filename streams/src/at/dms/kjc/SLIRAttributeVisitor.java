@@ -179,6 +179,22 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
                       JExpression streamContext,
                       int push);
 
+    
+    /**
+     * Visits a file reader.
+     */
+    Object visitFileReader(LIRFileReader self);
+
+    /**
+     * Visits a file writer.
+     */
+    Object visitFileWriter(LIRFileWriter self);
+    
+    /**
+     * Visits a special work function call.
+     */
+    Object visitRunSpecialWork(LIRRunSpecialWork self);
+    
     /**
      * Visits a splitter-setting node.
      */

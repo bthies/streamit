@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.28 2003-03-22 22:23:43 thies Exp $
+ * $Id: KjcOptions.opt,v 1.29 2003-03-31 16:18:09 aalamb Exp $
  */
 
 prefix Kjc
@@ -239,10 +239,9 @@ longname		"linearreplacement"
 
 longname		"frequencyreplacement"
 	shortcut	"F"
-	type		int
-	default		"-1"
-	requireArgument
-	help		"Convert FIR filters to a frequency implementation. 0 to 3 with three being the most efficient implementation"
+	type		boolean
+	default		"false"
+	help		"Convert FIR filters to a frequency implementation."
 
 longname		"redundantreplacement"
 	shortcut	"t"

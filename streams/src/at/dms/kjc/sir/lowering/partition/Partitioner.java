@@ -13,10 +13,22 @@ import at.dms.kjc.flatgraph.*;
 
 public class Partitioner {
     /**
-     * Tries to adjust <str> into <num> pieces of equal work, and
+     * Tries to adjust <str> into <targetCount> pieces of equal work, and
      * return new stream.
      */
-    public static SIRStream doit(SIRStream str, int target) {
+    public static SIRStream doit(SIRStream str, int targetCount) {
+	// detect number of tiles we have
+	int curCount = new GraphFlattener(str).getNumTiles();
+	return doit(str, curCount, targetCount);
+    }
+
+
+    /**
+     * Tries to adjust <str> into <targetCount> pieces of equal work, given
+     * that <str> currently requires <curCount> tiles.  Return new
+     * stream.
+     */
+    public static SIRStream doit(SIRStream str, int curCount, int targetCount) {
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
 	Lifter.lift(str);
@@ -26,9 +38,7 @@ public class Partitioner {
 	work.printGraph(str, "work-before-partition.dot");
 	work.getSortedFilterWork().writeToFile("work-before-partition.txt");
 
-	// detect number of tiles we have
-	int count = new GraphFlattener(str).getNumTiles();
-	System.err.println("  Found "+count+" tiles.");
+	System.err.println("  Found "+curCount+" tiles.");
 
 	// for statistics gathering
 	if (KjcOptions.dpscaling) {
@@ -36,21 +46,21 @@ public class Partitioner {
 	}
 
 	// do the partitioning
-	if (count < target) {
+	if (curCount < targetCount) {
 	    // need fission
 	    if (KjcOptions.dppartition) {
-		str = new DynamicProgPartitioner(str, work, target).toplevel();
+		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
 	    } else {
-		new GreedyPartitioner(str, work, target).toplevelFission(count);
+		new GreedyPartitioner(str, work, targetCount).toplevelFission(curCount);
 	    }
 	} else {
 	    // need fusion
 	    if (KjcOptions.ilppartition) {
-		new ILPPartitioner(str, work, target).toplevelFusion();
+		new ILPPartitioner(str, work, targetCount).toplevelFusion();
 	    } else if (KjcOptions.dppartition) {
-		str = new DynamicProgPartitioner(str, work, target).toplevel();
+		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
 	    } else {
-		new GreedyPartitioner(str, work, target).toplevelFusion();
+		new GreedyPartitioner(str, work, targetCount).toplevelFusion();
 	    }
 	}
 

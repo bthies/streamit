@@ -188,7 +188,7 @@ public class GreedyPartitioner {
 	    // get how many tiles we have
 	    GraphFlattener flattener = new GraphFlattener(str);
 	    count = flattener.getNumTiles();
-	    System.out.println("Partitioner detects " + count + " tiles.");
+	    System.out.println("  Partitioner detects " + count + " tiles.");
 	    if (count>target) {
 		//boolean tried=false;
 		// make a fresh work estimate

@@ -511,7 +511,8 @@ class Detector extends Filter
 	numSamples = nSamples;
 	holdsTarget = (myBeam == targetBeam);
 	targetSample = tarSample;
-	
+	myBeam++;
+
 	thresh = 0.1f;
 	input = new Channel(Float.TYPE, 1);
     }
@@ -529,7 +530,7 @@ class Detector extends Filter
 		if( !(val >= thresh) ) {
 		    System.out.println(0);
 		} else {
-		    System.out.println(1);
+		    System.out.println(myBeam);
 		}
 	    }
 	else
@@ -537,7 +538,7 @@ class Detector extends Filter
 		if( val >= thresh ) {
 		    System.out.println(0);
 		} else {
-		    System.out.println(-1);
+		    System.out.println(-myBeam);
 		    //System.out.println("OK not found on beam " + myBeam);
 		}
 	    }

@@ -14,7 +14,7 @@ public class KjcOptions extends at.dms.util.Options {
 	this("Kjc");
     }
 
-    public boolean raw = false;
+    public int raw = -1;
     public boolean constprop = false;
     public boolean unroll = false;
     public boolean fusion = false;
@@ -39,7 +39,7 @@ public class KjcOptions extends at.dms.util.Options {
     public boolean processOption(int code, Getopt g) {
 	switch (code) {
 	case 'r':
-	    raw = !false; return true;
+	    raw = getInt(g, 16) ; return true;
 	case 'c':
 	    constprop = !false; return true;
 	case 'u':
@@ -106,7 +106,7 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 14] = "  --lang, -l<String>:   Sets the source language (1.1, 1.2, kopi) [1.1]";
 	total[parent.length + 15] = "  --filter, -f<String>: Warning filter [at.dms.kjc.DefaultFilter]";
 	total[parent.length + 16] = "  --streamit, -s:       Turns on StreaMIT mode [false]";    
-	total[parent.length + 17] = "  --raw, -r:            Compile for RAW";
+	total[parent.length + 17] = "  --raw, -r<int>:            Compile for RAW with <int> tiles";
 	total[parent.length + 18] = "  --constprop, c:       Turns on StreamIt Constant Prop";
 	total[parent.length + 19] = "  --unroll, u:          StreamIt Unroll";
 	total[parent.length + 20] = "  --fusion, o:          Perform filter fusion";
@@ -171,6 +171,6 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("constprop", LongOpt.NO_ARGUMENT, null, 'c'),
 	new LongOpt("unroll", LongOpt.NO_ARGUMENT, null, 'u'),
 	new LongOpt("fusion", LongOpt.NO_ARGUMENT, null, 'o'),
-	new LongOpt("raw", LongOpt.NO_ARGUMENT, null, 'r')
+	new LongOpt("raw", LongOpt.REQUIRED_ARGUMENT, null, 'r')
 	    };
 }

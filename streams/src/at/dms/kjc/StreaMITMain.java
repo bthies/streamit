@@ -28,7 +28,7 @@ public class StreaMITMain {
 	    System.exit(-1);
 	}
 	
-	if (StreamItOptions.raw) {
+	if (StreamItOptions.raw != -1) {
 	    System.out.println("*/");
 	
 	    /* Compiling for raw */

@@ -16,7 +16,7 @@ public class SimpleHierarchicalSchedulerPow2 extends SimpleHierarchicalScheduler
         }
     }
 
-    private Schedule getNewSchedule ()
+    protected Schedule getNewSchedule ()
     {
         return new SchedulePow2 ();
     }

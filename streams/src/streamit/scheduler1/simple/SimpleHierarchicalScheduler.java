@@ -8,7 +8,7 @@ public class SimpleHierarchicalScheduler extends Scheduler
 {
     final Schedule schedule;
 
-    private Schedule getNewSchedule ()
+    protected Schedule getNewSchedule ()
     {
         return new Schedule ();
     }

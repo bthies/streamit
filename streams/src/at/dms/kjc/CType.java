@@ -15,12 +15,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CType.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CType.java,v 1.2 2003-04-19 01:28:48 thies Exp $
  */
 
 package at.dms.kjc;
 
 import java.util.Vector;
+
+import java.io.ObjectOutputStream;
+import java.io.IOException;
 
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.InconsistencyException;
@@ -34,7 +37,7 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
-
+ 
   /**
    * Constructs a type signature
    */
@@ -42,6 +45,22 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
     this.type = type;
   }
 
+  // ----------------------------------------------------------------------
+  // CLONING STUFF
+  // ----------------------------------------------------------------------
+
+    private Object serializationHandle;
+    
+    private void writeObject(ObjectOutputStream oos)
+	throws IOException {
+	this.serializationHandle = ObjectDeepCloner.getHandle(this);
+	oos.defaultWriteObject();
+    }
+    
+    private Object readResolve() throws Exception {
+	return ObjectDeepCloner.getInstance(serializationHandle, this);
+    }
+    
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------

@@ -22,14 +22,17 @@ import at.dms.compiler.*;
  * </pre>
  *
  * It also can replace splitjoins and pipelines with linear representations
- * with a single filter that computes the same function.
- * <p>
- * $Id: LinearDirectReplacer.java,v 1.7 2003-04-20 13:30:36 thies Exp $
+ * with a single filter that computes the same function.<br>
+ * 
+ * $Id: LinearDirectReplacer.java,v 1.8 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
     LinearAnalyzer linearityInformation;
-    /** the cost calculator which guides us in whether or not we should stream constructs with direct implementations. **/
+    /**
+     * the cost calculator which guides us in whether or
+     * not we should stream constructs with direct implementations.
+     **/
     LinearReplaceCalculator replaceGuide;
     
     protected LinearDirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
@@ -43,12 +46,13 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	this.replaceGuide = costs;
     }
 
-    /** start the process of replacement on str using the Linearity information in lfa. **/
+    /** Start the process of replacement on str using the Linearity information in lfa. **/
     public static void doReplace(LinearAnalyzer lfa, SIRStream str) {
 	// calculate the best way to replace linear components.
 	LinearReplaceCalculator replaceCosts = new LinearReplaceCalculator(lfa);
 	str.accept(replaceCosts);
-	LinearPrinter.println("starting replacement pass. Will replace " + replaceCosts.getDoReplace().keySet().size() + " filters:");
+	LinearPrinter.println("starting replacement pass. Will replace " +
+			      replaceCosts.getDoReplace().keySet().size() + " filters:");
 	Iterator keyIter = replaceCosts.getDoReplace().keySet().iterator();
 	while(keyIter.hasNext()) {
 	    Object key = keyIter.next();
@@ -66,11 +70,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * occurs if the replace calculator says that this stream should be replaced.
      **/
     public boolean makeReplacement(SIRStream self) {
-	// 	if (!this.replaceGuide.shouldReplace(self)) {
-	// 	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
-	// 	    LinearPrinter.println(" stop.");
-	// 	    return;
-	// 	}
 	LinearPrinter.println("Creating linear replacement for " + self);
 	SIRContainer parent = self.getParent();
 	if (parent == null) {
@@ -100,8 +99,9 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	// remove linearity mapping for old filter, since you can only
 	// have one stream mapping to a given linearity object
 	this.linearityInformation.removeLinearRepresentation(self);
-	// add a mapping from the new filter to the old linear rep (because it still computes the same thing)
-	this.linearityInformation.addLinearRepresentation(newImplementation, linearRep); // add same old linear rep
+	// add a mapping from the new filter to the old linear rep
+	// (because it still computes the same thing)
+	this.linearityInformation.addLinearRepresentation(newImplementation, linearRep);
 
 	// return that we replaced something
 	return true;
@@ -109,11 +109,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
     /**
      * Creates a filter that has a work function that directly implements
-     * the linear representation that is passed in.<p>
-     *
-     * Eventually, this will determine (by some yet to be determined method) the
-     * most efficient implementation and then create an IR structure that implements
-     * that. For now, we always return the direct matrix multply implementation.
+     * the linear representation that is passed in.<br>
      **/
     protected SIRFilter makeEfficientImplementation(SIRStream oldStream,
 						    LinearFilterRepresentation linearRep) {
@@ -130,7 +126,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	JMethodDeclaration newInit = SIRStream.makeEmptyInit();
 	
 	// create a new filter with the new work and init functions
-	
 	SIRFilter newFilter = new SIRFilter("Linear" + oldStream.getIdent());
 	newFilter.setWork(newWork);
 	newFilter.setInit(newInit);
@@ -149,9 +144,9 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * Create a method that computes the function represented in the
      * linear form. (Eg it pushes the direct sum of inputs to the output.)
      * inputType is the variable type of the peek/pop expression that this filter uses
-     * and output type is the type of the pushExpressions.<p>
+     * and output type is the type of the pushExpressions.<br>
      *
-     * The basic format of the resulting method is:<p>
+     * The basic format of the resulting method is:<br>
      * <pre>
      * push(a1*peek(0) + b1*peek(1) + ... + x1*peek(n));
      * push(a2*peek(0) + b2*peek(1) + ... + x2*peek(n));
@@ -217,11 +212,14 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    int currentPushIndex = pushCount - 1 - i;
 	    
 	    // go through each of the elements in this column of the matrix. If the element
-	    // is non zero, then we want to produce a peek(index)*weight term (which we will then add together).
-	    // Currently bomb out if we have a non real number (no way to generate non-reals at the present).
+	    // is non zero, then we want to produce a peek(index)*weight
+	    // term (which we will then add together).
+	    // Currently bomb out if we have a non real number
+	    // (no way to generate non-reals at the present).
 	    Vector combinationExpressions = new Vector();
 
-	    // a note about indexes: the matrix [[0] [1] [2]] implies peek(0)*2 + peek(1)*1 + peek(2)*0.
+	    // a note about indexes: the matrix [[0] [1] [2]]
+	    // implies peek(0)*2 + peek(1)*1 + peek(2)*0.
 	    for (int j = 0; j < peekCount; j++) {
 		int currentPeekIndex = peekCount - 1 - j;
 		ComplexNumber currentWeight = representation.getA().getElement(currentPeekIndex,
@@ -236,8 +234,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 		if (currentWeight.equals(ComplexNumber.ZERO)) {
 		    // do nothing for a zero weight
 		} else {
-		    // make an integer IR node for the appropriate peek index (peek (0) corresponds to
-		    // to the array row of  at peekSize-1
+		    // make an integer IR node for the appropriate peek index (peek (0)
+		    // corresponds to the array row of  at peekSize-1
 		    JIntLiteral peekOffsetNode = new JIntLiteral(j);
 		    // make a peek expression with the appropriate index
 		    SIRPeekExpression peekNode = new SIRPeekExpression(peekOffsetNode, inputType);
@@ -267,7 +265,9 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    
 	    // now, we need to create the appropriate constant to represent the offset
 	    ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
-	    if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
+	    if (!currentOffset.isReal()) {
+		throw new RuntimeException("Non real complex number in offset vector");
+	    }
 	    JLiteral offsetNode;
 	    // make the offset node for integers, and others
 	    if (currentOffset.isReal() && currentOffset.isIntegral()) {
@@ -278,7 +278,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    
 	    // now we have all of the combination nodes and the offset node.
 	    // What we want to do is to is to combine them all together using addition.
-	    // To do this, we create an add expression tree expanding downward to the right as we go.
+	    // To do this, we create an add expression tree expanding downward
+	    // to the right as we go.
 	    JExpression pushArgument;
 	    // if no combination expressions, then the push arg is only the offset
 	    if (combinationExpressions.size() == 0) {
@@ -317,14 +318,13 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /**
      * This visitor calculates the best way to replace filters in a stream
      * graph with direct implementations. Specifically, it calculates the
-     * the replacement that has the lowest cost.
+     * the replacement that has the lowest cost.<br>
      *
      * The technique in this class isn't quite correct (e.g., it doesn't
      * take into account the number of times that children execute in the
      * steady-state schedule when considering their cost) -- the linear
      * partitioner is now the preferred way to get the lowest cost
      * combination.  --bft
-     *
      **/
     static class LinearReplaceCalculator extends EmptyAttributeStreamVisitor {
 	/**

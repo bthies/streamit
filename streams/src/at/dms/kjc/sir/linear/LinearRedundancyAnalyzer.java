@@ -6,10 +6,10 @@ import at.dms.kjc.sir.*;
 
 /**
  * The LinearRedundancyAnalyzer tries to determine redundant computations
- * across the firings of filters. Possibly (in the future) this information can
- * be used to optimize performance even more.
+ * across the firings of filters. <br>
+ *
+ * $Id: LinearRedundancyAnalyzer.java,v 1.6 2003-06-02 18:19:23 aalamb Exp $
  **/
-
 public class LinearRedundancyAnalyzer {
     // the information that we are going to keep is a mapping from filter
     // to redundancy information.
@@ -73,13 +73,6 @@ public class LinearRedundancyAnalyzer {
 	returnString += "end.";
 	return returnString;
     }
-    
-
-
-    
-	    
-	
-
 }
 
 

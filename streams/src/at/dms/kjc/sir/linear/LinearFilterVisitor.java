@@ -6,19 +6,22 @@ import at.dms.kjc.sir.*;
 
 
 /**
- * A visitor class that goes through all of the expressions in the work function
+ * The visitor that goes through all of the expressions of a work function
  * of a filter to determine if the filter is linear and if it is what matrix
- * corresponds to the filter.<p>
+ * corresponds to the filter. This class implements almost verbatim the dataflow
+ * algorithm presented in http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf <br>
  *
  * This main workings of this class are as follows: it is an AttributeVisitor,
- * which means in plain english, that its methods return objects. For the
+ * which means (in plain English), that its methods return objects. For the
  * LinearFilterVisitor, each method analyzes a IR node. It returns one of two
- * things. <p>
+ * things: null or a LinearForm. <br>
  *
  * Returning null indicates that that particular IR node does not compute a
  * linear function. Otherwise, a LinearForm is returned, which corresponds to
- * the linear function that is computed by that IR nodes. LinearForms can
- * be used to represent linear combinations of the input plus a constant.
+ * the linear function that is computed by that IR node. LinearForms are
+ * used to represent linear combinations of the input plus a constant.<br>
+ *
+ * $Id: LinearFilterVisitor.java,v 1.14 2003-06-02 18:19:23 aalamb Exp $
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
@@ -31,14 +34,16 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     /**
      * Number of items that are peeked at. Therefore this is also the same
-     * size of the vector that must be used to represent.
+     * size of the vector that must be used to represent each affine combination.
      **/
     private int peekSize;
+
     /**
      * Number of items that are pused. Therefore it also represents the
      * number of columns that are in the matrix representation.
      **/
     private int pushSize;
+
     /**
      * Number of items that are poped. This information is needed for
      * later stages of analysis and is passed on to the LinearFilterRepresentation.
@@ -53,7 +58,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private int peekOffset;
 
     /**
-     * The current push offset. This keeps track of which colimn in the Linear representation
+     * The current push offset. This keeps track of which column in the Linear representation
      * of the current filter should be updated with the linear form.
      **/
     private int pushOffset;
@@ -68,6 +73,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     /** The matrix which represents this filter. **/
     private FilterMatrix representationMatrix;
+
     /**
      * A vector of offsets (eg constants that need to be added
      * to the combo of inputs to produce the output).
@@ -105,6 +111,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
      * Returns a shallow clone of this filter visitor (eg all of the
      * data structures are copied, but the things that they point to are not.
+     * Used at program split points (eg if statements).
      **/
     private LinearFilterVisitor copy() {
 	// first, make the copy using the default constructors
@@ -121,19 +128,18 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	otherVisitor.representationVector = (FilterVector)this.representationVector.copy();
 	otherVisitor.nonLinearFlag = this.nonLinearFlag;
 
-	
-
 	// and I think that that is all the state that we need.
 	return otherVisitor;
     }
 
     /**
-     * Recconcile the differences between two LinearFilterVisitors.
+     * Recconcile the differences between two LinearFilterVisitors after
+     * we rejoin from an if statement.
      * Basically, this implements the confluence operation that we
      * want to to after analyzing both the then and the else parts
      * of an if statement. We assume that otherVisitor was passed through
      * the other branch, and we are at the point where the control flow
-     * comes back together and we want to figure out what is going on.<p>
+     * comes back together and we want to figure out what is going on.<br>
      *
      * The basic rules are pretty simple. If the representation matrices are
      * different, or either this or otherVisitor has the nonlinear flag
@@ -179,7 +185,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     /**
      * Implements set union for the confluence operation.
-     * Returns the union of the two sets, that is it returns
+     * Returns the union of the two sets. That is it returns
      * a HashMap that contains only mappings from the same
      * key to the same value in both map1 and map2.
      **/
@@ -216,15 +222,18 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	this.nonLinearFlag = true;
     }
 	   
-    /** get the matrix representing this filter. **/
+    /** Get the matrix representing this filter. **/
     public FilterMatrix getMatrixRepresentation() {
 	return this.representationMatrix;
     }
-    /** get the vector representing the constants that this filter adds/subtracts to produce output. **/
+    /**
+     * Get the vector representing the constants that this filter
+     * adds/subtracts to produce output.
+     **/
     public FilterVector getConstantVector() {
 	return this.representationVector;
     }
-    /** get the linear representation of this filter **/
+    /** Get the linear representation of this filter. **/
     public LinearFilterRepresentation getLinearRepresentation() {
 	// throw exception if this filter is not linear, becase therefore we
 	// shouldn't be trying to get its linear form.
@@ -241,8 +250,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /////// expressions that are some sort of linear (or affine) calculation on the inputs
     /////// the method returns a LinearForm. They return null otherwise.
 
-
-
 //     public Object visitArgs(JExpression[] args) {return null;}
     /**
      * Visit an a ArrayAccessExpression. Currently just warn the user if we see one of these.
@@ -255,8 +262,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	return getMapping(self);
     }
     /**
-     * When we visit an array initializer, we  simply need to return null, as we are currently
-     * ignoring arrays on the principle that constprop gets rid of all the ones that are known at compile time.
+     * When we visit an array initializer, we simply need to return null, as we are currently
+     * ignoring arrays on the principle that constprop gets rid of all the ones that are
+     * known at compile time.
      **/
     public Object visitArrayInitializer(JArrayInitializer self, JExpression[] elems){
 	LinearPrinter.warn("Ignoring array initialization expression: " + self);
@@ -351,7 +359,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     
     /**
-     * visits a binary expression: eg add, sub, etc.
+     * Visits a binary expression: eg add, sub, etc.
      * If the operator is a plus or minus,
      * we can deal with all LinearForms for left and right.
      * If the operator is multiply or divide, we can only deal if
@@ -478,7 +486,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitBlockStatement(JBlock self, JavaStyleComment[] comments){return null;}
 //     public Object visitBreakStatement(JBreakStatement self, String label){return null;}
     /**
-     * Visit a cast expression, which basically means that we need to do chopping off if we are casting to
+     * Visit a cast expression, which basically means that we need to
+     * do chopping off if we are casting to
      * an integer, byte, etc. If we cast something to an int, that is a non linear operation, so we
      * just return null.
      **/
@@ -582,6 +591,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitExpressionStatement(JExpressionStatement self, JExpression expr){return null;}
 //     public Object visitFieldDeclaration(JFieldDeclaration self, int modifiers,
 // 					CType type, String ident, JExpression expr){return null;}
+
     /**
      * visits a field access expression. If there is a linear form mapped to this
      * expression in variablesToLinearForms, we return that. If there is no linear
@@ -677,6 +687,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	return getMapping(self);
     }
 //     public Object visitLogicalComplementExpression(JUnaryExpression self, JExpression expr){return null;}
+
     /**
      * Eventually, we should do interprodcedural analysis. Right now instead, we will
      * simply ignore them (eg return null signifying that they do not generate linear things).
@@ -791,7 +802,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
      * Shift expressions are linear for integer operators.
      * They correspond to multiplications or divisions by a power of two.
-     * if the RHS of the expression is a constant (eg a lienar form
+     * if the RHS of the expression is a constant (eg a linear form
      * with only an offset) then we can convert it to a power of two, and
      * then make the shift a multiplication or division. Otherwise, this is
      * not a linear operation.
@@ -885,6 +896,12 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 						    JVariableDefinition[] vars){return null;}
 //     public Object visitVariableDefinition(JVariableDefinition self, int modifiers,
 // 					  CType type, String ident, JExpression expr){return null;}
+    /**
+     * Visits a while statement. While statements are not currently
+     * analyzed because if the constprop/unroller couldn't handle them
+     * then they are unlikely to do linear things and hence this filter is
+     * most probably non-linear.
+     **/
     public Object visitWhileStatement(JWhileStatement self, JExpression cond, JStatement body){
 	this.nonLinearFlag = true;	
 	LinearPrinter.warn("Not yet implemented -- while statements are not yet implemented");
@@ -896,9 +913,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     ///// SIR Constructs that are interesting for linear analysis (eg push, pop, and peek expressions)
     
     /**
-     * when we visit a push expression, we are basically going to try and
+     * Visit a push expression. When we visit a push expression, we are basically going to try and
      * resolve the argument expression into linear form. If the argument
-     * resolves into linear form, then we are golden -- we make a note of the 
+     * resolves into linear form, then we are golden -- we make a note of the fact
+     * by copying the linear form into the appropriate column of A and the
+     * appropriate location in b.
      **/
     public Object visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
 	LinearPrinter.println("  visiting push expression: " +
@@ -934,7 +953,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// push expressions don't return values, so they also certainly don't return linear forms
 	return null;
     }
+
     /**
+     * Visit a pop expression.
      * A pop expression generates a linear form based on the current offset, and then
      * updates the current offset. The basic idea is that a pop expression represents using one
      * one of the input values from the tapes, and therefore should correspond to a linear form
@@ -967,7 +988,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	LinearPrinter.println("  returning linear form from pop expression");
 	return currentForm;
     }
+
     /**
+     * Visit a peek expression.
      * Peek expressions are also base expressions that generate linear forms.
      * The peek index is transformed into a "1" in the appropriate place in
      * the weights vector of the returned linear form. We also have to keep track of
@@ -1016,46 +1039,50 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
     ////// Generators for literal expressions
     
-    /** boolean logic falls outside the realm of linear filter analysis -- return null**/
+    /**
+     * Visit boolean literal. Boolean logic falls outside the
+     * realm of linear filter analysis -- return null.
+     **/
     public Object visitBooleanLiteral(JBooleanLiteral self,boolean value) {return null;}
-    /** create the appropriate valued offset **/
+    /** Visit a byte literal. Create the appropriate valued offset. **/
     public Object visitByteLiteral(JByteLiteral self, byte value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** create the appropriate valued offset **/
+    /** Visit a character literal. Create the appropriate valued offset **/
     public Object visitCharLiteral(JCharLiteral self,char value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** create the appropriate valued offset **/
+    /** Visit a double. Create the appropriate valued offset. **/
     public Object visitDoubleLiteral(JDoubleLiteral self,double value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** create the appropriate valued offset **/
+    /** Visit a float. Create the appropriate valued offset. **/
     public Object visitFloatLiteral(JFloatLiteral self,float value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** create the appropriate valued offset **/
+    /** Visit an int. Create the appropriate valued offset. **/
     public Object visitIntLiteral(JIntLiteral self, int value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** create the appropriate valued offset **/
+    /**  Visit a long. Create the appropriate valued offset. **/
     public Object visitLongLiteral(JLongLiteral self,long value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** create the appropriate valued offset **/
+    /** Visit a short. Create the appropriate valued offset. **/
     public Object visitShortLiteral(JShortLiteral self,short value) {
 	return this.getOffsetLinearForm((double)value);
     }
-    /** We can't deal with strings, not linear, return null **/
+    /** Visit a string (don't handle). We can't deal with strings, not linear, return null **/
     public Object visitStringLiteral(JStringLiteral self,String value) {
 	return null;
     }
-    /** if we have null nonsense, not going to be linear. Return null (how appropriate)**/
+    /**
+     * Visit a null literal (don't handle). If we have null nonsense, the expression
+     * is not going to be linear. Return null (how appropriate).
+     **/
     public Object visitNullLiteral(JNullLiteral self) {
 	return null;
     }
-
-
 
     /**
      * Removes the mapping of a local variable expression or a field access expression
@@ -1074,11 +1101,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
     }
     
-
-    
-
     /**
-     * Creates a blank linear form that is appropriate for this filter (eg
+     * Creates a blank linear form that is appropriate for this filter (i.e.
      * it has size of peekSize.
      **/
     private LinearForm getBlankLinearForm() {
@@ -1086,7 +1110,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	return new LinearForm(this.peekSize);
     }
 
-    /** Creates a blank linear form that has the specified offset **/
+    /** Creates a blank linear form that has the specified offset. **/
     private LinearForm getOffsetLinearForm(double offset) {
 	checkRep();
 	LinearForm lf = this.getBlankLinearForm();
@@ -1110,7 +1134,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    throw new RuntimeException("Inconsistent vector representation, cols");
 	}
 
-
 	// check that the only values in the HashMap are LinearForm objects
 	Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
 	while(keyIter.hasNext()) {
@@ -1123,7 +1146,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    Object val = this.variablesToLinearForms.get(key);
 	    if (!(val instanceof LinearForm)) {throw new RuntimeException("Non LinearForm in value map");}
 	}
-	
 	
 	// make sure that the peekoffset is not less than one, and that it
 	// is not greater than the peeksize
@@ -1143,8 +1165,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    throw new RuntimeException("Filter (" + this.filterName +
 				       ") pushes more items " + 
 				       "than is declared (" + this.representationMatrix.getRows());
-	}
-	    
-    }
-    
+	}	    
+    }    
 }

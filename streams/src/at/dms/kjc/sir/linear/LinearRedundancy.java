@@ -3,13 +3,18 @@ package at.dms.kjc.sir.linear;
 import java.util.*;
 
 /**
- * LinearRedundancy contains information about  redundant computations
+ * A LinearRedundancy contains information about redundant computations
  * that occur across filter invocations. LinearRedundancy is probably a
  * misnomer as this class merely contains information that lets us
  * identify redundant computation. Specifically, we keep a
  * mapping between a computation tuple (eg [input,coefficient]) and
  * "uses." A use of a computation tuple is definied as the number
- * subsequenct work function after the current one that the tuple is re used.
+ * subsequenct work function after the current one that the tuple is re used.<br>
+ *
+ * More information might be gleaned from:
+ * http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf<br>
+ *
+ * $Id: LinearRedundancy.java,v 1.10 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearRedundancy {
     /**
@@ -21,21 +26,20 @@ public class LinearRedundancy {
     /**
      * Creates a new linear redundancy from the linear filter rep that is passed
      * in (which has a matrix and a vector to describe computation. By creating a
-     * LinearRedundancy, we run the actual redundancy analysis. <p>
+     * LinearRedundancy, we run the actual redundancy analysis. <br>
      *
      * The overall plan for calculating all of the mappings that we need
      * is to realize that any tuple can only be used in up to ceil(peek/pop)
      * filter firings. Therefore, we iterate that many times, adding
-     * all of the necessary tuples.<p>
+     * all of the necessary tuples.
      */
     public LinearRedundancy(LinearFilterRepresentation lfr) {
 	// initialize our mappings
 	this.tuplesToUses = new HashMap();
 	
 	// now, we only care about the matrix (the vector is simply added into
-	// the final output).
-	// we also pull out the peek, pop and push counts to make the following code
-	// more readable.
+	// the final output). We also pull out the peek, pop and push counts
+	// to make the following code more readable.
 	FilterMatrix A = lfr.getA();
 	int peekCount = lfr.getPeekCount();
 	int popCount = lfr.getPopCount();
@@ -69,30 +73,25 @@ public class LinearRedundancy {
 		}
 	    }
 	}
-	
-	//		checkRep();
     }
     
     /** add an entry for the specified execution use to this tuple **/
     public void addUse(LinearComputationTuple tuple, int use) {
 	if (use < 0) {
-	    throw new IllegalArgumentException(
-					       "use was less than zero: " + use);
+	    throw new IllegalArgumentException("use was less than zero: " + use);
 	}
 	// if we don't have a list mapping to this tuple yet, make one.
 	if (!this.tuplesToUses.containsKey(tuple)) {
 	    this.tuplesToUses.put(tuple, new LinkedList());
 	}
-	// now, add the specified use to the list that the tuple
-	// maps to.
+	// now, add the specified use to the list that the tuple maps to.
 	((List) this.tuplesToUses.get(tuple)).add(new Integer(use));
-	//checkRep();
     }
 
     /**
      * Accessor into the internal tuples to uses map. Sure this
      * violates encapsulation, but what are you going to do?
-     * The the tuples to uses maps LinearComputationTuples to
+     * tuplesToUses maps LinearComputationTuples to
      * lists of Integers, which represent the execution of the work function
      * after the current one that the tuple is used in.
      **/
@@ -100,13 +99,12 @@ public class LinearRedundancy {
 	return this.tuplesToUses;
     }
 
-    
-    /** make a nice human readable string for this LinearRedundancy. **/
+    /** Make a nice human readable string for this LinearRedundancy. **/
     public String toString() {
 	return this.calculateRedundancyString();
     }
     
-    /** calculate redundancy statistics. **/
+    /** Calculate redundancy statistics. **/
     public RedundancyStatistics calculateRedundancyStatistics() {
 	RedundancyStatistics stats = new RedundancyStatistics();
 	Iterator tupleIter = this.tuplesToUses.keySet().iterator();
@@ -150,7 +148,7 @@ public class LinearRedundancy {
 	return stats;
     }
 
-    /** structure class for storing redundancy information. **/
+    /** Structure class for storing redundancy information. **/
     class RedundancyStatistics {
 	/** set to keep track of the tuples calculated in the first invocation. **/
 	public HashSet originalTuples = new HashSet(); 
@@ -209,7 +207,6 @@ public class LinearRedundancy {
 	return returnString;
     }
 
-
     /**
      * Returns a string version of the tuple -> list mapping.
      * This is used for debugging.
@@ -230,12 +227,8 @@ public class LinearRedundancy {
 	}
 	return str;
     }
-	    
-    
-
-    
 	
-    /** check that the rep invariant holds. **/
+    /** Check that the rep invariant holds. **/
     private void checkRep() {
 	Iterator tupleIter = this.tuplesToUses.keySet().iterator();
 	while(tupleIter.hasNext()) {
@@ -264,10 +257,6 @@ public class LinearRedundancy {
 	    }
 	}
     }
-    
-    
-    
-    
 
     /**
      * Gets the ceiling of the division of two integers. Eg

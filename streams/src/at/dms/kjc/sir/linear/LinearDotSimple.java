@@ -7,7 +7,7 @@ import at.dms.kjc.sir.*;
 
 /**
  * This is like LinearDot except that the node labels are only
- * the names and not the IO rates.
+ * the names and not the IO rates. Makes for easier reading.
  **/
 public class LinearDotSimple extends LinearDot {
     /**

@@ -10,8 +10,9 @@ import at.dms.compiler.*;
 
 /**
  * A LinearReplacer is the base class that all replacers that make
- * use of linear information inherit from.
- * $Id: LinearReplacer.java,v 1.17 2003-04-14 17:52:22 aalamb Exp $
+ * use of linear information inherit from.<br>
+ *
+ * $Id: LinearReplacer.java,v 1.18 2003-06-02 18:19:23 aalamb Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // in visitors of containers, only make a replacement if we're
@@ -20,23 +21,28 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     // make a replacement (to prevent the visitor from descending into
     // disconnected stream components).
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }}
+				     SIRFeedbackLoopIter iter) {
+	if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }
+    }
     public void preVisitPipeline(    SIRPipeline self,
-				     SIRPipelineIter iter){if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }}
+				     SIRPipelineIter iter){
+	if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }
+    }
     public void preVisitSplitJoin(   SIRSplitJoin self,
-				     SIRSplitJoinIter iter){if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }}
+				     SIRSplitJoinIter iter){
+	if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }
+    }
     public void visitFilter(         SIRFilter self,
-				     SIRFilterIter iter){makeReplacement(self);}
-
+				     SIRFilterIter iter){
+	makeReplacement(self);
+    }
 
     /**
      * Visit a pipeline, splitjoin or filter, replacing them with a
-     * new filter that presumably calculates things more efficiently.
+     * new filter that presumably executes more efficiently.
      * Returns whether or not any replacement was done.
      **/
     public abstract boolean makeReplacement(SIRStream self);
-
-
     
     /**
      * Gets all children of the specified stream.
@@ -49,7 +55,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	return kidCounter.getKids();
 	
     }
-    /** inner class to get a list of all the children streams. **/
+    /** Inner class to get a list of all the children streams. **/
     class LinearChildCounter extends EmptyStreamVisitor {
 	HashSet kids = new HashSet();
 	public HashSet getKids() {return this.kids;}
@@ -59,8 +65,10 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	public void visitFilter(SIRFilter self, SIRFilterIter iter){kids.add(self);}
     }
 
-    /* returns an array that is a field declaration for (newField)
-     * appended to the original field declarations. **/
+    /**
+     * Returns an array that is a field declaration for (newField)
+     * appended to the original field declarations.
+     **/
     public JFieldDeclaration[] appendFieldDeclaration(JFieldDeclaration[] originals,
 						      JVariableDefinition newField) {
 	
@@ -76,7 +84,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
 
-    /** returns the type to use for buffers -- in this case float[] */
+    /** Returns the type to use for buffers. In this case float[]. **/
     public CType getArrayType() {
 	return new CArrayType(CStdType.Float, 1);
     }
@@ -96,7 +104,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	return allDecls;
     }
 
-    /* make an array of one java comments from a string. */
+    /** Make an array of one java comments from a string. **/
     public JavaStyleComment[] makeComment(String c) {
 	JavaStyleComment[] container = new JavaStyleComment[1];
 	container[0] = new JavaStyleComment(c,
@@ -118,15 +126,15 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
     /**
-     * Create a field access expression for
+     * Create a field access expression for the field named "name"
      **/
     public JExpression makeFieldAccessExpression(String name) {
 	return new JFieldAccessExpression(null, new JThisExpression(null), name);
     }
 
     /**
-     * Creates a statement assigning <right> to <left>
-     */
+     * Creates a statement assigning "right" to "left".
+     **/
     public JStatement makeAssignmentStatement(JExpression left, JExpression right) {
 	return new JExpressionStatement(null, new JAssignmentExpression(null, left, right), null);
     }
@@ -136,7 +144,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	return new JLocalVariableExpression(null, var);
     }
 
-    /** Creates a less than expression: left < right. **/
+    /** Creates a less than expression: left &lt; right. **/
     public JExpression makeLessThanExpression(JExpression left, JExpression right) {
 	return new JRelationalExpression(null, OPE_LT, left, right);
     }
@@ -159,7 +167,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	return new JExpressionStatement(null, fieldAssign, comment);
     }
 
-    /** make a JNewArrayStatement that allocates size elements of a float array */
+    /** make a JNewArrayStatement that allocates size elements of a float array. */
     public JNewArrayExpression getNewArrayExpression(int size) {
 	/* make the size array. */
 	JExpression[] arrayDims = new JExpression[1];
@@ -170,19 +178,23 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 				       null);          /* initializer */
     }
 
-    /* makes a field array access expression of the form this.arrField[index] */
+    /* Makes a field array access expression of the form this.arrField[index]. */
     public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
 	return makeArrayFieldAccessExpr(arrField, new JIntLiteral(index));
     }
 
-    /* makes a field array access expression of the form
-     * <prefix>-arrField[index], where user can set prefix.  (For
+    /**
+     * Makes a field array access expression of the form
+     * prefix-arrField[index], where user can set prefix.  (For
      * example, prefix could be "this", or another array access
-     * expression.)  */
+     * expression.)
+     **/
     public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, JExpression index) {
 	/* first, make the prefix-arr1[index] expression */
 	JExpression fieldAccessExpr;
-	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
+	fieldAccessExpr = new JFieldAccessExpression(null,
+						     new JThisExpression(null),
+						     arrField.getIdent());
 	JExpression fieldArrayAccessExpr;
 	fieldArrayAccessExpr = new JArrayAccessExpression(null,
 							  fieldAccessExpr,
@@ -192,7 +204,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	return fieldArrayAccessExpr;
     }
 
-        /* makes a field array access expression of the form this.arrField[index] */
+    /* Makes a field array access expression of the form this.arrField[index]. */
     public JExpression makeArrayFieldAccessExpr(String arrFieldName, int index) {
 	JExpression fieldAccessExpr = makeFieldAccessExpression(arrFieldName);
 	JExpression arrayIndex = new JIntLiteral(index);
@@ -201,6 +213,4 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 								       arrayIndex);
 	return arrayAccessExpression;
     }
-    
-    
 }

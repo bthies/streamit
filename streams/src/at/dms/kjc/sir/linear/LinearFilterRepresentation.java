@@ -4,15 +4,12 @@ package at.dms.kjc.sir.linear;
  * A LinearFilterRepresentation represents the computations performed by a filter
  * on its input values as a matrix and a vector. The matrix represents
  * the combinations of inputs used to create various outputs. The vector corresponds
- * to constants that are added to the combination of inputs to produce the outputs.<p>
+ * to constants that are added to the combination of inputs to produce the outputs.<br>
  *
- * This class holds the A and b in the equation y = Ax+b which calculates the output
- * vector y using the input vector x. A is a matrix, b is a (column) vector.<p>
+ * This class holds the A and b in the equation y = xA+b which calculates the output
+ * vector y using the input vector x. A is a matrix, b is a (column) vector.<br>
  *
- * While this is not the clearest of descriptions, as this class is fleshed out
- * I hope to make the description more concise.<p>
- *
- * $Id: LinearFilterRepresentation.java,v 1.25 2003-04-20 20:04:52 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.26 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -24,7 +21,7 @@ public class LinearFilterRepresentation {
 
     /**
      * The pop count of the filter. This is necessary for doing pipeline combinations
-     * and it is information not stored somewhere in the dimensions of the
+     * and it is information not stored in the dimensions of the
      * representation matrix or vector.
      **/
     private int popCount;
@@ -32,9 +29,9 @@ public class LinearFilterRepresentation {
     /**
      * Create a new linear filter representation with matrix A and vector b.
      * Note that we use a copy of both matrix A and vector b so that we don't end up with
-     * an aliasing problem. pc is the pop count of the filter that this represenation is for,
+     * an aliasing problem. popc is the pop count of the filter that this represenation is for,
      * which we need for combining filters together (because the difference between
-     * the peek count and the pop count tells us about the buffers that the user is using.
+     * the peek count and the pop count tells us about the buffers that the program is using.
      **/
     public LinearFilterRepresentation(FilterMatrix matrixA,
 				      FilterVector vectorb,
@@ -42,7 +39,7 @@ public class LinearFilterRepresentation {
 	this.A = matrixA.copy();
 	this.b = (FilterVector)vectorb.copy();
 	this.popCount = popc;
-	// will calculate cost on demand
+	// we calculate cost on demain (with the linear partitioner)
 	this.cost = null;
     }
     //////////////// Accessors ///////////////////
@@ -63,7 +60,7 @@ public class LinearFilterRepresentation {
     //////////////// Utility Functions  ///////////////////
 
     /**
-     * Returns true if at least one element of the constant vector b are zero.
+     * Returns true if at least one element of the constant vector b is zero.
      **/
     public boolean hasConstantComponent() {
 	// go over all elements in b and if one is non zero, return true
@@ -81,10 +78,10 @@ public class LinearFilterRepresentation {
     }
 
     /**
-     * Expands this lienar representation to have the new peek, pop and push rates.
+     * Expands this linear representation to have the new peek, pop and push rates.
      * This method directly implements the "expand" operation outlined in
-     * the "Linear Analysis and Optimization of Stream Programs" paper that we
-     * submitted to pldi 03.
+     * the "Linear Analysis and Optimization of Stream Programs" paper:
+     * http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf
      **/
     public LinearFilterRepresentation expand(int newPeek, int newPop, int newPush) {
 	// do some argument checks
@@ -127,6 +124,10 @@ public class LinearFilterRepresentation {
 							    " newPeek=" + newPeek + " numCompleteCopies=" + numCompleteCopies + " oldPop=" + oldPop);}
 	if (numPartialCols < 0) {throw new RuntimeException("partial cols < 0!");}
 
+	// given the amount of debugging information below, you can tell
+	// that this partitcular operation really sucked to implement -- lots
+	// of silly details.
+	
 	//System.err.println("--------");
 	//System.err.println("new rows: " + newPeek);
 	//System.err.println("new cols: " + newPush);
@@ -147,11 +148,8 @@ public class LinearFilterRepresentation {
 		int oldCol = oldPush-(numPartialCols-j);
 		//System.err.println("oldRow: " + oldRow + " oldCol: " + oldCol);
 		newMatrix.setElement(i,j,oldMatrix.getElement(oldRow, oldCol));
-				     
-				     
 	    }
 	}
-
 	
 	// now copy all elements of the new vector
 	FilterVector oldVector = this.getb();
@@ -159,7 +157,6 @@ public class LinearFilterRepresentation {
 	for (int i=0; i<newPush; i++) {
 	    newVector.setElement(i,oldVector.getElement(oldPush-1-((newPush-i-1)%oldPush)));
 	}
-
 
 	// create a new Linear rep for the expanded filter
 	LinearFilterRepresentation newRep;

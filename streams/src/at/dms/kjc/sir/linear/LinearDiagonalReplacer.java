@@ -14,9 +14,10 @@ import at.dms.compiler.*;
  * elements in each column are non-zero.  It simply strips out the
  * zero multiplies on the top and bottom edge of each column.  (Thus
  * it deals equally well with diagonal, lower-triangular, and
- * upper-triangular mtatrices.)
+ * upper-triangular mtatrices.) This replacer was inspired by the
+ * Radar (CoarseSerializedBeamFormer) benchmark. <br>
  *
- * $Id: LinearDiagonalReplacer.java,v 1.1 2003-04-06 23:33:23 thies Exp $
+ * $Id: LinearDiagonalReplacer.java,v 1.2 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearDiagonalReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -110,7 +111,7 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
 									  0,
 									  arrayType,
 									  NAME_A, 
-								     null),
+									  null),
 						  null,
 						  null);
 	this.bBaseType = linearRep.getb().isIntegral() ? (CType)CStdType.Integer : (CType)CStdType.Float;
@@ -141,7 +142,7 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
     }
 
     /**
-     * Adds field initialization functions to init function <init>.
+     * Adds field initialization functions to init function "init".
      */
     private void addInitialization(JMethodDeclaration init, LinearFilterRepresentation linearRep) {
 	JBlock block = init.getBody();
@@ -224,9 +225,9 @@ public class LinearDiagonalReplacer extends LinearDirectReplacer implements Cons
 
     /**
      * Generate a Vector of Statements which implement (directly) the
-     * matrix multiplication represented by the linear representation.
+     * matrix multiplication represented by the linear representation.<br>
      *
-     * The basic format of the resulting statements is:<p>
+     * The basic format of the resulting statements is:<br>
      * <pre>
      * int sum, count, iters;
      * for (int j=0; j<numPush; j++) {

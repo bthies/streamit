@@ -5,12 +5,15 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.iterator.*;
-//import at.dms.compiler.*;
 
 
 /**
- * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.11 2003-05-12 14:42:05 aalamb Exp $
+ * Generates replacement filter code using the information within a
+ * LinearRedundancyAnalyzer to generate filters with less computational
+ * requirements. Refer to the documentation in LinearRedundancy
+ * for more information.<br>
+ *
+ * $Id: LinearRedundancyReplacer.java,v 1.12 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -76,18 +79,15 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    return false;
 	}
 
-
 	
-	/** calcluate the data structures that we need to generate the
-	 * replaced filter's body. **/
+	/**
+	 * Calcluate the data structures that we need to generate the
+	 * replaced filter's body.
+	 **/
 	RedundancyReplacerData tupleData;
 	LinearRedundancy redundancy = this.redundancyInformation.getRedundancy(self);
 	tupleData = new RedundancyReplacerData(redundancy,linearRep.getPopCount());
-	    
-	//System.err.println("\n\nRedundancy information calculated:");
-	//System.err.println(tupleData);
-	//System.err.println("\n");
-	
+
 	// since we need a two stage filter to implement this
 	// transformation, we need to make a whole new SIRStream and
 	// replace self with it.
@@ -107,10 +107,8 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
     SIRStream makeEfficientImplementation(SIRStream self,
 					  LinearFilterRepresentation linearRep,
 					  RedundancyReplacerData tupleData) {
-
 	// We are tasked to make an efficient implementation using the tuple
 	// data and the filter rep. This should be a lot of fun.
-	
 	// first of all, make the appropriate field declarations,
 	// one for each reused tuple.
 
@@ -392,10 +390,8 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    JExpression popExpr = new SIRPopExpression(CStdType.Float);
 	    body.addStatement(new JExpressionStatement(null, popExpr, null));
 	}
-			      
 	
-	
-	// put together the body with all of the appropriate KOPI nonsense
+	// finally, put together the body with all of the appropriate KOPI nonsense
 	String ident = (type == WORK) ? "work" : "initWork";
 	return new JMethodDeclaration(null,                  /* token reference */
 				      ACC_PUBLIC,            /* modifiers */
@@ -412,7 +408,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 
     /**
      * Generate a JExpression that computes the value specified by
-     * a computation tuple. Specifically, given <index,coefficient>
+     * a computation tuple. Specifically, given (index,coefficient)
      * computes peek(index)*coefficient.
      **/
     public JExpression makeTupleComputation(LinearComputationTuple tuple) {
@@ -456,20 +452,22 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
     }
 
     /**
-     * Creates an index increment of the form
+     * Creates an index increment of the form:
+     * <pre>
      * tuple_index = tuple_index - 1;
      * if (tuple_index < 0) {
      *  tuple_inded = maxUse(tuple);
      * }
+     * </pre>
      **/
     public void makeIndexUpdateStatement(JBlock body,
 					 LinearComputationTuple t,
 					 RedundancyReplacerData tupleData) {
-	/* make the tuple_index field */
+	// make the tuple_index field 
 	JExpression indexExpr = makeFieldAccessExpression(tupleData.getName(t)+INDEX_POSTFIX);
 	JExpression minusExpr = new JMinusExpression(null, indexExpr, new JIntLiteral(1));
 	
-	/** make the decrement expression */
+	// make the decrement expression
 	JExpression decExpr   = new JAssignmentExpression(null, indexExpr, minusExpr);
 	JStatement  decStmt   = new JExpressionStatement(null, decExpr, null);
 	
@@ -515,7 +513,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	 **/
 	private HashMap maxUse;
 	/**
-	 * mapping of tuples to an alpha numeric name (this is used
+	 * Mapping of tuples to an alpha numeric name (this is used
 	 * to generate variable names in the replaced code.
 	 **/
 	private HashMap nameMap;
@@ -626,41 +624,30 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		    }
 		}
 	    }
-
-
-	    
 	}
-
-
-
-
 	
 	////// Accessors
-	/** get the int value of the min use for this tuple. **/
+	/** Get the int value of the min use for this tuple. **/
 	public int getMinUse(LinearComputationTuple t) {
 	    if (!(this.minUse.containsKey(t))) {
 		throw new IllegalArgumentException("unknown tuple for min use: " + t);
 	    }
 	    return ((Integer)this.minUse.get(t)).intValue();
 	}
-	/** get the int value of the max use for this tuple. **/
+	/** Get the int value of the max use for this tuple. **/
 	public int getMaxUse(LinearComputationTuple t) {
 	    if (!(this.maxUse.containsKey(t))) {
 		throw new IllegalArgumentException("unknown tuple for max use: " + t);
 	    }
 	    return ((Integer)this.maxUse.get(t)).intValue();
 	}
-	/** get the name associated with this tuple. **/
+	/** Get the name associated with this tuple. **/
 	public String getName(LinearComputationTuple t) {
 	    if (!(this.nameMap.containsKey(t))) {
 		throw new IllegalArgumentException("unknown tuple for name: " + t);
 	    }
 	    return (String)this.nameMap.get(t);
 	}
-						    
-	    
-						   
-	
 
 	/** for debugging -- text dump of the data structures. **/
 	public String toString() {
@@ -687,7 +674,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    }
 	    return str;
 	}
-	/** utility to convert a set to a string. **/
+	/** Utility to convert a set to a string. **/
 	private String set2String(HashSet s) {
 	    String str = "(";
 	    Iterator iter = s.iterator();

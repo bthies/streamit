@@ -2,16 +2,16 @@ package at.dms.kjc.sir.linear;
 
 /**
  * A LinearForm is the representation of a variable inside
- * the linear dataflow analysis. It is comprised of a vector and a value.
+ * the linear dataflow analysis. It is comprised of a vector v and a value c.
  * The vector corresponds to the combinations of inputs used to compute the value,
- * and the value corresponds to a constant that is added to compute the value.
+ * and the value corresponds to a constant that is added to compute the value.<br>
  *
  * The basic gist of the dataflow analysis is to determine for all variables 
  * what the corresponding LinearForm is. Armed with this knowledge, we can
  * propage LinearForm information throughout the body of the filter and
- * hopefully construct a LinearFilterRepresentation from the filter.
+ * construct a LinearFilterRepresentation from the filter.<br>
  *
- * $Id: LinearForm.java,v 1.6 2003-04-06 12:01:52 thies Exp $
+ * $Id: LinearForm.java,v 1.7 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearForm {
     /** weights of inputs **/
@@ -24,8 +24,6 @@ public class LinearForm {
 	this.weights = new FilterVector(size);
 	this.offset = ComplexNumber.ZERO;
     }
-
-    
 
     /** returns true if this linear form's offset is an integer **/
     public boolean isIntegerOffset() {
@@ -47,21 +45,21 @@ public class LinearForm {
     public ComplexNumber getOffset() {
 	return this.offset;
     }
-    /** set the offset **/
+    /** Set the offset with an integer. **/
     public void setOffset(int val) {this.setOffset(new ComplexNumber(val, 0));}
-    /** set the offset **/
+    /** Set the offset with a double. **/
     public void setOffset(double val) {this.setOffset(new ComplexNumber(val, 0));}
-    /** set the offset **/
+    /** Set the offset with a ComplexNumber. **/
     public void setOffset(ComplexNumber val) {this.offset = val;}
     
     /**
-     * returns true if this LinearForm contains only a constant offset
+     * Returns true if this LinearForm contains only a constant offset
      * and a vector of all zeros.
      **/
     public boolean isOnlyOffset() {
 	for (int i=0; i<this.weights.getSize(); i++) {
 	    if (!(ComplexNumber.ZERO.equals(this.weights.getElement(i)))) {
-		// if the element was non zero, return false becasue there
+		// if the element was non zero, return false because there
 		// was something in the weights vector
 		return false;
 	    }
@@ -69,24 +67,24 @@ public class LinearForm {
 	return true;
     }    
 
-    /** sets the weight of a particular item in the linear form **/
+    /** Sets the weight of a particular item in the linear form. **/
     public void setWeight(int index, ComplexNumber weight) {
 	// try and set the item in the weights vector -- it takes
 	// care of all of the error handling
 	this.weights.setElement(index, weight);
     }
-    /** gets a speficied weight **/
+    /** Gets a speficied weight. **/
     public ComplexNumber getWeight(int index) {
 	// let the internal matrix rep handle the error bounds checking
 	return this.weights.getElement(index);
     }
-    /** gets the internal size of this linear form **/
+    /** Gets the internal size of the vecotr of this linear form (i.e. the peek amount). **/
     public int getWeightsSize() {
 	return this.weights.getSize();
     }
 
     /**
-     * Negate the LinearForm -- to do this, we reverse the sign of the
+     * Negate the LinearForm. To do this, we reverse the sign of the
      * offset reverse the sign of each element in the array.
      * This method creates a new LinearForm, and returns that as the
      * the result.
@@ -148,7 +146,7 @@ public class LinearForm {
     }
 
     /**
-     * divide all weights and the offset of this linear form by a constant.
+     * Divide all weights and the offset of this linear form by a constant.
      **/
     public LinearForm divideByConstant(ComplexNumber divideFactor) {
 	if (divideFactor == null) {
@@ -172,7 +170,7 @@ public class LinearForm {
      * the linear form, and from index (0,col) to index (n,col) of the filter matrix.
      * eg from left to right in linear form becomes top to bottom in
      * filter matrix. One more way -- copy the row vector in this linear form into the
-     * col column of the filter matrix.<p>
+     * col column of the filter matrix.<br>
      *
      * Note that the offset of the linear form is <b>not</b> copied anywhere.
      **/
@@ -196,7 +194,7 @@ public class LinearForm {
 	// and we are done
     }
 
-    /** returns true if this object is equal in value to this linear form **/
+    /** Returns true if this object is equal in value to this linear form. **/
     public boolean equals(Object o) {
 	if (o == null) {return false;}
 	if (!(o instanceof LinearForm)) {return false;}
@@ -207,19 +205,17 @@ public class LinearForm {
 		(this.weights.equals(other.weights)));
     }
 
-    /** preserve equals() semantics. **/
+    /** Preserve equals() semantics. **/
     public int hashCode() {
 	return 1;
     }
 
-    /** Pretty print this linear form **/
+    /** Pretty print this linear form. **/
     public String toString() {
 	return ("Linear Form: (" +
 		this.weights.toString() +
 		" + " + this.offset + ")");
     }
-
-    
 }
 
 

@@ -6,7 +6,7 @@ import at.dms.kjc.sir.*;
 
 
 /**
- * This class extends the main streamit dot printer to annotate the dot graphs with
+ * This class extends the main StreamIt dot (graph) printer to annotate the dot graphs with
  * linear analysis information. It colors linear nodes blue, linear nodes with
  * a constant component violet red and linear structures pink. <p>
  *

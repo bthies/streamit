@@ -14,9 +14,9 @@ import at.dms.compiler.*;
  * analyzer) with a sparse matrix multiply, using indirection through
  * an array (see makeLinearWork for example).  It also can replace
  * splitjoins and pipelines with linear representations with a single
- * filter that computes the same function.
+ * filter that computes the same function.<br>
  *
- * $Id: LinearIndirectReplacer.java,v 1.3 2003-04-06 23:33:23 thies Exp $
+ * $Id: LinearIndirectReplacer.java,v 1.4 2003-06-02 18:19:23 aalamb Exp $
  **/
 public class LinearIndirectReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -143,7 +143,7 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
     }
 
     /**
-     * Adds field initialization functions to init function <init>.
+     * Adds field initialization functions to init function init.
      */
     private void addInitialization(JMethodDeclaration init, LinearFilterRepresentation linearRep) {
 	JBlock block = init.getBody();

@@ -23,46 +23,41 @@ public class Lifter implements StreamVisitor {
     private Lifter() {}
 
     /**
-     * If <pipe> is a pipeline containing only a single filter,
-     * eliminate the pipeline (adjusting pipeline's parent
+     * If <str> is a pipeline that either:
+     *  1) Has a pipeline parent, or
+     *  2) Contains only a single stream
+     *
+     * then eliminate the pipeline (adjusting pipeline's parent
      * accordingly).  Returns whether or not the lifting was done.
      */
-    public static boolean eliminatePipe(final SIRPipeline pipe) {
-	// if pipe is down to a single filter and we're not at the
-	// toplevel already, then eliminate the pipeline
-	if (!(pipe.size()==1 && 
-	      pipe.get(0) instanceof SIRFilter &&
-	      pipe.getParent()!=null)) {
+    public static boolean eliminatePipe(final SIRPipeline str) {
+	// get parent
+	SIRContainer parent = str.getParent();
+
+	// consider only if we have have a parent that's a pipe or if
+	// we only have a single child
+	if (parent!=null && (str.size()==1 || parent instanceof SIRPipeline)) {
+	    
+	    // this assumes that we're not worrying about fields and
+	    // methods in containers -- otherwise we need renaming and
+	    // better handling of possible init function arguments?
+	    Utils.assert(str.getFields()==null || str.getFields().length==0,
+			 "Not expecting to find fields in container in Lifter.");
+	    Utils.assert(str.getMethods()==null || str.getMethods().length==0 ||
+			 (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()),
+			 "Not expecting to find methods in container in Lifter.");
+	    
+	    int index = parent.indexOf(str);
+	    for (int i=0; i<str.size(); i++) {
+		parent.add(index+1+i, str.get(i), str.getParams(i));
+	    }
+
+	    parent.remove(index);
+	    return true;
+
+	} else {
 	    return false;
 	}
-	// find the filter of interest
-	final SIRFilter filter = (SIRFilter)pipe.get(0);
-
-	// rename the contents of <filter>
-	RenameAll.renameFilterContents(filter);
-
-	// add a method call to filter's <init> from <pipe's> init
-	// function 
-	if (pipe.getInit()!=null) {
-	    pipe.getInit().addStatement(
-		    new JExpressionStatement(null,
-			     new JMethodCallExpression(null, 
-			     new JThisExpression(null),
-			     filter.getInit().getName(),
-			     (JExpression[])pipe.getParams(pipe.indexOf(filter)).toArray(new JExpression[0])),
-				     null));
-	    filter.setInitWithoutReplacement(pipe.getInit());
-	}
-
-	// add all the methods and fields of <pipe> to <filter>
-	filter.addFields(pipe.getFields());
-	filter.addMethods(pipe.getMethods());
-
-	SIRContainer parent = pipe.getParent();
-	// in parent, replace <pipe> with <filter>
-	parent.replace(pipe, filter);
-	
-	return true;
     }
 
     /**
@@ -126,13 +121,10 @@ public class Lifter implements StreamVisitor {
     }
 
     private void liftChildren(SIRContainer str) {
-	for (ListIterator it = str.getChildren().listIterator(); it.hasNext(); ) {
-	    SIROperator child = (SIROperator)it.next();
+	for (int i=0; i<str.size(); i++) {
+	    SIROperator child = (SIROperator)str.get(i);
 	    if (child instanceof SIRPipeline) {
-		SIRPipeline pipe = (SIRPipeline)child;
-		if (pipe.size()==1 && pipe.get(0) instanceof SIRFilter && pipe.getParent()!=null) {
-		    eliminatePipe(pipe);
-		}
+		eliminatePipe((SIRPipeline)child);
 	    }
 	}
     }

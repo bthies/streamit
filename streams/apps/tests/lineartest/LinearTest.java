@@ -66,11 +66,28 @@ class FloatIdentity extends Filter {
  **/
 class FloatFilter extends Filter {
     public void init() {
-	input = new Channel(Float.TYPE, 2);
-	output = new Channel(Float.TYPE, 1);
+	input = new Channel(Float.TYPE, 3);
+	output = new Channel(Float.TYPE, 3);
     }
     public void work() {
+	// should result in 3rd col: [1,1,1] + 0
+	output.pushFloat(input.peekFloat(0) +
+			 input.peekFloat(1) +
+			 input.peekFloat(2));
+
+	// should result in 2nd col: [3,2,10] + 6
+	output.pushFloat(1 +
+			 2*input.peekFloat(1) +
+			 input.peekFloat(2)*3 +
+			 5 +
+			 2*input.peekFloat(0)*5);
+
+	// should result in 1st col: [0,0,0] + -11	
+	output.pushFloat(-11);
+
+	// pop off the values from the input tape
 	input.popFloat();
-	output.pushFloat(input.popFloat()+5);
+	input.popFloat();
+	input.popFloat();
     }
 }

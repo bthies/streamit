@@ -1,7 +1,10 @@
 # Command to run the streamit compiler
-STREAMIT-COMPILER = java -Xmx512M  at.dms.kjc.Main -s 
+STREAMIT-COMPILER = java -Xmx512M at.dms.kjc.Main -s 
 # command to compile uniprocessor streamit programs
 UNI-COMPILER      = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
+
+# options to use
+COMPILER-OPTIONS  = --linearanalysis --debug 
 
 # various names of intermediary files.
 SOURCE-ROOT = LinearTest
@@ -9,6 +12,8 @@ SOURCE-EXT  = .java
 SOURCE = $(SOURCE-ROOT)$(SOURCE-EXT)
 UNI-SOURCE = $(SOURCE).c
 UNI-EXE    = $(SOURCE-ROOT).exe
+
+LINEAR-REG-TEST = linear_regtest.pl
 
 all: clean java-compile uni-compile raw-compile
 
@@ -35,10 +40,15 @@ raw-compile:
 linear-compile:
 	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
 linear-test: linear-compile
-	$(STREAMIT-COMPILER) --linearanalysis $(SOURCE)
+	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) $(SOURCE)
 
-linear-test-1: linear-compile
-	$(STREAMIT-COMPILER) --linearanalysis $(SOURCE-ROOT)1$(SOURCE-EXT)
+linear-test-currnet: linear-compile
+	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest2$(SOURCE-EXT)
+
+
+linear-regtest: linear-compile
+	# just run our regression testing script
+	$(LINEAR-REG-TEST)
 
 clean:
 	rm -f *.class
@@ -50,3 +60,5 @@ clean:
 	rm -f tile.*
 	rm -f fileio.bc kernel
 	rm -f *.dot
+	rm -f regtests/*.output
+	rm -f regtests/*.parsed

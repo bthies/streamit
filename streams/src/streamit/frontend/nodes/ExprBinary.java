@@ -22,7 +22,7 @@ package streamit.frontend.nodes;
  * (because a-b is different from b-a).
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprBinary.java,v 1.5 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ExprBinary.java,v 1.6 2005-02-01 05:09:41 rabbah Exp $
  */
 public class ExprBinary extends Expression
 {
@@ -44,6 +44,8 @@ public class ExprBinary extends Expression
     public static final int BINOP_BAND = 14;
     public static final int BINOP_BOR = 15;
     public static final int BINOP_BXOR = 16;
+    public static final int BINOP_LSHIFT = 17;
+    public static final int BINOP_RSHIFT = 18;
     
     private int op;
     private Expression left, right;
@@ -133,6 +135,8 @@ public class ExprBinary extends Expression
         case ExprBinary.BINOP_BAND: theOp = "&"; break;
         case ExprBinary.BINOP_BOR: theOp = "|"; break;
         case ExprBinary.BINOP_BXOR: theOp = "^"; break;
+        case ExprBinary.BINOP_LSHIFT: theOp = "<<"; break;
+        case ExprBinary.BINOP_RSHIFT: theOp = ">>"; break;
         default: theOp = "? (" + op + ")"; break;
         }
         return "(" + left.toString() + ")" + theOp +

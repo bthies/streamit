@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.16 2004-08-06 18:04:29 thies Exp $
+ * @version $Id: GetExprType.java,v 1.17 2005-02-01 05:09:41 rabbah Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -222,6 +222,7 @@ public class GetExprType extends FENullVisitor
 	// to an int.
 	if (t.equals(TypePrimitive.bittype)) {
 	    switch (exp.getOp()) {
+	    case ExprUnary.UNOP_COMPLEMENT:
 	    case ExprUnary.UNOP_NOT: {
 		// it is still a bit if it is negated, I think.
 		return TypePrimitive.bittype;

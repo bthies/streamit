@@ -114,7 +114,7 @@ public class StructureIncludeFile
 		else if (current.getFields()[j].getType().isClassType()) {
 		 
 		    fw.write("\ttemp." + current.getFields()[j].getVariable().getIdent() +
-			     " = pop" + current.getFields()[j].getType() + "();\n");
+			     " = pop" + network + current.getFields()[j].getType() + "();\n");
 		}
 		else {
 		    fw.write("\t" + Util.networkReceivePrefix(dynamic));
@@ -135,7 +135,7 @@ public class StructureIncludeFile
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
 		    //if this is struct field, call the struct's popPointer method
-		    fw.write("\t" + RawExecutionCode.structReceivePrefix + 
+		    fw.write("\t" + RawExecutionCode.structReceivePrefix + network + 
 			     current.getFields()[j].getType() +
 			     "(&temp->" + current.getFields()[j].getVariable().getIdent() +
 			     ");\n");

@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.33 2004-07-08 05:45:35 thies Exp $
+ * @version $Id: FEReplacer.java,v 1.34 2005-02-17 00:12:58 thies Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -186,6 +186,7 @@ public class FEReplacer implements FEVisitor
     public Object visitExprConstFloat(ExprConstFloat exp) { return exp; }
     public Object visitExprConstInt(ExprConstInt exp) { return exp; }
     public Object visitExprConstStr(ExprConstStr exp) { return exp; }
+    public Object visitExprDynamicToken(ExprDynamicToken exp) { return exp; }
 
     public Object visitExprField(ExprField exp)
     {
@@ -221,6 +222,17 @@ public class FEReplacer implements FEVisitor
     }
 
     public Object visitExprPop(ExprPop exp) { return exp; }
+
+    public Object visitExprRange(ExprRange exp) {
+	Expression min = doExpression(exp.getMin());
+	Expression ave = doExpression(exp.getAve());
+	Expression max = doExpression(exp.getMax());
+	if (min == exp.getMin() && ave == exp.getAve() && max == exp.getMax()) {
+	    return exp;
+	} else {
+	    return new ExprRange(exp.getContext(), min, ave, max);
+	}
+    }
     
     public Object visitExprTernary(ExprTernary exp)
     {

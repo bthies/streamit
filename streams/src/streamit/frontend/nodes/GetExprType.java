@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.17 2005-02-01 05:09:41 rabbah Exp $
+ * @version $Id: GetExprType.java,v 1.18 2005-02-17 00:12:58 thies Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -132,6 +132,11 @@ public class GetExprType extends FENullVisitor
         return null;
     }
     
+    public Object visitExprDynamicToken(ExprDynamicToken exp) 
+    {
+	return new TypePrimitive(TypePrimitive.TYPE_INT);
+    }
+
     public Object visitExprField(ExprField exp)
     {
         Type base = (Type)exp.getLeft().accept(this);
@@ -199,6 +204,11 @@ public class GetExprType extends FENullVisitor
         return streamType.getIn();
     }
     
+    public Object visitExprRange(ExprRange exp)
+    {
+	return new TypePrimitive(TypePrimitive.TYPE_INT);
+    }
+
     public Object visitExprTernary(ExprTernary exp)
     {
         // Do type unification on the two sides.

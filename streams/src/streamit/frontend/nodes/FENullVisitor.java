@@ -25,7 +25,7 @@ package streamit.frontend.nodes;
  * transformations on the tree.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FENullVisitor.java,v 1.10 2004-07-08 05:45:35 thies Exp $
+ * @version $Id: FENullVisitor.java,v 1.11 2005-02-17 00:12:58 thies Exp $
  */
 public class FENullVisitor implements FEVisitor
 {
@@ -38,10 +38,12 @@ public class FENullVisitor implements FEVisitor
     public Object visitExprConstFloat(ExprConstFloat exp) { return null; }
     public Object visitExprConstInt(ExprConstInt exp) { return null; }
     public Object visitExprConstStr(ExprConstStr exp) { return null; }
+    public Object visitExprDynamicToken(ExprDynamicToken exp) { return null; }
     public Object visitExprField(ExprField exp) { return null; }
     public Object visitExprFunCall(ExprFunCall exp) { return null; }
     public Object visitExprPeek(ExprPeek exp) { return null; }
     public Object visitExprPop(ExprPop exp) { return null; }
+    public Object visitExprRange(ExprRange exp) { return null; }
     public Object visitExprTernary(ExprTernary exp) { return null; }
     public Object visitExprTypeCast(ExprTypeCast exp) { return null; }
     public Object visitExprUnary(ExprUnary exp) { return null; }

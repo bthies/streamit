@@ -67,12 +67,16 @@ class Butterfly extends Filter
  */     
 class ButterflyGroup extends SplitJoin 
 {
+  float w_re, w_im; 
   public ButterflyGroup(float w_re, float w_im, int numbflies) 
   { 
     super(w_re, w_im, numbflies); 
   } 
   public void init(final float w_re, final float w_im, final int numbflies) 
   {
+    this.w_re = w_re; 
+    this.w_im = w_im; 
+
     /* The splitjoin routes the complex points in a round-robin fashion,  
      * one each to/from the constituent butterflies.  
      */

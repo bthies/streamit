@@ -17,9 +17,10 @@ class VectAddKernel extends Filter
   } 
   public void work() 
   {
-    output.pushInt(input.peekInt(0) + input.peekInt(1)); 
-    input.pop();
-    input.pop();
+    int t1, t2; 
+    t1 = input.popInt(); 
+    t2 = input.popInt(); 
+    output.pushInt(t1+t2); 
   } 
 } 
 
@@ -116,7 +117,7 @@ class VectAdd extends StreamIt
       I[2*i] = 2*i; 
       I[2*i+1] = 2*i+1;  
     }  
-    this.add(new VectSource(2*N, I));   
+    this.add(new VectSource(2*N, I));      
    
     //OptionB: Use a splitjoin of two sources  
     //(the O/Ps are different in the two options) 

@@ -933,6 +933,11 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	}
           
         print(ident);
+
+	//we want single precision versions of the math functions raw
+	if (isMathMethod(prefix, ident)) 
+	    print("f");
+
         print("(");
 	
 	//if this method we are calling is the call to a structure 
@@ -950,6 +955,30 @@ public class TraceIRtoC extends SLIREmptyVisitor
         */
         visitArgs(args, i);
         print(")");
+    }
+
+    private boolean isMathMethod(JExpression prefix, String ident) 
+    {
+	if (ident.equals("atan") && prefix instanceof JTypeNameExpression)
+	    System.out.println(((JTypeNameExpression)prefix).getQualifiedName());
+
+	if (prefix instanceof JTypeNameExpression &&
+	    ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+	    (ident.equals("acos") ||
+	     ident.equals("asin") ||
+	     ident.equals("atan") ||
+	     ident.equals("atan2") ||
+	     ident.equals("ceil") ||
+	     ident.equals("cos") ||
+	     ident.equals("exp") ||
+	     ident.equals("floorf") ||
+	     ident.equals("log") ||
+	     ident.equals("pow") ||
+	     ident.equals("rint") ||
+	     ident.equals("sqrt") ||
+	     ident.equals("tan")))
+	    return true;
+	return false;
     }
 
     /**

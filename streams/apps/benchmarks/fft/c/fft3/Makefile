@@ -14,3 +14,4 @@ dcompare: dcompare.c
 clean: 
 	rm -f *.o dcompare compare fft core 
 
+run:

@@ -7,6 +7,7 @@ import java.util.*;
 import at.dms.compiler.TabbedPrintWriter;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.KjcOptions;
 
 class FusionCode {
 
@@ -81,8 +82,12 @@ class FusionCode {
 	p.print("#define __MULT "+mult+"\n");
 	p.println();
 
+	if (!KjcOptions.standalone) {
 
-	//p.print("/*\n");
+	    // if not standalone then comment out the fusion variables
+	    p.print("/*\n");
+
+	}
 
 	for (int t = 0; t < threadCount; t++) {
 	    
@@ -254,7 +259,13 @@ class FusionCode {
 	    }
 	}
 
-	//p.print(" */\n");
+	if (!KjcOptions.standalone) {
+
+	    // if not standalone then comment out the fusion variables
+	    p.print(" */\n");
+
+	}
+
 	p.print("#endif\n");
 
 	try {

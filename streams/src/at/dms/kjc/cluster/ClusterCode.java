@@ -1141,7 +1141,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.println();
-	p.print("all: run_cluster");
+	
+	if (KjcOptions.standalone) {
+	    p.print("all: fusion");
+	} else {
+	    p.print("all: run_cluster");
+	}
+
 	p.println();
 	p.println();
 

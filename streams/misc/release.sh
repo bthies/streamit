@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.37 2003-10-17 17:57:45 dmaze Exp $
+# $Id: release.sh,v 1.38 2003-10-17 18:32:26 jasperln Exp $
 #
 
 # Interesting/configurable variables:
@@ -97,6 +97,8 @@ rm -rf $WORKING/streams/apps/examples/updown
 rm -rf $WORKING/streams/apps/tests/portals
 # autobatchersort gets the wrong answer
 rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
+# complicated param doesn't resolve
+rm -rf $WORKING/streams/apps/applications/DCT/IDCT.*
 
 # Some parts of the compiler aren't useful to release; trim those here.
 rm -rf $WORKING/streams/src/at/dms/kjc/cluster

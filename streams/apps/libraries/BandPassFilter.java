@@ -16,32 +16,48 @@ import java.lang.Math.*;
 import streamit.*;
 
 /**
- * Class BandPassFilter
- *
- * Implements a Low Pass FIR Filter
+ * A local subtractor class.  It subtracts two floats.  It has input = 2 and
+ * output = 1.
  */
-
-class BandPassFilter extends Filter {
-
-    int numberOfTaps;
-    float samplingRate;
-    int mDecimation;
-    float mGain; 
-    float mLowFreq;
-    float mHighFreq;
-
-    public BandPassFilter(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
-    {
-	super(sampleRate, lowFreq, highFreq, numTaps, gain);
-    }
-
+class FloatSubtract extends Filter
+{
     Channel input = new Channel (Float.TYPE, 2);
     Channel output = new Channel (Float.TYPE, 1);
 
     public void initIO ()
     {
-	streamInput = input;
-	streamOutput = output;
+        streamInput = input;
+        streamOutput = output;
+    }
+
+    public void init () { }
+
+    public void work() {
+        //subtract one from the other, round robin.
+        output.pushFloat((float)(input.peekFloat(0)-input.peekFloat(1)));
+        input.popFloat();
+        input.popFloat();
+    }
+}
+
+/**
+ * Class BandPassFilter
+ *
+ * Implements a Low Pass FIR Filter
+ */
+
+public class BandPassFilter extends Pipeline {
+
+    int numberOfTaps;
+    float samplingRate;
+    int mDecimation;
+    float mGain;
+    float mLowFreq;
+    float mHighFreq;
+
+    public BandPassFilter(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
+    {
+        super(sampleRate, lowFreq, highFreq, numTaps, gain);
     }
 
 
@@ -54,22 +70,17 @@ class BandPassFilter extends Filter {
         mGain = gain;
         numberOfTaps = numTaps;
 
-	add(new SplitJoin() {
-		public void init () {
-		    setSplitter(DUPLICATE());
-		    add(new LowPassFilter(samplingRate, mHighFreq, numberOfTaps));
-		    add(new LowPassFilter(samplingRate, mLowFreq, numberOfTaps));
-		    setJoiner(ROUND_ROBIN());
-		}
-	    });
+        add(new SplitJoin() {
+                public void init () {
+                    setSplitter(DUPLICATE());
+                    add(new LowPassFilter(samplingRate, mHighFreq, numberOfTaps));
+                    add(new LowPassFilter(samplingRate, mLowFreq, numberOfTaps));
+                    setJoiner(ROUND_ROBIN());
+                }
+            });
+        add (new FloatSubtract ());
     }
 
-    public void work() {
-	    //subtract one from the other, round robin.
-	output.pushFloat(mGain*(float)(input.peekFloat(0)-input.peekFloat(1)));
-	input.popFloat();
-	input.popFloat();
-    }
 }
 
 

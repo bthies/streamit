@@ -825,8 +825,8 @@ public class FusePipe {
 	if (count instanceof JIntLiteral) {
 	    int intCount = ((JIntLiteral)count).intValue();
 	    if (intCount<=0) {
-		// return assignment statement
-		return init;
+		// return empty statement
+		return new JEmptyStatement(null, null);
 	    }
 	}
 	// make conditional - test if <var> less than <count>

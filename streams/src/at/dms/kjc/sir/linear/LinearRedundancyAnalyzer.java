@@ -25,7 +25,7 @@ public class LinearRedundancyAnalyzer {
 	Iterator filterIterator = la.getFilterIterator();
 	while(filterIterator.hasNext()) {
 	    SIRStream filter = (SIRStream)filterIterator.next();
-	    LinearPrinter.println("analyzing for redundancy : " + filter);
+	    LinearPrinter.println("analyzing " + filter + " for redundancy...");
 	    LinearFilterRepresentation filterRep = la.getLinearRepresentation(filter);
 	    // make a new linear redundancy for this filter
 	    LinearRedundancy filterRedundancy = new LinearRedundancy(filterRep);

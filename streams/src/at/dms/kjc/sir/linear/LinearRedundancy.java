@@ -25,63 +25,88 @@ public class LinearRedundancy {
      * The overall plan for calculating all of the mappings that we need
      * is to realize that any tuple can only be used in up to ceil(peek/pop)
      * filter firings. Therefore, we iterate that many times, adding
-     * all of the necessary tuples.
-     **/    
-    public LinearRedundancy(LinearFilterRepresentation lfr) {
-	this.tuplesToUses = new HashMap();
+     * all of the necessary tuples.<p>
+     */
+	public LinearRedundancy(LinearFilterRepresentation lfr) {
+		// initialize our mappings
+		this.tuplesToUses = new HashMap();
 
-	// now, we only care about the matrix (the vector is simply added into the final output).
-	FilterMatrix A = lfr.getA();
-	int maxExecutions = divCeiling(lfr.getPeekCount(),lfr.getPopCount());
-	for (int currentExecution=0; currentExecution < maxExecutions; currentExecution++) {
-	    // now, for each row and column that we are interested in
-	    // add a use (start from the bottom and work up)
-	    int rowsUp = (currentExecution*lfr.getPopCount());
-	    for (int i=lfr.getPeekCount() - rowsUp - 1; i >=0; i--) {
-		for (int j=0; j<lfr.getPushCount(); j++) {
-		    // make the appropriate tuple 
-		    LinearComputationTuple tuple = new LinearComputationTuple(i+rowsUp, A.getElement(i,j));;
-		    addUse(tuple, currentExecution);
+		// now, we only care about the matrix (the vector is simply added into
+		// the final output).
+		// we also pull out the peek, pop and push counts to make the following code
+		// more readable.
+		FilterMatrix A = lfr.getA();
+		int peekCount = lfr.getPeekCount();
+		int popCount = lfr.getPopCount();
+		int pushCount = lfr.getPushCount();
+		int maxExecutions = divCeiling(peekCount, popCount);
+		for (int currentExecution = 0; currentExecution < maxExecutions; currentExecution++) {
+			// now, for each row and column that we are interested in
+			// add a use (start from the bottom and work up)
+			// (rowsUp is the number of rows from the bottom of the original matrix we are)
+			int rowsUp = (currentExecution * popCount);
+			// row is the current row of the matrix that we are looking at.
+			for (int row = rowsUp; row < peekCount; row++) {
+				// col is the column of the matrix that we are looking at (simply
+				// copy the whole thing, so we look at the whole column)		
+				for (int col = 0; col < pushCount; col++) {
+					// make the appropriate tuple, which is the tricky part
+					// the element from A is easy -- it is just A(row,col) by
+					// contruction. 
+					// However, the tuple position needs to be the size of
+					// the matrix minus the number of rows down that we are
+					// that overlap the matrix. It is probably easier to see
+					// with a graphic.
+					LinearComputationTuple tuple =
+						new LinearComputationTuple(
+							rowsUp + (peekCount - 1 - row),
+							A.getElement(row, col));
+					addUse(tuple, currentExecution);
+				}
+			}
 		}
-	    }
+
+		checkRep();
 	}
-	checkRep();
-    }
 
     /** add an entry for the specified execution use to this tuple **/
-    public void addUse(LinearComputationTuple tuple, int use) {
-	if (use < 0) {
-	    throw new IllegalArgumentException("use was less than zero: " + use);
+	public void addUse(LinearComputationTuple tuple, int use) {
+		if (use < 0) {
+			throw new IllegalArgumentException(
+				"use was less than zero: " + use);
+		}
+		// if we don't have a list mapping to this tuple yet, make one.
+		if (!this.tuplesToUses.containsKey(tuple)) {
+			this.tuplesToUses.put(tuple, new LinkedList());
+		}
+		// now, add the specified use to the list that the tuple
+		// maps to.
+		 ((List) this.tuplesToUses.get(tuple)).add(new Integer(use));
+		checkRep();
 	}
-	LinearPrinter.println("aal: use: " + use);
-	// if we don't have a list mapping to this tuple yet, make one.
-	if (!this.tuplesToUses.containsKey(tuple)) {
-	    this.tuplesToUses.put(tuple, new LinkedList());
-	}
-	// now, add the specified use to the list that the tuple
-	// maps to.
-	((List)this.tuplesToUses.get(tuple)).add(new Integer(use));
-	checkRep();
-    }
 
-    /** make a nice human readable string for this LinearRedundancy. **/ 
-    public String toString() {
-	checkRep();
-	String returnString = "";
-	Iterator listIter = this.tuplesToUses.keySet().iterator();
-	while(listIter.hasNext()) {
-	    LinearComputationTuple currentTuple = (LinearComputationTuple)listIter.next();
-	    List tupleList = (List)this.tuplesToUses.get(currentTuple);
-	    Iterator useIter = tupleList.iterator();
-	    // build the return string using this 
-	    returnString += currentTuple.toString() + ":";
-	    while(useIter.hasNext()) {
-		returnString += useIter.next() + ",";
-	    }
-	    returnString += "\n";
+	/** make a nice human readable string for this LinearRedundancy. **/
+	public String toString() {
+		checkRep();
+		String returnString = "";
+		Iterator listIter = this.tuplesToUses.keySet().iterator();
+		while (listIter.hasNext()) {
+			LinearComputationTuple currentTuple =
+				(LinearComputationTuple) listIter.next();
+			List tupleList = (List) this.tuplesToUses.get(currentTuple);
+			Iterator useIter = tupleList.iterator();
+			// build the return string using this 
+			returnString += currentTuple.toString() + ":";
+			String useString = "";
+			while (useIter.hasNext()) {
+				useString += useIter.next() + ",";
+			}
+			// chop off the trailing comma, and add parenthesis
+			useString = "(" + useString.substring(0, useString.length() - 1) + ")";
+			returnString += useString + "\n";
+		}
+		return returnString;
 	}
-	return returnString;
-    }
 
     /** check that the rep invariant holds. **/
     private void checkRep() {
@@ -89,13 +114,13 @@ public class LinearRedundancy {
 	while(tupleIter.hasNext()) {
 	    Object next = tupleIter.next();
 	    if (!(next instanceof LinearComputationTuple)) {
-		throw new RuntimeException("non comp tuple as key in LinearRedundancy");
+			throw new RuntimeException("non comp tuple as key in LinearRedundancy");
 	    }
 	    LinearComputationTuple nextTuple = (LinearComputationTuple)next;
 	    // now pull out the thing that is mapped to (should be a list)
 	    Object valObject = this.tuplesToUses.get(nextTuple);
 	    if (!(valObject instanceof List)) {
-		throw new RuntimeException("non list as value");
+			throw new RuntimeException("non list as value");
 	    }
 	    List useList = (List)valObject;
 	    // list should be non-empty
@@ -105,10 +130,10 @@ public class LinearRedundancy {
 	    // now, each element of the list should be an Integer object
 	    Iterator listIter = useList.iterator();
 	    while(listIter.hasNext()) {
-		Object listObject = listIter.next();
-		if (!(listObject instanceof Integer)) {
-		    throw new RuntimeException("non integer in list body");
-		}
+			Object listObject = listIter.next();
+			if (!(listObject instanceof Integer)) {
+		    	throw new RuntimeException("non integer in list body");
+			}
 	    }
 	}
     }

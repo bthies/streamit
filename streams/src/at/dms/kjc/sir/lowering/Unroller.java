@@ -170,23 +170,15 @@ class Unroller extends SLIRReplacingVisitor {
 	int counter = info.initVal;
 	// simulate execution of the loop...
 	while (done(counter,info)) {
-	    // create new for statement, just to replace the variable
-	    JForStatement newSelf
-		= (JForStatement)ObjectDeepCloner.deepCopy(self);
-	    // get unroll info for <newSelf>
-	    UnrollInfo newInfo = getUnrollInfo(newSelf.getInit(),
-					       newSelf.getCondition(),
-					       newSelf.getIncrement(),
-					       newSelf.getBody(),
-					       values,
-					       constants);
 	    // replace induction variable with its value current value
 	    Hashtable newConstants = new Hashtable();
-	    newConstants.put(newInfo.var, new JIntLiteral(counter));
+	    newConstants.put(info.var, new JIntLiteral(counter));
 	    // do the replacement
-	    newSelf.getBody().accept(new Propagator(newConstants));
+            JStatement newBody =
+                (JStatement)ObjectDeepCloner.deepCopy(self.getBody());
+	    newBody.accept(new Propagator(newConstants));
 	    // add to statement list
-	    statementList.add(newSelf.getBody());
+	    statementList.add(newBody);
 	    // increment counter
 	    counter = incrementCounter(counter, info);
 	}

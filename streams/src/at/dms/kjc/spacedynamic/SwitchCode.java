@@ -23,6 +23,9 @@ public class SwitchCode extends at.dms.util.Utils
     private static final int MAX_LOOKAHEAD = 10000;
     private static StreamGraph streamGraph;
     private static Layout layout;
+    //the maximum number of repetitions allowed for a switch sequence
+    //this is 2^16 because that is the largest immediate allowed 
+    private static final int MAX_REP = 65535;
 
     public static void generate(final StreamGraph sg) 
     {
@@ -279,7 +282,7 @@ public class SwitchCode extends at.dms.util.Utils
 	    //get the next route instruction
 	    current = t.nextToken();
 	    counter++;
-	    if (last.equals(current)) {
+	    if (last.equals(current) &&  repetitions < MAX_REP) {
 		repetitions++;
 	    }
 	    else {

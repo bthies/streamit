@@ -21,7 +21,9 @@ public class SwitchCode extends at.dms.util.Utils
  // the max-ahead is the maximum number of lines that this will
     // recognize as a pattern for folding into a loop
     private static final int MAX_LOOKAHEAD = 10000;
-
+    //the maximum number of repetitions allowed for a switch sequence
+    //this is 2^16 because that is the largest immediate allowed 
+    private static final int MAX_REP = 65535;
 
     public static void generate(FlatNode top) 
     {
@@ -234,7 +236,7 @@ public class SwitchCode extends at.dms.util.Utils
 	    //get the next route instruction
 	    current = t.nextToken();
 	    counter++;
-	    if (last.equals(current)) {
+	    if (last.equals(current) && repetitions < MAX_REP) {
 		repetitions++;
 	    }
 	    else {

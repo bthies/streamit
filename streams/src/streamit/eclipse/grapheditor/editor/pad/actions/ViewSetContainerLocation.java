@@ -9,24 +9,31 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 
 /**
- * Action that hides all of the expanded container nodes in the graph.
  * @author jcarlos
+ *
+
  */
-public class ViewContainersHide extends AbstractActionDefault {
+public class ViewSetContainerLocation extends AbstractActionDefault {
 
-
-	public ViewContainersHide(GPGraphpad graphpad) {
-		super(graphpad);
-	}
+	//
 	
 	/**
-	 * Hide the expanded container nodes in the graph.
+	 * Constructor for ViewSetContainerLocation.
+	 * @param graphpad
+	 * @param name
+	 */
+	public ViewSetContainerLocation(GPGraphpad graphpad) {
+		super(graphpad);
+	}
+		
+	/**
 	 */
 	public void actionPerformed(ActionEvent e) 
-	{
+	{	
 		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
-		graphStruct.containerNodes.hideAllContainers();
-		ViewContainerVisibility.HIDE = true;
-		
+		if (!(ViewContainerVisibility.HIDE))
+		{
+			graphStruct.containerNodes.setLocationContainersAtLevel(graphStruct);
+		}
 	}
 }

@@ -14,6 +14,7 @@ import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphLayoutCache;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
+import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.GEJoiner;
 import streamit.eclipse.grapheditor.graph.GEPhasedFilter;
 import streamit.eclipse.grapheditor.graph.GESplitter;
@@ -48,6 +49,10 @@ public class ViewExpand extends AbstractActionDefault {
 		int currentLevelView = graphStruct.containerNodes.getCurrentLevelView();
 		
 		graphStruct.containerNodes.expandContainersAtLevel(currentLevelView);
+		
+		ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
+										get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
+		ac.actionPerformed(null);
 		graphStruct.containerNodes.setCurrentLevelView(++currentLevelView);
 		
 		graphpad.getCurrentDocument().setScale(graphpad.getCurrentGraph().getScale() / 1.2);

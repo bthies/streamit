@@ -213,7 +213,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		//CHANGE 12/2/03 JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
-		setLocationAfterExpand();
+		//setLocationAfterExpand();
 	}	
 
 	/**
@@ -334,14 +334,14 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	 * expansion. This includes all of the containers located at the current level
 	 * and below (since everything below is expanded and the location of these
 	 * containers will have to be set). 
-	 */
+	 *//*
 	private void setLocationAfterExpand()
 	{
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
 		}
-	}
+	}*/
 	
 	
 	/**

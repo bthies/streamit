@@ -6,6 +6,7 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 import java.awt.event.ActionEvent;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
+import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
@@ -105,10 +106,14 @@ public class ViewCollapse extends AbstractActionDefault {
 			}
 	
 			/** Set the container nodes in their correspoding locations **/
+			ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
+											get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
+			ac.actionPerformed(null);
+			/*
 			for (int i = currentLevelView; i >= 0; i--)
 			{
 				graphStruct.containerNodes.setLocationContainersAtLevel(i, graphStruct);
-			}	
+			}*/	
 			/** Set the current level **/
 			if (currentLevelView < 0 )
 			{

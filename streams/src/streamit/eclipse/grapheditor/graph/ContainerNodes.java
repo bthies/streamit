@@ -272,44 +272,48 @@ public class ContainerNodes {
 	 * @param level The level of the containers whose location will be set. 
 	 */
 	
-	public void setLocationContainersAtLevel(int level, GraphStructure graphStruct)
+	public void setLocationContainersAtLevel(GraphStructure graphStruct)
 	{
-		ArrayList levelList = this.getContainersAtLevel(level);
 		
-		if (levelList != null)
+		for (int i = this.currentLevelView; i >= 0; i--)
 		{
-			Iterator listIter = levelList.iterator();
-			while(listIter.hasNext())
+			ArrayList levelList = this.getContainersAtLevel(i);
+			
+			if (levelList != null)
 			{
-				GEContainer node = (GEContainer) listIter.next();
-				System.out.println("node is "+ node);
-				graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{node}, true);
-				Object[] containedCells = node.getContainedElements().toArray();
-		
-				CellView[] containedCellViews = graphStruct.getJGraph().getGraphLayoutCache().getMapping(containedCells);
-
-				Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
-				
-				
-				Map attribs = ((GEStreamNode) node).getAttributes();
-				GraphConstants.setVerticalAlignment(attribs, 1);
-				GraphConstants.setAutoSize(attribs, false);
-				if (cellBounds != null)
+				Iterator listIter = levelList.iterator();
+				while(listIter.hasNext())
 				{
-					cellBounds.height += 60;
-					cellBounds.width += 60;
-					GraphConstants.setBounds(attribs, cellBounds);
+					GEContainer node = (GEContainer) listIter.next();
+					System.out.println("node is "+ node);
+					graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{node}, true);
+					Object[] containedCells = node.getContainedElements().toArray();
+			
+					CellView[] containedCellViews = graphStruct.getJGraph().getGraphLayoutCache().getMapping(containedCells);
+	
+					Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
+					
+					
+					Map attribs = ((GEStreamNode) node).getAttributes();
+					GraphConstants.setVerticalAlignment(attribs, 1);
+					GraphConstants.setAutoSize(attribs, false);
+					if (cellBounds != null)
+					{
+						cellBounds.height += 60;
+						cellBounds.width += 60;
+						GraphConstants.setBounds(attribs, cellBounds);
+					}
+					
+					// The lines below are supposed to change label location, but they don't
+					//GraphConstants.setValue(node.getAttributes(), "hello");
+					//GraphConstants.setHorizontalAlignment(node.getAttributes(), 1);
+					
+					graphStruct.getGraphModel().edit(graphStruct.getAttributes(), null , null, null);
 				}
-				
-				// The lines below are supposed to change label location, but they don't
-				//GraphConstants.setValue(node.getAttributes(), "hello");
-				//GraphConstants.setHorizontalAlignment(node.getAttributes(), 1);
-				
-				graphStruct.getGraphModel().edit(graphStruct.getAttributes(), null , null, null);
 			}
 		}
 	}
-	
+
 
 	/**
 	 * Get the current level of expansion/collapsing of the GraphStructure.

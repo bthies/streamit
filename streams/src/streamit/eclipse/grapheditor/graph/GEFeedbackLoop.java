@@ -269,7 +269,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		}
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();	
-		setLocationAfterExpand();
+		//setLocationAfterExpand();
 	}
 
 	/**
@@ -377,14 +377,14 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 	 * elements that it contains are enclosed.
 	 * Also, changes the location of the label so that it is more easily viewable.
 	 */
-	
+	/*
 	private void setLocationAfterExpand()
 	{
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
 		}
-	}
+	}*/
 	
 	/**
 	 * Get the first node contained by the GEPipeline. 

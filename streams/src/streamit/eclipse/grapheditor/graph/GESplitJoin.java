@@ -311,7 +311,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();	
-		setLocationAfterExpand();
+		//setLocationAfterExpand();
 	}
 	
 	
@@ -439,13 +439,14 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 * elements that it contains are enclosed.
 	 * Also, changes the location of the label so that it is more easily viewable.
 	 */
+	/*
 	private void setLocationAfterExpand()
 	{
 		for (int i = level; i >= 0; i--)
 		{
 			this.localGraphStruct.containerNodes.setLocationContainersAtLevel(i, this.localGraphStruct);
 		}
-	}
+	}*/
 	
 	/**
 	 * Get the first node contained by the GESplitJoin (this will always be

@@ -6,7 +6,7 @@ import streamit.*;
 
 public class SchedPipeline extends SchedStream
 {
-    SchedPipeline (Object stream)
+    protected SchedPipeline (Object stream)
     {
         super (stream);
     }
@@ -26,7 +26,7 @@ public class SchedPipeline extends SchedStream
         return allChildren;
     }
 
-    void computeSteadySchedule ()
+    public void computeSteadySchedule ()
     {
         // go through all the children and get them initialized
         {

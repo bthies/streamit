@@ -194,7 +194,7 @@ public class SplitJoin extends Stream
         // setup all children of this splitjoin
         {
             ListIterator iter;
-            iter = childrenStreams.listIterator ();
+fc            iter = childrenStreams.listIterator ();
             while (iter.hasNext ())
             {
                 Stream s = (Stream) iter.next ();

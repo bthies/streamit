@@ -3,6 +3,7 @@ package streamit;
 import java.util.*;
 import java.lang.reflect.*;
 import streamit.scheduler.*;
+import streamit.scheduler.simple.SimpleHierarchicalScheduler;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
 public class Stream extends Operator

@@ -27,7 +27,7 @@ public abstract class SchedStream extends AssertedClass
         produces = p;
     }
 
-    int getProduction ()
+    public int getProduction ()
     {
         ASSERT (produces >= 0);
         return produces;
@@ -41,7 +41,7 @@ public abstract class SchedStream extends AssertedClass
         if (peeks < 0) peeks = c;
     }
 
-    int getConsumption ()
+    public int getConsumption ()
     {
         ASSERT (consumes >= 0);
         return consumes;
@@ -54,34 +54,50 @@ public abstract class SchedStream extends AssertedClass
         peeks = p;
     }
 
-    int getPeekConsumption ()
+    public int getPeekConsumption ()
     {
         ASSERT (peeks >= 0);
         return peeks;
     }
 
-    private SchedStream parent;
+    /**
+     * This field holds the previous stream - be it a filter, pipeline,
+     * splitjoin or loop
+     */
+    private SchedStream prevStream = null;
 
-    SchedStream GetParent ()
+    /**
+     * Gets the previous stream
+     */
+    public SchedStream getPrevStream ()
     {
-        ASSERT (parent);
-        return parent;
+        return prevStream;
+    }
+
+    /**
+     * Sets the previous stream
+     */
+    public void setPrevStream (SchedStream stream)
+    {
+        ASSERT (stream != null && prevStream == null);
+
+        prevStream = stream;
     }
 
     // This section computes a steady-state schedule for children of the stream
     private BigInteger numExecutions;
 
-    BigInteger getNumExecutions ()
+    public BigInteger getNumExecutions ()
     {
         return numExecutions;
     }
 
-    void setNumExecutions (BigInteger n)
+    public void setNumExecutions (BigInteger n)
     {
         numExecutions = n;
     }
 
-    void multNumExecutions (BigInteger mult)
+    public void multNumExecutions (BigInteger mult)
     {
         // make sure that mutliplying by something > 0
         String str = mult.toString();
@@ -90,7 +106,7 @@ public abstract class SchedStream extends AssertedClass
         numExecutions = numExecutions.multiply (mult);
     }
 
-    void divNumExecutions (BigInteger div)
+    public void divNumExecutions (BigInteger div)
     {
         // make sure that dividing by something > 0
         ASSERT (div.compareTo (BigInteger.ZERO) == 1);
@@ -105,5 +121,5 @@ public abstract class SchedStream extends AssertedClass
      * the amount of data buffered between filters when executed.
      * It can change where the (active) data is in the buffer.
      */
-    abstract void computeSteadySchedule ();
+    abstract public void computeSteadySchedule ();
 }

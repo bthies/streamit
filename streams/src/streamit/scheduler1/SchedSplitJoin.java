@@ -6,7 +6,7 @@ import streamit.scheduler.*;
 
 public class SchedSplitJoin extends SchedStream
 {
-    SchedSplitJoin (Object stream)
+    protected SchedSplitJoin (Object stream)
     {
         super (stream);
     }
@@ -67,7 +67,7 @@ public class SchedSplitJoin extends SchedStream
         return numJoinExecutions;
     }
 
-    void computeSteadySchedule ()
+    public void computeSteadySchedule ()
     {
         // first compute schedules for all my children:
         {

@@ -46,7 +46,7 @@ public class SchedJoinType extends AssertedClass
         }
     }
 
-    int getInputWeight (int index)
+    public int getInputWeight (int index)
     {
         ASSERT (index >= 0 && index < joinWeights.size ());
 

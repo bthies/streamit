@@ -244,18 +244,32 @@ public class FEIRToSIR implements FEVisitor, Constants {
                                  decl.getBody());
     }
 
+    private CSourceClass specToCClass(StreamSpec spec)
+    {
+        CClass owner = null;
+        String name = spec.getName();
+        if (name == null)
+        {
+            // Anonymous stream.  The name can't actually be null, but
+            // "" is acceptable.  We also know the owner, it's our
+            // parent's cclass.
+            name = "";
+            owner = (CClass)cclassTable.get(parent.getIdent());
+        }
+        CSourceClass cclass = new CSourceClass(owner, // owner
+                                               contextToReference(spec),
+                                               0, // modifiers
+                                               name, name, // qualified
+                                               false); // deprecated
+        return cclass;
+    }
+
   public SIRStream visitFilterSpec(StreamSpec spec) {
     int i;
     List list;
     SIRFilter result = new SIRFilter();
     SIRStream oldParent = parent;
-    CClass owner = null;
-    CSourceClass cclass = new CSourceClass(owner, // owner
-                                           contextToReference(spec),
-                                           0, // modifiers
-                                           spec.getName(),
-                                           spec.getName(), // qualified
-                                           false); // deprecated
+    CSourceClass cclass = specToCClass(spec);
     Hashtable fields = new Hashtable();
     parent = result;
     
@@ -319,13 +333,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRPipeline result = new SIRPipeline(spec.getName());
     SIRStream oldParent = parent;
-    CClass owner = null;
-    CSourceClass cclass = new CSourceClass(owner, // owner
-                                           contextToReference(spec),
-                                           0, // modifiers
-                                           spec.getName(),
-                                           spec.getName(), // qualified
-                                           false); // deprecated
+    CSourceClass cclass = specToCClass(spec);
     Hashtable fields = new Hashtable();
 
     debug("In visitPipelineSpec\n");
@@ -724,21 +732,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRSplitJoin result = new SIRSplitJoin((SIRContainer) parent, spec.getName());
     SIRStream oldParent = parent;
-    CClass owner = null;
-    String name = spec.getName();
-    if (name == null)
-    {
-        // Anonymous stream.  The name can't actually be null, but ""
-        // is acceptable.  We also know the owner, it's our parent's
-        // cclass.
-        name = "";
-        owner = (CClass)cclassTable.get(parent.getIdent());
-    }
-    CSourceClass cclass = new CSourceClass(owner, // owner
-                                           contextToReference(spec),
-                                           0, // modifiers
-                                           name, name, // qualified
-                                           false); // deprecated
+    CSourceClass cclass = specToCClass(spec);
     Hashtable fields = new Hashtable();
 
     debug("In visitSplitJoinSpec\n");
@@ -781,13 +775,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     List list;
     SIRFeedbackLoop result = new SIRFeedbackLoop((SIRContainer) parent, spec.getName());
     SIRStream oldParent = parent;
-    CClass owner = null;
-    CSourceClass cclass = new CSourceClass(owner, // owner
-                                           contextToReference(spec),
-                                           0, // modifiers
-                                           spec.getName(),
-                                           spec.getName(), // qualified
-                                           false); // deprecated
+    CSourceClass cclass = specToCClass(spec);
     Hashtable fields = new Hashtable();
 
     debug("In visitFeedbackLoopSpec\n");

@@ -7,6 +7,7 @@ import at.dms.kjc.raw.*;
 import at.dms.kjc.spacetime.*;
 import at.dms.kjc.cluster.*;
 import grapheditor.GraphEncoder;
+import java.lang.reflect.*;
 
 /**
  * This provides the toplevel interface for StreaMIT.
@@ -44,44 +45,64 @@ public class StreaMITMain {
 		stream = top;
 	}
 
+        System.out.println("Out of Kopi2SIR.");
+
 	SemanticChecker.doCheck(stream);
-	
-	if(KjcOptions.graph) {
-	    System.err.println("Dumping Graph..");
-	    new GraphEncoder().encode(stream);
-	} else if (KjcOptions.raw != -1) {
-	    System.out.println("*/");
-	    
-	    if (KjcOptions.spacetime) {
-		SpaceTimeBackend.run(stream, 
-				     k2s.getInterfaces(),
-				     k2s.getInterfaceTables(),
-				     k2s.getStructures());
-	    }
-	    else {
-	    /* Compiling for raw */
-	    RawBackend.run(stream, 
-			   k2s.getInterfaces(),
-			   k2s.getInterfaceTables(),
-			   k2s.getStructures());
-	    }
-	}
-	else if (KjcOptions.cluster) {
-	    System.out.println("*/");
-	    
-	    /* Compiling for a cluster */
-	    ClusterBackend.run(stream, 
-			   k2s.getInterfaces(),
-			   k2s.getInterfaceTables(),
-			   k2s.getStructures());
-	    
-	}
-	else {
-	    /* Compiling for uniprocessor */
-	    Flattener.flatten(stream, 
-			      k2s.getInterfaces(),
-			      k2s.getInterfaceTables(),
-			      k2s.getStructures());
-	}
+
+        System.out.println("Out of semantic checker.");
+
+        String backendClass = null;
+        String backendMethod = "run";
+        if (KjcOptions.graph) {
+            backendClass = "grapheditor.GraphEncoder";
+        } else if (KjcOptions.raw != -1) {
+            System.out.println("*/");
+            if (KjcOptions.spacetime) {
+                backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
+            } else {
+                backendClass = "at.dms.kjc.raw.RawBackend";
+            }
+        } else if (KjcOptions.cluster) {
+            System.out.println("*/");
+            backendClass = "at.dms.kjc.cluster.ClusterBackend";
+        } else {
+            backendClass = "at.dms.kjc.sir.lowering.Flattener";
+            backendMethod = "flatten";
+        }
+        
+        // To find a method, we need its name and signature.  To
+        // invoke it, we need to stuff the parameters into an
+        // Object[]; given this, it's easy to get the types.
+        Object params[] = new Object[4];
+        Class paramTypes[] = new Class[4];
+        params[0] = stream;
+        params[1] = k2s.getInterfaces();
+        params[2] = k2s.getInterfaceTables();
+        params[3] = k2s.getStructures();
+
+        try {
+            paramTypes[0] = Class.forName("at.dms.kjc.sir.SIRStream");
+            for (int i = 1; i < 4; i++)
+                paramTypes[i] = params[i].getClass();
+            Class theBackend = Class.forName(backendClass);
+            Method theMethod =
+                theBackend.getMethod(backendMethod, paramTypes);
+            theMethod.invoke(null, params);        
+        } catch (ClassNotFoundException e) {
+            System.err.println("*** The class " + e.getMessage() +
+                               " does not exist.");
+        } catch (NoSuchMethodException e) {
+            System.err.println("*** The backend method " +
+                               backendClass + "." + backendMethod + "()" +
+                               " does not exist.");
+        } catch (IllegalAccessException e) {
+            System.err.println("*** Not allowed to invoke backend " +
+                               backendClass);
+        } catch (InvocationTargetException e) {
+            // Loses debugging information on the exception, sigh.
+            // We can't blindly rethrow the exception because it might
+            // not be a RuntimeException.  I hate Java.  Die as best we can.
+            System.err.println(e.getTargetException());
+        }
     }
 }

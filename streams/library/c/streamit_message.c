@@ -87,6 +87,7 @@ void dispatch_messages(void)
     struct queued_message *q = msg_queue;
     (q->fn)(q->context->stream_data, q->params);
     msg_queue = q->next;
+    free(q->params);
     free(q);
   }
 }

@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.17 2003-02-14 01:24:50 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.18 2003-03-22 21:37:12 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -26,7 +26,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     int splitJoinsSeen     = 0;
     int feedbackLoopsSeen  = 0;
 
-    private LinearAnalyzer() {
+    public LinearAnalyzer() {
 	this.filtersToLinearRepresentation = new HashMap();
 	checkRep();
     }
@@ -76,16 +76,24 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
     
     /**
-     * Main entry point -- searches the passed stream for
-     * linear filters and calculates their associated matricies.
+     * Main entry point -- searches the passed stream for linear
+     * filters and calculates their associated matricies.  Uses a
+     * fresh linear analyzer.
      *
      * If the debug flag is set, then we print a lot of debugging information
      **/
     public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug) {
+	return findLinearFilters(str, debug, new LinearAnalyzer());
+    }
+    
+    /**
+     * Same as above, but specifies an existing <lfa> to use instead
+     * of creating a fresh one.
+     */
+    public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug, LinearAnalyzer lfa) {
 	// set up the printer to either print or not depending on the debug flag
 	LinearPrinter.setOutput(debug);
 	LinearPrinter.println("aal--In linear filter visitor");
-	LinearAnalyzer lfa = new LinearAnalyzer();
 	IterFactory.createIter(str).accept(lfa);
 
 	// generate a report and print it.
@@ -101,6 +109,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     
     /** More or less get a callback for each stram **/
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
+	// short-circuit the case where we've already seen this stream
+	// (for dynamic programming partitioner)
+	if (filtersToLinearRepresentation.containsKey(self)) {
+	    return;
+	}
+
 	this.filtersSeen++;
 	LinearPrinter.println("Visiting " + "(" + self + ")");
 
@@ -154,6 +168,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     
     //void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
     public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
+	// short-circuit the case where we've already seen this stream
+	// (for dynamic programming partitioner)
+	if (filtersToLinearRepresentation.containsKey(self)) {
+	    return;
+	}
+
 	this.feedbackLoopsSeen++;
     }
 
@@ -165,6 +185,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * pipeline and also determine a linear form for them.
      **/
     public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
+	// short-circuit the case where we've already seen this stream
+	// (for dynamic programming partitioner)
+	if (filtersToLinearRepresentation.containsKey(self)) {
+	    return;
+	}
+
 	this.pipelinesSeen++;
 	LinearPrinter.println("Visiting pipeline: " + "(" + self + ")");
 	
@@ -322,6 +348,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * the entre split join construct into a single linear representation.
      **/
     public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
+	// short-circuit the case where we've already seen this stream
+	// (for dynamic programming partitioner)
+	if (filtersToLinearRepresentation.containsKey(self)) {
+	    return;
+	}
+
 	this.splitJoinsSeen++;
 
 	SIRSplitter splitter = self.getSplitter();

@@ -47,6 +47,26 @@ public class LinearCost {
 	if (this.addCount < 0) {throw new RuntimeException("negative add count!");}
     }
 
+    /**
+     * Returns the cost of this (in terms of estimated execution time,
+     * relative to any metric) if implemented directly in the time
+     * domain.
+     */
+    public int getDirectCost() {
+	return 3 * multiplyCount + addCount;
+    }
+
+    /**
+     * Returns the cost of this (in terms of estimated execution time,
+     * relative to any metric) if implemented in the frequency domain.
+     *
+     * Must be comparable to values returned by getDirectCost().
+     */
+    public int getFrequencyCost() {
+	return getDirectCost() / 2;
+    }
+    
+
 
 }
 	

@@ -11,14 +11,12 @@ import at.dms.compiler.*;
 
 
 /**
- * A LEETFrequencyReplacer replaces FIR filters (those calculating convolution sums,
- * peek=N, pop=1 push=1) of sufficient length with a conversion into the frequency
+ * Replaces linear filters of sufficient length with a conversion into the frequency
  * domain, multiplication, and convert the product back into the time domain.
- *
  * In so doing, this also increases the peek, pop and push rates to take advantage of
- * the frequency transformation.
+ * the frequency transformation.<br>
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.20 2003-04-20 13:31:07 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.21 2003-05-30 14:51:54 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -45,21 +43,23 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     public static final String PARTIAL_BUFFER_PREFIX ="freqPartial";
     
 
-    /** Constants specifying if we are making the work or the init work function **/
+    /** Constant specifying we are making the work function. **/
     public static final int INITWORK = 1;
+    /** Constant specifying we are making the init work. **/
     public static final int WORK = 2;
 
-    /** The minimum size FIR we will replace. 90 came from empirical measurements. **/
-    //public static final int minFIRSize = 90;
+    /** The minimum size FIR (eg peek count) we will replace. There is no way that
+     * a size one FIR will benefit from this transformation. **/
     public static final int minFIRSize = 2;
-    /** We multiply the FIR size to get the target FFT size if it is not specified. **/
+    
+    /** We multiply the FIR size to get the target FFT size. "Good tradeoff between
+     * execution time and storage space requirements. **/
     public static final int fftSizeFactor = 2;
 
     /** name of the loop variable to use **/
     public static final String LOOPVARNAME = "__freqIndex__";
     
-    
-    /** the linear analyzier which keeps mappings from filters-->linear representations**/
+    /** the linear analyzier which keeps mappings from filters-->linear representations. **/
     LinearAnalyzer linearityInformation;
     
     LEETFrequencyReplacer(LinearAnalyzer lfa) {
@@ -71,6 +71,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
     /**
      * Returns whether or not we can replace <str> with this replacer.
+     * This ensures that our assumptions are met.
      */
     public static boolean canReplace(SIRStream str, LinearAnalyzer lfa) {
 	/* if we don't have a linear form for this stream, we are done. */
@@ -80,20 +81,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	}
 
 	LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(str);
-	/* if this filter doesn't have a pop of one, we abort. 
-	   -- NOT ANYMORE, we now try to support this. --bft
-	**
-	if (linearRep.getPopCount() != 1) {
-	    LinearPrinter.println("  aborting -- filter is not FIR (pop = " +
-				  linearRep.getPopCount() + ")"); 
-	    return false;
-	}	
-	*/
-
-	/** for now, don't try converting to frequency inside any
-	 * feedback loop.  This is a conservative way to avoid making
-	 * scheduling feedbackloops impossible.
-	 */
+	// for now, don't try converting to frequency inside any
+	// feedback loop.  This is a conservative way to avoid making
+	// scheduling feedbackloops impossible.
+	//
 	SIRContainer parent = str.getParent();
 	while (parent!=null) {
 	    if (parent instanceof SIRFeedbackLoop) {
@@ -111,7 +102,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	/** if this filter has a constant component (eg if it has a non zero "b") we abort.
 	    (Note, there is nothing saying that we can't perform the transform in this
 	    case, only that currently we don't have any examples of programs that use it
-	    so I am not going to bother implenting it. -- AAL**/
+	    so I am not going to bother implenting it. The method would be to add the appropriate
+	    elements of b into the output after returning to the time domain and before
+	    we actually push the output values. -- AAL)**/
 	if (linearRep.hasConstantComponent()) {
 	    LinearPrinter.println("  aborting -- filter has non zero constant components.\n" +
 				  "ANDREW -- YOU ARE BEING LAZY. THIS IS NOT A HARD THING TO IMPLEMENT " +
@@ -119,7 +112,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	    return false;
 	}
 	
-	/** if doing clever replacement, don't do small FIRs. **/
+	/** don't do small FIRs. **/
 	if (linearRep.getPeekCount() < minFIRSize) {
  	    LinearPrinter.println("  aborting -- fir size too small: " +
 				  linearRep.getPeekCount() + ". needs to be at least " +
@@ -138,20 +131,17 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     public boolean makeReplacement(SIRStream self) {
 	LinearPrinter.println(" processing " + self.getIdent());
 
-	// make sure we can replace this.
+	// make sure we can replace "self" with a frequency version.
 	if (!canReplace(self, this.linearityInformation)) {
 	    return false;
 	}
 
 	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
-	/** set the target FFT size appropriately if it hasn't already been set */
-
 	/* now is when we get to the fun part, we have a linear representation
-	 * that computes an FIR (ef pop 1, push 1, peek x) and we want to replace it with an FFT.
-	 * Note that N is the block size of the input that we are looking at. */
-	int x = linearRep.getPeekCount();
-	int N = calculateN(x);
-	int filterSize = N+2*(x-1); // this is the size of the overall filter
+	 * and we want to replace it with an frequency version using the FFT.*/
+	int x = linearRep.getPeekCount(); // x-1 is the overlap amount
+	int N = calculateN(x);            // N is the non-overlap part
+	int filterSize = N+2*(x-1);       // this is the overall peek of the new filter
 	LinearPrinter.println("  creating frequency filter.\n" +
 			      "   N+(x-1)=" + (N+x-1) + " (outputs per steady state)\n" + 
 			      "   x=" + x + " (peek, original filter size)\n" +
@@ -163,8 +153,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	JFieldDeclaration[] newFields = self.getFields();
 	
 	/* make the fields to hold the transform of the weights. Note that the
-	   weights are stored in "half complex array" format which is the output format
-	   generated by FFTW. The first weight field corresponds to the weight field of
+	   weights are stored in "half complex array" or hermetian array format. This
+	   is the output format generated by FFTW. The first weight field corresponds to the weight field of
 	   the right most column, the next weight field corresponds to the weight field
 	   of the next right most column, etc. */
 	JVariableDefinition[] weightFields = new JVariableDefinition[numWeightFields];
@@ -188,15 +178,14 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	JVariableDefinition tempBufferField  = makeWeightField(TEMP_BUFFER_NAME);
 	newFields = appendFieldDeclaration(newFields, tempBufferField);
  
-	/** make enough output buffers to hold the appropriate outputs. **/
+	/** make enough output buffers to hold the appropriate outputs. We can't reuse
+	 * the output buffer fields because we need to interleave the values at the end. **/
 	JVariableDefinition outputBufferFields[] = new JVariableDefinition[numWeightFields];
 	for (int i=0; i<numWeightFields; i++) {
 	    outputBufferFields[i] = makeWeightField(OUTPUT_BUFFER_NAME + "_" + i);
 	    newFields = appendFieldDeclaration(newFields, outputBufferFields[i]);
 	}
-	
-	
-	
+
 	/* make a new init function */
 	JMethodDeclaration freqInit = makeNewInit(linearRep,
 						  weightFields, partialFields,
@@ -204,7 +193,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 						  outputBufferFields,
 						  filterSize, x);
 	
-	/* make the init work function */
+	/* make a new init work function */
 	JMethodDeclaration freqInitWork = makeNewWork(INITWORK,
 						      weightFields, partialFields,
 						      inputBufferField, tempBufferField,
@@ -224,45 +213,44 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	LinearPrinter.println("  creating new two stage filter...");
 	// Create a new filter that contains all of the new pieces that we have built
 	SIRStream replacement;
-	/* Note, we need to have initPeek-initPop == peek-Pop for some scheduling reason
-	 * so therefore, we set the peek rate of the work function to be N+2(x-1) even though
-	 * it really only needs to be N+x-1.*/
 	replacement = new SIRTwoStageFilter(self.getParent(),              /* parent */
-					   "TwoStageFreq"+self.getIdent(),/* ident */
-					   newFields,                     /* fields */
-					   new JMethodDeclaration[0],     /* methods Note:
-									     -- init, work, and
-									     initWork are special. */
-					   new JIntLiteral(N+x-1),        /* peek (w/ extra x-1 window...)*/
-					   new JIntLiteral(N+x-1),        /* pop */
-					   new JIntLiteral((N+x-1)*numWeightFields), /* push (note that the
-											push count needs to
-											be scaled by the
-											number of outputs
-											(because each FIR
-											filter outputs N+x-1 */
-					   freqWork,                      /* work */
-					   N+x-1,                         /* initPeek */
-					   N+x-1,                         /* initPop */
-					   N*numWeightFields,             /* initPush */
-					   freqInitWork,                  /* initWork */
-					   self.getInputType(),           /* input type */
-					   self.getOutputType());         /* output type */
-	// need to explicitly set the init function
+					    "TwoStageFreq"+self.getIdent(),/* ident */
+					    newFields,                     /* fields */
+					    new JMethodDeclaration[0],     /* methods Note:
+									      -- init, work, and
+									      initWork are special. */
+					    new JIntLiteral(N+x-1),        /* peek (w/ extra x-1 window...)*/
+					    new JIntLiteral(N+x-1),        /* pop */
+					    new JIntLiteral((N+x-1)*numWeightFields), /* push (note that the
+											 push count needs to
+											 be scaled by the
+											 number of outputs
+											 (because each FIR
+											 filter outputs
+											 N+x-1 */
+					    freqWork,                      /* work */
+					    N+x-1,                         /* initPeek */
+					    N+x-1,                         /* initPop */
+					    N*numWeightFields,             /* initPush */
+					    freqInitWork,                  /* initWork */
+					    self.getInputType(),           /* input type */
+					    self.getOutputType());         /* output type */
+	// need to explicitly set the init function (not part of the constructor)
 	replacement.setInit(freqInit);
-
+	
 	// if we have a pop rate greater than one, then put a decimator next to <replacement>
 	if (linearRep.getPopCount()>1) {
 	    SIRPipeline wrapper = new SIRPipeline(self.getParent(), replacement.getIdent()+"_dec_wrap");
 	    wrapper.setInit(SIRStream.makeEmptyInit());
 	    wrapper.add(replacement);
-	    wrapper.add(makeDecimatorForFrequencyNode(linearRep.getPushCount(), linearRep.getPopCount(), replacement.getOutputType()));
+	    wrapper.add(makeDecimatorForFrequencyNode(linearRep.getPushCount(),
+						      linearRep.getPopCount(), replacement.getOutputType()));
 	    // now remember this new wrapper as our replacement instead of the original
 	    replacement = wrapper;
 	}
 
 	// do unrolling on the new filter.  (Unrolling is part of
-	// filter loweing; will get field propagation and stuff node
+	// filter lowering; will get field propagation and stuff, node
 	// optimization, etc., as added bonus.)
 	Flattener.lowerFilterContents(replacement, false);
 	
@@ -276,9 +264,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 
     /**
-     * Returns a filter that has this behavior:
-     *   for (int i=0; i<freqPush; i++) { push(pop()) }
-     *   for (int i=0; i<freqPush; i++) { for (int j=0;j<freqPop-1; j++) { pop() } }
+     * Returns a filter that has this behavior:<br>
+     * <pre>
+     *   for (int i=0; i&lt;freqPush; i++) { push(pop()) }
+     *   for (int i=0; i&lt;freqPush; i++) { for (int j=0;j&lt;freqPop-1; j++) { pop() } }
+     * </pre> <br>
      *
      * Will return a filter with a null parent.  This is intended to
      * follow a frequency node that has a pop rate more than one; the
@@ -308,7 +298,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					 JFieldDeclaration.EMPTY(),
 					 JMethodDeclaration.EMPTY(),
 					 // peek, pop, push
-					 new JIntLiteral(freqPop*freqPush), new JIntLiteral(freqPop*freqPush), new JIntLiteral(freqPush),
+					 new JIntLiteral(freqPop*freqPush),
+					 new JIntLiteral(freqPop*freqPush),
+					 new JIntLiteral(freqPush),
 					 work,
 					 type,
 					 type);
@@ -317,8 +309,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 
     /**
-     * create the field that we are going to put the filter's freqenucy response in.
-     * the field is an array of floats, and we will have one array for the real part of the
+     * Create the field that we put the filter's frequency response in.
+     * The field is an array of floats, and we will have one array for the real part of the
      * repsonse and one array for the imaginary part of the response.
      */
     public JVariableDefinition makeWeightField(String name) {
@@ -332,10 +324,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
 
     /**
-     * Make an init function which assigns allocates space for the various fields
+     * Make the init function. The init function allocates space for the various fields
      * (frequency weight fields are of size filterSize, and partial result fields are
      * of size x-1) and 
-     * calculates the DFT of the impulse response and stores it in the weight fields.
+     * calculates the FFT of the impulse response and stores it in the weight fields.
      **/
     public JMethodDeclaration makeNewInit(LinearFilterRepresentation linearRep,
 					  JVariableDefinition[] weightFields,
@@ -347,10 +339,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	
 	JBlock body = new JBlock();
 
-	// the number of FIR filters that are embodied by this filter
+	// the number of FIR filters that are embodied by this filter (ie push count)
 	int numFIRs = weightFields.length;
 	
-	/** add in statements to allocate space for the weight fields, partial results
+	/** add statements to allocate space for the weight fields, partial results
 	    fields, input buffer field, and output buffer field.
 	    The weight fields are all of the filter size (because we will store the frequency
 	    representation in half complex array form (the output of FFTW). **/
@@ -489,19 +481,19 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     
 
     /**
-     * make both the initWork and the work function (because they are not very different).<p>
+     * Make both the initWork and the work function (because they are not very different).<br>
      *
-     * We make a function that copies N elements from the input
+     * We make a function that copies N+2(x-1) elements from the input
      * tape into a local array, calls the library function with the local array
-     * and the weight field to calcluate the produce of the DFT of the input and the weight fields.
+     * and the weight field to calcluate the FFT of the input and the weight fields.
      * If we are making the initWork function, then just the middle N elements of the result are pushed
      * and if we are making the work function then the x-1 partials are added to the first x-1 elements
      * of the results and we push out the first N+x-1 elements. For both types of work we
      * then save the last x-1 elements of the DFT output in
-     * the partial results fields for the next execution. Note that filterSize = N + 2(x-1).<p>
+     * the partial results fields for the next execution. Note that filterSize = N + 2(x-1).<br>
      *
      * If the GENFORLOOPS flag is set, then we will actually generate for loops in the
-     * work function rather than generating unrolled code.<p>
+     * work function rather than generating unrolled code.<br>
      */
     public JMethodDeclaration makeNewWork(int functionType, /* either INITWORK or WORK */
 					  JVariableDefinition[] weightFields,
@@ -679,7 +671,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	
     }
 
-    /** adds <n> popFloat() statements to the end of <body>. **/
+    /** adds n popFloat() statements to the end of body. **/
     public void makePopStatements(JBlock body, int n) {
 	// always put them in a loop exceeds the unroll count
 	SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float, n);
@@ -725,11 +717,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 	
     /**
-     * returns an array of floating point numbers that correspond
+     * Returns an array of floating point numbers that correspond
      * to the real part of the FIR filter's weights. Size is the size
      * of the array to allocate. This might need to be bigger than the
      * actual number of elements in the FIR response because we will
-     * be taking and FFT of the data.
+     * be taking and FFT of the data.<br>
      *
      * Col represents which column of data we want to get the coefficients
      * from. This is the column index in the actual filter's matrix rep.
@@ -754,8 +746,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 
     /**
-     * Generates the a for loop of the form:
-     * for(loopVar = initVal; loopVar<maxVal; loopVar++) {loopBody}, 
+     * Generates the a for loop of the form:<br>
+     * <pre>
+     * for(loopVar = initVal; loopVar&lt;maxVal; loopVar++) {loopBody}
+     * </pre>
      **/
     public JStatement makeConstantForLoop(JVariableDefinition loopVar,
 					  int initVal, int maxVal,
@@ -774,7 +768,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
      * calculates the appropriate size FFT to perform. It is passed x, the length
      * of the impuse response of the filter, and it returns the actual N, the
      * number of output points that will be produced by one execution of the
-     * filter.
+     * filter.<br>
      *
      * This implementation works by calculating a targetN that is a
      * multiple of x, and then scaling up to the next power of two.

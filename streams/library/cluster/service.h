@@ -14,6 +14,11 @@ class service {
 
   virtual void run() = 0;
 
+  void unlock_and_run() {
+    pthread_mutex_unlock(&__start_service_lock);
+    run();
+  }
+
  public:
 
   void start();

@@ -18,8 +18,5 @@ void service::start() {
 
 
 void *__start_service_method(void *) {
-  __start_service_instance->run();
-
-  pthread_mutex_unlock(&__start_service_lock);
-
+  __start_service_instance->unlock_and_run();
 }

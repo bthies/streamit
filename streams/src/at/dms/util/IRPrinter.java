@@ -1937,6 +1937,17 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
     
     /**
+     * Visits an identity creator.
+     */
+    public void visitIdentity(LIRIdentity self) {
+        blockStart("LIRIdentity");
+        attrStart("streamContext");
+        self.getStreamContext().accept(this);
+        attrEnd();
+        blockEnd();
+    }
+    
+    /**
      * Visits a set a parallel stream.
      */
     public void visitSetParallelStream(LIRSetParallelStream self,

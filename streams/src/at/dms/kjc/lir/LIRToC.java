@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.72 2002-07-26 15:22:47 clleger Exp $
+ * $Id: LIRToC.java,v 1.73 2002-08-08 20:21:20 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1833,7 +1833,22 @@ public class LIRToC
         self.getStreamContext().accept(this);
         print(", " + childName + "->context);");
     }
-    
+
+    /**
+     * Visits an identity filter.
+     */
+    public void visitIdentity(LIRIdentity self) 
+    {
+        String childName = "data->" + self.getChildName();
+        print(childName + " = malloc(sizeof(_ContextContainer));");
+        newLine();
+        print(childName + "->context = streamit_identity_create();");
+        newLine();
+        print("register_child(");
+        self.getStreamContext().accept(this);
+        print(", " + childName + "->context);");
+    }
+
     public void visitSetChild(LIRSetChild self,
                               JExpression streamContext,
                               String childType,
@@ -2099,13 +2114,17 @@ public class LIRToC
         streamContext.accept(this);
         print(", JOINER, OUTPUT, 0, ");
         childContext.accept(this);
-        print(", sizeof(" + inputType + "), " + inputSize + ");");
+        print(", sizeof(");
+        print(inputType);
+        print("), " + inputSize + ");");
         newLine();
         print("create_splitjoin_tape(");
         streamContext.accept(this);
         print(", SPLITTER, INPUT, 0, ");
         childContext.accept(this);
-        print(", sizeof(" + outputType + "), " + outputSize + ");");
+        print(", sizeof(");
+        print(outputType);
+        print("), " + outputSize + ");");
     }
 
     /**
@@ -2125,13 +2144,17 @@ public class LIRToC
         streamContext.accept(this);
         print(", SPLITTER, OUTPUT, 1, ");
         childContext.accept(this);
-        print(", sizeof(" + inputType + "), " + inputSize + ");");
+        print(", sizeof(");
+        print(inputType);
+        print("), " + inputSize + ");");
         newLine();
         print("create_splitjoin_tape(");
         streamContext.accept(this);
         print(", JOINER, INPUT, 1, ");
         childContext.accept(this);
-        print(", sizeof(" + outputType + "), " + outputSize + ");");
+        print(", sizeof(");
+        print(outputType);
+        print("), " + outputSize + ");");
     }
 
     /**
@@ -2154,7 +2177,9 @@ public class LIRToC
 	    streamContext.accept(this);
 	    print(", SPLITTER, OUTPUT, " + position + ", ");
 	    childContext.accept(this);
-	    print(", sizeof(" + inputType + "), " + inputSize + ");");
+	    print(", sizeof(");
+            print(inputType);
+            print("), " + inputSize + ");");
 	    newLine();
 	}
 	if (outputSize!=0) {
@@ -2162,7 +2187,9 @@ public class LIRToC
 	    streamContext.accept(this);
 	    print(", JOINER, INPUT, " + position + ", ");
 	    childContext.accept(this);
-	    print(", sizeof(" + outputType + "), " + outputSize + ");");
+	    print(", sizeof(");
+            print(outputType);
+            print("), " + outputSize + ");");
 	}
     }
 
@@ -2431,7 +2458,16 @@ public class LIRToC
         if (s instanceof CArrayType)
         {
             print(((CArrayType)s).getElementType());
-            print("*");
+            JExpression[] dims = ((CArrayType)s).getDims();
+            if (dims != null)
+                for (int i = 0; i < dims.length; i++)
+                {
+                    print("[");
+                    dims[i].accept(this);
+                    print("]");
+                }
+            else
+                print("*");
         }
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");

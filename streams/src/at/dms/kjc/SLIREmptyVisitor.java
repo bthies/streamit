@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.8 2002-06-20 17:44:53 thies Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.9 2002-08-08 20:21:15 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -192,6 +192,13 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      */
     public void visitFileWriter(LIRFileWriter self) {
 	self.getStreamContext().accept(this);
+    }
+
+    /**
+     * Visits an identity creator.
+     */
+    public void visitIdentity(LIRIdentity self) {
+        self.getStreamContext().accept(this);
     }
     
     /**

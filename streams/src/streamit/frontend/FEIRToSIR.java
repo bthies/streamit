@@ -175,33 +175,37 @@ public class FEIRToSIR implements FEVisitor, Constants {
     return null;
   }
 
-  public List fieldDeclToJFieldDeclarations(FieldDecl decl) {
-    debug("In fieldDeclToJFieldDeclarations\n");
-    List result = new ArrayList();
-    for (int i = 0; i < decl.getNumFields(); i++)
+    public List fieldDeclToJFieldDeclarations(FieldDecl decl)
     {
-        JVariableDefinition def = null;
-        if (decl.getInit(i) != null) {
-            def = new JVariableDefinition(null, // token reference
+        debug("In fieldDeclToJFieldDeclarations\n");
+        List result = new ArrayList();
+        TokenReference ref = contextToReference(decl);
+        for (int i = 0; i < decl.getNumFields(); i++)
+        {
+            JVariableDefinition def = null;
+            JExpression init = null;
+            if (decl.getInit(i) != null)
+                init = (JExpression)decl.getInit(i).accept(this);
+            else if (decl.getType(i) instanceof TypeArray)
+            {
+                TypeArray ta = (TypeArray)decl.getType(i);
+                JExpression[] dims = new JExpression[1];
+                dims[0] = (JExpression)ta.getLength().accept(this);
+                init = new JNewArrayExpression(ref,
+                                               feirTypeToSirType(ta.getBase()),
+                                               dims, null);
+            }
+            def = new JVariableDefinition(ref,
                                           at.dms.kjc.Constants.ACC_PUBLIC,
                                           feirTypeToSirType(decl.getType(i)),
-                                          decl.getName(i),
-                                          (JExpression) decl.getInit(i).accept(this));
-        } else {
-            def = new JVariableDefinition(null, // token reference
-                                          at.dms.kjc.Constants.ACC_PUBLIC,
-                                          feirTypeToSirType(decl.getType(i)),
-                                          decl.getName(i),
-                                          null);
+                                          decl.getName(i), init);
+            JFieldDeclaration fDecl = new JFieldDeclaration(ref, def,
+                                                            null, // javadoc
+                                                            null); // comments
+            result.add(fDecl);
         }
-        JFieldDeclaration fDecl = new JFieldDeclaration(null, /* token reference */
-                                                        def,
-                                                        null, /* javadoc */
-                                                        null); /* comments */
-        result.add(fDecl);
+        return result;
     }
-    return result;
-  }
 
     private void setStreamFields(SIRStream stream, Hashtable cfields,
                                  List vars)

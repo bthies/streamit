@@ -1,0 +1,30 @@
+test fib {
+  directory docs/examples/hand/fib
+  source Fib.java
+}
+
+test fib2 {
+  directory docs/examples/hand/fib2
+  source Fib2.java
+}
+
+test flybit {
+  directory docs/examples/hand/flybit
+  source Flybit.java
+}
+
+test hello6 {
+  directory docs/examples/hand/hello6
+  output Hello6.out
+  source HelloWorld6.java
+}
+
+test simple-split {
+  directory docs/examples/hand/simple-split
+  source SimpleSplit.java
+}
+
+test updown {
+  directory docs/examples/hand/updown
+  source UpDown.java
+}

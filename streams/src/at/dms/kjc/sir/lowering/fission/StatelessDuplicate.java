@@ -81,7 +81,24 @@ public class StatelessDuplicate {
 	// fields, then it is stateless.  This actually isn't too bad
 	// if fieldprop has removed the field references; otherwise we
 	// could use something more robust.
-	return filter.getFields().length==0;
+	//if(filter.getFields().length!=0)
+	final boolean[] out=new boolean[1];
+	out[0]=true;
+	JMethodDeclaration[] methods=filter.getMethods();
+	JMethodDeclaration init=filter.getInit();
+	for(int i=0;i<methods.length;i++)
+	    if(methods[i]!=init)
+		methods[i].accept(new EmptyAttributeVisitor() {
+			public Object visitFieldExpression(JFieldAccessExpression self,
+							   JExpression left,
+							   String ident) {
+			    out[0]=false;
+			    System.out.println(self);
+			    return self;
+			}
+		    });
+	//return filter.getFields().length==0;
+	return out[0];
     }
 
     /**

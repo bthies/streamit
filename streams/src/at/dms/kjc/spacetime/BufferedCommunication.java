@@ -32,7 +32,8 @@ public class BufferedCommunication extends RawExecutionCode
     public BufferedCommunication(FilterInfo filterInfo) 
     {
 	super(filterInfo);
-	System.out.println("Generating code for " + filterInfo.filter + " using Buffered Comm.");
+	FilterTraceNode node=filterInfo.traceNode;
+	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Buffered Comm.");
 	//set the unique id to append to each variable name
 	//treat all the filters as two stages, i.e.
 	//initWork is always called, so add one to non-2 stages

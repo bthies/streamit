@@ -63,8 +63,8 @@ public class DirectCommunication extends RawExecutionCode
     public DirectCommunication(FilterInfo filterInfo) 
     {
 	super(filterInfo);
-	System.out.println("Generating code for " + filterInfo.filter + " using Direct Comm.");
-
+	FilterTraceNode node=filterInfo.traceNode;
+	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Direct Comm.");
     }
 
     public JFieldDeclaration[] getVarDecls() 

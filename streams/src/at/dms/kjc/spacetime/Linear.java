@@ -28,7 +28,8 @@ public class Linear extends RawExecutionCode implements Constants {
     
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
-	System.out.println("Generating code for " + filterInfo.filter + " using Linear.");
+	FilterTraceNode node=filterInfo.traceNode;
+	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
 	FilterContent content=filterInfo.filter;
 	array=content.getArray();
 	begin=content.getBegin();

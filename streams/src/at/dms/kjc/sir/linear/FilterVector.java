@@ -8,7 +8,7 @@ import java.util.*;
  * keep track of the combinations of inputs that are used to compute a 
  * specific intermediate value in the program flow.
  *
- * $Id: FilterVector.java,v 1.1 2002-08-14 18:13:19 aalamb Exp $
+ * $Id: FilterVector.java,v 1.2 2002-08-15 20:38:04 aalamb Exp $
  **/
 
 public class FilterVector extends FilterMatrix {
@@ -32,7 +32,7 @@ public class FilterVector extends FilterMatrix {
     public ComplexNumber getElement(int row, int col) {
 	throw new RuntimeException("Do not use the two index version of getElement");
     }
-
+    
     //////// Accessors/Modifiers
     
     
@@ -47,6 +47,15 @@ public class FilterVector extends FilterMatrix {
 	// use the superclass's version
 	super.setElement(0,index,value);
     }
+
+
+    /** Gets the size of the vector **/
+    public int getSize() {
+	// this is very simple -- just the size of a row vector is
+	//the number of columns
+	return this.getCols();
+    }
+
     
 }
 	

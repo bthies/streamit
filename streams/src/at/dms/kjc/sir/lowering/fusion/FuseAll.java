@@ -22,9 +22,10 @@ public class FuseAll implements StreamVisitor {
     private FuseAll() {}
 
     /**
-     * Fuse everything we can in <str>
+     * Fuse everything we can in <str>.  Returns new fused segment,
+     * which is also mutated in the stream graph.
      */
-    public static void fuse(SIRStream str) {
+    public static SIRPipeline fuse(SIRStream str) {
 	// try fusing toplevel separately since noone contains it
 	SIRPipeline wrapper = SIRContainer.makeWrapper(str);
 	FuseAll fuseAll = new FuseAll();
@@ -40,7 +41,7 @@ public class FuseAll implements StreamVisitor {
 		hasFused = false;
 	    } catch (SuccessfulFuseException e) {}
 	}
-	Lifter.eliminatePipe(wrapper);
+	return wrapper;
     }
 
     /**

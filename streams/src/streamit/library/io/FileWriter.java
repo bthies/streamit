@@ -82,4 +82,19 @@ public class FileWriter extends Filter
             ERROR (e);
         }
     }
+
+    /**
+     * Destructor
+     */
+    void DELETE ()
+    {
+        try
+        {
+            outputStream.close ();
+        }
+        catch (Throwable e)
+        {
+            ERROR (e);
+        }
+    }
 }

@@ -17,6 +17,7 @@ public class FilterInfo
     public int steadyMult;
     public int push;
     public int pop;
+    public int primePump;
     public int peek;
 
     private FilterTraceNode traceNode;
@@ -28,6 +29,7 @@ public class FilterInfo
 	this.traceNode = traceNode;
 	this.steadyMult = traceNode.getSteadyMult();
 	this.initMult = traceNode.getInitMult();
+	this.primePump = filter.getPrimePump();
 	prePeek = 0;
 	prePush = 0;
 	prePop = 0;

@@ -145,16 +145,15 @@ public class SpaceTimeBackend
 		    curX+=forward;
 	    }
 	}
-	Trace[] init=new Trace[initTraces.size()];
-	Trace[] steady=new Trace[steadyTraces.size()];
-	initTraces.toArray(init);
-	steadyTraces.toArray(steady);
-	for(int i=1;i<init.length;i++) {
-	    init[i-1].setEdges(new Trace[]{init[i]});
-	    init[i].setDepends(new Trace[]{init[i-1]});
-	    steady[i-1].setEdges(new Trace[]{steady[i]});
-	    steady[i].setDepends(new Trace[]{steady[i-1]});
+	
+	Trace[] traces = new Trace[initTraces.size()];
+	initTraces.toArray(traces);
+	for(int i=1;i<traces.length;i++) {
+	    traces[i-1].setEdges(new Trace[]{traces[i]});
+	    traces[i].setDepends(new Trace[]{traces[i-1]});
 	}
+	
+
 	/*System.out.println(initTraces);
 	  for(int i=0;i<initTraces.size();i++) {
 	  TraceNode head=((Trace)initTraces.get(i)).getHead();
@@ -171,22 +170,26 @@ public class SpaceTimeBackend
 	    while (head != null) {
 		if(head instanceof FilterTraceNode)
 		    System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
-		else
+		else {
+		    System.out.println(head);
 		    System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
+		}
 		head = head.getNext();
+		
 	    }
 	    
 	    //System.out.println(((Trace)steadyTraces.get(i)).getHead());
 	}
+	    
 	initTraces=null;
 	steadyTraces=null;
 	executionCounts=null;
 
 	//mgordon's stuff
-	System.out.println("Building Initialization Trace Traversal");
-	ListIterator initTrav = TraceTraversal.getTraversal(init).listIterator();    
-	System.out.println("Building Steady-State Trace Traversal");
-	ListIterator steadyTrav = TraceTraversal.getTraversal(steady).listIterator();
+	System.out.println("Building Trace Traversal");
+	ListIterator initTrav = TraceTraversal.getTraversal(traces).listIterator();    
+	ListIterator steadyTrav = TraceTraversal.getTraversal(traces).listIterator();    
+
 
 	//create the raw execution code and switch code for the initialization phase
 	System.out.println("Creating Initialization Stage");

@@ -389,8 +389,8 @@ public class GenerateCCode
 	// RMR { added 'const' to avoid prototype conflicts
 	buf.append("extern EXTERNC int printf(const char[], ...);\n");
 	buf.append("extern EXTERNC int fprintf(int, const char[], ...);\n");
-	buf.append("extern EXTERNC int fopen(const char[], const char[]);\n");
-	buf.append("extern EXTERNC int fscanf(int, const char[], ...);\n");
+	buf.append("extern EXTERNC FILE* fopen(const char[], const char[]);\n");
+	buf.append("extern EXTERNC int fscanf(FILE*, const char[], ...);\n");
 	// } RMR
 	buf.append("extern EXTERNC float acosf(float);\n"); 
 	buf.append("extern EXTERNC float asinf(float);\n"); 

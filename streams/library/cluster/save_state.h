@@ -1,12 +1,15 @@
 #ifndef __SAVE_STATE__H
 #define __SAVE_STATE__H
 
+#include <mysocket.h>
 #include <init_instance.h>
 #include <object_write_buffer.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
 
 #define PATH "/u/janiss/checkpoints/"
 
@@ -83,6 +86,19 @@ class save_state {
       *steady = iter;
       save_state::load_from_file(thread, iter, read_object);
     }
+  }
+
+  static int test_iter(int iter, int n_threads) {
+        
+    char fname[256];
+
+    for (int t = 0; t < n_threads; t++) {
+          sprintf(fname, "%s%d.%d", PATH, t, iter);
+	  int fd = open(fname, O_RDONLY);
+	  if (fd == -1) return -1;
+    }
+    
+    return 0;
   }
 
 };

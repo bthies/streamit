@@ -4,12 +4,20 @@
 thread_info::thread_info(int thread_id, void (*check_thread_status_during_io)()) {
   this->thread_id = thread_id;
   this->check_thread_status_during_io = check_thread_status_during_io;
+  this->active = false;
 }
 
 int thread_info::get_thread_id() {
   return thread_id;
 }
 
+void thread_info::set_active(bool a) {
+  this->active = a;
+}
+
+bool thread_info::is_active() {
+  return active;
+}
 
 void thread_info::add_incoming_data_connection(connection_info *info){
   incoming_data.push_back(info);
@@ -37,12 +45,8 @@ pthread_t thread_info::get_pthread() {
 }
 
 
-void thread_info::set_state_flag(int *state_flag) { 
-  this->state_flag = state_flag; 
-}
-
 int *thread_info::get_state_flag() {
-  return state_flag;
+  return &state_flag;
 }
 
 

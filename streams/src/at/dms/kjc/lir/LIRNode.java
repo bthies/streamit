@@ -1,5 +1,6 @@
 package at.dms.kjc.lir;
 
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.compiler.*;
 
@@ -55,6 +56,11 @@ public class LIRNode extends JStatement {
 
     public void accept(SLIRVisitor p) {
         p.visitNode(this);
+    }
+
+    public Object accept(AttributeVisitor p) {
+	// no action is defined for attribute visitors on lir nodes
+	return null;
     }
 
     /**

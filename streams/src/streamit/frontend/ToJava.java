@@ -152,9 +152,10 @@ class ToJava
                 StreamItLex lexer = new StreamItLex(dis);
                 parser = new StreamItParserFE(lexer);
                 prog = parser.program();
+                String javaOut = (String)prog.accept(new NodesToJava(null));
+                outWriter.write(javaOut);
             }
-            String javaOut = (String)prog.accept(new NodesToJava(null));
-            outWriter.write(javaOut);
+            outWriter.flush();
         }
         catch (Exception e)
         {

@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * loops, though.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TranslateEnqueue.java,v 1.5 2003-08-29 18:08:29 dmaze Exp $
+ * @version $Id: TranslateEnqueue.java,v 1.6 2003-08-29 18:20:14 dmaze Exp $
  */
 public class TranslateEnqueue extends FEReplacer
 {
@@ -86,6 +86,7 @@ public class TranslateEnqueue extends FEReplacer
         {
             // This should be a warning.  But "float" seems to be
             // the common case, hack around it.
+            returnType = new TypePrimitive(TypePrimitive.TYPE_FLOAT);
             name = "initPathFloat";
             stmts.add(new StmtReturn(context,
                                      new ExprConstFloat(context, 0.0)));

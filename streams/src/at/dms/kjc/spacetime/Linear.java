@@ -183,7 +183,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	//final int remainingExec=0;
 	turns+=remainingExec; //Remaining executions
 	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
-	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
+	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+(newSteadyMult-1)); //Send steadyMult to switch
 	//TODO: Save registers here
 	body[0]=inline;
 	for(int i=0;i<array.length;i++) {
@@ -257,7 +257,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	//Loop Counter
 	inline=new InlineAssembly();
 	body[body.length-4]=inline;
-	inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+newSteadyMult);
+	inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+(newSteadyMult-1));
 	//Innerloop
 	inline=new InlineAssembly();
 	body[body.length-3]=inline;

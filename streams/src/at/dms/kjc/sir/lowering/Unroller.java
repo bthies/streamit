@@ -14,13 +14,10 @@ import at.dms.compiler.JavadocComment;
  */
 class Unroller extends SLIRReplacingVisitor {
     /**
-     * Map maintaining modified variables
+     * Map allowing the current block to access the modified
+     * list of the current for loop
      */
-    private Hashtable modified;
-    /**
-     * Map maintaining modified vars in current loop
-     */
-    private Hashtable curModified;
+    private Hashtable currentModified;
     /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */
@@ -29,7 +26,6 @@ class Unroller extends SLIRReplacingVisitor {
      * Whether or not anything has been unrolled.
      */
     private boolean hasUnrolled;
-
     /**
      * Creates one of these given that <constants> maps
      * JLocalVariables to JLiterals for the scope that we'll be
@@ -39,8 +35,7 @@ class Unroller extends SLIRReplacingVisitor {
 	super();
 	this.constants = constants;
 	this.hasUnrolled = false;
-	modified=new Hashtable();
-	curModified=new Hashtable();
+	currentModified=new Hashtable();
     }
 
     /**
@@ -50,7 +45,7 @@ class Unroller extends SLIRReplacingVisitor {
 					int oper,
 					JExpression expr) {
 	if(expr instanceof JLocalVariableExpression)
-	    curModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
+	    currentModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
 	return super.visitPrefixExpression(self,oper,expr);
     }
 
@@ -61,7 +56,7 @@ class Unroller extends SLIRReplacingVisitor {
 					 int oper,
 					 JExpression expr) {
 	if(expr instanceof JLocalVariableExpression)
-	    curModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
+	    currentModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
 	return super.visitPostfixExpression(self,oper,expr);
     }
 
@@ -72,9 +67,7 @@ class Unroller extends SLIRReplacingVisitor {
 					    JExpression left,
 					    JExpression right) {
 	if(left instanceof JLocalVariableExpression) {
-	    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
-	    if(var!=null)
-		curModified.put(var,Boolean.TRUE);
+	    currentModified.put(((JLocalVariableExpression)left).getVariable(),Boolean.TRUE);
 	}
 	return super.visitAssignmentExpression(self,left,right);
     }
@@ -88,22 +81,26 @@ class Unroller extends SLIRReplacingVisitor {
 				    JStatement incr,
 				    JStatement body) {
 	// first recurse into body
-	curModified=new Hashtable();
+	Hashtable saveModified=currentModified;
+	currentModified=new Hashtable();
 	JStatement newStmt = (JStatement)body.accept(this);
 	if (newStmt!=null && newStmt!=body) {
 	    self.setBody(newStmt);
 	}
-	modified.putAll(curModified);
 	// check for loop induction variable
 	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
 	// check to see if var was modified
 	// if we can unroll...
-	if(info!=null&&(!modified.containsKey(info.var))) {
+	if(info!=null&&(!currentModified.containsKey(info.var))) {
 	    // Set modified
-	    curModified.put(info.var,Boolean.TRUE);
+	    saveModified.putAll(currentModified);
+	    currentModified=saveModified;
+	    currentModified.put(info.var,Boolean.TRUE);
 	    // do unrolling
 	    return doUnroll(info, self);
 	}
+	saveModified.putAll(currentModified);
+	currentModified=saveModified;
 	return self;
     }
 
@@ -208,7 +205,7 @@ class Unroller extends SLIRReplacingVisitor {
      *  4. the variable is an integer
      *
      *  We do not check that the induction variable is unmodified in
-     *  the loop.  You'll break this if you modify it.
+     *  the loop.  Should be fixed for prefix/suffix expr and assign --jasperln
      *
      * This will return <null> if the loop can not be unrolled. 
      */

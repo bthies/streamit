@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.60 2004-10-07 22:03:52 janiss Exp $
+ * $Id: KjcOptions.opt,v 1.61 2004-11-17 00:02:38 janiss Exp $
  */
 
 prefix Kjc
@@ -293,6 +293,16 @@ longname		"cacheopt"
 	type		boolean
 	default		"false"
 	help		"Perform cache optimization"
+
+longname		"rename1"
+	type		boolean
+	default		"false"
+	help		"Rename local vars of operators during fusion"
+
+longname		"rename2"
+	type		boolean
+	default		"false"
+	help		"Rename local vars of destroyed arrays"
 
 longname		"raw"
 	shortcut	"r"

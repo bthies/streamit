@@ -55,8 +55,9 @@ public class NumberGathering extends at.dms.util.Utils
 	    int prints = CheckPrint.check((SIRFilter)sink.contents);
 
 	    //if this sink does not print, keep looking for one that does
-	    if (prints == 0) 
+	    if (prints == 0) {
 		continue;
+	    }
 	    // if we failed, unroll the filter on the loops that we
 	    // indicated
 	    if (prints == -1) {
@@ -237,15 +238,16 @@ public class NumberGathering extends at.dms.util.Utils
 	{
 	    if (node.isFilter()) {
 		SIRFilter filter = (SIRFilter)node.contents;
-		if (filter.getPushInt() == 0) {
-		    //sink
+	
+		// Look for a filter that prints 
+		if (ExistsPrint.exists(filter)) {
 		    if (sink != null)
 			multipleSinks = true;
 		    //add this to the hash map of sinks
 		    possibleSinks.add(node);
 		    //if this is the only sink, record it here
 		    sink = node;
-		}
+		}	
 	    }
 	}
     }

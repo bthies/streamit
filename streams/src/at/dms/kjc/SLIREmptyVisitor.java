@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.10 2003-01-21 18:00:51 dmaze Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.11 2003-11-04 01:13:36 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -381,4 +381,10 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
     {
         self.getStreamContext().accept(this);
     }
+
+    /**
+     * Visits InlineAssembly
+     */
+    public void visitInlineAssembly(InlineAssembly self,String[] asm) {}
 }
+

@@ -92,7 +92,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	}
 	if (body != null) {
 	    final Hashtable targets=new Hashtable();
-	    final Hashtable safe=new Hashtable();
+	    final Hashtable unsafe=new Hashtable();
 	    body.accept(new SLIRReplacingVisitor() {
 		    /**
 		     * If arrays used in any way except in array access then remove from targets
@@ -100,7 +100,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		    public Object visitLocalVariableExpression(JLocalVariableExpression self2,
 							       String ident2) {
 			targets.remove(((JLocalVariableExpression)self2).getVariable());
-			safe.put(((JLocalVariableExpression)self2).getVariable(),Boolean.TRUE);
+			unsafe.put(((JLocalVariableExpression)self2).getVariable(),Boolean.TRUE);
 			return self2;
 		    }
 
@@ -110,14 +110,14 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		    public Object visitArrayAccessExpression(JArrayAccessExpression self2,
 							     JExpression prefix,
 							     JExpression accessor) {
-			prefix.accept(this);
+			//prefix.accept(this);
 			accessor.accept(this);
-			if((prefix instanceof JLocalVariableExpression)&&(!safe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
+			if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
 			    if(accessor instanceof JIntLiteral) {
 				targets.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
 			    } else {
 				targets.remove(((JLocalVariableExpression)prefix).getVariable());
-				safe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
+				unsafe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
 			    }
 			return self2;
 		    }

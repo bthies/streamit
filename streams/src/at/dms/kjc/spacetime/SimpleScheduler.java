@@ -21,6 +21,7 @@ public class SimpleScheduler
     private RawChip rawChip;
     private LinkedList schedule;
     private SpaceTimeSchedule spSched;
+    private LinkedList initSchedule;
 
     public SimpleScheduler(Partitioner partitioner, RawChip rawChip) 
     {
@@ -36,7 +37,27 @@ public class SimpleScheduler
 	//	spSched = new SpaceTimeSchedule(rawChip.getYSize(), rawChip.getXSize());
     }
     
-    public LinkedList schedule() 
+    public LinkedList getSchedule() 
+    {
+	return schedule;
+    }
+
+    public LinkedList getInitSchedule() 
+    {
+	return initSchedule;
+    }
+    
+    
+    public boolean scheduledBefore(Trace t1, Trace t2) 
+    {
+	assert schedule.contains(t1) && schedule.contains(t2) &&
+	    t1 != t2;
+	if (schedule.indexOf(t1) < schedule.indexOf(t2))
+	    return true;
+	return false;
+    }
+
+    public void schedule() 
     {
 
 	//sort traces...
@@ -63,7 +84,7 @@ public class SimpleScheduler
 
 	while (!sortedTraces.isEmpty()) {
 	    Trace trace = (Trace)sortedTraces.get(0);
-	    System.out.println("Trying to schedule " + trace);
+	    //System.out.println("Trying to schedule " + trace);
 	    while (true) {
 		HashMap layout = canScheduleTrace(trace);
 		//if we cannot schedule this trace...
@@ -83,7 +104,7 @@ public class SimpleScheduler
 	
 	//set up dependencies
 	setupDepends();
-	return schedule;
+	initSchedule = InitSchedule.getInitSchedule(partitioner.topTraces);
     }
 
     private void setupDepends() 
@@ -133,7 +154,7 @@ public class SimpleScheduler
 	assert it.next() == bigTrace;
 	while (it.hasNext()) {
 	    Trace trace = (Trace)it.next();
-	    System.out.println("   (Trying to schedule smaller trace " + trace + ")");
+	    //System.out.println("   (Trying to schedule smaller trace " + trace + ")");
 	    //see when it will finish, if smaller than finishBefore
 	    if ((currentTime + partitioner.getTraceBNWork(trace)) <= 
 		    finishBefore) {
@@ -172,7 +193,7 @@ public class SimpleScheduler
     private void scheduleTrace(HashMap layout, Trace trace, LinkedList sortedList) 
     {
 	assert layout != null && trace != null;
-	System.out.println("Scheduling Trace: " + trace);
+	//	System.out.println("Scheduling Trace: " + trace);
 	//remove this trace from the list of traces to schedule
 	sortedList.remove(trace);
 	//add the trace to the schedule
@@ -194,8 +215,8 @@ public class SimpleScheduler
 	    tileAvail[tile.getTileNumber()] = currentTime 
 		+ partitioner.getTraceBNWork(trace);
 	    
-	    System.out.println("  *(" + currentTime + ") Assigning " + node + " to " + tile + 
-			       "(new avail: " + tileAvail[tile.getTileNumber()] + ")");
+	    //	    System.out.println("  *(" + currentTime + ") Assigning " + node + " to " + tile + 
+	    //		       "(new avail: " + tileAvail[tile.getTileNumber()] + ")");
 
 	    //if this is a file node, record that we have 
 	    //used this tile to either read or write a file...
@@ -249,7 +270,7 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		System.out.println("     (trying " + tile + " at " + currentTime + ")");
+		//System.out.println("     (trying " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile,
 			      layout))
@@ -271,7 +292,7 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		System.out.println("     (trying " + tile + " at " + currentTime + ")");
+		//		System.out.println("     (trying " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile, 
 			      layout))
@@ -285,7 +306,7 @@ public class SimpleScheduler
 	while (tilesIt.hasNext()) {
 	    RawTile tile = (RawTile)tilesIt.next();
 	    HashMap layout = new HashMap();
-	    System.out.println("     (trying " + tile + " at " + currentTime + ")");
+	    //System.out.println("     (trying " + tile + " at " + currentTime + ")");
 	    //if successful, return layout
 	    if (getLayout(trace.getHead().getNextFilter(), tile,
 			  layout))
@@ -300,20 +321,20 @@ public class SimpleScheduler
 	
 	//check if this tile is available, if not return false
 	if (!isTileAvail(tile)) {
-	    System.out.println("       (Tile not currently available)");
+	    //System.out.println("       (Tile not currently available)");
 	    return false;
 	}
 	
 	//cannot assign a tile twice...
 	if (layout.containsValue(tile)) {
-	    System.out.println("       (Tile Already Assigned)");
+	    //	    System.out.println("       (Tile Already Assigned)");
 	    return false;
 	}
 
 	//if this is an endpoint, it must be on a border tile
 	if ((filter.getNext().isOutputTrace() || filter.getPrevious().isInputTrace()) &&
 	    !tile.hasIODevice()) {
-	    System.out.println("       (Endpoint not at border tile)");
+	    //System.out.println("       (Endpoint not at border tile)");
 	    return false;
 	}
 	
@@ -321,13 +342,13 @@ public class SimpleScheduler
 	//on border and each tile can have one of each
 	if (filter.isFileInput() && !(tile.hasIODevice() && 
 				      !readsFile[tile.getTileNumber()])) {
-	    System.out.println("       (Failed file reader)");
+	    //System.out.println("       (Failed file reader)");
 	    return false;
 	}
 	
 	if (filter.isFileOutput() && !(tile.hasIODevice() &&
 				       !writesFile[tile.getTileNumber()])) {
-	    System.out.println("       (Failed file writer)");
+	    //System.out.println("       (Failed file writer)");
 	    return false;
 	}
 	
@@ -361,7 +382,7 @@ public class SimpleScheduler
 	    if (!found) {
 		//remove the current tile from the layout
 		layout.remove(filter);
-		System.out.println("       (Cannot find anything downstream)");
+		//System.out.println("       (Cannot find anything downstream)");
 		return false;
 	    }
 	    

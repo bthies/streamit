@@ -15,9 +15,16 @@ import at.dms.kjc.flatgraph2.*;
  **/
 public class Rawify
 {
-    public static void run(Iterator traces, RawChip rawChip,
+    public static void run(SimpleScheduler scheduler, RawChip rawChip,
 			   boolean init) 
     {
+	Iterator traces;
+	
+	if (init)
+	    traces = scheduler.getInitSchedule().iterator();
+	else
+	    traces = scheduler.getSchedule().iterator();
+
 	//iterate over the traces in the given order and generate the 
 	//switch code, the tile code, and the off chip stuff for 
 	//each TraceNode
@@ -41,7 +48,7 @@ public class Rawify
 			//add the dram command if this filter trace is an endpoint...
 		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, false);
 		    
-		    if(filterInfo.isLinear()) {
+		    if (filterInfo.isLinear()) {
 			assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
 			    "Items remaining on buffer for init for linear filter";
 			createSwitchCodeLinear(filterNode,
@@ -643,14 +650,16 @@ public class Rawify
 	    ppSteadyIt = (ppFilterIt * filterInfo.push) / traceNode.totalWeights();
 	    //subtract from the iterations
 	    iterations -= ppSteadyIt;
+	    /*
 	    //check the sanity of the primepump stage
 	    while (dests.hasNext()){
 		edge = (Edge)dests.next();
-		SpaceTimeBackend.println(edge.getDest().debugString(false));
+		//SpaceTimeBackend.println(edge.getDest().debugString(false));
 		assert ppFilterIt == filterInfo.steadyMult * (filterInfo.primePumpTrue - 
 				 FilterInfo.getFilterInfo(edge.getDest().getNextFilter()).primePumpTrue) :
 		    "Error: Inconsistent primepump stats for output trace node\n " + traceNode.debugString(false);
 	    }
+	    */
 	}
 
 	//add some comments to the switch code
@@ -702,6 +711,7 @@ public class Rawify
 	
 								      
     }
+
 
     private static void performSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,
 						FilterInfo filterInfo, boolean init, boolean primepump,

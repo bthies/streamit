@@ -149,20 +149,18 @@ public class SpaceTimeBackend
 	//Violators Will Be Garbage Collected
 	
 
-	LinkedList schedule = (new SimpleScheduler(partitioner, rawChip)).schedule();
-	SchedulePrimePump.doit(schedule);
+	SimpleScheduler scheduler = new SimpleScheduler(partitioner, rawChip);
+	scheduler.schedule();
+	SchedulePrimePump.doit(scheduler.getSchedule());
 	
 
 	//mgordon's stuff
 	assert !KjcOptions.magicdram : 
-	    "Magic DRAM support is not working";
-	
 
-	List initList = InitSchedule.getInitSchedule(partitioner.topTraces);
-	
-	TraceDotGraph.dumpGraph(schedule, partitioner.io, "preDRAMsteady.dot", false);
+	    "Magic DRAM support is not working";	
+	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "preDRAMsteady.dot", false);
 	//assign the buffers not assigned by Jasp to drams
-	BufferDRAMAssignment.run(schedule, rawChip, partitioner.io);
+	BufferDRAMAssignment.run(scheduler.getSchedule(), rawChip, partitioner.io);
 	//communicate the addresses for the off-chip buffers
 	if (!KjcOptions.magicdram) {
 	    //so right now, this pass does not communicate addresses
@@ -170,14 +168,14 @@ public class SpaceTimeBackend
 	    //on the corresponding tile.
 	    CommunicateAddrs.doit(rawChip);
 	}
-	TraceDotGraph.dumpGraph(initList, partitioner.io, "inittraces.dot", true);
-	TraceDotGraph.dumpGraph(schedule, partitioner.io, "steadyforrest.dot", true);
+	TraceDotGraph.dumpGraph(scheduler.getInitSchedule(), partitioner.io, "inittraces.dot", true);
+	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "steadyforrest.dot", true);
 	//create the raw execution code and switch code for the initialization phase
 	System.out.println("Creating Initialization Stage");
-	Rawify.run(initList.iterator(), rawChip, true); 
+	Rawify.run(scheduler, rawChip, true); 
 	//create the raw execution code and switch for the steady-state
 	System.out.println("Creating Steady-State Stage");
-	Rawify.run(schedule.iterator(), rawChip, false);
+	Rawify.run(scheduler, rawChip, false);
 	//dump the layout
 	LayoutDot.dumpLayout(rawChip, "layout.dot");
 	//generate the switch code assembly files...

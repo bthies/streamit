@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.21 2002-11-20 17:09:59 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.22 2002-12-09 17:43:09 dmaze Exp $
  */
 
 header {
@@ -111,15 +111,17 @@ struct_stream_decl[StreamType st] returns [StreamSpec ss]
 work_decl returns [FuncWork f]
 {	f = null;
 	Expression pop = null, peek = null, push = null;
-	Statement s;
+	Statement s; FEContext c = null; String name = null;
 }
-	:	t:TK_work
+	:	(	tw:TK_work { c = getContext(tw); }
+		|	tp:TK_phase id:ID { c = getContext(tp); name = id.getText(); }
+		)
 		(	TK_push push=right_expr
 		|	TK_pop pop=right_expr
 		|	TK_peek peek=right_expr
 		)*
 		s=block
-		{ f = new FuncWork(getContext(t), null, s, peek, pop, push); }
+		{ f = new FuncWork(c, name, s, peek, pop, push); }
 	;
 
 init_decl returns [Function f] { Statement s; f = null; }
@@ -235,11 +237,8 @@ variable_decl returns [Statement s] { s = null; Type t; Expression x = null; }
 
 function_decl returns [Function f] { Type t; List l; Statement s; f = null;
 int cls = Function.FUNC_HELPER; }
-	:	t=data_type (tc:TK_const { cls = Function.FUNC_CONST_HELPER; })?
-		TK_helper id:ID
-		l=param_decl_list
-		s=block
-		{ f = new Function(getContext(tc), cls, id.getText(), t, l, s); }
+	:	t=data_type id:ID l=param_decl_list s=block
+		{ f = new Function(getContext(id), cls, id.getText(), t, l, s); }
 	;
 
 param_decl_list returns [List l] { l = new ArrayList(); Parameter p; }

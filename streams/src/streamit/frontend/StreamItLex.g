@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.9 2002-11-19 21:26:56 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.10 2002-12-09 17:43:09 dmaze Exp $
  */
 
 header {
@@ -30,7 +30,7 @@ tokens {
 	// Feedback loops:
 	"body"; "loop"; "enqueue";
 	// Special functions:
-	"init"; "work"; "const"; "helper";
+	"init"; "work"; "phase";
 	// Manipulating tapes:
 	"peek"; "pop"; "push";
 	// Basic types:

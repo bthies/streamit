@@ -15,20 +15,25 @@ import at.dms.kjc.iterator.*;
  * (and I haven't tested the behavior of ArrayAccessExpressions, but I assume that
  * they also don't do the right thing for equals).
  * (eg two wrappers that
- * represent the same field should be equal).<p>
+ * represent the same field should be equal).<br>
  *
  * As an interesting note on implementation in KOPI, it seems as though there are
  * two cases that we will accept as being valid "prefix" part of a JFieldAccessExpression.
  * The first is a JThisExpression if the field is a local field.
  * The second is a JLocalVariableExpression if the field is from a class
- * that is being used as a structure.<p>
+ * that is being used as a structure.<br>
  *
  * If the prefix is not one of the above things, then we give up and don't
  * wrap it.
  *
- * Also, we can wrap array accesses, but it gets tricky when combinations of arrays and fields are used....
+ * Also, we can wrap array accesses, but it gets tricky when combinations of
+ * arrays and fields are used....<br>
  *
- * $Id: AccessWrapper.java,v 1.2 2002-09-09 21:52:06 aalamb Exp $
+ * <H1>NOTE: I am not sure that the whole access wrapper thing actually works
+ * This was too much of a reimplementation of ConstProp.
+ * </H1>
+ *
+ * $Id: AccessWrapper.java,v 1.3 2003-06-02 15:09:39 aalamb Exp $ 
  **/
 
 abstract class AccessWrapper {

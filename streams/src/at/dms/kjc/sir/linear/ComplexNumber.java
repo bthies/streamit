@@ -3,31 +3,35 @@ package at.dms.kjc.sir.linear;
 /**
  * This class represents a complex number in the Linear filter
  * extraction framework. It seems as though this should eventually be a
- * first class citizen of the IR, but for now we'll convert back and
- * forth between this and the structure that exists in the language.
+ * first class citizen of the IR, but they are not. For now, we'll convert back and
+ * forth between this and the structure that exists in the language
+ * (i.e. JFloatLiteral).<br>
  *
- * Complex numbers are immutable -- eg their value can't change after
- * they are instantiated.
+ * Complex numbers are immutable -- i.e. their value can't change after
+ * they are instantiated.<br>
  *
- * $Id: ComplexNumber.java,v 1.10 2003-05-12 16:27:02 thies Exp $
+ * $Id: ComplexNumber.java,v 1.11 2003-06-02 15:09:39 aalamb Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
     private final double imaginaryPart;
 
     /**
-     * the maximum difference between two complex numbers (either their real or imaginary parts)
+     * The maximum difference between two complex numbers
+     * (either their real or imaginary parts)
      * before the equals method will not distinguish them anymore.
+     * This is necessary because because of the imprecision of
+     * floating point arithmetic.
      **/
     public static final double MAX_PRECISION = .0000000001;
     
     
-    /** Canonical number zero **/
+    /** Canonical number zero. **/
     public static final ComplexNumber ZERO = new ComplexNumber(0,0);
-    /** Canonical real number one **/
+    /** Canonical real number one. **/
     public static final ComplexNumber ONE  = new ComplexNumber(1,0);
 
-    /** Create a complex number with real part re and imaginary part im **/
+    /** Create a complex number with real part re and imaginary part im. **/
     public ComplexNumber(double re, double im) {
 	this.realPart = re;
 	this.imaginaryPart = im;
@@ -42,16 +46,18 @@ public class ComplexNumber {
     public boolean isReal() {return (Math.abs(this.getImaginary()) < MAX_PRECISION);}
     /** returns true if both the real and imaginary parts of this are integers **/
     public boolean isIntegral() { 
-	return ( Math.abs(Math.abs(Math.round(this.getReal())) - Math.abs(this.getReal())) < MAX_PRECISION &&
-		 Math.abs(Math.abs(Math.round(this.getImaginary())) - Math.abs(this.getImaginary())) < MAX_PRECISION );
+	return ( Math.abs(Math.abs(Math.round(this.getReal())) -
+			  Math.abs(this.getReal())) < MAX_PRECISION &&
+		 Math.abs(Math.abs(Math.round(this.getImaginary())) -
+			  Math.abs(this.getImaginary())) < MAX_PRECISION );
     }
 
     /////// Arithemetic Operations
-    /** compute the negative of this complex number **/
+    /** Compute the negative of this complex number. **/
     public ComplexNumber negate() {
 	return new ComplexNumber(-1*this.getReal(), -1*this.getImaginary());
     }
-    /** Compute the sum of this and the passed complex number **/
+    /** Compute the sum of this and the passed complex number. **/
     public ComplexNumber plus(ComplexNumber other) {
 	if (other == null) {throw new IllegalArgumentException("Null object passed to plus");}
 	return new ComplexNumber(this.getReal() + other.getReal(),
@@ -64,15 +70,20 @@ public class ComplexNumber {
 	// real part
 	double newReal = ((this.getReal() * other.getReal()) -
 			  (this.getImaginary() * other.getImaginary()));
+	// imag part
 	double newImag = ((this.getReal() * other.getImaginary()) +
 			  (this.getImaginary() * other.getReal()));
 	return new ComplexNumber(newReal, newImag);
     }
-    /** divide this by the specified complex number and return the dividend. **/
+    /** Divide this by the specified complex number and return the dividend. **/
     public ComplexNumber dividedby (ComplexNumber other) {
-	if (other == null) {throw new IllegalArgumentException("Null object passed to divide");}
-	// simple implementation ofdivision. First, we multiply the both the numerator and denominator 
-	// by the congugate of the denominator (makes the denom a real number), then we can divide both the real
+	if (other == null) {
+	    throw new IllegalArgumentException("Null object passed to divide");
+	}
+	// simple implementation of division. First, we multiply the
+	// both the numerator and denominator 
+	// by the congugate of the denominator (makes the denom a real number),
+	// then we can divide both the real
 	// and imaginary part of the numerator by the constant in the bottom.
 	ComplexNumber numerator = this;
 	ComplexNumber denominator = other;
@@ -90,21 +101,24 @@ public class ComplexNumber {
 
 	// make sure that the denominator has zero imaginary part
 	if (!(denominator.getImaginary() == 0)) {
-	    throw new RuntimeException("real part of denominator is non zero: " + denominator.getImaginary());
+	    throw new RuntimeException("real part of denominator is non zero: " +
+				       denominator.getImaginary());
 	}
 
 	// scale the numerator by 1/denom.
 	numerator = numerator.times(new ComplexNumber(1/denominator.getReal(), 0));
 	return numerator;
     }
-    /** return the complex congugate of this complex number. (eg reverse the sign of the imaginary part) **/
+    /**
+     * Returns the complex congugate of this complex number.
+     * i.e. reverse the sign of the imaginary part).
+     **/
     public ComplexNumber conjugate() {
 	return new ComplexNumber(this.getReal(),
 				 -1*this.getImaginary());
     }
     
-	
-    /** Return true if the passed complex number is the same as this (by value) **/
+    /** Return true if the passed complex number is the same as this (by value). **/
     public boolean equals(Object o) {
 	if (o == null) {
 	    throw new RuntimeException("Null object passed to ComplexNumber.equals");
@@ -117,21 +131,14 @@ public class ComplexNumber {
 	return (doubleEquals(other.getReal(), this.getReal()) &&
 		doubleEquals(other.getImaginary(), this.getImaginary()));
     }
-	
-    // we get into precision issues, so we ignore any differences after the 10th decimal place.
-    //double realDiff = Math.abs(other.getReal() - this.getReal());
-    //double imagDiff = Math.abs(other.getImaginary() - this.getImaginary());
-    //return ((realDiff < MAX_PRECISION) &&
-    //		(imagDiff < MAX_PRECISION));	
-    //}
-
-    /** returns true if these two doubles are equal within a certain precision. **/
+    
+    /** Returns true if these two doubles are equal within a certain precision. **/
     public static boolean doubleEquals(double d1, double d2) {
 	double diff = Math.abs(d1 - d2);
 	return (diff < MAX_PRECISION);
     }
     
-    /** hashcode so that data structures work correctly **/
+    /** Hashcode so that data structures work correctly **/
     public int hashCode() {
 	return 1;
     }
@@ -141,13 +148,21 @@ public class ComplexNumber {
 	return (this.getReal() + "+" + this.getImaginary() + "i");
     }	    
 
-    /* This class represents a root of unity of the form e^((-2*pi/k)*n) where n and k are parameters. */
+    /**
+     * This class represents a root of unity of the
+     * form e^((-2*pi/k)*n) where n and k are parameters.
+     * This class is currently unused -- originally it was meant for
+     * automatically teasing out of a program where it was doing a DSP
+     * transform and then feeding that information into spiral
+     * (which has a primitive that is the root of unity which it uses
+     * to derive its factorizations).
+     **/
     static class RootOfUnity extends ComplexNumber {
 	int nInternal;
 	int kInternal;
     
 	RootOfUnity(int n, int k) {
-	    super(0,0); /* don't use the internal fields of ComplexNumber. */
+	    super(0,0); // don't use the internal fields of ComplexNumber.
 	    this.nInternal = n;
 	    this.kInternal = k;
 	}

@@ -10,9 +10,9 @@ import at.dms.compiler.*;
 
 /**
  * This replacer works by calling the matrix multiply routines in the
- * ATLAS package, which it assumes are installed in $ATLAS_HOME.
+ * ATLAS package, which it assumes are installed in $ATLAS_HOME.<br>
  *
- * $Id: LinearAtlasReplacer.java,v 1.1 2003-04-08 09:49:15 thies Exp $
+ * $Id: LinearAtlasReplacer.java,v 1.2 2003-06-02 15:09:39 aalamb Exp $
  **/
 public class LinearAtlasReplacer extends LinearDirectReplacer implements Constants{
     // names of fields

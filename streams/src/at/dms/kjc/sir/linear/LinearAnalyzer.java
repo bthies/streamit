@@ -11,23 +11,26 @@ import at.dms.kjc.iterator.*;
 
 
 /**
- * The LinearAnalyzer visits all of the Filter definitions in
- * a StreamIT program. It determines which filters calculate linear
+ * The LinearAnalyzer visits all of the filters and structures in
+ * a StreamIt program. It determines which filters calculate linear
  * functions of their inputs, and for those that do, it keeps a mapping from
- * the filter name to the filter's matrix representation.
+ * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.30 2003-04-16 02:24:37 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.31 2003-06-02 15:09:39 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
-    /** Mapping from streams to linear representations. never would have guessed that, would you? **/
+    /** Mapping from streams to linear representations. Never would have guessed that, would you? **/
     HashMap streamsToLinearRepresentation;
 
-    /** Set of streams that we've already explored and determined to
+    /**
+     * Set of streams that we've already explored and determined to
      * be non-linear, or that we couldn't convert into a linear
-     * form (do to errors or whatever).  **/
+     * form (do to errors or whatever).
+     **/
     HashSet nonLinearStreams;
 
-    /** Whether or not we should refactor linear children into a
+    /**
+     * Whether or not we should refactor linear children into a
      * separate pipeline, if some of their siblings are not linear.
      */
     boolean refactorLinearChildren;
@@ -46,6 +49,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
 
     ///////// Accessors    
+
     /** Returns true if the specified filter has a linear representation that we have found. **/
     public boolean hasLinearRepresentation(SIRStream stream) {
 	checkRep();
@@ -53,7 +57,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return (this.streamsToLinearRepresentation.get(stream) != null);
     }
     /**
-     * returns the mapping from stream to linear representation that we have. Returns
+     * Returns the mapping from stream to linear representation that we have. Returns
      * null if we do not have a mapping.
      **/
     public LinearFilterRepresentation getLinearRepresentation(SIRStream stream) {
@@ -61,7 +65,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return (LinearFilterRepresentation)this.streamsToLinearRepresentation.get(stream);
     }
     
-    /** removes the specified SIRStream from the linear represention list. **/
+    /** Removes the specified SIRStream from the linear represention mapping. **/
     public void removeLinearRepresentation(SIRStream stream) {
 	checkRep();
 	if (!this.hasLinearRepresentation(stream)) {
@@ -69,7 +73,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 	this.streamsToLinearRepresentation.remove(stream);
     }
-    /** adds a mapping from sir stream to linear filter rep. **/
+
+    /** Adds a mapping from SIRStream to LinearFilterRep. **/
     public void addLinearRepresentation(SIRStream key, LinearFilterRepresentation rep) {
 	checkRep();
 	if ((key == null) || (rep == null)) {
@@ -78,24 +83,19 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	if (this.streamsToLinearRepresentation.containsKey(key)) {
 	    throw new IllegalArgumentException("tried to add key mapping.");
 	}
-	/* Partitioner needs this for efficiency.
-	if (this.streamsToLinearRepresentation.containsValue(rep)) {
-	    throw new IllegalArgumentException("tried to add rep second time.");
-	}
-	*/
 	this.streamsToLinearRepresentation.put(key,rep);
 	checkRep();
     }
-    /** gets an iterator over all of the linear representations that this LinearAnalyzer knows about **/
+    /** Gets an iterator over all of the linear representations that this LinearAnalyzer knows about. **/
     public Iterator getFilterIterator() {
 	return this.streamsToLinearRepresentation.keySet().iterator();
     }
     
-    /** adds a record that <str> is non-linear **/
+    /** Adds a note that str is non-linear. **/
     public void addNonLinear(SIRStream str) {
 	nonLinearStreams.add(str);
     }
-    /** adds a mapping from sir stream to linear filter rep. **/
+    /** Adds a mapping from SIRStream to linear filter rep. **/
     public boolean isNonLinear(SIRStream key) {
 	return nonLinearStreams.contains(key);
     }
@@ -103,22 +103,23 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /**
      * Main entry point -- searches the passed stream for linear
      * filters and calculates their associated matricies.  Uses a
-     * fresh linear analyzer.
+     * fresh linear analyzer.<br>
      *
-     * If the debug flag is set, then we print a lot of debugging information
+     * If the debug flag is set, then we print a lot of debugging information.<br>
      *
-     * <refactorLinearChildren> indicates whether or not we should
+     * refactorLinearChildren indicates whether or not we should
      * refactor linear children into a separate pipeline, if some of
      * their siblings are not linear.
      **/
-    public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug, boolean refactorLinearChildren) {
+    public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug,
+						   boolean refactorLinearChildren) {
 	return findLinearFilters(str, debug, new LinearAnalyzer(refactorLinearChildren));
     }
     
     /**
      * Same as above, but specifies an existing <lfa> to use instead
      * of creating a fresh one.
-     */
+     **/
     public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug, LinearAnalyzer lfa) {
 	// set up the printer to either print or not depending on the debug flag
 	LinearPrinter.setOutput(debug);
@@ -135,7 +136,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     ///////////////////// Visitor methods
     /////////////////////////////////////
     
-    /** More or less get a callback for each stram **/
+    /** More or less get a callback for each stream. -- see EmptyStreamVisitor. **/
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
 	// short-circuit the case where we've already seen this stream
 	// (for dynamic programming partitioner)
@@ -185,8 +186,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 	
 	// print out the results of pumping the visitor
-	// incidentally, this output is parsed by some perl scripts to verify results,
-	// so it probably shouldn't be changed.
 	if (theVisitor.computesLinearFunction()) {
 	    // since printing the matrices takes so long, if debugging is not on,
 	    // don't even generate the string.
@@ -204,10 +203,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// check that we have not violated the rep invariant
 	checkRep();
     }
-
-
     
-    //void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
     public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
 	// short-circuit the case where we've already seen this stream
 	// (for dynamic programming partitioner)
@@ -219,7 +215,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
 
 
-    //void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
     /**
      * We visit a pipeline after all sub-streams have been visited.
      * We combine any adjacent linear children into their own wrapper
@@ -297,7 +292,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * This method does the actual work of replacing a group
      * of adjacent pipeline children with a wrapping pipeline,
      * calculating the overall linear form of that wrapping
-     * pipeline, and updating the map from filters to linear representations.
+     * pipeline, and updating the map from filters to linear representations.<br>
      *
      * Since the parent pointer is automatically set when SIRPipeline.add is called
      * we keep the list of children that we want to wrap in a list instead. If it is
@@ -392,13 +387,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return repList;
     }	
 
-    
-    //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
-
     /**
      * Visits a split join after all of its childern have been visited. If we have
-     * linear representations for all the children, then we can try to combine
-     * the entre split join construct into a single linear representation.
+     * linear representations for all the children, then we can  combine
+     * the entire split join construct into a single linear representation.
      **/
     public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
 	// short-circuit the case where we've already seen this stream
@@ -607,11 +599,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return new LinearFilterRepresentation(newA, newb, vTot); // pop==peek
     }
     
-
-
-
-
-	
+    ///////////////////////
+    // Utility Methods, etc.
+    ///////////////////////     
 
     /** returns a string like "(a[0], a[1], ... a[N-1])". **/
     private String makeStringFromIntArray(int[] arr) {
@@ -623,21 +613,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	weightString = weightString.substring(0, weightString.length()-1) + ")";
 	return weightString;
     }
-	
-
-
-
-
-
-
-
-	
-
-
-
-     ///////////////////////
-     // Utility Methods, etc.
-     ///////////////////////     
 
     /**
      * Make a nice report on the number of stream constructs processed

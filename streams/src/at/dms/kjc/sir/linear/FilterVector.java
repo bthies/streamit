@@ -6,9 +6,11 @@ import java.util.*;
  * A FilterVector is, at its most basic level, a simple, one dimensional
  * row vector. In the linear dataflow analysis, FilterVectors are used to
  * keep track of the combinations of inputs that are used to compute a 
- * specific intermediate value in the program flow.
+ * specific intermediate value in the program flow. The fact that this is
+ * implemented as a row vector and not a column vector is sort of
+ * immaterial.<br>
  *
- * $Id: FilterVector.java,v 1.5 2002-09-16 19:02:32 aalamb Exp $
+ * $Id: FilterVector.java,v 1.6 2003-06-02 15:09:39 aalamb Exp $
  **/
 
 public class FilterVector extends FilterMatrix {

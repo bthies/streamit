@@ -4,26 +4,31 @@ import java.util.*;
 import at.dms.util.Utils;
 
 /**
- * A FilterMatrix contains a matrix representation of a
- * linear filter in StreamIt. A Linear filter is a filter
- * for which each item pushed is a linear combination
- * of the input. If you think about the items that are peeked as
- * an input vector, you can express the filter's operation as
- * a matrix multiply operation on the input vector which
- * produces an output vector.<p>
+ * A FilterMatrix represents a matrix for use in the 
+ * linear filter analysis of StreamIt. The strange copy methods
+ * are used in the linear filter combination rules.<br>
  *
  * Each element of the FilterMatrix is a ComplexNumber,
- * though the internal representation was changed to arrays of floats
- * for performance reasons.
+ * though the internal representation was changed to
+ * two associated arrays of floats for performance reasons.<br>
  *
- * $Id: FilterMatrix.java,v 1.20 2003-04-20 13:30:36 thies Exp $
+ * Note: In the current implementation, if a matrix element is ever
+ * assigned an imaginary value, the matrix is forever designated as
+ * have imaginary parts, even if the imaginary element is reassigned
+ * a real value. This isn't a problem currently because we don't actually
+ * ever use imaginary values in the compiler, but if people
+ * actually start using FilterMatrices for imaginary entries, then
+ * someone should implement an imaginary entry counting scheme. -- AAL<br>
+ *
+ * $Id: FilterMatrix.java,v 1.21 2003-06-02 15:09:39 aalamb Exp $
  **/
 
 public class FilterMatrix {
-    /** Internal representation of the matrix **/ 
+    /** Internal representation of the matrix (real). **/ 
     private double internalMatrixReal[][] = null;
+    /** Internal representation of the matrix (imag). **/
     private double internalMatrixImag[][] = null;
-    /** this flag is used to easily differentiate between real amd complex matrices. **/
+    /** This flag is used to easily differentiate between real amd complex matrices. **/
     private boolean realFlag = true;
     private int internalSizeRows = -1;
     private int internalSizeCols = -1;
@@ -42,13 +47,6 @@ public class FilterMatrix {
 	this.internalMatrixImag = new double[rows][cols];
 	this.internalSizeRows = rows;
 	this.internalSizeCols = cols;
-	// initialize all to 0  (done for us in java)
-	//for (int i=0; i<rows; i++) {
-	//  for (int j=0; j<cols; j++) {
-	//this.internalMatrix[i][j] = ComplexNumber.ZERO;
-	//  }
-	//}
-	//checkRep();
     }
 
 
@@ -57,31 +55,26 @@ public class FilterMatrix {
      * and bombs an exception if the value is out of range.
      **/
     public ComplexNumber getElement(int row, int col) {
-	//checkRep();
 	// do bounds checking
 	validateBounds(row,col);
 	// actually give back the value
 	return new ComplexNumber(this.internalMatrixReal[row][col],
 				 this.internalMatrixImag[row][col]);
-	//return this.internalMatrix[row][col];
     }
 
     /**
      * Accessor: Return the number of rows in this matrix.
      **/
     public int getRows() {
-	//checkRep();
 	return this.internalSizeRows;
     }
     /**
      * Accessor: Return the number of columns in this matrix.
      **/
     public int getCols() {
-	//checkRep();
 	return this.internalSizeCols;
     }
 
-    
     /**
      * Sets the element in (row,col) to be value.
      **/
@@ -89,7 +82,9 @@ public class FilterMatrix {
 	// check bounds
 	validateBounds(row, col);
 	// make sure that we aren't putting in null
-	if (value == null) {throw new IllegalArgumentException("Null arguments are not allowed"); }
+	if (value == null) {
+	    throw new IllegalArgumentException("Null arguments are not allowed");
+	}
 	// finally, set the value correctly
 	this.internalMatrixReal[row][col] = value.getReal();
 	// if the imaginary part is non-zero, this matrix is now non-real
@@ -98,24 +93,27 @@ public class FilterMatrix {
 	    this.realFlag = false;
 	    this.internalMatrixImag[row][col] = imagValue;
 	}
-	// make sure that we haven't foobared the rep
-	//checkRep();
     }
 
-    /** convenience method -- automatically creates an entry with the specified real number **/
+    /**
+     * Convenience method that automatically sets an entry to
+     * the specified real number.
+     **/
     public void setElement(int row, int col, double realNumber) {
-	// check bounds
 	validateBounds(row, col);
-	// finally, set the value correctly
 	this.internalMatrixReal[row][col] = realNumber;
     }
 
     /**
      * Returns a "trimmed" version of this, in which unused (0) peek
-     * values are cut off.  However, guarantees to preserve at least
+     * values are cut off.  Unused peek values are rows of zeros
+     * at the top of the matrix.
+     * However, guarantees to preserve at least
      * <minRows>, since some things seem to depend on the rows being
      * at least as big as the pop count.
-     */
+     * This method is designed to reduce the peek value of linear
+     * filters without changing the semantics.
+     **/
     public FilterMatrix trim(int minRows) {
 	Utils.assert(this.isReal());
 	int zeroRows = 0;
@@ -131,11 +129,6 @@ public class FilterMatrix {
 	    if (allZero) { zeroRows++; }
 	    // figure if we found an all-zero matrix, then there was a reason for it...
 	}
-	/*
-	if (zeroRows>0) {
-	    System.err.println("Eliminated " + zeroRows + " / " + internalSizeRows + " rows in trim operation.");
-	}
-	*/
 	// return new matrix
 	FilterMatrix result = new FilterMatrix(internalSizeRows-zeroRows, internalSizeCols);
 	for (int i=zeroRows; i<internalSizeRows; i++) {
@@ -146,7 +139,6 @@ public class FilterMatrix {
 	return result;
     }
 	
-
     /**
      * Ensure that the specified row and col are within the
      * internal matrix's size. Throw an exception if they are not.
@@ -174,12 +166,10 @@ public class FilterMatrix {
 					       "(" + numRows + "," +
 					       numCols + ")");
 	}
-
     }
 
     /** Return a copy of this FilterMatrix. **/
     public FilterMatrix copy() {
-	//checkRep();
 	FilterMatrix copyMatrix = new FilterMatrix(this.internalSizeRows,
 						   this.internalSizeCols);
 
@@ -203,7 +193,7 @@ public class FilterMatrix {
 
     /**
      * Copies the source matrix into this FilterMatrix such that the
-     * specified ofset is the top left hand corner of the small matrix.
+     * specified offset is the top left hand corner of the small matrix.
      * Throws (horrible) exceptions when the bounds of the smaller
      * matrix at the offset overrun the boundaries of this matrix.
      **/
@@ -244,8 +234,10 @@ public class FilterMatrix {
      * (This is used to merge columns from one filter matrix into another
      * during splitjoin combinations.)
      **/
-    public void copyColumnsAt(int destOffset, FilterMatrix sourceMatrix, int srcOffset, int numCols) {
-	String argString = ("destOffset: " + destOffset + ". srcOffset: " + srcOffset + ". numCols: " + numCols);
+    public void copyColumnsAt(int destOffset, FilterMatrix sourceMatrix,
+			      int srcOffset, int numCols) {
+	String argString = ("destOffset: " + destOffset +
+			    ". srcOffset: " + srcOffset + ". numCols: " + numCols);
 	if (sourceMatrix == null) {throw new IllegalArgumentException("Null source matrix");}
 	// First, do some crazy bounds checking:
 	// 1) make sure that the number of rows is equal
@@ -282,7 +274,7 @@ public class FilterMatrix {
     }
 
     /**
-     * Copied numRows at the thisOffset position of this filter matrix
+     * Copied numRows at the thisOffset position of this FilterMatrix
      * from sourceOffset of the source filter matrix.
      **/
     public void copyRowsAt(int thisOffset, FilterMatrix source, int sourceOffset, int numRows) {
@@ -327,7 +319,7 @@ public class FilterMatrix {
 	if (other == null) {throw new IllegalArgumentException("Null other in times()");}
 	// check the dimensions
 	if (this.getCols() != other.getRows()) {
-	    throw new IllegalArgumentException("Dimensions do not agree in matrix multiply");
+	    throw new IllegalArgumentException("Dimensions do not agree in matrix multiply.");
 	}
 	// if this or other is non-real, die here
 	if ((this.realFlag == false) || (other.realFlag == false)) {
@@ -354,6 +346,7 @@ public class FilterMatrix {
 
     /**
      * Return the element-wise sum of this matrix with other.
+     * Requires that this and other have the same dimensions.
      **/
     public FilterMatrix plus(FilterMatrix other) {
 	if (other==null){throw new IllegalArgumentException("null other in plus()");}
@@ -384,7 +377,7 @@ public class FilterMatrix {
     }	
 
     /**
-     * Return the transpose of this matrix.
+     * Return the transpose of this FilterMatrix.
      */
     public FilterMatrix transpose() {
 	// make a matrix with rows and cols swapped
@@ -413,6 +406,7 @@ public class FilterMatrix {
 	for (int i=0; i<internalSizeRows; i++) {
 	    for (int j=0; j<internalSizeCols; j++) {
 		// use the function in complex number...
+		// Not so efficient, but easy to implement...
 		ComplexNumber temp = new ComplexNumber(this.internalMatrixReal[i][j],
 						       this.internalMatrixImag[i][j]);
 		if (!temp.isIntegral()) {
@@ -424,10 +418,11 @@ public class FilterMatrix {
     }
 
     /**
-     * Return whether or not all the elements of this are real.
+     * Return whether or not all the elements of this FilterMatrix are real.
      */
     public boolean isReal() {
-	// we can cheat and return our flag
+	// we can simply cheat and return our flag (that we keep up to date 
+	// to see if this is a real flag or not.
 	return this.realFlag;
     }
 
@@ -448,7 +443,7 @@ public class FilterMatrix {
 	for (int i=0; i<this.internalSizeRows; i++) {
 	    for (int j=0; j<this.internalSizeCols; j++) {
 		// if the elements are not the same, we are done
-		// use the doubleEquals method from COmplexNumber
+		// use the doubleEquals method from ComplexNumber
 		if (!ComplexNumber.doubleEquals(this.internalMatrixReal[i][j],
 						other.internalMatrixReal[i][j])) {
 		    return false;
@@ -504,7 +499,8 @@ public class FilterMatrix {
 
     /**
      * Preserve the semantics of equals/hashCode. If two objects
-     * are equal, they should produce the same hash code.
+     * are equal, they should produce the same hash code. Performance
+     * will be bad in large programs, but correctness is guaranteed.
      **/
     public int hashCode() {
 	return 1;
@@ -539,37 +535,11 @@ public class FilterMatrix {
 		}
 	    }
 	}	    
-	// make sure that we haven't screwed things up.
-	//checkRep();
     }
     
 
-    /** check to make sure that our assumptions about internal state hold true **/
-    //private void checkRep() {
-	//	if (this.internalMatrix == null) {
-	//    throw new RuntimeException("Null internal representation");
-	//}
-	//// make sure that the dimensions match up
-	//if (this.internalSizeRows != this.internalMatrix.length) {
-	//    throw new RuntimeException("Row size mismatch");
-	//	}
-	//if (this.internalSizeCols != this.internalMatrix[0].length) {
-	//    throw new RuntimeException("Col size mismatch");
-	//	}
-	// make sure that all of the elements are not null
-	//for (int i=0; i<this.internalSizeRows; i++) {
-	//   for (int j=0; j<this.internalSizeCols; j++) {
-	//	if (this.internalMatrix[i][j] == null) {
-	//	    throw new RuntimeException("Null matrix entry");
-	//	}
-	//   }
-	//}	
-	//    }	
-
-
-    /** Pretty Print our matrix **/
+    /** PrettyPrint our matrix. **/
     public String toString() {
-	//checkRep();
 	String returnString = "[";
 	// for each row
 	for (int i=0; i<internalSizeRows; i++) {
@@ -597,10 +567,9 @@ public class FilterMatrix {
     }
 
     /**
-     * Print only a "0" for zero elements and an "x" for non-zero elements
-     */
+     * Print only a "0" for zero elements and an "x" for non-zero elements.
+     **/
     public String getZeroString() {
-	//checkRep();
 	String returnString = "[";
 	// for each row
 	for (int i=0; i<internalSizeRows; i++) {

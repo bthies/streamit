@@ -7,12 +7,12 @@ import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.iterator.*;
 
 /**
- * Class for creating access wrappers.<p>
+ * Class for creating access wrappers.<br>
  *
  * This class has also been pressed into service to perform manipulations on
- * hashtable mappings that involve creating access wrappers.<p>
+ * hashtable mappings that involve creating access wrappers.<br>
  *
- * $Id: AccessWrapperFactory.java,v 1.3 2003-05-12 16:27:02 thies Exp $
+ * $Id: AccessWrapperFactory.java,v 1.4 2003-06-02 15:09:39 aalamb Exp $
  **/
 class AccessWrapperFactory {
     /**

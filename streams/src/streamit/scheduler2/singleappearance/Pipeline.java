@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Pipeline.java,v 1.4 2002-07-16 01:10:01 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.5 2002-07-16 02:18:48 karczma Exp $ */
 
 import java.util.Map;
 import java.util.HashMap;
@@ -150,7 +150,8 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
             }
 
             // now append the one init phase to my initialization phase
-            addInitScheduleStage(initStage);
+            if (initStage.getNumPhases() != 0)
+                addInitScheduleStage(initStage);
         }
 
         // compute the steady state schedule

@@ -1,8 +1,9 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Filter.java,v 1.3 2002-07-16 01:10:01 karczma Exp $ */
+/* $Id: Filter.java,v 1.4 2002-07-16 02:18:48 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/FilterIter;
+import streamit.scheduler.iriter./*persistent.*/
+FilterIter;
 import streamit.scheduler.Schedule;
 import streamit.scheduler.hierarchical.PhasingSchedule;
 
@@ -23,11 +24,12 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
 
     public void computeSchedule()
     {
-        PhasingSchedule initPhasingSchedule;
         PhasingSchedule steadyPhasingSchedule;
 
         // first do the init schedule
         {
+            PhasingSchedule initPhasingSchedule = new PhasingSchedule(this);
+
             Schedule initSchedule = new Schedule();
             int initPeek = 0, initPop = 0, initPush = 0;
             int initStage;
@@ -35,8 +37,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                 initStage < filterIter.getNumInitStages();
                 initStage++)
             {
-                Object initFunc =
-                    filterIter.getInitFunctionStage(initStage);
+                Object initFunc = filterIter.getInitFunctionStage(initStage);
                 int peek = filterIter.getInitPeekStage(initStage);
                 int pop = filterIter.getInitPopStage(initStage);
                 int push = filterIter.getInitPushStage(initStage);
@@ -45,20 +46,19 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                 initPop += pop;
                 initPush += push;
 
-                initSchedule.addSubSchedule(
-                    new Schedule(
-                        initFunc,
-                        filterIter.getUnspecializedIter()));
+                initPhasingSchedule.appendPhase(
+                    new PhasingSchedule(
+                        this,
+                        new Schedule(
+                            initFunc,
+                            filterIter.getUnspecializedIter()),
+                        peek,
+                        pop,
+                        push));
             }
 
-            initPhasingSchedule =
-                new PhasingSchedule(
-                    this,
-                    initSchedule,
-                    initPeek,
-                    initPop,
-                    initPush);
-            addInitScheduleStage(initPhasingSchedule);
+            if (initPhasingSchedule.getNumPhases() != 0)
+                addInitScheduleStage(initPhasingSchedule);
         }
 
         // now do the steady schedule

@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: FeedbackLoop.java,v 1.2 2002-07-16 01:10:00 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.3 2002-07-16 02:18:48 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -293,7 +293,8 @@ public class FeedbackLoop
             }
 
             // and put it in the real init schedule
-            addInitScheduleStage(initSchedule);
+            if (initSchedule.getNumPhases() != 0)
+                addInitScheduleStage(initSchedule);
         }
 
         // store the starting buffer sizes:

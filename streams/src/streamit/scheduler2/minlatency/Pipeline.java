@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: Pipeline.java,v 1.1 2002-07-16 01:09:58 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.2 2002-07-16 02:18:46 karczma Exp $ */
 
 import java.util.Map;
 import java.util.HashMap;
@@ -35,14 +35,15 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
             int nChild;
             for (nChild = 0; nChild < getNumChildren(); nChild++)
             {
+                StreamInterface child = getHierarchicalChild(nChild);
+
                 // compute child's schedule
-                getChild(nChild).computeSchedule();
+                child.computeSchedule();
 
                 // get the # of phases that this child needs to have executed
                 // to complete a steady state schedule
                 steadyChildPhases[nChild] =
-                    getHierarchicalChild(nChild).getNumSteadyPhases()
-                        * getChildNumExecs(nChild);
+                    child.getNumSteadyPhases() * getChildNumExecs(nChild);
             }
         }
 
@@ -369,9 +370,6 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                         // adjust buffers for this child
                         dataInBuffers[nChild] -= phase.getOverallPop();
                         dataInBuffers[nChild + 1] += phase.getOverallPush();
-
-                        // mark down that this child had another phase executed
-                        steadyChildPhases[nChild]--;
                     }
 
                     // make sure that I've executed every child the right number
@@ -380,7 +378,7 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                     // but in the init/steady schedule calculcation!
                     ASSERT(steadyChildPhases[nChild] == 0);
                 }
-                
+
                 // have I done anything?
                 if (extraPhase.getNumPhases() != 0)
                 {

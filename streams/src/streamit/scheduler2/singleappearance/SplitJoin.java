@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: SplitJoin.java,v 1.3 2002-07-16 01:10:01 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.4 2002-07-16 02:18:49 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -180,8 +180,10 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                             child.getInitScheduleStage(nStage));
                     }
                 }
-                addInitScheduleStage(initSched);
             }
+            
+            if (initSched.getNumPhases() != 0)
+                addInitScheduleStage(initSched);
         }
 
         // compute the steady schedule

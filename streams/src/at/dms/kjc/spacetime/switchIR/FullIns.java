@@ -1,26 +1,26 @@
 package at.dms.kjc.spacetime.switchIR;
 
-import java.util.ArrayList;
+import java.util.*;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.RawTile;
 
 //SwitchProcessorIns to Route Instructions
 public class FullIns extends SwitchProcessorIns {
     private SwitchProcessorIns procIns;
-    private ArrayList srcs;
+    private Vector srcs;
     private ArrayList dests;
     private RawTile tile;
     
     public FullIns(RawTile tile) {
 	this.tile=tile;
-	srcs=new ArrayList();
+	srcs=new Vector();
 	dests=new ArrayList();
     }
     
     public FullIns(RawTile tile,SwitchProcessorIns procIns) {
 	this.tile=tile;
 	this.procIns=procIns;
-	srcs=new ArrayList();
+	srcs=new Vector();
 	dests=new ArrayList();
     }
     
@@ -34,24 +34,30 @@ public class FullIns extends SwitchProcessorIns {
     public String toString() {
 	StringBuffer out=new StringBuffer();
 	if(procIns==null)
-	    out.append("nop\t");
+	    out.append("nop\t\t");
 	else
 	    out.append(procIns.toString()+"\t");
-	SwitchSrc[] from=new SwitchIPort[srcs.size()];
-	SwitchOPort[] to=new SwitchOPort[dests.size()];
-	srcs.toArray(from);
-	dests.toArray(to);
-	if(from.length>0) {
-	    out.append(from[0].toString());
+	/*Object[] from=new SwitchIPort[srcs.size()];
+	  SwitchOPort[] to=new SwitchOPort[dests.size()];
+	  src.toArray(from);
+	  dests.toArray(to);*/
+	if(srcs.size()>0) {
+	    out.append("route ");
+	    out.append(srcs.get(0).toString());
 	    out.append("->");
-	    out.append(to[0].toString());
-	    for(int i=1;i<from.length;i++) {
+	    out.append(dests.get(0).toString());
+	    for(int i=1;i<srcs.size();i++) {
 		out.append(", ");
-		out.append(from[i].toString());
+		out.append(srcs.get(i).toString());
 		out.append("->");
-		out.append(to[i].toString());
+		out.append(dests.get(i).toString());
 	    }
 	}
 	return out.toString();
     }
 }
+
+
+
+
+

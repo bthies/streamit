@@ -2,7 +2,7 @@ package at.dms.kjc.spacetime.switchIR;
 
 //Ports that can be used as input
 public class SwitchIPort implements SwitchSrc {
-    public static final SwitchIPort CSTI=new SwitchIPort("$csti");
+    public static final SwitchIPort CSTO=new SwitchIPort("$csto");
     public static final SwitchIPort N=new SwitchIPort("$cNi");
     public static final SwitchIPort E=new SwitchIPort("$cEi");
     public static final SwitchIPort S=new SwitchIPort("$cSi");

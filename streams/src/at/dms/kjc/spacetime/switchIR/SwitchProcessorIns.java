@@ -1,7 +1,7 @@
 package at.dms.kjc.spacetime.switchIR;
 
 //Just a processor inst without route inst
-public class SwitchProcessorIns {
+public class SwitchProcessorIns implements SwitchIns {
     protected String op;
     protected String arg1;
     protected String arg2;

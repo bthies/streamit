@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.34 2003-11-20 07:49:03 jasperln Exp $
+# $Id: strc,v 1.35 2003-11-25 16:27:16 dmaze Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -48,6 +48,16 @@ if ($opts{help})
   {
     usage(\*STDOUT, 0);
     exit(0);
+  }
+if (!$opts{home})
+  {
+    print <<EOH;
+The STREAMIT_HOME environment variable is unset.  Please see the
+instructions at http://cag.lcs.mit.edu/streamit/html/install.html;
+you will need to modify your shell's startup files, then log out
+and log in again.
+EOH
+    exit(1);
   }
 if (!@ARGV)
   {

@@ -1,4 +1,7 @@
-/** Test out combining splitjoins. **/
+/** 
+ * Test out combining splitjoins, with multiple split 
+ * joins in weighted roundrobin fashion.
+ **/
 void->void pipeline SimpleStreamItProgram {
   add FloatSource();
   add LinearSJ();
@@ -24,29 +27,40 @@ float->void filter FloatSink {
 
 /** A linear split join to test combination with different round robin weightings. **/
 float->float splitjoin LinearSJ {
-  split roundrobin(2,3);
+  split roundrobin(1,1,1);
   add FloatFilter1();
   add FloatFilter2();
-  join roundrobin;
+  add FloatFilter3();
+  join roundrobin(3,6,1);
 }
 
-
-/** filter that computes [[1 2][3 4]] **/
+/** filter that computes [[1 2 3][4 5 6][7 8 9]] **/
 float->float filter FloatFilter1 {
-  work pop 2 push 2 {
-    float t1 = pop();
-    float t2 = pop();
-    push(t2*2 + t1*4);
-    push(t2*1 + t1*3);
-  }
-}
-/** filter that computes [[5 6][7 8][9 10]] **/
-float->float filter FloatFilter2 {
-  work pop 3 push 2 {
+  work pop 3 push 3 {
     float t1 = pop();
     float t2 = pop();
     float t3 = pop();
-    push(10*t1 + 8*t2 + 6*t3);
-    push(9*t1  + 7*t2 + 5*t3);
+    push(9*t1  + 6*t2 + 3*t3);
+    push(8*t1  + 5*t2 + 2*t3);
+    push(7*t1  + 4*t2 + 1*t3);
+  }
+}
+
+/** filter that computes [[10 11]] **/
+float->float filter FloatFilter2 {
+  work pop 1 push 2 {
+    float t1 = pop();
+    push(t1*11);
+    push(t1*10);
+  }
+}
+
+/** filter that computes [[12][13][14]] **/
+float->float filter FloatFilter3 {
+  work pop 3 push 1 {
+    float t1 = pop();
+    float t2 = pop();
+    float t3 = pop();
+    push(t3*12 + t2*13 + t1*14);
   }
 }

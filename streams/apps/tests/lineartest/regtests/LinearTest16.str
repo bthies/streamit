@@ -2,6 +2,7 @@
 void->void pipeline SimpleStreamItProgram {
   add FloatSource();
   add LinearSJ();
+  add LinearSJ2();
   add FloatSink();
 }
 
@@ -27,7 +28,14 @@ float->float splitjoin LinearSJ {
   split roundrobin(2,3);
   add FloatFilter1();
   add FloatFilter2();
-  join roundrobin;
+  join roundrobin(2,3);
+}
+
+float->float splitjoin LinearSJ2 {
+  split roundrobin(4,6);
+  add FloatFilter1();
+  add FloatFilter2();
+  join roundrobin(4,6);
 }
 
 
@@ -40,13 +48,14 @@ float->float filter FloatFilter1 {
     push(t2*1 + t1*3);
   }
 }
-/** filter that computes [[5 6][7 8][9 10]] **/
+/** filter that computes [[5 6 7][8 9 10][11 12 13]] **/
 float->float filter FloatFilter2 {
-  work pop 3 push 2 {
+  work pop 3 push 3 {
     float t1 = pop();
     float t2 = pop();
     float t3 = pop();
-    push(10*t1 + 8*t2 + 6*t3);
-    push(9*t1  + 7*t2 + 5*t3);
+    push(13*t1 + 10*t2 + 7*t3);
+    push(12*t1  + 9*t2 + 6*t3);
+    push(11*t1  + 8*t2 + 5*t3);
   }
 }

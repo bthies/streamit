@@ -25,9 +25,9 @@ public class JoinerScheduleNode
 	StringBuffer ret = new StringBuffer();
 	
 	if (type == FIRE) {
-	    ret.append("static_send(buffer" + buffer +
-		       "[first" + buffer + "++]);\n");
-	    ret.append("first" + buffer + " = first" + buffer + " & MINUSONE;\n");
+	    ret.append("static_send(__buffer" + buffer +
+		       "[__first" + buffer + "++]);\n");
+	    ret.append("__first" + buffer + " = __first" + buffer + " & __MINUSONE__;\n");
 	    //	    ret.append("if (first" + buffer + " >= BUFSIZE) first" + 
 	    //	       buffer + " = 0;\n");
 	    // ret.append("if (first" + buffer + " == last" + 
@@ -35,11 +35,11 @@ public class JoinerScheduleNode
 	    
 	}
 	else { //receive
-	    ret.append("buffer" + buffer + "[last" + buffer + "++] = static_receive");
+	    ret.append("__buffer" + buffer + "[__last" + buffer + "++] = static_receive");
 	    if (fp)
 		ret.append("_f");
 	    ret.append("();\n");
-	    ret.append("last" + buffer + " = last" + buffer + " & MINUSONE;\n");
+	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
 	    //ret.append("if (last" + buffer + " >= BUFSIZE) last" + buffer + " = 0;\n");
 	}
 	return ret.toString();

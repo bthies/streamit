@@ -121,8 +121,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	if (ctype.equals(CStdType.Float))
 	    fp = true;
 	String type = ctype.toString(); 	
-	ret.append("#define BUFSIZE " + buffersize + "\n");
-	ret.append("#define MINUSONE " + (buffersize - 1) + "\n\n");
+	ret.append("#define __BUFSIZE__ " + buffersize + "\n");
+	ret.append("#define __MINUSONE__ " + (buffersize - 1) + "\n\n");
 	
 	ret.append("void work() { \n");
 	//print the temp for the for loop
@@ -132,9 +132,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	//print all the var definitions
 	while (bufIt.hasNext()) {
 	    String current = (String)bufIt.next();
-	    ret.append("int first" + current + " = 0;\n");
-	    ret.append("int last" + current + " = 0;\n");
-	    ret.append(type + " buffer" + current + "[BUFSIZE];\n");
+	    ret.append("int __first" + current + " = 0;\n");
+	    ret.append("int __last" + current + " = 0;\n");
+	    ret.append(type + " __buffer" + current + "[__BUFSIZE__];\n");
 	}
 
 	printSchedule((JoinerScheduleNode)Simulator.initJoinerCode.get(joiner), ret, fp);

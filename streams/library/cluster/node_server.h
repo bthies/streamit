@@ -46,11 +46,24 @@
 
 // params: <# of threads> 
 // <thread id>  <ip address>  <iteration>  (* number of threads)
+// response - none
+
+#define ALIVE_COMMAND 70
+
+// params: none
+// response: max checkcpoint iteration (>0)
+
+#define STOP_ALL_THREADS 80
+
+// paramns: none
+// response: 1 - ok
 
 
 class node_server {
 
   vector <thread_info*> thread_list;
+
+  void (*thread_init)();
 
   vector<int> list();
   vector<int> pause_proper(int id);
@@ -58,17 +71,19 @@ class node_server {
   vector<int> resume(int id);
   vector<int> list_incoming_data_links(int id);
   vector<int> list_outgoing_data_links(int id);
+  vector<int> stop_all();
+
+  mysocket *wait_for_connection();
+  static mysocket *connect_to_ccp(unsigned ip);
+  void run_server(mysocket *sock);
+
+  static int read_cluster_config(mysocket *sock);
 
  public:
   
-  node_server(vector <thread_info*> list);
-
-  mysocket *wait_for_connection();
-
-  void run_server(mysocket *sock);
-
-  static mysocket *connect_to_ccp(unsigned ip);
-  static int read_cluster_config(mysocket *sock, int n_threads);
+  node_server(vector <thread_info*> list, void (*thread_init)() = NULL);
+  
+  void run(unsigned ccp_ip);
   
 };
 

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.LinkedList;
 
+import com.sun.rsasign.t;
+
 
 /*
  * Created on Jun 18, 2003
@@ -72,36 +74,37 @@ public class GraphStructure {
 		for (int i = 0;  i < nodes.size(); i++)
 		{
 			Node n = (Node) nodes.get(i);
-			if (i == 0)
-			{
-				this.parent = n; 
-			}
 			this.graph.put(n, n.nodeChildren);
 		}
 	}
 	
 	// Add a node that will be a child node of the node parent.
 	
-	public void addNode(Node n, Node parent)
+	public void addNode(Node node, Node parent, int index)
 	{
-		
+		ArrayList nodeList = this.getChildren(parent); 
+		nodeList.add(index, node);
 	}
 	
 	// Delete node an all of the children belonging to that node	
-	public void deleteNode(Node n)
+	public void deleteNode(Node node)
 	{
+		ArrayList nodeList = this.getChildren(node);
+		int listSize = nodeList.size();
+		
+		for (int i = 0; i < listSize; i++)
+		{
+			Node n = (Node) nodeList.get(i);
+			this.graph.remove(n);
+		}
+		this.graph.remove(node);
 	}
 	
-	// Provide the children of node n that are to be expanded in the graph representation.
-	public ArrayList expandNode(Node n)
+	// Provide the children of node n 
+	public ArrayList getChildren(Node n)
 	{
-		return new ArrayList();
+		return (ArrayList) this.graph.get(n);
 	}
-
-	// Provide the children of node n that are to be collapsed in the graph representation.
-	public ArrayList collapseNode(Node n)	
-	{
-		return new ArrayList();
-	}
+	
 }
 

@@ -26,6 +26,23 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	deadend=false;
     }
 
+    // returns all local variables created by the array destroyer
+
+    public void addDestroyedLocals(Set set) {
+	Set key_set = replaced.keySet();
+	Iterator iter = key_set.iterator();
+	
+	while (iter.hasNext()) {
+	    Object key = iter.next();
+	    if (key instanceof JLocalVariable) {
+		JLocalVariable vars[] = (JLocalVariable[])replaced.get(key);
+		for (int i = 0; i < vars.length; i++) {
+		    set.add(vars[i]);
+		}
+	    }
+	}
+    }
+
     //wraps JLocalVar and index together
     /*public class VarIndex {
 	public JLocalVariable var;
@@ -296,7 +313,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
     private JFieldDeclaration toField(String name,int idx,CType type) {
 	return new JFieldDeclaration(null,new JVariableDefinition(null,0,((CArrayType)type).getBaseType(),name+"__destroyed_"+idx,null),null,null);
     }
-    
+
     public Object visitArrayAccessExpression(JArrayAccessExpression self,
 					     JExpression prefix,
 					     JExpression accessor) {

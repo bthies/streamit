@@ -13,7 +13,10 @@ public class Harness {
     /** The maximum time (in minutes) to execute a command **/
     public static final long TIME_LIMIT = 10;
     /** the path to the texec program to limit execution time **/
-    public static final String TEXEC = "regtest/tools/texec/texec"; 
+    public static final String TEXEC = "regtest/tools/texec/texec";
+
+    /** The maximum number of output lines to put in the error file. **/
+    public static final int MAX_OUTPUT_LINES = 500;
     
     /**
      * Reads out the environment variable STREAMIT_HOME
@@ -56,17 +59,23 @@ public class Harness {
 	BufferedReader jOutStream = new BufferedReader(outReader);
 	BufferedReader jErrorStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
 
+	System.out.println("Starting:\n" + flattenCommandArray(cmdArray));
+
 	// block until the child process is done (time limiting is done outside the JVM).
 	jProcess.waitFor();
 
-	// if 0 is not returned, print stdout to result printer for debugging
+	System.out.println("done.");
+	
+	// if 0 is not returned, print up to MAX_OUTPUT_LINES of stdout and stderr to result printer 
 	if (jProcess.exitValue() != 0) {
 	    // print output from so that we know what is going on
 	    ResultPrinter.printError("Error running: " + flattenCommandArray(cmdArray));
 	    ResultPrinter.printError("return value: " + jProcess.exitValue());
 	    ResultPrinter.printError("stdout: ");
-	    while (jOutStream.ready()) {
+	    int lineCounter = 0;
+	    while (jOutStream.ready() && (lineCounter < MAX_OUTPUT_LINES)) {
 		ResultPrinter.printError("out:" + jOutStream.readLine());
+		lineCounter++;
 	    }
 	    // flush errors to disk
 	    ResultPrinter.flushFileWriter();
@@ -75,8 +84,10 @@ public class Harness {
 	if (jErrorStream.ready()) {
 	    ResultPrinter.printError("Error messages while running: " + flattenCommandArray(cmdArray));
 	    ResultPrinter.printError("err: ");
-	    while (jErrorStream.ready()) {
+	    int lineCounter = 0;
+	    while (jErrorStream.ready() && (lineCounter < MAX_OUTPUT_LINES)) {
 		ResultPrinter.printError(":" + jErrorStream.readLine());
+		lineCounter++;
 	    }
 	    // flush errors to disk
 	    ResultPrinter.flushFileWriter();
@@ -102,7 +113,7 @@ public class Harness {
 		    Thread.currentThread().sleep(10);
 	    }
 	}
-	// if we get here, streamit compilation succeeded
+	// if we get here, execution succeeded
 	return true;
     }
 

@@ -54,7 +54,7 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 		//record that we have added this filter
 		visited.add(current);
 		pipeline.add((SIRFilter)current.contents, ((SIRFilter)current.contents).getParams());
-		pipeline.setParent(parent);
+		((SIRFilter)current.contents).setParent(parent);
 		//nothing more to do here so just return
 		if (current.ways == 0)
 		    return;

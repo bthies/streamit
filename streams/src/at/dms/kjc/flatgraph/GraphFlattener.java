@@ -80,7 +80,9 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 		else {
 		    // count a joiner if none of its outgoing edges is to
 		    // another joiner
-		    FlatNode[] edges = ((FlatNode)entry.getValue()).edges;
+		    FlatNode node = (FlatNode)entry.getValue();
+		    SIRJoiner joiner = (SIRJoiner)entry.getKey();
+		    FlatNode[] edges = node.edges;
 		    int increment = 1;
 		    for (int i=0; i<edges.length; i++) {
 			if (edges[i]!=null &&
@@ -88,6 +90,10 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 			    increment = 0;
 			}
 		    }
+		    //check if this is a null joiner if so, don't count it
+		    if (joiner.getType().isNull() || joiner.getSumOfWeights() == 0)
+			increment = 0;
+			    
 		    count += increment;
 		}
 	    } 

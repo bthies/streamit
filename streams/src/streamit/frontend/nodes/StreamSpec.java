@@ -1,12 +1,13 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.9 2003-01-09 20:45:14 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.10 2003-01-09 21:28:30 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import java.util.ArrayList;

@@ -48,7 +48,8 @@ public class StreaMITMain {
 	    /* Compiling for raw */
 	    RawBackend.run(stream, 
 			   k2s.getInterfaces(),
-			   k2s.getInterfaceTables());
+			   k2s.getInterfaceTables(),
+			   k2s.getStructures());
 	    
 	}
 	else {

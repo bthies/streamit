@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.25 2003-02-24 18:04:34 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.26 2003-03-04 23:03:29 mgordon Exp $
  */
 
 prefix Kjc
@@ -248,7 +248,7 @@ longname		"poptopeek"
 	shortcut	"P"
 	type		boolean
 	default		"false"
-	help		"Convert all Pop expressions into Peek expressions."
+	help		"Convert all Pop expressions into Peek expressions (for uniprocessor only, does nothing for raw)."
 
 longname		"ptraccess"
 	shortcut	"Q"

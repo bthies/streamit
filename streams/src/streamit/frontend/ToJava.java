@@ -1,6 +1,8 @@
 package streamit.frontend;
 import java.io.DataInputStream;
 import antlr.BaseAST;
+import java.util.List;
+import java.util.ArrayList;
 
 class ToJava
 {
@@ -56,7 +58,50 @@ class ToJava
 "\n");
     }
 
-    public void run(String [] args)
+    private boolean useNewPath = false;
+    private boolean printHelp = false;
+    private String outputFile = null;
+    private List inputFiles = new ArrayList();
+
+    public void doOptions(String[] args)
+    {
+        for (int i = 0; i < args.length; i++)
+        {
+            if (args[i].equals("--adhoc"))
+                useNewPath = false;
+            else if (args[i].equals("--full"))
+                useNewPath = true;
+            else if (args[i].equals("--help"))
+                printHelp = true;
+            else if (args[i].equals("--"))
+            {
+                // Add all of the remaining args as input files.
+                for (i++; i < args.length; i++)
+                    inputFiles.add(args[i]);
+            }
+            else if (args[i].equals("--output"))
+                outputFile = args[++i];
+            else
+                // Maybe check for unrecognized options.
+                inputFiles.add(args[i]);
+        }
+    }
+
+    public void run(String[] args)
+    {
+        doOptions(args);
+        if (printHelp)
+        {
+            printUsage();
+            return;
+        }
+        if (useNewPath)
+            runNew();
+        else
+            runOld();
+    }
+
+    public void runOld()
     {
         StreamItParser parser = null;
         try
@@ -77,6 +122,10 @@ class ToJava
         {
             e.printStackTrace(System.err);
         }
+    }
+
+    public void runNew()
+    {
     }
 
     public static void main(String[] args)

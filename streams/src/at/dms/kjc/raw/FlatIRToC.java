@@ -150,7 +150,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//       System.out.println(self.getName());
 	
 	//Entry point of the visitor
-	print("#include <raw.h>\n");
+
+	//do not print the raw header if compiling
+	//for uniprocessor
+	if (!KjcOptions.raw_uni) 
+	    print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
@@ -178,13 +182,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//        print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 
 	//print the extern for the function to init the 
-	//switch
-	print("void raw_init();\n");
-        print("void raw_init2();\n");
-	    
-	
-	print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
-	print("unsigned int " + INT_HEADER_WORD + ";\n");
+	//switch, do not do this if we are compiling for
+	//a uniprocessor
+	if (!KjcOptions.raw_uni) {
+	    print("void raw_init();\n");
+	    print("void raw_init2();\n");
+	}
+
+	//not used any more
+	//print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
+	//print("unsigned int " + INT_HEADER_WORD + ";\n");
 
 
 	//print the methods used for decoupled execution
@@ -211,13 +218,29 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    methods[i].accept(this);	
 	}
 	
-	print("void begin(void) {\n");
-	print("  raw_init();\n");
-	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
-	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
-        print("  raw_init2();\n");
+	//if we are generating raw code print the begin
+	//method for the simulator
+	if (!KjcOptions.raw_uni) {
+	    print("void begin(void) {\n");
+	}
+	else {
+	    //otherwise print a normal main()
+	    print("int main() {\n");
+	}
+	//not used at this time
+	//print(FLOAT_HEADER_WORD + 
+	//" = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
+	//print(INT_HEADER_WORD + 
+	//" = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
+	if (!KjcOptions.raw_uni) {
+	    print("  raw_init();\n");
+	    print("  raw_init2();\n");
+	}
 	//execute the raw main function
 	print(RawExecutionCode.rawMain + "();\n");
+	//return 0 if we are generating normal c code
+	if (KjcOptions.raw_uni) 
+	    print("  return 0;\n");
 	print("}\n");
        
 	createFile();
@@ -1390,7 +1413,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		print("print_int(");
+		if (!KjcOptions.raw_uni)
+		    print("print_int(");
+		else
+		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -1398,7 +1424,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		print("print_int(");
+		if (!KjcOptions.raw_uni)
+		    print("print_int(");
+		else
+		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -1406,7 +1435,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		print("print_float(");
+		if (!KjcOptions.raw_uni)
+		    print("print_float(");
+		else 
+		    print("printf(\"%f\\n\", "); 
 		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -1414,7 +1446,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		print("print_int(");
+		if (!KjcOptions.raw_uni)
+		    print("print_int(");
+		else
+		    print("printf(\"%d\\n\", "); 
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);

@@ -32,30 +32,25 @@ public final class LinearReplaceTransform extends StreamTransform {
 	// again detect that <str> is linear, since it is a newly constructed stream
 	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
 	LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(str);
-	boolean largeCode = linearRep.getCost().getMultiplies() >= LinearPartitioner.MAX_MULT_TO_UNROLL;
-	// use atlas if all of the following are true: 1) atlas option
-	// is enabled, 2) there is largeCode, 3) push>=2 (since
-	// otherwise, presumably, atlas can't improve anything)
-	if (KjcOptions.atlas && largeCode && linearRep.getPushCount()>=2) {
-	    LinearAtlasReplacer.doReplace(lfa, str);
-	} else {
-	    // otherwise, choose between our matrix multiplies..
-	    if (!largeCode) {
-		// always use dirct unrolling for small containers
-		LinearDirectReplacer.doReplace(lfa, str);
-	    } else {
-		// otherwise use diagonal by default, but indirect
-		// or direct if the option is enabled
-		if (KjcOptions.linearreplacement) {
-		    LinearDirectReplacer.doReplace(lfa, str);
-		} else if (KjcOptions.linearreplacement2) {
-		    LinearIndirectReplacer.doReplace(lfa, str);
-		} else {
-		    // default is same as KjcOptions.linearreplacement3
-		    LinearDiagonalReplacer.doReplace(lfa, str);
-		}
-	    }
-	}
+	boolean smallCode = linearRep.getCost().getMultiplies() < LinearPartitioner.MAX_MULT_TO_UNROLL;
+
+	// seems like we can never beat the original filter's
+	// implementation (at least in beamformer), so just do nothing
+	// if we have a filter
+	if (str instanceof SIRFilter) {}
+	// if we don't have many multiplies, or if direct replacer is
+	// explicitly noted, then generate direct unrolled code
+	else if (smallCode || KjcOptions.linearreplacement) { LinearDirectReplacer.doReplace(lfa, str); }
+	// otherwise, we have large code...
+	// do indirect replacement if option specified
+	else if (KjcOptions.linearreplacement2) { LinearIndirectReplacer.doReplace(lfa, str); }
+	// do atlas replacement if option specified, and if this
+	// filter pushes at least 2 (since presumably atlas can't
+	// leverage anything otherwise)
+	else if (KjcOptions.atlas && linearRep.getPushCount() >=2) { LinearAtlasReplacer.doReplace(lfa, str); }
+	// otherwise, (DEFAULT for large code) do diagonal replace
+	else { LinearDiagonalReplacer.doReplace(lfa, str); }
+
 	// kind of hard to get a handle on the new stream... return
 	// null for now; this shouldn't get dereferenced in linear
 	// partitioner

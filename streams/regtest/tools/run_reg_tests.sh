@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs regression tests every evening
 # (gets called from cron job on cagfarm-47.lcs.mit.edu user
 # aalamb).
-# $Id: run_reg_tests.sh,v 1.16 2002-10-28 20:39:46 thies Exp $
+# $Id: run_reg_tests.sh,v 1.17 2002-10-30 18:26:28 aalamb Exp $
 
 # Environmental Variables
 # home directory for CVS
@@ -10,7 +10,7 @@ setenv CVSROOT /projects/raw/cvsroot
 setenv STREAMIT_HOME /u/aalamb/streams/
 # path for RAW tools
 setenv TOPDIR /home/bits6/aalamb/starsearch
-setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi/3rdparty/JFlex/lib:$STREAMIT_HOME/compiler/kopi/3rdparty/getopt:$STREAMIT_HOME/compiler/kopi/classes:$STREAMIT_HOME/apps/libraries:$STREAMIT_HOME/misc/java:$STREAMIT_HOME/scheduler/v1/java:/usr/uns/java/antlr-2.7.1:$STREAMIT_HOME/compiler/frontend:$STREAMIT_HOME/scheduler/v2/java
+setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi/3rdparty/JFlex/lib:$STREAMIT_HOME/compiler/kopi/3rdparty/getopt:$STREAMIT_HOME/compiler/kopi/classes:$STREAMIT_HOME/apps/libraries:$STREAMIT_HOME/misc/java:$STREAMIT_HOME/scheduler/v1/java:/usr/uns/java/antlr-2.7.1:$STREAMIT_HOME/compiler/frontend:$STREAMIT_HOME/scheduler/v2/java:$STREAMIT_HOME/compiler/kopi/3rdparty/cplex/cplex.jar
 
 # the script to use for 
 

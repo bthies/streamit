@@ -22,6 +22,11 @@ public class SIRInterfaceTable extends JExpression
     protected JMethodDeclaration[] methods;
 
     /**
+     * The variable declaration containing this interface table.
+     */
+    protected JLocalVariable vardecl;
+
+    /**
      * Construct a new interface table.
      * @param where    The line of this node in the source code
      * @param iface    The interface being implemented
@@ -34,6 +39,7 @@ public class SIRInterfaceTable extends JExpression
         super(where);
         this.iface = iface;
         this.methods = methods;
+        this.vardecl = null;
     }
 
     /**
@@ -69,6 +75,22 @@ public class SIRInterfaceTable extends JExpression
     public JMethodDeclaration[] getMethods()
     {
         return this.methods;
+    }
+
+    /**
+     * Associates a variable declaration with the table.
+     */
+    public void setVarDecl(JLocalVariable vardecl)
+    {
+        this.vardecl = vardecl;
+    }
+    
+    /**
+     * Returns the variable declaration for the table.
+     */
+    public JLocalVariable getVarDecl()
+    {
+        return this.vardecl;
     }
 
     /**

@@ -626,6 +626,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                         structureList.add(sirStruct);
                     }
 		}
+                if (typeDeclarations[i] instanceof JInterfaceDeclaration) {
+                    interfaceList.add(typeDeclarations[i]);
+                }
 	    }
 	    
 	    //only visit the topleve declaration, visit other classes when used

@@ -97,10 +97,10 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Returns whether or not this pipeline contains child <child>
+     * Whether or not <str> is an immediate child of this.
      */
-    public boolean contains(SIROperator child) {
-	return elements.contains(child);
+    public boolean contains(SIROperator str) {
+	return elements.contains(str);
     }
 
     /**
@@ -125,10 +125,14 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Sets children of this to copy of <elements>
+     * Sets children of this to be all the elements of <elements>, and
+     * set all the parent fields in <elements> to be this.
      */
     public void setChildren(LinkedList elements) {
-	this.elements = (LinkedList)elements.clone();
+	this.elements.clear();
+	for (int i=0; i<elements.size(); i++) {
+	    add((SIRStream)elements.get(i));
+	}
     }
 
     /**
@@ -152,10 +156,20 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Add a stream to the pipeline.
+     * Add a stream to the end of the pipeline, and set that stream's
+     * parent to this.
      */
     public void add(SIRStream str) {
-	elements.add(str);
+	add(elements.size(), str);
+    }
+
+    /**
+     * Adds stream <str> to this pipeline, at index <index>, and sets
+     * the parent of <str> to be this.
+     */
+    private void add(int index, SIRStream str) {
+	elements.add(index, str);
+	str.setParent(this);
     }
 
     /**
@@ -167,6 +181,8 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 		     "Trying to replace with bad parameters, since " + this
 		     + " doesn't contain " + oldStr);
 	elements.set(index, newStr);
+	// set parent of new stream
+	newStr.setParent(this);
     }
 
     /**
@@ -186,7 +202,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	    elements.remove(index1);
 	}
 	// add the new stream
-	elements.add(index1, newStream);
+	add(index1, newStream);
     }
 
     /**

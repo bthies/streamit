@@ -82,16 +82,19 @@ public class SIRTwoStageFilter extends SIRFilter {
 	// we think the peek-pop difference should be the same in the
 	// initial and steady states (our simulation routine with the
 	// scheduler makes this assumption).
-	Utils.assert(initPeek-initPop==getPeekInt()-getPopInt());
+	Utils.assert(initPeek-initPop==getPeekInt()-getPopInt(),
+		     "\ninitPeek=" + initPeek + 
+		     "\ninitPop=" + initPop + 
+		     "\nPeek=" + getPeekInt() + 
+		     "\nPop=" + getPopInt());
 	// we need an init work function to be a two-stage filter
 	Utils.assert(initWork!=null);
     }
 
     /**
-     * Sets the work function.  Can be made public if there's ever a
-     * need for it, but right now there isn't.
+     * Sets the work function.  
      */
-    private void setInitWork (JMethodDeclaration newWork) {
+    public void setInitWork (JMethodDeclaration newWork) {
 	addReplacementMethod(newWork, this.initWork);
 	this.initWork = newWork;
 	checkRep();
@@ -107,6 +110,18 @@ public class SIRTwoStageFilter extends SIRFilter {
 
     public int getInitPop() {
 	return this.initPop;
+    }
+
+    public void setInitPush(int i) {
+	this.initPush = i;
+    }
+
+    public void setInitPeek(int i) {
+	this.initPeek = i;
+    }
+
+    public void setInitPop(int i) {
+	this.initPop = i;
     }
 
     public JMethodDeclaration getInitWork() {

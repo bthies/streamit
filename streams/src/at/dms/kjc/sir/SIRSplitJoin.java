@@ -39,10 +39,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Returns whether or not this pipeline contains child <child>
+     * Whether or not <str> is an immediate child of this.
      */
-    public boolean contains(SIROperator child) {
-	return elements.contains(child);
+    public boolean contains(SIROperator str) {
+	return elements.contains(str);
     }
 
     /**
@@ -114,10 +114,11 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 
     
     /**
-     * Add a stream to the SplitJoin.
+     * Add a stream to the SplitJoin, and set <str>'s parent field to this.
      */
     public void add(SIRStream str) {
 	elements.add(str);
+	str.setParent(this);
     }
     
     /**
@@ -129,6 +130,8 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 		     "Trying to replace with bad parameters, since " + this
 		     + " doesn't contain " + oldStr);
 	elements.set(index, newStr);
+	// set parent of <newStr> to be this
+	newStr.setParent(this);
     }
 
     /**
@@ -190,7 +193,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public void setParallelStreams(LinkedList elements) {
 	// reset elements
-	this.elements = (LinkedList)elements.clone();
+	this.elements.clear();
+	for (int i=0; i<elements.size(); i++) {
+	    add((SIRStream)elements.get(i));
+	}
 	this.rescale();
     }
 

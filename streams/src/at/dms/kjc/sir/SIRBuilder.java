@@ -22,9 +22,9 @@ public class SIRBuilder {
 	SIRPipeline toplevel = new SIRPipeline(null,
 					       "HelloWorld6",
 					       /* fields  */ 
-					       JFieldDeclaration.EMPTY,
+					       JFieldDeclaration.EMPTY(),
 					       /* methods */ 
-					       JMethodDeclaration.EMPTY);
+					       JMethodDeclaration.EMPTY());
 	/* build filter 1 */
 
 	JVariableDefinition x = 
@@ -142,7 +142,7 @@ public class SIRBuilder {
 
 	SIRFilter f2 = new SIRFilter(toplevel,
 				     "filter name",
-				     /* fields */ JFieldDeclaration.EMPTY,
+				     /* fields */ JFieldDeclaration.EMPTY(),
 				     /* methods */ meth2,
 				     /* peek, pop, push */ 
 				     new JIntLiteral(1), 

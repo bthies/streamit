@@ -129,6 +129,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * See documentation in SIRContainer.
      */
     public void replace(SIRStream oldStr, SIRStream newStr) {
+	newStr.setParent(this);
 	if (body==oldStr) {
 	    body = newStr;
 	} else if (loop==newStr) {
@@ -216,11 +217,13 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Set the Body of the feedback loop 
+     * Set the Body of the feedback loop, and the parent of <body> to
+     * this.
      **/
     public void setBody(SIRStream body) 
     {
 	this.body = body;
+	body.setParent(this);
     }
     /**
      * Set the Body of the feedback loop 
@@ -228,6 +231,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     public void setLoop(SIRStream loop) 
     {
 	this.loop = loop;
+	loop.setParent(this);
     }
     /**
      * Set the Joiner of the feedback loop 
@@ -256,6 +260,13 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     public int getDelay() 
     {
 	return this.delay;
+    }
+
+    /**
+     * Whether or not <str> is an immediate child of this.
+     */
+    public boolean contains(SIROperator str) {
+	return str==loop || str==body || str==joiner || str==splitter;
     }
 
     /**

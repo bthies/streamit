@@ -61,11 +61,16 @@ public abstract class SIRContainer extends SIRStream {
     /**
      * Replaces <oldStr> with <newStr> in this.  Requires that
      * <oldStr> is an immediate child of this.  (It does not do a
-     * deep-replacement.)  Also, it does not mend the calls in the
-     * init function to the newStr.
+     * deep-replacement.)  Also, it sets the parent of <newStr> to be
+     * this, but does NOT mend the calls in the init function to call
+     * the init function of newStr.
      */
     public abstract void replace(SIRStream oldStr, SIRStream newStr);
-    
+
+    /**
+     * Whether or not <str> is an immediate child of this.
+     */
+    public abstract boolean contains(SIROperator str);
 }
 
 

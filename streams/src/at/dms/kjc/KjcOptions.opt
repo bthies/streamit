@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.19 2003-01-09 21:58:01 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.20 2003-01-21 19:18:53 aalamb Exp $
  */
 
 prefix Kjc
@@ -224,7 +224,7 @@ longname		"frequencyreplacement"
 	type		int
 	default		"-1"
 	requireArgument
-	help		"Convert FIR filters to a frequency implementation. 0 implies inefficient implementation, 1 implies efficient implementation"
+	help		"Convert FIR filters to a frequency implementation. 0 implies inefficient implementation, 1 implies more efficient implementation, 2 implies most efficient implementation."
 
 longname 		"removeglobals"
 	shortcut	"G"

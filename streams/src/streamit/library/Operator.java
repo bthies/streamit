@@ -45,6 +45,15 @@ public class Operator extends DestroyedClass
             .add("b2", b2);
     }
 
+    public Operator(float x2, float y2, float z2, int a2)
+    {
+        initParams = new ParameterContainer ("float-float-float-int")
+            .add("x2", x2)
+            .add("y2", y2)
+            .add("z2", z2)
+            .add("a2", a2);
+    }
+
     public Operator()
     {
         initParams = new ParameterContainer ("");
@@ -101,6 +110,9 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, float z, int a, float b) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(float x, float y, float z, int a) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, int z) { invalidInitError (); }
@@ -376,6 +388,12 @@ public class Operator extends DestroyedClass
                   initParams.getFloatParam("z2"),
                   initParams.getIntParam("a2"),
                   initParams.getFloatParam("b2"));
+        else
+        if(initParams.getParamName().equals("float-float-float-int"))
+            init (initParams.getFloatParam("x2"),
+                  initParams.getFloatParam("y2"),
+                  initParams.getFloatParam("z2"),
+                  initParams.getIntParam("a2"));
         else
 
         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else

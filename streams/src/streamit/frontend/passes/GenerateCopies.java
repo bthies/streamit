@@ -12,7 +12,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.1 2003-07-31 18:46:00 dmaze Exp $
+ * @version $Id: GenerateCopies.java,v 1.2 2003-07-31 20:36:34 dmaze Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -70,8 +70,7 @@ public class GenerateCopies extends SymbolTableVisitor
         String tempName = varGen.nextVar();
         Expression tempVar = new ExprVar(expr.getContext(), tempName);
         Type type = getType(expr);
-        addStatement(new StmtVarDecl(expr.getContext(), type, tempName, null));
-        symtab.registerVar(tempName, type, null, SymbolTable.KIND_LOCAL);
+        addVarDecl(expr.getContext(), type, tempName);
         if (deep)
             makeCopy(expr, tempVar);
         else
@@ -104,7 +103,7 @@ public class GenerateCopies extends SymbolTableVisitor
         // view, the array bounds may not be constant.
         String indexName = varGen.nextVar();
         ExprVar index = new ExprVar(null, indexName);
-        Type intType = new TypePrimitive(TypePrimitive.TYPE_INT);
+        Type intType = new TypePrimitive(TypePrimitive.TYPE_INT);        
         Statement init =
             new StmtVarDecl(null, intType, indexName,
                             new ExprConstInt(null, 0));

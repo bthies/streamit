@@ -41,7 +41,7 @@ public class TraceExtractor {
 	    TraceNode node;
 	    Trace trace;
 	    if(!visited.containsKey(filter)) {
-		System.err.println("Visiting: "+filter.filter.getClass().getName());
+		//System.err.println("Visiting: "+filter.filter.getClass().getName());
 		visited.put(filter,null);
 		if(filter.in!=null&&filter.in.length>0) {
 		    //node=new InputTraceNode(filter.inWeights,getInNodes(outNodes,filter.in));
@@ -79,13 +79,13 @@ public class TraceExtractor {
 			content=new FileOutputContent(newFilter);
 		    else
 			content=new FilterContent(newFilter);
-		    System.out.println("IS LINEAR: "+linear);
+		    //System.out.println("IS LINEAR: "+linear);
 		    if(!(filter.filter instanceof SIRPredefinedFilter)) {
-			System.out.println("CONTENT: "+newFilter+" "+content.isLinear());
+			//System.out.println("CONTENT: "+newFilter+" "+content.isLinear());
 			if(content.isLinear()) {
 			    FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
-			    for(int i=0;i<linearStuff.length;i++)
-				System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
+			    //for(int i=0;i<linearStuff.length;i++)
+			    //System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
 			    for(int i=0;i<linearStuff.length;i++) {
 				FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
 				node.setNext(filterNode);

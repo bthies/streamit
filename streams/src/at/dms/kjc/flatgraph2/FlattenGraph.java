@@ -67,7 +67,7 @@ public class FlattenGraph {
 	    if(!(node==null||topLevelNodes.contains(node.dest)))
 		topLevelNodes.add(node.dest);
 	}
-	System.out.println("INPUT: "+lfa+" "+execCounts);
+	//System.out.println("INPUT: "+lfa+" "+execCounts);
 	//if(lfa!=null&&execCounts!=null)
 	extractLinear();
 	dumpGraph("newbefore.dot");
@@ -253,7 +253,7 @@ public class FlattenGraph {
 	Object[] filters=nodes.keySet().toArray();
 	for(int i=0;i<filters.length;i++) {
 	    UnflatFilter filter=(UnflatFilter)filters[i];
-	    System.out.println("VISITING: "+filter);
+	    //System.out.println("VISITING: "+filter);
 	    LinearFilterRepresentation linrep=null;
 	    if(lfa!=null)
 		linrep=lfa.getLinearRepresentation(filter.filter);
@@ -265,7 +265,7 @@ public class FlattenGraph {
 	    ans=(int[])execCounts[1].get(filter.filter);
 	    if(ans!=null)
 		steadyMult=ans[0];
-	    System.err.println("MULT: "+initMult+" "+steadyMult);
+	    //System.err.println("MULT: "+initMult+" "+steadyMult);
 	    if(linrep!=null) {
 		final int cols=linrep.getA().getCols();
 		if(cols==1) { 

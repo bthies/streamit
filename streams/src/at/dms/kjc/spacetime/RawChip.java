@@ -30,7 +30,7 @@ public class RawChip {
 	    addStreamingDrams();
 	
 	printChip();
-	System.exit(1);
+	//System.exit(1);
     }
 
     public RawTile getTile(int tileNumber) 

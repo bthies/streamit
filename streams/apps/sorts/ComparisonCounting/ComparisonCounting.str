@@ -28,14 +28,8 @@ void->int filter IntSource(int SIZE) {
 int->int splitjoin CountSortSplit(int SIZE) {
   split duplicate;
   add CountSplit(SIZE);
-  add IntIdentity();
+  add Identity<int>();
   join roundrobin(SIZE);
-}
-
-int->int filter IntIdentity() {
-  work push 1 pop 1 {
-    push(pop());
-  }
 }
 
 int->int splitjoin CountSplit(int SIZE) {
@@ -51,8 +45,11 @@ int->int filter Counter(int index, int SIZE) {
     int count = 0;
     for(int i=0; i < SIZE; i++) {
       if (peek(i) < mine) {
-	count++;
+	count = count+1;
       }
+    }
+    for (int i=0; i<SIZE; i++) {
+	pop();
     }
     push(count);
   }
@@ -60,7 +57,7 @@ int->int filter Counter(int index, int SIZE) {
 
 int->int filter RearrangeIndices(int SIZE) {
   work push SIZE pop SIZE * 2 {
-    int [SIZE]outputArray;
+    int [2*SIZE]outputArray;
     for(int i=0; i < SIZE; i++)
       outputArray[peek(i)] = peek(i+SIZE);
     for(int i=0; i < SIZE; i++) {

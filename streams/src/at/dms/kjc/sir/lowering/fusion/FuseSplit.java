@@ -429,7 +429,7 @@ public class FuseSplit {
 				    /* ident */ 
 				    LoweringConstants.getUniqueVarName(),
 				    /* initializer */
-				    new JIntLiteral(-1));
+				    new JIntLiteral(0));
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
 	    new JVariableDeclarationStatement(null, var, null);
@@ -446,8 +446,8 @@ public class FuseSplit {
 			JLocalVariableExpression ref = new JLocalVariableExpression(null,
 										    var);
                         // Return new peek expression.
-                        return new SIRPeekExpression(new JPrefixExpression(null,
-									   OPE_PREINC,
+                        return new SIRPeekExpression(new JPostfixExpression(null,
+									   OPE_POSTINC,
 									   ref),
 						     oldTapeType);
                     }
@@ -658,4 +658,6 @@ class RepInfo {
 
 
 }
+
+
 

@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.util.Utils;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.LinkedList;
@@ -61,8 +62,22 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
      */
     private void addName(SIROperator str) {
 	StringBuffer name = new StringBuffer();
-	// start name with the class of the IR object
-	name.append(splitQualifiedName(str.getClass().toString(), '.')[1]);
+	// build the prefix of the name as the most descriptive
+	// identifier that we can--if the object has an <ident> from
+	// the original source file, then use that; otherwise use the
+	// class of the IR object
+	String prefix;
+	if (str instanceof SIRStream) {
+	    // if we have a stream, then it should have an identifier
+	    prefix = ((SIRStream)str).getIdent();
+	    Utils.assert(prefix!=null,
+			 "Didn't expect to find null identifier of SIRStream");
+	} else {
+	    // otherwise, get the class of the IR object
+	    prefix = splitQualifiedName(str.getClass().toString(), '.')[1] ;
+	}
+	// add the prefix to the name
+	name.append(prefix);
 	// end name with list of positions, e.g. 1_2_1_
 	for (ListIterator e = namePrefix.listIterator(); e.hasNext(); ) {
 	    name.append("_");

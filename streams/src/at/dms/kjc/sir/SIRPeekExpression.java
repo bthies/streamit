@@ -100,13 +100,18 @@ public class SIRPeekExpression extends JExpression {
     }
 
     /**
-     * Accepts the specified Attribute visitor - just returns this for now.
-     * @param	p		the visitor
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	return this;
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitPeekExpression(this,
+								 tapeType,
+								 arg);
+	} else {
+	    return this;
+	}
     }
-
 
     /**
      * Generates JVM bytecode to evaluate this expression.  NOT SUPPORTED YET.

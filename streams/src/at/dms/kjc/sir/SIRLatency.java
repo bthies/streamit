@@ -28,4 +28,17 @@ public class SIRLatency implements Serializable {
 	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
 	}
     }
+
+    /**
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitLatency(this);
+	} else {
+	    return this;
+	}
+    }
+
 }

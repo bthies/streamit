@@ -94,18 +94,19 @@ public class SIRInitStatement extends JStatement {
 	}
     }
 
+
     /**
-     * Accepts the specified attribute visitor - just returns this for now.
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	// visit children
-	for (int i=0; i<args.length; i++) {
-	    JExpression newExp = (JExpression)args[i].accept(p);
-	    if (newExp!=null && newExp!=args[i]) {
-		args[i] = newExp;
-	    }
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitInitStatement(this, 
+								args,
+								target);
+	} else {
+	    return this;
 	}
-	return this;
     }
 
     /**

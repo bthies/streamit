@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.4 2001-10-02 20:36:11 thies Exp $
+ * $Id: SIRPrintStatement.java,v 1.5 2001-10-30 19:58:43 thies Exp $
  */
 
 package at.dms.kjc.sir;
@@ -82,6 +82,19 @@ public class SIRPrintStatement extends JStatement {
      * @param	code		the code list
      */
     public void genCode(CodeSequence code) {}
+
+    /**
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitPrintStatement(this,
+								 arg);
+	} else {
+	    return this;
+	}
+    }
 
     /**
      * Accepts the specified visitor.

@@ -36,6 +36,18 @@ public class SIRLatencyRange extends SIRLatencyMax {
     }
 
     /**
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitLatencyRange(this);
+	} else {
+	    return this;
+	}
+    }
+
+    /**
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {

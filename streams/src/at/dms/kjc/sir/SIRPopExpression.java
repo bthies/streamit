@@ -89,11 +89,16 @@ public class SIRPopExpression extends JExpression {
     }
 
     /**
-     * Accepts the specified attribute visitor - just returns this for now.
-     * @param	p		the visitor
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	return this;
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitPopExpression(this,
+								tapeType);
+	} else {
+	    return this;
+	}
     }
 
     /**

@@ -28,16 +28,20 @@ public class SIRCreatePortal extends JExpression {
     }
 
     /**
-     * Accepts the specified attribute visitor - just returns this for now.
+     * Accepts the specified attribute visitor.
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-        return this;
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitCreatePortalExpression(this);
+	} else {
+	    return this;
+	}
     }
 
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitCreatePortalExpression();
+	    ((SLIRVisitor)p).visitCreatePortalExpression(this);
 	} else {
 	    // otherwise, do nothing... this node appears in the body of
 	    // work functions, so a KjcVisitor might find it, but doesn't

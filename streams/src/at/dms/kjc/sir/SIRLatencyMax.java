@@ -34,6 +34,18 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
     }
 
     /**
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitLatencyMax(this);
+	} else {
+	    return this;
+	}
+    }
+
+    /**
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {

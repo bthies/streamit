@@ -84,11 +84,18 @@ public class SIRRegSenderStatement extends JStatement {
     }
 
     /**
-     * Accepts the specified attribute visitor - just returns this for now.
+     * Accepts the specified attribute visitor.
      * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	return this;
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).
+		visitRegSenderStatement(this,
+					  portal,
+					latency);
+	} else {
+	    return this;
+	}
     }
 
     /*

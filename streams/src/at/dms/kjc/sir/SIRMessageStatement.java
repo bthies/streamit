@@ -119,6 +119,23 @@ public class SIRMessageStatement extends JStatement {
     }
 
     /**
+     * Accepts the specified attribute visitor.
+     * @param   p               the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	if (p instanceof SLIRAttributeVisitor) {
+	    return ((SLIRAttributeVisitor)p).visitMessageStatement(this,
+								   portal,
+								   iname,
+								   ident,
+								   args,
+								   latency);
+	} else {
+	    return this;
+	}
+    }
+
+    /**
      * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
@@ -137,10 +154,4 @@ public class SIRMessageStatement extends JStatement {
 	}
     }
 
-    /*
-     * Accepts the specified attributed visitor - just returns this for now.
-     */
-    public Object accept(AttributeVisitor p) {
-	return this;
-    }
 }

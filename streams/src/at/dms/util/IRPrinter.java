@@ -1537,7 +1537,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
-    public void visitCreatePortalExpression() {
+    public void visitCreatePortalExpression(SIRCreatePortal self) {
 	blockStart("SIRCreatePortalExpression");
 	blockEnd();
     }

@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import java.io.Serializable;
 
 /** 
  * This represents a latency for message delivery.  A latency can be:
@@ -9,14 +10,14 @@ import at.dms.kjc.*;
  *    - a (min,max) range for delivery
  *    - a set of discrete times for delivery
  */
-public class SIRLatency {
+public class SIRLatency implements Serializable {
     /**
      * This signifies a best-effort latency.
      */
     public static final SIRLatency BEST_EFFORT = new SIRLatency();
     
     protected SIRLatency() {}
-
+    
     /**
      * Accepts the specified visitor.
      */

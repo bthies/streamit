@@ -74,7 +74,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("  work();\n");
 	    fw.write("}\n");
 	    fw.close();
-	    System.out.println("Code for " + Namer.getName(joiner.contents) +
+	    System.out.println("Code for " + joiner.contents.getName() +
 			       " written to tile" + Layout.getTileNumber(Layout.getTile(joiner)) +
 			       ".c");
 	}
@@ -260,7 +260,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		    //}
 	    }
 	    if (!found)
-		Utils.fail("cannot find any upstream filter from " + Namer.getName(joiner.contents));
+		Utils.fail("cannot find any upstream filter from " + joiner.contents.getName());
 	}
 	if (joiner != null) 
 	    return ((SIRFilter)joiner.contents).getOutputType();
@@ -273,7 +273,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     {
 	if (i == null) return 0;
 
-	System.out.println(Namer.getName(node.contents) + " BufferSize = " + i);
+	System.out.println(node.contents.getName() + " BufferSize = " + i);
 	
 	//	return 1024;
 	

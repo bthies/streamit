@@ -5,6 +5,7 @@ import streamit.scheduler.*;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
@@ -54,11 +55,6 @@ public class RawBackend {
 	    FieldProp.doPropagate(str);
 	}
 	
-	// name the components
-	System.out.println("Namer Begin...");
-	Namer.assignNames(str);
-	System.out.println("Namer End.");
-
 	AdjustGranularity.doit(str, 
 			       StreamItOptions.rawRows * 
 			       StreamItOptions.rawColumns);

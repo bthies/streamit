@@ -1,7 +1,6 @@
 package at.dms.kjc.raw;
 
 import java.util.Vector;
-import at.dms.kjc.sir.lowering.Namer;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 
@@ -59,7 +58,7 @@ public class SwitchScheduleNode
     public void printMe() {
 	for (int i = 0; i < destinations.size(); i++) {
 	    FlatNode node = (FlatNode)destinations.get(i);
-	    System.out.println(" " + Namer.getName(node.contents) + " Tile:" +
+	    System.out.println(" " + node.contents.getName() + " Tile:" +
 			       Layout.getTile(node.contents));
 	}
 	System.out.println("=====");

@@ -102,7 +102,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (self.getPeekInt() > 4 * self.getPopInt()) 
 	    circular = false;
       
-	//System.out.println(Namer.getName(self));
+	//System.out.println(self.getName());
 
 	//Entry point of the visitor
 	print("#include <raw.h>\n");
@@ -170,7 +170,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("  " + work.getName() + "();\n");
 	print("}\n");
 	
-	System.out.println("Code for " + Namer.getName(self) +
+	System.out.println("Code for " + self.getName() +
 			   " written to tile" + Layout.getTileNumber(self) +
 			   ".c");
 	try {
@@ -180,7 +180,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	catch (Exception e) {
 	    System.err.println("Unable to write tile code file for filter " +
-			       Namer.getName(self));
+			       self.getName());
 	}
     }
     

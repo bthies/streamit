@@ -163,8 +163,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	if (node.contents instanceof SIRFilter) {
 	    SIRFilter filter = (SIRFilter)node.contents;
 	    Utils.assert(buf!=null);
-	    buf.append(Namer.getName(node.contents) + "[ label = \"" +
-		       Namer.getName(node.contents) + 
+	    buf.append(node.contents.getName() + "[ label = \"" +
+		       node.contents.getName() + 
 		       " peek: " + filter.getPeekInt() + 
 		       " pop: " + filter.getPopInt() + 
 		       " push: " + filter.getPushInt() +
@@ -173,8 +173,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	
 	if (node.contents instanceof SIRJoiner) {
 	    for (int i = 0; i < node.inputs; i++) {
-		buf.append(Namer.getName(node.incoming[i].contents) + " -> " 
-			   + Namer.getName(node.contents));
+		buf.append(node.incoming[i].contents.getName() + " -> " 
+			   + node.contents.getName());
 		buf.append("[label=\"" + node.incomingWeights[i] + "\"];\n");
 	    }
       
@@ -182,8 +182,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	for (int i = 0; i < node.ways; i++) {
 	    if (node.edges[i].contents instanceof SIRJoiner)
 		continue;
-	    buf.append(Namer.getName(node.contents) + " -> " 
-		       + Namer.getName(node.edges[i].contents));
+	    buf.append(node.contents.getName() + " -> " 
+		+ node.edges[i].contents.getName());
 	    buf.append("[label=\"" + node.weights[i] + "\"];\n");
 	}
     }

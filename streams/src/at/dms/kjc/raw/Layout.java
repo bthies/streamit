@@ -403,10 +403,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
 		    push;
 	    }
-	    //  System.out.println("Items, hops  " + Namer.getName(node.contents) + ": " + items);
+	    //  System.out.println("Items, hops  " + node.contents.getName() + ": " + items);
 	    sum += /*((int)Math.sqrt*/(items * hops) + items * Math.pow(numAssigned * 2.0, 3.0);
 	}
-	//System.out.println("Cost for node " + Namer.getName(node.contents) + ": " + sum);
+	//System.out.println("Cost for node " + node.contents.getName() + ": " + sum);
 	
 	return sum;
     }
@@ -495,7 +495,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	while(it.hasNext()) {
 	     FlatNode node = (FlatNode) it.next();
 	     buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
-			Namer.getName(node.contents) + "\"];\n");
+			node.contents.getName() + "\"];\n");
 	     
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
@@ -603,7 +603,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		Integer row, column;
 		
 		//get row
-		System.out.print(Namer.getName(node.contents) + "\nRow: ");
+		System.out.print(node.contents.getName() + "\nRow: ");
 		row = Integer.valueOf(inputBuffer.readLine());
 		if (row.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");

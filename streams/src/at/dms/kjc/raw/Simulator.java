@@ -77,7 +77,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	initSimulation = init;
 	//toplevel.accept(this, new HashSet(), false);
 
-	//System.out.println("Bottom node " + Namer.getName(bottom.contents));
+	//System.out.println("Bottom node " + bottom.contents.getName());
     }
 
 
@@ -103,7 +103,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //simulate the firings
 	    //1 item for a joiner, push items for a filter
 	    	    
-	    //System.out.println(Namer.getName(fire.contents) + " pushing " + items);
+	    //System.out.println(fire.contents.getName() + " pushing " + items);
 
 	    for (int i = 0; i < items; i++) {
 	
@@ -222,7 +222,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     //consume the data and return the number of items produced
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
-	//System.out.println("Firing " + Namer.getName(fire.contents));
+	//System.out.println("Firing " + fire.contents.getName());
 	
 
 	if (fire.contents instanceof SIRFilter) {
@@ -274,7 +274,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    counters.decrementBufferCount(fire, 1);
 	    //get the joiner buffer as determined by getDestination and stored in a list 
 	    String joinerBuffer = counters.getJoinerReceiveBuffer(fire);
-	    //System.out.println(Namer.getName(fire.contents) + " adding to joiner buffer " + joinerBuffer);
+	    //System.out.println(fire.contents.getName() + " adding to joiner buffer " + joinerBuffer);
 	    
 	    //as determined by the simulation
 	    counters.incrementJoinerBufferCount(fire, joinerBuffer);
@@ -305,7 +305,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    current.buffer = counters.getJoinerBuffer(fire);
 	    current.type = JoinerScheduleNode.FIRE;
 	    previous.next = current;
-	    //System.out.println(Namer.getName(fire.contents) + " sending from joiner buffer " + current.buffer);
+	    //System.out.println(fire.contents.getName() + " sending from joiner buffer " + current.buffer);
 	    
 	    
 	    //set current
@@ -413,7 +413,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	FlatNode node;
 	FlatNode mostDownStream = null;
 			
-	//System.out.println("Starting from " + Namer.getName(start.contents));
+	//System.out.println("Starting from " + start.contents.getName());
 	
 	queue.add(start);
 	while (!queue.isEmpty()) {
@@ -445,9 +445,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //the schedule
 	    
 	    //System.out.println("Checking execution count: " + 
-	    //Namer.getName(node.contents));
+	    //node.contents.getName());
 	 
-	    //System.out.println("Can I fire " + Namer.getName(node.contents) + " " + counters.getBufferCount(node) + " " + itemsNeededToFire(node, counters));
+	    //System.out.println("Can I fire " + node.contents.getName() + " " + counters.getBufferCount(node) + " " + itemsNeededToFire(node, counters));
    
 	    Integer count = (Integer)executionCounts.get(node);
 	    if (count == null)
@@ -464,7 +464,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		return false;
 	}
 	else if (node.contents instanceof SIRJoiner) {
-	    //System.out.println("Can I fire " + Namer.getName(node.contents) + " " + counters.getBufferCount(node));
+	    //System.out.println("Can I fire " + node.contents.getName() + " " + counters.getBufferCount(node));
 	    //first of all, a joiner can only fire it is the most downstream
 	    //joiner in a joiner group
 	    if (!Layout.joiners.contains(node))
@@ -491,7 +491,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     //look for bottom node
     public void visitNode(FlatNode node) 
     {
-	System.out.println(Namer.getName(node.contents));
+	System.out.println(node.contents.getName());
 	if (node.contents instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)node.contents;
 	    System.out.println("init peek: " + two.getInitPeek() + " init pop:" + two.getInitPop() +
@@ -529,7 +529,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	Iterator it = map.keySet().iterator();
 	while(it.hasNext()) {
 	    FlatNode node = (FlatNode)it.next();
-	    System.out.println(Namer.getName(node.contents) + " " + 
+	    System.out.println(node.contents.getName() + " " + 
 			       ((Integer)map.get(node)).toString());
 	}
 	System.out.println();

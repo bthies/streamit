@@ -62,7 +62,7 @@ public class Router {
     }
 
     public static void printRoute(FlatNode from, FlatNode to, List route) {
-	System.out.println(Namer.getName(from.contents) + " -> " + Namer.getName(to.contents));
+	System.out.println(from.contents.getName() + " -> " + to.contents.getName());
 	Iterator it = route.iterator();
 	while (it.hasNext()) {
 	    Coordinate hop = (Coordinate) it.next();

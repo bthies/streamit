@@ -95,7 +95,7 @@ public class JoinerSimulator
 		//weighted round robin
 		for (int i = 0; i < node.inputs; i++) {
 		    //System.out.println(i + " " + counters.getCount(node, i) +
-		    //		       Namer.getName(node.incoming[i].contents));
+		    //		       node.incoming[i].contents.getName()));
 		    if (counters.getCount(node, i) > 0) {
 			counters.decrementCount(node, i);
 			simulateDataItem(node.incoming[i], schedNode,

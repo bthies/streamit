@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.38 2003-10-17 18:32:26 jasperln Exp $
+# $Id: release.sh,v 1.39 2003-10-17 19:20:20 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -88,6 +88,7 @@ rm -rf $WORKING/streams/apps/benchmarks/gsm
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
 rm -rf $WORKING/streams/apps/benchmarks/viram
+rm -rf $WORKING/streams/apps/benchmarks/vocoder
 rm -rf $WORKING/streams/apps/examples/chol-para
 rm -rf $WORKING/streams/apps/examples/median
 rm -rf $WORKING/streams/apps/examples/phase

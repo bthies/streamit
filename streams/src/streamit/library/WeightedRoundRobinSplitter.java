@@ -8,27 +8,27 @@ public class WeightedRoundRobinSplitter extends Splitter
     List destWeight = new ArrayList ();
     int outputCount = 0;
 
-    void AddWeight (Integer weight)
+    void addWeight (Integer weight)
     {
         ASSERT (weight != null && weight.intValue () >= 0);
         destWeight.add (weight);
     }
 
-    public boolean IsOutputUsed (int index)
+    public boolean isOutputUsed (int index)
     {
         ASSERT (index < destWeight.size ());
         return ((Integer)destWeight.get(index)).intValue () != 0;
     }
 
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         // do I even have anything to do?
         ASSERT (dest.size () == destWeight.size ());
 
-        super.ConnectGraph ();
+        super.connectGraph ();
     }
 
-    public void Work ()
+    public void work ()
     {
         ASSERT (destWeight.size () == dest.size ());
 
@@ -38,7 +38,7 @@ public class WeightedRoundRobinSplitter extends Splitter
             outputIndex = (outputIndex + 1) % dest.size ();
         }
 
-        PassOneData (input, output [outputIndex]);
+        passOneData (input, output [outputIndex]);
         outputCount++;
     }
 

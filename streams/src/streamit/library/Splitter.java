@@ -12,25 +12,25 @@ public class Splitter extends Operator
     public Channel input = null;
     public Channel output [] = null;
 
-    public void InitIO () { }
-    public void Init () { }
+    public void initIO () { }
+    public void init () { }
 
-    public void Work ()
+    public void work ()
     {
         ASSERT (0);
     }
 
-    void Add (Stream s)
+    void add (Stream s)
     {
         dest.add (s);
     }
 
-    public boolean IsOutputUsed (int index)
+    public boolean isOutputUsed (int index)
     {
         return true;
     }
 
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         // do I even have anything to do?
         if (dest.isEmpty ()) return;
@@ -55,8 +55,8 @@ public class Splitter extends Operator
 
                 // connect it and retrieve its input and copy it into
                 // the output array for this splitter
-                s.SetupOperator ();
-                Channel channel = s.GetIOField ("input");
+                s.setupOperator ();
+                Channel channel = s.getIOField ("streamInput");
                 output [outputIndx] = channel;
 
                 // if it is not a source, make sure that it consumes data
@@ -67,14 +67,14 @@ public class Splitter extends Operator
                     if (input == null)
                     {
                         input = new Channel (channel);
-                        input.SetSink (this);
+                        input.setSink (this);
                     } else {
                         // check that the input types agree
-                        ASSERT (channel.GetType ().getName ().equals (input.GetType ().getName ()));
+                        ASSERT (channel.getType ().getName ().equals (input.getType ().getName ()));
                     }
 
                     // now connect the channel to the Splitter
-                    channel.SetSource (this);
+                    channel.setSource (this);
                 }
             }
 

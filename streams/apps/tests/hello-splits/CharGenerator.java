@@ -12,18 +12,15 @@ public class CharGenerator extends Filter
     // the string to output
     private String message;
 
-    public void InitIO ()
-    {
-        output = new Channel (Character.TYPE);
-    }
+    Channel output = new Channel (Character.TYPE, 1);
 
-    public void InitCount ()
+    public void initIO ()
     {
-        outCount = 1;
+        streamOutput = output;
     }
 
     // <message> is string to output, one char at a time
-    public void Init(String message)
+    public void init(String message)
     {
         // init counter
         i = 0;
@@ -31,14 +28,14 @@ public class CharGenerator extends Filter
         this.message = message;
     }
 
-    public void Work()
+    public void work()
     {
-        output.PushChar(message.charAt(i));
+        streamOutput.pushChar(message.charAt(i));
         i++;
         if (message.length () == i)
         {
             i = 0;
-            output.PushChar ('\n');
+            streamOutput.pushChar ('\n');
         }
     }
 

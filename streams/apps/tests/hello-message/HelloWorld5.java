@@ -2,7 +2,7 @@
 
   Hello World Program #5:
 
-  Runs in parallel with one of the previous HelloWorld programs, then
+  runs in parallel with one of the previous HelloWorld programs, then
   switches to a different one to run in parallel with once it has
   finished.
 
@@ -18,7 +18,7 @@ public class HelloWorld5 extends SplitJoin {
 
     // presumably some main function invokes the stream
     public static void main(String args[]) {
-	new HelloWorld5(1).Run();
+	new HelloWorld5(1).run();
     }
 
     // if init with no arguments, then init with random 

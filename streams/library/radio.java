@@ -2,9 +2,11 @@ import streamit.*;
 
 class RandomSource extends Filter
 {
+    Channel output = new Channel (Float.TYPE);
+
     public void InitIO ()
     {
-        output = new Channel (Float.TYPE);
+        streamOutput = output;
     }
 
     public void InitCount ()
@@ -32,11 +34,14 @@ class Butterfly extends Stream {
          public void Init() {
             SetSplitter(WEIGHTED_ROUND_ROBIN(N, N));
             Add(new Filter() {
+                Channel input = new Channel(Float.TYPE);
+                Channel output = new Channel(Float.TYPE);
                 public void InitIO ()
                 {
-                    input = new Channel(Float.TYPE);
-                    output = new Channel(Float.TYPE);
+                    streamInput = input;
+                    streamOutput = output;
                 }
+
                 public void InitCount ()
                 {
                     inCount = 1;
@@ -66,10 +71,12 @@ class Butterfly extends Stream {
          public void Init() {
             SetSplitter(DUPLICATE ());
             Add(new Filter() {
+                Channel input = new Channel(Float.TYPE);
+                Channel output = new Channel(Float.TYPE);
                 public void InitIO ()
                 {
-                   input = new Channel(Float.TYPE);
-                   output = new Channel(Float.TYPE);
+                    streamInput = input;
+                    streamOutput = output;
                 }
                 public void InitCount ()
                 {
@@ -82,10 +89,12 @@ class Butterfly extends Stream {
                }
             });
             Add(new Filter() {
+                Channel input = new Channel(Float.TYPE);
+                Channel output = new Channel(Float.TYPE);
                 public void InitIO ()
                 {
-                   input = new Channel(Float.TYPE);
-                   output = new Channel(Float.TYPE);
+                    streamInput = input;
+                    streamOutput = output;
                 }
                 public void InitCount ()
                 {
@@ -130,10 +139,12 @@ class FIR extends Filter {
     {
         super (N);
     }
+    Channel input = new Channel(Float.TYPE);
+    Channel output = new Channel(Float.TYPE);
     public void InitIO ()
     {
-       input = new Channel(Float.TYPE);
-       output = new Channel(Float.TYPE);
+        streamInput = input;
+        streamOutput = output;
     }
     public void InitCount ()
     {
@@ -168,10 +179,12 @@ class Booster extends Stream {
 }
 
 class RFtoIF extends Filter {
+    Channel input = new Channel(Float.TYPE);
+    Channel output = new Channel(Float.TYPE);
     public void InitIO ()
     {
-       input = new Channel(Float.TYPE);
-       output = new Channel(Float.TYPE);
+        streamInput = input;
+        streamOutput = output;
     }
     public void InitCount ()
     {
@@ -212,11 +225,13 @@ class CheckFreqHop extends SplitJoin {
          if ((i==2)||(i==4)) {
             for (int j=0; j<2; j++) {
                Add(new Filter() {
-                   public void InitIO ()
-                   {
-                      input = new Channel(Float.TYPE);
-                      output = new Channel(Float.TYPE);
-                   }
+                    Channel input = new Channel(Float.TYPE);
+                    Channel output = new Channel(Float.TYPE);
+                    public void InitIO ()
+                    {
+                        streamInput = input;
+                        streamOutput = output;
+                    }
                     public void InitCount ()
                     {
                         inCount = 1;
@@ -236,10 +251,12 @@ class CheckFreqHop extends SplitJoin {
 }
 
 class CheckQuality extends Filter {
+    Channel input = new Channel(Float.TYPE);
+    Channel output = new Channel(Float.TYPE);
     public void InitIO ()
     {
-       input = new Channel(Float.TYPE);
-       output = new Channel(Float.TYPE);
+        streamInput = input;
+        streamOutput = output;
     }
     public void InitCount ()
     {
@@ -272,9 +289,10 @@ class CheckQuality extends Filter {
 
 class FloatPrinter extends Filter
 {
+    Channel input = new Channel(Float.TYPE);
     public void InitIO ()
     {
-        input = new Channel(Float.TYPE);
+        streamInput = input;
     }
 
     public void InitCount ()
@@ -313,7 +331,7 @@ public class radio extends Stream
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-        new radio().Run();
+        new radio().run();
     }
 
     // this is the defining part of the stream

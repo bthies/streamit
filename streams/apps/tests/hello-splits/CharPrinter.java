@@ -2,20 +2,15 @@ import streamit.*;
 
 public class CharPrinter extends Filter
 {
-    public void InitIO ()
+    public Channel input = new Channel (Character.TYPE, 1);
+    public void initIO ()
     {
-        input = new Channel(Character.TYPE);
+        streamInput = input;
     }
 
-    public void InitCount ()
+    public void work()
     {
-        inCount = 1;
-        outCount = 0;
-    }
-
-    public void Work()
-    {
-           System.out.print(input.PopChar());
+           System.out.print(streamInput.popChar());
     }
 
 }

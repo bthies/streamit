@@ -7,43 +7,38 @@ public class ChannelConnectFilter extends Filter
     {
         super ();
         type = ioType;
-        InitIO ();
+        initIO ();
     }
 
     public ChannelConnectFilter () { super (); }
 
-    public void InitIO ()
+    public void initIO ()
     {
         if (type != null)
         {
-            input = new Channel (type);
-            output = new Channel (type);
+            streamInput = new Channel (type);
+            streamOutput = new Channel (type);
         }
     }
 
-    public void Init () { }
+    public void init () { }
 
-    public void InitCount ()
+    public void work()
     {
-        inCount = outCount = 1;
+        passOneData (streamInput, streamOutput);
     }
 
-    public void Work()
+    void useChannels (Channel in, Channel out)
     {
-        PassOneData (input, output);
-    }
-
-    void UseChannels (Channel in, Channel out)
-    {
-        ASSERT (input == null && output == null);
+        ASSERT (streamInput == null && streamOutput == null);
         ASSERT (in != null && out != null);
         ASSERT (in != out);
-        ASSERT (out.GetType ().getName ().equals (in.GetType ().getName ()));
+        ASSERT (out.getType ().getName ().equals (in.getType ().getName ()));
 
-        input = in;
-        output = out;
+        streamInput = in;
+        streamOutput = out;
 
-        input.SetSink (this);
-        output.SetSource (this);
+        streamInput.setSink (this);
+        streamOutput.setSource (this);
     }
 }

@@ -20,53 +20,53 @@ public class FeedbackLoop extends Stream
     // stream position between items that arrive to joiner at same time,
     // assuming that all blocks in loop are 1-to-1 (otherwise we need to
     // work at defining exactly what it means).
-    public void SetDelay(int delay)
+    public void setDelay(int delay)
     {
         this.delay = delay;
     }
 
     // specifies the header
-    public void SetJoiner(SplitJoin.SplitJoinType type)
+    public void setJoiner(SplitJoin.SplitJoinType type)
     {
         ASSERT (joiner == null && type != null);
-        joiner = type.GetJoiner ();
+        joiner = type.getJoiner ();
     }
 
     // specifies the body of the feedback loop
-    public void SetBody (Stream body)
+    public void setBody (Stream body)
     {
         ASSERT (this.body == null && body != null);
         this.body = body;
     }
 
     // specifies the splitter
-    public void SetSplitter (SplitJoin.SplitJoinType type)
+    public void setSplitter (SplitJoin.SplitJoinType type)
     {
         ASSERT (splitter == null && type != null);
-        splitter = type.GetSplitter ();
+        splitter = type.getSplitter ();
     }
 
     // specifies the feedback path stream
-    public void SetLoop (Stream loop)
+    public void setLoop (Stream loop)
     {
         ASSERT (this.loop == null && loop != null);
         this.loop = loop;
     }
 
     // initialize the loop - push index-th element into the feedback loop channel
-    public void InitPath (int index, Channel path)
+    public void initPath (int index, Channel path)
     {
         ASSERT (false);
     }
 
     // not used here!
-    public void Add(Stream s)
+    public void add(Stream s)
     {
         ASSERT (false);
     }
 
     // connect all the elements of this FeedbackLoop
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         // make sure that I have the minimal elements to construct this loop
         ASSERT (joiner);
@@ -75,22 +75,22 @@ public class FeedbackLoop extends Stream
 
         // okay, initialize the body and figure out the type of data
         // passed around this loop
-        body.SetupOperator();
-        Channel bodyInput = body.GetIOField ("input");
-        Channel bodyOutput = body.GetIOField ("output");
+        body.setupOperator();
+        Channel bodyInput = body.getIOField ("streamInput");
+        Channel bodyOutput = body.getIOField ("streamOutput");
         ASSERT (bodyInput);
         ASSERT (bodyOutput);
-        ASSERT (bodyOutput.GetType ().getName ().equals (bodyInput.GetType ().getName ()));
+        ASSERT (bodyOutput.getType ().getName ().equals (bodyInput.getType ().getName ()));
 
         // if I don't have a feedback path, just give myself an identity body
         // and initialize whatever the feedback path is
-        if (loop == null) loop = new Identity (bodyOutput.GetType ());
-        loop.SetupOperator ();
-        Channel loopInput = loop.GetIOField ("input");
-        Channel loopOutput = loop.GetIOField ("output");
+        if (loop == null) loop = new Identity (bodyOutput.getType ());
+        loop.setupOperator ();
+        Channel loopInput = loop.getIOField ("streamInput");
+        Channel loopOutput = loop.getIOField ("streamOutput");
         ASSERT (loopInput);
         ASSERT (loopOutput);
-        ASSERT (loopOutput.GetType ().getName ().equals (loopInput.GetType ().getName ()));
+        ASSERT (loopOutput.getType ().getName ().equals (loopInput.getType ().getName ()));
 
         // create some extra Identities and give them to the split
         // and the join so they have a Filter for every input/output
@@ -98,59 +98,59 @@ public class FeedbackLoop extends Stream
         {
             // the joiner:
             Channel channelIn = null;
-            if (joiner.IsInputUsed (0))
+            if (joiner.isInputUsed (0))
             {
-                Filter joinerIn = new Identity (bodyInput.GetType ());
-                joinerIn.SetupOperator ();
-                joiner.Add (joinerIn);
-                channelIn = joinerIn.GetIOField ("input");
+                Filter joinerIn = new Identity (bodyInput.getType ());
+                joinerIn.setupOperator ();
+                joiner.add (joinerIn);
+                channelIn = joinerIn.getIOField ("streamInput");
             } else {
-                joiner.Add (null);
+                joiner.add (null);
             }
 
-            joiner.Add (loop);
-            joiner.SetupOperator ();
+            joiner.add (loop);
+            joiner.setupOperator ();
 
             {
                 ChannelConnectFilter connect = new ChannelConnectFilter ();
-                Channel in = joiner.GetIOField ("output", 0);
-                Channel out = body.GetIOField ("input");
-                connect.UseChannels (in, out);
+                Channel in = joiner.getIOField ("streamOutput", 0);
+                Channel out = body.getIOField ("streamInput");
+                connect.useChannels (in, out);
             }
 
             // the splitter:
             Channel channelOut = null;
-            if (splitter.IsOutputUsed (0))
+            if (splitter.isOutputUsed (0))
             {
-                Filter splitterOut = new Identity (bodyOutput.GetType ());
-                splitterOut.SetupOperator ();
-                splitter.Add (splitterOut);
-                channelOut = splitterOut.GetIOField ("output");
+                Filter splitterOut = new Identity (bodyOutput.getType ());
+                splitterOut.setupOperator ();
+                splitter.add (splitterOut);
+                channelOut = splitterOut.getIOField ("streamOutput");
             } else {
-                splitter.Add (null);
+                splitter.add (null);
             }
-            splitter.Add (loop);
-            splitter.SetupOperator ();
+            splitter.add (loop);
+            splitter.setupOperator ();
 
             {
                 ChannelConnectFilter connect = new ChannelConnectFilter ();
-                Channel in = body.GetIOField ("output");
-                Channel out = splitter.GetIOField ("input", 0);
-                connect.UseChannels (in, out);
+                Channel in = body.getIOField ("streamOutput");
+                Channel out = splitter.getIOField ("streamInput", 0);
+                connect.useChannels (in, out);
             }
 
             // copy the input/output from the identities to the input/output
             // fields of the feedback loop
-            input = channelIn;
-            output = channelOut;
+            streamInput = channelIn;
+            streamOutput = channelOut;
         }
 
         // now fill up the feedback path with precomputed data:
         {
-            Channel feedbackChannel = loop.GetIOField ("output");
+            Channel feedbackChannel = loop.getIOField ("streamOutput");
             for (int index = 0; index < delay; index++)
             {
-                InitPath (index, feedbackChannel);
+                initPath (index, feedbackChannel);
             }
         }
     }

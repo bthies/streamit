@@ -6,9 +6,9 @@ import streamit.scheduler.SchedSplitType;
 
 public class DuplicateSplitter extends Splitter
 {
-    public void Work ()
+    public void work ()
     {
-        DuplicateOneData (input, output);
+        duplicateOneData (input, output);
     }
 
     // ----------------------------------------------------------------
@@ -31,7 +31,7 @@ public class DuplicateSplitter extends Splitter
                 Stream filter = (Stream) filterIter.next ();
                 ASSERT (filter);
 
-                if (filter.GetIOField ("input") != null) weights.add (one);
+                if (filter.getIOField ("streamInput") != null) weights.add (one);
                 else weights.add (zero);
             }
         }

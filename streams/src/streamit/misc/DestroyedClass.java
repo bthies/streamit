@@ -11,8 +11,8 @@ import java.lang.reflect.*;
 
 public class DestroyedClass extends AssertedClass
 {
-    private boolean destroyed = false;
-    private static Class destroyedClass;
+    private boolean Destroyed = false;
+    private static Class DestroyedClass;
     
     
     // The class initializer initializes thisClass
@@ -20,7 +20,7 @@ public class DestroyedClass extends AssertedClass
     static {
         try
         {
-            destroyedClass = Class.forName ("streamit.DestroyedClass");
+            DestroyedClass = Class.forName ("streamit.DestroyedClass");
         }
         catch (ClassNotFoundException error)
         {
@@ -30,34 +30,34 @@ public class DestroyedClass extends AssertedClass
         }
     }
         
-    // The finalizer checks that the class has already been destroyed,
-    // and if not, it destroys it
+    // The finalizer checks that the class has already been Destroyed,
+    // and if not, it Destroys it
     protected void finalize () 
     {
-        if (!destroyed) Destroy ();
-        destroyed = true;
+        if (!Destroyed) Destroy ();
+        Destroyed = true;
     }
 
-    // Delete member functions will be used
+    // DELETE member functions will be used
     // to provide the actual destructors
-    void Delete () { }
+    void DELETE () { }
     
     void Destroy ()
     {
-        // make sure the object hasn't been destroyed yet
-        ASSERT (!destroyed);
-        destroyed = true;
+        // make sure the object hasn't been Destroyed yet
+        ASSERT (!Destroyed);
+        Destroyed = true;
         
         Class objectClass = this.getClass ();
         ASSERT (objectClass != null);
         
-        for ( ; objectClass != destroyedClass ; objectClass = objectClass.getSuperclass ())
+        for ( ; objectClass != DestroyedClass ; objectClass = objectClass.getSuperclass ())
         {
             Method deleteMethod = null;
             
             try
             {
-                deleteMethod = objectClass.getDeclaredMethod ("Delete", null);
+                deleteMethod = objectClass.getDeclaredMethod ("DELETE", null);
                 ASSERT (deleteMethod != null);
                 
                 deleteMethod.invoke (this, null);

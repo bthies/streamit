@@ -13,55 +13,82 @@ public class Channel extends DestroyedClass
 
     LinkedList queue;
 
+    Integer popPushCount = null;
+    Integer peekCount = null;
+
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
-    public Channel(Class channelType)
+    void setupChannel (Class channelType)
     {
         ASSERT (channelType != null);
         type = channelType;
         queue = new LinkedList ();
+    }
+    public Channel(Class channelType)
+    {
+        setupChannel (channelType);
+    }
+
+    public Channel (Class channelType, int popPush)
+    {
+        setupChannel (channelType);
+
+        // store the popPush
+        popPushCount = new Integer (popPush);
+    }
+
+    public Channel (Class channelType, int pop, int peek)
+    {
+        setupChannel (channelType);
+
+        // store the popPush
+        popPushCount = new Integer (pop);
+        peekCount = new Integer (peek);
     }
 
     public Channel (Channel original)
     {
         ASSERT (original != null);
 
-        type = original.GetType ();
+        type = original.getType ();
         queue = new LinkedList ();
+
+        // copy pop/push/peek values
+        ASSERT (false);
     }
 
-    void EnsureData (int amount)
+    void ensureData (int amount)
     {
         while (queue.size () < amount)
         {
             ASSERT (source != null);
 
-            source.Work ();
+            source.work ();
         }
     }
 
-    void EnsureData ()
+    void ensureData ()
     {
-        EnsureData (1);
+        ensureData (1);
     }
 
-    private void Enqueue (Object o)
+    private void enqueue (Object o)
     {
         queue.addLast (o);
 
         // overflow at 50 chars in the queue
         if (queue.size () > 100 && !declaredFull)
         {
-                source.AddFullChannel (this);
+                source.addFullChannel (this);
             declaredFull = true;
         }
     }
 
-    private Object Dequeue ()
+    private Object dequeue ()
     {
         if (queue.size () < 50 && declaredFull)
         {
-                source.RemoveFullChannel (this);
+                source.removeFullChannel (this);
             declaredFull = false;
         }
 
@@ -72,72 +99,72 @@ public class Channel extends DestroyedClass
     // PUSH OPERATIONS ----------------------------------------------
 
     // push something of type <type>
-    public void Push(Object o)
+    public void push(Object o)
     {
         ASSERT (o.getClass () == type);
 
-        Enqueue (o);
+        enqueue (o);
     }
 
     // push an int
-    public void PushInt(int i)
+    public void pushInt(int i)
     {
         ASSERT (type == Integer.TYPE);
 
-        Enqueue (new Integer (i));
+        enqueue (new Integer (i));
     }
 
     // push a char
-    public void PushChar(char c)
+    public void pushChar(char c)
     {
         ASSERT (type == Character.TYPE);
 
-        Enqueue (new Character  (c));
+        enqueue (new Character  (c));
     }
 
     // push a double
-    public void PushDouble(double d)
+    public void pushDouble(double d)
     {
         ASSERT (type == Double.TYPE);
 
-        Enqueue (new Double (d));
+        enqueue (new Double (d));
     }
 
     // push a float
-    public void PushFloat(float d)
+    public void pushFloat(float d)
     {
         ASSERT (type == Float.TYPE);
 
-        Enqueue (new Float (d));
+        enqueue (new Float (d));
     }
 
     // push a String
-    public void PushString(String str)
+    public void pushString(String str)
     {
-        Push (str);
+        push (str);
     }
 
     // POP OPERATIONS ----------------------------------------------
 
     // pop something of type <type>
-    public Object Pop()
+    public Object pop()
     {
-        EnsureData ();
+        ensureData ();
 
         Object data;
-        data = Dequeue ();
+        data = dequeue ();
         ASSERT (data != null);
 
         return data;
     }
 
     // pop an int
-    public int PopInt()
+    public int popInt()
     {
         ASSERT (type == Integer.TYPE);
 
         Integer data;
-        data = (Integer) Pop ();
+        data = (Integer) pop ();
         ASSERT (data != null);
 
         return data.intValue ();
@@ -145,36 +172,36 @@ public class Channel extends DestroyedClass
 
 
     // pop a char
-    public char PopChar()
+    public char popChar()
     {
         ASSERT (type == Character.TYPE);
 
         Character c;
-        c = (Character) Pop ();
+        c = (Character) pop ();
         ASSERT (c != null);
 
         return c.charValue ();
     }
 
     // pop a double
-    public double PopDouble()
+    public double popDouble()
     {
         ASSERT (type == Double.TYPE);
 
         Double data;
-        data = (Double) Pop ();
+        data = (Double) pop ();
         ASSERT (data != null);
 
         return data.doubleValue ();
     }
 
     // pop a float
-    public float PopFloat()
+    public float popFloat()
     {
         ASSERT (type == Float.TYPE);
 
         Float data;
-        data = (Float) Pop ();
+        data = (Float) pop ();
         ASSERT (data != null);
 
         return data.floatValue ();
@@ -182,9 +209,9 @@ public class Channel extends DestroyedClass
 
 
     // pop a String
-    public String PopString()
+    public String popString()
     {
-        String data = (String) Pop ();;
+        String data = (String) pop ();;
         ASSERT (data != null);
 
         return data;
@@ -193,9 +220,9 @@ public class Channel extends DestroyedClass
     // PEEK OPERATIONS ----------------------------------------------
 
     // peek at something of type <type>
-    public Object Peek(int index)
+    public Object peek(int index)
     {
-        EnsureData (index + 1);
+        ensureData (index + 1);
 
         Object data;
         data = queue.get (index);
@@ -205,76 +232,118 @@ public class Channel extends DestroyedClass
     }
 
     // peek at an int
-    public int PeekInt(int index)
+    public int peekInt(int index)
     {
         ASSERT (type == Integer.TYPE);
 
         Integer data;
-        data = (Integer) Peek (index);
+        data = (Integer) peek (index);
         ASSERT (data != null);
 
         return data.intValue ();
     }
 
     // peek at a char
-    public char PeekChar(int index)
+    public char peekChar(int index)
     {
         ASSERT (type == Character.TYPE);
 
         Character data;
-        data = (Character) Peek (index);
+        data = (Character) peek (index);
         ASSERT (data != null);
 
         return data.charValue ();
     }
 
     // peek at a double
-    public double PeekDouble(int index)
+    public double peekDouble(int index)
     {
         ASSERT (type == Double.TYPE);
 
         Double data;
-        data = (Double) Peek (index);
+        data = (Double) peek (index);
         ASSERT (data != null);
 
         return data.doubleValue ();
     }
 
     // peek at a float
-    public double PeekFloat(int index)
+    public double peekFloat(int index)
     {
         ASSERT (type == Float.TYPE);
 
         Float data;
-        data = (Float) Peek (index);
+        data = (Float) peek (index);
         ASSERT (data != null);
 
         return data.floatValue ();
     }
 
     // peek at a String
-    public String PeekString(int index)
+    public String peekString(int index)
     {
         String data;
-        data = (String) Peek (index);
+        data = (String) peek (index);
         ASSERT (data != null);
 
         return data;
+    }
+
+    /**
+    * Get the number amount of data popped from this channel
+    * on every iteration
+    */
+
+    public int getPopCount ()
+    {
+        ASSERT (popPushCount);
+
+        return popPushCount.intValue ();
+    }
+
+    /**
+    * Get the number amount of data peeked from this channel
+    * on every iteration.
+    * If the peek amount hasn't been set, make it the pop count
+    * If the pop count is smaller than the peek amount, assert
+    */
+
+    public int getPeekCount ()
+    {
+        if (peekCount != null)
+        {
+            ASSERT (peekCount.intValue () >= popPushCount.intValue ());
+            return peekCount.intValue ();
+        } else {
+            return getPopCount ();
+        }
+    }
+
+    /**
+    * Get the number amount of data pushed from this channel
+    * on every iteration
+    */
+
+    public int getPushCount ()
+    {
+        ASSERT (popPushCount);
+
+        return popPushCount.intValue ();
     }
 
     // ------------------------------------------------------------------
     //                  syntax checking functions
     // ------------------------------------------------------------------
 
-    Class GetType () { return type; }
+    Class getType () { return type; }
 
     // ------------------------------------------------------------------
     //                  graph keeping functions
     // ------------------------------------------------------------------
 
-    Operator GetSource () { return source; }
-    Operator GetSink () { return sink; }
+    Operator getSource () { return source; }
+    Operator getSink () { return sink; }
 
-    void SetSource (Operator _source) { source = _source; }
-    void SetSink (Operator _sink) { sink = _sink; }
+    void setSource (Operator _source) { source = _source; }
+    void setSink (Operator _sink) { sink = _sink; }
 }

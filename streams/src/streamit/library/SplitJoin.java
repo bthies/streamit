@@ -25,8 +25,8 @@ public class SplitJoin extends Stream
         super(n);
     }
 
-    // initializing IO will be handled by the Add function
-    public void InitIO () { }
+    // initializing IO will be handled by the add function
+    public void initIO () { }
 
     // type of a split or a join:
     public static class SplitJoinType
@@ -57,14 +57,14 @@ public class SplitJoin extends Stream
             type = myType;
         }
 
-        SplitJoinType AddWeight (int weight)
+        SplitJoinType addWeight (int weight)
         {
             ASSERT (weights != null);
             weights.add (new Integer (weight));
             return this;
         }
 
-        Splitter GetSplitter ()
+        Splitter getSplitter ()
         {
             switch (type)
             {
@@ -74,7 +74,7 @@ public class SplitJoin extends Stream
                     WeightedRoundRobinSplitter splitter = new WeightedRoundRobinSplitter ();
                     while (!weights.isEmpty ())
                     {
-                        splitter.AddWeight ((Integer)weights.remove (0));
+                        splitter.addWeight ((Integer)weights.remove (0));
                     }
                     return splitter;
                 case 3:
@@ -85,7 +85,7 @@ public class SplitJoin extends Stream
             return null;
         }
 
-        Joiner GetJoiner ()
+        Joiner getJoiner ()
         {
             switch (type)
             {
@@ -95,7 +95,7 @@ public class SplitJoin extends Stream
                     WeightedRoundRobinJoiner joiner = new WeightedRoundRobinJoiner ();
                     while (!weights.isEmpty ())
                     {
-                        joiner.AddWeight ((Integer)weights.remove (0));
+                        joiner.addWeight ((Integer)weights.remove (0));
                     }
                     return joiner;
                 case 3: // there are no duplicate joiners!
@@ -108,27 +108,27 @@ public class SplitJoin extends Stream
 
     public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1)
     {
-        return new SplitJoinType (2).AddWeight (w1);
+        return new SplitJoinType (2).addWeight (w1);
     }
 
     public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2)
     {
-        return new SplitJoinType (2).AddWeight (w1).AddWeight (w2);
+        return new SplitJoinType (2).addWeight (w1).addWeight (w2);
     }
 
     public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3)
     {
-        return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3);
+        return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3);
     }
 
     public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4)
     {
-        return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3).AddWeight (w4);
+        return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3).addWeight (w4);
     }
 
     public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7)
     {
-        return new SplitJoinType (2).AddWeight (w1).AddWeight (w2).AddWeight (w3).AddWeight (w4).AddWeight (w5).AddWeight (w6).AddWeight (w7);
+        return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3).addWeight (w4).addWeight (w5).addWeight (w6).addWeight (w7);
     }
 
     public static SplitJoinType ROUND_ROBIN ()
@@ -142,20 +142,20 @@ public class SplitJoin extends Stream
     }
 
     // specify the splitter
-    public void SetSplitter(SplitJoinType type)
+    public void setSplitter(SplitJoinType type)
     {
         ASSERT (splitter == null && type != null);
-        splitter = type.GetSplitter ();
+        splitter = type.getSplitter ();
 
         splitType = type;
     }
 
     // specify the joiner
     // must also add all the appropriate outputs to the joiner!
-    public void SetJoiner(SplitJoinType type)
+    public void setJoiner(SplitJoinType type)
     {
         ASSERT (joiner == null && type != null);
-        joiner = type.GetJoiner ();
+        joiner = type.getJoiner ();
 
         ListIterator iter;
         iter = childrenStreams.listIterator ();
@@ -164,21 +164,21 @@ public class SplitJoin extends Stream
             Stream s = (Stream) iter.next ();
             ASSERT (s != null);
 
-            joiner.Add (s);
+            joiner.add (s);
         }
 
         joinType = type;
     }
 
     // add a stream to the parallel section between the splitter and the joiner
-    public void Add(Stream s)
+    public void add(Stream s)
     {
         ASSERT (joiner == null);
 
         // add the stream to the Split
         if (splitter != null)
         {
-            splitter.Add (s);
+            splitter.add (s);
         }
 
         // save the stream to add to the Join
@@ -189,7 +189,7 @@ public class SplitJoin extends Stream
         childrenStreams.add (s);
     }
 
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         // setup all children of this splitjoin
         {
@@ -200,22 +200,22 @@ public class SplitJoin extends Stream
                 Stream s = (Stream) iter.next ();
                 ASSERT (s != null);
 
-                s.SetupOperator ();
+                s.setupOperator ();
             }
         }
         // connect the SplitJoin with the Split and the Join
         if (splitter != null)
         {
-            splitter.SetupOperator ();
-            input = splitter.GetIOField ("input", 0);
-            ASSERT (input != null);
+            splitter.setupOperator ();
+            streamInput = splitter.getIOField ("streamInput", 0);
+            ASSERT (streamInput != null);
         }
 
         if (joiner != null)
         {
-            joiner.SetupOperator ();
-            output = joiner.GetIOField ("output", 0);
-            ASSERT (output != null);
+            joiner.setupOperator ();
+            streamOutput = joiner.getIOField ("streamOutput", 0);
+            ASSERT (streamOutput != null);
         }
     }
 

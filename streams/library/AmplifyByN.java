@@ -2,28 +2,29 @@ import streamit.*;
 
 class AmplifyByN extends Filter
 {
-    int N;
+    int n;
     AmplifyByN (int n) { super (n); }
-    public void Init(int Nval)
+    Channel input = new Channel(Integer.TYPE, 1);
+    Channel output = new Channel (Integer.TYPE, 1);
+
+    public void initIO ()
     {
-        input = new Channel (Integer.TYPE);
-        output = new Channel (Integer.TYPE);
-        N = Nval;
+        streamInput = input;
+        streamOutput = output;
     }
 
-    public void InitCount ()
+    public void init (int nVal)
     {
-        inCount = 1;
-        outCount = 1;
+        n = nVal;
     }
 
-    public void Work()
+    public void work()
     {
-        output.PushInt(input.PopInt() * N);
+        output.pushInt(input.popInt() * n);
     }
 
-    void SetN(int Nval)
+    void setN(int nVal)
     {
-        N = Nval;
+        n = nVal;
     }
 }

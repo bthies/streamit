@@ -12,63 +12,51 @@ public class Operator extends DestroyedClass
 
     public Operator()
     {
-        OperatorInit ();
         initParams = new ParameterContainer ("");
     }
 
     public Operator(int n)
     {
-        OperatorInit ();
-        initParams = new ParameterContainer ("int").Add ("n", n);
+        initParams = new ParameterContainer ("int").add ("n", n);
     }
 
     public Operator(float f)
     {
-        OperatorInit ();
-        initParams = new ParameterContainer ("float").Add ("f", f);
+        initParams = new ParameterContainer ("float").add ("f", f);
     }
 
     public Operator(String str)
     {
-        OperatorInit ();
-        initParams = new ParameterContainer ("String").Add ("str", str);
+        initParams = new ParameterContainer ("String").add ("str", str);
     }
 
     public Operator(ParameterContainer params)
     {
-        OperatorInit ();
-        initParams = new ParameterContainer ("ParameterContainer").Add ("params", params);
+        initParams = new ParameterContainer ("ParameterContainer").add ("params", params);
     }
 
     // INIT FUNCTIONS ---------------------------------------------------------------------
 
     // initializatoin functions, to be over-ridden
-    public void Init() { ASSERT (false); }
+    public void init() { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(int n) { ASSERT (false); }
+    public void init(int n) { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(float f) { ASSERT (false); }
+    public void init(float f) { ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(String str) {ASSERT (false); }
+    public void init(String str) {ASSERT (false); }
 
     // initializatoin functions, to be over-ridden
-    public void Init(ParameterContainer params) {ASSERT (false); }
+    public void init(ParameterContainer params) {ASSERT (false); }
 
-    // general initialization function for Stream class only
-
-    private void OperatorInit ()
-    {
-        InitIO ();
-    }
-
-    // InitIO initializes all input/output channels
+    // initIO initializes all input/output channels
     // as required
-    public void InitIO ()
+    public void initIO ()
     {
-        // You must provide an InitIO function
+        // You must provide an initIO function
         // to initialize
         ASSERT (false);
     }
@@ -91,17 +79,17 @@ public class Operator extends DestroyedClass
         fullChannels = new HashSet ();
     }
 
-    void AddSink ()
+    void addSink ()
     {
         allSinks.add (this);
     }
 
-    void AddFilter ()
+    void addFilter ()
     {
         allFilters.add (this);
     }
 
-    void RunSinks ()
+    void runSinks ()
     {
         ListIterator iter;
 
@@ -121,12 +109,12 @@ public class Operator extends DestroyedClass
             int i;
             for (i = 0; i < 10; i++)
             {
-                sink.Work ();
+                sink.work ();
             }
         }
     }
 
-    void DrainChannels ()
+    void drainChannels ()
     {
         while (!fullChannels.isEmpty ())
         {
@@ -137,108 +125,108 @@ public class Operator extends DestroyedClass
             Channel ch = (Channel) fullChannel.next ();
             ASSERT (ch != null);
 
-            ch.GetSink ().Work ();
+            ch.getSink ().work ();
              }
     }
 
 
-    void AddFullChannel (Channel channel)
+    void addFullChannel (Channel channel)
     {
         fullChannels.add (channel);
     }
 
-    void RemoveFullChannel (Channel channel)
+    void removeFullChannel (Channel channel)
         {
                 fullChannels.remove (channel);
         }
 
-    public static void PassOneData (Channel from, Channel to)
+    public static void passOneData (Channel from, Channel to)
     {
-        Class type = from.GetType ();
-        ASSERT (type == to.GetType ());
+        Class type = from.getType ();
+        ASSERT (type == to.getType ());
 
         if (type == Integer.TYPE)
         {
-            to.PushInt (from.PopInt ());
+            to.pushInt (from.popInt ());
         } else
         if (type == Character.TYPE)
         {
-            to.PushChar (from.PopChar ());
+            to.pushChar (from.popChar ());
         } else
         if (type == Float.TYPE)
         {
-            to.PushFloat (from.PopFloat ());
+            to.pushFloat (from.popFloat ());
         } else
         if (type == Double.TYPE)
         {
-            to.PushDouble (from.PopDouble ());
+            to.pushDouble (from.popDouble ());
         } else {
-            to.Push (from.Pop ());
+            to.push (from.pop ());
         }
     }
 
-    public static void DuplicateOneData (Channel from, Channel [] to)
+    public static void duplicateOneData (Channel from, Channel [] to)
     {
-        Class type = from.GetType ();
-        ASSERT (to != null && type == to[0].GetType ());
+        Class type = from.getType ();
+        ASSERT (to != null && type == to[0].getType ());
 
         if (type == Integer.TYPE)
         {
-            int data = from.PopInt ();
+            int data = from.popInt ();
 
             int indx;
             for (indx = to.length - 1; indx >= 0; indx--)
             {
-                to [indx] .PushInt (data);
+                to [indx] .pushInt (data);
             }
         } else
         if (type == Character.TYPE)
         {
-            char data = from.PopChar ();
+            char data = from.popChar ();
 
             int indx;
             for (indx = to.length - 1; indx >= 0; indx--)
             {
-                to [indx] .PushChar (data);
+                to [indx] .pushChar (data);
             }
         } else
         if (type == Float.TYPE)
         {
-            float data = from.PopFloat ();
+            float data = from.popFloat ();
 
             int indx;
             for (indx = to.length - 1; indx >= 0; indx--)
             {
-                to [indx] .PushFloat (data);
+                to [indx] .pushFloat (data);
             }
         } else
         if (type == Double.TYPE)
         {
-            double data = from.PopDouble ();
+            double data = from.popDouble ();
 
             int indx;
             for (indx = to.length - 1; indx >= 0; indx--)
             {
-                to [indx] .PushDouble (data);
+                to [indx] .pushDouble (data);
             }
         } else {
-            Object data = from.Pop ();
+            Object data = from.pop ();
 
             int indx;
             for (indx = to.length - 1; indx >= 0; indx--)
             {
-                to [indx] .Push (data);
+                to [indx] .push (data);
             }
         }
     }
 
     // send a message to a handler that returns <stub> within <delay>
     // units of my input/output (to be specified more clearly...)
-    public void SendMessage(MessageStub stub, int delay) {}
+    public void sendMessage(MessageStub stub, int delay) {}
 
     // send a message to a handler that returns <stub> at the earliest
     // convenient time.
-    public void SendMessage(MessageStub stub) {}
+    public void sendMessage(MessageStub stub) {}
 
     protected static class MessageStub
     {
@@ -247,27 +235,29 @@ public class Operator extends DestroyedClass
     }
 
     // a prototype work function
-    void Work () { }
+    void work () { }
 
     // this function will take care of all appropriate calls to init:
-    void SetupOperator ()
+    void setupOperator ()
     {
         // don't re-initialize
         if (initialized) return;
 
         ASSERT (initParams != null);
 
-        if (initParams.GetParamName ().equals("")) Init ();
-        if (initParams.GetParamName ().equals("int")) Init (initParams.GetIntParam ("n"));
-        if (initParams.GetParamName ().equals("float")) Init (initParams.GetFloatParam ("f"));
-        if (initParams.GetParamName ().equals("String")) Init (initParams.GetStringParam ("str"));
-        if (initParams.GetParamName ().equals("ParameterContainer")) Init ((ParameterContainer) initParams.GetObjParam ("params"));
+        initIO ();
 
-        ConnectGraph ();
+        if (initParams.getParamName ().equals("")) init ();
+        if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n"));
+        if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f"));
+        if (initParams.getParamName ().equals("String")) init (initParams.getStringParam ("str"));
+        if (initParams.getParamName ().equals("ParameterContainer")) init ((ParameterContainer) initParams.getObjParam ("params"));
+
+        connectGraph ();
         initialized = true;
     }
 
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         ASSERT (false);
     }
@@ -278,9 +268,9 @@ public class Operator extends DestroyedClass
 
     // get an IO field (input or output)
     // returns null if none present
-    Channel[] GetIOFields (String fieldName)
+    Channel[] getIOFields (String fieldName)
     {
-        ASSERT (fieldName == "input" || fieldName == "output");
+        ASSERT (fieldName == "streamInput" || fieldName == "streamOutput");
 
         Channel fieldsInstance [] = null;
 
@@ -318,13 +308,13 @@ public class Operator extends DestroyedClass
         return fieldsInstance;
     }
 
-    Channel GetIOField (String fieldName, int fieldIndex)
+    Channel getIOField (String fieldName, int fieldIndex)
     {
         Channel field = null;
 
         {
             Channel fieldInstance[];
-            fieldInstance = GetIOFields (fieldName);
+            fieldInstance = getIOFields (fieldName);
 
             if (fieldInstance != null)
             {
@@ -336,9 +326,9 @@ public class Operator extends DestroyedClass
         return field;
     }
 
-    void SetIOField (String fieldName, int fieldIndex, Channel newChannel)
+    void setIOField (String fieldName, int fieldIndex, Channel newChannel)
     {
-        ASSERT (fieldName == "input" || fieldName == "output");
+        ASSERT (fieldName == "streamInput" || fieldName == "streamOutput");
 
         Channel fieldsInstance [];
 

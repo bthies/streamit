@@ -1,33 +1,19 @@
 import streamit.*;
 
-class Test2
-{
-        public Test2 ()
-        {
-                Init ();
-        }
-        public void Init ()
-        {
-        }
-}
-
 class PrintInt extends Filter
 {
-    public void InitIO ()
+    Channel input = new Channel (Integer.TYPE, 1);
+    Channel output = new Channel (Integer.TYPE, 1);
+    public void initIO ()
     {
-        input = new Channel (Integer.TYPE);
-        output = new Channel (Integer.TYPE);
+        streamInput = input;
+        streamOutput = output;
     }
-    public void InitCount ()
+    public void work ()
     {
-        inCount = 1;
-        outCount = 1;
-    }
-    public void Work ()
-    {
-        int data = input.PopInt ();
+        int data = input.popInt ();
         System.out.println (data);
-        output.PushInt (data);
+        output.pushInt (data);
     }
 }
 
@@ -36,38 +22,35 @@ public class test extends FeedbackLoop
     static public void main (String [] t)
     {
         test x = new test ();
-        x.Run ();
+        x.run ();
     }
-    public void Init ()
+    public void init ()
     {
-        SetDelay (2);
-        SetJoiner (WEIGHTED_ROUND_ROBIN (0,1));
-        SetBody (new Filter ()
+        setDelay (2);
+        setJoiner (WEIGHTED_ROUND_ROBIN (0,1));
+        setBody (new Filter ()
+        {
+            Channel input = new Channel (Integer.TYPE);
+            Channel output = new Channel (Integer.TYPE);
+            public void initIO ()
             {
-                public void InitIO ()
-                {
-                    input = new Channel (Integer.TYPE);
-                    output = new Channel (Integer.TYPE);
-                }
+                streamInput = input;
+                streamOutput = output;
+            }
 
-                public void InitCount ()
-                {
-                    inCount = 1;
-                    outCount = 1;
-                }
-                public void Work ()
-                {
-                    output.PushInt (input.PeekInt (0) + input.PeekInt (1));
-                    input.PopInt ();
-                }
-            });
-        SetLoop (new PrintInt());
-        SetSplitter (WEIGHTED_ROUND_ROBIN (0, 1));
+            public void work ()
+            {
+                output.pushInt (input.peekInt (0) + input.peekInt (1));
+                input.popInt ();
+            }
+        });
+        setLoop (new PrintInt());
+        setSplitter (WEIGHTED_ROUND_ROBIN (0, 1));
     }
 
-    public void InitPath (int index, Channel path)
+    public void initPath (int index, Channel path)
     {
-        path.PushInt(index);
+        path.pushInt(index);
     }
 }
 

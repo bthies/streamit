@@ -25,54 +25,66 @@ public abstract class Filter extends Stream
         super(str);
     }
 
-    // Add was present in Operator, but is not defined in Filter anymore
-    public void Add(Stream s) { ASSERT (false); }
+    // add was present in Operator, but is not defined in Filter anymore
+    public void add(Stream s) { ASSERT (false); }
 
-    // ConnectGraph doesn't connect anything for a Filter,
+    // connectGraph doesn't connect anything for a Filter,
     // but it can register all sinks:
     // also make sure that any input/output point to the filter itself
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
-        Channel myInput = GetIOField ("input");
-        Channel myOutput = GetIOField ("output");
+        Channel myInput = getIOField ("streamInput");
+        Channel myOutput = getIOField ("streamOutput");
 
         if (myOutput != null)
         {
-            myOutput.SetSource (this);
+            myOutput.setSource (this);
         } else {
-            AddSink ();
+            addSink ();
         }
 
         if (myInput != null)
         {
-            myInput.SetSink (this);
+            myInput.setSink (this);
         }
 
-        AddFilter ();
+        addFilter ();
     }
 
-    public abstract void Work();
+    public abstract void work();
 
     // provide some empty functions to make writing filters a bit easier
-    public void Init () { }
+    public void init () { }
 
     // some constants necessary for calculating a steady flow:
-    public int inCount = 0, outCount = 0;
+    public int popCount = 0, pushCount = 0, peekCount = 0;
 
     // and the function that is supposed to initialize the constants above
-    public abstract void InitCount ();
+    final void initCount ()
+    {
+        if (streamInput != null)
+        {
+            popCount = streamInput.getPopCount ();
+            peekCount = streamInput.getPeekCount ();
+        }
+
+        if (streamOutput != null)
+        {
+            pushCount = streamOutput.getPushCount ();
+        }
+    }
 
     // construct a schedule - construct an appropriate filter schedule
     // and return it
     SchedStream constructSchedule ()
     {
-        InitCount ();
-        ASSERT (inCount >= 0 && outCount >= 0);
-        ASSERT (inCount > 0 || outCount > 0);
+        initCount ();
+        ASSERT (popCount >= 0 && pushCount >= 0);
+        ASSERT (popCount > 0 || pushCount > 0);
 
         SchedFilter self = new SchedFilter ();
-        self.setProduction (outCount);
-        self.setConsumption (inCount);
+        self.setProduction (pushCount);
+        self.setConsumption (popCount);
         return self;
     }
 }

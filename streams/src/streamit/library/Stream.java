@@ -8,17 +8,12 @@ import streamit.scheduler.*;
 public class Stream extends Operator
 {
 
-    // CONSTRUCTORS --------------------------------------------------------------------
-
-    // "input" and "output" MUST NOT BE INITIALIZED HERE or in the constructor!
-    // if they're initialized here or in the constructor, things break due
-    // to problem with order of initialization of data members and calling
-    // of constructors
-    public Channel input;
-    public Channel output;
+    public Channel streamInput = null;
+    public Channel streamOutput = null;
 
     LinkedList streamElements = new LinkedList ();
 
+    // CONSTRUCTORS --------------------------------------------------------------------
     public Stream ()
     {
         super ();
@@ -44,32 +39,32 @@ public class Stream extends Operator
         super (params);
     }
 
-    public void InitIO () { }
+    public void initIO () { }
 
     // RESET FUNCTIONS
 
-    public MessageStub Reset()
+    public MessageStub reset()
     {
         ASSERT (false);
         return MESSAGE_STUB;
     }
 
-    public MessageStub Reset(int n)
+    public MessageStub reset(int n)
     {
         ASSERT (false);
         return MESSAGE_STUB;
     }
 
-    public MessageStub Reset(String str)
+    public MessageStub reset(String str)
     {
         ASSERT (false);
         return MESSAGE_STUB;
     }
 
     // just a runtime hook to run the stream
-    public void Run()
+    public void run()
     {
-        SetupOperator ();
+        setupOperator ();
 
         // setup the scheduler
         {
@@ -80,14 +75,14 @@ public class Stream extends Operator
             scheduler = new Scheduler (stream);
         }
 
-        ASSERT (input == null);
-        ASSERT (output == null);
+        ASSERT (streamInput == null);
+        ASSERT (streamOutput == null);
 
         // execute the stream here
         while (true)
         {
-            RunSinks ();
-            DrainChannels ();
+            runSinks ();
+            drainChannels ();
         }
     }
 
@@ -99,13 +94,13 @@ public class Stream extends Operator
     boolean isConnected = false;
 
     // adds something to the pipeline
-    public void Add(Stream s)
+    public void add(Stream s)
     {
         ASSERT (s != null);
         streamElements.add (s);
     }
 
-    // ConnectGraph will walk the entire subgraph (so it should be called
+    // connectGraph will walk the entire subgraph (so it should be called
     // on the "master", encapsulating Stream) and give each element
     // this function works in the following way:
     //
@@ -126,7 +121,7 @@ public class Stream extends Operator
     //    - the output from the last child is copied over
     //      to the Operator and the operation is finished
 
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         // make sure I have some elements - not sure what to do otherwise
         ASSERT (!streamElements.isEmpty ());
@@ -145,15 +140,15 @@ public class Stream extends Operator
                 ASSERT (sink != null);
 
                 // setup the sink itself
-                sink.SetupOperator ();
+                sink.setupOperator ();
 
-                if (source != null && source.GetIOField ("output") != null)
+                if (source != null && source.getIOField ("streamOutput") != null)
                 {
                     // create and connect a pass filter
                     ChannelConnectFilter connect = new ChannelConnectFilter ();
-                    Channel in = source.GetIOField ("output");
-                    Channel out = sink.GetIOField ("input");
-                    connect.UseChannels (in, out);
+                    Channel in = source.getIOField ("streamOutput");
+                    Channel out = sink.getIOField ("streamInput");
+                    connect.useChannels (in, out);
                 }
                 source = sink;
             }
@@ -166,22 +161,22 @@ public class Stream extends Operator
 
         // set myself up with proper input and output
         {
-            input = ((Stream)streamElements.getFirst ()).GetIOField ("input");
-            output = ((Stream)streamElements.getLast ()).GetIOField ("output");
+            streamInput = ((Stream)streamElements.getFirst ()).getIOField ("streamInput");
+            streamOutput = ((Stream)streamElements.getLast ()).getIOField ("streamOutput");
         }
     }
 
     // get my input.
     // makes sure that I only have ONE input
     // return null if no input present
-    Channel GetIOField (String fieldName)
+    Channel getIOField (String fieldName)
     {
-        return GetIOField (fieldName, 0);
+        return getIOField (fieldName, 0);
     }
 
-    void SetIOField (String fieldName, Channel newChannel)
+    void setIOField (String fieldName, Channel newChannel)
     {
-        SetIOField (fieldName, 0, newChannel);
+        setIOField (fieldName, 0, newChannel);
     }
 
     // ----------------------------------------------------------------

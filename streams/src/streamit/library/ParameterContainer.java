@@ -36,7 +36,7 @@ public class ParameterContainer extends AssertedClass
             primitive = true;
         }
         
-        int GetInt ()
+        int getInt ()
         {
             ASSERT (primitive);
             
@@ -46,7 +46,7 @@ public class ParameterContainer extends AssertedClass
             return intData.intValue ();
         }
 
-        float GetFloat ()
+        float getFloat ()
         {
             ASSERT (primitive);
             
@@ -56,7 +56,7 @@ public class ParameterContainer extends AssertedClass
             return floatData.floatValue ();
         }
 
-        boolean GetBool ()
+        boolean getBool ()
         {
             ASSERT (primitive);
             
@@ -66,7 +66,7 @@ public class ParameterContainer extends AssertedClass
             return boolData.booleanValue ();
         }
         
-        Object GetObj ()
+        Object getObj ()
         {
             ASSERT (!primitive);
             
@@ -79,79 +79,79 @@ public class ParameterContainer extends AssertedClass
         paramName = _paramName;
     }
     
-    public ParameterContainer Add (String paramName, Object obj)
+    public ParameterContainer add (String paramName, Object obj)
     {
         ParamData data = new ParamData (obj);
         parameters.put (paramName, data);
         return this;
     }
 
-    public ParameterContainer Add (String paramName, int intParam)
+    public ParameterContainer add (String paramName, int intParam)
     {
         ParamData data = new ParamData (intParam);
         parameters.put (paramName, data);
         return this;
     }
     
-    public ParameterContainer Add (String paramName, float floatParam)
+    public ParameterContainer add (String paramName, float floatParam)
     {
         ParamData data = new ParamData (floatParam);
         parameters.put (paramName, data);
         return this;
     }
     
-    public ParameterContainer Add (String paramName, boolean boolParam)
+    public ParameterContainer add (String paramName, boolean boolParam)
     {
         ParamData data = new ParamData (boolParam);
         parameters.put (paramName, data);
         return this;
     }
     
-    public String GetParamName () { return paramName; }
+    public String getParamName () { return paramName; }
     
-    public int GetIntParam (String paramName)
+    public int getIntParam (String paramName)
     {
         ASSERT (parameters.containsKey (paramName));
         
         ParamData paramData = (ParamData) parameters.get (paramName);
         ASSERT (paramData != null);
         
-        return paramData.GetInt ();
+        return paramData.getInt ();
     }
 
-    public float GetFloatParam (String paramName)
+    public float getFloatParam (String paramName)
     {
         ASSERT (parameters.containsKey (paramName));
         
         ParamData paramData = (ParamData) parameters.get (paramName);
         ASSERT (paramData != null);
         
-        return paramData.GetFloat ();
+        return paramData.getFloat ();
     }
 
-    public boolean GetBoolParam (String paramName)
+    public boolean getBoolParam (String paramName)
     {
         ASSERT (parameters.containsKey (paramName));
         
         ParamData paramData = (ParamData) parameters.get (paramName);
         ASSERT (paramData != null);
         
-        return paramData.GetBool ();
+        return paramData.getBool ();
     }
 
-    public Object GetObjParam (String paramName)
+    public Object getObjParam (String paramName)
     {
         ASSERT (parameters.containsKey (paramName));
         
         ParamData paramData = (ParamData) parameters.get (paramName);
         ASSERT (paramData != null);
         
-        return paramData.GetObj ();
+        return paramData.getObj ();
     }
     
-    public String GetStringParam (String paramName)
+    public String getStringParam (String paramName)
     {
-        Object obj = GetObjParam (paramName);
+        Object obj = getObjParam (paramName);
         String str = (String) obj;
         
         // make sure that either both or neither is null

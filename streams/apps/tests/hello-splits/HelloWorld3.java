@@ -25,26 +25,26 @@ public class HelloWorld3 extends Stream
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-        new HelloWorld3().Run();
+        new HelloWorld3().run();
     }
 
     // this is the defining part of the stream
-    public void Init ()
+    public void init ()
     {
-        Add(new CharGenerator(".....Hello World!.....\0"));
-        Add(new SplitJoin()
+        add(new CharGenerator(".....Hello World!.....\0"));
+        add(new SplitJoin()
             {
                 public void Init()
                 {
-                    SetSplitter(ROUND_ROBIN ());
-                    Add(new ChannelConnectFilter (Character.TYPE));
-                    Add(new XORLoop());
-                    //Add(new ChannelConnectFilter (Character.TYPE));
-                    //Add(new ChannelConnectFilter (Character.TYPE));
-                    SetJoiner(ROUND_ROBIN());
+                    setSplitter(ROUND_ROBIN ());
+                    add(new ChannelConnectFilter (Character.TYPE));
+                    add(new XORLoop());
+                    //add(new ChannelConnectFilter (Character.TYPE));
+                    //add(new ChannelConnectFilter (Character.TYPE));
+                    setJoiner(ROUND_ROBIN());
                 }
             });
-        Add(new BufferedCharPrinter());
+        add(new BufferedCharPrinter());
     }
 
     /* here is an alternative way to write the above code:
@@ -72,38 +72,35 @@ public class HelloWorld3 extends Stream
 
 class XORLoop extends FeedbackLoop
 {
-    public void InitPath (int index, Channel path)
+    public void initPath (int index, Channel path)
     {
-        path.PushChar ((char)0);
+        path.pushChar ((char)0);
     }
 
-    public void Init() {
-        SetDelay(3);
-        SetJoiner (ROUND_ROBIN ());
-        SetBody (new XORFilter());
-        SetSplitter (DUPLICATE ());
+    public void init() {
+        setDelay(3);
+        setJoiner (ROUND_ROBIN ());
+        setBody (new XORFilter());
+        setSplitter (DUPLICATE ());
     }
 }
 
 // outputs xor of successive items in stream
 class XORFilter extends Filter
 {
-    public void InitIO ()
+    Channel input = new Channel(Character.TYPE, 2);
+    Channel output = new Channel(Character.TYPE, 1);
+    public void initIO ()
     {
-        input = new Channel(Character.TYPE);
-        output = new Channel(Character.TYPE);
-    }
-    public void InitCount ()
-    {
-        inCount = 2;
-        outCount = 1;
+        streamInput = input;
+        streamOutput = output;
     }
 
-    public void Work()
+    public void work()
     {
-        char c1 = input.PopChar();
-        char c2 = input.PopChar();
-        output.PushChar((char)((int)c1 ^ (int)c2));
+        char c1 = input.popChar();
+        char c2 = input.popChar();
+        output.pushChar((char)((int)c1 ^ (int)c2));
     }
 }
 
@@ -111,27 +108,23 @@ class XORFilter extends Filter
 // to the screen
 class BufferedCharPrinter extends Filter
 {
-    public void InitIO ()
+    Channel input = new Channel(Character.TYPE, 1);
+    public void initIO ()
     {
-        input = new Channel(Character.TYPE);
-    }
-    public void InitCount ()
-    {
-        inCount = 1;
-        outCount = 0;
+        streamInput = input;
     }
 
     // string it's queueing up
     private StringBuffer sb;
 
-    public void Init()
+    public void init()
     {
         sb = new StringBuffer();
     }
 
-    public void Work()
+    public void work()
     {
-        char c = input.PopChar();
+        char c = input.popChar();
         // flush the buffer if we hit null-terminated string
         if (c=='\0')
         {

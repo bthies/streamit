@@ -6,12 +6,12 @@ import java.util.Iterator;
 
 public class RoundRobinSplitter extends Splitter
 {
-    public void Work ()
+    public void work ()
     {
         ASSERT (dest.size () > 0);
         ASSERT (output [outputIndex]);
 
-        PassOneData (input, output [outputIndex]);
+        passOneData (input, output [outputIndex]);
         outputIndex = (outputIndex + 1) % dest.size ();
     }
 

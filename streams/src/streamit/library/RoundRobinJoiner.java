@@ -9,11 +9,11 @@ public class RoundRobinJoiner extends Joiner {
     {
     }
 
-    public void Work ()
+    public void work ()
     {
         ASSERT (input [inputIndex]);
 
-        PassOneData (input [inputIndex], output);
+        passOneData (input [inputIndex], output);
         inputIndex = (inputIndex + 1) % srcs.size ();
     }
 

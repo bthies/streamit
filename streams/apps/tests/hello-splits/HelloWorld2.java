@@ -19,80 +19,74 @@ public class HelloWorld2 extends Stream
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-        new HelloWorld2().Run();
+        new HelloWorld2().run();
     }
 
     // this is the defining part of the stream
-    public void Init()
+    public void init()
     {
-        Add(new CharGenerator("Hello World2!"));
-        Add(new SplitJoin()
+        add(new CharGenerator("Hello World2!"));
+        add(new SplitJoin()
         {
-            public void Init()
+            public void init()
             {
-                SetSplitter(ROUND_ROBIN ());
-                Add(new Identity (Character.TYPE));
-                Add(new Identity (Character.TYPE));
-                SetJoiner (ROUND_ROBIN ());
+                setSplitter(ROUND_ROBIN ());
+                add(new Identity (Character.TYPE));
+                add(new Identity (Character.TYPE));
+                setJoiner (ROUND_ROBIN ());
             }
         });
-        Add (new SplitJoin ()
+        add (new SplitJoin ()
         {
-            public void Init ()
+            public void init ()
             {
-                SetSplitter (WEIGHTED_ROUND_ROBIN (2, 1, 4, 2));
-                Add (new Filter ()
+                setSplitter (WEIGHTED_ROUND_ROBIN (2, 1, 4, 2));
+                add (new Filter ()
                 {
-                    public void InitIO ()
+                    Channel input = new Channel(Character.TYPE, 1);
+                    Channel output = new Channel (Character.TYPE, 2);
+
+                    public void initIO ()
                     {
-                        input = new Channel(Character.TYPE);
-                        output = new Channel (Character.TYPE);
+                        streamInput = input;
+                        streamOutput = output;
                     }
 
-                    public void InitCount ()
+                    public void work()
                     {
-                        inCount = 1;
-                        outCount = 2;
-                    }
-
-                    public void Work()
-                    {
-                           input.PopChar ();
-                           output.PushChar (input.PopChar ());
+                       input.popChar ();
+                       output.pushChar (input.popChar ());
                     }
                 });
-                Add (new Filter ()
+                add (new Filter ()
                 {
-                    public void InitIO ()
+                    Channel input = new Channel(Character.TYPE, 1);
+                    Channel output = new Channel (Character.TYPE, 8);
+
+                    public void initIO ()
                     {
-                        input = new Channel(Character.TYPE);
-                        output = new Channel (Character.TYPE);
+                        streamInput = input;
+                        streamOutput = output;
                     }
 
-                    public void InitCount ()
+                    public void work()
                     {
-                        inCount = 1;
-                        outCount = 8;
-                    }
-
-                    public void Work()
-                    {
-                        char c = input.PopChar ();
-                        output.PushChar (c);
-                        output.PushChar (c);
-                        output.PushChar (c);
-                        output.PushChar (c);
-                        output.PushChar (c);
-                        output.PushChar (c);
-                        output.PushChar (c);
-                        output.PushChar (c);
+                        char c = input.popChar ();
+                        output.pushChar (c);
+                        output.pushChar (c);
+                        output.pushChar (c);
+                        output.pushChar (c);
+                        output.pushChar (c);
+                        output.pushChar (c);
+                        output.pushChar (c);
+                        output.pushChar (c);
                     }
                 });
-                Add (new Identity (Character.TYPE));
-                Add(new CharPrinter());
-                SetJoiner (WEIGHTED_ROUND_ROBIN (1, 2, 1, 0));
+                add (new Identity (Character.TYPE));
+                add(new CharPrinter());
+                setJoiner (WEIGHTED_ROUND_ROBIN (1, 2, 1, 0));
             }
         });
-        Add (new CharPrinter ());
+        add (new CharPrinter ());
     }
 }

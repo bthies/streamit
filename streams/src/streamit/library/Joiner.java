@@ -13,20 +13,20 @@ public class Joiner extends Operator
     public Channel input [] = null;
     public Channel output = null;
 
-    public void InitIO () { }
-    public void Init () { }
+    public void initIO () { }
+    public void init () { }
 
-    void Add (Stream s)
+    void add (Stream s)
     {
         srcs.add (s);
     }
 
-    public boolean IsInputUsed (int index)
+    public boolean isInputUsed (int index)
     {
         return true;
     }
 
-    public void ConnectGraph ()
+    public void connectGraph ()
     {
         // do I even have anything to do?
         if (srcs.isEmpty ()) return;
@@ -47,11 +47,11 @@ public class Joiner extends Operator
             // weighted joiner and I really don't have the stream!
             if (s != null)
             {
-                s.SetupOperator ();
+                s.setupOperator ();
 
                 // retrieve the output of this filter, which will be an
                 // input to this joiner
-                Channel channel = s.GetIOField ("output");
+                Channel channel = s.getIOField ("streamOutput");
                 input [inputIndx] = channel;
 
                 // if it is not a sink, make sure that it produces data
@@ -62,14 +62,14 @@ public class Joiner extends Operator
                     if (output == null)
                     {
                         output = new Channel (channel);
-                        output.SetSource (this);
+                        output.setSource (this);
                     } else {
                         // check that the input types agree
-                        ASSERT (channel.GetType ().getName ().equals (output.GetType ().getName ()));
+                        ASSERT (channel.getType ().getName ().equals (output.getType ().getName ()));
                     }
 
                     // now connect the channel to me
-                    channel.SetSink (this);
+                    channel.setSink (this);
                 }
             }
 
@@ -77,7 +77,7 @@ public class Joiner extends Operator
         }
     }
 
-    public void Work ()
+    public void work ()
     {
         ASSERT (false);
     }

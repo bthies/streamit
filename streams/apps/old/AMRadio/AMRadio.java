@@ -8,7 +8,7 @@ public class AMRadio extends Stream
 {
     static public void main(String[] t)
     {
-        AMRadio test = new AmRadio();
+        AMRadio test = new AMRadio();
         test.run();
     }
     

@@ -30,7 +30,7 @@ import streamit.frontend.nodes.*;
  * node.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: CFGNode.java,v 1.1 2004-01-16 21:32:25 dmaze Exp $
+ * @version $Id: CFGNode.java,v 1.2 2004-01-20 22:32:05 dmaze Exp $
  */
 public class CFGNode
 {
@@ -90,6 +90,29 @@ public class CFGNode
     public boolean isEmpty()
     {
         return empty;
+    }
+
+    /**
+     * Determine if this node is an expression node.
+     * If so, the statement associated with the node identifies
+     * a branch statement, such as a loop or if statement, that
+     * this is the condition for.
+     *
+     * @return true if this is an expression (conditional) node
+     */
+    public boolean isExpr()
+    {
+        return expr != null;
+    }
+    
+    /**
+     * Determine if this node is a statement node.
+     *
+     * @return true if this is a statement node
+     */
+    public boolean isStmt()
+    {
+        return !empty && expr == null;
     }
     
     /**

@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.11 2004-07-15 00:07:24 thies Exp $
+ * $Id: FieldInitMover.java,v 1.12 2005-04-05 07:07:28 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
     public static final int MOVE_ARRAY_INITIALIZERS = 0;
@@ -116,7 +116,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
 	    // init function
 	    //System.out.println("Initial expression for field: " + expr);
 	    if (expr != null &&
-		(moveArrayInitializers!=FieldInitMover.IGNORE_ARRAY_INITIALIZERS || !(expr instanceof JArrayInitializer))) {
+		(moveArrayInitializers!=FieldInitMover.IGNORE_ARRAY_INITIALIZERS || !type.isArrayType())) {
 		// build up the this.field = initalValue expression
 		
 		

@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs results gatherer every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_results.sh,v 1.4 2002-07-17 21:33:27 aalamb Exp $
+# $Id: run_results.sh,v 1.5 2002-07-24 22:04:49 aalamb Exp $
 
 setenv LOGFILE /u/aalamb/streams/regtest/tools/results_log.txt
 # file that gets generated automatically by the regression test framework
@@ -15,8 +15,13 @@ setenv TOPDIR /home/bits6/aalamb/starsearch
 setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi/3rdparty/JFlex/lib:$STREAMIT_HOME/compiler/kopi/3rdparty/getopt:$STREAMIT_HOME/compiler/kopi/classes:$STREAMIT_HOME/apps/libraries:$STREAMIT_HOME/misc/java:$STREAMIT_HOME/scheduler/v1/java:/usr/uns/java/antlr-2.7.1:$STREAMIT_HOME/compiler/frontend:$STREAMIT_HOME/scheduler/v2/java
 
 echo "-------------" > $LOGFILE
-echo "Starting..."  >> $LOGFILE
-date >> $LOGFILE
+echo "Input file:"   >> $LOGFILE
+cat $RESULT_SCRIPT   >> $LOG_FILE
+echo "-------------" >> $LOGFILE
+
+echo "-------------" >> $LOGFILE
+echo "Starting..."   >> $LOGFILE
+date                 >> $LOGFILE
 echo "-------------" >> $LOGFILE
 
 # simply run the results script (with the results we want for asplos)
@@ -24,8 +29,8 @@ cd /u/aalamb/streams/regtest/tools/
 reap_results.pl $RESULT_SCRIPT >>& $LOGFILE
 
 echo "-------------" >> $LOGFILE
-echo "Done..."  >> $LOGFILE
-date >> $LOGFILE
+echo "Done..."       >> $LOGFILE
+date                 >> $LOGFILE
 echo "-------------" >> $LOGFILE
 
 

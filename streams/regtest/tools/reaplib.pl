@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.7 2002-07-23 18:09:08 aalamb Exp $
+# $Id: reaplib.pl,v 1.8 2002-07-24 22:04:49 aalamb Exp $
 
 use strict;
 
@@ -200,8 +200,8 @@ sub generate_summary {
     # sort the summaries by filename (first characters in the string)
     @summary_table = sort(@summary_table);
 
-    # add heading to the table
-    push(@summary_table,
+    # add heading to the table (at the beginning!)
+    unshift(@summary_table,
 	 "File\tOptions\tThroughput\tUtilization(percent)\tMFLOPS");
     
     # write the results out to the summary file
@@ -308,9 +308,17 @@ sub generate_webpage {
 	push(@body_lines, $entry);
 	
     }
+
+    # create the pdf file from the overall summary text file
+    make_pdf_file($results_directory);
+
     
     # assemble the main body
-    my $main_body = "<h3>Summary of results in $results_directory</h3><br>\n"; 
+    my $main_body = "<h3>Summary of results in $results_directory</h3><br>\n\n"; 
+    $main_body .= "Overall Results\n";
+    $main_body .= "(<a href=\"summary.txt\">text</a>)\n";
+    $main_body .= "(<a href=\"summary.txt.tex\">tex</a>)\n";
+    $main_body .= "(<a href=\"summary.txt.pdf\">pdf</a>)\n";
     $main_body .= "<TABLE>\n";
     $main_body .= "<TR>\n";
     $main_body .= "   <TD>Filename</TD>\n";
@@ -398,6 +406,17 @@ sub make_dot_page {
     my $body  = $header . "\n\n" . "<a href=\"../$base_filename\"><img src=\"$web_filename\"></a>\n";
     # return the html
     return make_html_page("Dot File", $body);
+}
+
+#
+# Makes a PDF file out of the summary.txt.tex file in the specified results directory
+# Usage: make_pdf_file($results_dir)
+sub make_pdf_file {
+    my $results_dir = shift || die ("No results dir passed to make_pdf_file");
+    print "executing pdflatex...";
+    `/usr/bin/pdflatex $results_dir/summary.txt.tex`;
+    print `mv summary.txt.pdf $results_dir/summary.txt.pdf`;
+    print "done.\n";
 }
 
 # makes and scales an image to the specified dimensions

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLongLiteral.java,v 1.3 2001-10-29 04:40:54 thies Exp $
+ * $Id: JLongLiteral.java,v 1.4 2002-06-24 00:45:39 thies Exp $
  */
 
 package at.dms.kjc;
@@ -221,6 +221,16 @@ public class JLongLiteral extends JLiteral {
       code.plantInstruction(new PushLiteralInstruction(value));
     }
   }
+
+    /**
+     * Returns whether or <o> this represents a literal with the same
+     * value as this.
+     */
+    public boolean equals(Object o) {
+	return (o!=null && 
+		(o instanceof JLongLiteral) &&
+		((JLongLiteral)o).value==this.value);
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

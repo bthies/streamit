@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBooleanLiteral.java,v 1.3 2001-10-29 04:40:54 thies Exp $
+ * $Id: JBooleanLiteral.java,v 1.4 2002-06-24 00:45:38 thies Exp $
  */
 
 package at.dms.kjc;
@@ -53,6 +53,18 @@ public class JBooleanLiteral extends JLiteral {
    */
   public CType getType() {
     return CStdType.Boolean;
+  }
+
+  /**
+   * Returns a string representation of this literal.
+   */
+  public String toString() {
+    StringBuffer	buffer = new StringBuffer();
+
+    buffer.append("JBooleanLiteral[");
+    buffer.append(value);
+    buffer.append("]");
+    return buffer.toString();
   }
 
   /**
@@ -125,6 +137,16 @@ public class JBooleanLiteral extends JLiteral {
       code.plantInstruction(new PushLiteralInstruction(value ? 1 : 0));
     }
   }
+
+    /**
+     * Returns whether or <o> this represents a literal with the same
+     * value as this.
+     */
+    public boolean equals(Object o) {
+	return (o!=null && 
+		(o instanceof JBooleanLiteral) &&
+		((JBooleanLiteral)o).value==this.value);
+    }
 
   /**
    * Generates a sequence of bytescodes to branch on a label

@@ -49,6 +49,8 @@ public class SIRPopExpression extends JExpression {
      * @return the type of this expression
      */
     public CType getType() {
+        if (tapeType != null)
+            return tapeType;
 	return CStdType.Void;
     }
 

@@ -38,7 +38,13 @@ public class FlattenGraph {
 	    topLevelNodes.add(filter);
 	    nodes.put(filter,null);
 	} else if(((SIRContainer)graph).size()>0) {
-	    UnflatEdge node=flatten(graph)[0];
+	    UnflatEdge[] top=flatten(graph);
+	    UnflatEdge node=top[0];
+	    UnflatEdge bottom=top[1];
+	    if(node!=null)
+		node.dest.in=null;
+	    if(bottom!=null)
+		bottom.src.out=null;
 	    if(!(node==null||topLevelNodes.contains(node.dest)))
 		topLevelNodes.add(node.dest);
 	}
@@ -58,6 +64,7 @@ public class FlattenGraph {
 		inFilter=new UnflatFilter(null,in,out);
 		simpleNull.put(inFilter,null);
 	    } else {
+		SIRFilter filter=(SIRFilter)graph;
 		inFilter=new UnflatFilter(graph,in,out);
 		nodes.put(inFilter,null);
 	    }
@@ -114,23 +121,25 @@ public class FlattenGraph {
 		for(int i=0;i<size;i++)
 		    if(weights[i]!=0)
 			newSize++;
-		trimWeights=new int[newSize];
-		trimSplitterOut=new UnflatEdge[newSize][1];
-		if(newSize<size) {
-		    for(int i=0,j=0;i<size;i++)
-			if(weights[i]!=0) {
-			    trimWeights[j]=weights[i];
-			    trimSplitterOut[j][0]=splitterOut[i];
-			    j++;
-			}
-		} else {
-		    trimWeights=weights;
-		    for(int i=0;i<size;i++)
-			trimSplitterOut[i][0]=splitterOut[i];
+		if(newSize>0) {
+		    trimWeights=new int[newSize];
+		    trimSplitterOut=new UnflatEdge[newSize][1];
+		    if(newSize<size) {
+			for(int i=0,j=0;i<size;i++)
+			    if(weights[i]!=0) {
+				trimWeights[j]=weights[i];
+				trimSplitterOut[j][0]=splitterOut[i];
+				j++;
+			    }
+		    } else {
+			trimWeights=weights;
+			for(int i=0;i<size;i++)
+			    trimSplitterOut[i][0]=splitterOut[i];
+		    }
+		    in=new UnflatEdge();
+		    splitter=new UnflatFilter(null,new int[]{1},trimWeights,new UnflatEdge[]{in},trimSplitterOut);
+		    simpleNull.put(splitter,null);
 		}
-		in=new UnflatEdge();
-		splitter=new UnflatFilter(null,new int[]{1},trimWeights,new UnflatEdge[]{in},trimSplitterOut);
-		simpleNull.put(splitter,null);
 	    } else if(((SIRSplitJoin)graph).getSplitter().getType().isDuplicate()) {
 		in=new UnflatEdge();
 		splitter=new UnflatFilter(null,new int[]{1},new int[]{1},new UnflatEdge[]{in},new UnflatEdge[][]{splitterOut});
@@ -154,22 +163,24 @@ public class FlattenGraph {
 		for(int i=0;i<size;i++)
 		    if(weightsOut[i]!=0)
 			newSize++;
-		trimWeights=new int[newSize];
-		trimJoinerIn=new UnflatEdge[newSize];
-		if(newSize<size) {
-		    for(int i=0,j=0;i<size;i++)
-			if(weightsOut[i]!=0) {
-			    trimWeights[j]=weightsOut[i];
-			    trimJoinerIn[j]=joinerIn[i];
-			    j++;
-			}
-		} else {
-		    trimWeights=weightsOut;
-		    trimJoinerIn=joinerIn;
+		if(newSize>0) {
+		    trimWeights=new int[newSize];
+		    trimJoinerIn=new UnflatEdge[newSize];
+		    if(newSize<size) {
+			for(int i=0,j=0;i<size;i++)
+			    if(weightsOut[i]!=0) {
+				trimWeights[j]=weightsOut[i];
+				trimJoinerIn[j]=joinerIn[i];
+				j++;
+			    }
+		    } else {
+			trimWeights=weightsOut;
+			trimJoinerIn=joinerIn;
+		    }
+		    out=new UnflatEdge();
+		    joiner=new UnflatFilter(null,trimWeights,new int[]{1},trimJoinerIn,new UnflatEdge[][]{new UnflatEdge[]{out}});
+		    simpleNull.put(joiner,null);
 		}
-		out=new UnflatEdge();
-		joiner=new UnflatFilter(null,trimWeights,new int[]{1},trimJoinerIn,new UnflatEdge[][]{new UnflatEdge[]{out}});
-		simpleNull.put(joiner,null);
 	    } else if(!((SIRSplitJoin)graph).getJoiner().getType().isNull())
 		Utils.fail("Unknown Join Type: "+((SIRSplitJoin)graph).getJoiner().getType());
 	    if(!((SIRSplitJoin)graph).getSplitter().getType().isNull()) {
@@ -178,19 +189,24 @@ public class FlattenGraph {
 			UnflatEdge[] child=flatten(((SIRSplitJoin)graph).get(i));
 			if(weights[i]!=0) {
 			    splitterOut[i].connect(child[0]);
-			} else
+			} else {
 			    topLevelNodes.add(child[0].dest);
+			    child[0].dest.in=null;
+			}
 			if(weightsOut[i]!=0) {
 			    child[1].connect(joinerIn[i]);
-			}
+			} else
+			    child[1].src.out=null;
 		    }
 		} else {
 		    for(int i=0;i<size;i++) {
 			UnflatEdge[] child=flatten(((SIRSplitJoin)graph).get(i));
 			if(weights[i]!=0) {
 			    splitterOut[i].connect(child[0]);
-			} else
+			} else {
 			    topLevelNodes.add(child[0].dest);
+			    child[0].dest.in=null;
+			}
 		    }
 		}
 	    } else if(!((SIRSplitJoin)graph).getJoiner().getType().isNull()) {
@@ -199,7 +215,8 @@ public class FlattenGraph {
 		    topLevelNodes.add(child[0].dest);
 		    if(weightsOut[i]!=0) {
 			child[1].connect(joinerIn[i]);
-		    }
+		    } else
+			child[1].src.out=null;
 		}
 	    } else
 		for(int i=0;i<size;i++)
@@ -1011,30 +1028,31 @@ public class FlattenGraph {
 	    buf.append("\"];\n");
 	    UnflatEdge[][] out=filter.out;
 	    HashMap visited=new HashMap();
-	    for(int j=0;j<out.length;j++) {
-		UnflatEdge[] edges=out[j];
-		if(edges.length==1) {
-		    if(!visited.containsKey(edges[0])) {
-			visited.put(edges[0],null);
-			UnflatFilter target=edges[0].dest;
-			if(target!=null)
-			    buf.append(filter+" -> "+target+"[label=\""+printNext(edges[0])+"->"+printPrev(edges[0])+"\"];\n");
-		    }
-		} else
-		    for(int k=0;k<edges.length;k++) {
-			if(!visited.containsKey(edges[k])) {
-			    visited.put(edges[k],null);
-			    UnflatFilter target=edges[k].dest;
+	    if(out!=null)
+		for(int j=0;j<out.length;j++) {
+		    UnflatEdge[] edges=out[j];
+		    if(edges.length==1) {
+			if(!visited.containsKey(edges[0])) {
+			    visited.put(edges[0],null);
+			    UnflatFilter target=edges[0].dest;
 			    if(target!=null)
-				buf.append(filter+" -> "+target+"[label=\""+printNext(edges[k])+"->"+printPrev(edges[k])+"\", style=dashed];\n");
+				buf.append(filter+" -> "+target+"[label=\""+printNext(edges[0])+"->"+printPrev(edges[0])+"\"];\n");
 			}
-		    }
-	    }
+		    } else
+			for(int k=0;k<edges.length;k++) {
+			    if(!visited.containsKey(edges[k])) {
+				visited.put(edges[k],null);
+				UnflatFilter target=edges[k].dest;
+				if(target!=null)
+				    buf.append(filter+" -> "+target+"[label=\""+printNext(edges[k])+"->"+printPrev(edges[k])+"\", style=dashed];\n");
+			    }
+			}
+		}
 	}
 	filters=simpleNull.keySet().toArray();
 	for(int i=0;i<filters.length;i++) {
 	    UnflatFilter filter=(UnflatFilter)filters[i];
-	    buf.append(filter+"[ label = \""+arrayPrint(filter.inWeights)+"\\n"+arrayPrint(filter.outWeights)+"\"];\n");
+	    buf.append(filter+"[ label = \""+arrayPrint(filter.inWeights)+"\\nSIMPLE\\n"+arrayPrint(filter.outWeights)+"\"];\n");
 	    UnflatEdge[][] out=filter.out;
 	    HashMap visited=new HashMap();
 	    for(int j=0;j<out.length;j++) {
@@ -1060,7 +1078,7 @@ public class FlattenGraph {
 	filters=complexNull.keySet().toArray();
 	for(int i=0;i<filters.length;i++) {
 	    UnflatFilter filter=(UnflatFilter)filters[i];
-	    buf.append(filter+"[ label = \""+arrayPrint(filter.inWeights)+"\\n"+arrayPrint(filter.outWeights)+"\"];\n");
+	    buf.append(filter+"[ label = \""+arrayPrint(filter.inWeights)+"\\nCOMPLEX\\n"+arrayPrint(filter.outWeights)+"\"];\n");
 	    UnflatEdge[][] out=filter.out;
 	    HashMap visited=new HashMap();
 	    for(int j=0;j<out.length;j++) {
@@ -1167,3 +1185,4 @@ public class FlattenGraph {
 	    return "";
     }
 }
+

@@ -30,6 +30,8 @@ public class FeedbackLoopIter
         return new Iterator (feedback.getLoop ());
     }
 
+    public int getFanOut () { return 2; }
+
     public int getSplitterNumWork ()
     {
         if (feedback.getSplitter() instanceof NullSplitter)
@@ -55,6 +57,8 @@ public class FeedbackLoopIter
         return feedback.getSplitter ().getWeights ();
     }
     
+    public int getFanIn () { return 2; }
+
     public int[] getJoinPopWeights (int nWork)
     {
         return feedback.getJoiner ().getWeights ();

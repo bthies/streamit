@@ -30,6 +30,8 @@ public class SplitJoinIter
         return new Iterator (splitjoin.getChildN (n));
     }
 
+    public int getFanOut () { return getNumChildren (); }
+
     public int getSplitterNumWork ()
     {
         if (splitjoin.getSplitter() instanceof NullSplitter)
@@ -54,6 +56,8 @@ public class SplitJoinIter
     {
         return splitjoin.getSplitter ().getWeights ();
     }
+    
+    public int getFanIn () { return getNumChildren (); }
     
     public int[] getJoinPopWeights (int nWork)
     {

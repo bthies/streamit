@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: JoinerIter.java,v 1.1 2002-05-27 00:11:48 karczma Exp $ */
+/* $Id: JoinerIter.java,v 1.2 2002-05-27 02:56:39 karczma Exp $ */
 
 /**
  * An interface for retrieving data about streams with a Joiner.
@@ -9,8 +9,14 @@ package streamit.scheduler.iriter;
  * @author  Michal Karczmarek
  */
 
-interface JoinerIter
+public interface JoinerIter
 {
+    /**
+     * Returns the number of ways this Joiner joines data.
+     * @return return Joiner fan-in
+     */
+    public int getFanIn ();
+    
     /**
      * Returns the number of work functions for the Joiner
      * of this Stream.
@@ -28,7 +34,7 @@ interface JoinerIter
      * @return distribution of weights on a particular invocation
      * of work function for Joiner of this SplitJoin.
      */
-    public int[] getJoinPopWeights (int n);
+    public int[] getJoinPopWeights (int nWork);
     
     /**
      * Returns number of data items produced by a particular invocation

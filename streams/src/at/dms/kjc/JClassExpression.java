@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassExpression.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JClassExpression.java,v 1.3 2002-06-28 16:47:13 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -68,6 +68,14 @@ public class JClassExpression extends JExpression {
    */
   public CType getType() {
     return CStdType.Class;
+  }
+
+  /**
+   * Return the type this is a class expression for
+   * @return the type this is a class expression for
+   */
+  public CType getClassType() {
+    return this.type;
   }
 
   // ----------------------------------------------------------------------

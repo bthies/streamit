@@ -90,7 +90,9 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	String dir = File.separator + "tmp" + File.separator + 
 	    filter.getName();
 	
-	dir = dir.substring(0, 20) + rand.nextInt(99999);
+	int length = Math.min(dir.length() , 20);
+
+	dir = dir.substring(0, length) + rand.nextInt(99999);
 
 	System.out.println("Checking IMEM Size (DIR: " + dir + ") ...");	     
 	File file = new File(dir);

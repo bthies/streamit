@@ -123,16 +123,19 @@ public class LowerWorkFunctions implements StreamVisitor
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
+        removeStructureNew(self.getInit());
     }
   
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
 				  SIRSplitJoinIter iter) {
+        removeStructureNew(self.getInit());
     }
   
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
 				     SIRFeedbackLoopIter iter) {
+        removeStructureNew(self.getInit());
     }
   
     /**

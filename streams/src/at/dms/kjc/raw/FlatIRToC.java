@@ -28,49 +28,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     protected StringWriter                str; 
     protected boolean			nl = true;
     public boolean                   declOnly = true;
-
+    public SIRFilter               filter;
 
     public static void generateCode(FlatNode node) 
     {
-	FlatIRToC toC = new FlatIRToC();
+	FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
 	
         ((SIRFilter)node.contents).accept(toC);
     }
     
-    public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) 
-    {
-	print("#include \"raw.h\"\n");
-
-	//Visit fields declared in the filter class
-	for (int i = 0; i < fields.length; i++)
-	   fields[i].accept(this);
-	
-	//visit methods of filter, print the declaration first
-	declOnly = true;
-	for (int i =0; i < methods.length; i++)
-	    methods[i].accept(this);
-	//now print the functions with body
-	declOnly = false;
-	for (int i =0; i < methods.length; i++)
-	    methods[i].accept(this);	
-	
-	print("int main() {\n");
-	print("  init();\n");
-	print("  while(1) {\n");
-	print("     work();\n");
-	print("  }\n");
-	print("}");
-	
-	System.out.println("====  Code for " + Namer.getName(self));
-	System.out.println(str.toString());
-    }
-    
+  
 
     public FlatIRToC(TabbedPrintWriter p) {
         this.p = p;
@@ -78,7 +45,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         this.pos = 0;
     }
     
-    public FlatIRToC() {
+    public FlatIRToC(SIRFilter f) {
+	this.filter = f;
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
     }
@@ -101,6 +69,49 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         this.pos = pos;
     }
 
+    public void visitFilter(SIRFilter self,
+			    SIRStream parent,
+			    JFieldDeclaration[] fields,
+			    JMethodDeclaration[] methods,
+			    JMethodDeclaration init,
+			    JMethodDeclaration work,
+			    CType inputType, CType outputType) {
+	
+	//Entry point of the visitor
+	print("#include \"/projects/raw/rgcc/raw.h\"\n");
+	
+	//Visit fields declared in the filter class
+	for (int i = 0; i < fields.length; i++)
+	   fields[i].accept(this);
+	
+	//visit methods of filter, print the declaration first
+	declOnly = true;
+	for (int i =0; i < methods.length; i++)
+	    methods[i].accept(this);
+	//now print the functions with body
+	declOnly = false;
+	for (int i =0; i < methods.length; i++)
+	    methods[i].accept(this);	
+	
+	print("int main() {\n");
+	print("  init();\n");
+	print("  work();\n");
+	print("}");
+	
+	System.out.println("Code for " + Namer.getName(self) +
+			   " written to tile" + Layout.getTile(self) +
+			   ".c");
+	try {
+	    FileWriter fw = new FileWriter("tile" + Layout.getTile(self) + ".c");
+	    fw.write(str.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write tile code file for filter " +
+			       Namer.getName(self));
+	}
+    }
+    
     /**
      * prints a field declaration
      */
@@ -162,16 +173,60 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print(";");
 		return;
 	    }
-	
+
         print(" ");
         if (body != null) {
-            body.accept(this);
+	    if (ident.equals("work")) {
+		printWorkHeader();
+		body.accept(this);
+		printWorkTrailer();
+	    }
+	    else
+		body.accept(this);
         } else {
             print(";");
         }
         newLine();
     }
 
+    private void printWorkHeader() 
+    {
+	print("{\n");
+	if (filter.getPeekInt() > 0) {
+	    print("int i, count = 0, buffer[" + filter.getPeekInt() + "];\n");
+	    print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
+	    print("   buffer[i] = ");
+	    if (filter.getInputType().equals(CStdType.Float))
+		print("static_receive_f();\n");
+	    else 
+		print("static_receive();\n");
+	}
+	
+	print(" while (1) {\n");
+    }
+    
+    private void printWorkTrailer() 
+    {
+	if (filter.getPeekInt() > 0) {
+	    print("\n count = 0;\n");
+	    if (filter.getPeekInt() != filter.getPopInt()) {
+		print(" for (i = " + filter.getPopInt() + "; i < " +
+		      filter.getPeekInt() +
+		      "; i++)\n");
+		print("   buffer[count++] = buffer[i];\n");
+	    }
+	    
+	    print(" for (i = count; i < " + filter.getPeekInt() + "; i++) \n");
+	    print("   buffer[i] = ");
+	    if (filter.getInputType().equals(CStdType.Float)) 
+		print("static_receive_f();\n");
+	    else
+		print("static_receive();\n");
+	    print(" count = 0;\n");
+	}
+		print(" }\n}\n");
+    }
+    
     // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------
@@ -307,7 +362,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         }
         print("; ");
 	if (incr != null) {
-	    FlatIRToC l2c = new FlatIRToC();
+	    FlatIRToC l2c = new FlatIRToC(filter);
             incr.accept(l2c);
 	    // get String
 	    String str = l2c.getString();
@@ -980,7 +1035,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression num)
     {
-        print("PEEK(");
+        print("(buffer[count + ");
         /*
 	  if (tapeType != null)
 	  print(tapeType);
@@ -989,13 +1044,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	  print(", ");
 	*/
         num.accept(this);
-        print(")");
+        print("])");
     }
     
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("(POP())");
+        print("(buffer[count++])");
     }
     
     public void visitPrintStatement(SIRPrintStatement self,
@@ -1052,8 +1107,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression val)
     {
-        print("(static_send(");
-        val.accept(this);
+	if (tapeType.equals(CStdType.Float))
+	    print("(static_send_f(");
+	else
+	    print("(static_send(");
+	val.accept(this);
         print("))");
     }
     

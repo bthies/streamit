@@ -7,6 +7,8 @@ import at.dms.util.Utils;
 import java.io.*;
 import java.util.List;
 import java.util.HashMap;
+import java.util.Iterator;
+
 
 /**
  *The Layout class generates mapping of filters to raw tiles.  It assumes that the 
@@ -35,6 +37,10 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 	// assign raw tiles to filters
 	toplevel.accept(new Layout());
     }
+
+    public static Iterator tileIterator() {
+	return assignment.values().iterator();
+    }
     
     /**
      * Returns the tile number assignment for <str>, or null if none has been assigned.
@@ -54,19 +60,31 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 			    JMethodDeclaration init,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
-	
-	System.out.print(Namer.getName(self) + ": ");
-	
-	try {
-	    Integer tile;
-	    tile = Integer.valueOf(inputBuffer.readLine());
-	    assignment.put(self, tile);
+	//Assign a filter to a tile 
+	//perform some error checking.
+	while (true) {
+	    try {
+		Integer tile;
+		System.out.print(Namer.getName(self) + ": ");
+		tile = Integer.valueOf(inputBuffer.readLine());
+		if (tile.intValue() < 0) {
+		    System.err.println("Negative Value: Try again.");
+		    continue;
+		}
+		if (tile.intValue() > (StreamItOptions.raw -1)) {
+		    System.err.println("Value Too Large: Try again.");
+		    continue;
+		}
+		if (assignment.containsValue(tile)) {
+		    System.err.println("Value Already Assigned: Try Again.");
+		}
+		assignment.put(self, tile);
+		return;
+	    }
+	    catch (Exception e) {
+		System.err.println("Error:  Try again.");
+	    }
 	}
-	catch (Exception e) {
-	    System.err.println("Error assigning, exiting...");
-	    System.exit(1);
-	}
-	
     }
 
     /** 

@@ -70,6 +70,8 @@ public class RawBackend {
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(RawFlattener.top);
 	System.out.println("Tile Code End.");
+	System.out.println("Creating Makefile.");
+	MakefileGenerator.createMakefile();
 	System.out.println("Exiting");
 	System.exit(0);
     }

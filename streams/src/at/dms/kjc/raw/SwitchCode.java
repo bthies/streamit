@@ -38,6 +38,23 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	}
     }
 
+    public static String getHeading (FlatNode from, FlatNode to) 
+    {
+	int toTile = Layout.getTile(to.contents);
+	int fromTile = Layout.getTile(from.contents);
+	if (fromTile - 4 == toTile)
+	    return "north";
+	if (fromTile -1 == toTile) 
+	    return "west";
+	if (fromTile +1 == toTile)
+	    return "east";
+	if (fromTile +4 == toTile)
+	    return "south";
+	Utils.fail("Nodes not directly connected");
+	return null;
+    }
+    
+
     public static void dumpCode() {
 	System.out.println("============== Push Schedules ==============");
 	{

@@ -59,11 +59,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //that implement a given interface for a given class.
     private Vector interfaceTableList;
 
-    //globals to store the split and join type so they can be set in the
-    //post visit of the class declaration
-    private SIRSplitType splitType;
-    private SIRJoinType joinType;
-
     //The current dependency chain we are following when 
     //trying to resolve a class instantiation to a stream
     //stores strings of the stream names
@@ -139,6 +134,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    at.dms.util.Utils.fail("Duplicate Definition of " + className);
 	visitedSIROps.put(className, sirop);
     }
+
     private SIROperator getVisitedOp(String className) 
     {
 	//return the stream if it is in the table
@@ -292,27 +288,41 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (!((SIRFilter)current).hasMethod("init"))
 		 at.dms.util.Utils.fail("Filter must have an init statement.");
 	}
+
+	//Build the splitters and joiners now that we have seen all the elements that are added
+	//use the type that was set when we visited the setSplitter/setJoiner function call
+	//do not set the joiner/splitter if the type is a weighted round robin
+	//because we do not have to, we can determine the number of elements from the weights
 	if (current instanceof SIRFeedbackLoop) {
-	    if (splitType != null)
+	    if (!(((SIRFeedbackLoop)current).getSplitter().getType() ==
+		  SIRSplitType.WEIGHTED_RR))
 		((SIRFeedbackLoop)current).setSplitter(SIRSplitter.create((SIRFeedbackLoop)
-									  current, splitType, 2));
-	    if (joinType != null)
+									  current, 
+									  ((SIRFeedbackLoop)current).
+									  getSplitter().getType(), 2));
+	    if (!(((SIRFeedbackLoop)current).getJoiner().getType() ==
+		  SIRJoinType.WEIGHTED_RR))
 		((SIRFeedbackLoop)current).setJoiner(SIRJoiner.create((SIRFeedbackLoop)current, 
-								      joinType, 2));
-	    splitType = null;
-	    joinType = null;
+								      ((SIRFeedbackLoop)current).
+								      getJoiner().getType(), 2));
 	}
 	if (current instanceof SIRSplitJoin) {
-	    if (splitType != null)
-		((SIRSplitJoin)current).setSplitter(SIRSplitter.create((SIRSplitJoin)
-									  current, splitType, 2));
-	    if (joinType != null)
-		((SIRSplitJoin)current).setJoiner(SIRJoiner.create((SIRSplitJoin)current, 
-								      joinType, 2));
-	    splitType = null;
-	    joinType = null;
+	    if (!(((SIRSplitJoin)current).getSplitter().getType() ==
+		  SIRSplitType.WEIGHTED_RR))
+		((SIRSplitJoin)current).setSplitter(SIRSplitter.create((SIRSplitJoin)current, 
+								       ((SIRSplitJoin)current).
+								       getSplitter().getType(),
+								       ((SIRSplitJoin)current).
+								       size()));
+
+	    if (!(((SIRSplitJoin)current).getJoiner().getType() ==
+		  SIRJoinType.WEIGHTED_RR))
+	    ((SIRSplitJoin)current).setJoiner(SIRJoiner.create((SIRSplitJoin)current, 
+							       ((SIRSplitJoin)current).getJoiner().
+							       getType(), 
+							       ((SIRSplitJoin)current).
+							       size()));
 	}
-       
     }
 
     private boolean supportedType(String type) 
@@ -471,8 +481,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	//number
 	try {
 	    blockStart("CompilationUnit", self);
-	    boolean isTopLevel = false;
-	    
+	    //The top level declaration of the streamit class if it exists
+	    JTypeDeclaration TopLevelDeclaration = null;
+
 	    /*if (packageName.getName().length() > 0)
 	      packageName.accept(this);*/
 	    
@@ -491,19 +502,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 			typeDeclarations[i];
 		    if (decl.getSourceClass().getSuperClass().
 			getIdent().equals("StreamIt")) {
-			if (isTopLevel)
+			if (TopLevelDeclaration != null)
 			    at.dms.util.Utils.fail(printLine(decl) + 
-						   "Top level stream already twice.");
-			isTopLevel = true;
+						   "Top level stream already set.");
+			TopLevelDeclaration = decl;
 		    }
 		}
 	    }
 	    
-	    //visit the file only if it is the top level!!!!
-	    if (isTopLevel)	    
-		for (int i = 0; i < typeDeclarations.length ; i++)
-		    trash = typeDeclarations[i].accept(this);
-	    
+	    //only visit the topleve declaration, visit other classes when used
+	    if (TopLevelDeclaration != null)
+		trash = TopLevelDeclaration.accept(this);
 	    
 	    
 	    /* the end of the visit */
@@ -1698,38 +1707,35 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     private void buildSplitter(JExpression type) 
     {
+	
 	if (!(type instanceof JMethodCallExpression))
 	    at.dms.util.Utils.fail(printLine(type) + 
 				   "arg to setSplitter must be a method call");
 
-	JMethodCallExpression splitter = (JMethodCallExpression)type;
+	JMethodCallExpression splitterType = (JMethodCallExpression)type;
 	
-	if (splitter.getIdent().equals("ROUND_ROBIN"))
-	    splitType = SIRSplitType.ROUND_ROBIN;
-	else if (splitter.getIdent().equals("DUPLICATE"))
-	    splitType = SIRSplitType.DUPLICATE;
-	else if (splitter.getIdent().equals("NULL"))
-	    splitType = SIRSplitType.NULL;
-	else if (splitter.getIdent().equals("WEIGHTED_ROUND_ROBIN")) {
-	    //For weighted round robins, the splitter get built here and set here
+	SIRSplitter splitter = null;
 
-	    JExpression[] args = splitter.getArgs();
-	    if (parentStream instanceof SIRSplitJoin)
-		((SIRSplitJoin)parentStream).setSplitter(SIRSplitter.
-							createWeightedRR((SIRSplitJoin)
-									 parentStream, 
-									 args));
-	    if (parentStream instanceof SIRFeedbackLoop)
-		((SIRFeedbackLoop)parentStream).setSplitter(SIRSplitter.
-							 createWeightedRR((SIRFeedbackLoop)
-									  parentStream, 
-									  args));
-	    splitType = null;
-	}
+	//build a temporary splitter just to get the type from later
+	//after we have visited the entire stream, we will call setSplitter again
+	//with the correct number of splitting streams ( in postVisit() )
+	if (splitterType.getIdent().equals("ROUND_ROBIN"))
+	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.ROUND_ROBIN, 2);
+	else if (splitterType.getIdent().equals("DUPLICATE"))
+	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.DUPLICATE, 2);
+	else if (splitterType.getIdent().equals("NULL"))
+	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.NULL, 2);
+	else if (splitterType.getIdent().equals("WEIGHTED_ROUND_ROBIN"))
+	    splitter = SIRSplitter.createWeightedRR((SIRContainer)parentStream, 
+						    splitterType.getArgs());
 	else
 	    at.dms.util.Utils.fail(printLine(type) + 
 				   "Unsupported Split Type");
-	
+
+	if (parentStream instanceof SIRSplitJoin)
+	    ((SIRSplitJoin)parentStream).setSplitter(splitter);
+	if (parentStream instanceof SIRFeedbackLoop)
+	    ((SIRFeedbackLoop)parentStream).setSplitter(splitter);
     }
 
     private void buildJoiner(JExpression type) 
@@ -1739,32 +1745,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 				   "arg to setJoiner must be a method call");
 
 	JMethodCallExpression joiner = (JMethodCallExpression)type;
-	
+	SIRJoiner joinType = null;
+
 	if (joiner.getIdent().equals("ROUND_ROBIN"))
-	    joinType = SIRJoinType.ROUND_ROBIN;
+	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.ROUND_ROBIN, 2);
 	else if (joiner.getIdent().equals("COMBINE"))
-	    joinType = SIRJoinType.COMBINE;	  	
+	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);	  	
 	else if (joiner.getIdent().equals("NULL"))
-		joinType = SIRJoinType.COMBINE;
-	else if (joiner.getIdent().equals("WEIGHTED_ROUND_ROBIN")) {
-	    //For weighted round robins, the joiner get built here and set here
+	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);
+	else if (joiner.getIdent().equals("WEIGHTED_ROUND_ROBIN"))
+	    joinType = SIRJoiner.createWeightedRR((SIRContainer)parentStream, joiner.getArgs());
+	else 
+	    at.dms.util.Utils.fail(printLine(type) + 
+				   "Unsupported Join Type");
 
-	    JExpression[] args = joiner.getArgs();
-	    if (parentStream instanceof SIRSplitJoin)
-		((SIRSplitJoin)parentStream).setJoiner(SIRJoiner.
-							createWeightedRR((SIRSplitJoin)
-									 parentStream, 
-									 args));
-	    if (parentStream instanceof SIRFeedbackLoop)
-		((SIRFeedbackLoop)parentStream).setJoiner(SIRJoiner.
-							 createWeightedRR((SIRFeedbackLoop)
-									  parentStream, 
-									  args));
-	    joinType = null;
-	}
+	if (parentStream instanceof SIRSplitJoin)
+	    ((SIRSplitJoin)parentStream).setJoiner(joinType);
+	if (parentStream instanceof SIRFeedbackLoop)
+	    ((SIRFeedbackLoop)parentStream).setJoiner(joinType);
 	
-	    
-
     }
     
     

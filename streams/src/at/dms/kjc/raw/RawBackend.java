@@ -42,7 +42,7 @@ public class RawBackend {
 	structures = structs;
 	
 	Flattener.enableUnrollIfLinear();
-	createStructuresIncludeFile(structures);
+	StructureIncludeFile.doit(structures);
 
 	// set number of columns/rows
 	RawBackend.rawColumns = KjcOptions.raw;
@@ -115,6 +115,7 @@ public class RawBackend {
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
+
 	
 	//VarDecl Raise to move peek index up so
 	//constant prop propagates the peek buffer index
@@ -351,34 +352,5 @@ public class RawBackend {
 	return parents[parents.length -1];
     }
 
-    /** 
-     * create a c header file with all the structure definitions
-     * as typedef'ed structs.
-     **/
-    private static void createStructuresIncludeFile(SIRStructure[] structs) 
-    {
-	if (structs.length == 0) 
-	    return;
-
-	try {
-	    FileWriter fw = new FileWriter("structs.h");
-	    
-	    for (int i = 0; i < structs.length; i++) {
-		SIRStructure current = structs[i];
-		fw.write("typedef struct _" + current.getIdent() + " {\n");
-		for (int j = 0; j < current.getFields().length; j++) {
-		    fw.write("\t" + current.getFields()[j].getType() + " " +
-			     current.getFields()[j].getVariable().getIdent() +
-			     ";\n");
-		}
-		fw.write("} " + current.getIdent() + ";\n");
-	    }
-	    fw.close();
-	}
-	catch (Exception e) {
-	    e.printStackTrace();
-	    System.err.println("Error creating structure include file");
-	}
-    }
 }
 

@@ -110,7 +110,8 @@ public class MakefileGenerator
 
 	    fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");
 	    fw.write("clean:\n");
-	    fw.write("\trm -f *.o\n\n");
+	    fw.write("\trm -f *.o\n");
+	    fw.write("\trm -f tile*.s\n\n");
 	    if(KjcOptions.altcodegen) {
 		//do something
 	    }
@@ -213,20 +214,30 @@ public class MakefileGenerator
 	    fw.write("}\n");
 	}
 
+// 	    ("global gAUTOFLOPS = 0;\n" +
+// 	     "fn __clock_handler(hms)\n" +
+//              "{\n" +
+//              "  local i;\n" +
+//              "  for (i = 0; i < gNumProc; i++)\n" +
+//              "  {\n" +
+//              "    gAUTOFLOPS += imem_instr_is_fpu(get_imem_instr(i, get_pc_for_proc(i)));\n" +
+//              "  }\n" +
+//              "}\n" +
+//              "\n" +
+//              "EventManager_RegisterHandler(\"clock\", \"__clock_handler\");\n" +
+//              "\n" +
 
 	fw.write
-            ("global gAUTOFLOPS = 0;\n" +
-             "fn __clock_handler(hms)\n" +
-             "{\n" +
-             "  local i;\n" +
-             "  for (i = 0; i < gNumProc; i++)\n" +
-             "  {\n" +
-             "    gAUTOFLOPS += imem_instr_is_fpu(get_imem_instr(i, get_pc_for_proc(i)));\n" +
-             "  }\n" +
-             "}\n" +
-             "\n" +
-             "EventManager_RegisterHandler(\"clock\", \"__clock_handler\");\n" +
-             "\n" +
+	    ("global gAUTOFLOPS = 0;\n" +
+	     "fn __event_fpu_count(hms)\n" +
+	     "{" +
+	     "\tif (imem_instr_is_fpu(hms.instrWord))\n" +
+	     "\t{\n" +
+	     "\t\tAtomicIncrement(&gAUTOFLOPS);\n" +
+	     "\t}\n" +
+	     "}\n\n" +
+	     "EventManager_RegisterHandler(\"issued_instruction\", \"__event_fpu_count\");\n" +
+
              "fn count_FLOPS(steps)\n" +
              "{\n" +
              "  gAUTOFLOPS = 0;\n" +

@@ -160,6 +160,48 @@ public class Util extends at.dms.util.Utils {
 	return ret;
     }
 
+    public static String staticNetworkReceivePrefix() {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) 
+	    return "";
+	else 
+	    return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
+    }
 
+    public static String staticNetworkReceiveSuffix(CType tapeType) {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    if(tapeType.isFloatingPoint())
+		return "= csti.fp;";
+	    else
+		return " = csti.integer;";
+	}
+	else 
+	    return "));";
+    }
+
+    public static String staticNetworkSendPrefix(CType tapeType) {
+	StringBuffer buf = new StringBuffer();
+	
+	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    if(tapeType.isFloatingPoint()) 
+		buf.append("csto.fp = ");
+	    else 
+		buf.append("csto.integer = ");
+	    //temporary fix for type changing filters
+	    buf.append("(" + tapeType + ")");
+	} 
+	else {
+	    buf.append("(static_send(");    
+	    //temporary fix for type changing filters
+	    buf.append("(" + tapeType + ")");
+	}
+	return buf.toString();
+    }
+
+    public static String staticNetworkSendSuffix() {
+	if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+	    return "";
+	else 
+	    return "))";
+    }
 }
 

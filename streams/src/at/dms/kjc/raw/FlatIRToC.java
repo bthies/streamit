@@ -990,25 +990,20 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
-	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-		visitArgs(args, 0);
-		print(" = ");
-		if(args[0].getType().isFloatingPoint())
-		    print("csti.fp");
-		else
-		    print("csti.integer");
-		print(";");
-       	    } 
-	    else {
-		print ("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
-		visitArgs(args, 0);
-		print("));");
-	    }
+	    print(Util.staticNetworkReceivePrefix());
+	    visitArgs(args,0);
+	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
 	    return;  
-       }
-
+	}
+	
         print(ident);
         print("(");
+	
+	//if this method we are calling is the call to a structure 
+	//receive method that takes a pointer, we have to add the 
+	//address of operator
+	if (ident.startsWith(RawExecutionCode.structReceiveMethodPrefix))
+	    print("&");
 
         int i = 0;
         /* Ignore prefix, since it's just going to be a Java class name.
@@ -1124,6 +1119,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         } else {
 	    print("(");
             left.accept(this);
+	    if (!(left instanceof JThisExpression))
+		print(".");
             print(ident);
 	    print(")");
         }
@@ -1484,23 +1481,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType tapeType,
 			    JExpression val) 
     {
-	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    if(tapeType.isFloatingPoint()) 
-		print("csto.fp = ");
-	    else 
-		print("csto.integer = ");
-	    //temporary fix for type changing filters
-	    print("(" + tapeType + ")");
-	    val.accept(this);
-	} else {
-	    print("(static_send(");    
-	    //temporary fix for type changing filters
-	    print("(" + tapeType + ")");
-	    
-	    val.accept(this);
-	    print("))");	    
-	}
+	print(Util.staticNetworkSendPrefix(tapeType));
+	val.accept(this);
+	print(Util.staticNetworkSendSuffix());
     }
+
+    
+    public void pushClass(SIRPushExpression self, 
+			  CType tapeType,
+			  JExpression val) 
+    {
+	//turn the push statement into a call of
+	//the structure's push method
+	print("push" + tapeType + "(&");
+	val.accept(this);
+	print(")");
+    }
+    
 
     private void pushArray(SIRPushExpression self, 
 			   CType tapeType,
@@ -1538,13 +1535,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(");\n}\n");
 	}
     }
-
-    public void pushClass(SIRPushExpression self, 
-			   CType tapeType,
-			   JExpression val) 
-    {
-    }
-    
     
     public void visitPushExpression(SIRPushExpression self,
                                     CType tapeType,

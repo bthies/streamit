@@ -116,6 +116,40 @@ public class DirectCommunication extends at.dms.util.Utils
 
 class DirectConvertCommunication extends SLIRReplacingVisitor 
 {
+    public Object visitAssignmentExpression(JAssignmentExpression oldself,
+					    JExpression oldleft,
+					    JExpression oldright) 
+    {
+	//a little optimization, use the pointer version of the 
+	//structure's pop in struct.h to avoid copying		
+	if (oldright instanceof JCastExpression && 
+	    (((JCastExpression)oldright).getExpr() instanceof SIRPopExpression)) {
+	    SIRPopExpression pop = (SIRPopExpression)((JCastExpression)oldright).getExpr();
+	    
+	    if (pop.getType().isClassType()) {
+		JExpression left = (JExpression)oldleft.accept(this);
+		
+		JExpression[] arg = 
+		    {left};
+		
+		return new JMethodCallExpression(null, new JThisExpression(null), 
+						 RawExecutionCode.structReceiveMethodPrefix + 
+						 pop.getType(),
+						 arg);
+	    } 
+	    if (pop.getType().isArrayType()) {
+		return null;
+	    }
+	}
+
+	//otherwise do the normal thing
+	JExpression self = (JExpression)super.visitAssignmentExpression(oldself,
+									oldleft, 
+									oldright);
+	return self;
+    }
+    
+
     public Object visitPopExpression(SIRPopExpression oldSelf,
 				     CType oldTapeType) {
 	
@@ -124,11 +158,25 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	    (SIRPopExpression)
 	    super.visitPopExpression(oldSelf, oldTapeType);  
 
-	if (KjcOptions.altcodegen || KjcOptions.decoupled) 
-	    return altCodeGen(self);
-	else
-	    return normalCodeGen(self);
+	//if this is a struct, use the struct's pop method, generated in struct.h
+	if (self.getType().isClassType()) {
+	    return new JMethodCallExpression(null, new JThisExpression(null), 
+					     "pop" + self.getType(), 
+					     new JExpression[0]);
+	}
+	else if (self.getType().isArrayType()) {
+	    return null;
+	}
+	else {
+	    //I am keeping it the was it is because we should use static_receive
+	    //instead of receiving to memory as in the code in Util
+	    if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+		return altCodeGen(self);
+	    else
+		return normalCodeGen(self);
+	}
     }
+    
     
     private Object altCodeGen(SIRPopExpression self) {
 	String variable = "integer";
@@ -175,7 +223,7 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	Utils.fail("Should not see a peek expression when generating " +
 		   "direct communication");
 	return null;
-    }
+   }
 }
 
 

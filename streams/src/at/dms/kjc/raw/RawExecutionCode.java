@@ -40,6 +40,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String steadySchedFunction = "__RAWSTEADYSCHED__";
     
     public static String receiveMethod = "static_receive_to_mem";
+    public static String structReceiveMethodPrefix = "__popPointer";
 
     public static String rawMain = "__RAWMAIN__";
     
@@ -251,11 +252,9 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    
 	    return new JNewArrayExpression(null, baseType, dims, null);
 	}
-	//	else if (inputType.isClassType()) {
-	//    Utils.fail("Structures not implemented");
-	//	}
 
-	//else basetype, create the array
+	
+
 	JExpression dims[] = {new JIntLiteral(buffersize)};
 	return new JNewArrayExpression(null, inputType, dims, null);
 	
@@ -302,6 +301,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//only add the receive buffer and its vars if the 
 	//filter receives data
 	if (!noBuffer(filter)) {
+	    //initialize the buffersize to be the size of the 
+	    //struct being passed over it
 	    int buffersize;
 	    
 	    if (isSimple(filter)) {
@@ -527,7 +528,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 
 	    //add the code to receive the items into the buffer
 	    statements.addStatement
-		(makeForLoop(receiveCode(filter, localVariables),
+		(makeForLoop(receiveCode(filter, filter.getInputType(), 
+					 localVariables),
 			     localVariables.exeIndex,
 			     new JIntLiteral(two.getInitPeek())));
 	    
@@ -553,7 +555,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    
 	    if (bottomPeek > 0) {
 		statements.addStatement
-		    (makeForLoop(receiveCode(filter, localVariables),
+		    (makeForLoop(receiveCode(filter, filter.getInputType(),
+					     localVariables),
 				 localVariables.exeIndex,
 				 new JIntLiteral(bottomPeek)));
 	    }
@@ -567,7 +570,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//but not consumed by this filter in the initialization stage
 	if (remaining > 0) {
 	   statements.addStatement
-		(makeForLoop(receiveCode(filter, localVariables),
+		(makeForLoop(receiveCode(filter, filter.getInputType(),
+					 localVariables),
 			     localVariables.exeIndex,
 			     new JIntLiteral(remaining))); 
 	}
@@ -585,7 +589,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 				    LocalVariables localVariables) 
     {
 	JStatement innerReceiveLoop = 
-	    makeForLoop(receiveCode(filter, localVariables),
+	    makeForLoop(receiveCode(filter, filter.getInputType(),
+				    localVariables),
 			localVariables.exeIndex,
 			new JIntLiteral(filter.getPopInt()));
 	
@@ -676,7 +681,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	//add the statements to receive pop items into the buffer
 	block.addStatement
-	    (makeForLoop(receiveCode(filter, localVariables),
+	    (makeForLoop(receiveCode(filter, filter.getInputType(),
+				     localVariables),
 			 localVariables.exeIndex,
 			 new JIntLiteral(filter.getPopInt())));
 
@@ -711,55 +717,49 @@ public class RawExecutionCode extends at.dms.util.Utils
 				   null);
     }
 
-    //returns the code to receive one item into the buffer
-    //uses the correct variables
-    JStatement receiveCode(SIRFilter filter, LocalVariables localVariables) {
-	JBlock statements = new JBlock(null, new JStatement[0], null);
-
+    JStatement receiveCode(SIRFilter filter, CType type, LocalVariables localVariables) {
 	if (noBuffer(filter)) 
 	    return null;
+
+	//the name of the method we are calling, this will
+	//depend on type of the pop, by default set it to be the scalar receive
+	String receiveMethodName = receiveMethod;
+
+	JBlock statements = new JBlock(null, new JStatement[0], null);
 	
-	if (filter.getInputType().isArrayType()) {
-	    Utils.fail("Arrays over tapes not implemented");
-	    return null;
-	}
-	else if (filter.getInputType().isClassType()) {
-	    
-	    Utils.fail("Structures man");
-	} 
-	else if (!filter.getInputType().equals(CStdType.Void)) {
-	    //we want to create a statement of the form:
-	    //static_receive_to_mem((void*)&(recvBuffer[(++recvIndex) &
-	    //                                          recvBufferSize]));
+	//if it is not a scalar receive chane the name to the appropriate 
+	//method call, from struct.h
+	if (type.isClassType()) 
+	    receiveMethodName = structReceiveMethodPrefix  + type.toString();
+	else if (type.isArrayType()) 
+	    receiveMethodName = "something";
 
-	    //the cast to (void*) and the '&' are added by the FlatIRToC pass
+	//create the array access expression to access the buffer 
+	JArrayAccessExpression arrayAccess = 
+	    new JArrayAccessExpression(null,
+				       new JLocalVariableExpression
+				       (null,
+					localVariables.recvBuffer),
+				       bufferIndex(filter,
+						   localVariables));
+	
+	//put the arrayaccess in an array...
+	JExpression[] bufferAccess = 
+	    {new JParenthesedExpression(null,
+					arrayAccess)};
+	 
+	//the method call expression, for scalars, flatIRtoC
+	//changes this into c code thatw will perform the receive...
+	JExpression exp =
+	    new JMethodCallExpression(null,  new JThisExpression(null),
+				      receiveMethodName,
+				      bufferAccess);
 
-	  
-	    //create the array access expression
-	    JArrayAccessExpression bufferAccess = 
-		new JArrayAccessExpression(null,
-					   new JLocalVariableExpression
-					   (null,
-					    localVariables.recvBuffer),
-					   bufferIndex(filter,
-						       localVariables));
-	    
-	    JExpression[] arg = 
-		{new JParenthesedExpression(null,
-					    bufferAccess)};
-	    
-	    //create the method call expression
-	    JMethodCallExpression exp =
-		new JMethodCallExpression(null,  new JThisExpression(null),
-					  receiveMethod,
-					  arg);
-
-	    //return the method call
-	    return new JExpressionStatement(null, exp, null);
-	}
-	return null;
+	//return a statement
+	return new JExpressionStatement(null, exp, null);
     }
     
+
     //return the buffer access expression for the receive code
     //depends if this is a simple filter
     private JExpression bufferIndex(SIRFilter filter, 
@@ -1033,3 +1033,143 @@ public class RawExecutionCode extends at.dms.util.Utils
 }
 
 
+//  //REMOVE THIS WHEN THE NEW RECEIVE CODE WORKS
+//     //returns the code to receive one item into the buffer
+//     //uses the correct variables
+//     JStatement OLDreceiveCode(SIRFilter filter, CType type, LocalVariables localVariables) {
+// 	JBlock statements = new JBlock(null, new JStatement[0], null);
+
+// 	if (noBuffer(filter)) 
+// 	    return null;
+	
+// 	if (type.isArrayType()) {
+// 	    Utils.fail("Arrays over tapes not implemented");
+// 	    return null;
+// 	}
+// 	else if (type.isClassType()) {
+// 	    JBlock block = new JBlock();
+	    
+// 	    //add the statement to increment the index
+// 	    //and mask it, before we start element-wise receiving
+
+// 	    //add the increment to the buffer index
+// 	    JPrefixExpression bufferIncrement = 
+// 		new JPrefixExpression(null, 
+// 				      OPE_PREINC,
+// 				      new JLocalVariableExpression
+// 				      (null,localVariables.recvIndex));
+	    
+// 	    //create the modulo expression
+// 	    JBitwiseExpression indexAnd = 
+// 		new JBitwiseExpression(null, 
+// 				       OPE_BAND,
+// 				       bufferIncrement, 
+// 				       new JLocalVariableExpression
+// 				       (null,
+// 					localVariables.recvBufferBits));	
+// 	    block.addStatement
+// 		(new JExpressionStatement
+// 		 (null, new JAssignmentExpression(null,
+// 						  new JLocalVariableExpression
+// 						  (null,localVariables.recvIndex),
+// 						  indexAnd),
+// 		  null));
+	    
+// 	    JArrayAccessExpression prefix = 
+// 		new JArrayAccessExpression(null,
+// 					   new JLocalVariableExpression
+// 					   (null,
+// 					    localVariables.recvBuffer),
+// 					   new JLocalVariableExpression
+// 					   (null,
+// 					    localVariables.recvIndex));
+	    
+// 	    block.addStatement(structureReceiveCode(type, prefix, localVariables));
+// 	    return block;
+// 	} 
+// 	else if (!type.equals(CStdType.Void)) {
+// 	    //we want to create a statement of the form:
+// 	    //static_receive_to_mem((void*)&(recvBuffer[(++recvIndex) &
+// 	    //                                          recvBufferSize]));
+
+// 	    //the cast to (void*) and the '&' are added by the FlatIRToC pass
+
+	  
+// 	    //create the array access expression
+// 	    JArrayAccessExpression bufferAccess = 
+// 		new JArrayAccessExpression(null,
+// 					   new JLocalVariableExpression
+// 					   (null,
+// 					    localVariables.recvBuffer),
+// 					   bufferIndex(filter,
+// 						       localVariables));
+	    
+// 	    JExpression[] arg = 
+// 		{new JParenthesedExpression(null,
+// 					    bufferAccess)};
+	    
+// 	    //create the method call expression
+// 	    JMethodCallExpression exp =
+// 		new JMethodCallExpression(null,  new JThisExpression(null),
+// 					  receiveMethod,
+// 					  arg);
+
+// 	    //return the method call
+// 	    return new JExpressionStatement(null, exp, null);
+// 	}
+// 	return null;
+//     }
+    
+    
+//     /**
+//      * Returns a block of code that will receive one structure element from 
+//      * the tape, element-wise.
+//      **/
+//     private JStatement structureReceiveCode(CType type, 
+// 					    JExpression prefix,
+// 					    LocalVariables localVariables)
+//     {
+// 	JBlock block = new JBlock();
+// 	int i;
+	
+// 	//create a statement of the form:
+// 	//static_receive_to_mem((void*)&(recvBuffer[recvIndex]).current_member);
+// 	for (i = 0; i < type.getCClass().getFields().length; i++) {
+// 	    CField field = type.getCClass().getFields()[i];
+// 	    if (field.getType().isClassType()) {
+// 		//if this field is a class type, 
+// 		//recursively call this method with
+// 		//a new prefex that accesses this field
+// 		JFieldAccessExpression newPrefix = 
+// 		    new JFieldAccessExpression(null, prefix,
+// 					       field.getIdent());
+		
+// 		block.addStatement(structureReceiveCode(field.getType(),
+// 							newPrefix,
+// 							localVariables));
+// 	    }
+// 	    else if (field.getType().isArrayType()) {
+// 		Utils.fail("Arrays in structures not implemented");
+// 	    }
+// 	    else {
+// 		JFieldAccessExpression fieldAccess = 
+// 		    new JFieldAccessExpression(null,
+// 					       prefix,
+// 					       field.getIdent());
+
+// 		JExpression[] arg = 
+// 		{new JParenthesedExpression(null,
+// 					    fieldAccess)};
+
+// 		//create the method call expression
+// 		JMethodCallExpression exp =
+// 		    new JMethodCallExpression(null,  new JThisExpression(null),
+// 					      receiveMethod,
+// 					      arg);
+		
+// 		//return the method call
+// 		block.addStatement(new JExpressionStatement(null, exp, null));
+// 	    }
+// 	}
+// 	return block;
+//     }

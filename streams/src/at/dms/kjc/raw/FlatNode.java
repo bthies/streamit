@@ -27,12 +27,6 @@ public class FlatNode {
     private int currentEdge;
     private int currentIncoming;
 
-    public int hashCode() {
-	return inputs * ways * 
-	    (edges==null ? 1 : edges.length) * 
-	    (incoming==null ? 1 : incoming.length);
-    }
-
     /* create a new node with <op> */
     public FlatNode(SIROperator op) 
     {
@@ -149,5 +143,15 @@ public class FlatNode {
 	}
     }
     
+    /**
+     * Override the hashcode so that it is deterministic with each
+     * run, so that layouts can be deterministic.
+     */
+    public int hashCode() {
+	return inputs * ways * 
+	    (edges==null ? 1 : edges.length) * 
+	    (incoming==null ? 1 : incoming.length);
+    }
+
 }
 

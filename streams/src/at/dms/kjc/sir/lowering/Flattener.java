@@ -268,6 +268,8 @@ public class Flattener {
 	    }
 
 	}
+	Lifter.lift(str);
+	StreamItDot.printGraph(str, "linear-total-post-lift.dot");
 	return str;
     }
     

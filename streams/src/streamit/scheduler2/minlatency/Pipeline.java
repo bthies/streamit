@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.14 2003-04-06 19:19:06 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.15 2003-04-07 02:19:01 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -242,16 +242,21 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 for (int nChild = 0; nChild < getNumChildren(); nChild++)
                 {
                     StreamInterface child = getHierarchicalChild(nChild);
-                    
-                    phase.appendPhase(getChildPhases(child, phaseChildrenExecs[nChild]));
-                    
+
+                    phase.appendPhase(
+                        getChildPhases(child, phaseChildrenExecs[nChild]));
+
                     if (childrenExecs[nChild] >= phaseChildrenExecs[nChild])
                     {
                         childrenExecs[nChild] -= phaseChildrenExecs[nChild];
                         totalChildrenExecs -= phaseChildrenExecs[nChild];
-                    } else {
-                        totalChildrenExecs-= childrenExecs[nChild];
-                        extraChildrenExecs += (phaseChildrenExecs[nChild] - childrenExecs[nChild]);
+                    }
+                    else
+                    {
+                        totalChildrenExecs -= childrenExecs[nChild];
+                        extraChildrenExecs
+                            += (phaseChildrenExecs[nChild]
+                                - childrenExecs[nChild]);
                         childrenExecs[nChild] = 0;
                     }
                 }
@@ -259,7 +264,7 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 utility.addSchedulePhase(phase);
             }
         }
-        
+
         return extraChildrenExecs;
     }
 
@@ -303,13 +308,12 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             {
                 StreamInterface child = getHierarchicalChild(nChild);
                 int dataNeeded =
-                    getHierarchicalChild(nChild + 1).getSteadyPeek();
+                    getHierarchicalChild(nChild + 1).getSteadyPeek()
+                        - getHierarchicalChild(nChild + 1).getSteadyPop();
 
                 int dataPushed = 0;
                 int nStages;
-                for (nStages = 0;
-                    dataNeeded > dataPushed;
-                    nStages++)
+                for (nStages = 0; dataNeeded > dataPushed; nStages++)
                 {
                     dataPushed
                         += getChildInitStage(child, nStages).getOverallPush();
@@ -369,13 +373,14 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 }
             }
 
-            int extraExecs = computeMinLatencySchedule(
-                new PipelineSteadySchedulingUtility(this),
-                numChildPhases,
-                dataInBuffers,
-                lastChildNumExecPerPhase);
-                
-            ASSERT (extraExecs == 0);
+            int extraExecs =
+                computeMinLatencySchedule(
+                    new PipelineSteadySchedulingUtility(this),
+                    numChildPhases,
+                    dataInBuffers,
+                    lastChildNumExecPerPhase);
+
+            ASSERT(extraExecs == 0);
         }
     }
 }

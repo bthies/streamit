@@ -64,7 +64,7 @@ public class DeadCodeElimination {
 		    public void visitLocalVariableExpression(JLocalVariableExpression self,
 							     String ident) {
 			super.visitLocalVariableExpression(self, ident);
-			System.err.println("var used: " + ident);
+			//System.err.println("var used: " + ident);
 			varsUsed.add(self.getVariable());
 		    }
 		});

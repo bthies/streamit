@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JRelationalExpression.java,v 1.3 2002-06-19 19:32:03 jasperln Exp $
+ * $Id: JRelationalExpression.java,v 1.4 2002-06-24 23:40:59 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -101,65 +101,82 @@ public class JRelationalExpression extends JBinaryExpression {
 
     switch (left.getType().getTypeID()) {
     case TID_INT:
-      result = compute(left.intValue(), right.intValue());
-      break;
+	result = compute(left.intValue(), right.intValue());
+	break;
     case TID_LONG:
-      result = compute(left.longValue(), right.longValue());
-      break;
+	result = compute(left.longValue(), right.longValue());
+	break;
     case TID_FLOAT:
-      result = compute(left.floatValue(), right.floatValue());
-      break;
+	result = compute(left.floatValue(), right.floatValue());
+	break;
     case TID_DOUBLE:
-      result = compute(left.doubleValue(), right.doubleValue());
-      break;
+	result = compute(left.doubleValue(), right.doubleValue());
+	break;
+	//case OPE_BAND:
+	//result = left.booleanValue()&&right.booleanValue();
     default:
       throw new InconsistencyException("unexpected type " + left.getType());
     }
 
     return new JBooleanLiteral(getTokenReference(), result);
   }
-
-  /**
-   * Computes the result of the operation at compile-time (JLS 15.28).
-   * @param	left		the first operand
-   * @param	right		the seconds operand
-   * @return	the result of the operation
-   */
-  public boolean compute(int left, int right) {
-    switch (oper) {
-    case OPE_LT:
-      return left < right;
-    case OPE_LE:
-      return left <= right;
-    case OPE_GT:
-      return left > right;
-    case OPE_GE:
-      return left >= right;
-    default:
-      throw new InconsistencyException();
+    
+    /**
+     * Tries to fold even if both left an right aren't constant
+     
+     public JExpression partialFold() {
+     return this;
+     }*/
+    
+    /**
+     * Computes the result of the operation at compile-time (JLS 15.28).
+     * @param	left		the first operand
+     * @param	right		the seconds operand
+     * @return	the result of the operation
+     */
+    public boolean compute(int left, int right) {
+	switch (oper) {
+	case OPE_LT:
+	    return left < right;
+	case OPE_LE:
+	    return left <= right;
+	case OPE_GT:
+	    return left > right;
+	case OPE_GE:
+	    return left >= right;
+	case OPE_EQ:
+	    return left == right;
+	case OPE_NE:
+	    return left != right;
+	default:
+	    throw new InconsistencyException();
+	}
     }
-  }
-
-  /**
-   * Computes the result of the operation at compile-time (JLS 15.28).
-   * @param	left		the first operand
-   * @param	right		the seconds operand
-   * @return	the result of the operation
-   */
-  public boolean compute(long left, long right) {
-    switch (oper) {
-    case OPE_LT:
-      return left < right;
-    case OPE_LE:
-      return left <= right;
-    case OPE_GT:
-      return left > right;
-    case OPE_GE:
-      return left >= right;
-    default:
-      throw new InconsistencyException();
+    
+    /**
+     * Computes the result of the operation at compile-time (JLS 15.28).
+     * @param	left		the first operand
+     * @param	right		the seconds operand
+     * @return	the result of the operation
+     */
+    public boolean compute(long left, long right) {
+	switch (oper) {
+	case OPE_LT:
+	    return left < right;
+	case OPE_LE:
+	    return left <= right;
+	case OPE_GT:
+	    return left > right;
+	case OPE_GE:
+	    return left >= right;
+	case OPE_EQ:
+	    return left == right;
+	case OPE_NE:
+	    return left != right;
+	default:
+	    throw new InconsistencyException();
+	}
     }
-  }
 
   /**
    * Computes the result of the operation at compile-time (JLS 15.28).
@@ -177,6 +194,10 @@ public class JRelationalExpression extends JBinaryExpression {
       return left > right;
     case OPE_GE:
       return left >= right;
+    case OPE_EQ:
+	return left == right;
+    case OPE_NE:
+	return left != right;
     default:
       throw new InconsistencyException();
     }
@@ -189,18 +210,22 @@ public class JRelationalExpression extends JBinaryExpression {
    * @return	the result of the operation
    */
   public boolean compute(double left, double right) {
-    switch (oper) {
-    case OPE_LT:
-      return left < right;
-    case OPE_LE:
-      return left <= right;
-    case OPE_GT:
-      return left > right;
-    case OPE_GE:
-      return left >= right;
-    default:
-      throw new InconsistencyException();
-    }
+      switch (oper) {
+      case OPE_LT:
+	  return left < right;
+      case OPE_LE:
+	  return left <= right;
+      case OPE_GT:
+	  return left > right;
+      case OPE_GE:
+	  return left >= right;
+      case OPE_EQ:
+	  return left == right;
+      case OPE_NE:
+	  return left != right;
+      default:
+	  throw new InconsistencyException();
+      }
   }
 
   // ----------------------------------------------------------------------

@@ -2,15 +2,16 @@
 #ifndef __PEEK_STREAM_H
 #define __PEEK_STREAM_H
 
-#include <mysocket.h>
+#include <serializable.h>
+#include <data_consumer.h>
 
 #define PEEK_STREAM_QUEUE_MAXSIZE 100
 
 template <class T> 
-class peek_stream {
+class peek_stream : public serializable {
   
  private:
-  mysocket *sock;
+  data_consumer *input;
 
   // the queue
 
@@ -54,15 +55,27 @@ class peek_stream {
 
 
  public:
-  peek_stream(mysocket *sock) {
-    this->sock = sock;
+  peek_stream(data_consumer *input) {
+    this->input = input;
     init_queue();
   }
+
+  virtual void write_object(object_write_buffer *buf) {
+    buf->write_int(queue_size);
+    
+    int c_index = tail;
+    for (int i = 0; i < queue_size; i++) {
+      buf->write(&queue[c_index], sizeof(T));
+      c_index++;
+      if (c_index == PEEK_STREAM_QUEUE_MAXSIZE) c_index = 0;
+    }
+  }
+
 
   T pop() {
   
     if (queue_size == 0) {
-      sock->read_chunk((char*)queue[0], sizeof(T));
+      input->read_item((void*)queue[0], sizeof(T));
       return *(queue[0]);
     }
     

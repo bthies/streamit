@@ -183,25 +183,34 @@ void init_instance::initialize_sockets() {
       
       //int pfd[2];
       //int retval = pipe(pfd);
-      //if (retval != 0) perror("pipe");
-
-      //int sockets[2];
-      //if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
-      //  perror("opening stream socket pair");
-      //  exit(1);
+      //if (retval != 0) {
+      //  perror("pipe");
+      //  exit(-1);
       //}
-
       //out_sockets[sd] = pfd[0];
       //in_sockets[sd] = pfd[1];
-     
-      memsocket *ms = new memsocket();
 
-      out_sockets[sd] = ms;//sockets[0];
-      in_sockets[sd] = ms;//sockets[1];
+      int sockets[2];
+      if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
+        perror("opening stream socket pair");
+        exit(-1);
+      }
+
+      out_sockets[sd] = new netsocket(sockets[0]);
+      in_sockets[sd] = new netsocket(sockets[1]);
       
       out_done[sd] = true;
       in_done[sd] = true;
 
+      /*
+      memsocket *ms = new memsocket();
+
+      out_sockets[sd] = ms;
+      in_sockets[sd] = ms;
+      
+      out_done[sd] = true;
+      in_done[sd] = true;
+      */
     }
   }
 
@@ -343,6 +352,10 @@ int init_instance::listen() {
     perror("socket()");
     return -1;
   }
+
+  int w_size = 256 * 1000;
+  setsockopt(listenfd, SOL_SOCKET, SO_SNDBUF, (char*)&w_size, sizeof w_size);
+  setsockopt(listenfd, SOL_SOCKET, SO_RCVBUF, (char*)&w_size, sizeof w_size);
 
   flag = 1;
 

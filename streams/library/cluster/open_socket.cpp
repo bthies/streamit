@@ -141,6 +141,10 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
     return NULL; // Could not create socket
   }
 
+  int w_size = 256 * 1000;
+  setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (char*)&w_size, sizeof w_size);
+  setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char*)&w_size, sizeof w_size);
+
   sa.sin_family = AF_INET;
   sa.sin_port = htons(port);
   sa.sin_addr.s_addr = ipaddr;
@@ -167,4 +171,7 @@ netsocket *open_socket::connect(unsigned ipaddr, short port) {
  
   return new netsocket(sock);
 }
+
+
+
 

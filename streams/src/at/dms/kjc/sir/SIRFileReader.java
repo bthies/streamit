@@ -68,7 +68,7 @@ public class SIRFileReader extends SIRFilter implements Cloneable {
      * Returns the C type of the object, which is always a stream_context.
      */
     public String getName() {
-        return LoweringConstants.CONTEXT_TYPE_NAME;
+        return "ContextContainer";
     }
 }
 

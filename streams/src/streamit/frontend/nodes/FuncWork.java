@@ -1,7 +1,7 @@
 /**
  * FuncWork.java: a work function declaration
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FuncWork.java,v 1.3 2003-01-09 19:13:09 dmaze Exp $
+ * $Id: FuncWork.java,v 1.4 2003-01-09 19:49:07 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -23,11 +23,11 @@ public class FuncWork extends Function
      * and I/O rates.  If the pop or push rates are null, they are
      * replaced with a constant 0; if the peek rate is null, it is
      * replaced with the pop rate. */
-    public FuncWork(FEContext context, int type,
+    public FuncWork(FEContext context, int cls,
                     String name, Statement body,
                     Expression peek, Expression pop, Expression push)
     {
-        super(context, type, name,
+        super(context, cls, name,
               new TypePrimitive(TypePrimitive.TYPE_VOID),
               Collections.EMPTY_LIST, body);
         peekRate = peek;

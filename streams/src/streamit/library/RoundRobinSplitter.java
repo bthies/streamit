@@ -7,12 +7,21 @@ import java.util.Iterator;
 
 public class RoundRobinSplitter extends Splitter
 {
+    int weight;
+    RoundRobinSplitter (int weight)
+    {
+        this.weight = weight;
+    }
     public void work ()
     {
         int outputIndex;
         for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
         {
-            passOneData (input, output [outputIndex]);
+            int w;
+            for (w = 0; w < weight; w++)
+            {
+                passOneData (input, output [outputIndex]);
+            }
         }
     }
 
@@ -24,11 +33,11 @@ public class RoundRobinSplitter extends Splitter
     {
         ArrayList weights = new ArrayList (dest.size ());
 
-        Integer one = new Integer (1);
+        Integer w = new Integer (weight);
         int index;
         for (index = 0; index < dest.size (); index++)
         {
-            weights.add (one);
+            weights.add (w);
         }
 
         return scheduler.newSchedSplitType (SchedSplitType.WEIGHTED_ROUND_ROBIN, weights, this);

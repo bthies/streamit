@@ -62,12 +62,12 @@ public class SplitJoin extends Stream
         {
             switch (myType)
             {
-                case 1: // round robin
-                case 3: // duplicate
-                case 4: // null - no in/out
-                    break;
+                case 1: // round robin and
                 case 2: // weighted round robin - need a weight list
                     weights = new LinkedList ();
+                    break;
+                case 3: // duplicate
+                case 4: // null - no in/out
                     break;
                 default:
                     // passed an illegal parameter to the constructor!
@@ -89,7 +89,10 @@ public class SplitJoin extends Stream
             switch (type)
             {
                 case 1:
-                    return new RoundRobinSplitter ();
+                    {
+                        RoundRobinSplitter splitter =  new RoundRobinSplitter (((Integer)weights.remove (0)).intValue ());
+                        return splitter;
+                    }
                 case 2:
                     WeightedRoundRobinSplitter splitter = new WeightedRoundRobinSplitter ();
                     while (!weights.isEmpty ())
@@ -112,7 +115,10 @@ public class SplitJoin extends Stream
             switch (type)
             {
                 case 1:
-                    return new RoundRobinJoiner ();
+                    {
+                        RoundRobinJoiner joiner =  new RoundRobinJoiner (((Integer)weights.remove (0)).intValue ());
+                        return joiner;
+                    }
                 case 2:
                     WeightedRoundRobinJoiner joiner = new WeightedRoundRobinJoiner ();
                     while (!weights.isEmpty ())
@@ -182,15 +188,12 @@ public class SplitJoin extends Stream
 
     public static SplitJoinType ROUND_ROBIN ()
     {
-        return new SplitJoinType (1);
+        return new SplitJoinType (1).addWeight (1);
     }
 
-    /**
-     * TODO:  add support for a non-unity weight in a round-robin.
-     */
     public static SplitJoinType ROUND_ROBIN (int weight)
     {
-        return new SplitJoinType (1);
+        return new SplitJoinType (1).addWeight (weight);
     }
 
     public static SplitJoinType DUPLICATE ()

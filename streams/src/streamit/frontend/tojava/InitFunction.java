@@ -1,7 +1,7 @@
 /*
  * InitFunction.java: container class to represent an init function
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitFunction.java,v 1.3 2002-07-16 18:12:02 dmaze Exp $
+ * $Id: InitFunction.java,v 1.4 2002-07-22 19:12:23 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -16,8 +16,9 @@ public class InitFunction
 {
     public String body;
 
-    public String getText(int indent, List params, StreamType type,
-                          WorkFunction work, NodesToJava n2j)
+    public String getText(int indent, List params, List fields,
+                          StreamType type, WorkFunction work,
+                          NodesToJava n2j)
     {
         String paramAssigns = "";
         String t = getIndent(indent) + "public void init(";
@@ -32,6 +33,17 @@ public class InitFunction
                 t += param.getParam(n2j);
                 paramAssigns += getIndent(indent+1) + "this." + param.name +
                     " = " + param.name + ";\n";
+            }
+        }
+        if (fields != null)
+        {
+            Iterator iter = params.iterator();
+            while (iter.hasNext())
+            {
+                VariableDeclaration param = (VariableDeclaration)iter.next();
+                if (!(param.type instanceof TypePrimitive))
+                paramAssigns += getIndent(indent+1) + "this." + param.name +
+                    " = new " + n2j.convertTypeFull(param.type) + ";\n";
             }
         }
         t += ") ";

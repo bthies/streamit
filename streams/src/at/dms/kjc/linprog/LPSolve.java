@@ -11,7 +11,7 @@ import lpsolve.solve;
  * http://www.cs.wustl.edu/~javagrp/help/LinearProgramming.html
  *
  */
-public class LPSolve implements LinearProgram {
+public class LPSolve implements LinearProgramSolver {
     private final int numVars;
     private final int numConstraints;
     private final lprec lp;
@@ -47,7 +47,7 @@ public class LPSolve implements LinearProgram {
     /**
      * Constrains the i'th variable of this to be an integer.
      */
-    public void setIntVar(int i) {
+    public void setBoolVar(int i) {
 	solver.set_int(lp, wrap(i), constant.TRUE);
     }
 
@@ -70,16 +70,14 @@ public class LPSolve implements LinearProgram {
     }
     
     /**
-     * Solve the program and return the value of the objective
-     * function (at index 0), and the variables (indices 1...numVars)
-     * in the optimum.
+     * Solve the program and return the value of the the variables
+     * (indices 0...numVars-1) in the optimum.
      */
     public double[] solve() {
 	solver.dosolve(lp);
-	double[] result = new double[1+numVars];
-	result[0] = lp.getBestSolution(0);
-	for (int i=1; i<=numVars; i++) {
-	    result[i] = lp.getBestSolution(lp.getRows()+i);
+	double[] result = new double[numVars];
+	for (int i=0; i<numVars; i++) {
+	    result[i] = lp.getBestSolution(lp.getRows()+i+1);
 	}
 	return result;
     }

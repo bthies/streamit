@@ -23,7 +23,7 @@ public interface LinearProgram {
     /**
      * Constrains the n'th variable of this to be an integer.
      */
-    void setIntVar(int n);
+    void setBoolVar(int n);
 
     /**
      * Adds a greater-than-or-equal constraint between the variables
@@ -38,11 +38,4 @@ public interface LinearProgram {
      * coefficients <constraint> and the right-hand-side <rhs>.
      */
     void addConstraintEQ(double[] constraint, double rhs);
-    
-    /**
-     * Solve the program and return the value of the objective
-     * function (at index 0), and the variables (indices 1...numVars)
-     * in the optimum.
-     */
-    double[] solve();
 }

@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.18 2003-07-07 14:09:32 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.19 2003-07-10 23:49:41 dmaze Exp $
 
 use strict;
 use POSIX qw(strftime);
@@ -24,8 +24,6 @@ my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 # Set up necessary environmental variables so that programs will run
 # automatic testing so that the text tester gets used all of the time.
 $ENV{"AUTOMATIC_TEST"}="true";
-# path for RAW tools
-$ENV{"TOPDIR"}="/home/bits7/NO_BACKUP/streamit/starsearch";
 # Root location to store the reg test working files
 my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working";
 # Root location to store RT output
@@ -57,7 +55,8 @@ print MHMAIL saved_execute("cd $working_dir; cvs -d /projects/raw/cvsroot co str
 # Set up the compilation path
 my $streamit_home = "$working_dir/streams";
 $ENV{"STREAMIT_HOME"} = "$streamit_home/";
-$ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin";
+$ENV{"TOPDIR"}="$streamit_home/misc/raw/"; # for RAW
+$ENV{"PATH"} = "$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin";
 my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/usr/uns/java/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/library/java:$streamit_home/eclipse";
 $ENV{"CLASSPATH"} = $class_path;
 $ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
@@ -65,6 +64,7 @@ $ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
 
 # try and compile the freshly checked out streams directory
 print MHMAIL saved_execute("make -C $working_dir/streams/compiler");
+print MHMAIL saved_execute("make -C $working_dir/streams/misc/raw setup");
 
 # now that we have compiled the compiler, set up the various files where we will direct the output
 # temporary file use to generate body of the messages

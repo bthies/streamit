@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.42 2003-10-13 16:08:35 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.43 2003-10-14 07:32:13 thies Exp $
  **/
 package streamittest;
 
@@ -85,7 +85,8 @@ public class TestBenchmarks extends StreamITTestCase {
         doSyntaxConvertTest(root, "SerializedBeamFormer.str", "SerializedBeamFormer.java");
 	doCompileRunVerifyTest(root, "SerializedBeamFormer.java", "SerializedBeamFormer.out", 0, 4);
         doSyntaxConvertTest(root, "CoarseSerializedBeamFormer.str", "CoarseSerializedBeamFormer.java");
-	doCompileRunVerifyTest(root, "CoarseSerializedBeamFormer.java", "CoarseSerializedBeamFormer.out", 0, 128);
+	// this has the same output as serializedbeamformer
+	doCompileRunVerifyTest(root, "CoarseSerializedBeamFormer.java", "SerializedBeamFormer.out", 0, 128);
     }
 
     // iterative version of bitonic sort

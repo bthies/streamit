@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.33 2003-10-13 23:12:47 mgordon Exp $
+ * $Id: TestExamples.java,v 1.34 2003-10-14 07:32:13 thies Exp $
  **/
 package streamittest;
 
@@ -91,9 +91,12 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testVectAdd", flags));
 	suite.addTest(new TestExamples("testVectAdd1", flags));
 	
+	suite.addTest(new TestExamples("testPhase", flags));
 	suite.addTest(new TestExamples("testchol", flags));
 	suite.addTest(new TestExamples("testMedian", flags));
 	suite.addTest(new TestExamples("testBatcherSort", flags));
+	suite.addTest(new TestExamples("testRadixSort", flags));
+	suite.addTest(new TestExamples("testComparisonCounting", flags));
 	suite.addTest(new TestExamples("testAutoBatcherSort", flags));
 	suite.addTest(new TestExamples("testBubbleSort", flags));
 	suite.addTest(new TestExamples("testInsertionSort", flags));
@@ -126,12 +129,31 @@ public class TestExamples extends StreamITTestCase {
 	doConvertCompileRunVerifyTest(root, "BatcherSort", 0, 16);
     }
     
+    public void testRadixSort() 
+    {
+	String root = EXAMPLE_ROOT + "RadixSort";
+	doConvertCompileRunVerifyTest(root, "RadixSort", 0, 16);
+    }
+    
+    public void testComparisonCounting() 
+    {
+	String root = EXAMPLE_ROOT + "ComparisonCounting";
+	doConvertCompileRunVerifyTest(root, "ComparisonCounting", 0, 16);
+    }
+    
     public void testAutoBatcherSort() 
     {
 	String root = EXAMPLE_ROOT + "BatcherSort";
 	doConvertCompileRunVerifyTest(root, "AutoBatcherSort", 0, 16);
     }
 
+    public void testPhase() 
+    {
+	String root = EXAMPLE_ROOT + "phase";
+        doSyntaxConvertTest(root, "PhaseTest.str", "PhaseTest.java");
+        doCompileTest(root, "PhaseTest.java");
+    }
+    
     public void testchol() 
     {
 	String root = EXAMPLE_ROOT + "chol-para";

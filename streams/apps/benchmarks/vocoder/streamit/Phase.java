@@ -100,8 +100,7 @@ class PhaseStuff extends Pipeline implements Constants {
 	add(new Duplicator(DFT_LENGTH_REDUCED, NEW_LENGTH_REDUCED));
       }
     } else {
-      add(new IdentityFloat());
-//        add(new Identity(Float.TYPE));
+        add(new Identity(Float.TYPE));
     }
   }
 

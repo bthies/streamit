@@ -70,8 +70,7 @@ class Summation extends Pipeline {
   public Summation(int length) {super(length);}
   public void init(final int length) {
     if (length == 1) {
-      add(new IdentityFloat());
-//        add(new Identity(Float.TYPE));
+        add(new Identity(Float.TYPE));
     } else {
       add(new SplitJoin() {
 	  public void init() {

@@ -465,13 +465,6 @@ class FloatVoid extends Filter {
   public void init() {input = new Channel(Float.TYPE, 1); }
 }
 
-class IdentityFloat extends Filter {
-  public void work() {output.pushFloat(input.popFloat());}
-  public void init() {input = new Channel(Float.TYPE, 1);
-  output = new Channel(Float.TYPE, 1);}
-//    IdentityFloat() { super(1); }
-}
-
 class ShortVoid extends Filter {
   public void work() {input.popShort();}
   public void init() {input = new Channel(Short.TYPE, 1); }

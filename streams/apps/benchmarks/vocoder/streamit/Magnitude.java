@@ -12,8 +12,7 @@ class MagnitudeStuff extends Pipeline implements Constants {
 	  public void init() {
 	    setSplitter(DUPLICATE());
 	    add(new FIRSmoothingFilter(DFTLen));
-	    add(new IdentityFloat());
-//  	    add(new Identity(Float.TYPE));
+  	    add(new Identity(Float.TYPE));
 	    setJoiner(ROUND_ROBIN());
 	  }
 	});
@@ -40,8 +39,7 @@ class MagnitudeStuff extends Pipeline implements Constants {
 	  }
 	});
     } else {
-      add(new IdentityFloat());
-//        add(new Identity(Float.TYPE));
+        add(new Identity(Float.TYPE));
     }
 
   }

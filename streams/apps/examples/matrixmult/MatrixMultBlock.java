@@ -5,7 +5,7 @@ import streamit.Filter;
 import streamit.Channel;
 import streamit.Identity;
 
-/* $Id: MatrixMultBlock.java,v 1.1 2002-07-28 18:25:54 karczma Exp $ */
+/* $Id: MatrixMultBlock.java,v 1.2 2002-07-28 18:32:22 karczma Exp $ */
 
 public class MatrixMultBlock extends StreamIt
 {
@@ -16,9 +16,15 @@ public class MatrixMultBlock extends StreamIt
 
     public void init()
     {
+        int x0 = 4;
+        int y0 = 4;
+        int x1 = 6;
+        int y1 = 4;
+        int blockDiv = 2;
+        
         add(new BlockFloatSource(4));
-        //add(new BlockMatrixFloatPrinter(4, 4));
-        add(new MatrixBlockMultiply(4, 4, 4, 4, 2));
+        add(new MatrixBlockMultiply(x0, y0, x1, y0, blockDiv));
+        add(new BlockMatrixFloatPrinter(x1, y0));
         // sink
         add (new Filter() {
             public void init ()
@@ -45,13 +51,13 @@ class MatrixBlockMultiply extends Pipeline
         final int y0,
         final int x1,
         final int y1,
-        final int blockSize)
+        final int blockDiv)
     {
         ASSERT(x0 == y1);
-        ASSERT(x0 % blockSize == 0);
-        ASSERT(y0 % blockSize == 0);
-        ASSERT(x1 % blockSize == 0);
-        ASSERT(y1 % blockSize == 0);
+        ASSERT(x0 % blockDiv == 0);
+        ASSERT(y0 % blockDiv == 0);
+        ASSERT(x1 % blockDiv == 0);
+        ASSERT(y1 % blockDiv == 0);
 
         // rearrange and duplicate the matrices as necessary:
         add(new SplitJoin()
@@ -63,11 +69,11 @@ class MatrixBlockMultiply extends Pipeline
                 {
                     public void init()
                     {
-                        add(new BlockSplit(x0, y0, blockSize));
+                        add(new BlockSplit(x0, y0, blockDiv));
                         add(
                             new Duplicate(
-                                x0 * y0 / (blockSize),
-                                blockSize));
+                                x0 * y0 / (blockDiv),
+                                blockDiv));
                     }
                 });
                 add(new Pipeline()
@@ -75,25 +81,24 @@ class MatrixBlockMultiply extends Pipeline
                     public void init()
                     {
                         add(new Transpose(x1, y1));
-                        add(new BlockSplit(x1, y1, blockSize));
-                        add(new Duplicate(x1 * y1, blockSize));
+                        add(new BlockSplit(x1, y1, blockDiv));
+                        add(new Duplicate(x1 * y1, blockDiv));
                     }
                 });
                 setJoiner(
                     WEIGHTED_ROUND_ROBIN(
-                        x0 * y0 / (blockSize * blockSize),
-                        x1 * y1 / (blockSize * blockSize)));
+                        x0 * y0 / (blockDiv * blockDiv),
+                        x1 * y1 / (blockDiv * blockDiv)));
             }
         });
         add(
             new BlockMultiply(
-                x0 / blockSize,
-                y0 / blockSize,
-                y1 / blockSize,
-                x0 / blockSize));
-        add(new BlockAdd(x1 / blockSize, y0 / blockSize, blockSize));
-        add(new BlockCombine(x1, y0, blockSize));
-        add(new BlockMatrixFloatPrinter(4, 4));
+                x0 / blockDiv,
+                y0 / blockDiv,
+                y1 / blockDiv,
+                x0 / blockDiv));
+        add(new BlockAdd(x1 / blockDiv, y0 / blockDiv, blockDiv));
+        add(new BlockCombine(x1, y0, blockDiv));
     }
 }
 
@@ -103,15 +108,15 @@ class BlockSplit extends SplitJoin
     {
         super(a, b, c);
     }
-    public void init(int x0, int y0, int blockSize)
+    public void init(int x0, int y0, int blockDiv)
     {
-        setSplitter(ROUND_ROBIN(x0 / blockSize));
+        setSplitter(ROUND_ROBIN(x0 / blockDiv));
         int i;
-        for (i = 0; i < blockSize; i++)
+        for (i = 0; i < blockDiv; i++)
         {
             add(new Identity(Float.TYPE));
         }
-        setJoiner(ROUND_ROBIN(x0 * y0 / (blockSize * blockSize)));
+        setJoiner(ROUND_ROBIN(x0 * y0 / (blockDiv * blockDiv)));
     }
 }
 
@@ -121,9 +126,9 @@ class BlockCombine extends Pipeline
     {
         super(a, b, c);
     }
-    public void init(int x0, int y0, int blockSize)
+    public void init(int x0, int y0, int blockDiv)
     {
-        add (new BlockSplit(x0, y0, blockSize));
+        add (new BlockSplit(x0, y0, blockDiv));
     }
 }
 

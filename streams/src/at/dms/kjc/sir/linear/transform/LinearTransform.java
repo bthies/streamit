@@ -21,6 +21,43 @@ public abstract class LinearTransform {
      * applying the appropriate transformation.
      **/
     public abstract LinearFilterRepresentation transform() throws NoTransformPossibleException;
+
+
+
+
+    ///////////// Utility functions.
+
+
+    
+    /** Calculates the least common multiple of two integers. **/
+    public static int lcm(int a, int b) {
+	return (a*b)/gcd(a,b);
+    }
+
+
+    /**
+     * Return the greatest factor that evenly divids both m and n.
+     * Valid for 0 < n < m.
+     * From http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html.
+     **/
+    public static int gcd(int a, int b) {
+	int m, n;
+	if (a < b) {
+	    n = a; m = b;
+	} else {
+	    n = b; m = a;
+	}
+	int d = m;
+	int r = n;
+	
+	while( r != 0 ){ 
+	    d = r;
+	    r = m % r;
+	}
+	return d;
+    }
+
+
 }
 
 

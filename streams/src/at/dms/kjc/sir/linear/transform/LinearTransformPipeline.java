@@ -6,7 +6,7 @@ package at.dms.kjc.sir.linear;
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.<p>
- * $Id: LinearTransformPipeline.java,v 1.3 2002-09-18 17:15:37 aalamb Exp $
+ * $Id: LinearTransformPipeline.java,v 1.4 2002-09-20 18:09:37 aalamb Exp $
  **/
 class LinearTransformPipeline extends LinearTransform {
     /** The upstream filter representation. **/
@@ -140,31 +140,4 @@ class LinearTransformPipeline extends LinearTransform {
 	}
     }
 
-    /** Calculates the least common multiple of two integers. **/
-    public static int lcm(int a, int b) {
-	return (a*b)/gcd(a,b);
-    }
-
-
-    /**
-     * Return the greatest factor that evenly divids both m and n.
-     * Valid for 0 < n < m.
-     * From http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html.
-     **/
-    public static int gcd(int a, int b) {
-	int m, n;
-	if (a < b) {
-	    n = a; m = b;
-	} else {
-	    n = b; m = a;
-	}
-	int d = m;
-	int r = n;
-	
-	while( r != 0 ){ 
-	    d = r;
-	    r = m % r;
-	}
-	return d;
-    }
 }

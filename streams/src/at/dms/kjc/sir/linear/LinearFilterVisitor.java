@@ -335,7 +335,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// map
 	if (leftWrapper != null) {
 	    LinearPrinter.println("   adding a mapping from " + left +
-				  " to " + rightLinearForm);
+				  //" to " + rightLinearForm);
+				  " to a linear form");
 	    // add the mapping from the local variable to the linear form
 	    this.variablesToLinearForms.put(leftWrapper, rightLinearForm);
 				  
@@ -797,8 +798,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	LinearPrinter.println("  visiting shift expression: " + self);
 	LinearPrinter.println("   left: " + left);
 	LinearPrinter.println("   right: " + right);
-	LinearPrinter.println("   left from self: " + self.getLeft());
-	LinearPrinter.println("   right from self: " + self.getRight());
 	
 
 	// try and figure out what the right hand side of the expression is.
@@ -943,7 +942,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	this.peekOffset++;
 
 	// return the linear form of the pop expression
-	LinearPrinter.println("  returning " + currentForm + " from pop expression");
+	//LinearPrinter.println("  returning " + currentForm + " from pop expression");
+	LinearPrinter.println("  returning linear form from pop expression");
 	return currentForm;
     }
     /**
@@ -987,7 +987,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	LinearForm peekExprLinearForm = this.getBlankLinearForm();
 	peekExprLinearForm.setWeight(this.peekSize - 1 - exprLinearForm.getIntegerOffset() - this.peekOffset,
 				     ComplexNumber.ONE);
-	LinearPrinter.println("  returning linear form from peek expression: " + peekExprLinearForm);
+	LinearPrinter.println("  returning linear form from peek expression.");
+	//LinearPrinter.println("  returning linear form from peek expression: " + peekExprLinearForm);
 	return peekExprLinearForm;
     }
 

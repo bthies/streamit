@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.4 2002-09-18 01:02:50 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.5 2002-09-20 18:09:37 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -120,7 +120,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
     
     //void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
-    //void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
+	this.feedbackLoopsSeen++;
+    }
 
 
     //void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
@@ -198,13 +200,116 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
 
     //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
-    //public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
+
+    /**
+     * Visits a split join after all of its childern have been visited. If we have
+     * linear representations for all the children, then we can try to combine
+     * the entre split join construct into a single linear representation.
+     **/
+    public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
+	this.splitJoinsSeen++;
+
+	SIRSplitter splitter = self.getSplitter();
+	SIRJoiner   joiner   = self.getJoiner();
+	int[] splitWeights   = splitter.getWeights();
+	int[] joinWeights    = joiner.getWeights();
+	
+	LinearPrinter.println("Visiting SplitJoin");
+	LinearPrinter.println(" splitter: " + splitter.getType() +
+			      makeStringFromIntArray(splitWeights));
+	LinearPrinter.println(" joiner: " + joiner.getType() + 
+			      makeStringFromIntArray(joinWeights));
+
+	Iterator childIter = self.getChildren().iterator();
+	while(childIter.hasNext()) {
+	    SIROperator currentChild = (SIROperator)childIter.next();
+	    if (currentChild instanceof SIRStream) {
+		boolean childLinearity = this.hasLinearRepresentation((SIRStream)currentChild);
+		LinearPrinter.println(" child: " + currentChild + "(" +
+				      (childLinearity ? "linear" : "non-linear") +
+				      ")");
+	    } else {
+		LinearPrinter.println(" child: " + currentChild);
+	    }
+	}
+
+	// first things first -- for each child we need a linear rep, so
+	// iterate through all children and create a parallel list
+	// of linear representations. Remember that the first two elements
+	// are the splitter and the joiner so we get rid of them right off the
+	// bat.
+	LinkedList repList = new LinkedList();
+	List childList = self.getChildren();
+	childList.remove(0); childList.remove(childList.size()-1); // remove the splitter and the joiner
+	childIter = childList.iterator();
+	while (childIter.hasNext()) {
+	    SIRStream currentChild = (SIRStream)childIter.next();
+	    boolean childLinearity = this.hasLinearRepresentation(currentChild);
+	    // if we have a linear rep, add it to our list, otherwise we are done
+	    if (childLinearity) {
+		repList.add(this.getLinearRepresentation(currentChild));
+	    } else {
+		LinearPrinter.println(" aborting split join combination  -- non-linear child detected.");
+		return;
+	    }
+	}	    
+				  
+	// the transform that we will set based on the splitter type.
+	LinearTransform sjTransform = null;
+	
+	// dispatch based on the splitter 
+	if (splitter.getType() == SIRSplitType.DUPLICATE) {
+	    // process duplicate splitter
+	    sjTransform = LinearTransformSplitjoin.calculateDuplicate(repList, joinWeights);
+	} else if ((splitter.getType() == SIRSplitType.WEIGHTED_RR) ||
+		   (splitter.getType() == SIRSplitType.ROUND_ROBIN)) {
+	    // process roundrobin splitter
+	    sjTransform = LinearTransformSplitjoin.calculateRoundRobin(repList, joinWeights, splitWeights);
+	} else if (splitter.getType() == SIRSplitType.NULL) {
+	    LinearPrinter.println(" Ignoring null splitter.");
+	} else {
+	    LinearPrinter.println(" Ignoring unknown splitter type: " + splitter.getType());
+	}
+
+	// if we don't have a transform, we are done and return here
+	if (sjTransform == null) {  
+	    LinearPrinter.println(" no transform found. stop");
+	    return;
+	}
+
+	// do the actual transform
+	LinearPrinter.println(" performing transform.");
+	LinearFilterRepresentation newRep = null;
+	try {
+	    newRep = sjTransform.transform();
+	} catch (NoTransformPossibleException e) {
+	    LinearPrinter.println(" error performing transform: " + e.getMessage());
+	}
+
+	// If the new rep is null, some error occured and we are done
+	if (newRep == null) {
+	    LinearPrinter.println(" transform unsuccessful. stop.");
+	    return;
+	}
+
+	// add a mapping from this split join to the new linear representation
+	this.filtersToLinearRepresentation.put(self, newRep);
+    }
     
     
 
 
-
-
+    /** returns a string like "(a[0], a[1], ... a[N-1])". **/
+    private String makeStringFromIntArray(int[] arr) {
+	// make a nice string with all the weights in it.
+	String weightString = "   (";
+	for (int i=0; i<arr.length; i++) {
+	    weightString += arr[i] + ",";
+	}
+	weightString = weightString.substring(0, weightString.length()-1) + ")";
+	return weightString;
+    }
+	
 
 
 

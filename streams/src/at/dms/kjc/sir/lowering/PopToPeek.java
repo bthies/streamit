@@ -31,9 +31,19 @@ public class PopToPeek extends EmptyStreamVisitor implements Constants {
     /** visit a filter and do the transformation on it. **/
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
 	// if the work function is null, our work here is done.
-	if (self.getWork() == null) {
-	    return;
+	if (self.getWork() != null) {
+	    doIt(self, self.getWork().getBody(), self.getPopInt());
 	}
+	//if this is a two stage filter, we must do the same for
+	//the preWork function
+	if (self instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter two = (SIRTwoStageFilter)self;
+	    if (two.getInitWork() != null)
+		doIt(self, two.getInitWork().getBody(), two.getInitPop());
+	}
+    }
+
+    private void doIt(SIRFilter self, JBlock workBody, int pops) {
 	// create a variable definition for the index counter
 	JVariableDefinition indexVarDef = new JVariableDefinition(null, // tokenReference
 								  0, // modifiers, 0=none, I hope
@@ -45,9 +55,6 @@ public class PopToPeek extends EmptyStreamVisitor implements Constants {
 											null); // comments
 
 	
-
-	// get a reference to the body of the work function
-	JBlock workBody = self.getWork().getBody();
 	// stick in the decl statement at the front of the block
 	workBody.addStatementFirst(declStatement);
 
@@ -55,7 +62,9 @@ public class PopToPeek extends EmptyStreamVisitor implements Constants {
 	workBody.accept(new PopToPeekVisitor(indexVarDef, self.getInputType()));
 
 	// add the appropriate number of pops on to the end of the work function.
-	workBody.addAllStatements(makePopStatements(self.getPopInt(), self.getInputType()));
+	// we do not need the pops when going thru the raw backend
+	if (KjcOptions.raw == -1)
+	    workBody.addAllStatements(makePopStatements(pops, self.getInputType()));
     }
     
     /** returns a list of pop statements that are appended on the end of the work function. **/

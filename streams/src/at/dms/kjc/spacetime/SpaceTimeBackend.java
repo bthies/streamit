@@ -430,6 +430,7 @@ public class SpaceTimeBackend
 		    forward=-1;
 		    curY+=downward;
 		} else if(curX<=0&&forward<0) {
+		    forward=1;
 		    if(curY==0)
 			downward=1;
 		    if(curY==rawRows-1)

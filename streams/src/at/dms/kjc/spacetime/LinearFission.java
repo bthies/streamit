@@ -6,6 +6,7 @@ import at.dms.util.Utils;
 public class LinearFission {
     //Fiss linear FilterContent into num pieces
     public static FilterContent[] fiss(FilterContent content,int num) {
+	num/=2;
 	if(!content.isLinear())
 	    Utils.fail("Trying to Linear fiss nonlinear filter");
 	double[] array=content.getArray();

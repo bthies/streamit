@@ -361,7 +361,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 
 
     //inline all function calls in the raw main method
-    static class InlineFunctionCalls extends ReplacingVisitor
+    static class InlineFunctionCalls extends SLIRReplacingVisitor
     {
 	//the filter we are currently working on
 	private static SIRFilter filter;
@@ -435,7 +435,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 	}
     }
 
-    static class ConvertGlobalsToLocals extends ReplacingVisitor
+    static class ConvertGlobalsToLocals extends SLIRReplacingVisitor
     {
 	private static SIRFilter filter;
 	private static HashSet localVariables;
@@ -550,14 +550,18 @@ public class RemoveGlobals extends at.dms.util.Utils
 					   JExpression left,
 					   String ident)
 	{
+	    
 	    //if this field access is just a this expression, convert it
 	    //to a local variable access
 	    //otherwise it is accessing a field of a variable, so just
 	    //keep the name, it does not matter what it is...
-	    if (left instanceof JThisExpression)
+	    if (left instanceof JThisExpression) {
 		return new JLocalVariableExpression(null, getVarDef(ident));
-	    else 
+	    }
+	    else {
 		return self;
+	    }
+	    
 	}
 	
     }

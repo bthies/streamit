@@ -55,12 +55,18 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
 	HashMap steadyExecutionCounts = (HashMap)RawBackend.steadyExecutionCounts.clone();
 
+
 	joinerCode = initJoinerCode;
-	//RawBackend.printCounts(RawBackend.initExecutionCounts, 
-	//RawBackend.steadyExecutionCounts);
+	//	System.out.println("\n\nInit Execution Counts");
+	//RawBackend.printCounts(RawBackend.initExecutionCounts);
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
+
+	//System.out.println("\n\nSteady Execution Counts");
+	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
+
+	counters.resetBuffers();
 
 	joinerCode = steadyJoinerCode;
 	steadySchedules = (new FineGrainSimulator(top, false)).go(steadyExecutionCounts, counters, null);
@@ -216,6 +222,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	ListIterator destsIt = dests.listIterator();
 	while (destsIt.hasNext()) {
  	    FlatNode dest = (FlatNode)destsIt.next();
+	    //	    System.out.println("Dest: " + dest.getName());
 	    if (dest == null) 
 		System.out.println("Yup dest is null");
  	    Coordinate[] hops = 
@@ -293,8 +300,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters) 
     {
-	if (!counters.hasFired(fire)) {
-	    if (fire.contents instanceof SIRTwoStageFilter && initSimulation){
+	if (initSimulation && !counters.hasFired(fire)) {
+	    if (fire.contents instanceof SIRTwoStageFilter){
 		//if the twostage does nothing in its initWork()
 		//then the initWork should not count as an execution
 		//return peek items as the needed items
@@ -325,7 +332,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
 	if (fire.contents instanceof SIRFilter) {
-	    //System.out.println("Firing " + fire.contents.getName());
+	    //	    System.out.println("Firing " + fire.contents.getName());
 	    //decrement the schedule execution counter
 	    decrementExecutionCounts(fire, executionCounts);
 	    
@@ -381,7 +388,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     
     private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
     {
-	//System.out.println("Firing " + fire.contents.getName());
+	//	System.out.println("Firing " + fire.contents.getName());
 	//The joiner is passing a data item, record this as an execution
 	decrementExecutionCounts(fire, executionCounts);
 	
@@ -570,11 +577,11 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    return false;
 
 	if (node.contents instanceof SIRFilter) {
-	    if (node.contents instanceof SIRTwoStageFilter) {
-		//		System.out.println(node.contents.getName() + ": " +
-		//	   counters.getBufferCount(node) + " >= " +
-		//	   itemsNeededToFire(node, counters) );
-	    }
+	    //	    if (node.contents instanceof SIRTwoStageFilter) {
+	    //System.out.println(node.contents.getName() + ": " +
+	    //		   counters.getBufferCount(node) + " >= " +
+	    //		   itemsNeededToFire(node, counters) );
+	    //}
 	    
 
 	    //check if this node has fired the number of times given by

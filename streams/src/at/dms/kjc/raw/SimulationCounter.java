@@ -84,6 +84,21 @@ public class SimulationCounter {
 	fired.add(node);
     }
 
+    public void resetBuffers() 
+    {
+	Iterator it = bufferCount.keySet().iterator();
+	while (it.hasNext()) {
+	    FlatNode node = (FlatNode)it.next();
+	    if (node.contents instanceof SIRFilter) {
+		SIRFilter filter = (SIRFilter)node.contents;
+		bufferCount.put(node,new Integer(0));
+		
+				//				new Integer(filter.getPeekInt() - filter.getPopInt()));
+	    }
+	}
+	
+    }
+    
     public int getBufferCount(FlatNode node) {
 	if (!bufferCount.containsKey(node))
 	    bufferCount.put(node, new Integer(0));

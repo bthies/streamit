@@ -228,7 +228,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    //random placement
 	    randomPlacement();
 	    //filew = new FileWriter("simanneal.out");
-	    
+
+
 	    currentCost = placementCost();
 	    System.out.println("Initial Cost: " + currentCost);
 	    

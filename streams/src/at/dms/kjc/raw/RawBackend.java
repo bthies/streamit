@@ -108,8 +108,7 @@ public class RawBackend {
 	System.out.println("Assign End.");
 	//Generate the switch code
 	
-	if (StreamItOptions.ratematch)
-	    CalcBufferSize.createBufferSizePow2(rawFlattener.top);
+	CalcBufferSize.createBufferSizePow2(rawFlattener.top);
 	System.out.println("Switch Code Begin...");
 	SwitchCode.generate(rawFlattener.top);
 	//	SwitchCode.dumpCode();
@@ -158,6 +157,11 @@ public class RawBackend {
 		 val=26;
 		 }
 		*/
+		if ((i == 0) &&
+		    (obj.getName().startsWith("Fused__StepSource") ||
+		     obj.getName().startsWith("Fused_FilterBank")))
+		    val++;
+		
 		if (rawFlattener.getFlatNode(obj) != null)
 		    result[i].put(rawFlattener.getFlatNode(obj), 
 				  new Integer(val));
@@ -231,20 +235,16 @@ public class RawBackend {
     
     //debug function
     //run me after layout please
-    public static void printCounts(HashMap init, HashMap steady) {
-	HashMap[] result = { init, 
-			     steady	};
-		
-	for (int i=0;i < 2;i++) {
-	    Iterator it = result[i].keySet().iterator();
-	    while(it.hasNext()) {
-		FlatNode node = (FlatNode)it.next();
-		//	if (Layout.joiners.contains(node)) 
-		System.out.println(node.contents.getName() + " " +
-				   ((Integer)result[i].get(node)).intValue());
-	    }
+    public static void printCounts(HashMap counts) {
+	Iterator it = counts.keySet().iterator();
+	while(it.hasNext()) {
+	    FlatNode node = (FlatNode)it.next();
+	    //	if (Layout.joiners.contains(node)) 
+	    System.out.println(node.contents.getName() + " " +
+			       ((Integer)counts.get(node)).intValue());
 	}
     }
+
     
 
     //simple helper function to find the topmost pipeline

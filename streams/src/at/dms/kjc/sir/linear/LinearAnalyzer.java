@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.13 2002-12-02 23:01:35 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.14 2002-12-03 19:37:14 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -163,7 +163,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	this.pipelinesSeen++;
 	LinearPrinter.println("Visiting pipeline: " + "(" + self + ")");
 	
-	// This bit just goes and prints out the children of the pipeline.
+	// This bit just goes and prints out the children of the pipeline (for debugging)
 	Iterator kidIter = self.getChildren().iterator();
 	LinearPrinter.println("Children: ");
 	while(kidIter.hasNext()) {
@@ -173,28 +173,40 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 
 	// start going down the list of pipeline children.
-	int pipeCounter = 0;
 	kidIter = self.getChildren().iterator();
-	SIRPipeline currentPipe = new SIRPipeline("LinearWrapper"+pipeCounter);
+	List childrenToWrap = new LinkedList();
 	while(kidIter.hasNext()) {
 	    // grab the next child. If we have a linear rep, add the kid to the pipeline
 	    SIRStream currentKid = (SIRStream)kidIter.next();
-	    LinearPrinter.println(" current child: " + currentKid);
 	    if (this.hasLinearRepresentation(currentKid)) {
 		// add this kid to the current linear pipeline.
-		currentPipe.add(currentKid);
+		childrenToWrap.add(currentKid);
+		LinearPrinter.println(" adding linear child:(" + currentKid + ")");
 	    } else {
-		// kid was non linear. Replace the children in self with the new pipeline
+		// kid was non linear. Replace the children thus far in self with the new pipeline
 		// and update the mapping from filters to LinearFilterRepresentations.
-		doPipelineAdd(self, currentPipe, this.filtersToLinearRepresentation);
-		currentPipe = new SIRPipeline("LinearWrapper"+pipeCounter);
-		pipeCounter++;
+		LinearPrinter.println(" non-linear child:(" + currentKid + ")");
+		LinearPrinter.println(" wrapping children.");
+		doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
+		// reset our list
+		childrenToWrap = new LinkedList();
 	    }
 	}
-	// add the current pipeline (to catch the end of the pipeline) -- doens't add empty pipelines
-	doPipelineAdd(self, currentPipe, this.filtersToLinearRepresentation);	
+	// add the current list of children (to catch the end of the pipeline)
+	// Note: this doesn't add empty pipelines
+	doPipelineAdd(self, childrenToWrap, this.filtersToLinearRepresentation);
 	// check to make sure that we didn't foobar ourselves.
 	checkRep();
+
+	// debugging stuff -- print out the final contents of the pipeline with parents
+	kidIter = self.getChildren().iterator();
+	LinearPrinter.println(" Contents of (" + self +") post processing:");
+	while(kidIter.hasNext()) {
+	    SIRStream currentChild = (SIRStream)kidIter.next();
+	    LinearPrinter.println("  child:(" + currentChild + ")");
+
+	}
+	    
     }
 
     /**
@@ -202,64 +214,75 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * of adjacent pipeline children with a wrapping pipeline,
      * calculating the overall linear form of that wrapping
      * pipeline, and updating the map from filters to linear representations.
+     *
+     * Since the parent pointer is automatically set when SIRPipeline.add is called
+     * we keep the list of children that we want to wrap in a list instead. If it is
+     * a list that is more than one but less than the size of the parent pipeline,
+     * we wrap the children in a new wrapper pipeline named with getUniqueWrapperName,
+     * find the corresponding combinaed linear form, update the mapping, and return.
+     * Otherwise (eg if the list is either 0,1,or all pipeline children)
+     * we do nothing.
      **/
-    private static void doPipelineAdd(SIRPipeline parentPipe,
-				      SIRPipeline newChildPipe,
-				      HashMap linearRepMap) {
-
-	LinearPrinter.println(" new child pipe: ");
-	Iterator newKidIter = newChildPipe.getChildren().iterator();
+    private void doPipelineAdd(SIRPipeline parentPipe,
+			       List childrenToWrap,
+			       HashMap linearRepMap) {
+	
+	// this just prints out the children we are passed
+	LinearPrinter.println(" new child pipe in doPipelineAdd: ");
+	Iterator newKidIter = childrenToWrap.iterator();
 	while(newKidIter.hasNext()) {LinearPrinter.println("  " + newKidIter.next());}
 	
 
-	// if the new child pipe has 0-1 children, we are done
-	if (newChildPipe.size() == 0) {
+	SIRPipeline overallPipe;
+	
+	// if the new child pipe has 0,1, children, we are done
+	if (childrenToWrap.size() == 0) {
 	    LinearPrinter.println("  (no children)");
 	    return;
-	} else if (newChildPipe.size() == 1) {
+	} else if (childrenToWrap.size() == 1) {
 	    LinearPrinter.println("  (one child)");
-	    LinearPrinter.println("  resetting parent pointer for " + newChildPipe.get(0));
-	    newChildPipe.get(0).setParent(parentPipe);
 	    return;
-	}
-	
-	// if the newChild pipeline contains all of the children of
-	// the parent pipe, there is no need to do any replacing
-	// (we would just be adding a pipeline with its only child a pipeline).
-	if (parentPipe.size() != newChildPipe.size()) {
-	    // set the parent field of the child pipe to be the parent (duh)
-	    newChildPipe.setParent(parentPipe);
-	    newChildPipe.setInit(SIRStream.makeEmptyInit()); // set to empty init method
+	} else if (parentPipe.size() == childrenToWrap.size()) {
+	    // if the newChild pipeline contains all of the children of
+	    // the parent pipe, there is no need to do any replacing
+	    // (we would just be adding a pipeline with its only child a pipeline),
+	    // we only need to set the overallPipeline to the the parent
+	    // pipeline so that we can determine the overall linear rep of the pipeline
+	    overallPipe = parentPipe;
+	} else {
+	    // we are actually going to wrap the children in a pipeline
+	    // set up the new overall pipeline (parent gets set when we add it to the
+	    // parent pipeline
+	    overallPipe = new SIRPipeline(getUniqueWrapperName());
+	    overallPipe.setInit(SIRStream.makeEmptyInit()); // set to empty init method
 	    // remember the location of the first wrapper pipe's child
 	    // in the original parent pipeline (so we can insert the wrapper
 	    // pipe at the appropriate place.
-	    int newPipeIndex = parentPipe.indexOf(newChildPipe.get(0));
+	    int newPipeIndex = parentPipe.indexOf((SIRStream)childrenToWrap.get(0));
 	    if (newPipeIndex == -1) {throw new RuntimeException("unknown child in wrapper pipe");}
 	    // now, remove all of the streams that appear in the new child wrapper pipeline
-	    Iterator wrappedChildIter = newChildPipe.getChildren().iterator();
+	    Iterator wrappedChildIter = childrenToWrap.iterator();
 	    while(wrappedChildIter.hasNext()) {
 		SIRStream removeKid = (SIRStream)wrappedChildIter.next() ;
-		parentPipe.remove(removeKid);
+		parentPipe.remove(removeKid); // remove the child from the parent
+		overallPipe.add(removeKid);   // add the child into the overall pipeline.
 	    }
 	    // now, add the new child pipeline to the parent at the index of first wrapped child
-	    parentPipe.add(newPipeIndex,newChildPipe);
-	} else {
-	    // no need to do wrap all of the children again.
-	    newChildPipe = parentPipe;
+	    parentPipe.add(newPipeIndex,overallPipe);
 	}
 	
 	
 	// now, calculate the overall linear rep of the child pipeline
-	List repList = getLinearRepList(linearRepMap, newChildPipe.getChildren()); // list of linear reps
+	List repList = getLinearRepList(linearRepMap, childrenToWrap); // list of linear reps
 	LinearTransform pipeTransform = LinearTransformPipeline.calculate(repList);
 	try {
 	    LinearFilterRepresentation newRep = pipeTransform.transform();
 	    // add a mapping from child pipe to the new linear form.
-	    linearRepMap.put(newChildPipe, newRep);
+	    linearRepMap.put(overallPipe, newRep);
 	    // write output for output parsing scripts (check output mode
 	    // because printing this takes a loooooong time for big matrices) 
 	    if (LinearPrinter.getOutput()) {
-		LinearPrinter.println("Linear pipeline found: " + newChildPipe +
+		LinearPrinter.println("Linear pipeline found: " + overallPipe +
 				      "\n-->Matrix:\n" + newRep.getA() +
 				      "\n-->Constant Vector:\n" + newRep.getb());
 	    }
@@ -284,6 +307,17 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 	return repList;
     }
+
+    /** Field used to unique wrapping pipeline names. **/
+    int wrapperNonce = -1;
+    /**
+     * Returns a unique name for a wrapping pipeline.
+     **/
+    private String getUniqueWrapperName() {
+	wrapperNonce++;
+	return ("LinearWrapper"+this.wrapperNonce);
+    }
+	
 
     
     //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
@@ -438,7 +472,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    virtualPipeline.add(currentDecimatorRep);
 	    virtualPipeline.add(currentChildRep);
 
-	    
 	    // create a pipeline transformation and execute it
 	    LinearTransform pipeTransform = LinearTransformPipeline.calculate(virtualPipeline);
 	    LinearFilterRepresentation equivalentDuplicateRep;
@@ -468,30 +501,28 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * This transformation is used to transform a splitjoin with a roundrobin splitter
      * to a splitjoins with a duplicate splitter.
      **/
-    private LinearFilterRepresentation makeDecimator(int vSum, int[] splitWeights, int childPos) {
+    private LinearFilterRepresentation makeDecimator(int vTot, int[] splitWeights, int childPos) {
 	// make matrix (A starts out all zeros)
 	// we want to input vSum items and output as many items as the
 	// child would have gotten in the original splitter (eg splitWeights[childPos])
 	// which implies the new matrix has vSum rows and splitWeights[childPos] cols
 
-	FilterMatrix newA = new FilterMatrix(vSum, splitWeights[childPos]);
-	FilterVector newb = new FilterVector(vSum);
+	FilterMatrix newA = new FilterMatrix(vTot, splitWeights[childPos]);
+	FilterVector newb = new FilterVector(vTot);
 
-	// determine the first non-zero row;
-	int firstRow = 0;
-	for (int i=0; i<childPos; i++) {
-	    firstRow += splitWeights[i];
+	// determine the number of rows between the bottom and the start of the decimator's ones
+	int vSum_k1 = 0;
+	for (int i=0; i<=childPos; i++) {
+	    vSum_k1 += splitWeights[i];
 	}
-	
+
 	// set the splitWeights[childPos] rows of ones
-	for (int i=0; i<splitWeights[childPos]; i++) { // row i
-	    for (int j=0; j<vSum; j++) { // j col
-		newA.setElement(firstRow + i, j, ComplexNumber.ONE);
-	    }
+	for (int i=0; i<splitWeights[childPos]; i++) { // row = vTot-vSum_k1, col=i
+	    newA.setElement(vTot - vSum_k1 + i, i, ComplexNumber.ONE);
 	}
 
 	// make a new decimator rep out of the new A and b
-	return new LinearFilterRepresentation(newA, newb, vSum); // pop==peek
+	return new LinearFilterRepresentation(newA, newb, vTot); // pop==peek
     }
     
 

@@ -30,13 +30,18 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
      * outputs produced will always be targetSize or greater (because the FFT we are doing only
      * operates on inputs that are powers of two long.<p>
      *
+     * Note that the new frequency replacer determines the target size based on an empirical heuristic,
+     * so that the target size option is no longer actually required.<p>
+     *
      * (STUPID) 0 = stupid replacement<br>
      * (SMARTER)1 = smart replacement (reuse partial results) <br>
      * (FFTW)   2 = fftw replacement (use FFTW to calculate FFT, take advantage of real input/output symmetries<br>
      **/
-    public static void doReplace(LinearAnalyzer lfa, SIRStream str, int targetSize, int replacementType) {
+    public static void doReplace(LinearAnalyzer lfa, SIRStream str, int replacementType) {
 	LinearPrinter.println("Beginning frequency replacement(" + getName(replacementType) + ")...");
 
+	// target size is always going to be 100
+	int targetSize = 100;
 	// make a new replacer based on replacementType;
 	FrequencyReplacer replacer;
 	if (replacementType == STUPID) {
@@ -44,7 +49,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	} else if (replacementType == SMARTER) {
 	    replacer = new SmarterFrequencyReplacer(lfa, targetSize);
 	} else if (replacementType == FFTW) {
-	    replacer = new FFTWFrequencyReplacer(lfa, targetSize);	    
+	    replacer = new FFTWFrequencyReplacer(lfa);	    
 	} else {
 	    throw new RuntimeException("Error -- invalid frequency replacement type: " + replacementType);
 	}

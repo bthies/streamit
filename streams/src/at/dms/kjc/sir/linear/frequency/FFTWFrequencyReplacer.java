@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.10 2002-11-25 20:32:40 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.11 2002-12-12 16:26:04 aalamb Exp $
  **/
 public class FFTWFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -28,11 +28,6 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
     public static final int INITWORK = 1;
     public static final int WORK = 2;
 
-    /**
-     * flag to determine if we blindly replace all FIRs with frequency implementations or
-     * if we wait until the threshold is above the one defined.
-     **/
-    public static final boolean smartReplacement = false;
     /** The minimum size FIR we will replace. 90 came from empirical measurements. **/
     public static final int minFIRSize = 90;
     /** We multiply the FIR size to get the target FFT size if it is not specified. **/
@@ -41,18 +36,12 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
     
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
     LinearAnalyzer linearityInformation;
-    /** the target number of outputs to produce each firing of FIR filters. */
-    int targetNumberOfOutputs;
     
-    FFTWFrequencyReplacer(LinearAnalyzer lfa, int targetSize) {
+    FFTWFrequencyReplacer(LinearAnalyzer lfa) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer!");
 	}
-	if (targetSize <= 0) {
-	    throw new IllegalArgumentException("Target filter size must be greater than 0");
-	}
 	this.linearityInformation = lfa;
-	this.targetNumberOfOutputs = targetSize;
     }
 
 
@@ -80,8 +69,8 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
 	    return;
 	}	
 
-	/** if we are doing smart replacment, don't do small FIRs. **/
-	if (this.smartReplacement && (linearRep.getPeekCount() < minFIRSize)) {
+	/** if doing clever replacement, don't do small FIRs. **/
+	if (linearRep.getPeekCount() < minFIRSize) {
  	    LinearPrinter.println("  aborting -- fir size too small: " +
 				  linearRep.getPeekCount() + ". needs to be at least " +
 				  minFIRSize);
@@ -89,19 +78,15 @@ public class FFTWFrequencyReplacer extends FrequencyReplacer{
 	}
 
 	/** set the target FFT size appropriately if it hasn't already been set */
-	LinearPrinter.println("  old target N: " + this.targetNumberOfOutputs);
-	if (this.smartReplacement) {
-	    this.targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
-	}
-	LinearPrinter.println("  new target N: " + this.targetNumberOfOutputs);
+	int targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
+	LinearPrinter.println("  target output size: " + targetNumberOfOutputs);
 	
 	/* now is when we get to the fun part, we have a linear representation
 	 * that computes an FIR (ef pop 1, push 1, peek N) and we want to replace it with an FFT.
-	 * Note that we can equate N with the block size of the input that we are looking at.
-	 */
+	 * Note that N is the block size of the input that we are looking at. */
 	int x = linearRep.getPeekCount();
-	int N = calculateN(this.targetNumberOfOutputs,x);
-	int filterSize = N+2*(x-1);
+	int N = calculateN(targetNumberOfOutputs,x);
+	int filterSize = N+2*(x-1); // this is the size of the overall filter
 	LinearPrinter.println("  creating frequency filter. (N=" + N +
 			      ",x=" + x + ",size=" + filterSize + ")");
 	

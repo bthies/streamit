@@ -40,8 +40,8 @@ public abstract class Splitter extends Operator
     public void ConnectGraph ()
     {
         // do I even have anything to do?
-        if (dest.isEmpty ()) return;
         ASSERT (dest.size () == destWeight.size ());
+        if (dest.isEmpty ()) return;
         
         // yep, create an output array of appropriate size
         output = new Channel [dest.size ()];

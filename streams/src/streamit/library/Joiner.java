@@ -35,48 +35,17 @@ public class Joiner extends Operator
     
     void Add (Stream s)
     {
-        Channel newOutput = s.GetIOField ("output");
-        
-        if (output == null)
-        {
-            output = newOutput;
-        } else 
-        if (newOutput != null)
-        {
-            // check that the input types agree
-            ASSERT (newOutput.GetType ().getName ().equals (output.GetType ().getName ()));
-        }
-        
         srcs.add (s);
-        
-        if (newOutput != null)
-        {
-            if (input == null)
-            {
-                input = new Channel [1];
-                input [0] = (Channel) newOutput.clone ();
-                ASSERT (input [0] != null);
-            } else {
-                Channel [] oldInput = input;
-                input = new Channel [oldInput.length + 1];
-                
-                int indx;
-                for (indx = 0; indx < oldInput.length; indx++)
-                {
-                    input [indx] = oldInput [indx];
-                }
-                
-                input [indx] = (Channel) newOutput.clone ();
-                ASSERT (input [indx] != null);
-            }
-        }
     }
     
     public void ConnectGraph ()
     {
         // do I even have anything to do?
-        if (input == null || input.length == 0) return;
-        ASSERT (input.length == srcs.size ());
+        ASSERT (srcs.size () == srcsWeight.length);
+        if (srcs.isEmpty ()) return;
+        
+        // yep, create an input array of appropriate size
+        input = new Channel [srcs.size ()];
         
         // yep, go through my members and connect them all with
         // ChannelConnectFilter
@@ -89,19 +58,30 @@ public class Joiner extends Operator
             ASSERT (s != null);
             s.ConnectGraph ();
             
-            // connect the joiner to me
-            Channel out = s.GetIOField ("output");
-            ASSERT (out != null);
+            // retrieve the output of this filter, which will be an
+            // input to this joiner
+            Channel channel = s.GetIOField ("output");
+            input [inputIndx] = channel;
             
-            Channel in = input [inputIndx];
-            inputIndx++;
-            ASSERT (in != null);
-            
+            // if it is not a sink, make sure that it produces data
+            // of the same kind as everything else in this Joiner
+            if (channel != null)
+            {
+                // handle input channel
+                if (output == null)
+                {
+                    output = new Channel (channel);
+                } else {
+                    // check that the input types agree
+                    ASSERT (channel.GetType ().getName ().equals (output.GetType ().getName ()));
+                }
+            }
+
             // now connect the in and out
-            out.SetSource (s);
-            in.SetSink (this);
-            ChannelConnectFilter glue = new ChannelConnectFilter ();
-            glue.UseChannels (out, in);
+            channel.SetSource (s);
+            channel.SetSink (this);
+            
+            inputIndx ++;
         }
     }
     

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpression.java,v 1.3 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JExpression.java,v 1.4 2002-03-10 21:29:35 thies Exp $
  */ 
  
 package at.dms.kjc;
@@ -229,6 +229,18 @@ public abstract class JExpression extends JPhylum {
   {
     throw new CLineError(getTokenReference(), key, params);
   }
+
+    /**
+     * Analyse without a null context.
+     */
+    public JExpression convertType(CType dest) {
+	try {
+	    return convertType(dest, null);
+	} catch (PositionedError e) {
+	    e.printStackTrace();
+	    return null;
+	}
+    }
 
   /**
    * convertType

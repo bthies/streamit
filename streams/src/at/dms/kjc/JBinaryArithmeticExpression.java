@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryArithmeticExpression.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JBinaryArithmeticExpression.java,v 1.2 2002-03-10 21:29:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -91,17 +91,30 @@ public abstract class JBinaryArithmeticExpression extends JBinaryExpression {
    * @return	the literal holding the result of the operation
    */
   public JExpression constantFolding() {
-    switch (left.getType().getTypeID()) {
-    case TID_INT:
-      return new JIntLiteral(getTokenReference(), compute(left.intValue(), right.intValue()));
-    case TID_LONG:
-      return new JLongLiteral(getTokenReference(), compute(left.longValue(), right.longValue()));
-    case TID_FLOAT:
-      return new JFloatLiteral(getTokenReference(), compute(left.floatValue(), right.floatValue()));
-    case TID_DOUBLE:
-      return new JDoubleLiteral(getTokenReference(), compute(left.doubleValue(), right.doubleValue()));
+      CType myType = getType();
+    switch (myType.getTypeID()) {
+    case TID_INT: {
+	int val1 = ((JIntLiteral)left.convertType(myType)).intValue();
+	int val2 = ((JIntLiteral)right.convertType(myType)).intValue();
+	return new JIntLiteral(getTokenReference(), compute(val1, val2));
+    }
+    case TID_LONG: {
+	long val1 = ((JLongLiteral)left.convertType(myType)).longValue();
+	long val2 = ((JLongLiteral)right.convertType(myType)).longValue();
+	return new JLongLiteral(getTokenReference(), compute(val1, val2));
+    }
+    case TID_FLOAT: {
+	float val1 = ((JFloatLiteral)left.convertType(myType)).floatValue();
+	float val2 = ((JFloatLiteral)right.convertType(myType)).floatValue();
+	return new JFloatLiteral(getTokenReference(), compute(val1, val2));
+    }
+    case TID_DOUBLE: {
+	double val1 = ((JDoubleLiteral)left.convertType(myType)).doubleValue(); 
+	double val2 = ((JDoubleLiteral)right.convertType(myType)).doubleValue();
+	return new JDoubleLiteral(getTokenReference(), compute(val1, val2));
+    }
     default:
-      throw new InconsistencyException("unexpected type " + left.getType());
+	throw new InconsistencyException("unexpected type " + myType);
     }
   }
 

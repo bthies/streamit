@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoLoopStatement.java,v 1.3 2004-08-19 19:29:00 mgordon Exp $
+ * $Id: JDoLoopStatement.java,v 1.4 2004-08-19 21:42:21 mgordon Exp $
  */
 
 package at.dms.kjc.rstream;
@@ -151,6 +151,14 @@ new JLocalVariableExpression(null, induction),
 		Util.passThruParens(condValue) instanceof JIntLiteral &&
 		Util.passThruParens(incrValue) instanceof JIntLiteral);	
     }
+
+    public int getIncrInt() 
+    {
+	assert Util.passThruParens(incrValue) instanceof JIntLiteral;
+	
+	return ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
+    }
+    
     
     public int getTripCount() 
     {

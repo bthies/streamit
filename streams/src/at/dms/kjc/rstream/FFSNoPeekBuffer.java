@@ -308,9 +308,13 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	    
 	    body = GenerateCCode.makeDoLoop(body, forIndex, new JIntLiteral(mult));
 	    
+	    //see if can generate MIV buffer indices, if true, then the conversion 
+	    //was performed
 	    ConvertChannelExprsMIV tryMIV = new ConvertChannelExprsMIV(this, isInit);
-	    if (!tryMIV.tryMIV((JDoLoopStatement)body))
+	    if (!tryMIV.tryMIV((JDoLoopStatement)body)) {
+		System.out.println("Could not generate MIV indices for " + getNode().contents);
 		body.accept(new ConvertChannelExprs(this, isInit));
+	    }
 	    
 	    statements.addStatement(body);
 	}

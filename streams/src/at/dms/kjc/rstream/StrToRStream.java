@@ -31,10 +31,11 @@ import at.dms.util.Utils;
  */
 public class StrToRStream {
     /** if true generate do loops when identified **/
-    public static final boolean GENERATE_DO_LOOPS = true;
+    public static final boolean GENERATE_DO_LOOPS = false;
     /** look for do loops in the filter's code **/
     public static final boolean CONVERT_FOR_TO_DO_LOOPS = true;
-
+    /** generate MIV buffer index expressions if possible **/
+    public static final boolean GENERATE_MIVS = true;
     
     /** if true, generate a separate peek buffer for peeking filters
      * before execution, restore the peek buffer to the pop buffer,

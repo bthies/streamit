@@ -75,22 +75,24 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 	    }
 	    
 	    //now go back thru the statements and delete the var defs
-	    //for the induction variables
-	    JStatement[] statements = methods[i].getBody().getStatementArray();
-	    for (int k = 0; k < statements.length; k++) {
-		if (!(statements[k] instanceof JEmptyStatement || 
-		      statements[k] instanceof JVariableDeclarationStatement))
-		    break;
-		
-		if (statements[k] instanceof JVariableDeclarationStatement) {
-		    JVariableDeclarationStatement varDecl = 
-			(JVariableDeclarationStatement) statements[k];
-		    Vector newVars = new Vector();
-		    for (int j = 0; j < varDecl.getVars().length; j++) {
-			if (!inductionVars.contains(varDecl.getVars()[j]))
-			    newVars.add(varDecl.getVars()[j]);
-		    }
+	    //for the induction variables, but only if we are generating do loops
+	    if (StrToRStream.GENERATE_DO_LOOPS) {
+		JStatement[] statements = methods[i].getBody().getStatementArray();
+		for (int k = 0; k < statements.length; k++) {
+		    if (!(statements[k] instanceof JEmptyStatement || 
+			  statements[k] instanceof JVariableDeclarationStatement))
+			break;
+		    
+		    if (statements[k] instanceof JVariableDeclarationStatement) {
+			JVariableDeclarationStatement varDecl = 
+			    (JVariableDeclarationStatement) statements[k];
+			Vector newVars = new Vector();
+			for (int j = 0; j < varDecl.getVars().length; j++) {
+			    if (!inductionVars.contains(varDecl.getVars()[j]))
+				newVars.add(varDecl.getVars()[j]);
+			}
 			varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+		    }
 		}
 	    }
 	}
@@ -131,6 +133,8 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 		info.init = null;
 	    //System.out.println("Induction Var: " + info.induction);
 	    //System.out.println("init exp: " + info.init);
+	    if (info.init == null)
+		System.out.println("Couldn't resolve init in for loop");
 	}
 	if (cond != null && info.induction != null && info.init != null) {
 	    //get the condition statement and put it in the correct format
@@ -140,6 +144,8 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 		info.cond = null;
 	    //	    System.out.println("cond exp: " + info.cond);
 	    //cond.accept(this);
+	    if (info.cond == null)
+		System.out.println("Couldn't resolve cond in for loop");	    
 	}
 	//check the increment, only if there is one and we have passed 
 	//everything above
@@ -152,6 +158,8 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 		info.incr = null;
 	    //	    System.out.println("incr exp: " + info.incr);
 	    //incr.accept(this);
+	    if (info.incr == null)
+		System.out.println("Couldn't resolve incr in for loop");
 	}
 
 	//check that we found everything as expected...
@@ -170,7 +178,12 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 		    loops.put(self, info);
 		    inductionVars.add(info.induction);
 		    passed = true;
+		} else {
+		    System.out.println("Induction used outside for loop");
 		}
+		
+	    } else {
+		System.out.println("Induction variable assigned in for loop (or other weirdness in body)");
 	    }
 	}
 	

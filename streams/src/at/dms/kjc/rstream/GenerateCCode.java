@@ -167,7 +167,7 @@ public class GenerateCCode
 
 	while (traversal.hasNext()) {
 	    FlatNode node = (FlatNode)traversal.next();
-	    System.out.println("Generating Code for  " + node.contents);
+	    //	    System.out.println("Generating Code for  " + node.contents);
 	    generateCode(node, isInit);
 
 	}

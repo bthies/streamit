@@ -61,7 +61,6 @@ public class ConvertChannelExprsMIV {
 	Phase1 phase1 = new Phase1(top);
 	boolean passed = phase1.run();
 	if (passed) {
-	    //change me!!!
 	    Phase2 phase2 = new Phase2(top, phase1, 
 				       popBuffer, pushBuffer, pushOffset);
 	    phase2.run();
@@ -69,8 +68,7 @@ public class ConvertChannelExprsMIV {
 	else 
 	    System.out.println("failed");
 	
-	//NOTE:   change !!!!!!!!
-	return false;
+	return passed;
     }    
 }
 
@@ -171,11 +169,11 @@ class Phase2 extends SLIRReplacingVisitor
 
 	if (self instanceof SIRPopExpression ||
 	    self instanceof SIRPeekExpression) {
-	    loopExpr = phase1.loopPopExpr;
-	    topLevelExpr = phase1.topLevelPopExpr;
+	    loopExpr = phase1.loopPop;
+	    topLevelExpr = phase1.topLevelPop;
 	} else if (self instanceof SIRPushExpression) {
-	    loopExpr = phase1.loopPushExpr;
-	    topLevelExpr = phase1.topLevelPushExpr;
+	    loopExpr = phase1.loopPush;
+	    topLevelExpr = phase1.topLevelPush;
 	}
 	else {
 	    assert false : "Expression must be a push, pop, or peek";
@@ -194,7 +192,7 @@ class Phase2 extends SLIRReplacingVisitor
 		Util.newIntAddExpr(access,
 				   Util.newIntMultExpr(new JLocalVariableExpression(null,
 									   enclosing.getInduction()),
-						    (JExpression)loopExpr.get(enclosing)));
+						       new JIntLiteral(((Integer)loopExpr.get(enclosing)).intValue())));
 	    assert phase1.enclosingLoop.containsKey(enclosing);
 	    enclosing = (JDoLoopStatement)phase1.enclosingLoop.get(enclosing);
 	}
@@ -203,7 +201,7 @@ class Phase2 extends SLIRReplacingVisitor
 	assert topLevelExpr.containsKey(self);
 	access =
 	    Util.newIntAddExpr(access,
-			       (JExpression)topLevelExpr.get(self));
+			       new JIntLiteral(((Integer)topLevelExpr.get(self)).intValue()));
 	
 	return access;
     }
@@ -231,16 +229,16 @@ class Phase1 extends SLIREmptyVisitor
     private JDoLoopStatement topLevel;
 
     //pop/peek information
-    private JExpression currentLoopPopExpr;
-    private JExpression currentTopLevelPopExpr;
-    public HashMap topLevelPopExpr;
-    public HashMap loopPopExpr;
+    private int currentLoopPop;
+    private int currentTopLevelPop;
+    public HashMap topLevelPop;
+    public HashMap loopPop;
     
     //push information
-    private JExpression currentLoopPushExpr;
-    private JExpression currentTopLevelPushExpr;
-    public HashMap topLevelPushExpr;
-    public HashMap loopPushExpr;
+    private int currentLoopPush;
+    private int currentTopLevelPush;
+    public HashMap topLevelPush;
+    public HashMap loopPush;
 
     // > 0 if we are visiting the header of a do loop
     private int doHeader = 0;
@@ -259,16 +257,16 @@ class Phase1 extends SLIREmptyVisitor
     {
 	topLevel = top;
 	//init pop/peek state
-	currentLoopPopExpr = new JIntLiteral(0);
-	currentTopLevelPopExpr = new JIntLiteral(0);
-	topLevelPopExpr = new HashMap();
-	loopPopExpr = new HashMap();
+	currentLoopPop = 0;
+	currentTopLevelPop = 0;
+	topLevelPop = new HashMap();
+	loopPop = new HashMap();
 	
 	//init push state
-	currentLoopPushExpr = new JIntLiteral(0);
-	currentTopLevelPushExpr = new JIntLiteral(0);
-	topLevelPushExpr = new HashMap();
-	loopPushExpr = new HashMap();
+	currentLoopPush = 0;
+	currentTopLevelPush = 0;	
+	topLevelPush = new HashMap();
+	loopPush = new HashMap();
 
 	enclosingLoop = new HashMap();
 
@@ -281,11 +279,15 @@ class Phase1 extends SLIREmptyVisitor
 
     public boolean run()
     {
+	if (!StrToRStream.GENERATE_MIVS)
+	    return false;
+	
 	try {
 	    topLevel.accept(this);
+	    assert insideControlFlow == 0;
+	    assert doLoopLevel == 0;
 	}
 	catch (MIVException e) {
-	    e.printStackTrace();
 	    return false;
 	}
 	return true;
@@ -299,21 +301,42 @@ class Phase1 extends SLIREmptyVisitor
 				  JExpression cond,
 				  JStatement incr,
 				  JStatement body) {
-	JExpression oldCurrentPopExpr, oldTopLevelPopExpr;
-	JExpression oldCurrentPushExpr, oldTopLevelPushExpr;
+	if (self instanceof JDoLoopStatement) {
+	    visitDoLoopStatement((JDoLoopStatement)self);
+	    return;
+	}
+
+	insideControlFlow++;
+	if (init != null) {
+	    init.accept(this);
+	}
+	if (cond != null) {
+	    cond.accept(this);
+	}
+	if (incr != null) {
+	    incr.accept(this);
+	}
+	body.accept(this);
+	insideControlFlow--;
+    }
+
+
+    public void visitDoLoopStatement(JDoLoopStatement doloop) 
+    {
+	int oldCurrentPop, oldTopLevelPop;
+	int oldCurrentPush, oldTopLevelPush;
 	
 	JDoLoopStatement oldCurrentLoop;
-
-
-	//if not a do loop, then crap out
-	if (!(self instanceof JDoLoopStatement))
-	    throw new MIVException();
+	
 	//make sure we have static bounds
-	if (!((JDoLoopStatement)self).staticBounds())
+	if (!doloop.staticBounds())
 	    throw new MIVException();
 	
-	JDoLoopStatement doloop = (JDoLoopStatement)self;
-
+	if (doloop.getIncrInt() != 1) {
+	    System.out.println("**** Can't generate MIV because loop does not have 1 increment");
+	    throw new MIVException();
+	}
+	
 	enclosingLoop.put(doloop, currentLoop);
 	oldCurrentLoop = currentLoop;
 	currentLoop = doloop;
@@ -330,58 +353,46 @@ class Phase1 extends SLIREmptyVisitor
 	}
 	doHeader--;
 	doLoopLevel++;
-	oldCurrentPopExpr = currentLoopPopExpr;
-	oldTopLevelPopExpr = currentTopLevelPopExpr;
-	oldCurrentPushExpr = currentLoopPushExpr;
-	oldTopLevelPushExpr = currentTopLevelPushExpr;
+	oldCurrentPop = currentLoopPop;
+	oldTopLevelPop = currentTopLevelPop;
+	oldCurrentPush = currentLoopPush;
+	oldTopLevelPush = currentTopLevelPush;
 
 	
 	//reset the current expression
-	currentLoopPopExpr = new JIntLiteral(0);
-	currentLoopPushExpr = new JIntLiteral(0);
+	currentLoopPop = 0;
+	currentLoopPush = 0;
+	
 
 
 	//visit the body
-	body.accept(this);
+	doloop.getBody().accept(this);
 
 	//remember this loop's number of pops 
-	loopPopExpr.put(doloop, currentLoopPopExpr);
+	loopPop.put(doloop, new Integer(currentLoopPop));
 
-	//pass on up the new expr that describes the number of pops we have
+	//pass on up the new  that describes the number of pops we have
 	//seen so far on *this* iteration of all enclosing loops
-	currentTopLevelPopExpr = 
-	    Util.newIntAddExpr(oldTopLevelPopExpr,
-			       Util.newIntMultExpr(new JIntLiteral(doloop.getTripCount()),
-						   currentLoopPopExpr));
-
+	currentTopLevelPop = oldTopLevelPop  + (doloop.getTripCount() * currentLoopPop);
+	
 	//pass on up this loops number of pops * the trip count
 	//this is the number of total pops in this loop, this used so the 
 	//outer loop can get a count of how many pops it has
-	currentLoopPopExpr = 
-	    Util.newIntAddExpr(oldCurrentPopExpr,
-			       Util.newIntMultExpr(new JIntLiteral(doloop.getTripCount()),
-						   currentLoopPopExpr));
+	currentLoopPop = oldCurrentPop + (doloop.getTripCount() * currentLoopPop);
 
 
 	//remember this loop's number of pushes 
-	loopPushExpr.put(doloop, currentLoopPushExpr);
+	loopPush.put(doloop, new Integer(currentLoopPush));
 
 	//pass on up the new expr that describes the number of pushes we have
 	//seen so far on *this* iteration of all enclosing loops
-	currentTopLevelPushExpr = 
-	    Util.newIntAddExpr(oldTopLevelPushExpr,
-			       Util.newIntMultExpr(new JIntLiteral(doloop.getTripCount()),
-						   currentLoopPushExpr));
+	currentTopLevelPush = oldTopLevelPush + (doloop.getTripCount() * currentLoopPush);
 
 	//pass on up this loops number of pushes * the trip count
 	//this is the number of total pushes in this loop, this used so the 
 	//outer loop can get a count of how many pushes it has
-	currentLoopPushExpr = 
-	    Util.newIntAddExpr(oldCurrentPushExpr,
-			       Util.newIntMultExpr(new JIntLiteral(doloop.getTripCount()),
-						   currentLoopPushExpr));
-
-	
+	currentLoopPush = oldCurrentPush + (doloop.getTripCount() * currentLoopPush);
+		
 	doLoopLevel--;
 	currentLoop = oldCurrentLoop;
     }
@@ -402,7 +413,7 @@ class Phase1 extends SLIREmptyVisitor
 	arg.accept(this);
 	
 	enclosingLoop.put(self, currentLoop);
-	topLevelPopExpr.put(self, currentTopLevelPopExpr);
+	topLevelPop.put(self, new Integer(currentTopLevelPop));
     }
 
     /**
@@ -419,13 +430,9 @@ class Phase1 extends SLIREmptyVisitor
 
 	
 	enclosingLoop.put(self, currentLoop);
-	topLevelPopExpr.put(self, currentTopLevelPopExpr);
-	currentTopLevelPopExpr =
-	    Util.newIntAddExpr(currentTopLevelPopExpr,
-			       new JIntLiteral(1));
-	currentLoopPopExpr = 
-	    Util.newIntAddExpr(currentLoopPopExpr,
-			       new JIntLiteral(1));
+	topLevelPop.put(self, new Integer(currentTopLevelPop));
+	currentTopLevelPop += 1;
+	currentLoopPop += 1;
     }
     
     /**
@@ -443,14 +450,10 @@ class Phase1 extends SLIREmptyVisitor
 
 	arg.accept(this);
 	enclosingLoop.put(self, currentLoop);
-	topLevelPushExpr.put(self, currentTopLevelPushExpr);
-	currentTopLevelPushExpr =
-	    Util.newIntAddExpr(currentTopLevelPushExpr,
-			       new JIntLiteral(1));
-	currentLoopPushExpr = 
-	    Util.newIntAddExpr(currentLoopPushExpr,
-			       new JIntLiteral(1));
+	topLevelPush.put(self, new Integer(currentTopLevelPush));
 	
+	currentTopLevelPush += 1;
+	currentLoopPush += 1;
     }
 
     
@@ -462,17 +465,42 @@ class Phase1 extends SLIREmptyVisitor
 				 JExpression cond,
 				 JStatement thenClause,
 				 JStatement elseClause) {
-	assert false;
-	
 	cond.accept(this);
+	
+	int thenCurrentTopLevelPush = currentTopLevelPush;
+	int oldCurrentTopLevelPush = currentTopLevelPush;
+	int thenCurrentLoopPush = currentLoopPush;
+	int oldCurrentLoopPush = currentLoopPush;
+	int thenCurrentTopLevelPop = currentTopLevelPop;
+	int oldCurrentTopLevelPop = currentTopLevelPop;
+	int thenCurrentLoopPop = currentLoopPop;
+	int oldCurrentLoopPop = currentLoopPop;
 	
 	thenClause.accept(this);
 	
+	//remember the state after the then clause//
+	thenCurrentTopLevelPush = currentTopLevelPush; 
+	thenCurrentLoopPush = currentLoopPush;
+	thenCurrentTopLevelPop = currentTopLevelPop;
+	thenCurrentLoopPop = currentLoopPop;
+	
+	//reset the state to be before the then clause
+	//for the else clause
+	currentTopLevelPush = oldCurrentTopLevelPush; 
+	currentLoopPush = oldCurrentLoopPush;
+	currentTopLevelPop = oldCurrentTopLevelPop;
+	currentLoopPop = oldCurrentLoopPop;
+	
+
 	if (elseClause != null) {
 	    elseClause.accept(this);
 	}
 	
-	
+	if (thenCurrentTopLevelPush != currentTopLevelPush || 
+	    thenCurrentLoopPush != currentLoopPush ||
+	    thenCurrentTopLevelPop != currentTopLevelPop ||
+	    thenCurrentLoopPop != currentLoopPop)
+	    throw new MIVException();
     }
 
     

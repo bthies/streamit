@@ -9,16 +9,16 @@
  **/
 
 void->void pipeline SamplingRateConverter {
-    //add SampledSource(pi/10);
-    add FileReader<float>("input");
+    add SampledSource(pi/10);
+    //add FileReader<float>("input");
     add pipeline {
 	add Expander(2);
 	/* gain 3, cutoff freq of pi/3, 100 sample FIR */
 	add LowPassFilter(3, pi/3, 300);
 	add Compressor(3);
     };
-    //add FloatPrinter();
-    add FileWriter<float>("output");
+    add FloatPrinter();
+    //add FileWriter<float>("output");
 }
 
 

@@ -1,0 +1,118 @@
+/**
+ * This program uses multirate filtering to change the sampling rate of
+ * the input by a non integer amount. We assume that the original sampling
+ * rate was every T seconds (eg at a frequency of 2*pi/T radians)
+ * and the output of the system will be the same as if the original 
+ * signal had been sampled at every 3T/2 seconds instead. As this
+ * is a non-integer ratio conversion, we need to upsample, low-pass filter
+ * (eg interpolate) and then downsample.
+ **/
+
+void->void pipeline SamplingRateConverterSpaceTime {
+    //add SampledSource(pi/10);
+    add FileReader<float>("input");
+    add pipeline {
+	add Expander(2);
+	/* gain 3, cutoff freq of pi/3, 100 sample FIR */
+	add LowPassFilter(3, pi/3, 300);
+	add Compressor(3);
+    };
+    //add FloatPrinter();
+    add FileWriter<float>("output");
+}
+
+
+
+/* Simple filter that provides a source of sampled data. 
+ * For now we are going to produce just a cosine at a frequency
+ * specified.
+ */
+void->float filter SampledSource(float w) {
+  int n = 0;
+  work push 1 {
+    push(cos(w*n));
+    n++;
+  }
+}
+
+
+
+
+
+
+
+
+
+/**
+ * This filter expands the input by a factor L. Eg in takes in one
+ * sample and outputs L samples. The first sample is the input
+ * and the rest of the samples are zeros. 
+ **/
+float->float filter Expander(int L) {
+  work peek 1 pop 1 push L {
+    push(pop());
+    for (int i=0; i<(L-1); i++) {
+      push(0);
+    }
+  }
+}
+    
+/** 
+ * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N samples.
+ * Eg:
+ *                 ^ H(e^jw)
+ *                 |
+ *          ---------------
+ *          |      |      |
+ *          |      |      |
+ *    <-------------------------> w
+ *         -wc            wc
+ *
+ * This implementation is a FIR filter is a rectangularly windowed sinc function 
+ * (eg sin(x)/x), which is the optimal FIR low pass filter in 
+ * mean square error terms.
+ *
+ * Specifically, h[n] has N samples from n=0 to (N-1)
+ * such that h[n] = sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * and the field h holds h[-n].
+ */
+float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
+  float[N] h;
+
+  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
+  init {
+    int OFFSET = N/2;
+    for (int i=0; i<N; i++) {
+      int idx = i + 1;
+      // generate real part
+      if (idx == OFFSET) 
+	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
+	h[i] = g * cutoffFreq / pi; 
+      else 
+	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+    }
+  }
+
+  /* Implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}
+
+/**
+ * This filter compresses the signal at its input by a factor M.
+ * Eg it inputs M samples, and only outputs the first sample.
+ **/
+float->float filter Compressor(int M) {
+  work peek M pop M push 1 {
+    push(pop());
+    for (int i=0; i<(M-1); i++) {
+      pop();
+    }
+  }
+}

@@ -8,24 +8,19 @@ import java.util.LinkedList;
 import java.util.HashMap;
 
 /**
- * This serves to flatten a stream structure by encapsulating the
- * state in a set of closures instead of as a hierarchy.
+ * This creates structures (inner classes) to encapsulate the state of
+ * each hierarchical unit of a stream graph.
  */
-public class Flattener extends at.dms.util.Utils implements SIRVisitor {
+public class Structurer extends at.dms.util.Utils implements SIRVisitor {
     /**
      * List of the class declarations defined during traversal
      */
     private LinkedList structs;
-    /**
-     * mapping from stream structure (SIROperator) to name (String) of
-     * structure in target program
-     */
-    private HashMap names;
 
     /**
-     * Creates a new flattener.
+     * Creates a new structurer.
      */
-    private Flattener(HashMap names) {
+    private Structurer() {
 	this.structs = new LinkedList();
     }
 
@@ -36,17 +31,10 @@ public class Flattener extends at.dms.util.Utils implements SIRVisitor {
      * a stream takes its state as the first parameter, and references
      * fields via the state.
      */
-    public static JClassDeclaration[] flatten(SIROperator toplevel) {
-	Flattener f = new Flattener(Namer.name(toplevel));
+    public static JClassDeclaration[] structure(SIROperator toplevel) {
+	Structurer f = new Structurer();
 	toplevel.accept(f);
 	return (JClassDeclaration[])f.structs.toArray();
-    }
-
-    /**
-     * Retrieves the name for <str> (requires that it's been given a name).
-     */
-    private String getName(SIROperator str) {
-	return (String)names.get(str);
     }
 
     /**
@@ -76,7 +64,7 @@ public class Flattener extends at.dms.util.Utils implements SIRVisitor {
 	// fill in the children
 	for (int i=0; i<children.size(); i++) {
 	    // the name of the type in the structure
-	    String typeName = (String)names.get(children.get(i));
+	    String typeName = ((SIROperator)children.get(i)).getName();
 	    // the name for the variable in the structure
 	    String varName = "child" + i;
 	    // define a variable of the structure
@@ -127,6 +115,23 @@ public class Flattener extends at.dms.util.Utils implements SIRVisitor {
     }
 
     /**
+     * For each method in <methods>, belonging to stream named
+     * <streamName>, add a parameter representing the structure of
+     * state, and change all references to state to be references to
+     * the structure.  
+     */
+    private void addStructReferences(String streamName,
+				     JMethodDeclaration[] methods) {
+	// for each method
+	for (int i=0; i<methods.length; i++) {
+	    // add the parameter
+	    addParameter(streamName, methods[i]);
+	    // for each statement in the method, change references
+	    JStatement[] body = methods[i].getStatements();
+	}
+    }
+
+    /**
      * Adds a parameter to the beginning of the parameter list of
      * <meth> of type <type>.
      */
@@ -156,11 +161,9 @@ public class Flattener extends at.dms.util.Utils implements SIRVisitor {
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
 	// create struct type
-	createStruct(getName(self), fields, EMPTY_LIST);
-	// add parameters to all the methods
-	for (int i=0; i<methods.length; i++) {
-	    addParameter(getName(self), methods[i]);
-	}
+	createStruct(self.getName(), fields, EMPTY_LIST);
+	// add closure-referencing to methods
+	addStructReferences(self.getName(), methods);
     }
   
     /* visit a splitter */
@@ -224,7 +227,10 @@ public class Flattener extends at.dms.util.Utils implements SIRVisitor {
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init,
 				  List elements) {
-	createStruct(getName(self), fields, elements);
+	// create structure
+	createStruct(self.getName(), fields, elements);
+	// add closure-referencing to methods
+	addStructReferences(self.getName(), methods);
     }
   
     /* post-visit a splitjoin */
@@ -245,162 +251,5 @@ public class Flattener extends at.dms.util.Utils implements SIRVisitor {
 				      int delay,
 				      JMethodDeclaration initPath) {
 	fail("Not implemented yet");
-    }
-}
-
-class Namer extends at.dms.util.Utils implements SIRVisitor {
-    /**
-     * mapping from stream structure (SIROperator) to name (String) of
-     * structure in target program
-     */
-    private HashMap names;
-    /**
-     * Prefix of numbers used for naming
-     */
-    private LinkedList namePrefix;
-
-    
-    /**
-     * Make a new namer.
-     */
-    private Namer() {
-	this.names = new HashMap();
-	this.namePrefix = new LinkedList();
-    }
-
-    /**
-     * Return mapping of stream objects to names.
-     */
-    public static HashMap name(SIROperator str) {
-	Namer namer = new Namer();
-	str.accept(namer);
-	return namer.names;
-    }
-
-    /**
-     * Associates a name with <str>, saving the result in <names>.
-     */
-    private void addName(SIROperator str) {
-	StringBuffer name = new StringBuffer();
-	// start name with list of positions, e.g. 1_2_1_
-	for (ListIterator e = namePrefix.listIterator(); e.hasNext(); ) {
-	    name.append(e.next());
-	    name.append("_");
-	}
-	// end name with the class of the IR object
-	String suffix = splitQualifiedName(str.getClass().toString(), '.')[1];
-	// associate name with <str>
-	names.put(str, name);
-    }
-
-    /**
-     * PLAIN-VISITS 
-     */
-	    
-    /* visit a filter */
-    public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    int peek, int pop, int push,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) {
-	addName(self);
-	// increment the count on the prefix names
-	Integer old = (Integer)namePrefix.removeLast();
-	namePrefix.add(new Integer(old.intValue()+1));
-    }
-
-    /** 
-     * visit a splitter 
-     */
-    public void visitSplitter(SIRSplitter self,
-			      SIRStream parent,
-			      SIRSplitType type,
-			      int[] weights) {
-	fail("Not supported yet.");
-    }
-
-    /** 
-     * visit a joiner 
-     */
-    public void visitJoiner(SIRJoiner self,
-			    SIRStream parent,
-			    SIRJoinType type,
-			    int[] weights) {
-	fail("Not supported yet.");
-    }
-
-    /**
-     * PRE-VISITS 
-     */
-	    
-    /* pre-visit a pipeline */
-    public void preVisitPipeline(SIRPipeline self,
-				 SIRStream parent,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
-	addName(self);
-	// start counting children with namePrefix
-	namePrefix.add(new Integer(1));
-    }
-
-    /* pre-visit a splitjoin */
-    public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
-	fail("Not supported yet.");
-    }
-
-    /* pre-visit a feedbackloop */
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRStream parent,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     int delay,
-				     JMethodDeclaration initPath) {
-	fail("Not supported yet.");
-    }
-
-    /**
-     * POST-VISITS 
-     */
-	    
-    /* post-visit a pipeline */
-    public void postVisitPipeline(SIRPipeline self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
-	// stop counting children by removing a digit from namePrefix
-	namePrefix.removeLast();
-    }
-
-    /* post-visit a splitjoin */
-    public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRStream parent,
-				   JFieldDeclaration[] fields,
-				   JMethodDeclaration[] methods,
-				   JMethodDeclaration init) {
-	fail("Not supported yet.");
-    }
-
-
-    /* post-visit a feedbackloop */
-    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRStream parent,
-				      JFieldDeclaration[] fields,
-				      JMethodDeclaration[] methods,
-				      JMethodDeclaration init,
-				      int delay,
-				      JMethodDeclaration initPath) {
-	fail("Not supported yet.");
     }
 }

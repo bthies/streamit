@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.9 2003-03-19 16:35:48 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.10 2003-03-24 23:17:37 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -105,13 +105,15 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
         // BUGBUG this is a HACK!
         if (getNumChildren() == 1)
         {
+            PhasingSchedule phase = new PhasingSchedule(this);
             while (childrenExecs[0] != 0)
             {
-                utility.addSchedulePhase(
+                phase.appendPhase(
                     utility.getChildNextPhase(getHierarchicalChild(0)));
                 utility.advanceChildSchedule(getHierarchicalChild(0));
                 childrenExecs[0]--;
             }
+            utility.addSchedulePhase(phase);
             return;
         }
 

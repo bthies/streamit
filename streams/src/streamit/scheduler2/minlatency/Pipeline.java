@@ -262,6 +262,12 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                             phaseChildrenExecs[0]);
                     if (phase.getOverallPeek() > 0)
                         break;
+                        
+                    utility.advanceOnePhase(
+                        0,
+                        phaseChildrenExecs[0],
+                        dataInBuffers,
+                        dataBorrowed);
                     phaseChildrenExecs[0]++;
                 }
             }

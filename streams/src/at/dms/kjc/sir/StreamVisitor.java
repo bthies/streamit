@@ -7,6 +7,9 @@ import java.util.List;
  * This visitor is for visiting stream structures in the SIR.  It does
  * not visit statement-level constructs like SIRInitStatement,
  * SIRPushStatement, etc.
+ *
+ * The recursing process from one stream construct to another is
+ * automatic--one does not need to write code to visit the children.
  */
 public interface StreamVisitor {
     /**

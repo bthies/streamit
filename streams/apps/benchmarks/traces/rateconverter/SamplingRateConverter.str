@@ -1,0 +1,45 @@
+/**
+ * This program uses multirate filtering to change the sampling rate of
+ * the input by a non integer amount. We assume that the original sampling
+ * rate was every T seconds (eg at a frequency of 2*pi/T radians)
+ * and the output of the system will be the same as if the original 
+ * signal had been sampled at every 3T/2 seconds instead. As this
+ * is a non-integer ratio conversion, we need to upsample, low-pass filter
+ * (eg interpolate) and then downsample.
+ **/
+
+void->void pipeline SamplingRateConverter {
+    //add SampledSource(pi/10);
+    add FileReader<float>("input");
+    add pipeline {
+	add Expander(2);
+	/* gain 3, cutoff freq of pi/3, 100 sample FIR */
+	add LowPassFilter(3, pi/3, 300);
+	add Compressor(3);
+    };
+    //add FloatPrinter();
+    add FileWriter<float>("output");
+}
+
+
+
+/* Simple filter that provides a source of sampled data. 
+ * For now we are going to produce just a cosine at a frequency
+ * specified.
+ */
+void->float filter SampledSource(float w) {
+  int n = 0;
+  work push 1 {
+    push(cos(w*n));
+    n++;
+  }
+}
+
+
+
+
+
+
+
+
+

@@ -974,10 +974,8 @@ public class FusePipe {
 				   new JIntLiteral(steadyPop),
 				   new JIntLiteral(steadyPush),
 				   steadyWork,
-				   Utils.voidToInt(first.filter.
-						   getInputType()),
-				   Utils.voidToInt(last.filter.
-						   getOutputType()));
+				   first.filter.getInputType(),
+				   last.filter.getOutputType());
 	} else {
 	    // calculate the peek, pop, and push count for the fused
 	    // filter in the INITIAL state
@@ -1012,10 +1010,8 @@ public class FusePipe {
 					   initPop,
 					   initPush,
 					   initWork,
-					   Utils.voidToInt(first.filter.
-							   getInputType()),
-					   Utils.voidToInt(last.filter.
-							   getOutputType()));
+					   first.filter.getInputType(),
+					   last.filter.getOutputType());
 	}
 	
 	// set init function of fused filter

@@ -1,17 +1,19 @@
 void->void pipeline Partition1 {
     add Source();
-    add splitjoin {
-	split duplicate;
-	for (int i=0; i<10; i++) {
-	    add pipeline {
-		for (int j=0; j<10; j++) {
-		    add Incr();
-		}
+    add BigSJ();
+    add Printer();
+}
+
+int->int splitjoin BigSJ {
+    split duplicate;
+    for (int i=0; i<10; i++) {
+	add pipeline {
+	    for (int j=0; j<10; j++) {
+		add Incr();
 	    }
 	}
-	join roundrobin;
     }
-    add Printer();
+    join roundrobin;
 }
 
 void->int filter Source {

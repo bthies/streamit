@@ -79,7 +79,8 @@ public class Flattener {
 
 	if (KjcOptions.fusion) {
 	    System.err.print("Running FuseAll...");
-	    FuseAll.fuse(str);
+	    str = FuseAll.fuse(str);
+	    Lifter.lift(str);
 	    System.err.println("done.");
 	}
 

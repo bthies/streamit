@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.1 2002-07-10 18:03:30 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.2 2002-07-10 21:02:25 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -29,6 +29,27 @@ public class ComplexProp extends FEReplacer
      *    to disambiguate these.
      * -- Constants are always real.
      */
+
+    /** Helper function to coerce an expression into a complex
+     * expression.  If the passed expression is real, return an
+     * expression with that expression as the real part and 0.0
+     * (not null) as the imaginary part.  If the passed expression
+     * is complex, return a complex expression with 0.0 replacing
+     * nulls in either part. */
+    private static ExprComplex makeComplex(Expression exp)
+    {
+        if (!(exp instanceof ExprComplex))
+            return new ExprComplex(exp, new ExprConstFloat(0.0));
+        ExprComplex cplx = (ExprComplex)exp;
+        if (cplx.getReal() != null && cplx.getImag() != null)
+            return cplx;
+        Expression real, imag;
+        real = cplx.getReal();
+        if (real == null) real = new ExprConstFloat(0.0);
+        imag = cplx.getImag();
+        if (imag == null) imag = new ExprConstFloat(0.0);
+        return new ExprComplex(real, imag);
+    }
 
     public Object visitExprBinary(ExprBinary exp)
     {
@@ -183,5 +204,47 @@ public class ComplexProp extends FEReplacer
             return exp;
         else
             return new ExprBinary(exp.getOp(), left, right);
+    }
+
+    public Object visitExprTernary(ExprTernary exp)
+    {
+        // Only one case of these, so don't bother checking the op.
+        Expression a = (Expression)exp.getA().accept(this);
+        Expression b = (Expression)exp.getB().accept(this);
+        Expression c = (Expression)exp.getC().accept(this);
+
+        if (a == exp.getA() && b == exp.getB() && c == exp.getC())
+            return exp;
+
+        // Now, we assume that a is real.  If neither b nor c is
+        // complex, then the whole thing is real:
+        if (!(b instanceof ExprComplex) && !(c instanceof ExprComplex))
+            return new ExprTernary(exp.getOp(), a, b, c);
+
+        // Otherwise, force both b and c to be complex.
+        ExprComplex bc = makeComplex(b);
+        ExprComplex cc = makeComplex(c);
+        
+        // Now create the pair of ternary expressions.
+        Expression real = new ExprTernary(exp.getOp(), a, bc.getReal(), cc.getReal());
+        Expression imag = new ExprTernary(exp.getOp(), a, bc.getImag(), cc.getImag());
+        return new ExprComplex(real, imag);
+    }
+
+    public Object visitExprUnary(ExprUnary exp)
+    {
+        // The only operation this makes sense for is negation,
+        // and we're ignoring error-checking everywhere else anyways.
+        // So assume every unary operation is like negation.  In that
+        // case, -(a+bi) == (-a)+(-b)i.
+        Expression expr = (Expression)exp.getExpr().accept(this);
+        if (expr == exp.getExpr())
+            return exp;
+        if (!(expr instanceof ExprComplex))
+            return new ExprUnary(exp.getOp(), expr);
+        ExprComplex cplx = makeComplex(expr);
+        Expression real = new ExprUnary(exp.getOp(), cplx.getReal());
+        Expression imag = new ExprUnary(exp.getOp(), cplx.getImag());
+        return new ExprComplex(real, imag);
     }
 }

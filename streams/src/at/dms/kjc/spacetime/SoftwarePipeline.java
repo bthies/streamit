@@ -69,7 +69,7 @@ public class SoftwarePipeline {
 		//assert weights.length==1:"Case Not Supprted Yet";
 		Edge[] edges=input.getSources();
 		assert edges.length==1:"Case Not Supprted Yet";
-		trace.setPrimePump(edges[0].getDest().getParent().getPrimePump());
+		trace.setPrimePump(edges[0].getSrc().getParent().getPrimePump());
 	    } else
 		throw new AssertionError("Predefined filter neither input nor output");
 	}

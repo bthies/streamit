@@ -107,9 +107,7 @@ int save_state::load_from_file(int thread,
 
 int save_state::load_state(int thread, int *steady, void (*read_object)(object_write_buffer *)) {
   
-  //unsigned iter = init_instance::get_thread_start_iter(thread);
-  unsigned iter = *steady;
-
+  unsigned iter = init_instance::get_thread_start_iter(thread);
   printf("thread: %d iteration: %d\n", thread, iter);
   
   if (iter > 0) {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariableExpression.java,v 1.8 2003-08-29 19:25:37 thies Exp $
+ * $Id: JLocalVariableExpression.java,v 1.9 2003-09-13 05:17:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -144,10 +144,12 @@ public class JLocalVariableExpression extends JExpression {
       variable.setAssigned(getTokenReference(), context.getBodyContext());
     }
 
+    /* This rejects legal java in case of translated Beamformer.str.  --bft
     check(context,
 	  CVariableInfo.isInitialized(context.getBodyContext().getVariableInfo(variable.getIndex()))
 	  || (context.isLeftSide() && context.discardValue()),
 	  KjcMessages.UNINITIALIZED_LOCAL_VARIABLE, variable.getIdent());
+    */
 
     if (variable.isConstant() && !context.isLeftSide()) {
       return variable.getValue();

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAssignmentExpression.java,v 1.9 2003-08-29 19:25:36 thies Exp $
+ * $Id: JAssignmentExpression.java,v 1.10 2003-09-13 05:17:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -92,7 +92,9 @@ public class JAssignmentExpression extends JBinaryExpression {
        
     left = left.analyse(new CExpressionContext(context, true, true));
     check(context, left.isLValue(context), KjcMessages.ASSIGNMENT_NOTLVALUE);
-    check(context, !bc.isInLoop() || !left.isFinal(), KjcMessages.FINAL_IN_LOOP, left.getIdent());
+    /* This rejects legal java in case of translated Beamformer.str.  --bft
+      check(context, !bc.isInLoop() || !left.isFinal(), KjcMessages.FINAL_IN_LOOP, left.getIdent());
+    */
 
     try {
       left.setInitialized(context);

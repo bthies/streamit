@@ -229,7 +229,7 @@ float->void filter FloatPrinter {
  * Early attempt at an FM Radio... probably junk
  */
 
-float->float pipeline FMRadio {
+float->float pipeline FMRadioCore {
 
     // float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
     float samplingRate = 250000000; // 250 MHz sampling rate much more sensible, though
@@ -244,10 +244,9 @@ float->float pipeline FMRadio {
 }
 
 
-void->void pipeline FMTest {
+void->void pipeline FMRadio {
 
   add FloatOneSource();
-  add FMRadio();
+  add FMRadioCore();
   add FloatPrinter();
 }
-

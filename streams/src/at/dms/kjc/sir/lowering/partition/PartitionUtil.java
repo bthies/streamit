@@ -5,7 +5,6 @@ import java.io.*;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
-import at.dms.kjc.linprog.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;

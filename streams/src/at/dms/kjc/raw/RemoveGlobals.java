@@ -34,6 +34,33 @@ public class RemoveGlobals extends at.dms.util.Utils
 	top.accept((new RemoveGlobals()), null, true);
     }
     
+    public RemoveGlobals() 
+    {
+	 //reset the state
+	doNotInline = new HashSet();
+	functionsToKeep = new HashSet();
+    }
+
+    public static void doFilter(SIRFilter filter) 
+    {
+	if (filter instanceof SIRIdentity ||
+	    filter instanceof SIRFileWriter ||
+	    filter instanceof SIRFileReader) 
+	    return;
+	
+	RemoveGlobals removeGlobals = new RemoveGlobals();
+	if (removeGlobals.canConvert(filter)) {
+	    System.out.println("Removing Globals for " + filter.getName()); 
+	    InlineFunctionCalls.doit(filter);
+	    //add the raw main function to functions we want to keep
+	    functionsToKeep.add(getRawMain(filter));
+	    ConvertGlobalsToLocals.doit(filter);
+	}
+	else 
+	    System.out.println("Cannot Remove Globals for " + filter.getName()); 
+    }
+		
+
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()){

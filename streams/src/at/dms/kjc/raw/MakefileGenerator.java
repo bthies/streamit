@@ -34,7 +34,7 @@ public class MakefileGenerator
 	    
 	    fw.write("#Makefile\n\n");
 	    fw.write("SIM-CYCLES = 500000\n\n");
-	    fw.write("include $(STARSEARCH_HOME)/Makefile.include\n\n");
+	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
 	    if (FileVisitor.foundReader || FileVisitor.foundWriter) {
 		fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");

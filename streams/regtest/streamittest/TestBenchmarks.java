@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.30 2003-10-02 19:49:13 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.31 2003-10-02 20:13:56 dmaze Exp $
  **/
 package streamittest;
 
@@ -137,7 +137,7 @@ public class TestBenchmarks extends StreamITTestCase {
 
         doSyntaxConvertTest(root, "FilterBankNew.str", "FilterBankNew.java");
         doCompileRunVerifyTest(root, "FilterBankNew.java",
-                               "LinkedFBTest.out", 0, 256);
+                               "LinkedFBtest.out", 0, 256);
     }
 
     public void testFir()

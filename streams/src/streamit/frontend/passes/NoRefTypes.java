@@ -15,7 +15,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.3 2003-07-01 15:55:28 dmaze Exp $
+ * @version $Id: NoRefTypes.java,v 1.4 2003-07-08 20:44:25 dmaze Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -58,7 +58,8 @@ public class NoRefTypes extends FEReplacer
                 newNames.add(name);
                 newTypes.add(type);
             }
-            struct = new TypeStruct(struct.getName(), newNames, newTypes);
+            struct = new TypeStruct(struct.getContext(), struct.getName(),
+                                    newNames, newTypes);
             newStructs.add(struct);
             structs.put(struct.getName(), struct);
         }

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.38 2003-07-07 20:57:46 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.39 2003-07-08 20:44:22 dmaze Exp $
  */
 
 header {
@@ -573,8 +573,5 @@ struct_decl returns [TypeStruct ts]
 			{ names.add(p.getName()); types.add(p.getType()); }
 		)*
 		RCURLY
-		{ ts = new TypeStruct(id.getText(), names, types); }
-		// NB: this throws away context information, so the best we
-		// can do when reporting errors is to refer to things by name.
-		// Might change TypeStruct to work around this.
+		{ ts = new TypeStruct(getContext(t), id.getText(), names, types); }
 	;

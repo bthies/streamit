@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.9 2003-07-01 20:15:53 dmaze Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.10 2003-07-08 20:44:27 dmaze Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -25,7 +25,7 @@ public class MoveStreamParameters extends InitMunger
     public MoveStreamParameters()
     {
         super();
-        objectType = new TypeStruct("Object",
+        objectType = new TypeStruct(null, "Object",
                                     Collections.EMPTY_LIST,
                                     Collections.EMPTY_LIST);
     }

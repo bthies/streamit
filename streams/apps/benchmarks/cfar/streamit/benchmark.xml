@@ -7,7 +7,8 @@
   <reference>(none)</reference>
   <implementations>
     <impl lang="StreamIt">
-      <file>CFARtest.str</file>
+      <file class="source">CFARtest.str</file>
+      <file class="output">CFARtest.out</file>
     </impl>
   </implementations>
 </benchmark>

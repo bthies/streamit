@@ -208,5 +208,33 @@ public class Util extends at.dms.util.Utils {
 	else 
 	    return "))";
     }
+
+    //return the FlatNodes that are directly downstream of the 
+    //given flatnode and are themselves assigned a tile in the
+    //layout
+    public static HashSet getAssignedEdges(FlatNode node) {
+	HashSet set = new HashSet();
+
+	if (node == null)
+	    return set;
+
+	for (int i = 0; i < node.edges.length; i++) 
+	    getAssignedEdgesHelper(node.edges[i], set);
+
+	return set;
+    }
+
+    private static void getAssignedEdgesHelper(FlatNode node, HashSet set) {
+	if (node == null) 
+	    return;
+	else if (Layout.isAssigned(node)) {
+	    set.add(node);
+	    return;
+	}
+	else {
+	    for (int i = 0; i < node.edges.length; i++) 
+		getAssignedEdgesHelper(node.edges[i], set);
+	}
+    }
 }
 

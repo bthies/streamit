@@ -201,26 +201,19 @@ void run_splitter(stream_context *c)
                 int ratio = ratios [nTape];
                 if (ratio < 3)
                 {
-                    if (ratio)
+                    output_tape = tapes[nTape];
+                    switch (ratio)
                     {
-                        output_tape = tapes[nTape];
-                        
+                    case 2:
                         INCR_TAPE_READ(input_tape, size);
                         INCR_TAPE_WRITE(output_tape, size);
                         COPY_TAPE_ITEM(input_tape, output_tape);
-                        
-                        if (ratio > 0)
-                        {
-                            INCR_TAPE_READ(input_tape, size);
-                            INCR_TAPE_WRITE(output_tape, size);
-                            COPY_TAPE_ITEM(input_tape, output_tape);
-                            if (ratio == 2)
-                            {
-                                INCR_TAPE_READ(input_tape, size);
-                                INCR_TAPE_WRITE(output_tape, size);
-                                COPY_TAPE_ITEM(input_tape, output_tape);
-                            }
-                        }
+                    case 1:
+                        INCR_TAPE_READ(input_tape, size);
+                        INCR_TAPE_WRITE(output_tape, size);
+                        COPY_TAPE_ITEM(input_tape, output_tape);
+                    case 0:
+                        break;
                     }
                 } else {
                     // there will be four cases here:
@@ -248,7 +241,7 @@ void run_splitter(stream_context *c)
                                 data_size);
                             
                             input_tape->read_pos = read_pos + data_size - size;
-                            output_tape->write_pos += write_pos + data_size - size;
+                            output_tape->write_pos = write_pos + data_size - size;
                         } else {
                             // break the write tape
                             int copy_first = write_max - write_pos;
@@ -264,22 +257,84 @@ void run_splitter(stream_context *c)
                         }
                     } else
                     {
-			int n;
-			for (n=ratio;n;n--)
-			{
+                        // break the read tape
+                        if (write_pos + data_size <= write_max)
+                        {
+                            // don't break the write tape
+                            int copy_first = read_max - read_pos;
+                            memcpy (output_tape->data + write_pos,
+                                input_tape->data + read_pos,
+                                copy_first);
+                            memcpy (output_tape->data + write_pos + copy_first,
+                                input_tape->data,
+                                data_size - copy_first);
+                            
+                            input_tape->read_pos = data_size - copy_first - size;
+                            output_tape->write_pos = write_pos + data_size - size;
+                            
+                        } else {
+                            /*
+                            int n;
+                            for (n=ratio;n;n--)
+                            {
                                 INCR_TAPE_READ(input_tape, size);
                                 INCR_TAPE_WRITE(output_tape, size);
                                 COPY_TAPE_ITEM(input_tape, output_tape);
-			}
+                            }
+                            */
+
+                            if (write_max - write_pos > read_max - read_pos)
+                            {
+                                // there is more data on the write tape - break the
+                                // read tape first
+                                int copy_second, copy_third;
+                                int copy_first = read_max - read_pos;
+                                memcpy (output_tape->data + write_pos,
+                                    input_tape->data + read_pos,
+                                    copy_first);
+                                
+                                // break the read tape
+                                copy_second = write_max - write_pos - copy_first;
+                                memcpy (output_tape->data + write_pos + copy_first,
+                                    input_tape->data,
+                                    copy_second);
+                                
+                                // break the write tape
+                                copy_third = data_size - copy_second - copy_first;
+                                memcpy (output_tape->data,
+                                    input_tape->data + copy_second,
+                                    copy_third);
+                                
+                                input_tape->read_pos = copy_second + copy_third - size;
+                                output_tape->write_pos = copy_third - size;
+                            } else {
+                                // there is more data on the read tape - break the
+                                // write tape first
+                                int copy_first = write_max - write_pos;
+                                int copy_second, copy_third;
+                                memcpy (output_tape->data + write_pos,
+                                    input_tape->data + read_pos,
+                                    copy_first);
+                                
+                                // break the write tape
+                                copy_second = read_max - read_pos - copy_first;
+                                memcpy (output_tape->data,
+                                    input_tape->data + read_pos + copy_first,
+                                    copy_second);
+                                
+                                // break the read tape
+                                copy_third = data_size - copy_first - copy_second;
+                                memcpy (output_tape->data + copy_second,
+                                    input_tape->data,
+                                    copy_third);
+                                
+                                input_tape->read_pos = copy_third - size;
+                                output_tape->write_pos = copy_second + copy_third - size;
+                            }
+                        }
                     }
-          }
-          /*
-          output_tape = c->type_data.splitjoin_data.splitter.tcache[slot];
-          INCR_TAPE_READ(input_tape, size);
-          INCR_TAPE_WRITE(output_tape, size);
-          COPY_TAPE_ITEM(input_tape, output_tape);
-          */
-    }
+                }
+            }
         }
         break;
         

@@ -250,7 +250,15 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     {
 	this.delay = delay;
     }
-     /**
+    /**
+     * get the delay of the feedback loop 
+     **/
+    public int getDelay() 
+    {
+	return this.delay;
+    }
+
+    /**
      * Set the Init Path method  of the feedback loop 
      **/
     public void setInitPath(JMethodDeclaration newInitPath)

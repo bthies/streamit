@@ -41,4 +41,9 @@ public class Filter
     {
         return latencyNode;
     }
+    
+    public LatencyNode getLatencyNode ()
+    {
+        return latencyNode;
+    }
 }

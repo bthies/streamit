@@ -1,37 +1,36 @@
 package streamit.scheduler2.constrained;
 
-import streamit.misc.AssertedClass;
-import streamit.misc.OMap;
-import streamit.scheduler2.hierarchical.StreamInterface;
+import streamit.misc.Misc;
+import streamit.scheduler2.SDEPData;
 import java.math.BigInteger;
 
-public class LatencyEdge extends AssertedClass
+public class LatencyEdge extends Misc implements SDEPData
 {
+    final private boolean srcUpstream;
+
     final private LatencyNode src;
     final private int srcChannel;
-    final int numSteadySrcExec;
     final private LatencyNode dst;
     final private int dstChannel;
+
+    final int numSteadySrcExec;
     final int numSteadyDstExec;
-    final private boolean srcUpstream;
-    final private StreamInterface lowestCommonAncestor;
+
+    final int numInitSrcExec;
+    final int numInitDstExec;
 
     /**
-     * initDependencies is a map of dst phase execution # to 
-     * src phase execution #. In order to execute the dst phase,
-     * src must have been executed at least the corresponding phase #
+     * dst2srcDependency is an array src phase execution #s. In order 
+     * to execute the dst phase x, src must have been executed at least 
+     * dst2srcDependency[x] times.
+     * 
+     * This array has a size of (numInitDstExec + numSteadyDstExec).
+     * In order to find out dependency beyond this size, we need to
+     * wrap around from element (numInitDstExec + numSteadyDstExec) to
+     * element (numInitDstExec). (here I assume that everything starts
+     * at 0, which it does) 
      */
-    final OMap initDependencies = new OMap();
-
-    /**
-     * steadyDependencies is a map of dst phase execution # to 
-     * src phase execution #. In order to execute the dst phase,
-     * src must have been executed at least the corresponding phase #
-     * The data stored here starts from where initDependencies leaves off.
-     * The data is valid for every full execution of a steady state between
-     * the two nodes (adjusted for the number of steady state executions).
-     */
-    final OMap steadyDependencies = new OMap();
+    final int[] dst2srcDependency;
 
     /**
      * Constructs an edge between two consecutive nodes. upstream is the source 
@@ -42,13 +41,10 @@ public class LatencyEdge extends AssertedClass
         LatencyNode upstream,
         int outputChannel,
         LatencyNode downstream,
-        int inputChannel,
-        StreamInterface _lowestCommonAncestor)
+        int inputChannel)
     {
         // do some trivial initializations
         {
-            lowestCommonAncestor = _lowestCommonAncestor;
-
             src = upstream;
             srcChannel = outputChannel;
             dst = downstream;
@@ -70,8 +66,15 @@ public class LatencyEdge extends AssertedClass
             BigInteger steadyStateData =
                 srcData.multiply(dstData).divide(gcd);
 
-            numSteadySrcExec = dstData.divide(gcd).intValue();
-            numSteadyDstExec = srcData.divide(gcd).intValue();
+            numSteadySrcExec =
+                dstData.divide(gcd).intValue() * src.getSteadyNumPhases();
+            numSteadyDstExec =
+                srcData.divide(gcd).intValue() * dst.getSteadyNumPhases();
+
+            // don't initialize (allocate) this array, 'cause I don't yet
+            // know its size! I'll compute the number of phases requried for
+            // initialization below, allocate the array, and go through the 
+            // whole dependency (init and steady) at once.
         }
 
         // compute the dependency of downstream on upstream
@@ -79,6 +82,8 @@ public class LatencyEdge extends AssertedClass
         // are two stages in the depency: the initialization stage
         // and the steady stage.
         {
+            // compute the initialization stage of data dependency.
+            // do this twice. the first time i'll just record how many
             // compute the initialization stage of data dependency
             // this is done in two steps (usually only one will be
             // required, but I never know which one ahead of time).
@@ -88,72 +93,350 @@ public class LatencyEdge extends AssertedClass
             // any remaining phases of the intitialization of the
             // upstream operator, while computing which phase of the
             // downstream operator depends on the upstream operator.
-            int dstStage = 0, srcStage = 0;
-            int nDataInChannel = 0;
+            //
+            // Do not record the dependency, just figure out how many phases
+            // are required from the dst node to do it :) The dependncy will
+            // be recorded later (below) together with the steady state
+            // dependency in one fell swoop 
             {
+                int dstStage = 0, srcStage = 0;
+                int nDataInChannel = 0;
+                {
+                    for (dstStage = 0;
+                        dstStage < dst.getInitNumPhases();
+                        dstStage++)
+                    {
+                        int dataNeeded =
+                            dst.getPhasePeek(dstStage, inputChannel);
+
+                        while (dataNeeded >= nDataInChannel)
+                        {
+                            nDataInChannel
+                                += src.getPhasePush(srcStage, outputChannel);
+                            srcStage++;
+                        }
+
+                        nDataInChannel
+                            -= dst.getPhasePop(dstStage, inputChannel);
+                    }
+                }
+
+                // the dst has been initialized, now finish initializing
+                // the src
+                {
+                    for (; srcStage < src.getInitNumPhases(); srcStage++)
+                    {
+                        nDataInChannel
+                            += src.getPhasePush(srcStage, outputChannel);
+
+                        while (nDataInChannel
+                            >= dst.getPhasePeek(dstStage, inputChannel))
+                        {
+                            nDataInChannel
+                                -= dst.getPhasePop(dstStage, inputChannel);
+                            dstStage++;
+                        }
+                    }
+                }
+
+                numInitSrcExec = srcStage;
+                numInitDstExec = dstStage;
+            }
+
+            // allocate storage to keep track of the dependency
+            dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+
+            // compute the dependency for numInitDstExec + numSteadyDstExec
+            // phases of the dst node.
+            // this will do the initialization. if the src doesn't 
+            // execute enough times that's OK, 'cause its last phases would 
+            // not push any data
+            {
+                int dstStage = 0, srcStage = 0;
+                int nDataInChannel = 0;
                 for (dstStage = 0;
-                    dstStage < dst.getInitNumPhases();
+                    dstStage < numInitDstExec + numSteadyDstExec;
                     dstStage++)
                 {
-                    int dataNeeded = dst.getPhasePeek(dstStage, inputChannel);
+                    int dataNeeded =
+                        dst.getPhasePeek(dstStage, inputChannel);
 
                     while (dataNeeded >= nDataInChannel)
                     {
-                        nDataInChannel += src.getPhasePush(srcStage, outputChannel);
+                        nDataInChannel
+                            += src.getPhasePush(srcStage, outputChannel);
                         srcStage++;
                     }
 
-                    initDependencies.insert(
-                        new Integer(dstStage),
-                        new Integer(srcStage - 1));
+                    dst2srcDependency[dstStage] = srcStage - 1;
 
-                    nDataInChannel -= dst.getPhasePop(dstStage, inputChannel);
-                }
-            }
-
-            // the dst has been initialized, now finish initializing
-            // the src
-            {
-                for (; srcStage < src.getInitNumPhases(); srcStage++)
-                {
-                    nDataInChannel += src.getPhasePush(srcStage, outputChannel);
-
-                    while (nDataInChannel >= dst.getPhasePeek(dstStage, inputChannel))
-                    {
-                        initDependencies.insert(
-                            new Integer(dstStage),
-                            new Integer(srcStage - 1));
-                        nDataInChannel -= dst.getPhasePop(dstStage, inputChannel);
-                        dstStage++;
-                    }
-                }
-            }
-
-            // compute the steady state
-            // this will start off where the initialization left off
-            // and only execute as many times as necessary to pull
-            // data into the dst. if the src doesn't execute enough times
-            // that's OK, 'cause its last phases would not push any data
-            {
-                for (;
-                    dstStage < dst.getInitNumPhases() + numSteadyDstExec;
-                    dstStage++)
-                {
-                    int dataNeeded = dst.getPhasePeek(dstStage, inputChannel);
-
-                    while (dataNeeded >= nDataInChannel)
-                    {
-                        nDataInChannel += src.getPhasePush(srcStage, outputChannel);
-                        srcStage++;
-                    }
-
-                    steadyDependencies.insert(
-                        new Integer(dstStage),
-                        new Integer(srcStage - 1));
-
-                    nDataInChannel -= dst.getPhasePop(dstStage, inputChannel);
+                    nDataInChannel
+                        -= dst.getPhasePop(dstStage, inputChannel);
                 }
             }
         }
+    }
+
+    /**
+     * Construct an edge that points from the node to itself.
+     * 
+     * This kind of an edge is used as an identity edge. I can combine this
+     * edge with another edge that points from node -> node' or node' -> node
+     * (combine them vertically) and get the other edge in return. 
+     */
+    public LatencyEdge(LatencyNode node)
+    {
+        src = node;
+        srcChannel = -1;
+
+        dst = node;
+        dstChannel = -1;
+
+        srcUpstream = true;
+
+        numInitSrcExec = node.getInitNumPhases();
+        numInitDstExec = node.getInitNumPhases();
+
+        numSteadySrcExec = node.getSteadyNumPhases();
+        numSteadyDstExec = node.getSteadyNumPhases();
+
+        dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+
+        // create the appropriate latency maps
+        {
+            int n;
+            for (n = 0; n < numInitDstExec + numSteadyDstExec; n++)
+            {
+                dst2srcDependency[n] = n;
+            }
+        }
+    }
+
+    /**
+     * Construct an edge from two other edges.
+     * The other two edges can either be in parallel (connect two same nodes, 
+     * X->Y) or can be in series (connect three nodes X->Y->Z).
+     * If we're dealing with the latter case, edge1 must connect X->Y, while
+     * edge2 must connect Y->Z.
+     */
+    public LatencyEdge(LatencyEdge edge1, LatencyEdge edge2)
+    {
+        dstChannel = -1;
+        srcChannel = -1;
+        
+        srcUpstream = true;
+
+        if (edge1.getSrc() == edge2.getSrc()
+            && edge1.getDst() == edge2.getDst())
+        {
+            // the two edges are in parallel
+            src = edge1.getSrc();
+            dst = edge1.getDst();
+
+            // find out number of init phases
+            {
+                numInitDstExec =
+                    MAX(
+                        edge1.getNumDstInitPhases(),
+                        edge2.getNumDstInitPhases());
+                numInitSrcExec =
+                    MAX(
+                        edge1.getSrcPhase4DstPhase(numInitDstExec),
+                        edge2.getSrcPhase4DstPhase(numInitDstExec));
+            }
+
+            // find out number of steady phases
+            {
+                BigInteger srcPhases1 =
+                    BigInteger.valueOf(edge1.getNumSrcSteadyPhases());
+                BigInteger srcPhases2 =
+                    BigInteger.valueOf(edge2.getNumSrcSteadyPhases());
+
+                BigInteger dstPhases1 =
+                    BigInteger.valueOf(edge1.getNumDstSteadyPhases());
+                BigInteger dstPhases2 =
+                    BigInteger.valueOf(edge2.getNumDstSteadyPhases());
+
+                BigInteger src1Mult =
+                    srcPhases2.divide(srcPhases1.gcd(srcPhases2));
+                BigInteger dst1Mult =
+                    dstPhases2.divide(dstPhases1.gcd(dstPhases2));
+
+                BigInteger multiplier1 =
+                    src1Mult.divide(src1Mult.gcd(dst1Mult)).multiply(
+                        dst1Mult);
+
+                numSteadySrcExec =
+                    srcPhases1.multiply(multiplier1).intValue();
+                numSteadyDstExec =
+                    dstPhases1.multiply(multiplier1).intValue();
+            }
+
+            // allocate storage to keep track of the dependency
+            dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+
+            // compute the dependency for numInitDstExec + numSteadyDstExec
+            // phases of the dst node.
+            // this will do the initialization. if the src doesn't 
+            // execute enough times that's OK, 'cause its last phases would 
+            // not push any data
+            {
+                for (int nPhase = 0;
+                    nPhase < numInitDstExec + numSteadyDstExec;
+                    nPhase++)
+                {
+                    dst2srcDependency[nPhase] =
+                        MAX(
+                            edge1.getSrcPhase4DstPhase(nPhase),
+                            edge2.getSrcPhase4DstPhase(nPhase));
+                }
+            }
+        }
+        else
+        {
+            // the two edges are in series
+            // make sure they are, just in case though
+            ASSERT(edge1.getDst() == edge2.getSrc());
+
+            src = edge1.getSrc();
+            dst = edge2.getDst();
+
+            // find out number of init phases
+            {
+                numInitSrcExec =
+                    MAX(
+                        edge1.getNumSrcInitPhases(),
+                        edge1.getSrcPhase4DstPhase(
+                            edge2.getNumSrcInitPhases()));
+                numInitDstExec =
+                    MAX(
+                        edge2.getNumDstInitPhases(),
+                        edge2.getDstPhase4SrcPhase(
+                            edge1.getNumDstInitPhases()));
+            }
+
+            // find out the number of steady phases
+            {
+                BigInteger dstPhases1 =
+                    BigInteger.valueOf(edge1.getNumDstSteadyPhases());
+                BigInteger srcPhases2 =
+                    BigInteger.valueOf(edge2.getNumSrcSteadyPhases());
+
+                int gcd = dstPhases1.gcd(srcPhases2).intValue();
+                int phases1Mult = edge2.getNumSrcSteadyPhases() / gcd;
+                int phases2Mult = edge1.getNumDstSteadyPhases() / gcd;
+
+                numSteadySrcExec =
+                    edge1.getNumSrcSteadyPhases() * phases1Mult;
+                numSteadyDstExec =
+                    edge2.getNumDstSteadyPhases() * phases2Mult;
+
+            }
+
+            // allocate storage to keep track of the dependency
+            dst2srcDependency = new int[numInitDstExec + numSteadyDstExec];
+
+            // compute the dependency for numInitDstExec + numSteadyDstExec
+            // phases of the dst node.
+            // this will do the initialization. if the src doesn't 
+            // execute enough times that's OK, 'cause its last phases would 
+            // not push any data
+            {
+                for (int nPhase = 0;
+                    nPhase < numInitDstExec + numSteadyDstExec;
+                    nPhase++)
+                {
+                    dst2srcDependency[nPhase] =
+                        edge1.getSrcPhase4DstPhase(
+                            edge2.getSrcPhase4DstPhase(nPhase));
+                }
+            }
+        }
+    }
+
+    public LatencyNode getSrc()
+    {
+        return src;
+    }
+
+    public LatencyNode getDst()
+    {
+        return dst;
+    }
+
+    public int getNumDstInitPhases()
+    {
+        return numInitDstExec;
+    }
+
+    public int getNumSrcInitPhases()
+    {
+        return numInitSrcExec;
+    }
+
+    public int getNumDstSteadyPhases()
+    {
+        return numSteadyDstExec;
+    }
+
+    public int getNumSrcSteadyPhases()
+    {
+        return numSteadySrcExec;
+    }
+
+    public int getSrcPhase4DstPhase(int nDstPhase)
+    {
+        if (nDstPhase < numInitDstExec)
+        {
+            return dst2srcDependency[nDstPhase];
+        }
+        else
+        {
+            int nSmallerDstPhase =
+                ((nDstPhase - numInitDstExec) % numSteadyDstExec)
+                    + numInitDstExec;
+            return dst2srcDependency[nSmallerDstPhase];
+        }
+    }
+
+    public int getDstPhase4SrcPhase(int nSrcPhase)
+    {
+        // first have to figure out if I need to "wrap around"
+        int addDstPhase = 0;
+        if (nSrcPhase > numInitSrcExec + numSteadySrcExec)
+        {
+            int fullExecs = (nSrcPhase - numInitSrcExec) / numSteadySrcExec;
+            addDstPhase = fullExecs * numSteadyDstExec;
+            fullExecs =
+                numInitSrcExec
+                    + (numInitSrcExec - numInitSrcExec) % numSteadySrcExec;
+        }
+
+        int dstPhaseLow = 0,
+            dstPhaseHigh = numInitDstExec + numSteadyDstExec - 1;
+        while (dstPhaseHigh - dstPhaseLow > 1)
+        {
+            int dstPhaseMid = (dstPhaseLow + dstPhaseHigh) / 2;
+            if (dst2srcDependency[dstPhaseMid] > nSrcPhase)
+            {
+                dstPhaseHigh = dstPhaseMid;
+            }
+            else
+            {
+                dstPhaseLow = dstPhaseMid;
+            }
+        }
+
+        int dstPhase;
+        if (dst2srcDependency[dstPhaseLow] >= nSrcPhase)
+        {
+            dstPhase = dstPhaseLow;
+        }
+        else
+        {
+            dstPhase = dstPhaseHigh;
+        }
+
+        return dstPhase + addDstPhase;
     }
 }

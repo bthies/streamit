@@ -25,9 +25,9 @@ public class ConstrainedStreamFactory
     {
         if (iter2stream.containsKey(streamIter))
         {
-            return (StreamInterface) iter2stream.get(streamIter);
+            return (StreamInterface)iter2stream.get(streamIter);
         }
-        
+
         StreamInterface newStream;
 
         if (streamIter.isFilter() != null)
@@ -37,7 +37,9 @@ public class ConstrainedStreamFactory
         else if (streamIter.isPipeline() != null)
         {
             newStream = new Pipeline(streamIter.isPipeline(), parent, this);
-        } else {
+        }
+        else
+        {
             ERROR("Unsupported type passed to StreamFactory!");
             newStream = null;
         }

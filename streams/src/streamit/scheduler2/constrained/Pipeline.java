@@ -52,7 +52,11 @@ public class Pipeline
             LatencyNode topNode = topStream.getBottomLatencyNode();
             LatencyNode bottomNode = bottomStream.getTopLatencyNode();
 
-            LatencyEdge edge = new LatencyEdge(topNode, 0, bottomNode, 0, this);
+            LatencyEdge edge = new LatencyEdge(topNode, 0, bottomNode, 0);
+
+            // add self to the two nodes
+            topNode.addDependency(edge);
+            topNode.addDependency(edge);
         }
     }
 

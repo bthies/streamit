@@ -1,7 +1,8 @@
 package streamit.scheduler2.constrained;
 
 import streamit.misc.DLList;
-import streamit.misc.OMap;
+import streamit.misc.DLList_const;
+import streamit.misc.DLListIterator;
 
 public class LatencyNode extends streamit.misc.AssertedClass
 {
@@ -15,14 +16,6 @@ public class LatencyNode extends streamit.misc.AssertedClass
      * This is a list of StreamInterfaces, root is first, parent is last
      */
     final DLList ancestors;
-
-    /*
-     * This a map of StreamInterfaces to Integers.
-     * The Integer stores how many times the particular
-     * node needs to be executed in each steady state of
-     * the corresponding Stream
-     */
-    final OMap ancestors2numExecs = new OMap();
 
     /*
      * Store the steady and init phases of the unerlying node
@@ -72,27 +65,37 @@ public class LatencyNode extends streamit.misc.AssertedClass
                 nInitPhase < filter.getNumDeclaredInitPhases();
                 nInitPhase++)
             {
-                steadyNodePhases.setPhaseInput(
+                initNodePhases.setPhaseInput(
                     filter.getDeclaredInitPhasePeek(nInitPhase),
                     filter.getDeclaredInitPhasePop(nInitPhase),
                     nInitPhase,
                     0);
 
-                steadyNodePhases.setPhaseOutput(
+                initNodePhases.setPhaseOutput(
                     filter.getDeclaredInitPhasePush(nInitPhase),
                     nInitPhase,
                     0);
 
-                steadyNodePhases.setOperatorPhase(
+                initNodePhases.setOperatorPhase(
                     filter.getDeclaredInitPhase(nInitPhase),
                     nInitPhase);
             }
         }
     }
+    
+    public DLList_const getAncestors ()
+    {
+        return ancestors;
+    }
 
     public int getInitNumPhases()
     {
         return initNodePhases.getNumPhases();
+    }
+    
+    public int getSteadyNumPhases ()
+    {
+        return steadyNodePhases.getNumPhases ();
     }
 
     public int getSteadyStatePeek(int nChannel)
@@ -157,5 +160,44 @@ public class LatencyNode extends streamit.misc.AssertedClass
                     % steadyNodePhases.getNumPhases(),
                 nChannel);
         }
+    }
+
+    public void addDependency(LatencyEdge dependency)
+    {
+        if (dependency.getSrc() == this)
+        {
+            dependants.pushBack (dependency);
+        }
+        else
+        {
+            ASSERT(dependency.getDst() == this);
+            dependsOn.pushBack (dependency);
+        }
+    }
+
+    public DLList_const getDependants()
+    {
+        return dependants;
+    }
+
+    public DLList_const getDependecies()
+    {
+        return dependsOn;
+    }
+    
+    public boolean hasAncestor(StreamInterface ancestor)
+    {
+        DLListIterator ancestorIter = ancestors.begin();
+        DLListIterator lastAncestorIter = ancestors.end ();
+        
+        for ( ;!ancestorIter.equals(lastAncestorIter); ancestorIter.next())
+        {
+            if (((StreamInterface)ancestorIter.get()) == ancestor)
+            {
+                return true;
+            }
+        }
+        
+        return false;
     }
 }

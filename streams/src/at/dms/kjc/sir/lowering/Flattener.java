@@ -80,6 +80,8 @@ public class Flattener {
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();
 	str.accept(printer1);
+	//Raise variables to the top of thier block
+	new VarDeclRaiser().raiseVars(str);
 	printer1.close();
 
 	// name the components

@@ -283,7 +283,6 @@ class Unroller extends SLIRReplacingVisitor {
 		//oper = ae.getOperation();
 		//incrVal=((JIntLiteral)ae.getRight()).intValue();
 		incrVar=(JLocalVariableExpression)ae.getLeft();
-		System.err.println("Right:"+ae.getRight());
 		JBinaryExpression expr=(JBinaryExpression)ae.getRight();
 		if(expr instanceof JDivideExpression) {
 		    if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar)) {
@@ -292,6 +291,19 @@ class Unroller extends SLIRReplacingVisitor {
 		    }
 		    incrVal=((JIntLiteral)expr.getRight()).intValue();
 		    oper=OPE_SLASH;
+		} else if(expr instanceof JMultExpression) {
+		    JLocalVariableExpression multiplier;
+		    oper=OPE_STAR;
+		    if(expr.getLeft() instanceof JLocalVariableExpression) {
+			if(!((JLocalVariableExpression)expr.getLeft()).equals(incrVar))
+			    return null;
+			incrVal=((JIntLiteral)expr.getRight()).intValue();
+		    } else if(expr.getRight() instanceof JLocalVariableExpression) {
+			if(!((JLocalVariableExpression)expr.getRight()).equals(incrVar))
+			    return null;
+			incrVal=((JIntLiteral)expr.getLeft()).intValue();
+		    } else
+			return null;
 		} else
 		    return null;
 	    } else if (incrExpr instanceof JPrefixExpression)

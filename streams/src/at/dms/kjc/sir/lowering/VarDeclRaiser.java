@@ -26,6 +26,39 @@ class VarDeclRaiser extends SLIRReplacingVisitor {
     // Moving VariableDeclarations to front of block
     // ----------------------------------------------------------------------
 
+    public void raiseVars(SIRStream str) {
+	if (str instanceof SIRFeedbackLoop)
+	    {
+		SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
+		raiseVars(fl.getBody());
+		raiseVars(fl.getLoop());
+	    }
+        if (str instanceof SIRPipeline)
+	    {
+		SIRPipeline pl = (SIRPipeline)str;
+		Iterator iter = pl.getChildren().iterator();
+		while (iter.hasNext())
+		    {
+			SIRStream child = (SIRStream)iter.next();
+			raiseVars(child);
+		    }
+	    }
+        if (str instanceof SIRSplitJoin)
+	    {
+		SIRSplitJoin sj = (SIRSplitJoin)str;
+		Iterator iter = sj.getParallelStreams().iterator();
+            while (iter.hasNext())
+		{
+		    SIRStream child = (SIRStream)iter.next();
+		    raiseVars(child);
+		}
+	    }
+	if (str instanceof SIRFilter)
+	    for (int i = 0; i < str.getMethods().length; i++) {
+		str.getMethods()[i].accept(this);
+	    }
+    }
+
     public Object visitBlockStatement(JBlock self,
 				      JavaStyleComment[] comments) {
 	LinkedList saveDefs=varDefs;
@@ -56,8 +89,21 @@ class VarDeclRaiser extends SLIRReplacingVisitor {
 		self.setStatement(i,(JStatement)newBody);
 	    }
 	}
-	for(int i=varDefs.size()-1;i>=0;i--)
-	    self.addStatementFirst((JStatement)varDefs.get(i));
+	Hashtable visitedVars=new Hashtable();
+	for(int i=varDefs.size()-1;i>=0;i--) {
+	    JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);
+	    self.addStatementFirst(varDec);
+	    JVariableDefinition[] varArray=varDec.getVars();
+	    LinkedList newVars=new LinkedList();
+	    for(int j=0;j<varArray.length;j++) {
+		JLocalVariable var=(JLocalVariable)varArray[j];
+		if(!visitedVars.containsKey(var)) {
+		    visitedVars.put(var,Boolean.TRUE);
+		    newVars.add(var);
+		}
+	    }
+	    varDec.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+	}
 	varDefs=saveDefs;
 	visitComments(comments);
 	return self;

@@ -433,7 +433,7 @@ public class FieldProp implements Constants
             // Also run some simple algebraic simplification now.
             meths[i].accept(new Propagator(findLocals(meths[i])));
 	    // Raise Variable Declarations to beginning of block
-	    meths[i].accept(new VarDeclRaiser());
+	    //meths[i].accept(new VarDeclRaiser());
         }
     }
 

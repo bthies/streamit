@@ -1,18 +1,14 @@
 package streamittest;
 
 import junit.framework.*;
-import at.dms.kjc.sir.linear.ComplexNumber;
-import at.dms.kjc.sir.linear.FilterMatrix;
-import at.dms.kjc.sir.linear.FilterVector;
-import at.dms.kjc.sir.linear.LinearForm;
-import at.dms.kjc.sir.linear.LinearTransform;
+import at.dms.kjc.sir.linear.*;
 
 import java.util.*;
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.10 2002-09-26 17:07:21 aalamb Exp $
+ * $Id: TestLinear.java,v 1.11 2002-10-25 13:22:49 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -55,6 +51,8 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testLinearTransformLcm"));
 	suite.addTest(new TestLinear("testLinearTransformGcd"));
 
+	suite.addTest(new TestLinear("testLinearFilterRepresentation"));
+	
 	return suite;
     }
     
@@ -934,6 +932,51 @@ public class TestLinear extends TestCase {
 	
     }    
 
+    /** test the linear filter representation object -- specifically its cost calculating abilities. **/
+    public void testLinearFilterRepresentation() {
+	int SIZE = 10;
+	LinearFilterRepresentation lfr;
+	// start with a linearfilterrep that has a zeros matrix
+	lfr = new LinearFilterRepresentation(new FilterMatrix(SIZE, SIZE), new FilterVector(SIZE), 1);
+	assertEquals(0,lfr.getCost().getMultiplies());
+	assertEquals(0,lfr.getCost().getAdds());
+
+	// now, lets make a full matrix
+	FilterMatrix mat1 = new FilterMatrix(SIZE,SIZE);
+	for (int i=0; i<SIZE; i++) {
+	    for (int j=0; j<SIZE; j++) {
+		mat1.setElement(i,j,i*SIZE+j+2); // the two is so that they are all more than one
+	    }
+	}
+	lfr = new LinearFilterRepresentation(mat1, new FilterVector(SIZE), 1);
+	assertEquals(SIZE*SIZE, lfr.getCost().getMultiplies());
+	assertEquals(SIZE*(SIZE-1), lfr.getCost().getAdds());
+
+	// now, add in a filter vector that actually has more than zeros in it.
+	FilterVector vect1 = new FilterVector(SIZE);
+	for (int i=0; i<SIZE; i++) {
+	    if ((i%2)==0) 
+		vect1.setElement(0, i, 5);
+	    else
+		vect1.setElement(0, i, 1); // add an add, but not a multiply
+	}
+	lfr = new LinearFilterRepresentation(mat1, vect1,1);
+	assertEquals(SIZE*SIZE + SIZE/2, lfr.getCost().getMultiplies());
+	assertEquals((SIZE*(SIZE-1) + SIZE), lfr.getCost().getAdds());
+
+	// now, lets set some of the elements of mat1 to zero and one
+	mat1.setElement(1,1,ComplexNumber.ONE); //  #muls--
+	mat1.setElement(1,2,ComplexNumber.ZERO); // #muls--, #adds--
+	mat1.setElement(0,5,ComplexNumber.ZERO); // #muls--, #adds--
+	lfr = new LinearFilterRepresentation(mat1, vect1,1);
+	assertEquals(SIZE*SIZE + SIZE/2 - 3, lfr.getCost().getMultiplies());
+	assertEquals((SIZE*(SIZE-1) + SIZE)-2, lfr.getCost().getAdds());
+	
+    }
+	
+
+
+    
 
 
     ///////////// Utility function that I don't want to clutter the acutal

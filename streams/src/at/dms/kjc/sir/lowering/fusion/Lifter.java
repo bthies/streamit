@@ -49,7 +49,7 @@ public class Lifter implements StreamVisitor {
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
 	liftPipelineChildren(self);
-	RefactorSplitJoin.removeSyncPoints(self);
+	RefactorSplitJoin.removeMatchingSyncPoints(self);
     }
 
     /* pre-visit a splitjoin */
@@ -70,12 +70,13 @@ public class Lifter implements StreamVisitor {
     }
 
     /**
-     * POST-VISITS (empty)
+     * POST-VISITS
      */
 	    
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
+	RefactorSplitJoin.removeMatchingSyncPoints(self);
     }
 
     /* post-visit a splitjoin */

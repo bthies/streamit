@@ -54,40 +54,6 @@ class SchedJoinType
 
 public class Scheduler extends DestroyedClass
 {
-    public static class SchedStream
-    {
-        int consumes, produces, peeks;
-        SchedStream parent;
-
-        final List allChildren = new LinkedList ();
-
-        public void addStream (SchedStream stream)
-        {
-            boolean result = allChildren.add (stream);
-            ASSERT (result);
-        }
-    }
-
-    public static class SchedFilter extends SchedStream
-    {
-        Operator operator;
-
-        final List srcMsgs = new LinkedList ();
-        final List dstMsgs = new LinkedList ();
-    }
-
-    public static class SchedSplitJoin extends SchedStream
-    {
-        SchedSplitType splitType;
-        SchedJoinType joinType;
-        final List allChildren = new LinkedList ();
-    }
-
-    public static class SchedLoop extends SchedStream
-    {
-        SchedStream body, loop;
-    }
-
     class SchedBufferRestriction
     {
         SchedFilter filter1, filter2;

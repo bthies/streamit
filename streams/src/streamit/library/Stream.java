@@ -73,8 +73,8 @@ public class Stream extends Operator
 
         // setup the scheduler
         {
-            Scheduler.SchedStream stream;
-            stream = (Scheduler.SchedStream) constructSchedule ();
+            SchedStream stream;
+            stream = (SchedStream) constructSchedule ();
             ASSERT (stream);
 
             scheduler = new Scheduler (stream);
@@ -190,10 +190,10 @@ public class Stream extends Operator
 
     Scheduler scheduler;
 
-    Scheduler.SchedStream constructSchedule ()
+    SchedStream constructSchedule ()
     {
         // go through my children and dispatch on their
-        Scheduler.SchedStream stream = new Scheduler.SchedStream ();
+        SchedStream stream = new SchedStream ();
 
         ListIterator childIter;
         childIter = (ListIterator) streamElements.iterator ();
@@ -204,7 +204,7 @@ public class Stream extends Operator
             Stream child = (Stream) childIter.next ();
             ASSERT (child);
 
-            Scheduler.SchedStream childStream;
+            SchedStream childStream;
             childStream = child.constructSchedule ();
             stream.addStream (childStream);
         }

@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * This generates unique names for stream structures.
  */
-class Namer extends at.dms.util.Utils {
+public class Namer extends at.dms.util.Utils {
     /**
      * Mapping from stream structure (SIROperator) to name (String) of
      * structure in target program.

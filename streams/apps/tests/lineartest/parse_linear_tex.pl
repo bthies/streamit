@@ -12,7 +12,7 @@
 use strict;
 
 # Maximum number of columns to print
-my $MAX_COLS = 16;
+my $MAX_COLS = 33;
 
 # main entry point
 main();

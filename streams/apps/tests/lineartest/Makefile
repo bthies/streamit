@@ -43,7 +43,8 @@ linear-regtest: linear-compile
 clean:
 	rm -f *.class
 	rm -f *.dot *.output
-	rm -f regtests/*.output regtests/*.parsed regtests/*~
+	rm -f regtests/*.output regtests/*.parsed  regtests/*.dot
+	rm -f regtests/*~ regtests/*.exe regtests/*.run regtests/*.c
 	rm -f regtests/LinearTest10.java regtests/LinearTest11.java regtests/LinearTest12.java regtests/LinearTest13.java 
 	rm -f regtests/LinearTest14.java regtests/LinearTest15.java regtests/LinearTest16.java regtests/LinearTest17.java 
 	rm -f regtests/LinearTest18.java regtests/LinearTest19.java regtests/LinearTest20.java regtests/LinearTest21.java 

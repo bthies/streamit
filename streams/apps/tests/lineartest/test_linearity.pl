@@ -9,6 +9,7 @@ my $GRAPH_FILE  = "graphs.tex";
 
 
 ######## Input data ##########
+my $regtest_path = "regtest";
 my $apps_path = "/u/aalamb/streams/apps";
 my $applications_path = "$apps_path/applications";
 my $examples_path = "$apps_path/examples";
@@ -16,7 +17,6 @@ my $sorting_path = "$apps_path/sorts";
 my $benchmark_path = "$apps_path/benchmarks";
 
 my @files = (
-	     
 	     
 	     # has some sort of problem with the lowering phase -- non constant
 	     # something...
@@ -47,8 +47,12 @@ my @files = (
 	     "$examples_path/fib/Fib.java",
 	     "$examples_path/fib/Fib2.java",
 	     "$examples_path/hello/HelloWorld6.java",
-	     "$examples_path/matrixmult/MatrixMult.java",
-	     "$examples_path/matrixmult/MatrixMultBlock.java",
+
+	     # currently too big.
+	     #"$examples_path/matrixmult/MatrixMult.java",
+	     #"$examples_path/matrixmult/MatrixMultBlock.java",
+	     "$examples_path/matrixmult/MatrixMultSmall.java",
+	     
 	     "$examples_path/mergesort/MergeSort.java",
 	     
 	     # needs conditional operation support.
@@ -57,7 +61,31 @@ my @files = (
 	     "$examples_path/vectadd/VectAdd.java",	     
 	     "$examples_path/vectadd/VectAdd1.java",	     
 
+	     "$sorting_path/BatcherSort/BatcherSort.str",
+	     "$sorting_path/BatcherSort/AutoBatcherSort.str",
+	     "$sorting_path/BubbleSort/BubbleSort.str",
+	     "$sorting_path/ComparisonCounting/ComparisonCounting.str",
+	     "$sorting_path/InsertionSort/InsertionSort.str",
+	     "$sorting_path/MergeSort/MergeSort.str",
+	     "$sorting_path/RadixSort/RadixSort.str",
 	     
+
+	     "regtests/LinearTest1.java",
+	     "regtests/LinearTest2.java",
+	     "regtests/LinearTest3.java",
+	     "regtests/LinearTest4.java",
+	     "regtests/LinearTest5.java",
+	     "regtests/LinearTest6.java",
+	     "regtests/LinearTest7.java",
+	     "regtests/LinearTest8.java",
+	     "regtests/LinearTest9.str",
+	     "regtests/LinearTest10.str",
+	     "regtests/LinearTest11.str",
+	     "regtests/LinearTest12.str",
+	     "regtests/LinearTest13.str",
+	     "regtests/LinearTest14.str",
+	     "regtests/LinearTest15.str",
+	     "regtests/LinearTest16.str",
 	     );
 
 # delete the output files from any previous runs
@@ -72,6 +100,13 @@ print GFILE make_latex_header();
 # iterate over all input files
 my $current_file;
 foreach $current_file (@files) {
+    # if the current file ends with .str we run it through the new frontend first
+    my ($base, $extension) = split(/\./, $current_file);
+    if ($extension eq "str") {
+	print `java streamit.frontend.ToJava < $base.$extension > $base.java`;
+	$current_file = "$base.java";
+    }
+
     # figure out a base filename for the results directory.
     my $base_filename = $current_file;
     # remove slashes
@@ -163,7 +198,9 @@ sub make_latex_header {
     my $header = "\\documentclass{article}\n";
     $header .= "\\usepackage{fullpage}\n";
     $header .= "\\usepackage{epsfig}\n";
-    $header .= "\\begin{document}\n\n";
+    $header .= "\\begin{document}\n";
+    $header .= "\\tableofcontents\n";
+    $header .= "\\clearpage\n\n";
     return $header;
 }
 

@@ -6,6 +6,13 @@
 # expected matricies that are in test files.
 
 use strict;
+# java(streamit) --> c
+my $S = "java -Xmx512M at.dms.kjc.Main -s --constprop  --debug ";
+# c --> exe
+my $SL = "gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c";
+# compare output
+my $CMP = "/u/aalamb/streams/regtest/tools/compare_uni.pl";
+my $CMP_PATH = "/u/aalamb/streams/regtest/tools/";
 
 my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest2.java",
@@ -35,23 +42,45 @@ foreach $current_test (@tests) {
     }
 
     # run the compiler on the java file and save its output
-    my $command = ("java -Xmx512M at.dms.kjc.Main -s --constprop --linearanalysis --debug " .
-		   "$base.java >& $base.output");
+    my $command = ("$S --linearanalysis " .
+		   "$base.java >& $base.c");
     `$command`;
 
     # parse the output from the compiler
-    $command = "parse_linear_output.pl $base.output > $base.parsed";
+    $command = "parse_linear_output.pl $base.c > $base.parsed";
     `$command`;
 
     # compare the parsed output against the expected output
-    $command = "cmp $base.parsed $base.expected >& cmp.output";
-    `$command`;
-    my $result = `cat cmp.output`;
+    my $result = `perl -I$CMP_PATH $CMP $base.parsed $base.expected`;
     chomp($result);
     if ($result ne "") {
-	print "$base: failure\n";
+	print "$base(analysis): failure\n";
 	print "  $result\n";
     } else {
-	print "$base: success\n";
+	print "$base(analysis): success\n";
     }
+
+    # now, compile the test again, this time with linear replacement enabled
+    $command = ("$S --linearreplacement " .
+		"$base.java >& $base.replaced.c");
+    `$command`;
+    
+    # now, compile the c to an exe for both the original program and the replaced prgram
+    print `$SL $base.c -o $base.exe`;
+    print `$SL $base.replaced.c -o $base.replaced.exe`;
+    # execute both the original and the replaced program 100 iterations
+    print `$base.exe -i 100 > $base.run`;
+    print `$base.replaced.exe -i 100 > $base.replaced.run`;
+    # now, compare the outputs
+    $result = `perl -I$CMP_PATH $CMP $base.run $base.replaced.run`;
+    chomp($result);
+    if ($result ne "") {
+	print "$base(replace):  failure\n";
+	print "  $result\n";
+    } else {
+	print "$base(replace):  success\n";
+    }
+
+    
+    
 }

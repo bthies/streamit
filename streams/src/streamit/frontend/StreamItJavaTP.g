@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.17 2002-07-16 19:08:29 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.18 2002-07-16 19:44:48 dmaze Exp $
  */
 
 header {
@@ -578,6 +578,13 @@ expr_assign_statement returns [String t]
 
 expr_statement returns [String t] { t = ""; }
 	: t=expr
+		{
+			// Gross hack to strip out leading class casts,
+			// since they'll illegal (JLS 14.8).
+			if (t.charAt(0) == '(' &&
+				Character.isUpperCase(t.charAt(1)))
+				t = t.substring(t.indexOf(')') + 1);
+		}
 	;
 
 /*

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIfStatement.java,v 1.5 2002-02-20 16:26:50 thies Exp $
+ * $Id: JIfStatement.java,v 1.6 2002-06-25 19:59:28 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -121,10 +121,31 @@ public class JIfStatement extends JStatement {
     }
 
     /**
+     * Gets condition of this.
+     */
+    public JExpression getCondition() {
+	return cond;
+    }
+
+    /**
      * Set then clause.
      */
     public void setThenClause(JStatement thenClause) {
 	this.thenClause = thenClause;
+    }
+
+    /**
+     * Get then clause.
+     */
+    public JStatement getThenClause() {
+	return thenClause;
+    }
+
+    /**
+     * Get else clause.
+     */
+    public JStatement getElseClause() {
+	return elseClause;
     }
 
     /**

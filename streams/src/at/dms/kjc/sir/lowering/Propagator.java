@@ -223,7 +223,7 @@ class Propagator extends SLIRReplacingVisitor {
 	    */
 	    
 	    JExpression newExp = (JExpression)cond.accept(this);
-	    if (newExp.isConstant()) {
+	    if (newExp!=cond) {
 		self.setCondition(newExp);
 	    }
 	    if (newExp instanceof JBooleanLiteral)
@@ -236,14 +236,31 @@ class Propagator extends SLIRReplacingVisitor {
 		    else
 			return new JEmptyStatement(self.getTokenReference(), null);
 		}
-
 	    // propagate through then and else
 	    Propagator thenProp=new Propagator((Hashtable)constants.clone(),true);
 	    Propagator elseProp=new Propagator((Hashtable)constants.clone(),true);
 	    thenClause.accept(thenProp);
 	    if (elseClause != null) {
 		elseClause.accept(elseProp);
+		if((elseClause instanceof JBlock)&&(((JBlock)elseClause).size()==0))
+		    self.setElseClause(null);
 	    }
+	    if((self.getThenClause()==null)||((self.getThenClause() instanceof JBlock)&&(((JBlock)self.getThenClause()).size()==0))){
+		if((self.getElseClause()==null)||((self.getElseClause() instanceof JBlock)&&(((JBlock)self.getElseClause()).size()==0))) {
+		    return new JExpressionStatement(self.getTokenReference(),newExp,null);
+		} else {
+		    thenClause=self.getElseClause();
+		    elseClause=self.getThenClause();
+		    self.setThenClause(thenClause);
+		    self.setElseClause(elseClause);
+		    newExp=new JLogicalComplementExpression(cond.getTokenReference(),newExp);
+		    if((elseClause instanceof JBlock)&&(((JBlock)elseClause).size()==0))
+			self.setElseClause(null);
+		}
+	    }
+	    //if(self.getThenClause()==null)
+	    //if(self.getElseClause()==null)
+	    //return newExp;
 	    // reconstruct constants as those that are the same in
 	    // both <then> and <else>
 	    Hashtable newConstants = new Hashtable();
@@ -607,9 +624,14 @@ class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp.isConstant()) {
 	    return new JBooleanLiteral(null, !newExp.booleanValue());
-	} else {
+	} else if(newExp instanceof JRelationalExpression) {
+	    JRelationalExpression neg=((JRelationalExpression)newExp).complement();
+	    if(neg!=null)
+		return neg;
+	    else
+		return self;
+	} else
 	    return self;
-	}
     }
 
     /**
@@ -749,6 +771,16 @@ class Propagator extends SLIRReplacingVisitor {
 						left, 
 						right);
 	} else {
+	    JExpression newLeft = (JExpression)left.accept(this);
+	    JExpression newRight = (JExpression)right.accept(this);
+	    if(write) {
+		if (newLeft!=left) {
+		    self.setLeft(newLeft);
+		}
+		if (newRight!=right) {
+		    self.setRight(newRight);
+		}
+	    }
 	    return self;
 	}
     }

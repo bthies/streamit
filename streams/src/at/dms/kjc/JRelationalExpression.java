@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JRelationalExpression.java,v 1.4 2002-06-24 23:40:59 jasperln Exp $
+ * $Id: JRelationalExpression.java,v 1.5 2002-06-25 19:59:28 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -227,6 +227,28 @@ public class JRelationalExpression extends JBinaryExpression {
 	  throw new InconsistencyException();
       }
   }
+
+    /**
+     * Changes to the complement of this statement
+     */
+    public JRelationalExpression complement() {
+	switch (oper) {
+	case OPE_LT:
+	    return new JRelationalExpression(getTokenReference(),OPE_GE,left,right);
+	case OPE_LE:
+	    return new JRelationalExpression(getTokenReference(),OPE_GT,left,right);
+	case OPE_GT:
+	    return new JRelationalExpression(getTokenReference(),OPE_LE,left,right);
+	case OPE_GE:
+	    return new JRelationalExpression(getTokenReference(),OPE_LT,left,right);
+	case OPE_EQ:
+	    return new JRelationalExpression(getTokenReference(),OPE_NE,left,right);
+	case OPE_NE:
+	    return new JRelationalExpression(getTokenReference(),OPE_EQ,left,right);
+	default:
+	    return null;
+	}
+    }
 
   // ----------------------------------------------------------------------
   // CODE GENERATION

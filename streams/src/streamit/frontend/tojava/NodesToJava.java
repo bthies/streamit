@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.92 2005-02-17 00:13:09 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.93 2005-03-02 00:44:03 madrake Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -671,6 +671,8 @@ public class NodesToJava implements FEVisitor
         case ExprBinary.BINOP_SUB: op = " -= "; break;
         case ExprBinary.BINOP_MUL: op = " *= "; break;
         case ExprBinary.BINOP_DIV: op = " /= "; break;
+        case ExprBinary.BINOP_LSHIFT: op = " <<= "; break;
+        case ExprBinary.BINOP_RSHIFT: op = " >>= "; break;
         case 0: op = " = "; break;
         default: assert false: stmt; op = " = "; break;
         }

@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.52 2005-02-17 00:12:28 thies Exp $
+ * $Id: StreamItParserFE.g,v 1.53 2005-03-02 00:43:50 madrake Exp $
  */
 
 header {
@@ -461,7 +461,7 @@ for_incr_statement returns [Statement s] { s = null; }
 expr_statement returns [Statement s] { s = null; Expression x; }
 	:	(incOrDec) => x=incOrDec { s = new StmtExpr(x); }
 	|   (left_expr (ASSIGN | PLUS_EQUALS | MINUS_EQUALS | STAR_EQUALS |
-				DIV_EQUALS)) => s=assign_expr
+				DIV_EQUALS | LSHIFT_EQUALS | RSHIFT_EQUALS)) => s=assign_expr
 	|	(ID LPAREN) => x=func_call { s = new StmtExpr(x); }
 	|	x=streamit_value_expr { s = new StmtExpr(x); }
 	;
@@ -473,6 +473,8 @@ assign_expr returns [Statement s] { s = null; Expression l, r; int o = 0; }
 		| 	MINUS_EQUALS { o = ExprBinary.BINOP_SUB; }
 		|	STAR_EQUALS { o = ExprBinary.BINOP_MUL; }
 		|	DIV_EQUALS { o = ExprBinary.BINOP_DIV; }
+                |       LSHIFT_EQUALS { o = ExprBinary.BINOP_LSHIFT; }
+                |       RSHIFT_EQUALS { o = ExprBinary.BINOP_RSHIFT; }
 		)
 		r=right_expr
 		{ s = new StmtAssign(l.getContext(), l, r, o); }

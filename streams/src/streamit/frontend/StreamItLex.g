@@ -16,7 +16,7 @@
 
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.19 2005-02-01 19:09:23 rabbah Exp $
+ * $Id: StreamItLex.g,v 1.20 2005-03-02 00:43:50 madrake Exp $
  */
 
 header {
@@ -126,6 +126,8 @@ BITWISE_XOR: "^";
 BITWISE_COMPLEMENT: "~";
 LSHIFT: "<<";
 RSHIFT: ">>";
+LSHIFT_EQUALS: "<<=";
+RSHIFT_EQUALS: ">>=";
 ASSIGN: '=';
 EQUAL: "==";
 NOT_EQUAL: "!=";

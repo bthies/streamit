@@ -5,7 +5,7 @@ import streamit.Filter;
 import streamit.Channel;
 import streamit.Identity;
 
-/* $Id: MatrixMultBlock.java,v 1.3 2002-07-28 20:00:08 jasperln Exp $ */
+/* $Id: MatrixMultBlock.java,v 1.4 2002-07-28 20:51:05 karczma Exp $ */
 
 public class MatrixMultBlock extends StreamIt
 {
@@ -16,24 +16,25 @@ public class MatrixMultBlock extends StreamIt
 
     public void init()
     {
-        int x0 = 4;
-        int y0 = 4;
-        int x1 = 6;
-        int y1 = 4;
-        int blockDiv = 2;
-        
+        int x0 = 12;
+        int y0 = 12;
+        int x1 = 9;
+        int y1 = 12;
+        int blockDiv = 3;
+
         add(new BlockFloatSource(4));
-        add(new MatrixBlockMultiply(x0, y0, x1, y0, blockDiv));
+        add(new MatrixBlockMultiply(x0, y0, x1, y1, blockDiv));
         add(new BlockMatrixFloatPrinter(x1, y0));
         // sink
-        add (new Filter() {
-            public void init ()
+        add(new Filter()
+        {
+            public void init()
             {
-                input = new Channel (Float.TYPE, 1);
+                input = new Channel(Float.TYPE, 1);
             }
-            public void work ()
+            public void work()
             {
-                input.popFloat ();
+                input.popFloat();
             }
         });
     }
@@ -70,10 +71,7 @@ class MatrixBlockMultiply extends Pipeline
                     public void init()
                     {
                         add(new BlockSplit(x0, y0, blockDiv));
-                        add(
-                            new Duplicate(
-                                x0 * y0 / (blockDiv),
-                                blockDiv));
+                        add(new Duplicate(x0 * y0 / (blockDiv), blockDiv));
                     }
                 });
                 add(new Pipeline()
@@ -81,7 +79,7 @@ class MatrixBlockMultiply extends Pipeline
                     public void init()
                     {
                         add(new Transpose(x1, y1));
-                        add(new BlockSplit(x1, y1, blockDiv));
+                        add(new BlockSplit(y1, x1, blockDiv));
                         add(new Duplicate(x1 * y1, blockDiv));
                     }
                 });
@@ -91,13 +89,55 @@ class MatrixBlockMultiply extends Pipeline
                         x1 * y1 / (blockDiv * blockDiv)));
             }
         });
-        add(
-            new BlockMultiply(
-                x0 / blockDiv,
-                y0 / blockDiv,
-                y1 / blockDiv,
-                x0 / blockDiv));
-        add(new BlockAdd(x1 / blockDiv, y0 / blockDiv, blockDiv));
+
+        add(new SplitJoin()
+        {
+            public void init()
+            {
+                setSplitter(ROUND_ROBIN((x0 * y0 + x1 * y1)
+                                                / blockDiv));
+                int y;
+                for (y = 0; y < blockDiv; y++)
+                {
+                    add(new Pipeline()
+                    {
+                        public void init()
+                        {
+                            add(new SplitJoin()
+                            {
+                                public void init()
+                                {
+                                    setSplitter(
+                                        ROUND_ROBIN(
+                                            (x0 * y0 + x1 * y1)
+                                                / (blockDiv * blockDiv)));
+                                    int x;
+                                    for (x = 0; x < blockDiv; x++)
+                                    {
+                                        add(
+                                            new BlockMultiply(
+                                                x0 / blockDiv,
+                                                y0 / blockDiv,
+                                                x1 / blockDiv,
+                                                y1 / blockDiv));
+                                    }
+                                    setJoiner(
+                                        ROUND_ROBIN(
+                                            x1 * y0 / (blockDiv * blockDiv)));
+                                }
+                            });
+                            add(
+                                new BlockAdd(
+                                    x1 / blockDiv,
+                                    y0 / blockDiv,
+                                    blockDiv));
+                            //add(new BlockMatrixFloatPrinter(x1/blockDiv, y0/blockDiv));
+                        }
+                    });
+                }
+                setJoiner(ROUND_ROBIN(x1 * y0 / (blockDiv * blockDiv)));
+            }
+        });
         add(new BlockCombine(x1, y0, blockDiv));
     }
 }
@@ -128,7 +168,7 @@ class BlockCombine extends Pipeline
     }
     public void init(int x0, int y0, int blockDiv)
     {
-        add (new BlockSplit(x0, y0, blockDiv));
+        add(new BlockSplit(x0*y0/(blockDiv*blockDiv), y0, y0/blockDiv));
     }
 }
 
@@ -219,6 +259,8 @@ class BlockMultiply extends Filter
         y0 = _y0;
         x1 = _x1;
         y1 = _y1;
+        
+        ASSERT (_x0 == _y1);
 
         input = new Channel(Float.TYPE, _x0 * _y0 + _x1 * _y1);
         output = new Channel(Float.TYPE, _y0 * _x1);
@@ -235,9 +277,14 @@ class BlockMultiply extends Filter
                 float sum = 0;
                 for (z = 0; z < x0; z++)
                 {
+                    int leftPos = z + y * x0;
+                    int rightPos = z + x * y1 + block2Start;
+                    
+                    float left = input.peekFloat(leftPos);
+                    float right = input.peekFloat(rightPos);
                     sum
-                        += (input.peekFloat(z + y * y0)
-                            * input.peekFloat(z + x * y0 + block2Start));
+                        += (left * right);
+                    //System.out.println (left + "(" + leftPos + ") * " + right + "(" + rightPos + ")");
                 }
                 output.pushFloat(sum);
             }
@@ -302,7 +349,7 @@ class BlockMatrixFloatPrinter extends Filter
     public void init(int x2, int y2)
     {
         input = new Channel(Float.TYPE, x2 * y2);
-        output = new Channel (Float.TYPE, x2 * y2);
+        output = new Channel(Float.TYPE, x2 * y2);
         this.x = x2;
         this.y = y2;
     }
@@ -313,12 +360,11 @@ class BlockMatrixFloatPrinter extends Filter
         {
             for (a = 0; a < x; a++)
             {
-                float data = input.popFloat ();
-                output.pushFloat (data);
+                float data = input.popFloat();
+                output.pushFloat(data);
                 System.out.println(data);
             }
             //System.out.println();
         }
     }
 }
-

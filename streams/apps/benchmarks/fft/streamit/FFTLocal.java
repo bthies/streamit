@@ -1,6 +1,6 @@
 import streamit.*;
 
-class Identity extends Filter {
+class IdentityLocal extends Filter {
     Channel input = new Channel(Float.TYPE, 1);
     Channel output = new Channel(Float.TYPE, 1);
 
@@ -27,9 +27,10 @@ class Filter1 extends Filter {
     }
     
     public void init(int N, int W) {
+	int i;
 	this.W = W;
 	this.weights = new float[W];
-	for (int i=0; i<W; i++)
+	for (i=0; i<W; i+=1)
 	    weights[i] = calcWeight(i, N, W);
 	curr = 0;
     }
@@ -56,7 +57,7 @@ class Butterfly1 extends SplitJoin {
     public void init(final int N, final int W) {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
 	this.add(new Filter1(N, W));
-	this.add(new Identity());
+	this.add(new IdentityLocal());
 	this.setJoiner(ROUND_ROBIN());
     }
 }
@@ -109,8 +110,8 @@ class SplitJoin2 extends SplitJoin {
 
     public void init(int N) {
 	this.setSplitter(ROUND_ROBIN());
-	this.add(new Identity());
-	this.add(new Identity());
+	this.add(new IdentityLocal());
+	this.add(new IdentityLocal());
 	this.setJoiner(WEIGHTED_ROUND_ROBIN((int)
 					    N/4,
 					    (int)
@@ -124,29 +125,31 @@ class SplitJoin1 extends SplitJoin {
     }
 
     public void init(int N) {
+	int i;
 	this.setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
-	for (int i=0; i<2; i++)
+	for (i=0; i<2; i+=1)
 	    this.add(new SplitJoin2(N));
 	this.setJoiner(ROUND_ROBIN());
     }
 }
 
-class FFTKernel extends Pipeline {
-    public FFTKernel(int N)
+class FFTKernelLocal extends Pipeline {
+    public FFTKernelLocal(int N)
     {
         super (N);
     }
 
     public void init(final int N) {
+	int i;
         this.add(new SplitJoin1(N));
-        for (int i=2; i<N; i*=2) {
+        for (i=2; i<N; i*=2) {
             this.add(new Butterfly1(i, N));
             this.add(new Butterfly2(i, N));
 	}
     }
 }
 
-class OneSource extends Filter
+class OneSourceLocal extends Filter
 {
     Channel output = new Channel(Float.TYPE, 1);
     public void initIO ()
@@ -159,7 +162,7 @@ class OneSource extends Filter
     }
 }
 
-class FloatPrinter extends Filter
+class FloatPrinterLocal extends Filter
 {
     Channel input = new Channel(Float.TYPE, 1);
     public void initIO ()
@@ -178,9 +181,9 @@ public class FFTLocal extends StreamIt {
     }
 
     public void init() {
-        this.add(new OneSource());
-        this.add(new FFTKernel(16));
-        this.add(new FloatPrinter());
+        this.add(new OneSourceLocal());
+        this.add(new FFTKernelLocal(16));
+        this.add(new FloatPrinterLocal());
     }
 }
 

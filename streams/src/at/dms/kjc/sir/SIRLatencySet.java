@@ -4,7 +4,8 @@ import java.util.TreeSet;
 import java.util.Iterator;
 
 /**
- * A set of SIRLatencyMax's.
+ * A set of Integers corresponding to possible latencies for message
+ * delivery.
  */
 class SIRLatencySet extends SIRLatency {
     /**
@@ -19,16 +20,12 @@ class SIRLatencySet extends SIRLatency {
     // The following methods just mirror those of <entries>.  More can
     // be added if desired.
     
-    public boolean add(SIRLatencyMax x) {
+    public boolean add(Integer x) {
 	return entries.add(x);
     }
 
-    public boolean contains(SIRLatencyMax x) {
-	return entries.contains(x);
-    }
-
-    public SIRLatencyMax first() {
-	return (SIRLatencyMax)entries.first();
+    public Integer first() {
+	return (Integer)entries.first();
     }
 
     public boolean isEmpty() {
@@ -39,11 +36,11 @@ class SIRLatencySet extends SIRLatency {
 	return entries.iterator();
     }
 
-    public SIRLatency last() {
-	return (SIRLatency)entries.last();
+    public Integer last() {
+	return (Integer)entries.last();
     }
 
-    public boolean remove(SIRLatency x) {
+    public boolean remove(Integer x) {
 	return entries.remove(x);
     }
 

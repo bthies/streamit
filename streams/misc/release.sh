@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.13 2003-09-04 18:37:54 dmaze Exp $
+# $Id: release.sh,v 1.14 2003-09-04 19:03:49 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -77,16 +77,22 @@ rm -rf $WORKING/streams/apps/benchmarks/perftest4
 for d in cookbook manual release syntax; do
   make -C $WORKING/streams/docs/$d
 done
+find $WORKING/streams/docs \( -name '*.aux' -o -name '*.log' \
+  -o -name '*.toc' -o -name '*.[0-9]' \) -print0 | xargs -0 rm
 for f in COPYING COPYING.GPL INSTALL NEWS OPTIONS README REGTEST; do
-  cp $WORKING/streams/docs/release/$f $WORKING/streams
+  mv $WORKING/streams/docs/release/$f $WORKING/streams
 done
 
 # Make stable copies for all of the trees.  Clean the binary tree a little
 # in the process.
 cp -R $WORKING/streams $BINDIR
-rm -rf $BINDIR/compiler $BINDIR/README.source $BINDIR/include/dot-bashrc
+rm -rf $BINDIR/compiler $BINDIR/eclipse $BINDIR/README.source
+rm -rf $BINDIR/include/dot-bashrc
 rm -rf $BINDIR/include/dot-cshrc $BINDIR/misc/release.sh
 rm -rf $BINDIR/misc/get-antlr
+find $BINDIR/docs \( -name '*.hva' -o -name '*.tex' -o -name Makefile \
+  -o -name '*.mp' \) -print0 | xargs -0 rm
+rm $BINDIR/docs/release/htmlformat.pl
 
 # Build the source tarball:
 cp -R $WORKING/streams $WORKING/streamit-src-$VERSION

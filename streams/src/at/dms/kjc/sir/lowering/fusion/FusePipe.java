@@ -215,7 +215,8 @@ public class FusePipe {
 	    JVariableDefinition peekBufferVar = 
 		new JVariableDefinition(null,
 					at.dms.kjc.Constants.ACC_FINAL,
-					new CArrayType(filter.getInputType(), 
+					new CArrayType(voidToInt(filter.
+						       getInputType()), 
 						       1 /* dimension */ ),
 					PEEK_BUFFER_NAME + "_" + i,
 					null);
@@ -339,13 +340,14 @@ public class FusePipe {
 	JExpression[] dims = { new JIntLiteral(null, lookedAt) };
 	JExpression initializer = 
 	    new JNewArrayExpression(null,
-				    filter.getInputType(),
+				    voidToInt(filter.getInputType()),
 				    dims,
 				    null);
 	// make a buffer for all the items looked at in a round
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,
-				       new CArrayType(filter.getInputType(), 
+				       new CArrayType(voidToInt(filter.
+						      getInputType()), 
 						      1 /* dimension */ ),
 				       POP_BUFFER_NAME + "_" + pos,
 				       initializer);
@@ -819,13 +821,24 @@ public class FusePipe {
 					       initPop,
 					       initPush,
 					       initWork,
-					       first.filter.getInputType(),
-					       last.filter.getOutputType()));
+					       voidToInt(first.filter.
+					       getInputType()),
+					       voidToInt(last.filter.
+					       getOutputType())));
 	
 	// set init functions and work functions of fused filter
 	result.setInit(init);
     }
-				
+
+    /**
+     * If <type> is void, then return <int> type; otherwise return
+     * <type>.  This is a hack to get around the disallowance of void
+     * arrays in C--should fix this better post-asplos.
+     */
+    protected static CType voidToInt(CType type) {
+	return type==CStdType.Void ? CStdType.Integer : type;
+    }
+
 }
     
 /**
@@ -1191,7 +1204,8 @@ class InitFuser extends SLIRReplacingVisitor {
 					     info.peekBuffer.
 					     getVariable().getIdent()),
 		  new JNewArrayExpression(null,
-					  info.filter.getInputType(),
+					  FusePipe.voidToInt(info.filter.
+					  getInputType()),
 					  dims,
 					  null)), null));
 	}

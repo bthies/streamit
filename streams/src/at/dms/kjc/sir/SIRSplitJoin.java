@@ -74,6 +74,14 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	// just return the input type of the first element.
 	return ((SIRStream)elements.getFirst()).getInputType();
     }
+
+    
+    /**
+     * Add a stream to the SplitJoin.
+     */
+    public void add(SIRStream str) {
+	elements.add(str);
+    }
     
     /**
      * Returns the type of this stream.
@@ -184,12 +192,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
 	super(parent, fields, methods);
-
+	elements = new LinkedList();
     }
      /**
      * Construct a new SIRPipeline with null fields, parent, and methods.
      */
     public SIRSplitJoin() {
 	super();
+	elements = new LinkedList();
     }
 }

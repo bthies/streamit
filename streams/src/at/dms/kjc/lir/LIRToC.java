@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.60 2002-03-12 01:18:38 karczma Exp $
+ * $Id: LIRToC.java,v 1.61 2002-03-31 22:42:02 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1260,6 +1260,13 @@ public class LIRToC
                                      JExpression left,
                                      String ident)
     {
+	/*
+	System.err.println("!!! self=" + self);
+	System.err.println(" left=" + left);
+	System.err.println(" ident=" + ident);
+	System.err.println(" left.getType()==" + left.getType());
+	System.err.println(" getCClass()=" +left.getType().getCClass());
+	*/
         if (ident.equals(JAV_OUTER_THIS)) {// don't generate generated fields
             print(left.getType().getCClass().getOwner().getType() + "->this");
             return;

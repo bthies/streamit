@@ -1,0 +1,311 @@
+float->float filter CombineDFT(int n)
+{
+    float wn_r, wn_i;
+
+    init {
+	  wn_r = (float) cos(2 * pi / n);
+	  wn_i = (float) sin(2 * pi / n);
+    }
+
+    work push 2*n pop 2*n {
+        int i;
+        float w_r = 1;
+        float w_i = 0;
+	  float[2*n] results;
+
+        for (i = 0; i < n; i += 2) {
+		float y0_r = peek(i);
+            float y0_i = peek(i+1);
+            
+		float y1_r = peek(n + i);
+            float y1_i = peek(n + i + 1);
+		
+            float y1w_r = y1_r * w_r - y1_i * w_i;
+            float y1w_i = y1_r * w_i + y1_i * w_r;
+		
+            results[i] = y0_r + y1w_r;
+            results[i + 1] = y0_i + y1w_i;
+		
+		results[n + i] = y0_r - y1w_r;
+            results[n + i + 1] = y0_i - y1w_i;
+		
+            float w_r_next = w_r * wn_r - w_i * wn_i;
+            float w_i_next = w_r * wn_i + w_i * wn_r;
+            w_r = w_r_next;
+            w_i = w_i_next;
+        }
+
+        for (i = 0; i < 2 * n; i++) {
+            pop();
+            push(results[i]);
+        }
+    }
+}
+
+
+float->float filter FFTReorderSimple(int n)
+{
+    int totalData;
+    
+    init {
+	  totalData = 2*n; 
+    }
+    
+    work push 2*n pop 2*n {
+        int i;
+        
+        for (i = 0; i < totalData; i+=4) {
+            push(peek(i));
+            push(peek(i+1));
+        }
+        
+        for (i = 2; i < totalData; i+=4) {
+            push(peek(i));
+            push(peek(i+1));
+        }
+        
+        for (i = 0; i < n; i++) {
+            pop();
+            pop();
+        }
+    }
+}
+
+
+float->float pipeline FFTReorder(int n) 
+{
+    for (int i = 1; i < (n / 2); i *= 2) {
+	  add FFTReorderSimple(n/i);
+    }
+}
+
+
+float->float pipeline FFT_Kernel(int n) 
+{
+    add FFTReorder(n);
+    for (int j = 2; j <= n; j *= 2) {
+	  add CombineDFT(j);
+    }
+ }
+
+
+// we  need this  now  since  the cluster  backend  doesn't deal  with
+// identities
+float->float filter Float_Identity 
+{ 
+    work pop 1 push 1 {
+	  push(pop());
+    }
+}
+
+
+void->float filter Read_From_AtoD(int N)
+{
+    work pop 0 push N {
+	  for(int i = 1; i <= N; i++) {
+		push((float) pow((float) sin(i * pi / N), 2.0));
+	  }
+    }
+}
+
+
+float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
+{
+    float[N] weights;
+    int  size, count;
+    int iter;
+
+    init {
+	  set_frequency(_current_freq);
+	  iter = 0;
+    }
+    
+    work peek 1 pop 32*3 push 32*2 {
+	for (int i=0; i<32; i++) {
+	  push(pop() * weights[count++]);
+	  // there are two of these iterations per iteration of the
+	  // original source, so increment in both places
+	  iter++;
+
+	  if (count == size) {
+		count = 0;
+	  }
+
+	  push(pop() * weights[count++]);
+	  // there are two of these iterations per iteration of the
+	  // original source, so increment in both places
+	  iter++;
+
+	  if (count == size) {
+		count = 0;
+	  }
+	}
+	
+	for (int i=0; i<32; i++) {
+	  // check for freqhop from around feedbackloop
+	  float freqHop = pop();
+	  if (freqHop!=0) {
+	      // prints the iteration where a message was received
+	      print(iter);
+	      set_frequency(freqHop);
+	  }
+	}
+    }
+
+    handler set_frequency(float _freq) {
+	  count  = 0;
+	  size   = (int) ((_start_freq / _freq) * N);
+	  for (int i = 0; i < size; i++) {
+		weights[i] = (float) sin(i * pi / size);
+	  }
+    }
+}
+
+
+float->float filter Magnitude()
+{
+    work pop 2 push 1 {
+	  float f1 = pop();
+	  float f2 = pop();
+	  push (mag(f1, f2));
+    }
+
+    float mag(float real, float imag) {
+	  return (float) sqrt(real*real + imag*imag);
+    }
+}
+
+
+float->float filter Inject_Hop(int N, float hop_threshold)
+{
+    int[4] hops;
+    int    hop_index;
+
+    init {
+	  hops[0]   =  N / 4 - 2;
+	  hops[1]   =  N / 4 - 1;
+	  hops[2]   =  N / 2;
+	  hops[3]   =  N / 2 + 1;
+	  hop_index = 0;
+    }
+
+    work pop N push N {
+	  for(int i = 1; i <= hops[hop_index]; i++) {
+		push(pop());
+	  }
+
+	  push(2 * hop_threshold);
+	  pop();
+
+	  for (int i = hops[hop_index] + 2; i <= N; i++) {
+		push(pop());
+	  }
+
+	  hop_index++;
+	  if (hop_index >= 4) hop_index = 0;
+    }
+}
+
+
+float->float splitjoin Check_Freq_Hop(int N, int channels, float start_freq, float channel_bandwidth, float hop_threshold)
+{
+    // of N incoming values,  one of the data items in
+    // [N/2 - 2, N/2 + 2] may indicate a frequency hop
+    // ? why this arrangement
+    // ? why push the hop-indicator through; what does it mean to a downstream filter
+    split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
+    for (int i = 1; i < 6; i++) {
+	  if ((i == 2) || (i == 4)) {
+		for (int j = 0; j < 2; j++) {
+		    add float->float filter {
+			int frequency_index;
+			float [channels] hops;
+			
+			init {
+			    frequency_index = 0;
+			    for (int i = 0; i < channels; i++) {
+				hops[i] = start_freq + (i * channel_bandwidth);
+			    }
+			}
+			work pop 1 push 2 {
+			    float val = pop();
+			    push(val);
+			    if (val > hop_threshold) {
+				push(hops[frequency_index++]);
+			    } else {
+				push(0);
+			    }
+			}
+		    }
+		}
+	  }
+	  else {
+	      add float->float filter {
+		  work pop 1 push 2 {
+		      push(pop());
+		      push(0);
+		  }
+	      }
+	  }
+    }
+    join roundrobin(2*(N / 4 - 2), 2, 2, 2*(N / 2), 2, 2, 2*(N / 4 - 2));
+}
+
+
+float->void filter __Output_Filter__
+{
+    work peek 1 pop 1 push 0 {
+	  print(peek(0));
+	  pop();
+    }
+}
+
+
+void->void pipeline FHRFeedback
+{
+    // CONSTANTS {
+    int   N             = 32;
+    // will operate in the 2.402GHz to 2.481 GHz range
+    // with 79 channels each with 1MHz bandwidth 
+    float START_FREQ    = 2402000000;
+    int   CHANNELS      = 79; 
+    float CHANNEL_BAND  = 1000000;
+    // 
+    float HOP_THRESHOLD = 9000000000;
+    // } CONSTANTS
+
+    add Read_From_AtoD(N);
+
+    add float->float feedbackloop {
+	join roundrobin(64,32);
+	body pipeline {
+	    add RFtoIF(N, START_FREQ, START_FREQ);
+	    add FFT_Kernel(N);
+	    add Magnitude();
+	    add Inject_Hop(N, HOP_THRESHOLD);
+	    add Check_Freq_Hop(N, CHANNELS, START_FREQ, CHANNEL_BAND, HOP_THRESHOLD);
+	}
+	loop Identity<float>;
+	split roundrobin();
+	// delay of 192, since that is 6 (latency) * 32
+	for (int i=0; i<192; i++) {
+	    enqueue(0);
+	}
+    }
+    
+    add __Output_Filter__();
+}
+
+
+float->float filter Print(int N)
+{
+    work peek N pop N push N {
+	  print("---------------------------");
+	  for (int i = 0; i < N; i++) {
+		print(peek(0));
+		push(pop());
+	  }
+	  print("---------------------------");
+    }
+}
+

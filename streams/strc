@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.43 2004-05-25 02:30:10 mgordon Exp $
+# $Id: strc,v 1.44 2004-06-16 19:07:01 jasperln Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -29,6 +29,9 @@ $javac = "javac";
 $cc = "gcc";
 $have_fftw = "1";
 # END AUTOCONFISCATE
+
+# Turn on the server VM
+$java = $java . " -server";
 
 # Enable assertions globally:
 $java = $java . " -ea";

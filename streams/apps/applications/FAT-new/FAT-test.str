@@ -7,9 +7,9 @@ N_dop=N_pri+1-N_stg=2^N
 
 */
 
-void->void pipeline FAT-new (int N_sub,int N_ch,int N_rg,int N_pri,int N_bm,int N_dn,int N_dop, int N_fdn, int N_fup, int N_td,int N_pc,int N_ts,int G, int N_cfar,float alpha,float mu,int[] T_stap,float[] a, float[] b, float[] d,complex[] h_lp,complex[] h_td, complex[] h_pc,complex[] f_lp) {
+void->void pipeline FAT_new {
 
-
+	int N_sub;
 
 	int N_ch;
 	int N_rg;
@@ -54,41 +54,40 @@ void->void pipeline FAT-new (int N_sub,int N_ch,int N_rg,int N_pri,int N_bm,int 
 
 	int[N_ts] T_stap;
 
-	T_stap={1};
+	T_stap[0] = 1;
 
 	float[N_ch] b;
 	float[N_bm] a;
 	float[N_bm] d;
 
-	b={1};
-	a={0};
-	d={0};
+	b[0] = 1;
+	a[0] = 0;
+	d[0] = 0;
 
 	complex[N_fdn] h_lp;
 	complex[N_fup] f_lp;
 
-	h_lp={1};
-	f_lp={1};
+	h_lp[0] = 1;
+	f_lp[0] = 1;
 
 	complex[N_td] h_td;
 	complex[N_pc] h_pc;
 
-	h_td={1};
-	h_pc={1};
+	h_td[0] = 1;
+	h_pc[0] = 1;
 	
 	add IntSource(N_ch,N_rg,N_pri);
-	add FAT(N_sub,N_ch,N_pri,N_bm,N_dn,N_dop,N_fdn,N_fup,N_td,N_pc,N_ts,G,N_cfar,alpha, mu,T_stap,a,b,d,h_lp,h_td,h_pc,f_lp)
+	add FAT(N_sub,N_ch,N_pri,N_bm,N_dn,N_dop,N_fdn,N_fup,N_td,N_pc,N_ts,G,N_cfar,alpha, mu,T_stap,a,b,d,h_lp,h_td,h_pc,f_lp);
 
 	add Print3d(N_dop,N_rg,N_dop);
 }
 
 
 void->complex[N_ch][N_rg][N_pri] filter IntSource(int N_ch,int N_rg,int N_pri) {
-    init{}
+    complex[N_ch][N_rg][N_pri] OutArr;
 
     work pop 0 push 1 {
 	int dummy=0;
-	complex[N_ch][N_rg][N_pri] OutArr;
 	for (int i=0;i<N_ch;i++)
 	    for (int j=0; j < N_rg; j++)
 		for (int k=0; k < N_pri; k++){
@@ -102,20 +101,18 @@ void->complex[N_ch][N_rg][N_pri] filter IntSource(int N_ch,int N_rg,int N_pri) {
 
 
 float[N_cnb][N_rg][N_dop]-> void filter Print3d(int N_cnb, int N_rg, int N_dop){
-    init {}
-
+    complex[N_cnb][N_rg][N_dop] InArr;
     work pop 1 push 0 {
-	complex[N_cnb][N_rg][N_dop] InArr;
 	for (int i=0; i < N_cnb; i++)
 	    for (int j=0; j < N_rg; j++)
 		for (int k=0; k < N_dop; k++)
 		    {
 			print(i);
-			print(":");
+			// print(":");
 			print(j);
-			print(":");
+			// print(":");
 			print(k);
-			print("=");
+			// print("=");
 			println(InArr[i][j][k]);
 			
 		    }

@@ -65,7 +65,8 @@ public class MakefileGenerator
 	    if (RawBackend.rawRows > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 		//fix for snake boot race condition
-		fw.write("MULTI_SNAKEBOOT = 0\n\n");
+		//this should not be needed anymore
+		//fw.write("MULTI_SNAKEBOOT = 0\n\n");
 	    }
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {
@@ -107,10 +108,6 @@ public class MakefileGenerator
 		fw.write("ISSUE_WIDTH = 1\n\n");
 		fw.write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS)\n");
 		fw.write("RGCCFLAGS += -missue_width=$(ISSUE_WIDTH) -mdmem_ports=$(DMEM_PORTS)\n");
-
-		//fw.write("\ntile%.s: tile%.c\n");
-		//fw.write("\t$(RGCC) $(RGCCFLAGS) $(INCLUDES) $(DEFS) -S $< -o tile$%.S\n");
-		//fw.write("\t/u/slarsen/tmp/fixnw.pl tile$%.S $@\n");
 	    }
 
 	    fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");

@@ -174,7 +174,7 @@ public class ClusterBackend implements FlatVisitor {
 	// Increasing filter Multiplicity
 	if ( doCacheOptimization && KjcOptions.peekratio != 1024) {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
-	    //}
+	}
 
 	/* for cluster backend, fusion means to fuse segments on same cluster
 	if (KjcOptions.fusion) {

@@ -122,7 +122,7 @@ public class MakefileGenerator
 	    //use sam's gcc and set the parameters of the tile
 	    if (KjcOptions.altcodegen) {
 		fw.write
-		    ("\nRGCC=/home/bits7/NO_BACKUP/streamit/install/slgcc/bin/raw-gcc\n");
+		    ("\nRGCC=/home/pkg/brave_new_linux/0225.btl.rawlib.starbuild/install/slgcc/bin/raw-gcc\n");
 		fw.write("\nDMEM_PORTS  = 1\n");
 		fw.write("ISSUE_WIDTH = 1\n\n");
 		fw.write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS)\n");

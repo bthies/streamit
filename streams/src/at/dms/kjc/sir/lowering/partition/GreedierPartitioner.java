@@ -26,18 +26,14 @@ public class GreedierPartitioner {
      * The target number of tiles this partitioner is going for.
      */
     private final int numTiles;
-    /**
-     * List of Node objects in canonicalized order
-     */
-    //private LinkedList nodes;
     private TreeMap pairs; //Ordered fusable pairs (keys of type Pair)
-    private TreeMap fissable; //Ordered fissable filters (keys of type Node)
-    
+    private TreeMap nodes; //Ordered filters (keys of type Node)
+    private static final int FUSION_OVERHEAD=0; //Adjust
+
     public GreedierPartitioner(SIRStream str,WorkEstimate work,int numTiles) {
 	this.str=str;
 	this.work=work;
 	this.numTiles=numTiles;
-	//nodes=new LinkedList();
 	pairs=new TreeMap(new Comparator() {
 		public int compare(Object o1,Object o2) {
 		    if(o1==o2)
@@ -55,7 +51,7 @@ public class GreedierPartitioner {
 			return 1;
 		}
 	    });
-	fissable=new TreeMap(new Comparator() {
+	nodes=new TreeMap(new Comparator() {
 		public int compare(Object o1,Object o2) {
 		   if(o1==o2)
 		       return 0;
@@ -75,19 +71,19 @@ public class GreedierPartitioner {
 	buildNodesList();
     }
     
-    //Creates Nodes and populates pairs,fissable
+    //Creates Nodes and populates pairs,nodes
     private void buildNodesList() {
 	SIRIterator it = IterFactory.createFactory().createIter(str);
 	it.accept(new EmptyStreamVisitor() {
-		//SIRFilter prevFilter;
 		Node prevNode;
 		SIRContainer prevParent;
 		
 		public void visitFilter(SIRFilter self,
 					SIRFilterIter iter) {
 		    Node node=new Node(self,work.getWork(self));
+		    nodes.put(node,null);
 		    if(StatelessDuplicate.isFissable(self))
-			fissable.put(node,null);
+			node.fissable=true;
 		    SIRContainer parent=self.getParent();
 		    if(prevNode!=null) {
 			prevNode.next=node;
@@ -95,7 +91,6 @@ public class GreedierPartitioner {
 			if(parent.equals(prevParent)) {
 			    Pair pair=new Pair(prevNode,node);
 			    pairs.put(pair,null);
-			    System.out.println("Adding pair: "+pair.work);
 			}
 		    }
 		    prevNode=node;
@@ -109,22 +104,46 @@ public class GreedierPartitioner {
      * partitioned stream.
      */
     public SIRStream toplevel() {
-	System.out.println("FISSABLE: "+fissable.size());
 	int count=new GraphFlattener(str).getNumTiles();
 	System.out.println("  GreedierPartitioner detects " + count + " tiles.");
-	while(count>numTiles) {
-	    System.out.println("PAIRS: "+pairs.size());
-	    Pair smallest=(Pair)pairs.firstKey();
-	    //pairs.remove(smallest);
-	    fuse(smallest);
-	    count=new GraphFlattener(str).getNumTiles();
-	    System.out.println("  GreedierPartitioner detects " + count + " tiles.");
-	}
+	boolean cont;
+	do { //Iterate till can't (# fissable filters is always decreasing)
+	    cont=false;
+	    boolean fiss=shouldFiss(); //Try Fiss
+	    while(fiss&&count<numTiles) {
+		cont=true;
+		Node big=(Node)nodes.lastKey();
+		System.out.println("  Fissing: "+big.filter);
+		fiss(big);
+		count=new GraphFlattener(str).getNumTiles();
+		fiss=shouldFiss();
+		System.out.println("  GreedierPartitioner detects " + count + " tiles.");
+	    }
+	    while(count>numTiles) { //Try Fuse
+		cont=true;
+		Pair smallest=(Pair)pairs.firstKey();
+		fuse(smallest);
+		count=new GraphFlattener(str).getNumTiles();
+		System.out.println("  GreedierPartitioner detects " + count + " tiles.");
+	    }
+	} while(cont);
 	return str;
     }
 
+    private boolean shouldFiss() {
+	Node big=(Node)nodes.lastKey();
+	if(!big.fissable)
+	    return false;
+	Pair small=(Pair)pairs.firstKey();
+	pairs.remove(small);
+	Pair testSmall=(Pair)pairs.firstKey(); // Make sure 2nd smallest pair is below bottleneck
+	pairs.put(small,null);
+	return testSmall.work+FUSION_OVERHEAD<big.work;
+    }
+
     private void fuse(Pair p) {
-	System.out.println("Fusing: "+p.work);
+	nodes.remove(p.n1);
+	nodes.remove(p.n2);
 	SIRContainer parent=p.n1.filter.getParent();
 	PartitionGroup part=findPartition(p,parent);
 	//Fuse
@@ -142,13 +161,12 @@ public class GreedierPartitioner {
 	Node prev=p.n1.prev;
 	Node next=p.n2.next;
 	Node newNode=new Node(result,WorkEstimate.getWorkEstimate(result).getWork(result));
+	nodes.put(newNode,null);
 	if(prev!=null) {
 	    prev.next=newNode;
 	    newNode.prev=prev;
 	    Pair inter=prev.p2;
 	    if(inter!=null) { //Reuse old Pair
-		if(inter.n2!=p.n1)
-		    Utils.fail("HERE");
 		pairs.remove(inter);
 		inter.n2=newNode;
 		newNode.p1=inter;
@@ -156,16 +174,13 @@ public class GreedierPartitioner {
 		pairs.put(inter,null);
 	    } else if(prev.filter.getParent()==newNode.filter.getParent()) { //New Pair
 		pairs.put(new Pair(prev,newNode),null);
-	    } else
-		System.out.println("DIFFERENT PARENT! "+prev.filter+" "+result+" "+prev.filter.getParent()+" "+result.getParent());
+	    }
 	}
 	if(next!=null) {
 	    next.prev=newNode;
 	    newNode.next=next;
 	    Pair inter=next.p1;
 	    if(inter!=null) { //Reuse old Pair
-		if(inter.n1!=p.n2)
-		    Utils.fail("HERE2");
 		pairs.remove(inter);
 		inter.n1=newNode;
 		newNode.p2=inter;
@@ -173,8 +188,7 @@ public class GreedierPartitioner {
 		pairs.put(inter,null);
 	    } else if(next.filter.getParent()==newNode.filter.getParent()) { //New Pair
 		pairs.put(new Pair(newNode,next),null);
-	    } else
-		System.out.println("DIFFERENT PARENT! "+next.filter+" "+result+" "+next.filter.getParent()+" "+result.getParent());
+	    }
 	}
 	//Cleaning up
 	p.n1=null;
@@ -182,18 +196,53 @@ public class GreedierPartitioner {
 	pairs.remove(p);
     }
 
+    private void fiss(Node node) {
+	nodes.remove(node);
+	//Fiss
+	SIRSplitJoin split=StatelessDuplicate.doit(node.filter,2);
+	//Update Rep
+	SIRFilter filt=(SIRFilter)split.get(0);
+	Node n1=new Node(filt,WorkEstimate.getWorkEstimate(filt).getWork(filt));
+	nodes.put(n1,null);
+	filt=(SIRFilter)split.get(1);
+	Node n2=new Node(filt,WorkEstimate.getWorkEstimate(filt).getWork(filt));
+	nodes.put(n2,null);
+	n1.next=n2;
+	n2.prev=n1;
+	Node prev=node.prev;
+	if(prev!=null) {
+	    prev.next=n1;
+	    n1.prev=prev;
+	    //Cleaning up
+	    prev.p2=null;
+	    Pair prevPair=node.p1;
+	    if(prevPair!=null) {
+		node.p1.n1=null;
+		node.p1.n2=null;
+		node.p1=null;
+	    }
+	}
+	Node next=node.next;
+	if(next!=null) {
+	    next.prev=n2;
+	    n2.next=next;
+	    //Cleaning up
+	    next.p1=null;
+	    Pair nextPair=node.p2;
+	    if(nextPair!=null) {
+		node.p2.n1=null;
+		node.p2.n2=null;
+		node.p2=null;
+	    }
+	}
+    }
+
     //Create PartitionGroup corresponding to Pair p in parent
     private PartitionGroup findPartition(Pair p,SIRContainer parent) {
 	SIRFilter f1=p.n1.filter;
-	System.out.println("Finding: "+f1+" "+p.n2.filter+" in "+parent);
 	int[] part=new int[parent.size()-1];
 	for(int i=0;i<part.length;i++)
 	    part[i]=1;
-	/*int idx=0;
-	  while(!parent.get(idx).equals(f1))
-	  idx++;
-	  part[idx]=2;*/
-	System.out.println("Found: "+parent.indexOf(f1)+" "+parent.indexOf(p.n2.filter)+" "+(parent.size()-1));
 	part[parent.indexOf(f1)]=2;
 	return PartitionGroup.createFromArray(part);
     }
@@ -203,18 +252,12 @@ public class GreedierPartitioner {
 	int work;
 	Node prev,next;
 	Pair p1,p2; // Pairs that contain this (order matters: p1==pair with prev)
+	boolean fissable; // Only filters fissable in the original graph have fissable==true
 
 	public Node(SIRFilter filter,int work) {
 	    this.filter=filter;
 	    this.work=work;
 	}
-
-	/*public void addPair(Pair p) {
-	    if(p1==null)
-		p1=p;
-	    else
-		p2=p;
-		}*/
     }
 
     class Pair {
@@ -222,18 +265,10 @@ public class GreedierPartitioner {
 	int work;
 	
 	public Pair(Node n1,Node n2) {
-	    if(n1==null||n2==null)
-		Utils.fail("Pair: "+n1+" "+n2);
-	    if(n1.next!=n2)
-		Utils.fail("Pair2");
-	    if(n2.prev!=n1)
-		Utils.fail("Pair3");
 	    this.n1=n1;
 	    this.n2=n2;
 	    work(n1,n2);
-	    //n1.addPair(this);
 	    n1.p2=this;
-	    //n2.addPair(this);
 	    n2.p1=this;
 	}
 
@@ -242,6 +277,3 @@ public class GreedierPartitioner {
 	}
     }
 }
-
-
-

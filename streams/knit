@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.38 2003-09-22 16:09:52 dmaze Exp $
+# $Id: knit,v 1.39 2003-09-22 16:12:33 dmaze Exp $
 #
 
 use strict;
@@ -199,18 +199,18 @@ sub get_options
     # but don't override things otherwise on the command line.
     if (exists $opts{optimize})
       {
+	if ($opts{optimize} >= 2)
+	  {
+	    $opts{unroll} = 4096 unless exists $opts{unroll};
+	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
+	    $opts{simulatework} = 1 unless exists $opts{simulatework};
+	  }
 	if ($opts{optimize} >= 1)
 	  {
 	    $opts{unroll} = 256 unless exists $opts{unroll};
 	    $opts{altcodegen} = 1 unless exists $opts{altcodegen};
 	    $opts{ratematch} = 1 unless exists $opts{ratematch};
 	    $opts{wbs} = 1 unless exists $opts{wbs};
-	  }
-	if ($opts{optimize} >= 2)
-	  {
-	    $opts{unroll} = 4096 unless exists $opts{unroll};
-	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
-	    $opts{simulatework} = 1 unless exists $opts{simulatework};
 	  }
       }
     return 1;

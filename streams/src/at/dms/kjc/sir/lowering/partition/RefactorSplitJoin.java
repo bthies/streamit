@@ -7,6 +7,7 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.Lifter;
 import java.util.List;
+import java.util.HashMap;
 
 public class RefactorSplitJoin {
     /**
@@ -158,6 +159,88 @@ public class RefactorSplitJoin {
     }
 
     /**
+     * Removes all sync points that it can in a structued way in
+     * <pipe>.  Note that this might INCREASE the tile count because
+     * more joiners are introduced into the graph.  If this is not
+     * desired, use only removeMatchingSyncPoints (below).
+     */
+    public static boolean removeSyncPoints(SIRPipeline pipe) {
+	boolean madeChange = false;
+	for (int i=0; i<pipe.size()-1; i++) {
+	    // look for adjacent splitjoins
+	    if (pipe.get(i) instanceof SIRSplitJoin && 
+		pipe.get(i+1) instanceof SIRSplitJoin) {
+		// look for matching weights
+		SIRSplitJoin sj1 = (SIRSplitJoin)pipe.get(i);
+		SIRSplitJoin sj2 = (SIRSplitJoin)pipe.get(i+1);
+		// if only one stream on one side, not clear what we could do
+		if (sj1.size()==1 || sj2.size()==1) {
+		    continue;
+		}
+		// different sum of weights, and can't do anything
+		// (anything obvious, at least) in a structured way
+		int sum1 = sj1.getJoiner().getSumOfWeights();
+		int sum2 = sj2.getSplitter().getSumOfWeights();
+		if (sum1!=sum2) {
+		    continue;
+		}
+		// get weights
+		int[] w1 = sj1.getJoiner().getWeights();
+		int[] w2 = sj2.getSplitter().getWeights();
+		// keep track of the index of current matching
+		// segments in top and bottom streams.  
+		int partition = 0;
+		// map each child of top and bottom to their partition
+		HashMap map1 = new HashMap();
+		HashMap map2 = new HashMap();
+		// go through weights and assign to different
+		// partitions based on where the weights line up
+		// evenly.
+		// our index in the top and bottom streams
+		int i1 = 0, i2 = 0;
+		// the sum of weights in the top and bottom streams
+		int s1 = 0, s2 = 0;
+		do {
+		    // increment the lesser weight, assigning nodes to
+		    // partitions as we go
+		    if (s1<s2) {
+			map1.put(sj1.get(i1), new Integer(partition));
+			s1 += w1[i1];
+			i1++;
+		    } else {
+			map2.put(sj2.get(i2), new Integer(partition));
+			s2 += w2[i2];
+			i2++;
+		    }
+		    // if we found alignment bewteen sums, increment
+		    // partition
+		    if (s1==s2) {
+			partition++;
+		    }
+		} while (s1!=sum1 || s2!=sum2);
+		// if we only ended up with one partition, then
+		// there's no sync removal opportunity, so quit
+		if (partition==1) {
+		    continue;
+		}
+		// otherwise, we just need to factor the upper and
+		// lower splitjoins according to our partitioning, and
+		// then the matching rate removal will take care of
+		// it.  Only do this if we're actually grouping
+		// something; otherwise we're already all set.
+		if (partition<sj1.size()) {
+		    addHierarchicalChildren(sj1, PartitionGroup.createFromAssignments(sj1.getParallelStreams(), map1));
+		}
+		if (partition<sj2.size()) {
+		    addHierarchicalChildren(sj2, PartitionGroup.createFromAssignments(sj2.getParallelStreams(), map2));
+		}
+	    }
+	}
+	boolean result = removeMatchingSyncPoints(pipe);
+	return result;
+    }
+
+    /**
      * Does the opposite transformation of <addSyncPoints> above.  If
      * any two adjacent children in <pipe> are splitjoins where the
      * weights of the upstream joiner exactly match the weights of the
@@ -170,9 +253,12 @@ public class RefactorSplitJoin {
      * "duplicate" or "unroll" whole streams in order for
      * synchronization to match up.
      *
+     * This guarantees that the tile count is not increased by the
+     * procedure.
+     *
      * Returns whether or not any change was made.
      */
-    public static boolean removeSyncPoints(SIRPipeline pipe) {
+    public static boolean removeMatchingSyncPoints(SIRPipeline pipe) {
 	boolean madeChange = false;
 	for (int i=0; i<pipe.size()-1; i++) {
 	    // look for adjacent splitjoins
@@ -202,22 +288,6 @@ public class RefactorSplitJoin {
 		// otherwise, we have a case where we can combine the
 		// streams.
 		madeChange = true;
-		SIRPipeline[] child = new SIRPipeline[sj1.size()];
-		for (int j=0; j<child.length; j++) {
-		    child[j] = new SIRPipeline(sj1,
-					       sj1.get(j).getIdent()+"_"+sj2.get(j).getIdent(),
-					       JFieldDeclaration.EMPTY(),
-					       JMethodDeclaration.EMPTY());
-		    child[j].setInit(SIRStream.makeEmptyInit());
-		    child[j].add(sj1.get(j), sj1.getParams(j));
-		    child[j].add(sj2.get(j), sj2.getParams(j));
-		    // eliminate pipe's if applicable
-		    for (int k=0; k<2; k++) {
-			if (child[j].get(k) instanceof SIRPipeline) {
-			    Lifter.eliminatePipe((SIRPipeline)child[j].get(k));
-			}
-		    }
-		}
 		// make new splitjoin to replace sj1 and sj2
 		SIRSplitJoin sj3 =  new SIRSplitJoin(pipe,
 						     sj1.getIdent()+"_"+sj2.getIdent(),
@@ -226,6 +296,23 @@ public class RefactorSplitJoin {
 		sj3.setInit(SIRStream.makeEmptyInit());
 		sj3.setSplitter(sj1.getSplitter());
 		sj3.setJoiner(sj2.getJoiner());
+		// add children
+		for (int j=0; j<sj1.size(); j++) {
+		    SIRPipeline child = new SIRPipeline(sj1,
+							sj1.get(j).getIdent()+"_"+sj2.get(j).getIdent(),
+							JFieldDeclaration.EMPTY(),
+							JMethodDeclaration.EMPTY());
+		    child.setInit(SIRStream.makeEmptyInit());
+		    child.add(sj1.get(j), sj1.getParams(j));
+		    child.add(sj2.get(j), sj2.getParams(j));
+		    // eliminate pipe's if applicable
+		    for (int k=0; k<2; k++) {
+			if (child.get(k) instanceof SIRPipeline) {
+			    Lifter.eliminatePipe((SIRPipeline)child.get(k));
+			}
+		    }
+		    sj3.add(child);
+		}
 		// replace sj1 and sj2 with sj3
 		pipe.remove(sj1);
 		pipe.remove(sj2);

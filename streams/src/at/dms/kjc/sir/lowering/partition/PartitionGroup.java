@@ -135,4 +135,17 @@ public class PartitionGroup {
 	return sum;
     }
 
+    public String toString () {
+	StringBuffer result = new StringBuffer("PartitionGroup with sizes={");
+	for (int i=0; i<partitions.length; i++) {
+	    result.append(partitions[i]);
+	    if (i==partitions.length-1) {
+		result.append("}");
+	    } else {
+		result.append(",");
+	    }
+	}
+	return result.toString();
+    }
+
 }

@@ -90,6 +90,24 @@ public class LinearDot extends StreamItDot {
 
 
     /**
+     * Override the string used to create a new subgraph, to color it if we have a
+     * linear rep for it.
+     **/
+    public String getClusterString(SIRStream self) {
+	// if we have a linear rep of this object, color the resulting dot graph rose.
+	if (linearData.hasLinearRepresentation(self)) {
+	    return "subgraph cluster_" + getName() + " {\n color=pink2;\n style=filled;\n label=\"" + self.getIdent() + "\";\n";
+	} else {
+	    // otherwise, return boring white
+	    return "subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n";
+	}
+    }
+
+
+
+    
+
+    /**
      * Prints dot graph of <str> to <filename>, using LinearAnalyzer lfa.
      */
     public static void printGraph(SIRStream str, String filename,

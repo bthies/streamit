@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.1 2002-09-13 18:06:56 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.2 2002-09-16 19:02:32 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -26,13 +26,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     int feedbackLoopsSeen  = 0;
 
     
-    
-    /** use findLinearFilters to instantiate a LinearAnalyzer **/
     private LinearAnalyzer() {
 	this.filtersToLinearRepresentation = new HashMap();
 	checkRep();
     }
 
+    ///////// Accessors
+    
     /** Returns true if the specified filter has a linear representation that we have found. **/
     public boolean hasLinearRepresentation(SIRStream stream) {
 	checkRep();
@@ -48,6 +48,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	checkRep();
 	return (LinearFilterRepresentation)this.filtersToLinearRepresentation.get(stream);
     }
+
+
+
     
     /**
      * Main entry point -- searches the passed stream for
@@ -67,6 +70,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
     
 
+    /////////////////////////////////////
+    ///////////////////// Visitor methods
+    /////////////////////////////////////
+    
     /** More or less get a callback for each stram **/
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
 	this.filtersSeen++;
@@ -79,58 +86,128 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println("  Push rate: " + pushRate);
 	// if we have a peek or push rate of zero, this isn't a linear filter that we care about,
 	// so only try and visit the filter if both are non-zero
-	if ((peekRate != 0) && (pushRate != 0)) {
-	    LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),
-								     peekRate, pushRate);
-
-	    // pump the visitor through the work function
-	    // (we might need to send it thought the init function as well so that
-	    //  we can determine the initial values of fields. However, I think that
-	    //  field prop is supposed to take care of this.)
-	    self.getWork().accept(theVisitor);
-
-	    // print out the results of pumping the visitor
-	    if (theVisitor.computesLinearFunction()) {
-		LinearPrinter.println("Linear filter found: " + self +
-				   "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
-				   "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
-		// add a mapping from the filter to its linear form.
-		this.filtersToLinearRepresentation.put(self,
-						       theVisitor.getLinearRepresentation());
-	    }
-
-	    
-		
-	} else {
+	if ((peekRate == 0) || (pushRate == 0)) {
 	    LinearPrinter.println("  " + self.getIdent() + " is source/sink.");
+	    return;
 	}
 
-	// check the rep invariant
+	LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),
+								 peekRate, pushRate);
+	
+	// pump the visitor through the work function
+	// (we might need to send it thought the init function as well so that
+	//  we can determine the initial values of fields. However, I think that
+	//  field prop is supposed to take care of this.)
+	self.getWork().accept(theVisitor);
+	
+	// print out the results of pumping the visitor
+	// incidentally, this output is parsed by some perl scripts to verify results,
+	// so it probably shouldn't be changed.
+	if (theVisitor.computesLinearFunction()) {
+	    LinearPrinter.println("Linear filter found: " + self +
+				  "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
+				  "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
+	    // add a mapping from the filter to its linear form.
+	    this.filtersToLinearRepresentation.put(self,
+						   theVisitor.getLinearRepresentation());
+	} 
+	// check that we have not violated the rep invariant
 	checkRep();
     }
 
+
+    
+    //void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
+    //void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}
+
+
+    //void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {}
     /**
-     * Eventually, this method will handle combining feedback loops (possibly).
-     * For now it just keeps track of the number of times we have seen feedback loops.
+     * We visit a pipeline after all sub-streams have been visited.
+     * If all of the sub components have linear forms, then we will
+     * Try and combine those linear forms into a linear form that
+     * represents exactly what the pipeline is doing.
      **/
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
-	this.feedbackLoopsSeen++;
-    }
-    /**
-     * Eventually, this method will handle combining pipelines.
-     * For now it just keeps track of the number of times we have seen pipelines.
-     **/
-    public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
+    public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
 	this.pipelinesSeen++;
-    }
-    /**
-     * Eventually, this method will handle combining splitjoins.
-     * For now it just keeps track of the number of times we have seen splitjoins.
-     **/
-    public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
-	this.splitJoinsSeen++;
-    }
+	LinearPrinter.println("Visiting pipeline: " + "(" + self + ")");
 	
+	Iterator kidIter = self.getChildren().iterator();
+	LinearPrinter.println("Children: ");
+	while(kidIter.hasNext()) {
+	    SIRStream currentKid = (SIRStream)kidIter.next();
+	    String linearString = (this.hasLinearRepresentation(currentKid)) ? "linear" : "non-linear";
+	    LinearPrinter.println("  " + currentKid + "(" + linearString + ")");
+	}
+
+	// go down the list of children in the pipeline, trying to create 
+	// a (possibly) gigantic matrix representation for what is going on.
+	kidIter = self.getChildren().iterator();
+	// if we don't have any children, we are done
+	if (!kidIter.hasNext()) {
+	    LinearPrinter.warn("Pipeline: " + self + " has no children ?!?!?!?!");
+	    return;
+	}
+
+	// grab the first child. If we don't have a linear rep, we are done.
+	SIRStream firstKid = (SIRStream)kidIter.next();
+	if (!this.hasLinearRepresentation(firstKid)) {return;}
+	// get the matrix/vector corresponding to this rep. If it has a constant component, we are done
+	LinearFilterRepresentation overallRep = this.getLinearRepresentation(firstKid);
+	if (overallRep.hasConstantComponent()) {return;}
+	
+	// now, we should be good, go through the rest of the children, trying to
+	// tack on their linear reps to the overall one. If we hit a combination that
+	// we can't do, then we set overallRep to null
+	while(kidIter.hasNext() && (overallRep != null)) {
+	    SIRStream currentKid = (SIRStream)kidIter.next();
+	    // see if we have a representation for the current pipeline child
+	    if (this.hasLinearRepresentation(currentKid)) {
+		LinearFilterRepresentation currentRep = this.getLinearRepresentation(currentKid);
+		// try to combine and expand the overall rep by tacking on the current rep
+		// (possibly expanding along the way
+		overallRep = overallRep.combine(currentRep);
+	    } else {
+		// we didn't know anything about this filter, so just give up
+		overallRep = null;
+	    }
+	}
+
+	
+	// if we have an overall rep, then we should add a mapping from this pipeline to
+	// that rep, and return.
+	if (overallRep != null) {
+	    LinearPrinter.println("Linear pipeline found: " + self +
+				  "\n-->Matrix:\n" + overallRep.getA() +
+				  "\n-->Constant Vector:\n" + overallRep.getb());
+	    // add a mapping from the pipeline to its linear form.
+	    this.filtersToLinearRepresentation.put(self, overallRep);
+	    checkRep(); // to make sure we didn't shoot ourselves somehow
+	}
+	return;
+    }
+
+    //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
+    //public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    /////////////// Methods for reporting on the information that we have in the
+    /////////////// in the hashset.
+    
+
+
+    
 
     /**
      * Make a nice report on the number of stream constructs processed
@@ -140,24 +217,70 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	String rpt;
 	rpt = "Linearity Report\n";
 	rpt += "---------------------\n";
-	rpt += "Filters:       " + makePctString(filtersToLinearRepresentation.keySet().size(),
+	rpt += "Filters:       " + makePctString(getFilterReps(),
 						 this.filtersSeen);
-	rpt += "Pipelines:     " + this.pipelinesSeen + "\n";
-	rpt += "SplitJoins:    " + this.splitJoinsSeen + "\n";
-	rpt += "FeedbackLoops: " + this.feedbackLoopsSeen + "\n";
+	rpt += "Pipelines:     " + makePctString(getPipelineReps(),
+						 this.pipelinesSeen);
+	rpt += "SplitJoins:    " + makePctString(getSplitJoinReps(),
+						 this.splitJoinsSeen);
+	rpt += "FeedbackLoops: " + makePctString(getFeedbackLoopReps(),
+						 this.feedbackLoopsSeen);
 	rpt += "---------------------\n";
 	return rpt;
-    }
+    }    
     /** simple utility for report generation. makes "top/bottom (pct) string **/
     private String makePctString(int top, int bottom) {
 	float pct;
-	// figure out percent to two decimal places
-	pct = ((float)top)/((float)bottom);
-	pct *= 10000;
-	pct = Math.round(pct);
-	pct /= 100;
+	if (bottom == 0) {
+	    pct = 0;
+	} else {
+	    // figure out percent to two decimal places
+	    pct = ((float)top)/((float)bottom);
+	    pct *= 10000;
+	    pct = Math.round(pct);
+	    pct /= 100;
+	}
 	return top + "/" + bottom + " (" + pct + "%)\n";
     }
+
+    /** returns the number of filters that we have linear reps for. **/
+    private int getFilterReps() {
+	int filterCount = 0;
+	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	while(keyIter.hasNext()) {
+	    if (keyIter.next() instanceof SIRFilter) {filterCount++;}
+	}
+	return filterCount;
+    }
+    /** returns the number of pipelines that we have linear reps for. **/
+    private int getPipelineReps() {
+	int count = 0;
+	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	while(keyIter.hasNext()) {
+	    if (keyIter.next() instanceof SIRPipeline) {count++;}
+	}
+	return count;
+    }
+    /** returns the number of splitjoins that we have linear reps for. **/
+    private int getSplitJoinReps() {
+	int count = 0;
+	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	while(keyIter.hasNext()) {
+	    if (keyIter.next() instanceof SIRSplitJoin) {count++;}
+	}
+	return count;
+    }
+    /** returns the number of feedbackloops that we have linear reps for. **/
+    private int getFeedbackLoopReps() {
+	int count = 0;
+	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
+	while(keyIter.hasNext()) {
+	    if (keyIter.next() instanceof SIRFeedbackLoop) {count++;}
+	}
+	return count;
+    }
+
+
     
     /** extract the actual value from a JExpression that is actually a literal... **/
     private static int extractInteger(JExpression expr) {
@@ -173,6 +296,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    Object o = keyIter.next();
+	    if (o == null) {throw new RuntimeException("Null key in LinearAnalyzer.");}
 	    if (!(o instanceof SIRStream)) {throw new RuntimeException("Non stream key in LinearAnalyzer");}
 	    SIRStream key = (SIRStream)o;
 	    Object val = this.filtersToLinearRepresentation.get(key);

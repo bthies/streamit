@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.7 2002-08-30 20:13:25 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.8 2002-09-16 19:02:32 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -27,7 +27,7 @@ public class FilterMatrix {
     private ComplexNumber internalMatrix[][] = null;
     private int internalSizeRows = -1;
     private int internalSizeCols = -1;
-
+    
     /**
      * Create FilterMatrix of size (rows,cols) and initialize all
      * elements to the value 0.
@@ -139,6 +139,61 @@ public class FilterMatrix {
 	return copyMatrix;
     }
 
+    /**
+     * Returns the product of this matrix and the specified matrix.
+     * Note that the dimensions must be compatible,
+     * (#cols of this == #rows of other)
+     * or else an IllegalArgumentException is thrown.
+     * Returns Q = this*other. (order is important for matrix multiplys)
+     **/
+    public FilterMatrix times(FilterMatrix other) {
+	if (other == null) {throw new IllegalArgumentException("Null other in times()");}
+	// check the dimensions
+	if (this.getCols() != other.getRows()) {
+	    throw new IllegalArgumentException("Dimensions do not agree in matrix multiply");
+	}
+	// just implement matrix multiply straight up, one element after another
+	FilterMatrix product = new FilterMatrix(this.getRows(), other.getCols());
+	// for each row of this
+	for (int i=0; i<this.getRows(); i++) {
+	    // for each col of other
+	    for (int j=0; j<other.getCols(); j++) {
+		ComplexNumber sum = ComplexNumber.ZERO;
+		// for each element, compute partial sum (eg this(i,k)other(k,j)
+		for (int k=0; k<this.getCols(); k++) {
+		    // sum = sum + (this(i,k)*other(k,j)
+		    sum = sum.plus(this.getElement(i,k).times(other.getElement(k,j)));
+		}
+		// set the element i,j in the new matrix
+		product.setElement(i,j,sum);
+	    }
+	}
+	return product;
+    }
+
+    /**
+     * Return the element-wise sum of this matrix with other.
+     **/
+    public FilterMatrix plus(FilterMatrix other) {
+	if (other==null){throw new IllegalArgumentException("null other in plus()");}
+	// check dimensions -- all must agree
+	if ((this.getRows() != other.getRows()) ||
+	    (this.getCols() != other.getCols())) {
+	    throw new IllegalArgumentException("Dimension mismatch in FilterMatrix.plus!");
+	}
+	
+	// now, make the sum and add the vectors element wise
+	FilterMatrix sum = new FilterMatrix(this.getRows(), this.getCols());
+	for (int i=0; i<this.getRows(); i++) {
+	    for (int j=0; j<this.getCols(); j++) {
+		ComplexNumber thisNum  = this.getElement(i,j);
+		ComplexNumber otherNum = other.getElement(i,j);
+		sum.setElement(i,j,thisNum.plus(otherNum));
+	    }
+	}
+	return sum;
+    }	
+    
     /**
      * Return true if the passed object is a FilterMatrix and represents the same matrix as this,
      * on an element by element basis.

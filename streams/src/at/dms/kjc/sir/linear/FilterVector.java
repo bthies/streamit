@@ -8,7 +8,7 @@ import java.util.*;
  * keep track of the combinations of inputs that are used to compute a 
  * specific intermediate value in the program flow.
  *
- * $Id: FilterVector.java,v 1.4 2002-09-06 17:19:42 aalamb Exp $
+ * $Id: FilterVector.java,v 1.5 2002-09-16 19:02:32 aalamb Exp $
  **/
 
 public class FilterVector extends FilterMatrix {
@@ -49,6 +49,27 @@ public class FilterVector extends FilterMatrix {
 	    fv.setElement(i,this.getElement(i));
 	}
 	return fv;
+    }
+
+    /**
+     * Converts the matrix to a (row) vector (assuming that the matrix is actually a
+     * row vector.) Throws an IllegalArgumentException if the matrix is not the appropriate size.
+     * This method exists because the class heirarchy seems to be wrong. I wanted to reuse most of
+     * the code from FilterMatrix (but a lot of the methods actually make new FilterMatrices,
+     * like times() for instance.
+     **/
+    public static FilterVector toVector(FilterMatrix matrix) {
+	if (matrix==null) {throw new IllegalArgumentException("null matrix to toVector()");}
+	// ensure that the matrix is actually a row vector
+	if (matrix.getRows() != 1) {
+	    throw new IllegalArgumentException("matrix is not a row vector in toVector()");
+	}
+ 	FilterVector newVector = new FilterVector(matrix.getCols());
+	// copy over the elements in the matrix
+	for (int i=0; i<matrix.getCols(); i++) {
+	    newVector.setElement(i, matrix.getElement(0,i));
+	}
+	return newVector;
     }
 }
 	

@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: FilterMatrix.java,v 1.2 2004-02-18 21:05:19 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -495,6 +495,35 @@ public class FilterMatrix {
 	}
 	// if we get here, the other matrix is the same as this one.
 	return true;
+    }
+
+    /* returns true if all elements are zero */
+    public boolean isZero() {
+
+	for (int i=0; i<internalSizeRows; i++) {	
+	    for (int j=0; j<internalSizeCols; j++) {
+		if (!(this.getElement(i,j).equals(ComplexNumber.ZERO)))
+		    return false;
+	    }
+	}
+	return true;
+    }
+
+    /**
+     * Returns the the first row of zeros, or -1 if there is no such row
+     */
+
+    public int zeroRow() {
+	boolean found = true;
+	for (int i=0; i<internalSizeRows; i++) {	
+	    for (int j=0; j<internalSizeCols; j++) {
+		if (!(this.getElement(i,j).equals(ComplexNumber.ZERO)))
+		    found = false;
+	    }
+	    if(found)
+		return i;
+	}
+	return -1;
     }
 
     /**

@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.2 2004-02-13 17:05:53 thies Exp $
+ * $Id: LinearDirectReplacer.java,v 1.3 2004-02-18 21:05:19 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -118,18 +118,57 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    throw new RuntimeException("no linear info");
 	}
 
+	int numStates = linearRep.getStateCount();
+	FilterVector initVector = linearRep.getInit();
+
+	JVariableDefinition vars[] = new JVariableDefinition[numStates];
+	JFieldDeclaration fields[] = new JFieldDeclaration[numStates];
+	JAssignmentExpression assign;
+	JFieldAccessExpression fieldExpr;
+	JDoubleLiteral litExpr;
+	Vector assignStatements = new Vector();
+
+	for(int i=0; i<numStates; i++) {
+	    vars[i] = new JVariableDefinition(null, ACC_PUBLIC, new CDoubleType(), "x" + i, null);
+	    fields[i] = new JFieldDeclaration(null, vars[i], null, null);
+	    fieldExpr = new JFieldAccessExpression(null, "x" + i);
+	    litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal());
+	    assign = new JAssignmentExpression(null, fieldExpr, litExpr);
+	    assignStatements.add(assign);
+	}
+
+	JBlock initBody = new JBlock();
+	initBody.addAllStatements(assignStatements);
+	
+	// now, assemble the pieces needed for a new JMethod.
+
+	JMethodDeclaration newInit = new JMethodDeclaration(null, // tokenReference
+							    ACC_PUBLIC,//modifiers
+							    CStdType.Void, // returnType
+							    "init",
+							    new JFormalParameter[0], // params
+							    new CClassType[0], // exceptions
+							    initBody, // body (obviously)
+							    null, // javadoc
+							    new JavaStyleComment[0]); // comments
+
+
+
 	// create a new work function that calculates the linear representation directly
 	JMethodDeclaration newWork = makeLinearWork(linearRep,
 						    oldStream.getInputType(),
 						    oldStream.getOutputType(),
 						    linearRep.getPopCount());
-	JMethodDeclaration newInit = SIRStream.makeEmptyInit();
 	
 	// create a new filter with the new work and init functions
-	SIRFilter newFilter = new SIRFilter("Linear" + oldStream.getIdent());
+	SIRFilter newFilter = new SIRTwoStageFilter("Linear" + oldStream.getIdent());
+	newFilter.addFields(fields);
 	newFilter.setWork(newWork);
 	newFilter.setInit(newInit);
-	newFilter.setPeek(linearRep.getPeekCount());
+
+	/** make peek rate equal to pop rate **/
+
+	newFilter.setPeek(linearRep.getPopCount());
 	newFilter.setPop (linearRep.getPopCount());
 	newFilter.setPush(linearRep.getPushCount());
 	newFilter.setInputType(oldStream.getInputType());
@@ -203,27 +242,25 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 					  CType outputType) {
 	Vector returnVector = new Vector();
 
-	int peekCount = representation.getPeekCount();
+	int popCount = representation.getPopCount();
 	int pushCount = representation.getPushCount();
+	int stateCount = representation.getStateCount();
+	int peekCount = representation.getPeekCount();   
 
+	
 	// for each output value (eg push count), construct push expression
 	for (int i = 0; i < pushCount; i++) {
-	    // the first push will have index pushCount, etc.
-	    int currentPushIndex = pushCount - 1 - i;
+	    // the first push will have index 0
 	    
-	    // go through each of the elements in this column of the matrix. If the element
+	    // go through each of the elements in this row of the matrix. If the element
 	    // is non zero, then we want to produce a peek(index)*weight
 	    // term (which we will then add together).
 	    // Currently bomb out if we have a non real number
 	    // (no way to generate non-reals at the present).
 	    Vector combinationExpressions = new Vector();
 
-	    // a note about indexes: the matrix [[0] [1] [2]]
-	    // implies peek(0)*2 + peek(1)*1 + peek(2)*0.
-	    for (int j = 0; j < peekCount; j++) {
-		int currentPeekIndex = peekCount - 1 - j;
-		ComplexNumber currentWeight = representation.getA().getElement(currentPeekIndex,
-									       currentPushIndex);
+	    for (int j = 0; j < popCount; j++) {
+		ComplexNumber currentWeight = representation.getD().getElement(i,j);
 		// if we have a non real number, bomb Mr. Exception
 		if (!currentWeight.isReal()) {
 		    throw new RuntimeException("Direct implementation with complex " +
@@ -263,9 +300,50 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 		}
 	    }
 	    
+	    for(int k = 0; k < stateCount-1; k++) {
+		ComplexNumber currentWeight = representation.getC().getElement(i,k);
+		// if we have a non real number, bomb Mr. Exception
+		if (!currentWeight.isReal()) {
+		    throw new RuntimeException("Direct implementation with complex " +
+					       "numbers is not yet implemented.");
+		}
+
+
+		    // if we have a non zero weight, add a weight*peek node
+		    if (currentWeight.equals(ComplexNumber.ZERO)) {
+			// do nothing for a zero weight
+		    } else {
+
+			String varName = "x" + k;
+			JFieldAccessExpression fieldNode = new JFieldAccessExpression(null, varName);
+			// IR node for the expression (either var, or weight*var)
+			JExpression exprNode;
+			// If we have a one, no need to do a multiply
+			if (currentWeight.equals(ComplexNumber.ONE)) {
+			    exprNode = fieldNode;
+			} else {
+			    // make literal weight (special case if the weight is an integer)
+			    JLiteral weightNode;
+			    if (currentWeight.isReal() && currentWeight.isIntegral()) {
+				weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			    } else {
+				weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
+			    }
+			    // make a JMultExpression with weight*peekExpression
+			    exprNode = new JMultExpression(null,        // tokenReference
+						       weightNode,  // left
+							   fieldNode);   // right
+			}
+			// add in the new expression node
+			combinationExpressions.add(exprNode);
+		    }
+
+	    }
+
+
 	    // now, we need to create the appropriate constant to represent the offset
 	    // NOTE:  adding second index of 0 so that it compiles under statespace (bft)
-	    ComplexNumber currentOffset = representation.getB().getElement(currentPushIndex,0);
+	    ComplexNumber currentOffset = representation.getC().getElement(i,popCount+stateCount);
 	    if (!currentOffset.isReal()) {
 		throw new RuntimeException("Non real complex number in offset vector");
 	    }

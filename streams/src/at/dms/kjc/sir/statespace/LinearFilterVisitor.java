@@ -19,7 +19,7 @@ import at.dms.kjc.sir.*;
  * the linear function that is computed by that IR node. LinearForms are
  * used to represent linear combinations of the inputs and states.<br>
  *
- * $Id: LinearFilterVisitor.java,v 1.2 2004-02-12 22:32:57 sitij Exp $
+ * $Id: LinearFilterVisitor.java,v 1.3 2004-02-18 21:05:20 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -61,7 +61,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private JFieldDeclaration[] fieldArray;
 
     /**
-     * Number of states. There are peekSize-popSize buffer states, one state for each global      * field declaration, and one state used as a constant.
+     * Number of states. There are peekSize-popSize buffer states, one state for each global field declaration, and one state used as a constant.
      **/
     private int stateSize;
 
@@ -92,6 +92,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private FilterMatrix C;
     private FilterMatrix D;
 
+    /** Initialized state variables **/
+    private FilterVector initVars;
+
     /**
      * String which represents the name of the filter being visited -- this is used
      * for reporting useful error messages.
@@ -120,18 +123,21 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// one state for each buffered item, one state for each field, one constant state
         this.stateSize = (this.peekSize - this.popSize) + this.fieldSize + 1;
 
+	this.initVars = new FilterVector(this.stateSize);
+
 	this.variablesToLinearForms = new HashMap();
 	this.peekOffset = 0;
 	this.pushOffset = 0;
 
 	// create mappings for each global variable
-
+        JFieldDeclaration fieldDec;
         AccessWrapper fieldWrapper;
         LinearForm fieldForm;
         int offset = this.peekSize - this.popSize;
 
 	for(int i = 0; i < this.fieldSize; i++) {
-	    fieldWrapper = AccessWrapperFactory.wrapAccess(this.fieldArray[i]);
+	    fieldDec = this.fieldArray[i];
+	    fieldWrapper = AccessWrapperFactory.wrapAccess(fieldDec);
 	    fieldForm = new LinearForm(this.popSize,this.stateSize);
 	    fieldForm.setStateWeight(offset+i, ComplexNumber.ONE);
 	    this.variablesToLinearForms.put(fieldWrapper,fieldForm);
@@ -317,6 +323,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	this.nonLinearFlag = true;
     }
 	   
+    /** Set the initial Vector **/
+    public void setInit(FilterVector initVector) {
+	this.initVars = initVector;
+    }
+
     /** Get the matrices representing this filter. **/
     public FilterMatrix getA() {
 	return this.A;
@@ -334,6 +345,10 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	return this.D;
     }
 
+    public FilterVector getInitVec() {
+	return this.initVars;
+    }
+
     /** Get the linear representation of this filter. **/
     public LinearFilterRepresentation getLinearRepresentation() {
 	// throw exception if this filter is not linear, becase therefore we
@@ -343,7 +358,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 	return new LinearFilterRepresentation(this.getA(), this.getB(),
 					      this.getC(), this.getD(),
-					      this.peekSize);
+					      this.initVars, this.peekSize);
     }
 
 

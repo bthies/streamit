@@ -7,7 +7,7 @@ package at.dms.kjc.sir.statespace;
  * This class holds the A, B, C, D in the equations y = Ax+Bu, x' = Cx + Du which calculates the output
  * vector y and new state vector x' using the input vector u and the old state vector x.<br>
  *
- * $Id: LinearFilterRepresentation.java,v 1.3 2004-02-13 17:05:53 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.4 2004-02-18 21:05:19 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -21,6 +21,8 @@ public class LinearFilterRepresentation {
     private FilterMatrix C;
     /** the D in x'=Cx+Du. **/
     private FilterMatrix D;
+    /** the initial state values. **/
+    private FilterVector initVec;
     /** the cost of this node */
     private LinearCost cost;
 
@@ -42,11 +44,13 @@ public class LinearFilterRepresentation {
 				      FilterMatrix matrixB,
 				      FilterMatrix matrixC,
 				      FilterMatrix matrixD,
+				      FilterVector vec,
 				      int peekc) {
 	this.A = matrixA.copy();
 	this.B = matrixB.copy();
 	this.C = matrixC.copy();
-	this.D = matrixD.copy();	
+	this.D = matrixD.copy();
+	this.initVec = (FilterVector)vec.copy();	
 	this.peekCount = peekc;
 	// we calculate cost on demain (with the linear partitioner)
 	this.cost = null;
@@ -62,37 +66,31 @@ public class LinearFilterRepresentation {
     /** Get the D matrix. **/
     public FilterMatrix getD() {return this.D;}
 
+    /** Get the initialization matrix. **/
+    public FilterVector getInit() {return this.initVec;}
+
     /** Get the peek count.  **/
     public int getPeekCount() {return this.peekCount;}
     /** Get the push count. (#rows of D or C) **/
     public int getPushCount() {return this.D.getRows();}
     /** Get the pop count. (#cols of D) **/
     public int getPopCount() {return this.D.getCols();}
-
+    /** Get the number of state variables (#rows of A or B, # cols of A or C) **/
+    public int getStateCount() { return this.A.getRows();}
 
     //////////////// Utility Functions  ///////////////////
 
     /**
-     * Returns true if at least one element of the constant vector b is zero.
+     * Returns true if at least one constant component is non-zero.
      **/
     
     public boolean hasConstantComponent() {
-	/*
-	// go over all elements in b and if one is non zero, return true
-	// otherwise return false.
-	int bSize = b.getSize();
-	for (int i=0; i<bSize; i++) {
-	    ComplexNumber currentElement = b.getElement(i);
-	    if (!currentElement.equals(ComplexNumber.ZERO)) {
-		return true;
-	    }
-	}
-	// seen only non-zero terms, therefore we don't have a
-	// constant component.
-	return false;
-	*/
 
-	return false;
+        int index = A.zeroRow();
+	if(index == -1)
+	    return false;
+	else
+	  return initVec.getElement(index) != ComplexNumber.ZERO;
 
     }
     

@@ -9,20 +9,20 @@ import at.dms.kjc.iterator.*;
 import at.dms.compiler.*;
 
 /**
- * A LinearIndirectReplacer replaces the contents of the work
- * functions for linear filters (as determined by the linear filter
- * analyzer) with a sparse matrix multiply, using indirection through
- * an array (see makeLinearWork for example).  It also can replace
- * splitjoins and pipelines with linear representations with a single
- * filter that computes the same function.
+ * This replacer works well when the non-zero elements of the matrix
+ * form a strip or diagonal -- more specifically, when some contiguous
+ * elements in each column are non-zero.  It simply strips out the
+ * zero multiplies on the top and bottom edge of each column.  (Thus
+ * it deals equally well with diagonal, lower-triangular, and
+ * upper-triangular mtatrices.)
  *
- * $Id: LinearIndirectReplacer.java,v 1.3 2003-04-06 23:33:23 thies Exp $
+ * $Id: LinearDiagonalReplacer.java,v 1.1 2003-04-06 23:33:23 thies Exp $
  **/
-public class LinearIndirectReplacer extends LinearDirectReplacer implements Constants{
+public class LinearDiagonalReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
     private static final String NAME_A = "sparseA";
     private static final String NAME_B = "b";
-    private static final String NAME_INDEX = "index";
+    private static final String NAME_START = "start";
     private static final String NAME_LENGTH = "length";
     /**
      * Base type of A.
@@ -43,15 +43,16 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
      */
     private JFieldDeclaration bField;
     /**
-     * Two-dimensional array of indices that gives the locations to peek at.
+     * One-dimensional array of indices, giving the start of non-zero
+     * items for a given column.
      */
-    private JFieldDeclaration indexField;
+    private JFieldDeclaration startField;
     /**
-     * lengthField[i] == sparseAField[i].length == indexField[i].length
+     * One-dimensional array of indices, giving the length of each non-zero segment.
      */
     private JFieldDeclaration lengthField;
     
-    protected LinearIndirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
+    protected LinearDiagonalReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
 	super(lfa, costs);
     }
 
@@ -67,7 +68,7 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	    LinearPrinter.println(" " + key);
 	}
 	// make a new replacer with the information contained in the analyzer and the costs
-	LinearIndirectReplacer replacer = new LinearIndirectReplacer(lfa, replaceCosts);
+	LinearDiagonalReplacer replacer = new LinearDiagonalReplacer(lfa, replaceCosts);
 	// pump the replacer through the stream graph.
 	IterFactory.createIter(str).accept(replacer);
     }
@@ -84,7 +85,7 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	// set fields
 	JFieldDeclaration[] fields = { this.sparseAField, 
 				       this.bField,
-				       this.indexField,
+				       this.startField,
 				       this.lengthField };
 	result.setFields(fields);
 	// add initialization of fields to init function 
@@ -121,14 +122,11 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 								    null),
 					    null,
 					    null);
-	// do same trick as above
-	arrayType = new CArrayType(CStdType.Integer, 2);
-	arrayType.setClass(CStdType.Object.getCClass());
-	this.indexField = new JFieldDeclaration(null,
+	this.startField = new JFieldDeclaration(null,
 						new JVariableDefinition(null,
 									0,
-									arrayType,
-									NAME_INDEX, 
+									new CArrayType(CStdType.Integer, 1),
+									NAME_START, 
 									null),
 						null,
 						null);
@@ -150,44 +148,46 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	FilterMatrix A = linearRep.getA();
 	int rows = A.getRows();
 	int cols = A.getCols();
-	// first build length, index arrays.  note that this
-	// allocation of index is the full size of A for the sake of
-	// simplicity here, but when we generate code we will cut its
-	// dimension to the bounding box of the irregular indices
+	// first build start, end arrays.
+	int[] start = new int[cols];
 	int[] length = new int[cols];
-	int[][] index = new int[cols][rows];
 	// keep track of max length
 	int maxLength = 0;
+	// zeros for debugging
 	int zeros = 0;
 	// for each column of the matrix...
 	for (int j=0; j<cols; j++) {
-	    // length will count the number of non-zero elements
-	    for (int i=0; i<rows; i++) {
-		if (!A.getElement(i, j).equals(ComplexNumber.ZERO)) {
-		    // store the peek index here
-		    index[j][length[j]] = rows - i - 1;
-		    length[j]++;
-		} else {
-		    zeros++;
-		}
+	    // find start
+	    int i = 0;
+	    while (i<rows && A.getElement(rows-i-1, j).equals(ComplexNumber.ZERO)) {
+		start[j]++;
+		i++;
 	    }
-	    if (length[j] > maxLength) {
+	    // find end
+	    i = rows-1;
+	    int end = rows-1;
+	    while (i>=0 && A.getElement(rows-i-1, j).equals(ComplexNumber.ZERO)) {
+		end--;
+		i--;
+	    }
+	    // calculate length
+	    length[j] = end-start[j]+1;
+	    if (length[j]>maxLength) {
 		maxLength = length[j];
 	    }
 	}
 	LinearPrinter.println("Found " + zeros + " / " + (rows*cols) + " zeros in sparse matrix.");
-	//System.err.println(linearRep.getA().getZeroString());
 	// allocate sparseA
 	JExpression[] dims = { new JIntLiteral(maxLength), new JIntLiteral(cols) };
 	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_A),
 						   new JNewArrayExpression(null, sparseABaseType, dims, null)));
-	// allocate index
-	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_INDEX),
-						   new JNewArrayExpression(null, CStdType.Integer, dims, null)));
 	// allocate b
 	JExpression[] dims2 = { new JIntLiteral(cols) };
 	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_B),
 						   new JNewArrayExpression(null, bBaseType, dims2, null)));
+	// allocate start
+	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_START),
+						   new JNewArrayExpression(null, CStdType.Integer, dims2, null)));
 	// allocate length
 	block.addStatement(makeAssignmentStatement(new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
 						   new JNewArrayExpression(null, CStdType.Integer, dims2, null)));
@@ -200,26 +200,23 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	for (int j=0; j<cols; j++) {
 	    JExpression rhs;
 	    for (int i=0; i<length[j]; i++) {
-		// "sparseA"[i][j] = A.getElement(i, index[j][i])
+		// "sparseA"[i][j] = A.getElement(rows-start[j]-i-i, j)
 		rhs = ( sparseAField.getVariable().getType()==CStdType.Integer ? 
-			(JExpression)new JIntLiteral((int)A.getElement(rows - index[j][i] - 1, j).getReal()) :
-			(JExpression)new JFloatLiteral((float)A.getElement(rows - index[j][i] - 1, j).getReal()) );
+			(JExpression)new JIntLiteral((int)A.getElement(rows-start[j]-i-1, j).getReal()) :
+			(JExpression)new JFloatLiteral((float)A.getElement(rows-start[j]-i-1, j).getReal()) );
 
 		block.addStatement(makeAssignmentStatement(new JArrayAccessExpression(null,
 										      makeArrayFieldAccessExpr(sparseAField.getVariable(), i),
 										      new JIntLiteral(cols-j-1)),
 							   rhs));
-		// "index"[i][j] = index[i][j]
-		block.addStatement(makeAssignmentStatement(new JArrayAccessExpression(null,
-										      makeArrayFieldAccessExpr(indexField.getVariable(), i),
-										      new JIntLiteral(cols-j-1)),
-							   new JIntLiteral(index[j][i])));
 	    }
 	    // "b"[j] = b.getElement(j)
 	    rhs = ( bField.getVariable().getType()==CStdType.Integer ?
 		    (JExpression)new JIntLiteral((int)linearRep.getb().getElement(j).getReal()) :
 		    (JExpression)new JFloatLiteral((float)linearRep.getb().getElement(j).getReal()) );
 	    block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(bField.getVariable(), cols-j-1), rhs));
+	    // "start"[j] = start[j]
+	    block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(startField.getVariable(), cols-j-1), new JIntLiteral(start[j])));
 	    // "length"[j] = length[j]
 	    block.addStatement(makeAssignmentStatement(makeArrayFieldAccessExpr(lengthField.getVariable(), cols-j-1), new JIntLiteral(length[j])));
 	}
@@ -231,12 +228,14 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
      *
      * The basic format of the resulting statements is:<p>
      * <pre>
-     * int sum, count;
+     * int sum, count, iters;
      * for (int j=0; j<numPush; j++) {
      *   float sum = 0.0;
-     *   int count = length[j]
-     *   for (int i=0; i<count; i++) {
-     *     sum += sparseA[i][j] * peek(index[i][j]);
+     *   int count = start[j];
+     *   int iters = length[j];
+     *   for (int i=0; i<iters; i++) {
+     *     sum += sparseA[i][j] * peek(count);
+     *     count++;
      *   }
      *   sum += b[j];
      *   push (sum);
@@ -248,15 +247,22 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 					  CType outputType) {
 	Vector result = new Vector();
 
-	// declare our sum and count variables
+	// declare our variable names
 	String NAME_SUM = "sum";
 	String NAME_COUNT = "count";
+	String NAME_ITERS = "iters";
+	// sum variable
 	JVariableDefinition sumVar = new JVariableDefinition(null, 0, outputType, NAME_SUM, null);
 	JVariableDefinition[] def1 = { sumVar };
 	result.add(new JVariableDeclarationStatement(null, def1, null));
+	// count variable
 	JVariableDefinition countVar = new JVariableDefinition(null, 0, CStdType.Integer, NAME_COUNT, null);
 	JVariableDefinition[] def2 = { countVar };
 	result.add(new JVariableDeclarationStatement(null, def2, null));
+	// iters variable
+	JVariableDefinition itersVar = new JVariableDefinition(null, 0, CStdType.Integer, NAME_ITERS, null);
+	JVariableDefinition[] def3 = { itersVar };
+	result.add(new JVariableDeclarationStatement(null, def3, null));
 
 	// make loop bodies and loop counters
 	JBlock outerLoop = new JBlock();
@@ -273,15 +279,20 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	// sum = 0
 	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, sumVar), 
 						       new JIntLiteral(0)));
-	// count = length[i]
+	// count = start[j]
 	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, countVar), 
+						       new JArrayAccessExpression(null,
+										    new JFieldAccessExpression(null, new JThisExpression(null), NAME_START),
+										    new JLocalVariableExpression(null, jVar))));
+	// iters = length[j]
+	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, itersVar), 
 						       new JArrayAccessExpression(null,
 										    new JFieldAccessExpression(null, new JThisExpression(null), NAME_LENGTH),
 										    new JLocalVariableExpression(null, jVar))));
 	// add the inner for loop
-	outerLoop.addStatement(Utils.makeForLoop(innerLoop, new JLocalVariableExpression(null, countVar), iVar));
+	outerLoop.addStatement(Utils.makeForLoop(innerLoop, new JLocalVariableExpression(null, itersVar), iVar));
 	
-	// sum += b[i]
+	// sum += b[j]
 	outerLoop.addStatement(makeAssignmentStatement(new JLocalVariableExpression(null, sumVar),
 						       new JAddExpression(null,
 									  new JLocalVariableExpression(null, sumVar),
@@ -292,15 +303,12 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 	outerLoop.addStatement(new JExpressionStatement(null, new SIRPushExpression(new JLocalVariableExpression(null, sumVar), outputType), null));
 
 	// now build up the inner loop...
-	// sum += sparseA[i][j] * peek(index[i][j]);
+	// sum += sparseA[i][j] * peek(count);
 	JExpression sparseAij = new JArrayAccessExpression(null,
 							   makeArrayFieldAccessExpr(sparseAField.getVariable(),
 										    new JLocalVariableExpression(null, iVar)),
 							   new JLocalVariableExpression(null, jVar));
-	JExpression indexij =   new JArrayAccessExpression(null,
-							   makeArrayFieldAccessExpr(indexField.getVariable(),
-										    new JLocalVariableExpression(null, iVar)),
-							   new JLocalVariableExpression(null, jVar));
+	JLocalVariableExpression countRef = new JLocalVariableExpression(null, countVar);
 	innerLoop.addStatement(new JExpressionStatement(null, 
 							new JAssignmentExpression(null,
 										  new JLocalVariableExpression(null, sumVar),
@@ -308,9 +316,16 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
 												     new JLocalVariableExpression(null, sumVar),
 												     new JMultExpression(null, 
 															 sparseAij, 
-															 new SIRPeekExpression(indexij, inputType)))),
+															 new SIRPeekExpression(countRef, inputType)))),
 							null));
-	
+	// count++
+	innerLoop.addStatement(new JExpressionStatement(null, 
+							new JAssignmentExpression(null,
+										  new JLocalVariableExpression(null, countVar),
+										  new JAddExpression(null,
+												     new JLocalVariableExpression(null, countVar),
+												     new JIntLiteral(1))),
+							null));
 	return result;
     }
 }

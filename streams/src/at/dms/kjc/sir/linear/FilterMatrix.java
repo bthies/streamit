@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.14 2003-04-06 12:01:52 thies Exp $
+ * $Id: FilterMatrix.java,v 1.15 2003-04-06 23:33:23 thies Exp $
  **/
 
 public class FilterMatrix {
@@ -427,6 +427,38 @@ public class FilterMatrix {
 	return returnString;
     }
 
+    /**
+     * Print only a "0" for zero elements and an "x" for non-zero elements
+     */
+    public String getZeroString() {
+	//checkRep();
+	String returnString = "[";
+	// for each row
+	for (int i=0; i<internalSizeRows; i++) {
+	    if (i != 0) {
+		returnString += " ";
+	    }
+	    returnString += "[";
+	    // for each column
+	    for (int j=0; j<internalSizeCols; j++) {
+		// stick the value of the matrix onto this line
+		if (this.internalMatrix[i][j].equals(ComplexNumber.ZERO)) {
+		    returnString += "0";
+		} else {
+		    returnString += "x";
+		}
+		// don't add a space if this is the last element in the column
+		if (j != (internalSizeCols-1)) {
+		    returnString += " ";
+		}
+	    }
+	    returnString += "]";
+	    if (i != (internalSizeRows-1)) {
+		returnString += "\n";
+	    }
+	}
+	returnString += "]";
 
-    
+	return returnString;
+    }
 }

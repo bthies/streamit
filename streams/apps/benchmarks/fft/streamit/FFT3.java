@@ -67,16 +67,12 @@ class Butterfly extends Filter
  */     
 class ButterflyGroup extends SplitJoin 
 {
-  float w_re, w_im; 
   public ButterflyGroup(float w_re, float w_im, int numbflies) 
   { 
     super(w_re, w_im, numbflies); 
   } 
   public void init(final float w_re, final float w_im, final int numbflies) 
   {
-    this.w_re = w_re; 
-    this.w_im = w_im; 
-
     /* The splitjoin routes the complex points in a round-robin fashion,  
      * one each to/from the constituent butterflies.  
      */
@@ -95,11 +91,11 @@ class ButterflyGroup extends SplitJoin
  */  
 class ComputeStage extends SplitJoin 
 {
-  public ComputeStage(int D, int N, float W_re[], float W_im[]) 
+  public ComputeStage(int D, int N, float W_re3a[], float W_im3a[]) 
   { 
-    super(D, N, W_re, W_im); 
+    super(D, N, W_re3a, W_im3a); 
   } 
-  public void init(final int D, final int N, final float W_re[], final float W_im[]) 
+  public void init(final int D, final int N, final float W_re3[], final float W_im3[]) 
   {
     /* the length of a butterfly group in terms of points */ 
     final int grplen = D + D;  
@@ -122,8 +118,8 @@ class ComputeStage extends SplitJoin
        *   w_im = W_im[bitrev(g, logn-1)];
        * Still, we just use g, because the lookup array itself is bit-reversal permuted.
        */
-      w_re = W_re[g];  
-      w_im = W_im[g]; 
+      w_re = W_re3[g];  
+      w_im = W_im3[g]; 
 
       this.add(new ButterflyGroup(w_re, w_im, numbflies));
     }  
@@ -138,11 +134,11 @@ class ComputeStage extends SplitJoin
  */  
 class LastComputeStage extends SplitJoin 
 {
-  public LastComputeStage(int D, int N, float W_re[], float W_im[]) 
+  public LastComputeStage(int D, int N, float W_re4[], float W_im4[]) 
   { 
-    super(D, N, W_re, W_im); 
+    super(D, N, W_re4, W_im4); 
   } 
-  public void init(final int D, final int N, final float W_re[], final float W_im[]) 
+  public void init(final int D, final int N, final float W_re5[], final float W_im5[]) 
   {
     /* the length of a butterfly group in terms of points */ 
     final int grplen = D + D;  
@@ -160,8 +156,8 @@ class LastComputeStage extends SplitJoin
     for (int g=0; g<numgrps; g++) 
     {
       /* see ComputeStage class for details on indexing W[] */  
-      w_re = W_re[g];  
-      w_im = W_im[g]; 
+      w_re = W_re5[g];  
+      w_im = W_im5[g]; 
 
       /* bflygrp of the last fft stage is simply a bfly */ 
       this.add(new Butterfly(w_re, w_im));
@@ -222,11 +218,11 @@ class BitReverse extends Filter
  */  
 class FFT3Kernel extends Pipeline
 {
-  public FFT3Kernel(int N, int logN, float W_re[], float W_im[])  
+  public FFT3Kernel(int N, int logN, float W_re2a[], float W_im2a[])  
   { 
-    super(N, logN, W_re, W_im); 
+    super(N, logN, W_re2a, W_im2a); 
   } 
-  public void init(final int N, final int logN, final float W_re[], final float W_im[]) 
+  public void init(final int N, final int logN, final float W_re2[], final float W_im2[]) 
   {
     /* The logN computation stages followed by a bit-reversal phase. 
      * For more info on indexing "roots of unity" array W[], see ComputeStage class.
@@ -236,14 +232,14 @@ class FFT3Kernel extends Pipeline
      */ 
 
     /* the first ComputeStage - 1 bflygrp with N/2 bflies */ 
-    this.add(new ButterflyGroup(W_re[0], W_im[0], N/2));   
+    this.add(new ButterflyGroup(W_re2[0], W_im2[0], N/2));   
 
     /* the middle ComputeStages - N/2i bflygrps with i bflies each */ 
     for (int i=(N/4); i>1; i=i/2) 
-      this.add(new ComputeStage(i, N, W_re, W_im)); 
+      this.add(new ComputeStage(i, N, W_re2, W_im2)); 
 
     /* the last ComputeStage - N/2 bflygrps with 1 bfly each */ 
-    this.add(new LastComputeStage(1, N, W_re, W_im)); 
+    this.add(new LastComputeStage(1, N, W_re2, W_im2)); 
 
     /* the bit-reversal phase */ 
     this.add(new BitReverse(N, logN)); 
@@ -326,15 +322,15 @@ class FFT3 extends StreamIt
     /* Make sure N is a power_of_2, N >= 4 and 2^logN = N */  
     final int N =  32; //16; 
     final int logN = 5; //4;   
-    float W_re[]; 
-    float W_im[]; 
+    float W_re1[]; 
+    float W_im1[]; 
 
     /* Initialize roots of unity array W[].   
      * W[] is bit-reversal permuted for easier access later -   
      * see the comment inside 'class ComputeStage' 
      */ 
-    W_re = new float[N/2]; 
-    W_im = new float[N/2]; 
+    W_re1 = new float[N/2]; 
+    W_im1 = new float[N/2]; 
     for (int i=0; i<(N/2); i++) 
     {
 	//int br = bitrev(i, logN-1);  
@@ -347,15 +343,15 @@ class FFT3 extends StreamIt
 		br = (br << 1) | (temp & 1);
 		temp >>= 1;
 	}
-	W_re[br] = (float) Math.cos(((double)i*2.0*Math.PI)/((double)N)); 
-	W_im[br] = (float) Math.sin(((double)i*2.0*Math.PI)/((double)N)); 
+	W_re1[br] = (float) Math.cos(((double)i*2.0*Math.PI)/((double)N)); 
+	W_im1[br] = (float) Math.sin(((double)i*2.0*Math.PI)/((double)N)); 
     }  
     //for (int i=0; i<(N/2); i++) 
     //  System.out.println("WW "+W_re[i]+" "+W_im[i]); 
     
     /* the tapes contain real followed by imag parts of each complex point */ 
     this.add(new ComplexSource(N)); 
-    this.add(new FFT3Kernel(N, logN, W_re, W_im)); 
+    this.add(new FFT3Kernel(N, logN, W_re1, W_im1)); 
     this.add(new ComplexPrinter()); 
   } 
   /* Helper fn - treats inp as a numbits number and bitreverses it.

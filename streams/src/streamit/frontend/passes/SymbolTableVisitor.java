@@ -19,6 +19,7 @@ package streamit.frontend.passes;
 import streamit.frontend.nodes.*;
 
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Front-end visitor pass that maintains a symbol table.  Other
@@ -27,7 +28,7 @@ import java.util.Iterator;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.12 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.13 2003-12-22 19:54:10 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -49,6 +50,15 @@ public class SymbolTableVisitor extends FEReplacer
     protected StreamType streamType;
 
     /**
+     * Map resolving structure names to structure types.  This map is
+     * used early in the front end: if code needs to resolve the type
+     * of a structure variable that only has a structure-reference
+     * type, before NoRefTypes has been run, this can perform that
+     * resolution.  It is populated by <code>visitProgram()</code>.
+     */
+    protected Map structsByName;
+
+    /**
      * Create a new symbol table visitor.
      *
      * @param symtab  Symbol table to use if no other is available,
@@ -56,8 +66,7 @@ public class SymbolTableVisitor extends FEReplacer
      */
     public SymbolTableVisitor(SymbolTable symtab)
     {
-        this.symtab = symtab;
-        this.streamType = null;
+        this(symtab, null);
     }
 
     /**
@@ -71,6 +80,7 @@ public class SymbolTableVisitor extends FEReplacer
     {
         this.symtab = symtab;
         this.streamType = st;
+        this.structsByName = new java.util.HashMap();
     }
 
     /**
@@ -104,10 +114,32 @@ public class SymbolTableVisitor extends FEReplacer
         symtab.registerVar(name, type, stmt, SymbolTable.KIND_LOCAL);
     }
 
+    /**
+     * Get the actual type for a type.  In particular, if we have a
+     * structure-reference type and the name of the reference is
+     * registered, then the actual type is the corresponding
+     * structure type.
+     *
+     * @param type  type to resolve to actual type
+     * @return      actual resolved type
+     */
+    protected Type actualType(Type type)
+    {
+        if (type instanceof TypeStructRef)
+        {
+            String name = ((TypeStructRef)type).getName();
+            if (structsByName.containsKey(name))
+                type = (Type)structsByName.get(name);
+        }
+        return type;
+    }
+
     public Object visitFieldDecl(FieldDecl field)
     {
         for (int i = 0; i < field.getNumFields(); i++)
-            symtab.registerVar(field.getName(i), field.getType(i), field,
+            symtab.registerVar(field.getName(i),
+                               actualType(field.getType(i)),
+                               field,
                                SymbolTable.KIND_FIELD);
         return super.visitFieldDecl(field);
     }
@@ -119,7 +151,9 @@ public class SymbolTableVisitor extends FEReplacer
         for (Iterator iter = func.getParams().iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
-            symtab.registerVar(param.getName(), param.getType(), param,
+            symtab.registerVar(param.getName(),
+                               actualType(param.getType()),
+                               param,
                                SymbolTable.KIND_FUNC_PARAM);
         }
 	if (func!=null) { symtab.registerFn(func); }
@@ -136,6 +170,17 @@ public class SymbolTableVisitor extends FEReplacer
         symtab = oldSymTab;
         return result;
     }
+
+    public Object visitProgram(Program prog)
+    {
+        // Examine and register structure members, then recurse normally.
+        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
+        {
+            TypeStruct struct = (TypeStruct)iter.next();
+            structsByName.put(struct.getName(), struct);
+        }
+        return super.visitProgram(prog);
+    }
     
     public Object visitStmtBlock(StmtBlock block)
     {
@@ -149,7 +194,9 @@ public class SymbolTableVisitor extends FEReplacer
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
         for (int i = 0; i < stmt.getNumVars(); i++)
-            symtab.registerVar(stmt.getName(i), stmt.getType(i), stmt,
+            symtab.registerVar(stmt.getName(i),
+                               actualType(stmt.getType(i)),
+                               stmt,
                                SymbolTable.KIND_LOCAL);
         return super.visitStmtVarDecl(stmt);
     }
@@ -163,7 +210,9 @@ public class SymbolTableVisitor extends FEReplacer
         for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
-            symtab.registerVar(param.getName(), param.getType(), param,
+            symtab.registerVar(param.getName(),
+                               actualType(param.getType()),
+                               param,
                                SymbolTable.KIND_STREAM_PARAM);
         }
         Object result = super.visitStreamSpec(spec);

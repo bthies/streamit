@@ -6,7 +6,7 @@ import streamit.*;
 
 // this pipline performs the first few blocks in subband analysis.
 
-complex[N_ch][N_rg][N_pri]->complex[N_ch][(int) N_rg/N_dn][N_pri] pipline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[] h_lp, complex[] h_td){
+complex[N_ch][N_rg][N_pri]->complex[N_ch][(int) N_rg/N_dn][N_pri] pipline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[] h_lp, complex h_lp){
     add FormChg20(N_ch,N_rg,N_pri);
     add ElAnal(N_ch,N_rg,N_pri,N_dn,N_lp,N_td,w,h_lp,h_td);
     add FromChg21(N_ch,(int) N_rg/N_dn, N_pri);
@@ -20,7 +20,7 @@ complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri
 	for (int i=0; i< N_ch; i++)
 	    for (int j=0; j < N_pri; j ++)
 		add(new AnalTd(N_rg,N_dn,N_lp,N_td,W,h_lp,h_td));
-	join roundrobin;
+	joind roundrobin;
  }
 
 	
@@ -29,7 +29,7 @@ complex[N_rg]-> complex[N_rg/N_dn] splitjoin ElAnal(int N_ch,int N_rg, int N_pri
 complex[N_rg]->complex[(int) N_rg/N_dn] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[] h_lp,complex[] h_td){ 
         add FreqShift(N_rg,W);
 	add arrayFIR(N_rg,N_lp,h_lp);
-	add DownSamp(N_rg,N_dn);
+	add DownSamp(N_inN_dn);
 	add arrayFIR(N_rg/N_dn,N_td,);
 }
 

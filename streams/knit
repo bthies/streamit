@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.41 2003-09-22 19:01:49 dmaze Exp $
+# $Id: knit,v 1.42 2003-09-22 19:16:52 dmaze Exp $
 #
 
 use strict;
@@ -112,6 +112,8 @@ Options specific to RAW backend:
   --raw-uni, -U       Use RAW backend to generate uniprocessor code
 * --removeglobals, -G Inline all functions and turn globals into locals
   --simulatework, -T  Use simulator for work estimation
+* --spacetime         Use space-time partitioner
+  --wbs               Use work-based simulator for communication code
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
@@ -188,11 +190,13 @@ sub get_options
 			    "simplesjfusion|S",
 			    "simulatework|T",
 			    "sjtopipe|J",
+			    "spacetime!",
 			    "stats!",
 			    "sync|k",
 			    "tokopi!",
 			    "unroll|u=i",
 			    "viram|V",
+			    "wbs!",
 			    "cluster!",
 			    "destroyfieldarray!");
     return $result if !$result;
@@ -371,6 +375,8 @@ sub get_kjc_opts
     $opts{viram} && ($kjcopts .= " -V");
     $opts{cluster} && ($kjcopts .= " -cluster");
     $opts{destroyfieldarray} && ($kjcopts .= " -destroyfieldarray");
+    $opts{wbs} && ($kjcopts .= " -wbs");
+    $opts{spacetime} && ($kjcopts .= " -spacetime");
     return $kjcopts;
 }
 

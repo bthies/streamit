@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.24 2003-04-18 14:41:00 dmaze Exp $
+# $Id: knit,v 1.25 2003-04-18 14:44:29 dmaze Exp $
 #
 
 use strict;
@@ -57,6 +57,7 @@ Options available for all backends:
   --linearreplacement Perform linear transformations based on analysis
 * --linearpartition, -B
                       Automatically selecting targets of linear analyses
+  --memory, -Xmx      Specify Java runtime heap limit
   --nofieldprop, -L   Do not propagate constant field values
   --redundantreplacement, -t
                       Create linear filters without redundant computation
@@ -95,6 +96,7 @@ EOT
 sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
+    $opts{memory} = "512M";
     GetOptions(\%opts,
 	       "help",
 	       "more-help|help-more",
@@ -112,6 +114,7 @@ sub get_options
 	       "linearpartition|B",
 	       "linearreplacement|I",
 	       "magic-net|magic_net|M",
+	       "memory|Xmx=s",
 	       "noanneal|W",
 	       "nofieldprop|L",
 	       "numbers|N=i",
@@ -171,17 +174,18 @@ sub old_to_c
     my ($fns) = @_;
     return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
-    my $java = join(' ', @$fns);
+    my $java = "java -Xmx" . $opts{memory};
+    my $jfiles = join(' ', @$fns);
     if (!$opts{raw})
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java > $target");
+	call("$java at.dms.kjc.Main -s $kjcopts $jfiles > $target");
 	return [$target];
       }
     else
       {
-	call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java");
+	call("$java at.dms.kjc.Main -s $kjcopts $jfiles");
 	return [];
       }
   }

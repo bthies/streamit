@@ -129,9 +129,9 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	//print the numbers in a nicer format for automatic
 	//extracting
 	fprintf(outputFile,
-		"tiles in config;tiles assigned;avg cycles/steady;max cycles/steady;avg cyc/ss last 5 ss;");
+		"tiles in config;tiles assigned;avg cycles/steady;max cycles/steady;min cycles/steady;avg cyc/ss last 5 ss;");
 	fprintf(outputFile, 
-		"min cycles/steady;prints;thruput;MFLOPS;");
+		"prints;thruput;MFLOPS;");
 	fprintf(outputFile, 
 		"instr issued;fpu;mem;branch;admin;alu;max instr issued;\n");
 	fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d%;%d;%d;%d\n",

@@ -17,9 +17,11 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
     private HashMap targets;    
     private HashMap replaced;
     private HashMap varDefs;
+    private boolean deadend;
 
     public ArrayDestroyer() {
 	replaced=new HashMap();
+	deadend=false;
     }
 
     //wraps JLocalVar and index together
@@ -110,20 +112,31 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		    public Object visitArrayAccessExpression(JArrayAccessExpression self2,
 							     JExpression prefix,
 							     JExpression accessor) {
-			//prefix.accept(this);
-			accessor.accept(this);
-			if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
-			    if(accessor instanceof JIntLiteral) {
-				HashMap map=(HashMap)targets.get(((JLocalVariableExpression)prefix).getVariable());
-				if(map==null) {
-				    map=new HashMap();
-				    targets.put(((JLocalVariableExpression)prefix).getVariable(),map);
-				}
-				map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
+			if(!deadend) {
+			    accessor.accept(this);
+			    //if((prefix instanceof JLocalVariableExpression)&&(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
+			    if(prefix instanceof JLocalVariableExpression) {
+				if(!unsafe.containsKey(((JLocalVariableExpression)prefix).getVariable()))
+				    if(accessor instanceof JIntLiteral) {
+					HashMap map=(HashMap)targets.get(((JLocalVariableExpression)prefix).getVariable());
+					if(map==null) {
+					    map=new HashMap();
+					    targets.put(((JLocalVariableExpression)prefix).getVariable(),map);
+					}
+					map.put(new Integer(((JIntLiteral)accessor).intValue()),Boolean.TRUE);
+				    } else {
+					targets.remove(((JLocalVariableExpression)prefix).getVariable());
+					unsafe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
+				    }
 			    } else {
-				targets.remove(((JLocalVariableExpression)prefix).getVariable());
-				unsafe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
+				deadend=true;
+				prefix.accept(this);
+				deadend=false;
 			    }
+			} else {
+			    prefix.accept(this);
+			    accessor.accept(this);
+			}
 			return self2;
 		    }
 		});

@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.8 2002-09-30 21:22:11 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.9 2002-10-23 21:12:44 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -199,8 +199,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 		try {
 		    overallRep = pipelineTransform.transform();
 		} catch (NoTransformPossibleException e) {
-		    LinearPrinter.warn("Can't combine representations: " + overallRep + currentRep +
-				       " reason: " + e.getMessage());
+		    LinearPrinter.println("  can't combine representations: " + overallRep + currentRep +
+					  " reason: " + e.getMessage());
 		    overallRep = null;
 		}
 	    } else {

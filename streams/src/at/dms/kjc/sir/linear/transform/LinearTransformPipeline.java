@@ -6,7 +6,7 @@ package at.dms.kjc.sir.linear;
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.<p>
- * $Id: LinearTransformPipeline.java,v 1.4 2002-09-20 18:09:37 aalamb Exp $
+ * $Id: LinearTransformPipeline.java,v 1.5 2002-10-23 21:12:44 aalamb Exp $
  **/
 class LinearTransformPipeline extends LinearTransform {
     /** The upstream filter representation. **/
@@ -17,6 +17,8 @@ class LinearTransformPipeline extends LinearTransform {
     int upstreamExpandFactor;
     /** The number of times that we need to expand the downstream rep. **/
     int downstreamExpandFactor;
+    /** the new pop count for the combined filter after the expansion. **/
+    int newPopCount;
 
     /**
      * Creates a new pipeline transformation by expanding the upstream rep
@@ -26,11 +28,13 @@ class LinearTransformPipeline extends LinearTransform {
     private LinearTransformPipeline(int upFactor,
 				    LinearFilterRepresentation up,
 				    int downFactor,
-				    LinearFilterRepresentation down) {
-	this.upstreamExpandFactor = upFactor;
-	this.upstreamRep = up;
+				    LinearFilterRepresentation down,
+				    int newPop) {
+	this.upstreamExpandFactor   = upFactor;
+	this.upstreamRep            = up;
 	this.downstreamExpandFactor = downFactor;
-	this.downstreamRep = down;
+	this.downstreamRep          = down;
+	this.newPopCount            = newPop;
     }
 
 
@@ -83,9 +87,8 @@ class LinearTransformPipeline extends LinearTransform {
 	    // compute the new b = (b1A2 + b2)
 	    FilterVector newb = FilterVector.toVector((b1.times(A2)).plus(b2));
 
-	    // return a new LFR with newA and newb (the pop count is the same as the pop count of
-	    // upstreamExpandedRep.)
-	    return new LinearFilterRepresentation(newA, newb, upstreamExpandedRep.getPopCount());
+	    // return a new LFR with newA and newb 
+	    return new LinearFilterRepresentation(newA, newb, newPopCount);
 	} else {
 	    // we couldn't combine the matricies, complain!
 	    throw new RuntimeException("Pipeline is impossible to expand -- should not be a LinearTransformPipeline");
@@ -113,18 +116,11 @@ class LinearTransformPipeline extends LinearTransform {
      **/
     public static LinearTransform calculate(LinearFilterRepresentation upstream,
 					    LinearFilterRepresentation downstream) {
-	// if the two rates are already matched, we are good to go, and we can merely
-	// combine the two filters directly by a matrix multiplication.
-	if (upstream.getPushCount() == downstream.getPeekCount()) {
-	    // we can multiply these pipelines together
-	    return new LinearTransformPipeline(1, upstream,
-					       1, downstream);
-	    
 	// if the downstream filter has push equal to their pop, then
 	// we can combine them by expanding to make upstream.pop = downstream.peek
 	// and not trouble ourselves with any state embodied by the difference
 	// between downstream.peek and downstream.pop
-	} else if (downstream.getPeekCount() == downstream.getPopCount()) {
+	if (downstream.getPeekCount() == downstream.getPopCount()) {
 	    int expandLcm = lcm(upstream.getPushCount(), downstream.getPopCount());
 	    // a few paranoia checks
 	    if (((expandLcm % upstream.getPushCount()) != 0) ||
@@ -134,9 +130,26 @@ class LinearTransformPipeline extends LinearTransform {
 	    int upFact   = expandLcm / upstream.getPushCount();
 	    int downFact = expandLcm / downstream.getPopCount();
 	    return new LinearTransformPipeline(upFact, upstream,
-					       downFact, downstream);
+					       downFact, downstream,
+					       (upstream.getPopCount() * upFact)); // new pop count
+	    // check for two FIRs in a row, and handle appropriately
+	} else if (upstream.isFIR() && downstream.isFIR()) {
+	    // actually, to combine FIRs, things are easy. Expand the upstream
+	    // filter by the number of outputs that the downstream filter peeks at.
+	    // then, use the pop count of the downstream filter. (which is going to be 1)
+	    return new LinearTransformPipeline(downstream.getPeekCount(), upstream,
+					       1, downstream,
+					       (downstream.getPopCount()));
 	} else {
-	    return new LinearTransformNull("Rates of upstream and downstream don't match.");
+	    // we don't know how to transform this pipeline combination
+	    return new LinearTransformNull("don't know how to combine ([peek,pop,push]):" +
+					   "[" + (upstream.getPeekCount() + "," +
+						  upstream.getPopCount() + "," +
+						  upstream.getPushCount()) + "]-->" +
+					   "[" + (downstream.getPeekCount() + "," +
+						  downstream.getPopCount() + "," +
+						  downstream.getPushCount()) + "]");
+	    
 	}
     }
 

@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.10 2002-10-18 18:12:10 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.11 2002-10-23 21:12:44 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -119,6 +119,12 @@ public class LinearFilterRepresentation {
 	return newRep;
     }
 						
-	
-	
+    /**
+     * Returns true if this filter is an FIR filter. A linear filter is FIR  
+     * if push=pop=1.
+     **/
+    public boolean isFIR() {
+	return ((this.getPopCount() == 1) &&
+		(this.getPushCount() == 1));
+    }
 }

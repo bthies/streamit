@@ -2,14 +2,16 @@ package streamit.frontend;
 
 import java.util.*;
 import streamit.frontend.nodes.*;
+import at.dms.compiler.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 
-public class FEIRToSIR implements FEVisitor {
+public class FEIRToSIR implements FEVisitor, Constants {
   private SIRStream topLevel;
   private SIRStream parent;
   private Hashtable classTable;
     private Map cclassTable;
+    private SymbolTable symtab;
 
   public FEIRToSIR() {
     classTable = new Hashtable();
@@ -20,6 +22,18 @@ public class FEIRToSIR implements FEVisitor {
     System.err.print(s);
   }
   
+    private TokenReference contextToReference(FEContext ctx)
+    {
+        if (ctx != null)
+            return new TokenReference(ctx.getFileName(), ctx.getLineNumber());
+        return TokenReference.NO_REF;
+    }
+    
+    private TokenReference contextToReference(FENode node)
+    {
+        return contextToReference(node.getContext());
+    }
+
   public Object visitProgram(Program p) {
     /* We visit each stream and each struct */
     List feirStreams;
@@ -50,6 +64,14 @@ public class FEIRToSIR implements FEVisitor {
   public Object visitStreamSpec(StreamSpec spec) {
     SIRStream oldParent = parent;
     SIRStream current = null;
+    SymbolTable oldSymTab = symtab;
+    symtab = new SymbolTable(symtab);
+    for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
+    {
+        Parameter param = (Parameter)iter.next();
+        symtab.registerVar(param.getName(), param.getType(), param,
+                           SymbolTable.KIND_STREAM_PARAM);
+    }
 
     debug("In visitStreamSpec\n");
     
@@ -103,6 +125,8 @@ public class FEIRToSIR implements FEVisitor {
       }
     }
 
+    symtab = oldSymTab;
+    
     if (current != null) {
       return current;
     }
@@ -147,6 +171,9 @@ public class FEIRToSIR implements FEVisitor {
         {
             FieldDecl decl = (FieldDecl)iter.next();
             fieldList.addAll(fieldDeclToJFieldDeclarations(decl));
+            for (int i = 0; i < decl.getNumFields(); i++)
+                symtab.registerVar(decl.getName(i), decl.getType(i),
+                                   decl, SymbolTable.KIND_FIELD);
         }
         fields = (JFieldDeclaration[])fieldList.toArray(fields);
         stream.setFields(fields);
@@ -251,7 +278,7 @@ public class FEIRToSIR implements FEVisitor {
       case TypePrimitive.TYPE_DOUBLE:
 	return CStdType.Double;
       case TypePrimitive.TYPE_COMPLEX:
-        return new CClassNameType("Complex");
+        return new CClassType((CClass)cclassTable.get("Complex"));
       case TypePrimitive.TYPE_VOID:
 	return CStdType.Void;
       }
@@ -263,9 +290,9 @@ public class FEIRToSIR implements FEVisitor {
       return new CArrayType(feirTypeToSirType(ta.getBase()),
 			    1);
     } else if (type instanceof TypeStruct) {
-        return new CClassNameType(((TypeStruct)type).getName());
+        return new CClassType((CClass)cclassTable.get(((TypeStruct)type).getName()));
     } else if (type instanceof TypeStructRef) {
-        return new CClassNameType(((TypeStructRef)type).getName());
+        return new CClassType((CClass)cclassTable.get(((TypeStructRef)type).getName()));
     }
     /* This shouldn't happen */
     debug("  UNIMPLEMENTED - shouldn't happen\n");
@@ -275,24 +302,38 @@ public class FEIRToSIR implements FEVisitor {
   public SIRStructure visitTypeStruct(TypeStruct ts) {
     JFieldDeclaration[] fields = new JFieldDeclaration[ts.getNumFields()];
     int i;
+    TokenReference tr = contextToReference(ts.getContext());
+    CSourceClass cc = new CSourceClass(null, //owner
+                                       tr, //where
+                                       0, //modifiers
+                                       ts.getName(),
+                                       ts.getName(),
+                                       false); // deprecated
+    Hashtable cfields = new Hashtable();
+    CMethod[] cmethods = new CMethod[0];
     for (i = 0; i < fields.length; i++) {
       String name = ts.getField(i);
       Type type = ts.getType(name);
-      JVariableDefinition def = new JVariableDefinition(null,
-							at.dms.kjc.Constants.ACC_PUBLIC,
-							feirTypeToSirType(type),
+      CType ctype = feirTypeToSirType(type);
+      JVariableDefinition def = new JVariableDefinition(tr,
+                                                        ACC_PUBLIC,
+                                                        ctype,
 							name,
 							null);
-      fields[i] = new JFieldDeclaration(null,
+      fields[i] = new JFieldDeclaration(tr,
 					def,
 					null,
 					null);
+      CSourceField cf = new CSourceField(cc, ACC_PUBLIC, name, ctype, false);
+      cfields.put(name, cf);
     }
     debug("Adding " + ts.getName() + " to symbol table\n");
     SIRStructure struct = new SIRStructure(null,
 					   ts.getName(),
 					   fields);
     classTable.put(ts.getName(), struct);
+    cc.close(CClassType.EMPTY, null, cfields, cmethods);
+    cclassTable.put(ts.getName(), cc);
     return struct;
   }
 
@@ -514,26 +555,31 @@ public class FEIRToSIR implements FEVisitor {
 
   public Object visitFunction(Function func) {
     debug("In visitFunction\n");
-    int i;
+    int i = 0;
     List list;
+    SymbolTable oldSymTab = symtab;
+    symtab = new SymbolTable(symtab);
     Parameter[] feirParams = new Parameter[func.getParams().size()];
-    list = func.getParams();
-    for (i = 0; i < feirParams.length; i++) {
-      feirParams[i] = (Parameter) list.get(i);
-    }
     JFormalParameter[] sirParams = new JFormalParameter[feirParams.length];
-    for (i = 0; i < feirParams.length; i++) {
-      sirParams[i] = (JFormalParameter) visitParameter(feirParams[i]);
+    for (Iterator iter = func.getParams().iterator(); iter.hasNext(); )
+    {
+        Parameter param = (Parameter)iter.next();
+        symtab.registerVar(param.getName(), param.getType(), param,
+                           SymbolTable.KIND_FUNC_PARAM);
+        sirParams[i] = (JFormalParameter)visitParameter(param);
+        i++;
     }
-    JMethodDeclaration result = new JMethodDeclaration(null, /* token reference */
-						       at.dms.kjc.Constants.ACC_PUBLIC,
-						       feirTypeToSirType(func.getReturnType()),
-						       func.getName(),
-						       sirParams,
-						       CClassType.EMPTY,
-						       statementToJBlock(func.getBody()),
-						       null, /* javadoc */
-						       null); /* comments */
+    JMethodDeclaration result =
+        new JMethodDeclaration(contextToReference(func),
+                               ACC_PUBLIC,
+                               feirTypeToSirType(func.getReturnType()),
+                               func.getName(),
+                               sirParams,
+                               CClassType.EMPTY,
+                               statementToJBlock(func.getBody()),
+                               null, /* javadoc */
+                               null); /* comments */
+    symtab = oldSymTab;
     return result;
   }
 
@@ -762,6 +808,8 @@ public class FEIRToSIR implements FEVisitor {
 
   public Object visitStmtBlock(StmtBlock stmt) {
     debug("In visitStmtBlock\n");
+    SymbolTable oldSymTab = symtab;
+    symtab = new SymbolTable(symtab);
     JBlock result = new JBlock();
     List stmts = stmt.getStmts();
     Iterator i;
@@ -776,6 +824,7 @@ public class FEIRToSIR implements FEVisitor {
 	debug("  Ignoring NULL\n");
       }
     }
+    symtab = oldSymTab;
     return result;
   }
 
@@ -916,6 +965,8 @@ public class FEIRToSIR implements FEVisitor {
     List defs = new ArrayList();
     for (int i = 0; i < stmt.getNumVars(); i++)
     {
+        symtab.registerVar(stmt.getName(i), stmt.getType(i), stmt,
+                           SymbolTable.KIND_LOCAL);
         Expression init = stmt.getInit(i);
         JExpression jinit = null;
         if (init != null)

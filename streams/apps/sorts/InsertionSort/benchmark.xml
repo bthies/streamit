@@ -1,0 +1,16 @@
+<benchmark>
+  <name>InsertionSort</name>
+  <desc>Optimized Insertion Sorting Algorithm</desc>
+  <description>
+  Implementation based off of the Diminishing Increment Sort in
+  Knuth "Sorting and Searching", 5.2.1.  Similar to basic insertion
+  sort except that it tries to make larger jumps to minimize data
+  reorderings.  
+  </description>
+  <reference></reference>
+  <implementations>  
+    <impl lang="StreamIt">
+      <file>InsertionSort.str</file>
+    </impl>   
+  </implementations>
+</benchmark>

@@ -4,7 +4,7 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.9 2002-08-09 21:01:01 aalamb Exp $
+# $Id: reap_results.pl,v 1.10 2002-10-02 18:30:40 dmaze Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -20,7 +20,9 @@ use strict;
 
 require "reaplib.pl";
 
-my $base_results_directory = "/u/aalamb/results";
+my $home = $ENV{HOME};
+my $streams = $ENV{STREAMIT_HOME} || "$home/streams";
+my $base_results_directory = "$home/results";
 
 my $input_file_name = shift(@ARGV);
 
@@ -32,8 +34,8 @@ if ($input_file_name ne "") {
     print "reading tests from input file: $input_file_name\n"; 
     @results_wanted = split("\n", read_file($input_file_name));
 } else {
-    my $examples_dir = "/u/aalamb/streams/docs/examples/hand";
-    my $apps_dir     = "/u/aalamb/streams/apps";
+    my $examples_dir = "$streams/docs/examples/hand";
+    my $apps_dir     = "$streams/apps";
     @results_wanted = ("$apps_dir/BeamFormer-fine:BeamFormer.java:--raw 4 --partition:0:1",
 		       #"$apps_dir/FMRadio:LinkedFMTest.java:--raw 8 --partition"
 		       );

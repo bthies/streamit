@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.17 2002-11-07 22:40:58 dmaze Exp $
+ * $Id: StreamITTestCase.java,v 1.18 2002-12-20 18:39:12 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "apps/examples/";
@@ -46,7 +46,8 @@ class StreamITTestCase extends TestCase {
         // actually do the conversion
         boolean result = compiler.streamITConvert(root, filein, fileout);
         // assemble the id of this test
-        String idMessage = ("Convert " + root + filein + " to " + fileout);
+        String idMessage = ("Convert " + root + filein + " to " + fileout +
+			    "(" + compiler.getOptionsString() + ")");
 
 	// if the compilation was successful, print a success message
 	if (result == true) {

@@ -1,12 +1,6 @@
 /**
- * Template framework for writing test cases using JUnit.
- * 1. Copy to new java file, and find/replace TestExamples with new name.
- * 2. Add an entry in AllTests.java for this new suite
- * 3. Add test code in void methods like testSimple
- * 4. Add a line in suite() with the new test method name
- *
- * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestApps.java,v 1.6 2002-07-17 18:35:38 aalamb Exp $
+ * Test the programs in the apps/applications directory
+ * $Id: TestApps.java,v 1.7 2002-08-09 21:00:48 aalamb Exp $
  **/
 package streamittest;
 
@@ -34,47 +28,38 @@ public class TestApps extends StreamITTestCase {
 	}
     }
 
+    public static Test suite() {
+	return suite(DEFAULT_FLAGS);
+    }
+    
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 
-	// MatrixMult doesn't fit on 4x4=16 tiles, so don't add
-	// it if the raw 4 flag is set
-	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
-	    suite.addTest(new TestApps("testMatrixMult", flags));
+	// this one doesn't fit on any raw4
+	if (!flagsContainRaw4(flags)) {
+	    suite.addTest(new TestApps("testNokiaFine", flags));
 	}
-
-	//suite.addTest(new TestApps("testAppsFM", flags));
-	//suite.addTest(new TestApps("testGsm", flags));
+	
 
 	return suite;
     }
-
-    /**
-     * For testing only the apps -- returns a suite of all
-     * apps test cases with the Partition and raw 4 compiler
-     * options turned on.
-     **/
-    public static Test suite() {
-	return suite(CompilerInterface.PARTITION |
-		     CompilerInterface.RAW4);
-    }
-		      
     
-
-    public void testMatrixMult() {
-	doCompileRunVerifyTest(APPS_ROOT + "matrixmult/",
-			       "MatrixMult.java",
-			       "MatrixMult.out");
+    public void testNokiaFine() {
+	String nokiaRoot = APPS_ROOT + "nokia-fine/";
+	// create a linked version (and also bring in Delay.java)
+	doMake(nokiaRoot, "link");
+	doCompileTest(nokiaRoot,
+		      "Linkeddcalc.java");
+	// run the make script to make the app run a bit longer (like 5M cycles)
+	doMake(nokiaRoot, "more-cycles");
+	doRunTest(nokiaRoot,
+		  "Linkeddcalc.java",
+		  0,72);
+	doCompareTest(nokiaRoot,
+		      "Linkeddcalc.java",
+		      "Linkeddcalc.out");
     }
 
-    //public void testAppsFM() {
-    //String fmRoot = APPS_ROOT + "FMRadio/";
-    //doMake(fmRoot);
-    //doCompileRunVerifyTest(fmRoot,
-    //		       "MatrixMult.java",
-    //		       "MatrixMult.out");
-    //}
-
-
+    
 
 }

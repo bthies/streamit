@@ -5,11 +5,13 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.13 2002-08-09 16:42:22 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.14 2002-08-09 21:00:48 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
-    static final String EXAMPLE_PATH  = "docs/examples/hand/";
-    static final String APPS_PATH     = "apps/";
+    static final String EXAMPLE_PATH  = "apps/examples/";
+    static final String TESTS_PATH    = "apps/tests/";
+    static final String APPS_PATH     = "apps/applications/";
+    static final String BENCH_PATH    = "apps/benchmarks/";
 
     static final int    DEFAULT_FLAGS = CompilerInterface.NONE;
     

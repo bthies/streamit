@@ -61,9 +61,9 @@ class Butterfly extends Filter
 /**  
  * A butterfly group of a particular fft stage is a set 
  * of butterflies that use the same root of unity W. Or 
- * graphically, each butterfly group corresponds to a 
- * connected component in the FFT's butterfly graph for the   
- * particular fft stage. 
+ * graphically, each butterfly group is a bunch of  
+ * butterflies that are clustered together in the FFT's 
+ * butterfly graph for that particular stage 
  */     
 class ButterflyGroup extends SplitJoin 
 {

@@ -83,6 +83,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(top);
 
+	String tileNumber = Layout.getTileNumber(top) + "";
+
 	//remove print statements in the original app
 	//if we are running with decoupled
 	RemovePrintStatements.doIt(top);
@@ -107,7 +109,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	    {
 		String[] cmdArray = new String[5];
 		cmdArray[0] = "cp";
-		cmdArray[1] = "tile0.c";
+		cmdArray[1] = "tile" + tileNumber + ".c";
 		cmdArray[2] = "Makefile.streamit";
 		cmdArray[3] = "fileio.bc";
 		cmdArray[4] = dir;    

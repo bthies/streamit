@@ -129,6 +129,8 @@ public class IMEMEstimation implements FlatVisitor
 	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(top);
 
+	String tileNumber = Layout.getTileNumber(top) + "";
+	
 	//Generate the tile code
 	if (!containsRawMain(filter))
 	    RawExecutionCode.doit(top);
@@ -148,7 +150,7 @@ public class IMEMEstimation implements FlatVisitor
 		System.out.println("moving...");
 		String[] cmdArray = new String[5];
 		cmdArray[0] = "mv";
-		cmdArray[1] = "tile0.c";
+		cmdArray[1] = "tile" + tileNumber + ".c";
 		cmdArray[2] = "Makefile.streamit";
 		cmdArray[3] = "fileio.bc";
 		cmdArray[4] = dir;    
@@ -164,7 +166,7 @@ public class IMEMEstimation implements FlatVisitor
 		cmdArray[2] = dir;
 		cmdArray[3] = "-f";
 		cmdArray[4] = "Makefile.streamit";
-		cmdArray[5] = "tile0.s";
+		cmdArray[5] = "tile" + tileNumber + ".s";
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
 

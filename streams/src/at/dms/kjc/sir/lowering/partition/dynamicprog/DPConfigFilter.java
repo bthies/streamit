@@ -28,14 +28,16 @@ class DPConfigFilter extends DPConfig {
 	this.isFissable = StatelessDuplicate.isFissable(filter);
     }
 
-    public int get(int tileLimit, int nextToJoiner) {
+    public DPCost get(int tileLimit, int nextToJoiner) {
 	int workCount = partitioner.getWorkEstimate().getWork(filter);
 	// return decreased work if we're fissable
+	int cost;
 	if (tilesForFission(tileLimit, nextToJoiner)>1 && isFissable) {
-	    return workCount / tilesForFission(tileLimit, nextToJoiner) + DynamicProgPartitioner.FISSION_OVERHEAD;
+	    cost = workCount / tilesForFission(tileLimit, nextToJoiner) + DynamicProgPartitioner.FISSION_OVERHEAD;
 	} else {
-	    return workCount;
+	    cost = workCount;
 	}
+	return new DPCost(cost, cost);
     }
 
     // see how many tiles we can devote to fissed filters;

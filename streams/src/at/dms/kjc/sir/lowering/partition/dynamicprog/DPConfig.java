@@ -27,7 +27,7 @@ abstract class DPConfig implements Cloneable {
      * tiles.  <nextToJoiner> is 1 iff this is next to a downstream
      * joiner under the current arrangement.
      */
-    abstract protected int get(int tileLimit, int nextToJoiner);
+    abstract protected DPCost get(int tileLimit, int nextToJoiner);
 
     /**
      * Traceback through a pre-computed optimal solution, keeping

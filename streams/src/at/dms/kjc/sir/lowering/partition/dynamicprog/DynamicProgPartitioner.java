@@ -31,7 +31,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * The factor by which a filter's input or output rate should be
      * multiplied to estimate the horizontal fusion overhead.
      */
-    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 0; //5;
+    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 5;
     /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but
@@ -121,7 +121,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	work = WorkEstimate.getWorkEstimate(str);
 	// build up tables.
 	System.out.println("  Calculating partition info...");
-	int bottleneck = topConfig.get(numTiles, 0);
+	int bottleneck = topConfig.get(numTiles, 0).getMaxCost();
 	int tilesUsed = numTiles;
 	// decrease the number of tiles to the fewest that we need for
 	// a given bottleneck.  This is in an attempt to decrease

@@ -67,6 +67,9 @@ public class AdjustGranularity {
 	    doBigBeam1(str, 3);
 	} else if (app.equals("bb4")) {
 	    doBigBeam1OnlyBottomSplit(str);
+	} else if (app.equals("bb620")) {
+            // june 20, for retreat talk
+	    doBigBeam620(str);
 	} else if (app.equals("crc32")) {
 	    doCRC32(str);
 	} else {
@@ -111,7 +114,7 @@ public class AdjustGranularity {
 	Namer.assignNames(str);
     }
 
-    private static void doBigBeam1OnlyBottomSplit(SIRStream _str) {
+    private static void doBigBeam620(SIRStream _str) {
 	SIRPipeline str = (SIRPipeline)_str;	
 
 	StreamItDot.printGraph(str, "unbalanced.dot");
@@ -143,6 +146,35 @@ public class AdjustGranularity {
 	//ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
 
+	StreamItDot.printGraph(str, "balanced.dot");
+	Namer.assignNames(str);
+    }
+
+    private static void doBigBeam1OnlyBottomSplit(SIRStream _str) {
+	SIRPipeline str = (SIRPipeline)_str;	
+
+	StreamItDot.printGraph(str, "unbalanced.dot");
+	System.err.println("Working on the big beamform...");
+
+	FieldProp.doPropagate(str);
+
+	// do top
+	SIRSplitJoin sj = (SIRSplitJoin)str.get(0);
+	for (int i=0; i<sj.size(); i++) {
+	    SIRPipeline pipe = (SIRPipeline)sj.get(i);
+	    FusePipe.fuse(pipe);
+	}
+
+	// do bottom
+	sj = (SIRSplitJoin)str.get(1);
+	for (int i=0; i<sj.size(); i++) {
+	    SIRSplitJoin toFuse = (SIRSplitJoin)((SIRPipeline)(sj.get(i))).get(0);
+	    FusePipe.fuse((SIRPipeline)toFuse.get(0));
+	    FusePipe.fuse((SIRPipeline)toFuse.get(1));
+	    FuseSplit.fuse(toFuse);
+	    FusePipe.fuse((SIRPipeline)sj.get(i));
+	}
+	
 	StreamItDot.printGraph(str, "balanced.dot");
 	Namer.assignNames(str);
     }

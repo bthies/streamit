@@ -39,6 +39,8 @@ public class ConstantProp {
 	    Propagator propagator = new Propagator(constants);
 	    // propagate constants within init function of <str>
 	    str.getInit().accept(propagator);
+	    // propagate into fields of <str>
+	    propagateFields(propagator, str);
 	    // Raise Vars
 	    str.getInit().accept(new VarDeclRaiser());	
 	    // propagate constants within work function of <str>
@@ -47,8 +49,6 @@ public class ConstantProp {
 		work.accept(propagator);
 		work.accept(new VarDeclRaiser());
 	    }
-	    // propagate into fields of <str>
-	    propagateFields(propagator, str);
 	    // unroll loops within init function of <str>
 	    unroller = new Unroller(constants);
 	    str.getInit().accept(unroller);
@@ -160,12 +160,14 @@ public class ConstantProp {
 	for (int i=0; i<args.size(); i++) {
 	    // if we are passing an arg to the init function...
 	    if (args.get(i) instanceof JLiteral) {
+		//System.err.println("!! top finding " + parameters[i].getIdent() + " " + parameters[i].hashCode() + " = " + args.get(i) + " in call to " + str.getIdent());
 		// if it's already a literal, record it
 		constants.put(parameters[i], (JLiteral)args.get(i));
 	    } else if ((args.get(i) instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args.get(i)).getVariable())!=null) {
 		// otherwise if it's associated w/ a literal, then
 		// record that and set the actual argument to be a literal
 		JExpression constant = (JExpression)constants.get(((JLocalVariableExpression)args.get(i)).getVariable());
+		//System.err.println("!! bottom finding " + parameters[i].getIdent() + " " + parameters[i].hashCode() + " = " + constant + " in call to " + str.getIdent());		
 		constants.put(parameters[i], constant);
 		args.set(i, constant);
 	    }

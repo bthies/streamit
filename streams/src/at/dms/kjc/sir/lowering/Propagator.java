@@ -174,7 +174,7 @@ class Propagator extends SLIRReplacingVisitor {
 		Enumeration enum=constants.keys();
 		while(enum.hasMoreElements()) {
 		    Object key=enum.nextElement();
-		    if(!prop.constants.containsKey(key))
+		    if(prop.constants.containsKey(key))
 			remove.add(key);
 		}
 		for(int j=0;i<remove.size();j++) {
@@ -235,26 +235,35 @@ class Propagator extends SLIRReplacingVisitor {
 		    else
 			return new JEmptyStatement(self.getTokenReference(), null);
 		}
+
+	    // propagate through then and else
+	    Propagator thenProp=new Propagator((Hashtable)constants.clone(),true);
+	    Propagator elseProp=new Propagator((Hashtable)constants.clone(),true);
+	    thenClause.accept(thenProp);
 	    if (elseClause != null) {
-		Propagator thenProp=new Propagator((Hashtable)constants.clone(),true);
-		thenClause.accept(thenProp);
-		Propagator elseProp=new Propagator((Hashtable)constants.clone(),true);
 		elseClause.accept(elseProp);
-		constants=thenProp.constants;
-		Enumeration enum=constants.keys();
-		LinkedList remove=new LinkedList();
-		while(enum.hasMoreElements()) {
-		    Object key=enum.nextElement();
-		    if(!elseProp.constants.containsKey(key))
-			remove.add(key);
-		}
-		for(int i=0;i<remove.size();i++) {
-		    constants.remove(remove.get(i));
-		    changed.put(remove.get(i),Boolean.TRUE);
-		}
-	    } else {
-		thenClause.accept(this);
 	    }
+	    // reconstruct constants as those that are the same in
+	    // both <then> and <else>
+	    Hashtable newConstants = new Hashtable();
+	    for (Enumeration e = thenProp.constants.keys(); e.hasMoreElements(); ) {
+		Object thenKey = e.nextElement();
+		Object thenVal = thenProp.constants.get(thenKey);
+		Object elseVal = elseProp.constants.get(thenKey);
+		if (thenVal.equals(elseVal)) {
+		    newConstants.put(thenKey, thenVal);
+		}
+	    }
+	    // mark anything that's in <newConstants> but not in
+	    // <constants> as <changed>
+	    for (Enumeration e = constants.keys(); e.hasMoreElements(); ) {
+		Object key = e.nextElement();
+		if (!newConstants.containsKey(key)) {
+		    changed.put(key, Boolean.TRUE);
+		}
+	    }
+	    // set <constants> to <newConstants>
+	    constants = newConstants;
 	}
 	return self;
     }

@@ -190,12 +190,13 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     protected void attrPrint(String name, String body)
     {
-        if (body == null)
-            return;
-        
         attrStart(name);
         printData(" ");
-        printData(body);
+        if (body == null) {
+	    printData("NULL");
+	} else {
+	    printData(body);
+	}
         attrEnd();
     }
 
@@ -1421,7 +1422,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 			    JExpression[] args,
 			    SIRStream target) {
 	blockStart("SIRInitStatement");
-	//attrPrint("target", target.getName());
+	attrPrint("target ", target.toString());
 	attrStart("args");
 	for (int i=0; i<args.length; i++) {
 	    args[i].accept(this);

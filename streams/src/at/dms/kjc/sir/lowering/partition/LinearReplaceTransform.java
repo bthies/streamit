@@ -32,7 +32,7 @@ public final class LinearReplaceTransform extends StreamTransform {
 	// again detect that <str> is linear, since it is a newly constructed stream
 	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
 	LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(str);
-	boolean smallCode = linearRep.getCost().getMultiplies() < LinearPartitioner.MAX_MULT_TO_UNROLL;
+	boolean smallCode = Math.max(linearRep.getCost().getMultiplies(), linearRep.getCost().getAdds()) < LinearPartitioner.MAX_MULT_TO_UNROLL;
 
 	// seems like we can never beat the original filter's
 	// implementation (at least in beamformer), so just do nothing

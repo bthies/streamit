@@ -5,7 +5,7 @@ import java.util.*;
 
 /**
  * This represents a partitioning of the children of a single SIR
- * Container.
+ * Container.  A PartitionGroup is immutable.
  */
 public class PartitionGroup {
 

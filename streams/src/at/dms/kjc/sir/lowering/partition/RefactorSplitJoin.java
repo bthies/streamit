@@ -3,6 +3,7 @@ package at.dms.kjc.sir.lowering.partition;
 import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
@@ -189,6 +190,38 @@ public class RefactorSplitJoin {
     }
 
     /**
+     * Mutates <str> into one in which all splitjoins contained in any
+     * children are made rectangular and have synchronization after
+     * each child.
+     */
+    public static void addDeepRectangularSyncPoints(SIRStream str) {
+	// first lift everything
+	Lifter.lift(str);
+	// make all splitjoins rectangular and add synchronization
+	IterFactory.createIter(str).accept(new EmptyStreamVisitor() {
+		public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
+		    super.preVisitSplitJoin(self, iter);
+		    self.makeRectangular();
+		}
+		public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
+		    super.postVisitSplitJoin(self, iter);
+		    // don't need to do anything if only one level in <self>
+		    if (self.getRectangularHeight()>1) {
+			// make partitiongroup, putting each child in its own group
+			int[] partitions = new int[self.getRectangularHeight()];
+			for (int i=0; i<partitions.length; i++) {
+			    partitions[i] = 1;
+			}
+			SIRPipeline synced = addSyncPoints(self, PartitionGroup.createFromArray(partitions));
+			self.getParent().replace(self, synced);
+		    }
+		}});
+	// lift all but sync points we added
+	Lifter.liftPreservingSync(str);
+    }
+    static int ij=0;
+
+    /**
      * Given that all of the children of <sj> are pipelines and that
      * <partition> describes a partitioning for such a pipeline,
      * re-arrange <sj> into a pipeline of several splitjoins, each of
@@ -247,7 +280,9 @@ public class RefactorSplitJoin {
 	    // cases, this is the same as for <sj>; otherwise it's
 	    // the template RR splits and joins
 	    SIRSplitter split = (i==0 ? 
-				 SIRSplitter.createWeightedRR(newSJ, (JExpression[])sj.getSplitter().getInternalWeights().clone()) :
+				 (sj.getSplitter().getType()==SIRSplitType.DUPLICATE ? 
+				  SIRSplitter.create(newSJ, SIRSplitType.DUPLICATE, sj.size()) :
+				  SIRSplitter.createWeightedRR(newSJ, (JExpression[])sj.getSplitter().getInternalWeights().clone())) :
 				 SIRSplitter.createUniformRR(newSJ, new JIntLiteral(1)));
 	    SIRJoiner join = (i==partition.size()-1 ? 
 			      SIRJoiner.createWeightedRR(newSJ, (JExpression[])sj.getJoiner().getInternalWeights().clone()) :
@@ -377,6 +412,10 @@ public class RefactorSplitJoin {
 		SIRSplitJoin sj2 = (SIRSplitJoin)pipe.get(i+1);
 		// diff number of weights, can't do anything
 		if (sj1.size()!=sj2.size() || sj1.size()==1) {
+		    continue;
+		}
+		// can't do it if second splitjoin is a duplicate
+		if (sj2.getSplitter().getType()==SIRSplitType.DUPLICATE) {
 		    continue;
 		}
 		// get weights

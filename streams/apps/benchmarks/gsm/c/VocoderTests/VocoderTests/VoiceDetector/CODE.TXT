@@ -1,0 +1,551 @@
+  lagcount := 0
+
+  for j := 0 to 3 do
+  begin
+    smallag := maximum(Nj,N{j-1}) mod minimum(Nj,N{j-1})
+    if minimum(smallag,minimum(Nj,N{j-1})-smallag) < lthresh
+      then increment(lagcount)
+  end
+
+  veryoldlagcount := oldlagcount
+
+  oldlagcount := lagcount
+
+	tone := false
+	
+	den := a[1]*a[1]
+	num := 4*a[2] - a[1]*a[1]
+
+	if ( num <= 0 ) 
+	  return
+
+	if (( a[1] < 0 ) AND ( num / den < freqth ))
+	  return
+	            4
+	prederr := MULT (1 - RC[i]*RC[i])
+	           i=1
+
+	if (prederr < predth)
+	  tone := true
+
+	return
+
+	vvad := pvad > thvad
+
+  if vvad then increment(burstcount) else burstcount := 0
+
+  if burstcount >= burstconst then
+  begin
+    hangcount := hangconst;
+    burstcount := burstconst
+  end
+
+  vad := vvad or (hangcount >= 0)
+
+  if hangcount >= 0 then decrement(hangcount)
+
+IF ( scalauto < 0 ) THEN scalvad = 0;
+ELSE scalvad = scalauto;  / keep scalvad for use in subclause 3.2 /
+
+IF ( L_ACF[0] == 0 ) THEN
+						| e_pvad = -32768;
+						| m_pvad = 0;
+						| e_acf0 = -32768;
+						| m_acf0 = 0;
+						| EXIT  /continue with subclause 3.2/
+
+
+normacf = norm( L_ACF[0] );
+
+| FOR i = 0 to 8:
+|  sacf[i] = ( L_ACF[i] << normacf ) >> 19;
+| NEXT i:
+
+
+e_acf0 = add( 32, (scalvad << 1 ) );
+e_acf0 = sub( e_acf0, normacf);
+m_acf0 = sacf[0] << 3;
+
+
+e_pvad = add( e_acf0, 14 );
+e_pvad = sub( e_pvad, normrvad );
+
+L_temp = 0;
+
+| FOR i = 1 to 8:
+|  L_temp = L_add( L_temp, L_mult( sacf[i], rvad[i] ) );
+| NEXT i:
+
+L_temp = L_add( L_temp, L_mult( sacf[0], rvad[0] ) >> 1 );
+
+IF ( L_temp <= 0 ) THEN L_temp = 1;
+
+normprod = norm( L_temp );
+e_pvad = sub( e_pvad, normprod );
+m_pvad = ( L_temp << normprod ) >> 16;
+
+
+scal = sub( 10, (scalvad << 1) );
+
+
+| FOR i = 0 to 8:
+|  L_temp = L_ACF[i] >> scal;
+|  L_av0[i] = L_add( L_sacf[i], L_temp );
+|  L_av0[i] = L_add( L_sacf[i+9], L_av0[i] );
+|  L_av0[i] = L_add( L_sacf[i+18], L_av0[i] );
+|  L_sacf[ pt_sacf + i ] = L_temp;
+|  L_av1[i] = L_sav0[ pt_sav0 + i ];
+|  L_sav0[ pt_sav0 + i] = L_av0[i];
+| NEXT i:
+
+
+IF ( pt_sacf == 18 ) THEN pt_sacf = 0;
+ELSE pt_sacf = add( pt_sacf, 9);
+
+IF ( pt_sav0 == 27 ) THEN pt_sav0 = 0;
+ELSE pt_sav0 = add( pt_sav0, 9);
+
+
+IF( L_av1[0] == 0 ) THEN
+                         |== FOR i = 1 to 8:
+                         |    vpar[i] = 0;
+                         |== NEXT i:
+                         |    EXIT; /continue with subclause 3.3.2/
+temp = norm( L_av1[0] );
+|== FOR k=0 to 8:
+|    sacf[k] = ( L_av1[k] << temp ) >> 16;
+|== NEXT k:
+
+
+|== FOR i=1 to 7:
+|    K[9-i] = sacf[i];
+|== NEXT i:
+
+|== FOR i=0 to 8:
+|    P[i] = sacf[i];
+|== NEXT i:
+
+
+|== FOR n=1 to 8:
+|    IF( P[0] < abs( P[1] ) ) THEN
+|                                    |== FOR i = n to 8:
+|                                    |    vpar[i] = 0;
+|                                    |== NEXT i:
+|                                    | EXIT; /continue with
+|                                    |        subclause 3.3.2/
+|    vpar[n] = div( abs( P[1] ), P[0] );
+|    IF ( P[1] > 0 ) THEN vpar[n] = sub( 0, vpar[n] );
+|    IF ( n == 8 ) THEN EXIT; /continue with subclause 3.3.2/
+|
+|  Schur recursion:
+|
+|    P[0] = add( P[0], mult_r( P[1], vpar[n] ) );
+|==== FOR m=1 to 8-n:
+|      P[m] = add( P[m+1], mult_r( K[9-m], vpar[n] ) );
+|      K[9-m] = add( K[9-m], mult_r( P[m+1], vpar[n] ) );
+|==== NEXT m:
+|
+|== NEXT n:
+
+
+L_coef[0] = 16384 << 15;
+L_coef[1] = vpar[1] << 14;
+
+
+|= FOR m = 2 to 8:
+|== FOR i = 1 to m-1:
+|==  temp = L_coef[m-i] >> 16;  / takes the msb /
+|==  L_work[i] = L_add( L_coef[i], L_mult( vpar[m], temp ) );
+|== NEXT i
+|=
+|== FOR i = 1 to m-1:
+|==  L_coef[i] = L_work[i];
+|== NEXT i
+|=
+|= L_coef[m] = vpar[m] << 14;
+|= NEXT m:
+
+
+| FOR i = 0 to 8:
+|  aav1[i] = L_coef[i] >> 19;
+| NEXT i:
+
+|= FOR i= 0 to 8:
+|= L_work[i] = 0;
+|== FOR k = 0 to 8-i:
+|==  L_work[i] = L_add( L_work[i], L_mult( aav1[k], aav1[k+i] ) );
+|== NEXT k:
+|= NEXT i:
+
+IF ( L_work[0] == 0 ) THEN normrav1 =0;
+ELSE normrav1 = norm( L_work[0] );
+
+|= FOR i= 0 to 8:
+|= rav1[i] = ( L_work[i] << normrav1 ) >> 16;
+|= NEXT i:
+
+Keep the normrav1 for use in subclause 3.4 and 3.6.
+
+
+IF ( L_av0[0] == 0 ) THEN
+                          | FOR i = 0 to 8:
+                          |  sav0[i] = 4095;
+                          | NEXT i:
+ELSE
+    | shift = norm( L_av0[0] );
+    |= FOR i = 0 to 8:
+    |=  sav0[i] = ( L_av0[i] << shift-3 ) >> 16;
+    |= NEXT i:
+
+L_ S p = 0;
+|= FOR i = 1 to 8:
+|= L_ S p = L_add( L_ S p, L_mult( rav1[i], sav0[i] ) );
+|= NEXT i:
+
+
+IF ( L_ S p < 0 ) THEN L_temp = L_sub( 0, L_ S p );
+ELSE L_temp = L_ S p;
+
+IF ( L_temp == 0 ) THEN
+                       | L_dm  = 0;
+                       | shift = 0;
+ELSE
+     | sav0[0] = sav0[0] << 3;
+     | shift = norm( L_temp );
+     | temp  = ( L_temp << shift ) >> 16;
+     | IF ( sav0[0] >= temp ) THEN
+     |                            | divshift = 0;
+     |                            | temp = div( temp, sav0[0] );
+     | ELSE
+     |     | divshift = 1;
+     |     | temp = sub( temp, sav0[0] );
+     |     | temp = div( temp, sav0[0] );
+     |
+     | IF( divshift == 1 ) THEN L_dm = 32768;
+     | ELSE L_dm = 0;
+     |
+     | L_dm = L_add( L_dm, temp) << 1;
+     | IF( L_ S p < 0 ) THEN L_dm = L_sub( 0,  L_dm);
+
+
+L_dm = ( L_dm << 14 );
+L_dm = L_dm >> shift;
+L_dm = L_add( L_dm, ( rav1[0] << 11 ) );
+L_dm = L_dm >> normrav1;
+
+
+L_temp   = L_sub( L_dm, L_lastdm );
+L_lastdm = L_dm;
+IF ( L_temp < 0 ) THEN L_temp = L_sub( 0, L_temp );
+L_temp = L_sub( L_temp, 3277 );
+
+
+IF ( L_temp < 0 ) THEN stat = 1;
+ELSE stat = 0;
+
+temp = add( oldlagcount, veryoldlagcount );
+IF ( temp >= 4 ) THEN ptch = 1;
+ELSE ptch = 0;
+
+comp = 0;
+IF ( e_acf0 < E_PTH ) THEN  comp = 1;
+IF ( e_acf0 == E_PTH ) THEN  IF ( m_acf0 < M_PTH ) THEN comp =1;
+IF ( comp == 1 ) THEN
+                      | e_thvad = E_PLEV;
+                      | m_thvad = M_PLEV;
+                      | EXIT; /continue with subclause 3.7/
+
+
+comp = 0;
+IF ( ptch == 1 ) THEN comp = 1;
+IF ( stat == 0 ) THEN comp = 1;
+IF ( tone == 1 ) THEN comp = 1;
+IF ( comp == 1 ) THEN
+                      | adaptcount = 0;
+                      | EXIT; /continue with subclause 3.7/
+
+
+adaptcount = add( adaptcount, 1 );
+IF ( adaptcount <= 8 ) THEN EXIT; /continue with subclause 3.7/
+
+
+m_thvad = sub( m_thvad, (m_thvad >> 5 ) );
+IF ( m_thvad < 16384) THEN
+                           | m_thvad = m_thvad << 1;
+                           | e_thvad = sub( e_thvad, 1 );
+
+
+L_temp = L_add( m_pvad, m_pvad );
+L_temp = L_add( L_temp, m_pvad );
+L_temp = L_temp >> 1;
+e_temp = add( e_pvad, 1 );
+IF ( L_temp > 32767 ) THEN
+                          | L_temp = L_temp >> 1;
+                          | e_temp = add( e_temp, 1 );
+m_temp = L_temp;
+
+
+comp = 0;
+IF ( e_thvad < e_temp) THEN comp = 1;
+IF (e_thvad == e_temp) THEN  IF (m_thvad < m_temp) THEN comp =1;
+
+
+IF ( comp == 1 ) THEN
+|  Compute thvad +(thvad/inc).
+| L_temp = L_add( m_thvad, (m_thvad >> 4 ) );
+| IF ( L_temp > 32767 ) THEN
+|                           | m_thvad = L_temp >> 1;
+|                           | e_thvad = add( e_thvad,1 );
+| ELSE m_thvad = L_temp;
+| comp2 = 0;
+| IF ( e_temp < e_thvad) THEN comp2 = 1;
+| IF (e_temp == e__hvad) THEN IF (m_temp<m_thvad) THEN comp2 = 1;
+| IF ( comp2 == 1 ) THEN
+|                        | e_thvad = e_temp;
+|                        | m_thvad = m_temp;
+
+
+IF ( e_pvad == E_MARGIN ) THEN
+                               | L_temp = L_add(m_pvad, M_MARGIN);
+                               | m_temp = L_temp >> 1;
+                               | e_temp = add( e_pvad, 1 );
+ELSE
+    | IF ( e_pvad > E_MARGIN ) THEN
+    |     | temp = sub( e_pvad, E_MARGIN );
+    |     | temp = M_MARGIN >> temp;
+    |     | L_temp = L_add( m_pvad, temp );
+    |     | IF ( L_temp > 32767) THEN
+    |     |                           | e_temp = add( e_pvad, 1 );
+    |     |                           | m_temp = L_temp >> 1;
+    |     | ELSE
+    |     |    | e_temp = e_pvad;
+    |     |    | m_temp = L_temp;
+    | ELSE
+    |     | temp = sub( E_MARGIN, e_pvad );
+    |     | temp = m_pvad >> temp;
+    |     | L_temp = L_add( M_MARGIN, temp );
+    |     | IF (L_temp > 32767) THEN
+    |     |                          | e_temp = add( E_MARGIN, 1);
+    |     |                          | m_temp = L_temp >> 1;
+    |     | ELSE
+    |     |    | e_temp = E_MARGIN;
+    |     |    | m_temp = L_temp;
+
+
+comp = 0;
+IF ( e_thvad > e_temp) THEN comp = 1;
+IF (e_thvad == e_temp) THEN  IF (m_thvad > m_temp) THEN comp =1;
+
+IF ( comp == 1 ) THEN
+                      | e_thvad = e_temp;
+                      | m_thvad = m_temp;
+
+
+normrvad  = normrav1;
+
+|= FOR i = 0 to 8:
+|= rvad[i] = rav1[i];
+|= NEXT i:
+
+
+adaptcount = 9;
+
+vvad = 0;
+IF (e_pvad >  e_thvad) THEN vvad = 1;
+IF (e_pvad == e_thvad) THEN IF (m_pvad > m_thvad) THEN vvad =1;
+
+IF ( vvad == 1 ) THEN burstcount = add( burstcount, 1 );
+ELSE burstcount = 0;
+
+IF ( burstcount >= 3 ) THEN 
+                            | hangcount =  5;
+                            | burstcount = 3;
+
+vad = vvad;
+IF ( hangcount >= 0 ) THEN
+                           | vad = 1;
+                           | hangcount = sub( hangcount, 1 );
+
+
+lagcount = 0;
+
+|= FOR i = 0 to 3:
+|=  Search the maximum and minimum of consecutive lags.
+|= IF ( oldlag > lags[i] ) THEN
+|=                              | minlag = lags[i];
+|=                              | maxlag = oldlag;
+|= ELSE
+|=      | minlag = oldlag;
+|=      | maxlag = lags[i] ;
+|=
+|= Compute smallag (modulo operation not defined ):
+|=
+|= smallag = maxlag;
+|== | FOR j = 0 to 2:
+|== |  IF (smallag >= minlag) THEN smallag =sub( smallag, minlag);
+|== | NEXT j;
+|=
+|= Minimum of smallag and minlag - smallag:
+|=
+|= temp = sub( minlag, smallag );
+|= IF ( temp < smallag ) THEN smallag = temp;
+|= IF ( smallag < 2 ) THEN lagcount = add( lagcount, 1 );
+|= Save the current LTP lag.
+|= oldlag = lags[i];
+|= NEXT i:
+
+
+veryoldlagcount = oldlagcount;
+oldlagcount     = lagcount;
+
+|== FOR i = 0 to 79:
+|    sofh[i] = mult_r( sof[i], hann[i] );
+|    sofh[159-i] = mult_r( sof[159-i], hann[i] );
+|== NEXT i;
+
+
+smax = 0;
+
+|== FOR k = 0 to 159:
+|    temp = abs( sofh[k] );
+|    IF ( temp > smax ) THEN smax = temp;
+|== NEXT k;
+
+IF ( smax == 0 ) THEN scalauto = 0;
+ELSE scalauto = sub( 4, norm( smax << 16));
+
+
+IF ( scalauto > 0 ) THEN
+                        | temp = 16384 >> sub( scalauto,1);
+                        |== FOR k = 0 to 159:
+                        |    sofh[k] = mult_r( sofh[k], temp);
+                        |== NEXT k:
+
+
+|== FOR k=0 to 4:
+|    L_acfh[k] = 0;
+|==== FOR i=k to 159:
+|      L_temp = L_mult( sofh[i], sofh[i-k] );
+|      L_acfh[k] = L_add( L_acfh[k], L_temp );
+|==== NEXT i:
+|== NEXT k:
+
+
+IF( L_acfh[0] == 0 ) THEN
+                         |== FOR i = 1 to 4:
+                         |    rc[i] = 0;
+                         |== NEXT i:
+                         | EXIT; /continue with subclause 3.10.4/
+temp = norm( L_acfh[0] );
+|== FOR k=0 to 4:
+|    sacf[k] = ( L_acfh[k] << temp ) >> 16;
+|== NEXT k:
+
+
+|== FOR i=1 to 3:
+|    K[5-i] = sacf[i];
+|== NEXT i:
+
+|== FOR i=0 to 4:
+|    P[i] = sacf[i];
+|== NEXT i:
+
+|== FOR n=1 to 4:
+|    IF( P[0] < abs( P[1] ) ) THEN
+|                                    |== FOR i = n to 4:
+|                                    |    rc[i] = 0;
+|                                    |== NEXT i:
+|                                    | EXIT; /continue with subclause 3.10.4/
+|    rc[n] = div( abs( P[1] ), P[0] );
+|    IF ( P[1] > 0 ) THEN rc[n] = sub( 0, rc[n] );
+|    IF ( n == 4 ) THEN EXIT; /continue with subclause 3.10.4/
+|
+|
+|    P[0] = add( P[0], mult_r( P[1], rc[n] ) );
+|==== FOR m=1 to 4-n:
+|      P[m] = add( P[m+1], mult_r( K[5-m], rc[n] ) );
+|      K[5-m] = add( K[5-m], mult_r( P[m+1], rc[n] ) );
+|==== NEXT m:
+|
+|== NEXT n:
+
+
+temp = rc[1] >> 2;  
+a[1] = add( temp, mult_r( rc[2], temp ) );
+a[2] = rc[2] >> 2;
+
+L_den = L_mult ( a[1], a[1] );
+
+L_temp = a[2] << 16;
+L_num = L_sub ( L_temp, L_den );
+
+
+IF ( L_num <= 0 ) THEN 
+                      | tone = 0;
+                      | EXIT; /clause 3 complete/
+
+
+IF ( a[1] < 0) THEN
+                     | temp = L_den >> 16;
+                     | L_den = L_mult ( temp, 3189 );
+                     | L_temp = L_sub ( L_num, L_den );
+                     | IF ( L_temp < 0 ) THEN
+                                             | tone = 0;
+                                             | EXIT; /clause 3 complete/
+
+
+prederr = 32767;
+
+|== FOR i=1 to 4
+|    temp = mult ( rc[i], rc[i] );
+|    temp = sub ( 32767, temp);
+|    prederr = mult( prederr, temp );
+|== NEXT i;
+
+
+temp = sub ( prederr, 1464 );
+
+IF ( temp < 0 ) THEN tone = 1;
+ ELSE tone = 0;
+
+    LAR(1): bit 15 := 1 if VAD on
+            bit 15 := 0 if VAD 0ff
+
+
+    LAR(2): bit 15 := 1 if SP on
+            bit 15 := 0 if SP off
+
+
+| FOR i = 1 to 8:
+|  L_Temp = 2;	/* const. for rounding*/
+|  | FOR n = 1 to 4:
+|  |  L_Temp1 = LAR[j-n](i);	/*conversion 16 --> 32 bit*/
+|  |  L_Temp  = L_Add( L_Temp , L_Temp1 );
+|  | NEXT n
+|  L_Temp = L_temp >> 2; 
+|  mean (LAR(i)) = L_Temp;	/*conversion 32 --> 16 bit*/
+| NEXT i;
+
+
+
+L_Temp = 8;	/* const. for rounding*/
+
+| FOR n = 1 to 4:
+|  | FOR i = 1 to 4:
+|  |  L_Temp1 = xmax[j-n](i);	/*conversion 16 --> 32 bit*/
+|  |  L_Temp  = L_Add( L_Temp , L_Temp1 );
+|  | NEXT i
+| NEXT n
+
+L_Temp = L_Temp >> 4;
+
+mean (xmax) = L_Temp;	/*conversion 32 --> 16 bit*/
+
+
+Page 36
+ETS 300 965 (GSM 06.32 version 5.0.3): March 1998
+
+Page 7
+ETS 300 965 (GSM 06.32 version 5.0.3): March 1998
+
+

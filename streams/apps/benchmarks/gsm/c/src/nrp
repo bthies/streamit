@@ -1,0 +1,28 @@
+code.c:	word	* dp  = S->dp0 + 120;	/* [ -120...-1 ] */
+code.c:	(void)memcpy( (char *)S->dp0, (char *)(S->dp0 + 160),
+code.c:		120 * sizeof(*S->dp0) );
+decode.c:	register word		msr = S->msr;
+decode.c:	S->msr = msr;
+decode.c:	word		* drp = S->dp0 + 120;
+long_term.c:	if (S->fast) 
+long_term.c:		if (S->ltp_cut)
+long_term.c:		if (S->ltp_cut)
+long_term.c:	Nr = Ncr < 40 || Ncr > 120 ? S->nrp : Ncr;
+long_term.c:	S->nrp = Nr;
+lpc.c:	if (S->fast) Fast_Autocorrelation (s,	  L_ACF );
+preprocess.c:	word       z1 = S->z1;
+preprocess.c:	longword L_z2 = S->L_z2;
+preprocess.c:	word 	   mp = S->mp;
+preprocess.c:	S->z1   = z1;
+preprocess.c:	S->L_z2 = L_z2;
+preprocess.c:	S->mp   = mp;
+short_term.c:	register word		* u = S->u;
+short_term.c:	register word		* u = S->u;
+short_term.c:	register word		* v = S->v;
+short_term.c:	register word		* v = S->v;
+short_term.c:	word		* LARpp_j	= S->LARpp[ S->j      ];
+short_term.c:	word		* LARpp_j_1	= S->LARpp[ S->j ^= 1 ];
+short_term.c:# 	define	FILTER 	(* (S->fast			\
+short_term.c:	word		* LARpp_j	= S->LARpp[ S->j     ];
+short_term.c:	word		* LARpp_j_1	= S->LARpp[ S->j ^=1 ];
+short_term.c:# 	define	FILTER 	(* (S->fast			\

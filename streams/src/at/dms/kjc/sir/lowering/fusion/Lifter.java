@@ -39,7 +39,7 @@ public class Lifter implements StreamVisitor {
 	final SIRFilter filter = (SIRFilter)pipe.get(0);
 
 	// rename the contents of <filter>
-	new RenameAll().renameFilterContents(filter);
+	RenameAll.renameFilterContents(filter);
 
 	// add a method call to filter's <init> from <pipe's> init
 	// function 

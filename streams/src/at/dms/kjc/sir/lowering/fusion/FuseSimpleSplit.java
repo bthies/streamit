@@ -76,9 +76,7 @@ public class FuseSimpleSplit {
 					     SIRFilter newFilter) {
 	SIRPipeline pipe = new SIRPipeline("Wrapper_for_" + newFilter.getName());
 	// make a dummy init function
-	pipe.setInit(new JMethodDeclaration(null, 0, CStdType.Void, "init",
-					    JFormalParameter.EMPTY, CClassType.EMPTY,
-					    new JBlock(), null, null));
+	pipe.setInit(SIRStream.makeEmptyInit());
 
 	// make a splitFilter only if it's not a duplicate and it's
 	// not a null split
@@ -165,10 +163,9 @@ public class FuseSimpleSplit {
 
     private static void doRenaming(List children) {
         // Rename all of the child streams of this.
-        RenameAll ra = new RenameAll();
         Iterator iter = children.iterator();
         while (iter.hasNext()) {
-	    ra.renameFilterContents((SIRFilter)iter.next());
+	    RenameAll.renameFilterContents((SIRFilter)iter.next());
         }
     }
 	
@@ -207,15 +204,7 @@ public class FuseSimpleSplit {
 					CType type) {
 
 	// make empty init function
-	JMethodDeclaration init = new JMethodDeclaration(null,
-							 at.dms.kjc.Constants.ACC_PUBLIC,
-							 CStdType.Void,
-							 "init",
-							 JFormalParameter.EMPTY,
-							 CClassType.EMPTY,
-							 new JBlock(null, new LinkedList(), null),
-							 null,
-							 null);
+	JMethodDeclaration init = SIRStream.makeEmptyInit();
 	
 	// make work function
 	JMethodDeclaration work = new JMethodDeclaration(null,

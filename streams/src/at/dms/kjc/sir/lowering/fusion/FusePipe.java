@@ -271,9 +271,8 @@ public class FusePipe {
 	}
 	
 	// rename the components of the filters
-	RenameAll renamer = new RenameAll();
 	for (ListIterator it=filters.listIterator(); it.hasNext(); ) {
-	    renamer.renameFilterContents((SIRFilter)it.next());
+	    RenameAll.renameFilterContents((SIRFilter)it.next());
 	}
 	
 	// construct set of filter info

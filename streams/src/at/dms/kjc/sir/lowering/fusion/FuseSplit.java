@@ -80,14 +80,7 @@ public class FuseSplit {
 	    return sj;
 	}
 
-	// dispatch to simple fusion
-	SIRStream dispatchResult = dispatchToSimple(sj);
-	if (dispatchResult!=null) {
-	    return dispatchResult;
-	}
-	
 	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + numParts + " filters..."); 
-
 
         // first refactor the splitjoin so we can do partial fusing
         SIRSplitJoin factored = RefactorSplitJoin.addHierarchicalChildren(sj, partition);
@@ -374,10 +367,9 @@ public class FuseSplit {
 
     private static void doRenaming(List children) {
         // Rename all of the child streams of this.
-        RenameAll ra = new RenameAll();
         Iterator iter = children.iterator();
         while (iter.hasNext()) {
-	    ra.renameFilterContents((SIRFilter)iter.next());
+	    RenameAll.renameFilterContents((SIRFilter)iter.next());
         }
     }
 	
@@ -619,7 +611,7 @@ public class FuseSplit {
         // Start with the init function from the split/join.
 	JMethodDeclaration init = sj.getInit();
 	if(init==null)
-	    init=new JMethodDeclaration(null,at.dms.kjc.Constants.ACC_PUBLIC,CStdType.Void,"init",JFormalParameter.EMPTY,CClassType.EMPTY,new JBlock(),null,null);
+	    init=SIRStream.makeEmptyInit();
 	// add allocations of peek and push buffers
 	for (int i=0; i<childInfo.length; i++) {
 	    for (int j=0; j<2; j++) {

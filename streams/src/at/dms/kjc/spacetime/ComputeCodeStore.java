@@ -67,8 +67,10 @@ public class ComputeCodeStore {
 	}
 	else {
 	    //otherwise create the raw ir code 
-	    //if we can run direct communication, run it
-	    if (filterInfo.isDirect())
+	    //if we can run linear or direct communication, run it
+	    if(filterInfo.isLinear())
+		exeCode=new Linear(filterInfo);
+	    else if (filterInfo.isDirect())
 		exeCode = new DirectCommunication(filterInfo);
 	    else
 		exeCode = new BufferedCommunication(filterInfo);
@@ -113,15 +115,17 @@ public class ComputeCodeStore {
 	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
 	
 
-	rawMain.addStatementFirst(new 
-				   JExpressionStatement(null,
-							new JMethodCallExpression
-							(null,
-							 new JThisExpression(null),
-							 filterInfo.filter.getInit().getName(),
-							 paramArray),
-							null));
-					  
+	JMethodDeclaration init=filterInfo.filter.getInit();
+	if(init!=null)
+	    rawMain.addStatementFirst(new 
+		JExpressionStatement(null,
+				     new JMethodCallExpression
+					 (null,
+					  new JThisExpression(null),
+					  filterInfo.filter.getInit().getName(),
+					  paramArray),
+				     null));
+	
     }
     
 
@@ -131,7 +135,9 @@ public class ComputeCodeStore {
 	RawExecutionCode exeCode;
 	
 	//if we can run direct communication, run it
-	if (filterInfo.isDirect())
+	if(filterInfo.isLinear())
+	    exeCode=new Linear(filterInfo);
+	else if (filterInfo.isDirect())
 	    exeCode = new DirectCommunication(filterInfo);
 	else 
 	    exeCode = new BufferedCommunication(filterInfo);
@@ -146,20 +152,22 @@ public class ComputeCodeStore {
 	addTraceFieldsAndMethods(exeCode, filterInfo);
 	//get the initialization routine of the phase
 	JMethodDeclaration initStage = exeCode.getInitStageMethod();
-	//add the method
-	addMethod(initStage);
-
-
-	//now add a call to the init stage in main at the appropiate index
-	//and increment the index
-	initBlock.
-	    addStatement(new JExpressionStatement
-			 (null, 
-			  new JMethodCallExpression(null,
-						    new JThisExpression(null),
-						    initStage.getName(),
-						    new JExpression[0]),
-			  null));
+	if(initStage!=null) {
+	    //add the method
+	    addMethod(initStage);
+	    
+	    
+	    //now add a call to the init stage in main at the appropiate index
+	    //and increment the index
+	    initBlock.
+		addStatement(new JExpressionStatement
+		    (null, 
+		     new JMethodCallExpression(null,
+					       new JThisExpression(null),
+					       initStage.getName(),
+					       new JExpression[0]),
+		     null));
+	}
     }
     
 

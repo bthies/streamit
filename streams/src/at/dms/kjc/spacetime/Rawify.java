@@ -35,7 +35,9 @@ public class Rawify
 		    //generate switchcode based on the presence of buffering		    
 		    int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
 		    
-		    if (filterInfo.isDirect())
+		    if(filterInfo.isLinear())
+			createSwitchCodeLinear((FilterTraceNode)traceNode,trace,filterInfo,init,false,tile,rawChip,mult);
+		    else if (filterInfo.isDirect())
 			createSwitchCode((FilterTraceNode)traceNode, 
 					 trace, filterInfo, init, false, tile, rawChip, mult);
 		    else
@@ -102,6 +104,9 @@ public class Rawify
 				       TraceBufferSchedule.getInputBuffers(node)));
     }
     
+    private static void createSwitchCodeLinear(FilterTraceNode node,Trace parent,FilterInfo filterInfo,boolean init,boolean primePump,RawTile tile,RawChip rawChip,int mult) {
+	createReceiveCode(0, node, parent, filterInfo, init, primePump, tile, rawChip);
+    }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 
 					 FilterInfo filterInfo,

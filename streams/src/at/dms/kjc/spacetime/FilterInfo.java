@@ -23,6 +23,7 @@ public class FilterInfo
     public int primePump;
     public int peek;
 
+    private boolean linear;
     private boolean direct;
 
     public FilterTraceNode traceNode;
@@ -58,19 +59,23 @@ public class FilterInfo
 	prePeek = 0;
 	prePush = 0;
 	prePop = 0;
-	push = filter.getPushInt();
-	pop = filter.getPopInt();
-	peek = filter.getPeekInt();
-
-	if (isTwoStage()) {
-	    prePeek = filter.getInitPeek();
-	    prePush = filter.getInitPush();
-	    prePop = filter.getInitPop();
+	linear=filter.isLinear();
+	if(!linear) {
+	    direct = DirectCommunication.testDC(this);
+	    push = filter.getPushInt();
+	    pop = filter.getPopInt();
+	    peek = filter.getPeekInt();
+	    if (isTwoStage()) {
+		prePeek = filter.getInitPeek();
+		prePush = filter.getInitPush();
+		prePop = filter.getInitPop();
+	    }
+	} else {
+	    peek=filter.getArray().length;
+	    push=1;
+	    pop=filter.getPopCount();
 	}
-	
 	calculateRemaining();
-	
-	direct = DirectCommunication.testDC(this);
     }
     
     public boolean isTwoStage() 
@@ -151,6 +156,11 @@ public class FilterInfo
 	     Math.max((initFire - 2), 0) * pop);
 	
 	return remaining;
+    }
+
+    //returns true if this filter does not need a receive buffer
+    public boolean isLinear() {
+	return linear;
     }
 
     //returns true if this filter does not need a receive buffer

@@ -18,8 +18,8 @@ public class TraceExtractor {
 	    Q.add(topFilters[i]);
 	while(Q.size()>0) {
 	    UnflatFilter filter=(UnflatFilter)Q.removeFirst();
-	    FilterContent content=new FilterContent(filter.filter,execCounts,lfa);
-	    boolean linear=content.getLinear()!=null;
+	    FilterContent content=new FilterContent(filter);
+	    boolean linear=content.getArray()!=null;
 	    TraceNode node;
 	    Trace trace;
 	    if(!visited.containsKey(filter)) {
@@ -41,8 +41,8 @@ public class TraceExtractor {
 		boolean cont=true;
 		while(cont&&filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
 		    UnflatFilter newFilter=filter.out[0][0].dest;
-		    content=new FilterContent(newFilter.filter,execCounts,lfa);
-		    if((content.getLinear()!=null)==linear) {
+		    content=new FilterContent(newFilter);
+		    if((content.getArray()!=null)==linear) {
 			FilterTraceNode filterNode=new FilterTraceNode(content);
 			node.setNext(filterNode);
 			filterNode.setPrevious(node);
@@ -138,7 +138,7 @@ public class TraceExtractor {
 	if(node instanceof InputTraceNode)
 	    node=node.getNext();
 	StringBuffer out=null;
-	if(((FilterTraceNode)node).getFilter().getLinear()!=null)
+	if(((FilterTraceNode)node).getFilter().getArray()!=null)
 	    out=new StringBuffer("color=cornflowerblue, style=filled, label=\""+node.toString());
 	else
 	    out=new StringBuffer("label=\""+node.toString());

@@ -1796,6 +1796,19 @@ public class TraceIRtoC extends SLIREmptyVisitor
         print("}");
     }
 
+    /**
+     * prints InlineAssembly code
+     */
+    public void visitInlineAssembly(InlineAssembly self,String[] asm) {
+	System.err.println("VISITING: "+asm);
+	print("asm volatile(\"");
+	if(asm.length>0)
+	    print(asm[0]);
+	for(int i=1;i<asm.length;i++)
+	    print("\\n\\t"+asm[i]);
+	print("\"::);");
+    }
+
     // ----------------------------------------------------------------------
     // PROTECTED METHODS
     // ----------------------------------------------------------------------

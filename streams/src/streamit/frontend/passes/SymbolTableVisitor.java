@@ -11,7 +11,7 @@ import java.util.Iterator;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.4 2003-05-13 19:32:52 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.5 2003-05-20 15:19:33 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -25,6 +25,14 @@ public class SymbolTableVisitor extends FEReplacer
     protected SymbolTable symtab;
 
     /**
+     * The current stream type.  Functions in this class keep the
+     * prevailing stream type up to date, but anonymous streams may
+     * have a null stream type.  Calling a visitor method will update
+     * the stream type if necessary and recursively visit children.
+     */
+    protected StreamType streamType;
+
+    /**
      * Create a new symbol table visitor.
      *
      * @param symtab  Symbol table to use if no other is available,
@@ -33,6 +41,20 @@ public class SymbolTableVisitor extends FEReplacer
     public SymbolTableVisitor(SymbolTable symtab)
     {
         this.symtab = symtab;
+        this.streamType = null;
+    }
+
+    /**
+     * Get the type of an <code>Expression</code>.
+     *
+     * @param expr  Expression to get the type of
+     * @returns     Type of the expression
+     * @see         streamit.frontend.nodes.GetExprType
+     */
+    public Type getType(Expression expr)
+    {
+        // To think about: should we cache GetExprType objects?
+        return (Type)expr.accept(new GetExprType(symtab, streamType));
     }
 
     public Object visitFieldDecl(FieldDecl field)
@@ -80,8 +102,10 @@ public class SymbolTableVisitor extends FEReplacer
 
     public Object visitStreamSpec(StreamSpec spec)
     {
+        StreamType oldStreamType = streamType;
         SymbolTable oldSymTab = symtab;
         symtab = new SymbolTable(symtab);
+        streamType = spec.getStreamType();
         for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
@@ -90,6 +114,7 @@ public class SymbolTableVisitor extends FEReplacer
         }
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;
+        streamType = oldStreamType;
         return result;
     }
 

@@ -26,6 +26,8 @@ public class Rawify
 	    //iterate over the TraceNodes
 	    TraceNode traceNode = trace.getHead();
 	    while (traceNode != null) {
+		System.out.println("Rawify: " + traceNode);
+		
 		//do the appropiate code generation
 		if (traceNode.isFilterTrace()) {
 		    RawTile tile = rawChip.getTile(((FilterTraceNode)traceNode).getX(), 

@@ -95,14 +95,13 @@ public class FilterInfo
 	if (traceNode.getPrevious().isFilterTrace()) {
 	    ret = new FilterTraceNode[1];
 	    ret[0] = (FilterTraceNode)traceNode.getPrevious();
-	}
-	else { //input trace node
+	} else { //input trace node
 	    InputTraceNode input = (InputTraceNode)traceNode.getPrevious();
-
+	    
 	    //here we assume each trace has at least one filter trace node
 	    ret = new FilterTraceNode[input.getSources().length];
 	    for (int i = 0; i < ret.length; i++) {
-		ret[i] = (FilterTraceNode)input.getSources()[i].getPrevious();
+		    ret[i] = (FilterTraceNode)input.getSources()[i].getPrevious();
 	    }
 	}    
 	return ret;
@@ -227,6 +226,7 @@ public class FilterInfo
 	    //add all the upstream filters items that reach this filter
 	    for (int i = 0; i < previous.length; i++) {
 		OutputTraceNode out = (OutputTraceNode)previous[i].getNext();
+		System.out.println("Previous: " + previous[i]);
 		upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
 		    ((double)out.getWeight(in) / out.totalWeights()));
 	    }

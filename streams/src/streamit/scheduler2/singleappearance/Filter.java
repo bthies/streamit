@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Filter.java,v 1.2 2002-06-30 04:01:19 karczma Exp $ */
+/* $Id: Filter.java,v 1.3 2002-07-16 01:10:01 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/FilterIter;
 import streamit.scheduler.Schedule;
@@ -58,7 +58,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                     initPeek,
                     initPop,
                     initPush);
-            algorithm.addInitScheduleStage(initPhasingSchedule);
+            addInitScheduleStage(initPhasingSchedule);
         }
 
         // now do the steady schedule
@@ -93,7 +93,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                     steadyPeek,
                     steadyPop,
                     steadyPush);
-            algorithm.addSchedulePhase(steadyPhasingSchedule);
+            addSteadySchedulePhase(steadyPhasingSchedule);
         }
     }
 }

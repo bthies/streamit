@@ -1,8 +1,9 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: Pipeline.java,v 1.3 2002-06-30 04:01:10 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.4 2002-07-16 01:09:53 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/PipelineIter;
+import streamit.scheduler.iriter./*persistent.*/
+PipelineIter;
 import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.Schedule;
 
@@ -20,7 +21,7 @@ abstract public class Pipeline
     extends streamit.scheduler.base.Pipeline
     implements StreamInterface
 {
-    final protected StreamAlgorithm algorithm = new StreamAlgorithm(this);
+    final private StreamAlgorithm algorithm = new StreamAlgorithm(this);
 
     public Pipeline(PipelineIter iterator, StreamFactory factory)
     {
@@ -42,12 +43,12 @@ abstract public class Pipeline
     {
         streamit.scheduler.base.StreamInterface child;
         child = getChild(nChild);
-        
+
         if (!(child instanceof StreamInterface))
         {
             ERROR("This pipeline contains a child that is not hierarchical");
         }
-        
+
         return (StreamInterface) child;
     }
 
@@ -107,14 +108,19 @@ abstract public class Pipeline
 
     public PhasingSchedule getPhasingInitSchedule()
     {
-        return algorithm.getPhasingInitSchedule ();
+        return algorithm.getPhasingInitSchedule();
     }
-    
-    public Schedule getInitSchedule ()
+
+    public Schedule getInitSchedule()
     {
         return algorithm.getInitSchedule();
     }
-    
+
+    public void addInitScheduleStage(PhasingSchedule newStage)
+    {
+        algorithm.addInitScheduleStage(newStage);
+    }
+
     public int getNumSteadyPhases()
     {
         return algorithm.getNumSteadyPhases();
@@ -142,11 +148,63 @@ abstract public class Pipeline
 
     public PhasingSchedule getPhasingSteadySchedule()
     {
-        return algorithm.getPhasingSteadySchedule ();
+        return algorithm.getPhasingSteadySchedule();
     }
 
-    public Schedule getSteadySchedule ()
+    public Schedule getSteadySchedule()
     {
         return algorithm.getSteadySchedule();
+    }
+
+    public void addSteadySchedulePhase(PhasingSchedule newPhase)
+    {
+        algorithm.addSteadySchedulePhase(newPhase);
+    }
+
+    public void advanceChildInitSchedule(StreamInterface child)
+    {
+        algorithm.advanceChildInitSchedule(child, 1);
+    }
+
+    public void advanceChildInitSchedule(
+        StreamInterface child,
+        int numStages)
+    {
+        algorithm.advanceChildInitSchedule(child, numStages);
+    }
+
+    public void advanceChildSteadySchedule(StreamInterface child)
+    {
+        algorithm.advanceChildSteadySchedule(child, 1);
+    }
+
+    public void advanceChildSteadySchedule(
+        StreamInterface child,
+        int numPhases)
+    {
+        algorithm.advanceChildSteadySchedule(child, numPhases);
+    }
+
+    public PhasingSchedule getChildInitStage(
+        StreamInterface child,
+        int nStage)
+    {
+        return algorithm.getChildInitStage(child, nStage);
+    }
+
+    public PhasingSchedule getChildNextInitStage(StreamInterface child)
+    {
+        return algorithm.getChildInitStage(child, 0);
+    }
+    public PhasingSchedule getChildSteadyPhase(
+        StreamInterface child,
+        int nPhase)
+    {
+        return algorithm.getChildSteadyPhase(child, nPhase);
+    }
+
+    public PhasingSchedule getChildNextSteadyPhase(StreamInterface child)
+    {
+        return algorithm.getChildSteadyPhase(child, 0);
     }
 }

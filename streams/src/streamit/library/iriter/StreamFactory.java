@@ -1,12 +1,12 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.3 2002-07-06 06:06:05 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.4 2002-07-16 01:09:49 karczma Exp $ */
 
 import streamit.misc.DestroyedClass;
 import streamit.scheduler.iriter.Iterator;
 import streamit.scheduler.base.StreamInterface;
 import streamit.scheduler.singleappearance.Filter;
-import streamit.scheduler.singleappearance.Pipeline;
+import streamit.scheduler.minlatency.Pipeline;
 import streamit.scheduler.singleappearance.SplitJoin;
 import streamit.scheduler.singleappearance.FeedbackLoop;
 

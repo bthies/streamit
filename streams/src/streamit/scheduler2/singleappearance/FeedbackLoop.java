@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: FeedbackLoop.java,v 1.1 2002-07-06 06:06:15 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.2 2002-07-16 01:10:00 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -252,8 +252,7 @@ public class FeedbackLoop
 
                 // check if this is a legal schedule in the first place
                 if (feedbackLoop.getDelaySize()
-                    < nInitRunJoin * joinFlow.popWeights[1]
-                    )
+                    < nInitRunJoin * joinFlow.popWeights[1])
                 {
                     ERROR(
                         "Could not schedule this feedback loop.\n"
@@ -294,7 +293,7 @@ public class FeedbackLoop
             }
 
             // and put it in the real init schedule
-            algorithm.addInitScheduleStage(initSchedule);
+            addInitScheduleStage(initSchedule);
         }
 
         // store the starting buffer sizes:
@@ -422,15 +421,15 @@ public class FeedbackLoop
                         + "but this scheduler isn't intelligent enough to do it");
             }
         }
-        
+
         // add the steady schedule to the feedback loop's steady schedule
-        algorithm.addSchedulePhase(steadySchedule);
+        addSteadySchedulePhase(steadySchedule);
 
         // make sure that after execution of this schedule, the size of buffers
         // left over is SAME as when we started!
-        ASSERT(bodyBuffer== startBodyBuffer);
+        ASSERT(bodyBuffer == startBodyBuffer);
         ASSERT(splitBuffer == startSplitBuffer);
         ASSERT(loopBuffer == startLoopBuffer);
-        ASSERT(joinBuffer== startJoinBuffer);
+        ASSERT(joinBuffer == startJoinBuffer);
     }
 }

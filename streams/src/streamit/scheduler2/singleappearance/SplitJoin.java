@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: SplitJoin.java,v 1.2 2002-07-06 06:06:15 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.3 2002-07-16 01:10:01 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -29,9 +29,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
         {
             splitSched = new PhasingSchedule(this);
             int nPhase;
-            for (nPhase = 0;
-                nPhase < super.getNumSplitPhases();
-                nPhase++)
+            for (nPhase = 0; nPhase < super.getNumSplitPhases(); nPhase++)
             {
                 splitSched.appendPhase(super.getSplitPhase(nPhase));
             }
@@ -159,7 +157,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
             // run through the split an appropriate number of times
             // and append it to the init schedule
             {
-                PhasingSchedule splitSched = this.getSplitPhase();
+                PhasingSchedule splitSched = getSplitPhase();
 
                 int nRun;
                 for (nRun = 0; nRun < initSplitRunCount; nRun++)
@@ -182,7 +180,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                             child.getInitScheduleStage(nStage));
                     }
                 }
-                algorithm.addInitScheduleStage(initSched);
+                addInitScheduleStage(initSched);
             }
         }
 
@@ -233,7 +231,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                 }
             }
 
-            algorithm.addSchedulePhase(steadySched);
+            addSteadySchedulePhase(steadySched);
         }
     }
 }

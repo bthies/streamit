@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Pipeline.java,v 1.3 2002-07-06 06:06:15 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.4 2002-07-16 01:10:01 karczma Exp $ */
 
 import java.util.Map;
 import java.util.HashMap;
@@ -111,8 +111,7 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                     // and perform the peek adjust
                     neededByNext
                         += MAX(
-                            (child.getSteadyPeek()
-                                - child.getSteadyPop())
+                            (child.getSteadyPeek() - child.getSteadyPop())
                                 - (peek_i - pop_i),
                             0);
 
@@ -151,7 +150,7 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
             }
 
             // now append the one init phase to my initialization phase
-            algorithm.addInitScheduleStage(initStage);
+            addInitScheduleStage(initStage);
         }
 
         // compute the steady state schedule
@@ -169,12 +168,11 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                 int n;
                 for (n = 0; n < getChildNumExecs(nChild); n++)
                 {
-                    steadyPhase.appendPhase(
-                        child.getPhasingSteadySchedule());
+                    steadyPhase.appendPhase(child.getPhasingSteadySchedule());
                 }
             }
 
-            algorithm.addSchedulePhase(steadyPhase);
+            addSteadySchedulePhase(steadyPhase);
         }
     }
 }

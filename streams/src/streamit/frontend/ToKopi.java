@@ -16,7 +16,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.4 2003-07-10 15:12:55 dmaze Exp $
+ * @version $Id: ToKopi.java,v 1.5 2003-07-16 12:48:57 dmaze Exp $
  */
 public class ToKopi
 {
@@ -75,6 +75,7 @@ public class ToKopi
         prog = (Program)prog.accept(new FindFreeVariables());
         prog = (Program)prog.accept(new NoticePhasedFilters());
         prog = (Program)prog.accept(new DoComplexProp(varGen));
+        prog = (Program)prog.accept(new ComplexToStruct());
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new TranslateEnqueue());
         prog = (Program)prog.accept(new InsertInitConstructors(varGen));

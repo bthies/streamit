@@ -160,7 +160,7 @@ public class MakefileGenerator
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 	
 	if (KjcOptions.outputs > 0) 
-	    fw.write("global gstreamitoutputs = " + KjcOptions.outputs + ";\n");
+	    fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
 	
 	if (KjcOptions.decoupled) {
 	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");

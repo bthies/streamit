@@ -37,14 +37,20 @@ if [ -z "$indir" ] || [ -z "$outfile" ]; then
 fi
 
 rm -f $outfile
-echo "Benchmark;Options;Tiles in Config;Tiles Assigned;Cycles per Steady;Outputs Per Steady;Thruput per 10^5;MFLOPS;instr issued;FPU;MEM;Branch;Admin;ALU;max instr issued" >> $outfile
+#echo "Benchmark;Options;Tiles in Config;Tiles Assigned;Cycles per Steady;Outputs Per Steady;Thruput per 10^5;MFLOPS;instr issued;FPU;MEM;Branch;Admin;ALU;max instr issued" >> $outfile
 
+print_header="1"
 
 #concat all the files
 files=$(ls $indir)
 for file in $files; do
     #extract the info and write to the output file
     if [ -f "$indir/$file" ]; then
+	if [ $print_header = "1" ]; then
+	    echo -n "benchmark;options;" >> $outfile
+	    echo $(tail -2 "$indir/$file" | grep "tiles") >> $outfile
+	    print_header="0"
+	fi
 	extract_concat $file
     fi
 done

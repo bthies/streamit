@@ -64,8 +64,9 @@ public class Flattener {
 							   interfaceTables);
 	// build schedule as set of higher-level work functions
 	Schedule schedule = SIRScheduler.schedule(str, flatClass);
-	// add LIR hooks to init functions
+	// add LIR hooks to init and work functions
 	LowerInitFunctions.lower(str, schedule);
+        LowerWorkFunctions.lower(str);
 
 	// DEBUGGING PRINTING
 	System.out.println("----------- AFTER FLATTENER ------------------");

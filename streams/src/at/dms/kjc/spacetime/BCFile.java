@@ -91,6 +91,16 @@ public class BCFile
 	buf.append("global to_file_numbers_path = malloc(strlen(streamit_home) + 40);\n"); 
 	buf.append("sprintf(to_file_numbers_path, \"%s%s\", streamit_home, \"/include/to_file_numbers.bc\");\n"); 
 	buf.append("include(to_file_numbers_path);\n"); 
+	buf.append("global gStreamItTiles = " + rawChip.getYSize() * rawChip.getXSize() + ";\n");
+	int mappedTiles = 0;
+	for (int i = 0; i < rawChip.getXSize(); i++) 
+	    for (int j = 0; j < rawChip.getYSize(); j++) {
+		RawTile tile = rawChip.getTile(i, j);
+		if (tile.isMapped()) {
+		    mappedTiles++;
+		}
+	    }
+	buf.append("global gMappedTiles = " + mappedTiles + ";\n");
 	//define the vars
 	//define the number of items received so far and zero it
 	buf.append("global gNGItems;\n");

@@ -27,14 +27,22 @@ public final class VerticalCutTransform extends IdempotentTransform {
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	Utils.assert(str instanceof SIRSplitJoin, "Only support vertical cuts on splitjoins, but got "  + str.getClass());
-	SIRSplitJoin sj = (SIRSplitJoin)str;
-	Utils.assert(sj.size() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
-
-	// add one because of indexing convention in partitiongroup
-	int[] partitions = { cutPos + 1, sj.size() - cutPos - 1};
-	PartitionGroup group = PartitionGroup.createFromArray(partitions);
-	return RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
+	if (str instanceof SIRSplitJoin) {
+	    SIRSplitJoin sj = (SIRSplitJoin)str;
+	    Utils.assert(sj.size() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    
+	    // add one because of indexing convention in partitiongroup
+	    int[] partitions = { cutPos + 1, sj.size() - cutPos - 1};
+	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
+	    return RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
+	} else if (str instanceof SIRFeedbackLoop) {
+	    Utils.assert(cutPos==0, "Trying to vertical cut feedbackloop at position " + cutPos);
+	    // a cut at pos 1 is equivalent to breaking this guy in half
+	    return str;
+	} else {
+	    Utils.fail("Don't support vertical cuts on type "  + str.getClass());
+	    return null;
+	}
     }
 
     public String toString() {

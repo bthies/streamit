@@ -2,7 +2,7 @@
 #ifndef __MESSAGE_H
 #define __MESSAGE_H
 
-#include <mysocket.h>
+#include <netsocket.h>
 
 class message {
 
@@ -21,7 +21,7 @@ public:
   
   message(int size, int method_id, int execute_at);
 
-  void read_params(mysocket *sock);
+  void read_params(netsocket *sock);
 
   int get_int_param(); // advances current
   float get_float_param(); // advances current

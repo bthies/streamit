@@ -187,6 +187,7 @@ void init_instance::initialize_sockets() {
       //out_sockets[sd] = pfd[0];
       //in_sockets[sd] = pfd[1];
 
+      /*
       int sockets[2];
       if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
         perror("opening stream socket pair");
@@ -198,8 +199,9 @@ void init_instance::initialize_sockets() {
       
       out_done[sd] = true;
       in_done[sd] = true;
+      */
 
-      /*
+      
       memsocket *ms = new memsocket();
 
       out_sockets[sd] = ms;
@@ -207,7 +209,7 @@ void init_instance::initialize_sockets() {
       
       out_done[sd] = true;
       in_done[sd] = true;
-      */
+      
     }
   }
 

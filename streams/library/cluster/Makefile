@@ -1,6 +1,6 @@
 
 CC =		gcc
-CFLAGS = 	-O2 -I.
+CFLAGS = 	-g -O2 -I.
 AR =            ar
 RANLIB =        ranlib
 LIBRARY =       libcluster.a
@@ -11,8 +11,6 @@ NAMES =		sock_dscr \
 		connection_info \
 		timer \
 		sdep \
-		data_consumer \
-		data_producer \
 		open_socket \
 		message \
 		init_instance \
@@ -28,7 +26,12 @@ NAMES =		sock_dscr \
 		read_setup \
 		mysocket \
 		netsocket \
-		memsocket
+		memsocket \
+
+#               data_consumer
+#               data_producer
+#               network_connection
+#               network_manager
 
 SOURCES = 	$(NAMES:%=%.cpp)
 DEPS = 		$(NAMES:%=%.d)

@@ -9,7 +9,7 @@ message::message(int size, int method_id, int execute_at) {
   this->execute_at = execute_at;
 }
 
-void message::read_params(mysocket *sock) {
+void message::read_params(netsocket *sock) {
   int param_size = size - 12;
   params = (int*)malloc(param_size);
   current = params;

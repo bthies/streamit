@@ -1,63 +1,63 @@
 
-#ifndef __MEMSOCKET_H
-#define __MEMSOCKET_H
+#ifndef __NETWORK_CONNECTION_H
+#define __NETWORK_CONNECTION_H
 
-#include <mysocket.h>
-#include <pthread.h>
 #include <stdlib.h>
-#include <stdio.h>
+#include <pthread.h>
 #include <queue>
 
 using namespace std;
 
-class memsocket : public mysocket {
+class network_connection {
+
+  // read/write queue   push() --> pop()
 
   queue<void*> free_buffers;
-  pthread_mutex_t free_buffer_lock;
-  pthread_cond_t free_buffer_release_cond;
 
   queue<void*> data_queue;
-  pthread_mutex_t queue_lock;
-  pthread_cond_t queue_push_cond;
-  pthread_cond_t queue_pop_cond;
+  pthread_mutex_t queue_lock; 
+  pthread_cond_t queue_push_cond; 
+  pthread_cond_t queue_pop_cond; 
 
-  int buffer_size;
+  pthread_mutex_t free_buffer_lock; 
+  pthread_cond_t free_buffer_release_cond; 
+
+  int fd;
+
+  char *data_buffer;
+  int data_offset;
+
+  int read; // 1 - read connection, 0 - write connection
+
+  friend class network_manager;
+  friend void read_data(int fd, network_connection *c);
+  friend void write_data(int fd, network_connection *c);
 
  public:
 
-  memsocket() {
-    buffer_size = 0;
-    pthread_mutex_init(&free_buffer_lock, NULL);
-    pthread_cond_init(&free_buffer_release_cond, NULL);
+  network_connection(int fd, int read) {
+
+    // allocate data buffers
+    for (int y = 0; y < 25; y++) { 
+      free_buffers.push(malloc(40000));
+    }
+
+    if (read) {
+      data_buffer = (char*)malloc(40000);
+      data_offset = 0;
+    } else {
+      data_offset = -1;
+    }
+    this->fd = fd;
+    this->read = read;
+
     pthread_mutex_init(&queue_lock, NULL);
     pthread_cond_init(&queue_push_cond, NULL);
     pthread_cond_init(&queue_pop_cond, NULL);
+
+    pthread_mutex_init(&free_buffer_lock, NULL);
+    pthread_cond_init(&free_buffer_release_cond, NULL);
   }
-
-
-  virtual void set_buffer_size(int size) {
-
-    if (buffer_size == 0) {
-
-      pthread_mutex_lock(&free_buffer_lock);
-      for (int y = 0; y < 25; y++) {
-	free_buffers.push(malloc(size));
-      }
-      pthread_cond_signal(&free_buffer_release_cond);
-      pthread_mutex_unlock(&free_buffer_lock);
-
-
-    } else {
-      if (size != buffer_size) {
-	fprintf(stderr, "error: not alowed to change the buffer size form memsocket!");
-	exit(0);
-      }
-    }
-  }
-  
-  virtual bool is_mem_socket() { return true; }
-  virtual bool is_net_socket() { return false; }
-  virtual void close() {}
 
   void *get_free_buffer() {
     void *res;
@@ -69,7 +69,7 @@ class memsocket : public mysocket {
     free_buffers.pop();
     pthread_mutex_unlock(&free_buffer_lock);
     return res;
-  }  
+  }
 
   void release_buffer(void *buf) {
     pthread_mutex_lock(&free_buffer_lock);
@@ -78,12 +78,8 @@ class memsocket : public mysocket {
     pthread_mutex_unlock(&free_buffer_lock);
   }
 
-  inline int queue_size() {
-    int size;
-    pthread_mutex_lock(&queue_lock);
-    size = data_queue.size();
-    pthread_mutex_unlock(&queue_lock);
-    return size;
+  inline int get_fd() {
+    return fd;
   }
 
   inline bool queue_empty() {
@@ -93,7 +89,7 @@ class memsocket : public mysocket {
   inline bool queue_full() {
     return queue_size() >= 24;
   }
-  
+
   inline void wait_for_data() {
     pthread_mutex_lock(&queue_lock);
     pthread_cond_wait(&queue_push_cond, &queue_lock);
@@ -106,32 +102,41 @@ class memsocket : public mysocket {
     pthread_cond_wait(&queue_pop_cond, &queue_lock);
     pthread_mutex_unlock(&queue_lock);
     return;
-  }  
-  
-  inline void push_buffer(void *ptr) {
+  }
+
+  inline int queue_size() {
+    int size;
     pthread_mutex_lock(&queue_lock);
+
+    size = data_queue.size();
+
+    pthread_mutex_unlock(&queue_lock);
+    return size;
+  }
+
+  inline void push(void *ptr) {
+
+    pthread_mutex_lock(&queue_lock);
+
     data_queue.push(ptr);
     pthread_cond_signal(&queue_push_cond);
+
     pthread_mutex_unlock(&queue_lock);
   }
 
-  inline void* pop_buffer() {
+  inline void* pop() {
+
     void *res;
     pthread_mutex_lock(&queue_lock);
+
     res = data_queue.front();
     data_queue.pop();
     pthread_cond_signal(&queue_pop_cond);
+
     pthread_mutex_unlock(&queue_lock);
     return res;
-  }  
-
-  
-  
-  
-
+  }
 
 };
 
 #endif
-
-

@@ -18,7 +18,15 @@ class mysocket {
 
   void check_thread_status();
 
-  virtual void set_item_size(int size) = 0;
+  // virtual functions
+
+  virtual void set_buffer_size(int size) = 0;
+  virtual bool is_mem_socket() = 0;
+  virtual bool is_net_socket() = 0;
+  
+  virtual void close() = 0;
+
+  /*
   virtual int eof() = 0;
   virtual void close() = 0;
   virtual bool data_available() = 0;
@@ -34,7 +42,8 @@ class mysocket {
 
   float read_float();
   void write_float(float);
-
+  */
+  
 };
 
 #endif

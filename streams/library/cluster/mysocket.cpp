@@ -13,6 +13,8 @@ void mysocket::check_thread_status() {
   if (check_thread_fptr != NULL) check_thread_fptr();    
 }
 
+/*
+
 int mysocket::read_int() {
   int a;
   read_chunk((char*)&a, 4);
@@ -45,5 +47,5 @@ void mysocket::write_float(float a) {
   write_chunk((char*)&a, sizeof(a));
   return;
 }
-
+*/
 

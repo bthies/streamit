@@ -260,8 +260,7 @@ public class StreamItDot implements AttributeStreamVisitor
 
         // ...and walk through the body.
         Iterator iter = self.getParallelStreams().iterator();
-        while (iter.hasNext())
-        {
+        while (iter.hasNext()) {
             SIROperator oper = (SIROperator)iter.next();
             np = (NamePair)oper.accept(this);
             printEdge(pair.first, np.first);

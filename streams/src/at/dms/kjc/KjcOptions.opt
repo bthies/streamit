@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.7 2002-11-05 22:20:24 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.8 2002-11-11 03:45:56 thies Exp $
  */
 
 prefix Kjc
@@ -164,6 +164,12 @@ longname		"ilppartition"
 	type		boolean
 	default		"false"
 	help		"Use the ILP partitioner."
+
+longname		"dppartition"
+	shortcut	"y"
+	type		boolean
+	default		"false"
+	help		"Use the dynamic programming partitioner."
 
 longname		"sync"
 	shortcut	"k"

@@ -1,0 +1,14 @@
+<benchmark>
+  <name>RadixSort</name>
+  <desc>Binary Radix Sort Algorithm</desc>
+  <description>
+  An implementation of binary radix sort, where each successive filter sorts on
+  a different bit.  
+  </description>
+  <reference>http://www.jimloy.com/computer/radix.htm</reference>
+  <implementations>  
+    <impl lang="StreamIt">
+      <file>RadixSort.str</file>
+    </impl>   
+  </implementations>
+</benchmark>

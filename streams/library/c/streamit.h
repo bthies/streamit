@@ -390,7 +390,7 @@ void ERROR (void *data, char *error_msg);
  *
  * The output can be safely set to be one of the inputs if desired.
  */
-void do_halfcomplex_multiply(float *Y, float *X, float *H, int size);
+void do_halfcomplex_multiply(void* thisptr, float *Y, float *X, float *H, int size);
 
 /**
  * Replaces the contents of input_buff with the value of its FFT.
@@ -400,7 +400,7 @@ void do_halfcomplex_multiply(float *Y, float *X, float *H, int size);
  * valued FFT(input_buff) is stored in the "half complex array" format of
  * fftw (see http://www.fftw.org/doc/fftw_2.html#SEC5)
  **/
-void convert_to_freq(float* input_buff, int size);
+void convert_to_freq(void* thisptr, float* input_buff, int size);
 
 /** 
  * Scales each element of the passed array by 1/size. 
@@ -411,7 +411,7 @@ void convert_to_freq(float* input_buff, int size);
  * This function is used to pre-scale the coefficients of H
  * by 1/N so we don't have to do it on each filter invocation.
  **/
-void scale_by_size(float* buffer, int size);
+void scale_by_size(void* thisptr, float* buffer, int size);
 
 
 /**
@@ -429,12 +429,7 @@ void scale_by_size(float* buffer, int size);
  *
  * Note that this function trashes the values in input_buff.
  **/
-void convert_from_freq(float* input_buff, float* output_buff, int size);
-
-
-
-
-
+void convert_from_freq(void* thisptr, float* input_buff, float* output_buff, int size);
 
 
 #endif /* STREAMIT_H */

@@ -1,7 +1,12 @@
 /*
  * interface to the fftw library to replace streamit_fft.c (which 
- * contians a simple non optimized implementation of fft)
- * $Id: streamit_fftw.c,v 1.6 2003-02-06 21:52:29 aalamb Exp $
+ * contains a simple non optimized implementation of fft).
+ * 
+ * It is reasonably important to note that all of the functions
+ * have as their first argument a pointer to "this" in the
+ * streamit program. We simply ignore this.
+ * 
+ * $Id: streamit_fftw.c,v 1.7 2003-03-08 21:12:02 aalamb Exp $
  */
 
 #include <sfftw.h>
@@ -64,7 +69,7 @@ static struct rfftw_plan_list *get_plan(int size)
  *
  * The output can be safely set to be one of the inputs if desired.
  */
-void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
+void do_halfcomplex_multiply(void* thisptr, float *Y, float *X, float *H, int size)
 {
   int i;
   
@@ -126,7 +131,7 @@ void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
  * valued FFT(input_buff) is stored in the "half complex array" format of
  * fftw (see http://www.fftw.org/doc/fftw_2.html#SEC5)
  **/
-void convert_to_freq(float* input_buff, int size) 
+void convert_to_freq(void* thisptr, float* input_buff, int size) 
 {
   struct rfftw_plan_list *plan;
   int i;
@@ -156,7 +161,7 @@ void convert_to_freq(float* input_buff, int size)
  * This function is used to pre-scale the coefficients of H
  * by 1/N so we don't have to do it on each filter invocation.
  **/
-void scale_by_size(float* buffer, int size) 
+void scale_by_size(void* thisptr,float* buffer, int size) 
 {
   int i;
   for (i=0; i<size; i++) {
@@ -180,7 +185,7 @@ void scale_by_size(float* buffer, int size)
  *
  * Note that this function trashes the values in input_buff.
  **/
-void convert_from_freq(float* input_buff, float* output_buff, int size) 
+void convert_from_freq(void* thisptr, float* input_buff, float* output_buff, int size) 
 {
   struct rfftw_plan_list *plan;
 

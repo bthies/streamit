@@ -16,7 +16,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.1 2003-07-02 19:38:01 dmaze Exp $
+ * @version $Id: ToKopi.java,v 1.2 2003-07-02 21:44:37 dmaze Exp $
  */
 public class ToKopi
 {
@@ -55,6 +55,32 @@ public class ToKopi
         }
     }
 
+    public static Program lowerIRToJava(Program prog)
+    {
+        /* What's the right order for these?  Clearly generic
+         * things like MakeBodiesBlocks need to happen first.
+         * I don't think there's actually a problem running
+         * MoveStreamParameters after DoComplexProp, since
+         * this introduces only straight assignments which the
+         * Java front-end can handle.  OTOH,
+         * MoveStreamParameters introduces references to
+         * "this", which doesn't exist. */
+        TempVarGen varGen = new TempVarGen();
+        prog = (Program)prog.accept(new MakeBodiesBlocks());
+        prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
+        prog = (Program)prog.accept(new NoRefTypes());
+        prog = (Program)prog.accept(new RenameBitVars());
+        prog = (Program)prog.accept(new FindFreeVariables());
+        prog = (Program)prog.accept(new NoticePhasedFilters());
+        prog = (Program)prog.accept(new DoComplexProp(varGen));
+        prog = (Program)prog.accept(new TranslateEnqueue());
+        prog = (Program)prog.accept(new InsertInitConstructors());
+        prog = (Program)prog.accept(new MoveStreamParameters());
+        prog = (Program)prog.accept(new NameAnonymousFunctions());
+        prog = (Program)prog.accept(new TrimDumbDeadCode());
+        return prog;
+    }
+
     public void run(String[] args)
     {
         doOptions(args);
@@ -81,7 +107,7 @@ public class ToKopi
             return;
         }
 
-        prog = ToJava.lowerIRToJava(prog, false);
+        prog = lowerIRToJava(prog);
 
         SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
         SIRPrinter sirPrinter = new SIRPrinter();

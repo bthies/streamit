@@ -160,18 +160,26 @@ public class WorkEstimate {
      * prints work of all functions to system.err.
      */
     public void printWork() {
-	System.err.println("\nWORK ESTIMATES:");
-	for (Iterator it = workMap.keySet().iterator(); it.hasNext(); ) {
-	    SIRFilter obj = (SIRFilter)it.next();
-	    String objName = obj.toString();
-	    System.err.print(objName);
-	    for (int i=objName.length();  i<70; i++) {
+	WorkList sorted = getSortedFilterWork();
+	System.err.println("  Work Estimates:");
+	for (int i=sorted.size()-1; i>=0; i--) {
+	    SIRFilter obj = sorted.getFilter(i);
+	    String objName = obj.getIdent();
+	    System.err.print("    ");
+	    int length;
+	    if (objName.length()>30) {
+		System.err.print(objName.substring(0,27) + "...");
+		length=30;
+	    } else {
+		length = objName.length();
+		System.err.print(objName);
+	    }
+	    for (int j=length; j<35; j++) {
 		System.err.print(" ");
 	    }
-	    System.err.println("\t" + getWork(obj) + "\t" + "(" +
+	    System.err.println("\t" + sorted.getWork(i) + "\t" + "(" +
 			       ((int)getPercentageWork(obj)) + "%)");
 	}
-	
     }
 
     /**

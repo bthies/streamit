@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAssignmentExpression.java,v 1.3 2002-06-22 09:52:14 jasperln Exp $
+ * $Id: JAssignmentExpression.java,v 1.4 2002-06-24 11:31:27 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -30,7 +30,7 @@ import at.dms.compiler.UnpositionedError;
  */
 public class JAssignmentExpression extends JBinaryExpression {
 
-    private JLocalVariable copyVar;
+    private JLocalVariableExpression copyVar;
 
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
@@ -50,11 +50,11 @@ public class JAssignmentExpression extends JBinaryExpression {
     super(where, left, right);
   }
 
-    public JLocalVariable getCopyVar() {
+    public JLocalVariableExpression getCopyVar() {
 	return copyVar;
     }
 
-    public void setCopyVar(JLocalVariable var) {
+    public void setCopyVar(JLocalVariableExpression var) {
 	copyVar=var;
     }
 

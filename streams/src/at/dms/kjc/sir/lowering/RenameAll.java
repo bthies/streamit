@@ -76,7 +76,7 @@ public class RenameAll extends SLIRReplacingVisitor
         super();
         symtab = new RASymbolTable();
     }
-    
+
     /**
      * Renames the contents of <f1> but does not change the identity
      * of the filter itself.

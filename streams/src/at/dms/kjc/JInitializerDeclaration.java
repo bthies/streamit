@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JInitializerDeclaration.java,v 1.3 2003-05-16 21:06:38 thies Exp $
+ * $Id: JInitializerDeclaration.java,v 1.4 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,6 +31,8 @@ public class JInitializerDeclaration extends JMethodDeclaration {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JInitializerDeclaration() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompoundAssignmentExpression.java,v 1.4 2002-09-24 19:43:25 thies Exp $
+ * $Id: JCompoundAssignmentExpression.java,v 1.5 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -34,6 +34,8 @@ public class JCompoundAssignmentExpression extends JAssignmentExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JCompoundAssignmentExpression() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.3 2003-05-16 21:06:35 thies Exp $
+ * $Id: JavaStyleComment.java,v 1.4 2003-05-16 21:58:31 thies Exp $
  */
 
 package at.dms.compiler;
@@ -30,6 +30,8 @@ public class JavaStyleComment implements Serializable {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JavaStyleComment() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.14 2003-01-26 12:30:54 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.15 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -39,6 +39,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JMethodDeclaration() {} // for cloner only
 
   /**
    * Constructs a method declaration node in the syntax tree.

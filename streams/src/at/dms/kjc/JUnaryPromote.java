@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryPromote.java,v 1.4 2003-01-20 22:05:25 dmaze Exp $
+ * $Id: JUnaryPromote.java,v 1.5 2003-05-16 21:58:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,6 +30,8 @@ public class JUnaryPromote extends JExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JUnaryPromote() {} // for cloner only
 
  /**
    * Construct a node in the parsing tree

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoubleLiteral.java,v 1.6 2003-05-16 21:06:38 thies Exp $
+ * $Id: JDoubleLiteral.java,v 1.7 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,6 +33,8 @@ public class JDoubleLiteral extends JLiteral {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JDoubleLiteral() {} // for cloner only
 
   /**
    * Constructs a literal expression from a textual representation.

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIfStatement.java,v 1.6 2002-06-25 19:59:28 jasperln Exp $
+ * $Id: JIfStatement.java,v 1.7 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -37,6 +37,7 @@ public class JIfStatement extends JStatement {
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
 
+    protected JIfStatement() {} // for cloner only
   /**
    * Construct a node in the parsing tree
    * @param	where		the line of this node in the source code

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.1 2001-08-30 16:32:31 thies Exp $
+ * $Id: TabbedPrintWriter.java,v 1.2 2003-05-16 21:58:31 thies Exp $
  */
 
 package at.dms.compiler;
@@ -31,6 +31,8 @@ public class TabbedPrintWriter {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    private TabbedPrintWriter() {} // for cloner only
 
   /**
    * construct a pretty printer object for java code

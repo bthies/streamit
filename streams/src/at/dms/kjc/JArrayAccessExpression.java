@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.8 2003-03-06 12:56:47 thies Exp $
+ * $Id: JArrayAccessExpression.java,v 1.9 2003-05-16 21:58:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -34,6 +34,7 @@ public class JArrayAccessExpression extends JExpression {
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
 
+    protected JArrayAccessExpression() {} // for cloner only
   /**
    * This version is the original kopi one; tries to resolve type
    * automatically.  If you know the type, use the other constructor

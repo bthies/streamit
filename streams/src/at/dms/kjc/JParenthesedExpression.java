@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JParenthesedExpression.java,v 1.5 2002-10-29 20:44:43 mgordon Exp $
+ * $Id: JParenthesedExpression.java,v 1.6 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,6 +28,8 @@ import at.dms.util.InconsistencyException;
  * This class represents expression within parenthese
  */
 public class JParenthesedExpression extends JExpression {
+
+    protected JParenthesedExpression() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

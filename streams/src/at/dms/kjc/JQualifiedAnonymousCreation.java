@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JQualifiedAnonymousCreation.java,v 1.4 2003-05-16 03:49:40 thies Exp $
+ * $Id: JQualifiedAnonymousCreation.java,v 1.5 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,6 +32,8 @@ public class JQualifiedAnonymousCreation extends JExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JQualifiedAnonymousCreation() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

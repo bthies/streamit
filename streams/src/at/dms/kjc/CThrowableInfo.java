@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CThrowableInfo.java,v 1.2 2003-05-16 21:06:38 thies Exp $
+ * $Id: CThrowableInfo.java,v 1.3 2003-05-16 21:58:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,6 +28,8 @@ public class CThrowableInfo extends at.dms.util.Utils {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    private CThrowableInfo() {} // for cloner only
 
   /**
    * Constructs an informztion handler

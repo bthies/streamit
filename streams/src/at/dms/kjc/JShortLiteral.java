@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JShortLiteral.java,v 1.5 2003-05-16 21:06:38 thies Exp $
+ * $Id: JShortLiteral.java,v 1.6 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -34,6 +34,8 @@ public class JShortLiteral extends JLiteral {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JShortLiteral() {} // for cloner only
 
   /**
    * Constructs a literal expression from a constant value.

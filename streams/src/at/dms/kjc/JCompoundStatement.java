@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompoundStatement.java,v 1.2 2002-02-20 16:26:50 thies Exp $
+ * $Id: JCompoundStatement.java,v 1.3 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,6 +32,8 @@ public class JCompoundStatement extends JStatement {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JCompoundStatement() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

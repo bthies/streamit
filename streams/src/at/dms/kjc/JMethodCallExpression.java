@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.11 2003-03-06 12:56:47 thies Exp $
+ * $Id: JMethodCallExpression.java,v 1.12 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,6 +29,8 @@ import at.dms.compiler.UnpositionedError;
  * JLS 15.12 Method Invocation Expressions
  */
 public class JMethodCallExpression extends JExpression {
+
+    protected JMethodCallExpression() {} // for cloner only
 
   /**
    *

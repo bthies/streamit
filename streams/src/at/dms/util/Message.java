@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.2 2003-05-16 21:06:42 thies Exp $
+ * $Id: Message.java,v 1.3 2003-05-16 21:58:40 thies Exp $
  */
 
 package at.dms.util;
@@ -28,6 +28,8 @@ public class Message {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    private Message() {} // for cloner only
 
   /**
    * Constructs a message with an arbitrary number of parameters

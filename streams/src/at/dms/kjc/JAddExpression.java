@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAddExpression.java,v 1.4 2002-06-28 01:24:22 jasperln Exp $
+ * $Id: JAddExpression.java,v 1.5 2003-05-16 21:58:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,6 +33,8 @@ public class JAddExpression extends JBinaryArithmeticExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JAddExpression() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

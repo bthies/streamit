@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConditionalAndExpression.java,v 1.3 2002-07-12 19:46:42 clleger Exp $
+ * $Id: JConditionalAndExpression.java,v 1.4 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,6 +31,8 @@ public class JConditionalAndExpression extends JBinaryExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JConditionalAndExpression() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

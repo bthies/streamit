@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CType.java,v 1.2 2003-04-19 01:28:48 thies Exp $
+ * $Id: CType.java,v 1.3 2003-05-16 21:58:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -38,6 +38,8 @@ public abstract class CType extends at.dms.util.Utils implements Constants {
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
  
+    protected CType() {} // for cloner only
+
   /**
    * Constructs a type signature
    */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDeclarationStatement.java,v 1.4 2002-06-18 19:41:10 jasperln Exp $
+ * $Id: JVariableDeclarationStatement.java,v 1.5 2003-05-16 21:58:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -35,6 +35,8 @@ public class JVariableDeclarationStatement extends JStatement {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JVariableDeclarationStatement() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

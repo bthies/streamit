@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.7 2001-10-29 04:09:18 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.8 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -38,6 +38,8 @@ public class JClassDeclaration extends JTypeDeclaration {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JClassDeclaration() {} // for cloner only
 
   /**
    * Constructs a class declaration node in the syntax tree.

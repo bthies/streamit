@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassImport.java,v 1.3 2003-05-16 21:06:38 thies Exp $
+ * $Id: JClassImport.java,v 1.4 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -36,6 +36,8 @@ public class JClassImport extends JPhylum {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JClassImport() {} // for cloner only
 
   /**
    * Constructs a single-type-import declaration node in the syntax tree.

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedInstanceCreation.java,v 1.3 2001-10-12 05:53:07 mgordon Exp $
+ * $Id: JUnqualifiedInstanceCreation.java,v 1.4 2003-05-16 21:58:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -34,6 +34,8 @@ public class JUnqualifiedInstanceCreation extends JExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JUnqualifiedInstanceCreation() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

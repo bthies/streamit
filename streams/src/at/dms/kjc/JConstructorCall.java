@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConstructorCall.java,v 1.3 2003-03-14 19:40:07 thies Exp $
+ * $Id: JConstructorCall.java,v 1.4 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -28,6 +28,8 @@ import at.dms.compiler.UnpositionedError;
  * This class represents a explicit call to a super or self constructor
  */
 public class JConstructorCall extends JExpression {
+
+    protected JConstructorCall() {} // for cloner only
 
     /**
      * Construct a node in the parsing tree

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryExpression.java,v 1.2 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JUnaryExpression.java,v 1.3 2003-05-16 21:58:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -30,6 +30,8 @@ public abstract class JUnaryExpression extends JExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JUnaryExpression() {} // for cloning only
 
   /**
    * Construct a node in the parsing tree

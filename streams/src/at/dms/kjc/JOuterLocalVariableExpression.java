@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JOuterLocalVariableExpression.java,v 1.1 2001-08-30 16:32:52 thies Exp $
+ * $Id: JOuterLocalVariableExpression.java,v 1.2 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,6 +31,8 @@ public class JOuterLocalVariableExpression extends JLocalVariableExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JOuterLocalVariableExpression() {} // for cloner only
 
  /**
    * Construct a node in the parsing tree

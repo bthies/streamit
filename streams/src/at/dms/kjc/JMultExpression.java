@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMultExpression.java,v 1.3 2002-07-01 21:27:22 jasperln Exp $
+ * $Id: JMultExpression.java,v 1.4 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,6 +33,8 @@ public class JMultExpression extends JBinaryArithmeticExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JMultExpression() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

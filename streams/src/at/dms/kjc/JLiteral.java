@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLiteral.java,v 1.2 2003-04-23 09:29:42 jasperln Exp $
+ * $Id: JLiteral.java,v 1.3 2003-05-16 21:58:35 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,6 +31,8 @@ public abstract class JLiteral extends JExpression {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JLiteral() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

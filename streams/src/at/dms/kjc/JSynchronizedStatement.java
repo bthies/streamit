@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSynchronizedStatement.java,v 1.3 2002-02-20 16:26:50 thies Exp $
+ * $Id: JSynchronizedStatement.java,v 1.4 2003-05-16 21:58:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -36,6 +36,8 @@ public class JSynchronizedStatement extends JStatement {
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
+
+    protected JSynchronizedStatement() {} // for cloner only
 
   /**
    * Construct a node in the parsing tree

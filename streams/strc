@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.10 2003-10-06 19:03:40 dmaze Exp $
+# $Id: strc,v 1.11 2003-10-06 19:10:40 dmaze Exp $
 #
 
 use strict;
@@ -20,6 +20,11 @@ use Getopt::Long;
 Getopt::Long::Configure("bundling", "no_ignore_case");
 
 get_options() or die "Error parsing options";
+if ($opts{'much-more-help'})
+  {
+    usage(\*STDOUT, 2);
+    exit(0);
+  }
 if ($opts{'more-help'})
   {
     usage(\*STDOUT, 1);
@@ -70,8 +75,9 @@ Usage: strc [options] file.str ...
 	
 Options:
   --help              Show this screen
-* --more-help         Include internal-only options
-* --java              Input file is "old" syntax (in Java)
+  --more-help         Include extra options
+* --much-more-help    Include internal-only options
++ --java              Input file is "old" syntax (in Java)
   --output filename   Write a binary to filename
   --raw n, -r n       Compile for RAW, with an n-by-n grid
 * --cluster           Compile for a networked cluster
@@ -82,29 +88,29 @@ Options:
 
 Options available for all backends:
   -O0, -O1, -O2       Use predefined optimization sets
-* --destroyfieldarray Break arrays in structures into component elements
++ --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
-* --fusion, -f        Fuse entire program to a single filter
-* --fission           Do vertical fission up to limit of argument
++ --fusion, -f        Fuse entire program to a single filter
++ --fission           Do vertical fission up to limit of argument
   --linearreplacement, -l
                       Perform linear transformations based on analysis
 * --linearreplacement2
 *                     Do linear replacement using a level of indirection
 * --linearreplacement3
 *                     Do linear replacement using diagonal replacement
-* --nofieldprop       Do not propagate constant field values
-* --nolinearcollapse, -H
-*                     Do not combine filters with linear replacement
-* --print-partitioned-source, -c
-*                     Print equivalent source after partitioning
-* --redundantreplacement, -t
-*                     Create linear filters without redundant computation
++ --nofieldprop       Do not propagate constant field values
++ --nolinearcollapse, -H
++                     Do not combine filters with linear replacement
++ --print-partitioned-source, -c
++                     Print equivalent source after partitioning
++ --redundantreplacement, -t
++                     Create linear filters without redundant computation
 * --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
-* --sjtopipe, -J      Convert split-joins to pipelines
++ --sjtopipe, -J      Convert split-joins to pipelines
 * --stats             Gather statistics for program characterization
 * --tokopi            Use experimental frontend-to-SIR conversion
-* --sync, -k          Turn on sync removal
++ --sync, -k          Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
 
 Options specific to RAW backend:
@@ -117,11 +123,11 @@ Options specific to RAW backend:
   --magic-net, -M     Generate RAW "magic network" code
 * --noanneal, -W      Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
-* --ptraccess, -Q     Access buffers through a pointer
-* --ratematch, -x     Turn on rate matching
++ --ptraccess, -Q     Access buffers through a pointer
++ --ratematch, -x     Turn on rate matching
   --rawcol, -c        Specify number of columns; --raw has number of rows
   --raw-uni, -S       Use RAW backend to generate uniprocessor code
-* --removeglobals, -G Inline all functions and turn globals into locals
++ --removeglobals, -G Inline all functions and turn globals into locals
   --simulatework, -s  Use simulator for work estimation
 * --spacetime         Use space-time partitioner
   --wbs               Use work-based simulator for communication code
@@ -132,7 +138,7 @@ Options specific to uniprocessor backend:
   --linearpartition, -L
                       Automatically selecting targets of linear analyses
 * --atlas             Use ATLAS for generated matrix multiplies
-* --poptopeek, -P     Convert all pop expressions into peeks
++ --poptopeek, -P     Convert all pop expressions into peeks
   --profile           Compile with profiling information
 
 Options specific to Java library backend:
@@ -142,11 +148,9 @@ Options specific to Java library backend:
   --marksteady        Print * after each steady-state execution
   --printsched        Dump the program schedule
 EOT
-    if ($more) {
-      $text =~ s/^\*/ /mg;
-    } else {
-      $text =~ s/^\*.*\n//mg;
-    }
+    $text =~ s/^\*/ /mg if $more >= 2;
+    $text =~ s/^\+/ /mg if $more >= 1;
+    $text =~ s/^[*+].*\n//mg;
     print $fh $text;
 }
 
@@ -157,6 +161,7 @@ sub get_options
     my $result = GetOptions(\%opts,
 			    "help",
 			    "more-help|help-more",
+			    "much-more-help|help-much-more",
 			    "java!",
 			    "output|o=s",
 			    "raw|r=i",

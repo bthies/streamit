@@ -33,7 +33,8 @@ gMagicCrossbar.receive_addr = & fn(tileNum, pc, resultPtr)
 //csti is successful (see port_shephard.cc)
 
 //step the receive schedule creating a new listi...
-fn step_receive_schedule(tileNum) {
+gMagicCrossbar.receive_succ = & fn (tileNum) 
+{
 //  printf("Step the receive schedule for %d\n", tileNum);
   local i;
   local ret;
@@ -56,7 +57,7 @@ fn step_receive_schedule(tileNum) {
 
   ReceiveSchedules = newReceiveSchedules;
   
-}
+};
 
 //just get the current receive node, do not step the schedule
 fn getReceiveSchedule(tileNum) {

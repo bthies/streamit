@@ -11,12 +11,14 @@
     <impl lang="C" dir="c">
       <file>bitonic.c</file>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
-      <file>BitonicSort.str</file>
+    <impl lang="StreamIt" dir="streamit" id="bitonic">
+      <file class="source">BitonicSort.str</file>
+      <file class="output">BitonicSort.out</file>
       <desc>Original implementation</desc>
     </impl>
-    <impl lang="StreamIt" dir="streamit">
-      <file>BitonicSortRecursive.str</file>
+    <impl lang="StreamIt" dir="streamit" id="recursive">
+      <file class="source">BitonicSortRecursive.str</file>
+      <file class="output">BitonicSort.out</file>
       <desc>Recursive implementation</desc>
     </impl>
   </implementations>

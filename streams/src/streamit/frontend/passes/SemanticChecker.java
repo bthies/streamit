@@ -27,7 +27,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.14 2004-01-05 21:29:15 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.15 2004-01-06 13:50:13 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -529,7 +529,7 @@ public class SemanticChecker
                             break;
                             
                         case ExprUnary.UNOP_NOT:
-                            if (!bittype.promotesTo(ot))
+                            if (!ot.promotesTo(inttype))
                                 report(expr, "cannot take boolean not of " +
                                        ot);
                             break;

@@ -87,11 +87,11 @@ public abstract class SIRStream extends SIROperator {
     }
 
     /**
-     * Returns whether or not a function named "work" is defined in this.
+     * Returns whether or not a function named <name> is defined in this.
      */
-    public boolean hasWorkFunction() {
+    public boolean hasMethod(String name) {
 	for (int i=0; i<methods.length; i++) {
-	    if (methods[i].getName().equals("work")) {
+	    if (methods[i].getName().equals(name)) {
 		return true;
 	    }
 	}

@@ -34,6 +34,8 @@ public class SIRScheduler {
 	JMethodDeclaration work = buildToplevelWork(schedule, toplevel);
 	// add <work> to <flatClass>
 	flatClass.addMethod(work);
+	// add <work> to <toplevel>
+	toplevel.addMethod(work);
 	// return schedule for future reference
 	return schedule;
     }

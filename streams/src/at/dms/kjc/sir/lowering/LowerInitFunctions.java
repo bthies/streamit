@@ -222,7 +222,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	registerChildren(init, elements);
 
 	// set work function, if there is one
-	if (self.hasWorkFunction()) {
+	if (self.hasMethod(LoweringConstants.getWorkName(self))) {
 	    init.addStatementFirst(new LIRSetWork(LoweringConstants.
 						  getStreamContext(),
 						  new LIRFunctionPointer(

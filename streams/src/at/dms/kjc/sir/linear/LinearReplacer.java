@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.6 2002-10-30 21:25:54 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.7 2002-11-22 18:20:46 thies Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -139,7 +139,7 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 						    oldStream.getInputType(),
 						    oldStream.getOutputType(),
 						    linearRep.getPopCount());
-	JMethodDeclaration newInit = makeEmptyInit();
+	JMethodDeclaration newInit = SIRStream.makeEmptyInit();
 	
 	// create a new filter with the new work and init functions
 	
@@ -359,21 +359,6 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	return returnVector;
     }
     
-    /** creates an init function which does nothing. **/
-    private JMethodDeclaration makeEmptyInit() {
-	return new JMethodDeclaration(null, // token reference
-				      ACC_PUBLIC,//modifiers
-				      CStdType.Void, // returnType
-				      "init",
-				      new JFormalParameter[0], // params
-				      new CClassType[0], // exceptions
-				      new JBlock(), // body
-				      null, // javadoc
-				      new JavaStyleComment[0]); // comments
-    }
-
-    
-
     /**
      * This visitor calculates the best way to replace filters in a stream
      * graph with direct implementations. Specifically, it calculates the

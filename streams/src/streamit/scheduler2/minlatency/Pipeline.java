@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.11 2003-04-04 00:55:58 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.12 2003-04-04 18:52:25 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -295,6 +295,28 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             {
                 StreamInterface child = getHierarchicalChild(nChild);
                 childInitStages[nChild] = child.getNumInitStages();
+            }
+
+            // also check that all children will feed their
+            // downstream siblings enough data to execute their 
+            // steady state
+            for (int nChild = 0; nChild < getNumChildren() - 1; nChild++)
+            {
+                StreamInterface child = getHierarchicalChild(nChild);
+                int dataNeeded =
+                    getHierarchicalChild(nChild + 1).getSteadyPeek();
+
+                int dataPushed = 0;
+                int nStages;
+                for (nStages = 0;
+                    dataNeeded > dataPushed;
+                    nStages++)
+                {
+                    dataPushed
+                        += getChildInitStage(child, nStages).getOverallPush();
+                }
+
+                childInitStages[nChild] = MAX(childInitStages[nChild], nStages);
             }
 
             // and create a schedule that will execute enough stages

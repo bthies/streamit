@@ -7,7 +7,7 @@ package at.dms.kjc.sir.statespace;
  * This class holds the A, B, C, D in the equations y = Ax+Bu, x' = Cx + Du which calculates the output
  * vector y and new state vector x' using the input vector u and the old state vector x.<br>
  *
- * $Id: LinearFilterRepresentation.java,v 1.4 2004-02-18 21:05:19 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.5 2004-02-24 19:56:12 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -29,7 +29,8 @@ public class LinearFilterRepresentation {
     /**
      * The peek count of the filter. This is necessary for doing pipeline combinations
      * and it is information not stored in the dimensions of the
-     * representation matrix or vector.
+     * representation matrix or vector. peekCount - popCount is the number of variables that
+     * must be popped initially
      **/
     private int peekCount;
 
@@ -38,7 +39,7 @@ public class LinearFilterRepresentation {
      * Note that we use a copy of all matrices so that we don't end up with
      * an aliasing problem. peekc is the peek count of the filter that this represenation is for,
      * which we need for combining filters together (because the difference between
-     * the peek count and the pop count tells us about the buffers that the program is using.
+     * the peek count and the pop count tells us about the buffers that the program is using).
      **/
     public LinearFilterRepresentation(FilterMatrix matrixA,
 				      FilterMatrix matrixB,
@@ -46,6 +47,7 @@ public class LinearFilterRepresentation {
 				      FilterMatrix matrixD,
 				      FilterVector vec,
 				      int peekc) {
+
 	this.A = matrixA.copy();
 	this.B = matrixB.copy();
 	this.C = matrixC.copy();
@@ -84,71 +86,92 @@ public class LinearFilterRepresentation {
      * Returns true if at least one constant component is non-zero.
      **/
     
+    
     public boolean hasConstantComponent() {
-
+	/*
         int index = A.zeroRow();
 	if(index == -1)
 	    return false;
 	else
 	  return initVec.getElement(index) != ComplexNumber.ZERO;
+	*/
 
+
+	return false;
     }
     
 
     /**
-     * Expands this linear representation to have the new peek, pop and push rates.
-     * This method directly implements the "expand" operation outlined in
-     * the "Linear Analysis and Optimization of Stream Programs" paper:
-     * http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf
+     * Expands this linear representation by factor 
      **/
-    public LinearFilterRepresentation expand(int newPeek, int newPop, int newPush) {
-	at.dms.util.Utils.fail("Not implemented yet.");
-	return null;
-    }
-    /*
+
+    public LinearFilterRepresentation expand(int factor) {
+    
 	// do some argument checks
-	if (newPeek < this.getPeekCount()) {
-	    throw new IllegalArgumentException("newPeek is less than old peek");
-	}
-	if (newPop < this.getPopCount()) {
-	    throw new IllegalArgumentException("newPop is less than old push");
-	}
-	if (newPush < this.getPushCount()) {
-	    throw new IllegalArgumentException("newPush is less than old push");
+	if (factor < 1) {
+	    throw new IllegalArgumentException("need a positive multiplier");
 	}
 
 	// pull out old values for ease in understanding the code.
+	int stateCount = this.getStateCount();
 	int oldPush = this.getPushCount();
-	int oldPeek = this.getPeekCount();
 	int oldPop  = this.getPopCount();
-	FilterMatrix oldMatrix = this.getA();
-	FilterMatrix newMatrix = new FilterMatrix(newPeek, newPush);
+	int peekCount = this.getPeekCount();
 
-	// now, populate the new matrix with the appropriate copies of the old matrix
-	// (eg the As). We will be copying numCompleteCopies starting from lower left
-	int numCompleteCopies = (newPush/oldPush);
-	for (int i=0; i<numCompleteCopies; i++) {
-	    // copy the matrix starting at row: e' - e - (i*o)
-	    // col = u'-(i+1)u
-	    newMatrix.copyAt(newPeek - oldPeek - i*(oldPop),
-			     newPush - (i+1)*oldPush,
-			     oldMatrix);
+	// newA = oldA^(factor);
+	// newB = [oldA^(factor-1) * B  oldA^(factor-2) * B  ...  oldA * B  B]
+	// newC = [C  C * A  C * A^2  ...  C * A^(factor-2)  C * A^(factor-1)] (transposed)
+
+	/* 
+	   newD = |D                     0               0          0  ...  0      |       
+                  |C * B                 D               0          0  ...  0      |
+                  |C * A * B             C * B           D          0  ...  0      |
+                  |C * A^2 * B           C * A * B       C * B      D  ...  0      |
+                  |  ...
+                  |C*A^(factor-2)*B   C*A^(factor-3)*B                 ...  C*B  D | 
+
+         */
+
+	FilterMatrix oldA = this.getA();
+	FilterMatrix oldB = this.getB();
+	FilterMatrix oldC = this.getC();
+        FilterMatrix oldD = this.getD();
+
+	FilterMatrix newA = oldA.copy();
+	FilterMatrix newB = new FilterMatrix(stateCount, oldPop*factor);
+	FilterMatrix newC = new FilterMatrix(oldPush*factor, stateCount);
+        FilterMatrix newD = new FilterMatrix(oldPush*factor, oldPop*factor);
+
+	newB.copyAt(0,oldPop*(factor-1),oldB);
+	newC.copyAt(0,0,oldC);
+
+	FilterMatrix tempB = oldB.copy();
+	FilterMatrix tempC = oldC.copy();
+	FilterMatrix tempD = oldC.times(oldB);
+
+	for(int i=0; i<factor; i++) 
+	  newD.copyAt(oldPush*i,oldPop*i,oldD);
+
+	for(int i=1; i<factor; i++)
+	  newD.copyAt(oldPush*i,oldPop*(i-1),tempD);
+
+	for(int i=1; i<factor; i++) {
+	  tempB = newA.times(oldB);
+	  tempC = oldC.times(newA);
+	  tempD = tempC.times(oldB); 
+
+	  newB.copyAt(0,oldPop*(factor-i-1),tempB);
+	  newC.copyAt(oldPush*(factor-i-1),0,tempC);
+
+	  if(i < factor-1) {
+	    for(int j=i; j<factor; j++)
+	      newD.copyAt(oldPush*(i+1),oldPop*i,tempD);
+	  }
+
+	  newA = newA.times(oldA);
 	}
 
-	// do housecleaning for any fractional copies of A that we need to make
-	// (first, calculate the number of rows and columns that need to be filled with
-	// parts of the old matrix).
-	int numPartialRows = newPeek - numCompleteCopies*oldPop;
-	int numPartialCols = newPush - numCompleteCopies*oldPush;
-
-	// sanity checks.
-	if (numPartialRows < 0) {throw new RuntimeException("partial rows < 0!  Partial rows = " + numPartialRows +
-							    " newPeek=" + newPeek + " numCompleteCopies=" + numCompleteCopies + " oldPop=" + oldPop);}
-	if (numPartialCols < 0) {throw new RuntimeException("partial cols < 0!");}
-
-	// given the amount of debugging information below, you can tell
-	// that this partitcular operation really sucked to implement -- lots
-	// of silly details.
+	
 	
 	//System.err.println("--------");
 	//System.err.println("new rows: " + newPeek);
@@ -158,34 +181,17 @@ public class LinearFilterRepresentation {
 	//System.err.println("old cols: " + oldPush);
 	//System.err.println("old pop: "  + oldPop);
 	//System.err.println("num copies: " + numCompleteCopies);
-	//System.err.println("partial rows: " + numPartialRows);
-	//System.err.println("partial cols: " + numPartialCols);
-
-	// now, copy over the missing parts of A
-	for (int j=0; j<numPartialCols; j++) {
-	    // now, we copy from top down
-	    for (int i=0; i<numPartialRows;i++) {
-		//System.err.println("i: " + i + ", j: " + j);
-		int oldRow = oldPeek-(numPartialRows-i);
-		int oldCol = oldPush-(numPartialCols-j);
-		//System.err.println("oldRow: " + oldRow + " oldCol: " + oldCol);
-		newMatrix.setElement(i,j,oldMatrix.getElement(oldRow, oldCol));
-	    }
-	}
 	
-	// now copy all elements of the new vector
-	FilterVector oldVector = this.getb();
-	FilterVector newVector = new FilterVector(newPush);
-	for (int i=0; i<newPush; i++) {
-	    newVector.setElement(i,oldVector.getElement(oldPush-1-((newPush-i-1)%oldPush)));
-	}
+
+	// initial vector is the same
+	FilterVector newInitVec = (FilterVector)this.getInit().copy();
 
 	// create a new Linear rep for the expanded filter
 	LinearFilterRepresentation newRep;
-	newRep = new LinearFilterRepresentation(newMatrix, newVector, newPop);
+	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInitVec,peekCount);
 	return newRep;
     }
-    */	
+    
 					
     /**
      * Returns true if this filter is an FIR filter. A linear filter is FIR  
@@ -204,34 +210,36 @@ public class LinearFilterRepresentation {
      * of multiplies and adds that are necessary to implement this
      * linear filter representation.
      **/
-
-    /*
+    
     public LinearCost getCost() {
 	if (this.cost==null) {
-	    this.cost = calculateCost();
+	  LinearCost tempCost = calculateCost(this.A);
+	  tempCost = tempCost.plus(calculateCost(this.B));
+	  tempCost = tempCost.plus(calculateCost(this.C));
+	  tempCost = tempCost.plus(calculateCost(this.D));
+	  this.cost = tempCost;
 	}
 	return this.cost;
     }
-    */
 
     /**
      * Calculates cost of this.
      */
-    /*
-    private LinearCost calculateCost() {
+    
+    private LinearCost calculateCost(FilterMatrix M) {
 	// add up multiplies and adds that are necessary for each column of the matrix. 
 	int muls = 0;
 	int adds = 0;
 
-	int matRows = A.getRows();
-	int matCols = A.getCols();
+	int matRows = M.getRows();
+	int matCols = M.getCols();
 	
 	for (int col=0; col<matCols; col++) {
 	    // counters for the colums (# muls, adds)
 	    int rowAdds = 0;
 	    int rowMuls =  0;
 	    for (int row=0; row<matRows; row++) {
-		ComplexNumber currentElement = A.getElement(row,col);
+		ComplexNumber currentElement = M.getElement(row,col);
 		if (!currentElement.isReal()) {
 		    throw new RuntimeException("Non real matrix elements are not supported in cost .");
 		}
@@ -250,20 +258,7 @@ public class LinearFilterRepresentation {
 		if (incAdd) {rowAdds++;}
 		if (incMul) {rowMuls++;}
 	    }
-	    // now, add in the contribution from the constant vector
-	    ComplexNumber currentElement = b.getElement(0,col);
-	    if (!currentElement.isReal()) {
-		throw new RuntimeException("Non real vector elements are not supported in cost .");
-	    }
 
-	    // nothing for zero, inc add for one, and inc both for anything else.
-	    if (currentElement.equals(ComplexNumber.ZERO)) {
-	    } else if (currentElement.equals(ComplexNumber.ONE)) {
-		rowAdds++;
-	    } else {
-		rowAdds++;
-		rowMuls++;
-	    }
 
 	    // basically, we need one less add per row because adds take two operands
 	    // however, we don't want to blindly subtract one, because that might give
@@ -273,9 +268,9 @@ public class LinearFilterRepresentation {
 	    muls += rowMuls;
 	    adds += rowAdds;
 	}
-	return new LinearCost(muls, adds, matRows, matCols, popCount);
+	return new LinearCost(muls, adds, matRows, matCols);
     }	    
-    */
+    
 
     /** Returns true if and only if all coefficients in this filter rep are real valued. **/
     public boolean isPurelyReal() {

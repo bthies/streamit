@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.2 2004-02-18 21:05:19 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.3 2004-02-24 19:56:11 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -653,3 +653,7 @@ public class FilterMatrix {
     }
 
 }
+
+
+
+

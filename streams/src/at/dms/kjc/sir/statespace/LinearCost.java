@@ -22,14 +22,12 @@ public class LinearCost {
     private int multiplyCount;
     /** the number of adds **/
     private int addCount;
-    /** the number of pops in the filter **/
-    private int popCount;
-    /** the number of rows (peek count) in the matrix from which this was derived **/
+    /** the number of rows (push count) in the matrix from which this was derived **/
     private int rows;
-    /** the number of columns (push count) in the matrix from which this was derived **/
+    /** the number of columns (pop count) in the matrix from which this was derived **/
     private int cols;
     /** LinearCost with 0 multiplies and 0 adds. **/
-    public static final LinearCost ZERO = new LinearCost(0,0,0,0,0);
+    public static final LinearCost ZERO = new LinearCost(0,0,0,0);
     
     /**
      * Note that muls and adds do NOT count
@@ -38,12 +36,11 @@ public class LinearCost {
      * gives the number of elements (including zero and one) that were
      * in the original matrix.
      */
-    public LinearCost(int muls, int adds, int rows, int cols, int popCount) {
+    public LinearCost(int muls, int adds, int rows, int cols) {
 	this.multiplyCount = muls;
 	this.addCount = adds;
 	this.rows = rows;
 	this.cols = cols;
-	this.popCount = popCount;
 	checkRep();
     }
 
@@ -67,8 +64,7 @@ public class LinearCost {
 	return new LinearCost(this.getMultiplies() + other.getMultiplies(), // muls
 			      this.getAdds() + other.getAdds(),
 			      this.rows,
-			      this.cols,
-			      this.popCount);
+			      this.cols);
     }
     
     private void checkRep() {

@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.4 2004-02-23 21:32:25 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.5 2004-02-24 19:56:12 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -680,8 +680,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    }
 
 	    // calcuate the cost of doing a direct replacement of this container
-	    LinearCost containerCost = null; //linearInformation.getLinearRepresentation(self).getCost();
-	    Utils.fail("This part is not implemented in statespace.");
+	    LinearCost containerCost = linearInformation.getLinearRepresentation(self).getCost();
 
 	    // calculate the cost of doing the optimal replacement of the children.
 	    LinearReplaceCalculator childCalculator = new LinearReplaceCalculator(linearInformation);
@@ -713,8 +712,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 		// the only mappings that we have in the map are the streams we want to include
 		SIRStream currentStream = (SIRStream)keyIter.next();
 		LinearFilterRepresentation currentChildRep = linearInformation.getLinearRepresentation(currentStream);
-		LinearCost currentChildCost = null; //currentChildRep.getCost();
-		Utils.fail("This part is not implemented in statespace.");
+		LinearCost currentChildCost = currentChildRep.getCost();
 		currentCost = currentCost.plus(currentChildCost);
 	    }
 	    return currentCost;
@@ -729,3 +727,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	}
     }
 }
+
+
+
+

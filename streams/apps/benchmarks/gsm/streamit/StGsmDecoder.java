@@ -8,9 +8,9 @@
 
 import streamit.*;
 import java.lang.*;
-import java.io.*;
-import java.lang.reflect.*;
 
+import java.lang.reflect.*;
+import streamit.io.*;
         
 class DecoderInput
 {
@@ -22,14 +22,14 @@ class DecoderInput
   public short[] mRpeMagnitude = new short[4];
   public short[][] mSequence = new short[4][13];
 
-
+    /*
   public short[] readFile() 
   {
     short[] input = new short[151840];
     try
     {
 	File f1 = new File("SpeechEncoderOutputBits1");
-	FileReader fr = new FileReader(f1);
+	java.io.FileReader fr = new java.io.FileReader(f1);
 	BufferedReader br = new BufferedReader(fr);
 	//DataInputStream data = new DataInputStream(new FileInputStream(f1));
 	//read the sucker!
@@ -57,7 +57,7 @@ class DecoderInput
    
     return input; 
   }
-  
+    */
   public void getParameters(short[] input)
   {
     int input_index = 0;
@@ -742,7 +742,7 @@ class LTPInputSplitJoin extends SplitJoin
     public void init()
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
-	this.add(new LTPInputFilter());
+	this.add(new LTPPipeline());
 	this.add(new Identity(Short.TYPE));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
@@ -755,8 +755,25 @@ class LARInputSplitJoin extends SplitJoin
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (1, 0));  //we don't care about it going to in2
 	this.add(new Identity(Short.TYPE));
-	this.add(new LARInputFilter());	
+	this.add(new LARPipeline());	
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
+    }
+}
+
+class LTPPipeline extends Pipeline
+{
+    public void init()
+    {
+	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
+	this.add(new LTPInputFilter());
+    }
+}
+class LARPipeline extends Pipeline
+{
+    public void init()
+    {
+	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
+	this.add(new LARInputFilter());
     }
 }
 
@@ -765,19 +782,31 @@ class RPEInputFilter extends Filter
     //order of output: mSequence[0..13], mRpeMagnitude, mRpeGridPosition
     short[] mdata;
     short[] single_frame;
+    boolean donepushing;
     DecoderInput mdecodefile;
     
     public void init()
     {
+	mdecodefile = new DecoderInput();
 	mdata = new short[151840];
 	single_frame = new short[260];
-	mdecodefile = new DecoderInput();
+	input = new Channel(Short.TYPE, 151840);
 	output = new Channel(Short.TYPE, 60); 
+	donepushing = false;
     }
 
     public void work()
     {
-	mdata = mdecodefile.readFile();
+	for (int i = 0; i < mdata.length; i++)
+	{
+	    mdata[i] = input.popShort();
+	}
+
+	if (donepushing)
+	{
+	    AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
+	}
+
 	int frame_index = 0;
 	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
 	  {
@@ -799,6 +828,7 @@ class RPEInputFilter extends Filter
 	    output.pushShort(mdecodefile.mRpeMagnitude[i]);
 	    output.pushShort(mdecodefile.mRpeGridPosition[i]);
 	}
+	donepushing = true;
     }
 }
 class LARInputFilter extends Filter
@@ -806,18 +836,30 @@ class LARInputFilter extends Filter
     //order of output: mLarParameters[0...8]
     short[] mdata;
     short[] single_frame;
+    boolean donepushing;
     DecoderInput mdecodefile;
+
     public void init()
     {
+	mdecodefile = new DecoderInput();
 	mdata = new short[151840];
 	single_frame = new short[260];
-	mdecodefile = new DecoderInput();
+	input = new Channel(Short.TYPE, 151840);
 	output = new Channel(Short.TYPE, 8); 
+	donepushing = false;
     }
 
     public void work()
     {
-	mdata = mdecodefile.readFile();
+	for (int i = 0; i < mdata.length; i++)
+	{
+	    mdata[i] = input.popShort();
+	}
+
+	if (donepushing)
+	{
+	    AssertedClass.SERROR("Done Pushing at LARInputFilter!");
+	}
 	int frame_index = 0;
 	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
 	  {
@@ -834,6 +876,7 @@ class LARInputFilter extends Filter
 	{
 	    output.pushShort(mdecodefile.mLarParameters[i]);
 	}
+	donepushing = true;
     }
 }
 
@@ -842,18 +885,31 @@ class LTPInputFilter extends Filter
     //order of output: mLtpGain[4], mLtpOffset[4]
     short[] mdata;
     short[] single_frame;
+    boolean donepushing;
     DecoderInput mdecodefile;
+
     public void init()
     {
+	mdecodefile = new DecoderInput();
 	mdata = new short[151840];
 	single_frame = new short[260];
 	mdecodefile = new DecoderInput();
-	output = new Channel(Short.TYPE, 8); 
+	input = new Channel(Short.TYPE, 151840);
+	output = new Channel(Short.TYPE, 8);
+	donepushing = false;
     }
 
     public void work()
     {
-	mdata = mdecodefile.readFile();
+	for (int i = 0; i < mdata.length; i++)
+	{
+	    mdata[i] = input.popShort();
+	}
+
+	if (donepushing)
+	{
+	    AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
+	}
 	int frame_index = 0;
 	for (int j = 0; j < 1; j++)  //only pushing one in for now, should be 0 to 584
 	  {
@@ -871,6 +927,7 @@ class LTPInputFilter extends Filter
 	    output.pushShort(mdecodefile.mLtpGain[i]);
 	    output.pushShort(mdecodefile.mLtpOffset[i]);
 	}
+	donepushing = true;
     }
 }
 
@@ -909,11 +966,13 @@ public class StGsmDecoder extends StreamIt
     //include variables for parsing here!
     public static void main(String args[]) 
     {
-	new StGsmDecoder().run(); 
+	new StGsmDecoder().run(args); 
 	
     }
 
     public void init() {
+	
+	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
 	this.add(new RPEInputFilter());
 	this.add(new RPEDecodeFilter());
 	this.add(new DecoderFeedback());
@@ -921,9 +980,11 @@ public class StGsmDecoder extends StreamIt
 	this.add(new LARInputSplitJoin());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
+	this.add(new streamit.io.FileWriter("blahblah", Short.TYPE));
     }
 }
  
+
 
 
 

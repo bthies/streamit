@@ -57,7 +57,17 @@ public class FuseSplit {
 	{//Quick check
 	    int sum=0;
 	    for(int i=0;i<partition.length;i++) {
+		// make sure there's at least one stream per partition
 		Utils.assert(partition[i]>0);
+		// if we're trying to fuse something that's not a filter, just return
+		if (partition[i]>1) {
+		    for (int j=sum; j<sum+partition[i]; j++) {
+			if (!(sj.get(j) instanceof SIRFilter)) {
+			    System.err.println("Tried to fuse non-filter in SJ; returning original SJ.");
+			    return sj;
+			}
+		    }
+		}		
 		sum+=partition[i];
 	    }
 	    if(sum!=sj.size()) {
@@ -79,11 +89,7 @@ public class FuseSplit {
 	    return dispatchResult;
 	}
 	
-	if (!isFusable(sj)) {
-	    return sj;
-	} else {
-	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + partition.length + " filters..."); 
-	}
+	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + partition.length + " filters..."); 
 
 	int[] oldSplit=sj.getSplitter().getWeights();
 	int[] oldJoin=sj.getJoiner().getWeights();

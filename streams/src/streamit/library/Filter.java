@@ -39,7 +39,17 @@ public abstract class Filter extends Stream
         super(n1, n2, n3);
     }
 
-    public Filter(float f)
+    public Filter(int n1, int n2, int n3,
+		  int n4, float f1) {
+        super(n1, n2, n3, n4, f1);
+    }
+
+    public Filter(int n1, int n2, int n3,
+		  int n4, int n5, int n6) {
+        super(n1, n2, n3, n4, n5, n6);
+    }
+
+     public Filter(float f)
     {
         super(f);
     }

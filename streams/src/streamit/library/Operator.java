@@ -57,6 +57,18 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer ("int-int-int").add ("x", x).add ("y", y).add("z", z);
     }
 
+    public Operator (int x, int y, int z,
+		     int a, float b)
+    {
+        initParams = new ParameterContainer ("int-int-int-int-float").add ("x", x).add ("y", y).add("z", z).add ("a", a).add ("b", b);
+    }
+
+    public Operator (int x, int y, int z,
+		     int a, int b, int c)
+    {
+        initParams = new ParameterContainer ("int-int-int-int-int-int").add ("x", x).add ("y", y).add("z", z).add ("a", a).add ("b", b).add("c", c);
+    }
+
     public Operator(float f)
     {
         initParams = new ParameterContainer ("float").add ("f", f);
@@ -99,6 +111,12 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(int x, int y, int z) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int x, int y, int z, int a, float b) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int x, int y, int z, int a, int b, int c) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float f) { invalidInitError (); }
@@ -302,6 +320,21 @@ public class Operator extends DestroyedClass
 
         ASSERT (initParams != null);
 
+	if(initParams.getParamName().equals("int-int-int-int-float"))
+	    init (initParams.getIntParam("x"),
+		  initParams.getIntParam("y"),
+		  initParams.getIntParam("z"),
+		  initParams.getIntParam("a"),
+		  initParams.getFloatParam("b"));
+	else
+	if(initParams.getParamName().equals("int-int-int-int-int-int"))
+	    init (initParams.getIntParam("x"),
+		  initParams. getIntParam("y"),
+		  initParams.getIntParam("z"),
+		  initParams.getIntParam("a"),
+		  initParams.getIntParam("b"),
+		  initParams.getIntParam("c"));
+	else
         if(initParams.getParamName().equals("float-float-int"))
             init (initParams.getFloatParam("x1"),
                   initParams.getFloatParam("y1"),

@@ -17,7 +17,7 @@ setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/library/java
 setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
 
 # the current version of starsearch we're using
-setenv TOPDIR ${STREAMIT_HOME}/include/raw
+setenv TOPDIR ${STREAMIT_HOME}/misc/raw
 
 # the path to ATLAS
 setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS

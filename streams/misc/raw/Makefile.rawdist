@@ -1,0 +1,28 @@
+# defines where raw distribution (MASONDIR) can be found.
+
+############################################################
+# If this starsearch is being exported outside the Raw group
+# uncomment and edit (if necessary) the following:
+#
+# REMOTE_DIST = 1
+# DISTDIR = /usr/local/raw
+
+#####################################
+# change these variables if necessary
+
+DISTDIR ?= /home/pkg/brave_new_linux
+
+MASONVER ?= 0140
+
+############################
+# do not change what's below
+
+ifeq ($(REMOTE_DIST),1)
+  MASONDIR = $(DISTDIR)/install
+else
+  ifeq ($(LATEST),1)
+    MASONDIR = $(shell ls -1d $(DISTDIR)/0* | tail -1)/install
+  else
+    MASONDIR ?= $(wildcard $(DISTDIR)/$(MASONVER)*/install)
+  endif
+endif

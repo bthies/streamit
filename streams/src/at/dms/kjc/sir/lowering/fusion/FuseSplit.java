@@ -149,9 +149,11 @@ public class FuseSplit {
         // Use the new init function.
         newFilter.setInit(newInit);
 
-	// make a splitFilter only if it's not a duplicate
+	// make a splitFilter only if it's not a duplicate and it's
+	// not a null split
 	SIRFilter splitFilter = null;
-	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE &&
+	    rep.splitter!=0) {
 	    splitFilter = makeFilter(sj.getParent(),
 				     "Pre_" + sj.getIdent(),
 				     makeSplitFilterBody(sj.getSplitter(), 
@@ -161,14 +163,17 @@ public class FuseSplit {
 				     sj.getInputType());
 	}
 	
-	// make the join filter
-	SIRFilter joinFilter = makeFilter(sj.getParent(),
+	// make a joinFilter only if it's not a not a null join
+	SIRFilter joinFilter = null;
+	if (rep.joiner!=0) {
+	    joinFilter = makeFilter(sj.getParent(),
 					  "Post_" + sj.getIdent(),
 					  makeJoinFilterBody(sj.getJoiner(), 
 							     rep,
 							     sj.getOutputType()),
 					  push, push, push,
 					  sj.getOutputType());
+	}
 
 	// add these filters to the parent, which we require is a pipeline for now
 	SIRPipeline parent = (SIRPipeline)sj.getParent();
@@ -177,9 +182,11 @@ public class FuseSplit {
 	int index = parent.indexOf(sj);
 	parent.replace(sj, newFilter);
 	// add <joinFilter> after <newFilter>
-	parent.add(index+1, joinFilter);
+	if (joinFilter!=null) {
+	    parent.add(index+1, joinFilter);
+	}
 	// add <splitFilter> before <newFilter>, if it's not a duplicate
-	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+	if (splitFilter!=null) {
 	    parent.add(index, splitFilter);
 	}
 
@@ -221,12 +228,15 @@ public class FuseSplit {
 		    // then make a jblock initializing newStr, preStr, postStr
 		    LinkedList statements = new LinkedList();
 
-		    // ignore the preStr if we have a duplicate
-		    if (oldStr.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+		    // ignore the preStr if we don't have one
+		    if (preStr!=null) {
 			statements.add(new SIRInitStatement(null, null, new JExpression[0], preStr));
 		    }
 		    statements.add(self);
-		    statements.add(new SIRInitStatement(null, null, new JExpression[0], postStr));
+		    // ignore the postStr if we don't have one
+		    if (postStr!=null) {
+			statements.add(new SIRInitStatement(null, null, new JExpression[0], postStr));
+		    }
 
 		    // return a block
 		    return new JBlock(null, statements, null);
@@ -652,24 +662,41 @@ class RepInfo {
 	
 	// beware of sources in splits
 	int index = -1;
+	boolean nullSplit = false, nullJoin = false;
 	for (int i=0; i<child.length;i++) {
 	    if (child[i]!=0 && splitWeights[i]!=0 && joinWeights[i]!=0) {
 		index = i;
 		break;
 	    }
 	    if (i==child.length-1) {
-		Utils.fail("Think we're trying to fuse a null split or something--error");
+		// trying to fuse null split or join -- assume weight
+		// on opposite is okay
+		index = i;
+		if (splitWeights[i]==0) {
+		    nullSplit = true;
+		} else {
+		    nullJoin = true;
+		}
+		//		Utils.fail("Think we're trying to fuse a null split or something--error");
 	    }
 	}
-	this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
-	// make sure we came out even
-	Utils.assert(this.splitter * splitWeights[index] == 
-		     this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
+	if (nullSplit) {
+	    this.splitter = 0;
+	} else {
+	    this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
+	    // make sure we came out even
+	    Utils.assert(this.splitter * splitWeights[index] == 
+			 this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
+	}
 	// now for joiner
-	this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
-	// make sure we come out even
-	Utils.assert(this.joiner * joinWeights[index] == 
-		     this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
+	if (nullJoin) {
+	    this.joiner = 0;
+	} else {
+	    this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
+	    // make sure we come out even
+	    Utils.assert(this.joiner * joinWeights[index] == 
+			 this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
+	}
     }
 
 

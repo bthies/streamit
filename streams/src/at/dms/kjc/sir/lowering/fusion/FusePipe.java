@@ -113,8 +113,8 @@ public class FusePipe {
      *     parent, which must be an SIRPipeline
      *
      */
-    public static void fuse(SIRFilter first,
-			    SIRFilter last) {
+    public static SIRFilter fuse(SIRFilter first,
+				 SIRFilter last) {
 	SIRPipeline parent = (SIRPipeline)first.getParent();
 	// make a list of the filters to be fused
 	List filterList = parent.getChildrenBetween(first, last);
@@ -122,6 +122,8 @@ public class FusePipe {
 	SIRFilter fused = fuse(filterList);
 	// insert the fused filter in the parent
 	replace(parent, fused, filterList);
+	// return the fused filter
+	return fused;
     }
 
     /**

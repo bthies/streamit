@@ -114,9 +114,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    } else
 		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
 
-	    ArrayDestroyer arrayDest = new ArrayDestroyer();
-	    ((SIRFilter)node.contents).getMethods()[i].accept(arrayDest);
-	    arrayDest.addDestroyedLocals(destroyed_vars);
+	    if (KjcOptions.destroyfieldarray) {
+		ArrayDestroyer arrayDest = new ArrayDestroyer();
+		((SIRFilter)node.contents).getMethods()[i].accept(arrayDest);
+		arrayDest.addDestroyedLocals(destroyed_vars);
+	    }
 
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
@@ -127,7 +129,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	DeadCodeElimination.doit((SIRFilter)node.contents);
 
-	if (KjcOptions.rename2) {
+	if (KjcOptions.rename2 && KjcOptions.destroyfieldarray) {
 	    RenameDestroyedVars.renameDestroyedVars((SIRFilter)node.contents, destroyed_vars);
 	    DeadCodeElimination.doit((SIRFilter)node.contents);
 	}

@@ -430,6 +430,13 @@ public class Operator extends DestroyedClass
             .add("i1", i1);
     }
 
+    public Operator(int i1, int i2, Object o1) {
+        initParams = new ParameterContainer("int-int-Object")
+            .add("i1", i1)
+            .add("i2", i2)
+            .add("o1", o1);
+    }
+
     public Operator(Object o1, Object o2) {
 	initParams = new ParameterContainer("Object-Object")
 	    .add("o1", o1)
@@ -626,6 +633,10 @@ public class Operator extends DestroyedClass
 
 
     public void init(Object o1, int i1) {
+        invalidInitError();
+    }
+
+    public void init(int i1, int i2, Object o) {
         invalidInitError();
     }
 
@@ -1104,6 +1115,12 @@ public class Operator extends DestroyedClass
         else if(initParams.getParamName().equals("Object-int"))
             init(initParams.getObjectParam("o1"),
                  initParams.getIntParam("i1"));
+
+        else if(initParams.getParamName().equals("int-int-Object"))
+            init(initParams.getIntParam("i1"),
+                 initParams.getIntParam("i2"),
+                 initParams.getObjectParam("o1"));
+
 	else if(initParams.getParamName().equals("Object-Object"))
 	    init(initParams.getObjectParam("o1"),
 		 initParams.getObjectParam("o2"));

@@ -278,6 +278,7 @@ public abstract class Stream extends Operator
 
     public Stream(Object o1) {super(o1);}
     public Stream(Object o1, int i1) {super(o1, i1);}
+    public Stream(int i1, int i2, Object o1) {super(i1,i2,o1);}
     public Stream(Object o1,Object o2) {super(o1,o2);}
 
     public Stream(Object o1,Object o2,Object o3) {super(o1,o2,o3);}

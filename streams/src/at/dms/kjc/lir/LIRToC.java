@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.62 2002-04-23 15:51:25 dmaze Exp $
+ * $Id: LIRToC.java,v 1.63 2002-06-18 19:49:31 aalamb Exp $
  */
 
 package at.dms.kjc.lir;
@@ -357,26 +357,40 @@ public class LIRToC
           }
         */
 
-        newLine();
+	// if it is a final field (eg constant)
+	// leave it out of the structure because constant propagation
+	// will have removed all references to it.
+	if ((expr == null ||
+	     !(expr instanceof JNewArrayExpression)) &&
+	    CModifier.contains(self.getVariable().getModifiers(),
+			       CModifier.ACC_FINAL)) {
+	    return;
+	}
 
+
+	
+        newLine();
         // if printing a field decl and it's array and it's
         // initialized, I want to use a special printer that
         // will just declare an array, instead of a pointer
         if (expr == null || !(expr instanceof JNewArrayExpression))
         {
-            // nope - not an array, or not initialized.  just
-            // print it normally - if an array, it'll become  a
-            // pointer and the init function better allocate it
-            print (type);
+            // nope - not an array, or not initialized.
+            // just print it normally - if an array, it'll become  a
+            // pointer and the init function better allocate it	    
+	    		
+	    print (type);
             print (" ");
             print (ident);
-            if (expr != null)
-            {
-                print ("\t= ");
-                expr.accept (this);
-            }
-        } else 
-        {
+
+	    
+	    // AAL -- you can't automatically initialize things in C as you can in Java
+	    // C. Eg int i = 5; is legal in Java, illegal in C. 
+//              if (expr != null)
+	    //              {
+//                  print ("\t= ");
+//                  expr.accept (this);
+	} else {
             // yep.  use the local printing functions to print
             // the correct type and array size
             printLocalType (type);

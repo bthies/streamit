@@ -23,12 +23,20 @@ public class LinearDot extends StreamItDot {
 	this.linearData = anal;
     }
 
-
-    String makeGreyLabelledNode(String label)
+    /** Create the dot code for a dark grey labeled node, with the specified label. **/
+    String makeDarkGreyLabelledNode(String label)
     {
         String name = getName();
         if (label == null) label = name;
         print(name + " [ color=slategrey, style=filled, label=\"" + label + "\" ]\n");
+        return name;
+    }
+    /** Create the dot code for a light grey labeled node, with the specified label. **/
+    String makeLightGreyLabelledNode(String label)
+    {
+        String name = getName();
+        if (label == null) label = name;
+        print(name + " [ color=lightgrey, style=filled, label=\"" + label + "\" ]\n");
         return name;
     }
 
@@ -65,7 +73,16 @@ public class LinearDot extends StreamItDot {
 	// check with the linear analyzer that we have, return a
 	// grey node. Otherwise, return a normal node.
 	if (this.linearData.hasLinearRepresentation(self)) {
-	    return new NamePair(makeGreyLabelledNode(label));
+	    LinearFilterRepresentation lfr;
+	    lfr = this.linearData.getLinearRepresentation(self);
+	    // Make a dark grey node if the linear representation has a constant
+	    // component, make a light grey node if the linear rep has a constant
+	    // component.
+	    if (lfr.hasConstantComponent()) {
+		return new NamePair(makeDarkGreyLabelledNode(label));
+	    } else {
+		return new NamePair(makeLightGreyLabelledNode(label));
+	    }
 	} else {
 	    return new NamePair(makeLabelledNode(label));
 	}

@@ -7,8 +7,12 @@ import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.iterator.*;
 
 /**
- * Class for creating access wrappers.
- * $Id: AccessWrapperFactory.java,v 1.1 2002-09-09 21:52:06 aalamb Exp $
+ * Class for creating access wrappers.<p>
+ *
+ * This class has also been pressed into service to perform manipulations on
+ * hashtable mappings that involve creating access wrappers.<p>
+ *
+ * $Id: AccessWrapperFactory.java,v 1.2 2002-09-11 17:04:43 aalamb Exp $
  **/
 class AccessWrapperFactory {
     /**
@@ -51,6 +55,50 @@ class AccessWrapperFactory {
 	}
     }
 
+    /** Returns true if the passed access wrapper wraps a field. **/
+    public static boolean isFieldWrapper(Object o) {
+	if (o == null) {
+	    throw new IllegalArgumentException("Null arg. passed to isFieldWrapper");
+	} else {
+	    return (o instanceof FieldAccessWrapper);
+	}
+    }
+	
+
+    
+    /**
+     * Adds mappings for all indices of an array
+     * to zero. (semantics of streamit are that the arrays start
+     * all zero'd).<p>
+     * formSize is the size of the [0..]+[0] linear forms to add 
+     **/
+    public static void addInitialArrayMappings(JExpression var,
+					       int arraySize,
+					       HashMap mappings,
+					       int formSize) {
+	// try and create a wrapper for the base array expression
+	AccessWrapper prefixWrapper = wrapAccess(var);
+	// if we couldn't wrap successfully, complain loudly.
+	if (prefixWrapper == null) {throw new RuntimeException("Couldn't wrap array for initial mappings.");}
+	
+	// now, for each index of the new array that is being created,
+	// add a mapping to [0...0]+[0] in the mappings map.
+	for (int i=0; i<arraySize; i++) {
+	    // make an access wrapper for this array access
+	    AccessWrapper key = new ArrayAccessWrapper(prefixWrapper, i);
+	    // make the zero linear form
+	    LinearForm value  = new LinearForm(formSize);
+	    // sanity check -- if we already have this mapping something is wrong
+	    if (mappings.containsKey(key)) {
+		throw new RuntimeException("Mapping already contains array initializer.");
+	    }
+	    // update the mapping
+	    mappings.put(key,value);
+	}
+    }
+	
+	
+	
 
 }
 
@@ -127,4 +175,5 @@ class ArrayAccessWrapper extends AccessWrapper {
 	return (other.base.equals(this.base) &&
 		(other.index == this.index));
     }
+    public AccessWrapper getPrefix() {return this.base;}
 }

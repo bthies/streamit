@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.10 2002-09-09 21:52:06 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.11 2002-09-11 17:04:43 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -162,7 +162,7 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** extract the actual value from a JExpression that is actually a literal... **/
     private static int extractInteger(JExpression expr) {
 	if (expr == null) {throw new RuntimeException("null peek rate");}
-	if (!(expr instanceof JIntLiteral)) {throw new RuntimeException("non integer peek rate");}
+	if (!(expr instanceof JIntLiteral)) {throw new RuntimeException("non integer literal peek rate...");}
 	JIntLiteral literal = (JIntLiteral)expr;
 	return literal.intValue();
     }
@@ -379,10 +379,13 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	Iterator map1Iter = map1.keySet().iterator();
 	while(map1Iter.hasNext()) {
 	    Object currentKey = map1Iter.next();
-	    // if map2 contains a mapping to the same thing as map1
-	    // add the mapping to the union.
-	    if (map2.get(currentKey).equals(map1.get(currentKey))) {
-		unionMap.put(currentKey, map1.get(currentKey));
+	    // if both maps contain the same key
+	    if (map1.containsKey(currentKey) && map2.containsKey(currentKey)) {
+		// if the item that the key maps to in both sets is the same
+		if (map2.get(currentKey).equals(map1.get(currentKey))) {
+		    // add the key to the union map
+		    unionMap.put(currentKey, map1.get(currentKey));
+		}
 	    }
 	}
 	return unionMap;
@@ -458,13 +461,44 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 
 	//// NOTE !!!!
-	//// This doesn't handle th case of aliasing yet. Oh dearie.
+	//// This doesn't handle the case of array aliasing.
+	// (which is fine because array aliases can not arise in the
+	//  new streamit syntax.)
+
+	//Oh dearie.
 	// Also note that we basically ignore structures because the
 	// necessary actions should be implemented in  
 	// field prop and not reimplemented here
 	
 	// make sure that we start with legal state
 	checkRep();
+
+	// eventually, ConstProp will handle setting the inialized array values to
+	// zero. For now, we only provide mappings to arr[i]=0 for in arr=new int[5]
+	// for single dimension arrays
+	// check the RHS to see if it is a new array expression
+	if (right instanceof JNewArrayExpression) {
+	    // make sure that this is only a one dimensional array
+	    JNewArrayExpression nae = (JNewArrayExpression)right;
+	    if (nae.getDims().length > 1) {
+		LinearPrinter.warn("Multidimensional array initializations are not handled by the linear filter analyzer");
+		return null;
+	    }
+	    // see if we have a linear form (eg constant) for the size of the array
+	    LinearForm sizeForm = (LinearForm)nae.getDims()[0].accept(this);
+	    if ((sizeForm != null) && (sizeForm.isIntegerOffset())) {
+		int arraySize = sizeForm.getIntegerOffset();
+		// add new mappings for each element in the array to zero.	    
+		AccessWrapperFactory.addInitialArrayMappings(left,
+							     arraySize,
+							     this.variablesToLinearForms,
+							     this.peekSize);
+	    } else {
+		LinearPrinter.warn("Ignoring JNewArrayExpression: " + right);
+	    }
+	    // we are all done, so return null
+	    return null;
+	}
 
 	// check the RHS to see if it is a linear form -- pump us through it
 	LinearForm rightLinearForm = (LinearForm)right.accept(this);
@@ -476,7 +510,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    removeMapping(left);
 	    return null;
 	}
-
 	
 	// try and wrap the left hand side of this expression
 	AccessWrapper leftWrapper = AccessWrapperFactory.wrapAccess(left);
@@ -706,8 +739,15 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 
 //     public Object visitCompoundStatement(JCompoundStatement self, JStatement[] body){return null;}
-//     public Object visitConditionalExpression(JConditionalExpression self, JExpression cond,
-// 					     JExpression left, JExpression right){return null;}
+    /**
+     * Visits an expression of the form (expr) ? (left) : (right). Since we expect const prop to
+     * handle reducing this case if the conditional expression expr is constant, we assume that a
+     * JConditionalExpression is non linear, and thus return null.
+     **/
+    public Object visitConditionalExpression(JConditionalExpression self, JExpression cond,
+					     JExpression left, JExpression right){
+	return null; 
+    }
 //     public Object visitConstructorCall(JConstructorCall self, boolean functorIsThis, JExpression[] params){return null;}
 //     public Object visitConstructorDeclaration(JConstructorDeclaration self, int modifiers,
 // 					      String ident, JFormalParameter[] parameters,
@@ -715,7 +755,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitContinueStatement(JContinueStatement self, String label){return null;}
 //     public Object visitDoStatement(JDoStatement self, JExpression cond, JStatement body){return null;}
 //     public Object visitEmptyStatement(JEmptyStatement self){return null;}
-    /** equality is a non linear operation, so we return null. **/
+    /** Equality is a non linear operation, so we return null. **/
     public Object visitEqualityExpression(JEqualityExpression self, boolean equal,
  					  JExpression left, JExpression right){
 	return null;
@@ -756,8 +796,12 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     }
 //     public Object visitFormalParameters(JFormalParameter self, boolean isFinal,
 // 					CType type, String ident){return null;}
-//     public Object visitForStatement(JForStatement self, JStatement init,
-// 				    JExpression cond, JStatement incr, JStatement body){return null;}
+     public Object visitForStatement(JForStatement self, JStatement init,
+				     JExpression cond, JStatement incr, JStatement body){
+	 this.nonLinearFlag = true;
+	 LinearPrinter.warn("Not yet implemented -- for loops are not handled yet.");
+	 return null;
+     }
     /**
      * Visit an if statement -- push this down the
      * the then clause, push a copy of this down the else clause,
@@ -842,7 +886,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    Object key = keyIter.next();
-	    if (key instanceof FieldAccessWrapper) {
+	    if (AccessWrapperFactory.isFieldWrapper(key)) {
 		toRemove.add(key);
 	    }
 	}
@@ -886,7 +930,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      **/
     public Object visitNewArrayExpression(JNewArrayExpression self, CType type,
  					  JExpression[] dims, JArrayInitializer init){
-	LinearPrinter.warn("Ignoring new array expression " + self);
+	// right now, only support one dimensional arrays. If more than one dimension, complain loudly
+	if (dims.length > 1) { throw new RuntimeException("Multidimensional arrays are not supported yet"); }
 	return null;
     }
     
@@ -995,7 +1040,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 						    JVariableDefinition[] vars){return null;}
 //     public Object visitVariableDefinition(JVariableDefinition self, int modifiers,
 // 					  CType type, String ident, JExpression expr){return null;}
-//     public Object visitWhileStatement(JWhileStatement self, JExpression cond, JStatement body){return null;}
+    public Object visitWhileStatement(JWhileStatement self, JExpression cond, JStatement body){
+	this.nonLinearFlag = true;
+	LinearPrinter.warn("Not yet implemented -- while statements are not yet implemented");
+	return null;
+    }
 
 
 

@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.
  *
- * $Id: LinearFilterRepresentation.java,v 1.2 2002-09-06 17:19:42 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.3 2002-09-11 17:04:44 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -32,5 +32,34 @@ public class LinearFilterRepresentation {
 	this.A = matrixA.copy();
 	this.b = (FilterVector)vectorb.copy();
     }
+
+    /** Get the A matrix. **/
+    public FilterMatrix getA() {return this.A;}
+    /** Get the b vector. **/
+    public FilterVector getb() {return this.b;}
+
+    /** Get the peek count. (#cols of A) **/
+    public int getPeekCount() {return this.A.getCols();}
+    /** Get the push count. (#rows of A) **/
+    public int getPushCount() {return this.A.getRows();}
+
+    /**
+     * Returns true if at least one element of the constant vector b are zero.
+     **/
+    public boolean hasConstantComponent() {
+	// go over all elements in b and if one is non zero, return true
+	// otherwise return false.
+	int bSize = b.getSize();
+	for (int i=0; i<bSize; i++) {
+	    ComplexNumber currentElement = b.getElement(i);
+	    if (!currentElement.equals(ComplexNumber.ZERO)) {
+		return true;
+	    }
+	}
+	// seen only non-zero terms, therefore we don't have a
+	// constant component.
+	return false;
+    }							   
+
     
 }

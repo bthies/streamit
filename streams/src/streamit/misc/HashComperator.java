@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: HashComperator.java,v 1.5 2004-10-17 08:27:04 thies Exp $ */
+/* $Id: HashComperator.java,v 1.6 2004-11-16 09:57:16 thies Exp $ */
 
 public class HashComperator implements Comperator
 {
@@ -25,10 +25,12 @@ public class HashComperator implements Comperator
 		int leftHash = left.hashCode ();
 		int rightHash = right.hashCode ();
 		
+		/* Java does not require hashCodes to be distinct for distinct objects 
 		assert left == right || leftHash != rightHash : 
 		    "Hash error on Objects " + left + " and " + right + " of types + " + 
-		    (left==null ? "null" : ""+left.getClass()) + " and " + 
-		    (right==null ? "null" : ""+right.getClass());
+		    (left==null ? "null" : ""+left.getClass()) + " (hash=" + leftHash + ") and " + 
+		    (right==null ? "null" : ""+right.getClass()) + " (hash=" + rightHash + ")";
+		*/
 		return left.hashCode () < right.hashCode ();
 	}
 }

@@ -90,24 +90,32 @@ public class SIRMessageStatement extends JStatement {
     // ----------------------------------------------------------------------
 
     /**
-     * Accepts the specified visitor - NOT SUPPORTED YET.
+     * Generates a sequence of bytescodes - NOT SUPPORTED YET.
      */
-    public void accept(KjcVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+    public void genCode(CodeSequence code) {
+	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
 
     /**
+     * Accepts the specified visitor.
+     */
+    public void accept(KjcVisitor p) {
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitMessageStatement(this, 
+						   portal,
+						   ident,
+						   args,
+						   latency);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
+    }
+
+    /*
      * Accepts the specified attributed visitor - NOT SUPPORTED YET.
      */
     public Object accept(AttributeVisitor p) {
 	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
 	return null;
-    }
-
-    /**
-     * Generates a sequence of bytescodes - NOT SUPPORTED YET.
-     */
-    public void genCode(CodeSequence code) {
-	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
 }

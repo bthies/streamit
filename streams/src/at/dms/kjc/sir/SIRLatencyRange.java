@@ -1,5 +1,7 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.*;
+
 /** 
  * This represents a range of latencies for message delivery.
  */
@@ -31,5 +33,16 @@ public class SIRLatencyRange extends SIRLatencyMax {
      */
     public boolean isExact() {
 	return min==max;
+    }
+
+    /**
+     * Accepts the specified visitor.
+     */
+    public void accept(KjcVisitor p) {
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitLatencyRange(this);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
     }
 }

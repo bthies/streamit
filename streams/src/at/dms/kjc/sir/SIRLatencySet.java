@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.*;
 import java.util.TreeSet;
 import java.util.Iterator;
 
@@ -46,5 +47,16 @@ public class SIRLatencySet extends SIRLatency {
 
     public int size() {
 	return entries.size();
+    }
+
+    /**
+     * Accepts the specified visitor.
+     */
+    public void accept(KjcVisitor p) {
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitLatencySet(this);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
     }
 }

@@ -70,12 +70,14 @@ public class SIRPeekExpression extends JExpression {
     // ----------------------------------------------------------------------
 
     /**
-     * Accepts the specified visitor.  NOT SUPPORTED YET.
-     * @param	p		the visitor
+     * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	at.dms.util.Utils.fail("Visitors to custom nodes not supported yet.");
-	//    p.visitMethodCallExpression(this, prefix, ident, args);
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitPeekExpression(this, arg);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
     }
 
     /**

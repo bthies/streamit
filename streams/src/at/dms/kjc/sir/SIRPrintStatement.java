@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.2 2001-10-02 19:26:16 mgordon Exp $
+ * $Id: SIRPrintStatement.java,v 1.3 2001-10-02 19:58:52 thies Exp $
  */
 
 package at.dms.kjc.sir;
@@ -83,6 +83,14 @@ public class SIRPrintStatement extends JStatement {
      */
     public void genCode(CodeSequence code) {}
 
-
-    
+    /**
+     * Accepts the specified visitor.
+     */
+    public void accept(KjcVisitor p) {
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitPrintStatement(this, arg);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
+    }
 }

@@ -70,25 +70,26 @@ public class SIRPushExpression extends JExpression {
     // ----------------------------------------------------------------------
 
     /**
-     * Accepts the specified visitor.  NOT SUPPORTED YET.
-     * @param	p		the visitor
+     * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIRE nodes not supported yet.");
-	//    p.visitMethodCallExpression(this, prefix, ident, args);
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitPushExpression(this, arg);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
     }
 
     /**
      * Accepts the specified attribute visitor.  NOT SUPPORTED YET.
-     * @param	p		the visitor
+     * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIRE nodes not supported yet.");
-	return null;
+        at.dms.util.Utils.fail("Visitors to SIRE nodes not supported yet.");
+        return null;
     }
- 
 
-    /**
+    /*
      * Generates JVM bytecode to evaluate this expression.  NOT SUPPORTED YET.
      *
      * @param	code		the bytecode sequence

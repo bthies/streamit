@@ -72,10 +72,14 @@ public class SIRInitStatement extends JStatement {
     // ----------------------------------------------------------------------
 
     /**
-     * Accepts the specified visitor - NOT SUPPORTED YET.
+     * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitInitStatement(this, args, target);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
     }
 
     /**

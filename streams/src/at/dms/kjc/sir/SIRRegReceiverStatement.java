@@ -60,18 +60,23 @@ public class SIRRegReceiverStatement extends JStatement {
     // ----------------------------------------------------------------------
 
     /**
-     * Accepts the specified visitor - NOT SUPPORTED YET.
+     * Accepts the specified visitor.
      */
     public void accept(KjcVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitRegReceiverStatement(this, portal);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
     }
 
-        /**
-     * Accepts the specified attribute visitor - NOT SUPPORTED YET.
+    /**
+     * Accepts the specified attribute visitor.  NOT SUPPORTED YET.
+     * @param   p               the visitor
      */
     public Object accept(AttributeVisitor p) {
-	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
-	return null;
+        at.dms.util.Utils.fail("Visitors to SIRE nodes not supported yet.");
+        return null;
     }
 
     /**

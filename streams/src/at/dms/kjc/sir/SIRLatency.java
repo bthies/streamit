@@ -1,5 +1,7 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.*;
+
 /** 
  * This represents a latency for message delivery.  A latency can be:
  *    - best-effort delivery
@@ -14,4 +16,15 @@ public class SIRLatency {
     public static final SIRLatency BEST_EFFORT = new SIRLatency();
     
     protected SIRLatency() {}
+
+    /**
+     * Accepts the specified visitor.
+     */
+    public void accept(KjcVisitor p) {
+	if (p instanceof SLIRVisitor) {
+	    ((SLIRVisitor)p).visitLatency(this);
+	} else {
+	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	}
+    }
 }

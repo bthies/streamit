@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.66 2003-07-23 21:08:12 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.67 2003-07-24 19:22:16 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -713,10 +713,33 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtSendMessage(StmtSendMessage stmt)
     {
-        // Ignore the message latency until we have support for it
-        // in the Java syntax.
-        String result = (String)stmt.getReceiver().accept(this) + "." +
-            stmt.getName() + "(";
+        String receiver = (String)stmt.getReceiver().accept(this);
+        String result = "";
+
+        // Issue one of the latency-setting statements.
+        if (stmt.getMinLatency() == null)
+        {
+            if (stmt.getMaxLatency() == null)
+                result += receiver + ".setAnyLatency()";
+            else
+                result += receiver + ".setMaxLatency(" +
+                    (String)stmt.getMaxLatency().accept(this) + ")";
+        }
+        else
+        {
+            // Hmm, don't have an SIRLatency for only minimum latency.
+            // Wing it.
+            Expression max = stmt.getMaxLatency();
+            if (max == null)
+                max = new ExprBinary(null, ExprBinary.BINOP_MUL,
+                                     stmt.getMinLatency(),
+                                     new ExprConstInt(null, 100));
+            result += receiver + ".setLatency(" +
+                (String)stmt.getMinLatency().accept(this) + ", " +
+                (String)max.accept(this) + ")";
+        }
+        
+        result += ";\n" + indent + receiver + "." + stmt.getName() + "(";
         boolean first = true;
         for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
         {

@@ -10,12 +10,11 @@ import java.util.*;
 public class GraphEncoder implements AttributeStreamVisitor {
     //May Want outputStream or stdout. Not sure
     private PrintStream outputStream;
-    private ArrayList nodesList;
-    
+    private GraphStructure graph;
 
     //ADDED TO COMPILE
 
-    private int lastNode;
+    private GEStreamNode lastNode;
 
     public void print(String f) 
     {
@@ -39,7 +38,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
     
     public String getName()
     {
-        lastNode++;
+    
         return "node" + lastNode;
     }
 
@@ -47,26 +46,20 @@ public class GraphEncoder implements AttributeStreamVisitor {
 
     public GraphEncoder() 
     {
-	this.nodesList = new ArrayList();
+		this.graph = new GraphStructure();
 	
-	//Feel free to add arguments and call it correctly
-	//Setup an output stream to output to here
-	//For now we are using System.out
-	//Later we can change to outputting to file perhaps
+		//Feel free to add arguments and call it correctly
+		//Setup an output stream to output to here
+		//For now we are using System.out
+		//Later we can change to outputting to file perhaps
 	
-	this.outputStream = System.out;
+		this.outputStream = System.out;
     }
     
     public GraphEncoder(PrintStream outputStream) 
     {
-	this.nodesList = new ArrayList();
-	
-	//Feel free to add arguments and call it correctly
-	//Setup an output stream to output to here
-	//For now we are using System.out
-	//Later we can change to outputting to file perhaps
-	
-	this.outputStream = outputStream;
+		this.graph = new GraphStructure();
+		this.outputStream = outputStream;
     }
     
 	/**
@@ -127,7 +120,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
     /* visit a structure */
     public Object visitStructure(SIRStructure self,
                                  JFieldDeclaration[] fields) {
-        return null;
+        return new GEStreamNode(self.getIdent(), "");
     }
     
     /* visit a filter */
@@ -146,21 +139,21 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			for (int i = 0; i < phases.length; i++)
 			{
 				
-	// REMOVED TO ALLOW COMPILE			
-	//			phFilter.addWorkFunction(new GEWorkFunction(phases[i].getName(), 
-	//														phases[i].getPushInt(), 
-	//														phases[i].getPopInt(), 
-	//														phases[i].getPeekInt()));
+				
+				phFilter.addWorkFunction(new GEWorkFunction(work.getName(), 
+															phases[i].getPushInt(), 
+															phases[i].getPopInt(), 
+															phases[i].getPeekInt()));
 			}
 			phases = self.getInitPhases();
 			for (int i = 0; i < phases.length; i++)
 			{
 				
-	//REMOVED TO ALLOW COMPILE	
-	//			phFilter.addInitWorkFunction (new GEWorkFunction(phases[i].getName(), 
-	//															 phases[i].getPushInt(), 
-	//															 phases[i].getPopInt(), 
-	//															 phases[i].getPeekInt()));
+		
+				phFilter.addInitWorkFunction (new GEWorkFunction(work.getName(), 
+																 phases[i].getPushInt(), 
+																 phases[i].getPopInt(), 
+																 phases[i].getPeekInt()));
 			}							
 		}
 		catch (Exception e) 
@@ -216,16 +209,30 @@ public class GraphEncoder implements AttributeStreamVisitor {
     /* visit a splitter */
     public Object visitSplitter(SIRSplitter self,
                                 SIRSplitType type,
-                                JExpression[] expWeights) {
-	return null;
-	
-    }
+                                JExpression[] expWeights) 
+	{
+		try 
+		{
+			return new GESplitter(type.toString(), self.getWeights());
+		}
+		catch (Exception e) 
+		{
+			return null;
+		}
+	}
     
     /* visit a joiner */
     public Object visitJoiner(SIRJoiner self,
                               SIRJoinType type,
-                              JExpression[] expWeights) {
-	return null;
+                              JExpression[] expWeights) 
+    {
+		try {
+			return new GEJoiner(type.toString(), self.getWeights());
+		}
+		catch (Exception e) {
+			return null;
+		}
+	  
 	
     }
     
@@ -235,8 +242,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
     {
 		try 
 		{
-			GEWorkFunction wf = new GEWorkFunction(work.getName(), self.getPushInt(), self.getPopInt(),self.getPeekInt());
-			return wf;
+			return new GEWorkFunction(work.getName(), self.getPushInt(), self.getPopInt(),self.getPeekInt());
 		} 
 		catch (Exception e) 
 		{
@@ -256,31 +262,20 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 JMethodDeclaration init) {                 	
                                 	
 		GEPipeline pipeline = new GEPipeline();        
-        //###
-		// Establish this is a subgraph cluster
-		//###
-		print(getClusterString(self));
-
         
 		// Walk through each of the elements in the pipeline.
 		Iterator iter = self.getChildren().iterator();
 		while (iter.hasNext())
 		{
 			SIROperator oper = (SIROperator)iter.next();
-//			REMOVED TO ALLOW COMPILE	
-	//		GEStreamNode currNode = oper.accept(this);
-			
-			//###
-			// Instead of printEdge, add the edge relationship representation to the graph
-			//###
-//			REMOVED TO ALLOW COMPILE	
-//			graphStruct.createEdge(lastNode, currNode);	
-//		 	pipe.addPipeStage(currNode); 	//
-			// Update the known edges.
-//			lastNode = currNode;
-			
+	
+			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
+			pipeline.addChild(currNode);
+				
 		}
-		return null;
+		  
+		graph.addHierarchy(pipeline, pipeline.getChildren());
+		return pipeline;
     }
     
     /* Pre-visit a splitjoin 
@@ -291,36 +286,25 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                  JMethodDeclaration init,
                                  SIRSplitter splitter,
                                  SIRJoiner joiner) {
-									NamePair pair = new NamePair();
-        
-	//###
-	// Establish this is a subgraph cluster
-	//###
-	print(getClusterString(self));
+                                 	
+	// Visit the splitter and joiner 
+	GESplitter split = (GESplitter)splitter.accept(this);
+	GEJoiner join = (GEJoiner) joiner.accept(this);
 	
-
-	// Visit the splitter and joiner to get their node names...
-	NamePair np;
-	np = (NamePair)splitter.accept(this);
-	pair.first = np.first;
-	np = (NamePair)joiner.accept(this);
-	pair.last = np.last;
-
 	// ...and walk through the body.
 	Iterator iter = self.getParallelStreams().iterator();
 	while (iter.hasNext()) {
 		SIROperator oper = (SIROperator)iter.next();
-		np = (NamePair)oper.accept(this);
+		GEStreamNode strNode = (GEStreamNode)oper.accept(this);
+		split.addChild(strNode);
+		strNode.addChild(join);		
 		
-		//###
-		// Instead of printEdge, add the edge relationship representation to the graph
-		//###	
-		printEdge(pair.first, np.first);
-		printEdge(np.last, pair.last);
 	}
 	
-	return pair;                              	
-                    	                               	
+	// CREATE splitjoin class	
+//	return new GESplitJoin(split,join);
+
+	return null;
                                
     }
 
@@ -331,31 +315,25 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     JMethodDeclaration init,
                                     JMethodDeclaration initPath) {
 										NamePair np;
-        
-	//###
-	// Establish this is a subgraph cluster
-	//###
-	print(getClusterString(self));
-	
+    
+		// Visit the splitter and joiner.
+		GESplitter split = (GESplitter) self.getSplitter().accept(this);
+		GEJoiner join = (GEJoiner) self.getJoiner().accept(this);
 
-	// Visit the splitter and joiner.
-	np = (NamePair)self.getJoiner().accept(this);
-	String joinName = np.first;
-	np = (NamePair)self.getSplitter().accept(this);
-	String splitName = np.first;
+/*
 
-	// Visit the body and the loop part.
-	np = (NamePair)self.getBody().accept(this);
-	printEdge(joinName, np.first);
-	printEdge(np.last, splitName);
-	np = (NamePair)self.getLoop().accept(this);
+		// Visit the body and the loop part.
+		np = (NamePair)self.getBody().accept(this);
+		printEdge(joinName, np.first);
+		printEdge(np.last, splitName);
+		np = (NamePair)self.getLoop().accept(this);
 	
-	printEdge(splitName, np.first);
-	printEdge(np.last, joinName);
+		printEdge(splitName, np.first);
+		printEdge(np.last, joinName);
 
-											   print("}\n");
-											   return new NamePair(joinName, splitName);
-	
-	
+
+		return new NamePair(joinName, splitName);*/
+		
+		return null;
     }
 }

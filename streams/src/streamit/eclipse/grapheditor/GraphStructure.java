@@ -1,9 +1,6 @@
 package grapheditor;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.LinkedList;
+import java.util.*;
 
 import com.sun.rsasign.t;
 
@@ -24,7 +21,7 @@ import com.sun.rsasign.t;
 public class GraphStructure {
 	
 	private HashMap graph;
-	private Node parent;
+	private GEStreamNode parent;
 
 	/*
 	 * The Node class represents a Stream. 
@@ -44,8 +41,10 @@ public class GraphStructure {
 	 
 	/* The Node class is the graph representation of nodes in the Streamit graph
 	 * with the necessary properties (type of stream, children belonging to the node,
-	 * and other properties that are specific to the Stream type.
-	 */ 
+	 * and other properties that are specific
+	 *  to the Stream type.
+	 */
+	 /* 
 	 public class Node {
 	
 		private String type;
@@ -65,7 +64,7 @@ public class GraphStructure {
 			this.nodeChildren = new ArrayList(children);
 		}
 	}
-
+*/
 
 	
 	
@@ -73,35 +72,47 @@ public class GraphStructure {
 	{
 		for (int i = 0;  i < nodes.size(); i++)
 		{
-			Node n = (Node) nodes.get(i);
-			this.graph.put(n, n.nodeChildren);
+			GEStreamNode n = (GEStreamNode) nodes.get(i);
+			this.graph.put(n, n.getChildren());
 		}
 	}
 	
-	// Add a node that will be a child node of the node parent.
+	public GraphStructure()
+	{
+		graph = new HashMap();
+	}
 	
-	public void addNode(Node node, Node parent, int index)
+	
+	
+	
+	public void addHierarchy(GEStreamNode parentNode, ArrayList children)
+	{
+		this.graph.put(parentNode, children);
+	}
+			
+	// Add a node that will be a child node of the node parent.
+	public void addNode(GEStreamNode node, GEStreamNode parent, int index)
 	{
 		ArrayList nodeList = this.getChildren(parent); 
 		nodeList.add(index, node);
 	}
 	
 	// Delete node an all of the children belonging to that node	
-	public void deleteNode(Node node)
+	public void deleteNode(GEStreamNode node)
 	{
 		ArrayList nodeList = this.getChildren(node);
 		int listSize = nodeList.size();
 		
 		for (int i = 0; i < listSize; i++)
 		{
-			Node n = (Node) nodeList.get(i);
+			GEStreamNode n = (GEStreamNode) nodeList.get(i);
 			this.graph.remove(n);
 		}
 		this.graph.remove(node);
 	}
 	
 	// Provide the children of node n 
-	public ArrayList getChildren(Node n)
+	public ArrayList getChildren(GEStreamNode n)
 	{
 		return (ArrayList) this.graph.get(n);
 	}

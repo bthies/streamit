@@ -21,6 +21,7 @@ public class GEPhasedFilter extends GEStreamNode{
 	
 	public GEPhasedFilter()
 	{
+		super("PHASED_FILTER", "");
 		initWorkFunctions = new ArrayList();
 		workFunctions = new ArrayList();
 	}

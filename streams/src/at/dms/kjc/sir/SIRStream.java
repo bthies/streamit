@@ -360,5 +360,15 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	Utils.assert(foundInit || !needsInit() || getInit()==null);
 	Utils.assert(foundWork || !needsWork() || getWork()==null);
     }
+
+    /**
+     * Returns an empty init function.
+     */
+    public static JMethodDeclaration makeEmptyInit() {
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC, 
+				      CStdType.Void, "init",
+				      JFormalParameter.EMPTY, CClassType.EMPTY,
+				      new JBlock(), null, null);
+    }
 }
 

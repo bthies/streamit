@@ -39,14 +39,15 @@ public class SIRJoiner extends SIROperator {
     }
 
     public static SIRJoiner create(SIRContainer parent, 
-				     SIRJoinType type, 
-				     JExpression[] weights) {
+				   SIRJoinType type, 
+				   JExpression[] weights) {
 	if (type==SIRJoinType.NULL) {
 	    return new SIRJoiner(parent, type, initLiteralArray(weights.length, 0), true);
 	} else if (type==SIRJoinType.WEIGHTED_RR) {
 	    return createWeightedRR(parent,weights);
 	} else if (type==SIRJoinType.ROUND_ROBIN) {
-	    createUniformRR(parent,weights);
+	    JExpression weight = (weights.length>0 ? weights[0] : new JIntLiteral(1));
+	    createUniformRR(parent,weight);
 	} else {
 	    fail("Unrecognized joiner type.");
 	}
@@ -91,23 +92,14 @@ public class SIRJoiner extends SIROperator {
 
     /**
      * This is for creating a round robin with uniform weights across
-     * the stream.  If weight[] is empty, then assume the weights
-     * should all be one.  If non-empty, then assume the weight is the
-     * first element of <weight>.
+     * the stream.
      */
     public static SIRJoiner createUniformRR(SIRContainer parent, 
-					    JExpression[] weight) {
-	JExpression weightExp;
-	// get the weight for this
-	if (weight.length==0) {
-	    weightExp = new JIntLiteral(1);
-	} else {
-	    weightExp = weight[0];
-	}
+					    JExpression weight) {
 	// make a uniform rr joiner
 	return new SIRJoiner(parent, 
 			     SIRJoinType.WEIGHTED_RR,
-			     initArray(1, weightExp),
+			     initArray(Math.max(parent.size(), 1), weight),
 			     true);
     }
 

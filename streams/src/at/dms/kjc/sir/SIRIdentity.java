@@ -55,17 +55,7 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable {
 	JBlock initblock = new JBlock(/* tokref   */ null,
 				/* body     */ new JStatement[0],
 				/* comments */ null);
-	JMethodDeclaration initfn =  new JMethodDeclaration( /* tokref     */ null,
-					  /* modifiers  */ at.dms.kjc.
-					  Constants.ACC_PUBLIC,
-					  /* returntype */ CStdType.Void,
-					  /* identifier */ "init",
-					  /* parameters */ JFormalParameter.EMPTY,
-					  /* exceptions */ CClassType.EMPTY,
-					  /* body       */ initblock,
-					  /* javadoc    */ null,
-					  /* comments   */ null);
-	setInit(initfn);
+	setInit(SIRStream.makeEmptyInit());
     }
 }
 

@@ -1579,17 +1579,13 @@ public class IRPrinter extends Utils implements SLIRVisitor
     public void visitSetChild(LIRSetChild self,
 			      JExpression streamContext,
 			      String childType,
-			      String childName,
-			      LIRFunctionPointer childInit) {
+			      String childName) {
 	blockStart("LIRSetChild");
 	attrStart("parentContext");
 	streamContext.accept(this);
 	attrEnd();
 	attrPrint("childType", childType);
 	attrPrint("childName", childName);
-	attrStart("initFunction");
-	childInit.accept(this);
-	attrEnd();
 	blockEnd();
     }
 

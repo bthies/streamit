@@ -11,7 +11,6 @@ import at.dms.compiler.*;
  *  d->child1 = malloc(sizeof(HelloWorld6_1_data));
  *  d->child1->c = create_context(d->child1);
  *  register_child(d->c, d->child1->c);
- *  HelloWorld6_1_init(d->child1, d);
  */
 public class LIRSetChild extends LIRNode {
 
@@ -26,11 +25,6 @@ public class LIRSetChild extends LIRNode {
      */
     private String childName;
     
-    /**
-     * The init function of the child.  (e.g. HelloWorld6_1_init)
-     */
-    private LIRFunctionPointer childInit;
-
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
     // ----------------------------------------------------------------------
@@ -40,12 +34,10 @@ public class LIRSetChild extends LIRNode {
      */
     public LIRSetChild(JExpression streamContext,
 		       String childType,
-		       String childName,
-		       LIRFunctionPointer childInit) {
+		       String childName) {
 	super(streamContext);
 	this.childType = childType;
 	this.childName = childName;
-	this.childInit = childInit;
     }
 
     public void accept(SLIRVisitor v)
@@ -53,7 +45,6 @@ public class LIRSetChild extends LIRNode {
         v.visitSetChild(this, 
 			this.getStreamContext(), 
 			this.childType,
-			this.childName,
-			this.childInit);
+			this.childName);
     }
 }

@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.6 2001-10-03 13:29:12 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.7 2001-10-03 13:47:04 thies Exp $
  */
 
 package at.dms.kjc;
@@ -117,8 +117,7 @@ public interface SLIRVisitor extends KjcVisitor
     void visitSetChild(LIRSetChild self,
                        JExpression streamContext,
                        String childType,
-		       String childName,
-		       LIRFunctionPointer childInit);
+		       String childName);
     
     /**
      * Visits a decoder registration node.

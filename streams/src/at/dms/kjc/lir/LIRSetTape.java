@@ -7,6 +7,8 @@ import at.dms.compiler.*;
  * This specifies a tape connection between two streams.  I assume
  * that the runtime system assigns the actual tape to the appropriate
  * field of each structure.  
+ *
+ *  create_tape(d->child1, d->child2, sizeof(int), 1);
  */
 public class LIRSetTape extends LIRNode {
 

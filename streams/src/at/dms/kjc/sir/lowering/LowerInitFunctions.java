@@ -63,10 +63,7 @@ public class LowerInitFunctions implements StreamVisitor {
 						   filter.getName(),
 						   /* child name */
 						   LoweringConstants.
-						   getChildName(childCount),
-						   /* child init func */
-						   new LIRFunctionPointer(
-						   filter.getInit())));
+						   getChildName(childCount)));
 	}
     }
 				 

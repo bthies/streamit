@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNameExpression.java,v 1.3 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JNameExpression.java,v 1.4 2001-10-04 23:39:27 thies Exp $
  */
 
 package at.dms.kjc;
@@ -144,7 +144,6 @@ public class JNameExpression extends JExpression {
      * @exception	PositionedError	the analysis detected an error
      */
     public JExpression analyse(CExpressionContext context) throws PositionedError {
-	new RuntimeException().printStackTrace();
 	try {
 	    // 6.5.2 Reclassification of Contextually Ambiguous Names
 	    // If the AmbiguousName is a simple name, consisting of a single Identifier:

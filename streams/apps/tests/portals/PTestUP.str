@@ -1,5 +1,5 @@
 /*
- * PTest2.str: a portal messaging test
+ * PTestUP.str: an upstream messaging test
  */
 
 void->void pipeline PTestUP {

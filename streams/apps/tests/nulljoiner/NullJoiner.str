@@ -1,0 +1,43 @@
+// for example, try with "strc -r4 -c2 NullJoiner.str" and there
+// should be 8 filters in resulting graph (no joiners assigned tiles)
+
+void->void pipeline NullJoiner {
+    add Source();
+    add Dummy();
+    add Dummy();
+    add Dummy();
+    add Dummy();
+    add Test();
+}
+
+void->int filter Source {
+    work push 1 {
+	push(1);
+    }
+}
+
+int->void splitjoin Test {
+    split duplicate;
+    for (int i=0; i<2; i++) {
+	add splitjoin {
+	    split roundrobin;
+	    for (int i=0; i<2; i++) {
+		add Sink();
+	    }
+	    join roundrobin(0);
+	}
+    }
+    join roundrobin(0);
+}
+
+int->void filter Sink {
+    work pop 1 {
+	print(pop());
+    }
+}
+
+int->int filter Dummy {
+    work push 1 pop 1 {
+	push(2*pop());
+    }
+}

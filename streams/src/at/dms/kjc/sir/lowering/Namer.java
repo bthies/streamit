@@ -70,7 +70,13 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
      */
     public static String getName(SIROperator str) {
 	if (names==null) { return null; }
-	return (String)names.get(str);
+	// if the name is null, return the ident instead
+	String name = (String)names.get(str);
+	if (name==null && (str instanceof SIRStream)) {
+	    return ((SIRStream)str).getIdent();
+	} else {
+	    return name;
+	}
     }
 
     /**

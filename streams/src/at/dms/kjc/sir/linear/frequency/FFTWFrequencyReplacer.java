@@ -16,13 +16,17 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.4 2002-10-30 14:51:20 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.5 2002-11-08 01:22:05 aalamb Exp $
  **/
 public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
     public static final String FAST_CONV_EXTERNAL = "do_fast_convolution";
     /** the name of the buffer in which to place the input data. */
     public static final String INPUT_BUFFER_NAME = "timeBuffer";
+
+    /** If the makeNewWork function is making the init work function **/
+    public static final int INITWORK = 1;
+    public static final int WORK = 2;
     
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
     LinearAnalyzer linearityInformation;
@@ -77,7 +81,9 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	}	
 	
 	/* now is when we get to the fun part, we have a linear representation
-	 * that computes an FIR (ef pop 1, push 1, peek N) and we want to replace it with an FFT. */
+	 * that computes an FIR (ef pop 1, push 1, peek N) and we want to replace it with an FFT.
+	 * Note that we can equate N with the block size of the input that we are looking at.
+	 */
 	int x = linearRep.getPeekCount();
 	int N = calculateN(this.targetNumberOfOutputs,x);
 	int filterSize = N+2*(x-1);
@@ -89,27 +95,54 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	String imagWeightName = "freq_weights_i";
 	JVariableDefinition realWeightField    = makeWeightField(realWeightName);
 	JVariableDefinition imagWeightField    = makeWeightField(imagWeightName);
+
+	/* make fields to hold the real and imaginary partial results between executions */
+	String partialFieldName = "freq_partial";
+	JVariableDefinition partialField   = makeWeightField(partialFieldName);
 	
 	/* wrap them up, along with any fields that the filter already has. */
-	JFieldDeclaration[] newFields = makeFieldDeclarations(self.getFields(), realWeightField, imagWeightField);
+	JFieldDeclaration[] newFields = makeFieldDeclarations(self.getFields(),realWeightField, imagWeightField, partialField);
 	
 	/* make a new init function */
-	JMethodDeclaration freqInit = makeNewInit(linearRep, realWeightField, imagWeightField, filterSize);
+	JMethodDeclaration freqInit = makeNewInit(linearRep, realWeightField, imagWeightField, partialField,
+						  filterSize, x);
 
+	/* make the init work function */
+	JMethodDeclaration freqInitWork = makeNewWork(INITWORK, realWeightField, imagWeightField, partialField,
+						      filterSize, x, N);
+	
 	/* make a new work function */
-	JMethodDeclaration freqWork = makeNewWork(realWeightField, imagWeightField, filterSize, x, N);
+	JMethodDeclaration freqWork = makeNewWork(WORK, realWeightField, imagWeightField, partialField,
+						  filterSize, x, N);
 	
 	
 	LinearPrinter.println(" done building new IR nodes for " + self);
 	
-	/* replace all of the pieces that we just built. */
-	self.setPeek(x+N-1);
-	self.setPop(N);
-	self.setPush(N);
-	self.setWork(freqWork);
-	self.setInit(freqInit);
-	self.setFields(newFields);
-	self.setIdent("Frequency" + self.getIdent());
+	LinearPrinter.println(" creating new two stage filter...");
+	// Create a new filter that contains all of the new pieces that we have built
+	SIRTwoStageFilter freqFilter;
+	/* Note, we need to have initPeek-initPop == peek-Pop for some scheduling reason
+	 * so therefore, we set the peek rate of the work function to be N+2(x-1) even though
+	 * it really only needs to be N+x-1.*/
+	freqFilter = new SIRTwoStageFilter(self.getParent(),              /* parent */
+					   "TwoStageFreq" + self.getIdent(),/* ident */
+					   newFields,                     /* fields */
+					   new JMethodDeclaration[0],     /* methods -- init, work, and initWork are special*/
+					   new JIntLiteral(N+x-1 + x-1),  /* peek (w/ extra x-1 window...)*/
+					   new JIntLiteral(N+x-1),        /* pop */
+					   new JIntLiteral(N+x-1),        /* push */
+					   freqWork,                      /* work */
+					   N+x-1,                         /* initPeek */
+					   N,                             /* initPop */
+					   N,                             /* initPush */
+					   freqInitWork,                  /* initWork */
+					   self.getInputType(),           /* input type */
+					   self.getOutputType());         /* output type */
+	// need to explicitly set the init function
+	freqFilter.setInit(freqInit);
+
+	// now replace the current filter (self) with the frequency version
+	self.getParent().replace(self, freqFilter);
 	
 	LinearPrinter.println(" done replacing.");
 	
@@ -130,40 +163,46 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     
 
 
-    /* make a new field declarations array with the new fields for weights. */
+    /* make a new field declarations array with the new fields for weights and partial results. */
     public JFieldDeclaration[] makeFieldDeclarations(JFieldDeclaration[] originals,
 						     JVariableDefinition new1,
-						     JVariableDefinition new2) {
+						     JVariableDefinition new2,
+						     JVariableDefinition new3) {
 	/* really simple -- make a new array, copy the elements from the
 	 * old array and then stick in the two new ones. */
-	JFieldDeclaration[] returnFields = new JFieldDeclaration[originals.length+2];
+	JFieldDeclaration[] returnFields = new JFieldDeclaration[originals.length+3];
 	for (int i=0; i<originals.length; i++) {
 	    returnFields[i] = originals[i];
 	}
 	/* now, stick in the final two. */
 	returnFields[originals.length]   = new JFieldDeclaration(null, new1, null, null);
 	returnFields[originals.length+1] = new JFieldDeclaration(null, new2, null, null);
+	returnFields[originals.length+2] = new JFieldDeclaration(null, new3, null, null);
 
 	return returnFields;
     }
 
 
 
-    /* make the new init function which assigns the frequency weights to their respective fields. */
+    /**
+     * Make an init function which assigns allocates space for the various fields
+     * (frequency weight fields are of size filterSize, and partial result fields are
+     * of size x-1) and 
+     * calculates the DFT of the impulse response and stores it in the weight fields.
+     **/
     public JMethodDeclaration makeNewInit(LinearFilterRepresentation linearRep,
 					  JVariableDefinition realWeightField,
 					  JVariableDefinition imagWeightField,
-					  int filterSize) {
+					  JVariableDefinition partialField,
+					  int filterSize, int x) {
 	
 	JBlock body = new JBlock();
 
 	/* add in statements to allocate memory for the fields.*/
-	JExpression realField = new JFieldAccessExpression(null, new JThisExpression(null), realWeightField.getIdent());
-	JExpression imagField = new JFieldAccessExpression(null, new JThisExpression(null), imagWeightField.getIdent());
-	JExpression realAssign = new JAssignmentExpression(null, realField, getNewArrayExpression(filterSize)); 
-	JExpression imagAssign = new JAssignmentExpression(null, imagField, getNewArrayExpression(filterSize));
-	body.addStatement(new JExpressionStatement(null, realAssign, null));
-	body.addStatement(new JExpressionStatement(null, imagAssign, null)); 
+	body.addStatement(makeFieldAllocation(realWeightField.getIdent(),  filterSize));
+	body.addStatement(makeFieldAllocation(imagWeightField.getIdent(),  filterSize));
+	body.addStatement(makeFieldAllocation(partialField.getIdent(), x-1));
+
 
 	/* calculate the weights of the fields based on the filter
 	 * coefficients that are found in the linear representation. */	
@@ -201,6 +240,17 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 				      null);                /* java style comment */
     }
 
+    /**
+     * Create an array allocation expression. Allocates a one dimensional array of floats
+     * for the field of name fieldName of fieldSize.
+     **/
+    public JStatement makeFieldAllocation(String fieldName, int fieldSize) {
+	JExpression fieldExpr = new JFieldAccessExpression(null, new JThisExpression(null), fieldName);
+	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr, getNewArrayExpression(fieldSize));
+	return new JExpressionStatement(null, fieldAssign, null);
+    }
+
+    
     /** Creates an assignment expression of the form: this.f[index]=value; **/
     public JStatement makeArrayAssignment(JLocalVariable field, int index, float value) {
 	/* make the field access expression (eg this.field)*/
@@ -225,14 +275,32 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     }
 
 
-    /* make the new work function */
-    public JMethodDeclaration makeNewWork(JVariableDefinition realWeightField,
+    /*
+     * make both the work and the new work function.
+     *
+     * We make a function that copies N+x-1 elements from the input
+     * tape into a local array, calls the library function with the local array
+     * and the weight field to calcluate the produce of the DFT of the input and the weight fields.
+     * If we are making the initWork function, then just the middle N elements of the result are pushed
+     * and if we are making the work function then the x-1 partials are added to the first x-1 elements
+     * of the results and we push out the first N+x-1 elements. For both types of work we
+     * then save the last x-1 elements of the DFT output in
+     * the partial results fields for the next execution. Note that filterSize = N + 2(x-1).
+     */
+    public JMethodDeclaration makeNewWork(int functionType, /* either INITWORK or WORK */
+					  JVariableDefinition realWeightField,
 					  JVariableDefinition imagWeightField,
+					  JVariableDefinition partialField,
 					  int filterSize, int x, int N) {
+	// parameter check
+	if ((functionType != INITWORK) && (functionType != WORK)) {
+	    throw new IllegalArgumentException("function type must be either WORK or INITWORK");
+	}
+
 	/* the body of the new work function */
 	JBlock body = new JBlock();
 
-	/* make a local variable as a buffer to hold the information from the input tape. */
+	/* make a local variable for a buffer to hold values from the input tape. */
 	JVariableDefinition inputBuffer;
 	inputBuffer = new JVariableDefinition(null,         /* token reference */
 					      0,            /* modifiers */
@@ -241,16 +309,13 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 					      null);        /* initializer*/
 
 	/* stick in a declaration statement for the buffer into the body of the function. */
-	body.addStatement(new JVariableDeclarationStatement(null, /* token reference */
-							    inputBuffer, /* var definition */
-							    null)); /* comments */
+	body.addStatement(new JVariableDeclarationStatement(null, inputBuffer, null));
 
 	/* allocate space for the input buffer */
 	JLocalVariableExpression buffExpr = new JLocalVariableExpression(null, inputBuffer);
 	JNewArrayExpression      newExpr = getNewArrayExpression(filterSize);
 	JAssignmentExpression    assignExpr = new JAssignmentExpression(null, buffExpr, newExpr);
-	body.addStatement(new JExpressionStatement(null, assignExpr,
-						   makeComment("allocate space for input buffer.")));
+	body.addStatement(new JExpressionStatement(null,assignExpr,makeComment("allocate space for input buffer.")));
 
 	/* now, copy the data from the input tape into the buffer, element by element */
 	for (int i=0; i<(N+x-1); i++) {
@@ -262,7 +327,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	    body.addStatement(new JExpressionStatement(null, currentAssignExpr, null));
 	}
 	
-	/* stick in a call to the do_fast_convolution routine that gets linked in to the C library. */
+	/* stick in a call to the do_fast_convolution routine that gets linked in via the C library. */
 	// prep the args
 	JExpression[] externalArgs = new JExpression[4];
 	externalArgs[0] = new JLocalVariableExpression(null, inputBuffer);
@@ -273,17 +338,29 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 								       null,               /* prefix */
 								       FAST_CONV_EXTERNAL, /* ident */
 								       externalArgs);      /* args */
-	JavaStyleComment[] comment = makeComment("callout to " + FAST_CONV_EXTERNAL + " to do actual work. "); 
-	body.addStatement(new JExpressionStatement(null,         /* token reference */
-						   externalCall, /* expression */
-						   comment));       /* comments */
-	
+	JavaStyleComment[] comment = makeComment("callout to " + FAST_CONV_EXTERNAL + " to do actual DFT, mult, IDFT. "); 
+	body.addStatement(new JExpressionStatement(null,externalCall,comment));            /* comments */
 
+	/* if we are in the normal work function, push out the first x-1
+	   values from the local buffer added to the partial results */
+	if (functionType == WORK) {
+	    for (int i=0; i<(x-1); i++) {
+		body.addStatement(makeArrayAddAndPushStatement(partialField.getIdent(), inputBuffer, i));
+	    }
+	}
+
+	
 	/* now, put in code that will push the appropriate values inputBuffer[x-1 to N+x-2] back on the tape */
 	for (int i=(x-1); i<(N+x-1); i++) {
 	    body.addStatement(makeArrayPushStatement(inputBuffer, i));
 	}
 
+	/* now, copy the last x-1 values in the input buffer into the partial results buffer. */
+	for (int i=0; i<(x-1); i++) {
+	    body.addStatement(makePartialCopyExpression(partialField.getIdent(), i, inputBuffer, N+x-1+i));
+	}
+	
+	    
 	/* now, free the memory that we allocated to buffer (this is a wicked hack,
 	   as there is no notion of "free" in java/streamit */
 	JExpression[] freeArgs = new JExpression[1];
@@ -297,21 +374,71 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	
 	/* stick in the appropriate number (N) of pop calls */
 	for (int i=0; i<N; i++) {
-	    body.addStatement(new JExpressionStatement(null, new SIRPopExpression(CStdType.Float), null));
+	    body.addStatement(makePopStatement());
 	}
+
+	/* if this is the work function, we should also pup x-1 more items. to get a total pop count of N+x-1 */
+	if (functionType == WORK) {
+	    for (int i=0; i<(x-1); i++) {
+		body.addStatement(makePopStatement());
+	    }
+	}
+
+	/* figure out what the name of the function should be (work, or initWork) **/
+	String ident = (functionType == WORK) ? "work" : "initWork";
 	
 	/* wrap up all the mess that we just made into a new JMethodDeclaration and return it to the caller */
-	return new JMethodDeclaration(null,                 /* token reference */
-				      ACC_PUBLIC,           /* modifiers */
-				      CStdType.Void,        /* return type */
-				      "work",               /* identifier */
+	return new JMethodDeclaration(null,                  /* token reference */
+				      ACC_PUBLIC,            /* modifiers */
+				      CStdType.Void,         /* return type */
+				      ident,                 /* identifier */
 				      JFormalParameter.EMPTY,/* paramters */
-				      CClassType.EMPTY,     /* exceptions */
-				      body,                 /* body */
-				      null,                 /* java doc */
-				      null);                /* java style comment */
+				      CClassType.EMPTY,      /* exceptions */
+				      body,                  /* body */
+				      null,                  /* java doc */
+				      null);                 /* java style comment */
     }
 
+
+    /** Makes a copy expression from the local variable to the field of the form this.field[index1] = arr[index2] **/
+    public JStatement makePartialCopyExpression(String field, int index1, JLocalVariable arr, int index2) {
+	/* first, make the this.field[index] expression */
+	JFieldAccessExpression fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), field);
+	JArrayAccessExpression fieldArrayAccessExpr;
+	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index1));
+	/* now make the array access expression arr[index]. **/
+	JLocalVariableExpression arrExpr = new JLocalVariableExpression(null, arr);
+	JArrayAccessExpression arrAccessExpr = new JArrayAccessExpression(null, arrExpr, new JIntLiteral(index2));
+	/* now make the assignment expression */
+	JAssignmentExpression assignExpr = new JAssignmentExpression(null, fieldArrayAccessExpr, arrAccessExpr);
+	/* now write it all in an expression statement */
+	return new JExpressionStatement(null, assignExpr, null);
+	
+    }
+
+    /** makes a popFloat() statement. **/
+    public JStatement makePopStatement() {
+	return new JExpressionStatement(null, new SIRPopExpression(CStdType.Float), null);
+    }
+
+    /** makes an array push statement of the following form: push(this.field[index] + arr2[index]) **/
+    public JStatement makeArrayAddAndPushStatement(String field, JLocalVariable arr, int index) {
+	/* first, make the this.field[index] expression */
+	JFieldAccessExpression fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), field);
+	JArrayAccessExpression fieldArrayAccessExpr;
+	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index));
+	/* now make the array access expression arr[index]. **/
+	JLocalVariableExpression arrExpr = new JLocalVariableExpression(null, arr);
+	JArrayAccessExpression arrAccessExpr = new JArrayAccessExpression(null, arrExpr, new JIntLiteral(index));
+	/* make the add expression */
+	JAddExpression addExpr = new JAddExpression(null, fieldArrayAccessExpr, arrAccessExpr);
+	/* now make the push expression */
+	SIRPushExpression pushExpr = new SIRPushExpression(addExpr, CStdType.Float);
+	/* and return an expression statement */
+	return new JExpressionStatement(null, pushExpr, null);
+    }
+       
+    
 
     /* makes an array push statement of the following form: push(arr[index]) */
     public JStatement makeArrayPushStatement(JLocalVariable arr, int index) {

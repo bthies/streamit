@@ -141,8 +141,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
 			lastNodeList.add(strNode.construct(graphStruct,lvel));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
-			
-			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
+				
 			if (strNode instanceof GEContainer)
 			{
 				graphStruct.connectDraw(splitter, ((GEContainer)strNode).getFirstNodeInContainer()); //this.localGraphStruct.connectDraw(splitter, strNode);
@@ -153,14 +152,12 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 			} 
 		}
 		
-		listIter =  lastNodeList.listIterator();
-		
+		listIter =  lastNodeList.listIterator();	
 		this.joiner.construct(graphStruct, lvel); //this.joiner.construct(this.localGraphStruct); 
 		
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			System.out.println("Connecting " + strNode.getName()+  " to "+ joiner.getName());
 			graphStruct.connectDraw(strNode, joiner); //this.localGraphStruct.connectDraw(strNode, joiner); 
 		}	
 	
@@ -328,6 +325,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		{
 			DefaultEdge edge = (DefaultEdge) splitEdgeIter.next();
 			Iterator sourceIter = this.getJoiner().getSourceEdges().iterator();
+			
+		//	Iterator sourceIter = this.getSplitter().getSourceEdges().iterator();
 			while(sourceIter.hasNext())
 			{
 				DefaultEdge target = (DefaultEdge) sourceIter.next();
@@ -352,6 +351,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 					edgesToRemove.add(edge);
 				}
 			}
+			
 		}
 		while (joinEdgeIter.hasNext())
 		{
@@ -371,6 +371,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 				}
 			}
 			
+			
 			Iterator targetIter = this.getSplitter().getTargetEdges().iterator();	
 			while(targetIter.hasNext())
 			{
@@ -383,6 +384,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 					edgesToRemove.add(edge);
 				}
 			}
+			
 			
 		}	
 			

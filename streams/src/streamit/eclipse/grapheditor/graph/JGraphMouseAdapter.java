@@ -5,12 +5,7 @@
 package streamit.eclipse.grapheditor.graph;
 
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.jgraph.JGraph;
 
 

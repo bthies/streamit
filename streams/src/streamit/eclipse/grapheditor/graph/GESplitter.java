@@ -3,18 +3,18 @@
  */
 package streamit.eclipse.grapheditor.graph;
 
-import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.ArrayList;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
-import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
+
+import streamit.eclipse.grapheditor.graph.resources.ImageLoader;
 
 /**
  * GESplitter is the graph editor's internal representation of a splitter.
@@ -124,7 +124,7 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
 		
-		/* demoremove
+		
 		try 
 		{
 			ImageIcon icon = ImageLoader.getImageIcon("splitter.GIF");
@@ -133,13 +133,13 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		catch (Exception ex) 
 		{
 			ex.printStackTrace();
-		}*/
-		//demoadd
-		GraphConstants.setBorderColor(this.attributes, Color.green.darker());
+		}
+		
 		
 		this.port = new DefaultPort();
 		this.add(this.port);
 		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
+		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[] {this}, true);
 	}
 
 	/**

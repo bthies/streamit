@@ -417,7 +417,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			SIROperator oper = (SIROperator)iter.next();
 			GEStreamNode strNode = (GEStreamNode)oper.accept(this);		
 	 		split.addChild(strNode);
-			strNode.addChild(join);		
+//1/20/04 Removed since it affected layout algorithm strNode.addChild(join);		
 			strNode.setEncapsulatingNode(splitjoin);
 			splitjoin.addChild(strNode);
 		}

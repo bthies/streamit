@@ -53,7 +53,6 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		localGraphStruct = new GraphStructure();	
 	}
 
-
 	public GEPipeline(String name, GraphStructure gs)
 	{
 		super(GEType.PIPELINE, name);
@@ -61,8 +60,8 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	}
 
 	/**
- 	 * Constructs the pipeline and returns <this> so that the GEPipeline can 
- 	 * be connected to its succesor and predecessor.
+ 	 * Constructs the pipeline and returns the last node so that the 
+ 	 * GEPipeline can be connected to its succesor and predecessor.
  	*/
 	public GEStreamNode construct(GraphStructure graphStruct, int lvel)
 	{
@@ -71,39 +70,29 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		this.level = lvel;
 		graphStruct.containerNodes.addContainerToLevel(this.level, this);
 		lvel++;
-		
 		this.localGraphStruct = graphStruct;
-		
-		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
-		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());		
-		
+
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
 	
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			GEStreamNode lastTemp = strNode.construct(graphStruct, lvel); //GEStreamNode lastTemp = strNode.construct(this.localGraphStruct);
-			
+			GEStreamNode lastTemp = strNode.construct(graphStruct, lvel); 			
 			if(!first)
-			{
-				System.out.println("Connecting " + lastNode.getName()+  " to "+ strNode.getName());		 
+			{		 
 				if (strNode instanceof GEContainer)
 				{
-					graphStruct.connectDraw(lastNode, ((GEContainer)strNode).getFirstNodeInContainer()); //this.localGraphStruct.connectDraw(lastNode, strNode);
+					graphStruct.connectDraw(lastNode, ((GEContainer)strNode).getFirstNodeInContainer()); 
 				}
 				else
 				{
-					graphStruct.connectDraw(lastNode, strNode); //this.localGraphStruct.connectDraw(lastNode, strNode);
+					graphStruct.connectDraw(lastNode, strNode);
 				}
 			}
-
 			lastNode = lastTemp;
 			first = false;
 		}
-	
-		//this.localGraphStruct.getGraphModel().insert(this.localGraphStruct.getCells().toArray(), this.localGraphStruct.getAttributes(), this.localGraphStruct.getConnectionSet(), null, null);
-	
 		// removed to avoid multiple instances in the model: graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);			
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100,100)));
@@ -111,8 +100,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		if (graphStruct.getTopLevel() == this)
 		{
 			//graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
-		}
-				
+		}		
 		return lastNode;
 	}	
 	

@@ -6,15 +6,9 @@
  */
 package streamit.eclipse.grapheditor.graph;
 
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import org.jgraph.JGraph;
-import org.jgraph.graph.AbstractCellView;
-import org.jgraph.graph.CellView;
-import org.jgraph.graph.GraphConstants;
 
 /**
  * @author jcarlos
@@ -94,7 +88,8 @@ public class ContainerNodes {
 			{
 				 GEContainer node = (GEContainer) listIter.next();
 				 
-				 if (((GEStreamNode)node).getSuccesors().size() != 0)
+				//if (((GEStreamNode)node).getSuccesors().size() != 0)
+				if (node.getContainedElements().size() != 0)
 				 {
 					node.expand();
 				 }
@@ -120,7 +115,8 @@ public class ContainerNodes {
 			while(listIter.hasNext())
 			{
 				 GEContainer node = (GEContainer) listIter.next();
-				 if (((GEStreamNode)node).getSuccesors().size() != 0 )
+				// if (((GEStreamNode)node).getSuccesors().size() != 0 )
+				if (node.getContainedElements().size() != 0 )
 				 {
 					node.collapse();
 				 }

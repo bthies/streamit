@@ -186,7 +186,6 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	public void initDrawAttributes(GraphStructure graphStruct, Rectangle bounds)
 	{
 		(graphStruct.getAttributes()).put(this, this.attributes);
-				
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
 		GraphConstants.setBounds(this.attributes, bounds);
@@ -202,8 +201,8 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		
 		this.port = new DefaultPort();
 		this.add(this.port);
-				
-//		graphStruct.getCells().add(this);
+	//	graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[] {this}, true);
+
 	}
 	
 	

@@ -129,6 +129,8 @@ abstract class CConfigContainer extends CConfig {
 		return fuseAll(partitions, curPartition, x1, x2, tileLimit, str);   
 	    }
 
+	    if (x1 == x2) fuseAll(partitions, curPartition, x1, x2, tileLimit, str);   
+
 	    return doCut(partitions, curPartition, x1, x2, x1, tileLimit, 0, str);
 	}
 

@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.49 2003-10-10 22:34:18 thies Exp $
+ * @version $Id: ToJava.java,v 1.50 2003-10-14 17:54:38 dmaze Exp $
  */
 public class ToJava
 {
@@ -216,22 +216,34 @@ public class ToJava
         {
             prog = parseFiles(inputFiles);
         }
-        catch (java.io.IOException e) {e.printStackTrace(System.err);}
-        catch (antlr.RecognitionException e) {e.printStackTrace(System.err);}
-        catch (antlr.TokenStreamException e) {e.printStackTrace(System.err);}
+        catch (java.io.IOException e)
+        {
+            e.printStackTrace(System.err);
+            System.exit(1);
+        }
+        catch (antlr.RecognitionException e)
+        {
+            e.printStackTrace(System.err);
+            System.exit(1);
+        }
+        catch (antlr.TokenStreamException e)
+        {
+            e.printStackTrace(System.err);
+            System.exit(1);
+        }
 
         if (prog == null)
         {
             System.err.println("Compilation didn't generate a parse tree.");
-            return;
+            System.exit(1);
         }
 
         prog = (Program)prog.accept(new RenameBitVars());
         if (!SemanticChecker.check(prog))
-            return;
+            System.exit(1);
         prog = (Program)prog.accept(new AssignLoopTypes());
         if (prog == null)
-            return;
+            System.exit(1);
 
         TempVarGen varGen = new TempVarGen();
         prog = lowerIRToJava(prog, libraryFormat, varGen);
@@ -250,7 +262,11 @@ public class ToJava
             outWriter.write(javaOut);
             outWriter.flush();
         }
-        catch (java.io.IOException e) {e.printStackTrace(System.err);}
+        catch (java.io.IOException e)
+        {
+            e.printStackTrace(System.err);
+            System.exit(1);
+        }
     }
     
     public static void main(String[] args)

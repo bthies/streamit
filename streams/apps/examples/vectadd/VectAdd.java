@@ -60,7 +60,7 @@ class VectSource extends Filter
 class TwoVectSource extends SplitJoin 
 { 
   /* the input vectors */  
-  int A[], B[]; 
+    //int A[], B[]; 
 
   public TwoVectSource(int N) 
   { 
@@ -69,6 +69,7 @@ class TwoVectSource extends SplitJoin
   public void init(final int N) 
   { 
     /* set up the input vectors */ 
+      int A[], B[]; 
     A = new int[N]; 
     B = new int[N]; 
     for (int i=0; i<N; i++) 

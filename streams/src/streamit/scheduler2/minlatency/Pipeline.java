@@ -16,9 +16,7 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 {
-    public Pipeline(
-        PipelineIter iterator,
-        StreamFactory factory)
+    public Pipeline(PipelineIter iterator, StreamFactory factory)
     {
         super(iterator, factory);
     }
@@ -54,7 +52,9 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             if (borrowedData[nChild + 1] != 0)
             {
                 borrowedData[nChild + 1] =
-                    MAX(borrowedData[nChild + 1] - phase.getOverallPush(), 0);
+                    MAX(
+                        borrowedData[nChild + 1] - phase.getOverallPush(),
+                        0);
             }
             dataInBuffers[nChild + 1] += phase.getOverallPush();
         }
@@ -84,7 +84,9 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             return pipeline.getChildNextInitStage(child);
         }
 
-        public PhasingSchedule getChildPhase(StreamInterface child, int stage)
+        public PhasingSchedule getChildPhase(
+            StreamInterface child,
+            int stage)
         {
             return pipeline.getChildInitStage(child, stage);
         }
@@ -114,7 +116,9 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             return pipeline.getChildNextSteadyPhase(child);
         }
 
-        public PhasingSchedule getChildPhase(StreamInterface child, int stage)
+        public PhasingSchedule getChildPhase(
+            StreamInterface child,
+            int stage)
         {
             return pipeline.getChildSteadyPhase(child, stage);
         }
@@ -157,15 +161,22 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             }
         }
 
+        // estimate max of how many times the top child should be executed per
+        // phase, based on how max of how many times the bottom child should
+        // be executed per phase
+        int firstStreamMaxExecPerPhase =
+            (int) ((float)childrenExecs[0]
+                * (float)lastStreamMaxExecPerPhase
+                / (float)childrenExecs[getNumChildren()
+                - 1]);
+        ASSERT(firstStreamMaxExecPerPhase <= childrenExecs[0]);
+
         // execute the children however many times is necessary
         // keep track of how many executions are "requested" and
         // how many are extra to keep the pull algorithm happy.
         int extraChildrenExecs = 0;
         while (totalChildrenExecs > 0)
         {
-            // reset the number of data items output from the pipeline
-            dataInBuffers[getNumChildren()] = 0;
-
             // allocate the items borrowed table
             int dataBorrowed[] = new int[getNumChildren() + 1];
 
@@ -184,10 +195,31 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 // childrenExecs[nChild] (unless it's 0)
                 lastStreamMaxExecPerPhase =
                     MIN(childrenExecs[nChild], lastStreamMaxExecPerPhase);
-                lastStreamMaxExecPerPhase = MAX(lastStreamMaxExecPerPhase, 1);
+                lastStreamMaxExecPerPhase =
+                    MAX(lastStreamMaxExecPerPhase, 1);
+                    
+                // if I've already executed the last child the required
+                // number of times, find the bottom-most child that still
+                // needs executing 
+                // (I know there is one, because totalChildrenExecs > 0)
+                if (childrenExecs[nChild] == 0)
+                {
+                    while (childrenExecs [nChild] == 0)
+                    {
+                        nChild--;
+                    }
+                    ASSERT (nChild >= 0);
+                    
+                    lastStreamMaxExecPerPhase = childrenExecs [nChild];
+                }
+                
+                int dataInBuffersBelow = dataInBuffers [nChild + 1];
 
-                while (phaseChildrenExecs[nChild] < lastStreamMaxExecPerPhase
-                    && dataInBuffers[nChild + 1] == 0)
+                // execute this child until I've either executed it the
+                // appropriate number of times, or I've produced some data
+                while (phaseChildrenExecs[nChild]
+                    < lastStreamMaxExecPerPhase
+                    && dataInBuffers[nChild + 1] == dataInBuffersBelow)
                 {
                     utility.advanceOnePhase(
                         nChild,
@@ -211,6 +243,26 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                             dataBorrowed);
                         phaseChildrenExecs[nChild]++;
                     }
+                }
+            }
+
+            // execute the top child as many times as possible without
+            // consuming more data or executing it more times than
+            // childrenExecs allows me to, nor more than 
+            // firstStreamMaxExecPerPhase allows me
+            {
+                StreamInterface topChild = getHierarchicalChild(0);
+
+                while (phaseChildrenExecs[0]
+                    < MIN(childrenExecs[0], firstStreamMaxExecPerPhase))
+                {
+                    PhasingSchedule phase =
+                        utility.getChildPhase(
+                            topChild,
+                            phaseChildrenExecs[0]);
+                    if (phase.getOverallPeek() > 0)
+                        break;
+                    phaseChildrenExecs[0]++;
                 }
             }
 
@@ -246,7 +298,8 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                     phase.appendPhase(
                         getChildPhases(child, phaseChildrenExecs[nChild]));
 
-                    if (childrenExecs[nChild] >= phaseChildrenExecs[nChild])
+                    if (childrenExecs[nChild]
+                        >= phaseChildrenExecs[nChild])
                     {
                         childrenExecs[nChild] -= phaseChildrenExecs[nChild];
                         totalChildrenExecs -= phaseChildrenExecs[nChild];
@@ -319,7 +372,8 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                         += getChildInitStage(child, nStages).getOverallPush();
                 }
 
-                childInitStages[nChild] = MAX(childInitStages[nChild], nStages);
+                childInitStages[nChild] =
+                    MAX(childInitStages[nChild], nStages);
             }
 
             // and create a schedule that will execute enough stages
@@ -344,7 +398,8 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
             // figure out how many times I want to run the last child
             int lastChildNumExecPerPhase;
             {
-                if (getHierarchicalChild(getNumChildren() - 1).getSteadyPush()
+                if (getHierarchicalChild(getNumChildren() - 1)
+                    .getSteadyPush()
                     != 0)
                 {
                     // the last child is not a sink
@@ -365,7 +420,8 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                     if (numPipelinePhases != 0)
                         lastChildNumExecPerPhase =
                             (int)Math.ceil(
-                                ((double)numChildPhases[getNumChildren() - 1])
+                                ((double)numChildPhases[getNumChildren()
+                                    - 1])
                                     / numPipelinePhases);
                     else
                         lastChildNumExecPerPhase =
@@ -373,14 +429,6 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 }
             }
 
-            // execute the last child the pre-arranged fraction of times
-            /*
-            lastChildNumExecPerPhase =
-                (int)Math.ceil(
-                    phaseFracSS
-                        * ((float)numChildPhases[getNumChildren() - 1]));
-            */
-            
             int extraExecs =
                 computeMinLatencySchedule(
                     new PipelineSteadySchedulingUtility(this),

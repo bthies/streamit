@@ -7,7 +7,7 @@ public class Coordinate {
     public Coordinate(int r, int c) 
     {
 	row = r;
-	c = column;
+	column = c;
     }
     
     public int getColumn() 

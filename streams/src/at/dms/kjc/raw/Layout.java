@@ -17,7 +17,7 @@ import java.util.Iterator;
 public class Layout extends at.dms.util.Utils implements StreamVisitor {
 
     private static HashMap assignment;
-    
+    private static Coordinate[][] coordinates;
     private BufferedReader inputBuffer;
     
     public Layout() 
@@ -27,6 +27,14 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
     
     public static void handAssign(SIROperator str) 
     {
+	//create the array of tile objects so that we can use them 
+	//in hashmaps
+	coordinates  =
+	    new Coordinate[StreamItOptions.rawRows][StreamItOptions.rawColumns];
+	for (int row = 0; row < StreamItOptions.rawRows; row++)
+	    for (int column = 0; column < StreamItOptions.rawColumns; column++)
+		coordinates[row][column] = new Coordinate(row, column);
+		
 	assignment = new HashMap();
 	// find toplevel stream
 	SIROperator toplevel = str;
@@ -37,11 +45,6 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 	// assign raw tiles to filters
 	toplevel.accept(new Layout());
     }
-
-    public static Iterator tileIterator() {
-	return assignment.values().iterator();
-    }
-    
     /**
      * Returns the tile number assignment for <str>, or null if none has been assigned.
      */
@@ -56,8 +59,55 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 	if (assignment == null) return null;
 	return (Coordinate)assignment.get(str.contents);
     }
+
+    public static Coordinate getTile(int row, int column) 
+    {
+	System.out.println(row + " " + column);
+	
+	return coordinates[row][column];
+    }
     
+    public static String getDirection(Coordinate from,
+				      Coordinate to) {
+	if (from == to)
+	    Utils.fail("Calling getDirection on self");
+
+	
+	if (from.getRow() == to.getRow()) {
+	    int dir = from.getColumn() - to.getColumn();
+	    if (dir == -1)
+		return "E";
+	    else if (dir == 1)
+		return "W";
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	if (from.getColumn() == to.getColumn()) {
+	    int dir = from.getRow() - to.getRow();
+	    if (dir == -1) 
+		return "S";
+	    else if (dir == 1)
+		return "N";
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	Utils.fail("calling getDirection on non-neighbors");
+	return "";
+    }
+
+    public static int getTileNumber(Coordinate tile)
+    {
+	int row = tile.getRow();
+	int column = tile.getColumn();
+	return (row * StreamItOptions.rawRows) + column;
+    }
     
+    public static int getTileNumber(SIROperator str)
+    {
+	return getTileNumber(getTile(str));
+    }	
+	
+
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,
@@ -84,7 +134,7 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 		    continue;
 		}
 		//get column
-		System.out.println("Column: ");
+		System.out.print("Column: ");
 		column = Integer.valueOf(inputBuffer.readLine());
 		if (column.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");
@@ -104,7 +154,7 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 		    continue;
 		}
 		
-		assignment.put(self, new Coordinate(row.intValue(), column.intValue()));
+		assignment.put(self, coordinates[row.intValue()][column.intValue()]);
 		return;
 	    }
 	    catch (Exception e) {

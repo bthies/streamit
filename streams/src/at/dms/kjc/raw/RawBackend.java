@@ -8,6 +8,8 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
+import java.util.*;
+
 
 public class RawBackend {
 
@@ -71,9 +73,20 @@ public class RawBackend {
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(RawFlattener.top);
 	System.out.println("Tile Code End.");
+	//generate the makefiles
 	System.out.println("Creating Makefile.");
 	MakefileGenerator.createMakefile();
 	System.out.println("Exiting");
 	System.exit(0);
     }
+
+    //helper function to add everything in a collection to the set
+    public static void addAll(HashSet set, Collection c) 
+    {
+	Iterator it = c.iterator();
+	while (it.hasNext()) {
+	    set.add(it.next());
+	}
+    }
+    
 }

@@ -101,13 +101,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("  raw_init();\n");
 	print("  init();\n");
 	print("  work();\n");
-	print("}");
+	print("}\n");
 	
 	System.out.println("Code for " + Namer.getName(self) +
-			   " written to tile" + Layout.getTile(self) +
+			   " written to tile" + Layout.getTileNumber(self) +
 			   ".c");
 	try {
-	    FileWriter fw = new FileWriter("tile" + Layout.getTile(self) + ".c");
+	    FileWriter fw = new FileWriter("tile" + Layout.getTileNumber(self) + ".c");
 	    fw.write(str.toString());
 	    fw.close();
 	}

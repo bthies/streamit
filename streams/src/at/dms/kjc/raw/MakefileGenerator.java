@@ -5,6 +5,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
 import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.io.*;
@@ -16,15 +17,21 @@ public class MakefileGenerator
     {
 	try {
 	    FileWriter fw = new FileWriter("Makefile");
-	    Iterator tiles = Layout.tileIterator();
+	    //create a set of all the tiles with code
+	    HashSet tiles = new HashSet();
+	    tiles.addAll(TileCode.filters);
+	    tiles.addAll(TileCode.tiles);
+
+	    Iterator tilesIterator = tiles.iterator();
 	    
 	    fw.write("#Makefile\n\n");
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("include /u/mgordon/raw/starsearch/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
 	    fw.write("TILES = ");
-	    while (tiles.hasNext()) {
-		int tile = ((Integer)tiles.next()).intValue();
+	    while (tilesIterator.hasNext()) {
+		int tile = 
+		    Layout.getTileNumber((Coordinate)tilesIterator.next());
 		
 		if (tile < 10)
 		    fw.write("0" + tile + " ");
@@ -34,9 +41,11 @@ public class MakefileGenerator
 	    
 	    fw.write("\n\n");
 	    
-	    tiles = Layout.tileIterator();
-	    while(tiles.hasNext()) {
-		int tile = ((Integer)tiles.next()).intValue();
+	    tilesIterator = tiles.iterator();
+	    while(tilesIterator.hasNext()) {
+		int tile = 
+		    Layout.getTileNumber((Coordinate)tilesIterator.next());
+		
 		if (tile < 10) 
 		    fw.write("OBJECT_FILES_0");
 		else
@@ -54,6 +63,7 @@ public class MakefileGenerator
 	catch (Exception e) 
 	    {
 		System.err.println("Error writing Makefile");
+		e.printStackTrace();
 	    }
     }
 }

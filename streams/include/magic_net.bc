@@ -27,7 +27,14 @@ gMagicCrossbar.receive_addr = & fn(tileNum, pc, resultPtr)
   *(schedule) = schedule.next; 
 };
 
-fn getReceiveSchedule(tileNum) {
+//we have to break this up becase the simulator calls the above
+//receive_addr() for each cycle we are waiting on a csti
+//but we only want to step the schedule when the read from
+//csti is successful (see port_shephard.cc)
+
+//step the receive schedule creating a new listi...
+fn step_receive_schedule(tileNum) {
+//  printf("Step the receive schedule for %d\n", tileNum);
   local i;
   local ret;
   local newReceiveSchedules = listi_new();
@@ -37,7 +44,7 @@ fn getReceiveSchedule(tileNum) {
     listi_add(newReceiveSchedules, listi_walk_current_val(ReceiveSchedules));
     listi_walk_next(ReceiveSchedules);
   };
-
+  
   ret = listi_walk_current_val(ReceiveSchedules);
   listi_add(newReceiveSchedules, ret.next);
   listi_walk_next(ReceiveSchedules);
@@ -48,9 +55,24 @@ fn getReceiveSchedule(tileNum) {
   };
 
   ReceiveSchedules = newReceiveSchedules;
-  return ret;
+  
 }
 
+//just get the current receive node, do not step the schedule
+fn getReceiveSchedule(tileNum) {
+  local i;
+
+  listi_walk_begin(ReceiveSchedules);
+  
+  for (i = 0; i < tileNum; i++) {
+    listi_walk_next(ReceiveSchedules);
+  };
+
+  return listi_walk_current_val(ReceiveSchedules);
+}
+
+//with the transmit schedule we can step the schedule when we 
+//get the transmit request...
 fn getTransmitSchedule(tileNum) {
   local i;
   local ret;

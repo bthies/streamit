@@ -19,7 +19,7 @@ workCount = 1329065 / 1360912 = 0.97659878
 Uniprocessor (7/29/2002):
 (Xenon 2.2 GHz, 512MB cache)
 10 million iterations (128 outputs/iteration)
-99.% utilization
+99.9% utilization
 runtime for 10^7 iterations = 226.36 seconds
 
 We want cycles/iteration:

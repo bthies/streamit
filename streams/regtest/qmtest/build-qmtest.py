@@ -2,7 +2,7 @@
 #
 # build-qmtest.py: build QMTest XML files from the StreamIt tree
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: build-qmtest.py,v 1.1 2003-11-18 21:13:10 dmaze Exp $
+# $Id: build-qmtest.py,v 1.2 2003-11-19 16:15:22 dmaze Exp $
 #
 
 import os
@@ -233,7 +233,7 @@ def GetCompileDOM(target, fileset, extras):
     argument.setAttribute('name', 'options')
     set = doc.createElement('set')
     argument.appendChild(set)
-    for opt in extras['opts']:
+    for opt in extras['opts'].split():
         CreateTextElement(doc, set, 'text', opt)
 
     argument = doc.createElement('argument')

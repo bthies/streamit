@@ -43,39 +43,42 @@ class FloatSubtract extends Filter
 
 public class BandPassFilter extends Pipeline {
 
-    int numberOfTaps;
-    float samplingRate;
-    int mDecimation;
-    float mGain;
-    float mLowFreq;
-    float mHighFreq;
-
     public BandPassFilter(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
     {
         super(sampleRate, lowFreq, highFreq, numTaps, gain);
     }
 
 
-    public void init(final float sampleRate, final float lowFreq, final float highFreq, final int numTaps, final float gain)
+    public void init(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
     {
-        //all frequencies are in hz
-        samplingRate = sampleRate;
-        mHighFreq = highFreq;
-        mLowFreq = lowFreq;
-        mGain = gain;
-        numberOfTaps = numTaps;
-
-        add(new SplitJoin() {
-                public void init () {
-                    setSplitter(DUPLICATE());
-                    this.add(new LowPassFilter(sampleRate, highFreq, numTaps, 0));
-                    this.add(new LowPassFilter(sampleRate, lowFreq, numTaps, 0));
-                    setJoiner(ROUND_ROBIN());
-                }
-            });
+        add(new BandPassSplitJoin(sampleRate, lowFreq, highFreq, numTaps));
         add (new FloatSubtract ());
     }
 
+}
+
+/**
+ * Need to have a separate class for now (instead of inlining this
+ * splitjoin) so that constant prop. will work.
+ */
+class BandPassSplitJoin extends SplitJoin {
+
+    public BandPassSplitJoin(float sampleRate, 
+			     float lowFreq, 
+			     float highFreq,
+			     int numTaps) {
+	super(sampleRate, lowFreq, highFreq, numTaps);
+    }
+
+    public void init (float sampleRate, 
+		      float lowFreq, 
+		      float highFreq, 
+		      int numTaps) {
+	setSplitter(DUPLICATE());
+	this.add(new LowPassFilter(sampleRate, highFreq, numTaps, 0));
+	this.add(new LowPassFilter(sampleRate, lowFreq, numTaps, 0));
+	setJoiner(ROUND_ROBIN());
+    }
 }
 
 

@@ -13,7 +13,7 @@
  */
 
 
-// Together with a delay this creats an FIR 
+// This is the complete FIR pipeline
 
 import streamit.*;
 
@@ -23,33 +23,41 @@ import streamit.*;
  * Implements an FIR Filter
  */
 
-public class FirFilter extends Filter {
+public class FIR extends Pipeline {
 
-    int N;
-    float COEFF[];
-
-    public FirFilter (float[] COEFF)
+    public FIR (float[] COEFF)
     {
         super (COEFF);
     }
 
     public void init(float[] COEFF) {
-	this.N=COEFF.length;
-	this.COEFF=new float[COEFF.length];
-	
-	for (int i=0; i<this.N;i++)
-	    this.COEFF[i]=COEFF[i];
-
-	input = new Channel(Float.TYPE, 1, COEFF.length);
-	output = new Channel(Float.TYPE, 1);
+	add (new delay(COEFF.length));
+	add (new FirFilter(COEFF));
     }
 
-    public void work(){
-	float sum=0;
-	for (int i=0; i<N ; i++)
-	    sum+=input.peekFloat(i)*COEFF[N-1-i];
-	input.pop();
-	output.pushFloat(sum);
-    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

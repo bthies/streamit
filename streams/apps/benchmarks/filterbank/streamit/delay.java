@@ -1,8 +1,8 @@
 import streamit.*;
 
-class Delay extends FeedbackLoop {
+class delay extends FeedbackLoop {
 
-    public Delay(int N) {
+    public delay(int N) {
 	super(N);
     }
 
@@ -29,3 +29,5 @@ class Delay extends FeedbackLoop {
 	return 0.0f;
     }
 }
+
+

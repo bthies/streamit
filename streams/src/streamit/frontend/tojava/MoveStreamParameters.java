@@ -16,7 +16,7 @@ import java.util.ArrayList;
  * parameters as well.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: MoveStreamParameters.java,v 1.11 2003-07-15 19:27:05 dmaze Exp $
+ * @version $Id: MoveStreamParameters.java,v 1.12 2003-07-16 13:18:25 dmaze Exp $
  */
 public class MoveStreamParameters extends InitMunger
 {
@@ -66,16 +66,17 @@ public class MoveStreamParameters extends InitMunger
         for (Iterator iter = params.iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
-            Expression eThis = new ExprVar(context, "this");
-            Expression lhs = new ExprField(context, eThis, param.getName());
-            Expression rhs = new ExprVar(context, param.getName());
+            String pName = "_param_" + param.getName();
+            Expression lhs = new ExprVar(context, param.getName());
+            Expression rhs = new ExprVar(context, pName);
             Type type = param.getType();
+            param = new Parameter(type, pName);
             while (type instanceof TypeArray)
                 type = ((TypeArray)type).getBase();
             if (type instanceof TypeStruct)
             {
                 rhs = new ExprTypeCast(context, param.getType(), rhs);
-                param = new Parameter(objectType, param.getName());
+                param = new Parameter(objectType, pName);
             }
             Statement stmt = new StmtAssign(context, lhs, rhs);
             body.add(stmt);

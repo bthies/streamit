@@ -63,10 +63,10 @@ void begin()
   W_re = (double*)malloc(sizeof(double)*n/2); 
   W_im = (double*)malloc(sizeof(double)*n/2); 
   /* assert(A_re != NULL && A_im != NULL && W_re != NULL && W_im != NULL);  */
+  compute_W(n, W_re, W_im); 
   
   while (numiters == -1 || numiters-- > 0) {
     init_array(n, A_re, A_im); 
-    compute_W(n, W_re, W_im); 
     fft(n, A_re, A_im, W_re, W_im);
 #ifdef FFT2
     permute_bitrev(n, A_re, A_im);        

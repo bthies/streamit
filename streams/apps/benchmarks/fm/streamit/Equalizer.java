@@ -110,7 +110,7 @@ class EqualizerInnerPipeline extends Pipeline
     }
     public void init(final float rate, final float freq)
     {
-        add(new LowPassFilter(rate, freq, 50, 0));
+        add(new LowPassFilter(rate, freq, 64, 0));
         add(new FloatDup());
     }
 }
@@ -150,9 +150,9 @@ class EqualizerSplitJoin extends SplitJoin {
         // To think about: gains.
 	
 	setSplitter(DUPLICATE());
-        add(new LowPassFilter(rate, high, 50, 0));
+        add(new LowPassFilter(rate, high, 64, 0));
         add(new EqualizerInnerSplitJoin(rate, low, high, bands));
-        add(new LowPassFilter(rate, low, 50, 0));
+        add(new LowPassFilter(rate, low, 64, 0));
 	setJoiner(WEIGHTED_ROUND_ROBIN(1, (bands-1)*2, 1));
     }
 }
@@ -172,14 +172,9 @@ public class Equalizer extends Pipeline {
 
     public void init(final float rate)
     {
-        /*
-        final int bands = 4;
-        final float low = 1250;
-        final float high = 20000;
-        */
-        final int bands = 2;
-        final float low = 5000;
-        final float high = 20000;
+        final int bands = 10;
+        final float low = 55;
+        final float high = 1760;
 	add(new EqualizerSplitJoin(rate, low, high, bands));
         add(new FloatDiff());
 	add(new FloatNAdder(bands));

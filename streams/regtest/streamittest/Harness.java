@@ -189,23 +189,24 @@ public class Harness {
     public static String[] expandFileName(String fileName) {
 	Vector filenames = new Vector(); // expanded filenames
 
+        // we are going to use ls to expand the filenames for us
+        ByteArrayOutputStream lsBuff = new ByteArrayOutputStream();
 	try {
-	    // we are going to use ls to expand the filenames for us
-	    ByteArrayOutputStream lsBuff = new ByteArrayOutputStream();
 	    executeNative(getLsCommandOpts(fileName), lsBuff, null);
+        } catch (Exception e) {
+            throw new RuntimeException("Caught exception expanding filenames: " + e);
+        }
 	    
-	    // parse ls output:
-	    StringTokenizer st = new StringTokenizer(lsBuff.toString(), // output from ls
-						     "\n"); // split on newline
-	    while(st.hasMoreTokens()) {
-		String currentToken = st.nextToken();
-		if (!currentToken.equals("")) {
-		    filenames.add(currentToken);
-		}
-	    }
-	} catch (Exception e) {
-	    throw new RuntimeException("Caught exception expanding filenames: " + e.getMessage());
-	}
+        // parse ls output:
+        StringTokenizer st =
+            new StringTokenizer(lsBuff.toString(), // output from ls
+                                "\n"); // split on newline
+        while(st.hasMoreTokens()) {
+            String currentToken = st.nextToken();
+            if (!currentToken.equals("")) {
+                filenames.add(currentToken);
+            }
+        }
 
 	// copy from vector to array
 	String[] sourceFiles = new String[filenames.size()];

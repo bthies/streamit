@@ -61,8 +61,12 @@ class WorkList extends java.util.LinkedList {
 	for (int i=title1.length(); i<max; i++) {
 	    out.print(" ");
 	}
-	out.println("\t" + "Reps" + "\t" + "Measured Work" + "\t" + "Estimated Work" +
-		    "\t" + "(Measured-Estimated)/Measured" + "\t" + "Total Measured Work");
+	out.print("\t" + "Reps" + "\t" + "Estimated Work" + "\t" + "Total Estimated Work");
+	if (KjcOptions.simulatework) {
+	    out.println("\t" + "Measured Work" + "\t" + "(Measured-Estimated)/Measured" + "\t" + "Total Measured Work");
+	} else {
+	    out.println();
+	}
 	for (int i=size()-1; i>=0; i--) {
 	    SIRStream str = (SIRStream)((Map.Entry)super.get(i)).getKey();
 	    WorkInfo workInfo = (WorkInfo)((Map.Entry)super.get(i)).getValue();
@@ -70,9 +74,13 @@ class WorkList extends java.util.LinkedList {
 	    for (int j=str.getIdent().length(); j<max; j++) {
 		out.print(" ");
 	    }
-	    out.println("\t" + workInfo.getReps() + "\t" + workInfo.getUnitWork() + "\t" + workInfo.getInexactUnitWork() + 
-			"\t" + (((float)workInfo.getUnitWork()-(float)workInfo.getInexactUnitWork())/(float)workInfo.getUnitWork()) + 
-			"\t" + workInfo.getTotalWork());
+	    out.print("\t" + workInfo.getReps() + "\t" + workInfo.getInexactUnitWork() + "\t" + (workInfo.getReps()*workInfo.getInexactUnitWork()));
+	    if (KjcOptions.simulatework) {
+		out.println("\t" + workInfo.getUnitWork() + "\t" + (((float)workInfo.getUnitWork()-(float)workInfo.getInexactUnitWork())/(float)workInfo.getUnitWork()) + 
+			    "\t" + workInfo.getTotalWork());
+	    } else {
+		out.println();
+	    }
 	}
 	out.close();
     }

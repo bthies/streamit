@@ -99,7 +99,6 @@ public class GreedyPartitioner {
 		pos--;
 		continue;
 	    }
-	    StreamItDot.printGraph(str, "during-fission.dot");
 	    // make raw flattener for latest version of stream graph
 	    GraphFlattener flattener = new GraphFlattener(str);
 	    // get work at <pos>

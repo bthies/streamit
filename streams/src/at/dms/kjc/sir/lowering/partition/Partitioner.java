@@ -23,8 +23,8 @@ public class Partitioner {
 
 	// make work estimate
 	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-	work.printGraph(str, "work-before.dot");
-	work.getSortedFilterWork().writeToFile("work-before.txt");
+	work.printGraph(str, "work-before-partition.dot");
+	work.getSortedFilterWork().writeToFile("work-before-partition.txt");
 
 	// detect number of tiles we have
 	int count = new GraphFlattener(str).getNumTiles();
@@ -54,18 +54,15 @@ public class Partitioner {
 	    }
 	}
 
-	// print out final work estimate
-	WorkEstimate.getWorkEstimate(str).printWork();
-
 	// lift the result
 	Lifter.lift(str);
 
 	// get the final work estimate
-	/*
 	work = WorkEstimate.getWorkEstimate(str);
-	work.printGraph(str, "work-after.dot");
-	work.getSortedFilterWork().writeToFile("work-after.txt");
-	*/
+	work.printGraph(str, "work-after-partition.dot");
+	work.getSortedFilterWork().writeToFile("work-after-partition.txt");
+	work.printWork();
+
 	return str;
     }
 }

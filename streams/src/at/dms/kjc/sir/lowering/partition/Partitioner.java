@@ -18,10 +18,10 @@ public class Partitioner {
      * Tries to adjust <str> into <targetCount> pieces of equal work, and
      * return new stream.
      */
-    public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles) {
+    public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
 	// detect number of tiles we have
 	int curCount = new GraphFlattener(str).getNumTiles();
-	return doit(str, curCount, targetCount, joinersNeedTiles);
+	return doit(str, curCount, targetCount, joinersNeedTiles, limitICode);
     }
 
 
@@ -31,7 +31,7 @@ public class Partitioner {
      * whether or not <joinersNeedTiles> in the graph, or if they
      * count for free.  Return new stream.
      */
-    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles) {
+    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
 	Lifter.lift(str);
@@ -58,7 +58,7 @@ public class Partitioner {
 	       SIRStream str2 = (SIRStream)ObjectDeepCloner.deepCopy(str);
 	       new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
 	    */
-	    str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles).toplevel();
+	    str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode).toplevel();
 	} else if(KjcOptions.partition_greedier) {
 	    str=new GreedierPartitioner(str,work,targetCount,joinersNeedTiles).toplevel();
 	} else if (KjcOptions.partition_greedy) {

@@ -132,6 +132,20 @@ public class WorkEstimate {
     }
 
     /**
+     * Returns estimate of instruction code for <filter>
+     */
+    public int getICodeSize(SIRFilter filter) {
+	/* -- Uncomment this code for beamformer, and it will
+              demonstrate that the "Magnitude" filters are not fused
+              with anyone because their icode is too big.
+	if (filter.getIdent().startsWith("Mag")) {
+	    return 101;
+	}
+	*/
+	return 0;
+    }
+
+    /**
      * Returns the number of times that filter <obj> executes in this
      * estimate.  Requires that <obj> was present in the original
      * graph used to construct this.

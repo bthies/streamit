@@ -98,9 +98,11 @@ public class ManualPartition {
 
 	// since we're on Raw, the joiners need tiles
 	boolean joinersNeedTiles = true;
+	// icode is for cluster
+	boolean limitICode = false;
 
 	if (dp) {
-	    str = new DynamicProgPartitioner(str, work, targetTiles, joinersNeedTiles).toplevel();
+	    str = new DynamicProgPartitioner(str, work, targetTiles, joinersNeedTiles, limitICode).toplevel();
 	} else {
 	    if (curCount < targetTiles) {
 		// need fission

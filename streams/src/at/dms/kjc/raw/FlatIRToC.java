@@ -507,9 +507,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         forInit = true;
         if (init != null) {
             init.accept(this);
-        } else {
-            print(";");
-        }
+	}
+	print(";");
         forInit = false;
 
         print(" ");

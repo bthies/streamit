@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.15 2003-10-01 19:19:46 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.16 2003-10-01 19:32:34 dmaze Exp $
  */
 
 header {
@@ -168,7 +168,7 @@ DIGIT
 	;
 
 NUMBER
-	:	 (DIGIT)+ (DOT (DIGIT)+ )? (('e' | 'E') ('-')? (DIGIT)+ )? ('i')?
+	:	 (DIGIT)+ (DOT (DIGIT)+ )? (('e' | 'E') ('+'|'-')? (DIGIT)+ )? ('i')?
 	;
 
 ID

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.6 2002-03-03 03:08:36 thies Exp $
+ * $Id: Utils.java,v 1.7 2002-03-07 01:46:27 thies Exp $
  */
 
 package at.dms.util;
@@ -64,7 +64,8 @@ public abstract class Utils implements Serializable {
    * @exception	RuntimeException	the entire token reference
    */
   public static final void fail(String str) {
-      throw new InconsistencyException(str);
+      new InconsistencyException(str).printStackTrace();
+      System.exit(1);
   }
 
     

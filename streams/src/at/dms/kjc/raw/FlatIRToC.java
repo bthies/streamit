@@ -82,6 +82,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         this.pos = pos;
     }
 
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields)
+    {
+        print("struct " + self.getIdent() + " {\n");
+        for (int i = 0; i < fields.length; i++)
+            fields[i].accept(this);
+        print("};\n");
+    }
+    
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,
 			    JFieldDeclaration[] fields,

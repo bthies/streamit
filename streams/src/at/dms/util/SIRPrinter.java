@@ -25,6 +25,20 @@ import at.dms.util.*;
 
 public class SIRPrinter extends IRPrinter implements StreamVisitor {
     
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields) {
+        blockStart("Structure");
+        attrStart("Parent");
+        if (parent == null)
+            printData("null");
+        attrEnd();
+        for (int i = 0; i < fields.length; i++)
+            fields[i].accept(this);
+        blockEnd();
+    }
+    
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 		     SIRStream parent,

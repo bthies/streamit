@@ -298,6 +298,12 @@ public class LowerInitFunctions implements StreamVisitor {
     // VISITOR STUFF ------------------------------------------------------
     //
     
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields) {
+        // do nothing
+    }
+
     /**
      * visit a filter 
      */

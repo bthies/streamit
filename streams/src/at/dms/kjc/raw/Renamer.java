@@ -30,6 +30,13 @@ public class Renamer extends at.dms.util.Utils implements StreamVisitor
 	toplevel.accept(new Renamer());
     }
     
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields)
+    {
+    }
+
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,

@@ -11,6 +11,11 @@ import java.util.List;
  * recursing to component streams automatically.  
  */
 public interface AttributeStreamVisitor {
+    /* visit a structure */
+    Object visitStructure(SIRStructure self,
+                          SIRStream parent,
+                          JFieldDeclaration[] fields);
+
     /* visit a filter */
     Object visitFilter(SIRFilter self,
 		       SIRStream parent,

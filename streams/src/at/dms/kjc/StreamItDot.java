@@ -129,6 +129,14 @@ public class StreamItDot implements AttributeStreamVisitor
         return "node" + lastNode;
     }
 
+    /* visit a structure */
+    public Object visitStructure(SIRStructure self,
+                                 SIRStream parent,
+                                 JFieldDeclaration[] fields) 
+    {
+        return new NamePair(makeLabelledNode(self.getIdent()));
+    }
+
     /* visit a filter */
     public Object visitFilter(SIRFilter self,
                               SIRStream parent,

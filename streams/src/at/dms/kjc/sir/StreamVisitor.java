@@ -16,6 +16,11 @@ public interface StreamVisitor {
      * PLAIN-VISITS 
      */
 	    
+    /* visit a structure */
+    void visitStructure(SIRStructure self,
+                        SIRStream parent,
+                        JFieldDeclaration[] fields);
+
     /* visit a filter */
     void visitFilter(SIRFilter self,
 		     SIRStream parent,

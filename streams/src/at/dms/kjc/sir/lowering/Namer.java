@@ -125,6 +125,13 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 	incCount();
     }
 	    
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields) {
+        plainVisit(self);
+    }
+    
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,

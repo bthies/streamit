@@ -12,6 +12,12 @@ public class EmptyStreamVisitor implements StreamVisitor {
      * PLAIN-VISITS 
      */
 	    
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields) {
+    }
+
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,

@@ -219,6 +219,13 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 	}
     }
 	    
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields) {
+        visitStream(self);
+    }
+    
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,

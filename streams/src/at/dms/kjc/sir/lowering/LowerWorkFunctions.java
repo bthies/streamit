@@ -46,6 +46,13 @@ public class LowerWorkFunctions implements StreamVisitor
      * PLAIN-VISITS 
      */
      
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields) {
+        // do nothing
+    }
+    
     /* visit a filter */
     public void visitFilter(SIRFilter self,
 			    SIRStream parent,

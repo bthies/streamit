@@ -703,6 +703,15 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 	// visit the pipeline that's simulating <twoStage>
 	return pipe.accept(this);
     }
+    
+    /* visit a structure */
+    public Object visitStructure(SIRStructure self,
+                                 SIRStream parent,
+                                 JFieldDeclaration[] fields)
+    {
+        // Do nothing; the scheduler shouldn't care about structures
+        return null;
+    }
 
     /* visit a filter */
     public Object visitFilter(SIRFilter self,

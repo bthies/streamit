@@ -304,6 +304,15 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     /**
      * PLAIN-VISITS 
      */
+
+    /* visit a structure */
+    public void visitStructure(SIRStructure self,
+                               SIRStream parent,
+                               JFieldDeclaration[] fields)
+    {
+        // create struct type
+        createStruct(self.getName(), fields, EMPTY_LIST);
+    }
      
     /* visit a filter */
     public void visitFilter(SIRFilter self,

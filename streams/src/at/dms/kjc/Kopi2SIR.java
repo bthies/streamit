@@ -203,6 +203,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    parentStream = current;
 	    return current;
 	}
+        if (TYPE.equals("Structure")) {
+            SIRStructure current = new SIRStructure();
+            current.setIdent(clazz.getIdent());
+            current.setFields(JFieldDeclaration.EMPTY());
+            parentStream = current;
+            return current;
+        }
 	if (TYPE.equals("Filter")) {
 	    SIRFilter current = new SIRFilter();
 	    current.setParent((SIRContainer)parentStream);

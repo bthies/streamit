@@ -28,6 +28,15 @@ class init_instance {
   static map<int, unsigned> thread_machines;
   static map<int, unsigned> thread_start_iter;
 
+  //// helpers
+
+  static int listen();
+
+  static pthread_mutex_t accept_lock;
+  static pthread_mutex_t bind_lock;
+  
+  friend void *accept_thread(void *param);
+
  public:
 
   static void reset_all();
@@ -49,13 +58,6 @@ class init_instance {
   static mysocket* get_incoming_socket(int from, int to, int type);
   static mysocket* get_outgoing_socket(int from, int to, int type);
 
-
-  //// helpers
-
-  static int listen();
-
-  static pthread_mutex_t accept_lock;
-  static pthread_mutex_t bind_lock;
 
 };
 

@@ -36,10 +36,7 @@ short init_instance::listen_port = 22222;
 map<int, unsigned> init_instance::thread_machines;
 map<int, unsigned> init_instance::thread_start_iter;
 
-static void *accept_thread(void *param);
-
-
-static void *accept_thread(void *param) {
+void *accept_thread(void *param) {
 
   // this now locked my main thread
   //LOCK(&init_instance::accept_lock);

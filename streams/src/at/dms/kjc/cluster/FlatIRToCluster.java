@@ -45,6 +45,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     //circular buffers with anding
     public boolean debug = false;//true;
     public boolean isInit = false;
+    /** > 0 if in a for loop header during visit **/
+    private int forLoopHeader = 0;
     
     //fields for all of the vars names we introduce in the c code
     private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
@@ -1294,6 +1296,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
+	//be careful, if you return prematurely, decrement me
+	forLoopHeader++;
+
         print("for (");
         if (init != null) {
             init.accept(this);
@@ -1319,6 +1324,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    }
         }
 
+	forLoopHeader--;
         print(") ");
 
         print("{");
@@ -1389,8 +1395,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
      * prints a empty statement
      */
     public void visitEmptyStatement(JEmptyStatement self) {
-        newLine();
-        print(";");
+	//if we are inside a for loop header, we need to print 
+	//the ; of an empty statement
+	if (forLoopHeader > 0) {
+	    newLine();
+	    print(";");
+	}
     }
 
     /**

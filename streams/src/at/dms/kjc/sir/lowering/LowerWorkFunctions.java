@@ -74,11 +74,12 @@ public class LowerWorkFunctions implements StreamVisitor
 	    return;
 	}
         // dismantle arrays
+	new ArrayDestroyer().destroyArrays(self);
         for (int i = 0; i < self.getMethods().length; i++)
         {
-            self.getMethods()[i].accept(new ArrayDestroyer());
             self.getMethods()[i].accept(new VarDeclRaiser());
         }
+	DeadCodeElimination.doit(self);
         // add entry/exit nodes to work function
         addEntryExit(self.getWork());
         // prune structure creation statements

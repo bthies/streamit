@@ -12,12 +12,16 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.6 2004-02-20 14:39:18 dmaze Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.7 2004-10-15 01:08:14 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
     implements Constants, SLIRVisitor, AttributeStreamVisitor
 {
+    /**
+     * >0 when in a for loop header.
+     */
+    private int forLoopHeader;
     /*
      * Test code: top-level entry point.
      */
@@ -949,6 +953,7 @@ public class SIRToStreamIt
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
+	forLoopHeader++;
         print("for (");
         //forInit = true;
         if (init != null) {
@@ -976,6 +981,7 @@ public class SIRToStreamIt
 		print(str);
 	    }
         }
+	forLoopHeader--;
         print(")");
         newLine();
         pos += TAB_SIZE;
@@ -1068,8 +1074,13 @@ public class SIRToStreamIt
      * prints a empty statement
      */
     public void visitEmptyStatement(JEmptyStatement self) {
-        newLine();
-        print(";");
+	//if we are inside a for loop header, we need to print 
+	//the ; of an empty statement
+	if (forLoopHeader > 0) {
+	    newLine();
+	    print(";");
+	}
+
     }
 
     /**

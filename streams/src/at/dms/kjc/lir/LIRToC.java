@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.93 2004-08-07 02:26:18 thies Exp $
+ * $Id: LIRToC.java,v 1.94 2004-10-15 01:08:07 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -21,6 +21,8 @@ public class LIRToC
     extends at.dms.util.Utils
     implements Constants, SLIRVisitor
 {
+    /** >0 if in for loop header */
+    private int forLoopHeader;
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
 
@@ -824,6 +826,7 @@ public class LIRToC
                                   JExpression cond,
                                   JStatement incr,
                                   JStatement body) {
+	forLoopHeader++;
         print("for (");
         //forInit = true;
         if (init != null) {
@@ -851,6 +854,7 @@ public class LIRToC
 		print(str);
 	    }
         }
+	forLoopHeader--;
         print(") {\n");
 
         pos += TAB_SIZE;
@@ -922,8 +926,12 @@ public class LIRToC
      * prints a empty statement
      */
     public void visitEmptyStatement(JEmptyStatement self) {
-        newLine();
-        print(";");
+	//if we are inside a for loop header, we need to print 
+	//the ; of an empty statement
+	if (forLoopHeader > 0) {
+	    newLine();
+	    print(";");
+	}
     }
 
     /**

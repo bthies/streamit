@@ -452,6 +452,8 @@ public class GenerateCCode
 	if(KjcOptions.destroyfieldarray)
 	    arrayDest.destroyFieldArrays(filter);
 
+	DeadCodeElimination.doit(filter);
+
 	//remove unused variables...
 	RemoveUnusedVars.doit(filter);
 

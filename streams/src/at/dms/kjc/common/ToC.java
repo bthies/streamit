@@ -305,14 +305,6 @@ public abstract class ToC extends SLIREmptyVisitor
     }
 
     /**
-     * prints a empty statement
-     */
-    public void visitEmptyStatement(JEmptyStatement self) {
-        newLine();
-        print(";");
-    }
-
-    /**
      * prints a do statement
      */
     public void visitDoStatement(JDoStatement self,

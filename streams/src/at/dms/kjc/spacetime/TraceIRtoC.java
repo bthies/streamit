@@ -125,7 +125,6 @@ public class TraceIRtoC extends ToC
 	    //tile.getComputeCode().getMethods()[i].accept(arrayDest);
 	     tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
 	}
-	
     }
     
     private void generateHeader() 

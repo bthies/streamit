@@ -98,6 +98,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	*/
 	//	RemoveUnusedVars.doit(node);
+	DeadCodeElimination.doit((SIRFilter)node.contents);
 
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }

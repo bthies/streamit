@@ -87,9 +87,9 @@ public class RawBackend {
 	    //new BranchAnalyzer().analyzeBranches(str);
 	}
 
-	Flattener.doLinearAnalysis(str);
-
 	StreamItDot.printGraph(str, "before.dot");
+
+	Flattener.doLinearAnalysis(str);
 
 	AdjustGranularity.doit(str, 
 			       RawBackend.rawRows * 

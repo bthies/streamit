@@ -27,6 +27,8 @@ public class FeedbackLoopIter
     FeedbackLoopIter (FeedbackLoop _feedback)
     {
         feedback = _feedback;
+        feedback.getSplitter().useFL(this);
+        feedback.getJoiner().useFL(this);
     }
 
     FeedbackLoop feedback;

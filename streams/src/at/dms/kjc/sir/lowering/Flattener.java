@@ -23,6 +23,8 @@ public class Flattener {
 	str.accept(printer1);
 	printer1.close();
 
+	// propagate constants and unroll loops
+	ConstantProp.propagateAndUnroll(str);
 	// name the components
 	Namer.assignNames(str);
 	// make single structure

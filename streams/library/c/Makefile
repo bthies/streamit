@@ -1,9 +1,9 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.8 2001-11-06 16:46:28 dmaze Exp $
+# $Id: Makefile,v 1.9 2001-11-17 00:44:17 karczma Exp $
 #
 
-CC =		cc
+CC =		gcc
 CFLAGS =	-O2
 AR =		ar
 RANLIB =	ranlib

@@ -41,7 +41,7 @@ public class Flattener {
 	*/
 
         // flatten split/joins with duplicate splitters and RR joiners
-        // str = DupRR.doFlatten(str);
+        str = DupRR.doFlatten(str);
 
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");

@@ -55,12 +55,54 @@ public class SIRPortal extends JLiteral {
 	return (SIRPortal[])portals.toArray(array);
     }
 
+    /*
+     * Returns array of all portals with a specific sender
+     */
+
+    public static SIRPortal[] getPortalsWithSender(SIRStream sender) {
+	LinkedList list = new LinkedList();
+	for (int t = 0; t < portals.size(); t++) {
+	    SIRPortal portal = (SIRPortal)portals.get(t);
+	    if (portal.hasSender(sender)) list.add(portal);
+	}
+	SIRPortal[] array = new SIRPortal[list.size()];
+	return (SIRPortal[])list.toArray(array);
+    }
+
+    /*
+     * Returns array of all portals with a specific receiver
+     */
+
+    public static SIRPortal[] getPortalsWithReceiver(SIRStream receiver) {
+	LinkedList list = new LinkedList();
+	for (int t = 0; t < portals.size(); t++) {
+	    SIRPortal portal = (SIRPortal)portals.get(t);
+	    if (portal.hasReceiver(receiver)) list.add(portal);
+	}
+	SIRPortal[] array = new SIRPortal[list.size()];
+	return (SIRPortal[])list.toArray(array);
+    }
+
     public void addReceiver(SIRStream stream) {
 	if (!receivers.contains(stream)) receivers.add(stream);
     }
 
     public void addSender(SIRPortalSender sender) {
 	if (!senders.contains(sender)) senders.add(sender);
+    }
+
+    public boolean hasSender(SIRStream sender) {
+	for (int t = 0; t < senders.size(); t++) {
+	    if (((SIRPortalSender)senders.get(t)).getStream().equals(sender)) return true;
+	}
+	return false;
+    }
+
+    public boolean hasReceiver(SIRStream receiver) {
+	for (int t = 0; t < receivers.size(); t++) {
+	    if (receivers.get(t).equals(receiver)) return true;
+	}
+	return false;
     }
 
     public SIRStream[] getReceivers() {

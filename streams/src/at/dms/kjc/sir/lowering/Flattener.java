@@ -156,7 +156,7 @@ public class Flattener {
 	System.out.println("Running Linear Analysis");
 	//Destroys arrays into local variables if possible
 
-	LinearFilterVisitor lfv = LinearFilterVisitor.findLinearFilters(str);
+	LinearMatrixAnalyzer lma = LinearMatrixAnalyzer.findLinearFilters(str);
 	
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER Linear Analysis --------");

@@ -1,7 +1,7 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.8 2003-01-08 21:24:41 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.9 2003-01-09 20:45:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -96,6 +96,50 @@ public class StreamSpec extends FENode
     public List getFuncs()
     {
         return funcs;
+    }
+
+    /** Returns the init function declared in this, or null.  If multiple
+     * init functions are declared (probably an error), returns one
+     * arbitrarily. */
+    public Function getInitFunc()
+    {
+        for (Iterator iter = funcs.iterator(); iter.hasNext(); )
+        {
+            Function func = (Function)iter.next();
+            if (func.getCls() == Function.FUNC_INIT)
+                return func;
+        }
+        return null;
+    }
+
+    /** Returns the work function declared in this, or null.  If multiple
+     * work functions are declared (probably an error), returns one
+     * arbitrarily. */
+    public FuncWork getWorkFunc()
+    {
+        for (Iterator iter = funcs.iterator(); iter.hasNext(); )
+        {
+            Function func = (Function)iter.next();
+            if (func.getCls() == Function.FUNC_WORK)
+                return (FuncWork)func;
+        }
+        return null;
+    }
+
+    /** Returns the function with a given name contained in this, or
+     * null.  name should not be null.  If multiple functions are
+     * declared with the same name (probably an error), returns one
+     * arbitrarily. */
+    public Function getFuncNamed(String name)
+    {
+        for (Iterator iter = funcs.iterator(); iter.hasNext(); )
+        {
+            Function func = (Function)iter.next();
+            String fname = func.getName();
+            if (fname != null && fname.equals(name))
+                return func;
+        }
+        return null;
     }
 
     /** Accept a front-end visitor. */

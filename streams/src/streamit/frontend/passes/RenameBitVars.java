@@ -12,7 +12,7 @@ import java.util.List;
  * infrastructure to understand bit types.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: RenameBitVars.java,v 1.4 2003-05-12 21:07:58 dmaze Exp $
+ * @version $Id: RenameBitVars.java,v 1.5 2003-07-07 21:21:42 dmaze Exp $
  */
 public class RenameBitVars extends SymbolTableVisitor
 {
@@ -23,7 +23,7 @@ public class RenameBitVars extends SymbolTableVisitor
 
     public Object visitExprVar(ExprVar var)
     {
-        Type type = symtab.lookupVar(var.getName());
+        Type type = symtab.lookupVar(var);
         if ((type instanceof TypePrimitive) &&
             (((TypePrimitive)type).getType() == TypePrimitive.TYPE_BIT))
             return new ExprVar(var.getContext(), "_bit_" + var.getName());

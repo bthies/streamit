@@ -4,7 +4,7 @@
 #PBS -m n
 #PBS -q long
 #PBS -v STREAMIT_HOME=/u/dmaze/src/streams
-#PBS -N streamit-nightly
+#PBS -N streamitnightly
 #PBS -S /bin/sh
 
 # Run the "nightly" regression tests under OpenPBS.  Submit this script

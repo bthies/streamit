@@ -35,8 +35,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     private HashSet uniformSJ;
     
-    public DynamicProgPartitioner(SIRStream str, int numTiles) {
-	super(str, numTiles);
+    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles) {
+	super(str, work, numTiles);
 	this.configMap = new HashMap();
 	this.uniformSJ = new HashSet();
     }
@@ -44,17 +44,20 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * Collect scaling statistics for all partitions 1...<maxTiles>.
      */
-    public static void saveScalingStatistics(SIRStream str, int maxTiles) {
+    public static void saveScalingStatistics(SIRStream str, WorkEstimate work, int maxTiles) {
 	PartitionUtil.setupScalingStatistics();
 	for (int i=1; i<maxTiles; i++) {
 	    LinkedList partitions = new LinkedList();
-	    new DynamicProgPartitioner(str, i).calcPartitions(partitions);
+	    new DynamicProgPartitioner(str, work, i).calcPartitions(partitions);
 	    PartitionUtil.doScalingStatistics(partitions, i);
 	}
 	PartitionUtil.stopScalingStatistics();
     }
     
-    public void toplevelFusion() {
+    /**
+     * This is the toplevel call for doing partitioning.
+     */
+    public void toplevel() {
 	// debug setup
 	long start = System.currentTimeMillis();
 	LinkedList partitions = new LinkedList();
@@ -65,7 +68,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
 	// debug output
 	PartitionUtil.printTileWork(partitions, numTiles);
-	PartitionDot.printGraph(str, "partitions.dot", PartitionRecord.asMap(partitions));
+	PartitionDot.printPartitionGraph(str, "partitions.dot", PartitionRecord.asMap(partitions));
 	Utils.assert(partitions.size()<=numTiles, "Assigned " + partitions.size() + " tiles, but we only have " + numTiles);
 	System.out.println("Dynamic programming partitioner took " + 
 			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");

@@ -24,6 +24,13 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Construct a new SIRPipeline with no parent and empty fields and methods.
+     */
+    public SIRPipeline(String ident) {
+	this(null, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+    }
+
+    /**
      * Returns the output type of this.
      */
     public CType getOutputType() {

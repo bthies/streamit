@@ -133,7 +133,9 @@ public abstract class SIRContainer extends SIRStream {
      * constant indices defined in SIRFeedbackLoop, or getBody/getLoop.
      */
     public SIRStream get(int i) {
-	return (SIRStream)children.get(i);
+	SIRStream child = (SIRStream)children.get(i);
+	//Utils.assert(child.getParent()==this);
+	return child;
     }
 
     /**

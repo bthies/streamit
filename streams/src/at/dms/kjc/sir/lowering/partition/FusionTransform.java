@@ -42,6 +42,9 @@ public final class FusionTransform extends StreamTransform {
 	    FusePipe.fuse((SIRPipeline)str, childPart);
 	} else if (str instanceof SIRSplitJoin) {
 	    result = FuseSplit.fuse((SIRSplitJoin)str, childPart);
+	    // if we were supposed to fuse the whole thing, make sure
+	    // we got something different
+	    Utils.assert(childPart.size()>1 || str!=result, "Failed to fuse splitjoin: " + result);
 	    // if we got a pipeline back, that means we used old fusion,
 	    // and we should fuse the pipe again
 	    if (childPart.size()==1) { 

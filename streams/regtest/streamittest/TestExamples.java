@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.38 2003-10-15 19:06:43 thies Exp $
+ * $Id: TestExamples.java,v 1.39 2003-10-16 18:07:53 dmaze Exp $
  **/
 package streamittest;
 
@@ -162,6 +162,8 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testHello() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "hello/",
+                            "HelloWorld6.str", "HelloWorld6.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "hello/",
 			       "HelloWorld6.java",
 			       "HelloWorld6.out",
@@ -179,6 +181,8 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testMatrixMult() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "matrixmult/",
+                            "MatrixMult.str", "MatrixMult.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "matrixmult/",
 			       "MatrixMult.java",
 			       "MatrixMult.out",
@@ -197,6 +201,8 @@ public class TestExamples extends StreamITTestCase {
     }
     
     public void testVectAdd() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "vectadd/",
+                            "VectAdd.str", "VectAdd.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
 			       "VectAdd.java",
 			       "VectAdd.out",
@@ -204,6 +210,8 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testVectAdd1() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "vectadd/",
+                            "VectAdd1.str", "VectAdd1.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
 			       "VectAdd1.java",
 			       "VectAdd1.out",

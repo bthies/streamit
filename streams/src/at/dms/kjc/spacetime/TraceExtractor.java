@@ -60,7 +60,7 @@ public class TraceExtractor {
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=null;
-		    if(!(filter.filter instanceof SIRFileReader)) {
+		    if(filter.filter instanceof SIRFileReader) {
 			SIRFileReader read=(SIRFileReader)filter.filter;
 			outNode=new EnterTraceNode(read.getFileName(),true,filter.outWeights);
 		    } else
@@ -109,7 +109,7 @@ public class TraceExtractor {
 	for(int i=0;i<in.length;i++)
 	    inNode[i]=(OutputTraceNode)outNodes.get(in[i].src);
 	InputTraceNode output=null;
-	if(!(filter.filter instanceof SIRFileWriter)) {
+	if(filter.filter instanceof SIRFileWriter) {
 	    SIRFileWriter write=(SIRFileWriter)filter.filter;
 	    output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
 	} else

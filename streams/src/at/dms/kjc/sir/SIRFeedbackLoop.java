@@ -49,7 +49,7 @@ public class SIRFeedbackLoop extends SIRStream {
     /**
      * Accepts visitor <v> at this node.
      */
-    public void accept(SIRVisitor v) {
+    public void accept(StreamVisitor v) {
 	v.preVisitFeedbackLoop(this,
 			       parent,
 			       fields,

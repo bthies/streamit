@@ -23,7 +23,7 @@ public abstract class SIROperator extends at.dms.util.Utils {
     /**
      * Accepts <v> at this node.
      */
-    public abstract void accept(SIRVisitor v);
+    public abstract void accept(StreamVisitor v);
 
     /**
      * Returns the name of this, or null if a name has not yet been assigned.

@@ -7,7 +7,7 @@ import java.util.Iterator;
  * A set of Integers corresponding to possible latencies for message
  * delivery.
  */
-class SIRLatencySet extends SIRLatency {
+public class SIRLatencySet extends SIRLatency {
     /**
      * The entries in the set.
      */

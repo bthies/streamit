@@ -3,7 +3,7 @@ package at.dms.kjc.sir;
 /** 
  * This represents a range of latencies for message delivery.
  */
-class SIRLatencyRange extends SIRLatencyMax {
+public class SIRLatencyRange extends SIRLatencyMax {
     /**
      * The minimum latency for this.  (The maximum latency is held in
      * the superclass.)

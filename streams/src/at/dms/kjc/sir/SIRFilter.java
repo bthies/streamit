@@ -50,7 +50,7 @@ public class SIRFilter extends SIRStream {
     /**
      * Accepts visitor <v> at this node.
      */
-    public void accept(SIRVisitor v) {
+    public void accept(StreamVisitor v) {
 	v.visitFilter(this,
 		      parent,
 		      fields,

@@ -3,7 +3,7 @@ package at.dms.kjc.sir;
 /** 
  * This represents a maximum latency for message delivery.
  */
-class SIRLatencyMax extends SIRLatency implements Comparable {
+public class SIRLatencyMax extends SIRLatency implements Comparable {
     /**
      * The maximum latency.
      */

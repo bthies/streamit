@@ -3,7 +3,12 @@ package at.dms.kjc.sir;
 import at.dms.kjc.*;
 import java.util.List;
 
-public interface SIRVisitor {
+/**
+ * This visitor is for visiting stream structures in the SIR.  It does
+ * not visit statement-level constructs like SIRInitStatement,
+ * SIRPushStatement, etc.
+ */
+public interface StreamVisitor {
     /**
      * PLAIN-VISITS 
      */

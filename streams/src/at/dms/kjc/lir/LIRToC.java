@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.77 2002-12-03 16:57:48 dmaze Exp $
+ * $Id: LIRToC.java,v 1.78 2002-12-03 20:41:02 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -26,6 +26,10 @@ public class LIRToC
 
     //Name of the "this" parameter to init and work functions
     public static final String THIS_NAME = LoweringConstants.STATE_PARAM_NAME;
+    public static final String CONTEXT_NAME =
+        LoweringConstants.CONTEXT_VAR_NAME;
+    public static final String THIS_CONTEXT_NAME =
+        THIS_NAME + "->" + CONTEXT_NAME;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -1339,7 +1343,7 @@ public class LIRToC
             // This identifier is used for the enclosing instance of
             // inner classes; see JLS 8.1.2.
             print("((" + left.getType().getCClass().getOwner().getType() +
-                  ")(" + THIS_NAME + "->context->parent->stream_data))");
+                  ")(" + THIS_CONTEXT_NAME + "->parent->stream_data))");
             return;
         }
         int		index = ident.indexOf("_$");
@@ -1804,7 +1808,7 @@ public class LIRToC
     {
         print("register_receiver(");
         portal.accept(this);
-        print(", " + THIS_NAME + "->context, ");
+        print(", " + THIS_CONTEXT_NAME + ", ");
         print(self.getItable().getVarDecl().getIdent());
         print(", LATENCY_BEST_EFFORT);");
         // (But shouldn't there be a latency field in here?)
@@ -1829,12 +1833,13 @@ public class LIRToC
         String childName = THIS_NAME + "->" + self.getChildName();
         print(childName + " = malloc(sizeof(_ContextContainer));");
         newLine();
-        print(childName + "->context = streamit_filereader_create(\"" +
+        print(childName + "->" + CONTEXT_NAME +
+              " = streamit_filereader_create(\"" +
               self.getFileName() + "\");");
         newLine();
         print("register_child(");
         self.getStreamContext().accept(this);
-        print(", " + childName + "->context);");
+        print(", " + childName + "->" + CONTEXT_NAME + ");");
     }
 
     /**
@@ -1844,12 +1849,13 @@ public class LIRToC
         String childName = THIS_NAME + "->" + self.getChildName();
         print(childName + " = malloc(sizeof(_ContextContainer));");
         newLine();
-        print(childName + "->context = streamit_filewriter_create(\"" +
+        print(childName + "->" + CONTEXT_NAME +
+              " = streamit_filewriter_create(\"" +
               self.getFileName() + "\");");
         newLine();
         print("register_child(");
         self.getStreamContext().accept(this);
-        print(", " + childName + "->context);");
+        print(", " + childName + "->" + CONTEXT_NAME + ");");
     }
 
     /**
@@ -1860,11 +1866,12 @@ public class LIRToC
         String childName = THIS_NAME + "->" + self.getChildName();
         print(childName + " = malloc(sizeof(_ContextContainer));");
         newLine();
-        print(childName + "->context = streamit_identity_create();");
+        print(childName + "->" + CONTEXT_NAME +
+              " = streamit_identity_create();");
         newLine();
         print("register_child(");
         self.getStreamContext().accept(this);
-        print(", " + childName + "->context);");
+        print(", " + childName + "->" + CONTEXT_NAME + ");");
     }
 
     public void visitSetChild(LIRSetChild self,
@@ -1876,12 +1883,13 @@ public class LIRToC
         print(THIS_NAME + "->" + childName +
               " = malloc(sizeof(_" + childType + "));");
         newLine();
-        print(THIS_NAME + "->" + childName + "->context = " +
+        print(THIS_NAME + "->" + childName + "->" + CONTEXT_NAME + " = " +
               "create_context(" + THIS_NAME + "->" + childName + ");");
         newLine();
         print("register_child(");
         streamContext.accept(this);
-        print(", " + THIS_NAME + "->" + childName + "->context);");
+        print(", " + THIS_NAME + "->" + childName + "->" + CONTEXT_NAME +
+              ");");
     }
     
     public void visitSetTape(LIRSetTape self,
@@ -1893,9 +1901,9 @@ public class LIRToC
     {
         print("create_tape(");
         srcStruct.accept(this);
-        print("->context, ");
+        print("->" + CONTEXT_NAME + ", ");
         dstStruct.accept(this);
-        print("->context, sizeof(");
+        print("->" + CONTEXT_NAME + ", sizeof(");
         print(type);
         print("), " + size + ");");
     }
@@ -2097,18 +2105,18 @@ public class LIRToC
         print(typeName + " " + THIS_NAME +
               " = malloc(sizeof(_" + typeName + "));");
         newLine();
-        print(THIS_NAME + "->context = create_context(" + THIS_NAME + ");");
+        print(THIS_CONTEXT_NAME + " = create_context(" + THIS_NAME + ");");
         newLine();
         init.accept(this);
         print("(" + THIS_NAME + ");");
         newLine();
-        print("connect_tapes(" + THIS_NAME + "->context);");
+        print("connect_tapes(" + THIS_CONTEXT_NAME + ");");
         newLine();
         Iterator iter = initStatements.iterator();
         while (iter.hasNext())
             ((JStatement)(iter.next())).accept(this);
         newLine();
-        print("streamit_run(" + THIS_NAME + "->context, argc, argv);");
+        print("streamit_run(" + THIS_CONTEXT_NAME + ", argc, argv);");
         newLine();
         print("return 0;");
     }

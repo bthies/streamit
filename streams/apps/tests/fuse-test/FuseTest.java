@@ -32,9 +32,8 @@ class FloatSource extends Filter {
     }
 }
 
-/*
 class FloatPrinter extends Filter {
-    public FloatSource() {
+    public FloatPrinter() {
 	super();
     }
 
@@ -46,7 +45,6 @@ class FloatPrinter extends Filter {
 	System.out.println(input.pop());
     }
 }
-*/
 
 class UpSampler extends Filter {
     int myK;

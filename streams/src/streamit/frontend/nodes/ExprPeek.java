@@ -23,7 +23,7 @@ package streamit.frontend.nodes;
  * which item off the tape is to be read.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprPeek.java,v 1.3 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: ExprPeek.java,v 1.4 2004-01-16 20:46:23 dmaze Exp $
  */
 public class ExprPeek extends Expression
 {
@@ -55,5 +55,25 @@ public class ExprPeek extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprPeek(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ExprPeek))
+            return false;
+        ExprPeek ep = (ExprPeek)other;
+        if (!(expr.equals(ep.expr)))
+            return false;
+        return true;
+    }
+
+    public int hashCode()
+    {
+        return expr.hashCode();
+    }
+    
+    public String toString()
+    {
+        return "peek(" + expr + ")";
     }
 }

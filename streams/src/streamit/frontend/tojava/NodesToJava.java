@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.53 2003-05-13 19:32:54 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.54 2003-05-13 21:22:47 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -57,6 +57,7 @@ public class NodesToJava implements FEVisitor
         {
             switch (((TypePrimitive)type).getType())
             {
+            case TypePrimitive.TYPE_BOOLEAN: return "int";
             case TypePrimitive.TYPE_BIT: return "int";
             case TypePrimitive.TYPE_INT: return "int";
             case TypePrimitive.TYPE_FLOAT: return "float";
@@ -96,6 +97,8 @@ public class NodesToJava implements FEVisitor
         {
             switch (((TypePrimitive)t).getType())
             {
+            case TypePrimitive.TYPE_BOOLEAN:
+                return "Integer.TYPE";
             case TypePrimitive.TYPE_BIT:
                 return "Integer.TYPE";
             case TypePrimitive.TYPE_INT:
@@ -140,6 +143,9 @@ public class NodesToJava implements FEVisitor
         {
             switch (((TypePrimitive)type).getType())
             {
+            case TypePrimitive.TYPE_BOOLEAN:
+                suffix = "Int";
+                break;
             case TypePrimitive.TYPE_BIT:
                 suffix = "Int";
                 break;

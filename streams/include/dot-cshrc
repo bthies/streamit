@@ -3,8 +3,14 @@ else
   setenv CLASSPATH .
 endif
 
+# this is a temporary default value
+if ($?JAVA_HOME) then
+else
+  setenv JAVA_HOME /home/bits7/NO_BACKUP/streamit/j2sdk1.4.2_03
+endif
+
 # java classes
-setenv CLASSPATH ${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
+setenv CLASSPATH ${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
 ## antlr classes
 setenv CLASSPATH ${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
@@ -41,7 +47,7 @@ endif
 #include builtin Eclipse plugins
 setenv ECLIPSE_PLUG /home/bits7/NO_BACKUP/streamit/eclipse/plugins
 set PRE=${ECLIPSE_PLUG}/org.eclipse.
-set VER="_2.1.0"
+set VER="_2.1.1"
 setenv CLASSPATH ${CLASSPATH}:${PRE}ui.workbench.texteditor${VER}/texteditor.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}jface${VER}/jface.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}ui.editors${VER}/editors.jar
@@ -53,5 +59,6 @@ setenv CLASSPATH ${CLASSPATH}:${PRE}ui.workbench${VER}/workbench.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}text${VER}/text.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
 setenv CLASSPATH ${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar
+setenv CLASSPATH ${CLASSPATH}:${PRE}core.resources${VER}/resources.jar
 unset PRE
 unset VER

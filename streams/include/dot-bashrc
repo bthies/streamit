@@ -7,8 +7,14 @@ then
  export CLASSPATH=.
 fi
 
+# take care of classpath
+if [ -z "$JAVA_HOME" ]
+then
+ export JAVA_HOME=/home/bits7/NO_BACKUP/streamit/j2sdk1.4.2_03
+fi
+
 # java classes
-CLASSPATH=${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
+CLASSPATH=${CLASSPATH}:${JAVA_HOME}/jre/lib/rt.jar
 ## antlr classes
 CLASSPATH=${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
@@ -43,7 +49,7 @@ export TEXINPUTS
 #include builtin Eclipse plugins
 export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins
 PRE=${ECLIPSE_PLUG}/org.eclipse.
-VER="_2.1.0"
+VER="_2.1.1"
 CLASSPATH=${CLASSPATH}:${PRE}ui.workbench.texteditor${VER}/texteditor.jar
 CLASSPATH=${CLASSPATH}:${PRE}jface${VER}/jface.jar
 CLASSPATH=${CLASSPATH}:${PRE}ui.editors${VER}/editors.jar
@@ -55,3 +61,4 @@ CLASSPATH=${CLASSPATH}:${PRE}ui.workbench${VER}/workbench.jar
 CLASSPATH=${CLASSPATH}:${PRE}text${VER}/text.jar
 CLASSPATH=${CLASSPATH}:${PRE}jdt.core${VER}/jdtcore.jar
 CLASSPATH=${CLASSPATH}:${PRE}jdt.ui${VER}/jdt.jar
+CLASSPATH=${CLASSPATH}:${PRE}core.resources${VER}/resources.jar

@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.3 2004-03-05 23:25:33 sitij Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.4 2004-03-08 18:39:50 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -99,6 +99,18 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	FilterMatrix expandedD = new FilterMatrix(totalOutputs, totalInputs);
 	FilterVector expandedInit = new FilterVector(totalStates);
 
+	FilterMatrix expandedPreA, expandedPreB;
+	expandedPreA = null;
+	expandedPreB = null;
+
+	boolean overallPreNeeded = peekVal > totalInputs;
+ 
+
+	if(overallPreNeeded) {
+	    expandedPreA = new FilterMatrix(totalStates, totalStates);
+	    expandedPreB = new FilterMatrix(totalStates, peekVal-totalInputs);
+	}
+
 	// just do a little paranoia check and ensure that all of the pop counts are the same
 
 	for (int i=0; i<filterCount; i++) {
@@ -122,6 +134,13 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 	    expandedA.copyAt(stateOffset, stateOffset, expandedReps[i].getA());
 	    expandedB.copyAt(stateOffset, 0, expandedReps[i].getB());
+
+	    if(overallPreNeeded) {
+		if(expandedReps[i].preworkNeeded()) {
+		    expandedPreA.copyAt(stateOffset, stateOffset, expandedReps[i].getPreWorkA());
+		    expandedPreB.copyAt(stateOffset, 0, expandedReps[i].getPreWorkB());
+		}
+	    }
 
  
 	    // figure out how many groups of joinWeight rows that we have
@@ -168,7 +187,11 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 	// now, return a new LinearRepresentation that represents the transformed
 	// splitjoin with the new matrices, along with the new init vector and peek count.
-	return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedInit,peekVal);
+
+	if(overallPreNeeded)
+	    return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedPreA,expandedPreB,expandedInit);
+	else
+	    return new LinearFilterRepresentation(expandedA,expandedB,expandedC,expandedD,expandedInit,peekVal);
     }
 	
 

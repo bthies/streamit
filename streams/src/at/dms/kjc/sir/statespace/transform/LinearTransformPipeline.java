@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.8 2004-03-05 23:25:33 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.9 2004-03-08 18:39:50 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -148,9 +148,29 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    int removeVars = newPeek2 - newPop2;
 		    int extraVars = newPush1*n;
 		    int newVar2Total = state2 - removeVars + extraVars;
+
+		    FilterMatrix preworkA2_new, preworkB2_new;
+		    preworkA2_new = rep2Expanded.getPreWorkA();
+		    preworkB2_new = rep2Expanded.getPreWorkB();
+
+		    if(extraVars > removeVars) {
+
+			LinearFilterRepresentation newRep2;
+			newRep2 = rep2Expanded.changePeek(newPop2 + extraVars);
+
+			A2 = newRep2.getA();
+			B2 = newRep2.getB();
+			C2 = newRep2.getC();
+			D2 = newRep2.getD();
+			init2 = newRep2.getInit();
+			
+			preworkA2_new = newRep2.getPreWorkA();
+			preworkB2_new = newRep2.getPreWorkB();
+
+			state2 = newVar2Total;
 		    
-		    FilterMatrix preworkA2_new = LinearFilterRepresentation.createPreWorkA(newVar2Total);
-		    FilterMatrix preworkB2_new = LinearFilterRepresentation.createPreWorkB(newVar2Total,extraVars);
+		    }
+		    
 		    
 		    LinearFilterRepresentation rep1MoreExpanded = rep1Expanded.expand_with_prework(n);
 		    FilterMatrix preworkA1_new = rep1MoreExpanded.getA();
@@ -167,32 +187,6 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    preworkBprime.copyAt(0,0,preworkB1_new);
 		    preworkBprime.copyAt(state1,0,preworkB2_new.times(D1_temp));
 
-		    //    	    LinearPrinter.println("overall prework A: " + preworkAprime.toString());
-		    //              LinearPrinter.println("overall prework B: " + preworkBprime.toString());
-
-		    /* 
-The way filter 2 operates has been altered. Previously, filter2 used its first newPeek2-newPop2 variables to represent peek(0),peek(1),...,peek(newPeek2-newPop2-1), and used its newPop2 inputs to represent peek(newPeek2-newPop2),peek(newPeek2-newPop2+1),...,peek(newPeek2-1).
-
-Now, filter2 should use its first extraVars variables to represent peek(0),peek(1),...,peek(extraVars-1), and use its first newPop2-extraVars inputs to represent peek(extraVars),peek(extraVars+1),...,peek(newPeek2-1), The remaining inputs should be used to update the extraVars variables.
-
-We know that extraVars >= newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? extraVars = n*newPush1 < newPeek2 <= (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = extraVars + newPop1 >= newPeek2, so extraVars >= newPeek2-newPop1.
-		    */
-
-
-		    if(extraVars > removeVars) {
-
-			LinearFilterRepresentation newRep2;
-			newRep2 = rep2Expanded.changePeek(newPop2 + extraVars);
-
-			A2 = newRep2.getA();
-			B2 = newRep2.getB();
-			C2 = newRep2.getC();
-			D2 = newRep2.getD();
-			init2 = newRep2.getInit();
-			
-			state2 = newVar2Total;
-		    
-		    }
 		}
 
 	    }

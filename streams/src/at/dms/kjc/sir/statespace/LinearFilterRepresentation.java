@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.8 2004-03-05 23:25:21 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.9 2004-03-08 18:39:39 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -209,6 +209,16 @@ public class LinearFilterRepresentation {
      * Changes the peek value of this linear Representation (to a greater value)
      **/
 
+
+		    /* 
+The way this filter operates has been altered. Previously, it used its first newPeek2-newPop2 variables to represent peek(0),peek(1),...,peek(newPeek2-newPop2-1), and used its newPop2 inputs to represent peek(newPeek2-newPop2),peek(newPeek2-newPop2+1),...,peek(newPeek2-1).
+
+Now, the filter should use its first addVars variables to represent peek(0),peek(1),...,peek(extraVars-1), and use its first newPop2-extraVars inputs to represent peek(extraVars),peek(extraVars+1),...,peek(newPeek2-1), The remaining inputs should be used to update the extraVars variables.
+
+We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? addVars = n*newPush1 < newPeek2 <= (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = addVars + newPop1 >= newPeek2, so addVars >= newPeek2-newPop1.
+		    */
+
+
     public LinearFilterRepresentation changePeek(int newPeek) {
 
 	int oldPeek = this.peekCount;
@@ -223,8 +233,8 @@ public class LinearFilterRepresentation {
 	int addVars = newPeek - popCount;
 	int newStateCount = oldStateCount - removeVars + addVars;
 
-	FilterMatrix A, B, C, D;
-	FilterMatrix newA, newB, newC, newD;
+	FilterMatrix A, B, C, D, preA, preB;
+	FilterMatrix newA, newB, newC, newD, newPreA, newPreB;
 			
 	A = this.getA();
 	B = this.getB();
@@ -233,18 +243,48 @@ public class LinearFilterRepresentation {
 
 	newA = new FilterMatrix(newStateCount,newStateCount);
 	newA.copyRowsAndColsAt(addVars,addVars,A,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
+	newA.copyRowsAndColsAt(0,addVars,A,0,removeVars,removeVars,oldStateCount-removeVars);
 	newA.copyRowsAndColsAt(addVars,0,A,removeVars,0,oldStateCount-removeVars,removeVars);
+	newA.copyRowsAndColsAt(0,0,A,0,0,removeVars,removeVars);
 	newA.copyRowsAndColsAt(addVars,removeVars,B,removeVars,0,oldStateCount-removeVars,addVars-removeVars);
-	
+	newA.copyRowsAndColsAt(0,removeVars,B,0,0,removeVars,addVars-removeVars);
+
 	newB = new FilterMatrix(newStateCount,popCount);
-	newB.copyRowsAndColsAt(addVars,0,B,removeVars,addVars-removeVars,oldStateCount-removeVars,removeVars);
+	newB.copyRowsAndColsAt(0,0,B,0,addVars-removeVars,removeVars,popCount-(addVars-removeVars));
+	newB.copyRowsAndColsAt(addVars,0,B,removeVars,addVars-removeVars,oldStateCount-removeVars,popCount-(addVars-removeVars));
 
-	for(int i=0; i<addVars; i++)
-	    newB.setElement(i,i,ComplexNumber.ONE);
-			
-	//LinearPrinter.println("A2init-new" + tempA2.toString());
-	//LinearPrinter.println("B2init-new" + tempB2.toString());
+	for(int i=removeVars; i<addVars; i++) {
+	    if(i+popCount<addVars)
+		newA.setElement(i,i+popCount,ComplexNumber.ONE);
+	    else
+		newB.setElement(i,i+popCount-addVars,ComplexNumber.ONE);
+	}
 
+	//LinearPrinter.println("newA " + newA);
+	//LinearPrinter.println("newB" + newB);
+
+
+	if(this.preworkNeeded()) {
+	    preA = this.getPreWorkA();
+	    preB = this.getPreWorkB();
+
+	    newPreA = new FilterMatrix(newStateCount,newStateCount);
+	    newPreA.copyRowsAndColsAt(addVars,addVars,preA,removeVars,removeVars,oldStateCount-removeVars,oldStateCount-removeVars);
+	    newPreA.copyRowsAndColsAt(0,addVars,preA,0,removeVars,removeVars,oldStateCount-removeVars);
+
+
+	    newPreB = new FilterMatrix(newStateCount,newPeek-popCount);
+	    newPreB.copyRowsAndColsAt(0,0,preB,0,0,removeVars,removeVars);
+	    newPreB.copyRowsAndColsAt(addVars,0,preB,removeVars,0,oldStateCount-removeVars,removeVars);
+
+	    for(int i=removeVars; i<addVars; i++)
+		newPreB.setElement(i,i,ComplexNumber.ONE);
+
+	}
+	else {
+	    newPreA = null;
+	    newPreB = null;
+	}
 	
 	newC = new FilterMatrix(pushCount,newStateCount);
 	newC.copyColumnsAt(addVars,C,removeVars,oldStateCount-removeVars);
@@ -259,7 +299,11 @@ public class LinearFilterRepresentation {
 	newInit.copyAt(0,addVars-removeVars,init);
 			
 	LinearFilterRepresentation newRep; 
-	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInit,newPeek);
+
+	if(preworkNeeded())
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,newInit);
+	else
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newInit,newPeek);
 
 	return newRep;
 

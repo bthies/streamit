@@ -18,6 +18,7 @@ class SampleTrellis extends StreamIt
 	add (new FrameMaker());
 	add (new Shifter());
 	//add (new BinaryPasser("original data"));
+	add (new NoiseSource(39));
 	add (new RateDoubler());
 	add (new SplitJoin() {
 		public void init() {

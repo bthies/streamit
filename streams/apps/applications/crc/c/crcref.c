@@ -1,7 +1,7 @@
 /*
  * crcref.c: reference implementation of 32-bit CRC
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: crcref.c,v 1.1 2002-05-06 22:08:45 dmaze Exp $
+ * $Id: crcref.c,v 1.2 2002-05-07 19:28:42 dmaze Exp $
  */
 
 #include <stdint.h>
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   {
     int in = getInput();
     int out = doCRC(in);
-    fprintf(fp, "%d\n", out);
+    fwrite(&out, sizeof(out), 1, fp);
   }
   fclose(fp);
 }

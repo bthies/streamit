@@ -17,7 +17,7 @@ void->void pipeline beamformer
     source_location[0] = 3.0;
     source_location[0] = 0.0;
     
-    add FileReader<float>("beamformer-input.txt");
+    add FileReader<float>("/home/streamit/compiler-static/audiobeam/data/near-field/data2");
     add calculate_single_position(num_mics, hamming, sound_speed, sampling_rate, 
 					    mic_locations, source_location);
     
@@ -35,7 +35,7 @@ float->void pipeline calculate_single_position(int num_mics, boolean hamming,
     float[num_mics] distances;
     float[num_mics] weights;
     
-    float min_delay = 999e999;
+    float min_delay = 1e38;
     float max_delay = 0;
     int   index     = 0;
     

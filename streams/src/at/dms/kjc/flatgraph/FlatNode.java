@@ -38,6 +38,79 @@ public class FlatNode {
 
     public SIROperator oldContents;
 
+    //remove all downstream edges from node
+    public void removeEdges() 
+    {
+	edges = new FlatNode[0];
+	ways = 0;
+	weights = new int[0];
+	currentEdge = 0;
+    }
+    
+    //remove all back edges from node
+    public void removeIncoming() 
+    {
+	incoming = new FlatNode[0];
+	inputs = 0;
+	incomingWeights = new int[0];
+	currentIncoming = 0;
+    }
+    
+    public void removeForwardEdge(FlatNode to) 
+    {
+	assert edges.length == ways &&
+	    edges.length == weights.length && edges.length > 0;
+
+	FlatNode[] newEdges = new FlatNode[edges.length - 1];
+	int[] newWeights = new int[edges.length - 1];
+
+	boolean found = false;
+	int j = 0;
+	
+	for (int i = 0; i < edges.length; i++) {
+	    if (to != edges[i]) {
+		newEdges[j] = edges[i];
+		newWeights[j++] = weights[i];
+	    }
+	    else
+		found = true;
+	}
+
+	edges = newEdges;
+	weights = newWeights;
+	ways--;
+	currentEdge--;
+    }
+    
+
+    public void removeBackEdge(FlatNode from) 
+    {
+	assert incomingWeights.length == incoming.length &&
+	    incoming.length > 0 : this + " " + incomingWeights.length + ", " + incoming.length;
+
+	FlatNode[] newIncoming = new FlatNode[incoming.length - 1];
+	int[] newIncomingWeights = new int[incomingWeights.length -1];
+	boolean found = false;
+	int j = 0;
+	
+	for (int i = 0; i < incomingWeights.length; i++) {
+	    if (from != incoming[i]) {
+		newIncoming[j] = incoming[i];
+		newIncomingWeights[j] = incomingWeights[i];
+		j++;
+	    }
+	    else
+		found = true;
+	}
+	
+	assert found : "Trying to remove incoming edge that does not exist!";
+
+	incoming = newIncoming;
+	incomingWeights = newIncomingWeights;
+	inputs--;
+	currentIncoming--;
+    }
+
     /* create a new node with <op> */
     public FlatNode(SIROperator op) 
     {
@@ -50,8 +123,9 @@ public class FlatNode {
 	if (op instanceof SIRFilter) {
 	    ways = 0;
 	    inputs = 0;
-	    edges = new FlatNode[1];
-	    edges[0] = null;
+	    incoming = new FlatNode[0];
+	    edges = new FlatNode[0];
+	    //edges[0] = null;
 	}
 		   
 	if (op instanceof SIRJoiner) {
@@ -60,8 +134,8 @@ public class FlatNode {
 	    inputs = joiner.getWays();
 	    incoming = new FlatNode[inputs];
 	    incomingWeights = joiner.getWeights();
-	    edges = new FlatNode[1];
-	    edges[0] = null;
+	    edges = new FlatNode[0];
+	    //edges[0] = null;
 	}
 	if (op instanceof SIRSplitter) {
 	    SIRSplitter splitter = (SIRSplitter)op;
@@ -69,6 +143,7 @@ public class FlatNode {
 	    edges = new FlatNode[ways];
 	    weights = splitter.getWeights();
 	    inputs = 0;
+	    incoming = new FlatNode[0];
 	}
 	identMap=new HashMap();
 	label=uin++;
@@ -113,7 +188,7 @@ public class FlatNode {
 	    incomingWeights = new int[1];
 	    incomingWeights[0] = 1;
 	}
-	
+
 	incoming[currentIncoming++] = from;
     }
 	
@@ -163,11 +238,14 @@ public class FlatNode {
      * Override the hashcode so that it is deterministic with each
      * run, so that layouts can be deterministic.
      */
+
+    /*
     public int hashCode() {
 	return inputs * ways * 
 	    (edges==null ? 1 : edges.length) * 
 	    (incoming==null ? 1 : incoming.length);
     }
+    */
 
     /**
      * Now uses uin to implement deterministic hashcode system

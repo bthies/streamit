@@ -765,7 +765,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	buf.append("size = \"8, 10.5\";");
 	filterCount = 0;
 	top.accept(this, new HashSet(), true);
-	System.out.println("Filters in Graph: " + filterCount);
+	//	System.out.println("Filters in Graph: " + filterCount);
 	buf.append("}\n");	
 	try {
 	    FileWriter fw = new FileWriter(filename);
@@ -791,16 +791,27 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    buf.append("init Mult: " + getMult(node, true) + 
 		       " steady Mult: " + getMult(node, false));
 	    buf.append("\\n");
-	    buf.append(" peek: " + filter.getPeekInt() + 
-		       " pop: " + filter.getPopInt() + 
-		       " push: " + filter.getPushInt());
+	    buf.append(" peek: " + filter.getPeek() + 
+		       " pop: " + filter.getPop() + 
+		       " push: " + filter.getPush());
 	    buf.append("\\n");
 	    if (node.contents instanceof SIRTwoStageFilter) {
 		SIRTwoStageFilter two = (SIRTwoStageFilter)node.contents;
 		buf.append(" initPeek: " + two.getInitPeek() + 
 			   " initPop: " + two.getInitPop() + 
 			   " initPush: " + two.getInitPush());
+		buf.append("\\n");
 	    }
+	    if (node.inputs != node.incoming.length) {
+		buf.append("node.inputs (" + node.inputs + ") != node.incoming.length (" + 
+			   node.incoming.length + ")");
+		buf.append("\\n");
+	    }
+	    if (node.ways != node.edges.length) {
+		buf.append("node.ways (" + node.ways + ") != node.edges.length (" + 
+			   node.edges.length + ")");
+	    }
+	    
 	    buf.append("\"];");
 	}
 	
@@ -844,7 +855,8 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
     public static boolean countMe(SIRFilter filter) {
 	return !(filter instanceof SIRIdentity ||
 		 filter instanceof SIRFileWriter ||
-		 filter instanceof SIRFileReader);
+		 filter instanceof SIRFileReader ||
+		 filter instanceof SIRPredefinedFilter);
     }
     
     public static CType getJoinerType(FlatNode joiner) 
@@ -870,6 +882,8 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 
     public int getMult(FlatNode node, boolean init)
     {
+	if ((init ? initExecutionCounts : steadyExecutionCounts) == null)
+	    return -1;
 	Integer val = 
 	    ((Integer)(init ? initExecutionCounts.get(node) : steadyExecutionCounts.get(node)));
 	if (val == null)

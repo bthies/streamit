@@ -37,7 +37,7 @@ public class SIRScheduler implements Constants {
      * scheduler--any list starting with something as a key in this
      * map can be replaced with the corresponding value in the map.
      */
-   protected HashMap twoStageFilters;
+    protected HashMap twoStageFilters;
 
     /**
      * The destination flatClass that we're working on.
@@ -50,14 +50,6 @@ public class SIRScheduler implements Constants {
      * we're building the steady-state work function.
      */
     private boolean initMode;    
-
-    /**
-     * Creates one of these, not suitable for building work functions
-     * for a flatclass.  Only useful for scheduling purposes.
-     */
-    public SIRScheduler() {
-	this(null);
-    }
 
     /**
      * Creates one of these.
@@ -78,10 +70,69 @@ public class SIRScheduler implements Constants {
     }
 
     /**
-     * Returns a schedule for <str>.
-     */
-    public static Schedule getSchedule(SIRStream str) {
-	return new SIRScheduler(null).computeSchedule(str);
+     * Returns a two-dimensional array HashMap's that map each
+     * splitter, joiner, & filter in <str> to a 1-dimensional int
+     * array containing the count for how many times that siroperator
+     * executes:
+     *
+     *  result[0] = map for initializaiton schedule
+     *  result[1] = map for steady-state schedule
+     */ 
+    public static HashMap[] getExecutionCounts(SIRStream str) {
+	// make the result
+	HashMap[] result = { new HashMap(), new HashMap() } ;
+
+	// get the schedule
+	SIRScheduler scheduler = new SIRScheduler(null);
+	Schedule schedule = scheduler.computeSchedule(str);
+	
+	// fill in the init schedule
+	scheduler.fillExecutionCounts(schedule.getInitSchedule(),
+				      result[0]);
+
+	// fill in the steady-state schedule
+	scheduler.fillExecutionCounts(schedule.getSteadySchedule(), 
+				      result[1]);
+
+	return result;
+    }
+
+    // Creates execution counts of filters in graph.  Requires that
+    // <schedObject> results from a schedule built with this instance
+    // of the scheduler.
+    private void fillExecutionCounts(Object schedObject, HashMap counts) {
+	if (schedObject instanceof List) {
+	    // first see if we have a two-stage filter
+	    SIRTwoStageFilter twoStage = 
+		getTwoStageFilter((List)schedObject);
+	    // if we found a two-stage filter, recurse on it instead
+	    // of the list elements.
+	    if (twoStage!=null) {
+		fillExecutionCounts(twoStage, counts);
+	    } else {
+		// otherwise, visit all of the elements of the list
+		for (ListIterator it = ((List)schedObject).listIterator();
+		     it.hasNext(); ) {
+		    fillExecutionCounts(it.next(), counts);
+		}
+	    }
+	} else if (schedObject instanceof SchedRepSchedule) {
+    	    // get the schedRep
+	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
+	    for(int i = 0; i < rep.getTotalExecutions().intValue(); i++)
+		fillExecutionCounts(rep.getOriginalSchedule(), 
+				    counts);
+	} else {
+	    //add one to the count for this node
+	    if (!counts.containsKey(schedObject)) {
+		int[] wrapper = { 1 };
+		counts.put(schedObject, wrapper);
+	    } else {
+		//add one to counter
+		int[] wrapper = (int[])counts.get(schedObject);
+		wrapper[0]++;
+	    }
+	}
     }
 
     /**
@@ -103,7 +154,7 @@ public class SIRScheduler implements Constants {
      * Interface with the scheduler to get a schedule for <toplevel>.
      * Records all associations of two-stage filters in <twoStageFilters>.
      */
-    public Schedule computeSchedule(SIRStream toplevel) {
+    private Schedule computeSchedule(SIRStream toplevel) {
 	// make a scheduler
 	Scheduler scheduler = new SimpleHierarchicalSchedulerPow2();
 	// get a representation of the stream structure
@@ -257,7 +308,7 @@ public class SIRScheduler implements Constants {
      * <schedObject>, or <null> if <schedObject> does not represent a
      * two-stage filter.
      */
-    public SIRTwoStageFilter getTwoStageFilter(List schedObject) {
+    protected SIRTwoStageFilter getTwoStageFilter(List schedObject) {
 	// see if the first element in the list corresponds to a
 	// two-stage filter.
 	if (schedObject.size()>0 && 

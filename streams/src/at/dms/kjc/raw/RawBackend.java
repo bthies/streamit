@@ -81,7 +81,7 @@ public class RawBackend {
 	RawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
 	//create the execution counts for other passes
-	createExecutionCounts(RawFlattener.top);
+	createExecutionCounts(str);
 
 	// layout the components (assign filters to tiles)
 	Layout.simAnnealAssign(RawFlattener.top);
@@ -115,75 +115,32 @@ public class RawBackend {
 	}
     }
    
-    private static void createExecutionCounts(FlatNode top) 
-    {
+    private static void createExecutionCounts(SIRStream str) {
+	// get the execution counts from the scheduler
+	HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
 
-	SIRScheduler scheduler = new SIRScheduler();
-	Schedule schedule = scheduler.computeSchedule(getTopMostParent(top));
+	// make fresh hashmaps for results
+	HashMap[] result = { initExecutionCounts = new HashMap(), 
+			     steadyExecutionCounts = new HashMap()} ;
 
-	initExecutionCounts = new HashMap();
-	steadyExecutionCounts = new HashMap();
-
-	fillExecutionCounts(schedule.getInitSchedule(),
-			    initExecutionCounts,
-			    scheduler);
-	fillExecutionCounts(schedule.getSteadySchedule(), 
-			    steadyExecutionCounts,
-			    scheduler);
+	// then filter the results to wrap every filter in a flatnode,
+	// and ignore splitters
+	for (int i=0; i<2; i++) {
+	    for (Iterator it = executionCounts[i].keySet().iterator();
+		 it.hasNext(); ){
+		SIROperator obj = (SIROperator)it.next();
+		if (!(obj instanceof SIRSplitter)) {
+		    int val = ((int[])executionCounts[i].get(obj))[0];
+		    result[i].put(FlatNode.getFlatNode(obj), new Integer(val));
+		}
+	    }
+	}
     }
 
-    
     //simple helper function to find the topmost pipeline
-    private static SIRStream getTopMostParent(FlatNode node) 
+    private static SIRStream getTopMostParent (FlatNode node) 
     {
 	SIRContainer[] parents = node.contents.getParents();
 	return parents[parents.length -1];
-    }
-    
-    //creates execution counts of filters in graph (flatnode maps count)
-    private static void fillExecutionCounts(Object schedObject, 
-					    HashMap counts,
-					    SIRScheduler scheduler) 
-    {
-	if (schedObject instanceof List) {
-	    // first see if we have a two-stage filter
-	    SIRTwoStageFilter twoStage = 
-		scheduler.getTwoStageFilter((List)schedObject);
-	    // if we found a two-stage filter, recurse on it instead
-	    // of the list elements.  (This is a HACK that should be
-	    // removed throughout the SIRScheduler, perhaps by
-	    // supporting two-stage filters in Karczma's scheduler.) --bft
-	    if (twoStage!=null) {
-		fillExecutionCounts(twoStage, counts, scheduler);
-	    } else {
-		// otherwise, visit all of the elements of the list
-		for (ListIterator it = ((List)schedObject).listIterator();
-		     it.hasNext(); ) {
-		    fillExecutionCounts(it.next(), counts, scheduler);
-		}
-	    }
-	} else if (schedObject instanceof SchedRepSchedule) {
-    	    // get the schedRep
-	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
-	    ///===========================================BIG INT?????
-	    for(int i = 0; i < rep.getTotalExecutions().intValue(); i++)
-		fillExecutionCounts(rep.getOriginalSchedule(), 
-				    counts,
-				    scheduler);
-	} else {
-	    //do not count splitter
-	    if (schedObject instanceof SIRSplitter)
-		return;
-	    //add one to the count for this node
-	    FlatNode fnode = FlatNode.getFlatNode((SIROperator)schedObject);
-	    if (!counts.containsKey(fnode))
-		counts.put(fnode, new Integer(1));
-	    else {
-		//add one to counter
-		int old = ((Integer)counts.get(fnode)).intValue();
-		counts.put(fnode, new Integer(old + 1));
-	    }
-	    
-	}
     }
 }

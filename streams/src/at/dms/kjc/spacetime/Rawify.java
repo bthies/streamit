@@ -90,9 +90,12 @@ public class Rawify
 			"inputs for a single InputTraceNode coming from same DRAM";
 		    //create the switch code to perform the joining
 		    joinInputTrace((InputTraceNode)traceNode, init, false);
+		    //generate the dram command to execute the joining
+		    generateInputDRAMCommands((InputTraceNode)traceNode, init, false);
 		    //now create the primepump code
 		    if (init) {
 			joinInputTrace((InputTraceNode)traceNode, false, true);
+			generateInputDRAMCommands((InputTraceNode)traceNode, false, true);
 		    }
 		}
 		else if (traceNode.isOutputTrace() && !KjcOptions.magicdram) {
@@ -100,9 +103,12 @@ public class Rawify
 			"outputs for a single OutputTraceNode going to same DRAM";
 		    //create the switch code to perform the splitting
 		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
+		    //generate the DRAM command
+		    generateOutputDRAMCommands((OutputTraceNode)traceNode, init, false);
 		    //now create the primepump code
 		    if (init) {
 			splitOutputTrace((OutputTraceNode)traceNode, false, true);
+			generateOutputDRAMCommands((OutputTraceNode)traceNode, false, true);
 		    }
 		}
 		//get the next tracenode
@@ -123,6 +129,10 @@ public class Rawify
 
 	//number of total items that are being joined
 	int items = FilterInfo.getFilterInfo(filter).totalItemsReceived(init, primepump);
+	//do nothing if there is nothing to do
+	if (items == 0)
+	    return;
+	
 	assert items % input.totalWeights() == 0: 
 	    "weights on input trace node does not divide evenly with items received";
 	//iterations of "joiner"
@@ -132,8 +142,10 @@ public class Rawify
 	//generate the commands to read from the o/i temp buffer
 	//for each input to the input trace node
 	for (int i = 0; i < input.getSources().length; i++) {
+	    //get the first non-redundant buffer
 	    OffChipBuffer srcBuffer = OffChipBuffer.getBuffer(input.getSources()[i], 
-							      input);
+							      input).getNonRedundant();
+	    SpaceTimeBackend.println("Generate the DRAM read command for " + srcBuffer);
 	    int readBytes = iterations * typeSize * 
 		input.getWeight(input.getSources()[i]) * 4;
 	    readBytes = Util.cacheLineDiv(readBytes);
@@ -152,7 +164,6 @@ public class Rawify
     private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
     {
 	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
-	
 	//don't do anything for a redundant buffer
 	if (output.oneOutput() && 
 	    OffChipBuffer.getBuffer(output, output.getDests()[0][0]).redundant())
@@ -178,6 +189,8 @@ public class Rawify
 	int readBytes = FilterInfo.getFilterInfo(filter).totalItemsSent(init, primepump) *
 	    Util.getTypeSize(filter.getFilter().getOutputType()) * 4;
 	readBytes = Util.cacheLineDiv(readBytes);
+	SpaceTimeBackend.println("Generating the read command for " + output + " on " +
+				 srcBuffer.getOwner());
 	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
 							     readBytes, srcBuffer, true);
  

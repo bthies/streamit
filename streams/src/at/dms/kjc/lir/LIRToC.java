@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.44 2001-11-06 18:03:34 thies Exp $
+ * $Id: LIRToC.java,v 1.45 2001-11-06 19:44:02 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1633,13 +1633,6 @@ public class LIRToC
      * Visits a file writer.
      */
     public void visitFileWriter(LIRFileWriter self) {
-	at.dms.util.Utils.fail("Not implemented yet");
-    }
-    
-    /**
-     * Visits a special work function call.
-     */
-    public void visitRunSpecialWork(LIRRunSpecialWork self) {
 	at.dms.util.Utils.fail("Not implemented yet");
     }
     

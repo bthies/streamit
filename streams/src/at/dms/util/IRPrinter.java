@@ -1937,18 +1937,6 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
     
     /**
-     * Visits a special work function call.
-     */
-    public void visitRunSpecialWork(LIRRunSpecialWork self) {
-	blockStart("LIRRunSpecialWork");
-	attrStart("streamContext");
-	self.getStreamContext().accept(this);
-	attrEnd();
-	attrPrint("type", self.getType().toString());
-	blockEnd();
-    }
-    
-    /**
      * Visits a set a parallel stream.
      */
     public void visitSetParallelStream(LIRSetParallelStream self,

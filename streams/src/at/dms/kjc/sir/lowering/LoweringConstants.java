@@ -9,6 +9,18 @@ import at.dms.kjc.*;
 public class LoweringConstants {
     
     /**
+     * The name of the method in the runtime system that runs a filereader.
+     */
+    public static final String 
+	FILE_READER_WORK_NAME = "streamit_filereader_work";
+
+    /**
+     * The name of the method in the runtime system that runs a filewriter.
+     */
+    public static final String 
+	FILE_WRITER_WORK_NAME = "streamit_filewriter_work";
+
+    /**
      * The name of the method in the runtime system that runs a splitter.
      */
     public static final String SPLITTER_WORK_NAME = "run_splitter";

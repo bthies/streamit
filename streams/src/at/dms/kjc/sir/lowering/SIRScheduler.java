@@ -249,11 +249,11 @@ public class SIRScheduler {
 	// for each filter...
 	for (ListIterator it = list.listIterator(); it.hasNext(); ) {
 	    Object next = it.next();
-	    // get name of work function associated with <next>
+	    // get name of work function associated with <schedObject>
 	    String workName = getWorkName(next, toplevel);
 	    // make the work statement
 	    JStatement workStatement = makeWorkStatement(next, 
-							 workName, 
+							 workName,
 							 toplevel);
 	    // add call to filter work to our statement list
 	    statementList.add(workStatement);
@@ -263,8 +263,7 @@ public class SIRScheduler {
     }
 
     /**
-     * Generates a statement that calls the work function named <workName>
-     * on sched object <schedObject>.
+     * Generates a statement that calls the work function for <schedObject>.
      */
     private JStatement makeWorkStatement(Object schedObject, 
 					 String workName,
@@ -301,8 +300,14 @@ public class SIRScheduler {
 	    // if splitter, take splitter name
 	    return LoweringConstants.SPLITTER_WORK_NAME;
 	} else if (schedObject instanceof SIRJoiner) {
-	    // if splitter, take joiner name
+	    // if joiner, take joiner name
 	    return LoweringConstants.JOINER_WORK_NAME;
+	} else if (schedObject instanceof SIRFileReader) {
+	    // if file reader, take file reader name
+	    return LoweringConstants.FILE_READER_WORK_NAME;
+	} else if (schedObject instanceof SIRFileWriter) {
+	    // if file reader, take file reader name
+	    return LoweringConstants.FILE_WRITER_WORK_NAME;
 	} else {
 	    // otherwise, have a list or filter--need to make a work function
 	    JMethodDeclaration work = makeWork(schedObject, toplevel);

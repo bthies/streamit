@@ -34,6 +34,12 @@ public class IMEMEstimation extends EmptyStreamVisitor
 
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
+	// don't do anything if we've already detected overflow
+	// earlier in graph.
+	if (!everythingFits) {
+	    return;
+	}
+	// otherwise, test for overflow at this node
 	if (!fits(self)) {
 	    System.out.println("Filter " + self.getName() + " does not fit in IMEM.");
 	    everythingFits = false;

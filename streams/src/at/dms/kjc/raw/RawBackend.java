@@ -23,16 +23,16 @@ public class RawBackend {
 
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-	ConstantProp.propagateAndUnroll(str);
+
 	FieldProp.doPropagate(str);
+	Renamer.renameAll(str);
+	ConstantProp.propagateAndUnroll(str);
+	
 	System.out.println("Done Constant Prop and Unroll...");
 
-	//rename 
-	Renamer.renameAll(str);
-	
-	//SIRPrinter printer1 = new SIRPrinter();
-	//str.accept(printer1);
-	//printer1.close();
+	SIRPrinter printer1 = new SIRPrinter();
+	str.accept(printer1);
+	printer1.close();
 	
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);

@@ -1,0 +1,105 @@
+# C compiler
+ifneq ($(strip $(CC)),)
+CC = gcc
+endif
+
+# C++ compiler
+ifneq ($(strip $(CXX)),)
+CXX = g++
+endif
+
+# java compiler
+ifneq ($(strip $(JAVAC)),)
+JAVAC = jikes
+endif
+
+# java dependencies creation
+ifeq ($(strip $(JAVAC)),jikes)
+JAVAC_DEPS_OPT =  
+else
+JAVAC_DEPS_OPT = -nowrite -nowarn
+endif
+
+
+CC_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT) 
+CXX_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT) 
+LINK_OPT += $(DEBUG_OPT) $(LINK_LIBS)
+JAVA_OPT += $(DEBUG_OPT) $(CLASSPATH_OPT)
+JAVA_SRCS_DEPS = $(filter %.java.dep, $(JAVA_SRCS:%.java=%.java.dep))
+
+# compile .java files
+%.class : %.java
+	@rm -f $*.class
+	$(JAVAC) $(JAVA_OPT) $<
+
+%.o : %.c 
+	@rm -f $*.o
+	$(CC) -c $(CC_OPT) $<
+
+%.o : %.cc
+	@rm -f $*.o
+	$(CXX) -c $(CXX_OPT) $<
+
+%.o : %.cpp
+	@rm -f $*.o
+	$(CXX) -c $(CXX_OPT) $<
+
+all: $(C_TARGET) $(CXX_TARGET) $(JAVA_TARGET) Makefile.deps 
+
+commit: all
+	cvs commit
+
+$(C_TARGET) : $(OBJ_FILES)
+	@rm -f $(TARGET)
+	$(CXX) -o $(TARGET) $(LINK_OPT) $(OBJ_FILES) $(LINK_LIBS) 
+
+Makefile.deps: $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS)
+	@rm -f Makefile.deps
+	@echo > Makefile.deps
+ifneq ($(strip $(CXXSRCS)),)
+		@echo '# Dependencies for C++ files' >> Makefile.deps
+		@echo >> Makefile.deps
+		$(CXX) -M $(CXX_OPT) $(CXXSRCS) >> Makefile.deps
+		@echo >> Makefile.deps
+endif
+ifneq ($(strip $(CSRCS)),)
+		@echo '# Dependencies for C files' >> Makefile.deps
+		@echo >> Makefile.deps
+		$(CC) -M $(C_OPT) $(CSRCS) >> Makefile.deps
+		@echo >> Makefile.deps
+endif
+ifneq ($(strip $(JAVA_SRCS)),)
+		@echo '# Dependencies for Java files' >> Makefile.deps
+		@echo >> Makefile.deps
+		@echo include $(JAVA_SRCS_DEPS) >> Makefile.deps
+		@echo >> Makefile.deps
+endif
+
+# create .dep files from .java files
+%.java.dep : %.java
+	jikes +M +F $(JAVAC_DEPS_OPT) $(JAVA_OPT) $*.java
+	@rm -f $*.java.dep
+	@echo $*.class : $*.java.dep >> $*.java.dep
+	@cat $*.u >> $*.java.dep
+	@echo java_deps_clean : $*.u $*.class $*.java.dep >> $*.java.dep
+	@# append dependecies from java_deps_clean to all generated .u files
+	@sed 's/.*\:/java_deps_clean :/;s/\.java$$/\.u/' $*.u >> $*.java.dep
+
+ifeq (,$(CLEAN_RULE))
+CLEAN_RULE = defined
+clean: generic_clean
+endif
+
+java_deps_clean : 
+	@rm -f $^ $(JAVA_SRCS_DEPS:%.java.dep=%.u)
+
+generic_clean: java_deps_clean
+	rm -f core $(OBJ_FILES) $(CLASS_FILES) $(TARGET) 
+	rm -f Makefile.deps 
+
+depend:
+	rm -f Makefile.deps
+	make Makefile.deps
+
+include Makefile.deps
+

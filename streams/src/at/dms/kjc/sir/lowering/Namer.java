@@ -11,7 +11,7 @@ import java.util.HashMap;
  * This generates a mapping of stream structure to name for each
  * structure in the stream graph.
  */
-public class Namer extends at.dms.util.Utils implements SIRVisitor {
+public class Namer extends at.dms.util.Utils implements StreamVisitor {
     /**
      * Mapping from stream structure (SIROperator) to name (String) of
      * structure in target program.  Assumes that structure is

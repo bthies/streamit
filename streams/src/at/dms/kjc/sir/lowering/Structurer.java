@@ -11,7 +11,7 @@ import java.util.HashMap;
  * This creates structures (inner classes) to encapsulate the state of
  * each hierarchical unit of a stream graph.
  */
-public class Structurer extends at.dms.util.Utils implements SIRVisitor {
+public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     /**
      * List of the class declarations defined during traversal
      */

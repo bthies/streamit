@@ -35,10 +35,10 @@ public :
 	int i;
 	float* inputArray = inputReadPtr(-numberOfTaps + 1);
 
-	for (i=0; i < numberOfTaps; i++) {
+	for (i=0; i < numberOfTaps; i++) {	  
 	  sum += inputArray[i] * COEFF[i];
 	}
-	incInput(mDecimation);
+	incInput(mDecimation+1);
 	outputWrite(sum);
       }
       return;
@@ -98,6 +98,8 @@ public :
                                        / (i-m/2) * (0.54 - 0.46
                                                     * cos((2*pi)*(i/m))));
 	  }
+
+
 	}
       }
       COEFF = temptaps;

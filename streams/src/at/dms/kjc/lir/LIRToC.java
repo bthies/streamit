@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.63 2002-06-18 19:49:31 aalamb Exp $
+ * $Id: LIRToC.java,v 1.64 2002-06-18 22:18:50 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -360,12 +360,14 @@ public class LIRToC
 	// if it is a final field (eg constant)
 	// leave it out of the structure because constant propagation
 	// will have removed all references to it.
+	/*
 	if ((expr == null ||
 	     !(expr instanceof JNewArrayExpression)) &&
 	    CModifier.contains(self.getVariable().getModifiers(),
 			       CModifier.ACC_FINAL)) {
 	    return;
 	}
+	*/
 
 
 	
@@ -383,13 +385,11 @@ public class LIRToC
             print (" ");
             print (ident);
 
-	    
-	    // AAL -- you can't automatically initialize things in C as you can in Java
-	    // C. Eg int i = 5; is legal in Java, illegal in C. 
-//              if (expr != null)
-	    //              {
-//                  print ("\t= ");
-//                  expr.accept (this);
+	    // initializing vars is legal in C as well as java.
+	    if (expr != null) {
+		print ("\t= ");
+		expr.accept (this);
+	    }
 	} else {
             // yep.  use the local printing functions to print
             // the correct type and array size

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JExpression.java,v 1.6 2003-05-28 05:58:43 thies Exp $
+ * $Id: JExpression.java,v 1.7 2005-02-17 00:08:28 thies Exp $
  */ 
  
 package at.dms.kjc;
@@ -152,6 +152,18 @@ public abstract class JExpression extends JPhylum {
   public String stringValue() {
     throw new InconsistencyException(this + " is not a string literal");
   }
+
+  // ----------------------------------------------------------------------
+  // DYNAMIC RANGES
+  // ----------------------------------------------------------------------
+
+    /**
+     * Returns true only for SIRRangeExpressions, which represent a
+     * dynamic range of values.
+     */
+    public boolean isDynamic() {
+	return false;
+    }
 
   // ----------------------------------------------------------------------
   // ASSIGNMENT

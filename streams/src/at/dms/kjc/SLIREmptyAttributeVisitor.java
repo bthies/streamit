@@ -106,6 +106,23 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
 
     /**
+     * Visits a range expression.
+     */
+    public Object visitRangeExpression(SIRRangeExpression self) {
+	self.getMin().accept(this);
+	self.getAve().accept(this);
+	self.getMax().accept(this);
+	return self;
+    }
+
+    /**
+     * Visits a dynamic token.
+     */
+    public Object visitDynamicToken(SIRDynamicToken self) {
+	return self;
+    }
+
+    /**
      * Visits a peek expression.
      */
     public Object visitPeekExpression(SIRPeekExpression self,

@@ -61,6 +61,16 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
 			       SIRLatency latency);
 
     /**
+     * Visits a range expression.
+     */
+    Object visitRangeExpression(SIRRangeExpression self);
+
+    /**
+     * Visits a dynamic token.
+     */
+    Object visitDynamicToken(SIRDynamicToken self);
+
+    /**
      * Visits a peek expression.
      */
     Object visitPeekExpression(SIRPeekExpression self,

@@ -112,6 +112,35 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     }
 
     /**
+     * Visits a range expression.
+     */
+    public Object visitRangeExpression(SIRRangeExpression self) {
+	JExpression newMin = (JExpression)self.getMin().accept(this);
+	if (newMin!=null && newMin!=self.getMin()) {
+	    self.setMin(newMin);
+	}
+
+	JExpression newAve = (JExpression)self.getAve().accept(this);
+	if (newAve!=null && newAve!=self.getAve()) {
+	    self.setAve(newAve);
+	}
+
+	JExpression newMax = (JExpression)self.getMax().accept(this);
+	if (newMax!=null && newMax!=self.getMax()) {
+	    self.setMax(newMax);
+	}
+
+	return self;
+    }
+
+    /**
+     * Visits a dynamic token.
+     */
+    public Object visitDynamicToken(SIRDynamicToken self) {
+	return self;
+    }
+
+    /**
      * Visits a peek expression.
      */
     public Object visitPeekExpression(SIRPeekExpression self,

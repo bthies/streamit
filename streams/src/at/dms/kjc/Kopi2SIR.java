@@ -1554,7 +1554,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    }
 	    return v;
 	}
-	else {     /* Not a channel */
+	else if (type.getIdent().equals("Rate")) {
+	    // declaration of a variable I/O rate.  Frontend
+	    // guarantees that there are three arguments, for min,
+	    // average, and max.
+	    JExpression min = (JExpression)params[0].accept(this);
+	    JExpression ave = (JExpression)params[1].accept(this);
+	    JExpression max = (JExpression)params[2].accept(this);
+	    return new SIRRangeExpression(min, ave, max);
+	} else {     /* Not a channel */
 	    for (int i = 0; i < params.length; i++) 
 		params[i] = (JExpression)params[i].accept(this);
 	}
@@ -2222,9 +2230,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                                      String ident) 
     {
         blockStart("FieldExpression", self);
+
+	// return a dynamic rate token if we see DYNAMIC_RATE
+	if (ident.equals("DYNAMIC_RATE")) {
+	    return new SIRDynamicToken();
+	}
+
 	//return a string if this is a field expression that accesses the type
 	//argument in a channel instaniation or SIRFile* new expression
-	
 	if(anonCreation)
 	    for(int i=0;i<params.length;i++) {
 		if(self.ident.equals(paramNames[i])) {

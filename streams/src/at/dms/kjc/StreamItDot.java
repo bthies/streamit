@@ -144,16 +144,16 @@ public class StreamItDot implements AttributeStreamVisitor
             SIRWorkFunction[] phases = self.getPhases();
             for (int i = 0; i < phases.length; i++)
             {
-                label += "\\npush" + i + "=" + phases[i].getPushInt();
-                label += "\\npop" + i + "=" + phases[i].getPopInt();
-                label += "\\npeek" + i + " =" + phases[i].getPeekInt();
+                label += "\\npush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
+                label += "\\npop" + (phases.length>1 ? ""+i : "")  + "=" + phases[i].getPopString();
+                label += "\\npeek" + (phases.length>1 ? ""+i : "")  + " =" + phases[i].getPeekString();
             }
             phases = self.getInitPhases();
             for (int i = 0; i < phases.length; i++)
             {
-                label += "\\ninitPush" + i + "=" + phases[i].getPushInt();
-                label += "\\ninitPop" + i + "=" + phases[i].getPopInt();
-                label += "\\ninitPeek" + i + " =" + phases[i].getPeekInt();
+                label += "\\ninitPush" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPushString();
+                label += "\\ninitPop" + (phases.length>1 ? ""+i : "") + "=" + phases[i].getPopString();
+                label += "\\ninitPeek" + (phases.length>1 ? ""+i : "") + " =" + phases[i].getPeekString();
             }
 	} catch (Exception e) {
 	    // if constants not resolved for the ints, will get an exception
@@ -263,9 +263,9 @@ public class StreamItDot implements AttributeStreamVisitor
     {
 	String label = work.getName();
 	try {
-	    label += "\\npush=" + self.getPushInt();
-	    label += "\\npop=" + self.getPopInt();
-	    label += "\\npeek=" + self.getPeekInt();
+	    label += "\\npush=" + self.getPushString();
+	    label += "\\npop=" + self.getPopString();
+	    label += "\\npeek=" + self.getPeekString();
 	} catch (Exception e) {
 	    // if constants not resolved for the ints, will get an exception
 	}

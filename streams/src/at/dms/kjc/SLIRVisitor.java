@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.28 2003-12-08 22:34:41 dmaze Exp $
+ * $Id: SLIRVisitor.java,v 1.29 2005-02-17 00:08:28 thies Exp $
  */
 
 package at.dms.kjc;
@@ -65,6 +65,16 @@ public interface SLIRVisitor extends KjcVisitor
                                String ident,
 			       JExpression[] args,
 			       SIRLatency latency);
+
+    /**
+     * Visits a range expression.
+     */
+    void visitRangeExpression(SIRRangeExpression self);
+
+    /**
+     * Visits a dynamic token.
+     */
+    void visitDynamicToken(SIRDynamicToken self);
 
     /**
      * Visits a peek expression.

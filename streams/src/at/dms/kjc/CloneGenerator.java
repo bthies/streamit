@@ -548,6 +548,7 @@ public class CloneGenerator {
 	//"at.dms.kjc.sir.SIRBuilder",  -- shouldn't have references to this
 	"at.dms.kjc.sir.SIRContainer",
 	"at.dms.kjc.sir.SIRCreatePortal",
+	"at.dms.kjc.sir.SIRDynamicToken",
 	"at.dms.kjc.sir.SIRFeedbackLoop",
 	"at.dms.kjc.sir.SIRFileReader",
 	"at.dms.kjc.sir.SIRFileWriter",
@@ -571,6 +572,7 @@ public class CloneGenerator {
 	"at.dms.kjc.sir.SIRPredefinedFilter",
 	"at.dms.kjc.sir.SIRPrintStatement",
 	"at.dms.kjc.sir.SIRPushExpression",
+	"at.dms.kjc.sir.SIRRangeExpression",
 	"at.dms.kjc.sir.SIRRecursiveStub",
 	"at.dms.kjc.sir.SIRRegReceiverStatement",
 	"at.dms.kjc.sir.SIRRegSenderStatement",

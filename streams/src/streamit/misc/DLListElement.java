@@ -27,7 +27,7 @@ package streamit.misc;
  * 
  */
 
-public class DLListElement extends AssertedClass
+public class DLListElement
 {
     final Object data;
     
@@ -40,7 +40,7 @@ public class DLListElement extends AssertedClass
     DLListElement (DLListElement prev, Object data)
     {
         // check that both prev and next are valid
-        ASSERT (prev != null);
+        assert prev != null;
         
         // instantiate the element
         prevElem = prev;
@@ -75,13 +75,13 @@ public class DLListElement extends AssertedClass
     public DLListElement next ()
     {
         // check that this is not the root
-        ASSERT (data != this);
+        assert data != this;
         
         // and that there exists a next element
         // if there is no next element, then the
         // list is corrupt or the element has been
         // removed from the list already!
-        ASSERT (nextElem != null);
+        assert nextElem != null;
     
     	// and return the nextElement    
         return nextElem;
@@ -99,11 +99,11 @@ public class DLListElement extends AssertedClass
         // if it doesn't, then the list is corrupt
         // or the element has been removed from 
         // the list already!
-        ASSERT (prevElem != null);
+        assert prevElem != null;
         
         // make sure that the previous element is 
         // not the root element
-        ASSERT (prevElem.data != prevElem);
+        assert prevElem.data != prevElem;
         
         // and return the previous element
         return prevElem;
@@ -117,7 +117,7 @@ public class DLListElement extends AssertedClass
     {
         // make sure that this is not the root
         // (which holds no data)
-        ASSERT (data != this);
+        assert data != this;
      
      	// return the data   
         return data;

@@ -16,9 +16,9 @@
 
 package streamit.misc;
 
-/* $Id: RBNode.java,v 1.3 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: RBNode.java,v 1.4 2004-01-28 21:17:13 dmaze Exp $ */
 
-public class RBNode extends AssertedClass 
+public class RBNode
 {
     Object nodeData;
     RBNode left = null, right = null, parent = null;
@@ -26,7 +26,7 @@ public class RBNode extends AssertedClass
     
     RBNode (Object data)
     {
-        ASSERT (data);
+        assert data != null;
         nodeData = data;
     }
     

@@ -16,13 +16,13 @@
 
 package streamit.misc;
 
-public class OMapIterator extends AssertedClass
+public class OMapIterator
 {
     OSetIterator setIter;
 
     OMapIterator(OSetIterator _setIter)
     {
-        ASSERT(_setIter);
+        assert _setIter != null;
 
         setIter = _setIter;
     }

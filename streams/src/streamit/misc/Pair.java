@@ -16,9 +16,7 @@
 
 package streamit.misc;
 
-import streamit.misc.AssertedClass;
-
-/* $Id: Pair.java,v 1.4 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: Pair.java,v 1.5 2004-01-28 21:17:13 dmaze Exp $ */
 
 /**
  * <dl>
@@ -35,7 +33,7 @@ import streamit.misc.AssertedClass;
  * @author  Michal Karczmarek
  */
 
-public class Pair extends AssertedClass
+public class Pair
 {
     Object first, second;
 
@@ -57,7 +55,7 @@ public class Pair extends AssertedClass
     public boolean equals(Object o)
     {
         // you can only compare two pairs!
-        //ASSERT(o instanceof Pair);
+        //assert o instanceof Pair;
 	if(!(o instanceof Pair))
 	    return false;
 

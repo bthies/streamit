@@ -23,7 +23,7 @@ package streamit.misc;
  * 
  */
 
-public class DLListIterator extends AssertedClass
+public class DLListIterator
 {
     DLListElement element;
     
@@ -37,7 +37,7 @@ public class DLListIterator extends AssertedClass
     DLListIterator (DLListElement element)
     {
         // check that the element is actually valid
-        ASSERT (element != null);
+        assert element != null;
         
         // initiate element
         this.element = element;
@@ -51,7 +51,7 @@ public class DLListIterator extends AssertedClass
         // make sure that I'm not on the "root" element.
         // the "root" element has no next - it's treated as the "last"
         // element
-        ASSERT (element.data != element);
+        assert element.data != element;
         element = element.next ();
     }
     
@@ -64,7 +64,7 @@ public class DLListIterator extends AssertedClass
         
         // make sure that I'm not on the "root" element.
         // the "root" element indicates I've wrapped around the list
-        ASSERT (element.data != element);
+        assert element.data != element;
     }
     
     /**

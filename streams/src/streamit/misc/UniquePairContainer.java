@@ -16,12 +16,11 @@
 
 package streamit.misc;
 
-import streamit.misc.AssertedClass;
 import java.util.Map;
 import java.util.HashMap;
 import streamit.misc.Pair;
 
-/* $Id: UniquePairContainer.java,v 1.2 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: UniquePairContainer.java,v 1.3 2004-01-28 21:17:13 dmaze Exp $ */
 
 /**
  * <dl>
@@ -38,7 +37,7 @@ import streamit.misc.Pair;
  * @author  Michal Karczmarek
  */
 
-public class UniquePairContainer extends AssertedClass
+public class UniquePairContainer
 {
     private Map firstMap = new HashMap ();
     

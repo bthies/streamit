@@ -23,7 +23,7 @@ package streamit.misc;
  * 
  */
 
-public class DLList extends AssertedClass implements DLList_const
+public class DLList implements DLList_const
 {
     /**
      * This is the root of the list.  This element
@@ -92,7 +92,7 @@ public class DLList extends AssertedClass implements DLList_const
         DLListElement toRemove = theList.nextElem;
 
         // make sure that there is an element to pop
-        ASSERT(toRemove != theList);
+        assert toRemove != theList;
 
         removeElement(toRemove);
     }
@@ -102,7 +102,7 @@ public class DLList extends AssertedClass implements DLList_const
         DLListElement toRemove = theList.prevElem;
 
         // make sure that there is an element to pop
-        ASSERT(toRemove != theList);
+        assert toRemove != theList;
 
         removeElement(toRemove);
     }
@@ -119,7 +119,7 @@ public class DLList extends AssertedClass implements DLList_const
         DLListElement listElement = pos.getListElement();
         
         // make sure I'm not removing the root element!
-        ASSERT(listElement != theList);
+        assert listElement != theList;
         
         pos.next ();
         removeElement (listElement);
@@ -129,10 +129,10 @@ public class DLList extends AssertedClass implements DLList_const
     private void removeElement(DLListElement elem)
     {
         // make sure I'm not removing the root element!
-        ASSERT(elem != theList);
+        assert elem != theList;
 
         // and that the element hasn't been removed yet!
-        ASSERT(elem.nextElem != null);
+        assert elem.nextElem != null;
 
         // now remove the element
         DLListElement prevElem = elem.prevElem;

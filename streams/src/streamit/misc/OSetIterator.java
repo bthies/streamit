@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-public class OSetIterator extends AssertedClass
+public class OSetIterator
 {
     RBNode node;
 
@@ -38,7 +38,7 @@ public class OSetIterator extends AssertedClass
     public Object get()
     {
         // make sure that node != NULL
-        ASSERT (node.right != null);
+        assert node.right != null;
         return node.getData ();
     }
 
@@ -46,7 +46,7 @@ public class OSetIterator extends AssertedClass
     {
         // make sure that next NULL node exists, that is 
         // node != NULL and node is in the tree
-        ASSERT(node.right != null);
+        assert node.right != null;
 
         RBNode currentNode = node;
 
@@ -86,7 +86,7 @@ public class OSetIterator extends AssertedClass
             RBTree tree = (RBTree)node.nodeData;
             
             // make sure that the node hasn't been removed from the tree
-            ASSERT (tree);
+            assert tree != null;
             
             node = tree.getMax();
             return;
@@ -116,7 +116,7 @@ public class OSetIterator extends AssertedClass
         
         // if parent == null, I have asked for a prev of the first
         // element which is illegal!
-        ASSERT (parent != null);
+        assert parent != null;
 
         node = parent;
     }

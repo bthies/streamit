@@ -16,16 +16,16 @@
 
 package streamit.misc;
 
-/* $Id: HashComperator.java,v 1.3 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: HashComperator.java,v 1.4 2004-01-28 21:17:13 dmaze Exp $ */
 
-public class HashComperator extends AssertedClass implements Comperator
+public class HashComperator implements Comperator
 {
 	public boolean isLess(Object left, Object right)
 	{
 		int leftHash = left.hashCode ();
 		int rightHash = right.hashCode ();
 		
-		ASSERT (left == right || leftHash != rightHash);
+		assert left == right || leftHash != rightHash;
 		return left.hashCode () < right.hashCode ();
 	}
 }

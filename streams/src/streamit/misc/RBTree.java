@@ -16,9 +16,9 @@
 
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.8 2003-12-03 17:41:55 karczma Exp $ */
+/* $Id: RBTree.java,v 1.9 2004-01-28 21:17:13 dmaze Exp $ */
 
-public class RBTree extends AssertedClass
+public class RBTree
 {
     private RBNode root;
 
@@ -91,7 +91,7 @@ public class RBTree extends AssertedClass
 
     public RBNode find(Object data)
     {
-        ASSERT(data);
+        assert data != null;
 
         RBNode node = root;
 
@@ -162,7 +162,7 @@ public class RBTree extends AssertedClass
 
     public Pair insert(Object insertData, boolean replace)
     {
-        ASSERT(insertData);
+        assert insertData != null;
 
         // handle the case of empy tree
         if (root == NULL)
@@ -411,8 +411,8 @@ public class RBTree extends AssertedClass
     {
         // this code is taken verbatim from CLR's 
         // Introduction to Algorithms. hope they don't mind :)
-        ASSERT(pivot != NULL);
-        ASSERT(pivot.right != NULL);
+        assert pivot != NULL;
+        assert pivot.right != NULL;
 
         RBNode right = pivot.right;
         pivot.right = right.left;
@@ -435,8 +435,8 @@ public class RBTree extends AssertedClass
     {
         // this code is taken verbatim from CLR's 
         // Introduction to Algorithms. hope they don't mind :)
-        ASSERT(pivot != NULL);
-        ASSERT(pivot.left != NULL);
+        assert pivot != NULL;
+        assert pivot.left != NULL;
 
         RBNode left = pivot.left;
         pivot.left = left.right;
@@ -457,7 +457,7 @@ public class RBTree extends AssertedClass
 
     public RBNode successor(RBNode node)
     {
-        ASSERT(node != NULL);
+        assert node != NULL;
 
         if (node.right != NULL)
         {
@@ -480,7 +480,7 @@ public class RBTree extends AssertedClass
 
     public RBNode predecessor(RBNode node)
     {
-        ASSERT(node);
+        assert node != null;
 
         if (node.left != NULL)
         {

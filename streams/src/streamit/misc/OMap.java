@@ -16,16 +16,16 @@
 
 package streamit.misc;
 
-/* $Id: OMap.java,v 1.5 2003-12-03 17:41:55 karczma Exp $ */
+/* $Id: OMap.java,v 1.6 2004-01-28 21:17:13 dmaze Exp $ */
 
-public class OMap extends AssertedClass
+public class OMap
 {
     private final OSet set;
     private final OMapIterator last;
 
     public final static Comperator defaultComperator = new MapComperator();
 
-    static class MapComperator extends AssertedClass implements Comperator
+    static class MapComperator implements Comperator
     {
         final Comperator comparator;
         public MapComperator()
@@ -40,8 +40,8 @@ public class OMap extends AssertedClass
 
         public boolean isLess(Object left, Object right)
         {
-            ASSERT(left instanceof Pair);
-            ASSERT(right instanceof Pair);
+            assert left instanceof Pair;
+            assert right instanceof Pair;
 
             return comparator.isLess(((Pair)left).first, ((Pair)right).first);
         }

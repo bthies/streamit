@@ -52,7 +52,7 @@ public class StatelessDuplicate {
     private static boolean isFissable(SIRFilter filter) {
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;
-	    if (twoStage.getPeekInt()-twoStage.getPopInt()>0) {
+	    if (twoStage.getInitPop()>0) {
 		return false;
 	    }
 	}
@@ -145,8 +145,8 @@ public class StatelessDuplicate {
 	// make the first one just a copy of the original, since
 	// otherwise we have a stage in the two-stage filter that
 	// doesn't consume anything at all
-	newFilters.add(ObjectDeepCloner.deepCopy(origFilter));
-	for (int i=1; i<reps; i++) {
+	//newFilters.add(ObjectDeepCloner.deepCopy(origFilter));
+	for (int i=0; i<reps; i++) {
 	    newFilters.add(makeDuplicate(i));
 	    System.err.println("making a duplicate of " + origFilter + " " + origFilter.getName());
 	}
@@ -168,13 +168,34 @@ public class StatelessDuplicate {
 	*/
 	    SIRTwoStageFilter result = new SIRTwoStageFilter();
 	    result.copyState(cloned);
-	    // make the initial work function for the two-staged filter
-	    makeDuplicateInitWork(result, i);
 	    // make the work function
 	    makeDuplicateWork(result);
+	    // set I/O rates
+	    setRates(result, i);
+	    // make the initial work function for the two-staged filter
+	    makeDuplicateInitWork(result, i);
 	    // return result
 	    return result;
 	    //	}
+    }
+
+    private void setRates(SIRTwoStageFilter filter, int i) { 
+	// set the peek, pop, and push ratios...
+
+	int origPop = filter.getPopInt();
+	int extraPopCount = (reps-1)*origPop;
+
+	// the push amount stays the same
+	// change the peek and pop amount
+	filter.setPeek(Math.max(filter.getPeekInt(), extraPopCount+filter.getPopInt()));
+	filter.setPop(extraPopCount+filter.getPopInt());
+
+	// we push zero, since we're just clearing the input line
+	filter.setInitPush(0);
+	// we pop <i> * the original pop amount
+	filter.setInitPop(i*origPop);
+	// we peek the original peek amount (plus the pop)
+	filter.setInitPeek(filter.getInitPop()+filter.getPeekInt()-filter.getPopInt());
     }
 
     /**
@@ -183,45 +204,31 @@ public class StatelessDuplicate {
      * duplicated.
      */
     private void makeDuplicateInitWork(SIRTwoStageFilter filter, int i) {
-	// set the peek, pop, and push ratios...
-
-	// we push zero, since we're just clearing the input line
-	filter.setInitPush(0);
-	// we pop <i> * the original pop amount
-	filter.setInitPop(i*filter.getPopInt());
-	// we peek the original peek amount (plus the pop)
-	filter.setInitPeek((i-1)*filter.getPopInt()+filter.getPeekInt());
-
-	// to build <initWork>, first clone the statements in the work
-	// function of <filter>
-	JBlock initBlock = 
-	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
-	// now extract the statements and replace the push statements
-	// with empty statements; the purpose of the initWork is just
-	// to pop the elements that the predecessor has processed.
-	initBlock.accept(new SLIRReplacingVisitor() {
-		public Object 
-		    visitExpressionStatement(JExpressionStatement self,
-					     JExpression expr) {
-		    if (expr instanceof SIRPushExpression) {
-			return new JEmptyStatement(null, null);
-		    } else {
-			return super.visitExpressionStatement(self, expr);
-		    }
-		}});
-	// now wrap the block in a for loop that goes to <i>
-	JStatement[] loopContents = 
-	    { Utils.makeForLoop(initBlock, i) } ;
-	// make an init function with <loopedBlock> as the body
+	// the number of items to pop
+	int count = i*origFilter.getPopInt();
+	// the body of init work
+	JStatement[] body = { makePopLoop(count) };
+	// set init work
 	filter.setInitWork(new JMethodDeclaration(null,
 				     at.dms.kjc.Constants.ACC_PUBLIC,
 				     CStdType.Void,
 				     FusePipe.INIT_WORK_NAME, 
 				     JFormalParameter.EMPTY,
 				     CClassType.EMPTY,
-				     new JBlock(null, loopContents, null),
+				     new JBlock(null, body, null),
 				     null,
 				     null));
+    }
+
+    /**
+     * Returns a loop that pops <i> items.
+     */
+    private JStatement makePopLoop(int i) {
+	JStatement[] popStatement = 
+	    { new JExpressionStatement(null, new SIRPopExpression(), null) } ;
+	// wrap it in a block and a for loop
+	JBlock popBlock = new JBlock(null, popStatement, null);
+	return Utils.makeForLoop(popBlock, i);
     }
 
     /**
@@ -230,15 +237,9 @@ public class StatelessDuplicate {
      * involves simply popping an extra (reps-1)*POP at the end.
      */
     private void makeDuplicateWork(SIRTwoStageFilter filter) {
-	// make a pop statement
-	JStatement[] popStatement = 
-	    { new JExpressionStatement(null, new SIRPopExpression(), null) } ;
-	// wrap it in a block and a for loop
-	JBlock popBlock = new JBlock(null, popStatement, null);
-	JStatement popLoop = 
-	    Utils.makeForLoop(popBlock, (reps-1)*filter.getPopInt());
+	int extraPopCount = (reps-1)*filter.getPopInt();
 	// append the popLoop to the statements in the work function
-	filter.getWork().getBody().addStatement(popLoop);
+	filter.getWork().getBody().addStatement(makePopLoop(extraPopCount));
     }
 
     /**

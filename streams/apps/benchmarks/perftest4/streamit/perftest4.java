@@ -1,12 +1,10 @@
 import streamit.*;
 class TestSource extends Filter{
     public void init() {
-	output = new Channel(Float.TYPE, 1650);
+	output = new Channel(Float.TYPE, 1);
     }
     public void work() {
-	int i;
-	for (i = 0; i < 1650; i++) 
-	    output.pushFloat(0);
+        output.pushFloat(0);
     }
 }
 	    
@@ -54,14 +52,13 @@ public class perftest4 extends StreamIt
     
     static public void main(String[] t)
     {
-        perftest4 test = new perftest4();
-        test.run(t);
+        new perftest4().run(t);
     }
     
     public void init() {
 	
 	add(new TestSource());
 	add(new PerftestSplitJoin());
-	add(new NullSink());
+	add(new FileWriter("perftest.out", Short.TYPE));
     }
 }	

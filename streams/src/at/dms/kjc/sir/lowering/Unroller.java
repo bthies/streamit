@@ -37,15 +37,25 @@ public class Unroller extends SLIRReplacingVisitor {
      * children.)
      */
     private boolean inContainerInit;
-
+    /**
+     * Whether or not outer loops should be unrolled.  For performance
+     * reasons, the defauls is no, but for some applications (e.g.,
+     * linear analysis) full unrolling is required.
+     */
+    private final boolean unrollOuterLoops;
+    
     /**
      * Creates one of these given that <constants> maps
      * JLocalVariables to JLiterals for the scope that we'll be
      * visiting.
      */
     public Unroller(Hashtable constants) {
+	this(constants, false);
+    }
+    public Unroller(Hashtable constants, boolean unrollOuterLoops) {
 	super();
 	this.constants = constants;
+	this.unrollOuterLoops = unrollOuterLoops;
 	this.hasUnrolled = false;
 	currentModified=new Hashtable();
 	values=new Hashtable();
@@ -72,7 +82,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	// now do unrolling
 	int origUnroll = KjcOptions.unroll;
 	KjcOptions.unroll = 100000;
-	FieldProp.doPropagate(filter);
+	FieldProp.doPropagate(filter, true);
 	KjcOptions.unroll = origUnroll;
     }
 
@@ -212,8 +222,10 @@ public class Unroller extends SLIRReplacingVisitor {
 	    // previous unrolling
 	    hasUnrolled = saveHasUnrolled || childHasUnrolled;
 	    
-	    // only unroll if child hasn't, or if we're doing the init function
-	    if (!childHasUnrolled || inContainerInit) {
+	    // only unroll if we're set to unroll outer loops, or if
+	    // child hasn't unrolled, or if we're doing the init
+	    // function
+	    if (unrollOuterLoops || !childHasUnrolled || inContainerInit) {
 		// check for loop induction variable
 		UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
 		// see if we can unroll...

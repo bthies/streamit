@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.21 2003-01-21 21:33:02 dmaze Exp $
+ * $Id: FieldProp.java,v 1.22 2003-05-02 21:05:41 thies Exp $
  */
 public class FieldProp implements Constants
 {
@@ -40,7 +40,10 @@ public class FieldProp implements Constants
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.
      */
-    public static SIRStream doPropagate(SIRStream str)
+    public static SIRStream doPropagate(SIRStream str) {
+	return doPropagate(str, false);
+    }
+    public static SIRStream doPropagate(SIRStream str, boolean unrollOuterLoops)
     {
         // First, visit children (if any).
         if (str instanceof SIRFeedbackLoop)
@@ -82,7 +85,7 @@ public class FieldProp implements Constants
             Unroller unroller;
             for (int i = 0; i < str.getMethods().length; i++) {
 		do {
-		    unroller = new Unroller(new Hashtable());
+		    unroller = new Unroller(new Hashtable(), unrollOuterLoops);
 		    str.getMethods()[i].accept(unroller);
 		} while(unroller.hasUnrolled());
 	    }

@@ -5,8 +5,6 @@ import streamit.Channel;
 
 public class PCMSynthesis extends Pipeline
 {
-    float[] in = new float[32];
-
     public void init()
     {
         // multiply by the COS (matrixing)

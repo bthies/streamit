@@ -13,8 +13,6 @@ public class MultiChannelPCMSynthesis extends Pipeline
 
 class MultiChannelPCMSynthesisInternal extends SplitJoin
 {
-    int granuleInputSize;
-    
     public MultiChannelPCMSynthesisInternal(int n)
     {
         super(n);
@@ -24,7 +22,7 @@ class MultiChannelPCMSynthesisInternal extends SplitJoin
     {
         int ch;
 
-        granuleInputSize = (/* data size */ 18 + /* for type */ 1) * 32 + /* for type */ 1;
+        int granuleInputSize = (/* data size */ 18 + /* for type */ 1) * 32 + /* for type */ 1;
         // depending on how many channels, initialize the splitter appropriately
         // ASSERT (nChannels == 1 || nChannels == 2);
 

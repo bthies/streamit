@@ -8,7 +8,7 @@ import java.util.*;
  * keep track of the combinations of inputs that are used to compute a 
  * specific intermediate value in the program flow.
  *
- * $Id: FilterVector.java,v 1.3 2002-08-30 20:13:25 aalamb Exp $
+ * $Id: FilterVector.java,v 1.4 2002-09-06 17:19:42 aalamb Exp $
  **/
 
 public class FilterVector extends FilterMatrix {
@@ -41,7 +41,7 @@ public class FilterVector extends FilterMatrix {
 	return this.getCols();
     }
 
-    // return a copy of this filter vector
+    /** return a copy of this filter vector. **/
     public FilterMatrix copy() {
 	FilterVector fv = new FilterVector(this.getSize());
 	// copy weights

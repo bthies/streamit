@@ -13,16 +13,40 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.8 2002-09-04 19:05:59 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.9 2002-09-06 17:19:42 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
-    /** Mapping from filters to linear forms. never would have guessed that, would you? **/
-    HashMap filtersToLinearForm;
+    /** Mapping from filters to linear representations. never would have guessed that, would you? **/
+    HashMap filtersToLinearRepresentation;
+
+    // counters to keep track of how many of what type of stream constructs we have seen.
+    int filtersSeen        = 0;
+    int pipelinesSeen      = 0;
+    int splitJoinsSeen     = 0;
+    int feedbackLoopsSeen  = 0;
+
+    
     
     /** use findLinearFilters to instantiate a LinearFilterAnalyzer **/
     private LinearFilterAnalyzer() {
-	this.filtersToLinearForm = new HashMap();
+	this.filtersToLinearRepresentation = new HashMap();
 	checkRep();
+    }
+
+    /** Returns true if the specified filter has a linear representation that we have found. **/
+    public boolean hasLinearRepresentation(SIRStream stream) {
+	checkRep();
+	// just check to see if the hash set has a mapping to something other than null.
+	return (this.filtersToLinearRepresentation.get(stream) != null);
+    }
+
+    /**
+     * returns the mapping from stream to linear representation that we have. Returns
+     * null if we do not have a mapping.
+     **/
+    public LinearFilterRepresentation getLinearRepresentation(SIRStream stream) {
+	checkRep();
+	return (LinearFilterRepresentation)this.filtersToLinearRepresentation.get(stream);
     }
     
     /**
@@ -35,14 +59,17 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 	// set up the printer to either print or not depending on the debug flag
 	LinearPrinter.setOutput(debug);
 	LinearPrinter.println("aal--In linear filter visitor");
-	LinearFilterAnalyzer lfv = new LinearFilterAnalyzer();
-	IterFactory.createIter(str).accept(lfv);
-	return lfv;
+	LinearFilterAnalyzer lfa = new LinearFilterAnalyzer();
+	IterFactory.createIter(str).accept(lfa);
+	// generate a report and print it.
+	LinearPrinter.println(lfa.generateReport());
+	return lfa;
     }
     
 
     /** More or less get a callback for each stram **/
     public void visitFilter(SIRFilter self, SIRFilterIter iter) {
+	this.filtersSeen++;
 	LinearPrinter.println("Visiting " + "(" + self + ")");
 
 	// set up the visitor that will actually collect the data
@@ -53,7 +80,8 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 	// if we have a peek or push rate of zero, this isn't a linear filter that we care about,
 	// so only try and visit the filter if both are non-zero
 	if ((peekRate != 0) && (pushRate != 0)) {
-	    LinearFilterVisitor theVisitor = new LinearFilterVisitor(peekRate, pushRate);
+	    LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),
+								     peekRate, pushRate);
 
 	    // pump the visitor through the work function
 	    // (we might need to send it thought the init function as well so that
@@ -66,13 +94,71 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 		LinearPrinter.println("Linear filter found: " + self +
 				   "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
 				   "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
+		// add a mapping from the filter to its linear form.
+		this.filtersToLinearRepresentation.put(self,
+						       theVisitor.getLinearRepresentation());
 	    }
+
+	    
 		
 	} else {
 	    LinearPrinter.println("  " + self.getIdent() + " is source/sink.");
 	}
+
+	// check the rep invariant
+	checkRep();
     }
 
+    /**
+     * Eventually, this method will handle combining feedback loops (possibly).
+     * For now it just keeps track of the number of times we have seen feedback loops.
+     **/
+    public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {
+	this.feedbackLoopsSeen++;
+    }
+    /**
+     * Eventually, this method will handle combining pipelines.
+     * For now it just keeps track of the number of times we have seen pipelines.
+     **/
+    public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
+	this.pipelinesSeen++;
+    }
+    /**
+     * Eventually, this method will handle combining splitjoins.
+     * For now it just keeps track of the number of times we have seen splitjoins.
+     **/
+    public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {
+	this.splitJoinsSeen++;
+    }
+	
+
+    /**
+     * Make a nice report on the number of stream constructs processed
+     * and the number of things that we found linear forms for.
+     **/
+    private String generateReport() {
+	String rpt;
+	rpt = "Linearity Report\n";
+	rpt += "---------------------\n";
+	rpt += "Filters:       " + makePctString(filtersToLinearRepresentation.keySet().size(),
+						 this.filtersSeen);
+	rpt += "Pipelines:     " + this.pipelinesSeen + "\n";
+	rpt += "SplitJoins:    " + this.splitJoinsSeen + "\n";
+	rpt += "FeedbackLoops: " + this.feedbackLoopsSeen + "\n";
+	rpt += "---------------------\n";
+	return rpt;
+    }
+    /** simple utility for report generation. makes "top/bottom (pct) string **/
+    private String makePctString(int top, int bottom) {
+	float pct;
+	// figure out percent to two decimal places
+	pct = ((float)top)/((float)bottom);
+	pct *= 10000;
+	pct = Math.round(pct);
+	pct /= 100;
+	return top + "/" + bottom + " (" + pct + "%)\n";
+    }
+    
     /** extract the actual value from a JExpression that is actually a literal... **/
     private static int extractInteger(JExpression expr) {
 	if (expr == null) {throw new RuntimeException("null peek rate");}
@@ -84,17 +170,25 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     private void checkRep() {
 	// make sure that all keys in FiltersToMatricies are strings, and that all
 	// values are LinearForms.
-	Iterator keyIter = this.filtersToLinearForm.keySet().iterator();
+	Iterator keyIter = this.filtersToLinearRepresentation.keySet().iterator();
 	while(keyIter.hasNext()) {
 	    Object o = keyIter.next();
-	    if (!(o instanceof String)) {throw new RuntimeException("Non string key in LinearFilterAnalyzer");}
-	    String key = (String)o;
-	    Object val = this.filtersToLinearForm.get(key);
+	    if (!(o instanceof SIRStream)) {throw new RuntimeException("Non stream key in LinearFilterAnalyzer");}
+	    SIRStream key = (SIRStream)o;
+	    Object val = this.filtersToLinearRepresentation.get(key);
 	    if (val == null) {throw new RuntimeException("Null value found in LinearFilterAnalyzer");}
-	    if (!(val instanceof LinearForm)) {throw new RuntimeException("Non FilterMatric found in LinearFilterAnalyzer");}
+	    if (!(val instanceof LinearFilterRepresentation)) {
+		throw new RuntimeException("Non LinearFilterRepresentation found in LinearFilterAnalyzer");
+	    }
 	}
     }
 }
+
+
+
+
+
+
 
 
 // ----------------------------------------
@@ -107,7 +201,17 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 /**
  * A visitor class that goes through all of the expressions in the work function
  * of a filter to determine if the filter is linear and if it is what matrix
- * corresponds to the filter.
+ * corresponds to the filter.<p>
+ *
+ * This main workings of this class are as follows: it is an AttributeVisitor,
+ * which means in plain english, that its methods return objects. For the
+ * LinearFilterVisitor, each method analyzes a IR node. It returns one of two
+ * things. <p>
+ *
+ * Returning null indicates that that particular IR node does not compute a
+ * linear function. Otherwise, a LinearForm is returned, which corresponds to
+ * the linear function that is computed by that IR nodes. LinearForms can
+ * be used to represent linear combinations of the input plus a constant.
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
@@ -157,6 +261,13 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * to the combo of inputs to produce the output).
      **/
     private FilterVector representationVector;
+
+    /**
+     * String which represents the name of the filter being visited -- this is used
+     * for reporting useful error messages.
+     **/
+    private String filterName;
+
     
     /**
      * Create a new LinearFilterVisitor which is looking to figure out 
@@ -164,7 +275,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Also creates a LinearFilterRepresentation if the
      * filter computes a linear function.
      **/
-    public LinearFilterVisitor(int numPeeks, int numPushes) {
+    public LinearFilterVisitor(String name, int numPeeks, int numPushes) {
 	this.peekSize = numPeeks;
 	this.pushSize = numPushes;
 	this.variablesToLinearForms = new HashMap();
@@ -173,9 +284,109 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	this.representationMatrix = new FilterMatrix(numPeeks, numPushes);
 	this.representationVector = new FilterVector(numPushes);
 	this.nonLinearFlag = false;
+	this.filterName = name;
 	checkRep();
 
     }
+
+    /**
+     * Returns a shallow clone of this filter visitor (eg all of the
+     * data structures are copied, but the things that they point to are not.
+     **/
+    private LinearFilterVisitor copy() {
+	// first, make the copy using the default constructors
+	LinearFilterVisitor otherVisitor = new LinearFilterVisitor(this.filterName,
+								  this.peekSize,
+								  this.pushSize);
+
+	// now, copy the other data structures.
+	otherVisitor.variablesToLinearForms = new HashMap(this.variablesToLinearForms);
+	otherVisitor.peekOffset = this.peekOffset;
+	otherVisitor.pushOffset = this.pushOffset;
+	otherVisitor.representationMatrix = this.representationMatrix.copy();
+	otherVisitor.representationVector = (FilterVector)this.representationVector.copy();
+	otherVisitor.nonLinearFlag = this.nonLinearFlag;
+
+	
+
+	// and I think that that is all the state that we need.
+	return otherVisitor;
+    }
+
+    /**
+     * Recconcile the differences between two LinearFilterVisitors.
+     * Basically, this implements the confluence operation that we
+     * want to to after analyzing both the then and the else parts
+     * of an if statement. We assume that otherVisitor was passed through
+     * the other branch, and we are at the point where the control flow
+     * comes back together and we want to figure out what is going on.<p>
+     *
+     * The basic rules are pretty simple. If the representation matrices are
+     * different, or either this or otherVisitor has the nonlinear flag
+     * set, we set this.nonlinear flag to true, and continue (because the rest
+     * is irrelevant). If the linear representations are different, we also
+     * set the non linear flag and continue. Also, if the push counts are different
+     * we complain loudly, and bomb with an exception. If the reps are not different,
+     * then we do a set union on the variables to linear forms (like const prop).
+     **/
+    public void applyConfluence(LinearFilterVisitor other) {
+	// first thing that we need to do is to check both non linear flags.
+	if (this.nonLinearFlag || other.nonLinearFlag) {
+	    this.nonLinearFlag = true;
+	    return;
+	}
+	// now, check the linear representations
+	if ((!this.representationMatrix.equals(other.representationMatrix)) ||
+	    (!this.representationVector.equals(other.representationVector))) {
+	    LinearPrinter.println("Different branches compute different functions. Nonlinear!");
+	    this.nonLinearFlag = true;
+	    return;
+	}
+	// now, check the peek offset
+	if (!(this.peekOffset == other.peekOffset)) {
+	    LinearPrinter.println("Different branches have diff num of pops. " +
+				  "this = " + this.peekOffset +
+				  " other= " + other.peekOffset +
+				  ")  Nonlinear!");
+	    this.nonLinearFlag = true;
+	    return;
+	}	    
+	// now, check the push offset
+	if (!(this.pushOffset == other.pushOffset)) {
+	    LinearPrinter.println("Different branches have diff num of pushes. Nonlinear!");
+	    this.nonLinearFlag = true;
+	    return;
+	}
+	// now, do a set union on the two variable mappings and set
+	// that union as the variable mapping for this
+	this.variablesToLinearForms = setUnion(this.variablesToLinearForms,
+					       other.variablesToLinearForms);
+
+	// make sure we are still good from a representation invariant point of view
+	checkRep();
+    }
+
+    /**
+     * Implements set union for the confluence operation.
+     * Returns the union of the two sets, that is it returns
+     * a HashMap that contains only mappings from the same
+     * key to the same value in both map1 and map2.
+     **/
+    private HashMap setUnion(HashMap map1,
+			     HashMap map2) {
+	HashMap unionMap = new HashMap();
+	// iterate over the values in map1Iter.
+	Iterator map1Iter = map1.keySet().iterator();
+	while(map1Iter.hasNext()) {
+	    Object currentKey = map1Iter.next();
+	    // if map2 contains a mapping to the same thing as map1
+	    // add the mapping to the union.
+	    if (map2.get(currentKey).equals(map1.get(currentKey))) {
+		unionMap.put(currentKey, map1.get(currentKey));
+	    }
+	}
+	return unionMap;
+    }      
 
     /** Returns true of the filter computes a linear function. **/
     public boolean computesLinearFunction() {
@@ -194,7 +405,16 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     public FilterVector getConstantVector() {
 	return this.representationVector;
     }
-    
+    /** get the linear representation of this filter **/
+    public LinearFilterRepresentation getLinearRepresentation() {
+	// throw exception if this filter is not linear, becase therefore we
+	// shouldn't be trying to get its linear form.
+	if (!this.computesLinearFunction()) {
+	    throw new RuntimeException("Can't get the linear form of a non linear filter!");
+	}
+	return new LinearFilterRepresentation(this.getMatrixRepresentation(),
+					      this.getConstantVector());
+    }
 
 
     /////// So the deal with this attribute visitor is that all of its methods that visit
@@ -240,6 +460,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	//// NOTE !!!!
 	//// This doesn't handle th case of aliasing yet. Oh dearie.
+	// Also note that we basically ignore structures because the
+	// necessary actions should be implemented in  
+	// field prop and not reimplemented here
 	
 	// make sure that we start with legal state
 	checkRep();
@@ -411,7 +634,24 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 					 JExpression right){return null;}
 //     public Object visitBlockStatement(JBlock self, JavaStyleComment[] comments){return null;}
 //     public Object visitBreakStatement(JBreakStatement self, String label){return null;}
-//     public Object visitCastExpression(JCastExpression self, JExpression expr, CType type){return null;}
+    /**
+     * Visit a cast expression, which basically means that we need to do chopping off if we are casting to
+     * an integer, byte, etc. If we cast something to an int, that is a non linear operation, so we
+     * just return null.
+     **/
+    public Object visitCastExpression(JCastExpression self, JExpression expr, CType type){
+	// if we have a non ordinal type for the expression, and an ordinal type for
+	// the cast, then this is a non linear operation, and we should return null.
+	if ((!expr.getType().isOrdinal()) && type.isOrdinal()) {
+	    // this chops off digits (possibly), so non linear. We are all done.
+	    return null;
+	} else {
+	    // return whatever the expression evaluates to
+	    return expr.accept(this);
+	}
+    }
+    
+
 //     public Object visitCatchClause(JCatchClause self, JFormalParameter exception, JBlock body){return null;}
 //     public Object visitClassBody(JTypeDeclaration[] decls,
 // 				 JFieldDeclaration[] fields,
@@ -483,8 +723,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitContinueStatement(JContinueStatement self, String label){return null;}
 //     public Object visitDoStatement(JDoStatement self, JExpression cond, JStatement body){return null;}
 //     public Object visitEmptyStatement(JEmptyStatement self){return null;}
-//     public Object visitEqualityExpression(JEqualityExpression self, boolean equal,
-// 					  JExpression left, JExpression right){return null;}
+    /** equality is a non linear operation, so we return null. **/
+    public Object visitEqualityExpression(JEqualityExpression self, boolean equal,
+ 					  JExpression left, JExpression right){
+	return null;
+    }
 //     public Object visitExpressionListStatement(JExpressionListStatement self, JExpression[] expr){return null;}
 //     public Object visitExpressionStatement(JExpressionStatement self, JExpression expr){return null;}
 //     public Object visitFieldDeclaration(JFieldDeclaration self, int modifiers,
@@ -523,8 +766,42 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 // 					CType type, String ident){return null;}
 //     public Object visitForStatement(JForStatement self, JStatement init,
 // 				    JExpression cond, JStatement incr, JStatement body){return null;}
-//     public Object visitIfStatement(JIfStatement self, JExpression cond,
-// 				   JStatement thenClause, JStatement elseClause){return null;}
+    /**
+     * Visit an if statement -- push this down the
+     * the then clause, push a copy of this down the else clause,
+     * and then merge the differences. Also of note is that
+     * the conditional is a constant, constprop should have taken
+     * care of it, so flag an error.
+     **/
+    public Object visitIfStatement(JIfStatement self, JExpression cond,
+				   JStatement thenClause, JStatement elseClause){
+	LinearForm condForm = (LinearForm)cond.accept(this);
+	// if the cond form is a constant (eg only an offset), we should bomb an error as
+	// const prop should have taken care of it.
+	if (condForm != null) {
+	    if (condForm.isOnlyOffset()) {
+		throw new RuntimeException("Constant condition to if statement, " +
+					   "const prop should have handled " +
+					   self);
+	    }
+	}
+	// now, make a copy of this
+	LinearFilterVisitor otherVisitor = this.copy();
+	// send this through the then clause, and the copy through the else clause
+	thenClause.accept(this);
+	// if we have an else clause, then send the visitor through it. Else,
+	// the program could possibly skip the then clause, so we need to
+	// merge the differences afterwards.
+	if (elseClause != null) {
+	    elseClause.accept(otherVisitor);
+	}
+
+	// recconcile the differences between the else clause (or skip if no
+	// else clause).
+	this.applyConfluence(otherVisitor);
+	
+	return null;
+    }
 //     public Object visitInnerClassDeclaration(JClassDeclaration self, int modifiers,
 // 					     String ident, String superName,
 // 					     CClassType[] interfaces, JTypeDeclaration[] decls,
@@ -562,9 +839,41 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
     }
 //     public Object visitLogicalComplementExpression(JUnaryExpression self, JExpression expr){return null;}
-//     public Object visitMethodCallExpression(JMethodCallExpression self, JExpression prefix,
-// 					    String ident, JExpression[] args){return null;}
-//     public Object visitMethodDeclaration(JMethodDeclaration self, int modifiers,
+    /**
+     * Eventually, we should do interprodcedural analysis. Right now instead, we will
+     * simply ignore them (eg return null signifying that they do not generate linear things).
+     **/
+    public Object visitMethodCallExpression(JMethodCallExpression self, JExpression prefix,
+ 					    String ident, JExpression[] args){
+	LinearPrinter.warn("Assuming method call expression non linear(" +
+			   ident + "). Also removing all field mappings.");
+	this.removeAllFieldMappings();
+	return null;
+    }
+
+    /**
+     * Removes all of the mappings from fields to linear forms. We do this on a method call
+     * to make conservative, safe assumptions.
+     **/
+    private void removeAllFieldMappings() {
+	// basic idea is really simple -- iterate over all keys in our hashmap
+	// and remove the ones that are AccessWrappers.
+	Vector toRemove = new Vector(); // list of items to remove.
+	Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
+	while(keyIter.hasNext()) {
+	    Object key = keyIter.next();
+	    if (key instanceof AccessWrapper) {
+		toRemove.add(key);
+	    }
+	}
+	// now, remove all items in the toRemove list from the mapping
+	Iterator removeIter = toRemove.iterator();
+	while(removeIter.hasNext()) {
+	    this.variablesToLinearForms.remove(removeIter.next());
+	}
+    }	
+
+    //     public Object visitMethodDeclaration(JMethodDeclaration self, int modifiers,
 // 					 CType returnType, String ident,
 // 					 JFormalParameter[] parameters, CClassType[] exceptions,
 // 					 JBlock body){return null;}
@@ -597,10 +906,66 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitQualifiedInstanceCreation(JQualifiedInstanceCreation self,
 // 						 JExpression prefix, String ident,
 // 						 JExpression[] params){return null;}
-//     public Object visitRelationalExpression(JRelationalExpression self, int oper,
-// 					    JExpression left, JExpression right){return null;}
+    /**
+     * Visit a relational expression (eg using a <, >, ==, !=, etc. type of parameter.
+     * Since these are all non linear operatons, we need to return
+     * null to flag the rest of the visitor that they are non linear operations.
+     **/
+    public Object visitRelationalExpression(JRelationalExpression self, int oper,
+					    JExpression left, JExpression right){
+	LinearPrinter.println("  visiting non linear" + self);
+	return null;
+    }
 //     public Object visitReturnStatement(JReturnStatement self, JExpression expr){return null;}
-//     public Object visitShiftExpression(JShiftExpression self, int oper, JExpression left, JExpression right){return null;}
+
+    /**
+     * Shift expressions are linear for integer operators.
+     * They correspond to multiplications or divisions by a power of two.
+     * if the RHS of the expression is a constant (eg a lienar form
+     * with only an offset) then we can convert it to a power of two, and
+     * then make the shift a multiplication or division. Otherwise, this is
+     * not a linear operation.
+     **/
+    public Object visitShiftExpression(JShiftExpression self, int oper, JExpression left, JExpression right){
+	// since the left and the right expressions are somre type of integer
+	// or byte or something, we are all set. You can't shift floats, as it
+	// is not in java syntax and KOPI disallows it in the semantic checking
+	// phase.
+
+	LinearPrinter.println("  visiting shift expression: " + self);
+
+	// try and figure out what the right hand side of the expression is.
+	LinearForm rightForm = (LinearForm)right.accept(this);
+
+	// if the right side is non linear, give up. Accept the left side
+	// (to ensure any side effects are taken into account) and return null
+	if (right == null) {
+	    left.accept(this);
+	    return null;
+	}
+	
+	// if the right side is a constant, figure it out at compile time,
+	// and accept the equivalant multiplication or division.
+	if (rightForm.getOffset().isRealInteger()) {
+	    int rightInt = (int)rightForm.getOffset().getReal(); // get the real part
+	    // calculate the power of two.
+	    // this probably won't handle _large_ powers of two.
+	    int rightPowerOfTwo = 1 << rightInt;
+	    // if this is a left shift, accept a multiplication
+	    if (oper == OPE_SL) {
+		return (new JMultExpression(null, left, new JIntLiteral(rightPowerOfTwo))).accept(this);
+		// if this is a right shift, accept a division
+	    } else if (oper == OPE_SR) {
+		return (new JDivideExpression(null, left, new JIntLiteral(rightPowerOfTwo))).accept(this);
+	    } else {
+		throw new RuntimeException("Unknown operator in ShiftExpression:" + oper);
+	    }
+	} else {
+	    // merely accept the left and return
+	    left.accept(this);
+	    return null;
+	}
+    }
 //     public Object visitShortLiteral(JShortLiteral self, short value){return null;}
 //     public Object visitSuperExpression(JSuperExpression self){return null;}
 //     public Object visitSwitchGroup(JSwitchGroup self, JSwitchLabel[] labels, JStatement[] stmts){return null;}
@@ -660,6 +1025,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 	// increment the push offset (for the next push statement)
 	this.pushOffset++;
+
+	LinearPrinter.println("   (current push offset: " + this.pushOffset);
 
 	// make sure we didn't screw up anything.
 	checkRep();
@@ -737,19 +1104,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     }
 
 
-    
-
-
-
-    public Object visitMethodCallExpression(JMethodCallExpression self,
-					    JExpression prefix,
-					    String ident,
-					    JExpression[] args) {
-	LinearPrinter.println("  visiting method call expression: " + self);
-	return super.visitMethodCallExpression(self, prefix, ident, args);
-    }
-
-
     ////// Generators for literal expressions
     
     /** boolean logic falls outside the realm of linear filter analysis -- return null**/
@@ -808,8 +1162,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	} else if (expr instanceof JFieldAccessExpression) {
 	    removeMapping((JFieldAccessExpression)expr);
 	} else {
-	    throw new RuntimeException("Can have linear mappings to " + expr +
-				       " (of type " + expr.getClass().getName());
+	    //throw new RuntimeException("Can't have linear mappings to " + expr +
+	    //" (of type " + expr.getClass().getName());
 	}
     }
     
@@ -822,7 +1176,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	JLocalVariable theVariable = lve.getVariable();
 	// if the variable is a key in the mappings, then remove the mapping
 	if (this.variablesToLinearForms.containsKey(theVariable)) {
-	    LinearPrinter.println("  Removing mapping for " + theVariable);
+	    LinearPrinter.println("  Removing mapping for local variable:" + theVariable);
 	    this.variablesToLinearForms.remove(theVariable);
 	}
     }
@@ -831,7 +1185,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Does not report errors when a variable that is not in the mapping is "removed."
      **/
     public void removeMapping(JFieldAccessExpression fae) {
-	throw new RuntimeException("Not yet implemented");
+	// wrap the field access expression
+	AccessWrapper theWrapper = AccessWrapper.wrapFieldAccess((JFieldAccessExpression)fae);
+	LinearPrinter.println("  Removing mapping for field access expression: " + fae);
+	// actually remove the data from the hash map
+	this.variablesToLinearForms.remove(theWrapper);
     }
     
 
@@ -859,6 +1217,18 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Check the representation invariants of the LinearFilterVisitor.
      **/
     private void checkRep() {
+	// make sure that the representation matrix is the correct size
+	if (this.peekSize != this.representationMatrix.getRows()) {
+	    throw new RuntimeException("Inconsistent matrix representation, rows");
+	}
+	if (this.pushSize != this.representationMatrix.getCols()) {
+	    throw new RuntimeException("Inconsistent matrix representation, cols");
+	}
+	if (this.pushSize != this.representationVector.getCols()) {
+	    throw new RuntimeException("Inconsistent vector representation, cols");
+	}
+
+
 	// check that the only values in the HashMap are LinearForm objects
 	Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
 	while(keyIter.hasNext()) {
@@ -880,15 +1250,18 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// if the filter doesn't peek at any data, the following is incorrect.
 	if (peekSize != 0) {
 	    if (this.peekOffset > this.peekSize) {
-		throw new RuntimeException("Filter pops more than peeks:" +
+		throw new RuntimeException("Filter (" + this.filterName +
+					   ") pops more than peeks:" +
 					   "peekSize: " + this.peekSize + " " +
 					   "peekOffset: " + this.peekOffset);
 	    }
 	}
 	// make sure that the number of pushes that we have seen doesn't go past the end of
 	// the matrix/vector that represents this filter.
-	if (this.pushOffset > this.representationMatrix.getRows()) {
-	    throw new RuntimeException("Filter pushes more items than is decalred");
+	if (this.pushOffset > this.representationMatrix.getCols()) {
+	    throw new RuntimeException("Filter (" + this.filterName +
+				       ") pushes more items " + 
+				       "than is declared (" + this.representationMatrix.getRows());
 	}
 	    
     }

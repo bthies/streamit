@@ -10,7 +10,8 @@ import java.util.ArrayList;
 //If filter is linear
 
 public class Linear extends BufferedCommunication implements Constants {
-    private static final JMethodDeclaration linearInit=new JMethodDeclaration(null,0,CStdType.Void,"linearInit",new JFormalParameter[0],new CClassType[0],new JBlock(null,new JStatement[]{new InlineAssembly("mtsri BR_INCR,1")},null),null,null);
+    //private static final JMethodDeclaration linearInit=new JMethodDeclaration(null,0,CStdType.Void,"linearInit",new JFormalParameter[0],new CClassType[0],new JBlock(null,new JStatement[]{new InlineAssembly("mtsri BR_INCR,1")},null),null,null);
+    private static final JStatement initStatement=new InlineAssembly("mtsri BR_INCR,1");
     private static final JMethodDeclaration[] emptyMethods=new JMethodDeclaration[0];
     //private static final JFieldDeclaration[] emptyFields=new JFieldDeclaration[0];
     private static final String WEIGHT_PREFIX="w_";
@@ -193,9 +194,12 @@ public class Linear extends BufferedCommunication implements Constants {
       null);
       }*/
     
-    /*public JMethodDeclaration getInitStageMethod() {
-      return linearInit;
-      }*/
+    public JMethodDeclaration getInitStageMethod() {
+	//return linearInit;
+	JMethodDeclaration method=super.getInitStageMethod();
+	method.addStatementFirst(initStatement);
+	return method;
+    }
     
     public JMethodDeclaration[] getHelperMethods() {
 	return emptyMethods;

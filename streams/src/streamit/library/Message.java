@@ -27,7 +27,7 @@ import java.lang.reflect.*;
  *
  * There is a distinct message for every receiver object.
  *
- * @version $Id: Message.java,v 1.1 2004-11-16 09:56:14 thies Exp $
+ * @version $Id: Message.java,v 1.2 2004-11-16 10:04:42 thies Exp $
  */
 public class Message {
     /**
@@ -65,7 +65,7 @@ public class Message {
      */
     public void deliver(Object receiver) {
 	try {
-	    System.err.println("Delivering message " + methodName + " to " + receiver);
+	    //System.err.println("Delivering message " + methodName + " to " + receiver);
 	    // get parameter types
 	    Class[] paramTypes = new Class[args.length];
 	    for (int i=0; i<args.length; i++) {

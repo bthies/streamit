@@ -31,7 +31,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	super(partitioner);
 	this.cont = cont;
 	this.partitioner = partitioner;
-	this.A = new int[width][width][height][height][3];
+	this.A = new int[width][width][height][height][4];
 	initA();
     }
 
@@ -129,8 +129,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    // get number of times each child of <cont> executes
 		    HashMap[] counts = SIRScheduler.getExecutionCounts(sj);
 		    // add savings from two children
-		    int[] steadyCount = { ((int[])counts[1].get(cont.get(0)))[0],
-					  ((int[])counts[1].get(cont.get(1)))[1] };
+		    int[] steadyCount = { ((int[])counts[1].get(sj.get(0)))[0],
+					  ((int[])counts[1].get(sj.get(1)))[0] };
 		    // add savings from two children
 		    savings += steadyCount[0] * get(x1, x1, y1, y2, collapse, sj.get(0));
 		    savings += steadyCount[1] * get(x1+1, x2, y1, y2, collapse, sj.get(1));
@@ -140,8 +140,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    SIRPipeline pipe = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
 		    // get number of times each child of <cont> executes
 		    HashMap[] counts = SIRScheduler.getExecutionCounts(pipe);
-		    int[] steadyCount = { ((int[])counts[1].get(cont.get(0)))[0],
-					  ((int[])counts[1].get(cont.get(1)))[1] };
+		    int[] steadyCount = { ((int[])counts[1].get(pipe.get(0)))[0],
+					  ((int[])counts[1].get(pipe.get(1)))[0] };
 		    // add savings from two children
 		    savings += steadyCount[0] * get(x1, x2, y1, y1, collapse, pipe.get(0));
 		    savings += steadyCount[1] * get(x1, x2, y1+1, y2, collapse, pipe.get(1));
@@ -157,7 +157,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    // try a vertical cut
 	    for (int xPivot=x1; xPivot<x2; xPivot++) {
 		// break along <xPivot>
-		int[] arr = { 1 + (xPivot-x1), 1 + (x2-xPivot) };
+		int[] arr = { 1 + (xPivot-x1), x2-xPivot };
 		PartitionGroup pg = PartitionGroup.createFromArray(arr);
 		SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
 		savings = Math.max( savings, 
@@ -168,12 +168,18 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    // try a horizontal cut
 	    for (int yPivot=y1; yPivot<y2; yPivot++) {
 		// break along <yPivot>
-		int[] arr = { 1 + (yPivot-y1), 1 + (y2-yPivot) };
+		int[] arr = { 1 + (yPivot-y1), y2-yPivot };
 		PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		SIRPipeline pipe = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+		SIRContainer factored;
+		// might have either pipeline or splitjoin at this point...
+		if (str instanceof SIRSplitJoin) {
+		    factored = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+		} else {
+		    factored = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		}
 		savings = Math.max( savings, 
-				    get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, pipe.get(0)) +
-				    get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, pipe.get(1)) );
+				    get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
+				    get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
 	    }
 	    break;
 	}
@@ -250,7 +256,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 						    get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
 							/* dummy arg since get operation should just be lookup now */ null)) ) {
 		    // found the optimum
-		    int[] arr = { 1 + (xPivot-x1), 1 + (x2-xPivot) };
+		    int[] arr = { 1 + (xPivot-x1), x2-xPivot };
 		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
 		    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
 
@@ -271,15 +277,22 @@ abstract class LDPConfigContainer extends LDPConfig {
 		if (A[x1][x2][y1][y2][collapse] == (get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, str) +
 						    get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, str)) ) {
 		    // found the optimum
-		    int[] arr = { 1 + (yPivot-y1), 1 + (y2-yPivot) };
+		    int[] arr = { 1 + (yPivot-y1), y2-yPivot };
 		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		    SIRPipeline pipe = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+
+		    SIRContainer cont;
+		    // might have either pipeline or splitjoin at this point...
+		    if (str instanceof SIRSplitJoin) {
+			cont = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+		    } else {
+			cont = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		    }
 
 		    // generate transform
 		    StreamTransform result = new HorizontalCutTransform(yPivot-y1);
 		    // recurse left and right, adding transforms as post-ops
-		    result.addSucc(traceback(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, pipe.get(0)));
-		    result.addSucc(traceback(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, pipe.get(1)));
+		    result.addSucc(traceback(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, cont.get(0)));
+		    result.addSucc(traceback(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, cont.get(1)));
 
 		    // all done
 		    return result.reduce();
@@ -311,16 +324,16 @@ abstract class LDPConfigContainer extends LDPConfig {
      * Requires that <lfa> contains a linear representation for <cont>
      * as well as all its children.
      */
-    private int getOutermostSavings(SIRContainer cont, LinearAnalyzer lfa, HashMap[] counts) {
+    private int getOutermostSavings(SIRContainer str, LinearAnalyzer lfa, HashMap[] counts) {
 	// tabulate cost of doing separately
 	int separate = 0;
-	for (int i=0; i<cont.size(); i++) {
-	    int steadyCount = ((int[])counts[1].get(cont.get(i)))[0];
-	    separate += steadyCount * lfa.getLinearRepresentation(cont.get(i)).getCost().getDirectCost();
+	for (int i=0; i<str.size(); i++) {
+	    int steadyCount = ((int[])counts[1].get(str.get(i)))[0];
+	    separate += steadyCount * lfa.getLinearRepresentation(str.get(i)).getCost().getDirectCost();
 	}
 
 	// get the combined cost
-	int combined = lfa.getLinearRepresentation(cont).getCost().getDirectCost();
+	int combined = lfa.getLinearRepresentation(str).getCost().getDirectCost();
 
 	// return difference (remember positive is good)
 	return separate - combined;

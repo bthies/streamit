@@ -158,7 +158,7 @@ public class ConstantProp {
 	    if (args[i] instanceof JLiteral) {
 		// if it's already a literal, just record it
 		constants.put(parameters[i], args[i]);
-	    } else if (constants.get(args[i])!=null) {
+	    } else if ((args[i] instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args[i]).getVariable())!=null) {
 		// otherwise if it's associated w/ a literal, then record that
 		constants.put(parameters[i], constants.get(args[i]));
 	    }

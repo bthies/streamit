@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSourceClass.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CSourceClass.java,v 1.2 2002-06-14 14:13:05 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -128,7 +128,13 @@ public class CSourceClass extends CClass {
       }
     }
   }
-
+    
+    /**
+     * Naming of variables abstracted away
+     */
+    public static String varName(JLocalVariable var) {
+	return "var$" + var.getIdent();
+    }
 
   /**
    * Gets the code to access outer local vars
@@ -143,7 +149,7 @@ public class CSourceClass extends CClass {
       outers = new Hashtable();
     }
     if ((name = (String)outers.get(var)) == null) {
-      name = "var$" + var.getIdent();
+	name = varName(var);
       outers.put(var, name); // local vars are uniq
       field = new CSourceField(this, 0, name, var.getType(), false);
       addField(field);

@@ -21,7 +21,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 
     /**
      * sets the splitter for this SplitJoin, and sets the parent of
-     * <s> to be this.
+     * <b>s</b> to be this.
      */
     public void setSplitter(SIRSplitter s) 
     {
@@ -143,7 +143,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     /**
      * Returns a list of the children of this.  The children are
      * stream objects that are contained within this (including the
-     * splitter and joiner.
+     * splitter and joiner. Specifically, the first element in the
+     * list is the splitter(SIRSplitter), the second is the
+     * joiner(SIRJoiner), and the remaining elements are the children
+     * ordered from left to right.
      */
     public List getChildren() {
 	// build result from child streams

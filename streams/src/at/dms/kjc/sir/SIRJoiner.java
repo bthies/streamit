@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 
 /**
  * This represents a stream construct with a single output and multiple
@@ -15,9 +16,11 @@ public class SIRJoiner extends SIROperator {
      * The number of items that the joiner pulls from each input tape
      * in one execution cycle.
      */
-    private int[] weights;
+    private JExpression[] weights;
 
-    private SIRJoiner(SIRContainer parent, SIRJoinType type, int[] weights) {
+    private SIRJoiner(SIRContainer parent, 
+		      SIRJoinType type, 
+		      JExpression[] weights) {
       super(parent);
       this.weights = weights;
       this.type = type;
@@ -31,10 +34,10 @@ public class SIRJoiner extends SIROperator {
 				   int n) {
 	if (type==SIRJoinType.ROUND_ROBIN || type==SIRJoinType.COMBINE) {
 	    // fill weights with 1
-	    return new SIRJoiner(parent, type, initArray(n, 1));
+	    return new SIRJoiner(parent, type, initLiteralArray(n, 1));
         } else if (type==SIRJoinType.NULL) {
 	    // for null type, fill with zero weights
-	    return new SIRJoiner(parent, type, initArray(n, 0));
+	    return new SIRJoiner(parent, type, initLiteralArray(n, 0));
 	} else if (type==SIRJoinType.WEIGHTED_RR) {
 	    // if making a weighted round robin, should use other constructor
 	    fail("Need to specify weights for weighted round robin");
@@ -50,7 +53,7 @@ public class SIRJoiner extends SIROperator {
      * and weights.  
      */
     public static SIRJoiner createWeightedRR(SIRContainer parent, 
-					     int[] weights) {
+					     JExpression[] weights) {
 	return new SIRJoiner(parent, SIRJoinType.WEIGHTED_RR, weights);
     }
 
@@ -64,7 +67,7 @@ public class SIRJoiner extends SIROperator {
 	    obj.type!=SIRJoinType.WEIGHTED_RR) {
 	    return type==obj.type;
 	} else {
-	    return equalArrays(weights, obj.weights);
+	    return equalArrays(getWeights(), obj.getWeights());
 	}
     }
 
@@ -103,10 +106,25 @@ public class SIRJoiner extends SIROperator {
     }
 
     /**
-     * Return internal weights array of this.
+     * Returns JExpression weights of this.
+     */
+    public JExpression[] getInternalWeights() {
+	return weights;
+    }
+
+    /**
+     * Return int weights array of this.
      */
     public int[] getWeights() {
-	return weights;
+	int[] result = new int[weights.length];
+	for (int i=0; i<weights.length; i++) {
+	    Utils.assert(weights[i] instanceof JIntLiteral,
+			 "Expecting JIntLiteral as weight to round-robin--" +
+			 "could have problems with constant prop (maybe " +
+			 "it hasn't been run yet) or orig program");
+	    result[i] = ((JIntLiteral)weights[i]).intValue();
+	}
+	return result;
     }
 }
 

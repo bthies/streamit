@@ -25,13 +25,13 @@ public interface AttributeStreamVisitor {
     Object visitSplitter(SIRSplitter self,
 			 SIRStream parent,
 			 SIRSplitType type,
-			 int[] weights);
+			 JExpression[] weights);
     
     /* visit a joiner */
     Object visitJoiner(SIRJoiner self,
 			SIRStream parent,
 			SIRJoinType type,
-			int[] weights);
+			JExpression[] weights);
     
     /* pre-visit a pipeline */
     Object visitPipeline(SIRPipeline self,

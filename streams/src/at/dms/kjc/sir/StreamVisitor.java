@@ -30,13 +30,13 @@ public interface StreamVisitor {
     void visitSplitter(SIRSplitter self,
 		       SIRStream parent,
 		       SIRSplitType type,
-		       int[] weights);
+		       JExpression[] weights);
     
     /* visit a joiner */
     void visitJoiner(SIRJoiner self,
 		     SIRStream parent,
 		     SIRJoinType type,
-		     int[] weights);
+		     JExpression[] weights);
 
     /**
      * PRE-VISITS 

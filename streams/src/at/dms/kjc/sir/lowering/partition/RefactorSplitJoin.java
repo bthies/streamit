@@ -137,7 +137,7 @@ public class RefactorSplitJoin {
 		// add pipe to the sj for the current partition
 		newSJ.add(pipe, sj.getParams(j));
 		// try lifting in case we can
-		Lifter.lift(pipe);
+		Lifter.eliminatePipe(pipe);
 	    }
 
 	    // make the splitter and joiner for <newSJ>.  In the end

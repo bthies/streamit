@@ -207,6 +207,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		changed.put(self,Boolean.TRUE);
 	    } else if(newExp instanceof SIRCreatePortal) {
 		if (!constants.containsKey(self)) {
+		    //System.out.println("\n[new Exp]Adding portal to constants, variable is: "+self.getIdent()+" constants: "+constants+" at: "+self.getTokenReference());
 		    constants.put(self, new SIRPortal(type));
 		}
 	    }
@@ -821,15 +822,17 @@ public class Propagator extends SLIRReplacingVisitor {
 		System.err.println("WARNING:Cannot Propagate Array Prefix "+expr);
 	}
 
+	/*
 	if (newRight instanceof SIRCreatePortal) {
 		JLocalVariableExpression var=(JLocalVariableExpression)left;
 		if (!constants.containsKey(var.getVariable())) {
 
-		    //System.out.println("Adding portal to constants, variable is: "+var.getVariable().getIdent()+" constants: "+constants);
+		    //System.out.println("\n[newRight]Adding portal to constants, variable is: "+var.getVariable().getIdent()+" constants: "+constants+" at: "+self.getTokenReference());
 
 		    constants.put(var.getVariable(), new SIRPortal(left.getType()));
 		}
 	}
+	*/
 
         return self;
     }

@@ -73,6 +73,7 @@ public class CloneGenerator {
 	    // otherwise, should define contents of class
 	    sb.append("public Object deepClone() {\n");
 	    sb.append("  " + className + " other = new " + className + "();\n");
+	    sb.append("  AutoCloner.register(this, other);\n");
 	    sb.append("  deepCloneInto(other);\n");
 	    sb.append("  return other;\n");
 	    sb.append("}\n");
@@ -111,49 +112,16 @@ public class CloneGenerator {
 	    Class type = field[i].getType();
 	    if (Modifier.isStatic(field[i].getModifiers())) {
 		// do nothing for static fields
-	    } else if (inTargetClasses(type.getName())) {
-		// first pass:  output deep cloning for everything in at.dms
-		sb.append("  other." + name + " = (" + type.getName() + ")this." + name + ".deepClone();\n");
-	    } else if (type.isArray()) {
-		// clone arrays with typecast...
-		// get number of dimensions in array
-		int dims = 0;
-		Class arr = type;
-		while ((arr = arr.getComponentType())!=null) { dims++; };
-		// print the stuff
-		String componentType = type.getComponentType().getName();
-		sb.append("  other." + name + " = (" + componentType + "");
-		// print dims $ of []'s
-		for (int j=0; j<dims; j++) {
-		    sb.append("[]");
-		}
-		sb.append(")this." + name + ".clone();\n");
 	    } else if (type.isPrimitive()) {
 		// for primitives, copy them straight over
 		sb.append("  other." + name + " = this." + name + ";\n");
+	    } else if (name.equals("serializationHandle")) {
+		// for now, ignore serialization handles.  To be
+		// changed once we get complete new cloning framework.
+		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
-		// in this case we have an object... need to figure
-		// out how to clone it.
-		String typeName = type.getName();
-		if (typeName.equals("java.lang.String") ||
-		    typeName.equals("java.io.PrintWriter") ||
-		    typeName.equals("at.dms.compiler.WarningFilter")) {
-		    // don't clone these since they're immutable or shouldn't be copied
-		    sb.append("  other." + name + " = this." + name + ";\n");
-		} else if (name.equals("serializationHandle")) {
-		    // for now, ignore serialization handles.  To be
-		    // changed once we get complete new cloning framework.
-		    sb.append("  other." + name + " = this." + name + ";\n");
-		} else if (typeName.equals("java.util.Hashtable") || 
-			   typeName.equals("java.util.Vector") || 
-			   typeName.equals("java.util.LinkedList") ||
-			   typeName.equals("java.util.Stack")) {
-		    // call clone on these classes
-		    sb.append("  other." + name + " = (" + typeName + ")this." + name + ".clone();\n");
-		} else {
-		    System.err.println("WARNING:  Don't know how to clone field " + name + " of type " + typeName + " in class " + c);
-		    sb.append("  other." + name + " = this." + name + ";\n");
-		}
+		// otherwise call toplevel cloning method
+		sb.append("  other." + name + " = (" + type.getName() + ")AutoCloner.cloneToplevel(this." + name + ");\n");
 	    }
 	}
 	sb.append("}\n");
@@ -236,7 +204,7 @@ public class CloneGenerator {
     /**
      * Whether or not <className> is a class we're generating cloning code for.
      */
-    private static boolean inTargetClasses(String className) {
+    public static boolean inTargetClasses(String className) {
 	for (int i=0; i<classes.length; i++) {
 	    if (classes[i].equals(className)) {
 		return true;

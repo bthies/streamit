@@ -127,6 +127,22 @@ public class FieldProp
         exprs[slot] = null;
     }
 
+    /** Helper function to invalidate whatever a particular expression
+        points to.  No effect if the expression isn't a field-access
+        or array-access expression. */
+    private void invalidateExpression(JExpression expr)
+    {
+        if (expr instanceof JFieldAccessExpression)
+        {
+            JFieldAccessExpression fae = 
+                (JFieldAccessExpression)expr;
+            String name = fae.getIdent();
+            if (!(fae.getPrefix() instanceof JThisExpression))
+                return;
+            invalidateField(name);
+        }
+    }
+
     /** Helper function to determine if a field can be propagated. */
     private boolean canFieldPropagate(String name)
     {
@@ -286,15 +302,25 @@ public class FieldProp
                         super.visitCompoundAssignmentExpression
                             (self, oper, left, right);
                         // Instant death.
-                        if (left instanceof JFieldAccessExpression)
-                        {
-                            JFieldAccessExpression fae = 
-                                (JFieldAccessExpression)left;
-                            String name = fae.getIdent();
-                            if (!(fae.getPrefix() instanceof JThisExpression))
-                                return;
-                            invalidateField(name);
-                        }
+                        invalidateExpression(left);
+                    }
+                    public void visitPrefixExpression
+                        (JPrefixExpression self,
+                         int oper,
+                         JExpression expr)
+                    {
+                        super.visitPrefixExpression(self, oper, expr);
+                        // Again, instant death.
+                        invalidateExpression(expr);
+                    }
+                    public void visitPostfixExpression
+                        (JPostfixExpression self,
+                         int oper,
+                         JExpression expr)
+                    {
+                        super.visitPostfixExpression(self, oper, expr);
+                        // Again, instant death.
+                        invalidateExpression(expr);
                     }
                 });
         }

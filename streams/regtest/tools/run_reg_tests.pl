@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.10 2003-01-22 19:33:09 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.11 2003-01-23 18:13:25 aalamb Exp $
 
 use strict;
 
@@ -46,7 +46,7 @@ print MHMAIL saved_execute("cd $working_dir; cvs -d /projects/raw/cvsroot co str
 my $streamit_home = "$working_dir/streams";
 $ENV{"STREAMIT_HOME"} = "$streamit_home/";
 $ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:/u/diego/bin/:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/usr/ucb:/bin:/usr/bin:/usr/etc:/etc:/usr/games:";
-my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/u/thies/temp/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/library/java";
+my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/usr/uns/java/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/library/java";
 $ENV{"CLASSPATH"} = $class_path;
 $ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
 

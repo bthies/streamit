@@ -1,8 +1,9 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: SplitJoin.java,v 1.2 2002-06-30 04:01:11 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.3 2002-07-02 03:37:47 karczma Exp $ */
 
-import streamit.scheduler.iriter./*persistent.*/SplitJoinIter;
+import streamit.scheduler.iriter./*persistent.*/
+SplitJoinIter;
 import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.Schedule;
 
@@ -33,7 +34,7 @@ abstract public class SplitJoin
     abstract public void computeSchedule();
 
     /**
-     * Return an apporpriate hierarchical child.  All children of a 
+     * Return an appropriate hierarchical child.  All children of a 
      * hierarchical splitjoin must be hierarchical as well.  This function
      * asserts if a child is not hierarchical.
      * @return hierarchical child of the splitjoin
@@ -42,38 +43,62 @@ abstract public class SplitJoin
     {
         streamit.scheduler.base.StreamInterface child;
         child = getChild(nChild);
-        
+
         if (!(child instanceof StreamInterface))
         {
             ERROR("This splitjoin contains a child that is not hierarchical");
         }
-        
+
         return (StreamInterface) child;
     }
-    
+
     /**
      * Get the number of phases that the split of this SplitJoin has.
      * @return number of split's phases
      */
-    abstract public int getNumSplitPhases();
-    
+    public int getNumSplitPhases()
+    {
+        return splitjoin.getSplitterNumWork();
+    }
+
     /**
      * Get the appropriate phase for the split of this SplitJoin.
      * @return phase of the split
      */
-    abstract public PhasingSchedule getSplitPhase(int nPhase);
+    public PhasingSchedule getSplitPhase(int nPhase)
+    {
+        ASSERT(nPhase >= 0 && nPhase < getNumSplitPhases());
+        Schedule sched =
+            new Schedule(
+                splitjoin.getSplitterWork(nPhase),
+                splitjoin.getUnspecializedIter());
+        int popAmount = splitjoin.getSplitPop(nPhase);
+        return new PhasingSchedule(this, sched, popAmount, popAmount, 0);
+    }
 
     /**
      * Get the number of phases that the join of this SplitJoin has.
      * @return number of split's join
      */
-    abstract public int getNumJoinPhases();
+    public int getNumJoinPhases()
+    {
+        return splitjoin.getJoinerNumWork();
+    }
 
     /**
      * Get the appropriate phase for the join of this SplitJoin.
      * @return phase of the join
      */
-    abstract public PhasingSchedule getJoinPhase(int nPhase);
+    public PhasingSchedule getJoinPhase(int nPhase)
+    {
+        ASSERT(nPhase >= 0 && nPhase < getNumJoinPhases());
+        Schedule sched =
+            new Schedule(
+                splitjoin.getJoinerWork(nPhase),
+                splitjoin.getUnspecializedIter());
+        int pushAmount = splitjoin.getJoinPush(nPhase);
+        return new PhasingSchedule(this, sched, 0, 0, pushAmount);
+    }
 
     public streamit.scheduler.base.StreamInterface getTop()
     {
@@ -131,14 +156,14 @@ abstract public class SplitJoin
 
     public PhasingSchedule getPhasingInitSchedule()
     {
-        return algorithm.getPhasingInitSchedule ();
+        return algorithm.getPhasingInitSchedule();
     }
-    
-    public Schedule getInitSchedule ()
+
+    public Schedule getInitSchedule()
     {
         return algorithm.getInitSchedule();
     }
-    
+
     public int getNumSteadyPhases()
     {
         return algorithm.getNumSteadyPhases();
@@ -166,10 +191,10 @@ abstract public class SplitJoin
 
     public PhasingSchedule getPhasingSteadySchedule()
     {
-        return algorithm.getPhasingSteadySchedule ();
+        return algorithm.getPhasingSteadySchedule();
     }
 
-    public Schedule getSteadySchedule ()
+    public Schedule getSteadySchedule()
     {
         return algorithm.getSteadySchedule();
     }

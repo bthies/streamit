@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.3 2002-06-30 04:01:10 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.4 2002-07-02 03:37:47 karczma Exp $ */
 
 import java.util.Vector;
 import streamit.scheduler.Schedule;
@@ -31,6 +31,7 @@ public class PhasingSchedule extends DestroyedClass
     final Vector popSize = new Vector();
     final Vector pushSize = new Vector();
     final Vector phases = new Vector();
+    Schedule phasingPreComputedSchedule;
     Schedule schedule;
     final StreamInterface stream;
 
@@ -65,12 +66,12 @@ public class PhasingSchedule extends DestroyedClass
         overallPop = 0;
         overallPush = 0;
     }
-    
+
     /**
      * Get the stream that corresponds to this particular phase.
      * @return phase's stream
      */
-    StreamInterface getStream ()
+    StreamInterface getStream()
     {
         return stream;
     }
@@ -141,7 +142,10 @@ public class PhasingSchedule extends DestroyedClass
      */
     public void appendPhase(PhasingSchedule phase)
     {
-        // first append the new phase
+        // invalidate the old pre-computed schedule
+        phasingPreComputedSchedule = null;
+
+        // append the new phase
         nPhases++;
         phases.add(phase);
 
@@ -218,15 +222,24 @@ public class PhasingSchedule extends DestroyedClass
         {
             // yes: return the schedule and be happy
             return schedule;
-        } else {
+        }
+        else
+        {
+            // do I have a pre-computed version?
+            // if I do, just return it!
+            if (phasingPreComputedSchedule != null)
+                return phasingPreComputedSchedule;
+
             // now: create a schedule out of my phasing schedule...
-            Schedule sched = new Schedule ();
+            Schedule sched = new Schedule();
             int phase;
             for (phase = 0; phase < getNumPhases(); phase++)
             {
                 sched.addSubSchedule(getPhase(phase).getSchedule());
             }
-            
+
+            phasingPreComputedSchedule = sched;
+
             return sched;
         }
     }

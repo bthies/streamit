@@ -8,7 +8,7 @@ import streamit.misc.Fraction;
 import streamit.scheduler.iriter./*persistent.*/SplitterNJoinerIter;
 import streamit.scheduler.iriter.JoinerIter;
 
-/* $Id: StreamWithSplitNJoin.java,v 1.2 2002-06-30 04:01:06 karczma Exp $ */
+/* $Id: StreamWithSplitNJoin.java,v 1.3 2002-07-02 03:37:44 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for Streams that contain
@@ -20,24 +20,50 @@ import streamit.scheduler.iriter.JoinerIter;
 
 abstract class StreamWithSplitNJoin extends Stream
 {
+    StreamWithSplitNJoin(SplitterNJoinerIter snjIter)
+    {
+        splitFlow = getSplitSteadyFlow(snjIter);
+        joinFlow = getJoinSteadyFlow(snjIter);
+    }
+    
+    /**
+     * Stores the amount of data that the splitter transfers over all
+     * executions of the splitter's work functions.
+     */
+    final protected SplitSteadyFlow splitFlow;
+
+    /**
+     * Stores the amount of data that the joiner transfers over all
+     * executions of the joiner's work functions.
+     */
+    final protected JoinSteadyFlow joinFlow;
+    
     /**
      * store the amount of data distributed to and 
      * collected by the splitter
      */
-    class SplitSteadyFlow
+    public class SplitSteadyFlow
     {
-        public int splitPushWeights[];
-        public int splitPopWeight;
+        SplitSteadyFlow(int nChildren)
+        {
+            pushWeights = new int [nChildren];
+        }
+        public int pushWeights[];
+        public int popWeight;
     }
 
     /**
      * store the amount of data distributed to and 
      * collected by the joiner
      */
-    class JoinSteadyFlow
+    public class JoinSteadyFlow
     {
-        public int joinPopWeights[];
-        public int joinPushWeight;
+        JoinSteadyFlow(int nChildren)
+        {
+            popWeights = new int [nChildren];
+        }
+        public int popWeights[];
+        public int pushWeight;
     }
 
     /**
@@ -45,27 +71,25 @@ abstract class StreamWithSplitNJoin extends Stream
      * @return structure that holds amount of data 
      * handled by the splitter
      */
-    SplitSteadyFlow getSplitSteadyFlow (SplitterNJoinerIter splitter)
+    private SplitSteadyFlow getSplitSteadyFlow (SplitterNJoinerIter splitter)
     {
-        // not tested yet.
-        ASSERT (false);
-        
-        SplitSteadyFlow data = new SplitSteadyFlow();
-        data.splitPopWeight = 0;
+        SplitSteadyFlow splitData = new SplitSteadyFlow(splitter.getFanOut());
+        splitData.popWeight = 0;
 
         int nSplitExec;
         for (nSplitExec = 0; nSplitExec < splitter.getSplitterNumWork(); nSplitExec++)
         {
+            int splitPushWeights[] = splitter.getSplitPushWeights(nSplitExec);
             int nChild;
             for (nChild = 0; nChild < splitter.getFanOut(); nChild++)
             {
-                data.splitPushWeights[nChild] += splitter.getSplitPushWeights(nSplitExec)[nChild];
+                splitData.pushWeights[nChild] += splitPushWeights[nChild];
             }
 
-            data.splitPopWeight += splitter.getSplitPop(nSplitExec);
+            splitData.popWeight += splitter.getSplitPop(nSplitExec);
         }
         
-        return data;
+        return splitData;
     }
 
     /**
@@ -73,26 +97,25 @@ abstract class StreamWithSplitNJoin extends Stream
      * @return structure that holds amount of data 
      * handled by the joiner
      */
-    JoinSteadyFlow getJoinSteadyFlow (SplitterNJoinerIter joiner)
+    private JoinSteadyFlow getJoinSteadyFlow (SplitterNJoinerIter joiner)
     {
-        // not tested yet.
-        ASSERT (false);
-        
-        JoinSteadyFlow data = new JoinSteadyFlow ();
-        data.joinPushWeight = 0;
+        JoinSteadyFlow joinData = new JoinSteadyFlow (joiner.getFanIn());
+        joinData.pushWeight = 0;
         
         int nJoinExec;
         for (nJoinExec = 0; nJoinExec < joiner.getJoinerNumWork(); nJoinExec++)
         {
+            int joinPopWeights[] = joiner.getJoinPopWeights(nJoinExec);
+            
             int nChild;
-            for (nChild = 0; nChild < joiner.getJoinerNumWork (); nChild++)
+            for (nChild = 0; nChild < joiner.getFanIn (); nChild++)
             {
-                data.joinPopWeights[nChild] += joiner.getJoinPopWeights(nJoinExec)[nChild];
+                joinData.popWeights[nChild] += joinPopWeights [nChild];
             }
             
-            data.joinPushWeight += joiner.getJoinPush (nJoinExec);
+            joinData.pushWeight += joiner.getJoinPush (nJoinExec);
         }
         
-        return data;
+        return joinData;
     }
 }

@@ -4,7 +4,7 @@ import streamit.scheduler.iriter./*persistent.*/SplitJoinIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: SplitJoin.java,v 1.5 2002-06-30 04:01:06 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.6 2002-07-02 03:37:44 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for SplitJoins.
@@ -15,13 +15,15 @@ import streamit.misc.Fraction;
 
 abstract public class SplitJoin extends StreamWithSplitNJoin
 {
-    SplitJoinIter splitjoin;
+    protected SplitJoinIter splitjoin;
 
     private int nChildren;
     private StreamInterface children[];
 
     public SplitJoin(SplitJoinIter _splitjoin, StreamFactory factory)
     {
+        super(_splitjoin);
+        
         ASSERT(_splitjoin);
         splitjoin = _splitjoin;
 
@@ -73,7 +75,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
      * SplitJoin to go through an entire steady state.
      * These are initialized by computeSteadySchedule
      */
-    private BigInteger childrenNumExecs[];
+    protected BigInteger childrenNumExecs[];
 
     /**
      * these store how many times the splitter and joiner need to
@@ -82,6 +84,26 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
      * These are initialized by computeSteadySchedule
      */
     private BigInteger splitNumRounds, joinNumRounds;
+    
+    /**
+     * return the numberof times all the splitter work functions need to
+     * run in order to complete a steady schedule.
+     * @return number of rounds the splitter needs to run in a steady schedule
+     */
+    protected int getSplitNumRounds()
+    {
+        return splitNumRounds.intValue();
+    }
+
+    /**
+     * return the numberof times all the joiner work functions need to
+     * run in order to complete a steady schedule.
+     * @return number of rounds the joiner needs to run in a steady schedule
+     */
+    protected int getJoinNumRounds()
+    {
+        return joinNumRounds.intValue();
+    }
 
     /**
      * Compute the number of times each child, the split and the join
@@ -93,28 +115,11 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
      */
     public void computeSteadyState()
     {
-        // not tested yet.
-        ASSERT (false);
-        
         // amount of data distributed to and collected by the split
         // and join
         int splitPushWeights[];
         int joinPopWeights[];
         int splitPopWeight, joinPushWeight;
-
-        // calculate amount of data handled by the splitter
-        {
-            SplitSteadyFlow splitFlow = getSplitSteadyFlow (splitjoin);
-            splitPopWeight = splitFlow.splitPopWeight;
-            splitPushWeights = splitFlow.splitPushWeights;
-        }
-
-        // calculate amount of data collected from each child
-        {
-            JoinSteadyFlow joinFlow = getJoinSteadyFlow (splitjoin);
-            joinPushWeight = joinFlow.joinPushWeight;
-            joinPopWeights = joinFlow.joinPopWeights;
-        }
 
         Fraction childrenRates[] = new Fraction[nChildren];
         Fraction splitRate = null;
@@ -136,7 +141,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 
                 // rates at which the splitter is producing the data
                 // and the child is consuming it:
-                int numOut = splitPushWeights[nChild];
+                int numOut = splitFlow.pushWeights[nChild];
                 int numIn = child.getSteadyPop();
 
                 // is the splitter actually producing any data?
@@ -162,10 +167,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                     {
                         // if the child is producing data, the joiner
                         // better be consuming it!
-                        ASSERT(joinPopWeights [nChild] != 0);
+                        ASSERT(joinFlow.popWeights [nChild] != 0);
 
                         int childOut = child.getSteadyPush ();
-                        int joinIn = joinPopWeights [nChild];
+                        int joinIn = joinFlow.popWeights [nChild];
 
                         joinRate = new Fraction(childOut, joinIn).multiply(childRate).reduce();
                     }
@@ -203,7 +208,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 Fraction newChildRate = null;
                 {
                     int childOut = child.getSteadyPush ();
-                    int joinIn = joinPopWeights [nChild];
+                    int joinIn = joinFlow.popWeights [nChild];
 
                     // does the child produce any data?
                     if (childOut != 0)
@@ -297,6 +302,8 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 // normalize the children's rates and store them in
                 // childrenNumExecs
                 {
+                    childrenNumExecs = new BigInteger [nChildren];
+                    
                     int nChild;
                     for (nChild = 0; nChild < nChildren; nChild++)
                     {
@@ -315,8 +322,8 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         
         // setup my variables that come for Stream:
         {
-            int pop = splitNumRounds.intValue () * splitPopWeight;
-            int push = joinNumRounds.intValue () * joinPushWeight;
+            int pop = splitNumRounds.intValue () * splitFlow.popWeight;
+            int push = joinNumRounds.intValue () * joinFlow.pushWeight;
             
             setSteadyPeek (pop);
             setSteadyPop (pop);

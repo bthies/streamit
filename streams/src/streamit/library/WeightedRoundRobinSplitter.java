@@ -43,9 +43,6 @@ public class WeightedRoundRobinSplitter extends Splitter
 
     public int [] getWeights ()
     {
-        // not tested yet
-        ASSERT (0);
-        
         int numChildren = dest.size ();
         int [] weights = new int [numChildren];
         
@@ -63,9 +60,6 @@ public class WeightedRoundRobinSplitter extends Splitter
 
     public int getConsumption ()
     {
-        // not tested yet
-        ASSERT (0);
-        
         int numChildren = dest.size ();
         int inputTotal = 0;
         

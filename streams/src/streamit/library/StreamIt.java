@@ -18,7 +18,7 @@ public class StreamIt extends Pipeline
 {
     int numExecutions = 0;
     boolean printdot = false;
-    void runSchedule(Object schedule)
+    void runSchedule(Object schedule, Object function)
     {
         if (schedule instanceof Operator)
         {
@@ -30,7 +30,7 @@ public class StreamIt extends Pipeline
                 numExecutions = 0;
             }
             int inputCount = 0, outputCount = 0;
-            if (schedule instanceof Stream)
+            if (schedule instanceof Filter)
             {
                 Stream stream = (Stream) schedule;
                 if (stream.getInputChannel() != null)
@@ -45,9 +45,16 @@ public class StreamIt extends Pipeline
             }
 
             Operator oper = (Operator) schedule;
-            oper.work();
+            if (oper instanceof Filter)
+                oper.work();
+            else if (oper instanceof SplitJoin)
+            {
+                ASSERT (function instanceof Operator);
+                ((Operator)function).work();
+            }
+            else ASSERT (false);
 
-            if (schedule instanceof Stream)
+            if (schedule instanceof Filter)
             {
                 Stream stream = (Stream) schedule;
                 int newInputCount, newOutputCount;
@@ -80,19 +87,10 @@ public class StreamIt extends Pipeline
 
             }
         }
-        else if (schedule instanceof Array)
-        {
-            Object[] array = (Object[]) schedule;
-            int size = array.length;
-
-            for (int index = 0; index < size; index++)
-            {
-                Object child = array[index];
-                ASSERT(child);
-                runSchedule(child);
-            }
-        }
-        else if (schedule instanceof Schedule)
+    }
+    void runSchedule(Object schedule)
+    {
+        if (schedule instanceof Schedule)
         {
             Schedule repSchedule = (Schedule) schedule;
 
@@ -101,7 +99,7 @@ public class StreamIt extends Pipeline
             {
                 if (repSchedule.isBottomSchedule())
                 {
-                    runSchedule(repSchedule.getWorkStream().getObject());
+                    runSchedule(repSchedule.getWorkStream().getObject(), repSchedule.getWorkFunc());
                 }
                 else
                 {

@@ -5,7 +5,7 @@ import streamit.scheduler.iriter./*persistent.*/Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.4 2002-06-30 04:01:05 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.5 2002-07-02 03:37:44 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -22,6 +22,8 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
 
     FeedbackLoop (FeedbackLoopIter _feedbackLoop, StreamFactory factory)
     {
+        super (_feedbackLoop);
+        
         ASSERT(_feedbackLoop);
         feedbackLoop = _feedbackLoop;
         
@@ -69,20 +71,6 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         int joinPopWeights[];
         int splitPopWeight, joinPushWeight;
 
-        // calculate amount of data handled by the splitter
-        {
-            SplitSteadyFlow splitFlow = getSplitSteadyFlow (feedbackLoop);
-            splitPopWeight = splitFlow.splitPopWeight;
-            splitPushWeights = splitFlow.splitPushWeights;
-        }
-
-        // calculate amount of data collected from each child
-        {
-            JoinSteadyFlow joinFlow = getJoinSteadyFlow (feedbackLoop);
-            joinPushWeight = joinFlow.joinPushWeight;
-            joinPopWeights = joinFlow.joinPopWeights;
-        }
-        
         // now, assuming the body executes once, compute fractions
         // of how many times everything else executes
         {
@@ -99,10 +87,10 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             BigInteger joinPush, joinPop;
 
             // get the feedback production rate and others
-            splitPush = BigInteger.valueOf (splitPushWeights [1]);
-            splitPop = BigInteger.valueOf (splitPopWeight);
-            joinPop = BigInteger.valueOf (joinPopWeights [1]);
-            joinPush = BigInteger.valueOf (joinPushWeight);
+            splitPush = BigInteger.valueOf (splitFlow.pushWeights [1]);
+            splitPop = BigInteger.valueOf (splitFlow.popWeight);
+            joinPop = BigInteger.valueOf (joinFlow.popWeights [1]);
+            joinPush = BigInteger.valueOf (joinFlow.pushWeight);
 
             // calculate all the fractions
             Fraction bodyFrac = new Fraction (BigInteger.ONE, BigInteger.ONE);
@@ -146,8 +134,8 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
 
         // setup my variables that come from SchedStream:
         {
-            int pop = joinNumRounds.intValue () * joinPopWeights [0];
-            int push = splitNumRounds.intValue () * splitPushWeights [1];
+            int pop = joinNumRounds.intValue () * joinFlow.popWeights [0];
+            int push = splitNumRounds.intValue () * splitFlow.pushWeights [1];
             
             setSteadyPeek (pop);
             setSteadyPop (pop);

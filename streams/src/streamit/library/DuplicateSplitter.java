@@ -12,9 +12,6 @@ public class DuplicateSplitter extends Splitter
 
     public int [] getWeights ()
     {
-        // not tested yet
-        ASSERT (0);
-        
         int numChildren = dest.size ();
         int [] weights = new int [numChildren];
         

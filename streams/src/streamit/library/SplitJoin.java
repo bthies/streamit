@@ -300,8 +300,8 @@ public class SplitJoin extends Stream
 
      // allow access to the children of this pipeline
      
-    public int getNumChildren () { return streamElements.size (); }
-    public Stream getChildN (int n) { return (Stream) streamElements.get (n); }
+    public int getNumChildren () { return childrenStreams.size (); }
+    public Stream getChildN (int n) { return (Stream) childrenStreams.get (n); }
     public Splitter getSplitter () { return splitter; }
     public Joiner getJoiner () { return joiner; }
     

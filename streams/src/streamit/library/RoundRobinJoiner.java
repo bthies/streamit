@@ -29,9 +29,6 @@ public class RoundRobinJoiner extends Joiner
 
     public int [] getWeights ()
     {
-        // not tested yet
-        ASSERT (0);
-        
         int numChildren = srcs.size ();
         int [] weights = new int [numChildren];
         
@@ -49,9 +46,6 @@ public class RoundRobinJoiner extends Joiner
     
     public int getProduction ()
     {
-        // not tested yet
-        ASSERT (0);
-        
         int numChildren = srcs.size ();
         int outputTotal = 0;
         

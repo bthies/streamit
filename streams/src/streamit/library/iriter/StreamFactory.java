@@ -1,12 +1,13 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.1 2002-06-30 04:01:27 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.2 2002-07-02 03:37:41 karczma Exp $ */
 
 import streamit.misc.DestroyedClass;
 import streamit.scheduler.iriter.Iterator;
 import streamit.scheduler.base.StreamInterface;
 import streamit.scheduler.singleappearance.Filter;
 import streamit.scheduler.singleappearance.Pipeline;
+import streamit.scheduler.singleappearance.SplitJoin;
 
 /**
  * This class basically implements the StreamFactory interface.  In the 
@@ -28,6 +29,11 @@ public class StreamFactory
         if (streamIter.isPipeline() != null)
         {
             return new Pipeline(streamIter.isPipeline(), this);
+        }
+        
+        if (streamIter.isSplitJoin() != null)
+        {
+            return new SplitJoin(streamIter.isSplitJoin(), this);
         }
 
         // not implemented yet

@@ -5,14 +5,19 @@ import streamit.misc.UniquePairContainer;
 import streamit.misc.Pair;
 import java.util.Map;
 import java.util.HashMap;
-import streamit.scheduler.iriter./*persistent.*/Iterator;
-import streamit.scheduler.iriter./*persistent.*/FilterIter;
-import streamit.scheduler.iriter./*persistent.*/PipelineIter;
-import streamit.scheduler.iriter./*persistent.*/SplitJoinIter;
-import streamit.scheduler.iriter./*persistent.*/FeedbackLoopIter;
+import streamit.scheduler.iriter./*persistent.*/
+Iterator;
+import streamit.scheduler.iriter./*persistent.*/
+FilterIter;
+import streamit.scheduler.iriter./*persistent.*/
+PipelineIter;
+import streamit.scheduler.iriter./*persistent.*/
+SplitJoinIter;
+import streamit.scheduler.iriter./*persistent.*/
+FeedbackLoopIter;
 import streamit.scheduler.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.3 2002-06-30 04:01:03 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.4 2002-07-02 03:37:42 karczma Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -32,13 +37,15 @@ public class ScheduleBuffers extends DestroyedClass
     {
         traverseStream(root);
     }
-    
-    public int getBufferSizeBetween (streamit.scheduler.iriter.Iterator userBefore, streamit.scheduler.iriter.Iterator userAfter)
+
+    public int getBufferSizeBetween(
+        streamit.scheduler.iriter.Iterator userBefore,
+        streamit.scheduler.iriter.Iterator userAfter)
     {
         Iterator before = (Iterator) user2persistent.get(userBefore);
         Iterator after = (Iterator) user2persistent.get(userAfter);
         Pair beforeAfter = pairs.getPair(before, after);
-        BufferStatus status = (BufferStatus)bufferSizes.get(beforeAfter);
+        BufferStatus status = (BufferStatus) bufferSizes.get(beforeAfter);
         return status.getBufferSize();
     }
 
@@ -86,7 +93,8 @@ public class ScheduleBuffers extends DestroyedClass
 
     private void traverseStream(Iterator stream)
     {
-        user2persistent.put(stream/*.getPersistentIterator()*/, stream);
+        user2persistent.put(stream /*.getPersistentIterator()*/
+        , stream);
 
         if (stream.isFilter() != null)
         {
@@ -165,8 +173,93 @@ public class ScheduleBuffers extends DestroyedClass
         }
         else if (stream.isSplitJoin() != null)
         {
-            // not done yet
-            ASSERT(false);
+            SplitJoinIter splitjoin = stream.isSplitJoin();
+
+            // traverse all the children
+            {
+                int nChild = 0;
+                for (; nChild < splitjoin.getNumChildren(); nChild++)
+                {
+                    traverseStream(splitjoin.getChild(nChild));
+                }
+            }
+
+            // store all the split's work functions
+            {
+                int nPhase = 0;
+                for (; nPhase < splitjoin.getSplitterNumWork(); nPhase++)
+                {
+                    workFunctions.put(
+                        pairs.getPair(
+                            splitjoin.getSplitterWork(nPhase),
+                            stream),
+                        new Integer(nPhase));
+                }
+            }
+
+            // store all the join's work functions
+            {
+                int nPhase = 0;
+                for (; nPhase < splitjoin.getJoinerNumWork(); nPhase++)
+                {
+                    workFunctions.put(
+                        pairs.getPair(
+                            splitjoin.getJoinerWork(nPhase),
+                            stream),
+                        new Integer(nPhase));
+                }
+            }
+
+            // enter all the buffers:
+            {
+                int nChild = 0;
+                for (; nChild < splitjoin.getNumChildren(); nChild++)
+                {
+                    Iterator child = splitjoin.getChild(nChild);
+
+                    // create a buffer between sj and the child
+                    // (the one at the top of the sj, 
+                    // above child, below splitter
+                    {
+                        Pair pair = pairs.getPair(stream, child);
+                        BufferStatus buffer = new BufferStatus();
+
+                        // buffer pair:
+                        bufferSizes.put(pair, buffer);
+
+                        // buffer before the child:
+                        targetBufferBefore.put(
+                            getFirstStream(child),
+                            buffer);
+
+                        // buffer after the splitter:
+                        // don't store this data, as it will be ambiguous
+                        // handle this as a special case when actually running
+                        // the schedule
+                    }
+
+                    // create a buffer between sj and the child
+                    // (the one at the bottom of the sj, 
+                    // below child, above joiner)
+                    {
+                        Pair pair = pairs.getPair(child, stream);
+                        BufferStatus buffer = new BufferStatus();
+
+                        // buffer pair:
+                        bufferSizes.put(pair, buffer);
+
+                        // buffer after the child:
+                        targetBufferAfter.put(
+                            getLastStream(child),
+                            buffer);
+
+                        // buffer before the joiner:
+                        // don't store this data, as it will be ambiguous
+                        // handle this as a special case when actually running
+                        // the schedule
+                    }
+                }
+            }
         }
         else if (stream.isFeedbackLoop() != null)
         {
@@ -268,7 +361,7 @@ public class ScheduleBuffers extends DestroyedClass
                             (BufferStatus) targetBufferBefore.get(
                                 workStream);
                         bufferBefore.peekData(peekAmount);
-                        bufferBefore.peekData(popAmount);
+                        bufferBefore.popData(popAmount);
                     }
 
                     // update buffer after only if it's used
@@ -287,8 +380,61 @@ public class ScheduleBuffers extends DestroyedClass
                 }
                 else if (workStream.isSplitJoin() != null)
                 {
-                    // not done yet
-                    ASSERT(false);
+                    SplitJoinIter sj = workStream.isSplitJoin();
+                    int popAmount, pushAmount;
+
+                    // check if the function is a splitter or joiner function
+                    // and get appropriate pop/push values
+                    // also update the internal buffers!
+                    if (sj.getSplitterWork(numWork) == workFunc)
+                    {
+                        // splitter function
+                        popAmount = sj.getSplitPop(numWork);
+                        pushAmount = 0;
+                        
+                        // push data into the internal splitter buffers
+                        int nChild;
+                        int pushWeights[] = sj.getSplitPushWeights(numWork);
+                        for (nChild = 0; nChild < sj.getNumChildren(); nChild++)
+                        {
+                            Iterator firstChild = getFirstStream(sj.getChild(nChild));
+                            BufferStatus bufferBefore = (BufferStatus) targetBufferBefore.get(firstChild);
+                            bufferBefore.pushData(pushWeights[nChild]);
+                        }
+                    } else {
+                        // joiner function
+                        popAmount = 0;
+                        pushAmount = sj.getJoinPush(numWork);
+                        
+                        // push data into the internal joiner buffers
+                        int nChild;
+                        int popWeights[] = sj.getJoinPopWeights(numWork);
+                        for (nChild = 0; nChild < sj.getNumChildren(); nChild++)
+                        {
+                            Iterator lastChild = getLastStream(sj.getChild(nChild));
+                            BufferStatus bufferAfter = (BufferStatus) targetBufferAfter.get(lastChild);
+                            bufferAfter.popData(popWeights[nChild]);
+                        }
+                    }
+
+                    // update buffer before, only if it's used
+                    if (popAmount > 0)
+                    {
+                        BufferStatus bufferBefore =
+                            (BufferStatus) targetBufferBefore.get(
+                                workStream);
+                        bufferBefore.popData(popAmount);
+                    }
+
+                    // update buffer after only if it's used
+                    if (pushAmount > 0)
+                    {
+                        BufferStatus bufferAfter =
+                            (BufferStatus) targetBufferAfter.get(
+                                workStream);
+
+                        bufferAfter.pushData(pushAmount);
+                    }
                 }
                 else if (workStream.isFeedbackLoop() != null)
                 {

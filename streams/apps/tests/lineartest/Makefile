@@ -43,7 +43,7 @@ linear-test: linear-compile
 
 
 test-current: linear-compile
-	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest7$(SOURCE-EXT) > current.output
+	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest8$(SOURCE-EXT) > current.output
 	./parse_linear_output.pl current.output
 
 
@@ -65,3 +65,4 @@ clean:
 	rm -f *.output
 	rm -f regtests/*.output
 	rm -f regtests/*.parsed
+	rm -f regtests/*~

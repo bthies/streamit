@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.62 2004-12-01 23:38:48 janiss Exp $
+ * $Id: KjcOptions.opt,v 1.63 2005-01-23 00:38:35 thies Exp $
  */
 
 prefix Kjc
@@ -446,3 +446,7 @@ longname 		"absarray"
 	default		"false"
 	help		"Use abstract array syntax and semantics instead of C arrays."
 
+longname 		"modfusion"
+	type		boolean
+	default		"false"
+	help		"Use circular buffer with mod operations when fusing pipelines."

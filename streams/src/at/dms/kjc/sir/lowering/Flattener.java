@@ -155,7 +155,9 @@ public class Flattener {
 	// if someone wants to run any of the linear tools/optimizations
 	// we need to run linear analysis first to extract the information
 	// we are working with.
-	if (KjcOptions.linearanalysis || KjcOptions.linearreplacement || KjcOptions.frequencyreplacement) {
+	if (KjcOptions.linearanalysis ||
+	    KjcOptions.linearreplacement ||
+	    (KjcOptions.frequencyreplacement != -1)) {
 	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.print("Running linear analysis... ");
 	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
@@ -176,13 +178,21 @@ public class Flattener {
 	    }
 
 	    // and finally, if we want to run frequency analysis
-	    if (KjcOptions.frequencyreplacement) {
-		System.err.print("Running frequency replacement... ");
+	    // 0 means stupid implementation, 1 means nice implemenation
+	    if (KjcOptions.frequencyreplacement == 0) {
+		System.err.print("Running (stupid) frequency replacement... ");
+		StupidFrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize);
+		System.err.println("done.");
+		LinearDot.printGraph(str, "linear-frequency-stupid.dot", lfa);
+	    }
+	    if (KjcOptions.frequencyreplacement == 1) {
+		System.err.print("Running (smart) frequency replacement... ");
 		FrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize);
 		System.err.println("done.");
 		LinearDot.printGraph(str, "linear-frequency.dot", lfa);
 	    }
 
+	    
 	}
 
 	// make single structure

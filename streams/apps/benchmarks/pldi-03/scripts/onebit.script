@@ -1,0 +1,5 @@
+normal:--unroll 100000:OneBitDToA
+part:--linearpartition:OneBitDToA
+partatlas:--linearpartition --atlas:OneBitDToA
+freq:--frequencyreplacement:OneBitDToA
+

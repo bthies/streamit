@@ -1,0 +1,38 @@
+void->void pipeline Recursive {
+    add Source();
+    add Exp(3);
+    add Printer();
+}
+
+int->int pipeline Exp (int N) {
+    add TimesTwo();
+    if (N>1) {
+	add Exp2(N);
+    }
+}
+
+int->int pipeline Exp2 (int N) {
+    add Exp3(N+1);
+}
+
+int->int pipeline Exp3 (int N) {
+    add Exp(N-2);
+}
+
+void->int filter Source() {
+    work push 1 {
+	push(1);
+    }
+}
+
+int->int filter TimesTwo() {
+    work push 1 pop 1 {
+	push(2*pop());
+    }
+}
+
+int->void filter Printer() {
+    work pop 1 {
+	print(pop());
+    }
+}

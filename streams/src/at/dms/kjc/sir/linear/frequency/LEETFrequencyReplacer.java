@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.11 2003-03-06 13:01:28 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.12 2003-03-30 21:51:44 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -65,29 +65,27 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 
     /**
-     * Does the actual work of replacing something that computes a convolution
-     * sum with something that does a FFT, multiply, and then IFFT.
+     * Returns whether or not we can replace <str> with this replacer.
      */
-    public void makeReplacement(SIRStream self) {
-	LinearPrinter.println(" processing " + self.getIdent());
+    public static boolean canReplace(SIRStream str, LinearAnalyzer lfa) {
 	/* if we don't have a linear form for this stream, we are done. */
-	if(!this.linearityInformation.hasLinearRepresentation(self)) {
+	if(!lfa.hasLinearRepresentation(str)) {
 	    LinearPrinter.println("  aborting -- not linear");
-	    return;
+	    return false;
 	}
 
-	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
+	LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(str);
 	/* if this filter doesn't have a pop of one, we abort. **/
 	if (linearRep.getPopCount() != 1) {
 	    LinearPrinter.println("  aborting -- filter is not FIR (pop = " +
 				  linearRep.getPopCount() + ")"); 
-	    return;
+	    return false;
 	}	
 
 	/* if there is not a real valued FIR (all coefficients are real), we are done. */
 	if (!linearRep.isPurelyReal()) {
 	    LinearPrinter.println("  aborting -- filter has non real coefficients."); 
-	    return;
+	    return false;
 	}
 
 	/** if this filter has a constant component (eg if it has a non zero "b") we abort.
@@ -98,7 +96,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	    LinearPrinter.println("  aborting -- filter has non zero constant components.\n" +
 				  "ANDREW -- YOU ARE BEING LAZY. THIS IS NOT A HARD THING TO IMPLEMENT " +
 				  "SO DO IT!");
-	    return;
+	    return false;
 	}
 	
 	/** if doing clever replacement, don't do small FIRs. **/
@@ -106,9 +104,26 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
  	    LinearPrinter.println("  aborting -- fir size too small: " +
 				  linearRep.getPeekCount() + ". needs to be at least " +
 				  minFIRSize);
-	    return;
+	    return false;
 	}
 
+	// otherwise we can replace
+	return true;
+    }
+
+    /**
+     * Does the actual work of replacing something that computes a convolution
+     * sum with something that does a FFT, multiply, and then IFFT.
+     */
+    public boolean makeReplacement(SIRStream self) {
+	LinearPrinter.println(" processing " + self.getIdent());
+
+	// make sure we can replace this.
+	if (!canReplace(self, this.linearityInformation)) {
+	    return false;
+	}
+
+	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
 	/** set the target FFT size appropriately if it hasn't already been set */
 	int targetNumberOfOutputs = fftSizeFactor * linearRep.getPeekCount();
 	LinearPrinter.println("  target output size: " + targetNumberOfOutputs);
@@ -223,6 +238,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	
 	LinearPrinter.println("  done replacing.");
 	
+	// return true since we replaced something
+	return true;
     }
     
     /**

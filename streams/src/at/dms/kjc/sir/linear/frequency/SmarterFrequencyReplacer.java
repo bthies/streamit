@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  *
  * This frequency replacer is used to generate the 
  * 
- * $Id: SmarterFrequencyReplacer.java,v 1.4 2003-03-06 13:01:28 thies Exp $
+ * $Id: SmarterFrequencyReplacer.java,v 1.5 2003-03-30 21:51:44 thies Exp $
  **/
 public class SmarterFrequencyReplacer extends FrequencyReplacer {
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -66,19 +66,19 @@ public class SmarterFrequencyReplacer extends FrequencyReplacer {
      * Does the actual work of replacing something that computes a convolution
      * sum with something that does a FFT, multiply, and then IFFT.
      */
-    public void makeReplacement(SIRStream self) {
+    public boolean makeReplacement(SIRStream self) {
 	LinearPrinter.println(" processing " + self.getIdent());
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {
 	    LinearPrinter.println("  aborting -- not linear");
-	    return;
+	    return false;
 	}
 
 	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
 	/* if there is not an FIR filter, we are done. */
 	if (!linearRep.isFIR()) {
 	    LinearPrinter.println("  aborting -- filter is not FIR"); 
-	    return;
+	    return false;
 	}	
 
 	/** if we are doing smart replacment, don't do small FIRs. **/
@@ -86,7 +86,7 @@ public class SmarterFrequencyReplacer extends FrequencyReplacer {
  	    LinearPrinter.println("  aborting -- fir size too small: " +
 				  linearRep.getPeekCount() + ". needs to be at least " +
 				  minFIRSize);
-	    return;
+	    return false;
 	}
 
 	/** set the target FFT size appropriately if it hasn't already been set */
@@ -162,6 +162,8 @@ public class SmarterFrequencyReplacer extends FrequencyReplacer {
 	
 	LinearPrinter.println("  done replacing.");
 	
+	// return true since we replaced something
+	return true;
     }
     
     /**

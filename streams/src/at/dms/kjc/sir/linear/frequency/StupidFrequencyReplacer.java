@@ -19,7 +19,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: StupidFrequencyReplacer.java,v 1.4 2003-03-06 13:01:28 thies Exp $
+ * $Id: StupidFrequencyReplacer.java,v 1.5 2003-03-30 21:51:44 thies Exp $
  **/
 public class StupidFrequencyReplacer extends FrequencyReplacer {
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -52,16 +52,16 @@ public class StupidFrequencyReplacer extends FrequencyReplacer {
      * Does the actual work of replacing something that computes a convolution
      * sum with something that does a FFT, multiply, and then IFFT.
      */
-    public void makeReplacement(SIRStream self) {
+    public boolean makeReplacement(SIRStream self) {
 	/* if we don't have a linear form for this stream, we are done. */
 	if(!this.linearityInformation.hasLinearRepresentation(self)) {
-	    return;
+	    return false;
 	}
 
 	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
 	/* if there is not an FIR filter, we are done. */
 	if (!linearRep.isFIR()) {
-	    return;
+	    return false;
 	}	
 	
 	/* now is when we get to the fun part, we have a linear representation
@@ -104,6 +104,8 @@ public class StupidFrequencyReplacer extends FrequencyReplacer {
 	
 	LinearPrinter.println(" done replacing.");
 	
+	// return true since we replaced something
+	return true;
     }
     
     /**

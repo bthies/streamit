@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.30 2003-09-05 18:03:31 dmaze Exp $
+ * $Id: TestExamples.java,v 1.31 2003-10-07 17:52:50 dmaze Exp $
  **/
 package streamittest;
 
@@ -97,6 +97,8 @@ public class TestExamples extends StreamITTestCase {
 
 
     public void testAutoCor() {
+        doSyntaxConvertTest(EXAMPLE_ROOT + "autocor/",
+                            "AutoCor.str", "AutoCor.java");
 	doCompileRunVerifyTest(EXAMPLE_ROOT + "autocor/",
 			       "AutoCor.java",
 			       "AutoCor.out",

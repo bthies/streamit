@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- File written by PDE 1.0 -->
+
+<!-- ======================================================================= -->
+<!-- The StreamItEditor is a plugin adapted from the Java editor and Readme  -->
+<!-- Tool examples.                                                          -->
+<!-- ======================================================================= -->
+
+<plugin
+   id = "texteditor"
+   name = "%pluginName"
+   version = "2.1.0"
+   provider-name = "%providerName"
+   class="texteditor.StreamItPlugin">
+
+   <requires>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.core.resources"/>
+   </requires>
+
+   <runtime>
+      <library name="streamiteditor.jar">
+         <export name="*"/>
+      </library>
+   </runtime>
+
+   <!-- ================================================================== -->
+   <!-- Extension point: org.eclipse.ui.editors                            -->
+   <!-- ================================================================== -->
+   <extension 
+	point="org.eclipse.ui.editors">
+      <editor
+         name="%streamItEditorName"
+         icon="icons/obj16/java.gif"
+         extensions="str"
+         contributorClass="texteditor.StreamItActionContributor"
+         class="texteditor.StreamItEditor"
+         id="StreamItEditor">
+      </editor>
+   </extension>
+
+   <!-- ================================================================== -->
+   <!-- Extension point: org.eclipse.ui.documentProviders                  -->
+   <!-- ================================================================== -->
+   <extension
+        point="org.eclipse.ui.documentProviders">
+      <provider
+         extensions="%streamItFileExtension"
+         class="texteditor.StreamItDocumentProvider"
+         id="texteditor.StreamItDocumentProvider">
+      </provider>
+   </extension>
+
+   <!-- ================================================================== -->
+   <!-- Extension point: org.eclipse.ui.preferencePages                   -->
+   <!-- ================================================================== -->
+   <extension
+        point = "org.eclipse.ui.preferencePages">
+      <page 
+	 id="texteditor.Page1"
+	 class="texteditor.StreamItPreferencePage"
+         name="%streamItPreferencePage">
+      </page>
+   </extension>
+
+   <!-- ================================================================== -->
+   <!-- Add more extensions here.                                          -->
+   <!-- ================================================================== -->
+
+</plugin>

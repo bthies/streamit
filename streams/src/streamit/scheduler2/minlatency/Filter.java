@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: Filter.java,v 1.1 2002-07-16 01:09:58 karczma Exp $ */
+/* $Id: Filter.java,v 1.2 2002-07-23 01:55:32 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FilterIter;
@@ -54,7 +54,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
         {
             int nPhase;
             for (nPhase = 0;
-                nPhase < filterIter.getNumInitStages();
+                nPhase < filterIter.getNumWorkPhases();
                 nPhase++)
             {
                 Schedule workFunction =
@@ -68,7 +68,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                         filterIter.getPeekPhase(nPhase),
                         filterIter.getPopPhase(nPhase),
                         filterIter.getPushPhase(nPhase));
-                addInitScheduleStage(phase);
+                addSteadySchedulePhase(phase);
             }
         }
     }

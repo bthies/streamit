@@ -17,7 +17,7 @@ import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.5 2002-07-06 06:06:07 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.6 2002-07-23 01:55:30 karczma Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -579,7 +579,7 @@ public class ScheduleBuffers extends DestroyedClass
                         // pop data from the internal body-splitter buffer
                         {
                             BufferStatus bodyBuffer =
-                                (BufferStatus) targetBufferAfter.get(body);
+                                (BufferStatus) targetBufferAfter.get(getLastStream(body));
                             bodyBuffer.popData(
                                 feedbackLoop.getSplitPop(numWork));
                         }
@@ -587,7 +587,7 @@ public class ScheduleBuffers extends DestroyedClass
                         // push data to the internal splitter-loop buffer
                         {
                             BufferStatus loopBuffer =
-                                (BufferStatus) targetBufferBefore.get(loop);
+                                (BufferStatus) targetBufferBefore.get(getFirstStream(loop));
                             loopBuffer.pushData(
                                 feedbackLoop.getSplitPushWeights(numWork)[1]);
                         }
@@ -603,7 +603,7 @@ public class ScheduleBuffers extends DestroyedClass
                         // push data to the internal joiner-body buffer
                         {
                             BufferStatus bodyBuffer =
-                                (BufferStatus) targetBufferBefore.get(body);
+                                (BufferStatus) targetBufferBefore.get(getFirstStream(body));
                             bodyBuffer.pushData(
                                 feedbackLoop.getJoinPush(numWork));
                         }
@@ -611,7 +611,7 @@ public class ScheduleBuffers extends DestroyedClass
                         // pop data from the internal loop-joiner buffer
                         {
                             BufferStatus loopBuffer =
-                                (BufferStatus) targetBufferAfter.get(loop);
+                                (BufferStatus) targetBufferAfter.get(getLastStream(loop));
                             loopBuffer.popData(
                                 feedbackLoop.getJoinPopWeights(numWork)[1]);
                         }

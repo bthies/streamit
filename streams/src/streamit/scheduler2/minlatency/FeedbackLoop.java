@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: FeedbackLoop.java,v 1.1 2002-07-19 05:06:43 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.2 2002-07-23 01:55:32 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -219,7 +219,7 @@ public class FeedbackLoop
             if (splitExecs > 0)
             {
                 // figure out if I can run a phase of the splitter
-                SplitFlow splitFlow = utility.getSplitSteadyPhaseFlow(0);
+                SplitFlow splitFlow = utility.getNextSplitSteadyPhaseFlow();
                 if (splitFlow.getPopWeight() <= postBodyBuffer[0])
                 {
                     // yes - add it to the schedule, update buffers
@@ -227,6 +227,7 @@ public class FeedbackLoop
                     // and start a new phase
                     splitExecs--;
                     phase.appendPhase(utility.getNextSplitSteadyPhase());
+                    utility.advanceSplitSchedule();
                     postBodyBuffer[0] -= splitFlow.getPopWeight();
                     preLoopBuffer[0] += splitFlow.getPushWeight(1);
                     if (splitFlow.getPushWeight(0) > 0)
@@ -259,6 +260,7 @@ public class FeedbackLoop
                     // and continue from the top
                     bodyExecs--;
                     phase.appendPhase(bodyPhase);
+                    utility.advanceChildSchedule(body);
                     preBodyBuffer[0] -= bodyPhase.getOverallPop();
                     postBodyBuffer[0] += bodyPhase.getOverallPush();
                     continue;
@@ -284,6 +286,7 @@ public class FeedbackLoop
                     // and continue
                     joinExecs--;
                     phase.appendPhase(utility.getNextJoinSteadyPhase());
+                    utility.advanceJoinSchedule();
                     postLoopBuffer[0] -= joinFlow.getPopWeight(1);
                     preBodyBuffer[0] += joinFlow.getPushWeight();
                     continue;
@@ -312,6 +315,7 @@ public class FeedbackLoop
                     // and continue from the top
                     loopExecs--;
                     phase.appendPhase(loopPhase);
+                    utility.advanceChildSchedule(feedback);
                     preLoopBuffer[0] -= loopPhase.getOverallPop();
                     postLoopBuffer[0] += loopPhase.getOverallPush();
                     continue;

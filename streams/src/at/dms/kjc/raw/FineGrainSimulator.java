@@ -244,6 +244,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	Iterator it = dests.iterator();
 	while(it.hasNext()) {
 	    Coordinate currentDest = Layout.getTile((FlatNode)it.next());
+	
 	    
 	    if (!receiveSchedules.containsKey(currentDest))
 		receiveSchedules.put(currentDest, new LinkedList());

@@ -69,12 +69,18 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		fw.write(createInitPath(joiner) + "\n");	    
 	    fw.write(createJoinerWork(joiner));
 	    //write the extern for the function to init the 
-	    //switch
-	    fw.write("void raw_init();\n\n");
-            fw.write("void raw_init2();\n\n");
+	    //switch, but there is no switch for the magic network
+	    if (!KjcOptions.magic_net) {
+		fw.write("void raw_init();\n\n");
+		fw.write("void raw_init2();\n\n");
+	    }
 	    fw.write("void begin(void) {\n");
-	    fw.write("  raw_init();\n");
-            fw.write("  raw_init2();\n");
+	    if (!KjcOptions.magic_net) {
+		fw.write("  raw_init();\n");
+		fw.write("  raw_init2();\n");
+	    }
+	    else
+		fw.write("  __asm__ volatile (\"magc $0, $0, 1\");\n");
 	    fw.write("  work();\n");
 	    fw.write("}\n");
 	    fw.close();

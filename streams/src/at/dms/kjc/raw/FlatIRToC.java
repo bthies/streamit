@@ -232,7 +232,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//" = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
 	//print(INT_HEADER_WORD + 
 	//" = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
-	if (!KjcOptions.raw_uni) {
+	
+	//if we are using the magic network, 
+	//use a magic instruction to initialize the magic fifos
+	if (KjcOptions.magic_net)
+	    print("  __asm__ volatile (\"magc $0, $0, 1\");\n");
+	
+	//call the raw_init() function for the static network
+	//only if we are not using a uniprocessor or the
+	//magic network
+	if (!KjcOptions.raw_uni && !KjcOptions.magic_net) {
 	    print("  raw_init();\n");
 	    print("  raw_init2();\n");
 	}

@@ -42,6 +42,10 @@ public class MakefileGenerator
 	    if (KjcOptions.numbers > 0 && NumberGathering.successful)
 		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
 	    fw.write("SIM-CYCLES = 500000\n\n");
+	    //if we are using the magic network, tell btl
+	    if (KjcOptions.magic_net)
+		fw.write("EXTRA_BTL_ARGS += " +
+			 "-magic_instruction -magic_crossbar C1H2\n");
 	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
@@ -73,9 +77,14 @@ public class MakefileGenerator
 		    fw.write("OBJECT_FILES_0");
 		else
 		    fw.write("OBJECT_FILES_");
+
 		fw.write(tile + " = " +
-			 "tile" + tile + ".o " +
-			 "sw" + tile + ".o\n");
+			 "tile" + tile + ".o ");
+		//if we are using the magic net, we do not create 
+		//the switch assembly files
+		if (!KjcOptions.magic_net) 
+		    fw.write("sw" + tile + ".o");
+		fw.write("\n");
 	    }
 	    
 	    fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");
@@ -101,7 +110,10 @@ public class MakefileGenerator
 	FileWriter fw = new FileWriter("fileio.bc");
 
 	fw.write("include(\"<dev/basic.bc>\");\n");
+
+	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 	
+
 	//number gathering code
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
 	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
@@ -109,7 +121,6 @@ public class MakefileGenerator
 	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n\n");
 	    
 	    fw.write("{\n");
-	    fw.write("  local streamit_home = getenv(\"STREAMIT_HOME\");\n");	
 	    fw.write("  local numberpath = malloc(strlen(streamit_home) + 30);\n");
 	    fw.write("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/gather_numbers.bc\");\n");
 	    //include the number gathering code and install the device file
@@ -125,6 +136,22 @@ public class MakefileGenerator
 	    fw.write("  }\n");
 	    fw.write("}\n");
 	}
+
+	//magic network code
+	if (KjcOptions.magic_net) {
+	    fw.write("include(\"magic_schedules.bc\");\n");
+	    
+	    fw.write("fn addMagicNetwork() {\n");
+	    fw.write("  local magicpath = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("  sprintf(magicpath, \"%s%s\", streamit_home, \"/include/magic_net.bc\");\n");
+	    //include the number gathering code and install the device file
+	    fw.write("  include(magicpath);\n");  
+	    //add the function to catch the magic instructions
+	    fw.write("  addMagicFIFOs();\n");
+	    fw.write("  create_schedules();\n");
+	    fw.write("}\n");
+	}
+
 
 	fw.write
             ("global gAUTOFLOPS = 0;\n" +
@@ -188,7 +215,10 @@ public class MakefileGenerator
 	}
 	//
 	fw.write("\n{\n");	
-		
+	
+	if (KjcOptions.magic_net)
+	    fw.write("  addMagicNetwork();\n");
+
 	if (hasIO) {
 	    //generate the code for the fileReaders
 	    Iterator frs = FileVisitor.fileReaders.iterator();

@@ -108,6 +108,8 @@ public class CalcBufferSize extends at.dms.util.Utils implements FlatVisitor
  				      Util.getCountPrev(steady, prev, node)) * prevProd) -
 				    Util.getCount(init, node) * currentCons);
 
+		//a buffersize of 1 does not work too well
+		size = Math.max(size, 2);
 		consBufferSize.put(node, new Integer(size));
 	    }
 	    else 
@@ -118,6 +120,8 @@ public class CalcBufferSize extends at.dms.util.Utils implements FlatVisitor
 		int size = Math.max(Util.getCount(init, node), Util.getCount(steady, node)) * 
 		    filter.getPushInt();
 		
+		//a buffersize of 1 does not work too well
+		size = Math.max(size, 2);
 		prodBufferSize.put(node, new Integer(size));
 	    }
 	    else 

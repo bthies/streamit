@@ -2,6 +2,7 @@ package at.dms.kjc.flatgraph;
 
 import at.dms.kjc.*;
 import at.dms.kjc.raw.*;
+import at.dms.kjc.spacedynamic.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.util.Utils;
@@ -15,6 +16,12 @@ import java.util.*;
 public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 {
     public int filterCount;
+
+    //given a flatnode map to the execution count
+    //don't rely on these to be always set, they are only valid after
+    //a call to dumpGraph
+    public HashMap initExecutionCounts;
+    public HashMap steadyExecutionCounts; 
 
     private FlatNode currentNode;
     private StringBuffer buf;
@@ -62,7 +69,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
 	    if (entry.getKey() instanceof SIRFilter) {
-		if (Util.countMe((SIRFilter)entry.getKey()))
+		if (countMe((SIRFilter)entry.getKey()))
 		    count++;
 	    }
 	    else if (entry.getKey() instanceof SIRJoiner) {
@@ -323,7 +330,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 				FlatNode inEdge=inEdges[off];
 				//Dummy identity node
 				//Later we will set its input and outputs to the right places
-				FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(inEdge)));
+				FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(inEdge)));
 				ident.inputs=1;
 				ident.ways=1;
 				ident.weights=new int[]{1};
@@ -371,7 +378,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 				    inEdge=inEdges[off];
 				    entry=(LinkedList)needSplit.get(inEdge);
 				    //Dummy identity again
-				    ident=new FlatNode(new SIRIdentity(Util.getOutputType(inEdge)));
+				    ident=new FlatNode(new SIRIdentity(getOutputType(inEdge)));
 				    ident.inputs=1;
 				    ident.ways=1;
 				    ident.weights=new int[]{1};
@@ -612,7 +619,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 			LinkedList edges=(LinkedList)visited.get(node);
 			if(edges==null) {
 			    edges=new LinkedList();
-			    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(node)));
+			    FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(node)));
 			    FlatNode split=new FlatNode(SIRSplitter.createWeightedRR(null,new JExpression[0]));
 			    node.edges[0]=split;
 			    split.inputs=1;
@@ -628,7 +635,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 			    edges.add(newWeights.get(i));
 			    visited.put(node,edges);
 			} else {
-			    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(node)));
+			    FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(node)));
 			    FlatNode split=(FlatNode)edges.get(0);
 			    ident.inputs=1;
 			    ident.ways=1;
@@ -699,7 +706,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    FlatNode.addEdges(currentNode, joinerNode);
 	    /*
 	    //Add dummy identity on the output splitter so splitters are always followed by a filter (making analysis simple)
-	    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(splitterNode.edges[0])));
+	    FlatNode ident=new FlatNode(new SIRIdentity(getOutputType(splitterNode.edges[0])));
 	    FlatNode.addEdges(splitterNode, ident);
 	    currentNode = ident;
 	    */
@@ -744,10 +751,14 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 
     /** 
      * creates the dot file representing the flattened graph 
-     * must be called after createExecutionCounts in RawBackend.
+     * must be called after createExecutionCounts in 
      */
-    public void dumpGraph(String filename) 
+    public void dumpGraph(String filename, HashMap initExeCount,
+			  HashMap steadyExeCount) 
     {
+	this.initExecutionCounts = initExeCount;
+	this.steadyExecutionCounts = steadyExeCount;
+	
 	buf = new StringBuffer();
 	
 	buf.append("digraph Flattend {\n");
@@ -777,8 +788,8 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 
 	    buf.append(node.getName() + "[ label = \"" +
 		       node.getName() + "\\n");
-	    buf.append("init Mult: " + RawBackend.getMult(node, true) + 
-		       " steady Mult: " + RawBackend.getMult(node, false));
+	    buf.append("init Mult: " + getMult(node, true) + 
+		       " steady Mult: " + getMult(node, false));
 	    buf.append("\\n");
 	    buf.append(" peek: " + filter.getPeekInt() + 
 		       " pop: " + filter.getPopInt() + 
@@ -814,6 +825,59 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    buf.append("[label=\"" + node.weights[i] + "\"];\n");
 	}
     }
+
+
+    public static CType getOutputType(FlatNode node) {
+	if (node.contents instanceof SIRFilter)
+	    return ((SIRFilter)node.contents).getOutputType();
+	else if (node.contents instanceof SIRJoiner)
+	    return getJoinerType(node);
+	else if (node.contents instanceof SIRSplitter)
+	    return getOutputType(node.incoming[0]);
+	else {
+	    Utils.fail("Cannot get output type for this node");
+	    return null;
+	}
+    }
+
+    //returns true if this filter is mapped
+    public static boolean countMe(SIRFilter filter) {
+	return !(filter instanceof SIRIdentity ||
+		 filter instanceof SIRFileWriter ||
+		 filter instanceof SIRFileReader);
+    }
+    
+    public static CType getJoinerType(FlatNode joiner) 
+    {
+	boolean found;
+	//search backward until we find the first filter
+	while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
+	    found = false;
+	    for (int i = 0; i < joiner.inputs; i++) {
+		if (joiner.incoming[i] != null) {
+		    joiner = joiner.incoming[i];
+		    found = true;
+		}
+	    }
+	    if (!found)
+		Utils.fail("cannot find any upstream filter from " + joiner.contents.getName());
+	}
+	if (joiner != null) 
+	    return ((SIRFilter)joiner.contents).getOutputType();
+	else 
+	    return CStdType.Void;
+    }
+
+    public int getMult(FlatNode node, boolean init)
+    {
+	Integer val = 
+	    ((Integer)(init ? initExecutionCounts.get(node) : steadyExecutionCounts.get(node)));
+	if (val == null)
+	    return 0;
+	else 
+	    return val.intValue();
+    }
+    
 }
 
 

@@ -72,9 +72,9 @@ class PhaseStuff extends Pipeline {
 		  add(new PhaseUnwrapper());
 		  add(new FirstDifference());
 		  add(new ConstMultiplier(c));
+  		  add(new Remapper(10, (int) (speed * 10)));
 		  add(new Accumulator());
 //  		  add(new FloatPrinter("(phase " + fi + "):", "\n"));
-  		  add(new Remapper(10, (int) (speed * 10)));
 		}
 	      });
 	  }

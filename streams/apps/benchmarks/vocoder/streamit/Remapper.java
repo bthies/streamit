@@ -6,10 +6,10 @@ import streamit.io.*;
 class LinearInterpolator extends Filter {
   int interp;
 
-  public void init(int interp) {
-    this.interp = interp;
+  public void init(int interpFactor) {
+    this.interp = interpFactor;
     input = new Channel(Float.TYPE, 1,2);
-    output = new Channel(Float.TYPE, interp);
+    output = new Channel(Float.TYPE, (int) interpFactor);
   }
 
   public void work() {
@@ -60,11 +60,13 @@ class Decimator extends Filter {
 class Remapper extends Pipeline {
 
   public void init(int oldLen, int newLen) {
-    int c = gcd(oldLen, newLen);
-    int m = (int)newLen/c;
-    int n = (int)oldLen/c;
-    add(new LinearInterpolator(m));
-    add(new Decimator(n));
+//      int c = gcd(oldLen, newLen);
+//      int m = (int)newLen/c;
+//      int n = (int)oldLen/c;
+    int m = newLen;
+    int n = oldLen;
+    add(new LinearInterpolator(newLen));
+    add(new Decimator(oldLen));
   }
 
   int gcd(int a, int b) {
@@ -95,7 +97,7 @@ class Duplicator extends Filter {
       int i;
       for(i=0; i < newLen; i++)
 	output.pushFloat(input.popFloat());
-      for(; i < oldLen; i++) {
+      for(i = newLen; i < oldLen; i++) {
 	input.popFloat();
 //  	output.pushFloat(0);
       }

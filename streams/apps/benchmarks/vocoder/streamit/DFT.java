@@ -14,31 +14,60 @@ class DFTFilter extends Filter
   int DFTLen;
   float range;
   private boolean first = true;
-  Complex prev;
-  Complex w; //represents w^(-k)
+  private float prevR, prevI;
+  private float nextR, nextI;
+  private float wR, wI; //represents w^(-k)
+//    Complex prev;
+//    Complex w; //represents w^(-k)
 
   public void work() {
     if (first) {
       first = false;
-      computeFirstDFT();
+      //note: this w = w^k, not w^(-k)
+      float wkR, wkI;
+      wkR = (float)Math.cos(range); wkI = (float)Math.sin(range);
+      float wkiR, wkiI; //this represents w^(k*i)
+      float nwkiR, nwkiI;
+      wkiR = 1f; wkiI = 0f;
+
+      for (int i=0; i < DFTLen; i++) {
+	float nextVal = (float) input.peekFloat(i);
+      
+	prevR = (prevR + wkiR * nextVal) * deter;
+	prevI = (prevI + wkiI * nextVal) * deter;
+
+	nwkiR = wkiR * wkR - wkiI * wkI;
+	nwkiI = wkiR * wkI + wkiI * wkR;
+	wkiR = nwkiR;
+	wkiI = nwkiI;
+      }
+      //      System.out.println("Range: " + range + "'s initial start is: "
+      //    		       + prev.real() + " " + prev.imag() + "i");
+//        computeFirstDFT();
     }
     float nextVal = (float) input.peekFloat(DFTLen);
     float current = (float) input.popFloat();
 
-    prev = prev.times(deter).plus(new Complex(nextVal-(detern*current)));
+    prevR = prevR * deter + (nextVal - (detern * current));
+    prevI = prevI * deter;
+
 //      System.out.println("Range: " + range + "'s initial start is: "
 //    		       + prev.real() + " " + prev.imag() + "i");
-    prev = prev.times(w);
-//      output.pushObject(prev);
-    output.pushFloat(prev.real());
-    output.pushFloat(prev.imag());
+
+    nextR = prevR * wR - prevI * wI;
+    nextI = prevR * wI + prevI * wR;
+    prevR = nextR; prevI = nextI;
+
+    output.pushFloat(prevR);
+    output.pushFloat(prevI);
   }
 
   public void init(int DFTLen, float range) {
     this.DFTLen = DFTLen;
     this.range = range;
-    w = new Complex((float)Math.cos(range), (float)-Math.sin(range));
-    prev = new Complex();
+    wR = (float)Math.cos(range);
+    wI = (float)-Math.sin(range);
+    prevR = 0; prevI = 0;
 
     //need to peek DFTLen ahead of current one
     input = new Channel(Float.TYPE, 1, DFTLen+1);
@@ -47,19 +76,27 @@ class DFTFilter extends Filter
     //    computeFirstDFT();
   }
 
+  /**
   public void computeFirstDFT() {
     //note: this w = w^k, not w^(-k)
-    Complex wk = new Complex((float)Math.cos(range), (float)Math.sin(range));
-    Complex wki = new Complex(1, 0); //this represents w^(k*i)
+    float wkR, wkI;
+    wkR = (float)Math.cos(range); wkI = (float)Math.sin(range);
+    float wkiR, wkiI; //this represents w^(k*i)
+    wkiR = 1f; wkiI = 0f;
+
     for (int i=0; i < DFTLen; i++) {
       float nextVal = (float) input.peekFloat(i);
 
-      prev = prev.plus(wki.times(nextVal)).times(deter);
-      wki = wki.times(wk);
+      prevR = (prevR + wkiR * nextVal) * deter;
+      prevI = (prevI + wkiI * nextVal) * deter;
+
+      wkiR = wkiR * wkR - wkiI * wkI;
+      wkiI = wkiR * wkI + wkiI * wkR;
     }
 //      System.out.println("Range: " + range + "'s initial start is: "
 //    		       + prev.real() + " " + prev.imag() + "i");
   }
+  */
 
   public DFTFilter(int DFTLen, float range) {
     super(DFTLen, range);
@@ -75,7 +112,7 @@ class FilterBank extends SplitJoin {
 
     for(int k=0; k < channels; k++) {
       //this filter is for the kth range
-      final float range = (float)(2 * Math.PI * k)/channels;
+      final float range = (float)(2 * 3.1415926535898f * k)/channels;
       add(new DFTFilter(channels,range));
     }
 
@@ -97,7 +134,7 @@ class SumReals extends Filter {
 
   public void init(int length) {
     this.length = length;
-    input = new Channel(Float.TYPE,  2 * this.length);
+    input = new Channel(Float.TYPE,  2 * length);
     output = new Channel(Float.TYPE, 1);
   }
 

@@ -10,14 +10,14 @@ class RectangularToPolar extends Filter {
 
   public void work() {
     float x, y;
-    Complex c;
+//      Complex c;
     x = input.popFloat(); y = input.popFloat();
-    c = new Complex(x,y);
+//      c = new Complex(x,y);
 
     //output.pushFloat(c.real());
-    output.pushFloat(c.mag());
+    output.pushFloat((float)Math.sqrt(x*x + y*y));
     //output.pushFloat(c.imag());
-    output.pushFloat(c.phase());
+    output.pushFloat((float)Math.atan2(y, x));
   }
 }
 
@@ -38,7 +38,7 @@ class PolarToRectangular extends Filter {
 }
 /** RecToPolar **/
 
-/** Complex **/
+/** Complex **/ /**
 class Complex {
   private float real, imag;
   private float r, theta;
@@ -156,6 +156,7 @@ class IntToFloat extends Filter {
   }
 }
 
+/** 
 class IntPrinter extends Filter {
   String append;
     public void work() { int i = input.popInt();
@@ -176,19 +177,8 @@ class ShortPrinter extends Filter {
   ShortPrinter(String append) {this.append = append;}
 }
 
-class FloatPrinter extends Filter {
-  String append, prepend;
-  public void work() { float i = input.popFloat(); System.out.print(prepend);
-    System.out.print(i); System.out.print(append); output.pushFloat(i);}
-    public void init() { input = new Channel(Float.TYPE, 1); 
-    output = new Channel(Float.TYPE, 1);}
-  FloatPrinter() {prepend = "";append = "\n";}
-  FloatPrinter(String append) 
-  {this.prepend = "";this.append = append;}
-  FloatPrinter(String prepend, String append) 
-  {this.prepend = prepend;this.append = append;}
-}
-
+*/
+/*
 class Printer extends Filter {
   String append, prepend;
   Class type;
@@ -202,6 +192,8 @@ class Printer extends Filter {
   Printer(Class type, String prepend, String append) 
   {this.type = type;this.prepend = prepend;this.append = append;}
 }
+
+**/
 
 class FloatVoid extends Filter {
   public void work() {input.popFloat();}
@@ -226,113 +218,12 @@ class FloatToShort extends Filter {
 }
 
 class ShortToFloat extends Filter {
-  public void work() {output.pushFloat((float)(input.popShort())); }
+  public void work() {short i = input.popShort();
+  System.out.println(i);
+  float f = (float) i;
+  System.out.println(f);
+  output.pushFloat(f); }
   public void init() {input = new Channel(Short.TYPE, 1);
                       output = new Channel(Float.TYPE, 1);}
 }
 
-class Test extends StreamIt {
-  final int channels = 3;
-
-  public static void main(String args[]) {
-    new Test().run(args);
-  }
-
-  /**
-  public void init() {
-    add(new PlateauSource(7));
-    add(new IntToFloat());
-//      add(new SineSource((float)Math.PI / 4));
-//      add(new ConstMultiplier(10f));
-    add(new FloatPrinter("orig: ", "\n"));
-    add(new PhaseStuff(8, 8, 3.2f, 1f));
-//      add(new FilterBank(8));
-//  //      add(new FloatPrinter("DFT: ", "\n"));
-//      add(new SumReals(8));
-    //    add(new PhaseUnwrapper());
-//      add(new FirstDifference(2f));
-    //    add(new Remapper(12,8));
-    add(new FloatPrinter("Remapped: ", "\n"));
-    add(new FloatVoid());
-  }
-
-  /**/
-
-  /** Tests the phase unwrapper.  seems to be pretty good.
-   * sinesource should have this.prev = theta*3.2 to demo
-   **/
-//    public void init() {
-//  //      add(new PlateauSource(6));
-//  //      add(new IntToFloat());
-//  //      add(new AddSource((float)Math.PI * 0.06125f));
-//      add(new FunkySource((float)Math.PI * 0.06125f));
-//      add(new ModularFilter((float)Math.PI * 2.0f));
-//      add(new FloatPrinter("orig: ", "\n"));
-//      add(new PhaseUnwrapper());
-//  //      add(new FirstDifference(2f));
-//      //    add(new Remapper(12,8));
-//      add(new FloatPrinter("Remapped: ", "\n"));
-//      add(new FloatVoid());
-//    }
-
-  /** This demonstrates rectangular to polar pretty well **/
-//    public void init() {
-//      add(new StepSource(7));
-//      add(new IntToFloat());
-//      add(new SplitJoin() {
-//  	public void init() {
-//  	  setSplitter(DUPLICATE());
-//  	  add(new SineSource((float)(Math.PI * 0.25)));
-//  	  add(new IdentityFloat());
-//  	  setJoiner(ROUND_ROBIN());
-//  	}
-//        });
-//      add(new FloatPrinter("orig: ", "\n"));
-//      add(new RectangularToPolar());
-//      add(new PolarToRectangular());
-//      //    add(new Remapper(12,8));
-//      add(new FloatPrinter("Remapped: ", "\n"));
-//      add(new FloatVoid());
-//    }
-
-    /** Multiplier, and FIRSmoothingFilter */
-//    public void init() {
-//      add(new StepSource(7));
-//      add(new IntToFloat());
-//      add(new FloatPrinter("orig: ", "\n"));
-//      add(new FIRSmoothingFilter(16));
-//      add(new FloatPrinter("Convolved: ", "\n"));
-//  //      add(new Multiplier());
-//  //      add(new ConstMultiplier(5));
-//  //  //      add(new RectangularToPolar());
-//  //  //      add(new PolarToRectangular());
-//  //  //      add(new FloatPrinter("Deconvolve: ", "\n"));
-//      add(new FloatVoid());
-//    }
-
-  /**/
-  public void init() {
-    add(new FileReader("/home/bits6/clleger/Perfect.wav", Short.TYPE));
-    add(new SplitJoin() {
-	public void init() {
-	  setSplitter(DUPLICATE());
-	  add(new Pipeline() {
-	      public void init() {
-		add(new WaveSplitter(0));
-		add(new FileWriter("/home/bits6/clleger/Perfect0.wav", Short.TYPE));
-	      }
-	    });
-	  add(new Pipeline() {
-	      public void init() {
-		add(new WaveSplitter(1));
-		add(new FileWriter("/home/bits6/clleger/Perfect1.wav", Short.TYPE));
-	      }
-	    });
-	  setJoiner(ROUND_ROBIN());
-	}
-      });
-    //    add(new ShortVoid());
-  }
-  /**/
-
-}    

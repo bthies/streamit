@@ -3,12 +3,15 @@ import streamit.io.*;
 
 class MagnitudeStuff extends Pipeline {
   public void init(final int DFTLen, final int newLen, final float speed) {
-    final int interp = (int) Math.round(speed * 10);
+//      final int interpolate = (int) ((speed * 10) + 0.5f; 
+    //with this uncommented and used down in the split join, it was
+    //complaining about a non-constant field access, even though
+    //there's no reason why it should be a field.
     add(new SplitJoin() {
 	public void init() {
 	  setSplitter(DUPLICATE());
 	  add(new FIRSmoothingFilter(DFTLen));
-	  add(new Identity(Float.TYPE));
+	  add(new IdentityFloat());
 	  setJoiner(ROUND_ROBIN());
 	}
       });
@@ -26,7 +29,7 @@ class MagnitudeStuff extends Pipeline {
 	public void init() {
 	  setSplitter(ROUND_ROBIN());
 	  for(int i=0; i < DFTLen; i++) {
-	    add(new Remapper(10, interp));
+	    add(new Remapper(10,  (int) ((speed * 10) + 0.5f)));
 	  }
 	  setJoiner(ROUND_ROBIN());
 	}

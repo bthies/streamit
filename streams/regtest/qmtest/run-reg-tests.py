@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.12 2004-01-22 14:56:45 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.13 2005-02-20 16:02:05 rabbah Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -22,7 +22,7 @@ users = 'streamit-regtest@cag.lcs.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
 # regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
 regtest_root = '/home/bits8/streamit/regtest'
-smtp_server = 'catfish.lcs.mit.edu'
+smtp_server = 'k2.csail.mit.edu'
 
 # TODO: determine distinctions between "nightly" and "all" regtests.
 # These could just be different regtest.xml control files.
@@ -227,6 +227,7 @@ is the QMTest results file.
         msg['Subject'] = subject
         msg['From'] = from_whom
         msg['To'] = to_whom
+        msg['Date'] = time.strftime("%a, %d %b %Y %H:%M:%S %z")
         s = smtplib.SMTP()
         s.connect(smtp_server)
         s.sendmail(from_whom, to_whom, msg.as_string())

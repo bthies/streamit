@@ -2,6 +2,7 @@ package at.dms.kjc.sir.linear.frequency;
 
 import java.util.*;
 import at.dms.kjc.*;
+import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.iterator.*;
@@ -16,7 +17,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.13 2003-04-08 22:42:53 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.14 2003-04-09 11:14:30 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -545,9 +546,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	
 	
 	/* stick in the appropriate number (N+x-1) of pop calls */
-	for (int i=0; i<(N+x-1); i++) {
-	    body.addStatement(makePopStatement());
-	}
+	makePopStatements(body, N+x-1);
 	
 	/* figure out what the name of the function should be (work, or initWork) **/
 	String ident = (functionType == WORK) ? "work" : "initWork";
@@ -583,9 +582,22 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	
     }
 
-    /** makes a popFloat() statement. **/
-    public JStatement makePopStatement() {
-	return new JExpressionStatement(null, new SIRPopExpression(CStdType.Float), null);
+    /** adds <n> popFloat() statements to the end of <body>. **/
+    public void makePopStatements(JBlock body, int n) {
+	// put them in a loop if <n> exceeds the unroll count
+	if (n>KjcOptions.unroll) {
+	    SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float);
+	    // wrap the pop expression so it is a statement.
+	    JExpressionStatement popWrapper = new JExpressionStatement(null, popExpr, null);
+	    body.addStatement(Utils.makeForLoop(popWrapper, n));
+	} else {
+	    for (int i=0; i<n; i++) {
+		SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float);
+		// wrap the pop expression so it is a statement.
+		JExpressionStatement popWrapper = new JExpressionStatement(null, popExpr, null);
+		body.addStatement(popWrapper);
+	    }
+	}
     }
 
     /** makes an array push statement of the following form: push(this.arr1[index] + this.arr2[index]) **/

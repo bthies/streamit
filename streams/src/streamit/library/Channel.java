@@ -92,7 +92,10 @@ public class Channel extends DestroyedClass
         }
 
         // make sure that the channel isn't overflowing
-        ASSERT (queue.size () <= maxSize || maxSize == -1);
+        ASSERT (queue.size () <= maxSize || maxSize == -1,
+		"Expecting queue.size () <= maxSize || maxSize == -1,\n" +
+		"   but queue.size()==" + queue.size() + " and maxSize==" + 
+		maxSize);
 
         if (passThrough) sink.work ();
     }

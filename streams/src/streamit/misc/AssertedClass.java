@@ -9,58 +9,69 @@ package streamit;
 public class AssertedClass
 {
 
+    public static void ASSERT (Object object, boolean condition) {
+	ASSERT (object, condition, "No additional error message supplied");
+    }
+
     // assert the condition
     // if the condition is false, print an error and exit the program
-    public static void ASSERT (boolean condition, Object object)
+    public static void ASSERT (Object object, boolean condition,
+			       String message)
     {
         if (condition) return;
 
         // condition is not satisifed:
         // print an error and exit.
 
-        System.err.println ("An ASSERT has failed in class " + (object != null ? object.getClass ().getName () : "(unknown)") + ".  Exiting.\n\n");
+        System.err.println ("An ASSERT has failed in class " + (object != null ? object.getClass ().getName () : "(unknown)") + ".  Exiting.\n\n" + message +
+			    "\n");
         new RuntimeException().printStackTrace();
         System.exit (1);
     }
 
     public void ASSERT(boolean condition)
     {
-        ASSERT (condition, this);
+        ASSERT (this, condition);
+    }
+
+    public void ASSERT(boolean condition, String message)
+    {
+        ASSERT (this, condition, message);
     }
 
     public void ASSERT (char cond)
     {
-        ASSERT (cond != 0, this);
+        ASSERT (this, cond != 0);
     }
     public void ASSERT (short cond)
     {
-        ASSERT (cond != 0, this);
+        ASSERT (this, cond != 0);
     }
     public void ASSERT (int cond)
     {
-        ASSERT (cond != 0, this);
+        ASSERT (this, cond != 0);
     }
     public void ASSERT (long cond)
     {
-        ASSERT (cond != 0, this);
+        ASSERT (this, cond != 0);
     }
     public void ASSERT (float cond)
     {
-        ASSERT (cond != 0, this);
+        ASSERT (this, cond != 0);
     }
     public void ASSERT (double cond)
     {
-        ASSERT (cond != 0, this);
+        ASSERT (this, cond != 0);
     }
     public void ASSERT (Object cond)
     {
-        ASSERT (cond != null, this);
+        ASSERT (this, cond != null);
     }
 
     public void ERROR (String error)
     {
         System.err.println (error);
-        ASSERT (false, this);
+        ASSERT (this, false);
     }
 
     public void ERROR (Throwable e)
@@ -71,36 +82,36 @@ public class AssertedClass
     // static versions of asserts:
     public static void SASSERT(boolean condition)
     {
-        ASSERT (condition, null);
+        ASSERT (null, condition);
     }
 
     public static void SASSERT (char cond)
     {
-        ASSERT (cond != 0, null);
+        ASSERT (null, cond != 0);
     }
     public static void SASSERT (short cond)
     {
-        ASSERT (cond != 0, null);
+        ASSERT (null, cond != 0);
     }
     public static void SASSERT (int cond)
     {
-        ASSERT (cond != 0, null);
+        ASSERT (null, cond != 0);
     }
     public static void SASSERT (long cond)
     {
-        ASSERT (cond != 0, null);
+        ASSERT (null, cond != 0);
     }
     public static void SASSERT (float cond)
     {
-        ASSERT (cond != 0, null);
+        ASSERT (null, cond != 0);
     }
     public static void SASSERT (double cond)
     {
-        ASSERT (cond != 0, null);
+        ASSERT (null, cond != 0);
     }
     public static void SASSERT (Object cond)
     {
-        ASSERT (cond != null, null);
+        ASSERT (null, cond != null);
     }
 
     public static void SERROR (Throwable e)
@@ -113,6 +124,6 @@ public class AssertedClass
     public static void SERROR (String error)
     {
         System.err.println (error);
-        ASSERT (false, null);
+        ASSERT (null, false);
     }
 }

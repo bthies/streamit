@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CContext.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CContext.java,v 1.2 2003-04-20 13:26:44 thies Exp $
  */
 
 package at.dms.kjc;
@@ -24,6 +24,7 @@ import at.dms.compiler.Compiler;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.MessageDescription;
+import java.io.*;
 
 /**
  * This class represents a local context during checkBody
@@ -56,6 +57,22 @@ public abstract class CContext extends at.dms.util.Utils implements Constants {
     this.parent = parent;
   }
 
+  // ----------------------------------------------------------------------
+  // CLONING STUFF
+  // ----------------------------------------------------------------------
+
+    private Object serializationHandle;
+    
+    private void writeObject(ObjectOutputStream oos)
+	throws IOException {
+	this.serializationHandle = ObjectDeepCloner.getHandle(this);
+	oos.defaultWriteObject();
+    }
+    
+    private Object readResolve() throws Exception {
+	return ObjectDeepCloner.getInstance(serializationHandle, this);
+    }
+    
   // ----------------------------------------------------------------------
   // ACCESSORS (LOOKUP)
   // ----------------------------------------------------------------------

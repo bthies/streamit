@@ -126,6 +126,7 @@ public class ObjectDeepCloner
 	if (toBeCloned.contains(oldInstance)) {
 	    return new Integer(-1);
 	} else {
+	    //System.err.println("Preserving across a cloning call: " + oldInstance.getClass());
 	    preserved.add(oldInstance);
 	    return new Integer(preserved.size() - 1);
 	}

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.37 2003-09-22 07:03:13 jasperln Exp $
+# $Id: knit,v 1.38 2003-09-22 16:09:52 dmaze Exp $
 #
 
 use strict;
@@ -32,6 +32,13 @@ EOH
     exit(0);
   }
 my $fns = \@ARGV;
+# Autodetect old-syntax code:
+if (!exists $opts{java})
+  {
+    my $non_java = grep(!/\.java$/, @$fns);
+    $opts{java} = !$non_java;
+    # which is to say, 1 if there are no non-java files, 0 otherwise
+  }
 $fns = new_to_old($fns) unless ($opts{java} || $opts{tokopi});
 if ($opts{'library'}) {
     run_in_library($fns);
@@ -59,6 +66,7 @@ Options:
   --cluster           Compile for a networked cluster
 * --viram, -V         Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
+  -O0, -O1, -O2       Use predefined optimization sets
   --library           Run in the Java library instead of compiling
 
 Options available for all backends:
@@ -132,59 +140,80 @@ sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
     $opts{memory} = "1700M";
-    GetOptions(\%opts,
-	       "help",
-	       "more-help|help-more",
-	       "java!",
-	       "output|o=s",
-	       "raw|r=i",
-	       "verbose|v",
-	       "altcodegen|z",
-	       "atlas|E",
-	       "clone-with-serialization|clone_with_serialization|K",
-	       "decoupled|X",
-	       "dppartition|y",
-	       "dpscaling|Y",
-	       "fission|fission=i",
-	       "frequencyreplacement|F",
-	       "fusion|f",
-	       "ilppartition|A",
-	       "iterations|i=i",
-	       "library",
-	       "linearpartition|B",
-	       "linearreplacement|I",
-	       "linearreplacement2|Z",
-	       "linearreplacement3|R",
-	       "magic-net|magic_net|M",
-	       "memory|Xmx=s",
-	       "noanneal|W",
-	       "nofieldprop|L",
-	       "nolinearcollapse|H",
-	       "norun",
-	       "nosched",
-	       "numbers|N=i",
-	       "partition|a",
-	       "poptopeek|P",
-	       "printdot",
-	       "printsched",
-	       "print-partitioned-source|print_partitioned_source|c",
-	       "profile",
-	       "ptraccess|Q",
-	       "ratematch|x",
-	       "rawcol|q=i",
-	       "raw-uni|raw_uni|U",
-	       "redundantreplacement|t",
-	       "removeglobals|G",
-	       "simplesjfusion|S",
-	       "simulatework|T",
-	       "sjtopipe|J",
-	       "stats",
-	       "sync|k",
-	       "tokopi",
-	       "unroll|u=i",
-	       "viram|V",
-	       "cluster",
-	       "destroyfieldarray");
+    my $result = GetOptions(\%opts,
+			    "help",
+			    "more-help|help-more",
+			    "java!",
+			    "output|o=s",
+			    "raw|r=i",
+			    "verbose|v",
+			    "optimize|O=i",
+			    "altcodegen|z",
+			    "atlas|E",
+			    "clone-with-serialization|clone_with_serialization|K",
+			    "decoupled|X",
+			    "dppartition|y",
+			    "dpscaling|Y",
+			    "fission|fission=i",
+			    "frequencyreplacement|F",
+			    "fusion|f",
+			    "ilppartition|A",
+			    "iterations|i=i",
+			    "library!",
+			    "linearpartition|B",
+			    "linearreplacement|I",
+			    "linearreplacement2|Z",
+			    "linearreplacement3|R",
+			    "magic-net|magic_net|M",
+			    "memory|Xmx=s",
+			    "noanneal|W",
+			    "nofieldprop|L",
+			    "nolinearcollapse|H",
+			    "norun!",
+			    "nosched!",
+			    "numbers|N=i",
+			    "partition|a",
+			    "poptopeek|P",
+			    "printdot!",
+			    "printsched!",
+			    "print-partitioned-source|print_partitioned_source|c",
+			    "profile!",
+			    "ptraccess|Q",
+			    "ratematch|x",
+			    "rawcol|q=i",
+			    "raw-uni|raw_uni|U",
+			    "redundantreplacement|t",
+			    "removeglobals|G",
+			    "simplesjfusion|S",
+			    "simulatework|T",
+			    "sjtopipe|J",
+			    "stats!",
+			    "sync|k",
+			    "tokopi!",
+			    "unroll|u=i",
+			    "viram|V",
+			    "cluster!",
+			    "destroyfieldarray!");
+    return $result if !$result;
+    # If the user specified -O#, transform that into appropriate options,
+    # but don't override things otherwise on the command line.
+    if (exists $opts{optimize})
+      {
+	if ($opts{optimize} >= 1)
+	  {
+	    $opts{unroll} = 256 unless exists $opts{unroll};
+	    $opts{altcodegen} = 1 unless exists $opts{altcodegen};
+	    $opts{ratematch} = 1 unless exists $opts{ratematch};
+	    $opts{wbs} = 1 unless exists $opts{wbs};
+	  }
+	if ($opts{optimize} >= 2)
+	  {
+	    $opts{unroll} = 4096 unless exists $opts{unroll};
+	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
+	    $opts{simulatework} = 1 unless exists $opts{simulatework};
+	  }
+      }
+    return 1;
   }
 
 sub call

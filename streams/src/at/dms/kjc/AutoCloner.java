@@ -14,7 +14,7 @@ public class AutoCloner {
     /**
      * List of things that should be cloned on the current pass.
      */
-    private static LinkedList toBeCloned;
+    private static HashSet toBeCloned;
     /**
      * Mapping from old objects to their clones, so that object
      * equality is preserved across a cloning call.
@@ -81,7 +81,7 @@ public class AutoCloner {
     static public Object deepCopy(Kopi2SIR kopi2sir) {
 	// not sure what toBeCloned should be in this case... for now
 	// make it empty.
-	toBeCloned = new LinkedList();
+	toBeCloned = new HashSet();
 
 	registry = new HashMap();
 	Object result = cloneToplevel(kopi2sir);

@@ -28,7 +28,7 @@ public class ObjectDeepCloner
     /**
      * List of things that should be cloned on the current pass.
      */
-    private static LinkedList toBeCloned;
+    private static HashSet toBeCloned;
 
     /**
      * List of objects we're preserving across a cloning operation.

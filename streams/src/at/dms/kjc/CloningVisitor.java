@@ -23,10 +23,10 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
      *   - SIRContainer
      *   - JLocalVariable
      */
-    private LinkedList toBeCloned;
+    private HashSet toBeCloned;
 
     public CloningVisitor() {
-	this.toBeCloned = new LinkedList();
+	this.toBeCloned = new HashSet();
     }
     
     /**
@@ -43,7 +43,7 @@ public class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
     /**
      * Return the list of what should be cloned.
      */
-    public LinkedList getToBeCloned() {
+    public HashSet getToBeCloned() {
 	return toBeCloned;
     }
 

@@ -59,6 +59,11 @@ public class SchedSplitType extends SchedObject
         return weight.intValue ();
     }
 
+    public int getNumWeights ()
+    {
+        return splitWeights.size ();
+    }
+
     public int getRoundConsumption ()
     {
         return roundConsumption;

@@ -94,8 +94,10 @@ public class SchedSplitJoin extends SchedStream
             }
         }
 
-        // BUGBUG:
-        // this code might not work if the splitter or joiner is null!
+        // make sure that the splitter and joiner have the same
+        // number of weights as the splitjoin has children:
+        ASSERT (allChildren.size () == getSplitType ().getNumWeights ());
+        ASSERT (allChildren.size () == getJoinType ().getNumWeights ());
 
         List childrenRates = new ArrayList ();
         Fraction splitRate = null;

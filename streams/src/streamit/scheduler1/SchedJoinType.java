@@ -54,6 +54,11 @@ public class SchedJoinType extends SchedObject
         return weight.intValue ();
     }
 
+    public int getNumWeights ()
+    {
+        return joinWeights.size ();
+    }
+
     public int getRoundProduction ()
     {
         return roundProduction;

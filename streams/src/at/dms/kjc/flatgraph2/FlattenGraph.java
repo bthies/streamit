@@ -22,6 +22,18 @@ public class FlattenGraph {
 	return filterCount;
     }
     
+    //Don't call unless not using this anymore
+    public static void clear() {
+	topLevelNodes.clear();
+	topLevelNodes=null;
+	nodes.clear();
+	nodes=null;
+	simpleNull.clear();
+	simpleNull=null;
+	complexNull.clear();
+	complexNull=null;
+    }
+
     public static UnflatFilter[] getTopLevelNodes() {
 	final int len=topLevelNodes.size();
 	UnflatFilter[] out=new UnflatFilter[len];

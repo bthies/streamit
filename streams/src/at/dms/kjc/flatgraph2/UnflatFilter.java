@@ -14,6 +14,28 @@ public class UnflatFilter {
     private static int nullNum=0;
     private String name;
     
+    //Do not call unless not using this anymore
+    public void clear() {
+	filter=null;
+	inWeights=null;
+	outWeights=null;
+	if(in!=null) {
+	    for(int i=0;i<in.length;i++)
+		in[i]=null;
+	    in=null;
+	}
+	if(out!=null) {
+	    for(int i=0;i<out.length;i++) {
+		UnflatEdge[] inner=out[i];
+		for(int j=0;j<out.length;j++)
+		    inner[j]=null;
+		out[i]=null;
+	    }
+	    out=null;
+	}
+	name=null;
+    }
+
     UnflatFilter(SIRStream filter,int[] inWeights,int[] outWeights,UnflatEdge[] in,UnflatEdge[][] out) {
 	this.filter=(SIRFilter)filter;
 	this.inWeights=inWeights;

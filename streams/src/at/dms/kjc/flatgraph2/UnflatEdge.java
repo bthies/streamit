@@ -1,6 +1,7 @@
 package at.dms.kjc.flatgraph2;
 
 import at.dms.util.Utils;
+import java.util.LinkedList;
 
 /**
  * Intermediate file used in (super) synch removal
@@ -8,17 +9,36 @@ import at.dms.util.Utils;
 public class UnflatEdge {
     public UnflatFilter src;
     public UnflatFilter dest;
+    private static LinkedList toClear=new LinkedList();
     //int virtualPort;
 
     UnflatEdge() {
 	//virtualPort=0;
+	toClear.add(this);
     }
 
     UnflatEdge(UnflatFilter src,UnflatFilter dest) {
 	this.src=src;
 	this.dest=dest;
+	toClear.add(this);
     }
     
+    //Do not use unless you want to garbage collect graph
+    public static void clear() {
+	while(toClear.size()>0) {
+	    UnflatEdge edge=(UnflatEdge)toClear.removeFirst();
+	    if(edge.src!=null) {
+		edge.src.clear();
+		edge.src=null;
+	    }
+	    if(edge.dest!=null) {
+		edge.dest.clear();
+		edge.dest=null;
+	    }
+	}
+	toClear=null;
+    }
+
     void connect(UnflatEdge newDest) {
 	dest=newDest.dest;
 	//virtualPort=newDest.virtualPort;

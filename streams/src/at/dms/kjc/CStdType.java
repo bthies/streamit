@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CStdType.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CStdType.java,v 1.2 2001-09-25 14:16:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -31,17 +31,17 @@ public class CStdType extends at.dms.util.Utils implements Constants {
   // PRIMITIVE TYPES
   // ----------------------------------------------------------------------
 
-  public static CVoidType	Void;
-  public static CNullType	Null;
+  public static final CVoidType	Void = new CVoidType();
+  public static final CNullType	Null = new CNullType();
 
-  public static CBooleanType	Boolean;
-  public static CByteType	Byte;
-  public static CCharType	Char;
-  public static CDoubleType	Double;
-  public static CFloatType	Float;
-  public static CIntType	Integer;
-  public static CLongType	Long;
-  public static CShortType	Short;
+  public static final CBooleanType Boolean = new CBooleanType();
+  public static final CByteType Byte = new CByteType();
+  public static final CCharType Char = new CCharType();
+  public static final CDoubleType Double = new CDoubleType();
+  public static final CFloatType Float = new CFloatType();
+  public static final CIntType Integer = new CIntType();
+  public static final CLongType	Long = new CLongType();
+  public static final CShortType Short = new CShortType();
 
   public static CClassType	Object;
   public static CClassType	Class;
@@ -59,21 +59,6 @@ public class CStdType extends at.dms.util.Utils implements Constants {
    * Initialize all constants
    */
   public static void init(Compiler compiler) {
-    // one time is enough
-    if (Void == null) {
-      Void = new CVoidType();
-      Null = new CNullType();
-
-      Boolean = new CBooleanType();
-      Byte = new CByteType();
-      Char = new CCharType();
-      Double = new CDoubleType();
-      Float = new CFloatType();
-      Integer = new CIntType();
-      Long = new CLongType();
-      Short = new CShortType();
-    }
-
     CClassType.init(compiler);
 
     Object = CClassType.lookup(Constants.JAV_OBJECT);

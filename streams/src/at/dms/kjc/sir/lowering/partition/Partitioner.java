@@ -31,14 +31,19 @@ public class Partitioner {
 	// do the partitioning
 	if (count < target) {
 	    // need fission
-	    new GreedyPartitioner(str, target).toplevelFission(count);
+	    if (KjcOptions.dppartition) {
+		new DynamicProgPartitioner(str, target).toplevelFusion();
+	    } else {
+		new GreedyPartitioner(str, target).toplevelFission(count);
+	    }
 	} else {
 	    // need fusion
 	    if (KjcOptions.ilppartition) {
 		new ILPPartitioner(str, target).toplevelFusion();
+	    } else if (KjcOptions.dppartition) {
+		new DynamicProgPartitioner(str, target).toplevelFusion();
 	    } else {
 		new GreedyPartitioner(str, target).toplevelFusion();
-		//new DynamicProgPartitioner(str, target).toplevelFusion();
 	    }
 	}
 

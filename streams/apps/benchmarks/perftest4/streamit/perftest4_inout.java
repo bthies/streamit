@@ -75,12 +75,12 @@ class PerftestSplitJoin extends Pipeline {
     }
 }
 
-public class perftest4 extends StreamIt
+public class perftest4_inout extends StreamIt
 {
     
     static public void main(String[] t)
     {
-        perftest4 test = new perftest4();
+        perftest4_inout test = new perftest4_inout();
         test.run();
     }
     

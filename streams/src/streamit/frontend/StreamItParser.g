@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.10 2002-08-15 14:47:26 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.11 2002-08-15 19:21:30 dmaze Exp $
  */
 
 header {
@@ -271,7 +271,11 @@ logicOrExpr
 	;
 
 logicAndExpr
-	:	equalExpr ( LOGIC_AND^ logicAndExpr)?
+	:	bitwiseExpr ( LOGIC_AND^ logicAndExpr)?
+	;
+
+bitwiseExpr
+	:	equalExpr ((BITWISE_OR^ | BITWISE_AND^ | BITWISE_XOR^) bitwiseExpr)?
 	;
 
 equalExpr

@@ -187,4 +187,66 @@ abstract public class Scheduler extends AssertedClass
 			       + sched.getWorkFunc());
         }
     }
+
+    /**
+     * Returns a two-dimensional array HashMap's that map each
+     * splitter, joiner, & filter in <str> to a 1-dimensional int
+     * array containing the count for how many times that operator
+     * executes:
+     *
+     *  result[0] = map for initializaiton schedule
+     *  result[1] = map for steady-state schedule
+     */     
+    public HashMap[] getExecutionCounts() {
+	// make the result
+	HashMap[] result = { new HashMap(), new HashMap() } ;
+
+	// fill in the init schedule
+	fillExecutionCounts(getOptimizedInitSchedule(), result[0], 1);
+	// fill in the steady-state schedule
+	fillExecutionCounts(getOptimizedSteadySchedule(), result[1], 1);
+	
+	return result;
+    }
+    
+    // Creates execution counts of filters in graph.
+    private void fillExecutionCounts(Schedule schedule, HashMap counts, int numReps) {
+	if (schedule.isBottomSchedule()) {
+	    // tally up for this node.
+	    Object target = schedule.getStream().getObject();
+	    if (!counts.containsKey(target)) {
+		// initialize counter
+		int[] wrapper = { numReps };
+		counts.put(target, wrapper);
+	    } else {
+		// add to counter
+		int[] wrapper = (int[])counts.get(target);
+		wrapper[0] += numReps;
+	    }	    
+	} else {
+	    // otherwise we have a container, so simulate execution of
+	    // children
+	    for (int i=0; i<schedule.getNumPhases(); i++) {
+		fillExecutionCounts(schedule.getSubSched(i), counts, numReps * schedule.getSubSchedNumExecs(i));
+	    }
+	}
+    }
+
+    /**
+     * Prints repetition info to screen.
+     */
+    public void printReps() {
+	HashMap[] counts = getExecutionCounts();
+	// print init schedule
+	for (int i=0; i<2; i++) {
+	    System.out.println("Repetitions in " + (i==0 ? "initial" : "steady") + " schedule:");
+	    java.util.Set keys = counts[i].keySet();
+	    for (java.util.Iterator it = keys.iterator(); it.hasNext(); ) {
+		Object obj = it.next();
+		int[] reps = (int[])counts[i].get(obj);
+		System.out.println(reps[0] + " reps for " + obj + " (hashcode=" + obj.hashCode() + ")");
+	    }
+	    System.out.println();
+	}
+    }
 }

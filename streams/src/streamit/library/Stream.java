@@ -496,6 +496,7 @@ public abstract class Stream extends Operator
     int numExecutions = 0;
     boolean marksteady = false;
     boolean printsched = false;
+    boolean printreps = false;
 
     int uncompressedSize = 0;
     int totalSize = 0;
@@ -672,6 +673,10 @@ public abstract class Stream extends Operator
                 {
                     printsched = true;
                 }
+                else if (args[index].equals("-printreps"))
+                {
+                    printreps = true;
+                }
                 else if (args[index].equals("-norun"))
                 {
                     doRun = false;
@@ -815,6 +820,12 @@ public abstract class Stream extends Operator
                 System.out.println("!ml sched size = " + mlSize);
                 System.out.println("!ml buff size = " + mlBuffer);
             }
+
+	    // print number of steady state executions for every leaf
+	    // of schedule
+	    if (printreps) {
+		scheduler.printReps();
+	    }
 
             if (!doRun)
                 System.exit(0);

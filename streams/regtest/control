@@ -19,6 +19,11 @@ test hello6 {
   source HelloWorld6.java
 }
 
+test peek-pipe {
+  directory docs/examples/hand/peek-pipe
+  source PeekPipe.java
+}
+
 test simple-split {
   directory docs/examples/hand/simple-split
   source SimpleSplit.java

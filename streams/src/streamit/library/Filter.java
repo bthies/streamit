@@ -15,6 +15,10 @@ public abstract class Filter extends Stream
         super(i);
     }
 
+    public Filter(int n1, int n2) {
+	super(n1, n2);
+    }
+
     public Filter(float f)
     {
         super(f);

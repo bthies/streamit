@@ -25,6 +25,11 @@ public class SplitJoin extends Stream
         super(n);
     }
 
+    public SplitJoin(int n1, int n2)
+    {
+        super(n1, n2);
+    }
+
     // initializing IO will be handled by the add function
     public void initIO () { }
 

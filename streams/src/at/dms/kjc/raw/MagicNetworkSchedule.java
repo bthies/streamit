@@ -75,7 +75,7 @@ public class MagicNetworkSchedule
  		     Layout.getTileNumber((Coordinate)receiveIt.next()) +
  		     "receive;\n");
 	}
-
+	fw.write("fn create_schedules() {\n //Creating List...\n");
 	sendIt = steadySendSchedules.keySet().iterator();
  	while(sendIt.hasNext()) {
 	    Coordinate current = (Coordinate)sendIt.next();
@@ -109,7 +109,7 @@ public class MagicNetworkSchedule
 
     private static void createList(FileWriter fw) throws Exception
     {
-	fw.write("fn create_schedules() {\n //Creating List...\n");
+
 	fw.write("SendSchedules = listi_new();\n");
 	for (int i = 0; i < RawBackend.rawColumns * RawBackend.rawRows; i++) {
 	    Coordinate current = Layout.getTile(i);
@@ -224,13 +224,13 @@ public class MagicNetworkSchedule
 	
 	if (routes instanceof Coordinate) {
 	    //this is a receive instruction
-	    fw.write("*(temp.magic) = 0x" + toHex2(Layout.getTileNumber((Coordinate)routes)) +
-		     ";\n");
+	    fw.write("SetByte(temp.magic, 0x" + toHex2(Layout.getTileNumber((Coordinate)routes)) +
+		     ");\n");
 	    //add this FF because there is no source for csti2
-	    fw.write("*(temp.magic + 1) = 0xFF;\n");
+	    fw.write("SetByte(temp.magic + 1, 0xFF);\n");
 	    //there are no destinations, so set them all to FF
 	    fw.write("for (i = 2; i < 82; i ++)\n");
-	    fw.write("  *(temp.magic + i) = 0xFF;\n");
+	    fw.write("  SetByte(temp.magic + i, 0xFF);\n");
 	    return;
 	}
 	else {
@@ -238,19 +238,19 @@ public class MagicNetworkSchedule
 	    int i = 2;
 
 	    //there are no sources 
-	    fw.write("*(temp.magic) = 0xFF;\n");
-	    fw.write("*(temp.magic + 1) = 0xFF;\n");
+	    fw.write("SetByte(temp.magic, 0xFF);\n");
+	    fw.write("SetByte(temp.magic + 1, 0xFF);\n");
 
 	    //iterate thru the destinations 
 	    while (it.hasNext()) {
-		fw.write("*(temp.magic + " + i + ") = 0x" + 
+		fw.write("SetByte(temp.magic + " + i + ", 0x" + 
 			 toHex2(Layout.getTileNumber((Coordinate)it.next())) +
-			 ";\n");
+			 ");\n");
 		i++;
 	    }
 	    //zero out the remaining destinations
 	    fw.write("for (i = " + i + ";i < 82;i++)\n");
-	    fw.write("  *(temp.magic + i) = 0xFF;\n");
+	    fw.write("  SetByte(temp.magic + i, 0xFF);\n");
 	}	
     }
 

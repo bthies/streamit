@@ -8,7 +8,7 @@ import at.dms.util.*;
  * functions will generally be contained within SIRPhasedFilters.
  * They have code and constants for I/O rates.
  */
-public class SIRWorkFunction extends SIROperator
+public class SIRWorkFunction extends Utils
 {
     /**
      * The number of items that are peeked in each execution.
@@ -35,13 +35,11 @@ public class SIRWorkFunction extends SIROperator
         this.work = null;
     }
 
-    public SIRWorkFunction(SIRContainer parent,
-                           JExpression peek,
+    public SIRWorkFunction(JExpression peek,
                            JExpression pop,
                            JExpression push, 
                            JMethodDeclaration work)
     {
-        // super(parent);
         this.peek = peek;
         this.pop = pop;
         this.push = push;
@@ -115,7 +113,7 @@ public class SIRWorkFunction extends SIROperator
       }
 	// need int literal to get number
 	if (!(pop instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for pop value in filter " + this.getName() + ", but the constant hasn't been resolved yet. " + pop);
+	    Utils.fail("Trying to get integer value for pop value in work function " + this.getWork().getName() + ", but the constant hasn't been resolved yet. " + pop);
 	}
 	return ((JIntLiteral)pop).intValue();
     }
@@ -132,7 +130,7 @@ public class SIRWorkFunction extends SIROperator
       }
 	// need int literal to get number
 	if (!(peek instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for peek value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet. " + peek);
+	    Utils.fail("Trying to get integer value for peek value in work function " + this.getWork().getName() + ", but the constant hasn't been resolved yet. " + peek);
 	}
 	return ((JIntLiteral)peek).intValue();
     }
@@ -150,7 +148,7 @@ public class SIRWorkFunction extends SIROperator
       }
 
 	if (!(push instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for push value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet. " + push);
+	    Utils.fail("Trying to get integer value for push value in work function " + this.getWork().getName() + ", but the constant hasn't been resolved yet. " + push);
 	}
 	return ((JIntLiteral)push).intValue();
     }

@@ -13,7 +13,7 @@ KOPI_GENERATED = \
   at/dms/kjc/KjcParser.java
 
 KOPI_JFLEX_TARGET = \
-  JFlex/Main.class
+  3rdparty/JFlex/Main.class
 
 KOPI_ANTLR_TARGET = \
   at/dms/compiler/tools/antlr/compiler/Main.class
@@ -33,7 +33,7 @@ KOPI_TOOL_TARGET = \
   $(KOPI_LEXGEN_TARGET)
 
 KOPI_JFLEX_SRCS = \
-  JFlex/Main.java
+  3rdparty/JFlex/Main.java
 
 KOPI_ANTLR_SRCS = \
   at/dms/compiler/tools/antlr/compiler/Main.java

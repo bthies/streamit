@@ -12,6 +12,10 @@ SamplingRateConverter.java: SamplingRateConverter.str lib/*.str
 FilterBank.java: FilterBank.str lib/*.str
 	$(FRONTEND) FilterBank.str lib/*.str > FilterBank.java
 
+TargetDetect.java: TargetDetect.str lib/*.str
+	$(FRONTEND) TargetDetect.str lib/*.str > TargetDetect.java
+
+
 Test.java: Test.str lib/*.str
 	$(FRONTEND) Test.str lib/*.str > Test.java
 
@@ -22,4 +26,5 @@ Test.java: Test.str lib/*.str
 clean:
 	rm -f *.dot *.ps *.c *.exe *.class
 	rm -f Test.java
-	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java
+	rm -f FIRProgram.java SamplingRateConverter.java 
+	rm -f FilterBank.java TargetDetect.java

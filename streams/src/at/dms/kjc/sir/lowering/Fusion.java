@@ -218,7 +218,6 @@ public class Fusion {
 
 	// set init function to init function of first, arbitrarily (CHANGE)
 	fused.setInit(f1.getInit());
-	fused.setWork(newWork);
 
 	// replace <f1>..<f2> with <fused>
 	parent.replace(f1, f2, fused);

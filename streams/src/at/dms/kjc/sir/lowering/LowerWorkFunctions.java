@@ -56,14 +56,14 @@ public class LowerWorkFunctions implements StreamVisitor
 			    CType inputType, CType outputType) {
 	// only worry about actual SIRFilter's, not special cases like
 	// FileReader's and FileWriter's
-	if (!self.getClass().toString().endsWith("at.dms.kjc.sir.SIRFilter")) {
+	if (!self.needsWork()) {
 	    return;
 	}
         // add entry/exit nodes to work function
         addEntryExit(work);
 	// add entry/exit nodes to initial work function, if there is one
-	if (self.getInitWork()!=null) {
-	    addEntryExit(self.getInitWork());
+	if (self instanceof SIRTwoStageFilter) {
+	    addEntryExit(((SIRTwoStageFilter)self).getInitWork());
 	}
     }
   
@@ -96,10 +96,6 @@ public class LowerWorkFunctions implements StreamVisitor
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
 				 List elements) {
-	// add entry/exit nodes to initial work function, if there is one
-	if (self.getInitWork()!=null) {
-	    addEntryExit(self.getInitWork());
-	}
     }
   
     /* pre-visit a splitjoin */
@@ -108,10 +104,6 @@ public class LowerWorkFunctions implements StreamVisitor
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
-	// add entry/exit nodes to initial work function, if there is one
-	if (self.getInitWork()!=null) {
-	    addEntryExit(self.getInitWork());
-	}
     }
   
     /* pre-visit a feedbackloop */
@@ -122,10 +114,6 @@ public class LowerWorkFunctions implements StreamVisitor
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
-	// add entry/exit nodes to initial work function, if there is one
-	if (self.getInitWork()!=null) {
-	    addEntryExit(self.getInitWork());
-	}
     }
   
     /**

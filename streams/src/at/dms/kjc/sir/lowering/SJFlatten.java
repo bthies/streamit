@@ -171,8 +171,7 @@ public class SJFlatten
                                             sj.getInputType(),
                                             sj.getOutputType());
         
-        // Use the new init and work functions.
-        newFilter.setWork(newWork);
+        // Use the new init function.
         newFilter.setInit(newInit);
 
         // Replace the init function in the parent.

@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <sys/time.h>
 
 #include "streamit.h"
 #include "streamit_internal.h"
@@ -75,16 +78,27 @@ void connect_tapes (stream_context *c)
     }
 }
 
+/* Things to worry about for signal handlers: */
+static void handle_sigterm(int signum);
+static jmp_buf jmp_env;
+
 void streamit_run (stream_context *c, int argc, char **argv)
 {
-    int niters = -1;
+    int niters = -1, do_time = 0;
+    /* NB: volatile to force preservation across setjmp()/longjmp() */
+    volatile int iters_run = 0;
+    struct timeval start, now, diff;
+    struct sigaction sa;
     int flag;
     
-    while ((flag = getopt(argc, argv, "i:")) != -1)
+    while ((flag = getopt(argc, argv, "i:t")) != -1)
         switch (flag)
         {
         case 'i':
             niters = atoi(optarg);
+            break;
+        case 't':
+            do_time = 1;
             break;
         case '?':
             fprintf(stderr, "Unrecognized option '-%c'\n", optopt);
@@ -93,12 +107,48 @@ void streamit_run (stream_context *c, int argc, char **argv)
     
     connect_tapes (c);
 
-    // run the work function indefinitely
-    while (niters != 0)
-    {
+    /* Trap SIGTERM (normal kill) and SIGINT (C-c). */
+    sa.sa_handler = handle_sigterm;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
+
+    /* Record the start time now. */
+    gettimeofday(&start, NULL);
+
+    /* Don't run if we're calling back from the signal handler. */
+    if (!sigsetjmp(jmp_env, 1))
+      /* run the work function indefinitely */
+      while (niters != 0)
+      {
         c->work_function (c->stream_data);
         dispatch_messages();
         if (niters > 0)
-            niters--;
+          niters--;
+        iters_run++;
+      }
+
+    if (do_time)
+    {
+      double udiff;
+      
+      gettimeofday(&now, NULL);
+      diff.tv_sec = now.tv_sec - start.tv_sec;
+      diff.tv_usec = now.tv_usec - start.tv_usec;
+      if (diff.tv_usec < 0)
+      {
+        diff.tv_usec += 1000000;
+        diff.tv_sec--;
+      }
+      udiff = diff.tv_sec + (double)diff.tv_usec/1.0e6;
+  
+      fprintf(stderr, "Ran %d iterations in %g seconds (avg. %g/iter)\n",
+              iters_run, udiff, udiff/(double)(iters_run));
     }
+}
+
+static void handle_sigterm(int signum)
+{
+  siglongjmp(jmp_env, 1);
 }

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.40 2003-01-10 18:22:13 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.41 2003-01-10 18:53:13 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -16,15 +16,14 @@ import java.util.List;
  */
 public class NodesToJava implements FEVisitor
 {
-    private StreamType st;
-    private String streamName;
+    private StreamSpec ss;
     // A string consisting of an even number of spaces.
     private String indent;
     private boolean inFunction;
     
-    public NodesToJava(StreamType st)
+    public NodesToJava(StreamSpec ss)
     {
-        this.st = st;
+        this.ss = ss;
         this.indent = "";
         this.inFunction = false;
     }
@@ -195,7 +194,7 @@ public class NodesToJava implements FEVisitor
         // properly decompose the right-hand side.
         // We can use a null stream type here since the left-hand
         // side shouldn't contain pushes, pops, or peeks.
-        GetExprType eType = new GetExprType(symtab, st);
+        GetExprType eType = new GetExprType(symtab, ss.getStreamType());
         Type lhsType = (Type)lhs.accept(eType);
         if (lhsType.isComplex())
         {
@@ -337,12 +336,12 @@ public class NodesToJava implements FEVisitor
     public Object visitExprPeek(ExprPeek exp)
     {
         String result = (String)exp.getExpr().accept(this);
-        return peekFunction(st) + "(" + result + ")";
+        return peekFunction(ss.getStreamType()) + "(" + result + ")";
     }
     
     public Object visitExprPop(ExprPop exp)
     {
-        return popFunction(st) + "()";
+        return popFunction(ss.getStreamType()) + "()";
     }
 
     public Object visitExprTernary(ExprTernary exp)
@@ -385,7 +384,7 @@ public class NodesToJava implements FEVisitor
         boolean wasInFunction = inFunction;
         inFunction = true;
         String result = indent + "public ";
-        if (!func.getName().equals(streamName))
+        if (!func.getName().equals(ss.getName()))
             result += convertType(func.getReturnType()) + " ";
         result += func.getName();
         String prefix = null;
@@ -598,7 +597,7 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtPush(StmtPush stmt)
     {
-        return pushFunction(st) + "(" +
+        return pushFunction(ss.getStreamType()) + "(" +
             (String)stmt.getValue().accept(this) + ")";
     }
 
@@ -713,10 +712,8 @@ public class NodesToJava implements FEVisitor
         
         // At this point we get to ignore wholesale the stream type, except
         // that we want to save it.
-        StreamType oldST = st;
-        st = spec.getStreamType();
-        String oldStreamName = streamName;
-        streamName = spec.getName();
+        StreamSpec oldSS = ss;
+        ss = spec;
 
         // Output field definitions:
         for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
@@ -729,8 +726,7 @@ public class NodesToJava implements FEVisitor
         for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
             result += (String)(((Function)iter.next()).accept(this));
 
-        streamName = oldStreamName;
-        st = oldST;
+        ss = oldSS;
         unIndent();
         result += "}\n";
         inFunction = wasInFunction;

@@ -45,19 +45,19 @@ public class LoweringConstants {
     /**
      * The name of the variable holding the stream context in structures.
      */
-    public static final String CONTEXT_VAR_NAME = "context";
+    public static final String CONTEXT_VAR_NAME = "_context";
 
     /**
      * The prefix of the name for the variable holding child
      * substreams in structures.
      */
-    public static final String CHILD_NAME = "child";
+    public static final String CHILD_NAME = "_child";
 
     /**
      * The name of the parameter that functions get to access their
      * fields.
      */
-    public static final String STATE_PARAM_NAME = "data";
+    public static final String STATE_PARAM_NAME = "_data";
 
     /**
      * The name of the type of the tape parameters to work functions.
@@ -67,12 +67,12 @@ public class LoweringConstants {
     /**
      * The name of the parameter corresponding to the input tape.
      */
-    public static final String INPUT_TAPE_NAME = "inTape";
+    public static final String INPUT_TAPE_NAME = "_inTape";
 
     /**
      * The name of the parameter corresponding to the output tape.
      */
-    public static final String OUTPUT_TAPE_NAME = "outTape";
+    public static final String OUTPUT_TAPE_NAME = "_outTape";
 
     /**
      * Counts the work functions that have been created so that each

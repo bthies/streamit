@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.21 2003-05-15 20:53:45 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.22 2003-05-19 20:23:17 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -59,6 +59,22 @@ public class FEReplacer implements FEVisitor
     protected void addStatement(Statement stmt)
     {
         newStatements.add(stmt);
+    }
+
+    /**
+     * Accept an arbitrary <code>Statement</code>.  This by default
+     * just asks <code>stmt</code> to accept <code>this</code>, and
+     * adds the returned statement (if any) to the statement list.  If
+     * a derived class needs to do extra processing on every
+     * statement, it can override this method.
+     *
+     * @param stmt  Statement to visit
+     */
+    protected void doStatement(Statement stmt)
+    {
+        Statement result = (Statement)stmt.accept(this);
+        if (result != null)
+            addStatement(result);
     }
 
     /**
@@ -280,21 +296,11 @@ public class FEReplacer implements FEVisitor
     
     public Object visitStmtBlock(StmtBlock stmt)
     {
-        boolean changed = false;
         List oldStatements = newStatements;
         newStatements = new ArrayList();
         for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
-        {
-            Statement oldStmt = (Statement)iter.next();
-            Statement newStmt = (Statement)oldStmt.accept(this);
-            if (newStmt != oldStmt) changed = true;
-            if (newStmt != null) addStatement(newStmt);
-        }
-        Statement result;
-        if (!changed)
-            result = stmt;
-        else
-            result = new StmtBlock(stmt.getContext(), newStatements);
+            doStatement((Statement)iter.next());
+        Statement result = new StmtBlock(stmt.getContext(), newStatements);
         newStatements = oldStatements;
         return result;
     }

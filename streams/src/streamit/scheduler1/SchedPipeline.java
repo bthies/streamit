@@ -6,7 +6,7 @@ import streamit.*;
 
 public class SchedPipeline extends SchedStream
 {
-    public SchedPipeline (Object stream)
+    SchedPipeline (Object stream)
     {
         super (stream);
     }

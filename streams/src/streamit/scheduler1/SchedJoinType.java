@@ -15,7 +15,7 @@ public class SchedJoinType extends AssertedClass
     List joinWeights;
     Object joinObject;
 
-    public SchedJoinType (int type, List joinWeights, Object joinObject)
+    SchedJoinType (int type, List joinWeights, Object joinObject)
     {
         ASSERT (type > -1 && type < LAST);
         ASSERT (joinWeights);

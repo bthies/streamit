@@ -8,7 +8,7 @@ public class SchedFilter extends SchedStream
     final List srcMsgs = new LinkedList ();
     final List dstMsgs = new LinkedList ();
 
-    public SchedFilter (Object stream, int push, int pop, int peek)
+    SchedFilter (Object stream, int push, int pop, int peek)
     {
         super (stream);
         setProduction (push);

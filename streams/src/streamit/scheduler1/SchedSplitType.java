@@ -15,7 +15,7 @@ public class SchedSplitType extends AssertedClass
     List splitWeights;
     Object splitObject;
 
-    public SchedSplitType (int type, List splitWeights, Object splitObject)
+    SchedSplitType (int type, List splitWeights, Object splitObject)
     {
         ASSERT (type > -1 && type < LAST);
         ASSERT (splitWeights);

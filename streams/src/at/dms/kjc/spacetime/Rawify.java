@@ -932,12 +932,7 @@ public class Rawify
 	return tiles;
     }
     
-
-    /*private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
-					       FilterInfo filterInfo, boolean init, boolean primePump, 
-					       RawTile tile, RawChip rawChip) {*/
-    //private static void createLinearSwitchCode(FilterTraceNode node,boolean init,boolean primePump,int mult,RawTile tile,RawChip rawChip) {
-    private static void createLinearSwitchCode(FilterTraceNode node/*,boolean init,boolean primePump*/,int mult,RawTile tile,RawChip rawChip) {
+    private static void createLinearSwitchCode(FilterTraceNode node,FilterInfo filterInfo,int mult,RawTile tile,RawChip rawChip) {
 	System.err.println("Creating switchcode linear: "+node+" "+mult);
 	ComputeNode sourceNode = null;
 	//Get sourceNode and input port
@@ -978,6 +973,7 @@ public class Rawify
 	//Get filter properties
 	FilterContent content = node.getFilter();
 	final int numCoeff = content.getArray().length;
+	final int peek=content.getPeek();
 	final int pop = content.getPopCount();
 	final int numPop = numCoeff/pop;
 	final boolean begin=content.getBegin();
@@ -1001,54 +997,63 @@ public class Rawify
 	      testIns.addRoute(SwitchIPort.CSTO,dest);
 	      code.appendIns(testIns,false);*/
 
-	    boolean first=true; //Don't forward first value
-	    if(turns>0) {
-		if(turns>1) {
-		    //Order between values (from peek buffer) and partial sums is reversed
-		    //So use Reg1 as a buffer to reorder partial sum and values
-		    for(int turn=1;turn<turns;turn++)
-			for(int j = 0; j<pop; j++) {
-			    if(j==0) {
-				FullIns newIns=new FullIns(tile,new MoveIns(SwitchReg.R1,SwitchIPort.CSTO));
-				if(first)
-				    first=false;
-				else
-				    newIns.addRoute(SwitchReg.R1,dest);
-				code.appendIns(newIns, false);
-			    }
-			    FullIns ins=new FullIns(tile);
+	    int bufferRemaining=filterInfo.remaining; //Use peek buffer while bufferRemaining>0 else use net
+	    if(filterInfo.initMult>0)
+		bufferRemaining+=peek-pop;
+	    for(int i=0;i<numPop;i++)
+		for(int j=0;j<pop;j++)
+		    if(bufferRemaining>0)
+			bufferRemaining--;
+		    else {
+			//Pass first value
+			FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+			ins.addRoute(src, SwitchOPort.CSTI);
+			code.appendIns(ins, false);
+			//Repeat first value
+			for(int k=i-1;k>=0;k--) {
+			    FullIns newIns = new FullIns(tile);
+			    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			    code.appendIns(newIns, false);
+			}
+		    }
+ 	    if(turns>0) {
+		//Order between values (from peek buffer) and partial sums is reversed
+		//So use Reg2 as a buffer to reorder partial sum and values
+		//Save partial sum
+		FullIns ins=new FullIns(tile,new MoveIns(SwitchReg.R2,SwitchIPort.CSTO));
+		code.appendIns(ins, false);
+		for(int turn=0;turn<turns;turn++)
+		    for(int j = 0; j<pop; j++) {
+			if(bufferRemaining>0) {
+			    //Pass value from peek buffer
+			    ins=new FullIns(tile);
 			    ins.addRoute(SwitchIPort.CSTO,dest);
 			    code.appendIns(ins,false);
+			    bufferRemaining--;
+			} else {
+			    //Pass first value
+			    ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+			    ins.addRoute(src, SwitchOPort.CSTI);
+			    ins.addRoute(src,dest); //Send to next tile
+			    code.appendIns(ins, false);
+			    //Repeat first value
+			    for(int k=numPop-2;k>=0;k--) {
+				FullIns newIns = new FullIns(tile);
+				newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+				code.appendIns(newIns, false);
+			    }
 			}
-		    //Route remainding partial sum
-		    FullIns ins=new FullIns(tile);
-		    ins.addRoute(SwitchReg.R1,dest);
-		    code.appendIns(ins,false);
-		}
-		first=false; //First value successfully ignored
-	    }
-	    //Order back to normal
-	    for(int j = 0; j<pop; j++) {
-		//Pass first value
-		FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		ins.addRoute(src, SwitchOPort.CSTI);
-		if(first)
-		    first=false;
-		else
-		    ins.addRoute(src,dest);
-		code.appendIns(ins, false);
-		//Repeat first value
-		for(int k = numPop-2; k>= 0; k--) {
-		    FullIns newIns = new FullIns(tile);
-		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		    code.appendIns(newIns, false);
-		}
-		//Pass out partial sum to next filter
-		if(j==0) {
-		    FullIns newIns=new FullIns(tile);
-		    newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
-		    code.appendIns(newIns, false);
-		}
+			if(j==0) { //Partial sum
+			    //Save partial sum
+			    FullIns newIns;
+			    if(turn<turns-1)
+				newIns=new FullIns(tile,new MoveIns(SwitchReg.R2,SwitchIPort.CSTO));
+			    else
+				newIns=new FullIns(tile); //Don't pull off last partial sum
+			    newIns.addRoute(SwitchReg.R2,dest); //Send out partial sum
+			    code.appendIns(newIns, false);
+			}
+		    }
 	    }
 	} else {
 
@@ -1203,7 +1208,7 @@ public class Rawify
 		System.out.println("GENERATING PRIMEPUMP: "+node+" "+mult);
 
 	if(!(init||primePump||!linear)) { //Linear switch code in steadystate
-	    createLinearSwitchCode(node,mult,tile,rawChip);
+	    createLinearSwitchCode(node,filterInfo,mult,tile,rawChip);
 	    sentItems+=mult;
 	} else if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
 	    assert mult > 1;

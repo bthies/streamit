@@ -24,8 +24,18 @@ public class Fusion {
      * that:
      *  1. <f1> and <f2> have no control flow
      *  2. <f2> does not peek
+     *  3. the init functions are empty
+     *  4. there are no name conflicts in fields or methods (just put
+     *     'em together)
+     *
+     * Need to be careful with args of init function... should have
+     * multiple init functions per fused filter?  fuse the init
+     * functions, cascading their arguments?  need to adjust the
+     * SIRInitStatements, too.
+     * 
      */
-    public static void fuse(SIRPipeline parent, SIRFilter f1, SIRFilter f2) {
+    public static void fuse(SIRPipeline parent, final SIRFilter f1, 
+			    final SIRFilter f2) {
 	// make a scheduler
 	Scheduler scheduler = new SimpleHierarchicalScheduler();
 	// ask the scheduler to schedule <f1>, <f2>
@@ -63,9 +73,168 @@ public class Fusion {
 	    newStatements.addAllStatements(0, oldClone);
 	}
 
-	// change each push() statement into an assignment to a local var
-	
-	
+	// change each push() statement into an assignment to a local var...
+	// keep list of variable def's
+	final List vars = new LinkedList();
+	newStatements.accept(new SLIRReplacingVisitor() {
+		public Object visitPushExpression(SIRPushExpression oldSelf,
+						CType oldTapeType,
+						JExpression oldArg) {
+		    // do the recursing
+		    SIRPushExpression self = (SIRPushExpression)
+			super.visitPushExpression(oldSelf,
+						  oldTapeType,
+						  oldArg);
+
+		    // define a variable to assign to
+		    JVariableDefinition var = 
+			new JVariableDefinition(/* where */ null,
+						/* modifiers */ 0,
+						/* type */ 
+						self.getTapeType(),
+						/* ident */ 
+						LoweringConstants.
+						getUniqueVarName(),
+						/* initializer */
+						null);
+
+		    // add var to list of var's
+		    vars.add(var);
+		    
+		    // replace with an assignment expression
+		    return new JAssignmentExpression(null,
+		    new JLocalVariableExpression(null, var),
+						     self.getArg());
+		}
+	    });
+
+	// add var decl's to newStatements
+	for (ListIterator it = vars.listIterator(); it.hasNext(); ) {
+	    // get var
+	    JVariableDefinition var = (JVariableDefinition)it.next();
+	    // make a declaration statement for our new variable
+	    JVariableDeclarationStatement varDecl =
+		new JVariableDeclarationStatement(null, var, null);
+	    // add to newStatements
+	    newStatements.addStatementFirst(varDecl);
+	}
+
 	// add the set of statements from <f2>, <count2> times
+	JBlock newConsumers = new JBlock(null, new JStatement[0], null);
+	for (int i=0; i<count2; i++) {
+	    // get old statement list
+	    List old = f2.getWork().getStatements();
+	    // clone the list
+	    List oldClone = (List)ObjectDeepCloner.deepCopy(old);
+	    // add these statements to the end of the new body
+	    newConsumers.addAllStatements(0, oldClone);
+	}
+
+	// go through consumers, replacing pop's with references to
+	// local vars...
+
+	// keep a count of which var we're popping
+	final int popCount = 0;
+	// do the replacement
+	newConsumers.accept(new SLIRReplacingVisitor() {
+		public Object visitSIRPopExpression(SIRPopExpression oldSelf,
+						    CType oldTapeType) {
+		    // visit super
+		    SIRPopExpression self = 
+			(SIRPopExpression)
+			super.visitPopExpression(oldSelf, oldTapeType);
+		    
+		    // get the local var that we should be referencing
+		    JLocalVariable var = (JLocalVariable)vars.get(popCount);
+		    
+		    // increment the pop count
+		    popCount++;
+
+		    // make local var references instead of popping
+		    return new JLocalVariableExpression(null, var);
+		}
+	    });
+	
+	// add all the consumer statements to the new block
+	newStatements.addAllStatements(newStatements.size(),
+				       newConsumers.getStatements());
+
+	// make a new work function for the fused filter
+	JMethodDeclaration newWork = 
+	    new JMethodDeclaration(null,
+				   at.dms.kjc.Constants.ACC_PUBLIC,
+				   CStdType.Void,
+				   "work",
+				   JFormalParameter.EMPTY,
+				   CClassType.EMPTY,
+				   newStatements,
+				   null,
+				   null);
+
+	// copy fields
+	JFieldDeclaration[] newFields = 
+	    new JFieldDeclaration[f1.getFields().length + 
+				  f2.getFields().length];
+	for (int i=0; i<f1.getFields().length; i++) {
+	    newFields[i] = f1.getFields()[i];
+	}
+	for (int i=0; i<f2.getFields().length; i++) {
+	    newFields[i+f1.getFields().length] = f2.getFields()[i];
+	}
+
+	// copy methods
+	JMethodDeclaration[] newMethods = 
+	    new JMethodDeclaration[f1.getMethods().length + 
+				   f2.getMethods().length];
+	for (int i=0; i<f1.getMethods().length; i++) {
+	    newMethods[i] = f1.getMethods()[i];
+	}
+	for (int i=0; i<f2.getMethods().length; i++) {
+	    newMethods[i+f1.getMethods().length] = f2.getMethods()[i];
+	}
+
+	// make a new filter to represent the fused combo
+	final SIRFilter fused = new SIRFilter(f1.getParent(),
+					"Fused_" + 
+					f1.getIdent() + "_" + f2.getIdent(),
+					newFields,
+					newMethods,
+					/* ASSUME PEEK=0 !! */ 
+					new JIntLiteral(0),
+					new JIntLiteral(f1.getPopInt()*count1),
+				       new JIntLiteral(f2.getPushInt()*count2),
+					newWork,
+					f1.getInputType(),
+					f2.getOutputType());
+
+	// set init function to init function of first, arbitrarily (CHANGE)
+	fused.setInit(f1.getInit());
+
+	// replace <f1>..<f2> with <fused>
+	parent.replace(f1, f2, fused);
+
+	// replace the SIRInitStatements in the parent
+	parent.getInit().accept(new SLIRReplacingVisitor() {
+		public Object visitInitStatement(SIRInitStatement oldSelf,
+						 JExpression[] oldArgs,
+						 SIRStream oldTarget) {
+		    // do the super
+		    SIRInitStatement self = 
+			(SIRInitStatement)
+			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
+		    
+		    // if we're f1, change target to be <fused>
+		    if (self.getTarget()==f1) {
+			self.setTarget(fused);
+			return self;
+		    } else if (self.getTarget()==f2) {
+			// if we're f2, remove the init statement
+			return new JEmptyStatement(null, null);
+		    } else {
+			// otherwise, return self
+			return self;
+		    }
+		}
+	    });
     }
 }

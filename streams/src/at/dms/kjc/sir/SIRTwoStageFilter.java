@@ -83,6 +83,7 @@ public class SIRTwoStageFilter extends SIRFilter {
 	// initial and steady states (our simulation routine with the
 	// scheduler makes this assumption).
 	Utils.assert(initPeek-initPop==getPeekInt()-getPopInt(),
+		     "\nFor Two Stage Filters, initPeek-initPop must equal peek-pop" +
 		     "\ninitPeek=" + initPeek + 
 		     "\ninitPop=" + initPop + 
 		     "\nPeek=" + getPeekInt() + 

@@ -16,7 +16,8 @@ import at.dms.compiler.TokenReference;
  */
 class Propagator extends SLIRReplacingVisitor {
     /**
-     * Map of known constants (JLocalVariable -> JLiteral)
+     * Map of known constants/Overloaded for copy prop (JLocalVariable -> JLiteral/JLocalVariable/Array)
+     * When storing information about an array JLiteral/JLocalVariables are stored in the Array being mapped to
      */
     private Hashtable constants;
 
@@ -30,6 +31,11 @@ class Propagator extends SLIRReplacingVisitor {
      * actual changes or not
      */
     private boolean write;
+
+    /**
+     * Used for naming constprop vars
+     */
+    private static int propNum=0;
 
     /**
      * Creates one of these given that <constants> maps
@@ -104,6 +110,15 @@ class Propagator extends SLIRReplacingVisitor {
 		// remember the value for the duration of our visiting
 		constants.put(self, newExp);
 		changed.put(self,Boolean.TRUE);
+	    } else if(expr instanceof JNewArrayExpression) {
+		JExpression dim;
+		if(((JNewArrayExpression)expr).getDims().length==1) {
+		    dim=((JNewArrayExpression)expr).getDims()[0];
+		    if(dim instanceof JIntLiteral) {
+			constants.put(self,new Object[((JIntLiteral)dim).intValue()]);
+			changed.put(self,Boolean.TRUE);
+		    }
+		}
 	    }
 	}
 	return self;
@@ -325,12 +340,15 @@ class Propagator extends SLIRReplacingVisitor {
 	    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
 	    changed.put(var,Boolean.TRUE);
 	    if(write) {
-		JLiteral lit=(JLiteral)constants.get(var);
-		if(lit!=null)
-		    if(lit instanceof JIntLiteral) {
-			constants.put(var,new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1)));
-			return lit;
-		    }
+		Object val=constants.get(var);
+		if(val instanceof JLiteral) {
+		    JLiteral lit=(JLiteral)val;
+		    if(lit!=null)
+			if(lit instanceof JIntLiteral) {
+			    constants.put(var,new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1)));
+			    return lit;
+			}
+		}
 	    }
 	    constants.remove(var);
 	} //else
@@ -345,13 +363,16 @@ class Propagator extends SLIRReplacingVisitor {
 	    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
 	    changed.put(var,Boolean.TRUE);
 	    if(write) {
-		JLiteral lit=(JLiteral)constants.get(var);
-		if(lit!=null)
-		    if(lit instanceof JIntLiteral) {
-			JIntLiteral out=new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_PREINC) ? 1 : -1));
-			constants.put(var,out);
-			return out;
-		    }
+		Object val=constants.get(var);
+		if(val instanceof JLiteral) {
+		    JLiteral lit=(JLiteral)val;
+		    if(lit!=null)
+			if(lit instanceof JIntLiteral) {
+			    JIntLiteral out=new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_PREINC) ? 1 : -1));
+			    constants.put(var,out);
+			    return out;
+			}
+		}
 	    }
 	    constants.remove(var);
 	} /*else
@@ -385,19 +406,66 @@ class Propagator extends SLIRReplacingVisitor {
         left.accept(this);
         JExpression newRight = (JExpression)right.accept(this);
         if (newRight.isConstant()) {
-            self.setRight(newRight);
+	    if(write)
+		self.setRight(newRight);
 	    //System.out.println("Assign: "+left+" "+newRight);
 	    if(left instanceof JLocalVariableExpression) {
 		JLocalVariable var=((JLocalVariableExpression)left).getVariable();
 		//constants.remove(var);
 		constants.put(var,newRight);
 		changed.put(var,Boolean.TRUE);
+	    } else if(left instanceof JArrayAccessExpression) {
+		JExpression expr=((JArrayAccessExpression)left).getPrefix();
+		if(expr instanceof JLocalVariableExpression) {
+		    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
+		    JExpression accessor=((JArrayAccessExpression)left).getAccessor();
+		    Object[] array=(Object[])constants.get(var);
+		    //System.err.println("Array assigned:"+var+"["+accessor+"]="+newRight);
+		    if(array!=null)
+			if(accessor instanceof JIntLiteral) {
+			    array[((JIntLiteral)accessor).intValue()]=newRight;
+			} else
+			    constants.remove(var);
+		    
+		} else if(!(expr instanceof JFieldAccessExpression))
+		    System.err.println("WARNING:Cannot Propagate Array Prefix "+expr);
 	    }
         } else
 	    if(left instanceof JLocalVariableExpression) {
 		JLocalVariable var=((JLocalVariableExpression)left).getVariable();
-		constants.remove(var);
 		changed.put(var,Boolean.TRUE);
+		if(right instanceof JLocalVariableExpression) {
+		    if(newRight!=right) {
+			if(write)
+			    self.setRight(newRight);
+			constants.put(var,newRight);
+		    } else
+			constants.put(var,right);
+		} else if(right instanceof JNewArrayExpression) {
+		    JExpression dim;
+		    if(((JNewArrayExpression)right).getDims().length==1) {
+			dim=((JNewArrayExpression)right).getDims()[0];
+			if(dim instanceof JIntLiteral)
+			    constants.put(left,new Object[((JIntLiteral)dim).intValue()]);
+		    } else
+			constants.remove(var);
+		} else {
+		    constants.remove(var);
+		}
+	    } else if(left instanceof JArrayAccessExpression) {
+		JExpression expr=((JArrayAccessExpression)left).getPrefix();
+		if(expr instanceof JLocalVariableExpression) {
+		    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
+		    JExpression accessor=((JArrayAccessExpression)left).getAccessor();
+		    Object[] array=(Object[])constants.get(var);
+		    if(array!=null)
+			if(accessor instanceof JIntLiteral) {
+			    array[((JIntLiteral)accessor).intValue()]=null;
+			} else
+			    constants.remove(var);
+			
+		} else if(!(expr instanceof JFieldAccessExpression))
+		    System.err.println("WARNING:Cannot Propagate Array Prefix "+expr);
 	    }
         return self;
     }
@@ -730,19 +798,75 @@ class Propagator extends SLIRReplacingVisitor {
     }
 
     /**
-     * Visits an array length expression
+     * Visits an array access expression
      */
     public Object visitArrayAccessExpression(JArrayAccessExpression self,
 					     JExpression prefix,
 					     JExpression accessor) {
 	prefix.accept(this);
 	JExpression newExp = (JExpression)accessor.accept(this);
-	if (write&&newExp.isConstant()) {
+	if (write&&(newExp instanceof JIntLiteral)) {
 	    self.setAccessor(newExp);
+	    if(prefix instanceof JLocalVariableExpression) {
+		JLocalVariable var=((JLocalVariableExpression)prefix).getVariable();
+		Object[] array=(Object[])constants.get(var);
+		if(array!=null) {
+		    //System.err.println("Trying to access index:"+((JIntLiteral)newExp).intValue()+" "+array.length);
+		    int index=((JIntLiteral)newExp).intValue(); //fm produces negative indexes for some reason
+		    if(index>=0) {
+			Object val=array[index];
+			if(val!=null)
+			    return val;
+		    }
+		}
+	    } else if(!(prefix instanceof JFieldAccessExpression))
+		System.err.println("WARNING:Cannot Propagate Array Prefix "+prefix);
 	}
 	return self;
     }
 
+    //Breaks up complex assignments
+    //Useful for Copy Prop
+    public Object visitBlockStatement(JBlock self2,JavaStyleComment[] comments2) {
+	self2.accept(new ReplacingVisitor() {
+		public Object visitBlockStatement(JBlock self,JavaStyleComment[] comments) {
+
+		    int size=self.size();
+		    for (int i=0;i<size;i++) {
+			LinkedList newStates=new LinkedList();
+			JStatement state=(JStatement)self.getStatement(i);
+			if(state instanceof JExpressionStatement) {
+			    JExpression expr=((JExpressionStatement)state).getExpression();
+			    if(expr instanceof JAssignmentExpression) {
+				JExpression left=((JAssignmentExpression)expr).getLeft();
+				JExpression right=((JAssignmentExpression)expr).getRight();
+				if((left instanceof JArrayAccessExpression)&&(!(left instanceof JLocalVariableExpression)&&!(left.isConstant()))) {
+				    //System.err.println("Types:"+left.getType()+" "+right.getType());
+				    CType type;
+				    if(right.getType()!=null)
+					type=right.getType();
+				    else
+					type=left.getType();
+				    JVariableDefinition var=new JVariableDefinition(self.getTokenReference(),0,type,propName(),right);
+				    self.addStatement(i,new JVariableDeclarationStatement(self.getTokenReference(),var,null));
+				    size++;
+				    i++;
+				    ((JAssignmentExpression)expr).setRight(new JLocalVariableExpression(self.getTokenReference(),var));
+				}
+			    }
+			}
+		    }
+		    
+		    return self;
+		}
+	    });
+	return super.visitBlockStatement(self2,comments2);
+    }
+    
+    private String propName() {
+	return "__constpropvar_"+propNum++;
+    }
+		
     // ----------------------------------------------------------------------
     // UTILS
     // ----------------------------------------------------------------------

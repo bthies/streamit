@@ -2,6 +2,7 @@ package streamit.scheduler;
 
 import java.util.*;
 import java.math.BigInteger;
+import java.io.PrintStream;
 import streamit.scheduler.*;
 
 public class SchedSplitJoin extends SchedStream
@@ -287,6 +288,43 @@ public class SchedSplitJoin extends SchedStream
         }
 
         // done
+    }
+
+    void printDot (PrintStream outputStream)
+    {
+
+        // Create a subgraph again...
+        print("subgraph cluster_" + getUniqueStreamName () + " {\n", outputStream);
+
+        // Visit the splitter and joiner to get their node names...
+        getSplitType ().printDot (outputStream);
+        getJoinType ().printDot (outputStream);
+
+        String splitName = getSplitType ().getUniqueStreamName ();
+        String joinName = getJoinType ().getUniqueStreamName ();
+
+        // ...and walk through the body.
+        Iterator iter = allChildren.iterator();
+        while (iter.hasNext())
+        {
+            SchedObject oper = (SchedObject)iter.next();
+            oper.printDot (outputStream);
+
+            printEdge(splitName, oper.getFirstChild ().getUniqueStreamName (), outputStream);
+            printEdge(joinName, oper.getLastChild ().getUniqueStreamName (), outputStream);
+        }
+
+        print("}\n", outputStream);
+    }
+
+    SchedObject getFirstChild ()
+    {
+        return getSplitType ().getFirstChild ();
+    }
+
+    SchedObject getLastChild ()
+    {
+        return getJoinType ().getLastChild ();
     }
 }
 

@@ -1,6 +1,7 @@
 package streamit.scheduler;
 
 import java.util.*;
+import java.io.PrintStream;
 import streamit.*;
 
 public abstract class Scheduler extends DestroyedClass
@@ -26,6 +27,15 @@ public abstract class Scheduler extends DestroyedClass
         ASSERT (this.stream == null && stream != null);
         this.stream = stream;
         this.stream.computeSteadySchedule ();
+    }
+
+    /**
+     * Print the StreamIt graph
+     */
+    public void print (PrintStream outputStream)
+    {
+        ASSERT (stream);
+        stream.printDot (outputStream);
     }
 
     /**

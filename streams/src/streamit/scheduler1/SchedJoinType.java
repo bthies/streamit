@@ -1,10 +1,11 @@
 package streamit.scheduler;
 
 import streamit.*;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Iterator;
 
-public class SchedJoinType extends AssertedClass
+public class SchedJoinType extends SchedObject
 {
     public static final int ROUND_ROBIN = 0;
     public static final int WEIGHTED_ROUND_ROBIN = 1;
@@ -13,16 +14,16 @@ public class SchedJoinType extends AssertedClass
     final int type;
     int roundProduction;
     List joinWeights;
-    Object joinObject;
 
     SchedJoinType (int type, List joinWeights, Object joinObject)
     {
+        super (joinObject);
+
         ASSERT (type > -1 && type < LAST);
         ASSERT (joinWeights);
         ASSERT (joinObject);
         this.type = type;
         this.joinWeights = joinWeights;
-        this.joinObject = joinObject;
 
         switch (this.type)
         {
@@ -62,7 +63,14 @@ public class SchedJoinType extends AssertedClass
 
     public Object getJoinObject ()
     {
-        ASSERT (joinObject);
-        return joinObject;
+        return getStreamObject ();
     }
+
+    public void printDot (PrintStream outputStream)
+    {
+        print(getUniqueStreamName () + " [ label=\"" + getStreamName () + "\" ]\n", outputStream);
+    }
+
+    SchedObject getFirstChild () { return this; }
+    SchedObject getLastChild () { return this; }
 }

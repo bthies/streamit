@@ -1,9 +1,10 @@
 package streamit.scheduler;
 
 import streamit.*;
+import java.io.PrintStream;
 import java.util.*;
 
-public class SchedSplitType extends AssertedClass
+public class SchedSplitType extends SchedObject
 {
     public static final int ROUND_ROBIN = 0;
     public static final int WEIGHTED_ROUND_ROBIN = 1;
@@ -13,16 +14,16 @@ public class SchedSplitType extends AssertedClass
     final int type;
     int roundConsumption;
     List splitWeights;
-    Object splitObject;
 
     SchedSplitType (int type, List splitWeights, Object splitObject)
     {
+        super (splitObject);
+
         ASSERT (type > -1 && type < LAST);
         ASSERT (splitWeights);
         ASSERT (splitObject);
         this.type = type;
         this.splitWeights = splitWeights;
-        this.splitObject = splitObject;
 
         switch (this.type)
         {
@@ -67,7 +68,14 @@ public class SchedSplitType extends AssertedClass
 
     public Object getSplitObject ()
     {
-        ASSERT (splitObject);
-        return splitObject;
+        return getStreamObject ();
     }
+
+    public void printDot (PrintStream outputStream)
+    {
+        print(getUniqueStreamName () + " [ label=\"" + getStreamName () + "\" ]\n", outputStream);
+    }
+
+    SchedObject getFirstChild () { return this; }
+    SchedObject getLastChild () { return this; }
 }

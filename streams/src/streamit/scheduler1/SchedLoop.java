@@ -1,6 +1,7 @@
 package streamit.scheduler;
 
 import java.math.BigInteger;
+import java.io.PrintStream;
 
 public class SchedLoop extends SchedStream
 {
@@ -189,6 +190,37 @@ public class SchedLoop extends SchedStream
     {
         ASSERT (delay);
         return delay;
+    }
+
+    void printDot (PrintStream outputStream)
+    {
+        // Create a subgraph again...
+        print("subgraph cluster_" + getUniqueStreamName () + " {\n", outputStream);
+
+        // Visit the splitter and joiner.
+        getLoopSplit ().printDot (outputStream);
+        getLoopJoin ().printDot (outputStream);
+
+        // Visit the body and the loop part.
+        getLoopBody ().printDot (outputStream);
+        getLoopFeedbackPath ().printDot (outputStream);
+
+        printEdge (getLoopJoin ().getUniqueStreamName (), getLoopBody ().getFirstChild ().getUniqueStreamName (), outputStream);
+        printEdge (getLoopBody ().getLastChild ().getUniqueStreamName (), getLoopSplit ().getUniqueStreamName (), outputStream);
+        printEdge (getLoopSplit ().getUniqueStreamName (), getLoopFeedbackPath ().getFirstChild ().getUniqueStreamName (), outputStream);
+        printEdge (getLoopFeedbackPath ().getLastChild ().getUniqueStreamName (), getLoopJoin ().getUniqueStreamName (), outputStream);
+
+        print("}\n", outputStream);
+    }
+
+    SchedObject getFirstChild ()
+    {
+        return getLoopJoin ().getFirstChild ();
+    }
+
+    SchedObject getLastChild ()
+    {
+        return getLoopSplit ().getLastChild ();
     }
 }
 

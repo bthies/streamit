@@ -1,6 +1,7 @@
 package streamit.scheduler;
 
 import java.util.*;
+import java.io.PrintStream;
 import java.math.BigInteger;
 import streamit.*;
 
@@ -153,5 +154,43 @@ public class SchedPipeline extends SchedStream
                 setProduction (child.getProduction () * (child.getNumExecutions ().intValue ()));
             }
         }
+    }
+
+    void printDot (PrintStream outputStream)
+    {
+        String lastPrinted = null;
+
+        // Print this within a subgraph.
+        print("subgraph cluster_" + getUniqueStreamName () + " {\n", outputStream);
+
+        // Walk through each of the elements in the pipeline.
+        Iterator iter = allChildren.iterator();
+        while (iter.hasNext())
+        {
+            SchedStream child = (SchedStream)iter.next();
+            ASSERT (child);
+
+            child.printDot (outputStream);
+
+            String topChild = child.getFirstChild ().getUniqueStreamName ();
+            String bottomChild = child.getLastChild ().getUniqueStreamName ();
+
+            printEdge(lastPrinted, topChild, outputStream);
+
+            // Update the known edges.
+            lastPrinted = bottomChild;
+        }
+
+        print("}\n", outputStream);
+    }
+
+    SchedObject getFirstChild ()
+    {
+        return ((SchedStream)allChildren.get (0)).getFirstChild ();
+    }
+
+    SchedObject getLastChild ()
+    {
+        return ((SchedStream)allChildren.get (allChildren.size () - 1)).getLastChild ();
     }
 }

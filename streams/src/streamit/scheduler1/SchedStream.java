@@ -4,19 +4,11 @@ import java.util.*;
 import java.math.BigInteger;
 import streamit.*;
 
-public abstract class SchedStream extends AssertedClass
+public abstract class SchedStream extends SchedObject
 {
     SchedStream (Object stream)
     {
-        ASSERT (stream);
-        this.stream = stream;
-    }
-
-    Object stream;
-
-    public Object getStreamObject ()
-    {
-        return stream;
+        super (stream);
     }
 
     private int consumes = -1, produces = -1, peeks = -1;

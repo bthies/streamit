@@ -79,8 +79,7 @@ public class SwitchCode extends at.dms.util.Utils
 	    Iterator flatNodes = ssg.getFlatNodes().iterator(); 
 	    while (flatNodes.hasNext()) {
 		node = (FlatNode)flatNodes.next();
-		if (node.isFilter() && Layout.assignToATile(node) &&
-		    computeNodes.contains(layout.getTile(node)))
+		if (node.isFilter() && Layout.assignToATile(node))
 		    computeNodes.add(layout.getTile(node));
 	    }
 

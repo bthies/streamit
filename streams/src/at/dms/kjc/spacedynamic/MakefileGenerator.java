@@ -29,16 +29,16 @@ public class MakefileGenerator
 	    //FileWriter fw = new FileWriter("Makefile");
 	    FileWriter fw = new FileWriter(MAKEFILE_NAME);
 	    //create a set of all the tiles with code
-	    HashSet tiles = new HashSet();
-	    tiles.addAll(TileCode.realTiles);
-	    tiles.addAll(TileCode.tiles);
+	    HashSet computeTiles = new HashSet();
+	    computeTiles.addAll(TileCode.realTiles);
+	    computeTiles.addAll(TileCode.tiles);
 	    
 	    //remove joiners from the hashset if we are in decoupled mode, 
 	    //we do not want to simulate joiners
 	    if (KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM) 
-		removeJoiners(tiles);
+		removeJoiners(computeTiles);
 
-	    Iterator tilesIterator = tiles.iterator();
+	    Iterator tilesIterator = computeTiles.iterator();
 	    
 	    fw.write("#-*-Makefile-*-\n\n");
 	    /*
@@ -82,9 +82,9 @@ public class MakefileGenerator
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
 	    if (streamGraph.getFileState().foundReader || streamGraph.getFileState().foundWriter)
-		createBCFile(true, tiles);
+		createBCFile(true, computeTiles);
             else
-                createBCFile(false, tiles);
+                createBCFile(false, computeTiles);
 	    if (rawChip.getYSize() > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 	    }
@@ -104,7 +104,7 @@ public class MakefileGenerator
 	    
 	    fw.write("\n\n");
 	    
-	    tilesIterator = tiles.iterator();
+	    tilesIterator = computeTiles.iterator();
 	    while(tilesIterator.hasNext()) {
 		int tile = 
 		    ((RawTile)tilesIterator.next()).getTileNumber();

@@ -1,12 +1,12 @@
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.2 2003-02-19 20:18:40 karczma Exp $ */
+/* $Id: RBTree.java,v 1.3 2003-03-17 22:51:14 karczma Exp $ */
 
 public class RBTree extends AssertedClass
 {
     private RBNode root;
 
-    private static HashComperator defaultComperator = new HashComperator();
+    public static HashComperator defaultComperator = new HashComperator();
     private final Comperator myComperator;
 
     private int size = 0;

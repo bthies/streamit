@@ -5,7 +5,7 @@
 #include <serializable.h>
 #include <data_consumer.h>
 
-#define PEEK_STREAM_QUEUE_MAXSIZE 100
+#define PEEK_STREAM_QUEUE_MAXSIZE 1024
 
 template <class T> 
 class peek_stream : public serializable {

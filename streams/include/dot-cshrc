@@ -6,7 +6,7 @@ endif
 # java classes
 setenv CLASSPATH ${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
 ## antlr classes
-setenv CLASSPATH ${CLASSPATH}:/u/thies/temp/antlr.jar
+setenv CLASSPATH ${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty

@@ -7,7 +7,7 @@ fi
 # java classes
 CLASSPATH=${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
 ## antlr classes
-CLASSPATH=${CLASSPATH}:/u/thies/temp/antlr.jar
+CLASSPATH=${CLASSPATH}:/usr/uns/java/antlr.jar
 # streamit classes
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty

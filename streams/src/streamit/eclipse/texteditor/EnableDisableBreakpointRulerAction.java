@@ -14,7 +14,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package texteditor;
+package streamit.eclipse.texteditor;
 
 import org.eclipse.jdt.internal.debug.ui.actions.*;
 
@@ -43,9 +43,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
-import launcher.StreamItApplicationLaunchShortcut;
-import launcher.StreamItLauncherPlugin;
-import launcher.StreamItLocalApplicationLaunchConfigurationDelegate;
+import streamit.eclipse.launcher.StreamItApplicationLaunchShortcut;
+import streamit.eclipse.launcher.StreamItLauncherPlugin;
+import streamit.eclipse.launcher.StreamItLocalApplicationLaunchConfigurationDelegate;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
@@ -56,7 +56,7 @@ import org.eclipse.jdt.internal.debug.ui.actions.ActionMessages;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.ui.IEditorPart;
 
-import launcher.StreamItDebugEventSetListener;
+import streamit.eclipse.launcher.StreamItDebugEventSetListener;
 
 public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerAction {
 	

@@ -14,7 +14,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package texteditor;
+package streamit.eclipse.texteditor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,10 +59,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Set;
 import java.util.TreeSet;
-import launcher.StreamItApplicationLaunchShortcut;
-import launcher.StreamItLocalApplicationLaunchConfigurationDelegate;
-import launcher.StreamItDebugEventSetListener;
-import launcher.StreamItLauncherPlugin;
+import streamit.eclipse.launcher.StreamItApplicationLaunchShortcut;
+import streamit.eclipse.launcher.StreamItLocalApplicationLaunchConfigurationDelegate;
+import streamit.eclipse.launcher.StreamItDebugEventSetListener;
+import streamit.eclipse.launcher.StreamItLauncherPlugin;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;

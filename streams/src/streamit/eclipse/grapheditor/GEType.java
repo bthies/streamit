@@ -2,7 +2,7 @@
  * Created on Jun 25, 2003
  *
  */
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 /**
  * GEType contains the possible type values that a GEStreamNode can obtain.

@@ -2,7 +2,7 @@
  * Created on Jun 20, 2003
  */
 
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 import java.io.*;
 

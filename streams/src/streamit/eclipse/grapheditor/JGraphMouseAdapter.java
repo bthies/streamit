@@ -2,7 +2,7 @@
  * Created on Jul 17, 2003
  *
  */
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -14,7 +14,7 @@ import com.jgraph.graph.GraphConstants;
 import java.util.Map;
 import java.util.Hashtable;
 
-import grapheditor.jgraphextension.*;
+import streamit.eclipse.grapheditor.jgraphextension.*;
 
 /**
  * MouseAdapter for a given JGraph 

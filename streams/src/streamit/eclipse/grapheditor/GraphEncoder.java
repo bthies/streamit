@@ -1,4 +1,4 @@
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;

@@ -13,7 +13,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package texteditor;
+package streamit.eclipse.texteditor;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package launcher;
+package streamit.eclipse.launcher;
 
 import org.eclipse.swt.widgets.TableItem;
 

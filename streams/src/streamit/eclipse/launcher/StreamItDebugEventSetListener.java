@@ -2,7 +2,7 @@
  * StreamIt Debugger
  * @author kkuo
  *******************************************************************************/
-package launcher;
+package streamit.eclipse.launcher;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

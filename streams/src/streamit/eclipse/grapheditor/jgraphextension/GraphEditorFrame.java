@@ -1,4 +1,4 @@
-package grapheditor.jgraphextension;
+package streamit.eclipse.grapheditor.jgraphextension;
 import java.util.Map;
 import java.util.HashMap;
 import com.jgraph.graph.GraphConstants;

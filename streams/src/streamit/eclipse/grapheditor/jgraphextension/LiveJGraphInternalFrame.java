@@ -1,4 +1,4 @@
-package grapheditor.jgraphextension;
+package streamit.eclipse.grapheditor.jgraphextension;
 
 import javax.swing.table.DefaultTableModel;
 import javax.swing.JTable;
@@ -28,7 +28,7 @@ import java.awt.Rectangle;
 import java.awt.Color;
 import java.util.Map;
 import java.util.ArrayList;
-import grapheditor.*;
+import streamit.eclipse.grapheditor.*;
 
 
 /**

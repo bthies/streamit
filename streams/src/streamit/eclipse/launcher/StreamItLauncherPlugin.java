@@ -2,7 +2,7 @@
  * StreamIt Launcher Plugin
  * @author kkuo
  *******************************************************************************/
-package launcher;
+package streamit.eclipse.launcher;
 
 import org.eclipse.core.runtime.IPluginDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;

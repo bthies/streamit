@@ -2,14 +2,14 @@
  * Created on Jun 18, 2003
  */
 
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 import java.util.*;
 import java.io.*;
 import java.awt.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
-import grapheditor.jgraphextension.*;
+import streamit.eclipse.grapheditor.jgraphextension.*;
 
 import javax.swing.JScrollPane;
 //import com.sun.rsasign.t;

@@ -1,7 +1,7 @@
 /*
  * Created on Jun 24, 2003
  */
-package grapheditor;
+package streamit.eclipse.grapheditor;
 import java.io.*;
 import com.jgraph.JGraph;
 

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin
-	id="launcher"
+	id="streamit.eclipse.launcher"
 	name = "%pluginName"
 	version="1.0.0"
 	provider-name = "%providerName"
-	class="launcher.StreamItLauncherPlugin">
+	class="streamit.eclipse.launcher.StreamItLauncherPlugin">
 	
 	<requires>
 		<import plugin="org.eclipse.ui"/>
@@ -26,9 +26,9 @@
 	<!-- ================================================================== -->
 	<extension point = "org.eclipse.debug.core.launchConfigurationTypes">
 		<launchConfigurationType
-		   	id="launcher.localStreamItApplication"
+		   	id="streamit.eclipse.launcher.localStreamItApplication"
 			name="%streamItLauncherName"
-			delegate="launcher.StreamItLocalApplicationLaunchConfigurationDelegate"
+			delegate="streamit.eclipse.launcher.StreamItLocalApplicationLaunchConfigurationDelegate"
 			modes= "run, debug">
 			<fileExtension extension="str" default="true"/>
 		</launchConfigurationType>			
@@ -40,8 +40,8 @@
 <!-- 
 	<extension point = "org.eclipse.debug.core.sourceLocators">
 		<sourceLocator
-			id="launcher.javaSourceLocator"
-			class="launcher.StreamItUISourceLocator"
+			id="streamit.eclipse.launcher.javaSourceLocator"
+			class="streamit.eclipse.launcher.StreamItUISourceLocator"
 			name="%streamItSourceLocator"/>
 	</extension>
 -->
@@ -58,9 +58,9 @@
 	<!-- ================================================================== -->
 	<extension point = "org.eclipse.debug.ui.launchConfigurationTabGroups">
 		<launchConfigurationTabGroup
-			id="launcher.launchConfigurationTabGroup.localStreamItApplicationTabGroup"
-			type ="launcher.localStreamItApplication"
-			class="launcher.LocalStreamItApplicationTabGroup">
+			id="streamit.eclipse.launcher.launchConfigurationTabGroup.localStreamItApplicationTabGroup"
+			type ="streamit.eclipse.launcher.localStreamItApplication"
+			class="streamit.eclipse.launcher.LocalStreamItApplicationTabGroup">
 		</launchConfigurationTabGroup>
 	</extension>
 
@@ -70,8 +70,8 @@
 <!--	
 	<extension point="org.eclipse.debug.ui.launchConfigurationTypeImages">
 		<launchConfigurationTypeImage
-			id="launcher.launchConfigurationTypeImage.localStreamItApplication"
-			configTypeID="launcher.localStreamItApplication"
+			id="streamit.eclipse.launcher.launchConfigurationTypeImage.localStreamItApplication"
+			configTypeID="streamit.eclipse.launcher.localStreamItApplication"
 			icon="icons/full/ctool16/java_app.gif">
 		</launchConfigurationTypeImage>	
 	</extension>
@@ -82,8 +82,8 @@
 	<!-- ================================================================== -->
 	<extension point = "org.eclipse.debug.ui.launchShortcuts">
 		<shortcut
-			id="launcher.localStreamItShortcut"
-			class="launcher.StreamItApplicationLaunchShortcut"
+			id="streamit.eclipse.launcher.localStreamItShortcut"
+			class="streamit.eclipse.launcher.StreamItApplicationLaunchShortcut"
 			label="%StreamItApplicationLaunchShortcut.label"
 			icon="icons/full/ctool16/java_app.gif"
 			helpContextId="org.eclipse.jdt.debug.ui.shortcut_local_java_application"
@@ -100,11 +100,11 @@
 	<!-- ================================================================== -->
 	<extension point="org.eclipse.ui.views">
 		<view
-			id="launcher.FilterView"
+			id="streamit.eclipse.launcher.FilterView"
 			name="%displayViewName"
 			category="org.eclipse.debug.ui"
 		   	icon="icons/full/ctool16/disp_sbook.gif"
-		   	class="launcher.FilterView">
+		   	class="streamit.eclipse.launcher.FilterView">
 		</view>
 	</extension>
 	
@@ -114,7 +114,7 @@
 	<extension point="org.eclipse.ui.perspectiveExtensions">
 		<perspectiveExtension
 			targetID="org.eclipse.debug.ui.DebugPerspective">
-			<view id="launcher.FilterView" 
+			<view id="streamit.eclipse.launcher.FilterView" 
 				relative="org.eclipse.ui.views.TaskList"
 				relationship="stack"
 				visible="false"/>

@@ -1,11 +1,11 @@
 /*
  * Created on Jun 20, 2003
  */
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 import java.io.*;
 import java.util.*;
-import grapheditor.jgraphextension.*;
+import streamit.eclipse.grapheditor.jgraphextension.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
 import java.awt.Color;

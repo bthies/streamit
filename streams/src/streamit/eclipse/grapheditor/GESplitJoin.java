@@ -1,13 +1,13 @@
 /*
  * Created on Jun 24, 2003
  */
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 import java.io.*;
 import java.util.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
-import grapheditor.jgraphextension.*;
+import streamit.eclipse.grapheditor.jgraphextension.*;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Color;

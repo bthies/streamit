@@ -1,4 +1,4 @@
-package grapheditor;
+package streamit.eclipse.grapheditor;
 
 
    import org.eclipse.ui.IWorkbenchWindow;

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin
-   id="texteditor"
+   id="streamit.eclipse.texteditor"
    name="%pluginName"
    version="2.1.0"
    provider-name="%providerName"
-   class="texteditor.StreamItEditorPlugin">
+   class="streamit.eclipse.texteditor.StreamItEditorPlugin">
 
    <runtime>
       <library name="texteditor.jar">
@@ -38,7 +38,7 @@
             icon="icons/obj16/java.gif"
             extensions="str"
             contributorClass="org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditorActionContributor"
-            class="texteditor.StreamItEditor"
+            class="streamit.eclipse.texteditor.StreamItEditor"
             id="StreamItEditor">
       </editor>
    </extension>
@@ -49,8 +49,8 @@
          point="org.eclipse.ui.preferencePages">
       <page
             name="%streamItPreferencePage"
-            class="texteditor.StreamItEditorPreferencePage"
-            id="texteditor.Page1">
+            class="streamit.eclipse.texteditor.StreamItEditorPreferencePage"
+            id="streamit.eclipse.texteditor.Page1">
       </page>
    </extension>
 <!-- ================================================================== -->
@@ -60,8 +60,8 @@
          point="org.eclipse.ui.documentProviders">
       <provider
             extensions="str"
-            class="texteditor.StreamItDocumentProvider"
-            id="texteditor.StreamItDocumentProvider">
+            class="streamit.eclipse.texteditor.StreamItDocumentProvider"
+            id="streamit.eclipse.texteditor.StreamItDocumentProvider">
       </provider>
    </extension>
 <!-- ================================================================== -->
@@ -71,36 +71,36 @@
          point="org.eclipse.ui.popupMenus">
       <viewerContribution
             targetID="#StreamItRulerContext"
-            id="texteditor.StreamItEditorPopupActions">
+            id="streamit.eclipse.texteditor.StreamItEditorPopupActions">
          <action
                label="%StreamItBreakpointProperties.label"
-               class="texteditor.StreamItBreakpointPropertiesRulerActionDelegate"
+               class="streamit.eclipse.texteditor.StreamItBreakpointPropertiesRulerActionDelegate"
                menubarPath="debug"
-               id="texteditor.StreamItBreakpointPropertiesRulerActionDelegate">
+               id="streamit.eclipse.texteditor.StreamItBreakpointPropertiesRulerActionDelegate">
          </action>
          <action
                label="%AddWatchpoint.label"
-               class="texteditor.ManageWatchpointRulerActionDelegate"
+               class="streamit.eclipse.texteditor.ManageWatchpointRulerActionDelegate"
                menubarPath="debug"
-               id="texteditor.ManageWatchpointRulerActionDelegate">
+               id="streamit.eclipse.texteditor.ManageWatchpointRulerActionDelegate">
          </action>
          <action
                label="%AddMethodBreakpoint.label"
-               class="texteditor.ManageMethodBreakpointRulerActionDelegate"
+               class="streamit.eclipse.texteditor.ManageMethodBreakpointRulerActionDelegate"
                menubarPath="debug"
-               id="texteditor.ManageMethodBreakpointRulerActionDelegate">
+               id="streamit.eclipse.texteditor.ManageMethodBreakpointRulerActionDelegate">
          </action>
          <action
                label="%EnableBreakpoint.label"
-               class="texteditor.EnableDisableBreakpointRulerActionDelegate"
+               class="streamit.eclipse.texteditor.EnableDisableBreakpointRulerActionDelegate"
                menubarPath="debug"
-               id="texteditor.EnableDisableBreakpointRulerActionDelegate">
+               id="streamit.eclipse.texteditor.EnableDisableBreakpointRulerActionDelegate">
          </action>
          <action
                label="%AddBreakpoint.label"
-               class="texteditor.ManageBreakpointRulerActionDelegate"
+               class="streamit.eclipse.texteditor.ManageBreakpointRulerActionDelegate"
                menubarPath="debug"
-               id="texteditor.ManageBreakpointRulerActionDelegate">
+               id="streamit.eclipse.texteditor.ManageBreakpointRulerActionDelegate">
          </action>
          <action
                label="%AddTask.label"

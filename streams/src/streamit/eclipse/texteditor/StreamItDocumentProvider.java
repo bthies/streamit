@@ -2,7 +2,7 @@
  * StreamIt Texteditor Plugin
  * @author kkuo
  *******************************************************************************/
-package texteditor;
+package streamit.eclipse.texteditor;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;

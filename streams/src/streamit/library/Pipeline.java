@@ -40,6 +40,32 @@ public class Pipeline extends Stream
         super(x,y,z,a,b);
     }
 
+    /**
+     * Another constructor.
+     */
+    public Pipeline( int i1, 
+		     int i2, 
+		     int i3, 
+		     int i4, 
+		     int i5, 
+		     int i6, 
+		     int i7, 
+		     int i8, 
+		     int i9, 
+		     float f) {
+	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+    }
+
+    public Pipeline( int i1, 
+		     int i2, 
+		     int i3, 
+		     int i4, 
+		     int i5, 
+		     int i6, 
+		     float f) {
+	super(i1, i2, i3, i4, i5, i6, f);
+    }
+
     // connectGraph will walk the entire subgraph (so it should be called
     // on the "master", encapsulating Stream) and give each element
     // this function works in the following way:

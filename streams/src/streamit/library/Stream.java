@@ -111,6 +111,29 @@ public abstract class Stream extends Operator
         super (params);
     }
 
+    public Stream( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   int i7, 
+		   int i8, 
+		   int i9, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, i7, i8, i9, f);
+    }
+
+    public Stream( int i1, 
+		   int i2, 
+		   int i3, 
+		   int i4, 
+		   int i5, 
+		   int i6, 
+		   float f) {
+	super(i1, i2, i3, i4, i5, i6, f);
+    }
+
     // RESET FUNCTIONS
 
     public MessageStub reset()

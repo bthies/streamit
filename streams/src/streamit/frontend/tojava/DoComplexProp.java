@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.8 2002-10-04 19:05:38 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.9 2002-11-20 20:43:56 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -70,7 +70,7 @@ public class DoComplexProp extends FEReplacer
         for (Iterator iter = params.iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
-            symTab.register(param.getName(), param.getType());
+            symTab.registerVar(param.getName(), param.getType());
         }
     }
 
@@ -117,7 +117,7 @@ public class DoComplexProp extends FEReplacer
         Expression exprVar = new ExprVar(expr.getContext(), tempVar);
         Type type = new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, null));
-        symTab.register(tempVar, type);
+        symTab.registerVar(tempVar, type);
         addStatement(new StmtAssign(expr.getContext(),
                                     new ExprField(expr.getContext(),
                                                   exprVar, "real"),
@@ -140,7 +140,7 @@ public class DoComplexProp extends FEReplacer
         Expression exprVar = new ExprVar(expr.getContext(), tempVar);
         Type type = (Type)expr.accept(getExprType);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, expr));
-        symTab.register(tempVar, type);
+        symTab.registerVar(tempVar, type);
         return exprVar;
     }
 
@@ -276,7 +276,7 @@ public class DoComplexProp extends FEReplacer
     {
         // Go ahead and do propagation:
         stmt = (StmtVarDecl)super.visitStmtVarDecl(stmt);
-        symTab.register(stmt.getName(), stmt.getType());
+        symTab.registerVar(stmt.getName(), stmt.getType());
         // Now check to see if this is initialized,
         if (stmt.getInit() == null) return stmt;
         // and if so, if the type is complex,

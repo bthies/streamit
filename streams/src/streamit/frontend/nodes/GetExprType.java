@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.5 2002-10-31 21:45:52 dmaze Exp $
+ * $Id: GetExprType.java,v 1.6 2002-11-20 20:43:54 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -122,6 +122,6 @@ public class GetExprType extends FENullVisitor
     public Object visitExprVar(ExprVar exp)
     {
         // Look this up in the symbol table.
-        return symTab.lookup(exp.getName());
+        return symTab.lookupVar(exp.getName());
     }
 }

@@ -1,11 +1,12 @@
 /*
  * SymbolTable.java: symbol table for StreamIt programs
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SymbolTable.java,v 1.2 2002-08-12 18:48:39 dmaze Exp $
+ * $Id: SymbolTable.java,v 1.3 2002-11-20 20:43:54 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
 
+import java.util.List;
 import java.util.Map;
 
 import java.util.HashMap;
@@ -20,33 +21,36 @@ import java.util.HashMap;
  */
 public class SymbolTable
 {
-    private Map symbols;
+    private Map vars, fns;
     private SymbolTable parent;
+    private List includedFns;
     
     /** Creates a new symbol table with the specified parent (possibly
      * null). */
     public SymbolTable(SymbolTable parent)
     {
-        symbols = new HashMap();
+        vars = new HashMap();
+        fns = new HashMap();
         this.parent = parent;
+        this.includedFns = null;
     }
 
     /** Registers a new symbol in the symbol table. */
-    public void register(String name, Type type)
+    public void registerVar(String name, Type type)
     {
-        symbols.put(name, type);
+        vars.put(name, type);
     }
     
     /** Looks up the type for a symbol.  If that symbol is not in the
      * current symbol table, search in the parent.  If the parent is null,
      * returns null. */
-    public Type lookup(String name)
+    public Type lookupVar(String name)
     {
-        Type type = (Type)symbols.get(name);
+        Type type = (Type)vars.get(name);
         if (type != null)
             return type;
         if (parent != null)
-            return parent.lookup(name);
+            return parent.lookupVar(name);
         throw new UnrecognizedVariableException(name);
     }
 

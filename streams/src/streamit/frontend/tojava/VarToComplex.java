@@ -1,7 +1,7 @@
 /*
  * VarToComplex.java: split variables into separate real/complex parts
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: VarToComplex.java,v 1.6 2002-08-20 20:04:30 dmaze Exp $
+ * $Id: VarToComplex.java,v 1.7 2002-11-20 20:43:56 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -44,7 +44,7 @@ public class VarToComplex extends FEReplacer
         {
             ExprVar left = (ExprVar)exp.getLeft();
             String name = left.getName();
-            Type type = symtab.lookup(name);
+            Type type = symtab.lookupVar(name);
             if (type.isComplex())
                 return exp;
         }

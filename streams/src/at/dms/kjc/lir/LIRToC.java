@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.64 2002-06-18 22:18:50 thies Exp $
+ * $Id: LIRToC.java,v 1.65 2002-06-20 17:45:02 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1574,7 +1574,6 @@ public class LIRToC
     }
 
     public void visitInitStatement(SIRInitStatement self,
-                                   JExpression[] body,
                                    SIRStream stream)
     {
         print("/* InitStatement */");

@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.6 2004-03-03 20:41:59 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.7 2004-03-03 21:01:47 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -272,7 +272,7 @@ We know that extraVars >= newPeek2-newPop2, so we are adding states. Thus we mus
 	    if(combinedPreWorkNeeded)
 		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,preworkAprime,preworkBprime,initprime);
 	    else
-		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,initprime,newPop2);
+		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,initprime,newPop1);
 
 
 	    LinearPrinter.println("Created new linear rep: \n" +

@@ -1320,6 +1320,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
 	SIRStream newST = null;
 
+	//Already an SIRinit statement
+	if (SIROp instanceof SIRInitStatement) {
+	    return (SIRInitStatement)SIROp;
+	}
+	//Using a local variable that has been already defined as a stream construct
+	if (SIROp instanceof SIRStream)
+	    newST = (SIRStream)SIROp;
+
+	/********************************************************************/
+	/* THIS BREAKS IT, but was inserted in place of what's above (up to */
+	/* "= null"                                                         */
+	/********************************************************************
 	//Already an SIRinit statement (this is a local variable expression)
 	//we used the init statement from the symbol table
 	//Using a local variable that has been already defined as a stream construct
@@ -1331,6 +1343,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	if (SIROp instanceof SIRStream)
 	    newST = (SIRStream)SIROp;
+	/********************************************************************/
+	/************** END BREAKAGE ****************************************/
+	/********************************************************************/
+
 
 	//Creating a named class
 	//if it is a named creation, lookup in the symbol table for the visited

@@ -1,4 +1,4 @@
-# $Id: control,v 1.13 2002-06-18 19:56:15 aalamb Exp $
+# $Id: control,v 1.14 2002-06-18 22:26:55 thies Exp $
 test fft-inlined {
   directory docs/examples/hand/fft
   source FFT_inlined.java
@@ -98,10 +98,12 @@ test field-prop {
   directory docs/examples/hand/field-prop
   source FieldPropTest.java
   output FieldPropTest.out
+  disabled
 }
 
 test field-prop-2 {
   directory docs/examples/hand/field-prop
   source FieldPropTest2.java
   output FieldPropTest2.out
+  disabled
 }

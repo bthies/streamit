@@ -1,10 +1,24 @@
-FFT.java - fine-grained decimation-in-time implementation with inputs in bit-reversed order and outputs in natural order  
-FFT_inlined.java - inlined syntax version of FFT.java 
+There are several implementations of FFT in this directory.
 
-FFT3.java - fine-grained decimation-in-time implementation with outputs in bit-reversed order and inputs in natural order 
-            (More detailed implementation since it handles real/imag parts and roots of unity weights properly) 
-fftref/ - contains C equivalent of FFT3.java (reference implementation) 
+FFT3:
+ - reliable version that gets the right answer (checks with fftref)
+ - inputs in natural order, outputs in bit-reversed order
+ - fine-grained decimation-in-time implementation
+ - properly handles real/imag parts and roots of unity weights
 
+fftref:
+ - reference implementation in C, corresponding to FFT3
 
-FFT2.java - coarse-grained alternate implementation 
- 
+FFT2:
+ - A blocked version that we've been using as a benchmark for
+   publications (appears also in benchmarks directory.)
+ - inputs in natural order, outputs in natural order (that is, unlike
+   FFT3, it includes a bit-reverse stage)
+ - FFT2_opt.java just duplicates the main pipeline in a splitjoin to
+   improve performance on Raw
+
+FFT:
+ - Derived from our original, very fine-grained implementation in the
+   CC paper, but without the bit-reverse stage (which had a bug)
+ - Now inputs in bit-reversed order, outputs in natural order
+ - Has dummy weights -- doesn't actually compute the FFT.

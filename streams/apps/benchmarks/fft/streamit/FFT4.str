@@ -1,10 +1,13 @@
 void->void pipeline FFT {
     add OneSource();
-    add FFTKernel(16);
+    add FFTKernel(32);
     add FloatPrinter();
 }
 
 float->float pipeline FFTKernel (int N) {
+    /* This bit-reverse stage was published in the original CC paper,
+     * but it has a bug and causes the output to be wrong.
+
     add splitjoin {
 	split roundrobin(N/2, N/2);
 	for (int i=0; i<2; i++) {
@@ -17,7 +20,8 @@ float->float pipeline FFTKernel (int N) {
 	}
 	join roundrobin();
     };
-    for (int i=2; i<N; i*=2) {
+    */
+    for (int i=1; i<N; i*=2) {
 	add Butterfly(i, N);
     }
 }
@@ -25,14 +29,14 @@ float->float pipeline FFTKernel (int N) {
 float->float pipeline Butterfly (int N, int W) {
     add splitjoin {
 	split roundrobin(N, N);
-	add Multiply();
 	add Identity<float>();
+	add Multiply();
 	join roundrobin();
     };
     add splitjoin {
 	split duplicate;
-	add Subtract();
 	add Add();
+	add Subtract();
 	join roundrobin(N, N);
     };
 }

@@ -40,13 +40,17 @@ public class SIRBuilder {
 				    /* javadoc  */ null, 
 				    /* comments */ null) };
 
+	JStatement[] emptybody = new JStatement[0];
+	JBlock emptyblock = new JBlock(null, emptybody, null);
+
 	JStatement[] work1body = { 
 	 new JExpressionStatement(
           null,
 	  new SIRPushExpression(/* tokref */ null,
 				/* arg */ 
-				new JUnaryPlusExpression( 
+				new JPostfixExpression ( 
 				    /* tokref */ null,
+				    Constants.OPE_POSTINC,
 				    /* contents */ 
 				    new JFieldAccessExpression(null,
 				      new JThisExpression(null, (CClass)null),
@@ -57,8 +61,19 @@ public class SIRBuilder {
 				       /* body     */ work1body,
 				       /* comments */ null);
 
-	JMethodDeclaration[] work1 = 
-	    {new JMethodDeclaration( /* tokref     */ null,
+	JMethodDeclaration[] meth1 = 
+	    {/* init */
+		new JMethodDeclaration( /* tokref     */ null,
+				    /* modifiers  */ at.dms.kjc.
+				                    Constants.ACC_PUBLIC,
+				    /* returntype */ CStdType.Void,
+				    /* identifier */ "init",
+				    /* parameters */ JFormalParameter.EMPTY,
+				    /* exceptions */ CClassType.EMPTY,
+				    /* body       */ emptyblock,
+				    /* javadoc    */ null,
+					/* comments   */ null),
+	    /* work*/ new JMethodDeclaration( /* tokref     */ null,
 				    /* modifiers  */ at.dms.kjc.
 				                    Constants.ACC_PUBLIC,
 				    /* returntype */ CStdType.Void,
@@ -73,9 +88,9 @@ public class SIRBuilder {
 
 	SIRFilter f1 = new SIRFilter(toplevel,
 				     /* fields */ fields1,
-				     /* methods */ work1,
+				     /* methods */ meth1,
 				     /* peek, pop, push */ 0, 0, 1,
-				     /* work */ work1[0],
+				     /* work */ meth1[1],
 				     /* i/o type */ type1, type1);
 
 	/* build filter 2 */
@@ -90,8 +105,20 @@ public class SIRBuilder {
 				       /* body     */ work2body,
 				       /* comments */ null);
 
-	JMethodDeclaration[] work2 = 
-	    {new JMethodDeclaration( /* tokref     */ null,
+	JMethodDeclaration[] meth2 = 
+	{/* init */
+		new JMethodDeclaration( /* tokref     */ null,
+				    /* modifiers  */ at.dms.kjc.
+				                    Constants.ACC_PUBLIC,
+				    /* returntype */ CStdType.Void,
+				    /* identifier */ "init",
+				    /* parameters */ JFormalParameter.EMPTY,
+				    /* exceptions */ CClassType.EMPTY,
+				    /* body       */ emptyblock,
+				    /* javadoc    */ null,
+					/* comments   */ null),
+	    /* work*/
+		new JMethodDeclaration( /* tokref     */ null,
 				    /* modifiers  */ at.dms.kjc.
 				                    Constants.ACC_PUBLIC,
 				    /* returntype */ CStdType.Void,
@@ -106,9 +133,9 @@ public class SIRBuilder {
 
 	SIRFilter f2 = new SIRFilter(toplevel,
 				     /* fields */ JFieldDeclaration.EMPTY,
-				     /* methods */ work2,
+				     /* methods */ meth2,
 				     /* peek, pop, push */ 1, 1, 0,
-				     /* work */ work2[0],
+				     /* work */ meth2[1],
 				     /* i/o type */ type2, type2);
 
 	/* build pipeline and add filters */

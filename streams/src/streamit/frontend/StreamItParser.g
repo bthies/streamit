@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.3 2002-07-09 15:36:05 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.4 2002-07-11 20:59:14 dmaze Exp $
  */
 
 header {
@@ -40,9 +40,9 @@ filter_decl
 	;
 
 stream_type_decl
-	:	data_type
+	:	data_type (array_modifiers)?
 		ARROW^
-		data_type
+		data_type (array_modifiers)?
 	;
 
 struct_stream_decl

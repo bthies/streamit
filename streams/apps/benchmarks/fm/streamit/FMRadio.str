@@ -12,177 +12,75 @@
  *  without express or implied warranty.
  */
 
-
-/*
- * Software equalizer.  This version uses n+1 low-pass filters directly,
- * as opposed to n band-pass filters, each with two low-pass filters.
- * The important observation is that we have bands 1-2, 2-4, 4-8, ...
- * This means that we should run an LPF for each intermediate frequency,
- * rather than two per band.  Calculating this in StreamIt isn't that bad.
- * For a four-band equalizer:
- *
- *              |
- *             DUP
- *    +---------+---------+
- *    |         |         |
- *    |        DUP        |
- *    |    +----+----+    |
- *    |    |    |    |    |
- *   16    8    4    2    1
- *    |    |    |    |    |
- *    |  (dup)(dup)(dup)  |
- *    |    |    |    |    |
- *    |    +----+----+    |
- *    |       RR(2)       |
- *    |         |         |
- *    +---------+---------+
- *       WRR(1,2(n-1),1)
- *              |
- *            (a-b)
- *              |
- *            SUM(n)
- *              |
- *
- * It's straightforward to change the values of 1, 16, and n.  Coming out
- * of the EqualizerSplitJoin is 16 8 8 4 4 2 2 1; we can subtract and scale
- * these as appropriate to equalize.
- */
-
-
-float->float filter FloatNAdder(int count) {
-
-  work push 1 pop count {
-
-    float sum = 0.0;
-
-    for(int i=0; i<count; i++)
-      sum += pop();
-
-    push(sum);
+float->float pipeline BandPassFilter (float rate, float low, float high, int taps) {
+  add BPFCore(rate, low, high, taps);
+  add Subtracter();
+}
+float->float splitjoin BPFCore (float rate, float low, float high, int taps) {
+  split duplicate;
+  add LowPassFilter(rate, low, taps, 0);
+  add LowPassFilter(rate, high, taps, 0);
+  join roundrobin;
+}
+float->float filter Subtracter {
+  work pop 2 push 1 {
+    push(peek(1) - peek(0));
+    pop(); pop();
   }
 }
 
-
-float->float filter FloatDiff() {
-
-  work push 1 pop 2 {
- 
-    push(peek(0) - peek(1));
-    pop();
-    pop();
-  }
+float->float pipeline Equalizer(float rate, int bands, float[bands] cutoffs,
+                                float[bands] gains, int taps) {
+  add EqSplit(rate, bands, cutoffs, gains, taps);
+  add float->float filter {
+    work pop bands-1 push 1 {
+      float sum = 0;
+      for (int i = 0; i < bands-1; i++)
+        sum += pop();
+      push(sum);
+    }
+  };
+}
+float->float splitjoin EqSplit(float rate, int bands, float[bands] cutoffs,
+                               float[bands] gains, int taps) {
+  split duplicate;
+  for (int i = 1; i < bands; i++)
+    add pipeline {
+      add BandPassFilter(rate, cutoffs[i-1], cutoffs[i], taps);
+      add float->float filter {
+        work pop 1 push 1 { push(pop() * gains[i]); }
+      };
+    };
+  join roundrobin;
 }
 
-
-float->float filter FloatDup() {
-
-  work push 2 pop 1 {
-
-    float val = pop();
-    push(val);
-    push(val);
-  }
-}
-
-
-float->float pipeline EqualizerInnerPipeline(float rate, float freq) {
-
-  add LowPassFilter(rate,freq,64,0);
-  add FloatDup();
-}
-
-
-float->float splitjoin EqualizerInnerSplitJoin(float rate, float low, float high, int bands) {
-
-  split duplicate();
-  for(int i=0; i < bands-1; i++)
-    add EqualizerInnerPipeline(rate,(float)exp((i+1)*(log(high)-log(low))/bands + log(low)));
-  join roundrobin(2);
-}
-
-
-float->float splitjoin EqualizerSplitJoin(float rate, float low, float high, int bands) {
-
-  split duplicate();
-  add LowPassFilter(rate,high,64,0);
-  add EqualizerInnerSplitJoin(rate,low,high,bands);
-  add LowPassFilter(rate,low,64,0);
-  join roundrobin(1,(bands-1)*2,1);
-}
-
-
-float->float pipeline Equalizer(float rate) {
-
-  int bands = 10;
-  float low = 55;
-  float high = 1760;
-
-  add EqualizerSplitJoin(rate,low,high,bands);
-  add FloatDiff();
-  add FloatNAdder(bands);
-} 
-
-
-float->float filter LowPassFilter(float sampleRate, float cutFreq, int numTaps, int decimation) {
-
-  float[numTaps] COEFF;     //all frequencies are in hz
-  float tapTotal;
-
+float->float filter LowPassFilter(float rate, float cutoff, int taps, int decimation) {
+  float[taps] coeff;
   init {
-    float m = numTaps -1;
-    //from Oppenheim and Schafer, m is the order of filter
-
-    if(cutFreq == 0.0) {
-    
-      //Using a Hamming window for filter taps:
-      tapTotal = 0;
-
-      for(int i=0;i<numTaps;i++) {
-	COEFF[i] = (float)(0.54 - 0.46*cos((2*pi)*(i/m)));
-	tapTotal = tapTotal + COEFF[i];
-      }
-
-      //normalize all the taps to a sum of 1
-      for(int i=0;i<numTaps;i++) {
-	COEFF[i] = COEFF[i]/tapTotal;
-      }
-    }
-    else{
-    //ideal lowpass filter ==> Hamming window
-    //has IR h[n] = sin(omega*n)/(n*pi)
-    //reference: Oppenheim and Schafer
-
-    float w = (2*pi) * cutFreq/sampleRate;
-
-    for(int i=0;i<numTaps;i++) {
-      //check for div by zero
-      if(i-m/2 == 0)
-	COEFF[i] = w/pi;
+    int i;
+    float m = taps - 1;
+    float w = 2 * pi * cutoff / rate;
+    for (i = 0; i < taps; i++) {
+      if (i - m/2 == 0)
+        coeff[i] = w/pi;
       else
-	COEFF[i] = (float)(sin(w*(i-m/2)) / pi
-			       / (i-m/2) * (0.54 - 0.46
-					    * cos((2*pi)*(i/m))));
-      }
+        coeff[i] = sin(w*(i-m/2)) / pi / (i-m/2) *
+          (0.54 - 0.46 * cos(2*pi*i/m));
     }
   }
-
-  work push 1 pop decimation+1 peek numTaps {
-    float sum = 0.0;
-    for(int i=0; i<numTaps; i++) {
-      sum += peek(i)*COEFF[i];
-    }
-    pop();
-    for(int i=0; i<decimation; i++)
-      pop();
-
+  work pop 1+decimation push 1 peek taps {
+    float sum = 0;
+    for (int i = 0; i < taps; i++)
+      sum += peek(i) * coeff[i];
     push(sum);
-
+    for (int i=0; i<decimation; i++)
+	pop();
+    pop();
   }
 }
 
 
 float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
-
   float mGain;
 
   init {
@@ -203,7 +101,6 @@ float->float filter FMDemodulator(float sampRate, float max, float bandwidth) {
 
 
 void->float filter FloatOneSource {
-
   float x;
 
   init {
@@ -217,30 +114,44 @@ void->float filter FloatOneSource {
 
 
 float->void filter FloatPrinter {
-
   work push 0 pop 1 {
     print(pop());
   }
 }
 
-
-
-/*
- * Early attempt at an FM Radio... probably junk
- */
-
 float->float pipeline FMRadioCore {
-
-    // float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
-    float samplingRate = 250000000; // 250 MHz sampling rate much more sensible, though
+    float samplingRate = 250000000; // 250 MHz sampling rate is sensible
     float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
     int numberOfTaps = 64;
     float maxAmplitude = 27000;
     float bandwidth = 10000;
+    
+    // determine where equalizer cuts.  Note that <eqBands> is the
+    // number of CUTS; there are <eqBands>-1 bands, with parameters
+    // held in slots 1..<eqBands> of associated arrays.
+    int eqBands = 11;
+    float[eqBands] eqCutoff;
+    float[eqBands] eqGain;
+    float low = 55;
+    float high = 1760;
+
+    for (int i=0; i<eqBands; i++) {
+	// have exponentially spaced cutoffs
+	eqCutoff[i] = (float)exp(i*(log(high)-log(low))/(eqBands-1) + log(low));
+    }
+
+    // first gain doesn't really correspond to a band
+    eqGain[0] = 0;
+    for (int i=1; i<eqBands; i++) {
+	// the gain grows linearly towards the center bands
+	float val = (((float)(i-1))-(((float)(eqBands-2))/2.0)) / 5.0;
+	eqGain[i] = val > 0 ? 2.0-val : 2.0+val;
+    }
+    
     //decimate 4 samples after outputting 1
     add LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps, 4);
     add FMDemodulator(samplingRate, maxAmplitude, bandwidth);
-    add Equalizer(samplingRate);
+    add Equalizer(samplingRate, eqBands, eqCutoff, eqGain, numberOfTaps);
 }
 
 

@@ -18,9 +18,9 @@ abstract class DPConfigContainer extends DPConfig {
      */
     protected SIRContainer cont;
     /**
-     * Work estimate containing our children.
+     * Partitioner corresponding to this.
      */
-    protected WorkEstimate work;
+    protected DynamicProgPartitioner partitioner;
     
     /**
      * <width> and <height> represent the dimensions of the stream.
@@ -29,7 +29,7 @@ abstract class DPConfigContainer extends DPConfig {
 				int width, int height) {
 	super(partitioner);
 	this.cont = cont;
-	this.work = partitioner.getWorkEstimate();
+	this.partitioner = partitioner;
 	this.A = new int[width][width][height][height][partitioner.getNumTiles()+1][2];
     }
 
@@ -143,7 +143,9 @@ abstract class DPConfigContainer extends DPConfig {
 		if (config instanceof DPConfigFilter) {
 		    // add input rate
 		    SIRFilter filter = (SIRFilter)config.getStream();
-		    overhead += filter.getPopInt() * work.getReps(filter) * DynamicProgPartitioner.HORIZONTAL_FILTER_OVERHEAD_FACTOR;
+		    overhead += (filter.getPopInt() * 
+				 partitioner.getWorkEstimate().getReps(filter) * 
+				 DynamicProgPartitioner.HORIZONTAL_FILTER_OVERHEAD_FACTOR);
 		} else {
 		    // add generic rate
 		    overhead += DynamicProgPartitioner.HORIZONTAL_CONTAINER_OVERHEAD;

@@ -245,6 +245,36 @@ public class FilterInfo
 	return upStreamItems;
     }
 
+    public int totalItemsReceived(boolean init, boolean primepump) 
+    {
+	assert (!init == primepump) :
+	    "incorrect usage";
+	int items = 0;
+	//get the number of items received
+	if (init) 
+	    items = initItemsReceived();
+	else if (primepump) 
+	    items = primePump * pop;
+	else
+	    items = steadyMult * pop;
+	
+	return items;
+    }
+    
+    public int totalItemsSent(boolean init, boolean primepump) 
+    {
+	assert (!init == primepump) :
+	    "incorrect usage";
+	int items = 0;
+	if (init) 
+	    items = initItemsSent();
+	else if (primepump) 
+	    items = primePump * push;
+	else
+	    items = steadyMult * push;
+	return items;
+    }
+
     public int itemsFiring(int exeCount, boolean init) 
     {
 	int items = push;

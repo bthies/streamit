@@ -73,15 +73,14 @@ public class FEIRToSIR implements FEVisitor, Constants {
     return topLevel;
   }
 
-    private SIRStream findStream(String name)
+    public SIRStream findStream(String name)
     {
         // Have we already seen it?
         if (classTable.containsKey(name))
-            return (SIRStream)classTable.get(name);
+            return (SIRStream)AutoCloner.deepCopy((SIRStream)classTable.get(name));
         // Are we looking for it?
         if (searchList.contains(name))
-            return new SIRRecursiveStub(name, null);
-            // !!! Need to resolve these later.
+            return new SIRRecursiveStub(name, this);
         // Hmm.  Is it in the top-level Program?
         for (Iterator iter = theProgram.getStreams().iterator();
              iter.hasNext(); )
@@ -368,6 +367,8 @@ public class FEIRToSIR implements FEVisitor, Constants {
     if (type instanceof TypePrimitive) {
       TypePrimitive tp = (TypePrimitive) type;
       switch (tp.getType()) {
+      case TypePrimitive.TYPE_BOOLEAN:
+        return CStdType.Boolean;
       case TypePrimitive.TYPE_BIT:
       case TypePrimitive.TYPE_INT:
 	return CStdType.Integer;
@@ -394,6 +395,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
     }
     /* This shouldn't happen */
     debug("  UNIMPLEMENTED - shouldn't happen\n");
+    System.err.println("FEIRToSIR: failed to convert type " + type);
     return null;
   }
 

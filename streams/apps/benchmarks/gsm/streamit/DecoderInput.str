@@ -1,0 +1,95 @@
+// This is what used to be DecoderInput--now it will need to be
+// inlined into every class that was using it.
+
+//class DecoderInput
+//{
+
+//member variables!
+int[8] mLarParameters;
+int[4] mLtpOffset;
+int[4] mLtpGain;
+int[4] mRpeGridPosition;
+int[4] mRpeMagnitude;
+int[52] mSequence;
+
+int getParameters(int[260] input)
+{
+    int i, j, k, l, m;
+    int input_index = 0;
+    int num_bits = 0;
+
+    for(i = 0; i < 8; i++)
+	{
+		if(i == 0) {
+			num_bits = 6;
+		}
+		if(i == 2) {
+			num_bits = 5;
+		}
+		if(i == 4) {
+		        num_bits = 4;
+		}
+		if(i ==6) { 
+			num_bits = 3;		
+		}
+	
+		//print("pre index is " + input_index);
+		//print("numbits is " + num_bits);
+	    mLarParameters[i] = 0;
+	    for (j = 0; j < num_bits; j++)
+		{
+		    //print("gets here at iteration " + j + " with input index " + input_index);
+		    mLarParameters[i] = mLarParameters[i] | input[input_index] * gsm_exp(2, (num_bits - 1 - i));
+		    input_index = input_index + 1;
+		}
+
+	
+    }
+    //Sub-frames 1 through 4!
+    for (k = 0; k < 4; k++)
+	{
+	    //print("k is " + k);
+	    //print("input index is " + input_index);
+	    mLtpOffset[k] = 0;
+	    for (l = 0; l < 7; l++)
+		{
+		    mLtpOffset[k] = mLtpOffset[k] | input[input_index] * gsm_exp(2, (6 - l));
+		    input_index = input_index + 1;
+		}
+	    mLtpGain[k] = 0;
+	    for (l = 0; l < 2; l++)
+		{
+		    mLtpGain[k] = mLtpGain[k] | input[input_index] * gsm_exp(2, (1 - l));
+		    input_index = input_index + 1;
+		}
+	    mRpeGridPosition[k] = 0;
+	    for (l = 0; l < 2; l++)
+		{
+		    mRpeGridPosition[k] = mRpeGridPosition[k] | input[input_index] * gsm_exp(2,(1 - l));
+		    input_index = input_index + 1;
+		}
+	    mRpeMagnitude[k] = 0;
+	    for (l = 0; l < 6; l++)
+		{
+		    mRpeMagnitude[k] = mRpeMagnitude[k] | input[input_index] * gsm_exp(2,(5 - l));
+		    input_index = input_index + 1;
+		}
+	    for(l = 0; l < 13; l++)
+		{
+		    mSequence[k+4*l] = 0;
+		    for (m = 0; m < 3; m++)
+			{
+			    mSequence[k+4*l] = mSequence[k+4*l] | input[input_index] * gsm_exp(2,(2 - m));
+			    input_index = input_index + 1;
+			}
+	    
+		}
+	}
+    //System.out.//println(input_index);
+    //System.out.//println(input.length - input_index);
+	return 1;    
+}
+
+//}
+
+

@@ -267,6 +267,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
                                       String superName,
                                       CClassType[] interfaces,
                                       JPhylum[] body,
+				      JFieldDeclaration[] fields,
                                       JMethodDeclaration[] methods,
                                       JTypeDeclaration[] decls)
     {
@@ -277,7 +278,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("extends", superName);
         attrList("implements", interfaces);
 
-        visitClassBody(decls, methods, body);
+        visitClassBody(decls, fields, methods, body);
         
         blockEnd();
     }
@@ -286,6 +287,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * visits a class body
      */
     public void visitClassBody(JTypeDeclaration[] decls,
+			       JFieldDeclaration[] fields,
                                JMethodDeclaration[] methods,
                                JPhylum[] body)
     {
@@ -295,6 +297,8 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	    decls[i].accept(this);
         for (int i = 0; i < methods.length ; i++)
             methods[i].accept(this);
+        for (int i = 0; i < fields.length ; i++)
+            fields[i].accept(this);
 	if (body!=null) {
 	    for (int i = 0; i < body.length ; i++)
 		body[i].accept(this);
@@ -313,6 +317,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
                                            CClassType[] interfaces,
                                            JTypeDeclaration[] decls,
                                            JPhylum[] body,
+                                           JFieldDeclaration[] fields,
                                            JMethodDeclaration[] methods)
     {
         blockStart("InnerClassDeclaration");
@@ -322,7 +327,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("extends", superName);
         attrList("implements", interfaces);
 
-        visitClassBody(decls, methods, body);
+        visitClassBody(decls, fields, methods, body);
         
         blockEnd();
     }
@@ -342,7 +347,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("modifiers", String.valueOf(modifiers));
         attrPrint("name", ident);
         attrList("implements", interfaces);
-        visitClassBody(new JTypeDeclaration[0], methods, body);
+        visitClassBody(new JTypeDeclaration[0], 
+		       JFieldDeclaration.EMPTY,
+		       methods, body);
         blockEnd();
     }
 

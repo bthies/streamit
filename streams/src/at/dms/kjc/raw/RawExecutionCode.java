@@ -33,6 +33,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 
     public static String rawMain = "__RAWMAIN__";
     public static String receiveMethod = "static_receive_to_mem";
+
+    //These next fields are set by calculateItems()
+    //see my thesis for a better explanation
+    //number of items to receive between preWork() and work()
+    private int bottomPeek = 0; 
+    //number of times the filter fires in the init schedule
+    private int initFire = 0;
+    //number of items to receive after initialization
+    private int remaining = 0;
+    
     
     public static void doit(FlatNode top) 
     {
@@ -44,9 +54,88 @@ public class RawExecutionCode extends at.dms.util.Utils
 	if (node.isFilter()){
 	    createFields(node);
 	    convertCommExps((SIRFilter)node.contents);
+	    calculateItems((SIRFilter)node.contents);
 	    createRawMainFunc(node);
 	}
     } 
+
+    //calcuate bottomPeek, initFire, remaining
+    //see my thesis section 5.1.2
+    void calculateItems(SIRFilter filter) 
+    {
+	int pop = filter.getPopInt();
+	int peek = filter.getPeekInt();
+	
+	//set up prePop, prePeek
+	int prePop = 0;
+	int prePeek = 0;
+	
+	if (filter instanceof SIRTwoStageFilter) {
+	    prePop = ((SIRTwoStageFilter)filter).getInitPop();
+	    prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
+	}
+	
+	//the number of times this filter fires in the initialization
+	//schedule
+	initFire = 0;
+	
+	Integer init = (Integer)RawBackend.initExecutionCounts.
+	    get(Layout.getNode(Layout.getTile(filter)));
+	
+	if (init != null) 
+	    initFire = init.intValue();
+	
+	//if this is not a twostage, fake it by adding to initFire,
+	//so we always think the preWork is called
+	if (!(filter instanceof SIRTwoStageFilter))
+	    initFire++;
+
+	//the number of items produced by the upstream filter in
+	//initialization
+	int upStreamItems = 0;
+	//number of times the previous node fires in init
+	int prevInitCount = 0;
+	//its push rate
+	int prevPush = 0;
+	
+	FlatNode node = Layout.getNode(Layout.getTile(filter));
+	FlatNode previous = null;
+	
+	if (node.inputs > 0) {
+	    previous = node.incoming[0];
+	    prevInitCount = Util.getCountPrev(RawBackend.initExecutionCounts, 
+					 previous, node);
+	    if (prevInitCount > 0) {
+		if (previous.contents instanceof SIRSplitter || 
+		    previous.contents instanceof SIRJoiner) {
+		    prevPush = 1;
+		}
+		else
+		    prevPush = ((SIRFilter)previous.contents).getPushInt();
+	    }
+	    //System.out.println("previous: " + previous.getName());
+	    //System.out.println("prev Push: " + prevPush + " prev init: " + prevInitCount);
+	}
+	
+	//calculate the total items produced by the upstream node
+	upStreamItems = (prevInitCount * prevPush);
+	//if the previous node is a two stage filter then count its initWork
+	//in the initialItemsTo Receive
+	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
+	    upStreamItems -= ((SIRTwoStageFilter)previous.contents).getPushInt();
+	    upStreamItems += ((SIRTwoStageFilter)previous.contents).getInitPush();
+	}
+
+
+	//see my thesis for an explanation of this calculation
+	bottomPeek = Math.max(0, 
+			      peek - (prePeek - prePop));
+	
+	remaining = upStreamItems -
+	    (prePeek + bottomPeek + ((initFire - 2) * pop));
+	
+    }
+    
 
     //returns the expression that will create the buffer array.  A JNewArrayExpression
     //with the proper type, dimensions, and size...
@@ -249,7 +338,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	//add the code to collect enough data necessary to fire the 
 	//work function for the first time
-
+	
 	//add the calls for the work function in the initialization stage
 
 	//add the code to collect all data produced by the upstream filter 

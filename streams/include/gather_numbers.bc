@@ -151,13 +151,14 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 		gStreamItTiles*totalCycles);
 	//we are done getting the numbers, deregister the handler.
 	EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
-	//now get the blood graph	   
+	//now get the blood graph
 	setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
 	
+	//don't exit here unless you don't want a blood graph
 	//this should exit!!!!!
-	gInterrupted = 1;
+//	gInterrupted = 1;
 	//this will exit the thread
-	exit_now(0);
+//	exit_now(0);
       }
       else if (steadyStateExecutions > 1) {
 	local dif = time_lo - lastSteadyStartCycle; 
@@ -232,7 +233,7 @@ fn gather_numbers_init()
 
   //register the workcount event
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
-  EventManager_RegisterHandler("clock", "__check_deadlock");
+  //EventManager_RegisterHandler("clock", "__check_deadlock");
 
   return 1;
 }
@@ -250,7 +251,6 @@ fn close_bloodgraph() {
 fn update_bloodgraph(hms) {
   local j;
   local value;
-  
   //stop updating the blood graph
   if (gBloodCycles <= 0) {
     close_bloodgraph();

@@ -7,19 +7,17 @@
 package grapheditor;
 
 /**
+ * GEWorkFunction is the graph editor's internal representation of a work function.
  * @author jcarlos
- *
- * GEWorkFunction is a the graph editor's internal representation of a work function. 
- * 
  */
 public class GEWorkFunction 
 {
 	private String name;
-	private String pushValue;
-	private String popValue;
-	private String peekValue;
+	private int pushValue;
+	private int popValue;
+	private int peekValue;
 	
-	public GEWorkFunction(String name, String push, String pop, String peek)
+	public GEWorkFunction(String name, int push, int pop, int peek)
 	{
 		this.name = name;
 		this.pushValue = push;
@@ -34,19 +32,19 @@ public class GEWorkFunction
 	}
 
 	//	get the push value of GEWorkFunction
-	public String getPushValue()
+	public int getPushValue()
 	{
 		return this.pushValue;
 	}
 	 
 	//	get the pop value of GEWorkFunction
-	public String getPopValue()
+	public int getPopValue()
 	{
 		return this.popValue;
 	}
 	 
 	//	get the peek value of GEWorkFunction
-	public String getPeekValue()
+	public int getPeekValue()
 	{
 		return this.peekValue;
 	}
@@ -58,18 +56,18 @@ public class GEWorkFunction
 	}
 	 
 	//	set the pushValue of GEWorkFunction
-	public void setPushValue(String pop)
+	public void setPushValue(int pop)
 	{
 		this.pushValue = pop;
 	}
 
 	//	set the popValue of GEWorkFunction
-	public void setPopValue(String pop)
+	public void setPopValue(int pop)
 	{
 		this.popValue = pop;
 	}
 	//	set the peek value of GEWorkFunction
-	public void setPeekValue(String peek)
+	public void setPeekValue(int peek)
 	{
 		this.peekValue = peek;
 	}

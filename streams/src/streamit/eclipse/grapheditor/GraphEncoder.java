@@ -136,9 +136,41 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               JMethodDeclaration[] methods,
                               JMethodDeclaration init,
                               JMethodDeclaration work,
-                              CType inputType, CType outputType) {
-	return null;
-	
+                              CType inputType, CType outputType) 
+   {
+                              	
+		GEPhasedFilter phFilter = new GEPhasedFilter();					
+		try 
+		{
+			SIRWorkFunction[] phases = self.getPhases();
+			for (int i = 0; i < phases.length; i++)
+			{
+				
+	// REMOVED TO ALLOW COMPILE			
+	//			phFilter.addWorkFunction(new GEWorkFunction(phases[i].getName(), 
+	//														phases[i].getPushInt(), 
+	//														phases[i].getPopInt(), 
+	//														phases[i].getPeekInt()));
+			}
+			phases = self.getInitPhases();
+			for (int i = 0; i < phases.length; i++)
+			{
+				
+	//REMOVED TO ALLOW COMPILE	
+	//			phFilter.addInitWorkFunction (new GEWorkFunction(phases[i].getName(), 
+	//															 phases[i].getPushInt(), 
+	//															 phases[i].getPopInt(), 
+	//															 phases[i].getPeekInt()));
+			}							
+		}
+		catch (Exception e) 
+		{
+			// if constants not resolved for the ints, will get an exception
+		}
+				
+		return phFilter;             	
+                              	    	
+		
     }
     
     /* visit a phased filter */
@@ -149,8 +181,35 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     JMethodDeclaration work,
                                     SIRWorkFunction[] initPhases,
                                     SIRWorkFunction[] phases,
-                                    CType inputType, CType outputType) {
-	return null;
+                                    CType inputType, CType outputType)
+	{
+		
+        
+		//###
+	   	// Establish this is a subgraph cluster
+		//###
+		print(getClusterString(self));
+     
+    	GEPhasedFilter phFilter = new GEPhasedFilter();
+		// Walk through each of the phases.
+		if (initPhases != null)
+		{
+			for (int i = 0; i < initPhases.length; i++)
+			{   
+				GEWorkFunction wf = (GEWorkFunction) initPhases[i].accept(this);
+				phFilter.addInitWorkFunction(wf);
+			}
+		}
+		if (phases != null)
+		{
+	   		for (int i = 0; i < phases.length; i++)
+	   		{
+				GEWorkFunction wf = (GEWorkFunction) initPhases[i].accept(this);
+				phFilter.addWorkFunction(wf);
+	   		}
+		}        
+						
+		return phFilter;
 	
     }
     
@@ -172,9 +231,22 @@ public class GraphEncoder implements AttributeStreamVisitor {
     
     /* visit a work function */
     public Object visitWorkFunction(SIRWorkFunction self,
-                                    JMethodDeclaration work) {
-	return new NamePair("WORK_FUNCTION");
-    }
+                                    JMethodDeclaration work) 
+    {
+		try 
+		{
+			GEWorkFunction wf = new GEWorkFunction(work.getName(), self.getPushInt(), self.getPopInt(),self.getPeekInt());
+			return wf;
+		} 
+		catch (Exception e) 
+		{
+			// if constants not resolved for the ints, will get an exception
+			return null;
+		}
+		
+	}
+		
+    
     
     /* Pre-visit a pipeline
      */
@@ -183,8 +255,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init) {                 	
                                 	
-	NamePair pair = new NamePair();
-        
+		GEPipeline pipeline = new GEPipeline();        
         //###
 		// Establish this is a subgraph cluster
 		//###
@@ -196,19 +267,20 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		while (iter.hasNext())
 		{
 			SIROperator oper = (SIROperator)iter.next();
-			NamePair p2 = (NamePair)oper.accept(this);
+//			REMOVED TO ALLOW COMPILE	
+	//		GEStreamNode currNode = oper.accept(this);
 			
 			//###
 			// Instead of printEdge, add the edge relationship representation to the graph
 			//###
-				printEdge(pair.last, p2.first);
-		
+//			REMOVED TO ALLOW COMPILE	
+//			graphStruct.createEdge(lastNode, currNode);	
+//		 	pipe.addPipeStage(currNode); 	//
 			// Update the known edges.
-			if (pair.first == null)
-			   pair.first = p2.first;
-			pair.last = p2.last;
+//			lastNode = currNode;
+			
 		}
-		return pair;
+		return null;
     }
     
     /* Pre-visit a splitjoin 

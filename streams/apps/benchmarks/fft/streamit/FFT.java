@@ -5,103 +5,118 @@ class Identity extends Filter {
     Channel output = new Channel(Float.TYPE, 1);
 
     public void initIO() {
-	this.streamInput = input;
-	this.streamOutput = output;
+        streamInput = input;
+        streamOutput = output;
     }
 
     public void work() {
-	output.pushFloat(input.popFloat());
+        output.pushFloat(input.popFloat());
     }
 }
 
 class Butterfly extends Pipeline {
-    public Butterfly(int N, int W) { super(N,W); }
-    
+    public Butterfly(int N, int W) { super (N, W); }
+
     public void init(final int N, final int W) {
-	this.add(new SplitJoin() {
-		public void init() {
-		    this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
-		    this.add(new Filter() {
-			    Channel input = new Channel(Float.TYPE, 1);
-			    Channel output = new Channel(Float.TYPE, 1);
-			    float weights[] = new float[W];
-			    int curr;
+        add(new SplitJoin() {
+                public void init() {
+                    setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
+                    add(new Filter() {
+                            Channel input = new Channel(Float.TYPE, 1);
+                            Channel output = new Channel(Float.TYPE, 1);
+                            float weights[] = new float[W];
+                            int curr;
 
-			    public void init() {
-				for (int i=0; i<W; i++)
-				    weights[i] = calcWeight(i, N, W);
-				curr = 0;
-			    }
+                            public void init() {
+                                for (int i=0; i<W; i++)
+                                    weights[i] = calcWeight(i, N, W);
+                                curr = 0;
+                            }
 
-			    public void initIO() {
-				this.streamInput = input;
-				this.streamOutput = output;
-			    }
+                            public void initIO() {
+                                streamInput = input;
+                                streamOutput = output;
+                            }
 
-			    private float calcWeight(int a, int b, int c) {
-				return 1;
-			    }
+                            private float calcWeight(int a, int b, int c) {
+                                return 1;
+                            }
 
-			    public void work() {
-				output.pushFloat(input.popFloat()*
-						 weights[curr++]);
-				if(curr>= W) curr = 0;
-			    }
+                            public void work() {
+                                output.pushFloat(input.popFloat()*
+                                                 weights[curr++]);
+                                if(curr>= W) curr = 0;
+                            }
 
-			});
-		    this.add(new Identity());
-		    this.setJoiner(ROUND_ROBIN());
-		}});
+                        });
+                    add(new Identity());
+                    setJoiner(ROUND_ROBIN());
+                }});
 
-	this.add(new SplitJoin() {
-		public void init() {
-		    this.setSplitter(DUPLICATE());
+        add(new SplitJoin() {
+                public void init() {
+                    setSplitter(DUPLICATE());
 
-		    this.add(new Filter() {   
-			    Channel input = new Channel(Float.TYPE, 2);
-			    Channel output = new Channel(Float.TYPE, 1);
+                    add(new Filter() {
+                            Channel input = new Channel(Float.TYPE, 2);
+                            Channel output = new Channel(Float.TYPE, 1);
 
-			    public void work() {
-				output.pushFloat(input.popFloat() - 
-						 input.popFloat());
-			    }
-			});
+                            public void initIO ()
+                            {
+                                streamInput = input;
+                                streamOutput = output;
+                            }
 
-		    this.add(new Filter() {   
-			    Channel input = new Channel(Float.TYPE, 2);
-			    Channel output = new Channel(Float.TYPE, 1);
+                            public void work() {
+                                output.pushFloat(input.popFloat() -
+                                                 input.popFloat());
+                            }
+                        });
 
-			    public void work() {
-				output.pushFloat(input.popFloat() + 
-						 input.popFloat());
-			    }
-			});
-		    setJoiner(WEIGHTED_ROUND_ROBIN(N, N));
-		}});
+                    add(new Filter() {
+                            Channel input = new Channel(Float.TYPE, 2);
+                            Channel output = new Channel(Float.TYPE, 1);
+
+                            public void initIO ()
+                            {
+                                streamInput = input;
+                                streamOutput = output;
+                            }
+
+                            public void work() {
+                                output.pushFloat(input.popFloat() +
+                                                 input.popFloat());
+                            }
+                        });
+                    setJoiner(WEIGHTED_ROUND_ROBIN(N, N));
+                }});
     }}
 
 class FFTKernel extends Pipeline {
-    public FFTKernel(int N) { super (N); }
+    public FFTKernel(int N)
+    {
+        super (N);
+    }
 
     public void init(final int N) {
-	add(new SplitJoin() {
-		public void init() {
-		    this.setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
-		    for (int i=0; i<2; i++) 
-			this.add(new SplitJoin() {
-				public void init() {
-				    this.setSplitter(ROUND_ROBIN());
-				    this.add(new Identity());
-				    this.add(new Identity());
-				    this.setJoiner(WEIGHTED_ROUND_ROBIN((int)
-									N/4, 
-									(int)
-									N/4));
-				}});
-		    this.setJoiner(ROUND_ROBIN());
-		}});
-	for (int i=2; i<N; i*=2)
-	    this.add(new Butterfly(i, N));
+        add(new SplitJoin() {
+                public void init() {
+                    setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
+                    for (int i=0; i<2; i++)
+                        add(new SplitJoin() {
+                                public void init() {
+                                    setSplitter(ROUND_ROBIN());
+                                    add(new Identity());
+                                    add(new Identity());
+                                    setJoiner(WEIGHTED_ROUND_ROBIN((int)
+                                                                        N/4,
+                                                                        (int)
+                                                                        N/4));
+                                }});
+                    setJoiner(ROUND_ROBIN());
+                }});
+        for (int i=2; i<N; i*=2)
+            add(new Butterfly(i, N));
     }
 }
 
@@ -133,13 +148,13 @@ class FloatPrinter extends Filter
 
 public class FFT extends StreamIt {
     public static void main(String args[]) {
-	new FFT().run();
+        new FFT().run();
     }
 
     public void init() {
-	add(new OneSource());
-	add(new FFTKernel(16));
-	add(new FloatPrinter());
+        add(new OneSource());
+        add(new FFTKernel(16));
+        add(new FloatPrinter());
     }
 }
 

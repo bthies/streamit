@@ -23,3 +23,8 @@ if ($?PATH) then
 else
   setenv PATH ${STREAMIT_HOME}
 endif
+
+# include extra LaTeX packages
+# (Note that this *always* DTRT: the TeX path-searching stuff interprets
+# a blank entry as "the default path".)
+setenv TEXINPUTS ${TEXINPUTS}:${STREAMIT_HOME}/include/tex

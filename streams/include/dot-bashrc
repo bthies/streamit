@@ -28,3 +28,10 @@ then
 else
   PATH=${PATH}:${STREAMIT_HOME}
 fi
+
+# include extra LaTeX packages
+# (Note that this *always* DTRT: the TeX path-searching stuff interprets
+# a blank entry as "the default path".)
+TEXINPUTS=${TEXINPUTS}:${STREAMIT_HOME}/include/tex
+export TEXINPUTS
+

@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.18 2004-01-26 21:49:58 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.19 2004-01-27 16:02:14 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -944,6 +944,20 @@ public class SemanticChecker
                         theType = ss.getStreamType().getIn();
                     else
                         theType = ss.getStreamType().getOut();
+
+                    // Split-joins get to randomly have children
+                    // with void inputs/outputs.  In particular:
+                    // float->float splitjoin Insert(float f) {
+                    //   split roundrobin(1,0);
+                    //   add Identity<float>();
+                    //   add void->float filter { ... };
+                    //   join roundrobin;
+                    // }
+                    if (forSJ &&
+                        theType instanceof TypePrimitive &&
+                        ((TypePrimitive)theType).getType() ==
+                        TypePrimitive.TYPE_VOID)
+                        return in;
                     
                     // What do we actually return?  Take the meet
                     // of the input and output values, so that when

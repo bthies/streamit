@@ -163,10 +163,15 @@ public class BufferDRAMAssignment
 	    //if the dram is not being used by another buffer connected to 
 	    //the input trace, then assign it, otherwise let the below crap
 	    //handle it.
-	    if (!assignedInputDRAMs(output.getSingleEdge().getDest()).contains(wanted))
-		assign.put(output.getSingleEdge(), wanted);
-	    else
+	    if (!assignedInputDRAMs(output.getSingleEdge().getDest()).contains(wanted)) {
+		assign.put(output.getSingleEdge(), wanted); 
+		//exit because we have assigned the only edge
+		return assign;
+	    }
+	    else {  //it might be added below also, but this is fine...
 		needToAssign.add(output.getSingleEdge());
+	    }
+	    
 	}
 
 	//populate the unassigned ports set

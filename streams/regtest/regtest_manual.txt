@@ -1,6 +1,6 @@
 Documentation for StreamIT Regression Testing framework
 Andrew Lamb (aalamb@mit.edu) 6/25/2002
-$Id: regtest_manual.txt,v 1.2 2002-06-28 22:17:30 aalamb Exp $
+$Id: regtest_manual.txt,v 1.3 2002-07-17 18:35:22 aalamb Exp $
 
 
 Introduction
@@ -58,6 +58,32 @@ Execution: app returns 0
 Compare: cmp returns 0
 Raw Compilation: auto generated make returns 0
 Raw Execution:   auto generated "make run" return 0
+
+There are several files that the regtest generates via the ResultPrinter class:
+regtest_errors: 
+      The regression test framework dumps the raw stderr for any process that it
+runs to regtest_errors. In addition, after running any program/script that returns
+a non zero exit value, both stdout and stderr are dumped to the error file.
+
+regtest_results:
+      The regression test framework puts two lines in the results file for each 
+successful execution/verification that it performs on raw. The first line is a date/time 
+stamp along with the filename that was run and the options used to compile. The second
+line has the following format: (cycle in hex) (cycle in dec) (#output produced)
+which tells us the (roughly) # cycles needed to produce an output. This is not totally 
+accurate because it doesn't take into account startup costs.
+
+regtest_success:
+      The regtest framework writes a line for each successful test that it performs.
+This serves the dual purpose of letting us know explicitly which tests were run
+and succeeded and also lets us give people a pat on the back when we are sending out 
+test results.
+
+regtest_perf_script.txt:
+      The regression test framework writes a line in the perf script for each successful 
+raw execution run that it encounters. The perf script is then fed to the reap_results.pl
+script which automates gathering numbers and making graphs for compiler's performance
+for raw.
 
 
 

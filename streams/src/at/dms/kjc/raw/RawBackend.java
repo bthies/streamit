@@ -3,6 +3,7 @@ package at.dms.kjc.raw;
 import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.GraphFlattener;
+import at.dms.kjc.flatgraph.DumpGraph;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -205,7 +206,8 @@ public class RawBackend {
 	    createExecutionCounts(str, graphFlattener);
 
 	    //dump the flatgraph of the application, must be called after createExecutionCounts
-	    graphFlattener.dumpGraph("flatgraph.dot", initExecutionCounts, steadyExecutionCounts);
+	    (new DumpGraph()).dumpGraph(graphFlattener.top, "flatgraph.dot", 
+					initExecutionCounts, steadyExecutionCounts);
 
 
 	    //Generate number gathering simulator code

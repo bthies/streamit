@@ -35,6 +35,28 @@ public class MP3Decoder extends StreamIt
             int nChannels = (h.mode() == h.SINGLE_CHANNEL ? 1 : 2);
 
             add(new HeaderHuffmanDecoder());
+            add (new SplitJoin ()
+            {
+                public void init ()
+                {
+                    setSplitter (DUPLICATE ());
+                    add (new Filter ()
+                    {
+                        public void init ()
+                        {
+                            input = new Channel (Float.TYPE, 1);
+                            output = new Channel (Float.TYPE, 1);
+                        }
+                        
+                        public void work ()
+                        {
+                            output.pushFloat (input.popFloat ());
+                        }
+                    });
+                    add (new FileWriter ("Blur.float.raw", Float.TYPE));
+                    setJoiner (WEIGHTED_ROUND_ROBIN (1,0));
+                }
+            });
             add(new MultiChannelPCMSynthesis (nChannels));
             add(new SoundOutput(sampling_rate, nChannels));
         } catch (Throwable t)

@@ -44,6 +44,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
 	assert filterInfo.initMult<1:"Still need to create init function"+filterInfo.initMult;
 	assert filterInfo.primePump<1:"Still need to create primePump: "+filterInfo.primePump;
+	System.out.println("STEADYSTATE: "+filterInfo.steadyMult);
 	FilterContent content=filterInfo.filter;
 	array=content.getArray();
 	begin=content.getBegin();
@@ -175,12 +176,12 @@ public class Linear extends BufferedCommunication implements Constants {
 	    turns+=extra;
 	}
 	final int mult=getMult(array.length);
-	final int target=filterInfo.steadyMult-num-turns;
-	//final int newSteadyMult=target/mult-1;
-	final int newSteadyMult=1;
-	//final int remainingExec=target-newSteadyMult*mult;
-	final int remainingExec=0;
-	//turns+=remainingExec; //Remaining executions
+	final int target=filterInfo.steadyMult-(int)Math.ceil(((double)peek)/popCount);
+	final int newSteadyMult=target/mult-1;
+	//final int newSteadyMult=1;
+	final int remainingExec=target-(newSteadyMult+1)*mult;
+	//final int remainingExec=0;
+	turns+=remainingExec; //Remaining executions
 	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
 	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
 	//TODO: Save registers here

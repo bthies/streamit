@@ -1001,10 +1001,10 @@ public class Rawify
 	    turns+=extra;
 	}
 	final int numTimes=Linear.getMult(numCoeff);
-	final int target=filterInfo.steadyMult-numPop-turns;
+	final int target=filterInfo.steadyMult-(int)Math.ceil(((double)peek)/pop);
 	final int newSteadyMult=target/numTimes-1;
-	//final int remainingExec=target-newSteadyMult*numTimes;
-	//turns+=remainingExec; //Remaining executions
+	final int remainingExec=target-(newSteadyMult+1)*numTimes;
+	turns+=remainingExec; //Remaining executions
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
 	//Begin codegen

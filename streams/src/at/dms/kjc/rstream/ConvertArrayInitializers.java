@@ -204,19 +204,41 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 		else 
 		    prefix = new JLocalVariableExpression(null,
 							  (JLocalVariable)varAccess);
+		// RMR {
+		/* the  code   below  will   reverse  the  order   of  the
+		 * dimmensions in an array expression; this is a bug!
+		 *
+		   //build the final array access expression
+ 		   JArrayAccessExpression access = 
+			 new JArrayAccessExpression(null, 
+							    prefix,
+							    new JIntLiteral(i));
+		   //build the remaining, from bottom up
+		   for (int j = indices.size() - 1; j >= 0; j--) {
+			 access = new JArrayAccessExpression(null, 
+									 access,
+									 (JExpression)indices.get(j));
+		   }
 		
-		//build the final array access expression
+		 * the follow code is fix to produce the dimmensions in the
+		 * proper order:
+		 */
+
+		//build the final array access expression, top down
 		JArrayAccessExpression access = 
 		    new JArrayAccessExpression(null, 
-					       prefix,
-					       new JIntLiteral(i));
-		//build the remaining, from bottom up
-		for (int j = indices.size() - 1; j >= 0; j--) {
+							 prefix,
+							 (JExpression)indices.get(0));
+		
+		for (int j = 1; j <= indices.size() - 1; j++) {
 		    access = new JArrayAccessExpression(null, 
-							access,
-							(JExpression)indices.get(j));
+								    access,
+								    (JExpression)indices.get(j));
 		}
-
+		
+		access = new JArrayAccessExpression(null, access, new JIntLiteral(i));
+		// } RMR
+		
 		//only handle constant initializers for now
 		assert (Utils.passThruParens(init.getElems()[i]) instanceof JLiteral) : 
 		    "Error: Currently we only handle constant array initializers.";

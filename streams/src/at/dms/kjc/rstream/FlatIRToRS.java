@@ -278,7 +278,7 @@ public class FlatIRToRS extends ToC
 	    //print the declaration and get the number of dimensions
 	    int dim = handleArrayDecl(ident, type); 
 	    //now, get the new array expression
-	    if (expr == null) {//if their isn't a new array expression in the declaration
+	    if (expr == null) {//if there isn't a new array expression in the declaration
 		expr = getNewArrayExpr(self);
 	    }
 	    //make sure we found a new array expression

@@ -25,7 +25,7 @@ public class SIRRegReceiverStatement extends JStatement {
      */
     public SIRRegReceiverStatement(TokenReference where, 
 				   JavaStyleComment[] comments, 
-				   SIRPortal portal) {
+				   String portal) {
 	super(where, comments);
 
 	this.portal = portal;

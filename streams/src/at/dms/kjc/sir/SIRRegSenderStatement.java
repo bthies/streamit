@@ -29,7 +29,7 @@ public class SIRRegSenderStatement extends JStatement {
      */
     public SIRRegSenderStatement(TokenReference where, 
 				 JavaStyleComment[] comments, 
-				 SIRPortal portal, 
+				 String portal, 
 				 SIRLatency latency) {
 	super(where, comments);
 

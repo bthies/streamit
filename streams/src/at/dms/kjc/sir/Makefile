@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.1 2001-09-19 16:44:40 thies Exp $
+## $Id: Makefile,v 1.2 2001-09-21 11:28:23 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -33,8 +33,7 @@ GRM1DEP =
 SCANNER1 =	../Kjc
 
 # classes
-JAVAFILES +=	SIRPortal \
-		SIRLatency \
+JAVAFILES +=	SIRLatency \
 		SIRFeedbackLoop \
 		SIRFilter \
 		SIRJoinType \

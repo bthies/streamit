@@ -16,7 +16,7 @@ import at.dms.compiler.TokenReference;
  * Use visitBlockStatement to move Var Decls to top of block or
  * have it run on the method and have it recurse
  */
-class VarDeclRaiser extends SLIRReplacingVisitor {
+public class VarDeclRaiser extends SLIRReplacingVisitor {
     /**
      * List of variableDeclarations to move to the front of the block
      */

@@ -94,7 +94,9 @@ public class ConstantProp {
 	    SIRFeedbackLoop loop = (SIRFeedbackLoop)str;
 	    propagator.visitArgs(loop.getJoiner().getInternalWeights());
 	    propagator.visitArgs(loop.getSplitter().getInternalWeights());
-	    JExpression newDelay = (JExpression)loop.getDelay().accept(propagator);
+	    JExpression newDelay = loop.getDelay();
+            if (newDelay != null)
+                newDelay = (JExpression)newDelay.accept(propagator);
 	    if (newDelay!=null && newDelay!=loop.getDelay()) {
 		loop.setDelay(newDelay);
 	    }

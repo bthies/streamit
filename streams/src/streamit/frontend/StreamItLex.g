@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.12 2003-05-14 18:55:23 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.13 2003-07-03 19:55:38 dmaze Exp $
  */
 
 header {
@@ -22,6 +22,8 @@ options {
 tokens {
 	// Stream types:
 	"filter"; "pipeline"; "splitjoin"; "feedbackloop";
+	// Messaging:
+	"portal"; "to"; "handler";
 	// Composite streams:
 	"add";
 	// Splitters and joiners:

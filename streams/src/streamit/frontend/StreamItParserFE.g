@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.33 2003-05-14 18:55:24 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.34 2003-07-03 19:55:38 dmaze Exp $
  */
 
 header {
@@ -80,6 +80,7 @@ returns [StreamSpec ss]
 		( fn=init_decl { funcs.add(fn); }
 		| fn=work_decl { funcs.add(fn); }
 		| (function_decl) => fn=function_decl { funcs.add(fn); }
+		| fn=handler_decl { funcs.add(fn); }
 		| decl=field_decl SEMI { vars.add(decl); }
 		)*
 		RCURLY
@@ -151,37 +152,54 @@ push_statement returns [Statement s] { s = null; Expression x; }
 		{ s = new StmtPush(getContext(t), x); }
 	;
 
-statement returns [Statement s] { s = null; }
-	:	s=streamit_statement
+msg_statement returns [Statement s] { s = null; List l;
+  Expression minl = null, maxl = null; }
+	:	p:ID DOT m:ID l=func_call_params
+		(LSQUARE (minl=right_expr)? COLON (maxl=right_expr)? RSQUARE)?
 	;
 
-streamit_statement returns [Statement s] { s = null; }
-	:	s=minic_statement
-	|	s=add_statement
+statement returns [Statement s] { s = null; }
+	:	s=add_statement
 	|	s=body_statement
 	| 	s=loop_statement
 	|	s=split_statement SEMI
 	|	s=join_statement SEMI
 	|	s=enqueue_statement SEMI
 	|	s=push_statement SEMI
+	|	s=block
+	|	(data_type ID) => s=variable_decl SEMI!
+	|	(expr_statement) => s=expr_statement SEMI!
+	|	tb:TK_break SEMI { s = new StmtBreak(getContext(tb)); }
+	|	tc:TK_continue SEMI { s = new StmtContinue(getContext(tc)); }
+	|	s=return_statement SEMI
+	|	s=if_else_statement
+	|	s=while_statement
+	|	s=do_while_statement SEMI
+	|	s=for_statement
+	|	s=msg_statement SEMI
 	;
 
 add_statement returns [Statement s] { s = null; StreamCreator sc; }
-	: t:TK_add sc=stream_or_inline { s = new StmtAdd(getContext(t), sc); }
+	: t:TK_add sc=stream_creator { s = new StmtAdd(getContext(t), sc); }
 	;
 
 body_statement returns [Statement s] { s = null; StreamCreator sc; }
-	: t:TK_body sc=stream_or_inline { s = new StmtBody(getContext(t), sc); }
+	: t:TK_body sc=stream_creator { s = new StmtBody(getContext(t), sc); }
 	;
 
 loop_statement returns [Statement s] { s = null; StreamCreator sc; }
-	: t:TK_loop sc=stream_or_inline { s = new StmtLoop(getContext(t), sc); }
+	: t:TK_loop sc=stream_creator { s = new StmtLoop(getContext(t), sc); }
 	;
 
-stream_or_inline returns [StreamCreator sc]
+stream_creator returns [StreamCreator sc] { sc = null; }
+	: (ID ARROW | ~ID) => sc=anonymous_stream (TK_to ID)? (SEMI)?
+	| sc=named_stream (TK_to ID)? SEMI
+	;
+
+anonymous_stream returns [StreamCreator sc]
 { sc = null; StreamType st = null; List params = new ArrayList();
 Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null; }
-	: (ID ARROW | ~ID) => (st=stream_type_decl)?
+	: (st=stream_type_decl)?
 		( tf:TK_filter
 			ss=filter_body[getContext(tf), st, null, Collections.EMPTY_LIST]
 			{ sc = new SCAnon(getContext(tf), ss); }
@@ -191,10 +209,15 @@ Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null; }
 			{ sc = new SCAnon(getContext(ts), StreamSpec.STREAM_SPLITJOIN, body); }
 		| tl:TK_feedbackloop body=block
 			{ sc = new SCAnon(getContext(tl), StreamSpec.STREAM_FEEDBACKLOOP, body); }
-		) (SEMI)?
-	| id:ID
+		)
+	;
+
+named_stream returns [StreamCreator sc]
+{ sc = null; List params = new ArrayList(); List types = new ArrayList();
+Type t; }
+	: id:ID
 		(LESS_THAN t=data_type MORE_THAN { types.add(t); })?
-		(params=func_call_params)? SEMI
+		(params=func_call_params)?
 		{ sc = new SCSimple(getContext(id), id.getText(), types, params); }
 	;
 
@@ -235,6 +258,7 @@ data_type returns [Type t] { t = null; Expression x; }
 			RSQUARE
 		)*
 	|	TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
+	|	TK_portal LESS_THAN ID MORE_THAN
 	;
 
 primitive_type returns [Type t] { t = null; }
@@ -270,6 +294,13 @@ int cls = Function.FUNC_HELPER; }
 		{ f = new Function(getContext(id), cls, id.getText(), t, l, s); }
 	;
 
+handler_decl returns [Function f] { List l; Statement s; f = null;
+Type t = new TypePrimitive(TypePrimitive.TYPE_VOID);
+int cls = Function.FUNC_HANDLER; }
+	:	TK_handler id:ID l=param_decl_list s=block
+		{ f = new Function(getContext(id), cls, id.getText(), t, l, s); }
+	;
+
 param_decl_list returns [List l] { l = new ArrayList(); Parameter p; }
 	:	LPAREN
 		(p=param_decl { l.add(p); } (COMMA p=param_decl { l.add(p); })*
@@ -284,20 +315,6 @@ param_decl returns [Parameter p] { Type t; p = null; }
 block returns [Statement s] { s = null; List l = new ArrayList(); }
 	:	t:LCURLY ( s=statement { l.add(s); } )* RCURLY
 		{ s = new StmtBlock(getContext(t), l); }
-	;
-
-minic_statement returns [Statement s]
-{ s = null; Statement s1, s2; Expression x; }
-	:	s=block
-	|	(data_type ID) => s=variable_decl SEMI!
-	|	(expr_statement) => s=expr_statement SEMI!
-	|	tb:TK_break SEMI { s = new StmtBreak(getContext(tb)); }
-	|	tc:TK_continue SEMI { s = new StmtContinue(getContext(tc)); }
-	|	s=return_statement SEMI
-	|	s=if_else_statement
-	|	s=while_statement
-	|	s=do_while_statement SEMI
-	|	s=for_statement
 	;
 
 return_statement returns [Statement s] { s = null; Expression x = null; }

@@ -269,7 +269,9 @@ public class Linear extends RawExecutionCode implements Constants {
     }
 
     public JFieldDeclaration[] getVarDecls() {
-	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+3];
+	FilterContent filter = filterInfo.filter;
+	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+3 + filter.getFields().length];
+	
 	for(int i=0;i<array.length;i++)
 	    try {
 		fields[i]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getWeight(i),new JFloatLiteral(null,Float.toString((float)array[i]))),null,null);
@@ -280,7 +282,10 @@ public class Linear extends RawExecutionCode implements Constants {
 	    fields[array.length]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getConstant(),new JFloatLiteral(null,Float.toString((float)constant))),null,null);
 	} catch(PositionedError e) {
 	    Utils.fail("Couldn't convert constant: "+constant);
+
+
 	}
+
 	//Adapted from Gordo's Code
 	//index variable for certain for loops
 	JVariableDefinition exeIndexVar = 
@@ -304,11 +309,16 @@ public class Linear extends RawExecutionCode implements Constants {
 
 	generatedVariables.exeIndex1 = exeIndex1Var;
 	fields[array.length+2]=new JFieldDeclaration(null, exeIndex1Var, null, null);
+
+	//add the fields of the non-linear filter, because we call the non-linear work function in the
+	//init and primepump stage
+	for (int i = 0; i < filter.getFields().length; i++) 
+	    fields[i + array.length + 3] = filter.getFields()[i];
+	
 	//convert the communication
 	//all the communication is in the work function
-	FilterContent filter = filterInfo.filter;
 	filter.getWork().accept(new DirectConvertCommunication());
-	//End Gordo's Code
+	//End Gordo's Code.
 	return fields;
     }
     

@@ -87,6 +87,10 @@ public class FreeTileRouter implements Router
 	
 	LinkedList route = bestRoute.route;
 
+	//if we cannot find a legal route, just return a null route...
+	if (route.size() == 0)
+	    return route;
+
 	//if the src or the dst is a device, me must add them to the route
 	if (src.isPort())
 	    route.addFirst(src);

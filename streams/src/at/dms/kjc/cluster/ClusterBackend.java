@@ -127,12 +127,14 @@ public class ClusterBackend implements FlatVisitor {
 
 	Flattener.doLinearAnalysis(str);
 
+	/* for cluster backend, fusion means to fuse segments on same cluster
 	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");
 	    str = FuseAll.fuse(str);
 	    Lifter.lift(str);
 	    System.out.println("Done FuseAll...");
 	}
+	*/
 
 	int threads = KjcOptions.cluster;
 	System.err.println("Running Partitioning... target number of threads: "+threads);

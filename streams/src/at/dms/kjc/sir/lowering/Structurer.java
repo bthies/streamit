@@ -59,7 +59,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				    /* CClassType[] interfaces */
 				     CClassType.EMPTY,
 				     /* JFieldDeclaration[] fields */
-				     null,
+				     JFieldDeclaration.EMPTY,
 				     /* JMethodDeclaration[] methods */
 				     (JMethodDeclaration[])
 				     flatMethods.toArray(JMethodDeclaration.
@@ -135,7 +135,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  /* CClassType[] interfaces, */
 				  CClassType.EMPTY,
 				  /* JFieldDeclaration[] fields, */
-				  fields,
+				  classFields,
 				  /* JMethodDeclaration[] methods, */
 				  JMethodDeclaration.EMPTY,
 				  /* JTypeDeclaration[] inners, */

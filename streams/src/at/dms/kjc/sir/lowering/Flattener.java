@@ -18,12 +18,16 @@ public class Flattener {
 	Namer.assignNames(str);
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str);
-	// build schedule as set of higher-level work functions
+
 	IRPrinter printer = new IRPrinter();
 	flatClass.accept(printer);
 	printer.close();
+
+	// build schedule as set of higher-level work functions
+
 	// add LIR hooks to init functions
-	return null;
+
+	return flatClass;
     }
     
 }

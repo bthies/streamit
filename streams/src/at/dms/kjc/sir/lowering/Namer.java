@@ -67,7 +67,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 	    name.append("_");
 	}
 	// end name with the class of the IR object
-	String suffix = splitQualifiedName(str.getClass().toString(), '.')[1];
+	name.append(splitQualifiedName(str.getClass().toString(), '.')[1]);
 	// associate name with <str>
 	names.put(str, name.toString());
     }

@@ -27,7 +27,7 @@ abstract class LDPConfigContainer extends LDPConfig {
      * A_s[x1][x2][y1][y2][c] holds savings if children (x1..x2,
      * y1..y2) of stream s given collapse policy <c>.
      */
-    private int[][][][][] A;
+    private long[][][][][] A;
     /**  
      * Streams we've created for a given sub-segment.  Lowest-order
      * dimension is just for aliasing.
@@ -66,7 +66,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	this.uniform = new boolean[height];
 	initUniform();
 	// for simplicity, allocate the bounding box for A
-	this.A = new int[maxWidth][maxWidth][height][height][4];
+	this.A = new long[maxWidth][maxWidth][height][height][4];
 	this.strCache = new SIRStream[maxWidth][maxWidth][height][height][1];
 	initCaches();
 	starttime = System.currentTimeMillis();
@@ -183,7 +183,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
     }
 
-    protected int get(int collapse) {
+    protected long get(int collapse) {
 	// otherwise, compute it
 	return get(0, A.length-1, 0, A[0][0].length-1, collapse, this.cont);
     }
@@ -194,7 +194,7 @@ abstract class LDPConfigContainer extends LDPConfig {
     /**
      * <str> is a stream object representing the current sub-segment that we're operating on
      */
-    protected int get(int x1, int x2, int y1, int y2, int collapse, SIRStream _str) {
+    protected long get(int x1, int x2, int y1, int y2, int collapse, SIRStream _str) {
 	indent++;
 	String callStr = "get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ", " + LinearPartitioner.COLLAPSE_STRING(collapse) + ", " + (_str==null ? "null" : _str.getIdent());
 	/*
@@ -221,6 +221,9 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    debugMessage(" returning memoized value, " + callStr + " = " + A[x1][x2][y1][y2][collapse]);
 	    indent--;
 	    return A[x1][x2][y1][y2][collapse];
+	} else if (LinearPartitioner.tracingBack) {
+	    // we should always hit memoized values on traceback
+	    Utils.fail("Didn't find memoized value on traceback for " + callStr);
 	}
 
 	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
@@ -242,20 +245,21 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	// if we are down to one child, then descend into child
 	if (x1==x2 && y1==y2) {
-	    int childCost = childConfig(x1, y1).get(collapse); 
+	    long childCost = childConfig(x1, y1).get(collapse); 
+	    Utils.assert(childCost>=0, "childCost = " + childCost);
 	    A[x1][x2][y1][y2][collapse] = childCost;
 	    debugMessage(" returning child cost, " + callStr + " = " + childCost);
 	    indent--;
 	    return childCost;
 	}
 
-	int cost;
+	long cost;
 	switch(collapse) {
 	case LinearPartitioner.COLLAPSE_ANY: {
 	    // if we still have flexibility, do better out of
 	    // collapsing or not.  Important to do none first here
 	    // because it will setup the linear information.
-	    int none = get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_NONE, str);
+	    long none = get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_NONE, str);
 	    cost = Math.min(none,
 			    Math.min(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str),
 				     get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_FREQ, str)));
@@ -264,7 +268,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	case LinearPartitioner.COLLAPSE_FREQ: {
 	    if (!lfa.hasLinearRepresentation(str) || !LEETFrequencyReplacer.canReplace(str, lfa) || KjcOptions.nolinearcollapse) {
-		cost = Integer.MAX_VALUE;
+		cost = Long.MAX_VALUE;
 	    } else {
 		// otherwise, return freq costn
 		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
@@ -276,7 +280,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	case LinearPartitioner.COLLAPSE_LINEAR: {
 	    // if we don't have a linear node, return infinity
 	    if (!lfa.hasLinearRepresentation(str) || KjcOptions.nolinearcollapse) {
-		cost = Integer.MAX_VALUE;
+		cost = Long.MAX_VALUE;
 	    } else {
 		// otherwise, return cost of collapsed node
 		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
@@ -286,7 +290,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_NONE: {
-	    cost = Integer.MAX_VALUE;
+	    cost = Long.MAX_VALUE;
 
 	    // see if we can do a vertical cut -- first, that there
 	    // are two streams to cut between
@@ -341,7 +345,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 		if (allUniform) {
 		    debugMessage(" Trying uniform vertical cut.");
 		    // don't even need to partition it... it has its own pieces already
-		    int sum = 0;
+		    long sum = 0;
 		    for (int i=0; i<x2-x1+1; i++) {
 			sum += get(x1+i, x1+i, y1, y2, LinearPartitioner.COLLAPSE_ANY, verticalObj.get(i));
 		    }
@@ -477,6 +481,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 	
 	A[x1][x2][y1][y2][collapse] = cost;
+	Utils.assert(cost>=0, "cost = " + cost);
 	debugMessage(" returning " + callStr + " = " + cost);
 	indent--;
 	return cost;
@@ -533,6 +538,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 			      LinearPartitioner.COLLAPSE_NONE };
 	    for (int i=0; i<options.length; i++) {
 		if (A[x1][x2][y1][y2][collapse] == get(x1, x2, y1, y2, options[i], str)) {
+		    if (LinearPartitioner.DEBUG) { System.err.println("Tracing back through ANY of " + cont.getName() + " and found best option = " + 
+								      LinearPartitioner.COLLAPSE_STRING(options[i]) + " with cost " + get(x1,x2,y1,y2,options[i],str)); }
 		    return traceback(x1, x2, y1, y2, options[i], str);
 		}
 	    }
@@ -604,7 +611,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 		}
 		if (allUniform) {
 		    // get the sum of components to compare it to memoized value
-		    int sum = 0;
+		    long sum = 0;
 		    for (int i=x1; i<=x2; i++) {
 			sum += get(i, i, y1, y2, LinearPartitioner.COLLAPSE_ANY, null);
 		    }
@@ -750,8 +757,13 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    for (int i4=0; i4<A[0][0][0].length; i4++) {
 			System.err.println();
 			for (int i5=0; i5<4; i5++) {
-			    System.err.println(getStream().getIdent() + "[" + i1 + "][" + i2 + "][" + i3 + "][" + i4 + "][" + 
-					       LinearPartitioner.COLLAPSE_STRING(i5) + "] = " + A[i1][i2][i3][i4][i5]);
+			    System.err.print(getStream().getIdent() + "[" + i1 + "][" + i2 + "][" + i3 + "][" + i4 + "][" + 
+					     LinearPartitioner.COLLAPSE_STRING(i5) + "] = ");
+			    if (A[i1][i2][i3][i4][i5]==Long.MAX_VALUE) {
+				System.err.println("INFINITY");
+			    } else {
+				System.err.println(A[i1][i2][i3][i4][i5]);
+			    }
 			}
 		    }
 		}

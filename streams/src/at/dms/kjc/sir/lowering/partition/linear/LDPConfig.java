@@ -36,7 +36,7 @@ abstract class LDPConfig implements Cloneable {
     /**
      * Return the savings given collapse policy <collapsed>.
      */
-    abstract protected int get(int collapse);
+    abstract protected long get(int collapse);
 
     /**
      * Traceback through a pre-computed optimal solution.

@@ -17,7 +17,7 @@ public class LinearPartitioner {
     /**
      * Debugging.
      */
-    static final boolean DEBUG = false;
+    public static final boolean DEBUG = false;
 
     /**
      * The threshold for the number of multiplies in a node before we
@@ -30,6 +30,10 @@ public class LinearPartitioner {
      * vertically (otherwise we just consider each child pipeline).
      */
     static final boolean ENABLE_TWO_DIMENSIONAL_CUTS = true;
+    /**
+     * Whether or not we're currently tracing back.
+     */
+    static boolean tracingBack;
 
     /**
      * Different configurations to look for.
@@ -44,10 +48,10 @@ public class LinearPartitioner {
      */
     public static final String COLLAPSE_STRING(int collapse) {
 	switch(collapse) {
-	case COLLAPSE_NONE: return "NONE";
-	case COLLAPSE_ANY: return "ANY";
+	case COLLAPSE_NONE: return   "NONE  ";
+	case COLLAPSE_ANY: return    "ANY   ";
 	case COLLAPSE_LINEAR: return "LINEAR";
-	case COLLAPSE_FREQ: return "FREQ";
+	case COLLAPSE_FREQ: return   "FREQ  ";
 	default: return "UNKNOWN_COLLAPSE_TYPE: " + collapse;
 	}
     }
@@ -122,11 +126,13 @@ public class LinearPartitioner {
 	// identities that we added to the stream
 	this.counts = SIRScheduler.getExecutionCounts(str);
 	// build up tables.
-	int cost = topConfig.get(COLLAPSE_ANY);
+	long cost = topConfig.get(COLLAPSE_ANY);
 	// clear dot traces
 	LDPConfig.numAssigned = 0;
 	LDPConfig.partitions = new HashMap();
+	tracingBack = true;
 	StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
+	tracingBack = false;
 	// make dot graph of partitions
 	PartitionDot.printPartitionGraph(str, "partitions.dot", LDPConfig.partitions);
 	return result;

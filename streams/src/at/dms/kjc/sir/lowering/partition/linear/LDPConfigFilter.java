@@ -22,25 +22,25 @@ class LDPConfigFilter extends LDPConfig {
     /**
      * Memoized values for this.
      */
-    private int[] A;
+    private long[] A;
     
     public LDPConfigFilter(SIRFilter filter, LinearPartitioner partitioner) {
 	super(partitioner);
 	this.filter = filter;
-	this.A = new int[4];
+	this.A = new long[4];
 	for (int i=0; i<A.length; i++) {
 	    A[i] = -1;
 	}
     }
 
-    public int get(int collapse) {
+    public long get(int collapse) {
 	// return memoized value if we have it
 	if (A[collapse]!=-1) {
 	    return A[collapse];
 	}
 
 	// otherwise calculate cost...
-	int cost;
+	long cost;
 	
 	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
 	// we don't worry about counting cost of non-linear nodes
@@ -63,7 +63,7 @@ class LDPConfigFilter extends LDPConfig {
 		
 	    case LinearPartitioner.COLLAPSE_FREQ: {
 		if (!LEETFrequencyReplacer.canReplace(filter, lfa)) {
-		    cost = Integer.MAX_VALUE;
+		    cost = Long.MAX_VALUE;
 		} else {
 		    cost = getScalingFactor(linearRep, filter) * linearRep.getCost().getFrequencyCost();
 		}
@@ -103,10 +103,10 @@ class LDPConfigFilter extends LDPConfig {
 	    int[] options = { LinearPartitioner.COLLAPSE_FREQ, 
 			      LinearPartitioner.COLLAPSE_LINEAR, 
 			      LinearPartitioner.COLLAPSE_NONE };
-	    int min = Integer.MAX_VALUE;
+	    long min = Long.MAX_VALUE;
 	    int minOption = -1;
 	    for (int i=0; i<options.length; i++) {
-		int cost = get(options[i]);
+		long cost = get(options[i]);
 		if (cost<min) {
 		    min = cost;
 		    minOption = i;
@@ -152,7 +152,12 @@ class LDPConfigFilter extends LDPConfig {
 	String msg = "Printing array for " + getStream().getIdent() + " --------------------------";
 	System.err.println(msg);
 	for (int i1=0; i1<A.length; i1++) {
-	    System.err.println(getStream().getIdent() + "[" + LinearPartitioner.COLLAPSE_STRING(i1) + "] = " + A[i1]);
+	    System.err.print(getStream().getIdent() + "[" + LinearPartitioner.COLLAPSE_STRING(i1) + "] = ");
+	    if (A[i1]==Long.MAX_VALUE) {
+		System.err.println("INFINITY");
+	    } else {
+		System.err.println(A[i1]);
+	    }
 	}
 	for (int i=0; i<msg.length(); i++) {
 	    System.err.print("-");

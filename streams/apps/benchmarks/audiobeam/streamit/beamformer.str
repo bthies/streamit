@@ -14,8 +14,8 @@ void->void pipeline beamformer
 	  mic_locations[i][2] = 0.0;
     }
     source_location[0] = 1.5;
-    source_location[0] = 3.0;
-    source_location[0] = 0.0;
+    source_location[1] = 3.0;
+    source_location[2] = 0.0;
     
     add FileReader<float>("/home/streamit/compiler-static/audiobeam/data/near-field/data2");
     add calculate_single_position(num_mics, hamming, sound_speed, sampling_rate, 

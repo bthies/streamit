@@ -23,14 +23,19 @@ public class GreedyPartitioner {
      * The target number of tiles this partitioner is going for.
      */
     private int target;
+    /**
+     * Whether or not joiners need tiles.
+     */
+    private boolean joinersNeedTiles;
     
     //How many times to attempt fissing till use up all space
     private final int MAX_FISS_ITER=5;
 
-    public GreedyPartitioner(SIRStream str, WorkEstimate work, int target) {
+    public GreedyPartitioner(SIRStream str, WorkEstimate work, int target, boolean joinersNeedTiles) {
 	this.str = str;
 	this.target = target;
 	this.work = work;
+	this.joinersNeedTiles = joinersNeedTiles;
     }
 
     public void toplevelFission(int startingTileCount) {
@@ -38,7 +43,7 @@ public class GreedyPartitioner {
 	for(int i=0;i<MAX_FISS_ITER;i++) {
 	    fissAll();
 	    //System.out.print("count tiles again... ");
-	    count = new GraphFlattener(str).getNumTiles();
+	    count = Partitioner.countTilesNeeded(str, joinersNeedTiles);
 	    //System.out.println("done:"+count);
 	    if(count>=target) {
 		break;
@@ -138,7 +143,7 @@ public class GreedyPartitioner {
 	    newTiles += tilesForFission(filter, flattener, 2);
 	}
 	// return whether or not there's room for candidates
-	return (flattener.getNumTiles()+newTiles<=target);
+	return (Partitioner.countTilesNeeded(str, flattener, joinersNeedTiles)+newTiles<=target);
     }
     
     /**
@@ -151,13 +156,15 @@ public class GreedyPartitioner {
 	// add tiles for the copies of <filter>
 	result += ways-1;
 
-	// add a tile for the joiner if it's not followed by a joiner
-	// or a nullshow
-	FlatNode successor = flattener.getFlatNode(filter).edges[0];
-	if (successor!=null && !(successor.contents instanceof SIRJoiner)) {
-	    result += 1;
+	if (joinersNeedTiles) {
+	    // add a tile for the joiner if it's not followed by a joiner
+	    // or a nullshow
+	    FlatNode successor = flattener.getFlatNode(filter).edges[0];
+	    if (successor!=null && !(successor.contents instanceof SIRJoiner)) {
+		result += 1;
+	    }
 	}
-	
+
 	return result;
     }
 
@@ -186,8 +193,7 @@ public class GreedyPartitioner {
 	int aggressive=0;
 	do {
 	    // get how many tiles we have
-	    GraphFlattener flattener = new GraphFlattener(str);
-	    count = flattener.getNumTiles();
+	    count = Partitioner.countTilesNeeded(str, joinersNeedTiles);
 	    System.out.println("  Partitioner detects " + count + " tiles.");
 	    if (count>target) {
 		//boolean tried=false;
@@ -304,5 +310,6 @@ public class GreedyPartitioner {
 	} while (count>target && !done);
 	return count;
     }
+
 }
 

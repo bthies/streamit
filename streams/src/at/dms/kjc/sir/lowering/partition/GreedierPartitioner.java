@@ -15,6 +15,10 @@ import at.dms.kjc.flatgraph.*;
 
 public class GreedierPartitioner {
     /**
+     * Whether or not joiners need tiles.
+     */
+    private boolean joinersNeedTiles;
+    /**
      * The toplevel stream we're operating on.
      */
     private SIRStream str;
@@ -30,10 +34,11 @@ public class GreedierPartitioner {
     private TreeMap nodes; //Ordered filters (keys of type Node)
     private static final int FUSION_OVERHEAD=0; //Adjust
 
-    public GreedierPartitioner(SIRStream str,WorkEstimate work,int numTiles) {
+    public GreedierPartitioner(SIRStream str,WorkEstimate work,int numTiles,boolean joinersNeedTiles) {
 	this.str=str;
 	this.work=work;
 	this.numTiles=numTiles;
+	this.joinersNeedTiles=joinersNeedTiles;
 	pairs=new TreeMap(new Comparator() {
 		public int compare(Object o1,Object o2) {
 		    if(o1==o2)
@@ -123,7 +128,7 @@ public class GreedierPartitioner {
      * partitioned stream.
      */
     public SIRStream toplevel() {
-	int count=new GraphFlattener(str).getNumTiles();
+	int count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
 	System.out.println("  GreedierPartitioner detects " + count + " tiles.");
 	boolean cont;
 	do { //Iterate till can't (# fissable filters is always decreasing)
@@ -134,7 +139,7 @@ public class GreedierPartitioner {
 		Node big=(Node)nodes.lastKey();
 		System.out.println("  Fissing: "+big.filter);
 		fiss(big);
-		count=new GraphFlattener(str).getNumTiles();
+		count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
 		fiss=shouldFiss();
 		System.out.println("  GreedierPartitioner detects " + count + " tiles.");
 	    }
@@ -143,7 +148,7 @@ public class GreedierPartitioner {
 		//Pair smallest=(Pair)pairs.firstKey();
 		Pair smallest=findSmallest();
 		fuse(smallest);
-		count=new GraphFlattener(str).getNumTiles();
+		count=Partitioner.countTilesNeeded(str, joinersNeedTiles);
 		System.out.println("  GreedierPartitioner detects " + count + " tiles.");
 	    }
 	} while(cont);

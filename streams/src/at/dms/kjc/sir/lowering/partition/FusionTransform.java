@@ -30,7 +30,7 @@ public final class FusionTransform extends StreamTransform {
      */
     public SIRStream doMyTransform(SIRStream str) {
 	// make sure we have a container
-	Utils.assert(str instanceof SIRContainer, "Expected container as target of fusion, but got: " + str);
+	assert (str instanceof SIRContainer): "Expected container as target of fusion, but got: " + str;
 	// if we have as many partitions as children, then we're done
 	if (((SIRContainer)str).size()==partitions.size()-1) {
 	    return str;
@@ -44,7 +44,7 @@ public final class FusionTransform extends StreamTransform {
 	    result = FuseSplit.fuse((SIRSplitJoin)str, childPart);
 	    // if we were supposed to fuse the whole thing, make sure
 	    // we got something different
-	    Utils.assert(childPart.size()>1 || str!=result, "Failed to fuse splitjoin: " + result);
+	    assert (childPart.size()>1 || str!=result): "Failed to fuse splitjoin: " + result;
 	    // if we got a pipeline back, that means we used old fusion,
 	    // and we should fuse the pipe again
 	    if (childPart.size()==1) { 
@@ -82,7 +82,7 @@ public final class FusionTransform extends StreamTransform {
      * the fusion passes.
      */
     private PartitionGroup calcPartitionArray() {
-	Utils.assert(partitions.size()>=2, "Require >= 2 partitions in fusion.");
+	assert (partitions.size()>=2) : "Require >= 2 partitions in fusion.";
 	int[] result = new int[partitions.size()-1];
 	Iterator it = partitions.iterator();
 	int last = ((Integer)it.next()).intValue();

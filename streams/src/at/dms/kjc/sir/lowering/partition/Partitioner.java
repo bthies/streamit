@@ -4,6 +4,7 @@ import java.util.*;
 
 import at.dms.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
@@ -59,14 +60,14 @@ public class Partitioner {
 	    */
 	    str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles).toplevel();
 	} else if(KjcOptions.partition_greedier) {
-	    str=new GreedierPartitioner(str,work,targetCount).toplevel();
+	    str=new GreedierPartitioner(str,work,targetCount,joinersNeedTiles).toplevel();
 	} else if (KjcOptions.partition_greedy) {
 	    if (curCount < targetCount) {
 		// need fission
-		new GreedyPartitioner(str, work, targetCount).toplevelFission(curCount);
+		new GreedyPartitioner(str, work, targetCount, joinersNeedTiles).toplevelFission(curCount);
 	    } else {
 		// need fusion
-		new GreedyPartitioner(str, work, targetCount).toplevelFusion();
+		new GreedyPartitioner(str, work, targetCount, joinersNeedTiles).toplevelFusion();
 	    }
 		
 	} else if (KjcOptions.partition_ilp) {
@@ -87,4 +88,40 @@ public class Partitioner {
 
 	return str;
     }
+
+    /**
+     * Return number of tiles needed for <str>.
+     */
+    static int countTilesNeeded(SIRStream str, boolean joinersNeedTiles) {
+	if (joinersNeedTiles) {
+	    // if the joiners need tiles, use the graph flattener
+	    return countTilesNeeded(str, new GraphFlattener(str), joinersNeedTiles);
+	} else {
+	    // otherwise count number of filters.  (Should this count
+	    // identity filters or not?  Unclear, depending on
+	    // backend, so for now be conservative and count them.)
+	    final int[] count = { 0 };
+	    IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		    public void visitFilter(SIRFilter self,
+					    SIRFilterIter iter) {
+			count[0]++;
+		    }});
+	    return count[0];
+	}
+    }
+
+    /**
+     * Return number of tiles needed for <str>, when you already have
+     * a <flattener> handy.
+     */
+    static int countTilesNeeded(SIRStream str, GraphFlattener flattener, boolean joinersNeedTiles) {
+	if (joinersNeedTiles) {
+	    // if the joiners need tiles, use the graph flattener
+	    return flattener.getNumTiles();
+	} else {
+	    // otherwise count tiles
+	    return countTilesNeeded(str, joinersNeedTiles);
+	}
+    }
+
 }

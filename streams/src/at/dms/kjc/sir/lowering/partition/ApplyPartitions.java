@@ -110,7 +110,7 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
 			     JMethodDeclaration initPath) {
 	//System.err.println("visiting " + self);
 	// fusing a whole feedback loop isn't supported yet
-	Utils.assert(getPartition(self)==-1);
+	assert getPartition(self)==-1;
 	// replace children
 	replaceChildren(self);
 	return self;
@@ -122,8 +122,7 @@ class ApplyPartitions extends EmptyAttributeStreamVisitor {
      * Returns int partition for <str>
      */
     private int getPartition(Object str) {
-	Utils.assert(partitions.containsKey(str), 
-		     "No partition recorded for: " + str);
+	assert partitions.containsKey(str) : "No partition recorded for: " + str;
 	return ((Integer)partitions.get(str)).intValue();
     }
 }

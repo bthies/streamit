@@ -83,14 +83,14 @@ public class ILPPartitioner extends ListPartitioner {
 	    //System.err.println("Looking for tile for node #" + i + ": " + nodes.get(i));
 	    for (int j=0; j<numTiles; j++) {
 		if (almostEqual(sol[pNum(i,j)],1)) {
-		    Utils.assert(tile==-1, 
+		    assert (tile==-1) :
 				 "This node is assigned to both tile #" + tile + " and tile #" + j + 
-				 " (and possibly others): " + nodes.get(i));
+				 " (and possibly others): " + nodes.get(i);
 		    //System.err.println("  assigned to tile " + j);
 		    tile = j;
 		}
 	    }
-	    Utils.assert(tile!=-1, "This node is without a tile assigment: " + nodes.get(i));
+	    assert tile!=-1 : "This node is without a tile assigment: " + nodes.get(i);
 	    // register node->tile map in result
 	    result.put(nodes.get(i), new Integer(tile));
 
@@ -184,7 +184,7 @@ public class ILPPartitioner extends ListPartitioner {
 	System.err.println("Solving integer linear program...");
 	double[] sol = null;
 	sol = CPLEXClient.solveOverRMI((CPLEXSolve)lp);
-	Utils.assert(sol!=null, "Got a null value back from solver.");
+	assert sol!=null : "Got a null value back from solver.";
 	return sol;
     }
 
@@ -269,8 +269,7 @@ public class ILPPartitioner extends ListPartitioner {
 		    con[pNum(j, i)] = -1 * ILPPartitioner.JOINER_WORK_ESTIMATE;
 		} else {
 		    // otherwise we should have a dummy node
-		    Utils.assert(node instanceof DummyNode, "Didn't expect node " 
-				 + node + " of type " + node.getClass());
+		    assert (node instanceof DummyNode) : "Didn't expect node " + node + " of type " + node.getClass();
 		}
 	    }
 	    lp.addConstraintGE(con, 0);
@@ -331,8 +330,8 @@ public class ILPPartitioner extends ListPartitioner {
 		int join = ((Integer)last.get(sj)).intValue();
 		// forall t, forall i in [0, sj.size()], P_last(s_i),t != P_last(s_{i+1}) ==> P_join,t = 0
 		for (int i=0; i<sj.size()-1; i++) {
-		    Utils.assert(last.containsKey(sj.get(i)), "Item missing from last: " + sj.get(i));
-		    Utils.assert(last.containsKey(sj.get(i+1)), "Item missing from last: " + sj.get(i+1));
+		    assert (last.containsKey(sj.get(i))) : "Item missing from last: " + sj.get(i);
+		    assert (last.containsKey(sj.get(i+1))) : "Item missing from last: " + sj.get(i+1);
 		    int last1 = ((Integer)last.get(sj.get(i))).intValue();
 		    int last2 = ((Integer)last.get(sj.get(i+1))).intValue();
 		    for (int t=0; t<numTiles; t++) {

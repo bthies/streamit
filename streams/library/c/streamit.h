@@ -197,4 +197,6 @@ void streamit_filewriter_work(ContextContainer c);
 void connect_tapes(stream_context *c);
 void streamit_run(stream_context *c, int argc, char **argv);
 
+void ERROR (void *data, char *error_msg);
+
 #endif /* STREAMIT_H */

@@ -6,6 +6,12 @@
 #include "streamit.h"
 #include "streamit_internal.h"
 
+void ERROR (void *data, char *error_msg)
+{
+    fprintf (stderr, "ERROR:%s\nExiting...\n", error_msg);
+    exit (1);
+}
+
 void connect_tapes (stream_context *c)
 {
     stream_context_list *child;

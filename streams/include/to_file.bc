@@ -1,0 +1,81 @@
+/* to_file
+ *
+ * streams values from a static network port to a file.
+ * makes use of the data_transmitter generic device.
+ *
+ * Michael Taylor & Michael Gordon
+ */
+
+if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
+  include("<dev/data_transmitter.bc>");
+
+
+//type: 0 = int, 1 = float, can be extended
+fn dev_to_file(filename, port, type)
+{
+  local receive_device_descriptor = hms_new();
+
+  // open the file
+  receive_device_descriptor.fileName = filename;
+  receive_device_descriptor.theFile = fopen(receive_device_descriptor.fileName,
+                                            "w");
+  receive_device_descriptor.format = "";
+  receive_device_descriptor.ioPort = port;
+  receive_device_descriptor.type = type;
+  
+  if (type == 0)
+    receive_device_descriptor.format = "%d\n";
+  else if (type == 1)
+    receive_device_descriptor.format = "%f\n";
+  else {
+    printf("Invalid format arg passed to dev_to_file\n");
+    exit(-1);
+  }
+    
+
+  verify(receive_device_descriptor.theFile != NULL,
+         "### Failed to open output file\n");
+
+
+  receive_device_descriptor.calc =
+    & fn(this)
+  {
+    local theFile = this.theFile;
+    local format = this.format;
+    local filename = this.fileName;
+    local ioPort = this.ioPort;
+    local type = this.type;
+    
+    while (1)
+    {
+      local value = this.receive();
+      if (type == 0) {
+	//write to file
+	fprintf(theFile,format,value);
+	fflush(theFile);
+	//write to screen
+	printf("%s [%d]: ", filename, ioPort);
+	printf(format, value);
+	printf("\n");
+      }
+      else if (type == 1) {
+	//write to file
+	fprintf(theFile,format,double(value));
+	fflush(theFile);
+	//write to screen
+	printf("%s [%d]: ", filename, ioPort);
+	printf(format, double(value));
+	printf("\n");
+      }
+      else {
+	printf("Invalid format arg passed to dev_to_file\n");
+	exit(-1);
+      }
+    }
+  };
+
+  return dev_data_transmitter_init("to_file",
+				   port,
+				   0, //don't wait for static trigger 
+				   receive_device_descriptor);
+}

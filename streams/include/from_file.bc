@@ -1,0 +1,71 @@
+/* from_file
+ *
+ * streams values to a static network port from a file.
+ * makes use of the data_transmitter generic device.
+ *
+ * Michael Gordon
+ */
+
+if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
+  include("<dev/data_transmitter.bc>");
+
+fn dev_from_file(filename, port, type) 
+{
+  local send_device_descriptor = hms_new();
+
+  //open the file
+  send_device_descriptor.fileName = filename;
+  send_device_descriptor.theFile = fopen(send_device_descriptor.fileName,
+					 "r");
+  send_device_descriptor.format = "";
+  send_device_descriptor.ioPort = port;
+
+  //set the format string
+  if (type == 0) //int 
+    send_device_descriptor.format = "%d\n";
+  else if (type == 1) //float
+    send_device_descriptor.format = "%f\n";
+  else {
+    printf("Invalid format arg passed to dev_from_file\n");
+    exit(-1);
+  }
+
+  verify(send_device_descriptor.theFile != NULL,
+         "### Failed from open output file\n");
+
+  send_device_descriptor.calc = 
+    & fn(this) 
+  {
+    local theFile = this.theFile;
+    local format = this.format;
+    local ioPort = this.ioPort;
+    local fileName = this.fileName;
+    local value, i;
+    
+    while(fscanf(theFile, format, &value) != 0) {
+//      printf("sending(%d) ", i);
+//      i += 1;
+//      if (type == 0)
+//	printf(format, value);
+//      else if (type == 1)
+//	printf(format, double(value));
+//     else {
+//	printf("Invalid format arg passed to dev_from_file\n");
+//	exit(-1);
+      //     }
+      printf("\n");
+      this.send(value);
+    }
+
+    printf("** Input exhausted from %s (port %d)\n", fileName, ioPort);
+    while (1) {
+      //we are done, do nothing
+      yield;
+    }
+  };
+
+  return dev_data_transmitter_init("from_file",
+				   port,
+				   0, //don't wait for trigger
+				   send_device_descriptor);
+}

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JForStatement.java,v 1.3 2001-10-29 12:53:51 thies Exp $
+ * $Id: JForStatement.java,v 1.4 2001-10-29 19:22:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -58,6 +58,22 @@ public class JForStatement extends JLoopStatement {
     this.incr = incr;
     this.body = body;
   }
+
+    public JStatement getInit() {
+	return init;
+    }
+
+    public JStatement getIncrement() {
+	return incr;
+    }
+
+    public JExpression getCondition() {
+	return cond;
+    }
+
+    public JStatement getBody() {
+	return body;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

@@ -105,7 +105,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //when they are added, they will be cloned and any parameters that need to be set
     //will be set...
     private void initBuiltinFilters() {
-	SIRFileReader fr = new SIRFileReader(null, 
+	SIRFileReader fr = new SIRFileReader(null,
+					     "FileReader",
 					     new JIntLiteral(null, 0),
 					     new JIntLiteral(null, 0),
 					     new JIntLiteral(null, 1),
@@ -116,6 +117,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	addVisitedOp("FileReader", fr);
 	
 	SIRFileWriter fw = new SIRFileWriter(null, 
+					     "FileWriter",
 					     new JIntLiteral(null, 1),
 					     new JIntLiteral(null, 1),
 					     new JIntLiteral(null, 0),
@@ -195,6 +197,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     
 	if (TYPE.equals("Pipeline") || TYPE.equals("StreamIt")) {
 	    SIRPipeline current = new SIRPipeline((SIRContainer)parentStream, 
+						  clazz.getIdent(),
 				   JFieldDeclaration.EMPTY,
 				   JMethodDeclaration.EMPTY);
 	    parentStream = current;
@@ -205,6 +208,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    current.setParent((SIRContainer)parentStream);
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
+	    current.setIdent(clazz.getIdent());
 	    parentStream = current;
 	    return current;
 	}
@@ -213,11 +217,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    current.setParent((SIRContainer)parentStream);
 	    current.setFields(JFieldDeclaration.EMPTY);
 	    current.setMethods(JMethodDeclaration.EMPTY);
+	    current.setIdent(clazz.getIdent());
 	    parentStream = current;
 	    return current;
 	}
 	if (TYPE.equals("SplitJoin")) {
 	    SIRSplitJoin current = new SIRSplitJoin((SIRContainer)parentStream,
+						    clazz.getIdent(),
 						     JFieldDeclaration.EMPTY,
 						     JMethodDeclaration.EMPTY);
 	    parentStream = current;

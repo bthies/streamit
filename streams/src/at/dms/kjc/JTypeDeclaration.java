@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.3 2001-10-25 01:30:17 mgordon Exp $
+ * $Id: JTypeDeclaration.java,v 1.4 2001-11-10 16:26:00 thies Exp $
  */
 
 package at.dms.kjc;
@@ -165,6 +165,10 @@ public abstract class JTypeDeclaration extends JMemberDeclaration {
   public void setIdent(String ident) {
     this.ident = ident;
   }
+
+    public String getIdent() {
+	return ident;
+    }
 
   // ----------------------------------------------------------------------
   // INTERFACE CHECKING

@@ -130,6 +130,13 @@ public class DataEstimate {
 	    return ((Integer)saved_globals.get(filter)).intValue();
 	}
 
+	int data_size = computeFilterGlobalsSize(filter);
+	saved_globals.put(filter, new Integer(data_size));
+	return data_size;
+    }
+
+    public static int computeFilterGlobalsSize(SIRFilter filter) {
+
     	JFieldDeclaration[] fields = filter.getFields();
 	int data_size = 0;
 
@@ -161,8 +168,6 @@ public class DataEstimate {
 	    data_size += size;
 	}    
 
-	saved_globals.put(filter, new Integer(data_size));
-	
 	return data_size;
     }
 }

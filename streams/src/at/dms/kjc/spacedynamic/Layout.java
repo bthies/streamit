@@ -702,12 +702,18 @@ public class Layout extends at.dms.util.Utils implements
 	    while (route.hasNext()) {
 		ComputeNode tile = (ComputeNode)route.next();
 		assert tile != null;
+		/*
+		if (usedTiles.contains(tile))
+		    return ILLEGAL_WEIGHT/(DYN_MULT * 100);
+		else
+		    usedTiles.add(tile);
+		*/
 		//System.out.print(tile);
 		//add to cost only if these an no endpoints of the route
 		if (tile != srcTile && tile != dstTile) {
 		    cost += (1.0 * typeSize);
 		}		
-		usedTiles.add(tile);
+
 	    }
 	}
 	return cost;

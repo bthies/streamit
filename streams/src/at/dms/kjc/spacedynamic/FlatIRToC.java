@@ -53,6 +53,13 @@ public class FlatIRToC extends ToC implements StreamVisitor
     private boolean dynamicInput = false;
     private StaticStreamGraph ssg;
 
+    private static String ARRAY_INIT_PREFIX = "init_array";
+
+    //for the first filter/tile we encounter we are going to 
+    //create a magic instruction that tells the number-gathering
+    //stuff that everything is done snake booting, so if this is true
+    //don't generate the magic instruction
+    private static boolean gen_magc_done_boot = false;
 
     public static void generateCode(StaticStreamGraph SSG, FlatNode node)
     {
@@ -272,6 +279,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    //otherwise print a normal main()
 	    print("int main() {\n");
 	}
+	
+	//for the first filter/tile we encounter we are going to 
+	//create a magic instruction that tells the number-gathering
+	//stuff that everything is done snake booting, so if this is true
+	if (!gen_magc_done_boot && KjcOptions.numbers > 0) {
+	    gen_magc_done_boot = true;
+	    print("  __asm__ volatile (\"magc $0, $0, 5\");\n");
+	}
+	
+
 	//not used at this time
 	//print(FLOAT_HEADER_WORD + 
 	//" = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
@@ -718,6 +735,19 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//    if (dims[0].equals("0"))
 	//	return;
 	//}
+	
+	/*  a hack that never was...
+	if (ident.startsWith(ARRAY_INIT_PREFIX)) {
+	    assert args.length == 2 : "Error: improper args to init_array";
+	    assert args[0] instanceof JStringLiteral : "Error: improper args to init_array";
+	    assert args[1] instanceof JIntLiteral : "Error: improper args to init_array";
+	    
+	    print(getArrayInitFromFile(ident, 
+				       ((JStringLiteral)args[0]).stringValue(), 
+				       ((JIntLiteral)args[1]).intValue()));
+	    return;
+	}
+	*/
 
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
@@ -1051,4 +1081,48 @@ public class FlatIRToC extends ToC implements StreamVisitor
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
     }
+
+    private String getArrayInitFromFile(String method, String fileName, 
+					int size) 
+    {
+	StringBuffer buf = new StringBuffer();
+	String line;
+	
+	assert method.startsWith("init_array_");
+	
+	String dim = method.substring(11, 13);
+	assert dim.equals("1D") : "Error: Only support for 1D array initialization from file " + dim;
+	
+	String type = method.substring(14);
+	assert type.equals("int") || type.equals("float") : 
+	    "Error: unsupport type for array initialization from file";
+
+	buf.append("{");
+	try {
+	    BufferedReader in = new BufferedReader(new FileReader(fileName));
+	    int index = 0;
+	    
+	    while ((line = in.readLine()) != null ){
+		buf.append(line + ",\n");
+		index ++;
+		//break if we have read enough elements
+		if (index == size)
+		    break;
+	    }
+	    assert index == size : "Error: not enough elements in " + fileName +
+		" to initialize array";
+	    //remove the trailing , (before the newline) and append the }
+	    buf.setCharAt(buf.length() - 2, '}');       
+		       
+	    in.close();
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	    System.err.println("Error while opening/reading " + fileName +
+			       " for array initialization");
+	    System.exit(1);
+	}
+	return buf.toString();
+    }
+    
 }

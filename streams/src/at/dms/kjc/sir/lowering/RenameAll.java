@@ -156,9 +156,9 @@ public class RenameAll extends SLIRReplacingVisitor
 				       newName(two.getIdent()),
 				       newFields,
 				       newMethods,
-				       two.getPeek(),
-				       two.getPop(),
-				       two.getPush(),
+				       (JExpression)two.getPeek().accept(this),
+				       (JExpression)two.getPop().accept(this),
+				       (JExpression)two.getPush().accept(this),
 				       newWork,
 				       two.getInitPeek(),
 				       two.getInitPop(),
@@ -168,15 +168,15 @@ public class RenameAll extends SLIRReplacingVisitor
 				       two.getOutputType());
 	} else {
 	    nf = new SIRFilter(str.getParent(),
-					 newName(str.getIdent()),
-					 newFields,
-					 newMethods,
-					 str.getPeek(),
-					 str.getPop(),
-					 str.getPush(),
-					 newWork,
-					 str.getInputType(),
-					 str.getOutputType());
+                               newName(str.getIdent()),
+                               newFields,
+                               newMethods,
+                               (JExpression)str.getPeek().accept(this),
+                               (JExpression)str.getPop().accept(this),
+                               (JExpression)str.getPush().accept(this),
+                               newWork,
+                               str.getInputType(),
+                               str.getOutputType());
 	}
 	    
 	// replace any init call to <str> in the parent with an init

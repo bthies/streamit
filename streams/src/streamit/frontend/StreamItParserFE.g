@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.37 2003-07-07 19:10:04 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.38 2003-07-07 20:57:46 dmaze Exp $
  */
 
 header {
@@ -272,7 +272,8 @@ data_type returns [Type t] { t = null; Expression x; }
 			RSQUARE
 		)*
 	|	TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
-	|	TK_portal LESS_THAN ID MORE_THAN
+	|	TK_portal LESS_THAN pn:ID MORE_THAN
+		{ t = new TypePortal(pn.getText()); }
 	;
 
 primitive_type returns [Type t] { t = null; }

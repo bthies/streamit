@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.8 2002-07-03 19:30:50 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.9 2002-07-11 13:51:12 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
@@ -135,6 +135,22 @@ class StreamITTestCase extends TestCase {
 		   compiler.runMake(root, target));
     }
 
-    
+    /**
+     * Returns true if the compiler flags contain the option to
+     * compile to a 4x4 raw chip (eg 16 tiles). This is used
+     * to add tests conditionally to a test suite (tests known not to
+     * compile (eg fit) on raw 4 aren't included.
+     **/
+    public static boolean flagsContainRaw4(int flags) {
+ 	return ((flags & CompilerInterface.RAW4) == CompilerInterface.RAW4);
+    }
+    /**
+     * Returns true if the compiler flags contain the option to
+     * compile with partitioning turned on. This is used
+     * to add tests conditionally to a test suite.
+     **/
+    public static boolean flagsContainPartition(int flags) {
+ 	return ((flags & CompilerInterface.PARTITION) == CompilerInterface.PARTITION);
+    }
 }
 	    

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestApps.java,v 1.4 2002-07-01 19:17:46 aalamb Exp $
+ * $Id: TestApps.java,v 1.5 2002-07-11 13:51:12 aalamb Exp $
  **/
 package streamittest;
 
@@ -37,7 +37,12 @@ public class TestApps extends StreamITTestCase {
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 
-	suite.addTest(new TestApps("testMatrixMult", flags));
+	// MatrixMult doesn't fit on 4x4=16 tiles, so don't add
+	// it if the raw 4 flag is set
+	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
+	    suite.addTest(new TestApps("testMatrixMult", flags));
+	}
+
 	//suite.addTest(new TestApps("testGsm", flags));
 
 	return suite;
@@ -47,12 +52,8 @@ public class TestApps extends StreamITTestCase {
      * For testing.
      **/
     public static Test suite() {
-	TestSuite suite = new TestSuite();
-	suite.addTest(new TestApps("testMatrixMult",
-				   (CompilerInterface.CONSTPROP |
-				    CompilerInterface.UNROLL |
-				    CompilerInterface.FUSION)));
-	return suite;
+	return suite(CompilerInterface.PARTITION |
+		     CompilerInterface.RAW4);
     }
 		      
     

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.7 2002-07-03 19:30:50 aalamb Exp $
+ * $Id: TestExamples.java,v 1.8 2002-07-11 13:51:12 aalamb Exp $
  **/
 package streamittest;
 
@@ -34,12 +34,22 @@ public class TestExamples extends StreamITTestCase {
 	}
     }
 
+    /**
+     * Creates a suite containing test compilatons and runs for
+     * (most of) the examples in the docs/examples/hand directory.
+     **/
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 	
 	//suite.addTest(new TestExamples("testArrayTest", flags));
 	//suite.addTest(new TestExamples("testBitonicSort", flags));
-	suite.addTest(new TestExamples("testFFT", flags));
+
+
+	// can't fit on raw 4 without partition
+	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
+	    suite.addTest(new TestExamples("testFFT", flags));
+	}
+
 	suite.addTest(new TestExamples("testFusion", flags));
 	suite.addTest(new TestExamples("testFib", flags));
 	suite.addTest(new TestExamples("testFib2", flags));
@@ -50,7 +60,14 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testPeekPipe", flags));
 	suite.addTest(new TestExamples("testSimpleSplit", flags));
 	suite.addTest(new TestExamples("testUnroll", flags));
-	suite.addTest(new TestExamples("testFm", flags));
+
+	// can't fit on raw 4 without partition
+	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
+	
+	    suite.addTest(new TestExamples("testFm", flags));
+	}
+	
+	
 	suite.addTest(new TestExamples("testFile", flags));
 	suite.addTest(new TestExamples("testFieldProp", flags));
 	suite.addTest(new TestExamples("testFieldProp2", flags));
@@ -58,7 +75,13 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testFieldInit2", flags));
 	suite.addTest(new TestExamples("testFieldInit3", flags));
 	suite.addTest(new TestExamples("testFieldInit4", flags));
-	suite.addTest(new TestExamples("testLattice", flags));
+
+	// this one doesn't fit on any raw4
+	if (!flagsContainRaw4(flags)) {
+	    suite.addTest(new TestExamples("testLattice", flags));
+	}
+	
+
 	//suite.addTest(new TestExamples("testMergeSort", flags));
 	//suite.addTest(new TestExamples("testUpDown", flags));
 	//suite.addTest(new TestExamples("testVectAdd", flags));

@@ -3,10 +3,13 @@
 package streamit;
 
 public class Channel {
-
+    Object type;
+    
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
-    public Channel(Object type) {
+    public Channel(Object _type) 
+    {
+        type = _type;
     }
 
     // PUSH OPERATIONS ----------------------------------------------
@@ -59,5 +62,11 @@ public class Channel {
 
     // peek at a String
     public String PeekString(int index) { return null; }
+    
+    // ------------------------------------------------------------------
+    //                  syntax checking functions
+    // ------------------------------------------------------------------
+    
+    Object GetType () { return type; }
 
 }

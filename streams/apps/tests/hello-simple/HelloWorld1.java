@@ -10,25 +10,27 @@ import streamit.*;
 public class HelloWorld1 extends Stream {
 
     // presumably some main function invokes the stream
-    public static void main(String args[]) {
-	new HelloWorld1().run();
+    public static void main(String args[]) 
+    {
+	   new HelloWorld1().Run();
     }
 
     // this is the defining part of the stream
-    public void init() {
-	add(new CharGenerator("Hello World!"));
-	add(new CharPrinter());
+    public void Init() 
+    {
+    	Add(new CharGenerator("Hello World!"));
+    	Add(new CharPrinter());
     }
 
 }
 
 class CharGenerator extends Filter {
 
-    private Channel input = null;
     private Channel output = new Channel(new char[0]);
 
-    public CharGenerator(String str) {
-	super(str);
+    public CharGenerator(String str) 
+    {
+    	super(str);
     }
 
     // the position in outputting
@@ -37,27 +39,29 @@ class CharGenerator extends Filter {
     private String message;
 
     // <message> is string to output, one char at a time
-    public void init(String message) {
-	// init counter
-	i = 0;
-	// init message
-	this.message = message;
+    public void Init(String message) 
+    {
+    	// init counter
+    	i = 0;
+    	// init message
+    	this.message = message;
     }
 
-    public void work() {
-	output.pushChar(message.charAt(0));
-	i++;
+    public void Work()
+    {
+    	output.PushChar(message.charAt(i));
+    	i++;
     }
 
 }
 
-class CharPrinter extends Filter {
-
+class CharPrinter extends Filter 
+{
     private Channel input = new Channel(new char[0]);
-    private Channel output = null;
 
-    public void work() {
-	System.out.print(input.popChar());
+    public void Work()
+    {
+	   System.out.print(input.PopChar());
     }
 
 }

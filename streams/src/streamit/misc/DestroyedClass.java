@@ -20,7 +20,7 @@ public class DestroyedClass extends AssertedClass
     {
         try
         {
-            thisClass = Class.forName ("DestroyedClass");
+            thisClass = Class.forName ("streamit.DestroyedClass");
         }
         catch (ClassNotFoundException error)
         {
@@ -67,13 +67,9 @@ public class DestroyedClass extends AssertedClass
                 // do nothing, this isn't really an error
                 // just an annoying Java-ism
             }
-            catch (InvocationTargetException error)
-            {
-                // This REALLY shouldn't happen
-                // just assert
-                ASSERT (false);
-            }
-            catch (IllegalAccessException error)
+            
+            // I hope I can just catch the rest of the exceptions here...
+            catch (Throwable error)
             {
                 // This REALLY shouldn't happen
                 // just assert

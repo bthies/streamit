@@ -23,6 +23,9 @@ public abstract class Filter extends Stream
 	super(str);
     }
 
+    // Add was present in Operator, but is not defined in Filter anymore
+    public void Add(Stream s) { ASSERT (false); }
+
     public abstract void Work();
 }
 

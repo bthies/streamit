@@ -1,0 +1,44 @@
+float->float filter LowPassFilter(float rate, float cutoff, 
+                                  int taps, int decimation) {
+  float[taps] coeff;
+  init {
+    int i;
+    float m = taps - 1;
+    float w = 2 * pi * cutoff / rate;
+    for (i = 0; i < taps; i++) {
+      if (i - m/2 == 0)
+        coeff[i] = w/pi;
+      else
+        coeff[i] = sin(w*(i-m/2)) / pi / (i-m/2) *
+          (0.54 - 0.46 * cos(2*pi*i/m));
+    }
+  }
+  work pop 1+decimation push 1 peek taps {
+    float sum = 0;
+    for (int i = 0; i < taps; i++)
+      sum += peek(i) * coeff[i];
+    push(sum);
+    for (int i=0; i<decimation; i++)
+      pop();
+    pop();
+  }
+}
+
+void->void pipeline LPFProgram {
+  add FloatSource();
+  add LowPassFilter(250000000, 1000, 64, 2);
+  add FloatPrinter();
+}
+
+void->float filter FloatSource {
+  float x;
+  init { x = 0; }
+  work push 1 {
+    push(x);
+    x = x + 1.0;
+  }
+}
+
+float->void filter FloatPrinter {
+  work pop 1 { print(pop()); }
+}

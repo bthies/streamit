@@ -1,0 +1,40 @@
+float->float feedbackloop Echo
+    (int n, float f) {
+  join roundrobin(1,1);
+  body FloatAdderBypass();
+  loop float->float filter {
+    work pop 1 push 1 {
+      push(pop() * f);
+    }
+  };
+  split roundrobin;
+  for (int i = 0; i < n; i++)
+    enqueue(0);
+}
+float->float filter FloatAdderBypass {
+  work pop 2 push 2 {
+    push(peek(0) + peek(1));
+    push(peek(0));
+    pop();
+    pop();
+  }
+}
+
+void->void pipeline EchoProgram {
+  add FloatSource();
+  add Echo(3, 0.5);
+  add FloatPrinter();
+}
+
+void->float filter FloatSource {
+  float x;
+  init { x = 1; }
+  work push 1 {
+    push(x);
+    x = 0;
+  }
+}
+
+float->void filter FloatPrinter {
+  work pop 1 { print(pop()); }
+}

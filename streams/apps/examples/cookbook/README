@@ -1,0 +1,4 @@
+This directory contains the examples from the StreamIt cookbook (which
+is located in docs/cookbook).  Note that the FMRadio example
+referenced from the cookbook is in apps/benchmarks/fm/streamit instead
+of this directory.

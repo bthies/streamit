@@ -73,6 +73,19 @@ public class FEIRToSIR implements FEVisitor, Constants {
     return topLevel;
   }
 
+    public SIRStream findStream(SCSimple creator)
+    {
+        // Built-in streams need to be checked for with their type.
+        String name = creator.getName();
+        if (name.equals("Identity"))
+        {
+            Type ftype = (Type)creator.getTypes().get(0);
+            return new SIRIdentity(feirTypeToSirType(ftype));
+        }
+        return findStream(name);
+    }
+    
+
     public SIRStream findStream(String name)
     {
         // Have we already seen it?
@@ -920,7 +933,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
     for (i = 0; i < feirP.size(); i++) {
       sirP.add(((Expression) feirP.get(i)).accept(this));
     }
-    SIRStream str = findStream(sc.getName());
+    SIRStream str = findStream(sc);
+    if (str == null)
+        System.err.println("!!! didn't find stream named " + sc.getName());
     if (parent instanceof SIRContainer) {
       ((SIRContainer) parent).add(str);
     }
@@ -1021,7 +1036,9 @@ public class FEIRToSIR implements FEVisitor, Constants {
       } else if (x instanceof JExpression) {
 	result.addStatement(new JExpressionStatement(null, (JExpression) x, null));
       } else {
-	debug("  Ignoring NULL\n");
+          debug("  Didn't produce a JStatement or JExpression.\n");
+          debug("  Was: " + s + "\n");
+          debug("  Is: " + x + "\n");
       }
     }
     symtab = oldSymTab;

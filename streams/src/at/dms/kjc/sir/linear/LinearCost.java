@@ -17,7 +17,7 @@ public class LinearCost {
      * integers instead of floats so we can do quick and accurate
      * comparison in traceback.
      */
-    private static final long SCALE_FACTOR = 10000;
+    private static final long SCALE_FACTOR = 100000;
     /** the number of multiplies. **/
     private int multiplyCount;
     /** the number of adds **/
@@ -89,7 +89,7 @@ public class LinearCost {
     public long getDirectCost() {
 	// add the push count now to estimate copying overhead, even
 	// if you're not adding/multiplying.
-	return SCALE_FACTOR * (1l + 2l*cols + (3l * ((long)multiplyCount) + ((long)addCount)));
+	return SCALE_FACTOR * (100l + 2l*cols + (3l*(long)multiplyCount) + ((long)addCount));
     }
 
     /**
@@ -116,11 +116,11 @@ public class LinearCost {
 	// distort the partitioning), then multiply by popcount since
 	// the node has to be repeated, redundantly, if some of its
 	// outputs are useless.
-	double nodeCost = ((double)SCALE_FACTOR) * (getFrequencyComputationCost() + 1.0 + ((float)(2*cols))) * ((double)Math.max(popCount,1));
+	double nodeCost = ((double)SCALE_FACTOR) * (getFrequencyComputationCost() + 100.0 + ((float)(2*cols))) * ((double)Math.max(popCount,1));
 	// just count the pushing since popping is almost free, all at
 	// once.  count it twice since you have to read it and write
 	// it.
-	long decimatorCost = SCALE_FACTOR * (popCount > 1 ? 4 * cols : 0);
+	long decimatorCost = SCALE_FACTOR * (popCount > 1 ? 100 + 4 * cols : 0);
 	if (LinearPartitioner.DEBUG) { System.err.println("Returning linear cost of " + ((long)nodeCost + decimatorCost) + " with: \n"
 							  + "  frequencyComputationCost=" + getFrequencyComputationCost() + "\n"
 							  + "  nodeCost=" + nodeCost + "\n"
@@ -142,7 +142,7 @@ public class LinearCost {
      *
      * The offset 0.65 was obtained experimentally.
      */
-    private double getFrequencyComputationCost() {
+    public double getFrequencyComputationCost() {
 	// add one to cols because we have <cols>+1 FFT's that we do
 	// per iteration: one for the input, and one for what we push.
 	// but then divide by two, so that the base case is correct

@@ -12,7 +12,7 @@ package at.dms.kjc.sir.linear;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.24 2003-04-20 13:30:36 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.25 2003-04-20 20:04:52 thies Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -197,8 +197,8 @@ public class LinearFilterRepresentation {
 	int muls = 0;
 	int adds = 0;
 
-	int matRows = A.trim(1).getRows();
-	int matCols = A.trim(1).getCols();
+	int matRows = A.getRows();
+	int matCols = A.getCols();
 	
 	for (int col=0; col<matCols; col++) {
 	    // counters for the colums (# muls, adds)

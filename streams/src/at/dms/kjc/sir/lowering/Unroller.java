@@ -35,12 +35,19 @@ public class Unroller extends SLIRReplacingVisitor {
      * JLocalVariables to JLiterals for the scope that we'll be
      * visiting.
      */
+    private boolean inInit;
+
     public Unroller(Hashtable constants) {
 	super();
 	this.constants = constants;
 	this.hasUnrolled = false;
 	currentModified=new Hashtable();
 	values=new Hashtable();
+	inInit=false;
+    }
+    
+    public void setInit(boolean init) {
+	inInit=init;
     }
     
     public static void unroll(SIRStream str) {
@@ -194,19 +201,27 @@ public class Unroller extends SLIRReplacingVisitor {
 	if (info==null || currentModified.containsKey(info.var)) {
 	    return false;
 	}
-	// otherwise if there is an SIRInitStatement in the loop, then
-	// definately unroll for the sake of graph expansion
-	final boolean[] hasInit = { false };
-	body.accept(new SLIREmptyVisitor() {
-		public void visitInitStatement(SIRInitStatement self,
-					       SIRStream target) {
-		    super.visitInitStatement(self, target);
-		    hasInit[0] = true;
-		}
-	    });
-	if (hasInit[0]) {
+
+	//Unroll if in init
+	if(inInit)
 	    return true;
-	}
+	
+	/*
+	  // otherwise if there is an SIRInitStatement in the loop, then
+	  // definately unroll for the sake of graph expansion
+	  final boolean[] hasInit = { false };
+	  body.accept(new SLIREmptyVisitor() {
+	  public void visitInitStatement(SIRInitStatement self,
+	  SIRStream target) {
+	  super.visitInitStatement(self, target);
+	  hasInit[0] = true;
+	  }
+	  });
+	  if (hasInit[0]) {
+	  return true;
+	  }
+	*/
+
 	// otherwise calculate how many times the loop will execute,
 	// and only unroll if it is within our max unroll range
 	int count = getNumExecutions(info);

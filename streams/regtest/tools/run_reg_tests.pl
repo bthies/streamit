@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.15 2003-05-12 14:37:14 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.16 2003-06-26 14:26:24 dmaze Exp $
 
 use strict;
 
@@ -16,7 +16,7 @@ use strict;
 my $DEBUG = 0;
 
 # admin email addresses where we want the crazy emails to go (space separated)
-my $ADMINS = "aalamb\@mit.edu";
+my $ADMINS = "dmaze\@cag.lcs.mit.edu";
 # user email addresses who want to get regtest-results
 my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 
@@ -56,8 +56,8 @@ print MHMAIL saved_execute("cd $working_dir; cvs -d /projects/raw/cvsroot co str
 # Set up the compilation path
 my $streamit_home = "$working_dir/streams";
 $ENV{"STREAMIT_HOME"} = "$streamit_home/";
-$ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:/u/diego/bin/:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/usr/ucb:/bin:/usr/bin:/usr/etc:/etc:/usr/games:";
-my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/usr/uns/java/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/library/java";
+$ENV{"PATH"} = "/projects/raw/current/rawcc/compiler/bin:/usr/ccs/bin:$streamit_home:/usr/local/bin:/usr/uns/bin:/usr/bin/X11:/bin:/usr/bin";
+my $class_path = ".:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar:/usr/uns/java/antlr.jar:$streamit_home/compiler:$streamit_home/compiler/3rdparty:$streamit_home/compiler/3rdparty/cplex/cplex.jar:$streamit_home/library/java:$streamit_home/eclipse";
 $ENV{"CLASSPATH"} = $class_path;
 $ENV{"CLASSROOT"} = "$streamit_home/compiler/kopi/classes";
 

@@ -22,3 +22,4 @@ compile:
 clean:
 	rm -rf streamittest/*.class
 	rm -rf *.dot
+	rm -rf regtest_errors.txt

@@ -176,6 +176,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
    
     //Perform any post visiting operations after a class is declared
     private void postVisit(SIROperator current) {
+	if (current instanceof SIRFilter) {
+	    //Check for init statement
+	    if (!((SIRFilter)current).hasMethod("init"))
+		 at.dms.util.Utils.fail("Filter must have an init statement.");
+	}
 	if (current instanceof SIRFeedbackLoop) {
 	    if (splitType != null)
 		((SIRFeedbackLoop)current).setSplitter(SIRSplitter.create((SIRFeedbackLoop)
@@ -351,26 +356,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	for (int i = 0; i < body.length ; i++)
             trash = body[i].accept(this);
 	
-	
-	/* Install Empty Init Method */
-	if (parentStream.getInit() == null && !(parentStream instanceof SIRPipeline)) {
-	    JStatement[] emptybody = new JStatement[0];
-	    JBlock emptyblock = new JBlock(null, emptybody, null);
-	    JMethodDeclaration emptyInit = new JMethodDeclaration(null,
-								  at.dms.kjc.
-								  Constants.ACC_PUBLIC,
-								  CStdType.Void,
-								  "init",
-								  JFormalParameter.EMPTY,
-								  CClassType.EMPTY,
-								  emptyblock,
-								  null, null);
-	    parentStream.setInit(emptyInit);
+	//force the init method to be visited first!
+	for (int i = 0; i < methods.length; i++) {
+	    if (methods[i].getName().equals("init")) {
+		methods[i].accept(this);
+		break;
+	    }
 	}
-	
+	    
 
-        for (int i = 0; i < methods.length ; i++)
-            trash = methods[i].accept(this); 
+
+        for (int i = 0; i < methods.length ; i++) {
+	    if (!(methods[i].getName().equals("init")))
+		trash = methods[i].accept(this); 
+	}
      	return null;
     }
 
@@ -436,50 +435,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	   stream */ 
 	if (CModifier.contains(CModifier.ACC_STATIC, modifiers))
 	    at.dms.util.Utils.fail("Cannot declare fields static");
-	
-	if (ident.equals("input")) {
-	    if (!(parentStream instanceof SIRFilter))
-		at.dms.util.Utils.fail("Input declaration on non-Filter");
-	    SIRFilter filter = (SIRFilter)parentStream;
-	    Vector v = (Vector)expr.accept(this);
-	    filter.setInputType(getType((String)v.elementAt(0)));
-	    filter.setPop(((JIntLiteral)v.elementAt(1)).intValue());
-	    //If a peek value is given, and it is greater than pops
-	    //set the peek
-	    if (v.size() > 2) {
-		if (((JIntLiteral)v.elementAt(2)).intValue() < 
-		    ((JIntLiteral)v.elementAt(1)).intValue())
-		    at.dms.util.Utils.fail("Peeks less than Pops!");
-		filter.setPeek(((JIntLiteral)v.elementAt(2)).intValue());
-	    }
-	    else  //Otherwise set the peeks to the number of pops
-		filter.setPeek(((JIntLiteral)v.elementAt(1)).intValue());
-	    return self;
-	}
-	
+
 	/* Output declaration set the fields for the current
 	   stream */ 
-	else if (ident.equals("output")) {
-	    if (!(parentStream instanceof SIRFilter))
-		at.dms.util.Utils.fail("Output declaration on non-Filter");
-	    SIRFilter filter = (SIRFilter)parentStream;
-	    Vector v = (Vector)expr.accept(this);
-	    int push = ((JIntLiteral)v.elementAt(1)).intValue();
-	    filter.setPush(push);
-	    filter.setOutputType(getType((String)v.elementAt(0)));
-	    return self;
-	}
-	else {   /*Normal field declaration, add this field */
-	    if (expr != null)
-		expr = (JExpression)expr.accept(this);
-	    parentStream.addField(new JFieldDeclaration(null, new JVariableDefinition(null,
-										      modifiers,
-										      type,
-										      ident,
-										      expr),
-							null, null));
-	}
-	//never reached!
+
+	if (expr != null)
+	    expr = (JExpression)expr.accept(this);
+	parentStream.addField(new JFieldDeclaration(null, new JVariableDefinition(null,
+										  modifiers,
+										  type,
+										  ident,
+										  expr),
+						    null, null));
 	return self;
     }
 
@@ -1699,6 +1666,41 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           JExpression right)
     {
         blockStart("AssignmentExpression");
+	
+	//must check for an assignment to input or output inside of
+	//an init statement...
+	if (left instanceof JFieldAccessExpression) {
+	    if (((JFieldAccessExpression)left).getIdent().equals("input")) {
+		if (!(parentStream instanceof SIRFilter))
+		    at.dms.util.Utils.fail("Input declaration on non-Filter");
+		SIRFilter filter = (SIRFilter)parentStream;
+		Vector v = (Vector)right.accept(this);
+		filter.setInputType(getType((String)v.elementAt(0)));
+		filter.setPop(((JIntLiteral)v.elementAt(1)).intValue());
+		//If a peek value is given, and it is greater than pops
+		//set the peek
+		if (v.size() > 2) {
+		    if (((JIntLiteral)v.elementAt(2)).intValue() < 
+			((JIntLiteral)v.elementAt(1)).intValue())
+			at.dms.util.Utils.fail("Peeks less than Pops!");
+		    filter.setPeek(((JIntLiteral)v.elementAt(2)).intValue());
+		}
+		else  //Otherwise set the peeks to the number of pops
+		    filter.setPeek(((JIntLiteral)v.elementAt(1)).intValue());
+		return null;
+	    }
+       	    else if (((JFieldAccessExpression)left).getIdent().equals("output")) {
+		if (!(parentStream instanceof SIRFilter))
+		    at.dms.util.Utils.fail("Output declaration on non-Filter");
+		SIRFilter filter = (SIRFilter)parentStream;
+		Vector v = (Vector)right.accept(this);
+		int push = ((JIntLiteral)v.elementAt(1)).intValue();
+		filter.setPush(push);
+		filter.setOutputType(getType((String)v.elementAt(0)));
+		return null;
+	    }
+
+	}
        	if (left != null)
 	    left = (JExpression)left.accept(this);
 	if (right != null)

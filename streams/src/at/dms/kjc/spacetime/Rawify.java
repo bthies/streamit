@@ -47,7 +47,8 @@ public class Rawify
 		    else 
 			createSwitchCode(filterNode, 
 					 trace, filterInfo, init, false, tile, rawChip);
-		    
+		    //used for debugging, nothing more
+		    tile.addFilterTrace(init, false, filterNode);
 		    //do every again for the primepump if it is the init stage and add the
 		    //compute code for the init stage
 		    if (init) {
@@ -60,6 +61,8 @@ public class Rawify
 			//generate the compute code for the trace and place it in
 			//the tile			
 			tile.getComputeCode().addTraceInit(filterInfo);
+			//used for debugging
+			tile.addFilterTrace(false, true, filterNode);
 		    }
 		    else {
 			//generate the compute code for the trace and place it in

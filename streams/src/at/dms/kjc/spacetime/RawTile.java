@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import java.util.HashSet;
+import java.util.Vector;
 
 public class RawTile extends ComputeNode {
     private int tileNumber;
@@ -20,6 +21,10 @@ public class RawTile extends ComputeNode {
 
     private HashSet offChipBuffers;
 
+    private Vector initFilters;
+    private Vector primepumpFilters;
+    private Vector steadyFilters;
+    
     public RawTile(int x, int y, RawChip rawChip) {
 	super(rawChip);
 	X = x;
@@ -31,6 +36,9 @@ public class RawTile extends ComputeNode {
 	computeCode = new ComputeCodeStore(this);
 	IODevices = new IODevice[0];
 	offChipBuffers = new HashSet();
+	initFilters = new Vector();
+	primepumpFilters = new Vector();
+	steadyFilters = new Vector();
     }
 
     public String toString() {
@@ -169,6 +177,41 @@ public class RawTile extends ComputeNode {
 	    for (int x = 0; x < chip.getXSize(); x++)
 		for (int y = 0; y < chip.getYSize(); y++)
 		    chip.getTile(x, y).printDram();
+    }
+
+    
+    public void addFilterTrace(boolean init, boolean primepump, FilterTraceNode filter)
+    { 
+	if (init)
+	    initFilters.add(filter);
+	else if (primepump)
+	    primepumpFilters.add(filter);
+	else
+	    steadyFilters.add(filter);
+    }
+
+    public Vector getFilters(boolean init, boolean primepump) 
+    {
+	if (init)
+	    return initFilters;
+	else if (primepump)
+	    return primepumpFilters;
+	else
+	    return steadyFilters;
+    }
+    
+    public Vector getNeighborTiles() 
+    {
+	Vector ret = new Vector();
+	if (X - 1 >= 0)
+	    ret.add(rawChip.getTile(X-1, Y));
+	if (X + 1 < rawChip.getXSize())
+	    ret.add(rawChip.getTile(X+1, Y));
+	if (Y - 1 >= 0)
+	    ret.add(rawChip.getTile(X, Y-1));
+	if (Y + 1 < rawChip.getYSize())
+	    ret.add(rawChip.getTile(X, Y+1));
+	return ret;
     }
     
 }

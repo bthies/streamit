@@ -71,6 +71,7 @@ inline void check_thread_status(int *flag, thread_info *info) {
 inline void check_thread_status_during_io(int *flag, thread_info *info) {
 
   if (*flag == RUN_STATE) return;
+  if (*flag == PAUSE_PROPER_REQUEST) return;
 
   *flag = PAUSE_IO_ENTERED;
   

@@ -21,9 +21,9 @@ public class Operator extends DestroyedClass
     public Operator(float a, float b, float c)
     {
         initParams = new ParameterContainer("float-float-float")
-	    .add("a", a)
-	    .add("b", b)
-	    .add("c", c);
+            .add("a", a)
+            .add("b", b)
+            .add("c", c);
     }
 
     public Operator(float x3, float y3, int z3, int a3)
@@ -32,7 +32,7 @@ public class Operator extends DestroyedClass
             .add("x3", x3)
             .add("y3", y3)
             .add("z3", z3)
-	    .add("a3", a3);
+            .add("a3", a3);
     }
 
     public Operator(float x2, float y2, float z2, int a2, float b2)
@@ -66,13 +66,13 @@ public class Operator extends DestroyedClass
     }
 
     public Operator (int x, int y, int z,
-		     int a, float b)
+                     int a, float b)
     {
         initParams = new ParameterContainer ("int-int-int-int-float").add ("x", x).add ("y", y).add("z", z).add ("a", a).add ("b", b);
     }
 
     public Operator (int x, int y, int z,
-		     int a, int b, int c)
+                     int a, int b, int c)
     {
         initParams = new ParameterContainer ("int-int-int-int-int-int").add ("x", x).add ("y", y).add("z", z).add ("a", a).add ("b", b).add("c", c);
     }
@@ -234,6 +234,10 @@ public class Operator extends DestroyedClass
         {
             to.pushInt (from.popInt ());
         } else
+        if (type == Short.TYPE)
+        {
+            to.pushShort (from.popShort ());
+        } else
         if (type == Character.TYPE)
         {
             to.pushChar (from.popChar ());
@@ -330,21 +334,21 @@ public class Operator extends DestroyedClass
 
         ASSERT (initParams != null);
 
-	if(initParams.getParamName().equals("int-int-int-int-float"))
-	    init (initParams.getIntParam("x"),
-		  initParams.getIntParam("y"),
-		  initParams.getIntParam("z"),
-		  initParams.getIntParam("a"),
-		  initParams.getFloatParam("b"));
-	else
-	if(initParams.getParamName().equals("int-int-int-int-int-int"))
-	    init (initParams.getIntParam("x"),
-		  initParams. getIntParam("y"),
-		  initParams.getIntParam("z"),
-		  initParams.getIntParam("a"),
-		  initParams.getIntParam("b"),
-		  initParams.getIntParam("c"));
-	else
+        if(initParams.getParamName().equals("int-int-int-int-float"))
+            init (initParams.getIntParam("x"),
+                  initParams.getIntParam("y"),
+                  initParams.getIntParam("z"),
+                  initParams.getIntParam("a"),
+                  initParams.getFloatParam("b"));
+        else
+        if(initParams.getParamName().equals("int-int-int-int-int-int"))
+            init (initParams.getIntParam("x"),
+                  initParams. getIntParam("y"),
+                  initParams.getIntParam("z"),
+                  initParams.getIntParam("a"),
+                  initParams.getIntParam("b"),
+                  initParams.getIntParam("c"));
+        else
         if(initParams.getParamName().equals("float-float-int"))
             init (initParams.getFloatParam("x1"),
                   initParams.getFloatParam("y1"),
@@ -354,7 +358,7 @@ public class Operator extends DestroyedClass
             init (initParams.getFloatParam("x3"),
                   initParams.getFloatParam("y3"),
                   initParams.getIntParam("z3"),
-		  initParams.getIntParam("a3"));
+                  initParams.getIntParam("a3"));
         else
         if(initParams.getParamName().equals("float-float-float-int-float"))
             init (initParams.getFloatParam("x2"),

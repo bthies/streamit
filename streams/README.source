@@ -3,7 +3,7 @@
 The StreamIt Source Tree
 ========================
 
-$Id: README.source,v 1.2 2003-01-20 12:58:55 thies Exp $
+$Id: README.source,v 1.3 2003-02-18 22:48:01 aalamb Exp $
 
 Directory Layout
 ----------------
@@ -14,10 +14,12 @@ are specific to run-time interpretation of Java code, while
 "compiler" contains the frontend and scheduler that are used
 during the actual compilation process.
 
-The output of the compiler is a C file; this is built and linked
-against libstreamit.a, which is built from sources in library/c.
-misc/c contains a utility program to convert data files to be used
-with the CAG RAW simulator.
+The output of the compiler is one of two things:
+1. A C program on standard out (STDOUT) that is built and linked against 
+   libstreamit.a, which is built from sources in library/c.
+2. A program designed to work on the CAG RAW simulator consisting of
+   multiple tileXX.c, swXX.s files and Makefile.streamit.
+
 
 Compiler Flow
 -------------

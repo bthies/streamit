@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.4 2001-11-15 18:23:26 dmaze Exp $
+ * $Id: JFieldAccessExpression.java,v 1.5 2002-03-31 22:40:15 thies Exp $
  */
 
 package at.dms.kjc;
@@ -37,6 +37,23 @@ public class JFieldAccessExpression extends JExpression {
     // ----------------------------------------------------------------------
 
     /**
+     * You usually don't know the cfield--this is mostly for
+     * constructing new accesses from old accesses within the ir.
+     * note that cfield goes missing otherwise.
+     */
+    public JFieldAccessExpression(TokenReference where,
+				  JExpression prefix,
+				  String ident,
+				  CField field) {
+	super(where);
+
+	this.prefix = prefix;
+	this.ident = ident;
+	this.constantPrefix = false;
+	this.field = field;
+    }
+
+    /**
      * Construct a node in the parsing tree
      *
      * @param	where		the line of this node in the source code
@@ -47,11 +64,7 @@ public class JFieldAccessExpression extends JExpression {
 				  JExpression prefix,
 				  String ident)
     {
-	super(where);
-
-	this.prefix = prefix;
-	this.ident = ident;
-	this.constantPrefix = false;
+	this(where, prefix, ident, null);
     }
 
 

@@ -43,13 +43,13 @@ push(@result_lines,
 # format for script programs is 
 #directory:filename
 my @programs = (
-		#".:FIRProgram",
+		".:FIRProgram",
 		#".:SamplingRateConverter",
 		#".:FilterBank",
 		#".:TargetDetect",
-		".:Test",
-		#".:FMTest",
+		#".:FMRadioApp",
 		#".:CoarseSerializedBeamFormer",
+		#".:Test",
 		);
 
 # determine the next available results directory (eg results0, results1, etc.)
@@ -102,9 +102,9 @@ foreach (@programs) {
 
     
     # for various sizes of target FFT length
-    my $MAX_TARGET_SIZE = 256; #4096;
+    my $MAX_TARGET_SIZE = 4096;
     my $targetFFTSize;
-    for ($targetFFTSize=1; $targetFFTSize<($MAX_TARGET_SIZE+1); $targetFFTSize*=4) {
+    for ($targetFFTSize=1; $targetFFTSize<($MAX_TARGET_SIZE+1); $targetFFTSize*=2) {
 	
         # now, do the compilation with the frequency replacement
 	print "$base_filename(freq, $targetFFTSize):";

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.42 2003-01-10 18:59:42 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.43 2003-01-10 19:21:37 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -307,9 +307,14 @@ public class NodesToJava implements FEVisitor
     public Object visitExprFunCall(ExprFunCall exp)
     {
 	String result;
+        String name = exp.getName();
+        // Local function?
+        if (ss.getFuncNamed(name) != null) {
+            result = name + "(";
+        }
 	// look for print and println statements; assume everything
 	// else is a math function
-	if (exp.getName().equals("print")) {
+	else if (exp.getName().equals("print")) {
 	    result = "System.out.println(";
 	} else if (exp.getName().equals("println")) {
 	    result = "System.out.println(";

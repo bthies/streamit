@@ -3,4 +3,4 @@
 # get-antlr: download an antlr.jar from the ANTLR Web site
 
 test -f $1 && exit 0
-mv /u/thies/public_html/antlr.jar $1
+cp /u/thies/public_html/antlr.jar $1

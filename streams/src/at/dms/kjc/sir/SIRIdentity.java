@@ -19,15 +19,16 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable {
 	      /* input type */ type,
 	      /* output type */ type);
     }
-    
+
     /**
      * Set the input type and output type to t
-     * also sets the work function
+     * also sets the work function and init function
      */
     public void setType(CType t) {
 	this.setInputType(t);
 	this.setOutputType(t);
-	
+
+	// work function
 	JStatement work1body[] = new JStatement[1];
 	work1body[0] =  
 	    new JExpressionStatement
@@ -49,6 +50,22 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable {
 					  /* javadoc    */ null,
 					  /* comments   */ null);
 	setWork(workfn);
+
+	// init function
+	JBlock initblock = new JBlock(/* tokref   */ null,
+				/* body     */ new JStatement[0],
+				/* comments */ null);
+	JMethodDeclaration initfn =  new JMethodDeclaration( /* tokref     */ null,
+					  /* modifiers  */ at.dms.kjc.
+					  Constants.ACC_PUBLIC,
+					  /* returntype */ CStdType.Void,
+					  /* identifier */ "init",
+					  /* parameters */ JFormalParameter.EMPTY,
+					  /* exceptions */ CClassType.EMPTY,
+					  /* body       */ initblock,
+					  /* javadoc    */ null,
+					  /* comments   */ null);
+	setInit(initfn);
     }
 }
 

@@ -59,6 +59,8 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * in this, and that <first> comes before <last>.
      */
     public List getChildrenBetween(SIROperator first, SIROperator last) {
+	Utils.assert(myChildren().contains(first), "first=" + first.getName() + " is not a child of " + this);
+	Utils.assert(myChildren().contains(last), "last=" + last.getName() + " is not a child of " + this);
 	// make result
 	LinkedList result = new LinkedList();
 	// start iterating through children at <first>

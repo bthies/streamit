@@ -32,11 +32,6 @@ fi
 # include extra LaTeX packages
 # (Note that this *always* DTRT: the TeX path-searching stuff interprets
 # a blank entry as "the default path".)
-if [ -z "$TEXINPUTS" ]
-then
-  export TEXINPUTS=${STREAMIT_HOME}/include/tex:.:/usr/share/texmf/tex::
-else
-  TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
-fi
+TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 
 

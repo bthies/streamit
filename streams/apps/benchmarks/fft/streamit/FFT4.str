@@ -1,4 +1,4 @@
-void->void pipeline FFT {
+void->void pipeline FFT4 {
     add OneSource();
     add FFTKernel(32);
     add FloatPrinter();

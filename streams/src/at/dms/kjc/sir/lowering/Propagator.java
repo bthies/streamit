@@ -1209,18 +1209,21 @@ public class Propagator extends SLIRReplacingVisitor {
 			JLocalVariable var=((JLocalVariableExpression)pre).getVariable();
 			JExpression accessor1=((JArrayAccessExpression)prefix).getAccessor();
 			JExpression newAccess=(JExpression)accessor1.accept(this);
-			Object val=constants.get(var);
-			changed.put(var,Boolean.TRUE);
-			if(val instanceof Object[][]) {
-			    Object[][] array=(Object[][])val;
-			    if(array!=null) {
-				int index=((JIntLiteral)newAccess).intValue();
-				int index2=((JIntLiteral)newExp).intValue();
-				if(index>=0) {
-				    Object val2=array[index][index2];
-				    if(val2!=null)
-					return val2;
-				}
+			if(newAccess instanceof JIntLiteral) {
+			    Object val=constants.get(var);
+			    changed.put(var,Boolean.TRUE);
+			    if(val instanceof Object[][]) {
+				Object[][] array=(Object[][])val;
+				if(array!=null) {
+				    int index=((JIntLiteral)newAccess).intValue();
+				    int index2=((JIntLiteral)newExp).intValue();
+				    if(index>=0) {
+					Object val2=array[index][index2];
+					if(val2!=null)
+					    return val2;
+				    }
+				} else
+				    constants.remove(var);
 			    } else
 				constants.remove(var);
 			} else

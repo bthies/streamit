@@ -10,23 +10,29 @@ ANALYSIS-OPTIONS  = --unroll 100000 --linearanalysis --debug
 # options to use for linear transformation
 LINTRANS-OPTIONS =  --unroll 100000 --linearanalysis --linearreplacement --debug
 # options to use for frquency transformation
-FREQTRANS-OPTIONS =  --unroll 100000 --linearanalysis --frequencyreplacement 1 --targetFFTSize 20 --debug
+FREQTRANS-OPTIONS =  --unroll 100000 --linearanalysis --frequencyreplacement 3 --debug
 # options to use for both transformations
 BOTH-OPTIONS      =  --unroll 100000 --linearanalysis --linearreplacement --frequencyreplacement 1 --debug
 
 # regression testing perl script
 LINEAR-REG-TEST = linear_regtest.pl
 
+# output comparison script
+COMPARE = perl -I$(STREAMIT_HOME)/regtest/tools $(STREAMIT_HOME)/regtest/tools/compare_uni.pl 
+
 # current test
-CURRENT-TEST = regtests/LinearTest21
+CURRENT-TEST = regtests/LinearTest34
+
 
 all: clean java-compile uni-compile raw-compile
 
 
 linear-compile:
-	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java 
-	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/transform/*.java
-	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/frequency/*.java
+	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/*.java 
+	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/transform/*.java
+	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/frequency/*.java
+library-compile:
+	make -C $(STREAMIT_HOME)/library/c
 
 
 test-current-replace: linear-compile
@@ -37,17 +43,18 @@ test-current-replace: linear-compile
 	$(UNI-COMPILER) test-replace.c -o test-replace.exe
 
 
-test-current-freq: linear-compile
+test-current-freq: linear-compile library-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
-	$(STREAMIT-COMPILER) $(FREQTRANS-OPTIONS) $(CURRENT-TEST).java > current.output
-	./parse_linear_output.pl current.output
-	# convert to .c files, and run compiler without any fancy options to see what we get.
-	cp current.output test-freq.c
+	$(STREAMIT-COMPILER) $(FREQTRANS-OPTIONS) $(CURRENT-TEST).java > test-freq.c
 	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > test-normal.c
 	$(UNI-COMPILER) test-freq.c -o test-freq.exe
 	$(UNI-COMPILER) test-normal.c -o test-normal.exe
-	./test-freq.exe -i 10 > freq.out
+	./test-freq.exe -i 100 > freq.out
 	./test-normal.exe -i 1000 > norm.out
+	./parse_linear_output.pl test-freq.c
+	$(COMPARE) norm.out freq.out
+
+
 
 test-current-both: linear-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
@@ -60,6 +67,11 @@ test-current: linear-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
 	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > current.output
 	./parse_linear_output.pl current.output
+
+test-current-redundant: linear-compile
+	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
+	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > current.output
+	./parse_redundant_output.pl current.output
 
 
 
@@ -81,3 +93,4 @@ clean:
 	rm -f regtests/LinearTest22.java regtests/LinearTest23.java regtests/LinearTest24.java regtests/LinearTest25.java 
 	rm -f regtests/LinearTest26.java regtests/LinearTest27.java regtests/LinearTest28.java regtests/LinearTest29.java 
 	rm -f regtests/LinearTest30.java regtests/LinearTest31.java regtests/LinearTest32.java regtests/LinearTest33.java 
+	rm -f regtests/LinearTest34.java regtests/LinearTest35.java regtests/LinearTest36.java regtests/LinearTest37.java

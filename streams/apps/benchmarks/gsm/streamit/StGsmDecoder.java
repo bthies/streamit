@@ -648,7 +648,7 @@ class LTPPipeline extends Pipeline
     {
 	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
 	this.add(new LTPInputFilter());
-	this.add(new ShortPrinter('g'));
+	//this.add(new ShortPrinter('g'));
     }
 }
 class LARPipeline extends Pipeline
@@ -668,7 +668,7 @@ class LTPInputSplitJoin extends SplitJoin
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
 	this.add(new LTPPipeline());
 	//this.add(new ShortIdentity());
-	this.add(new ShortPrinter('d'));
+	//this.add(new ShortPrinter('d'));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
 }
@@ -678,15 +678,9 @@ class LTPLoopStream extends Pipeline
     public void init()
     {
 	this.add(new LTPInputSplitJoin());
-	this.add(new Pipeline() 
-	    {
-		public void init()
-		{
-		    this.add(new ShortPrinter('e'));
-		    this.add(new LTPFilter());
-		    this.add(new ShortPrinter('b')); 
-		}
-	    });
+        //this.add(new ShortPrinter('e'));
+        this.add(new LTPFilter());
+        //this.add(new ShortPrinter('b')); 
     }
 }
 class DecoderFeedback extends FeedbackLoop
@@ -716,9 +710,9 @@ class StupidStream extends Pipeline
 {
     public void init()
     {
-	this.add(new ShortPrinter('a'));
+	//this.add(new ShortPrinter('a'));
 	this.add(new AdditionUpdateFilter());
-	this.add(new ShortPrinter('c'));
+	//this.add(new ShortPrinter('c'));
     }
 }
 
@@ -849,7 +843,6 @@ class ShortPrinter extends Filter
 	output.pushShort(a);
     }
 }
-
 
 public class StGsmDecoder extends StreamIt 
 {

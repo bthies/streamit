@@ -27,19 +27,21 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.77 2003-12-01 21:44:28 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.78 2003-12-15 21:36:27 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
     private StreamSpec ss;
     // A string consisting of an even number of spaces.
     private String indent;
+    private boolean libraryFormat;
     private TempVarGen varGen;
     
-    public NodesToJava(StreamSpec ss, TempVarGen varGen)
+    public NodesToJava(boolean libraryFormat, TempVarGen varGen)
     {
-        this.ss = ss;
+        this.ss = null;
         this.indent = "";
+        this.libraryFormat = libraryFormat;
         this.varGen = varGen;
     }
 

@@ -12,7 +12,7 @@ import java.util.List;
  * parameters with the correct actual structure type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ComplexToStruct.java,v 1.1 2003-07-15 19:23:09 dmaze Exp $
+ * @version $Id: ComplexToStruct.java,v 1.2 2003-09-02 17:45:42 dmaze Exp $
  */
 public class ComplexToStruct extends FEReplacer
 {
@@ -133,6 +133,7 @@ public class ComplexToStruct extends FEReplacer
     {
         return new StreamType(st.getContext(),
                               remapType(st.getIn()),
-                              remapType(st.getOut()));
+                              remapType(st.getOut()),
+                              remapType(st.getLoop()));
     }
 }

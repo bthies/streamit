@@ -16,7 +16,7 @@
 
 package streamit.library;
 
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 
 public abstract class PhasedFilter extends Stream
 {
@@ -66,7 +66,7 @@ public abstract class PhasedFilter extends Stream
         wf.work();
     }
 
-    void setupBufferLengths (ScheduleBuffers buffers)
+    void setupBufferLengths (Scheduler buffers)
     {
         // Filter claims this doesn't need to do anything, sure.
     }

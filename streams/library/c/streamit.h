@@ -94,7 +94,7 @@ typedef message_fn *interface_table;
  * be useful with macros that depend on finding the context from a
  * data item. */
 typedef struct ContextContainer {
-  stream_context *context;
+  stream_context *_context;
 } _ContextContainer, *ContextContainer;
 
 /** A tape between two stream objects.  This is a FIFO circular queue of

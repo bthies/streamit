@@ -1,6 +1,6 @@
 /*
  * streamit_io.c: implementation of built-in IO filters
- * $Id: streamit_io.c,v 1.6 2002-10-29 22:11:36 dmaze Exp $
+ * $Id: streamit_io.c,v 1.7 2002-12-03 20:56:48 dmaze Exp $
  */
 
 #include <stdlib.h>
@@ -37,7 +37,7 @@ stream_context *streamit_filereader_create(char *filename)
 
 void streamit_filereader_work(ContextContainer cc)
 {
-  stream_context *c = cc->context;
+  stream_context *c = cc->_context;
   fileio_data *frd = c->stream_data;
   
   /* Do the fread() directly on to the output tape. */
@@ -67,7 +67,7 @@ stream_context *streamit_filewriter_create(char *filename)
 
 void streamit_filewriter_work(ContextContainer cc)
 {
-  stream_context *c = cc->context;
+  stream_context *c = cc->_context;
   fileio_data *frd = c->stream_data;
   
   /* Do the fwrite() directly from the input tape. */
@@ -95,7 +95,7 @@ stream_context *streamit_identity_create(void)
 void streamit_identity_work(ContextContainer cc)
 {
   VARS_DEFAULTB();
-  stream_context *c = cc->context;
+  stream_context *c = cc->_context;
   int s = c->input_tape->data_size;
   LOCALIZE_DEFAULTB(c);
   /* We don't have the type (though we could), do this the hard way... */

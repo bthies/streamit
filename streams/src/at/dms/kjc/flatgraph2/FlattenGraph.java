@@ -32,6 +32,7 @@ public class FlattenGraph {
     }
     
     public static void flattenGraph(SIRStream graph) {
+	System.out.println("Flattening Graph..");
 	if(graph instanceof SIRFilter) {
 	    UnflatFilter filter=new UnflatFilter(graph);
 	    topLevelNodes.add(filter);
@@ -42,8 +43,9 @@ public class FlattenGraph {
 		topLevelNodes.add(node.dest);
 	}
 	dumpGraph("newbefore.dot");
+	System.out.println("Done Flattening, Starting Sync Removal..");
 	syncRemove();
-	System.out.println("Done Sync");
+	System.out.println("Done Sync Removal..");
 	dumpGraph("newafter.dot");
     }
     

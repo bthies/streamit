@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.raw.*;
+import at.dms.kjc.cluster.*;
 import grapheditor.GraphEncoder;
 
 /**
@@ -52,6 +53,16 @@ public class StreaMITMain {
 	    
 	    /* Compiling for raw */
 	    RawBackend.run(stream, 
+			   k2s.getInterfaces(),
+			   k2s.getInterfaceTables(),
+			   k2s.getStructures());
+	    
+	}
+	else if (KjcOptions.cluster) {
+	    System.out.println("*/");
+	    
+	    /* Compiling for raw */
+	    ClusterBackend.run(stream, 
 			   k2s.getInterfaces(),
 			   k2s.getInterfaceTables(),
 			   k2s.getStructures());

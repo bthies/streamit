@@ -30,6 +30,22 @@ public class SIRFilter extends SIRStream {
      * the input and output channels, respectively.
      */
     private CType inputType, outputType;
+
+    public SIRFilter(JFieldDeclaration[] fields, 
+		     JMethodDeclaration[] methods, 
+		     int peek, int pop, int push, 
+		     JMethodDeclaration work, 
+		     CType inputType, 
+		     CType outputType) {
+	super(fields, methods);
+	this.peek = peek;
+	this.pop = pop;
+	this.push = push;
+	this.work = work;
+	this.inputType = inputType;
+	this.outputType = outputType;
+    }
+
 }
 
 

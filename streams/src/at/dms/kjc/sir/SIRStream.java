@@ -20,5 +20,14 @@ public class SIRStream extends SIROperator {
      * The init function.
      */
     protected JMethodDeclaration init;
+
+    // don't set the init function upon instantation since the lowering
+    // pass will have to create the init function
+    protected SIRStream(JFieldDeclaration[] fields,
+			JMethodDeclaration[] methods) {
+	this.fields = fields;
+	this.methods = methods;
+	this.init = init;
+    }
 }
 

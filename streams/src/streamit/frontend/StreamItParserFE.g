@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.35 2003-07-03 20:13:00 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.36 2003-07-07 15:48:05 dmaze Exp $
  */
 
 header {
@@ -192,33 +192,44 @@ loop_statement returns [Statement s] { s = null; StreamCreator sc; }
 	;
 
 stream_creator returns [StreamCreator sc] { sc = null; }
-	: (ID ARROW | ~ID) => sc=anonymous_stream ((TK_to ID)? SEMI)?
-	| sc=named_stream (TK_to ID)? SEMI
+	: (ID ARROW | ~ID) => sc=anonymous_stream
+	| sc=named_stream SEMI
+	;
+
+portal_spec returns [List p] { p = null; Expression pn; }
+	:	TK_to id:ID
+			{ pn = new ExprVar(getContext(id), id.getText());
+			  p = Collections.singletonList(pn); }
 	;
 
 anonymous_stream returns [StreamCreator sc]
 { sc = null; StreamType st = null; List params = new ArrayList();
-Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null; }
+Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null;
+List p = null; int sst = 0; FEContext ctx = null; }
 	: (st=stream_type_decl)?
 		( tf:TK_filter
 			ss=filter_body[getContext(tf), st, null, Collections.EMPTY_LIST]
-			{ sc = new SCAnon(getContext(tf), ss); }
-		| tp:TK_pipeline body=block
-			{ sc = new SCAnon(getContext(tp), StreamSpec.STREAM_PIPELINE, body); }
-		| ts:TK_splitjoin body=block
-			{ sc = new SCAnon(getContext(ts), StreamSpec.STREAM_SPLITJOIN, body); }
-		| tl:TK_feedbackloop body=block
-			{ sc = new SCAnon(getContext(tl), StreamSpec.STREAM_FEEDBACKLOOP, body); }
+			((p=portal_spec)? SEMI)?
+			{ sc = new SCAnon(getContext(tf), ss, p); }
+		|	( tp:TK_pipeline
+				{ ctx = getContext(tp); sst = StreamSpec.STREAM_PIPELINE; }
+			| ts:TK_splitjoin
+				{ ctx = getContext(ts); sst = StreamSpec.STREAM_SPLITJOIN; }
+			| tl:TK_feedbackloop
+				{ ctx = getContext(tl); sst = StreamSpec.STREAM_FEEDBACKLOOP; }
+			) body=block ((p=portal_spec)? SEMI)?
+			{ sc = new SCAnon(ctx, sst, body, p); }
 		)
 	;
 
 named_stream returns [StreamCreator sc]
 { sc = null; List params = new ArrayList(); List types = new ArrayList();
-Type t; }
+Type t; List p = null; }
 	: id:ID
 		(LESS_THAN t=data_type MORE_THAN { types.add(t); })?
 		(params=func_call_params)?
-		{ sc = new SCSimple(getContext(id), id.getText(), types, params); }
+		(p=portal_spec)?
+		{ sc = new SCSimple(getContext(id), id.getText(), types, params, p); }
 	;
 
 split_statement returns [Statement s] { s = null; SplitterJoiner sj; }

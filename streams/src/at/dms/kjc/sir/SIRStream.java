@@ -306,7 +306,5 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public JMethodDeclaration getInit() {
 	return init;
     }
-
-    abstract public Object clone();
 }
 

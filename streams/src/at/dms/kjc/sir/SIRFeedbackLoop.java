@@ -63,26 +63,6 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Return a shallow clone of the SIRFeedbackLoop
-     */
-    public Object clone() 
-    {
-	SIRFeedbackLoop f = new SIRFeedbackLoop(this.parent,
-						this.ident,
-						this.fields,
-						this.methods);
-	f.setInit(this.init);
-	f.setDelay(this.delay);
-	f.setBody(this.getBody());
-	f.setInitPath(this.initPath);
-	f.setJoiner(this.joiner);
-	f.setLoop(this.getLoop());
-	f.setSplitter(this.splitter);
-	return f;
-    }
-    
-
-    /**
      * Returns the output type of this.
      */
     public CType getOutputType() {

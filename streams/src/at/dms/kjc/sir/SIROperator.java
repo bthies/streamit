@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.lowering.Namer;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 
@@ -160,7 +161,7 @@ public abstract class SIROperator extends Utils implements Finalizable {
      * This should be called in every mutator.
      */
     public void assertMutable() {
-	Utils.assert(!StreaMITMain.memoizer.isFinalized(this), 
+	Utils.assert(!IterFactory.isFinalized(this), 
 		     "A mutability check failed.");
     }
 }

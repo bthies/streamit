@@ -55,6 +55,7 @@ public class SIRStructure extends SIRStream
     public boolean needsInit() { return false; }
     public boolean needsWork() { return false; }
 
+    /*
     public Object clone() 
     {
         SIRStructure s = new SIRStructure(this.parent,
@@ -62,6 +63,7 @@ public class SIRStructure extends SIRStream
                                           this.fields);
         return s;
     }
+    */
 
     public void accept(StreamVisitor v)
     {

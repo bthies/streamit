@@ -18,19 +18,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * The joiner at the bottom of this.
      */
     private SIRJoiner joiner;
-    /**
-     * Return a shallow clone of the SIRSplitJoin
-     */
-    public Object clone() {
-	SIRSplitJoin s = new SIRSplitJoin(this.parent,
-					  this.ident,
-					  this.fields,
-					  this.methods);
-	s.setInit(this.init);
-	s.setSplitter(this.splitter);
-	s.setJoiner(this.joiner);
-	return s;
-    }
 
     /**
      * sets the splitter for this SplitJoin

@@ -24,26 +24,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Return a shallow clone of the SIRPipeline
-     */
-    public Object clone() {
-	SIRPipeline p = new SIRPipeline(this.parent, this.ident,
-					this.fields, this.methods);
-	p.setInit(this.init);
-	for(int i = 0; i < size(); i++) {
-	    // get child
-	    SIRStream child = get(i);
-	    // clone child
-	    SIRStream childClone = (SIRStream)child; //.clone();
-	    // set child's parent to <p>
-	    //childClone.setParent(p);
-	    // add it to <p>'s children
-	    p.add(childClone);
-	}
-	return p;
-    }
-
-    /**
      * Returns the output type of this.
      */
     public CType getOutputType() {

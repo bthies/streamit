@@ -42,9 +42,10 @@ public abstract class SIRContainer extends SIRStream {
     public abstract String getChildName(SIROperator str);
 
     /**
-     * Returns a list of the children of this.  The children are
-     * stream objects that are contained within this.  Should be
-     * over-ridden by subclasses to include splitters/joiners etc.
+     * Returns a list of the children of this (does not return the
+     * internal representation list of this.)  The children are stream
+     * objects that are contained within this.  Should be over-ridden
+     * by subclasses to include splitters/joiners etc.
      */
     public List getChildren() {
 	List result = new LinkedList();

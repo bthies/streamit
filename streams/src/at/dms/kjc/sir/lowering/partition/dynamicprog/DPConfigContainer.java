@@ -125,7 +125,17 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// if we're down to one node, then descend into it
 	if (x1==x2 && y1==y2) {
-	    return childConfig(x1, y1).traceback(partitions, curPartition, tileLimit);
+	    StreamTransform child = childConfig(x1, y1).traceback(partitions, curPartition, tileLimit);
+	    // if this config container only has one child, then we
+	    // should wrap this in an identity so that we don't apply
+	    // it to ourself
+	    if (A.length==1 && A[0][0].length==1) {
+		StreamTransform result = new IdentityTransform();
+		result.addSucc(child);
+		return result;
+	    } else {
+		return child;
+	    }
 	}
 	
 	// if we only have one tile left, return fusion transform with

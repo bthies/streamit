@@ -507,6 +507,10 @@ abstract class DPConfigContainer extends DPConfig {
      * of overhead of fusing the contents.
      */
     private int getHorizontalFusionOverhead(int x1, int x2, int y1, int y2) {
+	// on the cluster backend, there is no horizontal fusion
+	if (KjcOptions.cluster!=-1 && !KjcOptions.fusion) {
+	    return 0;
+	}
 	int overhead = 0;
 	// for filters, add cost estimate according to their
 	// rates; otherwise, add generic cost estimate...

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.41 2004-02-17 18:29:47 dmaze Exp $
+# $Id: strc,v 1.42 2004-04-01 17:07:37 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -165,6 +165,7 @@ Options specific to RAW backend:
 * --altcodegen        Alternate RAW communication code generation
 * --decoupled         Generate dummy communication code
 * --dpscaling         Collect theoretical scaling statistics
+* --forceunroll       Force unroll to -u amount (even if overflows IMEM)
   --magic-net, -M     Generate RAW "magic network" code
 * --noanneal          Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
@@ -222,6 +223,7 @@ sub get_options
 			    "dpscaling",
 			    "fission=i",
 			    "frequencyreplacement|F",
+			    "forceunroll",
 			    "fusion",
 			    "iterations|i=i",
 			    "library!",
@@ -479,6 +481,7 @@ sub get_kjc_opts
     $opts{debug} && ($kjcopts .= " --debug");
     $opts{decoupled} && ($kjcopts .= " --decoupled");
     $opts{dpscaling} && ($kjcopts .= " --dpscaling");
+    $opts{forceunroll} && ($kjcopts .= " --forceunroll");
     $opts{frequencyreplacement} && ($kjcopts .= " --frequencyreplacement");
     $opts{fission} && ($kjcopts .= " --fission " . $opts{fission});
     $opts{fusion} && ($kjcopts .= " --fusion");

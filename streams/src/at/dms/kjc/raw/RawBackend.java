@@ -93,7 +93,8 @@ public class RawBackend {
 	SIRStream strOrig = null;
 	// only need to make copy if there is some unrolling, since
 	// otherwise we won't roll back
-	if (KjcOptions.unroll>1) {
+	boolean scaleUnrollFactor = KjcOptions.unroll>1 && !KjcOptions.forceunroll;
+	if (scaleUnrollFactor) {
 	    strOrig = (SIRStream)ObjectDeepCloner.deepCopy(str);
 	}
 	boolean fitsInIMEM;
@@ -167,7 +168,7 @@ public class RawBackend {
 	    new VarDeclRaiser().raiseVars(str);
 
 	    // see if we are going to overflow IMEM
-	    if (KjcOptions.unroll>1) {
+	    if (scaleUnrollFactor) {
 		System.out.println("Trying unroll factor " + KjcOptions.unroll);
 		fitsInIMEM = IMEMEstimation.testMe(str);
 		if (fitsInIMEM) {

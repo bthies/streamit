@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.39 2003-10-17 19:20:20 thies Exp $
+# $Id: release.sh,v 1.40 2003-10-17 20:33:21 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -95,6 +95,7 @@ rm -rf $WORKING/streams/apps/examples/phase
 rm -rf $WORKING/streams/apps/examples/sample-trellis
 rm -rf $WORKING/streams/apps/examples/toy-trellis
 rm -rf $WORKING/streams/apps/examples/updown
+rm -rf $WORKING/streams/apps/examples/vectadd/VectAdd1.*
 rm -rf $WORKING/streams/apps/tests/portals
 # autobatchersort gets the wrong answer
 rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*

@@ -1860,7 +1860,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     {
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
-	print(in.name()+"in.peek(");
+	print(in.consumer_name()+".peek(");
 	num.accept(this);
 	print(")");
 
@@ -1872,7 +1872,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     {
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
-	print(in.name()+"in.pop()");
+	print(in.consumer_name()+".pop()");
 
 	//Utils.fail("FlatIRToCluster should see no pop expressions");
     }
@@ -1946,20 +1946,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	
 	NetStream out = RegisterStreams.getFilterOutStream(filter);
 
-	if (tapeType.equals(CStdType.Integer)) {
-
-	    print("__producer_"+out.getSource()+"_"+out.getDest()+".write_int(");
-	    val.accept(this);
-	    print(")");
-	    
-	} else if (tapeType.equals(CStdType.Float)) {
-
-	    print("__producer_"+out.getSource()+"_"+out.getDest()+".write_float(");
-	    val.accept(this);
-	    print(")");
-
-	}
-
+	print(out.producer_name()+".push(");
+	val.accept(this);
+	print(")");
 
 	//print(Util.staticNetworkSendPrefix(tapeType));
 	//print(Util.staticNetworkSendSuffix());

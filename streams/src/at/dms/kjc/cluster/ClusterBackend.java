@@ -233,11 +233,12 @@ public class ClusterBackend implements FlatVisitor {
 	ClusterExecutionCode.doit(graphFlattener.top);
 
 	System.out.println("Cluster Code begin...");
-	
+
+	ClusterCode.setPartitionMap(partitionMap);
 	ClusterCode.generateCode(graphFlattener.top);
 	ClusterCode.generateMasterFile();
 	ClusterCode.generateMakeFile();
-	ClusterCode.generateConfigFile(partitionMap);
+	ClusterCode.generateConfigFile();
 	ClusterCode.generateSetupFile();
 
 	System.out.println("Cluster Code End.");	

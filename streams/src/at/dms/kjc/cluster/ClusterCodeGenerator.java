@@ -40,6 +40,8 @@ class ClusterCodeGenerator {
     private HashSet sendsCreditsTo;
 
     private String TypeToC(CType t) {
+	if (t.toString().compareTo("int") == 0) return "int";
+	if (t.toString().compareTo("float") == 0) return "float";
 	if (t.toString().compareTo("boolean") == 0) return "bool";
 	return t.toString();
     } 
@@ -109,14 +111,18 @@ class ClusterCodeGenerator {
 	r.add("#include <init_instance.h>\n");
         r.add("#include <mysocket.h>\n");
 	r.add("#include <peek_stream.h>\n");
-	r.add("#include <data_consumer.h>\n");
-	r.add("#include <data_producer.h>\n");
 	r.add("#include <object_write_buffer.h>\n");
 	r.add("#include <save_state.h>\n");
 	r.add("#include <sdep.h>\n");
 	r.add("#include <message.h>\n");
 	r.add("#include <timer.h>\n");
 	r.add("#include <thread_info.h>\n");
+	r.add("\n");
+
+	r.add("#include <data_consumer.h>\n");
+	r.add("#include <data_producer.h>\n");
+	r.add("#include <consumer2.h>\n");
+	r.add("#include <producer2.h>\n");
 	r.add("\n");
 
 	r.add("extern int __max_iteration;\n");
@@ -142,16 +148,6 @@ class ClusterCodeGenerator {
 	}
 
 	r.add("\n");
-
-	//  +=============================+
-	//  | Fields                      |
-	//  +=============================+
-
-	for (int f = 0; f < fields.length; f++) {
-	    CType type = fields[f].getType();
-	    String ident = fields[f].getVariable().getIdent();
-	    r.add(TypeToC(type)+" "+ident+"__"+id+";\n");
-	}
 	
 	//  +=============================+
 	//  | Communication Variables     |
@@ -160,17 +156,21 @@ class ClusterCodeGenerator {
 	i = data_in.iterator();
 	while (i.hasNext()) {
 	    NetStream in = (NetStream)i.next();
-	    r.add("data_consumer "+in.consumer_name()+"; // "+in.getType()+"\n");
+	    r.add("consumer2<"+TypeToC(in.getType())+"> "+in.consumer_name()+";\n");
+
+	    /*
 	    if (oper instanceof SIRFilter) {
 		String type = ((SIRFilter)oper).getInputType().toString();
 		r.add("peek_stream<"+type+"> "+in.name()+"in(&"+in.consumer_name()+");\n");
 	    }
+	    */
 	}
 	
 	i = data_out.iterator();
 	while (i.hasNext()) {
 	    NetStream out = (NetStream)i.next();
-	    r.add("data_producer "+out.producer_name()+"; // "+out.getType()+"\n");
+	    r.add("producer2<"+TypeToC(out.getType())+"> "+out.producer_name()+";\n");
+	    r.add("    // this-part:"+ClusterCode.getPartition(NodeEnumerator.getFlatNode(id))+" dst-part:"+ClusterCode.getPartition(NodeEnumerator.getFlatNode(out.getDest()))+"\n");
 	}
 	
 	i = msg_from.iterator();
@@ -188,6 +188,18 @@ class ClusterCodeGenerator {
 	r.add("\n");
 
 	//  +=============================+
+	//  | Fields                      |
+	//  +=============================+
+
+	for (int f = 0; f < fields.length; f++) {
+	    CType type = fields[f].getType();
+	    String ident = fields[f].getVariable().getIdent();
+	    r.add(TypeToC(type)+" "+ident+"__"+id+";\n");
+	}
+
+	r.add("\n");
+
+	//  +=============================+
 	//  | Read / Write Thread         |
 	//  +=============================+
 
@@ -197,9 +209,12 @@ class ClusterCodeGenerator {
 	while (i.hasNext()) {
 	    NetStream in = (NetStream)i.next();
 	    r.add("  "+in.consumer_name()+".write_object(buf);\n");
+	    
+	    /*
 	    if (oper instanceof SIRFilter) {
-		r.add("  "+in.name()+"in.write_object(buf);\n");
+	       r.add("  "+in.name()+"in.write_object(buf);\n");
 	    }
+	    */
 	}
 
 	for (int f = 0; f < fields.length; f++) {
@@ -236,9 +251,12 @@ class ClusterCodeGenerator {
 	while (i.hasNext()) {
 	    NetStream in = (NetStream)i.next();
 	    r.add("  "+in.consumer_name()+".read_object(buf);\n");
+
+	    /*
 	    if (oper instanceof SIRFilter) {
 		r.add("  "+in.name()+"in.read_object(buf);\n");
 	    }
+	    */
 	}
 
 	for (int f = 0; f < fields.length; f++) {

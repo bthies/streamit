@@ -36,6 +36,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
     public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
 
+    private static HashMap partitionMap;
+
+    public static void setPartitionMap(HashMap pmap) {
+	partitionMap = pmap;
+    }
+
     public static void generateCode(FlatNode topLevel) 
     {
 	//generate the code for all tiles 
@@ -131,19 +137,19 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 
 	    p.print("  "+baseType.toString()+" tmp;\n");	
-	    p.print("  tmp = "+in.consumer_name()+".read_"+baseType.toString()+"();\n");	    
+	    p.print("  tmp = "+in.consumer_name()+".pop();\n");	    
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
+		p.print("  "+s.producer_name()+".push(tmp);\n");
 	    }
 
 	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN)) {
 	    	    
 	    p.print("  "+baseType.toString()+" tmp;\n");
 	    for (int i = 0; i < out.size(); i++) {
-		p.print("  tmp = "+in.consumer_name()+".read_"+baseType.toString()+"();\n");
+		p.print("  tmp = "+in.consumer_name()+".pop();\n");
 		NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
+		p.print("  "+s.producer_name()+".push(tmp);\n");
 	    }
 
 	} else if (splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
@@ -168,12 +174,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    int offs = 0;
 		
 	    p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
-	    p.print("  "+in.consumer_name()+".read_chunk(tmp, "+sum+" * sizeof("+baseType.toString()+"), "+sum+");\n");
+	    p.print("  "+in.consumer_name()+".pop_items(tmp, "+sum+");\n");
 		
 	    for (int i = 0; i < out.size(); i++) {
 		int num = splitter.getWeight(i);
 		NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".write_chunk(&tmp["+offs+"], "+num+" * sizeof("+baseType.toString()+"), "+num+");\n");
+		p.print("  "+s.producer_name()+".push_items(&tmp["+offs+"], "+num+");\n");
 		offs += num;
 	    }
 	}
@@ -191,10 +197,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 	    
 	    p.print("  "+baseType.toString()+" tmp[1000 * "+steady_counts+"];\n");
-	    p.print("  "+in.consumer_name()+".read_chunk(tmp, 1000 * "+steady_counts+" * sizeof("+baseType.toString()+"), 1000 * "+steady_counts+");\n");		
+	    p.print("  "+in.consumer_name()+".pop_items(tmp, 1000 * "+steady_counts+");\n");		
 	    for (int i = 0; i < out.size(); i++) {
 		NetStream s = (NetStream)out.elementAt(i);		
-		p.print("  "+s.producer_name()+".write_chunk(tmp, 1000 * "+steady_counts+" * sizeof("+baseType.toString()+"), 1000 * "+steady_counts+");\n");
+		p.print("  "+s.producer_name()+".push_items(tmp, 1000 * "+steady_counts+");\n");
 	    }
 
 	} else {	
@@ -329,9 +335,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    for (int i = 0; i < in.size(); i++) {
 		NetStream s = (NetStream)in.elementAt(i);		
-		p.print("  tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+		p.print("  tmp = "+s.consumer_name()+".pop();\n");
 		
-		p.print("  "+out.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
+		p.print("  "+out.producer_name()+".push(tmp);\n");
 		
 	    }
 
@@ -354,14 +360,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			    p.print("    tmp = __Init_Path_"+thread_id+"(__init_counter_"+thread_id+");\n");
 			    p.print("    __init_counter_"+thread_id+"++;\n");
 			    p.print("  } else\n");
-			    p.print("    tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+			    p.print("    tmp = "+s.consumer_name()+".pop();\n");
 			    
 			} else {
 			    
-			    p.print("  tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+			    p.print("  tmp = "+s.consumer_name()+".pop();\n");
 			}
 			
-			p.print("  "+out.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
+			p.print("  "+out.producer_name()+".push(tmp);\n");
 		    }
 		    
 		}
@@ -378,13 +384,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    NetStream s = (NetStream)in.elementAt(i);		
 		    int num = joiner.getWeight(i);
 		    
-		    p.print("  "+s.consumer_name()+".read_chunk(&tmp["+offs+"], "+num+" * sizeof("+baseType.toString()+"), "+num+");\n");
+		    p.print("  "+s.consumer_name()+".pop_items(&tmp["+offs+"], "+num+");\n");
 		    
 		    offs += num;
 		    
 		}
 		
-		p.print("  "+out.producer_name()+".write_chunk(tmp, "+sum+" * sizeof("+baseType.toString()+"), "+sum+");\n");
+		p.print("  "+out.producer_name()+".push_items(tmp, "+sum+");\n");
 	    
 	    }
 	}
@@ -710,7 +716,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     /**
      * partitionMap is SIROperator->Integer denoting partition #
      */
-    public static void generateConfigFile(HashMap partitionMap) {
+    public static void generateConfigFile() {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 
@@ -743,7 +749,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	*/
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print(i+" "+"machine-"+getPartition(NodeEnumerator.getFlatNode(i), partitionMap)+"\n");
+	    p.print(i+" "+"machine-"+getPartition(NodeEnumerator.getFlatNode(i))+"\n");
 	}
 
 	try {
@@ -782,7 +788,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     /**
      * Returns partition that <thread> should execute on.
      */
-    private static String getPartition(FlatNode node, HashMap partitionMap) {
+    public static String getPartition(FlatNode node) {
 	SIROperator op = node.contents;
 	Integer partition = (Integer)partitionMap.get(op);
 
@@ -803,7 +809,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		// integrate backward if reading from a filter
 		if (node.incoming[0] != null && node.incoming[0].contents instanceof SIRFilter) {
-		    String part = getPartition(node.incoming[0], partitionMap);
+		    String part = getPartition(node.incoming[0]);
 		    return part;
 		}
 
@@ -813,7 +819,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		HashMap map = new HashMap(); // String partition->Integer sum
 		int[] weights = split.getWeights();
 		for (int i=0; i<weights.length; i++) {
-		    String part = getPartition(node.edges[i], partitionMap);
+		    String part = getPartition(node.edges[i]);
 		    Integer _oldSum = (Integer)map.get(part);
 		    int oldSum = 0;
 		    if (_oldSum!=null) {
@@ -840,7 +846,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    
 	    // integrate forward if writing to a filter
 	    if (node.edges[0] != null && node.edges[0].contents instanceof SIRFilter) {
-		String part = getPartition(node.edges[0], partitionMap);
+		String part = getPartition(node.edges[0]);
 		return part;
 	    }
 
@@ -850,7 +856,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    HashMap map = new HashMap(); // String partition->Integer sum
 	    int[] weights = join.getWeights();
 	    for (int i=0; i<weights.length; i++) {
-		String part = getPartition(node.incoming[i], partitionMap);
+		String part = getPartition(node.incoming[i]);
 		Integer _oldSum = (Integer)map.get(part);
 		int oldSum = 0;
 		if (_oldSum!=null) {
@@ -876,7 +882,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    // if we find identity that wasn't assigned, integrate it
 	    // into its destination (arbitrarily -- could just as well
 	    // be the source)
-	    return getPartition(node.edges[0], partitionMap);
+	    return getPartition(node.edges[0]);
 	} else {
 	    Utils.fail("No partition was assigned to " + op + " of type " + op.getClass());
 	    return null;

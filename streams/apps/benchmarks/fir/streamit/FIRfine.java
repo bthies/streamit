@@ -12,8 +12,8 @@ public class FIRfine extends StreamIt
     {
         add (new FloatSource (10000));
         add (new FIR (128));
-	add (new FileWriter("output.dat", Float.TYPE));
-	//add (new FloatPrinter (10000));
+	//add (new FileWriter("output.dat", Float.TYPE));
+	add (new FloatPrinter (10000));
     }
 }
 

@@ -10,7 +10,6 @@ NAMES =		init_instance \
 		int_pair \
 		mysocket \
 		open_socket \
-		peek_stream \
 		timer
 
 OBJS = 		$(NAMES:%=%.o)
@@ -46,7 +45,6 @@ init_instance.o: init_instance.h int_pair.h open_socket.h mysocket.h
 int_pair.o: int_pair.h
 mysocket.o: mysocket.h
 open_socket.o: open_socket.h mysocket.h
-peek_stream.o: peek_stream.h mysocket.h
 timer.o: timer.h
 
 

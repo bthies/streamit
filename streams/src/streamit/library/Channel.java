@@ -20,82 +20,181 @@ public class Channel extends DestroyedClass
         queue = new LinkedList ();
     }
     
-    void EnsureData ()
+    void EnsureData (int amount)
     {
-        while (queue.isEmpty ())
+        while (queue.size () < amount)
         {
             ASSERT (source != null);
             
             source.Work ();
         }
     }
+    
+    void EnsureData ()
+    {
+        EnsureData (1);
+    }
 
     // PUSH OPERATIONS ----------------------------------------------
 
     // push something of type <type>
-    public void Push(Object o) {}
+    public void Push(Object o)
+    {
+        ASSERT (o.getClass () == type);
+        
+        queue.addLast(o);
+    }
 
     // push an int
-    public void PushInt(int i) {}
+    public void PushInt(int i) 
+    {
+        ASSERT (type == Integer.TYPE);
+        
+        queue.addLast (new Integer (i));
+    }
 
     // push a char
     public void PushChar(char c)
     {
-        ASSERT (type.isPrimitive ());
+        ASSERT (type == Character.TYPE);
         
-        queue.addFirst (new Character  (c));
+        queue.addLast (new Character  (c));
     }
 
     // push a double
-    public void PushDouble(double d) {}
+    public void PushDouble(double d)
+    {
+        ASSERT (type == Double.TYPE);
+        
+        queue.addLast (new Double (d));
+    }
 
     // push a String
-    public void PushString(String str) {}
+    public void PushString(String str)
+    {
+        Push (str);
+    }
 
     // POP OPERATIONS ----------------------------------------------
 
     // pop something of type <type>
-    public Object Pop() { return null; }
+    public Object Pop()
+    {
+        EnsureData ();
+        
+        Object data;
+        data = queue.removeFirst ();
+        ASSERT (data != null);
+        
+        return data;
+    }
 
     // pop an int
-    public int PopInt() { return 0; }
+    public int PopInt()
+    {
+        ASSERT (type == Integer.TYPE);
+        
+        Integer data;
+        data = (Integer) Pop ();
+        ASSERT (data != null);
+        
+        return data.intValue ();
+    }
+    
 
     // pop a char
     public char PopChar()
     {
-        ASSERT (type.isPrimitive ());
-        
-        EnsureData ();
+        ASSERT (type == Character.TYPE);
         
         Character c;
-        c = (Character) queue.removeLast ();
+        c = (Character) Pop ();
         ASSERT (c != null);
         
         return c.charValue ();
     }
 
     // pop a double
-    public double PopDouble() { return 0; }
+    public double PopDouble()
+    {
+        ASSERT (type == Double.TYPE);
+        
+        Double data;
+        data = (Double) Pop ();
+        ASSERT (data != null);
+        
+        return data.doubleValue ();
+    }
+    
 
     // pop a String
-    public String PopString() { return null; }
+    public String PopString() 
+    {
+        String data = (String) Pop ();;
+        ASSERT (data != null);
+
+        return data;
+    }
 
     // PEEK OPERATIONS ----------------------------------------------
 
     // peek at something of type <type>
-    public Object Peek(int index) { return null; }
+    public Object Peek(int index)
+    {
+        EnsureData (index);
+        
+        Object data;
+        data = queue.get (index - 1);
+        ASSERT (data != null);
+        
+        return data;
+    }
 
     // peek at an int
-    public int PeekInt(int index) { return 0; }
+    public int PeekInt(int index)
+    {
+        ASSERT (type == Integer.TYPE);
+        
+        Integer data;
+        data = (Integer) Peek (index);
+        ASSERT (data != null);
+        
+        return data.intValue ();
+    }
 
     // peek at a char
-    public char PeekChar(int index) { return 'x'; }
+    public char PeekChar(int index)
+    {
+        ASSERT (type == Character.TYPE);
+        
+        Character data;
+        data = (Character) Peek (index);
+        ASSERT (data != null);
+        
+        return data.charValue ();
+    }
 
     // peek at a double
-    public double PeekDouble(int index) { return 0; }
+    public double PeekDouble(int index)
+    {
+        ASSERT (type == Double.TYPE);
+        
+        Double data;
+        data = (Double) Peek (index);
+        ASSERT (data != null);
+        
+        return data.doubleValue ();
+    }
 
     // peek at a String
-    public String PeekString(int index) { return null; }
+    public String PeekString(int index)
+    {
+        String data;
+        data = (String) Peek (index);
+        ASSERT (data != null);
+        
+        return data;
+    }
     
     // ------------------------------------------------------------------
     //                  syntax checking functions

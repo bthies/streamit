@@ -27,6 +27,7 @@
 # > need to verify some of the values used
 # } xxx
 
+
 $num_rows = 4;
 $num_cols = 4;
 
@@ -52,7 +53,7 @@ print "\n";
 
 # declare $num_rowx x $num_cols tiles
 # each tile declares a single functional unit and
-# access to a dedicate cache (data and instruction)
+# access to a dedicated cache (data and instruction)
 print "\t<Proc>\n";
 print "\t\t<Name>TILE</Name>\n";
 print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
@@ -231,9 +232,13 @@ print "\n";
 print "\t<Mem>\n";
 print "\t\t<Name>LMEM</Name>\n";
 print "\t\t<Dimension>4</Dimension>\n";
-print "\t\t<Subtype>RAM</Subtype>\n";
+print "\t\t<Subtype>CACHE</Subtype>\n";
 print "\t\t<Size>1048576</Size>\n";
-print "\t\t<RAMCoherence>INCOHERENT</RAMCoherence>\n";
+print "\n";
+print "\t\t<CacheContent>UNIFIED</CacheContent>\n";
+print "\t\t<CacheCoherent>false</CacheCoherent>\n";
+print "\t\t<CacheLinesize>32</CacheLinesize>\n";
+print "\t\t<CacheAssociativity>2</CacheAssociativity>\n";
 print "\t</Mem>\n";
 print "\n";
 # } xxx
@@ -339,27 +344,27 @@ print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
 print "\n";
 print "\t\t<Sender>\n";
 print "\t\t\t<Name>DCACHE</Name>\n";
-print "\t\t\t<Index>*</Index>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
 print "\t\t</Sender>\n";
 print "\t\t<Sender>\n";
 print "\t\t\t<Name>ICACHE</Name>\n";
-print "\t\t\t<Index>*</Index>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
 print "\t\t</Sender>\n";
 print "\t\t<Sender>\n";
 print "\t\t\t<Name>LMEM</Name>\n";
-print "\t\t\t<Index>*</Index>\n";
+print "\t\t\t<Index>0..3</Index>\n";
 print "\t\t</Sender>\n";
 print "\t\t<Receiver>\n";
 print "\t\t\t<Name>DCACHE</Name>\n";
-print "\t\t\t<Index>*</Index>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
 print "\t\t</Receiver>\n";
 print "\t\t<Receiver>\n";
 print "\t\t\t<Name>ICACHE</Name>\n";
-print "\t\t\t<Index>*</Index>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
 print "\t\t</Receiver>\n";
 print "\t\t<Receiver>\n";
 print "\t\t\t<Name>LMEM</Name>\n";
-print "\t\t\t<Index>*</Index>\n";
+print "\t\t\t<Index>0..3</Index>\n";
 print "\t\t</Receiver>\n";
 # xxx {
 # verify parameters
@@ -481,7 +486,7 @@ foreach $key (sort keys %vnet) {
     # make connection to fifo within a tile
     print "\t\t<Sender>\n";
     print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
-    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t\t<Index>$i $j</Index>\n";
     print "\t\t</Sender>\n";
 
     # make connection to link or if at the boundary
@@ -514,7 +519,7 @@ foreach $key (sort keys %vnet) {
     # repeat process for receivers 
     print "\t\t<Receiver>\n";
     print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
-    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t\t<Index>$i $j</Index>\n";
     print "\t\t</Receiver>\n";
 
     print "\t\t<Receiver>\n";
@@ -564,7 +569,7 @@ foreach $key (sort keys %hnet) {
 
     print "\t\t<Sender>\n";
     print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
-    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t\t<Index>$i $j</Index>\n";
     print "\t\t</Sender>\n";
 
     print "\t\t<Sender>\n";
@@ -593,7 +598,7 @@ foreach $key (sort keys %hnet) {
 
     print "\t\t<Receiver>\n";
     print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
-    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t\t<Index>$i $j</Index>\n";
     print "\t\t</Receiver>\n";
 
     print "\t\t<Receiver>\n";
@@ -627,4 +632,91 @@ foreach $key (sort keys %hnet) {
 }
 
 print "\n";
+print "<Morph>\n";
+print "\t\t<Name>INIT_STATE</Name>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>DMA</Name>\n";
+print "\t\t\t<Index>0</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>DCACHE</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>ICACHE</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>0..3</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>GMEM</Name>\n";
+print "\t\t\t<Index>0</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>DCACHE_TILE_LINK</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>ICACHE_TILE_LINK</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>CACHE_LMEM_LINK</Name>\n";
+print "\t\t\t<Index>0..$num_rows 0..$num_cols</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>GMEM_DMA_LINK</Name>\n";
+print "\t\t\t<Index>0</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>GMEM_LMEM_LINK</Name>\n";
+print "\t\t\t<Index>0..3</Index>\n";
+print "\t\t</IntoResource>\n";
+print "\t\t<IntoResource>\n";
+print "\t\t\t<Name>LMEM_DMA_LINK</Name>\n";
+print "\t\t\t<Index>0..3</Index>\n";
+print "\t\t</IntoResource>\n";
+
+foreach $key (sort keys %vnet) {
+    $_ = $key;
+    s/ /_/g;
+    $suffix = $_;
+    
+    $sid = $hnet{$key}[0];
+    $rid = $hnet{$key}[1];
+    
+    ($type, $id, $i, $j) = split(/ /, $key);
+
+    print "\t\t<IntoResource>\n";
+    print "\t\t\t<Name>V_$suffix</Name>\n";
+    print "\t\t</IntoResource>\n";
+}
+
+foreach $key (sort keys %hnet) {
+    $_ = $key;
+    s/ /_/g;
+    $suffix = $_;
+    
+    $sid = $hnet{$key}[0];
+    $rid = $hnet{$key}[1];
+    
+    ($type, $id, $i, $j) = split(/ /, $key);
+
+    print "\t\t<IntoResource>\n";
+    print "\t\t\t<Name>H_$suffix</Name>\n";
+    print "\t\t</IntoResource>\n";
+}
+print "\t</Morph>\n";
+
+
 print "</Root>\n";

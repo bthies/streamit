@@ -38,11 +38,12 @@ public class StatelessDuplicate {
      * Duplicates <filter> into a <reps>-way SplitJoin and replaces
      * the filter with the new construct in the parent.
      */
-    public static void doit(SIRFilter origFilter, int reps) {
+    public static SIRSplitJoin doit(SIRFilter origFilter, int reps) {
 	if (isFissable(origFilter)) {
-	    new StatelessDuplicate(origFilter, reps).doit();
+	    return new StatelessDuplicate(origFilter, reps).doit();
 	} else {
 	    Utils.fail("Trying to split an un-fissable filter: " + origFilter);
+	    return null;
 	}
     }
 
@@ -122,7 +123,7 @@ public class StatelessDuplicate {
     /**
      * Carry out the duplication on this instance.
      */
-    private void doit() {
+    private SIRSplitJoin doit() {
 	// make new filters
 	makeDuplicates();
 
@@ -178,6 +179,7 @@ public class StatelessDuplicate {
 	}
 	ConstantProp.propagateAndUnroll(toplevel);
 	*/
+	return result;
     }
 
     /**

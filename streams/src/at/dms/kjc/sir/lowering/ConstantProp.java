@@ -225,6 +225,11 @@ public class ConstantProp {
 		//System.err.println("!! top finding " + parameters[i].getIdent() + " " + parameters[i].hashCode() + " = " + args.get(i) + " in call to " + str.getIdent());
 		// if it's already a literal, record it
 		constants.put(parameters[i], (JLiteral)args.get(i));
+            } else if (args.get(i) instanceof SIRPortal ||
+                       (args.get(i) instanceof JLocalVariableExpression &&
+                       ((JLocalVariableExpression)args.get(i)).getType().getCClass().getIdent().endsWith("Portal"))) {
+                // similarly.
+                constants.put(parameters[i], args.get(i));
 	    } else if ((args.get(i) instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args.get(i)).getVariable())!=null) {
 		// otherwise if it's associated w/ a literal, then
 		// record that and set the actual argument to be a literal

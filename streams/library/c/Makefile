@@ -1,10 +1,10 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.6 2001-10-30 15:52:08 dmaze Exp $
+# $Id: Makefile,v 1.7 2001-11-02 19:36:41 dmaze Exp $
 #
 
 CC =		cc
-CFLAGS =	-g
+CFLAGS =	-O2
 AR =		ar
 RANLIB =	ranlib
 LIBRARY =	libstreamit.a
@@ -32,7 +32,7 @@ $(LIBRARYP): $(OBJSP)
 	$(RANLIB) $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -g -c -o $@ $<
 
 %_p.o: %.c
 	$(CC) $(CFLAGS) -g -pg -a -c -o $@ $<

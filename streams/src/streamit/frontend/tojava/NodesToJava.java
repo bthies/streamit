@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.36 2002-09-26 20:30:14 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.37 2002-09-30 21:28:20 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -487,8 +487,17 @@ public class NodesToJava implements FEVisitor
     
     public Object visitStmtAssign(StmtAssign stmt)
     {
+        String op;
+        switch(stmt.getOp())
+        {
+        case ExprBinary.BINOP_ADD: op = " += "; break;
+        case ExprBinary.BINOP_SUB: op = " -= "; break;
+        case ExprBinary.BINOP_MUL: op = " *= "; break;
+        case ExprBinary.BINOP_DIV: op = " /= "; break;
+        default: op = " = ";
+        }
         // Assume both sides are the right type.
-        return (String)stmt.getLHS().accept(this) + " = " +
+        return (String)stmt.getLHS().accept(this) + op +
             (String)stmt.getRHS().accept(this);
     }
 

@@ -133,7 +133,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             ASSERT (splitObject);
 
             BigInteger numExecutions = getNumSplitExecutions ();
-            ASSERT (numExecutions != null && numExecutions.signum () == 1);
+            ASSERT (numExecutions != null && numExecutions.signum () >= 0);
 
             if (numExecutions.signum () == 1)
             {
@@ -204,7 +204,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             ASSERT (joinObject);
 
             BigInteger numExecutions = getNumJoinExecutions ();
-            ASSERT (numExecutions != null && numExecutions.signum () == 1);
+            ASSERT (numExecutions != null && numExecutions.signum () >= 0);
 
             if (numExecutions.signum () == 1)
             {

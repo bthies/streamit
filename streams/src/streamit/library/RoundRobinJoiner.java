@@ -5,11 +5,8 @@ import streamit.scheduler.Scheduler;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class RoundRobinJoiner extends Joiner {
-    public RoundRobinJoiner()
-    {
-    }
-
+public class RoundRobinJoiner extends Joiner 
+{
     public void work ()
     {
         int inputIndex;

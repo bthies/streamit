@@ -45,6 +45,11 @@ public class SchedSplitJoin extends SchedStream
     {
         ASSERT (type);
         splitType = type;
+        
+        // make sure that you have at most one NULL join and split
+        // if both are NULL then the children are disjoint and the
+        // scheduler won't be able to handle this anyway
+        ASSERT (joinType == null || (joinType.type != joinType.NULL || splitType.type != splitType.NULL));
     }
 
     public SchedSplitType getSplitType ()
@@ -57,6 +62,11 @@ public class SchedSplitJoin extends SchedStream
     {
         ASSERT (type);
         joinType = type;
+        
+        // make sure that you have at most one NULL join and split
+        // if both are NULL then the children are disjoint and the
+        // scheduler won't be able to handle this anyway
+        ASSERT (splitType == null || (joinType.type != joinType.NULL || splitType.type != splitType.NULL));
     }
 
     public SchedJoinType getJoinType ()
@@ -237,7 +247,14 @@ public class SchedSplitJoin extends SchedStream
 
         // now normalize all the rates to be integers
         {
-            BigInteger multiplier = joinRate.getDenominator ();
+            BigInteger multiplier;
+            
+            if (joinRate != null)
+            {
+                multiplier = joinRate.getDenominator ();
+            } else {
+                multiplier = BigInteger.ONE;
+            }
 
             // find a factor to multiply all the fractional rates by
             {
@@ -258,14 +275,26 @@ public class SchedSplitJoin extends SchedStream
             // multiply all the rates by this factor and set the rates for
             // the children and splitter and joiner
             {
-                splitRate = splitRate.multiply (multiplier);
-                joinRate = joinRate.multiply (multiplier);
-                ASSERT (splitRate.getDenominator ().equals (BigInteger.ONE));
-                ASSERT (joinRate.getDenominator ().equals (BigInteger.ONE));
-
-                numSplitExecutions = splitRate.getNumerator ();
-                numJoinExecutions = joinRate.getNumerator ();
-
+                if (splitRate != null)
+                {
+	                splitRate = splitRate.multiply (multiplier);
+                	ASSERT (splitRate.getDenominator ().equals (BigInteger.ONE));
+                	numSplitExecutions = splitRate.getNumerator ();
+                } else
+                {
+                    numSplitExecutions = BigInteger.ZERO;
+                }
+                
+                if (joinRate != null)
+                {
+                	joinRate = joinRate.multiply (multiplier);
+                	ASSERT (joinRate.getDenominator ().equals (BigInteger.ONE));
+                	numJoinExecutions = joinRate.getNumerator ();
+                } else 
+                {
+                    numJoinExecutions = BigInteger.ZERO;
+                }
+                
                 // handle the children
                 {
                     ListIterator iter;

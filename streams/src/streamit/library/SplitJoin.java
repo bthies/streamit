@@ -48,6 +48,7 @@ public class SplitJoin extends Stream
         //  1 - round robin
         //  2 - weighted round robin
         //  3 - duplicate
+        //  4 - null
 
         int type;
         List weights;
@@ -58,6 +59,7 @@ public class SplitJoin extends Stream
             {
                 case 1: // round robin
                 case 3: // duplicate
+                case 4: // null - no in/out
                     break;
                 case 2: // weighted round robin - need a weight list
                     weights = new LinkedList ();
@@ -92,6 +94,8 @@ public class SplitJoin extends Stream
                     return splitter;
                 case 3:
                     return new DuplicateSplitter ();
+                case 4:
+                	return new NullSplitter ();
                 default:
                     SASSERT (false);
             }
@@ -111,7 +115,12 @@ public class SplitJoin extends Stream
                         joiner.addWeight ((Integer)weights.remove (0));
                     }
                     return joiner;
-                case 3: // there are no duplicate joiners!
+                case 3: 
+                    // there are no duplicate joiners!
+                    SASSERT (false);
+                    break;
+                case 4:
+                    return new NullJoiner ();
                 default:
                     SASSERT (false);
             }
@@ -144,6 +153,28 @@ public class SplitJoin extends Stream
         return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3).addWeight (w4).addWeight (w5).addWeight (w6).addWeight (w7);
     }
 
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7, int w8, int w9, int w10, int w11, int w12, int w13, int w14, int w15, int w16, int w17, int w18)
+    {
+        return new SplitJoinType (2).addWeight (w1).
+        								 addWeight (w2).
+        								 addWeight (w3).
+        								 addWeight (w4).
+        								 addWeight (w5).
+        								 addWeight (w6).
+        								 addWeight (w7).
+        								 addWeight (w8).
+        								 addWeight (w9).
+        								 addWeight (w10).
+        								 addWeight (w11).
+        								 addWeight (w12).
+        								 addWeight (w13).
+        								 addWeight (w14).
+        								 addWeight (w15).
+        								 addWeight (w16).
+        								 addWeight (w17).
+        								 addWeight (w18);
+    }
+
     public static SplitJoinType ROUND_ROBIN ()
     {
         return new SplitJoinType (1);
@@ -152,6 +183,11 @@ public class SplitJoin extends Stream
     public static SplitJoinType DUPLICATE ()
     {
         return new SplitJoinType (3);
+    }
+    
+    public static SplitJoinType NULL ()
+    {
+        return new SplitJoinType (4);
     }
 
     // specify the splitter
@@ -221,14 +257,12 @@ public class SplitJoin extends Stream
         {
             splitter.setupOperator ();
             input = splitter.getIOField ("input", 0);
-            ASSERT (input != null);
         }
 
         if (joiner != null)
         {
             joiner.setupOperator ();
             output = joiner.getIOField ("output", 0);
-            ASSERT (output != null);
         }
     }
 

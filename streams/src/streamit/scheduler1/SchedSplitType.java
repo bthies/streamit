@@ -8,7 +8,8 @@ public class SchedSplitType extends SchedObject
 {
     public static final int WEIGHTED_ROUND_ROBIN = 0;
     public static final int DUPLICATE = 1;
-    public static final int LAST = 2;
+    public static final int NULL = 2;
+    public static final int LAST = 3;
 
     final int type;
     int roundConsumption;
@@ -45,6 +46,11 @@ public class SchedSplitType extends SchedObject
                     roundConsumption = 1;
                     break;
                 }
+            case NULL:
+            	{
+            	    roundConsumption = 0;
+            	    break;
+            	}
             default:
                 ASSERT (false);
         }

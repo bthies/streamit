@@ -25,6 +25,13 @@ public class Operator extends DestroyedClass
             .add("b", b);
     }
 
+    public Operator(float a, int b)
+    {
+        initParams = new ParameterContainer("float-int")
+            .add("a", a)
+            .add("b", b);
+    }
+
     public Operator(float a, float b, float c)
     {
         initParams = new ParameterContainer("float-float-float")
@@ -170,7 +177,8 @@ public class Operator extends DestroyedClass
 
     void invalidInitError ()
     {
-        ERROR ("You didn't provide a valid init function in class " + getClass ().getName () + ".\nFilters now need init functions, even if they're empty.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.");
+        ERROR ("You didn't provide a valid init function in class " + getClass ().getName () + ".\nFilters now need init functions, even if they're empty.\nPerhaps you're passing parameters that don't have a valid prototype yet?\nCheck streams/docs/implementation-notes/library-init-functions.txt for instructions on adding new signatures to init functions.\n" + 
+                "The init string you passed is: (" + initParams.getParamName() + ")." );
     }
 
     // initializatoin functions, to be over-ridden
@@ -207,6 +215,9 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(int x, int y) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(float x, int y) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(int x, int y, int z) { invalidInitError (); }
@@ -481,6 +492,10 @@ public class Operator extends DestroyedClass
         if(initParams.getParamName().equals("int-float"))
             init (initParams.getIntParam("a"),
                   initParams.getFloatParam("b"));
+        else
+        if(initParams.getParamName().equals("float-int"))
+            init (initParams.getFloatParam("a"),
+                  initParams.getIntParam("b"));
         else
         if(initParams.getParamName().equals("float-float-int"))
             init (initParams.getFloatParam("x1"),

@@ -21,25 +21,59 @@ package streamit.frontend.nodes;
  * the specified type parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePrimitive.java,v 1.9 2004-01-28 22:12:59 dmaze Exp $
+ * @version $Id: TypePrimitive.java,v 1.10 2004-01-28 22:26:54 dmaze Exp $
  */
 public class TypePrimitive extends Type
 {
+    /** Type constant for bit types. */
     public static final int TYPE_BIT = 1;
+    /** Type constant for int types. */
     public static final int TYPE_INT = 2;
+    /** Type constant for float types. */
     public static final int TYPE_FLOAT = 3;
+    /** Type constant for double types; unused in StreamIt. */
     public static final int TYPE_DOUBLE = 4;
+    /** Type constant for complex primitive types. */
     public static final int TYPE_COMPLEX = 5;
+    /** Type constant for void types. */
     public static final int TYPE_VOID = 6;
+    /** Type constant for boolean types. */
     public static final int TYPE_BOOLEAN = 7;
+
+    /** Type object for boolean types. */
+    public static final TypePrimitive booltype =
+        new TypePrimitive(TYPE_BOOLEAN);
+    /** Type object for bit types. */
+    public static final TypePrimitive bittype = new TypePrimitive(TYPE_BIT);
+    /** Type object for int types. */
+    public static final TypePrimitive inttype = new TypePrimitive(TYPE_INT);
+    /** Type object for float types. */
+    public static final TypePrimitive floattype =
+        new TypePrimitive(TYPE_FLOAT);
+    /** Type object for complex primitive types. */
+    public static final TypePrimitive cplxtype =
+        new TypePrimitive(TYPE_COMPLEX);
+    /** Type object for void types. */
+    public static final TypePrimitive voidtype =
+        new TypePrimitive(TYPE_VOID);
     
     private int type;
 
+    /**
+     * Create a new primitive type.
+     *
+     * @param type  integer type number, one of the TYPE_* constants
+     */
     public TypePrimitive(int type)
     {
         this.type = type;
     }
     
+    /**
+     * Get the type number for this type.
+     *
+     * @return  integer type number, one of the TYPE_* constants
+     */
     public int getType()
     {
         return type;

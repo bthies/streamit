@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.34 2003-07-08 21:05:10 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.35 2003-07-09 15:54:48 dmaze Exp $
  */
 public class ToJava
 {
@@ -148,7 +148,7 @@ public class ToJava
         prog = (Program)prog.accept(new DoComplexProp(varGen));
         prog = (Program)prog.accept(new TranslateEnqueue());
         prog = (Program)prog.accept(new InsertIODecls(libraryFormat));
-        prog = (Program)prog.accept(new InsertInitConstructors());
+        prog = (Program)prog.accept(new InsertInitConstructors(varGen));
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());
         prog = (Program)prog.accept(new TrimDumbDeadCode());

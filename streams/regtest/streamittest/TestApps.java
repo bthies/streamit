@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.9 2003-01-25 09:49:19 thies Exp $
+ * $Id: TestApps.java,v 1.10 2003-01-31 15:10:38 thies Exp $
  **/
 package streamittest;
 
@@ -54,7 +54,8 @@ public class TestApps extends StreamITTestCase {
     public void testMP3Simple()
     {
         String root = APPS_ROOT + "mp3decoder/";
-	doCompileRunVerifyTest(root, "MP3Simple.java", "MP3Simple.out", 0, 1152);
+	doMake(root);
+	doCompileRunVerifyTest(root, "LinkedMP3Simple.java", "MP3Simple.out", 0, 1152);
     }
     
     public void testNokiaFine() {

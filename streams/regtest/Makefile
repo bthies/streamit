@@ -83,7 +83,8 @@ do-test-checkin-raw: compile
 # linear framework tests (lower level than the regression
 # testing framework for testing the entire compiler path.
 test-linear: compile
-	make -C $(STREAMIT_HOME)/compiler
+	#make -C $(STREAMIT_HOME)/compiler
+	jikes -nowarn ~/linear/*.java
 	$(TESTER) streamittest.TestLinear
 
 

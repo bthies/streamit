@@ -37,7 +37,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	    new JVariableDefinition(null, 
 				    0, 
 				    CStdType.Integer,
-				    "i",
+				    "____i",
 				    null);
 	
 
@@ -82,10 +82,16 @@ class IncreaseFilterMult implements StreamVisitor {
 	block.addStatement(init);
 
 	JBlock for_block = new JBlock(null, new JStatement[0], null);
-	for_block.addStatement(call);
+	//for_block.addStatement(call);
+	for_block.addAllStatements(work.getBody());
 
-	block.addStatement(new JForStatement(null, init, cond, incr, for_block,
-					     null));
+	JForStatement for_stmt = new JForStatement(null, init, cond, incr, for_block, null);
+
+	// mark the for loop as unrolled
+	// since unrolling it may cause code explosion
+	for_stmt.setUnrolled(true); 
+
+	block.addStatement(for_stmt);
 
 
 	//block.addStatement(
@@ -95,8 +101,9 @@ class IncreaseFilterMult implements StreamVisitor {
 	//JBlock body = new JBlock(null, new JStatement[0], null);
 	//body.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, work.getName(), new JExpression[0]), null));
 
+	/*
 	JBlock work_body = work.getBody();
-
+	
 	JMethodDeclaration old_work = 
 	    new JMethodDeclaration(null, 
 				   at.dms.kjc.Constants.ACC_PUBLIC,
@@ -109,7 +116,7 @@ class IncreaseFilterMult implements StreamVisitor {
 				   null);
 
 	filter.addMethod(old_work); 
-
+	*/
 
 
 	JMethodDeclaration new_work = 

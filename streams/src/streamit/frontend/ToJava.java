@@ -56,17 +56,14 @@ class ToJava
     {
         System.err.println(
 "streamit.frontend.ToJava: StreamIt syntax translator\n" +
-"Usage: java streamit.frontend.ToJava < in.str > out.java\n" +
+"Usage: java streamit.frontend.ToJava [--output out.java] in.str ...\n" +
 "\n" +
 "Options:\n" +
-"  --adhoc        Use partial parsing and ad-hoc translation (default)\n" +
-"  --full         Use full parsing (experimental)\n" +
 "  --help         Print this message\n" +
 "  --output file  Write output to file, not stdout\n" +
 "\n");
     }
 
-    private boolean useNewPath = true;
     private boolean printHelp = false;
     private String outputFile = null;
     private List inputFiles = new ArrayList();
@@ -75,10 +72,8 @@ class ToJava
     {
         for (int i = 0; i < args.length; i++)
         {
-            if (args[i].equals("--adhoc"))
-                useNewPath = false;
-            else if (args[i].equals("--full"))
-                useNewPath = true;
+            if (args[i].equals("--full"))
+                ; // Accept but ignore for compatibility
             else if (args[i].equals("--help"))
                 printHelp = true;
             else if (args[i].equals("--"))
@@ -103,37 +98,7 @@ class ToJava
             printUsage();
             return;
         }
-        if (useNewPath)
-            runNew();
-        else
-            runOld();
-    }
-
-    public void runOld()
-    {
-        StreamItParser parser = null;
-        try
-        {
-            StreamItLex lexer = new StreamItLex (new DataInputStream(System.in));
-            parser = new StreamItParser (lexer);
-            System.out.println ("/*");
-            System.out.println ("parsing:");
-            parser.program ();
-            System.out.println ("done parsing. outputing:");
-            System.out.println(toStringList ((BaseAST)parser.getAST()));
-            System.out.println ("done outputing. walking:");
-            System.out.println ("*/");
-            StreamItJavaTP walker = new StreamItJavaTP();
-            walker.program(parser.getAST());  // walk tree
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace(System.err);
-        }
-    }
-
-    public void runNew()
-    {
+        
         StreamItParserFE parser = null;
         Program prog = null;
         Writer outWriter;

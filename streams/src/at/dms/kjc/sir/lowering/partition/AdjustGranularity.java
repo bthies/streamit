@@ -25,9 +25,6 @@ public class AdjustGranularity {
 	}
 	if (app.equals("fm")) {
 	    // do custom transforms for FM radio
-	    if (num==-1) {
-		Namer.assignNames(IterFactory.createIter(str));
-	    }
 	    doFM16_2(str);
 	} else if (app.equals("fft")) {
 	    // do custom transforms for fft
@@ -112,7 +109,6 @@ public class AdjustGranularity {
 	//FieldProp.doPropagate(str);
 
 	StreamItDot.printGraph(str, "balanced.dot");
-	Namer.assignNames(IterFactory.createIter(str));
     }
 
     private static void doBigBeam620(SIRStream _str) {
@@ -148,7 +144,6 @@ public class AdjustGranularity {
 	//FieldProp.doPropagate(str);
 
 	StreamItDot.printGraph(str, "balanced.dot");
-	Namer.assignNames(IterFactory.createIter(str));
     }
 
     private static void doBigBeam1OnlyBottomSplit(SIRStream _str) {
@@ -177,7 +172,6 @@ public class AdjustGranularity {
 	}
 	
 	StreamItDot.printGraph(str, "balanced.dot");
-	Namer.assignNames(IterFactory.createIter(str));
     }
 
     private static void doBigBeam2(SIRStream _str) {
@@ -229,7 +223,6 @@ public class AdjustGranularity {
 	//FieldProp.doPropagate(str);
 
 	StreamItDot.printGraph(str, "balanced.dot");
-	Namer.assignNames(IterFactory.createIter(str));
     }
 
     private static void doBeam16_2(SIRStream str) {
@@ -277,8 +270,6 @@ public class AdjustGranularity {
 
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
-
-	Namer.assignNames(IterFactory.createIter(str));
     }
 
     private static void doBeam16(SIRStream str) {
@@ -342,7 +333,6 @@ public class AdjustGranularity {
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	/*
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
@@ -420,7 +410,6 @@ public class AdjustGranularity {
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	/*
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
@@ -521,7 +510,6 @@ public class AdjustGranularity {
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	/*
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
@@ -602,7 +590,6 @@ public class AdjustGranularity {
 
         ConstantProp.propagateAndUnroll(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -631,7 +618,6 @@ public class AdjustGranularity {
 
         ConstantProp.propagateAndUnroll(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -653,7 +639,6 @@ public class AdjustGranularity {
 
 	WorkEstimate.getWorkEstimate(str).printWork();
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -683,7 +668,6 @@ public class AdjustGranularity {
 
 	WorkEstimate.getWorkEstimate(str).printWork();
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -716,7 +700,6 @@ public class AdjustGranularity {
 
 	WorkEstimate.getWorkEstimate(str).printWork();
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -799,7 +782,6 @@ public class AdjustGranularity {
 
 	StreamItDot.printGraph (str, "fused2.dot");
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -831,7 +813,6 @@ public class AdjustGranularity {
 	SIRFilter printer = (SIRFilter)Namer.getStream("FloatPrinter_2_3_4");
 	FusePipe.fuse(adder, printer);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -926,8 +907,6 @@ public class AdjustGranularity {
 	FieldProp.doPropagate(pipe2);
 	*/
 
-	Namer.assignNames(IterFactory.createIter(str));
-
 	StreamItDot.printGraph(str, "after.dot");
 
 	/*
@@ -966,7 +945,6 @@ public class AdjustGranularity {
 	FuseAll.fuse(str);
 	ConstantProp.propagateAndUnroll(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
@@ -1038,7 +1016,6 @@ public class AdjustGranularity {
 	ConstantProp.propagateAndUnroll(str);
 	FieldProp.doPropagate(str);
 
-	Namer.assignNames(IterFactory.createIter(str));
 	rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 

@@ -19,6 +19,7 @@ package streamit.scheduler2.constrained;
 import streamit.misc.DLList;
 import streamit.misc.DLList_const;
 import streamit.misc.DLListIterator;
+import streamit.misc.Pair;
 import streamit.misc.OMap;
 import streamit.misc.OMapIterator;
 import streamit.misc.OSet;
@@ -145,7 +146,8 @@ public class LatencyGraph extends streamit.misc.AssertedClass
 
     public SDEPData computeSDEP(
         LatencyNode upstreamNode,
-        LatencyNode downstreamNode) throws NoPathException
+        LatencyNode downstreamNode)
+        throws NoPathException
     {
         // first find all the edges that need to be traversed when figuring
         // out the dependencies between nodes
@@ -222,9 +224,10 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             // if you don't understand this, or think it's wrong, ask karczma 
             // (03/07/15)
             //ASSERT(!edgesToTraverse.empty());
-	    if (edgesToTraverse.empty()) {
-		throw new NoPathException();
-	    }
+            if (edgesToTraverse.empty())
+            {
+                throw new NoPathException();
+            }
         }
 
         // now go through all the edges and count how many useful edges
@@ -235,7 +238,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             OSetIterator edgeIter = edgesToTraverse.begin();
             OSetIterator lastEdgeIter = edgesToTraverse.end();
 
-            Integer ZERO = new Integer(0);
+            Integer ONE = new Integer(1);
 
             for (; !edgeIter.equals(lastEdgeIter); edgeIter.next())
             {
@@ -243,16 +246,17 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                     ((LatencyEdge)edgeIter.get()).getDst();
                 OMapIterator n2eIter = nodes2numEdges.find(nodeDst);
 
-                Integer useCount = ZERO;
-
                 if (!n2eIter.equals(lastN2NEIter))
                 {
-                    useCount = (Integer)n2eIter.getData();
+                    Integer useCount = (Integer)n2eIter.getData();
+
+                    // increase the data useful edge count
+                    n2eIter.setData(new Integer(useCount.intValue() + 1));
                 }
-
-                useCount = new Integer(useCount.intValue() + 1);
-
-                nodes2numEdges.insert(nodeDst, useCount);
+                else
+                {
+                    nodes2numEdges.insert(nodeDst, ONE);
+                }
             }
         }
 
@@ -339,21 +343,23 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                     // if an edge going to edgeDst already exists there,
                     // this will replace it, which is good
 
-                    nodes2latencyEdges.insert(edgeDst, newEdge);
+                    Pair result =
+                        nodes2latencyEdges.insert(edgeDst, newEdge);
+                    OMapIterator iter = (OMapIterator)result.getFirst();
+                    iter.setData(newEdge);
                 }
 
                 // find how many more edges need to lead to this node
+                OMapIterator nodeNumEdgesIter =
+                    nodes2numEdges.find(edge.getDst());
                 int nodeNumEdges =
-                    ((Integer)nodes2numEdges.find(edge.getDst()).getData())
-                        .intValue();
+                    ((Integer)nodeNumEdgesIter.getData()).intValue();
                 ASSERT(nodeNumEdges > 0);
 
                 // decrease the number of edges that need to lead to this node
                 // by one
                 nodeNumEdges--;
-                nodes2numEdges.insert(
-                    edge.getDst(),
-                    new Integer(nodeNumEdges));
+                nodeNumEdgesIter.setData(new Integer(nodeNumEdges));
 
                 // if there are no more edges leading into this node,
                 // I'm ready to visit the node

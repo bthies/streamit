@@ -10,7 +10,7 @@ import streamit.frontend.nodes.*;
  * of a method to call.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtAddPhase.java,v 1.2 2003-02-12 22:51:34 dmaze Exp $
+ * @version $Id: StmtAddPhase.java,v 1.3 2003-09-16 20:53:38 dmaze Exp $
  */
 public class StmtAddPhase extends Statement
 {
@@ -56,10 +56,12 @@ public class StmtAddPhase extends Statement
         this.peek = work.getPeekRate();
         this.pop = work.getPopRate();
         this.push = work.getPushRate();
-        if (work.getName() == null)
-            this.name = "work";
-        else
+        if (work.getName() != null)
             this.name = work.getName();
+        else if (init)
+            this.name = "prework";
+        else
+            this.name = "work";
     }
     
     /** Returns true if the phase is an init phase, false if the phase

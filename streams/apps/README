@@ -1,8 +1,18 @@
+The structure of the apps directory is as follows:
+
+apps/examples     -- Simple example source files for beginners to read
+apps/applications -- Full featured, (eg complicated) apps
+apps/benchmarks   -- Current benchmarks (currently these were used in ASPLOS to compare performance)
+apps/tests        -- Applications that are for testing specific pieces of the streamit compiler (eg regtest)
+apps/old          -- Random mung that seems to have collected in CVS and that I don't
+
+
+
 Here are the applications contained in this directory:
 
-AMRadio			An old attempt at an AMRadio (not using now)
+old/AMRadio			An old attempt at an AMRadio (not using now)
 
-BeamFormer		The original Beamformer implementation, which leads
+benchmarks/beamformer	The original Beamformer implementation, which leads
 			to buffer overflow.
 
 BeamFormer-fine		More fine-grained Beamformer, which moves some state
@@ -22,10 +32,10 @@ matrixmult		Matrix multiplication.
 mp3decoder		Parts of an MP3 decoder (beginning stages still 
 			unimplemented since they are variable rate).
 
-PCADemo			An old version of the Beamformer, modeled off of
+old/PCADemo			An old version of the Beamformer, modeled off of
 			unclassified example program from Lincoln Lab
 			for DARPA's Polymorphic Computing Architecture (PCA)
 
-perftest4		A performance test from Spectrumware.
+old/perftest4		A performance test from Spectrumware.
 
-specs			Specifications of applications we're implementing.
+/home/streamit/specs	Specifications of applications we're implementing.

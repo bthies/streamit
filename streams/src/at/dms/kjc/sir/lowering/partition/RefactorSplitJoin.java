@@ -6,6 +6,8 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.Lifter;
+import java.util.List;
+import java.util.Iterator;
 
 public class RefactorSplitJoin {
     /**
@@ -178,4 +180,101 @@ public class RefactorSplitJoin {
 	}
     }
 
+    /**
+     * Given a split-join sj with a duplicate splitter, raise any
+     * children of sj that also have duplicate splitters, provided
+     * that there is no buffering required for the child's outputs.
+     *
+     * Good: (outputs A1, A2, B, B)
+     *
+     *        |
+     *       DUP
+     *      /   \               |
+     *   DUP     \             DUP
+     *  /   \     |          /  |  \
+     * A1   A2    B   -->  A1   A2  B
+     *  \   /     |          \  |  /
+     *  RR(1)    /         WRR(1,1,2)
+     *      \   /               |
+     *      RR(2)
+     *        |
+     *
+     * Bad: (outputs A1, B, A2, B)
+     *
+     *        |
+     *       DUP
+     *      /   \
+     *   DUP     \
+     *  /   \     |
+     * A1   A2    B
+     *  \   /     |
+     *  RR(1)    /
+     *      \   /
+     *      RR(1)
+     *        |
+     */
+    public static SIRSplitJoin raiseDupDupSJChildren(SIRSplitJoin sj)
+    {
+        // Check that sj's splitter is duplicate:
+        if (sj.getSplitter().getType() != SIRSplitType.DUPLICATE)
+            return sj;
+        // For sanity, confirm that we have a round-robin joiner.
+        if (sj.getJoiner().getType() != SIRJoinType.ROUND_ROBIN &&
+            sj.getJoiner().getType() != SIRJoinType.WEIGHTED_RR)
+            return sj;
+        int[] joinWeights = sj.getJoiner().getWeights();
+        
+        // Whee.  Let's look at sj's children:
+        int index = 0;
+        for (Iterator iter = sj.getChildren().iterator(); iter.hasNext();
+             index++)
+        {
+            SIRStream child = (SIRStream)iter.next();
+            // To continue, child must be a splitjoin with a duplicate
+            // splitter.
+            if (!(child instanceof SIRSplitJoin))
+                continue;
+            SIRSplitJoin sjChild = (SIRSplitJoin)child;
+            if (sjChild.getSplitter().getType() != SIRSplitType.DUPLICATE)
+                continue;
+
+            // The useful output rate, for our purposes, is the
+            // sum of the output weights of the joiner.
+            int outCount = sjChild.getJoiner().getSumOfWeights();
+            if (outCount != joinWeights[index])
+                continue;
+
+            // Okay, we can raise the child.  This involves setting a new
+            // (weighted round robin) joiner, and moving the child's children
+            // into sj.  Do the joiner first:
+            JExpression[] oldWeights = sj.getJoiner().getInternalWeights();
+            JExpression[] newWeights =
+                new JExpression[sj.size() + sjChild.size() - 1];
+            JExpression[] childWeights =
+                sjChild.getJoiner().getInternalWeights();
+            int i;
+            for (i = 0; i < index; i++)
+                newWeights[i] = oldWeights[i];
+            for (int j = 0; j < childWeights.length; i++, j++)
+                newWeights[i] = childWeights[j];
+            for (int j = 1; j < oldWeights.length - index; i++, j++)
+                newWeights[i] = oldWeights[index + j];
+            SIRJoiner newJoiner =
+                SIRJoiner.create(sj, SIRJoinType.WEIGHTED_RR, newWeights);
+
+            // ...and raise the children.
+            while (sjChild.size() > 0)
+            {
+                SIRStream child2 = sjChild.get(0);
+                List params = sjChild.getParams(0);
+                sjChild.remove(0);
+                sj.add(index, child2, params);
+                index++;
+            }
+            sj.remove(index);
+            index--;
+        }
+        
+        return sj;
+    }
 }

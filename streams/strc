@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.20 2003-10-13 04:47:05 thies Exp $
+# $Id: strc,v 1.21 2003-10-13 15:00:38 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -96,7 +96,7 @@ Options:
   --raw n, -r n       Compile for RAW, with an n-by-n grid
   --standalone, -S    Generate C file without library dependencies
 * --cluster           Compile for a networked cluster
-* --viram, -V         Compile for VIRAM, a vector uniprocessor
+* --viram             Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
   --library           Run in the Java library instead of compiling
   --memory, -Xmx      Specify Java runtime heap limit
@@ -107,7 +107,7 @@ Options available for all backends:
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
 + --debug             Output debugging information in the compiler
-+ --fusion, -f        Fuse entire program to a single filter
++ --fusion            Fuse entire program to a single filter
 + --fission           Do vertical fission up to limit of argument
   --linearreplacement, -l
                       Perform linear transformations based on analysis
@@ -116,17 +116,17 @@ Options available for all backends:
 + --linearreplacement3
 +                     Do linear replacement using diagonal replacement
 + --nofieldprop       Do not propagate constant field values
-+ --nolinearcollapse, -H
++ --nolinearcollapse
 +                     Do not combine filters with linear replacement
-+ --print-partitioned-source, -c
++ --print-partitioned-source
 +                     Print equivalent source after partitioning
-+ --redundantreplacement, -t
++ --redundantreplacement
 +                     Create linear filters without redundant computation
 * --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
-+ --sjtopipe, -J      Convert split-joins to pipelines
++ --sjtopipe          Convert split-joins to pipelines
 * --stats             Gather statistics for program characterization
 * --tokopi            Use experimental frontend-to-SIR conversion
-+ --sync, -k          Turn on sync removal
++ --sync              Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
 
 Options specific to RAW backend:
@@ -134,16 +134,16 @@ Options specific to RAW backend:
 +   --partition-dp      Dynamic programming partitioner (default)
 +   --partition-greedy  Greedy partitioner
 *   --partition-ilp     Integer linear programming partitioner
-* --altcodegen, -z    Alternate RAW communication code generation
-* --decoupled, -X     Generate dummy communication code
-* --dpscaling, -Y     Collect theoretical scaling statistics
+* --altcodegen        Alternate RAW communication code generation
+* --decoupled         Generate dummy communication code
+* --dpscaling         Collect theoretical scaling statistics
   --magic-net, -M     Generate RAW "magic network" code
-* --noanneal, -W      Do not run simulated annealing for layout
+* --noanneal          Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
-+ --ptraccess, -Q     Access buffers through a pointer
-+ --ratematch, -x     Turn on rate matching
++ --ptraccess         Access buffers through a pointer
++ --ratematch         Turn on rate matching
   --rawcol, -c        Specify number of columns; --raw has number of rows
-+ --removeglobals, -G Inline all functions and turn globals into locals
++ --removeglobals     Inline all functions and turn globals into locals
   --simulatework, -s  Use simulator for work estimation
 * --spacetime         Use space-time partitioner
   --wbs               Use work-based simulator for communication code
@@ -154,7 +154,7 @@ Options specific to uniprocessor backend:
   --linearpartition, -L
                       Automatically selecting targets of linear analyses
 * --atlas             Use ATLAS for generated matrix multiplies
-+ --poptopeek, -P     Convert all pop expressions into peeks
++ --poptopeek         Convert all pop expressions into peeks
   --profile           Compile with profiling information
 
 Options specific to Java library backend:
@@ -183,15 +183,15 @@ sub get_options
 			    "raw|r=i",
 			    "verbose|v",
 			    "optimize|O=i",
-			    "altcodegen|z",
+			    "altcodegen",
 			    "atlas!",
 			    "clone-with-serialization|clone_with_serialization",
 			    "debug!",
-			    "decoupled|X",
-			    "dpscaling|Y",
+			    "decoupled",
+			    "dpscaling",
 			    "fission|fission=i",
 			    "frequencyreplacement|F",
-			    "fusion|f",
+			    "fusion",
 			    "iterations|i=i",
 			    "library!",
 			    "linearpartition|L",
@@ -200,9 +200,9 @@ sub get_options
 			    "linearreplacement3",
 			    "magic-net|magic_net|M",
 			    "memory|Xmx=s",
-			    "noanneal|W",
+			    "noanneal",
 			    "nofieldprop",
-			    "nolinearcollapse|H",
+			    "nolinearcollapse",
 			    "norun",
 			    "nosched",
 			    "numbers|N=i",
@@ -210,26 +210,26 @@ sub get_options
 			    "partition-dp|pdp",
 			    "partition-greedy|pgreedy",
 			    "partition-ilp|pilp",
-			    "poptopeek|P",
+			    "poptopeek",
 			    "marksteady!",
 			    "printsched!",
-			    "print-partitioned-source|print_partitioned_source|c",
+			    "print-partitioned-source|print_partitioned_source",
 			    "profile!",
-			    "ptraccess|Q",
-			    "ratematch|x",
+			    "ptraccess",
+			    "ratematch",
 			    "rawcol|c=i",
-			    "redundantreplacement|t",
-			    "removeglobals|G",
+			    "redundantreplacement",
+			    "removeglobals",
 			    "simplesjfusion",
 			    "simulatework|s",
-			    "sjtopipe|J",
+			    "sjtopipe",
 			    "spacetime!",
 			    "standalone|S",
 			    "stats!",
-			    "sync|k",
+			    "sync",
 			    "tokopi!",
 			    "unroll|u=i",
-			    "viram|V",
+			    "viram",
 			    "wbs!",
 			    "cluster!",
 			    "destroyfieldarray!");

@@ -199,6 +199,7 @@ public class Pipeline extends Stream
 	super(i1, i2, i3, i4, i5, i6, f);
     }
 
+    public Pipeline(int i1,int i2,int i3,float f1) {super(i1,i2,i3,f1);}
 
     public Pipeline(Object o1) {super(o1);}
     

@@ -208,8 +208,8 @@ public class FusePipe {
 	List steadySched = schedule.getSteadySchedule();
 
 	// DEBUGGING OUTPUT
-	SIRScheduler.printSchedule(initSched, "initialization");
-	SIRScheduler.printSchedule(steadySched, "steady state");
+	//SIRScheduler.printSchedule(initSched, "initialization");
+	//SIRScheduler.printSchedule(steadySched, "steady state");
 
 	// for each filter...
 	ListIterator it = filterList.listIterator();
@@ -810,12 +810,14 @@ public class FusePipe {
 	    (first.filter.getPeekInt() - first.filter.getPopInt()) + steadyPop;
 	int steadyPush = last.steady.num * last.filter.getPushInt();
 
+	/*
 	System.out.println(" Fused filter init peek   = " + initPeek);
 	System.out.println("              init pop    = " + initPop);
 	System.out.println("              init push   = " + initPush);
 	System.out.println("              steady peek = " + steadyPeek);
 	System.out.println("              steady pop  = " + steadyPop);
 	System.out.println("              steady push = " + steadyPush);
+	*/
 
 	// make a new filter to represent the fused combo
 	result.copyState(new SIRTwoStageFilter(first.filter.getParent(),

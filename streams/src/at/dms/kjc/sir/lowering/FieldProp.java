@@ -78,9 +78,6 @@ public class FieldProp implements Constants
             // Run the unroller...
             Unroller unroller = new Unroller(new Hashtable());
             for (int i = 0; i < str.getMethods().length; i++) {
-		System.out.println(" !!! Unrolling method " + 
-				   str.getMethods()[i].getName() + " in " +
-				   str);
                 str.getMethods()[i].accept(unroller);
 	    }
             // Then try to propagatate again.

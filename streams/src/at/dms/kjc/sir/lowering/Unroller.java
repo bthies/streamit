@@ -86,9 +86,6 @@ class Unroller extends SLIRReplacingVisitor {
      * statements.
      */
     private JBlock doUnroll(UnrollInfo info, JForStatement self) {
-	System.out.println("unrolling with init = " + info.initVal + " and "
-			   + "final = " + info.finalVal);
-
 	// make a list of statements
 	List statementList = new LinkedList();
 	// get the initial value of the counter

@@ -77,6 +77,7 @@ typedef struct one_to_many {
   int *ratio;
   int slots;
   tape **tape, **tcache;
+  int slot_pos;
 } one_to_many;
 typedef struct stream_context {
   void *stream_data;

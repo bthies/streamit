@@ -6,7 +6,7 @@ endif
 # this is a temporary default value
 if ($?JAVA_HOME) then
 else
-  setenv JAVA_HOME /home/bits7/NO_BACKUP/streamit/j2sdk1.4.2_03
+  setenv JAVA_HOME /usr/uns
 endif
 
 # java classes

@@ -71,16 +71,16 @@ VrComplexFIRfilter<iType>::work(int n)
 {
   VrComplex result = 0;
   int ch_num = 0;
-  printf("ComplexFir %d\n", n);
+  // printf("ComplexFir %d\n", n);
   
   for (int i=0;i<n;i++,
-	 printf("ComplexFir incrementing %d\n", decimation),
+	 // printf("ComplexFir incrementing %d\n", decimation),
 	 incInput(decimation)) {
     result = 0;
 
     for (ch_num =0; ch_num<num_ch; ch_num++){
       //make input pointer local
-      printf("ComplexFir requesting -%d\n", numTaps[ch_num]);
+      //printf("ComplexFir requesting -%d\n", numTaps[ch_num]);
       iType *inputArray = inputReadPtr(-numTaps[ch_num]+1);
 
       VrComplex *taps_tmp = taps[ch_num];
@@ -92,7 +92,7 @@ VrComplexFIRfilter<iType>::work(int n)
 	phase_correction[ch_num] *= phase_corr_incr[ch_num];
 	result *= phase_correction[ch_num];
       }
-      printf("ComplexFir writing 1\n");
+      //printf("ComplexFir writing 1\n");
       outputWriteN(ch_num,result);
     }
   }

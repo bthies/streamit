@@ -111,24 +111,19 @@ public class ComplexFIRFilter extends Filter {
 	}
 	
 	if (center_freq != 0.0){
-	    phase_correctionReal = multiplyReal(phase_correctionReal, 
-						phase_correctionImag,
-						phase_corr_incrReal,
-						phase_corr_incrImag);
-	    phase_correctionImag = multiplyImag(phase_correctionReal, 
-						phase_correctionImag,
-						    phase_corr_incrReal,
-						phase_corr_incrImag);
+	    phase_correctionReal = (phase_correctionReal *  phase_corr_incrReal) -
+		(phase_correctionImag * phase_corr_incrImag);
+	    phase_correctionImag = (phase_correctionReal * phase_corr_incrImag) -
+		(phase_correctionImag * phase_corr_incrReal);
 	    
-	    resultReal =  multiplyReal(resultReal,
-				       resultImag, 
-				       phase_correctionReal,
-				       phase_correctionImag);
+	    resultReal =  (resultReal *phase_correctionReal) -
+		(resultImag *				       
+		phase_correctionImag);
 	    
-	    resultImag =  multiplyImag(resultReal,
-				       resultImag, 
-				       phase_correctionReal,
-				       phase_correctionImag);
+	    resultImag =  (resultReal * phase_correctionImag) -
+		(resultImag * 
+		 phase_correctionReal);
+
 	    
 	}
 	
@@ -136,12 +131,4 @@ public class ComplexFIRFilter extends Filter {
 	output.pushFloat(resultImag);
     }
 
-
-    public float multiplyReal(float a, float b, float c, float d) {
-	return a*c - b*d;
-    }
-    
-    public float multiplyImag(float a, float b, float c, float d) {
-	return a*d - b*c;
-    }
 }

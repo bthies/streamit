@@ -25,19 +25,7 @@ public class QuadratureDemod extends Filter {
     int firing;
     float gain;
 
-    public float multiplyReal(float a, float b, float c, float d) {
-	return a*c - b*d;
-    }
-
-    public float multiplyImag(float a, float b, float c, float d) {
-	return a*d - b*c;
-    }
-
-    public float argument(float a, float b) {
-	return 
-	    (float)(Math.asin(b/(Math.sqrt(Math.pow(a,2) + Math.pow(b,2)))));
-    }
-
+  
     public QuadratureDemod (int firingRate, float g)
     {
         super ();
@@ -64,13 +52,16 @@ public class QuadratureDemod extends Filter {
 	    valImag = input.popFloat();
 	    valReal = input.popFloat();
 	    
-	    productReal = multiplyReal(valReal, valImag, lastValReal, -lastValImag);
-	    productImag = multiplyImag(valReal, valImag, lastValReal, -lastValImag);
+	    productReal = (valReal *lastValReal) - (valImag * lastValImag);
+	    productImag = (valReal * (-lastValImag)) - (valImag *lastValReal);
 
 	    lastValReal = valReal;
 	    lastValImag = valImag;
 	    
-	    output.pushFloat(gain * argument(productReal, productImag));
+	    output.pushFloat
+		(gain * (float)(Math.asin(productImag/
+					  (Math.sqrt(Math.pow(productReal,2) + 
+						     Math.pow(productImag,2))))));
 	}
     }
 }

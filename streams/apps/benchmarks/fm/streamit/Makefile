@@ -36,3 +36,10 @@ all:
 	cat ${MAIN_FILE}.1.tmp >> Linked${MAIN_FILE}
 	# remove temporaries
 	rm -f ${MAIN_FILE}.tmp ${MAIN_FILE}.1.tmp
+
+
+# replace all references in Makefile.streamit of
+# SIM-CYCLES = 50000 to SIM-CYCLES = 100000
+extra-run:
+	perl -pi -e "s/SIM-CYCLES = \d*/SIM-CYCLES = 2500000/g" Makefile.streamit
+

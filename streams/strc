@@ -2,11 +2,12 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.4 2003-10-01 13:24:46 dmaze Exp $
+# $Id: strc,v 1.5 2003-10-01 20:18:58 dmaze Exp $
 #
 
 use strict;
 use vars qw(%opts $java $javac $cc $have_fftw);
+use POSIX qw(:sys_wait_h);
 
 # AUTOCONFISCATE $var = "@VAR@";
 $java = "java";
@@ -47,12 +48,15 @@ if (!exists $opts{java})
     # which is to say, 1 if there are no non-java files, 0 otherwise
   }
 $fns = new_to_old($fns) unless ($opts{java} || $opts{tokopi});
+exit(1) if !@$fns;
 if ($opts{'library'}) {
     run_in_library($fns);
     exit(0);
 }
 $fns = old_to_c($fns) unless $opts{tokopi};
+exit(1) if !@$fns;
 $fns = new_to_c($fns) if $opts{tokopi};
+exit(1) if !@$fns;
 c_to_out($fns, $opts{output}) unless ($opts{raw} || $opts{cluster});
 exit(0);
 
@@ -238,7 +242,19 @@ sub call
   {
     my ($cmd) = @_;
     print "$cmd\n" if $opts{verbose};
-    return system($cmd);
+    my $result = system($cmd);
+    if ($opts{verbose} && $result != 0)
+      {
+	if (WIFSIGNALED($?))
+	  {
+	    print "(exited with signal " . WTERMSIG($?) . ")\n";
+	  }
+	else
+	  {
+	    print "(exited with value " . WEXITSTATUS($?) . ")\n";
+	  }
+      }
+    return $result;
   }
 
 sub change_extension
@@ -266,8 +282,9 @@ sub new_to_old
     $target = $opts{output} . ".java" if $opts{output};
     my $libflag = "";
     $libflag = "--library" if $opts{library};
-    call("$java streamit.frontend.ToJava --output $target $libflag " .
-	 join(' ', @$fns));
+    my $result = call("$java streamit.frontend.ToJava --output $target " .
+		      "$libflag " . join(' ', @$fns));
+    return [] if $result != 0;
     return [$target];
   }
 
@@ -282,7 +299,9 @@ sub old_to_c
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("$java $xmx at.dms.kjc.Main -s $kjcopts $jfiles > $target");
+	my $result = call("$java $xmx at.dms.kjc.Main -s $kjcopts " .
+			  "$jfiles > $target");
+	return [] if $result != 0;
 	return [$target];
       }
     else
@@ -316,6 +335,7 @@ sub new_to_c
 sub run_in_library
   {
     my ($fns) = @_;
+    return if !@$fns;
     my @out = ();
     my $xmx = "-Xmx" . $opts{memory};
     foreach my $jfile (@$fns)
@@ -329,6 +349,7 @@ sub run_in_library
 sub c_to_out
   {
     my ($fns, $target) = @_;
+    return [] if !@$fns;
     $target = $target ? "-o$target" : ""; # but never undef
     my $sh = $opts{home};
     my ($gcc, $libs);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JForStatement.java,v 1.6 2001-11-10 21:40:35 thies Exp $
+ * $Id: JForStatement.java,v 1.7 2002-11-14 03:40:39 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -31,7 +31,7 @@ import at.dms.compiler.JavaStyleComment;
  * until the value of the expression is false.
  */
 public class JForStatement extends JLoopStatement {
-
+    public boolean unrolled; //To not unroll the same loop several times
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
@@ -57,6 +57,7 @@ public class JForStatement extends JLoopStatement {
     this.cond = cond;
     this.incr = incr;
     this.body = body;
+    unrolled=false;
   }
 
     public JStatement getInit() {

@@ -1,6 +1,6 @@
 import streamit.*;
 
-public class SimpleSplit extends Pipeline {
+public class SimpleSplit extends StreamIt {
     public static void main(String args[]) {
 	new SimpleSplit().run();
     }

@@ -68,25 +68,31 @@ public class FilterBank extends Pipeline
                         this.add(new FloatIdentity());
                     } else
                     {
-                        this.add(new SplitJoin()
+                        this.add(new Pipeline () 
                         {
-                            public void init()
+                            public void init ()
                             {
-                                this.setSplitter(ROUND_ROBIN());
-                                this.add(new FloatIdentity());
-                                this.add(new Filter()
+                                this.add (new SplitJoin()
                                 {
                                     public void init()
                                     {
-                                        this.input = new Channel(Float.TYPE, 1);
-                                        this.output = new Channel(Float.TYPE, 1);
-                                    }
-                                    public void work()
-                                    {
-                                        this.output.pushFloat(-this.input.popFloat());
+                                        this.setSplitter(ROUND_ROBIN());
+                                        this.add(new FloatIdentity());
+                                        this.add(new Filter()
+                                        {
+                                            public void init()
+                                            {
+                                                this.input = new Channel(Float.TYPE, 1);
+                                                this.output = new Channel(Float.TYPE, 1);
+                                            }
+                                            public void work()
+                                            {
+                                                this.output.pushFloat(-this.input.popFloat());
+                                            }
+                                        });
+                                        this.setJoiner(ROUND_ROBIN());
                                     }
                                 });
-                                this.setJoiner(ROUND_ROBIN());
                             }
                         });
                     }

@@ -23,7 +23,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private boolean DEBUG = false;
     private boolean NOCOMM = false;
 
-    protected boolean			forInit;	// is on a for init
+    //protected boolean			forInit;	// is on a for init
     protected int				TAB_SIZE = 2;
     protected int				WIDTH = 80;
     protected int				pos;
@@ -155,6 +155,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("volatile float router_mem_f;\n");
 	    print("register int router asm(\"$24\");\n");
 	    print("register float router_f asm(\"$24\");\n\n");
+	    print("static inline float static_receive_sketch() {\n");
+	    print("  int __return;\n");
+	    print("  router=router_mem;\n");
+	    print("  /* receive */ asm (\"or %0,$0,%1\" : \"=r\" (__return), \"=r\" (router) : \"1\" (router));\n");
+	    print("  return __return;\n");
+	    print("}\n\n");
+	    print("static inline float static_receive_sketch_f() {\n");
+	    print("  float __return;\n");
+	    print("  router_f=router_mem_f;\n");
+	    print("  /* receive */ asm (\"or %0,$0,%1\" : \"=r\" (__return), \"=r\" (router_f) : \"1\" (router_f));\n");
+	    print("  return __return;\n");
+	    print("}\n\n");
 	}
 
 	//print the inline asm 
@@ -504,12 +516,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                   JStatement incr,
                                   JStatement body) {
         print("for (");
-        forInit = true;
+        //forInit = true;
         if (init != null) {
             init.accept(this);
-	}
-	print(";");
-        forInit = false;
+	} else
+	    print(";");
+	//print(";");
+        //forInit = false;
 
         print(" ");
         if (cond != null) {
@@ -578,9 +591,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     public void visitExpressionStatement(JExpressionStatement self,
                                          JExpression expr) {
         expr.accept(this);
-        if (!forInit) {
-            print(";");
-        }
+	print(";");
     }
 
     /**

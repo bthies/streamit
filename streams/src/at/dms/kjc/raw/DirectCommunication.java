@@ -109,11 +109,19 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	    (SIRPopExpression)
 	    super.visitPopExpression(oldSelf, oldTapeType);  
 
-	String floatSuffix = "";
+	String floatSuffix;
+	if(KjcOptions.sketchycodegen)
+	    floatSuffix="_sketch";
+	else
+	    floatSuffix="";
 	//append the _f if this pop expression pops floats
 	if (self.getType().equals(CStdType.Float) ||
 	    self.getType().equals(CStdType.Double))
-	    floatSuffix = "_f";
+	    if(KjcOptions.sketchycodegen)
+		floatSuffix = "_sketch_f";
+	    else
+		floatSuffix = "_sketch_f";
+	
 	
 	//create the method call for static_receive()
 	JMethodCallExpression static_receive = 

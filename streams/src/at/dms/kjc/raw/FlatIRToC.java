@@ -279,7 +279,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	     (filter instanceof SIRTwoStageFilter &&
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
 	    return;
-
+	
+	//If this is the raw Main function then set is work to true
+	//used for stack allocating arrays
+	isWork = ident.equals(RawExecutionCode.rawMain);
+	   
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);

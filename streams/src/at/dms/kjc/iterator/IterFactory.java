@@ -52,6 +52,7 @@ public class IterFactory {
 	} else if (obj instanceof SIRRecursiveStub) {
 	    return createIter((SIRRecursiveStub)obj);
 	} else {
+	    new RuntimeException().printStackTrace();
 	    Utils.fail("Unexpected iterator " + obj + " of type " 
 		       + (obj==null ? "" : obj.getClass().toString()));
 	    return null;

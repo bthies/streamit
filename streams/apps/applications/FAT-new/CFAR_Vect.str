@@ -19,12 +19,12 @@ complex[N_rg]->float[N_rg] filter CFAR_Vect(int N_rg,int N_cfar,int G, float mu)
 	    float Tijk=0;
 	    int N_nei=0;
 	 
-	    for (int l=0; (l <N_cfar) and ((k-l-G) >=0 ); l++){	   
+	    for (int l=0; (l <N_cfar) && ((k-l-G) >=0 ); l++){	   
 		N_nei+=1;	     
 		Tijk=Tijk+InVect[k-l-G].real*InVect[k-l-G].real+InVect[k-l-G].imag*InVect[k-l-G].imag;
 	    }
 	 
-	    for (int l=0; (l < N_cfar) and ((k+l+G)<N_rg); l++){
+	    for (int l=0; (l < N_cfar) && ((k+l+G)<N_rg); l++){
 		N_nei+=1;
 		Tijk=Tijk+InVect[k+l+G].real*InVect[k+l+G].real+InVect[k+l+G].imag*InVect[k+l+G].imag;
 	    }

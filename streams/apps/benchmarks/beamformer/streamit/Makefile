@@ -4,7 +4,7 @@
 # print the raw values received by the detector, rather than just
 # doing a threshold near the end.
 CPP_FLAGS = -P -DRANDOM_WEIGHTS -DRANDOM_INPUTS -DDISPLAY_OUTPUT
-FILES = BeamFormer.java SerializedBeamFormer.java CoarseBeamFormer.java CoarseSerializedBeamFormer.java BeamFormer.str SerializedBeamFormer.str CoarseBeamFormer.str CoarseSerializedBeamFormer.str
+FILES = BeamFormer.str SerializedBeamFormer.str CoarseBeamFormer.str CoarseSerializedBeamFormer.str
 
 default: clean ${FILES}
 
@@ -12,22 +12,6 @@ classes: BeamFormer.class SerializedBeamFormer.class CoarseBeamFormer.class Coar
 
 %.class: ${FILES}
 	javac $*.java
-
-BeamFormer.java: TemplateBeamFormer.java
-	cpp ${CPP_FLAGS} TemplateBeamFormer.java > $@
-	perl -pi -e 's/TemplateBeamFormer/BeamFormer/g' $@
-
-SerializedBeamFormer.java: TemplateBeamFormer.java
-	cpp ${CPP_FLAGS} -DSERIALIZED TemplateBeamFormer.java  > $@
-	perl -pi -e 's/TemplateBeamFormer/SerializedBeamFormer/g' $@
-
-CoarseBeamFormer.java: TemplateBeamFormer.java
-	cpp ${CPP_FLAGS} -DCOARSE TemplateBeamFormer.java  > $@
-	perl -pi -e 's/TemplateBeamFormer/CoarseBeamFormer/g' $@
-
-CoarseSerializedBeamFormer.java: TemplateBeamFormer.java
-	cpp ${CPP_FLAGS} -DSERIALIZED -DCOARSE TemplateBeamFormer.java  > $@
-	perl -pi -e 's/TemplateBeamFormer/CoarseSerializedBeamFormer/g' $@
 
 BeamFormer.str: TemplateBeamFormer.str
 	cpp ${CPP_FLAGS} TemplateBeamFormer.str > $@

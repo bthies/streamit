@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcVisitor.java,v 1.2 2001-10-02 21:19:20 thies Exp $
+ * $Id: KjcVisitor.java,v 1.3 2001-10-30 17:32:37 thies Exp $
  */
 
 package at.dms.kjc;
 
+import java.util.List;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 
@@ -258,7 +259,6 @@ public interface KjcVisitor {
    * visits an expression statement
    */
   void visitBlockStatement(JBlock self,
-			   JStatement[] body,
 			   JavaStyleComment[] comments);
 
   /**

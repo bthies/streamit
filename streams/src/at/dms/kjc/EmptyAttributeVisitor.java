@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.4 2001-10-29 12:53:51 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.5 2001-10-30 17:32:36 thies Exp $
  */
 
 package at.dms.kjc;
 
+import java.util.ListIterator;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 
@@ -440,10 +441,9 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
      * prints an expression statement
      */
     public Object visitBlockStatement(JBlock self,
-				      JStatement[] body,
 				      JavaStyleComment[] comments) {
-	for (int i=0; i<body.length; i++) {
-	    body[i].accept(this);
+	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+	    ((JStatement)it.next()).accept(this);
 	}
 	return self;
     }

@@ -15,12 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcPrettyPrinter.java,v 1.2 2001-10-02 21:19:20 thies Exp $
+ * $Id: KjcPrettyPrinter.java,v 1.3 2001-10-30 17:32:36 thies Exp $
  */
 
 package at.dms.kjc;
 
 import java.util.StringTokenizer;
+import java.util.List;
 
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
@@ -671,11 +672,10 @@ public class KjcPrettyPrinter extends at.dms.util.Utils implements Constants, Kj
    * prints an expression statement
    */
   public void visitBlockStatement(JBlock self,
-				  JStatement[] body,
 				  JavaStyleComment[] comments) {
     print("{");
     pos += TAB_SIZE;
-    visitCompoundStatement(body);
+    visitCompoundStatement(self.getStatementArray());
     if (comments != null) {
       visitComments(comments);
     }

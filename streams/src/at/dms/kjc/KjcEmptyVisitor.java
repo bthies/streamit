@@ -15,13 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcEmptyVisitor.java,v 1.5 2001-10-29 10:26:02 thies Exp $
+ * $Id: KjcEmptyVisitor.java,v 1.6 2001-10-30 17:32:36 thies Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
+import java.util.ListIterator;
 
 /**
  * This is a visitor that just recurses into children at every node.
@@ -419,10 +420,9 @@ public class KjcEmptyVisitor implements Constants, KjcVisitor {
    * prints an expression statement
    */
   public void visitBlockStatement(JBlock self,
-				  JStatement[] body,
 				  JavaStyleComment[] comments) {
-      for (int i=0; i<body.length; i++) {
-	  body[i].accept(this);
+      for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+	  ((JStatement)it.next()).accept(this);
       }
   }
 

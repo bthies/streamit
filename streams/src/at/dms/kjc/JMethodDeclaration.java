@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.10 2001-10-29 10:26:02 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.11 2001-10-30 17:32:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -425,8 +425,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
     /**
      * Returns list of statements in this.  
      */
-    public List getStatementList() {
-	return body.getStatementList();
+    public List getStatements() {
+	return body.getStatements();
     }
 
     /**

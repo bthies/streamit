@@ -13,6 +13,7 @@
 
 package at.dms.kjc;
 
+import java.util.List;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 
@@ -250,7 +251,6 @@ public interface AttributeVisitor {
    * visits an expression statement
    */
   Object visitBlockStatement(JBlock self,
-			   JStatement[] body,
 			   JavaStyleComment[] comments);
 
   /**

@@ -872,9 +872,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an expression statement
      */
     public Object visitBlockStatement(JBlock self,
-                                    JStatement[] body,
                                     JavaStyleComment[] comments)
     {
+	JStatement[] body = self.getStatementArray();
 	JTryCatchStatement removeFlag = new JTryCatchStatement(null, null,
 							       null, null);
 	

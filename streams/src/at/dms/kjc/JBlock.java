@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.8 2001-10-29 12:53:51 thies Exp $
+ * $Id: JBlock.java,v 1.9 2001-10-30 17:32:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -135,7 +135,7 @@ public class JBlock extends JStatement {
    * @param	p		the visitor
    */
   public void accept(KjcVisitor p) {
-    p.visitBlockStatement(this, getStatements(), getComments());
+    p.visitBlockStatement(this, getComments());
   }
 
  /**
@@ -143,7 +143,7 @@ public class JBlock extends JStatement {
    * @param	p		the visitor
    */
   public Object accept(AttributeVisitor p) {
-      return    p.visitBlockStatement(this, getStatements(), getComments());
+      return    p.visitBlockStatement(this, getComments());
   }
 
   /**
@@ -163,17 +163,17 @@ public class JBlock extends JStatement {
   // ----------------------------------------------------------------------
 
     /**
-     * Returns array (NOT internal representation!!) of body of this.  
+     * Returns INTERNAL list of statements in this.  
      */
-    private JStatement[] getStatements() {
-	return (JStatement[])body.toArray(new JStatement[0]);
+    public List getStatements() {
+	return body;
     }
 
     /**
-     * Returns list of statements in this.  
+     * Returns array of statements in this.  
      */
-    public List getStatementList() {
-	return body;
+    public JStatement[] getStatementArray() {
+	return (JStatement[])body.toArray(new JStatement[0]);
     }
 
     /**

@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.12 2004-04-02 20:41:22 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.13 2004-04-21 17:34:24 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -156,8 +156,6 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    int removeVars = newInputVars2;
 		    int extraVars = newPush1*n;  // which is >= than removeVars
 
-		    //		    int removeVars = newPeek2 - newPop2;
-		    //		    int extraVars = newPush1*n;
 		    int newVar2Total = state2 - removeVars + extraVars;
 
 		    FilterMatrix preworkA2_new, preworkB2_new;
@@ -217,7 +215,7 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 	    Aprime.copyAt(0,0,A1);
 	    Aprime.copyAt(state1,0,B2.times(C1));
 	    Aprime.copyAt(state1,state1,A2);
-	
+
 	    Bprime = new FilterMatrix(state1+state2,newPop1);
 	    Bprime.copyAt(0,0,B1);
 	    Bprime.copyAt(state1,0,B2.times(D1));
@@ -227,7 +225,7 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 	    Cprime.copyAt(0,state1,C2);
 
 	    Dprime = D2.times(D1);
-	    	    
+
 	    initprime = new FilterVector(state1+state2);
 	    initprime.copyAt(0,0,init1);
 	    initprime.copyAt(0,state1,init2);
@@ -237,10 +235,10 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 	    LinearFilterRepresentation combinedRep;
 
 	    if(combinedPreWorkNeeded) {
+
 		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,preworkAprime,preworkBprime,newInputVars1,initprime);
 
 	    }
-
 	    else
 		combinedRep = new LinearFilterRepresentation(Aprime,Bprime,Cprime,Dprime,newInputVars1,initprime);
 
@@ -248,8 +246,8 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 	    LinearPrinter.println("Created new linear rep: \n" +
 				  " inputvars =" + combinedRep.getStoredInputCount() + "\n" +
 				  " pop=" + combinedRep.getPopCount() + "\n" +
-				  " push=" + combinedRep.getPushCount() + "\n" + combinedRep);
-				  
+				  " push=" + combinedRep.getPushCount());
+
 
 	    // now, we set the combined rep to be rep1 and repeat
 	    rep1 = combinedRep;

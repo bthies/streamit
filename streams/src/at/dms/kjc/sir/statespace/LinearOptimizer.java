@@ -24,10 +24,13 @@ public class LinearOptimizer {
 
 	if(preNeeded) {
 	    int totalPreCols = states + l.getPreWorkPopCount();
-	    totalPreMatrix = new FilterMatrix(totalRows,totalPreCols);
+	    totalPreMatrix = new FilterMatrix(states,totalPreCols);
 
 	    totalPreMatrix.copyAt(0,0,l.getPreWorkA());
 	    totalPreMatrix.copyAt(0,states,l.getPreWorkB());
+
+	    LinearPrinter.println("totalPreMatrix \n" + totalPreMatrix);
+
 	}
 
 
@@ -67,8 +70,10 @@ public class LinearOptimizer {
 	    
 		if(r >= 0) {
 		    totalMatrix.swapRowsAndCols(r,i);
-		    if(preNeeded)
+		    if(preNeeded) {
 			totalPreMatrix.swapRowsAndCols(r,i);
+		    }
+
 		    init.swapCols(r,i);
 
 		    LinearPrinter.println("SWAPPED " + i + " " + r);
@@ -85,8 +90,10 @@ public class LinearOptimizer {
 			double temp = totalMatrix.getElement(k,j).getReal();
 			double val = -temp/curr;
 			totalMatrix.addRowAndCol(i,k,val);
-			if(preNeeded)
+			if(preNeeded) {
 			    totalPreMatrix.addRowAndCol(i,k,val);
+			    LinearPrinter.println("multiplying \n" + totalPreMatrix);
+			}
 			init.addCol(k,i,val);
 
 

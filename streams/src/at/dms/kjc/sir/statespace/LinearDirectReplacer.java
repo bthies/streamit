@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.12 2004-04-13 20:09:57 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.13 2004-04-21 17:34:18 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -34,7 +34,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * not we should stream constructs with direct implementations.
      **/
     LinearReplaceCalculator replaceGuide;
-    JLiteral zeroLiteral;
     
     protected LinearDirectReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
 	if (lfa == null){
@@ -91,13 +90,13 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	linearRep = this.linearityInformation.getLinearRepresentation(self);
 
 	/********** test print for optimization *********/
-	//	LinearPrinter.println("Before optimization: " + linearRep);
-	//LinearFilterRepresentation testRep = LinearOptimizer.getMinStateRep(linearRep);
-	//LinearPrinter.println("After optimization: " + testRep);
+				LinearPrinter.println("Before optimization: " + linearRep);
+	LinearFilterRepresentation testRep = LinearOptimizer.getMinStateRep(linearRep);
+	LinearPrinter.println("After optimization: " + testRep);
 
 
-	//	linearRep = testRep;
-
+			linearRep = testRep;
+	
 	/***********************************************/
 
 
@@ -134,23 +133,10 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	
 	CType varType;
 
+       
+	// use doubles for best precision
 
-	// use the more specific numeric type (ie double over int, int over short, etc) 
-	if(oldStream.getInputType().getTypeID() >= oldStream.getOutputType().getTypeID())
-	    varType = oldStream.getInputType();
-	else
-	    varType = oldStream.getOutputType();
-
-	// depending on the type chosen, set the global variable zeroLiteral accordingly
-	switch(varType.getTypeID()) {
-	case TID_DOUBLE: zeroLiteral = new JDoubleLiteral(null, 0.0); break;
-	case TID_FLOAT: zeroLiteral = new JFloatLiteral(null, (float)0.0); break;
-	case TID_LONG: zeroLiteral = new JLongLiteral(null, (long)0); break;
-	case TID_BYTE: zeroLiteral = new JDoubleLiteral(null, (byte)0); break;
-	case TID_SHORT: zeroLiteral = new JShortLiteral(null, (short)0); break;
-	case TID_INT: zeroLiteral = new JIntLiteral(null, 0); break;
-	default: zeroLiteral = new JDoubleLiteral(null, 0.0);
-	}
+	varType = new CDoubleType();
 
 	int numStates = linearRep.getStateCount();
 	FilterVector initVector = linearRep.getInit();
@@ -172,19 +158,11 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    vars[i] = new JVariableDefinition(null, ACC_PUBLIC, varType, varName, null);
 	    fields[i] = new JFieldDeclaration(null, vars[i], null, null);
 	    fieldExpr = new JFieldAccessExpression(null, thisExpr, varName);
-
-	    //depending on the type we have selected, use the appropriate literal
-	    switch(varType.getTypeID()) {
-	    case TID_DOUBLE: litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal()); break;
-	    case TID_FLOAT: litExpr = new JFloatLiteral(null, (float)initVector.getElement(i).getReal()); break;
-	    case TID_LONG: litExpr = new JLongLiteral(null, (long)initVector.getElement(i).getReal()); break;
-	    case TID_BYTE: litExpr = new JByteLiteral(null, (byte)initVector.getElement(i).getReal()); break;
-	    case TID_SHORT: litExpr = new JShortLiteral(null, (short)initVector.getElement(i).getReal()); break;
-	    case TID_INT: litExpr = new JIntLiteral(null, (int)initVector.getElement(i).getReal()); break;
-	    default: litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal());
-	    }
-
+	    litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal());
 	    assign = new JAssignmentExpression(null, fieldExpr, litExpr);
+
+
+	    LinearPrinter.println("i,val"  + i + " " + initVector.getElement(i).getReal());
 
 	    // wrap the assign expression in a expression statement
 	    JExpressionStatement assignWrapper = new JExpressionStatement(null, // tokenReference
@@ -421,7 +399,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    // What we want to do is to is to combine them all together using addition.
 	    // To do this, we create an add expression tree expanding downward
 	    // to the right as we go.
-	    JLiteral offsetNode = zeroLiteral;
+	    JLiteral offsetNode = new JDoubleLiteral(null,0.0);
 	    JExpression pushArgument;
 	    // if no combination expressions, then the push arg is zero
 	    if (combinationExpressions.size() == 0) {
@@ -563,7 +541,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    // What we want to do is to is to combine them all together using addition.
 	    // To do this, we create an add expression tree expanding downward
 	    // to the right as we go.
-	    JLiteral offsetNode = zeroLiteral;
+	    JLiteral offsetNode = new JDoubleLiteral(null,0.0);
 	    JExpression assignArgument;
 	    // if no combination expressions, then the push arg is zero
 	    if (combinationExpressions.size() == 0) {
@@ -789,7 +767,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    // What we want to do is to is to combine them all together using addition.
 	    // To do this, we create an add expression tree expanding downward
 	    // to the right as we go.
-	    JLiteral offsetNode = zeroLiteral;
+	    JLiteral offsetNode = new JDoubleLiteral(null,0.0);
 	    JExpression assignArgument;
 	    // if no combination expressions, then the push arg is zero
 	    if (combinationExpressions.size() == 0) {

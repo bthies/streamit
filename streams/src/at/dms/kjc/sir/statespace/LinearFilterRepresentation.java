@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.15 2004-04-13 20:09:57 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.16 2004-04-21 17:34:18 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -153,19 +153,19 @@ public class LinearFilterRepresentation {
     //////////////// Accessors ///////////////////
     
     /** Get the A matrix. **/
-    public FilterMatrix getA() {return this.A;}
+    public FilterMatrix getA() {return this.A.copy();}
     /** Get the B matrix. **/
-    public FilterMatrix getB() {return this.B;}
+    public FilterMatrix getB() {return this.B.copy();}
     /** Get the C matrix. **/
-    public FilterMatrix getC() {return this.C;}
+    public FilterMatrix getC() {return this.C.copy();}
     /** Get the D matrix. **/
-    public FilterMatrix getD() {return this.D;}
+    public FilterMatrix getD() {return this.D.copy();}
 
     /** Get the prework A matrix. **/
     public FilterMatrix getPreWorkA() {
 
 	if(this.preworkNeeded())
-	    return this.preworkA;
+	    return this.preworkA.copy();
 	else
 	    return null;
     }
@@ -173,13 +173,13 @@ public class LinearFilterRepresentation {
     /** Get the prework B matrix. **/
     public FilterMatrix getPreWorkB() {
 	if(this.preworkNeeded())
-	    return this.preworkB;
+	    return this.preworkB.copy();
 	else
 	    return null;
     }
 
     /** Get the state vector initialization matrix. **/
-    public FilterVector getInit() {return this.initVec;}
+    public FilterVector getInit() {return (FilterVector)this.initVec.copy();}
 
     /** Get the stored input count.  **/
     public int getStoredInputCount() {return this.storedInputs;}
@@ -341,23 +341,11 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	newC.copyColumnsAt(removeVars,D,0,endCount);
 
 
-	LinearPrinter.println("inputvars: " + oldStoredInputs + " -> " + newStoredInputs);
-	LinearPrinter.println("before change " + this);
-	
-	LinearPrinter.println("after changePeek A " + newA);
-	LinearPrinter.println("after changePeek B" + newB);
-	LinearPrinter.println("after changePeek C " + newC);
-	LinearPrinter.println("after changePeek D" + newD);
-	LinearPrinter.println("after changePeek preA " + newPreA);
-	LinearPrinter.println("after changePeek preB " + newPreB);
-	
+	LinearPrinter.println("inputvars: " + oldStoredInputs + " -> " + newStoredInputs);	
 
 	FilterVector init = this.getInit();
 	FilterVector newInit = new FilterVector(newStateCount);
 	newInit.copyAt(0,addVars-removeVars,init);
-		
-
-	//	LinearPrinter.println("after changeStoredInputs init " + newInit);
 	
 	LinearFilterRepresentation newRep; 
 
@@ -680,6 +668,7 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
     }
 
     public String toString() {
+
 	String retString = new String("\n Matrix A:\n" + A + 
 				      "\n Matrix B:\n" + B + 
 				      "\n Matrix C:\n" + C + 

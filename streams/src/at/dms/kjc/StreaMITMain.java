@@ -1,12 +1,6 @@
 package at.dms.kjc;
 
 import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.lir.*;
-import at.dms.kjc.raw.*;
-import at.dms.kjc.spacetime.*;
-import at.dms.kjc.cluster.*;
-import streamit.eclipse.grapheditor.GraphEncoder;
 import java.lang.reflect.*;
 
 /**
@@ -54,7 +48,7 @@ public class StreaMITMain {
         String backendClass = null;
         String backendMethod = "run";
         if (KjcOptions.graph) {
-            backendClass = "grapheditor.GraphEncoder";
+            backendClass = "streamit.eclipse.grapheditor.GraphEncoder";
         } else if (KjcOptions.raw != -1) {
             System.out.println("*/");
             if (KjcOptions.spacetime) {

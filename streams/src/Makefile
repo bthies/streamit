@@ -56,7 +56,6 @@ KOPI_TOOL_SRCS = \
 
 STREAMIT_GENERATED = \
   streamit/frontend/StreamItLex.java \
-  streamit/frontend/StreamItParser.java \
   streamit/frontend/StreamItParserFE.java
 
 # these are used by some streamit applications, but not called

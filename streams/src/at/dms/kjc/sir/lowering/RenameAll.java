@@ -6,6 +6,8 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * This visitor renames every variable, method, and field to a globally
@@ -67,6 +69,17 @@ public class RenameAll extends SLIRReplacingVisitor
     {
         super();
         symtab = new RASymbolTable();
+    }
+    
+    /**
+     * Given a list of SIRFilters <filterList>, replaces each filter
+     * in the list with a renamed version of itself.
+     */
+    public void renameFilters(List filterList) {
+	for (ListIterator it=filterList.listIterator(); it.hasNext(); ) {
+	    SIRFilter filter = (SIRFilter)it.next();
+	    it.set(renameFilter(filter));
+	}
     }
 
     /**

@@ -67,7 +67,7 @@ public class ConstantProp {
     private void propagateFields(Propagator propagator, SIRStream str) {
 	if (str instanceof SIRFilter) {
 	    propagateFilterFields(propagator, (SIRFilter)str);
-	} if (str instanceof SIRSplitJoin) {
+	} else if (str instanceof SIRSplitJoin) {
 	    // for split-joins, resolve the weights of splitters and
 	    // joiners
 	    propagator.visitArgs(((SIRSplitJoin)str).

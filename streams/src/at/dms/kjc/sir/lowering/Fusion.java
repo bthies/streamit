@@ -24,7 +24,7 @@ public class Fusion {
      * that:
      *  1. <f1> and <f2> have no control flow
      *  2. <f2> does not peek
-     *  3. the init functions are empty
+     *  3. the init functions are empty (actually, adopts init function of #1)
      *  4. there are no name conflicts in fields or methods (just put
      *     'em together)
      *

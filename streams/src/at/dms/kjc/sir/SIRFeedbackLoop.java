@@ -190,18 +190,22 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	loop.setParent(this);
     }
     /**
-     * Set the Joiner of the feedback loop 
+     * Set the Joiner of the feedback loop, and sets the parent of
+     * <joiner> to be this.
      **/
     public void setJoiner(SIRJoiner joiner) 
     {
 	this.joiner = joiner;
+	joiner.setParent(this);
     }
     /**
-     * Set the Splitter of the feedback loop 
+     * Set the Splitter of the feedback loop, and sets the parent of
+     * <splitter> to be this.
      **/
     public void setSplitter(SIRSplitter splitter) 
     {
 	this.splitter = splitter;
+	splitter.setParent(this);
     }
     /**
      * Set the delay of the feedback loop 

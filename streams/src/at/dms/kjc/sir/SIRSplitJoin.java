@@ -20,11 +20,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     private SIRJoiner joiner;
 
     /**
-     * sets the splitter for this SplitJoin
+     * sets the splitter for this SplitJoin, and sets the parent of
+     * <s> to be this.
      */
     public void setSplitter(SIRSplitter s) 
     {
 	this.splitter = s;
+	s.setParent(this);
     }
     
     /**
@@ -37,11 +39,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
     
     /**
-     * sets the joiner for this SplitJoin
+     * sets the joiner for this SplitJoin, and sets the parent of <j>
+     * to be this.
      */
     public void setJoiner(SIRJoiner j) 
     {
 	this.joiner = j;
+	j.setParent(this);
     }
    
     /**
@@ -49,7 +53,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public SIRJoiner getJoiner() 
     {
-	Utils.assert(this.splitter!=null);
+	Utils.assert(this.joiner!=null);
 	return this.joiner;
     }
     

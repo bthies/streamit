@@ -1,0 +1,159 @@
+/* 
+ Description:
+  The function WienerHopfSolution solves the equation 
+     W = inv(R) * V, where R = A * A' is a square matrix, V is a set 
+     of steering column vectors, and W is the adaptive weight 
+     matrix. If normalize = 1, then perform normalization of 
+     each column of the W matrix.
+  The solution is achieved by acquiring the LQ decomposition 
+     of the matrix A. For each column of the steering column 
+     matrix, V, a forward and back-substitution sequence is 
+     executed to acquire the corresponding column of the W 
+     matrix. 
+
+*/
+
+
+// input: m*n+m*p complex (m by n matrix, m by p matrix)
+// output: m*p complex (m by p matrix)
+
+complex->complex pipeline calcWHS(int m, int n, int p, int normalize) {
+
+  add split_A_and_V(m,n,p);
+  add do_forward_sub(m,p);
+  add do_back_sub(m,p,normalize);
+  add transposeComplex(p,m);
+}
+
+
+// calculate L,L' from A for each col of V
+
+// input: m*n+m*p complex (m by n matrix, m by p matrix)
+// output: 2*p*m*m + m*p complex (2*p m by m matrices, m length m vectors)
+
+complex->complex splitjoin split_A_and_V(int m, int n, int p) {
+
+  split roundrobin(m*n,m*p);
+  add get_lqmatrix(m,n,p);  // get L', L of LQ decomposition of matrix A
+  add transposeComplex(m,p); // output cols of matrix V  
+  join roundrobin(2*m*m,m);
+
+}
+
+
+// for each col of V, computes L' and L
+
+// input: m*n complex (m by n matrix)
+// output: 2*m*m*p complex (2*p m by m matrices)
+
+complex->complex pipeline get_lqmatrix(int m, int n, int p) {
+
+  add compute_L(m,n);
+
+  if(n>m) 
+    add convert_to_square_cols(m,n);
+
+  add splitjoin {
+
+    int total = m*m;
+
+    split duplicate();
+
+    for(int i=0; i<p; i++) {
+      add Hermatian(m,m);
+      add iden_c(total);
+    }
+    join roundrobin(total);
+  }
+}
+
+
+// do back sub with L and cols computed from forward sub
+
+// input: p*(len*len+len) complex (p len by len matrices, p len length vectors)
+// output: p*len complex (p len length vector)
+
+complex->complex splitjoin do_back_sub(int len, int p, int normalize) {
+
+  split roundrobin(len*len + len);
+
+  if(normalize==0) {
+    for(int i=0; i<p; i++)
+      add backsubComplex(len);   // back sub for each col
+
+  }
+  else {
+    for(int i=0; i<p; i++) 
+      add norm_helper(len);    
+  } 
+
+  join roundrobin(len);
+}
+
+
+// normalize vector
+
+complex->complex pipeline norm_helper(int len) {
+
+  add splitjoin {
+    split roundrobin(len*len,len);
+    add iden_c(len*len);
+    add divide_by_norm_sqr(len);
+    join roundrobin(len*len,len);
+  }
+  add backsubComplex(len);
+
+}
+
+complex->complex pipeline divide_by_norm_sqr(int len) {
+
+  add splitjoin {
+    split duplicate();
+    add sqr_sumComplex(len);
+    add iden_c(len);
+    join roundrobin(1,len);
+  }
+
+  add divide_by_constant_c(len);
+}
+
+
+// do forward sub with L' and col, bypass L
+
+// input: p*(2*len*len+len) complex (2p len by len matrices, p len length vectors)
+// output: p*(len*len+len) complex (p len by len matrix, p len length vectors)
+
+complex->complex splitjoin do_forward_sub(int len, int p) {
+
+  split roundrobin(2*len*len + len);
+
+  for(int i=0; i<p; i++) 
+    add forward_sub_helper(len);
+
+  join roundrobin(len*len + len);
+
+}
+
+
+// forward sub for each col
+
+// input: 2*len*len + len complex (len by len matrix, len by len matrix, len length vector
+// output: len*len + len complex (len by len matrix, len length vector)
+
+complex->complex splitjoin forward_sub_helper(int len) {
+
+  split roundrobin(len*len, len*len + len); 
+  add iden_c(len*len);
+  add forwardsubComplex(len);
+  join roundrobin(len*len, len);
+}
+
+
+
+
+
+
+
+
+
+

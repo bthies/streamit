@@ -1,0 +1,254 @@
+
+/*
+usage: Data2 = PulseCompression2(GmtiParam, Data, windowPulse)
+ Description:
+   Pulse compression processing for GMTI processing. Uses FIR filter to 
+   compress pulses of the radar.   
+
+ Inputs:
+    GmtiParam: set of GMTI parameters
+    Data: Data cube of dimensions [Nbm x Nsrg x Npri] to be pulse compressed. 
+    windowPulse: Windowed pulse filter coefficients used by radar transmitters 
+                 which generated current data cube 
+
+ Outputs:
+  Data2: Data cube of dimensions [Nbm x Nsrg+Npc-1 x Npri] that has been pulse 
+           compressed. 
+*/
+
+
+
+// input: Nbm*Nsrg*Npri complex
+// output: Nbm*(Nsrg+Npc-1)*Npri complex
+
+complex->complex pipeline PulseCompression(GmtiParamType GmtiParam) {
+
+  int Nbm = GmtiParam.Nbm;
+  int Nsrg = GmtiParam.Nsrg;
+  int Npri = GmtiParam.Npri;
+  int Npc = GmtiParam.Npc;
+
+  int in_total = Nbm*Nsrg*Npri;
+  int out_total = Nbm*(Nsrg+Npc-1)*Npri;
+
+  float cf = GmtiParam.CenterFrequency;
+  float Band = GmtiParam.Bandwidth;
+  float sample = GmtiParam.SamplingRate;
+  float cr = GmtiParam.ChirpRate;
+
+
+  add splitjoin {
+    split roundrobin(in_total,0);
+    add iden_c(Nsrg);
+    add pipeline {
+      add windowPulse(cf,Band,sample,cr,Npc,Nsrg);
+      add repmatComplex(Npc,1,Nbm*Npri,1);  // replicate pulse for each row
+    }
+    join roundrobin(Nsrg,Npc);   // join one row with one pulse
+  }
+
+  add freq_conv(Nsrg,Npc);  // convolve row and pulse  
+}
+
+
+// convolves two vectors, of length x and y
+
+// input: x+y complex
+// output: x+y-1 complex
+
+complex->complex pipeline freq_conv(int x, int y) {
+
+  int total = x+y-1;
+  
+  float log2_total = log(total)/log(2);
+  int log2_total_ceil = (int)(log2_total+0.999);
+  int fft_len = (int)(exp(log(2)*log2_total_ceil)+0.5);
+//print(fft_len);
+
+  add splitjoin {
+    split roundrobin(x,y);
+    add pipeline {
+      add splitjoin {
+        split roundrobin(x,0);
+        add iden_c(x);
+        add zeros_c(fft_len-x);
+        join roundrobin(x,fft_len-x);
+      }
+      add DFT(fft_len);
+    }
+    add pipeline {
+      add splitjoin {
+        split roundrobin(y,0);
+        add iden_c(y);
+        add zeros_c(fft_len-y);
+        join roundrobin(y,fft_len-y);
+      }
+      add DFT(fft_len);
+    }
+    join roundrobin(fft_len);
+  }
+
+  add TermMatrixMultComplex(fft_len,1);
+  add IDFT(fft_len);
+  add output_initial(total,fft_len-total);
+}
+
+
+// input: none
+// output: Npc complex
+
+void->complex pipeline windowPulse(float cf, float Band, float sample, float cr, int Npc, int Nrg) {
+
+//  float cf = GmtiParam.CenterFrequency;
+//  float Band = GmtiParam.Bandwidth;
+//  float sample = GmtiParam.SamplingRate;
+// float cr = GmtiParam.ChirpRate;
+
+  float startFrequency = (cf - Band/2.0)/sample;
+  float centerFrequency = cf/sample;
+  float chirpRate = cr/(sample*sample);  
+ 
+//  int Npc = GmtiParam.Npc;
+//  int Nrg = GmtiParam.Nrg;
+  int wind_len = (int)(0.5 + 1.05*Nrg*Band/sample);
+
+  add pulse_init(startFrequency,chirpRate,Npc);
+  add pulse_init_to_pri(Npc,Nrg-Npc);
+  add pri_to_weights(Nrg,centerFrequency);
+  add weights_to_windowPulse(wind_len,Nrg,Npc);
+}
+
+
+// input: none
+// output: Npc complex
+
+void->complex pipeline pulse_init(float startFreq, float chirpRate, int Npc) {
+
+  complex chirp, start, val;
+  chirp.real = chirpRate/2.0; chirp.imag = 0.0;
+  start.real = startFreq; start.imag = 0.0;
+  val.real = 0.0; val.imag = 2*pi;
+
+  add gen_ints(0,Npc-1);
+  add splitjoin {
+    split duplicate();
+    add pipeline {
+      add mult_valComplex(chirp,Npc);
+      add addvalComplex(start,Npc);
+      add mult_valComplex(val,Npc);
+    }
+    add iden_c(Npc);
+    join roundrobin(Npc);
+  }
+  add TermMatrixMultComplex(Npc,1);
+  add exp_vector(Npc);
+}
+
+
+// input: Npc complex
+// output: Nrg complex
+
+complex->complex splitjoin pulse_init_to_pri(int pulse_len, int zero_len) {
+
+  split roundrobin(pulse_len,0);
+  add iden_c(pulse_len);
+  add zeros_c(zero_len);
+  join roundrobin(pulse_len,zero_len);
+}
+
+
+// input: Nrg complex
+// output: Nrg complex
+
+complex->complex pipeline pri_to_weights(int Nrg, float centerFreq) {
+
+  add splitjoin {
+    split roundrobin(Nrg,0);
+    add iden_c(Nrg);
+    add pipeline {  //creates demodulate
+      complex c;
+      c.real = 0.0;
+      c.imag = -2.0*pi*centerFreq;
+
+      add gen_ints(0,Nrg-1);
+      add mult_valComplex(c,Nrg);
+      add exp_vector(Nrg);
+    }
+    join roundrobin(Nrg);
+  }
+
+  add TermMatrixMultComplex(Nrg,1);
+  add DFT(Nrg);
+  add complex_conjugate(Nrg);
+}
+
+
+// input: Nrg complex
+// output: Npc complex
+
+complex->complex pipeline weights_to_windowPulse(int win_len, int Nrg, int Npc) {
+
+  add splitjoin {
+    split roundrobin(Nrg,0);
+    add iden_c(Nrg);
+    add create_window(win_len,Nrg);
+    join roundrobin(Nrg,Nrg);
+  }
+  add TermMatrixMultComplex(Nrg,1);
+  add IDFT(Nrg);
+  add rearrange(Nrg,Npc);
+  add normalizeComplex(Npc);
+}
+
+
+// input: Nrg complex
+// output: Npc complex
+
+complex->complex filter rearrange(int Nrg, int Npc) {
+
+  work push Npc pop Nrg {
+    complex first;
+
+    first = pop();
+    for(int i=1; i<Nrg-Npc+1; i++)
+      pop();
+
+    for(int i=1; i<Npc; i++)
+      push(pop());
+
+    push(first);
+  }
+}
+
+
+// creates a Hamming window that is fftshifted and has zeros in the middle
+
+// input: none
+// output: Nrg complex
+
+void->complex pipeline create_window(int win_len, int Nrg) {
+
+  int half_win, rest_win; 
+
+  if((win_len % 2)==0)
+    half_win = win_len/2;
+  else
+    half_win = (win_len+1)/2;
+
+  rest_win = win_len - half_win;
+
+  add Hamming(win_len);
+  add ConvertFloatToComplex(win_len);
+  add fftshift_1d(win_len);
+
+  add splitjoin {
+    split roundrobin(rest_win,0,half_win);
+    add iden_c(rest_win);
+    add zeros_c(Nrg-win_len);
+    add iden_c(half_win);
+    join roundrobin(rest_win,Nrg-win_len,half_win);
+  }
+}
+
+
+

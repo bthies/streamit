@@ -1,0 +1,82 @@
+/* extremely simple N^2 algorithm for calculating N point DFT */
+
+complex->complex splitjoin DFT(int N) {
+
+  split duplicate;
+
+  for(int i=0; i<N; i++)
+    add calc_kth_coeff(N,i); 
+
+  join roundrobin(1);
+}
+
+
+complex->complex pipeline IDFT(int N) {
+
+  add complex_conjugate(N);
+  add DFT(N);
+  add complex_conjugate(N);
+  add divide_by_N(N);
+
+}
+
+
+complex->complex pipeline calc_kth_coeff(int N, int k) {
+
+  add splitjoin {
+    split roundrobin(N,0);
+    add iden_c(N);
+    add create_unity_train(N,k);
+    join roundrobin(1,1);
+  }
+
+  add mult_and_sum(N);
+
+} 
+
+
+
+complex->complex filter mult_and_sum(int N) {
+
+  work push 1 pop 2*N {
+
+    complex total = 0.0;
+
+    for(int i=0; i<N; i++)
+      total += pop()*pop();
+
+    push(total);
+
+  }
+}
+
+
+void->complex filter create_unity_train(int N, int k) {
+
+  complex temp;
+
+  init {
+    complex num = 0.0 - 1.0i;
+    temp = 2*pi*num*k/N;
+  }
+  
+  work push N pop 0 {
+
+    for(int i=0; i<N; i++) 
+      push(exp(temp*i));
+
+  }
+}
+
+
+complex->complex filter divide_by_N(int len) {
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++)
+      push(pop()/len);
+  }
+}
+
+
+

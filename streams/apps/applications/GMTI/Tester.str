@@ -1,0 +1,330 @@
+void->complex filter generate {
+   complex[14] a;  
+   complex c;
+   int i;
+
+  init {
+    i=0;
+
+    c = 1.0 + 0.0i;
+
+
+    a[0] = -8.4i+3.0;
+    a[1] = 1.0 + 2i;
+    a[2] = 2.0;
+
+    a[3] = 3.0 - 8i;
+    a[4] = 7.6i-8.2;
+    a[5] = 9.7 - 4.2i;
+
+    a[6] = -1.4;
+    a[7] = 8.3 + 4.5i;
+    a[8] = 9.0-2.9i;
+
+    a[9] = 0.0+3.4i;
+    a[10] = 9;
+    a[11] = 9;
+    a[12] = 9;
+    a[13] = 9;
+
+   
+
+  }
+
+  work push 1 pop 0 {
+
+//    if(i<14)
+//      push(a[i++]);
+//    else
+
+complex max_val;
+max_val.real = 1000.0;
+
+      if((c.real==7.0)||(c.real==114.0))
+        push(max_val);
+      else
+        push(c);
+      
+  c.real += 1.0;
+
+  }
+
+}
+
+
+float->void filter output_f {
+
+  work push 0 pop 1 peek 1 {
+    print(pop());
+  }
+}
+
+
+complex->void filter output_c {
+
+  complex c;
+
+  work push 0 pop 1 peek 1 {
+   c = pop();
+   print(c.real); print(c.imag);
+  }
+}
+
+
+
+
+void->void pipeline Tester {
+
+
+  GmtiParamType GmtiParam;
+  AntParamType AntParams;
+
+
+// GENERAL RADAR SYSTEM AND PHYSICAL PARAMTERS
+
+  GmtiParam.SpeedofLight = 2.9979e8;  // speed of light in meters per second
+  GmtiParam.CenterFrequency = 1e10;   // radar center frequency in Hertz
+  GmtiParam.Bandwidth = 1.6e7;        // radar bandwidth in Hertz
+  GmtiParam.SamplingRate = 2e7;   // radar A/D sampling rate in Hertz
+  GmtiParam.PRF = 7.0e3;          // pulse repitition frequency in Hertz
+
+
+
+//  GmtiParam.Npc = 167;            // pulse compression filter length in samples
+
+GmtiParam.Npc = 5;
+
+
+GmtiParam.PulseTime = GmtiParam.Npc/GmtiParam.SamplingRate; // Pulse length in seconds 
+  GmtiParam.ChirpRate = GmtiParam.Bandwidth/GmtiParam.PulseTime; // Chirp Rate
+  GmtiParam.DutyCycle = GmtiParam.PulseTime * GmtiParam.PRF;  // Percentage of pulse cycle that radar is transmitting
+  GmtiParam.Ntde = 36;            // Time delay and equalization filter length
+
+// MAIN RADAR PROCESSING PARAMETERS
+
+// Don't change Nch, Nbm, or Ncnb - the are matched precisely to the system antenna
+
+//  GmtiParam.Nch = 9;  // Number of sensor channels
+//  GmtiParam.Nbm = 7;  // Number of beams formed 
+//  GmtiParam.Ncnb = 5; // Number of clutter nulled beams
+
+
+GmtiParam.Nch = 5;
+GmtiParam.Nbm = 3;
+GmtiParam.Ncnb = 2;
+
+
+
+// Number of Staggers in doppler filtering
+  GmtiParam.Nstag = 2; // number of temporal degrees of freedom in PRI-staggered STAP
+
+
+
+//  GmtiParam.Npri = 31; // Number of radar pulses
+
+
+GmtiParam.Npri = 7;
+
+
+
+  GmtiParam.Ndop  = GmtiParam.Npri - GmtiParam.Nstag + 1; // Number of doppler bins
+
+// Number of training sample history vectors for ABF and STAP
+//  int NabfTSHistory  = 5;
+//  int NstapTSHistory = 5;
+
+  int NabfTSHistory  = 1;
+  int NstapTSHistory = 1;
+
+
+  GmtiParam.NabfTS  = NabfTSHistory * GmtiParam.Nch;
+  GmtiParam.NstapTS = NstapTSHistory * GmtiParam.Nbm * GmtiParam.Nstag;
+
+// number of STAP weight vector training regions - for this radar, it should always be 1
+  GmtiParam.StapTR = 1;
+
+// Base the number of range gates on the distance of surveillance in meters
+  GmtiParam.MinDistance = (GmtiParam.SpeedofLight / (2 * GmtiParam.PRF)) * GmtiParam.DutyCycle;
+// surveillance distance in meters
+
+  float num1 = ((GmtiParam.SpeedofLight/GmtiParam.PRF)/2) - GmtiParam.MinDistance;
+
+  if(num1 < 4e4)
+    GmtiParam.Distance = num1;
+  else
+    GmtiParam.Distance = 4e4;
+
+
+
+// number of range samples per channel per pulse 
+//  GmtiParam.Nrg = (int)ceil(GmtiParam.SamplingRate*2*GmtiParam.Distance/GmtiParam.SpeedofLight);
+
+
+
+GmtiParam.Nrg = 9;
+
+// For narrowband radar, Nsrg will be set to Nrg
+  GmtiParam.Nsrg = GmtiParam.Nrg;
+
+
+   GmtiParam.NumberCPIs = 1;
+
+// Set diagonal loading factors for ABF and STAP
+//  - Don't change any of these, they are tuned to the antenna
+  GmtiParam.alphaAbf = 10;
+  GmtiParam.alphaStap = 0.01;
+
+// DETECTION PARAMETERS
+// Don't change these; they are tuned to the radar system
+
+//  GmtiParam.Ncfar = 30;  // CFAR range buffer
+//  GmtiParam.G = 10;      // CFAR guard cells
+
+
+GmtiParam.Ncfar = 3;
+GmtiParam.G = 2;
+
+//  GmtiParam.mu = 200;    // sensitivity for detection
+
+GmtiParam.mu = 1;
+
+// LOOK ANGLE PARAMTERS
+// Don't change Azimuth, Elevation, and Platform speed
+  GmtiParam.Azimuth = 0*pi/180;   // in radians off broadside
+  GmtiParam.Elevation = 0*pi/180; // in radians off broadside
+  GmtiParam.PlatformSpeed = 0;   // platform ground speed in meters per second, 10.0 mi/hr = 4.47 m/sec
+
+// Level of clutter to noise ratio at the element level on a linear scale
+  GmtiParam.CNR = 1e1; 
+
+// Flag for turning clutter generation on or off: 1=on, 0=off
+  GmtiParam.GenClutter = 1;
+
+// Turn adaptive beamforming on=1/off=0
+  GmtiParam.AdaptiveBeamforming = 1;
+
+// Turn STAP on=1/off=0
+  GmtiParam.AdaptiveSTAP = 1;
+
+// Create parameters to estimate target locations from target bin estimates
+// Don't change these parameters, they are derived from other currently
+//   unchangeable parameters.  Changing these will only cause incorrect
+//   estimation of absolute positions in the output.
+// -- Azimuth dimension
+  GmtiParam.AzStart = -1 * pi/180;
+  GmtiParam.AzEnd = 1 * pi/180;
+  GmtiParam.AzBins  = GmtiParam.Ncnb;
+
+// Range & Doppler dimensions is entirely calculated by other parameters.
+
+GmtiParam.RgStart = -round( ( (GmtiParam.Npc-1) / GmtiParam.Nsrg) * GmtiParam.Distance);
+GmtiParam.RgEnd   = GmtiParam.Distance;
+GmtiParam.RgBins  = GmtiParam.Nrg+GmtiParam.Npc-1;
+
+GmtiParam.DopStart = GmtiParam.SpeedofLight * GmtiParam.PRF / (4 * GmtiParam.CenterFrequency);
+GmtiParam.DopEnd   = -GmtiParam.SpeedofLight * GmtiParam.PRF / (4 * GmtiParam.CenterFrequency);
+GmtiParam.DopBins  = GmtiParam.Ndop;
+
+
+// SIMULATION SYSTEM PARAMETERS
+// relative location of GMTI data
+//  GmtiParam.dataFolderName = 'GmtiData';
+
+// Flag for saving target cubes: 1=yes, 0=no
+  GmtiParam.SaveTargetCubes = 0;
+
+// Flag for saving output data cubes
+  GmtiParam.SaveOutputCubes = 0;
+
+// Produce a reduced number of noise data cubes 
+
+  int num2 = (int)floor(sqrt(GmtiParam.NumberCPIs));
+
+  if(num2 < 5)
+    GmtiParam.noiseCubes = num2;
+  else
+    GmtiParam.noiseCubes = 5;
+
+
+
+// The following parameters are for the antenna
+  AntParams.fam   = 4;
+  AntParams.Nx    = 18;  // Dimension of subarray in x-direction 
+  AntParams.Ny    = 4;   // Dimension of subarray in y-direction
+  AntParams.am1   = 1;   // Location index on x-axis for first auxilary element 
+  AntParams.am2   = AntParams.fam*AntParams.Nx; // Location index on x-axis for second auxilary element
+  AntParams.an1   = 0;   // Location index on y-axis for first auxilary element
+  AntParams.an2   = 0;   // Location index on t-axis for second auxilary element
+  AntParams.a     = 0.54; 
+  AntParams.b     = 0.46; 
+  AntParams.scale = (AntParams.a*(AntParams.Ny) - AntParams.b) * (AntParams.a*(AntParams.Nx) - AntParams.b);
+  AntParams.N     = AntParams.Nx * AntParams.fam;
+      
+
+int N = AntParams.N;
+int Nch = GmtiParam.Nch;
+int Nbm = GmtiParam.Nbm; 
+int Nsrg = GmtiParam.Nsrg;
+int Npc = GmtiParam.Npc;
+int Ndop = GmtiParam.Ndop;
+int Nstag = GmtiParam.Nstag;
+int Npri = GmtiParam.Npri;
+int NabfTS = GmtiParam.NabfTS;
+int NstapTS = GmtiParam.NstapTS;
+int Ncnb = GmtiParam.Ncnb;
+
+int data_tot = Nch*Nsrg*Npri; 
+int data1_tot = Nbm*Nsrg*Npri;
+int data2_tot = Nbm*(Nsrg+Npc-1)*Npri;
+int data3_tot = Nbm*Nstag*(Nsrg+Npc-1)*Ndop; 
+int data4_tot = Ncnb*(Nsrg+Npc-1)*Ndop;
+
+int V1_tot = Nch*Nbm;
+int T1_tot = N*Nch;
+int Wabf_tot = Nch*Nbm;
+int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;      
+
+  add generate();
+
+  add AdaptiveBeamform(GmtiParam,AntParams);
+
+  add output_final(V1_tot,T1_tot+Wabf_tot+data1_tot); // don't need V1
+
+  add splitjoin {
+    split roundrobin(T1_tot+Wabf_tot,data1_tot);
+    add iden_c(T1_tot+Wabf_tot);
+    
+    add pipeline {
+      add PulseCompression(GmtiParam);
+      add DopFilt(GmtiParam);
+    }
+    join roundrobin(T1_tot+Wabf_tot,data3_tot);
+  }
+
+  add splitjoin {
+    split duplicate();
+    add output_final(T1_tot+Wabf_tot,data3_tot);
+    add output_initial(T1_tot+Wabf_tot,data3_tot);  
+    join roundrobin(data3_tot,T1_tot+Wabf_tot);
+  }
+
+  add Stap(GmtiParam,AntParams);
+  add output_final(Astapset_tot,data4_tot);
+
+  add Detector(GmtiParam);
+  add output_f();
+
+//add output_c();
+
+}
+
+
+
+
+
+
+
+
+
+
+

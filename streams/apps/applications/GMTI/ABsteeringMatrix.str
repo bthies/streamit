@@ -1,0 +1,318 @@
+/*
+
+Description:
+  Adaptive beamforming steering matrix for GMTI processing. returns.  
+
+Inputs:
+  GmtiParam: set of GMTI parameters
+  AntParams: set of antenna parameters
+
+Outputs:
+ T1: Abf antenna subarray mix matrix used in the STAP stage for beam steering. 
+ V1: Abf beam steering matrix(vector set) used in STAP stage for beam steering. 
+*/
+
+
+
+// generates matrix V1
+
+// input: none
+// output: Nch*Nbm (Nch by Nbm matrix)
+
+void->complex pipeline get_V1_only(GmtiParamType GmtiParam, AntParamType AntParams) {
+
+  int Ns = AntParams.Nx;
+  int N = Ns*AntParams.fam;
+  int Nch = GmtiParam.Nch;
+  int Nbm = GmtiParam.Nbm;
+  float Azimuth = GmtiParam.Azimuth;
+  
+  float val_num = (AntParams.fam*AntParams.Nx - AntParams.Nx);
+  float val_den = (Nch - 1);
+  float val = val_num/val_den;
+
+  add processT1(val,Azimuth,N,Nch,Ns,N); 
+  add get_V1_from_T1(Azimuth,-pi/180,pi/180,N,Nbm,Nch);
+}
+
+
+// generates matrices V1 and T1
+
+// input: none
+// output: Nch*Nbm+N*Nch (Nch by Nbm matrix, N by Nch matrix)
+
+void->complex pipeline getV1andT1(GmtiParamType GmtiParam, AntParamType AntParams) {
+
+  int Ns = AntParams.Nx;
+  int N = Ns*AntParams.fam;
+  int Nch = GmtiParam.Nch;
+  int Nbm = GmtiParam.Nbm;
+  float Azimuth = GmtiParam.Azimuth;
+  
+  float val_num = (AntParams.fam*AntParams.Nx - AntParams.Nx);
+  float val_den = (Nch - 1);
+  float val = val_num/val_den;
+
+  add processT1(val,Azimuth,N,Nch,Ns,N); 
+  add ABhelper(Azimuth,-pi/180,pi/180,N,Nbm,Nch);
+}
+
+
+// outputs V1 and T1 from T1
+
+// input: N*Nch complex (N by Nch matrix)
+// output: Nch*Nbm+N*Nch (Nch by Nbm matrix, N by Nch matrix)
+
+complex->complex splitjoin ABhelper(float Azi, float start, float end, int N, int Nbm, int Nch) {
+
+  split duplicate();
+    add get_V1_from_T1(Azi,start,end,N,Nbm,Nch);
+    add iden_c(N*Nch);
+  join roundrobin(Nch*Nbm,N*Nch);
+}
+
+
+// calculates V1 from matrix T1
+
+// input: N*Nch complex (N by Nch matrix)
+// output: Nch*Nbm complex (Nch by Nbm matrix)
+
+complex->complex pipeline get_V1_from_T1(float Azi, float start, float end, int N, int Nbm, int Nch) {
+
+  add Hermatian(N,Nch);
+  add splitjoin {
+    split duplicate();
+    add iden_c(Nch*N);
+    add mult_by_ves(Azi,start,end,N,Nbm,Nch);
+    join roundrobin(Nch*N,Nch*Nbm);
+  }
+  add calcWHS(Nch,N,Nbm,0);
+  add clean_up_zeros(Nch*Nbm);
+  add qr_get_q(Nch,Nbm);
+}
+
+
+// multiplies input matrix T1' by Ves
+
+// input: Nch*N complex (Nch by N matrix)
+// output: Nch*Nbm complex (Nch by Nbm matrix)
+
+complex->complex pipeline mult_by_ves(float Azi, float start, float end, int N, int Nbm, int Nch) {
+
+  add splitjoin {
+    split roundrobin(Nch*N,0);
+    add iden_c(Nch*N);
+    add createVes(Azi,start,end,N,Nbm);
+    join roundrobin(Nch*N,N*Nbm);
+  }
+  add clean_up_zeros(Nch*N + N*Nbm);
+  add MatrixMultComplex1(Nch,N,Nbm);
+
+}
+
+
+// generates final T1 matrix
+
+// input: none
+// output: x*y complex (x by y matrix)
+
+void->complex pipeline processT1(float val, float Azi, int x, int y, int Ns, int N) {
+
+  int tot = x*y;
+
+  add splitjoin {
+    split roundrobin(0);
+    add divideT1(x,y,Ns,N,val);
+    add createVs(x,y,Azi);
+    join roundrobin(tot,tot);
+  }
+
+  add TermMatrixMultComplex(x,y);
+} 
+
+
+// creates initial T1 matrix and divides by shade
+
+// input: none
+// output: x*y complex (x by y complex)
+
+void->complex pipeline divideT1(int x, int y, int Ns, int N, float val) {
+
+  int tot = x*y;
+
+  add splitjoin {
+    split roundrobin(0);
+    add create_shade(Ns);
+    add createT1_init(x,y,Ns,val);
+    join roundrobin(1,tot);
+  }
+  add divide_by_constant(tot);
+  add ConvertFloatToComplex(tot);
+}
+
+
+// calculates shade factor
+
+// input: none
+// output: 1 float
+
+void->float pipeline create_shade(int N) {
+
+  add Hamming(N);
+  add sum_vector(N);
+}
+
+
+// generates initial T1 matrix
+
+// input: none
+// output: x*y float (x by y matrix)
+
+void->float pipeline createT1_init(int x, int y, int Ns, float val) {
+
+  add splitjoin {
+    int index_val;
+
+    split roundrobin(0);
+    for(int i=1; i<=y; i++) {
+      index_val =  (int)floor((i-1)*val);
+      add compute_T1_col(x,index_val,Ns);
+    }
+    join roundrobin(x);
+  }
+  add transpose(y,x);
+}
+
+
+// generates one col of initial T1 matrix
+
+// input: none
+// output: x float
+
+void->float splitjoin compute_T1_col(int x, int index_val, int Ns) {
+
+  int rest = x-Ns-index_val;
+
+  split roundrobin(0);
+
+  if(index_val!=0)
+    add zeros(index_val);
+
+  add Hamming(Ns);
+
+  if(rest!=0)
+    add zeros(rest);
+
+  if((index_val!=0)&&(rest!=0))
+    join roundrobin(index_val, Ns, rest);
+  else {
+    if(index_val == 0)
+      join roundrobin(Ns, rest);
+    else  // rest == 0
+      join roundrobin(index_val, Ns);
+  }
+} 
+
+
+// generates Vs matrix, used to calculate T1
+
+// input: none
+// output: N*Nch complex (N by Nch matrix)
+
+void->complex pipeline createVs(int N, int Nch, float Azi) {
+
+  add complexify(N, sin(Azi));
+  add exp_vector(N);
+  add repmatComplex(N,1,1,Nch);
+}
+
+
+// creates vector [1:N] * -j * pi * val
+
+// input: none
+// output: N complex
+
+void->complex filter complexify(int N, float val) {
+
+  complex num;
+
+  init {
+    num.real = 0.0;
+    num.imag = -1.0;
+  }
+
+  work push N pop 0 {
+    for(int i=1; i<=N; i++) 
+      push(pi*val*i*num);
+
+  }
+}
+
+
+// generates Ves matrix, which is used to calculate V1
+
+// input: none
+// output: N*Nbm complex (N by Nbm matrix)
+
+void->complex pipeline createVes(float Azi, float start, float end, int N, int Nbm) {
+
+  add splitjoin {
+    split roundrobin(0);
+    add create_first(N,Nbm);
+    add create_second(Azi,start,end,N,Nbm);
+    join roundrobin(N*Nbm);
+  }
+  add TermMatrixMultComplex(N,Nbm);
+}
+
+// input: none
+// output: N*Nbm complex (N by Nbm matrix)
+
+void->complex pipeline create_first(int N, int Nbm) {
+
+  add Hamming(N);
+  add repmat(N,1,1,Nbm);
+  add ConvertFloatToComplex(N*Nbm);
+}
+
+// input: none
+// output: N*Nbm complex (N by Nbm matrix)
+
+void->complex pipeline create_second(float Azi, float start, float end, int N, int Nbm) {
+
+  add splitjoin {
+    split roundrobin(0);
+    add complexify(N,1.0);    
+    add create_steeraz(Azi,start,end,Nbm);
+    join roundrobin(N,Nbm);
+  }
+
+  add MatrixMultComplex1(N,1,Nbm);
+  add exp_vector(N*Nbm);
+}
+
+// linearly spaced angles
+
+// input: none
+// output: Nbm complex
+
+void->complex pipeline create_steeraz(float Azi, float start, float end, int Nbm) {
+
+  float val = sin(Azi);
+
+  add linspace(start,end,Nbm);
+  add addval(val,Nbm);
+  add ConvertFloatToComplex(Nbm);
+
+}
+
+
+
+
+
+
+
+
+
+
+

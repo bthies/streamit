@@ -1,0 +1,410 @@
+/*
+usage: [Data1, Wabf, T1, V1] = AdaptiveBeamform(GmtiParam, AntParams, Data)
+ Description:
+   Adaptive beamforming processing for GMTI processing. Adaptively removes 
+   sidelobe barrage jamming.  
+
+ Inputs:
+    GmtiParam: set of GMTI parameters
+    AntParams: set of antenna parameters
+    Data: Data cube of dimensions [Nch x Nsrg x Npri] to be equalized. 
+
+ Outputs:
+    Data1: Data cube of dimensions [Nbm x Nsrg x Npri] that has been equalized. 
+    Wabf: Adaptive beamforming matrix of dimensions [Nch x Nbm]. It is used 
+          in the STAP stage for beam steering. 
+    T1:   Abf antenna subarray mix matrix used in the STAP stage for beam steering. 
+    V1:   Abf beam steering matrix (vector set) used in STAP stage for beam steering. 
+
+*/
+
+// input: Nch*Nsrg*Npri complex (Data)
+// output: Nch*Nbm+N*Nch+Nch*Nbm+Nbm*Nsrg*Npri complex (V1,T1,Wabf,Data1)
+
+complex->complex pipeline AdaptiveBeamform(GmtiParamType GmtiParam, AntParamType AntParams) {
+
+  int N = AntParams.Nx*AntParams.fam;
+
+  add get_pieces(GmtiParam,AntParams);
+  add separate_pieces(GmtiParam,N);
+}
+
+
+// calculates all the matrices needed to compute Data1
+
+// input: Nch*Nsrg*Npri complex (Data)
+// output: Nch*Nbm+N*Nch+2*Nch*Nbm+Nch*Nsrg*Npri complex (V1,T1,Wabf,Wabf,Data)
+
+complex->complex splitjoin get_pieces(GmtiParamType GmtiParam, AntParamType AntParams) {
+
+  int Nch = GmtiParam.Nch;
+  int N = AntParams.Nx*AntParams.fam;
+
+  int total1 = Nch*GmtiParam.Nbm + Nch*N + Nch*GmtiParam.Nbm*2;
+  int total2 = Nch*GmtiParam.Nsrg*GmtiParam.Npri;
+
+  split duplicate();
+  add data_to_pieces(GmtiParam,AntParams);
+  add iden_c(total2);
+  join roundrobin(total1,total2);
+}
+
+
+// gets pieces from data
+
+// input: Nch*Nsrg*Npri complex (Data)
+// output: Nch*Nbm+N*Nch+2*Nch*Nbm complex (V1,T1,Wabf,Wabf)
+ 
+complex->complex pipeline data_to_pieces(GmtiParamType GmtiParam, AntParamType AntParams) {
+
+  int Nch = GmtiParam.Nch;
+  int N = AntParams.Nx*AntParams.fam;
+
+  int A_x = Nch;  // = V1_x
+  int A_y = Nch+GmtiParam.NabfTS; 
+  int V1_y = GmtiParam.Nbm;
+
+  int T1_len = Nch*N;
+
+  add combine_A_V1_T1(GmtiParam,AntParams);
+  add split_pieces(A_x,A_y,V1_y,T1_len);
+}
+
+
+// calculates Wabf and passes V1,T1 along
+
+// input: Nch*(Nch+NabfTS)+Nch*Nbm+N*Nch complex (A,V1,T1)
+// output: Nch*Nbm+N*Nch+2*Nch*Nbm complex (V1,T1,Wabf,Wabf)
+
+complex->complex splitjoin split_pieces(int a_x, int a_y, int v_y, int t_len) {
+
+  int a_len = a_x * a_y;
+  int v_len = a_x * v_y; 
+  int tot = v_len + t_len;
+
+  split duplicate();
+  add output_V1_T1(a_len,tot);
+  add output_Wabf2(a_x,a_y,v_y,t_len);
+  join roundrobin(tot,2*a_x*v_y);
+}
+
+
+// from A,V1,T1 outputs V1,T1
+
+// input: Nch*(Nch+NabfTS)+Nch*Nbm+N*Nch complex (A,V1,T1)
+// output: Nch*Nbm+N*Nch (V1,T1)
+
+complex->complex filter output_V1_T1(int total1, int total2) {
+
+  work push total2 pop total1+total2 {
+
+    for(int i=0; i<total1; i++)
+      pop();
+
+    for(int i=0; i<total2; i++)
+      push(pop());
+  }
+}
+
+
+// calculates Wabf and outputs twice
+
+// input: Nch*(Nch+NabfTS)+Nch*Nbm+N*Nch complex (A,V1,T1)
+// output: 2*Nch*Nbm (Wabf,Wabf)
+
+complex->complex pipeline output_Wabf2(int a_x, int a_y, int v_y, int t_len) {
+
+  int a_len = a_x * a_y;
+  int v_len = a_x * v_y;
+  int tot = a_len+v_len;
+
+  add output_A_V1(tot,t_len);
+  add calcWHS(a_x,a_y,v_y,1);
+  add repmatComplex(a_x,v_y,2,1);   // output two copies of Wabf matrix
+}
+
+
+// outputs A,V1 from A,V1,T1
+
+// input: Nch*(Nch+NabfTS)+Nch*Nbm+N*Nch complex (A,V1,T1)
+// output: Nch*(Nch+NabfTS)+Nch*Nbm complex (A,V1)
+
+complex->complex filter output_A_V1(int total1, int total2) {
+
+  work push total1 pop total1+total2 {
+
+    for(int i=0; i<total1; i++)
+      push(pop());
+
+    for(int i=0; i<total2; i++)
+      pop();
+  }
+}
+
+
+// outputs final matrices from the pieces
+
+// input: Nch*Nbm+N*Nch+2*Nch*Nbm+Nch*Nsrg*Npri complex (V1,T1,Wabf,Wabf,Data)
+// output: Nch*Nbm+N*Nch+Nch*Nbm+Nbm*Nsrg*Npri complex (V1,T1,Wabf,Data1)
+
+complex->complex splitjoin separate_pieces(GmtiParamType GmtiParam, int N) {
+
+  int Nch = GmtiParam.Nch;
+  int Nbm = GmtiParam.Nbm;
+  int Nsrg = GmtiParam.Nsrg;
+  int Npri = GmtiParam.Npri;
+
+  int len_v = Nch*Nbm; 
+  int len_t = N*Nch;
+  int len_wabf = len_v;
+  int len_data = Nch*Nsrg*Npri;
+
+  int total1 = len_v + len_t + len_wabf;
+  int total2 = len_wabf + len_data;
+  int total3 = Nbm*Nsrg*Npri;
+
+  split roundrobin(total1,total2);
+  add iden_c(total1);
+  add get_new_data(Nch,Nbm,Nsrg,Npri);
+  join roundrobin(total1,total3);
+}
+
+
+// outputs new data matrix
+
+// input: Nch*Nbm + Nch*Nsrg*Npri (Wabf, Data)
+// output: Nbm*Nsrg*Npri complex (Data1)
+
+complex->complex pipeline get_new_data(int Nch, int Nbm, int Nsrg, int Npri) {
+
+  int wabf_len = Nch*Nbm;
+  int data_len = Nch*Nsrg*Npri;
+
+  add splitjoin {
+    split roundrobin(wabf_len,data_len);
+    add pipeline {
+      add Hermatian(Nch,Nbm);
+      add repmatComplex(Nbm,Nch,Npri,1);
+    }
+    add iden_c(Nch*Nsrg);
+    join roundrobin(Nbm*Nch,Nch*Nsrg);
+  }
+
+  add MatrixMultComplex1(Nbm,Nch,Nsrg);
+}
+
+
+// generates A and V1,T1 (from data)
+
+// input: Nch*Nsrg*Npri complex (Nch by Nsrg by Npri matrix)
+// output: Nch*(Nch+NabfTS)+Nch*Nbm + AntParams.N*Nch complex (Nch by Nch+NabfTS matrix, Nch by Nbm matrix, Nx*fam by Nch matrix)
+
+complex->complex splitjoin combine_A_V1_T1(GmtiParamType GmtiParam, AntParamType AntParams) {
+
+  int Nch = GmtiParam.Nch;
+
+  int total1 = GmtiParam.Npri*GmtiParam.Nch*GmtiParam.Nsrg;
+  int total2 = Nch*(GmtiParam.Nch + GmtiParam.NabfTS);
+  int total3 = Nch*GmtiParam.Nbm + AntParams.N*Nch;
+
+  split roundrobin(total1,0);
+
+  add create_A(GmtiParam);
+  add getV1andT1(GmtiParam, AntParams);
+
+  join roundrobin(total2,total3);
+}
+
+
+// calculates matrix A from data
+
+// input: Nch*Nsrg*Npri complex (Nch by Nsrg by Npri matrix)
+// output: Nch*(Nch+NabfTS) complex (Nch by Nch+NabfTS matrix)
+
+complex->complex pipeline create_A(GmtiParamType GmtiParam) {
+
+  int NabfTS = GmtiParam.NabfTS;
+  int Nsrg = GmtiParam.Nsrg;
+  int Npri = GmtiParam.Npri;
+  int Nch = GmtiParam.Nch;
+  int alphaAbf = GmtiParam.alphaAbf;
+
+  float normDopTrain, normDop;
+
+// calculate normDopTrain
+  float lambda = GmtiParam.SpeedofLight/GmtiParam.CenterFrequency;
+  float sin_theta = sin(GmtiParam.Azimuth);
+  float spatial_frequency = 0.5*sin_theta;
+  normDop = 4*GmtiParam.PlatformSpeed*spatial_frequency/lambda/GmtiParam.PRF;
+  normDop = normDop - (int)(normDop+0.5);
+  normDopTrain = normDop - (int)(normDop) - 0.5;
+
+  add get_Xt(NabfTS, Nsrg, Npri, Nch, normDopTrain);   
+  add convert_Xt_to_A(Nch, NabfTS, alphaAbf);
+}
+
+
+// calculate A from Xt and loading matrix
+
+// input: Nch*NabfTS complex (Nch by NabfTS matrix)
+// output: Nch*(Nch+NabfTS) complex (Nch by Nch+NabfTS matrix)
+
+complex->complex splitjoin convert_Xt_to_A(int Nch, int NabfTS, int alphaAbf) {
+
+  complex val;
+  val.real = sqrt(NabfTS);
+  val.imag = 0.0;
+
+  split roundrobin(Nch*NabfTS,0);
+  add div_valComplex(val,Nch*NabfTS);
+  add create_loading_matrix(Nch, alphaAbf);
+  join roundrobin(NabfTS,Nch);
+}
+
+
+// generate the loading matrix
+
+//input: none
+//output: Nch*Nch complex (Nch by Nch matrix)
+
+void->complex pipeline create_loading_matrix(int Nch, int alphaAbf) {
+
+  float val = sqrt(alphaAbf);
+  int total = Nch*Nch;
+
+  add eye(Nch);
+  add mult_val(val,total);
+  add ConvertFloatToComplex(total);
+}
+
+
+// generate Xt matrix
+
+// input: Nch*Nsrg*Npri complex (Nch by Nsrg by Npri matrix)
+// output: Nch*NabfTS complex (Nch by NabfTS matrix)
+
+complex->complex pipeline get_Xt(int NabfTS, int Nsrg, int Npri, int Nch, float normDopTrain) {
+
+  add get_XtPulse(NabfTS,Nsrg,Npri,Nch);
+
+  add splitjoin {
+   split roundrobin(1);
+    
+    for(int i=0; i<NabfTS; i++) 
+      add process_Xt(Npri,Nch,normDopTrain);
+
+   join roundrobin(Nch);
+  }
+
+  add transposeComplex(NabfTS,Nch);
+}
+
+
+// multiplies input matrix by doppler, then sums over rows
+
+// input: Nch*Npri complex
+// output: Nch complex
+
+complex->complex pipeline process_Xt(int Npri, int Nch, float normDopTrain ) {
+
+  add splitjoin {
+    split roundrobin(Npri*Nch,0);
+    add transposeComplex(Npri,Nch);
+    add process_dopfilt(Npri,Nch,normDopTrain);
+    join roundrobin(Nch*Npri,Nch*Npri);
+  }
+  add TermMatrixMultComplex(Nch,Npri);
+
+// now want to do sum here
+
+  add sum_rowsComplex(Nch, Npri);
+}
+
+
+// gets Xt_pulse from data matrix
+
+// input: Nch*Nsrg*Npri complex (Nch by Nsrg by Npri matrix)
+// output: Nch*NabfTS*Npri complex (Nch by NabfTS by Npri matrix)
+
+complex->complex filter get_XtPulse(int NabfTS, int Nsrg, int Npri, int Nch) {
+
+  int temp;
+
+  init {
+    temp = Nsrg - NabfTS;
+  }
+
+  work push Npri*Nch*NabfTS pop Npri*Nch*Nsrg {
+
+
+    for(int k=0; k<Npri; k++) {
+
+      for(int j=0; j<Nch; j++) {
+
+        for(int i=0; i<temp; i++)
+          pop();
+
+        for(int i=temp; i<Nsrg; i++)
+          push(pop());
+     }
+   }
+  }
+}
+
+
+// outputs final doppler filter (initial multiplied by taper, then replicated)
+
+// input: none
+// output: Nch*Npri complex (Nch by Npri matrix)
+
+void->complex pipeline process_dopfilt(int Npri, int Nch, float normDopTrain) {
+
+  add splitjoin {
+    split roundrobin(0);
+    add create_dopfilt(Npri,normDopTrain);
+    add pipeline {
+      add cheb_taps(Npri);
+      add ConvertFloatToComplex(Npri);
+    }
+    join roundrobin(Npri);
+  }
+
+  add TermMatrixMultComplex(1,Npri);
+  add repmatComplex(1,Npri,Nch,1);
+}
+
+
+// creates initial doppler filter
+
+// input: none
+// output: N complex
+
+void->complex filter create_dopfilt(int Npri, float normDopTrain) {
+
+  complex num, temp;
+  float val;
+
+  init {
+    num = 0.0 - 1.0i;
+    val = sqrt(Npri);
+    temp = num*2*pi*normDopTrain;
+  }
+
+  work push Npri pop 0 {
+
+    for(int i=0; i<Npri; i++) 
+      push(exp(i*temp)/val);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+

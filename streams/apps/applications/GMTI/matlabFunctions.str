@@ -1,0 +1,1644 @@
+// these filters assume matrices are inputted by rows
+// l by p matrix multiplied by p by r matrix
+
+// input: l*p+p*r floats (l by p matrix, p by r matrix)
+// output: l*r floats (l by r matrix)
+
+float->float filter MatrixMult1(int l, int p, int r) {
+
+// recieve the rows of the first matrix, then rows of the second matrix
+// output rows of the out matrix
+  work push l*r pop l*p + p*r {
+    float sum;
+ 
+    for(int i=0; i<l; i++) {
+      for(int j=0; j<r; j++) {
+         sum = 0.0;
+         for(int k=0; k<p; k++) {
+// want the ith row, kth row of first matrix times
+// kth row, jth column of second matrix, summed over k
+           sum += peek(i*p + k)*peek(l*p + k*r + j);
+         }
+         push(sum);
+      }
+    }  
+
+    for(int i=0;i<l*p + p*r;i++) {
+      pop();
+    }
+  }
+}
+
+
+//complex l by p matrix multiplied by p by r matrix
+
+// input: l*p+p*r complex (l by p matrix, p by r matrix)
+// output: l*r complex (l by r matrix)
+
+complex->complex filter MatrixMultComplex1(int l, int p, int r) {
+
+// recieve the rows of the first matrix, then rows of the second matrix
+// output rows of the out matrix
+  work push l*r pop l*p + p*r {
+    complex sum;
+ 
+    for(int i=0; i<l; i++) {
+      for(int j=0; j<r; j++) {
+         sum = 0.0;
+         for(int k=0; k<p; k++) {
+// want the ith row, kth col of first matrix times
+// kth row, jth column of second matrix, summed over k
+
+           sum = sum + peek(i*p + k)*peek(l*p + k*r + j);
+
+         }
+         push(sum);
+      }
+    }  
+    for(int i=0;i<l*p + p*r;i++) {
+      pop();
+    }
+  }
+}
+
+
+// computes transpose of x by y matrix
+
+// input: x*y floats (x by y matrix)
+// output: y*x floats (y by x matrix)
+
+float->float splitjoin transpose(int x, int y) {
+
+  split roundrobin(1);
+
+  for(int i=0; i<y; i++)
+    add iden(x);
+
+  join roundrobin(x);
+}
+
+
+// computes transpose of x by y matrix
+
+// input: x*y complex (x by y matrix)
+// output: y*x complex (y by x matrix)
+
+complex->complex splitjoin transposeComplex(int x, int y) {
+
+  split roundrobin(1);
+
+  for(int i=0; i<y; i++)
+    add iden_c(x);
+
+  join roundrobin(x);
+
+}
+
+
+
+// generates N points evenly spaced from start to end
+
+// input: none
+// output: N floats
+
+void->float filter linspace(float start, float end, int N) {
+
+  work push N pop 0 {
+
+    if(N==1)
+      push(end);
+    else {
+      float interval = (end - start)/(N-1);
+      float sum = start;
+
+      for(int i=0; i<N; i++) {
+        push(sum);
+        sum+=interval;
+      }
+    }
+  }
+
+}
+
+
+// generates a symmetric N point Hamming window
+
+// input: none
+// output: N floats
+
+void->float filter Hamming(int N) {
+
+  work push N pop 0 {
+
+    for(int i=0; i<N; i++) {
+      push(0.54-0.46*cos(2*pi*i/(N-1)));
+    }
+  }
+}
+
+
+// 31 or 30 point cheb filter with 60 dB attenuation
+
+// input: none
+// output: N floats
+
+void->float filter cheb_taps(int N) {
+
+  int num_a = 31; float[num_a] a;
+  int num_b = 30; float[num_b] b;
+
+  int num_TEMP = 7; int num2_TEMP = 6;
+
+  float[num_TEMP] c; float[num2_TEMP] c2;
+
+  init {
+
+c[0] = 0.0871; c[1] = 0.380; c[2] = 0.7947; c[3] = 1.000;
+c[6] = 0.0871; c[5] = 0.380; c[4] = 0.7947;
+
+c2[0] = 0.1327; c2[1] = 0.5477; c2[2] = 1.000; 
+c2[5] = 0.1327; c2[4] = 0.5477; c2[3] = 1.000;
+
+   a[0] = 0.0188;       b[0] = 0.0189;
+   a[1] =  0.0348;      b[1] = 0.0360;
+   a[2] =  0.0637;      b[2] = 0.0667;
+   a[3] =  0.1047;      b[3] = 0.1105;
+   a[4] =  0.1593;      b[4] = 0.1690;
+   a[5] =  0.2277;      b[5] = 0.2424;
+   a[6] =  0.3095;      b[6] = 0.3297;
+   a[7] =  0.4025;      b[7] = 0.4284;
+   a[8] =  0.5034;      b[8] = 0.5345;
+   a[9] =  0.6077;      b[9] = 0.6427;
+   a[10] =  0.7101;     b[10] = 0.7469;
+   a[11] =  0.8046;     b[11] = 0.8405;
+   a[12] =  0.8856;     b[12] = 0.9172;
+   a[13] =  0.9476;     b[13] = 0.9717;
+   a[14] =  0.9867;     b[14] = 1.0000;
+   a[15] =  1.0000;     b[15] = 1.0000;
+   a[16] =  0.9867;     b[16] = 0.9717;
+   a[17] =  0.9476;     b[17] = 0.9172;
+   a[18] =  0.8856;     b[18] = 0.8405;
+   a[19] =  0.8046;     b[19] = 0.7469;
+   a[20] =  0.7101;     b[20] = 0.6427;
+   a[21] =  0.6077;     b[21] = 0.5345;
+   a[22] =  0.5034;     b[22] = 0.4284;
+   a[23] =  0.4025;     b[23] = 0.3297;
+   a[24] =  0.3095;     b[24] = 0.2424;
+   a[25] =  0.2277;     b[25] = 0.1690;
+   a[26] =  0.1593;     b[26] = 0.1105;
+   a[27] =  0.1047;     b[27] = 0.0667;
+   a[28] =  0.0637;     b[28] = 0.0360;
+   a[29] =  0.0348;     b[29] = 0.0189;
+   a[30] =  0.0188;
+  }
+
+  work push N pop 0 {
+
+    if(N == num_a) {
+      for(int i=0; i<N; i++)
+        push(a[i]);
+    }
+    else if(N == num_b) { 
+      for(int i=0; i<N; i++) 
+        push(b[i]);
+    }
+    else if(N == num_TEMP) {
+      for(int i=0; i<N; i++)
+        push(c[i]);
+    }
+    else if(N == num2_TEMP) {
+      for(int i=0; i<N; i++)
+        push(c2[i]);
+    }
+    else {
+      for(int i=0; i<N; i++)
+        push(1.0);
+    }
+  }
+}
+
+
+// generates N zeros
+
+// input: none
+// output: N floats
+
+void->float filter zeros(int N) {
+
+  work push N pop 0 {
+
+    for(int i=0; i<N; i++) {
+      push(0.0);
+    }
+  }
+}
+
+
+// generates N zeros
+
+// input: none
+// output: N complex
+
+void->complex filter zeros_c(int N) {
+
+  complex c;
+
+  init {
+    c = 0.0 + 0.0i;
+  }
+
+  work push N pop 0 {
+
+    for(int i=0; i<N; i++) {
+      push(c);
+    }
+  }
+}
+
+
+// replicates M by N matrix P by Q times
+// assumes matrix entered by rows
+// outputs new matrix by rows
+
+// input: M*N floats (M by N matrix)
+// output: M*N*P*Q floats (M*P by N*Q matrix)
+
+float->float splitjoin repmat(int M, int N, int P, int Q) {
+
+  split duplicate();  
+  for(int i=0; i<P; i++) 
+    add repmat_xdir(M,N,Q);  // creates one M by N 'row'  
+  join roundrobin(M*N*Q);    // puts all those 'rows' together
+}
+
+// replicates the M by N matrix horizontally
+
+// input: M*N floats (M by N matrix)
+// output: M*N*Q floats (M by N*Q matrix)
+
+float->float splitjoin repmat_xdir(int M, int N, int Q) {
+
+  split roundrobin(N);
+  for(int i=0; i<M; i++) 
+    add copy_row(N,Q);
+  join roundrobin(N*Q);
+}
+
+// duplicates row of floats
+
+// input: row_len floats
+// output: row_len*copy_times floats
+
+float->float splitjoin copy_row(int row_len, int copy_times) {
+  
+  split duplicate();
+  for(int i=0; i<copy_times; i++)
+    add iden(row_len);
+
+  join roundrobin(row_len);
+}
+
+
+// replicates M by N complex matrix P by Q times
+// assumes matrix entered by rows
+// outputs new matrix by rows
+
+// input: M*N complex (M by N matrix)
+// output: M*N*P*Q complex (M*P by N*Q matrix)
+
+complex->complex splitjoin repmatComplex(int M, int N, int P, int Q) {
+
+  split duplicate();  
+  for(int i=0; i<P; i++) 
+    add repmat_xdir_c(M,N,Q);  // creates one M by N 'row'
+  join roundrobin(M*N*Q);      // puts all those 'rows' together
+}
+
+// replicates the M by N matrix horizontally
+
+// input: M*N complex (M by N matrix)
+// output: M*N*Q complex (M by N*Q matrix)
+
+complex->complex splitjoin repmat_xdir_c(int M, int N, int Q) {
+
+  split roundrobin(N);
+  for(int i=0; i<M; i++) 
+    add copy_row_c(N,Q);
+  join roundrobin(N*Q);
+}
+
+// duplicates row of floats
+
+// input: row_len complex
+// output: row_len*copy_times complex
+
+complex->complex splitjoin copy_row_c(int row_len, int copy_times) {
+  
+  split duplicate();
+  for(int i=0; i<copy_times; i++)
+    add iden_c(row_len);
+
+  join roundrobin(row_len);
+}
+
+
+// outputs N inputs
+
+// input: N floats
+// output: N floats
+
+float->float filter iden(int N) {
+
+  work push N pop N {
+    for(int i=0; i<N; i++)
+      push(pop());
+  }
+}
+
+
+// outputs N inputs
+
+// input: N complex
+// output: N complex
+
+complex->complex filter iden_c(int N) {
+
+  work push N pop N {
+    for(int i=0; i<N; i++)
+      push(pop());
+  }
+}
+
+
+// sums N elements
+
+// input: N floats
+// output: 1 float
+
+float->float filter sum_vector(int N) {
+
+  work push 1 pop N {
+
+    float total = 0.0;
+
+    for(int i=0; i<N; i++) {
+      total += pop();
+    }
+    push(total);
+  }
+}
+
+
+// sums N elements
+
+// input: N complex
+// output: 1 complex
+
+complex->complex filter sum_vectorComplex(int N) {
+
+  work push 1 pop N {
+
+    complex total = 0.0 + 0.0i;
+
+    for(int i=0; i<N; i++) {
+      total = total + pop();
+    }
+    push(total);
+  }
+}
+
+
+// sums rows of an m by n matrix
+
+// input: m*n floats (m by n matrix)
+// output: m floats (m length vector)
+
+float->float splitjoin sum_rows(int m, int n) {
+
+  split roundrobin(n);
+  for(int i=0; i<m; i++)
+    add sum_vector(n);
+  join roundrobin(1);
+}
+
+
+// sums rows of an m by n complex matrix
+
+// input: m*n complex (m by n matrix)
+// output: m complex (m length vector)
+
+complex->complex splitjoin sum_rowsComplex(int m, int n) {
+
+  split roundrobin(n);
+  for(int i=0; i<m; i++)
+    add sum_vectorComplex(n);
+  join roundrobin(1);
+}
+
+
+// sums cols of an m by n matrix
+
+// input: m*n floats (m by n matrix)
+// output: n floats (m length vector)
+
+float->float splitjoin sum_cols(int m, int n) {
+
+  add transpose(m,n);
+  add sum_rows(n,m);
+  add transpose(n,m);
+}
+
+
+// reverses the stream of values
+
+// input: N floats
+// output: N floats
+
+float->float filter reverse_1(int N) {
+
+  work push N pop N peek N {
+    
+    for(int i=0; i<N; i++)
+      push(peek(N-i-1));
+
+    for(int i=0; i<N; i++)
+      pop();
+  }
+}
+
+
+// reverses the stream of values
+
+// input: N complex
+// output: N complex
+
+complex->complex filter reverse_1_c(int N) {
+
+  work push N pop N peek N {
+    
+    for(int i=0; i<N; i++)
+      push(peek(N-i-1));
+
+    for(int i=0; i<N; i++)
+      pop();
+  }
+}
+
+
+// adds num vectors, each of length len
+
+// input: num*len floats
+// output: len floats
+
+float->float pipeline add_consec(int len, int num) {
+
+  add interleave_multiple(len,num);
+  add sum_rows(len,num);
+}
+
+
+float->float splitjoin interleave_multiple(int len, int num) {
+
+  split roundrobin(len);
+  for(int i=0; i<num; i++)
+    add iden(1);
+  join roundrobin(1);
+}
+
+
+// term by term real matrix multiplication
+
+// input: 2*m*n floats
+// output: m*n floats
+
+float->float pipeline TermMatrixMult(int m, int n) {
+
+  int total = m*n;
+
+  add interleave_terms(total); // interleave the two matrices
+  add mult_consec_terms(total); // multiply consecutive terms
+
+}
+
+// interleaves total values with previous total values 
+
+// input: 2*total floats
+// output: 2*total floats
+
+float->float splitjoin interleave_terms(int total) {
+
+  split roundrobin(total);
+  add iden(total);
+  add iden(total);
+  join roundrobin(1,1);
+}
+
+// multiplies total consecutive terms
+
+// input: 2*total floats
+// output: total floats
+
+float->float filter mult_consec_terms(int total) {
+
+  work push total pop 2*total {
+
+    for(int i=0; i<total; i++)
+      push(pop()*pop());
+  }
+}
+
+
+// term by term complex matrix multiplication
+
+// input: 2*m*n complex
+// output: m*n complex
+
+complex->complex pipeline TermMatrixMultComplex(int m, int n) {
+
+  int total = m*n;
+
+  add interleave_terms_c(total);    // interleave the two matrices
+  add mult_consec_terms_c(total);   // multiply consecutive terms
+}
+
+// interleaves total values with previous total values 
+
+// input: 2*total complex
+// output: 2*total complex
+
+complex->complex splitjoin interleave_terms_c(int total) {
+
+
+  split roundrobin(total);
+  add iden_c(total);
+  add iden_c(total);
+  join roundrobin(1,1);
+}
+
+// multiplies total consecutive terms
+
+// input: 2*total complex
+// output: total complex
+
+complex->complex filter mult_consec_terms_c(int total) {
+
+  work push total pop 2*total {
+
+    for(int i=0; i<total; i++)
+      push(pop()*pop());
+  }
+}
+
+
+// performs forward substitution given an n by n lower triangular matrix L and n by 1 matrix b to solve L*s = b for the n by 1 matrix s
+
+// input: n*n+n floats (n by n matrix, n by 1 matrix)
+// output: n*1 floats (n by 1 matrix)
+
+float->float pipeline forwardsub(int n) {
+
+  add diff_matrix_interleave(n);  // interleave two matrices 
+  add f_substitutions(n);         // do forward substitution
+}
+
+// interleave the matrices, using one row from the n by n matrix then one entry from the n by 1 matrix 
+
+// input: n*n+n floats
+// output: n*n+n floats
+
+float->float splitjoin diff_matrix_interleave(int n) {
+
+  split roundrobin(n*n,n);
+  add iden(n);
+  add iden(1);
+  join roundrobin(n,1);
+}
+
+// forward substitution algorithm
+
+// input: n*n + n floats
+// output: n floats (n by 1 matrix)
+
+float->float filter f_substitutions(int n) {
+
+  float[n] s; float temp_count, temp_l, temp_b;
+
+  work push n pop n*n + n {
+
+    for(int i=0; i<n; i++) {
+      temp_count = 0.0;
+
+      for(int j=0; j<i; j++)
+        temp_count += pop()*s[j];  // multiply row entries by previously calculated solutions
+
+      temp_l = pop();
+
+      for(int j=i+1; j<n; j++)    // these are zeros, just discard them
+        pop();
+
+      temp_b = pop();
+      s[i] = (temp_b - temp_count)/temp_l;   // save solution in s[i]
+      push(s[i]);
+    }
+  }
+}
+
+
+// performs backwards substitution given an n by n upper triangular matrix U and n by 1 matrix b to solve U*s = b for the n by 1 matrix s
+
+// input: n*n+n floats (n by n matrix, n by 1 matrix)
+// output: n*1 floats (n by 1 matrix)
+
+float->float pipeline backsub(int n) {
+
+  add split_to_reverse(n); // reverse the n by n AND n by 1 matrices
+  add forwardsub(n);       // do forward substitution on the reversed matrices
+  add reverse_1(n);       // reverse the output
+}
+
+// reverses n by n and n by 1 matrices
+
+// input: n*n+n floats (n by n matrix, n by 1 matrix)
+// output: n*n+n floats (n by n matrix, n by 1 matrix)
+
+float->float splitjoin split_to_reverse(int n) {
+
+  int total = n*n;
+
+  split roundrobin(total,n);
+  add reverse_1(total);
+  add reverse_1(n);
+  join roundrobin(total,n);
+}
+
+
+// performs forward substitution given an n by n complex lower triangular matrix L and n by 1 matrix b to solve L*s = b for the n by 1 matrix s
+
+// input: n*n+n complex (n by n matrix, n by 1 matrix)
+// output: n*1 complex (n by 1 matrix)
+
+complex->complex pipeline forwardsubComplex(int n) {
+
+  add diff_matrix_interleave_c(n);    // interleave the two matrices  
+  add f_substitutions_c(n);           // do forward substitution
+}
+
+// interleave the matrices, using one row from the n by n matrix then one entry from the n by 1 matrix 
+
+// input: n*n+n complex
+// output: n*n+n complex
+
+complex->complex splitjoin diff_matrix_interleave_c(int n) {
+
+  split roundrobin(n*n,n);
+  add iden_c(n);
+  add iden_c(1);
+  join roundrobin(n,1);
+}
+
+// forward substitution algorithm
+
+// input: n*n + n complex
+// output: n complex (n by 1 matrix)
+
+complex->complex filter f_substitutions_c(int n) {
+
+  complex[n] s; complex temp_count, temp_l, temp_b;
+
+  work push n pop n*n + n {
+
+    for(int i=0; i<n; i++) {
+      temp_count.real = 0.0;
+      temp_count.imag = 0.0;
+
+      for(int j=0; j<i; j++)
+        temp_count += pop()*s[j];  // multiply row entries by previously calculated solutions
+
+      temp_l = pop();
+
+      for(int j=i+1; j<n; j++)
+        pop();                    // these are zeros, just discard the
+
+      temp_b = pop();
+      s[i] = (temp_b - temp_count)/temp_l;     // save solution in s[i]
+      push(s[i]);
+    }
+  }
+}
+
+
+// performs backwards substitution given an n by n upper triangular matrix U and n by 1 matrix b to solve U*s = b for the n by 1 matrix s
+
+// input: n*n+n complex (n by n matrix, n by 1 matrix)
+// output: n*1 complex (n by 1 matrix)
+
+complex->complex pipeline backsubComplex(int n) {
+
+  add split_to_reverse_c(n); // reverse the n by n AND n by 1 matrices
+  add forwardsubComplex(n);  // do forward subs on the reversed matrices
+  add reverse_1_c(n);        // reverse the output
+}
+ 
+// reverses n by n and n by 1 matrices
+
+// input: n*n+n complex (n by n matrix, n by 1 matrix)
+// output: n*n+n complex (n by n matrix, n by 1 matrix)
+
+complex->complex splitjoin split_to_reverse_c(int n) {
+
+  int total = n*n;
+
+  split roundrobin(total,n);
+  add reverse_1_c(total);
+  add reverse_1_c(n);
+  join roundrobin(total,n);
+
+}
+
+// takes an m by n matrix and removes the last n-m columns
+// ASSUMES n >= m
+
+// input: m*n complex (m by n matrix)
+// output: m*m complex (m by m matrix)
+
+complex->complex filter convert_to_square_cols(int m, int n) {
+
+  work push m*m pop m*n {
+
+    for(int i=0; i<m; i++) {
+
+      for(int j=0; j<m; j++)
+        push(pop());
+
+      for(int j=m; j<n; j++)
+        pop();
+    }
+  }
+}
+
+
+// takes an m by n matrix and removes the last m-n rows
+// ASSUMES m >= n
+
+// input: m*n complex (m by n matrix)
+// output: n*n complex (m by m matrix)
+
+complex->complex filter convert_to_square_rows(int m, int n) {
+
+  work push n*n pop m*n {
+
+    for(int i=0; i<n; i++) 
+      for(int j=0; j<n; j++)
+        push(pop());
+
+    for(int i=n; i<m; i++)
+      for(int j=0; j<n; j++)
+        pop();
+  }
+}
+
+
+// divides stream of values by first value
+
+// input: len+1 floats
+// output: len floats
+
+float->float filter divide_by_constant(int len) {
+
+  float val;
+
+  work push len pop len+1 {
+    val = pop();
+
+    for(int i=0; i<len; i++) 
+      push(pop()/val);
+  }
+}
+
+
+// divides stream of values by first value
+
+// input: len+1 complex
+// output: len complex
+
+complex->complex filter divide_by_constant_c(int len) {
+
+  complex val;
+
+  work push len pop len+1 {
+    val = pop();
+
+    for(int i=0; i<len; i++) 
+      push(pop()/val);
+
+  }
+}
+
+
+// multiplies stream of values by first value
+
+// input: len+1 floats
+// output: len floats
+
+float->float filter multiply_by_constant(int len) {
+
+  float val;
+
+  work push len pop len+1 {
+    val = pop();
+
+    for(int i=0; i<len; i++) 
+      push(pop()*val);
+
+  }
+}
+
+
+// multiplies stream of values by first value
+
+// input: len+1 complex
+// output: len complex
+
+complex->complex filter multiply_by_constant_c(int len) {
+
+  complex val;
+
+  work push len pop len+1 {
+    val = pop();
+
+    for(int i=0; i<len; i++) 
+      push(pop()*val);
+
+  }
+}
+
+
+// adds value val to stream of N values
+
+// input: N floats
+// output: N floats
+
+float->float filter addval(float val, int N) {
+
+  work push N pop N {
+
+    for(int i=0; i<N; i++)
+      push(pop()+val);
+  }
+}
+
+
+// adds value val to stream of N values
+
+// input: N complex
+// output: N complex
+
+complex->complex filter addvalComplex(complex val, int N) {
+
+  work push N pop N {
+
+    for(int i=0; i<N; i++)
+      push(pop()+val);
+  }
+}
+
+
+// divides stream of N values by val
+
+// input: N floats
+// output: N floats
+
+float->float filter div_val(float val, int N) {
+
+  work push N pop N {
+
+    for(int i=0; i<N; i++)
+      push(pop()/val);
+  }
+}
+
+
+// multiplies stream of N values by val
+
+// input: N floats
+// output: N floats
+
+float->float filter mult_val(float val, int N) {
+
+  work push N pop N {
+
+    for(int i=0; i<N; i++)
+      push(pop()*val);
+  }
+}
+
+
+// multiplies stream of N values by val
+
+// input: N complex
+// output: N complex
+
+complex->complex filter mult_valComplex(complex val, int N) {
+
+  work push N pop N {
+
+    for(int i=0; i<N; i++)
+      push(pop()*val);
+  }
+}
+
+
+// divides stream of N values by val
+
+// input: N complex
+// output: N complex
+
+complex->complex filter div_valComplex(complex val, int N) {
+
+  work push N pop N {
+
+    for(int i=0; i<N; i++)
+      push(pop()/val);
+  }
+}
+
+
+// Kronecker tensor product
+// takes all possible products between elements of first and second matrices
+
+// input: m*n + p*q complex (m by n matrix, p by q matrix)
+// output: m*n*p*q complex (m*p by n*q matrix)
+
+complex->complex pipeline kronComplex(int m, int n, int p, int q) {
+
+  add splitjoin {
+    split roundrobin(m*n,p*q);
+    add repmatComplex(m,n,1,p);
+    add repmatComplex(p,q,m,n);
+    join roundrobin(1,q);
+  }
+  add multiply_by_constant_c(q);
+}
+
+
+// generates N by N identity matrix
+
+// input: none
+// output: N*N floats (N by N matrix)
+
+void->float filter eye(int N) {
+
+  work push N*N pop 0 {
+    for(int i=0; i<N; i++) {
+      for(int j=0; j<N; j++) {
+        if(j==i)
+          push(1);
+        else
+          push(0);
+      }
+    }
+  }
+}
+
+
+// converts stream of floats to stream of complex
+
+// input: N floats
+// output: N complex
+
+float->complex filter ConvertFloatToComplex(int N) {
+
+  work push N pop N {
+
+    complex c;
+
+    c.imag = 0;
+    for(int i=0; i<N; i++) {
+      c.real = pop();
+      push(c);
+    }
+
+  }
+}
+
+
+// converts stream of complex to stream of floats
+
+// input: N complex
+// output: N floats
+
+complex->float filter ConvertComplexToFloat(int N) {
+
+  work push N pop N {
+
+    complex c;
+
+    for(int i=0; i<N; i++) {
+      c = pop();
+      push((float)c.real);
+    }
+  }
+}
+
+
+// computes the sum of squares of len values
+
+// input: N floats
+// output: 1 float
+
+float->float filter sqr_sum(int len) {
+  
+  work push 1 pop len {
+  
+    float sum = 0.0;
+  
+    for(int i=0; i<len; i++)
+      sum += peek(0)*pop();
+
+    push(sum);
+  }
+}
+
+
+// computes the sum of squares of len values
+
+// input: N complex
+// output: 1 complex
+
+complex->complex filter sqr_sumComplex(int len) {
+  
+  work push 1 pop len {
+
+    float sum = 0.0;
+    float temp;
+    complex sum_c;
+
+    for(int i=0; i<len; i++) {
+      temp = abs(pop());
+      sum += temp*temp;
+    }
+    sum_c.real = sum;
+    sum_c.imag = 0.0;
+    push(sum_c);
+  }
+}
+
+
+// computes the norm (square root of sum of squares) of len values
+
+// input: N floats
+// output: 1 float
+
+float->float filter norm(int len) {
+  
+  work push 1 pop len {
+  
+    float sum = 0.0;
+  
+    for(int i=0; i<len; i++)
+      sum += peek(0)*pop();
+
+    push(sqrt(sum));
+  }
+}
+
+
+// computes the norm (square root of sum of squares) of len values
+
+// input: N complex
+// output: 1 complex
+
+complex->complex filter normComplex(int len) {
+  
+  work push 1 pop len {
+    float sum = 0.0;
+    float temp;
+    complex sum_c;
+    
+    for(int i=0; i<len; i++) {
+      temp = abs(pop());
+      sum += temp*temp;
+    }
+    sum_c.real = sqrt(sum);
+    sum_c.imag = 0.0;
+
+    push(sum_c);
+  }
+}
+
+
+// normalizes a complex stream
+
+// input: len complex
+// output: len complex
+
+complex->complex pipeline normalizeComplex(int len) {
+
+  add splitjoin {
+    split roundrobin(len);
+    add normComplex(len);
+    add iden_c(len);
+    join roundrobin(1,len);
+  }
+
+  add divide_by_constant_c(len);
+}
+
+
+
+// takes the complex conjugate of len values
+
+// input: len complex
+// output: len complex
+
+complex->complex filter complex_conjugate(int len) {
+
+  complex in, out;
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++) {
+      in = pop();
+      out.real = in.real;
+      out.imag = -in.imag;
+      push(out);
+    }
+  }
+}
+
+
+// computes Hermatian of x by y matrix
+
+// input: x*y complex (x by y matrix)
+// output: y*x complex (y by x matrix)
+
+complex->complex pipeline Hermatian(int x, int y) {
+
+  add complex_conjugate(x*y);
+  add transposeComplex(x,y);
+
+}
+
+
+// converts small values (< threshold) to zero
+
+// input: len complex
+// output: len complex
+
+complex->complex filter clean_up_zeros(int len) {
+
+  float threshold = 0.000001;
+  complex in, out;
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++) {
+      in = pop();
+      out.real = in.real;
+      out.imag = in.imag;
+      
+      if(abs(out.real)<threshold)
+        out.real = 0.0;
+      if(abs(out.imag)<threshold)
+        out.imag = 0.0;
+
+      push(out);
+
+    }
+  }
+}
+
+
+// converts small values (< threshold) to zero
+
+// input: len floats
+// output: len floats
+
+float->float filter clean_up_zeros_f(int len) {
+
+  float threshold = 0.000001;
+  float temp;
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++) {
+      temp = pop();
+    
+      if(abs(temp)<threshold)
+        temp = 0.0;
+
+      push(temp);
+    }
+  }
+}
+
+
+// replaces zero with epsilon
+
+// input: len float
+// output: len float
+
+float->float filter replace_zeros(int len) {
+
+  float epsilon = 0.00000000000000022;  // 2.2e-16
+
+  work push len pop len {
+
+    float temp;
+
+    for(int i=0; i<len; i++) {
+      temp = pop();
+
+      if(abs(temp)==0.0)
+        temp = epsilon;
+
+      push(temp);
+    }
+  }
+}
+
+
+// outputs 1 if above thresh, 0 otherwise
+
+// input: len complex
+// output: len complex
+
+float->float filter above_thresh(int len, float thresh) {
+
+  work push len pop len {
+
+    float temp;
+
+    for(int i=0; i<len; i++) {
+      temp = pop();
+      if(temp>thresh)
+        push(1.0);
+      else
+        push(0.0);
+    }
+  }
+}
+
+
+
+// takes the complex exponential of len values
+
+// input: len complex
+// output: len complex
+
+complex->complex filter exp_vector(int len) {
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++)
+      push(exp(pop()));
+  }
+}
+
+
+// negates len values
+
+// input: len complex
+// output: len complex
+
+float->float filter negate(int len) {
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++)
+      push(-(pop()));
+  }
+}
+
+
+// outputs a portion of a 3D matrix
+
+// input: x*y*z float (x by y by z matrix)
+// output: (endx-startx+1)*(endy-starty+1)*(endz-startz+1) float
+
+float->float filter partial_3d_matrix_f(int x, int y, int z, int startx, int endx, int starty, int endy, int startz, int endz) {
+
+  work push (endx-startx+1)*(endy-starty+1)*(endz-startz+1) pop x*y*z {
+
+    for(int i=0; i<startz; i++) {
+      for(int j=0; j<y; j++) {
+        for(int k=0; k<x; k++)
+          pop();
+      }
+    }
+
+    for(int i=startz; i<=endz; i++) {
+      for(int j=0; j<startx;j++) {
+        for(int k=0; k<y; k++)
+          pop();
+      }
+
+      for(int j=startx; j<=endx; j++) {
+        for(int k=0; k<starty; k++) 
+          pop();
+        for(int k=starty; k<=endy; k++) 
+          push(pop());
+        for(int k=endy+1; k<y; k++)
+          pop();
+      }
+
+      for(int j=endx+1; j<x; j++) {
+        for(int k=0; k<y; k++)
+          pop();
+      }
+    } 
+
+    for(int i=endz+1; i<z; i++) {
+      for(int j=0; j<x; j++) {
+        for(int k=0; k<y; k++)
+          pop();
+      }
+    }
+  }
+}
+
+
+// outputs one column of a 3D matrix
+
+// input: x*y*z float
+// output: x*z float
+
+float->float pipeline getCol3D(int x, int y, int z, int col) {
+  add partial_3d_matrix_f(x,y,z,0,x-1,col,col,0,z-1);
+}
+
+
+// outputs a portion of a 3D matrix
+
+// input: x*y*z complex (x by y by z matrix)
+// output: (endx-startx+1)*(endy-starty+1)*(endz-startz+1) complex
+
+complex->complex filter partial_3d_matrix(int x, int y, int z, int startx, int endx, int starty, int endy, int startz, int endz) {
+
+  work push (endx-startx+1)*(endy-starty+1)*(endz-startz+1) pop x*y*z {
+
+    for(int i=0; i<startz; i++) {
+      for(int j=0; j<y; j++) {
+        for(int k=0; k<x; k++)
+          pop();
+      }
+    }
+
+    for(int i=startz; i<=endz; i++) {
+      for(int j=0; j<startx;j++) {
+        for(int k=0; k<y; k++)
+          pop();
+      }
+
+      for(int j=startx; j<=endx; j++) {
+        for(int k=0; k<starty; k++)
+          pop();
+        for(int k=starty; k<=endy; k++) 
+          push(pop());
+        for(int k=endy+1; k<y; k++)
+          pop();
+
+      }
+
+      for(int j=endx+1; j<x; j++) {
+        for(int k=0; k<y; k++)
+          pop();
+      }
+
+    } 
+
+    for(int i=endz+1; i<z; i++) {
+      for(int j=0; j<x; j++) {
+        for(int k=0; k<y; k++)
+          pop();
+      }
+    }
+  }
+}
+
+
+// outputs a portion of a 2D matrix
+
+// input: x*y complex (x by y matrix)
+// output: (endx-startx+1)*(endy-starty+1) complex
+
+complex->complex pipeline partial_2d_matrix(int x, int y, int startx, int endx, int starty, int endy) { 
+
+  add partial_3d_matrix(x,y,1,startx,endx,starty,endy,0,0);
+
+}
+
+
+// input: total1+total2 complex
+// output: total1 complex
+
+complex->complex filter output_initial(int total1, int total2) {
+
+  work push total1 pop total1+total2 {
+
+    for(int i=0; i<total1; i++)
+      push(pop());
+
+    for(int i=0; i<total2; i++)
+      pop();
+  }
+}
+
+
+// input: total1+total2 float
+// output: total1 float
+
+float->float filter output_initial_f(int total1, int total2) {
+
+  work push total1 pop total1+total2 {
+
+    for(int i=0; i<total1; i++)
+      push(pop());
+
+    for(int i=0; i<total2; i++)
+      pop();
+  }
+}
+
+
+// input: total1+total2 complex
+// output: total1 complex
+
+complex->complex filter output_final(int total1, int total2) {
+
+  work push total2 pop total1+total2 {
+
+    for(int i=0; i<total1; i++)
+      pop();
+
+    for(int i=0; i<total2; i++)
+      push(pop());
+  }
+}
+
+
+// input: total1+total2 float
+// output: total1 float
+
+float->float filter output_final_f(int total1, int total2) {
+
+  work push total2 pop total1+total2 {
+
+    for(int i=0; i<total1; i++)
+      pop();
+
+    for(int i=0; i<total2; i++)
+      push(pop());
+  }
+}
+
+
+// input: total floats
+// output: zero floats
+
+float->void filter remove(int total) {
+
+  work push 0 pop total {
+
+    for(int i=0; i<total; i++)
+      pop();
+  }
+}
+
+
+// 1 dimensional fftshift (swaps first half and second half)
+
+// input: N complex
+// output: N complex
+
+complex->complex filter fftshift_1d(int N) {
+
+  int half;
+
+  init {
+    if((N % 2)==0)
+      half = N/2;
+    else
+      half = (N+1)/2;
+  }
+
+  work push N pop N peek N {
+
+    for(int i=half; i<N; i++)
+      push(peek(i));
+
+    for(int i=0; i<half; i++)
+      push(pop());
+
+    for(int i=half; i<N; i++)
+      pop();
+  }
+}
+
+
+// 2D fftshift (swaps first and third, second and fourth quadrants)
+
+// input: x*y complex (x by y matrix)
+// output: x*y complex (x by y matrix)
+
+complex->complex pipeline fftshift_2d(int x, int y) {
+
+  add fftshift_rows(x,y);   // 1D fftshift of each row
+  add fftshift_cols(x,y);   // 1D fftshift of each col
+}
+
+
+// 1D row fftshifts
+
+// input: x*y complex (x by y matrix)
+// output: x*y complex (x by y matrix)
+
+complex->complex splitjoin fftshift_rows(int x, int y) {
+
+  split roundrobin(y);
+  for(int i=0; i<x; i++) 
+    add fftshift_1d(y);
+  join roundrobin(y);
+}
+
+
+// 1D column fftshifts
+
+// input: x*y complex (x by y matrix)
+// output: x*y complex (x by y matrix)
+
+complex->complex pipeline fftshift_cols(int x, int y) {
+
+  add transposeComplex(x,y);     // convert cols to rows
+  add fftshift_rows(y,x);        // fftshift on converted rows
+  add transposeComplex(y,x);     // convert rows back to cols
+
+}
+
+
+// generates integers from start to end, inclusive
+
+// input: none
+// output: end-start+1 complex
+
+void->complex filter gen_ints(int start, int end) {
+
+  work push end-start+1 pop 0 {
+
+    complex c;
+    c.real = start;
+    c.imag = 0;
+
+    for(int i=start; i<=end; i++) {
+      push(c);
+      c.real += 1.0;
+    }
+  }
+}
+
+
+// print len values and push them along - useful for debugging
+
+// input: len complex
+// output: len complex
+
+complex->complex filter print_and_push(int len) {
+
+  work push len pop len {
+
+    complex temp;
+
+    print(11111);
+    for(int i=0; i<len; i++) {
+      temp = pop();
+      print(temp.real);
+      print(temp.imag);
+      push(temp);
+    }
+    print(99999);
+  }
+}
+
+
+// print len values and push them along - useful for debugging
+
+// input: len float
+// output: len float
+
+float->float filter print_and_push_f(int len) {
+
+  work push len pop len {
+
+    float temp;
+
+    print(11111);
+    for(int i=0; i<len; i++) {
+      temp = pop();
+      print(temp);
+      push(temp);
+    }
+    print(99999);
+  }
+}
+
+

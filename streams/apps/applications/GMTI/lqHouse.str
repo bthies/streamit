@@ -1,0 +1,262 @@
+/* given m by n matrix A in which the rows are independent and m <= n, 
+   computes the L of the LQ decomposition of A, where L is an m by n 
+   lower triangular matrix, and Q is unitary
+
+   This is done by an iterative process. The first row of A is used to construct a householder matrix H1 which is then multiplied by A to get A'. The second row of A' is used to construct a householder matrix H2 which is then multiplied by A' to get A'', etc, until we have gone through all m rows.
+
+*/
+
+
+// input: m*n complex (m by n matrix)
+// output: m*n complex (m by n matrix)
+
+complex->complex pipeline compute_L(int m, int n) {
+
+  for(int i=0; i<m; i++) {
+    add dup_to_calculate(m,n,i);  // calculates ith house matrix from current matrix
+    add MatrixMultComplex1(m,n,n);  // multiplies house matrix by current matrix to get new current matrix
+  }
+}
+
+
+// duplicates matrix and uses one copy to calculate housematrix
+
+// input: m*n complex (m by n matrix)
+// output: m*n+n*n complex (m by n matrix, n by n matrix)
+
+complex->complex splitjoin dup_to_calculate(int m, int n, int i) {
+
+  split duplicate();
+  add iden_c(m*n);
+  add calc_ith_housemat(m,n,i);
+  join roundrobin(m*n, n*n);
+}
+
+
+// calculates ith housematrix
+
+// input: m*n complex (m by n matrix)
+// output: n*n complex (n by n matrix)
+
+complex->complex pipeline calc_ith_housemat(int m, int n, int i) {
+
+  add select_partial_row(m,n,i);
+  add process_row(n,i);
+}
+
+
+// input: m*n complex (m by n matrix)
+// output: n-i complex (n-i length vector)
+
+complex->complex filter select_partial_row(int m, int n, int i) {
+
+  int total1, total2;
+
+  init {
+    total1 = i*n + i;
+    total2 = (m-i-1)*n;
+  }
+ 
+  work push n-i pop m*n {
+
+    for(int j=0; j<total1; j++)
+      pop();
+
+    for(int j=i; j<n; j++)
+      push(pop());
+
+    for(int j=0; j<total2; j++)
+       pop();
+  }
+}
+
+
+// input: len-i complex (len-i length vector)
+// output: n*n complex (n by n matrix)
+
+complex->complex pipeline process_row(int len, int i) {
+
+  int new_len = len-i;
+
+  add calc_housevec(new_len);  // converts partial row to housevector
+  add convert_to_housemat(new_len); // converts vector to matrix
+  add pad_matrix(new_len,i);   // pads matrix with zeros to make it n by n
+}
+
+
+// calculates housevector by adding norm to first element
+
+// input: len complex (len length vector)
+// output: len complex (len length vector)
+
+complex->complex pipeline calc_housevec(int len) {
+
+  add get_norm_and_iden(len);
+  add addnorm(len);
+}
+
+
+// calculates norm and combines with original stream
+
+// input: len complex (len length vector)
+// output: len+1 complex (norm, len length vector)
+
+complex->complex splitjoin get_norm_and_iden(int len) {
+
+  split duplicate();
+  add normComplex(len);
+  add complex_conjugate(len);
+  join roundrobin(1,len);
+}
+
+
+// adds norm(first element) to first value(second element)
+
+// input: len+1 complex (norm, len length vector)
+// output: len complex (len length vector)
+
+complex->complex filter addnorm(int len) {
+ 
+  complex norm_val, first, new_first;
+
+  work push len pop len+1 {
+
+    norm_val = pop();
+    first = pop();
+
+    new_first = first + (first/abs(first))*norm_val;
+
+    push(new_first);
+    for(int j=1;j<len; j++) 
+      push(pop());
+    
+  }
+}
+
+
+// converts housevector to housematrix
+
+// input: len complex (len length vector)
+// output: len*len complex (len by len matrix)
+
+complex->complex pipeline convert_to_housemat(int len) {
+
+  add get_beta_and_matrix(len);
+  add calculate_matrix(len);
+}
+
+
+// calculates beta value and matrix from vector
+
+// input: len complex (len length vector)
+// output: 1+len*len complex (beta, len by len matrix)
+
+complex->complex splitjoin get_beta_and_matrix(int len) {
+
+  split duplicate();
+  add sqr_sumComplex(len);
+  add get_trans_matrix(len);
+  join roundrobin(1,len*len);
+}
+
+
+// multiplies each element of matrix by beta, adds 1 along diagonal
+
+// input: 1+len*len complex (beta, len by len matrix)
+// output: len*len complex (len by len matrix)
+
+complex->complex filter calculate_matrix(int len) {
+
+  work push len*len pop len*len + 1 {
+
+    complex beta = pop();
+    beta = -2/beta;
+
+    for(int i=0; i<len; i++) {
+      for(int j=0; j<len; j++) {
+        if(i==j)
+          push(1 + beta*pop());
+        else
+          push(beta*pop());
+      }
+    }
+  }
+}
+
+
+// multiplies row vector by its complex conjugate transpose
+
+// input: len complex (len length vector)
+// output: len*len complex (len by len matrix)
+
+complex->complex pipeline get_trans_matrix(int len) {
+
+  add duplicate_rowComplex(len);
+  add MatrixMultComplex1(len,1,len);
+}
+
+
+// outputs original vector and complex conjugate
+
+// input: len complex (len length vector)
+// output: len+len complex (len length vector, len length vector)
+
+complex->complex splitjoin duplicate_rowComplex(int len) {
+
+  split duplicate();
+  add iden_c(len);
+  add complex_conjugate(len);
+  join roundrobin(len);
+}
+
+
+// pads matrix with zeros along final len-i rows and cols
+// ASSUMES i<=len
+
+// input: len*len complex (len by len matrix)
+// output: (len+i)*(len+i) complex
+
+complex->complex filter pad_matrix(int len, int i) {
+
+  int total; complex one; complex zero;
+
+  init {
+    total = len + i;
+    one.real = 1.0;
+    one.imag = 0.0;
+    zero.real = 0.0;
+    zero.imag = 0.0;
+  }
+
+  work push (len+i)*(len+i) pop len*len {
+
+    for(int j=0; j<i; j++) {
+      for(int k=0; k<total; k++) {
+        if(k==j)
+          push(one);
+        else
+          push(zero);
+      }
+    }
+
+    for(int j=0;j<len; j++) {
+      for(int k=0; k<i; k++) {
+        push(zero);
+      }
+      for(int k=0; k<len; k++) {
+         push(pop());
+      }
+    }
+  }
+
+}
+
+
+
+
+
+
+
+
+
+

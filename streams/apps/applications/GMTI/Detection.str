@@ -1,0 +1,115 @@
+/*
+ usage: TargetReport = Detection(GmtiParam, Data, cpi)
+ Description:
+   Detection processing for GMTI processing. Detect targets in data cube. 
+   This includes 3-dimensional target grouping which helps find a local 
+   maxima where a target is located (as opposed to the sidelobes which 
+   are byproducts of the target). 
+
+ Inputs:
+    GmtiParam: set of GMTI parameters
+    Data: Data cube of dimensions [Ncnb x Nsrg+Npc-1 x Ndop] in which 
+          target are to be detected. 
+    cpi: the coherent processing interval (data cube number) in which to 
+          detect the targets.
+
+ Outputs:
+    TargetReport: A data structure of a target report which includes the 
+                  azimuth bin, range bin, doppler bin, azimuth bin estimate, 
+                  range bin estimate, doppler bin estimate, signal-to-noise 
+                  ratio, and time stamp for each target detected in the data 
+                  cube. 
+*/
+
+// input: Ncnb*(Nsrg+Npc-1)*Ndop complex (Data)
+// output: 2*Ncnb*(Nsrg+Npc-1)*Ndop floats (NP, TargetReport)
+
+complex->float pipeline Detector(GmtiParamType GmtiParam) {
+
+  int x = GmtiParam.Ncnb;
+  int y = GmtiParam.Nsrg+GmtiParam.Npc-1;
+  int z = GmtiParam.Ndop;
+
+  int x_range = 1;
+//  int y_range = 2;
+//  int z_range = 3;
+
+int y_range = 1;
+int z_range = 1;
+
+  add Cfar(GmtiParam);
+  add get_final_targets(x,y,z,x_range,y_range,z_range);
+}
+
+
+
+// input: 2*x*y*z floats (NPslice, PrelimTargets - interleaved)
+// output: 2*x*y*z floats (TargetReport)
+
+float->float filter get_final_targets(int x, int y, int z, int x_range, int y_range, int z_range) {
+
+  work push 2*x*y*z pop 2*x*y*z {
+
+    int x_low, x_high, y_low, y_high, z_low, z_high; 
+    int curr_NP, curr_Prelim;
+    float curr_NP_val, temp_NP_val;
+    int temp_count1 = -1; int temp_count2;
+    bit isTarget;
+
+    for(int k=0; k<z; k++) {
+      for(int j=0; j<x; j++) {
+        for(int i=0; i<y; i++) {
+          temp_count1++;
+          curr_NP = 2*temp_count1;
+          curr_Prelim = curr_NP + 1;
+
+ 	  // first check if the data point is in PrelimTargets
+	  if(peek(curr_Prelim)==0) {
+            push(0.0);   // if not in PrelimTargets, output zero
+            push(0.0);
+          }
+          else {
+            curr_NP_val = peek(curr_NP);
+
+            // get the local endpoints
+  	    x_low = (int)max(0,j-x_range);
+            x_high = (int)min(x-1,j+x_range);
+	    y_low = (int)max(0,i-y_range);
+            y_high = (int)min(y-1,i+y_range);          
+	    z_low = (int)max(0,k-z_range);
+            z_high = (int)min(z-1,k+z_range);
+
+	    isTarget = 1; 
+            for(int n=z_low; n<=z_high; n++) {  
+	      for(int m=x_low; m<=x_high; m++) {
+		for(int l=y_low; l<=y_high; l++) {
+                  temp_count2 = x*y*n + y*m + l;
+		  temp_NP_val = peek(2*temp_count2);
+                  if(temp_NP_val > curr_NP_val)
+                    isTarget = 0;
+                }
+              } 
+	    }
+
+            if(isTarget==0) {
+              push(0.0);
+              push(0.0);
+            }
+            else {
+              push(1.0);
+              push(curr_NP_val);
+            }
+          }
+        }
+      }
+    }
+
+    for(int k=0; k<z; k++) {
+      for(int j=0; j<x; j++) {
+        for(int i=0; i<y; i++) {
+          pop(); pop();
+	}
+      }
+    }
+  }
+}

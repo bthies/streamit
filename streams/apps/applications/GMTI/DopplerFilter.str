@@ -1,0 +1,159 @@
+/*
+usage: Data3 = DopplerFilter2(GmtiParam, Data)
+ Description:
+   Doppler filter for GMTI processing. Doppler filter across pulses for 
+   baseline STAP processing before PRI-stagggered STAP processing. 
+
+ Inputs:
+    GmtiParam: set of GMTI parameters
+    Data: Data cube of dimensions [Nbm x Nsrg+Npc-1 x Npri] to be doppler filtered. 
+
+ Outputs:
+    Data3: Data cube of dimensions [Nbm*Nstag x Nsrg+Npc-1 x Ndop] that has been doppler filtered and staggered. 
+*/
+
+
+// input: Nbm*(Nsrg+Npc-1)*Npri complex (Data)
+// output: Nbm*Nstag*(Nsrg+Npc-1)*Ndop (Data3)
+
+complex->complex pipeline DopFilt(GmtiParamType GmtiParam) {
+
+  int Nstag = GmtiParam.Nstag;
+  int Nbm = GmtiParam.Nbm;
+  int Nsrg = GmtiParam.Nsrg;
+  int Npc = GmtiParam.Npc;
+  int Ndop = GmtiParam.Ndop;
+  int Npri = GmtiParam.Npri;
+
+  int in_1 = Nbm;
+  int in_2 = Nsrg+Npc-1;
+  int in_3 = Npri;
+
+  int out_1 = Nbm*Nstag;
+  int out_2 = in_2;
+  int out_3 = Ndop;
+
+
+// generate taper matrices and replicate data matrix
+  add interleave_data_taper(in_1,in_2,in_3,Nstag,Ndop,Npri,out_3);
+
+// term by term multiply consecutative matrices
+  add TermMatrixMultComplex(in_1*in_2,out_3);
+
+// output data along dimension 3 
+  add transposeComplex(out_3,in_1*in_2);
+
+// calculate DFT along dimension 3
+  add DFT(out_3);
+
+// output result in regular form (dim 1 by dim 2 by dim 3)
+  add transposeComplex(in_1*in_2,out_3);
+
+// put result in partial row
+  add turn(in_1,in_2,out_3,Nstag);
+
+// output result along dim 3 (dim 2 by dim 3 by dim 1)
+  add interchange(out_1,out_2,out_3);
+
+// 1-d fft shift per line of dim 3
+  add fftshift_1d(out_3);
+
+// output result in normal form 
+  add restore(out_1,out_2,out_3);
+}
+
+
+// input: x*y*z complex
+// output: x*y*z complex
+
+complex->complex splitjoin restore(int x, int y, int z) {
+
+  split roundrobin(y*z);
+  for(int i=0; i<x; i++)
+    add transposeComplex(y,z);
+  join roundrobin(y);
+}
+
+
+// input: x*y*z complex
+// output: x*y*z complex
+
+complex->complex splitjoin interchange(int x, int y, int z) {
+
+    split roundrobin(x*y);
+    for(int i=0; i<z; i++)
+      add iden_c(x*y);
+    join roundrobin(1);
+}
+
+
+// input: x*y*z complex
+// output: x*y*z complex
+
+complex->complex splitjoin turn(int x, int y, int z, int x_factor) {
+
+  split roundrobin(x*y*z);
+  for(int i=0; i<x_factor; i++)
+    add iden_c(x*y);
+  join roundrobin(x*y);
+}
+
+
+// interleaves data portions with tapermesh copies
+
+// input: Nbm*(Nsrg+Npc-1)*Npri complex (Data)
+// output: 2*Nbm*(Nsrg+Npc-1)*Ndop*Nstag complex
+
+complex->complex splitjoin interleave_data_taper(int in_1, int in_2, int in_3, int Nstag, int Ndop, int Npri, int out_3) {
+
+  split roundrobin(in_1*in_2*in_3,0);
+  add data_rep(in_1,in_2,in_3,Nstag,Npri-Nstag);  // Npri-Nstag+1 = Ndop
+  add createTaperMesh(Ndop,in_1,in_2,Nstag); 
+  join roundrobin(in_1*in_2*out_3);
+}
+
+
+// takes Nstag portions of the data matrix
+
+// input: Nbm*(Nsrg+Npc-1)*Npri complex (Data)
+// output: Nbm*(Nsrg+Npc-1)*(val+1)*Nstag complex
+
+complex->complex splitjoin data_rep(int x, int y, int z, int Nstag, int val) {
+
+  split duplicate();
+  for(int i=0; i<Nstag; i++) {
+    add partial_3d_matrix(x,y,z,0,x-1,0,y-1,i,i+val);
+  }
+  join roundrobin(x*y*(val+1));
+}
+
+
+// generates tapermesh matrix and replicates Nstag times
+
+// input: none
+// output: Nbm*(Nsrg+Npc-1)*Ndop*Nstag complex
+
+void->complex pipeline createTaperMesh(int Ndop, int x, int y, int Nstag) {
+
+  int tot = x*y;
+
+  add cheb_taps(Ndop);
+  add splitjoin {
+     split duplicate();
+     for(int i=0; i<tot;i++)
+       add iden(1);
+     join roundrobin(1);
+  }   
+  add ConvertFloatToComplex(Ndop*tot);
+  add repmatComplex(x*y,Ndop,Nstag,1);
+}
+
+
+
+
+
+
+
+
+
+

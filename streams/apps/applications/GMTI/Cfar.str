@@ -1,0 +1,241 @@
+/*
+  Since dynamic rates are not (yet) supported, we cannot output PrelimTargets as a list of all triples that satisfy the threshold criteria (because we do not know how many there will be a priori). Therefore, for PrelimTargets we output a value for each point in the data cube - a 0 representing that the point did not satisfy the criteria, a 1 representing that the point did satisfy the criteria
+*/
+
+
+// input: Ncnb*(Nsrg+Npc-1)*Ndop complex (Data)
+// output: 2*Ncnb*(Nsrg+Npc-1)*Ndop floats (NP, PrelimTargets)
+
+complex->float pipeline Cfar(GmtiParamType GmtiParam) {
+
+  int Ncfar = GmtiParam.Ncfar;
+  int G = GmtiParam.G;
+  int mu = GmtiParam.mu;
+
+  int x = GmtiParam.Ncnb;
+  int y = GmtiParam.Nsrg+GmtiParam.Npc-1;
+  int z = GmtiParam.Ndop;
+
+  int sub_total = x*z;
+  int total = x*y*z;
+
+  add sqr_sumComplex(1);  // get DataPow from Data
+  add ConvertComplexToFloat(1);
+
+  add splitjoin {
+    split roundrobin(0,total);
+    add zeros(sub_total);   // initialize sum as zeros
+    add iden(total);
+    join roundrobin(sub_total,total);
+  }
+
+  add get_prelim_recurs(x,y,z,G,Ncfar,mu,1);
+
+
+// interleave NP and PrelimTarget
+  add splitjoin {
+    split roundrobin(sub_total);
+    for(int i=0; i<2*y; i++)
+      add iden(1);
+    join roundrobin(1);
+  }  
+}
+
+
+
+// input: Ncnb*Ndop+Ncnb*(Nsrg+Npc-1)*Ndop (oldsum,DataPow)
+// output: (y-j+1)*(x*z+x*z) (y-j+1 NPslice,PrelimTarget)
+
+float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, int mu, int j) {
+
+  int Td;
+
+  if(j-(G+1) < 1)
+    Td = Ncfar;
+  else if((j-(G+1) >= 1)&&(j-(G+Ncfar+1) < 1))
+    Td = Ncfar + j - (G+1);
+  else if((j-(G+Ncfar+1) >= 1)&&(j+G+Ncfar <= y))
+    Td = 2*Ncfar;
+  else if((j+G+Ncfar > y)&&(j+G <= y))
+    Td = Ncfar + y - (j+G);
+  else // j+G > y
+    Td = Ncfar;    
+
+  add new_sum(x,y,z,G,Ncfar,j);
+  add splitjoin {
+    split duplicate();
+
+    add pipeline { // outputs NPslice,PrelimTarget portion from Sum,DatPow
+      add splitjoin {  // outputs Sum,DatPowSlice from Sum,DatPow
+        split roundrobin(x*z,x*y*z);
+        add iden(x*z);
+        add getCol3D(x,y,z,j-1);  // outputs DatPowSlice from DatPow
+        join roundrobin(x*z,x*z);
+      }
+      add FindTargets(x,z,mu,Td);  
+    }
+    add pipeline {
+      if(j<y) 
+        add get_prelim_recurs(x,y,z,G,Ncfar,mu,j+1);
+      else 
+        add remove(x*z+x*y*z);
+    }
+
+    join roundrobin(2*x*z, 2*x*z*(y-j));
+  }
+}
+
+
+// input: Ncnb*Ndop+Ncnb*(Nsrg+Npc-1)*Ndop (oldsum,DataPow)
+// output: Ncnb*Ndop+Ncnb*(Nsrg+Npc-1)*Ndop (newsum,DataPow)
+
+float->float pipeline new_sum(int x, int y, int z, int G, int Ncfar, int j) {
+
+  int total = x*y*z;
+  int sub_total = x*z;
+
+  add splitjoin {
+    split roundrobin(sub_total,total);
+    add iden(sub_total);
+
+    add splitjoin {
+      split duplicate(); 
+  
+      add pipeline {
+
+      if(j==1) {  // initial case
+        add partial_3d_matrix_f(x,y,z,0,x-1,G+1,G+Ncfar,0,z-1);
+        add sum_rows(x,Ncfar);  // done to each of the Ndop 2-d matrices
+      }
+      else if(j-(G+1) < 1) {
+	add splitjoin {
+	  split duplicate();
+	  add pipeline {
+	    add getCol3D(x,y,z,j+G -1);
+	    add negate(sub_total);
+	  }
+	  add getCol3D(x,y,z,j+G+Ncfar -1);
+	  join roundrobin(1);
+	}
+	add sum_rows(sub_total,2);   
+      }
+      else if((j-(G+1) >= 1)&&(j-(G+Ncfar+1) < 1)) {
+        add splitjoin {
+	  split duplicate();
+	  add getCol3D(x,y,z,j-(G+1) -1);
+	  add pipeline {
+            add getCol3D(x,y,z,j+G -1);
+            add negate(sub_total);
+	  }
+	  add getCol3D(x,y,z,j+G+Ncfar -1);
+	  join roundrobin(1);
+	}
+	add sum_rows(sub_total,3);
+      }
+      else if((j-(G+Ncfar+1) >= 1)&&(j+G+Ncfar <= y)) {
+	add splitjoin {
+	  split duplicate();
+	  add pipeline {
+            add getCol3D(x,y,z,j-(Ncfar+G+1) -1);
+            add negate(sub_total);
+	  }
+	  add getCol3D(x,y,z,j-(G+1) -1);
+	  add pipeline {
+            add getCol3D(x,y,z,j+G -1);
+	    add negate(sub_total);
+	  }
+	  add getCol3D(x,y,z,j+G+Ncfar -1);
+	  join roundrobin(1);
+	}
+	add sum_rows(sub_total,4);
+      }
+      else if((j+G+Ncfar > y)&&(j+G <= y)) {
+	add splitjoin {
+	  split duplicate();
+	  add pipeline {
+	    add getCol3D(x,y,z,j-(Ncfar+G+1) -1);
+	    add negate(sub_total);
+	  }
+	  add getCol3D(x,y,z,j-(G+1) -1);
+	  add pipeline {
+            add getCol3D(x,y,z,j+G -1);
+	    add negate(sub_total);
+	  }
+	  join roundrobin(1);
+	}
+	add sum_rows(sub_total,3);
+      }
+      else {  // j+G > y
+        add splitjoin {
+	  split duplicate();
+	  add pipeline {
+            add getCol3D(x,y,z,j-(Ncfar+G+1) -1);
+	    add negate(sub_total);
+	  }
+	  add getCol3D(x,y,z,j-(G+1) -1);
+	  join roundrobin(1);
+	}
+	add sum_rows(sub_total,2);
+      }
+      }  // end of pipeline
+
+      add iden(total);
+      join roundrobin(sub_total,total);
+    }  // end of splitjoin
+
+  join roundrobin(sub_total,sub_total+total);
+  }  // end of splitjoin
+
+  add splitjoin {
+    split roundrobin(sub_total+sub_total,total);
+    add add_consec(sub_total,2); // add old sum to the calc'd values from above
+    add iden(total);
+    join roundrobin(sub_total,total);
+  }
+}
+
+
+// input: Ncnb*Ndop+Ncnb*Ndop float (Sum,DatPowSlice)
+// output: Ncnb*Ndop+Ncnb*Ndop float (NPslice,PrelimTarget portion)
+
+float->float pipeline FindTargets(int x, int z, int mu, int Td) {
+
+  int total = x*z;
+  float mu_f = (float)mu;
+  float Td_f = (float)Td;
+
+  add splitjoin {  
+    split roundrobin(total);
+    add pipeline {
+      add div_val(Td_f,total);
+      add clean_up_zeros_f(total);
+      add replace_zeros(total);
+    }
+    add iden(total);
+    join roundrobin(1); // interleave values
+  }
+
+  add normalized_power(total);  // outputs NPslice
+
+  add splitjoin {
+    split duplicate();
+    add iden(total);
+    add above_thresh(total,mu_f);
+    join roundrobin(total);
+  }  
+}
+
+
+float->float filter normalized_power(int tot) {
+
+  work push tot pop 2*tot {
+
+    float num,den;
+
+    for(int i=0; i<tot; i++) {
+      den = pop();
+      num = pop();
+      push(num/den);
+    }
+  }
+}

@@ -1,0 +1,159 @@
+// for now, want n <= m otherwise the programs breaks!
+ 
+
+
+complex->complex splitjoin qr_get_q_r(int m, int n) {
+
+  split duplicate();
+  add qr_get_q(m,n);
+  add qr_get_r(m,n);
+  join roundrobin(m*n);
+}
+
+
+// outputs only part of q of the qr decomposition
+// note q is actually an m by m matrix, but this function outputs m by n matrix that is the first n columns of q
+
+// input: m*n complex
+// output: m*n complex
+
+complex->complex pipeline qr_get_q(int m, int n) {
+
+  add splitjoin {
+    int m1 = m;
+    int n1 = n;
+    split duplicate();
+    
+    add pipeline {
+
+      int m2 = m1;
+      int n2 = n1;
+  
+      add qr_get_r(m2,n2);
+      if(m1>n1) 
+        add convert_to_square_rows(m2,n2);
+      add Hermatian(n2,n2);
+      add repmatComplex(n2,n2,m2,1);
+    }
+
+    add complex_conjugate(m*n);
+
+    join roundrobin(n*n,n);
+  }
+  
+  add forwardsubComplex(n);
+  add complex_conjugate(m*n);
+}
+
+
+// outputs only r of the qr decomposition
+
+// input: m*n complex
+// output: m*n complex
+
+complex->complex pipeline qr_get_r(int m, int n) {
+
+  add Hermatian(m,n);
+  add compute_L(n,m);
+  add Hermatian(n,m);
+
+  add splitjoin {
+
+    int m1 = m;
+    int n1 = n;
+
+    split duplicate();
+    add pipeline {
+
+      int m2 = m1;
+      int n2 = n1;
+
+      add get_diag_factors(m2,n2);
+      if(m2>n2) {
+        add splitjoin {
+
+          int m3 = m2;
+          int n3 = n2;
+
+          split roundrobin(n3,0);
+          add iden_c(n3);
+          add zeros_c(m3-n3);
+          join roundrobin(n3,m3-n3);
+        }
+      }
+    }
+    add iden_c(n);
+    join roundrobin(1,n);
+  }
+
+  add multiply_by_constant_c(n);
+}
+
+
+// outputs the norm of each diagonal value divided by that value
+
+// input: m*n complex
+// output: n complex
+
+complex->complex pipeline get_diag_factors(int m, int n) {
+
+  add get_diags(m,n);
+  add norm_diags(n);
+}
+
+
+// outputs the diagonal elements only
+
+// input: a*b complex
+// output: b complex
+
+complex->complex filter get_diags(int a, int b) {
+
+  work push b pop a*b {
+
+    for(int i=0; i<a; i++) {
+      for(int j=0; j<b; j++) {
+        if(i!=j)
+          pop();
+        else
+          push(pop());
+      }
+    }
+
+  }
+}
+
+
+// outputs the norm of each value divided by the value itself
+
+// input: len complex
+// output: len complex
+
+complex->complex filter norm_diags(int len) {
+
+  work push len pop len {
+
+    complex c;
+    complex norm;
+
+    for(int i=0; i<len; i++) {
+      c = pop();
+
+      if((c.real > -1.0))
+        norm.real = abs(c);
+      else
+        norm.real = -abs(c); 
+      norm.imag = 0;
+
+      push(norm/c);
+    }
+  }
+}
+
+
+
+
+
+
+
+

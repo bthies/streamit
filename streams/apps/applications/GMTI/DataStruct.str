@@ -1,0 +1,147 @@
+// these are the data structures used by the GMTI program
+
+struct GmtiParamType {
+
+
+  float SpeedofLight;            // speed of light in meters per second
+  float CenterFrequency;         // radar center frequency in Hertz
+  float Bandwidth;               // radar bandwidth in Hertz
+  float SamplingRate;            // radar A/D sampling rate in Hertz
+  float PRF;                     // pulse repitition frequency in Hertz
+  int Npc;                     // pulse compression filter length in samples
+  float PulseTime;             // Pulse length in seconds
+  float ChirpRate;            // Chirp Rate
+  float DutyCycle;      // Percentage of pulse cycle that radar is transmitting
+  int Ntde;                    // Time delay and equalization filter length
+
+ // MAIN RADAR PROCESSING PARAMETERS
+
+// Don't change Nch, Nbm, or Ncnb - the are matched precisely to the system antenna
+
+  int Nch;  // Number of sensor channels
+  int Nbm;  // Number of beams formed 
+  int Ncnb; // Number of clutter nulled beams
+
+// Number of Staggers in doppler filtering
+  int Nstag; // number of temporal degrees of freedom in PRI-staggered STAP
+  int Npri;  // Number of radar pulses
+  int Ndop;   // Number of doppler bins
+
+// Number of training sample vectors for ABF and STAP
+  int NabfTS;
+  int NstapTS;
+
+// number of STAP weight vector training regions - for this radar, it should always be 1
+  int StapTR;
+
+// Base the number of range gates on the distance of surveillance in meters
+  float MinDistance;
+
+// surveillance distance in meters
+  float Distance;
+
+// number of range samples per channel per pulse 
+  int Nrg;
+
+// For narrowband radar, Nsrg will be set to Nrg
+  int Nsrg;
+
+// Number of CPIs in simulation
+  int NumberCPIs;
+
+// Set diagonal loading factors for ABF and STAP
+//  - Don't change any of these, they are tuned to the antenna
+  int alphaAbf;
+  float alphaStap;
+
+
+// DETECTION PARAMETERS
+// Don't change these; they are tuned to the radar system
+  int Ncfar; // CFAR range buffer
+  int G;     // CFAR guard cells
+  int mu;    // sensitivity for detection
+
+// LOOK ANGLE PARAMTERS
+// Don't change Azimuth, Elevation, and Platform speed
+  float Azimuth;          // in radians off broadside
+  float Elevation;        // in radians off broadside
+  float PlatformSpeed; // platform ground speed in meters per second
+
+// Level of clutter to noise ratio at the element level on a linear scale
+  float CNR;
+
+// Flag for turning clutter generation on or off: 1=on, 0=off
+  bit GenClutter;
+
+// Turn adaptive beamforming on=1/off=0
+  bit AdaptiveBeamforming;
+
+// Turn STAP on=1/off=0
+  bit AdaptiveSTAP;
+
+// Create parameters to estimate target locations from target bin estimates
+// Don't change these parameters, they are derived from other currently
+//   unchangeable parameters.  Changing these will only cause incorrect
+//   estimation of absolute positions in the output.
+// -- Azimuth dimension
+
+  float AzStart;
+  float AzEnd;
+  int AzBins;
+
+// -- Range dimension
+  float RgStart;
+  float RgEnd;
+  int RgBins;
+
+// -- Doppler dimension
+  float DopStart;
+  float DopEnd;
+  int DopBins;
+
+// SIMULATION SYSTEM PARAMETERS
+// relative location of GMTI data
+//  String dataFolderName;
+
+// Flag for saving target cubes: 1=yes, 0=no
+  bit SaveTargetCubes;
+
+// Flag for saving output data cubes
+  bit SaveOutputCubes;
+
+// Produce a reduced number of noise data cubes 
+  int noiseCubes;
+
+}
+
+
+
+struct AntParamType {
+
+// The following parameters are for the antenna
+  int Nx;    // Dimension of subarray in x-direction 
+  int Ny;    // Dimension of subarray in y-direction
+  int am1;   // Location index on x-axis for first auxilary element 
+  int am2;   // Location index on x-axis for second auxilary element
+  int an1;   // Location index on y-axis for first auxilary element
+  int an2;   // Location index on t-axis for second auxilary element
+  float a;
+  float b;
+  float scale;
+  int fam;
+  int N;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

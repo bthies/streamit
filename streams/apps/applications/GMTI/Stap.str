@@ -1,0 +1,315 @@
+// Description:
+//   Space-Time adaptive processing for GMTI processing. Implements a PRI-stagggered post doppler STAP algorithm. 
+//
+// Inputs:
+//    GmtiParam: set of GMTI parameters
+//    AntParams: set of antenna parameters
+//    Data: Data cube of dimensions [Nbm*Nstag x Nsrg+Npc-1 x Ndop] to be space-time adaptively processed. 
+//    Wabf: Adaptive beamforming matrix of dimensions [Nch x Nbm]. 
+//    T1:   Abf antenna subarray mix matrix. 
+//
+// Outputs:
+//    Data4: Data cube of dimensions [Ncnb x Nsrg+Npc-1 x Ndop] that has been STAP processed. 
+//    AstapSet: Set of STAP training matrices - one matrix for each doppler. Dimensions of AstapSet are [Nbm*Nstag x NstapTS + Nbm*Nstag x Ndop]. 
+
+
+
+
+// input: Nbm*Nstag*(Nsrg+Npc-1)*Ndop+N*Nch+Nch*Nbm complex (Data,T1,Wabf)
+// output: Nbm*Nstag*(NstapTS+Nbm*Nstag)*Ndop+Ncnb*(Nsrg+Npc-1)*Ndop (AstapSet, Data_out)
+
+complex->complex pipeline Stap(GmtiParamType GmtiParam, AntParamType AntParams)
+{
+  int N = AntParams.N;
+  int Nbm = GmtiParam.Nbm;
+  int Nstag = GmtiParam.Nstag;
+  int NstapTS = GmtiParam.NstapTS;
+  int Nsrg = GmtiParam.Nsrg;
+  int Npc = GmtiParam.Npc;
+  int Ncnb = GmtiParam.Ncnb;
+  int Ndop = GmtiParam.Ndop;
+  float alphaStap = GmtiParam.alphaStap;
+
+  int A_x = Nbm * Nstag;
+  int A_y = NstapTS + Nbm * Nstag;
+  int A_tot = A_x * A_y;
+  int Dat_x = Nbm * Nstag;
+  int Dat_y = Nsrg + Npc - 1;
+  int Dat_tot = Dat_x * Dat_y;
+  int V2_x = Nbm * Nstag;  // = A_x
+  int V2_y = Ncnb;
+  int V2_tot = V2_x * V2_y;
+  int R2_x = Ncnb;
+  int R2_y = Ncnb;
+  int R2_tot = R2_x * R2_y;
+  int Wstap_x = Ncnb;  // = V2_y
+  int Wstap_y = Nbm * Nstag;  // = V2_x
+  int Wstap_tot = Wstap_x * Wstap_y;
+
+  add interleave_data_V2space_dops(GmtiParam, N);
+
+  add splitjoin {  // outputs A,Data(i),V2,R2 from Data(i),V2space,dops(i)
+    split roundrobin(Dat_tot,1+Nbm*Ncnb);
+
+    add splitjoin {  // outputs A, Data(i) from Data(i);
+      split duplicate();
+      add data_to_A(Npc,NstapTS,Nbm,Nstag,Nsrg,alphaStap);
+      add iden_c(Dat_tot);
+      join roundrobin(A_tot,Dat_tot);
+    }
+    add V2space_dop_to_V2_R2(Nbm,Ncnb,Nstag);  // outputs V2,R2 from V2space,dops(i)
+
+    join roundrobin(A_tot+Dat_tot,V2_tot+R2_tot);
+  }
+
+  add splitjoin {
+    split duplicate();
+    add get_A_Wstap_prime(A_x,A_y,Dat_tot,V2_y,R2_tot);
+    add get_D_R2(A_tot,Dat_tot,V2_tot,R2_tot);
+    join roundrobin(A_tot+Wstap_tot,Dat_tot+R2_tot); //outputs A,Wstap',Data,R2
+  }
+
+  add splitjoin {
+    split roundrobin(A_tot,Wstap_tot+Dat_tot+R2_tot);
+    add iden_c(A_tot);
+    add pipeline {
+      add splitjoin {
+        split roundrobin(Wstap_tot+Dat_tot,R2_tot);
+        add pipeline {
+          add MatrixMultComplex1(Wstap_x,Wstap_y,Dat_y);
+          add transposeComplex(Wstap_x,Dat_y);
+        } 
+        add complex_conjugate(R2_tot);
+        join roundrobin(Dat_y*Wstap_x,R2_tot);
+      }
+      add MatrixMultComplex1(Dat_y,Wstap_x,R2_y);
+      add transposeComplex(Dat_y,R2_y);
+    }
+    join roundrobin(A_tot*Ndop,R2_y*Dat_y*Ndop);
+  }
+}
+
+
+
+//input: x1*y1+total2+x1*y2+total4 (A,Data(i),V2,R2)
+// output: x1*y1+y2*x1 (A,Wstap')
+
+complex->complex pipeline get_A_Wstap_prime(int x1, int y1, int total2, int y2, int total4) {
+
+  add get_A_V2(x1*y1,total2,x1*y2,total4);
+
+  add splitjoin {
+    split duplicate();
+
+    add output_initial(x1*y1,x1*y2);
+    add pipeline {
+      add calcWHS(x1,y1,y2,1);
+      add Hermatian(x1,y2);
+    }
+
+    join roundrobin(x1*y1,y2*x1);
+  }
+}
+
+
+// input: total1+total2+total3+total4 complex (A,Data(i),V2,R2)
+// output: total1+total3 complex (A,V2)
+
+complex->complex filter get_A_V2(int total1, int total2, int total3, int total4) {
+
+  work push total1+total3 pop total1+total2+total3+total4 {
+
+    for(int i=0; i<total1;i++)
+      push(pop());
+    for(int i=0; i<total2;i++)
+      pop();
+    for(int i=0; i<total3;i++)
+      push(pop());
+    for(int i=0; i<total4;i++)
+      pop();
+  }
+}
+
+
+// input: total1+total2+total3+total4 complex (A,Data(i),V2,R2)
+// output: total2+total4 complex (Data(i),R2)
+
+complex->complex filter get_D_R2(int total1, int total2, int total3, int total4) {
+
+  work push total2+total4 pop total1+total2+total3+total4 {
+
+    for(int i=0; i<total1;i++)
+      pop();
+    for(int i=0; i<total2;i++)
+      push(pop());
+    for(int i=0; i<total3;i++)
+      pop();
+    for(int i=0; i<total4;i++)
+      push(pop());
+  }
+}
+
+
+// input: Nbm*Nstag*(Nsrg+Npc-1) complex (Data(i))
+// output: Nbm*Nstag*(NstapTS+Nbm*Nstag) complex (A)
+
+complex->complex pipeline data_to_A(int Npc, int NstapTS, int Nbm, int Nstag, int Nsrg, float alphaStap) {
+
+  int start = Npc;
+  int end = NstapTS+Npc-1;
+
+  int x = Nbm*Nstag;
+  int y = Nsrg+Npc-1;
+
+  complex val1;
+  val1.real = sqrt(NstapTS);
+  complex val2;
+  val2.real = sqrt(alphaStap);
+
+  add partial_2d_matrix(x,y,0,x-1,start,end);
+  add div_valComplex(val1,x*NstapTS);
+
+  add splitjoin {
+    split roundrobin(x*NstapTS,0);
+    add iden_c(NstapTS);
+    add pipeline {
+      add eye(x);
+      add ConvertFloatToComplex(x*x);
+      add mult_valComplex(val2,x*x);
+    }
+    join roundrobin(NstapTS,x);
+  }
+}
+
+
+// input: 1+Nbm*Ncnb complex (dops(i),V2Space)
+// output: Nstag*Nbm*Ncnb+Ncnb*Ncnb complex (V2, R2)
+
+complex->complex pipeline V2space_dop_to_V2_R2(int Nbm, int Ncnb, int Nstag) {
+
+  add splitjoin {
+    split roundrobin(1,Nbm*Ncnb);
+
+    add pipeline {
+
+      complex c = 0.0 + pi*2.0i;
+
+      add splitjoin {
+        split roundrobin(1,0);
+          add iden_c(1);
+          add gen_ints(1,Nstag);
+        join roundrobin(1,Nstag);
+      }
+
+      add multiply_by_constant_c(Nstag);
+      add mult_valComplex(c,Nstag);
+      add exp_vector(Nstag);
+    }
+
+    add iden_c(Nbm*Ncnb);
+    join roundrobin(Nstag,Nbm*Ncnb);
+  }
+
+  add kronComplex(Nstag,1,Nbm,Ncnb);
+  add qr_get_q_r(Nstag*Nbm,Ncnb);
+
+  add splitjoin {
+    split roundrobin(Nstag*Nbm*Ncnb);
+    add iden_c(Nstag*Nbm*Ncnb);
+    add partial_2d_matrix(Nstag*Nbm,Ncnb,0,Ncnb-1,0,Ncnb-1);
+    join roundrobin(Nstag*Nbm*Ncnb,Ncnb*Ncnb);
+  }
+
+}
+
+
+// input: Nbm*Nstag*(Nsrg+Npc-1)*Ndop+N*Nch+Nch*Nbm complex (Data,T1,Wabf)
+// output: Ndop*(Nbm*Nstag*(Nsrg+Npc-1)+Nbm*Ncnb+1) complex (Data(1),dops(1),V2space,...,Data(Ndop),dops(Ndop),V2space)
+
+complex->complex splitjoin interleave_data_V2space_dops(GmtiParamType GmtiParam, int N) {
+
+  int Nbm = GmtiParam.Nbm;
+  int Nsrg = GmtiParam.Nsrg;
+  int Npc = GmtiParam.Npc;
+  int Ndop = GmtiParam.Ndop;
+  int Nch = GmtiParam.Nch;
+  int Nstag = GmtiParam.Nstag;
+  int Ncnb = GmtiParam.Ncnb;
+  float Azi = GmtiParam.Azimuth;
+
+  split roundrobin(Nbm*Nstag*(Nsrg+Npc-1)*Ndop,N*Nch+Nch*Nbm);
+  add iden_c(1);
+  add interleave_V2space_dops(N,Nch,Nbm,Ncnb,Ndop,Azi);
+  join roundrobin(Nbm*Nstag*(Nsrg+Npc-1),1+Nbm*Ncnb);
+}
+
+
+// input: N*Nch+Nch*Nbm complex (T1, Wabf)
+// output: Ndop*(1+Nbm*Ncnb) complex (dops(1),V2space,...,dops(Ndop),V2space)
+
+complex->complex splitjoin interleave_V2space_dops(int N, int Nch, int Nbm, int Ncnb, int Ndop, float Azi) {
+
+  split roundrobin(0,N*Nch+Nch*Nbm);
+  add create_dops(Ndop);
+  add pipeline {
+    add create_V2space(N,Nch,Nbm,Ncnb,Azi);
+    add repmatComplex(Nbm,Ncnb,Ndop,1);
+  }
+  join roundrobin(1,Nbm*Ncnb);
+}
+
+
+// input: N*Nch+Nch*Nbm complex (T1, Wabf)
+// output:  Nbm*Ncnb complex (V2space)
+
+complex->complex pipeline create_V2space(int N, int Nch, int Nbm, int Ncnb, float Azi) {
+
+  add MatrixMultComplex1(N,Nch,Nbm);    // creates T2 (N by Nbm)
+  add Hermatian(N,Nbm);                // T2' (Nbm by N)
+  add repmatComplex(Nbm,N,2,1);
+
+  add splitjoin {
+     split roundrobin(Nbm*N*2,0);
+     add iden_c(Nbm*N*2);
+     add createVes(Azi,-pi/180,pi/180,N,Ncnb); // creates Ves2 (N by Ncnb)
+     join roundrobin(Nbm*N*2,N*Ncnb);
+  }
+
+  add splitjoin {
+    split roundrobin(Nbm*N,Nbm*N+N*Ncnb);
+    add iden_c(Nbm*N);
+    add MatrixMultComplex1(Nbm,N,Ncnb);
+    join roundrobin(Nbm*N,Nbm*Ncnb);
+  }
+
+  add calcWHS(Nbm,N,Ncnb,0);
+}
+
+
+// input: none
+// output: Ndop complex
+
+void->complex pipeline create_dops(int Ndop) {
+
+  complex val;
+  val.real = Ndop;
+
+  add gen_ints(0,Ndop-1);
+  add fftshift_1d(Ndop);
+  add div_valComplex(val,Ndop);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

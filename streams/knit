@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.36 2003-09-17 08:27:26 thies Exp $
+# $Id: knit,v 1.37 2003-09-22 07:03:13 jasperln Exp $
 #
 
 use strict;
@@ -183,7 +183,8 @@ sub get_options
 	       "tokopi",
 	       "unroll|u=i",
 	       "viram|V",
-	       "cluster");
+	       "cluster",
+	       "destroyfieldarray");
   }
 
 sub call
@@ -337,6 +338,7 @@ sub get_kjc_opts
     $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " -V");
     $opts{cluster} && ($kjcopts .= " -cluster");
+    $opts{destroyfieldarray} && ($kjcopts .= " -destroyfieldarray");
     return $kjcopts;
 }
 

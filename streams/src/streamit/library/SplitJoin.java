@@ -147,7 +147,7 @@ public class SplitJoin extends Stream
     }
 
     public SplitJoin(Object o1) {super(o1);}
-
+    public SplitJoin(Object o1, int i1){super(o1, i1);}
     public SplitJoin(int i1, int i2, Object o1) {super(i1,i2,o1);}
     
     public SplitJoin(Object o1,Object o2) {super(o1,o2);}

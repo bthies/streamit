@@ -80,7 +80,7 @@
             class="streamit.eclipse.debugger.launching.StreamItApplicationLaunchShortcut"
             id="streamit.eclipse.debugger.launching.localStreamItShortcut">
          <perspective
-               id="org.eclipse.jdt.ui.JavaPerspective">
+               id="streamit.eclipse.debugger.ui.StreamItPerspective">
          </perspective>
          <perspective
                id="org.eclipse.debug.ui.DebugPerspective">
@@ -108,6 +108,18 @@
       </view>
    </extension>
 <!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.perspectives						-->
+<!-- ================================================================== -->   
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            name="%Perspective.streamItPerspective"
+            icon="icons/full/ctool16/streamit_app.gif"
+            class="streamit.eclipse.debugger.ui.StreamItPerspectiveFactory"
+            id="streamit.eclipse.debugger.ui.StreamItPerspective">
+      </perspective>
+   </extension>
+<!-- ================================================================== -->
 <!-- Extension point: org.eclipse.ui.perspectiveExtensions				-->
 <!-- ================================================================== -->
    <extension
@@ -121,8 +133,7 @@
       <perspectiveExtension
             targetID="org.eclipse.debug.ui.DebugPerspective">
          <view
-               relative="org.eclipse.ui.views.TaskList"
-               visible="false"
+               relative="org.eclipse.ui.views.ContentOutline"
                relationship="stack"
                id="streamit.eclipse.debugger.graph.StreamView">
          </view>
@@ -130,13 +141,13 @@
       <perspectiveExtension
             targetID="org.eclipse.debug.ui.DebugPerspective">
          <view
-               relative="org.eclipse.ui.views.TaskList"
-               visible="false"
-               relationship="stack"
+               relative="org.eclipse.ui.views.ContentOutline"
+               relationship="left"
+               ratio=".50"
                id="streamit.eclipse.debugger.graph.StreamOverview">
          </view>
       </perspectiveExtension>
-   </extension>
+   </extension>   
 <!-- ================================================================== -->
 <!-- Extension point: org.eclipse.ui.editors                            -->
 <!-- ================================================================== -->
@@ -177,35 +188,41 @@
 <!-- Extension point: org.eclipse.ui.newWizards							-->
 <!-- ================================================================== -->
    <extension
-      point = "org.eclipse.ui.newWizards">
-    <category
-	   id="streamit.eclipse.debugger.wizards"
-	   name="%newWizardCategoryName">
-	</category>
-	<wizard 
-		id="streamit.eclipse.debugger.wizards.NewProjectCreationWizard"
-		name="%NewStreamItProject.label"
-		class="streamit.eclipse.debugger.wizards.NewProjectCreationWizard"
-		category="streamit.eclipse.debugger.wizards"
-		project="true"
-		finalPerspective="org.eclipse.jdt.ui.JavaPerspective"
-		preferredPerspectives="org.eclipse.jdt.ui.JavaPerspective,org.eclipse.jdt.ui.JavaBrowsingPerspective,org.eclipse.jdt.ui.JavaHierarchyPerspective"
-		icon="icons/full/ctool16/newjprj_wiz.gif">
-		<description>%NewStreamItProject.description</description>
-    </wizard>
+         point="org.eclipse.ui.newWizards">
+      <category
+            name="%newWizardCategoryName"
+            id="streamit.eclipse.debugger.wizards">
+      </category>
+      <wizard
+            name="%NewStreamItProject.label"
+            icon="icons/full/ctool16/newjprj_wiz.gif"
+            category="streamit.eclipse.debugger.wizards"
+            class="streamit.eclipse.debugger.wizards.NewProjectCreationWizard"
+            preferredPerspectives="streamit.eclipse.debugger.ui.StreamItPerspective"
+            project="true"
+            finalPerspective="streamit.eclipse.debugger.ui.StreamItPerspective"
+            id="streamit.eclipse.debugger.wizards.NewProjectCreationWizard">
+         <description>
+            %NewStreamItProject.description
+         </description>
+      </wizard>
    </extension>
 <!-- ================================================================== -->
 <!-- Extension point: org.eclipse.core.resources.natures                 -->
 <!-- ================================================================== -->
-   <extension point="org.eclipse.core.resources.natures"
-      id="streamitnature"
-      name="%streamItNatureName">
+   <extension
+         id="streamitnature"
+         name="%streamItNatureName"
+         point="org.eclipse.core.resources.natures">
       <runtime>
-         <run class="streamit.eclipse.debugger.wizards.StreamItProjectNature">
+         <run
+               class="streamit.eclipse.debugger.wizards.StreamItProjectNature">
          </run>
       </runtime>
-      <requires-nature id="org.eclipse.jdt.core.javanature"/>
-   </extension>   
+      <requires-nature
+            id="org.eclipse.jdt.core.javanature">
+      </requires-nature>
+   </extension>
 <!-- ================================================================== -->
 <!-- Extension point: org.eclipse.ui.popupMenus			                -->
 <!-- ================================================================== -->
@@ -307,15 +324,15 @@
                id="streamit.eclipse.debugger.actions.ExpandAllViewActionDelegate">
          </action>
          <action
-               label="%HideAction.label"
-               hoverIcon="icons/full/obj16/hidelines.gif"
-               icon="icons/full/obj16/hidelines.gif"
-               tooltip="%HideAction.tooltip"
-               class="streamit.eclipse.debugger.actions.HideLinesViewActionDelegate"
-               toolbarPath="additions"
-               style="toggle"
                state="false"
-               id="streamit.eclipse.debugger.actions.HideLinesViewActionDelegate">
+               style="toggle"
+               id="streamit.eclipse.debugger.actions.HideLinesViewActionDelegate"
+               toolbarPath="additions"
+               hoverIcon="icons/full/obj16/hidelines.gif"
+               class="streamit.eclipse.debugger.actions.HideLinesViewActionDelegate"
+               icon="icons/full/obj16/hidelines.gif"
+               label="%HideAction.label"
+               tooltip="%HideAction.tooltip">
          </action>
       </viewContribution>
    </extension>

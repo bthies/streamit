@@ -624,8 +624,8 @@ public class PCMSynthesis extends Pipeline
                             public void work()
                             {
                                 float sum = 0;
-                                int i;
-                                for (i = 0; i < 16; i++)
+                                int j;
+                                for (j = 0; j < 16; j++)
                                 {
                                     sum += this.input.popFloat();
                                 }

@@ -194,6 +194,24 @@ public class FlatNode {
 	    //return contents.getName();
     }
 
+    public boolean isFilter() {
+	if (contents instanceof SIRFilter) 
+	    return true;
+	return false;
+    }
+    
+    public boolean isJoiner() {
+	if (contents instanceof SIRJoiner) 
+	    return true;
+	return false;
+    }
+
+    public boolean isSplitter() {
+	if (contents instanceof SIRSplitter) 
+	    return true;
+	return false;
+    }
+    
     public String toString() {
 	return "FlatNode:"+getName();
     }

@@ -1,7 +1,7 @@
 /*
  * InitFunction.java: container class to represent an init function
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitFunction.java,v 1.6 2002-07-22 20:02:44 dmaze Exp $
+ * $Id: InitFunction.java,v 1.7 2002-08-13 19:28:22 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -46,6 +46,12 @@ public class InitFunction
                     paramAssigns += getIndent(indent+1) + "this." +
                         param.name + " = " +
                         n2j.makeConstructor(param.type) + ";\n";
+                // Again, not necessarily correct, notably if
+                // param.type.isComplex().
+                if (param.init != null)
+                    paramAssigns += getIndent(indent+1) + "this." +
+                        param.name + " = " +
+                        param.init.accept(n2j) + ";\n"; 
             }
         }
         t += ") ";

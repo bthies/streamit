@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.24 2002-08-12 20:54:42 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.25 2002-08-13 19:28:20 dmaze Exp $
  */
 
 header {
@@ -234,9 +234,10 @@ stream_param returns [VariableDeclaration var]
 {
 	var = new VariableDeclaration();
 	Type type;
+	Expression init = null;
 }
-	: #(name:ID type=data_type)
-		{ var.type = type; var.name = name.getText();
+	: #(name:ID type=data_type (#(ASSIGN init=expression_reduced))?)
+		{ var.type = type; var.name = name.getText(); var.init=init;
 			symTab.register(name.getText(), type); }
 	;
 
@@ -554,27 +555,27 @@ assign_statement returns [String t] {t=null; Expression l, x;}
 variable_decl returns [String t]
 {
 	t = "";
-	String init_value = "";
 	Type type;
 	Expression array_dim;
+	Expression init=null;
 }
-	:	 #(name:ID
-			type=data_type
-			(init_value=variable_init)?
-		)
+	: #(name:ID type=data_type (#(ASSIGN init=expression_reduced))?)
 		{
 			// Possibly overwrite init_value.
+			t = n2j.convertType(type) + " " + name.getText ();
 			if (type.isComplex() || !(type instanceof TypePrimitive))
-				init_value = "= " + n2j.makeConstructor(type);
-			t = n2j.convertType(type) + " " + name.getText () +
-				" " + init_value;
+			{
+				t += " = " + n2j.makeConstructor(type);
+				if (init != null)
+					t += ";\n" + getIndent() + name.getText() + " = " +
+						init.accept(n2j);
+			}
+			else if (init != null)
+			/* NB: this really doesn't do the right thing, particularly
+             * if the thing being initialized is a complex variable. */
+				t +=  " = " + init.accept(n2j);
 			symTab.register(name.getText(), type);
 		}
-	;
-
-variable_init returns [String t] { t = null; }
-	: #(ASSIGN t=expr)
-		{ t = " = " + t; }
 	;
 
 expr_assign_statement returns [String t]

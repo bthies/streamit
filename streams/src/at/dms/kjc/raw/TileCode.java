@@ -353,6 +353,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("void begin(void) {\n");
 	    fw.write("  raw_init();\n");
             fw.write("  raw_init2();\n");
+	    fw.write("  while (1) {}\n");
 	    fw.write("}\n");
 	    fw.close();
 	    System.out.println("Code " +

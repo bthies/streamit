@@ -1499,7 +1499,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 	
         print(ident);
-	print("__"+selfID);
+	
+	if (!Utils.isMathMethod(prefix, ident)) {
+	    // don't rename the built-in math functions
+	    print("__"+selfID);
+	}
         print("(");
 	
 	//if this method we are calling is the call to a structure 

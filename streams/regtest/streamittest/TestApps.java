@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.12 2003-07-11 14:25:03 dmaze Exp $
+ * $Id: TestApps.java,v 1.13 2003-09-29 20:41:05 thies Exp $
  **/
 package streamittest;
 
@@ -39,13 +39,6 @@ public class TestApps extends StreamITTestCase {
         if (!flagsContainFusion(flags))
             suite.addTest(new TestApps("testCrc", flags));
 	
-	// this one doesn't fit on raw 8 without partitioning,
-        // and doesn't fuse (it has a filereader).
-        if (!flagsContainFusion(flags) &&
-            (!flagsContainRaw(8, flags) ||
-             flagsContainPartition(flags)))
-	    suite.addTest(new TestApps("testMP3Simple", flags));
-
 	suite.addTest(new TestApps("testNokiaFine", flags));
 	
 	return suite;
@@ -58,13 +51,6 @@ public class TestApps extends StreamITTestCase {
         doCompareTest(root, "CrcEncoder32Test.java", "CrcEncoder32Test.out");
     }
 
-    public void testMP3Simple()
-    {
-        String root = APPS_ROOT + "mp3decoder/";
-	doMake(root);
-	doCompileRunVerifyTest(root, "LinkedMP3Simple.java", "MP3Simple.out", 0, 1152);
-    }
-    
     public void testNokiaFine() {
 	String nokiaRoot = APPS_ROOT + "nokia-fine/";
 	// create a linked version (and also bring in Delay.java)

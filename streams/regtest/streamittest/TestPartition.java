@@ -1,7 +1,7 @@
 /**
  * Runs the compiler on the all of the tests with no optimizations
  * turned on.
- * $Id: TestPartition.java,v 1.5 2003-01-29 03:54:15 thies Exp $
+ * $Id: TestPartition.java,v 1.6 2003-09-29 20:41:05 thies Exp $
  **/
 package streamittest;
 
@@ -80,9 +80,9 @@ public class TestPartition extends StreamITTestCase {
 	suite.addTest(new TestBenchmarks("testMatMulBlock", opts));
 	suite.addTest(new TestBenchmarks("testCFAR", opts));
 	suite.addTest(new TestBenchmarks("testPerftest4", opts));
+	suite.addTest(new TestBenchmarks("testMP3Simple", opts));
 	
 	suite.addTest(new TestApps("testCrc", opts));
-	suite.addTest(new TestApps("testMP3Simple", opts));
 	suite.addTest(new TestApps("testNokiaFine", opts));
 	
 	suite.addTest(new TestExamples("testMatrixMult", opts));

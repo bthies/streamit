@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.27 2003-09-18 16:14:19 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.28 2003-09-29 20:41:05 thies Exp $
  **/
 package streamittest;
 
@@ -54,6 +54,13 @@ public class TestBenchmarks extends StreamITTestCase {
         suite.addTest(new TestBenchmarks("testMatMulBlock", flags));
         suite.addTest(new TestBenchmarks("testCFAR", flags));
         suite.addTest(new TestBenchmarks("testPerftest4", flags));
+
+	// this one doesn't fit on raw 8 without partitioning,
+        // and doesn't fuse (it has a filereader).
+        if (!flagsContainFusion(flags) &&
+            (!flagsContainRaw(8, flags) ||
+             flagsContainPartition(flags)))
+	    suite.addTest(new TestApps("testMP3Simple", flags));
 
 	return suite;
     }
@@ -208,5 +215,13 @@ public class TestBenchmarks extends StreamITTestCase {
 	doMake(root);
 	doCompileRunVerifyTest(root, "Linkedperftest4.java", "Linkedperftest4.out", 0, 4);
     }
+
+    public void testMP3Simple()
+    {
+        String root = BENCH_ROOT + "mp3decoder/";
+	doMake(root);
+	doCompileRunVerifyTest(root, "LinkedMP3Simple.java", "MP3Simple.out", 0, 1152);
+    }
+    
 }
 

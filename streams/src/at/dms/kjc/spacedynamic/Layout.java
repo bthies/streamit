@@ -329,8 +329,10 @@ public class Layout extends at.dms.util.Utils implements
 		}
 	    }    
 	}
-	
-	assert cost(true) > 0.0 : "Illegal Layout";
+	double cost = placementCost(true);
+	System.out.println("Layout cost: " + cost);
+	assert cost >= 0.0 : "Illegal Layout";
+
 	dumpLayout("layout.dot");
     }
     
@@ -338,7 +340,7 @@ public class Layout extends at.dms.util.Utils implements
 	if the cost is negative, this layout is illegal.
 	if <debug> then print out why this layout was illegal
     **/
-    public double cost(boolean debug) 
+    public double placementCost(boolean debug) 
     {
 	/** tiles used already to route dynamic data between 
 	    SSGs, a tile can only be used once **/
@@ -516,13 +518,14 @@ public class Layout extends at.dms.util.Utils implements
 	    Iterator route = XYRouter.getRoute(getTile(src), getTile(dst)).iterator();
 	    
 	    while (route.hasNext()) {
-		cost += 1.0;
 		ComputeNode tile = (ComputeNode)route.next();
+		//add to cost only if these an no endpoints of the route
+		if (tile != getTile(src) && tile != getTile(dst))
+		    cost += 1.0;
 		if (usedTiles.contains(tile))
 		    return -1.0;
 		usedTiles.add(tile);
 	    }
-	    
 	}
 	return cost;
     }
@@ -556,6 +559,222 @@ public class Layout extends at.dms.util.Utils implements
     }
 
 
+    public void simAnnealAssign(FlatNode node) 
+    {
+	System.out.println("Simulated Annealing Assignment");
+	int nsucc =0, j = 0;
+	double currentCost = 0.0, minCost = 0.0;
+	//number of paths tried at an iteration
+	int nover = 100; //* RawBackend.rawRows * RawBackend.rawColumns;
+
+	try {
+	    random = new Random(17);
+	    //random placement
+	    //randomPlacement();
+	    assert false;
+	    
+	    filew = new FileWriter("simanneal.out");
+	    int configuration = 0;
+
+	    currentCost = placementCost(false);
+	    assert currentCost >= 0.0;
+	    System.out.println("Initial Cost: " + currentCost);
+	    
+	    if (KjcOptions.noanneal || KjcOptions.decoupled) {
+		dumpLayout("noanneal.dot");
+		return;
+	    }
+	    //as a little hack, we will cache the layout with the minimum cost
+	    //these two hashmaps store this layout
+	    HashMap sirMin = (HashMap)SIRassignment.clone();
+	    HashMap tileMin = (HashMap)tileAssignment.clone();
+	    minCost = currentCost;
+	    
+	    if (currentCost == 0.0) {
+		dumpLayout("layout.dot");
+		return;
+	    }
+
+	    //The first iteration is really just to get a 
+	    //good initial layout.  Some random layouts really kill the algorithm
+	    for (int two = 0; two < rawChip.getYSize() ; two++) {
+		double t = annealMaxTemp(); 
+		double tFinal = annealMinTemp();
+		while (true) {
+		    int k = 0;
+		    nsucc = 0;
+		    for (k = 0; k < nover; k++) {
+			//true if config change was accepted
+			boolean accepted = perturbConfiguration(t);
+			currentCost = placementCost(false);
+			//the layout should always be legal
+			assert currentCost >= 0.0;
+			
+			if (accepted) {
+			    filew.write(configuration++ + " " + currentCost + "\n");
+			    nsucc++;
+			}
+
+			//this will be the final layout
+			if (currentCost == 0.0)
+			    break;
+			//keep the layout with the minimum cost
+			if (currentCost < minCost) {
+			    minCost = currentCost;
+			    //save the layout with the minimum cost
+			    sirMin = (HashMap)SIRassignment.clone();
+			    tileMin = (HashMap)tileAssignment.clone();
+			}
+		    }
+		    
+		    t *= TFACTR;
+    
+		    if (nsucc == 0) break;
+		    if (currentCost == 0)
+			break;
+		    if (t <= tFinal)
+			break;
+		    j++;
+		}
+		if (currentCost == 0)
+		    break;
+	    }
+	   
+	    currentCost = placementCost(false);
+	    System.out.println("Final Cost: " + currentCost + 
+			       " Min Cost : " + minCost + 
+			       " in  " + j + " iterations.");
+	    if (minCost < currentCost) {
+		SIRassignment = sirMin;
+		tileAssignment = tileMin;
+	    }
+	    
+	    filew.close();
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	}
+	dumpLayout("layout.dot");
+    }
+    
+    
+     private double annealMaxTemp() throws Exception
+     {
+ 	double T = 1.0;
+ 	int total = 0, accepted = 0;
+ 	HashMap sirInit  = (HashMap)SIRassignment.clone();
+ 	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+ 	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
+ 	    T = 2.0 * T;
+	    total = 0;
+	    accepted = 0;
+	    for (int j = 0; j < 100; j++) {
+		//c_old <- c_init
+		SIRassignment = sirInit;
+		tileAssignment = tileInit;
+		if (perturbConfiguration(T))
+		    accepted ++;
+		total++;
+	    }
+ 	    if (((double)accepted) / ((double)total) > .9)
+ 		break;
+ 	}
+ 	//c_old <- c_init
+ 	SIRassignment = sirInit;
+ 	tileAssignment = tileInit;
+ 	return T;
+     }
+
+  private double annealMinTemp() throws Exception
+     {
+ 	double T = 1.0;
+ 	int total = 0, accepted = 0;
+ 	HashMap sirInit  = (HashMap)SIRassignment.clone();
+ 	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+ 	for (int i = 0; i < MINTEMPITERATIONS; i++) {
+ 	    T = 0.5 * T;
+	    total = 0;
+	    accepted = 0;
+	    for (int j = 0; j < 100; j++) {
+		//c_old <- c_init
+		SIRassignment = sirInit;
+		tileAssignment = tileInit;
+		if (perturbConfiguration(T))
+		    accepted ++;
+		total++;
+	    }
+ 	    if (((double)accepted) / ((double)total) > .1)
+ 		break;
+ 	}
+ 	//c_old <- c_init
+ 	SIRassignment = sirInit;
+ 	tileAssignment = tileInit;
+ 	return T;
+     }
+
+     //return true if the perturbation is accepted
+    private boolean perturbConfiguration(double T) throws Exception
+    {
+	int first, second;
+	//the cost of the new layout and the old layout
+	double e_new, e_old = placementCost(false);
+	//the nodes to swap
+	FlatNode firstNode, secondNode;
+	
+	//find 2 suitable nodes to swap
+	while (true) {
+	    first = getRandom();
+	    second = getRandom();
+	    //do not swap same tile or two null tiles
+	    if (first == second)
+		continue;
+	    if ((getNode(rawChip.getTile(first)) == null) &&
+		(getNode(rawChip.getTile(second)) == null))
+		continue;
+	    	    
+	    firstNode = getNode(rawChip.getTile(first));
+	    secondNode = getNode(rawChip.getTile(second));
+	    //perform swap
+	    assign(rawChip.getTile(first), secondNode);
+	    assign(rawChip.getTile(second), firstNode);
+	    
+	    //the new placement cost
+	    e_new = placementCost(false);
+	    
+	    if (e_new < 0.0) {
+		//illegal tile assignment so revert the assignment
+		assign(rawChip.getTile(second), secondNode);
+		assign(rawChip.getTile(first), firstNode);
+		continue;
+	    }
+	    else  //found a successful new layout
+		break;
+	}
+	
+	
+	double P = 1.0;
+	double R = random.nextDouble();
+	
+	if (e_new >= e_old)
+	    P = Math.exp((((double)e_old) - ((double)e_new)) / T);
+	
+	if (R < P) {
+	    return true;
+	}
+	else {
+	    //reject configuration
+	    assign(rawChip.getTile(second), secondNode);
+	    assign(rawChip.getTile(first), firstNode);
+	    return false;
+	}
+    }
+    
+    private int getRandom() 
+    {
+	return random.nextInt(rawChip.getTotalTiles());
+    }
     
     /** END simulated annealing methods **/
 

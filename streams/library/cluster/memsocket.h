@@ -11,16 +11,15 @@
 
 // unidirectional communication mechanism with reader and writer
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE_BYTES 100000
 
 class memsocket : public mysocket {
 
   char *data_buffer;
   int tail, head;
   
-  int buf_size;
-
   int item_size;
+  int size;
 
  public:
 
@@ -45,3 +44,5 @@ class memsocket : public mysocket {
 };
 
 #endif
+
+

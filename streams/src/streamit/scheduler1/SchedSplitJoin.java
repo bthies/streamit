@@ -88,13 +88,83 @@ public class SchedSplitJoin extends SchedStream
         // this code might not work if the splitter or joiner is null!
 
         List childrenRates = new ArrayList ();
-        Fraction splitRate = new Fraction (1, 1);
+        Fraction splitRate = null;
         Fraction joinRate = null;
 
         // now go through all children and calculate the rates at which
         // they will be called w.r.t. the splitter
-        // also calculate and check the rate of execution of the joiner!
+        // also, compute the rate of execution of the joiner
+        // (if it ever ends up being executed)
         {
+            ListIterator iter;
+            iter = allChildren.listIterator ();
+            int index = -1;
+
+            while (iter.hasNext ())
+            {
+                SchedStream child = (SchedStream) iter.next ();
+                ASSERT (child);
+                index++;
+
+                // the rate at which the child should be executed
+                Fraction childRate = null;
+
+                // rates at which the splitter is producing the data
+                // and the child is consuming it:
+                int numOut = splitType.getOutputWeight (index);
+                int numIn = child.getConsumption ();
+
+                // is the splitter actually producing any data?
+                if (numOut != 0)
+                {
+                    // if the slitter is producing data, the child better
+                    // be consuming it!
+                    ASSERT (numIn);
+
+                    if (splitRate == null)
+                    {
+                        // if I hadn't set the split rate yet, do it now
+                        splitRate = new Fraction (BigInteger.ONE, BigInteger.ONE);
+                    }
+
+                    // compute the rate at which the child should be executing
+                    // (relative to the splitter)
+                    childRate = new Fraction (numOut, numIn).multiply (splitRate).reduce ();
+
+                    // if I still hadn't computed the rate at which the joiner
+                    // is executed, try to compute it:
+                    if (joinRate == null && child.getProduction () != 0)
+                    {
+                        // if the child is producing data, the joiner
+                        // better be consuming it!
+                        ASSERT (joinType.getInputWeight (index) != 0);
+
+                        int childOut = child.getProduction ();
+                        int joinIn = joinType.getInputWeight (index);
+
+                        joinRate = new Fraction (childOut, joinIn).multiply (childRate).reduce ();
+                    }
+                }
+
+                childrenRates.add (childRate);
+            }
+        }
+
+        // now compute the rate of execution of the joiner w.r.t. children
+        // and make sure that everything will be executed at consistant
+        // rates (to avoid overflowing the buffers)
+        {
+            // if the splitter never needs to get executed (doesn't produce
+            // any data), the joiner rate should be set to ONE:
+            if (splitRate == null)
+            {
+                // I better not have computed the join rate yet!
+                ASSERT (joinRate == null);
+
+                // okay, just set it to ONE/ONE
+                joinRate = new Fraction (BigInteger.ONE, BigInteger.ONE);
+            }
+
             ListIterator iter;
             iter = allChildren.listIterator ();
 
@@ -105,36 +175,49 @@ public class SchedSplitJoin extends SchedStream
                 ASSERT (child);
                 index++;
 
-                Fraction childRate;
+                // get the child rate
+                Fraction childRate = (Fraction) childrenRates.get (index);
 
-                // rates for children
+                // compute the new childRate:
+                Fraction newChildRate = null;
                 {
-                    int numOut = splitType.getOutputWeight (index);
-                    int numIn = child.getConsumption ();
+                    int childOut = child.getProduction ();
+                    int joinIn = joinType.getInputWeight (index);
 
-                    childRate = new Fraction (numOut, numIn).reduce ();
-                    childrenRates.add (childRate);
+                    // does the child produce any data?
+                    if (childOut != 0)
+                    {
+                        // yes
+                        // the split better consume some data too!
+                        ASSERT (joinIn != 0);
+
+                        // compute the rate at which the child should execute
+                        // w.r.t. the splitter
+                        newChildRate = new Fraction (joinIn, childOut).multiply (joinRate).reduce ();
+                    } else {
+                        // no
+                        // the splitter better not consume any data either
+                        ASSERT (joinIn == 0);
+                    }
                 }
 
-                // rate for joiner
+                // if this is a new rate, put it in the array
+                if (childRate == null)
                 {
-                    int numOut = child.getProduction ();
-                    int numIn = joinType.getInputWeight (index);
+                    // I better have the rate here, or the child
+                    // neither produces nor consumes any data!
+                    ASSERT (newChildRate != null);
 
-                    if (numIn != 0 && numOut != 0)
+                    // set the rate
+                    childrenRates.set (index, newChildRate);
+                }
+
+                // okay, if I have both rates, make sure that they agree!
+                if (childRate != null && newChildRate != null)
+                {
+                    if (!childRate.equals (newChildRate))
                     {
-                        // compute new rate
-                        Fraction newJoinRate = new Fraction (numOut, numIn).multiply (childRate);
-                        if (joinRate == null)
-                        {
-                            joinRate = newJoinRate;
-                        }
-
-                        // make sure that the rate is same as previous rate
-                        if (!joinRate.equals (newJoinRate))
-                        {
-                            ERROR ("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
-                        }
+                        ERROR ("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
                     }
                 }
             }

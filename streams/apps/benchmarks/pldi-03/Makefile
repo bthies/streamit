@@ -24,61 +24,7 @@ beamformer-results: CoarseSerializedBeamFormer.java
 
 
 
-benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java
-
-
-# rules to make a directory and run all of the benchmarks so that I can measure some metrics
-dump: benchmarks
-	mkdir -p dump
-	$(COMPILER) --unroll 10000000 --linearreplacement --frequencyreplacement 1 FIRProgram.java
-	cp linear.dot dump/fir-linear.dot
-	cp linear-replace.dot dump/fir-linear-replace.dot
-	cp linear-frequency.dot dump/fir-freq.dot
-	$(COMPILER)  --unroll 10000000 --frequencyreplacement 1 FIRProgram.java
-	cp linear-frequency.dot dump/fir-freq-only.dot
-
-	$(COMPILER)  --unroll 10000000 --linearreplacement --frequencyreplacement 1 SamplingRateConverter.java
-	cp linear.dot dump/sample-linear.dot
-	cp linear-replace.dot dump/sample-linear-replace.dot
-	cp linear-frequency.dot dump/sample-freq.dot
-	$(COMPILER)  --unroll 10000000 --frequencyreplacement 1 SamplingRateConverter.java
-	cp linear-frequency.dot dump/sample-freq-only.dot
-
-
-	$(COMPILER)  --unroll 10000000 --linearreplacement --frequencyreplacement 1 FilterBank.java
-	cp linear.dot dump/filterbank-linear.dot
-	cp linear-replace.dot dump/filterbank-linear-replace.dot
-	cp linear-frequency.dot dump/filterbank-freq.dot
-	$(COMPILER)  --unroll 10000000 --frequencyreplacement 1 FilterBank.java
-	cp linear-frequency.dot dump/filterbank-freq-only.dot
-
-
-	$(COMPILER)  --unroll 10000000 --linearreplacement --frequencyreplacement 1 TargetDetect.java
-	cp linear.dot dump/target-linear.dot
-	cp linear-replace.dot dump/target-linear-replace.dot
-	cp linear-frequency.dot dump/target-freq.dot
-	$(COMPILER)  --unroll 10000000 --frequencyreplacement 1 TargetDetect.java
-	cp linear-frequency.dot dump/target-freq-only.dot
-
-
-	$(COMPILER)  --unroll 10000000 --linearreplacement --frequencyreplacement 1 FMRadioApp.java
-	cp linear.dot dump/fm-linear.dot
-	cp linear-replace.dot dump/fm-linear-replace.dot
-	cp linear-frequency.dot dump/fm-freq.dot
-	$(COMPILER)  --unroll 10000000 --frequencyreplacement 1 FMRadioApp.java
-	cp linear-frequency.dot dump/fm-freq-only.dot
-
-
-
-dump-beam:
-	$(COMPILER)  --unroll 10000000 --linearreplacement --frequencyreplacement 1 CoarseSerializedBeamFormer.java
-	cp linear.dot dump/beamformer-linear.dot
-	cp linear-replace.dot dump/beamformer-linear-replace.dot
-	cp linear-frequency.dot dump/beamformer-freq.dot
-	$(COMPILER)  --unroll 10000000 --frequencyreplacement 1 CoarseSerializedBeamFormer.java
-	cp linear-frequency.dot dump/beamformer-freq-only.dot
-
-
+benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java
 
 
 
@@ -107,7 +53,11 @@ fir-scaling1: Test.java
 fir-scaling2: Test.java
 	./reap_fir.pl 2 | mhmail aalamb@mit.edu -s "() FIR scaling results are ready"
 
-# other benchmarks: CoarseSerializedBeamFormer.java, and FMRadioApp.java
+CoarseSerializedBeamFormer.java:
+	make -C $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit
+	cp $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit/CoarseSerializedBeamFormer.java .
+
+FMRadioApp.java:
 
 # rule to create java files from .str files
 %.java: %.str lib/*.str

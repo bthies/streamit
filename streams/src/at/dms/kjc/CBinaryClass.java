@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBinaryClass.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CBinaryClass.java,v 1.2 2003-04-19 01:15:46 dmaze Exp $
  */
 
 package at.dms.kjc;
 
+import java.io.*;
 import java.util.Hashtable;
 
 import at.dms.classfile.ClassInfo;
@@ -117,4 +118,21 @@ public class CBinaryClass extends CClass {
 
     return index == -1 ? null : CClassType.lookup(clazz.substring(0, index)).getCClass();
   }
+
+  // ----------------------------------------------------------------------
+  // CLONING STUFF
+  // ----------------------------------------------------------------------
+
+    private Object serializationHandle;
+    
+    private void writeObject(ObjectOutputStream oos)
+	throws IOException {
+	this.serializationHandle = ObjectDeepCloner.getHandle(this);
+	oos.defaultWriteObject();
+    }
+    
+    protected Object readResolve() throws Exception {
+	return ObjectDeepCloner.getInstance(serializationHandle, this);
+    }
+    
 }

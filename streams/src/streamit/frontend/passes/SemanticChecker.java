@@ -27,7 +27,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.13 2003-12-11 21:57:48 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.14 2004-01-05 21:29:15 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -48,8 +48,10 @@ public class SemanticChecker
         checker.checkStreamTypes(prog);
         checker.checkFunctionValidity(prog);
         checker.checkStatementPlacement(prog);
-        checker.checkIORates(prog);
         checker.checkVariableUsage(prog);
+        checker.checkBasicTyping(prog);
+        checker.checkStreamConnectionTyping(prog);
+        checker.checkIORates(prog);
         return checker.good;
     }
     
@@ -471,6 +473,270 @@ public class SemanticChecker
                     return super.visitStmtSplit(stmt);
                 }
             });
+    }
+
+    /**
+     * Checks that basic operations are performed on appropriate types.
+     * For example, the type of the unary ! operator can't be float
+     * or complex; there needs to be a common type for equality
+     * checking, but an arithmetic type for arithmetic operations.
+     * This also tests that the right-hand side of an assignment is
+     * assignable to the left-hand side.
+     *<p>
+     * (Does this test that peek, pop, push, and enqueue are used
+     * properly?  Initial plans were to have this as a separate
+     * function, but it does fit nicely here.)
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkBasicTyping(Program prog)
+    {
+        /* We mostly just need to walk through and check things.
+         * enqueue statements can be hard, though: if there's a
+         * feedback loop with void type, we need to find the
+         * loopback type, which is the output type of the loop
+         * stream object.  If it's kosher to have enqueue before
+         * loop, we need an extra pass over statements to find
+         * the loop type.  The AssignLoopTypes pass could be
+         * helpful here, but we want to give an error message if
+         * things fail. */
+        prog.accept(new SymbolTableVisitor(null) {
+                // Need to visit everything.  Handily, STV does things
+                // for us like save streamType when we run across
+                // streamspecs; the only potentially hard thing is
+                // the loop type of feedback loops.
+                //
+                // Otherwise, assume that the GetExprType pass can
+                // find the types of things.  This should report
+                // an error exactly when GET returns null,
+                // so we can ignore nulls (assume that they type
+                // check).
+                public Object visitExprUnary(ExprUnary expr)
+                {
+                    Type ot = getType(expr.getExpr());
+                    if (ot != null)
+                    {
+                        Type inttype =
+                            new TypePrimitive(TypePrimitive.TYPE_INT);
+                        Type bittype =
+                            new TypePrimitive(TypePrimitive.TYPE_BIT);
+                    
+                        switch(expr.getOp())
+                        {
+                        case ExprUnary.UNOP_NEG:
+                            if (!inttype.promotesTo(ot))
+                                report(expr, "cannot negate " + ot);
+                            break;
+                            
+                        case ExprUnary.UNOP_NOT:
+                            if (!bittype.promotesTo(ot))
+                                report(expr, "cannot take boolean not of " +
+                                       ot);
+                            break;
+                            
+                        case ExprUnary.UNOP_PREDEC:
+                        case ExprUnary.UNOP_PREINC:
+                        case ExprUnary.UNOP_POSTDEC:
+                        case ExprUnary.UNOP_POSTINC:
+                            if (!inttype.promotesTo(ot))
+                                report(expr, "cannot perform ++/-- on " + ot);
+                            break;
+                        }
+                    }
+                    
+                    return super.visitExprUnary(expr);
+                }
+
+                public Object visitExprBinary(ExprBinary expr)
+                {
+                    Type lt = getType(expr.getLeft());
+                    Type rt = getType(expr.getRight());
+
+                    if (lt != null && rt != null)
+                    {                        
+                        Type ct = lt.leastCommonPromotion(rt);
+                        if (ct == null)
+                        {
+                            report (expr,
+                                    "incompatible types in binary expression");
+                            return expr;
+                        }
+                        // TODO: check to see whether ct is an appropriate
+                        // type for the operator.
+                    }
+
+                    return super.visitExprBinary(expr);
+                }
+
+                public Object visitExprTernary(ExprTernary expr)
+                {
+                    Type at = getType(expr.getA());
+                    Type bt = getType(expr.getB());
+                    Type ct = getType(expr.getC());
+                    
+                    if (at != null)
+                    {
+                        if (!at.promotesTo
+                            (new TypePrimitive(TypePrimitive.TYPE_INT)))
+                            report(expr,
+                                   "first part of ternary expression "+
+                                   "must be int");
+                    }
+
+                    if (bt != null && ct != null)
+                    {                        
+                        Type xt = bt.leastCommonPromotion(ct);
+                        if (xt == null)
+                            report(expr,
+                                   "incompatible second and third types "+
+                                   "in ternary expression");
+                    }
+                    
+                    return super.visitExprTernary(expr);
+                }
+
+                public Object visitExprField(ExprField expr)
+                {
+                    Type lt = getType(expr.getLeft());
+
+                    // Either lt is complex, or it's a structure
+                    // type, or it's null, or it's an error.
+                    if (lt == null)
+                    {
+                        // pass
+                    }
+                    else if (lt.isComplex())
+                    {
+                        String rn = expr.getName();
+                        if (!rn.equals("real") &&
+                            !rn.equals("imag"))
+                            report(expr,
+                                   "complex variables have only "+
+                                   "'real' and 'imag' fields");
+                    }
+                    else if (lt instanceof TypeStruct)
+                    {
+                        TypeStruct ts = (TypeStruct)lt;
+                        String rn = expr.getName();
+                        boolean found = false;
+                        for (int i = 0; i < ts.getNumFields(); i++)
+                            if (ts.getField(i).equals(rn))
+                            {
+                                found = true;
+                                break;
+                            }
+                        
+                        if (!found)
+                            report(expr,
+                                   "structure does not have a field named "+
+                                   "'" + rn + "'");
+                    }
+                    else
+                    {
+                        report(expr,
+                               "field reference of a non-structure type");
+                    }
+
+                    return super.visitExprField(expr);
+                }
+
+                public Object visitExprArray(ExprArray expr)
+                {
+                    Type bt = getType(expr.getBase());
+                    Type ot = getType(expr.getOffset());
+                    
+                    if (bt != null)
+                    {
+                        if (!(bt instanceof TypeArray))
+                            report(expr, "array access with a non-array base");
+                    }
+
+                    if (ot != null)
+                    {
+                        if (!ot.promotesTo
+                            (new TypePrimitive(TypePrimitive.TYPE_INT)))
+                            report(expr, "array index must be an int");
+                    }
+                    
+                    return super.visitExprArray(expr);
+                }
+
+                public Object visitExprPeek(ExprPeek expr)
+                {
+                    Type it = getType(expr.getExpr());
+                    
+                    if (it != null)
+                    {
+                        if (!it.promotesTo
+                            (new TypePrimitive(TypePrimitive.TYPE_INT)))
+                            report(expr, "peek index must be an int");
+                    }
+                    
+                    return super.visitExprPeek(expr);                    
+                }
+
+                public Object visitStmtPush(StmtPush stmt)
+                {
+                    Type xt = getType(stmt.getValue());
+                    
+                    if (xt != null && streamType != null &&
+                        streamType.getOut() != null &&
+                        !(xt.promotesTo(streamType.getOut())))
+                        report(stmt, "push expression must be of "+
+                               "output type of filter");
+                    
+                    return super.visitStmtPush(stmt);
+                }
+
+                public Object visitStmtEnqueue(StmtEnqueue stmt)
+                {
+                    Type xt = getType(stmt.getValue());
+                    
+                    // Punt if, in addition to the normal cases,
+                    // the input type is void.  (We'd have to
+                    // determine the loopback type now.)
+                    if (xt != null && streamType != null)
+                    {
+                        Type in = streamType.getIn();
+                        if (!((in instanceof TypePrimitive) &&
+                              ((TypePrimitive)in).getType() ==
+                              TypePrimitive.TYPE_VOID) &&
+                            !(xt.promotesTo(in)))
+                        report(stmt, "enqueue expression must be of "+
+                               "input type of feedback loop");
+                    }
+                    
+                    return super.visitStmtEnqueue(stmt);
+                }
+
+                public Object visitStmtAssign(StmtAssign stmt)
+                {
+                    Type lt = getType(stmt.getLHS());
+                    Type rt = getType(stmt.getRHS());
+                    
+                    if (lt != null && rt != null &&
+                        !(rt.promotesTo(lt)))
+                        report(stmt,
+                               "right-hand side of assignment must "+
+                               "be promotable to left-hand side's type");
+                    
+                    return super.visitStmtAssign(stmt);
+                }
+            });
+    }
+    
+    /**
+     * Checks that streams are connected with consistent types.
+     * In a split-join, all of the children need to have the same
+     * type, which is the same type as the parent stream; in a pipeline,
+     * the type of the output of the first child must be the same as
+     * the input of the second, and so on; feedback loops must be
+     * properly connected too.
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkStreamConnectionTyping(Program prog)
+    {
     }
 
     /**

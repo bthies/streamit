@@ -7,7 +7,6 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.Lifter;
 import java.util.List;
-import java.util.Iterator;
 
 public class RefactorSplitJoin {
     /**
@@ -225,11 +224,9 @@ public class RefactorSplitJoin {
         int[] joinWeights = sj.getJoiner().getWeights();
         
         // Whee.  Let's look at sj's children:
-        int index = 0;
-        for (Iterator iter = sj.getChildren().iterator(); iter.hasNext();
-             index++)
+        for (int index = 0; index < sj.size(); index++)
         {
-            SIRStream child = (SIRStream)iter.next();
+            SIRStream child = sj.get(index);
             // To continue, child must be a splitjoin with a duplicate
             // splitter.
             if (!(child instanceof SIRSplitJoin))

@@ -217,7 +217,7 @@ public class Flattener {
 	if (KjcOptions.linearanalysis ||
 	    KjcOptions.linearreplacement ||
 	    KjcOptions.linearpartition ||
-	    (KjcOptions.frequencyreplacement != -1) ||
+	    KjcOptions.frequencyreplacement ||
 	    KjcOptions.redundantreplacement) {
 	    origUnroll = KjcOptions.unroll;
 	    KjcOptions.unroll=100000;
@@ -235,7 +235,7 @@ public class Flattener {
 	if (KjcOptions.linearanalysis ||
 	    KjcOptions.linearreplacement ||
 	    KjcOptions.linearpartition ||
-	    (KjcOptions.frequencyreplacement != -1) ||
+	    KjcOptions.frequencyreplacement ||
 	    KjcOptions.redundantreplacement) {
 	    // restore unroll to original value
 	    KjcOptions.unroll = origUnroll;
@@ -243,7 +243,9 @@ public class Flattener {
 	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.print("Running linear analysis... ");
 	    // only refactor linear children if we're NOT doing the linear partitioner
-	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, !KjcOptions.linearpartition);
+	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str,
+								  KjcOptions.debug,
+								  !KjcOptions.linearpartition);
 	    System.err.println("done.");
 
 	    // now, print out the graph using the LinearPrinter which colors the graph
@@ -270,14 +272,11 @@ public class Flattener {
 		
 		// and finally, if we want to run frequency analysis
 		// 0 means stupid implementation, 1 means nice implemenation
-		if (KjcOptions.frequencyreplacement != FrequencyReplacer.UNKNOWN) {
-		    int replacementType = KjcOptions.frequencyreplacement;
-		    System.err.print("Running " +
-				     "(" + FrequencyReplacer.getName(replacementType) + ")" +
-				     " frequency replacement...");
-		    FrequencyReplacer.doReplace(lfa, str, replacementType);
+		if (KjcOptions.frequencyreplacement) {
+		    System.err.print("Running frequency replacement...");
+		    FrequencyReplacer.doReplace(lfa, str);
 		    System.err.println("done.");
-		    LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
+		    LinearDot.printGraph(str, ("linear-frequency.dot"), lfa);
 		}
 	    }
 

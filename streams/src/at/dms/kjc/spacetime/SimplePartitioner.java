@@ -28,18 +28,23 @@ public class SimplePartitioner extends Partitioner
 	LinkedList queue = new LinkedList();
 	HashSet visited = new HashSet();
 	LinkedList traces = new LinkedList();
-	
+	LinkedList topTracesList = new LinkedList(); //traces with no incoming dependencies
+	HashSet topUnflat = new HashSet();
+
 	//map unflatEdges -> Edge?
 	HashMap edges = new HashMap();
 	//add the top filters to the queue
-	for (int i = 0; i < topFilters.length;i++) 
+	for (int i = 0; i < topFilters.length;i++) {
+	    topUnflat.add(topFilters[i]);
 	    queue.add(topFilters[i]);
+	}
+	
 	
 	while (!queue.isEmpty()) {
 	    UnflatFilter unflatFilter = (UnflatFilter)queue.removeFirst();
 	    //the filter content for the new filter
 	    FilterContent filterContent = getFilterContent(unflatFilter);
-
+	    
 	    //remember the work estimation based on the filter content
 	    workEstimation.put(filterContent, 
 			       new Integer(getWorkEstimate(unflatFilter)));
@@ -92,10 +97,18 @@ public class SimplePartitioner extends Partitioner
 		    trace = new Trace(node);
 		}
 		
+		if (topUnflat.contains(unflatFilter)) {
+		    assert unflatFilter.in == null || unflatFilter.in.length == 0;
+		    topTracesList.add(trace);
+		}
+		else 
+		    assert unflatFilter.in.length > 0;
+
 		//should be at least one filter in the trace by now, don't worry about 
 		//linear stuff right now...
 
 		traces.add(trace);
+
 		int bottleNeckWork = getWorkEstimate(unflatFilter);
 		//try to add more filters to the trace...
 		while (continueTrace(unflatFilter, filterContent.isLinear(), bottleNeckWork,
@@ -167,6 +180,7 @@ public class SimplePartitioner extends Partitioner
 	
 	traceGraph = new Trace[traces.size()];
 	traces.toArray(traceGraph);
+	topTracesList.toArray(topTraces);
 	return traceGraph;
     }
 

@@ -20,6 +20,7 @@ public class SimpleScheduler
     private boolean[] writesFile;
     private RawChip rawChip;
     private LinkedList schedule;
+    private SpaceTimeSchedule spSched;
 
     public SimpleScheduler(Partitioner partitioner, RawChip rawChip) 
     {
@@ -32,11 +33,12 @@ public class SimpleScheduler
 	    readsFile[i] = false;
 	    writesFile[i] = false;
 	}
-	
+	//	spSched = new SpaceTimeSchedule(rawChip.getYSize(), rawChip.getXSize());
     }
     
-    public void schedule() 
+    public LinkedList schedule() 
     {
+
 	//sort traces...
 	Trace[] tempArray = (Trace[])partitioner.getTraceGraph().clone();
 	Arrays.sort(tempArray, 
@@ -64,10 +66,9 @@ public class SimpleScheduler
 		if (layout == null) {
 		    //try to schedule other traces that will fit before the 
 		    //room becomes available for this trace
-		    //while (scheduleSmallerTrace(sortedTraces, trace)) {
-		    //}
+		    while (scheduleSmallerTrace(sortedTraces, trace)) {}
 		    //increment current time to next smallest avail time
-		    incrementCurrentTime();
+		    currentTime = nextTime(currentTime);
 		}
 		else {
 		    scheduleTrace(layout, trace, sortedTraces);
@@ -75,20 +76,91 @@ public class SimpleScheduler
 		}
 	    }
 	}
+	
+	//set up dependencies
+	setupDepends();
+	return schedule;
+    }
+
+    private void setupDepends() 
+    {
+	Iterator sch = schedule.iterator();
+	Trace prev = null;
+	System.out.println("Schedule: ");
+	while (sch.hasNext()) {
+	    Trace trace = (Trace)sch.next();
+	    System.out.println(" * " + trace);
+	    if (prev != null)
+		trace.addDependency(prev);
+	    prev = trace;
+	}
+	
+	//now call done dependencies...cannot be done up there...
+	sch = schedule.iterator();
+	while (sch.hasNext()) {
+	    ((Trace)sch.next()).doneDependencies();
+	}
+	
     }
     
-    //reset the current time to next min tile avail time
-    private void incrementCurrentTime() 
-    {
-	int newMin = Integer.MAX_VALUE;
 
-	for (int i = 0; i < tileAvail.length; i++) {
-	    if (currentTime < tileAvail[i]) {
-		if (tileAvail[i] < newMin)
-		    newMin = tileAvail[i];
+    //see if we can schedule any smaller traces to run and finish before the 
+    //earliest time the current trace can start execution
+    private boolean scheduleSmallerTrace(LinkedList sortedTraces, Trace bigTrace) 
+    {
+	
+	//find the earliest time that bigTrace can execute based on the 
+	//number of idle tiles...
+	int finishBefore = currentTime;
+	while (true) {
+	    int idleTiles = 0; 
+	    for (int i = 0; i < tileAvail.length; i++) {
+		if (finishBefore >= tileAvail[i])
+		    idleTiles++;
+	    }
+	    if (idleTiles >= bigTrace.getNumFilters())
+		break;
+	    
+	    finishBefore = nextTime(finishBefore);
+	}
+	
+	//see if we can schedule any trace to finish before finishBefore
+	Iterator it = sortedTraces.iterator();
+	assert it.next() == bigTrace;
+	while (it.hasNext()) {
+	    Trace trace = (Trace)it.next();
+	    System.out.println("   (Trying to schedule smaller trace " + trace + ")");
+	    //see when it will finish, if smaller than finishBefore
+	    if ((currentTime + partitioner.getTraceBNWork(trace)) <= 
+		    finishBefore) {
+		//see if we can schedule the trace now
+		HashMap layout = canScheduleTrace(trace);
+		if (layout != null) {
+		    //schedule the trace and return true
+		    scheduleTrace(layout, trace, sortedTraces);
+		    return true;
+		}
 	    }
 	}
-	currentTime = newMin;
+	return false;
+    }
+
+    //reset the current time to next min tile avail time
+    private int nextTime(int time) 
+    {
+	int newMin = 0;
+	//set newMin to max of tileavail times
+	for (int i = 0; i < tileAvail.length; i++) 
+	    if (newMin < tileAvail[i])
+		newMin = tileAvail[i];
+
+	for (int i = 0; i < tileAvail.length; i++) {
+	    if (time < tileAvail[i] && tileAvail[i] < newMin) {
+		newMin = tileAvail[i];
+	    }
+	}
+
+	return newMin;
     }
     
 
@@ -101,9 +173,11 @@ public class SimpleScheduler
 	sortedList.remove(trace);
 	//add the trace to the schedule
 	schedule.add(trace);
+	
 	//now set the layout for the filterTraceNodes
 	//and set the available time for each tile
 	TraceNode node = trace.getHead().getNext();
+
 	while (node instanceof FilterTraceNode) {
 	    assert layout.containsKey(node) && 
 		layout.get(node) != null;
@@ -129,28 +203,87 @@ public class SimpleScheduler
 		assert tile.hasIODevice() && !writesFile[tile.getTileNumber()];
 		writesFile[tile.getTileNumber()] = true;
 	    }
+
+	    //set the space time schedule?? Jasper's stuff
+	    //don't do it for the first node
+	    /*
+	    if (node != trace.getHead().getNext()) 
+		spSched.add(trace, ((FilterTraceNode)node).getY(),
+			  ((FilterTraceNode)node).getX());
+	    else //do this instead
+		spSched.addHead(trace, ((FilterTraceNode)node).getY(),
+				((FilterTraceNode)node).getX());
+	    */
+
 	    node = node.getNext();
 	}
     }
     
-    //remove it from the sortedTraces list...
-    private boolean scheduleSmallerTrace(LinkedList sortedTraces, Trace bigTrace) 
-    {
-	return false;
-    }
-
     //see if we can schedule the trace at current time given tile avail
     //return the layout mapping filtertracenode -> rawtile
     private HashMap canScheduleTrace(Trace trace) 
     {
 	if (getAvailTiles() < trace.getNumFilters())
 	    return null;
-	//try all starting tiles
+	
+	LinkedList tiles = new LinkedList();
 	for (int i = 0; i < rawChip.getTotalTiles(); i++) {
+	    tiles.add(rawChip.getTile(i));
+	}
+	
+
+	//first try starting tiles that are either endpoints of upstream
+	//or starts of downstream
+	Iterator sources = trace.getHead().getSourceSet().iterator();
+	while (sources.hasNext()) {
+	    Trace current = ((Edge)sources.next()).getSrc().getParent();
+	    if (schedule.contains(current)) {
+		//get the endpoint of the trace
+		RawTile tile = rawChip.getTile(current.getTail().getPrevFilter().getX(),
+					       current.getTail().getPrevFilter().getY());
+		//we already tried this tile previously
+		if (!tiles.contains(tile))
+		    continue;
+		HashMap layout = new HashMap();
+		System.out.println("     (trying " + tile + " at " + currentTime + ")");
+		//if successful, return layout
+		if (getLayout(trace.getHead().getNextFilter(), tile,
+			      layout))
+		    return layout;
+		else //we tried this tile, remove it...
+		    tiles.remove(tile);
+	    }
+	    
+	}
+	
+	Iterator dests = trace.getTail().getDestSet().iterator();
+	while (dests.hasNext()) {
+	    Trace current = ((Edge)dests.next()).getDest().getParent();
+	    if (schedule.contains(current)) {
+		//get the endpoint of the trace
+		RawTile tile = rawChip.getTile(current.getHead().getNextFilter().getX(),
+					       current.getHead().getNextFilter().getY());
+		//we already tried this tile previously
+		if (!tiles.contains(tile))
+		    continue;
+		HashMap layout = new HashMap();
+		System.out.println("     (trying " + tile + " at " + currentTime + ")");
+		//if successful, return layout
+		if (getLayout(trace.getHead().getNextFilter(), tile, 
+			      layout))
+		    return layout;
+		else //we tried this tile, remove it...
+		    tiles.remove(tile);
+	    }
+	}
+	
+	Iterator tilesIt = tiles.iterator();
+	while (tilesIt.hasNext()) {
+	    RawTile tile = (RawTile)tilesIt.next();
 	    HashMap layout = new HashMap();
-	    System.out.println("     (trying " + rawChip.getTile(i) + ")");
+	    System.out.println("     (trying " + tile + " at " + currentTime + ")");
 	    //if successful, return layout
-	    if (getLayout(trace.getHead().getNextFilter(), rawChip.getTile(i), 
+	    if (getLayout(trace.getHead().getNextFilter(), tile,
 			  layout))
 		return layout;
 	}
@@ -158,9 +291,9 @@ public class SimpleScheduler
 	return null;
     }
 
-    private boolean getLayout(FilterTraceNode filter, RawTile tile, HashMap layout) 
+    private boolean getLayout(FilterTraceNode filter, RawTile tile, HashMap layout)
     {
-
+	
 	//check if this tile is available, if not return false
 	if (!isTileAvail(tile)) {
 	    System.out.println("       (Tile not currently available)");
@@ -183,19 +316,23 @@ public class SimpleScheduler
 	//check file readers/writers, they must be 
 	//on border and each tile can have one of each
 	if (filter.isFileInput() && !(tile.hasIODevice() && 
-				      readsFile[tile.getTileNumber()])) {
+				      !readsFile[tile.getTileNumber()])) {
 	    System.out.println("       (Failed file reader)");
 	    return false;
 	}
 	
 	if (filter.isFileOutput() && !(tile.hasIODevice() &&
-				       writesFile[tile.getTileNumber()])) {
+				       !writesFile[tile.getTileNumber()])) {
 	    System.out.println("       (Failed file writer)");
 	    return false;
 	}
 	
+	//add this to the layout, because everything worked
+	layout.put(filter, tile);
+	
 	//see if the downstream filters fit
 	if (filter.getNext().isFilterTrace()) {
+
 	    Vector neighbors = tile.getNeighborTiles();
 	    //try all the possible neighboring tiles for the
 	    //next filter, if any work return true
@@ -218,14 +355,14 @@ public class SimpleScheduler
 		}
 	    //nothing found return false
 	    if (!found) {
+		//remove the current tile from the layout
+		layout.remove(filter);
 		System.out.println("       (Cannot find anything downstream)");
 		return false;
 	    }
 	    
 	}
 	
-	//add this to the layout, because everything worked
-	layout.put(filter, tile);
 	return true;
     }
     

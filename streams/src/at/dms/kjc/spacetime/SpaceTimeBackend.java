@@ -120,12 +120,6 @@ public class SpaceTimeBackend
 	Trace[] traces=null;
 	Trace[] traceGraph=null; //used if REAL
 
-	if (false) {
-	    traceGraph = TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
-	    System.out.println("UnPrunnedTraces: "+traceGraph.length);
-	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
-	}
-
 	//get the work estimation
 	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
 	SimplePartitioner partitioner = new SimplePartitioner(topNodes,executionCounts,lfa, work, rawChip);
@@ -133,10 +127,6 @@ public class SpaceTimeBackend
 	System.out.println("UnPrunnedTraces: "+traceGraph.length);
 	partitioner.dumpGraph("traces.dot");
     
-	(new SimpleScheduler(partitioner, rawChip)).schedule();
-
-	System.exit(0);
-	
 	/*System.gc();
 	  System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));*/
 	StreaMITMain.clearParams();
@@ -153,158 +143,178 @@ public class SpaceTimeBackend
 	executionCounts=null;
 	topNodes=null;
 	System.gc();
-	/*System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));
-	  System.gc();
-	  System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));
-	  System.gc();
-	  System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));*/
+
 	//----------------------- This Is The Line -----------------------
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
 	
 	Trace[] traceForrest = new Trace[1];
-	//traceForrest[0] = traces[0];
-	/*if(false&&REAL) {
-	  //System.out.println("TracesGraph: "+traceGraph.length);
-	  //for(int i=0;i<traceGraph.length;i++)
-	  //System.out.println(traceGraph[i]);
-	  traces=traceGraph;
-	  int index=0;
-	  traceForrest[0]=traceGraph[0];
-	  Trace realTrace=traceGraph[0];
-	  while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
-	  realTrace=traceGraph[++index];
-	  TraceNode node=realTrace.getHead();
-	  FilterTraceNode currentNode=null;
-	  if(node instanceof InputTraceNode)
-	  currentNode=(FilterTraceNode)node.getNext();
-	  else
-	  currentNode=(FilterTraceNode)node;
-	  currentNode.setXY(0,0);
-	  System.out.println("SETTING: "+currentNode+" (0,0)");
-	  int curX=1;
-	  int curY=0;
-	  int forward=1;
-	  int downward=1;
-	  //ArrayList traceList=new ArrayList();
-	  //traceList.add(new Trace(currentNode));
-	  TraceNode nextNode=currentNode.getNext();
-	  while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
-	  currentNode=(FilterTraceNode)nextNode;
-	  System.out.println("SETTING: "+nextNode+" ("+curX+","+curY+")");
-	  currentNode.setXY(curX,curY);
-	  if(curX>=rawColumns-1&&forward>0) {
-	  forward=-1;
-	  curY+=downward;
-	  } else if(curX<=0&&forward<0) {
-	  forward=1;
-	  if(curY==0)
-	  downward=1;
-	  if(curY==rawRows-1)
-	  downward=-1;
-	  if((curY==0)||(curY==rawRows-1)) {
-	  } else
-	  curY+=downward;
-	  } else
-	  curX+=forward;
-	  nextNode=currentNode.getNext();
-	  }
-	  //traces=new Trace[traceList.size()];
-	  //traceList.toArray(traces);
-	  for(int i=1;i<traces.length;i++) {
-	  traces[i-1].setEdges(new Trace[]{traces[i]});
-	  traces[i].setDepends(new Trace[]{traces[i-1]});
-	  }
-	  //System.out.println(traceList);
-	  } else */
-
-	Trace[] io=null;
-
-	if(true&&REAL) {
-	    int len=traceGraph.length;
-	    int newLen=len;
-	    for(int i=0;i<len;i++)
-		if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
-		    newLen--;
-	    traces=new Trace[newLen];
-	    io=new Trace[len-newLen];
-	    int idx=0;
-	    int idx2=0;
-	    for(int i=0;i<len;i++) {
-		Trace trace=traceGraph[i];
-		if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
-		    traces[idx++]=trace;
-		else
-		    io[idx2++]=trace;
-	    }
-	    System.out.println("Traces: "+traces.length);
-	    for(int i=0;i<traces.length;i++)
-		System.out.println(traces[i]);
-	    SpaceTimeSchedule sched=TestLayout.layout(traces,rawRows,rawColumns);
-	    traceForrest=Schedule2Dependencies.findDependencies(sched,traces,rawRows,rawColumns);
-	    SoftwarePipeline.pipeline(sched,traces,io);
-	    for(int i=0;i<traces.length;i++)
-		traces[i].doneDependencies();
-	    System.err.println("TopNodes in Forest: "+traceForrest.length);
-	    traceForrest=PruneTopTraces.prune(traceForrest);
-	    System.err.println("TopNodes in Forest: "+traceForrest.length);
-	}
+	Trace[] io=null;	
+	LinkedList schedule = (new SimpleScheduler(partitioner, rawChip)).schedule();
 	
-	//traceList=null;
-	//content=null;
-	//executionCounts=null;
-	if(true&&REAL) {
-	    //mgordon's stuff
-	    assert !KjcOptions.magicdram : 
-		"Magic DRAM support is not working";
-	    
-	    System.out.println("Building Trace Traversal");
-	    //LinkedList initList = TraceTraversal.getTraversal(traces);
-	    List initList = Arrays.asList(traces);
-	    List steadyList = TraceTraversal.getTraversal(traceForrest);
-
-	    //
-
-	    TraceDotGraph.dumpGraph(steadyList, io, "preDRAMsteady.dot", false);
-	    //assign the buffers not assigned by Jasp to drams
-	    BufferDRAMAssignment.run(steadyList, rawChip, io);
-	    //communicate the addresses for the off-chip buffers
-	    if (!KjcOptions.magicdram) {
-		//so right now, this pass does not communicate addresses
-		//but it generates the declarations of the buffers
-		//on the corresponding tile.
-		CommunicateAddrs.doit(rawChip);
-	    }
-	    TraceDotGraph.dumpGraph(initList, io, "inittraces.dot", true);
-	    TraceDotGraph.dumpGraph(steadyList, io, "steadyforrest.dot", true);
-	    //create the raw execution code and switch code for the initialization phase
-	    System.out.println("Creating Initialization Stage");
-	    Rawify.run(initList.iterator(), rawChip, true); 
-	    //create the raw execution code and switch for the steady-state
-	    System.out.println("Creating Steady-State Stage");
-	    Rawify.run(steadyList.iterator(), rawChip, false);
-	    //dump the layout
-	    LayoutDot.dumpLayout(rawChip, "layout.dot");
-	    //generate the switch code assembly files...
-	    GenerateSwitchCode.run(rawChip);
-	    //generate the compute code from the SIR
-	    GenerateComputeCode.run(rawChip);
-	    //generate the magic dram code if enabled
-	    if (KjcOptions.magicdram) {
-		MagicDram.GenerateCode(rawChip);
-	    }
-	    Makefile.generate(rawChip);
-	    //generate the bc file depending on if we have number gathering enabled
-	    if (KjcOptions.numbers > 0)
-		BCFile.generate(rawChip, NumberGathering.doit(rawChip, io));
-	    else 
-		BCFile.generate(rawChip, null);
+	//remove the io nodes from the trace and put them in IO
+	int len=traceGraph.length;
+	int newLen=len;
+	for(int i=0;i<len;i++)
+	    if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
+		newLen--;	
+	traces=new Trace[newLen];
+	io=new Trace[len-newLen];
+	int idx=0;
+	int idx2=0;
+	for(int i=0;i<len;i++) {
+	    Trace trace=traceGraph[i];
+	    if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
+		traces[idx++]=trace;
+	    else
+		io[idx2++]=trace;
 	}
-    }
+	//mgordon's stuff
+	assert !KjcOptions.magicdram : 
+	    "Magic DRAM support is not working";
+	
 
+	List initList = InitSchedule.getInitSchedule(partitioner.topTraces);
+	
+	TraceDotGraph.dumpGraph(schedule, io, "preDRAMsteady.dot", false);
+	//assign the buffers not assigned by Jasp to drams
+	BufferDRAMAssignment.run(schedule, rawChip, io);
+	//communicate the addresses for the off-chip buffers
+	if (!KjcOptions.magicdram) {
+	    //so right now, this pass does not communicate addresses
+	    //but it generates the declarations of the buffers
+	    //on the corresponding tile.
+	    CommunicateAddrs.doit(rawChip);
+	}
+	TraceDotGraph.dumpGraph(initList, io, "inittraces.dot", true);
+	TraceDotGraph.dumpGraph(schedule, io, "steadyforrest.dot", true);
+	//create the raw execution code and switch code for the initialization phase
+	System.out.println("Creating Initialization Stage");
+	Rawify.run(initList.iterator(), rawChip, true); 
+	//create the raw execution code and switch for the steady-state
+	System.out.println("Creating Steady-State Stage");
+	Rawify.run(schedule.iterator(), rawChip, false);
+	//dump the layout
+	LayoutDot.dumpLayout(rawChip, "layout.dot");
+	//generate the switch code assembly files...
+	GenerateSwitchCode.run(rawChip);
+	//generate the compute code from the SIR
+	GenerateComputeCode.run(rawChip);
+	//generate the magic dram code if enabled
+	if (KjcOptions.magicdram) {
+	    MagicDram.GenerateCode(rawChip);
+	}
+	Makefile.generate(rawChip);
+	//generate the bc file depending on if we have number gathering enabled
+	if (KjcOptions.numbers > 0)
+	    BCFile.generate(rawChip, NumberGathering.doit(rawChip, io));
+	else 
+	    BCFile.generate(rawChip, null);
+    }
+    
     public static void println(String s) 
     {
 	if (KjcOptions.debug) 
 	    System.out.println(s);
     }
 }
+
+
+// /*
+
+// 	//software pipeline
+// 	//	traceForrest=Schedule2Dependencies.findDependencies(spSched,traces,rawRows,rawColumns);
+// 	//SoftwarePipeline.pipeline(spSched,traces,io);
+// 	//for(int i=0;i<traces.length;i++)
+// 	    traces[i].doneDependencies();
+// 	System.err.println("TopNodes in Forest: "+traceForrest.length);
+// 	traceForrest=PruneTopTraces.prune(traceForrest);
+// 	System.err.println("TopNodes in Forest: "+traceForrest.length);
+
+// 	//traceForrest[0] = traces[0];
+// 	/*if(false&&REAL) {
+// 	  //System.out.println("TracesGraph: "+traceGraph.length);
+// 	  //for(int i=0;i<traceGraph.length;i++)
+// 	  //System.out.println(traceGraph[i]);
+// 	  traces=traceGraph;
+// 	  int index=0;
+// 	  traceForrest[0]=traceGraph[0];
+// 	  Trace realTrace=traceGraph[0];
+// 	  while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
+// 	  realTrace=traceGraph[++index];
+// 	  TraceNode node=realTrace.getHead();
+// 	  FilterTraceNode currentNode=null;
+// 	  if(node instanceof InputTraceNode)
+// 	  currentNode=(FilterTraceNode)node.getNext();
+// 	  else
+// 	  currentNode=(FilterTraceNode)node;
+// 	  currentNode.setXY(0,0);
+// 	  System.out.println("SETTING: "+currentNode+" (0,0)");
+// 	  int curX=1;
+// 	  int curY=0;
+// 	  int forward=1;
+// 	  int downward=1;
+// 	  //ArrayList traceList=new ArrayList();
+// 	  //traceList.add(new Trace(currentNode));
+// 	  TraceNode nextNode=currentNode.getNext();
+// 	  while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
+// 	  currentNode=(FilterTraceNode)nextNode;
+// 	  System.out.println("SETTING: "+nextNode+" ("+curX+","+curY+")");
+// 	  currentNode.setXY(curX,curY);
+// 	  if(curX>=rawColumns-1&&forward>0) {
+// 	  forward=-1;
+// 	  curY+=downward;
+// 	  } else if(curX<=0&&forward<0) {
+// 	  forward=1;
+// 	  if(curY==0)
+// 	  downward=1;
+// 	  if(curY==rawRows-1)
+// 	  downward=-1;
+// 	  if((curY==0)||(curY==rawRows-1)) {
+// 	  } else
+// 	  curY+=downward;
+// 	  } else
+// 	  curX+=forward;
+// 	  nextNode=currentNode.getNext();
+// 	  }
+// 	  //traces=new Trace[traceList.size()];
+// 	  //traceList.toArray(traces);
+// 	  for(int i=1;i<traces.length;i++) {
+// 	  traces[i-1].setEdges(new Trace[]{traces[i]});
+// 	  traces[i].setDepends(new Trace[]{traces[i-1]});
+// 	  }
+// 	  //System.out.println(traceList);
+// 	  } else */
+
+
+
+// 	if(false&&REAL) {
+// 	    len=traceGraph.length;
+// 	    newLen=len;
+// 	    for(int i=0;i<len;i++)
+// 		if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
+// 		    newLen--;	
+// 	    traces=new Trace[newLen];
+// 	    io=new Trace[len-newLen];
+// 	    idx=0;
+// 	    idx2=0;
+// 	    for(int i=0;i<len;i++) {
+// 		Trace trace=traceGraph[i];
+// 		if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
+// 		    traces[idx++]=trace;
+// 		else
+// 		    io[idx2++]=trace;
+// 	    }
+// 	    System.out.println("Traces: "+traces.length);
+// 	    for(int i=0;i<traces.length;i++)
+// 		System.out.println(traces[i]);
+// 	    SpaceTimeSchedule sched=TestLayout.layout(traces,rawRows,rawColumns);
+// 	    traceForrest=Schedule2Dependencies.findDependencies(sched,traces,rawRows,rawColumns);
+// 	    SoftwarePipeline.pipeline(sched,traces,io);
+// 	    for(int i=0;i<traces.length;i++)
+// 		traces[i].doneDependencies();
+// 	    System.err.println("TopNodes in Forest: "+traceForrest.length);
+// 	    traceForrest=PruneTopTraces.prune(traceForrest);
+// 	    System.err.println("TopNodes in Forest: "+traceForrest.length);
+// 	}
+// */

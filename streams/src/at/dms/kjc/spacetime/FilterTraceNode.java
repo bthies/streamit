@@ -12,6 +12,7 @@ public class FilterTraceNode extends TraceNode
     //private int steadyMult;
     private int x, y;
     private boolean predefined;
+    private boolean laidout;
 
     public FilterTraceNode(FilterContent filter,
 			   int x, int y) {
@@ -19,11 +20,13 @@ public class FilterTraceNode extends TraceNode
 	this.filter = filter;
 	this.x = x;
 	this.y = y;
+	laidout = false;
     }
 
     public FilterTraceNode(FilterContent filter) {
 	predefined = (filter instanceof PredefinedContent);
 	this.filter=filter;
+	laidout = false;
     }
     
     public boolean isPredefined() 
@@ -31,24 +34,19 @@ public class FilterTraceNode extends TraceNode
 	return predefined;
     }
 
-    public void setX(int x) {
-	this.x = x;
-    }
-    
-    public void setY(int y) {
-	this.y = y;
-    }
-    
     public void setXY(int x,int y) {
+	laidout = true;
 	this.x=x;
 	this.y=y;
     }
     
     public int getX() {
+	assert laidout;
 	return x;
     }    
     
     public int getY() {
+	assert laidout;
 	return y;
     }
 

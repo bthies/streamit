@@ -20,6 +20,7 @@ public abstract class Partitioner
     protected LinearAnalyzer lfa;
     //sirfilter -> work estimation
     protected WorkEstimate work;
+    protected Trace[] topTraces;
 
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
 		       WorkEstimate work, RawChip rawChip) 
@@ -29,6 +30,7 @@ public abstract class Partitioner
 	this.exeCounts = exeCounts;
 	this.lfa = lfa;
 	this.work = work;
+	topTraces = new Trace[topFilters.length];
 	traceBNWork = new HashMap();
     }
     

@@ -123,9 +123,12 @@ public class Flattener {
 	//Raise variables to the top of their block
 	new VarDeclRaiser().raiseVars(str);
 
-	// if someone wants to run linear analysis:
-	if (StreamItOptions.linearanalysis) {
-	    runLinearAnalysis(str);
+	// if someone wants to run linear analysis (or linear replacement)
+	if (StreamItOptions.linearanalysis || StreamItOptions.linearreplacement) {
+	    // pass the program (str) and whether or not we want
+	    // to do direct replacement code for the work functions
+	    // of linear filters.
+	    runLinearAnalysis(str, StreamItOptions.linearreplacement);
 	}
 
 	// DEBUGGING PRINTING
@@ -154,8 +157,13 @@ public class Flattener {
     }
 
 
-    /** Runs linear analysis (and associated optimizations) on the passed stream. **/
-    static void runLinearAnalysis(SIRStream str) {
+    /**
+     * Runs linear analysis on the passed stream. 
+     * If the transform flag is set, then we attempt to use the
+     * linear analysis information to transform the stream into 
+     **/
+    static void runLinearAnalysis(SIRStream str,
+				  boolean transform) {
 	System.out.println("Running Linear Analysis");
 	// run the linear analysis and stores the information garnered in the lfa
 	LinearFilterAnalyzer lfa = LinearFilterAnalyzer.findLinearFilters(str,

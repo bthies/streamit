@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.16 2003-11-13 10:46:10 thies Exp $
+ * $Id: JMethodCallExpression.java,v 1.17 2003-12-01 17:27:17 thies Exp $
  */
 
 package at.dms.kjc;
@@ -67,6 +67,18 @@ public class JMethodCallExpression extends JExpression {
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------
+
+    public String toString() {
+	StringBuffer sb = new StringBuffer("MethodCallExpression (" + ident + ")");
+	/* -- gets too big
+	for (int i=0; i<args.length; i++) {
+	    sb.append(args[i].toString());
+	    if (i!=args.length-1) { sb.append(", "); }
+	}
+	sb.append(")");
+	*/
+	return sb.toString();
+    }
 
   /**
    * @return the type of this expression

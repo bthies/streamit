@@ -133,7 +133,7 @@ public class TestK2S extends Main
 
 	for (int count = 0; count < tree.length; count++)
 	    {
-		SIRPrinter sirPrinter = new SIRPrinter();
+		SIRPrinter sirPrinter = new SIRPrinter("ir1.txt");
 		//Return topLevel for each tree
 		IterFactory.createFactory().createIter(topLevel[count]).accept(sirPrinter);
 		sirPrinter.close();

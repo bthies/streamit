@@ -62,7 +62,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//FieldProp.doPropagate((SIRFilter)node.contents);
 
 	//Optimizations
-	/*
+	
+	
 	if(!KjcOptions.nofieldprop)
 	    System.out.println
 		("Optimizing "+
@@ -103,8 +104,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	if(KjcOptions.destroyfieldarray)
 	   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
-	*/
-	/*	
+	   /*	
 	  try {
 	    SIRPrinter printer1 = new SIRPrinter();
 	    IterFactory.createIter((SIRFilter)node.contents).accept(printer1);
@@ -1077,7 +1077,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
 	    print(Util.staticNetworkReceivePrefix());
 	    visitArgs(args,0);
-	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
+	    print(Util.staticNetworkReceiveSuffix
+		  (Util.getBaseType(filter.getInputType())));
 	    return;  
 	}
 
@@ -1698,11 +1699,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("{\n");
-	    //	    print(Util.CSTOVAR + " = ");
+	    print(Util.staticNetworkSendPrefix(Util.getBaseType(tapeType)));
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
 	    }
+	    print(Util.staticNetworkSendSuffix());
 	    print(";\n}\n");
 	} else {
 	    print("{");

@@ -1,27 +1,32 @@
-/*
- * StmtSplit.java: a split statement
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtSplit.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 /**
- * StmtSplit declares the splitter type for a split-join or feedback
- * loop.
+ * Declare the splitter type for a split-join or feedback loop.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: StmtSplit.java,v 1.3 2003-07-24 15:30:53 dmaze Exp $
  */
 public class StmtSplit extends Statement
 {
     private SplitterJoiner sj;
     
-    /** Creates a new split statement with the specified splitter type. */
+    /**
+     * Creates a new split statement with the specified splitter type.
+     *
+     * @param context  file and line number this statement corresponds to
+     * @param splitter type of splitter for this stream
+     */
     public StmtSplit(FEContext context, SplitterJoiner splitter)
     {
         super(context);
         sj = splitter;
     }
     
-    /** Returns the splitter type for this. */
+    /**
+     * Returns the splitter type for this.
+     *
+     * @returns the splitter object
+     */
     public SplitterJoiner getSplitter()
     {
         return sj;
@@ -31,5 +36,22 @@ public class StmtSplit extends Statement
     public Object accept(FEVisitor v)
     {
         return v.visitStmtSplit(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof StmtSplit))
+            return false;
+        return ((StmtSplit)other).sj.equals(sj);
+    }
+    
+    public int hashCode()
+    {
+        return sj.hashCode();
+    }
+    
+    public String toString()
+    {
+        return "split " + sj;
     }
 }

@@ -1,0 +1,24 @@
+<benchmark>
+  <name>fir</name>
+  <desc>Fine-grained finite impulse response kernel</desc>
+  <description>
+A fine-grained finite impulse response kernel.  While it is possible
+to implement an FIR filter as a single StreamIt filter, this
+implementation uses a series of simple filters, one per tap, to expose
+more parallelism to the compiler.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="C" dir="c">
+      <file>firref.c</file>
+    </impl>
+    <impl lang="Java" dir="streamit">
+      <file>FIRfine.java</file>
+      <file class="output">FIRfine.out</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <file>FIR.str</file>
+      <file class="output">FIRfine.out</file>
+    </impl>
+  </implementations>
+</benchmark>

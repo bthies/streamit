@@ -1,0 +1,52 @@
+void->void pipeline FIR
+{
+  add FloatSource(10000);
+  add FIRFilter(128);
+  add FloatPrinter(10000);
+}
+
+float->float pipeline FIRFilter(int N)
+{
+  add float->float filter {
+    work pop 1 push 2 { push(0); push(pop()); }
+  };
+  for (int i = 0; i < N; i++)
+    add SingleMultiply(i);
+  add float->float filter {
+    work pop 2 push 1 { push(pop()); pop(); }
+  };
+}
+
+float->float filter SingleMultiply(int i)
+{
+  float W, last;
+  init
+  {
+    last = 0;
+    W = 2 * i * i / ((float)i+1);
+  }
+  work pop 2 push 2
+  {
+    float s = pop();
+    push(s + last * W);
+    push(last);
+    last = pop();
+  }
+}
+
+void->float filter FloatSource(float maxNum)
+{
+  float num;
+  init { num = 0; }
+  work push 1
+  {
+    push(num);
+    num++;
+    if (num == maxNum) num = 0;
+  }
+}
+
+float->void filter FloatPrinter(int x)
+{
+  work pop 1 { print(pop()); }
+}

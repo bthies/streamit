@@ -224,6 +224,8 @@ public class IMDCT extends Filter
 
         if (block_type == 2)
         {
+            int six_i = 0;
+
 
             /*
              *		
@@ -273,10 +275,11 @@ public class IMDCT extends Filter
             out[34] = 0.0f;
             out[35] = 0.0f;
 
-            int six_i = 0;
-
             for (i = 0; i < 3; i++)
             {
+                float pp1, pp2, sum;
+                float save;
+
                 // 12 point IMDCT
                 // Begin 12 point IDCT
                 // Input aliasing for 12 pt IDCT
@@ -291,7 +294,6 @@ public class IMDCT extends Filter
                 in[9 + i] += in[3 + i];
 
                 // 3 point IDCT on even indices
-                float pp1, pp2, sum;
                 pp2 = in[12 + i] * 0.500000000f;
                 pp1 = in[6 + i] * 0.866025403f;
                 sum = in[0 + i] + pp2;
@@ -315,7 +317,7 @@ public class IMDCT extends Filter
                 tmpf_5 *= 0.517638090f;
 
                 // Output butterflies on 2 3 point IDCT's (for 6 point IDCT)
-                float save = tmpf_0;
+                save = tmpf_0;
                 tmpf_0 += tmpf_5;
                 tmpf_5 = save - tmpf_5;
                 save = tmpf_1;
@@ -372,6 +374,21 @@ public class IMDCT extends Filter
             }
         } else
         {
+            float tmp0, tmp1, tmp2, tmp3, tmp4, tmp0_, tmp1_, tmp2_, tmp3_;
+            float tmp0o, tmp1o, tmp2o, tmp3o, tmp4o, tmp0_o, tmp1_o, tmp2_o, tmp3_o;
+
+            float i00;
+            float iip12;
+
+            float i66_;
+
+            float i0;
+            float i0p12;
+
+            float i6_;
+
+            float e, o;
+
             // 36 point IDCT
             // input aliasing for 36 point IDCT
             in[17] += in[16];
@@ -403,9 +420,6 @@ public class IMDCT extends Filter
             in[5] += in[3];
             in[3] += in[1];
 
-            float tmp0, tmp1, tmp2, tmp3, tmp4, tmp0_, tmp1_, tmp2_, tmp3_;
-            float tmp0o, tmp1o, tmp2o, tmp3o, tmp4o, tmp0_o, tmp1_o, tmp2_o, tmp3_o;
-
             // Fast 9 Point Inverse Discrete Cosine Transform
             //
             // By  Francois-Raymond Boyer
@@ -420,8 +434,8 @@ public class IMDCT extends Filter
             // 9 point IDCT on even indices
 
             // 5 points on odd indices (not realy an IDCT)
-            float i00 = in[0] + in[0];
-            float iip12 = i00 + in[12];
+            i00 = in[0] + in[0];
+            iip12 = i00 + in[12];
 
             tmp0 =
                 iip12
@@ -442,7 +456,7 @@ public class IMDCT extends Filter
             tmp4 = in[0] - in[4] + in[8] - in[12] + in[16];
 
             // 4 points on even indices
-            float i66_ = in[6] * 1.732050808f; // Sqrt[3]
+            i66_ = in[6] * 1.732050808f; // Sqrt[3]
 
             tmp0_ =
                 in[2] * 1.9696155060244f
@@ -463,8 +477,8 @@ public class IMDCT extends Filter
 
             // 9 point IDCT on odd indices
             // 5 points on odd indices (not realy an IDCT)
-            float i0 = in[0 + 1] + in[0 + 1];
-            float i0p12 = i0 + in[12 + 1];
+            i0 = in[0 + 1] + in[0 + 1];
+            i0p12 = i0 + in[12 + 1];
 
             tmp0o =
                 i0p12
@@ -496,7 +510,7 @@ public class IMDCT extends Filter
             // Twiddled
 
             // 4 points on even indices
-            float i6_ = in[6 + 1] * 1.732050808f; // Sqrt[3]
+            i6_ = in[6 + 1] * 1.732050808f; // Sqrt[3]
 
             tmp0_o =
                 in[2
@@ -530,7 +544,6 @@ public class IMDCT extends Filter
             // and
             // twiddle factors for 36 point IDCT
 
-            float e, o;
             e = tmp0 + tmp0_;
             o = (tmp0o + tmp0_o) * 0.501909918f;
             tmpf_0 = e + o;
@@ -612,7 +625,7 @@ public class IMDCT extends Filter
     /***************************************************************/
     /*                             INV_MDCT                        */
     /***************************************************************/
-    public static final float win[] = new float [36 * 4];
+    public final float win[] = new float [36 * 4];
     /***************************************************************/
     /*                         END OF INV_MDCT                     */
     /***************************************************************/

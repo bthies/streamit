@@ -87,7 +87,7 @@ public class Antialias extends Filter
             }
         }
     }
-    private static float cs[] = new float [8];
+    private float cs[] = new float [8];
 
-    private static final float ca[] = new float [8];
+    private float ca[] = new float [8];
 }

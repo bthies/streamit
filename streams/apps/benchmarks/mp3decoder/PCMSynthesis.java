@@ -6,7 +6,6 @@ import streamit.Channel;
 public class PCMSynthesis extends Pipeline
 {
     float[] in = new float[32];
-    final int OUT_SIZE = 32;
 
     public void init()
     {
@@ -650,9 +649,10 @@ public class PCMSynthesis extends Pipeline
             public void work()
             {
                 float fs = this.input.popFloat() * 32767;
+                short s;
                 fs = (fs > 32767.0f ? 32767.0f : (fs < -32767.0f ? -32767.0f : fs));
 
-                short s = (short) fs;
+                s = (short) fs;
                 this.output.pushShort(s);
             }
 

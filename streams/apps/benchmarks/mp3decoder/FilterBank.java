@@ -58,8 +58,8 @@ public class FilterBank extends Pipeline
         {
             public void init()
             {
-                this.setSplitter(ROUND_ROBIN());
                 int x;
+                this.setSplitter(ROUND_ROBIN());
 
                 for (x = 0; x < 18; x++)
                 {

@@ -2,13 +2,13 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.43 2003-09-25 15:05:31 dmaze Exp $
+# $Id: knit,v 1.44 2003-09-25 17:54:15 dmaze Exp $
 #
 
 use strict;
 use vars qw(%opts $java $javac $cc);
 
-# AUTOCONFISCATE $var = @VAR@;
+# AUTOCONFISCATE $var = "@VAR@";
 $java = "java";
 $javac = "javac";
 $cc = "gcc";

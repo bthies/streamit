@@ -56,8 +56,6 @@ public class Flattener {
 	ConstantProp.propagateAndUnroll(str);
 	System.err.println("done.");
 
-	lowerFilterContents(str, true);
-
 	// Convert Peeks to Pops
 	if (KjcOptions.poptopeek) {
 	    System.err.print("Converting pop to peek... ");
@@ -69,6 +67,8 @@ public class Flattener {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 	INIT_STATEMENTS_RESOLVED = true;
+
+	lowerFilterContents(str, true);
 
 	Lifter.liftAggressiveSync(str);
 	// dump the original graph to a dot format

@@ -80,90 +80,13 @@ float->float pipeline FFTReorder(int n)
 }
 
 
-float->float splitjoin FFT_Kernel(int n) 
+float->float pipeline FFT_Kernel(int n) 
 {
-    split roundrobin(2 * n);
-    for (int i = 0; i < 2; i++) {
-	  add pipeline {
-		add FFTReorder(n);
-		for (int j = 2; j <= n; j *= 2) {
-		    add CombineDFT(j);
-		}
-	  }
+    add FFTReorder(n);
+    for (int j = 2; j <= n; j *= 2) {
+	  add CombineDFT(j);
     }
-    join roundrobin(2*n);
-}
-
-
-float->float filter RFtoIF(int _N, int _start_freq)
-{
-    // CONSTANTS {
-    int CARRIER_FREQ = 1;
-    int MIN_FREQ     = 1;
-    int MAX_WEIGHTS  = CARRIER_FREQ / MIN_FREQ * _N;
-    // } CONSTANTS
-
-    float[MAX_WEIGHTS] weights;
-
-    int size, count, N;
-
-    init {
-	  N = _N;
-	  set_frequency(_start_freq);
-    }
-    
-    work peek 1 pop 1 push 1 {
-	  push(pop() * weights[count++]);
-
-	  if (count == size) {
-		count = 0;
-	  }
-    }
-
-    handler set_frequency(int _freq) {
-	  count  = 0;
-	  size   = CARRIER_FREQ / _freq * N;
-	  for (int i = 0; i < size; i++) {
-		weights[i] = sin(i * pi / size);
-	  }
-    }
-}
-
-
-float->float splitjoin Check_Freq_Hop(int N, portal<RFtoIF> port) 
-{
-    // CONSTANTS {
-    int FREQ_HOP_THRESHOLD = 1;
-    int MAX_FREQS          = 1; 
-    int[MAX_FREQS] FREQS;
-    for (int i = 0; i < MAX_FREQS; i++) {
-	  FREQS[i] = i;
-    }
-    // } CONSTANTS
-
-    split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
-    for (int i = 1, k = 0; i < 6; i++) {
-	  if ((i == 2) || (i == 3)) {
-		for (int j = 0; j < 2; j++) {
-		    add float->float filter {
-			  work pop 1 push 1 {
-				float val = pop();
-				if (val >= FREQ_HOP_THRESHOLD) {
-				    port.set_frequency(FREQS[k]) [4*N : 6*N];
-				}
-				push(val);
-			  }
-		    }
-		}
-		k++;
-		if (k >= MAX_FREQS) k = 0;
-	  }
-	  else {
-		add Identity<float>;
-	  }
-    }
-    join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
-}
+ }
 
 
 void->float filter Read_From_AtoD(int N) 
@@ -181,9 +104,82 @@ void->float filter Read_From_AtoD(int N)
 }
 
 
-void->void pipeline FHR(int N)
+float->float filter RFtoIF(int _N, float _start_freq)
 {
+    // CONSTANTS {
+    float CARRIER_FREQ = 1.0;
+    float MIN_FREQ     = 1.0;
+    int   MAX_WEIGHTS  = (int) (CARRIER_FREQ / MIN_FREQ * _N);
+    // } CONSTANTS
+
+    float[MAX_WEIGHTS] weights;
+    int  size, count, N;
+
+    init {
+	  N = _N;
+	  set_frequency(_start_freq);
+    }
+    
+    work peek 1 pop 1 push 1 {
+	  push(pop() * weights[count++]);
+
+	  if (count == size) {
+		count = 0;
+	  }
+    }
+
+    handler set_frequency(float _freq) {
+	  count  = 0;
+	  size   = (int) (CARRIER_FREQ / _freq * N);
+	  for (int i = 0; i < size; i++) {
+		weights[i] = /* sin */ (i * pi / size);
+	  }
+    }
+}
+
+
+float->float splitjoin Check_Freq_Hop(int N, portal<RFtoIF> port) 
+{
+    // CONSTANTS {
+    float FREQ_HOP_THRESHOLD = 1.0;
+    int   MAX_FREQS          = 1; 
+    float [MAX_FREQS] FREQS;
+    for (int i = 0; i < MAX_FREQS; i++) {
+	  FREQS[i] = i * 1.0;
+    }
+    // } CONSTANTS
+
+    split roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
+    for (int i = 1, k = 0; i < 6; i++) {
+	  if ((i == 2) || (i == 4)) {
+		for (int j = 0; j < 2; j++) {
+		    add float->float filter {
+			  work pop 1 push 1 {
+				float val = pop();
+				if (val >= FREQ_HOP_THRESHOLD) {
+				    port.set_frequency(FREQS[k]) [4 : 6];
+				}
+				push(val);
+			  }
+		    }
+		}
+		k++;
+		if (k >= MAX_FREQS) k = 0;
+	  }
+	  else {
+		add Identity<float>;
+	  }
+    }
+    join roundrobin(N / 4 - 2, 1, 1, N / 2, 1, 1, N / 4 - 2);
+}
+
+
+void->void pipeline FHR
+{
+    // CONSTANTS {
+    int N          = 64;
     int START_FREQ = 1;
+    // } CONSTANTS
 
     portal <RFtoIF> port;
 

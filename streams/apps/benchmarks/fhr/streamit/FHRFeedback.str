@@ -120,17 +120,8 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 	  iter = 0;
     }
     
-    work peek 1 pop 32*3 push 32*2 {
-	for (int i=0; i<32; i++) {
-	  push(pop() * weights[count++]);
-	  // there are two of these iterations per iteration of the
-	  // original source, so increment in both places
-	  iter++;
-
-	  if (count == size) {
-		count = 0;
-	  }
-
+    work peek 1 pop N*3 push N*2 {
+	for (int i=0; i<2*N; i++) {
 	  push(pop() * weights[count++]);
 	  // there are two of these iterations per iteration of the
 	  // original source, so increment in both places
@@ -141,7 +132,7 @@ float->float filter RFtoIF(int N, float _start_freq, float _current_freq)
 	  }
 	}
 	
-	for (int i=0; i<32; i++) {
+	for (int i=0; i<N; i++) {
 	  // check for freqhop from around feedbackloop
 	  float freqHop = pop();
 	  if (freqHop!=0) {
@@ -277,7 +268,7 @@ void->void pipeline FHRFeedback
     add Read_From_AtoD(N);
 
     add float->float feedbackloop {
-	join roundrobin(64,32);
+	join roundrobin(2*N,N);
 	body pipeline {
 	    add RFtoIF(N, START_FREQ, START_FREQ);
 	    add FFT_Kernel(N);
@@ -287,8 +278,8 @@ void->void pipeline FHRFeedback
 	}
 	loop Identity<float>;
 	split roundrobin();
-	// delay of 192, since that is 6 (latency) * 32
-	for (int i=0; i<192; i++) {
+	// delay is latency * N
+	for (int i=0; i<6*N; i++) {
 	    enqueue(0);
 	}
     }

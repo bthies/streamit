@@ -282,70 +282,23 @@ public class FusePipe {
 
 	InitFuser initFuser;
 
+	// make the initial work function
+	JMethodDeclaration initWork =  makeWork(filterInfo, true);
+	
 	if(filters.get(0) instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter twostage=(SIRTwoStageFilter)filters.get(0);
-	    // make a statement list for the init function
-	    //JBlock statements = new JBlock(null, new JStatement[0], null);
-	    // add the variable declarations
-	    //makeWorkDecls(filterInfo,statements,true);
-	    //makeWorkDecls(filterInfo,statements,false);
-	    JMethodDeclaration initWork=twostage.getInitWork();
-	    //Adding Decls
-	    //for(int i=statements.size()-1;i>=0;i--)
-	    //initWork.addStatementFirst(statements.getStatement(i));
-	    if(makeWork(filterInfo, true)!=null)
+	    if(initWork!=null)
 		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter");
-
-	    // make the steady-state work function
-	    JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
-	    
-	    // make the fused init functions
-	    initFuser = makeInitFunction(filterInfo);
-	    
-	    JMethodDeclaration init=initFuser.getInitFunction();
-
-	    FilterInfo first = (FilterInfo)filterInfo.get(0);
-	    FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
-
-	    int steadyPop = first.steady.num * first.filter.getPopInt();
-	    int steadyPeek = 
-		(first.filter.getPeekInt() - first.filter.getPopInt()) + steadyPop;
-	    int steadyPush = last.steady.num * last.filter.getPushInt();
-	    
-	    // fuse all other fields and methods
-	    result = new SIRTwoStageFilter(first.filter.getParent(),
-					   getFusedName(filterInfo),
-					   getFields(filterInfo),
-					   getMethods(filterInfo, 
-						      init, 
-						      initWork, 
-						      steadyWork),
-					   new JIntLiteral(steadyPeek), 
-					   new JIntLiteral(steadyPop),
-					   new JIntLiteral(steadyPush),
-					   steadyWork,
-					   twostage.getInitPeek(),
-					   twostage.getInitPop(),
-					   twostage.getInitPush(),
-					   initWork,
-					   Utils.voidToInt(first.filter.
-						     getInputType()),
-					   Utils.voidToInt(last.filter.
-						     getOutputType()));
-	    result.setInit(init);
-	} else {
-	    // make the initial work function
-	    JMethodDeclaration initWork =  makeWork(filterInfo, true);
-	    
-	    // make the steady-state work function
-	    JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
-	    
-	    // make the fused init functions
-	    initFuser = makeInitFunction(filterInfo);
-	    
-	    // fuse all other fields and methods
-	    result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
+	    initWork=((SIRTwoStageFilter)filters.get(0)).getInitWork();
 	}
+	
+	// make the steady-state work function
+	JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
+	
+	// make the fused init functions
+	initFuser = makeInitFunction(filterInfo);
+	
+	// fuse all other fields and methods
+	result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
 	
 	// insert the fused filter in the parent
 	replace((SIRPipeline)((SIRFilter)filters.get(0)).getParent(), 

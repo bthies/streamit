@@ -135,14 +135,18 @@ public class InputTraceNode extends TraceNode
 	return set;
     }
 
-    public String debugString() 
+    public String debugString(boolean escape) 
     {
+	String newLine = "\n";
+	if (escape)
+	    newLine = "\\n";
+	
 	StringBuffer buf = new StringBuffer();
-	buf.append("***** " + this.toString() + " *****\n");
+	buf.append("***** " + this.toString() + " *****" + newLine);
 	for (int i = 0; i < sources.length; i++) {
-	    buf.append("  weight " + weights[i] + ": " + sources[i].toString() + "\n");
+	    buf.append("  weight " + weights[i] + ": " + sources[i].toString() + newLine);
 	}
-	buf.append("**********\n");
+	buf.append("**********" + newLine);
 	return buf.toString();
     }
     

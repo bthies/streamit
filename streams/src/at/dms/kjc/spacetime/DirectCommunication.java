@@ -31,8 +31,6 @@ public class DirectCommunication extends RawExecutionCode
     public static boolean testDC(FilterInfo fi) 
     {
 	FilterContent filter = fi.filter;
-	System.out.println(filter);
-	
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
 	if (KjcOptions.ratematch)

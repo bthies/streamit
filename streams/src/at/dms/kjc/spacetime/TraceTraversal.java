@@ -57,10 +57,10 @@ public class TraceTraversal
 		//so break and look at the next head
 		if (trace == null) {
 		    if (!queue.isEmpty()) {
-			System.out.println(" ****  QUEUE NOT EMPTY ****");
+			SpaceTimeBackend.println(" ****  QUEUE NOT EMPTY ****");
 			
 			for (int q= 0; q < queue.size(); q++)
-			    System.out.println(queue.get(q));
+			    SpaceTimeBackend.println(queue.get(q).toString());
 		    }
 			
 		    break;
@@ -69,7 +69,7 @@ public class TraceTraversal
 		addToTraversal(trace, traversal, visited, queue);
 	    }	    
 	}
-
+	SpaceTimeBackend.println("Finished building steady traversal");
 	return traversal;
     }
     
@@ -79,7 +79,7 @@ public class TraceTraversal
 	//add the trace to the traversal and show that it is visited...
 	assert trace != null : "Trace should not be null!";
 	
-	System.out.println("Adding Trace in traversal " + trace);
+	SpaceTimeBackend.println("Adding Trace in traversal " + trace);
 	queue.remove(trace);
 	traversal.add(trace);
 	visited.add(trace);
@@ -89,7 +89,7 @@ public class TraceTraversal
 	for (int j = 0; j < trace.getEdges().length; j++) {
 	    if (!queue.contains(trace.getEdges()[j])) {
 		queue.add(trace.getEdges()[j]);
-		System.out.println("Adding trace to queue " + trace.getEdges()[j]);
+		SpaceTimeBackend.println("Adding trace to queue " + trace.getEdges()[j]);
 	    }
 	}
 	//System.out.println(queue.size());

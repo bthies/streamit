@@ -14,8 +14,8 @@ public class TraceDotGraph
 {
     public static void dumpGraph(List steadyTrav, Trace[] io, String fileName, boolean DRAM) 
     {
+	SpaceTimeBackend.println("Creating Trace Dot Graph...");	
 	try {
-	    boolean first = true;
 	    int order = 1;
 	    FileWriter fw = new FileWriter(fileName);
 	    fw.write("digraph TraceDotGraph {\n");
@@ -36,23 +36,32 @@ public class TraceDotGraph
 		while (node != null) {
 		    if (node.isFilterTrace() && !node.getNext().isOutputTrace())
 			fw.write("  " + node.hashCode() + " -> " + node.getNext().hashCode() + ";\n");
-		    if (node.isInputTrace()) 
+		    if (node.isInputTrace()) {
 			bufferArc(IntraTraceBuffer.getBuffer((InputTraceNode)node, (FilterTraceNode)node.getNext()), fw, DRAM);
-		    if (node.isOutputTrace())
-			bufferArc(IntraTraceBuffer.getBuffer((FilterTraceNode)node.getPrevious(), (OutputTraceNode)node), fw, DRAM);
+			    fw.write("  " + node.hashCode() + "[ label=\"");
+			if (((InputTraceNode)node).oneInput() ||
+			    ((InputTraceNode)node).noInputs())
+			    fw.write(node.toString());
+			else {
+			    fw.write(((InputTraceNode)node).debugString(true));
+			}
+			
+		    }
 		    
-		    fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
+		    if (node.isOutputTrace()) {
+			bufferArc(IntraTraceBuffer.getBuffer((FilterTraceNode)node.getPrevious(), (OutputTraceNode)node), fw, DRAM);
+			fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
+		    }
+		    
+		    
 		    if (node.isFilterTrace()) {
+			fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
 			FilterInfo filter = FilterInfo.getFilterInfo((FilterTraceNode)node);
 			fw.write("\\nMult: (" + filter.initMult + ", " + filter.primePump + ", " + filter.steadyMult + ")");
 			fw.write("\\nPre-peek, pop, push: (" + filter.prePeek + ", " + filter.prePop + ", " + filter.prePush + ")");
 			fw.write("\\npeek, pop, push: (" + filter.peek + ", " + filter.pop + ", " + filter.push + ")");
 		    }
 		    fw.write("\"");
-		    if (first) {
-			fw.write(", shape=triangle");
-			first = false;
-		    }
 		    fw.write("];\n");
 		    node = node.getNext();
 		}
@@ -72,7 +81,7 @@ public class TraceDotGraph
 	catch (Exception e) {
 	    
 	}
-	
+	SpaceTimeBackend.println("Finished Creating Trace Dot Graph");	
     }
     
     private static void bufferArc(OffChipBuffer buffer, FileWriter fw, boolean DRAM) throws Exception 

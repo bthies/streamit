@@ -25,6 +25,7 @@ public class IntraTraceBuffer extends OffChipBuffer
     {
 	if (!bufferStore.containsKey(src)) {
 	    bufferStore.put(src, new IntraTraceBuffer(src, dst));
+	
 	}
 	assert (((IntraTraceBuffer)bufferStore.get(src)).getDest() ==
 		dst) : "Src connected to different dst in buffer store";
@@ -115,6 +116,7 @@ public class IntraTraceBuffer extends OffChipBuffer
 	    sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
 	    //steady is just pop * mult
 	    sizeSteady = (Address.ZERO.add(fi.pop * fi.steadyMult)).add32Byte(0);
+
 	}
     }
     

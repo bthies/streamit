@@ -429,6 +429,7 @@ public class SpaceTimeBackend
 	    //LinkedList initList = TraceTraversal.getTraversal(traces);
 	    List initList = Arrays.asList(traces);
 	    List steadyList = TraceTraversal.getTraversal(traceForrest);
+
 	    TraceDotGraph.dumpGraph(steadyList, io, "preDRAMsteady.dot", false);
 	    //assign the buffers not assigned by Jasp to drams
 	    BufferDRAMAssignment.run(steadyList, rawChip, io);

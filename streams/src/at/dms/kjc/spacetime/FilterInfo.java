@@ -73,19 +73,21 @@ public class FilterInfo
 	    peek=filter.getArray().length;
 	    push=1;
 	    pop=filter.getPopCount();
+	    calculateRemaining();
 	}
 	else if (traceNode.isFileInput()) {
 	    push = 1;
 	    pop = 0;
 	    peek = 0;
+	    calculateRemaining();
 	}
 	else if (traceNode.isFileOutput()) {
 	    push = 0;
 	    pop = 1;
 	    peek = 0;
+	    calculateRemaining();
 	}
 	else {
-	    direct = DirectCommunication.testDC(this);
 	    push = filter.getPushInt();
 	    pop = filter.getPopInt();
 	    peek = filter.getPeekInt();
@@ -94,8 +96,9 @@ public class FilterInfo
 		prePush = filter.getInitPush();
 		prePop = filter.getInitPop();
 	    } 
+	    calculateRemaining();
+	    direct = DirectCommunication.testDC(this);
 	}
-	calculateRemaining();
     }
     
     public boolean isTwoStage() 
@@ -123,8 +126,35 @@ public class FilterInfo
 	else
 	    bottomPeek = 0;
 	
-
-	remaining = initItemsReceived() -
+	//don't call initItemsReceived() here it 
+	//may cause an infinite loop because it creates filter infos
+	int initItemsRec = 0;
+	if (traceNode.getPrevious().isFilterTrace()) {
+	    FilterContent filterC = ((FilterTraceNode)traceNode.getPrevious()).getFilter();
+	    initItemsRec = filterC.getPushInt() * filterC.getInitMult();
+	    if (filterC.isTwoStage()) {
+		initItemsRec -= filterC.getPushInt();
+		initItemsRec += filterC.getInitPush();
+	    }
+	}
+	else { //previous is an input trace
+	    InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
+	    
+	    //add all the upstream filters items that reach this filter
+	    for (int i = 0; i < in.getWeights().length; i++) {
+		Edge incoming = in.getSources()[i];
+		FilterContent filterC = ((FilterTraceNode)incoming.getSrc().getPrevious()).getFilter();
+		//calculate the init items sent by the upstream filter
+		int upstreamInitItems = 0;
+		upstreamInitItems = filterC.getPushInt() * filterC.getInitMult();
+		if (filterC.isTwoStage()) {
+		    upstreamInitItems -= filterC.getPushInt();
+		    upstreamInitItems += filterC.getInitPush();
+		}
+		initItemsRec = (int)((double)upstreamInitItems * incoming.getSrc().ratio(incoming));
+	    }
+	}
+	remaining = initItemsRec -
 	    (prePeek + 
 	     bottomPeek + 
 	     Math.max((initFire - 2), 0) * pop);

@@ -629,7 +629,7 @@ public class Rawify
 	    assert dests.hasNext() :
 		"Output should have at least one dest";
 	    Edge edge = (Edge)dests.next();
-	    System.out.println(edge.getDest().debugString());
+	    SpaceTimeBackend.println(edge.getDest().debugString(false));
 	    FilterInfo downstream = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
 	    //the number of times the source filter fires in the pp while feeding the steady buffer
 	    int ppFilterIt = 
@@ -642,7 +642,7 @@ public class Rawify
 	    //check the sanity of the primepump stage
 	    while (dests.hasNext()){
 		edge = (Edge)dests.next();
-		System.out.println(edge.getDest().debugString());
+		SpaceTimeBackend.println(edge.getDest().debugString(false));
 		assert ppFilterIt == filterInfo.steadyMult * (filterInfo.primePumpTrue - 
 				 FilterInfo.getFilterInfo(edge.getDest().getNextFilter()).primePumpTrue) :
 		    "Error: Inconsistent primepump stats for output trace node\n " + traceNode.debugString();

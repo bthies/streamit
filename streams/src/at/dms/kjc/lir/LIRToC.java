@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.49 2001-11-08 21:20:47 dmaze Exp $
+ * $Id: LIRToC.java,v 1.50 2001-11-09 22:09:33 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -648,7 +648,12 @@ public class LIRToC
         print("; ");
 
         if (incr != null) {
-            incr.accept(this);
+	    LIRToC l2c = new LIRToC();
+            incr.accept(l2c);
+	    // get String
+	    String str = l2c.getString();
+	    // leave off the trailing semicolon
+	    print(str.substring(0, str.length()-1));
         }
         print(") ");
 

@@ -90,17 +90,17 @@ public class LowerInitFunctions implements StreamVisitor {
 	    // get filter2
 	    filter2 = (SIRFilter)pipe.get(i);
 	    // declare a tape from filter1 to filter2
-	    init.addStatementFirst(new LIRSetTape(LoweringConstants.
-						  getStreamContext(),
-						  /* stream struct 1 */
-						  LoweringConstants.
-						  getChildStruct(i-1),
-						  /* stream struct 2 */
-						  LoweringConstants.
-						  getChildStruct(i), 
-						  /* type on tape */
-						  filter1.getOutputType(), 
-						  /* size of buffer */
+	    init.addStatement(new LIRSetTape(LoweringConstants.
+					     getStreamContext(),
+					     /* stream struct 1 */
+					     LoweringConstants.
+					     getChildStruct(i-1),
+					     /* stream struct 2 */
+					     LoweringConstants.
+					     getChildStruct(i), 
+					     /* type on tape */
+					     filter1.getOutputType(), 
+					     /* size of buffer */
 	   schedule.getBufferSizeBetween(filter1, filter2).intValue()
 						  ));
 	    // re-assign filter1 for next step
@@ -211,28 +211,34 @@ public class LowerInitFunctions implements StreamVisitor {
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
 				 List elements) {
-	// register tapes between children
-	registerTapes(self, init);
-	
-	// register children
-	registerChildren(init, elements);
 
 	// translate init statements to function calls with context
 	lowerInitStatements(self, init);
 
-	// set stream type to pipeline
-	init.addStatement(new LIRSetStreamType(LoweringConstants.
-					       getStreamContext(),
-					       LIRStreamType.LIR_PIPELINE));
+	// add some things to the init function... these things are
+	// added to beginning, so they're in reverse order
+
+	// register children
+	registerChildren(init, elements);
 
 	// set work function, if there is one
 	if (self.hasWorkFunction()) {
-	    init.addStatement(new LIRSetWork(LoweringConstants.
-					     getStreamContext(),
-					     new LIRFunctionPointer(
+	    init.addStatementFirst(new LIRSetWork(LoweringConstants.
+						  getStreamContext(),
+						  new LIRFunctionPointer(
 						 LoweringConstants.
 						 getWorkName(self))));
 	}
+
+	// set stream type to pipeline (at very beginning)
+	init.addStatementFirst(new LIRSetStreamType(LoweringConstants.
+						    getStreamContext(),
+						    LIRStreamType.
+						    LIR_PIPELINE));
+
+	// register tapes between children (at very end)
+	registerTapes(self, init);
+	
     }
 
     /* visit a splitter */

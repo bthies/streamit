@@ -98,6 +98,9 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 
+	// debug output
+	// SIRToStreamIt.run(str, interfaces, interfaceTables, structs);
+
 	System.err.print("Raising variable declarations... ");
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");

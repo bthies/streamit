@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.9 2002-11-12 20:04:16 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.10 2002-11-13 03:15:01 mgordon Exp $
  */
 
 prefix Kjc
@@ -190,7 +190,7 @@ longname		"simplesjfusion"
 	help		"Revert to the old, simple SplitJoin fusion algorithm"
 
 longname		"noanneal"
-	shortcut	"N"
+	shortcut	"W"
 	type		boolean
 	default		"false"
 	help		"Do not run simulated annealing for layout"
@@ -256,3 +256,9 @@ longname		"streamit"
 	type		boolean
 	default		"false"
 	help		"Compile StreamIt code."
+
+longname		"numbers"
+	shortcut	"N"
+	type		boolean
+	default		"false"
+	help		"Attempt Generate Raw code that gathers performance numbers."

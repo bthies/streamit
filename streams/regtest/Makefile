@@ -68,6 +68,7 @@ do-test-checkin-raw: compile
 # linear framework tests (lower level than the regression
 # testing framework for testing the entire compiler path.
 test-linear: compile
+	jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
 	$(TESTER) streamittest.TestLinear
 
 

@@ -92,30 +92,29 @@ public class IntraTraceBuffer extends OffChipBuffer
     {
 	//we'll make it 32 byte aligned
 	if (source.isFilterTrace()) {
-	    //the size is the max of the multiplicities
+	    //the init size is the max of the multiplicities for init and pp
 	    //times the push rate
 	    FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode)source);
-	    int maxItems = Math.max(fi.initMult,
-				    Math.max(fi.primePump, fi.steadyMult));
+	    int maxItems = Math.max(fi.initMult, fi.primePump);
 	    maxItems *= fi.push;
 	    //account for the initpush
-	    
 	    if (fi.push < fi.prePush)
 		maxItems += (fi.prePush - fi.push);
-	    size = (Address.ZERO.add(maxItems)).add32Byte(0);
+	    sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
+	    //steady is just pop * mult
+	    sizeSteady = (Address.ZERO.add(fi.push*fi.steadyMult)).add32Byte(0);
 	}
 	else if (dest.isFilterTrace())
 	{
 	    //this is not a perfect estimation but who cares
 	    FilterInfo fi = FilterInfo.getFilterInfo((FilterTraceNode)dest);
-	    int maxItems = Math.max(fi.steadyMult,
-				    Math.max(fi.initMult, fi.primePump));
-	   
+	    int maxItems = Math.max(fi.initMult, fi.primePump);
 	    maxItems *= fi.pop;
 	    //now account for initpop, initpeek, peek
 	    maxItems += (fi.prePeek + fi.prePop + fi.prePeek);
-	    
-	    size = (Address.ZERO.add(maxItems)).add32Byte(0);
+	    sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
+	    //steady is just pop * mult
+	    sizeSteady = (Address.ZERO.add(fi.pop * fi.steadyMult)).add32Byte(0);
 	}
     }
     

@@ -270,8 +270,10 @@ public class Rawify
 	    int bytes = 
 		Util.cacheLineDiv((items * Util.getTypeSize(filterNode.getFilter().getOutputType())) *
 				  4);
-	    SpaceTimeBackend.println("Generating DRAM store command with " + items + " items and " + bytes + " bytes");
-	    //this command cannot be presynched
+	    SpaceTimeBackend.println("Generating DRAM store command with " + items + " items, typesize " + 
+				     Util.getTypeSize(filterNode.getFilter().getOutputType()) + 
+				     " and " + bytes + " bytes");
+	    //this commaGnd cannot be presynched
 	    tile.getComputeCode().addDRAMCommand(false, init || primepump, bytes, buffer, false);
 	}
     }

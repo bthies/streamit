@@ -55,8 +55,16 @@ public class TraceTraversal
 		}
 		//if the trace is null, we could not find anything to add
 		//so break and look at the next head
-		if (trace == null) 
+		if (trace == null) {
+		    if (!queue.isEmpty()) {
+			System.out.println(" ****  QUEUE NOT EMPTY ****");
+			
+			for (int q= 0; q < queue.size(); q++)
+			    System.out.println(queue.get(q));
+		    }
+			
 		    break;
+		}
 		
 		addToTraversal(trace, traversal, visited, queue);
 	    }	    
@@ -81,7 +89,7 @@ public class TraceTraversal
 	for (int j = 0; j < trace.getEdges().length; j++) {
 	    if (!queue.contains(trace.getEdges()[j])) {
 		queue.add(trace.getEdges()[j]);
-		//System.out.println("Adding trace to queue " + trace.getEdges()[j]);
+		System.out.println("Adding trace to queue " + trace.getEdges()[j]);
 	    }
 	}
 	//System.out.println(queue.size());

@@ -80,7 +80,7 @@ public class ComputeCodeStore {
 	int cacheLines = bytes / RawChip.cacheLineBytes;
 	JExpression[] args = {new JFieldAccessExpression(null, 
 							 new JThisExpression(null),
-							 buffer.getIdent()),
+							 buffer.getIdent(init)),
 			      new JIntLiteral(1),
 			      new JIntLiteral(cacheLines)};
 
@@ -95,7 +95,7 @@ public class ComputeCodeStore {
 	
 	JFieldAccessExpression bufAccess = 
 	    new JFieldAccessExpression(null, new JThisExpression(null),
-				       buffer.getIdent());
+				       buffer.getIdent(init));
 	
 	JAssignmentExpression assExp = 
 	    new JAssignmentExpression(null, dynNetSend, bufAccess);

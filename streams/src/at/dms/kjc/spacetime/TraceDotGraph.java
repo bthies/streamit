@@ -76,7 +76,8 @@ public class TraceDotGraph
 	    if (buffer.redundant())
 		fw.write("\", style=dashed");
 	    else
-		fw.write(buffer.getSize() + "(" + buffer.getIdent() + ")\", style=bold");
+		fw.write(buffer.getSize(true) + ", " + buffer.getSize(false) + 
+			 "(" + buffer.getIdentPrefix() + ")\", style=bold");
 	}
 	fw.write("];\n");	
     }

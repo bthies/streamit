@@ -88,13 +88,17 @@ public class OutputTraceNode extends TraceNode
     public int getWeight(Edge in) 
     {
 	int sum = 0;
-	
+
 	for (int i = 0; i < dests.length; i++) {
-	    for (int j = 0; j < dests[i].length; j++)
+	    for (int j = 0; j < dests[i].length; j++) {
+		//		System.out.println("Checking dest(" + i + ", " + j + ")");
+		//System.out.println(dests[i][j] + " ?= " + in);
 		if (dests[i][j] == in) {
+		    //  System.out.println("Found edge");
 		    sum += weights[i];
 		    break;
 		}
+	    }
 	}
 	return sum;
     }

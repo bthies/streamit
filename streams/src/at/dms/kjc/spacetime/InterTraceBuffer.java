@@ -50,10 +50,11 @@ public class InterTraceBuffer extends OffChipBuffer
     protected void calculateSize() 
     {
 	//max of the buffer size in the various stages...
-	int maxItems = Math.max(Util.steadyBufferSize(edge),
-				Math.max(Util.initBufferSize(edge),
-					 Util.primePumpBufferSize(edge)));
-	size = (Address.ZERO.add(maxItems)).add32Byte(0);	
+	int maxItems =Math.max(Util.initBufferSize(edge),
+			       Util.primePumpBufferSize(edge));
+	sizeInit = (Address.ZERO.add(maxItems)).add32Byte(0);
+	//
+	sizeSteady = (Address.ZERO.add(Util.steadyBufferSize(edge))).add32Byte(0);	
     }
     
 }

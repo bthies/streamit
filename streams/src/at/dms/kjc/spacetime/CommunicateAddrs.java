@@ -74,47 +74,84 @@ public class CommunicateAddrs
 	    //set the allocating tile to have compute code
 	    allocatingTile.setComputes();
 
-	    //allocate the buffer on the allocating tile
+	    //allocate the init buffer on the allocating tile
 	    ((StringBuffer)fields.get(allocatingTile)).append
 		(buffer.getType().toString() + "* " + 
-		 buffer.getIdent() + ";\n");
+		 buffer.getIdent(true) + ";\n");
+
+	    //allocate the steady buffer on the allocating tile
+	    ((StringBuffer)fields.get(allocatingTile)).append
+		(buffer.getType().toString() + "* " + 
+		 buffer.getIdent(false) + ";\n");
 	    
-	    //		 buffer.getSize().toString() + "];\n");
-	    //malloc the buffer
+
+	    //malloc the init buffer
 	    ((StringBuffer)functions.get(allocatingTile)).append
-		("  " + buffer.getIdent() + " = (" + buffer.getType() + 
-		 "*) malloc(32 + (" + buffer.getSize().toString() + " * sizeof(" +
+		("  " + buffer.getIdent(true) + " = (" + buffer.getType() + 
+		 "*) malloc(32 + (" + buffer.getSize(true).toString() + " * sizeof(" +
 		 buffer.getType() + ")));\n");
 	    //align the buffer
 	    ((StringBuffer)functions.get(allocatingTile)).append
-		("  " + buffer.getIdent() + " = ((u_int32_t)" + buffer.getIdent() +
+		("  " + buffer.getIdent(true) + " = ((u_int32_t)" + buffer.getIdent(true) +
+		 ") & 0xffffff00;\n");
+
+	    //malloc the steady buffer
+	    ((StringBuffer)functions.get(allocatingTile)).append
+		("  " + buffer.getIdent(false) + " = (" + buffer.getType() + 
+		 "*) malloc(32 + (" + buffer.getSize(false).toString() + " * sizeof(" +
+		 buffer.getType() + ")));\n");
+	    //align the buffer
+	    ((StringBuffer)functions.get(allocatingTile)).append
+		("  " + buffer.getIdent(false) + " = ((u_int32_t)" + buffer.getIdent(false) +
 		 ") & 0xffffff00;\n");
 
 	    //if allocator != neighbor, create declaration of 
-	    //pointer on neighbor and communicate the address
+	    //pointer on neighbor and communicate the address for both init and steady...
 	    if (allocatingTile != dram.getNeighboringTile()) {
 		dram.getNeighboringTile().setComputes();
 		SpaceTimeBackend.println("Need to communicate buffer address from " + 
 					 allocatingTile + " to " + dram.getNeighboringTile());
-		//generate the switch code to send the address
+		//generate the switch code to send the addresses
 		RawTile[] dest = {dram.getNeighboringTile()};
+		//first for the init
+		SwitchCodeStore.generateSwitchCode(allocatingTile, 
+						   dest, 0);
+		//now for the steady
 		SwitchCodeStore.generateSwitchCode(allocatingTile, 
 						   dest, 0);
 		//add the code to the owner to send the address to the
-		//static net
+		//static net for the init
 		((StringBuffer)functions.get(allocatingTile)).append
 		    ("  " + Util.staticNetworkSendPrefix(buffer.getType()) + 
-		     buffer.getIdent() + 
+		     buffer.getIdent(true) + 
 		     Util.staticNetworkSendSuffix() + ";\n");
-		
-		//add declaration of pointer to neighbor
+
+		//add the code to the owner to send the address to the
+		//static net for the steady
+		((StringBuffer)functions.get(allocatingTile)).append
+		    ("  " + Util.staticNetworkSendPrefix(buffer.getType()) + 
+		     buffer.getIdent(false) + 
+		     Util.staticNetworkSendSuffix() + ";\n");
+
+		//add declaration of pointer to neighbor (init)
 		((StringBuffer)fields.get(dram.getNeighboringTile())).append
 		    (buffer.getType().toString() + "* " + 
-		     buffer.getIdent() + ";\n");
-		//add the code to receive the address into the pointer
+		     buffer.getIdent(true) + ";\n");
+
+		//add declaration of pointer to neighbor (steady)
+		((StringBuffer)fields.get(dram.getNeighboringTile())).append
+		    (buffer.getType().toString() + "* " + 
+		     buffer.getIdent(false) + ";\n");
+
+		//add the code to receive the address into the pointer (init)
 		((StringBuffer)functions.get(dram.getNeighboringTile())).append
 		    ("  " + Util.staticNetworkReceivePrefix() + 
-		     buffer.getIdent() + 
+		     buffer.getIdent(true) + 
+		     Util.staticNetworkReceiveSuffix(buffer.getType()) + ";\n");
+		//add the code to receive the address into the pointer (steady)
+		((StringBuffer)functions.get(dram.getNeighboringTile())).append
+		    ("  " + Util.staticNetworkReceivePrefix() + 
+		     buffer.getIdent(false) + 
 		     Util.staticNetworkReceiveSuffix(buffer.getType()) + ";\n");
 	    }
 	}

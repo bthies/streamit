@@ -16,7 +16,8 @@ public abstract class OffChipBuffer
     protected static int unique_id;
     //the tracenode connection that this buffer is modeling
     protected static HashMap bufferStore;
-    protected Address size;
+    protected Address sizeInit;
+    protected Address sizeSteady;
     protected CType type;
     protected StreamingDram dram;
     protected TraceNode source;
@@ -94,12 +95,17 @@ public abstract class OffChipBuffer
     }
     
     
-    public String getIdent() 
+    public String getIdent(boolean init) 
+    {
+	assert !redundant();
+	return ident + (init ? "_init__" : "_steady__");
+    }
+    
+    public String getIdentPrefix()
     {
 	assert !redundant();
 	return ident;
     }
-    
     
     public CType getType() 
     {
@@ -120,9 +126,12 @@ public abstract class OffChipBuffer
     }
     
 
-    public Address getSize() 
+    public Address getSize(boolean init) 
     {
-	return size;
+	if (init)
+	    return sizeInit;
+	else 
+	    return sizeSteady;
     }
     
 

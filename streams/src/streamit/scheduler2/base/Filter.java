@@ -3,7 +3,7 @@ package streamit.scheduler.base;
 import streamit.scheduler.iriter./*persistent.*/
 FilterIter;
 
-/* $Id: Filter.java,v 1.5 2002-07-16 01:09:51 karczma Exp $ */
+/* $Id: Filter.java,v 1.6 2002-12-02 17:49:36 karczma Exp $ */
 
 /**
  * Computes some basic data for Filters.
@@ -18,6 +18,8 @@ abstract public class Filter extends Stream
 
     public Filter(FilterIter _filterIter)
     {
+        super (_filterIter.getUnspecializedIter());
+        
         ASSERT(_filterIter);
         filterIter = _filterIter;
 
@@ -50,4 +52,8 @@ abstract public class Filter extends Stream
         setSteadyPop(pop);
         setSteadyPush(push);
     }
+    
+    public int getNumNodes () { return 1; }
+    
+    public int getNumNodeFirings() { return 1; }
 }

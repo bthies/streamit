@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: SplitJoin.java,v 1.3 2002-10-01 00:01:10 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.4 2002-12-02 17:49:44 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -499,7 +499,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                         child.getInitPop()
                             + MAX(
                                 child.getInitPeek() - child.getInitPop(),
-                                child.getInitPush() - child.getSteadyPop());
+                                child.getSteadyPeek() - child.getSteadyPop());
 
                     while (childInitPeek > 0)
                     {

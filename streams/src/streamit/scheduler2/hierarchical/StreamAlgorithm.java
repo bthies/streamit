@@ -1,11 +1,13 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.3 2002-07-16 01:09:54 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.4 2002-12-02 17:49:41 karczma Exp $ */
 
 import streamit.scheduler.Schedule;
 import streamit.misc.DestroyedClass;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Vector;
 
 /**
@@ -235,4 +237,35 @@ public class StreamAlgorithm extends DestroyedClass
 
         return child.getSteadySchedulePhase(realPhase);
     }
+    
+    
+    /*
+    public int getScheduleSize ()
+    {
+        return getScheduleSize (getSteadySchedule()) + getScheduleSize (getInitializationSchedule ());
+    }
+
+    int getScheduleSize (PhasingSchedule sched)
+    {
+        int size = 0;
+        if (sched.getNumPhases() > 1) size += sched.getNumPhases ();
+        
+        int nPhase;
+        for (nPhase = 0; nPhase < sched.getNumPhases(); sched++)
+        {
+            // compute the size of a phase
+            PhasingSchedule phase = sched.getPhase(nPhase);
+        }
+        
+        return size;
+    }
+    
+    Set phasesComputed = new HashSet ();
+    
+    int getChildScheduleSize (PhasingSchedule sched)
+    {
+        if (phasesComputed.contains(sched)) return 0;
+        return sched.getStream().getScheduleSize (sched);
+    }
+    */
 }

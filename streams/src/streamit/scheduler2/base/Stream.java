@@ -1,8 +1,9 @@
 package streamit.scheduler.base;
 
 import streamit.misc.DestroyedClass;
+import streamit.scheduler.iriter.Iterator;
 
-/* $Id: Stream.java,v 1.2 2002-06-09 22:38:47 karczma Exp $ */
+/* $Id: Stream.java,v 1.3 2002-12-02 17:49:37 karczma Exp $ */
 
 /**
  * This class provides the basic functionality for
@@ -15,6 +16,16 @@ import streamit.misc.DestroyedClass;
 
 abstract class Stream extends DestroyedClass implements StreamInterface
 {
+    final private Iterator streamIter;
+    
+    protected Stream (Iterator _streamIter)
+    {
+        ASSERT (_streamIter != null);
+        streamIter = _streamIter;
+    }
+    
+    public Iterator getStreamIter () { return streamIter; }
+    
     private int steadyPeek, steadyPop, steadyPush;
     
     public int getSteadyPeek () { return steadyPeek; }

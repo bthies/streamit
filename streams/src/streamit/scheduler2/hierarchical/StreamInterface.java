@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamInterface.java,v 1.4 2002-07-16 21:41:24 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.5 2002-12-02 17:49:42 karczma Exp $ */
 
 import streamit.scheduler.Schedule;
 
@@ -129,5 +129,9 @@ public interface StreamInterface
      * @return a stage of the initialization schedule
      */
     public PhasingSchedule getInitScheduleStage(int stage);
-
+    
+    /**
+     * Thesis hack
+     */
+    //int getScheduleSize (PhasingSchedule sched);
 }

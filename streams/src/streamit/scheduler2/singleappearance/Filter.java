@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Filter.java,v 1.4 2002-07-16 02:18:48 karczma Exp $ */
+/* $Id: Filter.java,v 1.5 2002-12-02 17:49:46 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FilterIter;
@@ -30,7 +30,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
         {
             PhasingSchedule initPhasingSchedule = new PhasingSchedule(this);
 
-            Schedule initSchedule = new Schedule();
+            Schedule initSchedule = new Schedule(filterIter.getUnspecializedIter());
             int initPeek = 0, initPop = 0, initPush = 0;
             int initStage;
             for (initStage = 0;
@@ -63,7 +63,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
 
         // now do the steady schedule
         {
-            Schedule steadySchedule = new Schedule();
+            Schedule steadySchedule = new Schedule(filterIter.getUnspecializedIter());
             int steadyPeek = 0, steadyPop = 0, steadyPush = 0;
             int steadyPhase;
             for (steadyPhase = 0;

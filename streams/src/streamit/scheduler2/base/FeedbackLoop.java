@@ -7,7 +7,7 @@ Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.7 2002-07-18 05:34:36 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.8 2002-12-02 17:49:36 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -195,5 +195,22 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             setSteadyPop(pop);
             setSteadyPush(push);
         }
+    }
+    
+    public int getNumNodes () 
+    { 
+        int nodes = 2 + body.getNumNodes () + loop.getNumNodes();
+        return nodes;
+    }
+    
+    public int getNumNodeFirings() 
+    {
+        int firings = 0;
+        firings += body.getNumNodeFirings ();
+        firings += loop.getNumNodeFirings ();
+        firings += getNumSplitRounds();
+        firings += getNumJoinRounds();
+        
+        return firings;
     }
 }

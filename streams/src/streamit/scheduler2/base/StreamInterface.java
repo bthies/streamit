@@ -1,8 +1,9 @@
 package streamit.scheduler.base;
 
 import streamit.scheduler.Schedule;
+import streamit.scheduler.iriter.Iterator;
 
-/* $Id: StreamInterface.java,v 1.5 2002-07-18 05:34:37 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.6 2002-12-02 17:49:37 karczma Exp $ */
 
 /**
  * This interface will provide the basic functionality for
@@ -16,6 +17,12 @@ import streamit.scheduler.Schedule;
 
 public interface StreamInterface
 {
+    /**
+     * Return an iterator to this stream. The iterator is a unspecialized
+     * iterator type.
+     */
+    public Iterator getStreamIter();
+    
     /**
      * Compute the appropriate schedules for this  Stream.  This function
      * computes both the steady state and initialization schedules.
@@ -75,4 +82,10 @@ public interface StreamInterface
      * @return number of data pushed during initialization
      */
     public int getInitPush();
+
+
+    
+    public int getNumNodes ();
+    
+    public int getNumNodeFirings();
 }

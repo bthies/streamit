@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.4 2002-07-02 03:37:47 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.5 2002-12-02 17:49:41 karczma Exp $ */
 
 import java.util.Vector;
 import streamit.scheduler.Schedule;
@@ -231,7 +231,7 @@ public class PhasingSchedule extends DestroyedClass
                 return phasingPreComputedSchedule;
 
             // now: create a schedule out of my phasing schedule...
-            Schedule sched = new Schedule();
+            Schedule sched = new Schedule(getStream().getStreamIter());
             int phase;
             for (phase = 0; phase < getNumPhases(); phase++)
             {

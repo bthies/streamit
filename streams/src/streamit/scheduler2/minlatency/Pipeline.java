@@ -1,6 +1,6 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: Pipeline.java,v 1.5 2002-07-23 01:55:32 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.6 2002-12-02 17:49:44 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 PipelineIter;
@@ -114,6 +114,9 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
 
         do
         {
+            boolean fakePull = false;
+            int fakePullSize=0;
+            
             // calculate how much data the pipeline is supposed to push out
             // during execution of this schedule
             int pipelineOverallPush = 0;
@@ -127,22 +130,34 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                         utility.getChildPhase(child, nPhase);
                     pipelineOverallPush += phase.getOverallPush();
                 }
+                if (pipelineOverallPush == 0 && !forcedPull) 
+                {
+                    pipelineOverallPush = childrenExecs[lastChildIndex];
+                    fakePull = true;
+                    fakePullSize = (int)Math.ceil(Math.sqrt(child.getSteadyPop() * super.getChildNumExecs(lastChildIndex)));
+                }
             }
 
             // repeat while the last child still needs to pull some data
             while (dataInBuffers[getNumChildren()] < pipelineOverallPush)
             {
                 int numChildExecs[] = new int[getNumChildren()];
+                int dataPushed[] = new int[getNumChildren()];
+                int dataPeeked [] = new int [getNumChildren ()];
+                int dataPopped [] = new int [getNumChildren ()];
+                
 
                 // figure out how many times each child needs to get executed
                 {
                     int nextChildDataNeeded = 1, nChild;
+                    if (fakePull) nextChildDataNeeded = MIN(fakePullSize, childrenExecs[getNumChildren() - 1]);
+
+                    // go from bottom to top to pull data
                     for (nChild = getNumChildren() - 1;
                         nChild >= 0;
                         nChild--)
                     {
                         StreamInterface child = getHierarchicalChild(nChild);
-                        int childPeek = 0, childPop = 0;
 
                         // repeat while still need to provide data 
                         // for the next child
@@ -159,25 +174,74 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                             int phasePush = phase.getOverallPush();
 
                             // update the overall phase child peek/pop
-                            childPeek = MAX(childPeek, childPop + phasePeek);
-                            childPop += phasePop;
+                            dataPeeked [nChild] = MAX(dataPeeked [nChild], dataPopped [nChild] + phasePeek);
+                            dataPopped [nChild] += phasePop;
 
                             // reduce the amount of data still needed
                             // by the next child
                             nextChildDataNeeded -= phasePush;
+                            if (fakePull && nChild == getNumChildren() - 1) 
+                            {
+                                nextChildDataNeeded -= 1;
+                            }
 
                             // note that I just executed another stage/phase 
                             // of this child
                             numChildExecs[nChild]++;
+                            dataPushed[nChild] += phasePush;
                         }
 
                         // figure out how much data the previous child
                         // still needs to provide:
                         nextChildDataNeeded =
-                            childPeek - dataInBuffers[nChild];
+                            dataPeeked [nChild] - dataInBuffers[nChild];
                     }
+
+                    
+                    // and now go from top to bottom to push data
+                    int dataAdded = 0;
+
+                    for (nChild = 1; nChild < getNumChildren(); nChild++)
+                    {
+                        StreamInterface child = getHierarchicalChild(nChild);
+
+                        // repeat while still can run on prev child's data
+                        do
+                        {
+                            if (numChildExecs[nChild]
+                                == childrenExecs[nChild])
+                                break;
+
+                            // figure out how much this phase/stage will 
+                            // push/pop/peek
+                            PhasingSchedule phase =
+                                utility.getChildPhase(
+                                    child,
+                                    numChildExecs[nChild]);
+                            int phasePeek = phase.getOverallPeek();
+                            int phasePop = phase.getOverallPop();
+                            int phasePush = phase.getOverallPush();
+
+                            // update the overall phase child peek/pop
+                            dataPeeked [nChild] = MAX(dataPeeked [nChild], dataPopped [nChild] + phasePeek);
+                            dataPopped [nChild] += phasePop;
+                            
+                            if (dataPeeked [nChild] > dataInBuffers[nChild] + dataPushed [nChild-1]) break;
+
+                            // note that I just executed another stage/phase 
+                            // of this child
+                            numChildExecs[nChild]++;
+                            dataPushed[nChild] += phasePush;
+                        } while (true);
+                    }
+                    
                 }
 
+                if (fakePull) 
+                {
+                    pipelineOverallPush -= numChildExecs [getNumChildren () - 1];
+                }
+                
                 // construct an actual stage of the schedule and execute it
                 {
                     PhasingSchedule steadyPhase = new PhasingSchedule(this);
@@ -398,8 +462,9 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
         computeMinLatencySchedule(
             new PipelineInitSchedulingUtility(this),
             childInitStages,
-            dataInBuffers, true);
-            
+            dataInBuffers,
+            true);
+
         // here I'll allow the schedule to simply execute the children
         // however many times I told it to - this should satisfy the
         // pull semantics, because it's a steady schedule, and the
@@ -407,6 +472,7 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
         computeMinLatencySchedule(
             new PipelineSteadySchedulingUtility(this),
             steadyChildPhases,
-            dataInBuffers, false);
+            dataInBuffers,
+            false);
     }
 }

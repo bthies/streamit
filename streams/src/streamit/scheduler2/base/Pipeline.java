@@ -3,7 +3,7 @@ package streamit.scheduler.base;
 import streamit.scheduler.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.5 2002-07-18 05:34:36 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.6 2002-12-02 17:49:37 karczma Exp $ */
 
 /**
  * Computes some basic data for Pipelines.  
@@ -21,6 +21,8 @@ abstract public class Pipeline extends Stream
 
     protected Pipeline(PipelineIter _pipeline, StreamFactory factory)
     {
+        super(_pipeline.getUnspecializedIter());
+        
         ASSERT(_pipeline);
         pipeline = _pipeline;
 
@@ -182,5 +184,32 @@ abstract public class Pipeline extends Stream
             setSteadyPop(pop);
             setSteadyPush(push);
         }
+    }
+
+
+    public int getNumNodes () 
+    { 
+        int nodes = 0;
+        for (int nChild = 0; nChild < nChildren; nChild++)
+        {
+            StreamInterface child = children[nChild];
+            ASSERT(child);
+            
+            nodes += child.getNumNodes ();
+        }
+        return nodes;
+    }
+    
+    public int getNumNodeFirings() 
+    {
+        int firings = 0;
+        for (int nChild = 0; nChild < nChildren; nChild++)
+        {
+            StreamInterface child = children[nChild];
+            ASSERT(child);
+            
+            firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
+        }
+        return firings;
     }
 }

@@ -12,7 +12,7 @@ SplitterNJoinerIter;
 import streamit.scheduler.iriter.JoinerIter;
 import streamit.scheduler.iriter.SplitterIter;
 
-/* $Id: StreamWithSplitNJoin.java,v 1.4 2002-07-18 05:34:38 karczma Exp $ */
+/* $Id: StreamWithSplitNJoin.java,v 1.5 2002-12-02 17:49:37 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for Streams that contain
@@ -28,6 +28,8 @@ abstract public class StreamWithSplitNJoin
 {
     StreamWithSplitNJoin(SplitterNJoinerIter snjIter)
     {
+        super(snjIter.getUnspecializedIter());
+        
         steadySplitFlow = new SplitFlow(snjIter.getFanOut());
         steadyJoinFlow = new JoinFlow(snjIter.getFanIn());
         splitFlow = new SplitFlow[snjIter.getSplitterNumWork()];

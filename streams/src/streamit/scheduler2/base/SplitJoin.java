@@ -5,7 +5,7 @@ SplitJoinIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: SplitJoin.java,v 1.7 2002-07-18 05:34:37 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.8 2002-12-02 17:49:37 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for SplitJoins.
@@ -368,5 +368,36 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             setSteadyPop(pop);
             setSteadyPush(push);
         }
+    }
+    
+    public int getNumNodes () 
+    { 
+        int nodes = 0;
+        for (int nChild = 0; nChild < nChildren; nChild++)
+        {
+            StreamInterface child = children[nChild];
+            ASSERT(child);
+            
+            nodes += child.getNumNodes ();
+        }
+        if (getSplitNumRounds () > 0) nodes++;
+        if (getJoinNumRounds () > 0) nodes++;
+        return nodes;
+    }
+    
+    public int getNumNodeFirings() 
+    {
+        int firings = 0;
+        for (int nChild = 0; nChild < nChildren; nChild++)
+        {
+            StreamInterface child = children[nChild];
+            ASSERT(child);
+            
+            firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
+        }
+        firings += getSplitNumRounds();
+        firings += getJoinNumRounds();
+        
+        return firings;
     }
 }

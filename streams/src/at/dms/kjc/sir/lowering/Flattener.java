@@ -207,6 +207,7 @@ public class Flattener {
 	// we are working with.
 	if (KjcOptions.linearanalysis ||
 	    KjcOptions.linearreplacement ||
+	    KjcOptions.linearreplacement2 ||
 	    KjcOptions.linearpartition ||
 	    KjcOptions.frequencyreplacement ||
 	    KjcOptions.redundantreplacement) {
@@ -240,6 +241,17 @@ public class Flattener {
 		    // print out the stream graph after linear replacement
 		    LinearDot.printGraph(str, "linear-replace.dot", lfa);
 		}
+
+		// if we are supposed to transform the graph
+		// by replacing work functions with their linear forms (using indirection)
+		if (KjcOptions.linearreplacement2) {
+		    System.err.print("Running indirect linear replacement ... ");
+		    LinearIndirectReplacer.doReplace(lfa, str);
+		    System.err.println("done.");
+		    // print out the stream graph after linear replacement
+		    LinearDot.printGraph(str, "linear-indirect-replace.dot", lfa);
+		}
+
 		
 		// and finally, if we want to run frequency analysis
 		// 0 means stupid implementation, 1 means nice implemenation

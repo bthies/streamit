@@ -119,9 +119,10 @@ class ClusterCodeGenerator {
 	r.add("#include <thread_info.h>\n");
 	r.add("\n");
 
-	r.add("extern int __number_of_iterations;\n");
+	r.add("extern int __max_iteration;\n");
 	r.add("extern int __frequency_of_chkpts;\n");
 	r.add("message *__msg_stack_"+id+";\n");
+	r.add("int __number_of_iterations_"+id+";\n");
 	r.add("int __counter_"+id+" = 0;\n");
 	r.add("int __steady_"+id+" = 0;\n");
 	r.add("int __tmp_"+id+" = 0;\n");
@@ -440,6 +441,8 @@ class ClusterCodeGenerator {
 	if (init_f != null) r.add("  "+init_f+"();\n");
 
 	r.add("  save_state::load_state("+id+", &__steady_"+id+", __read_thread__"+id+");\n");
+	
+	r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
 
 	if (main_f != null) r.add("  "+main_f+"();\n");
 

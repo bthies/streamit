@@ -238,6 +238,7 @@ public class ClusterBackend implements FlatVisitor {
 	ClusterCode.generateMasterFile();
 	ClusterCode.generateMakeFile();
 	ClusterCode.generateConfigFile(partitionMap);
+	ClusterCode.generateSetupFile();
 
 	System.out.println("Cluster Code End.");	
 

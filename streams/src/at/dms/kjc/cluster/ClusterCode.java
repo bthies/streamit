@@ -176,13 +176,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
 
-	p.print("  for (i = 1; i <= __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
+	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
 
-	p.print("    if (i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("    if (__frequency_of_chkpts != 0 && i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
 
 	p.print("  }\n");
 
@@ -327,13 +327,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
 
-	p.print("  for (i = 1; i <= __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
+	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __joiner_"+thread_id+"_work();\n");
 	p.print("    }\n");
 
-	p.print("    if (i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("    if (__frequency_of_chkpts != 0 && i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
 
 	p.print("  }\n");
 
@@ -394,11 +394,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <save_manager.h>\n");
 	p.print("#include <delete_chkpts.h>\n");
 	p.print("#include <object_write_buffer.h>\n");
+	p.print("#include <read_setup.h>\n");
 	p.print("#include <ccp.h>\n");
 	p.println();
 
-	p.print("int __number_of_iterations = 20;\n");
-	p.print("int __frequency_of_chkpts = 1000;\n");
+	p.print("int __max_iteration;\n");
+	p.print("int __frequency_of_chkpts;\n");
+	p.print("int __out_data_buffer;\n");
+
 	p.print("vector <thread_info*> thread_list;\n");
 	p.print("mysocket *server = NULL;\n");
 	p.print("unsigned __ccp_ip = 0;\n");
@@ -467,6 +470,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("int main(int argc, char **argv) {\n");
 
+	p.print("  read_setup::read_setup_file();\n");
+	p.print("  __frequency_of_chkpts = read_setup::freq_of_chkpts;\n");
+	p.print("  __out_data_buffer = read_setup::out_data_buffer;\n");
+	p.print("  __max_iteration = read_setup::max_iteration;\n");
+
 	p.print("  master_pid = getpid();\n");
 
 	p.print("  for (int a = 1; a < argc; a++) {");
@@ -478,12 +486,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("       __init_iter = tmp;"); 
 	p.print("    }\n");
 
+	/*
+
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n"); 
 	p.print("       int tmp;\n");
 	p.print("       sscanf(argv[a + 1], \"%d\", &tmp);\n");
 	p.print("       printf(\"Number of Iterations: %d\\n\", tmp);\n"); 
 	p.print("       __number_of_iterations = tmp;"); 
 	p.print("    }\n");
+
+	*/
 
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-ccp\") == 0) {\n");
 	p.print("       printf(\"CCP address: %s\\n\", argv[a + 1]);\n"); 
@@ -655,6 +667,29 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	catch (Exception e) {
 	    System.err.println("Unable to write cluster configuration file");
+	}	
+    }
+
+
+    public static void generateSetupFile() {
+
+	TabbedPrintWriter p;
+	StringWriter str; 
+	
+	str = new StringWriter();
+        p = new TabbedPrintWriter(str);
+
+	p.print("frequency_of_checkpoints 1000 // must be a multiple of 1000 or 0 for disabled.\n");
+	p.print("outbound_data_buffer 400      // <= 1400 or 0 for disabled.\n");
+	p.print("number_of_iterations 10000    // number of steady state iterations\n");
+
+	try {
+	    FileWriter fw = new FileWriter("cluster-setup.txt");
+	    fw.write(str.toString());
+	    fw.close();
+	}
+	catch (Exception e) {
+	    System.err.println("Unable to write cluster setup file");
 	}	
     }
 

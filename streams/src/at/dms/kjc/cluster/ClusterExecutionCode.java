@@ -856,7 +856,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JVariableDefinition var2 = 
 	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
-				    "__number_of_iterations", 
+				    "__number_of_iterations_"+nodeID, 
 				    new JIntLiteral(0));
 
 	JVariableDeclarationStatement var_st = 
@@ -1021,7 +1021,8 @@ new JEmptyStatement(null, null);
 	s_params[2] = new JLocalVariableExpression(null, new JVariableDefinition(null, 0, (CType)CStdType.Integer, "__write_thread__"+nodeID, new JIntLiteral(0)));
 
 
-	sss[1] = new JIfStatement(null,
+
+	JIfStatement nested_if_stmt =  new JIfStatement(null,
 				  
 				  new JRelationalExpression(null, Constants.OPE_LE, new JModuloExpression(null, new JLocalVariableExpression(null, var_tmp2), new JLocalVariableExpression(null, var_freq)), new JIntLiteral(0)),
 				 
@@ -1031,6 +1032,18 @@ new JEmptyStatement(null, null);
 				  
 				  null);
 	
+
+	sss[1] = new JIfStatement(null,
+				  
+				  new JRelationalExpression(null, Constants.OPE_GT, new JLocalVariableExpression(null, var_freq), new JIntLiteral(0)),
+				  
+				  nested_if_stmt,
+				   
+				  new JEmptyStatement(null, null),
+				  
+				  null);
+	
+
 	JBlock steady_state = new JBlock(null, sss, null);
 
 

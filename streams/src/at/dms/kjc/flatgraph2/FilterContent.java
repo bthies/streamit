@@ -110,6 +110,8 @@ public class FilterContent {
 	    end=true;
 	    pos=0;
 	    total=1;
+	    methods=filter.getMethods(); //Keep nonlinear rep
+	    steady=filter.getPhases(); //Keep nonlinear rep
 	} else {
 	    linear=false;
 	    init=filter.getInitPhases();

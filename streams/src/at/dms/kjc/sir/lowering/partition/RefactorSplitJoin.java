@@ -44,9 +44,7 @@ public class RefactorSplitJoin {
 	}
 	// make result pipe
 	SIRPipeline pipe = new SIRPipeline(sj.getParent(),
-					   sj.getIdent() +"_ToPipe",
-					   JFieldDeclaration.EMPTY(),
-					   JMethodDeclaration.EMPTY());
+					   sj.getIdent() +"_ToPipe");
 	pipe.setInit(SIRStream.makeEmptyInit());
 	// clone the children <size> times.  Then, in the i'th child
 	// of the resulting pipeline, replace all elements except the
@@ -58,9 +56,7 @@ public class RefactorSplitJoin {
 	// of thqe join weights to the split rates of hte original.
 	for (int i=0; i<sj.size(); i++) {
 	    SIRSplitJoin child = new SIRSplitJoin(pipe,
-						  sj.getIdent() + "_Fiss" + i,
-						  JFieldDeclaration.EMPTY(),
-						  JMethodDeclaration.EMPTY());
+						  sj.getIdent() + "_Fiss" + i);
 	    child.setInit(SIRStream.makeEmptyInit());
 	    // make split weights, join weights
 	    JExpression[] jwOrig = sj.getJoiner().getInternalWeights();
@@ -162,9 +158,7 @@ public class RefactorSplitJoin {
 		JExpression[] childJoin=new JExpression[partSize];
 		// the child splitjoin
 		SIRSplitJoin childSplitJoin=new SIRSplitJoin(sj,
-							     sj.getIdent() + "_child" + i,
-							     JFieldDeclaration.EMPTY(),
-							     JMethodDeclaration.EMPTY());
+							     sj.getIdent() + "_child" + i);
 		childSplitJoin.setInit(SIRStream.makeEmptyInit());
 
 		// move children into hierarchical splitjoin
@@ -221,18 +215,14 @@ public class RefactorSplitJoin {
 
 	// make result pipeline
 	SIRPipeline result = new SIRPipeline(sj.getParent(), 
-					     sj.getIdent()+"_par",
-					     JFieldDeclaration.EMPTY(),
-					     JMethodDeclaration.EMPTY());
+					     sj.getIdent()+"_par");
 	result.setInit(SIRStream.makeEmptyInit());
 
 	for (int i=0; i<partition.size(); i++) {
 	    // new i'th splitjoin.  Replace init function in <sj>
 	    // before we clone the methods
 	    SIRSplitJoin newSJ = new SIRSplitJoin(result, 
-						  sj.getIdent()+"_"+i,
-						  JFieldDeclaration.EMPTY(),
-						  JMethodDeclaration.EMPTY());
+						  sj.getIdent()+"_"+i);
 	    newSJ.setInit(SIRStream.makeEmptyInit());
 
 	    // new pipe's for the i'th splitjoin
@@ -240,9 +230,7 @@ public class RefactorSplitJoin {
 		SIRPipeline origPipe = (SIRPipeline)sj.get(j);
 		// reset init function in origPipe before we clone it
 		SIRPipeline pipe = new SIRPipeline(newSJ,
-						   origPipe.getIdent()+"_"+i+"_"+j,
-						   JFieldDeclaration.EMPTY(),
-						   JMethodDeclaration.EMPTY());
+						   origPipe.getIdent()+"_"+i+"_"+j);
 		pipe.setInit(SIRStream.makeEmptyInit());
 
 		// add requisite streams to pipe
@@ -410,18 +398,14 @@ public class RefactorSplitJoin {
 		madeChange = true;
 		// make new splitjoin to replace sj1 and sj2
 		SIRSplitJoin sj3 =  new SIRSplitJoin(pipe,
-						     sj1.getIdent()+"_"+sj2.getIdent(),
-						     JFieldDeclaration.EMPTY(),
-						     JMethodDeclaration.EMPTY());
+						     sj1.getIdent()+"_"+sj2.getIdent());
 		sj3.setInit(SIRStream.makeEmptyInit());
 		sj3.setSplitter(sj1.getSplitter());
 		sj3.setJoiner(sj2.getJoiner());
 		// add children
 		for (int j=0; j<sj1.size(); j++) {
 		    SIRPipeline child = new SIRPipeline(sj1,
-							sj1.get(j).getIdent()+"_"+sj2.get(j).getIdent(),
-							JFieldDeclaration.EMPTY(),
-							JMethodDeclaration.EMPTY());
+							sj1.get(j).getIdent()+"_"+sj2.get(j).getIdent());
 		    child.setInit(SIRStream.makeEmptyInit());
 		    child.add(sj1.get(j), sj1.getParams(j));
 		    child.add(sj2.get(j), sj2.getParams(j));

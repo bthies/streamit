@@ -47,8 +47,7 @@ public class RefactorPipeline {
      */
     public static SIRPipeline addHierarchicalChildren(SIRPipeline pipe, PartitionGroup partition) {
 	// make result
-	SIRPipeline result = new SIRPipeline(pipe.getParent(), pipe.getIdent() + "_Hier", 
-					     JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+	SIRPipeline result = new SIRPipeline(pipe.getParent(), pipe.getIdent() + "_Hier");
 	result.setInit(SIRStream.makeEmptyInit());
 
 	// get copy of list of old children, and parameters passed to them
@@ -66,9 +65,7 @@ public class RefactorPipeline {
 	    } else {
 		// the child pipeline
 		SIRPipeline childPipe = new SIRPipeline(pipe,
-							pipe.getIdent() + "_child" + i,
-							JFieldDeclaration.EMPTY(),
-							JMethodDeclaration.EMPTY());
+							pipe.getIdent() + "_child" + i);
 		childPipe.setInit(SIRStream.makeEmptyInit());
 		
 		// move children into hierarchical pipeline

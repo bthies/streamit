@@ -141,7 +141,7 @@ class BitonicSortRecursive extends StreamIt
     public void init() 
     { 
 	/* Make sure N is a power_of_2 */  
-	final int N = 32 //16;
+	final int N = 32; //16;
  
 	this.add(new KeySource(N)); 
 	this.add(new BitonicSortKernelRecursive(N, true)); /* true for UP sort */ 

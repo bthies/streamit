@@ -374,8 +374,25 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				    JMethodDeclaration init,
 				    int delay,
 				    JMethodDeclaration initPath) {
-	Utils.fail("Can't schedule feedback loops yet.");
-	return null;
+	// get joiner
+	SchedJoinType joiner = (SchedJoinType)self.getJoiner().accept(this);
+	// get body
+	SchedStream body = (SchedStream)self.getBody().accept(this);
+	// get splitter
+	SchedSplitType splitter 
+	    = (SchedSplitType)self.getSplitter().accept(this);
+	// get loop
+	SchedStream loop = (SchedStream)self.getLoop().accept(this);
+
+	// represent the whole feedback loop
+	SchedLoop result = scheduler.newSchedLoop(self,
+						  joiner,
+						  body,
+						  splitter,
+						  loop,
+						  delay);
+	// return result
+	return result;
     }
 
     /* visit a splitter */

@@ -500,7 +500,6 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 					  String ident,
 					  JExpression[] args) {
 	super.visitMethodCallExpression(self, prefix, ident, args);
-        System.err.println("Calling " + ident);
         JMethodDeclaration target = findMethod(ident);
         if (target != null)
             target.accept(this);

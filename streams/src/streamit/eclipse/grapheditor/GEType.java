@@ -10,7 +10,7 @@ package grapheditor;
  */
 public class GEType {
 	
-		public static final String FILTER = "FILTER";
+		//public static final String FILTER = "FILTER";
 		public static final String PHASED_FILTER = "PHASED_FILTER"; 
 		public static final String SPLITTER =  "SPLITTER";
 		public static final String JOINER = "JOINER";

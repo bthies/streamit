@@ -35,8 +35,6 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		super(GEType.PHASED_FILTER, name);
 		initWorkFunctions = new ArrayList();
 		workFunctions = new ArrayList();
-
-		// Creation of JGraph components necessary to draw the stream structure moved to constructGraph
 	}
 	
 	/**
@@ -119,28 +117,30 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		{
 			this.setUserObject(this.getNameLabel());
 		}
-		 
-		(graphStruct.getAttributes()).put(this, this.attributes);
-		//liveGraph.attributes.put(this, this.attributes);
 		
+		this.initDrawAttributes(graphStruct);
+
+		return this;
+	}
+	
+	/**
+	 * Initialize the default attributes that will be used to draw the GEPhasedFilter.
+	 * @param graphStruct The GraphStructure that will have its attributes set.
+	 */	
+	public void initDrawAttributes(GraphStructure graphStruct)
+	{
+		(graphStruct.getAttributes()).put(this, this.attributes);
+				
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
 		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.red));
 		GraphConstants.setBackground(this.attributes, Color.blue);
 		
-		
-		
 		this.port = new DefaultPort();
 		this.add(this.port);
 		
 		graphStruct.getCells().add(this);
-		//liveGraph.cells.add(this);
-		
-		this.draw();	
-		
-		return this;
 	}
-	
 	/**
 	 * Draw this GEPhasedFilter.
 	 */

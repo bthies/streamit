@@ -114,9 +114,73 @@ public class GraphStructure implements Serializable{
 	 */
 	public void addNode(GEStreamNode node, GEStreamNode parent, int index)
 	{
-		ArrayList nodeList = this.getSuccesors(parent); 
-		nodeList.add(index, node);
+		// create node for GEStreamNode (if it does not already exist)
+		
+		// insert node inside parent at index i
+		if (parent.getType() == GEType.PIPELINE)
+		{ 
+			ArrayList nodeList = this.getSuccesors(parent); 
+		
+			GEStreamNode nextNode =  (GEStreamNode) nodeList.get(index + 1);
+			Iterator nextNodeEdgesIter = nextNode.getTargetEdges().iterator();
+			DefaultEdge edge = (DefaultEdge) nextNodeEdgesIter.next();
+			this.cs.disconnect(edge);
+		
+			if (index > 0 )
+			{
+				GEStreamNode previousNode = (GEStreamNode) nodeList.get(index -1);
+				this.connectDraw(previousNode, node);
+			}	
+			this.connectDraw(node, nextNode);
+		}
+		else if (parent.getType() == GEType.SPLITTER)
+		{}
+		else if (parent.getType() == GEType.FEEDBACK_LOOP)
+		{}
+		else
+		{
+			System.out.println("ERROR : The parent type is invalid");
+		}
 	}
+	
+	public void createNode(String type, String name)
+	{
+		GEStreamNode node = null;
+		
+		if (type == GEType.PHASED_FILTER)
+		{
+			node = new GEPhasedFilter(name);
+		}
+		else if (type == GEType.PIPELINE)
+		{
+			node = new GEPipeline(name);
+		}
+		else if (type == GEType.SPLIT_JOIN)
+		{
+			
+		}
+		else if (type == GEType.JOINER)
+		{
+			node = new GEJoiner(name);
+		}
+		else if (type == GEType.SPLITTER)
+		{
+			node = new GESplitter(name);
+		}
+		else if (type == GEType.FEEDBACK_LOOP)
+		{
+			
+		}
+		else 
+		{
+			System.out.println("The type that was specified is invalid");
+		}
+		
+	}
+	
+	
+	
+	
 	
 	/**
 	 * Delete <node> and all of the children belonging to that node

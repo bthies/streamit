@@ -9,8 +9,8 @@ import grapheditor.jgraphextension.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
 import java.awt.Color;
+import java.awt.Rectangle;
 import javax.swing.BorderFactory; 
-
 
 /**
  * GEPipeline is the graph internal representation of a pipeline. 
@@ -65,29 +65,17 @@ public class GEPipeline extends GEStreamNode implements Serializable{
  	*/
 	public GEStreamNode construct(GraphStructure graphStruct, int level)
 	{
-		
 		System.out.println("Constructing the pipeline" +this.getName());
 		boolean first = true;
-		this.draw();
 		
 		graphStruct.addToLevelContainer(level, this);
 		level++;
-	
-		/*	
-		DefaultGraphModel model = new DefaultGraphModel();
-		this.localGraphStruct.setGraphModel(model);
-		JGraph jgraph = new JGraph(model);	
-		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
-		jgraph.getGraphLayoutCache().setVisible(this, true);
-		this.localGraphStruct.setJGraph(jgraph);
-		
-		frame = new LiveJGraphInternalFrame(this.localGraphStruct.getJGraph());
-		this.localGraphStruct.internalFrame = frame;
-		*/
-		
 		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph()));
-		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
-		this.localGraphStruct.setJGraph(graphStruct.getJGraph());		
+		
+		this.localGraphStruct = graphStruct;
+		
+		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
+		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());		
 		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
@@ -99,63 +87,43 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 			
 			if(!first)
 			{
-				System.out.println("Connecting " + lastNode.getName()+  " to "+ strNode.getName());
-				 
+				System.out.println("Connecting " + lastNode.getName()+  " to "+ strNode.getName());		 
 				graphStruct.connectDraw(lastNode, strNode); //this.localGraphStruct.connectDraw(lastNode, strNode);
 			}
-			
 			lastNode = lastTemp;
 			first = false;
 		}
 	
-
 		//this.localGraphStruct.getGraphModel().insert(this.localGraphStruct.getCells().toArray(), this.localGraphStruct.getAttributes(), this.localGraphStruct.getConnectionSet(), null, null);
 		graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(), graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
-		
-		
+		this.initDrawAttributes(graphStruct);
+
+		if (graphStruct.getTopLevel() == this)
+		{
+			graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
+		}
+				
+		return this;
+	}	
+	
+	/**
+	 * Initialize the default attributes that will be used to draw the GEPipeline.
+	 * @param graphStruct The GraphStructure that will have its attributes set.
+	 */	
+	public void initDrawAttributes(GraphStructure graphStruct)
+	{
 		this.port = new DefaultPort();
 		this.add(this.port);
-		
-		/*
-		frame.setGraphCell(this);
-		frame.setGraphStruct(graphStruct);
-		frame.setGraphModel(graphStruct.getGraphModel());
-		frame.create(this.getName());
-		frame.setSize(150, 350);
-		*/
-				
+
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));	
 		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.blue));
 		GraphConstants.setBackground(this.attributes, Color.blue);	
-			
-			
-			
-			
-		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
-		graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
 		
-		
-		if (graphStruct.getTopLevel() == this) {
-			//graphStruct.editorFrame.getDesktopPane().add(frame);
-			//graphStruct.panel.getViewport().setView(frame);
-		}
-		else {
-			graphStruct.internalFrame.getContentPane().add(frame);
-		}
-		
-		/*
-		try {	
-			frame.setSelected(true);
-		}  catch(Exception pve) {}
-		frame.setSize(algorithm.max.x + 10, ((algorithm.max.y + ((algorithm.spacing.y * (this.getSuccesors().size()-1)) / 2)))) ; 
-		*/
-		
-		return this;
-	}	
-	
-	
+		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);	
+	}
+			
 	/**
 	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
 	 * collapsed or expanded. 
@@ -178,48 +146,65 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	
 	public void expand(JGraph jgraph)
 	{
-			
-		/*
-		if(this.isInfoDisplayed) {		
+		/*if(this.isInfoDisplayed) {		
 			Rectangle rect = GraphConstants.getBounds(this.attributes);
 			this.frame.setLocation(new Point(rect.x, rect.y));
 			this.frame.setVisible(true);
 		} else {
 			this.frame.setLocation(GraphConstants.getOffset(this.attributes));
-			this.frame.setVisible(false);
-		}
+			this.frame.setVisible(false); }
 		*/
-	
-	/*	if(jgraph.getGraphLayoutCache().isPartial()) {
-			System.out.println("the graph is partial");
-		}*/	 
-		
+
 		Object[] nodeList = this.getSuccesors().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
 		jgraph.getGraphLayoutCache().setVisible(nodeList, true);
 		
 		Iterator eIter = localGraphStruct.getGraphModel().edges(this.getPort());
-		
-		boolean temp = true;
-		
+		ArrayList edgesToRemove =  new ArrayList();
+		GEStreamNode firstInPipe = (GEStreamNode) nodeList[0];
+		GEStreamNode finalInPipe = (GEStreamNode) nodeList[nodeList.length-1];
+			
 		while (eIter.hasNext())
 		{
 			DefaultEdge edge = (DefaultEdge) eIter.next();
-			
-			if (nodeList.length > 0)
+				
+			Iterator sourceIter = this.getSourceEdges().iterator();	
+			System.out.println(" edge hash" +edge.hashCode());
+			while (sourceIter.hasNext())
 			{
-			
-				if (temp)
+				DefaultEdge s = (DefaultEdge) sourceIter.next();
+				System.out.println(" s hash" +s.hashCode());
+				if (s.equals(edge))
 				{
-					cs.disconnect(edge,false);
-					cs.connect(edge, nodeList[0], false);
-					temp = false;
-				}	
-				else
-				{
+						
+					System.out.println("source edges were equal");
 					cs.disconnect(edge, true);
-					cs.connect(edge, nodeList[nodeList.length-1], true);		
-				}	
+					cs.connect(edge, finalInPipe.getPort(), true);	
+					finalInPipe.addSourceEdge(s);
+					edgesToRemove.add(s);
+				}
+			}
+			
+			Iterator targetIter = this.getTargetEdges().iterator();
+			while(targetIter.hasNext())
+			{
+				DefaultEdge t = (DefaultEdge) targetIter.next();
+				System.out.println(" t hash" +t.hashCode());
+				if(t.equals(edge))
+				{
+					System.out.println("target edges were equal");
+					cs.disconnect(edge,false);
+					cs.connect(edge, firstInPipe.getPort(),false);
+					firstInPipe.addTargetEdge(t);
+					edgesToRemove.add(t);
+				}
+			}	
+			
+			Object[] removeArray = edgesToRemove.toArray();
+			for(int i = 0; i<removeArray.length;i++)
+			{
+				this.removeSourceEdge((DefaultEdge)removeArray[i]);
+				this.removeTargetEdge((DefaultEdge)removeArray[i]);
 			}
 		}
 		
@@ -227,9 +212,9 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
 		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		manager.arrange();	
-
-	}
+		manager.arrange();
+		setLocationAfterExpand();
+	}	
 
 	/**
 	 * Collapse the GraphStructure.
@@ -334,6 +319,36 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		manager.arrange();	
 	}
 	
+	private void setLocationAfterExpand()
+	{
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		Object[] containedCells = this.getSuccesors().toArray();
+		
+		CellView[] containedCellViews = 
+			this.localGraphStruct.getJGraph().getGraphLayoutCache().getMapping(containedCells);
+
+		Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
+		
+		System.out.println("Bounds of the contained elements is" + cellBounds.toString());
+		GraphConstants.setAutoSize(this.attributes, false);
+		GraphConstants.setBounds(this.attributes, cellBounds);
+		
+		this.localGraphStruct.getGraphModel().
+				edit(localGraphStruct.getAttributes(), null , null, null);
+	}
+	
+	public void hide()
+	{
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().
+				setVisible(new Object[]{this}, true);
+	}
+	
+	public void unhide()
+	{
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().
+				setVisible(new Object[]{this}, false);
+	}
+	
 	/**
 	 * Draw this Pipeline
 	 */	
@@ -341,6 +356,4 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	{
 		System.out.println("Drawing the pipeline " +this.getName());
 	}
-
-
 }

@@ -49,6 +49,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable{
 		this.loop = loop;
 	}
 	
+	
+	
 	/**
 	 * Get the splitter part of this.
 	 * @return GESplitter corresponding to this GEFeedbackLoop.

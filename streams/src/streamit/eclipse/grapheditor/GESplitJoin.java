@@ -168,15 +168,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		frame.setSize(400, 400);
 		*/
 		
-		(graphStruct.getAttributes()).put(this, this.attributes);
-		GraphConstants.setAutoSize(this.attributes, true);
-		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
-		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.green));
-		
-		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
-		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);
+		this.initDrawAttributes(graphStruct);
 						
-		
 		//graphStruct.internalFrame.getContentPane().add(frame);
 		/*
 		try {	
@@ -187,6 +180,21 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		*/
 		
 		return this;
+	}
+	
+	/**
+	 * Initialize the default attributes that will be used to draw the GESplitJoin.
+	 * @param graphStruct The GraphStructure that will have its attributes set.
+	 */	
+	public void initDrawAttributes(GraphStructure graphStruct)
+	{
+		(graphStruct.getAttributes()).put(this, this.attributes);
+		GraphConstants.setAutoSize(this.attributes, true);
+		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
+		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.green));
+		
+		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
+		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);	
 	}
 	
 	/**
@@ -297,18 +305,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 				this.removeSourceEdge((DefaultEdge)removeArray[i]);
 				this.removeTargetEdge((DefaultEdge)removeArray[i]);
 			}
-			
-			
-			
-			
-			/*if (temp) {
-				cs.disconnect(edge,false);
-				cs.connect(edge, this.splitter.getPort(),false);
-				temp = false;	
-			}else {
-				cs.disconnect(edge, true);
-				cs.connect(edge, this.joiner.getPort(), true);		
-			}*/
+	
 		}
 		
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
@@ -414,52 +411,35 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 			this.joiner.removeTargetEdge((DefaultEdge)removeArray[i]);
 
 		}
-
-		
-			
-			
-		
-		
-		/*
-		if (splitEdgeIter.hasNext())
-		{
-			DefaultEdge sEdge = (DefaultEdge) splitEdgeIter.next();
-			cs.disconnect(sEdge, false);
-			cs.connect(sEdge, this, false);
-		}
-
-		ArrayList joinEdgeArray = new ArrayList();
-		while (joinEdgeIter.hasNext())
-		{
-			joinEdgeArray.add(joinEdgeIter.next());
-		}
-			
-		DefaultEdge jEdge = (DefaultEdge) joinEdgeArray.get(joinEdgeArray.size()-1);
-		cs.disconnect(jEdge,true);
-		cs.connect(jEdge, this,true);
-		*/
-										
-		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
+	
+		GraphConstants.setAutoSize(this.attributes, true);			
+		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
 		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
 		
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
-		manager.arrange();	
+		manager.arrange();
+			
 	}
 	
 	private void setLocationAfterExpand()
 	{
-		Object[] nodeList = this.getContainedElements().toArray();
-		for (int i = 0; i < nodeList.length; i++)
-		{
-			GEStreamNode node = (GEStreamNode) nodeList[i];
-			System.out.println ("node "+ node);
-			Point p = GraphConstants.getOffset(node.getAttributes());
-			Rectangle r = node.defaultBounds;
-			System.out.println("The point is " + r.toString());
-			
-		}
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		Object[] containedCells = this.getContainedElements().toArray();
 		
+		CellView[] containedCellViews = 
+			this.localGraphStruct.getJGraph().getGraphLayoutCache().getMapping(containedCells);
+
+		Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
+		
+		System.out.println("Bounds of the contained elements is" + cellBounds.toString());
+		GraphConstants.setAutoSize(this.attributes, false);
+		GraphConstants.setBounds(this.attributes, cellBounds);
+		
+		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), null , null, null);
 	}
+	
+	
+	
 
 }

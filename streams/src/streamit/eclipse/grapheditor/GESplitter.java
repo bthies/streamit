@@ -34,6 +34,17 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	}
 	
 	/**
+	 * GESplitter constructor.
+	 * @param name The name of the GESplitter.
+	 */
+	public GESplitter(String name)
+	{
+		super(GEType.SPLITTER , name);
+		this.name = name;
+		this.weights = null;
+	}
+	
+	/**
 	 * Get the weights of this 
 	 * @return The weights corresponding to the GESplitter
 	 */
@@ -71,9 +82,26 @@ public class GESplitter extends GEStreamNode implements Serializable{
 	{
 		System.out.println("Constructing the Splitter " +this.getName());
 		
-		this.setInfo(this.getWeightsAsString());
-		this.setUserObject(this.getInfoLabel());
+		if (weights != null)
+		{
+			this.setInfo(this.getWeightsAsString());
+			this.setUserObject(this.getInfoLabel());
+		}
+		else 
+		{
+			this.setUserObject(this.getNameLabel());
+		}
 		
+		this.initDrawAttributes(graphStruct);	
+		return this;
+	}
+
+	/**
+	 * Initialize the default attributes that will be used to draw the GESplitter.
+	 * @param graphStruct The GraphStructure that will have its attributes set.
+	 */	
+	public void initDrawAttributes(GraphStructure graphStruct)
+	{
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
@@ -83,11 +111,8 @@ public class GESplitter extends GEStreamNode implements Serializable{
 		this.port = new DefaultPort();
 		this.add(this.port);
 		graphStruct.getCells().add(this);
-		
-		this.draw();
-		return this;
 	}
-	
+
 	/**
 	 * Draw this Splitter
 	 */

@@ -492,6 +492,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	return self;
     }
 
+
+    private boolean ignoreMethod(String ident) {
+	if (ident.equals("init") ||
+	    ident.equals("work") ||
+	    ident.equals("add") ||
+	    ident.equals("initIO"))
+	    return true;
+	return false;
+    }
+
     /**
      * visits a method declaration
      */
@@ -532,7 +542,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	
 	/*Install init function for filter*/
-	if (ident.equals("init") && (parentStream instanceof SIRFilter)) {
+	else if (ident.equals("init") && (parentStream instanceof SIRFilter)) {
 	    ((SIRFilter)parentStream).setInit(new JMethodDeclaration(null,
 								     modifiers,
 								     returnType,
@@ -543,6 +553,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 								     null,
 								     null)); 
 	}
+	else if (!ignoreMethod(ident) && (parentStream instanceof SIRStream))
+	    ((SIRStream)parentStream).addMethod(new JMethodDeclaration(null,
+								     modifiers,
+								     returnType,
+								     ident,
+								     parameters,
+								     exceptions,
+								     body,
+								     null,
+								       null));
+	    
 	return self;
     }
     
@@ -774,7 +795,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
        
 	blockStart("BlockStatement");
         for (int i = 0; i < body.length; i++) {
-	    body[i] = (JStatement)body[i].accept(this);
+	    System.out.println(i);
+	    Object st = body[i].accept(this);
+	    if (st instanceof JStatement)
+		body[i] = (JStatement)st;
 	}
 	return (new JBlock(null, body, null));
     }
@@ -1522,21 +1546,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * visits an array length expression
      */
     public Object visitComments(JavaStyleComment[] comments) {
-	return comments;
+	blockStart("Comments");
+	return null;
     }
 
     /**
      * visits an array length expression
      */
     public Object visitComment(JavaStyleComment comment) {
-	return comment;
+	blockStart("Comment");
+	return null;
     }
 
     /**
      * visits an array length expression
      */
     public Object visitJavadoc(JavadocComment comment) {
-	return comment;
+	blockStart("Javadoc");
+	return null;
     }
 
       /**

@@ -991,55 +991,72 @@ public class Rawify
 	//System.err.println("Getting HERE!");
 	code.appendIns(new Comment("HERE!"),false);
 	//Get loop counter
-	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),false);
+	FullIns loopCount=new FullIns(tile,new MoveIns(SwitchReg.R3,SwitchIPort.CSTO));
+	code.appendIns(loopCount,false);
 	//Preloop
 	if(begin) {
-	    boolean first=true;
-	    //Order between values (from peek buffer) and partial sums is reversed
-	    for(int turn=1;turn<turns;turn++)
-		for(int j = 0; j<pop; j++) {
-		    if(j==0) {
-			//FullIns newIns=new FullIns(tile);
-			//newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
-			FullIns newIns=new FullIns(tile,new MoveIns(SwitchReg.R1,SwitchIPort.CSTO));
-			if(first)
-			    first=false;
-			else
-			    newIns.addRoute(SwitchReg.R1,dest);
-			code.appendIns(newIns, false);
-		    }
+
+	    //Test: pass start down
+	    FullIns testIns=new FullIns(tile);
+	    testIns.addRoute(SwitchIPort.CSTO,dest);
+	    code.appendIns(testIns,false);
+
+	    if(turns>0) {
+		if(turns>1) {
+		    boolean first=true;
+		    //Order between values (from peek buffer) and partial sums is reversed
+		    for(int turn=1;turn<turns;turn++)
+			for(int j = 0; j<pop; j++) {
+			    if(j==0) {
+				//FullIns newIns=new FullIns(tile);
+				//newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
+				FullIns newIns=new FullIns(tile,new MoveIns(SwitchReg.R1,SwitchIPort.CSTO));
+				if(first)
+				    first=false;
+				else
+				    newIns.addRoute(SwitchReg.R1,dest);
+				code.appendIns(newIns, false);
+			    }
+			    FullIns ins=new FullIns(tile);
+			    ins.addRoute(SwitchIPort.CSTO,dest);
+			    code.appendIns(ins,false);
+			}
+		    //Route remainder
 		    FullIns ins=new FullIns(tile);
-		    ins.addRoute(SwitchIPort.CSTO,dest);
+		    ins.addRoute(SwitchReg.R1,dest);
 		    code.appendIns(ins,false);
 		}
-	    //Route remainder
-	    FullIns ins=new FullIns(tile);
-	    ins.addRoute(SwitchReg.R1,dest);
-	    code.appendIns(ins,false);
-	    //Order back to normal
-	    for(int j = 0; j<pop; j++) {
-		//Pass first value
-		ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		ins.addRoute(src, SwitchOPort.CSTI);
-		//if(!end)
-		ins.addRoute(src,dest);
-		code.appendIns(ins, false);
-		//Repeat first value
-		for(int k = numPop-2; k>= 0; k--) {
-		    FullIns newIns = new FullIns(tile);
-		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		    code.appendIns(newIns, false);
-		}
-		//Pass in partial sum
-		if(j==0) {
-		    FullIns newIns=new FullIns(tile);
-		    newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
-		    //Pass out partial sum to next filter
-		    newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
-		    code.appendIns(newIns, false);
+		//Order back to normal
+		for(int j = 0; j<pop; j++) {
+		    //Pass first value
+		    FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		    ins.addRoute(src, SwitchOPort.CSTI);
+		    //if(!end)
+		    ins.addRoute(src,dest);
+		    code.appendIns(ins, false);
+		    //Repeat first value
+		    for(int k = numPop-2; k>= 0; k--) {
+			FullIns newIns = new FullIns(tile);
+			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			code.appendIns(newIns, false);
+		    }
+		    //Pass in partial sum
+		    if(j==0) {
+			FullIns newIns=new FullIns(tile);
+			newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
+			//Pass out partial sum to next filter
+			newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
+			code.appendIns(newIns, false);
+		    }
 		}
 	    }
 	} else {
+
+	    //Test: passing start down
+	    FullIns testIns=new FullIns(tile);
+	    testIns.addRoute(src,dest);
+	    code.appendIns(testIns,false);
+
 	    for(int i = 0; i<numPop; i++) {
 		for(int j = 0; j<pop; j++) {
 		    //Pass first value

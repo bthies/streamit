@@ -30,7 +30,7 @@ public class RawBackend {
 	System.out.println("Running Constant Prop and Unroll...");
 	//Renamer.renameAll(str);
 	ConstantProp.propagateAndUnroll(str);
-	//FieldProp.doPropagate(str);
+	FieldProp.doPropagate(str);
 	
 	System.out.println("Done Constant Prop and Unroll...");
 

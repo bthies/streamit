@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.21 2003-09-29 09:08:46 thies Exp $
+# $Id: run_reg_tests.pl,v 1.22 2003-10-17 07:23:16 jasperln Exp $
 
 use strict;
 use POSIX qw(strftime);
@@ -25,7 +25,7 @@ my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 # automatic testing so that the text tester gets used all of the time.
 $ENV{"AUTOMATIC_TEST"}="true";
 # Root location to store the reg test working files
-my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working";
+my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working2";
 # Root location to store RT output
 my $RT_ROOT = "/projects/streamit/www/rt";
 
@@ -35,6 +35,21 @@ my $RT_ROOT = "/projects/streamit/www/rt";
 my $CVS_TARGET = "test-all";
 if (@ARGV[0] eq "nightly") {
     $CVS_TARGET = "test-nightly";
+}
+if (@ARGV[0] eq "tests") {
+    $CVS_TARGET = "test-tests";
+}
+if (@ARGV[0] eq "apps") {
+    $CVS_TARGET = "test-apps";
+}
+if (@ARGV[0] eq "examples") {
+    $CVS_TARGET = "test-examples";
+}
+if (@ARGV[0] eq "benchmarks") {
+    $CVS_TARGET = "test-benchmarks";
+}
+if (@ARGV[0] eq "sorts") {
+    $CVS_TARGET = "test-sorts";
 }
 
 # Get a time/date stamp without spaces,etc. for the directory name

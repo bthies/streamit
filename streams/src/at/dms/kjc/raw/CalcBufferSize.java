@@ -83,13 +83,30 @@ public class CalcBufferSize extends at.dms.util.Utils implements FlatVisitor
 		FlatNode prev = node.incoming[0];
 		//if prev is a joiner or a splitter, production is 1
 		int prevProd = 1;
-		if (prev.contents instanceof SIRFilter)
+		int currentCons = 0;
+		currentCons = filter.getPopInt();
+
+		if (prev.contents instanceof SIRFilter) {
 		    prevProd = ((SIRFilter)prev.contents).getPushInt();
-		
-		int size = Math.max((Util.getCountPrev(init, prev, node) * prevProd),
-				    ((Util.getCountPrev(init, prev, node) + 
-				      Util.getCountPrev(steady, prev, node)) * prevProd -
-				     Util.getCount(init, node) * filter.getPopInt()));
+		    //correct for two stage filters
+		    if (prev.contents instanceof SIRTwoStageFilter &&
+			((SIRTwoStageFilter)prev.contents).getInitPush() > prevProd)
+			prevProd = ((SIRTwoStageFilter)prev.contents).getInitPush();
+		}
+			
+		//if the current is a two stage, 
+		if (filter instanceof SIRTwoStageFilter &&
+		    ((SIRTwoStageFilter)filter).getInitPop() < currentCons)
+		    currentCons = ((SIRTwoStageFilter)filter).getInitPop();
+
+// 		int size = Math.max((Util.getCountPrev(init, prev, node) * prevProd),
+// 				    ((Util.getCountPrev(init, prev, node) + 
+// 				      Util.getCountPrev(steady, prev, node)) * prevProd));
+
+ 		int size = Math.max((Util.getCountPrev(init, prev, node) * prevProd),
+ 				    ((Util.getCountPrev(init, prev, node) + 
+ 				      Util.getCountPrev(steady, prev, node)) * prevProd) -
+				    Util.getCount(init, node) * currentCons);
 
 		consBufferSize.put(node, new Integer(size));
 	    }

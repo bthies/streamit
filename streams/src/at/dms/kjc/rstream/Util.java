@@ -102,7 +102,23 @@ public class Util extends at.dms.util.Utils {
 	return ret;
     }
 
+    public static int getItemsPushed(FlatNode from, FlatNode to)  
+    {
+	if (from.isFilter())
+	    return ((SIRFilter)from.contents).getPushInt();
+	else if (from.isJoiner())
+	    return from.getTotalIncomingWeights();
+	else if (from.isSplitter())
+	    return from.getWeight(to);
+	
+	return -1;
+    }
 
+    public static CType getOutputType(FlatNode node) 
+    {
+	return at.dms.kjc.raw.Util.getOutputType(node);
+    }
 }
+
 
 

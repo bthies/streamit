@@ -284,7 +284,7 @@ public class StrToRStream {
 		    result[1].put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
 	    }
 	}
-	
+	/*	
 	//now, in the above calculation, an execution of a joiner node is 
 	//considered one cycle of all of its inputs.  For the remainder of the
 	//raw backend, I would like the execution of a joiner to be defined as
@@ -310,6 +310,7 @@ public class StrToRStream {
 		}
 	    }
 	}
+	*/
     }
     
     

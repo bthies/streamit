@@ -44,12 +44,11 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 
 	    this.pushBuffer = current.getPushBufferVar(init);
 	    
-	    this.pushCounter = current.getPushCounterVar(init);
-	    
-	    System.out.println(current + " " + this.pushCounter);   
+	    this.pushCounter = current.getPushCounterVar(init);	    
 	}
 	
-	this.popBuffer = current.getBufferVar(init);
+	this.popBuffer = current.getBufferVar(null /*this is a filter, so only one previous */,
+					      init);
 	this.popCounter = current.getPopCounterVar();
 	
     }

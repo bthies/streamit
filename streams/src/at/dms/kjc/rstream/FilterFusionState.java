@@ -9,12 +9,9 @@ import at.dms.kjc.sir.*;
 
 //each filter owns its popBuffer, the popBufferIndex, and the pushIndex
 //into the next filters popBuffer.
-public class FilterFusionState
+public class FilterFusionState extends FusionState
 {
-    private static HashMap filterState;
-    
-    private static int uniqueID = 0;
-    private static String BUFFERNAME = "__INTER_BUFFER_";
+
     private static String POPCOUNTERNAME = "__POP_COUNTER_";
     private static String PUSHCOUNTERNAME = "__PUSH_COUNTER_";
     private static String PEEKBUFFERNAME = "__PEEK_BUFFER_";
@@ -23,41 +20,21 @@ public class FilterFusionState
     private JVariableDefinition pushCounterVar;
     private JVariableDefinition pushCounterVarInit;
     private JVariableDefinition peekBufferVar;
-    private JVariableDefinition bufferVar;
-    private JVariableDefinition bufferVarInit;
     private JVariableDefinition loopCounterVar;
 
-    private int myUniqueID;
-
-    private FlatNode node;
+    
     private SIRFilter filter;
-    private int peekBufferSize;
-    
-    static 
-    {
-	filterState = new HashMap();
-    }
-    
-
-    public static FilterFusionState getFusionState(FlatNode node) 
-    {
-	if (!filterState.containsKey(node)) {
-	    filterState.put(node, new FilterFusionState(node));
-	}
-	
-	return (FilterFusionState)filterState.get(node);
-    }
-
-    
 
     /** this will create both the init and the steady buffer **/
-    private FilterFusionState(FlatNode fnode)
+    public FilterFusionState(FlatNode fnode)
     {
-	node = fnode;
-	myUniqueID = uniqueID++;
+	super(fnode);
 
 	filter = (SIRFilter)node.contents;
 	
+	bufferVar = new JVariableDefinition[1];
+	bufferVarInit = new JVariableDefinition[1];
+
 	createVariables();
     }
     
@@ -73,15 +50,14 @@ public class FilterFusionState
 	    myConsume = StrToRStream.getMult(node, true) * filter.getPopInt();
 
 
-	peekBufferSize = getLastProduced() - myConsume;
+	peekBufferSize = getLastProducedInit() - myConsume;
 	
-
 	assert peekBufferSize >= (filter.getPeekInt() - filter.getPopInt()) &&
-	    peekBufferSize >= 0;
+	    peekBufferSize >= 0 : peekBufferSize + " " + (filter.getPeekInt() - filter.getPopInt());
 
 	//do it for init, then do it for steady
-	bufferVarInit = makePopBuffer(StrToRStream.getMult(node, true));
-	bufferVar = makePopBuffer(StrToRStream.getMult(node, false));
+	bufferVarInit[0] = makePopBuffer(StrToRStream.getMult(node, true));
+	bufferVar[0] = makePopBuffer(StrToRStream.getMult(node, false));
 
 	popCounterVar = new JVariableDefinition(null,
 						0,
@@ -98,7 +74,7 @@ public class FilterFusionState
 	    assert node.ways == 1;
 	    assert node.edges[0] != null;
 	    
-	    FilterFusionState next = getFusionState(node.edges[0]);
+	    FusionState next = getFusionState(node.edges[0]);
 	    
 	    pushCounterVar = new JVariableDefinition(null,
 						     0,
@@ -157,10 +133,7 @@ public class FilterFusionState
 	return peekBufferVar;
     }
     
-    public JVariableDefinition getBufferVar(boolean init)
-    {
-	return init ? bufferVarInit : bufferVar;
-    }
+   
     
     public JVariableDefinition getPopCounterVar()
     {
@@ -176,53 +149,24 @@ public class FilterFusionState
     {
 	assert node.ways == 1;
 	
-	return getFusionState(node.edges[0]).getBufferVar(isInit);
+	return getFusionState(node.edges[0]).getBufferVar(node, isInit);
 	
     }
     
-
-    public int getPeekBufferSize() 
-    {
-	return peekBufferSize;
-    }
-    
-    public FlatNode getNode() 
-    {
-	return node;
-    }
-
-
-    
-    
-    private JStatement intAssignStm(JVariableDefinition def, int value) 
-    {
-	return new JExpressionStatement
-	    (null,
-	     new JAssignmentExpression
-	     (null, new JLocalVariableExpression(null, def),
-	      new JIntLiteral(value)),
-	     null);
-    }		   
-
-    private int getLastProduced() 
+    private int getLastProducedInit() 
     {
 	if (node.inputs < 1) 
 	    return 0;
 
 	FlatNode last = node.incoming[0];
-	
-	assert last.isFilter();
 
-	if (last.contents instanceof SIRTwoStageFilter) 
-	    return ((SIRTwoStageFilter)last.contents).getInitPush() +
-		(StrToRStream.getMult(last, true) - 1) * ((SIRFilter)last.contents).getPushInt();
-	else
-	    return ((SIRFilter)last.contents).getPushInt() * StrToRStream.getMult(last, true);
+	return Util.getItemsPushed(last, node) * StrToRStream.getMult(last, true);
+	
     }
 
     public JStatement getPopBufDecl(boolean isInit) 
     {
-	JVariableDefinition buf = isInit ? bufferVarInit : bufferVar;
+	JVariableDefinition buf = isInit ? bufferVarInit[0] : bufferVar[0];
 	
 	if (buf == null)
 	    return null;
@@ -291,7 +235,7 @@ public class FilterFusionState
 	// the lhs of the dest of the assignment
 	JExpression destLhs = 
 	    new JLocalVariableExpression(null,
-					 bufferVar);
+					 bufferVar[0]);
 	    
 	// the rhs of the dest of the assignment
 	JExpression destRhs = 
@@ -344,7 +288,7 @@ public class FilterFusionState
 	// the lhs of the source of the assignment
 	JExpression sourceLhs = 
 	    new JLocalVariableExpression(null,
-					 isInit ? bufferVarInit : bufferVar);
+					 isInit ? bufferVarInit[0] : bufferVar[0]);
 	    
 
 	JExpression sourceRhs = 

@@ -19,6 +19,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import at.dms.util.SIRPrinter;
+import at.dms.kjc.raw.*;
 
 /**
 
@@ -29,7 +30,6 @@ public class GenerateCCode
     private int uniqueID = 0;
 
     private Vector fields;
-    //private StringBuffer functionDecls;
     private Vector initFunctions;
     private JBlock main;
     private JMethodDeclaration mainMethod;
@@ -37,7 +37,6 @@ public class GenerateCCode
     private JBlock initFunctionCalls;
     private JBlock steady;
     private JBlock init;
-    private HashSet visited;
 
     private FlatIRToRS toRS;
 
@@ -45,6 +44,7 @@ public class GenerateCCode
 
     private ConvertArrayInitializers arrayInits;
 
+    
     public static void generate(FlatNode top) 
     {
 	new GenerateCCode(top);
@@ -52,8 +52,6 @@ public class GenerateCCode
     
     private GenerateCCode(FlatNode top) 
     {
-	visited = new HashSet();
-	
 	//initialize containers
 	main = new JBlock(null, new JStatement[0], null);
 	steady = new JBlock(null, new JStatement[0], null);
@@ -66,14 +64,19 @@ public class GenerateCCode
 	toRS = new FlatIRToRS();
 
 	arrayInits = new ConvertArrayInitializers();
+	
+	visitGraph(top, true);
+	//reset the uniqueID, so that nodes get the same ID
+	//between init and steady
+	uniqueID++;
+	visitGraph(top, false);
 
-	visitGraph(top);
 	setUpSIR();
 	writeCompleteFile();
     }
     
     //make everything into legal sir
-    public void setUpSIR() 
+    private void setUpSIR() 
     {
 	//add things to the main method, the only thing
 	//before this should be peek buffer declarations
@@ -98,21 +101,10 @@ public class GenerateCCode
 				   new JFormalParameter[0],
 				   new CClassType[0],
 				   main, null, null);
-
     }
-    
-    //place the array initializer blocks in the main method after
-    //any array local variable declaration
-    private void placeFieldArrayInits() 
-    {
-	Iterator blocks = arrayInits.fields.iterator();
-	while (blocks.hasNext()) {
-	    main.addStatement(((JBlock)blocks.next()));
-	}
-    }
+   
 
-
-    public void writeCompleteFile() 
+    private void writeCompleteFile() 
     {
 	StringBuffer str = new StringBuffer();
 
@@ -161,80 +153,91 @@ public class GenerateCCode
 	}
     }
 
-    public void visitGraph(FlatNode node) 
+    private void visitGraph(FlatNode top, boolean isInit) 
     {
-	assert !visited.contains(node) : "Feedbackloops not supported";
+	Iterator traversal = BreadthFirstTraversal.getTraversal(top).iterator();
 
-	visited.add(node);
-	
-	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    
-	    //two stage filters are currently only introduced by partitioning 
-	    assert !(filter instanceof SIRTwoStageFilter);
-	    
-	    assert node.ways <= 1 : "Filter FlatNode with more than one outgoing buffer";	    
+	while (traversal.hasNext()) {
+	    FlatNode node = (FlatNode)traversal.next();
 
-	    generateFilterCode((SIRFilter)node.contents, node);
+	    //increment uniqueID for any created variables
+	    uniqueID++;
 	    
-	    if (node.ways == 1) {
-		assert node.edges[0] != null : "Edge null";
-		visitGraph(node.edges[0]);
+	    if (node.isFilter()) {
+		SIRFilter filter = (SIRFilter)node.contents;
+		
+		//two stage filters are currently only introduced by partitioning 
+		assert !(filter instanceof SIRTwoStageFilter);
+		
+		assert node.ways <= 1 : "Filter FlatNode with more than one outgoing buffer";	    
+		
+		generateFilterCode((SIRFilter)node.contents, node, isInit);
 	    }
-	}
-	else if (node.isSplitter()) {
-	    assert false : "Not implemented";
-	}
-	else if (node.isJoiner()) {
-	    assert false : "Not implemented";
+	    else if (node.isSplitter()) {
+		generateSplitterCode((SIRSplitter)node.contents, node, isInit);
+	    }
+	    else if (node.isJoiner()) {
+		generateJoinerCode((SIRJoiner)node.contents, node, isInit);
+	    }
 	}
     }
     
     
-    public void generateFilterCode(SIRFilter filter, FlatNode node) 
+    
+    private void generateSplitterCode(SIRSplitter splitter, FlatNode node, boolean isInit)
     {
-	//increment uniqueID for any created variables
-	uniqueID++;
-
-	//run code optimizations and transformations
-	optimizeFilter(filter);
-
-	//add helper functions
-	for (int i = 0; i < filter.getMethods().length; i++) {
-	    if (filter.getMethods()[i] != filter.getInit() &&
-		filter.getMethods()[i] != filter.getWork())
-		functions.add(filter.getMethods()[i]);
-	}
-
-	//add init function
-	if (filter.getInit() != null)
-	    initFunctions.add(filter.getInit());
-
-	//add fields 
-	for (int i = 0; i < filter.getFields().length; i++) 
-	    fields.add(filter.getFields()[i]);
-
-	//add call to the init function to the init block
-	initFunctionCalls.addStatement(new JExpressionStatement
-			  (null, 
-			   new JMethodCallExpression
-			   (null, new JThisExpression(null),
-			    filter.getInit().getName(), new JExpression[0]),
-			   null));
-
-	FilterFusionState me = FilterFusionState.getFusionState(node);
-
-	//add the init schedule work calls to the init block...
-	addStmtArray(init, makeSchedule(me, filter, true));
+		
 	
-	//add the steady schedule work block to the steady block
-	addStmtArray(steady, makeSchedule(me, filter, false));
+    }
+    
+    private void generateJoinerCode(SIRJoiner joiner, FlatNode node, boolean isInit)
+    {
+	
+    }
 
-	//if this buffer peeks add the declaration for the peek buffer
-	//to the main function
-	JStatement peekBufDecl = me.getPeekBufDecl();
-	if (peekBufDecl != null) 
-	    main.addStatementFirst(peekBufDecl);
+    private void generateFilterCode(SIRFilter filter, FlatNode node, boolean isInit) 
+    {
+	FilterFusionState me = (FilterFusionState)FusionState.getFusionState(node);
+
+	//do all the things that we should do only once or during the init phase
+	if (isInit) {
+	    //run code optimizations and transformations
+	    optimizeFilter(filter);
+	    
+	    //add helper functions
+	    for (int i = 0; i < filter.getMethods().length; i++) {
+		if (filter.getMethods()[i] != filter.getInit() &&
+		    filter.getMethods()[i] != filter.getWork())
+		    functions.add(filter.getMethods()[i]);
+	    }
+	    
+	    //add init function
+	    if (filter.getInit() != null)
+		initFunctions.add(filter.getInit());
+	    
+	    //add fields 
+	    for (int i = 0; i < filter.getFields().length; i++) 
+		fields.add(filter.getFields()[i]);
+
+	    //add call to the init function to the init block
+	    initFunctionCalls.addStatement(new JExpressionStatement
+					   (null, 
+					    new JMethodCallExpression
+					    (null, new JThisExpression(null),
+					     filter.getInit().getName(), new JExpression[0]),
+					    null));
+
+	    //if this buffer peeks add the declaration for the peek buffer
+	    //to the main function
+	    JStatement peekBufDecl = me.getPeekBufDecl();
+	    if (peekBufDecl != null) 
+		main.addStatementFirst(peekBufDecl);
+	}
+	
+	//add the init schedule work calls to the init block...
+	addStmtArray(isInit ? init : steady, 
+		     makeSchedule(me, filter, isInit));
+	
     }
     
     private JStatement[] makeSchedule(FilterFusionState me, SIRFilter filter, boolean isInit) 
@@ -463,6 +466,15 @@ public class GenerateCCode
 	    block.addStatement(index++, stms[i]);
     }
     
+    //place the array initializer blocks in the main method after
+    //any array local variable declaration
+    private void placeFieldArrayInits() 
+    {
+	Iterator blocks = arrayInits.fields.iterator();
+	while (blocks.hasNext()) {
+	    main.addStatement(((JBlock)blocks.next()));
+	}
+    }
 
     private static String FORINDEXNAME = "__work_counter_";
     private static String RESTORECOUNTER = "__restore_counter_";

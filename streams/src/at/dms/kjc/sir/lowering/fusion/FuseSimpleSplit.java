@@ -6,13 +6,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.lowering.*;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
-import streamit.*;
-import streamit.scheduler1.*;
-import streamit.scheduler1.simple.*;
+import java.util.*;
 
 /**
  * This flattens certain cases of split/joins into a single filter.
@@ -30,7 +24,7 @@ public class FuseSimpleSplit {
 	if (!isFusable(sj)) {
 	    return sj;
 	} else {
-	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters!"); 
+	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters."); 
 	}
 
 	// get copy of child streams
@@ -548,46 +542,23 @@ class SRepInfo {
      * Makes the weights valid for the given <sj>
      */
     private void compute(SIRSplitJoin sj) {
-	// interface with the scheduler...
-	Scheduler scheduler = new SimpleHierarchicalScheduler();
-	SchedSplitJoin schedSplit = scheduler.newSchedSplitJoin(sj);
-	// keep track of the sched objects for the filters so we can
-	// retrieve their multiplicities
-	SchedFilter[] schedFilter = new SchedFilter[sj.size()];
-	for (int i=0; i<sj.size(); i++) {
-	    // get the filter
-	    SIRFilter filter = (SIRFilter)sj.get(i);
-	    // build scheduler representation of child
-	    schedFilter[i] = scheduler.newSchedFilter(filter, 
-						      filter.getPushInt(), 
-						      filter.getPopInt(),
-						      filter.getPeekInt());
-	    // add child to pipe
-	    schedSplit.addChild(schedFilter[i]);
-	}
-	// get the splitter, joiner
-	SIRSplitter splitter = sj.getSplitter();
-	SIRJoiner joiner = sj.getJoiner();
-	int[] splitWeights = splitter.getWeights();
-	int[] joinWeights = joiner.getWeights();
-	// set split type
-	schedSplit.setSplitType(scheduler.newSchedSplitType(splitter.getType().toSchedType(), 
-							    Utils.intArrayToList(splitWeights), 
-							    splitter));
 
-	// set join type
-	schedSplit.setJoinType(scheduler.newSchedJoinType(joiner.getType().toSchedType(), 
-							  Utils.intArrayToList(joinWeights),
-							  joiner));
-	
-	// compute schedule
-	scheduler.useStream(schedSplit);
-	scheduler.computeSchedule();
-	
-	// fill in the info for this
+	// fill in the execution count info for this
+	HashMap[] execCount = SIRScheduler.getExecutionCounts(sj);
 	for (int i=0; i<sj.size(); i++) {
-	    this.child[i] = schedFilter[i].getNumExecutions().intValue();
+	    // get the steady-state count
+	    int[] count = (int[])execCount[1].get(sj.get(i));
+	    if (count==null) {
+		this.child[i] = 0;
+	    } else {
+		this.child[i] = count[0];
+	    }
 	}
+
+	// infer how many times the splitter, joiner runs
+	int[] splitWeights = sj.getSplitter().getWeights();
+	int[] joinWeights = sj.getJoiner().getWeights();
+
 	// infer how many times the splitter, joiner runs
 	
 	// beware of sources in splits

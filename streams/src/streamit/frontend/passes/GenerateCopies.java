@@ -28,7 +28,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.4 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: GenerateCopies.java,v 1.5 2004-07-08 05:45:38 thies Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -69,7 +69,14 @@ public class GenerateCopies extends SymbolTableVisitor
      */
     private boolean needsCopy(Expression expr)
     {
-        return needsCopy(getType(expr));
+	// don't generate copies for array initializers, since we
+	// currently assume that they specify every literal in the
+	// array (they don't contain variable references).
+	if (expr instanceof ExprArrayInit) {
+	    return false;
+	} else {
+	    return needsCopy(getType(expr));
+	}
     }
 
     /**

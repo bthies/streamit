@@ -478,6 +478,15 @@ public class FEIRToSIR implements FEVisitor, Constants {
 				      (JExpression) exp.getOffset().accept(this));
   }
 
+    public Object visitExprArrayInit(ExprArrayInit exp) {
+	debug("In visitExprArrayInit\n");
+	JExpression[] elems = new JExpression[exp.getElements().size()];
+	for (int i=0; i<elems.length; i++) {
+	    elems[i] = (JExpression)((Expression)exp.getElements().get(i)).accept(this);
+	}
+	return new JArrayInitializer(null, elems);
+    }
+
   public Object visitExprBinary(ExprBinary exp) {
     debug("In visitExprBinary\n");
     switch(exp.getOp()) {

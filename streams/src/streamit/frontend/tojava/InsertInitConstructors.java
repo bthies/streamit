@@ -27,7 +27,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.17 2003-10-09 19:51:02 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.18 2004-07-08 05:45:42 thies Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -48,10 +48,19 @@ public class InsertInitConstructors extends InitMunger
      * This happens if the type is complex, or if it is not a
      * primitive type.  (Complex primitive types use the Java
      * 'Complex' class.)
+     *
+     * Call the version with the initializer when possible; if no
+     * initializer available, will assume to be null.
      */
     private static boolean needsConstructor(Type type)
     {
-        return type.isComplex() || !(type instanceof TypePrimitive);
+	return needsConstructor(type, null);
+    }
+    private static boolean needsConstructor(Type type, Expression initializer) {
+	return (type.isComplex() || 
+		(!(type instanceof TypePrimitive) && 
+		 // don't need constructors for arrays with initializers
+		 !(type instanceof TypeArray && initializer!=null)));
     }
 
     /**
@@ -67,13 +76,13 @@ public class InsertInitConstructors extends InitMunger
      *              arrays
      */
     private List stmtsForConstructor(FEContext ctx, Expression name,
-                                     Type type, boolean arrayConstructor)
+                                     Type type, Expression init, boolean arrayConstructor)
     {
         List result = new java.util.ArrayList();
 
         // If the type doesn't involve a constructor, there are no
         // generated statements.
-        if (!needsConstructor(type))
+        if (!needsConstructor(type, init))
             return result;
 
         // No; generate the constructor.
@@ -96,7 +105,7 @@ public class InsertInitConstructors extends InitMunger
                     // Construct the new left-hand side:
                     Expression lhs = new ExprField(ctx, name, fname);
                     // Get child constructors and add them:
-                    result.addAll(stmtsForConstructor(ctx, lhs, ftype, true));
+                    result.addAll(stmtsForConstructor(ctx, lhs, ftype, null, true));
                 }
             }
         }
@@ -130,7 +139,7 @@ public class InsertInitConstructors extends InitMunger
                 Expression lhs = new ExprArray(ctx, name, varExp);
                 Statement body =
                     new StmtBlock(ctx,
-                                  stmtsForConstructor(ctx, lhs, base, false));
+                                  stmtsForConstructor(ctx, lhs, base, null, false));
                 Statement loop =
                     new StmtFor(ctx, decl, cond, incr, body);
                 result.add(loop);
@@ -158,11 +167,12 @@ public class InsertInitConstructors extends InitMunger
             for (int i = 0; i < field.getNumFields(); i++)
             {
                 Type type = field.getType(i);
-                if (needsConstructor(type))
+                Expression init = field.getInit(i);
+                if (needsConstructor(type, init))
                 {
                     FEContext ctx = field.getContext();
                     Expression lhs = new ExprVar(ctx, field.getName(i));
-                    newStmts.addAll(stmtsForConstructor(ctx, lhs, type, true));
+                    newStmts.addAll(stmtsForConstructor(ctx, lhs, type, init, true));
                 }
             }
         }
@@ -193,7 +203,7 @@ public class InsertInitConstructors extends InitMunger
         // the initializer.)
         boolean needed = false;
         for (int i = 0; i < decl.getNumVars(); i++)
-            if (needsConstructor(decl.getType(i)))
+            if (needsConstructor(decl.getType(i), decl.getInit(i)))
                 needed = true;
         if (!needed)
             return decl;
@@ -208,11 +218,12 @@ public class InsertInitConstructors extends InitMunger
         for (int i = 0; i < decl.getNumVars(); i++)
         {
             Type type = decl.getType(i);
-            if (needsConstructor(type))
+            Expression init = decl.getInit(i);
+            if (needsConstructor(type, init))
             {
                 FEContext ctx = decl.getContext();
                 Expression lhs = new ExprVar(ctx, decl.getName(i));
-                addStatements(stmtsForConstructor(ctx, lhs, type, true));
+                addStatements(stmtsForConstructor(ctx, lhs, type, init, true));
             }
         }
 

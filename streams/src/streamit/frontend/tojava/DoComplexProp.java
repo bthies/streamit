@@ -44,7 +44,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.24 2003-10-13 18:31:18 jasperln Exp $
+ * @version $Id: DoComplexProp.java,v 1.25 2004-07-08 05:45:42 thies Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -205,9 +205,19 @@ public class DoComplexProp extends SymbolTableVisitor
         // If the type of the expression is complex, decompose it;
         // otherwise, move on.
         if (getType(exp).isComplex())
+	    // this path will never be taken because <exp> will be an
+	    // array type, not a complex type, right?  --BFT
             return makeComplexPair(exp);
         else
             return exp;
+    }
+
+    public Object visitExprArrayInit(ExprArrayInit exp)
+    {
+	// Not sure what to do here -- let's try visiting the super.
+	// I bet that static initializers with complex numbers would
+	// fail at this point.  --BFT
+	return super.visitExprArrayInit(exp);
     }
 
     public Object visitSCSimple(SCSimple creator)

@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.84 2004-04-23 23:59:12 rabbah Exp $
+ * @version $Id: NodesToJava.java,v 1.85 2004-07-08 05:45:42 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -279,6 +279,28 @@ public class NodesToJava implements FEVisitor
         result += (String)exp.getOffset().accept(this);
         result += "]";
         return result;
+    }
+    
+    public Object visitExprArrayInit(ExprArrayInit exp)
+    {
+	StringBuffer sb = new StringBuffer();
+	sb.append("{");
+
+	List elems = exp.getElements();
+	for (int i=0; i<elems.size(); i++) {
+	    sb.append((String)((Expression)elems.get(i)).accept(this));
+	    if (i!=elems.size()-1) {
+		sb.append(",");
+	    }
+	    // leave blank line for multi-dim arrays
+	    if (exp.getDims()>1) {
+		sb.append("\n");
+	    }
+	}
+	
+	sb.append("}");
+
+        return sb.toString();
     }
     
     public Object visitExprBinary(ExprBinary exp)

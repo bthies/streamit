@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.47 2004-02-12 20:47:06 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.48 2004-07-08 05:45:31 thies Exp $
  */
 
 header {
@@ -121,11 +121,11 @@ returns [StreamSpec ss]
 field_decl returns [FieldDecl f] { f = null; Type t; Expression x = null;
 	List ts = new ArrayList(); List ns = new ArrayList();
 	List xs = new ArrayList(); FEContext ctx = null; }
-	:	t=data_type id:ID (ASSIGN x=right_expr)?
+	:	t=data_type id:ID (ASSIGN x=var_initializer)?
 		{ ctx = getContext(id); ts.add(t); ns.add(id.getText()); xs.add(x); }
 		(
 			{ x = null; }
-			COMMA id2:ID (ASSIGN x=right_expr)?
+			COMMA id2:ID (ASSIGN x=var_initializer)?
 			{ ts.add(t); ns.add(id2.getText()); xs.add(x); }
 		)*
 		{ f = new FieldDecl(ctx, ts, ns, xs); }
@@ -321,11 +321,11 @@ variable_decl returns [Statement s] { s = null; Type t; Expression x = null;
 	List xs = new ArrayList(); FEContext ctx = null; }
 	:	t=data_type
 		id:ID { ctx = getContext(id); }
-		(ASSIGN x=right_expr)?
+		(ASSIGN x=var_initializer)?
 		{ ts.add(t); ns.add(id.getText()); xs.add(x); }
 		(
 			{ x = null; }
-			COMMA id2:ID (ASSIGN x=right_expr)?
+			COMMA id2:ID (ASSIGN x=var_initializer)?
 			{ ts.add(t); ns.add(id2.getText()); xs.add(x); }
 		)*
 		{ s = new StmtVarDecl(ctx, ts, ns, xs); }
@@ -444,6 +444,22 @@ left_expr returns [Expression x] { x = null; }
 right_expr returns [Expression x] { x = null; }
 	:	x=ternaryExpr
 	;
+
+var_initializer returns [Expression x] { x = null; }
+	:	x=right_expr
+        | x=arr_initializer
+	;
+
+arr_initializer returns [Expression x] { ArrayList l = new ArrayList(); 
+                                         x = null;
+                                         Expression y; }
+    : lc:LCURLY
+      ( y=var_initializer { l.add(y); }
+            (COMMA y=var_initializer { l.add(y); })*
+      )?
+      RCURLY
+        { x = new ExprArrayInit(getContext(lc), l); } 
+    ;
 
 ternaryExpr returns [Expression x] { x = null; Expression b, c; }
 	:	x=logicOrExpr

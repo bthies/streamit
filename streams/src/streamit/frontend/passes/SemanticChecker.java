@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.21 2004-01-27 23:20:59 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.22 2004-07-08 05:45:39 thies Exp $
  */
 public class SemanticChecker
 {
@@ -728,6 +728,48 @@ public class SemanticChecker
                     return super.visitExprArray(expr);
                 }
 
+                public Object visitExprArrayInit(ExprArrayInit expr)
+                {
+		    // check for uniform length and dimensions among all children.
+		    List elems = expr.getElements();
+		    
+		    // only worry about it if we have elements
+		    if (elems.size()>0) {
+			Expression first = (Expression)elems.get(0);
+			// if one is an array, they should all be
+			// arrays of the same length and dimensions
+			if (first instanceof ExprArrayInit) {
+			    ExprArrayInit firstArr = (ExprArrayInit)first;
+			    for (int i=1; i<elems.size(); i++) {
+				ExprArrayInit other = (ExprArrayInit)elems.get(i);
+				if (firstArr.getDims() != other.getDims()) {
+				    report(expr, 
+					   "non-uniform number of array " +
+					   "dimensions in array initializer");
+				}
+				if (firstArr.getElements().size() != other.getElements().size()) {
+				    report(expr, 
+					   "two rows of a multi-dimensional " +  
+					   "array are initialized to different " + 
+					   "lengths (arrays must be rectangular)");
+				}
+			    }
+			} else {
+			    // if first element is not array, no other
+			    // element should be an array
+			    for (int i=1; i<elems.size(); i++) {
+				if (elems.get(i) instanceof ExprArrayInit) {
+				    report(expr, 
+					   "non-uniform number of array " +
+					   "dimensions in array initializer");
+				}
+			    }
+			}
+		    }
+		    
+                    return super.visitExprArrayInit(expr);
+                }
+
                 public Object visitExprPeek(ExprPeek expr)
                 {
                     Type it = getType(expr.getExpr());
@@ -741,6 +783,35 @@ public class SemanticChecker
                     
                     return super.visitExprPeek(expr);                    
                 }
+
+		public Object visitFieldDecl(FieldDecl field) {
+		    // check that array sizes match
+		    for (int i=0; i<field.getNumFields(); i++) {
+			Type type = field.getType(i);
+			Expression init = field.getInit(i);
+			if (type instanceof TypeArray && init!=null) {
+			    // check that initializer is array initializer
+			    // (I guess it could also be conditional expression?  Don't bother.)
+			    if (!(init instanceof ExprArrayInit)) {
+				report (field, "array initialized to non-array type");
+			    } else {
+				// check that lengths match
+				Expression lengthExpr = ((TypeArray)type).getLength();
+				// only check it if we have resolved it
+				if (lengthExpr instanceof ExprConstInt) {
+				    int length = ((ExprConstInt)lengthExpr).getVal();
+				    if (length != ((ExprArrayInit)init).getElements().size()) {
+					report(field, 
+					       "declared array length does not match " +
+					       "array initializer");
+				    }
+				}
+			    }
+			}
+		    }
+
+		    return super.visitFieldDecl(field);
+		}
 
                 public Object visitStmtPush(StmtPush stmt)
                 {

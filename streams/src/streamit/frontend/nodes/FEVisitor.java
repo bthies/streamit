@@ -28,11 +28,12 @@ package streamit.frontend.nodes;
  * <code>FENode.accept()</code> method of the object in question.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEVisitor.java,v 1.14 2003-12-01 21:44:19 dmaze Exp $
+ * @version $Id: FEVisitor.java,v 1.15 2004-07-08 05:45:35 thies Exp $
  */
 public interface FEVisitor
 {
     public Object visitExprArray(ExprArray exp);
+    public Object visitExprArrayInit(ExprArrayInit exp);
     public Object visitExprBinary(ExprBinary exp);
     public Object visitExprComplex(ExprComplex exp);
     public Object visitExprConstBoolean(ExprConstBoolean exp);

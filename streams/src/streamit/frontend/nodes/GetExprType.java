@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.14 2004-02-13 21:25:06 dmaze Exp $
+ * @version $Id: GetExprType.java,v 1.15 2004-07-08 05:45:35 thies Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -46,6 +46,32 @@ public class GetExprType extends FENullVisitor
         Type base = (Type)exp.getBase().accept(this);
         // ASSERT: base is a TypeArray.
         return ((TypeArray)base).getBase();
+    }
+
+    public Object visitExprArrayInit(ExprArrayInit exp)
+    {
+	// want to determine these about the array
+	Type base;
+	int length;
+
+	// get the elements
+	List elems = exp.getElements();
+
+	// not sure what to do for base type if array is empty... try
+	// keeping it null --BFT
+	if (elems.size()==0) {
+	    base = null;
+	} else {
+	    // otherwise, take promotion over all elements declared
+	    base = (Type)((Expression)elems.get(0)).accept(this);
+	    
+	    for (int i=1; i<elems.size(); i++) {
+		Type t = (Type)((Expression)elems.get(i)).accept(this);
+		base = t.leastCommonPromotion(t);
+	    }
+	}
+	
+	return new TypeArray(base, new ExprConstInt(elems.size()));
     }
 
     public Object visitExprBinary(ExprBinary exp)

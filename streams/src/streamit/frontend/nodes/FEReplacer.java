@@ -52,7 +52,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.32 2004-02-13 21:23:53 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.33 2004-07-08 05:45:35 thies Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -144,6 +144,21 @@ public class FEReplacer implements FEVisitor
             return new ExprArray(exp.getContext(), base, offset);
     }
     
+    public Object visitExprArrayInit(ExprArrayInit exp)
+    {
+        boolean hasChanged = false;
+        List newElements = new ArrayList();
+        for (Iterator iter = exp.getElements().iterator(); iter.hasNext(); )
+        {
+            Expression element = (Expression)iter.next();
+            Expression newElement = doExpression(element);
+            newElements.add(newElement);
+            if (element != newElement) hasChanged = true;
+        }
+        if (!hasChanged) return exp;
+        return new ExprArrayInit(exp.getContext(), newElements);
+    }
+
     public Object visitExprBinary(ExprBinary exp)
     {
         Expression left = doExpression(exp.getLeft());

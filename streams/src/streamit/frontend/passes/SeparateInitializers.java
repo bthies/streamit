@@ -19,6 +19,7 @@ package streamit.frontend.passes;
 import streamit.frontend.nodes.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Separate variable initializers into separate statements.  Given
@@ -36,15 +37,23 @@ import java.util.List;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SeparateInitializers.java,v 1.3 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: SeparateInitializers.java,v 1.4 2004-07-08 05:45:39 thies Exp $
  */
 public class SeparateInitializers extends FEReplacer
 {
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        // Make sure the variable declaration stays first.
-        // This will have no initializers at all.
-        List newInits = Collections.nCopies(stmt.getNumVars(), null);
+        // Make sure the variable declaration stays first.  This will
+        // have no initializers, except for where there is an array
+        // initializer.
+	ArrayList newInits = new ArrayList(stmt.getNumVars());
+	for (int i=0; i<stmt.getNumVars(); i++) {
+	    if (stmt.getInit(i) instanceof ExprArrayInit) {
+		newInits.add(stmt.getInit(i));
+	    } else {
+		newInits.add(null);
+	    }
+	}
         Statement newDecl = new StmtVarDecl(stmt.getContext(),
                                             stmt.getTypes(),
                                             stmt.getNames(),
@@ -57,7 +66,9 @@ public class SeparateInitializers extends FEReplacer
         {
             String name = stmt.getName(i);
             Expression init = stmt.getInit(i);
-            if (init != null)
+	    // don't separate array initializations, because it become
+	    // illegal syntax
+            if (init != null && !(init instanceof ExprArrayInit))
             {
                 Statement assign =
                     new StmtAssign(stmt.getContext(),

@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.16 2004-04-21 17:34:18 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.17 2004-05-20 16:09:48 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -226,6 +226,15 @@ public class LinearFilterRepresentation {
 	    preB.setElement(i,i,ComplexNumber.ONE);
 
 	return preB;
+    }
+
+
+    public void cleanEntries() {
+
+	A.cleanEntries(); 
+	B.cleanEntries();
+	C.cleanEntries();
+	D.cleanEntries();
     }
 
 

@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.13 2004-05-12 18:38:25 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.14 2004-05-20 16:09:48 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -118,6 +118,20 @@ public class FilterMatrix {
 	validateBounds(row, col);
 	this.internalMatrixReal[row][col] = realNumber;
     }
+
+
+    public void cleanEntries() {
+	ComplexNumber temp;
+
+	for(int i=0; i<this.internalSizeRows; i++)
+	    for(int j=0; j<this.internalSizeCols; j++) {
+		temp = this.getElement(i,j);
+		if(temp.isReal()&&temp.isIntegral()) {
+		    this.setElement(i,j,Math.round(temp.getReal()));
+		}
+	    }
+    }
+
 
     /**
      * Returns a "trimmed" version of this, in which unused (0) peek

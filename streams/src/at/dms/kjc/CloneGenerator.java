@@ -119,6 +119,9 @@ public class CloneGenerator {
 		// for now, ignore serialization handles.  To be
 		// changed once we get complete new cloning framework.
 		sb.append("  other." + name + " = this." + name + ";\n");
+	    } else if  (name.equals("parent") && c.getName().equals("at.dms.kjc.sir.SIROperator")) {
+		// ignore SIROperator.parent, because this clones the entire tree
+		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
 		// otherwise call toplevel cloning method
 		sb.append("  other." + name + " = (" + printSourceType(type) + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");

@@ -2695,7 +2695,7 @@ protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);
   other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
   other.anonCreation = this.anonCreation;
-  other.nextLatency = this.nextLatency;
+  other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

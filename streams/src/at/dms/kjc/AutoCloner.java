@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 import at.dms.compiler.JavaStyleComment;
+import at.dms.compiler.TokenReference;
 
 import java.io.*;
 import java.util.*;
@@ -133,6 +134,7 @@ public class AutoCloner {
 	else if (typeName.startsWith("at.dms.kjc.C") ||
 		 o instanceof JLiteral ||
 		 o instanceof JavaStyleComment ||
+		 o instanceof TokenReference ||
 		 o instanceof SIRSplitType ||
 		 o instanceof SIRJoinType ||
 		 o instanceof String ||
@@ -153,10 +155,31 @@ public class AutoCloner {
 	} 
 	// arrays -- need to clone children as well
 	else if (o.getClass().isArray()) {
-	    result = ((Object[])o).clone();
+	    // don't clone arrays of certain element types...
+	    boolean shouldClone;
+	    Object[] arr = (Object[])o;
+	    if (arr.length > 0) {
+		Object elem = arr[0];
+		// don't clone these array types
+		if (elem instanceof JavaStyleComment) {
+		    shouldClone = false;
+		} else {
+		    shouldClone = true;
+		}
+	    } else {
+		shouldClone = true;
+	    }
+	    // clone array if we decided to
+	    if (shouldClone) {
+		result = ((Object[])o).clone();
+	    } else {
+		result = o;
+	    }
 	    register(o, result);
-	    cloneWithinArray((Object[])result);
-	} 
+	    if (shouldClone) {
+		cloneWithinArray((Object[])result);
+	    }
+	}
 	// enumerate the list types to make the java compiler happy
 	// with calling the .clone() method
 	else if (o instanceof LinkedList) {

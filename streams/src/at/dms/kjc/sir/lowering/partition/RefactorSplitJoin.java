@@ -210,6 +210,7 @@ public class RefactorSplitJoin {
 			// make partitiongroup, putting each child in its own group
 			SIRPipeline synced = addSyncPoints(self, PartitionGroup.createUniformPartition(self.getRectangularHeight()));
 			self.getParent().replace(self, synced);
+			Lifter.eliminatePipe(synced);
 		    }
 		}});
 	// lift all but sync points we added

@@ -72,6 +72,14 @@ public class Propagator extends SLIRReplacingVisitor {
 	knownFields=new Hashtable();
     }
     
+    public Propagator construct(Hashtable constants) {
+	return new Propagator(constants);
+    }
+
+    public Propagator construct(Hashtable constants,boolean write) {
+	return new Propagator(constants,write);
+    }
+
     public Hashtable getConstants() {
 	return constants;
     }
@@ -91,7 +99,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
-	    Propagator newProp=new Propagator(cloneTable(constants),false);
+	    Propagator newProp=construct(cloneTable(constants),false);
 	    cond.accept(newProp);
 	    body.accept(newProp);
 	    Enumeration remove=newProp.changed.keys();
@@ -182,7 +190,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    }
 	    Propagator[] propagators=new Propagator[body.length];
 	    for (int i = 0; i < body.length; i++) {
-		Propagator prop=new Propagator(cloneTable(constants),true);
+		Propagator prop=construct(cloneTable(constants),true);
 		propagators[i]=prop;
 		body[i].accept(prop);
 	    }
@@ -279,8 +287,8 @@ public class Propagator extends SLIRReplacingVisitor {
 			return new JEmptyStatement(self.getTokenReference(), null);
 		}
 	    // propagate through then and else
-	    Propagator thenProp=new Propagator(cloneTable(constants),true);
-	    Propagator elseProp=new Propagator(cloneTable(constants),true);
+	    Propagator thenProp=construct(cloneTable(constants),true);
+	    Propagator elseProp=construct(cloneTable(constants),true);
 	    thenClause.accept(thenProp);
 	    if (elseClause != null) {
 		elseClause.accept(elseProp);
@@ -374,7 +382,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
-	    Propagator newProp=new Propagator(cloneTable(constants),false);
+	    Propagator newProp=construct(cloneTable(constants),false);
 	    init.accept(newProp);
 	    incr.accept(newProp);
 	    cond.accept(newProp);

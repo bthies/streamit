@@ -133,24 +133,39 @@ public class ConstantProp {
 	// recursion method depends on whether or not there are still
 	// init statements
 	if (Flattener.INIT_STATEMENTS_RESOLVED) {
+	    System.err.println("Recurse From 2:"+str);
 	    for (int i=0; i<str.size(); i++) {
 		recurseInto(str.get(i), str.getParams(i), constants);
 	    }
 	} else {
 	    // iterate through statements of init function, looking for
 	    // SIRInit's
+	    //System.err.println("Recurse From 1:"+str+" {");
 	    InitPropagator prop=new InitPropagator(constants);
 	    str.getInit().accept(prop);
 	    constants=prop.getConstants();
-	    for (int i=0; i<str.size(); i++) {
-		recurseInto(str.get(i), str.getParams(i), constants);
-	    }
+	    //System.err.println("}");
+	    //for (int i=0; i<str.size(); i++) {
+	    //recurseInto(str.get(i), str.getParams(i), constants);
+	    //}
 	}
     }
 
     class InitPropagator extends Propagator {
 	public InitPropagator(Hashtable constants) {
 	    super(constants);
+	}
+
+	public InitPropagator(Hashtable constants,boolean write) {
+	    super(constants,write);
+	}
+	
+	public Propagator construct(Hashtable constants) {
+	    return new InitPropagator(constants);
+	}
+	
+	public Propagator construct(Hashtable constants,boolean write) {
+	    return new InitPropagator(constants,write);
 	}
 	
 	public Object visitInitStatement(SIRInitStatement self,
@@ -167,12 +182,14 @@ public class ConstantProp {
     private void recurseInto(SIRStream str, List args, Hashtable constants) {
 	JMethodDeclaration initMethod = str.getInit();
 	// if there is no init function, we're done
+	//System.err.println("   Recursing into:"+str);
 	if (initMethod==null) {
 	    return;
 	}
 	JFormalParameter[] parameters = initMethod.getParameters();
 	// build new constants
 	for (int i=0; i<args.size(); i++) {
+	    //System.err.println("Arg "+i+"="+args.get(i));
 	    // if we are passing an arg to the init function...
 	    if (args.get(i) instanceof JLiteral) {
 		//System.err.println("!! top finding " + parameters[i].getIdent() + " " + parameters[i].hashCode() + " = " + args.get(i) + " in call to " + str.getIdent());

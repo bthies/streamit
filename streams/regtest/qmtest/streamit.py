@@ -1,7 +1,7 @@
 #
 # streamit.py: Python extensions to QMTest for StreamIt
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: streamit.py,v 1.3 2003-11-20 22:42:39 dmaze Exp $
+# $Id: streamit.py,v 1.4 2003-11-23 15:42:00 dmaze Exp $
 #
 
 # This file just defines some extra test classes that QMTest can use.
@@ -13,20 +13,43 @@ import os.path
 import qm.executable
 from   qm.fields import *
 import qm.test.test
+import signal
+import threading
 import re
 
 class TimedExecutable(qm.executable.RedirectedExecutable):
     # TODO: make this configurable.
     timeout = 20 * 60
 
-    # Insert some texec in here.
+    # Limitations here: we can't set a signal handler, because
+    # this sometimes gets run in a thread.  We want to kill all
+    # of our children (recursively).  texec doesn't seem to be
+    # reliable.
+    #
+    # New thought: when we spawn a child, make the child a process
+    # group.  Then set a thread-based timeout.  When the timeout
+    # trips, kill the child process group.
+    def Spawn(self, arguments=[], environment=None, dir=None,
+              path=None, exception_pipe=None):
+        self.pid = qm.executable.RedirectedExecutable.Spawn \
+                   (self, arguments, environment, dir, path,
+                    exception_pipe)
+        os.setpgid(self.pid, 0)
+        self.timer = threading.Timer(self.timeout, self._OnTimeout)
+        self.timer.start()
+        return self.pid
+
     def Run(self, arguments=[], environment=None, dir=None, path=None):
-        newpath = os.environ["STREAMIT_HOME"] + "/regtest/tools/texec/texec"
-	if not path: path=arguments[0]
-        arguments = [newpath, '-s', str(self.timeout), path] + arguments[1:]
-        return qm.executable.RedirectedExecutable.Run(self, arguments,
-                                                      environment,
-                                                      dir, newpath)
+        status = qm.executable.RedirectedExecutable.Run \
+                 (self, arguments, environment, dir, path)
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
+        return status
+
+    def _OnTimeout(self):
+        os.kill(-self.pid, signal.SIGTERM)
+        self.timer = None
 
 class BackendField(EnumerationField):
     """A field containing a StreamIt compiler backend."""

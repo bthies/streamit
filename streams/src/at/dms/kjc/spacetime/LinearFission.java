@@ -13,9 +13,9 @@ public class LinearFission {
 	double constant=content.getConstant();
 	final int len=(int)Math.ceil(((double)array.length)/num);
 	final int realNum=(int)Math.ceil(((double)array.length)/len);
-	System.out.println("NUM: "+num);
-	System.out.println("LEN: "+len);
-	System.out.println("REALNUM: "+realNum);
+	//System.out.println("NUM: "+num);
+	//System.out.println("LEN: "+len);
+	//System.out.println("REALNUM: "+realNum);
 	content.setTotal(num);
 	FilterContent[] out=new FilterContent[realNum];
 	for(int i=0;i<realNum;i++)

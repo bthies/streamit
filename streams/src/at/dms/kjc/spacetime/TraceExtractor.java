@@ -49,8 +49,8 @@ public class TraceExtractor {
 		    trace=new Trace((InputTraceNode)node);
 		    if(content.isLinear()) {
 			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
-			for(int i=0;i<linearStuff.length;i++)
-			    System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
+			//for(int i=0;i<linearStuff.length;i++)
+			//System.out.println("Linear: "+linearStuff[i].getArray().length+" "+linearStuff[i].getArray()[0]);
 			for(int i=0;i<linearStuff.length;i++) {
 			    FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
 			    node.setNext(filterNode);

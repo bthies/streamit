@@ -20,12 +20,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
     /**
      * Amount the current line of text should be indented by
      */
-    private int indent;
+    protected int indent;
     
     /**
      * Where printed text should go
      */
-    private BufferedWriter p;
+    protected BufferedWriter p;
 
     /**
      * Default constructor.  Writes IR to standard output.

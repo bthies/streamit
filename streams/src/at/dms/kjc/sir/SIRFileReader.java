@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.sir.lowering.Propagator;
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.*;
@@ -12,7 +13,7 @@ public class SIRFileReader extends SIRPredefinedFilter implements Cloneable {
     /**
      * The filename of the data source.
      */
-    private String fileName;
+    private JExpression fileName;
 
     public SIRFileReader() {
 	super(null,
@@ -23,15 +24,28 @@ public class SIRFileReader extends SIRPredefinedFilter implements Cloneable {
 	      new JIntLiteral(null, 0),
 	      new JIntLiteral(null, 1),
 	      CStdType.Void, null);
-	this.fileName = "";
+	this.fileName = new JStringLiteral("");
     }
 
-    public void setFileName(String fileName) {
+    public void setFileName(JExpression fileName) {
 	this.fileName = fileName;
     }
 
     public String getFileName() {
-	return this.fileName;
+	if (!(fileName instanceof JStringLiteral)) {
+	    System.err.println("Error:  have not yet resolved filename for filereader.\n" +
+			       "        the filename expression is " + fileName);
+	    new RuntimeException().printStackTrace();
+	    System.exit(1);
+	}
+	return ((JStringLiteral)fileName).stringValue();
+    }
+
+    public void propagatePredefinedFields(Propagator propagator) {
+	JExpression newFilename = (JExpression)fileName.accept(propagator);
+	if (newFilename!=null && newFilename!=fileName) {
+	    fileName = newFilename;
+	}
     }
 
 /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
@@ -47,7 +61,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRFileReader other) {
   super.deepCloneInto(other);
-  other.fileName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);
+  other.fileName = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

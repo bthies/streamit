@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.sir.lowering.Propagator;
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.*;
@@ -42,6 +43,13 @@ public class SIRPredefinedFilter extends SIRFilter implements Cloneable {
 
     public String getTypeNameInC() {
         return "ContextContainer";
+    }
+
+    /**
+     * Uses <propagator> to propagate constants into predefined fields
+     * of this.  To be overridden by implementors.
+     */
+    public void propagatePredefinedFields(Propagator propagator) {
     }
 
 /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

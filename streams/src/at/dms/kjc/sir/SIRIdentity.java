@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import at.dms.kjc.sir.lowering.Propagator;
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import at.dms.kjc.*;
@@ -56,7 +57,15 @@ public class SIRIdentity extends SIRPredefinedFilter implements Cloneable, Const
     {
 	return rate;
     }
-    
+
+
+    public void propagatePredefinedFields(Propagator propagator) {
+	JExpression newRate = (JExpression)rate.accept(propagator);
+	if (newRate!=null && newRate!=rate) {
+	    rate = newRate;
+	}
+    }
+
     /**
      * Set the input type and output type to t
      * also sets the work function and init function

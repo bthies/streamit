@@ -12,7 +12,7 @@ public class ComputeCodeStore {
     //set to false if you do not want to generate 
     //the work functions calls or inline them
     //useful for debugging
-    private static final boolean CODE = false;
+    private static final boolean CODE = true;
 
     protected JFieldDeclaration[] fields;
     protected JMethodDeclaration[] methods;

@@ -200,6 +200,7 @@ public class Unroller extends SLIRReplacingVisitor {
 				    JExpression cond,
 				    JStatement incr,
 				    JStatement body) {
+
 	// to do the right thing if someone set an unroll factor of 0
 	// (or 1, which means to do nothing)
 	if((KjcOptions.unroll>1 || inContainerInit) && !self.getUnrolled()) { //Ignore if already unrolled
@@ -221,7 +222,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	    // unrollings up, but don't want to eliminate record of
 	    // previous unrolling
 	    hasUnrolled = saveHasUnrolled || childHasUnrolled;
-	    
+
 	    // only unroll if we're set to unroll outer loops, or if
 	    // child hasn't unrolled, or if we're doing the init
 	    // function
@@ -249,7 +250,8 @@ public class Unroller extends SLIRReplacingVisitor {
 		// because we don't want to consider it again and
 		// unroll it when children were unrolled by a
 		// different unroller
-		self.setUnrolled(true);
+		if (!childHasUnrolled)
+		    self.setUnrolled(true);
 	    }
 	    saveModified.putAll(currentModified);
 	    currentModified=saveModified;
@@ -306,6 +308,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	// otherwise calculate how many times the loop will execute,
 	// and only unroll if it is within our max unroll range
 	int count = getNumExecutions(info);
+
 	return count <= KjcOptions.unroll;
     }
 

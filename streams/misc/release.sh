@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.23 2003-10-14 16:14:42 dmaze Exp $
+# $Id: release.sh,v 1.24 2003-10-14 20:34:54 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -46,9 +46,11 @@ done
 WORKING=$TMPDIR/streamit-$USER-$$
 mkdir $WORKING
 SRCDIR=$WORKING/streams
+STREAMIT_HOME=$SRCDIR
 SRCTAR=$WORKING/streamit-src-$VERSION.tar
 BINDIR=$WORKING/streamit-$VERSION
 BINTAR=$WORKING/streamit-$VERSION.tar
+export STREAMIT_HOME
 
 # Helper function to add a list of directories to $DIRS
 builddirs() {
@@ -62,6 +64,7 @@ DIRS="streams/strc streams/Makefile streams/README.source"
 builddirs streams 3rdparty src library include misc configure.in
 builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes release syntax
+builddirs streams/docs index.html
 
 cvs export -r $TAG -d $WORKING $DIRS
 
@@ -99,6 +102,9 @@ find $WORKING/streams/docs \( -name '*.aux' -o -name '*.log' \
 for f in COPYING COPYING.GPL INSTALL NEWS OPTIONS README REGTEST; do
   mv $WORKING/streams/docs/release/$f $WORKING/streams
 done
+$WORKING/streams/misc/build-bench-doc
+mv $WORKING/streams/apps/benchmarks.html $WORKING/streams/docs
+rm $WORKING/streams/apps/benchall.xml
 
 # Make stable copies for all of the trees.  Clean the binary tree a little
 # in the process.
@@ -126,8 +132,7 @@ $SRCDIR/misc/get-antlr $SRCDIR/3rdparty/antlr.jar
 CLASSPATH=$SRCDIR/3rdparty/antlr.jar
 
 # Now do a reference build.
-STREAMIT_HOME=$SRCDIR
-export CLASSPATH STREAMIT_HOME
+export CLASSPATH
 . $STREAMIT_HOME/include/dot-bashrc
 make -C $SRCDIR/src jar CAG_BUILD=0
 

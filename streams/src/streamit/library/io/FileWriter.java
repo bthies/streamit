@@ -84,7 +84,7 @@ public class FileWriter extends Filter
     }
 
     /**
-     * Destructor
+     * Destructor closes the file written.
      */
     public void DELETE ()
     {

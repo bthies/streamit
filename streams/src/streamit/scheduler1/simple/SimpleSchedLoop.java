@@ -392,9 +392,9 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
             steadySchedule.add (myBody.getSteadySchedule ());
             steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), mySplitter.getStreamObject ()));
             steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getSplitType ().getStreamObject ()));
-            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getChild (1).getStreamObject ()));
+            steadySchedule.add (new SchedRepSchedule (BigInteger.valueOf (160), LTPSplitJoin.getChild (1).getSteadySchedule ()));
             steadySchedule.add (LTPSplitJoin.getJoinType ().getStreamObject ());
-            steadySchedule.add (LTPFilter.getStreamObject ());
+            steadySchedule.add (LTPFilter.getSteadySchedule ());
         }
 
         scheduler.schedule.setBufferSize (myJoiner.getStreamObject (), myBody.getStreamObject (), BigInteger.valueOf (41));

@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.28 2003-09-29 20:41:05 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.29 2003-10-02 18:48:26 dmaze Exp $
  **/
 package streamittest;
 
@@ -73,27 +73,18 @@ public class TestBenchmarks extends StreamITTestCase {
     {
         String root = BENCH_ROOT + "beamformer/streamit/";
         doMake(root);
-	// first test java versions as hand-written
-	testBeamFormerJava(root);
-	// then generate java from new syntax and test those, too
-        doSyntaxConvertTest(root, "BeamFormer.str", "BeamFormer.java");
-        doSyntaxConvertTest(root, "CoarseBeamFormer.str", "CoarseBeamFormer.java");
-        doSyntaxConvertTest(root, "SerializedBeamFormer.str", "SerializedBeamFormer.java");
-        doSyntaxConvertTest(root, "CoarseSerializedBeamFormer.str", "CoarseSerializedBeamFormer.java");
-	// run java tests again
-	testBeamFormerJava(root);
-    }
-
-    // only tests the java versions of the programs
-    private void testBeamFormerJava(String root) {
 	// plain beamformer
+        doSyntaxConvertTest(root, "BeamFormer.str", "BeamFormer.java");
         doCompileTest(root, "BeamFormer.java");
         doRunTest(root, "BeamFormer.java", 0, 4);
 	// coarse-grained beamformer
+        doSyntaxConvertTest(root, "CoarseBeamFormer.str", "CoarseBeamFormer.java");
         doCompileTest(root, "CoarseBeamFormer.java");
         doRunTest(root, "CoarseBeamFormer.java", 0, 128);
         // serialized versions, for output checking
+        doSyntaxConvertTest(root, "SerializedBeamFormer.str", "SerializedBeamFormer.java");
 	doCompileRunVerifyTest(root, "SerializedBeamFormer.java", "SerializedBeamFormer.out", 0, 4);
+        doSyntaxConvertTest(root, "CoarseSerializedBeamFormer.str", "CoarseSerializedBeamFormer.java");
 	doCompileRunVerifyTest(root, "CoarseSerializedBeamFormer.java", "CoarseSerializedBeamFormer.out", 0, 128);
     }
 

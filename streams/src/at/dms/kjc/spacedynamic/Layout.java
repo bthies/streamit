@@ -602,7 +602,7 @@ public class Layout extends at.dms.util.Utils implements
 
 		items *= Util.getTypeSize(Util.getOutputType(src));
 		//calculate communication cost of this node and add it to the cost sum
-		cost += ((items * hops) + 10 * (items * numAssigned));
+		cost += ((items * hops) + (items * numAssigned));
 	    }   
 	}
 	SpaceDynamicBackend.addAll(usedTiles, tiles);
@@ -653,12 +653,13 @@ public class Layout extends at.dms.util.Utils implements
 		usedTiles.add(tile);
 	    }
 	}
-	return 5 * cost;
+	return cost;
     }
     
     
     //return true if the node should be assigned to a tile
-    public static boolean assignNode(FlatNode node) 
+    //keep this consistent with visitNode!!!
+    public static boolean assignedNode(FlatNode node)
     {
 	//if this is a filter and not an file reader/write/identity/predefined
 	if (node.contents instanceof SIRFilter && 
@@ -667,6 +668,8 @@ public class Layout extends at.dms.util.Utils implements
 	    return true;
 	
 	if (node.contents instanceof SIRJoiner) {
+	    if (node.edges.length == 0)
+		return false;
 	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
 		//do not assign the joiner if JoinerRemoval wants is removed...
 		//if (JoinerRemoval.unnecessary != null && 

@@ -393,7 +393,9 @@ public class StaticStreamGraph
 	    else if (bottomLevel.isJoiner()) {
 		assert nexts.size() == bottomLevel.incoming.length &&
 		    bottomLevel.incoming.length == ((SIRJoiner)bottomLevel.contents).getWays() &&
-		    outputs.length == nexts.size();
+		    outputs.length == nexts.size() : 
+		    "Partitioning problem: The partition changed the number of inputs or outputs of SSG " + 
+		    this.toString();
 		for (int i = 0; i < outputs.length; i++) 
 		    outputs[i] = bottomLevel.incoming[i];
 	    }
@@ -879,6 +881,18 @@ public class StaticStreamGraph
 	return streamGraph;
     }
 
+    public int countAssignedNodes() 
+    {
+	int assignedNodes = 0;
+	
+	Iterator nodes = flatNodes.iterator();
+	while (nodes.hasNext()) {
+	    if (Layout.assignedNode((FlatNode)nodes.next()))
+		assignedNodes++;
+	}
+	return assignedNodes;
+    }
+    
 
     public int filterCount() 
     {

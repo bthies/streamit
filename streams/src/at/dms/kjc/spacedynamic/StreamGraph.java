@@ -319,11 +319,11 @@ public class StreamGraph
 	
 	for (int i = 0; i < staticSubGraphs.length; i++) {
 	    current = staticSubGraphs[i];
-	    int filters = current.filterCount();
+	    int assignedNodes = current.countAssignedNodes();
 	    
 	    while (true) {
 		System.out.print("Number of tiles for " + current + " (" + numTilesToAssign +
-				   " tiles left, " + filters + " filters in subgraph): ");
+				   " tiles left, " + assignedNodes + " nodes in subgraph): ");
 		try {
 		    num = Integer.valueOf(inputBuffer.readLine()).intValue();
 		}

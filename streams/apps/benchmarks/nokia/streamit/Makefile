@@ -14,7 +14,8 @@ LIB_FILES =	AdapTest.java \
 		chold.java \
 		FloatIdentity.java \
 		multiply.java \
-		SelfProd.java
+		SelfProd.java \
+		DelayPipeline.java
 
 MAIN	  = 	dcalc
 

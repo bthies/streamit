@@ -59,6 +59,7 @@ public abstract class SIRStream extends SIROperator {
      */
     public void setInit(JMethodDeclaration init) {
 	this.init = init;
+	
 	addMethod(init);
     }
 
@@ -85,6 +86,32 @@ public abstract class SIRStream extends SIROperator {
 	// reset old to new
 	this.methods = newMethods;
     }
+
+    
+    /**
+     * adds field <field> to this, if <field> is not already registered
+     * as a field of this.  
+     */
+    public void addField(JFieldDeclaration field) {
+	// see if we already have <field> in this
+	for (int i=0; i<fields.length; i++) {
+	    if (fields[i]==field) {
+		return;
+	    }
+	}
+	// otherwise, create new fields array
+	JFieldDeclaration[] newFields = new JFieldDeclaration[fields.length
+								+ 1];
+	// copy in new field
+	newFields[0] = field;
+	// copy in old fields
+	for (int i=0; i<fields.length; i++) {
+	    newFields[i+1] = fields[i];
+	}
+	// reset old to new
+	this.fields = newFields;
+    }
+
 
     /**
      * Returns whether or not a function named <name> is defined in this.

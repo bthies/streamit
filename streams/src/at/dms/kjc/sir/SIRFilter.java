@@ -95,6 +95,7 @@ public class SIRFilter extends SIRStream {
     }
     public void setWork (JMethodDeclaration w) {
 	this.work = w;
+	addMethod(w);
     }
     public void setInputType(CType t){
 	this.inputType = t;

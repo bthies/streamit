@@ -7,6 +7,11 @@ import streamit.*;
 
 public class HDTV extends StreamIt 
 {
+    //static final int NUM_TRELLIS_ENCODERS = 12;
+    static final int NUM_TRELLIS_ENCODERS = 12;
+    //static final int INTERLEAVE_DEPTH = 52;
+    static final int INTERLEAVE_DEPTH = 5;
+
     //include variables for parsing here!
     public static void main(String args[]) 
     {
@@ -16,7 +21,7 @@ public class HDTV extends StreamIt
 
     public void init() {
 	// add a data source
-	this.add(new DataSource());
+	this.add(new DataSegmentGenerator());
 	
 	// add an encoder
 	this.add(new HDTVEncodePipeline());
@@ -25,7 +30,7 @@ public class HDTV extends StreamIt
 	this.add(new HDTVDecodePipeline());
 
 	// print what comes out of the decoder
-	this.add(new DataSink());
+	this.add(new DataSegmentSink());
 
     }
 
@@ -33,82 +38,93 @@ public class HDTV extends StreamIt
 
 class HDTVEncodePipeline extends Pipeline {
     public void init() {
+	// -- data is integers in integers--
+
 	// split integers into "bytes"
 	this.add(new IntegerSplitter());
 
+	// -- data is bytes in integers--
+	
 	// encode using reed-solomon encoder
 	this.add(new ReedSolomonEncoder());
 
-	// split "bytes" into "bits"
-	this.add(new Bitifier());
-
+	// -- data is bytes in integers--
+	
 	// convolutionally interleave
-	// NOTE:not sure that this is possible with streamIT
-
+	//this.add(new ConvolutionalInterleaver(HDTV.INTERLEAVE_DEPTH));
+	
+	// -- data is bytes in integers--
+	
 	// interleave and trellis encode
-	this.add(new TrellisEncoderPipeline());
+	this.add(new TrellisEncoderPipeline(HDTV.NUM_TRELLIS_ENCODERS));
+
+	// -- data is bits in integers--
+
+	// reorder the bits
+	this.add(new DataReorder(1)); // 1 means reorder
+
+	// -- data is bits in integers--
 	
 	// create our symbols to transmit over the noisy channel
 	this.add(new SymbolMapper());
+
+	// -- data is 8 level symbols in integers--
+	// add the four symbol sync to the symbols
+	this.add(new SyncGenerator());
+
+	// -- data is 8 level symbols in integers--	
     }
 }
 
 
 class HDTVDecodePipeline extends Pipeline {
     public void init() {
+	// -- data is 8 level symbols in integers--
+
+	// remove the sync field from the symbols that come
+	// in over the channel
+	this.add(new SyncRemover());
 	
+	// -- data is 8 level symbols in integers--	
 
 	// decode symbols received over the channel
 	this.add(new SymbolUnMapper());
 
+	// -- data is bits in integers--
+
+	// un-reorder the bits
+	this.add(new DataReorder(2)); // 1 means un-reorder
+
+	// -- data is bits in integers--
+
 	// trellis decode and de-interleave
-	this.add(new TrellisDecoderPipeline());
+	this.add(new TrellisDecoderPipeline(HDTV.NUM_TRELLIS_ENCODERS));
+
+	// -- data is bytes in integers--
 	
 	// convolutionally deinterleave and decode
-	// NOTE: Not sure that this is possible with streamIT
+	//this.add(new ConvolutionalDeinterleaver(HDTV.INTERLEAVE_DEPTH));
 
-	// recombine "bits" into "bytes"
-	this.add(new UnBitifier());
+	// -- data is bytes in integers--
 
 	// decode (and correct errors with reed solomon
 	this.add(new ReedSolomonDecoder());
+
+	// -- data is bytes in integers--
 	
 	// recombine "bytes" back into integers
 	this.add(new IntegerCombiner());
+
+	// -- data is integers in integers--
 	
     }    
-}
-
-
-/** Trellis Interleave/Encoder pipeline **/
-class TrellisEncoderPipeline extends SplitJoin {
-    public void init() {
-	int NUM = 12; // number of ways to interleave
-	this.setSplitter(ROUND_ROBIN());
-	for (int i=0; i<NUM; i++) {
-	    this.add(new TrellisEncoder());
-	}
-	this.setJoiner(ROUND_ROBIN());
-    }
-}
-
-/** Trellis Decoder/Deinterleaver pipeline **/
-class TrellisDecoderPipeline extends SplitJoin {
-    public void init() {
-	int NUM = 12; // number of ways to deinterleave
-	this.setSplitter(ROUND_ROBIN());
-	for (int i=0; i<NUM; i++) {
-	    this.add(new TrellisDecoder());
-	}
-	this.setJoiner(ROUND_ROBIN());
-    }
 }
 
 
 /**
  * Data source for sample application
  **/
-class DataSource extends Filter {
+class DataSegmentGenerator extends Filter {
     int x=0;
     public void init() {
 	output = new Channel(Integer.TYPE, 1); // pushes 1 item per cycle
@@ -122,7 +138,7 @@ class DataSource extends Filter {
 /**
  * Data sink for sample app (prints out data).
  **/
-class DataSink extends Filter {
+class DataSegmentSink extends Filter {
     public void init() {
 	input = new Channel(Integer.TYPE,1); // pops 1 item per cycle
     }
@@ -130,6 +146,7 @@ class DataSink extends Filter {
 	System.out.println(input.popInt());
     }
 }
+
 
 /**
  * Prints data on the way by.
@@ -195,51 +212,65 @@ class IntegerCombiner extends Filter {
 }
 
 
+
 /**
- * Bitifier -- converts a byte (masquarading as an integer)
- * into a stream of bits (also masquarading as integers).
- * In digital systems, this is known as a shift register
- * (MSB is shifted out first).
+ * Adds a Sync field (I do not know what this contains at the present)
+ * on the front of a data segment.
+ *
+ * 828 8-level-symbols are transmitted per data segment, and attached
+ * to the front of those 828 symbols are 4 binary sync levels, for a
+ * grand total of 832 symbols sent over the channel per data segment.
  **/
-class Bitifier extends Filter {
+class SyncGenerator extends Filter {
+    final int DATA_SEGMENT_SIZE = 828;
+    final int SYNC_SIZE         = 4;
     public void init() {
-	input  = new Channel(Integer.TYPE, 1); // pops 1 "bytes"
-	output = new Channel(Integer.TYPE, 8); // pushes 8 "bits"
+	input  = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE);
+	output = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE + SYNC_SIZE);
+    }
+    public void work() {
+	// push out the sync value on to the output tape
+	generateSync();
+	// copy the remaining 828 symbols from the input to the output
+	for (int i=0; i<DATA_SEGMENT_SIZE; i++) {
+	    output.pushInt(input.popInt());
+	}
+    }
+    public void generateSync() {
+	// the sync, according to the a53, rev b spec
+	// is binary 1001, encoded as symbols
+	// 5 -5 -5 5
+	output.pushInt(5);
+	output.pushInt(-5);
+	output.pushInt(-5);
+	output.pushInt(5);
     }
 
-    public void work() {
-	int left = input.popInt(); // pull off the byte
-	for (int i=0; i<8; i++) {
-	    // shift out the bits one by one (msb first)
-	    output.pushInt((left & 0x80) >> 7);
-	    // set up next shift
-	    left = left << 1;
-	}
-    }    
 }
 
 
 /**
- * UnBitifier -- converts a stream of bits (masquarading as integers)
- * into byte (also masquarading as an integer).
- * In digital systems, this is also a shift register
- * (MSB is shifted in first).
+ * Removes a Sync field (I do not know what this contains at the present)
+ * the front of a data segment. Totally ignores the sync data
  **/
-class UnBitifier extends Filter {
+class SyncRemover extends Filter {
+    final int DATA_SEGMENT_SIZE = 828;
+    final int SYNC_SIZE         = 4;
     public void init() {
-	input  = new Channel(Integer.TYPE, 8); // pops 1 "bits"
-	output = new Channel(Integer.TYPE, 1); // pushes 1 "byte"
+	input  = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE + SYNC_SIZE);
+	output = new Channel(Integer.TYPE, DATA_SEGMENT_SIZE);
     }
-
     public void work() {
-	int accum = 0;
-	for (int i=0; i<8; i++) {
-	    // shift in 8 bits
-	    accum = accum << 1;
-	    accum = accum | input.popInt();
+	int i;
+	// pop off the sync
+	for (i=0; i<SYNC_SIZE;i++) {
+	    input.popInt();
 	}
-	output.pushInt(accum);
-    }    
+	// copy the rest of the data over
+	for (i=0; i<DATA_SEGMENT_SIZE; i++) {
+	    output.pushInt(input.popInt());
+	}
+    }
 }
 
 
@@ -253,63 +284,7 @@ class UnBitifier extends Filter {
 
 
 
-/**
- * Symbol Encoder -- maps sequences of 3 bits to
- * a symbol that is to be transmitted over the
- * the airwaves. Therefore it takes in 3 "bits"
- * and produces one "symbol" as output. LSB is brought in first.
- **/
-class SymbolMapper extends Filter {
-    int[] map;
-    public void init() {
-	input  = new Channel(Integer.TYPE, 3); // input three bits
-	output = new Channel(Integer.TYPE, 1); // output one symbol
-	setupMap();
-    }
-    public void work() {
-	// shift in the bits (msb is first)
-	int index = 0;
-	for (int i=0; i<3; i++) {
-	    index = index << 1;
-	    index = index | input.popInt();
-	}
-	// do a symbol lookup on the index
-	output.pushInt(this.map[index]);
-	
-    }
-
-    void setupMap() {
-	this.map = new int[8];
-	map[0] = -7;
-	map[1] = -5;
-	map[2] = -3;
-	map[3] = -1;
-	map[4] = 1;
-	map[5] = 3;
-	map[6] = 5;
-	map[7] = 7;
-    }
-}
 
 
-/**
- * Symbol Decoder -- maps a symbol to a sequence of 3 bits.
- **/
-class SymbolUnMapper extends Filter {
-    public void init() {
-	input  = new Channel(Integer.TYPE, 1); // input 1 symbol
-	output = new Channel(Integer.TYPE, 3); // output 3 bits
-    }
-    public void work() {
-	int sym = input.popInt();
-	int index = (sym+7)/2; // easy formula to recover the data from symbol
 
-	//now, shift out the bits, msb first
-	for (int i=0; i<3; i++) {
-	    output.pushInt((index & 0x04) >> 2);
-	    index = index << 1;
-	}
-    }
-
-}
 

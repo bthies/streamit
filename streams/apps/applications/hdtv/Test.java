@@ -12,6 +12,7 @@ public class Test extends StreamIt
 	// add a data source
 	//this.add(new TestDataSource());
 	this.add(new SimpleTestDataSource());
+	//this.add(new LimitedSimpleTestDataSource(100));
 
 	// try a delay pipeline
 	//this.add(new DelayPipeline(5));
@@ -20,7 +21,17 @@ public class Test extends StreamIt
 	this.add(new ConvolutionalInterleaver(5));
 	this.add(new ConvolutionalDeinterleaver(5));	
 
+	// try trellis encoding/decoding pipeline
+	//this.add(new TrellisEncoderPipeline());
+	//this.add(new TrellisDecoderPipeline());
 
+	// try data reordering...
+	//this.add(new Bitifier());
+	//this.add(new DataReorder(1));
+	//this.add(new DataReorder(2));
+	//this.add(new UnBitifier());
+	
+	
 	// add a reed solomon encoder
 	//this.add(new ReedSolomonEncoder());
 	//this.add(new ReedSolomonDecoder());
@@ -77,7 +88,7 @@ class TestDataSource extends Filter {
 class SimpleTestDataSource extends Filter {
     int x;
     public void init() {
-	this.x = 10;
+	this.x = 0;
 	output = new Channel(Integer.TYPE, 1);
     }
     public void work() {
@@ -85,6 +96,25 @@ class SimpleTestDataSource extends Filter {
 	this.x++;
     }
 }
+
+
+class LimitedSimpleTestDataSource extends Filter {
+    int x;
+    int limit;
+    public LimitedSimpleTestDataSource(int l) {
+	super(l);
+    }
+    public void init(int l) {
+	this.limit = l;
+	this.x = 0;
+	output = new Channel(Integer.TYPE, 1);
+    }
+    public void work() {
+	output.pushInt(this.x);
+	this.x = (this.x + 1) % limit;
+    }
+}
+
 
 class TestDataSink extends Filter {
     public void init() {
@@ -119,3 +149,5 @@ class TestDataSnooper extends Filter {
 }	
 	    
 	 
+
+

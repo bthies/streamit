@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.1 2004-02-17 18:27:05 dmaze Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.2 2004-02-17 20:34:23 dmaze Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -33,6 +33,7 @@ public class SIRToStreamIt
         
         // Flattener code: run constant prop and such.
         ConstantProp.propagateAndUnroll(str);
+        ConstructSIRTree.doit(str);
         
         SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.out)));
 
@@ -1093,6 +1094,20 @@ public class SIRToStreamIt
                 fl.getJoiner().accept(this);
                 newLine();
                 fl.getSplitter().accept(this);
+            }
+            if (theStream instanceof SIRContainer)
+            {
+                SIRContainer cont = (SIRContainer)theStream;
+                for (int i = 0; i < cont.size(); i++)
+                {
+                    SIRStream child = cont.get(i);
+                    List params = cont.getParams(i);
+                    // synthesize an SIRInitStatement, then visit
+                    // it to print an add/body/loop statement and
+                    // enqueue the stream's code to be printed.
+                    newLine();
+                    new SIRInitStatement(params, child).accept(this);
+                }
             }
         }
         pos -= TAB_SIZE;

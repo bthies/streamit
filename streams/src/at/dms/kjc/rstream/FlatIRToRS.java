@@ -81,8 +81,8 @@ public class FlatIRToRS extends ToC
 	//element-wise copy!!
 	
 	if (!StrToRStream.GENERATE_ABSARRAY && 
-	    left.getType() != null && left.getType().isArrayType() &&
-	    right.getType() != null && right.getType().isArrayType()) {
+	    (left.getType() != null && left.getType().isArrayType()) ||
+	    (right.getType() != null && right.getType().isArrayType())) {
 	    arrayCopy(left, right);
 	    return;
 	}
@@ -176,7 +176,7 @@ public class FlatIRToRS extends ToC
     /**
      * print an abstract array declaration and return the number of dimensions
      **/
-    private int handleArrayDecl(String ident, CType type) 
+    private int handleArrayDecl(String ident, CType type)
     {
 	
 	String brackets = StrToRStream.GENERATE_ABSARRAY ? "[[" : "";
@@ -193,6 +193,8 @@ public class FlatIRToRS extends ToC
 	
 	if (StrToRStream.GENERATE_ABSARRAY)
 	    brackets = brackets + "]]";
+	else
+	    brackets = brackets + "[]";
 	
 	//current type should now be the base type
 	print(currentType);
@@ -204,6 +206,30 @@ public class FlatIRToRS extends ToC
     }
     
     
+    private void printArrayType(CArrayType type) 
+    {
+	String brackets = StrToRStream.GENERATE_ABSARRAY ? "[[" : "";
+	
+	CType currentType = ((CArrayType)type).getElementType();
+	//keep stripping off array types until we get a base type
+	while (currentType.isArrayType()) {
+	    brackets = brackets + 
+		(StrToRStream.GENERATE_ABSARRAY ? "," : "*");
+	    currentType = ((CArrayType)currentType).getElementType();
+	}
+	
+	if (StrToRStream.GENERATE_ABSARRAY)
+	    brackets = brackets + "]]";
+	else 
+	    brackets = brackets + "*";
+	
+	//current type should now be the base type
+	print(currentType);
+	print(" ");
+	print(brackets);
+    }
+    
+
     /** 
      * given a string (for field) or a JVariableDefinition (for locals)
      * find the corresponding JNewArrayExpression, return null if none was found
@@ -655,7 +681,7 @@ public class FlatIRToRS extends ToC
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
 	if (s instanceof CArrayType){
-	    handleArrayDecl("", s);
+	    printArrayType((CArrayType)s);
 	    //assert false : "Should not be printing an array type";
         }
         else if (s.getTypeID() == TID_BOOLEAN)
@@ -677,26 +703,39 @@ public class FlatIRToRS extends ToC
 	String ident = "";
 	//this is used to find the new array expression
 	//it is either a string for fields or JVarDef for locals
-	Object var = null;
+	Object varDef = null;
+	//the var access expression
+	JExpression var = left;
 	
-	if (left instanceof JFieldAccessExpression) {
-	    var = ((JFieldAccessExpression)left).getIdent();
-	    ident = ((JFieldAccessExpression)left).getIdent();
+	//if this is an array access expression, get the variable access
+	if (left instanceof JArrayAccessExpression) {
+	    var = Util.getVar((JArrayAccessExpression)left);
 	}
-	else if (left instanceof JLocalVariableExpression) {
-	    var = ((JLocalVariableExpression)left).getVariable();
-	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
+	
+
+	if (var instanceof JFieldAccessExpression) {
+	    varDef = ((JFieldAccessExpression)var).getIdent();
+	    ident = ((JFieldAccessExpression)var).getIdent();
+	}
+	else if (var instanceof JLocalVariableExpression) {
+	    varDef = ((JLocalVariableExpression)var).getVariable();
+	    ident = ((JLocalVariableExpression)var).getVariable().getIdent();
 	}
 	else 
 	    Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
 	
-	assert getDim(left.getType()) == getDim(right.getType()) :
-	    "Array dimensions of variables of array assignment do not match";
+	//	assert getDim(left.getType()) == getDim(right.getType()) :
+	//    "Array dimensions of variables of array assignment do not match";
 	
 	//find the number of dimensions
-	int bound = getDim(left.getType());
+	int bound = getDim(right.getType());
 	//find the extent of each dimension
-	int[] dims = getDims(getNewArrayExpr(var));
+	int[] dims = getDims(getNewArrayExpr(varDef));
+	//if we are assigning elements from a lower dimension array to a higher
+	//dim array, remember the difference
+	int diff = dims.length - bound;
+	
+	assert diff >= 0 : "Error in array copy: " + left + " = " + right;
 
 	assert bound > 0;
 
@@ -710,7 +749,7 @@ public class FlatIRToRS extends ToC
 	print(";\n");
 	for (int i = 0; i < bound; i++) {
 	    print("for (" + FlatIRToRS.ARRAY_COPY + i + " = 0; " + FlatIRToRS.ARRAY_COPY + i +  
-		  " < " + dims[i] + "; " + FlatIRToRS.ARRAY_COPY + i + "++)\n");
+		  " < " + dims[i + diff] + "; " + FlatIRToRS.ARRAY_COPY + i + "++)\n");
 	}
 	left.accept(this);
 	for (int i = 0; i < bound; i++)
@@ -724,6 +763,32 @@ public class FlatIRToRS extends ToC
     }
     
 
+
+    /**
+     * prints a cast expression
+     */
+    public void visitCastExpression(JCastExpression self,
+				    JExpression expr,
+				    CType type)
+    {
+	//hack, if we not generating abstract arrays
+	//then don't print array casts for C
+	if (!StrToRStream.GENERATE_ABSARRAY && type.isArrayType()) {
+	    expr.accept(this);
+	    return;
+	}
+	
+	    
+	print("(");
+        print("(");
+	print(type);
+        print(")");
+        print("(");
+	expr.accept(this);
+	print(")");
+        print(")");
+    }
+    
 
     // ----------------------------------------------------------------------
     // UNUSED STREAM VISITORS

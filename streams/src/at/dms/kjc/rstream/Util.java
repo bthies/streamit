@@ -78,6 +78,16 @@ public class Util extends at.dms.util.Utils {
 	return type;
     }
 
+    //get the variable access in an array access expression
+    public static JExpression getVar(JArrayAccessExpression expr) 
+    {
+	if (!(expr.getPrefix() instanceof JArrayAccessExpression))
+	    return expr.getPrefix();
+	else
+	    return getVar((JArrayAccessExpression)expr.getPrefix());
+    }
+    
+
     public static String[] makeString(JExpression[] dims) {
 	String[] ret = new String[dims.length];
 	

@@ -137,9 +137,14 @@ public class GenerateCCode
 						   JExpression left,
 						   String ident)
 		{
-		    assert left instanceof JThisExpression : 
-			"Non-JThisExpression for prefix of field expression";
-		    
+		    //if not a this expression, then we have a field access of a 
+		    //variable that is a structure.  So just visit the expression
+		    //and construct a new field access
+		    if (!(left instanceof JThisExpression))
+			return new JFieldAccessExpression(null, (JExpression)left.accept(this), 
+							  ident,
+							  null);
+
 		    assert (stringVarDef.containsKey(ident)) &&
 			(stringVarDef.get(ident) instanceof JVariableDefinition) :
 			"Error converting fields to locals, name not found";

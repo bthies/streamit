@@ -152,21 +152,10 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	
 	if (bufferSize == 0)
 	    return null;
-
-	JExpression[] dims = { new JIntLiteral(null, bufferSize) };
-	JExpression initializer = 
-	    new JNewArrayExpression(null,
-				    Utils.voidToInt(filter.getInputType()),
-				    dims,
-				    null);
 	// make a buffer for all the items looked at in a round
-	return new JVariableDefinition(null,
-				       at.dms.kjc.Constants.ACC_FINAL,
-				       new CArrayType(Utils.voidToInt(filter.
-								      getInputType()), 
-						      1 /* dimension */ ),
-				       BUFFERNAME + myUniqueID,
-				       initializer);
+	return makeBuffer(bufferSize, filter.getInputType(),
+			  BUFFERNAME + myUniqueID);
+	
     }
     
     public void initTasks(Vector fields, Vector functions,

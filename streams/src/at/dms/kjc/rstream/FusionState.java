@@ -39,7 +39,6 @@ public abstract class FusionState
 	this.myUniqueID = uniqueID++;
 	remaining = new int[Math.max(1, node.inputs)];
 	remaining[0] = 0;
-	System.out.println("UniqueID " + myUniqueID + " = " + node);
     }
 
     public abstract int getBufferSize(FlatNode prev, boolean init);
@@ -153,7 +152,53 @@ public abstract class FusionState
 					new JIntLiteral(remainingItems));
     }
 
-    protected static String BACKUPCOUNTER = "__backup_counter_";
+    protected JVariableDefinition makeBuffer(int bufferSize,
+					     CType elementType,
+					     String bufferName) 
+    {
+	if (bufferSize == 0 || elementType == CStdType.Void)
+	    return null;
+	
+	int dim = 1;  // the dimensionality of the pop buffer
+	//the dims of the element type we are passing over the channle
+	//for non-array's this will be null
+	JExpression[] elementDims = new JExpression[0];
+	    
+	//we have an array type
+	if (elementType.isArrayType()) {
+	    elementDims = ((CArrayType)elementType).getDims();
+	    dim += elementDims.length;
+	}
+
+	JExpression[] dims = new JExpression[dim];
+	//set the 0 dim to the size of the buffer
+	dims[0] = new JIntLiteral(bufferSize);
+
+	//set the remaining dims to be equal to the dims
+	//of the elements, if we have an array
+	for (int i = 1; i < dims.length; i++)
+	    dims[i] = elementDims[i-1];
+	
+	CArrayType bufferType = new CArrayType(elementType, 
+					       1);
+	
+	JExpression initializer = 
+	    new JNewArrayExpression(null,
+				    bufferType,
+				    dims,
+				    null);
+
+	return new JVariableDefinition(null,
+				       at.dms.kjc.Constants.ACC_FINAL,
+				       bufferType,
+				       bufferName,
+				       initializer);
+    }
     
+
+    protected static String BACKUPCOUNTER = "__backup_counter_";
+
+
+
 }
 

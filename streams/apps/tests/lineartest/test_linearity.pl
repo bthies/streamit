@@ -5,7 +5,6 @@
 use strict;
 
 my $RESULTS_DIR = "workingfiles";
-my $REPORT_FILE = "report.txt";
 my $GRAPH_FILE  = "graphs.tex";
 
 
@@ -70,17 +69,11 @@ my @files = (
 	     
 	     );
 
+
 # delete the output files from any previous runs
 `rm -rf $RESULTS_DIR`;
 # remake the directory
 `mkdir $RESULTS_DIR`;
-# remove the old report file
-`rf -f $REPORT_FILE`;
-
-# open the file handle for writing reports to
-open(RFILE, ">$REPORT_FILE");
-# write the TSV header
-print RFILE "file(s)\tLinear Filters/Total Filters (% linear)\n";
 
 # open the graph file and write a header to it.
 open(GFILE, ">$GRAPH_FILE");
@@ -107,46 +100,58 @@ foreach $current_file (@files) {
 
     # copy the "linear.dot" file into the result directory
     print `cp linear.dot $base_filename.dot`;
+    # remove the old copy (so we don't get duplicates if linearanalysis dies)
+    print `rm linear.dot`;
     # use dot to make a ps file
     print `dot -Tps $base_filename.dot > $base_filename.ps`;
-    # convert ps to eps
-    print `ps2epsi $base_filename.ps $base_filename.eps`;
-
-    # add data to the latex graph file to import this figure
-    print GFILE "\\begin{figure}\n\\center\n";    
-    print GFILE "\\epsfxsize=4.5in\n";
-    print GFILE "\\epsfbox{$base_filename.eps}\n";
-    print GFILE "\\caption{Linearity graph for $current_file}\n";
-    print GFILE "\\end{figure}\n\n";
     
+    # extract the base filename
+    my @parts = split("/", $current_file);
+    my $section_name = pop(@parts);
     
 
     # parse the output from the compiler into $base_filename.parsed
-    $command = "parse_linear_output.pl $base_filename.output > $base_filename.parsed";
-    `$command`;
+    print  `parse_linear_output.pl $base_filename.output > $base_filename.parsed`;
 
     # read in the output and get the Linearity Report
     my $output = read_file("$base_filename.output");
-    #print "output: " . $output;
     $output =~ m/Linearity Report\n(.*?\n\n)/sgi;
     my $report = $1;
     chomp($report);
-
     # give the report a header (like what file it refers to...)
     $report = "File: " . $current_file . "\n" . $report;
-
     # Write the report to the screen
     print $report;
 
-    # munge the report and write a line to our report tsv file
-    $report =~ m/Filters:(\s*)(.*)/;
-    print RFILE "$current_file\t$2\n";
 
+    # Set up the section reserved for the linearity report
+    print GFILE "\\section{Linearity Report for $section_name}\n";
+
+    # add the data from parsing the output with the parse_lienar_tex.pl part
+    print GFILE "\\subsection{Matrix Representations of $section_name}\n";
+    print GFILE `parse_linear_tex.pl $base_filename.output`;
+
+    # add a section with the linearity report
+    print GFILE "\\subsection{Filter breakdown for $section_name}\n";
+    print GFILE "\\begin{verbatim}\n";
+    print GFILE "$report\n";
+    print GFILE "\\end{verbatim}\n\n";
+ 
+    # add data to the latex graph file to import this figure
+    print GFILE "\\subsection{Stream Graph for $section_name}\n";
+    print GFILE "\\begin{figure}\n\\center\n";    
+    print GFILE "\\epsfxsize=\\hsize\n";
+    print GFILE "\\epsfysize=\\vsize\n";
+    print GFILE "\\epsfbox{$base_filename.ps}\n";
+    print GFILE "\\caption{Linearity graph for $current_file}\n";
+    print GFILE "\\end{figure}\n";
+    print GFILE "\\clearpage\n\n";
+     
+    # delete the output to conserve disk space.
+    print `rm $base_filename.output`;
 
 }
 
-# close up the report file
-close(RFILE);
 # close up the graph file
 print GFILE make_latex_footer();
 close(GFILE);

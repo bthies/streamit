@@ -6,10 +6,9 @@ import java.util.*;
 
 public class SchedSplitType extends SchedObject
 {
-    public static final int ROUND_ROBIN = 0;
-    public static final int WEIGHTED_ROUND_ROBIN = 1;
-    public static final int DUPLICATE = 2;
-    public static final int LAST = 3;
+    public static final int WEIGHTED_ROUND_ROBIN = 0;
+    public static final int DUPLICATE = 1;
+    public static final int LAST = 2;
 
     final int type;
     int roundConsumption;
@@ -27,7 +26,6 @@ public class SchedSplitType extends SchedObject
 
         switch (this.type)
         {
-            case ROUND_ROBIN:
             case WEIGHTED_ROUND_ROBIN:
                 {
                     roundConsumption = 0;

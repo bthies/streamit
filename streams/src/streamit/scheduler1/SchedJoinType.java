@@ -7,9 +7,8 @@ import java.util.Iterator;
 
 public class SchedJoinType extends SchedObject
 {
-    public static final int ROUND_ROBIN = 0;
-    public static final int WEIGHTED_ROUND_ROBIN = 1;
-    public static final int LAST = 2;
+    public static final int WEIGHTED_ROUND_ROBIN = 0;
+    public static final int LAST = 1;
 
     final int type;
     int roundProduction;
@@ -27,7 +26,6 @@ public class SchedJoinType extends SchedObject
 
         switch (this.type)
         {
-            case ROUND_ROBIN:
             case WEIGHTED_ROUND_ROBIN:
                 {
                     roundProduction = 0;

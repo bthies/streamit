@@ -35,6 +35,6 @@ public class RoundRobinJoiner extends Joiner {
             weights.add (one);
         }
 
-        return scheduler.newSchedJoinType (SchedJoinType.ROUND_ROBIN, weights, this);
+        return scheduler.newSchedJoinType (SchedJoinType.WEIGHTED_ROUND_ROBIN, weights, this);
     }
 }

@@ -132,6 +132,11 @@ public abstract class Filter extends Stream
         super(n1, n2, n3, n4, n5, n6);
     }
 
+    public Filter(int n1, int n2, int n3, int n4, int n5, int n6, int n7, int n8, int n9)
+    {
+        super(n1, n2, n3, n4, n5, n6, n7, n8, n9);
+    }
+
     public Filter(short s1, short s2, short s3) {
 	super(s1, s2, s3);
     }

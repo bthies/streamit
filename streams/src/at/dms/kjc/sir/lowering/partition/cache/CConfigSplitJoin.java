@@ -17,12 +17,18 @@ class CConfigSplitJoin extends CConfigContainer {
     protected SIRSplitJoin split_join;
     private FusionInfo fusion_info;
     private int num_tiles;
+
+    private boolean sj_peek = false; // true if splitjoin peeks when fused!
     
     public CConfigSplitJoin(SIRSplitJoin sj, CachePartitioner partitioner) {
 	super(sj, partitioner);
 	split_join = sj;
 	fusion_info = null;
 	num_tiles = 0;
+    }
+
+    public boolean getPeek() {
+	return sj_peek;
     }
 
     public static int gcd(int x, int y) {
@@ -135,6 +141,84 @@ class CConfigSplitJoin extends CConfigContainer {
 	//for (int i = 0; i < cont.size(); i++) {
 	//    System.out.println("[split: "+split_join.getSplitter().getWeight(i)+" join: "+split_join.getJoiner().getWeight(i)+" pop: "+childConfig(i).getFusionInfo().getPopInt()+" push: "+childConfig(i).getFusionInfo().getPushInt()+"]");
 	//}
+
+
+	
+	if (split_join.getJoiner().getSumOfWeights() == 0) {
+
+	    // We assume all of splitters weights are positive
+
+	    //System.out.println("CASE2");
+
+	    for (int i = 0; i < cont.size(); i++) {
+		int pop = childConfig(i).getFusionInfo().getPopInt();
+		int split_weight = split_join.getSplitter().getWeight(i);
+		int m = pop / gcd(split_weight, pop); // multiple for splitter
+		mult = mult * m / gcd(mult, m);
+	    }
+
+	    for (int i = 0; i < cont.size(); i++) {
+		int pop = childConfig(i).getFusionInfo().getPopInt();
+		int split_weight = split_join.getSplitter().getWeight(i);
+		fmult[i] = mult * split_weight / pop;
+
+		//System.out.print("[fmult["+i+"] = "+fmult[i]+"] ");
+	    }
+
+	    s_mult = mult;
+
+	} else {
+
+	    // We assume all of joiners weights are positive
+	    // Some of the splitters weights might be zero
+
+	    //System.out.println("CASE1");
+
+	    for (int i = 0; i < cont.size(); i++) {
+		int push = childConfig(i).getFusionInfo().getPushInt();
+		int join_weight = split_join.getJoiner().getWeight(i);
+		int m = push / gcd(join_weight, push); // multiple for joiner
+		mult = mult * m / gcd(mult, m);
+	    }
+
+	    for (int i = 0; i < cont.size(); i++) {
+		int push = childConfig(i).getFusionInfo().getPushInt();
+		int join_weight = split_join.getJoiner().getWeight(i);
+		fmult[i] = mult * join_weight / push;
+	    }
+	    
+	    j_mult = mult;
+
+
+	    if (s_sum > 0) {
+
+		for (int j = 0; j < cont.size(); j++) {
+
+		    int pop = childConfig(j).getFusionInfo().getPopInt();
+		    int splitter_weight = split_join.getSplitter().getWeight(j);
+		
+		    if (splitter_weight == 0) continue;
+
+		    // items is number of items joiner has to consume
+		    // from branch 1
+		    int items = pop * fmult[j];
+
+		    int lcd = items * splitter_weight / gcd(items, splitter_weight);
+		
+		    s_mult = lcd / splitter_weight; 
+
+		    int xtra = lcd / items;
+		    j_mult *= xtra;
+
+		    for (int i = 0; i < cont.size(); i++) {
+			fmult[i] *= xtra;
+		    }
+		}
+	    }
+	}
+
+
+	/*
 	
 	if (split_join.getSplitter().getSumOfWeights() == 0) {
 
@@ -198,6 +282,7 @@ class CConfigSplitJoin extends CConfigContainer {
 	    }
 	}
 
+	*/
 
 	for (int i = 0; i < cont.size(); i++) {
 	    //System.out.print("[fmult["+i+"] = "+fmult[i]+"] ");
@@ -242,27 +327,49 @@ class CConfigSplitJoin extends CConfigContainer {
 		work += fi.getWorkEstimate()/2;
 	    }
 
-	    // add fusion peek overhead
-	    /*
-	    if (child instanceof CConfigFilter) {
-		CConfigFilter fc = (CConfigFilter)child;
-		SIRFilter filter = (SIRFilter)fc.getStream();
-		if (filter.getPeekInt() > filter.getPopInt()) {
-		    work += fi.getWorkEstimate() / 2;
-		}
-	    }
+	    //If peek ratio is 1024 add fusion peek overhead
+	    // unless the splitter is duplicate, since
+	    // then peek buffer can be reused!
 
-	    if (child instanceof CConfigPipeline) {
-		CConfigPipeline pipe = (CConfigPipeline)child;
-		if (pipe.childConfig(1) instanceof CConfigFilter) {
-		    CConfigFilter cfilter = (CConfigFilter)pipe.childConfig(1);
-		    SIRFilter filter = (SIRFilter)cfilter.getStream();
+	    boolean duplicate = split_join.getSplitter().getType().isDuplicate();
+
+	    if (KjcOptions.peekratio == 1024) { 
+
+		if (child instanceof CConfigFilter) {
+		    CConfigFilter fc = (CConfigFilter)child;
+		    SIRFilter filter = (SIRFilter)fc.getStream();
 		    if (filter.getPeekInt() > filter.getPopInt()) {
-			work += cfilter.getFusionInfo().getWorkEstimate() / 2;
+
+			if (!duplicate) {
+			    work += fi.getWorkEstimate() / 2;
+			} else {
+			    sj_peek = true;
+			}
+
 		    }
 		}
+		
+		if (child instanceof CConfigPipeline) {
+		    CConfigPipeline pipe = (CConfigPipeline)child;
+		    if (pipe.childConfig(1) instanceof CConfigFilter) {
+			CConfigFilter cfilter = (CConfigFilter)pipe.childConfig(1);
+			SIRFilter filter = (SIRFilter)cfilter.getStream();
+			if (filter.getPeekInt() > filter.getPopInt()) {
+
+			    if (!duplicate) {
+				work += cfilter.getFusionInfo().getWorkEstimate() / 2;
+			    } else {
+				sj_peek = true;
+			    }
+
+			}
+		    }
+		}
+
+		// WARNING!!!
+		// Currently do not support multiple nested pipelines!
+
 	    }
-	    */
 	}
 
 	int pop = split_join.getSplitter().getSumOfWeights()*s_mult;

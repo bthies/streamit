@@ -1,3 +1,4 @@
+
 package at.dms.kjc.sir.lowering.partition.cache;
 
 import java.util.*;
@@ -11,6 +12,7 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
+
 
 class CConfigPipeline extends CConfigContainer {
     
@@ -50,22 +52,214 @@ class CConfigPipeline extends CConfigContainer {
 
 	num_tiles = numberOfTiles(0, cont.size()-1);
 	
+	System.out.println("pipeline num tiles: "+num_tiles);
+
 	//System.out.println("Pipeline (0,"+(cont.size()-1)+") Greedy Cuts:");
 
 	//for (int i = 0; i < cont.size()-1; i++) {
 	//    if (greedyCuts[i]) System.out.println("cut after: "+i);
 	//}
 
+	int p_start = 0;
+
+	for (int i = 0; i < cont.size()-2; i++) {
+	    if (greedyCuts[i]) {
+		num_tiles += refactor(p_start, i);
+		p_start = i + 1;
+	    }
+	}
+
+	num_tiles += refactor(p_start, cont.size()-1);
+
+	num_tiles += recombine_partitions();
+
+	System.out.println("pipeline FINAL num tiles: "+num_tiles);
 	return num_tiles;
     }
 
 
-    private int numberOfTiles(int from, int to) {
-	
-	if (from > to) return 0;
+    // returns true if item at index peeks
 
-	//System.out.println("Pipeline.numberOfTiles("+from+","+to+")");
+    private boolean does_peek(int index) {
+
+	CConfig child = childConfig(index);
 	
+	if (child instanceof CConfigFilter) {
+	    CConfigFilter fc = (CConfigFilter)child;
+	    SIRFilter filter = (SIRFilter)fc.getStream();
+
+	    int f_pop = filter.getPopInt();
+	    int f_peek = filter.getPeekInt();
+
+	    if (f_peek > f_pop) return true;
+	}
+
+
+	if (child instanceof CConfigSplitJoin) {
+	    CConfigSplitJoin sj = (CConfigSplitJoin)child;
+	    if (sj.getPeek()) {
+
+		return true;
+	    }
+	}
+	
+	return false;
+    }
+
+    
+    private int recombine_partitions() {
+
+	int result = 0;
+
+	int last_cut = -1;
+	int curr_cut = 0;
+
+	for (curr_cut = 0; curr_cut < cont.size() - 2; curr_cut++) {
+	    if (greedyCuts[curr_cut]) {
+		break;
+	    }
+	}	
+
+	for (int i = curr_cut + 1; i < cont.size() - 2; i++) {
+
+	    if (greedyCuts[i]) {
+
+		// last_cut + 1 ... curr_cut
+		// curr_cut + 1 ... i
+
+		FusionInfo f_all = getFusionInfo(last_cut + 1, i);
+
+		if (f_all.getCost().getCost() <= f_all.getWorkEstimateNoPenalty() &&
+		    !does_peek(curr_cut+1)) {
+		    
+		    greedyCuts[curr_cut] = false;
+		    System.out.println("recombining adjacent partitions!");
+		    System.out.println("recomb: ["+(last_cut+1)+
+				       ","+curr_cut+","+i+"]");
+
+		    curr_cut = i;
+		    result--;
+
+		} else {
+
+		    last_cut = curr_cut;
+		    curr_cut = i;
+		}
+	    }
+	}
+
+	FusionInfo f_all = getFusionInfo(last_cut + 1, cont.size() - 1);
+	
+	if (f_all.getCost().getCost() <= f_all.getWorkEstimateNoPenalty() &&
+	    !does_peek(curr_cut+1)) {
+	    greedyCuts[curr_cut] = false;
+
+	    System.out.println("recombining adjacent partitions!");
+	    System.out.println("recomb: ["+(last_cut+1)+
+			       ","+curr_cut+","+(cont.size()-1)+"]");
+
+	    result--;
+	}
+
+	return result;
+    }
+
+    private int refactor(int from, int to) {
+
+	System.out.println("refactor from:"+from+" to:"+to);
+
+	int new_cuts = 0;
+
+	// find multiplicity of filters
+
+	int mult[] = new int[cont.size()];
+	mult[from] = 1; // init mult. of first item to 1
+
+	for (int i = from; i < to; i++) {
+	    int push = childConfig(i).getFusionInfo().getPushInt() * mult[i];
+	    int pop = childConfig(i+1).getFusionInfo().getPopInt();
+
+	    int common = gcd(push,pop);
+	    int xtra = pop / common;
+
+	    if (xtra > 1) {
+		for (int a = from; a <= i; a++) {
+		    mult[a] = mult[a] * xtra; 
+		}
+	    }
+
+	    mult[i+1] = (push * xtra) / pop;
+	}
+
+	for (int i = from+1; i <= to; i++) {
+	    CConfig child = childConfig(i);
+
+	    //If peek ratio is 1024 -- try to refactor partition
+
+	    if (KjcOptions.peekratio == 1024 && child instanceof CConfigFilter) {
+		CConfigFilter fc = (CConfigFilter)child;
+		SIRFilter filter = (SIRFilter)fc.getStream();
+		
+		int f_pop = filter.getPopInt();
+		int f_peek = filter.getPeekInt();
+		int f_extra = f_peek - f_pop;
+
+		if (f_extra > 0) { // peek > pop
+		    
+		    //double amortize_break = f_extra / ClusterBackend.getExecCounts(filter);
+		    //double amortize_fuse = f_extra / mult[i];
+		
+		    // break if peek rate < 25% of (peek-pop)
+		    
+		    System.out.print("[refactor extra:"+f_extra+"("+(f_pop * mult[i] * 4)+") pop:"+f_pop+" m:"+mult[i]+" ]");
+		    
+		    //System.out.print("[ a_b: "+amortize_break+" a_f: "+amortize_break+"]");
+
+		    if (f_extra > f_pop * mult[i] * 4) {
+			//work += fi.getWorkEstimate()/2;
+			//work += 1500;
+			System.out.print("Cutting partition!!");
+			greedyCuts[i-1] = true;
+			new_cuts++;
+		    } 
+		    /*
+		    else if (amortize_break * 2 < amortize_fuse) {
+
+			// break if amortize_break * 2 < amortize_fuse
+
+			System.out.print("Cutting partition!!");
+			greedyCuts[i-1] = true;
+			new_cuts++;
+		    }
+		    */
+		    
+		    System.out.println();
+		    
+		}
+	    }
+
+	    if (i > from && child instanceof CConfigSplitJoin) {
+		CConfigSplitJoin sj = (CConfigSplitJoin)child;
+		if (sj.getPeek()) {
+
+		    System.out.print("Cutting partition!!");
+		    greedyCuts[i-1] = true;
+		    new_cuts++;
+
+		    //work += fi.getWorkEstimate()/2;
+		    //work += 1500;
+		}
+	    }
+	}
+
+	return new_cuts;
+    }
+
+    private int numberOfTiles(int from, int to) {
+
+	System.out.println("Pipeline.numberOfTiles("+from+","+to+")");
+
+       	if (from > to) return 0;
 	if (from == to) return childConfig(from).numberOfTiles();
 
 	for (int i = from; i <= to; i++) {
@@ -83,30 +277,39 @@ class CConfigPipeline extends CConfigContainer {
 
 	// all children fit into one tile each
 
+	// first try fusing everything
+
+	FusionInfo f_all = getFusionInfo(from, to);
+
+	System.out.println("try one tile ["+f_all.getCost().getCost()+","+f_all.getWorkEstimateNoPenalty()+"]");
+
+	if (f_all.getCost().getCost() <= f_all.getWorkEstimateNoPenalty()) {
+
+	    System.out.println("pipeline segnemt fits into one tile!");
+	    return 1;
+	}
+
 	// find multiplicity of filters
-	
+
 	int mult[] = new int[cont.size()];
 	mult[from] = 1; // init mult. of first item to 1
 
-	//System.out.println("from: "+from+" to: "+to);
-
 	for (int i = from; i < to; i++) {
-
-	    int push = childConfig(i).getFusionInfo().getPushInt();
+	    int push = childConfig(i).getFusionInfo().getPushInt() * mult[i];
 	    int pop = childConfig(i+1).getFusionInfo().getPopInt();
-	    int m = (push * pop) / gcd(push,pop);
 
+	    int common = gcd(push,pop);
+	    int xtra = pop / common;
 
-	    //System.out.println("i="+i+" push: "+push+" pop: "+pop+" m: "+m+" mult[i]: "+mult[i]);
-	    
-
-	    int xtra = (m / push) / gcd(mult[i], (m / push)); 
-
-	    for (int a = from; a <= i; a++) {
-		mult[a] = mult[a] * xtra; 
+	    if (xtra > 1) {
+		for (int a = from; a <= i; a++) {
+		    mult[a] = mult[a] * xtra; 
+		}
 	    }
-	    mult[i+1] = (m / pop);
+
+	    mult[i+1] = (push * xtra) / pop;
 	}
+
 	
 	// find max bandwidth connection
 
@@ -218,15 +421,19 @@ class CConfigPipeline extends CConfigContainer {
 	mult[from] = 1; // init mult. of first item to 1
 
 	for (int i = from; i < to; i++) {
-	    int push = childConfig(i).getFusionInfo().getPushInt();
+	    int push = childConfig(i).getFusionInfo().getPushInt() * mult[i];
 	    int pop = childConfig(i+1).getFusionInfo().getPopInt();
-	    int m = (push * pop) / gcd(push,pop);
-	    int xtra = (m / push) / gcd(mult[i], (m / push)); 
 
-	    for (int a = from; a <= i; a++) {
-		mult[a] = mult[a] * xtra; 
+	    int common = gcd(push,pop);
+	    int xtra = pop / common;
+
+	    if (xtra > 1) {
+		for (int a = from; a <= i; a++) {
+		    mult[a] = mult[a] * xtra; 
+		}
 	    }
-	    mult[i+1] = (m / pop);
+
+	    mult[i+1] = (push * xtra) / pop;
 	}
 
 	for (int i = from; i <= to; i++) {
@@ -245,16 +452,41 @@ class CConfigPipeline extends CConfigContainer {
 	    // add impossible unroll penalty
 	    if (KjcOptions.unroll < mult[i]) work += fi.getWorkEstimate()/2;
 
-	    // add fusion peek overhead
-	    /*
-	    if (i > from && child instanceof CConfigFilter) {
-		CConfigFilter fc = (CConfigFilter)child;
-		SIRFilter filter = (SIRFilter)fc.getStream();
-		if (filter.getPeekInt() > filter.getPopInt()) {
-		    work += fi.getWorkEstimate()/2;
+	    //If peek ratio is 1024 add fusion peek overhead!
+	    if (KjcOptions.peekratio == 1024) { 
+		if (i > from && child instanceof CConfigFilter) {
+		    CConfigFilter fc = (CConfigFilter)child;
+		    SIRFilter filter = (SIRFilter)fc.getStream();
+
+		    int f_pop = filter.getPopInt();
+		    int f_peek = filter.getPeekInt();
+		    int f_extra = f_peek - f_pop;
+
+		    if (f_extra > 0) { // peek > pop
+
+			// only penalize if peek rate < 25% of (peek-pop)
+
+			//System.out.print("[ extra:"+f_extra+"("+(f_pop * mult[i] * 4)+") pop:"+f_pop+" m:"+mult[i]+" ]");
+
+			if (f_extra > f_pop * mult[i] * 4) {
+			    //work += fi.getWorkEstimate()/2;
+			    //work += 1500;
+			    //System.out.print("penalty!!");
+			}
+
+			//System.out.println();
+
+		    }
+		}
+
+		if (i > from && child instanceof CConfigSplitJoin) {
+		    CConfigSplitJoin sj = (CConfigSplitJoin)child;
+		    if (sj.getPeek()) {
+			//work += fi.getWorkEstimate()/2;
+			//work += 1500;
+		    }
 		}
 	    }
-	    */
 	}
 
 	int to_push = childConfig(to).getFusionInfo().getPushInt();

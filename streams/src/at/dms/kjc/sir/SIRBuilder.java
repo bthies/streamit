@@ -48,8 +48,8 @@ public class SIRBuilder {
 				new JUnaryPlusExpression( 
 				    /* tokref */ null,
 				    /* contents */ 
-				    new JFieldAccessExpression(/* tokref */
-							       null,
+				    new JFieldAccessExpression(null,
+				      new JThisExpression(null, (CClass)null),
 							       "x"))),
 	  null) };
 	 

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.7 2002-09-17 19:58:41 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.8 2002-09-23 21:18:43 dmaze Exp $
  */
 
 header {
@@ -152,7 +152,8 @@ loop_statement returns [Statement s] { s = null; StreamCreator sc; }
 	;
 
 stream_or_inline returns [StreamCreator sc]
-{ sc = null; StreamType st; List params = new ArrayList(); Statement body; }
+{ sc = null; StreamType st; List params = new ArrayList(); Statement body;
+List types = new ArrayList(); Type t; }
 	: (stream_type_decl TK_filter) =>
 		st=stream_type_decl tf:TK_filter body=block
 		// (Is this even right?  What's the syntax for inline filter decls?)
@@ -163,10 +164,9 @@ stream_or_inline returns [StreamCreator sc]
 	| tl:TK_feedbackloop body=block
 		{ sc = new SCAnon(getContext(tl), StreamSpec.STREAM_FEEDBACKLOOP, body); }
 	| id:ID
-		( /* LESS_THAN data_type MORE_THAN (params=func_call_params)?
-		| */ (params=func_call_params)?
-			{ sc = new SCSimple(getContext(id), id.getText(), params); }
-		)
+		(LESS_THAN t=data_type MORE_THAN { types.add(t); })?
+		(params=func_call_params)?
+		{ sc = new SCSimple(getContext(id), id.getText(), types, params); }
 	;
 
 split_statement returns [Statement s] { s = null; SplitterJoiner sj; }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.3 2001-11-02 21:55:30 mgordon Exp $
+ * $Id: Main.java,v 1.4 2001-11-16 08:13:05 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -162,6 +162,13 @@ public class Main extends Compiler {
 
     // do streamit pass
     if (options.streamit) {
+	if (options.unroll) 
+	    StreamItOptions.unroll = true;
+	if (options.fusion)
+	    StreamItOptions.fusion = true;
+	if (options.constprop) 
+	    StreamItOptions.constprop = true;
+	
 	StreaMITMain.compile(tree);
 	/*	
 		for (int count=0; count < tree.length; count++) {

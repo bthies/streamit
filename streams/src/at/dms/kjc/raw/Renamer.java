@@ -124,8 +124,4 @@ public class Renamer extends at.dms.util.Utils implements StreamVisitor
 				      JMethodDeclaration initPath) {
     }
     
-    public void visitStructure (SIRStructure self, 
-				SIRStream parent, 
-				JFieldDeclaration[] fields) {
-    }
 }

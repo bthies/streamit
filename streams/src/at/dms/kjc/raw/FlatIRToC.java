@@ -1734,9 +1734,4 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
     }
 
-   public void visitStructure (SIRStructure self, 
-				SIRStream parent, 
-				JFieldDeclaration[] fields) {
-    } 
-    
 }

@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.2 2002-09-16 19:02:32 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.3 2002-09-17 18:27:18 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -152,9 +152,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// grab the first child. If we don't have a linear rep, we are done.
 	SIRStream firstKid = (SIRStream)kidIter.next();
 	if (!this.hasLinearRepresentation(firstKid)) {return;}
-	// get the matrix/vector corresponding to this rep. If it has a constant component, we are done
+	// get the matrix/vector corresponding to this rep.
 	LinearFilterRepresentation overallRep = this.getLinearRepresentation(firstKid);
-	if (overallRep.hasConstantComponent()) {return;}
 	
 	// now, we should be good, go through the rest of the children, trying to
 	// tack on their linear reps to the overall one. If we hit a combination that
@@ -164,9 +163,18 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // see if we have a representation for the current pipeline child
 	    if (this.hasLinearRepresentation(currentKid)) {
 		LinearFilterRepresentation currentRep = this.getLinearRepresentation(currentKid);
-		// try to combine and expand the overall rep by tacking on the current rep
-		// (possibly expanding along the way
-		overallRep = overallRep.combine(currentRep);
+		// calculate what transformations we need to do on the two representations
+		// in order to allow them to combine.
+		LinearTransform pipelineTransform;
+		pipelineTransform = LinearTransformPipeline.calculate(overallRep, currentRep);
+		// actually try to do the tranformation
+		try {
+		    overallRep = pipelineTransform.transform();
+		} catch (NoTransformPossibleException e) {
+		    LinearPrinter.warn("Can't combine representations: " + overallRep + currentRep +
+				       " reason: " + e.getMessage());
+		    overallRep = null;
+		}
 	    } else {
 		// we didn't know anything about this filter, so just give up
 		overallRep = null;
@@ -202,12 +210,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
 
 
-    /////////////// Methods for reporting on the information that we have in the
-    /////////////// in the hashset.
-    
+	
 
 
-    
+
+     ///////////////////////
+     // Utility Methods, etc.
+     ///////////////////////     
 
     /**
      * Make a nice report on the number of stream constructs processed

@@ -839,8 +839,17 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitTypeNameExpression(JTypeNameExpression self, CType type){return null;}
 //     public Object visitUnaryMinusExpression(JUnaryExpression self, JExpression expr){return null;}
 //     public Object visitUnaryPlusExpression(JUnaryExpression self, JExpression expr){return null;}
-//     public Object visitUnaryPromoteExpression(JUnaryPromote self, JExpression expr, CType type){return null;}
-//     public Object visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self,
+    /** Visits a unary promote expression, which is basically a type cast.
+     * Since we aren't really worried about
+     * type casts in the linear analysis, a promote
+     * expression basically just visits the expression.
+     **/
+    public Object visitUnaryPromoteExpression(JUnaryPromote self, JExpression expr, CType type){
+	return expr.accept(this);
+    }
+    
+    
+    //     public Object visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self,
 // 						    CClassType type, JExpression[] params,
 // 						    JClassDeclaration decl){return null;}
 //     public Object visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self, CClassType type,

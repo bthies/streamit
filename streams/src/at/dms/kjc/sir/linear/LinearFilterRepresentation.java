@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.
  *
- * $Id: LinearFilterRepresentation.java,v 1.5 2002-09-16 19:02:32 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.6 2002-09-17 18:27:18 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -61,57 +61,5 @@ public class LinearFilterRepresentation {
 	return false;
     }							   
 
-    /**
-     * Tries to combine this LinearFilterRepresentation with other.
-     * LFRs represent the calculations that a filter performs, by combining two
-     * LFRs we hope to represent the calculations that the two filters cascaded one
-     * after another form. <p>
-     * 
-     * Combining only makes sense for two filters with the following properties:
-     * <ul>
-     * <li> The push rate of upstream one is equal to the peek rate of the downstream one
-     * </ul>
-     *
-     * It is interesting to note that the above suggests that some filters are not combinable
-     * which we think is the general case. However, we can also possibly do the
-     * equivalent of matrix unrolling on both this LFR and the other LFR to get the above
-     * condition to hold.<p>
-     *
-     * If filter one computes y = xA1 + b1 and filter 2 computes y=xA2 + b2 then
-     * the overall filter filter1 --> filter 2 will compute
-     * y = (xA1 + b1)A2 + b2 = xA1A2 + (b1A2 + b2), which itself can be represented  
-     * with the LFR: A = A1A2 and b = (b1A2 + b2).
-     *
-     * The LFR that represents both filters cascaded is returned if we can find it, and
-     * null is returned if we can not.
-     **/
-    LinearFilterRepresentation combine(LinearFilterRepresentation other) {
-	// so we we can treat the (possibly) expanded versions the same 
-	LinearFilterRepresentation thisRep  = this;
-	LinearFilterRepresentation otherRep = other;
-
-	// try and expand if need be
-	// TODO
-
-	// If the dimensions match up, then perform the actual matrix
-	// multiplication
-	if (thisRep.getPushCount() == otherRep.getPeekCount()) {
-	    FilterMatrix A1 = thisRep.getA();
-	    FilterVector b1 = thisRep.getb();
-	    FilterMatrix A2 = otherRep.getA();
-	    FilterVector b2 = otherRep.getb();
-	    
-	    // compute the the new A = A1A2
-	    FilterMatrix newA = A1.times(A2);
-	    // compute the new b = (b1A2 + b2)
-	    FilterVector newb = FilterVector.toVector((b1.times(A2)).plus(b2));
-
-	    // return a new LFR with newA and newb
-	    return new LinearFilterRepresentation(newA, newb);
-	} else {
-	    // we couldn't combine the matricies, give up
-	    return null;
-	}
-    }
     
 }

@@ -382,13 +382,34 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /**
+     * Returns an empty void method with given name.
+     */
+    private static JMethodDeclaration makeEmptyVoidMethod(String name) {
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+				      CStdType.Void, name,
+				      JFormalParameter.EMPTY, CClassType.EMPTY,
+				      new JBlock(), null, null);
+    }
+
+    /**
+     * Returns an empty work function.
+     */
+    public static JMethodDeclaration makeEmptyWork() {
+	return makeEmptyVoidMethod("work");
+    }
+
+    /**
+     * Returns an empty prework function.
+     */
+    public static JMethodDeclaration makeEmptyInitWork() {
+	return makeEmptyVoidMethod("initWork");
+    }
+
+    /**
      * Returns an empty init function.
      */
     public static JMethodDeclaration makeEmptyInit() {
-	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC, 
-				      CStdType.Void, "init",
-				      JFormalParameter.EMPTY, CClassType.EMPTY,
-				      new JBlock(), null, null);
+	return makeEmptyVoidMethod("init");
     }
 
 /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

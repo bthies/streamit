@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.10 2003-03-03 20:12:46 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.11 2003-03-06 13:01:28 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -330,7 +330,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 						     fieldToConvert.getIdent());
 	externalArgs[1] = new JIntLiteral(filterSize);
 	JExpression externalCall = new JMethodCallExpression(null,               /* token reference*/
-							     null,               /* prefix */
 							     TO_FREQ_EXTERNAL,   /* ident */
 							     externalArgs);      /* args */
 	JavaStyleComment[] comment = makeComment("callout to " + TO_FREQ_EXTERNAL +
@@ -346,7 +345,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 						     fieldToScale.getIdent());
 	externalArgs[1] = new JIntLiteral(filterSize);
 	JExpression externalCall = new JMethodCallExpression(null,           /* token reference*/
-							     null,           /* prefix */
 							     SCALE_EXTERNAL, /* ident */
 							     externalArgs);  /* args */
 	JavaStyleComment[] comment = makeComment("callout to " + SCALE_EXTERNAL +
@@ -468,7 +466,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 							 weightFields[i].getIdent());
 	    externalArgs[3] = new JIntLiteral(filterSize);
 	    JExpression externalCall = new JMethodCallExpression(null,           /* token reference */
-								 null,               /* prefix */
 								 MULTIPLY_EXTERNAL, /* ident */
 								 externalArgs);      /* args */
 	    JavaStyleComment[] externalComment = makeComment("callout to " + MULTIPLY_EXTERNAL +
@@ -486,7 +483,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 							 outputBufferFields[i].getIdent());
 	    externalArgs[2] = new JIntLiteral(filterSize);
 	    externalCall = new JMethodCallExpression(null,           /* token reference */
-						     null,               /* prefix */
 						     FROM_FREQ_EXTERNAL, /* ident */
 						     externalArgs);      /* args */
 	    externalComment = makeComment("callout to " + FROM_FREQ_EXTERNAL +

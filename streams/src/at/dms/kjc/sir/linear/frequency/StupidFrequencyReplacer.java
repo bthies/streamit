@@ -19,7 +19,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: StupidFrequencyReplacer.java,v 1.3 2003-02-28 22:35:07 aalamb Exp $
+ * $Id: StupidFrequencyReplacer.java,v 1.4 2003-03-06 13:01:28 thies Exp $
  **/
 public class StupidFrequencyReplacer extends FrequencyReplacer {
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -261,7 +261,6 @@ public class StupidFrequencyReplacer extends FrequencyReplacer {
 	externalArgs[2] = new JFieldAccessExpression(null, new JThisExpression(null), imagWeightField.getIdent());
 	externalArgs[3] = new JIntLiteral(filterSize);
 	JMethodCallExpression externalCall = new JMethodCallExpression(null,               /* token reference */
-								       null,               /* prefix */
 								       FAST_CONV_EXTERNAL, /* ident */
 								       externalArgs);      /* args */
 	JavaStyleComment[] comment = makeComment("callout to " + FAST_CONV_EXTERNAL + " to do actual work. "); 
@@ -280,7 +279,6 @@ public class StupidFrequencyReplacer extends FrequencyReplacer {
 	JExpression[] freeArgs = new JExpression[1];
 	freeArgs[0] = new JLocalVariableExpression(null, inputBuffer);
 	JMethodCallExpression freeCall = new JMethodCallExpression(null,     /* token reference */
-								   null,     /* prefix */
 								   "free",   /* ident */
 								   freeArgs);/* args */
 	comment = makeComment("call to free the buffer space");

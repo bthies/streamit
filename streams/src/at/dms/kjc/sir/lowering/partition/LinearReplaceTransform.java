@@ -29,29 +29,32 @@ public final class LinearReplaceTransform extends StreamTransform {
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	if (str instanceof SIRFilter) {
-	    // if we just have a filter, figure that the custom
-	    // implementation of the filter is going to be better than
-	    // our own version of matrix multiply... that is, do
-	    // nothing.
+	// again detect that <str> is linear, since it is a newly constructed stream
+	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
+	LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(str);
+	boolean largeCode = linearRep.getCost().getMultiplies() >= LinearPartitioner.MAX_MULT_TO_UNROLL;
+	// use atlas if all of the following are true: 1) atlas option
+	// is enabled, 2) there is largeCode, 3) push>=2 (since
+	// otherwise, presumably, atlas can't improve anything)
+	if (KjcOptions.atlas && largeCode && linearRep.getPushCount()>=2) {
+	    LinearAtlasReplacer.doReplace(lfa, str);
 	} else {
-	    // again detect that <str> is linear, since it is a newly constructed stream
-	    LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
-	    // otherwise, look at the number of multiplies, and do an
-	    // unrolled direct replacement only if it's less than our
-	    // threshoold
-	    if (lfa.getLinearRepresentation(str).getCost().getMultiplies()<=LinearPartitioner.MAX_MULT_TO_UNROLL) {
+	    // otherwise, choose between our matrix multiplies..
+	    if (!largeCode) {
+		// always use dirct unrolling for small containers
 		LinearDirectReplacer.doReplace(lfa, str);
 	    } else {
-		if (KjcOptions.atlas) {
-		    LinearAtlasReplacer.doReplace(lfa, str);
+		// otherwise use diagonal by default, but indirect
+		// or direct if the option is enabled
+		if (KjcOptions.linearreplacement) {
+		    LinearDirectReplacer.doReplace(lfa, str);
+		} else if (KjcOptions.linearreplacement2) {
+		    LinearIndirectReplacer.doReplace(lfa, str);
 		} else {
+		    // default is same as KjcOptions.linearreplacement3
 		    LinearDiagonalReplacer.doReplace(lfa, str);
 		}
-	    } /* TODO: else if sparse matrix {
-		 LinearIndirectReplacer.doReplace(lfa, str);
-		 }
-	      */
+	    }
 	}
 	// kind of hard to get a handle on the new stream... return
 	// null for now; this shouldn't get dereferenced in linear

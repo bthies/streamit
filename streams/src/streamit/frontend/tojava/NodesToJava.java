@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.58 2003-05-13 22:42:57 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.59 2003-06-20 15:43:26 jasperln Exp $
  */
 
 package streamit.frontend.tojava;
@@ -50,10 +50,12 @@ public class NodesToJava implements FEVisitor
             return base + "[]";
         }
         else if (type instanceof TypeStruct)
-        {
-            return ((TypeStruct)type).getName();
-        }
-        else if (type instanceof TypePrimitive)
+	{
+	    return ((TypeStruct)type).getName();
+	}
+	else if(type instanceof TypeStructRef) {
+	    return ((TypeStructRef)type).getName();
+        } else if (type instanceof TypePrimitive)
         {
             switch (((TypePrimitive)type).getType())
             {

@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.util.Utils;
 import java.util.*;
 
@@ -177,6 +178,23 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * Returns the input type of this.
      */
     public abstract CType getInputType();
+
+    /**
+     * Returns a child stream of this that has number <num>, or null
+     * if no deep-child of this has number <num>.
+     */
+    public SIRStream getStreamWithNumber(final int num) {
+	final SIRStream[] result = new SIRStream[1];
+	IterFactory.createFactory().createIter(this).accept(new EmptyStreamVisitor() {
+		public void preVisitStream(SIRStream self,
+					   SIRIterator iter) {
+		    if (self.getNumber()==num) {
+			result[0] = self;
+		    }
+		}
+	    });
+	return result[0];
+    }
 
     /**
      * Returns the number of items pushed out of this stream in one

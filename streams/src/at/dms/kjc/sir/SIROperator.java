@@ -159,6 +159,15 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
     }
 
     /**
+     * Returns a UNIQUE integer for this.  That is, if a given stream
+     * operator was added in multiple positions of the stream graph,
+     * then this will return a different name for each instantiation.
+     */
+    public int getNumber() {
+	return Namer.getUniqueNumber(this);
+    }
+
+    /**
      * Returns the parent of this.
      */
     public SIRContainer getParent() {

@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.8 2002-09-18 15:55:05 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.9 2002-09-20 15:09:55 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -400,4 +400,5 @@ public class FEReplacer implements FEVisitor
     }
     
     public Object visitStreamType(StreamType type) { return type; }
+    public Object visitOther(FENode node) { return node; }
 }

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.23 2002-09-13 16:16:39 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.24 2002-09-20 15:09:58 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -579,9 +579,16 @@ public class NodesToJava implements FEVisitor
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
         String result = convertType(stmt.getType()) + " " + stmt.getName();
-        // TODO: insert constructors for non-primitive types
         if (stmt.getInit() != null)
             result += " = " + (String)stmt.getInit().accept(this);
+        else
+        {
+            // If the type of the statement isn't a primitive type
+            // (or is complex), emit a constructor.
+            Type type = stmt.getType();
+            if (type.isComplex() || !(type instanceof TypePrimitive))
+                result += " = " + makeConstructor(type);
+        }
         return result;
     }
 
@@ -661,6 +668,11 @@ public class NodesToJava implements FEVisitor
     public Object visitStreamType(StreamType type)
     {
         // Nothing to do here.
+        return "";
+    }
+    
+    public Object visitOther(FENode node)
+    {
         return "";
     }
 }

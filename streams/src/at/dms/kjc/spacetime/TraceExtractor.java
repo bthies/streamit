@@ -207,13 +207,13 @@ public class TraceExtractor {
 	StringBuffer buf=new StringBuffer();
 	buf.append("digraph Flattend {\n");
 	buf.append("size = \"8, 10.5\";\n");
-	HashMap parent=new HashMap();
-	for(int i=0;i<traces.length;i++)
-	    parent.put(traces[i].getHead(),traces[i]);
+	//HashMap parent=new HashMap(); // TraceNode -> Trace
+	//for(int i=0;i<traces.length;i++)
+	//parent.put(traces[i].getHead(),traces[i]);
 	for(int i=0;i<traces.length;i++) {
 	    Trace trace=traces[i];
 	    buf.append(trace.hashCode()+" [ "+traceName(trace)+"\" ];\n");
-	    Trace[] next=getNext(trace,parent);
+	    Trace[] next=getNext(trace/*,parent*/);
 	    for(int j=0;j<next.length;j++)
 		buf.append(hashName(trace)+" -> "+hashName(next[j])+";\n");
 	}
@@ -254,7 +254,7 @@ public class TraceExtractor {
 	return out.toString();
     }
 
-    private static Trace[] getNext(Trace trace,HashMap parent) {
+    private static Trace[] getNext(Trace trace/*,HashMap parent*/) {
 	TraceNode node=trace.getHead();
 	if(node instanceof InputTraceNode)
 	    node=node.getNext();
@@ -267,7 +267,8 @@ public class TraceExtractor {
 	    for(int i=0;i<dests.length;i++) {
 		Edge[] inner=dests[i];
 		for(int j=0;j<inner.length;j++) {
-		    Object next=parent.get(inner[j]);
+		    //Object next=parent.get(inner[j]);
+		    Object next=inner[j].getDest().getParent();
 		    if(!output.contains(next))
 			output.add(next);
 		}

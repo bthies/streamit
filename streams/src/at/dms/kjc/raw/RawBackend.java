@@ -93,7 +93,7 @@ public class RawBackend {
 	SIRStream strOrig = null;
 	// only need to make copy if there is some unrolling, since
 	// otherwise we won't roll back
-	boolean scaleUnrollFactor = KjcOptions.unroll>1 && !KjcOptions.forceunroll;
+	boolean scaleUnrollFactor = KjcOptions.unroll>1 && !KjcOptions.forceunroll && !KjcOptions.standalone;
 	if (scaleUnrollFactor) {
 	    strOrig = (SIRStream)ObjectDeepCloner.deepCopy(str);
 	}

@@ -82,6 +82,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    return;
 	}
 
+	int init_counts, steady_counts;
+
+	Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	if (init_int==null) {
+	    init_counts = 0;
+	} else {
+	    init_counts = init_int.intValue();
+	}
+
+	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+
 	CType baseType = Util.getBaseType(Util.getOutputType(node));
 	int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
@@ -96,6 +107,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 		
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(splitter, new JFieldDeclaration[0]);
+
+	p.print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
+	p.print("\n");
 
 	//  +=============================+
 	//  | Preamble                    |
@@ -135,6 +149,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	} else if (splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
 
+	    /*
+
 	    for (int i = 0; i < out.size(); i++) {
 
 		int num = splitter.getWeight(i);
@@ -146,6 +162,27 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    p.print("  "+s.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
 		}
 	    }
+
+	    */
+	    
+	    int sum = splitter.getSumOfWeights();
+	    int offs = 0;
+		
+	    p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
+
+	    p.print("  "+in.consumer_name()+".read_chunk(tmp, "+sum+" * sizeof("+baseType.toString()+"), "+sum+");\n");
+		
+	    for (int i = 0; i < out.size(); i++) {
+		    
+		int num = splitter.getWeight(i);
+		NetStream s = (NetStream)out.elementAt(i);		
+		
+		p.print("  "+s.producer_name()+".write_chunk(&tmp["+offs+"], "+num+" * sizeof("+baseType.toString()+"), "+num+");\n");
+		    
+		offs += num;
+		    
+	    }
+		
 	}
 
 	p.print("}\n");
@@ -159,17 +196,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("void __splitter_"+thread_id+"_main() {\n");
 	p.print("  int i, ii;\n");
 	
-	// get int init count
-	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
-	int init;
-	if (initCounts==null) {
-	    init = 0;
-	} else {
-	    init = initCounts.intValue();
-	}
-
 	p.print("  if (__steady_"+thread_id+" == 0) {\n");
-	p.print("    for (i = 0; i < "+init+"; i++) {\n");
+	p.print("    for (i = 0; i < "+init_counts+"; i++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
@@ -177,7 +205,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  __steady_"+thread_id+"++;\n");
 
 	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
-	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
+	p.print("    for (ii = 0; ii < "+steady_counts+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
@@ -227,6 +255,16 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    return;
 	}
 
+	int init_counts, steady_counts;
+
+	Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	if (init_int==null) {
+	    init_counts = 0;
+	} else {
+	    init_counts = init_int.intValue();
+	}
+
+	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
 	CType baseType = Util.getBaseType(Util.getJoinerType(node));
 	int thread_id = NodeEnumerator.getSIROperatorId(node.contents);
 
@@ -241,6 +279,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 		
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(joiner, new JFieldDeclaration[0]);
+
+	p.print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
+	p.print("\n");
 
 	//  +=============================+
 	//  | Preamble                    |
@@ -258,9 +299,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("void __joiner_"+thread_id+"_work() {\n");
 
-	p.print("  "+baseType.toString()+" tmp;\n");
-
 	if (joiner.getType().equals(SIRJoinType.ROUND_ROBIN)) {
+
+	    p.print("  "+baseType.toString()+" tmp;\n");
 
 	    for (int i = 0; i < in.size(); i++) {
 		NetStream s = (NetStream)in.elementAt(i);		
@@ -272,31 +313,56 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	} else if (joiner.getType().equals(SIRJoinType.WEIGHTED_RR)) {
 
-	    for (int i = 0; i < in.size(); i++) {
+	    if (joiner.getParent() instanceof SIRFeedbackLoop) {
 
-		NetStream s = (NetStream)in.elementAt(i);		
-		int num = joiner.getWeight(i);
-
-		for (int ii = 0; ii < num; ii++) {
-
-		    if (i == 1 && joiner.getParent() instanceof SIRFeedbackLoop) {
-			int delay =  ((SIRFeedbackLoop)joiner.getParent()).getDelayInt();
-			p.print("  if (__init_counter_"+thread_id+" < "+delay+") {\n");
-			p.print("    tmp = __Init_Path_"+thread_id+"(__init_counter_"+thread_id+");\n");
-			p.print("    __init_counter_"+thread_id+"++;\n");
-			p.print("  } else\n");
-			p.print("    tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+		p.print("  "+baseType.toString()+" tmp;\n");
+		
+		for (int i = 0; i < in.size(); i++) {
+		    
+		    NetStream s = (NetStream)in.elementAt(i);		
+		    int num = joiner.getWeight(i);
+		    
+		    for (int ii = 0; ii < num; ii++) {
 			
-		    } else {
-
-			p.print("  tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+			if (i == 1 && joiner.getParent() instanceof SIRFeedbackLoop) {
+			    int delay =  ((SIRFeedbackLoop)joiner.getParent()).getDelayInt();
+			    p.print("  if (__init_counter_"+thread_id+" < "+delay+") {\n");
+			    p.print("    tmp = __Init_Path_"+thread_id+"(__init_counter_"+thread_id+");\n");
+			    p.print("    __init_counter_"+thread_id+"++;\n");
+			    p.print("  } else\n");
+			    p.print("    tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+			    
+			} else {
+			    
+			    p.print("  tmp = "+s.consumer_name()+".read_"+baseType.toString()+"();\n");
+			}
+			
+			p.print("  "+out.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
 		    }
-
-		    p.print("  "+out.producer_name()+".write_"+baseType.toString()+"(tmp);\n");
+		    
 		}
 
-	    }
+	    } else {
 
+		int sum = joiner.getSumOfWeights();
+		int offs = 0;
+		
+		p.print("  "+baseType.toString()+" tmp["+sum+"];\n");
+		
+		for (int i = 0; i < in.size(); i++) {
+		    
+		    NetStream s = (NetStream)in.elementAt(i);		
+		    int num = joiner.getWeight(i);
+		    
+		    p.print("  "+s.consumer_name()+".read_chunk(&tmp["+offs+"], "+num+" * sizeof("+baseType.toString()+"), "+num+");\n");
+		    
+		    offs += num;
+		    
+		}
+		
+		p.print("  "+out.producer_name()+".write_chunk(tmp, "+sum+" * sizeof("+baseType.toString()+"), "+sum+");\n");
+	    
+	    }
 	}
 
 	p.print("}\n");
@@ -310,17 +376,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("void __joiner_"+thread_id+"_main() {\n");
 	p.print("  int i, ii;\n");
 	
-	// get int init count
-	Integer initCounts = (Integer)ClusterBackend.initExecutionCounts.get(node);
-	int init;
-	if (initCounts==null) {
-	    init = 0;
-	} else {
-	    init = initCounts.intValue();
-	}
-
 	p.print("  if (__steady_"+thread_id+" == 0) {\n");
-	p.print("    for (i = 0; i < "+init+"; i++) {\n");
+	p.print("    for (i = 0; i < "+init_counts+"; i++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __joiner_"+thread_id+"_work();\n");
 	p.print("    }\n");
@@ -328,7 +385,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  __steady_"+thread_id+"++;\n");
 
 	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
-	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
+	p.print("    for (ii = 0; ii < "+steady_counts+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __joiner_"+thread_id+"_work();\n");
 	p.print("    }\n");

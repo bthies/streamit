@@ -176,6 +176,22 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	Vector sends_to = new Vector();
 	Vector receives_from = new Vector();
 
+	FlatNode node = NodeEnumerator.getFlatNode(selfID);
+
+	System.out.println("flat node: "+node);
+	
+	Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	int init_counts;
+
+	if (init_int == null) {
+	    init_counts = 0;
+	} else {
+	    init_counts = init_int.intValue();
+	}
+
+	int steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+
+
 	for (int t = 0; t < outgoing.length; t++) {
 	    SIRStream[] receivers = outgoing[t].getReceivers();
 	    for (int i = 0; i < receivers.length; i++) {
@@ -197,6 +213,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	pushn = self.getPushInt();
 
 	print("// peek: "+peekn+" pop: "+popn+" push "+pushn+"\n"); 
+	print("// init counts: "+init_counts+" steady counts: "+steady_counts+"\n"); 
+	print("\n");
 
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(self, self.getFields());
 

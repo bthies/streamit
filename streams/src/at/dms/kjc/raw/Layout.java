@@ -45,10 +45,10 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
     /**
      * Returns the tile number assignment for <str>, or null if none has been assigned.
      */
-    public static int getTile(SIROperator str) 
+    public static Coordinate getTile(SIROperator str) 
     {
-	if (assignment == null) return -1;
-	return ((Integer)(assignment.get(str))).intValue();
+	if (assignment == null) return null;
+	return (Coordinate)assignment.get(str);
     }
     
     
@@ -64,21 +64,41 @@ public class Layout extends at.dms.util.Utils implements StreamVisitor {
 	//perform some error checking.
 	while (true) {
 	    try {
-		Integer tile;
-		System.out.print(Namer.getName(self) + ": ");
-		tile = Integer.valueOf(inputBuffer.readLine());
-		if (tile.intValue() < 0) {
+		Integer row, column;
+		
+		//get row
+		System.out.print(Namer.getName(self) + "\nRow: ");
+		row = Integer.valueOf(inputBuffer.readLine());
+		if (row.intValue() < 0) {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (tile.intValue() > (StreamItOptions.raw -1)) {
+		if (row.intValue() > (StreamItOptions.rawRow -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}
-		if (assignment.containsValue(tile)) {
-		    System.err.println("Value Already Assigned: Try Again.");
+		//get column
+		System.out.println("Column: ");
+		column = Integer.valueOf(inputBuffer.readLine());
+		if (column.intValue() < 0) {
+		    System.err.println("Negative Value: Try again.");
+		    continue;
 		}
-		assignment.put(self, tile);
+		if (column.intValue() > (StreamItOptions.rawColumn -1)) {
+		    System.err.println("Value Too Large: Try again.");
+		    continue;
+		}
+		//check if this tile has been already assigned
+		Iterator it = assignment.values().iterator();
+		while(it.hasNext()) {
+		    Coordinate current = (Coordinate)it.next();
+		    if (current.getRow() == row.intValue() &&
+			current.getColumn() == column.intValue())
+			System.err.println("Tile Already Assigned: Try Again.");
+		    continue;
+		}
+		
+		assignment.put(self, new Coordinate(row.intValue(), column.intValue()));
 		return;
 	    }
 	    catch (Exception e) {

@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.3 2002-09-17 21:09:27 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.4 2002-09-18 15:59:55 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -23,6 +23,12 @@ import java.util.ArrayList;
  * expression to be either purely real or be an ExprComplex at the
  * top level.  Finally, this pass inserts statements as necessary to
  * cause all statements to deal with purely real values.
+ *
+ * Things this is known to punt on:
+ * -- Some things (parameters to function calls, enqueue(), push(), 
+ *    return) need to be actual variables rather than complex
+ *    expressions.  Generate temporary variables for these if needed.
+ * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  */
 public class DoComplexProp extends FEReplacer
 {
@@ -87,6 +93,11 @@ public class DoComplexProp extends FEReplacer
         return expr;
     }
 
+    protected Expression doExpression(Expression expr)
+    {
+        return doExprProp(expr);
+    }
+
     public Object visitFunction(Function func)
     {
         pushSymTab();
@@ -148,27 +159,6 @@ public class DoComplexProp extends FEReplacer
         Statement result = (Statement)super.visitStmtBlock(block);
         popSymTab();
         return result;
-    }
-
-    public Object visitStmtDoWhile(StmtDoWhile stmt)
-    {
-        Statement newBody = (Statement)stmt.getBody().accept(this);
-        Expression newCond = doExprProp(stmt.getCond());
-        if (newBody == stmt.getBody() && newCond == stmt.getCond())
-            return stmt;
-        return new StmtDoWhile(stmt.getContext(), newBody, newCond);
-    }
-
-    public Object visitStmtEnqueue(StmtEnqueue stmt)
-    {
-        // NB: here, as well as in function calls, we want to break out
-        // immediate complex values.  Punt on that for now.
-        // (but, enqueue(1i) needs a temporary, for example.)
-        Expression newValue = doExprProp(stmt.getValue());
-        // TODO: if newValue is complex, create a temporary.
-        if (newValue == stmt.getValue())
-            return stmt;
-        return new StmtEnqueue(stmt.getContext(), newValue);
     }
 
     public Object visitStmtExpr(StmtExpr stmt)

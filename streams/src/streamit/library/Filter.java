@@ -102,11 +102,61 @@ public abstract class Filter extends Stream
     // add was present in Operator, but is not defined in Filter anymore
     public void add(Stream s) { ASSERT (false); }
 
+    // data for support of syntax in the CC paper
+    int peekAmount = -1, popAmount = -1, pushAmount = -1;
+    Class inputType=null, outputType=null;
+    boolean ccStyleInit = false;
+    
+    // functions for support of syntax in the CC paper
+    public void setPeek (int peek)
+    {
+        peekAmount = peek;
+        ccStyleInit = true;
+    }
+    
+    public void setPop (int pop)
+    {
+        popAmount = pop;
+        ccStyleInit = true;
+    }
+    
+    public void setPush (int push)
+    {
+        pushAmount = push;
+        ccStyleInit = true;
+    }
+    
+    public void setOutput (Class type)
+    {
+        outputType = type;
+        ccStyleInit = true;
+    }
+
+    public void setInput (Class type)
+    {
+        inputType = type;
+        ccStyleInit = true;
+    }
+
     // connectGraph doesn't connect anything for a Filter,
     // but it can register all sinks:
     // also make sure that any input/output point to the filter itself
     public void connectGraph ()
     {
+    	if (ccStyleInit)
+    	{
+    	    if (outputType != null)
+    	    {
+                output = new Channel (outputType, pushAmount);
+    	    }
+    	    
+    	    if (inputType != null)
+    	    {
+    	        if (peekAmount == -1) peekAmount = popAmount;
+    	        input = new Channel (inputType, popAmount, peekAmount);
+    	    }
+    	}
+    	
         Channel myInput = getInputChannel ();
         Channel myOutput = getOutputChannel ();
 

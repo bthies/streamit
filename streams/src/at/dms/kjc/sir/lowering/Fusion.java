@@ -139,7 +139,8 @@ public class Fusion {
 	// local vars...
 
 	// keep a count of which var we're popping
-	final int popCount = 0;
+	//final int popCount = 0;
+	final ListIterator it = vars.listIterator();
 	// do the replacement
 	newConsumers.accept(new SLIRReplacingVisitor() {
 		public Object visitPopExpression(SIRPopExpression oldSelf,
@@ -150,10 +151,11 @@ public class Fusion {
 			super.visitPopExpression(oldSelf, oldTapeType);
 		    
 		    // get the local var that we should be referencing
-		    JLocalVariable var = (JLocalVariable)vars.get(popCount);
-		    
+		    //JLocalVariable var = (JLocalVariable)vars.get(popCount);
+		    JLocalVariable var = (JLocalVariable)it.next();
+
 		    // increment the pop count
-		    popCount++;
+		    //popCount++;
 
 		    // make local var references instead of popping
 		    return new JLocalVariableExpression(null, var);

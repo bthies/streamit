@@ -10,10 +10,10 @@ import streamit.scheduler.SchedJoinType;
  */
 public class SIRJoinType {
     /**
-     * A duplicating splitter.
+     * A combining splitter.
      */
-    public static final SIRJoinType DUPLICATE 
-	= new SIRJoinType("DUPLICATE");
+    public static final SIRJoinType COMBINE 
+	= new SIRJoinType("COMBINE");
     /**
      * An equal-weight round robing splitter.
      */

@@ -96,6 +96,7 @@ public class BCFile
 	buf.append("global gNGskip;\n");
 	buf.append("global gNGsteady;\n");
 	buf.append("global gNGfws = " + ng.fileWriters.length + ";\n");
+	buf.append("global gTotalSteadyItems = " + ng.totalSteadyItems + ";\n");
 	//malloc and set the arrays
 	buf.append("\n{ //Number Gathering \n");
 	buf.append("  gNGItems = malloc(gNGfws * 4);\n");

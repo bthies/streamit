@@ -11,7 +11,8 @@ public class NumberGathering
     //each stage
     public int[] steady;
     public int[] skip;
-    
+    public int totalSteadyItems;
+
     public static NumberGathering doit(RawChip chip, Trace[] files) 
     {
 	return (new NumberGathering(chip, files));
@@ -29,6 +30,7 @@ public class NumberGathering
 	assert fileWriters.length > 0 : "Error in number gathering: no file writer";
 	steady = new int[fileWriters.length];
 	skip = new int[fileWriters.length];
+	totalSteadyItems = 0;
 	//assign all the arrays 
 	for (int i = 0; i < fileWriters.length; i++) {
 	    FilterTraceNode node = (FilterTraceNode)fileWriters[i].getHead().getNext();
@@ -37,6 +39,7 @@ public class NumberGathering
 		"non-numeric type for input to filewriter";
 	    
 	    steady[i] = fi.totalItemsReceived(false, false);
+	    totalSteadyItems += steady[i];
 	    skip[i] = fi.totalItemsReceived(true, false) + 
 		fi.totalItemsReceived(false, true);
 	}

@@ -1442,25 +1442,6 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    type = CStdType.Integer;
 	}
 	
-	//if we have the number gathering stuff on, convert each print 
-	//to a magic instruction, there are only print statements in the sink
-	//all other prints have been removed...
-	if (KjcOptions.numbers > 0) {
-	    //assign the expression to a dummy var do it does not get
-	    //optimized out...
-	    print("dummy");
-	    if (type.isFloatingPoint())
-		print("Float");
-	    else 
-		print("Int");
-	    print(" = ");
-	    exp.accept(this);
-	    print(";\n");
-	    print("__asm__ volatile (\"magc $0, $0, 2\");\n");
-	    return;
-	}
-
-	    
 	if (type.equals(CStdType.Boolean))
 	    {
 		Utils.fail("Cannot print a boolean");

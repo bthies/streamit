@@ -51,11 +51,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		
 	//determine if there is a file reader/writer in the graph
 	//call init() to traverse the graph 
-	// if there is create a new row to place the fileReader/writer
+	// if there is create a new column to place the fileReader/writer
 	// it will become a bc file reading device
 	FileVisitor.init(top);
 	if (FileVisitor.foundReader || FileVisitor.foundWriter){
-	    rows++;
+	    columns++;
 	}
 	
 	coordinates  =
@@ -115,9 +115,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	return coordinates[tileNumber / StreamItOptions.rawColumns]
 	    [tileNumber % StreamItOptions.rawColumns];
     }
-    
-	      
-    
+	    
     public static String getDirection(Coordinate from,
 				      Coordinate to) {
 	if (from == to)
@@ -349,21 +347,23 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	if (FileVisitor.foundReader || FileVisitor.foundWriter) {
 	    Iterator frs = FileVisitor.fileReaders.iterator();
 	    Iterator fws = FileVisitor.fileWriters.iterator();
-	    int column = 0;
+	    int row = 0;
 	    //check to see if there are less then
 	    //file readers/writers the number of columns
 	    if (FileVisitor.fileReaders.size() + 
-		FileVisitor.fileWriters.size() > StreamItOptions.rawColumns)
-		Utils.fail("Too many file readers/writers (must be less than columns.");
+		FileVisitor.fileWriters.size() > StreamItOptions.rawRows)
+		Utils.fail("Too many file readers/writers (must be less than rows.");
+	    //assign the file streams to the added column starting at the top
+	    //row
 	    while (frs.hasNext()) {
-		assign(coordinates[StreamItOptions.rawRows][column], 
-		       (FlatNode)frs.next());
-		column ++;
+		assign(coordinates[row][StreamItOptions.rawColumns], 
+ 		       (FlatNode)frs.next());
+		row++;
 	    }
 	    while (fws.hasNext()) {
-		assign(coordinates[StreamItOptions.rawRows][column],
+		assign(coordinates[row][StreamItOptions.rawColumns],
 		       (FlatNode)fws.next());
-		column++;
+		row++;
 	    }
 	}
 	Iterator nodes = assigned.iterator();
@@ -534,8 +534,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	buf.append("edge[color = red,arrowhead = normal, style = bold];\n");
 	Iterator it = tileAssignment.values().iterator();
 	while(it.hasNext()) {
-	     FlatNode node = (FlatNode) it.next();
-	     buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
+	    FlatNode node = (FlatNode) it.next();
+	    if (FileVisitor.fileNodes.contains(node))
+		continue;
+	    buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
 			node.contents.getName() + "\"];\n");
 	     
 	     //we only map joiners and filters to tiles and they each have
@@ -543,6 +545,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	     Iterator downstream = getDownStream(node).iterator();
 	     while(downstream.hasNext()) {
 		 FlatNode n = (FlatNode)downstream.next();
+		 if (FileVisitor.fileNodes.contains(n))
+		     continue;
 		 buf.append("tile" + getTileNumber(node) + 
 			    " -> tile" +
 			    getTileNumber(n) + " [weight = 1];\n");
@@ -578,6 +582,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	
 	if (node.contents instanceof SIRFilter) {
+	    if (node.contents.getName().indexOf("Identity") != -1)
+		return getDownStreamHelper(node.edges[0]);
 	    HashSet ret = new HashSet();
 	    ret.add(node);
 	    return ret;
@@ -707,7 +713,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter &&
-	    ! (FileVisitor.fileNodes.contains(node))) {
+	    ! (FileVisitor.fileNodes.contains(node)) &&
+	    ! (node.contents.getName().indexOf("Identity") != -1)) {
 	    assigned.add(node);
 	    return;
 	}

@@ -115,8 +115,8 @@ public class MakefileGenerator
     
     private static int getIOPort(Coordinate tile) 
     {
-	return StreamItOptions.rawColumns + StreamItOptions.rawRows + 
-	    (StreamItOptions.rawColumns - 1) - tile.getColumn();
+	return StreamItOptions.rawColumns + 
+	    + tile.getRow();
     }
     
 

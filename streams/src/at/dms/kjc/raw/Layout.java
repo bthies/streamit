@@ -564,10 +564,15 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
 	if (node.contents instanceof SIRJoiner) {
 	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
-		joiners.add(node);
-		assigned.add(node);
-		return;
-	    } 
+		//do not assign the joiner if it is a null joiner
+		for (int i = 0; i < node.inputs;i++) {
+		    if (node.incomingWeights[i] != 0) {
+			joiners.add(node);
+			assigned.add(node);
+			return;
+		    }
+		} 
+	    }
 	}
     }
    

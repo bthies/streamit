@@ -61,6 +61,7 @@ public class Router {
 	return route;
     }
     
+
     public static void printRoute(FlatNode from, FlatNode to, List route) {
 	System.out.println(Namer.getName(from.contents) + " -> " + Namer.getName(to.contents));
 	Iterator it = route.iterator();

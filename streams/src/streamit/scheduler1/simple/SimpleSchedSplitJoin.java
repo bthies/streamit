@@ -12,6 +12,8 @@ import java.math.BigInteger;
 public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedStream
 {
     final SimpleHierarchicalScheduler scheduler;
+    private List steadySchedule;
+    private List initSchedule;
 
     SimpleSchedSplitJoin (SimpleHierarchicalScheduler scheduler, Object stream)
     {
@@ -21,10 +23,14 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
         this.scheduler = scheduler;
     }
 
-    public Object computeSchedule ()
+    public void computeSchedule ()
     {
-        // splitJoinSchedule
-        List mySchedule = new LinkedList ();
+        // make sure that this the first call to computeSchedule
+        {
+            ASSERT (steadySchedule == null && initSchedule == null);
+            steadySchedule = new LinkedList ();
+            initSchedule = new LinkedList ();
+        }
 
         // compute the split schedule and the split buffer sizes
         {
@@ -38,7 +44,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             {
                 numExecutions = numExecutions.subtract (numExecutions.ONE);
 
-                mySchedule.add (splitObject);
+                steadySchedule.add (splitObject);
             }
         }
 
@@ -57,11 +63,13 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             ListIterator iter = children.listIterator ();
             while (iter.hasNext ())
             {
-                SchedStream child = (SchedStream) iter.next ();
+                // get the child
+                SimpleSchedStream child = (SimpleSchedStream) iter.next ();
                 ASSERT (child);
 
                 // compute child's schedule
-                Object childSchedule = scheduler.computeSchedule (child);
+                child.computeSchedule ();
+                Object childSchedule = child.getSteadySchedule ();
                 ASSERT (childSchedule);
 
                 BigInteger numExecutions = child.getNumExecutions ();
@@ -79,7 +87,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
                 {
                     numExecutions = numExecutions.subtract (numExecutions.ONE);
 
-                    mySchedule.add (childSchedule);
+                    steadySchedule.add (childSchedule);
                 }
             }
         }
@@ -96,10 +104,20 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
             {
                 numExecutions = numExecutions.subtract (numExecutions.ONE);
 
-                mySchedule.add (joinObject);
+                steadySchedule.add (joinObject);
             }
         }
+    }
 
-        return mySchedule;
+    public Object getSteadySchedule ()
+    {
+        ASSERT (steadySchedule);
+        return steadySchedule;
+    }
+    public Object getInitSchedule ()
+    {
+        ASSERT (initSchedule);
+        return initSchedule;
     }
 }
+

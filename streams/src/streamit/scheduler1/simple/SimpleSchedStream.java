@@ -1,6 +1,10 @@
 package streamit.scheduler.simple;
 
-interface SimpleSchedStream
+import streamit.scheduler.SchedStreamInterface;
+
+interface SimpleSchedStream extends SchedStreamInterface
 {
-    public Object computeSchedule ();
+    public void computeSchedule ();
+    public Object getSteadySchedule ();
+    public Object getInitSchedule ();
 }

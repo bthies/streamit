@@ -13,11 +13,19 @@ public class SimpleSchedFilter extends SchedFilter implements SimpleSchedStream
         this.scheduler = scheduler;
     }
 
-    public Object computeSchedule ()
+    public void computeSchedule ()
     {
         Object userFilter = getStreamObject ();
         ASSERT (userFilter);
+    }
 
-        return userFilter;
+    public Object getSteadySchedule ()
+    {
+        return getStreamObject ();
+    }
+
+    public Object getInitSchedule ()
+    {
+        return null;
     }
 }

@@ -15,6 +15,8 @@ import java.math.BigInteger;
 class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
 {
     SimpleHierarchicalScheduler scheduler;
+    private List steadySchedule = null;
+    private List initSchedule = null;
 
     SimpleSchedLoop (SimpleHierarchicalScheduler scheduler, Object stream, SchedJoinType join, SchedStream body, SchedSplitType split, SchedStream loop, int delay)
     {
@@ -24,9 +26,23 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         this.scheduler = scheduler;
     }
 
-    public Object computeSchedule ()
+    public void computeSchedule ()
     {
-        List mySchedule = new LinkedList ();
+        // make sure that this the first call to computeSchedule
+        {
+            ASSERT (steadySchedule == null && initSchedule == null);
+            steadySchedule = new LinkedList ();
+            initSchedule = new LinkedList ();
+        }
+
+        // now initialize all the children appropriately
+        {
+            ASSERT (getLoopBody () instanceof SimpleSchedStream);
+            ((SimpleSchedStream) getLoopBody ()).computeSchedule ();
+
+            ASSERT (getLoopFeedbackPath () instanceof SimpleSchedStream);
+            ((SimpleSchedStream) getLoopFeedbackPath ()).computeSchedule ();
+        }
 
         // counters for how many times each component of the loop gets executed
         BigInteger splitExecutions = getNumSplitExecutions ();
@@ -68,7 +84,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                 {
                     // move the data forward
                     movedForward = true;
-                    mySchedule.add (getLoopJoin ().getJoinObject ());
+                    steadySchedule.add (getLoopJoin ().getJoinObject ());
                     joinBuffer = joinBuffer.subtract (BigInteger.valueOf (getLoopJoin ().getInputWeight (1)));
                     bodyBuffer = bodyBuffer.add (BigInteger.valueOf (getLoopJoin ().getRoundProduction ()));
 
@@ -90,7 +106,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                        && !bodyExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;
-                    mySchedule.add (getLoopBody ());
+                    steadySchedule.add (getLoopBody ());
                     bodyBuffer = bodyBuffer.subtract (BigInteger.valueOf (getLoopBody ().getConsumption ()));
                     splitBuffer = splitBuffer.add (BigInteger.valueOf (getLoopBody ().getProduction ()));
 
@@ -112,7 +128,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                        && !splitExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;
-                    mySchedule.add (getLoopSplit ().getSplitObject ());
+                    steadySchedule.add (getLoopSplit ().getSplitObject ());
                     splitBuffer = splitBuffer.subtract (BigInteger.valueOf (getLoopSplit ().getRoundConsumption ()));
                     loopBuffer = loopBuffer.add (BigInteger.valueOf (getLoopSplit ().getOutputWeight (1)));
 
@@ -134,7 +150,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                        && !loopExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;
-                    mySchedule.add (getLoopFeedbackPath ());
+                    steadySchedule.add (getLoopFeedbackPath ());
                     loopBuffer = loopBuffer.subtract (BigInteger.valueOf (getLoopFeedbackPath ().getConsumption ()));
                     joinBuffer = joinBuffer.add (BigInteger.valueOf (getLoopFeedbackPath ().getProduction ()));
 
@@ -173,7 +189,16 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         scheduler.schedule.setBufferSize (getLoopBody ().getStreamObject (), getLoopSplit ().getSplitObject (), maxSplitBuffer);
         scheduler.schedule.setBufferSize (getLoopSplit ().getSplitObject (), getLoopFeedbackPath ().getStreamObject (), maxLoopBuffer);
         scheduler.schedule.setBufferSize (getLoopFeedbackPath ().getStreamObject (), getLoopJoin ().getJoinObject (), maxJoinBuffer);
+    }
 
-        return mySchedule;
+    public Object getSteadySchedule ()
+    {
+        ASSERT (steadySchedule);
+        return steadySchedule;
+    }
+    public Object getInitSchedule ()
+    {
+        ASSERT (initSchedule);
+        return initSchedule;
     }
 }

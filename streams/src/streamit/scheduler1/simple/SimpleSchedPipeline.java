@@ -10,6 +10,8 @@ import java.math.BigInteger;
 public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStream
 {
     final SimpleHierarchicalScheduler scheduler;
+    private List steadySchedule = null;
+    private List initSchedule = null;
 
     SimpleSchedPipeline (SimpleHierarchicalScheduler scheduler, Object stream)
     {
@@ -19,23 +21,33 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
         this.scheduler = scheduler;
     }
 
-    public Object computeSchedule ()
+    public void computeSchedule ()
     {
-        List mySchedule = new LinkedList ();
+        // make sure that this the first call to computeSchedule
+        {
+            ASSERT (steadySchedule == null && initSchedule == null);
+            steadySchedule = new LinkedList ();
+            initSchedule = new LinkedList ();
+        }
 
         List children = getChildren ();
         ListIterator iter = children.listIterator ();
-        SchedStream prevChild = null;
+        SimpleSchedStream prevChild = null;
+
         while (iter.hasNext ())
         {
-            SchedStream child = (SchedStream) iter.next ();
+            // get the child
+            SimpleSchedStream child = (SimpleSchedStream) iter.next ();
             ASSERT (child);
+
+            // initialize the child's schedule
+            child.computeSchedule ();
 
             // can't quite handle peeking yet!
             ASSERT (child.getPeekConsumption () == child.getConsumption ());
 
             Object childSchedule;
-            childSchedule = scheduler.computeSchedule (child);
+            childSchedule = child.getSteadySchedule ();
             ASSERT (childSchedule);
 
             BigInteger numExecutions = child.getNumExecutions ();
@@ -57,24 +69,33 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                     int pushSize = child.getProduction ();
 
                     ASSERT (pushSize != 0);
-                    int extraPushes = (extraPeekSize + pushSize - 1) / pushSize;
+                    int extraPushes = (extraPeekSize + (pushSize - 1)) / pushSize;
 
                     bufferSize = bufferSize.add (BigInteger.valueOf (extraPushes * pushSize));
                 }
 
-                scheduler.setBufferSize (prevChild.getStreamObject (), child.getStreamObject (), bufferSize);
+                scheduler.schedule.setBufferSize (prevChild.getStreamObject (), child.getStreamObject (), bufferSize);
             }
 
             // enter all the appropriate sub-schedules into the schedule
             while (numExecutions.signum () != 0)
             {
-                mySchedule.add (childSchedule);
+                steadySchedule.add (childSchedule);
                 numExecutions = numExecutions.subtract (BigInteger.ONE);
             }
 
             prevChild = child;
         }
+    }
 
-        return mySchedule;
+    public Object getSteadySchedule ()
+    {
+        ASSERT (steadySchedule);
+        return steadySchedule;
+    }
+    public Object getInitSchedule ()
+    {
+        ASSERT (initSchedule);
+        return initSchedule;
     }
 }

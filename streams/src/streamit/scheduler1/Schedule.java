@@ -106,28 +106,37 @@ public class Schedule extends AssertedClass
         setBufferSize (streamSrc, join, bufferSize);
     }
 
-    List schedule = new LinkedList ();
+    List steadySchedule = null;
+    List initSchedule = null;
 
-    public List getSchedule ()
+    public List getSteadySchedule ()
     {
-        return schedule;
+        ASSERT (steadySchedule);
+        return steadySchedule;
     }
 
-    public void setSchedule (Object newSchedule)
+    public List getInitSchedule ()
     {
-        if (newSchedule instanceof List)
+        return initSchedule;
+    }
+
+    public void setSchedules (Object steadySchedule, Object initSchedule)
+    {
+        if (steadySchedule instanceof List)
         {
-            schedule = (List) newSchedule;
+            this.steadySchedule = (List) steadySchedule;
         } else {
-            schedule = new LinkedList ();
-            schedule.add (newSchedule);
+            this.steadySchedule = new LinkedList ();
+            this.steadySchedule.add (steadySchedule);
         }
-    }
 
-    public void addToSchedule (Object scheduleElement)
-    {
-        ASSERT ((List) scheduleElement != null || (SchedStream) scheduleElement != null);
-        schedule.add (scheduleElement);
+        if (initSchedule instanceof List)
+        {
+            this.initSchedule = (List) initSchedule;
+        } else {
+            this.initSchedule = new LinkedList ();
+            this.initSchedule.add (initSchedule);
+        }
     }
 }
 

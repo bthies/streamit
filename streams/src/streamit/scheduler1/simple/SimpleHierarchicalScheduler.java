@@ -43,42 +43,18 @@ public class SimpleHierarchicalScheduler extends Scheduler
     public Schedule computeSchedule ()
     {
         ASSERT (stream);
+        ASSERT (stream instanceof SimpleSchedStream);
 
-        Object schedule;
-        schedule = computeSchedule (stream);
-        ASSERT (schedule);
+        SimpleSchedStream simpleStream = (SimpleSchedStream) stream;
+        simpleStream.computeSchedule ();
 
-        this.schedule.setSchedule (schedule);
+        schedule.setSchedules (simpleStream.getSteadySchedule (), simpleStream.getInitSchedule ());
 
-        return this.schedule;
+        return schedule;
     }
 
-    final Map subSchedules = new HashMap ();
-
-    public void setBufferSize (Object streamSrc, Object streamDst, BigInteger bufferSize)
+    public Schedule getSchedule ()
     {
-        schedule.setBufferSize (streamSrc, streamDst, bufferSize);
-    }
-
-    Object computeSchedule (SchedStream stream)
-    {
-        Object schedule;
-
-        if (subSchedules.containsKey (stream))
-        {
-            // just retrieve the schedule and discard the list given to me
-            schedule = subSchedules.get (stream);
-            ASSERT (schedule);
-            return schedule;
-        } else {
-            // have to compute it:
-            ASSERT (stream instanceof SimpleSchedStream);
-            schedule = ((SimpleSchedStream)stream).computeSchedule ();
-
-            ASSERT (schedule);
-            subSchedules.put (stream, schedule);
-        }
-
         return schedule;
     }
 }

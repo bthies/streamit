@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.34 2003-10-06 20:33:06 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.35 2003-10-06 20:39:41 dmaze Exp $
  **/
 package streamittest;
 
@@ -92,6 +92,7 @@ public class TestBenchmarks extends StreamITTestCase {
     public void testBitonicSort() 
     {
         String root = BENCH_ROOT + "bitonic-sort/streamit/";
+        doSyntaxConvertTest(root, "BitonicSort.str", "BitonicSort.java");
         doCompileTest(root, "BitonicSort.java");
         doRunTest(root, "BitonicSort.java", 0, 32);
 	doCompareTest(root, "BitonicSort.java", "BitonicSort.out");
@@ -110,17 +111,6 @@ public class TestBenchmarks extends StreamITTestCase {
     public void testFft()
     {
         String root = BENCH_ROOT + "fft/streamit/";
-        /*
-        doMake(root);
-        doCompileTest(root, "LinkedFFT2.java");
-        doRunTest(root, "LinkedFFT2.java", 0, 256);
-	// do the comparison test
-	doCompareTest(root,
-		      "LinkedFFT2.java",
-                      "LinkedFFT2.out");
-        */
-
-        // new syntax from Sitij:
         doSyntaxConvertTest(root, "FFT2.str", "FFT2.java");
         doCompileTest(root, "FFT2.java");
         doRunTest(root, "FFT2.java", 0, 256);
@@ -130,13 +120,6 @@ public class TestBenchmarks extends StreamITTestCase {
     public void testFilterbank()
     {
         String root = BENCH_ROOT + "filterbank/streamit/";
-        doMake(root);
-        doCompileTest(root, "LinkedFBtest.java");
-        doRunTest(root, "LinkedFBtest.java", 0, 256);
-	doCompareTest(root,
-		      "LinkedFBtest.java",
-		      "LinkedFBtest.out");    
-
         doSyntaxConvertTest(root, "FilterBankNew.str", "FilterBankNew.java");
         doCompileRunVerifyTest(root, "FilterBankNew.java",
                                "LinkedFBtest.out", 0, 256);
@@ -145,34 +128,14 @@ public class TestBenchmarks extends StreamITTestCase {
     public void testFir()
     {
         String root = BENCH_ROOT + "fir/streamit/";
-        doCompileRunVerifyTest(root, "FIRfine.java", "FIRfine.out", 0, 6);
-        // I think FIR.str is equivalent to FIRfine:
         doSyntaxConvertTest(root, "FIR.str", "FIR.java");
         doCompileRunVerifyTest(root, "FIR.java", "FIRfine.out", 0, 6);
     }
 
     public void testFm() {
 	String root = BENCH_ROOT + "fm/streamit/"; 
-        /*
-	doMake(root);
-	doCompileTest(root,
-		      "LinkedFMTest.java");
-	// run make, this time with the target extra-run
-	// which changes the streamit makefile so the simulator runs
-	// for more cycles
-	doMake(root, "more-cycles");
-	doRunTest(root,
-		  "LinkedFMTest.java",
-		  0,1);
-	// do the comparison test
-	doCompareTest(root,
-		      "LinkedFMTest.java",
-		      "LinkedFMTest.out");
-        */
-
-        // new syntax:
-        doSyntaxConvertTest(root, "FMRadio.str", "FMRadio.java");
-        doCompileRunVerifyTest(root, "FMRadio.java", "LinkedFMTest.out",
+        doSyntaxConvertTest(root, "FMTest.str", "FMTest.java");
+        doCompileRunVerifyTest(root, "FMTest.java", "LinkedFMTest.out",
                                0, 1);
     }
 

@@ -88,8 +88,6 @@ public class GESplitJoinController extends GEStreamNodeController{
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
 		dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
-		dialog.setSplitterWeights(propert.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS));
-		dialog.setJoinerWeights(propert.getProperty(GEProperties.KEY_JOINER_WEIGHTS));
 	}
 	
 	/**
@@ -102,9 +100,6 @@ public class GESplitJoinController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_INPUT_TAPE, dialog.getInputTape());
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, dialog.getOutputTape());
 		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
-		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, dialog.getSplitterWeights());
-		properties.put(GEProperties.KEY_JOINER_WEIGHTS, dialog.getJoinerWeights());
-
 	}
 
 	 /**
@@ -120,8 +115,6 @@ public class GESplitJoinController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
 		properties.put(GEProperties.KEY_PARENT, "Toplevel");
 		properties.put(GEProperties.KEY_TYPE, GEType.SPLIT_JOIN);
-		properties.put(GEProperties.KEY_JOINER_WEIGHTS, "1");
-		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
 	 }
 	
 

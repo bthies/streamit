@@ -18,7 +18,6 @@ import javax.swing.JTextField;
 
 import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
-import streamit.eclipse.grapheditor.graph.GEProperties;
 
 /**
  * @author jcarlos
@@ -27,15 +26,7 @@ import streamit.eclipse.grapheditor.graph.GEProperties;
 public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDialog
 {
 	private String dialogType = "SplitJoin Configuration";
-	
-	protected JLabel splitterWeightsLabel = new JLabel();
-	protected JTextField splitterWeightsTextField;
 
-	protected JLabel joinerWeightsLabel = new JLabel();
-	protected JTextField joinerWeightsTextField;
-	
-
-	
 	public GESplitJoinConfigurationDialog(Frame parent, GPDocument document)
 	{
 		super(parent, document);
@@ -62,7 +53,7 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 				System.out.println("TOKEN " + token);
 				Integer.parseInt(token);
 			}*/
-			GEProperties.weightsToInt(splitterWeightsTextField.getText().trim()) ;
+			//GEProperties.weightsToInt(splitterWeightsTextField.getText().trim()) ;
 			
 			
 		} catch (Exception e) {
@@ -76,47 +67,13 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		canceled = false;
 	}
 	
-	/**
-	 * Set the value of the "Push Rate" text field.
-	 * @param push Text value for "Push Rate"
-	 */
-	public void setSplitterWeights(String weights)
-	{
-		splitterWeightsTextField.setText(weights);	
-	}
-	
-	/**
-	 * Set the value of the "Pop Rate" text field.
-	 * @param push Text value for "Pop Rate"
-	 */
-	public String getSplitterWeights()
-	{
-		return splitterWeightsTextField.getText().trim();
-	}
-	
-	/**
-	 * Set the value of the "Push Rate" text field.
-	 * @param push Text value for "Push Rate"
-	 */
-	public void setJoinerWeights(String weights)
-	{
-		joinerWeightsTextField.setText(weights);	
-	}
-	
-	/**
-	 * Set the value of the "Pop Rate" text field.
-	 * @param push Text value for "Pop Rate"
-	 */
-	public String getJoinerWeights()
-	{
-		return joinerWeightsTextField.getText().trim();
-	}
+
 	
 	
 			
 	protected void initComponents()
 	{
-		jPanel1 = new JPanel(new GridLayout(7,7));
+		jPanel1 = new JPanel(new GridLayout(5,5));
 		toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT ));
 		cancelButton = new JButton();
 		finishedButton = new JButton();
@@ -125,16 +82,12 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		parentLabel = new JLabel();
 		inputTapeLabel = new JLabel();
 		outputTapeLabel = new JLabel();
-		splitterWeightsLabel = new JLabel();
-		joinerWeightsLabel = new JLabel();
 	
 		nameTextField = new JTextField();
 		inputTapeTextField = new JTextField();
 		outputTapeTextField = new JTextField();
-		splitterWeightsTextField = new JTextField();
-		joinerWeightsTextField = new JTextField();
 		
-		parentsJComboBox = new JComboBox(this.document.getGraphStructure().getAllContainerNames());
+		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
 
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -184,21 +137,6 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		outputTapeLabel.setName("Output Tape");
 		jPanel1.add(outputTapeLabel);
 		jPanel1.add(outputTapeTextField);
-		
-		splitterWeightsLabel.setText("Splitter Weights");
-		splitterWeightsLabel.setName("Splitter Weights");
-		jPanel1.add(splitterWeightsLabel);
-		jPanel1.add(splitterWeightsTextField);
-
-		joinerWeightsLabel.setText("Joiner Weights");
-		joinerWeightsLabel.setName("JoinerWeights");
-		jPanel1.add(joinerWeightsLabel);
-		jPanel1.add(joinerWeightsTextField);
-		
-		JLabel weightParseReqLabel= new JLabel();
-		weightParseReqLabel.setName("Weights Parse Req");
-		weightParseReqLabel.setText("(separate weights with commas)");
-		jPanel1.add(weightParseReqLabel);
 
 		getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 

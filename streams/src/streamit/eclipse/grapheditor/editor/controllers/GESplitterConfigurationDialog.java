@@ -1,6 +1,5 @@
 /*
- * Created on Dec 10, 2003
- *
+ * Created on Jan 28, 2004
  */
 package streamit.eclipse.grapheditor.editor.controllers;
 
@@ -12,7 +11,6 @@ import java.awt.GridLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -22,19 +20,26 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 /**
  * @author jcarlos
  *
+ * To change the template for this generated type comment go to
+ * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class GEFeedbackLoopConfigurationDialog extends GEStreamNodeConfigurationDialog
-{
-	private String dialogType = "FeedbackLoop Configuration";
+public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDialog{
 
-	public GEFeedbackLoopConfigurationDialog(Frame parent, GPDocument document)
-	{
+
+	private String dialogType = "Splitter Configuration";
+	
+	protected JLabel splitterWeightsLabel = new JLabel();
+	protected JTextField splitterWeightsTextField;
+	
+	/**
+	 * Creates new form GEJoinerConfigurationDialog
+	 */
+	public GESplitterConfigurationDialog(Frame parent, GPDocument document) 
+	{    
 		super(parent, document);
 		initComponents();
-        
-		
 		setTitle(dialogType);
-		setName(dialogType);
+		setName(dialogType);		
 		setPosition();
 	}
 
@@ -43,37 +48,48 @@ public class GEFeedbackLoopConfigurationDialog extends GEStreamNodeConfiguration
 	 */
 	protected void action_ok() {
 		
-		
+		/*
 		try {
-			/*
-			StringTokenizer strToken = new StringTokenizer(splitterWeightsTextField.getText().trim(), ",");
-			while(strToken.hasMoreTokens())
-			{
-				String token = strToken.nextToken();
-				System.out.println("TOKEN " + token);
-				Integer.parseInt(token);
-			}*/
-			//GEProperties.weightsToInt(splitterWeightsTextField.getText().trim()) ;
-			
-			
+			Integer.parseInt(nameTextField.getText());
+			Integer.parseInt(parentTextField.getText());
+			Integer.parseInt(inputTapeTextField.getText());
+			Integer.parseInt(outputTapeTextField.getText());
+			Integer.parseInt(argumentsTextField.getText());
 		} catch (Exception e) {
-			String message = "The weights must be separated by a comma and no spaces in between";
+			String message = Translator.getString("Error.SpacingMustBeNumbers");
 			JOptionPane.showMessageDialog(this, message, Translator.getString("Error"), JOptionPane.INFORMATION_MESSAGE);
 			return;
-		}
+		}*/
 		
 		setVisible(false);
 		dispose();
 		canceled = false;
 	}
-	
-
-	
-	
-			
-	protected void initComponents()
+    
+	/**
+	 * Set the value of the "Push Rate" text field.
+	 * @param push Text value for "Push Rate"
+	 */
+	public void setSplitterWeights(String weights)
 	{
-		jPanel1 = new JPanel(new GridLayout(5,5));
+		splitterWeightsTextField.setText(weights);	
+	}
+	
+	/**
+	 * Set the value of the "Pop Rate" text field.
+	 * @param push Text value for "Pop Rate"
+	 */
+	public String getSplitterWeights()
+	{
+		return splitterWeightsTextField.getText().trim();
+	}
+	
+	/** 
+	 * Initialize the Swing Components
+	 */   
+	protected void initComponents() 
+	{
+		jPanel1 = new JPanel(new GridLayout(7,7));
 		toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT ));
 		cancelButton = new JButton();
 		finishedButton = new JButton();
@@ -82,10 +98,12 @@ public class GEFeedbackLoopConfigurationDialog extends GEStreamNodeConfiguration
 		parentLabel = new JLabel();
 		inputTapeLabel = new JLabel();
 		outputTapeLabel = new JLabel();
-	
+		splitterWeightsLabel = new JLabel();
+
 		nameTextField = new JTextField();
 		inputTapeTextField = new JTextField();
 		outputTapeTextField = new JTextField();
+		splitterWeightsTextField = new JTextField();
 		
 		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
 
@@ -137,13 +155,21 @@ public class GEFeedbackLoopConfigurationDialog extends GEStreamNodeConfiguration
 		outputTapeLabel.setName("Output Tape");
 		jPanel1.add(outputTapeLabel);
 		jPanel1.add(outputTapeTextField);
-
+		
+		splitterWeightsLabel.setText("Splitter Weights");
+		splitterWeightsLabel.setName("Splitter Weights");
+		jPanel1.add(splitterWeightsLabel);
+		jPanel1.add(splitterWeightsTextField);
+		
+		JLabel weightParseReqLabel= new JLabel();
+		weightParseReqLabel.setName("Weights Parse Req");
+		weightParseReqLabel.setText("(separate weights with commas)");
+		jPanel1.add(weightParseReqLabel);
+		
 		getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 
 		pack();
-		
 	}
+
+
 }
-
-
-

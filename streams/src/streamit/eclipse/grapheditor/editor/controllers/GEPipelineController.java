@@ -94,10 +94,10 @@ public class GEPipelineController extends GEStreamNodeController {
 	 */
 	public void getPropertiesInDialog()
 	{
-		dialog.setName(properties.getProperty (GEProperties.KEY_NAME));
-		dialog.setInputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
-		dialog.setOutputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));	
-		dialog.setImmediateParent(properties.getProperty(GEProperties.KEY_PARENT));
+		properties.put(GEProperties.KEY_NAME, dialog.getName());
+		properties.put(GEProperties.KEY_INPUT_TAPE, dialog.getInputTape());
+		properties.put(GEProperties.KEY_OUTPUT_TAPE, dialog.getOutputTape());
+		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
 		
 	}
 

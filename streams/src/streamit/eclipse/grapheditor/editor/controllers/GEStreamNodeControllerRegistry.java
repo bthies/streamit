@@ -31,7 +31,7 @@ public class GEStreamNodeControllerRegistry {
 		streamNodeControllers.add(new GESplitterController());
 		streamNodeControllers.add(new GESplitJoinController());
 		streamNodeControllers.add(new GEJoinerController());
-//		streamNodeControllers.add(new GEFeedbackLoopController());
+		streamNodeControllers.add(new GEFeedbackLoopController());
 		
 		sort();
 	}

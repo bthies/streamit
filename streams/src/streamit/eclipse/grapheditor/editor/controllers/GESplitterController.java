@@ -18,8 +18,7 @@ import streamit.eclipse.grapheditor.graph.GEType;
  */
 public class GESplitterController extends GEStreamNodeController{
 	
-	//TODO Create a controller for the splitter
-	GEPipelineConfigurationDialog dialog = null;
+	GESplitterConfigurationDialog dialog = null;
 	
 	/**
 	  * Constructor. Set the default properties for the GEPhasedFilter. 
@@ -47,7 +46,7 @@ public class GESplitterController extends GEStreamNodeController{
 	 {
 		setDefaultProperties();
     	
-		dialog = new GEPipelineConfigurationDialog(new JFrame(), document);
+		dialog = new GESplitterConfigurationDialog(new JFrame(), document);
 		setPropertiesInDialog(this.properties);
 		
 		dialog.setVisible(true);
@@ -66,7 +65,7 @@ public class GESplitterController extends GEStreamNodeController{
 	 {
 		setDefaultProperties();
     	
-		dialog = new GEPipelineConfigurationDialog(new JFrame(), document);
+		dialog = new GESplitterConfigurationDialog(new JFrame(), document);
 		setPropertiesInDialog(propert);
 		
 		dialog.setVisible(true);
@@ -88,6 +87,7 @@ public class GESplitterController extends GEStreamNodeController{
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
 		dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
+		dialog.setSplitterWeights(propert.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS));
 	}
 	
 	/**
@@ -100,7 +100,7 @@ public class GESplitterController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_INPUT_TAPE, dialog.getInputTape());
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, dialog.getOutputTape());
 		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
-
+		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, dialog.getSplitterWeights());
 	}
 	
 	 /**
@@ -116,6 +116,7 @@ public class GESplitterController extends GEStreamNodeController{
 		 properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
 		 properties.put(GEProperties.KEY_PARENT, "Toplevel");
 		 properties.put(GEProperties.KEY_TYPE, GEType.SPLITTER);
+		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
 	 }
 	
 

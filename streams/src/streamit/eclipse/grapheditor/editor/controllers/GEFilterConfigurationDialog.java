@@ -142,7 +142,7 @@ public class GEFilterConfigurationDialog extends GEStreamNodeConfigurationDialog
 		popTextField = new JTextField();
 		peekTextField = new JTextField();
 		
-		parentsJComboBox = new JComboBox(this.document.getGraphStructure().getAllContainerNames());
+		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
 
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {

@@ -13,7 +13,7 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
  *
  */
 
-abstract class GEStreamNodeController {
+abstract class GEStreamNodeController implements Controller {
     
 
 	/**
@@ -30,31 +30,18 @@ abstract class GEStreamNodeController {
 		properties = new Properties();
 	}
 
-	/**
-	 * Return the type of the controller.
-	 */
-	public abstract String toString();
+
 
 	/**
 	 * The properties of the pipeline are configurable.
 	 */
+	
 	public boolean isConfigurable() 
 	{
 		return true;
 	}
 
-	/**
-	 * Display the dialog that allows the user to configure the values for the pipeline.
-	 */
-	public abstract boolean configure(GPDocument document) ;
-	/**
-	 * Set the default properties of the GEPipelineController. If the default properties
-	 * are not set again, then the values that are changed in the GEPipelineController, will
-	 * remain stored. 
-	 *
-	 */
-	
-	public abstract void setDefaultProperties();	
+
 	/**
 	 * Get the configuration values for the pipeline. 
 	 */
@@ -64,7 +51,7 @@ abstract class GEStreamNodeController {
 		return properties;
 	}
     
-	public abstract Properties getDefaultConfiguration();
+
 
 }
 

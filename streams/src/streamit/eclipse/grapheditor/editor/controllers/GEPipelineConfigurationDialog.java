@@ -25,7 +25,7 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 public class GEPipelineConfigurationDialog extends GEStreamNodeConfigurationDialog{
 
 
-	private String dialogType = "SplitJoin Configuration";
+	private String dialogType = "Pipeline Configuration";
  
 	
 	/**
@@ -90,10 +90,10 @@ public class GEPipelineConfigurationDialog extends GEStreamNodeConfigurationDial
 		outputTapeTextField = new JTextField();
 
 		
-		System.out.println(this.document.getGraphStructure().getAllContainers().toString());
+		System.out.println(this.document.getGraphStructure().containerNodes.getAllContainers().toString());
 		
 		
-		parentsJComboBox = new JComboBox(this.document.getGraphStructure().getAllContainerNames());
+		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
 
 		addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent evt) {

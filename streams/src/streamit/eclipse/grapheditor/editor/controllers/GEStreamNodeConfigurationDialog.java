@@ -21,7 +21,7 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
  * @author jcarlos
  *
  */
-abstract class GEStreamNodeConfigurationDialog extends JDialog{
+public abstract class GEStreamNodeConfigurationDialog extends JDialog{
 
 
 	/** 

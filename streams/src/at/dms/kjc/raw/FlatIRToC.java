@@ -216,6 +216,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//print the extern for the function to init the 
 	//switch
 	print("void raw_init();\n");
+        print("void raw_init2();\n");
 	    
 	print("int " + TAPE_INDEX + " = -1;\n");
 	print("int " + BUFFER_INDEX + ";\n");
@@ -305,6 +306,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (self instanceof SIRTwoStageFilter) {
 	    print("  " + ((SIRTwoStageFilter)self).getInitWork().getName() + "();\n");
 	}
+        print("  raw_init2();\n");
 	print("  " + self.getWork().getName() + "();\n");
 	print("}\n");
 	

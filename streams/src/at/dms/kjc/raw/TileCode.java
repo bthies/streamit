@@ -67,8 +67,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //write the extern for the function to init the 
 	    //switch
 	    fw.write("void raw_init();\n\n");
+            fw.write("void raw_init2();\n\n");
 	    fw.write("void begin(void) {\n");
 	    fw.write("  raw_init();\n");
+            fw.write("  raw_init2();\n");
 	    fw.write("  work();\n");
 	    fw.write("}\n");
 	    fw.close();
@@ -293,8 +295,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //write the extern for the function to init the 
 	    //switch
 	    fw.write("void raw_init();\n\n");
+            fw.write("void raw_init2();\n\n");
 	    fw.write("void begin(void) {\n");
 	    fw.write("  raw_init();\n");
+            fw.write("  raw_init2();\n");
 	    fw.write("}\n");
 	    fw.close();
 	    System.out.println("Code " +

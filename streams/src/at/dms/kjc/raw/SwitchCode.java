@@ -67,13 +67,15 @@ public class SwitchCode extends at.dms.util.Utils
 		    steadyCode = ((StringBuffer)RawBackend.simulator.steadySchedules.get(tile)).toString();
 		
 		//the sequences we are going to compress if compression is needed
-		Repetition[] threeBiggest = null;
+		Repetition[] big3init = null;
+                Repetition[] big3work = null;
 		
 		int codeSize = getCodeLength(steadyCode + initCode);
 		if (codeSize > 5000) {
 		    System.out.println("Compression needed.  Code size = " + codeSize);
 		    compression = true;
-		    threeBiggest = threeBiggestRepetitions(steadyCode);
+                    big3init = threeBiggestRepetitions(initCode);
+		    big3work = threeBiggestRepetitions(steadyCode);
 		}
 		
 		FileWriter fw =
@@ -85,18 +87,20 @@ public class SwitchCode extends at.dms.util.Utils
 		//we need to send a data word to it
 		printIOStartUp(tile, fw);
 		//print the code to get the repetition counts from the processor
-		if (threeBiggest != null)
-		    getRepetitionCounts(threeBiggest, fw);
 		//print the init switch code
-		toASM(initCode, null, fw);
+                if (big3init != null)
+                    getRepetitionCounts(big3init, fw);
+		toASM(initCode, "i", big3init, fw);
 		//loop label
+		if (big3work != null)
+		    getRepetitionCounts(big3work, fw);
 		fw.write("sw_loop:\n");
 		//print the steady state switch code
 		if (RawBackend.simulator.steadySchedules.get(tile) != null)
-		    toASM(steadyCode, threeBiggest, fw);
+		    toASM(steadyCode, "w", big3work, fw);
 		//print the jump ins
 		fw.write("\tj\tsw_loop\n\n");
-		fw.write(getTrailer(tile, threeBiggest));
+		fw.write(getTrailer(tile, big3init, big3work));
 		fw.close();
 		/*if (threeBiggest != null) {
 		    		    System.out.print("Found Seqeunces of: " +
@@ -139,7 +143,7 @@ public class SwitchCode extends at.dms.util.Utils
     //print the assemble for the tile routing instructions.  if init is true
     //then we are printing the init schedule and if we have repetitions
     //we must get the constants from the processor
-    private static void toASM(String ins, Repetition[] compressMe, FileWriter fw) throws Exception
+    private static void toASM(String ins, String side, Repetition[] compressMe, FileWriter fw) throws Exception
     {
         int seq = 0;
 	StringTokenizer t = new StringTokenizer(ins, "\n");
@@ -163,10 +167,10 @@ public class SwitchCode extends at.dms.util.Utils
 		    if (compressMe[i].hasLine(counter)) {
 			repetitions = compressMe[i].repetitions;
 			fw.write("\tmove $3, $" + i + "\n");
-			fw.write("seq_start" + seq + ":\n");
+			fw.write("seq_start" + side + seq + ":\n");
 			//fw.write("\tnop\t" + current + "\n");
 			//fw.write("\tbnezd $3, $3, seq_start" + i + "\n");
-			fw.write("\tbnezd $3, $3, seq_start" + seq + "\t" + current + "\n");
+			fw.write("\tbnezd $3, $3, seq_start" + side + seq + "\t" + current + "\n");
                         seq++;
 			break;
 		    }
@@ -357,13 +361,16 @@ public class SwitchCode extends at.dms.util.Utils
 	buf.append("#include \"module_test.h\"\n\n");
 	buf.append(".swtext\n");
 	buf.append(".global sw_begin\n");
-	buf.append(".global raw_init\n\n");
+	buf.append(".global raw_init\n");
+        buf.append(".global raw_init2\n\n");
 	buf.append("sw_begin:\n");
 	
 	return buf.toString();
     }
     
-    private static String getTrailer(Coordinate tile, Repetition[] compressMe) 
+    private static String getTrailer(Coordinate tile,
+                                     Repetition[] compressInit,
+                                     Repetition[] compressWork) 
     {
 	StringBuffer buf = new StringBuffer();
 	
@@ -374,16 +381,28 @@ public class SwitchCode extends at.dms.util.Utils
 	if (FileVisitor.connectedToFR(tile))
 	    buf.append("\tori! $0, $0, 1\n");
 
-	if (compressMe != null) {
-	    for (int i = 0; i < compressMe.length; i++) {
+	if (compressInit != null) {
+	    for (int i = 0; i < compressInit.length; i++) {
 		//System.out.println("line: " + compressMe[i].line + " reps: " + compressMe[i].repetitions);
 		
 		//need to subtract 1 because we are adding the route instruction to the
 		//branch and it will execute regardless of whether we branch
-		buf.append("\tori! $0, $0, " + (compressMe[i].repetitions  - 1) + "\n");
+		buf.append("\tori! $0, $0, " + (compressInit[i].repetitions  - 1) + "\n");
 	    }
 	}
 	buf.append("\tjr $31\n");
+
+        buf.append("raw_init2:\n");
+	if (compressWork != null) {
+	    for (int i = 0; i < compressWork.length; i++) {
+		
+		//need to subtract 1 because we are adding the route instruction to the
+		//branch and it will execute regardless of whether we branch
+		buf.append("\tori! $0, $0, " + (compressWork[i].repetitions  - 1) + "\n");
+	    }
+	}
+        buf.append("\tjr $31\n");
+
 	return buf.toString();
     }
 }

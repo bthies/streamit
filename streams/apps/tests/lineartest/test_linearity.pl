@@ -56,7 +56,7 @@ my @files = (
 	     "$examples_path/mergesort/MergeSort.java",
 	     
 	     # needs conditional operation support.
-	     #"$examples_path/mergesort/MergeSort16.java",
+	     "$examples_path/mergesort/MergeSort16.java",
 	     
 	     "$examples_path/vectadd/VectAdd.java",	     
 	     "$examples_path/vectadd/VectAdd1.java",	     
@@ -87,6 +87,8 @@ my @files = (
 	     "regtests/LinearTest15.str",
 	     "regtests/LinearTest16.str",
 	     );
+
+@files = (	     "$benchmark_path/fm/streamit/LinkedFMTest.java",);
 
 # delete the output files from any previous runs
 `rm -rf $RESULTS_DIR`;
@@ -119,7 +121,7 @@ foreach $current_file (@files) {
     $base_filename = $RESULTS_DIR . "/" . $base_filename;
 
     # run the compiler and save its output to $base_filename.output
-    my $command = ("java -Xmx1500M at.dms.kjc.Main -s --constprop --linearanalysis --debug " .
+    my $command = ("java -Xmx1500M at.dms.kjc.Main -s --unroll 100000 --constprop --linearanalysis --debug " .
 		   "$current_file >& $base_filename.output");
     print `$command`;
 

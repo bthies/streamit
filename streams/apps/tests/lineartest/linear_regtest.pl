@@ -30,7 +30,8 @@ my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest14.str",
 	     "regtests/LinearTest15.str",
 	     "regtests/LinearTest16.str",
-	     "regtests/LinearTest17.str",);
+	     "regtests/LinearTest17.str",
+	     "regtests/LinearTest18.str",);
 
 
 my $current_test;

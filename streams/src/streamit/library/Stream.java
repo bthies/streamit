@@ -646,10 +646,21 @@ public abstract class Stream extends Operator
         return getChild(nChild);
     }
 
+    /**
+     * Ensures that a run is unscheduled (for example, if a dynamic
+     * rate is detected in the stream graph).
+     */
+    public static void ensureUnscheduled() {
+	if (scheduledRun) {
+	    //System.out.println("Note: detected dynamic rate in stream graph, using demand-driven schedule.");
+	    scheduledRun = false;
+	}
+    }
+    
     // just a runtime hook to run the stream
+    static boolean scheduledRun = true;
     public void run(String args[])
     {
-        boolean scheduledRun = true;
         boolean printGraph = true;
         boolean doRun = true;
         boolean singeappsched = false;

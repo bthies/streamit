@@ -49,21 +49,53 @@ public class Channel extends streamit.misc.DestroyedClass
         setupChannel (channelType);
     }
 
-    public Channel (Class channelType, int popPush)
+    public Channel (Class channelType, Rate popPush)
     {
         setupChannel (channelType);
 
-        // store the popPush
-        popPushCount = new Integer (popPush);
+	// if we detect a dynamic rate, make sure we're in unscheduled
+	// mode
+	if (!popPush.isStatic()) {
+	    Stream.ensureUnscheduled();
+	}
+
+        // store the popPush (use the maximum in case it's dynamic)
+        popPushCount = new Integer (popPush.max);
+    }
+    /**
+     * Same as above, for fixed I/O rates (and backwards compatibility
+     * with old Java benchmarks)
+     */
+    public Channel (Class channelType, int popPush) {
+	this(channelType, new RateStatic(popPush));
     }
 
-    public Channel (Class channelType, int pop, int peek)
+    public Channel (Class channelType, Rate pop, Rate peek)
     {
         setupChannel (channelType);
 
-        // store the popPush
-        popPushCount = new Integer (pop);
-        peekCount = new Integer (peek);
+	// if we detect a dynamic rate, make sure we're in unscheduled
+	// mode
+	if (!pop.isStatic() || !peek.isStatic()) {
+	    Stream.ensureUnscheduled();
+	}
+
+        // store the popPush (use the maximum in case it's dynamic)
+        popPushCount = new Integer (pop.max);
+        peekCount = new Integer (peek.max);
+    }
+    /**
+     * Same as above, for fixed I/O rates (and backwards compatibility
+     * with old Java benchmarks)
+     */
+    public Channel (Class channelType, int pop, int peek) {
+	this(channelType, new RateStatic(pop), new RateStatic(peek));
+    }
+    public Channel (Class channelType, Rate pop, int peek) {
+	this(channelType, pop, new RateStatic(peek));
+    }
+    public Channel (Class channelType, int pop, Rate peek) {
+	this(channelType, new RateStatic(pop), peek);
     }
 
     public Channel (Channel original)

@@ -424,16 +424,86 @@ public abstract class Filter extends Stream
         multiPhaseStyle = true;
     }
 
-    public void addSteadyPhase(int e, int o, int u, String name)
+    public void addSteadyPhase(Rate e, Rate o, Rate u, String name)
     {
-        steadyPhases.add(new PhaseInfo(e, o, u, name));
+	// if we detect a dynamic rate, make sure we're in unscheduled
+	// mode
+	if (!e.isStatic() || !o.isStatic() || !u.isStatic()) {
+	    Stream.ensureUnscheduled();
+	}
+
+	// use max rates in case they are dynamic
+        steadyPhases.add(new PhaseInfo(e.max, o.max, u.max, name));
         multiPhaseStyle = true;
     }
+    /**
+     * Same as above, for fixed I/O rates (and backwards compatibility
+     * with old Java benchmarks).  It's slightly easier to write all
+     * these signatures here and have the compiler recognize an int
+     * literal as being a static rate than it is to recognize a static
+     * rate in the compiler.
+     */
+    public void addSteadyPhase(int e, int o, int u, String name) {
+	addSteadyPhase(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
+    }
+    public void addSteadyPhase(Rate e, int o, int u, String name) {
+	addSteadyPhase(e, new RateStatic(o), new RateStatic(u), name);
+    }
+    public void addSteadyPhase(int e, Rate o, int u, String name) {
+	addSteadyPhase(new RateStatic(e), o, new RateStatic(u), name);
+    }
+    public void addSteadyPhase(int e, int o, Rate u, String name) {
+	addSteadyPhase(new RateStatic(e), new RateStatic(o), u, name);
+    }
+    public void addSteadyPhase(Rate e, int o, Rate u, String name) {
+	addSteadyPhase(e, new RateStatic(o), u, name);
+    }
+    public void addSteadyPhase(Rate e, Rate o, int u, String name) {
+	addSteadyPhase(e, o, new RateStatic(u), name);
+    }
+    public void addSteadyPhase(int e, Rate o, Rate u, String name) {
+	addSteadyPhase(new RateStatic(e), o, u, name);
+    }
 
-    public void addInitPhase(int e, int o, int u, String name)
+    public void addInitPhase(Rate e, Rate o, Rate u, String name)
     {
-        initPhases.add(new PhaseInfo(e, o, u, name));
+	// if we detect a dynamic rate, make sure we're in unscheduled
+	// mode
+	if (!e.isStatic() || !o.isStatic() || !u.isStatic()) {
+	    Stream.ensureUnscheduled();
+	}
+
+	// use max rates in case they are dynamic
+        initPhases.add(new PhaseInfo(e.max, o.max, u.max, name));
         multiPhaseStyle = true;
+    }
+    /**
+     * Same as above, for fixed I/O rates (and backwards compatibility
+     * with old Java benchmarks).  It's slightly easier to write all
+     * these signatures here and have the compiler recognize an int
+     * literal as being a static rate than it is to recognize a static
+     * rate in the compiler.
+     */
+    public void addInitPhase(int e, int o, int u, String name) {
+	addInitPhase(new RateStatic(e), new RateStatic(o), new RateStatic(u), name);
+    }
+    public void addInitPhase(Rate e, int o, int u, String name) {
+	addInitPhase(e, new RateStatic(o), new RateStatic(u), name);
+    }
+    public void addInitPhase(int e, Rate o, int u, String name) {
+	addInitPhase(new RateStatic(e), o, new RateStatic(u), name);
+    }
+    public void addInitPhase(int e, int o, Rate u, String name) {
+	addInitPhase(new RateStatic(e), new RateStatic(o), u, name);
+    }
+    public void addInitPhase(Rate e, int o, Rate u, String name) {
+	addInitPhase(e, new RateStatic(o), u, name);
+    }
+    public void addInitPhase(Rate e, Rate o, int u, String name) {
+	addInitPhase(e, o, new RateStatic(u), name);
+    }
+    public void addInitPhase(int e, Rate o, Rate u, String name) {
+	addInitPhase(new RateStatic(e), o, u, name);
     }
 
     public int getNumInitPhases()

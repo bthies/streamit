@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.46 2003-12-01 22:45:34 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.47 2004-02-12 20:47:06 dmaze Exp $
  */
 
 header {
@@ -210,6 +210,7 @@ statement returns [Statement s] { s = null; }
 	|	s=do_while_statement SEMI
 	|	s=for_statement
 	|	s=msg_statement SEMI
+	|   SEMI
 	;
 
 add_statement returns [Statement s] { s = null; StreamCreator sc; }
@@ -358,7 +359,7 @@ param_decl returns [Parameter p] { Type t; p = null; }
 	;
 
 block returns [Statement s] { s = null; List l = new ArrayList(); }
-	:	t:LCURLY ( s=statement { l.add(s); } )* RCURLY
+	:	t:LCURLY ( s=statement { if (s != null) l.add(s); } )* RCURLY
 		{ s = new StmtBlock(getContext(t), l); }
 	;
 

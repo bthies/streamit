@@ -125,6 +125,11 @@ public class MagicDram extends IODevice
 			 Util.magicBufferSize(current.in, current.out) + ";\n");
 		fw.write("\tlocal " + bufferIdent + "_buffer = malloc(" + bufferIdent + "_size);\n");
 	    }
+	    //Before we can start this device, receive one item from the tile
+	    //so that we know that it is done booting...
+	    fw.write("// wait for boot to finish before starting...\n");
+	    fw.write("threaded_static_io_receive(machine, port);\n");
+	    fw.write("yield;\n");
 	    
 	    //write the init magic dram instructions
 	    fw.write("// Initialization Stage \n");

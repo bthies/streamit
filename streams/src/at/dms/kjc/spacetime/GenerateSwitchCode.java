@@ -18,7 +18,7 @@ public class GenerateSwitchCode {
 			
 			fw.write("#  Switch code\n");
 			fw.write(getHeader());
-			
+			fw.write(startIO(chip, tile));
 			//write the initialization code
 			for (int i = 0; i < tile.getSwitchCode().size(true); i++) {
 			    fw.write("\t" + 
@@ -48,7 +48,17 @@ public class GenerateSwitchCode {
 	
     }
     
+    private static String startIO(RawChip rawChip, RawTile tile) 
+    {
+	StringBuffer buf = new StringBuffer();
+	if (tile.hasIODevice()) {
+	    //move whatever is in $1 to the iodevice to get it started
+	    buf.append("\tnop\troute $1->$c" + rawChip.getDirection(tile, tile.getIODevice()) + "o\n");
+	}
+	return buf.toString();
+    }
     
+
     private static String getHeader() 
     {
 	StringBuffer buf = new StringBuffer();

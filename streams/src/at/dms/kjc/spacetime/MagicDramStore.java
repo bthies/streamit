@@ -18,15 +18,31 @@ public class MagicDramStore extends MagicDramInstruction
     {
 	StringBuffer sb = new StringBuffer();
 	//store
-	sb.append("while (switch_to_io_move(machine, port, &temp) == 0) yield;\n");
+	sb.append("temp = threaded_static_io_receive(machine, port);\n");
+	//sb.append("while (switch_to_io_move(machine, port, &temp) == 0) yield;\n");
 	for (int i = 0; i < dests.length; i++) {
 	    if (dests[i].isFileOutput()) {
-		FileOutputContent out = (FileOutputContent)((FilterTraceNode)dests[i].getNext()).getFilter();
-		sb.append("\tfprintf(" + Util.getFileHandle(out) + ", \"%e\\n\", temp);\n");
-		sb.append("\tprintf(\"[%d]: %e\\n\", port, temp);\n");
-		sb.append("if (" + Util.getOutputsVar(out) + 
-			 " != -1 && ++" + Util.getOutputsVar(out) + " >= " + 
-			 out.getOutputs() + ") quit_sim();\n");
+		FileOutputContent out = 
+		    (FileOutputContent)((FilterTraceNode)dests[i].getNext()).getFilter();
+		if (out.isFP()) {
+		    sb.append("\tfprintf(" + Util.getFileHandle(out) + 
+			      ", \"%f\\n\", double(temp));\n");
+		    sb.append("\tprintf(\"[%d]: %f\\n\", port, double(temp));\n");
+		}
+		else {
+		    sb.append("\tfprintf(" + Util.getFileHandle(out) + ", \"%d\\n\", temp);\n");
+		    sb.append("\tprintf(\"[%d]: %d\\n\", port, temp);\n");
+		}
+		
+		//comment out the output limitation if getoutputs == -1
+		if (out.getOutputs() == -1)
+		    sb.append("/*\n");
+		sb.append("\t" + Util.getOutputsVar(out) + " = " + Util.getOutputsVar(out) +
+			  " + 1;\n");
+		sb.append("\tif (" + Util.getOutputsVar(out) + " >= " + 
+			  out.getOutputs() + ") quit_sim();\n");
+		if (out.getOutputs() == -1)
+		    sb.append("*/\n");
 	    }
 	    else {
 		sb.append("\t\t" + MagicDram.getBufferIdent(source, dests[i]) +

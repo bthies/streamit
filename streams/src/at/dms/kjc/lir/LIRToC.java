@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.45 2001-11-06 19:44:02 thies Exp $
+ * $Id: LIRToC.java,v 1.46 2001-11-07 15:50:20 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1626,14 +1626,28 @@ public class LIRToC
      * Visits a file reader.
      */
     public void visitFileReader(LIRFileReader self) {
-	at.dms.util.Utils.fail("Not implemented yet");
+        String childName = self.getChildName();
+        print("data->" + self.getChildName() +
+              " = streamit_filereader_create(\"" +
+              self.getFileName() + "\");");
+        newLine();
+        print("register_child(");
+        self.getStreamContext().accept(this);
+        print(", data->" + self.getChildName() + ");");
     }
 
     /**
      * Visits a file writer.
      */
     public void visitFileWriter(LIRFileWriter self) {
-	at.dms.util.Utils.fail("Not implemented yet");
+        String childName = self.getChildName();
+        print("data->" + self.getChildName() +
+              " = streamit_filewriter_create(\"" +
+              self.getFileName() + "\");");
+        newLine();
+        print("register_child(");
+        self.getStreamContext().accept(this);
+        print(", data->" + self.getChildName() + ");");
     }
     
     public void visitSetChild(LIRSetChild self,

@@ -6,6 +6,7 @@ import at.dms.kjc.sir.lowering.LoweringConstants;
 
 import java.util.List;
 import java.util.LinkedList;
+import java.io.*;
 
 /**
  * This represents an operator in the stream graph.
@@ -15,8 +16,22 @@ public abstract class SIROperator extends at.dms.util.Utils {
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
      */
-    protected SIRContainer parent;
-
+    transient protected SIRContainer parent;
+    
+    //cloning stuff
+    protected Integer serializationIndex;
+    
+    private void writeObject(ObjectOutputStream oos) 
+	throws IOException {
+	this.serializationIndex = SerializationVector.addObject(parent);
+	oos.defaultWriteObject();
+    }
+    
+    protected Object readResolve() throws Exception {
+	this.parent = (SIRContainer)SerializationVector.getObject(serializationIndex);
+	return this;
+    }
+    
     /**
      * Constructs and operator with parent <parent>.
      */

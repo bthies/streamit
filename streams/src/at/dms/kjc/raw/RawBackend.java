@@ -102,7 +102,8 @@ public class RawBackend {
 
 	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");
-	    FuseAll.fuse(str);
+	    str = FuseAll.fuse(str);
+	    Lifter.lift(str);
 	    System.out.println("Done FuseAll...");
 	}
 

@@ -255,17 +255,15 @@ public class FFSNoPeekBuffer extends FilterFusionState
 							   false,
 							   false)};
 
-
-	statements.addStatement(new JEmptyStatement(null, comment));
-				 
-	int mult = StrToRStream.getMult(getNode(), isInit);
-	
-	//now add the declaration of the pop index and the push index
-	GenerateCCode.addStmtArrayFirst(enclosingBlock, getIndexDecls(isInit));
-	
-	//now add the for loop for the work function executions in this
-	//schedule
 	if (StrToRStream.getMult(getNode(), isInit) > 0) {
+	    
+	    statements.addStatement(new JEmptyStatement(null, comment));
+	    
+	    int mult = StrToRStream.getMult(getNode(), isInit);
+	    
+	    //now add the for loop for the work function executions in this
+	    //schedule
+
 	    //clone work function 
 	    JMethodDeclaration work = filter.getWork();
 	    JBlock oldBody = new JBlock(null, work.getStatements(), null);
@@ -277,9 +275,11 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	    JVariableDefinition forIndex = GenerateCCode.newIntLocal(FORINDEXNAME,
 						       myUniqueID, 0);
 	    
-	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					     (null, forIndex, null));
-	    
+	    //add the var decl for the index of the work loop
+	    //but only if we are not generating doloops
+	    if (!KjcOptions.doloops)
+		enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+						 (null, forIndex, null));
 	    
 	    body = GenerateCCode.makeDoLoop(body, forIndex, new JIntLiteral(mult));
 	    
@@ -289,7 +289,10 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	    if (!StrToRStream.GENERATE_MIVS || !tryMIV.tryMIV((JDoLoopStatement)body)) {
 		if (StrToRStream.GENERATE_MIVS)
 		    System.out.println("Could not generate MIV indices for " + getNode().contents);
+		//using incrementing index expressions for the buffer accesses
 		body.accept(new ConvertChannelExprs(this, isInit));
+		//now add the declaration of the pop index and the push index
+		GenerateCCode.addStmtArrayFirst(enclosingBlock, getIndexDecls(isInit));
 	    }
 	    
 	    statements.addStatement(body);
@@ -302,8 +305,9 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	    JVariableDefinition loopCounterBackup = 
 		GenerateCCode.newIntLocal(BACKUPCOUNTER, myUniqueID, 0);
 	    //add the declaration of the counter
-	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					     (null, loopCounterBackup, null));
+	    if (!KjcOptions.doloops)
+		enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+						 (null, loopCounterBackup, null));
 	    //make the back up loop, move peekBufferItems starting at pop*mult
 	    //to the beginning
 	    statements.addStatement(remainingBackupLoop(bufferVar[0],

@@ -214,8 +214,9 @@ public class SplitterFusionState extends FusionState
 	    JVariableDefinition loopCounterBackup = 
 		GenerateCCode.newIntLocal(BACKUPCOUNTER, myUniqueID, 0);
 	    //add the declaration of the counter
-	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					     (null, loopCounterBackup, null));
+	    if (!KjcOptions.doloops)
+		enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+						 (null, loopCounterBackup, null));
 	    //make the back up loop, move peekBufferItems starting at mult*weight
 	    //to the beginning 
 	    statements.addStatement 
@@ -239,8 +240,9 @@ public class SplitterFusionState extends FusionState
 	    GenerateCCode.newIntLocal(RRCOUNTER, myUniqueID, 0);
 
 	//add the decl of the induction variable
-	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					(null, induction, null));
+	if (!KjcOptions.doloops)
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, induction, null));
 	//for each outgoing edge...
 	for (int i = 0; i < node.ways; i++) {
 	    //do nothing if this has 0 weight
@@ -253,8 +255,9 @@ public class SplitterFusionState extends FusionState
 	    FusionState downstream = FusionState.getFusionState(node.edges[i]);
 
 	    //add the decl of the induction variable
-	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					     (null, innerVar, null));
+	    if (!KjcOptions.doloops)
+		enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+						 (null, innerVar, null));
 	    //the incoming buffer
 	    JLocalVariableExpression incomingBuffer = 
 		new JLocalVariableExpression(null,
@@ -346,8 +349,9 @@ public class SplitterFusionState extends FusionState
 	    GenerateCCode.newIntLocal(DUPLICATECOUNTER, myUniqueID, 0);
 
 	//add the decl of the induction variable
-	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					(null, induction, null));
+	if (!KjcOptions.doloops)
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, induction, null));
 
 	//for each outgoing edge.. add a statement to copy on item from the
 	//incoming buffer to the current outgoing buffer

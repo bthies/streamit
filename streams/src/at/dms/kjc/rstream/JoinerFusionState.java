@@ -142,10 +142,11 @@ public class JoinerFusionState extends FusionState
 	    JMethodDeclaration initPath = loop.getInitPath();
 	    //create the induction variable
 	    JVariableDefinition index = GenerateCCode.newIntLocal(INIT_PATH_INDEX, myUniqueID, 0);
-	    //declare the induction variable
-	    initFunctionCalls.addStatementFirst(new JVariableDeclarationStatement(null,
-										  index,
-										  null));
+	    //declare the induction variable, not needed if we are generating doloops
+	    if (!KjcOptions.doloops) 
+		initFunctionCalls.addStatementFirst(new JVariableDeclarationStatement(null,
+										      index,
+										      null));
 
 	    //create the args for the initpath call
 	    JExpression[] args = {new JLocalVariableExpression(null, index)};
@@ -205,8 +206,9 @@ public class JoinerFusionState extends FusionState
 	    GenerateCCode.newIntLocal(JOINERCOUNTER, myUniqueID, 0);
 	
 	//add the decl of the induction variable
-	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					(null, induction, null));
+	if (!KjcOptions.doloops)
+	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+					     (null, induction, null));
 	
 	//for each incoming way, create the loop that copies the items
 	//from its incoming buffer to the outgoing buffer
@@ -215,8 +217,9 @@ public class JoinerFusionState extends FusionState
 	    JVariableDefinition innerVar = 
 		GenerateCCode.newIntLocal(JOINERINNERVAR + myUniqueID + "_", i, + 0);
 	    //add the decl of the induction variable
-	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
-					     (null, innerVar, null));
+	    if (!KjcOptions.doloops)
+		enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
+						 (null, innerVar, null));
 	    
 	    //do nothing if incoming weight is zero
 	    if (node.incomingWeights[i] == 0)

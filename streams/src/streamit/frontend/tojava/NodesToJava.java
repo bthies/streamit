@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.96 2005-04-04 20:17:03 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.97 2005-04-06 12:03:30 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -432,16 +432,20 @@ public class NodesToJava implements FEVisitor
 	} else if (name.startsWith("init_array")) {
 	    // take care of, e.g., init_array_1D_float(String filename, int size)
 
-	    // in the library, generate a function call to load file
-	    // from disk.  In the compiler, add a static array
-	    // initializer.  (Can't use static array initializers in
-	    // Java because it might exceed max method size of JVM's.)
-	    if (libraryFormat) {
-		result = name + "(";
+	    // Generate a function call to load file from disk.
+	    result = name + "(";
+
+	    /* The code below will insert the static array initializer
+	     * in the java output.  For now we do this in the compiler
+	     * instead to get benefits of constant prop in the
+	     * filename and size of the initializer.
+
 	    } else {
 		result = makeArrayInit(exp);
 		return result;
 	    }
+	    */
+
 	} else {
 	    // Math.sqrt will return a double, but we're only supporting
 	    // float's now, so add a cast to float.  Not sure if this is
@@ -492,7 +496,7 @@ public class NodesToJava implements FEVisitor
 	if (exp.getParams().get(1) instanceof ExprConstInt) {
 	    size = ((ExprConstInt)exp.getParams().get(1)).getVal();
 	} else {
-	    System.err.println("Error: expected first argument to " + funcName + " to be an integer (the size)");
+	    System.err.println("Error: expected second argument to " + funcName + " to be an integer (the size)");
 	    System.exit(1);
 	}
 

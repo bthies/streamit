@@ -26,7 +26,7 @@ public class LIRSetChild extends LIRNode {
 	this.childContext = childContext;
     }
 
-    public void accept(LIRVisitor v)
+    public void accept(SLIRVisitor v)
     {
         v.visitSetChild(this,
                         this.getStreamContext(),

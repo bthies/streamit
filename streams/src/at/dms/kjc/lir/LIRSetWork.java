@@ -26,7 +26,7 @@ public class LIRSetWork extends LIRNode {
 	this.work = work;
     }
 
-    public void accept(LIRVisitor v) {
+    public void accept(SLIRVisitor v) {
         v.visitSetWork(this, this.getStreamContext(), this.work);
     }
 }

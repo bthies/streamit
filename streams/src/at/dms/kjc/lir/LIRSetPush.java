@@ -26,7 +26,7 @@ public class LIRSetPush extends LIRNode {
 	this.push = push;
     }
 
-    public void accept(LIRVisitor v)
+    public void accept(SLIRVisitor v)
     {
         v.visitSetPush(this, this.getStreamContext(), this.push);
     }

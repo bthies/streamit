@@ -26,7 +26,7 @@ public class LIRSetPop extends LIRNode {
 	this.pop = pop;
     }
 
-    public void accept(LIRVisitor v)
+    public void accept(SLIRVisitor v)
     {
         v.visitSetPop(this, this.getStreamContext(), this.pop);
     }

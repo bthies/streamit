@@ -26,7 +26,7 @@ public class LIRSetPeek extends LIRNode {
 	this.peek = peek;
     }
 
-    public void accept(LIRVisitor v)
+    public void accept(SLIRVisitor v)
     {
         v.visitSetPeek(this, this.getStreamContext(), this.peek);
     }

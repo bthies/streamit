@@ -32,7 +32,7 @@ public class LIRFunctionPointer {
         return name;
     }
 
-    public void accept(LIRVisitor v)
+    public void accept(SLIRVisitor v)
     {
         v.visitFunctionPointer(this, this.getName());
     }

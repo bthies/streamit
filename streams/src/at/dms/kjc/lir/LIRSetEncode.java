@@ -28,7 +28,7 @@ public class LIRSetEncode extends LIRNode {
 	this.encode = encode;
     }
 
-    public void accept(LIRVisitor v) {
+    public void accept(SLIRVisitor v) {
         v.visitSetEncode(this, this.getStreamContext(), this.encode);
     }
 }

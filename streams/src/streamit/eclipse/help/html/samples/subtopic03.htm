@@ -1,0 +1,551 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 10">
+<meta name=Originator content="Microsoft Word 10">
+<link rel=File-List href="subtopic03_files/filelist.xml">
+<title>FFT4</title>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author>Cag User</o:Author>
+  <o:Template>Normal</o:Template>
+  <o:LastAuthor>Cag User</o:LastAuthor>
+  <o:Revision>2</o:Revision>
+  <o:TotalTime>0</o:TotalTime>
+  <o:Created>2004-01-14T22:04:00Z</o:Created>
+  <o:LastSaved>2004-01-14T22:04:00Z</o:LastSaved>
+  <o:Pages>1</o:Pages>
+  <o:Words>242</o:Words>
+  <o:Characters>1381</o:Characters>
+  <o:Company>Cag</o:Company>
+  <o:Lines>11</o:Lines>
+  <o:Paragraphs>3</o:Paragraphs>
+  <o:CharactersWithSpaces>1620</o:CharactersWithSpaces>
+  <o:Version>10.2625</o:Version>
+ </o:DocumentProperties>
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <w:WordDocument>
+  <w:SpellingState>Clean</w:SpellingState>
+  <w:GrammarState>Clean</w:GrammarState>
+  <w:Compatibility>
+   <w:BreakWrappedTables/>
+   <w:SnapToGridInCell/>
+   <w:WrapTextWithPunct/>
+   <w:UseAsianBreakRules/>
+  </w:Compatibility>
+  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
+ </w:WordDocument>
+</xml><![endif]-->
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+span.SpellE
+	{mso-style-name:"";
+	mso-spl-e:yes;}
+span.GramE
+	{mso-style-name:"";
+	mso-gram-e:yes;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 10]>
+<style>
+ /* Style Definitions */
+ table.MsoNormalTable
+	{mso-style-name:"Table Normal";
+	mso-tstyle-rowband-size:0;
+	mso-tstyle-colband-size:0;
+	mso-style-noshow:yes;
+	mso-style-parent:"";
+	mso-padding-alt:0in 5.4pt 0in 5.4pt;
+	mso-para-margin:0in;
+	mso-para-margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:10.0pt;
+	font-family:"Times New Roman";}
+</style>
+<![endif]-->
+</head>
+
+<body lang=EN-US style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><b
+style='mso-bidi-font-weight:normal'><span style='font-size:14.0pt;font-family:
+Arial;background:white;mso-highlight:white'>FFT4<o:p></o:p></span></b></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>void</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;void
+pipeline FFT4 {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>add</span> <span
+class=SpellE>OneSource</span>();</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>add</span> <span
+class=SpellE>FFTKernel</span>(32);</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>add</span> <span
+class=SpellE>FloatPrinter</span>();</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>float</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;float
+pipeline <span class=SpellE>FFTKernel</span> (<span class=SpellE>int</span> N)
+{</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>/* <span class=GramE>This</span>
+bit-reverse stage was published in the original CC paper,</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>     </span>* <span class=GramE>but</span>
+it has a bug and causes the output to be wrong.</span><span style='font-size:
+10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>add</span> <span
+class=SpellE>splitjoin</span> {</span><span style='font-size:10.0pt;font-family:
+"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>split</span>
+<span class=SpellE>roundrobin</span>(N/2, N/2);</span><span style='font-size:
+10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>for</span>
+(<span class=SpellE>int</span> <span class=SpellE>i</span>=0; <span
+class=SpellE>i</span>&lt;2; <span class=SpellE>i</span>++) {</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>            </span><span class=GramE>add</span>
+<span class=SpellE>splitjoin</span> {</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>                </span><span class=GramE>split</span>
+<span class=SpellE>roundrobin</span>();</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>                </span><span class=GramE>add</span>
+Identity&lt;float&gt;();</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>                </span><span class=GramE>add</span>
+Identity&lt;float&gt;();</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span
+style='mso-spacerun:yes'>            </span><span class=GramE>join</span> <span
+class=SpellE>roundrobin</span>(N/4, N/4);</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>            </span>};</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>join</span>
+<span class=SpellE>roundrobin</span>();</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>};</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>*/</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>for</span> (<span
+class=SpellE>int</span> <span class=SpellE>i</span>=1; <span class=SpellE>i</span>&lt;N;
+<span class=SpellE>i</span>*=2) {</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>add</span>
+Butterfly(<span class=SpellE>i</span>, N);</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>float</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;float
+pipeline Butterfly (<span class=SpellE>int</span> N, <span class=SpellE>int</span>
+W) {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>add</span> <span
+class=SpellE>splitjoin</span> {</span><span style='font-size:10.0pt;font-family:
+"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>split</span>
+<span class=SpellE>roundrobin</span>(N, N);</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>add</span>
+Identity&lt;float&gt;();</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>add</span>
+Multiply();</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>join</span>
+<span class=SpellE>roundrobin</span>();</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>};</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>add</span> <span
+class=SpellE>splitjoin</span> {</span><span style='font-size:10.0pt;font-family:
+"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>split</span>
+duplicate;</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>add</span>
+<span class=SpellE>Add</span>();</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>add</span>
+Subtract();</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>join</span>
+<span class=SpellE>roundrobin</span>(N, N);</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>};</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>void</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;float
+filter <span class=SpellE>OneSource</span> {</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span><span class=GramE>init</span>
+{</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>work</span>
+push 1 {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>push(</span>1);</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>float</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;float
+filter Multiply {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span><span class=GramE>init</span>
+{</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span>}<span style='mso-tab-count:
+1'>     </span></span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>// just multiplying by 2 for
+now instead of calculating weights</span><span style='font-size:10.0pt;
+font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>work</span>
+push 1 pop 1 {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>push(</span>2
+* pop());</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>float</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;float
+filter Add {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span><span class=GramE>init</span>
+{</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>work</span>
+push 1 pop 2 {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>push(</span>peek(0)
++ peek(1));</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>pop(</span>);</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>pop(</span>);</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>float</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;float
+filter Subtract {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span><span class=GramE>init</span>
+{</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>work</span>
+push 1 pop 2 {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>push(</span>peek(0)
+- peek(1));</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>pop(</span>);</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>pop(</span>);</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'>}</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+class=GramE><span style='font-size:10.0pt;font-family:"Courier New";background:
+white;mso-highlight:white'>float</span></span><span style='font-size:10.0pt;
+font-family:"Courier New";background:white;mso-highlight:white'>-&gt;void
+filter <span class=SpellE>FloatPrinter</span> {</span><span style='font-size:
+10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span><span class=GramE>init</span>
+{</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-tab-count:1'>      </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span><span class=GramE>work</span>
+pop 1 {</span><span style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>        </span><span class=GramE>print(</span>pop());</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal style='mso-layout-grid-align:none;text-autospace:none'><span
+style='font-size:10.0pt;font-family:"Courier New";background:white;mso-highlight:
+white'><span style='mso-spacerun:yes'>    </span>}</span><span
+style='font-size:10.0pt;font-family:"Courier New"'><o:p></o:p></span></p>
+
+<p class=MsoNormal><span style='font-size:10.0pt;font-family:"Courier New";
+background:white;mso-highlight:white'>}</span></p>
+
+</div>
+
+</body>
+
+</html>

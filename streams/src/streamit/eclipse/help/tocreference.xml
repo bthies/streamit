@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+
+<toc label="Reference" link_to="toc.xml#reference"> 
+	<topic label="References"  href="html/reference/maintopic.htm"> 
+	</topic>
+<!--
+	<topic label="Main Topic 2">
+		<topic label="Sub Topic 2" href="html/reference/subtopic2.html" /> 
+	</topic> 
+-->
+</toc>

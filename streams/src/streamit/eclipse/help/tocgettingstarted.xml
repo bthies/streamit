@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+
+<toc label="Getting Started" link_to="toc.xml#gettingstarted"> 
+	<topic label="Installation Instructions"  href="html/gettingstarted/maintopic.htm">
+	</topic>
+<!--	
+	<topic label="Main Topic 2">
+		<topic label="Sub Topic 2" href="html/gettingstarted/subtopic2.html" />
+	</topic> 
+-->
+</toc>

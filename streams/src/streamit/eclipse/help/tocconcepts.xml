@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?NLS TYPE="org.eclipse.help.toc"?>
+
+<toc label="Concepts" link_to="toc.xml#concepts"> 
+	<topic label="Features"  href="html/concepts/maintopic.htm"> 
+		<topic label="StreamIt Syntax Highlighting" href="html/concepts/subtopic01.htm" /> 
+		<topic label="Breakpoints and Watchpoints" href="html/concepts/subtopic02.htm" /> 
+		<topic label="Program Launch Support" href="html/concepts/subtopic03.htm" /> 
+		<topic label="General Debugging Support and Eclipse Integration" href="html/concepts/subtopic04.htm" /> 
+		<topic label="Stream Graph Display and Navigation" href="html/concepts/subtopic05.htm" /> 
+		<topic label="Data Display, Modification, and Tracking" href="html/concepts/subtopic06.htm" /> 
+	</topic>
+<!--
+	<topic label="Main Topic 2">
+		<topic label="Sub Topic 2" href="html/concepts/subtopic2.html" /> 
+	</topic> 
+-->
+</toc>

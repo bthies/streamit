@@ -1,9 +1,3 @@
-/*
- * ExprComplex.java: a complex-valued expression
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprComplex.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 /**
@@ -14,6 +8,9 @@ package streamit.frontend.nodes;
  * is intended to be used to construct simple expressions from the parse
  * tree, and then combine them into more complicated expressions with
  * fully-expanded real and imaginary parts.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: ExprComplex.java,v 1.3 2003-06-30 20:23:12 dmaze Exp $
  */
 public class ExprComplex extends Expression
 {
@@ -39,5 +36,27 @@ public class ExprComplex extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprComplex(this);
+    }
+
+    public String toString()
+    {
+        return "((" + real + ")+(" + imag + ")i)";
+    }
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ExprComplex))
+            return false;
+        ExprComplex that = (ExprComplex)other;
+        if (!(this.real.equals(that.real)))
+            return false;
+        if (!(this.imag.equals(that.imag)))
+            return false;
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        return real.hashCode() ^ imag.hashCode();
     }
 }

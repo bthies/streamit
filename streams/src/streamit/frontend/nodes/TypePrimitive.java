@@ -1,14 +1,11 @@
-/*
- * TypePrimitive.java: a primitive data type
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: TypePrimitive.java,v 1.4 2003-05-13 21:06:47 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 /**
  * A primitive type.  This can be int, float, or complex, depending on
  * the specified type parameter.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: TypePrimitive.java,v 1.5 2003-06-30 20:23:12 dmaze Exp $
  */
 public class TypePrimitive extends Type
 {
@@ -35,5 +32,51 @@ public class TypePrimitive extends Type
     public boolean isComplex()
     {
         return type == TYPE_COMPLEX;
+    }
+
+    public String toString()
+    {
+        switch (type)
+        {
+        case TYPE_BIT:
+            return "bit";
+        case TYPE_INT:
+            return "int";
+        case TYPE_FLOAT:
+            return "float";
+        case TYPE_DOUBLE:
+            return "double";
+        case TYPE_COMPLEX:
+            return "complex";
+        case TYPE_VOID:
+            return "void";
+        case TYPE_BOOLEAN:
+            return "boolean";
+        default:
+            return "<primitive type " + type + ">";
+        }
+    }
+    
+    public boolean equals(Object other)
+    {
+        // Two cases.  One, this is complex, and so is that:
+        if (other instanceof Type)
+        {
+            Type that = (Type)other;
+            if (this.isComplex() && that.isComplex())
+                return true;
+        }
+        // Two, these are both primitive types with the same type code.
+        if (!(other instanceof TypePrimitive))
+            return false;
+        TypePrimitive that = (TypePrimitive)other;
+        if (this.type != that.type)
+            return false;
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        return new Integer(type).hashCode();
     }
 }

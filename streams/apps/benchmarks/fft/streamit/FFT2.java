@@ -36,13 +36,13 @@ class CombineDFT extends Filter
             float y1_i = input.peekFloat(nWay + i + 1);
 
             float y1w_r = y1_r * w_r - y1_i * w_i;
-            float y1i_r = y1_r * w_i + y1_i * w_r;
+            float y1w_i = y1_r * w_i + y1_i * w_r;
 
-            results[i] = y0_r + y1_r;
-            results[i + 1] = y0_i + y1_i;
+            results[i] = y0_r + y1w_r;
+            results[i + 1] = y0_i + y1w_i;
 
-            results[nWay + i] = y0_r - y1_r;
-            results[nWay + i + 1] = y0_i - y1_i;
+            results[nWay + i] = y0_r - y1w_r;
+            results[nWay + i + 1] = y0_i - y1w_i;
 
             float w_r_next = w_r * wn_r - w_i * wn_i;
             float w_i_next = w_r * wn_i + w_i * wn_r;
@@ -165,3 +165,6 @@ public class FFT2 extends StreamIt
         add(new FloatPrinter());
     }
 }
+
+
+

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JThisExpression.java,v 1.3 2001-11-10 21:40:35 thies Exp $
+ * $Id: JThisExpression.java,v 1.4 2002-04-04 19:28:59 thies Exp $
  */
 
 package at.dms.kjc;
@@ -69,7 +69,13 @@ public class JThisExpression extends JExpression {
    * @return the type of this expression
    */
   public CType getType() {
-    return self.getType();
+      // not sure why <self> is null, but it was causing problems with
+      // FMRadio and this seems to fix it
+      if (self==null) {
+	  return CStdType.Null;
+      } else {
+	  return self.getType();
+      }
   }
 
   /**

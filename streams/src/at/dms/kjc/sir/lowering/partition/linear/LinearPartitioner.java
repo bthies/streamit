@@ -97,6 +97,8 @@ public class LinearPartitioner {
 	// perform partitioning transformations
 	SIRStream result = st.doTransform(str);
 
+	// remove unnecessary identities
+	Lifter.eliminateIdentities(result);
 	// lift before and after
 	Lifter.lift(result);
 

@@ -89,7 +89,12 @@ public class DynamicProgPartitioner extends ListPartitioner {
 			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
 
 	// perform partitioning transformations
-	return st.doTransform(str);
+	SIRStream result = st.doTransform(str);
+
+	// remove unnecessary identities
+	Lifter.eliminateIdentities(result);
+
+	return result;
     }
 
     /**

@@ -152,8 +152,6 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    childCost = ( getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
 				  getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost() );
 		}
-		// put children back in <str>
-		((SIRContainer)str).reclaimChildren();
 
 		// get cost of self
 		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
@@ -226,9 +224,6 @@ abstract class LDPConfigContainer extends LDPConfig {
 					get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
 		}
 	    }
-	    // put children back in <str>
-	    ((SIRContainer)str).reclaimChildren();
-
 	    break;
 	}
 	    

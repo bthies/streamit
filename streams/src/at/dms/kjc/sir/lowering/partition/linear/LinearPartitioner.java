@@ -100,6 +100,12 @@ public class LinearPartitioner {
 	// lift before and after
 	Lifter.lift(result);
 
+	// reclaim children here, since they might've been shuffled
+	// around in the config process
+	if (result instanceof SIRContainer) {
+	    ((SIRContainer)result).reclaimChildren();
+	}
+
 	return result;
     }
 

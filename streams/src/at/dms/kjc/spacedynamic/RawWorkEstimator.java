@@ -45,11 +45,17 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	int work = 0;
 	//clone the Filter and create a dummy pipeline with just this
 	//new cloned filter
+
 	SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
+	/*
 	SIRPipeline pipe = new SIRPipeline("top");
 	LinkedList list = new LinkedList();
 	list.add(filter);
 	pipe.setChildren(list);
+	*/
+
+	StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
+	StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[0];
 
 	//make a new directory and change the current working dir
 	String dir = File.separator + "tmp" + File.separator + 
@@ -78,18 +84,21 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(filter);
 
-	Layout oldLayout = Layout.getLayout();
+	Layout oldLayout = streamGraph.getLayout();
 	
 	// layout the components (assign filters to tiles)	
-	Layout.simAnnealAssign(top);
+	assert false;
+	//Layout.simAnnealAssign(top);
 
 	//remove print statements in the original app
 	//if we are running with decoupled
 	RemovePrintStatements.doIt(top);
 	
 	//Generate the tile code
-	RawExecutionCode.doit(top);
 
+	RawExecutionCode rawExe = new RawExecutionCode(ssg);
+	ssg.getTopLevel().accept(rawExe, null, true);
+	    
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(top);
 	}
@@ -98,9 +107,9 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	StructureIncludeFile.doit(SpaceDynamicBackend.structures, top, dir);
 
 	SIMULATING_WORK = true;
-	TileCode.generateCode(top);
+	TileCode.generateCode(null);
 	SIMULATING_WORK = false;
-	MakefileGenerator.createMakefile();
+	MakefileGenerator.createMakefile(null);
 
 	try {
 	    //copy the files 
@@ -152,7 +161,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	KjcOptions.magic_net = oldMagicNetValue;
 	KjcOptions.ratematch = oldRateMatchValue;
 	KjcOptions.outputs = oldOutputsValue;
-	Layout.setLayout(oldLayout);
+	//	Layout.setLayout(oldLayout);
 	return work;
     }
 

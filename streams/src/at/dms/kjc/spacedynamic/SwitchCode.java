@@ -21,112 +21,147 @@ public class SwitchCode extends at.dms.util.Utils
  // the max-ahead is the maximum number of lines that this will
     // recognize as a pattern for folding into a loop
     private static final int MAX_LOOKAHEAD = 10000;
+    private static StreamGraph streamGraph;
+    private static Layout layout;
 
-
-    public static void generate(FlatNode top) 
+    public static void generate(final StreamGraph sg) 
     {
-	//Use the simulator to create the switch schedules
+	streamGraph = sg;
+	layout = streamGraph.getLayout();
+
+	//create the joiner schedules before simulation
+	sg.joinerSimulator = new JoinerSimulator(streamGraph);
+	sg.joinerSimulator.createJoinerSchedules();
 	
-	SpaceDynamicBackend.simulator.simulate(top);
+	/*StaticStreamGraph current = streamGraph.getTopLevel();
+	
+	while (current != null) {
+	    current.scheduleCommunication(sg.joinerSimulator);
+	    current = current.getNext();
+	    }*/
+	
+	streamGraph.getTopLevel().accept(new StreamGraphVisitor() {
+		public void visitStaticStreamGraph(StaticStreamGraph ssg) 
+		{
+		    ssg.scheduleCommunication(sg.joinerSimulator);
+		}
+		
+	    }, null, true);
+
 	//now print the schedules
 	dumpSchedules();
     }
     
     public static void dumpSchedules() 
     {
-	//get all the nodes that have either init switch code
-	//or steady state switch code
-	HashSet tiles = new HashSet(SpaceDynamicBackend.simulator.initSchedules.
-	    keySet());
-	
-	SpaceDynamicBackend.addAll(tiles, SpaceDynamicBackend.simulator.steadySchedules.keySet());
-	SpaceDynamicBackend.addAll(tiles, Layout.getTiles());
+	//this is a hash set that keeps tiles that we have already generated
+	//code for
+	HashSet tilesGenerated = new HashSet();
 
-	//do not generate switchcode for Tiles assigned to file readers/writers
-	//they are just dummy tiles
-	Iterator fs = FileVisitor.fileNodes.iterator();
-	while (fs.hasNext()) {
-	    tiles.remove(Layout.getTile((FlatNode)fs.next()));
-	}
-       
-	
-	Iterator tileIterator = tiles.iterator();
-			
-	//for each tiles dump the code
-	while(tileIterator.hasNext()) {
-	    Coordinate tile = (Coordinate) tileIterator.next();
-	    try {
-		//true if we are compressing the switch code
-		boolean compression = false;
-		
-		//get the code
-		String steadyCode = "";
-		String initCode = "";
-		if (SpaceDynamicBackend.simulator.initSchedules.get(tile) != null)
-		    initCode = ((StringBuffer)SpaceDynamicBackend.simulator.initSchedules.get(tile)).toString();
-		if (SpaceDynamicBackend.simulator.steadySchedules.get(tile) != null)
-		    steadyCode = ((StringBuffer)SpaceDynamicBackend.simulator.steadySchedules.get(tile)).toString();
-		
-		//the sequences we are going to compress if compression is needed
-		Repetition[] big3init = null;
-                Repetition[] big3work = null;
-		
-		int codeSize = getCodeLength(steadyCode + initCode);
-		if (codeSize > 5000) {
-		    System.out.println("Compression needed.  Code size = " + codeSize);
-		    compression = true;
-                    big3init = threeBiggestRepetitions(initCode);
-		    big3work = threeBiggestRepetitions(steadyCode);
-		}
-		
-		FileWriter fw =
-		    new FileWriter("sw" + Layout.getTileNumber(tile) 
-				   + ".s");
-		fw.write("#  Switch code\n");
-		fw.write(getHeader());
-		//if this tile is the north neighbor of a bc file i/o device
-		//we need to send a data word to it
-		printIOStartUp(tile, fw);
-		//print the code to get the repetition counts from the processor
-		//print the init switch code
-                if (big3init != null)
-                    getRepetitionCounts(big3init, fw);
-		toASM(initCode, "i", big3init, fw);
-		//loop label
-		if (big3work != null)
-		    getRepetitionCounts(big3work, fw);
-		fw.write("sw_loop:\n");
-		//print the steady state switch code
-		if (SpaceDynamicBackend.simulator.steadySchedules.get(tile) != null)
-		    toASM(steadyCode, "w", big3work, fw);
-		//print the jump ins
-		fw.write("\tj\tsw_loop\n\n");
-		fw.write(getTrailer(tile, big3init, big3work));
-		fw.close();
-		/*if (threeBiggest != null) {
-		    		    System.out.print("Found Seqeunces of: " +
-				     threeBiggest[0].repetitions + " " + t" " + 
-				     threeBiggest[1].repetitions + " " + threeBiggest[1].length + " " + 
-				     threeBiggest[2].repetitions + " " + threeBiggest[2].length + "\n");
-				     } */
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    //get all the nodes that have either init switch code
+	    //or steady state switch code
+	    HashSet tiles = new HashSet();
 
-		System.out.println("sw" + Layout.getTileNumber(tile) 
-				   + ".s written");
+	    //SpaceDynamicBackend.addAll(tiles, layout.getTiles());
+
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.initSchedules.keySet());
+	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.steadySchedules.keySet());
+	    
+	    //do not generate switchcode for Tiles assigned to file readers/writers
+	    //they are just dummy tiles
+	    Iterator fs = streamGraph.getFileVisitor().fileNodes.iterator();
+	    while (fs.hasNext()) {
+		tiles.remove(layout.getTile((FlatNode)fs.next()));
 	    }
-	    catch (Exception e) {
-		e.printStackTrace();
+	    
+	    Iterator tileIterator = tiles.iterator();
+			
+	    //for each tiles dump the code
+	    while(tileIterator.hasNext()) {
+		RawTile tile = (RawTile) tileIterator.next();
 		
-		Utils.fail("Error creating switch code file for tile " + 
-			   Layout.getTileNumber(tile));
+		assert !tilesGenerated.contains(tile) : 
+		    "Trying to generated switch code for a tile that has already been seen";
+
+		tilesGenerated.add(tile);
+		
+
+		try {
+		    //true if we are compressing the switch code
+		    boolean compression = false;
+		    
+		    //get the code
+		    String steadyCode = "";
+		    String initCode = "";
+		    if (ssg.simulator.initSchedules.get(tile) != null)
+			initCode = ((StringBuffer)ssg.simulator.initSchedules.get(tile)).toString();
+		    if (ssg.simulator.steadySchedules.get(tile) != null)
+			steadyCode = ((StringBuffer)ssg.simulator.steadySchedules.get(tile)).toString();
+		    
+		    //the sequences we are going to compress if compression is needed
+		    Repetition[] big3init = null;
+		    Repetition[] big3work = null;
+		    
+		    int codeSize = getCodeLength(steadyCode + initCode);
+		    if (codeSize > 5000) {
+			System.out.println("Compression needed.  Code size = " + codeSize);
+			compression = true;
+			big3init = threeBiggestRepetitions(initCode);
+			big3work = threeBiggestRepetitions(steadyCode);
+		    }
+		    
+		    FileWriter fw =
+			new FileWriter("sw" + tile.getTileNumber() 
+				       + ".s");
+		    fw.write("#  Switch code\n");
+		    fw.write(getHeader());
+		    //if this tile is the north neighbor of a bc file i/o device
+		    //we need to send a data word to it
+		    printIOStartUp(tile, fw);
+		    //print the code to get the repetition counts from the processor
+		    //print the init switch code
+		    if (big3init != null)
+			getRepetitionCounts(big3init, fw);
+		    toASM(initCode, "i", big3init, fw);
+		    //loop label
+		    if (big3work != null)
+			getRepetitionCounts(big3work, fw);
+		    fw.write("sw_loop:\n");
+		    //print the steady state switch code
+		    if (ssg.simulator.steadySchedules.get(tile) != null)
+			toASM(steadyCode, "w", big3work, fw);
+		    //print the jump ins
+		    fw.write("\tj\tsw_loop\n\n");
+		    fw.write(getTrailer(tile, big3init, big3work));
+		    fw.close();
+		    /*if (threeBiggest != null) {
+		      System.out.print("Found Seqeunces of: " +
+		      threeBiggest[0].repetitions + " " + t" " + 
+		      threeBiggest[1].repetitions + " " + threeBiggest[1].length + " " + 
+		      threeBiggest[2].repetitions + " " + threeBiggest[2].length + "\n");
+		      } */
+		    
+		    System.out.println("sw" + tile.getTileNumber() 
+				       + ".s written");
+		}
+		catch (Exception e) {
+		    e.printStackTrace();
+		    
+		    Utils.fail("Error creating switch code file for tile " + 
+			       tile.getTileNumber());
+		}
 	    }
 	}
     }
-
+    
+    
     //this this tile is the north neightbor of a bc file i/o device, we must send a
     //dummy 
-    private static void printIOStartUp(Coordinate tile, FileWriter fw) throws Exception 
+    private static void printIOStartUp(RawTile tile, FileWriter fw) throws Exception 
     {
-	if (FileVisitor.connectedToFR(tile))
+	if (streamGraph.getFileVisitor().connectedToFR(tile))
 	    fw.write("\tnop\troute $csto->$cEo\n");
     }
 
@@ -369,7 +404,7 @@ public class SwitchCode extends at.dms.util.Utils
 	return buf.toString();
     }
     
-    private static String getTrailer(Coordinate tile,
+    private static String getTrailer(RawTile tile,
                                      Repetition[] compressInit,
                                      Repetition[] compressWork) 
     {
@@ -381,7 +416,7 @@ public class SwitchCode extends at.dms.util.Utils
 	buf.append("\tla $3, sw_begin\n");
 	buf.append("\tmtsr SW_PC, $3\n");
 	buf.append("\tmtsri	SW_FREEZE, 0\n");
-	if (FileVisitor.connectedToFR(tile))
+	if (streamGraph.getFileVisitor().connectedToFR(tile))
 	    buf.append("\tori! $0, $0, 1\n");
 
 	if (compressInit != null) {

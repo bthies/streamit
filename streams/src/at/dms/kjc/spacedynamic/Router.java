@@ -18,48 +18,50 @@ public class Router {
     
     //returns a linked list of coordinates that gives the route
     //including source and dest
-    public static LinkedList getRoute(FlatNode from, FlatNode to) 
+    public static LinkedList getRoute(Layout layout, FlatNode from, FlatNode to) 
     {
+	RawChip rawChip = SpaceDynamicBackend.rawChip;
+
 	LinkedList route = new LinkedList();
-	Coordinate fromCoord, toCoord;
-	fromCoord = Layout.getTile(from);
-	toCoord = Layout.getTile(to);
+	RawTile fromCoord, toCoord;
+	fromCoord = layout.getTile(from);
+	toCoord = layout.getTile(to);
 	
-	route.add(Layout.getTile(from));
+	route.add(layout.getTile(from));
 
 	if (fromCoord== null)
-	    System.out.println("From Coordinate null");
+	    System.out.println("From RawTile null");
 
-	int row = fromCoord.getRow();
-	int column = fromCoord.getColumn();
+	int row = fromCoord.getY();
+	int column = fromCoord.getX();
 	//For now just route the packets in a stupid manner
 	//row then column
 
 
-	if (fromCoord.getRow() != toCoord.getRow()) {
-	    if (fromCoord.getRow() < toCoord.getRow()) {
-		for (row = fromCoord.getRow() + 1; 
-		     row <= toCoord.getRow(); row++)
-		    route.add(Layout.getTile(row, column));
+	if (fromCoord.getY() != toCoord.getY()) {
+	    if (fromCoord.getY() < toCoord.getY()) {
+		for (row = fromCoord.getY() + 1; 
+		     row <= toCoord.getY(); row++)
+		    route.add(rawChip.getTile(column, row));
 		row--;
 	    }
 	    else {
-		for (row = fromCoord.getRow() - 1; 
-		     row >= toCoord.getRow(); row--) 
-		    route.add(Layout.getTile(row, column));
+		for (row = fromCoord.getY() - 1; 
+		     row >= toCoord.getY(); row--) 
+		    route.add(rawChip.getTile(column, row));
 		row++;
 	    }
 	}
 	//column
-	if (fromCoord.getColumn() != toCoord.getColumn()) {
-	    if (fromCoord.getColumn() < toCoord.getColumn())
-		for (column = fromCoord.getColumn() + 1; 
-		     column <= toCoord.getColumn(); column++)
-		    route.add(Layout.getTile(row, column));
+	if (fromCoord.getX() != toCoord.getX()) {
+	    if (fromCoord.getX() < toCoord.getX())
+		for (column = fromCoord.getX() + 1; 
+		     column <= toCoord.getX(); column++)
+		    route.add(rawChip.getTile(column, row));
 	    else
-		for (column = fromCoord.getColumn() - 1; 
-		     column >= toCoord.getColumn(); column--)
-		    route.add(Layout.getTile(row, column));
+		for (column = fromCoord.getX() - 1; 
+		     column >= toCoord.getX(); column--)
+		    route.add(rawChip.getTile(column, row));
 	}
 	//printRoute(from, to, route);
 	return route;
@@ -69,8 +71,8 @@ public class Router {
 	System.out.println(from.contents.getName() + " -> " + to.contents.getName());
 	Iterator it = route.iterator();
 	while (it.hasNext()) {
-	    Coordinate hop = (Coordinate) it.next();
-	    System.out.println(Layout.getTileNumber(hop));
+	    RawTile hop = (RawTile) it.next();
+	    System.out.println(hop.getTileNumber());
 	}
     }
     

@@ -2,6 +2,7 @@ package at.dms.kjc.spacedynamic;
 
 import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
+import at.dms.kjc.flatgraph.FlatGraphToSIR;
 import at.dms.kjc.flatgraph.GraphFlattener;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
@@ -19,21 +20,11 @@ import java.io.*;
 import at.dms.util.Utils;
 
 public class SpaceDynamicBackend {
-    // number of rows and columns that we're compiling for
-    public static int rawRows = -1;
-    public static int rawColumns = -1;
-
-    //the stream  graph object that represents the application
+    //the stream  graph object that represents the application...
     public static StreamGraph streamGraph;
+    //the raw chip that we are executing on...
+    public static RawChip rawChip;
 
-    //given a flatnode map to the execution count
-    public static HashMap initExecutionCounts;
-    public static HashMap steadyExecutionCounts;
-    //the simulator to be run
-    public static Simulator simulator;
-    // get the execution counts from the scheduler
-    public static HashMap[] executionCounts;
-    
     public static SIRStructure[] structures;
     
     //if true have each filter print out each value it is pushing
@@ -49,21 +40,24 @@ public class SpaceDynamicBackend {
 			   structs) {
 
 	System.out.println("Entry to RAW Backend");
+	
+	//alt code gen has to be enabled for this pass to work
+	KjcOptions.altcodegen = true;
 
 	structures = structs;
 	
-	// set number of columns/rows
-	SpaceDynamicBackend.rawRows = KjcOptions.raw;
-	if(KjcOptions.rawcol>-1)
-	    SpaceDynamicBackend.rawColumns = KjcOptions.rawcol;
-	else
-	    SpaceDynamicBackend.rawColumns = KjcOptions.raw;
+	int rawRows = -1;
+	int rawColumns = -1;
 
-	//use the work based simulator to layout the communication instructions
-	if (KjcOptions.wbs)
-	    simulator = new WorkBasedSimulator();
-	else 
-	    simulator = new FineGrainSimulator();
+	//set number of columns/rows
+	rawRows = KjcOptions.raw;
+	if(KjcOptions.rawcol>-1)
+	    rawColumns = KjcOptions.rawcol;
+	else
+	    rawColumns = KjcOptions.raw;
+
+	//create the RawChip
+	rawChip = new RawChip(rawColumns, rawRows);
 
 	//this must be run now, FlatIRToC relies on it!!!
 	RenameAll.renameAllFilters(str);
@@ -91,26 +85,34 @@ public class SpaceDynamicBackend {
 	    System.exit(1);
 	}
 	*/
+	
+	//first of all, flatten the graph to make it easier to deal with...
+	GraphFlattener graphFlattener = new GraphFlattener(str);
+	//	FlatGraphToSIR flatToSIR = new FlatGraphToSIR(graphFlattener.top);
+	
+	streamGraph = new StreamGraph(graphFlattener.top);
+	graphFlattener.dumpGraph("pre-SSG-FG.dot", null, null);
 
-	streamGraph = new StreamGraph(str);
+	//create the static stream graphs cutting at dynamic rate boundaries
 	streamGraph.createStaticStreamGraphs();
-	streamGraph.tileAssignment();
+
+	//assign tiles to each static stream graph
+	//	streamGraph.tileAssignment();
+	streamGraph.handTileAssignment();
+	
+	//dump a dot representation of the graph
 	streamGraph.dumpStaticStreamGraph();
 	
-	GraphFlattener graphFlattener = null;
-
-	Iterator subGraphs = streamGraph.getStaticSubGraphs().iterator();
-
-	while (subGraphs.hasNext()) {
-	    StaticStreamGraph staticSubGraph = (StaticStreamGraph)subGraphs.next();
-	    SIRStream subStr = staticSubGraph.getTopLevelSIR();
+	for (int k = 0; k < streamGraph.getStaticSubGraphs().length; k++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[k];
+	    System.out.println(" ****** Static Sub-Graph = " + ssg.toString() + " ******");
 	    
 	    //SIRPrinter printer1 = new SIRPrinter();
 	    //subStr.accept(printer1);
 	    //printer1.close();
 	    
 	    //VarDecl Raise to move array assignments up
-	    new VarDeclRaiser().raiseVars(subStr);
+	    new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 
 
 	    
@@ -120,7 +122,7 @@ public class SpaceDynamicBackend {
 	    // otherwise we won't roll back
 	    boolean scaleUnrollFactor = KjcOptions.unroll>1 && !KjcOptions.forceunroll && !KjcOptions.standalone;
 	    if (scaleUnrollFactor) {
-		strOrig = (SIRStream)ObjectDeepCloner.deepCopy(subStr);
+		strOrig = (SIRStream)ObjectDeepCloner.deepCopy(ssg.getTopLevelSIR());
 	    }
 	    boolean fitsInIMEM;
 
@@ -130,44 +132,44 @@ public class SpaceDynamicBackend {
 		if (KjcOptions.nofieldprop) {
 		} else {
 		    System.out.println("Running Constant Field Propagation...");
-		    FieldProp.doPropagate(subStr);
+		    FieldProp.doPropagate(ssg.getTopLevelSIR());
 		    System.out.println("Done Constant Field Propagation...");
 		    //System.out.println("Analyzing Branches..");
-		    //new BlockFlattener().flattenBlocks(subStr);
-		    //new BranchAnalyzer().analyzeBranches(subStr);
+		    //new BlockFlattener().flattenBlocks(ssg.getTopLevelSIR());
+		    //new BranchAnalyzer().analyzeBranches(ssg.getTopLevelSIR());
 		}
 		
-		Lifter.liftAggressiveSync(subStr);
-		NumberDot.printGraph(subStr, makeDotFileName("numbered", subStr));
-		StreamItDot.printGraph(subStr, makeDotFileName("before-partition", subStr));
+		Lifter.liftAggressiveSync(ssg.getTopLevelSIR());
+		NumberDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("numbered", ssg.getTopLevelSIR()));
+		StreamItDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("before-partition", ssg.getTopLevelSIR()));
 		
 		// gather application-characterization statistics
 		if (KjcOptions.stats) {
-		    StatisticsGathering.doit(subStr);
+		    StatisticsGathering.doit(ssg.getTopLevelSIR());
 		}
 		
-		subStr = Flattener.doLinearAnalysis(subStr);
-		subStr = Flattener.doStateSpaceAnalysis(subStr);
+		//ssg.setTopLevelSIR(Flattener.doLinearAnalysis(ssg.getTopLevelSIR()));
+		//ssg.setTopLevelSIR(Flattener.doStateSpaceAnalysis(ssg.getTopLevelSIR()));
 		
 		if (KjcOptions.fusion) {
 		    System.out.println("Running FuseAll...");
-		    subStr = FuseAll.fuse(subStr);
-		    Lifter.lift(subStr);
+		    ssg.setTopLevelSIR(FuseAll.fuse(ssg.getTopLevelSIR()));
+		    Lifter.lift(ssg.getTopLevelSIR());
 		    System.out.println("Done FuseAll...");
 		}
 		
 		if (KjcOptions.fission>1) {
 		    System.out.println("Running Vertical Fission...");
-		    FissionReplacer.doit(subStr, KjcOptions.fission);
-		    Lifter.lift(subStr);
+		    FissionReplacer.doit(ssg.getTopLevelSIR(), KjcOptions.fission);
+		    Lifter.lift(ssg.getTopLevelSIR());
 		    System.out.println("Done Vertical Fission...");
 		}
 		
 		// turn on partitioning if there aren't enough tiles for all
 		// the filters
-		int count = new GraphFlattener(subStr).getNumTiles();
+		int count = new GraphFlattener(ssg.getTopLevelSIR()).getNumTiles();
 		//partition this sub graph based on the number of tiles it is assigned...
-		int numTiles = staticSubGraph.getNumTiles();//SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
+		int numTiles = ssg.getNumTiles();//SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns;
 		boolean manual = KjcOptions.manual != null;
 		boolean partitioning = ((KjcOptions.standalone || !manual) // still fuse graph if both manual and standalone enabled
 					&& (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_greedier || KjcOptions.partition_ilp));
@@ -182,68 +184,63 @@ public class SpaceDynamicBackend {
 		
 		if (manual) {
 		    System.err.println("Running Manual Partitioning...");
-		    subStr = ManualPartition.doit(subStr);
+		    ssg.setTopLevelSIR(ManualPartition.doit(ssg.getTopLevelSIR()));
 		    System.err.println("Done Manual Partitioning...");
 		}
 		
 		if (partitioning) {
 		    System.err.println("Running Partitioning...");
-		    subStr = Partitioner.doit(subStr, count, numTiles, true, false);
+		    ssg.setTopLevelSIR(Partitioner.doit(ssg.getTopLevelSIR(), count, numTiles, true, false));
 		    System.err.println("Done Partitioning...");
 		}
 		
 		if (KjcOptions.sjtopipe) {
-		    SJToPipe.doit(subStr);
+		    SJToPipe.doit(ssg.getTopLevelSIR());
 		}
 		
-		StreamItDot.printGraph(subStr, makeDotFileName("after-partition", subStr));
+		StreamItDot.printGraph(ssg.getTopLevelSIR(), makeDotFileName("after-partition", ssg.getTopLevelSIR()));
 		
 		//VarDecl Raise to move array assignments up
-		new VarDeclRaiser().raiseVars(subStr);
+		new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 		
 		
 		//VarDecl Raise to move peek index up so
 		//constant prop propagates the peek buffer index
-		new VarDeclRaiser().raiseVars(subStr);
+		new VarDeclRaiser().raiseVars(ssg.getTopLevelSIR());
 		
 		// optionally print a version of the source code that we're
 		// sending to the scheduler
 		if (KjcOptions.print_partitioned_source) {
-		    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createFactory().createIter(subStr));
+		    new streamit.scheduler2.print.PrintProgram().printProgram
+			(IterFactory.createFactory().createIter(ssg.getTopLevelSIR()));
 		}
 		
 		//SIRPrinter printer1 = new SIRPrinter();
-		//IterFactory.createFactory().createIter(subStr).accept(printer1);
+		//IterFactory.createFactory().createIter(ssg.getTopLevelSIR()).accept(printer1);
 		//printer1.close();
 		
-		System.out.println("Flattener Begin...");
-		executionCounts = SIRScheduler.getExecutionCounts(subStr);
-		PartitionDot.printScheduleGraph(subStr, makeDotFileName("schedule", subStr), executionCounts);
-		graphFlattener = new GraphFlattener(subStr);
-		System.out.println("Flattener End.");
-		
-		//create the execution counts for other passes
-		createExecutionCounts(subStr, graphFlattener);
-		
-		//dump the flatgraph of the application, must be called after createExecutionCounts
-		graphFlattener.dumpGraph(makeDotFileName("flatgraph", subStr), initExecutionCounts,
-					 steadyExecutionCounts);
-		
-		
+		/** Flatten the subgraph and create the flat node representation 
+		 now we can use the flatgraph representation **/
+		ssg.scheduleAndFlattenGraph();
+
+		/*
 		//Generate number gathering simulator code
 		if (KjcOptions.numbers > 0) {
+		    assert false : "Number gathering doesn't work yet!";
+		    
 		    // do this on demand from NumberGathering
-		    //SinkUnroller.doit(graphFlattener.top);
-		    if (!NumberGathering.doit(graphFlattener.top)) {
+		    //SinkUnroller.doit(ssg.getTopLevel());
+		    if (!NumberGathering.doit(ssg.getTopLevel())) {
 			System.err.println("Could not generate number gathering code.  Exiting...");
 			System.exit(1);
 		    }
 		}
+		*/
 		
 		// see if we are going to overflow IMEM
 		if (scaleUnrollFactor) {
 		    System.out.println("Trying unroll factor " + KjcOptions.unroll);
-		    fitsInIMEM = IMEMEstimation.testMe(graphFlattener.top);
+		    fitsInIMEM = IMEMEstimation.testMe(ssg, ssg.getTopLevel());
 		    if (fitsInIMEM) {
 			// if we fit, clear backup copy of stream graph
 			strOrig = null;
@@ -257,7 +254,7 @@ public class SpaceDynamicBackend {
 			// otherwise, cut unrolling in half and recurse
 			System.out.println("Cutting unroll factor from " + KjcOptions.unroll + " to " + (KjcOptions.unroll/2) + " to try to fit in IMEM...");
 			KjcOptions.unroll = KjcOptions.unroll / 2;
-			subStr = (SIRStream)ObjectDeepCloner.deepCopy(strOrig);
+			ssg.setTopLevelSIR((SIRStream)ObjectDeepCloner.deepCopy(strOrig));
 		    }
 		} else {
 		    // it might not fit in IMEM, but we can't decrease the
@@ -268,65 +265,68 @@ public class SpaceDynamicBackend {
 	    } while (!fitsInIMEM);    
 	}
 	
-	//see if we can remove any joiners
-	//JoinerRemoval.run(graphFlattener.top);
-
-	// layout the components (assign filters to tiles)	
-	Layout.simAnnealAssign(graphFlattener.top);
-
-	//Layout.handAssign(graphFlattener.top);
+	//see if we can remove any joiners, doesn't run in the old space backend...
+	//JoinerRemoval.run(ssg.getTopLevel());
 	
-	//Layout.handAssign(graphFlattener.top);
+	// layout the components (assign filters to tiles)	
+	streamGraph.layoutGraph();
 	System.out.println("Assign End.");
-
+	
 	//if rate matching is requested, check if we can do it
 	//if we can, then keep KjcOptions.rateMatch as true, 
 	//otherwise set it to false
+	
+	
 	if (KjcOptions.ratematch) {
-	    if (RateMatch.doit(graphFlattener.top))
+	    assert false;
+	    /*
+	    if (RateMatch.doit(ssg.getTopLevel()))
 		System.out.println("Rate Matching Test Successful.");
 	    else {
 		KjcOptions.ratematch = false;
 		System.out.println("Cannot perform Rate Matching.");
 	    }
+	    */
 	}
-		
+	
 	if (KjcOptions.magic_net) {
-	    MagicNetworkSchedule.generateSchedules(graphFlattener.top);
+	    assert false;
+	    //MagicNetworkSchedule.generateSchedules(ssg.getTopLevel());
 	}
 	else {
 	    System.out.println("Switch Code Begin...");
-	    SwitchCode.generate(graphFlattener.top);
+	    SwitchCode.generate(streamGraph);
 	    System.out.println("Switch Code End.");
 	}
 
+	/*
 	//remove print statements in the original app
 	//if we are running with decoupled
 	if (KjcOptions.decoupled)
-	    RemovePrintStatements.doIt(graphFlattener.top);
-	
+	RemovePrintStatements.doIt(ssg.getTopLevel());
+	*/
+
 	//Generate the tile code
-	RawExecutionCode.doit(graphFlattener.top);
+	RawExecutionCode.doit(streamGraph);
 
-
+	/*
 	if (KjcOptions.removeglobals) {
-	    RemoveGlobals.doit(graphFlattener.top);
+	    RemoveGlobals.doit(ssg.getTopLevel());
 	}
-	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
-
-	StructureIncludeFile.doit(structures, graphFlattener.top);
-
+	
+	StructureIncludeFile.doit(structures, ssg.getTopLevel());
+	*/
+	
 	System.out.println("Tile Code begin...");
-	TileCode.generateCode(graphFlattener.top);
+	TileCode.generateCode(streamGraph);
 	System.out.println("Tile Code End.");
-
-
+	
 	//generate the makefiles
 	System.out.println("Creating Makefile.");
-	MakefileGenerator.createMakefile();
-
+	MakefileGenerator.createMakefile(streamGraph);
+		
 	System.out.println("Exiting");
 	System.exit(0);
     }
@@ -340,154 +340,6 @@ public class SpaceDynamicBackend {
 	}
     }
    
-    private static void createExecutionCounts(SIRStream str,
-					      GraphFlattener graphFlattener) {
-	// make fresh hashmaps for results
-	HashMap[] result = { initExecutionCounts = new HashMap(), 
-			     steadyExecutionCounts = new HashMap()} ;
-
-	// then filter the results to wrap every filter in a flatnode,
-	// and ignore splitters
-	for (int i=0; i<2; i++) {
-	    for (Iterator it = executionCounts[i].keySet().iterator();
-		 it.hasNext(); ){
-		SIROperator obj = (SIROperator)it.next();
-		int val = ((int[])executionCounts[i].get(obj))[0];
-		//System.err.println("execution count for " + obj + ": " + val);
-		/** This bug doesn't show up in the new version of
-		 * FM Radio - but leaving the comment here in case
-		 * we need to special case any other scheduler bugsx.
-		 
-		 if (val==25) { 
-		 System.err.println("Warning: catching scheduler bug with special-value "
-		 + "overwrite in SpaceDynamicBackend");
-		 val=26;
-		 }
-	       	if ((i == 0) &&
-		    (obj.getName().startsWith("Fused__StepSource") ||
-		     obj.getName().startsWith("Fused_FilterBank")))
-		    val++;
-	       */
-		if (graphFlattener.getFlatNode(obj) != null)
-		    result[i].put(graphFlattener.getFlatNode(obj), 
-				  new Integer(val));
-	    }
-	}
-	
-	//Schedule the new Identities and Splitters introduced by GraphFlattener
-	for(int i=0;i<GraphFlattener.needsToBeSched.size();i++) {
-	    FlatNode node=(FlatNode)GraphFlattener.needsToBeSched.get(i);
-	    int initCount=-1;
-	    if(node.incoming.length>0) {
-		if(initExecutionCounts.get(node.incoming[0])!=null)
-		    initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
-		if((initCount==-1)&&(executionCounts[0].get(node.incoming[0].contents)!=null))
-		    initCount=((int[])executionCounts[0].get(node.incoming[0].contents))[0];
-	    }
-	    int steadyCount=-1;
-	    if(node.incoming.length>0) {
-		if(steadyExecutionCounts.get(node.incoming[0])!=null)
-		    steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
-		if((steadyCount==-1)&&(executionCounts[1].get(node.incoming[0].contents)!=null))
-		    steadyCount=((int[])executionCounts[1].get(node.incoming[0].contents))[0];
-	    }
-	    if(node.contents instanceof SIRIdentity) {
-		if(initCount>=0)
-		    initExecutionCounts.put(node,new Integer(initCount));
-		if(steadyCount>=0)
-		    steadyExecutionCounts.put(node,new Integer(steadyCount));
-	    } else if(node.contents instanceof SIRSplitter) {
-		//System.out.println("Splitter:"+node);
-		int[] weights=node.weights;
-		FlatNode[] edges=node.edges;
-		int sum=0;
-		for(int j=0;j<weights.length;j++)
-		    sum+=weights[j];
-		for(int j=0;j<edges.length;j++) {
-		    if(initCount>=0)
-			initExecutionCounts.put(edges[j],new Integer((initCount*weights[j])/sum));
-		    if(steadyCount>=0)
-			steadyExecutionCounts.put(edges[j],new Integer((steadyCount*weights[j])/sum));
-		}
-		if(initCount>=0)
-		    result[0].put(node,new Integer(initCount));
-		if(steadyCount>=0)
-		    result[1].put(node,new Integer(steadyCount));
-	    } else if(node.contents instanceof SIRJoiner) {
-		FlatNode oldNode=graphFlattener.getFlatNode(node.contents);
-		if(executionCounts[0].get(node.oldContents)!=null)
-		    result[0].put(node,new Integer(((int[])executionCounts[0].get(node.oldContents))[0]));
-		if(executionCounts[1].get(node.oldContents)!=null)
-		    result[1].put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
-	    }
-	}
-	
-	//now, in the above calculation, an execution of a joiner node is 
-	//considered one cycle of all of its inputs.  For the remainder of the
-	//raw backend, I would like the execution of a joiner to be defined as
-	//the joiner passing one data item down stream
-	for (int i=0; i < 2; i++) {
-	    Iterator it = result[i].keySet().iterator();
-	    while(it.hasNext()){
-		FlatNode node = (FlatNode)it.next();
-		if (node.contents instanceof SIRJoiner) {
-		    int oldVal = ((Integer)result[i].get(node)).intValue();
-		    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
-		    if((node.schedMult!=0)&&(node.schedDivider!=0))
-			cycles=(cycles*node.schedMult)/node.schedDivider;
-		    result[i].put(node, new Integer(cycles));
-		}
-		if (node.contents instanceof SIRSplitter) {
-		    int sum = 0;
-		    for (int j = 0; j < node.ways; j++)
-			sum += node.weights[j];
-		    int oldVal = ((Integer)result[i].get(node)).intValue();
-		    result[i].put(node, new Integer(sum*oldVal));
-		    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
-		}
-	    }
-	}
-	
-	//The following code fixes an implementation quirk of two-stage-filters
-	//in the *FIRST* version of the scheduler.  It is no longer needed,
-	//but I am keeping it around just in case we every need to go back to the old
-	//scheduler.
-	
-	//increment the execution count for all two-stage filters that have 
-	//initpop == initpush == 0, do this for the init schedule only
-	//we must do this for all the two-stage filters, 
-	//so iterate over the keyset from the steady state 
-	/*	Iterator it = result[1].keySet().iterator();
-	while(it.hasNext()){
-	    FlatNode node = (FlatNode)it.next();
-	    if (node.contents instanceof SIRTwoStageFilter) {
-		SIRTwoStageFilter two = (SIRTwoStageFilter) node.contents;
-		if (two.getInitPush() == 0 &&
-		    two.getInitPop() == 0) {
-		    Integer old = (Integer)result[0].get(node);
-		    //if this 2-stage was not in the init sched
-		    //set the oldval to 0
-		    int oldVal = 0;
-		    if (old != null)
-			oldVal = old.intValue();
-		    result[0].put(node, new Integer(1 + oldVal));   
-		}
-	    }
-	    }*/
-    }
-    
-    //debug function
-    //run me after layout please
-    public static void printCounts(HashMap counts) {
-	Iterator it = counts.keySet().iterator();
-	while(it.hasNext()) {
-	    FlatNode node = (FlatNode)it.next();
-	    //	if (Layout.joiners.contains(node)) 
-	    System.out.println(node.contents.getName() + " " +
-			       ((Integer)counts.get(node)).intValue());
-	}
-    }
-
     
 
     //simple helper function to find the topmost pipeline
@@ -497,20 +349,9 @@ public class SpaceDynamicBackend {
 	return parents[parents.length -1];
     }
 
-    public static int getMult(FlatNode node, boolean init)
+    public static String makeDotFileName(String prefix, SIRStream strName) 
     {
-	Integer val = 
-	    ((Integer)(init ? initExecutionCounts.get(node) : steadyExecutionCounts.get(node)));
-	if (val == null)
-	    return 0;
-	else 
-	    return val.intValue();
-    }
-    
-
-    private static String makeDotFileName(String prefix, SIRStream strName) 
-    {
-	return prefix + strName.getIdent() + ".dot";
+	return prefix + (strName != null ? strName.getIdent() : "") + ".dot";
     }
     
 }

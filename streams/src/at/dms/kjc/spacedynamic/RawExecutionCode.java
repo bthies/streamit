@@ -51,7 +51,9 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String arrayReceiveMethod = "__array_receive__";
 
     public static String rawMain = "__RAWMAIN__";
-    
+
+    private Layout layout;
+    private StaticStreamGraph ssg;
 
     //These next fields are set by calculateItems()
     //see my thesis for a better explanation
@@ -82,9 +84,19 @@ public class RawExecutionCode extends at.dms.util.Utils
     }
     
     
-    public static void doit(FlatNode top) 
+    public RawExecutionCode(StaticStreamGraph ssg) 
     {
-	top.accept((new RawExecutionCode()), null, true);
+	this.ssg = ssg;
+	this.layout = SpaceDynamicBackend.streamGraph.getLayout();
+    }
+    
+
+    public static void doit(StreamGraph streamGraph)
+    {
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    streamGraph.getStaticSubGraphs()[i].getTopLevel().
+		accept(new RawExecutionCode(streamGraph.getStaticSubGraphs()[i]), null, true);
+	}
     }
     
     public void visitNode(FlatNode node) 
@@ -106,10 +118,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    //and the code was produced 
 	    if (bottomPeek == 0 && 
 		remaining == 0 &&
-		DirectCommunication.doit((SIRFilter)node.contents)) {
+		DirectCommunication.doit(node)) {
 		System.out.println("(Direct Communication)");
 		return;
 	    }
+	    
+	    assert false : "Peeking filters not support yet";
 	    
 	    //otherwise generate code the old way
 	    LocalVariables localVariables = new LocalVariables();
@@ -173,12 +187,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 
 	// initExec counts might be null if we're calling for work
 	// estimation before exec counts have been determined.
-	if (SpaceDynamicBackend.initExecutionCounts!=null) {
-	    Integer init = (Integer)SpaceDynamicBackend.initExecutionCounts.
-		get(Layout.getNode(Layout.getTile(filter)));
-	
-	    if (init != null) 
-		initFire = init.intValue();
+	if (ssg.getExecutionCounts(true) != null) {
+	    initFire = ssg.getMult(layout.getNode(layout.getTile(filter)), true);
 	} else {
 	    // otherwise, we should be doing this only for work
 	    // estimation--check that the filter is the only thing in the graph
@@ -197,7 +207,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//initialization
 	int upStreamItems = 0;
 	
-	FlatNode node = Layout.getNode(Layout.getTile(filter));
+	FlatNode node = layout.getNode(layout.getTile(filter));
 	FlatNode previous = null;
 	
 	if (node.inputs > 0) {
@@ -212,7 +222,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    }
 	    else {
 		//upstream not a splitter, just get the number of executions
-		upStreamItems = getUpStreamItems(SpaceDynamicBackend.initExecutionCounts,
+		upStreamItems = getUpStreamItems(ssg.getExecutionCounts(true),
 						 node);
 	    }
 	}
@@ -312,16 +322,16 @@ public class RawExecutionCode extends at.dms.util.Utils
 	
 	//now current must be a joiner or filter
 	//get the number of item current produces
-	int currentUpStreamItems = getUpStreamItems(SpaceDynamicBackend.initExecutionCounts,
+	int currentUpStreamItems = getUpStreamItems(ssg.getExecutionCounts(true),
 						 current.edges[0]);
 	System.out.println(currentUpStreamItems);
 	/*
-	  if (getUpStreamItems(SpaceDynamicBackend.initExecutionCounts, node) != 
+	  if (getUpStreamItems(ssg.getExecutionCounts(true), node) != 
 	  ((int)(currentUpStreamItems * roundRobinMult)))
 	    System.out.println
 		("***** CORRECTING FOR INCOMING SPLITTER BUFFER IN INIT SCHEDULE (" + 
 		 node.contents.getName() + " " + ((int)(currentUpStreamItems * roundRobinMult))
-		 + " vs. " + getUpStreamItems(SpaceDynamicBackend.initExecutionCounts, node) + ") *****\n");
+		 + " vs. " + getUpStreamItems(ssg.getExecutionCounts(true), node) + ") *****\n");
 	*/
 	
 	//return the number of items passed from current to node thru the splitters
@@ -415,13 +425,13 @@ public class RawExecutionCode extends at.dms.util.Utils
 		if (KjcOptions.ratematch) {
 		    //System.out.println(filter.getName());
 		    
-		    int i = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue();
+		    int i = ssg.getMult(node, false);
 
 		    //i don't know, the prepeek could be really large, so just in case
 		    //include it.  Make the buffer big enough to hold 
 		    buffersize = 
 			Math.max
-			((((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+			((ssg.getMult(node, false) - 1) * 
 			 filter.getPopInt() + filter.getPeekInt(), prepeek);
 		}
 		else //not ratematching and we do not have a circular buffer
@@ -447,7 +457,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 		//see Mgordon's thesis for explanation (Code Generation Section)
 		if (KjcOptions.ratematch)
 		    buffersize = 
-			Util.nextPow2(Math.max((((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+			Util.nextPow2(Math.max((ssg.getMult(node, false) - 1) * 
 					       filter.getPopInt() + filter.getPeekInt(), prepeek) + remaining);
 		else
 		    buffersize = Util.nextPow2(maxpeek + remaining);
@@ -529,8 +539,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//if we are rate matching, create the output buffer with its 
 	//index
 	if (KjcOptions.ratematch && filter.getPushInt() > 0) {
-	    int steady = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.
-			  get(Layout.getNode(Layout.getTile(filter)))).intValue();
+	    int steady = 
+		ssg.getMult(layout.getNode(layout.getTile(filter)), false);
 	    
 	    //define the send buffer index variable
 	    JVariableDefinition sendBufferIndexVar = 
@@ -840,8 +850,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 					    LocalVariables localVariables) 
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
-	int steady = ((Integer)SpaceDynamicBackend.steadyExecutionCounts.
-	    get(Layout.getNode(Layout.getTile(filter)))).intValue();
+	int steady = 
+	    ssg.getMult(layout.getNode(layout.getTile(filter)), false);
 
 	//reset the simple index
 	if (isSimple(filter)){

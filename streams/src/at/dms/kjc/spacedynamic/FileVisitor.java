@@ -15,34 +15,40 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 
-public class FileVisitor implements FlatVisitor {
+public class FileVisitor implements StreamGraphVisitor, FlatVisitor {
     //true if the graph contains a fileReader
-    public static boolean foundReader;
+    public boolean foundReader;
     //a hashset containing the flatnodes of the fileReaders
-    public static HashSet fileReaders;
+    public HashSet fileReaders;
     //true if the graph contains a fileWriter
-    public static boolean foundWriter;
+    public boolean foundWriter;
     //a hashset containing the flatnodes of the fileWriters
-    public static HashSet fileWriters;
+    public HashSet fileWriters;
     //a hashset containing the flatnodes of all the file manipulators
     //(both readers and writers
-    public static HashSet fileNodes;
+    public HashSet fileNodes;
 
-    public static void init(FlatNode top) {
-	FileVisitor frv = new FileVisitor();
-	top.accept(frv, new HashSet(), false);
-	//add everything to the fileNodes hashset
-	SpaceDynamicBackend.addAll(fileNodes, fileReaders);
-	SpaceDynamicBackend.addAll(fileNodes, fileWriters);
+    private StreamGraph streamGraph;
+
+    public void visitStaticStreamGraph(StaticStreamGraph ssg) 
+    {
+	ssg.getTopLevel().accept(this, new HashSet(), false);
     }
 	
-    public FileVisitor() 
+    public FileVisitor(StreamGraph streamGraph) 
     {
+	this.streamGraph = streamGraph;
 	foundReader = false;
 	foundWriter = false;
 	fileReaders = new HashSet();
 	fileWriters = new HashSet();
 	fileNodes = new HashSet();
+	
+	streamGraph.getTopLevel().accept(this, null, true);
+
+	//add everything to the fileNodes hashset
+	SpaceDynamicBackend.addAll(fileNodes, fileReaders);
+	SpaceDynamicBackend.addAll(fileNodes, fileWriters);
     }
 	
     public void visitNode (FlatNode node) 
@@ -57,10 +63,11 @@ public class FileVisitor implements FlatVisitor {
 	}
     }
 
-    public static boolean connectedToFR(Coordinate tile) {
+    public boolean connectedToFR(RawTile tile) {
 	Iterator frs = fileReaders.iterator();
 	while (frs.hasNext()) {
-	    if (Layout.areNeighbors(tile, Layout.getTile((FlatNode)frs.next()))) 
+	    if (SpaceDynamicBackend.rawChip.areNeighbors(tile, 
+							 streamGraph.getLayout().getTile((FlatNode)frs.next()))) 
 		return true;
 	}
 	return false;

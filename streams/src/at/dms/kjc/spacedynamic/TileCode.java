@@ -28,25 +28,42 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     public static HashSet realTiles;
     public static HashSet tiles;
 
+    private static StreamGraph streamGraph;
+    private static Layout layout;
+
     public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
 
-    public static void generateCode(FlatNode topLevel) 
+    public static void generateCode(StreamGraph sg)
     {
+	streamGraph = sg;
+	layout = SpaceDynamicBackend.streamGraph.getLayout();
+
 	//create a set containing all the coordinates of all
 	//the nodes in the FlatGraph plus all the tiles involved
 	//in switching
 	//generate the code for all tiles containing filters and joiners
+	
+	//tiles that are assigned to streams (filters or joiners)
 	realTiles = new HashSet();
-	topLevel.accept(new TileCode(), new HashSet(), true);
+	//all the tiles that do anything
 	tiles = new HashSet();
-	//for decoupled execution the scheduler does not run
-	if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
-	    tiles.addAll(SpaceDynamicBackend.simulator.initSchedules.keySet());
-	    tiles.addAll(SpaceDynamicBackend.simulator.steadySchedules.keySet());
+
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    ssg.getTopLevel().accept(new TileCode(), new HashSet(), true);
+	    
+	    //for decoupled execution the scheduler does not run
+	    if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
+		tiles.addAll(ssg.simulator.initSchedules.keySet());
+		tiles.addAll(ssg.simulator.steadySchedules.keySet());
+	    }
 	}
+
+
+	//for the tiles that are only involved in routing just create a dummy main function
 	Iterator tileIterator = tiles.iterator();
 	while(tileIterator.hasNext()) {
-	    Coordinate tile = (Coordinate)tileIterator.next();
+	    RawTile tile = (RawTile)tileIterator.next();
 	    //do not generate code for this tile
 	    //if it contains a filter or a joiner
 	    //we have already generated the code in the visitor
@@ -60,7 +77,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     {
 	try {
 	    FileWriter fw = 
-		new FileWriter("tile" + Layout.getTileNumber(Layout.getTile(joiner)) 
+		new FileWriter("tile" + layout.getTile(joiner).getTileNumber()
 			       + ".c");
 	    fw.write("/* " + joiner.contents.getName() + "*/\n");
 	    fw.write("#include <raw.h>\n");
@@ -89,10 +106,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //the structure definition header files
 	    //this must be included after the above declarations 
 	    //(of CSTO*, CSTI*)
-
+	    /*
 	    if (SpaceDynamicBackend.structures.length > 0) 
 		fw.write("#include \"structs.h\"\n");
-	    
+	    */
 	    if (KjcOptions.decoupled) {
 		fw.write("float " + Util.CSTOFPVAR + ";\n");
 		fw.write("float " + Util.CSTIFPVAR + ";\n");
@@ -129,14 +146,14 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("}\n");
 	    fw.close();
 	    System.out.println("Code for " + joiner.contents.getName() +
-			       " written to tile" + Layout.getTileNumber(Layout.getTile(joiner)) +
+			       " written to tile" + layout.getTile(joiner).getTileNumber() +
 			       ".c");
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
 	    
 	    Utils.fail("Error writing switch code for tile " +
-		       Layout.getTileNumber(Layout.getTile(joiner)));
+		       layout.getTile(joiner).getTileNumber());
 	}
     }
     
@@ -188,7 +205,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    ret.append(";\n");
 	}
 	    
-	HashSet buffers = (HashSet)JoinerSimulator.buffers.get(joiner);
+	HashSet buffers = (HashSet)streamGraph.joinerSimulator.buffers.get(joiner);
 	Iterator bufIt = buffers.iterator();
 	//print all the var definitions
 	while (bufIt.hasNext()) {
@@ -205,9 +222,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    ret.append(";\n");
 	}
 
-	printSchedule(joiner, (JoinerScheduleNode)SpaceDynamicBackend.simulator.initJoinerCode.get(joiner), ret);
+	printSchedule(joiner, (JoinerScheduleNode)streamGraph.getParentSSG(joiner).simulator.initJoinerCode.get(joiner), ret);
 	ret.append("while(1) {\n");
-	printSchedule(joiner, (JoinerScheduleNode)SpaceDynamicBackend.simulator.steadyJoinerCode.get(joiner), ret);
+	printSchedule(joiner, (JoinerScheduleNode)streamGraph.getParentSSG(joiner).simulator.steadyJoinerCode.get(joiner), ret);
 	ret.append("}}\n");
 
 	return ret.toString();
@@ -333,15 +350,15 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	return (int)Math.pow(2, bit);
     }
         
-    private static void noFilterCode(Coordinate tile) 
+    private static void noFilterCode(RawTile tile) 
     {
 	//do not generate code for file manipulators
-	if (FileVisitor.fileNodes.contains(Layout.getNode(tile)))
+	if (streamGraph.getFileVisitor().fileNodes.contains(layout.getNode(tile)))
 	    return;
 	
 	try {
 	    FileWriter fw = 
-		new FileWriter("tile" + Layout.getTileNumber(tile) 
+		new FileWriter("tile" + tile.getTileNumber() 
 			       + ".c");
 	    if (!KjcOptions.standalone) 
 		fw.write("#include <raw.h>\n\n");
@@ -357,14 +374,14 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("}\n");
 	    fw.close();
 	    System.out.println("Code " +
-			       " written to tile" + Layout.getTileNumber(tile) +
+			       " written to tile" + tile.getTileNumber() +
 			       ".c");
 
 
 	}
 	catch (Exception e) {
 	    Utils.fail("Error writing switch code for tile " +
-		       Layout.getTileNumber(tile));
+		       tile.getTileNumber());
 	}
     }
     
@@ -375,8 +392,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     {
 	//this is a mapped joiner, we do not want to generate code for
 	//joiners in the decoupled case
-	if (Layout.getJoiners().contains(node) && !KjcOptions.decoupled) {
-	    realTiles.add(Layout.getTile(node.contents));
+	if (layout.getJoiners().contains(node) && !KjcOptions.decoupled) {
+	    realTiles.add(layout.getTile(node.contents));
 	    joinerCode(node);
 	    //After done with node drops its contents for garbage collection
 	    //node.contents=null;
@@ -388,12 +405,12 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	if (node.contents instanceof SIRFilter) {
 	    //do not generate code for the file manipulators
-	    if (FileVisitor.fileNodes.contains(node))
+	    if (streamGraph.getFileVisitor().fileNodes.contains(node))
 		return;
-	    if (!Layout.isAssigned(node))
+	    if (!layout.isAssigned(node))
 		return;
-	    realTiles.add(Layout.getTile(node.contents));
-	    FlatIRToC.generateCode(node);
+	    realTiles.add(layout.getTile(node.contents));
+	    FlatIRToC.generateCode(node, layout);
 	    //After done with node drops its contents for garbage collection
 	    //Need to keep contents for filter type checking but dropping methods
 	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());

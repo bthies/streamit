@@ -247,28 +247,28 @@ public class Util extends at.dms.util.Utils {
     //return the FlatNodes that are directly downstream of the 
     //given flatnode and are themselves assigned a tile in the
     //layout
-    public static HashSet getAssignedEdges(FlatNode node) {
+    public static HashSet getAssignedEdges(Layout layout, FlatNode node) {
 	HashSet set = new HashSet();
 
 	if (node == null)
 	    return set;
 
 	for (int i = 0; i < node.edges.length; i++) 
-	    getAssignedEdgesHelper(node.edges[i], set);
+	    getAssignedEdgesHelper(layout, node.edges[i], set);
 
 	return set;
     }
 
-    private static void getAssignedEdgesHelper(FlatNode node, HashSet set) {
+    private static void getAssignedEdgesHelper(Layout layout, FlatNode node, HashSet set) {
 	if (node == null) 
 	    return;
-	else if (Layout.isAssigned(node)) {
+	else if (layout.isAssigned(node)) {
 	    set.add(node);
 	    return;
 	}
 	else {
 	    for (int i = 0; i < node.edges.length; i++) 
-		getAssignedEdgesHelper(node.edges[i], set);
+		getAssignedEdgesHelper(layout, node.edges[i], set);
 	}
     }
 
@@ -305,7 +305,29 @@ public class Util extends at.dms.util.Utils {
 	    return ret;
 	}
 	return null;
-    }    
+    }
+
+    public static SIRFilter getSinkFilter(SIRStream stream) 
+    {
+	if (stream instanceof SIRFilter)
+	    return (SIRFilter)stream;
+	else if (stream instanceof SIRPipeline)
+	    return getSinkFilter(((SIRPipeline)stream).get(((SIRPipeline)stream).size() - 1));
+	else
+	    assert false : "Calling getSinkFilter() on Stream with non-filter sink";
+	return null;
+    }
+    
+    public static SIRFilter getSourceFilter(SIRStream stream) 
+    {
+	if (stream instanceof SIRFilter)
+	    return (SIRFilter)stream;
+	else if (stream instanceof SIRPipeline) 
+	    return getSourceFilter(((SIRPipeline)stream).get(0));
+	else 
+	    assert false : "Calling getSourceFilter() on Stream with non-filter source";
+	return null;
+    }
 }
 
 

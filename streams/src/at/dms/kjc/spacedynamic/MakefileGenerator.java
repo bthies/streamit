@@ -15,10 +15,16 @@ import java.io.*;
 public class MakefileGenerator 
 {
     public static final String MAKEFILE_NAME = "Makefile.streamit";
+    private static StreamGraph streamGraph;
+    private static Layout layout;
+    private static RawChip rawChip;
     
-    public static void createMakefile() 
+    public static void createMakefile(StreamGraph sg) 
     {
-		
+	streamGraph = sg;
+	layout = sg.getLayout();
+	rawChip = SpaceDynamicBackend.rawChip;
+
 	try {
 	    //FileWriter fw = new FileWriter("Makefile");
 	    FileWriter fw = new FileWriter(MAKEFILE_NAME);
@@ -30,9 +36,9 @@ public class MakefileGenerator
 	    //remove the tiles assigned to FileReaders
 	    //do not generate switchcode for Tiles assigned to file readers
 	    //they are just dummy tiles
-	    Iterator frs = FileVisitor.fileNodes.iterator();
+	    Iterator frs = sg.getFileVisitor().fileNodes.iterator();
 	    while (frs.hasNext()) {
-		tiles.remove(Layout.getTile((FlatNode)frs.next()));
+		tiles.remove(layout.getTile((FlatNode)frs.next()));
 	    }
 
 	    //remove joiners from the hashset if we are in decoupled mode, 
@@ -78,11 +84,11 @@ public class MakefileGenerator
 	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
-	    if (FileVisitor.foundReader || FileVisitor.foundWriter)
+	    if (streamGraph.getFileVisitor().foundReader || streamGraph.getFileVisitor().foundWriter)
 		createBCFile(true, tiles);
             else
                 createBCFile(false, tiles);
-	    if (SpaceDynamicBackend.rawRows > 4) {
+	    if (SpaceDynamicBackend.rawChip.getYSize() > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 	    }
 	    //fix for snake boot race condition
@@ -91,7 +97,7 @@ public class MakefileGenerator
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {
 		int tile = 
-		    Layout.getTileNumber((Coordinate)tilesIterator.next());
+		    ((RawTile)tilesIterator.next()).getTileNumber();
 
 		if (tile < 10)
 		    fw.write("0" + tile + " ");
@@ -104,7 +110,7 @@ public class MakefileGenerator
 	    tilesIterator = tiles.iterator();
 	    while(tilesIterator.hasNext()) {
 		int tile = 
-		    Layout.getTileNumber((Coordinate)tilesIterator.next());
+		    ((RawTile)tilesIterator.next()).getTileNumber();
 		
 		if (tile < 10) 
 		    fw.write("OBJECT_FILES_0");
@@ -145,9 +151,9 @@ public class MakefileGenerator
     
     //remove all tiles mapped to joiners from the coordinate hashset *tiles*
     private static void removeJoiners(HashSet tiles) {
-	Iterator it = Layout.getJoiners().iterator();
+	Iterator it = layout.getJoiners().iterator();
 	while (it.hasNext()) {
-	    tiles.remove(Layout.getTile((FlatNode)it.next()));
+	    tiles.remove(layout.getTile((FlatNode)it.next()));
 	}
     }
 
@@ -166,8 +172,8 @@ public class MakefileGenerator
 	
 	//let the simulation know how many tiles are mapped to 
 	//filters or joiners
-	fw.write("global gStreamItTilesUsed = " + Layout.getTilesAssigned() + ";\n");
-	fw.write("global gStreamItTiles = " + SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns +
+	fw.write("global gStreamItTilesUsed = " + layout.getTilesAssigned() + ";\n");
+	fw.write("global gStreamItTiles = " + SpaceDynamicBackend.rawChip.getTotalTiles() +
 		 ";\n");
 	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
@@ -183,10 +189,10 @@ public class MakefileGenerator
 	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
 	    fw.write("  gFilterNames = listi_new();\n");
 	    Iterator it = tiles.iterator();
-	    for (int i = 0; i < SpaceDynamicBackend.rawRows * SpaceDynamicBackend.rawColumns; i++) {
-		if (tiles.contains(Layout.getTile(i))) {
+	    for (int i = 0; i < SpaceDynamicBackend.rawChip.getTotalTiles(); i++) {
+		if (tiles.contains(rawChip.getTile(i))) {
 		    fw.write("  listi_add(gFilterNames, \"" +
-			     Layout.getNode(Layout.getTile(i)).getName() + "\");\n");
+			     layout.getNode(rawChip.getTile(i)).getName() + "\");\n");
 		}
 	    }
 	    fw.write("  sprintf(workestpath, \"%s%s\", streamit_home, \"/include/work_est.bc\");\n");
@@ -212,7 +218,7 @@ public class MakefileGenerator
 	//generate the if statement with all the tile numbers of mapped tiles
 	while (tilesIterator.hasNext()) {
 	    fw.write("tileNumber == " + 
-		     Layout.getTileNumber((Coordinate)tilesIterator.next()));
+		     ((RawTile)tilesIterator.next()).getTileNumber());
 	    if (tilesIterator.hasNext())
 		fw.write(" ||\n");
 	}
@@ -241,15 +247,17 @@ public class MakefileGenerator
 
 	//number gathering code
 	if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {
+	    assert false;
+	    /*
 	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
 	    fw.write("global calculatedPrintsPerSteady = " + NumberGathering.totalPrintsPerSteady + ";\n");
 	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
 	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n");
 	    fw.write("global gSinkX = " + 
-		     Layout.getTile(NumberGathering.sink).getColumn() +
+		     layout.getTile(NumberGathering.sink).getX() +
 		     ";\n");
 	    fw.write("global gSinkY = " + 
-		     Layout.getTile(NumberGathering.sink).getRow() +
+		     layout.getTile(NumberGathering.sink).getY() +
 		     ";\n");
 	    
 	    fw.write("{\n");
@@ -259,7 +267,9 @@ public class MakefileGenerator
 	    fw.write("  include(numberpath);\n");
 	    //call the number gathering initialization function
 	    fw.write("  gather_numbers_init();\n");
-	    /*  only number gathering crap
+	    */
+	    
+	    /*  only number gathering crap ****** This was commentted out before
 	    // add print service to the south of the SE tile
 	      fw.write("  {\n");
 	      fw.write("    local str = malloc(256);\n");
@@ -369,23 +379,23 @@ public class MakefileGenerator
 
 	if (hasIO) {
 	    //generate the code for the fileReaders
-	    Iterator frs = FileVisitor.fileReaders.iterator();
+	    Iterator frs = streamGraph.getFileVisitor().fileReaders.iterator();
 	    while (frs.hasNext()) {
 		FlatNode node = (FlatNode)frs.next();
 		SIRFileReader fr = (SIRFileReader)node.contents;
 		fw.write("\tdev_serial_rom_init(\"" + fr.getFileName() +
-			 "\", " + getIOPort(Layout.getTile(node)) + 
+			 "\", " + getIOPort(layout.getTile(node)) + 
 			 ", 1);\n");
 	    }
 	    //generate the code for the file writers
-	    Iterator fws = FileVisitor.fileWriters.iterator();
+	    Iterator fws = streamGraph.getFileVisitor().fileWriters.iterator();
 	    while (fws.hasNext()) {
 		FlatNode node = (FlatNode)fws.next();
 		SIRFileWriter sfw = (SIRFileWriter)node.contents;
 		int size = getTypeSize(((SIRFileWriter)node.contents).getInputType());
 		fw.write("\tdev_st_port_to_file_size(\"" + sfw.getFileName() +
 			 "\", " + size + ", " +
-			 getIOPort(Layout.getTile(node)) + ");\n");
+			 getIOPort(layout.getTile(node)) + ");\n");
             }
 	}
 	
@@ -416,10 +426,10 @@ public class MakefileGenerator
     return 0;
 }
 
-private static int getIOPort(Coordinate tile) 
+private static int getIOPort(RawTile tile) 
 {
-    return SpaceDynamicBackend.rawColumns + 
-	+ tile.getRow();
+    return rawChip.getXSize() + 
+	+ tile.getY();
 }
 
 

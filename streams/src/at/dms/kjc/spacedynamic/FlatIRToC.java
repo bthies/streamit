@@ -46,11 +46,20 @@ public class FlatIRToC extends ToC implements StreamVisitor
     //the flat node for the filter we are visiting
     private FlatNode flatNode;
     
+    private Layout layout;
+    /** true if the filter is the sink of a SSG, so it has dynamic output 
+	and must sent output over the dynamic network **/
+    private boolean dynamicOutput = false;
+    private StaticStreamGraph ssg;
 
-    public static void generateCode(FlatNode node) 
+    public static void generateCode(FlatNode node, Layout lo) 
     {
 	FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
 	toC.flatNode = node;
+	toC.layout = lo;
+	toC.ssg = SpaceDynamicBackend.streamGraph.getParentSSG(node);
+	toC.dynamicOutput =  toC.ssg.isOutput(node);
+    
 	//FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
 	//FieldProp.doPropagate((SIRFilter)node.contents);
 
@@ -174,12 +183,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
 	    print("register float " + Util.CGNOFPVAR + " asm(\"$cgno\");\n");
 	    print("register float " + Util.CGNIFPVAR + " asm(\"$cgni\");\n");
-	}
-	if (KjcOptions.dynamicnet) {
 	    print("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
 	    print("register int " + Util.CGNIINTVAR + " asm(\"$cgni\");\n");
 	    print("unsigned " + DYNMSGHEADER + ";\n");
 	}
+	
+    
 	
 	if (KjcOptions.decoupled) {
 	    print("volatile float " + Util.CSTOFPVAR + ";\n");
@@ -204,8 +213,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	
 	//if there are structures in the code, include
 	//the structure definition header files
-	if (SpaceDynamicBackend.structures.length > 0) 
-	    print("#include \"structs.h\"\n");
+	if (SpaceDynamicBackend.structures.length > 0) {
+	    //print("#include \"structs.h\"\n");
+	}
 
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
@@ -254,16 +264,16 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	
 	//if we are using the dynamic network create the dynamic network
 	//header to be used for all outgoing messages
-	if (KjcOptions.dynamicnet) {
-	    HashSet downstream = Util.getDirectDownstream(flatNode);
-	    if (downstream.size() > 0) {
-		assert downstream.size() == 1;
-		FlatNode down = (FlatNode)downstream.iterator().next();
+	if (dynamicOutput) {
+	    FlatNode downstream = 
+		SpaceDynamicBackend.streamGraph.getParentSSG(flatNode).getNext(flatNode);
+	    
+	    if (downstream != null) {
 		print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, 1, 0, " +
-		      (Layout.getTile(self)).getRow() + ", " +
-		      (Layout.getTile(self)).getColumn() + ", " + 
-		      (Layout.getTile(down)).getRow() + "," +
-		      (Layout.getTile(down)).getColumn() + ");\n");
+		      (layout.getTile(self)).getY() + ", " +
+		      (layout.getTile(self)).getX() + ", " + 
+		      (layout.getTile(downstream)).getY() + "," +
+		      (layout.getTile(downstream)).getX() + ");\n");
 	    }
 	}
 	
@@ -307,10 +317,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 
     private void createFile() {
 	System.out.println("Code for " + filter.getName() +
-			   " written to tile" + Layout.getTileNumber(filter) +
+			   " written to tile" + layout.getTileNumber(filter) +
 			   ".c");
 	try {
-	    FileWriter fw = new FileWriter("tile" + Layout.getTileNumber(filter) + ".c");
+	    FileWriter fw = new FileWriter("tile" + layout.getTileNumber(filter) + ".c");
 	    fw.write(str.toString());
 	    fw.close();
 	}
@@ -752,11 +762,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
     }
 
     public void visitDynamicToken(SIRDynamicToken self) {
-	Utils.fail("Dynamic rates not yet supported in cluster backend.");
+	Utils.fail("We should not see a dynamic token in FlatIRToC");
     }
 
     public void visitRangeExpression(SIRRangeExpression self) {
-	Utils.fail("Dynamic rates not yet supported in cluster backend.");
+	Utils.fail("We should not see a range expression in FlatIRToC");
     }
 
     public void visitPeekExpression(SIRPeekExpression self,
@@ -814,7 +824,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 		 type.equals(CStdType.Short))
 	    {
 		if (!KjcOptions.standalone)
-		    print("print_int(");
+		    print("raw_test_pass_reg(");
 		else
 		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -825,7 +835,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	else if (type.equals(CStdType.Char))
 	    {
 		if (!KjcOptions.standalone)
-		    print("print_int(");
+		    print("raw_test_pass_reg(");
 		else
 		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -836,7 +846,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	else if (type.equals(CStdType.Float))
 	    {
 		if (!KjcOptions.standalone)
-		    print("print_float(");
+		    print("raw_test_pass_reg(");
 		else 
 		    print("printf(\"%f\\n\", "); 
 		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
@@ -847,7 +857,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
         else if (type.equals(CStdType.Long))
 	    {
 		if (!KjcOptions.standalone)
-		    print("print_int(");
+		    print("raw_test_pass_reg(");
 		else
 		    print("printf(\"%d\\n\", "); 
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -883,7 +893,11 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//	if (tapeType != val.getType()) {
 	//    Utils.fail("type of push argument does not match filter output type");
 	//	}
-	if (KjcOptions.dynamicnet) {
+	
+
+	//if this filter is the sink of a ssg, then we have to produce
+	//dynamic network code!!!, check this by using some util methods.
+	if (dynamicOutput) {
 	    print(Util.CGNOINTVAR + " = " + DYNMSGHEADER + ";");
 	    if (tapeType.isFloatingPoint())
 		print(Util.CGNOFPVAR);
@@ -912,7 +926,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
     {
 	//turn the push statement into a call of
 	//the structure's push method
-	assert !KjcOptions.dynamicnet;
+	assert false;
 	print("push" + tapeType + "(&");
 	val.accept(this);
 	print(")");
@@ -923,7 +937,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 			   CType tapeType,
 			   JExpression val) 
     {
-	assert !KjcOptions.dynamicnet;
+	assert false;
 	CType baseType = ((CArrayType)tapeType).getBaseType();
 	String dims[] = Util.makeString(((CArrayType)tapeType).getDims());
 	

@@ -17,6 +17,7 @@ import at.dms.kjc.lir.*;
 import java.util.*;
 import java.io.*;
 import at.dms.util.Utils;
+import java.io.*;
 
 /**
 
@@ -25,174 +26,244 @@ import at.dms.util.Utils;
 public class StreamGraph
 {
     /** The toplevel stream container **/
-    private SIRStream str;
+    private FlatNode topLevelFlatNode;
     /** A list of all the static sub graphs **/
-    private List staticSubGraphs;
+    private StaticStreamGraph[] staticSubGraphs;
     /** the entry point static subgraph **/
     private StaticStreamGraph topLevel;
-
-    public StreamGraph(SIRStream top) 
+    /** the tile assignment for the stream graph **/
+    private Layout layout;
+    /** Information on all the file readers and writer of the graph **/
+    private FileVisitor fileVisitor;
+    /** map of flat nodes to parent ssg **/
+    public HashMap parentMap;
+    /** schedules of sending for all the joiners of the stream graph **/
+    public JoinerSimulator joinerSimulator;
+    /** Maps RawTile -> switch code schedule **/
+    public HashMap initSwitchSchedules;
+    /** Maps RawTile -> switch code schedule **/
+    public HashMap steadySwitchSchedules;
+	
+    public StreamGraph(FlatNode top) 
     {
-	this.str = top;
-	staticSubGraphs = new LinkedList();
+	this.topLevelFlatNode = top;
+	parentMap = new HashMap();
+	initSwitchSchedules = new HashMap();
+	steadySwitchSchedules = new HashMap();
     }
     
-
     public void createStaticStreamGraphs() 
     {
-	int id = 0;
-	assert str instanceof SIRPipeline;
+	//flat nodes at a dynamic rate boundary that may constitute the
+	//beginning of a new ssg
+	LinkedList dynamicBoundary = new LinkedList();
+	HashSet visited = new HashSet();
+	//add the toplevel to the dynamicboundary list
+	dynamicBoundary.add(topLevelFlatNode);
 	
-	List children = ((SIRPipeline)str).getChildren();	
-
-	//loop thru all the streams in the toplevel pipeline and 
-	//see if any have endpoints that are dynamic, make the 
-	//boundaries of the static stream graphs at these points...
-
-	StaticStreamGraph prev = null;
-
-
-	while (!children.isEmpty()) {
-	    SIRStream current = (SIRStream)children.remove(0);
-	    //the new pipeline, adding as many pipelines after the first without dynamic
-	    //entries assuming the first does not have a dynamic exit...
-	    SIRPipeline currentPipeline = new SIRPipeline("CreatedPipeLine" + id++);
-	    //the list of children for the new pipeline
-	    LinkedList currentChildren = new LinkedList();
-	    StaticStreamGraph ssg = new StaticStreamGraph(prev, currentPipeline);
-	    //add this subgraph to the list 
-	    staticSubGraphs.add(ssg);
-	    if (prev != null)
-		prev.setNext(ssg);
-
-	    //set the toplevel
+	//create the ssgs list
+	LinkedList ssgs = new LinkedList();
+	
+	while (!dynamicBoundary.isEmpty()) {
+	    FlatNode top = (FlatNode)dynamicBoundary.remove(0);
+	    //we don't want to create a new SSG for something we have already added
+	    assert !visited.contains(top);
+	    //dynamic boundaries can only be filters!
+	    assert top.isFilter();
+	    StaticStreamGraph ssg = new StaticStreamGraph(this, top);
+	    //set topleve 
 	    if (topLevel == null)
 		topLevel = ssg;
-	    
-	    //we need to add a dummy input filter for compatiblity if the first stream has input
-	    // and it is not dynamic
-	    if (current.getInputType() != CStdType.Void && !dynamicEntry(current))
-		currentChildren.add(new SIRDummySource(current.getInputType()));
-	    
-	    currentChildren.add(current);
-	    
-	    //if the first stream has a dynamic exit, then start a new graph
-	    if (!dynamicExit(current)) {
-		//see if we can add any more of the toplevel pipeline's children...
-		while(!children.isEmpty()) {
-		    SIRStream tryMe = (SIRStream)children.get(0);
-		    //exit if tryMe has dynamic entry, it will start a new static sub graph...
-		    if (dynamicEntry(tryMe))
-			break;
-		    //add tryme to the list of current children for the pipeline we are constructing
-		    currentChildren.add(tryMe);
-		    //remove tryme from the children of the toplevel pipeline
-		    children.remove(0);
-		    
-		    //if tryme has dynamic output then end this pipeline...
-		    if (dynamicExit(tryMe))
-			break;
-		}
-	    }
-	    
-		
-	    //set the children of the pipeline, this should correct set 
-	    //the children's parent field
-	    currentPipeline.setChildren(currentChildren);
- 
-	    //we need to add a dummy filter if the current pipeline outputs
-	    // and is not dynamic for output
-	    if (currentPipeline.getOutputType() != CStdType.Void && !dynamicExit(currentPipeline)) 
-		currentPipeline.add(new SIRDummySink(currentPipeline.getOutputType()));
-
-	    //set prev to ssg so we can 
-	    prev = ssg;
+	    ssgs.add(ssg);
+	    searchDownstream(top, ssg, visited, dynamicBoundary);
 	}
 
-	//now all the static stream graphs are created 
-	//convert all filters with dynamic rates to static rates...
-	convertDynamicToStatic();
+	//set up the array of sub graphs
+	staticSubGraphs = 
+	    (StaticStreamGraph[])ssgs.toArray(new StaticStreamGraph[0]);
 
-	//make sure no dynamic rates inside the staticstreamgraphs
+	
+	
+	//clean up the flat graph so that is can be converted to an SIR
+	for (int i = 0; i < staticSubGraphs.length; i++)
+	    staticSubGraphs[i].cleanUp();
+	
+	
+	//create the connections of the graph!!!
+	for (int i = 0; i < staticSubGraphs.length; i++)
+	    staticSubGraphs[i].connect();
 
+	//after we have created the ssg, convert their
+	//flatgraphs to SIR graphs
+	for (int i = 0; i < staticSubGraphs.length; i++) {
+	    staticSubGraphs[i].createSIRGraph();
+	    staticSubGraphs[i].dumpFlatGraph();
+	}
     }
-    /**
-     * Convert all dynamic rate filter declarations to static approximations
-     **/
-    private void convertDynamicToStatic() 
+
+    /** recursive function to cut the graph into ssgs */
+    private void searchDownstream(FlatNode current, StaticStreamGraph ssg, HashSet visited, 
+				  List dynamicBoundary) 
     {
-	class ConvertDynamicToStatic extends EmptyStreamVisitor
-	{
-	    //set this to try as soon as we visit one filter!, this is used
-	    //to make sure that dynamic rates only occur at the endpoints of static sub graphs
-	    private boolean visitedAFilter = false;
-	    //set this after we have seen a dynamic push to true, we should see no more
-	    //filters after that!!
-	    private boolean shouldSeeNoMoreFilters = false;
+	assert current.ways == current.edges.length;
 
-	    /** This is not used anymore!!!, part of an old implementation !!**/
-	    private JIntLiteral convertRangeToInt(SIRRangeExpression exp) 
-	    {
-		
-		
-		if (exp.getAve() instanceof JIntLiteral) {
-		    //first see if there is an average hint that is a integer
-		    return (JIntLiteral)exp.getAve();
-		} else if (exp.getMin() instanceof JIntLiteral &&
-			   exp.getMax() instanceof JIntLiteral) {
-		    //if we have both a max and min bound, then just take the 2 
-		    //return the average..
-		    return new JIntLiteral((((JIntLiteral)exp.getMin()).intValue() +
-					    ((JIntLiteral)exp.getMax()).intValue()) / 2);
-		} else if (exp.getMin() instanceof JIntLiteral) {
-		    //if we have a min, just return that...
-		    return (JIntLiteral)exp.getMin();
-		} else {
-		    //otherwise just return 1 
-		    return new JIntLiteral(1);
-		}
-	    }
-	    /** convert any dynamic rate declarations to static **/
-	    public void visitFilter(SIRFilter self,
-				    SIRFilterIter iter) {
-		assert !shouldSeeNoMoreFilters : "Dynamic Rates in middle of static sub graph " + self;
-
-		
-		if (self.getPop().isDynamic()) {
-		    //convert any dynamic pop rate to zero!!
-		    self.setPop(new JIntLiteral(0));
-		    assert !visitedAFilter : "Dynamic Rates in the middle of static sub graph " + self;
-		}
-		if (self.getPeek().isDynamic()) {
-		    //convert any dynamic peek rate to zero!!
-		    self.setPeek(new JIntLiteral(0));
-		    assert !visitedAFilter : "Dynamic Rates in the middle of static sub graph " + self;
-		}
-		if (self.getPush().isDynamic()) {
-		    //convert any dynamic push rate to zero
-		    self.setPush(new JIntLiteral(0));
-		    //now that we have seen a dynamic push, this should be the last filter!!
-		    shouldSeeNoMoreFilters = true;
-		}
-		visitedAFilter = true;
-	    }
-
-	    public void visitPhasedFilter(SIRPhasedFilter self,
-					  SIRPhasedFilterIter iter) {
-		assert false : "Phased filters not supported!";
-	    }
+	//we may have already seen this node before, if so just exit
+	if (visited.contains(current)) {
+	    return;
 	}
 
-	StaticStreamGraph current = topLevel;
-	//visit all the subgraphs converting dynamic rates to static...
-	while (current != null) {
-	 
-	    IterFactory.createFactory().createIter(current.getTopLevelSIR()).accept(new ConvertDynamicToStatic());
+
+	//record that it has been visited...
+	visited.add(current);
+	//current has not been added yet
+	ssg.addFlatNode(current);
+	
+	//if this flatnode is a filter, check if it has dynamic input
+	if (current.isFilter()) {
 	    
-	    current = current.getNext();
+	    SIRFilter filter = (SIRFilter)current.contents;
+	    //if this filter has dynamic output and their is a downstream neighbor, it will begin
+	    //a new SSG, so add it to dynamicBoundary, but only if we have not seen the node yet
+	    //we way have visited it in an upstream walk
+	    if (filter.getPush().isDynamic()) {
+		assert current.ways == 1 && current.edges.length == 1 && current.edges[0] != null;
+		if (!visited.contains(current.edges[0])) {
+		    dynamicBoundary.add(current.edges[0]);
+		    //set the next field of the ssg for the current flatnode
+		    ssg.addNext(current, current.edges[0]);
+		    cutGraph(current, current.edges[0]);
+		}
+		return;
+	    }
+	    //if the downstream filter of this filter has dynamic input, then this is a
+	    //dynamic boundary, so add the downstream to dynamicBoundary to start a new SSG
+	    //but only if we haven't visited the node yet, we may have visited it in
+	    //upstream walk...
+	    if (current.ways > 0 && current.edges[0].isFilter()) {
+		assert current.ways == 1 && current.edges.length == 1;
+		SIRFilter downstream = (SIRFilter)current.edges[0].contents;
+		if ((downstream.getPeek().isDynamic() || downstream.getPop().isDynamic())) {
+		    if (!visited.contains(current.edges[0])) {
+			dynamicBoundary.add(current.edges[0]);
+			//set the next field of the ssg for the current flatnode
+			ssg.addNext(current, current.edges[0]);
+			cutGraph(current, current.edges[0]);
+		    }
+		    return;
+		}
+	    }
+	    //otherwise continue the ssg if connected to more
+	    if (current.edges.length > 0) {
+		assert current.edges[0] != null;
+		searchDownstream(current.edges[0], ssg, visited, dynamicBoundary);
+	    }
 	}	
+	else if (current.isSplitter()) {
+	    for (int i = 0; i < current.ways; i++) {
+		assert current.edges[i] != null;
+		searchDownstream(current.edges[i], ssg, visited, dynamicBoundary);
+	    }
+	}
+	else {
+	    assert current.isJoiner();
+
+	    assert current.incoming.length == current.inputs;
+	    //search backwards if we haven't seen this joiner and it is not a null joiner
+	    if (!(((SIRJoiner)current.contents).getType().isNull() || 
+		((SIRJoiner)current.contents).getSumOfWeights() == 0)) {
+		for (int i = 0; i < current.inputs; i++) {
+		    assert current.incoming[i] != null;
+		    searchUpstream(current.incoming[i], ssg, visited, dynamicBoundary);
+		}
+	    }
+	    
+	    if (current.edges.length > 0) {
+		assert current.edges[0] != null;
+		searchDownstream(current.edges[0], ssg, visited, dynamicBoundary);
+	    }
+	}
     }
     
+    private void cutGraph(FlatNode upstream, FlatNode downstream) 
+    {
+	assert upstream.isFilter() && downstream.isFilter();
+	SIRFilter upFilter = (SIRFilter)upstream.contents;
+	SIRFilter downFilter = (SIRFilter)downstream.contents;
+	
+	assert upFilter.getPush().isDynamic() || downFilter.getPeek().isDynamic() ||
+	    downFilter.getPop().isDynamic();
+	
+	//reset upstream	
+	upFilter.setPush(new JIntLiteral(0));
+	upstream.removeEdges();
+	//reset downstream
+	downFilter.setPop(new JIntLiteral(0));
+	downFilter.setPeek(new JIntLiteral(0));
+	downstream.removeIncoming();
+    }
+    
+    private void searchUpstream(FlatNode current, StaticStreamGraph ssg, HashSet visited, 
+				List dynamicBoundary) 
+    {
+	assert current.incoming.length == current.inputs;
+
+	//we have already added this flatnode to an ssg so just make sure and exit
+	if (visited.contains(current)) {
+	    assert !dynamicBoundary.contains(current);
+	    return;
+	}
+	
+	//stop at unprocessed dynamic boundaries, but add the boundary node and remove it
+	//from the unprocess boundary list
+	if (dynamicBoundary.contains(current)) {
+	    ssg.addTopLevelFlatNode(current);
+	    visited.add(current);
+	    dynamicBoundary.remove(current);
+	    return;
+	}
+	
+	//we have not seen this flatnode before
+	ssg.addFlatNode(current);
+	visited.add(current);
+	
+	if (current.isFilter()) {
+	    SIRFilter filter = (SIRFilter)current.contents;
+	    //if this filter has dynamic input, and we hav
+	    if (filter.getPop().isDynamic() || filter.getPeek().isDynamic()) {
+		assert current.inputs == 1;
+		cutGraph(current.incoming[0], current);
+		ssg.addTopLevelFlatNode(current);
+		return;
+	    }	    
+	    if (current.inputs > 0) {
+		assert current.inputs == 1 && current.incoming[0] != null;
+		//check if the upstream filter has dynamic output
+		//if so return
+		if (current.incoming[0].isFilter()) {
+		    SIRFilter upstream = (SIRFilter)current.incoming[0].contents;
+		    if (upstream.getPush().isDynamic()) { 
+			cutGraph(current.incoming[0], current);
+			ssg.addTopLevelFlatNode(current);
+			return;
+		    }
+		}
+		//if not, continue upstream walk
+		searchUpstream(current.incoming[0], ssg, visited, dynamicBoundary);
+	    }
+	} else if (current.isSplitter()) {
+	    if (current.inputs > 0) {
+		assert current.incoming[0] != null && current.inputs == 1;
+		searchUpstream(current.incoming[0], ssg, visited, dynamicBoundary);
+	    }
+	} else {
+	    assert current.isJoiner();
+	    
+	    for (int i = 0; i < current.inputs; i++) {
+		assert current.incoming[i] != null;
+		searchUpstream(current.incoming[i], ssg, visited, dynamicBoundary);
+	    }
+	}
+    }
 
     public boolean dynamicEntry(SIRStream stream) 
     {
@@ -221,19 +292,65 @@ public class StreamGraph
 	    return false;
     }
     
-    public List getStaticSubGraphs() 
+    public void handTileAssignment() 
     {
-	return staticSubGraphs;
+	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));;
+	int numTilesToAssign = SpaceDynamicBackend.rawChip.getTotalTiles(), num;
+	StaticStreamGraph current = topLevel;
+	
+	for (int i = 0; i < staticSubGraphs.length; i++) {
+	    current = staticSubGraphs[i];
+	    final int[] filters = {0};
+	    
+	    IterFactory.createFactory().createIter(current.getTopLevelSIR()).accept(new EmptyStreamVisitor() {
+		    public void visitFilter(SIRFilter self,
+					    SIRFilterIter iter) {
+			if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
+			    filters[0]++;
+			}
+			
+		    }
+		}); 
+	    
+	    while (true) {
+		System.out.print("Number of tiles for " + current + " (" + numTilesToAssign +
+				   " tiles left, " + filters[0] + " filters in subgraph): ");
+		try {
+		    num = Integer.valueOf(inputBuffer.readLine()).intValue();
+		}
+		catch (Exception e) {
+		    System.out.println("Bad number!");
+		    continue;
+		}
+		
+		if (num <= 0) {
+		    System.out.println("Enter number > 0!");
+		    continue;
+		}
+		
+		if ((numTilesToAssign - num) < 0) {
+		    System.out.println("Too many tiles desired!");
+		    continue;
+		}
+		
+		current.setNumTiles(num);
+		numTilesToAssign -= num;
+		break;
+	    }
+	}
+	//	checkAssignment();
     }
     
+
     /** for each sub-graph, assign a certain number of tiles to it **/
     public void tileAssignment() 
     {
 	StaticStreamGraph current = topLevel;
-	
-	while (current != null) {
+	//for right now just assign exactly the number of tiles as filters!
+	for (int i = 0; i < staticSubGraphs.length; i++) {
+	    current = staticSubGraphs[i];
 	    final int[] filters = {0};
-
+	    
 	    IterFactory.createFactory().createIter(current.getTopLevelSIR()).accept(new EmptyStreamVisitor() {
 		    public void visitFilter(SIRFilter self,
 					    SIRFilterIter iter) {
@@ -244,16 +361,88 @@ public class StreamGraph
 		    }
 		}); 
 	    current.setNumTiles(filters[0]);
-	    current = current.getNext();
 	}
+	//	checkAssignment();
     }
 
+    public void putParentMap(FlatNode node, StaticStreamGraph ssg) 
+    {
+	parentMap.put(node, ssg);
+    }
+    
+
+    public StaticStreamGraph getParentSSG(FlatNode node) 
+    {
+	assert parentMap.containsKey(node) : node;
+	return (StaticStreamGraph)parentMap.get(node);
+    }
+    
+
+    public FileVisitor getFileVisitor() 
+    {
+	return fileVisitor;
+    }
+    
+    public Layout getLayout() 
+    {
+	return layout;
+    }
+    
+    
+    public void layoutGraph() 
+    {
+	//set up the parent map for other passes
+	topLevel.accept(new StreamGraphVisitor() {
+		public void visitStaticStreamGraph(StaticStreamGraph ssg) 
+		{
+		    parentMap.putAll(ssg.getParentMap());
+		}
+		
+	    }, null, true);
+
+	
+	//gather the information on file readers and writers in the graph
+	fileVisitor = new FileVisitor(this);
+
+	//now ready to layout	
+	layout = new Layout(this);
+	//for right now just handAssign!!
+	layout.handAssign();
+    }
+
+
+    /** make sure that we have every tile of the raw chip assigned
+	the sum of tiles assigned to ssg's equals the number of raw tiles 
+    **/
+    private void checkAssignment() 
+    {
+	StaticStreamGraph current = topLevel;
+	int totalTiles = 0;
+	//for right now just assign exactly the number of tiles as filters!	
+	for (int i = 0; i < staticSubGraphs.length; i++) {
+	    current = staticSubGraphs[i];
+	    totalTiles += current.getNumTiles();
+	}
+	assert totalTiles == SpaceDynamicBackend.rawChip.getTotalTiles() :
+	    "Error: some tiles not assigned";
+    }
+    
+    
+    public StaticStreamGraph[] getStaticSubGraphs() 
+    {
+	return staticSubGraphs;
+    }
+    
+    public StaticStreamGraph getTopLevel() 
+    {
+	return topLevel;
+    }
 
     public void dumpStaticStreamGraph() 
     {
 	StaticStreamGraph current = topLevel;
-	
-	while (current != null) {
+	for (int i = 0; i < staticSubGraphs.length; i++) {
+	    current = staticSubGraphs[i];
 	    System.out.println("******* StaticStreamGraph ********");
 	    System.out.println("Dynamic rate input = " + dynamicEntry(current.getTopLevelSIR()));
 	    System.out.println("InputType = " + current.getTopLevelSIR().getInputType());
@@ -262,9 +451,100 @@ public class StreamGraph
 	    System.out.println("OutputType = " + current.getTopLevelSIR().getOutputType());
 	    System.out.println("Dynamic rate output = " + dynamicExit(current.getTopLevelSIR()));
 	    StreamItDot.printGraph(current.getTopLevelSIR(), current.getTopLevelSIR().getIdent() + ".dot");
-	    current = current.getNext();
 	    System.out.println("**********************************");
 	}
     }
 
+    /** create a stream graph with only one filter (thus one SSG) **/
+    public static StreamGraph constructStreamGraph(SIRFilter filter) 
+    {
+	return constructStreamGraph(new FlatNode(filter));
+    }
+    
+    /** create a stream graph with only one filter (thus one SSG) **/
+    public static StreamGraph constructStreamGraph(FlatNode node)  
+    {
+	assert node.isFilter();
+	assert false;
+	return null;
+    }
+    
 }
+
+
+
+//     /**
+//      * not called anymore!!
+//      * Convert all dynamic rate filter declarations to static approximations
+//      **/
+//     private void convertDynamicToStatic() 
+//     {
+// 	class ConvertDynamicToStatic extends EmptyStreamVisitor
+// 	{
+// 	    //set this to try as soon as we visit one filter!, this is used
+// 	    //to make sure that dynamic rates only occur at the endpoints of static sub graphs
+// 	    private boolean visitedAFilter = false;
+// 	    //set this after we have seen a dynamic push to true, we should see no more
+// 	    //filters after that!!
+// 	    private boolean shouldSeeNoMoreFilters = false;
+
+// 	    /** This is not used anymore!!!, part of an old implementation !!**/
+// 	    private JIntLiteral convertRangeToInt(SIRRangeExpression exp) 
+// 	    {
+		
+		
+// 		if (exp.getAve() instanceof JIntLiteral) {
+// 		    //first see if there is an average hint that is a integer
+// 		    return (JIntLiteral)exp.getAve();
+// 		} else if (exp.getMin() instanceof JIntLiteral &&
+// 			   exp.getMax() instanceof JIntLiteral) {
+// 		    //if we have both a max and min bound, then just take the 2 
+// 		    //return the average..
+// 		    return new JIntLiteral((((JIntLiteral)exp.getMin()).intValue() +
+// 					    ((JIntLiteral)exp.getMax()).intValue()) / 2);
+// 		} else if (exp.getMin() instanceof JIntLiteral) {
+// 		    //if we have a min, just return that...
+// 		    return (JIntLiteral)exp.getMin();
+// 		} else {
+// 		    //otherwise just return 1 
+// 		    return new JIntLiteral(1);
+// 		}
+// 	    }
+// 	    /** convert any dynamic rate declarations to static **/
+// 	    public void visitFilter(SIRFilter self,
+// 				    SIRFilterIter iter) {
+// 		assert !shouldSeeNoMoreFilters : "Dynamic Rates in middle of static sub graph " + self;
+
+		
+// 		if (self.getPop().isDynamic()) {
+// 		    //convert any dynamic pop rate to zero!!
+// 		    self.setPop(new JIntLiteral(0));
+// 		    assert !visitedAFilter : "Dynamic Rates in the middle of static sub graph " + self;
+// 		}
+// 		if (self.getPeek().isDynamic()) {
+// 		    //convert any dynamic peek rate to zero!!
+// 		    self.setPeek(new JIntLiteral(0));
+// 		    assert !visitedAFilter : "Dynamic Rates in the middle of static sub graph " + self;
+// 		}
+// 		if (self.getPush().isDynamic()) {
+// 		    //convert any dynamic push rate to zero
+// 		    self.setPush(new JIntLiteral(0));
+// 		    //now that we have seen a dynamic push, this should be the last filter!!
+// 		    shouldSeeNoMoreFilters = true;
+// 		}
+// 		visitedAFilter = true;
+// 	    }
+
+// 	    public void visitPhasedFilter(SIRPhasedFilter self,
+// 					  SIRPhasedFilterIter iter) {
+// 		assert false : "Phased filters not supported!";
+// 	    }
+// 	}
+
+// 	StaticStreamGraph current = topLevel;
+// 	//visit all the subgraphs converting dynamic rates to static...
+// 	while (current != null) {	 
+// 	    IterFactory.createFactory().createIter(current.getTopLevelSIR()).accept(new ConvertDynamicToStatic());
+// 	    current = current.getNext();
+// 	}	
+//     }

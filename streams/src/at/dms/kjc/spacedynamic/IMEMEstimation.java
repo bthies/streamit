@@ -27,6 +27,7 @@ public class IMEMEstimation implements FlatVisitor
     private boolean everythingFits = true;
     private static Random rand;
     private static String user;
+    private StaticStreamGraph ssg;
 
     static 
     {
@@ -52,25 +53,25 @@ public class IMEMEstimation implements FlatVisitor
 	}
     }
     
-    public IMEMEstimation() 
+    public IMEMEstimation(StaticStreamGraph ssg) 
     {
-	
+	this.ssg = ssg;
     }
     
     /**
      * Returns true iff all filters in <str> fit in IMEM.  Each filter
      * is measured independently (assuming 1 filter per tile).
      */
-    public static boolean testMe(FlatNode top) 
+    public static boolean testMe(StaticStreamGraph ssg, FlatNode top) 
     {
-	IMEMEstimation visitor = new IMEMEstimation();
+	IMEMEstimation visitor = new IMEMEstimation(ssg);
 	top.accept(visitor, null, true);
 	return visitor.everythingFits;
     }
     
 
     //returns true if it fits in IMEM
-    public static boolean fits(SIRFilter oldFilter) 
+    public boolean fits(SIRFilter oldFilter) 
     {
 	// if we have an identity filter, just return 0 since these
 	// aren't mapped onto Raw
@@ -90,10 +91,16 @@ public class IMEMEstimation implements FlatVisitor
 	//clone the Filter and create a dummy pipeline with just this
 	//new cloned filter
 	SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
+
+	//just call this 
+	StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
+	StaticStreamGraph fakeSSG = streamGraph.getStaticSubGraphs()[0];
+	/*
 	SIRPipeline pipe = new SIRPipeline("top");
 	LinkedList list = new LinkedList();
 	list.add(filter);
 	pipe.setChildren(list);
+	*/
 
 	//make a new directory and change the current working dir
 	String dir = File.separator + "tmp" + File.separator + 
@@ -115,7 +122,6 @@ public class IMEMEstimation implements FlatVisitor
 	KjcOptions.outputs = -1;
 
 	//make a new FlatGraph with only this filter...
-	FlatNode top = new FlatNode(filter);
 	
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(filter);
@@ -124,23 +130,28 @@ public class IMEMEstimation implements FlatVisitor
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(filter);
 
-	Layout oldLayout = Layout.getLayout();
+	Layout oldLayout = streamGraph.getLayout();
 	
 	// layout the components (assign filters to tiles)	
-	Layout.simAnnealAssign(top);
+	assert false;
+	//must layout the 
+	//Layout.someLayout.(top);
 
 	//Generate the tile code
-	if (!containsRawMain(filter))
-	    RawExecutionCode.doit(top);
-
-	if (KjcOptions.removeglobals) {
-	    RemoveGlobals.doit(top);
+	if (!containsRawMain(filter)) {
+	    RawExecutionCode rawExe = new RawExecutionCode(fakeSSG);
+	    fakeSSG.getTopLevel().accept(rawExe, null, true);
 	}
+	
+	if (KjcOptions.removeglobals) {
+	    RemoveGlobals.doit(fakeSSG.getTopLevel());
+	}
+	
 	// make structures header file in this directory
-	StructureIncludeFile.doit(SpaceDynamicBackend.structures, top, dir);
+	StructureIncludeFile.doit(SpaceDynamicBackend.structures, fakeSSG.getTopLevel(), dir);
 
-	TileCode.generateCode(top);
-	MakefileGenerator.createMakefile();
+	TileCode.generateCode(null);
+	MakefileGenerator.createMakefile(null);
 	
 	try {
 	    //move the files 
@@ -210,7 +221,8 @@ public class IMEMEstimation implements FlatVisitor
 	KjcOptions.magic_net = oldMagicNetValue;
 	KjcOptions.ratematch = oldRateMatchValue;
 	KjcOptions.outputs = oldOutputsValue;
-	Layout.setLayout(oldLayout);
+	//do something with layout
+	//Layout.setLayout(oldLayout);
 	return fits;
     }
     

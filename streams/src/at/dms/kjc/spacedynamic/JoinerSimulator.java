@@ -21,17 +21,23 @@ public class JoinerSimulator
     public static HashMap schedules;
     //hash map indexed by Flatnode to a hashset of all
     //the buffer names for a node
-    public static HashMap buffers;
+    public HashMap buffers;
     
     //the current flatnode we are working on
-    private static FlatNode current;
-    
-    public static void createJoinerSchedules(FlatNode top) 
+    private FlatNode current;
+
+    private StreamGraph streamGraph;
+
+    public JoinerSimulator(StreamGraph streamGraph) 
     {
+	this.streamGraph = streamGraph;
 	schedules = new HashMap();
 	buffers = new HashMap();
-		
-	Iterator joiners = Layout.getJoiners().iterator();
+    }
+    
+    public void createJoinerSchedules() 
+    {
+	Iterator joiners = streamGraph.getLayout().getJoiners().iterator();
 	while (joiners.hasNext()) {
 	    FlatNode node = (FlatNode)joiners.next();
 	    current = node;
@@ -40,7 +46,7 @@ public class JoinerSimulator
 	}
     }
     
-    private static void buildJoinerSchedule(FlatNode node) 
+    private void buildJoinerSchedule(FlatNode node) 
     {
 	JoinerCounter counters = new JoinerCounter();
 	JoinerScheduleNode first = new JoinerScheduleNode();
@@ -69,7 +75,7 @@ public class JoinerSimulator
 
 	
 
-    private static void simulateDataItem(FlatNode node, 
+    private void simulateDataItem(FlatNode node, 
 				     JoinerScheduleNode schedNode,
 				     JoinerCounter counters,
 				     String buf) 

@@ -21,13 +21,13 @@ import java.util.Iterator;
  * init schedule and one
  * steady state execution of the schedule
  */
-public class FineGrainSimulator extends Simulator  implements FlatVisitor
+public class FineGrainSimulator extends Simulator 
 {
     
     private HashMap switchSchedules;
     
     //the current joiner code we are working on (steady or init)
-    private static HashMap joinerCode;
+    private HashMap joinerCode;
         
     //the curent node in the joiner schedule we are working on
     private HashMap currentJoinerCode;
@@ -37,55 +37,65 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     //true if we are simulating the init schedule
     private boolean initSimulation;
 
-    public void simulate(FlatNode top) 
+    private Layout layout;
+
+    private RawChip rawChip;
+
+    public void simulate() 
     {
 	System.out.println("FineGrainSimulator Running...");
 	
+	layout = SpaceDynamicBackend.streamGraph.getLayout();
+	rawChip = SpaceDynamicBackend.rawChip;
+
 	initJoinerCode = new HashMap();
         steadyJoinerCode = new HashMap();
 
-	//generate the joiner schedule
-	JoinerSimulator.createJoinerSchedules(top);
-	
 	SimulationCounter counters = 
 	    new SimulationCounter(JoinerSimulator.schedules);
 	
 	
 	//create copies of the executionCounts
-	HashMap initExecutionCounts = (HashMap)SpaceDynamicBackend.initExecutionCounts.clone();
-	HashMap steadyExecutionCounts = (HashMap)SpaceDynamicBackend.steadyExecutionCounts.clone();
-
+	HashMap initExecutionCounts = (HashMap)ssg.getExecutionCounts(true).clone();
+	HashMap steadyExecutionCounts = (HashMap)ssg.getExecutionCounts(false).clone();
 
 	joinerCode = initJoinerCode;
 	
 	//	System.out.println("\n\nInit Execution Counts");
 	//SpaceDynamicBackend.printCounts(SpaceDynamicBackend.initExecutionCounts);
 	
-	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
+	this.initialize(true);
+	initSchedules = this.goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 	
 	//System.out.println("\n\nSteady Execution Counts");
 	//SpaceDynamicBackend.printCounts(SpaceDynamicBackend.steadyExecutionCounts);
 
+	//re-initialized the state of the simulator
+	this.initialize(false);
+	//reset the state of the buffers
 	counters.resetBuffers();
 
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new FineGrainSimulator(top, false)).go(steadyExecutionCounts, counters, null);
+	steadySchedules = this.go(steadyExecutionCounts, counters, null);
 	testExecutionCounts(steadyExecutionCounts);
 	System.out.println("End of steady-state simulation");
     }
     
     
-    public FineGrainSimulator() {
+    public FineGrainSimulator(StaticStreamGraph ssg, JoinerSimulator js) 
+    {
+	super(ssg, js);
     }
     
 
-    private FineGrainSimulator(FlatNode top, boolean init) 
+    /** Initialize the state of the communication simulator **/
+    private void initialize(boolean init) 
     {
 	switchSchedules = new HashMap();
 	currentJoinerCode = new HashMap();
-	toplevel = top;
+	toplevel = ssg.getTopLevel();
 	//find the bottom (last) filter, used later to decide
 	//execution order
 	bottom = null;
@@ -97,14 +107,14 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
       to its completion.  It checks if all the execution counts for 
       mapped streams are 0
     */
-    private static void testExecutionCounts(HashMap exeCounts) 
+    private void testExecutionCounts(HashMap exeCounts) 
     {
 	boolean bad = false;
 	
 	Iterator it = exeCounts.keySet().iterator();
 	while(it.hasNext()) {
 	    FlatNode node = (FlatNode)it.next();
-	    if (Layout.isAssigned(node)) {
+	    if (layout.isAssigned(node)) {
 		if (((Integer)exeCounts.get(node)).intValue() != 0) {
 		    System.out.println(node.contents.getName() + " has " + 
 				       exeCounts.get(node) + " executions remaining!!!!");
@@ -125,7 +135,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     private void callInitPaths(SimulationCounter counters) 
     {
 	//find all the joiners that are immediately contained in a FeedbackLoop
-	Iterator joiners = Layout.getJoiners().iterator();
+	Iterator joiners = layout.getJoiners().iterator();
 	//clone the joiner schedules
 	
 	FlatNode joiner;
@@ -200,9 +210,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
 		if (KjcOptions.magic_net) {
+		    assert false;
 		    //generating code for the raw magic network
-		    appendMagicNetNodes(fire, getDestination(fire, 
-							      counters));
+		    //appendMagicNetNodes(fire, getDestination(fire, 
+		    //counters));
 		}
 		else {
 		    //not generating code for the magic network
@@ -218,9 +229,9 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	}
 	return switchSchedules;
     }
-
+    /*
     private void appendMagicNetNodes(FlatNode fire, List dests) {
-	Coordinate source = Layout.getTile(fire);
+	RawTile source = layout.getTile(fire);
 	
 	HashMap receiveSchedules = MagicNetworkSchedule.steadyReceiveSchedules;
 	HashMap sendSchedules = MagicNetworkSchedule.steadySendSchedules;
@@ -239,13 +250,13 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	LinkedList sourceSendSchedule = (LinkedList)sendSchedules.get(source);
 
 	//generate a list of coordinates to add to the send schedule for the source
-	LinkedList destsCoordinate = new LinkedList();
+	LinkedList destsRawTile = new LinkedList();
 
 
 	//iterate thru the dests adding to the receive schedules for the dests
 	Iterator it = dests.iterator();
 	while(it.hasNext()) {
-	    Coordinate currentDest = Layout.getTile((FlatNode)it.next());
+	    RawTile currentDest = layout.getTile((FlatNode)it.next());
 	
 	    
 	    if (!receiveSchedules.containsKey(currentDest))
@@ -255,13 +266,13 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    destReceiveSchedule.add(source);
 
 	    //add to the list of coordinate dests
-	    destsCoordinate.add(currentDest);
+	    destsRawTile.add(currentDest);
 	}
 
 	//add the list of coordinates to the source send schedule
-	sourceSendSchedule.add(destsCoordinate);
+	sourceSendSchedule.add(destsRawTile);
     }
-
+    */
 
     //generate the switch code for 1 data item given the list of destinations
     //we do not want to duplicate items until necesary, so we have to keep track 
@@ -279,12 +290,12 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //	    System.out.println("Dest: " + dest.getName());
 	    if (dest == null) 
 		System.out.println("Yup dest is null");
- 	    Coordinate[] hops = 
- 		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
+ 	    RawTile[] hops = 
+ 		(RawTile[])Router.getRoute(layout, fire, dest).toArray(new RawTile[0]);
 	    //add to fire's next
-	    if (!next.containsKey(Layout.getTile(fire))) 
-		next.put(Layout.getTile(fire), new HashSet());
-	    ((HashSet)next.get(Layout.getTile(fire))).add(hops[1]);
+	    if (!next.containsKey(layout.getTile(fire))) 
+		next.put(layout.getTile(fire), new HashSet());
+	    ((HashSet)next.get(layout.getTile(fire))).add(hops[1]);
 	    //add to all other previous, next
 	    for (int i = 1; i < hops.length -1; i++) {
 		if (prev.containsKey(hops[i]))
@@ -308,10 +319,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	//create the appropriate amount of routing instructions
 	int elements = Util.getTypeSize(Util.getOutputType(fire));
 	for (int i = 0; i < elements; i++)
-	    asm(Layout.getTile(fire), prev, next);
+	    asm(layout.getTile(fire), prev, next);
     }
     
-    private void asm(Coordinate fire, HashMap previous, HashMap next) 
+    private void asm(RawTile fire, HashMap previous, HashMap next) 
     {
 	//generate the sends
 	if (!switchSchedules.containsKey(fire))
@@ -320,9 +331,9 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	Iterator it = ((HashSet)next.get(fire)).iterator();
 	buf.append("route ");
 	while (it.hasNext()) {
-	    Coordinate dest = (Coordinate)it.next();
+	    RawTile dest = (RawTile)it.next();
 	    buf.append("$csto->" + "$c" + 
-		       Layout.getDirection(fire, dest) + 
+		       rawChip.getDirection(fire, dest) + 
 		       "o,");
 	}
 	//erase the trailing ,
@@ -331,22 +342,22 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	//generate all the other 
 	Iterator tiles = next.keySet().iterator();
 	while (tiles.hasNext()) {
-	    Coordinate tile = (Coordinate)tiles.next();
+	    RawTile tile = (RawTile)tiles.next();
 	    if (tile == fire) 
 		continue;
 	    if (!switchSchedules.containsKey(tile))
 		switchSchedules.put(tile, new StringBuffer());
 	    buf = (StringBuffer)switchSchedules.get(tile);
-	    Coordinate prevTile = (Coordinate)previous.get(tile);
+	    RawTile prevTile = (RawTile)previous.get(tile);
 	    buf.append("route ");	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
 	    while(nexts.hasNext()) {
-		Coordinate nextTile = (Coordinate)nexts.next();
+		RawTile nextTile = (RawTile)nexts.next();
 		if (!nextTile.equals(tile))
-		    buf.append("$c" + Layout.getDirection(tile, prevTile) + "i->$c" +
-			       Layout.getDirection(tile, nextTile) + "o,");
+		    buf.append("$c" + rawChip.getDirection(tile, prevTile) + "i->$c" +
+			       rawChip.getDirection(tile, nextTile) + "o,");
 		else 
-		    buf.append("$c" + Layout.getDirection(tile, prevTile) + "i->$c" +
-			       Layout.getDirection(tile, nextTile) + "i,");
+		    buf.append("$c" + rawChip.getDirection(tile, prevTile) + "i->$c" +
+			       rawChip.getDirection(tile, nextTile) + "i,");
 	    }
 	    buf.setCharAt(buf.length() - 1, '\n');
 	}
@@ -364,10 +375,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	else if (!initSimulation && KjcOptions.ratematch && 
 		 fire.contents instanceof SIRFilter) {
 	    //we are ratematching filters
-	    return (((SIRFilter)fire.contents).getPopInt() * 
-		((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(fire)).intValue() +
-		(((SIRFilter)fire.contents).getPeekInt() -
-		 ((SIRFilter)fire.contents).getPopInt()));
+	    return (((SIRFilter)fire.contents).getPopInt() *
+		    ssg.getMult(fire, false) +
+		    (((SIRFilter)fire.contents).getPeekInt() -
+		     ((SIRFilter)fire.contents).getPopInt()));
 	}
 	//otherwise peek items are needed
 	return ((SIRFilter)fire.contents).getPeekInt();
@@ -402,7 +413,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //we are ratematching on the filter
 	    //it consumes for the entire steady state
 	    return ((SIRFilter)fire.contents).getPopInt() *
-		((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(fire)).intValue();
+		ssg.getMult(fire, false);
 	}
 	//otherwise just consume pop
 	return ((SIRFilter)fire.contents).getPopInt();
@@ -430,7 +441,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
 	    else if (!initSimulation && KjcOptions.ratematch) {
 		//we are ratematching so produce all the data on the one firing.
-		ret *= ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(fire)).intValue();
+		ret *= ssg.getMult(fire, false);
 	    }
 	    //now this node has fired
 	    counters.setFired(fire);
@@ -528,7 +539,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	//add to its buffer and
 	//create a list and add it
 	if (node.contents instanceof SIRFilter) {
-	    if (Layout.getIdentities().contains(node)) {
+	    if (layout.getIdentities().contains(node)) {
 		return getDestinationHelper(node.edges[0], counters,
 					    joinerBuffer, node);
 	    }
@@ -541,7 +552,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //just pass thru joiners except the joiners that are the 
 	    //last joiner in a joiner group
 	    //this list is kept in the layout class
-	    if (Layout.getJoiners().contains(node)) {
+	    if (layout.getJoiners().contains(node)) {
 		joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
 		counters.addJoinerReceiveBuffer(node, joinerBuffer);
 		counters.incrementBufferCount(node);
@@ -654,7 +665,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     {
 	if (node == null)
 	    return false;
-	if (Layout.getIdentities().contains(node))
+	if (layout.getIdentities().contains(node))
 	    return false;
 
 	if (node.contents instanceof SIRFilter) {
@@ -684,7 +695,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	else if (node.contents instanceof SIRJoiner) {
 	    //first of all, a joiner can only fire it is the most downstream
 	    //joiner in a joiner group
-	    if (!Layout.getJoiners().contains(node))
+	    if (!layout.getJoiners().contains(node))
 		return false;
 	    //determine if the joiner can receive and buffer data
 	    //this does not count as an execution of the joiner
@@ -714,30 +725,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	else 
 	    return false;
     }
-   	
-    //Just a debugging function, not used
-    public void visitNode(FlatNode node) 
-    {
-	System.out.println(node.contents.getName());
-	if (node.contents instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter two = (SIRTwoStageFilter)node.contents;
-	    System.out.println("init peek: " + two.getInitPeek() + " init pop:" + two.getInitPop() +
-			       " init push: " + two.getInitPush());
-	}
-	if (node.contents instanceof SIRFilter) {
-	    SIRFilter two = (SIRFilter)node.contents;
-	    System.out.println("init peek: " + two.getPeekInt() + " init pop:" + two.getPopInt() +
-			       " init push: " + two.getPushInt());
-	}
-	
-	if (SpaceDynamicBackend.initExecutionCounts.containsKey(node))
-	    System.out.println("   executes in init " + 
-			       ((Integer)SpaceDynamicBackend.initExecutionCounts.get(node)).intValue());
-	if (SpaceDynamicBackend.steadyExecutionCounts.containsKey(node))
-	    System.out.println("   executes in steady " + 
-			       ((Integer)SpaceDynamicBackend.steadyExecutionCounts.get(node)).intValue());
-    }
-    
+
     private String getJoinerBuffer(FlatNode node, FlatNode previous) 
     {
 	//	System.out.println(node.contents.getName());

@@ -4,15 +4,27 @@ import java.util.HashMap;
 import at.dms.kjc.flatgraph.FlatNode;
 
 public abstract class Simulator {
-    public static HashMap initSchedules;
-    public static HashMap steadySchedules;
+    public HashMap initSchedules;
+    public HashMap steadySchedules;
     
-    public static HashMap initJoinerCode;
-    public static HashMap steadyJoinerCode;
+    public HashMap initJoinerCode;
+    public HashMap steadyJoinerCode;
     
-    public FlatNode toplevel;
+    protected StaticStreamGraph ssg;
 
-    public abstract void simulate(FlatNode top);
+    protected FlatNode toplevel;
+
+    protected JoinerSimulator joinerSimulator;
+    
+
+    public Simulator(StaticStreamGraph ssg, JoinerSimulator joinerSimulator) 
+    {
+	this.ssg = ssg;
+	this.joinerSimulator = joinerSimulator;
+	this.toplevel = ssg.getTopLevel();
+    }
+
+    public abstract void simulate();
     public abstract boolean canFire(FlatNode node, HashMap executionCounts, 
 				    SimulationCounter counters);
 }

@@ -15,6 +15,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
 import java.math.BigInteger;
+import at.dms.kjc.flatgraph.*;
 
 //if 
 //not 2 stage
@@ -25,7 +26,33 @@ import java.math.BigInteger;
 public class DirectCommunication extends at.dms.util.Utils 
     implements Constants 
 {
-    public static boolean doit(SIRFilter filter) 
+    private SIRFilter filter;
+    private FlatNode node;
+    private StaticStreamGraph ssg;
+    /** true if this filter is the source of a static stream graph **/
+    private boolean dynamicInput;
+    
+    public static boolean doit(FlatNode node) 
+    {
+	DirectCommunication dc = new DirectCommunication(node);
+	//see if we can generate direct communication
+	if (dc.canRun())
+	    return dc.run();
+	//can't so return false...
+	return false;
+    }
+
+    private DirectCommunication(FlatNode node) 
+    {
+	this.node = node;
+	this.filter = (SIRFilter)node.contents;
+	this.ssg = SpaceDynamicBackend.streamGraph.getParentSSG(node);
+	//if this is a source of an ssg then set dynamicInput
+	dynamicInput = ssg.isInput(node);
+    }
+    
+
+    private boolean canRun()
     {
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
@@ -50,10 +77,14 @@ public class DirectCommunication extends at.dms.util.Utils
 	    filter.getOutputType().isArrayType())
 	    return false;
 	//all tests pass
-	
+	return true;
+    }
+    
+    private boolean run()
+    {
 	//convert the communication
 	//all the communication is in the work function
-	filter.getWork().accept(new DirectConvertCommunication());
+	filter.getWork().accept(new DirectConvertCommunication(dynamicInput));
 	//generate the raw main function 
 	rawMainFunction(filter);
 	return true;
@@ -132,6 +163,14 @@ public class DirectCommunication extends at.dms.util.Utils
 
     static class DirectConvertCommunication extends SLIRReplacingVisitor 
     {
+	private boolean dynamic;
+
+	public DirectConvertCommunication(boolean dynamicInput) 
+	{
+	    dynamic = dynamicInput;
+	}
+	
+
 	public Object visitAssignmentExpression(JAssignmentExpression oldself,
 						JExpression oldleft,
 						JExpression oldright) 
@@ -202,7 +241,7 @@ public class DirectCommunication extends at.dms.util.Utils
 		    (null,
 		     new JGeneratedLocalVariable(null, 0, 
 						 CStdType.Float, 
-						 KjcOptions.dynamicnet ? Util.CGNIFPVAR : Util.CSTIFPVAR,
+						 dynamic ? Util.CGNIFPVAR : Util.CSTIFPVAR,
 						 null));
 	    else 
 		return 
@@ -210,7 +249,7 @@ public class DirectCommunication extends at.dms.util.Utils
 		    (null,
 		     new JGeneratedLocalVariable(null, 0, 
 						 CStdType.Integer,
-						 KjcOptions.dynamicnet ? Util.CGNIINTVAR : Util.CSTIINTVAR,
+						 dynamic ? Util.CGNIINTVAR : Util.CSTIINTVAR,
 						 null));
 	}
     

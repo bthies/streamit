@@ -31,7 +31,7 @@ import at.dms.util.Utils;
  */
 public class StrToRStream {
     /** if true generate do loops when identified **/
-    public static final boolean GENERATE_DO_LOOPS = false;
+    public static final boolean GENERATE_DO_LOOPS = true;
     /** look for do loops in the filter's code **/
     public static final boolean CONVERT_FOR_TO_DO_LOOPS = true;
     /** generate MIV buffer index expressions if possible **/
@@ -39,7 +39,7 @@ public class StrToRStream {
     /** generate code for superfluous identites and splitter **/
     public static final boolean GENERATE_UNNECESSARY = false;
     /** generate code for superfluous identites and splitter **/
-    public static final boolean GENERATE_ABSARRAY = false;
+    public static final boolean GENERATE_ABSARRAY = true;
     
     /** if true, generate a separate peek buffer for peeking filters
      * before execution, restore the peek buffer to the pop buffer,
@@ -48,7 +48,8 @@ public class StrToRStream {
      * to the beginning after the filter executes
 
      * Please note that setting this to true is untested and 
-     * produces unnecessary code
+     * produces unnecessary code, in fact I don't know why it is an option
+     * I guess I just want to keep around all the code I wrote.
      **/
     public static final boolean HEADER_FOOTER_PEEK_RESTORE = false;
 
@@ -180,19 +181,18 @@ public class StrToRStream {
 	//IterFactory.createFactory().createIter(str).accept(printer1);
 	//printer1.close();
 
+	//generate the include file that has the structure definitions
 	StructureIncludeFile.doit(structures);
-	
+	//generate the c code for the application
 	GenerateCCode.generate(graphFlattener.top);
-
-	//FlatIRToRS.generateCode(graphFlattener.top);
-
+	//exit
 	System.exit(0);
     }
 
     /**
      *  Helper function to add everything in a collection to the set
      *
-     * @param set The Hashset we want to add <c> to
+     * @param set The Hashset we want to add *c* to
      * @param c   The collection to add
      *
      */

@@ -8,16 +8,31 @@ import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 
-//each filter owns its popBuffer, the popBufferIndex, and the pushIndex
-//into the next filters popBuffer.
+/**
+ * This class represent the state and conversion necessary to convert 
+ * a splitter FlatNode into imperative SIR code so it can be added to 
+ * the application's SIR code.
+ * 
+ * For duplicate splitters, we just create a loop that will copy items from 
+ * the incoming buffer to each outgoing buffer.
+ * 
+ * For round-robin splitters we create an outer loop that contains 
+ * assignments from the incoming buffer to the outgoing buffer in order and frequency
+ * given by the round-robin weights
+ *
+ * @author Michael Gordon
+ * 
+ */
 public class SplitterFusionState extends FusionState
 {
+    /** the splitter object this represents **/
     private SIRSplitter splitter;
 
-    //the size of the pop buffer (including the peekRestore size)
+    /** the size of the pop buffer (including the remaining items) **/
     private int bufferSize;
     
-    public SplitterFusionState (FlatNode node)
+    
+    protected SplitterFusionState (FlatNode node)
     {
 	super(node);
 	
@@ -34,11 +49,12 @@ public class SplitterFusionState extends FusionState
 	bufferVar[0] = makePopBuffer();
     }
 
-    //calculate the remaining items store in peekBufferSize 
+    /** calculate the number of items remaining on this splitter's incoming buffer
+	after the init stage has executed **/
     private void calculateRemaining() 
     {
-	int itemsSent = 0;  //the number of items sent to the splitter
-	int itemsReceived = 0; //the number of items this splitter will receive
+	int itemsSentTo = 0;  //the number of items sent to the splitter
+	int itemsSentFrom = 0; //the number of items will send along
 	
 	if (node.inputs < 1) {
 	    return;
@@ -47,15 +63,15 @@ public class SplitterFusionState extends FusionState
 	assert node.inputs == 1;
 
 	if (node.incoming[0] != null)
-	    itemsSent += StrToRStream.getMult(node.incoming[0], true) *
+	    itemsSentTo += StrToRStream.getMult(node.incoming[0], true) *
 		Util.getItemsPushed(node.incoming[0], node);
 	
-	
-	itemsReceived = StrToRStream.getMult(node, true) * 
+	//calc the number of items sent along by this splitter
+	itemsSentFrom = StrToRStream.getMult(node, true) * 
 	    distinctRoundItems();
 	
 
-	remaining[0] =  itemsSent - itemsReceived;
+	remaining[0] =  itemsSentTo - itemsSentFrom;
 
 	if (remaining[0] > 0) 
 	    System.out.println("** Items remaining on an incoming splitter buffer");
@@ -64,7 +80,9 @@ public class SplitterFusionState extends FusionState
     }
     
 
-    //return true if we must generate code for this splitter
+    /** see if we need to generate code for this splitter, if the splitter is a duplicate
+	and there is no funny business going on, then we can just share the incoming buffer
+	across the parallel streams **/
     private boolean setNecessary() 
     {
 	if (StrToRStream.GENERATE_UNNECESSARY)
@@ -131,6 +149,10 @@ public class SplitterFusionState extends FusionState
 	return true;
     }
 
+
+    /** perform any initialization tasks, including setting the downstream buffers to be 
+	this splitter's incoming buffer if this splitter is unnecessary (thereby bypassing it)
+	and declaring the incoming buffer **/
     public void initTasks(Vector fields, Vector functions,
 			  JBlock initFunctionCalls, JBlock main) 
     {
@@ -150,7 +172,16 @@ public class SplitterFusionState extends FusionState
     }
     
     
-    
+    /** Return the block containing imperative SIR code that will perform the 
+	splitting of the incoming buffer.
+
+	For duplicate splitters, we just create a loop that will copy items from 
+	the incoming buffer to each outgoing buffer.
+
+	For round-robin splitters we create an outer loop that contains 
+	assignments from the incoming buffer to the outgoing buffer in order and frequency
+	given by the round-robin weights
+    **/
     public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
     {
 	
@@ -197,6 +228,9 @@ public class SplitterFusionState extends FusionState
 	return statements.getStatementArray();
     }
     
+    /** create the round-robin code, an outer loop that contains 
+	assignments from the incoming buffer to the outgoing buffer in order and frequency
+	given by the round-robin weights **/
     private JStatement getRRCode(JBlock enclosingBlock, int mult, boolean isInit)
     {
 	JBlock loops = new JBlock(null, new JStatement[0], null);
@@ -207,33 +241,35 @@ public class SplitterFusionState extends FusionState
 	//add the decl of the induction variable
 	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
 					(null, induction, null));
-
+	//for each outgoing edge...
 	for (int i = 0; i < node.ways; i++) {
 	    //do nothing if this has 0 weight
 	    if (node.weights[i] == 0)
 		continue;
-	    
+	    //get a new induction var for the inner loop
 	    JVariableDefinition innerVar = 
 		GenerateCCode.newIntLocal(RRINNERVAR + myUniqueID + "_", i, 0);
-	    
+	    //get the downstream fusion state
 	    FusionState downstream = FusionState.getFusionState(node.edges[i]);
 
 	    //add the decl of the induction variable
 	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
 					     (null, innerVar, null));
-
+	    //the incoming buffer
 	    JLocalVariableExpression incomingBuffer = 
 		new JLocalVariableExpression(null,
 					     getBufferVar(null, isInit));
 
-	    	    
+	    //the outgoing buffer of this way
 	    JLocalVariableExpression outgoingBuffer = 
 		new JLocalVariableExpression
 		(null,
 		 downstream.getBufferVar(node, isInit));
 	    
+	    //now create the buffer assignment
+
 	    //if init outgoing[induction * weights[i] + innervar]
-	    //if steady outgoing[induction * weights[i] + innervar + peekbuffersize_outgoing]
+	    //if steady outgoing[induction * weights[i] + innervar + remaining_outgoing]
 	    JAddExpression outgoingIndex = 
 		new JAddExpression(null,
 				   new JMultExpression(null, 
@@ -246,6 +282,11 @@ public class SplitterFusionState extends FusionState
 						   outgoingIndex,
 						   new JIntLiteral(downstream.getRemaining(node, isInit)));
 
+	    JArrayAccessExpression outgoingAccess = 
+		new JArrayAccessExpression(null,
+					   outgoingBuffer, outgoingIndex);
+	    
+
 	    //incoming[induction * totalWeights + partialSum + innerVar]
 	    JAddExpression incomingIndex = 
 		new JAddExpression(null,
@@ -255,10 +296,6 @@ public class SplitterFusionState extends FusionState
 				   new JAddExpression(null,
 						      new JIntLiteral(node.getPartialOutgoingSum(i)),
 						      new JLocalVariableExpression(null, innerVar)));
-	    JArrayAccessExpression outgoingAccess = 
-		new JArrayAccessExpression(null,
-					   outgoingBuffer, outgoingIndex);
-	    
 	    JArrayAccessExpression incomingAccess = 
 		new JArrayAccessExpression(null,
 					   incomingBuffer, incomingIndex);
@@ -270,33 +307,41 @@ public class SplitterFusionState extends FusionState
 								   outgoingAccess,
 								   incomingAccess),
 					 null);
+	    //now place the assignment in a for loop with trip count equal to the weight on the
+	    //edge
 	    loops.addStatement(GenerateCCode.makeDoLoop(assignment,
 							 innerVar,
 							 new JIntLiteral(node.weights[i])));
 	}
-	
+	//loop the inner loops for the multiplicity of the splitter in this stage
 	return GenerateCCode.makeDoLoop(loops, induction, new JIntLiteral(mult));
     }
 
+    /** return the outgoing buffersize **/
     public int getBufferSize(FlatNode prev, boolean init) 
     {
 	return  bufferSize;
     }
     
-				 
+    /** return the outgoing buffer var for this splitter **/
     public JVariableDefinition getBufferVar(FlatNode prev, boolean init) 
     {
 	return bufferVar[0];
     }
     
-
+    /** 
+	For duplicate splitters, we just create a loop that will copy items from 
+	the incoming buffer to each outgoing buffer. This sounds redundant, but in 
+	certain cases we still need to generate this, for instance, each downstream 
+	buffer may have different remaining items...
+    **/
     private JStatement getDuplicateCode(JBlock enclosingBlock, int mult, boolean isInit) 
     {
 	JBlock assigns = new JBlock(null, new JStatement[0], null);
 
 	if (!necessary)
 	    return assigns;
-
+	//the induction var of the loop
 	JVariableDefinition induction = 
 	    GenerateCCode.newIntLocal(DUPLICATECOUNTER, myUniqueID, 0);
 
@@ -304,13 +349,15 @@ public class SplitterFusionState extends FusionState
 	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
 					(null, induction, null));
 
+	//for each outgoing edge.. add a statement to copy on item from the
+	//incoming buffer to the current outgoing buffer
 	for (int i = 0; i < node.ways; i++) {
 	    assert node.weights[i] == 1;
-	    
+	    //get the downstream fusion state
 	    FusionState downstream =  FusionState.getFusionState(node.edges[i]);
 
 	    //if init outgoing[induction] = incoming[induction]
-	    //if steady outgoing[induction + peekBufSize_outgoing] = incoming[induction]
+	    //if steady outgoing[induction + remaining_outgoing] = incoming[induction]
 	    JLocalVariableExpression incomingBuffer = 
 		new JLocalVariableExpression(null,
 					     getBufferVar(null, isInit));
@@ -319,14 +366,14 @@ public class SplitterFusionState extends FusionState
 		new JLocalVariableExpression
 		(null, downstream.getBufferVar(node, isInit));
 								      
-
+	    
 	    JArrayAccessExpression rhs = 
 		new JArrayAccessExpression(null, incomingBuffer, 
 					   new JLocalVariableExpression
 					   (null, induction));
 	    
 	    JExpression outgoingIndex = new JLocalVariableExpression(null, induction);
-	    
+	    //add the downstream's remaining to the outgoing index expression
 	    if (!isInit && downstream.getRemaining(node, isInit) > 0) 
 		outgoingIndex = new JAddExpression(null,
 						   outgoingIndex,
@@ -349,15 +396,16 @@ public class SplitterFusionState extends FusionState
 					     new JIntLiteral(mult));
     }
     
-
+    /** create the pop (incoming) buffer for this node **/
     private JVariableDefinition makePopBuffer() 
     {
+	//the multiplicity is the max of the steady and the init
 	int mult = Math.max(StrToRStream.getMult(node, false),
 			    StrToRStream.getMult(node, true));
 
 	
 	int itemsAccessed = mult * distinctRoundItems();
-
+	//add the remaining items
 	itemsAccessed += remaining[0];
 	
 	assert itemsAccessed >= 0;
@@ -371,7 +419,7 @@ public class SplitterFusionState extends FusionState
 			  Util.getOutputType(node),
 			  BUFFERNAME + myUniqueID);
     }
-
+    /** return the items remaining on the incoming buffer after the init stage **/
     public int getRemaining(FlatNode prev, boolean isInit) 
     {
 	return remaining[0];
@@ -379,7 +427,7 @@ public class SplitterFusionState extends FusionState
     
     
     /**
-     * return the number of distinct items sent/received it a round
+     * return the number of distinct items sent/received it a round of the splitter
     **/
     private int distinctRoundItems() 
     {

@@ -71,6 +71,7 @@ public class Util extends at.dms.util.Utils {
 	return 0;
     }
     
+    /** get the base type of a type, so for array's return the element type **/
     public static CType getBaseType (CType type) 
     {
 	if (type.isArrayType())
@@ -78,7 +79,7 @@ public class Util extends at.dms.util.Utils {
 	return type;
     }
 
-    //get the variable access in an array access expression
+    /** get the variable access in an array access expression **/
     public static JExpression getVar(JArrayAccessExpression expr) 
     {
 	if (!(expr.getPrefix() instanceof JArrayAccessExpression))
@@ -87,7 +88,7 @@ public class Util extends at.dms.util.Utils {
 	    return getVar((JArrayAccessExpression)expr.getPrefix());
     }
     
-
+    /** turn an array of expressions to any array of strings using FlatIRToRS **/
     public static String[] makeString(JExpression[] dims) {
 	String[] ret = new String[dims.length];
 	
@@ -100,7 +101,7 @@ public class Util extends at.dms.util.Utils {
 	return ret;
     }
 
-
+    /** turn an array of JIntLiterals into an array of ints, fail if not JIntLiterals **/
     public static int[] makeInt(JExpression[] dims) {
 	int[] ret = new int[dims.length];
 	
@@ -111,7 +112,10 @@ public class Util extends at.dms.util.Utils {
 	}
 	return ret;
     }
-
+    
+    /** return the number of items pushed from *from* to *to*
+	on each iteration of *from*.
+	If from is a splitter take this into account **/
     public static int getItemsPushed(FlatNode from, FlatNode to)  
     {
 	if (from.isFilter())
@@ -124,11 +128,14 @@ public class Util extends at.dms.util.Utils {
 	return -1;
     }
 
+    /** return the output type of the node, for joiner and splitters
+	this relies on the surrounding filters **/
     public static CType getOutputType(FlatNode node) 
     {
 	return at.dms.kjc.raw.Util.getOutputType(node);
     }
     
+    /** convert an IR tree to a string of C code **/
     public static String JPhylumToC(JPhylum top) 
     {
 	 FlatIRToRS toC = new FlatIRToRS();
@@ -136,7 +143,8 @@ public class Util extends at.dms.util.Utils {
 	 return toC.getString();
     }
     
-
+    /** construct a new JAddExpression, *left* + *right* where
+	both are of type int.  Try to fold constants **/
     public static JExpression newIntAddExpr(JExpression left,
 					    JExpression right) 
     {
@@ -157,6 +165,8 @@ public class Util extends at.dms.util.Utils {
 				  left, right);
     }
 
+    /** construct a new JMultExpression, *left* * *right* where
+	both are of type int.  Try to fold constants **/
     public static JExpression newIntMultExpr(JExpression left, 
 					     JExpression right) 
     {
@@ -183,6 +193,8 @@ public class Util extends at.dms.util.Utils {
 				  left, right);
     }
 
+    /** construct a new JMinusExpression, *left* - *right* where
+	both are of type int.  Try to fold constants **/
     public static JExpression newIntSubExpr(JExpression left,
 					    JExpression right) 
     {
@@ -192,13 +204,14 @@ public class Util extends at.dms.util.Utils {
 	return new JMinusExpression(null, left, right);
     }
     
-    
+    /** return true if this exp is a JIntLiteral and the int value is 0 **/
     public static boolean isIntZero(JExpression exp) 
     {
 	return ((Utils.passThruParens(exp) instanceof JIntLiteral) &&
 		((JIntLiteral)Utils.passThruParens(exp)).intValue() == 0);
     }
-
+    
+    /** return true if this exp is a JIntLiteral and the int value is 1 **/
     public static boolean isIntOne(JExpression exp) 
     {
 	return ((Utils.passThruParens(exp) instanceof JIntLiteral) &&

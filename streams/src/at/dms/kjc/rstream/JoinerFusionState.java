@@ -8,21 +8,32 @@ import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 
-//each filter owns its popBuffer, the popBufferIndex, and the pushIndex
-//into the next filters popBuffer.
+/**
+ * This class represent the state and conversion necessary to convert 
+ * a joiner FlatNode into imperative SIR code so it can be added to 
+ * the application's SIR code.  Essentially, we create an outer loop
+ * with trip count equal to the multiplicity of the joiner, inside the loop 
+ * we read from each incoming buffer for the number of times given by the weight
+ * on the incoming edge corresponding to the buffer and place the items in the
+ * single outgoing buffer.
+ *
+ * @author Michael Gordon
+ * 
+ */
 public class JoinerFusionState extends FusionState
 {
+    /** the joiner this object represents **/
     private SIRJoiner joiner;
-    //flatnode (previous) -> Jvariabledeclaration (buffer) for steady
+    /** flatnode (previous) -> Jvariabledeclaration (buffer) for steady **/
     private HashMap bufferMap;
   
-    //size of incoming buffers
-    int bufferSizes[];
+    /** size of incoming buffers **/
+    private int bufferSizes[];
 
-    //true if parent is a feedback loop
-    boolean isFBJoiner = false;
+    /** true if parent is a feedback loop and this a feebackloop joiner **/
+    private boolean isFBJoiner = false;
 
-    public JoinerFusionState(FlatNode node) 
+    protected JoinerFusionState(FlatNode node) 
     {
 	super(node);
 	
@@ -31,27 +42,27 @@ public class JoinerFusionState extends FusionState
 	joiner = (SIRJoiner)node.contents;
 	isFBJoiner = joiner.getParent() instanceof SIRFeedbackLoop;
 	
+	//calculate the items remaining on the incoming buffers after init
 	calculateRemaining();
-	
-	//share the buffers between init and steady...
+	//create the incoming buffers array
 	bufferVar = new JVariableDefinition[node.inputs];
-	
+	//create the incoming bufffer sizes array
 	bufferSizes = new int[node.inputs];
 
 	bufferMap = new HashMap();
-		
+	//create the incoming buffer vars and set the buffer sizes
 	makeIncomingBuffers();
     }
 
-    //make sure that all items are passed by the joiner, i.e. nothing 
-    //remains "in" the joiner
+    /** calculate the number of items remaining on the incoming buffers 
+     * 	after the initialization stage has finished **/
     private void calculateRemaining()
     {
 	//calculate remaining for the input channels
 	for (int i = 0; i < node.inputs; i++) {
-	    //the number of items sent on this channel from upstream
+	    //the number of items sent to this channel from upstream
 	    int itemsReceived = 0;
-	    //the number of items pass along from this channel
+	    //the number of items passed along from this channel by the joiner
 	    int itemsSent = 0;
 	    
 	    if (node.incoming[i] == null) {
@@ -66,8 +77,8 @@ public class JoinerFusionState extends FusionState
 	    itemsSent = StrToRStream.getMult(node, true) *
 		node.incomingWeights[i];
 	    
-	    //now add the items from added from the init path delay that are not
-	    //consumed, the second incoming way is always the loop back channel
+	    //now add the items from the init path delay
+	    //the second incoming way is always the loop back channel
 	    if (isFBJoiner && i == 1) {
 		SIRFeedbackLoop fbl = ((SIRFeedbackLoop)joiner.getParent());
 		//the loopback connect is always index 1
@@ -76,6 +87,7 @@ public class JoinerFusionState extends FusionState
 		itemsReceived += fbl.getDelayInt();
 	    }
 
+	    //remaining is items received - the items sent along
 	    remaining[i] = itemsReceived - itemsSent;
 
 	    if (remaining[i] > 0) 
@@ -88,6 +100,9 @@ public class JoinerFusionState extends FusionState
 	
     }
     
+    /** Perform the initialization tasks of this joiner, including declaring 
+     * the incoming buffers and calling the init path function and placing the
+     * results in the correct incoming buffer if this joiner is a feedback joiner **/
     public void initTasks(Vector fields, Vector functions,
 			  JBlock initFunctionCalls, JBlock main) 
     {
@@ -98,7 +113,9 @@ public class JoinerFusionState extends FusionState
 									 bufferVar[i],
 									 null));
 	}
-
+	//if this is a feedback joiner, we must place the initpath items 
+	//in the second incoming buffer, so call the initPath() function and
+	//assign the results to the buffer
 	if (isFBJoiner) {
 	    SIRFeedbackLoop loop = (SIRFeedbackLoop)joiner.getParent();
 	    int delay = loop.getDelayInt();
@@ -133,11 +150,12 @@ public class JoinerFusionState extends FusionState
 	    //create the args for the initpath call
 	    JExpression[] args = {new JLocalVariableExpression(null, index)};
 	    
-		    
+	    //the init path call
 	    JExpression rhs = new JMethodCallExpression(null,
 							new JThisExpression(null),
 							initPath.getName(),
 							args);
+	    //the buffer access
 	    JExpression lhs = 
 		new JArrayAccessExpression(null,
 					   new JLocalVariableExpression(null, loopBackBuf),
@@ -146,6 +164,7 @@ public class JoinerFusionState extends FusionState
 	    JAssignmentExpression assign = new JAssignmentExpression(null,
 								     lhs,
 								     rhs);
+	    //place the assignments in a loop
 	    initFunctionCalls.addStatement
 		(GenerateCCode.makeDoLoop(new JExpressionStatement(null, assign, null),
 					  index,
@@ -153,10 +172,13 @@ public class JoinerFusionState extends FusionState
 	}
     }
     
-    
+    /** Construct the code necessary to perform the joining of the incoming buffers 
+	as given by the round-robin weights of the joiner **/
     public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
     {
+	
 	JBlock statements = new JBlock(null, new JStatement[0], null);
+	//the inner loops the perform the copying for each incoming way
 	JBlock innerLoops = new JBlock(null, new JStatement[0], null);
 
 	int mult = StrToRStream.getMult(getNode(), isInit);
@@ -168,15 +190,17 @@ public class JoinerFusionState extends FusionState
 							   false)};
 	statements.addStatement(new JEmptyStatement(null, comment));
 
+	//if we don't execute then just return the comment
 	if (mult == 0)
 	    return statements.getStatementArray();
 	
 	assert node.edges[0] != null;
-
+	
+	//the single downstream FusionState
 	FusionState downstream = FusionState.getFusionState(node.edges[0]);
-
+	//the single outgoing buffer
 	JVariableDefinition outgoingBuffer = downstream.getBufferVar(node, isInit);
-
+	//the induction var of the outer loop that counts to mult
 	JVariableDefinition induction = 
 	    GenerateCCode.newIntLocal(JOINERCOUNTER, myUniqueID, 0);
 	
@@ -184,7 +208,10 @@ public class JoinerFusionState extends FusionState
 	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
 					(null, induction, null));
 	
+	//for each incoming way, create the loop that copies the items
+	//from its incoming buffer to the outgoing buffer
 	for (int i = 0; i < node.inputs; i++) {
+	    //the induction var of the inner loop
 	    JVariableDefinition innerVar = 
 		GenerateCCode.newIntLocal(JOINERINNERVAR + myUniqueID + "_", i, + 0);
 	    //add the decl of the induction variable
@@ -195,12 +222,14 @@ public class JoinerFusionState extends FusionState
 	    if (node.incomingWeights[i] == 0)
 		continue;
 
-	    //add the decls for the buffers
+	    //get the incoming buffer variable
 	    JVariableDefinition incomingBuffer = getBufferVar(node.incoming[i], isInit);
 	    
 	    
 	    //add the code to perform the joining
 	    
+
+	    //first create the outgoing buffer access:
 	    //outgoing[induction * totalWeights + partialSum + innerVar] if init
 	    //outgoing[induction * totalWeights + partialSum + innerVar + peekBufferSize_of_outgoing] 
 	    //if steady
@@ -214,11 +243,18 @@ public class JoinerFusionState extends FusionState
 						      new JIntLiteral(node.getPartialIncomingSum(i)),
 						      new JLocalVariableExpression(null,
 										   innerVar)));
+	    //so if this is not init add the remaining items
 	    if (!isInit && downstream.getRemaining(node, isInit) > 0)
 		outgoingIndex = new JAddExpression(null,
 						   outgoingIndex,
 						   new JIntLiteral(downstream.getRemaining(node, isInit)));
 	    
+	    JArrayAccessExpression outgoingAccess = 
+		new JArrayAccessExpression(null,
+					   new JLocalVariableExpression(null, outgoingBuffer),
+					   outgoingIndex);
+
+	    //now construct the incoming buffer access
 	    //incoming[weight * induction + innerVar]
 	    JAddExpression incomingIndex = 
 		new JAddExpression(null,
@@ -228,34 +264,36 @@ public class JoinerFusionState extends FusionState
 										    induction)),
 				   new JLocalVariableExpression(null,
 								innerVar));
-	    
-	    JArrayAccessExpression outgoingAccess = 
-		new JArrayAccessExpression(null,
-					   new JLocalVariableExpression(null, outgoingBuffer),
-					   outgoingIndex);
-	   
+	    	   
 	    JArrayAccessExpression incomingAccess = 
 		new JArrayAccessExpression(null,
 					   new JLocalVariableExpression(null, incomingBuffer),
 					   incomingIndex);
 
+
+	    //create the assignment expression
 	    JExpressionStatement assignment = 
 		new JExpressionStatement(null,
 					 new JAssignmentExpression(null,
 								   outgoingAccess,
 								   incomingAccess),
 					 null);
+
+	    //loop the assign statement based on the weight of this incoming way
 	    innerLoops.addStatement(GenerateCCode.makeDoLoop(assignment,
 							      innerVar,
 							      new JIntLiteral(node.incomingWeights[i])));
 	    
 	}
-	
+	//now make an outer do loop with trip count equal to the multiplicity of this joiner in this stage
 	statements.addStatement(GenerateCCode.makeDoLoop(innerLoops,
 							 induction,
 							 new JIntLiteral(mult)));
 	
+
+	//now for each incoming way, we must
 	//move any remaining items on an input tape to the beginning of the tape 
+	//if there are remaining items, this items were not cosumed by the joiner 
 	for (int i = 0; i < node.inputs; i++) {
 	    int offset = StrToRStream.getMult(node, isInit) *
 		node.incomingWeights[i];  //offset, consumed
@@ -276,6 +314,7 @@ public class JoinerFusionState extends FusionState
 	return statements.getStatementArray();
     }
 
+    /** return the var def of the incoming (pop) buffer from *node* to this joiner **/
     public JVariableDefinition getBufferVar(FlatNode node, boolean init)
     {
 	assert bufferMap.containsKey(node);
@@ -283,6 +322,7 @@ public class JoinerFusionState extends FusionState
 	return (JVariableDefinition) bufferMap.get(node);
     }
     
+    /** create the incoming buffers JVariableDeclaration **/
     private void makeIncomingBuffers() 
     {
 	for (int i = 0; i < node.inputs; i++) {
@@ -291,13 +331,14 @@ public class JoinerFusionState extends FusionState
 	    bufferMap.put(node.incoming[i], bufferVar[i]);
 	}
     }
-
+    /** return the buffer size for the incoming buffer from *prev* to this node **/
     public int getBufferSize(FlatNode prev, boolean init) 
     {
 	return bufferSizes[node.getIncomingWay(prev)];
     }
     
-
+    /** make the incoming buffer representing the buffer from *incoming* to this node,
+	at *way* index of the incoming edges **/
     private JVariableDefinition makeIncomingBuffer(FlatNode incoming, int way)
     {
 	//use the stage multiplicity that has the largest value
@@ -324,6 +365,10 @@ public class JoinerFusionState extends FusionState
 			  BUFFERNAME + "_" + myUniqueID+ "_" + way);
     }
 
+    /** return the items remaining (after the init stage) 
+	on the incoming buffer from *prev* to this node.
+	remember to add the initpath items that were not consumed 
+	by this joiner if it is a feedback joiner **/
     public int getRemaining(FlatNode prev, boolean isInit) 
     {
 	//if this is the feedback incoming edge of a feedback loop joiner

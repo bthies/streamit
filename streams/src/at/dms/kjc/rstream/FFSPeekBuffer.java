@@ -7,8 +7,16 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 
-//each filter owns its popBuffer, the popBufferIndex, and the pushIndex
-//into the next filters popBuffer.
+/**
+ * This (used to) implement the filter abstraction by using a 
+ * separate pop buffer and peek buffer.  It would copy the non-pop'ed 
+ * item from the pop buffer to the push buffer after the filter has fired,
+ * before the filter fires, the peek buffer was copied into the pop buffer.
+ * But it is no longer maintained.
+ *
+ * @author Michael Gordon
+ * 
+ */
 public class FFSPeekBuffer extends FilterFusionState
 {
     private static String PEEKBUFFERNAME = "__PEEK_BUFFER_";
@@ -17,9 +25,7 @@ public class FFSPeekBuffer extends FilterFusionState
     
     private JVariableDefinition peekBufferVar;
   
-    
-      /** this will create both the init and the steady buffer **/
-    public FFSPeekBuffer(FlatNode fnode)
+    protected FFSPeekBuffer(FlatNode fnode)
     {
 	super(fnode);
 

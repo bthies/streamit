@@ -101,7 +101,7 @@ public class NewArrayExprs extends SLIRReplacingVisitor implements FlatVisitor
      * that was found.  If none was found, return null.
      *
      *
-     * @param Var either a string for a field or a JLocalVariable for a
+     * @param var either a string for a field or a JLocalVariable for a
      * local.
      *
      * @return The corresponding JNewArrayExpression or null if one
@@ -118,7 +118,7 @@ public class NewArrayExprs extends SLIRReplacingVisitor implements FlatVisitor
      * Given an array variable (eithere a string for fields are a JLocalVariable),
      * return an array that was assigned to it.    
      *
-     * @param Var either a string for a field or a JLocalVariable for a
+     * @param var either a string for a field or a JLocalVariable for a
      * local.
      * 
      * @return An array variable that the given variable was assigned.

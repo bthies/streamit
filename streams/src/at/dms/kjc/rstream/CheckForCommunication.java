@@ -29,7 +29,7 @@ class CheckForCommunication extends SLIREmptyVisitor
     }
 	
     /**
-     * This function returns true if <filter> contains
+     * This function returns true if *filter* contains
      * a push, pop, or peek statement in any of its 
      * methods.
      *

@@ -20,8 +20,14 @@ import java.util.Hashtable;
 import at.dms.util.SIRPrinter;
 
 /**
-
-*/
+ * This visitor will convert the communication expressions of a filter (push, pop, peek)
+ * into buffer accesses.  We introduce an incoming buffer for each filter.
+ * Pop is converted into an access of the incoming buffer off of a pop counter that is
+ * incremented by one for each pop, peek(i) is an access to the incoming buffer at the pop
+ * index + i.  Push is converted into a write of the downstream node's incoming buffer that 
+ * connects this node to that node, it is indexed by a push counter that is 
+ * incremented at each push.
+ */
 public class ConvertChannelExprs extends SLIRReplacingVisitor {
 
     private JLocalVariable popBuffer;
@@ -29,10 +35,9 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
     private JLocalVariable pushBuffer;
     private JLocalVariable pushCounter;
 
-   
+    /** construct a new visitor to convert the channel expression of the filter of 
+     * current, if init is true we are in the init stage **/
     public ConvertChannelExprs(FilterFusionState current, boolean init)
-	//JLocalVariable popBuffer, JLocalVariable popCounter,
-	//		       JLocalVariable pushBuffer, JLocalVariable pushCounter) 
     {
 	SIRFilter filter = (SIRFilter)current.getNode().contents;
 	
@@ -42,7 +47,7 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 	//set the push buffer and the push counter if this filter pushes
 	if (current.getNode().ways > 0) {
 	    assert current.getNode().ways == 1;
-
+	    //get the downstream incoming buffer
 	    this.pushBuffer = current.getPushBufferVar(init);
 	    
 	    this.pushCounter = current.getPushCounterVar(init);	    
@@ -54,7 +59,9 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 	
     }
     
-    
+    /** 
+     * visit a pop expression, converting the expression to a buffer access 
+     **/
     public Object visitPopExpression(SIRPopExpression self,
 				     CType tapeType) {
 	
@@ -71,7 +78,10 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 	// return a new array access expression
 	return new JArrayAccessExpression(null, lhs, rhs);
     }
-
+    
+    /** 
+     * visit a pop expression, converting the expression to a buffer access 
+     **/
     public Object visitPeekExpression(SIRPeekExpression oldSelf,
 				      CType oldTapeType,
 				      JExpression oldArg) {
@@ -98,7 +108,10 @@ public class ConvertChannelExprs extends SLIRReplacingVisitor {
 	// return a new array access expression
 	return new JArrayAccessExpression(null, lhs, rhs);
     }
-
+    
+    /** 
+     * visit a push expression, converting the expression to a buffer write
+     **/
     public Object visitPushExpression(SIRPushExpression oldSelf,
 				      CType oldTapeType,
 				      JExpression oldArg) {

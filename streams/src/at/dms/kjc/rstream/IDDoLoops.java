@@ -27,12 +27,11 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
     private HashSet inductionVars;
 
     /**
-     * The entry point of this class, given a stream <top> and 
+     * The entry point of this class, given a stream *top* and 
      * everything downstream of it, classify the for loop in each method of
      * each filter as to whether they can be converted to do loops.
      *
      * @param top The top level of the application
-     * @return Returns a hashmap of JForStatements -> DoLoopInfo
      */
     public static void doit(FlatNode top)
     {
@@ -245,8 +244,8 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
 
     /**
      * Calculate the increment expression for the do loop and 
-     * put it in the right format, so just return <exp> where
-     * ind-var += <exp>.
+     * put it in the right format, so just return *exp* where
+     * ind-var += *exp*.
      *
      * @param incrExp The orginal for loop increment expression
      * @param info The information on this do loop, place the 
@@ -345,8 +344,8 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
     
     /**
      * Give the condition expression of the for loop, return the 
-     * conditional expression for in do loop form. So just <expr>
-     * in <induction_var> <= <expr> 
+     * conditional expression for in do loop form. So just *expr*
+     * in *induction_var* <= *expr* 
      *
      * @param condExp The condition expression of the for loop
      * @param info The do loop information as calculated so far
@@ -439,7 +438,7 @@ public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Cons
      * @param orig The statement
      *
      *
-     * @return null if <orig> does not contain an expression or
+     * @return null if *orig* does not contain an expression or
      * the expression if it does.
      */
     public static JExpression getExpression(JStatement orig)

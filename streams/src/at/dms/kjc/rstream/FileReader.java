@@ -19,7 +19,7 @@ public class FileReader extends SIRFilter
 
     //be careful about names clashing...
     /**
-     * Returns the fully constructed FileReader based on <sirFR>/
+     * Returns the fully constructed FileReader based on *sirFR*
      * @param sirFR The SIRFileReader we are replacing
      */
     public FileReader(SIRFileReader sirFR) 

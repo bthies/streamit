@@ -36,7 +36,7 @@ public class StructureIncludeFile
     }
 
     /**
-     * Create structures include file in directory <dir>.
+     * Create structures include file in directory *dir*.
      * @param structs The structures used in the programs 
      * @param dir The directory to store the include file.
      */

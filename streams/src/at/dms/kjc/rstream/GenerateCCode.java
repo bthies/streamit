@@ -20,29 +20,54 @@ import java.util.Hashtable;
 import at.dms.util.SIRPrinter;
 
 /**
-
+ * This class is the driver that generates the c code
+ * for the application.  It traverses the stream graph,
+ * generating code for each filter.  It generates the init
+ * fucntion calls for each filter, the initialization stage,
+ * and the steady-state stage.  It writes its output to *str.c*.
+ *
+ *
+ * @author Michael Gordon
+ * 
  */
 
 public class GenerateCCode 
 {
+    /* The fields of the application, convert to locals for rstream */
     private Vector fields;
+    /* the main method includes the initfunction calls, init and steady states */
     private JBlock main;
+    /* the main method decl */
     private JMethodDeclaration mainMethod;
+    /* any helper functions of the application */
     private Vector functions;
     /** init function calls and initPath calls for joiners **/
     private JBlock initFunctionCalls;
+    /** the steady state block, streams traversed in data-flow order **/
     private JBlock steady;
+    /** the init state block, streams traversed in data-flow order **/
     private JBlock init;
     /** map string (variable name) to JVariableDefinition for fields, 
 	set up in convertFieldsToLocals()**/
     HashMap stringVarDef = new HashMap();
+    /** the c converter we are using **/
     private FlatIRToRS toRS;
-
+    /** the name of the file we are generating **/
     private static String FNAME = "str.c";
-
+    /** array initalizers, we must convert array inits to assignment statements**/
     private ConvertArrayInitializers arrayInits;
+    /** remember the new array expressions for array decls **/
     private NewArrayExprs newArrayExprs;
     
+    /**
+     * The entry point of the code generation pass.  This will
+     * traverse the stream graph starting at top, and generate the 
+     * code for the application.
+     *
+     * @param top The top level node in the flat graph for 
+     * the application
+     *
+     */
     public static void generate(FlatNode top) 
     {
 	new GenerateCCode(top);
@@ -57,19 +82,23 @@ public class GenerateCCode
 	fields = new Vector();
 	functions = new Vector();
 	initFunctionCalls = new JBlock(null, new JStatement[0], null);
-
+	//rename all filters so that names do not clash in the 
+	//resulting c file
 	renameFilterContents(top);
-
-	arrayInits = new ConvertArrayInitializers();
 	
+	arrayInits = new ConvertArrayInitializers();
+	//visit the graph in for the init stage
 	visitGraph(top, true);
-
+	//visit the graph for the steady-state stage
 	visitGraph(top, false);
-
+	//set up the complete sir application
 	setUpSIR();
+	//write the application to the C file using FlatIRToRS
 	writeCompleteFile();
     }
     
+    /** rename the fields, locals, and methods of each filter
+	so there are unique across filters **/
     private void renameFilterContents(FlatNode top) 
     {
 	top.accept(new FlatVisitor() {
@@ -84,11 +113,12 @@ public class GenerateCCode
     }
     
 
-    //make everything into legal sir
+    /** Concatenate everything into a main method and some helper functions **/
     private void setUpSIR() 
     {
-	//add things to the main method, the only thing
-	//before this should be peek buffer declarations
+	//place any field (that are converted to locals of main) 
+	//array inits into assignment statements and place them at the beginning
+	//of main
 	placeFieldArrayInits();
 	
 	//add comments to the blocks
@@ -119,7 +149,7 @@ public class GenerateCCode
 
 	//convert all fields to locals of main function
 	convertFieldsToLocals();
-	
+	//construct the main driver method of the app
 	mainMethod = 
 	    new JMethodDeclaration(null, 0, CStdType.Integer,
 				   MAINMETHOD,
@@ -139,7 +169,8 @@ public class GenerateCCode
 		(new JVariableDeclarationStatement(null,
 						   field.getVariable(),
 						   null));
-	    //remember the vardef
+	    //remember the vardef for the visiter down below
+	    //this works because we renamed everything!
 	    stringVarDef.put(field.getVariable().getIdent(), field.getVariable());
 	}
 	
@@ -160,7 +191,7 @@ public class GenerateCCode
 		    assert (stringVarDef.containsKey(ident)) &&
 			(stringVarDef.get(ident) instanceof JVariableDefinition) :
 			"Error converting fields to locals, name not found";
-		    
+		    //return a local variable expression
 		    return new JLocalVariableExpression(null, 
 							((JVariableDefinition)stringVarDef.get(ident)));
 		}
@@ -168,14 +199,14 @@ public class GenerateCCode
     }
     
    
-
+    /** Now, the main method has been constructed, so convert the SIR 
+	for the application to C code. **/
     private void writeCompleteFile() 
     {
 	StringBuffer str = new StringBuffer();
 
 
-	//remember all new array expression
-	//newArrayExprs = NewArrayExprs.doit(fields, functions, mainMethod);
+	//remember all new array expressions for use in FlatIRToRS
 	newArrayExprs = NewArrayExprs.doit(functions, mainMethod);
 	
 	toRS = new FlatIRToRS(newArrayExprs);
@@ -222,8 +253,14 @@ public class GenerateCCode
 	}
     }
 
+    /** visit each node in the flat graph generating the SIR imperative code 
+	necesary for its execution in the init (*isInit* == true) or steady
+	*isInit == false*.
+    **/
     private void visitGraph(FlatNode top, boolean isInit) 
     {
+	//get a data-flow ordered traversal for the graph, i.e. a node 
+	//can only fire if its upstream filters have fired
 	Iterator traversal = DataFlowTraversal.getTraversal(top).iterator();
 
 	while (traversal.hasNext()) {
@@ -234,9 +271,14 @@ public class GenerateCCode
 	}
     }
     
+    /** for each node in the graph visited by *visitGraph()*, 
+	create the SIR code for its imperative execution, placing the
+	code in the correct container **/
     private void generateCode(FlatNode node, boolean isInit) 
     {
+	//get the fusion state for this node
 	FusionState me = FusionState.getFusionState(node);
+	//the block to add the code to
 	JBlock enclosingBlock = isInit ? init : steady;
 	
 	//do all the things that we should do only once or during the init phase
@@ -244,7 +286,7 @@ public class GenerateCCode
 	    //run code optimizations and transformations
 	    if (node.isFilter())
 		optimizeFilter((SIRFilter)node.contents);
-	    
+	    //tell the node to do all of its initialization
 	    me.initTasks(fields, functions, initFunctionCalls, main);
 	}
 	
@@ -253,8 +295,8 @@ public class GenerateCCode
 	addStmtArray(enclosingBlock, me.getWork(enclosingBlock, isInit));
     }
 
-    //for now, just print all the common math functions as
-    //external functions
+    /** for now, just print all the common math functions as
+	external functions **/
     protected String getExterns() 
     {
 	StringBuffer buf = new StringBuffer();
@@ -291,14 +333,14 @@ public class GenerateCCode
 
 
     /**
-     * Returns a for loop that uses local variable <var> to count
-     * <count> times with the body of the loop being <body>.  If count
+     * Returns a for loop that uses local variable *var* to count
+     * *count* times with the body of the loop being *body*.  If count
      * is non-positive, just returns an empty statement.
      */
     public static JStatement makeForLoop(JStatement body,
 					JLocalVariable var,
 					JExpression count) {
-	// make init statement - assign zero to <var>.  We need to use
+	// make init statement - assign zero to *var*.  We need to use
 	// an expression list statement to follow the convention of
 	// other for loops and to get the codegen right.
 	JExpression initExpr[] = {
@@ -314,7 +356,7 @@ public class GenerateCCode
 		return new JEmptyStatement(null, null);
 	    }
 	}
-	// make conditional - test if <var> less than <count>
+	// make conditional - test if *var* less than *count*
 	JExpression cond = 
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
@@ -332,8 +374,8 @@ public class GenerateCCode
 
     
     /**
-     * Returns a do loop that uses local variable <var> to count
-     * <count> times with the body of the loop being <body>.  If count
+     * Returns a do loop that uses local variable *var* to count
+     * *count* times with the body of the loop being *body*.  If count
      * is non-positive, just returns an empty statement.
      */
     public static JStatement makeDoLoop(JStatement body,
@@ -351,7 +393,10 @@ public class GenerateCCode
     }
 
 
-
+    /**
+     * Return a new integer local variable definition with name
+     * *prefix* + *uniqueID*, that is initialized to *initVal*.
+     **/
     public static JVariableDefinition newIntLocal(String prefix, int uniqueID, int initVal) 
     {
 	return new JVariableDefinition(null, 0, CStdType.Integer,
@@ -359,6 +404,8 @@ public class GenerateCCode
 				       new JIntLiteral(initVal));
     }
 
+    /** call some magic for each filter to optimize it: unroller if 
+	enabled, flattener, const prop, etc. **/
     private void optimizeFilter(SIRFilter filter) 
     {
 	ArrayDestroyer arrayDest=new ArrayDestroyer();
@@ -388,21 +435,9 @@ public class GenerateCCode
 	    method.accept(arrayDest);
 	    method.accept(new VarDeclRaiser());
 	}
-	
+	//destroy field arrays if possible...
 	if(KjcOptions.destroyfieldarray)
 	    arrayDest.destroyFieldArrays(filter);
-	   /*	
-	     try {
-	     SIRPrinter printer1 = new SIRPrinter();
-	     IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-	     printer1.close();
-	     }
-	     catch (Exception e) 
-	     {
-	     }
-	*/
-	
-	//these passes have to change...
 
 	//remove unused variables...
 	RemoveUnusedVars.doit(filter);
@@ -416,14 +451,17 @@ public class GenerateCCode
 	//remove unnecessary do loops
 	//RemoveDeadDoLoops.doit(node, toC.doloops);
     }
-    
 
+    /** given a block *block*, add Statement array *stms* to the
+	end of the block, if stms is empty,  do nothing **/
     public static void addStmtArray(JBlock block, JStatement[] stms) 
     {
 	for (int i = 0; i < stms.length; i++) 
 	    block.addStatement(stms[i]);
     }
-
+    
+    /** given a block *block*, add Statement array *stms* to the
+	beginning of the block, if stms is empty,  do nothing **/
     public static void addStmtArrayFirst(JBlock block, JStatement[] stms) 
     {
 	int index = 0;
@@ -431,8 +469,8 @@ public class GenerateCCode
 	    block.addStatement(index++, stms[i]);
     }
     
-    //place the array initializer blocks in the main method after
-    //any array local variable declaration
+    /** place the array initializer blocks in the main method after
+	any array local variable declaration **/
     private void placeFieldArrayInits() 
     {
 	Iterator blocks = arrayInits.fields.iterator();

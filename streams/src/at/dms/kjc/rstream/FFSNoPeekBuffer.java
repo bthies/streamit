@@ -8,11 +8,16 @@ import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 
-//each filter owns its popBuffer, the popBufferIndex, and the pushIndex
-//into the next filters popBuffer.
+/** 
+ * This class creates imperative SIR code to implement StreamIt's filter abstraction.
+ * For each filter we have a pop buffer (incoming buffer) that the filter pops from.
+ * It uses the downstream's FusionState incoming buffer to write its results to.
+ * For peeking buffers, we move the non-pop'ed items remaining on the incoming buffer
+ * after execution to the beginning of the buffer 
+ **/
 public class FFSNoPeekBuffer extends FilterFusionState
 {
-    //the size of the pop buffer (including the peekRestore size)
+    /* the size of the pop buffer (including the peekRestore size) */
     private int bufferSize;
 
     /** this will create both the init and the steady buffer **/
@@ -24,14 +29,16 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	
 	setNecessary();
     }
-    
+    /** See if this filter's code needs to be generated **/
     private void setNecessary() 
     {
+	/** if we are always generating code for unnecessary filters
+	    just set to true and return **/
 	if (StrToRStream.GENERATE_UNNECESSARY) {
 	    necessary = true;
 	    return;
 	}
-	
+	//for now only SIR Identities with 0 remaining are necessary
 	if (filter instanceof SIRIdentity &&
 	    remaining[0] == 0) {
 	    System.out.println("Found unnecessary identity");
@@ -41,33 +48,32 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	    necessary = true;
     }
 
+    /** return the incoming buffer (pop buffer) size **/
     public int getBufferSize(FlatNode prev, boolean init) 
     {
 	return bufferSize;
     }
     
-
+    /** create any variables this filter will need to use and calculate the
+	items remaining on the incoming buffer after the initialization stage. **/
     private void createVariables() 
     {
 	int myConsume;
-	
-	/*	if (filter instanceof SIRTwoStageFilter &&
-	    StrToRStream.getMult(node, true) > 0) 
-	    myConsume = ((SIRTwoStageFilter)filter).getInitPop() + 
-		(StrToRStream.getMult(node, true) - 1) * filter.getPopInt();
-		else*/ 
-	
+
+	//the number of items this fitler consumes
 	myConsume = StrToRStream.getMult(node, true) * filter.getPopInt();
 
+	//remaining is the number of items produced by the upstream filter 
+	//minus the number of items this filter consumes (all for the init stage)
 	remaining[0] = getLastProducedInit() - myConsume;
-	
+
 	assert remaining[0] >= (filter.getPeekInt() - filter.getPopInt()) &&
 	    remaining[0] >= 0 : remaining[0] + " " + (filter.getPeekInt() - filter.getPopInt());
 
 	
-	//do it for init, then do it for steady
+	//create the pop (incoming) buffer
 	bufferVar[0] = makePopBuffer();
-
+	//create the var representing the pop buffer index
 	popCounterVar = new JVariableDefinition(null,
 						0,
 						CStdType.Integer,
@@ -100,6 +106,8 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	}
     }
     
+    /** return the declarations for the index variables of this filter,
+	the stage depends on *isInit* **/
     private JStatement[] getIndexDecls(boolean isInit) 
     {
 	Vector stmts = new Vector();
@@ -120,6 +128,8 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	return (JStatement[])stmts.toArray(new JStatement[0]);
     }
     
+    /** return the number of items produced by the upstream node in the 
+	init stage **/
     private int getLastProducedInit() 
     {
 	if (node.inputs < 1) 
@@ -130,7 +140,9 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	return Util.getItemsPushed(last, node) * StrToRStream.getMult(last, true);
 	
     }
-
+    
+    /** get the pop (incoming) buffer JVariableDeclarationStatement
+	to declare the buffer **/
     private JStatement getPopBufDecl() 
     {
 	if (dontGeneratePopDecl)
@@ -144,11 +156,15 @@ public class FFSNoPeekBuffer extends FilterFusionState
 						 null);
     }
     
+    /** create the pop (incoming) buffer variable, returning  the 
+	JVarDef, the size of the buffer is the max of steady and init **/
     private JVariableDefinition makePopBuffer()
     {
+	// set mult to the max multiplicity of init and steady
 	int mult = StrToRStream.getMult(node, false) > StrToRStream.getMult(node, true) ?
 	    StrToRStream.getMult(node, false) : StrToRStream.getMult(node, true);
 
+	//multiply mult by the pop rate and add the remaining items
 	bufferSize = mult * filter.getPopInt() + remaining[0];
 	
 	assert bufferSize >= 0;
@@ -161,6 +177,10 @@ public class FFSNoPeekBuffer extends FilterFusionState
 			  BUFFERNAME + myUniqueID);
     }
     
+
+    /** Perform any initialization tasks necessary for the filter,
+	including declaring the pop buffer, adding helper functions,
+	adding fields, and adding the init function. **/
     public void initTasks(Vector fields, Vector functions,
 			  JBlock initFunctionCalls, JBlock main) 
     {
@@ -204,21 +224,24 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	//clone init function 
 	JMethodDeclaration init = filter.getInit();
 	JBlock oldBody = new JBlock(null, init.getStatements(), null);
-	
+	//add a comment to the init function block
 	JStatement body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
 	JavaStyleComment[] comment = {new JavaStyleComment(filter.toString() + " init()",
 						      true, false, false)};
 	initFunctionCalls.addStatement(new JEmptyStatement(null, comment));
 	initFunctionCalls.addStatement(body);
 
-	//if this buffer peeks add the declaration for the peek buffer
-	//to the main function
+	//add the declaration of the pop buffer
 	JStatement popBufDecl = getPopBufDecl();
 	if (popBufDecl != null) 
 	    main.addStatementFirst(popBufDecl);
     }
     
-    
+    /**
+     * Return a block has the necessary SIR imperative instructions 
+     * to execution this filter in the init stage (*isInit* == true) or the
+     * steady state (*isInit* == false), add all declaration to *enclosingBlock*.
+    **/
     public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
     {
 	JBlock statements = new JBlock(null, new JStatement[0], null);
@@ -226,7 +249,7 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	//don't generate code if this filter is not needed
 	if (!necessary)
 	    return statements.getStatementArray();
-	
+	//add a comment to the SIR Code
 	JavaStyleComment[] comment = {new JavaStyleComment(filter.toString(),
 							   true,
 							   false,
@@ -236,7 +259,6 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	statements.addStatement(new JEmptyStatement(null, comment));
 				 
 	int mult = StrToRStream.getMult(getNode(), isInit);
-
 	
 	//now add the declaration of the pop index and the push index
 	GenerateCCode.addStmtArrayFirst(enclosingBlock, getIndexDecls(isInit));

@@ -34,8 +34,6 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
      * array initializers to new array expressions and remembers
      * a sequence of assignments expressions that will perform the initialization.
      *
-     * @param node The top level flat node.
-     *
      *
      */
     public ConvertArrayInitializers() 

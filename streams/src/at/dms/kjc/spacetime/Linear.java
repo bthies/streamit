@@ -22,7 +22,7 @@ public class Linear extends BufferedCommunication implements Constants {
     private static final String tempReg="$5"; //Loop and address reg
     //The actual number of registers usable as coefficients is regs.length-array.length/popCount-1
     //The -1 can be potentially gotten rid of if constant==0
-    private static final String[] regs=new String[]{"$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17","$18","$19","$20","$21","$22","$23","$28","$30","$31"};
+    private static final String[] regs=new String[]{"$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17","$18","$19","$20","$21","$22","$23","$30","$31"}; //28
     private static long guin=0;
     private double[] array;
     private boolean begin;
@@ -172,7 +172,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	    turns+=extra;
 	}
 	final int mult=getMult(array.length);
-	final int newSteadyMult=(filterInfo.steadyMult-1-extra)/mult;
+	final int newSteadyMult=(filterInfo.steadyMult-2-extra)/mult; //2 iterations start before innerloop
 	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
 	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
 	//TODO: Save registers here

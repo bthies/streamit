@@ -1130,43 +1130,86 @@ public class Rawify
 	}
 	//Innerloop
 	Label label = code.getFreshLabel();
-	code.appendIns(label,false);
 	final int numTimes=Linear.getMult(numCoeff);
 	int pendingSends=0;
-	int times=0;
+	//int pendingReceives=0;
+	int deferredSends=0; //Add a delay
 	FullIns ins=null;
-	for(int i = 0;i<numTimes;i++) {
-	    for(int j=0;j<pop;j++) {
-		for(int k=0;k<numPop;k++) {
-		    if(j==0&&k==numPop-1)
-			pendingSends++;
-		    times++;
-		    if(k==0) {
-			ins=new FullIns(tile,new MoveIns(SwitchReg.R1, src));
-			ins.addRoute(src, SwitchOPort.CSTI);
-			if(!end) {
-			    ins.addRoute(src,dest);
-			}
-		    } else {
-			ins=new FullIns(tile);
-			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI); //Temp reg
-		    }
-		    code.appendIns(ins, false);
-		    if(times==4) {
-			times=0;
-			if(pendingSends>0) {
-			    for(int l=0;l<pendingSends;l++) {
-				ins=new FullIns(tile);
-				if(!begin) {
-				    ins.addRoute(src2,SwitchOPort.CSTI2);
-				}
-				if(end)
-				    ins.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
-				else
-				    ins.addRoute(SwitchIPort.CSTO,dest2);
-				code.appendIns(ins,false);
+	for(int repeat=0;repeat<2;repeat++) {
+	    int times=0;
+	    if(repeat==1)
+		code.appendIns(label,false);
+	    for(int i = 0;i<numTimes;i++) {
+		for(int j=0;j<pop;j++) {
+		    for(int k=0;k<numPop;k++) {
+			if(j==0&&k==numPop-1)
+			    //pendingSends++;
+			    deferredSends++;
+			times++;
+			if(k==0) {
+			    ins=new FullIns(tile,new MoveIns(SwitchReg.R1, src));
+			    ins.addRoute(src, SwitchOPort.CSTI);
+			    if(!end) {
+				ins.addRoute(src,dest);
 			    }
-			    pendingSends=0;
+			} else {
+			    ins=new FullIns(tile);
+			    ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI); //Temp reg
+			}
+			// Add Send
+			if(pendingSends>0) {
+			    if(end)
+				ins.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+			    else
+				ins.addRoute(SwitchIPort.CSTO,dest2);
+			    pendingSends--;
+			}
+			code.appendIns(ins, false);
+			if(times==4) {
+			    times=0;
+			    /*int saveDeferredSends=deferredSends;
+			      while(pendingSends>0||deferredSends>0) {
+			      ins=new FullIns(tile);
+			      if(pendingSends>0) {
+			      if(end)
+			      ins.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+			      else
+			      ins.addRoute(SwitchIPort.CSTO,dest2);
+			      pendingSends--;
+			      }
+			      if(deferredSends>0) {
+			      if(!begin) {
+			      ins.addRoute(src2,SwitchOPort.CSTI2);
+			      }
+			      deferredSends--;
+			      }
+			      code.appendIns(ins,false);
+			      }
+			      pendingSends=saveDeferredSends;*/
+			    
+			    /*if(pendingSends>0) {
+			      for(int l=0;l<pendingSends;l++) {
+			      ins=new FullIns(tile);
+			      if(end)
+			      ins.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+			      else
+			      ins.addRoute(SwitchIPort.CSTO,dest2);
+			      code.appendIns(ins,false);
+			      }
+			      pendingSends=0;
+			      }*/
+			    if(deferredSends>0) {
+				pendingSends=deferredSends;
+				//pendingRecieves=defferredSends;
+				for(int l=0;l<deferredSends;l++) {
+				    ins=new FullIns(tile); //Put receive code here
+				    if(!begin) {
+					ins.addRoute(src2,SwitchOPort.CSTI2);
+				    }
+				    code.appendIns(ins,false);
+				}
+				deferredSends=0;
+			    }
 			}
 		    }
 		}

@@ -9,7 +9,7 @@ public class FMTest extends StreamIt
 {
     static public void main(String[] t)
     {
-        new FMTest().run();
+        new FMTest().run(t);
     }
     
     public void init()

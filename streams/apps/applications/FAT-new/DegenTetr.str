@@ -1,4 +1,4 @@
-complex->complex[N_bm][N_srg][N_dop][N_stag] filter DegenTetr(int N_bm,int N_srg,int N_dop,N_stag) {
+complex->complex[N_bm][N_srg][N_dop][N_stag] filter DegenTetr(int N_bm,int N_srg,int N_dop,int N_stag) {
     init {}
     work pop N_bm*N_srg*N_dop*N_stag push 1 {
 	complex[N_bm][N_srg][N_dop][N_stag] InArr;

@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/local/bin/perl -w
 # AAL 6/25/2002 Script that runs regression tests every evening
 # This is a modern adaptation of the venerable run_reg_tests.sh rewritten
 # in perl because I don't know how to use all of the crazy unix command
@@ -7,9 +7,10 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.16 2003-06-26 14:26:24 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.17 2003-06-27 16:17:07 dmaze Exp $
 
 use strict;
+use POSIX qw(strftime);
 
 # debug flag -- if this flag is set, only the admins are emailed results 
 # and the test-bed command is run. 1 = true, 0= false
@@ -149,13 +150,7 @@ close (MHMAIL);
 # returns a clean time date stamp without any spaces or
 # other invalid filename characters
 sub get_clean_timedate_stamp {
-    # call the date command
-    my $timedate = `date`;
-    chomp($timedate);
-    # remove all bad stuff (like spaces, and colons)
-    $timedate =~ s/ /_/gi;
-    $timedate =~ s/\:/_/gi;
-    return $timedate;
+    return strftime "%Y%m%d.%H%M%S.%a", localtime;
 }
 
 # executes a command and returns both the stdout and stderr in the same

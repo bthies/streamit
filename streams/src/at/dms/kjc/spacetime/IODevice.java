@@ -1,15 +1,17 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
+import java.util.Vector;
 
 public abstract class IODevice extends ComputeNode
 {
     protected int port;
-    protected RawTile tile;
+    protected Vector tiles;
 
     public IODevice (RawChip chip, int port) 
     {
 	super(chip);
+	tiles = new Vector();
 	if (port < 0 || port >= (2 * rawChip.getXSize() + 2 *rawChip.getYSize()))
 	    Utils.fail("invalid port number for io device");
 	this.port = port;
@@ -34,7 +36,7 @@ public abstract class IODevice extends ComputeNode
     public IODevice(RawChip chip, int port, RawTile tile) 
     {
 	this(chip, port);
-	this.tile = tile;
+	tiles.add(tile);
     }
 
     public int getPort() 
@@ -42,8 +44,18 @@ public abstract class IODevice extends ComputeNode
 	return port;
     }
     
+    public void addTile(RawTile tile) 
+    {
+	tiles.add(tile);
+    }
+    
+    public RawTile[] getTiles() 
+    {
+	return (RawTile[])tiles.toArray(new RawTile[0]);
+    }
+
     public RawTile getTile() 
     {
-	return tile;
+	return (RawTile)tiles.get(0);
     }
 }

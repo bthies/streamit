@@ -81,6 +81,7 @@ public class StreamingDram extends IODevice
 		x = xOff + j;
 		Address lb = startAddr.add(addrPerTile.mult(x - xOff));
 		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		StreamingDram.getStrDram(lb, chip).addTile(chip.getTile(dimX*y + x));
 		//Address ub = lb.add(addrPerTile);
 		//System.out.println("Tile: " + (dimX*y + x) + 
 		//		   " lb: " + lb + 
@@ -102,6 +103,7 @@ public class StreamingDram extends IODevice
 		x = xOff - j;
 		Address lb = startAddr.add(addrPerTile.mult(xOff - x));
 		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		StreamingDram.getStrDram(lb, chip).addTile(chip.getTile(dimX*y + x));
 		//Address ub = lb.add(addrPerTile);
 		//System.out.println("Tile: " + (dimX*y + x) + 
 		//		   " lb: " + lb + 
@@ -124,6 +126,7 @@ public class StreamingDram extends IODevice
 		y = yOff + j;
 		Address lb = startAddr.add(addrPerTile.mult(y-yOff));
 		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		StreamingDram.getStrDram(lb, chip).addTile(chip.getTile(dimX*y + x));
 		//Address ub = lb.add(addrPerTile);
 		//System.out.println("Tile: " + (dimX*y + x) + 
 		//		   " lb: " + lb + 
@@ -147,6 +150,7 @@ public class StreamingDram extends IODevice
 		y = yOff - j;
 		Address lb = startAddr.add(addrPerTile.mult(yOff-y));
 		chip.getTile(dimX*y + x).setIODevice(StreamingDram.getStrDram(lb, chip));
+		StreamingDram.getStrDram(lb, chip).addTile(chip.getTile(dimX*y + x));
 		//Address ub = lb.add(addrPerTile);
 		//System.out.println("Tile: " + (dimX*y + x) + 
 		//		   " lb: " + lb + 

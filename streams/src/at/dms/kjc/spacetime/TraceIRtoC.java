@@ -74,6 +74,10 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	for (int i = 0; i < tile.getComputeCode().getFields().length; i++)
 	    tile.getComputeCode().getFields()[i].accept(this);
 	
+	//print the pointers to the off chip buffers
+	if (!KjcOptions.magicdram)
+	    print(CommunicateAddrs.getFields(tile));
+
 	//visit methods of tile, print the declaration first
 	declOnly = true;
 	for (int i = 0; i < tile.getComputeCode().getMethods().length; i++)
@@ -87,6 +91,11 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    if(method!=mainMethod) //Manually inline main method so inline asm labels don't repeat
 		method.accept(this);
 	}
+	
+	//print the method that sends/recvs block addresses
+	if (!KjcOptions.magicdram)
+	    print(CommunicateAddrs.getFunction(tile));
+
 	//generate the entry function for the simulator
 	print("void begin(void) {\n");
 	//if we are using the magic network, 
@@ -99,6 +108,9 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    print("  raw_init();\n");
 	    //print("  raw_init2();\n");
 	}
+
+	if (!KjcOptions.magicdram) 
+	    print("  " + CommunicateAddrs.functName + "();\n");
 	
 	//print(tile.getComputeCode().getMainFunction().getName() + "();\n");
 	mainMethod.getBody().accept(this); //Inline Main method

@@ -24,6 +24,17 @@ public class SwitchCodeStore {
 	else
 	    steadySwitchIns.add(ins);
     }
+    
+    public void appendIns(int i, SwitchIns ins, boolean init) 
+    {
+	//this tile has switch code
+	parent.setSwitches();
+	if (init) 
+	    initSwitchIns.add(i, ins);
+	else
+	    steadySwitchIns.add(i, ins);
+    }
+    
 
     public int size(boolean init) {
 	return init ? initSwitchIns.size() : steadySwitchIns.size();

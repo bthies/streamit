@@ -2,14 +2,12 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.3 2003-03-10 17:26:59 dmaze Exp $
+# $Id: release.sh,v 1.4 2003-03-12 22:28:25 dmaze Exp $
 #
 
 # Interesting/configurable variables:
 VERSION=0.0.20030314
 TAG=HEAD
-test -f /usr/share/java/antlrall.jar && ANTLRJAR=/usr/share/java/antlrall.jar
-test -f /usr/uns/java/antlr.jar && ANTLRJAR=/usr/uns/java/antlr.jar
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 
@@ -38,24 +36,21 @@ do
     --version|-v) VERSION="$1"; shift;;
     --tag|-t) TAG="$1"; shift;;
     --tmpdir) TMPDIR="$1"; shift;;
-    --antlr) ANTLRJAR="$1"; shift;;
     --cvsroot|-d) CVSROOT="$1"; export CVSROOT; shift;;
     --precious|-k) PRECIOUS=yes;;
     *) usage; exit 1;;
   esac
 done
 
-# Make sure we have ANTLR somewhere.
-if test -z "$ANTLRJAR"; then
-  echo No ANTLR jar file\; use --antlr command-line option >&2
-  exit 1
-fi
-
 # Temporary directory:
 WORKING=$TMPDIR/streamit-$USER-$$
 mkdir $WORKING
-SRCDIR=$WORKING/streamit-$VERSION
-SRCTAR=$SRCDIR.tar
+SRCDIR=$WORKING/streams
+SRCTAR=$WORKING/streamit-src-$VERSION.tar
+BINDIR=$WORKING/streamit-$VERSION
+BINTAR=$WORKING/streamit-$VERSION.tar
+LIBDIR=$WORKING/streamit-lib-$VERSION
+LIBTAR=$WORKING/streamit-lib-$VERSION.tar
 
 # Helper function to add a list of directories to $DIRS
 builddirs() {
@@ -72,28 +67,38 @@ builddirs streams/docs cookbook implementation-notes manual runtime-interface
 builddirs streams/docs semantics syntax
 
 cvs export -r $TAG -d $WORKING $DIRS
-mv $WORKING/streams $SRCDIR
+cvs export -r $TAG -d $SRCDIR streams/docs/release
+
+# Make stable copies for all of the trees.
+cp -R $WORKING/streams $BINDIR
+rm -rf $BINDIR/compiler
+cp -R $BINDIR $LIBDIR
 
 # Build the source tarball:
-cvs export -r $TAG -d $SRCDIR streams/docs/release
-tar cf $SRCTAR -C $WORKING streamit-$VERSION
+cp -R $WORKING/streams $WORKING/streamit-src-$VERSION
+tar cf $SRCTAR -C $WORKING streamit-src-$VERSION
+
+# Use the build magic to get an ANTLR jar file.
+$SRCDIR/misc/get-antlr $SRCDIR/compiler/antlr.jar
+CLASSPATH=$SRCDIR/compiler/antlr.jar
 
 # Now do a reference build.
-CLASSPATH=${ANTLRJAR:?}
 STREAMIT_HOME=$SRCDIR
 export CLASSPATH STREAMIT_HOME
 . $STREAMIT_HOME/include/dot-bashrc
 make -C $SRCDIR/compiler jar
 
-# And add the resulting jar files to the tarball.
-mv $SRCDIR/compiler/streamit.jar $SRCDIR
-mv $SRCDIR/compiler/streamit-lib.jar $SRCDIR
-tar rf $SRCTAR -C $WORKING streamit-$VERSION/streamit.jar
-tar rf $SRCTAR -C $WORKING streamit-$VERSION/streamit-lib.jar
+# Build binary jar file:
+cp $SRCDIR/compiler/streamit.jar $BINDIR
+tar cf $BINTAR -C $WORKING streamit-$VERSION
+
+# Build library jar file:
+cp $SRCDIR/compiler/streamit-lib.jar $LIBDIR
+tar cf $LIBTAR -C $WORKING streamit-lib-$VERSION
 
 # gzip the tarball and move it here.
-gzip $SRCTAR
-mv $SRCTAR.gz .
+gzip $SRCTAR $LIBTAR $BINTAR
+mv $SRCTAR.gz $LIBTAR.gz $BINTAR.gz .
 
 # Clean up.
 if test -n "$PRECIOUS"

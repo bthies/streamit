@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.7 2003-04-06 19:19:02 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.8 2003-04-07 02:04:45 karczma Exp $ */
 
 import streamit.scheduler2.Schedule;
 import streamit.misc.DestroyedClass;
@@ -171,7 +171,7 @@ public class StreamAlgorithm extends DestroyedClass
         ASSERT(shift >= child.getNumInitStages());
 
         // store shift + 1
-        childPhaseShift.put(child, new Integer(shift + 1));
+        childPhaseShift.put(child, new Integer(shift + numPhases));
     }
 
     /**

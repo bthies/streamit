@@ -1,0 +1,16 @@
+FloatIdentity_1.matrix
+[[1.0+0.0i]]
+FloatIdentity_1.vector
+[[0.0+0.0i]]
+LinearFilter_1.matrix
+[[1.0+0.0i]
+ [1.0+0.0i]
+ [1.0+0.0i]]
+LinearFilter_1.vector
+[[0.0+0.0i]]
+LinearPipe_1.matrix
+[[1.0+0.0i]
+ [1.0+0.0i]
+ [1.0+0.0i]]
+LinearPipe_1.vector
+[[0.0+0.0i]]

@@ -44,8 +44,11 @@ public class RawBackend {
 	StructureIncludeFile.doit(structures);
 
 	// set number of columns/rows
-	RawBackend.rawColumns = KjcOptions.raw;
 	RawBackend.rawRows = KjcOptions.raw;
+	if(KjcOptions.rawcol>-1)
+	    RawBackend.rawColumns = KjcOptions.rawcol;
+	else
+	    RawBackend.rawColumns = KjcOptions.raw;
 
 	//	if (KjcOptions.ratematch)
 	//    simulator = new RateMatchSim();

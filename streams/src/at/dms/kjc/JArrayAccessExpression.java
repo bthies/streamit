@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.4 2001-11-02 17:35:30 mgordon Exp $
+ * $Id: JArrayAccessExpression.java,v 1.5 2001-11-15 23:28:33 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -59,6 +59,20 @@ public class JArrayAccessExpression extends JExpression {
    */
   public CType getType() {
     return type;
+  }
+
+  /**
+   * @return the prefix of this expression
+   */
+  public JExpression getPrefix() {
+    return prefix;
+  }
+    
+  /**
+   * @return the accessor of this expression
+   */
+  public JExpression getAccessor() {
+    return accessor;
   }
 
   /**

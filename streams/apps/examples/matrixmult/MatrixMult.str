@@ -1,0 +1,95 @@
+void->void pipeline MatrixMult {
+    add FloatSource(10);
+    add MatrixMultiply(10, 10, 10, 10);
+    add FloatPrinter();
+}
+
+float->float pipeline MatrixMultiply(int x0, int y0, int x1, int y1) {
+    // rearrange and duplicate the matrices as necessary:
+    add RearrangeDuplicateBoth(x0, y0, x1, y1);
+    add MultiplyAccumulateParallel(x0, x0);
+}
+
+float->float splitjoin RearrangeDuplicateBoth(int x0, int y0, 
+    int x1, int y1) {
+    split roundrobin(x0 * y0, x1 * y1);
+    // the first matrix just needs to get duplicated 
+    add DuplicateRows(x1, x0);
+        
+    // the second matrix needs to be transposed first
+    // and then duplicated:
+    add RearrangeDuplicate(x0, y0, x1, y1);
+    join roundrobin;
+}
+
+float->float pipeline RearrangeDuplicate(int x0, int y0, int x1, int y1) {
+    add Transpose(x1, y1);
+    add DuplicateRows(y0, x1*y1);
+}
+
+float->float splitjoin Transpose(int x, int y) {
+    split roundrobin;
+    for (int i = 0; i < x; i++) add Identity<float>();
+    join roundrobin;    
+}
+
+float->float splitjoin MultiplyAccumulateParallel(int x, int n) {
+    split roundrobin(x*2);
+    for (int i = 0; i < n; i++) add MultiplyAccumulate(x);
+    join roundrobin(1);
+}
+
+float->float filter MultiplyAccumulate(int rowLength) {
+    work pop rowLength*2 push 1 {
+        float result = 0;
+        for (int x = 0; x < rowLength; x++) {
+            result += (peek(0) * peek(1));
+	    pop();
+	    pop();
+        }
+	push(result);
+    }
+}
+
+float->float pipeline DuplicateRows(int x, int y) {
+    add DuplicateRowsInternal(x, y);
+}
+
+float->float splitjoin DuplicateRowsInternal(int times, int length) {
+   split duplicate;
+   for (int i = 0; i < times; i++) add Identity<float>();
+   join roundrobin(length);
+}
+
+void->float filter FloatSource(float maxNum) {    
+    float num;
+    init {
+	num = 0;
+    }
+    work push 1 {
+       push(num);
+       num++;
+       if (num == maxNum) num = 0;
+    }
+}
+
+float->void filter FloatPrinter {
+    work pop 1 {
+	print(pop());
+    }
+}
+
+float->void filter Sink {
+    int x;
+    init {
+	x = 0;
+    }
+    work pop 1 {
+	pop();
+	x++;
+	if (x == 100) {
+	    print("done..");
+	    x = 0;
+	}
+    }
+}

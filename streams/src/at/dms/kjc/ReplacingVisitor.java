@@ -220,7 +220,7 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 	    JVariableDefinition result = 
 		(JVariableDefinition)vars[i].accept(this);
 	    if (result != null && result!=vars[i]) {
-		vars[i] = result;;
+		vars[i] = result;
 	    }
 	}
 	return self;

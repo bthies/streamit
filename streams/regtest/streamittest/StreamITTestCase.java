@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.19 2003-01-29 22:13:42 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.20 2003-10-13 16:08:35 thies Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "apps/examples/";
@@ -221,7 +221,8 @@ class StreamITTestCase extends TestCase {
      * to add tests conditionally to a test suite.
      **/
     public static boolean flagsContainPartition(int flags) {
- 	return ((flags & CompilerInterface.PARTITION) == CompilerInterface.PARTITION);
+ 	return ((flags & CompilerInterface.PARTITION_DP) == CompilerInterface.PARTITION_DP ||
+		(flags & CompilerInterface.PARTITION_GREEDY) == CompilerInterface.PARTITION_GREEDY);
     }
 
     /**

@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.22 2003-10-05 00:39:30 thies Exp $
+ * $Id: TestAll.java,v 1.23 2003-10-13 16:08:35 thies Exp $
  **/
 package streamittest;
 
@@ -58,10 +58,10 @@ public class TestAll extends TestCase {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW[8]));
 
-	// try dynamic programming partitioner
+	// try greedy partitioner
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW[4] | 
-				       CompilerInterface.DPPARTITION));
+				       CompilerInterface.PARTITION_GREEDY));
 
 	// try all configurations of raw with constprop and partition
 	// This was causing the regtest to go crazy, so I am removing
@@ -69,7 +69,7 @@ public class TestAll extends TestCase {
  	for (int i=4; i<=8; i+=4) {
 	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 					   CompilerInterface.RAW[i] |
-					   CompilerInterface.PARTITION));
+					   CompilerInterface.PARTITION_DP));
 	}
 
     }

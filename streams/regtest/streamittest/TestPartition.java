@@ -1,7 +1,7 @@
 /**
  * Runs the compiler on the all of the tests with no optimizations
  * turned on.
- * $Id: TestPartition.java,v 1.6 2003-09-29 20:41:05 thies Exp $
+ * $Id: TestPartition.java,v 1.7 2003-10-13 16:08:35 thies Exp $
  **/
 package streamittest;
 
@@ -20,31 +20,31 @@ public class TestPartition extends StreamITTestCase {
 			 CompilerInterface.UNROLL | 
 			 CompilerInterface.NUMBERS);
 
-	int[] opts1 = { baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE };
+	int[] opts1 = { baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.DPSCALE };
 
-	int[] opts2 = {baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[2],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[3],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[4],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[5],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[6],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[7],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[8],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[2],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[3],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[4],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[5],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[6],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[7],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[8]};
+	int[] opts2 = {baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[3],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[5],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[7],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[8],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[3],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[5],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[7],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[8]};
 
-	int[] opts3 = {baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[2],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[4],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[6],
-		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[8],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[2],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[4],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[6],
-		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[8]};
+	int[] opts3 = {baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[8],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.PARTITION_DP | CompilerInterface.RAW[8]};
 
 	// first get theoretical scaling results for everything
 	for (int i=0; i<opts1.length; i++) {

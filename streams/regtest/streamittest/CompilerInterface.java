@@ -6,32 +6,32 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.25 2003-09-26 18:47:29 dmaze Exp $
+ * $Id: CompilerInterface.java,v 1.26 2003-10-13 16:08:35 thies Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
     public static final int NONE               =    0x0;
-    //public static final int RAW              =    0x1;
-    //public static final int CONSTPROP          =    0x2;
+    //public static final int USE THIS SLOT    =    0x1;
+    //public static final int USE THIS SLOT    =    0x2;
     public static final int UNROLL             =    0x4; // sets unroll limit to 100000
     public static final int FUSION             =    0x8;
-    public static final int PARTITION          =   0x10;
+    public static final int PARTITION_DP       =   0x10;
     public static final int[] RAW              = { 0x00,   // ignore the 0 case
 						   0x20,   // RAW[1]
 						   0x40,   // RAW[2]
 						   0x80,   // RAW[3]
-						  0x100,  // RAW[4]
-						  0x200,  // RAW[5]
-						  0x400,  // RAW[6]
-						  0x800,  // RAW[7]
-						 0x1000};// RAW[8]
+						  0x100,   // RAW[4]
+						  0x200,   // RAW[5]
+						  0x400,   // RAW[6]
+						  0x800,   // RAW[7]
+						 0x1000};  // RAW[8]
     public static final int LINEAR_ANALYSIS    = 0x2000;
     public static final int LINEAR_REPLACEMENT = 0x4000;
     public static final int FREQ_REPLACEMENT   = 0x8000;
     public static final int REDUND_REPLACEMENT = 0x10000;
     public static final int DEBUG              = 0x20000;
     public static final int POPTOPEEK          = 0x40000;
-    public static final int DPPARTITION        = 0x80000;
+    public static final int PARTITION_GREEDY   = 0x80000;
     public static final int NUMBERS            = 0x100000;
     public static final int REMOVE_GLOBALS     = 0x200000;
     public static final int DPSCALE            = 0x400000;
@@ -45,11 +45,11 @@ public class CompilerInterface {
     
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
-    //public static final String OPTION_CONSTPROP          = "--constprop";
     public static final String OPTION_UNROLL             = "--unroll";
     public static final String OPTION_UNROLL_COUNT       = "100000";
     public static final String OPTION_FUSION             = "--fusion";
-    public static final String OPTION_PARTITION          = "--partition";
+    public static final String OPTION_PARTITION_DP       = "--partition_dp";
+    public static final String OPTION_PARTITION_GREEDY   = "--partition_greedy";
 
     public static final String OPTION_RAW                = "--raw";
 
@@ -60,7 +60,6 @@ public class CompilerInterface {
 
     public static final String OPTION_DEBUG              = "--debug";
     public static final String OPTION_POPTOPEEK          = "--poptopeek";
-    public static final String OPTION_DPPARTITION        = "--dppartition";
     public static final String OPTION_NUMBERS            = "--numbers";
     public static final String OPTION_REMOVE_GLOBALS     = "--removeglobals";
     public static final String OPTION_DPSCALE            = "--dpscaling";
@@ -275,9 +274,15 @@ public class CompilerInterface {
 	    numOptions++;
 	}
 
-	// if we want to turn on partitioning
-	if ((flags & PARTITION) == PARTITION) {
-	    options[numOptions] = OPTION_PARTITION;
+	// if we want to turn on partitioning (dp)
+	if ((flags & PARTITION_DP) == PARTITION_DP) {
+	    options[numOptions] = OPTION_PARTITION_DP;
+	    numOptions++;
+	}
+
+	// if we want to turn on partitioning (greedy)
+	if ((flags & PARTITION_GREEDY) == PARTITION_GREEDY) {
+	    options[numOptions] = OPTION_PARTITION_GREEDY;
 	    numOptions++;
 	}
 
@@ -339,12 +344,6 @@ public class CompilerInterface {
 	// if we want to convert all pops to peeks
 	if ((flags & POPTOPEEK) == POPTOPEEK) {
 	    options[numOptions] = OPTION_POPTOPEEK;
-	    numOptions++;
-	}
-
-	// dynamic programming partitioner
-	if ((flags & DPPARTITION) == DPPARTITION) {
-	    options[numOptions] = OPTION_DPPARTITION;
 	    numOptions++;
 	}
 

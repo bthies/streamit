@@ -471,20 +471,57 @@ public class FusePipe {
      */
     private static void moveVarDecls(JBlock source, JBlock dest) {
 	JStatement decl;
+	int index = 0;
 	while (true) {
-	    // get statement at front of source
-	    decl = source.getStatement(0);
+	    // get statement at <index> of source
+	    decl = source.getStatement(index);
 	    // if it's a var decl...
 	    if (decl instanceof JVariableDeclarationStatement) {
+		// remove the initializers from <decl> ...
+		JVariableDefinition[] vars = ((JVariableDeclarationStatement)
+					      decl).getVars();
+		JExpressionListStatement assigns = stripInitializers(vars);
 		// add to front of dest
 		dest.addStatementFirst(decl);
-		// remove from front of source
-		source.removeStatement(0);
+		// remove from source
+		source.removeStatement(index);
+		// add assignment to source
+		source.addStatement(index, assigns);
+		index++;
 	    } else {
-		// quite looping when we run out of decl's
+		// quit looping when we run out of decl's
 		break;
 	    }
 	}
+    }
+
+    /**
+     * Strips all initializers out of <vars> and returns a statement that
+     * assigns the initial value to each variable in <vars>.
+     */
+    private static JExpressionListStatement 
+	stripInitializers(JVariableDefinition[] vars) {
+	// make list to hold assignments
+	LinkedList assign = new LinkedList();
+	// go through vars 
+	for (int i=0; i<vars.length; i++) {
+	    // see if there's an initializer
+	    if (vars[i].hasInitializer()) {
+		// if so, clear it...
+		JExpression init = vars[i].getValue();
+		vars[i].setValue(null);
+		// and make assignment
+		JLocalVariableExpression lhs =
+		    new JLocalVariableExpression(null, vars[i]);
+		assign.add(new JAssignmentExpression(null,
+						     lhs,
+						     init));
+	    }
+	}
+	return new JExpressionListStatement(null,
+					    (JExpression[])
+					    assign.toArray(new JExpression[0]),
+					    null);
     }
 
     /**

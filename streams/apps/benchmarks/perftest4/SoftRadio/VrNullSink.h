@@ -20,11 +20,14 @@
 
 #include <VrSink.h>
 
+
 template<class iType> 
 class VrNullSink : public VrSink<iType> {
 private:
   int myhistory, it;
 public:
+  static int id;
+  int myID;
   virtual void work(int n);
   virtual void initialize();
   VrNullSink(): myhistory(1) {}
@@ -35,13 +38,15 @@ template<class iType> void
 VrNullSink<iType>::work(int n)
 {
   //  long long init = CYCLE_COUNT();
+  // printf("NullSink %d\n", n);
 
   while(n>0) {
     it ++;
-    //printf("%d\n", inputRead(0));  
-    inputRead(0);
-    if (it > 10)
+    if (myID == 0 && it > 1000)
       exit(0);
+    //printf("%d %d\n", myID, inputRead(0));  
+    // printf("NullSink requesting 1\n");
+    inputRead(0);
 
 // need to read one sample to force the connector
                  // to request more data
@@ -54,11 +59,14 @@ VrNullSink<iType>::work(int n)
 
 }
 
+template<class itype> int VrNullSink<itype>::id;
+
 template<class iType> void
 VrNullSink<iType>::initialize() {
   setHistory(myhistory);  
   setOutputSize(myhistory);  
   it = 0;
+  myID = id++;
 }
 
 #endif

@@ -36,15 +36,20 @@ public:
 template<class oType> void
 VrQuadratureDemod<oType>::work(int n)
 {
-  printf("n %d\n", n);
+  printf("QuadDemod %d\n", n);
   
   complex product,val;
+  printf("QuadDemod requesting -1\n");
   complex lastVal = inputRead(-1);
 
-  for (int i=0; i < n; i++,incInput(1)) {
+  for (int i=0; i < n; i++,
+	 printf("QuadDemod incrementing 1\n"),
+	 incInput(1)) {
+    printf("QuadDemod requesting 0\n");
     val = inputRead(0);
     product = val * conj(lastVal);
     lastVal = val;
+    printf("QuadDemod writing 1\n");
     outputWrite((oType)(gain * arg(product)));
   }
   return;

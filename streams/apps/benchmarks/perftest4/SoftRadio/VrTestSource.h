@@ -9,8 +9,10 @@ protected:
   char c;
 public:
   virtual void work(int i) {
+    //printf("TestSource %d\n", i);
     for (int n = 0; n < i; n ++) {
-      outputWrite((char)0);
+      //printf("TestSource Writing 1\n");
+      outputWrite((char)c);
 
       if (c == CHAR_MAX)
 	c = (char) 0;

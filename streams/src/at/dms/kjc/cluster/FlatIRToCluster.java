@@ -190,6 +190,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	}
 	
+	int popn, peekn, pushn;
+
+	popn = self.getPopInt();
+	peekn = self.getPeekInt();
+	pushn = self.getPushInt();
+
+	print("// peek: "+peekn+" pop: "+popn+" push "+pushn+"\n"); 
+
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(self, self.getFields());
 
 	Vector pre = gen.generatePreamble();

@@ -27,8 +27,31 @@ public class RegisterStreams implements FlatVisitor {
 			 NodeEnumerator.getNodeId(node)+
 			 "\n");
 	*/
-			 
 	
+	CType input_t = null, output_t = null;
+
+	SIROperator operator = node.contents;
+
+	try {
+	    if (operator instanceof SIRJoiner) {
+		input_t = Util.getBaseType(Util.getJoinerType(node));
+		output_t = Util.getBaseType(Util.getJoinerType(node));
+	    }
+	} catch (Exception ex) {}
+
+	try {
+	    if (operator instanceof SIRSplitter) {
+		input_t = Util.getBaseType(Util.getOutputType(node));
+		output_t = Util.getBaseType(Util.getOutputType(node));
+	    }
+	} catch (Exception ex) {}
+
+	if (operator instanceof SIRStream) {
+	    SIRStream stream = (SIRStream)operator;
+	    input_t = stream.getInputType();
+	    output_t = stream.getOutputType();
+	}
+
 	Vector v;
 	int i;
 
@@ -40,7 +63,7 @@ public class RegisterStreams implements FlatVisitor {
 		
 		int source = NodeEnumerator.getNodeId(node.incoming[i]);
 		int dest = NodeEnumerator.getNodeId(node);
-		v.add(new NetStream(source, dest));
+		v.add(new NetStream(source, dest, input_t));
 	    }	
 	}
 
@@ -57,7 +80,7 @@ public class RegisterStreams implements FlatVisitor {
 		if (node.edges[i] != null) {
 
 		    int dest = NodeEnumerator.getNodeId(node.edges[i]);
-		    v.add(new NetStream(source, dest));
+		    v.add(new NetStream(source, dest, output_t));
 		}
 	    }
 	}

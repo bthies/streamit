@@ -386,7 +386,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <stdlib.h>\n");
 	p.print("#include <stdio.h>\n");
 	p.println();
-	p.print("#include <mysocket.h>\n");
+	p.print("#include <netsocket.h>\n");
 	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <master_server.h>\n");
@@ -403,7 +403,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("int __out_data_buffer;\n");
 
 	p.print("vector <thread_info*> thread_list;\n");
-	p.print("mysocket *server = NULL;\n");
+	p.print("netsocket *server = NULL;\n");
 	p.print("unsigned __ccp_ip = 0;\n");
 	p.print("int __init_iter = 0;\n");
 	p.println();
@@ -425,6 +425,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
+	/*
+
 	p.print("void sig_recv(int sig_nr) {\n");
 	p.print("  if (master_pid == getpid()) {\n");
 	p.print("    printf(\"\n data sent     : %d\\n\", mysocket::get_total_data_sent());\n");
@@ -434,6 +436,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
+	*/
 
 	///////////////////////////////////////
 	// create sockets and threads
@@ -537,7 +540,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
-	p.print("  signal(3, sig_recv);\n\n");
+	//p.print("  signal(3, sig_recv);\n\n");
 	p.print("  node->run(__ccp_ip);\n");
 
 	//p.print("  for (;;) {}\n");	

@@ -2,14 +2,17 @@
 package at.dms.kjc.cluster;
 
 import java.lang.*;
+import at.dms.kjc.CType;
 
 public class NetStream {
 
     int source, dest;
-    
-    public NetStream(int source, int dest) {
+    CType type;
+
+    public NetStream(int source, int dest, CType type) {
 	this.source = source;
 	this.dest = dest;
+	this.type = type;
     }
 	
     public int getSource() {
@@ -18,6 +21,10 @@ public class NetStream {
 
     public int getDest() {
 	return dest;
+    }
+
+    public CType getType() {
+	return type;
     }
 
     public String name() {

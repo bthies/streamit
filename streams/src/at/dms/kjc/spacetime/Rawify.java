@@ -33,7 +33,7 @@ public class Rawify
 		if (traceNode.isFilterTrace()) {
 		    FilterTraceNode filterNode = (FilterTraceNode)traceNode;
 		    assert !filterNode.isPredefined() :
-			"Predefined filters should not appear in the trace traversal";
+			"Predefined filters should not appear in the trace traversal: " + trace.toString();
 		    RawTile tile = rawChip.getTile((filterNode).getX(), 
 						   (filterNode).getY());
 		    //create the filter info class

@@ -21,7 +21,8 @@ public abstract class Partitioner
     //sirfilter -> work estimation
     protected WorkEstimate work;
     protected Trace[] topTraces;
-
+    public Trace[] io;
+    
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
 		       WorkEstimate work, RawChip rawChip) 
     {

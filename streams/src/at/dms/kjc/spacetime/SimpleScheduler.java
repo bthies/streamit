@@ -44,7 +44,11 @@ public class SimpleScheduler
 	Arrays.sort(tempArray, 
 		    new CompareTraceBNWork(partitioner));
 	LinkedList sortedTraces = new LinkedList(Arrays.asList(tempArray));
-
+	//remove predefined filters
+	for (int i = 0; i < partitioner.io.length; i++) {
+	    sortedTraces.remove(partitioner.io[i]);
+	}
+	
 	
 	//reverse the list
 	Collections.reverse(sortedTraces);

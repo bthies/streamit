@@ -22,6 +22,8 @@ public class InitSchedule
 	    queue.add(topTraces[i]);
 	    while (!queue.isEmpty()) {
 		Trace trace = (Trace)queue.removeFirst();
+		if (trace.getHead().getNextFilter().isPredefined())
+		    continue;
 		if (!visited.contains(trace)) {
 		    System.out.println("Adding " + trace + " to init schedule.");
 		    schedule.add(trace);

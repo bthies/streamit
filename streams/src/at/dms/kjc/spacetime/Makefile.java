@@ -67,7 +67,7 @@ public class Makefile
 			buf.append("OBJECT_FILES_");
 		    buf.append(num + " = ");
 		    
-		    if (tile.hasComputeCode())
+		    if (tile.hasComputeCode() || tile.hasSwitchCode())
 			buf.append("tile" + num + ".o ");
 		    if (tile.hasSwitchCode() && 
 			!KjcOptions.magic_net && !KjcOptions.decoupled)
@@ -94,10 +94,7 @@ public class Makefile
 	}
 	
 	buf.append("\ninclude $(COMMONDIR)/Makefile.all\n");
-	//add the drams to all sides
-	if (!KjcOptions.magicdram) 
-	    buf.append("BTL-ARGS += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs\n\n");
-	
+		
 	buf.append("clean:\n");
 	buf.append("\trm -f *.o\n");
 	buf.append("\trm -f tile*.s\n\n");
@@ -127,7 +124,7 @@ public class Makefile
 	    buf.append("MEMORY_LAYOUT=FOUR_SIDES\n");
 	
 	buf.append("SIM-CYCLES = 500000\n\n");
-	buf.append("BTL-ARGS += -dram_streaming\n");
+	buf.append("BTL-DEVICES += -dram_streaming -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
 	//if we are using the magic network, tell btl
 	if (KjcOptions.magic_net)
 	    buf.append("EXTRA_BTL_ARGS += " +

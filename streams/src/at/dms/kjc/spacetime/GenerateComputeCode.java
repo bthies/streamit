@@ -12,7 +12,7 @@ public class GenerateComputeCode {
 	    for (int x = 0; x < rawChip.getXSize(); x++)
 		for (int y = 0; y < rawChip.getYSize(); y++) {
 		    RawTile tile = rawChip.getTile(x, y);
-		    if (tile.hasComputeCode()) {
+		    if (tile.hasComputeCode() || tile.hasSwitchCode()) {
 			FileWriter fw = new FileWriter("tile" + tile.getTileNumber() + 
 						       ".c");
 			TraceIRtoC ttoc  = new TraceIRtoC(tile);

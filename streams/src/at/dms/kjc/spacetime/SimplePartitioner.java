@@ -11,7 +11,7 @@ import at.dms.kjc.sir.lowering.partition.*;
 public class SimplePartitioner extends Partitioner
 {
     //trace work threshold, higher number, more restrictive, smaller traces
-    private static final double TRASHOLD = 0.40;
+    private static final double TRASHOLD = 0.001;
     //filtercontent -> work estimation
     private HashMap workEstimation;
 
@@ -181,9 +181,26 @@ public class SimplePartitioner extends Partitioner
 	traceGraph = new Trace[traces.size()];
 	traces.toArray(traceGraph);
 	topTracesList.toArray(topTraces);
+	setupIO();
 	return traceGraph;
     }
 
+    private void setupIO() 
+    {
+	int len=traceGraph.length;
+	int newLen=len;
+	for(int i=0;i<len;i++)
+	    if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
+		newLen--;	
+		io=new Trace[len-newLen];
+	int idx=0;
+	for(int i=0;i<len;i++) {
+	    Trace trace=traceGraph[i];
+	    if(((FilterTraceNode)trace.getHead().getNext()).isPredefined())
+		io[idx++]=trace;
+	}
+    }
+    
 
     //given <unflatFilter> determine if we should continue the current race we are
     //building

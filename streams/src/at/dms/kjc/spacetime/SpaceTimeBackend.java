@@ -148,27 +148,11 @@ public class SpaceTimeBackend
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
 	
-	Trace[] traceForrest = new Trace[1];
-	Trace[] io=null;	
+
 	LinkedList schedule = (new SimpleScheduler(partitioner, rawChip)).schedule();
+	SchedulePrimePump.doit(schedule);
 	
-	//remove the io nodes from the trace and put them in IO
-	int len=traceGraph.length;
-	int newLen=len;
-	for(int i=0;i<len;i++)
-	    if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
-		newLen--;	
-	traces=new Trace[newLen];
-	io=new Trace[len-newLen];
-	int idx=0;
-	int idx2=0;
-	for(int i=0;i<len;i++) {
-	    Trace trace=traceGraph[i];
-	    if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
-		traces[idx++]=trace;
-	    else
-		io[idx2++]=trace;
-	}
+
 	//mgordon's stuff
 	assert !KjcOptions.magicdram : 
 	    "Magic DRAM support is not working";
@@ -176,9 +160,9 @@ public class SpaceTimeBackend
 
 	List initList = InitSchedule.getInitSchedule(partitioner.topTraces);
 	
-	TraceDotGraph.dumpGraph(schedule, io, "preDRAMsteady.dot", false);
+	TraceDotGraph.dumpGraph(schedule, partitioner.io, "preDRAMsteady.dot", false);
 	//assign the buffers not assigned by Jasp to drams
-	BufferDRAMAssignment.run(schedule, rawChip, io);
+	BufferDRAMAssignment.run(schedule, rawChip, partitioner.io);
 	//communicate the addresses for the off-chip buffers
 	if (!KjcOptions.magicdram) {
 	    //so right now, this pass does not communicate addresses
@@ -186,8 +170,8 @@ public class SpaceTimeBackend
 	    //on the corresponding tile.
 	    CommunicateAddrs.doit(rawChip);
 	}
-	TraceDotGraph.dumpGraph(initList, io, "inittraces.dot", true);
-	TraceDotGraph.dumpGraph(schedule, io, "steadyforrest.dot", true);
+	TraceDotGraph.dumpGraph(initList, partitioner.io, "inittraces.dot", true);
+	TraceDotGraph.dumpGraph(schedule, partitioner.io, "steadyforrest.dot", true);
 	//create the raw execution code and switch code for the initialization phase
 	System.out.println("Creating Initialization Stage");
 	Rawify.run(initList.iterator(), rawChip, true); 
@@ -207,7 +191,7 @@ public class SpaceTimeBackend
 	Makefile.generate(rawChip);
 	//generate the bc file depending on if we have number gathering enabled
 	if (KjcOptions.numbers > 0)
-	    BCFile.generate(rawChip, NumberGathering.doit(rawChip, io));
+	    BCFile.generate(rawChip, NumberGathering.doit(rawChip, partitioner.io));
 	else 
 	    BCFile.generate(rawChip, null);
     }

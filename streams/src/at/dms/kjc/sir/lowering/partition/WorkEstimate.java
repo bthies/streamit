@@ -147,7 +147,7 @@ public class WorkEstimate {
 	return 1;
 	*/
 
-	return CodeEstimate.estimate(filter);
+	return CodeEstimate.estimateCode(filter);
     }
 
     /**

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.45 2003-09-25 20:09:16 dmaze Exp $
+# $Id: knit,v 1.46 2003-09-25 20:10:51 dmaze Exp $
 #
 
 use strict;
@@ -12,7 +12,7 @@ use vars qw(%opts $java $javac $cc $have_fftw);
 $java = "java";
 $javac = "javac";
 $cc = "gcc";
-$have_fftw = 1;
+$have_fftw = "1";
 # END AUTOCONFISCATE
 
 use Getopt::Long;

@@ -679,7 +679,7 @@ public class Propagator extends SLIRReplacingVisitor {
                                             JExpression left,
                                             JExpression right)
     {
-        left.accept(this);
+        JExpression newLeft = (JExpression)left.accept(this);
         JExpression newRight = (JExpression)right.accept(this);
 	if(write&&(newRight!=null)) {
 	    self.setRight(newRight);
@@ -829,17 +829,24 @@ public class Propagator extends SLIRReplacingVisitor {
 		System.err.println("WARNING:Cannot Propagate Array Prefix "+expr);
 	}
 
-	/*
 	if (newRight instanceof SIRCreatePortal) {
-		JLocalVariableExpression var=(JLocalVariableExpression)left;
-		if (!constants.containsKey(var.getVariable())) {
-
-		    //System.out.println("\n[newRight]Adding portal to constants, variable is: "+var.getVariable().getIdent()+" constants: "+constants+" at: "+self.getTokenReference());
-
-		    constants.put(var.getVariable(), new SIRPortal(left.getType()));
-		}
+            /* ...this was commented out before; it looks like it's
+               intended to work as an alternative to making portals
+               appear "constant".  Still, ick.  --dzm
+            JLocalVariableExpression var=(JLocalVariableExpression)left;
+            if (!constants.containsKey(var.getVariable())) {
+                
+                //System.out.println("\n[newRight]Adding portal to constants, variable is: "+var.getVariable().getIdent()+" constants: "+constants+" at: "+self.getTokenReference());
+                
+                constants.put(var.getVariable(), new SIRPortal(left.getType()));
+            }
+            */
+            // Do cause constant prop to happen to the left-hand
+            // side.  This should change it to an SIRPortal.
+            if(write&&(newLeft!=null)) {
+                self.setLeft(newLeft);
+            }
 	}
-	*/
 
         return self;
     }

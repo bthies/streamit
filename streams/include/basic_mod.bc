@@ -73,7 +73,7 @@ arg_process(
       // this defines the number gathering routines
       local streamit_home = getenv("STREAMIT_HOME");	
       local numberpath = malloc(strlen(streamit_home) + 30); 	
-      sprintf(numberpath, "%s%s", streamit_home, "include/gather_numbers.bc");
+      sprintf(numberpath, "%s%s", streamit_home, "/include/gather_numbers.bc");
       include(numberpath);
 //      include("gather_numbers.bc");
 

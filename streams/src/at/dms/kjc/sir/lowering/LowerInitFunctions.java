@@ -64,6 +64,13 @@ public class LowerInitFunctions implements StreamVisitor {
 					       getStreamContext(),
 					       child.getRelativeName(),
 					       writer.getFileName()));
+            } else if (child instanceof SIRIdentity) {
+                // get identity
+                SIRIdentity identity = (SIRIdentity)child;
+                // register it
+                prologue.add(new LIRIdentity(LoweringConstants.
+                                             getStreamContext(),
+                                             child.getRelativeName()));
 	    } else if (child instanceof SIRJoiner) {
 		// get joiner
 		SIRJoiner joiner = (SIRJoiner)child;

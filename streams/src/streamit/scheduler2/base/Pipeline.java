@@ -223,7 +223,7 @@ abstract public class Pipeline extends Stream
         for (int nChild = 0; nChild < nChildren; nChild++)
         {
             StreamInterface child = children[nChild];
-            assert child;
+            assert child != null;
             
             firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
         }

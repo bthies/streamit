@@ -264,6 +264,12 @@ public class FilterContent {
 	return initMult;
     }
     
+    public void multSteadyMult(int mult) 
+    {
+	steadyMult *= mult;
+    }
+    
+
     public int getSteadyMult() {
 	return steadyMult;
     }

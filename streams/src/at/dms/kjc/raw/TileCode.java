@@ -336,7 +336,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    FlatIRToC.generateCode(node);
 	    //After done with node drops its contents for garbage collection
 	    //Need to keep contents for filter type checking but dropping methods
-	    ((SIRFilter)node.contents).setMethods(null);
+	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 	}
     }
 }

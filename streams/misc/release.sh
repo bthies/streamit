@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.5 2003-03-12 23:08:38 dmaze Exp $
+# $Id: release.sh,v 1.6 2003-03-13 23:27:56 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -49,8 +49,6 @@ SRCDIR=$WORKING/streams
 SRCTAR=$WORKING/streamit-src-$VERSION.tar
 BINDIR=$WORKING/streamit-$VERSION
 BINTAR=$WORKING/streamit-$VERSION.tar
-LIBDIR=$WORKING/streamit-lib-$VERSION
-LIBTAR=$WORKING/streamit-lib-$VERSION.tar
 
 # Helper function to add a list of directories to $DIRS
 builddirs() {
@@ -75,8 +73,6 @@ cp -R $WORKING/streams $BINDIR
 rm -rf $BINDIR/compiler $BINDIR/README.source $BINDIR/include/dot-bashrc
 rm -rf $BINDIR/include/dot-cshrc $BINDIR/misc/release.sh
 rm -rf $BINDIR/misc/get-antlr
-cp -R $BINDIR $LIBDIR
-rm -rf $LIBDIR/library/c $LIBDIR/misc $LIBDIR/include/*.bc
 
 # Build the source tarball:
 cp -R $WORKING/streams $WORKING/streamit-src-$VERSION
@@ -96,13 +92,9 @@ make -C $SRCDIR/compiler jar
 cp $SRCDIR/compiler/streamit.jar $BINDIR
 tar cf $BINTAR -C $WORKING streamit-$VERSION
 
-# Build library jar file:
-cp $SRCDIR/compiler/streamit-lib.jar $LIBDIR
-tar cf $LIBTAR -C $WORKING streamit-lib-$VERSION
-
 # gzip the tarball and move it here.
-gzip $SRCTAR $LIBTAR $BINTAR
-mv $SRCTAR.gz $LIBTAR.gz $BINTAR.gz .
+gzip $SRCTAR $BINTAR
+mv $SRCTAR.gz $BINTAR.gz .
 
 # Clean up.
 if test -n "$PRECIOUS"

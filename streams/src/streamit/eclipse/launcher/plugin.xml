@@ -79,7 +79,6 @@
 	<!-- ================================================================== -->
 	<!-- Extension point: org.eclipse.debug.ui.launchShortcuts				-->
 	<!-- ================================================================== -->
-<!--
 	<extension point = "org.eclipse.debug.ui.launchShortcuts">
 		<shortcut
 			id="launcher.localStreamItShortcut"
@@ -94,5 +93,5 @@
 			<perspective id="org.eclipse.debug.ui.DebugPerspective"/>
 		</shortcut>
 	</extension>
--->	
+	
 </plugin>

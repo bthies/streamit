@@ -18,6 +18,10 @@ public class StreamItLauncherPlugin extends AbstractUIPlugin {
 	private static StreamItLauncherPlugin inst;
 	
 	public static final String ATTR_SECONDARY_CLASSES = StreamItLauncherPlugin.getUniqueIdentifier() + ".SECONDARY_CLASSES";
+	public static final String ID_STR_APPLICATION = StreamItLauncherPlugin.getUniqueIdentifier() + ".localStreamItApplication"; //$NON-NLS-1$
+	public static final String STR_FILE_EXTENSION = "str";
+	public static final String FILTER_CLASS = "Filter";
+	public static final String FILTER_KEYWORD = "filter";
 	
 	/**
 	 * Creates the StreamItLauncher plugin and caches its default instance
@@ -47,6 +51,4 @@ public class StreamItLauncherPlugin extends AbstractUIPlugin {
 		}
 		return getDefault().getDescriptor().getUniqueIdentifier();
 	}
-	
-	// TODO preferences for launcher
 }

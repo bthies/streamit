@@ -19,8 +19,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.MenuManager;
-
 import org.eclipse.jface.text.source.ISourceViewer;
 
 import org.eclipse.ui.IEditorInput;
@@ -29,8 +27,7 @@ import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.TextOperationAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
-//import org.eclipse.jdt.ui.PreferenceConstants;
-//import org.eclipse.jdt.ui.text.*;
+import org.eclipse.jface.action.IMenuManager;
 
 /**
  * StreamIt specific text editor.
@@ -54,28 +51,20 @@ public class StreamItEditor extends TextEditor {
     protected void createActions() {
 		super.createActions();
 		
-		IAction a = 
-		    new TextOperationAction(
-					    StreamItEditorMessages.getResourceBundle(),
-					    "ContentAssistProposal.", 
-					    this, 
-					    ISourceViewer.CONTENTASSIST_PROPOSALS); 
-		                            //$NON-NLS-1$
-		a.setActionDefinitionId(ITextEditorActionDefinitionIds.
-					CONTENT_ASSIST_PROPOSALS);
+		IAction a = new TextOperationAction(StreamItEditorMessages.getResourceBundle(),
+					    "ContentAssistProposal.", this, 
+					    ISourceViewer.CONTENTASSIST_PROPOSALS); //$NON-NLS-1$
+		a.setActionDefinitionId(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
 		setAction("ContentAssistProposal", a); //$NON-NLS-1$
 		
-		a = 
-		    new TextOperationAction(StreamItEditorMessages.getResourceBundle(),
-					    "ContentAssistTip.", this, 
-					    ISourceViewer.
-					    CONTENTASSIST_CONTEXT_INFORMATION);
-		                            //$NON-NLS-1$
-		a.setActionDefinitionId(ITextEditorActionDefinitionIds.
-					CONTENT_ASSIST_CONTEXT_INFORMATION);
+		a = new TextOperationAction(StreamItEditorMessages.getResourceBundle(),
+			"ContentAssistTip.", this, 
+			ISourceViewer.CONTENTASSIST_CONTEXT_INFORMATION); //$NON-NLS-1$	
+		a.setActionDefinitionId(ITextEditorActionDefinitionIds.CONTENT_ASSIST_CONTEXT_INFORMATION);
 		setAction("ContentAssistTip", a); //$NON-NLS-1$
-    }
-	
+
+	}
+    
     /** The <code>StreamItEditor</code> implementation of this 
      * <code>AbstractTextEditor</code> method performs any extra 
      * disposal actions required by the StreamIt editor.
@@ -125,17 +114,18 @@ public class StreamItEditor extends TextEditor {
 		if (fOutlinePage != null)
 		    fOutlinePage.setInput(input);
     }
-    
+   
     /** The <code>StreamItEditor</code> implementation of this 
      * <code>AbstractTextEditor</code> method adds any 
      * JavaEditor specific entries.
-     */ 
-    public void editorContextMenuAboutToShow(MenuManager menu) {
+	 */
+    protected void editorContextMenuAboutToShow(IMenuManager menu) {
 		super.editorContextMenuAboutToShow(menu);
+		createActions();
 		addAction(menu, "ContentAssistProposal"); //$NON-NLS-1$
 		addAction(menu, "ContentAssistTip"); //$NON-NLS-1$
-    }
-	
+    }   
+
     /** The <code>StreamItEditor</code> implementation of this 
      * <code>AbstractTextEditor</code> method performs gets
      * the StreamIt content outline page if request is for a an 
@@ -159,9 +149,9 @@ public class StreamItEditor extends TextEditor {
      */
     protected void initializeEditor() {
 		super.initializeEditor();
-		//setSourceViewerConfiguration(new JavaSourceViewerConfiguration(new JavaTextTools(PreferenceConstants.getPreferenceStore()), this));		
-		setSourceViewerConfiguration(new StreamItSourceViewerConfiguration(this));
+	
+		setSourceViewerConfiguration(new StreamItEditorSourceViewerConfiguration(this));
 		setEditorContextMenuId("#JavaEditorContext"); //$NON-NLS-1$
-		setRulerContextMenuId("#JavaRulerContext"); //$NON-NLS-1$
+		setRulerContextMenuId("#StreamItRulerContext"); //$NON-NLS-1$
     }
 }

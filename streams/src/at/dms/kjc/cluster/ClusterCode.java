@@ -54,6 +54,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	if (node.contents instanceof SIRFilter) {
 
+	    //DetectConst.detect(node);
 	    FlatIRToCluster.generateCode(node);
 	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());
 
@@ -770,6 +771,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		// if we hit the top (a null splitter), assign to partition 0
 		return "1";
 	    } else {
+
+		// integrate backward if reading from a filter
+		if (node.incoming[0] != null && node.incoming[0].contents instanceof SIRFilter) {
+		    String part = getPartition(node.incoming[0], partitionMap);
+		    return part;
+		}
+
 		// integrate forwards to partition that is communicating
 		// most with this one.
 		SIRSplitter split = (SIRSplitter)op;
@@ -800,6 +808,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		return result;
 	    }
 	} else if (op instanceof SIRJoiner) {
+	    
+	    // integrate forward if writing to a filter
+	    if (node.edges[0] != null && node.edges[0].contents instanceof SIRFilter) {
+		String part = getPartition(node.edges[0], partitionMap);
+		return part;
+	    }
+
 	    // integrate backwards to partition that is communicating
 	    // most with this one.
 	    SIRJoiner join = (SIRJoiner)op;

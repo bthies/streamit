@@ -32,7 +32,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private HashMap variablesToLinearForms;
 
     /**
-     * number of items that are peeked at. therefore this is also the same
+     * Number of items that are peeked at. Therefore this is also the same
      * size of the vector that must be used to represent.
      **/
     private int peekSize;
@@ -41,6 +41,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * number of columns that are in the matrix representation.
      **/
     private int pushSize;
+    /**
+     * Number of items that are poped. This information is needed for
+     * later stages of analysis and is passed on to the LinearFilterRepresentation.
+     **/
+    private int popSize;
 
     /**
      * The current offset to add to a peeked value. Eg if we execute
@@ -84,9 +89,10 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Also creates a LinearFilterRepresentation if the
      * filter computes a linear function.
      **/
-    public LinearFilterVisitor(String name, int numPeeks, int numPushes) {
+    public LinearFilterVisitor(String name, int numPeeks, int numPushes, int numPops) {
 	this.peekSize = numPeeks;
 	this.pushSize = numPushes;
+	this.popSize  = numPops;
 	this.variablesToLinearForms = new HashMap();
 	this.peekOffset = 0;
 	this.pushOffset = 0;
@@ -105,8 +111,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private LinearFilterVisitor copy() {
 	// first, make the copy using the default constructors
 	LinearFilterVisitor otherVisitor = new LinearFilterVisitor(this.filterName,
-								  this.peekSize,
-								  this.pushSize);
+								   this.peekSize,
+								   this.pushSize,
+								   this.popSize);
 
 	// now, copy the other data structures.
 	otherVisitor.variablesToLinearForms = new HashMap(this.variablesToLinearForms);
@@ -225,7 +232,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    throw new RuntimeException("Can't get the linear form of a non linear filter!");
 	}
 	return new LinearFilterRepresentation(this.getMatrixRepresentation(),
-					      this.getConstantVector());
+					      this.getConstantVector(),
+					      this.popSize);
     }
 
 

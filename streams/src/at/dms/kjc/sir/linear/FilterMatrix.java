@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.8 2002-09-16 19:02:32 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.9 2002-09-18 01:02:50 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -138,6 +138,42 @@ public class FilterMatrix {
 	}
 	return copyMatrix;
     }
+
+    /**
+     * Copies the internal matrix into this FilterMatrix such that the
+     * specified ofset is the top left hand corner of the small matrix.
+     * Throws (horrible) exceptions when the bounds of the smaller
+     * matrix at the offset overrun the boundaries of this matrix.
+     **/
+    public FilterMatrix copyAt(int offsetRow, int offsetCol, FilterMatrix sourceMatrix) {
+	if (sourceMatrix == null) {throw new IllegalArgumentException("Null source matrix");}
+	// make sure that the copy won't run off the end of the this matrix
+	int sourceRows = sourceMatrix.getRows();
+	int sourceCols = sourceMatrix.getCols();
+	if ((offsetRow + sourceRows) > this.internalSizeRows) {
+	    throw new IllegalArgumentException("copying sourceMatrix would exceed matrix row size.");
+	}
+	if ((offsetCol + sourceCols) > this.internalSizeCols) {
+	    throw new IllegalArgumentException("copying sourceMatrix would exceed matrix col size.");
+	}
+
+	// start with a copy of this matrix
+	FilterMatrix thisCopy = this.copy();
+
+	// now that we are satisfied that the boundaries are ok, do the copy.
+	for (int i=0; i<sourceRows; i++) {
+	    for (int j=0; j<sourceCols; j++) {
+		thisCopy.setElement(offsetRow + i, offsetCol + j,
+				    sourceMatrix.getElement(i,j));
+	    }
+	}
+
+	// return the modified copy;
+	return thisCopy;
+    }
+				
+					       
+     
 
     /**
      * Returns the product of this matrix and the specified matrix.

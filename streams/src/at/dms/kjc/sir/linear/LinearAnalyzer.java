@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.3 2002-09-17 18:27:18 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.4 2002-09-18 01:02:50 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -82,8 +82,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// set up the visitor that will actually collect the data
 	int peekRate = extractInteger(self.getPeek());
 	int pushRate = extractInteger(self.getPush());
+	int popRate  = extractInteger(self.getPop());
 	LinearPrinter.println("  Peek rate: " + peekRate);
 	LinearPrinter.println("  Push rate: " + pushRate);
+	LinearPrinter.println("  Pop rate: "  + popRate);
 	// if we have a peek or push rate of zero, this isn't a linear filter that we care about,
 	// so only try and visit the filter if both are non-zero
 	if ((peekRate == 0) || (pushRate == 0)) {
@@ -92,7 +94,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 
 	LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),
-								 peekRate, pushRate);
+								 peekRate, pushRate, popRate);
 	
 	// pump the visitor through the work function
 	// (we might need to send it thought the init function as well so that

@@ -8,8 +8,17 @@ an increasing sequence of numbers, the second prints this sequence.
   </description>
   <reference>(none)</reference>
   <implementations>
-    <impl lang="C">MIT, to demonstrate compiler output format</impl>
-    <impl lang="Java">MIT, "old syntax" implementation</impl>
-    <impl lang="StreamIt">MIT</impl>
+    <impl lang="C">
+      <desc>MIT, to demonstrate compiler output format</desc>
+      <file>HelloWorld6.c</file>
+    </impl>
+    <impl lang="Java">
+      <desc>MIT, "old syntax" implementation</desc>
+      <file>HelloWorld6.java</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>MIT, "new syntax" implementation</desc>
+      <file>HelloWorld6.str</file>
+    </impl>
   </implementations>
 </benchmark>

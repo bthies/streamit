@@ -70,6 +70,21 @@ class Unroller extends SLIRReplacingVisitor {
     }
 
     /**
+     * checks var def
+     */
+    public Object visitVariableDefinition(JVariableDefinition self,
+					  int modifiers,
+					  CType type,
+					  String ident,
+					  JExpression expr) {
+	currentModified.put(self,Boolean.TRUE);
+	if(expr instanceof JLiteral) {
+	    values.put(self,expr);
+	}
+    	return super.visitVariableDefinition(self,modifiers,type,ident,expr);
+    }
+
+    /**
      * checks assignment
      */
     public Object visitAssignmentExpression(JAssignmentExpression self,
@@ -77,8 +92,9 @@ class Unroller extends SLIRReplacingVisitor {
 					    JExpression right) {
 	if(left instanceof JLocalVariableExpression) {
 	    currentModified.put(((JLocalVariableExpression)left).getVariable(),Boolean.TRUE);
-	    if(right instanceof JLiteral)
+	    if(right instanceof JLiteral) {
 		values.put(((JLocalVariableExpression)left).getVariable(),right);
+	    }
 	}
 	return super.visitAssignmentExpression(self,left,right);
     }
@@ -100,7 +116,7 @@ class Unroller extends SLIRReplacingVisitor {
 	}
 	// check for loop induction variable
 	
-	UnrollInfo info = getUnrollInfo(init, cond, incr, body,values);
+	UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
 	// check to see if var was modified
 	// if we can unroll...
 	if(info!=null&&(!currentModified.containsKey(info.var))) {
@@ -125,7 +141,7 @@ class Unroller extends SLIRReplacingVisitor {
 				       JExpression cond,
 				       JStatement incr,
 				       JStatement body) {
-	UnrollInfo info = getUnrollInfo(init, cond, incr, body,new Hashtable());
+	UnrollInfo info = getUnrollInfo(init, cond, incr, body,new Hashtable(),new Hashtable());
 	// if we didn't get any unroll info, return -1
 	if (info==null) { return -1; }
 	// get the initial value of the counter
@@ -162,7 +178,8 @@ class Unroller extends SLIRReplacingVisitor {
 					       newSelf.getCondition(),
 					       newSelf.getIncrement(),
 					       newSelf.getBody(),
-					       values);
+					       values,
+					       constants);
 	    // replace induction variable with its value current value
 	    Hashtable newConstants = new Hashtable();
 	    newConstants.put(newInfo.var, new JIntLiteral(counter));
@@ -255,7 +272,8 @@ class Unroller extends SLIRReplacingVisitor {
 					    JExpression cond,
 					    JStatement incr,
 					    JStatement body,
-					    Hashtable values) {
+					    Hashtable values,
+					    Hashtable constants) {
 	try {
 	    JLocalVariable var;
 	    int initVal=0;
@@ -274,12 +292,15 @@ class Unroller extends SLIRReplacingVisitor {
 			= ((JIntLiteral)initExpr.getRight()).intValue();
 		else if(values.containsKey(var))
 		    initVal=((JIntLiteral)values.get(var)).intValue();
+		else if(constants.containsKey(var))
+		    initVal=((JIntLiteral)constants.get(var)).intValue();
 		else
 		    throw new Exception("Not Constant!");
 	    } else if(values.containsKey(var))
 		initVal=((JIntLiteral)values.get(var)).intValue();
-	    else
+	    else {
 		throw new Exception("Not Constant!");
+	    }
 	    // get the upper limit
 	    if(condExpr.getRight() instanceof JIntLiteral) {
 		finalVal = ((JIntLiteral)condExpr.getRight()).intValue();

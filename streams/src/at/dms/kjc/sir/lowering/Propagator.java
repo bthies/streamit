@@ -324,13 +324,14 @@ class Propagator extends SLIRReplacingVisitor {
 	if(expr instanceof JLocalVariableExpression) {
 	    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
 	    changed.put(var,Boolean.TRUE);
-	    /*if(write) {
-	      JLiteral lit=(JLiteral)constants.get(var);
-	      if(lit!=null)
-	      if(lit instanceof JIntLiteral)
-	      constants.put(var,new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1)));
-	      return lit;
-	      } else*/
+	    if(write) {
+		JLiteral lit=(JLiteral)constants.get(var);
+		if(lit!=null)
+		    if(lit instanceof JIntLiteral) {
+			constants.put(var,new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1)));
+			return lit;
+		    }
+	    }
 	    constants.remove(var);
 	} //else
 	//System.err.println("WARNING: Postfix of nonvariable: "+expr);
@@ -343,15 +344,15 @@ class Propagator extends SLIRReplacingVisitor {
 	if(expr instanceof JLocalVariableExpression) {
 	    JLocalVariable var=((JLocalVariableExpression)expr).getVariable();
 	    changed.put(var,Boolean.TRUE);
-	    /*if(write) {
-	      JLiteral lit=(JLiteral)constants.get(var);
-	      if(lit!=null)
-	      if(lit instanceof JIntLiteral) {
-	      JIntLiteral out=new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1));
-	      constants.put(var,out);
-	      return out;
-	      }
-	      } else*/
+	    if(write) {
+		JLiteral lit=(JLiteral)constants.get(var);
+		if(lit!=null)
+		    if(lit instanceof JIntLiteral) {
+			JIntLiteral out=new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_PREINC) ? 1 : -1));
+			constants.put(var,out);
+			return out;
+		    }
+	    }
 	    constants.remove(var);
 	} /*else
 	    System.err.println("WARNING: Prefix of nonvariable: "+expr);*/
@@ -388,8 +389,8 @@ class Propagator extends SLIRReplacingVisitor {
 	    //System.out.println("Assign: "+left+" "+newRight);
 	    if(left instanceof JLocalVariableExpression) {
 		JLocalVariable var=((JLocalVariableExpression)left).getVariable();
-		constants.remove(var);
-		//constants.put(var,newRight);
+		//constants.remove(var);
+		constants.put(var,newRight);
 		changed.put(var,Boolean.TRUE);
 	    }
         } else

@@ -57,12 +57,80 @@ public class FusePipe {
     protected static final String INIT_PARAM_NAME = "___param";
 
     /**
-     * Fuses all candidate portions of <pipe>.  Candidates for fusion
-     * are sequences of filters that do not have special,
-     * compiler-defined work functions.  Return how many filters were
-     * ELIMINATED from this pipeline..
+     * Fuses all eligibles portions of <pipe>, returning the number of
+     * filters eliminated.
      */
     public static int fuse(SIRPipeline pipe) {
+	return doFuse(pipe, pipe.size());
+    }
+
+    /**
+     * Fuses all candidate portions of <pipe>, given that the caller
+     * would prefer not to eliminate more than <targetElim> filters
+     * from <pipe>.  The fusion does its best to respect this
+     * constraint (in a greedy way for now), but it will error on the
+     * side of eliminating MORE than <targetElim> instead of
+     * eliminating fewer.
+     */
+    public static int fuse(SIRPipeline pipe, int targetElim) {
+	// get num that are fusable
+	int numElim = getNumElim(pipe);
+	int maxLength;
+	if (targetElim > numElim) {
+	    maxLength = pipe.size();
+	} else {
+	    maxLength = (int)Math.ceil(numElim/(numElim-targetElim));
+	}
+	return doFuse(pipe, maxLength);
+    }
+
+    /**
+     * Fuses all candidate portions of <pipe>, but only fusing in
+     * segments of length <maxLength>.  Candidates for fusion are
+     * sequences of filters that do not have special, compiler-defined
+     * work functions.  Return how many filters were ELIMINATED from
+     * this pipeline.
+     */
+    private static int doFuse(SIRPipeline pipe, int maxLength) {
+	int numEliminated = 0;
+	int start = 0;
+	do {
+	    // find start of candidate stretch for fusion
+	    while (start < pipe.size()-1 && !isFusable(pipe.get(start))) {
+		start++;
+	    }
+	    // find end of candidate stretch for fusion
+	    int end = start;
+	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1))
+		   && (end-start+1<maxLength)) {
+		end++;
+	    }
+	    // if we found anything to fuse
+	    if (end > start) {
+		fuse((SIRFilter)pipe.get(start),
+		     (SIRFilter)pipe.get(end));
+		numEliminated += end-start;
+		start = start + 1;
+		System.err.println("Fusing " + (end-start+1) + " Pipeline filters!");
+	    } else {
+		start = end + 1;
+	    }
+	} while (start < pipe.size()-1);
+	// if pipe is down to a single filter and we're not at the
+	// toplevel already, then eliminate the pipeline
+	if (pipe.size()==1 && 
+	    pipe.get(0) instanceof SIRFilter &&
+	    pipe.getParent()!=null) {
+	    Lifter.eliminatePipe(pipe);
+	}
+	return numEliminated;
+    }
+
+    /**
+     * Returns how many filters in this can be eliminated in a fusion
+     * operation.
+     */
+    private static int getNumElim(SIRPipeline pipe) {
 	int numEliminated = 0;
 	int start = 0;
 	do {
@@ -77,20 +145,10 @@ public class FusePipe {
 	    }
 	    // if we found anything to fuse
 	    if (end > start) {
-		fuse((SIRFilter)pipe.get(start),
-		     (SIRFilter)pipe.get(end));
 		numEliminated += end-start;
-		System.err.println("Fusing " + (end-start+1) + " Pipeline filters!");
 	    }
 	    start = end + 1;
 	} while (start < pipe.size()-1);
-	// if pipe is down to a single filter and we're not at the
-	// toplevel already, then eliminate the pipeline
-	if (pipe.size()==1 && 
-	    pipe.get(0) instanceof SIRFilter &&
-	    pipe.getParent()!=null) {
-	    Lifter.eliminatePipe(pipe);
-	}
 	return numEliminated;
     }
 

@@ -9,12 +9,14 @@ use strict;
 
 my @tests = ("regtests/LinearTest1",
 	     "regtests/LinearTest2",
-	     "regtests/LinearTest3",);
+	     "regtests/LinearTest3",
+	     "regtests/LinearTest4",
+	     "regtests/LinearTest5",);
 
 my $current_test;
 foreach $current_test (@tests) {
     # run the compiler and save its output
-    my $command = ("java -Xmx512M at.dms.kjc.Main -s --linearanalysis --debug " .
+    my $command = ("java -Xmx512M at.dms.kjc.Main -s --constprop --linearanalysis --debug " .
 		   "$current_test.java >& $current_test.output");
     `$command`;
 

@@ -4,7 +4,7 @@ STREAMIT-COMPILER = java -Xmx512M at.dms.kjc.Main -s
 UNI-COMPILER      = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
 
 # options to use
-COMPILER-OPTIONS  = --linearanalysis --debug 
+COMPILER-OPTIONS  = --constprop --linearanalysis --debug 
 
 # various names of intermediary files.
 SOURCE-ROOT = LinearTest
@@ -43,7 +43,7 @@ linear-test: linear-compile
 
 
 test-current: linear-compile
-	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest4$(SOURCE-EXT) > current.output
+	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest5$(SOURCE-EXT) > current.output
 	./parse_linear_output.pl current.output
 
 

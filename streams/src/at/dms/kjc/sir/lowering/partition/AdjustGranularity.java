@@ -147,6 +147,9 @@ public class AdjustGranularity {
 
 	WorkEstimate.getWorkEstimate(str).printWork();
 
+	StreamItDot.printGraph(str, "unfused.dot");
+	//SIRScheduler.printGraph(str, "unfused.dot");
+
 	// fuse shortonesource, rpeinputfilter
 	SIRFilter source = (SIRFilter)Namer.getStream("ShortOneSource_1");
 	SIRFilter rpeInput = (SIRFilter)Namer.getStream("RPEInputFilter_2");
@@ -356,6 +359,9 @@ public class AdjustGranularity {
 
 	// fuse the second two filters
 	SIRPipeline pipe = (SIRPipeline)((SIRPipeline)str).get(1);
+	System.err.println("Trying to fuse " + pipe.get(0) + " " + 
+			   ((SIRStream)pipe.get(0)).getName() + " and " + pipe.get(1) +
+			   " " + ((SIRStream)pipe.get(1)).getName());
 	FusePipe.fuse((SIRFilter)pipe.get(0),
 		      (SIRFilter)pipe.get(1));
 

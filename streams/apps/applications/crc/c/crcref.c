@@ -1,25 +1,32 @@
 /*
  * crcref.c: reference implementation of 32-bit CRC
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: crcref.c,v 1.2 2002-05-07 19:28:42 dmaze Exp $
+ * $Id: crcref.c,v 1.3 2002-05-08 17:58:29 dmaze Exp $
  */
 
+#ifdef raw
+#include <raw.h>
+#else
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#endif
 
 /* This is intended to implement exactly the code in CrcEncoder32Test.java.
  * It seems like a real C implementation of this would use bitwise
  * operations for speed.  We'll see how we do here... */
 
+void begin(void);
 int getInput(void);
 int doCRC(int in);
 
+static int numiters = -1;
+
+#ifndef raw
 int main(int argc, char **argv)
 {
-  int numiters = -1;
   int option;
-  FILE *fp;
 
   while ((option = getopt(argc, argv, "i:")) != -1)
   {
@@ -30,16 +37,32 @@ int main(int argc, char **argv)
     }
   }
 
+  begin();
+  return 0;
+}
+#endif
+
+void begin(void)
+{
+#ifndef raw
+  FILE *fp;
   fp = fopen("bleh", "w");
+#endif
 
   /* Main loop: */
   while (numiters == -1 || numiters-- > 0)
   {
     int in = getInput();
     int out = doCRC(in);
+#ifdef raw
+    print_int(out);
+#else
     fwrite(&out, sizeof(out), 1, fp);
+#endif
   }
+#ifndef raw
   fclose(fp);
+#endif
 }
 
 int getInput(void)

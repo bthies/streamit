@@ -231,7 +231,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	// track number of executions
 	int result = 0;
 	// simulate execution of the loop...
-	while (counter < info.finalVal) {
+	while (done(counter, info)) {
 	    // increment counters
 	    counter = incrementCounter(counter, info);
 	    result++;

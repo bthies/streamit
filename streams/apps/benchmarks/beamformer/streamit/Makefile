@@ -30,4 +30,5 @@ CoarseSerializedBeamFormer.java: TemplateBeamFormer.java
 	perl -pi -e 's/TemplateBeamFormer/CoarseSerializedBeamFormer/g' $@
 
 clean:
-	rm -f BeamFormer.* SerializedBeamFormer.* Coarse*BeamFormer.*
+# don't remove our output files!
+	rm -f BeamFormer.* `find . -name "SerializedBeamFormer.*" | grep -v SerializedBeamFormer.out` `find . -name "Coarse*BeamFormer.*" | grep -v CoarseSerializedBeamFormer.out`

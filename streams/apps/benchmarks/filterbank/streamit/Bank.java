@@ -36,10 +36,17 @@ public class Bank extends Pipeline {
 	
   
 	///add (new source(r)); They are here for debugging purposes
-	add (new FIR(H));
+	//add (new FIR(H));
+        // Bill says to inline:
+	add (new Delay_N(H.length-1));
+	add (new FirFilter(H));
+        //
 	add (new DownSamp(N));
 	add (new UpSamp(N));
-	add (new FIR(F));
+	//add (new FIR(F));
+        // inlining again:
+	add (new Delay_N(F.length-1));
+	add (new FirFilter(F));
 	///add (new sink(r.length));
     }
     

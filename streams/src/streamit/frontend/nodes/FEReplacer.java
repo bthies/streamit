@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.10 2003-01-09 19:42:23 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.11 2003-01-09 22:36:52 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -158,9 +158,12 @@ public class FEReplacer implements FEVisitor
     public Object visitFuncWork(FuncWork func)
     {
         Statement newBody = (Statement)func.getBody().accept(this);
-        Expression newPeek = (Expression)func.getPeekRate().accept(this);
-        Expression newPop = (Expression)func.getPopRate().accept(this);
-        Expression newPush = (Expression)func.getPushRate().accept(this);
+        Expression newPeek = (func.getPeekRate() != null) ?
+            (Expression)func.getPeekRate().accept(this) : null;
+        Expression newPop = (func.getPopRate() != null) ?
+            (Expression)func.getPopRate().accept(this) : null;
+        Expression newPush = (func.getPushRate() != null) ?
+            (Expression)func.getPushRate().accept(this) : null;
         if (newBody == func.getBody() && newPeek == func.getPeekRate() &&
             newPop == func.getPopRate() && newPush == func.getPushRate())
             return func;

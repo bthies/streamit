@@ -87,7 +87,7 @@ public class FilterContent {
 	if(linear==null)
 	    return name;
 	else
-	    return name+" *";
+	    return name+" ["+linear.getPeekCount()+","+linear.getPushCount()+","+linear.getPopCount()+"]";
     }
 
     public String getName() {

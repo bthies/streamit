@@ -69,6 +69,9 @@ public class RawBackend {
 			     StreamItOptions.rawColumns);
 	}
 
+	//Destroys arrays into local variables if possible
+	new ArrayDestroyer().destroyArrays(str);
+	//Raise VarDecls to front of blocks
 	new VarDeclRaiser().raiseVars(str);
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);

@@ -33,7 +33,10 @@ my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest17.str",
 	     "regtests/LinearTest18.str",
 	     "regtests/LinearTest19.str",
-	     "regtests/LinearTest20.str",);
+	     "regtests/LinearTest20.str",
+	     "regtests/LinearTest21.str",
+	     "regtests/LinearTest22.str",
+	     "regtests/LinearTest23.str",);
 
 
 my $current_test;
@@ -43,7 +46,7 @@ foreach $current_test (@tests) {
     
     # if this is str file, run the frontend to create the appropriate java file
     if ($extension eq "str") {
-	print `java streamit.frontend.ToJava < $base.$extension > $base.java`;
+	print `java streamit.frontend.ToJava --full $base.$extension > $base.java`;
     }
 
     # run the compiler on the java file and save its output

@@ -22,7 +22,12 @@ foreach $current_file (@files) {
     print GFILE tex("\\epsfxsize=6.5in\n");
     print GFILE tex("\\epsfysize=8.5\in\n");
     print GFILE ("\\epsfbox{$current_file}\n");
-    print GFILE tex("\\caption{Linearity graph for $current_file}\n");
+    # if this is a replaced graph, use a different caption.
+    if ($current_file =~ m/replace/gi) {
+	print GFILE tex("\\caption{Linear replacement graph for $current_file}\n"); 
+    } else {
+	print GFILE tex("\\caption{Linearity graph for $current_file}\n");
+    }
     print GFILE tex("\\end{figure}\n");
     print GFILE tex("\\clearpage\n\n");
 

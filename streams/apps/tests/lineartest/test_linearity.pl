@@ -86,6 +86,11 @@ my @files = (
 	     "regtests/LinearTest14.str",
 	     "regtests/LinearTest15.str",
 	     "regtests/LinearTest16.str",
+	     "regtests/LinearTest17.str",
+	     "regtests/LinearTest18.str",
+	     "regtests/LinearTest19.str",
+	     "regtests/LinearTest20.str",
+	     "regtests/LinearTest21.str",
 	     );
 
 # delete the output files from any previous runs
@@ -119,16 +124,21 @@ foreach $current_file (@files) {
     $base_filename = $RESULTS_DIR . "/" . $base_filename;
 
     # run the compiler and save its output to $base_filename.output
-    my $command = ("java -Xmx1500M at.dms.kjc.Main -s --unroll 100000 --constprop --linearanalysis --debug " .
+    my $command = ("java -Xmx1500M at.dms.kjc.Main -s --unroll 100000 --constprop --linearanalysis --linearreplacement --debug " .
 		   "$current_file >& $base_filename.output");
     print `$command`;
 
-    # copy the "linear.dot" file into the result directory
+    # copy the "linear.dot" file into the result directory, remove the file 
+    # (so we don't get duplicates if linearanalysis dies), and make a ps file
     print `cp linear.dot $base_filename.dot`;
-    # remove the old copy (so we don't get duplicates if linearanalysis dies)
     print `rm linear.dot`;
-    # use dot to make a ps file
     print `dot -Tps $base_filename.dot > $base_filename.ps`;
+    # do the same for linear replacement
+    print `cp linear-replace.dot $base_filename-replace.dot`;
+    print `rm linear-replace.dot`;
+    print `dot -Tps $base_filename-replace.dot > $base_filename-replace.ps`;
+    
+
     
     # extract the base filename
     my @parts = split("/", $current_file);
@@ -162,13 +172,23 @@ foreach $current_file (@files) {
     print GFILE tex("$report\n");
     print GFILE tex("\\end{verbatim}\n\n");
  
-    # add data to the latex graph file to import this figure
+    # add data to the latex file to import the linearity figure
     print GFILE tex("\\subsection{Stream Graph for $section_name}\n");
     print GFILE tex("\\begin{figure}\n\\center\n");    
-    print GFILE tex("\\epsfxsize=\\hsize\n");
-    print GFILE tex("\\epsfysize=\\vsize\n");
+    print GFILE tex("\\epsfxsize=6.5in\n");
+    print GFILE tex("\\epsfysize=10in\n");
     print GFILE ("\\epsfbox{$base_filename.ps}\n");
     print GFILE tex("\\caption{Linearity graph for $current_file}\n");
+    print GFILE tex("\\end{figure}\n");
+    print GFILE tex("\\clearpage\n\n");
+
+    # add data to the latex file to import the linear replacement figure
+    print GFILE tex("\\subsection{Linear Replacement for $section_name}\n");
+    print GFILE tex("\\begin{figure}\n\\center\n");    
+    print GFILE tex("\\epsfxsize=6.5in\n");
+    print GFILE tex("\\epsfysize=10in\n");
+    print GFILE ("\\epsfbox{$base_filename-replace.ps}\n");
+    print GFILE tex("\\caption{Linear Replacement graph for $current_file}\n");
     print GFILE tex("\\end{figure}\n");
     print GFILE tex("\\clearpage\n\n");
      

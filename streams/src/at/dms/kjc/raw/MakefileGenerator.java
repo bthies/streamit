@@ -136,6 +136,10 @@ public class MakefileGenerator
 	    fw.write("gTurnOffNativeCompilation = 1;\n");
 
 	fw.write("include(\"<dev/basic.bc>\");\n");
+
+	//workaround for magic instruction support...
+	if (KjcOptions.magic_net) 
+	    fw.write("include(\"<dev/magic_instruction.bc>\");\n");
 	
 	//let the simulation know how many tiles are mapped to 
 	//filters or joiners

@@ -1,0 +1,563 @@
+struct Vector3f
+{
+	float x;
+	float y;
+	float z;
+}
+
+struct Vector4f
+{
+	float x;
+	float y;
+	float z;
+	float w;
+}
+
+struct Matrix3f
+{
+	float[9] m;
+}
+
+struct Matrix4f
+{
+	float[16] m;
+}
+
+struct BoundingBox2i
+{
+	int minX;
+	int maxX;
+
+	int minY;
+	int maxY;
+}
+
+void->float filter TriangleSource
+{
+	work push 12
+	{
+		// v0
+		push( -1.8 );
+		push( 2 );
+		push( -5 );
+		push( 1 );
+		
+		// v1
+		push( -2 );
+		push( -2 );
+		push( -5 );
+		push( 1 );
+
+		// v2
+		push( 2 );
+		push( -1.8 );
+		push( -5 );
+		push( 1 );
+	}
+}
+
+// Like a regular vertex shader
+// output a vertex in "clip space":
+// out = proj * modelview * in
+float->float filter VertexShader
+{
+	Matrix4f modelView;
+	Matrix4f projection;
+
+	init
+	{
+		// modelview matrix, identity for now
+		modelView.m[0] = 1;
+		modelView.m[1] = 0;
+		modelView.m[2] = 0;
+		modelView.m[3] = 0;
+
+		modelView.m[4] = 0;
+		modelView.m[5] = 1;
+		modelView.m[6] = 0;
+		modelView.m[7] = 0;
+
+		modelView.m[8] = 0;
+		modelView.m[9] = 0;
+		modelView.m[10] = 1;
+		modelView.m[11] = 0;
+
+		modelView.m[12] = 0;
+		modelView.m[13] = 0;
+		modelView.m[14] = 0;
+		modelView.m[15] = 1;
+
+		// nominal projection matrix
+		// fov = 50 degrees, 1:1 aspect ratio, near = 1, far = 10
+		// gluPerspective( 50, 1, 1, 10 );
+		projection.m[0] = 2.144507;
+		projection.m[1] = 0;
+		projection.m[2] = 0;
+		projection.m[3] = 0;
+
+		projection.m[4] = 0;
+		projection.m[5] = 2.144507;
+		projection.m[6] = 0;
+		projection.m[7] = 0;
+
+		projection.m[8] = 0;
+		projection.m[9] = 0;
+		projection.m[10] = -1.222222;
+		projection.m[11] = -1;
+
+		projection.m[12] = 0;
+		projection.m[13] = 0;
+		projection.m[14] = -2.222222;
+		projection.m[15] = 0;
+	}
+
+/*
+	void printv4( Vector4f v )
+	{
+		print( v.x );
+		print( v.y );
+		print( v.z );
+		print( v.w );
+	}
+*/
+
+	Vector4f mul( Matrix4f matrix, Vector4f v )
+	{
+		Vector4f out;
+
+		out.x = matrix.m[0] * v.x + matrix.m[4] * v.y + matrix.m[8]  * v.z + matrix.m[12] * v.w;
+		out.y = matrix.m[1] * v.x + matrix.m[5] * v.y + matrix.m[9]  * v.z + matrix.m[13] * v.w;
+		out.z = matrix.m[2] * v.x + matrix.m[6] * v.y + matrix.m[10] * v.z + matrix.m[14] * v.w;
+		out.w = matrix.m[3] * v.x + matrix.m[7] * v.y + matrix.m[11] * v.z + matrix.m[15] * v.w;
+
+		return out;
+	}
+
+	work pop 12 push 12
+	{
+		Vector4f[3] worldSpace;
+		Vector4f[3] eyeSpace;
+		Vector4f[3] clipSpace;
+
+		worldSpace[0].x = pop();
+		worldSpace[0].y = pop();
+		worldSpace[0].z = pop();
+		worldSpace[0].w = pop();
+
+		worldSpace[1].x = pop();
+		worldSpace[1].y = pop();
+		worldSpace[1].z = pop();
+		worldSpace[1].w = pop();
+
+		worldSpace[2].x = pop();
+		worldSpace[2].y = pop();
+		worldSpace[2].z = pop();
+		worldSpace[2].w = pop();
+
+		eyeSpace[0] = mul( modelView, worldSpace[0] );
+		eyeSpace[1] = mul( modelView, worldSpace[1] );
+		eyeSpace[2] = mul( modelView, worldSpace[2] );
+
+		clipSpace[0] = mul( projection, eyeSpace[0] );
+		clipSpace[1] = mul( projection, eyeSpace[1] );
+		clipSpace[2] = mul( projection, eyeSpace[2] );
+
+		push( clipSpace[0].x );
+		push( clipSpace[0].y );
+		push( clipSpace[0].z );
+		push( clipSpace[0].w );
+
+		push( clipSpace[1].x );
+		push( clipSpace[1].y );
+		push( clipSpace[1].z );
+		push( clipSpace[1].w );
+
+		push( clipSpace[2].x );
+		push( clipSpace[2].y );
+		push( clipSpace[2].z );
+		push( clipSpace[2].w );
+	}
+}
+
+float->void filter FragmentShader( int number, int left, int bottom, int tileWidth, int tileHeight, int screenWidth, int screenHeight )
+{
+	float[tileWidth * tileHeight] screen;
+
+	int min( int x, int y )
+	{
+		if( x < y )
+		{
+			return x;
+		}
+		return y;
+	}
+
+	int max( int x, int y )
+	{
+		if( x > y )
+		{
+			return x;
+		}
+		return y;
+	}
+
+	BoundingBox2i getBoundingBox( Vector3f v0, Vector3f v1, Vector3f v2 )
+	{
+		BoundingBox2i bbox;
+		int v0x, v0y, v1x, v1y, v2x, v2y;
+
+		v0x = ( int )( v0.x );
+		v0y = ( int )( v0.y );
+		v1x = ( int )( v1.x );
+		v1y = ( int )( v1.y );
+		v2x = ( int )( v2.x );
+		v2y = ( int )( v2.y );
+
+		bbox.maxX = max( v0x, max( v1x, v2x ) ) + 1;
+		bbox.maxY = max( v0y, max( v1y, v2y ) ) + 1;
+
+		bbox.minX = min( v0x, min( v1x, v2x ) );
+		bbox.minY = min( v0y, min( v1y, v2y ) );
+
+		return bbox;
+	}
+
+	BoundingBox2i clampBoundingBox( BoundingBox2i b )
+	{
+		// TODO: <=, >
+		// early rejection - bbox of triangle must overlap
+		// with this tile of screen
+		if( ( b.minX <= ( left + tileWidth ) ) &&
+			( b.minY <= ( bottom + tileHeight ) ) &&
+			( b.maxX >= left ) &&
+			( b.maxY >= bottom ) )
+		{
+			if( b.minX < left )
+			{
+				b.minX = left;
+			}
+			if( b.minY < bottom )
+			{
+				b.minY = bottom;
+			}
+			if( b.maxX >= ( left + tileWidth ) )
+			{
+				b.maxX = left + tileWidth - 1;
+			}
+			if( b.maxY >= ( bottom + tileHeight ) )
+			{
+				b.maxY = bottom + tileHeight - 1;
+			}
+		}
+
+		return b;
+	}
+
+	Matrix3f invertMatrix3f( Matrix3f in ) 
+	{
+		Matrix3f out;
+		float d;
+
+		d = ( in.m[0] * in.m[4] * in.m[8] - in.m[0] * in.m[5] * in.m[7] - in.m[3] * in.m[1] * in.m[8] + in.m[3] * in.m[2] * in.m[7] + in.m[6] * in.m[1] * in.m[5] - in.m[6] * in.m[2] * in.m[4] );
+
+		out.m[0] = ( in.m[4] * in.m[8] - in.m[5] * in.m[7] ) / d;
+		out.m[3] = -( in.m[3] * in.m[8] - in.m[5] * in.m[6] ) / d;
+		out.m[6] = -(-in.m[3] * in.m[7] + in.m[4] * in.m[6] ) / d;
+		out.m[1] = -( in.m[1] * in.m[8] - in.m[2] * in.m[7] ) / d;
+		out.m[4] = ( in.m[0] * in.m[8] - in.m[2] * in.m[6] ) / d;
+		out.m[7] = -( in.m[0] * in.m[7] - in.m[1] * in.m[6] ) / d;
+		out.m[2] = -(-in.m[1] * in.m[5] + in.m[2] * in.m[4] ) / d;
+		out.m[5] = -( in.m[0] * in.m[5] - in.m[2] * in.m[3] ) / d;
+		out.m[8] = ( in.m[0] * in.m[4] - in.m[1] * in.m[3] ) / d;
+
+		return out;
+	}
+
+	Vector4f normalizeW( Vector4f v )
+	{
+		Vector4f out;
+		out.x = v.x / v.w;
+		out.y = v.y / v.w;
+		out.z = v.z / v.w;
+		out.w = 1;
+		return out;
+	}
+
+	Vector3f viewport( Vector4f v )
+	{
+		Vector3f vScreen;
+		vScreen.x = screenWidth * ( v.x + 1.0 ) / 2.0;
+		vScreen.y = screenHeight * ( v.y + 1.0 ) / 2.0;
+		// shift z range from [-1..1] to [0..1]
+		vScreen.z = ( v.z + 1.0 ) / 2.0;
+		return vScreen;
+	}
+
+	Vector3f mul( Matrix3f matrix, Vector3f v )
+	{
+		Vector3f out;
+
+		out.x = matrix.m[0] * v.x + matrix.m[3] * v.y + matrix.m[6]  * v.z;
+		out.y = matrix.m[1] * v.x + matrix.m[4] * v.y + matrix.m[7]  * v.z;
+		out.z = matrix.m[2] * v.x + matrix.m[5] * v.y + matrix.m[8] * v.z;
+
+		return out;
+	}
+
+/*
+	void printv3( Vector3f v )
+	{
+		print( v.x );
+		print( v.y );
+		print( v.z );
+	}
+
+	void printv4( Vector4f v )
+	{
+		print( v.x );
+		print( v.y );
+		print( v.z );
+		print( v.w );
+	}
+*/
+
+	init
+	{
+
+	}
+
+	work pop 12 push 0
+	{
+		Vector4f[3] clipSpace;
+		Vector4f[3] ndcSpace;
+		Vector3f[3] screenSpace;
+		BoundingBox2i screenBoundingBox;
+		BoundingBox2i clampedBoundingBox;
+		
+		clipSpace[0].x = pop();
+		clipSpace[0].y = pop();
+		clipSpace[0].z = pop();
+		clipSpace[0].w = pop();
+
+		clipSpace[1].x = pop();
+		clipSpace[1].y = pop();
+		clipSpace[1].z = pop();
+		clipSpace[1].w = pop();
+
+		clipSpace[2].x = pop();
+		clipSpace[2].y = pop();
+		clipSpace[2].z = pop();
+		clipSpace[2].w = pop();
+
+		ndcSpace[0] = normalizeW( clipSpace[0] );
+		ndcSpace[1] = normalizeW( clipSpace[1] );
+		ndcSpace[2] = normalizeW( clipSpace[2] );
+
+/*
+		print( "clipspace" );
+		printv4( clipSpace[0] );
+		printv4( clipSpace[1] );
+		printv4( clipSpace[2] );
+*/
+
+/*
+		print( "ndcspace" );
+		printv4( ndcSpace[0] );
+		printv4( ndcSpace[1] );
+		printv4( ndcSpace[2] );
+*/
+
+		screenSpace[0] = viewport( ndcSpace[0] );
+		screenSpace[1] = viewport( ndcSpace[1] );
+		screenSpace[2] = viewport( ndcSpace[2] );
+
+/*
+		print( "viewport" );
+		printv3( screenSpace[0] );
+		printv3( screenSpace[1] );
+		printv3( screenSpace[2] );
+*/
+
+		screenBoundingBox = getBoundingBox( screenSpace[0], screenSpace[1], screenSpace[2] );
+		clampedBoundingBox = clampBoundingBox( screenBoundingBox );
+
+		Matrix3f vertexMatrix;
+		vertexMatrix.m[0] = clipSpace[0].x;
+		vertexMatrix.m[3] = clipSpace[0].y;
+		vertexMatrix.m[6] = clipSpace[0].w;
+
+		vertexMatrix.m[1] = clipSpace[1].x;
+		vertexMatrix.m[4] = clipSpace[1].y;
+		vertexMatrix.m[7] = clipSpace[1].w;
+
+		vertexMatrix.m[2] = clipSpace[2].x;
+		vertexMatrix.m[5] = clipSpace[2].y;
+		vertexMatrix.m[8] = clipSpace[2].w;
+
+		Matrix3f vertexMatrixInverse = invertMatrix3f( vertexMatrix );
+
+		Vector3f wCoefficients;
+		wCoefficients.x = vertexMatrixInverse.m[0] + vertexMatrixInverse.m[3] + vertexMatrixInverse.m[6];
+		wCoefficients.y = vertexMatrixInverse.m[1] + vertexMatrixInverse.m[4] + vertexMatrixInverse.m[7];
+		wCoefficients.z = vertexMatrixInverse.m[2] + vertexMatrixInverse.m[5] + vertexMatrixInverse.m[8];
+
+		// coefficients for edge interpolation
+		Vector3f edge01, edge12, edge20;
+		// edge01 = vertexMatrixInverse * [0 0 1]^T
+		edge01.x = vertexMatrixInverse.m[6];
+		edge01.y = vertexMatrixInverse.m[7];
+		edge01.z = vertexMatrixInverse.m[8];
+
+		// edge12 = vertexMatrixInverse * [1 0 0]^T
+		edge12.x = vertexMatrixInverse.m[0];
+		edge12.y = vertexMatrixInverse.m[1];
+		edge12.z = vertexMatrixInverse.m[2];
+
+		// edge20 = vertexMatrixInverse * [0 1 0]^T
+		edge20.x = vertexMatrixInverse.m[3];
+		edge20.y = vertexMatrixInverse.m[4];
+		edge20.z = vertexMatrixInverse.m[5];
+
+		Vector3f tmp;
+
+		// coefficients for z interpolation
+		Vector3f zInterp;
+		tmp.x = screenSpace[0].z;
+		tmp.y = screenSpace[1].z;
+		tmp.z = screenSpace[2].z;
+		zInterp = mul( vertexMatrixInverse, tmp );
+
+		// TODO: <=?
+		for( int y = clampedBoundingBox.minY; y <= clampedBoundingBox.maxY; ++y )
+		{
+			for( int x = clampedBoundingBox.minX; x <= clampedBoundingBox.maxX; ++x )
+			{
+				// compute NDC coordinates for current pixel position
+//				float ndc_x = (float)(x - left) * 2.0 / (float)tileWidth - 1.0;
+	//			float ndc_y = (float)(y - bottom) * 2.0 / (float)tileHeight - 1.0;
+
+				float ndc_x = (float)(x) * 2.0 / (float)screenWidth - 1.0;
+				float ndc_y = (float)(y) * 2.0 / (float)screenHeight - 1.0;
+
+				// interpolate w
+				float w;
+				w = 1 / ( wCoefficients.x * ndc_x + wCoefficients.y * ndc_y + wCoefficients.z );
+
+				// interpolate edges
+				float inside_e01 = (edge01.x * ndc_x + edge01.y * ndc_y + edge01.z) * w;
+				float inside_e12 = (edge12.x * ndc_x + edge12.y * ndc_y + edge12.z) * w;
+				float inside_e20 = (edge20.x * ndc_x + edge20.y * ndc_y + edge20.z) * w;
+
+				// interpolate z
+				float z = (zInterp.x * ndc_x + zInterp.y * ndc_y + zInterp.z) * w;
+
+				if(inside_e01 >= 0 && inside_e12 >= 0 && inside_e20 >= 0 && z >= 0) 
+				{
+					
+					screen[ ( y - bottom ) * tileWidth + ( x - left ) ] = 1;
+
+
+					// print( "x = " + x );
+					// print( "y = " + y );
+
+
+/*
+					// color interpolation
+					frag.r = (rInterp.x * ndc_x + rInterp.y * ndc_y + rInterp.z) * w;
+					frag.g = (gInterp.x * ndc_x + gInterp.y * ndc_y + gInterp.z) * w;
+					frag.b = (bInterp.x * ndc_x + bInterp.y * ndc_y + bInterp.z) * w;
+
+					// texture interpolation
+					float u = (uInterp.x * ndc_x + uInterp.y * ndc_y + uInterp.z) * w;
+					float v = (vInterp.x * ndc_x + vInterp.y * ndc_y + vInterp.z) * w;
+
+					// test texture coordinate interpolation
+					if(((int)(u*10)/2)*2==(int)(u*10)) { 
+						frag.r = 1; frag.g = 0; frag.b = 0; 
+					}
+
+					frag.x = x;
+					frag.y = y;
+					frag.z = z;
+
+					push(frag);
+*/
+				}
+			}
+		}
+
+		print( number );
+	}
+}
+
+float->void filter ProgressPrinter
+{
+	work pop 12
+	{
+		for( int i = 0; i < 12; ++i )
+		{
+			print( pop() );
+		}
+	}
+}
+
+float->float splitjoin VertexIssue
+{
+	split roundrobin;
+	add VertexShader();
+	add VertexShader();
+	add VertexShader();
+	add VertexShader();
+	join roundrobin;
+}
+
+float->void splitjoin RasterizerIssue
+{
+	split duplicate;
+
+	add FragmentShader( 0, 0, 0, 4, 4, 12, 12 );
+	add FragmentShader( 1, 0, 4, 4, 4, 12, 12 );
+	add FragmentShader( 2, 0, 8, 4, 4, 12, 12 );
+	add FragmentShader( 3, 4, 0, 4, 4, 12, 12 );
+	add FragmentShader( 4, 4, 4, 4, 4, 12, 12 );
+	add FragmentShader( 5, 4, 8, 4, 4, 12, 12 );
+	add FragmentShader( 6, 8, 0, 4, 4, 12, 12 );
+	add FragmentShader( 7, 8, 4, 4, 4, 12, 12 );
+	add FragmentShader( 8, 8, 8, 4, 4, 12, 12 );
+
+/*
+	add FragmentShader( 0, 0, 0, 33, 33, 99, 99 );
+	add FragmentShader( 1, 0, 33, 33, 33, 99, 99 );
+	add FragmentShader( 2, 0, 66, 33, 33, 99, 99 );
+	add FragmentShader( 3, 33, 0, 33, 33, 99, 99 );
+	add FragmentShader( 4, 33, 33, 33, 33, 99, 99 );
+	add FragmentShader( 5, 33, 66, 33, 33, 99, 99 );
+	add FragmentShader( 6, 66, 0, 33, 33, 99, 99 );
+	add FragmentShader( 7, 66, 33, 33, 33, 99, 99 );
+	add FragmentShader( 8, 66, 66, 33, 33, 99, 99 );
+*/
+
+/*
+	add FragmentShader( 0, 0, 0, 133, 133, 399, 399 );
+	add FragmentShader( 1, 0, 133, 133, 133, 399, 399 );
+	add FragmentShader( 2, 0, 266, 133, 133, 399, 399 );
+	add FragmentShader( 3, 133, 0, 133, 133, 399, 399 );
+	add FragmentShader( 4, 133, 133, 133, 133, 399, 399 );
+	add FragmentShader( 5, 133, 266, 133, 133, 399, 399 );
+	add FragmentShader( 6, 266, 0, 133, 133, 399, 399 );
+	add FragmentShader( 7, 266, 133, 133, 133, 399, 399 );
+	add FragmentShader( 8, 266, 266, 133, 133, 399, 399 );
+*/
+//	add FragmentShader( 0, 0, 0, 400, 400 );
+	join roundrobin( 0 );
+}
+
+void->void pipeline ParallelVertexUnit
+{
+	add TriangleSource();
+//	add VertexShader();
+	add VertexIssue();
+	add RasterizerIssue();
+//	add FragmentShader( 0, 0, 99, 99 );
+//	add ProgressPrinter();
+}

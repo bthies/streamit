@@ -1,0 +1,42 @@
+# -*-Makefile-*-
+# this performs linking, packaging, symbol creation for a one-tile
+# version of fft.
+#
+
+include $(TOPDIR)/Makefile.include
+
+#ATTRIBUTES += ICACHE
+#LIMIT = TRUE
+# SIM-CYCLES = 5000000
+# SIM-COMMAND = sv(88907); sv(85057); sv(85057); 
+
+BTL-MACHINE-FILE = fileio.bc
+
+ROOT = vocoder
+EXECUTABLE_FILENAME = ./vocoder
+FFTLEN = 16
+IN_FILE = step.wav
+OUT_FILE = step_out.wav
+OPTIONS = -s 2.0
+
+ARGUMENTS = $(EXECUTABLE_FILENAME) $(IN_FILE) $(OUT_FILE) $(FFTLEN) $(OPTIONS)
+
+TILES = 00
+
+ifndef TOPDIR
+$(error TOPDIR not defined, make sure to include Makefile.include)
+endif
+
+OBJECT_FILES_00 = main.o dft.o conv.o pitch.o util.o unwrap.o modifytime.o
+
+include $(COMMONDIR)/Makefile.all
+
+BTL-ARGS += -arg 0 "$(ARGUMENTS)"
+BTL-ARGS += -host
+
+SPEC-IMEM-SIZE = -imem_size 131072
+SPEC-SMEM-SIZE = -smem_size 262144
+
+BTL-ARGS += $(SPEC-IMEM-SIZE) $(SPEC-SMEM-SIZE)
+
+DEFS += -DRAW

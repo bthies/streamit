@@ -1,8 +1,26 @@
 #include "main.h"
+#ifdef RAW
+#include "common.h"
+#include "raw.h"
+#endif
 
-#define BUFSIZE   512
+#define BUFSIZE   16
+/*  #define BUFSIZE   512 */
+
+#ifdef RAW
+int full_count = 0;
+const int BLOCK_SIZE =  64;
+const int RUN_SIZE   = 128;
+/*  const int BLOCK_SIZE =  524288; */
+/*  const int RUN_SIZE   = 1048576; */
+/*  const int RUN_SIZE   = 2097152; */
+#endif
 
 float *LastMag, *LastPha;
+
+struct Complex {
+  float rl, im;
+};
 
 void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parameter, WAVHDR *Hdr, int DownSampleFlag, FILE *fout)
 {
@@ -13,7 +31,9 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
   int  i, j, StartFlag ;
   float *magnitude, *phase;
   int BufCount;
+#ifndef RAW
   time_t t1, t2, t3;
+#endif //RAW
 
   /* Calculate Constants Needed in Iterative DFT, based on DFTRes */
   fftlen2 = fftlen/2;
@@ -23,6 +43,9 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
   
 
   //  printf("Command = %c, Parame = %f\n ",Command, Parameter); 
+#ifdef RAW 
+  raw_test_pass_reg(4);
+#endif //RAW
   LastSample = (Complex *) malloc (fftlen2*sizeof(Complex));
   
   memset(Buf, 0, (BUFSIZE-fftlen2)*sizeof(float));
@@ -44,11 +67,19 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
   while (DataIdx < SampleNum+fftlen2 )
     {
       LastDataIdx = DataIdx;
-      
-      t2 = t1 = time(NULL);
 
+#ifndef RAW
+      t2 = t1 = time(NULL);
+#endif
+
+#ifdef RAW 
+  raw_test_pass_reg(5);
+#endif //RAW
       dftrec = DFT (data, SampleNum, &DataIdx, Buf, BUFSIZE, fftlen, LastSample, BufCount);
       datalen = DataIdx - LastDataIdx; 
+#ifdef RAW 
+  raw_test_pass_reg(6);
+#endif //RAW
       dft = AddCosWin ( dftrec, fftlen, datalen);
       free(dftrec);
      
@@ -73,7 +104,13 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
       phase = DFT2Phase (dft, fftnum*datalen);
       */
 
+#ifdef RAW 
+  raw_test_pass_reg(7);
+#endif //RAW
       Rectangular2Polar ( dft, magnitude, phase, fftnum*datalen);
+#ifdef RAW 
+  raw_test_pass_reg(71);
+#endif //RAW
       //SaveData(phase, datalen*fftnum, "pha0.dat");
       if (Command != 'f' ) 
 	unwrap1(phase, datalen, fftnum, fftlen, BufCount, LastPha, DownSampleFlag);
@@ -81,19 +118,48 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
       //SaveData(phase, datalen*fftnum, "pha1.dat");
 
       switch (Command) {
-      case 's' : Recon = speedup ( magnitude, phase, fftnum, fftlen, &datalen, Parameter, BufCount, LastMag, LastPha, DownSampleFlag); break;
+      case 's' :
+#ifdef RAW 
+  raw_test_pass_reg(8);
+#endif //RAW
+ Recon = speedup ( magnitude, phase, fftnum, fftlen, &datalen, Parameter, BufCount, LastMag, LastPha, DownSampleFlag); 
+#ifdef RAW 
+  raw_test_pass_reg(81);
+#endif //RAW
+
+break;
       case 'm' :
       case 'f' : Recon = Conv ( magnitude, phase, fftnum, fftlen, datalen, Command, BufCount, DownSampleFlag); break;
       case 'p' : Recon = Pitch ( magnitude, phase, fftnum, fftlen, datalen, BufCount, DownSampleFlag); break;
       default :  Recon = InvDFT2 (dft, fftnum, datalen); ; break;
       };
 
+#ifdef RAW 
+  raw_test_pass_reg(9);
+#endif //RAW
       free(dft);
+#ifndef RAW
       if (Recon)
 	WriteWaveFile(Recon, datalen, Hdr, fout);
+#else
+      raw_test_pass_reg(0xdeadcafe);
+      if (Recon) {
+	int i=0;
+/*  	for(i = 0; i < datalen; i++)  */
+/*  	  print_int((int) (Recon[i] + 0.5)); */
+	print_string("done\n");
+	full_count += datalen;
+	while (full_count >= BLOCK_SIZE) {
+	  full_count -= BLOCK_SIZE;
+	}
+      }
+#endif //RAW
       free(Recon);
-      
+
       BufCount ++;
+#ifdef RAW 
+  raw_test_pass_reg(10);
+#endif //RAW
       datalen = DataIdx - LastDataIdx; 
       for (i = 0 ; i < fftnum; i++)
 	{
@@ -105,12 +171,35 @@ void vocoder (float *data, int fftlen, int SampleNum, char Command, float Parame
       free(phase);
       */
     }
-  
-  free(LastSample);
+
+#ifdef RAW 
+  raw_test_pass_reg(11);
+#endif //RAW
+/*    free(LastSample); */
   return;
 }
 
-
+#ifdef RAW
+float *GenerateData(int length) {
+  int i=0, up = 1;
+  float j=0;
+  float *data = (float *)malloc(length * sizeof(float));
+  for(i = 0; i < length; i++) {
+    data[i] = j;
+    if (j == 100) {
+      up = 0;
+    } else if (j == 0) {
+      up = 1;
+    }
+    if (up == 1) {
+      j++;
+    } else {
+      j--;
+    }
+  }
+  return data;
+}
+#endif //RAW
 
 int  main(argc, argv)
      int argc;
@@ -124,37 +213,68 @@ int  main(argc, argv)
   float TimeRatio;
   char Command;
   int DownSampleFlag = 0 ;
+#ifndef RAW
   time_t t1, t2;
 
   t1 = time(NULL);
+#endif
+
   /*argument 1: input file name */
+#ifndef RAW
   fsrc = fopen((char *)(argv[1]), "rb");
   data = ReadWaveFile(&WavHdr,  &SampleNum, fsrc);
   fclose(fsrc);
-  
+#else
+  raw_test_pass_reg(0);
+/*    print_int(0); //DEBUG! */
+  SampleNum = RUN_SIZE;
+  data = GenerateData(SampleNum); 
+  raw_test_pass_reg(1);
+/*    print_int(1); //DEBUG! */
+#endif //RAW
+
   /*argument 2: output file name */
+#ifndef RAW
   fout = fopen((char *)(argv[2]), "w");
   fwrite((&WavHdr), sizeof(WAVHDR), 1, fout);
-  
+#endif //RAW  
+
   /*argument 3: DFT Resolution */
+#ifndef RAW
   sscanf((char *)(argv[3]), "%d", &fftlen);
+#else
+  fftlen = 16;
+#endif //RAW
 
   /*argument 4: downsample flag */
+#ifndef RAW
   sscanf((char *)(argv[4]), "%d", &DownSampleFlag);
+#else
+  DownSampleFlag = 0;
+#endif //RAW
   
   /*argument 5: option         */
   /*-s: time change            */
   /*-m: male to female change  */
   /*-f: female to male change  */
+#ifndef RAW
   if (argc >= 6) 
     sscanf((char *)(argv[5]), "%c%c", &Command, &Command);
-  
+#else
+  Command = 's';
+#endif //RAW
+
+#ifndef RAW
   if (argc >= 7 )
     if (Command == 's')
       sscanf((char*)(argv[6]), "%f", &TimeRatio);
     else TimeRatio = 0;
+#else
+  TimeRatio = 2.0;
+  raw_test_pass_reg(2);
+/*    print_int(2); */
+#endif //RAW
 
-  
   if (DownSampleFlag)
     {
       
@@ -175,40 +295,31 @@ int  main(argc, argv)
       LastPha = (float *) malloc (fftlen/2*sizeof(float));
 
     }
- 
+
   vocoder (data, fftlen, SampleNum, Command, TimeRatio, &WavHdr, DownSampleFlag, fout);
 
+#ifdef RAW
+  raw_test_pass_reg(100);
+#endif //RAW
   CleanSpeed();
   CleanConv();
   CleanPitch();
   free(data);
 
   /*SetSampleRate(fout, 16000);*/
+#ifndef RAW
   WaveFileClose(fout);
+#endif //RAW
   free(LastMag);
   free(LastPha);
 
+#ifndef RAW
   t2 = time(NULL);
 
   printf ( "Total Running Time = %f\n", difftime(t2, t1));
+#else
+  raw_test_pass_reg(-1);
+#endif
 
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -193,7 +193,8 @@ for benchmark in "${benchmarks[@]}"; do
      done
 done
 
-echo "waiting for remote runs to finish..."
+echo "waiting for remote runs to finish... if this hangs, hit CTRL+C and run:"
+echo $STREAMIT_HOME/misc/scripts/number-gathering/condense -i "$tmpdir" -o "$outputfile"
 #wait for everything to complete
 wait
 

@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.9 2002-11-18 20:40:25 dmaze Exp $
+ * $Id: CompilerHarness.java,v 1.10 2002-11-18 20:42:00 dmaze Exp $
  **/
 package streamittest;
 
@@ -236,7 +236,7 @@ public class CompilerHarness extends Harness {
 	
 	// copy over the stream library files
 	for (int i=0; i<libFiles.length; i++) {
-	    opts[6+i] = libFiles[i];
+	    opts[8+i] = libFiles[i];
 	}
 
 	return opts;

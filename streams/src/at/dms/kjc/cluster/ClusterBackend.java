@@ -68,6 +68,8 @@ public class ClusterBackend implements FlatVisitor {
 
 	System.out.println("Entry to Cluster Backend");
 	System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
+	System.out.println("  rename1 is: "+KjcOptions.rename1);
+	System.out.println("  rename2 is: "+KjcOptions.rename2);
 
 	structures = structs;
 	
@@ -122,7 +124,7 @@ public class ClusterBackend implements FlatVisitor {
 	SIRPortal.findMessageStatements(str);
 
 	// Increasing filter Multiplicity
-	//IncreaseFilterMult.inc(str, 5);
+	//IncreaseFilterMult.inc(str, 1);
 
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");

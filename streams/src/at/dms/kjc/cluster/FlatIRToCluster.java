@@ -79,6 +79,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	
 	Set destroyed_vars = new HashSet();
 
+	//ArrayDestroyer arrayDest=new ArrayDestroyer();
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    if (!KjcOptions.nofieldprop) {
 		
@@ -104,16 +105,23 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    } else
 		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
 
-	    ArrayDestroyer destroyer = new ArrayDestroyer();
-	    ((SIRFilter)node.contents).getMethods()[i].accept(destroyer);
-	    destroyer.addDestroyedLocals(destroyed_vars);
+	    ArrayDestroyer arrayDest = new ArrayDestroyer();
+	    ((SIRFilter)node.contents).getMethods()[i].accept(arrayDest);
+	    arrayDest.addDestroyedLocals(destroyed_vars);
 
 	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
 	}
 
+	//if(KjcOptions.destroyfieldarray) {
+	//   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+	//}
+
 	DeadCodeElimination.doit((SIRFilter)node.contents);
-	RenameDestroyedVars.renameDestroyedVars((SIRFilter)node.contents, destroyed_vars);
-	DeadCodeElimination.doit((SIRFilter)node.contents); // run one more time!
+
+	if (KjcOptions.rename2) {
+	    RenameDestroyedVars.renameDestroyedVars((SIRFilter)node.contents, destroyed_vars);
+	    DeadCodeElimination.doit((SIRFilter)node.contents);
+	}
 
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }

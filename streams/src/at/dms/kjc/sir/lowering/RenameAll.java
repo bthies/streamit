@@ -4,6 +4,7 @@ import at.dms.compiler.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
+import at.dms.util.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -155,7 +156,7 @@ public class RenameAll extends SLIRReplacingVisitor
 	// call to <nf> -- DON'T DO THIS since it messes up mutation case.
 	// replaceParentInit(str, nf);
 
-        nf.setInit(newInit);
+	nf.setInit(newInit);
         symtab = ost;
         return nf;
     }

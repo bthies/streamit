@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.31 2003-05-13 22:42:55 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.32 2003-05-13 22:47:54 dmaze Exp $
  */
 
 header {
@@ -227,7 +227,7 @@ enqueue_statement returns [Statement s] { s = null; Expression x; }
 	;
 
 data_type returns [Type t] { t = null; Expression x; }
-	:	t=primitive_type
+	:	(t=primitive_type | id:ID { t = new TypeStructRef(id.getText()); })
 		(	l:LSQUARE
 			(x=right_expr { t = new TypeArray(t, x); }
 			| { throw new SemanticException("missing array bounds in type declaration", getFilename(), l.getLine()); }
@@ -244,7 +244,6 @@ primitive_type returns [Type t] { t = null; }
 	|	TK_float { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT); }
 	|	TK_double { t =  new TypePrimitive(TypePrimitive.TYPE_DOUBLE); }
 	|	TK_complex { t = new TypePrimitive(TypePrimitive.TYPE_COMPLEX); }
-	|	id:ID { t = new TypeStructRef(id.getText()); }
 	;
 
 variable_decl returns [Statement s] { s = null; Type t; Expression x = null; 
@@ -457,8 +456,10 @@ multExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 	;
 
 castExpr returns [Expression x] { x = null; Type t=null; }
-	:	(l:LPAREN t=primitive_type RPAREN)? x=inc_dec_expr
-		{ if (t != null) x = new ExprTypeCast(getContext(l), t, x); }
+	:	(LPAREN primitive_type) =>
+		  (l:LPAREN t=primitive_type RPAREN) x=inc_dec_expr
+		{ x = new ExprTypeCast(getContext(l), t, x); }
+	|	x=inc_dec_expr
 	;
 
 inc_dec_expr returns [Expression x] { x = null; }

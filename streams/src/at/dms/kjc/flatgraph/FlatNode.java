@@ -211,9 +211,79 @@ public class FlatNode {
 	    return true;
 	return false;
     }
+
+    public boolean isDuplicateSplitter() 
+    {
+	if (contents instanceof SIRSplitter &&
+	    ((SIRSplitter)contents).getType() == SIRSplitType.DUPLICATE)
+	    return true;
+	return false;
+    }
+    
     
     public String toString() {
 	return "FlatNode:"+getName();
+    }
+    
+    public int getTotalIncomingWeights() 
+    {
+	int sum = 0;
+	
+	for (int i= 0; i < inputs; i++)
+	    sum += incomingWeights[i];
+	return sum;
+    }
+    
+    public int getTotalOutgoingWeights() 
+    {
+	int sum = 0;
+	
+	for (int i = 0; i < ways; i++) 
+	    sum += weights[i];
+	
+	return sum;
+    }
+    
+
+    /**
+     *  get partial sum of weights 0 thru i - 1 
+    **/
+    public int getPartialOutgoingSum(int i) 
+    {
+	assert i >= 0 && i < ways;
+	    
+	int sum = 0;
+
+	for (int q = 0; q < i; q++)
+	    sum += weights[q];
+	
+	return sum;
+    }
+    
+    /**
+     * get the partial sum of incoming weight 0 thru i - 1
+     **/
+    public int getPartialIncomingSum(int i) 
+    {
+	assert i >= 0 && i < inputs;
+	
+	int sum = 0; 
+	
+	for (int j = 0; j < i; j++)
+	    sum += incomingWeights[j];
+	
+	return sum;
+    }
+    
+
+    public int getWeight(FlatNode to) 
+    {
+	for (int i = 0; i < ways; i++) {
+	    if (edges[i] == to)
+		return weights[i];
+	}
+	assert false : "Node " + this + " not connected to " + to;
+	return -1;
     }
 }
 

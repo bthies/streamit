@@ -1250,13 +1250,29 @@ public class Propagator extends SLIRReplacingVisitor {
 		    if(expr instanceof JAssignmentExpression) {
 			JExpression left=((JAssignmentExpression)expr).getLeft();
 			JExpression right=((JAssignmentExpression)expr).getRight();
-			CType type;
+			CType type = null;
 			//Types worth copying
-			if((right instanceof JFieldAccessExpression)||((right instanceof JArrayAccessExpression)&&(((JArrayAccessExpression)right).getAccessor() instanceof JIntLiteral))) {
+			if (right instanceof JFieldAccessExpression) {
 			    if(right.getType()!=null)
 				type=right.getType();
 			    else
 				type=left.getType();
+			}
+			if ((right instanceof JArrayAccessExpression)&&(((JArrayAccessExpression)right).getAccessor() instanceof JIntLiteral)) {
+			    if (right.getType()!=null) {
+				Utils.assert(right.getType() instanceof CArrayType);
+				type = ((CArrayType)right.getType()).getBaseType();
+			    } else if (left.getType()!=null) { 
+				// I don't know if left type could
+				// ever be null, just extending
+				// jasper's code and trying to be
+				// careful not to change semantics
+				// that were there
+				Utils.assert(left.getType() instanceof CArrayType);
+				type = ((CArrayType)left.getType()).getBaseType();
+			    }
+			}
+			if (type!=null) {
 			    JVariableDefinition var=new JVariableDefinition(self.getTokenReference(),0,type,propName(),right);
 			    JVariableDeclarationStatement newState=new JVariableDeclarationStatement(self.getTokenReference(),var,null);
 			    self.addStatement(i++,newState);

@@ -108,58 +108,7 @@ public class Flattener {
 	StatelessDuplicate.doit(toDuplicate, 2);
 	*/
 
-	//Raise NewArray's up to top
-	System.err.print("Raising variable declarations... ");
-	new VarDeclRaiser().raiseVars(str);
-	System.err.println("done.");
-	
-	/* aal -- changed so that the default action is to do field prop.
-	 * turn off field prop using --nofieldprop or -L */
-	// do constant propagation on fields
-        if (KjcOptions.nofieldprop) {
-	} else {
-	    System.err.print("Propagating constant fields... ");
-	    FieldProp.doPropagate(str);
-	    System.err.println("done.");
-	}
-
-	/* dzm -- note phase ordering issue here.  In particular, we
-	 * probably want to form filter phases before fusing the world, but we need
-	 * to run field prop before forming phases. */
-	// resolve phases in phased filters
-	FilterPhaser.resolvePhasedFilters(str);    
-        
-	// move field initializations into init function
-	System.err.print("Moving initial assignments... ");
-	FieldInitMover.moveStreamInitialAssignments(str);
-	System.err.println("done.");
-
-	/* DEBUGGING PRINTING
-	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
-	printer1 = new SIRPrinter();
-	IterFactory.createIter(str).accept(printer1);
-	printer1.close();
-	*/
-	
-	if (KjcOptions.nofieldprop) {
-	} else {
-	    //Flatten Blocks
-	    System.err.print("Flattening blocks... ");
-	    new BlockFlattener().flattenBlocks(str);
-	    System.err.println("done.");
-	    //Analyze Branches
-	    //System.err.print("Analyzing branches... ");
-	    //new BranchAnalyzer().analyzeBranches(str);
-	    //System.err.println("done.");
-	}
-	//Destroys arrays into local variables if possible
-	//System.err.print("Destroying arrays... ");
-	//new ArrayDestroyer().destroyArrays(str);
-	//System.err.println("done.");
-	//Raise variables to the top of their block
-	System.err.print("Raising variables... ");
-	new VarDeclRaiser().raiseVars(str);
-	System.err.println("done.");
+	lowerFilterContents(str, true);
 
 	str = doLinearAnalysis(str);
 
@@ -207,6 +156,68 @@ public class Flattener {
 	System.err.println("Generating code...");
 	LIRToC.generateCode(flatClass);
 	//System.err.println("done.");
+    }
+    
+    /**
+     * Lowers the contents of filters <str> as is appropriate along
+     * the main compilation path.  Also has the effect of doing
+     * constant propagation and unrolling (with appropriate setup and
+     * cleanup) for all filters in str.  Doesn't unroll any loops that
+     * haven't already been unrolled.
+     */
+    public static void lowerFilterContents(SIRStream str, boolean printStatus) {
+	//Raise NewArray's up to top
+	if (printStatus) { System.err.print("Raising variable declarations... "); }
+	new VarDeclRaiser().raiseVars(str);
+	if (printStatus) { System.err.println("done."); }
+	
+	/* aal -- changed so that the default action is to do field prop.
+	 * turn off field prop using --nofieldprop or -L */
+	// do constant propagation on fields
+        if (KjcOptions.nofieldprop) {
+	} else {
+	    if (printStatus) { System.err.print("Propagating constant fields... "); }
+	    FieldProp.doPropagate(str);
+	    if (printStatus) { System.err.println("done."); }
+	}
+
+	/* dzm -- note phase ordering issue here.  In particular, we
+	 * probably want to form filter phases before fusing the world, but we need
+	 * to run field prop before forming phases. */
+	// resolve phases in phased filters
+	FilterPhaser.resolvePhasedFilters(str);    
+        
+	// move field initializations into init function
+	if (printStatus) { System.err.print("Moving initial assignments... "); }
+	FieldInitMover.moveStreamInitialAssignments(str);
+	if (printStatus) { System.err.println("done."); }
+
+	/* DEBUGGING PRINTING
+	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
+	printer1 = new SIRPrinter();
+	IterFactory.createIter(str).accept(printer1);
+	printer1.close();
+	*/
+	
+	if (KjcOptions.nofieldprop) {
+	} else {
+	    //Flatten Blocks
+	    if (printStatus) { System.err.print("Flattening blocks... "); }
+	    new BlockFlattener().flattenBlocks(str);
+	    if (printStatus) { System.err.println("done."); }
+	    //Analyze Branches
+	    //System.err.print("Analyzing branches... ");
+	    //new BranchAnalyzer().analyzeBranches(str);
+	    //System.err.println("done.");
+	}
+	//Destroys arrays into local variables if possible
+	//System.err.print("Destroying arrays... ");
+	//new ArrayDestroyer().destroyArrays(str);
+	//System.err.println("done.");
+	//Raise variables to the top of their block
+	if (printStatus) { System.err.print("Raising variables... "); }
+	new VarDeclRaiser().raiseVars(str);
+	if (printStatus) { System.err.println("done."); }
     }
 
     /**

@@ -109,6 +109,7 @@ public class Channel extends streamit.misc.DestroyedClass
         queue.addLast (o);
         
 		totalItemsPushed++;
+		source.registerPush();
 
         // overflow at 50 chars in the queue
         if (queue.size () > 100 && !declaredFull)
@@ -139,6 +140,7 @@ public class Channel extends streamit.misc.DestroyedClass
         }
 
         totalItemsPopped++;
+	sink.registerPop();
 
         return queue.removeFirst ();
     }
@@ -152,7 +154,6 @@ public class Channel extends streamit.misc.DestroyedClass
     public void push(Object o)
     {
         assert o.getClass () == type;
-	sink.registerPush();
 
         enqueue (o);
     }
@@ -240,7 +241,6 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop something of type <type>
     public Object pop()
     {
-	source.registerPop();
         ensureData ();
 
         Object data;
@@ -356,7 +356,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at something of type <type>
     public Object peek(int index)
     {
-	source.registerPeek(index);
+	sink.registerPeek(index);
         ensureData (index + 1);
 
         Object data;

@@ -31,6 +31,21 @@ public class RouteIns implements SwitchIns {
 	dests.add(dest);
     }
 
+    public void addRoute(SwitchSrc source, ComputeNode dest) 
+    {
+	assert (source != null && dest != null) :
+	    "Trying to add a null source or dest to route instruction";
+	//check if the source,dest pair exists
+	for (int i = 0; i < sources.size();i++) {
+	    if (sources.get(i) == source &&
+		dests.get(i) == dest)
+		return;
+	}    
+	sources.add(source);
+	dests.add(dest);
+    }
+    
+
     public String toString() {
 	String ins = "nop\troute ";
 	
@@ -38,12 +53,18 @@ public class RouteIns implements SwitchIns {
 	    //append the src, then ->, then dst
 	    String dir;
 	    
-	    dir = tile.getRawChip().getDirection(tile, (ComputeNode)sources.get(i));
-	    if (dir.equals("st"))
-		ins += "$c" + dir + "o";
-	    else 
-		ins += "$c" + dir + "i";
-
+	    if (sources.get(i) instanceof ComputeNode) {
+		dir = tile.getRawChip().getDirection(tile, (ComputeNode)sources.get(i));
+		if (dir.equals("st"))
+		    ins += "$c" + dir + "o";
+		else 
+		    ins += "$c" + dir + "i";
+	    }
+	    else if (sources.get(i) instanceof SwitchReg) {
+		ins += ((SwitchReg)sources.get(i)).toString();
+	    }
+	    
+	    
 	    ins += "->";
 	    
 	    dir = tile.getRawChip().getDirection(tile, (ComputeNode)dests.get(i));

@@ -23,4 +23,37 @@ public class SwitchIPort implements SwitchSrc {
     public String toString() {
 	return reg;
     }
+    
+    public static SwitchIPort getIPort(String dir) 
+    {
+	if (dir == "st")
+	    return CSTO;
+	if (dir == "N")
+	    return N;
+	if (dir == "E")
+	    return E;
+	if (dir == "S")
+	    return S;
+	if (dir == "W")
+	    return W;
+	
+	assert false : "invalid direction for getIPort";
+	return null;
+    }
+    
+    public static SwitchIPort getIPort2(String dir) 
+    {
+	if (dir == "st")
+	    return CSTO;
+	if (dir == "N")
+	    return N2;
+	if (dir == "E")
+	    return E2;
+	if (dir == "S")
+	    return S2;
+	if (dir == "W")
+	    return W2;
+	assert false : "invalid direction for getIPort2";
+	return null;
+    }	
 }

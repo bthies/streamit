@@ -24,4 +24,37 @@ public class SwitchOPort  {
     public String toString() {
 	return reg;
     }
+    
+   public static SwitchOPort getOPort(String dir) 
+    {
+	if (dir == "st")
+	    return CSTI;
+	if (dir == "N")
+	    return N;
+	if (dir == "E")
+	    return E;
+	if (dir == "S")
+	    return S;
+	if (dir == "W")
+	    return W;
+	
+	assert false : "invalid direction for getIPort";
+	return null;
+    }
+    
+    public static SwitchOPort getOPort2(String dir) 
+    {
+	if (dir == "st")
+	    return CSTI2;
+	if (dir == "N")
+	    return N2;
+	if (dir == "E")
+	    return E2;
+	if (dir == "S")
+	    return S2;
+	if (dir == "W")
+	    return W2;
+	assert false : "invalid direction for getIPort2";
+	return null;
+    }	
 }

@@ -12,8 +12,9 @@ public class TraceExtractor {
 	LinkedList Q=new LinkedList();
 	HashMap visited=new HashMap();
 	LinkedList traces=new LinkedList();
-	HashMap outNodes=new HashMap();
-	HashMap inNodes=new HashMap();
+	//HashMap outNodes=new HashMap();
+	//HashMap inNodes=new HashMap();
+	HashMap edges=new HashMap(); // UnflatEdge -> Edge
 	for(int i=0;i<topFilters.length;i++)
 	    Q.add(topFilters[i]);
 	while(Q.size()>0) {
@@ -45,7 +46,16 @@ public class TraceExtractor {
 		visited.put(filter,null);
 		if(filter.in!=null&&filter.in.length>0) {
 		    //node=new InputTraceNode(filter.inWeights,getInNodes(outNodes,filter.in));
-		    node=getInNode(outNodes,inNodes,filter);
+		    //node=getInNode(outNodes,inNodes,filter);
+		    UnflatEdge[] unflatEdges=filter.in;
+		    Edge[] inEdges=new Edge[unflatEdges.length];
+		    for(int i=0;i<unflatEdges.length;i++) {
+			UnflatEdge unflatEdge=unflatEdges[i];
+			Edge edge=(Edge)edges.get(unflatEdge);
+			assert edge!=null:"Edge Null";
+			inEdges[i]=edge;
+		    }
+		    node=new InputTraceNode(filter.inWeights,inEdges);
 		    trace=new Trace((InputTraceNode)node);
 		    if(content.isLinear()) {
 			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
@@ -116,16 +126,26 @@ public class TraceExtractor {
 		    //SIRFileReader read=(SIRFileReader)filter.filter;
 		    //outNode=new EnterTraceNode(read.getFileName(),true,filter.outWeights);
 		    //} else
-		    outNode=new OutputTraceNode(filter.outWeights);
+		    Edge[][] outEdges=new Edge[filter.out.length][];
+		    outNode=new OutputTraceNode(filter.outWeights,outEdges);
 		    node.setNext(outNode);
 		    outNode.setPrevious(node);
-		    outNodes.put(filter,outNode);
+		    //outNodes.put(filter,outNode);
 		    for(int i=0;i<filter.out.length;i++) {
 			UnflatEdge[] inner=filter.out[i];
+			Edge[] innerEdges=new Edge[inner.length];
+			outEdges[i]=innerEdges;
 			for(int j=0;j<inner.length;j++) {
-			    UnflatFilter dest=inner[j].dest;
+			    UnflatEdge unflatEdge=inner[j];
+			    UnflatFilter dest=unflatEdge.dest;
 			    if(!visited.containsKey(dest))
 				Q.add(dest);
+			    Edge edge=(Edge)edges.get(unflatEdge);
+			    if(edge==null) {
+				edge=new Edge(outNode);
+				edges.put(unflatEdge,edge);
+			    }
+			    innerEdges[j]=edge;
 			}
 		    }
 		}
@@ -133,42 +153,42 @@ public class TraceExtractor {
 	    }
 	}
 	//Fix Output Nodes
-	Set outFilters=outNodes.keySet();
-	UnflatFilter[] outArray=new UnflatFilter[outFilters.size()];
-	outFilters.toArray(outArray);
-	for(int i=0;i<outArray.length;i++) {
-	    UnflatFilter outFilter=outArray[i];
-	    OutputTraceNode outNode=(OutputTraceNode)outNodes.get(outFilter);
-	    Edge[][] dests=new Edge[outFilter.out.length][0];
-	    for(int j=0;j<dests.length;j++) {
-		UnflatEdge[] destFilters=outFilter.out[j];
-		Edge[] subDests=new Edge[destFilters.length];
-		for(int k=0;k<destFilters.length;k++) {
-		    subDests[k]=new Edge(outNode,(InputTraceNode)inNodes.get(destFilters[k].dest));
-		}
-		dests[j]=subDests;
-	    }
-	    outNode.setDests(dests);
-	}
+	/*Set outFilters=outNodes.keySet();
+	  UnflatFilter[] outArray=new UnflatFilter[outFilters.size()];
+	  outFilters.toArray(outArray);
+	  for(int i=0;i<outArray.length;i++) {
+	  UnflatFilter outFilter=outArray[i];
+	  OutputTraceNode outNode=(OutputTraceNode)outNodes.get(outFilter);
+	  Edge[][] dests=new Edge[outFilter.out.length][0];
+	  for(int j=0;j<dests.length;j++) {
+	  UnflatEdge[] destFilters=outFilter.out[j];
+	  Edge[] subDests=new Edge[destFilters.length];
+	  for(int k=0;k<destFilters.length;k++) {
+	  subDests[k]=new Edge(outNode,(InputTraceNode)inNodes.get(destFilters[k].dest));
+	  }
+	  dests[j]=subDests;
+	  }
+	  outNode.setDests(dests);
+	  }*/
 	Trace[] out=new Trace[traces.size()];
 	traces.toArray(out);
 	return out;
     }
     
-    private static InputTraceNode getInNode(HashMap outNodes,HashMap inNodes,UnflatFilter filter) {
-	UnflatEdge[] in=filter.in;
-	OutputTraceNode[] inNode=new OutputTraceNode[in.length];
-	for(int i=0;i<in.length;i++)
-	    inNode[i]=(OutputTraceNode)outNodes.get(in[i].src);
-	InputTraceNode output=null;
-	//if(filter.filter instanceof SIRFileWriter) {
-	//SIRFileWriter write=(SIRFileWriter)filter.filter;
-	//output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
-	//} else
-	output=new InputTraceNode(filter.inWeights,inNode);
-	inNodes.put(filter,output);
-	return output;
-    }
+    /*private static InputTraceNode getInNode(HashMap outNodes,HashMap inNodes,UnflatFilter filter) {
+      UnflatEdge[] in=filter.in;
+      OutputTraceNode[] inNode=new OutputTraceNode[in.length];
+      for(int i=0;i<in.length;i++)
+      inNode[i]=(OutputTraceNode)outNodes.get(in[i].src);
+      InputTraceNode output=null;
+      //if(filter.filter instanceof SIRFileWriter) {
+      //SIRFileWriter write=(SIRFileWriter)filter.filter;
+      //output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
+      //} else
+      output=new InputTraceNode(filter.inWeights,inNode);
+      inNodes.put(filter,output);
+      return output;
+      }*/
 
     /*private static OutputTraceNode[] getInNodes(HashMap outNodes,UnflatEdge[] in) {
       OutputTraceNode[] output=new OutputTraceNode[in.length];

@@ -18,29 +18,31 @@ public class HelloWorld5 extends SplitJoin {
 
     // presumably some main function invokes the stream
     public static void main(String args[]) {
-	new HelloWorld5(1).run();
+	new HelloWorld5(1).Run();
     }
 
     // if init with no arguments, then init with random 
-    public void init() {
-	init(1 + (int)(Math.random()*4));
+    public void Init() 
+    {
+	Init(1 + (int)(Math.random()*4));
     }
 
     // this is the defining part of the stream
-    public void init(int selection) {
+    public void Init(int selection)
+    {
 	// setup the one to run in parallel
-	add(new Stream() {
+	Add(new Stream() {
 		public void init() {
-		    add(new CharGenerator("Hello World!.....\0"));
-		    add(new ResetingCharPrinter(this));
+		    Add(new CharGenerator("Hello World!.....\0"));
+		    Add(new ResetingCharPrinter(this));
 		}
 	    });
 	// setup the other one to run.  this acts like the old SwitchSelect.
 	switch(selection) {
-	case 1: add(new HelloWorld1()); break;
-	case 2: add(new HelloWorld2()); break;
-	case 3: add(new HelloWorld3()); break;
-	case 4: add(new HelloWorld4()); break;
+	case 1: Add(new HelloWorld1()); break;
+	case 2: Add(new HelloWorld2()); break;
+	case 3: Add(new HelloWorld3()); break;
+	case 4: Add(new HelloWorld4()); break;
 	}
     }
 }
@@ -57,11 +59,11 @@ class ResetingCharPrinter extends Filter {
 	super(str);
     }
 
-    public void init(Stream str) {
+    public void Init(Stream str) {
 	this.str = str;
     }
     
-    public void work() {
+    public void Work() {
 	char c;
 	System.out.print(c = input.popChar());
 	if (c=='\0') {

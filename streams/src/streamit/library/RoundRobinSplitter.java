@@ -4,13 +4,9 @@ public class RoundRobinSplitter extends Splitter
 {
     public void Work ()
     {
-        while (outputCount == ((Integer)destWeight.get (outputIndex)).intValue ())
-        {
-            outputCount = 0;
-            outputIndex = (outputIndex + 1) % dest.size ();
-        }
+        ASSERT (dest.size () > 0);
         
         PassOneData (input, output [outputIndex]);
-        outputCount++;
+        outputIndex = (outputIndex + 1) % dest.size ();
     }
 }

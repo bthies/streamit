@@ -5,19 +5,8 @@ import java.util.*;
 // 1 input, many output
 public abstract class Splitter extends Operator
 {
-    public static Splitter ROUND_ROBIN_SPLITTER ()
-    {
-        return new RoundRobinSplitter ();
-    }
-    
-    public static Splitter DUPLICATE_SPLITTER ()
-    {
-        return new DuplicateSplitter ();
-    }
-    
     List dest = new ArrayList ();
-    List destWeight = new ArrayList ();
-    int outputIndex = 0, outputCount = 0;
+    int outputIndex = 0;
     public Channel input = null;
     public Channel output [] = null;
     
@@ -27,20 +16,13 @@ public abstract class Splitter extends Operator
     
     void Add (Stream s)
     {
-        Add (s, 1);
-    }
-    
-    void Add (Stream s, int weight)
-    {
-        // add the destination to the list of destinations
+        ASSERT (s != null);
         dest.add (s);
-        destWeight.add (new Integer (weight));
     }
 
     public void ConnectGraph ()
     {
         // do I even have anything to do?
-        ASSERT (dest.size () == destWeight.size ());
         if (dest.isEmpty ()) return;
         
         // yep, create an output array of appropriate size
@@ -78,10 +60,6 @@ public abstract class Splitter extends Operator
                 
                 // now connect the channel to the Splitter
                 channel.SetSource (this);
-                
-                ASSERT (((Integer)destWeight.get (outputIndx)).intValue () > 0);
-            } else {
-                ASSERT (((Integer)destWeight.get (outputIndx)).intValue () == 0);
             }
             
             outputIndx ++;

@@ -37,12 +37,12 @@ public class HelloWorld3 extends Stream
             {
                 public void Init() 
                 {
-                    UseSplitter(Splitter.DUPLICATE_SPLITTER ());
-                    Add(new BufferedCharPrinter());
+                    SetSplitter(WEIGHTED_ROUND_ROBIN (2, 2));
+                    Add(new ChannelConnectFilter (new char [1]));
                     //Add(new XORLoop());
                     //Add(new ChannelConnectFilter (new char [1]));
                     Add(new ChannelConnectFilter (new char [1]));
-                    UseJoiner(Joiner.WEIGHTED_ROUND_ROBIN(0,1));
+                    SetJoiner(ROUND_ROBIN());
                 }
             });
         Add(new BufferedCharPrinter());
@@ -70,7 +70,7 @@ public class HelloWorld3 extends Stream
      */
 
 }
-
+/*
 class XORLoop extends FeedbackLoop 
 {
     public void Init() {
@@ -79,7 +79,7 @@ class XORLoop extends FeedbackLoop
         Add(new XORFilter());
     }
 }
-
+*/
 // outputs xor of successive items in stream
 class XORFilter extends Filter
 {

@@ -193,7 +193,7 @@ done
 
 #call condense
 echo -en "\033[1m\e[32;40mCondensing the various numbers into $outputfile...\033[0m\n"; tput sgr0
-$STREAMIT_HOME/scripts/condense -i "$tmpdir" -o "$outputfile"
+$STREAMIT_HOME/misc/scripts/number-gathering/condense -i "$tmpdir" -o "$outputfile"
 
 #remove the tmpdir
 rm -rf "$tmpdir"

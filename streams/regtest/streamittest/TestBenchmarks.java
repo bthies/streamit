@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.22 2003-06-26 20:49:01 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.23 2003-06-26 20:59:15 thies Exp $
  **/
 package streamittest;
 
@@ -36,8 +36,9 @@ public class TestBenchmarks extends StreamITTestCase {
         // compiler runs out of memory on any RAW configuration
         if (!flagsContainRaw(flags) ||
             flagsContainFusion(flags)) {
-	    suite.addTest(new TestBenchmarks("testBitonicSort", flags));
+	    suite.addTest(new TestBenchmarks("testBitonicSortRecursive", flags));
         }
+	suite.addTest(new TestBenchmarks("testBitonicSort", flags));
 	// can't fit on raw 8 without partition
 	if (!flagsContainRaw(flags) || 
 	    flagsContainPartition(flags) ||
@@ -78,14 +79,19 @@ public class TestBenchmarks extends StreamITTestCase {
 	doCompileRunVerifyTest(root, "CoarseSerializedBeamFormer.java", "CoarseSerializedBeamFormer.out", 0, 128);
     }
 
+    // iterative version of bitonic sort
     public void testBitonicSort() 
     {
         String root = BENCH_ROOT + "bitonic-sort/streamit/";
-	// iterative version
         doCompileTest(root, "BitonicSort.java");
         doRunTest(root, "BitonicSort.java", 0, 32);
 	doCompareTest(root, "BitonicSort.java", "BitonicSort.out");
+    }
 
+    // recursive version of bitonic sort
+    public void testBitonicSortRecursive() 
+    {
+        String root = BENCH_ROOT + "bitonic-sort/streamit/";
 	// recursive version
         doCompileTest(root, "BitonicSortRecursive.java");
         doRunTest(root, "BitonicSortRecursive.java", 0, 32);

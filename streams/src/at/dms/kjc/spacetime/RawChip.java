@@ -10,6 +10,8 @@ public class RawChip {
     private IODevice[] devices;
     private int gXSize;
     private int gYSize;
+    public static final int cacheLineBytes = 32;
+    public static final int cacheLineWords = 8;
     
     public RawChip(int xSize, int ySize) {
 	gXSize = xSize;

@@ -2,6 +2,9 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import java.util.Set;
+import java.util.HashSet;
+
 
 /** 
  *
@@ -100,6 +103,17 @@ public class OutputTraceNode extends TraceNode
 	    current = current.getPrevious();
 	}
 	return ((FilterTraceNode)current).getFilter().getOutputType();
+    }
+    
+    //return a set containing the destinations for this input trace node
+    public Set getDestSet() 
+    {
+	HashSet set = new HashSet();
+	for (int i = 0; i < dests.length; i++) {
+	    for (int j = 0; i < dests[i].length; j++)
+		set.add(dests[i][j]);
+	}
+	return set;
     }
     
 }

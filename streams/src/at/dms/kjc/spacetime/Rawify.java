@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import java.util.ListIterator;
+import java.util.Iterator;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 import at.dms.kjc.spacetime.switchIR.*;
@@ -37,7 +38,7 @@ public class Rawify
 			else 
 			    Utils.fail("Predefined filters not supported");
 		    }
-		    else {
+		    else { //regular filter!
 			RawTile tile = rawChip.getTile((filterNode).getX(), 
 						       (filterNode).getY());
 			//create the filter info class
@@ -54,6 +55,9 @@ public class Rawify
 			else
 			    createSwitchCodeBuffered(filterNode, 
 						     trace, filterInfo, init, tile, rawChip, mult);
+			//we must add some switch instructions to account for the fact
+			//that we must transfer cacheline sized chunks in the streaming dram
+			handleCacheLine(filterNode, init, false);
 			//generate the compute code for the trace and place it in
 			//the tile
 			if (init) {
@@ -61,11 +65,13 @@ public class Rawify
 			    //after the initialization switch code
 			    createPrimePumpSwitchCode(filterNode, 
 						      trace, filterInfo, init, tile, rawChip);
+			    handleCacheLine(filterNode, init, true);
 			    tile.getComputeCode().addTraceInit(filterInfo);
 			}
 			else
 			    tile.getComputeCode().addTraceSteady(filterInfo);
 		    }
+		    
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
 		    //create the switch code to perform the joining
@@ -89,9 +95,79 @@ public class Rawify
 	
     }
 
-    private static void joinInputTrace(InputTraceNode node, boolean init, boolean primepump)
+    //we must add some switch instructions to account for the fact
+    //that we must transfer cacheline sized chunks in the streaming dram
+    private static void handleCacheLine(FilterTraceNode filterNode, boolean init, boolean primepump) 
+    {
+	//because all dram transfers must be multiples of cacheline
+	//generate code to disregard the remainder of the transfer
+	if (!KjcOptions.magicdram && filterNode.getPrevious().isInputTrace())
+	    handleUnneededInput(filterNode, init, primepump);
+	//generate code to fill the remainder of the cache line
+	if (!KjcOptions.magicdram && filterNode.getNext().isOutputTrace())
+	    fillCacheLine(filterNode, init, primepump);
+    }
+    
+
+    private static void handleUnneededInput(FilterTraceNode traceNode, boolean init, boolean primepump) 
     {
 	
+    }
+    
+    private static void fillCacheLine(FilterTraceNode traceNode, boolean init, boolean primepump) 
+    {
+    }
+    
+
+    private static void joinInputTrace(InputTraceNode traceNode, boolean init, boolean primepump)
+    {
+	FilterTraceNode filter = (FilterTraceNode)traceNode.getNext();
+	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
+	//calculate the number of items sent
+	int items, iterations, stage = 1, typeSize;
+	if (init) 
+	    items = filterInfo.initItemsReceived();
+	else if (primepump) 
+	    items = filterInfo.primePump * filterInfo.pop;
+	else
+	    items = filterInfo.steadyMult * filterInfo.pop;
+	//the stage we are generating code for as used below for generateSwitchCode()
+	if (!init) 
+	    stage = 2;
+	
+	typeSize = Util.getTypeSize(filter.getFilter().getInputType());
+	//the numbers of times we should cycle thru this "joiner"
+	assert items % traceNode.totalWeights() == 0: 
+	    "weights on input trace node does not divide evenly with items received";
+	iterations = items / traceNode.totalWeights();
+	
+	StreamingDram[] dest = {OffChipBuffer.getBuffer(traceNode, filter).getDRAM()};
+	
+	for (int i = 0; i < iterations; i++) {
+	    for (int j = 0; j < traceNode.getWeights().length; j++) {
+		for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+		    StreamingDram source = OffChipBuffer.getBuffer(traceNode.getSources()[j],
+								   traceNode).getDRAM();
+		    for (int q = 0; q < typeSize; q++)
+			SwitchCodeStore.generateSwitchCode(source, dest, stage);
+		}
+	    }
+	}
+	//because transfers must be cache line size divisible...
+	//generate dummy values to fill the cache line!
+	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
+	    int dummy = (items * typeSize) % RawChip.cacheLineWords;
+	    SwitchCodeStore.dummyOutgoing(dest[0], dummy, init);
+	}
+	//disregard remainder of inputs coming from temp offchip buffers
+	for (int i = 0; i < traceNode.getSources().length; i++) {
+	    OutputTraceNode source = traceNode.getSources()[i];
+	    int remainder = 
+		(iterations * typeSize * 
+		 traceNode.getWeight(source)) % RawChip.cacheLineWords;
+	    SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(source, traceNode).getDRAM(),
+					      remainder, init);
+	}
     }
     
     private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump)
@@ -99,7 +175,7 @@ public class Rawify
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 	//calculate the number of items sent
-	int items, iterations, stage = 1;
+	int items, iterations, stage = 1, typeSize;
 	if (init) 
 	    items = filterInfo.initItemsSent();
 	else if (primepump) 
@@ -110,6 +186,8 @@ public class Rawify
 	//the stage we are generating code for as used below for generateSwitchCode()
 	if (!init) 
 	    stage = 2;
+
+	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 	    
 	//the numbers of times we should cycle thru this "splitter"
 	assert items % traceNode.totalWeights() == 0: 
@@ -128,11 +206,27 @@ public class Rawify
 		    for (int d = 0; d < dests.length; d++) 
 			dests[d] = OffChipBuffer.getBuffer(traceNode, 
 							   traceNode.getDests()[j][d]).getDRAM();
-		    SwitchCodeStore.generateSwitchCode(sourcePort, 
-						       dests, stage);
+		    for (int q = 0; q < typeSize; q++)
+			SwitchCodeStore.generateSwitchCode(sourcePort, 
+							   dests, stage);
 		}
 	    }
 	}
+	//because transfers must be cache line size divisible...
+	//disregard the dummy values coming out of the dram
+	if ((items * typeSize) % RawChip.cacheLineWords != 0) {
+	    int remainder = (items * typeSize) % RawChip.cacheLineWords;
+	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init);
+	}
+	//write dummy values into each temp buffer with a remainder
+	Iterator it = traceNode.getDestSet().iterator();
+	while (it.hasNext()) {
+	    InputTraceNode in = (InputTraceNode)it.next();
+	    int remainder = (typeSize * iterations * traceNode.getWeight(in)) %
+		RawChip.cacheLineWords;
+	    SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, in).getDRAM(),
+					  remainder, init);
+	}   
     }
     
 

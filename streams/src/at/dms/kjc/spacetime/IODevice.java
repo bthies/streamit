@@ -58,4 +58,16 @@ public abstract class IODevice extends ComputeNode
     {
 	return (RawTile)tiles.get(0);
     }
+    
+    public RawTile getNeighboringTile() 
+    {
+	if (Y == -1)
+	    return rawChip.getTile(X, 0);
+	if (X == -1)
+	    return rawChip.getTile(0, Y);
+	if (X == rawChip.getXSize())
+	    return rawChip.getTile(X - 1, Y);
+	else // Y == rawChip.getYSize()
+	    return rawChip.getTile(X, Y -1);
+    }
 }

@@ -19,6 +19,7 @@ import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import java.util.Vector;
+import java.util.Hashtable;
 
 public class Kopi2SIR extends Utils implements AttributeVisitor
 {
@@ -35,12 +36,29 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     private int num = 0;
 
+    //This hashtable acts as a symbol table to store named (not anonymous)
+    //SIR classes
+    private Hashtable visitedSIROps;
+
+
     public Kopi2SIR() {
 	parentStream = null;
 	topLevel = null;
 	parentOperator = null;
+	visitedSIROps = new Hashtable(100);
     }
 
+    private void addVisitedOp(String className, SIROperator sirop) {
+	visitedSIROps.put(className, sirop);
+    }
+    private SIROperator getVisitedOp(String className) 
+    {
+	SIROperator ret = (SIROperator)visitedSIROps.get(className);
+	if (ret == null)
+	    at.dms.util.Utils.fail("Named SIR Operator not found in the symbol table");
+	return ret;
+    }
+    
     private void blockStart(String str) {
 	//System.out.println("attribute_visit" + str +"\n");
     }
@@ -106,7 +124,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	else
 	    at.dms.util.Utils.fail("SIR Expression Expected");
 	//Return CType based on extracted Type String
-	if (type.equals("Integer"))
+	if (type.equals("Int"))
 	    return CStdType.Integer;
 	else if (type.equals("Character"))
 	    return CStdType.Char;
@@ -174,6 +192,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     
     private void buildInit(SIRPipeline node) {
 	JStatement[] initStatements = new JStatement[node.size()];
+	//Add to the init statement any anonymously created SIR ops
+	//that are already registered
 	for (int i = 0; i < node.size(); i++) {
 	    initStatements[i] = new SIRInitStatement(null, null, JExpression.EMPTY,
 						     node.get(i));
@@ -228,20 +248,30 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	SIROperator current;
 	SIROperator oldParentOperator = parentOperator;
 	SIRStream oldParentStream = parentStream;
-
-	num++;
-
+	/* true if this class was created with an anonymous creation */
+	boolean anonCreation = false;
+	
+	blockStart("ClassDeclaration");
+	printMe("Class Name: " + ident);
 	if (self.getSourceClass() != null)
 	    printMe("In " + 
-			       self.getSourceClass().getSuperClass().getIdent() + num);
+		    self.getSourceClass().getSuperClass().getIdent());
+
+	// if the name of the class being declared is the same
+	// as the name of the superclass then it is anonymous
+	if (ident == self.getSourceClass().getSuperClass().getIdent())
+	    anonCreation = true;
 	
 	// create a new SIROperator
 	current = newSIROP(self);
 
-	//If there is no toplevel stream set, set it, this is it!
-	if (topLevel == null)
-	    topLevel = (SIRStream) current;
-	
+	//If this class is public then it is the topLevel stream (entry point)
+	if (self.getSourceClass().isPublic()) {
+	    if (topLevel == null)
+		topLevel = (SIRStream) current;
+	    else
+		at.dms.util.Utils.fail("Toplevel Stream already set");	
+	}
 	if (current == null) 
 	    printMe("Null");
 	
@@ -257,7 +287,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
 	/* Perform any operations needed after the childern are visited */
 	postVisit(current);
-	
+
+	/*
+	  if this is not an anonymous creation add the SIR op to the 
+	   "symbol table" 
+	*/
+	if (!anonCreation)
+	    addVisitedOp(ident, current);
+	     
 	parentStream = oldParentStream;
 	parentOperator = oldParentOperator;
 	
@@ -960,6 +997,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
          JExpression[] params)
     {
         blockStart("UnqualifiedInstanceCreation");
+	printMe("  Declaring: " + type.getIdent());
 	if (params.length == 0)
 	    params = JExpression.EMPTY;
 	if (type.getIdent().equals("Channel")) 
@@ -1038,6 +1076,23 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (isSIRExp(self)) {
 	    printMe("SIR Expression " + ident);
 	    return newSIRExp(self, args);
+	}
+	else if (ident.equals("add")) {            //Handle an add call in a pipeline
+	    //Parent must be a pipeline
+	    if (parentStream instanceof SIRPipeline) {
+		if (args.length > 1)
+		    at.dms.util.Utils.fail("Exactly one arg to add() allowed");
+		//Visit the argument (Exactly one)
+		JExpression SIROp = (JExpression) args[0].accept(this);
+		//if it is a anonymous creation do nothing, it will be added elsewhere
+		//if it is a named creation, lookup in the symbol table for the visited
+		//node and add it to the pipeline
+		if (SIROp instanceof JUnqualifiedInstanceCreation) {
+		    SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
+						getType().getCClass().getIdent());
+		    ((SIRPipeline)parentStream).add(st);
+		}
+	    }
 	}
 	else {             //Not an SIR call
 	    for (int i = 0; i < args.length; i++)

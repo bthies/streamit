@@ -85,12 +85,13 @@ public class TestK2S extends Main
         if (options.proc > tree.length)
             options.proc = tree.length;
 
-        if (options.multi)
+        if (options.multi) {
             parseMultiProc(tree);
-        else
+	}
+        else {
             for (int count = 0; count < tree.length; count++)
                 tree[count] = parseFile((File)infiles.elementAt(count));
-
+	}
         infiles = null;
 
         if (errorFound)
@@ -119,27 +120,27 @@ public class TestK2S extends Main
 	Kopi2SIR k2s = new Kopi2SIR();
 	SIRStream[] topLevel = new SIRStream[tree.length];
 
+	System.out.println(tree.length);
+	
 	for (int count = 0; count < tree.length; count++)
 	    {
 		//Return topLevel for each tree
 		topLevel[count] = (SIRStream)tree[count].accept(k2s);
 	    }
 	
-	System.out.println("---------------------------");
+	//	System.out.println("---------------------------");
 
 	
 
-	SIRPrinter sirPrinter = new SIRPrinter();
-
 	for (int count = 0; count < tree.length; count++)
 	    {
+		SIRPrinter sirPrinter = new SIRPrinter();
 		//Return topLevel for each tree
 		topLevel[count].accept(sirPrinter);
+		sirPrinter.close();
 	    }
 
-	sirPrinter.close();
-
-	System.out.println("---------------------------");
+	//	System.out.println("---------------------------");
 	/*
 	sirPrinter = new SIRPrinter();
 	topLevel[0] = SIRBuilder.buildHello6();
@@ -171,8 +172,8 @@ public class TestK2S extends Main
 	
 	CodeSequence.endSession();
 	
-	System.out.println("---------------------------");
-	
+	//System.out.println("---------------------------");
+       	
 	
 	/*	k2s = new Kopi2SIR();
 

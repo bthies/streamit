@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.1 2003-11-19 23:18:18 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.2 2003-11-20 17:53:21 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -21,6 +21,7 @@ admins = 'streamit-regtest-log@cag.lcs.mit.edu'
 users = 'streamit-regtest@cag.lcs.mit.edu'
 cvs_root = '/projects/raw/cvsroot'
 regtest_root = '/home/bits7/NO_BACKUP/streamit/regtest_working'
+# regtest_root = '/home/bits8/streamit/regtest'
 rt_root = '/projects/streamit/www/rt'
 smtp_server = 'catfish.lcs.mit.edu'
 
@@ -116,6 +117,9 @@ class RunRegTests:
 
         self.run_and_log('cvs -d %s co streams' % cvs_root, 'cvslog',
                          'CVS checkout')
+        self.run_and_log('make -C %s/regtest/tools/texec' % \
+                         self.streamit_home, 'texeclog',
+                         'Building texec')
         self.run_and_log('make -C %s/src' % self.streamit_home, 'makelog',
                          'Building the compiler')
         self.run_and_log('make -C %s/library/c' % self.streamit_home,

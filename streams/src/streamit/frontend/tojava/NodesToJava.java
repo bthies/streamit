@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.35 2002-09-26 19:26:49 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.36 2002-09-26 20:30:14 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -645,7 +645,16 @@ public class NodesToJava implements FEVisitor
                 TypePrimitive.TYPE_VOID)
             {
                 result += "public class " + spec.getName() +
-                    " extends StreamIt";
+                    " extends StreamIt\n";
+                result += indent + "{\n";
+                addIndent();
+                result += indent + "public static void main(String[] args) {\n";
+                addIndent();
+                result += indent + spec.getName() + " program = new " +
+                    spec.getName() + "();\n";
+                result += indent + "program.run(args);\n";
+                unIndent();
+                result += indent + "}\n";
             }
             else
             {
@@ -661,9 +670,9 @@ public class NodesToJava implements FEVisitor
                 case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
                     break;
                 }
+                result += "\n" + indent + "{\n";
+                addIndent();
             }
-            result += "\n" + indent + "{\n";
-            addIndent();
         }
         else
         {

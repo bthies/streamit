@@ -1,20 +1,37 @@
-splitjoin AutoCor(int N, int NLAGS) {
-    split Duplicate();
-    for (int lag=0; lag<NLAGS; lag++)
-	add float->float filter {
-	work push N pop N {
-	    float sum = 0;
-	    for (int i=0; i<N-lag; i++) {
-		sum += peek(0) * peek(lag);
-		pop();
-	    }
-	    for (int i=0; i<lag; i++) {
-		pop();
-	    }
-	    push(sum);
-	}
-    };
-    join RoundRobin();
+void->void pipeline AutoCor {
+  add OneSource();
+  add Cor1(32, 8);
+  add FloatPrinter();
 }
 
+/* Produce an autocorrelation series for some input.  The input
+ * is a series of vectors N long; the output is the autocorrelation
+ * series NLAGS long. */
+float->float splitjoin Cor1(int N, int NLAGS) {
+  split duplicate;
+  for (int lag = 0; lag < NLAGS; lag++) {
+    // Calculate a single autocorrelation for lag:
+    add float->float filter {
+      work pop N push 1 {
+        float sum = 0;
+        for (int i = 0; i < N-lag; i++)
+          sum += peek(i) * peek(i+lag);
+        for (int i = 0; i < N; i++)
+          pop();
+        push(sum);
+      }
+    }
+  }
+  join roundrobin;
+}
+
+void->float filter OneSource {
+  float n;
+  init { n = 0; }
+  work push 1 { push(n); n += 0.01; }
+}
+
+float->void filter FloatPrinter {
+  work pop 1 { print(pop()); }
+}
 

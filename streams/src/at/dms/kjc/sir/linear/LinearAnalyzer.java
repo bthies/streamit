@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.5 2002-09-20 18:09:37 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.6 2002-09-23 21:26:22 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -214,7 +214,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	int[] splitWeights   = splitter.getWeights();
 	int[] joinWeights    = joiner.getWeights();
 	
-	LinearPrinter.println("Visiting SplitJoin");
+	LinearPrinter.println("Visiting SplitJoin (" + self + ")");
 	LinearPrinter.println(" splitter: " + splitter.getType() +
 			      makeStringFromIntArray(splitWeights));
 	LinearPrinter.println(" joiner: " + joiner.getType() + 
@@ -260,11 +260,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// dispatch based on the splitter 
 	if (splitter.getType() == SIRSplitType.DUPLICATE) {
 	    // process duplicate splitter
-	    sjTransform = LinearTransformSplitjoin.calculateDuplicate(repList, joinWeights);
+	    sjTransform = LinearTransformSplitJoin.calculateDuplicate(repList, joinWeights);
 	} else if ((splitter.getType() == SIRSplitType.WEIGHTED_RR) ||
 		   (splitter.getType() == SIRSplitType.ROUND_ROBIN)) {
 	    // process roundrobin splitter
-	    sjTransform = LinearTransformSplitjoin.calculateRoundRobin(repList, joinWeights, splitWeights);
+	    sjTransform = LinearTransformSplitJoin.calculateRoundRobin(repList, joinWeights, splitWeights);
 	} else if (splitter.getType() == SIRSplitType.NULL) {
 	    LinearPrinter.println(" Ignoring null splitter.");
 	} else {
@@ -291,7 +291,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    LinearPrinter.println(" transform unsuccessful. stop.");
 	    return;
 	}
-
+	
+	LinearPrinter.println(" transform successful.");
+	LinearPrinter.println("Linear splitjoin found: " + self +
+			      "\n-->Matrix:\n" + newRep.getA() +
+			      "\n-->Constant Vector:\n" + newRep.getb());
 	// add a mapping from this split join to the new linear representation
 	this.filtersToLinearRepresentation.put(self, newRep);
     }

@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.10 2002-09-18 17:15:37 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.11 2002-09-23 21:26:22 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -166,6 +166,44 @@ public class FilterMatrix {
 	}
 
 	return;
+    }
+
+    /**
+     * Copies numCols from the source matrix starting at (0,sourceOffset)
+     * into this matrix beginning at (0,destOffset).
+     * (This is used to merge columns from one filter matrix into another
+     * during splitjoin combinations.)
+     **/
+    public void copyColumnsAt(int destOffset, FilterMatrix sourceMatrix, int srcOffset, int numCols) {
+	String argString = ("destOffset: " + destOffset + ". srcOffset: " + srcOffset + ". numCols: " + numCols);
+	if (sourceMatrix == null) {throw new IllegalArgumentException("Null source matrix");}
+	// First, do some crazy bounds checking
+	// make sure that the number of rows is equal
+	if (this.internalSizeRows != sourceMatrix.internalSizeRows) {
+	    System.err.println("Args: " + argString);
+	    System.err.println("this: \n" + this);
+	    System.err.println("source:\n" + sourceMatrix);
+	    throw new IllegalArgumentException("Source and destination marices don't have the same # of rows.");
+	}
+	    
+	// make sure that the dest offset + numCols doesn't overrun the bounds of this
+	if (this.internalSizeCols < (destOffset + numCols)) {
+	    throw new IllegalArgumentException("Copy past the right side of this matrix:" + argString);
+	}
+	// make sure that the source offset + numCols doesn't overrun the bounds of source
+	if (sourceMatrix.internalSizeCols < (srcOffset + numCols)) {
+	    throw new IllegalArgumentException("Copy from past the right side of the source matrix");
+	}
+	    
+
+	// for each row
+	for (int i=0; i<this.internalSizeRows; i++) {
+	    // copy each column
+	    for (int j=0; j<numCols; j++) {
+		// do the copy
+		this.internalMatrix[i][destOffset+j] = sourceMatrix.internalMatrix[i][srcOffset+j];
+	    }
+	}
     }
 				
 					       

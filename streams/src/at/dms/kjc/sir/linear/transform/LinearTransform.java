@@ -34,6 +34,20 @@ public abstract class LinearTransform {
 	return (a*b)/gcd(a,b);
     }
 
+    /** calculates the least common multiple of all the integers contained in the array. **/
+    public static int lcm(int[] numbers) {
+	// if we don't have any numbers, complain.
+	if (!(numbers.length > 0)) {
+	    throw new IllegalArgumentException("no integers were found in the array in lcm(int[])");
+	}
+	int currentLcm = numbers[0];
+	for (int i=1; i<numbers.length; i++) {
+	    currentLcm = lcm(currentLcm, numbers[i]);
+	}
+	return currentLcm;
+    }
+							 
+
 
     /**
      * Return the greatest factor that evenly divids both m and n.
@@ -41,6 +55,10 @@ public abstract class LinearTransform {
      * From http://www.brent.worden.org/algorithm/mathematics/greatestCommonDenominator.html.
      **/
     public static int gcd(int a, int b) {
+	if ((a <= 0) || (b <= 0)) {
+	    throw new IllegalArgumentException("Bad arguments to lcm: " +
+					       "(" + a + "," + b + ")");
+	}
 	int m, n;
 	if (a < b) {
 	    n = a; m = b;
@@ -57,7 +75,18 @@ public abstract class LinearTransform {
 	return d;
     }
 
-
+    /** gets the gcd of an array of numbers **/
+    public static int gcd(int[] arr) {
+	if (arr.length < 1) {
+	    throw new IllegalArgumentException("No numbers passed to gcd");
+	}
+	int currentGcd = arr[0];
+	for (int i=1; i<arr.length; i++) {
+	    currentGcd = gcd(currentGcd, arr[i]);
+	}
+	return currentGcd;
+    }
+    
 }
 
 

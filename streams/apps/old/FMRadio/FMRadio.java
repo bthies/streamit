@@ -10,9 +10,12 @@ public class FMRadio extends Pipeline
     {
 	super();
     }
+
     public void init()
     {
-	//this is junk data... for example only
+        input = new Channel (Float.TYPE, 1);
+        output = new Channel (Float.TYPE, 1);
+
 	float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
 	float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
 	int numberOfTaps = 100;

@@ -959,9 +959,6 @@ public class TraceIRtoC extends SLIREmptyVisitor
 
     private boolean isMathMethod(JExpression prefix, String ident) 
     {
-	if (ident.equals("atan") && prefix instanceof JTypeNameExpression)
-	    System.out.println(((JTypeNameExpression)prefix).getQualifiedName());
-
 	if (prefix instanceof JTypeNameExpression &&
 	    ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
 	    (ident.equals("acos") ||

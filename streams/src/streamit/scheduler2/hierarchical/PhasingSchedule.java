@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.1 2002-06-09 22:38:51 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.2 2002-06-13 22:43:29 karczma Exp $ */
 
 import java.util.Vector;
 import streamit.scheduler.Schedule;
@@ -32,20 +32,19 @@ public class PhasingSchedule extends DestroyedClass
     final Vector pushSize = new Vector();
     final Vector phases = new Vector();
     Schedule schedule;
-    final StreamInterface streamTop, streamBottom;
+    final StreamInterface stream;
 
     /**
      * Setup a PhasingSchedule with a real Schedule.
      */
     public PhasingSchedule(
-        StreamInterface stream,
+        StreamInterface _stream,
         Schedule _schedule,
         int peekAmount,
         int popAmount,
         int pushAmount)
     {
-        streamTop = stream;
-        streamBottom = stream;
+        stream = _stream;
         schedule = _schedule;
         nPhases = 1;
         peekSize.add(new Integer(peekAmount));
@@ -59,13 +58,21 @@ public class PhasingSchedule extends DestroyedClass
     /**
      * Setup a PhasingSchedule for being a proper phasing schedule.
      */
-    public PhasingSchedule(StreamInterface top, StreamInterface bottom)
+    public PhasingSchedule(StreamInterface _stream)
     {
-        streamTop = top;
-        streamBottom = bottom;
+        stream = _stream;
         overallPeek = 0;
         overallPop = 0;
         overallPush = 0;
+    }
+    
+    /**
+     * Get the stream that corresponds to this particular phase.
+     * @return phase's stream
+     */
+    StreamInterface getStream ()
+    {
+        return stream;
     }
 
     /**
@@ -132,7 +139,7 @@ public class PhasingSchedule extends DestroyedClass
      * Otherwise, it will store 0's, as this sub-stream does not
      * affect communication outside this stream.
      */
-    public void appendPhase(PhasingSchedule phase, StreamInterface subStream)
+    public void appendPhase(PhasingSchedule phase)
     {
         // first append the new phase
         nPhases++;
@@ -140,16 +147,25 @@ public class PhasingSchedule extends DestroyedClass
 
         // find out how much this phase communicates withoutside world
         int peek = 0, pop = 0, push = 0;
+        StreamInterface phaseStream = phase.getStream();
 
-        if (subStream == streamTop)
+        // if the stream corresponding to this phase is my stream
+        // (somebody constructed a phase for my stream specifically)
+        // or if it is the top of my stream, I need to account for this
+        // phase's peek & pop in my peek & pop
+        if (phaseStream == stream || phaseStream == stream.getTop())
         {
             peek = phase.getOverallPeek();
-            pop = phase.getOverallPop ();
+            pop = phase.getOverallPop();
         }
-        
-        if (subStream == streamBottom)
+
+        // if the stream corresponding to this phase is my stream
+        // (somebody constructed a phase for my stream specifically)
+        // or if it is the top of my stream, I need to account for this
+        // phase's push in my push
+        if (phaseStream == stream || phaseStream == stream.getBottom())
         {
-            push = phase.getOverallPush ();
+            push = phase.getOverallPush();
         }
 
         // update this stream's communication
@@ -157,14 +173,14 @@ public class PhasingSchedule extends DestroyedClass
         overallPop = overallPop + pop;
         overallPush = overallPush + push;
     }
-    
+
     /**
      * Get the amount of data that this phasing schedule peeks, when
      * all of its phases are executed.  This amount is reported as
      * seen by the object whose schedule is being reported here.
      * @return peek size for overall schedule
      */
-    public int getOverallPeek ()
+    public int getOverallPeek()
     {
         return overallPeek;
     }
@@ -175,7 +191,7 @@ public class PhasingSchedule extends DestroyedClass
      * seen by the object whose schedule is being reported here.
      * @return pop size for overall schedule
      */
-    public int getOverallPop ()
+    public int getOverallPop()
     {
         return overallPop;
     }
@@ -186,7 +202,7 @@ public class PhasingSchedule extends DestroyedClass
      * seen by the object whose schedule is being reported here.
      * @return push size for overall schedule
      */
-    public int getOverallPush ()
+    public int getOverallPush()
     {
         return overallPush;
     }

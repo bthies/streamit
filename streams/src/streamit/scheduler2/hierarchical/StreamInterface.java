@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamInterface.java,v 1.1 2002-06-09 22:38:52 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.2 2002-06-13 22:43:30 karczma Exp $ */
 
 import streamit.scheduler.Schedule;
 
@@ -19,7 +19,7 @@ import streamit.scheduler.Schedule;
  * @author  Michal Karczmarek
  */
 
-abstract interface StreamInterface
+public interface StreamInterface extends streamit.scheduler.base.StreamInterface
 {
     /**
      * Returns the object that has ability to consume/peek data
@@ -28,7 +28,7 @@ abstract interface StreamInterface
      * would be self (splits and joins are considered parts of the
      * stream objects).
      */
-    StreamInterface getTop();
+    public streamit.scheduler.base.StreamInterface getTop();
 
     /**
      * Returns the object that has ability to consume/peek data
@@ -37,7 +37,7 @@ abstract interface StreamInterface
      * would be self (splits and joins are considered parts of the
      * stream objects).
      */
-    StreamInterface getBottom();
+    public streamit.scheduler.base.StreamInterface getBottom();
 
     /**
      * Return the number of phases that this StreamInterface's steady 
@@ -68,10 +68,10 @@ abstract interface StreamInterface
     public int getSteadyPhaseNumPush(int phase);
 
     /**
-     * Return the steady state schedule associated with this object.
-     * @return stready state schedule
+     * Return the phasing steady state schedule associated with this object.
+     * @return phasing stready state schedule
      */
-    public Schedule getSteadySchedule();
+    public PhasingSchedule getPhasingSteadySchedule();
 
     /**
      * Return a phase of the steady state schedule.
@@ -112,11 +112,11 @@ abstract interface StreamInterface
     public int getInitStageNumPush(int stage);
 
     /**
-     * Return the initialization schedule associated with this 
+     * Return the phasing initialization schedule associated with this 
      * object.
-     * @return intitialization schedule
+     * @return phasing intitialization schedule
      */
-    public Schedule getInitSchedule();
+    public PhasingSchedule getPhasingInitSchedule();
 
     /**
      * Return a stage of the initialization schedule.

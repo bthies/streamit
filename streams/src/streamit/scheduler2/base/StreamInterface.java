@@ -1,6 +1,8 @@
 package streamit.scheduler.base;
 
-/* $Id: StreamInterface.java,v 1.2 2002-06-09 22:38:47 karczma Exp $ */
+import streamit.scheduler.Schedule;
+
+/* $Id: StreamInterface.java,v 1.3 2002-06-13 22:43:25 karczma Exp $ */
 
 /**
  * This interface will provide the basic functionality for
@@ -14,6 +16,12 @@ package streamit.scheduler.base;
 
 public interface StreamInterface
 {
+    /**
+     * Compute the appropriate schedules for this  Stream.  This function
+     * computes both the steady state and initialization schedules.
+     */
+    public void computeSchedule ();
+    
     /**
      * return number of data peeked in a minimal steady execution
      * of this element.
@@ -36,9 +44,23 @@ public interface StreamInterface
     public int getSteadyPush ();
     
     /**
-     * compute the steady state peek/pop/push values.
-     * This will compute the number of executions of each
-     * subcomponent in steady state.
+     * return number of data peeked during intialization 
+     * of this element.
+     * @return number of data peeked during initialization
      */
-    void computeSteadyState ();
+    public int getInitPeek ();
+
+    /**
+     * return number of data popped during initialization
+     * of this element.
+     * @return number of data popped during initialization
+     */
+    public int getInitPop ();
+
+    /**
+     * return number of data pushed during initialization
+     * of this element.
+     * @return number of data pushed during initialization
+     */
+    public int getInitPush ();
 }

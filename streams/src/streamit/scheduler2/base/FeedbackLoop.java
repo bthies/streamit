@@ -5,7 +5,7 @@ import streamit.scheduler.iriter.Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.2 2002-06-09 22:38:46 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.3 2002-06-13 22:43:24 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -14,7 +14,7 @@ import streamit.misc.Fraction;
  * @author  Michal Karczmarek
  */
 
-public class FeedbackLoop extends StreamWithSplitNJoin
+abstract public class FeedbackLoop extends StreamWithSplitNJoin
 {
     FeedbackLoopIter feedbackLoop;
     StreamInterface body;
@@ -29,9 +29,10 @@ public class FeedbackLoop extends StreamWithSplitNJoin
         body = factory.newFrom (feedbackLoop.getBody ());
         loop = factory.newFrom (feedbackLoop.getLoop ());
         
-        // and get them to compute their schedules
-        body.computeSteadyState();
-        loop.computeSteadyState();
+        // compute my steady schedule
+        // my children already have computed their steady schedules,
+        // so I just have to do mine
+        computeSteadyState();
     }
 
     /**
@@ -61,12 +62,6 @@ public class FeedbackLoop extends StreamWithSplitNJoin
     {
         // not tested yet.
         ASSERT (false);
-        
-        // first, initialize the children:
-        {
-            body.computeSteadyState ();
-            loop.computeSteadyState ();
-        }
         
         // amount of data distributed to and collected by the split
         // and join

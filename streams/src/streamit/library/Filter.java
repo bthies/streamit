@@ -173,6 +173,7 @@ public abstract class Filter extends Stream
         }
 
         addFilter ();
+        initCount ();
     }
 
     public abstract void work();

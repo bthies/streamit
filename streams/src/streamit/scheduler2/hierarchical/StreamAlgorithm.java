@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.1 2002-06-09 22:38:52 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.2 2002-06-13 22:43:29 karczma Exp $ */
 
 import streamit.scheduler.Schedule;
 import streamit.misc.DestroyedClass;
@@ -30,25 +30,39 @@ public class StreamAlgorithm extends DestroyedClass
     {
         stream = _stream;
 
-        initSchedule = new PhasingSchedule(stream.getTop(), stream.getBottom());
-        steadySchedule =
-            new PhasingSchedule(stream.getTop(), stream.getBottom());
+        initSchedule = new PhasingSchedule(stream);
+        steadySchedule = new PhasingSchedule(stream);
     }
-    
+
     /**
      * Add a stage to the initialization schedule
      */
-    public void addInitScheduleStage (PhasingSchedule newStage)
+    public void addInitScheduleStage(PhasingSchedule newStage)
     {
-        initSchedule.appendPhase (newStage, stream);
+        initSchedule.appendPhase(newStage);
     }
-    
+
     /**
      * Add a phase to the steady schedule
      */
-    public void addSchedulePhase (PhasingSchedule newPhase)
+    public void addSchedulePhase(PhasingSchedule newPhase)
     {
-        steadySchedule.appendPhase (newPhase, stream);
+        steadySchedule.appendPhase(newPhase);
+    }
+
+    public int getInitPeek()
+    {
+        return initSchedule.getOverallPeek();
+    }
+
+    public int getInitPop()
+    {
+        return initSchedule.getOverallPop();
+    }
+
+    public int getInitPush()
+    {
+        return initSchedule.getOverallPush();
     }
 
     public int getNumInitStages()
@@ -74,6 +88,11 @@ public class StreamAlgorithm extends DestroyedClass
     public PhasingSchedule getInitScheduleStage(int phase)
     {
         return initSchedule.getPhase(phase);
+    }
+
+    public PhasingSchedule getPhasingInitSchedule()
+    {
+        return initSchedule;
     }
 
     public Schedule getInitSchedule()
@@ -104,6 +123,11 @@ public class StreamAlgorithm extends DestroyedClass
     public PhasingSchedule getSteadySchedulePhase(int phase)
     {
         return steadySchedule.getPhase(phase);
+    }
+
+    public PhasingSchedule getPhasingSteadySchedule()
+    {
+        return steadySchedule;
     }
 
     public Schedule getSteadySchedule()

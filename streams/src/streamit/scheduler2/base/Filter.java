@@ -2,7 +2,7 @@ package streamit.scheduler.base;
 
 import streamit.scheduler.iriter.FilterIter;
 
-/* $Id: Filter.java,v 1.2 2002-06-09 22:38:46 karczma Exp $ */
+/* $Id: Filter.java,v 1.3 2002-06-13 22:43:25 karczma Exp $ */
 
 /**
  * Computes some basic data for Filters.
@@ -11,7 +11,7 @@ import streamit.scheduler.iriter.FilterIter;
  * @author  Michal Karczmarek
  */
 
-public class Filter extends Stream
+abstract public class Filter extends Stream
 {
     final public FilterIter filterIter;
 
@@ -25,9 +25,6 @@ public class Filter extends Stream
 
     public void computeSteadyState()
     {
-        // not tested yet.
-        ASSERT(false);
-
         int pop = 0, push = 0;
         int maxPeek = 0;
 

@@ -1,13 +1,14 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: Filter.java,v 1.2 2002-06-13 22:43:28 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.1 2002-06-13 22:43:29 karczma Exp $ */
 
-import streamit.scheduler.iriter.FilterIter;
+import streamit.scheduler.iriter.PipelineIter;
+import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.Schedule;
 
 /**
  * This class provides the required functions to implement a schduler
- * for a Filter.  Mostly, it simply implements wrappers for functions
+ * for a Pipeline.  Mostly, it simply implements wrappers for functions
  * in StreamInterface and passes them on to the StreamAlgorithm.  This
  * is necessary, 'cause Java doesn't support multiple inheritance.
  * 
@@ -15,49 +16,68 @@ import streamit.scheduler.Schedule;
  * @author  Michal Karczmarek
  */
 
-abstract public class Filter
-    extends streamit.scheduler.base.Filter
+abstract public class Pipeline
+    extends streamit.scheduler.base.Pipeline
     implements StreamInterface
 {
     final protected StreamAlgorithm algorithm = new StreamAlgorithm(this);
 
-    public Filter(FilterIter iterator)
+    public Pipeline(PipelineIter iterator, StreamFactory factory)
     {
-        super(iterator);
+        super(iterator, factory);
     }
 
     /**
      * compute the initialization and steady state schedules
      */
     abstract public void computeSchedule();
-    
-    public streamit.scheduler.base.StreamInterface getTop ()
+
+    /**
+     * Return an apporpriate hierarchical child.  All children of a 
+     * hierarchical pipeline must be hierarchical as well.  This function
+     * asserts if a child is not hierarchical.
+     * @return hierarchical child of the pipeline
+     */
+    protected StreamInterface getHierarchicalChild(int nChild)
     {
-        return this;
+        streamit.scheduler.base.StreamInterface child;
+        child = getChild(nChild);
+        
+        if (!(child instanceof StreamInterface))
+        {
+            ERROR("This pipeline contains a child that is no hierarchical");
+        }
+        
+        return (StreamInterface) child;
     }
-    
-    public streamit.scheduler.base.StreamInterface getBottom ()
+
+    public streamit.scheduler.base.StreamInterface getTop()
     {
-        return this;
+        return getChild(0);
+    }
+
+    public streamit.scheduler.base.StreamInterface getBottom()
+    {
+        return getChild(getNumChildren() - 1);
     }
 
     // These functions implement wrappers for StreamAlgorithm
     // I have to use this stupid style of coding to accomodate
     // Java with its lack of multiple inheritance
-    
-    public int getInitPeek ()
+
+    public int getInitPeek()
     {
-        return algorithm.getInitPeek ();
+        return algorithm.getInitPeek();
     }
 
-    public int getInitPop ()
+    public int getInitPop()
     {
-        return algorithm.getInitPop ();
+        return algorithm.getInitPop();
     }
 
-    public int getInitPush ()
+    public int getInitPush()
     {
-        return algorithm.getInitPush ();
+        return algorithm.getInitPush();
     }
 
     public int getNumInitStages()

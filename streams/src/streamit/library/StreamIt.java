@@ -4,6 +4,9 @@ import streamit.Pipeline;
 import java.util.List;
 import java.util.ListIterator;
 import java.lang.reflect.Array;
+import streamit.iriter.Iterator;
+import streamit.iriter.StreamFactory;
+import streamit.scheduler.base.StreamInterface;
 
 import streamit.scheduler.Schedule;
 
@@ -163,6 +166,10 @@ public class StreamIt extends Pipeline
         {
             // not implemented yet. waiting for the scheduler to
             // be done.
+            Iterator selfIter = new Iterator (this);
+            StreamFactory factory = new StreamFactory ();
+            StreamInterface selfStream = factory.newFrom (selfIter);
+            selfStream.computeSchedule ();
             ASSERT (false);
             
             /*

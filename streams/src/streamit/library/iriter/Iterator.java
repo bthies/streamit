@@ -8,7 +8,7 @@ import streamit.Stream;
 
 public class Iterator implements streamit.scheduler.iriter.Iterator
 {
-    Iterator(Stream _stream)
+    public Iterator(Stream _stream)
     {
         stream = _stream;
     }

@@ -8,18 +8,12 @@ import java.util.HashMap;
 import streamit.scheduler.iriter.Iterator;
 import streamit.scheduler.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.1 2002-05-24 23:10:31 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.2 2002-06-13 22:43:23 karczma Exp $ */
 
 /**
- * <dl>
- * <dt>Purpose: Extract and Store Buffer Sizes for a Schedule
- * <dd>
- *
- * <dt>Description:
- * <dd> This class uses a valid schedule and an iterator to determine 
+ * This class uses a valid schedule and an iterator to determine 
  * the size of buffers required to execute the schedule.  The class
  * makes an assumption that the buffers will not be shared.
- * </dl>
  * 
  * @version 2
  * @author  Michal Karczmarek

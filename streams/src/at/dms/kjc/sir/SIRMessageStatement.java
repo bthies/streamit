@@ -124,7 +124,10 @@ public class SIRMessageStatement extends JStatement {
 						   args,
 						   latency);
 	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	    // otherwise, visit the arguments
+	    for (int i=0; i<args.length; i++) {
+		args[i].accept(p);
+	    }
 	}
     }
 

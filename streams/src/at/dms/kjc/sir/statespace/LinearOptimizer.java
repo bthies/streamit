@@ -69,7 +69,7 @@ public class LinearOptimizer {
     public LinearFilterRepresentation optimize() {
 
 	int s1, s2;
-			
+				
 	// remove unobservable states
 	transposeSystem();
 	s1 = reduceParameters(false);
@@ -94,7 +94,7 @@ public class LinearOptimizer {
 	    cleanAll(); 
 	    removeUnreachableStates(s2); 
 	}  
-			
+		
 	return extractRep();
     }
 

@@ -23,7 +23,7 @@ public class SIRFeedbackLoop extends SIRStream {
     /**
      * The splitter, which appears at the bottom of the feedback loop.
      */
-    private SIRJoiner splitter;
+    private SIRSplitter splitter;
     /**
      * The delay of this, which is the number of inputs that are drawn
      * from the initPath function before reading them from the loop
@@ -90,4 +90,49 @@ public class SIRFeedbackLoop extends SIRStream {
 				   delay,
 				   initPath);
     }
+
+    /**
+     * Set the Body of the feedback loop 
+     **/
+    public void setBody(SIRStream body) 
+    {
+	this.body = body;
+    }
+    /**
+     * Set the Body of the feedback loop 
+     **/
+    public void setLoop(SIRStream loop) 
+    {
+	this.loop = loop;
+    }
+    /**
+     * Set the Joiner of the feedback loop 
+     **/
+    public void setJoiner(SIRJoiner joiner) 
+    {
+	this.joiner = joiner;
+    }
+    /**
+     * Set the Splitter of the feedback loop 
+     **/
+    public void setSplitter(SIRSplitter splitter) 
+    {
+	this.splitter = splitter;
+    }
+    /**
+     * Set the delay of the feedback loop 
+     **/
+    public void setDelay(int delay) 
+    {
+	this.delay = delay;
+    }
+     /**
+     * Set the Init Path method  of the feedback loop 
+     **/
+    public void setInitPath(JMethodDeclaration initPath)
+    {
+	this.initPath= initPath;
+    }
+    
+    
 }

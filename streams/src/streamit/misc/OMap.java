@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: OMap.java,v 1.4 2003-10-09 21:03:16 dmaze Exp $ */
+/* $Id: OMap.java,v 1.5 2003-12-03 17:41:55 karczma Exp $ */
 
 public class OMap extends AssertedClass
 {
@@ -102,5 +102,15 @@ public class OMap extends AssertedClass
     public OMapIterator find(Object key)
     {
         return new OMapIterator(set.find(new Pair (key, null)));
+    }
+    
+    public OMapIterator upper_bound(Object key)
+    {
+        return new OMapIterator(set.upper_bound(key));
+    }
+
+    public OMapIterator lower_bound(Object key)
+    {
+        return new OMapIterator(set.upper_bound(key));
     }
 }

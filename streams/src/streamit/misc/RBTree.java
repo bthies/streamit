@@ -16,7 +16,7 @@
 
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.7 2003-11-03 20:23:20 karczma Exp $ */
+/* $Id: RBTree.java,v 1.8 2003-12-03 17:41:55 karczma Exp $ */
 
 public class RBTree extends AssertedClass
 {
@@ -58,32 +58,34 @@ public class RBTree extends AssertedClass
     {
         return NULL;
     }
-    
-    public RBNode getMin ()
+
+    public RBNode getMin()
     {
         RBNode min = root;
-        
-        if (min == NULL) return min;
-        
+
+        if (min == NULL)
+            return min;
+
         while (min.left != NULL)
         {
             min = min.left;
         }
-        
+
         return min;
     }
-    
-    public RBNode getMax ()
+
+    public RBNode getMax()
     {
         RBNode max = root;
-        
-        if (max == NULL) return max;
-        
+
+        if (max == NULL)
+            return max;
+
         while (max.right != NULL)
         {
             max = max.right;
         }
-        
+
         return max;
     }
 
@@ -110,6 +112,52 @@ public class RBTree extends AssertedClass
         }
 
         return node;
+    }
+
+    public RBNode upper_bound(Object data)
+    {
+        RBNode upperBound = NULL;
+        RBNode node = root;
+
+        while (node != NULL)
+        {
+            if (myComperator.isLess(data, node.nodeData))
+            {
+                upperBound = node;
+                node = node.left;
+            }
+            else
+            {
+                node = node.right;
+            }
+        }
+
+        return upperBound;
+    }
+
+    public RBNode lower_bound(Object data)
+    {
+        RBNode lowerBound = NULL;
+        RBNode node = root;
+
+        while (node != NULL)
+        {
+            if (myComperator.isLess(data, node.nodeData))
+            {
+                lowerBound = node;
+                node = node.left;
+            }
+            if (myComperator.isLess(node.nodeData, data))
+            {
+                node = node.right;
+            }
+            else
+            {
+                return node;
+            }
+        }
+
+        return lowerBound;
     }
 
     public Pair insert(Object insertData, boolean replace)
@@ -196,7 +244,7 @@ public class RBTree extends AssertedClass
                     {
                         insertionPoint.nodeData = insertData;
                     }
-                    
+
                     return new Pair(insertionPoint, Boolean.FALSE);
                 }
             }
@@ -308,7 +356,7 @@ public class RBTree extends AssertedClass
                 splicedNode.parent.right = splicedChild;
             }
         }
-        
+
         boolean splicedBlack = splicedNode.isBlack();
 
         if (node != splicedNode)
@@ -320,23 +368,28 @@ public class RBTree extends AssertedClass
             splicedNode.black = node.black;
             splicedNode.left = node.left;
             splicedNode.right = node.right;
-            
+
             // fix node's children:
             splicedNode.left.parent = splicedNode;
             splicedNode.right.parent = splicedNode;
-            
+
             // and node's parent:
-	    if (splicedNode.parent == null) {
-		root = splicedNode;
-	    } else {
-		if (splicedNode.parent.left == node)
-		    {
-			splicedNode.parent.left = splicedNode;
-		    } else {
-			splicedNode.parent.right = splicedNode;
-		    }
-	    }
-            
+            if (splicedNode.parent == null)
+            {
+                root = splicedNode;
+            }
+            else
+            {
+                if (splicedNode.parent.left == node)
+                {
+                    splicedNode.parent.left = splicedNode;
+                }
+                else
+                {
+                    splicedNode.parent.right = splicedNode;
+                }
+            }
+
             // set node's left, right, parent AND nodeData
             // to be null (not even NULL)
             node.left = null;
@@ -350,7 +403,7 @@ public class RBTree extends AssertedClass
             // perform the fixup from CLR
             RBDeleteFixup(splicedChild);
         }
-        
+
         size = size - 1;
     }
 

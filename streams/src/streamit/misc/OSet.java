@@ -64,7 +64,7 @@ public class OSet
     {
         Pair result = tree.insert(data, false);
         return new Pair(
-            new OSetIterator((RBNode) result.first),
+            new OSetIterator((RBNode)result.first),
             result.second);
     }
 
@@ -84,5 +84,15 @@ public class OSet
     public OSetIterator find(Object data)
     {
         return new OSetIterator(tree.find(data));
+    }
+
+    public OSetIterator upper_bound(Object key)
+    {
+        return new OSetIterator(tree.upper_bound(key));
+    }
+
+    public OSetIterator lower_bound(Object key)
+    {
+        return new OSetIterator(tree.upper_bound(key));
     }
 }

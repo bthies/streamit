@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.51 2005-01-23 00:38:26 thies Exp $
+# $Id: strc,v 1.52 2005-01-28 00:50:33 janiss Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -295,6 +295,7 @@ sub get_options
 			    "scheduler=s",
 			    "destroyfieldarray!",
 			    "cacheopt!",
+			    "nomult!",
 			    "rename1!",
 			    "rename2!",
 			    "peekratio=i");
@@ -543,6 +544,7 @@ sub get_kjc_opts
     $opts{cluster} && ($kjcopts .= " --cluster " . $opts{cluster});
     $opts{destroyfieldarray} && ($kjcopts .= " --destroyfieldarray");
     $opts{cacheopt} && ($kjcopts .= " --cacheopt");
+    $opts{nomult} && ($kjcopts .= " --nomult");
     $opts{rename1} && ($kjcopts .= " --rename1");
     $opts{rename2} && ($kjcopts .= " --rename2");
     $opts{peekratio} && ($kjcopts .= " --peekratio " . $opts{peekratio});

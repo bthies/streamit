@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.63 2005-01-23 00:38:35 thies Exp $
+ * $Id: KjcOptions.opt,v 1.64 2005-01-28 00:50:38 janiss Exp $
  */
 
 prefix Kjc
@@ -299,6 +299,11 @@ longname		"peekratio"
 	default		"-1"
 	requireArgument
 	help		"Increases multiplicity of peeking filters to make sure that (pop * ratio) >= (peek - pop)"
+
+longname		"nomult"
+	type		boolean
+	default		"false"
+	help		"Do not increase multiplicity of partitions"
 
 
 longname		"rename1"

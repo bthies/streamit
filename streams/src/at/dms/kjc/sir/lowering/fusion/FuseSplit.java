@@ -85,7 +85,9 @@ public class FuseSplit {
 	//System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + numParts + " filters..."); 
 
         // first refactor the splitjoin so we can do partial fusing
-        RefactorSplitJoin.addHierarchicalChildren(sj, partition);
+        SIRSplitJoin newSj = RefactorSplitJoin.addHierarchicalChildren(sj, partition);
+	sj.getParent().replace(sj, newSj);
+	sj = newSj;
         // then fuse the eligible components
         for (int i=0; i<partition.size(); i++) {
             // leave the 1-way components alone, since they weren't

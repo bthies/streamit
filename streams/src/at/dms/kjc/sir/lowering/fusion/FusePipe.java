@@ -88,10 +88,16 @@ public class FusePipe {
      * specifies the grouping sequence of who gets fused together.
      */
     public static void fuse(SIRPipeline pipe, PartitionGroup partitions) {
-	RefactorPipeline.addHierarchicalChildren(pipe, partitions);
+	// make a new pipeline having the proper partition
+	// arrangement, and replace all current children of <pipe>
+	// with this <newPipe>.  This is because we're trying to just
+	// mutate <pipe> instead of returning a new one.
+	SIRPipeline newPipe = RefactorPipeline.addHierarchicalChildren(pipe, partitions);
+	newPipe.setInit(SIRStream.makeEmptyInit());
+	pipe.replace(pipe.get(0), pipe.get(pipe.size()-1), newPipe);
 	for (int i=0; i<partitions.size(); i++) {
 	    if (partitions.get(i)!=1) {
-		SIRPipeline child = (SIRPipeline)pipe.get(i);
+		SIRPipeline child = (SIRPipeline)newPipe.get(i);
 		internalFuse(child);
 		Lifter.eliminatePipe(child);
 	    }
@@ -132,11 +138,20 @@ public class FusePipe {
 	    // call directly
 	    internalFuse(parent);
 	} else {
-	    // otherwise, create a sub-pipeline to contain first..last
-	    RefactorPipeline.addHierarchicalChild(parent, firstIndex, lastIndex);
-	    SIRPipeline newPipe = (SIRPipeline)parent.get(firstIndex);
+	    // otherwise, create a sub-pipeline to contain first..last.
+	    StreamItDot.printGraph(parent, "debug1.dot");
+	    SIRPipeline newPipe = new SIRPipeline(parent, parent.getIdent() + "_Cont",
+						  JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+	    for (int i=lastIndex; i>=firstIndex; i--) {
+		newPipe.add(0, parent.get(i), parent.getParams(i));
+		parent.remove(i);
+	    }
+	    parent.add(firstIndex, newPipe);
+	    StreamItDot.printGraph(parent, "debug2.dot");
 	    internalFuse(newPipe);
+	    StreamItDot.printGraph(parent, "debug3.dot");
 	    Lifter.eliminatePipe(newPipe);
+	    StreamItDot.printGraph(parent, "debug4.dot");
 	}
     }
 

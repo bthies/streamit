@@ -110,10 +110,16 @@ public class Lifter implements StreamVisitor {
 	    // better handling of possible init function arguments?
 	    Utils.assert(str.getFields()==null || str.getFields().length==0,
 			 "Not expecting to find fields in container in Lifter.");
-	    Utils.assert(str.getMethods()==null || str.getMethods().length==0 ||
-			 (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()),
-			 "Not expecting to find methods in container in Lifter, but found " + str.getMethods().length + " in " + str.getName() + ":\n" 
-			 + str.getMethods()[0]);
+	    if (!(str.getMethods()==null || str.getMethods().length==0 ||
+		  (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()))) {
+		System.err.println("Not expecting to find methods in container in Lifter, but found " + 
+				   str.getMethods().length + " in " + str.getName() + " when str.getInit() = " + str.getInit() + " [" + 
+				   str.getInit().hashCode() + "]");
+		for (int i=0; i<str.getMethods().length; i++) {
+		    System.err.println(str.getMethods()[i] + " [" + str.getMethods()[i].hashCode() + "]");
+		}
+		Utils.fail("Aborting.");
+	    }
 	    
 	    int index = parent.indexOf(str);
 	    for (int i=0; i<str.size(); i++) {

@@ -61,7 +61,11 @@ public class LinearRedundancy {
 		    LinearComputationTuple tuple =
 			new LinearComputationTuple(rowsUp + (peekCount - 1 - row),	
 						   A.getElement(row, col));
-		    addUse(tuple, currentExecution);
+		    // only add the tuple if the coefficient is non zero
+		    // (eg we don't care about reusing zero coefficients!)
+		    if (!tuple.getCoefficient().equals(ComplexNumber.ZERO)) {
+			addUse(tuple, currentExecution);
+		    }
 		}
 	    }
 	}

@@ -228,6 +228,7 @@ fn dev_work_est_calc(printServiceStruct)
 	    if (gFinished == gStreamItFilterTiles) {
 	      print_final_stats();
 	      //this should exit!!!!!
+	      fclose(theFile);
 	      gInterrupted = 1;
 	      //this will exit the thread
 	      exit_now(0);

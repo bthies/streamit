@@ -6,6 +6,7 @@
 test fft-local {
   directory docs/examples/hand/fft
   source FFTLocal.java
+  output FFT.out
 }
 
 test fib {

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.36 2003-10-15 18:14:19 mgordon Exp $
+ * $Id: TestExamples.java,v 1.37 2003-10-15 18:59:01 dmaze Exp $
  **/
 package streamittest;
 
@@ -16,7 +16,6 @@ import junit.framework.*;
 public class TestExamples extends StreamITTestCase {
     static String STREAM_ROOT = null;
     static String EXAMPLE_ROOT = null;
-    static String SORT_ROOT = null;
 
     public TestExamples(String name) {
 	this(name, DEFAULT_FLAGS);
@@ -31,7 +30,6 @@ public class TestExamples extends StreamITTestCase {
 	if (STREAM_ROOT == null) {
 	    STREAM_ROOT = Harness.getStreamITRoot();
 	    EXAMPLE_ROOT = STREAM_ROOT + EXAMPLE_PATH;
-	    SORT_ROOT = STREAM_ROOT + SORT_PATH;	    
 	}
     }
 
@@ -95,59 +93,10 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testPhase", flags));
 	suite.addTest(new TestExamples("testchol", flags));
 	suite.addTest(new TestExamples("testMedian", flags));
-	suite.addTest(new TestExamples("testBatcherSort", flags));
-	suite.addTest(new TestExamples("testRadixSort", flags));
-	suite.addTest(new TestExamples("testComparisonCounting", flags));
-	suite.addTest(new TestExamples("testAutoBatcherSort", flags));
-	suite.addTest(new TestExamples("testBubbleSort", flags));
-	suite.addTest(new TestExamples("testInsertionSort", flags));
-	suite.addTest(new TestExamples("testMergeSort", flags));
 	
 	return suite;
     }
     
-    public void testMergeSort() 
-    {
-	String root = SORT_ROOT + "MergeSort/";
-	doConvertCompileRunVerifyTest(root, "MergeSort", 0, 16);
-    }
-
-    public void testInsertionSort() 
-    {
-	String root = SORT_ROOT + "InsertionSort/";
-	doConvertCompileRunVerifyTest(root, "InsertionSort", 0, 16);
-    }
-
-    public void testBubbleSort() 
-    {
-	String root = SORT_ROOT + "BubbleSort/";
-	doConvertCompileRunVerifyTest(root, "BubbleSort", 0, 1);
-    }
-    
-    public void testBatcherSort() 
-    {
-	String root = SORT_ROOT + "BatcherSort/";
-	doConvertCompileRunVerifyTest(root, "BatcherSort", 0, 16);
-    }
-    
-    public void testRadixSort() 
-    {
-	String root = SORT_ROOT + "RadixSort/";
-	doConvertCompileRunVerifyTest(root, "RadixSort", 0, 16);
-    }
-    
-    public void testComparisonCounting() 
-    {
-	String root = EXAMPLE_ROOT + "ComparisonCounting/";
-	doConvertCompileRunVerifyTest(root, "ComparisonCounting", 0, 16);
-    }
-    
-    public void testAutoBatcherSort() 
-    {
-	String root = SORT_ROOT + "BatcherSort/";
-	doConvertCompileRunVerifyTest(root, "AutoBatcherSort", 0, 16);
-    }
-
     public void testPhase() 
     {
 	String root = EXAMPLE_ROOT + "phase/";

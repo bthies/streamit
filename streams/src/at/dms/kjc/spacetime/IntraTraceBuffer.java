@@ -36,12 +36,14 @@ public class IntraTraceBuffer extends OffChipBuffer
 			       FilterTraceNode dst) 
     {
 	super(src, dst);
+	calculateSize();
     }
     
     protected IntraTraceBuffer(FilterTraceNode src,
 			       OutputTraceNode dst) 
     {
 	super(src, dst);
+	calculateSize();
     }
     
     public boolean redundant() 

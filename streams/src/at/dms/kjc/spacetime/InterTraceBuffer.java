@@ -17,6 +17,7 @@ public class InterTraceBuffer extends OffChipBuffer
     {
 	super(edge.getSrc(), edge.getDest());
 	this.edge = edge;
+	calculateSize();
     }
     
     public static InterTraceBuffer getBuffer(Edge edge) 

@@ -37,7 +37,6 @@ public abstract class OffChipBuffer
 	ident = "__buf_" + /*owner.getIODevice().getPort() + */ "_" + unique_id + "__";
 	unique_id++;
 	setType();
-	calculateSize();
     }
 
     public abstract boolean redundant();

@@ -35,7 +35,7 @@ class vRamp extends Filter {
 	
     }
 
-    Channel output = new Channel (Float.TYPE, 1);
+    Channel output = new Channel (Float.TYPE, numberOfElems);
 
     public void initIO ()
     {

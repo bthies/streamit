@@ -11,6 +11,7 @@ import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
@@ -150,7 +151,46 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
 
+	int selfID = NodeEnumerator.getSIROperatorId(self);
 
+	SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
+	SIRPortal incoming[] = SIRPortal.getPortalsWithReceiver(self);
+
+	HashSet sends_to = new HashSet();
+	HashSet receives_from = new HashSet();
+
+	for (int t = 0; t < outgoing.length; t++) {
+	    SIRStream[] receivers = outgoing[t].getReceivers();
+	    for (int i = 0; i < receivers.length; i++) {
+		sends_to.add(receivers[i]);
+	    }
+	}
+
+	for (int t = 0; t < incoming.length; t++) {
+	    SIRPortalSender[] senders = incoming[t].getSenders();
+	    for (int i = 0; i < senders.length; i++) {
+		receives_from.add(senders[i].getStream());
+	    }
+	}
+
+	/*
+	{
+	    Iterator i = sends_to.iterator();
+	    while (i.hasNext()) {
+		print("// sends to "+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"\n");
+	    }
+	}
+
+	{
+	    Iterator i = receives_from.iterator();
+	    while (i.hasNext()) {
+		print("// receives from "+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"\n");
+	    }
+	}
+        
+	print("\n");
+	*/
+	
 	//System.out.print("filter.equals(self): "+(filter.equals(self))+"\n");
 
 	//Entry point of the visitor
@@ -172,12 +212,22 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	p.print("extern int __number_of_iterations;\n");
 
+
+	//////////////////////////////////////////////
+	// Declare Filter Fields
+
+
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
 	for (int i = 0; i < fields.length; i++)
 	   fields[i].accept(this);
 
 	print("\n");
+
+
+	//////////////////////////////////////////////
+	// Declare Socket Variables
+
 
 	//declare input/output socket variables
 	NetStream in = RegisterStreams.getFilterInStream(self);
@@ -191,7 +241,26 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("mysocket *"+out.name()+"out;\n");
 	}
 
-	print("\nvoid __declare_sockets_"+NodeEnumerator.getSIROperatorId(self)+"() {\n");
+	{
+	    Iterator i = sends_to.iterator();
+	    while (i.hasNext()) {
+		print("mysocket msg_sock_"+selfID+"_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"out;\n");
+	    }
+	}
+
+	{
+	    Iterator i = receives_from.iterator();
+	    while (i.hasNext()) {
+		print("mysocket msg_sock_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"_"+selfID+"in;\n");
+	    }
+	}
+
+
+	//////////////////////////////////////////////
+	// Declare_Sockets Method
+
+
+	print("\nvoid __declare_sockets_"+selfID+"() {\n");
 
 	if (in != null) {
 	    print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+");\n");
@@ -201,7 +270,30 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+",lookup_ip(init_instance::get_node_name("+out.getDest()+")));\n");
 	}
 
+
+	{
+	    Iterator i = sends_to.iterator();
+	    while (i.hasNext()) {
+		int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+		print("  init_instance::add_outgoing("+(-selfID-1)+","+(-dst-1)+",lookup_ip(init_instance::get_node_name("+dst+")));\n");
+	    }
+	}
+
+	{
+	    Iterator i = receives_from.iterator();
+	    while (i.hasNext()) {
+		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+		print("  init_instance::add_incoming("+(-src-1)+","+(-selfID-1)+");\n");
+	    }
+	}
+
+
 	print("}\n");
+
+
+	//////////////////////////////////////////////
+	// Method Declarations
+
 
 	//visit methods of filter, print the declaration first
 	declOnly = true;
@@ -212,14 +304,24 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("\n");
 
+
+	//////////////////////////////////////////////
+	// Method Bodies
+
+
 	//now print the functions with body
 	declOnly = false;
 	for (int i =0; i < methods.length; i++) {
 	    methods[i].accept(this);	
 	}
 
+
+	//////////////////////////////////////////////
+	// The Run Method
+
+
 	//now the run function
-	print("\nvoid run_"+NodeEnumerator.getSIROperatorId(self)+"() {\n");
+	print("\nvoid run_"+selfID+"() {\n");
 
 	print("  int i;\n");
 
@@ -237,7 +339,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("  } \n");
 	print("}\n");
        
-	createFile(NodeEnumerator.getSIROperatorId(self));
+	createFile(selfID);
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
@@ -277,6 +379,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
           }
         */
 
+	if (type.toString().endsWith("Portal")) return;
+
         newLine();
         // print(CModifier.toString(modifiers));
 
@@ -292,6 +396,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 	}
 
+
         print(type);
         print(" ");
         print(ident);
@@ -305,7 +410,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	else if (type.isFloatingPoint())
 	    print(" = 0.0f");
 
-        print(";");
+        print(";/* "+type+" */");
     }
 
     /**
@@ -1166,6 +1271,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                           JExpression left,
                                           JExpression right) {
 
+	if (left.getType().toString().endsWith("Portal")) {
+	    print("/* void */");
+	    return;
+	}
+
 	//print the correct code for array assignment
 	//this must be run after renaming!!!!!!
 	if (left.getType() == null || right.getType() == null) {
@@ -1273,6 +1383,9 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
         print(" = ");
         right.accept(this);
         print(")");
+
+
+	print("/*"+left.getType()+"*/");
     }
 
     //stack allocate the array
@@ -1369,7 +1482,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-	print("send_" + iname + "_" + ident + "(");
+	print("//send_" + iname + "_" + ident + "(");
         portal.accept(this);
         print(", ");
         latency.accept(this);

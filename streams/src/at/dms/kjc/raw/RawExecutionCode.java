@@ -159,12 +159,22 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//the number of times this filter fires in the initialization
 	//schedule
 	initFire = 0;
+
+	// initExec counts might be null if we're calling for work
+	// estimation before exec counts have been determined.
+	if (RawBackend.initExecutionCounts!=null) {
+	    Integer init = (Integer)RawBackend.initExecutionCounts.
+		get(Layout.getNode(Layout.getTile(filter)));
 	
-	Integer init = (Integer)RawBackend.initExecutionCounts.
-	    get(Layout.getNode(Layout.getTile(filter)));
-	
-	if (init != null) 
-	    initFire = init.intValue();
+	    if (init != null) 
+		initFire = init.intValue();
+	} else {
+	    // otherwise, we should be doing this only for work
+	    // estimation--check that the filter is the only thing in the graph
+	    Utils.assert(filter.getParent()==null ||
+			 filter.getParent().size()==1 && filter.getParent().getParent()==null,
+			 "Found null pointer where unexpected.");
+	}
 	
 	//if this is not a twostage, fake it by adding to initFire,
 	//so we always think the preWork is called

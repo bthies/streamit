@@ -24,6 +24,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
     public static int estimateWork(SIRFilter oldFilter)
     {
 	boolean oldDecoupledValue = KjcOptions.decoupled;
+	boolean oldMagicNetValue = KjcOptions.magic_net;
 	int work = 0;
 	//clone the Filter and create a dummy pipeline with just this
 	//new cloned filter
@@ -40,8 +41,10 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	File file = new File(dir);
 	file.mkdir();
 
-	//set decouple execution to true
+	// set decouple execution to true
 	KjcOptions.decoupled = true;
+	// set magic net to false
+	KjcOptions.magic_net = false;
 
 	//make a new FlatGraph with only this filter...
 	FlatNode top = new FlatNode(filter);
@@ -126,6 +129,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	
 
 	KjcOptions.decoupled = oldDecoupledValue;
+	KjcOptions.magic_net = oldMagicNetValue;
 	return work;
     }
 

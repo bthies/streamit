@@ -30,8 +30,8 @@ public class JoinerRemoval implements FlatVisitor
     public void visitNode(FlatNode node) 
     {
 
-
-		if (node.contents instanceof SIRJoiner) {
+	
+	if (node.contents instanceof SIRJoiner) {
 	    //make sure that this joiner is not connected to any other
 	    //joiners
 	    if (node.edges[0] != null && (node.edges[0].contents instanceof SIRJoiner))

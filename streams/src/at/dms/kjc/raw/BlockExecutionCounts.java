@@ -50,10 +50,10 @@ public class BlockExecutionCounts implements FlatVisitor
 	    blockCounts.put(node, new Integer(1));
 	}
 	else {
-	    blockCounts.put(node, new Integer(1));
-	    //blockCounts.put(node, 
-	    //			    new Integer(((Integer)RawBackend.
-	    //		 steadyExecutionCounts.get(node)).intValue()));
+	    //blockCounts.put(node, new Integer(1));
+	    blockCounts.put(node, 
+			    new Integer(((Integer)RawBackend.
+					 steadyExecutionCounts.get(node)).intValue()));
 	}
 	return;
     }

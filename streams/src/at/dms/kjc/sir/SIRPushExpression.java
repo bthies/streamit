@@ -74,6 +74,10 @@ public class SIRPushExpression extends JExpression {
 	return this.arg;
     }
 
+    public void setArg(JExpression arg) {
+	this.arg = arg;
+    }
+
     /**
      * Returns true iff this expression can be used as a statement (JLS 14.8)
      */

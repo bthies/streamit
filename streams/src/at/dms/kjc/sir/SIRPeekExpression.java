@@ -51,6 +51,13 @@ public class SIRPeekExpression extends JExpression {
         this.tapeType = type;
     }
 
+    /**
+     * Sets the arg of this.
+     */
+    public void setArg(JExpression arg) {
+	this.arg = arg;
+    }
+
     // ----------------------------------------------------------------------
     // ACCESSORS
     // ----------------------------------------------------------------------

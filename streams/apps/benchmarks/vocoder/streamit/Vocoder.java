@@ -5,71 +5,6 @@
 import streamit.*;
 import streamit.io.*;
 
-class IntPrinter extends Filter {
-  int x;
-  public void work() { int i = input.popInt();
-  System.out.print(x+++" ");
-  System.out.println(i); 
-  output.pushInt(i);
-  }
-  public void init() { x = 0;input = new Channel(Integer.TYPE, 1); 
-  output = new Channel(Integer.TYPE, 1);}
-  IntPrinter() {}
-}
-
-class ComplexPrinter extends Filter {
-  int real,imag;
-  int N;
-  public void work() { float f = input.popFloat();
-  System.out.print((real++ * 2 * Math.PI /N)+" ");
-  System.out.println(f); 
-  output.pushFloat(f);
-  f = input.popFloat();
-  System.err.print((imag++ * 2 * Math.PI /N)+" ");
-  System.err.println(f); 
-  output.pushFloat(f);
-  if (real == N) {
-    real = 0;
-    imag = 0;
-  }
-  }
-  
-  public void init(int length) { 
-      this.N = length;
-      real= 0;
-      input = new Channel(Float.TYPE, 2); 
-      imag = 0;
-      output = new Channel(Float.TYPE, 2);
-    }
-  public ComplexPrinter(int length) {
-    super(length);
-  }
-}
-
-class ShortPrinter extends Filter {
-  public void work() { short i = input.popShort();
-    System.out.println(i); output.pushShort(i);}
-    public void init() { input = new Channel(Short.TYPE, 1); 
-    output = new Channel(Short.TYPE, 1);}
-  ShortPrinter() {}
-}
-class DoublePrinter extends Filter {
-  public void work() { double i = input.popDouble();
-    System.out.println(i); output.pushDouble(i);}
-    public void init() { input = new Channel(Double.TYPE, 1); 
-    output = new Channel(Double.TYPE, 1);}
-  DoublePrinter() {}
-}
-class FloatPrinter extends Filter {
-
-  public void work() { float i = input.popFloat(); 
-    System.out.println(i); 
-    output.pushFloat(i);}
-    public void init() { input = new Channel(Float.TYPE, 1); 
-    output = new Channel(Float.TYPE, 1);}
-  FloatPrinter() {}
-}
-
 class VocoderSystem extends SplitJoin
 {
   public void init(int DFTLen, int newLen, float c, float speed) {
@@ -87,18 +22,47 @@ class VocoderSystem extends SplitJoin
 }
 
 interface Constants {
-  // in my system, i take the DFT_LENGTH and use that number of
-  // samples for the range [0, PI].  In the reference system, he takes
-  // the DFT_LENGTH to be the number of samples for the range [0, 2 *
-  // PI], then uses only half of the value for the range [0, PI].  In
-  // my system, i multiply by two twice; he divides by two countless
-  // number of times.
+  //For this system, DFT_LENGTH_NOM is the nominal number of DFT
+  //coefficients to use when taking the DFT.  Thus the behaviour of
+  //the system is that there are DFT_LENGTH_NOM filters between 
+  //[0, 2 * pi).  
+
+  //This code assumes that the DFT_LENGTH_NOM is even, so that the
+  //range (pi, 2 * pi) is just a reflection of the range (0, pi).
+  //This is because the input signal is real and discrete;
+  //discreteness means the fourier transform is periodic with 2 * pi,
+  //and since the signal is real the magnitude of the DFT will be even
+  //and the phase odd.  Since we only care about the real output of
+  //the system, and are only doing the inverse DFT for a single sample
+  //at the center of the window, the phase being odd makes no
+  //difference.  Thus with filters in the range [0, pi], the entire
+  //fourier transform can be represented, thus using approximately
+  //half the filters and computation.
+
+  /** DFT_LENGTH_NOM numbers:
+   *            
+   *         4: can tell when someone is talking, but not recognize
+   *            that it's a voice unless you already know
+   *  
+   *         8: can tell that it's a person talking, if you already
+   *            know the script, you can follow the voice
+   *
+   *        16: can tell that it's a person, can understand the words,
+   *            can kind of see that the vocoder is doing something 
+   *            that may be appropriate
+   *
+   *        32: better output; less grainy, more believable
+   *        64: still better output
+   *
+   *       128: probably the high-point of good output
+   *            vs. computation * and size.  With 128, it'll tradeof
+   *            quality in output for * time.
+   **/
 
 //    public static final int DFT_LENGTH = 128; //
-  public static final int DFT_LENGTH_NOM = 4; //
+  public static final int DFT_LENGTH_NOM = 16; //
   public static final int DFT_LENGTH = DFT_LENGTH_NOM/2+1; //
 //    public static final int DFT_LENGTH = DFT_LENGTH_NOM+1; //
-//    public static final int NEW_LENGTH = 64; //
   public static final float FREQUENCY_FACTOR = 1f;
   public static final float GLOTTAL_EXPANSION = 1f;
   public static final int NEW_LENGTH = (int) (DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
@@ -106,7 +70,7 @@ interface Constants {
   public static final float SPEED_FACTOR = 2f;
   //i have no idea what's going on, i think i'm using these for speed
   public static final int n_LENGTH = 1; //dft_length
-  public static final int m_LENGTH = 1; //new_length
+  public static final int m_LENGTH = 2; //new_length
 
 //    public static final int LARGE = 2147480000;
 //    public static final int LARGE = 852524;
@@ -121,7 +85,11 @@ class Vocoder extends Pipeline implements Constants {
 
   public void init() {
     add(new FilterBank(DFT_LENGTH_NOM));
+
+    // adding the hanning window breaks the output when doing something
+    // other than the identity.  very weird
 //      add(new HanningWindow(DFT_LENGTH));
+    // the hanning window is not necessary for the correctness, however.
     add(new RectangularToPolar());
 
     add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR));

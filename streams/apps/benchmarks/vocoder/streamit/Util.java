@@ -306,6 +306,71 @@ class CountDown extends Filter {
   }
 }
 
+class IntPrinter extends Filter {
+  int x;
+  public void work() { int i = input.popInt();
+  System.out.print(x+++" ");
+  System.out.println(i); 
+  output.pushInt(i);
+  }
+  public void init() { x = 0;input = new Channel(Integer.TYPE, 1); 
+  output = new Channel(Integer.TYPE, 1);}
+  IntPrinter() {}
+}
+
+class ComplexPrinter extends Filter {
+  int real,imag;
+  int N;
+  public void work() { float f = input.popFloat();
+  System.out.print((real++ * 2 * Math.PI /N)+" ");
+  System.out.println(f); 
+  output.pushFloat(f);
+  f = input.popFloat();
+  System.err.print((imag++ * 2 * Math.PI /N)+" ");
+  System.err.println(f); 
+  output.pushFloat(f);
+  if (real == N) {
+    real = 0;
+    imag = 0;
+  }
+  }
+  
+  public void init(int length) { 
+      this.N = length;
+      real= 0;
+      input = new Channel(Float.TYPE, 2); 
+      imag = 0;
+      output = new Channel(Float.TYPE, 2);
+    }
+  public ComplexPrinter(int length) {
+    super(length);
+  }
+}
+
+class ShortPrinter extends Filter {
+  public void work() { short i = input.popShort();
+    System.out.println(i); output.pushShort(i);}
+    public void init() { input = new Channel(Short.TYPE, 1); 
+    output = new Channel(Short.TYPE, 1);}
+  ShortPrinter() {}
+}
+class DoublePrinter extends Filter {
+  public void work() { double i = input.popDouble();
+    System.out.println(i); output.pushDouble(i);}
+    public void init() { input = new Channel(Double.TYPE, 1); 
+    output = new Channel(Double.TYPE, 1);}
+  DoublePrinter() {}
+}
+class FloatPrinter extends Filter {
+
+  public void work() { float i = input.popFloat(); 
+    System.out.println(i); 
+    output.pushFloat(i);}
+    public void init() { input = new Channel(Float.TYPE, 1); 
+    output = new Channel(Float.TYPE, 1);}
+  FloatPrinter() {}
+}
+
 /** 
 class IntPrinter extends Filter {
   String append;

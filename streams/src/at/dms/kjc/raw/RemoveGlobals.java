@@ -337,19 +337,58 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    JBlock rawMainBlock = RemoveGlobals.getRawMain(filter).getBody();
 	    JFieldDeclaration[] fields = filter.getFields();
 	    
+	    HashSet arrays = new HashSet();
+
 	    //move all globals var defs into the raw main function
 	    for (int i = 0; i < fields.length; i++) {
 		JVariableDefinition def = fields[i].getVariable();
+		
+		//remember all the arrays so we can 
+		//zero them later
+		if (def.getType().isArrayType())
+		    arrays.add(def);
+
 		localVariables.add(def);
 		
-		if(f.getName().startsWith("source")) {
-		    System.out.println(def.getIdent());
-		}
 		rawMainBlock.addStatementFirst
 		    (new JVariableDeclarationStatement
 		     (null, def, null));
 	    }
 	    
+	    //we need to initialize all array elements to zero
+	    //create a statement of the form
+	    //memset(var, 0, sizeof(var));
+	    Iterator arrayIt = arrays.iterator();
+	    while (arrayIt.hasNext()) {
+		JVariableDefinition def = (JVariableDefinition)arrayIt.next();
+		//use memset to zero the array, need to calculate size
+		JExpression[] args = new JExpression[3];
+		
+		args[0] = new JLocalVariableExpression(null, def);
+		
+		//set up the size of arg, just the array name...
+		JExpression[] sizeofArgs = new JExpression[1];
+		sizeofArgs[0] = new JLocalVariableExpression(null, def);
+		
+		args[1] = new JIntLiteral(0);
+		
+		args[2] = new JMethodCallExpression(null,
+						    new JThisExpression(null),
+						    "sizeof",
+						    sizeofArgs);
+		
+		JExpressionStatement zeroArray = 
+		    new JExpressionStatement(null,
+					     new JMethodCallExpression(null,
+								       new JThisExpression(null), 
+								       "memset",
+								       args),
+					     null);
+		
+		//place the statement after the variable defs
+		rawMainBlock.addStatement(fields.length, zeroArray);
+	    }
+
 	    //remove the field defs from the filter
 	    filter.setFields(new JFieldDeclaration[0]);
 

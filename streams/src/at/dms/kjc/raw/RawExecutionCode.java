@@ -86,6 +86,29 @@ public class RawExecutionCode extends at.dms.util.Utils
 	int buffersize = 
 	    CalcBufferSize.getConsBufSize(Layout.getNode(Layout.getTile(filter)));
 
+	//index variable for certain for loops
+	JVariableDefinition exeIndexVar = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    exeIndex,
+				    null);
+	filter.addField(new JFieldDeclaration(null, 
+					      exeIndexVar,
+					      null, null));
+
+	//index variable for certain for loops
+	JVariableDefinition exeIndex1Var = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    exeIndex1,
+				    null);
+	
+	filter.addField(new JFieldDeclaration(null, 
+					      exeIndex1Var,
+					      null, null));
+	
 	//only add the receive buffer and its vars if the 
 	//filter receives data
 	if (filter.getPeekInt() > 0) {
@@ -122,31 +145,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 					CStdType.Integer,
 					recvIndex,
 					new JIntLiteral(-1));
-	    
-	   
-	    //index variable for certain for loops
-	    JVariableDefinition exeIndexVar = 
-		new JVariableDefinition(null, 
-					0, 
-					CStdType.Integer,
-					exeIndex,
-					null);
-
-	    //index variable for certain for loops
-	    JVariableDefinition exeIndex1Var = 
-		new JVariableDefinition(null, 
-					0, 
-					CStdType.Integer,
-					exeIndex1,
-					null);
 
 	    JFieldDeclaration[] fields = 
 		{new JFieldDeclaration(null, recvBufVar, null, null),
 		 new JFieldDeclaration(null, recvBufferSizeVar, null, null),
 		 new JFieldDeclaration(null, recvBufferIndexVar, null, null),
 		 new JFieldDeclaration(null, recvIndexVar, null, null),
-		 new JFieldDeclaration(null, exeIndexVar, null, null),
-		 new JFieldDeclaration(null, exeIndex1Var, null, null)
 		};
 	    
 
@@ -234,8 +238,11 @@ public class RawExecutionCode extends at.dms.util.Utils
 		(two.getInitWork().getBody());
 
 	    //add the code to receive the items into the buffer
-	    statements.addStatement(recExeCode(two.getInitPeek(),
-						   receiveCode(filter)));
+	    statements.addStatement
+		(makeForLoop(receiveCode(filter),
+			     exeIndex,
+			     new JIntLiteral(two.getInitPeek())));
+	    		
 	    //now inline the init work body
 	    statements.addStatement(body);
 	}
@@ -249,8 +256,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	//but not consumed by this filter in the initialization stage
 
 	//add the call to the work function
+	statements.addStatement(generateSteadyStateLoop(filter));
 	
-
 	//create the method and add it to the filter
 	JMethodDeclaration rawMainMethod = 
 	    new JMethodDeclaration(null, 
@@ -265,21 +272,28 @@ public class RawExecutionCode extends at.dms.util.Utils
 	filter.addMethod(rawMainMethod);
     }
 
-    //return a list of  statements to receive <rec> items and then inline the
-    //<block>
-    JStatement recExeCode(int rec, JStatement block) 
+    //generate the code for the steady state loop
+    JStatement generateSteadyStateLoop(SIRFilter filter) 
     {
-	//generate the receive code
-	if (rec > 0) {
-	    return makeForLoop(block, exeIndex, new JIntLiteral(rec));
-	}
-	else {	    
-	    //do not generate the receive code
-	    //simply return the block
-	    return block;
-	}   
+	JBlock block = new JBlock(null, new JStatement[0], null);
+	
+	//add the statements to receive pop items into the buffer
+	block.addStatement
+	    (makeForLoop(receiveCode(filter),
+			 exeIndex,
+			 new JIntLiteral(filter.getPopInt())));
+	
+	//clone and inline the work function
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	block.addStatement(workBlock);
+	
+	//return the infinite loop
+	return new JWhileStatement(null, 
+				   new JBooleanLiteral(null, true),
+				   block, 
+				   null);
     }
-
 
     //returns the code to receive one item into the buffer
     //uses the correct variables
@@ -344,7 +358,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     /**
      * Returns a for loop that uses field <var> to count
      * <count> times with the body of the loop being <body>.  If count
-     * is non-positive, just returns the initial assignment statement.
+     * is non-positive, just returns the initial assignment
      */
     private static JStatement makeForLoop(JStatement body,
 					  String var,
@@ -354,7 +368,9 @@ public class RawExecutionCode extends at.dms.util.Utils
 	// other for loops and to get the codegen right.
 	JExpression initExpr[] = {
 	    new JAssignmentExpression(null,
-				      new JFieldAccessExpression(null, var),
+				      new JFieldAccessExpression
+				      (null, 
+				       new JThisExpression(null),var),
 				      new JIntLiteral(0)) };
 	JStatement init = new JExpressionListStatement(null, initExpr, null);
 	// if count==0, just return init statement
@@ -369,12 +385,18 @@ public class RawExecutionCode extends at.dms.util.Utils
 	JExpression cond = 
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
-				      new JFieldAccessExpression(null, var),
+				      new JFieldAccessExpression
+				      (null, 
+				       new JThisExpression(null),
+				       var),
 				      count);
 	JExpression incrExpr = 
 	    new JPostfixExpression(null, 
 				   Constants.OPE_POSTINC, 
-				   new JFieldAccessExpression(null, var));
+				   new JFieldAccessExpression
+				   (null, 
+				    new JThisExpression(null),
+				    var));
 	JStatement incr = 
 	    new JExpressionStatement(null, incrExpr, null);
 

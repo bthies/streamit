@@ -1,0 +1,4 @@
+normal:--unroll 100000:CoarseSerializedBeamFormer
+part:--linearpartition:CoarseSerializedBeamFormer
+partatlas:--linearpartition --atlas:CoarseSerializedBeamFormer
+freq:--frequencyreplacement:CoarseSerializedBeamFormer

@@ -1,0 +1,4 @@
+normal:--unroll 100000:TargetDetect
+part:--linearpartition:TargetDetect
+partatlas:--linearpartition --atlas:TargetDetect
+freq:--frequencyreplacement:TargetDetect

@@ -1,0 +1,5 @@
+normal:--unroll 100000:Oversampler
+part:--linearpartition:Oversampler
+partatlas:--linearpartition --atlas:Oversampler
+freq:--frequencyreplacement:Oversampler
+

@@ -1,0 +1,4 @@
+normal:--unroll 100000:FilterBank
+part:--linearpartition:FilterBank
+partatlas:--linearpartition --atlas:FilterBank
+freq:--frequencyreplacement:FilterBank

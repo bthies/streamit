@@ -1,0 +1,4 @@
+normal:--unroll 100000:FIRProgram
+part:--linearpartition:FIRProgram
+partatlas:--linearpartition --atlas:FIRProgram
+freq:--frequencyreplacement:FIRProgram

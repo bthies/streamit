@@ -1,0 +1,4 @@
+normal:--unroll 100000:LinkedFMTest
+part:--linearpartition:LinkedFMTest
+partatlas:--linearpartition --atlas:LinkedFMTest
+freq:--frequencyreplacement:LinkedFMTest

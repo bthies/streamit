@@ -1,0 +1,4 @@
+normal:--unroll 100000:ChannelVocoder
+part:--linearpartition:ChannelVocoder
+partatlas:--linearpartition --atlas:ChannelVocoder
+freq:--frequencyreplacement:ChannelVocoder

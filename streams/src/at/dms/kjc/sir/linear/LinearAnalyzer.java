@@ -16,7 +16,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.25 2003-04-08 01:58:56 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.26 2003-04-09 11:13:20 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. never would have guessed that, would you? **/
@@ -170,9 +170,9 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println("Visiting " + "(" + self + ")");
 
 	// set up the visitor that will actually collect the data
-	int peekRate = extractInteger(self.getPeek());
-	int pushRate = extractInteger(self.getPush());
-	int popRate  = extractInteger(self.getPop());
+	int peekRate = self.getPeekInt();
+	int pushRate = self.getPushInt();
+	int popRate  = self.getPopInt();
 	LinearPrinter.println("  Peek rate: " + peekRate);
 	LinearPrinter.println("  Push rate: " + pushRate);
 	LinearPrinter.println("  Pop rate: "  + popRate);
@@ -725,16 +725,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    if (keyIter.next() instanceof SIRFeedbackLoop) {count++;}
 	}
 	return count;
-    }
-
-
-    
-    /** extract the actual value from a JExpression that is actually a literal... **/
-    private static int extractInteger(JExpression expr) {
-	if (expr == null) {throw new RuntimeException("null peek rate");}
-	if (!(expr instanceof JIntLiteral)) {throw new RuntimeException("non integer literal peek rate...");}
-	JIntLiteral literal = (JIntLiteral)expr;
-	return literal.intValue();
     }
 
     private void checkRep() {

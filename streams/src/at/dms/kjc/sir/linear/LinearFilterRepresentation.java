@@ -12,13 +12,15 @@ package at.dms.kjc.sir.linear;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.19 2003-04-06 12:01:52 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.20 2003-04-09 11:13:20 thies Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
     private FilterMatrix A;
     /** the b in y=Ax+b. **/
     private FilterVector b;
+    /** the cost of this node */
+    private LinearCost cost;
 
     /**
      * The pop count of the filter. This is necessary for doing pipeline combinations
@@ -40,6 +42,8 @@ public class LinearFilterRepresentation {
 	this.A = matrixA.copy();
 	this.b = (FilterVector)vectorb.copy();
 	this.popCount = popc;
+	// will calculate cost on demand
+	this.cost = null;
     }
 
     //////////////// Accessors ///////////////////
@@ -161,6 +165,16 @@ public class LinearFilterRepresentation {
      * linear filter representation.
      **/
     public LinearCost getCost() {
+	if (this.cost==null) {
+	    this.cost = calculateCost();
+	}
+	return this.cost;
+    }
+
+    /**
+     * Calculates cost of this.
+     */
+    private LinearCost calculateCost() {
 	// add up multiplies and adds that are necessary for each column of the matrix. 
 	int muls = 0;
 	int adds = 0;

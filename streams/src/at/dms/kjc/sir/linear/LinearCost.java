@@ -63,15 +63,17 @@ public class LinearCost {
     /**
      * Returns the cost of this (in units proportional of estimated
      * execution time, relative to any metric) if implemented directly
-     * in the time domain.  We assume that the number and cost of adds
-     * is proportional to the number of multiplies, and just count the
-     * multiplies.
+     * in the time domain.  It's important to count the adds because
+     * we don't currently count the multiplies if it's multiplication
+     * by one!  Also add one so that no linear node is completely free
+     * (even if it just does reordering or rate-changing, it takes
+     * some time to execute).
      *
      * We scale up by FREQ_BENEFIT here instead of dividing in
      * getFrequencyCost so that eveverything stays integral.
      */
     public int getDirectCost() {
-	return FREQUENCY_BENEFIT * multiplyCount;
+	return 1 + FREQUENCY_BENEFIT * (3 * multiplyCount + addCount);
     }
 
     /**
@@ -81,6 +83,10 @@ public class LinearCost {
      * Must be comparable to values returned by getDirectCost().
      */
     public int getFrequencyCost() {
-	return originalMatrixSize;
+	// factor of 4 because above we count multilies 3 times and
+	// adds once.  Even though we only add N-1 times for a column
+	// of N, we add again for the constant vector, so it's not off
+	// by one.
+	return 4 * originalMatrixSize;
     }
 }

@@ -19,7 +19,9 @@ NAMES =		sock_dscr \
 		message \
 		init_instance \
 		node_server \
-		master_server
+		master_server \
+		ccp_session \
+		ccp
 
 OBJS = 		$(NAMES:%=%.o)
 OBJSP =         $(NAMES:%=%_p.o)

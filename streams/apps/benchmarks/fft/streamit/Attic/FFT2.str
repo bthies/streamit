@@ -4,7 +4,7 @@ complex->complex filter CombineDFT(int n)
 
     init
     {
-	complex wn = Math.cos(2*Math.PI/n)+1i*Math.sin(2*Math.PI/n);	
+	complex wn = exp(2i * 3.14159265358979 / n);	
 	Ws[0].real=1;
 	Ws[0].imag=0;
 	for (int i=1; i < n; i++)

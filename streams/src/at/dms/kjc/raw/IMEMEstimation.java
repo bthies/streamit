@@ -189,7 +189,6 @@ public class IMEMEstimation extends EmptyStreamVisitor
 		//set the return value based on the exit code of the make 
 		fits = (jProcess.exitValue() == 0);
 	    }
-	    /*
 	    //remove the directory
 	    {
 		System.out.println("remove dir...");
@@ -200,7 +199,6 @@ public class IMEMEstimation extends EmptyStreamVisitor
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
 	    }
-	    */
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

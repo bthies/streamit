@@ -881,7 +881,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
-	p.print("\tgcc -O2 -o run_cluster master.o");
+	p.print("\tgcc -O3 -o run_cluster master.o");
 	
 	for (int i = 0; i < threadNumber; i++) {
 	    p.print(" thread"+i+".o");
@@ -894,7 +894,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("master.o: master.cpp");
 	p.println();
-	p.print("\tgcc -O2 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
+	p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
 	p.println();
 	p.println();
 
@@ -903,7 +903,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    p.print("thread"+i+".o: thread"+i+".cpp");
 	    p.println();
-	    p.print("\tgcc -O2 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
+	    p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
 	    p.println();
 	    p.println();
 

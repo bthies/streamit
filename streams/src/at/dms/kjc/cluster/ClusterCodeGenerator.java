@@ -36,6 +36,10 @@ class ClusterCodeGenerator {
     private boolean isEliminated; // true if eliminated by ClusterFusion
     private Set fusedWith;
 
+    private int init_counts;
+    private int steady_counts;
+    private String work_function;
+
     private String TypeToC(CType t) {
 	if (t.toString().compareTo("int") == 0) return "int";
 	if (t.toString().compareTo("float") == 0) return "float";
@@ -52,6 +56,24 @@ class ClusterCodeGenerator {
 	id = NodeEnumerator.getSIROperatorId(oper);
 
 	node = NodeEnumerator.getFlatNode(id);
+
+	Integer init_int = (Integer)ClusterBackend.initExecutionCounts.get(node);
+	if (init_int == null) { init_counts = 0; } else { init_counts = init_int.intValue(); }
+
+	steady_counts = ((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue();
+
+	if (oper instanceof SIRFilter) {
+	    work_function = ((SIRFilter)oper).getWork().getName()+"__"+id;
+	} 
+
+	if (oper instanceof SIRSplitter) {
+	    work_function = "__splitter_"+id+"_work";
+	}
+
+	if (oper instanceof SIRJoiner) {
+	    work_function = "__joiner_"+id+"_work";
+	}
+
 	isEliminated = ClusterFusion.isEliminated(node);
 	fusedWith = ClusterFusion.fusedWith(node);
 
@@ -609,12 +631,76 @@ class ClusterCodeGenerator {
 
 	if (init_f != null) r.add("  "+init_f+"();\n");
 	r.add("  save_state::load_state("+id+", &__steady_"+id+", __read_thread__"+id+");\n");
-	r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
+
+
+	//r.add("  __number_of_iterations_"+id+" = __max_iteration - __steady_"+id+";\n");
+
+	r.add("}\n");
+	r.add("\n");
+
+	//  +=============================+
+	//  | Main Function               |
+	//  +=============================+
+
+	r.add("void __main__"+id+"() {\n");
+	r.add("  int _tmp;\n");
+	r.add("  int _steady = __steady_"+id+";\n");
+	r.add("  int _number = __max_iteration;\n");
+	r.add("\n");
 
 	if (oper instanceof SIRFilter) {
 	    r.add("  __init_pop_buf__"+id+"();\n");
 	}
 
+	if (init_counts > 0) {
+	    
+	    r.add("  if (_steady == 0) {\n");
+	    r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
+	    if (oper instanceof SIRFilter) {
+		r.add("      //check_status__"+id+"();\n");
+		r.add("      //check_messages__"+id+"();\n");
+		r.add("      __update_pop_buf__"+id+"();\n");
+	    }
+	    r.add("      "+work_function+"();\n");
+	    if (oper instanceof SIRFilter) {
+		r.add("      //send_credits_"+id+"();\n");
+	    }
+	    r.add("    }\n");
+	    r.add("  }\n");
+	    
+	}
+
+	r.add("  _steady++;\n");
+	r.add("  for (; _steady <= _number; _steady++) {\n");
+
+	if (steady_counts > 1) {
+
+	    r.add("    for (_tmp = 0; _tmp < "+steady_counts+"; _tmp++) {\n");
+	    if (oper instanceof SIRFilter) {
+		r.add("      //check_status__"+id+"();\n");
+		r.add("      //check_messages__"+id+"();\n");
+		r.add("      __update_pop_buf__"+id+"();\n");
+	    }
+	    r.add("      "+work_function+"();\n");
+	    if (oper instanceof SIRFilter) {
+		r.add("      //send_credits_"+id+"();\n");
+	    }
+	    r.add("    }\n");
+
+	} else {
+
+	    if (oper instanceof SIRFilter) {
+		r.add("    //check_status__"+id+"();\n");
+		r.add("    //check_messages__"+id+"();\n");
+		r.add("    __update_pop_buf__"+id+"();\n");
+	    }
+	    r.add("    "+work_function+"();\n");
+	    if (oper instanceof SIRFilter) {
+		r.add("    //send_credits_"+id+"();\n");
+	    }
+	}
+	
+	r.add("  }\n");
 	r.add("}\n");
 	r.add("\n");
 
@@ -701,7 +787,9 @@ class ClusterCodeGenerator {
 	    r.add("  t1.start();\n");
 	}
 
-	if (main_f != null) r.add("  "+main_f+"();\n");
+	//if (main_f != null) r.add("  "+main_f+"();\n");
+
+	r.add("  __main__"+id+"();\n");
 
 	if (!data_out.iterator().hasNext()) {
 	    r.add("  t1.stop();\n");

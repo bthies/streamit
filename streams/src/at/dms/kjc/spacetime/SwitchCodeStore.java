@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import java.util.Vector;
+import at.dms.kjc.spacetime.switchIR.*;
 
 public class SwitchCodeStore {
     protected RawTile parent;

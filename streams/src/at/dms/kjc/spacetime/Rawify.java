@@ -3,7 +3,7 @@ package at.dms.kjc.spacetime;
 import java.util.ListIterator;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
-
+import at.dms.kjc.spacetime.switchIR.*;
 
 /** This class will rawify the SIR code and it creates the 
  * switch code.  It does not rawify the switch code in place. 
@@ -33,6 +33,11 @@ public class Rawify
 		traceNode = traceNode.getNext();;
 	    }
 	}
+	
+	//generate code need in between init and steady
+	if (init) 
+	    EndInitialization(rawChip);
+
     }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent,
@@ -108,6 +113,10 @@ public class Rawify
     }
     
 
+    private static void EndInitialization(RawChip rawChip) 
+    {
+	
+    }
     
 }
 

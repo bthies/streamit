@@ -76,7 +76,7 @@ public class SpaceTimeBackend
 
 	//create the raw execution code for the initialization phase
 	Rawify.run(initTrav, rawChip, true);
-	
+	EndInitState(rawChip);
 	//create the raw execution code for the steady-state
 	Rawify.run(initTrav, rawChip, false);
     }

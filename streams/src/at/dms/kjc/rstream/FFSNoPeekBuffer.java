@@ -150,12 +150,14 @@ public class FFSNoPeekBuffer extends FilterFusionState
 
 	bufferSize = mult * filter.getPopInt() + remaining[0];
 	
+	assert bufferSize >= 0;
+	
 	if (bufferSize == 0)
 	    return null;
+
 	// make a buffer for all the items looked at in a round
 	return makeBuffer(bufferSize, filter.getInputType(),
 			  BUFFERNAME + myUniqueID);
-	
     }
     
     public void initTasks(Vector fields, Vector functions,

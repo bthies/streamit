@@ -46,6 +46,9 @@ public class StrToRStream {
      * after execution, backup the non-pop'ed items to the peek buffer
      * If false, just move the un-pop'ed items from the end of the pop buffer
      * to the beginning after the filter executes
+
+     * Please note that setting this to true is untested and 
+     * produces unnecessary code
      **/
     public static final boolean HEADER_FOOTER_PEEK_RESTORE = false;
 

@@ -81,8 +81,9 @@ public class FlatIRToRS extends ToC
 	//element-wise copy!!
 	
 	if (!StrToRStream.GENERATE_ABSARRAY && 
-	    (left.getType() != null && left.getType().isArrayType()) ||
-	    (right.getType() != null && right.getType().isArrayType())) {
+	    ((left.getType() != null && left.getType().isArrayType()) ||
+	    (right.getType() != null && right.getType().isArrayType()))) {
+	    
 	    arrayCopy(left, right);
 	    return;
 	}

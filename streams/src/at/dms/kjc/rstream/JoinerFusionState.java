@@ -92,9 +92,10 @@ public class JoinerFusionState extends FusionState
     {
 	//add the declarations for all the incoming buffers
 	for (int i = 0; i < node.inputs; i++) {
-	    main.addStatementFirst(new JVariableDeclarationStatement(null,
-								     bufferVar[i],
-								     null));
+	    if (bufferVar[i] != null) 
+		main.addStatementFirst(new JVariableDeclarationStatement(null,
+									 bufferVar[i],
+									 null));
 	}
 
 	if (isFBJoiner) {
@@ -182,6 +183,10 @@ public class JoinerFusionState extends FusionState
 	    enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
 					     (null, innerVar, null));
 	    
+	    //do nothing if incoming weight is zero
+	    if (node.incomingWeights[i] == 0)
+		continue;
+
 	    //add the decls for the buffers
 	    JVariableDefinition incomingBuffer = getBufferVar(node.incoming[i], isInit);
 	    
@@ -220,7 +225,7 @@ public class JoinerFusionState extends FusionState
 		new JArrayAccessExpression(null,
 					   new JLocalVariableExpression(null, outgoingBuffer),
 					   outgoingIndex);
-	    
+	   
 	    JArrayAccessExpression incomingAccess = 
 		new JArrayAccessExpression(null,
 					   new JLocalVariableExpression(null, incomingBuffer),
@@ -299,22 +304,16 @@ public class JoinerFusionState extends FusionState
 				     ((SIRFeedbackLoop)joiner.getParent()).getDelayInt());
 	}
 	
-
+	assert itemsAccessed >= 0;
 	bufferSizes[way] = itemsAccessed;
 	
-	JExpression[] dims = { new JIntLiteral(null, itemsAccessed) };
-	JExpression initializer = 
-	    new JNewArrayExpression(null,
-				    Util.getOutputType(node),
-				    dims,
-				    null);
-	// make a buffer for all the items looked at in a round
-	return new JVariableDefinition(null,
-				       at.dms.kjc.Constants.ACC_FINAL,
-				       new CArrayType(Util.getOutputType(node),
-						      1 /* dimension */ ),
-				       BUFFERNAME + "_" + myUniqueID+ "_" + way,
-				       initializer);
+
+	if (itemsAccessed == 0)
+	    return null;
+
+	return makeBuffer(itemsAccessed, 
+			  Util.getOutputType(node),
+			  BUFFERNAME + "_" + myUniqueID+ "_" + way);
     }
 
     public int getRemaining(FlatNode prev, boolean isInit) 

@@ -12,6 +12,9 @@ import at.dms.kjc.sir.*;
 public class SplitterFusionState extends FusionState
 {
     private SIRSplitter splitter;
+
+    //the size of the pop buffer (including the peekRestore size)
+    private int bufferSize;
     
     public SplitterFusionState (FlatNode node)
     {
@@ -27,7 +30,7 @@ public class SplitterFusionState extends FusionState
 	
 	bufferVar = new JVariableDefinition[1];
 	
-	bufferVar[0] = makeBuffer();
+	bufferVar[0] = makePopBuffer();
     }
 
     //calculate the remaining items store in peekBufferSize 
@@ -268,7 +271,7 @@ public class SplitterFusionState extends FusionState
 
     public int getBufferSize(FlatNode prev, boolean init) 
     {
-	return  StrToRStream.getMult(node, init) * distinctRoundItems();
+	return  bufferSize;
     }
     
 				 
@@ -338,7 +341,7 @@ public class SplitterFusionState extends FusionState
     }
     
 
-    private JVariableDefinition makeBuffer() 
+    private JVariableDefinition makePopBuffer() 
     {
 	int mult = Math.max(StrToRStream.getMult(node, false),
 			    StrToRStream.getMult(node, true));
@@ -347,24 +350,17 @@ public class SplitterFusionState extends FusionState
 	int itemsAccessed = mult * distinctRoundItems();
 
 	itemsAccessed += remaining[0];
-
-	if (itemsAccessed == 0) {
-	    return null;
-	}
 	
-	JExpression[] dims = { new JIntLiteral(null, itemsAccessed) };
-	JExpression initializer = 
-	    new JNewArrayExpression(null,
-				    Util.getOutputType(node),
-				    dims,
-				    null);
-	// make a buffer for all the items looked at in a round
-	return new JVariableDefinition(null,
-				       at.dms.kjc.Constants.ACC_FINAL,
-				       new CArrayType(Util.getOutputType(node),
-						      1 /* dimension */ ),
-				       BUFFERNAME + myUniqueID,
-				       initializer);
+	assert itemsAccessed >= 0;
+
+	bufferSize = itemsAccessed;
+	
+	if (itemsAccessed == 0)
+	    return null;
+	
+	return makeBuffer(itemsAccessed,
+			  Util.getOutputType(node),
+			  BUFFERNAME + myUniqueID);
     }
 
     public int getRemaining(FlatNode prev, boolean isInit) 

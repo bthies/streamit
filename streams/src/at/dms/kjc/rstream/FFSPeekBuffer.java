@@ -23,6 +23,8 @@ public class FFSPeekBuffer extends FilterFusionState
     {
 	super(fnode);
 
+	assert false : "This code generation scheme is deprecated";
+
 	createVariables();
 	
 	setNecessary();
@@ -189,26 +191,7 @@ public class FFSPeekBuffer extends FilterFusionState
 	if (itemsAccessed == 0)
 	    return null;
 
-	JExpression[] dims = { new JIntLiteral(null, itemsAccessed) };
-	JExpression initializer = 
-	    new JNewArrayExpression(null,
-				    Utils.voidToInt(filter.getInputType()),
-				    dims,
-				    null);
-
-
-	//make sure that we generate a new array expression for the
-	//buffer if we are passing arrays over channels...
-	
-	
-	// make a buffer for all the items looked at in a round
-	return new JVariableDefinition(null,
-				       at.dms.kjc.Constants.ACC_FINAL,
-				       new CArrayType(Utils.voidToInt(filter.
-								      getInputType()), 
-						      1 /* dimension */ ),
-				       BUFFERNAME + myUniqueID,
-				       initializer);
+	return null;
     }
     
 

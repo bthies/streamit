@@ -197,8 +197,5 @@ public abstract class FusionState
     
 
     protected static String BACKUPCOUNTER = "__backup_counter_";
-
-
-
 }
 

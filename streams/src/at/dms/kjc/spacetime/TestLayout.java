@@ -42,10 +42,19 @@ public class TestLayout {
 	    //System.out.println("Laying out: "+trace);
 	    int size=trace.size();
 	    TraceNode filter=trace.getHead().getNext();
-	    for(int j=0;j<size;j++) {
+	    //System.out.println(idx);
+	    int curRow=rows[idx];
+	    int curCol=cols[idx];
+	    ((FilterTraceNode)filter).setXY(curRow,curCol);
+	    sched.addHead(trace,curRow,curCol);
+	    idx++;
+	    if(idx==len)
+		idx=0;
+	    filter=filter.getNext();
+	    for(int j=1;j<size;j++) {
 		//System.out.println(idx);
-		int curRow=rows[idx];
-		int curCol=cols[idx];
+		curRow=rows[idx];
+		curCol=cols[idx];
 		((FilterTraceNode)filter).setXY(curRow,curCol);
 		sched.add(trace,curRow,curCol);
 		idx++;

@@ -1,6 +1,7 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
+import java.util.ArrayList;
 
 /** 
  * 
@@ -12,23 +13,26 @@ public class Trace
     private OutputTraceNode tail;
     private int len;
     private Trace[] depends;
+    private ArrayList dependsTemp;
+    private ArrayList edgesTemp;
+    private int primePump;
 
-    public Trace (Trace[] edges, Trace[] depends, InputTraceNode head) 
-    {
-	if (edges == null)
-	    this.edges = new Trace[0];
-	else 
-	    this.edges = edges;
-
-	this.head = head;
-	head.setParent(this);
-
-	if (depends == null)
-	    this.depends = new Trace[0];
-	else 
-	    this.depends = depends;
-	len=-1;
-    }
+    /*public Trace (Trace[] edges, Trace[] depends, InputTraceNode head) 
+      {
+      if (edges == null)
+      this.edges = new Trace[0];
+      else 
+      this.edges = edges;
+      
+      this.head = head;
+      head.setParent(this);
+      
+      if (depends == null)
+      this.depends = new Trace[0];
+      else 
+      this.depends = depends;
+      len=-1;
+      }*/
 
     public Trace(InputTraceNode head) {
 	this.head = head;
@@ -36,6 +40,8 @@ public class Trace
 	depends = new Trace[0];
 	edges = new Trace[0];
 	len=-1;
+	dependsTemp=new ArrayList();
+	edgesTemp=new ArrayList();
     }
 
     public Trace(TraceNode node) {
@@ -48,6 +54,8 @@ public class Trace
 	depends = new Trace[0];
 	edges = new Trace[0];
 	len=-1;
+	dependsTemp=new ArrayList();
+	edgesTemp=new ArrayList();
     }
 
     //Finishes creating Trace
@@ -100,24 +108,28 @@ public class Trace
     
     public Trace[] getEdges() 
     {
+	assert edges!=null:"Must call doneDependencies() beforehand";
 	return edges;
     }
 
     public Trace[] getDepends()
     {
+	assert depends!=null:"Must call doneDependencies() beforehand";
 	return depends;
     }
 
+    //Deprecated
     public void setEdges(Trace[] edges) {
 	if (edges != null)
 	    this.edges = edges;
     }
-
+    
+    //Deprecated
     public void setDepends(Trace[] depends) {
 	if (depends != null) 
 	    this.depends = depends;
     }
-
+    
     public void connect(Trace target) {
 	edges=new Trace[]{target};
 	target.depends=new Trace[]{this};
@@ -125,6 +137,35 @@ public class Trace
 
     public String toString() {
 	return "Trace:"+head.getNext();
+    }
+
+    public void doneDependencies() {
+	depends=new Trace[dependsTemp.size()];
+	dependsTemp.toArray(depends);
+	dependsTemp=null;
+	edges=new Trace[edgesTemp.size()];
+	edgesTemp.toArray(edges);
+	edgesTemp=null;
+    }
+
+    public void addDependency(Trace prev) {
+	if(!dependsTemp.contains(prev))
+	    dependsTemp.add(prev);
+	if(!prev.edgesTemp.contains(this))
+	    prev.edgesTemp.add(this);
+    }
+
+    public void setPrimePump(int pp) {
+	primePump=pp;
+	TraceNode cur=head.getNext();
+	while(cur instanceof FilterTraceNode) {
+	    ((FilterTraceNode)cur).getFilter().setPrimePump(pp);
+	    cur=cur.getNext();
+	}
+    }
+
+    public int getPrimePump() {
+	return primePump;
     }
 }
 

@@ -395,12 +395,16 @@ public class SpaceTimeBackend
 	    for(int i=0;i<traces.length;i++)
 		System.out.println(traces[i]);
 	    SpaceTimeSchedule sched=TestLayout.layout(traces,rawRows,rawColumns);
+	    traceForrest=Schedule2Dependencies.findDependencies(sched,traces,rawRows,rawColumns);
+	    SoftwarePipeline.pipeline(sched,traces);
+	    for(int i=0;i<traces.length;i++)
+		traces[i].doneDependencies();
 	}
 	
 	//traceList=null;
 	//content=null;
 	//executionCounts=null;
-	if(false&&REAL) {
+	if(true&&REAL) {
 	    //mgordon's stuff
 	    System.out.println("Building Trace Traversal");
 	    ListIterator initTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    

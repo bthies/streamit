@@ -11,8 +11,8 @@ import at.dms.kjc.sir.linear.*;
  * After these are constructed the old SIRFilters can be garbage collected
  * Will migrate methods from SIRFilter and SIRTwoStageFilter as needed
  * Unifies the representation of SIRFilter and SIRTwoStageFilter
- * Information is transferred from SIRFilter at construction time so
- * is immutable and a more compact representation
+ * Information is transferred from SIRFilter at construction time
+ * FilterContent is immutable and a more compact representation
  * Truly flat. No pointers back to any previously existing structure.
  */
 public class FilterContent {

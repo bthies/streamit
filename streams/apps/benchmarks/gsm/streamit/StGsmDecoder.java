@@ -428,131 +428,81 @@ class ReflectionCoeffFilter extends Filter
 
 
 }//ReflectionCoeffFilter
-class ShortTermSynthFilter extends Filter
-{
-    short[] mdrp;   //input
-    short[] mrrp; //input
-    short[] wt; //temporary array
-    short[] v; //temporary array
-    short[] sr; //output!
 
-#include "Helper.java"
-#define V_LENGTH 9
-#define MDRP_LENGTH 40
-#define MRRP_LENGTH 8
-#define WT_LENGTH 160
-#define SR_LENGTH 160
+class ShortTermReorder extends Filter
+{
+    short mrrp[];
     
     public void init()
     {
-	int i;
-	input = new Channel(Short.TYPE, 48);
-	output = new Channel(Short.TYPE, 160);
-	mdrp = new short[MDRP_LENGTH];
-	mrrp = new short[MRRP_LENGTH];
-	wt = new short[WT_LENGTH];
-	v = new short[V_LENGTH];
-	for (i = 0; i < V_LENGTH; i++)
-	{
-	    v[i] = 0;
-	}
-	sr = new short[SR_LENGTH];
-
+        input = new Channel(Short.TYPE, 8 + 40);
+        output = new Channel(Short.TYPE, (8 + 1) * 40);
+        mrrp = new short[8];
     }
+    
     public void work()
     {
-	int i;
-	short j, temp, temp1, temp2, k, sri;
-	for (i = 0; i < MDRP_LENGTH; i++)
-	{
-	    mdrp[i] = input.popShort();
-	}
-	for (i = 0; i < MRRP_LENGTH; i++)
-	{
-	    mrrp[i] = input.popShort();
-	}
-	//Short term synthesis filtering:  uses drp[0..39] and rrp[0...7] 
-	// to produce sr[0...159].  A temporary array wt[0..159] is used.
-	for (k = 0; k < 40; k++)
-	    {
-		wt[k] = mdrp[k];
-	    }
-	for (k = 0; k < 40; k++)
-	    {
-		wt[40+k] = mdrp[k];
-	    }
-	for (k = 0; k < 40; k++)
-	    {
-		wt[80+k] = mdrp[k];
-	    }
-	for (k = 0; k < 40; k++)
-	    {
-		wt[120+k] = mdrp[k];
-	    }
-	//below is supposed to be from index_start to index_end...how is
-	//this different from just 0 to 159?
-	for (k = 0; k < 13; k++)
-	    {
-		sri = wt[k];
-		for (i = 1; i < 8; i++)
-		    {
-			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
-			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
-		    }
-                output.pushShort(sri);
-		// sr[k] = sri;
-		v[0] = sri;
-	    }
+        short val;
+        int i, j;
+        
+        // Read in mrrp:
+        for (j = 0; j < 8; j++)
+            mrrp[j] = input.popShort();
 
-	for (k = 13; k < 27; k++)
-	    {
-		sri = wt[k];
-		for (i = 1; i < 8; i++)
-		    {
-			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
-			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
-		    }
-                output.pushShort(sri);
-		// sr[k] = sri;
-		v[0] = sri;
-	    }
-
-	for (k = 27; k < 40; k++)
-	    {
-		sri = wt[k];
-		for (i = 1; i < 8; i++)
-		    {
-			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
-			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
-		    }
-                output.pushShort(sri);
-		// sr[k] = sri;
-		v[0] = sri;
-	    }	
-
-	for (k = 40; k < 160; k++)
-	    {
-		sri = wt[k];
-		for (i = 1; i < 8; i++)
-		    {
-			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
-			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
-		    }
-                output.pushShort(sri);
-		// sr[k] = sri;
-		v[0] = sri;
-	    }
-
-        /*
-	for (j = 0; j < SR_LENGTH; j++)
-	    {
-		output.pushShort(sr[j]);
-	    }
-        */
-	//System.err.println("Got to ShortTermSynth Filter!");
+        for (i = 0; i < 40; i++)
+        {
+            for (j = 0; j < 8; j++)
+                output.pushShort(mrrp[j]);
+            output.pushShort(input.popShort());
+        }
     }
-}//ShortTermSynthFilter
+}
 
+class ShortTermSynthCalc extends Filter
+{
+    short[] mrrp;
+    short[] v;
+ 
+#include "Helper.java"
+#define V_LENGTH 9
+#define MRRP_LENGTH 8
+   
+    public void init()
+    {
+        input = new Channel(Short.TYPE, MRRP_LENGTH + 1);
+        output = new Channel(Short.TYPE, 1);
+        mrrp = new short[MRRP_LENGTH];
+	v = new short[V_LENGTH];
+	for (int i = 0; i < V_LENGTH; i++)
+	    v[i] = 0;
+    }
+
+    public void work()
+    {
+        int i;
+        short sri;
+        
+        for (i = 0; i < MRRP_LENGTH; i++)
+            mrrp[i] = input.popShort();
+        sri = input.popShort();
+        for (i = 1; i < 8; i++)
+        {
+            sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
+            v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
+        }
+        v[0] = sri;
+        output.pushShort(sri);
+    }
+}
+
+class ShortTermSynth extends Pipeline
+{
+    public void init()
+    {
+        add(new ShortTermReorder());
+        add(new ShortTermSynthCalc());
+    }
+}
 
 class LARInputFilter extends Filter
 {
@@ -926,7 +876,7 @@ public class StGsmDecoder extends StreamIt
 	this.add(new HoldFilter());
 	this.add(new LARInputSplitJoin());
 	this.add(new ReflectionCoeffFilter());
-	this.add(new ShortTermSynthFilter());
+	this.add(new ShortTermSynth());
 	this.add(new PostProcessingFilter());
 	//this.add(new ShortPrinter());
 	this.add(new streamit.io.FileWriter("BinaryDecoderOutput1", Short.TYPE));	

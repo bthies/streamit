@@ -18,7 +18,7 @@ public class FilterContent {
     private String name;
     private SIRWorkFunction[] init,steady;
     private CType inputType,outputType;
-    private int initMult, steadyMult;
+    private int initMult, steadyMult, primePump;
     private JMethodDeclaration[] methods;
     private List paramList;
     private JMethodDeclaration initFunction;
@@ -56,12 +56,21 @@ public class FilterContent {
 	is2stage = steady.length > 1;
     }
     
+    public void setPrimePump(int pp) 
+    {
+	primePump = pp;
+    }
+    
+    public int getPrimePump() 
+    {
+	return primePump;
+    }
+
     public boolean isTwoStage() 
     {
 	return is2stage;
     }
     
-
     public String toString() {
 	return name;
     }

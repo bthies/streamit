@@ -74,6 +74,12 @@ typedef struct tape {
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)
+#define FEEDBACK_DELAY(d, c, n, t, f) { \
+  int i; \
+  for (i = 0; i < (n); i++) { \
+    PUSH_TAPE((c)->type_data.splitjoin_data.joiner.tape[1], t, f((d), i)); \
+  } \
+}
 typedef struct one_to_many {
   splitjoin_type type;
   int fan;

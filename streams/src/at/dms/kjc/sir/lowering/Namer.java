@@ -42,7 +42,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 	names = new HashMap();
 	// find toplevel stream
 	SIROperator toplevel = str;
-	while (str.getParent()!=null) {
+	while (toplevel.getParent()!=null) {
 	    toplevel = toplevel.getParent();
 	}
 	// name the stream structure

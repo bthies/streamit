@@ -263,6 +263,8 @@ public class Pipeline extends Stream
     public Pipeline(Object o1) {super(o1);}
 
     public Pipeline(Object o1, int i1) {super(o1,i1);}
+
+    public Pipeline(int i1, int i2, Object o1) {super(i1,i2,o1);}
     
     public Pipeline(Object o1,Object o2) {super(o1,o2);}
 

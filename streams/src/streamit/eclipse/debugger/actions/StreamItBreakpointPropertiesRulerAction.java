@@ -91,6 +91,5 @@ public class StreamItBreakpointPropertiesRulerAction extends ManageBreakpointRul
 		}
 
 		return null;
-	}
-	
+	}	
 }

@@ -69,6 +69,22 @@ public class StreamItDebuggerPlugin extends AbstractUIPlugin {
 			
 			desc = ImageDescriptor.createFromURL(new URL(iconUrl, "obj16/minus.gif"));
 			getImageRegistry().put(IStreamItDebuggerPluginConstants.MINUS_IMAGE, desc);
+			
+			desc = ImageDescriptor.createFromURL(new URL(iconUrl, "obj16/next_nav.gif"));
+			getImageRegistry().put(IStreamItDebuggerPluginConstants.UP_ARROW_IMAGE, desc);
+			
+			desc = ImageDescriptor.createFromURL(new URL(iconUrl, "obj16/prev_nav.gif"));
+			getImageRegistry().put(IStreamItDebuggerPluginConstants.DOWN_ARROW_IMAGE, desc);
+			
+			desc = ImageDescriptor.createFromURL(new URL(iconUrl, "ctool16/watchlist_view.gif"));
+			getImageRegistry().put(IStreamItDebuggerPluginConstants.SHOW_CHANNEL, desc);
+
+			desc = ImageDescriptor.createFromURL(new URL(iconUrl, "ctool16/faded_watchlist_view.gif"));
+			getImageRegistry().put(IStreamItDebuggerPluginConstants.FADED_SHOW_CHANNEL, desc);
+
+			desc = ImageDescriptor.createFromURL(new URL(iconUrl, "obj16/ref-27.gif"));
+			getImageRegistry().put(IStreamItDebuggerPluginConstants.HIGHLIGHT, desc);
+			
 		} catch (MalformedURLException e) {
 		}
 	}

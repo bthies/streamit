@@ -7,5 +7,8 @@ import streamit.eclipse.debugger.StreamItDebuggerPlugin;
  */
 public interface IStreamItActionConstants {
 	
-	public static String ID_STREAMIT_EDITOR = StreamItDebuggerPlugin.getUniqueIdentifier() + ".texteditor.StreamItEditor";
+	public static String PREFIX = StreamItDebuggerPlugin.getUniqueIdentifier() + ".actions."; 
+	public static String ID_LINE_BREAKPOINT_ACTION = PREFIX + "ManageBreakpointAction";
+	public static String ID_METHOD_BREAKPOINT_ACTION = PREFIX + "ManageMethodBreakpointAction";
+	public static String ID_WATCHPOINT_ACTION = PREFIX + "ManageWatchpointAction";
 }

@@ -10,8 +10,9 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 
-import streamit.eclipse.debugger.actions.ChangeDatumValueAction;
+import streamit.eclipse.debugger.actions.ChangeQueueValuesAction;
 import streamit.eclipse.debugger.actions.HighlightDatumAction;
+import streamit.eclipse.debugger.actions.ShowQueueValuesAction;
 import streamit.eclipse.debugger.core.IStreamItDebuggerConstants;
 
 /**
@@ -19,7 +20,8 @@ import streamit.eclipse.debugger.core.IStreamItDebuggerConstants;
  */
 public class ChannelSelector implements MouseListener {
 
-	private static ChangeDatumValueAction fChangeDatumAction = new ChangeDatumValueAction();
+	private static ChangeQueueValuesAction fChangeQueueValuesAction = new ChangeQueueValuesAction();
+	private static ShowQueueValuesAction fShowQueueValuesAction = new ShowQueueValuesAction();
 	private static HighlightDatumAction fHighlightAction = new HighlightDatumAction();
 
 	/**
@@ -45,9 +47,11 @@ public class ChannelSelector implements MouseListener {
 			Figure f = (Figure) me.getSource();
 			if (f instanceof Channel) {
 				Channel c = (Channel) me.getSource();
-				fChangeDatumAction.update(c);
-				//fHighlightAction.update(c);
-				createContextMenu(getStreamViewer(getActivePage()));
+				fChangeQueueValuesAction.update(c);
+				fShowQueueValuesAction.update(c);
+				StreamViewer v = getStreamViewer(getActivePage());
+				fHighlightAction.update(c, me.getLocation().y, v.getAllExpanded(false));
+				createContextMenu(v);
 			} else {
 				disableActions();
 			}
@@ -56,15 +60,17 @@ public class ChannelSelector implements MouseListener {
 	
 	public static void createContextMenu(StreamViewer v) {
 		MenuManager menuMgr = new MenuManager("#PopUp");
-		menuMgr.add(fChangeDatumAction);
-		//menuMgr.add(fHighlightAction);
+		menuMgr.add(fChangeQueueValuesAction);
+		menuMgr.add(fHighlightAction);
+		menuMgr.add(fShowQueueValuesAction);
 		Control canvas = v.getControl();
 		Menu menu = menuMgr.createContextMenu(canvas);
 		canvas.setMenu(menu);
 	}
 
 	protected static void disableActions() {
-		fChangeDatumAction.disable();
+		fChangeQueueValuesAction.disable();
+		fShowQueueValuesAction.disable();
 		fHighlightAction.disable();
 	}
 
@@ -80,8 +86,8 @@ public class ChannelSelector implements MouseListener {
 	 */
 	public void mouseDoubleClicked(MouseEvent me) {
 		Channel c = (Channel) me.getSource();
-		//fHighlightAction.update(c);
-		//fHighlightAction.run();
+		fHighlightAction.update(c, me.getLocation().y, getStreamViewer(getActivePage()).getAllExpanded(false));
+		fHighlightAction.run();
 	}
 
 	private static IWorkbenchPage getActivePage(){

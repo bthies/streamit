@@ -28,7 +28,6 @@
       <import plugin="org.eclipse.draw2d"/>
    </requires>
 
-
 <!-- ================================================================== -->
 <!-- Extension point: org.eclipse.debug.core.launchConfigurationTypes	-->
 <!-- ================================================================== -->
@@ -91,20 +90,6 @@
 <!-- Extension point: org.eclipse.ui.views								-->
 <!-- ================================================================== -->
    <extension point="org.eclipse.ui.views">
-      <view
-            name="%filterViewName"
-            icon="icons/full/ctool16/disp_sbook.gif"
-            category="org.eclipse.debug.ui"
-            class="streamit.eclipse.debugger.ui.FilterView"
-            id="streamit.eclipse.debugger.ui.FilterView">
-      </view>
-      <view
-            name="%channelViewName"
-            icon="icons/full/ctool16/disp_sbook.gif"
-            category="org.eclipse.debug.ui"
-            class="streamit.eclipse.debugger.ui.ChannelView"
-            id="streamit.eclipse.debugger.ui.ChannelView">
-      </view>
 	  <view
             name="%streamViewName"
             icon="icons/full/ctool16/streamit_app.gif"
@@ -118,6 +103,10 @@
 <!-- Extension point: org.eclipse.ui.perspectiveExtensions				-->
 <!-- ================================================================== -->
    <extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension 
+			targetID="org.eclipse.debug.ui.DebugPerspective">
+			<actionSet id="streamit.eclipse.debugger.ui.StreamItDebugActionSet"/>
+		</perspectiveExtension>
       <perspectiveExtension
             targetID="org.eclipse.debug.ui.DebugPerspective">
          <view
@@ -134,6 +123,15 @@
                visible="false"
                relationship="stack"
                id="streamit.eclipse.debugger.core.ChannelView">
+         </view>
+      </perspectiveExtension>
+      <perspectiveExtension
+            targetID="org.eclipse.debug.ui.DebugPerspective">
+         <view
+               relative="org.eclipse.ui.views.TaskList"
+               visible="false"
+               relationship="stack"
+               id="streamit.eclipse.debugger.graph.StreamView">
          </view>
       </perspectiveExtension>
    </extension>
@@ -185,24 +183,26 @@
       <viewerContribution
             targetID="#StreamItRulerContext"
             id="streamit.eclipse.debugger.texteditor.StreamItEditorPopupActions">
-         <action
-               label="%StreamItBreakpointProperties.label"
-               class="streamit.eclipse.debugger.actions.StreamItBreakpointPropertiesRulerActionDelegate"
-               menubarPath="debug"
-               id="streamit.eclipse.debugger.actions.StreamItBreakpointPropertiesRulerActionDelegate">
-         </action>
+<!--
          <action
                label="%AddWatchpoint.label"
                class="streamit.eclipse.debugger.actions.ManageWatchpointRulerActionDelegate"
                menubarPath="debug"
                id="streamit.eclipse.debugger.actions.ManageWatchpointRulerActionDelegate">
          </action>
-         <action
+        <action
                label="%AddMethodBreakpoint.label"
                class="streamit.eclipse.debugger.actions.ManageMethodBreakpointRulerActionDelegate"
                menubarPath="debug"
                id="streamit.eclipse.debugger.actions.ManageMethodBreakpointRulerActionDelegate">
          </action>
+-->
+         <action
+               label="%StreamItBreakpointProperties.label"
+               class="streamit.eclipse.debugger.actions.StreamItBreakpointPropertiesRulerActionDelegate"
+               menubarPath="debug"
+               id="streamit.eclipse.debugger.actions.StreamItBreakpointPropertiesRulerActionDelegate">
+         </action>         
          <action
                label="%EnableBreakpoint.label"
                class="streamit.eclipse.debugger.actions.EnableDisableBreakpointRulerActionDelegate"
@@ -249,11 +249,30 @@
 			</action>
 		</editorContribution>
 	</extension>
+	
+<!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.viewActions	  	                -->
+<!-- ================================================================== -->
+	<extension point = "org.eclipse.ui.viewActions">
+		<viewContribution 
+			id="streamit.eclipse.debugger.graph.vc" 
+			targetID="streamit.eclipse.debugger.graph.StreamView">        
+			<action 
+				id="streamit.eclipse.debugger.graph.collapseall"
+				toolbarPath="additions"
+				class="streamit.eclipse.debugger.actions.CollapseAllViewAction"
+				hoverIcon="icons/full/obj16/collapseall.gif"
+				disabledIcon="icons/full/obj16/faded_collapseall.gif"
+				icon="icons/full/obj16/collapseall.gif"
+				label="%CollapseAction.label"
+				tooltip="%CollapseAction.tooltip">
+			</action>
+		</viewContribution>
+	</extension>	
 
 <!-- ================================================================== -->
 <!-- Extension point: org.eclipse.ui.actionSets			                -->
 <!-- ================================================================== -->
-     <!--
 <extension point="org.eclipse.ui.actionSets">
 	<actionSet 
 		label="%StreamItDebugActionSet.label" 
@@ -265,7 +284,6 @@
 		path="additions">
         <separator name="breakpointGroup"/>
      </menu>
-
         <action id="streamit.eclipse.debugger.actions.ManageWatchpointAction"
         	definitionId="streamit.eclipse.debugger.actions.ManageWatchpointAction"
   			label="%ManageWatchpointAction.label"
@@ -274,39 +292,80 @@
   			class="streamit.eclipse.debugger.actions.ManageWatchpointActionDelegate"
   			menubarPath="streamit.eclipse.debugger.ui.run/breakpointGroup">
   			<enablement>
-  				<or>
-	             	<objectClass name="org.eclipse.jface.text.ITextSelection"/>
-            		<objectClass name="org.eclipse.jdt.core.IField"/>
-            		<objectClass name="org.eclipse.jdt.debug.core.IJavaFieldVariable"/>
-            	</or>
+             	<objectClass name="org.eclipse.jface.text.ITextSelection"/>
             </enablement>
         </action>
       	<action id="streamit.eclipse.debugger.actions.ManageMethodBreakpointAction"
 	      	definitionId="streamit.eclipse.debugger.actions.ManageMethodBreakpointAction"
   			label="%ManageMethodBreakpointAction.label"
-  			icon="icons/full/obj16/brkpi_obj.gif"
+  			icon="icons/full/obj16/brkp_method.gif"
   			helpContextId="manage_method_breakpoint_action_context"
   			class="streamit.eclipse.debugger.actions.ManageMethodBreakpointActionDelegate"
   			menubarPath="streamit.eclipse.debugger.ui.run/breakpointGroup">
-  			<enablement>
-  				<or>
-	         		<objectClass name="org.eclipse.jface.text.ITextSelection"/>
-	            	<objectClass name="org.eclipse.jdt.core.IMethod"/>
-	            </or>
-			</enablement>
+   			<enablement>
+             	<objectClass name="org.eclipse.jface.text.ITextSelection"/>
+            </enablement>
   	    </action>
-
       	<action id="streamit.eclipse.debugger.actions.ManageBreakpointAction"
       		definitionId="streamit.eclipse.debugger.actions.ManageBreakpointAction"
   			label="%ManageBreakpointAction.label"
-  			icon="icons/full/obj16/brkpi_obj.gif"
+  			icon="icons/full/obj16/brkp_obj.gif"
   			helpContextId="manage_breakpoint_action_context"
   			class="streamit.eclipse.debugger.actions.ManageBreakpointActionDelegate"
   			menubarPath="streamit.eclipse.debugger.ui.run/breakpointGroup">
+  			<enablement>
+             	<objectClass name="org.eclipse.jface.text.ITextSelection"/>
+            </enablement>
   	    </action>
-
    </actionSet>
 </extension>
-  	   --> 
+
+<!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.commands		          	        -->
+<!-- ================================================================== -->
+<extension point="org.eclipse.ui.commands">
+	<category 
+		name="%category.streamit.name"
+		description="%category.streamit.description"
+		id="org.eclipse.debug.ui.category.streamit"
+	/>
+	<command
+		category="org.eclipse.debug.ui.category.streamit"
+		 id="org.eclipse.jdt.debug.ui.ManageWatchpointAction"
+  		 name="%ActionDefinition.manageWatchpoint.name"
+  		 description= "%ActionDefinition.manageWatchpoint.description"
+	/>
+	<keyBinding
+		string=""
+		scope="org.eclipse.ui.globalScope"
+		command="org.eclipse.jdt.debug.ui.ManageWatchpointAction"
+		configuration="org.eclipse.ui.defaultAcceleratorConfiguration"
+	/>	
+	<command
+		category="org.eclipse.debug.ui.category.streamit"
+		id="org.eclipse.jdt.debug.ui.ManageMethodBreakpointAction"
+		name="%ActionDefinition.manageMethodBreakpoint.name"
+  		description="%ActionDefinition.manageMethodBreakpoint.description"
+	/>
+	<keyBinding
+		string=""
+		scope="org.eclipse.ui.globalScope"
+		command="org.eclipse.jdt.debug.ui.ManageMethodBreakpointAction"
+		configuration="org.eclipse.ui.defaultAcceleratorConfiguration"
+	/>
+	<command
+		category="org.eclipse.debug.ui.category.streamit"
+		id="streamit.eclipse.debugger.actions.ManageBreakpointAction"
+		name="%ActionDefinition.manageBreakpoint.name"
+		description= "%ActionDefinition.manageBreakpoint.description"
+	/>
+	<keyBinding
+		string="Ctrl+Shift+B"
+		scope="org.eclipse.ui.textEditorScope"
+		command="streamit.eclipse.debugger.actions.ManageBreakpointAction"
+		configuration="org.eclipse.ui.defaultAcceleratorConfiguration"
+	/>
+	
+</extension>
 
 </plugin>

@@ -5,6 +5,7 @@ import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.draw2d.geometry.Dimension;
+import org.eclipse.jdt.debug.core.IJavaObject;
 import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaVariable;
 import org.eclipse.jface.resource.ImageRegistry;
@@ -23,6 +24,7 @@ import org.eclipse.ui.PlatformUI;
 
 import streamit.eclipse.debugger.IStreamItDebuggerPluginConstants;
 import streamit.eclipse.debugger.StreamItDebuggerPlugin;
+import streamit.eclipse.debugger.core.StreamItViewsManager;
 
 /**
  * @author kkuo
@@ -36,10 +38,12 @@ public class StreamViewer extends Viewer {
 	private Canvas fCanvas;
 	private Figure fPanel;
 	private ScrolledComposite fCanvasC;
-	private Font fParentFont;
-	
+
 	private Image fPlus;
 	private Image fMinus;
+	private Image fUpArrow;
+	private Image fDownArrow;
+	private Font fParentFont;
 
 	public StreamViewer(Composite parent) {
 		super();
@@ -62,19 +66,15 @@ public class StreamViewer extends Viewer {
 		fPanel = new Figure();
 		lws.setContents(fPanel);
 		
-		fParentFont = parent.getFont();
 		new ChannelSelector(this, fPanel);
 		
 		ImageRegistry reg = StreamItDebuggerPlugin.getDefault().getImageRegistry(); 
 		fPlus = reg.get(IStreamItDebuggerPluginConstants.PLUS_IMAGE);
 		fMinus = reg.get(IStreamItDebuggerPluginConstants.MINUS_IMAGE);
-		StreamItViewFactory.getInstance().setImages(fPlus, fMinus);
-
-	}
-	
-	public void dispose() {
-		fPlus.dispose();
-		fMinus.dispose();
+		fUpArrow = reg.get(IStreamItDebuggerPluginConstants.UP_ARROW_IMAGE);
+		fDownArrow = reg.get(IStreamItDebuggerPluginConstants.DOWN_ARROW_IMAGE);
+		fParentFont = parent.getFont();
+		StreamItViewFactory.getInstance().setUtilities(fPlus, fMinus, fUpArrow, fDownArrow, fParentFont);
 	}
 
 	/* (non-Javadoc)
@@ -112,15 +112,16 @@ public class StreamViewer extends Viewer {
 			// clean graph
 			fInput = null;
 			setRoot(null);
+			StreamItViewsManager.setCollapseAll(false);
 			return;
 		}
 		
 		if (!(input instanceof IVariable)) return;
 		fInput = (IVariable) input;
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, fParentFont, "", getAllExpanded(false)));
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", getAllExpanded(false)));
 	}
 	
-	private Expanded getAllExpanded(boolean highlighting) {
+	protected Expanded getAllExpanded(boolean highlighting) {
 		if (fRoot == null) return new Expanded(highlighting);
 		return ((MainPipeline) fRoot).getAllExpanded(highlighting);
 	}
@@ -134,18 +135,30 @@ public class StreamViewer extends Viewer {
 		fCanvasC.setMinSize(fCanvasC.computeSize(d.width, d.height));
 	}
 	
-	public void setSelection(String streamNameWithId) {
+	public void setSelection(String streamNameWithId, boolean highlighting) {
 		if (fInput == null) return;
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, fParentFont, streamNameWithId, getAllExpanded(true)));
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, streamNameWithId, getAllExpanded(highlighting)));
 	}
 	
-	public void toggle(String streamNameWithId) {
+	public void toggleStream(String streamNameWithId) {
 		if (fInput == null) return;
 		Expanded e = getAllExpanded(false);
-		e.toggle(streamNameWithId);
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, fParentFont, streamNameWithId, e));
+		e.toggleStream(streamNameWithId);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, streamNameWithId, e));
 	}
-
+	
+	public void toggleChannel(String channelId) {
+		if (fInput == null) return;
+		Expanded e = getAllExpanded(false);
+		e.toggleChannel(channelId);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, StreamSelector.getSelectionName(), e));
+	}
+	
+	public void collapseAll() {
+		if (fRoot == null) return;
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", new Expanded(false)));
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.Viewer#setSelection(org.eclipse.jface.viewers.ISelection, boolean)
 	 */
@@ -157,11 +170,18 @@ public class StreamViewer extends Viewer {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 				if (element instanceof IJavaVariable) {
 					IJavaVariable v = (IJavaVariable) element;
-					setSelection(v.getValue().getReferenceTypeName() + v.getValue().getValueString());
+					setSelection(v.getValue().getReferenceTypeName() + v.getValue().getValueString(), true);
 				} else if (element instanceof IJavaStackFrame) {
+					IJavaStackFrame frame = (IJavaStackFrame) element;
+					IJavaObject o = frame.getThis();
+					if (o != null) {
+						setSelection(o.getReferenceTypeName() + o.getValueString(), true);
+						return;
+					}
+					
 					IVariable[] vars = ((IJavaStackFrame) element).getVariables();
-					if (vars.length < 1) return;
-					setSelection(vars[0].getReferenceTypeName() + vars[0].getValue().getValueString());
+					IVariable var = StreamItViewFactory.getInstance().getVariable(vars, "program");
+					setSelection(var.getReferenceTypeName() + var.getValue().getValueString(), true);
 				}
 			} catch (Exception e) {
 			}

@@ -39,7 +39,6 @@ import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
 import org.eclipse.jdt.internal.debug.ui.actions.AbstractBreakpointRulerAction;
 import org.eclipse.jdt.internal.debug.ui.actions.ActionMessages;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -106,7 +105,6 @@ public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerA
 				ErrorDialog.openError(getTextEditor().getEditorSite().getShell(), ActionMessages.getString("EnableDisableBreakpointRulerAction.Enabling/disabling_breakpoints_2"), ActionMessages.getString("EnableDisableBreakpointRulerAction.Exceptions_occurred_enabling_disabling_the_breakpoint_3"), e.getStatus()); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
-		JavaPlugin.getActivePage().bringToTop(getTextEditor());
 	}
 	
 	/**
@@ -127,7 +125,6 @@ public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerA
 		} catch (CoreException ce) {
 			JDIDebugUIPlugin.log(ce);
 		}
-		JavaPlugin.getActivePage().bringToTop(getTextEditor());
 	}
 	
 	protected IBreakpoint getJavaBreakpoint() {

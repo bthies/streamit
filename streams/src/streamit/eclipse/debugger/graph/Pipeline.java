@@ -1,5 +1,6 @@
 package streamit.eclipse.debugger.graph;
 
+import java.util.Collections;
 import java.util.Vector;
 
 import org.eclipse.debug.core.DebugException;
@@ -8,28 +9,31 @@ import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.FigureUtilities;
+import org.eclipse.draw2d.ImageFigure;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.LineBorder;
+import org.eclipse.draw2d.RectangleFigure;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.jdt.debug.core.IJavaClassType;
 import org.eclipse.jdt.debug.core.IJavaValue;
-import org.eclipse.swt.graphics.Font;
 
 /**
  * @author kkuo
  */
-public class Pipeline extends Label implements IStream {
+public class Pipeline extends RectangleFigure implements IStream {
 	
 	private String fNameWithoutId;
 	private String fId;
 	private Label fHeader;
+	private ImageFigure fArrow;
+	
 	private boolean fExpanded;
-	private Label fInputChannel;
-	private Label fOutputChannel;
+	private Channel fTopChannel;
+	private Channel fBottomChannel;
 	private Vector fChildren;
 
-	public Pipeline(IValue pipelineVal, String name, Font parentFont, String streamNameWithId, Expanded allExpanded, Figure parent, boolean verticalLayout, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
+	public Pipeline(IValue pipelineVal, String name, String streamNameWithId, Expanded allExpanded, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 		
 		// create pipeline
@@ -37,8 +41,8 @@ public class Pipeline extends Label implements IStream {
 		fNameWithoutId = name;
 		fId = pipelineVal.getValueString();
 		String pipelineName = getNameWithId();
-		fExpanded = allExpanded.contains(pipelineName, false);
-		Dimension pipelineSize = FigureUtilities.getTextExtents(pipelineName, parentFont);
+		fExpanded = allExpanded.containsStream(pipelineName, false);
+		Dimension pipelineSize = FigureUtilities.getTextExtents(pipelineName, factoryInst.getFont());
 
 		// pipeline style
 		setBorder(new LineBorder());
@@ -52,18 +56,18 @@ public class Pipeline extends Label implements IStream {
 		if (!fExpanded) {
 			
 			// collapsed content
-			setIcon(factoryInst.getPlus());
-			setText(pipelineName);
-			
-			// collapsed size
-			pipelineSize.expand(getIconTextGap() + factoryInst.getPlus().getBounds().width + IStreamItGraphConstants.MARGIN, IStreamItGraphConstants.MARGIN);
+			fHeader = new Label(pipelineName, factoryInst.getPlus());
+			pipelineSize.expand(fHeader.getIconTextGap() + factoryInst.getImageWidth(), 0);
 			factoryInst.roundUpEven(pipelineSize);
-			
+			fHeader.setSize(pipelineSize);
+			add(fHeader);
+
+			pipelineSize.expand(IStreamItGraphConstants.MARGIN, factoryInst.getArrowHeight() + IStreamItGraphConstants.MARGIN);
 		} else {
 			
 			// expanded content
 			fHeader = new Label(pipelineName, factoryInst.getMinus());
-			pipelineSize.expand(fHeader.getIconTextGap() + factoryInst.getMinus().getBounds().width + IStreamItGraphConstants.MARGIN, IStreamItGraphConstants.MARGIN);
+			pipelineSize.expand(fHeader.getIconTextGap() + factoryInst.getImageWidth(), 0);
 			factoryInst.roundUpEven(pipelineSize);
 			fHeader.setSize(pipelineSize);
 			add(fHeader);
@@ -71,6 +75,13 @@ public class Pipeline extends Label implements IStream {
 			// expanded children
 			IVariable[] vars = factoryInst.findVariables(factoryInst.findVariables(factoryInst.findVariables(pipelineVal.getVariables(), "streamElements"), "header"), "next");
 			Vector elements = factoryInst.getLinkedListElements(vars);
+			int last;
+			if (forward) {
+				last = elements.size() - 1;
+			} else {
+				last = 0;
+				Collections.reverse(elements);
+			}
 			IJavaValue val;
 			IJavaClassType type;
 			String streamType, streamName;
@@ -82,70 +93,82 @@ public class Pipeline extends Label implements IStream {
 				streamName = type.getName();
 				streamType = type.getSuperclass().getName();
 				if (streamType.equals("streamit.library.Filter")) {
-					fChildren.add(new Filter(val, streamName, parentFont, streamNameWithId, allExpanded, this, true, childrenSize, factoryInst));
+					fChildren.add(new Filter(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.Pipeline")) {
-					fChildren.add(new Pipeline(val, streamName, parentFont, streamNameWithId, allExpanded, this, true, childrenSize, factoryInst));
+					fChildren.add(new Pipeline(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.SplitJoin")) {
-					fChildren.add(new SplitJoin(val, streamName, parentFont, streamNameWithId, allExpanded, this, true, childrenSize, factoryInst));	
+					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));	
 				} else if (streamType.equals("streamit.library.FeedbackLoop")) {
-					fChildren.add(new FeedbackLoop(val, streamName, parentFont, streamNameWithId, allExpanded, this, true, childrenSize, factoryInst));				
+					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));				
 				}
 			}
 		
 			// expanded size
-			pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*2);
-			pipelineSize.height = Math.max(childrenSize.height, pipelineSize.height);
+			pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*3 + factoryInst.getImageWidth()*2);
+			pipelineSize.height = Math.max(childrenSize.height, pipelineSize.height + factoryInst.getArrowHeight());
 		}
-
 		setSize(pipelineSize);
-			
+
+		// content arrow
+		fArrow = new ImageFigure(factoryInst.getArrow(forward));
+		fArrow.setSize(factoryInst.getArrowWidth(), factoryInst.getArrowHeight());
+		add(fArrow);
+
 		// create channels
 		IVariable[] pipelineVars = pipelineVal.getVariables();
-		fInputChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), parentFont, true, factoryInst);
-		fOutputChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), parentFont, false, factoryInst);
-
+		if (forward) {
+			fTopChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), pipelineName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
+			fBottomChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), pipelineName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+		} else {
+			fBottomChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), pipelineName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
+			fTopChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), pipelineName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+		}
+		fTopChannel.turnOff(fExpanded);
+		fBottomChannel.turnOff(fExpanded);
+		
 		// parent content
-		parent.add(fInputChannel);
 		parent.add(this);
-		parent.add(fOutputChannel);
 
 		// parent size
 		if (verticalLayout) {
 			// (total height of children, width of widest child)
-			parentSize.height = parentSize.height + fInputChannel.getSize().height + pipelineSize.height + fOutputChannel.getSize().height;
+			parentSize.height = parentSize.height + fTopChannel.getSize().height + pipelineSize.height;// + fOutputChannel.getSize().height;
+			if (lastChild) parentSize.height += fBottomChannel.getSize().height;
 			parentSize.width = Math.max(parentSize.width, pipelineSize.width);
 		} else {
 			// (height of tallest child, total width of children)
-			parentSize.height = Math.max(parentSize.height, fInputChannel.getSize().height + pipelineSize.height + fOutputChannel.getSize().height);
-			parentSize.width = parentSize.width + Math.max(pipelineSize.width, fInputChannel.getSize().width);
+			parentSize.height = Math.max(parentSize.height, fTopChannel.getSize().height + pipelineSize.height + fBottomChannel.getSize().height);
+			parentSize.width = parentSize.width + Math.max(pipelineSize.width, fTopChannel.getSize().width);
 		}
 	}
 
 	public int setVerticalLocation(Point parentTopCenter, int currentHeight) {
-		Dimension inputSize = fInputChannel.getSize();
+		Dimension topSize = fTopChannel.getSize();
 		Dimension pipelineSize = getSize();
-		Dimension outputSize = fOutputChannel.getSize();
+		Dimension headerSize = fHeader.getSize();
+		Dimension arrowSize = fArrow.getSize();
+		Dimension bottomSize = fBottomChannel.getSize();
 
-		fInputChannel.setLocation(parentTopCenter.getTranslated(-inputSize.width/2, currentHeight));
-		currentHeight += inputSize.height;
+		if (fTopChannel.setSelf(parentTopCenter.getTranslated(-topSize.width/2, currentHeight))) currentHeight += topSize.height;
 
 		setLocation(parentTopCenter.getTranslated(-pipelineSize.width/2, currentHeight));
-						
+		fHeader.setLocation(parentTopCenter.getTranslated(-pipelineSize.width/2 + IStreamItGraphConstants.MARGIN/2, IStreamItGraphConstants.MARGIN/2 + currentHeight));
+					
 		if (!isExpanded()) {
 			// collapsed location
+			fArrow.setLocation(parentTopCenter.getTranslated(-arrowSize.width/2, IStreamItGraphConstants.MARGIN/2 + headerSize.height + currentHeight));
 			currentHeight += pipelineSize.height;
 			
 		} else {
 			// expanded location
-			Dimension headerSize = fHeader.getSize();
-			fHeader.setLocation(parentTopCenter.getTranslated(-pipelineSize.width/2, currentHeight));		
-
-			for (int i = 0; i < fChildren.size(); i++)
+			fArrow.setLocation(parentTopCenter.getTranslated(-pipelineSize.width/2 + IStreamItGraphConstants.MARGIN/2, IStreamItGraphConstants.MARGIN/2 + headerSize.height + currentHeight));
+			
+			int last = fChildren.size() - 1;
+			for (int i = 0; i < last + 1; i++)
 				currentHeight = ((IStream) fChildren.get(i)).setVerticalLocation(parentTopCenter, currentHeight);
 		}
 
-		fOutputChannel.setLocation(parentTopCenter.getTranslated(-outputSize.width/2, currentHeight));
-		currentHeight += outputSize.height;		
+		if (fBottomChannel.setSelf(parentTopCenter.getTranslated(-bottomSize.width/2, currentHeight))) currentHeight += bottomSize.height;
 
 		return currentHeight;
 	}
@@ -154,15 +177,15 @@ public class Pipeline extends Label implements IStream {
 	 * @see streamit.eclipse.debugger.graph.IStream#setHorizontalLocation(org.eclipse.draw2d.geometry.Point, int, int)
 	 */
 	public int setHorizontalLocation(int currentHeight, int stretchHeight, int currentWidth) {
-		Dimension inputSize = fInputChannel.getSize();
+		Dimension topSize = fTopChannel.getSize();
 		Dimension pipelineSize = getSize();
-		Dimension outputSize = fOutputChannel.getSize();
-		
+		Dimension bottomSize = fBottomChannel.getSize();
+
 		// expand channels
-		inputSize.height = (stretchHeight - pipelineSize.height)/2;
-		fInputChannel.setSize(inputSize);
-		outputSize.height = (stretchHeight - pipelineSize.height)/2;
-		fOutputChannel.setSize(outputSize);
+		topSize.height = (stretchHeight - pipelineSize.height)/2;
+		fTopChannel.setSize(topSize);
+		bottomSize.height = (stretchHeight - pipelineSize.height)/2;
+		fBottomChannel.setSize(bottomSize);
 		
 		setVerticalLocation(new Point(currentWidth + pipelineSize.width/2, currentHeight), 0);
 		currentWidth = currentWidth +  pipelineSize.width + IStreamItGraphConstants.MARGIN/2;
@@ -170,31 +193,31 @@ public class Pipeline extends Label implements IStream {
 	}
 	
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getInputLabelTopLeft()
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelTopLeft()
 	 */
-	public Point getInputChannelTopLeft() {
-		return fInputChannel.getLocation();
+	public Point getTopChannelTopLeft() {
+		return fTopChannel.getLocation();
 	}
 
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getInputLabelTopRight()
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelTopRight()
 	 */
-	public Point getInputChannelTopRight() {
-		return fInputChannel.getBounds().getTopRight().getTranslated(-1, 0);
+	public Point getTopChannelTopRight() {
+		return fTopChannel.getBounds().getTopRight().getTranslated(-1, 0);
 	}
 
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getOutputLabelBottomLeft()
+	 * @see streamit.eclipse.debugger.graph.IStream#getBottomChannelBottomLeft()
 	 */
-	public Point getOutputChannelBottomLeft() {
-		return fOutputChannel.getBounds().getBottomLeft();
+	public Point getBottomChannelBottomLeft() {
+		return fBottomChannel.getBounds().getBottomLeft();
 	}
 
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getOutputLabelBottomRight()
+	 * @see streamit.eclipse.debugger.graph.IStream#getBottomChannelBottomRight()
 	 */
-	public Point getOutputChannelBottomRight() {
-		return fOutputChannel.getBounds().getBottomRight().getTranslated(-1, 0);
+	public Point getBottomChannelBottomRight() {
+		return fBottomChannel.getBounds().getBottomRight().getTranslated(-1, 0);
 	}
 	
 	/* (non-Javadoc)
@@ -215,7 +238,6 @@ public class Pipeline extends Label implements IStream {
 	 * @see streamit.eclipse.debugger.graph.Stream#withinIcon()
 	 */
 	public boolean isWithinIcon(Point p) {
-		if (!isExpanded()) return getIconBounds().contains(p);
 		return fHeader.getIconBounds().contains(p);
 	}
 

@@ -8,13 +8,13 @@ import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.FigureUtilities;
+import org.eclipse.draw2d.ImageFigure;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.Polygon;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.jdt.debug.core.IJavaClassType;
 import org.eclipse.jdt.debug.core.IJavaValue;
-import org.eclipse.swt.graphics.Font;
 
 /**
  * @author kkuo
@@ -24,9 +24,11 @@ public class SplitJoin extends Polygon implements IStream {
 	private String fNameWithoutId;
 	private String fId;
 	private Label fHeader;
+	private ImageFigure fArrow;
+	
 	private boolean fExpanded;
-	private Label fInputChannel;
-	private Label fOutputChannel;
+	private Channel fTopChannel;
+	private Channel fBottomChannel;
 	private Vector fChildren;
 	
 	private Polygon fSplitter;
@@ -34,7 +36,7 @@ public class SplitJoin extends Polygon implements IStream {
 	private int fTallestChild;
 	private int fChildWidth;
 	
-	public SplitJoin(IValue splitjoinVal, String name, Font parentFont, String streamNameWithId, Expanded allExpanded, Figure parent, boolean verticalLayout, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
+	public SplitJoin(IValue splitjoinVal, String name, String streamNameWithId, Expanded allExpanded, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 	
 		// create splitjoin
@@ -42,9 +44,9 @@ public class SplitJoin extends Polygon implements IStream {
 		fNameWithoutId = name;
 		fId = splitjoinVal.getValueString();
 		String splitjoinName = getNameWithId();
-		fExpanded = allExpanded.contains(splitjoinName, false);
+		fExpanded = allExpanded.containsStream(splitjoinName, false);
 		fHeader = new Label(splitjoinName);
-		Dimension splitjoinSize = FigureUtilities.getTextExtents(splitjoinName, parentFont);
+		Dimension splitjoinSize = FigureUtilities.getTextExtents(splitjoinName, factoryInst.getFont());
 
 		// splitjoin style
 		setOutline(true);
@@ -58,21 +60,18 @@ public class SplitJoin extends Polygon implements IStream {
 
 			// collapsed content
 			fHeader.setIcon(factoryInst.getPlus());
-			splitjoinSize.expand(fHeader.getIconTextGap() + factoryInst.getPlus().getBounds().width, 0);
+			splitjoinSize.expand(fHeader.getIconTextGap() + factoryInst.getImageWidth(), 0);
 			factoryInst.roundUpEven(splitjoinSize);
 			fHeader.setSize(splitjoinSize);
 			add(fHeader);
 			
 			// collapsed size
-			splitjoinSize.expand(IStreamItGraphConstants.MARGIN, splitjoinSize.height + IStreamItGraphConstants.MARGIN);
-			
-			// highlight
-			StreamSelector.setSelection(this);
+			splitjoinSize.expand(IStreamItGraphConstants.MARGIN, factoryInst.getArrowHeight()*2 + IStreamItGraphConstants.MARGIN);
 		} else {
 			
 			// expanded header
 			fHeader.setIcon(factoryInst.getMinus());
-			splitjoinSize.expand(fHeader.getIconTextGap() + factoryInst.getMinus().getBounds().width, 0);
+			splitjoinSize.expand(fHeader.getIconTextGap() + factoryInst.getImageWidth(), 0);
 			factoryInst.roundUpEven(splitjoinSize);
 			fHeader.setSize(splitjoinSize);
 			add(fHeader);
@@ -95,13 +94,13 @@ public class SplitJoin extends Polygon implements IStream {
 				streamName = type.getName();
 				streamType = type.getSuperclass().getName();
 				if (streamType.equals("streamit.library.Filter")) {
-					fChildren.add(new Filter(val, streamName, parentFont, streamNameWithId, allExpanded, this, false, childrenSize, factoryInst));
+					fChildren.add(new Filter(val, streamName, streamNameWithId, allExpanded, this, forward, false, true, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.Pipeline")) {
-					fChildren.add(new Pipeline(val, streamName, parentFont, streamNameWithId, allExpanded,  this, false, childrenSize, factoryInst));
+					fChildren.add(new Pipeline(val, streamName, streamNameWithId, allExpanded,  this, forward, false, true, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.SplitJoin")) {
-					fChildren.add(new SplitJoin(val, streamName, parentFont, streamNameWithId, allExpanded, this, false, childrenSize, factoryInst));	
+					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, allExpanded, this, forward, false, true, childrenSize, factoryInst));	
 				} else if (streamType.equals("streamit.library.FeedbackLoop")) {
-					fChildren.add(new FeedbackLoop(val, streamName, parentFont, streamNameWithId, allExpanded, this, false, childrenSize, factoryInst));
+					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, allExpanded, this, forward, false, true, childrenSize, factoryInst));
 				}
 				childrenSize.width += IStreamItGraphConstants.MARGIN/2;
 			}
@@ -114,29 +113,37 @@ public class SplitJoin extends Polygon implements IStream {
 			fTallestChild = childrenSize.height;
 			fChildWidth = childrenSize.width;
 			splitjoinSize.width = Math.max(childrenSize.width, splitjoinSize.width*2 + IStreamItGraphConstants.CHANNEL_WIDTH + IStreamItGraphConstants.MARGIN*2);
-			splitjoinSize.height = Math.max(childrenSize.height, splitjoinSize.height) + IStreamItGraphConstants.CHANNEL_WIDTH*2 + splitjoinSize.height*4;
+			splitjoinSize.height = Math.max(childrenSize.height, splitjoinSize.height) + IStreamItGraphConstants.CHANNEL_WIDTH*2 + splitjoinSize.height*2 + IStreamItGraphConstants.MARGIN*2 + factoryInst.getArrowHeight()*2;
 		}
-
 		setSize(splitjoinSize);
+		
+		// content arrow
+		fArrow = new ImageFigure(factoryInst.getArrow(forward));
+		fArrow.setSize(factoryInst.getArrowWidth(), factoryInst.getArrowHeight());
+		add(fArrow);
 
 		// create channels
 		IVariable[] splitjoinVars = splitjoinVal.getVariables();
-		fInputChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), parentFont, true, factoryInst);
-		fOutputChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), parentFont, false, factoryInst);
+		if (forward) {
+			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), splitjoinName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
+			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), splitjoinName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+		} else {
+			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), splitjoinName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
+			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), splitjoinName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+		}
 
 		// collapsed content
-		parent.add(fInputChannel);
 		parent.add(this);
-		parent.add(fOutputChannel);
 			
 		if (verticalLayout) {
 			// (total height of children, width of widest child)
-			parentSize.height = parentSize.height + fInputChannel.getSize().height + splitjoinSize.height + fOutputChannel.getSize().height;
+			parentSize.height = parentSize.height + fTopChannel.getSize().height + splitjoinSize.height;
+			if (lastChild) parentSize.height += fBottomChannel.getSize().height;
 			parentSize.width = Math.max(parentSize.width, splitjoinSize.width);
 		} else {
 			// (height of tallest child, total width of children)
-			parentSize.height = Math.max(parentSize.height, fInputChannel.getSize().height + splitjoinSize.height + fOutputChannel.getSize().height);
-			parentSize.width = parentSize.width + Math.max(splitjoinSize.width, fInputChannel.getSize().width);
+			parentSize.height = Math.max(parentSize.height, fTopChannel.getSize().height + splitjoinSize.height + fBottomChannel.getSize().height);
+			parentSize.width = parentSize.width + Math.max(splitjoinSize.width, fTopChannel.getSize().width);
 		}
 	}
 
@@ -144,48 +151,47 @@ public class SplitJoin extends Polygon implements IStream {
 	 * @see streamit.eclipse.debugger.graph.IStream#setLocation(org.eclipse.draw2d.geometry.Point, int)
 	 */
 	public int setVerticalLocation(Point parentTopCenter, int currentHeight) {
-		Dimension inputSize = fInputChannel.getSize();
+		Dimension topSize = fTopChannel.getSize();
 		Dimension splitjoinSize = getSize();
 		Dimension headerSize = fHeader.getSize();
-		Dimension outputSize = fOutputChannel.getSize();
+		Dimension arrowSize = fArrow.getSize();
+		Dimension bottomSize = fBottomChannel.getSize();
 
-		fInputChannel.setLocation(parentTopCenter.getTranslated(-inputSize.width/2, currentHeight));
-		currentHeight += inputSize.height;
+		if (fTopChannel.setSelf(parentTopCenter.getTranslated(-topSize.width/2, currentHeight))) currentHeight += topSize.height;
 
 		Point splitjoinTopCenter = parentTopCenter.getTranslated(0, currentHeight);
 		setLocation(parentTopCenter.getTranslated(-splitjoinSize.width/2, currentHeight));
 		
 		if (!isExpanded()) {
 			// collapsed location
-			fHeader.setLocation(splitjoinTopCenter.getTranslated(-headerSize.width/2, headerSize.height/2 + IStreamItGraphConstants.MARGIN/2));
+			fHeader.setLocation(splitjoinTopCenter.getTranslated(-headerSize.width/2, arrowSize.height + IStreamItGraphConstants.MARGIN/2));
+			fArrow.setLocation(splitjoinTopCenter.getTranslated(-arrowSize.width/2, headerSize.height + arrowSize.height + IStreamItGraphConstants.MARGIN/2));
 			currentHeight += splitjoinSize.height;
 
-			Point bottomLeft = parentTopCenter.getTranslated(-outputSize.width/2, currentHeight);
-			fOutputChannel.setLocation(bottomLeft);
-			currentHeight += outputSize.height;
-
+			Point bottomLeft = parentTopCenter.getTranslated(-bottomSize.width/2, currentHeight);
+			if (fBottomChannel.setSelf(bottomLeft)) currentHeight += bottomSize.height;
+			
 			// splitjoin points (8)
 			addPoint(splitjoinTopCenter.getTranslated(-IStreamItGraphConstants.CHANNEL_WIDTH/2, 0));
 			addPoint(splitjoinTopCenter.getTranslated(IStreamItGraphConstants.CHANNEL_WIDTH/2 - 1, 0));
-			addPoint(splitjoinTopCenter.getTranslated(splitjoinSize.width/2, headerSize.height/2 + IStreamItGraphConstants.MARGIN/2));
-			addPoint(bottomLeft.getTranslated(splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -headerSize.height/2 - IStreamItGraphConstants.MARGIN/2));
+			addPoint(splitjoinTopCenter.getTranslated(splitjoinSize.width/2, arrowSize.height + IStreamItGraphConstants.MARGIN/2));
+			addPoint(bottomLeft.getTranslated(splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -arrowSize.height - IStreamItGraphConstants.MARGIN/2));
 			addPoint(bottomLeft.getTranslated(IStreamItGraphConstants.CHANNEL_WIDTH, 0));
 			addPoint(bottomLeft.getCopy());
-			addPoint(bottomLeft.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -headerSize.height/2 - IStreamItGraphConstants.MARGIN/2));
-			addPoint(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2, headerSize.height/2 + IStreamItGraphConstants.MARGIN/2));
+			addPoint(bottomLeft.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -arrowSize.height - IStreamItGraphConstants.MARGIN/2));
+			addPoint(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2, arrowSize.height + IStreamItGraphConstants.MARGIN/2));
 		} else {
 			// expanded location
-			
 			if (fChildren.size() > 0) {
 				
 				// layout children
 				int currentWidth = splitjoinTopCenter.x - fChildWidth/2 + IStreamItGraphConstants.MARGIN/2;
 				for (int i = 0; i < fChildren.size(); i++)
-					currentWidth = ((IStream) fChildren.get(i)).setHorizontalLocation(splitjoinTopCenter.y + headerSize.height*2 + IStreamItGraphConstants.CHANNEL_WIDTH, fTallestChild, currentWidth);
-				
+					currentWidth = ((IStream) fChildren.get(i)).setHorizontalLocation(splitjoinTopCenter.y + IStreamItGraphConstants.CHANNEL_WIDTH + headerSize.height + IStreamItGraphConstants.MARGIN + arrowSize.height, fTallestChild, currentWidth);
+					
 				// fSplitter
-				Point bottomLeft = ((IStream) fChildren.get(0)).getInputChannelTopLeft();
-				Point bottomRight = ((IStream) fChildren.get(fChildren.size() - 1)).getInputChannelTopRight();
+				Point bottomLeft = ((IStream) fChildren.get(0)).getTopChannelTopLeft();
+				Point bottomRight = ((IStream) fChildren.get(fChildren.size() - 1)).getTopChannelTopRight();
 				Point topLeft = splitjoinTopCenter.getTranslated(-IStreamItGraphConstants.CHANNEL_WIDTH/2, 0);
 				Point topRight = splitjoinTopCenter.getTranslated(IStreamItGraphConstants.CHANNEL_WIDTH/2 - 1, 0);
 				Point middleLeft = new Point(topLeft.x, bottomLeft.y - IStreamItGraphConstants.CHANNEL_WIDTH);
@@ -203,15 +209,14 @@ public class SplitJoin extends Polygon implements IStream {
 			
 			currentHeight += splitjoinSize.height;
 			
-			Point bottomLeft = parentTopCenter.getTranslated(-outputSize.width/2, currentHeight);
-			fOutputChannel.setLocation(bottomLeft);
-			currentHeight += outputSize.height;
-
+			Point bottomLeft = parentTopCenter.getTranslated(-bottomSize.width/2, currentHeight);
+			if (fBottomChannel.setSelf(bottomLeft)) currentHeight += bottomSize.height;
+			
 			if (fChildren.size() > 0) {
 				
 				// fJoiner				
-				Point topLeft = ((IStream) fChildren.get(0)).getOutputChannelBottomLeft();
-				Point topRight = ((IStream) fChildren.get(fChildren.size() - 1)).getOutputChannelBottomRight();
+				Point topLeft = ((IStream) fChildren.get(0)).getBottomChannelBottomLeft();
+				Point topRight = ((IStream) fChildren.get(fChildren.size() - 1)).getBottomChannelBottomRight();
 				Point bottomRight = bottomLeft.getTranslated(IStreamItGraphConstants.CHANNEL_WIDTH - 1, 0);
 				Point middleLeft = new Point(bottomLeft.x, topLeft.y + IStreamItGraphConstants.CHANNEL_WIDTH);
 				Point middleRight = new Point(bottomRight.x, topRight.y + IStreamItGraphConstants.CHANNEL_WIDTH);
@@ -230,16 +235,16 @@ public class SplitJoin extends Polygon implements IStream {
 			// splitjoin points (8)
 			addPoint(splitjoinTopCenter.getTranslated(-IStreamItGraphConstants.CHANNEL_WIDTH/2, 0));
 			addPoint(splitjoinTopCenter.getTranslated(IStreamItGraphConstants.CHANNEL_WIDTH/2, 0));			
-			addPoint(splitjoinTopCenter.getTranslated(splitjoinSize.width/2, headerSize.height));
-			addPoint(bottomLeft.getTranslated(splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -headerSize.height));
+			addPoint(splitjoinTopCenter.getTranslated(splitjoinSize.width/2, arrowSize.height));
+			addPoint(bottomLeft.getTranslated(splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -arrowSize.height));
 			addPoint(bottomLeft.getTranslated(IStreamItGraphConstants.CHANNEL_WIDTH, 0));
 			addPoint(bottomLeft.getCopy());
-			addPoint(bottomLeft.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -headerSize.height));
-			addPoint(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2, headerSize.height));
+			addPoint(bottomLeft.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.CHANNEL_WIDTH/2, -arrowSize.height));
+			addPoint(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2, arrowSize.height));
 			
 			// fHeader
-			fHeader.setLocation(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.MARGIN/2, headerSize.height));
-
+			fHeader.setLocation(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.MARGIN/2, arrowSize.height + IStreamItGraphConstants.MARGIN/2));
+			fArrow.setLocation(splitjoinTopCenter.getTranslated(-splitjoinSize.width/2 + IStreamItGraphConstants.MARGIN/2, headerSize.height + arrowSize.height + IStreamItGraphConstants.MARGIN/2));
 		}
 		
 		return currentHeight;
@@ -249,15 +254,15 @@ public class SplitJoin extends Polygon implements IStream {
 	 * @see streamit.eclipse.debugger.graph.IStream#setHorizontalLocation(org.eclipse.draw2d.geometry.Point, int, int)
 	 */
 	public int setHorizontalLocation(int currentHeight, int stretchHeight, int currentWidth) {
-		Dimension inputSize = fInputChannel.getSize();
+		Dimension topSize = fTopChannel.getSize();
 		Dimension splitjoinSize = getSize();
-		Dimension outputSize = fOutputChannel.getSize();
-		
+		Dimension bottomSize = fBottomChannel.getSize();
+
 		// expand channels
-		inputSize.height = (stretchHeight - splitjoinSize.height)/2;
-		fInputChannel.setSize(inputSize);
-		outputSize.height = (stretchHeight - splitjoinSize.height)/2;
-		fOutputChannel.setSize(outputSize);
+		topSize.height = (stretchHeight - splitjoinSize.height)/2;
+		fTopChannel.setSize(topSize);
+		bottomSize.height = (stretchHeight - splitjoinSize.height)/2;
+		fBottomChannel.setSize(bottomSize);
 		
 		setVerticalLocation(new Point(currentWidth + splitjoinSize.width/2, currentHeight), 0);
 		currentWidth = currentWidth +  splitjoinSize.width + IStreamItGraphConstants.MARGIN/2;
@@ -265,31 +270,31 @@ public class SplitJoin extends Polygon implements IStream {
 	}
 	
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getInputLabelTopLeft()
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelTopLeft()
 	 */
-	public Point getInputChannelTopLeft() {
-		return fInputChannel.getLocation();
+	public Point getTopChannelTopLeft() {
+		return fTopChannel.getLocation();
 	}
 
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getInputLabelTopRight()
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelTopRight()
 	 */
-	public Point getInputChannelTopRight() {
-		return fInputChannel.getBounds().getTopRight().getTranslated(-1, 0);
+	public Point getTopChannelTopRight() {
+		return fTopChannel.getBounds().getTopRight().getTranslated(-1, 0);
 	}
 
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getOutputLabelBottomLeft()
+	 * @see streamit.eclipse.debugger.graph.IStream#getBottomChannelBottomLeft()
 	 */
-	public Point getOutputChannelBottomLeft() {
-		return fOutputChannel.getBounds().getBottomLeft();
+	public Point getBottomChannelBottomLeft() {
+		return fBottomChannel.getBounds().getBottomLeft();
 	}
 
 	/* (non-Javadoc)
-	 * @see streamit.eclipse.debugger.graph.IStream#getOutputLabelBottomRight()
+	 * @see streamit.eclipse.debugger.graph.IStream#getBottomChannelBottomRight()
 	 */
-	public Point getOutputChannelBottomRight() {
-		return fOutputChannel.getBounds().getBottomRight().getTranslated(-1, 0);
+	public Point getBottomChannelBottomRight() {
+		return fBottomChannel.getBounds().getBottomRight().getTranslated(-1, 0);
 	}
 
 	/* (non-Javadoc)

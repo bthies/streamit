@@ -19,7 +19,14 @@ public class StreamItViewFactory {
 	
 	private Image fPlus;
 	private Image fMinus;
-	
+	private Image fUpArrow;
+	private Image fDownArrow;
+	private int fIconWidth;
+	private int fIconHeight;
+	private int fArrowHeight;
+	private int fArrowWidth;
+	private Font fParentFont;
+		
 	/**
 	 * Creates a new StreamItModelFactory.
 	 */
@@ -33,18 +40,27 @@ public class StreamItViewFactory {
 		return fInstance;
 	}
 	
-	public Figure makeStream(IVariable topLevelPipeline, Font parentFont, String streamNameWithId, Expanded allExpandedChildren) {
+	public Figure makeStream(IVariable topLevelPipeline, String streamNameWithId, Expanded allExpandedChildren) {
 		try {
-			return new MainPipeline(topLevelPipeline, parentFont, streamNameWithId, allExpandedChildren, getInstance());			
+			return new MainPipeline(topLevelPipeline, streamNameWithId, allExpandedChildren, getInstance());			
 		} catch (DebugException e) {
 			System.out.println("makeStream error:  " + e.toString());
 		}
 		return null;
 	}
 	
-	public void setImages(Image plus, Image minus) {
+	public void setUtilities(Image plus, Image minus, Image upArrow, Image downArrow, Font parentFont) {
 		fPlus = plus;
 		fMinus = minus;
+		fUpArrow = upArrow;
+		fDownArrow = downArrow;
+		fParentFont = parentFont;
+		fIconWidth = Math.max(fPlus.getBounds().width, fMinus.getBounds().width);
+		fIconHeight = Math.max(fPlus.getBounds().height, fMinus.getBounds().height);
+		fArrowHeight = Math.max(fUpArrow.getBounds().height, fDownArrow.getBounds().height);  
+		fArrowWidth = Math.max(fUpArrow.getBounds().width, fDownArrow.getBounds().width); 
+		if (fArrowHeight % 2 != 0) fArrowHeight++; 
+		if (fArrowWidth % 2 != 0) fArrowWidth++;
 	}
 	
 	public Image getMinus() {
@@ -53,6 +69,31 @@ public class StreamItViewFactory {
 	
 	public Image getPlus() {
 		return fPlus;
+	}
+	
+	public Image getArrow(boolean forward) {
+		if (forward) return fUpArrow;
+		else return fDownArrow;
+	}
+	
+	public int getImageWidth() {
+		return fIconWidth;
+	}
+	
+	public int getImageHeight() {
+		return fIconHeight;
+	}
+	
+	public int getArrowHeight() {
+		return fArrowHeight;
+	}
+	
+	public int getArrowWidth() {
+		return fArrowWidth;
+	}
+	
+	public Font getFont() {
+		return fParentFont;
 	}
 		
 	protected IVariable getVariable(IVariable[] vars, String name) throws DebugException {

@@ -4,55 +4,33 @@
  * @author kkuo
  *******************************************************************************/
 
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.actions;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointManager;
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.internal.debug.ui.BreakpointUtils;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
 import org.eclipse.jdt.internal.debug.ui.actions.ActionMessages;
-import org.eclipse.jdt.internal.debug.ui.actions.BreakpointLocationVerifier;
-import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.IWorkingCopyManager;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.action.Action;
@@ -63,17 +41,14 @@ import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.IVerticalRulerInfo;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.IUpdate;
 
-import streamit.eclipse.debugger.launching.IStreamItLaunchingConstants;
-import streamit.eclipse.debugger.launching.StreamItApplicationLaunchShortcut;
-import streamit.eclipse.debugger.launching.StreamItLocalApplicationLaunchConfigurationDelegate;
+import streamit.eclipse.debugger.core.BreakpointRulerData;
+import streamit.eclipse.debugger.core.StrToJavaMapper;
 
 public class ManageBreakpointRulerAction extends Action implements IUpdate {	
 	
@@ -85,16 +60,8 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 	protected String fAddLabel;
 	protected String fRemoveLabel;
 
-	protected String fStrFileName;
-	protected String fJavaFileName;
-	protected String fStrName;
-	protected IJavaElement fJavaFile;
-	protected IEditorPart fJavaEditorPart;
-	protected HashMap fStrToJava;
-	protected HashMap fJavaToStr;	
-	protected static StreamItApplicationLaunchShortcut launchShortcut = new StreamItApplicationLaunchShortcut();
-	protected static StreamItLocalApplicationLaunchConfigurationDelegate launchDelegate = new StreamItLocalApplicationLaunchConfigurationDelegate();
-	
+	protected BreakpointRulerData fData;	
+
 	public ManageBreakpointRulerAction(ITextEditor editor, IVerticalRulerInfo ruler) {
 		
 		fRuler= ruler;
@@ -103,83 +70,10 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 		fAddLabel= ActionMessages.getString("ManageBreakpointRulerAction.add.label"); //$NON-NLS-1$
 		fRemoveLabel= ActionMessages.getString("ManageBreakpointRulerAction.remove.label"); //$NON-NLS-1$
 
-		// TODo when .str changes, .java should also change!
-		// TODo error when .str is already open (at start-up)
+		// TODO when .str changes, .java should also change!
+		// TODO error when .str is already open (at start-up)
 
-		fStrFileName = getResource().getName();
-		fStrName = fStrFileName.substring(0, fStrFileName.lastIndexOf('.' + IStreamItLaunchingConstants.STR_FILE_EXTENSION));
-		fStrFileName = getResource().getLocation().toOSString();
-		fJavaFileName = fStrName + ".java";
-		fJavaFile = null;
-		fJavaEditorPart = null;
-		fStrToJava = null;
-		fJavaToStr = null;
-	}
-	
-	protected IEditorPart getJavaEditorPart() {
-		if (fJavaEditorPart == null) openJavaFile();
-		return fJavaEditorPart;
-	}
-	
-	protected IJavaElement getJavaFile() {
-		if (fJavaFile == null) openJavaFile();
-		return fJavaFile;
-	}
-
-	protected void openJavaFile() {
-		IProject project = getResource().getProject();
-		IFile javaFile = project.getFile(fJavaFileName);
-		try {
-			if (!javaFile.exists() && project.hasNature(JavaCore.NATURE_ID)) {
-				ILaunchConfiguration configuration = launchShortcut.findLaunchConfiguration(project.getName(), fStrName, ILaunchManager.RUN_MODE);
-				launchDelegate.launchJava(configuration);
-
-				// handle a secondary file
-				String mainClassName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "");
-				if (!mainClassName.equals(fStrName)) fJavaFileName = mainClassName + ".java";
-				javaFile = project.getFile(fJavaFileName);
-				javaFile.setReadOnly(true);
-			}
-			fJavaFile = JavaCore.create(javaFile);
-			fJavaEditorPart = JavaUI.openInEditor(fJavaFile);
-			mapStrToJava(javaFile);
-			
-			// open graph editor if not already open
-			
-		} catch (Exception e) {
-		}
-	}
-	
-	protected void mapStrToJava(IFile javaFile) throws Exception {
-		fStrToJava = new HashMap();
-		fJavaToStr = new HashMap();
-		
-		// look for commented mappings
-		InputStream is = javaFile.getContents();
-		InputStreamReader isr = new InputStreamReader(is);
-		BufferedReader br = new BufferedReader(isr);
-		String strLine = null;
-		int javaLineNumber = 0;
-		String token = "// " + fStrFileName + ':';
-		
-		while (true) {
-			javaLineNumber++;
-			strLine = br.readLine();
-			if (strLine == null) break;
-			if (strLine.indexOf(token) != -1) {
-				Integer strLineNumber = Integer.valueOf(strLine.substring(strLine.indexOf(token) + token.length()));
-				Object isThere = fStrToJava.get(strLineNumber);			
-				if (isThere == null) {
-					Set javaLNs = new TreeSet();
-					javaLNs.add(new Integer(javaLineNumber));
-					fStrToJava.put(strLineNumber, javaLNs);
-				} else {
-					((Set) isThere).add(new Integer(javaLineNumber));				
-				}
-				fJavaToStr.put(new Integer(javaLineNumber), strLineNumber);
-			}		
-		}
-		is.close();
+		fData = StrToJavaMapper.getInstance().loadStrFile(getResource(), editor);
 	}
 	
 	/** 
@@ -201,7 +95,7 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 	}
 	
 	protected IResource getJavaResource() {
-		return getJavaFile().getResource();
+		return fData.getJavaFile();
 	}
 	
 	/**
@@ -230,19 +124,13 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 	protected boolean includesJavaRulerLine(Position position, IDocument document) {
 		if (position != null) {
 			try {
-				int markerLine= document.getLineOfOffset(position.getOffset());
-				int line= fRuler.getLineOfLastMouseButtonActivity() + 1;
+				int markerLine = document.getLineOfOffset(position.getOffset());
+				int line = fRuler.getLineOfLastMouseButtonActivity() + 1;
 				
 				// find mapping to .java
-				Iterator javaRulerLine;
-				Object isThere = fStrToJava.get(new Integer(line));
-				if (isThere == null) return false;
-				else javaRulerLine = ((Set) isThere).iterator();
-
-				while (javaRulerLine.hasNext()) {
-					if (((Integer) javaRulerLine.next()).intValue() - 1 == markerLine)
-						return true;
-				}
+				line = fData.getJavaBreakpointLineNumber(line);
+				if (line < 0) return false;
+				if (line - 1 == markerLine) return true;
 			} catch (BadLocationException x) {
 			}
 		}		
@@ -283,7 +171,7 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 	
 	protected AbstractMarkerAnnotationModel getJavaAnnotationModel() {
 		IDocumentProvider provider = JavaUI.getDocumentProvider();
-		IAnnotationModel model = provider.getAnnotationModel(getJavaEditorPart().getEditorInput());
+		IAnnotationModel model = provider.getAnnotationModel(fData.getJavaEditorPart().getEditorInput());
 		if (model instanceof AbstractMarkerAnnotationModel) {
 			return (AbstractMarkerAnnotationModel) model;
 		}
@@ -301,16 +189,31 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 	}
 	
 	protected IDocument getJavaDocument() {
-		return JavaUI.getDocumentProvider().getDocument(getJavaEditorPart().getEditorInput());
+		return JavaUI.getDocumentProvider().getDocument(fData.getJavaEditorPart().getEditorInput());
 	}
 	
 	/**
 	 * @see IUpdate#update()
 	 */
 	public void update() {
+
 		fMarkers= getMarkers();
-		setText(fMarkers.isEmpty() ? fAddLabel : fRemoveLabel);
-		JavaPlugin.getActivePage().bringToTop(getTextEditor());
+		if (fMarkers.isEmpty()) {
+			setText(fAddLabel);
+			
+			// find mapping between str and Java
+			int lineNumber = fData.getJavaBreakpointLineNumber(getVerticalRulerInfo().getLineOfLastMouseButtonActivity() + 1);
+			setEnabled(enableAction(lineNumber));
+			
+		} else {
+			setText(fRemoveLabel);
+			setEnabled(true);
+		}
+	}
+	
+	public static boolean enableAction(int lineNumber) {
+		if (lineNumber > 0) return true;
+		return false;
 	}
 
 	/**
@@ -322,7 +225,6 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 		} else {
 			removeMarkers(fMarkers);
 		}
-		JavaPlugin.getActivePage().bringToTop(getTextEditor());
 	}
 	
 	protected List getJavaMarkers() {
@@ -342,7 +244,7 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 				} else {
 					IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();
 					markers= root.findMarkers(IBreakpoint.BREAKPOINT_MARKER, true, IResource.DEPTH_INFINITE);
-				}		
+				}
 			
 				if (markers != null) {
 					IBreakpointManager breakpointManager= DebugPlugin.getDefault().getBreakpointManager();
@@ -380,7 +282,7 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 						IBreakpoint breakpoint= breakpointManager.getBreakpoint(markers[i]);
 						if (breakpoint != null && breakpointManager.isRegistered(breakpoint) && 
 								includesRulerLine(model.getMarkerPosition(markers[i]), document)) {
-							breakpoints.add(markers[i]);							
+							breakpoints.add(markers[i]);
 						}
 					}
 				}
@@ -401,49 +303,34 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 	}
 	
 	protected void addMarker() {
-		IEditorInput editorInput = getJavaEditorPart().getEditorInput();
+		IEditorInput editorInput = fData.getJavaEditorPart().getEditorInput();
 		IDocument document = getJavaDocument();
 
-		// find mapping between str and Java
-		int rulerLine= getVerticalRulerInfo().getLineOfLastMouseButtonActivity() + 1;
-		int javaRulerLine;
-		
-		Object isThere = fStrToJava.get(new Integer(rulerLine));
-		if (isThere == null) return;
-		else javaRulerLine = ((Integer) ((Set) isThere).iterator().next()).intValue() - 1;
+		// find mapping between str and java
+		int strRulerLineNumber = getVerticalRulerInfo().getLineOfLastMouseButtonActivity() + 1;
+		int validJavaLineNumber = fData.getJavaBreakpointLineNumber(strRulerLineNumber);
 
 		// get & verify line number
 		try {
-			BreakpointLocationVerifier bv = new BreakpointLocationVerifier();
-			int lineNumber = bv.getValidBreakpointLocation(document, javaRulerLine);
-
-			// trace back to .str
-			rulerLine = ((Integer) fJavaToStr.get(new Integer(lineNumber))).intValue();
-
-			if (lineNumber > 0) {
-				IRegion line= document.getLineInformation(lineNumber - 1);
-				IType type = setType(editorInput, line);
-				
-				if (type != null) {
-					IJavaProject project= type.getJavaProject();
-					if (type.exists() && project != null && project.isOnClasspath(type)) {
-						if (JDIDebugModel.lineBreakpointExists(type.getFullyQualifiedName(),lineNumber) == null) {
-							Map attributes = new HashMap(10);
-							int start= line.getOffset();
-							int end= start + line.getLength() - 1;
-							BreakpointUtils.addJavaBreakpointAttributesWithMemberDetails(attributes, type, start, end);
-							IMarker m = JDIDebugModel.createLineBreakpoint(getJavaResource(), type.getFullyQualifiedName(), lineNumber, -1, -1, 0, true, attributes).getMarker();
-
-							// in .java, leave highlighted area on breakpoint just added
-							PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor(m, false);
-							
-							// Add breakpoint in .str
-							IRegion strLine= getDocument().getLineInformation(rulerLine - 1);
-							start = strLine.getOffset();
-							end = start + strLine.getLength() - 1;
-							BreakpointUtils.addJavaBreakpointAttributesWithMemberDetails(attributes, type, start, end);
-							JDIDebugModel.createLineBreakpoint(getResource(), type.getFullyQualifiedName(), rulerLine, -1, -1, 0, true, attributes);
-						}
+			IRegion line = document.getLineInformation(validJavaLineNumber - 1);
+			IType type = getType(editorInput, line);
+			
+			if (type != null) {
+				IJavaProject project = type.getJavaProject();
+				if (type.exists() && project != null && project.isOnClasspath(type)) {
+					if (getJavaMarkers().size() == 0) {
+						Map attributes = new HashMap(10);
+						int start= line.getOffset();
+						int end= start + line.getLength() - 1;
+						BreakpointUtils.addJavaBreakpointAttributesWithMemberDetails(attributes, type, start, end);
+						IMarker m = JDIDebugModel.createLineBreakpoint(getJavaResource(), type.getFullyQualifiedName(), validJavaLineNumber, -1, -1, 0, true, attributes).getMarker();
+						
+						// Add breakpoint in .str
+						IRegion strLine= getDocument().getLineInformation(strRulerLineNumber - 1);
+						start = strLine.getOffset();
+						end = start + strLine.getLength() - 1;
+						BreakpointUtils.addJavaBreakpointAttributesWithMemberDetails(attributes, type, start, end);
+						JDIDebugModel.createLineBreakpoint(getResource(), type.getFullyQualifiedName(), strRulerLineNumber, -1, -1, 0, true, attributes);
 					}
 				}	
 			}
@@ -452,7 +339,7 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 		}
 	}
 	
-	protected IType setType(IEditorInput editorInput, IRegion line) throws JavaModelException {
+	protected static IType getType(IEditorInput editorInput, IRegion line) throws JavaModelException {
 		if (editorInput instanceof IFileEditorInput) {
 			IWorkingCopyManager manager= JavaUI.getWorkingCopyManager();
 			ICompilationUnit unit= manager.getWorkingCopy(editorInput);
@@ -482,7 +369,6 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 			IMarker m;
 			while (e.hasNext()) {
 				m = (IMarker) e.next();
-				PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().openEditor(m, false);
 				IBreakpoint breakpoint= breakpointManager.getBreakpoint(m);
 				breakpointManager.removeBreakpoint(breakpoint, true);
 			}

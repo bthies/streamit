@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.56 2001-11-16 23:05:32 dmaze Exp $
+ * $Id: LIRToC.java,v 1.57 2001-11-16 23:53:17 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1567,7 +1567,7 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression num)
     {
-        print("(PEEK(data->context, ");
+        print("(PEEK_DEFAULTB(");
         if (tapeType != null)
             print(tapeType);
         else
@@ -1580,7 +1580,7 @@ public class LIRToC
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("(POP(data->context, ");
+        print("(POP_DEFAULTB( ");
         if (tapeType != null)
             print(tapeType);
         else
@@ -1638,7 +1638,7 @@ public class LIRToC
                                     CType tapeType,
                                     JExpression val)
     {
-        print("(PUSH(data->context, ");
+        print("(PUSH_DEFAULTB(");
         if (tapeType != null)
             print(tapeType);
         else

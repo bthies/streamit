@@ -106,6 +106,7 @@ public class SpaceTimeBackend
 	    System.out.println("Done with linear analysis.");
 	    LinearDot.printGraph(str,"linear.dot",lfa);
 	    LinearDotSimple.printGraph(str,"linear-simple.dot",lfa,null);
+	    IterFactory.createFactory().createIter(str).accept(new LinearPreprocessor(lfa));
 	}
 	
 	//get the execution counts from the scheduler

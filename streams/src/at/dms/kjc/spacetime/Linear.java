@@ -312,7 +312,7 @@ public class Linear extends RawExecutionCode implements Constants {
 
 	}
 
-	/*
+	
 	  //Adapted from Gordo's Code
 	  //index variable for certain for loops
 	  JVariableDefinition exeIndexVar = 
@@ -346,7 +346,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	  //all the communication is in the work function
 	  //filter.getWork().accept(new DirectConvertCommunication());
 	  //End Gordo's Code.
-	*/
+	
 	return fields;
     }
     

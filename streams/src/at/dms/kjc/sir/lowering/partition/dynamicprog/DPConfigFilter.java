@@ -59,7 +59,7 @@ class DPConfigFilter extends DPConfig {
     /**
      * Add this to the map and return.
      */
-    public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner) {
+    public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
 	// do fission if we can
 	int tff = tilesForFission(tileLimit, nextToJoiner);
 	if (tff>1 && isFissable) {
@@ -83,10 +83,10 @@ class DPConfigFilter extends DPConfig {
 		curPartition.add(SIRJoiner.createUniformRR(filter.getParent(), new JIntLiteral(1)), 0);
 		partitions.add(curPartition);
 	    }
-	    return new FissionTransform(tilesForFission(tileLimit, nextToJoiner));
+	    return StatelessDuplicate.doit(filter, tilesForFission(tileLimit, nextToJoiner));
 	} else {
 	    curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
-	    return new IdentityTransform();
+	    return filter;
 	}
     }
 }

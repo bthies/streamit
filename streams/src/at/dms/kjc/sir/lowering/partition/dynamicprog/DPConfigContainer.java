@@ -422,21 +422,21 @@ abstract class DPConfigContainer extends DPConfig {
     /**
      * Traceback function.
      */
-    public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner) {
-	StreamTransform st = traceback(partitions, curPartition, 0, A.length-1, 0, A[0][0].length-1, tileLimit, nextToJoiner);
+    public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
+	SIRStream result = traceback(partitions, curPartition, 0, A.length-1, 0, A[0][0].length-1, tileLimit, nextToJoiner, str);
 	// if the whole container is assigned to one tile, record it
 	// as such.
 	if (tileLimit==1) {
 	    curPartition.add(cont);
 	} 
-	return st;
+	return result;
     }
 	
     /**
      * Traceback helper function.
      */
-    protected StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition,
-					int x1, int x2, int y1, int y2, int tileLimit, int nextToJoiner) {
+    protected SIRStream traceback(LinkedList partitions, PartitionRecord curPartition,
+				  int x1, int x2, int y1, int y2, int tileLimit, int nextToJoiner, SIRStream str) {
 	indent++;
 	String callStr = cont.getName() + ".traceback(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
 	debugMessage("calling " + callStr); 
@@ -450,69 +450,32 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// if we're down to one node, then descend into it
 	if (x1==x2 && y1==y2) {
-	    StreamTransform child = childConfig(x1, y1).traceback(partitions, curPartition, tileLimit, nextToJoiner);
-	    // if this config container only has one child, then we
-	    // should wrap this in an identity so that we don't apply
-	    // it to ourself
-	    if (A.length==1 && A[0][0].length==1) {
-		StreamTransform result = new IdentityTransform();
-		result.addSucc(child);
-		indent--;
-		return result.reduce();
-	    } else {
-		indent--;
-		return child.reduce();
-	    }
+	    SIRStream child = childConfig(x1, y1).traceback(partitions, curPartition, tileLimit, nextToJoiner, childConfig(x1, y1).getStream());
+	    indent--;
+	    return child;
 	}
 	
 	// if we only have one tile left, return fusion transform with
 	// children fused first
 	if (tileLimit==1) {
-	    FusionTransform result = new FusionTransform();
-	    result.addPartition(0);
-	    if (y1<y2) {
-		// if there are vertical streams, fuse them first
-		result.addPartition(1+y2-y1);
-		for (int y=y1; y<=y2; y++) {
-		    result.addPred(traceback(partitions, curPartition, x1, x2, y, y, tileLimit, nextToJoiner));
-		}
-	    } else {
-		// otherwise, fuse the horizontal streams
-		result.addPartition(1+x2-x1);
-		for (int x=x1; x<=x2; x++) {
-		    result.addPred(traceback(partitions, curPartition, x, x, y1, y2, tileLimit, nextToJoiner));
-		}
-	    }
+	    // fuse everything.  First make a wrapper so we have
+	    // something to return.
+	    SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+	    wrapper.reclaimChildren();
+	    FuseAll.fuse(str);
+	    Lifter.lift(wrapper);
+	    // make sure we've fused
+	    Utils.assert(wrapper.size()==1 && wrapper.get(0) instanceof SIRFilter, "Wrapper contains " + wrapper.size() + " entries, with get(0)==" + wrapper.get(0));
+	    // return child
+	    Lifter.eliminatePipe(wrapper);
+	    SIRStream result = wrapper.get(0);
 	    indent--;
-	    return result.reduce();
+	    return result;
 	}
 
-	// see if we can do a vertical cut -- first, that there
-	// are two streams to cut between
-	boolean tryVertical = x1<x2 && sameWidth[y1][y2];
-	
-	// then, if we're starting on a pipeline, and have more than
-	// one row, and this is our first vertical cut, that we can
-	// remove the synchronization between y1 and y2
-	boolean firstVertCut = x1==0 && x2==width[y1]-1;
-	if (tryVertical && y1<y2) {
-	    if (cont instanceof SIRPipeline && firstVertCut) {
-		// make a copy of pipeline, to see if we can remove
-		// the sync.
-		SIRPipeline copy = new SIRPipeline(cont.getParent(),cont.getIdent()+"_copy");
-		for (int i=y1; i<=y2; i++) { copy.add(((SIRPipeline)cont).get(i)); }
-		// now remove synchronization in <copy>.
-		RefactorSplitJoin.removeMatchingSyncPoints(copy);
-		// undo effects of adding to someone else
-		cont.reclaimChildren();
-		// now if we only have one splitjoin left as the
-		// child, sync removal was successful, and we can do a
-		// cut
-		tryVertical = (copy.size()==1);
-	    }
-	}
+	SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, str);
 
-	if (tryVertical) {
+	if (verticalObj!=null) {
 	    // otherwise, see if we made a vertical cut (breaking into
 	    // left/right pieces).  As with get procedure, pass
 	    // nextToJoiner as true and adjust tileLimit around the call.
@@ -523,45 +486,27 @@ abstract class DPConfigContainer extends DPConfig {
 					getWithFusionOverhead(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1, tilesAvail));
 		    if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 			// there's a division at this <xPivot>.  We'll
-			// return a vertical cut
-			//System.err.println("tracing vertical cut at x=" + xPivot + " from y=" + y1 + " to y=" + y2 + " in " + cont.getName());
-			StreamTransform result = new VerticalCutTransform(xPivot-x1);
-			// recurse left and right, adding transforms as post-ops
-			result.addSucc(traceback(partitions, curPartition, x1, xPivot, y1, y2, tPivot, 1));
+			// return result of a vertical cut
+
+			int[] arr = { 1 + (xPivot-x1), x2-xPivot };
+			PartitionGroup pg = PartitionGroup.createFromArray(arr);
+			// do the vertical cut
+			SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
+
+			// recurse left and right.
+			SIRStream left = traceback(partitions, curPartition, x1, xPivot, y1, y2, tPivot, 1, sj.get(0));
 			// mark that we have a partition here
 			curPartition = new PartitionRecord();
 			partitions.add(curPartition);
-			result.addSucc(traceback(partitions, curPartition, xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1));
-			/*
-			if (nextToJoiner==0) {
-			    // if we have to add a joiner, then add it to the partition record
-			    curPartition = new PartitionRecord();
-			    if (cont instanceof SIRSplitJoin) {
-				curPartition.add(((SIRSplitJoin)cont).getJoiner(), 0);
-			    } else {
-				curPartition.add(((SIRSplitJoin)cont.get(cont.size()-1)).getJoiner(), 0);
-			    }
-			    partitions.add(curPartition);
-			}
-			*/
+			SIRStream right = traceback(partitions, curPartition, xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1, sj.get(1));
 
-			// Here we have a pipeline.  If y1==y2 then we
-			// don't need the sync removal, but we DO need
-			// an identity to unwrap the pipeline.  If
-			// y1<y2, need sync removal.
-			if (y1<y2) {
-			    StreamTransform newResult = new RemoveSyncTransform();
-			    newResult.addSucc(result);
-			    result = newResult;
-			} else {
-			    StreamTransform newResult = new IdentityTransform();
-			    newResult.addSucc(result);
-			    result = newResult;
-			}
+			// mutate ourselves if we haven't been mutated already
+			sj.set(0, left);
+			sj.set(1, right);
 
 			// all done
 			indent--;
-			return result.reduce();
+			return sj;
 		    }
 		}
 	    }
@@ -577,18 +522,40 @@ abstract class DPConfigContainer extends DPConfig {
 				    getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit));
 		if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 		    // there's a division at this <yPivot>.  We'll
-		    // return a horizontal cut.
-		    //System.err.println("tracing horizontal cut at y=" + yPivot + " from x=" + x1 + " to x=" + x2 + " in " + cont.getName());
-		    StreamTransform result = new HorizontalCutTransform(yPivot-y1);
-		    // recurse left and right, adding transforms as post-ops
-		    result.addSucc(traceback(partitions, curPartition, x1, x2, y1, yPivot, tPivot, 0));
+		    // return result of a horizontal cut.
+		    int[] arr = { 1 + (yPivot-y1), y2-yPivot };
+		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
+
+		    SIRContainer result;
+		    // might have either pipeline or splitjoin at this point...
+		    if (str instanceof SIRSplitJoin) {
+			result = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+		    } else if (str instanceof SIRPipeline) {
+			result = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		    } else if (str instanceof SIRFeedbackLoop) {
+			// if we have a feedbackloop, then factored is
+			// just the original, since it will have only
+			// two children
+			result = (SIRContainer)str;
+		    } else {
+			result = null;
+			Utils.fail("Unrecognized stream type: " + str);
+		    }
+
+		    // recurse left and right
+		    SIRStream left = traceback(partitions, curPartition, x1, x2, y1, yPivot, tPivot, 0, result.get(0));
 		    // mark that we have a partition here
 		    curPartition = new PartitionRecord();
 		    partitions.add(curPartition);
-		    result.addSucc(traceback(partitions, curPartition, x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner));
+		    SIRStream right = traceback(partitions, curPartition, x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, result.get(1));
+
+		    // mutate ourselves if we haven't been mutated yet
+		    result.set(0, left);
+		    result.set(1, right);
+
 		    // all done
 		    indent--;
-		    return result.reduce();
+		    return result;
 		}
 	    }
 	}
@@ -596,6 +563,52 @@ abstract class DPConfigContainer extends DPConfig {
 	// if we make it this far, then we didn't find our traceback
 	Utils.fail("Didn't find traceback.");
 	return null;
+    }
+
+    /**
+     * Return a splitjoin that a vertical cut could be performed on.
+     * If it is impossible to perform a vertical cut, returns null.
+     */
+    private SIRSplitJoin getVerticalObj(int x1, int x2, int y1, int y2, SIRStream str) {
+	// see if we can do a vertical cut -- first, that there
+	// are two streams to cut between
+	boolean tryVertical = x1<x2 && sameWidth[y1][y2];
+	
+	// get the object we're doing vertical cuts on, and try to
+	// remove any synchronization
+	SIRSplitJoin verticalObj = null;
+	if (tryVertical) {
+	    if (str instanceof SIRPipeline) {
+		// make a copy of our pipeline, since we're about
+		// to split across it.  Don't worry about parent
+		// field of children, since they seem to be
+		// switched around a lot during partitioning (and
+		// restored after)
+		SIRPipeline copy = new SIRPipeline(str.getParent(), str.getIdent()+"_copy");
+		for (int i=0; i<((SIRPipeline)str).size(); i++) { copy.add(((SIRPipeline)str).get(i)); }
+		// now remove synchronization in <copy>.
+		RefactorSplitJoin.removeMatchingSyncPoints(copy);
+		// now if we only have one splitjoin left as the child, we can do a cut
+		if (copy.size()==1) {
+		    verticalObj = (SIRSplitJoin)copy.get(0);
+		} else {
+		    // otherwise can't do a cut
+		    tryVertical = false;
+		}
+	    } else if (str instanceof SIRSplitJoin) {
+		verticalObj = (SIRSplitJoin)str;
+	    } else {
+		Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
+	    }    
+	}
+	Utils.assert(!(tryVertical && verticalObj==null));
+	
+	// return obj if it's possible to do vert cut
+	if (tryVertical) {
+	    return verticalObj;
+	} else {
+	    return null;
+	}
     }
 
     /**

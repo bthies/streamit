@@ -39,7 +39,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * want to revert or experiment.
      */
     private static final boolean SHARING_CONFIGS = false;
-
+    /**
+     * Whether or not we're transforming the stream on traceback.  If
+     * not, then we're just gathering the partition info for dot
+     * output.
+     */
+    static boolean transformOnTraceback;
+    
     /**
      * Map from stream structures to DPConfig's.
      */
@@ -63,7 +69,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	PartitionUtil.setupScalingStatistics();
 	for (int i=1; i<maxTiles; i++) {
 	    LinkedList partitions = new LinkedList();
-	    new DynamicProgPartitioner(str, work, i).calcPartitions(partitions);
+	    new DynamicProgPartitioner(str, work, i).calcPartitions(partitions, false);
 	    PartitionUtil.doScalingStatistics(partitions, i);
 	}
 	PartitionUtil.stopScalingStatistics();
@@ -73,26 +79,21 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * This is the toplevel call for doing partitioning.
      */
     public SIRStream toplevel() {
-	// debug setup
-	long start = System.currentTimeMillis();
-	LinkedList partitions = new LinkedList();
-
 	// calculate partitions
-	StreamTransform st = calcPartitions(partitions);
-	if (KjcOptions.debug) { st.printHierarchy(); }
-
-	// debug output
-	PartitionUtil.printTileWork(partitions, numTiles);
-	PartitionDot.printPartitionGraph(str, "partitions.dot", PartitionRecord.asMap(partitions));
-	Utils.assert(partitions.size()<=numTiles, "Assigned " + partitions.size() + " tiles, but we only have " + numTiles);
-	System.out.println("Dynamic programming partitioner took " + 
-			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
-
-	// perform partitioning transformations
-	SIRStream result = st.doTransform(str);
+	LinkedList partitions = new LinkedList();
+	SIRStream result = calcPartitions(partitions, true);
+	//	if (KjcOptions.debug) { 
+	// st.printHierarchy();
+	    // }
 
 	// remove unnecessary identities
 	Lifter.eliminateIdentities(result);
+
+	// reclaim children here, since they might've been shuffled
+	// around in the config process
+	if (result instanceof SIRContainer) {
+	    ((SIRContainer)result).reclaimChildren();
+	}
 
 	return result;
     }
@@ -101,9 +102,14 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * Returns a stream transform that will perform the partitioning
      * for <str>.  <partitions> must be a non-null linked list; it is
      * cleared and then filled with PartitionRecords representing the
-     * partitions.
+     * partitions.  If <doTransform> is true, then the result of
+     * partitioning the stream is returned; otherwise the stream is
+     * left alone and only <partitions> are filled up.
      */
-    private StreamTransform calcPartitions(LinkedList partitions) {
+    private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
+	// debug setup
+	long start = System.currentTimeMillis();
+
 	// build stream config
 	System.out.println("  Building stream config... ");
 	DPConfig topConfig = buildStreamConfig();
@@ -144,7 +150,28 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	partitions.add(curPartition);
 
 	System.out.println("  Tracing back...");
-	StreamTransform result = topConfig.traceback(partitions, curPartition, tilesUsed, 0);
+
+	// first just get partitions
+	/*
+	transformOnTraceback = false;
+	topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
+	// debug output
+	PartitionUtil.printTileWork(partitions, numTiles);
+	PartitionDot.printPartitionGraph(str, "partitions.dot", PartitionRecord.asMap(partitions));
+	Utils.assert(partitions.size()<=numTiles, "Assigned " + partitions.size() + " tiles, but we only have " + numTiles);
+	System.out.println("Dynamic programming partitioner took " + 
+			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
+	*/
+
+	// then do transformations.  This will mess up <partitions>
+	// and <curPartition> but it doesn't matter.
+	SIRStream result;
+	if (doTransform) {
+	    transformOnTraceback = true;
+	    result = topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
+	} else {
+	    result = null;
+	}
 
 	/* This is no longer the case because of estimating fusion overhead.
 	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions),

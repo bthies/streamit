@@ -31,11 +31,10 @@ abstract class DPConfig implements Cloneable {
 
     /**
      * Traceback through a pre-computed optimal solution, keeping
-     * track of new partitions in <partitions> and adding to
-     * current partition <curPartition>, and returning stream
-     * transform to perform best partitioning.
+     * track of new partitions in <partitions> and adding to current
+     * partition <curPartition>, and returning new stream.
      */
-    abstract public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner);
+    abstract public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str);
 
     /**
      * Returns the stream this config is wrapping.

@@ -82,6 +82,10 @@ public class BufferDRAMAssignment
     
     private static void inputFilterAssignment(InputTraceNode input, RawChip chip) 
     {
+	//don't assign this to a dram if there are no inputs
+	if (input.noInputs())
+	    return;
+	
 	FilterTraceNode filter = (FilterTraceNode)input.getNext();
 	
 	RawTile tile = chip.getTile(filter.getX(), filter.getY());

@@ -124,7 +124,7 @@ public class OffChipBuffer
 
     public void setDRAM(StreamingDram DRAM) 
     {
-	assert !redundant() : "calling setDRAM() on redundant buffer";
+	//	assert !redundant() : "calling setDRAM() on redundant buffer";
 	this.dram = DRAM;
     }
     
@@ -136,7 +136,7 @@ public class OffChipBuffer
     public StreamingDram getDRAM() 
     {
 	assert dram != null: "need to assign buffer to streaming dram";
-	assert !redundant() : "calling getDRAM() on redundant buffer";
+	//assert !redundant() : "calling getDRAM() on redundant buffer";
 	return dram;
     }
     

@@ -8,15 +8,15 @@ import java.util.*;
  * means that elements can't be added or removed from the list.  They
  * can, however, be set to different elements.
  */
-public class ConstList implements Serializable, at.dms.kjc.DeepCloneable {
+public class ConstList implements Serializable, Cloneable {
 
-    protected List list;
+    protected LinkedList list;
 
     public ConstList() {
 	list = new LinkedList();
     }
 
-    public ConstList(List list) {
+    public ConstList(LinkedList list) {
 	this.list = list;
     }
 
@@ -102,7 +102,6 @@ public class ConstList implements Serializable, at.dms.kjc.DeepCloneable {
 	return list.toArray();
     }
 
-
     /** Returns an array containing all of the elements in this list in
      * proper sequence; the runtime type of the returned array is that of
      * the specified array. */
@@ -110,20 +109,9 @@ public class ConstList implements Serializable, at.dms.kjc.DeepCloneable {
 	return list.toArray(a);
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
-
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.util.ConstList other = new at.dms.util.ConstList();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
-
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.util.ConstList other) {
-  other.list = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.list, other);
-}
-
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    public Object clone() {
+	ConstList result = new ConstList();
+	result.list = (LinkedList)list.clone();
+	return result;
+    }
 }

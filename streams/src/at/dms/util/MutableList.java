@@ -8,7 +8,7 @@ import java.util.*;
  * wants a constant view of a list while another wants to be able to
  * mutate it.
  */
-public class MutableList extends ConstList implements Serializable {
+public class MutableList extends ConstList implements List, Cloneable, Serializable {
 
     /** Inserts the specified element at the specified position in
      * this list (optional operation). */
@@ -73,20 +73,9 @@ public class MutableList extends ConstList implements Serializable {
 	return list.subList(fromIndex, toIndex);
     }
 
-/** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
-
-/** Returns a deep clone of this object. */
-public Object deepClone() {
-  at.dms.util.MutableList other = new at.dms.util.MutableList();
-  at.dms.kjc.AutoCloner.register(this, other);
-  deepCloneInto(other);
-  return other;
-}
-
-/** Clones all fields of this into <other> */
-protected void deepCloneInto(at.dms.util.MutableList other) {
-  super.deepCloneInto(other);
-}
-
-/** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+    public Object clone() {
+	MutableList result = new MutableList();
+	result.list = (LinkedList)list.clone();
+	return result;
+    }
 }

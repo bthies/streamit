@@ -1,35 +1,36 @@
 7/30/02 -- AAL 
 Ripped out the stuff in fmref to fmref_raw to make it only output at the end.
 
-first  iteration done at 0x0000134c9 (79049 cycles)
-second iteration done at 0x000024551 (148817 cycles) (delta=69768)
-third  iteration done at 0x0000355d9 (218585 cycles) (delta=69768)
+first  iteration done at 0x0000044b7 (17591 cycles)
+second iteration done at 0x000005ef7 (24311 cycles) (delta=6720)
+third  iteration done at 0x000007937 (31031 cycles) (delta=6720)
 
 
-==> iter takes 69768/69768 cycles (average = 69768)
+==> iter takes 6720/6720 cycles (average = 6720)
 
-since we are producing a 12 element output vector, we are producing 
-12 outputs every 69768 cycles, so normalized to 10^5 cycles, 12*(100000/69768) = 17.199862
+since we are producing something every iteration which corresponds to 6 streamit
+outputs, we are therefore producing 6 outputs  
+every 6720 cycles, normalized to 10^5 cycles, 6*(100000/6720) = 89.285714
 
-flops reported are 4626 flops, which is (4626/69768) * 250 = 16.576367 MFLOPS
+flops reported are 771 flops, which is (771/6720) * 250 = 28.683036 MFLOPS
 
-workCount = 1231651 / 1264784 = 0.97380343
-workCount = 1088243 / 1116288 = 0.97487656
-workCount = 1088243 / 1116288 = 0.97487656
+workCount = 274190 / 281456 = 0.97418424
+workCount = 105586 / 107520 = 0.98201265
+workCount = 105586 / 107520 = 0.98201265
 
 
 
 
 Uniprocessor (7/30/2002):
 (Xenon 2.2 GHz, 512MB cache)
-10 million iterations (12 outputs/iteration)
+100 million iterations (6 outputs/iteration)
 99.9% utilization
-runtime for 10^7 iterations = 127.270 seconds
+runtime for 10^8 iterations = 130.09 seconds
 
 We want cycles/iteration:
-10^7 iterations/ 127.270 sec * 
-12 outputs/1 iteration
+10^8 iterations/ 130.09 sec * 
+6 outputs/1 iteration *
 1 second /2.2x10^9 cycles
 * 10^5 cycles 
 
-= 42.858061 outputs/10^5 cycles
+= 209.64507 outputs/10^5 cycles

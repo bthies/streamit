@@ -4,7 +4,9 @@
 
 LIMIT = TRUE
 SIM-CYCLES = 5000000
-SIM-COMMAND = sv(79049); sv(69768); sv(69768);
+SIM-COMMAND = count_FLOPS(17591); count_FLOPS(6720); count_FLOPS(6720);
+
+
 
 BTL-MACHINE-FILE = fileio.bc
 

@@ -1,44 +1,26 @@
 /*
  * firref.c: C reference implementation of FIR
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: firref_raw.c,v 1.2 2002-07-30 19:11:40 dmaze Exp $
+ * $Id: firref_raw.c,v 1.3 2002-07-30 19:50:27 aalamb Exp $
  */
 
-#define raw
-#ifdef raw
 #include <raw.h>
-#else
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#endif
 #include <math.h>
 
 void begin(void);
-float calc_fir(const float *a, float *b, float W, float last);
 
 /* Globals: */
 static int numiters = -1;
 
-#ifndef raw
 int main(int argc, char **argv)
 {
-  int option;
-
-  while ((option = getopt(argc, argv, "i:")) != -1)
-  {
-    switch(option)
-    {
-    case 'i':
-      numiters = atoi(optarg);
-    }
-  }
-
+  numiters = 100;
   begin();
   return 0;
 }
-#endif
 
 #define DEPTH 128
 #define COUNT 6
@@ -74,11 +56,6 @@ void begin(void)
     if (base < 0) base += DEPTH;
     buff[base] = bufflast++;
       
-    // Print the result.
-#ifdef raw
     print_float(s);
-#else
-    printf("%f\n", s);
-#endif
   }
 }

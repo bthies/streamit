@@ -78,11 +78,11 @@ class dcalc extends StreamIt {
 	r[5]=6;
 	add(new Sourcer(Q*N+W-1,r));
 	add(new AddAHLAhA(W,Q,N,K,h,C));
-	add(new AhrdAhA(Q*N+W-1,K*N));
+	add(new AhrdAhA(Q*N+W-1,K*N)); //5,4
+	//add(new Printer());
 	//	add(new LrL(K*N));
 	//      add(new backs(K*N));
 	add(new Ahrchold(K*N));
-	//add(new Printer());
 	add(new LrL(K*N));
 	add(new backs(K*N));
 	add(new SinkD(K*N));
@@ -137,6 +137,7 @@ class dsolve extends Pipeline { //input to this pipeline is Ahr(N),L(N*N) and th
     public dsolve(int N) {super(N);}
     public void init(int N){
 	add (new LrL(N));
+	//add(new Printer());
 	add (new backs(N));
     }
 }
@@ -158,9 +159,9 @@ class split_ahrd extends SplitJoin{//In:2* Ahr(N)+ 2 * L(N*(N+1)/2)
 class Ahrd extends Pipeline{// the input is Ar, L , the output is Ahr,d,AhA 
     public Ahrd( int M,int N) {super (M,N);}
     public void init(int M,int N) {
+	//add(new Printer());
 	add (new AhrL1(M,N));
 	add (new split_ahrd(N));
-	//add(new Printer());
       }
 
 }
@@ -172,7 +173,7 @@ class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,Ah
 	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1)+N*(N+1)/2,N*(N+1)/2));
 	add (new Ahrd(M,N));
 	add (new FloatIdentity());                
-	setJoiner(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)/2));
+	setJoiner(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)/2)); //8,10
     }
 
 }
@@ -235,8 +236,8 @@ class SinkD extends Filter{
 		//System.out.print("This is ");
 		//System.out.print(i);
 		//System.out.print(" : ");
-		//System.out.println(input.popFloat());
-		input.popFloat();
+		System.out.println(input.popFloat());
+		//input.popFloat();
 	    }
 	    
     }

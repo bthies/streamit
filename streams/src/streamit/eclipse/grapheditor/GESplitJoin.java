@@ -10,6 +10,7 @@ import java.io.*;
 import java.util.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
+import com.jgraph.layout.*;
 import grapheditor.jgraphextension.*;
 
 /**
@@ -23,6 +24,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	private GEJoiner joiner;
 	private ArrayList children;
 	
+	// graph structure contained within a LiveJGraphInternalFrame
+	private GraphStructure localGraphStruct;
 
 	public GESplitJoin(String name, GESplitter split, GEJoiner join)
 	{
@@ -30,7 +33,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		this.splitter = split;
 		this.joiner = join;
 		this.setChildren(split.getSuccesors());
-		
+		this.localGraphStruct = new GraphStructure();
 	}
 
 	/**
@@ -68,19 +71,16 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
 		this.draw();
-		
-		// Create a graph structure that will be contained within a LiveJGraphInternalFrame.
-		GraphStructure localGraphStruct = new GraphStructure();
-		localGraphStruct.liveDemo = graphStruct.liveDemo;
-
+					
+		//localGraphStruct.editorFrame = graphStruct.liveDemo;
 		DefaultGraphModel model = new DefaultGraphModel();
-		localGraphStruct.setGraphModel(model);
-		localGraphStruct.setJGraph(new JGraph(model));
+		this.localGraphStruct.setGraphModel(model);
+		this.localGraphStruct.setJGraph(new JGraph(model));
 				
-		LiveJGraphInternalFrame frame = new LiveJGraphInternalFrame(localGraphStruct.getJGraph());
-		localGraphStruct.internalFrame = frame;
+		LiveJGraphInternalFrame frame = new LiveJGraphInternalFrame(this.localGraphStruct.getJGraph());
+		this.localGraphStruct.internalFrame = frame;
 		
-		this.splitter.construct(localGraphStruct); ////// this.splitter.construct(graphStruct);
+		this.splitter.construct(this.localGraphStruct); ////// this.splitter.construct(graphStruct);
 		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
@@ -89,56 +89,61 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
-			lastNodeList.add(strNode.construct(localGraphStruct)); ///////// lastNodeList.add(strNode.construct(graphStruct));
+			lastNodeList.add(strNode.construct(this.localGraphStruct)); ///////// lastNodeList.add(strNode.construct(graphStruct));
 			
 			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
-			localGraphStruct.connectDraw(splitter, strNode); ///////// graphStruct.connectDraw(splitter, strNode);
+			this.localGraphStruct.connectDraw(splitter, strNode); ///////// graphStruct.connectDraw(splitter, strNode);
 		}
 		
 		listIter =  lastNodeList.listIterator();
 		
-		this.joiner.construct(localGraphStruct); //////// this.joiner.construct(graphStruct);
+		this.joiner.construct(this.localGraphStruct); //////// this.joiner.construct(graphStruct);
 		
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
 			System.out.println("Connecting " + strNode.getName()+  " to "+ joiner.getName());
-			localGraphStruct.connectDraw(strNode, joiner); //////// graphStruct.connectDraw(strNode, joiner);
+			this.localGraphStruct.connectDraw(strNode, joiner); //////// graphStruct.connectDraw(strNode, joiner);
 		}	
 	
-		model.insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
+		this.localGraphStruct.getGraphModel().insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
 
-		DefaultGraphCell splitjoinCell = new DefaultGraphCell(frame);	
+		//DefaultGraphCell splitjoinCell = new DefaultGraphCell(frame);	
 		this.port = new DefaultPort();
-		splitjoinCell.add(this.port);
-		frame.setGraphCell(splitjoinCell);
+		//splitjoinCell.add(this.port);
+		this.add(this.port);
+		//frame.setGraphCell(splitjoinCell);
+		frame.setGraphCell(this);
 
 		frame.setGraphStruct(graphStruct);
 		
-		frame.setGraphModel(model);
+		//frame.setGraphModel(this.localGraphStruct.getGraphModel());
+		frame.setGraphModel(graphStruct.getGraphModel());
 		frame.create(this.getName());
-		frame.setSize(320, 700);
+		frame.setSize(400, 400);
 		
+		/*
+		(graphStruct.getAttributes()).put(this, this.attributes);
+		GraphConstants.setAutoSize(this.attributes, true);
+		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
+		*/
 		
-	
-		//(graphStruct.getAttributes()).put(this, this.attributes);
-		//GraphConstants.setAutoSize(this.attributes, true);
-		//GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
-		
-		graphStruct.getCells().add(splitjoinCell); 
-		//(graphStruct.getGraphModel()).insert(new Object[] {splitjoinCell}, null, null, null, null);
+		//graphStruct.getCells().add(splitjoinCell);
+		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
 						
-		
 		graphStruct.internalFrame.getContentPane().add(frame);
-		// did not actually solve the problem, as originally thought (07/24/03)
 		//graphStruct.internalFrame.getDesktopPane().add(frame);
-	
 	
 		try 
 		{	
 			frame.setSelected(true);
 		} 
 		catch(Exception pve) {}
+		
+		SugiyamaLayoutAlgorithm algorithm = new SugiyamaLayoutAlgorithm();
+		SugiyamaLayoutController aController= new SugiyamaLayoutController();	
+		algorithm.perform(localGraphStruct.getJGraph(), true, aController.getConfiguration());
+	
 	
 		return this;
 	}

@@ -438,7 +438,8 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration initPath) {
-										NamePair np;
+		
+		//NamePair np;
     
     	System.out.println("***** Entering visitFeedbackLoop");
     	

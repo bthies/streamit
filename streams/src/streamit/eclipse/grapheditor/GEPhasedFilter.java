@@ -105,7 +105,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
-		GraphConstants.setBorder(this.attributes , BorderFactory.createRaisedBevelBorder());
+		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.red));
 		GraphConstants.setBackground(this.attributes, Color.blue);
 		
 		

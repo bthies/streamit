@@ -12,6 +12,7 @@ import java.awt.*;
 //import com.sun.rsasign.t;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
+import com.jgraph.layout.*;
 
 import javax.swing.*;
 import grapheditor.jgraphextension.*;
@@ -29,40 +30,18 @@ public class GraphStructure implements Serializable{
 	private Hashtable globalAttributes;
 	private DefaultGraphModel model;
 	private JGraph jgraph;
-	
-	
+		
 	private int x;
 	private int y;
 	private int width;
 	private int height;
 	
-	public LiveJGraphDemo liveDemo; 
+	public GraphEditorFrame editorFrame; 
 	public LiveJGraphInternalFrame internalFrame;
 	
 	
 	// The toplevel GEStreamNode. Typically it should be a GEPipeline object.  
 	private GEStreamNode topLevel;
-
-	/*
-	public GraphStructure(ArrayList nodes)
-	{
-		for (int i = 0;  i < nodes.size(); i++)
-		{
-			GEStreamNode n = (GEStreamNode) nodes.get(i);
-			this.graph.put(n, n.getSuccesors());
-		}
-		
-		cs = new ConnectionSet();
-		cells = new ArrayList();
-		globalAttributes= new Hashtable();
-		model = new DefaultGraphModel();
-		jgraph = new JGraph(model);
-		x = 20;
-		y = 20;
-		width = 80;
-		height = 30;
-	}
-	*/
 	
 	public GraphStructure()
 	{
@@ -123,58 +102,25 @@ public class GraphStructure implements Serializable{
 		return (ArrayList) this.graph.get(node);
 	}
 	
-	
-	
-	
-	
-	
 	/**
 	 * Construct graph so that it could be drawn by a GUI component
 	 */
 	public void constructGraph()
 	{
-		
-	//	try{
-			
-			liveDemo = new LiveJGraphDemo();
+			editorFrame = new GraphEditorFrame();
 			this.topLevel.construct(this);
 			model.insert(cells.toArray(), globalAttributes, cs, null, null);
-		
-			// Testing drawing of components by using JFrames
-			
-			
+
 			/*
-			System.out.println("Creating the JFrame");
-			JFrame frame = new JFrame();
-			System.out.println("Adding the JScrollPane with JGraph");
-			
+			JFrame frame = new JFrame();			
 			jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));
 			jgraph.getModel().addGraphModelListener(new JGraphModelListener());
-			
 			frame.getContentPane().add(new JScrollPane(jgraph));
-			
-			System.out.println("Setting the default close operation");
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			System.out.println("Packing");
 			frame.pack();
-			System.out.println("Setting visible");
 			frame.setVisible(true);
-			System.out.println("Finished setting visible");
 			*/
-			
-			
-	//	}
-	/*		
-		catch(Exception e)
-		{
-			System.out.println("Entered catch exception in constructGraph method in GraphStructure");
-			System.out.println("!!! EXCEPTION : " + e.toString());
-			System.out.println("Info : " + e.fillInStackTrace());
-		}
-		*/
 	}
-	
-	
 	
 	/** 
 	 * Sets the toplevel node to <strNode>
@@ -209,14 +155,10 @@ public class GraphStructure implements Serializable{
 		cells.add(edge);	
 	}
 	
-	
-	
-	
-
 	public Rectangle setRectCoords(GEStreamNode node)
 	{
 		Rectangle rect =  new Rectangle(x, y, width, height);
-		
+		/*
 		if (node.getType() == GEType.PHASED_FILTER)
 		{
 			System.out.println("################################## setting COORDS for FILTER");
@@ -230,38 +172,37 @@ public class GraphStructure implements Serializable{
 			x+= 600;
 			rect.x = x;
 		}
-		
-		else{
-		
-		
-		if (node.getEncapsulatingNode() != null)
-		{
-		
-			if ((node.getEncapsulatingNode().getType() == GEType.SPLIT_JOIN) && 
-			    (node.getType() != GEType.JOINER) && 
-			    (node.getType() != GEType.SPLITTER))  
+		else
+		{		
+			if (node.getEncapsulatingNode() != null)
 			{
-				x += 100;
-			}
-			else if (node.getType() == GEType.JOINER)
-			{
-				rect.height = 400;
-				rect.width = 400;
-				y += 120;
-				rect.y = y;
-				y += 120;
-			}
 			
+				if ((node.getEncapsulatingNode().getType() == GEType.SPLIT_JOIN) && 
+			    	(node.getType() != GEType.JOINER) && 
+			    	(node.getType() != GEType.SPLITTER))  
+				{
+					x += 100;
+				}
+				else if (node.getType() == GEType.JOINER)
+				{
+					rect.height = 400;
+					rect.width = 400;
+					y += 120;
+					rect.y = y;
+					y += 120;
+				}
+				
+				else
+				{
+					y += 120;
+				}
+			}
 			else
 			{
 				y += 120;
 			}
 		}
-		else
-		{
-			y += 120;
-		}
-		}
+		*/
 		return rect;
 	}
 

@@ -182,15 +182,25 @@ public class Fusion {
 	    newFields[i+f1.getFields().length] = f2.getFields()[i];
 	}
 
-	// copy methods
+	// copy methods.  subtract 4 to avoid init, work
 	JMethodDeclaration[] newMethods = 
 	    new JMethodDeclaration[f1.getMethods().length + 
-				   f2.getMethods().length];
+				   f2.getMethods().length - 4];
+	int j=0;
 	for (int i=0; i<f1.getMethods().length; i++) {
-	    newMethods[i] = f1.getMethods()[i];
+	    if (f1.getMethods()[i]!=f1.getInit() &&
+		f1.getMethods()[i]!=f1.getWork()) {
+		j++;
+		newMethods[j] = f1.getMethods()[i];
+	    }
 	}
+	j=0;
 	for (int i=0; i<f2.getMethods().length; i++) {
-	    newMethods[i+f1.getMethods().length] = f2.getMethods()[i];
+	    if (f2.getMethods()[i]!=f2.getInit() &&
+		f2.getMethods()[i]!=f2.getWork()) {
+		j++;
+		newMethods[j+f1.getMethods().length] = f2.getMethods()[i];
+	    }
 	}
 
 	// make a new filter to represent the fused combo
@@ -209,6 +219,7 @@ public class Fusion {
 
 	// set init function to init function of first, arbitrarily (CHANGE)
 	fused.setInit(f1.getInit());
+	fused.setWork(newWork);
 
 	// replace <f1>..<f2> with <fused>
 	parent.replace(f1, f2, fused);

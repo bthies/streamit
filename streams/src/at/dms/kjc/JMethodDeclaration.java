@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.3 2001-09-27 18:47:51 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.4 2001-09-27 23:28:34 thies Exp $
  */
 
 package at.dms.kjc;
@@ -71,6 +71,20 @@ public class JMethodDeclaration extends JMemberDeclaration {
     assert(parameters != null);
     assert(exceptions != null);
   }
+
+    /**
+     * Set method name to <name>
+     */
+    public void setName(String str) {
+	this.ident = str;
+    }
+
+    /**
+     * Return identifier of this method.
+     */
+    public String getName() {
+	return ident;
+    }
 
     /**
      * Inserts <param> as the first parameter of this.

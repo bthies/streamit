@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.2 2001-09-25 22:52:38 thies Exp $
+## $Id: Makefile,v 1.3 2001-09-27 23:28:34 thies Exp $
 ##
 
 TOPDIR =	..
@@ -59,7 +59,8 @@ JAVAFILES +=	BytecodeOptimizer					\
 		CTryFinallyContext CType CVariableInfo CVoidType	\
 		CodeLabel CodeSequence Constants			\
 		DefaultFilter JCheckedExpression KjcPrettyPrinter	\
-		KjcScanner KjcVisitor Main MethodSignatureParser
+		KjcScanner KjcVisitor KjcEmptyVisitor Main 		\
+		MethodSignatureParser
 
 # Syntax tree classes
 JAVAFILES +=	JAddExpression JArrayAccessExpression			\

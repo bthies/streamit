@@ -40,7 +40,7 @@ public class Flattener {
 			       SIRInterfaceTable[]
 			       interfaceTables,
 			       SIRStructure[] structs) {
-	/* DEBUGGING PRINTING
+	/* DEBUGGING PRINTING *
         System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();
 	IterFactory.createIter(str).accept(printer1);

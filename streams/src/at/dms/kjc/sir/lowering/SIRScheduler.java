@@ -43,11 +43,19 @@ public class SIRScheduler implements Constants {
     private boolean initMode;    
 
     /**
+     * Maps schedules (phases) to work functions.  A given phase could
+     * appear multiple times (as sub-schedules of other schedules), so
+     * we want to only have one work function generated.
+     */
+    private HashMap scheduleToWork;
+
+    /**
      * Creates one of these.
      */
     private SIRScheduler(SIRContainer toplevel, JClassDeclaration flatClass) {
 	this.toplevel = toplevel;
 	this.flatClass = flatClass;
+	this.scheduleToWork = new HashMap();
     }
 
     /**
@@ -186,6 +194,7 @@ public class SIRScheduler implements Constants {
 	SIRStreamFactory factory = new SIRStreamFactory();
 	StreamInterface schedInterface = factory.newFrom(IterFactory.createIter(str));
 	schedInterface.computeSchedule();
+	//System.err.println("Back from scheduler package.");
 	return schedInterface;
     }
 
@@ -334,6 +343,11 @@ public class SIRScheduler implements Constants {
      * Makes work function for hierarchical <schedule>.
      */
     private JMethodDeclaration makeHierWork(Schedule schedule) {
+	// see if we've already made a work function for this schedule
+	if (scheduleToWork.containsKey(schedule)) {
+	    return (JMethodDeclaration)scheduleToWork.get(schedule);
+	}
+	// otherwise, build a work function from scratch...
 	JStatement[] statementList = makeWorkStatements(schedule);
 	// make block for statements
 	JBlock statementBlock = new JBlock(null, statementList, null);
@@ -365,6 +379,8 @@ public class SIRScheduler implements Constants {
 				    /* comments   */ null);
 	// store work function in flat class
 	flatClass.addMethod(result);
+	// remember that this schedule is represented by this work function
+	scheduleToWork.put(schedule, result);
 	// return result
 	return result;
     }

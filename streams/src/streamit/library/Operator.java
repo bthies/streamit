@@ -269,6 +269,16 @@ public class Operator extends DestroyedClass
                 to [indx] .pushInt (data);
             }
         } else
+        if (type == Short.TYPE)
+        {
+            int data = from.popShort ();
+
+            int indx;
+            for (indx = to.length - 1; indx >= 0; indx--)
+            {
+                to [indx] .pushShort (data);
+            }
+        } else
         if (type == Character.TYPE)
         {
             char data = from.popChar ();

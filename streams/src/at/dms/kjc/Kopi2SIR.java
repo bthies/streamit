@@ -21,7 +21,7 @@ import at.dms.util.*;
 import java.util.*;
 
 
-public class Kopi2SIR extends Utils implements AttributeVisitor
+public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 {
     /* The entire application */
     private JCompilationUnit[] application;
@@ -81,6 +81,30 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     //Keeps track if current class is anonymous
     private boolean anonCreation;
+
+    /**
+     * Clones all the state to save in case a recursive stream needs to be expanded
+     * later. Please add any new state necessary for the operation of Kopi2SIR.
+     */
+    public Object clone() {
+	try {
+	    Kopi2SIR clone=(Kopi2SIR)super.clone();
+	    clone.application=(JCompilationUnit[])application.clone();
+	    clone.visitedSIROps=(Hashtable)visitedSIROps.clone();
+	    clone.symbolTable=(Hashtable)symbolTable.clone();
+	    clone.interfaceList=(Vector)interfaceList.clone();
+	    clone.interfaceTableList=(Vector)interfaceTableList.clone();
+	    clone.structureList=(Vector)structureList.clone();
+	    clone.searchList=(LinkedList)searchList.clone();
+	    clone.params=(JFormalParameter[])params.clone();
+	    clone.paramNames=(String[])paramNames.clone();
+	    clone.finalVars=(LinkedList)finalVars.clone();
+	    return clone;
+	} catch(CloneNotSupportedException e) {
+	    Utils.fail("Was not able to clone Kopi2SIR");
+	    return null;
+	}
+    }
 
     //Uncomment the println for debugging
     private void printMe(String str) {
@@ -161,17 +185,26 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     private SIROperator getVisitedOp(String className) 
     {
-	//return the stream if it is in the table
-	if (visitedSIROps.get(className) != null) {
-	    return (SIROperator)visitedSIROps.get(className);
+	SIROperator visitedOp=(SIROperator)visitedSIROps.get(className);
+	if((visitedOp instanceof SIRContainer)&&(searchList.contains(className))) {
+	    at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
+				       className);
+	    SIRContainer out=(SIRContainer)ObjectDeepCloner.deepCopy((SIRContainer)visitedOp);
+	    out.setRecurse((Kopi2SIR)this.clone());
+	    return out;
+	}
+	if (visitedOp!=null) {
+	    return visitedOp;
 	}
 	//if not look for it over the entire application (if given)
 	else if (application != null) {
 	    //if this class name is already trying to be resolved then
 	    //we have a mutually recursive defintion
-	    if (searchList.contains(className)) 
+	    if (searchList.contains(className)) {
+		System.err.println(visitedSIROps);
 		at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
 				       className);
+	    }
 	    //add this class name to the list of streams we are resolving
 	    searchList.add(className);
 	    for (int unit = 0; unit < application.length; unit++) {
@@ -450,10 +483,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	// create a new SIROperator
 	current = newSIROP(self);
-	//check if this is a regular class, not a streamit class
-	//if (current == null)
-	//    System.out.println(printLine(self) + " visiting class ");
-	    
+
+	/*
+	  if this is not an anonymous creation add the SIR op to the 
+	  "symbol table"
+	  Adding it earlier to support not visit recursive def again
+	*/
+
+	if (!anonCreation) {
+	    addVisitedOp(ident, current);
+	}
+
 	//If this class is public then it is the topLevel stream (entry point)
 	if (self.getSourceClass().getSuperClass().getIdent().equals("StreamIt")) {
 	    if (topLevel == null)
@@ -467,8 +507,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	trash = visitClassBody(decls, fields, methods, body);
 
-	/* add the current SIR OP to the parent */
-	
 	if (current == null) 
 	    printMe("Null");
 	
@@ -482,14 +520,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	  else
 	  anonCreation = false;*/
 
-	/*
-	  if this is not an anonymous creation add the SIR op to the 
-	   "symbol table" 
-	*/
-	if (!anonCreation) {
-	    addVisitedOp(ident, current);
-	}
-	     
 	parentStream = oldParentStream;
 	printMe( "Out " + self.getSourceClass().getSuperClass().getIdent()
 			    + num);
@@ -1618,7 +1648,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    
 	    //if we cannot find the stream in the symbol table then 
 	    //we have not seen the declaration before the use
-	    if (st == null)
+	    if (st==null)
 		at.dms.util.Utils.fail(lineNumber + 
 				       ": cannot find declaration of stream " +
 				       ((JUnqualifiedInstanceCreation)SIROp).

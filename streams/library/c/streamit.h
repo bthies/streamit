@@ -38,7 +38,7 @@ typedef enum latency_special {
 } latency_special;
 
 typedef union latency {
-  latency_list list;
+  latency_list *list;
   latency_range range;
   latency_special special;
 } latency;
@@ -127,7 +127,7 @@ typedef struct portal_receiver {
 } portal_receiver;
 typedef struct portal {
   portal_receiver *receiver;
-} portal;
+} _portal, *portal;
 void set_stream_type(stream_context *c, stream_type type);
 void set_peek(stream_context *c, int peeks);
 void set_pop(stream_context *c, int pops);
@@ -150,11 +150,11 @@ void create_splitjoin_tape(stream_context *container,
                            int data_size, int tape_length);
 void run_splitter(stream_context *c);
 void run_joiner(stream_context *c);
-portal *create_portal(void);
-void register_receiver(portal *p, stream_context *receiver,
-                       interface_table *vtbl, latency *l);
-/* void register_sender(portal *p, stream_context *sender, latency *l); */
-void send_message(portal *p, int msgid, latency *l, void *params);
+portal create_portal(void);
+void register_receiver(portal p, stream_context *receiver,
+                       interface_table *vtbl, latency l);
+/* void register_sender(portal p, stream_context *sender, latency l); */
+void send_message(portal p, int msgid, latency l, void *params);
 void connect_tapes(stream_context *c);
 void streamit_run(stream_context *c);
 

@@ -18,15 +18,15 @@ struct queued_message
 };
 static struct queued_message *msg_queue = NULL;
 
-portal *create_portal(void)
+portal create_portal(void)
 {
-  portal *p = malloc(sizeof(portal));
+  portal p = malloc(sizeof(_portal));
   p->receiver = NULL;
   return p;
 }
 
-void register_receiver(portal *p, stream_context *receiver,
-                       interface_table *vtbl, latency *l)
+void register_receiver(portal p, stream_context *receiver,
+                       interface_table *vtbl, latency l)
 {
   portal_receiver *rec;
   
@@ -39,12 +39,12 @@ void register_receiver(portal *p, stream_context *receiver,
   p->receiver = rec;
 }
 
-void register_sender(portal *p, stream_context *sender, latency *l)
+void register_sender(portal p, stream_context *sender, latency l)
 {
   /* Ignore; our current model doesn't deal. */
 }
 
-void send_message(portal *p, int msgid, latency *l, void *params)
+void send_message(portal p, int msgid, latency l, void *params)
 {
   /* Again, ignore the latency. */
   /* Go through every receiver in the portal, and push an appropriate

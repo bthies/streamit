@@ -15,34 +15,52 @@ public class LinearOptimizer {
     boolean preNeeded;
 
     /* extracts totalMatrix, totalPreMatrix, and other parameters from linear rep orig
+       converts inputs to states, so:
 
-       totalMatrix = | A  B |     totalPreMatrix = | preA  preB |
-                     | C  0 |
+       A' = |A B|   B' = |0|    C' = |C D|   D' = |0|
+            |0 0|        |I|
+
+
+       preA' = |preA 0|     preB' = |preB 0|    
+               |0    0|             |0    I|    
+
+       totalMatrix = |A'  B'|     totalPreMatrix = |preA'  preB'|
+                     |C'  0 |
 
     */
     public LinearOptimizer(LinearFilterRepresentation orig) {
 	
-	states = orig.getStateCount();
 	outputs = orig.getPushCount();
 	inputs = orig.getPopCount();
+	states = orig.getStateCount() + inputs;
 	preNeeded = orig.preworkNeeded();
 
 	totalMatrix = new FilterMatrix(states+outputs,states+inputs);
 	totalMatrix.copyAt(0,0,orig.getA());
-	totalMatrix.copyAt(0,states,orig.getB());
+	totalMatrix.copyAt(0,states-inputs,orig.getB());
+	totalMatrix.copyAt(states-inputs,states, FilterMatrix.getIdentity(inputs));
 	totalMatrix.copyAt(states,0,orig.getC());
+	totalMatrix.copyAt(states,states-inputs,orig.getD());
+	D = new FilterMatrix(outputs,inputs);
 
-	D = orig.getD();
-
-	initVec = orig.getInit();
+	initVec = new FilterVector(states);
+	initVec.copyAt(0,0,orig.getInit());
 	storedInputs = orig.getStoredInputCount();
 
 	if(preNeeded) {
-	    pre_inputs = orig.getPreWorkPopCount();
+	    pre_inputs = orig.getPreWorkPopCount() + inputs;
 	    totalPreMatrix = new FilterMatrix(states,states+pre_inputs);
 
 	    totalPreMatrix.copyAt(0,0,orig.getPreWorkA());
 	    totalPreMatrix.copyAt(0,states,orig.getPreWorkB());
+	    totalPreMatrix.copyAt(states-inputs,states+pre_inputs-inputs, FilterMatrix.getIdentity(inputs));
+	}
+	else {
+	    pre_inputs = inputs;
+	    totalPreMatrix = new FilterMatrix(states,states+pre_inputs);
+	    totalPreMatrix.copyAt(0,0, FilterMatrix.getIdentity(states-inputs));
+	    totalPreMatrix.copyAt(states-inputs,states, FilterMatrix.getIdentity(inputs));
+	    preNeeded = true;
 	}
     }
 
@@ -51,7 +69,7 @@ public class LinearOptimizer {
     public LinearFilterRepresentation optimize() {
 
 	int s1, s2;
-
+		
 	// remove unobservable states
 	transposeSystem();
 	s1 = reduceParameters(false);
@@ -60,7 +78,7 @@ public class LinearOptimizer {
 		
 	if(s1 >= 0) {
 	    // for now, leave at least 1 state
-	    s1 = Math.min(s1,states-1);
+	    s1 = Math.min(s1,states-2);
 	    for(int i=0; i<=s1; i++)
 		removeState(0);
 	}
@@ -76,7 +94,7 @@ public class LinearOptimizer {
 	    cleanAll();
 	    removeStates(s2);
 	} 
-	
+		
 	return extractRep();
     }
 

@@ -10,6 +10,8 @@ def main():
         if path == '':
             return []
         (head, tail) = os.path.split(path)
+        if tail == '':
+            return splitall(head)
         return splitall(head) + [tail]
     
     def visit(arg, dirname, names):

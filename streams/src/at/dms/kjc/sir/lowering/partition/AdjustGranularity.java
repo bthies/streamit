@@ -755,8 +755,8 @@ public class AdjustGranularity {
 	rawFlattener.dumpGraph("before-adjust.dot");
 	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
 			   " tiles");
-	WorkEstimate.getWorkEstimate(str).printWork();
 	*/
+	WorkEstimate.getWorkEstimate(str).printWork();
 	StreamItDot.printGraph(str, "before.dot");
 
 	// fizzzzz the low-pass filter

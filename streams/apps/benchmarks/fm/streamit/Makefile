@@ -39,7 +39,7 @@ all:
 
 
 # replace all references in Makefile.streamit of
-# SIM-CYCLES = 50000 to SIM-CYCLES = 100000
-extra-run:
-	perl -pi -e "s/SIM-CYCLES = \d*/SIM-CYCLES = 2500000/g" Makefile.streamit
+# SIM-CYCLES = 50000 to SIM-CYCLES = 5Million
+more-cycles:
+	perl -pi -e "s/SIM-CYCLES = \d*/SIM-CYCLES = 5000000/g" Makefile.streamit
 

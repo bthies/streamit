@@ -18,6 +18,14 @@ public class Operator extends DestroyedClass
             .add("z1", z1);
     }
 
+    public Operator(float a, float b, float c)
+    {
+        initParams = new ParameterContainer("float-float-float")
+	    .add("a", a)
+	    .add("b", b)
+	    .add("c", c);
+    }
+
     public Operator(float x3, float y3, int z3, int a3)
     {
         initParams = new ParameterContainer ("float-float-int-int")
@@ -96,6 +104,8 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, int z) { invalidInitError (); }
+
+    public void init(float a, float b, float c) { invalidInitError(); }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, float y, int z, int a) { invalidInitError (); }

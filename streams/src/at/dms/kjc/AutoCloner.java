@@ -59,74 +59,110 @@ public class AutoCloner {
      */
     static public Object cloneToplevel(Object o) {
 	// if we've already cloned <o>, then return the clone
-	Object alreadyCloned = new registry.get(new RegistryWrapper(o));
+	Object alreadyCloned = registry.get(new RegistryWrapper(o));
 	if (alreadyCloned!=null) {
 	    return alreadyCloned;
 	}
 	// otherwise, dispatch on type of <o>...
 	String typeName = o.getClass().getName();
-	if (CloneGenerator.inTargetClasses(typeName)) {
+	// local variables require special treatment since their
+	// references might be shared
+	if (o instanceof JLocalVariable) {
+	    return cloneJLocalVariable((JLocalVariable)o);
+	} 	
+	// immutable types -- don't clone them, might rely on
+	// reference equality
+	else if (o instanceof CType ||
+		 o instanceof String ||
+		 o instanceof PrintWriter ||
+		 o instanceof at.dms.compiler.WarningFilter) {
+	    // don't clone these since they're immutable or shouldn't be copied
+	    return o;
+	} 
+	// other kjc classes, do deep cloning
+	else if (CloneGenerator.inTargetClasses(typeName)) {
 	    // first pass:  output deep cloning for everything in at.dms
 	    Utils.assert(o instanceof DeepCloneable, "Should declare " + o.getClass() + " to implement DeepCloneable.");
 	    return ((DeepCloneable)o).deepClone();
-	} else if (type.isArray()) {
-	    return cloneArray(o);
-	} else if (o instanceof List) {
-	    return cloneList(o);
-	} else if (o instanceof Dictionary) {
-	    return cloneDictionary(o);
-	} else if (o instanceof JLocalVariable) {
-	    return cloneJLocalVariable(o);
-	} else if (o instanceof String ||
-		   o instanceof PrintWriter ||
-		   o instanceof at.dms.compiler.WarningFilter) {
-	    // don't clone these since they're immutable or shouldn't be copied
-	    return o;
-	} else {
+	}
+	// hashtables -- clone along with contents
+	else if (o instanceof Hashtable) {
+	    return cloneHashtable((Hashtable)o);
+	} 
+	// arrays -- need to clone children as well
+	else if (o.getClass().isArray()) {
+	    Object[] result = (Object[])((Object[])o).clone();
+	    cloneWithinArray(result);
+	    return result;
+	} 
+	// enumerate the list types to make the java compiler happy
+	// with calling the .clone() method
+	else if (o instanceof LinkedList) {
+	    List result = (List)((LinkedList)o).clone();
+	    cloneWithinList(result);
+	    return result;
+	} else if (o instanceof Stack) {
+	    List result = (List)((Stack)o).clone();
+	    cloneWithinList(result);
+	    return result;
+	} else if (o instanceof Vector) {
+	    List result = (List)((Vector)o).clone();
+	    cloneWithinList(result);
+	    return result;
+	} 
+	// unknown types
+	else {
 	    Utils.fail("Don't know how to clone field of type " + o.getClass());
 	    return o;
 	}
     }
 
     /**
-     * Helper function to clone arrays.  Should only be called as part
-     * of automatic cloning process.
-     */
-    static private Object cloneArray(Object arr) {
-	// TODO
-	return arr.clone();
-    }
-
-    /**
-     * Helper function to clone dictionaries.  Should only be called
-     * as part of automatic cloning process.
-     */
-    static private Object cloneDictionary(Object d) {
-	// TODO
-	return d.clone();
-    }
-
-    /**
-     * Helper function to clone lists.  Should only be called as part
-     * of automatic cloning process.
-     */
-    static private Object cloneList(List list) {
-	ListIterator it = list.ListIterator();
-	while (it.hasNext()) {
-	    Object o = it.next();
-	    // TODO
-	}
-    }
-
-    /**
-     * Helper function to clone local variables.  Should only be
-     * called as part of automatic cloning process.
+     * Helper function.  Should only be called as part of automatic
+     * cloning process.
      */
     static private Object cloneJLocalVariable(JLocalVariable var) {
 	if (toBeCloned.contains(var)) {
 	    return var.deepClone();
 	} else {
 	    return var;
+	}
+    }
+
+    /**
+     * Helper function.  Should only be called as part of automatic
+     * cloning process.
+     */
+    static private Object cloneHashtable(Hashtable ht) {
+	Hashtable result = new Hashtable();
+	Enumeration e = ht.keys();
+	while (e.hasMoreElements()) {
+	    Object key = e.nextElement();
+	    Object value = ht.get(key);
+	    result.put(cloneToplevel(key), cloneToplevel(value));
+	}
+	return result;
+    }
+
+    /**
+     * Helper function.  Should only be called as part of automatic
+     * cloning process.
+     */
+    static private void cloneWithinList(List clone) {
+	for (int i=0; i<clone.size(); i++) {
+	    Object old = clone.get(i);
+	    clone.set(i, cloneToplevel(old));
+	}
+    }
+
+    /**
+     * Helper function.  Should only be called as part of automatic
+     * cloning process.
+     */
+    static private void cloneWithinArray(Object[] clone) {
+	// clone elements
+	for (int i=0; i<clone.length; i++) {
+	    clone[i] = cloneToplevel(clone[i]);
 	}
     }
 
@@ -144,7 +180,7 @@ public class AutoCloner {
 	/**
 	 * Hashcode of <obj>.
 	 */
-	public long hashCode() {
+	public int hashCode() {
 	    return obj.hashCode();
 	}
 	

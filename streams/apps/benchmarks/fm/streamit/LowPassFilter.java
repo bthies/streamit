@@ -33,7 +33,8 @@ public class LowPassFilter extends Filter {
         super(sampleRate, cutFreq, numTaps, decimation);
     }
 
-    public void init(float sampleRate, float cutFreq, int numTaps, int decimation)
+    public void init(final float sampleRate, final float cutFreq,
+                     final int numTaps, final int decimation)
     {
 	float pi, m, w;
 	float temptaps[];

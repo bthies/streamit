@@ -29,6 +29,8 @@ public class DirectCommunication extends at.dms.util.Utils
     {
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
+	if (KjcOptions.ratematch)
+	    return false;
 	if (filter instanceof SIRTwoStageFilter)
 	    return false;
 	if (filter.getPeekInt() > filter.getPopInt())

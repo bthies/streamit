@@ -65,9 +65,9 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
-
-	//	System.out.println("\n\nSteady Execution Counts");
-	//      RawBackend.printCounts(RawBackend.steadyExecutionCounts);
+	
+	//System.out.println("\n\nSteady Execution Counts");
+	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
 
 	counters.resetBuffers();
 

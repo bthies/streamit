@@ -24,6 +24,11 @@ public class RawExecutionCode extends at.dms.util.Utils
     public static String recvBuffer = "__RECVBUFFER__";
     public static String recvBufferSize = "__RECVBUFFERSIZE__";
     public static String recvBufferBits = "__RECVBUFFERBITS__";
+
+    //the output buffer for ratematching
+    public static String sendBuffer = "__SENDBUFFER__";
+    public static String sendBufferIndex = "__SENDBUFFERINDEX__";
+    public static String rateMatchSendMethod = "__RATEMATCHSEND__";
     
     //recvBufferIndex points to the beginning of the tape
     public static String recvBufferIndex = "__RECVBUFFERINDEX__";
@@ -72,6 +77,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	JVariableDefinition[] ARRAY_INDEX;
 	JVariableDefinition[] ARRAY_COPY;
 	JVariableDefinition simpleIndex;
+	JVariableDefinition sendBufferIndex;
+	JVariableDefinition sendBuffer;
     }
     
     
@@ -390,12 +397,24 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    //struct being passed over it
 	    int buffersize;
 	    
+	    int prepeek = 0;
+	    int maxpeek = filter.getPeekInt();
+	    if (filter instanceof SIRTwoStageFilter)
+		prepeek = ((SIRTwoStageFilter)filter).getInitPeek();
+	    //set up the maxpeek
+	    maxpeek = (prepeek > maxpeek) ? prepeek : maxpeek;
+	    
+	    
 	    if (isSimple(filter)) {
-		int prepeek = 0;
-		if (filter instanceof SIRTwoStageFilter) 
-		    prepeek = ((SIRTwoStageFilter)filter).getInitPeek();
-		
-		buffersize = Math.max(prepeek, filter.getPeekInt());
+		//simple filter (no remaining items)
+		if (KjcOptions.ratematch) {
+		    //i don't know, the prepeek could be really large, so just in case
+		    //include it.  Make the buffer big enough to hold 
+		    buffersize = Math.max((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+					  filter.getPopInt() + filter.getPeekInt(), prepeek);
+		}
+		else //not ratematching and we do not have a circular buffer
+		    buffersize = maxpeek;
 
 		//define the simple index variable
 		JVariableDefinition simpleIndexVar = 
@@ -415,13 +434,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    }
 	    else { //filter with remaing items on the buffer after initialization 
 		//see Mgordon's thesis for explanation (Code Generation Section)
-		int maxpeek = filter.getPeekInt();
-
-		if (filter instanceof SIRTwoStageFilter &&
-		    (((SIRTwoStageFilter)filter).getInitPeek() > maxpeek))
-		    maxpeek = ((SIRTwoStageFilter)filter).getInitPeek();
-
-		buffersize = Util.nextPow2(maxpeek + remaining);
+		if (KjcOptions.ratematch)
+		    buffersize = 
+			Util.nextPow2(Math.max((((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() - 1) * 
+					       filter.getPopInt() + filter.getPeekInt(), prepeek) + remaining);
+		else
+		    buffersize = Util.nextPow2(maxpeek + remaining);
 	    }
 	    
 	    JVariableDefinition recvBufVar = 
@@ -492,6 +510,50 @@ public class RawExecutionCode extends at.dms.util.Utils
 						   null));
 	    
 	}
+	
+	//if we are rate matching, create the output buffer with its 
+	//index
+	if (KjcOptions.ratematch && filter.getPushInt() > 0) {
+	    int steady = ((Integer)RawBackend.steadyExecutionCounts.
+			  get(Layout.getNode(Layout.getTile(filter)))).intValue();
+	    
+	    //define the send buffer index variable
+	    JVariableDefinition sendBufferIndexVar = 
+		new JVariableDefinition(null, 
+					0, 
+					CStdType.Integer,
+					sendBufferIndex,
+					new JIntLiteral(-1));
+	    
+	    localVariables.sendBufferIndex = sendBufferIndexVar;
+	    block.addStatement
+		(new JVariableDeclarationStatement(null,
+						   sendBufferIndexVar,
+						   null));
+	    //define the send buffer
+	    
+	    JExpression[] dims = new JExpression[1];
+	    //the size of the output array is number of executions in steady *
+	    // number of items pushed * size of item
+	    dims[0] = new JIntLiteral(steady * filter.getPushInt() * 
+				      Util.getTypeSize(filter.getOutputType()));
+
+	    JVariableDefinition sendBufVar = 
+		new JVariableDefinition(null, 
+					at.dms.kjc.Constants.ACC_FINAL, //?????????
+					new CArrayType(filter.getOutputType(), 
+						       1 /* dimension */ ),
+					sendBuffer,
+					new JNewArrayExpression(null,
+								Util.getBaseType(filter.getOutputType()),
+								dims, null));
+	    localVariables.sendBuffer = sendBufVar;
+	    block.addStatement
+		(new JVariableDeclarationStatement(null,
+						   sendBufVar,
+						   null));
+	}
+	
 	
 	//print the declarations for the array indices for pushing and popping
 	//if this filter deals with arrays
@@ -571,6 +633,10 @@ public class RawExecutionCode extends at.dms.util.Utils
 
     private boolean noBuffer(SIRFilter filter) 
 	{
+	    //always need a buffer for rate matching.
+	    if (KjcOptions.ratematch)
+		return false;
+	    
 	    if (filter.getPeekInt() == 0 &&
 		(!(filter instanceof SIRTwoStageFilter) ||
 		 (((SIRTwoStageFilter)filter).getInitPeek() == 0)))
@@ -755,14 +821,126 @@ public class RawExecutionCode extends at.dms.util.Utils
     }
 
 
+    JStatement generateRateMatchSteadyState(SIRFilter filter,
+					    LocalVariables localVariables) 
+    {
+	JBlock block = new JBlock(null, new JStatement[0], null);
+	int steady = ((Integer)RawBackend.steadyExecutionCounts.
+	    get(Layout.getNode(Layout.getTile(filter)))).intValue();
+
+	//reset the simple index
+	if (isSimple(filter)){
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JLocalVariableExpression
+					    (null, localVariables.simpleIndex),
+					    new JIntLiteral(-1))), null));
+	}
+	    
+	
+	//should be at least peek - pop items in the buffer, so
+	//just receive pop * steady in the buffer and we can
+	//run for an entire steady state
+	block.addStatement
+	    (makeForLoop(receiveCode(filter, filter.getInputType(),
+				     localVariables),
+			 localVariables.exeIndex,
+			 new JIntLiteral(filter.getPopInt() * steady)));
+
+	
+	//now, run the work function steady times...
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.
+	    deepCopy(filter.getWork().getBody());
+
+	//convert all of the push expressions in the steady state work block into
+	//stores to the output buffer
+	workBlock.accept(new RateMatchConvertPush());
+
+	//if we are in debug mode, print out that the filter is firing
+	if (RawBackend.FILTER_DEBUG_MODE) {
+	    block.addStatement
+		(new SIRPrintStatement(null,
+				       new JStringLiteral(null, filter.getName() + " firing."),
+				       null));
+	}
+
+	//add the cloned work function to the block
+	block.addStatement
+	    (makeForLoop(workBlock, localVariables.exeIndex,
+	     new JIntLiteral(steady)));
+	
+	//now add the code to push the output buffer onto the static network and 
+	//reset the output buffer index
+	//    for (steady*push*typesize)
+	//        push(__SENDBUFFER__[++ __SENDBUFFERINDEX__])
+	if (filter.getPushInt() > 0) {
+	    
+	    SIRPushExpression pushExp =  new SIRPushExpression
+		(new JArrayAccessExpression
+		 (null, 
+		  new JLocalVariableExpression
+		  (null,
+		   localVariables.sendBuffer),
+		  new JLocalVariableExpression
+		  (null,
+		   localVariables.exeIndex)));
+	    
+	    pushExp.setTapeType(Util.getBaseType(filter.getOutputType()));
+	    
+	    JExpressionStatement send = new JExpressionStatement(null, pushExp, null);
+	    
+	    block.addStatement
+		(makeForLoop(send, localVariables.exeIndex,
+			 new JIntLiteral(steady * filter.getPushInt() * 
+					 Util.getTypeSize(filter.getOutputType()))));
+	    //reset the send buffer index
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  new JAssignmentExpression(null,
+								    new JLocalVariableExpression
+								    (null, localVariables.sendBufferIndex),
+								    new JIntLiteral(-1)),
+					  null));
+	}
+	
+
+	//if we are in decoupled mode do not put the work function in a for loop
+	//and add the print statements
+	if (KjcOptions.decoupled) {
+	    block.addStatementFirst
+		(new SIRPrintStatement(null, 
+				       new JIntLiteral(0),
+				       null));
+	    block.addStatement(block.size(), 
+				    new SIRPrintStatement(null, 
+							  new JIntLiteral(1),
+							  null));
+	    return block;
+	}
+	
+	//return the infinite loop
+	return new JWhileStatement(null, 
+				   new JBooleanLiteral(null, true),
+				   block, 
+				   null);
+	
+    }
+
     //generate the code for the steady state loop
     JStatement generateSteadyStateLoop(SIRFilter filter, 
 				       LocalVariables localVariables) 
     {
 	
+	//is we are rate matching generate the appropriate code
+	if (KjcOptions.ratematch) 
+	    return generateRateMatchSteadyState(filter, localVariables);
+
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
-	//clone and inline the work function
+	//reset the simple index
 	if (isSimple(filter)){
 	    block.addStatement
 		(new JExpressionStatement(null,
@@ -1136,146 +1314,38 @@ public class RawExecutionCode extends at.dms.util.Utils
 	}
 	
     }
+
+    //this pass will convert all push statements to a method call expression
+    //so that in FlatIRtoC we can recognize the call and replace it with a store to
+    //the output buffer instead of a send onto the network...
+    class RateMatchConvertPush extends SLIRReplacingVisitor 
+    {
+	LocalVariables localVariables;
+	
+	
+	public RateMatchConvertPush() 
+	{
+	    
+	}
+  
+	/**
+	 * Visits a push expression.
+	 */
+	public Object visitPushExpression(SIRPushExpression self,
+					  CType tapeType,
+					  JExpression arg) {
+	    JExpression newExp = (JExpression)arg.accept(this);
+	    //the expression is the argument of the call
+	    JExpression[] args = new JExpression[1];
+	    args[0] = newExp;
+	    
+	    JMethodCallExpression ratematchsend = 
+		new JMethodCallExpression(null, new JThisExpression(null),
+					  RawExecutionCode.rateMatchSendMethod,
+					  args);
+	    
+	    return ratematchsend;
+	}
+    }
 }
 
-
-//  //REMOVE THIS WHEN THE NEW RECEIVE CODE WORKS
-//     //returns the code to receive one item into the buffer
-//     //uses the correct variables
-//     JStatement OLDreceiveCode(SIRFilter filter, CType type, LocalVariables localVariables) {
-// 	JBlock statements = new JBlock(null, new JStatement[0], null);
-
-// 	if (noBuffer(filter)) 
-// 	    return null;
-	
-// 	if (type.isArrayType()) {
-// 	    Utils.fail("Arrays over tapes not implemented");
-// 	    return null;
-// 	}
-// 	else if (type.isClassType()) {
-// 	    JBlock block = new JBlock();
-	    
-// 	    //add the statement to increment the index
-// 	    //and mask it, before we start element-wise receiving
-
-// 	    //add the increment to the buffer index
-// 	    JPrefixExpression bufferIncrement = 
-// 		new JPrefixExpression(null, 
-// 				      OPE_PREINC,
-// 				      new JLocalVariableExpression
-// 				      (null,localVariables.recvIndex));
-	    
-// 	    //create the modulo expression
-// 	    JBitwiseExpression indexAnd = 
-// 		new JBitwiseExpression(null, 
-// 				       OPE_BAND,
-// 				       bufferIncrement, 
-// 				       new JLocalVariableExpression
-// 				       (null,
-// 					localVariables.recvBufferBits));	
-// 	    block.addStatement
-// 		(new JExpressionStatement
-// 		 (null, new JAssignmentExpression(null,
-// 						  new JLocalVariableExpression
-// 						  (null,localVariables.recvIndex),
-// 						  indexAnd),
-// 		  null));
-	    
-// 	    JArrayAccessExpression prefix = 
-// 		new JArrayAccessExpression(null,
-// 					   new JLocalVariableExpression
-// 					   (null,
-// 					    localVariables.recvBuffer),
-// 					   new JLocalVariableExpression
-// 					   (null,
-// 					    localVariables.recvIndex));
-	    
-// 	    block.addStatement(structureReceiveCode(type, prefix, localVariables));
-// 	    return block;
-// 	} 
-// 	else if (!type.equals(CStdType.Void)) {
-// 	    //we want to create a statement of the form:
-// 	    //static_receive_to_mem((void*)&(recvBuffer[(++recvIndex) &
-// 	    //                                          recvBufferSize]));
-
-// 	    //the cast to (void*) and the '&' are added by the FlatIRToC pass
-
-	  
-// 	    //create the array access expression
-// 	    JArrayAccessExpression bufferAccess = 
-// 		new JArrayAccessExpression(null,
-// 					   new JLocalVariableExpression
-// 					   (null,
-// 					    localVariables.recvBuffer),
-// 					   bufferIndex(filter,
-// 						       localVariables));
-	    
-// 	    JExpression[] arg = 
-// 		{new JParenthesedExpression(null,
-// 					    bufferAccess)};
-	    
-// 	    //create the method call expression
-// 	    JMethodCallExpression exp =
-// 		new JMethodCallExpression(null,  new JThisExpression(null),
-// 					  receiveMethod,
-// 					  arg);
-
-// 	    //return the method call
-// 	    return new JExpressionStatement(null, exp, null);
-// 	}
-// 	return null;
-//     }
-    
-    
-//     /**
-//      * Returns a block of code that will receive one structure element from 
-//      * the tape, element-wise.
-//      **/
-//     private JStatement structureReceiveCode(CType type, 
-// 					    JExpression prefix,
-// 					    LocalVariables localVariables)
-//     {
-// 	JBlock block = new JBlock();
-// 	int i;
-	
-// 	//create a statement of the form:
-// 	//static_receive_to_mem((void*)&(recvBuffer[recvIndex]).current_member);
-// 	for (i = 0; i < type.getCClass().getFields().length; i++) {
-// 	    CField field = type.getCClass().getFields()[i];
-// 	    if (field.getType().isClassType()) {
-// 		//if this field is a class type, 
-// 		//recursively call this method with
-// 		//a new prefex that accesses this field
-// 		JFieldAccessExpression newPrefix = 
-// 		    new JFieldAccessExpression(null, prefix,
-// 					       field.getIdent());
-		
-// 		block.addStatement(structureReceiveCode(field.getType(),
-// 							newPrefix,
-// 							localVariables));
-// 	    }
-// 	    else if (field.getType().isArrayType()) {
-// 		Utils.fail("Arrays in structures not implemented");
-// 	    }
-// 	    else {
-// 		JFieldAccessExpression fieldAccess = 
-// 		    new JFieldAccessExpression(null,
-// 					       prefix,
-// 					       field.getIdent());
-
-// 		JExpression[] arg = 
-// 		{new JParenthesedExpression(null,
-// 					    fieldAccess)};
-
-// 		//create the method call expression
-// 		JMethodCallExpression exp =
-// 		    new JMethodCallExpression(null,  new JThisExpression(null),
-// 					      receiveMethod,
-// 					      arg);
-		
-// 		//return the method call
-// 		block.addStatement(new JExpressionStatement(null, exp, null));
-// 	    }
-// 	}
-// 	return block;
-//     }

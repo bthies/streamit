@@ -543,19 +543,19 @@ public class SIRStreamFactory implements streamit.scheduler2.base.StreamFactory 
 
     public StreamInterface newFrom(Iterator streamIter) {
         if (streamIter.isFilter() != null) {
-            return new streamit.scheduler2.singleappearance.Filter(streamIter.isFilter());
+            return new streamit.scheduler2.minlatency.Filter(streamIter.isFilter());
         }
 
         if (streamIter.isPipeline() != null) {
-            return new streamit.scheduler2.singleappearance.Pipeline(streamIter.isPipeline(), this);
+            return new streamit.scheduler2.minlatency.Pipeline(streamIter.isPipeline(), this);
         }
         
         if (streamIter.isSplitJoin() != null) {
-            return new streamit.scheduler2.singleappearance.SplitJoin(streamIter.isSplitJoin(), this);
+            return new streamit.scheduler2.minlatency.SplitJoin(streamIter.isSplitJoin(), this);
         }
 
         if (streamIter.isFeedbackLoop() != null) {
-            return new streamit.scheduler2.singleappearance.FeedbackLoop(streamIter.isFeedbackLoop(), this);
+            return new streamit.scheduler2.minlatency.FeedbackLoop(streamIter.isFeedbackLoop(), this);
         }
 	
 	// not implemented yet

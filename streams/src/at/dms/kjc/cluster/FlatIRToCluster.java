@@ -231,7 +231,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("extern int __number_of_iterations;\n");
 	p.print("message *__msg_stack_"+selfID+";\n");
 	p.print("int __counter_"+selfID+" = 0;\n");
-	p.print("int *state_flag_"+selfID+";\n");
+	p.print("int *__state_flag_"+selfID+" = NULL;\n");
+	p.print("thread_info *__thread_"+selfID+" = NULL;\n");
 
 	if (restrictedExecution) {
 	    p.print("int __credit_"+selfID+" = 0;\n");
@@ -302,17 +303,18 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("\nthread_info *__get_thread_info_"+selfID+"() {\n");
 
-	print("  thread_info *info = new thread_info("+selfID+");\n");
+	print("  if (__thread_"+selfID+" != NULL) return __thread_"+selfID+";\n");
+	print("  __thread_"+selfID+" = new thread_info("+selfID+");\n");
 
 	if (in != null) {
-	    print("  info->add_incoming_data_connection("+in.getSource()+");\n");
+	    print("  __thread_"+selfID+"->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",NULL));\n");
 	}
 
 	if (out != null) {
-	    print("  info->add_outgoing_data_connection("+out.getDest()+");\n");
+	    print("  __thread_"+selfID+"->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",NULL));\n");
 	}
 	
-	print("  return info;\n");
+	print("  return __thread_"+selfID+";\n");
 	print("}\n");
 	
 
@@ -365,7 +367,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
 
-	print("\nvoid check_status__"+selfID+"();\n");
+	print("\ninline void check_status__"+selfID+"();\n");
 	print("\nvoid check_messages__"+selfID+"();\n");
 	print("\nvoid handle_message__"+selfID+"(mysocket *sock);\n");
 	print("\nvoid send_credits__"+selfID+"();\n");
@@ -386,12 +388,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	//////////////////////////////////////////////
 	// Check Status
 
-	print("\nvoid check_status__"+selfID+"() {\n");
-	print("  if (*state_flag_"+selfID+" == RUN_STATE) return;\n");
-	print("  for(;;) {\n");
-	print("    usleep(10000);\n");
-	print("    if (*state_flag_"+selfID+" == RUN_STATE) return;\n");
-	print("  }\n");
+	print("\ninline void check_status__"+selfID+"() {\n");
+
+	print("  check_thread_status(__state_flag_"+selfID+", __thread_"+selfID+");\n");
+	print("}\n");
+
+	//////////////////////////////////////////////
+	// Check Status During IO
+
+	print("\nvoid check_status_during_io__"+selfID+"() {\n");
+
+	print("  check_thread_status_during_io(__state_flag_"+selfID+", __thread_"+selfID+");\n");
 	print("}\n");
 
 
@@ -670,14 +677,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("\nvoid run_"+selfID+"(int *state_ptr) {\n");
 
 	print("  int i;\n");
-	print("  state_flag_"+selfID+" = state_ptr;\n");
+	print("  __state_flag_"+selfID+" = state_ptr;\n");
 
 	if (in != null) {
-	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET)));\n");
+	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+"));\n");
 	}
 
 	if (out != null) {
-	    print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET));\n");
+	    print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET),check_status_during_io__"+selfID+");\n");
 	}
 
 	{

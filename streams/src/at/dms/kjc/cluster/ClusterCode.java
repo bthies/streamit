@@ -99,7 +99,8 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("extern int __number_of_iterations;\n");
 	p.print("int *state_flag_"+thread_id+";\n");
-	
+	p.print("thread_info *__thread_"+thread_id+" = NULL;\n");
+
 	//Visit fields declared in the filter class
 	//JFieldDeclaration[] fields = self.getFields();
 	//for (int i = 0; i < fields.length; i++)
@@ -117,20 +118,34 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("mysocket *"+((NetStream)out.elementAt(i)).name()+"out;\n");
 	}
 	
-
 	p.print("\n");
-	p.print("thread_info *__get_thread_info_"+thread_id+"() {\n");
-	p.print("  thread_info *info = new thread_info("+thread_id+");\n");
 
-	p.print("  info->add_incoming_data_connection("+in.getSource()+");\n");
+
+
+
+	//////////////////////////////////////////////
+	// thread info
+
+	p.print("\nthread_info *__get_thread_info_"+thread_id+"() {\n");
+
+	p.print("  if (__thread_"+thread_id+" != NULL) return __thread_"+thread_id+";\n");
+	p.print("  __thread_"+thread_id+" = new thread_info("+thread_id+");\n");
+
+	p.print("  __thread_"+thread_id+"->add_incoming_data_connection(new connection_info("+in.getSource()+","+in.getDest()+",NULL));\n");
 
 	for (int i = 0; i < out.size(); i++) {
-	    NetStream s = (NetStream)out.elementAt(i);		
-	    p.print("  info->add_outgoing_data_connection("+s.getDest()+");\n");
+	    NetStream s = (NetStream)out.elementAt(i);	    
+	    p.print("  __thread_"+thread_id+"->add_outgoing_data_connection(new connection_info("+s.getSource()+","+s.getDest()+",NULL));\n");
 	}
-	
-	p.print("  return info;\n");
+
+	p.print("  return __thread_"+thread_id+";\n");
 	p.print("}\n");
+
+	p.print("\n");
+
+
+	//////////////////////////////////////////////
+	// declare sockets
 
 
 	p.print("\n");
@@ -147,8 +162,25 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.print("}\n");
 	
-	p.print("\n");
 
+
+
+	//////////////////////////////////////////////
+	// Check Status
+
+	p.print("\n");
+	p.print("\nvoid check_status_during_io__"+thread_id+"() {\n");
+
+	p.print("  check_thread_status_during_io(state_flag_"+thread_id+", __thread_"+thread_id+");\n");
+	p.print("}\n");
+	
+
+
+	//////////////////////////////////////////////
+	// Splitter Work
+
+
+	p.print("\n");
 	p.print("void __splitter_"+thread_id+"_work() {\n");
 
 	p.print("  "+baseType.toString()+" tmp;\n");
@@ -189,27 +221,17 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("}\n");
 	
 	p.print("\n");
-
-	p.print("void check_status__"+thread_id+"() {\n");
-	p.print("    if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
-	p.print("    for(;;) {\n");
-	p.print("        usleep(10000);\n");
-	p.print("        if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
-	p.print("    }\n");
-	p.print("}\n");
-
-	p.print("\n");
 	
 	p.print("void run_"+thread_id+"(int *flag) {\n");
 	p.print("  int i;\n");
 	p.print("  state_flag_"+thread_id+" = flag;\n");
 	
-	p.print("  "+in.name()+"in = new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET));\n");
+	p.print("  "+in.name()+"in = new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+");\n");
 	
 	for (int i = 0; i < out.size(); i++) {
 	    NetStream s = (NetStream)out.elementAt(i);
 	    
-	    p.print("  "+s.name()+"out = new mysocket(init_instance::get_outgoing_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET));\n");
+	    p.print("  "+s.name()+"out = new mysocket(init_instance::get_outgoing_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+");\n");
 	}
 
 	// get int init count
@@ -222,7 +244,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	p.print("  {int __split_iter = " + init + " + " + ClusterBackend.steadyExecutionCounts.get(node) + " * __number_of_iterations;\n");
 	p.print("  for (i = 0; i < __split_iter; i++) {\n");
-	p.print("    check_status__"+thread_id+"();\n");
+	p.print("    check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("    __splitter_"+thread_id+"_work();\n");
 	p.print("  }}\n");
 	
@@ -269,6 +291,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("extern int __number_of_iterations;\n");
 	p.print("int *state_flag_"+thread_id+";\n");
+	p.print("thread_info *__thread_"+thread_id+" = NULL;\n");
 
 	//Visit fields declared in the filter class
 	//JFieldDeclaration[] fields = self.getFields();
@@ -289,23 +312,33 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 
 
-	p.print("\n");
-	p.print("thread_info *__get_thread_info_"+thread_id+"() {\n");
-	p.print("  thread_info *info = new thread_info("+thread_id+");\n");
+
+	//////////////////////////////////////////////
+	// thread info
+
+	p.print("\nthread_info *__get_thread_info_"+thread_id+"() {\n");
+
+	p.print("  if (__thread_"+thread_id+" != NULL) return __thread_"+thread_id+";\n");
+	p.print("  __thread_"+thread_id+" = new thread_info("+thread_id+");\n");
 
 	for (int i = 0; i < in.size(); i++) {
 	    NetStream s = (NetStream)in.elementAt(i);	    
-	    p.print("  info->add_incoming_data_connection("+s.getSource()+");\n");    
+	    p.print("  __thread_"+thread_id+"->add_incoming_data_connection(new connection_info("+s.getSource()+","+s.getDest()+",NULL));\n");
 	}
 
-	p.print("  info->add_outgoing_data_connection("+out.getDest()+");\n");
+	p.print("  __thread_"+thread_id+"->add_outgoing_data_connection(new connection_info("+out.getSource()+","+out.getDest()+",NULL));\n");
 
-	
-	p.print("  return info;\n");
+	p.print("  return __thread_"+thread_id+";\n");
 	p.print("}\n");
 
-	
 	p.print("\n");
+
+
+
+	///////////////////////////////////////////////
+	// declare sockets
+
+
 	p.print("void __declare_sockets_"+thread_id+"() {\n");
 
 	for (int i = 0; i < in.size(); i++) {
@@ -317,9 +350,6 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.print("}\n");
 	
-	p.print("\n");
-
-
 
 	if (joiner.getParent() instanceof SIRFeedbackLoop) {
 
@@ -342,6 +372,23 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	
 
+
+	//////////////////////////////////////////////
+	// Check Status
+
+	p.print("\n");
+	p.print("\nvoid check_status_during_io__"+thread_id+"() {\n");
+
+	p.print("  check_thread_status_during_io(state_flag_"+thread_id+", __thread_"+thread_id+");\n");
+	p.print("}\n");
+	
+
+
+
+	//////////////////////////////////////////////
+	// Joiner Work
+
+	p.print("\n");
 	p.print("void __joiner_"+thread_id+"_work() {\n");
 
 	p.print("  "+baseType.toString()+" tmp;\n");
@@ -390,16 +437,6 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
-	p.print("void check_status__"+thread_id+"() {\n");
-	p.print("    if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
-	p.print("    for(;;) {\n");
-	p.print("        usleep(10000);\n");
-	p.print("        if (*state_flag_"+thread_id+" == RUN_STATE) return;\n");
-	p.print("    }\n");
-	p.print("}\n");
-
-	p.print("\n");
-
 	p.print("void run_"+thread_id+"(int *flag) {\n");
 	p.print("  int i;\n");
 	p.print("  state_flag_"+thread_id+" = flag;\n");
@@ -408,10 +445,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	for (int i = 0; i < in.size(); i++) {
 	    NetStream s = (NetStream)in.elementAt(i);
 		
-	    p.print("  "+s.name()+"in = new mysocket(init_instance::get_incoming_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET));\n");
+	    p.print("  "+s.name()+"in = new mysocket(init_instance::get_incoming_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+");\n");
 	}
 
-	p.print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET));\n");
+	p.print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET),check_status_during_io__"+thread_id+");\n");
 
 
 	// get int init count
@@ -424,7 +461,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	}
 	p.print("  {int __join_iter = " + init + " + " + ClusterBackend.steadyExecutionCounts.get(node) + " * __number_of_iterations;\n");
 	p.print("  for (i = 0; i < __join_iter; i++) {\n");
-	p.print("    check_status__"+thread_id+"();\n");
+	p.print("    check_thread_status(state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("    __joiner_"+thread_id+"_work();\n");
 	p.print("  }}\n");
 

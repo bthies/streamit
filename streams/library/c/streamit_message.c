@@ -26,7 +26,7 @@ portal create_portal(void)
 }
 
 void register_receiver(portal p, stream_context *receiver,
-                       interface_table *vtbl, latency l)
+                       interface_table vtbl, latency l)
 {
   portal_receiver *rec;
   
@@ -54,7 +54,7 @@ void send_message(portal p, int msgid, latency l, void *params)
   {
     struct queued_message *q = malloc(sizeof(struct queued_message));
     q->next = msg_queue;
-    q->fn = *(rec->vtbl)[msgid];
+    q->fn = (rec->vtbl)[msgid];
     q->context = rec->context;
     q->params = params;
     msg_queue = q;

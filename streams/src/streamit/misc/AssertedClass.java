@@ -18,7 +18,8 @@ public class AssertedClass
         // condition is not satisifed:
         // print an error and exit.
 
-        System.err.println ("An ASSERT has failed.  Exiting.");
+        System.err.println ("An ASSERT has failed.  Exiting.\n\n");
+	new RuntimeException().printStackTrace();
         System.exit (0);
     }
 

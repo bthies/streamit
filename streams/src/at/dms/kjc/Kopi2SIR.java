@@ -1050,14 +1050,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                                   JStatement body) 
     {
         blockStart("ForStatement", self);
-	if (body != null)
+	if (body != null) 
 	    body = (JStatement)body.accept(this);
+	else 
+	    body = new JEmptyStatement(null, null);
 	if (init != null)
 	    init = (JStatement)init.accept(this);
+	else 
+	    init = new JEmptyStatement(null, null);
 	if (cond != null)
 	    cond = (JExpression)cond.accept(this);
 	if (incr != null)
 	    incr= (JStatement)incr.accept(this);	
+	else 
+	    incr = new JEmptyStatement(null, null);
 	return new JForStatement(null, init, cond, incr, body, null);
     }
 

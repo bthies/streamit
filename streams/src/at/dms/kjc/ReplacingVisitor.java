@@ -154,17 +154,18 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 	if (newInit!=null && newInit!=init) {
 	    self.setInit(newInit);
 	}
-
+	
 	JExpression newExp = (JExpression)cond.accept(this);
 	if (newExp!=null && newExp!=cond) {
 	    self.setCond(newExp);
 	}
-
+	
 	// recurse into incr
 	JStatement newIncr = (JStatement)incr.accept(this);
 	if (newIncr!=null && newIncr!=incr) {
 	    self.setIncr(newIncr);
 	}
+	
 	// recurse into body
 	JStatement newBody = (JStatement)body.accept(this);
 	if (newBody!=null && newBody!=body) {

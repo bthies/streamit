@@ -85,12 +85,15 @@ public class ConstantProp {
 	    propagator.visitArgs(((SIRSplitJoin)str).
 				 getSplitter().getInternalWeights());
 	} else if (str instanceof SIRFeedbackLoop) {
-	    // for feedback loops, resolve the weights of splitters
-	    // and joiners
-	    propagator.visitArgs(((SIRFeedbackLoop)str).
-				 getJoiner().getInternalWeights());
-	    propagator.visitArgs(((SIRFeedbackLoop)str).
-				 getSplitter().getInternalWeights());
+	    // for feedback loops, resolve the weights of splitters, 
+	    // joiners, and delay
+	    SIRFeedbackLoop loop = (SIRFeedbackLoop)str;
+	    propagator.visitArgs(loop.getJoiner().getInternalWeights());
+	    propagator.visitArgs(loop.getSplitter().getInternalWeights());
+	    JExpression newDelay = (JExpression)loop.getDelay().accept(propagator);
+	    if (newDelay!=null && newDelay!=loop.getDelay()) {
+		loop.setDelay(newDelay);
+	    }
 	}
     }
 
@@ -106,16 +109,6 @@ public class ConstantProp {
 	}
 	// propagate to peek expression
 	JExpression newPeek = (JExpression)filter.getPeek().accept(propagator);
-
-	/*
-	System.out.println("inspecting " + filter.getPeek());
-	SIRPrinter t;
-	filter.getPeek().accept(t = new SIRPrinter());
-	t.close();
-	System.out.println("found " + newPeek);
-	System.out.println("const? " + (newPeek instanceof JLiteral));
-	*/
-
 	if (newPeek!=null && newPeek!=filter.getPeek()) {
 	    filter.setPeek(newPeek);
 	}

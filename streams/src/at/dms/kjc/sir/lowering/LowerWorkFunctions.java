@@ -118,7 +118,6 @@ public class LowerWorkFunctions implements StreamVisitor
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
     }
   
@@ -148,7 +147,6 @@ public class LowerWorkFunctions implements StreamVisitor
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
     }
 }

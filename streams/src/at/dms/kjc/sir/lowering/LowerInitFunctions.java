@@ -429,14 +429,13 @@ public class LowerInitFunctions implements StreamVisitor {
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
 	// do standard container stuff
 	visitContainer(self, init);
 	// register tapes
 	registerFeedbackLoopTapes(self, init);
         // set up the delay function
-        doFeedbackLoopDelay(self, delay, initPath, init);
+        doFeedbackLoopDelay(self, self.getDelayInt(), initPath, init);
     }
 
     /* post-visit a pipeline */
@@ -463,7 +462,6 @@ public class LowerInitFunctions implements StreamVisitor {
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
 	// do nothing -- all work is in preVisit
     }

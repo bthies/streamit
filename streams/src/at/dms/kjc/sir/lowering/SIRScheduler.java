@@ -791,7 +791,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				    JFieldDeclaration[] fields,
 				    JMethodDeclaration[] methods,
 				    JMethodDeclaration init,
-				    int delay,
 				    JMethodDeclaration initPath) {
 	// get joiner
 	SchedJoinType joiner = (SchedJoinType)self.getJoiner().accept(this);
@@ -809,7 +808,7 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 						  body,
 						  splitter,
 						  loop,
-						  delay);
+						  self.getDelayInt());
 	// return result
 	return result;
     }

@@ -193,14 +193,15 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			      JFieldDeclaration[] fields,
 			      JMethodDeclaration[] methods,
 			      JMethodDeclaration init,
-			      int delay,
 			      JMethodDeclaration initPath){
 	blockStart("FeedbackLoop");
 	attrStart("Parent");
 	if (parent == null)
 	    printData("null");
 	attrEnd();
-	attrPrint("delay", (new Integer(delay)).toString());
+	attrStart("delay");
+	self.getDelay().accept(this);
+	attrEnd();
 	attrStart("InitPath");
 	initPath.accept(this);
 	attrEnd();
@@ -235,6 +236,5 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 			       JFieldDeclaration[] fields,
 			       JMethodDeclaration[] methods,
 			       JMethodDeclaration init,
-			       int delay,
 			       JMethodDeclaration initPath){}
 }

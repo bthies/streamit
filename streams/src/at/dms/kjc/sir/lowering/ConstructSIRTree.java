@@ -45,10 +45,13 @@ public class ConstructSIRTree {
 						 JFieldDeclaration[] fields,
 						 JMethodDeclaration[] methods,
 						 JMethodDeclaration init,
-						 int delay,
 						 JMethodDeclaration initPath) {
 		    self.clear();
 		    init.accept(new InitializationHoister(self));
+		    // if we don't have enough children, add null loop
+		    if (self.size()<2) {
+			self.add(null);
+		    }
 		}
 	    });
     }
@@ -56,8 +59,7 @@ public class ConstructSIRTree {
 
 class InitializationHoister extends SLIRReplacingVisitor {
     /**
-     * Stack of parents we've descended through.  Modified from
-     * outside this visitor.
+     * The immediate parent.
      */
     private SIRContainer parent;
 
@@ -83,8 +85,8 @@ class InitializationHoister extends SLIRReplacingVisitor {
 	// check it
 	for (int i=0; i<self.getArgs().size(); i++) {
 	    Utils.assert(self.getArgs().get(i) instanceof JLiteral,
-			 "Expected constant arguments to init, but found non-constant:\n" +
-			 self.getArgs().get(i) + "\n");
+			 "Expected constant arguments to init, but found non-constant " +
+			 self.getArgs().get(i) + " in parent " + parent + "\n");
 	}
 	
 	// return an empty statement to eliminate the init

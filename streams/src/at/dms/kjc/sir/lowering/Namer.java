@@ -206,7 +206,6 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
 	preVisit(self);
     }
@@ -251,7 +250,6 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
 	postVisit();
     }

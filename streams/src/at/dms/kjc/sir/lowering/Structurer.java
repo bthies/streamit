@@ -411,7 +411,6 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
 	// don't do anything--visit on the way up
     }
@@ -459,7 +458,6 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
 	// make a list of body and loop
 	List children = new LinkedList();

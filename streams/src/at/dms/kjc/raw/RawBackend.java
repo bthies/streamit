@@ -45,7 +45,7 @@ public class RawBackend {
 	simulator = new FineGrainSimulator();
 
 	//this must be run now, FlatIRToC relies on it!!!
-	Renamer.renameAll(str);
+	RenameAll.renameAllFilters(str);
 	
 	// move field initializations into init function
 	System.out.print("Moving initializers into init functions... ");
@@ -65,7 +65,7 @@ public class RawBackend {
 	//printer1.close();
 
 	StreamItDot.printGraph(str, "before.dot");
-	
+
 	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");
 	    FuseAll.fuse(str);

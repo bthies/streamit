@@ -364,16 +364,9 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    
 	    //set the init to a dummy init if we need an init 
 	    if (filter.needsInit()) {
-		filter.setInit(new JMethodDeclaration(null, ACC_PUBLIC, 
-						      CStdType.Void, 
-						      "init",
-						      new JFormalParameter[0], 
-						      new CClassType[0],
-						      new JBlock(),
-						      null, null));
-		
-						      
+		filter.setInit(SIRStream.makeEmptyInit());
 	    }
+
 	    //set the work to a dummy work if we need a work
 	    if (filter.needsWork()) {
 		filter.setWork(new JMethodDeclaration(null, ACC_PUBLIC, 

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.21 2001-10-25 18:19:29 dmaze Exp $
+ * $Id: LIRToC.java,v 1.22 2001-10-25 20:23:32 mgordon Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1340,6 +1340,9 @@ public class LIRToC
     // ----------------------------------------------------------------------
     // STREAMIT IR HANDLERS
     // ----------------------------------------------------------------------
+
+    public void visitCreatePortalExpression() {
+    }
 
     public void visitInitStatement(SIRInitStatement self,
                                    JExpression[] body,

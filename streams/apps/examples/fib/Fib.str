@@ -5,7 +5,7 @@ void->void pipeline Fib {
 	split duplicate;
 	enqueue 0;
 	enqueue 1;
-    }
+    };
     add IntPrinter();
 }
 
@@ -17,6 +17,6 @@ int->int filter PeekAdd {
 
 int->void filter IntPrinter {
     work pop 1 {
-	System.out.println(pop());
+	print(pop());
     }
 }

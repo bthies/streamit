@@ -43,5 +43,14 @@ public class FileWriterDevice extends IODevice
     {
 	return "File Writer (" + getFileName() + ")";
     }
+
+    public String getTypeCode() 
+    {
+	assert getType().isFloatingPoint() ||
+	    getType().isOrdinal() : "Invalid type for file writer: " + getType();
+	Integer i = 
+	    new Integer(getType().isFloatingPoint() ? 1 : 0);
+	return i.toString();
+    }
 }
 

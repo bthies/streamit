@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.11 2003-07-09 15:55:06 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.12 2003-07-30 20:31:55 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -84,7 +84,7 @@ public class InsertInitConstructors extends InitMunger
             {
                 // The length might be non-constant.  This means that
                 // we need to do this by looping through the array.
-                String tempVar = varGen.varName(varGen.nextVar(null));
+                String tempVar = varGen.nextVar();
                 Expression varExp = new ExprVar(ctx, tempVar);
                 Statement decl =
                     new StmtVarDecl(ctx,

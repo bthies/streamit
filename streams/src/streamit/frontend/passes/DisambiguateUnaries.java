@@ -1,7 +1,6 @@
 package streamit.frontend.passes;
 
 import streamit.frontend.nodes.*;
-import streamit.frontend.tojava.TempVarGen;
 import java.util.List;
 
 /**
@@ -12,7 +11,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.3 2003-07-09 18:12:37 dmaze Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.4 2003-07-30 20:31:52 dmaze Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -71,7 +70,7 @@ public class DisambiguateUnaries extends SymbolTableVisitor
     {
         // Create a temporary variable...
         FEContext ctx = expr.getContext();
-        String name = varGen.varName(varGen.nextVar(null));
+        String name = varGen.nextVar();
         Type type = getType(expr);
         addStatement(new StmtVarDecl(ctx, type, name, null));
         // Generate an assignment to that..

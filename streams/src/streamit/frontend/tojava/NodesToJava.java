@@ -1,9 +1,3 @@
-/*
- * NodesToJava.java: traverse a front-end tree and produce Java objects
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.67 2003-07-24 19:22:16 dmaze Exp $
- */
-
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
@@ -11,8 +5,13 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * NodesToJava is a front-end visitor that produces Java code from
- * expression trees.  Every method actually returns a String.
+ * Traverse a front-end tree and produce Java code.  This uses {@link
+ * streamit.frontend.nodes.FEVisitor} directly, without going through
+ * an intermediate class such as <code>FEReplacer</code>.  Every
+ * method actually returns a String.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: NodesToJava.java,v 1.68 2003-07-30 20:31:55 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -537,7 +536,7 @@ public class NodesToJava implements FEVisitor
         List portals = sc.getPortals();
         if (portals.isEmpty())
             return how + "(" + (String)sc.accept(this) + ")";
-        String tempVar = varGen.varName(varGen.nextVar(null));
+        String tempVar = varGen.nextVar();
         // Need run-time type of the creator.  Assert that only
         // named streams can be added to portals.
         SCSimple scsimple = (SCSimple)sc;

@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.21 2003-07-30 20:12:25 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.22 2003-07-30 20:31:54 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -78,7 +78,7 @@ public class DoComplexProp extends SymbolTableVisitor
         // This code path almost certainly isn't going to follow
         // the path tojava.TempVarGen was written for, so we can
         // ignore the type parameter.
-        String tempVar = varGen.varName(varGen.nextVar(null));
+        String tempVar = varGen.nextVar();
         Expression exprVar = new ExprVar(expr.getContext(), tempVar);
         Type type = new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, null));
@@ -101,7 +101,7 @@ public class DoComplexProp extends SymbolTableVisitor
      */
     private Expression makeAnyTemporary(Expression expr)
     {
-        String tempVar = varGen.varName(varGen.nextVar(null));
+        String tempVar = varGen.nextVar();
         Expression exprVar = new ExprVar(expr.getContext(), tempVar);
         Type type = getType(expr);
         addStatement(new StmtVarDecl(expr.getContext(), type, tempVar, expr));

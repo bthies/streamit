@@ -2,7 +2,7 @@
  * This should help you test your bed. Next version.
  * Currently used as scratch space for testing a small
  * subset of the total test cases.
- * $Id: TestBed.java,v 1.12 2002-08-30 20:11:20 aalamb Exp $
+ * $Id: TestBed.java,v 1.13 2002-10-04 00:35:34 thies Exp $
  **/
 package streamittest;
 
@@ -21,7 +21,7 @@ public class TestBed extends StreamITTestCase {
     public static Test suite() {
 
  	int flags = (CompilerInterface.NONE |
- 		     CompilerInterface.RAW4 |
+ 		     CompilerInterface.RAW[4] |
 		     CompilerInterface.PARTITION);
 	//flags = CompilerInterface.NONE;
 

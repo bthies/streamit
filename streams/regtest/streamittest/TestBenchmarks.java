@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.5 2002-10-03 19:10:18 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.6 2002-10-04 00:35:34 thies Exp $
  **/
 package streamittest;
 
@@ -27,7 +27,7 @@ public class TestBenchmarks extends StreamITTestCase {
     public TestBenchmarks(String name) {
 	this (name,
               CompilerInterface.NONE |
-              CompilerInterface.RAW4 |
+              CompilerInterface.RAW[4] |
               CompilerInterface.CONSTPROP |
               CompilerInterface.PARTITION);
     }
@@ -44,11 +44,7 @@ public class TestBenchmarks extends StreamITTestCase {
         suite.addTest(new TestBenchmarks("testGsm", flags));
         suite.addTest(new TestBenchmarks("testNokia", flags));
         suite.addTest(new TestBenchmarks("testVocoder", flags));
-	// can't fit on raw 4 without partition
-	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
-	}
 
-	
 	return suite;
     }
     

@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.15 2002-09-26 00:15:24 thies Exp $
+ * $Id: StreamITTestCase.java,v 1.16 2002-10-04 00:35:34 thies Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "apps/examples/";
@@ -176,29 +176,19 @@ class StreamITTestCase extends TestCase {
 
     /**
      * Returns true if the compiler flags contain the option to
-     * compile to a 4x4 raw chip (eg 16 tiles). This is used
-     * to add tests conditionally to a test suite (tests known not to
-     * compile (eg fit) on raw 4 aren't included.
+     * compile to a <i>x<i> raw chip (eg 16 tiles). This is used to
+     * add tests conditionally to a test suite (tests known not to
+     * compile (eg fit) on raw <i> aren't included.
      **/
-    public static boolean flagsContainRaw4(int flags) {
- 	return ((flags & CompilerInterface.RAW4) == CompilerInterface.RAW4);
+    public static boolean flagsContainRaw(int i, int flags) {
+ 	return ((flags & CompilerInterface.RAW[i]) == CompilerInterface.RAW[i]);
     }
+
     /**
-     * Returns true if the compiler flags contain the option to
-     * compile to a 8x8 raw chip (eg 64 tiles). This is used
-     * to add tests conditionally to a test suite (tests known not to
-     * compile (eg fit) on raw 8 aren't included.
-     **/
-    public static boolean flagsContainRaw8(int flags) {
- 	return ((flags & CompilerInterface.RAW8) == CompilerInterface.RAW8);
-    }
-    /**
-     * Returns true if the passed flags contain either raw 4 or raw
-     * 8.
+     * Returns true if the passed flags contain raw[x] for some x.
      **/
     public static boolean flagsContainRaw(int flags) {
-	return (flagsContainRaw4(flags) ||
-		flagsContainRaw8(flags));
+	return CompilerInterface.rawTarget(flags);
     }
     
     /**

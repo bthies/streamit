@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.8 2002-09-11 18:52:31 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.9 2002-10-04 00:35:34 thies Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -16,11 +16,18 @@ public class CompilerInterface {
     public static final int UNROLL             = 0x4;
     public static final int FUSION             = 0x8;
     public static final int PARTITION          = 0x10;
-    public static final int RAW4               = 0x20;
-    public static final int RAW8               = 0x40;
-    public static final int LINEAR_ANALYSIS    = 0x80;
-    public static final int LINEAR_REPLACEMENT = 0x100;
-    public static final int DEBUG              = 0x200;
+    public static final int[] RAW              = {0x00,   // ignore the 0 case
+						  0x20,   // RAW[1]
+						  0x40,   // RAW[2]
+						  0x80,   // RAW[3]
+						  0x100,  // RAW[4]
+						  0x200,  // RAW[5]
+						  0x400,  // RAW[6]
+						  0x800,  // RAW[7]
+						  0x1000};// RAW[8]
+    public static final int LINEAR_ANALYSIS    = 0x2000;
+    public static final int LINEAR_REPLACEMENT = 0x4000;
+    public static final int DEBUG              = 0x8000;
     
 
 
@@ -32,8 +39,6 @@ public class CompilerInterface {
     public static final String OPTION_PARTITION          = "--partition";
 
     public static final String OPTION_RAW                = "--raw";
-    public static final String OPTION_FOUR               = "4";
-    public static final String OPTION_EIGHT              = "8";
 
     public static final String OPTION_LINEAR_ANALYSIS    = "--linearanalysis";
     public static final String OPTION_LINEAR_REPLACEMENT = "--linearreplacement";
@@ -185,19 +190,13 @@ public class CompilerInterface {
 	}
 
 	// if we are compiling to 4 raw tiles 
-	if ((flags & RAW4) == RAW4) {
-	    options[numOptions] = OPTION_RAW;
-	    numOptions++;
-	    options[numOptions] = OPTION_FOUR;
-	    numOptions++;
-	}
-
-	// if we are compiling to 8 raw tiles 
-	if ((flags & RAW8) == RAW8) {
-	    options[numOptions] = OPTION_RAW;
-	    numOptions++;
-	    options[numOptions] = OPTION_EIGHT;
-	    numOptions++;
+	for (int i=1; i<=8; i++) {
+	    if ((flags & RAW[i]) == RAW[i]) {
+		options[numOptions] = OPTION_RAW;
+		numOptions++;
+		options[numOptions] = "" + i;
+		numOptions++;
+	    }
 	}
 
 	// if we are running linear analysis
@@ -261,9 +260,11 @@ public class CompilerInterface {
      * returns true if the flags passed include any of the raw options.
      **/
     public static boolean rawTarget(int flags) {
-	boolean raw4 = ((flags & RAW4) == RAW4);
-	boolean raw8 = ((flags & RAW8) == RAW8);
-
-	return (raw4 || raw8);
+	for (int i=1; i<=8; i++) {
+	    if ((flags & RAW[i]) == RAW[i]) {
+		return true;
+	    }
+	}
+	return false;
     }
 }

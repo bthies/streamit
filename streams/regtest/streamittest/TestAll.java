@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.11 2002-09-30 17:50:41 thies Exp $
+ * $Id: TestAll.java,v 1.12 2002-10-04 00:35:34 thies Exp $
  **/
 package streamittest;
 
@@ -62,45 +62,28 @@ public class TestAll extends TestCase {
      * add the raw tests to the test suite framework.
      **/
     public static void addRawTests(TestSuite allTests) {
-	// raw with 4 tiles, partition
+	// test on raw 4 and raw 8 without fieldprop, just to see if a
+	// fieldprop problem (or performance issue) is local to these
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW4 |
+				       CompilerInterface.RAW[4] |
 				       CompilerInterface.PARTITION));
 
-	// raw with 4 tiles, partition, constprop
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW4 |
-				       CompilerInterface.PARTITION |
-				       CompilerInterface.CONSTPROP));
+				       CompilerInterface.RAW[8] |
+				       CompilerInterface.PARTITION));
 
-	/* don't worry about raw 4 with fusion, because now fusion is
-	 * likely to produce such big code that it won't fit on a
-	 * single raw tile, or it breaks the raw assembler.  Raw with
-	 * partitioning should test it instead; fusion will be tested
-	 * on uniproc. path.
+	// try one without partitioning just in case we want to
+	// compare with original performance
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW[8]));
 
-	// raw 4 with fusion
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW4 |
-				       CompilerInterface.FUSION));
-	// raw 4 with fusion
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW4 |
-				       CompilerInterface.FUSION |
-				       CompilerInterface.CONSTPROP));
-	*/
-
-	// test raw with 8 tiles to see if problem are being introduced by
-	// the above optimizations
-				       
-	// raw with 8 tiles
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW8));
-
-	// raw with 8 tiles, constprop
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW8 |
-				       CompilerInterface.CONSTPROP));
+	// try all configurations of raw with constprop and partition
+	for (int i=1; i<=8; i++) {
+	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+					   CompilerInterface.RAW[i] |
+					   CompilerInterface.PARTITION |
+					   CompilerInterface.CONSTPROP));
+	}
 
 	// try linear replacement (replace linear filters with a direct implementation).
 // 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |

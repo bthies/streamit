@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.23 2002-09-26 01:10:08 thies Exp $
+ * $Id: TestExamples.java,v 1.24 2002-10-04 00:35:35 thies Exp $
  **/
 package streamittest;
 
@@ -50,7 +50,7 @@ public class TestExamples extends StreamITTestCase {
 	}
 
 	// overflows instruction memory on raw if there is fusion
-	if (!(flagsContainRaw(flags) && flagsContainFusion(flags))) {
+	if (!(flagsContainRaw(1, flags))) {
 	    suite.addTest(new TestExamples("testAutoCor", flags));
 	}
 
@@ -69,7 +69,10 @@ public class TestExamples extends StreamITTestCase {
 	
 	
 	// this one doesn't fit on any raw4
-	if (!flagsContainRaw4(flags)) {
+	if (!(flagsContainRaw(1, flags) || 
+	      flagsContainRaw(2, flags) || 
+	      flagsContainRaw(3, flags) || 
+	      flagsContainRaw(4, flags))) {
 	    suite.addTest(new TestExamples("testLattice", flags));
 	}
 

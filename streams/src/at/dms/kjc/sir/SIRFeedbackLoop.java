@@ -115,7 +115,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	newStr.setParent(this);
 	if (getBody()==oldStr) {
 	    setBody(newStr);
-	} else if (getLoop()==newStr) {
+	} else if (getLoop()==oldStr) {
 	    setLoop(newStr);
 	} else {
 	    Utils.fail("Trying to replace child " + oldStr + " of " + this

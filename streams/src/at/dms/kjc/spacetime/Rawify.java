@@ -32,7 +32,10 @@ public class Rawify
 		    FilterTraceNode filterNode = (FilterTraceNode)traceNode;
 		    if (filterNode.isPredefined()) {
 			//predefined node, may have to do something
-			handlePredefined(filterNode, rawChip, init);
+			if (KjcOptions.magicdram) 
+			    magicHandlePredefined(filterNode, rawChip, init);
+			else 
+			    Utils.fail("Predefined filters not supported");
 		    }
 		    else {
 			RawTile tile = rawChip.getTile((filterNode).getX(), 
@@ -64,6 +67,20 @@ public class Rawify
 			    tile.getComputeCode().addTraceSteady(filterInfo);
 		    }
 		}
+		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
+		    //create the switch code to perform the joining
+		    joinInputTrace((InputTraceNode)traceNode, init, false);
+		    //now create the primepump code
+		    if (init) 
+			joinInputTrace((InputTraceNode)traceNode, init, true);
+		}
+		else if (traceNode.isOutputTrace() && !KjcOptions.magicdram) {
+		    //create the switch code to perform the splitting
+		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
+		    //now create the primepump code
+		    if (init) 
+			splitOutputTrace((OutputTraceNode)traceNode, init, true);
+		}
 		//get the next tracenode
 		traceNode = traceNode.getNext();
 	    }
@@ -72,7 +89,54 @@ public class Rawify
 	
     }
 
-    private static void handlePredefined(FilterTraceNode predefined, RawChip rawChip, boolean init) 
+    private static void joinInputTrace(InputTraceNode node, boolean init, boolean primepump)
+    {
+	
+    }
+    
+    private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump)
+    {
+	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
+	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
+	//calculate the number of items sent
+	int items, iterations, stage = 1;
+	if (init) 
+	    items = filterInfo.initItemsSent();
+	else if (primepump) 
+	    items = filterInfo.primePump * filterInfo.push;
+	else
+	    items = filterInfo.steadyMult * filterInfo.push;
+	
+	//the stage we are generating code for as used below for generateSwitchCode()
+	if (!init) 
+	    stage = 2;
+	    
+	//the numbers of times we should cycle thru this "splitter"
+	assert items % traceNode.totalWeights() == 0: 
+	    "weights on output trace node does not divide evenly with items sent";
+	iterations = items / traceNode.totalWeights();
+	
+	//is there a load immediate in the switch instruction set?!
+	//I guess not, if switch instruction memory is a problem
+	//this naive implementation will have to change
+	StreamingDram sourcePort = OffChipBuffer.getBuffer(filter, traceNode).getDRAM();
+	for (int i = 0; i < iterations; i++) {
+	    for (int j = 0; j < traceNode.getWeights().length; j++) {
+		for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+		    //generate the array of compute node dests
+		    ComputeNode dests[] = new ComputeNode[traceNode.getDests()[j].length];
+		    for (int d = 0; d < dests.length; d++) 
+			dests[d] = OffChipBuffer.getBuffer(traceNode, 
+							   traceNode.getDests()[j][d]).getDRAM();
+		    SwitchCodeStore.generateSwitchCode(sourcePort, 
+						       dests, stage);
+		}
+	    }
+	}
+    }
+    
+
+    private static void magicHandlePredefined(FilterTraceNode predefined, RawChip rawChip, boolean init) 
     {
 	if (init) {
 	    //tell the magic dram that it should open the file and create vars for this file
@@ -527,7 +591,7 @@ public class Rawify
 		tile.hasIODevice()) 
 		sourceNode = tile.getIODevice();
 	    else 
-		return;
+		sourceNode = OffChipBuffer.getBuffer(node.getPrevious(), node).getDRAM();
 	}
 	
 	for (int j = 0; j < itemsReceiving; j++) {
@@ -568,8 +632,10 @@ public class Rawify
 	    if (KjcOptions.magicdram && node.getNext() != null &&
 		node.getNext().isOutputTrace() && tile.hasIODevice())
 		destNode = tile.getIODevice();
-	    else
-		return;
+	    else {
+		destNode = OffChipBuffer.getBuffer(node, node.getNext()).getDRAM();
+	    }
+	    
 	}
 	
 	for (int j = 0; j < items; j++) {

@@ -207,7 +207,8 @@ public class StreamingDram extends IODevice
     
     public void printDramSetup() 
     {
-	System.out.println("port: " + this.port +" lb: " + lb + " ub: " + ub + " size: " + size );
+	System.out.println("port: " + this.port +" lb: " + lb + " ub: " + ub + 
+			   " size: " + size + " (" + this.X + ", " + this.Y + ")");
     }
 
     public static void printSetup(RawChip chip) 

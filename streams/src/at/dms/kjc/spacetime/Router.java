@@ -7,7 +7,7 @@ public class Router
 {
     //return the route from src to dest (including both)
     //first x then y
-    public static LinkedList getRoute(RawTile src, RawTile dst) 
+    public static LinkedList getRoute(ComputeNode src, ComputeNode dst) 
     {
 	LinkedList route = new LinkedList();
 	RawChip chip = src.getRawChip();
@@ -27,13 +27,13 @@ public class Router
 	    if (src.getX() < dst.getX()) {
 		for (row = src.getX() + 1; 
 		     row <= dst.getX(); row++)
-		    route.add(chip.getTile(row, column));
+		    route.add(chip.getComputeNode(row, column));
 		row--;
 	    }
 	    else {
 		for (row = src.getX() - 1; 
 		     row >= dst.getX(); row--) 
-		    route.add(chip.getTile(row, column));
+		    route.add(chip.getComputeNode(row, column));
 		row++;
 	    }
 	}
@@ -42,11 +42,11 @@ public class Router
 	    if (src.getY() < dst.getY())
 		for (column = src.getY() + 1; 
 		     column <= dst.getY(); column++)
-		    route.add(chip.getTile(row, column));
+		    route.add(chip.getComputeNode(row, column));
 	    else
 		for (column = src.getY() - 1; 
 		     column >= dst.getY(); column--)
-		    route.add(chip.getTile(row, column));
+		    route.add(chip.getComputeNode(row, column));
 	}
 	return route;
     }

@@ -40,9 +40,27 @@ public class RawChip {
 	return tiles[x][y];
     }
     
+    public ComputeNode getComputeNode(int x, int y) 
+    {
+	assert !(x > gXSize || y > gYSize || x < -1 || y < -1) :
+	    "out of bounds in getComputeNode() of RawChip";
+	    
+	if (x == gXSize || y == gYSize || x == -1 || y == -1) {
+	    if (y == -1) 
+		return devices[x];
+	    if (x == -1)
+		return devices[(gYSize - 1) + (2 * gXSize + gYSize) - y];
+	    if (y == gYSize) 
+		return devices[(gXSize + 1) + (gXSize + gYSize) - x];
+	    if (x == gXSize) 
+		return devices[y + gXSize];
+	}
+	return tiles[x][y];
+    }
+    
+    
     public RawTile getTile(int x, int y) {
-	if (x >= gXSize || y >= gYSize)
-	    Utils.fail("out of bounds in getTile() of RawChip");
+	assert  !(x >= gXSize || y >= gYSize) : "out of bounds in getTile() of RawChip";
 	return tiles[x][y];
     }
 

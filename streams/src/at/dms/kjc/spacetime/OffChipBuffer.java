@@ -17,6 +17,7 @@ public class OffChipBuffer
     private static HashMap bufferStore;
     private Address size;
     private CType type;
+    private StreamingDram dram;
 
     static 
     {
@@ -39,6 +40,18 @@ public class OffChipBuffer
 	setType();
 	calculateSize();
     }
+
+    public void setDRAM(StreamingDram DRAM) 
+    {
+	this.dram = DRAM;
+    }
+    
+    public StreamingDram getDRAM() 
+    {
+	assert dram != null: "need to assign buffer to streaming dram";
+	return dram;
+    }
+    
     
     public String getIdent() 
     {

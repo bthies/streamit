@@ -467,6 +467,10 @@ public class SpaceTimeBackend
 	    //create the raw execution code and switch for the steady-state
 	    System.out.println("Creating Steady-State Stage");
 	    Rawify.run(steadyTrav, rawChip, false);
+	    //communicate the addresses for the off-chip buffers
+	    if (!KjcOptions.magicdram) {
+		CommunicateAddrs.doit(rawChip);
+	    }
 	    //generate the switch code assembly files...
 	    GenerateSwitchCode.run(rawChip);
 	    //generate the compute code from the SIR

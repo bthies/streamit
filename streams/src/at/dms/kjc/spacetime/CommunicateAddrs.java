@@ -13,16 +13,19 @@ public class CommunicateAddrs
 
     public static String getFunction(RawTile tile) 
     {
+	StringBuffer buf = new StringBuffer();
+
 	//prepend the function name 
-	
+	buf.append("void " + functName + "() {\n");
 	//append the closing } and 
-	
-	return "";
+	buf.append((StringBuffer)commAddrs.functions.get(tile));
+	buf.append("}\n");
+	return buf.toString();
     }
     
     public static String getFields(RawTile tile) 
     {
-	return "";
+	return ((StringBuffer)commAddrs.fields.get(tile)).toString();
     }
 
     public CommunicateAddrs(RawChip chip)
@@ -52,7 +55,8 @@ public class CommunicateAddrs
 			continue;
 		    
 		    //add the switch code to all the tiles to communicate this address
-		    owner.getSwitchCode().addCommAddrRoute(buf.getUsers());
+		    //owner.getSwitchCode().addCommAddrRoute(buf.getUsers());
+		    SwitchCodeStore.generateSwitchCode(owner, buf.getUsers(), 0);
 		    //add declaration of array to owners fields
 		    ((StringBuffer)fields.get(owner)).append
 			(buf.getType().toString() + " " + 

@@ -68,17 +68,26 @@ public class SwitchCodeStore {
     {
 	return commAddrIns.size();
     }
-    //add route from this tile to the dest and all intermediate
-    //tiles
-    public void addCommAddrRoute(RawTile[] dests)
+
+    /**
+     give a source and an array of dests, generate the code to 
+     route an item from the sourc to the dests and place the
+     place the switch instruction in the appropriate stage's instruction
+     vector based on the <stage> argument:
+     0: commaddr
+     1: init / prime pump
+     2: steady stage
+    **/
+    public static void generateSwitchCode(ComputeNode source, ComputeNode[] dests,
+					   int stage)
     {
-	RouteIns[] ins = new RouteIns[parent.getRawChip().getXSize() *
-				      parent.getRawChip().getYSize()];
+	RouteIns[] ins = new RouteIns[source.getRawChip().getXSize() *
+				      source.getRawChip().getYSize()];
 	
 	for (int i = 0; i < dests.length; i++) {
-	    RawTile dest = dests[i];
+	    ComputeNode dest = dests[i];
 	    
-	    LinkedList route = Router.getRoute(parent, dest);
+	    LinkedList route = Router.getRoute(source, dest);
 	    //append the dest again to the end of route 
 	    //so we can place the item in the processor queue
 	    route.add(dest);
@@ -88,18 +97,21 @@ public class SwitchCodeStore {
 		continue;
 	    }
 	    
-	    RawTile prev = (RawTile)it.next();
-	    RawTile current = prev;
-	    RawTile next;
+	    ComputeNode prev = (ComputeNode)it.next();
+	    ComputeNode current = prev;
+	    ComputeNode next;
 	    
 	    while (it.hasNext()) {
-		next = (RawTile)it.next();
+		next = (ComputeNode)it.next();
+		//only add the instructions to the raw tile
+		if (current instanceof RawTile) {
 		//create the route instruction if it does not exist
-		if (ins[current.getTileNumber()] == null)
-		    ins[current.getTileNumber()] = new RouteIns(current);
-		//add this route to it
-		//RouteIns will take care of the duplicate routes 
-		ins[current.getTileNumber()].addRoute(prev, next);
+		    if (ins[((RawTile)current).getTileNumber()] == null)
+			ins[((RawTile)current).getTileNumber()] = new RouteIns((RawTile)current);
+		    //add this route to it
+		    //RouteIns will take care of the duplicate routes 
+		    ins[((RawTile)current).getTileNumber()].addRoute(prev, next);
+		}
 		prev = current;
 		current = next;
 	    }
@@ -107,11 +119,17 @@ public class SwitchCodeStore {
 	//add the non-null instructions
 	for (int i = 0; i < ins.length; i++) {
 	    if (ins[i] != null) {
-		parent.getRawChip().getTile(i).getSwitchCode().appendCommAddrIns(ins[i]);
+		if (stage == 0) 
+		    ((RawTile)source).getSwitchCode().appendCommAddrIns(ins[i]);
+		if (stage == 1) 
+		    ((RawTile)source).getSwitchCode().appendIns(ins[i], true);
+		if (stage == 1)
+		    ((RawTile)source).getSwitchCode().appendIns(ins[i], false);
 	    }
 	}
     }
-    
+   
+    /* 
     public void addCommAddrRoute(RawTile dest) 
     {
 	LinkedList route = Router.getRoute(parent, dest);
@@ -140,5 +158,5 @@ public class SwitchCodeStore {
 	    prev = current;
 	    current = next;
 	}
-    }
+	}*/
 }

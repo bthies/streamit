@@ -9,6 +9,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
+import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.lir.*;
 
 import java.math.BigInteger;
@@ -90,6 +91,7 @@ public class Lifter implements StreamVisitor {
     public void preVisitSplitJoin(SIRSplitJoin self,
 				  SIRSplitJoinIter iter) {
 	liftChildren(self);
+        RefactorSplitJoin.raiseDupDupSJChildren(self);
     }
 
     /* pre-visit a feedbackloop */

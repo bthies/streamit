@@ -35,7 +35,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
 
     public SIRFilter(String ident) {
-	super(null, ident, null, null);
+	super(null, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
 	this.pop = new JIntLiteral(0);
 	this.push = new JIntLiteral(0);
 	this.peek = new JIntLiteral(0);

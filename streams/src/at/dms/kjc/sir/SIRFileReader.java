@@ -26,28 +26,13 @@ public class SIRFileReader extends SIRFilter implements Cloneable {
 			 String fileName) {
 	super(parent,
 	      ident,
-	      /* fields */ null,
-	      /* methods */ null,
+	      /* fields */ JFieldDeclaration.EMPTY(),
+	      /* methods */ JMethodDeclaration.EMPTY(),
 	      peek, pop, push,
 	      /* work */ null,
 	      /* input type */ null,
 	      /* output type */ outputType);
 	this.fileName = fileName;
-    }
-
-    /**
-     * Return shallow copy of this.
-     */
-    public Object clone() {
-	SIRFileReader f = new SIRFileReader(getParent(),
-					    getIdent(),
-					    getPeek(),
-					    getPop(),
-					    getPush(),
-					    getOutputType(),
-					    getFileName());
-	f.setInit(this.init);
-	return f;
     }
 
     public void setFileName(String fileName) {

@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
+import at.dms.util.Utils;
 import java.util.*;
 
 /**
@@ -53,10 +54,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     protected SIRStream() {
-	super(null);
-	this.fields = null;
-	this.methods = null;
-	argConstants=new LinkedList();
+	this(null, null, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
     }
 
     public void setArgConstants(List list) {
@@ -164,9 +162,13 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /*
-     * Set the methods member variable 
+     * Set the methods member variable.  Asserts that all the methods
+     * in <m> are non-null.
      */
     public void setMethods (JMethodDeclaration[] m) {
+	for (int i=0; i<m.length; i++) {
+	    Utils.assert(m[i]!=null, "Detected a null method in SIRStream.setMethods");
+	}
 	this.methods = m;
     }
 
@@ -208,7 +210,9 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * sets the init function
      */
     public void setInit(JMethodDeclaration newInit) {
-	addReplacementMethod(newInit, this.init);
+	if (newInit!=null) {
+	    addReplacementMethod(newInit, this.init);
+	}
 	this.init = newInit;
     }
 
@@ -254,9 +258,10 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 
     /**
      * adds method <meth> to this, if <meth> is not already registered
-     * as a method of this.  
+     * as a method of this.  Requires that <method> is non-null.
      */
     public void addMethod(JMethodDeclaration method) {
+	Utils.assert(method!=null);
 	// see if we already have <method> in this
 	for (int i=0; i<methods.length; i++) {
 	    if (methods[i]==method) {

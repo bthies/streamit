@@ -8,6 +8,7 @@ class Identity extends Filter {
         this.streamInput = input;
         this.streamOutput = output;
     }
+    public void init () { }
 
     public void work() {
         output.pushFloat(input.popFloat());
@@ -66,6 +67,7 @@ class Butterfly extends Pipeline {
                                 this.streamInput = input;
                                 this.streamOutput = output;
                             }
+                            public void init () { }
 
                             public void work() {
                                 output.pushFloat(input.popFloat() -
@@ -82,6 +84,7 @@ class Butterfly extends Pipeline {
                                 this.streamInput = input;
                                 this.streamOutput = output;
                             }
+                            public void init () { }
 
                             public void work() {
                                 output.pushFloat(input.popFloat() +
@@ -127,6 +130,7 @@ class OneSource extends Filter
     {
         this.streamOutput = output;
     }
+    public void init () { }
     public void work()
     {
         output.pushFloat(1);
@@ -140,6 +144,7 @@ class FloatPrinter extends Filter
     {
         this.streamInput = input;
     }
+    public void init () { }
     public void work ()
     {
         System.out.println (input.popFloat ());

@@ -15,7 +15,7 @@ class IdentityLocal extends Filter {
 }
 
 class Filter1 extends Filter {
-    
+
     Channel input = new Channel(Float.TYPE, 1);
     Channel output = new Channel(Float.TYPE, 1);
     float weights[];
@@ -23,31 +23,31 @@ class Filter1 extends Filter {
     int W;
 
     public Filter1(int N, int W) {
-	super(N, W);
+        super(N, W);
     }
-    
+
     public void init(int N, int W) {
-	int i;
-	this.W = W;
-	this.weights = new float[W];
-	for (i=0; i<W; i+=1)
-	    weights[i] = calcWeight(i, N, W);
-	curr = 0;
+        int i;
+        this.W = W;
+        this.weights = new float[W];
+        for (i=0; i<W; i+=1)
+            weights[i] = calcWeight(i, N, W);
+        curr = 0;
     }
-    
+
     public void initIO() {
-	this.streamInput = input;
-	this.streamOutput = output;
+        this.streamInput = input;
+        this.streamOutput = output;
     }
-    
+
     private float calcWeight(int a, int b, int c) {
-	return 1;
+        return 1;
     }
-    
+
     public void work() {
-	output.pushFloat(input.popFloat()*
-			 weights[curr++]);
-	if(curr>= W) curr = 0;
+        output.pushFloat(input.popFloat()*
+                         weights[curr++]);
+        if(curr>= W) curr = 0;
     }
 }
 
@@ -55,10 +55,10 @@ class Butterfly1 extends SplitJoin {
     public Butterfly1(int N, int W) { super (N, W); }
 
     public void init(final int N, final int W) {
-	this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
-	this.add(new Filter1(N, W));
-	this.add(new IdentityLocal());
-	this.setJoiner(ROUND_ROBIN());
+        this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
+        this.add(new Filter1(N, W));
+        this.add(new IdentityLocal());
+        this.setJoiner(ROUND_ROBIN());
     }
 }
 
@@ -66,70 +66,70 @@ class Butterfly2 extends SplitJoin {
     public Butterfly2(int N, int W) { super (N, W); }
 
     public void init(final int N, final int W) {
-	this.setSplitter(DUPLICATE());
-    
-	this.add(new Filter() {
-		Channel input = new Channel(Float.TYPE, 2);
-		Channel output = new Channel(Float.TYPE, 1);
-		
-		public void initIO ()
-		{
-		    this.streamInput = input;
-		    this.streamOutput = output;
-		}
-		
-		public void work() {
-		    output.pushFloat(input.popFloat() +
-				     input.popFloat());
-		}
-	    });
-	this.add(new Filter() {
-		Channel input = new Channel(Float.TYPE, 2);
-		Channel output = new Channel(Float.TYPE, 1);
-		
-		public void initIO ()
-		{
-		    this.streamInput = input;
-		    this.streamOutput = output;
-		}
-		
-		public void work() {
-		    output.pushFloat(input.popFloat() -
-				     input.popFloat());
-		}
-	    });
-	
-	this.setJoiner(WEIGHTED_ROUND_ROBIN(N, N));
+        this.setSplitter(DUPLICATE());
+
+        this.add(new Filter() {
+                Channel input = new Channel(Float.TYPE, 2);
+                Channel output = new Channel(Float.TYPE, 1);
+
+                public void initIO ()
+                {
+                    this.streamInput = input;
+                    this.streamOutput = output;
+                }
+
+                public void work() {
+                    output.pushFloat(input.popFloat() +
+                                     input.popFloat());
+                }
+            });
+        this.add(new Filter() {
+                Channel input = new Channel(Float.TYPE, 2);
+                Channel output = new Channel(Float.TYPE, 1);
+
+                public void initIO ()
+                {
+                    this.streamInput = input;
+                    this.streamOutput = output;
+                }
+
+                public void work() {
+                    output.pushFloat(input.popFloat() -
+                                     input.popFloat());
+                }
+            });
+
+        this.setJoiner(WEIGHTED_ROUND_ROBIN(N, N));
     }
 }
 
 class SplitJoin2 extends SplitJoin {
     public SplitJoin2(int N) {
-	super(N);
+        super(N);
     }
 
     public void init(int N) {
-	this.setSplitter(ROUND_ROBIN());
-	this.add(new IdentityLocal());
-	this.add(new IdentityLocal());
-	this.setJoiner(WEIGHTED_ROUND_ROBIN((int)
-					    N/4,
-					    (int)
-					    N/4));
+        this.setSplitter(ROUND_ROBIN());
+        this.add(new IdentityLocal());
+        this.add(new IdentityLocal());
+        this.setJoiner(WEIGHTED_ROUND_ROBIN((int)
+                                            N/4,
+                                            (int)
+                                            N/4));
     }
 }
 
 class SplitJoin1 extends SplitJoin {
     public SplitJoin1(int N) {
-	super(N);
+        super(N);
     }
 
     public void init(int N) {
-	int i;
-	this.setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
-	for (i=0; i<2; i+=1)
-	    this.add(new SplitJoin2(N));
-	this.setJoiner(ROUND_ROBIN());
+        int i;
+        this.setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
+        for (i=0; i<2; i+=1)
+            this.add(new SplitJoin2(N));
+        this.setJoiner(ROUND_ROBIN());
     }
 }
 
@@ -140,12 +140,12 @@ class FFTKernelLocal extends Pipeline {
     }
 
     public void init(final int N) {
-	int i;
+        int i;
         this.add(new SplitJoin1(N));
         for (i=2; i<N; i*=2) {
             this.add(new Butterfly1(i, N));
             this.add(new Butterfly2(i, N));
-	}
+        }
     }
 }
 
@@ -156,6 +156,7 @@ class OneSourceLocal extends Filter
     {
         this.streamOutput = output;
     }
+    public void init () { }
     public void work()
     {
         output.pushFloat(1);

@@ -9,8 +9,15 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
     /**
      * The maximum latency.
      */
-    protected final int max;
+    protected int max;
 
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected SIRLatencyMax() {
+	super();
+    }
+    
     /**
      * Constructs a new latency with the given maximum.
      */

@@ -34,6 +34,13 @@ public class SIRJoinType implements Serializable {
     private String name;
 
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private SIRJoinType() {
+	super();
+    }
+    
+    /**
      * Constructs a join type with name <name>.
      */
     private SIRJoinType(String name) {

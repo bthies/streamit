@@ -27,6 +27,13 @@ public class SIRInterfaceTable extends JExpression
     protected JLocalVariable vardecl;
 
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected SIRInterfaceTable() {
+	super();
+    }
+    
+    /**
      * Construct a new interface table.
      * @param where    The line of this node in the source code
      * @param iface    The interface being implemented

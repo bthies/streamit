@@ -34,6 +34,13 @@ public class SIRSplitType implements Serializable {
     private String name;
 
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private SIRSplitType() {
+	super();
+    }
+    
+    /**
      * Constructs a split type with name <name>.
      */
     private SIRSplitType(String name) {

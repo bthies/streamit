@@ -10,7 +10,14 @@ public class SIRLatencyRange extends SIRLatencyMax {
      * The minimum latency for this.  (The maximum latency is held in
      * the superclass.)
      */
-    protected final int min;
+    protected int min;
+    
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected SIRLatencyRange() {
+	super();
+    }
     
     /**
      * Constructs a latency with the range between <min> and <max>.

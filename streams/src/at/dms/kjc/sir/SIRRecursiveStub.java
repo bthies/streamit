@@ -15,17 +15,24 @@ public class SIRRecursiveStub extends SIRStream implements Cloneable {
     /**
      * The name of the class that this should be expanded into.
      */
-    private final String className;
+    private String className;
     /**
      * A snapshot (clone) of Kopi2SIR when this class was encountered.
      */
-    private final Kopi2SIR kopi2SIR;
+    private Kopi2SIR kopi2SIR;
     /**
      * The expanded version of this.  Initially null, then memoized to
      * prevent duplicate expansions.
      */
     private SIRStream expanded;
 
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected SIRRecursiveStub() {
+	super();
+    }
+    
     public SIRRecursiveStub(String className, Kopi2SIR kopi2SIR) {
 	super(null, "RecursiveStub_for_" + className, 
 	      JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());

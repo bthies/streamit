@@ -19,6 +19,13 @@ public class SIRPushExpression extends JExpression {
     protected CType tapeType;
 
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    protected SIRPushExpression() {
+	super();
+    }
+    
+    /**
      * Construct a node in the parsing tree
      * @param	where		the line of this node in the source code
      * @param	arg		the argument of the call

@@ -10,6 +10,13 @@ import at.dms.util.*;
  */
 public class SIRIdentity extends SIRPredefinedFilter implements Cloneable {
 
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private SIRIdentity() {
+	super();
+    }
+    
     public SIRIdentity(CType type) {
 	super(null,
 	      "Identity",

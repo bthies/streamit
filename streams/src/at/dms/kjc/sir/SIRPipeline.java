@@ -15,6 +15,13 @@ import java.io.*;
  */
 public class SIRPipeline extends SIRContainer implements Cloneable {
     /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private SIRPipeline() {
+	super();
+    }
+    
+    /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
     public SIRPipeline(SIRContainer parent,

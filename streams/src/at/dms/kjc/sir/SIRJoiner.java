@@ -44,6 +44,13 @@ public class SIRJoiner extends SIROperator {
 
     public int oldSumWeights;
 
+    /**
+     * No argument constructor, FOR AUTOMATIC CLONING ONLY.
+     */
+    private SIRJoiner() {
+	super();
+    }
+    
     private SIRJoiner(SIRContainer parent, 
 		      SIRJoinType type, 
 		      JExpression[] weights,

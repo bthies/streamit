@@ -1517,6 +1517,7 @@
     \lst@TrackNewLines \lst@PrintToken
     \lst@EnterMode\lst@GPmode{}\let\lst@ifmode\iffalse
     \lst@mode\lst@insidemode #1\lst@mode\lst@GPmode\relax\lst@modetrue}
+\iffalse
 \IfFileExists{lstpatch.sty}
     {\def\lst@topatch{0.19}\input{lstpatch.sty}%
      \let\lst@next\relax
@@ -1531,6 +1532,7 @@
         ***^^J}%
         \batchmode \@@end
      \fi}{}
+\fi
 \let\lst@ifsavemem\iffalse
 \DeclareOption{savemem}{\let\lst@ifsavemem\iftrue}
 \DeclareOption{noaspects}{\let\lst@loadaspects\@empty}

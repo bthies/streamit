@@ -254,10 +254,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
 	    found = false;
 	    for (int i = 0; i < joiner.inputs; i++) {
-		//	if (joiner.incomingWeights[i] > 0) {
+		if (joiner.incoming[i] != null) {
 		    joiner = joiner.incoming[i];
 		    found = true;
-		    //}
+		}
 	    }
 	    if (!found)
 		Utils.fail("cannot find any upstream filter from " + joiner.contents.getName());

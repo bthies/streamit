@@ -105,9 +105,9 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    if (top == null) {
 		//currentNode = joinerNode;
 		top = joinerNode;
-		}
+	    }
 	    FlatNode splitterNode = addFlatNode (loop.getSplitter());
-
+	    
 	    FlatNode.addEdges(currentNode, joinerNode);
 	    	    
 	    currentNode = joinerNode;
@@ -173,6 +173,9 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	
 	if (node.contents instanceof SIRJoiner) {
 	    for (int i = 0; i < node.inputs; i++) {
+		//joiners may have null upstream neighbors
+		if (node.incoming[i] == null)
+		    continue;
 		buf.append(node.incoming[i].contents.getName() + " -> " 
 			   + node.contents.getName());
 		buf.append("[label=\"" + node.incomingWeights[i] + "\"];\n");

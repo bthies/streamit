@@ -1,0 +1,2 @@
+The --removeglobals option (and consequently -O2) is known to produce
+incorrect results on the FilterBankNew.str benchmark.

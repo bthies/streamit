@@ -1,0 +1,100 @@
+#!/usr/bin/perl -w
+#
+# knit: StreamIt compiler wrapper
+# David Maze <dmaze@cag.lcs.mit.edu>
+# $Id: knit,v 1.1 2002-06-12 19:38:04 dmaze Exp $
+#
+
+use strict;
+use vars qw(%opts);
+
+use Getopt::Long;
+
+get_options() or die "Error parsing options";
+if ($opts{help})
+  {
+    usage(\*STDOUT);
+    exit(0);
+  }
+my $fns = \@ARGV;
+$fns = new_to_old($fns) unless $opts{java};
+$fns = old_to_c($fns);
+c_to_out($fns, $opts{output});
+exit(0);
+
+sub usage
+  {
+    my ($fh) = @_;
+    print $fh <<'EOT';
+knit: StreamIt compiler wrapper
+
+Usage: knit [options] file.str ...
+	
+Options:
+  --help              Show this screen
+  --java              Input file is "old" syntax
+  --output filename   Write a binary to filename
+  --verbose           Print commands as they are executed 
+EOT
+}
+
+sub get_options
+  {
+    $opts{home} = $ENV{STREAMIT_HOME};
+    $opts{output} = "a.out";
+    GetOptions(\%opts,
+	       "help",
+	       "java!",
+	       "output|o=s",
+	       "verbose|v");
+  }
+
+sub call
+  {
+    my ($cmd) = @_;
+    print "$cmd\n" if $opts{verbose};
+    return system($cmd);
+  }
+
+sub change_extension
+  {
+    my ($old, $from, $to) = @_;
+    my $fn = $old;
+    $fn =~ s/.$from$//;
+    $fn .= ".$to";
+    return $fn;
+  }
+
+sub new_to_old
+  {
+    my ($fns) = @_;
+    my @out = ();
+    foreach my $str (@$fns)
+      {
+	my $java = change_extension($str, "str", "java");
+	call("java streamit.frontend.ToJava < $str > $java");
+	push @out, $java;
+      }
+    return \@out;
+  }
+
+sub old_to_c
+  {
+    my ($fns) = @_;
+    my @out = ();
+    foreach my $java (@$fns)
+      {
+	my $c = change_extension($java, "java", "c");
+	call("java at.dms.kjc.Main -s $java > $c");
+	push @out, $c;
+      }
+    return \@out;
+  }
+
+sub c_to_out
+  {
+    my ($fns, $target) = @_;
+    my $sh = $opts{home};
+    call("gcc -o$target -I$sh/library/c " . join(' ', @$fns) .
+	 " -L$sh/library/c -lstreamit");
+  }

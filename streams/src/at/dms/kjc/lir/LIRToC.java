@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.25 2001-10-25 22:31:33 mgordon Exp $
+ * $Id: LIRToC.java,v 1.26 2001-10-26 21:19:19 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -209,28 +209,47 @@ public class LIRToC
                                           CClassType[] interfaces,
                                           JPhylum[] body,
                                           JMethodDeclaration[] methods) {
-        newLine();
-        print(CModifier.toString(modifiers));
-        print("interface " + ident);
-
-        if (interfaces.length != 0) {
-            print(" extends ");
-            for (int i = interfaces.length - 1; i >= 0; i--) {
-                print((i == 0 ? "" : ",") + interfaces[i]);
-            }
-        }
-
-        print(" {");
-        pos += TAB_SIZE;
-        for (int i = 0; i < body.length; i++) {
-            body[i].accept(this);
-        }
+        /* If an interface declaration gets through this far, it means
+         * that there is a portal interface that can have messages sent
+         * through it.  We can ignore everything about the interface
+         * but the methods.  For each method, we need to generate a
+         * parameter structure and a correct send_message() wrapper. */
         for (int i = 0; i < methods.length; i++) {
-            methods[i].accept(this);
-        }
-        pos -= TAB_SIZE;
-        newLine();
-        print("}");
+            CMethod mth = methods[i].getMethod();
+            CType[] params = mth.getParameters();
+            String name = ident + "_" + methods[i].getName();
+            String pname = name + "_params";
+
+            // Print the parameter structure.
+            newLine();
+            print("typedef struct " + pname + " {");
+            pos += TAB_SIZE;
+            for (int j = 0; j < params.length; j++) {
+                newLine();
+                print(params[j] + " p" + j + ";");
+            }
+            pos -= TAB_SIZE;
+            newLine();
+            print("} _" + pname + ", *" + pname + ";");
+
+            // And now print a wrapper for send_message().
+            newLine();
+            print("void send_" + name + "(portal *p, latency l");
+            for (int j = 0; j < params.length; j++) {
+                print(", " + params[j] + " p" + j);
+            }
+            print(") {");
+            pos += TAB_SIZE;
+            newLine();
+            print(pname + " q = malloc(sizeof(_" + pname + "));");
+            for (int j = 0; j < params.length; j++) {
+                newLine();
+                print("q->p" + j + " = p" + j + ";");
+            }
+            newLine();
+            print("send_message(p, " + i + ", l, q);");
+            pos -= TAB_SIZE;
+        }        
     }
 
     // ----------------------------------------------------------------------

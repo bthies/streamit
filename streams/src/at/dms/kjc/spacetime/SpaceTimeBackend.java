@@ -382,6 +382,8 @@ public class SpaceTimeBackend
 	  //System.out.println(traceList);
 	  } else */
 
+	Trace[] io=null;
+
 	if(true&&REAL) {
 	    int len=traceGraph.length;
 	    int newLen=len;
@@ -389,11 +391,15 @@ public class SpaceTimeBackend
 		if(((FilterTraceNode)traceGraph[i].getHead().getNext()).isPredefined())
 		    newLen--;
 	    traces=new Trace[newLen];
+	    io=new Trace[len-newLen];
 	    int idx=0;
+	    int idx2=0;
 	    for(int i=0;i<len;i++) {
 		Trace trace=traceGraph[i];
 		if(!((FilterTraceNode)trace.getHead().getNext()).isPredefined())
 		    traces[idx++]=trace;
+		else
+		    io[idx2++]=trace;
 	    }
 	    System.out.println("Traces: "+traces.length);
 	    for(int i=0;i<traces.length;i++)

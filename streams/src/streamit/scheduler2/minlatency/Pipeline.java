@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.7 2002-12-02 23:54:12 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.8 2003-03-13 23:17:10 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -107,6 +107,17 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
         int dataInBuffers[],
         boolean forcedPull)
     {
+		// if only one child, just add all the appropriate phases!
+		// BUGBUG this is a HACK!
+		if (getNumChildren() == 1) {
+			while (childrenExecs[0] != 0) {
+				utility.addSchedulePhase(
+					utility.getChildNextPhase(getHierarchicalChild(0)));
+				childrenExecs[0]--;
+			}
+			return;
+		}
+		
         // reset the buffer below the pipeline (it's not actually used
         // for any computation)
         dataInBuffers[getNumChildren()] = 0;

@@ -11,7 +11,8 @@ NAMES =		init_instance \
 		mysocket \
 		open_socket \
 		timer \
-		sdep
+		sdep \
+		message
 
 OBJS = 		$(NAMES:%=%.o)
 OBJSP =         $(NAMES:%=%_p.o)

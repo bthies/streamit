@@ -3,15 +3,15 @@
 #define __SDEP_H
 
 class sdep {
-
+  
   int numInitSrcExec;
   int numInitDstExec;
-
+  
   int numSteadySrcExec;
   int numSteadyDstExec;
-
+  
   int* dst2srcDependency;
-
+  
 public:
 
   sdep(int initSrc, int initDst, int steadySrc, int steadyDst);

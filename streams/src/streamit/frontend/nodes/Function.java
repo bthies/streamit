@@ -1,7 +1,7 @@
 /*
  * Function.java: a generic function declaration
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Function.java,v 1.3 2002-11-19 21:11:04 dmaze Exp $
+ * $Id: Function.java,v 1.4 2002-11-20 20:19:23 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -24,6 +24,7 @@ public class Function extends FENode
     public static final int FUNC_HANDLER = 3;
     public static final int FUNC_HELPER = 4;
     public static final int FUNC_CONST_HELPER = 5;
+    public static final int FUNC_BUILTIN_HELPER = 6;
     
     private int cls;
     private String name; // or null

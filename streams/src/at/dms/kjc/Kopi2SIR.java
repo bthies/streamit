@@ -276,6 +276,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    parentStream = current;
 	    return current;
 	}
+        if (TYPE.equals("PhasedFilter")) {
+            SIRPhasedFilter current = new SIRPhasedFilter();
+            current.setParent((SIRContainer)parentStream);
+            current.setIdent(clazz.getIdent());
+            current.setInputType(CStdType.Void);
+            current.setOutputType(CStdType.Void);
+            parentStream = current;
+            return current;
+        }
 	if (TYPE.equals("FeedbackLoop")) {
 	    SIRFeedbackLoop current = new SIRFeedbackLoop();
 	    current.setParent((SIRContainer)parentStream);

@@ -26,7 +26,39 @@ public class StreamIt extends Pipeline
                 if (printdot) System.out.print (".");
                 numExecutions = 0;
             }
-            ((Operator) schedule).work ();
+            int inputCount = 0, outputCount = 0;
+            if (schedule instanceof Stream)
+            {
+                Stream stream = (Stream) schedule;
+                if (stream.getInputChannel () != null)
+                {
+                	inputCount = stream.getInputChannel ().getItemsPopped ();
+                }
+                if (stream.getOutputChannel () != null)
+                {
+                	outputCount = stream.getOutputChannel ().getItemsPushed ();
+                }
+            }
+            
+            Operator oper = (Operator)schedule;
+            oper.work ();
+            
+            if (schedule instanceof Stream)
+            {
+                Stream stream = (Stream) schedule;
+                int newInputCount, newOutputCount;
+                if (stream.getInputChannel () != null)
+                {
+                	newInputCount = stream.getInputChannel ().getItemsPopped ();
+                	ASSERT (newInputCount - inputCount == stream.getInputChannel ().getPopCount()); 
+                }
+                if (stream.getOutputChannel () != null)
+                {
+                	newOutputCount = stream.getOutputChannel ().getItemsPushed ();
+                	ASSERT (newOutputCount - outputCount == stream.getOutputChannel ().getPushCount()); 
+                }
+                
+            }
         } else
         if (schedule instanceof List)
         {

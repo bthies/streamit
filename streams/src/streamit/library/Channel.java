@@ -18,6 +18,8 @@ public class Channel extends DestroyedClass
 
     int maxSize = -1;
     boolean passThrough = false;
+    
+    int totalItemsPushed = 0, totalItemsPopped = 0;
 
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
@@ -83,6 +85,8 @@ public class Channel extends DestroyedClass
     private void enqueue (Object o)
     {
         queue.addLast (o);
+        
+		totalItemsPushed++;
 
         // overflow at 50 chars in the queue
         if (queue.size () > 100 && !declaredFull)
@@ -96,7 +100,7 @@ public class Channel extends DestroyedClass
 		"Expecting queue.size () <= maxSize || maxSize == -1,\n" +
 		"   but queue.size()==" + queue.size() + " and maxSize==" + 
 		maxSize);
-
+		
         if (passThrough) sink.work ();
     }
 
@@ -104,15 +108,19 @@ public class Channel extends DestroyedClass
     {
         if (queue.size () < 50 && declaredFull)
         {
-                source.removeFullChannel (this);
+            source.removeFullChannel (this);
             declaredFull = false;
         }
+
+        totalItemsPopped++;
 
         return queue.removeFirst ();
     }
 
 
     // PUSH OPERATIONS ----------------------------------------------
+    
+    public int getItemsPushed () { return totalItemsPushed; }
 
     // push something of type <type>
     public void push(Object o)
@@ -170,6 +178,8 @@ public class Channel extends DestroyedClass
 
     // POP OPERATIONS ----------------------------------------------
 
+    public int getItemsPopped () { return totalItemsPopped; }
+
     // pop something of type <type>
     public Object pop()
     {
@@ -178,7 +188,7 @@ public class Channel extends DestroyedClass
         Object data;
         data = dequeue ();
         ASSERT (data != null);
-
+        
         return data;
     }
 

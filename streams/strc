@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.14 2003-10-06 20:58:23 dmaze Exp $
+# $Id: strc,v 1.15 2003-10-07 02:39:47 thies Exp $
 #
 
 use strict;
@@ -92,6 +92,7 @@ Options available for all backends:
 + --destroyfieldarray Break arrays in structures into component elements
 * --clone-with-serialization
 *                     Use old serialization code to copy objects
++ --debug             Output debugging information in the compiler
 + --fusion, -f        Fuse entire program to a single filter
 + --fission           Do vertical fission up to limit of argument
   --linearreplacement, -l
@@ -171,6 +172,7 @@ sub get_options
 			    "altcodegen|z",
 			    "atlas!",
 			    "clone-with-serialization|clone_with_serialization",
+			    "debug!",
 			    "decoupled|X",
 			    "dpscaling|Y",
 			    "fission|fission=i",
@@ -397,6 +399,7 @@ sub get_kjc_opts
     $opts{altcodegen} && ($kjcopts .= " -z");
     $opts{atlas} && ($kjcopts .= " -E");
     $opts{'clone-with-serialization'} && ($kjcopts .= " -K");
+    $opts{debug} && ($kjcopts .= " --debug");
     $opts{decoupled} && ($kjcopts .= " -X");
     $opts{dpscaling} && ($kjcopts .= " -Y");
     $opts{frequencyreplacement} && ($kjcopts .= " -F");

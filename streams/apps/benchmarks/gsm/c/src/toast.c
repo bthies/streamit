@@ -4,12 +4,13 @@
  * details.  THERE IS ABSOLUTELY NO WARRANTY FOR THIS SOFTWARE.
  */
 
-/* $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/apps/benchmarks/gsm/c/src/toast.c,v 1.1 2001-11-01 00:20:06 thies Exp $ */
+/* $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/apps/benchmarks/gsm/c/src/toast.c,v 1.2 2002-07-30 15:05:19 aalamb Exp $ */
 
 #include	"toast.h"
 
 /*  toast -- lossy sound compression using the gsm library.
  */
+
 
 char   * progname;
 
@@ -319,79 +320,16 @@ static void update_mode P0()
 {
 	if (!instat.st_nlink) return;		/* couldn't stat in */
 
-#ifdef HAS_FCHMOD
-	if (fchmod(fileno(out), instat.st_mode & 07777)) {
-		perror(outname);
-		fprintf(stderr, "%s: could not change file mode of \"%s\"\n",
-			progname, outname);
-	}
-#else 
-#ifdef HAS_CHMOD
-	if (outname && chmod(outname, instat.st_mode & 07777)) {
-		perror(outname);
-		fprintf(stderr, "%s: could not change file mode of \"%s\"\n",
-			progname, outname);
-	}
-#endif /* HAS_CHMOD  */
-#endif /* HAS_FCHMOD */
 }
 
 static void update_own P0()
 {
 	if (!instat.st_nlink) return; /* couldn't stat in */
-#ifdef HAS_FCHOWN
-	(void)fchown(fileno(out), instat.st_uid, instat.st_gid);
-#else 
-#ifdef HAS_CHOWN
-	(void)chown(outname, instat.st_uid, instat.st_gid);
-#endif /* HAS_CHOWN  */
-#endif /* HAS_FCHOWN */
 }
 
 static void update_times P0()
 {
 	if (!instat.st_nlink) return; 	/* couldn't stat in */
-
-#ifdef HAS_UTIMES
-	if (outname) {
-		struct timeval tv[2];
-
-		tv[0].tv_sec  = instat.st_atime;
-		tv[1].tv_sec  = instat.st_mtime;
-		tv[0].tv_usec = tv[1].tv_usec = 0;
-		(void) utimes(outname, tv);
-	}
-#else
-#ifdef HAS_UTIME
-
-	if (outname) {
-
-#ifdef	HAS_UTIMBUF
-		struct utimbuf ut;
-
-		ut.actime     = instat.st_atime;
-		ut.modtime    = instat.st_mtime;
-
-#	ifdef	HAS_UTIMEUSEC
-		ut.acusec     = instat.st_ausec;
-		ut.modusec    = instat.st_musec;
-#	endif 	/* HAS_UTIMEUSEC */
-
-		(void) utime(outname, &ut);
-
-#else /* UTIMBUF */
-
-		time_t ut[2];
-
-		ut[0] = instat.st_atime;
-		ut[1] = instat.st_mtime;
-
-		(void) utime(outname, ut);
-
-#endif	/* UTIMBUF */
-	}
-#endif /* HAS_UTIME */
-#endif /* HAS_UTIMES */
 }
 
 
@@ -710,7 +648,7 @@ static void version P0()
 {
 	printf( "%s 1.0, version %s\n",
 		progname,
-		"$Id: toast.c,v 1.1 2001-11-01 00:20:06 thies Exp $" );
+		"$Id: toast.c,v 1.2 2002-07-30 15:05:19 aalamb Exp $" );
 }
 
 static void help P0()
@@ -755,6 +693,8 @@ int main P2((ac, av), int ac, char **av)
 	int  		opt;
 	extern int	optind;
 	extern char	* optarg;
+
+	printf("In main...\n");
 
 	parse_argv0(*av);
 

@@ -1,0 +1,10 @@
+Hand-written StreaMIT compilation examples
+==========================================
+
+streams/docs/examples/hand contains hand-written examples of how the
+StreaMIT compilation might work.  In general, the C and Java code
+should be compilable against the respective run-time libraries.
+The StreaMIT code should be compilable to something structurally
+similar to the provided C and Java source.
+
+$Id: README,v 1.1 2001-09-25 15:03:57 dmaze Exp $

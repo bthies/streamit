@@ -7,9 +7,15 @@ package grapheditor;
 import java.util.*;
 import java.io.*;
 
+import java.awt.Rectangle;
+
 //import com.sun.rsasign.t;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+
 
 /**
  * Graph data structure that has GEStreamNode objects as its nodes. 
@@ -20,9 +26,18 @@ public class GraphStructure implements Serializable{
 	private HashMap graph;
 	private ConnectionSet cs;
 	private ArrayList cells;
-	private Map globalAttributes;
+	private Hashtable globalAttributes;
 	private DefaultGraphModel model;
 	private JGraph jgraph;
+	
+	
+	private int x;
+	private int y;
+	private int width;
+	private int height;
+	
+	
+	
 	
 	// The toplevel GEStreamNode. Typically it should be a GEPipeline object.  
 	private GEStreamNode topLevel;
@@ -39,6 +54,12 @@ public class GraphStructure implements Serializable{
 		cs = new ConnectionSet();
 		cells = new ArrayList();
 		globalAttributes= new Hashtable();
+		model = new DefaultGraphModel();
+		jgraph = new JGraph(model);
+		x = 20;
+		y = 20;
+		width = 50;
+		height = 50;
 	}
 	
 	public GraphStructure()
@@ -49,6 +70,12 @@ public class GraphStructure implements Serializable{
 		globalAttributes= new Hashtable();
 		model = new DefaultGraphModel();
 		jgraph = new JGraph(model);
+		x = 20;
+		y = 20;
+		width = 50;
+		height = 50;
+		
+		
 	}
 	
 	/**
@@ -103,6 +130,14 @@ public class GraphStructure implements Serializable{
 	{
 		this.topLevel.construct(this);
 		model.insert(cells.toArray(), globalAttributes, cs, null, null);
+		
+		// Testing drawing of components by using JFrames
+		JFrame frame = new JFrame();
+		frame.getContentPane().add(new JScrollPane(jgraph));
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.pack();
+		frame.setVisible(true);
+		
 	}
 	
 	
@@ -139,6 +174,21 @@ public class GraphStructure implements Serializable{
 				
 		cells.add(edge);	
 	}
+
+	public Rectangle setRectCoords()
+	{
+		return new Rectangle(x + 50, y + 50, width, height);
+	}
+
+	public ArrayList getCells()
+	{
+		return this.cells;
+	}
 	
+	public Hashtable getAttributes()
+	{
+		return this.globalAttributes;
+		
+	}
 }
 

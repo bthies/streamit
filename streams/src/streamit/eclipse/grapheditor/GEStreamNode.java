@@ -9,7 +9,7 @@ import java.util.*;
 import java.io.*;
 
 import com.jgraph.graph.*;
-
+import com.jgraph.graph.DefaultGraphCell;
 
 /**
  * GEStremaNode is the graph internal representation of a node. .
@@ -24,6 +24,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 
 	public GEStreamNode(String type, String name)
 	{
+		super();
 		System.out.println("Constructing the stream node");
 		this.type = type;
 		this.children = new ArrayList();

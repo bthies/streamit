@@ -49,7 +49,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 				System.out.println("Connecting " + lastNode.getName()+  " to "+ strNode.getName());
 				
 				// TO BE ADDED
-				// connectDraw(lastNode, strNode);
+				graphStruct.connectDraw(lastNode, strNode);
 				
 				
 				

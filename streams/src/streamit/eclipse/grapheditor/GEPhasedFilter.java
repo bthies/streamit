@@ -7,7 +7,7 @@
 package grapheditor;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
 
 import com.jgraph.graph.*;
@@ -35,11 +35,8 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		/* *************************************************************************
 		 * Creation of the JGraph components necessary to draw the stream structure
 		*/
-		this.port = new DefaultPort();
-		this.add(this.port);
-		GraphConstants.setBorder(this.attributes , BorderFactory.createRaisedBevelBorder());
-		GraphConstants.setBounds(this.attributes, new Rectangle(100,100,100,100));
-		GraphConstants.setBackground(this.attributes, Color.blue);
+		
+		
 		/* ***********************************************************
 		*/
 	}
@@ -89,7 +86,18 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	public GEStreamNode construct(GraphStructure graphStruct)
 	{
 		System.out.println("Constructing the filter " +this.getName());
+		
+		(graphStruct.getAttributes()).put(this, this.attributes);
+		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords());
+		GraphConstants.setBorder(this.attributes , BorderFactory.createRaisedBevelBorder());
+		GraphConstants.setBackground(this.attributes, Color.blue);
+		
+		this.port = new DefaultPort();
+		this.add(this.port);
+		
+		graphStruct.getCells().add(this);
 		this.draw();	
+		
 		return this;
 	}
 	

@@ -1,0 +1,60 @@
+/*
+ * UpDown.str: demo app demonstrating StreamIt messaging
+ * David Maze <dmaze@cag.lcs.mit.edu>
+ * $Id: UpDown.str,v 1.1 2003-07-03 18:38:16 dmaze Exp $
+ */
+
+void->int filter Counter
+{
+  int incr;
+  int x;
+
+  init {
+    incr = 1;
+    x = 0;
+  }
+
+  work push 1 {
+    push(x);
+    x += incr;
+  }
+
+  handler setIncr(int i) {
+    incr = i;
+  }
+}
+
+int->int filter Detector(portal<Counter> p)
+{
+  int incr;
+
+  init {
+    incr = 1;
+  }
+
+  work pop 1 push 1 {
+    int i = pop();
+    if (incr > 0 && i == 10) {
+      incr = -1;
+      p.setIncr(-1);
+    }
+    if (incr < 0 && i == 0) {
+      incr = 1;
+      p.setIncr(1);
+    }
+    push(i);
+  }
+}
+
+int->void filter IntSink
+{
+  work pop 1 { print(pop()); }
+}
+
+void->void pipeline UpDown
+{
+  portal<Counter> p;
+  add Counter to p;
+  add Detector(p);
+  add IntSink;
+}

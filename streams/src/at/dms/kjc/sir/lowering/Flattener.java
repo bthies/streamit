@@ -102,6 +102,9 @@ public class Flattener {
 	    FieldProp.doPropagate(str);
 	}
 
+	// move field initializations into init function
+	FieldInitMover.moveStreamInitialAssignments(str);
+
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();

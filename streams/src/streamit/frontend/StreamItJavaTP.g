@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.27 2002-08-15 14:50:34 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.28 2002-08-15 19:22:15 dmaze Exp $
  */
 
 header {
@@ -668,6 +668,9 @@ minic_binary_expr returns [Expression x]
 		| #(STAR { o = ExprBinary.BINOP_MUL; } l=expression r=expression)
 		| #(DIV { o = ExprBinary.BINOP_DIV; } l=expression r=expression)
 		| #(MOD { o = ExprBinary.BINOP_MOD; } l=expression r=expression)
+		| #(BITWISE_AND { o = ExprBinary.BINOP_BAND; } l=expression r=expression)
+		| #(BITWISE_OR { o = ExprBinary.BINOP_BOR; } l=expression r=expression)
+		| #(BITWISE_XOR { o = ExprBinary.BINOP_BXOR; } l=expression r=expression)
 		| #(LOGIC_AND { o = ExprBinary.BINOP_AND; } l=expression r=expression)
 		| #(LOGIC_OR { o = ExprBinary.BINOP_OR; } l=expression r=expression)
 		| #(EQUAL { o = ExprBinary.BINOP_EQ; } l=expression r=expression)

@@ -291,6 +291,11 @@ abstract class DPConfigContainer extends DPConfig {
 	assert x1<=x2: "x1=" + x1 + " > x2= " + x2 + " with y1= " + y1 +
             " and y2=" + y2 + " in " + cont;
 
+	// consider ourselves to be next to a joiner if we don't care about joiners
+	if (!partitioner.joinersNeedTiles()) {
+	    nextToJoiner = 1;
+	}
+
 	// if we've exceeded the width of this node, then trim down to actual width
 	if (x2>maxWidth[y1][y2]-1) {
 	    x2 = maxWidth[y1][y2]-1;
@@ -594,6 +599,11 @@ abstract class DPConfigContainer extends DPConfig {
 	assert x1<=x2:
             "x1=" + x1 + " > x2= " + x2 +
             " with y1= " + y1 + " and y2=" + y2 + " in " + cont;
+
+	// consider ourselves to be next to a joiner if we don't care about joiners
+	if (!partitioner.joinersNeedTiles()) {
+	    nextToJoiner = 1;
+	}
 
 	// if we've exceeded the width of this node, then trim down to actual width
 	if (x2>maxWidth[y1][y2]-1) {

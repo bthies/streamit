@@ -29,6 +29,11 @@ class DPConfigFilter extends DPConfig {
     }
 
     public DPCost get(int tileLimit, int nextToJoiner) {
+	// consider ourselves to be next to a joiner if we don't care about joiners
+	if (!partitioner.joinersNeedTiles()) {
+	    nextToJoiner = 1;
+	}
+
 	int workCount = partitioner.getWorkEstimate().getWork(filter);
 	// return decreased work if we're fissable
 	int cost;
@@ -66,6 +71,11 @@ class DPConfigFilter extends DPConfig {
      * Add this to the map and return.
      */
     public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
+	// consider ourselves to be next to a joiner if we don't care about joiners
+	if (!partitioner.joinersNeedTiles()) {
+	    nextToJoiner = 1;
+	}
+
 	// do fission if we can
 	int tff = tilesForFission(tileLimit, nextToJoiner);
 	if (tff>1 && isFissable

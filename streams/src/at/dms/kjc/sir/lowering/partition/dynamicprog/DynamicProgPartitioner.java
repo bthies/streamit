@@ -56,20 +56,34 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     private HashSet uniformSJ;
 
-    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles) {
+    /**
+     * Whether or not joiners need a tile.
+     */
+    private boolean joinersNeedTiles;
+
+    /**
+     * <joinersNeedTiles> indicates whether or not joiners in the graph
+     * require a tile in the allocation.  If false, joiners will be
+     * counted as free.  If true, a tile will be allocated to each
+     * joiner, though adjacent joiners will be considered as collapsed
+     * into one.
+     */
+    public DynamicProgPartitioner(SIRStream str, WorkEstimate work, int numTiles, boolean joinersNeedTiles) {
 	super(str, work, numTiles);
+	this.joinersNeedTiles = joinersNeedTiles;
 	this.configMap = new HashMap();
 	this.uniformSJ = new HashSet();
     }
 
     /**
-     * Collect scaling statistics for all partitions 1...<maxTiles>.
+     * Collect scaling statistics for all partitions 1...<maxTiles>,
+     * assuming joiners need tiles.
      */
     public static void saveScalingStatistics(SIRStream str, WorkEstimate work, int maxTiles) {
 	PartitionUtil.setupScalingStatistics();
 	for (int i=1; i<maxTiles; i++) {
 	    LinkedList partitions = new LinkedList();
-	    new DynamicProgPartitioner(str, work, i).calcPartitions(partitions, false);
+	    new DynamicProgPartitioner(str, work, i, true).calcPartitions(partitions, false);
 	    PartitionUtil.doScalingStatistics(partitions, i);
 	}
 	PartitionUtil.stopScalingStatistics();
@@ -227,6 +241,13 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	// add all from <unshared> to <configMap> (don't do above to
 	// avoid modifying what we're iterating over)
 	configMap.putAll(unshared);
+    }
+
+    /**
+     * Whether or not joiners in this need a tile.
+     */
+    public boolean joinersNeedTiles() {
+	return this.joinersNeedTiles;
     }
 
     public DPConfig getConfig(SIRStream str) {

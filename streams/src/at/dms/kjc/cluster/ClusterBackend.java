@@ -141,10 +141,10 @@ public class ClusterBackend implements FlatVisitor {
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {
 	    KjcOptions.partition_dp = true;
-	    str = Partitioner.doit(str, 0, threads);
+	    str = Partitioner.doit(str, 0, threads, false);
 	}
 	HashMap partitionMap = new HashMap();
-	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
+	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false).calcPartitions(partitionMap);
 	System.err.println("Done Partitioning...");
 
 	if (KjcOptions.sjtopipe) {

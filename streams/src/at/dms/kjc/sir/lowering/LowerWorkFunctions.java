@@ -20,21 +20,11 @@ public class LowerWorkFunctions implements StreamVisitor
     
     private void addEntryExit(JMethodDeclaration method)
     {
-        // add the entry node after all of the variable declarations
-        int pos = 0;
-        Iterator statements = method.getStatementIterator();
-        while (statements.hasNext()) {
-            JStatement stmt = (JStatement)statements.next();
-            if (!(stmt instanceof JVariableDeclarationStatement))
-            {
-                List newStmts = new LinkedList();
-                newStmts.add(new LIRWorkEntry
-                             (LoweringConstants.getStreamContext()));
-                method.addAllStatements(pos, newStmts);
-                break;
-            }
-            pos++;
-        }
+        // add the entry node before the variable declarations, since
+        // the variable declarations might include initializations
+        // that read from the input tape.
+	method.addStatementFirst(new LIRWorkEntry
+				 (LoweringConstants.getStreamContext()));
         // append an exit node
         method.addStatement(new LIRWorkExit
                             (LoweringConstants.getStreamContext()));
@@ -71,6 +61,10 @@ public class LowerWorkFunctions implements StreamVisitor
 	}
         // add entry/exit nodes to work function
         addEntryExit(work);
+	// add entry/exit nodes to initial work function, if there is one
+	if (self.getInitWork()!=null) {
+	    addEntryExit(self.getInitWork());
+	}
     }
   
     /* visit a splitter */
@@ -102,7 +96,10 @@ public class LowerWorkFunctions implements StreamVisitor
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
 				 List elements) {
-	// don't do anything--visit on the way up
+	// add entry/exit nodes to initial work function, if there is one
+	if (self.getInitWork()!=null) {
+	    addEntryExit(self.getInitWork());
+	}
     }
   
     /* pre-visit a splitjoin */
@@ -111,7 +108,10 @@ public class LowerWorkFunctions implements StreamVisitor
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
-	// don't do anything--visit on the way up
+	// add entry/exit nodes to initial work function, if there is one
+	if (self.getInitWork()!=null) {
+	    addEntryExit(self.getInitWork());
+	}
     }
   
     /* pre-visit a feedbackloop */
@@ -122,7 +122,10 @@ public class LowerWorkFunctions implements StreamVisitor
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
-	// don't do anything--visit on the way up
+	// add entry/exit nodes to initial work function, if there is one
+	if (self.getInitWork()!=null) {
+	    addEntryExit(self.getInitWork());
+	}
     }
   
     /**

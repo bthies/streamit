@@ -22,6 +22,11 @@ public class Pipeline extends Stream
      */
     public Pipeline (int n) { super (n); }
 
+    /** 
+     * Constructor with a float.
+     */
+    public Pipeline (float x) { super(x);}
+
     /**
      * Constructor with two ints.
      */

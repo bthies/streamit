@@ -13,7 +13,7 @@ float->float filter CombineDFT(int n) {
 
   init {
     wn_r = (float)cos(2 * 3.141592654 / n);
-    wn_i = (float)sin(2 * 3.141592654 / n);
+    wn_i = (float)sin(-2 * 3.141592654 / n);
   }
 
   work push 2*n pop 2*n {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.2 2001-09-28 03:07:01 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.3 2001-09-28 03:08:56 thies Exp $
  */
 
 package at.dms.kjc;
@@ -67,10 +67,7 @@ public class JClassDeclaration extends JTypeDeclaration {
 			   JavaStyleComment[] comment)
   {
     super(where, modifiers, ident, interfaces, fields, methods, inners, initializers, javadoc, comment);
-    this.superClass = superClass;
-    if (superClass!=null) {
-	this.superName = superClass.toString();
-    }
+    setSuperClass(superClass);
   }
 
   // ----------------------------------------------------------------------
@@ -82,6 +79,9 @@ public class JClassDeclaration extends JTypeDeclaration {
    */
   public void setSuperClass(CClassType superClass) {
     this.superClass = superClass;
+    if (superClass!=null) {
+	this.superName = superClass.toString();
+    }
   }
 
   /**
@@ -107,7 +107,7 @@ public class JClassDeclaration extends JTypeDeclaration {
 	// superClass = null;
 	// superClass1 = null;
       } else {
-	superClass = CStdType.Object;
+	  setSuperClass(CStdType.Object);
       }
     } else {
       try {

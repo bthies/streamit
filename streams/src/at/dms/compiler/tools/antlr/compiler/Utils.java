@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.1 2001-08-30 16:32:36 thies Exp $
+ * $Id: Utils.java,v 1.2 2002-12-18 06:28:40 karczma Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -28,7 +28,7 @@ import java.io.IOException;
 
 import at.dms.compiler.tools.antlr.runtime.FileLineFormatter;
 
-public class Utils extends at.dms.util.Utils {
+public class Utils extends at.dms.compiler.tools.common.Utils {
 
   /**
    * Returns the pathname string of this abstract pathname's parent.

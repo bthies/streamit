@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: DefinitionFile.java,v 1.1 2001-08-30 16:32:43 thies Exp $
+ * $Id: DefinitionFile.java,v 1.2 2002-12-18 06:28:55 karczma Exp $
  */
 
 package at.dms.compiler.tools.lexgen;
@@ -29,11 +29,11 @@ import java.io.PrintWriter;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import at.dms.compiler.CompilerMessages;
-import at.dms.compiler.PositionedError;
-import at.dms.compiler.TokenReference;
+import at.dms.compiler.tools.common.CompilerMessages;
+import at.dms.compiler.tools.common.PositionedError;
+import at.dms.compiler.tools.common.TokenReference;
 import at.dms.compiler.tools.antlr.runtime.ParserException;
-import at.dms.util.Utils;
+import at.dms.compiler.tools.common.Utils;
 
 class DefinitionFile {
 

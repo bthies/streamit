@@ -15,14 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MsggenError.java,v 1.1 2001-08-30 16:32:45 thies Exp $
+ * $Id: MsggenError.java,v 1.2 2002-12-18 06:28:58 karczma Exp $
  */
 
 package at.dms.compiler.tools.msggen;
 
-import at.dms.util.FormattedException;
-import at.dms.util.Message;
-import at.dms.util.MessageDescription;
+import at.dms.compiler.tools.common.FormattedException;
+import at.dms.compiler.tools.common.Message;
+import at.dms.compiler.tools.common.MessageDescription;
 
 /**
  * Error thrown on problems encountered while running the program.

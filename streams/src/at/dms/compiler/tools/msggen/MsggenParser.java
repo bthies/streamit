@@ -4,8 +4,8 @@ import at.dms.compiler.tools.antlr.runtime.*;
 
   import java.util.Vector;
 
-  import at.dms.util.MessageDescription;
-  import at.dms.util.Utils;
+  import at.dms.compiler.tools.common.MessageDescription;
+  import at.dms.compiler.tools.common.Utils;
 
 public class MsggenParser extends at.dms.compiler.tools.antlr.runtime.LLkParser
        implements MsggenTokenTypes

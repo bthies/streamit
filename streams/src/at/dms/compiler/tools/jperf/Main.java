@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.1 2001-08-30 16:32:42 thies Exp $
+ * $Id: Main.java,v 1.2 2002-12-18 06:28:52 karczma Exp $
  */
 
 package at.dms.compiler.tools.jperf;
@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Vector;
 
-import at.dms.util.Utils;
+import at.dms.compiler.tools.common.Utils;
 
 /**
  * Main is the main driver of the package.

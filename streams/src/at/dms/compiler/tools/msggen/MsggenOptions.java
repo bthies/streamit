@@ -4,7 +4,7 @@ package at.dms.compiler.tools.msggen;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-public class MsggenOptions extends at.dms.util.Options {
+public class MsggenOptions extends at.dms.compiler.tools.common.Options {
 
   public MsggenOptions(String name) {
     super(name);

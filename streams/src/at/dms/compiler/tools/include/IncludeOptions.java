@@ -4,7 +4,7 @@ package at.dms.compiler.tools.include;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-public class IncludeOptions extends at.dms.util.Options {
+public class IncludeOptions extends at.dms.compiler.tools.common.Options {
 
   public IncludeOptions(String name) {
     super(name);

@@ -15,19 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Parser.java,v 1.1 2001-08-30 16:32:38 thies Exp $
+ * $Id: Parser.java,v 1.2 2002-12-18 06:28:43 karczma Exp $
  */
 
 package at.dms.compiler.tools.antlr.extra;
 
 import java.util.Vector;
 
-import at.dms.compiler.Compiler;
-import at.dms.compiler.CompilerMessages;
-import at.dms.compiler.JavaStyleComment;
-import at.dms.compiler.JavadocComment;
-import at.dms.compiler.PositionedError;
-import at.dms.compiler.TokenReference;
+import at.dms.compiler.tools.common.Compiler;
+import at.dms.compiler.tools.common.CompilerMessages;
+import at.dms.compiler.tools.common.JavaStyleComment;
+import at.dms.compiler.tools.common.JavadocComment;
+import at.dms.compiler.tools.common.PositionedError;
+import at.dms.compiler.tools.common.TokenReference;
 import at.dms.compiler.tools.antlr.runtime.LLkParser;
 import at.dms.compiler.tools.antlr.runtime.ParserException;
 

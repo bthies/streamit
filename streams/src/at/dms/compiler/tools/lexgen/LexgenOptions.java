@@ -4,7 +4,7 @@ package at.dms.compiler.tools.lexgen;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-public class LexgenOptions extends at.dms.util.Options {
+public class LexgenOptions extends at.dms.compiler.tools.common.Options {
 
   public LexgenOptions(String name) {
     super(name);

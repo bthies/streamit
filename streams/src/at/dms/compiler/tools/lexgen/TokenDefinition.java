@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenDefinition.java,v 1.1 2001-08-30 16:32:43 thies Exp $
+ * $Id: TokenDefinition.java,v 1.2 2002-12-18 06:28:55 karczma Exp $
  */
 
 package at.dms.compiler.tools.lexgen;
@@ -179,7 +179,7 @@ class TokenDefinition {
   // DATA MEMBERS
   // --------------------------------------------------------------------
 
-  private static final String		TOKEN_CLASS = "at.dms.compiler.tools.antlr.extra.CToken";
+  private static final String		TOKEN_CLASS = "at.dms.compiler.antlr.extra.CToken";
   private static final String		TOKEN_PREFIX = "TOKEN_";
 
   private final int			type;

@@ -4,7 +4,7 @@ import at.dms.compiler.tools.antlr.runtime.*;
 
   import java.util.Vector;
 
-  import at.dms.util.Utils;
+  import at.dms.compiler.tools.common.Utils;
 
 public class OptgenParser extends at.dms.compiler.tools.antlr.runtime.LLkParser
        implements OptgenTokenTypes

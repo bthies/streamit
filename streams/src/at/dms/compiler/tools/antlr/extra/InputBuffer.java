@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: InputBuffer.java,v 1.1 2001-08-30 16:32:38 thies Exp $
+ * $Id: InputBuffer.java,v 1.2 2002-12-18 06:28:43 karczma Exp $
  */
 
 package at.dms.compiler.tools.antlr.extra;
@@ -28,7 +28,7 @@ import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.io.Reader;
 
-import at.dms.util.UnicodeReader;
+import at.dms.compiler.tools.common.UnicodeReader;
 
 /**
  * Handles the input of compiler source code to the scanner.

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaCodeGenerator.java,v 1.1 2001-08-30 16:32:35 thies Exp $
+ * $Id: JavaCodeGenerator.java,v 1.2 2002-12-18 06:28:40 karczma Exp $
  */
 
 package at.dms.compiler.tools.antlr.compiler;
@@ -760,7 +760,7 @@ public class JavaCodeGenerator {
     println("import java.io.InputStream;");
     println("import java.io.Reader;");
     println("import java.util.Hashtable;");
-    println("import at.dms.compiler.tools.antlr.runtime.*;");
+    println("import at.dms.compiler.antlr.runtime.*;");
 
     // Generate user-defined lexer file preamble
     println(grammar.preambleAction.getText());
@@ -770,7 +770,7 @@ public class JavaCodeGenerator {
     if ( grammar.superClass!=null ) {
       sup = grammar.superClass;
     } else {
-      sup = "at.dms.compiler.tools.antlr.runtime." + grammar.getSuperClass();
+      sup = "at.dms.compiler.antlr.runtime." + grammar.getSuperClass();
     }
 
     // print javadoc comment if any
@@ -982,7 +982,7 @@ public class JavaCodeGenerator {
     println(behavior.getHeaderAction(""));
 
     // Generate header for the parser
-    println("import at.dms.compiler.tools.antlr.runtime.*;");
+    println("import at.dms.compiler.antlr.runtime.*;");
 
     // Output the user-defined parser preamble
     println(grammar.preambleAction.getText());
@@ -992,7 +992,7 @@ public class JavaCodeGenerator {
     if ( grammar.superClass != null ) {
       sup = grammar.superClass;
     } else{
-      sup = "at.dms.compiler.tools.antlr.runtime." + grammar.getSuperClass();
+      sup = "at.dms.compiler.antlr.runtime." + grammar.getSuperClass();
     }
 
     // print javadoc comment if any

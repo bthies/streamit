@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.1 2001-08-30 16:32:41 thies Exp $
+ * $Id: Main.java,v 1.2 2002-12-18 06:28:50 karczma Exp $
  */
 
 package at.dms.compiler.tools.include;
@@ -29,7 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import at.dms.compiler.CompilerMessages;
+import at.dms.compiler.tools.common.CompilerMessages;
 
 /**
  * This class is the entry point for the KOPI assembler.

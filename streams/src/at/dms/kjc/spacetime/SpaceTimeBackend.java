@@ -149,23 +149,29 @@ public class SpaceTimeBackend
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
 	
-
+	System.out.println("Scheduling Traces...");
 	SimpleScheduler scheduler = new SimpleScheduler(partitioner, rawChip);
 	scheduler.schedule();
 
+	System.out.println("Multiplying Steady-State...");
 	MultiplySteadyState.doit(partitioner, scheduler);
 	
+	System.out.println("Calculating Prime Pump Schedule...");
 	SchedulePrimePump.doit(scheduler);
+	System.out.println("Finished Calculating Prime Pump Schedule.");
 	
+
 	//mgordon's stuff
 	assert !KjcOptions.magicdram :
 	    "Magic DRAM support is not working";	
 	
 	//we can now use filter infos, everything is set
 	FilterInfo.canUse();
-
+	System.out.println("Dumping preDRAMsteady.dot...");
+	
 	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, 
 				"preDRAMsteady.dot", false, rawChip, partitioner);
+	System.out.println("Assigning Buffers to DRAMs...");
 	//assign the buffers not assigned by Jasp to drams
 	BufferDRAMAssignment.run(scheduler.getSchedule(), rawChip, partitioner.io);
 	//communicate the addresses for the off-chip buffers

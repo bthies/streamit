@@ -14,7 +14,8 @@ public class SchedulePrimePump
 	    Trace trace = (Trace)traces.next();
 	    incrementUpstream(trace, schedule);
 	}
-	//check graph 
+	//check graph
+	System.out.println("Checking legality of Prime Pump Schedule...");
 	checkGraph(schedule);
 	//everything one more than downstream...no
     }

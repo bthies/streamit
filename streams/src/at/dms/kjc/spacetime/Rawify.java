@@ -1395,8 +1395,18 @@ public class Rawify
 		cacheAlignDest = false;
 	}
 	
+	
+	//each trace has 2 off-chip buffers, one for init and primepump(call this init), 
+	//and one for steady
 
-      
+	//so, for the primepump stage we place in the init buffer the items that are consumed by the downstream
+	//trace in the steady-state, so subtract from the primepump mult the number of multiplicities
+	//whose items are consumed by the downstream trace in the steady state.
+
+	//handle the items that are consumed in the steady-state but produced in the pp stage below, see ppSteadyIt
+
+	//now, it is the case that non-endpoints of traces don't have to worry about this
+	//so, primePumpItemsNotConsumed() will return 0 for them...
 	if (primePump)
 	    mult = filterInfo.primePump - (filterInfo.push == 0 ? 0 :
 					   (filterInfo.primePumpItemsNotConsumed() / filterInfo.push));

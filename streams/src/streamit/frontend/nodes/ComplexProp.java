@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.7 2002-07-19 14:41:34 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.8 2002-07-19 14:52:30 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -293,7 +293,6 @@ public class ComplexProp extends FEReplacer
 
     private boolean isEligibleFunCall(ExprFunCall exp, List params, String fn)
     {
-        System.err.println("Checking if " + exp.getName() + " is eligible");
         // A function call is eligible if:
         // -- Its name is exactly fn;
         // -- It has exactly one parameter;

@@ -108,7 +108,7 @@ public class RawBackend {
 	    StatisticsGathering.doit(str);
 	}
 
-	Flattener.doLinearAnalysis(str);
+	str = Flattener.doLinearAnalysis(str);
 
 	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");

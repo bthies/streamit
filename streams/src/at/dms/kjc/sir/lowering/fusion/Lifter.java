@@ -58,73 +58,27 @@ public class Lifter implements StreamVisitor {
     }
 
     /**
-     * PLAIN-VISITS 
+     * Removes all non-essential identity filters from <str>.  (At
+     * least, removes the ones that would be inserted by partitioning.)
      */
-	    
-    /* visit a filter */
-    public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-    }
-
-    /* visit a phased filter */
-    public void visitPhasedFilter(SIRPhasedFilter self,
-                                  SIRPhasedFilterIter iter) {
-    }
-  
-    /**
-     * PRE-VISITS 
-     */
-	    
-    /* pre-visit a pipeline */
-    public void preVisitPipeline(SIRPipeline self,
-				 SIRPipelineIter iter) {
-	liftChildren(self);
-	if (syncRemoval==SYNC_REMOVAL_NO_NEW_JOINERS) {
-	    RefactorSplitJoin.removeMatchingSyncPoints(self);
-	} else if (syncRemoval==SYNC_REMOVAL_MAX_STRUCTURED) {
-	    RefactorSplitJoin.removeSyncPoints(self);
-	}
-    }
-
-    /* pre-visit a splitjoin */
-    public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRSplitJoinIter iter) {
-	boolean changing;
-	do {
-	    changing = false;
-	    changing = liftChildren(self) || changing;
-	    changing = liftIntoSplitJoin(self) || changing;
-	} while (changing);
-    }
-
-    /* pre-visit a feedbackloop */
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
-	liftChildren(self);
-    }
-
-    /**
-     * POST-VISITS
-     */
-	    
-    /* post-visit a pipeline */
-    public void postVisitPipeline(SIRPipeline self,
-				  SIRPipelineIter iter) {
-	if (syncRemoval==SYNC_REMOVAL_NO_NEW_JOINERS) {
-	    RefactorSplitJoin.removeMatchingSyncPoints(self);
-	} else if (syncRemoval==SYNC_REMOVAL_MAX_STRUCTURED) {
-	    RefactorSplitJoin.removeSyncPoints(self);
-	}
-    }
-
-    /* post-visit a splitjoin */
-    public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRSplitJoinIter iter) {
-    }
-
-    /* post-visit a feedbackloop */
-    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRFeedbackLoopIter iter) {
+    public static void eliminateIdentities(SIRStream str) {
+	IterFactory.createIter(str).accept(new EmptyStreamVisitor() {
+		public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter) {
+		    for (int i=self.size()-1; i>=0; i--) {
+			if (self.get(i) instanceof SIRIdentity) {
+			    // don't completely wipe out the pipeline,
+			    // since it might be in a splitjoin or
+			    // something.  This could be more
+			    // sophisticated to figure out exactly
+			    // when it should remove something, but
+			    // for now is good enough to remove what's
+			    // inserted by partitioning.
+			    if (self.size()>1) {
+				self.remove(i);
+			    }
+			}
+		    }
+		}});
     }
 
     /**
@@ -197,6 +151,76 @@ public class Lifter implements StreamVisitor {
 	} else {
 	    return false;
 	}
+    }
+
+    /**
+     * PLAIN-VISITS 
+     */
+	    
+    /* visit a filter */
+    public void visitFilter(SIRFilter self,
+			    SIRFilterIter iter) {
+    }
+
+    /* visit a phased filter */
+    public void visitPhasedFilter(SIRPhasedFilter self,
+                                  SIRPhasedFilterIter iter) {
+    }
+  
+    /**
+     * PRE-VISITS 
+     */
+	    
+    /* pre-visit a pipeline */
+    public void preVisitPipeline(SIRPipeline self,
+				 SIRPipelineIter iter) {
+	liftChildren(self);
+	if (syncRemoval==SYNC_REMOVAL_NO_NEW_JOINERS) {
+	    RefactorSplitJoin.removeMatchingSyncPoints(self);
+	} else if (syncRemoval==SYNC_REMOVAL_MAX_STRUCTURED) {
+	    RefactorSplitJoin.removeSyncPoints(self);
+	}
+    }
+
+    /* pre-visit a splitjoin */
+    public void preVisitSplitJoin(SIRSplitJoin self,
+				  SIRSplitJoinIter iter) {
+	boolean changing;
+	do {
+	    changing = false;
+	    changing = liftChildren(self) || changing;
+	    changing = liftIntoSplitJoin(self) || changing;
+	} while (changing);
+    }
+
+    /* pre-visit a feedbackloop */
+    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+				     SIRFeedbackLoopIter iter) {
+	liftChildren(self);
+    }
+
+    /**
+     * POST-VISITS
+     */
+	    
+    /* post-visit a pipeline */
+    public void postVisitPipeline(SIRPipeline self,
+				  SIRPipelineIter iter) {
+	if (syncRemoval==SYNC_REMOVAL_NO_NEW_JOINERS) {
+	    RefactorSplitJoin.removeMatchingSyncPoints(self);
+	} else if (syncRemoval==SYNC_REMOVAL_MAX_STRUCTURED) {
+	    RefactorSplitJoin.removeSyncPoints(self);
+	}
+    }
+
+    /* post-visit a splitjoin */
+    public void postVisitSplitJoin(SIRSplitJoin self,
+				   SIRSplitJoinIter iter) {
+    }
+
+    /* post-visit a feedbackloop */
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
+				      SIRFeedbackLoopIter iter) {
     }
 
     /**

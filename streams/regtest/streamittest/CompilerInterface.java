@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.4 2002-06-25 20:02:31 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.5 2002-06-28 22:18:38 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -34,7 +34,7 @@ public class CompilerInterface {
     public static final String SUFFIX_C    = ".c";
     public static final String SUFFIX_EXE  = ".exe";
     public static final String SUFFIX_DATA = ".data";
-    public static final String SUFFIX_DATA_RAW = ".data.raw";
+    public static final String SUFFIX_DATA_RAW = ".raw";
     
 
     
@@ -99,16 +99,12 @@ public class CompilerInterface {
      **/
     boolean streamITRun(String root, String filename) {
 	if (rawTarget(this.compilerFlags)) {
-	    // set up the execution of the program in the raw simulator
-	    ResultPrinter.printError("*******\n" +
-				     "Error!\n" +
-				     "Raw execution not supported yet (no way to compare results)\n" +
-				     "*******");
-	    return false;
-	    //	    return RuntimeHarness.rawExecute(root,
-	    //			     at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME,
-	    //			     root + filename + SUFFIX_DATA_RAW); // put direct data into 
+	    // set up the execution of the program via the raw simulator
+	    return RuntimeHarness.rawExecute(root,
+					     at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME,
+					     root + filename + SUFFIX_DATA_RAW);
 	} else {
+	    // execute the program directly on the uniprocessor
 	    return RuntimeHarness.uniExecute(root + filename + SUFFIX_EXE,
 					     root + filename + SUFFIX_DATA);
 	}
@@ -119,8 +115,17 @@ public class CompilerInterface {
      * the data file.
      **/
     boolean streamITCompare(String root, String filename, String datafile) {
-	return RuntimeHarness.compare(root + filename + SUFFIX_DATA,
-				      root + datafile);
+	if (rawTarget(this.compilerFlags)) {
+	    // set up the verification process via 
+	    return RuntimeHarness.rawCompare(root + filename + SUFFIX_DATA_RAW,
+					     root + datafile,
+					     root,
+					     filename,
+					     this.compilerOptions);
+	} else {
+	    return RuntimeHarness.uniCompare(root + filename + SUFFIX_DATA,
+					     root + datafile);
+	}
     }
     
 

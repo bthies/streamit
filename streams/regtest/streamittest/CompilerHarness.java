@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
+ * $Id: CompilerHarness.java,v 1.4 2002-06-28 22:18:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -146,7 +146,7 @@ public class CompilerHarness extends Harness {
     public static String[] getGccCommandArray(String inputFileName,
 					      String exeFileName) {
 
-	String streamit_root = StreamITTestCase.getStreamITRoot();
+	String streamit_root = getStreamITRoot();
 	// expand out the library files path
 	String[] libFiles = expandFileName(streamit_root + C_LIBRARY_FILES);
 

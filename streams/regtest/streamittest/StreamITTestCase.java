@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.4 2002-06-25 20:02:31 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.5 2002-06-28 22:18:38 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
@@ -20,26 +20,11 @@ class StreamITTestCase extends TestCase {
 	this.compiler = CompilerInterface.createCompilerInterface(flags);
     }
 
-
-    /**
-     * Reads out the environment variable STREAMIT_HOME
-     * (which gets set via calling java with -Dstreamit_home=$STREAMIT_HOME
-     * command line argument).
-     **/
-    public static String getStreamITRoot() {
-	return System.getProperty("streamit_home"); // imported using the -D command line
-    }
-
     /**
      * Performs streamit compile, gcc compile.
      **/
     public void doCompileTest(String root,
 			      String filename) {
-
-	// print out test details when verbose output is on
-	ResultPrinter.printTest(this.getClass().getName(),
-				this.getName() + " compile ",
-				"compiling " + root + filename + " with " + compiler.getOptionsString());
 
     	assertTrue("Compile " + root + filename + "(" + compiler.getOptionsString() + ")",
 		   compiler.streamITCompile(root,
@@ -55,27 +40,17 @@ class StreamITTestCase extends TestCase {
     public void doCompileRunVerifyTest(String root,
 				       String filename,
 				       String datafile) {
-
+	
 	// run the compilation tests
 	doCompileTest(root, filename);
 
 	// test execution
-
-	// print out test details for verbose output
-	ResultPrinter.printTest(this.getClass().getName(),
-				this.getName() + " run ",
-				" running " + root + filename + ", redirecting output to " + root + datafile);
-	assertTrue("Executing " + root + filename,
+	assertTrue("Executing " + root + filename + "(" + compiler.getOptionsString() + ")",
 		   compiler.streamITRun(root,
 					filename));
 
 	// test output
-	
-	// print out test details for verbose output
-	ResultPrinter.printTest(this.getClass().getName(),
-				this.getName() + " verify ",
-				" verifying output of " + root + filename);	
-	assertTrue("Verify output " + root + filename,
+	assertTrue("Verify output " + root + filename + "(" + compiler.getOptionsString() + ")",
 		   compiler.streamITCompare(root,
 					    filename,
 					    datafile));

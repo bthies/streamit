@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.2 2002-06-24 21:25:36 aalamb Exp $
+ * $Id: TestExamples.java,v 1.3 2002-06-28 22:18:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -24,7 +24,7 @@ public class TestExamples extends StreamITTestCase {
     public TestExamples(String name, int flags) {
 	super (name,flags);
 	if (STREAM_ROOT == null) {
-	    STREAM_ROOT = getStreamITRoot();
+	    STREAM_ROOT = Harness.getStreamITRoot();
 	    EXAMPLE_ROOT = STREAM_ROOT + EXAMPLE_PATH;
 	    
 	}
@@ -32,7 +32,9 @@ public class TestExamples extends StreamITTestCase {
 
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
-
+	
+	suite.addTest(new TestExamples("testArrayTest", flags));
+	suite.addTest(new TestExamples("testBitonicSort", flags));
 	suite.addTest(new TestExamples("testFFT", flags));
 	suite.addTest(new TestExamples("testFusion", flags));
 	suite.addTest(new TestExamples("testFib", flags));
@@ -48,8 +50,24 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testFile", flags));
 	suite.addTest(new TestExamples("testFieldProp", flags));
 	suite.addTest(new TestExamples("testFieldProp2", flags));
-
+	suite.addTest(new TestExamples("testLattice", flags));
+	suite.addTest(new TestExamples("testMergeSort", flags));
+	//suite.addTest(new TestExamples("testUpDown", flags));
+	suite.addTest(new TestExamples("testVectAdd", flags));
+	suite.addTest(new TestExamples("testWeightedRR", flags));
 	return suite;
+    }
+
+    public void testArrayTest() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "arraytest/",
+			       "ArrayTest.java",
+			       "ArrayTest.out");
+    }
+
+    public void testBitonicSort() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "bitonic-sort/",
+			       "BitonicSort.java",
+			       "BitonicSort.out");
     }
 
     public void testFFT() {
@@ -88,8 +106,9 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testHello6() {
-	doCompileTest(EXAMPLE_ROOT + "hello6/",
-		      "HelloWorld6.java");
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "hello6/",
+			       "HelloWorld6.java",
+			       "HelloWorld6.out");
 			
     }
 
@@ -135,6 +154,38 @@ public class TestExamples extends StreamITTestCase {
 			       "FieldPropTest2.out");
     }
 
+    public void testLattice() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "lattice/",
+			       "Lattice.java",
+			       "Lattice.out");
+    }
 
+    public void testMergeSort() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "mergesort/",
+			       "MergeSort.java",
+			       "MergeSort.out");
+    }
+
+    public void testUpDown() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "updown/",
+			       "UpDown.java",
+			       "UpDown.out");
+    }
+
+    public void testVectAdd() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "vectadd/",
+			       "VectAdd.java",
+			       "VectAdd.out");
+    }
+
+    public void testWeightedRR() {
+	doCompileRunVerifyTest(EXAMPLE_ROOT + "weighted-rr/",
+			       "WeightedRR.java",
+			       "WeightedRR.out");
+    }
+
+    
+
+    
 
 }

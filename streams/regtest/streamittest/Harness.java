@@ -10,8 +10,21 @@ import java.util.*;
  * runtime system.
  **/
 public class Harness {
+    
+    /**
+     * Reads out the environment variable STREAMIT_HOME
+     * (which gets set via calling java with -Dstreamit_home=$STREAMIT_HOME
+     * command line argument).
+     **/
+    public static String getStreamITRoot() {
+	String home = System.getProperty("streamit_home"); // imported using the -D command line
+	if (home == null) {
+	    throw new RuntimeException("null streamit root property");
+	}
+	return home;
+    }
 
-
+    
     /** run command natively, ignoring stdout (eg for gcc, make) **/
     public static boolean executeNative(String[] cmdArray) throws Exception {
 	return executeNative(cmdArray, null);

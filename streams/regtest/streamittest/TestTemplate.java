@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestTemplate.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: TestTemplate.java,v 1.3 2002-06-28 22:18:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -22,7 +22,7 @@ public class TestTemplate extends StreamITTestCase {
     public TestTemplate(String name, int flags) {
 	super (name,flags);
 	if (STREAM_ROOT == null) {
-	    STREAM_ROOT = getStreamITRoot();
+	    STREAM_ROOT = Harness.getStreamITRoot();
 	}
     }
 

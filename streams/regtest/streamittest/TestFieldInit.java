@@ -4,7 +4,7 @@
  * 2. Add an entry in AllTests.java for this new suite
  * 3. Add test code in void methods like testSimple
  * 4. Add a line in suite() with the new test method name
- * $Id: TestFieldInit.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
+ * $Id: TestFieldInit.java,v 1.3 2002-06-28 22:18:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -22,7 +22,7 @@ public class TestFieldInit extends StreamITTestCase {
     public TestFieldInit(String name, int flags) {
 	super (name,flags);
 	if (STREAM_ROOT == null) {
-	    STREAM_ROOT = getStreamITRoot() + EXAMPLE_PATH + "field-init/";
+	    STREAM_ROOT = Harness.getStreamITRoot() + EXAMPLE_PATH + "field-init/";
 	}
     }
 

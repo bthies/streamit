@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestApps.java,v 1.2 2002-06-24 21:25:36 aalamb Exp $
+ * $Id: TestApps.java,v 1.3 2002-06-28 22:18:38 aalamb Exp $
  **/
 package streamittest;
 
@@ -24,7 +24,7 @@ public class TestApps extends StreamITTestCase {
     public TestApps(String name, int flags) {
 	super (name,flags);
 	if (STREAM_ROOT == null) {
-	    STREAM_ROOT = getStreamITRoot();
+	    STREAM_ROOT = Harness.getStreamITRoot();
 	    APPS_ROOT = STREAM_ROOT + APPS_PATH;
 	    
 	}
@@ -59,11 +59,6 @@ public class TestApps extends StreamITTestCase {
 			       "MatrixMult.out");
     }
 
-    public void testGsm() {
-	String root = APPS_ROOT + "gsm/";
-	doMake(root);
-	doCompileTest(root,
-		      "Gsm.java");
-    }
+
 
 }

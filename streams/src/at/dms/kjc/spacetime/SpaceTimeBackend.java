@@ -399,7 +399,12 @@ public class SpaceTimeBackend
 	    System.out.println("TracesGraph: "+traceGraph.length);
 	    for(int i=0;i<traceGraph.length;i++)
 		System.out.println(traceGraph[i]);
-	    FilterTraceNode currentNode=(FilterTraceNode)traceGraph[0].getHead();
+	    TraceNode node=traceGraph[0].getHead();
+	    FilterTraceNode currentNode=null;
+	    if(node instanceof InputTraceNode)
+		currentNode=(FilterTraceNode)node.getNext();
+	    else
+		currentNode=(FilterTraceNode)node;
 	    currentNode.setXY(0,0);
 	    int curX=1;
 	    int curY=0;

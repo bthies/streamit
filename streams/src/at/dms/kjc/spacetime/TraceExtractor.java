@@ -37,7 +37,8 @@ public class TraceExtractor {
 		    node=new FilterTraceNode(content);
 		    trace=new Trace(node);
 		}
-		traces.add(trace);
+		if(!(filter.filter instanceof SIRPredefinedFilter)) //Don't map FileReader/Writer
+		    traces.add(trace);
 		boolean cont=true;
 		while(cont&&filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
 		    UnflatFilter newFilter=filter.out[0][0].dest;
@@ -137,7 +138,7 @@ public class TraceExtractor {
 	    buf.append(trace.hashCode()+" [ "+traceName(trace)+"\" ];\n");
 	    Trace[] next=getNext(trace,parent);
 	    for(int j=0;j<next.length;j++)
-		buf.append(trace.hashCode()+" -> "+next[j].hashCode()+";\n");
+		buf.append(hashName(trace)+" -> "+hashName(next[j])+";\n");
 	}
 	buf.append("}\n");
 	try {
@@ -148,6 +149,12 @@ public class TraceExtractor {
 	catch (Exception e) {
 	    System.err.println("Could not print extracted traces");
 	}
+    }
+
+    private static int hashName(Trace trace) {
+	if(trace==null)
+	    return -1;
+	return trace.hashCode();
     }
 
     private static String traceName(Trace trace) {

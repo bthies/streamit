@@ -32,19 +32,12 @@ float->float pipeline rchol( int N) {
 
 float->float splitjoin break1(int N) {
     split roundrobin(N,(N*(N-1))/2);
-    add FloatIdentity();
+    add Identity<float>();
     add rchol(N-1);
     join roundrobin(N,(N*(N-1))/2);
 
 }
 
-
-// the name says it all
-float->float filter FloatIdentity() {
-    work pop 1 push 1 {
-	push(pop());
-    }
-}
 
 // performs the first column divisions
 

@@ -1,12 +1,13 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.1 2002-06-12 17:57:29 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.2 2002-07-10 18:16:55 dmaze Exp $
  */
 
 header {
 	package streamit.frontend;
 	import streamit.frontend.tojava.*;
+	import streamit.frontend.nodes.*;
 	import java.util.ArrayList;
 	import java.util.Iterator;
 	import java.util.List;
@@ -27,6 +28,10 @@ options {
 	StreamType cur_type = null;
 	List cur_class_params = null;
 	String cur_class_name = null;
+	NodesToJava n2j = new NodesToJava();
+	ComplexProp cplx_prop = new ComplexProp();
+	TempVarGen varGen;
+	TJSymTab symTab = null;
 	String getIndent ()
 	{
 		String result = "";
@@ -47,11 +52,18 @@ program
 	String t;
 	System.out.println ("import streamit.*;");
 	System.out.println ("import streamit.io.*;\n");
+	System.out.println ("class Complex extends Structure {");
+	System.out.println ("  public double real, imag;");
+	System.out.println ("}\n");
 }
 	: (t=stream_decl 
 			{ System.out.println (t != null ? t : "no match"); } 
 		)*
 	;
+
+/*
+ * Top-level stream declarations.
+ */
 
 stream_decl returns [String t] {t = null;}
 	:	t=filter_decl
@@ -65,6 +77,7 @@ filter_decl returns [String t]
 	StreamType last_type = cur_type;
 	String body = "";
 	List params = null;
+	symTab = new TJSymTab(symTab);
 }
 	: #(
 			TK_filter 
@@ -91,9 +104,14 @@ filter_decl returns [String t]
 			)?
 			LCURLY
 			body=filter_body
-			{ indent--; cur_type = last_type; cur_class_params = null;
-			  cur_class_name = null;}
-			{ t += body + getIndent() + "}\n"; }
+			{
+				indent--;
+				cur_type = last_type;
+				cur_class_params = null;
+				cur_class_name = null;
+				symTab = symTab.getParent();
+				t += body + getIndent() + "}\n";
+			}
 		) 
 	;
 
@@ -131,6 +149,7 @@ struct_stream_decl2[String superclass] returns [String t]
 	String body = null;
 	List params = null;
 	InitFunction init = new InitFunction();
+	symTab = new TJSymTab(symTab);
 }
 	:
 		type=stream_type name:ID
@@ -175,6 +194,7 @@ struct_stream_decl2[String superclass] returns [String t]
 			t += init.getConstructor(indent+1, cur_class_params,
 				name.getText());
 			t += getIndent() + "}\n";
+			symTab = symTab.getParent();
 		}
 	;
 
@@ -201,122 +221,23 @@ stream_param returns [VariableDeclaration var]
 	String type;
 }
 	: #(name:ID type=data_type)
-		{ var.type = type; var.name = name.getText(); }
+		{ var.type = type; var.name = name.getText();
+			symTab.register(name.getText(), type); }
 	;
 
-init_func_decl returns [InitFunction init]
-{
-	init = new InitFunction();
-	String args = "", body = "";
-}
-	: #(TK_init
-			body=block { init.body = getIndent() + body; }
-		)
+data_type returns [String t] {t = "";}
+	:	TK_int { t = "int"; }
+	|	TK_float { t = "float"; }
+	|	TK_double { t = "double"; }
+	|	TK_char { t = "char"; }
+	|	TK_void { t = "void"; }
+	|	TK_complex { t = "Complex"; }
+	|	cust_name:ID { t = cust_name.getText(); }
 	;
 
-work_func_decl returns [WorkFunction wf]
-{
-	wf = new WorkFunction();
-	String body, rate;
-}
-	: #(TK_work
-			(	#(TK_push rate=expr { wf.pushRate = rate; })
-			|	#(TK_pop  rate=expr { wf.popRate  = rate; })
-			|	#(TK_peek rate=expr { wf.peekRate = rate; })
-			)*
-			body=block { wf.body = body; })
-	;
-
-statement returns [String t] { t = ""; }
-	: t=block
-	| t=if_statement
-	| t=for_statement
-	| t=while_statement
-	| t=inline_statement { t += ";"; }
-	;
-
-inline_statement returns [String t] { t = ""; }
-	:	t=add_statement
-	|	t=body_statement
-	|	t=loop_statement
-	|	t=split_statement
-	|	t=join_statement
-	|	t=enqueue_statement
-	|	t=push_statement
-	|	t=print_statement
-	|	t=expr_assign_statement
-	|	(variable_decl) => t=variable_decl
-	|	(expr_statement) => t=expr_statement
-	;
-
-push_statement returns [String t] {t = null;}
-	: #(TK_push t=expr) { t = cur_type.pushFunction() + "(" + t + ")"; }
-	;
-
-print_statement returns [String t] {t = null;}
-	: #(TK_print t=expr) { t = "System.out.println(" + t + ")"; }
-	;
-
-expr returns [String t] {t=null;}
-	: (t=streamit_expr | t=minic_expr)
-	;
-
-streamit_expr returns [String t] {t=null;}
-	: (t=pop_expr | t=peek_expr)
-	;
-
-pop_expr returns [String t] {t=null;}
-	: TK_pop { t = cur_type.popFunction() + "()"; }
-	;
-
-peek_expr returns [String t] {t=null;}
-	: #(TK_peek t=expr) { t = cur_type.peekFunction() + "(" + t + ")"; }
-	;
-
-split_statement returns [String t] {t=null; String type = null;}
-	: #(TK_split type=split_join_type)
-		{ t = "setSplitter(" + type + ")"; }
-	;
-
-join_statement returns [String t] {t=null; String type = null;}
-	: #(TK_join type=split_join_type)
-		{ t = "setJoiner(" + type + ")"; }
-	;
-
-split_join_type returns [String t] { t = null; }
-	:
-		( TK_duplicate { t = "DUPLICATE ()"; }
-			// FIX AMBIGUITY HERE!!!
-		| TK_roundrobin { t = "ROUND_ROBIN ()"; }
-		| #(TK_roundrobin
-				t=func_call_params
-				{ t = "WEIGHTED_ROUND_ROBIN " + t; }
-			)
-		)
-	;
-
-add_statement returns [String t] {t=null;}
-	: #(TK_add t=substream_statement["add"])
-	;
-
-body_statement returns [String t] {t=null;}
-	: #(TK_body t=substream_statement["setBody"])
-	;
-
-loop_statement returns [String t] {t=null;}
-	: #(TK_loop t=substream_statement["setLoop"])
-	;
-
-substream_statement[String operation] returns [String t]
-{
-  t = null;
-  String params, inline;
-}
-	: name:ID params=func_call_params
-		{ t = operation + "(new " + name.getText() + params + ")"; }
-	| inline=inline_stream
-		{ t = operation + "(" + inline + ")"; }
-	;
+/*
+ * Inline stream declarations.
+ */
 
 inline_stream returns [String t] {t=null;}
 	: t=inline_filter
@@ -368,16 +289,31 @@ inline_struct_stream2[String superclass] returns [String t]
 		}
 	;
 
-enqueue_statement returns [String t] {t=""; String val;}
-	: #(TK_enqueue val=expr)
-		{ t = "enqueue(" + val + ")"; }
+/*
+ * Function declarations.
+ */
+
+init_func_decl returns [InitFunction init]
+{
+	init = new InitFunction();
+	String args = "", body = "";
+}
+	: #(TK_init
+			body=block { init.body = getIndent() + body; }
+		)
 	;
 
-data_type returns [String t] {t = "";}
-	:	TK_int { t = "int"; }
-	|	TK_char { t = "char"; }
-	|	TK_void { t = "void"; }
-	|	cust_name:ID { t = cust_name.getText(); }
+work_func_decl returns [WorkFunction wf]
+{
+	wf = new WorkFunction();
+	String body, rate;
+}
+	: #(TK_work
+			(	#(TK_push rate=expr { wf.pushRate = rate; })
+			|	#(TK_pop  rate=expr { wf.popRate  = rate; })
+			|	#(TK_peek rate=expr { wf.peekRate = rate; })
+			)*
+			body=block { wf.body = body; })
 	;
 
 function_decl returns [String t]
@@ -398,11 +334,18 @@ function_decl returns [String t]
   }
 ;
 
+/*
+ * Blocks and statements.
+ */
+
 block returns [String t]
 {
-  t = "";
-  String stmts = "";
-  String stmt = "";
+	t = "";
+	String stmts = "";
+	String stmt = "";
+	TempVarGen lastVarGen = varGen;
+	varGen = new TempVarGen();
+	symTab = new TJSymTab(symTab);
 }
 : #(
     LCURLY { indent++; }
@@ -411,10 +354,21 @@ block returns [String t]
   {
     indent--;
     t = "{\n"
+	  + varGen.allDecls()
       + stmts
       + getIndent () + "}";
+	varGen = lastVarGen;
+	symTab = symTab.getParent();
   }
 ;
+
+statement returns [String t] { t = ""; }
+	: t=block
+	| t=if_statement
+	| t=for_statement
+	| t=while_statement
+	| t=inline_statement { t += ";"; }
+	;
 
 if_statement returns [String t]
 {
@@ -445,8 +399,191 @@ while_statement returns [String t]
 		{ t = "while (" + cond + ") " + body; }
 	;
 
+inline_statement returns [String t] { t = ""; }
+	:	t=add_statement
+	|	t=body_statement
+	|	t=loop_statement
+	|	t=split_statement
+	|	t=join_statement
+	|	t=enqueue_statement
+	|	t=push_statement
+	|	t=print_statement
+	|	t=assign_statement
+	|	t=expr_assign_statement
+	|	(variable_decl) => t=variable_decl
+	|	(expr_statement) => t=expr_statement
+	;
+
+add_statement returns [String t] {t=null;}
+	: #(TK_add t=substream_statement["add"])
+	;
+
+body_statement returns [String t] {t=null;}
+	: #(TK_body t=substream_statement["setBody"])
+	;
+
+loop_statement returns [String t] {t=null;}
+	: #(TK_loop t=substream_statement["setLoop"])
+	;
+
+substream_statement[String operation] returns [String t]
+{
+  t = null;
+  String params, inline;
+}
+	: name:ID params=func_call_params
+		{ t = operation + "(new " + name.getText() + params + ")"; }
+	| inline=inline_stream
+		{ t = operation + "(" + inline + ")"; }
+	;
+
+split_statement returns [String t] {t=null; String type = null;}
+	: #(TK_split type=split_join_type)
+		{ t = "setSplitter(" + type + ")"; }
+	;
+
+join_statement returns [String t] {t=null; String type = null;}
+	: #(TK_join type=split_join_type)
+		{ t = "setJoiner(" + type + ")"; }
+	;
+
+split_join_type returns [String t] { t = null; }
+	:
+		( TK_duplicate { t = "DUPLICATE ()"; }
+			// FIX AMBIGUITY HERE!!!
+		| TK_roundrobin { t = "ROUND_ROBIN ()"; }
+		| #(TK_roundrobin
+				t=func_call_params
+				{ t = "WEIGHTED_ROUND_ROBIN " + t; }
+			)
+		)
+	;
+
+enqueue_statement returns [String t] {t=""; Expression x; String v;}
+	: #(TK_enqueue x=expression_reduced)
+		{
+			Decomplexifier.Result result;
+			result = Decomplexifier.decomplexify(x, varGen);
+			v = (String)result.exp.accept(n2j);
+			t = result.statements;
+			t += "enqueue(" + v + ")";
+		}
+	;
+
+push_statement returns [String t] {t = null; Expression x; String v;}
+	: #(TK_push x=expression_reduced)
+		{
+			Decomplexifier.Result result;
+			result = Decomplexifier.decomplexify(x, varGen);
+			v = (String)result.exp.accept(n2j);
+			t = result.statements;
+			t += cur_type.pushFunction() + "(" + v + ")";
+		}
+	;
+
+print_statement returns [String t] {t = null;}
+	: #(TK_print t=expr) { t = "System.out.println(" + t + ")"; }
+	;
+
+assign_statement returns [String t] {t=null; Expression x;}
+	: #(ASSIGN name:ID x=expression_reduced)
+		{
+			// Check to see if the name is a Complex variable.
+			String type = symTab.lookup(name.getText());
+			if (type.equals("Complex"))
+			{
+				if (x instanceof ExprComplex)
+				{
+					ExprComplex cplx = (ExprComplex)x;
+					t = name.getText() + ".real = " +
+						(String)cplx.getReal().accept(n2j) + ";\n";
+					t += name.getText() + ".imag = " +
+						(String)cplx.getImag().accept(n2j);
+				}
+				else
+				{
+					t = name.getText() + ".real = " +
+						(String)x.accept(n2j) + ";\n";
+					t += name.getText() + ".imag = 0";
+				}
+			}
+			else
+			{
+				// Assert that RHS is purely real.
+				t = name.getText() + " = " + (String)x.accept(n2j);
+			}
+		}
+	;
+
+variable_decl returns [String t]
+{
+  t = "";
+  String type = "", array_mod = "", array_mods = "";
+  String init_value = "";
+}
+	:	 #(name:ID
+			type=data_type
+			(array_mod=array_modifiers {array_mods += array_mod;})*
+			(init_value=variable_init)?
+		)
+		{
+			t = type + " " + name.getText () + " " + array_mods + init_value;
+			symTab.register(name.getText(), type + array_mods);
+		}
+	;
+
+variable_init returns [String t] { t = null; }
+	: #(ASSIGN t=expr)
+		{ t = " = " + t; }
+	;
+
+expr_assign_statement returns [String t]
+{
+	t = null;
+	String l = null;
+	String o = null;
+	String r = null;
+}
+	:	( #(PLUS_EQUALS { o = "+="; } l=expr r=expr)
+		| #(MINUS_EQUALS { o = "-="; } l=expr r=expr)
+		) { t = l + " " + o + " " + r; }
+	;
+
 expr_statement returns [String t] { t = ""; }
 	: t=expr
+	;
+
+/*
+ * Expressions.
+ */
+
+expr returns [String t] {t=null; Expression x;}
+	: t=streamit_expr
+	| x=expression_reduced { t = (String)x.accept(n2j); }
+	;
+
+expression_reduced returns [Expression x] {x=null;}
+	: x=expression
+		{
+			x = (Expression)x.accept(new VarToComplex(symTab));
+			x = (Expression)x.accept(cplx_prop);
+		}
+	;
+
+expression returns [Expression x] {x=null;}
+	: x=minic_expr
+	;
+
+streamit_expr returns [String t] {t=null;}
+	: (t=pop_expr | t=peek_expr)
+	;
+
+pop_expr returns [String t] {t=null;}
+	: TK_pop { t = cur_type.popFunction() + "()"; }
+	;
+
+peek_expr returns [String t] {t=null;}
+	: #(TK_peek t=expr) { t = cur_type.peekFunction() + "(" + t + ")"; }
 	;
 
 variable_list returns [String t]
@@ -469,39 +606,6 @@ variable_list returns [String t]
 		}
 	;
 
-variable_decl returns [String t]
-{
-  t = "";
-  String type = "", array_mod = "", array_mods = "";
-  String init_value = "";
-}
-	:	 #(name:ID
-			type=data_type
-			(array_mod=array_modifiers {array_mods += array_mod;})*
-			(init_value=variable_init)?
-		)
-		{
-			t = type + " " + name.getText () + " " + array_mods + init_value;
-		}
-	;
-
-variable_init returns [String t] { t = null; }
-	: #(ASSIGN t=expr)
-		{ t = " = " + t; }
-	;
-
-expr_assign_statement returns [String t]
-{
-	t = null;
-	String l = null;
-	String o = null;
-	String r = null;
-}
-	:	( #(PLUS_EQUALS { o = "+="; } l=expr r=expr)
-		| #(MINUS_EQUALS { o = "-="; } l=expr r=expr)
-		) { t = l + " " + o + " " + r; }
-	;
-
 array_modifiers returns [String t]
 {
   t = "";
@@ -512,70 +616,71 @@ array_modifiers returns [String t]
 		)
 	;
 
-minic_expr returns [String t] { t = ""; }
-	: t=minic_ternary_expr
-	| t=minic_binary_expr
-	| t=minic_unary_expr
-	| t=value_expression
-	| number:NUMBER { t = number.getText (); }
-	| char_literal:CHAR_LITERAL { t= char_literal.getText (); }
-	| string_literal:STRING_LITERAL { t = string_literal.getText (); }
+minic_expr returns [Expression x] { x = null; }
+	: x=minic_ternary_expr
+	| x=minic_binary_expr
+	| x=minic_unary_expr
+	| x=value_expression
+	| number:NUMBER { x = ExprConstant.createConstant(number.getText()); }
+	| char_literal:CHAR_LITERAL
+		{ x = new ExprConstChar(char_literal.getText()); }
+	| string_literal:STRING_LITERAL
+		{ x = new ExprConstStr(string_literal.getText()); }
 	;
 
-minic_ternary_expr returns [String t]
+minic_ternary_expr returns [Expression x]
 {
-	t = "";
-	String a = null, b = null, c = null;
+	x = null;
+	Expression a, b, c;
 }
-	: #(QUESTION a=expr b=expr c=expr)
-		{ t = a + " ? " + b + " : " + c; }
+	: #(QUESTION a=expression b=expression c=expression)
+		{ x = new ExprTernary(ExprTernary.TEROP_COND, a, b, c); }
 	;
 
-minic_binary_expr returns [String t]
+minic_binary_expr returns [Expression x]
 {
-  t = "";
-  String l = "", o="", r = "";
+	x = null;
+	Expression l = null, r = null;
+	int o = 0;
 }
-	: #( ASSIGN { o = "="; } l=expr r=expr)
-		{ t = l + o + r; }
-	|	( #(PLUS { o = "+"; } l=expr r=expr)
-		| #(MINUS { o = "-"; } l=expr r=expr)
-		| #(STAR { o = "*"; } l=expr r=expr)
-		| #(DIV { o = "/"; } l=expr r=expr)
-		| #(MOD { o = "%"; } l=expr r=expr)
-		| #(LOGIC_AND { o = "&&"; } l=expr r=expr)
-		| #(LOGIC_OR { o = "||"; } l=expr r=expr)
-		| #(EQUAL { o = "=="; } l=expr r=expr)
-		| #(NOT_EQUAL { o = "!="; } l=expr r=expr)
-		| #(LESS_THAN { o = "<"; } l=expr r=expr)
-		| #(LESS_EQUAL { o = "<="; } l=expr r=expr)
-		| #(MORE_THAN { o = ">"; } l=expr r=expr)
-		| #(MORE_EQUAL { o = ">="; } l=expr r=expr)
+	:	( #(PLUS { o = ExprBinary.BINOP_ADD; } l=expression r=expression)
+		| #(MINUS { o = ExprBinary.BINOP_SUB; } l=expression r=expression)
+		| #(STAR { o = ExprBinary.BINOP_MUL; } l=expression r=expression)
+		| #(DIV { o = ExprBinary.BINOP_DIV; } l=expression r=expression)
+		| #(MOD { o = ExprBinary.BINOP_MOD; } l=expression r=expression)
+		| #(LOGIC_AND { o = ExprBinary.BINOP_AND; } l=expression r=expression)
+		| #(LOGIC_OR { o = ExprBinary.BINOP_OR; } l=expression r=expression)
+		| #(EQUAL { o = ExprBinary.BINOP_EQ; } l=expression r=expression)
+		| #(NOT_EQUAL { o = ExprBinary.BINOP_NEQ; } l=expression r=expression)
+		| #(LESS_THAN { o = ExprBinary.BINOP_LT; } l=expression r=expression)
+		| #(LESS_EQUAL { o = ExprBinary.BINOP_LE; } l=expression r=expression)
+		| #(MORE_THAN { o = ExprBinary.BINOP_GT; } l=expression r=expression)
+		| #(MORE_EQUAL { o = ExprBinary.BINOP_GE; } l=expression r=expression)
 		)
-		{ t = "(" + l + o + r + ")"; }
+		{ x = new ExprBinary(o, l, r); }
 	;
 
-minic_unary_expr returns [String t]
-{
-  t = null;
-  String oper = null;
-  String func_name;
-}
-	:
-		( #(INCREMENT { oper = "++"; } t=expr)
-		| #(DECREMENT { oper = "--"; } t=expr)
-		)
-  { t += oper; }
-;
+minic_unary_expr returns [Expression x] {x=null; Expression y;}
+	: #(INCREMENT y=expression)
+		{ x = new ExprUnary(ExprUnary.UNOP_PREINC, y); }
+	| #(DECREMENT y=expression)
+		{ x = new ExprUnary(ExprUnary.UNOP_PREDEC, y); }
+	;
 
-value_expression returns [String t]
+value_expression returns [Expression x]
 {
-  t = null;
-  String field = "", root = "";
+	x = null;
+	Expression left, right;
   String func_params = "", array_mods = "";
 }
-	:
-		( field=field_ref 
+	: id:ID { x = new ExprVar(id.getText()); }
+	| #(DOT left=expression field:ID)
+		{ x = new ExprField(left, field.getText()); }
+	| #(LSQUARE left=expression right=expression)
+		{ x = new ExprArray(left, right); }
+	;
+/*
+		( field=var_ref 
 		| #(LPAREN root=expr func_params=func_call_params) 
 		| #(LSQUARE root=expr array_mods=array_modifiers) 
 		| #(DOT root=expr field=field_ref) { field = "." + field; }
@@ -583,13 +688,10 @@ value_expression returns [String t]
 		{ t = root + field + func_params + array_mods; }
 	;
 
-field_ref returns [String t]
-{
-  t = null;
-  String l = null, r = null;
-}
-	: id:ID { t = id.getText (); }
+var_ref returns [Expression x] {x=null;}
+	: id:ID { x = new ExprVar(id.getText()); }
 	;
+*/
 
 func_call_params returns [String t]
 {

@@ -9,17 +9,29 @@ void->void pipeline FFT2() {
 
 float->float filter CombineDFT(int n) {
 
-  float wn_r, wn_i;
+  // each array will have half its entries equal to zero.  do this to
+  // allow easy indexing from the inner loop (don't need to calculate
+  // extra index ops)
+  float[n] w_r, w_i;
 
   init {
-    wn_r = (float)cos(2 * 3.141592654 / n);
-    wn_i = (float)sin(-2 * 3.141592654 / n);
+      float wn_r = (float)cos(2 * 3.141592654 / n);
+      float wn_i = (float)sin(-2 * 3.141592654 / n);
+      float real = 1;
+      float imag = 0;
+      float next_real, next_imag;
+      for (int i=0; i<n; i+=2) {
+	  w_r[i] = real;
+	  w_i[i] = imag;
+	  next_real = real * wn_r - imag * wn_i;
+	  next_imag = real * wn_i + imag * wn_r;
+	  real = next_real;
+	  imag = next_imag;
+      }
   }
 
   work push 2*n pop 2*n {
         int i;
-        float w_r = 1;
-        float w_i = 0;
 	float[2*n] results;
 
         for (i = 0; i < n; i += 2)
@@ -39,19 +51,19 @@ float->float filter CombineDFT(int n) {
 	    float y1_r = peek(n + i);
             float y1_i = peek(n + i + 1);
 
-            float y1w_r = y1_r * w_r - y1_i * w_i;
-            float y1w_i = y1_r * w_i + y1_i * w_r;
+	    // load into temps to make sure it doesn't got loaded
+	    // separately for each load
+	    float weight_real = w_r[i];
+	    float weight_imag = w_i[i];
+
+            float y1w_r = y1_r * weight_real - y1_i * weight_imag;
+            float y1w_i = y1_r * weight_imag + y1_i * weight_real;
 
             results[i] = y0_r + y1w_r;
             results[i + 1] = y0_i + y1w_i;
 
 	    results[n + i] = y0_r - y1w_r;
             results[n + i + 1] = y0_i - y1w_i;
-
-            float w_r_next = w_r * wn_r - w_i * wn_i;
-            float w_i_next = w_r * wn_i + w_i * wn_r;
-            w_r = w_r_next;
-            w_i = w_i_next;
         }
 
         for (i = 0; i < 2 * n; i++)

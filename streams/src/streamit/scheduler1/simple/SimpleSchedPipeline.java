@@ -219,7 +219,7 @@ public class SimpleSchedPipeline extends SchedPipeline implements SimpleSchedStr
                 }
 
                 BigInteger bufferSize = initProdSize.max (initProdSize.subtract (initConsumeSize).add (steadyStateProd));
-                scheduler.schedule.setBufferSize (prevChild, child, bufferSize);
+                scheduler.schedule.setBufferSize (prevChild.getStreamObject (), child.getStreamObject (), bufferSize);
 
                 prevChild = child;
             }

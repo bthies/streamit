@@ -49,6 +49,7 @@ public class ClusterBackend implements FlatVisitor {
     //onto its output tape
     public static boolean FILTER_DEBUG_MODE = false;
 
+    public static streamit.scheduler2.iriter.Iterator topStreamIter; 
     
     public void visitNode(FlatNode node) 
     {
@@ -158,11 +159,10 @@ public class ClusterBackend implements FlatVisitor {
 
        	System.out.print("Constrained Scheduler Begin...");
 
-	streamit.scheduler2.iriter.Iterator selfIter = 
-	    IterFactory.createIter(str);
+	topStreamIter = IterFactory.createIter(str);
 
 	streamit.scheduler2.constrained.Scheduler cscheduler =
-	    new streamit.scheduler2.constrained.Scheduler(selfIter);
+	    new streamit.scheduler2.constrained.Scheduler(topStreamIter);
 
 	//cscheduler.computeSchedule(); //"Not Implemented"
 
@@ -184,24 +184,28 @@ public class ClusterBackend implements FlatVisitor {
 	    sdep = cscheduler.computeSDEP(firstIter, lastIter);
 
 	    System.out.println("\n");
-	    System.out.println("Source Init Phases: "+sdep.getNumSrcInitPhases());
-	    System.out.println("Destn. Init Phases: "+sdep.getNumDstInitPhases());
-	    System.out.println("Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
-	    System.out.println("Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
+	    System.out.println("Source --> Sink Dependency:\n");
+
+	    System.out.println("  Source Init Phases: "+sdep.getNumSrcInitPhases());
+	    System.out.println("  Destn. Init Phases: "+sdep.getNumDstInitPhases());
+	    System.out.println("  Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
+	    System.out.println("  Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
 	    
 	    
+	    /*
 	    for (int t = 0; t < 20; t++) {
 		int phase = sdep.getSrcPhase4DstPhase(t);
 		int phaserev = sdep.getDstPhase4SrcPhase(t);
 		System.out.println("sdep ["+t+"] = "+phase+
 				   " reverse_sdep["+t+"] = "+phaserev);
 	    }
+	    */
 
 	} catch (streamit.scheduler2.constrained.NoPathException ex) {
 
 	}
 
-	DoSchedules.findSchedules(selfIter, firstIter, str);
+	//DoSchedules.findSchedules(topStreamIter, firstIter, str);
 
        	System.out.println(" done.");
 
@@ -259,7 +263,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	    System.out.println();
 	}
-
+	
 	/// end output portals
 
 	

@@ -10,11 +10,13 @@ public class NodeEnumerator implements FlatVisitor {
 
     static int counter = 0;
     
-    static HashMap nodeIds;
+    static HashMap nodeIds; // SIROperator --> int
+    static HashMap idToNode; // int --> SIROperator
 
     public static void reset() {
 	counter = 0;
 	nodeIds = new HashMap();
+	idToNode = new HashMap();
     }
 
     public static int getNumberOfNodes() {
@@ -26,6 +28,11 @@ public class NodeEnumerator implements FlatVisitor {
 	Integer i = (Integer)nodeIds.get(node.contents);
 
 	return i.intValue();
+    }
+
+    public static SIROperator getNode(int nodeID) {
+    
+	return (SIROperator)idToNode.get(new Integer(nodeID));
     }
 
     public static int getSIROperatorId(SIROperator f) {
@@ -46,7 +53,10 @@ public class NodeEnumerator implements FlatVisitor {
 			 "\n");
 	*/
 
-	nodeIds.put(node.contents, new Integer(counter));
+	Integer _int = new Integer(counter); 
+
+	nodeIds.put(node.contents, _int);
+	idToNode.put(_int, node.contents);
 
 	counter++;
 	

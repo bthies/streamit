@@ -63,6 +63,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
     //number of items to receive after initialization
     private int remaining = 0;
     
+    private int nodeID;
 
     //class to hold the local variables we create 
     //so we can pass these across functions
@@ -94,6 +95,9 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	    SIRFilter filter = (SIRFilter)node.contents;
 
+	    nodeID = NodeEnumerator.getSIROperatorId(filter);
+
+	    /*
 	    System.out.print("ClusterExecCode visiting: "+filter.getName()+ " [FILTER]" );
 
 	    if (isSimple(filter))
@@ -108,6 +112,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 		
 	    }
 	    System.out.println();
+	    */
 
 	    LocalVariables localVariables = new LocalVariables();	    
 	    JBlock block = new JBlock(null, new JStatement[0], null);
@@ -746,6 +751,8 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
+	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "check_messages", new JExpression[0]), null));
+
 	//reset the simple index
 	if (isSimple(filter)){
 	    block.addStatement
@@ -813,11 +820,17 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	JVariableDeclarationStatement var_st = 
 	    new JVariableDeclarationStatement( null, var, null);
 
-	return new JForStatement(null,  var_st, 
-				 new JRelationalExpression(null, Constants.OPE_LT, new JLocalVariableExpression(null, var), new JLocalVariableExpression(null, var2)),
-				 new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null),
+	JExpression relation = new JRelationalExpression(null, Constants.OPE_LT, new JLocalVariableExpression(null, var), new JLocalVariableExpression(null, var2));
+
+	JStatement incr_expr = new JExpressionStatement(null, new JPostfixExpression(null, OPE_POSTINC, new JLocalVariableExpression(null, var)), null);
+
+	return new JForStatement(null,  
+				 var_st, 
+				 relation,
+				 incr_expr,
 				 block,
 				 null);
+
 	//return the infinite loop
 	
 	//return new JWhileStatement(null, 

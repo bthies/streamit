@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.16 2004-01-21 21:14:55 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.17 2004-01-26 19:36:19 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -739,6 +739,239 @@ public class SemanticChecker
      */
     public void checkStreamConnectionTyping(Program prog)
     {
+        // Generic map of stream names:
+        final Map streams = new HashMap();
+        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+        {
+            StreamSpec ss = (StreamSpec)iter.next();
+            streams.put(ss.getName(), ss);
+        }
+        
+        // Look for init functions in composite streams:
+        prog.accept(new FEReplacer() {
+                public Object visitStreamSpec(StreamSpec ss)
+                {
+                    if (ss.getType() == StreamSpec.STREAM_SPLITJOIN)
+                        checkSplitJoinConnectionTyping(ss, streams);
+                    else if (ss.getType() == StreamSpec.STREAM_PIPELINE)
+                        checkPipelineConnectionTyping(ss, streams);
+                    else if (ss.getType() == StreamSpec.STREAM_FEEDBACKLOOP)
+                        checkFeedbackLoopConnectionTyping(ss, streams);
+                    return super.visitStreamSpec(ss);
+                }
+            });
+    }
+
+    private void checkPipelineConnectionTyping(StreamSpec ss,
+                                               final Map streams)
+    {
+        Function init = ss.getInitFunc();
+        final CFG cfg = CFGBuilder.buildCFG(init);
+        final StreamType st = ss.getStreamType();
+        final Set reported = new HashSet();
+
+        // Use data flow to check the stream types.
+        Map inTypes = new DataFlow() {
+                public Lattice getInit()
+                {
+                    if (st == null)
+                        return new StrictTypeLattice(true); // top
+                    else
+                        return new StrictTypeLattice(st.getIn());
+                }
+                
+                public Lattice flowFunction(CFGNode node, Lattice in)
+                {
+                    if (!node.isStmt())
+                        return in;
+                    Statement stmt = node.getStmt();
+                    if (!(stmt instanceof StmtAdd))
+                        return in;
+                    StrictTypeLattice stl = (StrictTypeLattice)in;
+                    StmtAdd add = (StmtAdd)stmt;
+                    StreamCreator sc = ((StmtAdd)stmt).getCreator();
+                    StreamType st2;
+                    if (sc instanceof SCAnon)
+                        st2 = ((SCAnon)sc).getSpec().getStreamType();
+                    else
+                    {
+                        String name = ((SCSimple)sc).getName();
+                        StreamSpec spec = (StreamSpec)streams.get(name);
+                        if (spec == null)
+                            // Technically an error; keep going.
+                            return stl.getTop();
+                        st2 = spec.getStreamType();
+                    }
+                    // Report on conflicts at this node, but only
+                    // if we haven't yet.
+                    if (!reported.contains(stmt))
+                    {
+                        // Is the input bottom?
+                        if (stl.isBottom())
+                        {
+                            reported.add(stmt);
+                            report(stmt, "ambiguous prevailing stream type");
+                        }
+                        // If we have a stream type, does it disagree?
+                        else if (!stl.isTop() && st2 != null &&
+                                 !(stl.getValue().equals(st2.getIn())))
+                        {
+                            reported.add(stmt);
+                            report(stmt, "prevailing stream type " +
+                                   stl.getValue() + " disagrees with child");
+                        }
+                    }
+                    // In any case, the output type is top if our stream
+                    // type is null, or a value.
+                    if (st2 == null)
+                        return new StrictTypeLattice(true);
+                    else
+                        return new StrictTypeLattice(st2.getOut());
+                }
+        }.run(cfg);
+
+        // At this point we've reported if stream types don't match
+        // within the stream.  Check the output:
+        StrictTypeLattice stl = (StrictTypeLattice)inTypes.get(cfg.getExit());
+        if (stl.isBottom())
+            report(init, "ambiguous type at pipeline exit");
+        else if (!stl.isTop() && st != null &&
+                 !(st.getOut().equals(stl.getValue())))
+            report(init, "type at pipeline exit " + stl.getValue() +
+                   " disagrees with declared type");
+    }
+    
+    private void checkSplitJoinConnectionTyping(StreamSpec ss, Map streams)
+    {
+        checkSJFLConnections(ss, streams, true, true);
+        checkSJFLConnections(ss, streams, true, false);
+    }
+
+    private void checkFeedbackLoopConnectionTyping(StreamSpec ss, Map streams)
+    {
+        checkSJFLConnections(ss, streams, false, true);
+        checkSJFLConnections(ss, streams, false, false);
+    }
+
+    // Only do this once, it's the same basic algorithm for split-joins
+    // and feedback loops:
+    private void checkSJFLConnections(final StreamSpec ss,
+                                      final Map streams,
+                                      final boolean forSJ,
+                                      final boolean forInput)
+    {
+        // What we want to do is check that the input and/or output
+        // types of a non-pipeline composite stream match up.  That is,
+        // there should be a single type at the splitter or joiner.
+        // Using the data-flow infrastructure for this seems gratuitous,
+        // except that the StreamType type may be indeterminate
+        // (could have a null StreamType, or for a feedback loop
+        // could have a void input or output type).
+
+        Function init = ss.getInitFunc();
+        // ASSERT: init != null; this mostly implies you're not
+        // calling this on a filter.
+        CFG cfg = CFGBuilder.buildCFG(init);
+        Map typeMap = new DataFlow() {
+                public Lattice getInit()
+                {
+                    StreamType st = ss.getStreamType();
+                    if (st == null)
+                        return new StrictTypeLattice(true); // top
+                    if (forInput)
+                        return new StrictTypeLattice(st.getIn());
+                    else
+                        return new StrictTypeLattice(st.getOut());
+                }
+
+                public Lattice flowFunction(CFGNode node, Lattice in)
+                {
+                    if (!node.isStmt())
+                        return in;
+                    
+                    // This is generic code for either split-joins or
+                    // feedback loops.  Don't worry about getting the
+                    // wrong statement.  sc gets set to the child
+                    // stream creator object, we'll resolve it
+                    // momentarily.  takeInput gets set if we're
+                    // interested in the input type of the stream,
+                    // false if we want the output.
+                    Statement stmt = node.getStmt();
+                    StreamCreator sc;
+                    boolean takeInput;
+                    if (stmt instanceof StmtAdd)
+                    {
+                        sc = ((StmtAdd)stmt).getCreator();
+                        takeInput = forInput;
+                    }
+                    else if (stmt instanceof StmtBody)
+                    {
+                        sc = ((StmtBody)stmt).getCreator();
+                        // child input connected to loop input
+                        takeInput = forInput;
+                    }
+                    else if (stmt instanceof StmtLoop)
+                    {
+                        sc = ((StmtLoop)stmt).getCreator();
+                        // child input connected to loop output
+                        takeInput = !forInput;
+                    }
+                    else
+                        // uninteresting statement
+                        return in;
+                    
+                    // Find the actual stream spec/type.
+                    StreamSpec ss = null;
+                    if (sc instanceof SCAnon)
+                        ss = ((SCAnon)sc).getSpec();
+                    else if (sc instanceof SCSimple)
+                    {
+                        String name = ((SCSimple)sc).getName();
+                        ss = (StreamSpec)streams.get(name);
+                    }
+
+                    if (ss == null)
+                        return in;
+                    if (ss.getStreamType() == null)
+                        return in;
+                    Type theType;
+                    if (takeInput)
+                        theType = ss.getStreamType().getIn();
+                    else
+                        theType = ss.getStreamType().getOut();
+                    
+                    // What do we actually return?  Take the meet
+                    // of the input and output values, so that when
+                    // we see
+                    //   add void->float filter { ... };
+                    //   add void->int filter { ... };
+                    // we notice something's wrong.
+                    //
+                    // In principle, we could report here, but we
+                    // would get an extra error on linear code when
+                    // reporting on an error at a possible join
+                    // just before exit (make the above statements
+                    // branches of an if/then).
+                    Lattice newVal = new StrictTypeLattice(theType);
+                    return in.meet(newVal);
+                }
+            }.run(cfg);
+
+        // We again want something that can traverse a CFG and
+        // give the first place where the lattice value is bottom.
+        StrictTypeLattice exitVal =
+            (StrictTypeLattice)typeMap.get(cfg.getExit());
+        if (exitVal.isBottom())
+        {
+            if (forSJ && forInput)
+                report(ss, "types at splitjoin entry disagree");
+            else if (forSJ && !forInput)
+                report(ss, "types at splitjoin exit disagree");
+            else if (!forSJ && forInput)
+                report(ss, "types at feedbackloop entry disagree");
+            else if (!forSJ && !forInput)
+                report(ss, "types at feedbackloop exit disagree");
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 package at.dms.kjc.raw;
 
 import java.util.Vector;
+import at.dms.kjc.sir.lowering.Namer;
 
 /**
  * This class represents a node in the switch schedule.
@@ -14,19 +15,35 @@ public class SwitchScheduleNode
     public SwitchScheduleNode next;
     /* destination filters for this data item */
     private Vector destinations;
-
-    
+    private int size;
+        
     public SwitchScheduleNode() {
 	destinations = new Vector();
+	size = 0;
     }
 
-    public void addDest(int tile) {
-	destinations.add(new Integer(tile));
+    public void addDest(FlatNode to) {
+	destinations.add(to);
+	size++;
     }
     
-    public int getDest(int i) 
+    public int getSize() 
     {
-	return ((Integer)(destinations.get(i))).intValue();
+	return size;
+    }
+    
+    public FlatNode getDest(int i) 
+    {
+	return (FlatNode)destinations.get(i);
+    }
+    
+    public void printMe() {
+	for (int i = 0; i < destinations.size(); i++) {
+	    FlatNode node = (FlatNode)destinations.get(i);
+	    System.out.println(" " + Namer.getName(node.contents) + " Tile:" +
+			       Layout.getTile(node.contents));
+	}
+	System.out.println("=====");
     }
     
 }

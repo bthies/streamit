@@ -63,7 +63,10 @@ public class RawBackend {
 	RawFlattener.dumpGraph();
 	System.out.println("Flattener End.");
 	//Generate the switch code
-	//SwitchCode.generate(str);
+	System.out.println("Switch Code Begin...");
+	SwitchCode.generate(RawFlattener.top);
+	SwitchCode.dumpCode();
+	System.out.println("Switch Code End.");
 	System.out.println("Exiting");
 	System.exit(0);
     }

@@ -32,7 +32,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		top = node;
 	    }
 	    
-	    currentNode.addEdgeTo(node);
+	    currentNode.addEdges(node);
 	    currentNode = node;
 	}
 	if (current instanceof SIRPipeline){
@@ -52,11 +52,11 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    
 	    FlatNode joinerNode = new FlatNode (sj.getJoiner());
 	    	    
-	    currentNode.addEdgeTo(splitterNode);
+	    currentNode.addEdges(splitterNode);
 	    for (int i = 0; i < sj.size(); i++) {
 		currentNode = splitterNode;
 		createGraph(sj.get(i));
-		currentNode.addEdgeTo(joinerNode);
+		currentNode.addEdges(joinerNode);
 	    }
 	    currentNode = joinerNode;
 	    
@@ -70,15 +70,15 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    }
 	    FlatNode splitterNode = new FlatNode(loop.getSplitter());
 
-	    currentNode.addEdgeTo(joinerNode);
+	    currentNode.addEdges(joinerNode);
 	    	    
 	    currentNode = joinerNode;
 	    createGraph(loop.getBody());
-	    currentNode.addEdgeTo(splitterNode);
+	    currentNode.addEdges(splitterNode);
 	    
 	    currentNode = splitterNode;
 	    createGraph(loop.getLoop());
-	    currentNode.addEdgeTo(joinerNode);
+	    currentNode.addEdges(joinerNode);
 	    currentNode = splitterNode;
 	}
     }

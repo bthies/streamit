@@ -5,35 +5,35 @@
 These are the examples in the StreamIt Cookbook.
   </description>
   <implementations>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="minimal">
       <desc>Minimal program, section 2.1</desc>
       <file>Minimal.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="movingaverage">
       <desc>Moving average filter, section 2.2</desc>
       <file>MovingAverage.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="lpf">
       <desc>Low-pass filter, section 2.3</desc>
       <file>LPFProgram.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="bpf">
       <desc>Band-pass filter, section 2.4</desc>
       <file>BPFProgram.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="equalizer">
       <desc>Equalizer, section 2.5</desc>
       <file>EqualizerProgram.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="echo">
       <desc>Echo effect, section 2.6</desc>
       <file>EchoProgram.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="fib">
       <desc>Fibonacci number generator, section 2.7</desc>
       <file>FibProgram.str</file>
     </impl>
-    <impl lang="StreamIt">
+    <impl lang="StreamIt" id="fmradio">
       <desc>FMRadio with equalizer, section 3</desc>
       <file>FMRadio.str</file>
     </impl>

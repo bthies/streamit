@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.13 2003-04-08 09:50:07 thies Exp $
+ * $Id: Utils.java,v 1.14 2003-04-19 00:18:23 thies Exp $
  */
 
 package at.dms.util;
@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.LoweringConstants;
 import java.lang.reflect.Array;
 import java.util.Vector;

@@ -20,10 +20,41 @@ package streamit.frontend.nodes;
  * Base class for variable data types.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: Type.java,v 1.3 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: Type.java,v 1.4 2003-12-18 18:34:30 dmaze Exp $
  */
 public abstract class Type
 {
     /** Returns true if this type is a complex type. */
     public boolean isComplex() { return false; }
+
+    /**
+     * Check if this type can be promoted to some other type.
+     * Returns true if a value of this type can be assigned to
+     * a variable of that type.
+     *
+     * @param that  other type to check promotion to
+     * @return      true if this can be promoted to that
+     */
+    public boolean promotesTo(Type that)
+    {
+        if (this.equals(that))
+            return true;
+        return false;
+    }
+
+    /**
+     * Find the lowest type that two types can promote to.
+     *
+     * @param that  other type
+     * @return      a type such that both this and that can promote
+     *              to type, or null if there is no such type
+     */
+    public Type leastCommonPromotion(Type that)
+    {
+        if (this.promotesTo(that))
+            return that;
+        if (that.promotesTo(this))
+            return this;
+        return null;
+    }
 }

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.30 2003-05-13 21:50:57 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.31 2003-05-13 22:42:55 dmaze Exp $
  */
 
 header {
@@ -446,14 +446,19 @@ addExpr returns [Expression x] { x = null; Expression r; int o = 0; }
 	;
 
 multExpr returns [Expression x] { x = null; Expression r; int o = 0; }
-	:	x=inc_dec_expr
+	:	x=castExpr
 		(	( STAR { o = ExprBinary.BINOP_MUL; }
 			| DIV  { o = ExprBinary.BINOP_DIV; }
 			| MOD  { o = ExprBinary.BINOP_MOD; }
 			)
-			r=inc_dec_expr
+			r=castExpr
 			{ x = new ExprBinary(x.getContext(), o, x, r); }
 		)*
+	;
+
+castExpr returns [Expression x] { x = null; Type t=null; }
+	:	(l:LPAREN t=primitive_type RPAREN)? x=inc_dec_expr
+		{ if (t != null) x = new ExprTypeCast(getContext(l), t, x); }
 	;
 
 inc_dec_expr returns [Expression x] { x = null; }

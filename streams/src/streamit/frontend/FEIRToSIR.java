@@ -471,6 +471,13 @@ public class FEIRToSIR implements FEVisitor {
 				      (JExpression) exp.getC().accept(this));
   }
 
+  public Object visitExprTypeCast(ExprTypeCast exp) {
+    debug("In visitExprTypeCast\n");
+    return new JCastExpression(null,
+                               (JExpression) exp.getExpr().accept(this),
+                               feirTypeToSirType(exp.getType()));
+  }
+
   public Object visitExprUnary(ExprUnary exp) {
     debug("In visitExprUnary\n");
     switch (exp.getOp()) {

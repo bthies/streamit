@@ -12,7 +12,7 @@ package streamit.frontend.nodes;
  * <code>FENode.accept()</code> method of the object in question.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEVisitor.java,v 1.10 2003-05-13 21:45:30 dmaze Exp $
+ * @version $Id: FEVisitor.java,v 1.11 2003-05-13 22:42:57 dmaze Exp $
  */
 public interface FEVisitor
 {
@@ -29,6 +29,7 @@ public interface FEVisitor
     public Object visitExprPeek(ExprPeek exp);
     public Object visitExprPop(ExprPop exp);
     public Object visitExprTernary(ExprTernary exp);
+    public Object visitExprTypeCast(ExprTypeCast exp);
     public Object visitExprUnary(ExprUnary exp);
     public Object visitExprVar(ExprVar exp);
     public Object visitFieldDecl(FieldDecl field);

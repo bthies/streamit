@@ -14,7 +14,7 @@
 
 CC = g++
 RM = rm -f
-CFLAGS =  -Wall -O2
+CFLAGS =  -Wall -g -pg
 DEBUG_CFLAGS =  -g -Wall
 SRCS = $(shell ls *.cc)
 CLASSES = $(shell ls *.java | mawk 'gsub ( ".java$$", ".class" )')

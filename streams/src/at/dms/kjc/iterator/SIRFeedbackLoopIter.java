@@ -9,20 +9,21 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
     /**
      * Object pointed to by this iterator.
      */
-    private SIRFeedbackLoop obj;
+    protected SIRFeedbackLoop obj;
     
     /**
      * Returns new iterator for <obj> with no parent.
      */
-    SIRFeedbackLoopIter(SIRFeedbackLoop obj) {
+    SIRFeedbackLoopIter(IterFactory _factory, SIRFeedbackLoop obj) {
+	super(_factory);
 	this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
-    SIRFeedbackLoopIter(SIRFeedbackLoop obj, SIRIterator parent, int pos) {
-	super(parent, pos);
+    SIRFeedbackLoopIter(IterFactory _factory, SIRFeedbackLoop obj, SIRIterator parent, int pos) {
+	super(_factory, parent, pos);
 	this.obj = obj;
     }
 
@@ -50,9 +51,9 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
      * @return iterator for the body of the FeedbackLoop
      */
     public Iterator getBodyChild () { 
-	return IterFactory.createIter(obj.getBody(),
-				      this,
-				      SIRFeedbackLoop.BODY);
+	return factory.createIter(obj.getBody(),
+				  this,
+				  SIRFeedbackLoop.BODY);
     }
 
     /**
@@ -60,21 +61,21 @@ public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter
      * @return iterator for the loop of the FeedbackLoop
      */
     public Iterator getLoopChild () { 
-	return IterFactory.createIter(obj.getLoop(),
-				      this,
-				      SIRFeedbackLoop.LOOP);
+	return factory.createIter(obj.getLoop(),
+				  this,
+				  SIRFeedbackLoop.LOOP);
     }
 
     public SIRIterator getLoop() {
-	return IterFactory.createIter(obj.getLoop(),
-				      this,
-				      SIRFeedbackLoop.LOOP);
+	return factory.createIter(obj.getLoop(),
+				  this,
+				  SIRFeedbackLoop.LOOP);
     }
 
     public SIRIterator getBody() {
-	return IterFactory.createIter(obj.getBody(),
-				      this,
-				      SIRFeedbackLoop.BODY);
+	return factory.createIter(obj.getBody(),
+				  this,
+				  SIRFeedbackLoop.BODY);
     }
 
     /**

@@ -27,9 +27,15 @@ public abstract class SIRIterator implements Iterator {
     private int pos;
 
     /**
+     * Factory we should use for making children iterators.
+     */
+    protected IterFactory factory;
+    
+    /**
      * Make an iterator with no parent
      */
-    protected SIRIterator() {
+    protected SIRIterator(IterFactory _factory) {
+	this.factory = _factory;
 	this.root = new Root();
 	this.parent = null;
 	this.pos = -1;
@@ -39,7 +45,8 @@ public abstract class SIRIterator implements Iterator {
      * Make an iterator for parent <parent> that contains this at
      * position <pos>
      */
-    protected SIRIterator(SIRIterator parent, int pos) {
+    protected SIRIterator(IterFactory _factory, SIRIterator parent, int pos) {
+	this.factory = _factory;
 	this.root = parent.root;
 	this.parent = parent;
 	this.pos = pos;

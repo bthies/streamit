@@ -13,15 +13,16 @@ public class SIRPhasedFilterIter extends SIRIterator implements FilterIter
     /**
      * Returns new iterator for <obj> with no parent.
      */
-    SIRPhasedFilterIter(SIRPhasedFilter obj) {
+    SIRPhasedFilterIter(IterFactory _factory, SIRPhasedFilter obj) {
+	super(_factory);
 	this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
-    SIRPhasedFilterIter(SIRPhasedFilter obj, SIRIterator parent, int pos) {
-	super(parent, pos);
+    SIRPhasedFilterIter(IterFactory _factory, SIRPhasedFilter obj, SIRIterator parent, int pos) {
+	super(_factory, parent, pos);
 	this.obj = obj;
     }
 

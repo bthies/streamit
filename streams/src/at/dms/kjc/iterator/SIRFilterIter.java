@@ -13,15 +13,16 @@ public class SIRFilterIter extends SIRIterator implements FilterIter {
     /**
      * Returns new iterator for <obj> with no parent.
      */
-    SIRFilterIter(SIRFilter obj) {
+    SIRFilterIter(IterFactory _factory, SIRFilter obj) {
+	super(_factory);
 	this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
-    SIRFilterIter(SIRFilter obj, SIRIterator parent, int pos) {
-	super(parent, pos);
+    SIRFilterIter(IterFactory _factory, SIRFilter obj, SIRIterator parent, int pos) {
+	super(_factory, parent, pos);
 	this.obj = obj;
     }
 

@@ -9,20 +9,21 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
     /**
      * Object pointed to by this iterator.
      */
-    private SIRSplitJoin obj;
+    protected SIRSplitJoin obj;
 
     /**
      * Returns new iterator for <obj> with no parent.
      */
-    SIRSplitJoinIter(SIRSplitJoin obj) {
+    SIRSplitJoinIter(IterFactory _factory, SIRSplitJoin obj) {
+	super(_factory);
 	this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
-    SIRSplitJoinIter(SIRSplitJoin obj, SIRIterator parent, int pos) {
-	super(parent, pos);
+    SIRSplitJoinIter(IterFactory _factory, SIRSplitJoin obj, SIRIterator parent, int pos) {
+	super(_factory, parent, pos);
 	this.obj = obj;
     }
 
@@ -43,7 +44,7 @@ public class SIRSplitJoinIter extends SIRIterator implements SplitJoinIter {
     }
 
     public Iterator getChild (int n) {
-	return IterFactory.createIter(obj.get(n), this, n);
+	return factory.createIter(obj.get(n), this, n);
     }
 
     /**

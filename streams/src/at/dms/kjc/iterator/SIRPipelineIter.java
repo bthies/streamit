@@ -13,15 +13,16 @@ public class SIRPipelineIter extends SIRIterator implements PipelineIter {
     /**
      * Returns new iterator for <obj> with no parent.
      */
-    SIRPipelineIter(SIRPipeline obj) {
+    SIRPipelineIter(IterFactory _factory, SIRPipeline obj) {
+	super(_factory);
 	this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
-    SIRPipelineIter(SIRPipeline obj, SIRIterator parent, int pos) {
-	super(parent, pos);
+    SIRPipelineIter(IterFactory _factory, SIRPipeline obj, SIRIterator parent, int pos) {
+	super(_factory, parent, pos);
 	this.obj = obj;
     }
 
@@ -42,7 +43,7 @@ public class SIRPipelineIter extends SIRIterator implements PipelineIter {
     }
 
     public Iterator getChild (int n) {
-	return IterFactory.createIter(obj.get(n), this, n);
+	return factory.createIter(obj.get(n), this, n);
     }
 
     /**

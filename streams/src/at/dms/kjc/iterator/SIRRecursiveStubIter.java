@@ -13,15 +13,16 @@ public class SIRRecursiveStubIter extends SIRIterator implements IteratorBase {
     /**
      * Returns new iterator for <obj> with no parent.
      */
-    SIRRecursiveStubIter(SIRRecursiveStub obj) {
+    SIRRecursiveStubIter(IterFactory _factory, SIRRecursiveStub obj) {
+	super(_factory);
 	this.obj = obj;
     }
 
     /**
      * Returns new iterator for <obj> in position <pos> of parent <parent>.
      */
-    SIRRecursiveStubIter(SIRRecursiveStub obj, SIRIterator parent, int pos) {
-	super(parent, pos);
+    SIRRecursiveStubIter(IterFactory _factory, SIRRecursiveStub obj, SIRIterator parent, int pos) {
+	super(_factory, parent, pos);
 	this.obj = obj;
     }
 

@@ -9,39 +9,36 @@ import at.dms.util.*;
 import at.dms.kjc.sir.*;
 
 public class IterFactory {
-
     /**
      * For now, we just need one memoizer, so let's just keep it here.
      */
     private static final Memoizer memoizer = Memoizer.create();
 
+    /**
+     * Constructor should stay protected so that it's only returned
+     * from static methods in this package.
+     */
+    IterFactory() {}
+
     /***********************************************************************/
 
-    public static SIRPipelineIter createIter(SIRPipeline obj) { 
-	return new SIRPipelineIter(obj);
+    /**
+     * Returns default factory.
+     */
+    public static IterFactory createFactory() {
+	return new IterFactory();
     }
 
-    public static SIRFilterIter createIter(SIRFilter obj) { 
-	return new SIRFilterIter(obj);
+    /**
+     * Returns fine-grained iter factory.
+     */
+    public static IterFactory createFineGrainedFactory() {
+	return new FineGrainedIterFactory();
     }
 
-    public static SIRPhasedFilterIter createIter(SIRPhasedFilter obj) {
-        return new SIRPhasedFilterIter(obj);
-    }
+    /***********************************************************************/
 
-    public static SIRSplitJoinIter createIter(SIRSplitJoin obj) {
-	return new SIRSplitJoinIter(obj);
-    }
-
-    public static SIRFeedbackLoopIter createIter(SIRFeedbackLoop obj) {
-	return new SIRFeedbackLoopIter(obj);
-    }
-
-    public static SIRRecursiveStubIter createIter(SIRRecursiveStub obj) {
-	return new SIRRecursiveStubIter(obj);
-    }
-
-    public static SIRIterator createIter(SIRStream obj) { 
+    public SIRIterator createIter(SIRStream obj) { 
 	if (obj instanceof SIRFilter) {
 	    return createIter((SIRFilter)obj);
         } else if (obj instanceof SIRPhasedFilter) {
@@ -59,6 +56,76 @@ public class IterFactory {
 		       + (obj==null ? "" : obj.getClass().toString()));
 	    return null;
 	}
+    }
+    // The following methods are provided over the general method
+    // aboveto provide better type checking on the return value, in
+    // the event that the object type is known statically.  Also
+    // allows for easier overriding.
+    public SIRPipelineIter createIter(SIRPipeline obj) { 
+	return new SIRPipelineIter(this, obj);
+    }
+    public SIRFilterIter createIter(SIRFilter obj) { 
+	return new SIRFilterIter(this, obj);
+    }
+    public SIRPhasedFilterIter createIter(SIRPhasedFilter obj) {
+        return new SIRPhasedFilterIter(this, obj);
+    }
+    public SIRSplitJoinIter createIter(SIRSplitJoin obj) {
+	return new SIRSplitJoinIter(this, obj);
+    }
+    public SIRFeedbackLoopIter createIter(SIRFeedbackLoop obj) {
+	return new SIRFeedbackLoopIter(this, obj);
+    }
+    public SIRRecursiveStubIter createIter(SIRRecursiveStub obj) {
+	return new SIRRecursiveStubIter(this, obj);
+    }
+
+    /**
+     * For building a child iterator, internal only to the iterator
+     * package.  Requires that <parent> is non-null (to create a fresh
+     * top-level iterator, use methods above.)
+     */
+    SIRIterator createIter(SIRStream obj, SIRIterator parent, int pos) { 
+	Utils.assert(parent!=null);
+	if (obj instanceof SIRFilter) {
+	    return createIter((SIRFilter)obj, parent, pos);
+        } else if (obj instanceof SIRPhasedFilter) {
+            return createIter((SIRPhasedFilter)obj, parent, pos);
+	} else if (obj instanceof SIRPipeline) {
+	    return createIter((SIRPipeline)obj, parent, pos);
+	} else if (obj instanceof SIRSplitJoin) {
+	    return createIter((SIRSplitJoin)obj, parent, pos);
+	} else if (obj instanceof SIRFeedbackLoop) {
+	    return createIter((SIRFeedbackLoop)obj, parent, pos);
+	} else if (obj instanceof SIRRecursiveStub) {
+	    return createIter((SIRRecursiveStub)obj, parent, pos);
+	} else {
+	    Utils.fail("Unexpected iterator " + obj + " of type " 
+		       + (obj==null ? "" : obj.getClass().toString()));
+	    return null;
+	}
+    }
+    // The following methods are provided over the general method
+    // aboveto provide better type checking on the return value, in
+    // the event that the object type is known statically.  Also
+    // allows for easier overriding.
+    SIRPipelineIter createIter(SIRPipeline obj, SIRIterator parent, int pos) { 
+	return new SIRPipelineIter(this, obj, parent, pos);
+    }
+    SIRFilterIter createIter(SIRFilter obj, SIRIterator parent, int pos) { 
+	return new SIRFilterIter(this, obj, parent, pos);
+    }
+    SIRPhasedFilterIter createIter(SIRPhasedFilter obj, SIRIterator parent, int pos) {
+        return new SIRPhasedFilterIter(this, obj, parent, pos);
+    }
+    SIRSplitJoinIter createIter(SIRSplitJoin obj, SIRIterator parent, int pos) {
+	return new SIRSplitJoinIter(this, obj, parent, pos);
+    }
+    SIRFeedbackLoopIter createIter(SIRFeedbackLoop obj, SIRIterator parent, int pos) {
+	return new SIRFeedbackLoopIter(this, obj, parent, pos);
+    }
+    SIRRecursiveStubIter createIter(SIRRecursiveStub obj, SIRIterator parent, int pos) {
+	return new SIRRecursiveStubIter(this, obj, parent, pos);
     }
 
     /**
@@ -159,31 +226,5 @@ public class IterFactory {
 	}
     }
      */
-
-    /**
-     * For building a child iterator, internal only to the iterator
-     * package.  Requires that <parent> is non-null (to create a fresh
-     * top-level iterator, use methods above.)
-     */
-    static SIRIterator createIter(SIRStream obj, SIRIterator parent, int pos) { 
-	Utils.assert(parent!=null);
-	if (obj instanceof SIRFilter) {
-	    return new SIRFilterIter((SIRFilter)obj, parent, pos);
-        } else if (obj instanceof SIRPhasedFilter) {
-            return new SIRPhasedFilterIter((SIRPhasedFilter)obj, parent, pos);
-	} else if (obj instanceof SIRPipeline) {
-	    return new SIRPipelineIter((SIRPipeline)obj, parent, pos);
-	} else if (obj instanceof SIRSplitJoin) {
-	    return new SIRSplitJoinIter((SIRSplitJoin)obj, parent, pos);
-	} else if (obj instanceof SIRFeedbackLoop) {
-	    return new SIRFeedbackLoopIter((SIRFeedbackLoop)obj, parent, pos);
-	} else if (obj instanceof SIRRecursiveStub) {
-	    return new SIRRecursiveStubIter((SIRRecursiveStub)obj, parent, pos);
-	} else {
-	    Utils.fail("Unexpected iterator " + obj + " of type " 
-		       + (obj==null ? "" : obj.getClass().toString()));
-	    return null;
-	}
-    }
 
 }

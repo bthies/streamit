@@ -23,6 +23,12 @@ public class RawWorkEstimator extends EmptyStreamVisitor
      **/
     public static int estimateWork(SIRFilter oldFilter)
     {
+	// if we have an identity filter, just return 0 since these
+	// aren't mapped onto Raw
+	if (oldFilter instanceof SIRIdentity) {
+	    return 0;
+	}
+
 	boolean oldDecoupledValue = KjcOptions.decoupled;
 	boolean oldMagicNetValue = KjcOptions.magic_net;
 	int work = 0;

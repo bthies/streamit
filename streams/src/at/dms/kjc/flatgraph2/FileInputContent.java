@@ -6,7 +6,7 @@ import at.dms.kjc.*;
 import java.util.*;
 import at.dms.kjc.sir.linear.*;
 
-public class FileInputContent extends PredefinedContent {
+public class FileInputContent extends InputContent {
     private String filename;
 
     public FileInputContent(FileInputContent content) {

@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.7 2002-09-16 20:30:03 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.8 2002-09-18 15:55:05 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -29,6 +29,11 @@ import java.util.ArrayList;
  * statements inside a block; practically, this means that any pass
  * that adds or removes statements should be called after the
  * MakeBodiesBlocks pass.
+ *
+ * Statements that visit Expressions call doExpression() to do
+ * the actual visitation; by default, this accepts this on the
+ * provided expression, but derived classes can override
+ * doExpression() to perform some custom action.
  */
 public class FEReplacer implements FEVisitor
 {
@@ -40,6 +45,11 @@ public class FEReplacer implements FEVisitor
     protected void addStatement(Statement stmt)
     {
         newStatements.add(stmt);
+    }
+
+    protected Expression doExpression(Expression expr)
+    {
+        return (Expression)expr.accept(this);
     }
 
     public Object visitExprArray(ExprArray exp)
@@ -210,8 +220,8 @@ public class FEReplacer implements FEVisitor
     
     public Object visitStmtAssign(StmtAssign stmt)
     {
-        Expression newLHS = (Expression)stmt.getLHS().accept(this);
-        Expression newRHS = (Expression)stmt.getRHS().accept(this);
+        Expression newLHS = doExpression(stmt.getLHS());
+        Expression newRHS = doExpression(stmt.getRHS());
         if (newLHS == stmt.getLHS() && newRHS == stmt.getRHS())
             return stmt;
         return new StmtAssign(stmt.getContext(), newLHS, newRHS,
@@ -253,7 +263,7 @@ public class FEReplacer implements FEVisitor
     public Object visitStmtDoWhile(StmtDoWhile stmt)
     {
         Statement newBody = (Statement)stmt.getBody().accept(this);
-        Expression newCond = (Expression)stmt.getCond().accept(this);
+        Expression newCond = doExpression(stmt.getCond());
         if (newBody == stmt.getBody() && newCond == stmt.getCond())
             return stmt;
         return new StmtDoWhile(stmt.getContext(), newBody, newCond);
@@ -261,14 +271,14 @@ public class FEReplacer implements FEVisitor
     
     public Object visitStmtEnqueue(StmtEnqueue stmt)
     {
-        Expression newValue = (Expression)stmt.getValue().accept(this);
+        Expression newValue = doExpression(stmt.getValue());
         if (newValue == stmt.getValue()) return stmt;
         return new StmtEnqueue(stmt.getContext(), newValue);
     }
     
     public Object visitStmtExpr(StmtExpr stmt)
     {
-        Expression newExpr = (Expression)stmt.getExpression().accept(this);
+        Expression newExpr = doExpression(stmt.getExpression());
         if (newExpr == stmt.getExpression()) return stmt;
         return new StmtEnqueue(stmt.getContext(), newExpr);
     }
@@ -276,7 +286,7 @@ public class FEReplacer implements FEVisitor
     public Object visitStmtFor(StmtFor stmt)
     {
         Statement newInit = (Statement)stmt.getInit().accept(this);
-        Expression newCond = (Expression)stmt.getCond().accept(this);
+        Expression newCond = doExpression(stmt.getCond());
         Statement newIncr = (Statement)stmt.getIncr().accept(this);
         Statement newBody = (Statement)stmt.getBody().accept(this);
         if (newInit == stmt.getInit() && newCond == stmt.getCond() &&
@@ -288,7 +298,7 @@ public class FEReplacer implements FEVisitor
     
     public Object visitStmtIfThen(StmtIfThen stmt)
     {
-        Expression newCond = (Expression)stmt.getCond().accept(this);
+        Expression newCond = doExpression(stmt.getCond());
         Statement newCons = stmt.getCons() == null ? null :
             (Statement)stmt.getCons().accept(this);
         Statement newAlt = stmt.getAlt() == null ? null :
@@ -317,7 +327,7 @@ public class FEReplacer implements FEVisitor
 
     public Object visitStmtPush(StmtPush stmt)
     {
-        Expression newValue = (Expression)stmt.getValue().accept(this);
+        Expression newValue = doExpression(stmt.getValue());
         if (newValue == stmt.getValue()) return stmt;
         return new StmtPush(stmt.getContext(), newValue);
     }
@@ -325,7 +335,7 @@ public class FEReplacer implements FEVisitor
     public Object visitStmtReturn(StmtReturn stmt)
     {
         Expression newValue = stmt.getValue() == null ? null :
-            (Expression)stmt.getValue().accept(this);
+            doExpression(stmt.getValue());
         if (newValue == stmt.getValue()) return stmt;
         return new StmtReturn(stmt.getContext(), newValue);
     }
@@ -341,7 +351,7 @@ public class FEReplacer implements FEVisitor
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
         Expression newInit = stmt.getInit() == null ? null :
-            (Expression)stmt.getInit().accept(this);
+            doExpression(stmt.getInit());
         if (newInit == stmt.getInit()) return stmt;
         return new StmtVarDecl(stmt.getContext(), stmt.getType(),
                                stmt.getName(), newInit);
@@ -349,7 +359,7 @@ public class FEReplacer implements FEVisitor
     
     public Object visitStmtWhile(StmtWhile stmt)
     {
-        Expression newCond = (Expression)stmt.getCond().accept(this);
+        Expression newCond = doExpression(stmt.getCond());
         Statement newBody = (Statement)stmt.getBody().accept(this);
         if (newCond == stmt.getCond() && newBody == stmt.getBody())
             return stmt;

@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.4 2003-11-24 17:20:40 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.5 2003-11-25 04:26:51 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -200,8 +200,8 @@ and load 'results.qmr'.
         except:
             pass
         try:
-            os.symlink(os.path.join(regtest_root, 'latest'),
-                       self.working_dir)
+            os.symlink(self.working_dir,
+		       os.path.join(regtest_root, 'latest'))
         except:
             pass
 

@@ -30,7 +30,7 @@ public class HelloWorld2 extends Stream
     	{
     		public void Init()
     	    {
-    		    UseSplitter(Splitter.ROUND_ROBIN_SPLITTER);
+    		    UseSplitter(Splitter.ROUND_ROBIN_SPLITTER ());
     		    Add(new CharPrinter());
     		    Add(new CharPrinter());
     		    Add(new CharPrinter());

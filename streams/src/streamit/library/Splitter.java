@@ -5,8 +5,15 @@ import java.util.*;
 // 1 input, many output
 public abstract class Splitter extends Operator
 {
-    public static final Splitter ROUND_ROBIN_SPLITTER = new RoundRobinSplitter ();
-    public static final Splitter DUPLICATE_SPLITTER = new DuplicateSplitter ();
+    public static Splitter ROUND_ROBIN_SPLITTER ()
+    {
+        return new RoundRobinSplitter ();
+    }
+    
+    public static Splitter DUPLICATE_SPLITTER ()
+    {
+        return new DuplicateSplitter ();
+    }
     
     List dest = new ArrayList ();
     List destWeight = new ArrayList ();
@@ -25,74 +32,55 @@ public abstract class Splitter extends Operator
     
     void Add (Stream s, int weight)
     {
-        Channel newOutput = (Channel) s.GetIOField ("input").clone ();
-        
-        // handle input channel
-        if (input == null)
-        {
-            input = newOutput;
-            newOutput = (Channel) newOutput.clone ();
-        } else 
-        if (newOutput != null) 
-        {
-            // check that the input types agree
-            ASSERT (newOutput.GetType ().getName ().equals (input.GetType ().getName ()));
-        }
-        
         // add the destination to the list of destinations
         dest.add (s);
         destWeight.add (new Integer (weight));
-        
-        // and finally add an entrance in the output channel array:
-        if (output == null)
-        {
-            output = new Channel [1];
-            output [0] = newOutput;
-        } else {
-            // need to copy the whole thing before actually
-            // appending the new entrance
-            Channel [] oldOutputs = output;
-            output = new Channel [oldOutputs.length + 1];
-            int pos;
-            for (pos = 0; pos < oldOutputs.length; pos++)
-            {
-                output [pos] = oldOutputs [pos];
-            }
-            output [pos] = newOutput;
-        }
     }
-    
+
     public void ConnectGraph ()
     {
         // do I even have anything to do?
-        if (output == null || output.length == 0) return;
-        ASSERT (output.length == dest.size ());
+        if (dest.isEmpty ()) return;
+        ASSERT (dest.size () == destWeight.size ());
         
-        // yep, go through my members and connect them all with
+        // yep, create an output array of appropriate size
+        output = new Channel [dest.size ()];
+        
+        // go through my members and connect them all with
         // ChannelConnectFilter
         int outputIndx = 0;
         ListIterator iter = dest.listIterator ();
         while (iter.hasNext ())
         {
-            // get next output and input channels
+            // get the stream
             Stream s = (Stream) iter.next ();
             ASSERT (s != null);
             
-            Channel in = s.GetIOField ("input");
-            ASSERT (in != null);
-            
-            Channel out = output [outputIndx];
-            outputIndx++;
-            ASSERT (out != null);
+            // connect it and retrieve its input and copy it into
+            // the output array for this splitter
+            s.ConnectGraph ();
+            Channel channel = s.GetIOField ("input");
+            output [outputIndx] = channel;
+
+            // if it is not a source, make sure that it consumes data
+            // of the same kind as everything else in this Splitter
+            if (channel != null)
+            {
+                // handle input channel
+                if (input == null)
+                {
+                    input = new Channel (channel);
+                } else {
+                    // check that the input types agree
+                    ASSERT (channel.GetType ().getName ().equals (input.GetType ().getName ()));
+                }
+            }
             
             // now connect the in and out
-            out.SetSource (this);
-            in.SetSink (s);
-            ChannelConnectFilter glue = new ChannelConnectFilter ();
-            glue.UseChannels (out, in);
+            channel.SetSource (this);
+            channel.SetSink (s);
             
-            // and connect the output Stream:
-            s.ConnectGraph ();
+            outputIndx ++;
         }
     }
 }

@@ -137,70 +137,47 @@ public class Stream extends Operator
     
     public void ConnectGraph ()
     {
-        // get my source.  If I don't have one, I'm a source.
-        Stream source = this;
-        Channel currentSourceChannel = GetIOField ("input");
+        // make sure I have some elements - not sure what to do otherwise
+        ASSERT (streamElements.isEmpty () == false);
         
-        // a Stream should have a list of elements that it
-        // contains serially.  Go through this list and
-        // setup the connections through channels:
-        
-        // if I am a sink, add self to the list:
-        if (GetIOField ("output") == null)
+        // set myself up with proper input and output
         {
-            AddSink ();
+            input = ((Stream)streamElements.getFirst ()).GetIOField ("input");
+            output = ((Stream)streamElements.getFirst ()).GetIOField ("output");
         }
-
+        
+        // go through the list and connect it together:
         try
         {
             ListIterator childIter;
             childIter = (ListIterator) streamElements.iterator ();
+            Stream source = null;
         
             while (childIter.hasNext ())
             {
                 // advance the iterator:
                 Stream sink = (Stream) childIter.next ();
+                ASSERT (sink != null);
                 
-                // get the next stream:
-                Channel currentDestChannel = sink.GetIOField ("input");
-                
-                // make sure that the channels use the same data types
-                ASSERT ((currentSourceChannel == null) == (currentDestChannel == null));
-                ASSERT (currentSourceChannel == null || currentDestChannel == null ||
-                        currentSourceChannel.GetType ().getName ().equals (currentDestChannel.GetType ().getName ()));
-                
-                // now copy the currentInput into the currentOutput
-                if (currentSourceChannel != null)
-                {
-                    sink.SetIOField ("input", currentSourceChannel);
-                    
-                    ASSERT (sink.GetIOField ("input") == currentSourceChannel);
-                    
-                    // tell the channels what their sources and sinks are:
-                    if (currentSourceChannel.GetSource () == null)
-                        currentSourceChannel.SetSource (source);
-                    currentSourceChannel.SetSink (sink);
-                }
-                
-                // connect the subgraph
+                // setup the sink itself
                 sink.ConnectGraph ();
-
-                // and setup for the next iteration
+                
+                if (source != null && source.GetIOField ("output") != null)
+                {
+                    // create and connect a pass filter
+                    ChannelConnectFilter connect = new ChannelConnectFilter ();
+                    Channel in = source.GetIOField ("output");
+                    Channel out = sink.GetIOField ("input");
+                    connect.UseChannels (in, out);
+                    
+                    // connect the channels to their filters
+                    in.SetSource (source);
+                    out.SetSink (sink);
+                } else
+                {
+                    ASSERT (sink.GetIOField ("input") == null);
+                }
                 source = sink;
-                currentSourceChannel = source.GetIOField ("output");
-            }
-            
-            if (currentSourceChannel != null)
-            {
-                // get the next stream:
-                Channel currentDestChannel = GetIOField ("input");
-                
-                // make sure that the channels use the same data types
-                ASSERT (currentDestChannel != null);
-                ASSERT (currentSourceChannel.GetType ().getName ().equals (currentDestChannel.GetType ().getName ()));
-                
-                // now copy the currentInput into the currentOutput
-                SetIOField ("input", currentSourceChannel);
             }
         }
         catch (NoSuchElementException error)
@@ -215,20 +192,7 @@ public class Stream extends Operator
     // return null if no input present
     Channel GetIOField (String fieldName)
     {
-        Channel field = null;
-        
-        {
-            Channel fieldInstance[];
-            fieldInstance = super.GetIOFields (fieldName);
-            
-            if (fieldInstance != null)
-            {
-                ASSERT (fieldInstance.length == 1);
-                field = fieldInstance [0];
-            }
-        }
-        
-        return field;
+        return GetIOField (fieldName, 0);
     }
     
     void SetIOField (String fieldName, Channel newChannel)

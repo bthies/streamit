@@ -62,7 +62,7 @@ public class SplitJoin extends Stream
         {
             if (input == null)
             {
-                input = (Channel) newInput.clone ();
+                input = new Channel (newInput);
                 ASSERT (input != null);
             } else {
                 // check that the input types agree
@@ -74,7 +74,7 @@ public class SplitJoin extends Stream
         {
             if (output == null)
             {
-                output = (Channel) newOutput.clone ();
+                output = new Channel (newOutput);
                 ASSERT (output != null);
             } else {
                 // check that the output types agree
@@ -105,15 +105,16 @@ public class SplitJoin extends Stream
     public void ConnectGraph ()
     {
         // connect the SplitJoin with the Split and the Join
-        if (input != null)
+        if (splitter != null)
         {
             ASSERT (splitter != null);
             
-            splitter.SetIOField ("input", 0, input);
             splitter.ConnectGraph ();
+            
+            input = splitter.GetIOField ("input", 0);
         }
         
-        if (output != null)
+        if (joiner != null)
         {
             ASSERT (joiner != null);
             

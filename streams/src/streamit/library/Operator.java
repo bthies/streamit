@@ -224,6 +224,24 @@ class Operator extends DestroyedClass
         return fieldsInstance;
     }
     
+    Channel GetIOField (String fieldName, int fieldIndex)
+    {
+        Channel field = null;
+        
+        {
+            Channel fieldInstance[];
+            fieldInstance = GetIOFields (fieldName);
+            
+            if (fieldInstance != null)
+            {
+                ASSERT (fieldInstance.length > fieldIndex);
+                field = fieldInstance [fieldIndex];
+            }
+        }
+        
+        return field;
+    }
+    
     void SetIOField (String fieldName, int fieldIndex, Channel newChannel)
     {
         ASSERT (fieldName == "input" || fieldName == "output");

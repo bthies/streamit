@@ -5,7 +5,7 @@ package streamit;
 import java.util.*;
 import java.lang.*;
 
-public class Channel extends DestroyedClass implements Cloneable
+public class Channel extends DestroyedClass
 {
     Class type;
     Operator source = null, sink = null;
@@ -19,6 +19,14 @@ public class Channel extends DestroyedClass implements Cloneable
     {
         ASSERT (dataObject.getClass ().isArray ());
         type = dataObject.getClass ().getComponentType ();
+        queue = new LinkedList ();
+    }
+    
+    public Channel (Channel original)
+    {
+        ASSERT (original != null);
+        
+        type = original.GetType ();
         queue = new LinkedList ();
     }
     
@@ -237,21 +245,4 @@ public class Channel extends DestroyedClass implements Cloneable
     
     void SetSource (Operator _source) { source = _source; }
     void SetSink (Operator _sink) { sink = _sink; }
-    
-    protected Object clone ()
-    {
-        Channel result = null;
-        try 
-        {
-            result = (Channel) super.clone ();
-            ASSERT (result != null);
-        }
-        catch (Throwable error)
-        {
-            // this should NOT happen!
-            ASSERT (false);
-        }
-        
-        return result;
-    }
 }

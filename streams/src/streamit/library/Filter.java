@@ -25,6 +25,16 @@ public abstract class Filter extends Stream
 
     // Add was present in Operator, but is not defined in Filter anymore
     public void Add(Stream s) { ASSERT (false); }
+    
+    // ConnectGraph doesn't connect anything for a Filter,
+    // but it can register all sinks:
+    public void ConnectGraph ()
+    {
+        if (GetIOField ("output") == null)
+        {
+            AddSink ();
+        }
+    }
 
     public abstract void Work();
 }

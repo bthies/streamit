@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.5 2003-02-10 17:27:37 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.6 2003-04-15 19:22:18 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
@@ -29,7 +29,7 @@ public class InsertInitConstructors extends InitMunger
         // complex or non-primitive types, generate a constructor.
         for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
         {
-            StmtVarDecl field = (StmtVarDecl)iter.next();
+            FieldDecl field = (FieldDecl)iter.next();
             Type type = field.getType();
             if (type.isComplex() || !(type instanceof TypePrimitive))
             {

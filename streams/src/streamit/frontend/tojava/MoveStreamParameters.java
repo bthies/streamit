@@ -1,7 +1,7 @@
 /*
  * MoveStreamParameters.java: make constructors and init functions
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MoveStreamParameters.java,v 1.6 2003-02-21 15:34:59 dmaze Exp $
+ * $Id: MoveStreamParameters.java,v 1.7 2003-04-15 19:22:18 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -106,10 +106,10 @@ public class MoveStreamParameters extends InitMunger
                      iter.hasNext(); )
                 {
                     Parameter param = (Parameter)iter.next();
-                    Statement varDecl = new StmtVarDecl(spec.getContext(),
-                                                        param.getType(),
-                                                        param.getName(), null);
-                    newVars.add(varDecl);
+                    FieldDecl field = new FieldDecl(spec.getContext(),
+                                                    param.getType(),
+                                                    param.getName());
+                    newVars.add(field);
                 }
             
                 // Rewrite the init function:

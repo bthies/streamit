@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.46 2003-02-21 15:34:59 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.47 2003-04-15 19:22:18 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -386,6 +386,12 @@ public class NodesToJava implements FEVisitor
         return exp.getName();
     }
 
+    public Object visitFieldDecl(FieldDecl field)
+    {
+        return indent + convertType(field.getType()) + " " +
+            field.getName() + ";\n";
+    }
+
     public Object visitFunction(Function func)
     {
         boolean wasInFunction = inFunction;
@@ -753,8 +759,8 @@ public class NodesToJava implements FEVisitor
         // Output field definitions:
         for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
         {
-            Statement varDecl = (Statement)iter.next();
-            result += indent + (String)varDecl.accept(this) + ";\n";
+            FieldDecl varDecl = (FieldDecl)iter.next();
+            result += (String)varDecl.accept(this);
         }
         
         // Output method definitions:

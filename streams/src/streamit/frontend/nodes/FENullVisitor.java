@@ -1,7 +1,7 @@
 /*
  * FENullVisitor.java: visitor implementation that always returns null
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FENullVisitor.java,v 1.3 2003-01-10 18:22:01 dmaze Exp $
+ * $Id: FENullVisitor.java,v 1.4 2003-04-15 19:22:17 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -29,6 +29,7 @@ public class FENullVisitor implements FEVisitor
     public Object visitExprTernary(ExprTernary exp) { return null; }
     public Object visitExprUnary(ExprUnary exp) { return null; }
     public Object visitExprVar(ExprVar exp) { return null; }
+    public Object visitFieldDecl(FieldDecl field) { return null; }
     public Object visitFunction(Function func) { return null; }
     public Object visitFuncWork(FuncWork func) { return null; }
     public Object visitProgram(Program prog) { return null; }

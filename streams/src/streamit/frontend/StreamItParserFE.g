@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.23 2003-01-09 19:39:55 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.24 2003-04-15 19:22:12 dmaze Exp $
  */
 
 header {
@@ -75,17 +75,23 @@ filter_decl[StreamType st] returns [StreamSpec ss]
 filter_body[FEContext context, StreamType st, String name, List params]
 returns [StreamSpec ss]
 { ss = null; List vars = new ArrayList(); List funcs = new ArrayList();
-	Function fn; Statement decl; }
+	Function fn; FieldDecl decl; }
 	:	LCURLY
 		( fn=init_decl { funcs.add(fn); }
 		| fn=work_decl { funcs.add(fn); }
 		| (function_decl) => fn=function_decl { funcs.add(fn); }
-		| decl=variable_decl SEMI { vars.add(decl); }
+		| decl=field_decl SEMI { vars.add(decl); }
 		)*
 		RCURLY
 		{ ss = new StreamSpec(context, StreamSpec.STREAM_FILTER,
 				st, name, params, vars, funcs); }
 	;
+
+field_decl returns [FieldDecl f] { f = null; Type t; }
+	:	t=data_type id:ID
+		{ f = new FieldDecl(getContext(id), t, id.getText()); }
+	;
+
 
 stream_type_decl returns [StreamType st] { st = null; Type in, out; }
 	:	in=data_type t:ARROW out=data_type

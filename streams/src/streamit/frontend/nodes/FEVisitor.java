@@ -1,7 +1,7 @@
 /*
  * FEVisitor.java: visit a tree of front-end nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEVisitor.java,v 1.8 2003-01-10 18:22:01 dmaze Exp $
+ * $Id: FEVisitor.java,v 1.9 2003-04-15 19:22:17 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -32,6 +32,7 @@ public interface FEVisitor
     public Object visitExprTernary(ExprTernary exp);
     public Object visitExprUnary(ExprUnary exp);
     public Object visitExprVar(ExprVar exp);
+    public Object visitFieldDecl(FieldDecl field);
     public Object visitFunction(Function func);
     public Object visitFuncWork(FuncWork func);
     public Object visitProgram(Program prog);

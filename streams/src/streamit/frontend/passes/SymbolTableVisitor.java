@@ -11,7 +11,7 @@ import java.util.Iterator;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.1 2003-04-09 15:26:49 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.2 2003-04-15 19:22:17 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -23,7 +23,7 @@ public class SymbolTableVisitor extends FEReplacer
      * children.
      */
     protected SymbolTable symtab;
-    
+
     /**
      * Create a new symbol table visitor.
      *
@@ -33,6 +33,13 @@ public class SymbolTableVisitor extends FEReplacer
     public SymbolTableVisitor(SymbolTable symtab)
     {
         this.symtab = symtab;
+    }
+
+    public Object visitFieldDecl(FieldDecl field)
+    {
+        symtab.registerVar(field.getName(), field.getType(), field,
+                           SymbolTable.KIND_FIELD);
+        return field;
     }
 
     public Object visitFunction(Function func)
@@ -64,7 +71,8 @@ public class SymbolTableVisitor extends FEReplacer
 
     public Object visitStmtVarDecl(StmtVarDecl stmt)
     {
-        symtab.registerVar(stmt.getName(), stmt.getType());
+        symtab.registerVar(stmt.getName(), stmt.getType(), stmt,
+                           SymbolTable.KIND_LOCAL);
         return stmt;
     }
 
@@ -75,7 +83,8 @@ public class SymbolTableVisitor extends FEReplacer
         for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
-            symtab.registerVar(param.getName(), param.getType());
+            symtab.registerVar(param.getName(), param.getType(), param,
+                               SymbolTable.KIND_STREAM_PARAM);
         }
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;

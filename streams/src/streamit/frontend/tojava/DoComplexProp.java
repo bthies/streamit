@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.10 2002-11-21 21:43:35 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.11 2003-04-15 19:22:18 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -167,6 +167,13 @@ public class DoComplexProp extends FEReplacer
         // if (streamType.getIn().isComplex())
         //     x = makeAnyTemporary(x);
         return x;
+    }
+
+    public Object visitFieldDecl(FieldDecl field)
+    {
+        symTab.registerVar(field.getName(), field.getType(), field,
+                           SymbolTable.KIND_FIELD);
+        return field;
     }
 
     public Object visitFunction(Function func)

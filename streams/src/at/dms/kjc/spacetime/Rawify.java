@@ -182,22 +182,66 @@ public class Rawify
 	System.out.println("SRC: "+src);
 	System.out.println("DEST: "+dest);
 	SwitchCodeStore code = tile.getSwitchCode();
-	for(int i = 0; i<numPop; i++)
+	boolean first=true;
+	for(int i = 0; i<numPop-1; i++)
 	    for(int j = 0; j<pop; j++) {
 		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		ins.addRoute(src, SwitchOPort.CSTI);
-		ins.addRoute(src,dest);
+		//if(!first) {
+		    if(!end)
+			ins.addRoute(src,dest);
+		    //}
 		code.appendIns(ins, init||primePump);
 		for(int k = i-1; k>= 0; k--) {
 		    FullIns newIns = new FullIns(tile);
 		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 		    code.appendIns(newIns, init||primePump);
 		}
+		FullIns newIns=null;
+		if(!begin) {
+		    newIns=new FullIns(tile);
+		    newIns.addRoute(src, SwitchOPort.CSTI);
+		    code.appendIns(newIns, init||primePump);
+		}
+		/*if(!first) {
+		    newIns = new FullIns(tile);
+		    newIns.addRoute(SwitchIPort.CSTO,dest);
+		    code.appendIns(newIns, init||primePump);
+		}
+		first=false;*/
+	    }
+	final int turns=content.getPos();
+	for(int turn=0;turn<turns;turn++)
+	    for(int j = 0; j<pop; j++) {
+		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		ins.addRoute(src, SwitchOPort.CSTI);
+		if(!first) {
+		    if(!end)
+			ins.addRoute(src,dest);
+		    }
+		code.appendIns(ins, init||primePump);
+		for(int k = numPop-2; k>= 0; k--) {
+		    FullIns newIns = new FullIns(tile);
+		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+		    code.appendIns(newIns, init||primePump);
+		}
+		FullIns newIns=null;
+		if(!begin) {
+		    newIns=new FullIns(tile);
+		    newIns.addRoute(src, SwitchOPort.CSTI);
+		    code.appendIns(newIns, init||primePump);
+		}
+		if(!first) {
+		    newIns = new FullIns(tile);
+		    newIns.addRoute(SwitchIPort.CSTO,dest);
+		    code.appendIns(newIns, init||primePump);
+		}
+		first=false;
 	    }
 	Label label = code.getFreshLabel();
-	//for(int rounds=0;rounds<1;rounds++) {
+	//for(int rounds=0;rounds<2;rounds++) {
 	//if(rounds>0)
-	code.appendIns(label, init||primePump);
+		code.appendIns(label, init||primePump);
 	    final int numTimes = Linear.getMult(peek);
 	    int pendingSends=0;
 	    int times=0;
@@ -209,7 +253,7 @@ public class Rawify
 		    times++;
 		    ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		    ins.addRoute(src, SwitchOPort.CSTI);
-		    if(!end)
+		    if(!end/*&&rounds>0*/)
 			ins.addRoute(src,dest);
 		    code.appendIns(ins, init||primePump);
 		    if(times==4) {
@@ -228,9 +272,11 @@ public class Rawify
 				ins.addRoute(SwitchIPort.CSTO,dest);
 				code.appendIns(ins,init||primePump);
 			    }
-			    ins=new FullIns(tile);
-			    ins.addRoute(SwitchIPort.CSTO,dest);
-			    code.appendIns(ins,init||primePump);
+			    //if(rounds>0) {
+				ins=new FullIns(tile);
+				ins.addRoute(SwitchIPort.CSTO,dest);
+				code.appendIns(ins,init||primePump);
+				//}
 			    pendingSends=0;
 			}
 		    }
@@ -257,15 +303,17 @@ public class Rawify
 				    ins.addRoute(SwitchIPort.CSTO,dest);
 				    code.appendIns(ins,init||primePump);
 				}
-				ins=new FullIns(tile);
-				ins.addRoute(SwitchIPort.CSTO,dest);
-				code.appendIns(ins,init||primePump);
+				//if(rounds>0) {
+				    ins=new FullIns(tile);
+				    ins.addRoute(SwitchIPort.CSTO,dest);
+				    code.appendIns(ins,init||primePump);
+				    //}
 				pendingSends=0;
 			    }
 			}
 		    }
 		}
-		//}
+    //}
 	}
 	/*for(int i=0;i<numTimes-1;i++) {
 	  FullIns newIns=new FullIns(tile);

@@ -24,6 +24,7 @@ public class Linear extends RawExecutionCode implements Constants {
     private int popCount;
     private int[] idx;
     private long uin;
+    private int pos;
     
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
@@ -34,6 +35,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	constant=content.getConstant();
 	popCount=content.getPopCount();
 	int num=array.length/popCount;
+	pos=content.getPos();
 	idx=new int[num];
 	for(int i=0,j=0;j<num;i+=popCount,j++) {
 	    System.err.println("Adding idx: "+i);
@@ -65,9 +67,15 @@ public class Linear extends RawExecutionCode implements Constants {
 	}
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
-	for(int i=0;i<idx.length;i++)
+	for(int i=0;i<idx.length-1;i++)
 	    for(int k=0;k<popCount;k++)
 		for(int j=i;j>=0;j--) {
+		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
+		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
+		}
+	for(int turn=0;turn<pos;turn++)
+	    for(int k=0;k<popCount;k++)
+		for(int j=idx.length-1;j>=0;j--) {
 		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[j]+k]);
 		    inline.add("add.s "+getInterReg(false,j,k)+",\\t"+getInterReg(true,j,k)+",\\t"+tempRegs[0]);
 		}

@@ -9,16 +9,17 @@ IT DOES NOT CHECK FOR CORRECTNESS!  That is left to the reg test.
 usage:
 
 "FarmIt low_raw_size high_row_size starting_cagfarm ending_cagfarm
-compiler_options benchmark_file output_file"
+compiler_options benchmark_file output_file bloodgraph_directory"
 
 A simple example should suffice to explain the options:
 
-FarmIt 1 8 22 33 "-a -N 5" working_benchmarks results
+FarmIt 1 8 22 33 "-a -N 5" working_benchmarks results /u/mgordon/blood
 
 The above states that we want to run the benchmarks listed in the file
 "working_benchmarks" on raw sizes 1x1 thru 8x8 (inclusive) on cagfarms
 22 thru 33 with the options "-a -N 5" (the -raw option is
-automatically generated) and place the results in the file "results".
+automatically generated) and place the results in the file "results" and
+the generated blood graphs in /u/mgordon/blood
 
 Preliminaries:
 

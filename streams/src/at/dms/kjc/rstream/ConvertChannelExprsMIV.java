@@ -177,8 +177,11 @@ class Phase2 extends SLIRReplacingVisitor
 	
 	//if we have just a pop expression, not nested in anything, then 
 	//just remove it, we don't need it anymore!!!!!
-	//	if (expr instanceof SIRPopExpression)
-	//   return new JEmptyStatement(null, null);
+	// RMR { not sure why the following was commented out before
+	// (it generated statements with no effect)
+	if (expr instanceof SIRPopExpression)
+	    return new JEmptyStatement(null, null);
+	// } RMR
 		
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp!=null && newExp!=expr) {

@@ -50,6 +50,11 @@ public class FilterTraceNode extends TraceNode
 	return y;
     }
 
+    public boolean isAssignedTile() 
+    {
+	return laidout;
+    }
+
     public FilterContent getFilter() {
 	return filter;
     }

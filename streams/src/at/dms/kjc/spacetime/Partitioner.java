@@ -37,6 +37,14 @@ public abstract class Partitioner
     
     public abstract Trace[] partition();
 
+    public boolean isIO(Trace trace) 
+    {
+	for (int i = 0; i < io.length; i++) {
+	    if (trace == io[i])
+		return true;
+	}
+	return false;
+    }
 
     public Trace[] getTraceGraph()
     {

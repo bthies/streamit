@@ -228,6 +228,19 @@ public class OutputTraceNode extends TraceNode
 	}
 	return false;
     }
+
+    public Set fileOutputs() 
+    {
+	HashSet fileOutputs = new HashSet();
+	Iterator dests = getDestSet().iterator();
+	while (dests.hasNext()) {
+	    Edge edge = (Edge)dests.next();
+	    if (edge.getDest().isFileWriter())
+		fileOutputs.add(edge.getDest());
+	}
+	return fileOutputs;
+    }
+    
     
     /*
     public int itemsReceived(boolean init, boolean primepump) 

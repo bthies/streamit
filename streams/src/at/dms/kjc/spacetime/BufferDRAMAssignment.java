@@ -107,11 +107,10 @@ public class BufferDRAMAssignment
 		assert files[i].getHead().oneInput() : 
 		    "buffer assignment of a joined file writer not implemented " +
 		    "everthing else should be done";
-		FilterTraceNode upstream = 
-		    files[i].getHead().getSingleEdge().getSrc().getPrevFilter();
 		FileOutputContent fileOC = 
 		    (FileOutputContent)filter.getFilter();
-		RawTile tile = chip.getTile(upstream.getX(), upstream.getY());
+		RawTile tile = chip.getTile(files[i].getHead().getNextFilter().getX(), 
+					    files[i].getHead().getNextFilter().getY());
 		IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(files[i].getHead(), filter);
 		//the dram of the tile where we want to add the file writer 
 		StreamingDram dram = null;
@@ -136,10 +135,9 @@ public class BufferDRAMAssignment
 		assert files[i].getTail().oneOutput() :
 		    "buffer assignment of a split file reader not implemented " +
 		    "everthing else should be done";
-		FilterTraceNode downstream = 
-		    files[i].getTail().getSingleEdge().getDest().getNextFilter();
 		FileInputContent fileIC = (FileInputContent)filter.getFilter();
-		RawTile tile = chip.getTile(downstream.getX(), downstream.getY());
+		RawTile tile = chip.getTile(files[i].getHead().getNextFilter().getX(), 
+					    files[i].getHead().getNextFilter().getY());
 		IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(filter, files[i].getTail());
 		StreamingDram dram = null;
 		for (int j = 0; j < tile.getIODevices().length; j++) {

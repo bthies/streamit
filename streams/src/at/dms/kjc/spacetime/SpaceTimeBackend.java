@@ -151,12 +151,18 @@ public class SpaceTimeBackend
 
 	SimpleScheduler scheduler = new SimpleScheduler(partitioner, rawChip);
 	scheduler.schedule();
+
+	//MultiplySteadyState.doit(partitioner, scheduler);
+	
 	SchedulePrimePump.doit(scheduler.getSchedule());
 	
 	//mgordon's stuff
-	assert !KjcOptions.magicdram : 
-
+	assert !KjcOptions.magicdram :
 	    "Magic DRAM support is not working";	
+	
+	//we can now use filter infos, everything is set
+	FilterInfo.canUse();
+
 	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "preDRAMsteady.dot", false);
 	//assign the buffers not assigned by Jasp to drams
 	BufferDRAMAssignment.run(scheduler.getSchedule(), rawChip, partitioner.io);

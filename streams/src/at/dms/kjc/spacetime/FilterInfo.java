@@ -35,15 +35,26 @@ public class FilterInfo
     public FilterContent filter;
 
     private static HashMap filterInfos;
+    //true if everything is set and we can use this class
+    //because once a filter info is created you cannot
+    //change the underlying filter...
+    private static boolean canuse;
     
     static 
     {
 	filterInfos = new HashMap();
+	canuse = false;
+    }
+    
+    public static void canUse() 
+    {
+	canuse = true;
     }
     
 
     public static FilterInfo getFilterInfo(FilterTraceNode traceNode) 
     {
+	assert canuse;
 	if (!filterInfos.containsKey(traceNode)) {
 	    FilterInfo info = new FilterInfo(traceNode);
 	    filterInfos.put(traceNode, info);

@@ -5,6 +5,7 @@ import at.dms.kjc.sir.lowering.partition.linear.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.reordering.*;
+import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.linear.*;
 import at.dms.kjc.sir.linear.frequency.*; 
 import at.dms.util.IRPrinter;
@@ -69,6 +70,11 @@ public class Flattener {
 
 	// dump the original graph to a dot format
 	StreamItDot.printGraph(str, "before.dot");
+
+	// gather application-characterization statistics
+	if (KjcOptions.stats) {
+	    StatisticsGathering.doit(str);
+	}
 
 	if (KjcOptions.fusion) {
 	    System.err.print("Running FuseAll...");

@@ -5,6 +5,7 @@ import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
@@ -90,6 +91,11 @@ public class RawBackend {
 	}
 
 	StreamItDot.printGraph(str, "before.dot");
+
+	// gather application-characterization statistics
+	if (KjcOptions.stats) {
+	    StatisticsGathering.doit(str);
+	}
 
 	Flattener.doLinearAnalysis(str);
 

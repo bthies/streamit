@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.22 2004-07-08 05:45:39 thies Exp $
+ * @version $Id: SemanticChecker.java,v 1.23 2004-08-06 18:05:20 thies Exp $
  */
 public class SemanticChecker
 {
@@ -526,12 +526,16 @@ public class SemanticChecker
                         switch(expr.getOp())
                         {
                         case ExprUnary.UNOP_NEG:
-                            if (!inttype.promotesTo(ot))
+			    // you can negate a bit, since 0 and 1
+			    // literals always count as bits.
+			    // However, the resulting negation will be
+			    // an int.
+                            if (!bittype.promotesTo(ot)) 
                                 report(expr, "cannot negate " + ot);
                             break;
                             
                         case ExprUnary.UNOP_NOT:
-                            if (!ot.promotesTo(inttype))
+                            if (!ot.promotesTo(bittype))
                                 report(expr, "cannot take boolean not of " +
                                        ot);
                             break;
@@ -540,7 +544,8 @@ public class SemanticChecker
                         case ExprUnary.UNOP_PREINC:
                         case ExprUnary.UNOP_POSTDEC:
                         case ExprUnary.UNOP_POSTINC:
-                            if (!inttype.promotesTo(ot))
+			    // same as negation, regarding bits
+                            if (!bittype.promotesTo(ot))
                                 report(expr, "cannot perform ++/-- on " + ot);
                             break;
                         }

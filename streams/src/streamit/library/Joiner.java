@@ -73,6 +73,10 @@ abstract public class Joiner extends Operator
         }
     }
 
+    public String toString() {
+	return "joiner";
+    }
+
     abstract public void work ();
 
     // ----------------------------------------------------------------
@@ -81,7 +85,6 @@ abstract public class Joiner extends Operator
 
     public abstract int [] getWeights ();
     public abstract int getProduction ();
-
 }
 
 

@@ -17,4 +17,7 @@ public class NullJoiner extends Joiner
     
     public int getProduction () { return 0; }
 
+    public String toString() {
+	return "roundrobin(0)";
+    }
 }

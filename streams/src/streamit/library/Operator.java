@@ -1426,4 +1426,12 @@ public class Operator extends DestroyedClass
 	}
 	return result;
     }
+
+    /**
+     * This is what shows up on nodes in the dot graph output of the
+     * library.
+     */
+    public String toString() {
+	return getClass().getName();
+    }
 }

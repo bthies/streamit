@@ -56,4 +56,8 @@ public class RoundRobinJoiner extends Joiner
         
         return outputTotal;
     }
+
+    public String toString() {
+	return "roundrobin";
+    }
 }

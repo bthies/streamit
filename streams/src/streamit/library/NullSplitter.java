@@ -16,4 +16,8 @@ public class NullSplitter extends Splitter
     }
     
     public int getConsumption () { return 0; }
+
+    public String toString() {
+	return "roundrobin(0)";
+    }
 }

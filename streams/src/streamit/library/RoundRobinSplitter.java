@@ -53,4 +53,8 @@ public class RoundRobinSplitter extends Splitter
         
         return inputTotal;
     }
+
+    public String toString() {
+	return "roundrobin";
+    }
 }

@@ -75,6 +75,10 @@ abstract public class Splitter extends Operator
         }
     }
 
+    public String toString() {
+	return "joiner";
+    }
+
     // ----------------------------------------------------------------
     // This function constructs a weights list for the scheduler
     // ----------------------------------------------------------------

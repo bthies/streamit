@@ -78,4 +78,18 @@ public class WeightedRoundRobinJoiner extends Joiner
 
         return outputTotal;
     }
+
+    public String toString() {
+	int[] weights = getWeights();
+	StringBuffer result = new StringBuffer("roundrobin(");
+	for (int i=0; i<weights.length; i++) {
+	    result.append(weights[i]);
+	    if (i!=weights.length-1) {
+		result.append(", ");
+	    } else {
+		result.append(")");
+	    }
+	}
+	return result.toString();
+    }
 }

@@ -28,4 +28,8 @@ public class DuplicateSplitter extends Splitter
     {
         return 1;
     }
+
+    public String toString() {
+	return "duplicate";
+    }
 }

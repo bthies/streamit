@@ -109,6 +109,9 @@ public class MakefileGenerator
     {
 	FileWriter fw = new FileWriter("fileio.bc");
 
+	if (KjcOptions.magic_net) 
+	    fw.write("gTurnOffNativeCompilation=1;\n");
+
 	fw.write("include(\"<dev/basic.bc>\");\n");
 
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      

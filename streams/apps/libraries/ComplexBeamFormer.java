@@ -35,6 +35,8 @@ class ComplexBeamFormer extends Filter
 
   public void init(int nBeams, int nChannels, int nSamples)
   {
+    int i;
+
     numberOfBeams      = nBeams;
     numberOfChannels   = nChannels;
     numberOfSamples    = nSamples;
@@ -44,7 +46,11 @@ class ComplexBeamFormer extends Filter
     input = new Channel (Float.TYPE, nChannels*nSamples*2);
     output = new Channel (Float.TYPE, nBeams*nSamples*2);
 
-    // NEED TO GENERATE BF WEIGHTS HERE
+    for (i = 0; i < numberOfBeams*numberOfChannels*2; i++)
+    {
+      beamFormingWeights[i] = ((float) i)/ 2.449489743f;
+      //System.out.println(beamFormingWeights[i]);
+    }
   }
 
   public void work()
@@ -57,7 +63,9 @@ class ComplexBeamFormer extends Filter
     {
       for (j = 0; j < numberOfSamples*2; j++)
       {
-        inputData[v++] = input.popFloat();
+	float x;
+        x = inputData[v++] = input.popFloat();
+//	System.out.println(x);
       }
     }
 

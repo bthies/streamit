@@ -30,6 +30,11 @@ class FloatFileWriter extends Filter {
     public FloatFileWriter (String output)
     {
         super ();
+    }
+
+    public void init(String output)
+    {
+        input = new Channel (Float.TYPE, 1);
         try{
             outputFile = new File(output);
             out = new FileWriter(outputFile);
@@ -42,11 +47,6 @@ class FloatFileWriter extends Filter {
             {
                 System.err.println("IO Exception: " + e);
             }
-    }
-
-    public void init()
-    {
-        input = new Channel (Float.TYPE, 1);
     }
 
     public void work() {

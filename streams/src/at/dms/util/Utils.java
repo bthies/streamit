@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.15 2003-05-16 02:02:59 thies Exp $
+ * $Id: Utils.java,v 1.16 2003-05-16 04:11:09 thies Exp $
  */
 
 package at.dms.util;
@@ -484,6 +484,6 @@ public abstract class Utils implements Serializable {
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 
-    public static final List EMPTY_LIST = new LinkedList();
+    public static final LinkedList EMPTY_LIST = new LinkedList();
 
 }

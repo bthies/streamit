@@ -79,13 +79,13 @@ at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc
 
 at/dms/kjc/KjcTokenTypes.java : at/dms/kjc/Kjc.t $(KOPI_LEXGEN_TARGET)
 	@rm -f at/dms/kjc/KjcTokenTypes.java
-	cd `dirname $<` ; \
-	java at.dms.compiler.tools.lexgen.Main -ditf `basename $<`
+	cd $(dir $<) && \
+	java at.dms.compiler.tools.lexgen.Main -ditf $(notdir $<)
 
 at/dms/kjc/KjcParser.java : at/dms/kjc/Kjc.g at/dms/kjc/KjcTokenTypes.java $(KOPI_ANTLR_TARGET)
 	@rm -f at/dms/kjc/KjcParser.java
-	cd `dirname $<` ; \
-	java -mx64m at.dms.compiler.tools.antlr.compiler.Main `basename $<`
+	cd $(dir $<) && \
+	java -mx64m at.dms.compiler.tools.antlr.compiler.Main $(notdir $<)
 
 at/dms/kjc/KjcOptions.java : at/dms/kjc/KjcOptions.opt $(KOPI_OPTGEN_TARGET)
 

@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.19 2002-09-21 15:15:10 jasperln Exp $
+ * $Id: FieldProp.java,v 1.20 2002-11-14 04:14:07 mgordon Exp $
  */
 public class FieldProp implements Constants
 {
@@ -113,15 +113,15 @@ public class FieldProp implements Constants
     {
         findCandidates(filter);
 
-	System.out.println("--------------------");
-	System.out.println("Candidates Fields : ");
+	//	System.out.println("--------------------");
+	//System.out.println("Candidates Fields : ");
 	Iterator keyIter = this.types.keySet().iterator();
 	while(keyIter.hasNext()) {
 	  Object f = keyIter.next();
-	  System.out.println("Field: " + f +
+	  /*	  System.out.println("Field: " + f +
 			     "  " + this.types.get(f) +
 			     " --> " + this.fields.get(f));
-
+	  */
 	  
 	}
 
@@ -147,7 +147,7 @@ public class FieldProp implements Constants
     /** Helper function to invalidate a particular field. */
     private void invalidateField(String name)
     {
-      System.out.println("Invalidating field: " + name);
+	//      System.out.println("Invalidating field: " + name);
       nofields.add(name);
       fields.remove(name);
     }

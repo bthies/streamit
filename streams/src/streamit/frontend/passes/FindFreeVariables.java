@@ -17,7 +17,7 @@ import java.util.List;
  * inside the anonymous stream) corresponds to a local.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FindFreeVariables.java,v 1.1 2003-04-15 20:56:58 dmaze Exp $
+ * @version $Id: FindFreeVariables.java,v 1.2 2003-07-30 18:09:23 dmaze Exp $
  */
 public class FindFreeVariables extends SymbolTableVisitor
 {
@@ -53,10 +53,12 @@ public class FindFreeVariables extends SymbolTableVisitor
         for (Iterator iter = freeVars.iterator(); iter.hasNext(); )
         {
             String name = (String)iter.next();
+            // Is the variable free here, too?
+            if (!symtab.hasVar(name))
+                oldFreeVars.add(name);
             // Look up the variable in the symbol table; only print
             // if it's a local.
-            int kind = symtab.lookupKind(name);
-            if (kind == SymbolTable.KIND_LOCAL)
+            else if (symtab.lookupKind(name) == SymbolTable.KIND_LOCAL)
             {
                 final String was = name;
                 final String wrapped = "_final_" + name;

@@ -52,12 +52,12 @@ public class FlatIRToC extends ToC implements StreamVisitor
     private boolean dynamicOutput = false;
     private StaticStreamGraph ssg;
 
-    public static void generateCode(FlatNode node, Layout lo) 
+    public static void generateCode(StaticStreamGraph SSG, FlatNode node)
     {
 	FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
 	toC.flatNode = node;
-	toC.layout = lo;
-	toC.ssg = SpaceDynamicBackend.streamGraph.getParentSSG(node);
+	toC.ssg = SSG;
+	toC.layout = SSG.getStreamGraph().getLayout();
 	toC.dynamicOutput =  toC.ssg.isOutput(node);
     
 	//FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
@@ -266,7 +266,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	//header to be used for all outgoing messages
 	if (dynamicOutput) {
 	    FlatNode downstream = 
-		SpaceDynamicBackend.streamGraph.getParentSSG(flatNode).getNext(flatNode);
+		ssg.getStreamGraph().getParentSSG(flatNode).getNext(flatNode);
 	    
 	    if (downstream != null) {
 		print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, 1, 0, " +

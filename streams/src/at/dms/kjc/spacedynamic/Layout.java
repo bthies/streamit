@@ -52,7 +52,7 @@ public class Layout extends at.dms.util.Utils implements
     {
 	this.streamGraph = streamGraph;
 	joiners = new HashSet();
-	rawChip = SpaceDynamicBackend.rawChip;	
+	rawChip = streamGraph.getRawChip();	
 
 	int rows = rawChip.getYSize();
 	int columns = rawChip.getXSize();
@@ -74,10 +74,10 @@ public class Layout extends at.dms.util.Utils implements
 	System.out.println("Tiles layout.assigned: " + assigned.size());
 
 	if (assigned.size() > 
-	    (SpaceDynamicBackend.rawChip.getXSize() * SpaceDynamicBackend.rawChip.getYSize())) {
+	    (rawChip.getXSize() * rawChip.getYSize())) {
 	    System.err.println("\nLAYOUT ERROR: Need " + assigned.size() +
 			       " tiles, have " + 
-			       (SpaceDynamicBackend.rawChip.getYSize() * SpaceDynamicBackend.rawChip.getXSize()) +
+			       (rawChip.getYSize() * rawChip.getXSize()) +
 			       " tiles.");
 	    System.exit(-1);
 	}
@@ -174,15 +174,15 @@ public class Layout extends at.dms.util.Utils implements
 	buf.append("digraph Layout {\n");
 	buf.append("size = \"8, 10.5\"");
 	buf.append("node [shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
-	for (int i = 0; i < SpaceDynamicBackend.rawChip.getYSize(); i++) {
+	for (int i = 0; i < rawChip.getYSize(); i++) {
 	    buf.append("{rank = same;");
-	    for (int j = 0; j < SpaceDynamicBackend.rawChip.getXSize(); j++) {
+	    for (int j = 0; j < rawChip.getXSize(); j++) {
 		buf.append("tile" + rawChip.getTile(j, i).getTileNumber() + ";");
 	    }
 	    buf.append("}\n");
 	}
-	for (int i = 0; i < SpaceDynamicBackend.rawChip.getYSize(); i++) {
-	    for (int j = 0; j < SpaceDynamicBackend.rawChip.getXSize(); j++) {
+	for (int i = 0; i < rawChip.getYSize(); i++) {
+	    for (int j = 0; j < rawChip.getXSize(); j++) {
 		Iterator neighbors = rawChip.getTile(j, i).getSouthAndEastNeighbors().iterator();
 		while (neighbors.hasNext()) {
 		    RawTile n = (RawTile)neighbors.next();
@@ -293,7 +293,20 @@ public class Layout extends at.dms.util.Utils implements
 	return null;
     }
         
-      
+    /** Assign a StreamGraph that is composed of one filter 
+	in one SSG on a RawChip with one tile **/
+    public void singleFilterAssignment() 
+    {
+	assert assigned.size() == 1;
+	assert rawChip.getTotalTiles() == 1;
+	assert (FlatNode)(assigned.toArray()[0]) == 
+	    streamGraph.getStaticSubGraphs()[0].getTopLevel();
+
+	assign(rawChip.getTile(0), 
+	       (FlatNode)(assigned.toArray()[0]));
+    }
+    
+
     public void handAssign() 
     {
 	System.out.println("Enter desired tile for each filter...");
@@ -320,11 +333,11 @@ public class Layout extends at.dms.util.Utils implements
 		System.out.println("Bad number!");
 		continue;
 	    }
-	    if (tileNumber < 0 || tileNumber >= SpaceDynamicBackend.rawChip.getTotalTiles()) {
+	    if (tileNumber < 0 || tileNumber >= rawChip.getTotalTiles()) {
 		System.out.println("Bad tile number!");
 		continue;
 	    }
-	    RawTile tile = SpaceDynamicBackend.rawChip.getTile(tileNumber);
+	    RawTile tile = rawChip.getTile(tileNumber);
 	    if (SIRassignment.values().contains(tile)) {
 		System.out.println("Tile Already Assigned!");
 		continue;

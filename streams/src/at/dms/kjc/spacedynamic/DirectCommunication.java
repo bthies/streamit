@@ -32,9 +32,9 @@ public class DirectCommunication extends at.dms.util.Utils
     /** true if this filter is the source of a static stream graph **/
     private boolean dynamicInput;
     
-    public static boolean doit(FlatNode node) 
+    public static boolean doit(StaticStreamGraph SSG, FlatNode node) 
     {
-	DirectCommunication dc = new DirectCommunication(node);
+	DirectCommunication dc = new DirectCommunication(SSG, node);
 	//see if we can generate direct communication
 	if (dc.canRun())
 	    return dc.run();
@@ -42,11 +42,11 @@ public class DirectCommunication extends at.dms.util.Utils
 	return false;
     }
 
-    private DirectCommunication(FlatNode node) 
+    private DirectCommunication(StaticStreamGraph SSG, FlatNode node) 
     {
+	this.ssg = SSG;
 	this.node = node;
 	this.filter = (SIRFilter)node.contents;
-	this.ssg = SpaceDynamicBackend.streamGraph.getParentSSG(node);
 	//if this is a source of an ssg then set dynamicInput
 	dynamicInput = ssg.isInput(node);
     }

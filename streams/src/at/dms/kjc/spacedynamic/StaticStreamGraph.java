@@ -852,5 +852,22 @@ public class StaticStreamGraph
     {
 	return streamGraph;
     }
-    
+
+
+    public int filterCount() 
+    {
+	final int[] filters = {0};
+	
+	IterFactory.createFactory().createIter(getTopLevelSIR()).accept(new EmptyStreamVisitor() {
+		public void visitFilter(SIRFilter self,
+					SIRFilterIter iter) {
+		    if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
+			filters[0]++;
+		    }
+		    
+		}
+		
+	    }); 
+	return filters[0];
+    }    
 }

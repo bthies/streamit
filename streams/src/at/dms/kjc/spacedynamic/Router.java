@@ -18,9 +18,10 @@ public class Router {
     
     //returns a linked list of coordinates that gives the route
     //including source and dest
-    public static LinkedList getRoute(Layout layout, FlatNode from, FlatNode to) 
+    public static LinkedList getRoute(StaticStreamGraph ssg, FlatNode from, FlatNode to) 
     {
-	RawChip rawChip = SpaceDynamicBackend.rawChip;
+	RawChip rawChip = ssg.getStreamGraph().getRawChip();
+	Layout layout = ssg.getStreamGraph().getLayout();
 
 	LinkedList route = new LinkedList();
 	RawTile fromCoord, toCoord;

@@ -47,12 +47,6 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	//new cloned filter
 
 	SIRFilter filter = (SIRFilter)ObjectDeepCloner.deepCopy(oldFilter);
-	/*
-	SIRPipeline pipe = new SIRPipeline("top");
-	LinkedList list = new LinkedList();
-	list.add(filter);
-	pipe.setChildren(list);
-	*/
 
 	StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
 	StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[0];
@@ -74,9 +68,6 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	KjcOptions.outputs = -1;
 
 
-	//make a new FlatGraph with only this filter...
-	FlatNode top = new FlatNode(filter);
-	
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(filter);
 	
@@ -84,15 +75,12 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(filter);
 
-	Layout oldLayout = streamGraph.getLayout();
-	
 	// layout the components (assign filters to tiles)	
-	assert false;
-	//Layout.simAnnealAssign(top);
+	streamGraph.getLayout().singleFilterAssignment();
 
 	//remove print statements in the original app
 	//if we are running with decoupled
-	RemovePrintStatements.doIt(top);
+	RemovePrintStatements.doIt(ssg.getTopLevel());
 	
 	//Generate the tile code
 
@@ -100,16 +88,16 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	ssg.getTopLevel().accept(rawExe, null, true);
 	    
 	if (KjcOptions.removeglobals) {
-	    RemoveGlobals.doit(top);
+	    RemoveGlobals.doit(ssg.getTopLevel());
 	}
-
+	
 	// make structures header file in this directory
-	StructureIncludeFile.doit(SpaceDynamicBackend.structures, top, dir);
+	StructureIncludeFile.doit(SpaceDynamicBackend.structures, ssg.getTopLevel(), dir);
 
 	SIMULATING_WORK = true;
-	TileCode.generateCode(null);
+	TileCode.generateCode(streamGraph);
 	SIMULATING_WORK = false;
-	MakefileGenerator.createMakefile(null);
+	MakefileGenerator.createMakefile(streamGraph);
 
 	try {
 	    //copy the files 
@@ -161,7 +149,6 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	KjcOptions.magic_net = oldMagicNetValue;
 	KjcOptions.ratematch = oldRateMatchValue;
 	KjcOptions.outputs = oldOutputsValue;
-	//	Layout.setLayout(oldLayout);
 	return work;
     }
 

@@ -95,12 +95,6 @@ public class IMEMEstimation implements FlatVisitor
 	//just call this 
 	StreamGraph streamGraph = StreamGraph.constructStreamGraph(filter);
 	StaticStreamGraph fakeSSG = streamGraph.getStaticSubGraphs()[0];
-	/*
-	SIRPipeline pipe = new SIRPipeline("top");
-	LinkedList list = new LinkedList();
-	list.add(filter);
-	pipe.setChildren(list);
-	*/
 
 	//make a new directory and change the current working dir
 	String dir = File.separator + "tmp" + File.separator + 
@@ -120,8 +114,6 @@ public class IMEMEstimation implements FlatVisitor
 	KjcOptions.ratematch = false;
 	//turn off output limiting
 	KjcOptions.outputs = -1;
-
-	//make a new FlatGraph with only this filter...
 	
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(filter);
@@ -130,12 +122,8 @@ public class IMEMEstimation implements FlatVisitor
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(filter);
 
-	Layout oldLayout = streamGraph.getLayout();
-	
 	// layout the components (assign filters to tiles)	
-	assert false;
-	//must layout the 
-	//Layout.someLayout.(top);
+	streamGraph.getLayout().singleFilterAssignment();
 
 	//Generate the tile code
 	if (!containsRawMain(filter)) {
@@ -150,8 +138,8 @@ public class IMEMEstimation implements FlatVisitor
 	// make structures header file in this directory
 	StructureIncludeFile.doit(SpaceDynamicBackend.structures, fakeSSG.getTopLevel(), dir);
 
-	TileCode.generateCode(null);
-	MakefileGenerator.createMakefile(null);
+	TileCode.generateCode(streamGraph);
+	MakefileGenerator.createMakefile(streamGraph);
 	
 	try {
 	    //move the files 

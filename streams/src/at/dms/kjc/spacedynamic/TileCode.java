@@ -30,13 +30,20 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
     private static StreamGraph streamGraph;
     private static Layout layout;
-
+    private StaticStreamGraph ssg;
+    
     public static final String ARRAY_INDEX = "__ARRAY_INDEX__";
+
+    public TileCode(StaticStreamGraph SSG) 
+    {
+	this.ssg = SSG;
+    }
+    
 
     public static void generateCode(StreamGraph sg)
     {
 	streamGraph = sg;
-	layout = SpaceDynamicBackend.streamGraph.getLayout();
+	layout = sg.getLayout();
 
 	//create a set containing all the coordinates of all
 	//the nodes in the FlatGraph plus all the tiles involved
@@ -49,13 +56,13 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	tiles = new HashSet();
 
 	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
-	    ssg.getTopLevel().accept(new TileCode(), new HashSet(), true);
+	    StaticStreamGraph staticGraph = streamGraph.getStaticSubGraphs()[i];
+	    staticGraph.getTopLevel().accept(new TileCode(staticGraph), new HashSet(), true);
 	    
 	    //for decoupled execution the scheduler does not run
 	    if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
-		tiles.addAll(ssg.simulator.initSchedules.keySet());
-		tiles.addAll(ssg.simulator.steadySchedules.keySet());
+		tiles.addAll(staticGraph.simulator.initSchedules.keySet());
+		tiles.addAll(staticGraph.simulator.steadySchedules.keySet());
 	    }
 	}
 
@@ -410,7 +417,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    if (!layout.isAssigned(node))
 		return;
 	    realTiles.add(layout.getTile(node.contents));
-	    FlatIRToC.generateCode(node, layout);
+	    FlatIRToC.generateCode(ssg, node);
 	    //After done with node drops its contents for garbage collection
 	    //Need to keep contents for filter type checking but dropping methods
 	    ((SIRFilter)node.contents).setMethods(JMethodDeclaration.EMPTY());

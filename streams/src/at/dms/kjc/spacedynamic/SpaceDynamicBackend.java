@@ -90,7 +90,7 @@ public class SpaceDynamicBackend {
 	GraphFlattener graphFlattener = new GraphFlattener(str);
 	//	FlatGraphToSIR flatToSIR = new FlatGraphToSIR(graphFlattener.top);
 	
-	streamGraph = new StreamGraph(graphFlattener.top);
+	streamGraph = new StreamGraph(graphFlattener.top, rawChip);
 	graphFlattener.dumpGraph("pre-SSG-FG.dot", null, null);
 
 	//create the static stream graphs cutting at dynamic rate boundaries

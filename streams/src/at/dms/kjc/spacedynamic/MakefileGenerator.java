@@ -23,7 +23,7 @@ public class MakefileGenerator
     {
 	streamGraph = sg;
 	layout = sg.getLayout();
-	rawChip = SpaceDynamicBackend.rawChip;
+	rawChip = sg.getRawChip();
 
 	try {
 	    //FileWriter fw = new FileWriter("Makefile");
@@ -88,7 +88,7 @@ public class MakefileGenerator
 		createBCFile(true, tiles);
             else
                 createBCFile(false, tiles);
-	    if (SpaceDynamicBackend.rawChip.getYSize() > 4) {
+	    if (rawChip.getYSize() > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 	    }
 	    //fix for snake boot race condition
@@ -173,7 +173,7 @@ public class MakefileGenerator
 	//let the simulation know how many tiles are mapped to 
 	//filters or joiners
 	fw.write("global gStreamItTilesUsed = " + layout.getTilesAssigned() + ";\n");
-	fw.write("global gStreamItTiles = " + SpaceDynamicBackend.rawChip.getTotalTiles() +
+	fw.write("global gStreamItTiles = " + rawChip.getTotalTiles() +
 		 ";\n");
 	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
@@ -189,7 +189,7 @@ public class MakefileGenerator
 	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
 	    fw.write("  gFilterNames = listi_new();\n");
 	    Iterator it = tiles.iterator();
-	    for (int i = 0; i < SpaceDynamicBackend.rawChip.getTotalTiles(); i++) {
+	    for (int i = 0; i < rawChip.getTotalTiles(); i++) {
 		if (tiles.contains(rawChip.getTile(i))) {
 		    fw.write("  listi_add(gFilterNames, \"" +
 			     layout.getNode(rawChip.getTile(i)).getName() + "\");\n");

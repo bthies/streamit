@@ -45,8 +45,8 @@ public class FineGrainSimulator extends Simulator
     {
 	System.out.println("FineGrainSimulator Running...");
 	
-	layout = SpaceDynamicBackend.streamGraph.getLayout();
-	rawChip = SpaceDynamicBackend.rawChip;
+	layout = ssg.getStreamGraph().getLayout();
+	rawChip = ssg.getStreamGraph().getRawChip();
 
 	initJoinerCode = new HashMap();
         steadyJoinerCode = new HashMap();
@@ -291,7 +291,7 @@ public class FineGrainSimulator extends Simulator
 	    if (dest == null) 
 		System.out.println("Yup dest is null");
  	    RawTile[] hops = 
- 		(RawTile[])Router.getRoute(layout, fire, dest).toArray(new RawTile[0]);
+ 		(RawTile[])Router.getRoute(ssg, fire, dest).toArray(new RawTile[0]);
 	    //add to fire's next
 	    if (!next.containsKey(layout.getTile(fire))) 
 		next.put(layout.getTile(fire), new HashSet());

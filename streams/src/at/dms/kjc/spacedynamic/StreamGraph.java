@@ -43,9 +43,11 @@ public class StreamGraph
     public HashMap initSwitchSchedules;
     /** Maps RawTile -> switch code schedule **/
     public HashMap steadySwitchSchedules;
-	
-    public StreamGraph(FlatNode top) 
+    private RawChip rawChip;
+
+    public StreamGraph(FlatNode top, RawChip rawChip) 
     {
+	this.rawChip = rawChip;
 	this.topLevelFlatNode = top;
 	parentMap = new HashMap();
 	initSwitchSchedules = new HashMap();
@@ -292,29 +294,33 @@ public class StreamGraph
 	    return false;
     }
     
+    /** This will automatically assign the single tile of the raw chip
+	to the one filter of the one SSG, all these conditions must be true **/
+    public void tileAssignmentOneFilter() 
+    {
+	assert rawChip.getTotalTiles() == 1;
+	assert staticSubGraphs.length == 1;
+	
+	StaticStreamGraph ssg = staticSubGraphs[0];
+	assert ssg.filterCount() == 1;
+	
+	ssg.setNumTiles(1);
+    }
+    
+
     public void handTileAssignment() 
     {
 	BufferedReader inputBuffer = new BufferedReader(new InputStreamReader(System.in));;
-	int numTilesToAssign = SpaceDynamicBackend.rawChip.getTotalTiles(), num;
+	int numTilesToAssign = rawChip.getTotalTiles(), num;
 	StaticStreamGraph current = topLevel;
 	
 	for (int i = 0; i < staticSubGraphs.length; i++) {
 	    current = staticSubGraphs[i];
-	    final int[] filters = {0};
-	    
-	    IterFactory.createFactory().createIter(current.getTopLevelSIR()).accept(new EmptyStreamVisitor() {
-		    public void visitFilter(SIRFilter self,
-					    SIRFilterIter iter) {
-			if (!(self instanceof SIRDummySource || self instanceof SIRDummySink)) {
-			    filters[0]++;
-			}
-			
-		    }
-		}); 
+	    int filters = current.filterCount();
 	    
 	    while (true) {
 		System.out.print("Number of tiles for " + current + " (" + numTilesToAssign +
-				   " tiles left, " + filters[0] + " filters in subgraph): ");
+				   " tiles left, " + filters + " filters in subgraph): ");
 		try {
 		    num = Integer.valueOf(inputBuffer.readLine()).intValue();
 		}
@@ -423,7 +429,7 @@ public class StreamGraph
 	    current = staticSubGraphs[i];
 	    totalTiles += current.getNumTiles();
 	}
-	assert totalTiles == SpaceDynamicBackend.rawChip.getTotalTiles() :
+	assert totalTiles == rawChip.getTotalTiles() :
 	    "Error: some tiles not assigned";
     }
     
@@ -437,6 +443,13 @@ public class StreamGraph
     {
 	return topLevel;
     }
+
+    public RawChip getRawChip() 
+    {
+	return rawChip;
+    }
+
+
 
     public void dumpStaticStreamGraph() 
     {
@@ -461,12 +474,16 @@ public class StreamGraph
 	return constructStreamGraph(new FlatNode(filter));
     }
     
-    /** create a stream graph with only one filter (thus one SSG) **/
+    /** create a stream graph with only one filter (thus one SSG), it's not laid out yet**/
     public static StreamGraph constructStreamGraph(FlatNode node)  
     {
 	assert node.isFilter();
-	assert false;
-	return null;
+
+	StreamGraph streamGraph = new StreamGraph(node, new RawChip(1, 1));
+	streamGraph.createStaticStreamGraphs();
+	streamGraph.tileAssignmentOneFilter();
+
+	return streamGraph;
     }
     
 }

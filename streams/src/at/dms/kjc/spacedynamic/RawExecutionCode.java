@@ -87,7 +87,7 @@ public class RawExecutionCode extends at.dms.util.Utils
     public RawExecutionCode(StaticStreamGraph ssg) 
     {
 	this.ssg = ssg;
-	this.layout = SpaceDynamicBackend.streamGraph.getLayout();
+	this.layout = ssg.getStreamGraph().getLayout();
     }
     
 
@@ -118,7 +118,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    //and the code was produced 
 	    if (bottomPeek == 0 && 
 		remaining == 0 &&
-		DirectCommunication.doit(node)) {
+		DirectCommunication.doit(ssg, node)) {
 		System.out.println("(Direct Communication)");
 		return;
 	    }

@@ -31,7 +31,7 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      * from the initPath function before reading them from the loop
      * tape.
      */
-    private int delay;
+    private JExpression delay;
     /**
      * The function that generates initial items appearing on the
      * feedback loop.  It should input an int i and return the i'th
@@ -39,6 +39,16 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
      */
     private JMethodDeclaration initPath;
 
+    /**
+     * Construct a new SIRPipeline null fields, parent, and methods
+     */
+    public SIRFeedbackLoop() {
+	super();
+	// need this to populate the children list
+	add(null);
+	add(null);
+    }
+    
     /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
@@ -52,16 +62,6 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	add(null);
     }
 
-    /**
-     * Construct a new SIRPipeline null fields, parent, and methods
-     */
-    public SIRFeedbackLoop() {
-	super();
-	// need this to populate the children list
-	add(null);
-	add(null);
-    }
-    
     /**
      * Return a shallow clone of the SIRFeedbackLoop
      */
@@ -190,7 +190,6 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 			       fields,
 			       methods,
 			       init,
-			       delay,
 			       initPath);
 	/* visit components */
 	joiner.accept(v);
@@ -202,7 +201,6 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 				fields,
 				methods,
 				init,
-				delay,
 				initPath);
     }
 
@@ -215,7 +213,6 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 				   fields,
 				   methods,
 				   init,
-				   delay,
 				   initPath);
     }
 
@@ -253,16 +250,29 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     /**
      * Set the delay of the feedback loop 
      **/
-    public void setDelay(int delay) 
+    public void setDelay(JExpression delay) 
     {
 	this.delay = delay;
     }
     /**
      * get the delay of the feedback loop 
      **/
-    public int getDelay() 
+    public JExpression getDelay() 
     {
 	return this.delay;
+    }
+
+    /**
+     * Retrieve the delay of this as an int (requires that constants
+     * have been propagated).
+     */
+    public int getDelayInt() {
+	if (!(delay instanceof JIntLiteral)) {
+	    Utils.fail("Trying to get integer value for DELAY value, " + 
+		       "but the constant hasn't been resolved yet.  " + 
+		       "It is of class " + delay.getClass());
+	}
+	return ((JIntLiteral)delay).intValue();
     }
 
     /**

@@ -129,6 +129,7 @@ public abstract class SIRContainer extends SIRStream {
      * Removes the i'th child of this.
      */
     public void remove(int i) {
+	new RuntimeException("removing child " + i).printStackTrace();
 	children.remove(i);
 	params.remove(i);
     }

@@ -59,6 +59,5 @@ public interface AttributeStreamVisitor {
 			     JFieldDeclaration[] fields,
 			     JMethodDeclaration[] methods,
 			     JMethodDeclaration init,
-			     int delay,
 			     JMethodDeclaration initPath);
 }

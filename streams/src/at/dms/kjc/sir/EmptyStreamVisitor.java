@@ -78,7 +78,6 @@ public class EmptyStreamVisitor implements StreamVisitor {
 				     JFieldDeclaration[] fields,
 				     JMethodDeclaration[] methods,
 				     JMethodDeclaration init,
-				     int delay,
 				     JMethodDeclaration initPath) {
 	visitStream(self);
     }
@@ -109,7 +108,6 @@ public class EmptyStreamVisitor implements StreamVisitor {
 				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JMethodDeclaration init,
-				      int delay,
 				      JMethodDeclaration initPath) {
     }
 }

@@ -66,7 +66,6 @@ public interface StreamVisitor {
 			      JFieldDeclaration[] fields,
 			      JMethodDeclaration[] methods,
 			      JMethodDeclaration init,
-			      int delay,
 			      JMethodDeclaration initPath);
 
     /**
@@ -93,6 +92,5 @@ public interface StreamVisitor {
 			       JFieldDeclaration[] fields,
 			       JMethodDeclaration[] methods,
 			       JMethodDeclaration init,
-			       int delay,
 			       JMethodDeclaration initPath);
 }

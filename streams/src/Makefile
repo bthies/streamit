@@ -15,7 +15,7 @@ KOPI_GENERATED = \
   at/dms/kjc/KjcParser.java
 
 KOPI_JFLEX_TARGET = \
-  3rdparty/JFlex/Main.class
+  ../3rdparty/JFlex/Main.class
 
 KOPI_ANTLR_TARGET = \
   at/dms/compiler/tools/antlr/compiler/Main.class
@@ -35,7 +35,7 @@ KOPI_TOOL_TARGET = \
   $(KOPI_LEXGEN_TARGET)
 
 KOPI_JFLEX_SRCS = \
-  3rdparty/JFlex/Main.java
+  ../3rdparty/JFlex/Main.java
 
 KOPI_ANTLR_SRCS = \
   at/dms/compiler/tools/antlr/compiler/Main.java
@@ -62,11 +62,11 @@ STREAMIT_GENERATED = \
 # these are used by some streamit applications, but not called
 # from the library directly
 STREAMIT_LIBRARIES = \
-  ../library/java/streamit/io/DataPrinter.class \
-  ../library/java/streamit/io/FileReader.class \
-  ../library/java/streamit/io/FileWriter.class \
-  ../library/java/streamit/Structure.class \
-  ../library/java/streamit/Portal.class
+  streamit/library/io/DataPrinter.class \
+  streamit/library/io/FileReader.class \
+  streamit/library/io/FileWriter.class \
+  streamit/library/Structure.class \
+  streamit/library/Portal.class
 
 # these are invoked by reflection from StreaMITMain
 STREAMIT_BACKENDS = \
@@ -74,7 +74,7 @@ STREAMIT_BACKENDS = \
   at/dms/kjc/sir/lowering/Flattener.class
 ifeq ($(CAG_BUILD),1)
 STREAMIT_BACKENDS += \
-  ../eclipse/grapheditor/GraphEncoder.class \
+  streamit/eclipse/grapheditor/GraphEncoder.class \
   at/dms/kjc/spacetime/SpaceTimeBackend.class \
   at/dms/kjc/cluster/ClusterBackend.class
 endif
@@ -84,12 +84,12 @@ JAVA_TARGET = \
   $(KOPI_TOOL_TARGET) \
   $(STREAMIT_LIBRARIES) \
   $(STREAMIT_BACKENDS) \
-  ../library/java/streamit/StreamIt.class \
-  ../library/java/streamit/StreamItFilter.class \
-  ../library/java/streamit/StreamItFeedbackLoop.class \
-  ../library/java/streamit/StreamItPhasedFilter.class \
-  ../library/java/streamit/StreamItPipeline.class \
-  ../library/java/streamit/StreamItSplitJoin.class \
+  streamit/library/StreamIt.class \
+  streamit/library/StreamItFilter.class \
+  streamit/library/StreamItFeedbackLoop.class \
+  streamit/library/StreamItPhasedFilter.class \
+  streamit/library/StreamItPipeline.class \
+  streamit/library/StreamItSplitJoin.class \
   streamit/frontend/ToJava.class \
   streamit/frontend/ToKopi.class
 
@@ -98,7 +98,7 @@ JAVA_SRCS = \
   $(KOPI_GENERATED) \
   $(KOPI_TOOL_SRCS) \
   $(STREAMIT_GENERATED) \
-  ../library/java/streamit/StreamIt.java
+  streamit/library/StreamIt.java
 
 DEBUG_OPT = -g
 
@@ -120,9 +120,9 @@ streamit.jar: $(JAVA_TARGET)
 	cd classes && jar xf ../antlr.jar
 	find . -name '*.class' | cpio -p -d -V classes
 	find . -name '*.properties' | cpio -d -p -V classes
-	cd $(STREAMIT_HOME)/library/java && \
+	cd $(STREAMIT_HOME)/src/streamit/library && \
 		find . -name '*.class' | \
-		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
+		cpio -p -d -V $(STREAMIT_HOME)/src/classes
 	echo "Main-Class: at.dms.kjc.Main" > manifest.streamit
 	jar cf $@ -C classes .
 	jar umf manifest.streamit $@
@@ -136,12 +136,12 @@ streamit-eclipse.jar: $(JAVA_TARGET)
 	cd classes && jar xf ../antlr.jar
 	find . -name '*.class' -or -name '*.java' | cpio -p -d -V classes
 	find . -name '*.properties' | cpio -d -p -V classes
-	cd $(STREAMIT_HOME)/library/java && \
+	cd $(STREAMIT_HOME)/src/streamit/library && \
 		find . -name '*.class' -or -name '*.java' | \
-		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
-	cd $(STREAMIT_HOME)/eclipse && \
+		cpio -p -d -V $(STREAMIT_HOME)/src/classes
+	cd $(STREAMIT_HOME)/src/streamit/eclipse && \
 		find . -name '*.class' -or -name '*.java' | \
-		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
+		cpio -p -d -V $(STREAMIT_HOME)/src/classes
 	echo "Main-Class: at.dms.kjc.Main" > manifest.streamit
 	jar cf $@ -C classes .
 	jar umf manifest.streamit $@
@@ -154,9 +154,9 @@ streamit-lib.jar: $(JAVA_TARGET)
 	$(STREAMIT_HOME)/misc/get-antlr antlr.jar
 	cd classes && jar xf ../antlr.jar
 	find streamit -name '*.class' | cpio -d -p -V classes
-	cd $(STREAMIT_HOME)/library/java && \
+	cd $(STREAMIT_HOME)/src/streamit/library && \
 		find . -name '*.class' | \
-		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
+		cpio -p -d -V $(STREAMIT_HOME)/src/classes
 	jar cf $@ -C classes .
 	rm -rf classes
 

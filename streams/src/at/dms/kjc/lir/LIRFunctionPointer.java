@@ -26,6 +26,13 @@ public class LIRFunctionPointer {
     }
 
     /**
+     * Construct a node in the parsing tree
+     */
+    public LIRFunctionPointer(JMethodDeclaration meth) {
+	this(meth.getName());
+    }
+
+    /**
      * Returns the name of the function pointed to.
      */
     public String getName() {

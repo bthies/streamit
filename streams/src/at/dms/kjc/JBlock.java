@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.4 2001-10-03 09:15:09 thies Exp $
+ * $Id: JBlock.java,v 1.5 2001-10-03 12:32:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -23,6 +23,10 @@ package at.dms.kjc;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
+
+import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.List;
 
 /**
  * JLS 14.2: Block
@@ -48,7 +52,11 @@ public class JBlock extends JStatement {
   {
     super(where, comments);
 
-    this.body = body;
+    // fill list with elements of <body>
+    this.body = new LinkedList();
+    for (int i=0; i<body.length; i++) {
+	this.body.add(body[i]);
+    }
   }
 
   // ----------------------------------------------------------------------
@@ -61,24 +69,21 @@ public class JBlock extends JStatement {
    * @return	true iff the block is empty.
    */
   public boolean isEmpty() {
-    return body.length == 0;
+    return body.size() == 0;
   }
 
     /**
      * Adds <statement> to this.
      */
     public void addStatement(JStatement statement) {
-	// make new array
-	JStatement[] newStatements = 
-	    new JStatement[body.length + 1];
-	// add extra
-	newStatements[0] = statement;
-	// copy old into new
-	for (int i=0; i<body.length; i++) {
-	    newStatements[i+1] = body[i];
-	}
-	// set old to new
-	body = newStatements;
+	body.add(statement);
+    }
+
+    /**
+     * Adds <statement> to front of this.
+     */
+    public void addStatementFirst(JStatement statement) {
+	body.addFirst(statement);
     }
 
   // ----------------------------------------------------------------------
@@ -93,12 +98,12 @@ public class JBlock extends JStatement {
   public void analyse(CBodyContext context) throws PositionedError {
     CBlockContext	self = new CBlockContext(context);
 
-    for (int i = 0; i < body.length; i++) {
+    for (int i = 0; i < body.size(); i++) {
       if (! self.isReachable()) {
-	throw new CLineError(body[i].getTokenReference(), KjcMessages.STATEMENT_UNREACHABLE);
+	throw new CLineError(((JStatement)body.get(i)).getTokenReference(), KjcMessages.STATEMENT_UNREACHABLE);
       }
       try {
-	body[i].analyse(self);
+	((JStatement)body.get(i)).analyse(self);
       } catch (CLineError e) {
 	self.reportTrouble(e);
       }
@@ -116,7 +121,7 @@ public class JBlock extends JStatement {
    * @param	p		the visitor
    */
   public void accept(KjcVisitor p) {
-    p.visitBlockStatement(this, body, getComments());
+    p.visitBlockStatement(this, getStatements(), getComments());
   }
 
  /**
@@ -124,7 +129,7 @@ public class JBlock extends JStatement {
    * @param	p		the visitor
    */
   public Object accept(AttributeVisitor p) {
-      return    p.visitBlockStatement(this, body, getComments());
+      return    p.visitBlockStatement(this, getStatements(), getComments());
   }
 
   /**
@@ -134,8 +139,8 @@ public class JBlock extends JStatement {
   public void genCode(CodeSequence code) {
     setLineNumber(code);
 
-    for (int i = 0; i < body.length; i++) {
-      body[i].genCode(code);
+    for (int i = 0; i < body.size(); i++) {
+      ((JStatement)body.get(i)).genCode(code);
     }
   }
 
@@ -144,11 +149,27 @@ public class JBlock extends JStatement {
   // ----------------------------------------------------------------------
 
     /**
-     * Returns array (internal representation) of body of this.  
+     * Returns array (NOT internal representation!!) of body of this.  
      */
-    public JStatement[] getStatements() {
+    private JStatement[] getStatements() {
+	return (JStatement[])body.toArray(new JStatement[0]);
+    }
+
+    /**
+     * Returns list of statements in this.  
+     */
+    public List getStatementList() {
 	return body;
     }
 
-  protected JStatement[]		body;
+    /**
+     * Returns iterator of statements in this.  
+     */
+    public ListIterator getStatementIterator() {
+	return body.listIterator();
+    }
+
+    // <body> containts JStatements
+  protected LinkedList 	body;
 }
+

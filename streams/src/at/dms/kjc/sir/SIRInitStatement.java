@@ -36,7 +36,7 @@ public class SIRInitStatement extends JStatement {
 	super(where, comments);
 
 	this.args = args;
-	this.target = target;
+	this.target = str;
     }
     
     /**
@@ -52,8 +52,17 @@ public class SIRInitStatement extends JStatement {
     public void setArgs(JExpression[] a) {
 	this.args = a;
     }
+
+    public JExpression[] getArgs() {
+	return this.args;
+    }
+
     public void setTarget(SIRStream s) {
 	this.target = s;
+    }
+
+    public SIRStream getTarget() {
+	return this.target;
     }
 
     // ----------------------------------------------------------------------
@@ -78,7 +87,10 @@ public class SIRInitStatement extends JStatement {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitInitStatement(this, args, target);
 	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	    // otherwise, visit children
+	    for (int i=0; i<args.length; i++) {
+		args[i].accept(p);
+	    }
 	}
     }
 
@@ -97,3 +109,8 @@ public class SIRInitStatement extends JStatement {
 	at.dms.util.Utils.fail("Codegen of SIR nodes not supported yet.");
     }
 }
+
+
+
+
+

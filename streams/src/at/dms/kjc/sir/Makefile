@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.11 2001-10-03 09:15:43 thies Exp $
+## $Id: Makefile,v 1.12 2001-10-03 12:32:34 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -62,7 +62,8 @@ JAVAFILES +=	StreamVisitor \
 		lowering/Structurer \
 		lowering/Namer \
 		lowering/Flattener \
-		lowering/SIRScheduler
+		lowering/SIRScheduler \
+		lowering/LowerInitFunctions
 
 MESSAGES =	../KjcMessages
 

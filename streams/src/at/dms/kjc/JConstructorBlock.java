@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConstructorBlock.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JConstructorBlock.java,v 1.2 2001-10-03 12:32:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -143,8 +143,8 @@ public class JConstructorBlock extends JBlock {
       initializerCall.genCode(code);
     }
 
-    for (int i = 0; i < body.length; i++) {
-      body[i].genCode(code);
+    for (int i = 0; i < body.size(); i++) {
+      ((JStatement)body.get(i)).genCode(code);
     }
 
     //!!! graf 010529 : needed ?

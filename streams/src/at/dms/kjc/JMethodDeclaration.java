@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.7 2001-10-03 09:15:09 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.8 2001-10-03 12:32:23 thies Exp $
  */
 
 package at.dms.kjc;
@@ -26,6 +26,10 @@ import at.dms.compiler.JavadocComment;
 import at.dms.compiler.TokenReference;
 import at.dms.compiler.UnpositionedError;
 import at.dms.util.InconsistencyException;
+
+import java.util.ListIterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This class represents a Java method declaration in the syntax tree.
@@ -103,10 +107,17 @@ public class JMethodDeclaration extends JMemberDeclaration {
     }
 
     /**
-     * Adds <statement> to this.
+     * Adds <statement> to the end of the statements in this.
      */
-    public void addParameter(JStatement statement) {
+    public void addStatement(JStatement statement) {
 	body.addStatement(statement);
+    }
+
+    /**
+     * Adds <statement> to the end of the statements in this.
+     */
+    public void addStatementFirst(JStatement statement) {
+	body.addStatementFirst(statement);
     }
 
   // ----------------------------------------------------------------------
@@ -391,10 +402,17 @@ public class JMethodDeclaration extends JMemberDeclaration {
   // ----------------------------------------------------------------------
 
     /**
-     * Returns array (internal representation) of statements in this.  
+     * Returns iterator of statements in this.  
      */
-    public JStatement[] getStatements() {
-	return body.getStatements();
+    public ListIterator getStatementIterator() {
+	return body.getStatementIterator();
+    }
+
+    /**
+     * Returns list of statements in this.  
+     */
+    public List getStatementList() {
+	return body.getStatementList();
     }
 
     // bft:  added for streamit passes

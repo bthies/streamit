@@ -92,6 +92,7 @@ public class SIRBuilder {
 				     /* peek, pop, push */ 0, 0, 1,
 				     /* work */ meth1[1],
 				     /* i/o type */ type1, type1);
+	f1.setInit(meth1[0]);
 
 	/* build filter 2 */
 
@@ -134,9 +135,12 @@ public class SIRBuilder {
 	SIRFilter f2 = new SIRFilter(toplevel,
 				     /* fields */ JFieldDeclaration.EMPTY,
 				     /* methods */ meth2,
-				     /* peek, pop, push */ 2, 2, 0,
+				     /* peek, pop, push */ 1, 1, 0,
 				     /* work */ meth2[1],
 				     /* i/o type */ type2, type2);
+	
+
+	f2.setInit(meth2[0]);
 
 	/* build pipeline and add filters */
 

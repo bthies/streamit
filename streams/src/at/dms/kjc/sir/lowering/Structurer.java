@@ -183,10 +183,10 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			 streamName, 
 			 LoweringConstants.STATE_PARAM_NAME);
 	    // for each statement in the method, change references
-	    JStatement[] statements = methods[i].getStatements();
 	    KjcVisitor resolver = new FieldResolver();
-	    for (int j=0; j<statements.length; j++) {
-		statements[j].accept(resolver);
+	    ListIterator statements = methods[i].getStatementIterator();
+	    while (statements.hasNext()) {
+		((JStatement)statements.next()).accept(resolver);
 	    }
 	    // add <method> to the list of flattened methods
 	    flatMethods.add(methods[i]);

@@ -20,13 +20,13 @@ public class Flattener {
 	JClassDeclaration flatClass = Structurer.structure(str);
 	// build schedule as set of higher-level work functions
 	SIRScheduler.schedule(str, flatClass);
-
+	// add LIR hooks to init functions
+	LowerInitFunctions.lower(str);
+	
 	// DEBUGGING PRINTING
 	IRPrinter printer = new IRPrinter();
 	flatClass.accept(printer);
 	printer.close();
-
-	// add LIR hooks to init functions
 
 	return flatClass;
     }

@@ -46,13 +46,17 @@ public class LoweringConstants {
     public static final String OUTPUT_TAPE_NAME = "outTape";
 
     /**
-     * Returns the name of the <i>'th child for use as a variable name
-     * in the structure for a stream construct.  
+     * Returns the name of the <childNum>'th child for use as a
+     * variable name in the structure for a stream construct.
+     * <childNum> should start counting at zero.
      */
     public static String getChildName(int childNum) {
-	return "child" + childNum;
+	return "child" + (childNum+1);
     }
 
+    /**
+     * Returns the field declaration declaring a stream context.
+     */
     public static JFieldDeclaration getContextField() {
 	// define a variable
 	JVariableDefinition var = 
@@ -115,10 +119,33 @@ public class LoweringConstants {
     }
 
     /**
-     * Returns the name of the flattened work function for <filter>.
+     * Returns the name of the flattened work function for <str>.
      */
     public static String getWorkName(SIRStream str) {
 	return getMethodName(str.getName(), "work");
+    }
+
+    /**
+     * Returns the name of the flattened init function for <str>.
+     */
+    public static String getInitName(SIRStream str) {
+	return getMethodName(str.getName(), "init");
+    }
+
+    /**
+     * Returns a reference to current stream context inside a work
+     * function.  
+     */
+    public static JExpression getStreamContext() {
+	return new JFieldAccessExpression(/* tokref */
+				       null,
+				       /* prefix */
+				       new JNameExpression(/* tokref */ 
+							   null,
+							   /* ident */
+							   STATE_PARAM_NAME),
+				       /* ident */
+				       CONTEXT_VAR_NAME);
     }
 }
 

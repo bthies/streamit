@@ -59,6 +59,43 @@ public abstract class SIRStream extends SIROperator {
      */
     public void setInit(JMethodDeclaration init) {
 	this.init = init;
+	addMethod(init);
+    }
+
+    /**
+     * adds method <meth> to this, if <meth> is not already registered
+     * as a method of this.  
+     */
+    public void addMethod(JMethodDeclaration method) {
+	// see if we already have <method> in this
+	for (int i=0; i<methods.length; i++) {
+	    if (methods[i]==method) {
+		return;
+	    }
+	}
+	// otherwise, create new methods array
+	JMethodDeclaration[] newMethods = new JMethodDeclaration[methods.length
+								+ 1];
+	// copy in new method
+	newMethods[0] = method;
+	// copy in old methods
+	for (int i=0; i<methods.length; i++) {
+	    newMethods[i+1] = methods[i];
+	}
+	// reset old to new
+	this.methods = newMethods;
+    }
+
+    /**
+     * Returns whether or not a function named "work" is defined in this.
+     */
+    public boolean hasWorkFunction() {
+	for (int i=0; i<methods.length; i++) {
+	    if (methods[i].getName().equals("work")) {
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**

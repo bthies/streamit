@@ -1578,13 +1578,17 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitSetChild(LIRSetChild self,
 			      JExpression streamContext,
-			      JExpression childContext) {
+			      String childType,
+			      String childName,
+			      LIRFunctionPointer childInit) {
 	blockStart("LIRSetChild");
 	attrStart("parentContext");
 	streamContext.accept(this);
 	attrEnd();
-	attrStart("childContext");
-	childContext.accept(this);
+	attrPrint("childType", childType);
+	attrPrint("childName", childName);
+	attrStart("initFunction");
+	childInit.accept(this);
 	attrEnd();
 	blockEnd();
     }
@@ -1600,7 +1604,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	attrStart("decode function");
+	attrStart("decode_function");
 	fp.accept(this);
 	attrEnd();
 	blockEnd();
@@ -1617,7 +1621,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	attrStart("encode function");
+	attrStart("encode_function");
 	fp.accept(this);
 	attrEnd();
 	blockEnd();
@@ -1634,7 +1638,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	printData("peek count: " + peek);
+	attrPrint("peek_count", String.valueOf(peek));
 	blockEnd();
     }
 
@@ -1649,7 +1653,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	printData("pop count: " + pop);
+	attrPrint("pop_count", String.valueOf(pop));
 	blockEnd();
     }
 
@@ -1664,7 +1668,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	printData("push count: " + push);
+	attrPrint("push_count", String.valueOf(push));
 	blockEnd();
     }
 
@@ -1679,7 +1683,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	printData("type: " + streamType);
+	attrPrint("stream_type", streamType.toString());
 	blockEnd();
     }
 
@@ -1694,7 +1698,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
-	attrStart("work function");
+	attrStart("work_function");
 	fn.accept(this);
 	attrEnd();
 	blockEnd();

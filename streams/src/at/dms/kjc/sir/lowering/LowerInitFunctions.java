@@ -125,6 +125,11 @@ public class LowerInitFunctions implements StreamVisitor {
      */
     private void registerFeedbackLoopTapes(SIRFeedbackLoop str, 
 					   JMethodDeclaration init) {
+        // get parent context
+        JExpression parentContext =
+            LoweringConstants.getStreamContext(LoweringConstants.
+                                               getChildStruct(str));
+
 	// work on BODY...
 	SIRStream body = str.getBody();
 	// get child context
@@ -139,7 +144,8 @@ public class LowerInitFunctions implements StreamVisitor {
 							   str.getSplitter() 
 							   ).intValue();
 	// register tape
-	init.addStatement(new LIRSetBodyOfFeedback(bodyContext,
+	init.addStatement(new LIRSetBodyOfFeedback(parentContext,
+                                                   bodyContext,
 						   body.getInputType(),
 						   body.getOutputType(),
 						   bodyInputSize,
@@ -158,7 +164,8 @@ public class LowerInitFunctions implements StreamVisitor {
 							   str.getJoiner() 
 							   ).intValue();
 	// register tape
-	init.addStatement(new LIRSetLoopOfFeedback(loopContext,
+	init.addStatement(new LIRSetLoopOfFeedback(parentContext,
+                                                   loopContext,
 						   loop.getInputType(),
 						   loop.getOutputType(),
 						   loopInputSize,
@@ -170,6 +177,10 @@ public class LowerInitFunctions implements StreamVisitor {
      */
     private void registerSplitJoinTapes(SIRSplitJoin str, 
 					JMethodDeclaration init) {
+        // get parent context
+        JExpression parentContext =
+            LoweringConstants.getStreamContext(LoweringConstants.
+                                               getChildStruct(str));
 	// go through elements
 	for (int i=0; i<str.size(); i++) {
 	    // get i'th child
@@ -187,7 +198,8 @@ public class LowerInitFunctions implements StreamVisitor {
 							   str.getJoiner() 
 							   ).intValue();
 	    // register an LIR node to <init>
-	    init.addStatement(new LIRSetParallelStream(childContext,
+	    init.addStatement(new LIRSetParallelStream(parentContext,
+                                                       childContext,
 						       i,
 						       child.getInputType(),
 						       child.getOutputType(),

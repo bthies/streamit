@@ -14,6 +14,11 @@ import at.dms.compiler.*;
 public class LIRSetLoopOfFeedback extends LIRNode {
 
     /**
+     * The child context to be used as the feedback loop loop part.
+     */
+    private JExpression childContext;
+
+    /**
      * The input type of the loop stream.
      */
     private CType inputType;
@@ -41,11 +46,13 @@ public class LIRSetLoopOfFeedback extends LIRNode {
      * Construct a node.
      */
     public LIRSetLoopOfFeedback(JExpression streamContext,
+                                JExpression childContext,
 				CType inputType,
 				CType outputType,
 				int inputSize,
 				int outputSize) {
 	super(streamContext);
+        this.childContext = childContext;
 	this.inputType = inputType;
 	this.outputType = outputType;
 	this.inputSize = inputSize;
@@ -56,6 +63,7 @@ public class LIRSetLoopOfFeedback extends LIRNode {
     {
         v.visitSetLoopOfFeedback(this,
 				 this.getStreamContext(), 
+                                 this.childContext,
 				 this.inputType,
 				 this.outputType,
 				 this.inputSize,

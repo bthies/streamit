@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.12 2001-10-16 13:26:51 dmaze Exp $
+ * $Id: LIRToC.java,v 1.13 2001-10-16 16:03:04 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1704,6 +1704,7 @@ public class LIRToC
      */
     public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
 				       JExpression streamContext,
+                                       JExpression childContext,
 				       CType inputType,
 				       CType outputType,
 				       int inputSize,
@@ -1716,6 +1717,7 @@ public class LIRToC
      */
     public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
 				       JExpression streamContext,
+                                       JExpression childContext,
 				       CType inputType,
 				       CType outputType,
 				       int inputSize,
@@ -1728,6 +1730,7 @@ public class LIRToC
      */
     public void visitSetParallelStream(LIRSetParallelStream self,
 				       JExpression streamContext,
+                                       JExpression childContext,
 				       int position,
 				       CType inputType,
 				       CType outputType,

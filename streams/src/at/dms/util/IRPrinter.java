@@ -1794,6 +1794,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
 				       JExpression streamContext,
+                                       JExpression childContext,
 				       CType inputType,
 				       CType outputType,
 				       int inputSize,
@@ -1802,6 +1803,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
+        attrStart("childContext");
+        childContext.accept(this);
+        attrEnd();
 	attrPrint("input type", inputType.toString());
 	attrPrint("output type", outputType.toString());
 	attrPrint("input size", String.valueOf(inputSize));
@@ -1814,6 +1818,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
 				       JExpression streamContext,
+                                       JExpression childContext,
 				       CType inputType,
 				       CType outputType,
 				       int inputSize,
@@ -1822,6 +1827,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
+        attrStart("childContext");
+        childContext.accept(this);
+        attrEnd();
 	attrPrint("input type", inputType.toString());
 	attrPrint("output type", outputType.toString());
 	attrPrint("input size", String.valueOf(inputSize));
@@ -1834,6 +1842,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitSetParallelStream(LIRSetParallelStream self,
 				       JExpression streamContext,
+                                       JExpression childContext,
 				       int position,
 				       CType inputType,
 				       CType outputType,
@@ -1843,6 +1852,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	streamContext.accept(this);
 	attrEnd();
+        attrStart("childContext");
+        childContext.accept(this);
+        attrEnd();
 	attrPrint("position", String.valueOf(position));
 	attrPrint("input type", inputType.toString());
 	attrPrint("output type", outputType.toString());

@@ -15,6 +15,11 @@ import at.dms.compiler.*;
 public class LIRSetParallelStream extends LIRNode {
 
     /**
+     * The child context to be used as the split/join body.
+     */
+    private JExpression childContext;
+
+    /**
      * The position of this stream in its parent's SplitJoin
      * construct.  That is, the 0'th position is on the far left, then
      * the 1'st position, etc.
@@ -49,12 +54,14 @@ public class LIRSetParallelStream extends LIRNode {
      * Construct a node.
      */
     public LIRSetParallelStream(JExpression streamContext,
+                                JExpression childContext,
 				int position,
 				CType inputType,
 				CType outputType,
 				int inputSize,
 				int outputSize) {
 	super(streamContext);
+        this.childContext = childContext;
 	this.position = position;
 	this.inputType = inputType;
 	this.outputType = outputType;
@@ -66,6 +73,7 @@ public class LIRSetParallelStream extends LIRNode {
     {
         v.visitSetParallelStream(this,
 				 this.getStreamContext(), 
+                                 this.childContext,
 				 this.position,
 				 this.inputType,
 				 this.outputType,

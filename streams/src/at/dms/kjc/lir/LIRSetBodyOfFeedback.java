@@ -14,6 +14,11 @@ import at.dms.compiler.*;
 public class LIRSetBodyOfFeedback extends LIRNode {
 
     /**
+     * The child context to be used as the feedback loop body.
+     */
+    private JExpression childContext;
+
+    /**
      * The input type of the body stream.
      */
     private CType inputType;
@@ -41,11 +46,13 @@ public class LIRSetBodyOfFeedback extends LIRNode {
      * Construct a node.
      */
     public LIRSetBodyOfFeedback(JExpression streamContext,
+                                JExpression childContext,
 				CType inputType,
 				CType outputType,
 				int inputSize,
 				int outputSize) {
 	super(streamContext);
+        this.childContext = childContext;
 	this.inputType = inputType;
 	this.outputType = outputType;
 	this.inputSize = inputSize;
@@ -56,6 +63,7 @@ public class LIRSetBodyOfFeedback extends LIRNode {
     {
         v.visitSetBodyOfFeedback(this,
 				 this.getStreamContext(), 
+                                 this.childContext,
 				 this.inputType,
 				 this.outputType,
 				 this.inputSize,

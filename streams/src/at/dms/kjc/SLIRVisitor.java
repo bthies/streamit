@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.10 2001-10-15 18:39:31 thies Exp $
+ * $Id: SLIRVisitor.java,v 1.11 2001-10-16 16:03:00 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -209,6 +209,7 @@ public interface SLIRVisitor extends KjcVisitor
      */
     void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
 				JExpression streamContext,
+                                JExpression childContext,
 				CType inputType,
 				CType outputType,
 				int inputSize,
@@ -219,6 +220,7 @@ public interface SLIRVisitor extends KjcVisitor
      */
     void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
 				JExpression streamContext,
+                                JExpression childContext,
 				CType inputType,
 				CType outputType,
 				int inputSize,
@@ -229,6 +231,7 @@ public interface SLIRVisitor extends KjcVisitor
      */
     void visitSetParallelStream(LIRSetParallelStream self,
 				JExpression streamContext,
+                                JExpression childContext,
 				int position,
 				CType inputType,
 				CType outputType,

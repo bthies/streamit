@@ -58,10 +58,6 @@ public class Lifter implements StreamVisitor {
 	SIRContainer parent = pipe.getParent();
 	// in parent, replace <pipe> with <filter>
 	parent.replace(pipe, filter);
-
-	// set new arguments to <filter>
-	parent.setParams(parent.indexOf(filter), 
-			 pipe.getParams(pipe.indexOf(filter)));
     }
 
     /**

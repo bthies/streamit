@@ -13,8 +13,11 @@ import java.util.ListIterator;
 
 /**
  * This class fuses all the pipelines that it can in a stream graph.
+ * We need to fuse all the children of the current stream we're
+ * visiting (rather than the stream itself) so that the iterators
+ * don't get confused.
  */
-public class FuseAll extends EmptyStreamVisitor {
+public class FuseAll implements StreamVisitor {
 
     private FuseAll() {}
 
@@ -25,14 +28,67 @@ public class FuseAll extends EmptyStreamVisitor {
 	IterFactory.createIter(str).accept(new FuseAll());
     }
 
+    /**
+     * PLAIN-VISITS 
+     */
+	    
+    /* visit a filter */
+    public void visitFilter(SIRFilter self,
+			    SIRFilterIter iter) {
+    }
+  
+    /**
+     * PRE-VISITS 
+     */
+	    
+    /* pre-visit a pipeline */
+    public void preVisitPipeline(SIRPipeline self,
+				 SIRPipelineIter iter) {
+	fuseChildren(self);
+    }
+
+    /* pre-visit a splitjoin */
+    public void preVisitSplitJoin(SIRSplitJoin self,
+				  SIRSplitJoinIter iter) {
+	fuseChildren(self);
+    }
+
+    /* pre-visit a feedbackloop */
+    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+				     SIRFeedbackLoopIter iter) {
+	fuseChildren(self);
+    }
+
+    /**
+     * POST-VISITS 
+     */
+	    
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
-	FusePipe.fuse(self);
+	fuseChildren(self);
     }
 
+    /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
-	FuseSplit.fuse(self);
+	fuseChildren(self);
+    }
+
+    /* post-visit a feedbackloop */
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
+				      SIRFeedbackLoopIter iter) {
+	fuseChildren(self);
+    }
+
+    private void fuseChildren(SIRContainer str) {
+	for (ListIterator it = str.getChildren().listIterator(); it.hasNext(); ) {
+	    SIROperator child = (SIROperator)it.next();
+	    if (child instanceof SIRPipeline) {
+		FusePipe.fuse((SIRPipeline)child);
+	    } else if (child instanceof SIRSplitJoin) {
+		FuseSplit.fuse((SIRSplitJoin)child);
+	    }
+	}
     }
 }

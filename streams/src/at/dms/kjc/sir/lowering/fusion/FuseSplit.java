@@ -19,57 +19,6 @@ import streamit.scheduler.simple.*;
  */
 public class FuseSplit {
     /**
-     * Performs a depth-first traversal of an SIRStream tree, and
-     * calls flatten() on any SIRSplitJoins as a post-pass.
-     * COMMENTED OUT since total deep-fusion like this should
-     * be done from FuseAll now.
-    public static SIRStream doFlatten(SIRStream str)
-    {
-        // First, visit children (if any).
-        if (str instanceof SIRFeedbackLoop)
-        {
-            SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
-            fl.setBody((SIRStream)doFlatten(fl.getBody()));
-            fl.setLoop((SIRStream)doFlatten(fl.getLoop()));
-        }
-        if (str instanceof SIRPipeline)
-        {
-            SIRPipeline pl = (SIRPipeline)str;
-	    for (int i=0; i<pl.size(); i++) {
-		// TODO this has some needless recursion since
-		// we might mutate pipe in flattening, but okay
-		// for now; don't want to make brittle by adding
-		// extra increment.
-		doFlatten(pl.get(i));
-            }
-        }
-        if (str instanceof SIRSplitJoin)
-        {
-            SIRSplitJoin sj = (SIRSplitJoin)str;
-            // This is painful, but I don't feel like adding code to
-            // SIRSplitJoin right now.
-            LinkedList ll = new LinkedList();
-            Iterator iter = sj.getParallelStreams().iterator();
-            while (iter.hasNext())
-            {
-                SIRStream child = (SIRStream)iter.next();
-                ll.add(doFlatten(child));
-            }
-            // Replace the children of the split/join with the flattened list.
-            sj.setParallelStreams(ll);
-        }
-        
-        // Having recursed, do the flattening, if it's appropriate.
-        if (str instanceof SIRSplitJoin) {
-            str = fuse((SIRSplitJoin)str);
-	}
-        
-        // All done, return the object.
-        return str;
-    }
-     */
-    
-    /**
      * Flattens a split/join, subject to the following constraints:
      *  1. Each parallel component of the stream is a filter.  Further, it is
      *     not a two-stage filter that peeks.
@@ -80,36 +29,17 @@ public class FuseSplit {
      */
     public static SIRStream fuse(SIRSplitJoin sj)
     {
-	// check the parent
-	if (!(sj.getParent() instanceof SIRPipeline)) {
-	    System.err.println("Didn't fuse SJ because parent is of " + sj.getParent().getClass());
+	if (!isFusable(sj)) {
 	    return sj;
+	} else {
+	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters!"); 
 	}
-        // Check the ratios.
-        Iterator childIter = sj.getParallelStreams().iterator();
-        while (childIter.hasNext()) {
-            SIRStream str = (SIRStream)childIter.next();
-            if (!(str instanceof SIRFilter))
-                return sj;
-            SIRFilter filter = (SIRFilter)str;
-	    // don't allow two-stage filters, since we aren't dealing
-	    // with how to fuse their initWork functions.
-            if (filter instanceof SIRTwoStageFilter) {
-		System.err.println("Didn't fuse SJ because this child is a 2-stage filter: " + filter);
-                return sj;
-	    }
-        }
 
-	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters!");
-
-        // Rename all of the child streams of this.
-        RenameAll ra = new RenameAll();
+	// get copy of child streams
         List children = sj.getParallelStreams();
-        Iterator iter = children.iterator();
-        while (iter.hasNext()) {
-	    ra.renameFilterContents((SIRFilter)iter.next());
-        }
-	
+
+	// rename components
+	doRenaming(children);
 	// calculate the repetitions for the split-join
 	RepInfo rep = RepInfo.calcReps(sj);
 
@@ -117,20 +47,96 @@ public class FuseSplit {
         JMethodDeclaration newWork = makeWorkFunction(sj, children, rep);
         JFieldDeclaration[] newFields = makeFields(sj, children);
         JMethodDeclaration[] newMethods = makeMethods(sj, children);
-
-        /* Make names of things within the split/join unique.
-        ra.findDecls(newFields);
-        ra.findDecls(newMethods);
-        for (int i = 0; i < newFields.length; i++)
-            newFields[i] = (JFieldDeclaration)newFields[i].accept(ra);
-        for (int i = 0; i < newMethods.length; i++)
-            newMethods[i] = (JMethodDeclaration)newMethods[i].accept(ra);
-        newWork = (JMethodDeclaration)newWork.accept(ra);
-	*/
-
-        // Get the init function now, using renamed names of things.
         JMethodDeclaration newInit = makeInitFunction(sj, children);
 
+	Rate rate = calcRate(sj, rep);
+
+        // Build the new filter.
+        SIRFilter newFilter = new SIRFilter(sj.getParent(), "Fused_" + sj.getIdent(),
+                                            newFields, newMethods, new JIntLiteral(rate.peek),
+                                            new JIntLiteral(rate.pop), new JIntLiteral(rate.push),
+                                            newWork, sj.getInputType(), sj.getOutputType());
+        // Use the new init function
+        newFilter.setInit(newInit);
+
+	// make new pipeline representing fused sj
+	SIRPipeline fused = makeFusedPipe(sj, rep, rate, newFilter);
+
+	// replace in parent
+	replaceInParent(sj, fused);
+
+        return newFilter;
+    }
+
+    /**
+     * Create a pipelin containing prelude and postlude (and new
+     * filter) to represent the fused splitjoin.
+     */
+    private static SIRPipeline makeFusedPipe(SIRSplitJoin sj, 
+					     RepInfo rep,
+					     Rate rate,
+					     SIRFilter newFilter) {
+	SIRPipeline pipe = new SIRPipeline("Wrapper_for_" + newFilter.getName());
+	// make a dummy init function
+	pipe.setInit(new JMethodDeclaration(null, 0, CStdType.Void, "init",
+					    JFormalParameter.EMPTY, CClassType.EMPTY,
+					    new JBlock(), null, null));
+
+	// make a splitFilter only if it's not a duplicate and it's
+	// not a null split
+	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE &&
+	    rep.splitter!=0) {
+	    pipe.add(makeFilter(sj.getParent(),
+				"Pre_" + sj.getIdent(),
+				makeSplitFilterBody(sj.getSplitter(), 
+						    rep,
+						    sj.getInputType()), 
+				rate.pop, rate.pop, rate.pop,
+				sj.getInputType()));
+	}
+	
+	int index = sj.getParent().indexOf(sj);
+	pipe.add(newFilter, new LinkedList(sj.getParent().getParams(index)));
+	
+	// make a joinFilter only if it's not a not a null join
+	if (rep.joiner!=0) {
+	    pipe.add(makeFilter(sj.getParent(),
+				"Post_" + sj.getIdent(),
+				makeJoinFilterBody(sj.getJoiner(), 
+						   rep,
+						   sj.getOutputType()),
+				rate.push, rate.push, rate.push,
+				sj.getOutputType()));
+	}
+	
+	return pipe;
+    }
+
+    private static void replaceInParent(SIRSplitJoin sj, 
+					SIRPipeline fused) {
+	// if parent of <sj> is a pipeline, then copy these children
+	// in, in place of the original filter
+	SIRContainer parent = sj.getParent();
+	if (parent instanceof SIRPipeline) {
+	    int index = parent.indexOf(sj);
+	    parent.remove(index);
+	    for (int i=fused.size()-1; i>=0; i--) {
+		parent.add(index, fused.get(i), fused.getParams(i));
+	    }
+	} else {
+	    // if <fused> has just one filter, add it in place of <sj>
+	    if (fused.size()==1) {
+		parent.replace(sj, fused.get(0));
+	    } else {
+		// otherwise, just add <fused> to parent in place of <sj>
+		parent.replace(sj, fused);
+		// clear the param list pased to <fused>
+		parent.getParams(parent.indexOf(fused)).clear();
+	    }
+	}
+    }
+
+    private static Rate calcRate(SIRSplitJoin sj, RepInfo rep) {
 	// calculate the push/pop/peek ratio
 	int push = rep.joiner * sj.getJoiner().getSumOfWeights();
 	int pop;
@@ -142,11 +148,9 @@ public class FuseSplit {
 
 	// calculate the peek amount...
 	// get the max peeked by a child, in excess of its popping
-        children = sj.getParallelStreams();
-        iter = children.iterator();
-	int maxPeek = 0;
-        while (iter.hasNext()) {
-	    SIRFilter filter = (SIRFilter)iter.next();
+	int maxPeek = -1;
+	for (int i=0; i<sj.size(); i++) {
+	    SIRFilter filter = (SIRFilter)sj.get(i);
 	    maxPeek = Math.max(maxPeek, 
 			       filter.getPeekInt()-
 			       filter.getPopInt());
@@ -155,62 +159,37 @@ public class FuseSplit {
 	// during execution
 	int peek = pop+maxPeek;
 
-        // Build the new filter.
-        SIRFilter newFilter = new SIRFilter(sj.getParent(),
-                                            "Fused_" + sj.getIdent(),
-                                            newFields,
-                                            newMethods,
-                                            new JIntLiteral(peek),
-                                            new JIntLiteral(pop),
-                                            new JIntLiteral(push),
-                                            newWork,
-                                            sj.getInputType(),
-                                            sj.getOutputType());
-        // Use the new init function.
-        newFilter.setInit(newInit);
+	return new Rate(push, pop, peek);
+    }
 
-	// make a splitFilter only if it's not a duplicate and it's
-	// not a null split
-	SIRFilter splitFilter = null;
-	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE &&
-	    rep.splitter!=0) {
-	    splitFilter = makeFilter(sj.getParent(),
-				     "Pre_" + sj.getIdent(),
-				     makeSplitFilterBody(sj.getSplitter(), 
-							 rep,
-							 sj.getInputType()), 
-				     pop, pop, pop,
-				     sj.getInputType());
-	}
+    private static void doRenaming(List children) {
+        // Rename all of the child streams of this.
+        RenameAll ra = new RenameAll();
+        Iterator iter = children.iterator();
+        while (iter.hasNext()) {
+	    ra.renameFilterContents((SIRFilter)iter.next());
+        }
+    }
 	
-	// make a joinFilter only if it's not a not a null join
-	SIRFilter joinFilter = null;
-	if (rep.joiner!=0) {
-	    joinFilter = makeFilter(sj.getParent(),
-					  "Post_" + sj.getIdent(),
-					  makeJoinFilterBody(sj.getJoiner(), 
-							     rep,
-							     sj.getOutputType()),
-					  push, push, push,
-					  sj.getOutputType());
-	}
-
-	// add these filters to the parent, which we require is a pipeline for now
-	SIRPipeline parent = (SIRPipeline)sj.getParent();
-
-	// get the index where we did the replace
-	int index = parent.indexOf(sj);
-	parent.replace(sj, newFilter);
-	// add <joinFilter> after <newFilter>
-	if (joinFilter!=null) {
-	    parent.add(index+1, joinFilter);
-	}
-	// add <splitFilter> before <newFilter>, if it's not a duplicate
-	if (splitFilter!=null) {
-	    parent.add(index, splitFilter);
-	}
-
-        return newFilter;
+    /**
+     * Returns whether or not <sj> is fusable.
+     */
+    private static boolean isFusable(SIRSplitJoin sj) {
+        // Check the ratios.
+        Iterator childIter = sj.getParallelStreams().iterator();
+        while (childIter.hasNext()) {
+            SIRStream str = (SIRStream)childIter.next();
+            if (!(str instanceof SIRFilter))
+                return false;
+            SIRFilter filter = (SIRFilter)str;
+	    // don't allow two-stage filters, since we aren't dealing
+	    // with how to fuse their initWork functions.
+            if (filter instanceof SIRTwoStageFilter) {
+		System.err.println("Didn't fuse SJ because this child is a 2-stage filter: " + filter);
+                return false;
+	    }
+        }
+	return true;
     }
 
     /**
@@ -223,7 +202,7 @@ public class FuseSplit {
     private static SIRFilter makeFilter(SIRContainer parent,
 					String ident,
 					JBlock block, 
-					int peek, int pop, int push,
+					int push, int pop, int peek,
 					CType type) {
 
 	// make empty init function
@@ -657,8 +636,18 @@ class RepInfo {
 			 this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
 	}
     }
+}
 
+class Rate {
+    public int push;
+    public int pop;
+    public int peek;
 
+    public Rate(int push, int pop, int peek) {
+	this.push = push;
+	this.pop = pop;
+	this.peek = peek;
+    }
 }
 
 

@@ -61,7 +61,7 @@ public class FusePipe {
      * filters eliminated.
      */
     public static int fuse(SIRPipeline pipe) {
-	return doFuse(pipe, pipe.size());
+	return doFuse(pipe, pipe.size(), pipe.size());
     }
 
     /**
@@ -79,19 +79,20 @@ public class FusePipe {
 	if (targetElim >= numElim) {
 	    maxLength = pipe.size();
 	} else {
-	    maxLength = (int)Math.ceil(numElim/(numElim-targetElim));
+	    maxLength = (int)Math.ceil(((float)numElim)/((float)(numElim-targetElim)));
+	    //System.err.println("numElim = " + numElim + " targetElim=" + targetElim + " maxLength=" + maxLength);
 	}
-	return doFuse(pipe, maxLength);
+	return doFuse(pipe, maxLength, targetElim);
     }
 
     /**
      * Fuses all candidate portions of <pipe>, but only fusing in
-     * segments of length <maxLength>.  Candidates for fusion are
-     * sequences of filters that do not have special, compiler-defined
-     * work functions.  Return how many filters were ELIMINATED from
-     * this pipeline.
+     * segments of length <maxLength>, eliminating a maximum of
+     * <maxElim>.  Candidates for fusion are sequences of filters that
+     * do not have special, compiler-defined work functions.  Return
+     * how many filters were ELIMINATED from this pipeline.
      */
-    private static int doFuse(SIRPipeline pipe, int maxLength) {
+    private static int doFuse(SIRPipeline pipe, int maxLength, int maxElim) {
 	int numEliminated = 0;
 	int start = 0;
 	do {
@@ -115,7 +116,7 @@ public class FusePipe {
 	    } else {
 		start = end + 1;
 	    }
-	} while (start < pipe.size()-1);
+	} while (start < pipe.size()-1 && numEliminated<maxElim);
 	// if pipe is down to a single filter and we're not at the
 	// toplevel already, then eliminate the pipeline
 	if (pipe.size()==1 && 
@@ -160,16 +161,17 @@ public class FusePipe {
     private static boolean isFusable(SIRStream str) {
 	// don't allow two-stage filters that peek
 	if (str instanceof SIRTwoStageFilter) {
+	    //System.err.println("Couldn't fuse " + str + " because it is 2-stage filter");
 	    return false;
-	    /*
-	    if (twoStage.getInitPeek()-twoStage.getInitPop()>0) {
-		return false;
-	    }
-	    */
 	}
-	return (str instanceof SIRFilter) && ((SIRFilter)str).needsWork();
+	if ((str instanceof SIRFilter) && ((SIRFilter)str).needsWork()) {
+	    return true;
+	} else {
+	    //System.err.println("Couldn't fuse " + str + " because it isn't filter or doesn't need work");
+	    return false;
 	}
-	
+    }
+    
     /**
      * Fuses filters <first> ... <last>.  For now, assumes: 
      *
@@ -242,8 +244,8 @@ public class FusePipe {
 	SIRFilter result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
 	
 	// insert the fused filter in the parent
-	replace((SIRPipeline)result.getParent(), filters,
-		result, initFuser.getInitArgs());
+	replace((SIRPipeline)((SIRFilter)filters.get(0)).getParent(), 
+		filters, result, initFuser.getInitArgs());
 
 	// return result
 	return result;

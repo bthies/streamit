@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.45 2003-09-08 22:14:46 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.46 2003-09-25 13:04:37 dmaze Exp $
  */
 public class ToJava
 {
@@ -75,11 +75,11 @@ public class ToJava
         // Complex structure type:
         List fields = new java.util.ArrayList();
         List ftypes = new java.util.ArrayList();
-        Type doubletype = new TypePrimitive(TypePrimitive.TYPE_DOUBLE);
+        Type floattype = new TypePrimitive(TypePrimitive.TYPE_FLOAT);
         fields.add("real");
-        ftypes.add(doubletype);
+        ftypes.add(floattype);
         fields.add("imag");
-        ftypes.add(doubletype);
+        ftypes.add(floattype);
         TypeStruct complexStruct =
             new TypeStruct(null, "Complex", fields, ftypes);
         structs.add(complexStruct);

@@ -1,7 +1,7 @@
 /*
  * DoComplexProp.java: perform constant propagation on function bodies
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: DoComplexProp.java,v 1.1 2002-09-16 20:47:03 dmaze Exp $
+ * $Id: DoComplexProp.java,v 1.2 2002-09-17 20:40:13 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -56,6 +56,15 @@ public class DoComplexProp extends FEReplacer
         getExprType = new GetExprType(symTab, streamType);
     }
 
+    private void paramListToSymTab(List params)
+    {
+        for (Iterator iter = params.iterator(); iter.hasNext(); )
+        {
+            Parameter param = (Parameter)iter.next();
+            symTab.register(param.getName(), param.getType());
+        }
+    }
+
     private void pushStreamType(StreamType st)
     {
         oldStreamTypes.addFirst(streamType);
@@ -69,6 +78,24 @@ public class DoComplexProp extends FEReplacer
         streamType = (StreamType)oldStreamTypes.removeFirst();
         varToComplex = new VarToComplex(symTab, streamType);
         getExprType = new GetExprType(symTab, streamType);
+    }
+
+    public Object visitFunction(Function func)
+    {
+        pushSymTab();
+        paramListToSymTab(func.getParams());
+        Object result = super.visitFunction(func);
+        popSymTab();
+        return result;
+    }
+
+    public Object visitFuncWork(FuncWork func)
+    {
+        pushSymTab();
+        paramListToSymTab(func.getParams());
+        Object result = super.visitFuncWork(func);
+        popSymTab();
+        return result;
     }
 
     public Object visitStmtAssign(StmtAssign stmt)
@@ -90,7 +117,8 @@ public class DoComplexProp extends FEReplacer
                                         cplx.getImag()));
             return null;
         }
-        else if (((Type)lhs.accept(getExprType)).isComplex())
+        else if (((Type)lhs.accept(getExprType)).isComplex() &&
+                 !((Type)rhs.accept(getExprType)).isComplex())
         {
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
@@ -128,13 +156,7 @@ public class DoComplexProp extends FEReplacer
     {
         pushSymTab();
         pushStreamType(spec.getStreamType());
-
-        // Add all of the stream parameters to the symbol table.
-        for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
-        {
-            Parameter param = (Parameter)iter.next();
-            symTab.register(param.getName(), param.getType());
-        }
+        paramListToSymTab(spec.getParams());
         
         Object result = super.visitStreamSpec(spec);
 

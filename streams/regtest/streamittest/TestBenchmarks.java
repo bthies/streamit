@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.19 2002-12-12 16:08:46 aalamb Exp $
+ * $Id: TestBenchmarks.java,v 1.20 2003-01-25 09:49:19 thies Exp $
  **/
 package streamittest;
 
@@ -43,12 +43,14 @@ public class TestBenchmarks extends StreamITTestCase {
 	    suite.addTest(new TestBenchmarks("testBeamFormer", flags));
 	}
 	suite.addTest(new TestBenchmarks("testSimple", flags));
-        //suite.addTest(new TestBenchmarks("testFft", flags));
+        suite.addTest(new TestBenchmarks("testFft", flags));
         suite.addTest(new TestBenchmarks("testFilterbank", flags));
         suite.addTest(new TestBenchmarks("testFm", flags));
         suite.addTest(new TestBenchmarks("testGsm", flags));
         suite.addTest(new TestBenchmarks("testNokia", flags));
         suite.addTest(new TestBenchmarks("testMatMulBlock", flags));
+        suite.addTest(new TestBenchmarks("testCFAR", flags));
+        suite.addTest(new TestBenchmarks("testPerftest4", flags));
 
 	return suite;
     }
@@ -66,7 +68,10 @@ public class TestBenchmarks extends StreamITTestCase {
         doRunTest(root, "BeamFormer.java", 0, 4);
 	// coarse-grained beamformer
         doCompileTest(root, "CoarseBeamFormer.java");
-        doRunTest(root, "CoarseBeamFormer.java", 0, 256);
+        doRunTest(root, "CoarseBeamFormer.java", 0, 128);
+        // serialized versions, for output checking
+	doCompileRunVerifyTest(root, "SerializedBeamFormer.java", "SerializedBeamFormer.out", 0, 4);
+	doCompileRunVerifyTest(root, "CoarseSerializedBeamFormer.java", "CoarseSerializedBeamFormer.out", 0, 128);
     }
 
     public void testBitonicSort() 
@@ -109,8 +114,7 @@ public class TestBenchmarks extends StreamITTestCase {
     public void testFir()
     {
         String root = BENCH_ROOT + "fir/streamit/";
-        doCompileTest(root, "FIRfine.java");
-        doRunTest(root, "FIRfine.java", 0, 6);
+        doCompileRunVerifyTest(root, "FIRfine.java", "FIRfine.out", 0, 6);
     }
 
     public void testFm() {
@@ -144,18 +148,18 @@ public class TestBenchmarks extends StreamITTestCase {
     {
         String root = BENCH_ROOT + "nokia/streamit/";
         doMake(root);
-        doCompileTest(root, "Linkeddcalc.java");
-        doRunTest(root, "Linkeddcalc.java", 0, 4);
+        doCompileRunVerifyTest(root, "Linkeddcalc.java", "Linkeddcalc.out", 0, 4);
     }
 
     public void testVocoder()
     {
         String root = BENCH_ROOT + "vocoder/streamit/";
         doMake(root);
-        doCompileTest(root, "LinkedVocoder.java");
-        doMake(root, "more-imem");
-        doRunTest(root, "LinkedVocoder.java", 0, 1);
-    }
+        doCompileTest(root, "LinkedMain.java");
+        doMake(root, "more-imem"); 
+        doRunTest(root, "LinkedVocoderToplevel.java", 0, 1);
+        doCompareTest(root, "LinkedVocoderToplevel.java", "LinkedVocoderToplevel.out");
+   }
 
     public void testMatMulBlock()
     {
@@ -164,6 +168,20 @@ public class TestBenchmarks extends StreamITTestCase {
         doCompileTest(root, "MatrixMultBlock.java");
         doRunTest(root, "MatrixMultBlock.java", 0, 108);
         doCompareTest(root, "MatrixMultBlock.java", "MatrixMultBlock.out");
+    }
+
+    public void testCFAR()
+    {
+        String root = BENCH_ROOT + "cfar/streamit/";
+        doSyntaxConvertTest(root, "CFARtest.str", "CFARtest.java");
+	doCompileRunVerifyTest(root, "CFARtest.java", "CFARtest.out", 0, 64);
+    }
+
+    public void testPerftest4()
+    {
+        String root = BENCH_ROOT + "perftest4/streamit/";
+	doMake(root);
+	doCompileRunVerifyTest(root, "Linkedperftest4.java", "Linkedperftest4.out", 0, 4);
     }
 }
 

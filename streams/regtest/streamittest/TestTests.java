@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestTests.java,v 1.7 2003-01-20 14:12:34 thies Exp $
+ * $Id: TestTests.java,v 1.8 2003-01-25 09:49:19 thies Exp $
  **/
 package streamittest;
 
@@ -62,6 +62,7 @@ public class TestTests extends StreamITTestCase {
 
 	suite.addTest(new TestTests("testWeightedRR", flags));
 	suite.addTest(new TestTests("testTwoWeightedRR", flags));
+	suite.addTest(new TestTests("testRecursive", flags));
 	
 	return suite;
     }
@@ -205,6 +206,13 @@ public class TestTests extends StreamITTestCase {
 			       "TwoWeightedRR.java",
 			       "TwoWeightedRR.out",
 			       0,6);
+    }
+
+    public void testRecursive()
+    {
+        String root = TESTS_ROOT + "recursive/";
+        doSyntaxConvertTest(root, "Recursive.str", "Recursive.java");
+	doCompileRunVerifyTest(root, "Recursive.java", "Recursive.out");
     }
     
 }

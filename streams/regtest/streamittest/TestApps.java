@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.8 2002-09-26 01:10:08 thies Exp $
+ * $Id: TestApps.java,v 1.9 2003-01-25 09:49:19 thies Exp $
  **/
 package streamittest;
 
@@ -35,10 +35,26 @@ public class TestApps extends StreamITTestCase {
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 
+	suite.addTest(new TestApps("testCrc", flags));
+	suite.addTest(new TestApps("testMP3Simple", flags));
+
 	// this one doesn't fit on any raw4
 	suite.addTest(new TestApps("testNokiaFine", flags));
 
 	return suite;
+    }
+
+    public void testCrc() {
+        String root = APPS_ROOT + "crc/streamit/";
+        doCompileTest(root, "CrcEncoder32Test.java");
+        doRunTest(root, "CrcEncoder32Test.java", 0, 1);
+        doCompareTest(root, "CrcEncoder32Test.java", "CrcEncoder32Test.out");
+    }
+
+    public void testMP3Simple()
+    {
+        String root = APPS_ROOT + "mp3decoder/";
+	doCompileRunVerifyTest(root, "MP3Simple.java", "MP3Simple.out", 0, 1152);
     }
     
     public void testNokiaFine() {

@@ -13,6 +13,14 @@ import at.dms.compiler.JavadocComment;
  */
 class Unroller extends SLIRReplacingVisitor {
     /**
+     * Map maintaining modified variables
+     */
+    private Hashtable modified;
+    /**
+     * Map maintaining modified vars in current loop
+     */
+    private Hashtable curModified;
+    /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */
     private Hashtable constants;
@@ -30,6 +38,40 @@ class Unroller extends SLIRReplacingVisitor {
 	super();
 	this.constants = constants;
 	this.hasUnrolled = false;
+	modified=new Hashtable();
+    }
+
+    /**
+     * checks prefix
+     */
+    public Object visitPrefixExpression(JPrefixExpression self,
+					int oper,
+					JExpression expr) {
+	if(expr instanceof JLocalVariableExpression)
+	    curModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
+	return super.visitPrefixExpression(self,oper,expr);
+    }
+
+    /**
+     * checks postfix
+     */
+    public Object visitPostfixExpression(JPostfixExpression self,
+					 int oper,
+					 JExpression expr) {
+	if(expr instanceof JLocalVariableExpression)
+	    curModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
+	return super.visitPostfixExpression(self,oper,expr);
+    }
+
+    /**
+     * checks assignment
+     */
+    public Object visitAssignmentExpression(JAssignmentExpression self,
+					    JExpression left,
+					    JExpression right) {
+	if(left instanceof JLocalVariableExpression)
+	    curModified.put(((JLocalVariableExpression)left).getVariable(),Boolean.TRUE);
+	return super.visitAssignmentExpression(self,left,right);
     }
 
     /**
@@ -41,14 +83,19 @@ class Unroller extends SLIRReplacingVisitor {
 				    JStatement incr,
 				    JStatement body) {
 	// first recurse into body
+	curModified=new Hashtable();
 	JStatement newStmt = (JStatement)body.accept(this);
 	if (newStmt!=null && newStmt!=body) {
 	    self.setBody(newStmt);
 	}
+	modified.putAll(curModified);
 	// check for loop induction variable
 	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
+	// check to see if var was modified
 	// if we can unroll...
-	if (info!=null) {
+	if((!modified.containsKey(info.var))&&info!=null) {
+	    // Set modified
+	    curModified.put(info.var,Boolean.TRUE);
 	    // do unrolling
 	    return doUnroll(info, self);
 	}

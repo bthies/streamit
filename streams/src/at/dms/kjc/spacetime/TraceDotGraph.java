@@ -38,7 +38,7 @@ public class TraceDotGraph
 			fw.write("  " + node.hashCode() + " -> " + node.getNext().hashCode() + ";\n");
 		    if (node.isInputTrace()) {
 			bufferArc(IntraTraceBuffer.getBuffer((InputTraceNode)node, (FilterTraceNode)node.getNext()), fw, DRAM);
-			    fw.write("  " + node.hashCode() + "[ label=\"");
+			fw.write("  " + node.hashCode() + "[ label=\"");
 			if (((InputTraceNode)node).oneInput() ||
 			    ((InputTraceNode)node).noInputs())
 			    fw.write(node.toString());
@@ -50,7 +50,12 @@ public class TraceDotGraph
 		    
 		    if (node.isOutputTrace()) {
 			bufferArc(IntraTraceBuffer.getBuffer((FilterTraceNode)node.getPrevious(), (OutputTraceNode)node), fw, DRAM);
-			fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
+			fw.write("  " + node.hashCode() + "[ label=\"");
+			if (((OutputTraceNode)node).oneOutput() ||
+			    ((OutputTraceNode)node).noOutputs())
+			    fw.write(node.toString());
+			else
+			    fw.write(((OutputTraceNode)node).debugString(true));
 		    }
 		    
 		    

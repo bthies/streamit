@@ -123,6 +123,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	
     private void optimizations() 
     {
+	ArrayDestroyer arrayDest=new ArrayDestroyer();
 	for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
 	    if (!KjcOptions.nofieldprop) {
 		 Unroller unroller;
@@ -140,7 +141,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	     } else
 		 tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
 	     
-	    //tile.getComputeCode().getMethods()[i].accept(new ArrayDestroyer());
+	    //tile.getComputeCode().getMethods()[i].accept(arrayDest);
 	     tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
 	}
 	

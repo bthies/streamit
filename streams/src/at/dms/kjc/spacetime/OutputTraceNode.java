@@ -206,16 +206,20 @@ public class OutputTraceNode extends TraceNode
 		(double)totalWeights());
     }
 
-    public String debugString() 
+    public String debugString(boolean escape) 
     {
+	String newLine = "\n";
 	StringBuffer buf = new StringBuffer();
-	buf.append("***** " + this.toString() + " *****\n");
+	if (escape)
+	    newLine = "\\n";
+	
+	buf.append("***** " + this.toString() + " *****" + newLine);
 	for (int i = 0; i < weights.length; i++) {
-	    buf.append("* Weight = " + weights[i] + "\n");
+	    buf.append("* Weight = " + weights[i] + newLine);
 	    for (int j = 0; j < dests[i].length; j++)
-		buf.append("  " + dests[i][j] + "\n");
+		buf.append("  " + dests[i][j] + newLine);
 	}
-	buf.append("**********\n");
+	buf.append("**********" + newLine);
 	return buf.toString();
     }
     

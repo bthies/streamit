@@ -230,7 +230,7 @@ public class ComputeCodeStore {
 	
 
 	JMethodDeclaration init=filterInfo.filter.getInit();
-	if(init!=null)
+	if(init!=null) 
 	    rawMain.addStatementFirst(new 
 		JExpressionStatement(null,
 				     new JMethodCallExpression
@@ -239,6 +239,8 @@ public class ComputeCodeStore {
 					  filterInfo.filter.getInit().getName(),
 					  paramArray),
 				     null));
+	else
+	    System.out.println(" ** Warning: Init function is null");
 	
     }
     
@@ -250,7 +252,7 @@ public class ComputeCodeStore {
 	
 	//if we can run direct communication, run it
 	if(filterInfo.isLinear())
-	    exeCode=new Linear(filterInfo);
+	    exeCode = new Linear(filterInfo);
 	else if (filterInfo.isDirect())
 	    exeCode = new DirectCommunication(filterInfo);
 	else 

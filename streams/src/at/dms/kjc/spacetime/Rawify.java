@@ -41,9 +41,13 @@ public class Rawify
 			//add the dram command if this filter trace is an endpoint...
 		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, false);
 		    
-		    if(filterInfo.isLinear())
+		    if(filterInfo.isLinear()) {
+			assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
+			    "Items remaining on buffer for init for linear filter";
 			createSwitchCodeLinear(filterNode,
 					       trace,filterInfo,init,false,tile,rawChip);
+		    }
+		    
 		    else 
 			createSwitchCode(filterNode, 
 					 trace, filterInfo, init, false, tile, rawChip);
@@ -645,7 +649,7 @@ public class Rawify
 		SpaceTimeBackend.println(edge.getDest().debugString(false));
 		assert ppFilterIt == filterInfo.steadyMult * (filterInfo.primePumpTrue - 
 				 FilterInfo.getFilterInfo(edge.getDest().getNextFilter()).primePumpTrue) :
-		    "Error: Inconsistent primepump stats for output trace node\n " + traceNode.debugString();
+		    "Error: Inconsistent primepump stats for output trace node\n " + traceNode.debugString(false);
 	    }
 	}
 
@@ -753,6 +757,12 @@ public class Rawify
 					       RawTile tile, RawChip rawChip) {
 	System.err.println("Creating switchcode linear: "+node);
 
+	//if we are in the init or primepump call the regular create switch code
+	if (init || primePump) {
+	    createSwitchCode(node, parent, filterInfo, init, primePump, tile, rawChip);
+	    return;
+	}
+	
 	//START Copy Gordo
 	int mult, sentItems = 0;
 	

@@ -1,0 +1,17 @@
+The compressed files contain the following FR test sequences:
+
+fr_a.exe     --> - 8 bit linear A-law input sequences to the FR encoder (*.inp)
+		 - output sequence from the encoder (*.cod)
+		 - decoder output sequences, 8 bit linear A-law (*.out)
+
+fr_hom_a.exe     --> test sequences with homing
+		 - 8 bit linear A-law input sequences to the FR encoder (*.inp)
+		 - output sequence from the encoder (*.cod)
+		 - decoder output sequences, 8 bit linear A-law (*.out)
+
+ fr_syn_a.exe  --> synchronization sequences A-law
+
+
+IMPORTANT:
+For generating the decoder output sequences *.out the already available decoder input sequences shall be used
+ 

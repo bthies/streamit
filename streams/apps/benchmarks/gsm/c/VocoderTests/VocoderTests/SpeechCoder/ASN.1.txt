@@ -1,0 +1,620 @@
+==================================================================
+Parameter  Parameter   Parameter          Var.  Number    Bit no.
+           number      name               name  of bits  (LSB-MSB)
+==================================================================
+
+==================================================================
+               1                        LAR 1     6     b1  - b6
+               2                        LAR 2     6     b7  - b12
+FILTER         3      Log. Area         LAR 3     5     b13 - b17
+               4      ratios            LAR 4     5     b18 - b22
+PARAMETERS     5      1 - 8             LAR 5     4     b23 - b26
+               6                        LAR 6     4     b27 - b30
+               7                        LAR 7     3     b31 - b33
+               8                        LAR 8     3     b34 - b36
+==================================================================
+==================================================================
+LTP            9      LTP lag             N1      7     b37 - b43
+PARAMETERS    10      LTP gain            b1      2     b44 - b45
+------------------------------------------------------------------
+              11      RPE grid position   M1      2     b46 - b47
+RPE           12      Block amplitude   Xmax1     6     b48 - b53
+PARAMETERS    13      RPE-pulse no.1    x1(0)     3     b54 - b56
+              14      RPE-pulse no.2    x1(1)     3     b57 - b59
+              ..      ...                                  ...
+              25      RPE-pulse no.13   x1(12)    3     b90 - b92
+==================================================================
+==================================================================
+LTP           26      LTP lag             N2      7     b93 - b99
+PARAMETERS    27      LTP gain            b2      2     b100- b101
+------------------------------------------------------------------
+              28      RPE grid position   M2      2     b102- b103
+RPE           29      Block amplitude   Xmax2     6     b104- b109
+PARAMETERS    30      RPE-pulse no.1    x2(0)     3     b110- b112
+              31      RPE-pulse no.2    x2(1)     3     b113- b115
+              ..      ...                                  ...
+              42      RPE-pulse no.13   x2(12)    3     b146- b148
+==================================================================
+==================================================================
+LTP           43      LTP lag              N3     7     b149- b155
+PARAMETERS    44      LTP gain             b3     2     b156- b157
+------------------------------------------------------------------
+              45      RPE grid position    M3     2     b158- b159
+RPE           46      Block amplitude    Xmax3    6     b160- b165
+PARAMETERS    47      RPE-pulse no.1     x3(0)    3     b166- b168
+              48      RPE-pulse no.2     x3(1)    3     b169- b171
+              ..      ...                                  ...
+              59      RPE-pulse no.13    x3(12)   3     b202- b204
+==================================================================
+==================================================================
+LTP           60      LTP lag              N4     7     b205- b211
+PARAMETERS    61      LTP gain             b4     2     b212- b213
+------------------------------------------------------------------
+              62      RPE grid position    M4     2     b214- b215
+RPE           63      Block amplitude    Xmax4    6     b216- b221
+PARAMETERS    64      RPE-pulse no.1     x4(0)    3     b222- b224
+              65      RPE-pulse no.2     x4(1)    3     b225- b227
+              ..      ...                                  ...
+              76      RPE-pulse no.13    x4(12)   3     b258- b260
+==================================================================
+  s(k) = sof(k) - beta*sof(k-1)                     					(3.1.2)
+
+  beta= 28180*2-15
+
+               159
+    ACF(k)=    ( s(i)s(i-k)     ,k = 0,1...,8       				(3.2)
+               i=k
+     -1 <= r(i) <= + 1
+
+                          1 + r(i)
+    Logarea(i) = log10  (----------)                					 (3.3)
+                          1 - r(i)
+
+         r(i)                       ;          |r(i)| < 0.675
+LAR(i) = sign[r(i)]*[2|r(i)|-0.675] ; 0.675 <= |r(i)| < 0.950
+         sign[r(i)]*[8|r(i)|-6.375] ; 0.950 <= |r(i)| <= 1.000
+                                                   				  	(3.4)
+
+      LAR'(i)                           ; |LAR'(i)|<0.675
+r'(i)=sign[LAR'(i)]*[0.500*|LAR'(i)|
+      +0.337500]                        ; 0.675<=|LAR'(i)|<1.225
+      sign[LAR'(i)]*[0.125*|LAR'(i)|
+      +0.796875]                        ; 1.225<=|LAR'(i)|<=1.625
+                                                    					(3.5)
+  LARc(i) = Nint{A(i)*LAR(i) + B(i)}                   				(3.6)
+  with
+  Nint{z} = int{z+sign{z}*0.5}                        				(3.6a)
+
+Function Nint defines the rounding  LAR''(i) = ( LARc(i) - B(i) )/ A(i)                					(3.7)
+
+  d0(k) = s(k)                                         				(3.8a)
+  u0(k) = s(k)                                          				(3.8b)
+  di(k) = di-1(k)  + r'i*ui-1(k-1)  with i=1,...8       			(3.8c)
+  ui(k) = ui-1(k-1) + r'i*di-1(k)   with i=1,...8       			(3.8d)
+  d(k ) = d8(k)                                         				(3.8e)
+
+
+                39                          j  = 0,...3
+  Rj(lambda) =  ( d(kj+i)*d'(kj+i-lambda); kj = k0 + j*40
+                i=0                         lambda = 40,...,120
+
+                                                       				(3.9)
+
+
+     Rj(Nj) = max { Rj(lambda); lambda = 40..120 };
+     j = 0,...,3
+                                                     					(3.10)
+
+     bj =    Rj(Nj) / Sj(Nj);       j = 0,...,3      (3.11)
+
+       with
+               39
+     Sj(Nj) =  ( d'2 (kj+i-Nj);  j = 0,...,3        				(3.12)
+               i=0
+   Ncj = Nj;                        j = 0,...,3     					(3.13)
+
+   Nj' = Ncj;                       j = 0,...,3     					(3.14)
+
+      if            bj <= DLB(i)  then  bcj  = 0;  i=0
+   if DLB(i-1) < bj <= DLB(i)  then  bcj  = i;  i=1,2      			(3.15)
+   if DLB(i-1) < bj            then  bcj  = 3;  i=3
+
+  bj' =  QLB(bcj) ;  j = 0,...,3         								(3.16)
+
+                                     j  = 0,...,3
+  e(kj+k) = d(kj+k) - d"(kj+k)   ;   k  = 0,...,39       				(3.17)
+                                     kj = k0 + j*40
+
+                                  j = 0,...,3
+  d"(kj+k) = bj'*d'(kj+k-Nj')  ;  k = 0,...,39           				(3.18)
+                                  kj = k0 + j*40
+
+                                      j  = 0,...,3
+   d'(kj+k) = e'(kj+k) + d"(kj+k)   ; k = 0,...,39       				(3.19)
+                                      kj = k0 + j*40
+
+	|H(Omega=0)| = 2.779;
+         10
+  x(k) = ( H(i) * e(k+5-i)      with k = 0,...,39       			(3.20)
+         i=0
+  xm(i) = x(kj+m+3*i)           ;  i = 0,...,12          				(3.21)
+                                   m = 0,...,3
+
+            12 
+  EM = max  ( xm2(i)       ;  m = 0,...,3              				(3.22)
+        m   i=0
+  x'(i) = xM(i)/x'max ;    i=0,...,12                					(3.23)
+  sr(0)(k) = dr'(k)                                     				(3.24a)
+  sr(i)(k) = sr(i-1)(k) - rr'(9-i) * v8-i(k-1);  i=1,...,8
+                                                        				(3.24b)
+  v9-i(k)  = v8-i(k-1) + rr'(9-i) * sr(i)(k);    i=1,...,8
+                                                        				(3.24c)
+  sr'(k)   = sr(8)(k)                                   				(3.24d)
+  v0(k)    = sr(8)(k)                                   				(3.24e)
+
+  sro(k) = sr(k) + beta*sro(k-1) ;  beta= 28180*2-15    			(3.25)
+
+       /* var  = integer(  real_var * scalefactor ) */ 
+
+         x' -----> xp
+         x''-----> xpp
+
+              |== FOR k= start to end:
+              |    inner computation;
+              |== NEXT k:
+
+       IF (condition1) THEN statement1;
+          ELSE IF ( condition2) THEN statement2;
+               ELSE IF ( condition3) THEN statement3;
+
+       | LARc[1..8]     : Coded LAR coefficients
+       |--> These parameters are calculated and sent once per frame.
+       | Nc        : LTP lag;
+       | bc        : Coded LTP gain;
+       | Mc        : RPE grid selection;
+       | xmaxc          : Coded maximum amplitude of the RPE sequence;
+       | xMc[0..12]     : Codes of the normalized RPE samples;
+       |--> These parameters are calculated and sent four times per frame.
+
+     S.v.v.v.v.v.v.v.v.v.v.v.v.x.x.x ( 2's complement format).
+     Where S is the sign bit, v a valid bit, and x a "don't care" bit.
+     The original signal is called sop[..];
+       |== FOR k=0 to 159:
+       |    so[k]  = sop[k] >> 3;
+       |    so[k]  = so[k] << 2;
+       |== NEXT k:
+
+       |== FOR k = 0 to 159:
+
+       | Compute the non-recursive part.
+       |    s1 = sub( so[k], z1 );
+       |    z1 = so[k];
+
+       | Compute the recursive part.
+       |    L_s2 = s1;
+       |    L_s2 = L_s2 << 15;
+       | Execution of a 31 by 16 bits multiplication.
+       |    msp = L_z2 >> 15;
+       |    lsp = L_sub( L_z2, ( msp << 15 ) );
+       |    temp = mult_r( lsp, 32735 );
+       |    L_s2 = L_add( L_s2, temp );
+       |    L_z2 = L_add(  L_mult( msp, 32735 ) >> 1, L_s2 );
+
+       | Compute sof[k] with rounding.
+       |    sof[k] =  L_add( L_z2, 16384 )  >> 15;
+       |== NEXT k:
+       |== FOR k=0 to 159:
+       |    s[k] = add( sof[k], mult_r( mp, -28180 ) );
+       |    mp = sof[k];
+       |== NEXT k:
+
+       smax = 0;
+       |== FOR k = 0 to 159:
+       |    temp = abs( s [k] );
+       |    IF ( temp > smax ) THEN smax = temp;
+       |== NEXT k;
+
+       IF ( smax == 0 ) THEN scalauto = 0;
+         ELSE  scalauto = sub( 4, norm( smax << 16 )  );
+
+       IF ( scalauto > 0 ) THEN
+                            | temp = 16384 >> sub( scalauto,1);
+                            |== FOR k = 0 to 159:
+                            |    s[k] = mult_r( s[k], temp);
+                            |== NEXT k:
+
+       |== FOR k=0 to 8:
+       |    L_ACF[k] = 0;
+       |==== FOR i=k to 159:
+       |      L_temp = L_mult( s[i], s[i-k] );
+       |      L_ACF[k] = L_add( L_ACF[k], L_temp );
+       |==== NEXT i:
+       |== NEXT k:
+IF ( scalauto > 0 ) THEN 
+                                |== FOR k = 0 to 159:
+                                |    s[k] = s[k] << scalauto;
+                                |== NEXT k:
+
+       IF( L_ACF[0] == 0 ) THEN
+                                |== FOR i = 1 to 8:
+                                |    r[i] = 0;
+                                |== NEXT i:
+                                |    EXIT; /continue with section 5.2.6/
+       temp = norm( L_ACF[0] );
+       |== FOR k=0 to 8:
+       |    ACF[k] = ( L_ACF[k] << temp ) >> 16;
+       |== NEXT k:
+
+       |== FOR i=1 to 7:
+       |    K[9-i] = ACF[i];
+       |== NEXT i:
+       |== FOR i=0 to 8:
+       |    P[i] = ACF[i];
+       |== NEXT i:
+
+       |== FOR n=1 to 8:
+       |    IF( P[0] < abs( P[1] ) ) THEN
+       |                                    |== FOR i = n to 8:
+       |                                    |    r[i] = 0;
+       |                                    |== NEXT i:
+       |                                    | EXIT; /continue with
+       |                                    |       section 5.2.6/
+       |    r[n] = div( abs( P[1] ), P[0] );
+       |    IF ( P[1] > 0 ) THEN r[n] = sub( 0, r[n] );
+       |
+       |    IF (  n ==  8 ) THEN EXIT; /continue with
+                                       section 5.2-6/
+
+       |    P[0] = add( P[0], mult_r( P[1], r[n] ) );
+       |==== FOR m=1 to 8-n:
+       |      P[m] = add( P[m+1], mult_r( K[9-m], r[n] ) );
+       |      K[9-m] = add( K[9-m], mult_r( P[m+1], r[n] ) );
+       |==== NEXT m:
+       |
+       |== NEXT n:
+
+       L_num = num;
+       L_denum = denum;
+       div =0;
+       |== FOR k = 0 to 14:
+       |    div= div << 1;
+       |    L_num = L_num << 1;
+       |    IF ( L_num >= L_denum) THEN
+       |                         | L_num=L_sub(L_num, L_denum);
+       |                         | div = add( div ,1 );
+       |== NEXT k:
+
+   /* r[..] = integer( real_r[..]*32768. );  -1. <= real_r <1. */
+   /*                                                          */
+   /* LAR[..] = integer( real_LAR[..]*16384. );                */
+   /*                                                          */
+   /* with  -1.625 <= real_LAR <= 1.625                        */
+
+       |== FOR i = 1 to 8:
+       |    temp = abs( r[i] );
+       |    IF ( temp < 22118 ) THEN temp = temp >> 1;
+       |       ELSE  IF ( temp < 31130 ) THEN
+       |              temp= sub(temp, 11059);
+       |          ELSE temp = sub( temp, 26112 ) << 2;
+       |    LAR[i] = temp;
+       |    IF ( r[i] < 0 ) THEN LAR[i] = sub( 0, LAR[i] );
+       |== NEXT i:
+
+/* A[1..8]= integer( real_A[1..8]*1024); 8 values (see table5.1)*/
+/*                                                              */
+/* B[1..8]= integer( real_B[1..8]*512);  8 values (see table5.1)*/
+/*                                                              */
+/* MAC[1..8]= maximum of the LARc[1..8]; 8 values (see table5.1)*/
+/*                                                              */
+/* MIC[1..8]= minimum of the LARc[1..8]; 8 values (see table5.1)*/
+
+       |== FOR i =1 to 8:
+       |    temp= mult( A[i], LAR[i] );
+       |    temp= add( temp, B[i] );
+       |    temp= add( temp, 256);     for rounding
+       |    LARc[i]= temp >> 9;
+       |
+       |	Check IF LARc[i] lies between MIN and MAX
+       |
+       |     IF ( LARc[i] > MAC[i] ) THEN LARc[i] = MAC[i];
+       |     IF ( LARc[i] < MIC[i] ) THEN LARc[i] = MIC[i];
+       |    LARc[i] = sub( LARc[i], MIC[i] );  /See note below/
+       |== NEXT i:
+
+/* INVA[1..8]=integer((32768*8)/(real_A[1..8]);                */
+/*                                       8 values (table 5.2 ) */
+/* MIC[1..8]=minimum value of the LARc[1..8];                  */
+/*                                       8 values (table 5.1)  */
+
+     |== FOR i=1 to 8:
+     |    temp1 = add( LARc[i], MIC[i] ) << 10; /See note below/
+     |    temp2 = B[i] << 1;
+     |    temp1 = sub( temp1, temp2);
+     |    temp1 = mult_r( INVA[i], temp1);
+     |    LARpp[i] = add( temp1, temp1);
+     |== NEXT i:
+
+For k_start = 0 to k_end = 12.
+|==== FOR i= 1 to 8:
+|     LARp[i] = add((LARpp(j-1)[i] >> 2),(LARpp(j)[i] >> 2));
+|     LARp[i] = add( LARp[i] , ( LARpp(j-1)[i]  >> 1 ) );
+|==== NEXT i:
+
+For k_start = 13 to k_end = 26.
+|==== FOR i= 1 to 8:
+|     LARp[i] = add((LARpp(j-1)[i] >> 1),(LARpp(j)[i] >> 1 ));
+|==== NEXT i:
+
+For k_start = 27 to k_end = 39.
+|==== FOR i= 1 to 8:
+|     LARp[i] = add((LARpp(j-1)[i] >> 2),(LARpp(j)[i] >> 2 ));
+|     LARp[i] = add( LARp[i] , ( LARpp(j)[i]  >> 1 ) );
+|==== NEXT i:
+
+For k_start = 40 to k_end = 159.
+|==== FOR i= 1 to 8:
+|     LARp[i] =  LARpp(j)[i];
+|==== NEXT i:
+
+       |== FOR i=1 to 8:
+       |    temp = abs( LARp[i] );
+       |    IF ( temp < 11059 ) THEN temp = temp << 1;
+       |        ELSE IF (temp < 20070) THEN
+       |                 temp = add(temp, 11059);
+       |           ELSE temp = add( (temp >> 2), 26112 );
+       |    rp[i] = temp;
+       |    IF ( LARp[i] < 0 ) THEN rp[i] = sub( 0, rp[i] );
+       |== NEXT i:
+       |== FOR k = k_start to k_end:
+       |    di = s[k]
+       |    sav = di;
+       |==== FOR i = 1 to 8:
+       |      temp = add( u[i-1], mult_r( rp[i], di ) );
+       |      di = add( di, mult_r( rp[i], u[i-1] ) );
+       |      u[i-1] = sav;
+       |      sav = temp;
+       |==== NEXT i:
+       |    d[k] = di;
+       |== NEXT k:
+
+       dmax = 0;
+       |== FOR k = 0 to 39:
+       |    temp = abs( d[k] );
+       |    IF ( temp > dmax ) THEN dmax = temp;
+       |== NEXT k:
+
+       temp = 0;
+       IF ( dmax == 0 ) THEN scal = 0;
+         ELSE temp = norm( dmax << 16 );
+       IF ( temp > 6 ) THEN scal = 0;
+         ELSE scal = sub( 6, temp );
+
+       |== FOR k = 0 to 39:
+       |    wt[k] = d[k] >> scal;
+       |== NEXT k:
+
+       L_max = 0;
+       Nc = 40;   (index for the maximum cross-correlation)
+       |== FOR lambda = 40 to 120:
+       |    L_result = 0;
+       |==== FOR k = 0 to 39:
+       |      L_temp = L_mult( wt[k], dp[k-lambda] );
+       |      L_result = L_add( L_temp, L_result );
+       |==== NEXT k:
+       |    IF ( L_result > L_max) THEN
+       |                                | Nc = lambda;
+       |                                | L_max = L_result ;
+       |== NEXT lambda:
+
+       L_max = L_max >> ( sub( 6, scal ) );
+
+       |== FOR k = 0 to 39:
+       |    wt[k] = dp[k-Nc] >> 3;
+       |== NEXT k:
+
+       L_power = 0;
+       |== FOR k =0 to 39:
+       |    L_temp = L_mult( wt[k], wt[k] );
+       |    L_power = L_add( L_temp, L_power );
+       |== NEXT k:
+
+       IF ( L_max <= 0 ) THEN
+                              | bc = 0;
+                              | EXIT; /cont. with 5.2.12/
+       IF ( L_max >= L_power ) THEN
+                                    | bc = 3;
+                                    | EXIT; /cont. with 5.2.12/
+       temp = norm( L_power );
+       R = ( L_max << temp ) >> 16;
+       S = ( L_power << temp ) >> 16;
+
+       |== FOR bc = 0 to 2:
+       |      IF (R <= mult(S, DLB[bc])) THEN EXIT; /cont. with
+                                                       5.2.12/
+       |== NEXT bc;
+       bc = 3;
+
+Initial value: dp[-120..-1]=0;
+
+       bp = QLB[bc];
+
+       |== FOR k = 0 to 39:
+       |    dpp[k] = mult_r( bp, dp[k-Nc] );
+       |    e[k] = sub( d[k], dpp[k] );
+       |== NEXT k:
+
+       /* H[0..10] = integer( real_H[0..10]*8192 ); */
+
+       |== FOR k= 0 to 4:
+       |    wt[k] = 0;
+       |== NEXT k:
+
+       |== FOR k = 5 to 44:
+       |    wt[k] = e[k-5];
+       |== NEXT k:
+
+       |== FOR k= 45 to 49:
+       |    wt[k] = 0;
+       |== NEXT k:
+
+       |== FOR k= 0 to 39:
+       |      L_result =  8192; /rounding of the output
+                                     of the filter/
+       |==== FOR i = 0 to 10:
+       |      L_temp = L_mult( wt[k+i], H[i] );
+       |      L_result = L_add( L_result, L_temp );
+       |==== NEXT i:
+       |      L_result = L_add(L_result,L_result); /scaling (x2)/
+       |      L_result = L_add(L_result,L_result); /scaling (x4)/
+       |    x[k] = L_result >> 16;
+       |== NEXT k:
+
+       EM =0;
+       Mc = 0;
+
+       |== FOR m = 0 to 3:
+       |    L_result = 0;
+       |==== FOR i = 0 to 12:
+       |      temp1 = x[m+(3*i)] >> 2;
+       |      L_temp = L_mult( temp1, temp1 );
+       |      L_result = L_add( L_temp, L_result );
+       |==== NEXT i:
+       |    IF ( L_result > EM) THEN
+       |                                | Mc = m;
+       |                                | EM = L_result;
+       |== NEXT m:
+
+       |== FOR i = 0 to 12:
+       |    xM[i] = x[Mc +(3*i)];
+       |== NEXT i:
+
+       xmax = 0;
+       |== FOR i = 0 to 12:
+       |    temp = abs( xM[i] ) ;
+       |    IF ( temp > xmax ) THEN xmax = temp;
+       |== NEXT i:
+
+       exp = 0;
+       temp = xmax >> 9;
+       itest = 0;
+       |== FOR i = 0 to 5:
+       |    IF ( temp <= 0 ) THEN itest = 1;
+       |    temp = temp >> 1;
+       |    IF ( itest == 0 ) THEN exp = add( exp, 1 ) ;
+       |== NEXT i:
+
+       temp = add( exp, 5 ) ;
+       xmaxc = add( ( xmax >> temp ), ( exp << 3 ) ) ;
+
+       exp = 0 ;
+       IF ( xmaxc > 15 ) THEN exp = sub( ( xmaxc >> 3 ), 1 ) ;
+       mant = sub( xmaxc , ( exp << 3 ) );
+
+       IF ( mant == 0 ) THEN | exp = -4;
+                             | mant = 15;
+       ELSE | itest = 0;
+            |== FOR i = 0 to 2:
+            |    IF ( mant > 7 ) THEN itest = 1;
+            |    IF (itest == 0) THEN mant = add((mant << 1),1);
+            |    IF ( itest == 0 ) THEN exp = sub( exp, 1 );
+            |== NEXT i:
+       mant = sub( mant, 8 );
+
+       temp1= sub( 6, exp );  /normalization by the exponent/
+       temp2  =  NRFAC[mant];  /see table 5.5 (inverse mantissa)/
+
+       |== FOR i = 0 to 12:
+       |    temp = xM[i] << temp1;
+       |    temp = mult( temp , temp2 );
+       |    xMc[i] = add( ( temp >> 12 ), 4 );  /See note below/
+       |== NEXT I:
+
+       temp1 = FAC[mant];  see 5.2.15 for mant
+       temp2= sub( 6, exp );  see 5.2.15 for exp
+       temp3= 1 << sub( temp2, 1 );
+
+       |== FOR i =0 to 12:
+       |    temp = sub( ( xMc[i] << 1 ), 7 );  /See note below/
+       |    temp = temp << 12;
+       |    temp = mult_r( temp1, temp );
+       |    temp = add( temp, temp3 );
+       |    xMp[i] = temp >> temp2;
+       |== NEXT i;
+
+       |== FOR k = 0 to 39:
+       |    ep[k] = 0;
+       |== NEXT k:
+
+       |== FOR i = 0 to 12:
+       |    ep[Mc +(3*i)] = xMp[i];
+       |== NEXT i:
+
+       |== FOR k = 0 to 79:
+       |    dp[-120+k] = dp[-80+k];
+       |== NEXT k:
+
+       |== FOR k = 0 to 39:
+       |    dp[-40+k] = add( ep[k], dpp[k] );
+       |== NEXT k:
+
+       Nr = Ncr;
+       IF ( Ncr < 40 ) THEN Nr = nrp;
+       IF ( Ncr > 120 ) THEN Nr = nrp;
+       nrp= Nr;
+
+       brp = QLB[bcr]
+
+       |== FOR k = 0 to 39:
+       |    drpp = mult_r( brp, drp[k-Nr] );
+       |    drp[k] = add( erp[k], drpp );
+       |== NEXT k:
+
+       |== FOR k = 0 to 119:
+       |    drp[-120+k] = drp[-80+k];
+       |== NEXT k:
+
+       |== FOR k = 0 to 39:
+       |     wt[k] = drp[k];
+       |== NEXT k:
+
+       |== FOR k = 0 to 39:
+       |     wt[40+k] = drp[k];
+       |== NEXT k:
+
+       |== FOR k = 0 to 39:
+       |     wt[80+k] = drp[k];
+       |== NEXT k:
+
+       |== FOR k = 0 to 39:
+       |     wt[120+k] = drp[k];
+       |== NEXT k:
+
+       |== FOR k = k_start to k_end:
+       |    sri = wt[k];
+       |==== FOR i = 1 to 8:
+       |      sri = sub( sri, mult_r( rrp[9-i], v[8-i] ) );
+       |      v[9-i] = add( v[8-i], mult_r( rrp[9-i], sri ) );
+       |==== NEXT i:
+       |    sr[k] = sri;
+       |    v[0] = sri;
+       |== NEXT k:
+
+       |== FOR k = 0 to 159:
+       |    temp = add( sr[k], mult_r( msr, 28180 ) );
+       |    msr = temp;
+       |    sro[k] = msr;
+       |== NEXT k:
+
+       |== FOR k = 0 to 159:
+       |    srop[k] = add( sro[k], sro[k] );
+       |== NEXT k:
+
+       |== FOR k = 0 to 159:
+       |    srop[k] = srop[k] >> 3; 
+       |    srop[k] = srop[k] << 3;
+       |== NEXT k:
+
+       S.v.v.v.v.v.v.v.v.v.v.v.v.0.0.0  (2's complement).
+          SR = srop[k] >> 3;
+          LAW = 1;
+

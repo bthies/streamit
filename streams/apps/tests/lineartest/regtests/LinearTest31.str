@@ -1,13 +1,10 @@
 /** 
- * Really simple fir program for doing frequency replacement testing.
+ * Simple program to test expanders.
  **/
-void->void pipeline LinearTest26 {
+void->void pipeline LinearTest31 {
    add FloatSource(10);
-   add pipeline {
-     add Expander(2);
-     add AverageFilter(2);
-     add Compressor(3);
-   };
+   add Expander(2);
+   add AverageFilter(2);
    add FloatSink();
  }
 
@@ -48,15 +45,6 @@ float->float filter Expander(int L) {
     push(pop());
     for (int i=0; i<(L-1); i++) {
       push(0);
-    }
-  }
-}
-
-float->float filter Compressor(int M) {
-  work pop M push 1 {
-    push(pop());
-    for (int i=0; i<(M-1); i++) {
-      pop();
     }
   }
 }

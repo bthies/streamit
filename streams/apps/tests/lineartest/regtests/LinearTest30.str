@@ -1,0 +1,58 @@
+/** 
+ * Very simple example of SplitJoin combination to test out the general
+ * rules as set forth in the paper.
+ **/
+void->void pipeline LinearTest30 {
+  add FloatSource();
+  add LinearSplitJoin();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** 
+ * This is simply a (duplicate) SplitJoin which has a bunch of FIR
+ * filters as children.
+ **/
+float->float splitjoin LinearSplitJoin {
+  split duplicate;
+  add MockFIRFilter(5,0);
+  add MockFIRFilter(5,1);
+  add MockFIRFilter(5,2);
+  join roundrobin;
+}
+
+/** This is a mock up of an FIR filter. N is where the counting starts from **/
+float->float filter MockFIRFilter(int size, int N) {
+  float[size] weights;
+  init {
+    for (int i=0; i<size; i++) {
+      weights[i] = N + i;
+    }
+  }
+
+  work pop 1 peek size push 1 {
+    float sum = 0;
+    /** do the MAC like normal **/
+    for (int i=0; i<size; i++) {
+      sum = sum + (peek(i) * weights[i]);
+    }
+    push(sum);
+    pop();
+  }
+}

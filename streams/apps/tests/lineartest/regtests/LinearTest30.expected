@@ -1,0 +1,32 @@
+LinearSplitJoin_1.matrix
+[[6.0+0.0i 5.0+0.0i 4.0+0.0i]
+ [5.0+0.0i 4.0+0.0i 3.0+0.0i]
+ [4.0+0.0i 3.0+0.0i 2.0+0.0i]
+ [3.0+0.0i 2.0+0.0i 1.0+0.0i]
+ [2.0+0.0i 1.0+0.0i 0.0+0.0i]]
+LinearSplitJoin_1.vector
+[[0.0+0.0i 0.0+0.0i 0.0+0.0i]]
+MockFIRFilter_1.matrix
+[[4.0+0.0i]
+ [3.0+0.0i]
+ [2.0+0.0i]
+ [1.0+0.0i]
+ [0.0+0.0i]]
+MockFIRFilter_1.vector
+[[0.0+0.0i]]
+MockFIRFilter_2.matrix
+[[5.0+0.0i]
+ [4.0+0.0i]
+ [3.0+0.0i]
+ [2.0+0.0i]
+ [1.0+0.0i]]
+MockFIRFilter_2.vector
+[[0.0+0.0i]]
+MockFIRFilter_3.matrix
+[[6.0+0.0i]
+ [5.0+0.0i]
+ [4.0+0.0i]
+ [3.0+0.0i]
+ [2.0+0.0i]]
+MockFIRFilter_3.vector
+[[0.0+0.0i]]

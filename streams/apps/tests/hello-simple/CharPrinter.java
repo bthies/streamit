@@ -4,7 +4,7 @@ public class CharPrinter extends Filter
 {
     public void work()
     {
-           System.out.print(input.popChar());
+           System.out.println(input.popChar());
     }
     public void init ()
     {

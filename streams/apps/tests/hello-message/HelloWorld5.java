@@ -18,7 +18,7 @@ public class HelloWorld5 extends SplitJoin {
 
     // presumably some main function invokes the stream
     public static void main(String args[]) {
-	new HelloWorld5(1).run();
+	new HelloWorld5(1).run(args);
     }
 
     // if init with no arguments, then init with random 
@@ -33,7 +33,7 @@ public class HelloWorld5 extends SplitJoin {
 	// setup the one to run in parallel
 	add(new Stream() {
 		public void init() {
-		    add(new CharGenerator("Hello World!.....\0"));
+		    add(new CharGenerator());
 		    add(new ResetingCharPrinter(this));
 		}
 	    });

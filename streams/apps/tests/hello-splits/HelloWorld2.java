@@ -2,7 +2,7 @@
 
   Hello World Program #2:
 
-  1) Generates the "Hello World2!" string one character at a time
+  1) Generates the "Hello World!" string one character at a time
 
   2) Splits the characters through a split/join, guaranteeing only a
   partial ordering on the order in which the characters are printed.
@@ -19,13 +19,13 @@ public class HelloWorld2 extends StreamIt
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-        new HelloWorld2().run();
+        new HelloWorld2().run(args);
     }
 
     // this is the defining part of the stream
     public void init()
     {
-        this.add(new CharGenerator("Hello World2!"));
+        this.add(new CharGenerator());
         this.add(new SplitJoin()
         {
             public void init()

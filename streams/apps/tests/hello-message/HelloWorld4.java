@@ -17,7 +17,7 @@ public class HelloWorld4 extends Stream {
 
     // presumably some main function invokes the stream
     public static void main(String args[]) {
-	new HelloWorld4().run();
+	new HelloWorld4().run(args);
     }
 
     // this is the defining part of the stream

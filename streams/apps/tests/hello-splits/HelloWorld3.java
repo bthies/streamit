@@ -2,18 +2,13 @@
 
   Hello World Program #3:
 
-  1) Generates the ".....Hello World!.....\0" string one character at a
-  time.  This time the string has to be null-terminated so that the
-  printers recognize the end.
+  1) Generates "Hello World!" string one character at a
+  time.
 
   2) Encodes the message by having a feedback loop, XOR'ing each character
      with the one that is offset by 3
 
-  3) queue's up and prints out the encoded message
-
-  3) Decodes the message by the same process
-
-  4) queue's up and prints out the final message
+  4) prints out some encoded message
 
  */
 
@@ -25,26 +20,25 @@ public class HelloWorld3 extends StreamIt
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-        new HelloWorld3().run();
+        new HelloWorld3().run(args);
     }
 
     // this is the defining part of the stream
     public void init ()
     {
-        add(new CharGenerator(".....Hello World!.....\0"));
+        add(new CharGenerator());
         add(new SplitJoin()
             {
                 public void init()
                 {
                     setSplitter(ROUND_ROBIN ());
-                    add(new ChannelConnectFilter (Character.TYPE));
                     add(new XORLoop());
                     //add(new ChannelConnectFilter (Character.TYPE));
                     //add(new ChannelConnectFilter (Character.TYPE));
                     setJoiner(ROUND_ROBIN());
                 }
             });
-        add(new BufferedCharPrinter());
+        add(new CharPrinter());
     }
 
     /* here is an alternative way to write the above code:
@@ -72,15 +66,16 @@ public class HelloWorld3 extends StreamIt
 
 class XORLoop extends FeedbackLoop
 {
-    public void initPath (int index, Channel path)
+    public int initPath (int index)
     {
-        path.pushChar ((char)0);
+        return ' ';
     }
 
     public void init() {
         setDelay(3);
         setJoiner (ROUND_ROBIN ());
         setBody (new XORFilter());
+	setLoop (new Identity(Character.TYPE));
         setSplitter (DUPLICATE ());
     }
 }
@@ -103,6 +98,7 @@ class XORFilter extends Filter
 
 // buffers input until it gets a null-terminated string, then prints it
 // to the screen
+/*
 class BufferedCharPrinter extends Filter
 {
     // string it's queueing up
@@ -127,3 +123,4 @@ class BufferedCharPrinter extends Filter
         }
     }
 }
+*/

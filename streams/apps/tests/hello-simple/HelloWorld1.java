@@ -11,7 +11,7 @@ public class HelloWorld1 extends StreamIt
     // presumably some main function invokes the stream
     public static void main(String args[])
     {
-           new HelloWorld1().run();
+           new HelloWorld1().run(args);
     }
 
     // this is the defining part of the stream
@@ -21,7 +21,7 @@ public class HelloWorld1 extends StreamIt
         {
             public void init ()
             {
-                add(new CharGenerator("Hello World!"));
+                add(new CharGenerator());
             }
         });
         add (new Pipeline ()
@@ -38,10 +38,6 @@ public class HelloWorld1 extends StreamIt
                     public void work ()
                     {
                         char c = input.popChar ();
-                        if (Character.isLetter (c))
-                        {
-                            c = (Character.isUpperCase (c) ? Character.toLowerCase (c) : Character.toUpperCase (c));
-                        }
                         output.pushChar (c);
                     }
                 });

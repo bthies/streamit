@@ -69,7 +69,7 @@ public class BranchAnalyzer extends SLIRReplacingVisitor {
 			analyzeBranches(child);
 		    }
 	    }
-	if (str instanceof SIRFilter)
+	if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
 	    for (int i = 0; i < str.getMethods().length; i++) {
 		str.getMethods()[i].accept(this);
 		str.getMethods()[i].accept(new Propagator(new Hashtable()));

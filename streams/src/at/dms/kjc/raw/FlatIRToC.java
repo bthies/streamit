@@ -383,10 +383,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                         CType type,
                                         String ident,
                                         JExpression expr) {
+
         // print(CModifier.toString(modifiers));
 	//	System.out.println(ident);
 	//System.out.println(expr);
-	
+
 	//if we are in a work function, we want to stack allocate all arrays
 	//right now array var definition is separate from allocation
 	//we convert an assignment statement into the stack allocation statement'
@@ -394,7 +395,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (isWork && type.isArrayType()) {
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //but only do this if the array has corresponding 
-	    //new expression, otherwise print the def... 
+	    //new expression, otherwise print the def...
 	    if (!(dims == null)) {
 		return;
 	    }
@@ -406,7 +407,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(type);
 	}	    
         print(" ");
-        print(ident);
+	print(ident);
         if (expr != null) {
 	    print(" = ");
 	    expr.accept(this);
@@ -416,7 +417,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	else if (type.isFloatingPoint())
 	    print(" = 0.0f");
 
-        print(";");
+        print(";\n");
+
     }
 
 
@@ -1171,11 +1173,42 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
 	    print(baseType + " ");
 	    //print the identifier
-	    left.accept(this);
+	    
+	    //Before the ISCA hack this was how we printed the var ident
+	    //	    left.accept(this);
+	    
 	    String ident;
 	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-	    //print the dims of the array
-	    stackAllocateArray(ident);
+
+
+	    
+	    if (KjcOptions.ptraccess) {
+		
+		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//the receive buffer ptr to help stupid GCC
+		if (ident.equals(RawExecutionCode.recvBuffer)) 
+		    print(RawExecutionCode.recvBuffer + "_Alloc");
+		else 
+		    left.accept(this);
+		
+		//print the dims of the array
+		stackAllocateArray(ident);
+		
+		
+		//HACK FOR THE ISCA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		//the receive buffer ptr to help stupid GCC
+		if (ident.equals(RawExecutionCode.recvBuffer)) {
+		    print(";\n");
+		    print(baseType + " *" + ident + " = " + RawExecutionCode.recvBuffer + "_Alloc");
+		    
+		}
+	    }
+	    else {
+		//the way it used to be before the hack
+		 left.accept(this);
+		 //print the dims of the array
+		 stackAllocateArray(ident);
+	    }
 	    return;
 	}
            

@@ -320,8 +320,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    else
 		buffersize = CalcBufferSize.getConsBufSize(Layout.getNode(Layout.getTile(filter)));
 	    
-	    
-	    //the receive buffer
+
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
@@ -388,8 +387,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 		(new JVariableDeclarationStatement(null,
 						   recvBufVar, 
 						   null));
-
-
+	    
 	    
 	    //print the declarations for the array indices for pushing and popping
 	    //if this filter deals with arrays

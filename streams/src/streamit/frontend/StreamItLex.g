@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.11 2003-05-13 21:15:11 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.12 2003-05-14 18:55:23 dmaze Exp $
  */
 
 header {
@@ -117,6 +117,7 @@ COLON: ':';
 SEMI: ';';
 COMMA: ',';
 DOT: '.';
+BANG: '!';
 
 CHAR_LITERAL
 	:	'\'' (ESC|~'\'') '\''

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.32 2003-05-13 22:47:54 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.33 2003-05-14 18:55:24 dmaze Exp $
  */
 
 header {
@@ -464,6 +464,8 @@ castExpr returns [Expression x] { x = null; Type t=null; }
 
 inc_dec_expr returns [Expression x] { x = null; }
 	:	(incOrDec) => x=incOrDec
+	|	b:BANG x=value_expr { x = new ExprUnary(getContext(b),
+												ExprUnary.UNOP_NOT, x); }
 	|	x=value_expr
 	;
 

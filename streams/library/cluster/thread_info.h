@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <vector>
 
+using namespace std;
+
 #define RUN_STATE 0
 
 #define PAUSE_PROPER_REQUEST 1  //set by service thread. Asks thread

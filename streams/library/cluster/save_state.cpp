@@ -109,41 +109,40 @@ int save_state::find_max_iter(int n_threads) {
   int *max_iter = (int*)malloc(n_threads * sizeof(int));
   memset(max_iter, 0, n_threads * sizeof(int));
 
-  struct dirent **namelist;
-  int n;
+  struct dirent *dent;
+  DIR *dir;
   
-  n = scandir(PATH, &namelist, 0, alphasort);
-  if (n >= 0) {
-    while(n--) {
-      
-      int thread;
-      int iter;
-      
-      char *name = namelist[n]->d_name;
-      
-      int len = strlen(name);
-      bool correct = true;
-      
-      if (len < 3) correct = false; // eliminate "." and ".."
+  dir = opendir(PATH);
+  if (!dir) return 0;
 
-      for (int i = 0; i < len; i++) {
-	if (!((name[i] >= '0' && name[i] <= '9') || name[i] == '.')) {
-	  correct = false;
-	  break;
-	}
-      }
+  while (NULL != (dent = readdir(dir))) {
       
-      if (correct) {
-	
-	sscanf(namelist[n]->d_name, "%d.%d", &thread, &iter);
-	if (max_iter[thread] < iter) max_iter[thread] = iter;
-
-      }
+    int thread;
+    int iter;
+    
+    char *name = dent->d_name;
+    
+    int len = strlen(name);
+    bool correct = true;
       
-      free(namelist[n]);
+    if (len < 3) correct = false; // eliminate "." and ".."
+    
+    for (int i = 0; i < len; i++) {
+      if (!((name[i] >= '0' && name[i] <= '9') || name[i] == '.')) {
+	correct = false;
+	break;
+      }
     }
-    free(namelist);
+    
+    if (correct) {
+      
+      sscanf(dent->d_name, "%d.%d", &thread, &iter);
+      if (max_iter[thread] < iter) max_iter[thread] = iter;
+      
+    }      
   }
+  
+  closedir(dir);
 
   // now find the smallest of the maximum iterations for each thread
 
@@ -174,45 +173,45 @@ int save_state::test_iter(int iter, int n_threads) {
 
 void save_state::delete_checkpoints(int max_iter) {
   
-  struct dirent **namelist;
-  int n;
-  
-  n = scandir(PATH, &namelist, 0, alphasort);
-  if (n >= 0) {
-    while(n--) {
-      
-      int thread;
-      int iter;
-      
-      char *name = namelist[n]->d_name;
-      
-      int len = strlen(name);
-      bool correct = true;
-      
-      if (len < 3) correct = false; // eliminate "." and ".."
+  struct dirent *dent;
+  DIR *dir;
 
-      for (int i = 0; i < len; i++) {
-	if (!((name[i] >= '0' && name[i] <= '9') || name[i] == '.')) {
-	  correct = false;
-	  break;
-	}
-      }
-      
-      if (correct) {
-	
-	sscanf(namelist[n]->d_name, "%d.%d", &thread, &iter);
-	if (iter < max_iter) {
-	  
-	  char fname[128];
-	  sprintf(fname, "%s%s", PATH, name);
-	  unlink(fname);
+  dir = opendir(PATH);
+  if (!dir) return;
 
-	  //printf("deleted (%s)", fname);
-	}
-      }
+  while (NULL != (dent = readdir(dir))) {
       
-      free(namelist[n]);
+    int thread;
+    int iter;
+    
+    char *name = dent->d_name;
+    
+    int len = strlen(name);
+    bool correct = true;
+    
+    if (len < 3) correct = false; // eliminate "." and ".."
+    
+    for (int i = 0; i < len; i++) {
+      if (!((name[i] >= '0' && name[i] <= '9') || name[i] == '.')) {
+	correct = false;
+	break;
+      }
     }
-    free(namelist);
+      
+    if (correct) {
+      
+      sscanf(dent->d_name, "%d.%d", &thread, &iter);
+      if (iter < max_iter) {
+	
+	char fname[128];
+	sprintf(fname, "%s%s", PATH, name);
+	unlink(fname);
+	
+	//printf("deleted (%s)", fname);
+      }
+    }
+      
   }
+   
+  closedir(dir);
 }

@@ -1,6 +1,8 @@
 
 #include <object_write_buffer.h>
 
+#include <string.h>
+
 object_write_buffer::object_write_buffer() {
   size = 0;
   read_offset = 0;

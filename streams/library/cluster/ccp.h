@@ -7,6 +7,8 @@
 #include <vector>
 #include <map>
 
+using namespace std;
+
 class ccp {
 
   int number_of_threads;

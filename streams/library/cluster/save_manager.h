@@ -14,6 +14,8 @@
 #define LOCK(var)   pthread_mutex_lock(var)
 #define UNLOCK(var) pthread_mutex_unlock(var)
 
+using namespace std;
+
 class checkpoint_info {
 
  public:

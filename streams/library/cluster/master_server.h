@@ -10,6 +10,8 @@
 #include <open_socket.h>
 #include <node_server.h>
 
+using namespace std;
+
 class node_info {
 
   unsigned ip;

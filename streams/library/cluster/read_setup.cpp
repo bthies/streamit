@@ -1,6 +1,7 @@
 
 #include <read_setup.h>
 #include <stdio.h>
+#include <string.h>
 
 int read_setup::freq_of_chkpts = 1000;
 int read_setup::out_data_buffer = 1400;

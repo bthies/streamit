@@ -10,6 +10,8 @@
 #include <vector>
 #include <unistd.h>
 
+using namespace std;
+
 #define LIST_COMMAND 10
 
 // parameters: none

@@ -50,11 +50,11 @@ class CConfigPipeline extends CConfigContainer {
 
 	num_tiles = numberOfTiles(0, cont.size()-1);
 	
-	System.out.println("Pipeline (0,"+(cont.size()-1)+") Greedy Cuts:");
+	//System.out.println("Pipeline (0,"+(cont.size()-1)+") Greedy Cuts:");
 
-	for (int i = 0; i < cont.size()-1; i++) {
-	    if (greedyCuts[i]) System.out.println("cut after: "+i);
-	}
+	//for (int i = 0; i < cont.size()-1; i++) {
+	//    if (greedyCuts[i]) System.out.println("cut after: "+i);
+	//}
 
 	return num_tiles;
     }
@@ -64,7 +64,7 @@ class CConfigPipeline extends CConfigContainer {
 	
 	if (from > to) return 0;
 
-	System.out.println("Pipeline.numberOfTiles("+from+","+to+")");
+	//System.out.println("Pipeline.numberOfTiles("+from+","+to+")");
 	
 	if (from == to) return childConfig(from).numberOfTiles();
 
@@ -88,7 +88,7 @@ class CConfigPipeline extends CConfigContainer {
 	int mult[] = new int[cont.size()];
 	mult[from] = 1; // init mult. of first item to 1
 
-	System.out.println("from: "+from+" to: "+to);
+	//System.out.println("from: "+from+" to: "+to);
 
 	for (int i = from; i < to; i++) {
 
@@ -97,7 +97,7 @@ class CConfigPipeline extends CConfigContainer {
 	    int m = (push * pop) / gcd(push,pop);
 
 
-	    System.out.println("i="+i+" push: "+push+" pop: "+pop+" m: "+m+" mult[i]: "+mult[i]);
+	    //System.out.println("i="+i+" push: "+push+" pop: "+pop+" m: "+m+" mult[i]: "+mult[i]);
 	    
 
 	    int xtra = (m / push) / gcd(mult[i], (m / push)); 
@@ -179,7 +179,7 @@ class CConfigPipeline extends CConfigContainer {
 
 	    if (!can_fuse_up && !can_fuse_down) { 
 
-		System.out.println("done fusing ["+f_start+","+f_end+"]");
+		//System.out.println("done fusing ["+f_start+","+f_end+"]");
 
 		int left = numberOfTiles(from, f_start - 1);
 		int right = numberOfTiles(f_end + 1, to);
@@ -244,6 +244,7 @@ class CConfigPipeline extends CConfigContainer {
 	    if (KjcOptions.unroll < mult[i]) work += fi.getWorkEstimate()/2;
 
 	    // add fusion peek overhead
+	    /*
 	    if (i > from && child instanceof CConfigFilter) {
 		CConfigFilter fc = (CConfigFilter)child;
 		SIRFilter filter = (SIRFilter)fc.getStream();
@@ -251,6 +252,7 @@ class CConfigPipeline extends CConfigContainer {
 		    work += fi.getWorkEstimate()/2;
 		}
 	    }
+	    */
 	}
 
 	int to_push = childConfig(to).getFusionInfo().getPushInt();

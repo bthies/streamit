@@ -130,15 +130,15 @@ class CConfigSplitJoin extends CConfigContainer {
 	int s_mult = 0;
 	int j_mult = 0;
 
-	System.out.println("[Fusion info for SplitJoin]");
+	//System.out.println("[Fusion info for SplitJoin]");
 
-	for (int i = 0; i < cont.size(); i++) {
-	    System.out.println("[split: "+split_join.getSplitter().getWeight(i)+" join: "+split_join.getJoiner().getWeight(i)+" pop: "+childConfig(i).getFusionInfo().getPopInt()+" push: "+childConfig(i).getFusionInfo().getPushInt()+"]");
-	}
+	//for (int i = 0; i < cont.size(); i++) {
+	//    System.out.println("[split: "+split_join.getSplitter().getWeight(i)+" join: "+split_join.getJoiner().getWeight(i)+" pop: "+childConfig(i).getFusionInfo().getPopInt()+" push: "+childConfig(i).getFusionInfo().getPushInt()+"]");
+	//}
 	
 	if (split_join.getSplitter().getSumOfWeights() == 0) {
 
-	    System.out.println("CASE1");
+	    //System.out.println("CASE1");
 
 	    for (int i = 0; i < cont.size(); i++) {
 		int push = childConfig(i).getFusionInfo().getPushInt();
@@ -157,7 +157,7 @@ class CConfigSplitJoin extends CConfigContainer {
 
 	} else {
 
-	    System.out.println("CASE2");
+	    //System.out.println("CASE2");
 
 	    for (int i = 0; i < cont.size(); i++) {
 		int pop = childConfig(i).getFusionInfo().getPopInt();
@@ -200,18 +200,18 @@ class CConfigSplitJoin extends CConfigContainer {
 
 
 	for (int i = 0; i < cont.size(); i++) {
-	    System.out.print("[fmult["+i+"] = "+fmult[i]+"] ");
+	    //System.out.print("[fmult["+i+"] = "+fmult[i]+"] ");
 	}
 
 	if (s_mult > KjcOptions.unroll) work += 100;
 	if (j_mult > KjcOptions.unroll) work += 100;
 
-	// duplicate splitter penalty
-	if (split_join.getSplitter().getType().isDuplicate()) {
-	    work += 100;
-	}
+	// duplicate splitter fusion penalty
+	//if (split_join.getSplitter().getType().isDuplicate()) {
+	//    work += 100;
+	//}
 
-	System.out.println("\n[s-mult: "+s_mult+" j-mult: "+j_mult+"]");
+	//System.out.println("\n[s-mult: "+s_mult+" j-mult: "+j_mult+"]");
 
 	code += s_sum * s_mult * 20;
 	code += j_sum * j_mult * 20;
@@ -239,6 +239,7 @@ class CConfigSplitJoin extends CConfigContainer {
 	    }
 
 	    // add fusion peek overhead
+	    /*
 	    if (child instanceof CConfigFilter) {
 		CConfigFilter fc = (CConfigFilter)child;
 		SIRFilter filter = (SIRFilter)fc.getStream();
@@ -257,6 +258,7 @@ class CConfigSplitJoin extends CConfigContainer {
 		    }
 		}
 	    }
+	    */
 	}
 
 	int pop = split_join.getSplitter().getSumOfWeights()*s_mult;
@@ -267,7 +269,7 @@ class CConfigSplitJoin extends CConfigContainer {
 
 	int push = split_join.getJoiner().getSumOfWeights()*j_mult;
 
-	System.out.println("Fused SplitJoin Pop: "+pop+" Push: "+push); 
+	//System.out.println("Fused SplitJoin Pop: "+pop+" Push: "+push); 
 
 	fusion_info = 
 	    new FusionInfo(work, work_no_penalty, code, data,

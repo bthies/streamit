@@ -25,8 +25,16 @@ import java.math.BigInteger;
 public class NumberGathering extends at.dms.util.Utils 
     implements Constants 
 {
+    //fields that are used by makefilegenerater
+    //to produce the bC code...
+    //true if we can generate code
+    public static boolean successful = false;
+    public static int printsPerSteady = 0;
+    public static int skipPrints = 0;
+
     public static boolean doit(FlatNode top) 
     {
+	successful = false;
 	FlatNode sink = Sink.getSink(top);
 	//no sink or more than one sink
 	if (sink == null) {
@@ -56,16 +64,11 @@ public class NumberGathering extends at.dms.util.Utils
 	    return false;
 	}
 	
-	//generate the bc code to get the performance numbers
-	generateCode(sink, prints, init, steady);
-	
+	//set the globals that are read by makefilegenerator	
+	successful = true;
+	skipPrints = init * prints;
+	printsPerSteady = prints * steady;
 	return true;
-    }
-
-    private static void generateCode(FlatNode sink, int prints, int init, int steady) 
-    {
-	System.out.println("init: " + init + " steady: " + steady + " prints: " + prints);
-	
     }
 }
 

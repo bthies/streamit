@@ -96,7 +96,20 @@ public class MakefileGenerator
     {
 	FileWriter fw = new FileWriter("fileio.bc");
 	
-	fw.write("include(\"<dev/basic.bc>\");\n");
+	//number gathering code
+	if (KjcOptions.numbers && NumberGathering.successful) {
+	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
+	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
+	    fw.write("global quitAfter = 5;\n\n");
+	    
+	    fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");	
+	    fw.write("global path = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("sprintf(path, \"%s%s\", streamit_home, \"include/basic_mod.bc\");\n");
+	    //include the modified basic.bc file
+	    fw.write("include(path);\n");
+	}
+	else
+	    fw.write("include(\"<dev/basic.bc>\");\n");
 	
 	fw.write(
 		 "fn dev_quick_print_init(ioPort, portInfo, toFile, fileName)\n" +

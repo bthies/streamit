@@ -427,9 +427,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    if (node.edges[0].contents instanceof SIRSplitter) {
 		//if the final dest is a filter then just get the execution count of the 
 		//dest filter * its pop rate
-		if(RawBackend.steadyExecutionCounts.get(dest)==null)
-		    items=1;
-		else if (dest.contents instanceof SIRFilter) {
+		if (dest.contents instanceof SIRFilter) {
 		    items = ((Integer)RawBackend.steadyExecutionCounts.get(dest)).intValue() *
 			((SIRFilter)dest.contents).getPopInt();
 		}
@@ -632,21 +630,20 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	else if (node.contents instanceof SIRSplitter) {
 	    HashSet ret = new HashSet();
 	    /*
-	    if (node.contents.getParent() instanceof SIRFeedbackLoop) {
-		//add the connection to all the nodes outside of the feedback
-		if (node.ways > 1) {
-		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[0]));
-		    ret.add(node.edges[1]);
-		}
-		else 
-		    ret.add(node.edges[0]);
-	    }
-	    */
+	      if (node.contents.getParent() instanceof SIRFeedbackLoop) {
+	      //add the connection to all the nodes outside of the feedback
+	      if (node.ways > 1) {
+	      RawBackend.addAll(ret, getDownStreamHelper(node.edges[0]));
+	      ret.add(node.edges[1]);
+	      }
+	      else 
+	      ret.add(node.edges[0]);
+	      }
+			  */
 	    for (int i = 0; i < node.ways; i++) {
-		if(addZeros||(node.weights[i]!=0))
+		//if(addZeros||(node.weights[i]!=0))
+		if(node.weights[i]!=0)
 		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],addZeros));
-		else
-		    System.out.println("WARNING:"+node.edges[i]);
 	    }
 	    return ret;
 	}

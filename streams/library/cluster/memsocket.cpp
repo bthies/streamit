@@ -106,13 +106,12 @@ int memsocket::read_item(char *buf) {
 
 void memsocket::peek_item(char *buf, int offset) {
   
-  int size = (head - tail + size) % size; 
+  int avail = (head - tail + size) % size; 
   
-  while (size <= offset) {
+  while (avail <= offset) {
     sched_yield();
-    size = (head - tail + size) % size; 
+    avail = (head - tail + size) % size; 
   }
-
 
   //*(int*)buf = *(int*)&data_buffer[ (tail + offset * item_size) % buf_size ];
   memcpy(buf, &data_buffer[ ((tail + offset) * item_size) % size ], item_size);

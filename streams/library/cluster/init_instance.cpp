@@ -19,6 +19,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+int init_instance::start_iter = 0;
+
 pthread_mutex_t init_instance::accept_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t init_instance::bind_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -113,12 +115,17 @@ unsigned init_instance::get_thread_ip(int thread) {
 }
 
 
+void init_instance::set_start_iter(int iter) {
+  start_iter = iter;
+}
+
+
 unsigned init_instance::get_thread_start_iter(int thread) {
 
   map<int, unsigned>::iterator i = thread_start_iter.find(thread);
 
   if (i == thread_start_iter.end()) {
-    return 0;
+    return start_iter;
   } else {
     return (unsigned)(*i).second;
   }

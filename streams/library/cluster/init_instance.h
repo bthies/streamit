@@ -20,6 +20,7 @@ using namespace std;
 class init_instance {
 
   static short listen_port;
+  static int start_iter;
   
   static vector<sock_dscr> in_connections, out_connections;
   static map<sock_dscr, mysocket*> in_sockets, out_sockets;
@@ -41,6 +42,7 @@ class init_instance {
 
   static void reset_all();
 
+  static void set_start_iter(int iter);
   static void read_config_file();
 
   static void set_thread_ip(int thread, unsigned ip); 

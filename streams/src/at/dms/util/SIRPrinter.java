@@ -44,6 +44,15 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
         blockEnd();
     }
     */
+
+    /**
+     * Build an IRPrinter for a particular file.
+     *
+     * @arg filename  Name of the file to write IR to
+     */
+    public SIRPrinter(String filename) {
+	super(filename);
+    }
     
     /* visit a filter */
     public void visitFilter(SIRFilter self,

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.11 2002-02-15 11:26:31 thies Exp $
+ * $Id: JBlock.java,v 1.12 2002-03-09 22:33:29 thies Exp $
  */
 
 package at.dms.kjc;
@@ -99,6 +99,13 @@ public class JBlock extends JStatement {
      */
     public void addStatementFirst(JStatement statement) {
 	body.addFirst(statement);
+    }
+
+    /**
+     * Adds statement to this, at the specified position.
+     */
+    public void addStatement(int pos, JStatement statement) {
+	body.add(pos, statement);
     }
 
     /**

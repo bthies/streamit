@@ -54,6 +54,9 @@ public class Partitioner {
 	    }
 	}
 
+	// print out final work estimate
+	WorkEstimate.getWorkEstimate(str).printWork();
+
 	// lift the result
 	Lifter.lift(str);
 

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.23 2003-03-31 18:16:32 thies Exp $
+# $Id: knit,v 1.24 2003-04-18 14:41:00 dmaze Exp $
 #
 
 use strict;
@@ -95,7 +95,6 @@ EOT
 sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
-    $opts{output} = "a.out";
     GetOptions(\%opts,
 	       "help",
 	       "more-help|help-more",
@@ -159,35 +158,32 @@ sub remove_extension
 sub new_to_old
   {
     my ($fns) = @_;
-    my @out = ();
-    foreach my $str (@$fns)
-      {
-	my $java = change_extension($str, "str", "java");
-	call("java streamit.frontend.ToJava $str --output $java");
-	push @out, $java;
-      }
-    return \@out;
+    return [] if !@$fns;
+    my $target = change_extension($fns->[0], "str", "java");
+    $target = $opts{output} . ".java" if $opts{output};
+    call("java streamit.frontend.ToJava --output $target " .
+	 join(' ', @$fns));
+    return [$target];
   }
 
 sub old_to_c
   {
     my ($fns) = @_;
-    my @out = ();
+    return [] if !@$fns;
     my $kjcopts = get_kjc_opts();
-    foreach my $java (@$fns)
+    my $java = join(' ', @$fns);
+    if (!$opts{raw})
       {
-	if (!$opts{raw})
-	  {
-	    my $c = change_extension($java, "java", "c");
-	    call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java > $c");
-	    push @out, $c;
-	  }
-	else
-	  {
-	    call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java");
-	  }
+	my $target = change_extension($fns->[0], "java", "c");
+	$target = $opts{output} . ".c" if $opts{outputs};
+	call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java > $target");
+	return [$target];
       }
-    return \@out;
+    else
+      {
+	call("java -Xmx512M at.dms.kjc.Main -s $kjcopts $java");
+	return [];
+      }
   }
 
 sub run_in_library
@@ -205,6 +201,7 @@ sub run_in_library
 sub c_to_out
   {
     my ($fns, $target) = @_;
+    $target = $target ? "-o$target" : ""; # but never undef
     my $sh = $opts{home};
     my ($gcc, $libs);
     if ($opts{profile})
@@ -218,7 +215,7 @@ sub c_to_out
 	$gcc = "gcc";
 	$libs = "-lstreamit -lsrfftw -lsfftw -lm";
       }
-    call("$gcc -g -O2 -o$target -I$sh/library/c " . join(' ', @$fns) .
+    call("$gcc -g -O2 $target -I$sh/library/c " . join(' ', @$fns) .
 	 " -L$sh/library/c $libs");
   }
 

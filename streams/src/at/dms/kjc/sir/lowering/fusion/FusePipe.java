@@ -117,13 +117,6 @@ public class FusePipe {
 		start = end + 1;
 	    }
 	} while (start < pipe.size()-1 && numEliminated<maxElim);
-	// if pipe is down to a single filter and we're not at the
-	// toplevel already, then eliminate the pipeline
-	if (pipe.size()==1 && 
-	    pipe.get(0) instanceof SIRFilter &&
-	    pipe.getParent()!=null) {
-	    Lifter.eliminatePipe(pipe);
-	}
 	return numEliminated;
     }
 
@@ -190,6 +183,32 @@ public class FusePipe {
 	    return false;
 	}
     }
+
+    /**
+     * Fuses sections of <pipe> according to <partitions>, which
+     * specifies the grouping sequence of who gets fused together.
+     */
+    public static void fuse(SIRPipeline pipe, int[] partitions) {
+	int pos = 0;
+	// keep track of the first and last element in each partition
+	SIRFilter[] first = new SIRFilter[partitions.length];
+	SIRFilter[] last = new SIRFilter[partitions.length];
+	for (int i=0; i<partitions.length; i++) {
+	    // ignore 1-size partitions since they might not be filters
+	    if (partitions[i]!=1) {
+		first[i] = (SIRFilter)pipe.get(pos);
+		last[i]  = (SIRFilter)pipe.get(pos+partitions[i]-1);
+	    }
+	    pos+=partitions[i];
+	}
+	// do the fusion in sections
+	for (int i=0; i<partitions.length; i++) {
+	    // only need to fuse for partitions[i]>1
+	    if (partitions[i]!=1) {
+		fuse(first[i], last[i]);
+	    }
+	}
+    }
     
     /**
      * Fuses filters <first> ... <last>.  For now, assumes: 
@@ -232,6 +251,11 @@ public class FusePipe {
      * <filters>.
      */
     private static SIRFilter fuse(List filters) {
+	// if we have just one filter, return it
+	if (filters.size()==1) {
+	    return (SIRFilter)filters.get(0);
+	}
+
 	// check that all the filters are fusable
 	for (ListIterator it = filters.listIterator(); it.hasNext(); ) {
 	    SIRStream str = (SIRStream)it.next();

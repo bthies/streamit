@@ -23,15 +23,18 @@ public class Lifter implements StreamVisitor {
     private Lifter() {}
 
     /**
-     * Given that <pipe> is a pipeline containing only a single
-     * filter, eliminate the pipeline.  For now, don't call this on
-     * the outer-most pipeline--<pipe> must have a non-null parent.
+     * If <pipe> is a pipeline containing only a single filter,
+     * eliminate the pipeline (adjusting pipeline's parent
+     * accordingly).  Returns whether or not the lifting was done.
      */
-    public static void eliminatePipe(final SIRPipeline pipe) {
-	// assert the clauses
-	Utils.assert(pipe.size()==1 && 
-		     pipe.get(0) instanceof SIRFilter &&
-		     pipe.getParent()!=null);
+    public static boolean eliminatePipe(final SIRPipeline pipe) {
+	// if pipe is down to a single filter and we're not at the
+	// toplevel already, then eliminate the pipeline
+	if (!(pipe.size()==1 && 
+	      pipe.get(0) instanceof SIRFilter &&
+	      pipe.getParent()!=null)) {
+	    return false;
+	}
 	// find the filter of interest
 	final SIRFilter filter = (SIRFilter)pipe.get(0);
 
@@ -58,6 +61,8 @@ public class Lifter implements StreamVisitor {
 	SIRContainer parent = pipe.getParent();
 	// in parent, replace <pipe> with <filter>
 	parent.replace(pipe, filter);
+	
+	return true;
     }
 
     /**

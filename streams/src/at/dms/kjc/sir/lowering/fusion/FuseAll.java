@@ -71,6 +71,8 @@ public class FuseAll implements StreamVisitor {
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
 	int elim = FusePipe.fuse(self);
+	// try lifting
+	Lifter.eliminatePipe(self);
 	if (elim > 0) {
 	    throw new SuccessfulFuseException();
 	}

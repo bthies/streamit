@@ -27,6 +27,10 @@ public class FuseSplit {
     private static final String PUSH_READ_NAME = "___PUSH_READ";
     private static final String PUSH_WRITE_NAME = "___PUSH_WRITE";
 
+    /**
+     * Fuses half the children of <sj> together instead of fusing the
+     * entire construct.
+     */
     public static SIRStream semiFuse(SIRSplitJoin sj) {
 	if(sj.size()<=3)
 	    return fuse(sj);
@@ -50,8 +54,25 @@ public class FuseSplit {
     //Uses partition to partion children and fuses only the children corresponding non 1 elements of partition
     //Sum of elements in partition should be number of children
     public static SIRStream fuse(SIRSplitJoin sj,int[] partition) {
-	if(partition.length==1)
+	{//Quick check
+	    int sum=0;
+	    for(int i=0;i<partition.length;i++) {
+		Utils.assert(partition[i]>0);
+		sum+=partition[i];
+	    }
+	    if(sum!=sj.size()) {
+		Utils.fail("Illformated partition "+partition+" for SIRSplitJoin "+sj+" of size "+sj.size());
+	    }
+	}
+
+	if (partition.length==1) {
+	    // if fusing whole thing
 	    return fuse(sj);
+	} else if (partition.length==sj.size()) {
+	    // if not fusing at all
+	    return sj;
+	}
+
 	// dispatch to simple fusion
 	SIRStream dispatchResult = dispatchToSimple(sj);
 	if (dispatchResult!=null) {
@@ -63,13 +84,7 @@ public class FuseSplit {
 	} else {
 	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + partition.length + " filters..."); 
 	}
-	{ //Quick check
-	    int sum=0;
-	    for(int i=0;i<partition.length;i++)
-		sum+=partition[i];
-	    if(sum!=sj.size())
-		Utils.fail("Illformated partition "+partition+" for SIRSplitJoin "+sj+" of size "+sj.size());
-	}
+
 	int[] oldSplit=sj.getSplitter().getWeights();
 	int[] oldJoin=sj.getJoiner().getWeights();
 	JExpression[] newSplit=new JExpression[partition.length];
@@ -177,13 +192,6 @@ public class FuseSplit {
 
 	// replace in parent
 	sj.getParent().replace(sj, newFilter);
-
-	// if we're the only filter left in parent, eliminate parent
-	/*if (sj.getParent() instanceof SIRPipeline &&
-	  sj.getParent().size()==1 && 
-	  sj.getParent().getParent()!=null) {
-	  Lifter.eliminatePipe((SIRPipeline)sj.getParent());
-	  }*/
 
         return newFilter;
     }

@@ -27,7 +27,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.12 2003-12-10 16:33:00 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.13 2003-12-11 21:57:48 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -248,7 +248,8 @@ public class SemanticChecker
                 public Object visitStreamSpec(StreamSpec ss)
                 {
                     StreamType st = ss.getStreamType();
-                    if (st.getIn() instanceof TypePrimitive &&
+                    if (st != null &&
+                        st.getIn() instanceof TypePrimitive &&
                         st.getOut() instanceof TypePrimitive &&
                         ((TypePrimitive)st.getIn()).getType() ==
                         TypePrimitive.TYPE_VOID &&

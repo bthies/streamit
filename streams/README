@@ -11,5 +11,4 @@ streams/misc		Code stuff that doesn't belong anywhere else.
 streams/regtest		A regression test for the compiler.
 streams/router		Irrelevant to StreamIt (Click router on RAW)
 streams/scheduler	The scheduler source code (used by library/compiler)
-streams/talks		Some of our presentations.
 

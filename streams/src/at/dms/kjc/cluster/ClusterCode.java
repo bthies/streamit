@@ -643,7 +643,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  init_instance::read_config_file();\n");
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print("  if (get_myip() == lookup_ip(init_instance::get_node_name("+i+"))) {\n");
+	    p.print("  if (get_myip() == init_instance::get_node_ip("+i+")) {\n");
 	    p.print("    __declare_sockets_"+i+"();\n");
 	    p.print("  }\n");
 	}
@@ -653,7 +653,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	for (int i = 0; i < threadNumber; i++) {
 
-	    p.print("  if (get_myip() == lookup_ip(init_instance::get_node_name("+i+"))) {\n");
+	    p.print("  if (get_myip() == init_instance::get_node_ip("+i+")) {\n");
 
 
 	    p.print("    current_thread_state_flag = (int*)malloc(sizeof(int));\n");

@@ -6,7 +6,6 @@ StreamIt programs to generate Fibonacci numbers.  In general, these
 work by pushing previous values around a feedback loop, so they can be
 calculated.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="StreamIt">
       <desc>Basic implementation</desc>

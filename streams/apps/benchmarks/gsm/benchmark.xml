@@ -7,7 +7,6 @@ file and performs processing to convert the data stream to voice
 data.  Since the output of one packet depends on previous packets,
 data is fed through a large feedback loop to do the main decoding.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="StreamIt" dir="streamit">
       <file>StGsmDecoder.str</file>

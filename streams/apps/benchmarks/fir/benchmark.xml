@@ -7,7 +7,6 @@ to implement an FIR filter as a single StreamIt filter, this
 implementation uses a series of simple filters, one per tap, to expose
 more parallelism to the compiler.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="C" dir="c">
       <file>firref.c</file>

@@ -9,7 +9,6 @@ enough to decode an MP3 audio file, however; the front-end
 decompression stage is not static-rate and not directly expressible in
 StreamIt.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="StreamIt">
       <file>MP3.str</file>

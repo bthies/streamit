@@ -8,7 +8,6 @@ function, and passed down through the init functions to FirFilter
 objects.  On each branch, a delay, filter, and downsample is
 performed, followed by an upsample, delay, and filter.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="C" dir="c">
       <file>FilterBank.cpp</file>

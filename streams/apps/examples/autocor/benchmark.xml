@@ -7,7 +7,6 @@ autocorrelation series for some input.  The input is a series of
 vectors of a parameterizable length, and the output is the
 autocorrelation series for a specified number of lags.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="StreamIt">
       <file>AutoCor.str</file>

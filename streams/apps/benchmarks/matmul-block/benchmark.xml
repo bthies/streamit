@@ -7,7 +7,6 @@ the amount of communication, the matrices are divided into equal-sized
 submatrices, which are reordered, pairwise multiplied, and reordered
 again to get the final result matrix.
   </description>
-  <reference>(none)</reference>
   <implementations>
     <impl lang="C" dir="c">
       <file>matmul-block.c</file>

@@ -163,7 +163,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    at.dms.util.Utils.fail("Mutually recursive stream defintion of " + 
 				       className);
 	    */
-	    SIRRecursiveStub stub = new SIRRecursiveStub(className, (Kopi2SIR)AutoCloner.deepCopy(this));
+	    //SIRRecursiveStub stub = new SIRRecursiveStub(className, (Kopi2SIR)AutoCloner.deepCopy(this));
+	    SIRRecursiveStub stub = new SIRRecursiveStub(className,this);
 	    return stub;
 	}
 	if (visitedOp!=null) {
@@ -217,7 +218,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 			//visit the class declaration and return the stream
 			SIROperator sir = (SIROperator)decls[i].accept(this);
 			//visitClassDecl will add the stream to the table
-			
 			//remove the name from the resolve list
 			searchList.remove(className);
 			//return the stream
@@ -484,7 +484,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     
 		    
 		    
-	    
+    //private int spaces=0;
 	    
     public Object visitClassDeclaration(JClassDeclaration self,
                                       int modifiers,
@@ -537,7 +537,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	if (current == null) 
 	    printMe("Null");
 	
+	/*for(int i=0;i<spaces;i++)
+	  System.err.print("  ");
+	  System.err.println(spaces+" Starting Visiting: "+ident);
+	  spaces++;*/
 	trash = visitClassBody(decls, fields, methods, body);
+	/*spaces--;
+	  for(int i=0;i<spaces;i++)
+	  System.err.print("  ");
+	  System.err.println(spaces+" Done Visiting: "+ident);*/
 
 	if (current == null) 
 	    printMe("Null");
@@ -1475,7 +1483,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	      */
 	//The only time that we can use an Anonymous class is inside an add statement 
 	//which needs to be translated into an SIRInitStatement
-	SIRInitStatement sis = new SIRInitStatement(Arrays.asList(params), (SIRStream)SIROp);
+	SIRInitStatement sis = new SIRInitStatement(Arrays.asList(params), (SIRStream)ObjectDeepCloner.deepCopy((SIRStream)SIROp));
 	return sis;
     }
 
@@ -1662,7 +1670,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
     }
 
 		      
-
 
     //This method creates an initStatement from the underlying arguments
     //to the function should be translated into an init statment
@@ -2177,29 +2184,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	//return a string if this is a field expression that accesses the type
 	//argument in a channel instaniation or SIRFile* new expression
 	
-	if(anonCreation) {
+	if(anonCreation)
 	    for(int i=0;i<params.length;i++) {
 		if(self.ident.equals(paramNames[i])) {
 		    return new JLocalVariableExpression(params[i].getTokenReference(),params[i]);
 		}
 	    }
-	    if(ident.equals("var$numbflies")) {
-		System.err.println("Trying to match var$numbflies");
-		for(int i=finalVars.size()-1;i>=0;i--) {
-		    System.err.println("Recursing...");
-		    List vars=(List)finalVars.get(i);
-		    for(int j=0;j<vars.size();j++) {
-			JLocalVariable var=(JLocalVariable)vars.get(j);
-			System.err.println("Trying:"+var);
-			if(CSourceClass.varName(var).equals(ident)) {
-			    System.err.println("Success!");
-			    return new JLocalVariableExpression(var.getTokenReference(),var);
-			}
-		    }
-		}
-	    }
-	    
-	}
 	if (supportedType(left.getType().getCClass().getIdent())) {
 	    return new JStringLiteral(self.getTokenReference(), left.getType().getCClass().getIdent());
 	}

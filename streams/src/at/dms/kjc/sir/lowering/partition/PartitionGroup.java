@@ -40,6 +40,17 @@ public class PartitionGroup {
     }
 
     /**
+     * Create a uniform partition with one child in each.  <n> is number of children.
+     */
+    public static PartitionGroup createUniformPartition(int n) {
+	int[] partitions = new int[n];
+	for (int i=0; i<n; i++) {
+	    partitions[i] = 1;
+	}
+	return new PartitionGroup(partitions);
+    }
+
+    /**
      * Given a list of children and a mapping from each child to an
      * Integer denoting the partition, creates a partition group where
      * children mapped to the same integer are allocated to the same

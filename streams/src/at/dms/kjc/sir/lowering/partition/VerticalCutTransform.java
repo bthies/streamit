@@ -40,7 +40,7 @@ public final class VerticalCutTransform extends IdempotentTransform {
 	    // a cut at pos 1 is equivalent to breaking this guy in half
 	    return str;
 	} else {
-	    Utils.fail("Don't support vertical cuts on type "  + str.getClass());
+	    Utils.fail("Don't support vertical cuts on type "  + str.getClass() + " but trying it at position " + cutPos + " of " + str);
 	    return null;
 	}
     }

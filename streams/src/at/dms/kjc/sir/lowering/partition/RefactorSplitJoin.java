@@ -208,11 +208,7 @@ public class RefactorSplitJoin {
 		    // don't need to do anything if only one level in <self>
 		    if (self.getRectangularHeight()>1) {
 			// make partitiongroup, putting each child in its own group
-			int[] partitions = new int[self.getRectangularHeight()];
-			for (int i=0; i<partitions.length; i++) {
-			    partitions[i] = 1;
-			}
-			SIRPipeline synced = addSyncPoints(self, PartitionGroup.createFromArray(partitions));
+			SIRPipeline synced = addSyncPoints(self, PartitionGroup.createUniformPartition(self.getRectangularHeight()));
 			self.getParent().replace(self, synced);
 		    }
 		}});
@@ -246,6 +242,9 @@ public class RefactorSplitJoin {
 	checkSymmetry(sj);
 	Utils.assert(partition.getNumChildren()==((SIRPipeline)sj.get(0)).size());
 
+	// get execution counts for <sj>
+	HashMap[] sched = SIRScheduler.getExecutionCounts(sj);
+
 	// make result pipeline
 	SIRPipeline result = new SIRPipeline(sj.getParent(), 
 					     sj.getIdent()+"_par");
@@ -278,15 +277,29 @@ public class RefactorSplitJoin {
 
 	    // make the splitter and joiner for <newSJ>.  In the end
 	    // cases, this is the same as for <sj>; otherwise it's
-	    // the template RR splits and joins
-	    SIRSplitter split = (i==0 ? 
-				 (sj.getSplitter().getType()==SIRSplitType.DUPLICATE ? 
-				  SIRSplitter.create(newSJ, SIRSplitType.DUPLICATE, sj.size()) :
-				  SIRSplitter.createWeightedRR(newSJ, (JExpression[])sj.getSplitter().getInternalWeights().clone())) :
-				 SIRSplitter.createUniformRR(newSJ, new JIntLiteral(1)));
-	    SIRJoiner join = (i==partition.size()-1 ? 
-			      SIRJoiner.createWeightedRR(newSJ, (JExpression[])sj.getJoiner().getInternalWeights().clone()) :
-			      SIRJoiner.createUniformRR(newSJ, new JIntLiteral(1)));
+	    // round robin's according to the steady-state rates of components
+	    SIRSplitter split;
+	    if (i==0) {
+		split = (sj.getSplitter().getType()==SIRSplitType.DUPLICATE ? 
+			 SIRSplitter.create(newSJ, SIRSplitType.DUPLICATE, sj.size()) :
+			 SIRSplitter.createWeightedRR(newSJ, (JExpression[])sj.getSplitter().getInternalWeights().clone()));
+	    } else {
+		JExpression[] weights = new JExpression[sj.size()];
+		for (int j=0; j<sj.size(); j++) {
+		    weights[j] = new JIntLiteral(newSJ.get(j).getPopForSchedule(sched));
+		}
+		split = SIRSplitter.createWeightedRR(newSJ, weights);
+	    }
+	    SIRJoiner join;
+	    if (i==partition.size()-1) {
+		join = SIRJoiner.createWeightedRR(newSJ, (JExpression[])sj.getJoiner().getInternalWeights().clone());
+	    } else {
+		JExpression[] weights = new JExpression[sj.size()];
+		for (int j=0; j<sj.size(); j++) {
+		    weights[j] = new JIntLiteral(newSJ.get(j).getPushForSchedule(sched));
+		}
+		join = SIRJoiner.createWeightedRR(newSJ, weights);
+	    }
 	    newSJ.setSplitter(split);
 	    newSJ.setJoiner(join);
 

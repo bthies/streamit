@@ -649,15 +649,27 @@ class RepInfo {
 	    this.child[i] = schedFilter[i].getNumExecutions().intValue();
 	}
 	// infer how many times the splitter, joiner runs
-	this.splitter = this.child[0] * ((SIRFilter)sj.get(0)).getPopInt() / splitWeights[0];
+	
+	// beware of sources in splits
+	int index = -1;
+	for (int i=0; i<child.length;i++) {
+	    if (child[i]!=0 && splitWeights[i]!=0 && joinWeights[i]!=0) {
+		index = i;
+		break;
+	    }
+	    if (i==child.length-1) {
+		Utils.fail("Think we're trying to fuse a null split or something--error");
+	    }
+	}
+	this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
 	// make sure we came out even
-	Utils.assert(this.splitter * splitWeights[0] == 
-		     this.child[0] * ((SIRFilter)sj.get(0)).getPopInt());
+	Utils.assert(this.splitter * splitWeights[index] == 
+		     this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
 	// now for joiner
-	this.joiner = this.child[0] * ((SIRFilter)sj.get(0)).getPushInt() / joinWeights[0];
+	this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
 	// make sure we come out even
-	Utils.assert(this.joiner * joinWeights[0] == 
-		     this.child[0] * ((SIRFilter)sj.get(0)).getPushInt());
+	Utils.assert(this.joiner * joinWeights[index] == 
+		     this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
     }
 
 

@@ -1,25 +1,36 @@
 /*
- * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.2 2001-10-30 19:58:25 thies Exp $
+ * Copyright (C) 1990-2001 DMS Decision Management Systems Ges.m.b.H.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
  */
 
 package at.dms.kjc;
 
 import java.util.List;
-
-import at.dms.kjc.*;
-import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.lir.*;
+import java.util.ListIterator;
+import at.dms.compiler.JavaStyleComment;
+import at.dms.compiler.JavadocComment;
 
 /**
- * This visitor is for visiting statement-level constructs in the
- * streamit IR.  It visits both high-level constructs like
- * SIRInitStatement that never appear in the LIR, as well as low-level
- * constructs like LIRSetPeek that never appear in the low IR.
+ * This is just like ReplacingVisitor except for SLIR nodes, too.
+ * Right now it only replaces statements in children.
  */
-public class SLIREmptyVisitor extends KjcEmptyVisitor 
-    implements Constants, SLIRVisitor
-{
+public class SLIRReplacingVisitor extends SLIREmptyAttributeVisitor {
 
     /**
      * SIR NODES.
@@ -28,40 +39,54 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
     /**
      * Visits an init statement.
      */
-    public void visitInitStatement(SIRInitStatement self,
-				   JExpression[] args,
-				   SIRStream target) {
+    public Object visitInitStatement(SIRInitStatement self,
+				     JExpression[] args,
+				     SIRStream target) {
 	for (int i=0; i<args.length; i++) {
-	    args[i].accept(this);
+	    JExpression newExp = (JExpression)args[i].accept(this);
+	    if (newExp!=null && newExp!=args[i]) {
+		args[i] = newExp;
+	    }
 	}
+	return self;
     }
 
     /**
      * Visits a latency.
      */
-    public void visitLatency(SIRLatency self) {}
+    public Object visitLatency(SIRLatency self) {
+	return self;
+    }
 
     /**
      * Visits a max latency.
      */
-    public void visitLatencyMax(SIRLatencyMax self) {}
+    public Object visitLatencyMax(SIRLatencyMax self) {
+    	return self;
+    }
 
     /**
      * Visits a latency range.
      */
-    public void visitLatencyRange(SIRLatencyRange self) {}
+    public Object visitLatencyRange(SIRLatencyRange self) {
+	return self;
+    }
 
     /**
      * Visits a latency set.
      */
-    public void visitLatencySet(SIRLatencySet self) {}
+    public Object visitLatencySet(SIRLatencySet self) {
+    	return self;
+    }
 
-    public void visitCreatePortalExpression(SIRCreatePortal self) {}
+    public Object visitCreatePortalExpression(SIRCreatePortal self) {
+	return self;
+    }
 
     /**
      * Visits a message statement.
      */
-    public void visitMessageStatement(SIRMessageStatement self,
+    public Object visitMessageStatement(SIRMessageStatement self,
 				      JExpression portal,
 				      String iname,
 				      String ident,
@@ -72,58 +97,65 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 	    args[i].accept(this);
 	}
 	latency.accept(this);
+	return self;
     }
 
     /**
      * Visits a peek expression.
      */
-    public void visitPeekExpression(SIRPeekExpression self,
+    public Object visitPeekExpression(SIRPeekExpression self,
 				    CType tapeType,
 				    JExpression arg) {
 	arg.accept(this);
+	return self;
     }
 
     /**
      * Visits a pop expression.
      */
-    public void visitPopExpression(SIRPopExpression self,
+    public Object visitPopExpression(SIRPopExpression self,
 				   CType tapeType) {
+	return self;
     }
 
     /**
      * Visits a print statement.
      */
-    public void visitPrintStatement(SIRPrintStatement self,
+    public Object visitPrintStatement(SIRPrintStatement self,
 				    JExpression arg) {
 	arg.accept(this);
+	return self;
     }
 
     /**
      * Visits a push expression.
      */
-    public void visitPushExpression(SIRPushExpression self,
+    public Object visitPushExpression(SIRPushExpression self,
 				    CType tapeType,
 				    JExpression arg) {
 	arg.accept(this);
+	return self;
     }
 
     /**
      * Visits a register-receiver statement.
      */
-    public void visitRegReceiverStatement(SIRRegReceiverStatement self,
+    public Object visitRegReceiverStatement(SIRRegReceiverStatement self,
 					  JExpression portal,
 					  SIRStream receiver,
 					  JMethodDeclaration[] methods) {
 	portal.accept(this);
+	return self;
     }
 
     /**
      * Visits a register-sender statement.
      */
-    public void visitRegSenderStatement(SIRRegSenderStatement self,
+    public Object visitRegSenderStatement(SIRRegSenderStatement self,
 					String portal,
 					SIRLatency latency) {
 	latency.accept(this);
+	return self;
     }
 
     /**
@@ -133,39 +165,44 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
     /**
      * Visits a function pointer.
      */
-    public void visitFunctionPointer(LIRFunctionPointer self,
+    public Object visitFunctionPointer(LIRFunctionPointer self,
 				     String name) {
+	return self;
     }
     
     /**
      * Visits an LIR node.
      */
-    public void visitNode(LIRNode self) {}
+    public Object visitNode(LIRNode self) {
+	return self;
+    }
 
     /**
      * Visits a child registration node.
      */
-    public void visitSetChild(LIRSetChild self,
+    public Object visitSetChild(LIRSetChild self,
 			      JExpression streamContext,
 			      String childType,
 			      String childName) {
 	streamContext.accept(this);
+	return self;
     }
     
     /**
      * Visits a decoder registration node.
      */
-    public void visitSetDecode(LIRSetDecode self,
+    public Object visitSetDecode(LIRSetDecode self,
 			       JExpression streamContext,
 			       LIRFunctionPointer fp) {
 	streamContext.accept(this);
 	fp.accept(this);
+	return self;
     }
 
     /**
      * Visits a feedback loop delay node.
      */
-    public void visitSetDelay(LIRSetDelay self,
+    public Object visitSetDelay(LIRSetDelay self,
 			      JExpression data,
 			      JExpression streamContext,
 			      int delay,
@@ -174,90 +211,99 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 	data.accept(this);
 	streamContext.accept(this);
 	fp.accept(this);
+	return self;
     }
     
     /**
      * Visits an encoder registration node.
      */
-    public void visitSetEncode(LIRSetEncode self,
+    public Object visitSetEncode(LIRSetEncode self,
 			       JExpression streamContext,
 			       LIRFunctionPointer fp) {
 	streamContext.accept(this);
 	fp.accept(this);
+	return self;
     }
 
     /**
      * Visits a joiner-setting node.
      */
-    public void visitSetJoiner(LIRSetJoiner self,
+    public Object visitSetJoiner(LIRSetJoiner self,
 			       JExpression streamContext,
 			       SIRJoinType type,
 			       int ways,
 			       int[] weights) {
 	streamContext.accept(this);
+	return self;
     }
     
     /**
      * Visits a peek-rate-setting node.
      */
-    public void visitSetPeek(LIRSetPeek self,
+    public Object visitSetPeek(LIRSetPeek self,
 			     JExpression streamContext,
 			     int peek) {
 	streamContext.accept(this);
+	return self;
     }
     
     /**
      * Visits a pop-rate-setting node.
      */
-    public void visitSetPop(LIRSetPop self,
+    public Object visitSetPop(LIRSetPop self,
 			    JExpression streamContext,
 			    int pop) {
 	streamContext.accept(this);
+	return self;
     }
     
     /**
      * Visits a push-rate-setting node.
      */
-    public void visitSetPush(LIRSetPush self,
+    public Object visitSetPush(LIRSetPush self,
 			     JExpression streamContext,
 			     int push) {
 	streamContext.accept(this);
+	return self;
     }
 
     /**
      * Visits a splitter-setting node.
      */
-    public void visitSetSplitter(LIRSetSplitter self,
+    public Object visitSetSplitter(LIRSetSplitter self,
 				 JExpression streamContext,
 				 SIRSplitType type,
 				 int ways,
 				 int[] weights) {
 	streamContext.accept(this);
+	return self;
     }
     
     /**
      * Visits a stream-type-setting node.
      */
-    public void visitSetStreamType(LIRSetStreamType self,
+    public Object visitSetStreamType(LIRSetStreamType self,
 				   JExpression streamContext,
 				   LIRStreamType streamType) {
 	streamContext.accept(this);
+	return self;
     }
     
     /**
      * Visits a work-function-setting node.
      */
-    public void visitSetWork(LIRSetWork self,
+    public Object visitSetWork(LIRSetWork self,
 			     JExpression streamContext,
 			     LIRFunctionPointer fn) {
 	streamContext.accept(this);
 	fn.accept(this);
+	return self;
     }
 
     /**
      * Visits a tape registerer.
      */
-    public void visitSetTape(LIRSetTape self,
+    public Object visitSetTape(LIRSetTape self,
 			     JExpression streamContext,
 			     JExpression srcStruct,
 			     JExpression dstStruct,
@@ -266,26 +312,32 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 	streamContext.accept(this);
 	srcStruct.accept(this);
 	dstStruct.accept(this);
+	return self;
     }
 
     /**
      * Visits a main function contents.
      */
-    public void visitMainFunction(LIRMainFunction self,
+    public Object visitMainFunction(LIRMainFunction self,
 				  String typeName,
 				  LIRFunctionPointer init,
 				  List initStatements) {
 	init.accept(this);
-	for (int i=0; i<initStatements.size(); i++) {
-	    ((JStatement)initStatements.get(i)).accept(this);
+	for (ListIterator it = initStatements.listIterator(); it.hasNext(); ) {
+	    JStatement old = (JStatement)it.next();
+	    JStatement newSt = (JStatement)old.accept(this);
+	    if (newSt!=null && newSt!=old) {
+		it.set(newSt);
+	    }
 	}
+	return self;
     }
 
 
     /**
      * Visits a set body of feedback loop.
      */
-    public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+    public Object visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
 				       JExpression streamContext,
 				       JExpression childContext,
 				       CType inputType,
@@ -294,13 +346,14 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 				       int outputSize) {
 	streamContext.accept(this);
 	childContext.accept(this);
+	return self;
     }
 
 
     /**
      * Visits a set loop of feedback loop.
      */
-    public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+    public Object visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
 				       JExpression streamContext,
 				       JExpression childContext,
 				       CType inputType,
@@ -309,12 +362,13 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 				       int outputSize) {
 	streamContext.accept(this);
 	childContext.accept(this);
+	return self;
     }
 
     /**
      * Visits a set a parallel stream.
      */
-    public void visitSetParallelStream(LIRSetParallelStream self,
+    public Object visitSetParallelStream(LIRSetParallelStream self,
 				       JExpression streamContext,
 				       JExpression childContext,
 				       int position,
@@ -324,5 +378,6 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 				       int outputSize) {
 	streamContext.accept(this);
 	childContext.accept(this);
+	return self;
     }
 }

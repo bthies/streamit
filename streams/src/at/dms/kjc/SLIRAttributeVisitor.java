@@ -1,24 +1,17 @@
-/*
- * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.19 2001-10-30 19:58:25 thies Exp $
- */
-
 package at.dms.kjc;
 
 import java.util.List;
-
 import at.dms.kjc.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.sir.*;
+import at.dms.compiler.JavaStyleComment;
+import at.dms.compiler.JavadocComment;
 
 /**
- * This visitor is for visiting statement-level constructs in the
- * streamit IR.  It visits both high-level constructs like
- * SIRInitStatement that never appear in the LIR, as well as low-level
- * constructs like LIRSetPeek that never appear in the low IR.
+ * Implementation of an Attributed Visitor Design Pattern for KJC.
+ *
  */
-public interface SLIRVisitor extends KjcVisitor
-{
+public interface SLIRAttributeVisitor extends AttributeVisitor {
 
     /**
      * SIR NODES.
@@ -27,35 +20,35 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits an init statement.
      */
-    void visitInitStatement(SIRInitStatement self,
+    Object visitInitStatement(SIRInitStatement self,
 			    JExpression[] args,
 			    SIRStream target);
     /**
      * Visits a latency.
      */
-    void visitLatency(SIRLatency self);
+    Object visitLatency(SIRLatency self);
 
     /**
      * Visits a max latency.
      */
-    void visitLatencyMax(SIRLatencyMax self);
+    Object visitLatencyMax(SIRLatencyMax self);
 
     /**
      * Visits a latency range.
      */
-    void visitLatencyRange(SIRLatencyRange self);
+    Object visitLatencyRange(SIRLatencyRange self);
 
     /**
      * Visits a latency set.
      */
-    void visitLatencySet(SIRLatencySet self);
+    Object visitLatencySet(SIRLatencySet self);
 
-    void visitCreatePortalExpression(SIRCreatePortal self);
+    Object visitCreatePortalExpression(SIRCreatePortal self);
 
     /**
      * Visits a message statement.
      */
-    void visitMessageStatement(SIRMessageStatement self,
+    Object visitMessageStatement(SIRMessageStatement self,
 			       JExpression portal,
                                String iname,
                                String ident,
@@ -65,33 +58,33 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a peek expression.
      */
-    void visitPeekExpression(SIRPeekExpression self,
+    Object visitPeekExpression(SIRPeekExpression self,
                              CType tapeType,
 			     JExpression arg);
 
     /**
      * Visits a pop expression.
      */
-    void visitPopExpression(SIRPopExpression self,
+    Object visitPopExpression(SIRPopExpression self,
                             CType tapeType);
 
     /**
      * Visits a print statement.
      */
-    void visitPrintStatement(SIRPrintStatement self,
+    Object visitPrintStatement(SIRPrintStatement self,
 			     JExpression arg);
 
     /**
      * Visits a push expression.
      */
-    void visitPushExpression(SIRPushExpression self,
+    Object visitPushExpression(SIRPushExpression self,
                              CType tapeType,
 			     JExpression arg);
 
     /**
      * Visits a register-receiver statement.
      */
-    void visitRegReceiverStatement(SIRRegReceiverStatement self,
+    Object visitRegReceiverStatement(SIRRegReceiverStatement self,
 				   JExpression portal,
 				   SIRStream receiver,
 				   JMethodDeclaration[] methods);
@@ -99,7 +92,7 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a register-sender statement.
      */
-    void visitRegSenderStatement(SIRRegSenderStatement self,
+    Object visitRegSenderStatement(SIRRegSenderStatement self,
 				 String portal,
 				 SIRLatency latency);
 
@@ -110,18 +103,18 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a function pointer.
      */
-    void visitFunctionPointer(LIRFunctionPointer self,
+    Object visitFunctionPointer(LIRFunctionPointer self,
                               String name);
     
     /**
      * Visits an LIR node.
      */
-    void visitNode(LIRNode self);
+    Object visitNode(LIRNode self);
 
     /**
      * Visits a child registration node.
      */
-    void visitSetChild(LIRSetChild self,
+    Object visitSetChild(LIRSetChild self,
                        JExpression streamContext,
                        String childType,
 		       String childName);
@@ -129,14 +122,14 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a decoder registration node.
      */
-    void visitSetDecode(LIRSetDecode self,
+    Object visitSetDecode(LIRSetDecode self,
                         JExpression streamContext,
                         LIRFunctionPointer fp);
 
     /**
      * Visits a feedback loop delay node.
      */
-    void visitSetDelay(LIRSetDelay self,
+    Object visitSetDelay(LIRSetDelay self,
                        JExpression data,
                        JExpression streamContext,
                        int delay,
@@ -146,14 +139,14 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits an encoder registration node.
      */
-    void visitSetEncode(LIRSetEncode self,
+    Object visitSetEncode(LIRSetEncode self,
                         JExpression streamContext,
                         LIRFunctionPointer fp);
 
     /**
      * Visits a joiner-setting node.
      */
-    void visitSetJoiner(LIRSetJoiner self,
+    Object visitSetJoiner(LIRSetJoiner self,
                         JExpression streamContext,
                         SIRJoinType type,
                         int ways,
@@ -162,28 +155,28 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a peek-rate-setting node.
      */
-    void visitSetPeek(LIRSetPeek self,
+    Object visitSetPeek(LIRSetPeek self,
                       JExpression streamContext,
                       int peek);
     
     /**
      * Visits a pop-rate-setting node.
      */
-    void visitSetPop(LIRSetPop self,
+    Object visitSetPop(LIRSetPop self,
                      JExpression streamContext,
                      int pop);
     
     /**
      * Visits a push-rate-setting node.
      */
-    void visitSetPush(LIRSetPush self,
+    Object visitSetPush(LIRSetPush self,
                       JExpression streamContext,
                       int push);
 
     /**
      * Visits a splitter-setting node.
      */
-    void visitSetSplitter(LIRSetSplitter self,
+    Object visitSetSplitter(LIRSetSplitter self,
                           JExpression streamContext,
                           SIRSplitType type,
                           int ways,
@@ -192,21 +185,21 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a stream-type-setting node.
      */
-    void visitSetStreamType(LIRSetStreamType self,
+    Object visitSetStreamType(LIRSetStreamType self,
                             JExpression streamContext,
                             LIRStreamType streamType);
     
     /**
      * Visits a work-function-setting node.
      */
-    void visitSetWork(LIRSetWork self,
+    Object visitSetWork(LIRSetWork self,
                       JExpression streamContext,
                       LIRFunctionPointer fn);
 
     /**
      * Visits a tape registerer.
      */
-    void visitSetTape(LIRSetTape self,
+    Object visitSetTape(LIRSetTape self,
                       JExpression streamContext,
 		      JExpression srcStruct,
 		      JExpression dstStruct,
@@ -216,7 +209,7 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a main function contents.
      */
-    void visitMainFunction(LIRMainFunction self,
+    Object visitMainFunction(LIRMainFunction self,
 			   String typeName,
 			   LIRFunctionPointer init,
 			   List initStatements);
@@ -225,7 +218,7 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a set body of feedback loop.
      */
-    void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+    Object visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
 				JExpression streamContext,
                                 JExpression childContext,
 				CType inputType,
@@ -236,7 +229,7 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a set loop of feedback loop.
      */
-    void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+    Object visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
 				JExpression streamContext,
                                 JExpression childContext,
 				CType inputType,
@@ -247,7 +240,7 @@ public interface SLIRVisitor extends KjcVisitor
     /**
      * Visits a set a parallel stream.
      */
-    void visitSetParallelStream(LIRSetParallelStream self,
+    Object visitSetParallelStream(LIRSetParallelStream self,
 				JExpression streamContext,
                                 JExpression childContext,
 				int position,
@@ -255,6 +248,4 @@ public interface SLIRVisitor extends KjcVisitor
 				CType outputType,
 				int inputSize,
 				int outputSize);
-
 }
-

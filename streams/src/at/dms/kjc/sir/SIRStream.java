@@ -21,6 +21,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     protected JMethodDeclaration[] methods;
     /**
      * The init function.
+     * Can be null
      */
     protected JMethodDeclaration init;
     /**

@@ -27,6 +27,90 @@ public class FuseSplit {
     private static final String PUSH_READ_NAME = "___PUSH_READ";
     private static final String PUSH_WRITE_NAME = "___PUSH_WRITE";
 
+    /*public static SIRStream semiFuse(SIRSplitJoin sj) {
+	if(sj.size()%2==0&&
+	   sj.size()>2) {
+	    int half=sj.size()/2;
+	    System.out.println("SEMI! "+half);
+	    int[] partition=new int[half+1];
+	    for(int i=0;i<half-1;i++)
+		partition[i]=2;
+	    partition[half-1]=1;
+	    partition[half]=1;
+	    return fuse(sj,partition);
+	}
+	System.out.println("NOT SEMI!");
+	return fuse(sj);
+	}*/
+
+
+    //Uses partition to partion children and fuses only the children corresponding non 1 elements of partition
+    //Sum of elements in partition should be number of children
+    public static SIRStream fuse(SIRSplitJoin sj,int[] partition) {
+	if(partition.length==1)
+	    return fuse(sj);
+	// dispatch to simple fusion
+	SIRStream dispatchResult = dispatchToSimple(sj);
+	if (dispatchResult!=null) {
+	    return dispatchResult;
+	}
+	
+	if (!isFusable(sj)) {
+	    return sj;
+	} else {
+	    System.err.println("Fusing " + (sj.size()) + " SplitJoin filters!"); 
+	}
+	{ //Quick check
+	    int sum=0;
+	    for(int i=0;i<partition.length;i++)
+		sum+=partition[i];
+	    if(sum!=sj.size())
+		Utils.fail("Illformated partition "+partition+" for SIRSplitJoin "+sj+" of size "+sj.size());
+	}
+	int[] oldSplit=sj.getSplitter().getWeights();
+	int[] oldJoin=sj.getJoiner().getWeights();
+	JExpression[] newSplit=new JExpression[partition.length];
+	JExpression[] newJoin=new JExpression[partition.length];
+	SIRSplitJoin newSplitJoin=new SIRSplitJoin();
+	newSplitJoin.setParent(sj.getParent());
+	newSplitJoin.setIdent(sj.getIdent());
+	newSplitJoin.setFields(sj.getFields());
+	newSplitJoin.setMethods(sj.getMethods());
+	for(int i=0,j=0;i<partition.length;i++) {
+	    int incr=partition[i];
+	    if(incr==1) {
+		newSplitJoin.add(sj.get(j));
+		newSplit[i]=new JIntLiteral(oldSplit[j]);
+		newJoin[i]=new JIntLiteral(oldJoin[j]);
+	    } else {
+		int sumSplit=0;
+		int sumJoin=0;
+		JExpression[] childSplit=new JExpression[incr];
+		JExpression[] childJoin=new JExpression[incr];
+		SIRSplitJoin childSplitJoin=new SIRSplitJoin();
+		for(int k=incr,l=j,m=0;k>0;k--,l++,m++) {
+		    sumSplit+=oldSplit[l];
+		    sumJoin+=oldJoin[l];
+		    childSplit[m]=new JIntLiteral(oldSplit[l]);
+		    childJoin[m]=new JIntLiteral(oldJoin[l]);
+		    childSplitJoin.add(sj.get(l));
+		}
+		newSplit[i]=new JIntLiteral(sumSplit);
+		newJoin[i]=new JIntLiteral(sumJoin);
+		childSplitJoin.setSplitter(SIRSplitter.create(childSplitJoin,sj.getSplitter().getType(),childSplit));
+		childSplitJoin.setJoiner(SIRJoiner.create(childSplitJoin,sj.getJoiner().getType(),childJoin));
+		newSplitJoin.add(childSplitJoin);
+		fuse(childSplitJoin);
+	    }
+	    j+=incr;
+	}
+	newSplitJoin.setSplitter(SIRSplitter.create(newSplitJoin,sj.getSplitter().getType(),newSplit));
+	newSplitJoin.setJoiner(SIRJoiner.create(newSplitJoin,sj.getJoiner().getType(),newJoin));
+	// replace in parent
+	sj.getParent().replace(sj,newSplitJoin);
+	return newSplitJoin;
+    }
+
     public static SIRStream fuse(SIRSplitJoin sj)
     {
 	// dispatch to simple fusion
@@ -320,8 +404,9 @@ public class FuseSplit {
         Iterator childIter = sj.getParallelStreams().iterator();
         while (childIter.hasNext()) {
             SIRStream str = (SIRStream)childIter.next();
-            if (!(str instanceof SIRFilter))
+            if (!(str instanceof SIRFilter)) {
                 return false;
+	    }
             SIRFilter filter = (SIRFilter)str;
 	    // don't allow two-stage filters, since we aren't dealing
 	    // with how to fuse their initWork functions.
@@ -548,6 +633,8 @@ public class FuseSplit {
 						       SJChildInfo[] childInfo) { 
         // Start with the init function from the split/join.
 	JMethodDeclaration init = sj.getInit();
+	if(init==null)
+	    init=new JMethodDeclaration(null,at.dms.kjc.Constants.ACC_PUBLIC,CStdType.Void,"init",JFormalParameter.EMPTY,CClassType.EMPTY,new JBlock(),null,null);
 	// add allocations of peek and push buffers
 	for (int i=0; i<childInfo.length; i++) {
 	    for (int j=0; j<2; j++) {

@@ -39,6 +39,25 @@ public class SIRSplitter extends SIROperator {
       this.type = type;
       this.uniform = uniform;
     }
+    
+    public static SIRSplitter create(SIRContainer parent, 
+				     SIRSplitType type, 
+				     JExpression[] weights) {
+	if (type==SIRSplitType.DUPLICATE) {
+	    return new SIRSplitter(parent, type, initLiteralArray(weights.length, 1), true);
+        } else if (type==SIRSplitType.NULL) {
+	    return new SIRSplitter(parent, type, initLiteralArray(weights.length, 0), true);
+	} else if (type==SIRSplitType.WEIGHTED_RR) {
+	    return createWeightedRR(parent,weights);
+	} else if (type==SIRSplitType.ROUND_ROBIN) {
+	    createUniformRR(parent,weights);
+	} else {
+	    fail("Unreckognized splitter type.");
+	}
+	// stupid compiler
+	return null;
+    }
+
 
     /**
      * Constructs a splitter with given parent, type and n number of inputs.

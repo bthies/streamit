@@ -38,6 +38,22 @@ public class SIRJoiner extends SIROperator {
       this.uniform = uniform;
     }
 
+    public static SIRJoiner create(SIRContainer parent, 
+				     SIRJoinType type, 
+				     JExpression[] weights) {
+	if (type==SIRJoinType.NULL) {
+	    return new SIRJoiner(parent, type, initLiteralArray(weights.length, 0), true);
+	} else if (type==SIRJoinType.WEIGHTED_RR) {
+	    return createWeightedRR(parent,weights);
+	} else if (type==SIRJoinType.ROUND_ROBIN) {
+	    createUniformRR(parent,weights);
+	} else {
+	    fail("Unrecognized joiner type.");
+	}
+	// stupid compiler
+	return null;
+    }
+
     /**
      * Constructs a joiner with given parent, type and n number of inputs.
      */

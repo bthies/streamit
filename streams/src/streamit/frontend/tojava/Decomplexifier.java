@@ -1,7 +1,7 @@
 /*
  * Decomplexifier.java: convert complex expressions to real arithmetic
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Decomplexifier.java,v 1.1 2002-07-10 18:11:17 dmaze Exp $
+ * $Id: Decomplexifier.java,v 1.2 2002-07-11 20:57:26 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -39,7 +39,8 @@ public class Decomplexifier
      * generating temporary variables if need be.  The return value is
      * a Result, whose statements need to be executed before the
      * current statement and whose expression should replace exp. */
-    public static Result decomplexify(Expression exp, TempVarGen varGen)
+    public static Result decomplexify(Expression exp, TempVarGen varGen,
+                                      NodesToJava n2j)
     {
         // If the expression is complex, generate a temporary,
         // generate the appropriate assign statements, and return
@@ -53,7 +54,6 @@ public class Decomplexifier
             Expression lhsr = new ExprField(varExpr, "real");
             Expression lhsi = new ExprField(varExpr, "imag");
             ExprComplex cplx = (ExprComplex)exp;
-            NodesToJava n2j = new NodesToJava();
             
             result.statements += (String)lhsr.accept(n2j) + " = " +
                 (String)cplx.getReal().accept(n2j) + ";\n";

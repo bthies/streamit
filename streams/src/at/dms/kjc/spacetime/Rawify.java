@@ -997,9 +997,9 @@ public class Rawify
 	if(begin) {
 
 	    //Test: pass start down
-	    FullIns testIns=new FullIns(tile);
-	    testIns.addRoute(SwitchIPort.CSTO,dest);
-	    code.appendIns(testIns,false);
+	    /*FullIns testIns=new FullIns(tile);
+	      testIns.addRoute(SwitchIPort.CSTO,dest);
+	      code.appendIns(testIns,false);*/
 
 	    if(turns>0) {
 		if(turns>1) {
@@ -1040,11 +1040,10 @@ public class Rawify
 			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 			code.appendIns(newIns, false);
 		    }
-		    //Pass in partial sum
+		    //Pass out partial sum to next filter
 		    if(j==0) {
 			FullIns newIns=new FullIns(tile);
-			newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
-			//Pass out partial sum to next filter
+			//newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
 			newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
 			code.appendIns(newIns, false);
 		    }
@@ -1053,9 +1052,9 @@ public class Rawify
 	} else {
 
 	    //Test: passing start down
-	    FullIns testIns=new FullIns(tile);
-	    testIns.addRoute(src,dest);
-	    code.appendIns(testIns,false);
+	    /*FullIns testIns=new FullIns(tile);
+	      testIns.addRoute(src,dest);
+	      code.appendIns(testIns,false);*/
 
 	    for(int i = 0; i<numPop; i++) {
 		for(int j = 0; j<pop; j++) {

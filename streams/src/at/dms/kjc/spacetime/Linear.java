@@ -166,9 +166,9 @@ public class Linear extends BufferedCommunication implements Constants {
 	}
 
 	//TEST: Send start
-	if(begin) {
-	    inline.add("addu $csto, $0, "+regs[0]);
-	}
+	/*if(begin) {
+	  inline.add("addu $csto, $0, "+regs[0]);
+	  }*/
 
 	//Start Template
 	inline=new InlineAssembly();

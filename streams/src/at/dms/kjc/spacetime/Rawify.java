@@ -992,13 +992,19 @@ public class Rawify
 	}
 	if(filterInfo.initMult>0)
 	    bufferSize+=peek-pop;
-	int turns=pos*numCoeff; //Default number of turns
+	//int turns=pos*numCoeff; //Default number of turns
+	int turns=pos*numPop; //Default number of turns
 	int extra=0; //Extra turns needed
 	int excess=bufferSize-pop*(int)Math.ceil(((double)peek)/pop);//pop*(numCoeff+turns);
 	if(excess>0) { //Handle excess items on peekbuffer
 	    extra=(int)Math.ceil(((double)excess)/pop);
 	    turns+=extra;
 	}
+	final int numTimes=Linear.getMult(numCoeff);
+	final int target=filterInfo.steadyMult-numPop-turns;
+	final int newSteadyMult=target/numTimes-1;
+	//final int remainingExec=target-newSteadyMult*numTimes;
+	//turns+=remainingExec; //Remaining executions
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
 	//Begin codegen
@@ -1119,17 +1125,11 @@ public class Rawify
 	}
 	//Innerloop
 	Label label = code.getFreshLabel();
-	final int numTimes=Linear.getMult(numCoeff);
-	final int target=filterInfo.steadyMult-2-extra; //2 iterations start before innerloop
-	//final int newSteadyMult=target/numTimes;
-	final int newSteadyMult=1;
-	//final int remainingExec=target-newSteadyMult*numTimes;
-	final int remainingExec=0;
 	int pendingSends=0;
 	//int pendingReceives=0;
 	int deferredSends=0; //Add a delay
 	FullIns ins=null;
-	for(int repeat=0;repeat<2+remainingExec;repeat++) {
+	for(int repeat=0;repeat<2;repeat++) {
 	    int times=0;
 	    if(repeat==1)
 		code.appendIns(label,false);
@@ -1223,9 +1223,9 @@ public class Rawify
 	    pendingSends=0;
 	}
 	//Postloop
-	turns=index*numPop+extra;
+	//turns=index*numPop+extra;
 	//turns=pos*numPop;
-	//turns=index*numPop;//+(int)Math.ceil(((double)bufferSize)/pop); //Make sure to fill peekbuffer
+	turns=index*numPop;//+(int)Math.ceil(((double)bufferSize)/pop); //Make sure to fill peekbuffer
 	System.out.println("SWITCH TURNS: "+turns);
 	if(begin) {
 	    int bufferRemaining=bufferSize;

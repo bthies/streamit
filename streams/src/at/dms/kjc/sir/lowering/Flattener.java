@@ -74,12 +74,21 @@ public class Flattener {
 
 	AdjustGranularity.doit(str, -1);
 
+	if (KjcOptions.fusion) {
+	    System.err.print("Running FuseAll...");
+	    FuseAll.fuse(str);
+	    System.err.println("done.");
+	}
+
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
 	    System.err.println("Partitioning...");
 	    Partitioner.doit(str, 
 			     KjcOptions.raw * KjcOptions.raw);
 	    System.err.println("...done with Partitioning.");
 	}
+
+	// dump the partitioned graph to a dot format
+	StreamItDot.printGraph(str, "after.dot");
 
 	/* Not general code: Just a test for sync-removal on TwoWeightedRR.java */ 
 	/* StreamItDot.printGraph(str, "before-syncremov.dot");
@@ -94,22 +103,6 @@ public class Flattener {
 	System.err.println("Trying to duplicate " + toDuplicate);
 	StatelessDuplicate.doit(toDuplicate, 2);
 	*/
-
-	if (KjcOptions.fusion) {
-	    System.err.print("Running FuseAll...");
-	    FuseAll.fuse(str);
-	    System.err.println("done.");
-	    /* DEBUGGING PRINTING
-	    System.out.println("--------- AFTER FUSION ------------");
-	    printer1 = new SIRPrinter();
-	    IterFactory.createIter(str).accept(printer1);
-	    printer1.close();
-	    */
-	    
-	}
-
-	// dump the original graph to a dot format
-	StreamItDot.printGraph(str, "after.dot");
 
 	//Raise NewArray's up to top
 	System.err.print("Raising variable declarations... ");

@@ -62,14 +62,6 @@ public class RawBackend {
 	//str.accept(printer1);
 	//printer1.close();
 
-	StreamItDot.printGraph(str, "before.dot");
-
-	if (KjcOptions.fusion) {
-	    System.out.println("Running FuseAll...");
-	    FuseAll.fuse(str);
-	    System.out.println("Done FuseAll...");
-	}
-
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
 
@@ -84,9 +76,17 @@ public class RawBackend {
 	    //new BranchAnalyzer().analyzeBranches(str);
 	}
 
+	StreamItDot.printGraph(str, "before.dot");
+
 	AdjustGranularity.doit(str, 
 			       RawBackend.rawRows * 
 			       RawBackend.rawColumns);
+
+	if (KjcOptions.fusion) {
+	    System.out.println("Running FuseAll...");
+	    FuseAll.fuse(str);
+	    System.out.println("Done FuseAll...");
+	}
 
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
 	    Partitioner.doit(str,

@@ -59,6 +59,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //that implement a given interface for a given class.
     private Vector interfaceTableList;
 
+    //This vector stores all of the structure declarations.
+    private Vector structureList;
+
     //The current dependency chain we are following when 
     //trying to resolve a class instantiation to a stream
     //stores strings of the stream names
@@ -66,7 +69,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
     //Uncomment the println for debugging
     private void printMe(String str) {
-	//System.out.println(str);
+	System.out.println(str);
     }
 
     public Kopi2SIR() {
@@ -78,6 +81,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	symbolTable = new Hashtable(300);
 	interfaceList = new Vector(100);
 	interfaceTableList = new Vector(100);
+        structureList = new Vector(100);
 	searchList = new LinkedList();
 	application = null;
 	initBuiltinFilters();
@@ -92,6 +96,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	symbolTable = new Hashtable(300);
 	interfaceList = new Vector(100);
 	interfaceTableList = new Vector(100);
+        structureList = new Vector(100);
 	searchList = new LinkedList();
 	this.application = app;
 	initBuiltinFilters();
@@ -496,6 +501,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 						   "Top level stream already set.");
 			TopLevelDeclaration = decl;
 		    }
+                    else if (decl.getSourceClass().getSuperClass().
+                             getIdent().equals("Structure")) {
+                        SIRStructure sirStruct;
+                        sirStruct = (SIRStructure)decl.accept(this);
+                        structureList.add(sirStruct);
+                    }
 		}
 	    }
 	    
@@ -2210,6 +2221,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public SIRInterfaceTable[] getInterfaceTables()  {
 	SIRInterfaceTable[] ret = (SIRInterfaceTable[])interfaceTableList.toArray(new SIRInterfaceTable[0]);
 	return ret;
+    }
+
+    /**
+     * Returns a vector of all the SIRStructures that appeared in the
+     * program
+     */
+    public SIRStructure[] getStructures() {
+        SIRStructure[] ret = (SIRStructure[])structureList.toArray(new SIRStructure[0]);
+        return ret;
     }
     
 

@@ -258,6 +258,9 @@ public class RefactorSplitJoin {
                 newWeights[i] = oldWeights[index + j];
             SIRJoiner newJoiner =
                 SIRJoiner.create(sj, SIRJoinType.WEIGHTED_RR, newWeights);
+            SIRSplitter newSplitter =
+                SIRSplitter.create(sj, SIRSplitType.DUPLICATE,
+                                   newWeights.length);
 
             // ...and raise the children.
             while (sjChild.size() > 0)
@@ -270,6 +273,7 @@ public class RefactorSplitJoin {
             }
             sj.remove(index);
             index--;
+            sj.setSplitter(newSplitter);
             sj.setJoiner(newJoiner);
         }
 

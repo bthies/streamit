@@ -122,7 +122,7 @@ public class ConstantProp {
     /**
      * Recurses from <str> into all its substreams.
      */
-    private void recurseFrom(SIRContainer str, final Hashtable constants) {
+    private void recurseFrom(SIRContainer str, Hashtable constants) {
 	// if we're at the bottom, we're done
 	if (str.getInit()==null) {
 	    return;
@@ -136,15 +136,24 @@ public class ConstantProp {
 	} else {
 	    // iterate through statements of init function, looking for
 	    // SIRInit's
-	    str.getInit().accept(new SLIREmptyVisitor() {
-		    public void visitInitStatement(SIRInitStatement self,
-						   SIRStream target) {
-			recurseInto(self.getTarget(), self.getArgs(), constants);
-		    }
-		});
+	    InitPropagator prop=new InitPropagator(constants);
+	    str.getInit().accept(prop);
+	    constants=prop.getConstants();
 	}
     }
 
+    class InitPropagator extends Propagator {
+	public InitPropagator(Hashtable constants) {
+	    super(constants);
+	}
+	
+	public Object visitInitStatement(SIRInitStatement self,
+				       SIRStream target) {
+	    recurseInto(self.getTarget(), self.getArgs(), constants);
+	    return self;
+	}
+    }
+    
     /**
      * Recurses into <str> given that it is instantiated with
      * arguments <args>, and <constants> were built for the parent.
@@ -166,10 +175,11 @@ public class ConstantProp {
 	    } else if ((args.get(i) instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args.get(i)).getVariable())!=null) {
 		// otherwise if it's associated w/ a literal, then
 		// record that and set the actual argument to be a literal
-		JExpression constant = (JExpression)constants.get(((JLocalVariableExpression)args.get(i)).getVariable());
-		//System.err.println("!! bottom finding " + parameters[i].getIdent() + " " + parameters[i].hashCode() + " = " + constant + " in call to " + str.getIdent());		
-		constants.put(parameters[i], constant);
-		args.set(i, constant);
+		Object constant = constants.get(((JLocalVariableExpression)args.get(i)).getVariable());
+		//System.err.println("!! bottom finding " + parameters[i].getIdent() + " " + parameters[i].hashCode() + " = " + constant + " in call to " + str.getIdent());
+		constants.put(parameters[i],constant);
+		if(constant instanceof JExpression)
+		    args.set(i, constant);
 	    }
 	}
 	// recurse into sub-stream

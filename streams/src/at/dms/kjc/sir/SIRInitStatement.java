@@ -33,8 +33,7 @@ public class SIRInitStatement extends JStatement {
     public SIRInitStatement(List args, 
 			    SIRStream str) {
 	super(null, null);
-
-	this.args = args;
+	this.args = new Vector(args);
 	this.target = str;
     }
     

@@ -23,6 +23,10 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      */
     protected JMethodDeclaration init;
     /**
+     * List of constants for the args of the init function
+     */
+    protected List argConstants;
+    /**
      * The work function.  Must be non-null for filters, but may be null
      * for SIRContainers.
      */
@@ -45,12 +49,22 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
       this.ident = ident;
       this.fields = fields;
       this.methods = methods;
+      argConstants=new LinkedList();
     }
 
     protected SIRStream() {
 	super(null);
 	this.fields = null;
 	this.methods = null;
+	argConstants=new LinkedList();
+    }
+
+    public void setArgConstants(List list) {
+	argConstants=list;
+    }
+
+    public List getArgConstants() {
+	return argConstants;
     }
 
     /*

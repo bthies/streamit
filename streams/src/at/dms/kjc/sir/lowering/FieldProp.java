@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.16 2002-06-28 01:24:32 jasperln Exp $
+ * $Id: FieldProp.java,v 1.17 2002-07-01 21:27:42 jasperln Exp $
  */
 public class FieldProp implements Constants
 {
@@ -146,13 +146,15 @@ public class FieldProp implements Constants
         if (isFieldInvalidated(name)) return;
         boolean[] bary = (boolean[])noarrays.get(name);
         JExpression[] exprs = (JExpression[])arrays.get(name);
-        if (bary == null)
+        if ((bary == null)&&(exprs!=null))
         {
             bary = new boolean[exprs.length];
             noarrays.put(name, bary);
         }
-        bary[slot] = true;
-        exprs[slot] = null;
+	if(bary!=null)
+	    bary[slot] = true;
+	if(exprs!=null)
+	    exprs[slot] = null;
     }
 
     /** Helper function to invalidate whatever a particular expression
@@ -249,7 +251,8 @@ public class FieldProp implements Constants
         CType atype = (CType)types.get(name);
         value = forceLiteralType(value, ((CArrayType)atype).getBaseType());
         JExpression[] exprs = (JExpression[])arrays.get(name);
-        exprs[slot] = value;
+	if(exprs!=null)
+	    exprs[slot] = value;
     }
 
     /** Notice that an array exists with a fixed size. */

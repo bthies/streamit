@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMinusExpression.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JMinusExpression.java,v 1.3 2002-07-01 21:27:22 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -46,6 +46,10 @@ public class JMinusExpression extends JBinaryArithmeticExpression {
 			  JExpression right) {
     super(where, left, right);
   }
+
+    public String toString() {
+	return "JMinusExpression["+left+","+right+"]";
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFloatLiteral.java,v 1.4 2002-06-24 00:45:39 thies Exp $
+ * $Id: JFloatLiteral.java,v 1.5 2002-07-01 21:27:22 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -95,6 +95,10 @@ public class JFloatLiteral extends JLiteral {
     super(where);
     this.value = value;
   }
+
+    public String toString() {
+	return "JFloatLiteral["+value+"]";
+    }
 
   // ----------------------------------------------------------------------
   // ACCESSORS

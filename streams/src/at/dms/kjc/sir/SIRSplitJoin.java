@@ -76,14 +76,21 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     public CType getInputType() {
 	// first look for a non-null type (since some of them might
 	// not be reading in from the splitter)
+	boolean isVoid=false;
 	for (int i=0; i<size(); i++) {
 	    CType type = get(i).getInputType();
 	    if (type!=CStdType.Null) {
-		return type;
+		if(type==CStdType.Void)
+		    isVoid=true;
+		else
+		    return type;
 	    }
 	}
-	// otherwise, they're all null, so return null
-	return CStdType.Null;
+	// otherwise, they're all null (or void)
+	if(isVoid)
+	    return CStdType.Void;
+	else
+	    return CStdType.Null;
     }
 
     

@@ -1399,8 +1399,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
         blockStart("NewArrayExpression", self);
 	if (dims.length == 0)
 	    dims = JExpression.EMPTY;
-	for (int i = 0; i < dims.length; i++)
-            dims[i] = (JExpression)dims[i].accept(this);
+	for (int i = 0; i < dims.length; i++) {
+	    if(dims[i]!=null)
+		dims[i] = (JExpression)dims[i].accept(this);
+	}
 	return new JNewArrayExpression(null, type, dims, init);
     }
 

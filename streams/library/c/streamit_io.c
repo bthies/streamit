@@ -1,6 +1,6 @@
 /*
  * streamit_io.c: implementation of built-in IO filters
- * $Id: streamit_io.c,v 1.4 2002-08-08 21:41:43 dmaze Exp $
+ * $Id: streamit_io.c,v 1.5 2002-10-01 20:22:26 dmaze Exp $
  */
 
 #include <stdlib.h>
@@ -100,7 +100,7 @@ void streamit_identity_work(ContextContainer cc)
   LOCALIZE_DEFAULTB(c);
   /* We don't have the type (though we could), do this the hard way... */
   streamit_memcpy(__wd + __wp, __rd + __rp, s);
-  INCR_TAPE_READ(c->input_tape, s);
-  INCR_TAPE_WRITE(c->output_tape, s);
+  INCR_TAPE_LOCALB(__rp, __rm, s);
+  INCR_TAPE_LOCALB(__wp, __wm, s);
   UNLOCALIZE_DEFAULTB(c);
 }

@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.12 2002-10-04 00:35:34 thies Exp $
+ * $Id: TestAll.java,v 1.13 2002-10-18 00:26:52 aalamb Exp $
  **/
 package streamittest;
 
@@ -78,12 +78,13 @@ public class TestAll extends TestCase {
 				       CompilerInterface.RAW[8]));
 
 	// try all configurations of raw with constprop and partition
-	for (int i=1; i<=8; i++) {
-	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-					   CompilerInterface.RAW[i] |
-					   CompilerInterface.PARTITION |
-					   CompilerInterface.CONSTPROP));
-	}
+	// This was causing the regtest to go crazy, so I am removing them.
+// 	for (int i=1; i<=8; i++) {
+// 	    allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+// 					   CompilerInterface.RAW[i] |
+// 					   CompilerInterface.PARTITION |
+// 					   CompilerInterface.CONSTPROP));
+// 	}
 
 	// try linear replacement (replace linear filters with a direct implementation).
 // 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.8 2002-09-23 21:18:43 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.9 2002-09-30 21:25:31 dmaze Exp $
  */
 
 header {
@@ -307,6 +307,8 @@ assign_expr returns [Statement s] { s = null; Expression l, r; int o = 0; }
 		(	ASSIGN { o = 0; }
 		|	PLUS_EQUALS { o = ExprBinary.BINOP_ADD; }
 		| 	MINUS_EQUALS { o = ExprBinary.BINOP_SUB; }
+		|	STAR_EQUALS { o = ExprBinary.BINOP_MUL; }
+		|	DIV_EQUALS { o = ExprBinary.BINOP_DIV; }
 		)
 		r=right_expr
 		{ s = new StmtAssign(l.getContext(), l, r, o); }

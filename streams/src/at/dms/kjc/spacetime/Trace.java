@@ -179,6 +179,17 @@ public class Trace
     public int getPrimePump() {
 	return primePump;
     }
+    
+    //return the number of filters in the trace
+    public int getNumFilters() 
+    {
+	TraceNode node = getHead().getNext();
+	int ret = 0;
+	while (node instanceof FilterTraceNode)
+	    ret++;
+	return ret;
+    }
+    
 }
 
 

@@ -133,7 +133,7 @@ public class SpaceTimeBackend
 	System.out.println("UnPrunnedTraces: "+traceGraph.length);
 	partitioner.dumpGraph("traces.dot");
     
-	(new SimpleScheduler(partitioner)).schedule();
+	(new SimpleScheduler(partitioner, rawChip)).schedule();
 
 	System.exit(0);
 	

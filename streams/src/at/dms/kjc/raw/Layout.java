@@ -204,7 +204,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	System.out.println("Simulated Annealing Assignment");
 	int nsucc, j;
 	//number of paths tried at a temp
-	int nover = 100 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	int nover = 10 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
 	//max number of sucessful path lengths before continuing
 	int nlimit = 10 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
 	int cost = 0;
@@ -214,7 +214,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	random = new Random(17);
 	//random placement
 	randomPlacement();
-	/*
+	
 	System.out.println("Initial Cost: " + placementCost());
 	for (j = 0; j < ANNEALITERATIONS; j++) {
 	    nsucc = 0;
@@ -232,7 +232,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    break;
 	}
 	System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
-      */
+      
 	dumpLayout();
 
     }

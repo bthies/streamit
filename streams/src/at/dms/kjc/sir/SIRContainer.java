@@ -118,7 +118,7 @@ public abstract class SIRContainer extends SIRStream {
      * have not been resolved yet.
      */
     public LinkedList getParams(int i) {
-	return ((SIRStreamInstance)children.get(i)).args;
+	return (LinkedList)params.get(i);
     }
 
     /**
@@ -150,7 +150,7 @@ public abstract class SIRContainer extends SIRStream {
      */
     public boolean contains(SIROperator str) {
 	for (int i=0; i<children.size(); i++) {
-	    if (((SIRStreamInstance)children.get(i)).str==str) {
+	    if (children.get(i)==str) {
 		return true;
 	    }
 	}

@@ -25,7 +25,13 @@ public class IMEMEstimation extends EmptyStreamVisitor
      * IMEM.
      */
     private boolean everythingFits = true;
-    
+    private static Random rand;
+
+    static 
+    {
+	rand = new Random(17);
+    }
+
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
 	if (!fits(self)) {
@@ -84,6 +90,9 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	String dir = File.separator + "tmp" + File.separator + 
 	    filter.getName();
 	
+	dir = dir.substring(0, 20) + rand.nextInt(99999);
+
+	System.out.println("Checking IMEM Size (DIR: " + dir + ") ...");	     
 	File file = new File(dir);
 	file.mkdir();
 
@@ -155,7 +164,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
 
 	    //now determine if the filter fit in IMEM
 	    {
-		System.out.println("Checking IMEM Size...");	     
+		
 		String[] cmdArray = new String[6];
 		cmdArray[0] = "make";
 		cmdArray[1] = "-C";

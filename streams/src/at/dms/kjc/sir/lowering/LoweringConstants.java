@@ -1,5 +1,6 @@
 package at.dms.kjc.sir.lowering;
 
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 
@@ -32,7 +33,7 @@ public class LoweringConstants {
 
     /**
      * The name of the type serving as the stream context.
-z     */
+     */
     public static final String CONTEXT_TYPE_NAME = "stream_context*";
 
     /**
@@ -110,6 +111,35 @@ z     */
 				       "interfaceTable" + 
 				       interfaceTableCounter++, 
 				       /* init exp */ initializer);
+    }
+
+    /**
+     * Creates a field access that gets to the structure of <iter>
+     * from the toplevel stream.
+     */
+    public static JExpression getParentStructureAccess(SIRIterator iter) {
+	// get parents of <str>
+	SIRStream parents[] = iter.getParents();
+
+	// construct result expression
+	JExpression result = getDataField();
+
+	// go through parents from top to bottom, building up the
+	// field access expression.
+	for (int i=parents.length-2; i>=0; i--) {
+	    // get field name for child context
+	    String childName = parents[i].getRelativeName();
+	    // build up cascaded field reference
+	    result = new JFieldAccessExpression(/* tokref */
+						null,
+						/* prefix is previous ref*/
+						result,
+						/* ident */
+						childName);
+	}
+
+	// return result
+	return result;
     }
 
     /**

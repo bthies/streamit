@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering;
 
 import at.dms.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import java.util.List;
 import java.util.ListIterator;
@@ -46,7 +47,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * fields via the state.  Finally, puts interface declarations
      * <inners> and interface tables <tables> in toplevel structure.
      */
-    public static JClassDeclaration structure(SIROperator toplevel,
+    public static JClassDeclaration structure(SIRIterator toplevel,
 					      JInterfaceDeclaration[] inners,
 					      SIRInterfaceTable[] tables,
                                               SIRStructure[] structures) {
@@ -66,7 +67,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	structs.addAll(Arrays.asList(inners));
         // Process structures
         for (int i=0; i<structures.length; i++)
-            structures[i].accept(this);
+            doStructure(structures[i]);
 	// create a field declaration that is initialized to each interface
 	// table in <tables>
 	JFieldDeclaration[] fields = new JFieldDeclaration[tables.length];
@@ -311,10 +312,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      */
 
     /* visit a structure */
-    public void visitStructure(SIRStructure self,
-                               SIRStream parent,
-                               JFieldDeclaration[] fields)
-    {
+    public void doStructure(SIRStructure self) {
 	JClassDeclaration classDecl = 
 	    new JClassDeclaration(/* TokenReference where */
 				  null,
@@ -327,7 +325,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  /* CClassType[] interfaces, */
 				  CClassType.EMPTY,
 				  /* JFieldDeclaration[] fields, */
-				  fields,
+				  self.getFields(),
 				  /* JMethodDeclaration[] methods, */
 				  JMethodDeclaration.EMPTY(),
 				  /* JTypeDeclaration[] inners, */
@@ -346,72 +344,39 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      
     /* visit a filter */
     public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) {
+			    SIRFilterIter iter) {
 	// only worry about actual SIRFilter's, not special cases like
 	// FileReader's and FileWriter's
 	if (!self.needsWork()) {
 	    return;
 	}
 	// create struct type
-	createStruct(self.getName(), fields, EMPTY_LIST);
+	createStruct(self.getName(), self.getFields(), EMPTY_LIST);
 	// add tape parameters to work function
 	//addTapeParameters(work);
 	// add closure-referencing to methods
-	flattenMethods(self.getName(), methods);
+	flattenMethods(self.getName(), self.getMethods());
     }
   
-    /* visit a splitter */
-    public void visitSplitter(SIRSplitter self,
-			      SIRStream parent,
-			      SIRSplitType type,
-			      JExpression[] weights) {
-	// create struct type (no - not needed anymore by runtime)
-	// createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
-    }
-  
-    /* visit a joiner */
-    public void visitJoiner(SIRJoiner self,
-			    SIRStream parent,
-			    SIRJoinType type,
-			    JExpression[] weights) {
-	// create struct type (no - not needed anymore by runtime)
-	// createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
-    }
-
     /**
      * PRE-VISITS 
      */
 	    
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRStream parent,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init) {
+				 SIRPipelineIter iter) {
 	// don't do anything--visit on the way up
     }
   
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
+				  SIRSplitJoinIter iter) {
 	// don't do anything--visit on the way up
     }
   
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRStream parent,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     JMethodDeclaration initPath) {
+				     SIRFeedbackLoopIter iter) {
 	// don't do anything--visit on the way up
     }
   
@@ -436,35 +401,25 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
-	postVisit(self.getName(), fields, methods, self.getChildren());
+				  SIRPipelineIter iter) {
+	postVisit(self.getName(), self.getFields(), self.getMethods(), self.getChildren());
     }
   
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRStream parent,
-				   JFieldDeclaration[] fields,
-				   JMethodDeclaration[] methods,
-				   JMethodDeclaration init) {
-	postVisit(self.getName(), fields, methods, self.getParallelStreams());
+				   SIRSplitJoinIter iter) {
+	postVisit(self.getName(), self.getFields(), self.getMethods(), self.getParallelStreams());
     }
   
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRStream parent,
-				      JFieldDeclaration[] fields,
-				      JMethodDeclaration[] methods,
-				      JMethodDeclaration init,
-				      JMethodDeclaration initPath) {
+				      SIRFeedbackLoopIter iter) {
 	// make a list of body and loop
 	List children = new LinkedList();
 	children.add(self.getBody());
 	children.add(self.getLoop());
 	// do visit
-	postVisit(self.getName(), fields, methods, children);
+	postVisit(self.getName(), self.getFields(), self.getMethods(), children);
         // deal with initPath, too
         //flattenMethod(self.getName(), initPath);
     }

@@ -38,12 +38,12 @@ public class Flattener {
 	// DEBUGGING PRINTING
         System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();
-	str.accept(printer1);
+	IterFactory.createIter(str).accept(printer1);
 	printer1.close();
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
-	
+
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
 
@@ -77,7 +77,7 @@ public class Flattener {
 	    // DEBUGGING PRINTING
 	    System.out.println("--------- AFTER FUSION ------------");
 	    printer1 = new SIRPrinter();
-	    str.accept(printer1);
+	    IterFactory.createIter(str).accept(printer1);
 	    printer1.close();
 	    
 	}
@@ -94,7 +94,7 @@ public class Flattener {
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();
-	str.accept(printer1);
+	IterFactory.createIter(str).accept(printer1);
 	printer1.close();
 	
 	if (StreamItOptions.constprop) {
@@ -109,15 +109,16 @@ public class Flattener {
 	new VarDeclRaiser().raiseVars(str);
 	
 	// make single structure
-	JClassDeclaration flatClass = Structurer.structure(str, 
+	SIRIterator iter = IterFactory.createIter(str);
+	JClassDeclaration flatClass = Structurer.structure(iter,
 							   interfaces,
 							   interfaceTables,
                                                            structs);
 	// build schedule as set of higher-level work functions
 	Schedule schedule = SIRScheduler.buildWorkFunctions(str, flatClass);
 	// add LIR hooks to init and work functions
-	LowerInitFunctions.lower(str, schedule);
-        LowerWorkFunctions.lower(str);
+	LowerInitFunctions.lower(iter, schedule);
+        LowerWorkFunctions.lower(iter);
 
 	// DEBUGGING PRINTING
 	System.out.println("----------- AFTER FLATTENER ------------------");

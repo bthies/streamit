@@ -706,7 +706,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
     
     /* visit a structure */
     public Object visitStructure(SIRStructure self,
-                                 SIRStream parent,
                                  JFieldDeclaration[] fields)
     {
         // Do nothing; the scheduler shouldn't care about structures
@@ -715,7 +714,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 
     /* visit a filter */
     public Object visitFilter(SIRFilter self,
-			      SIRStream parent,
 			      JFieldDeclaration[] fields,
 			      JMethodDeclaration[] methods,
 			      JMethodDeclaration init,
@@ -734,7 +732,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
   
     /* pre-visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
-				SIRStream parent,
 				JFieldDeclaration[] fields,
 				JMethodDeclaration[] methods,
 				JMethodDeclaration init) {
@@ -760,7 +757,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 
     /* pre-visit a splitjoin */
     public Object visitSplitJoin(SIRSplitJoin self,
-				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
@@ -787,7 +783,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 
     /* pre-visit a feedbackloop */
     public Object visitFeedbackLoop(SIRFeedbackLoop self,
-				    SIRStream parent,
 				    JFieldDeclaration[] fields,
 				    JMethodDeclaration[] methods,
 				    JMethodDeclaration init,
@@ -815,7 +810,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 
     /* visit a splitter */
     public Object visitSplitter(SIRSplitter self,
-				SIRStream parent,
 				SIRSplitType type,
 				JExpression[] weights) {
 	// represent the splitter
@@ -827,7 +821,6 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
     
     /* visit a joiner */
     public Object visitJoiner(SIRJoiner self,
-			      SIRStream parent,
 			      SIRJoinType type,
 			      JExpression[] weights)  {
 	// represent the joiner

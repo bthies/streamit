@@ -5,6 +5,7 @@ import streamit.scheduler.*;
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 
@@ -29,8 +30,8 @@ public class LowerInitFunctions implements StreamVisitor {
     /**
      * Lowers the init functions in <str>.
      */
-    public static void lower(SIRStream str, Schedule schedule) {
-	str.accept(new LowerInitFunctions(schedule));
+    public static void lower(SIRIterator iter, Schedule schedule) {
+	iter.accept(new LowerInitFunctions(schedule));
     }
 
     //
@@ -289,28 +290,18 @@ public class LowerInitFunctions implements StreamVisitor {
     // VISITOR STUFF ------------------------------------------------------
     //
     
-    public void visitStructure(SIRStructure self,
-                               SIRStream parent,
-                               JFieldDeclaration[] fields) {
-        // do nothing
-    }
-
     /**
      * visit a filter 
      */
     public void visitFilter(SIRFilter self,
-			    SIRStream parent,
-			    JFieldDeclaration[] fields,
-			    JMethodDeclaration[] methods,
-			    JMethodDeclaration init,
-			    JMethodDeclaration work,
-			    CType inputType, CType outputType) {
+			    SIRFilterIter iter) {
 	// only worry about actual SIRFilter's, not special cases like
 	// FileReader's and FileWriter's
 	if (!self.needsWork()) {
 	    return;
 	}
-
+	
+	JMethodDeclaration init = self.getInit();
 	// set stream type to filter
 	init.addStatement(new LIRSetStreamType(LoweringConstants.
 					       getStreamContext(),
@@ -336,22 +327,6 @@ public class LowerInitFunctions implements StreamVisitor {
 					 /*
 					 LoweringConstants.
 					 getWorkName(self))));*/
-    }
-
-    /* visit a splitter */
-    public void visitSplitter(SIRSplitter self,
-			      SIRStream parent,
-			      SIRSplitType type,
-			      JExpression[] weights) {
-	// do nothing at a splitter
-    }
-    
-    /* visit a joiner */
-    public void visitJoiner(SIRJoiner self,
-			    SIRStream parent,
-			    SIRJoinType type,
-			    JExpression[] weights) {
-	// do nothing at a joiner
     }
 
     /**
@@ -401,68 +376,48 @@ public class LowerInitFunctions implements StreamVisitor {
 	
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
-				 SIRStream parent,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init) {
+				 SIRPipelineIter iter) {
 	// do standard container stuff
-	visitContainer(self, init);
+	visitContainer(self, self.getInit());
 	// register tapes between children in init function
-	registerTapes(self.getTapePairs(), init);
+	registerTapes(self.getTapePairs(), self.getInit());
     }
 
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
+				  SIRSplitJoinIter iter) {
 	// do standard container stuff
-	visitContainer(self, init);
+	visitContainer(self, self.getInit());
 	// register tapes
-	registerSplitJoinTapes(self, init);
+	registerSplitJoinTapes(self, self.getInit());
     }
 
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRStream parent,
-				     JFieldDeclaration[] fields,
-				     JMethodDeclaration[] methods,
-				     JMethodDeclaration init,
-				     JMethodDeclaration initPath) {
+				     SIRFeedbackLoopIter iter) {
 	// do standard container stuff
-	visitContainer(self, init);
+	visitContainer(self, self.getInit());
 	// register tapes
-	registerFeedbackLoopTapes(self, init);
+	registerFeedbackLoopTapes(self, self.getInit());
         // set up the delay function
-        doFeedbackLoopDelay(self, self.getDelayInt(), initPath, init);
+        doFeedbackLoopDelay(self, self.getDelayInt(), self.getInitPath(), self.getInit());
     }
 
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
-				  SIRStream parent,
-				  JFieldDeclaration[] fields,
-				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init) {
+				  SIRPipelineIter iter) {
 	// do nothing -- all work is in preVisit
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
-				   SIRStream parent,
-				   JFieldDeclaration[] fields,
-				   JMethodDeclaration[] methods,
-				   JMethodDeclaration init) {
+				   SIRSplitJoinIter iter) {
 	// do nothing -- all work is in preVisit
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
-				      SIRStream parent,
-				      JFieldDeclaration[] fields,
-				      JMethodDeclaration[] methods,
-				      JMethodDeclaration init,
-				      JMethodDeclaration initPath) {
+				      SIRFeedbackLoopIter iter) {
 	// do nothing -- all work is in preVisit
     }
 }

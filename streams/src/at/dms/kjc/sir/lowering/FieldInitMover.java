@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 
 import java.util.*;
@@ -17,13 +18,13 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.2 2002-06-25 20:46:25 aalamb Exp $
+ * $Id: FieldInitMover.java,v 1.3 2002-06-28 06:50:59 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor{
 
     public static void moveStreamInitialAssignments(SIRStream str) {
 	FieldInitMover mover = new FieldInitMover();
-	str.accept(mover);
+	IterFactory.createIter(str).accept(mover);
     }
 
     /*
@@ -31,16 +32,11 @@ public class FieldInitMover extends EmptyStreamVisitor{
      * declaration into the body of the init.
      */
     public void visitFilter(SIRFilter filter,
-		     SIRStream parent,
-		     JFieldDeclaration[] fields,
-		     JMethodDeclaration[] methods,
-		     JMethodDeclaration init,
-		     JMethodDeclaration work,
-		     CType inputType, CType outputType) {
+			    SIRFilterIter iter) {
 
 	// assignment statements that need to be added to the init function 
 	final Vector assignmentStatements = new Vector();
-	
+	JFieldDeclaration[] fields = filter.getFields();
 	for (int i=0; i<fields.length; i++) {
 	    	    
 	    // go and visit all of the field declarations

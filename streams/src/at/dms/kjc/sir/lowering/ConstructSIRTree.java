@@ -3,6 +3,7 @@ package at.dms.kjc.sir.lowering;
 import java.util.*;
 import at.dms.util.*;
 import at.dms.kjc.*;
+import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 
 /**
@@ -18,36 +19,26 @@ public class ConstructSIRTree {
 
     public static void doit(SIRStream str) {
 	// visit the hoister in all containers
-	str.accept(new EmptyStreamVisitor() {
+	IterFactory.createIter(str).accept(new EmptyStreamVisitor() {
 		/* pre-visit a pipeline */
 		public void preVisitPipeline(SIRPipeline self,
-					     SIRStream parent,
-					     JFieldDeclaration[] fields,
-					     JMethodDeclaration[] methods,
-					     JMethodDeclaration init) {
+					     SIRPipelineIter iter) {
 		    self.clear();
-		    init.accept(new InitializationHoister(self));
+		    self.getInit().accept(new InitializationHoister(self));
 		}
 		
 		/* pre-visit a splitjoin */
 		public void preVisitSplitJoin(SIRSplitJoin self,
-					      SIRStream parent,
-					      JFieldDeclaration[] fields,
-					      JMethodDeclaration[] methods,
-					      JMethodDeclaration init) {
+					      SIRSplitJoinIter iter) {
 		    self.clear();
-		    init.accept(new InitializationHoister(self));
+		    self.getInit().accept(new InitializationHoister(self));
 		}
 		
 		/* pre-visit a feedbackloop */
 		public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-						 SIRStream parent,
-						 JFieldDeclaration[] fields,
-						 JMethodDeclaration[] methods,
-						 JMethodDeclaration init,
-						 JMethodDeclaration initPath) {
+						 SIRFeedbackLoopIter iter) {
 		    self.clear();
-		    init.accept(new InitializationHoister(self));
+		    self.getInit().accept(new InitializationHoister(self));
 		    // if we don't have enough children, add null loop
 		    if (self.size()<2) {
 			self.add(null);

@@ -17,12 +17,12 @@ complex[N_srg]-> complex[N_srg*N_up] splitjoin ElSynth(int N_cnb,int N_srg, int 
     split roundrobin;
     for (int i=0; i< N_cnb; i++)
 	for (int j=0; j < N_dop; j ++)
-	    add AnalTd(N_srg,N_up,N_lp,W,f_lp);
+	    add SynthTd(N_srg,N_up,N_lp,W,f_lp);
     join roundrobin;
 }
 	
 // this pipeline  performes the upsampling, low pass filtering and frequency shifting for the array.
-complex[N_srg]->complex[ N_srg*N_up] pipeline AnalTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp,complex[N_td] h_td) {
+complex[N_srg]->complex[ N_srg*N_up] pipeline SynthTd(int N_rg,int N_dn,int N_lp,int N_td,complex W, complex[N_lp] h_lp,complex[N_td] h_td) {
     add DownSamp(N_dn);
     add arrayFIR(N_srg*N_up,N_lp,f_lp);
     add FreqShift(N_rg,W);

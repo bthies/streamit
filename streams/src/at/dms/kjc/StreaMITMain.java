@@ -24,6 +24,10 @@ public class StreaMITMain {
 	if (KjcOptions.altcodegen &&
 	    KjcOptions.decoupled)
 	    at.dms.util.Utils.fail("The options altcodegen and decoupled are mutually exclusive.");
+
+	if (KjcOptions.outputs > 0 &&
+	    KjcOptions.numbers > 0)
+	    at.dms.util.Utils.fail("The options outputs and numbers are mutually exclusive.");
 	    
 	if (KjcOptions.magic_net &&
 	    KjcOptions.decoupled)

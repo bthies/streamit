@@ -163,7 +163,7 @@ public class Lifter implements StreamVisitor {
     private boolean liftChildren(SIRContainer str) {
 	boolean changed = false;
 	changed = changed || liftPipelineChildren(str);
-	changed = changed || simplifyTwoStageChildren(str);
+	//changed = changed || simplifyTwoStageChildren(str);
 	return changed;
     }
 

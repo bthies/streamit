@@ -1,0 +1,59 @@
+/*
+ * PhaseTest.str: phased filter test code
+ */
+
+/* Concept: input is a stream of integers.  The first set of n integers
+ * is data; the second set of n integers is in the range 0..n-1, and
+ * specifies which integer from the first n is selected. */
+int->int filter IntSelector(int count)
+{
+    int[count] values;
+    work 
+        {
+	    int i;
+            readValues();
+            for (i = 0; i < count; i++)
+                copyValue();
+        }
+    
+    phase readValues pop count
+        {
+	    int i;
+            for (i = 0; i < count; i++)
+                values[i] = pop();
+        }
+    
+    phase copyValue pop 1 push 1
+        {
+            push(values[pop()]);
+        }
+}
+
+void->int filter IntSelectorSource(int count)
+{
+    int x;
+    work push 2*count
+        {
+            /* First n: push values. */
+            for (int i = 0; i < count; i++)
+                push(x++);
+            /* Second n: push n-1..0. */
+            for (int i = count - 1; i >= 0; i--)
+                push(i);
+        }
+}
+
+int->void filter IntSink
+{
+    work pop 1
+        {
+            print(pop());
+        }
+}
+
+void->void pipeline PhaseTest
+{
+    add IntSelectorSource(9);
+    add IntSelector(9);
+    add IntSink;
+}

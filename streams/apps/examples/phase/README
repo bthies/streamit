@@ -1,0 +1,31 @@
+Phased filter example
+---------------------
+
+$Id: README,v 1.1 2003-02-20 14:56:36 dmaze Exp $
+
+PhaseTest.str contains a minimal program that demonstrates StreamIt's
+phased-filter construct.  The core of the program is the IntSelector
+phased filter.  There are two phases in this filter.  The first phase
+reads (count) items off of the input tape and stores them.  The second
+phase, which is run (count) times, reads an item off the input tape
+and returns the corresponding item out of the store.  Thus, with count=4:
+
+               1 3 2 2 8 4 2 1 ---> IntSelector --->
+
+  readValues:          1 3 2 2 ---> IntSelector --->
+                                      1 2 4 8
+
+   copyValue:            1 3 2 ---> IntSelector ---> 4
+   copyValue:              1 3 ---> IntSelector ---> 4 4
+   copyValue:                1 ---> IntSelector ---> 8 4 4
+   copyValue:                  ---> IntSelector ---> 2 8 4 4
+
+The source used in the sample code just prints an increasing series of
+numbers, grouped in sets of 9, with each set printed in decreasing
+order.
+
+As of this writing, this code will run against the StreamIt compiler
+but not against the Java library.  In particular, the for loop in the
+phased filter's work funciton will not be unrolled in the front-end,
+resulting in the compiler being unable to produce an ordered sequence
+of phases.

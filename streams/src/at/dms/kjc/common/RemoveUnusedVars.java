@@ -35,7 +35,6 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
      */
     public static void doit(FlatNode node) 
     {
-	System.out.println("Removing Dead Variables...");
 	node.accept(new RemoveUnusedVars(), null, true);
     }
 
@@ -47,7 +46,6 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 
     public static void doit(SIRFilter filter) 
     {
-	System.out.println("Removing Dead Variables...");
 	(new RemoveUnusedVars()).visitFilter(filter);
     }
     

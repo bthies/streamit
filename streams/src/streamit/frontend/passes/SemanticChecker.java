@@ -11,7 +11,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.9 2003-07-09 19:36:20 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.10 2003-09-16 21:24:17 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -464,6 +464,7 @@ public class SemanticChecker
                     // rather than a phase function, then
                     // it's possible to have neither push nor
                     // pop rates even with non-void types.
+                    boolean isInit = (func.getCls() == Function.FUNC_PREWORK);
                     boolean isPhase = (func.getCls() == Function.FUNC_PHASE);
                     boolean phased = (!canPop) && (!canPeek) && (!isPhase);
                     
@@ -475,7 +476,7 @@ public class SemanticChecker
                                "filter declared void input type, but " +
                                "non-zero pop rate");
                     if (!typeIsVoid(st.getIn()) && !canPop && !phased &&
-                        !isPhase)
+                        !isPhase && !isInit)
                         report(func,
                                "filter declared non-void input type, but "+
                                "has zero pop rate");
@@ -484,13 +485,13 @@ public class SemanticChecker
                                "filter declared void output type, but " +
                                "non-zero push rate");
                     if (!typeIsVoid(st.getOut()) && !canPush && !phased &&
-                        !isPhase)
+                        !isPhase && !isInit)
                         report(func,
                                "filter declared non-void output type, but " +
                                "has zero push rate");
                     // If this isn't a phase function, and it has a
                     // peek rate, then it must have a pop rate.
-                    if (!isPhase && !canPop && canPeek)
+                    if (!isPhase && !isInit && !canPop && canPeek)
                         report(func,
                                "filter declared a peek rate but not a " +
                                "pop rate");

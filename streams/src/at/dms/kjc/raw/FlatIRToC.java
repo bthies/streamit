@@ -76,7 +76,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { 
 		//Already in __RAWMAIN__
 		if (!KjcOptions.nofieldprop) {
-		
 		    Unroller unroller;
 		    do {
 			do {
@@ -183,7 +182,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//if we are number gathering and this is the sink, generate the dummy
 	//vars for the assignment of the print expression.
-	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
+	if (KjcOptions.numbers > 0) {
 	    print ("volatile int dummyInt;\n");
 	    print ("volatile float dummyFloat;\n");
 	}
@@ -1578,7 +1577,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//if we have the number gathering stuff on, convert each print 
 	//to a magic instruction, there are only print statements in the sink
 	//all other prints have been removed...
-	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
+	if (KjcOptions.numbers > 0) {
 	    //assign the expression to a dummy var do it does not get
 	    //optimized out...
 	    print("dummy");

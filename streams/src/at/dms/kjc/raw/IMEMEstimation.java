@@ -68,7 +68,6 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	TESTING_IMEM = true;
 	boolean fits = true;
 
-	boolean oldDecoupledValue = KjcOptions.decoupled;
 	boolean oldMagicNetValue = KjcOptions.magic_net;
 	boolean oldRateMatchValue = KjcOptions.ratematch;
 	int oldOutputsValue = KjcOptions.outputs;
@@ -90,8 +89,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
 
 	// make structures header file in this directory
 	StructureIncludeFile.doit(RawBackend.structures, dir);
-	// set decouple execution to true
-	KjcOptions.decoupled = true;
+
 	// set magic net to false
 	KjcOptions.magic_net = false;
 	//set rate match to false
@@ -154,17 +152,17 @@ public class IMEMEstimation extends EmptyStreamVisitor
 		//set the return value based on the exit code of the make 
 		fits = (jProcess.exitValue() == 0);
 	    }
-	    
-	    
+
 	    //remove the directory
- 	    {
+	    {
  		String[] cmdArray = new String[3];
  		cmdArray[0] = "rm";
  		cmdArray[1] = "-rf";
  		cmdArray[2] = dir;
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
- 	    }
+	    }
+	  
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
@@ -173,7 +171,6 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	
 
 	TESTING_IMEM = false;
-	KjcOptions.decoupled = oldDecoupledValue;
 	KjcOptions.magic_net = oldMagicNetValue;
 	KjcOptions.ratematch = oldRateMatchValue;
 	KjcOptions.outputs = oldOutputsValue;

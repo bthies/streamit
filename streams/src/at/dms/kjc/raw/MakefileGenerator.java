@@ -45,7 +45,7 @@ public class MakefileGenerator
 	    fw.write("#-*-Makefile-*-\n\n");
 	    /*
 	    if (KjcOptions.outputs < 0 &&
-		! (KjcOptions.numbers > 0 && NumberGathering.successful))
+		! (KjcOptions.numbers > 0))
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
 	    */
 	    //            fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
@@ -60,7 +60,7 @@ public class MakefileGenerator
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
 	    if (KjcOptions.outputs > 0 ||
-		KjcOptions.numbers > 0 && NumberGathering.successful ||
+		KjcOptions.numbers > 0 ||
 		KjcOptions.decoupled) {
 		fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
 	    }
@@ -160,7 +160,7 @@ public class MakefileGenerator
 	fw.write("include(\"<dev/basic.bc>\");\n");
 
 	//workaround for magic instruction support...
-	if (KjcOptions.magic_net || (KjcOptions.numbers > 0 && NumberGathering.successful)) 
+	if (KjcOptions.magic_net || KjcOptions.numbers > 0)
 	    fw.write("include(\"<dev/magic_instruction.bc>\");\n");
 	
 	//let the simulation know how many tiles are mapped to 
@@ -238,7 +238,7 @@ public class MakefileGenerator
 	
 
 	//number gathering code
-	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
+	if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {
 	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
 	    fw.write("global calculatedPrintsPerSteady = " + NumberGathering.totalPrintsPerSteady + ";\n");
 	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");

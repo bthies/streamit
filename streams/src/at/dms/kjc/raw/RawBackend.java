@@ -168,6 +168,7 @@ public class RawBackend {
 
 	    // see if we are going to overflow IMEM
 	    if (KjcOptions.unroll>1) {
+		System.out.println("Trying unroll factor " + KjcOptions.unroll);
 		fitsInIMEM = IMEMEstimation.testMe(str);
 		if (fitsInIMEM) {
 		    // if we fit, clear backup copy of stream graph
@@ -220,7 +221,6 @@ public class RawBackend {
 	
 	//Layout.handAssign(graphFlattener.top);
 	System.out.println("Assign End.");
-
 
 	//if rate matching is requested, check if we can do it
 	//if we can, then keep KjcOptions.rateMatch as true, 

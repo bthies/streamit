@@ -40,7 +40,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	topLevel.accept(new TileCode(), new HashSet(), true);
 	tiles = new HashSet();
 	//for decoupled execution the scheduler does not run
-	if (!KjcOptions.decoupled) {
+	if (!(KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) {
 	    tiles.addAll(RawBackend.simulator.initSchedules.keySet());
 	    tiles.addAll(RawBackend.simulator.steadySchedules.keySet());
 	}

@@ -31,7 +31,6 @@ public class NumberGathering extends at.dms.util.Utils
     //fields that are used by makefilegenerater
     //to produce the bC code...
     //true if we can generate code
-    public static boolean successful = false;
     public static int printsPerSteady = 0;
     public static int skipPrints = 0;
     public static FlatNode sink;
@@ -39,7 +38,6 @@ public class NumberGathering extends at.dms.util.Utils
 
     public static boolean doit(FlatNode top) 
     {
-	successful = false;
 	//find the sinks and make sure they are synchronized
 	HashSet sinks = Sink.getSinks(top);
 	//there could be multiple sinks, find one that works
@@ -108,7 +106,6 @@ public class NumberGathering extends at.dms.util.Utils
 	    //we are successsful
 	    System.out.println("Generating Number Gathering Code...");
 	    //set the globals that are read by makefilegenerator	
-	    successful = true;
 	    skipPrints = init * prints;
 	    printsPerSteady = prints * steady;
 	    //remove the prints from all other tiles
@@ -118,6 +115,8 @@ public class NumberGathering extends at.dms.util.Utils
 	    return true;
 	}
 	System.out.println("Cannot Generate Number Gathering Code.  Could not find a suitable sink...");
+	//exit the system...
+	System.exit(1);
 	return false;
     }
 

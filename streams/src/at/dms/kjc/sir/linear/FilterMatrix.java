@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.11 2002-09-23 21:26:22 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.12 2002-09-26 17:06:30 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -180,9 +180,9 @@ public class FilterMatrix {
 	// First, do some crazy bounds checking
 	// make sure that the number of rows is equal
 	if (this.internalSizeRows != sourceMatrix.internalSizeRows) {
-	    System.err.println("Args: " + argString);
-	    System.err.println("this: \n" + this);
-	    System.err.println("source:\n" + sourceMatrix);
+	    //System.err.println("Args: " + argString);
+	    //System.err.println("this: \n" + this);
+	    //System.err.println("source:\n" + sourceMatrix);
 	    throw new IllegalArgumentException("Source and destination marices don't have the same # of rows.");
 	}
 	    
@@ -205,8 +205,32 @@ public class FilterMatrix {
 	    }
 	}
     }
-				
-					       
+
+    /**
+     * Copied numRows at the thisOffset position of this filter matrix
+     * from sourceOffset of the source filter matrix.
+     **/
+    public void copyRowsAt(int thisOffset, FilterMatrix source, int sourceOffset, int numRows) {
+	if (source == null) {throw new IllegalArgumentException("null source matrix");}
+	// check bounds
+	String args = ("(thisOffset=" + thisOffset + ",sourceOffset=" +
+		       sourceOffset + ",numRows=" + numRows + ")");
+	if (this.internalSizeCols != source.internalSizeCols) {
+	    throw new IllegalArgumentException("row sizes don't match up (eg # cols are different)");
+	}
+	if (this.internalSizeRows < (thisOffset + numRows)) {
+	    throw new IllegalArgumentException("too many rows to copy -- run off end of dest." + args);
+	}
+	if (source.internalSizeRows < (sourceOffset + numRows)) {
+	    throw new IllegalArgumentException("too many rows to copy -- run off the end of source");
+	}
+	// do the copy
+	for (int i=0; i<numRows; i++) {
+	    for (int j=0; j<this.internalSizeCols; j++) {
+		this.internalMatrix[i+thisOffset][j] = source.internalMatrix[sourceOffset+i][j];
+	    }
+	}
+    }
      
 
     /**

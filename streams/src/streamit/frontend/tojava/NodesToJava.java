@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.25 2002-09-20 17:10:18 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.26 2002-09-20 17:22:06 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -20,11 +20,13 @@ public class NodesToJava implements FEVisitor
     private String streamName;
     // A string consisting of an even number of spaces.
     private String indent;
+    private boolean inFunction;
     
     public NodesToJava(StreamType st)
     {
         this.st = st;
         this.indent = "";
+        this.inFunction = false;
     }
 
     // Add two spaces to the indent.
@@ -379,6 +381,8 @@ public class NodesToJava implements FEVisitor
 
     public Object visitFunction(Function func)
     {
+        boolean wasInFunction = inFunction;
+        inFunction = true;
         String result = indent + "public ";
         if (!func.getName().equals(streamName))
             result += convertType(func.getReturnType()) + " ";
@@ -386,6 +390,7 @@ public class NodesToJava implements FEVisitor
         result += doParams(func.getParams()) + " ";
         result += (String)func.getBody().accept(this);
         result += "\n";
+        inFunction = wasInFunction;
         return result;
     }
     
@@ -581,10 +586,12 @@ public class NodesToJava implements FEVisitor
         String result = convertType(stmt.getType()) + " " + stmt.getName();
         if (stmt.getInit() != null)
             result += " = " + (String)stmt.getInit().accept(this);
-        else
+        else if (inFunction)
         {
             // If the type of the statement isn't a primitive type
-            // (or is complex), emit a constructor.
+            // (or is complex), emit a constructor.  Only do this
+            // inside a function; for other things (fields), we'll
+            // get constructor nodes in init functions.
             Type type = stmt.getType();
             if (type.isComplex() || !(type instanceof TypePrimitive))
                 result += " = " + makeConstructor(type);
@@ -601,6 +608,8 @@ public class NodesToJava implements FEVisitor
     public Object visitStreamSpec(StreamSpec spec)
     {
         String result = "";
+        boolean wasInFunction = inFunction;
+        inFunction = false;
         // Anonymous classes look different from non-anonymous ones.
         // This appears in two places: (a) as a top-level (named)
         // stream; (b) in an anonymous stream creator (SCAnon).
@@ -662,6 +671,7 @@ public class NodesToJava implements FEVisitor
         st = oldST;
         unIndent();
         result += "}\n";
+        inFunction = wasInFunction;
         return result;
     }
     

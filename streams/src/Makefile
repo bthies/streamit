@@ -1,3 +1,5 @@
+include $(STREAMIT_HOME)/misc/Makefile.vars
+
 JAVAC = jikes
 
 KOPI_SRCS = \
@@ -68,11 +70,14 @@ STREAMIT_LIBRARIES = \
 
 # these are invoked by reflection from StreaMITMain
 STREAMIT_BACKENDS = \
+  at/dms/kjc/raw/RawBackend.class \
+  at/dms/kjc/sir/lowering/Flattener.class
+ifeq ($(CAG_BUILD),1)
+STREAMIT_BACKENDS += \
   ../eclipse/grapheditor/GraphEncoder.class \
   at/dms/kjc/spacetime/SpaceTimeBackend.class \
-  at/dms/kjc/raw/RawBackend.class \
-  at/dms/kjc/cluster/ClusterBackend.class \
-  at/dms/kjc/sir/lowering/Flattener.class
+  at/dms/kjc/cluster/ClusterBackend.class
+endif
 
 JAVA_TARGET = \
   $(KOPI_TARGET) \

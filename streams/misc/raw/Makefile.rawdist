@@ -9,10 +9,12 @@
 
 #####################################
 # change these variables if necessary
-
+#REMOTE_DIST = 1
+#DISTDIR = /home/bits7/NO_BACKUP/prj/raw_dist/raw
+#DISTDIR = /u/mtaylor/bod
 DISTDIR ?= /home/pkg/brave_new_linux
 
-MASONVER ?= 0145
+MASONVER ?= 0160
 
 ############################
 # do not change what's below

@@ -34,6 +34,7 @@ public class BufferedCommunication extends RawExecutionCode
 
     public BufferedCommunication(FilterInfo filterInfo) 
     {
+	System.out.println("Generating code for " + filterInfo.filter + " using Buffered Comm.");
 	//set the unique id to append to each variable name
 	uniqueID = getUniqueID();
 	generatedVariables = new GeneratedVariables();
@@ -42,11 +43,12 @@ public class BufferedCommunication extends RawExecutionCode
 	//initWork is always called, so add one to non-2 stages
 	//init multiplicity
 	initFire = filterInfo.initMult;
-	if (!filterInfo.isTwoStage())
+	if (!filterInfo.isTwoStage()) {
 	    initFire++;
-	//convert the pops/peeks into buffer access 
-	convertCommExprs();
+	}
+	
     }
+
 
     //convert the peek and pop expressions for a filter into
     //buffer accesses, do this for all functions just in case helper
@@ -273,6 +275,10 @@ public class BufferedCommunication extends RawExecutionCode
 		decls.add(new JFieldDeclaration(null, arrayIndexVar, null, null));
 	    }
 	}
+	
+	//convert the pops/peeks into buffer access 
+	convertCommExprs();
+
 	return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
     }
 

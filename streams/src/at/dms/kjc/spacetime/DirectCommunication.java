@@ -65,11 +65,9 @@ public class DirectCommunication extends RawExecutionCode
     public DirectCommunication(FilterInfo filterInfo) 
     {
 	this.filterInfo = filterInfo;
+	System.out.println("Generating code for " + filterInfo.filter + " using Direct Comm.");
 	generatedVariables = new GeneratedVariables();
 	uniqueID = getUniqueID();
-	//convert the communication
-	//all the communication is in the work function
-	filterInfo.filter.getWork().accept(new DirectConvertCommunication());
     }
 
     public JFieldDeclaration[] getVarDecls() 
@@ -103,7 +101,10 @@ public class DirectCommunication extends RawExecutionCode
 	generatedVariables.exeIndex1 = exeIndex1Var;
 	decls.add(new JFieldDeclaration(null, exeIndex1Var, null, null));
 
-	
+	//convert the communication
+	//all the communication is in the work function
+	filter.getWork().accept(new DirectConvertCommunication());
+
 	return (JFieldDeclaration[])decls.toArray(new JFieldDeclaration[0]);
     }
 

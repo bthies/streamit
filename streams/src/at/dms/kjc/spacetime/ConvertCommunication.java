@@ -37,7 +37,7 @@ class ConvertCommunication extends SLIRReplacingVisitor
 	    new JPrefixExpression(null, 
 				  OPE_PREINC,
 				  new JFieldAccessExpression
-				  (null, null, 
+				  (null, new JThisExpression(null), 
 				   generatedVariables.recvBufferIndex.getIdent()));
 	    
 	JBitwiseExpression indexAnd = 
@@ -45,7 +45,7 @@ class ConvertCommunication extends SLIRReplacingVisitor
 				   OPE_BAND,
 				   bufferIncrement, 
 				   new JFieldAccessExpression
-				   (null, null, 
+				   (null, new JThisExpression(null),     
 				    generatedVariables.recvBufferBits.getIdent()));
 	/*
 	//create the modulo expression
@@ -60,7 +60,7 @@ class ConvertCommunication extends SLIRReplacingVisitor
 	JArrayAccessExpression bufferAccess = 
 	    new JArrayAccessExpression(null,
 				       new JFieldAccessExpression
-				       (null, null,
+				       (null, new JThisExpression(null),
 					generatedVariables.recvBuffer.getIdent()),
 				       indexAnd);
 
@@ -86,7 +86,7 @@ class ConvertCommunication extends SLIRReplacingVisitor
 	JAddExpression index = 
 	    new JAddExpression(null,
 			       new JFieldAccessExpression
-			       (null, null,
+			       (null, new JThisExpression(null),
 				generatedVariables.recvBufferIndex.getIdent()),
 			       argIncrement);
 	    
@@ -95,7 +95,7 @@ class ConvertCommunication extends SLIRReplacingVisitor
 				   OPE_BAND,
 				   index, 
 				   new JFieldAccessExpression
-				   (null, null,
+				   (null, new JThisExpression(null),
 				    generatedVariables.recvBufferBits.getIdent()));
 	 
 	/*
@@ -111,7 +111,7 @@ class ConvertCommunication extends SLIRReplacingVisitor
 	JArrayAccessExpression bufferAccess = 
 	    new JArrayAccessExpression(null,
 				       new JFieldAccessExpression
-				       (null, null, 
+				       (null, new JThisExpression(null),
 					generatedVariables.recvBuffer.getIdent()),
 				       indexAnd);
 

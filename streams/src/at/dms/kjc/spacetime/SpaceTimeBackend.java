@@ -13,6 +13,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
 import java.util.*;
+import at.dms.util.SIRPrinter;
 
 /**
  * The entry to the space time backend for raw.
@@ -44,9 +45,6 @@ public class SpaceTimeBackend
 	//create the RawChip
 	RawChip rawChip = new RawChip(rawRows, rawColumns);
 
-	//this must be run now, other pass rely on it...
-	RenameAll.renameOverAllFilters(str);
-	
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
 		
@@ -72,6 +70,22 @@ public class SpaceTimeBackend
 	Lifter.liftAggressiveSync(str);
        	StreamItDot.printGraph(str, "before.dot");
 
+	str = Partitioner.doit(str, 4);
+
+	//VarDecl Raise to move array assignments up
+	new VarDeclRaiser().raiseVars(str);
+	
+	//VarDecl Raise to move peek index up so
+	//constant prop propagates the peek buffer index
+	new VarDeclRaiser().raiseVars(str);
+
+	//this must be run now, other pass rely on it...
+	RenameAll.renameOverAllFilters(str);
+	
+	//SIRPrinter printer1 = new SIRPrinter();
+	//IterFactory.createIter(str).accept(printer1);
+	//printer1.close();
+	
 	//jasperln's Stuff
 	FlattenGraph.flattenGraph(str);
 	UnflatFilter[] topNodes=FlattenGraph.getTopLevelNodes();

@@ -42,14 +42,14 @@ public class ConvertCommunicationSimple extends SLIRReplacingVisitor
 	    new JPrefixExpression(null, 
 				  OPE_PREINC,
 				  new JFieldAccessExpression
-				  (null, null, 
+				  (null, new JThisExpression(null), 
 				   generatedVariables.simpleIndex.getIdent()));
 	    
 	//create the array access expression
 	JArrayAccessExpression bufferAccess = 
 	    new JArrayAccessExpression(null,
 				       new JFieldAccessExpression
-				       (null, null, 
+				       (null, new JThisExpression(null),
 					generatedVariables.recvBuffer.getIdent()),
 				       increment);
 
@@ -75,7 +75,7 @@ public class ConvertCommunicationSimple extends SLIRReplacingVisitor
 	JAddExpression index = 
 	    new JAddExpression(null,
 			       new JFieldAccessExpression
-			       (null, null,
+			       (null, new JThisExpression(null),  
 				generatedVariables.simpleIndex.getIdent()),
 			       argIncrement);
 
@@ -83,7 +83,7 @@ public class ConvertCommunicationSimple extends SLIRReplacingVisitor
 	JArrayAccessExpression bufferAccess = 
 	    new JArrayAccessExpression(null,
 				       new JFieldAccessExpression
-				       (null, null, 
+				       (null, new JThisExpression(null), 
 					generatedVariables.recvBuffer.getIdent()),
 				       index);
 

@@ -30,3 +30,6 @@ FFT5:
  - fine-grained version, more elegant than FFT4 (and with correct weights)
  - inputs in natural order, outputs in natural order (that is, it
    includes a bit-reverse stage).
+
+FFT6:
+ - same as fft2 but uses complex instead of interleaved floats

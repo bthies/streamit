@@ -1,5 +1,131 @@
+/**
+ *  StGsmDecoder:  
+ *  Decoder portion of GSM Vocoder, java/streamit implementation
+ *  Uses GSM Spec 06.10
+ *  - J. Wong
+ */
+
+
 import streamit.*;
 import java.lang.*;
+import java.io.*;
+import java.lang.reflect.*;
+
+        
+class DecoderInput
+{
+  //member variables!
+  public int[] mLarParameters = new int[8];
+  public int[] mLtpOffset = new int[4];
+  public int[] mLtpGain = new int[4];
+  public int[] mRpeGridPosition = new int[4];
+  public int[] mRpeMagnitude = new int[4];
+  public int[][] mSequence = new int[4][13];
+
+  public int[] readFile() throws IOException, FileNotFoundException
+  {
+    
+    
+    File f1 = new File("SpeechEncoderOutputBits1");
+    FileReader fr = new FileReader(f1);
+    BufferedReader br = new BufferedReader(fr);
+    //DataInputStream data = new DataInputStream(new FileInputStream(f1));
+    //read the sucker!
+    //boolean[] input = new boolean[4];
+    int[] input = new int[151840];
+    for(int i = 0; i < input.length; i++)
+      {
+	String j = br.readLine();
+	
+		if (j.equals("1"))
+		  {
+		    input[i] = 1;
+		  }
+		else
+		  { 
+		    input[i] = 0;
+		  }		
+		
+      }
+    br.close();	
+    return input;
+    
+  }
+  
+  public void getParameters(int[] input)
+  {
+    int input_index = 0;
+    int num_bits = 0;
+    for(int i = 0; i < 8; i++)
+      {
+	
+	switch(i)
+	  {
+	  case 0:
+	  case 1:      num_bits = 6;
+	    break;
+	  case 2:      
+	  case 3:      num_bits = 5;
+	    break;
+	  case 4:      
+	  case 5:      num_bits = 4;
+	    break;
+	  case 6:      
+	  case 7:      num_bits = 3;
+	    break;
+	  }
+	
+	  
+	mLarParameters[i] = 0;
+	for (int j = 0; j < num_bits; j++, input_index++)
+	  {
+	    mLarParameters[i] |= input[input_index] << (num_bits - 1 - i);
+	  }
+      }
+    
+    //Sub-frames 1 through 4!
+    for (int k = 0; k < 4; k++)
+      {
+	mLtpOffset[k] = 0;
+	for (int l = 0; l < 7; l++)
+	  {
+	    mLtpOffset[k] |= input[input_index] << (6 - l);
+	    input_index++;
+	  }
+	mLtpGain[k] = 0;
+	for (int l = 0; l < 2; l++)
+	  {
+	    mLtpGain[k] |= input[input_index] << (1 - l);
+	    input_index++;
+	  }
+	mRpeGridPosition[k] = 0;
+	for (int l = 0; l < 2; l++)
+	  {
+	    mRpeGridPosition[k] |= input[input_index] << (1 - l);
+	    input_index++;
+	  }
+	mRpeMagnitude[k] = 0;
+	for (int l = 0; l < 6; l++)
+	  {
+	    mRpeMagnitude[k] |= input[input_index] << (5 - l);
+	    input_index++;
+	  }
+	for(int l = 0; l < 13; l++)
+	  {
+	    mSequence[k][l] = 0;
+	    for (int m = 0; m < 3; m++)
+	      {
+		mSequence[k][l] |= input[input_index] << (2 - m);
+		input_index++;
+	      }
+	    
+	  }
+      }
+    //System.out.println(input_index);
+    //System.out.println(input.length - input_index);
+    
+  }
+}
 
 
 class Helper
@@ -24,6 +150,7 @@ class Helper
     }
     
     static short gsm_add(short a, short b)
+
     {
 	long ltmp = (long) a + (long) b;
 	if (ltmp >= 32767)
@@ -323,7 +450,8 @@ class ShortTermSynthFilter extends Filter
     static short[] MIC = {-32, -32, -16, -16, -8, -8, -4, -4};
     static short[] B = {0, 0, 2048, -2560, 94, -1792};
     
-    short[] mdrp;   //input
+    short[] mdrpin; //input
+    short[] mdrp;   //shortened input
     short[] mLARc;  //input
     short[] mLARpp; //intermediary
     short[] mprevLARpp; //intermediary
@@ -335,6 +463,7 @@ class ShortTermSynthFilter extends Filter
 
     public void init() 
     {
+	mdrpin = new short[160];
 	mdrp = new short[40];
 	mLARc = new short[8];
 	mLARpp = new short[8];
@@ -356,14 +485,20 @@ class ShortTermSynthFilter extends Filter
 
     public void work() 
     {
+	for (short i = 0; i < mdrpin.length; i++)
+	{
+	    mdrpin[i] = input.popShort();
+	}
+	//truncate to only get mdrpin[121...160]
+	for (int i = 0; i < mdrp.length; i++)
+	{
+	    mdrp[i] = mdrpin[i + 121];
+	}
 	for (short i = 0; i < mLARc.length; i++)
 	{
 	    mLARc[i] = input.popShort();   //fix inputs!!
 	}
-	for (short i = 0; i < mdrp.length; i++)
-	{
-	    mdrp[i] = input.popShort();
-	}
+	
 	
 	//Decoding of the coded Log-Area ratios:
 	for (short i = 0; i < 8; i++)

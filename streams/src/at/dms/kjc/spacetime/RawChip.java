@@ -101,6 +101,33 @@ public class RawChip {
 	return null;
     }
 
+    //Same as getOPort(ComputeNode from, ComputeNode to) except use static net 2
+    public SwitchOPort getOPort2(ComputeNode from, ComputeNode to) {
+	System.out.println("Get Out: "+from+" "+to);
+	if(from==to)
+	    return SwitchOPort.CSTI2;
+	if(from.getX()==to.getX()) {
+	    int dir=from.getY()-to.getY();
+	    if(dir==-1)
+		return SwitchOPort.S2;
+	    else if (dir == 1)
+		return SwitchOPort.N2;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	if(from.getY()==to.getY()) {
+	    int dir=from.getX()-to.getX();
+	    if(dir==-1) 
+		return SwitchOPort.E2;
+	    else if (dir == 1)
+		return SwitchOPort.W2;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	Utils.fail("calling getDirection on non-neighbors");
+	return null;
+    }
+
     //Same as getDirection(ComputeNode from, ComputeNode to) except returns SwitchIPort
     public SwitchIPort getIPort(ComputeNode from, ComputeNode to) {
 	System.out.println("Get In: "+from+" "+to);
@@ -121,6 +148,33 @@ public class RawChip {
 		return SwitchIPort.W;
 	    else if (dir == 1)
 		return SwitchIPort.E;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	Utils.fail("calling getDirection on non-neighbors");
+	return null;
+    }
+
+    //Same as getIPort2(ComputeNode from, ComputeNode to) except returns static net 2 port
+    public SwitchIPort getIPort2(ComputeNode from, ComputeNode to) {
+	System.out.println("Get In: "+from+" "+to);
+	if(from==to)
+	    return SwitchIPort.CSTO;
+	if(from.getX()==to.getX()) {
+	    int dir=from.getY()-to.getY();
+	    if(dir==-1)
+		return SwitchIPort.N2;
+	    else if (dir == 1)
+		return SwitchIPort.S2;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	if(from.getY()==to.getY()) {
+	    int dir=from.getX()-to.getX();
+	    if(dir==-1) 
+		return SwitchIPort.W2;
+	    else if (dir == 1)
+		return SwitchIPort.E2;
 	    else
 		Utils.fail("calling getDirection on non-neighbors");
 	}

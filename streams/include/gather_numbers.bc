@@ -37,6 +37,9 @@ global gAdminCountTotal = 0;
 global gAluCountTotal = 0;
 global totalCycles = 0;
 global gNumberDone = 0;
+global gMaxCyclesPerSteady = 0;
+global gMinCyclesPerSteady = -1;
+global gLastFiveCycles = 0;
 
 fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 {
@@ -89,6 +92,9 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	fprintf(outputFile, "Total Cycles: %d\n", totalCycles);
 	fprintf(outputFile, "Total Steady State Outputs: %d\n", gSteadyStatePrints);
 	fprintf(outputFile, "Avg Cycles per Steady-State: %d\n", totalCycles/quitAfter);
+	fprintf(outputFile, "Max Cycles per Steady-State: %d\n", gMaxCyclesPerSteady);
+	fprintf(outputFile, "Min Cycles per Steady-State: %d\n", gMinCyclesPerSteady);
+	fprintf(outputFile, "Avg Cycles for Last 5 Steady-States: %d\n", gLastFiveCycles/5);
 	fprintf(outputFile, "Thruput per 10^5: %d\n", 
 		(100000) / (totalCycles/gSteadyStatePrints));
 	fprintf(outputFile, "Total Non-Blocked Cycles: %d\n\n", 
@@ -123,11 +129,15 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	//print the numbers in a nicer format for automatic
 	//extracting
 	fprintf(outputFile,
-		"\n# format: tiles in config:tiles assigned:cycles/steady:steadyprints:thruput:MFLOPS:");
+		"tiles in config;tiles assigned;avg cycles/steady;max cycles/steady;avg cyc/ss last 5 ss;");
 	fprintf(outputFile, 
-		"instr issued:fpu:mem:branch:admin:alu:max instr issued:\n");
-	fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n",
+		"min cycles/steady;prints;thruput;MFLOPS;");
+	fprintf(outputFile, 
+		"instr issued;fpu;mem;branch;admin;alu;max instr issued;\n");
+	fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d%;%d;%d;%d\n",
 		gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter,
+		gMaxCyclesPerSteady, gMinCyclesPerSteady,
+		(gLastFiveCycles/5), 
 		calculatedPrintsPerSteady,
 		((100000) / (totalCycles/gSteadyStatePrints)),
 		(250*gFpuCountTotal)/totalCycles,
@@ -139,12 +149,12 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	//we are done getting the numbers, deregister the handler.
 	EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
 	//now get the blood graph	   
-	setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
+//	setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
 	
 	//this should exit!!!!!
-	//gInterrupted = 1;
+	gInterrupted = 1;
 	//this will exit the thread
-	//exit_now(0);
+	exit_now(0);
       }
       else if (steadyStateExecutions > 1) {
 	local dif = time_lo - lastSteadyStartCycle; 
@@ -152,6 +162,15 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	//from now on, we are in the steady state
 	gSteadyState = 1;
 
+	if (steadyStateExecutions > quitAfter - 4) {
+	  gLastFiveCycles += dif;
+	}
+
+	if (dif > gMaxCyclesPerSteady)
+	  gMaxCyclesPerSteady = dif;
+	
+	if (dif < gMinCyclesPerSteady || gMinCyclesPerSteady < 0)
+	  gMinCyclesPerSteady = dif;
 
 	totalCycles += dif;
 	if (totalCycles < 0) {

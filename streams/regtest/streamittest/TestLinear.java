@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.16 2003-04-12 17:51:21 aalamb Exp $
+ * $Id: TestLinear.java,v 1.17 2003-06-03 12:47:58 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -20,8 +20,6 @@ public class TestLinear extends TestCase {
 
     public static Test suite() {
 	TestSuite suite = new TestSuite();
-
-	suite.addTest(new TestLinear("testFFT"));
 
 	suite.addTest(new TestLinear("testSimple"));
 	suite.addTest(new TestLinear("testComplexNumberCreationAndAccess"));
@@ -1083,76 +1081,6 @@ public class TestLinear extends TestCase {
 
 
 
-    /** test the javafied version of the fft implementation that we use in C **/
-    public void testFFT() {
-	float[] in = new float[16];
-	in[0]=0.000000f;
-	in[1]=0.000000f;
-	in[2]=0.000000f;
-	in[3]=0.000000f;
-	in[4]=0.000000f;
-	in[5]=1.000000f;
-	in[6]=1.000000f;
-	in[7]=1.000000f;
-	in[8]=1.000000f;
-	in[9]=1.000000f;
-	in[10]=1.000000f;
-	in[11]=1.000000f;
-	in[12]=0.000000f;
-	in[13]=0.000000f;
-	in[14]=0.000000f;
-	in[15]=0.000000f;
-	float[] out_r = new float[16];
-	out_r[0]=7.000000f;
-	out_r[1]=-5.027339f;
-	out_r[2]=1.000000f;
-	out_r[3]=1.496606f;
-	out_r[4]=-1.000000f;
-	out_r[5]=-0.668179f;
-	out_r[6]=1.000000f;
-	out_r[7]=0.198912f;
-	out_r[8]=-1.000000f;
-	out_r[9]=0.198912f;
-	out_r[10]=1.000000f;
-	out_r[11]=-0.668179f;
-	out_r[12]=-1.000000f;
-	out_r[13]=1.496606f;
-	out_r[14]=1.000000f;
-	out_r[15]=-5.027339f;
-	float[] out_i = new float[16];
-	out_i[0]=-0.000000f;
-	out_i[1]=-0.000000f;
-	out_i[2]=0.000000f;
-	out_i[3]=0.000000f;
-	out_i[4]=-0.000000f;
-	out_i[5]=0.000000f;
-	out_i[6]=0.000000f;
-	out_i[7]=-0.000000f;
-	out_i[8]=0.000000f;
-	out_i[9]=0.000000f;
-	out_i[10]=0.000000f;
-	out_i[11]=-0.000000f;
-	out_i[12]=-0.000000f;
-	out_i[13]=-0.000000f;
-	out_i[14]=0.000000f;
-	out_i[15]=0.000000f;
-	
-	/* compute the fft with our javafied version, and compare against the output of the c program. */
-	float[] java_output_r = new float[16];
-	float[] java_output_i = new float[16];
-	LinearFFT.fft_float(16, false, in, null, java_output_r, java_output_i); /* forward transform */
-	
-	compareArrays(out_r, java_output_r);
-	compareArrays(out_i, java_output_i);
-
-	/* just for chuckles, do the inverse fft to get back in */
-	float[] recovered_in_r = new float[16];
-	float[] recovered_in_i = new float[16];
-	LinearFFT.fft_float(16, true, java_output_r, java_output_i, recovered_in_r, recovered_in_i);
-
-	compareArrays(in, recovered_in_r);
-	compareArrays(new float[16], recovered_in_i);
-    }
 
     /** compares array */
     private void compareArrays(float[] arr1, float[] arr2) {

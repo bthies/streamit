@@ -82,6 +82,7 @@ public class FuseSplit {
     {
 	// check the parent
 	if (!(sj.getParent() instanceof SIRPipeline)) {
+	    System.err.println("Didn't fuse SJ because parent is of " + sj.getParent().getClass());
 	    return sj;
 	}
         // Check the ratios.
@@ -94,6 +95,7 @@ public class FuseSplit {
 	    // don't allow two-stage filters, since we aren't dealing
 	    // with how to fuse their initWork functions.
             if (filter instanceof SIRTwoStageFilter) {
+		System.err.println("Didn't fuse SJ because this child is a 2-stage filter: " + filter);
                 return sj;
 	    }
         }

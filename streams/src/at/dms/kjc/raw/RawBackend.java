@@ -69,8 +69,6 @@ public class RawBackend {
 			     StreamItOptions.rawColumns);
 	}
 
-	str.getInit().accept(new VarDeclRaiser()); 
-
 	new VarDeclRaiser().raiseVars(str);
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);

@@ -134,7 +134,7 @@ public class LinearPartitioner {
 	StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
 	tracingBack = false;
 	// make dot graph of partitions
-	PartitionDot.printPartitionGraph(str, "partitions.dot", LDPConfig.partitions);
+	PartitionDot.printPartitionGraph(str, "linear-partitions.dot", LDPConfig.partitions);
 	return result;
     }
 

@@ -27,10 +27,12 @@ public class MagicDramStore extends MagicDramInstruction
 		if (out.isFP()) {
 		    sb.append("\tfprintf(" + Util.getFileHandle(out) + 
 			      ", \"%f\\n\", double(temp));\n");
+		    sb.append("\tfflush(" + Util.getFileHandle(out) + ");\n");
 		    sb.append("\tprintf(\"[%d]: %f\\n\", port, double(temp));\n");
 		}
 		else {
 		    sb.append("\tfprintf(" + Util.getFileHandle(out) + ", \"%d\\n\", temp);\n");
+		    sb.append("\tfflush(" + Util.getFileHandle(out) + ");\n");
 		    sb.append("\tprintf(\"[%d]: %d\\n\", port, temp);\n");
 		}
 		

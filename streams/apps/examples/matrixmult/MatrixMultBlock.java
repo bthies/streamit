@@ -5,7 +5,7 @@ import streamit.Filter;
 import streamit.Channel;
 import streamit.Identity;
 
-/* $Id: MatrixMultBlock.java,v 1.2 2002-07-28 18:32:22 karczma Exp $ */
+/* $Id: MatrixMultBlock.java,v 1.3 2002-07-28 20:00:08 jasperln Exp $ */
 
 public class MatrixMultBlock extends StreamIt
 {
@@ -145,10 +145,10 @@ class BlockAdd extends Filter
         x = _x;
         y = _y;
         times = _times;
-        result = new float[x][y];
+        result = new float[_x][_y];
 
-        input = new Channel(Float.TYPE, x * y * times);
-        output = new Channel(Float.TYPE, x * y);
+        input = new Channel(Float.TYPE, _x * _y * _times);
+        output = new Channel(Float.TYPE, _x * _y);
     }
 
     public void work()
@@ -220,8 +220,8 @@ class BlockMultiply extends Filter
         x1 = _x1;
         y1 = _y1;
 
-        input = new Channel(Float.TYPE, x0 * y0 + x1 * y1);
-        output = new Channel(Float.TYPE, y0 * x1);
+        input = new Channel(Float.TYPE, _x0 * _y0 + _x1 * _y1);
+        output = new Channel(Float.TYPE, _y0 * _x1);
     }
 
     public void work()
@@ -315,9 +315,10 @@ class BlockMatrixFloatPrinter extends Filter
             {
                 float data = input.popFloat ();
                 output.pushFloat (data);
-                System.out.print(data + " ");
+                System.out.println(data);
             }
-            System.out.println();
+            //System.out.println();
         }
     }
 }
+

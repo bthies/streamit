@@ -32,8 +32,9 @@ class master_server {
   node_info *connect(unsigned ip);
   vector<int> list(node_info *node);
 
-  int pause(node_info *node, int id);
-  int restart(node_info *node, int id);
+  int pause_proper(node_info *node, int id);
+  int pause_any(node_info *node, int id);
+  int resume(node_info *node, int id);
 
   vector<int> indata(node_info *node, int id);
   vector<int> outdata(node_info *node, int id);

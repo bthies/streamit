@@ -10,19 +10,19 @@ int thread_info::get_thread_id() {
 }
 
 
-void thread_info::add_incoming_data_connection(int id){
-  incoming_data.push_back(id);
+void thread_info::add_incoming_data_connection(connection_info *info){
+  incoming_data.push_back(info);
 }
 
-void thread_info::add_outgoing_data_connection(int id){
-  outgoing_data.push_back(id);
+void thread_info::add_outgoing_data_connection(connection_info *info){
+  outgoing_data.push_back(info);
 }
 
-vector<int> thread_info::get_incoming_data_connections() {
+vector<connection_info*> thread_info::get_incoming_data_connections() {
   return incoming_data;
 }
 
-vector<int> thread_info::get_outgoing_data_connections() {
+vector<connection_info*> thread_info::get_outgoing_data_connections() {
   return outgoing_data;
 }
 

@@ -18,12 +18,16 @@ mysocket *node_info::get_socket() {
 void master_server::print_commands() {
   printf("\n");
   printf("commands:\n");
-  printf("  connect <hostname>\n");
-  printf("  pause   <thread_id>\n");
-  printf("  restart <thread_id>\n");
+  printf("  connect   <hostname>\n");
   printf("\n");
-  printf("  indata <thread_id> - lists incoming data links\n");
-  printf("  outdata <thread_id> - lists outbound data links\n");
+  printf("  pause     <thread_id> - pause a thread between iterations (might\n");
+  printf("                          deadlock if pause more than one thread)\n");
+  printf("  pause-any <thread_id> - pause a thread between iterations or\n");
+  printf("                          during an I/O operation\n");
+  printf("  resume    <thread_id> - resume a thread\n");
+  printf("\n");
+  printf("  indata <thread_id>    - lists incoming data links\n");
+  printf("  outdata <thread_id>   - lists outbound data links\n");
   printf("\n");
 }
 
@@ -64,20 +68,30 @@ vector<int> master_server::list(node_info *node) {
 }
 
 
-int master_server::pause(node_info *node, int id) {
+int master_server::pause_proper(node_info *node, int id) {
   
   mysocket *socket = node->get_socket();  
-  socket->write_int(PAUSE_COMMAND);
+  socket->write_int(PAUSE_PROPER_COMMAND);
   socket->write_int(id);
 
   return socket->read_int();
 }
 
 
-int master_server::restart(node_info *node, int id) {
+int master_server::pause_any(node_info *node, int id) {
   
   mysocket *socket = node->get_socket();  
-  socket->write_int(RESTART_COMMAND);
+  socket->write_int(PAUSE_ANY_COMMAND);
+  socket->write_int(id);
+
+  return socket->read_int();
+}
+
+
+int master_server::resume(node_info *node, int id) {
+  
+  mysocket *socket = node->get_socket();  
+  socket->write_int(RESUME_COMMAND);
   socket->write_int(id);
 
   return socket->read_int();
@@ -167,15 +181,37 @@ void master_server::process_command(char *cmd) {
     } else {
 
       int retval;
-      retval = pause(node, id);
+      retval = pause_proper(node, id);
       printf("retval: %d\n", retval);	
       
     }      
   }
 
-  if (clen >= 8 && strncmp("restart ", cmd, 8) == 0) {
+
+  if (clen >= 10 && strncmp("pause-any ", cmd, 10) == 0) {
     
-    char *rest = cmd + 8;
+    char *rest = cmd + 10; 
+    int id;
+    sscanf(rest, "%d", &id);
+    
+    node_info *node = node_map[id];
+    
+    if (node == NULL) {
+      
+      printf("ERROR: Thread not found.\n");
+      
+    } else {
+
+      int retval;
+      retval = pause_any(node, id);
+      printf("retval: %d\n", retval);	
+      
+    }      
+  }
+
+  if (clen >= 7 && strncmp("resume ", cmd, 7) == 0) {
+    
+    char *rest = cmd + 7;
     int id;
     sscanf(rest, "%d", &id);
     
@@ -188,7 +224,7 @@ void master_server::process_command(char *cmd) {
     } else {
       
       int retval;
-      retval = restart(node, id);
+      retval = resume(node, id);
       printf("retval: %d\n", retval);	
       
     }      

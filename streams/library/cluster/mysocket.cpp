@@ -54,8 +54,9 @@ void print_ip(FILE *f, unsigned ip) {
 }
 
 
-mysocket::mysocket(int s) {
+mysocket::mysocket(int s, void (*check_thread_status_during_io)() = NULL) {
   fd = s;
+  check_thread_fptr = check_thread_status_during_io;
 }
 
 
@@ -148,12 +149,19 @@ int mysocket::write_chunk(char *buf, int len) {
     FD_ZERO(&set);
     FD_SET(fd, &set);
     
-    rwait.tv_sec = 1;
-    rwait.tv_usec = 0;
+    rwait.tv_sec = 0;
+    rwait.tv_usec = 100000; // 1/10th of a second
     
-    if (select(fd + 1, NULL, &set, NULL, &rwait) > 0) {
-      
-      int res = write(fd, buf + done, len - done);
+    int select_retval = select(fd + 1, NULL, &set, NULL, &rwait);
+
+    if (select_retval == 0) {
+
+      if (check_thread_fptr != NULL) check_thread_fptr();    
+    }
+
+    if (select_retval > 0) {
+
+       int res = write(fd, buf + done, len - done);
 
       if (res > 0) done += res;
     }
@@ -205,13 +213,20 @@ int mysocket::read_chunk(char *buf, int len) {
     FD_ZERO(&set);
     FD_SET(fd, &set);
     
-    rwait.tv_sec = 1;
-    rwait.tv_usec = 0;
+    rwait.tv_sec = 0;
+    rwait.tv_usec = 100000; // 1/10th of a second
+
+    int select_retval = select(fd + 1, &set, NULL, NULL, &rwait);
+
+    if (select_retval == 0) {
+      if (check_thread_fptr != NULL) check_thread_fptr(); 
     
-    if (select(fd + 1, &set, NULL, NULL, &rwait) > 0) {
+    }
+    
+    if (select_retval > 0) {
       
       //printf("read_chunk :: select returns true\n");
-      
+
       retval = read(fd, buf + done, len - done);
 
       if (retval == 0) {

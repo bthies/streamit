@@ -17,13 +17,15 @@ class mysocket {
   static int total_data_received;
   static int total_data_sent;
 
+  void (*check_thread_fptr)();
+
  protected:
   void set_socket(int s) { fd = s; }
 
  public:
 
   mysocket() {}
-  mysocket(int s);
+  mysocket(int s, void (*check_thread_status_during_io)() = NULL);
 
   int eof();
   void close();

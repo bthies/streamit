@@ -41,6 +41,7 @@ public class RawBackend {
 
 	structures = structs;
 	
+	Flattener.enableUnrollIfLinear();
 	createStructuresIncludeFile(structures);
 
 	// set number of columns/rows
@@ -85,6 +86,8 @@ public class RawBackend {
 	    //new BlockFlattener().flattenBlocks(str);
 	    //new BranchAnalyzer().analyzeBranches(str);
 	}
+
+	Flattener.doLinearAnalysis(str);
 
 	StreamItDot.printGraph(str, "before.dot");
 

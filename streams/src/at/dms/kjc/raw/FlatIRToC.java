@@ -1202,7 +1202,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    else if (left instanceof JLocalVariableExpression) 
 		ident = ((JLocalVariableExpression)left).getVariable().getIdent();
 	    else 
-		Utils.fail("Assigning an array to an unsupported expression");
+		Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
 	    
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //if we cannot find the dim, just create a pointer copy

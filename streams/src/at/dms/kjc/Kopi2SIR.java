@@ -67,6 +67,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //stores strings of the stream names
     private LinkedList searchList;
 
+    //Array of the parameters of the last nonanonymous method
+    //Used to correctly handle their reduction in anonymous classes
+    private JFormalParameter[] params;
+
+    //Array of names of the parameters
+    private String[] paramNames;
+
+    //Keeps track if current class is anonymous
+    private boolean anonCreation;
+
     //Uncomment the println for debugging
     private void printMe(String str) {
 	// System.out.println(str);
@@ -411,21 +421,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	/* The current SIR Operator we are creating */
 	SIROperator current;
 	SIRStream oldParentStream = parentStream;
-	/* true if this class was created with an anonymous creation */
-	boolean anonCreation = false;
 	
 	blockStart("ClassDeclaration", self);
 	printMe("Class Name: " + ident);
 	printMe(self.getSourceClass().getSuperClass().getIdent());
-	
+
 	if (ident.endsWith("Portal"))
-	return null;
-	
-	// if the name of the class being declared is the same
-	// as the name of the superclass then it is anonymous
+	    return null;
+
+	boolean saveAnon=anonCreation;
 	if (self.getSourceClass().getSuperClass().getIdent().equals(ident))
 	    anonCreation = true;
-
+	else
+	    anonCreation = false;
+	
 	// create a new SIROperator
 	current = newSIROP(self);
 
@@ -450,16 +459,25 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	/* Perform any operations needed after the childern are visited */
 	postVisit(current);
 
+	// if the name of the class being declared is the same
+	// as the name of the superclass then it is anonymous
+	/*if (self.getSourceClass().getSuperClass().getIdent().equals(ident))
+	  anonCreation = true;
+	  else
+	  anonCreation = false;*/
+
 	/*
 	  if this is not an anonymous creation add the SIR op to the 
 	   "symbol table" 
 	*/
-	if (!anonCreation)
+	if (!anonCreation) {
 	    addVisitedOp(ident, current);
+	}
 	     
 	parentStream = oldParentStream;
 	printMe( "Out " + self.getSourceClass().getSuperClass().getIdent()
 			    + num);
+	anonCreation=saveAnon;
 	return current;
     }
 
@@ -672,8 +690,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    return self;
 	}
 
-	for (int i = 0; i < parameters.length; i++)
+	JFormalParameter[] saveParams=params;
+	String[] saveNames=paramNames;
+	if(!anonCreation) {
+	    params=parameters;
+	    paramNames=new String[params.length];
+	    for(int i=0;i<params.length;i++)
+		paramNames[i]=CSourceClass.varName(params[i]);
+	}
+	for (int i = 0; i < parameters.length; i++) {
             trash = parameters[i].accept(this);
+	}
         
 	body = (JBlock)body.accept(this);
 	
@@ -734,7 +761,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 								       body,
 								       null,
 								       null));
-	
+
+	params=saveParams;
+	paramNames=saveNames;
 	return self;
     }
     
@@ -788,7 +817,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
          JVariableDefinition[] vars) 
     {
         blockStart("VariableDeclarationStatement", self);
-        
 	for (int i = 0; i < vars.length; i++) {
             vars[i] = (JVariableDefinition)vars[i].accept(this);	
 	}
@@ -1721,7 +1749,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 				   "arg to setSplitter must be a method call");
 
 	JMethodCallExpression splitterType = (JMethodCallExpression)type;
-	
+	JExpression[] args=splitterType.getArgs();
+	JExpression[] newArgs=new JExpression[args.length];
+	for(int i=0;i<args.length;i++)
+	    newArgs[i]=(JExpression)args[i].accept(this);
+	splitterType.setArgs(newArgs);
+	    
 	SIRSplitter splitter = null;
 
 	//build a temporary splitter just to get the type from later
@@ -1757,6 +1790,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 				   "arg to setJoiner must be a method call");
 
 	JMethodCallExpression joiner = (JMethodCallExpression)type;
+	JExpression[] args=joiner.getArgs();
+	JExpression[] newArgs=new JExpression[args.length];
+	for(int i=0;i<args.length;i++)
+	    newArgs[i]=(JExpression)args[i].accept(this);
+	joiner.setArgs(newArgs);
 	SIRJoiner joinType = null;
 
 	if (joiner.getIdent().equals("ROUND_ROBIN")) {
@@ -1863,6 +1901,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
         blockStart("FieldExpression", self);
 	//return a string if this is a field expression that accesses the type
 	//argument in a channel instaniation or SIRFile* new expression
+	
+	if(anonCreation) {
+	    for(int i=0;i<params.length;i++) {
+		if(self.ident.equals(paramNames[i])) {
+		    return new JLocalVariableExpression(params[i].getTokenReference(),params[i]);
+		}
+	    }
+	}
 	if (supportedType(left.getType().getCClass().getIdent())) {
 	    return new JStringLiteral(null, left.getType().getCClass().getIdent());
 	}

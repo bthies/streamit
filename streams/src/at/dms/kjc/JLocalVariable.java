@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.5 2002-03-07 01:45:42 thies Exp $
+ * $Id: JLocalVariable.java,v 1.6 2002-06-14 14:13:05 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -114,6 +114,10 @@ public abstract class JLocalVariable extends JPhylum {
     return name;
   }
 
+    public String toString() {
+	return "JLocalVariable:"+name+index;
+    }
+
     public void setIdent(String name) {
 	this.name = name;
     }
@@ -210,8 +214,13 @@ public abstract class JLocalVariable extends JPhylum {
 
   public boolean equals(Object o) {
     return o instanceof JLocalVariable &&
-      index == ((JLocalVariable)o).index;
+	index == ((JLocalVariable)o).index&&
+	name.equals(((JLocalVariable)o).name);
   }
+
+    public int hashCode() {
+	return index+17*name.hashCode();
+    }
 
   // ----------------------------------------------------------------------
   // CODE GENERATION

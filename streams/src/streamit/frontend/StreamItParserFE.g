@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.43 2003-10-09 19:50:53 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.44 2003-10-14 19:10:40 dmaze Exp $
  */
 
 header {
@@ -60,6 +60,20 @@ options {
 		if (col == 0) col = -1;
 		return new FEContext(getFilename(), line, col);
 	}
+
+	private boolean hasError = false;
+
+	public void reportError(RecognitionException ex)
+	{
+		hasError = true;
+		super.reportError(ex);
+	}
+
+	public void  reportError(String s)
+	{
+		hasError = true;
+		super.reportError(s);
+	}
 }
 
 program	returns [Program p]
@@ -70,7 +84,7 @@ program	returns [Program p]
 		)*
 		EOF
 		// Can get away with no context here.
-		{ p = new Program(null, streams, structs); }
+		{ if (!hasError) p = new Program(null, streams, structs); }
 	;
 
 stream_decl returns [StreamSpec ss] { ss = null; StreamType st; }

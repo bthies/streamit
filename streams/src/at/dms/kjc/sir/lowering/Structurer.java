@@ -252,8 +252,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			      SIRStream parent,
 			      SIRSplitType type,
 			      int[] weights) {
-	// create struct type
-	createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
+	// create struct type (no - not needed anymore by runtime)
+	// createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
     }
   
     /* visit a joiner */
@@ -261,8 +261,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			    SIRStream parent,
 			    SIRJoinType type,
 			    int[] weights) {
-	// create struct type
-	createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
+	// create struct type (no - not needed anymore by runtime)
+	// createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
     }
 
     /**

@@ -12,9 +12,9 @@ import at.dms.compiler.*;
 public class SIRRegReceiverStatement extends JStatement {
 
     /**
-     * The portal to register with.
+     * The name of the portal to register with.
      */
-    private SIRPortal portal;
+    private String portal;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS

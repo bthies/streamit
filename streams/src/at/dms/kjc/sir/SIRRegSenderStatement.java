@@ -12,9 +12,9 @@ import at.dms.compiler.*;
 public class SIRRegSenderStatement extends JStatement {
 
     /**
-     * The portal to register with.
+     * The name of the portal to register with.
      */
-    private SIRPortal portal;
+    private String portal;
     /**
      * The latency to register with.  
      */

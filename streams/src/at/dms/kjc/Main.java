@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.10 2002-07-27 22:16:07 mgordon Exp $
+ * $Id: Main.java,v 1.11 2002-07-29 10:59:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -169,6 +169,7 @@ public class Main extends Compiler {
 	StreamItOptions.rawRows = StreamItOptions.rawColumns = options.raw;
 	StreamItOptions.sync = options.sync;
 	StreamItOptions.ratematch = options.ratematch;
+	StreamItOptions.simplesjfusion = options.simplesjfusion;
 
 	StreaMITMain.compile(tree);
 	/*	

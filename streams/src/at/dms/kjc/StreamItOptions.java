@@ -10,4 +10,5 @@ public class StreamItOptions
     public static int rawColumns = -1;
     public static boolean sync = false;
     public static boolean ratematch = false;
+    public static boolean simplesjfusion = false;
 }

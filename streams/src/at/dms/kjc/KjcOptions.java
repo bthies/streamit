@@ -38,6 +38,7 @@ public class KjcOptions extends at.dms.util.Options {
     public String filter = "at.dms.kjc.DefaultFilter";
     public boolean sync = false;
     public boolean ratematch = false;
+    public boolean simplesjfusion = false;
     
     public boolean processOption(int code, Getopt g) {
 	switch (code) {
@@ -89,6 +90,8 @@ public class KjcOptions extends at.dms.util.Options {
 	    sync = !false; return true;
 	case 'x':
 	    ratematch = !false;return true;
+	case 'S':
+	    simplesjfusion = !false;return true;
 	default:
 	    return super.processOption(code, g);
 	}
@@ -123,12 +126,13 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 21] = "  --partition, -a:       Automatically partition stream graph";
 	total[parent.length + 22] = "  --sync, -k:            Turn on sync removal";
 	total[parent.length + 23] = "  --ratematch, -x:       Turn on rate matching for raw";
+	total[parent.length + 24] = "  --simplesjfusion, -S:  Revert to the old, simple SplitJoin fusion algorithm";
 	return total; 
     }
 
 
     public String getShortOptions() {
-	return "ackxuosbvje:nw::*O::mDp:d:C:gl:f:" + super.getShortOptions();
+	return "Sackxuosbvje:nw::*O::mDp:d:C:gl:f:" + super.getShortOptions();
     }
 
 
@@ -186,7 +190,8 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("partition", LongOpt.NO_ARGUMENT, null, 'a'),
 	new LongOpt("raw", LongOpt.REQUIRED_ARGUMENT, null, 'r'),
 	new LongOpt("sync", LongOpt.NO_ARGUMENT, null, 'k'),
-	new LongOpt("ratematch", LongOpt.NO_ARGUMENT, null, 'x')
+	new LongOpt("ratematch", LongOpt.NO_ARGUMENT, null, 'x'),
+	new LongOpt("simplesjfusion", LongOpt.NO_ARGUMENT, null, 'S')
     };
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.13 2002-07-24 03:15:07 thies Exp $
+ * $Id: JBlock.java,v 1.14 2002-07-29 10:59:19 thies Exp $
  */
 
 package at.dms.kjc;
@@ -84,6 +84,14 @@ public class JBlock extends JStatement {
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------
+
+    /**
+     * Return a shallow copy of this block (don't copy any contained
+     * statements; just copy list of statements.)
+     */
+    public JBlock copy() {
+	return new JBlock(null, new LinkedList(body), getComments());
+    }
 
   /**
    * Tests whether the block is empty.

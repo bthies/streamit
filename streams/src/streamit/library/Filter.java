@@ -146,6 +146,12 @@ public abstract class Filter extends Stream
         super(str);
     }
 
+    public Filter(Object o1) {super(o1);}
+    
+    public Filter(Object o1,Object o2) {super(o1,o2);}
+
+    public Filter(Object o1,Object o2,Object o3) {super(o1,o2,o3);}
+
     // add was present in Operator, but is not defined in Filter anymore
     public void add(Stream s)
     {

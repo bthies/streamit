@@ -254,6 +254,12 @@ public abstract class Stream extends Operator
 	super(s1, s2, s3);
     }
 
+    public Stream(Object o1) {super(o1);}
+    
+    public Stream(Object o1,Object o2) {super(o1,o2);}
+
+    public Stream(Object o1,Object o2,Object o3) {super(o1,o2,o3);}
+
     // RESET FUNCTIONS
 
     public MessageStub reset()

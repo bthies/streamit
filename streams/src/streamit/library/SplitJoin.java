@@ -141,6 +141,12 @@ public class SplitJoin extends Stream
         super(n1, b1);
     }
 
+    public SplitJoin(Object o1) {super(o1);}
+    
+    public SplitJoin(Object o1,Object o2) {super(o1,o2);}
+
+    public SplitJoin(Object o1,Object o2,Object o3) {super(o1,o2,o3);}
+    
     // type of a split or a join:
     public static class SplitJoinType
     {

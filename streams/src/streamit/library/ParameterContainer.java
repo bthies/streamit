@@ -80,6 +80,16 @@ public class ParameterContainer extends AssertedClass
             return floatData.floatValue ();
         }
 
+	Object getObject ()
+        {
+            ASSERT (primitive);
+            
+            Object objectData = data;
+            ASSERT (objectData != null);
+            
+            return objectData;
+        }
+
         boolean getBool ()
         {
             ASSERT (primitive);
@@ -185,6 +195,16 @@ public class ParameterContainer extends AssertedClass
         ASSERT (paramData != null);
         
         return paramData.getFloat ();
+    }
+
+    public Object getObjectParam (String paramName)
+    {
+        ASSERT (parameters.containsKey (paramName));
+        
+        ParamData paramData = (ParamData) parameters.get (paramName);
+        ASSERT (paramData != null);
+        
+        return paramData.getObject();
     }
 
     public boolean getBoolParam (String paramName)

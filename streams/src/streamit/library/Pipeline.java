@@ -195,6 +195,12 @@ public class Pipeline extends Stream
     }
 
 
+    public Pipeline(Object o1) {super(o1);}
+    
+    public Pipeline(Object o1,Object o2) {super(o1,o2);}
+
+    public Pipeline(Object o1,Object o2,Object o3) {super(o1,o2,o3);}
+
      // allow access to the children of this pipeline
      
     public int getNumChildren () { return streamElements.size (); }

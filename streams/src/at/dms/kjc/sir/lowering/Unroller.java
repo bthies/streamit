@@ -32,19 +32,24 @@ public class Unroller extends SLIRReplacingVisitor {
      */
     private boolean hasUnrolled;
     /**
+     * Whether or not we're in the init function of a container.
+     * (Should unroll maximally here because might contain stream
+     * children.)
+     */
+    private boolean inContainerInit;
+
+    /**
      * Creates one of these given that <constants> maps
      * JLocalVariables to JLiterals for the scope that we'll be
      * visiting.
      */
-    private boolean inInit;
-
     public Unroller(Hashtable constants) {
 	super();
 	this.constants = constants;
 	this.hasUnrolled = false;
 	currentModified=new Hashtable();
 	values=new Hashtable();
-	inInit=false;
+	inContainerInit=false;
     }
     
     /**
@@ -71,8 +76,8 @@ public class Unroller extends SLIRReplacingVisitor {
 	KjcOptions.unroll = origUnroll;
     }
 
-    public void setInit(boolean init) {
-	inInit=init;
+    public void setContainerInit(boolean init) {
+	inContainerInit=init;
     }
     
     public static void unroll(SIRStream str) {
@@ -187,7 +192,7 @@ public class Unroller extends SLIRReplacingVisitor {
 				    JStatement body) {
 	// to do the right thing if someone set an unroll factor of 0
 	// (or 1, which means to do nothing)
-	if((KjcOptions.unroll>1 || inInit) && !self.getUnrolled()) { //Ignore if already unrolled
+	if((KjcOptions.unroll>1 || inContainerInit) && !self.getUnrolled()) { //Ignore if already unrolled
 	    // first recurse into body
 	    Hashtable saveModified=currentModified;
 	    currentModified=new Hashtable();
@@ -232,7 +237,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	}
 
 	//Unroll if in init
-	if(inInit)
+	if(inContainerInit)
 	    return true;
 	
 	/*

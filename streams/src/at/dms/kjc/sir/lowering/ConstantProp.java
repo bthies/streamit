@@ -52,9 +52,10 @@ public class ConstantProp {
 	    }
 	    // unroll loops within init function of <str>
 	    unroller = new Unroller(constants);
-	    unroller.setInit(true);
+	    // only unroll maximally for containers
+	    unroller.setContainerInit(str instanceof SIRContainer);
 	    str.getInit().accept(unroller);
-	    unroller.setInit(false);
+	    unroller.setContainerInit(false);
 	    // patch list of children for splitjoins and pipelines
 	    if (unroller.hasUnrolled()) {
 		if (str instanceof SIRPipeline) {

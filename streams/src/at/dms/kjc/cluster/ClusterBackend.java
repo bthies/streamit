@@ -66,6 +66,9 @@ public class ClusterBackend implements FlatVisitor {
 			   SIRStructure[]
 			   structs) {
 
+	HashMap[] exec_counts1;
+	HashMap[] exec_counts2;
+
 	boolean doCacheOptimization = KjcOptions.cacheopt;
 	int code_cache = 16000;
 	int data_cache = 16000;
@@ -78,7 +81,6 @@ public class ClusterBackend implements FlatVisitor {
 
 	structures = structs;
 	
-
 	// set number of columns/rows
  	//RawBackend.rawRows = KjcOptions.raw;
 	//if(KjcOptions.rawcol>-1)
@@ -123,7 +125,6 @@ public class ClusterBackend implements FlatVisitor {
 	FieldProp.doPropagate(str);
 	System.out.println(" done.");
 
-
 	//System.out.println("Analyzing Branches..");
 	//new BlockFlattener().flattenBlocks(str);
 	//new BranchAnalyzer().analyzeBranches(str);
@@ -135,13 +136,17 @@ public class ClusterBackend implements FlatVisitor {
 	Optimizer.optimize(str); 
 	Estimator.estimate(str);
 
+	// Calculate SIRSchedule before increasing multiplicity
+	//StreamItDot.printGraph(str, "before-peekmult.dot");
+	exec_counts1 = SIRScheduler.getExecutionCounts(str);
+
+	Lifter.liftAggressiveSync(str);
+	//StreamItDot.printGraph(str, "before-partition.dot");
+
 	// Increasing filter Multiplicity
 	if ( doCacheOptimization ) {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
 	}
-
-	Lifter.liftAggressiveSync(str);
-	StreamItDot.printGraph(str, "before-partition.dot");
 
 	// gather application-characterization statistics
 	if (KjcOptions.stats) {
@@ -165,8 +170,6 @@ public class ClusterBackend implements FlatVisitor {
 
 	int threads = KjcOptions.cluster;
 
-	System.err.println("Running Partitioning... target number of threads: "+threads);
-
 	HashMap partitionMap = new HashMap();
 
 	if ( doCacheOptimization ) {
@@ -182,6 +185,25 @@ public class ClusterBackend implements FlatVisitor {
 		decreased = IncreaseFilterMult.decreaseMult(partitionMap);
 	    }
 	}
+
+	// Calculate SIRSchedule after increasing multiplicity
+	exec_counts2 = SIRScheduler.getExecutionCounts(str);
+
+	//find out how what is the schedule multiplicity due to
+	//peek scaling
+
+	HashMap steady1 = exec_counts1[1];
+	HashMap steady2 = exec_counts2[1];
+	
+	int implicit_mult =
+	    IncreaseFilterMult.scheduleMultAfterScaling(steady1, steady2);
+
+	System.out.println("Implicit schedule mult increase due to peek scaling is: "+implicit_mult);
+
+	System.err.println("Running Partitioning... target number of threads: "+threads);
+
+	StreamItDot.printGraph(str, "before-partition.dot");
+
 
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {
@@ -313,7 +335,7 @@ public class ClusterBackend implements FlatVisitor {
 	ClusterCode.generateCode(graphFlattener.top);
 
 	FusionCode.generateFusionHeader();
-	FusionCode.generateFusionFile(d_sched);
+	FusionCode.generateFusionFile(d_sched, implicit_mult);
 
 	ClusterCode.generateMasterFile();
 	ClusterCode.generateMakeFile();

@@ -10,7 +10,7 @@ class IncreaseFilterMult implements StreamVisitor {
 
     class WorkInfo {
 	public JMethodDeclaration work;
-	public int push, pop, peek;
+	public int push, pop, peek, multiple;	
     }
 
     private int mult;
@@ -28,6 +28,44 @@ class IncreaseFilterMult implements StreamVisitor {
 	this.start_of_pipeline = false;
 	this.CODE_CACHE_SIZE = code_cache_size;
     }
+
+
+    // returns implicit schedule scaling after increasing/decreasing mult.
+    // before hash map SIRStream->int[] steady state execution count
+    // after hash map SIRStream->int[] steady state execution count
+
+    public static int scheduleMultAfterScaling(HashMap before, HashMap after) {
+
+	Set keySet = before.keySet();
+	Iterator iter = keySet.iterator();
+
+	int mult = -1;
+
+	while (iter.hasNext()) {
+	    SIRStream ss = (SIRStream)iter.next();
+	    int i1[] = (int[])before.get(ss);
+	    int i2[] = (int[])after.get(ss);
+
+	    if (previous_work.containsKey(ss)) {
+		SIRFilter f = (SIRFilter)ss;
+		WorkInfo info = (WorkInfo)previous_work.get(ss);
+		i2[0] *= info.multiple;
+	    }
+
+	    int ratio = i2[0] / i1[0];
+	    assert(i2[0] % i1[0] == 0);
+	    //System.out.println(ss+
+	    //		       " s1: "+i1[0]+
+	    //		       " s2: "+i2[0]+
+	    //		       " ratio: "+ratio);
+
+	    assert (mult == -1 || mult == ratio);
+	    mult = ratio;
+	}	
+	assert (mult!=-1);
+	return mult;
+    }
+
 
     public void preVisitPipeline(SIRPipeline self, 
 				 SIRPipelineIter iter) {
@@ -326,6 +364,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	w.pop = filter.getPopInt();
 	w.push = filter.getPushInt();
 	w.peek = filter.getPeekInt();
+	w.multiple = _mult;
 
 	previous_work.put(filter, w);
 

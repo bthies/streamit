@@ -81,6 +81,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	//ArrayDestroyer arrayDest=new ArrayDestroyer();
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
+
+	    // do not optimize init work function
+	    if (node.contents instanceof SIRTwoStageFilter) {
+		JMethodDeclaration init_work = ((SIRTwoStageFilter)node.contents).getInitWork();
+		if (((SIRFilter)node.contents).getMethods()[i].equals(init_work)) {
+		    continue;
+		}
+	    }
+
 	    if (!KjcOptions.nofieldprop) {
 		
 		Unroller unroller;

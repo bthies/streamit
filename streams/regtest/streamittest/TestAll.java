@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.20 2003-03-07 23:53:52 aalamb Exp $
+ * $Id: TestAll.java,v 1.21 2003-10-05 00:39:04 thies Exp $
  **/
 package streamittest;
 
@@ -57,6 +57,12 @@ public class TestAll extends TestCase {
 	// compare with original performance
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW[8]));
+
+	// try one without partitioning just in case we want to
+	// compare with original performance
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW[4] | 
+				       CompilerInterface.DPPARTITION));
 
 	// try all configurations of raw with constprop and partition
 	// This was causing the regtest to go crazy, so I am removing

@@ -193,6 +193,17 @@ public class Fraction        // encapsulates a fraction
     }
 
     /******************************************************************************/
+    public Fraction divide(BigInteger temp) // divide returns this / temp
+    /******************************************************************************/
+    {
+        if(temp.equals (BigInteger.ZERO)) throw new ArithmeticException
+                              ("Divide by zero error: " + this + " / " + temp );
+
+        Fraction returnValue =  new Fraction( num, denom.multiply (temp));
+        return returnValue.reduce();
+    }
+
+    /******************************************************************************/
     public boolean equals(Fraction temp) // returns true or false
     /******************************************************************************/
     {

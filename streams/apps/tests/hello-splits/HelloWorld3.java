@@ -32,16 +32,15 @@ public class HelloWorld3 extends Stream
     public void Init ()
     {
         Add(new CharGenerator(".....Hello World!.....\0"));
-        //Add(new XORLoop());
         Add(new SplitJoin()
             {
                 public void Init()
                 {
-                    SetSplitter(WEIGHTED_ROUND_ROBIN (2, 2));
+                    SetSplitter(ROUND_ROBIN ());
                     Add(new ChannelConnectFilter (Character.TYPE));
-                    //Add(new XORLoop());
+                    Add(new XORLoop());
                     //Add(new ChannelConnectFilter (Character.TYPE));
-                    Add(new ChannelConnectFilter (Character.TYPE));
+                    //Add(new ChannelConnectFilter (Character.TYPE));
                     SetJoiner(ROUND_ROBIN());
                 }
             });
@@ -70,16 +69,22 @@ public class HelloWorld3 extends Stream
      */
 
 }
-/*
+
 class XORLoop extends FeedbackLoop
 {
+    public void InitPath (int index, Channel path)
+    {
+        path.PushChar ((char)0);
+    }
+
     public void Init() {
         SetDelay(3);
-        Header(Joiner.ROUND_ROBIN_JOINER ());
-        Add(new XORFilter());
+        SetJoiner (ROUND_ROBIN ());
+        SetBody (new XORFilter());
+        SetSplitter (DUPLICATE ());
     }
 }
-*/
+
 // outputs xor of successive items in stream
 class XORFilter extends Filter
 {

@@ -1,5 +1,7 @@
 package streamit;
 
+import streamit.scheduler.*;
+
 // the feedback loop
 public class FeedbackLoop extends Stream
 {
@@ -184,6 +186,22 @@ public class FeedbackLoop extends Stream
     public static SplitJoin.SplitJoinType DUPLICATE ()
     {
         return SplitJoin.DUPLICATE ();
+    }
+
+    // ----------------------------------------------------------------
+    // This code constructs an independent graph for the scheduler
+    // ----------------------------------------------------------------
+
+    SchedStream constructSchedule ()
+    {
+        // initialize the children
+        SchedStream bodySched = (body == null ? null : body.constructSchedule ());
+        SchedStream loopSched = (loop == null ? null : loop.constructSchedule ());
+
+        // create the loop
+        SchedLoop stream = new SchedLoop (joiner.getSchedType (), bodySched, splitter.getSchedType (), loopSched, delay);
+
+        return stream;
     }
 }
 

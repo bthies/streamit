@@ -1,11 +1,11 @@
 /*
  * HelloWorld6.java: Hello, World example
- * $Id: HelloWorld6.java,v 1.2 2001-10-05 00:05:32 thies Exp $
+ * $Id: HelloWorld6.java,v 1.3 2001-10-20 00:16:11 karczma Exp $
  */
 
 import streamit.*;
 
-class HelloWorld6 extends Pipeline
+class HelloWorld6 extends StreamIt
 {
     static public void main (String [] t)
     {
@@ -19,9 +19,9 @@ class HelloWorld6 extends Pipeline
         {
             int x;
             Channel output = new Channel (Integer.TYPE, 1);    /* push */
-	    public void init() {
-		this.x = 0;
-	    }
+            public void init() {
+                this.x = 0;
+            }
             public void initIO ()
             {
                 streamOutput = output;

@@ -1,11 +1,11 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib2.java,v 1.8 2001-10-15 13:34:02 dmaze Exp $
+ * $Id: Fib2.java,v 1.9 2001-10-20 00:16:07 karczma Exp $
  */
 
 import streamit.*;
 
-public class Fib2 extends Pipeline
+public class Fib2 extends StreamIt
 {
     static public void main (String[] t)
     {

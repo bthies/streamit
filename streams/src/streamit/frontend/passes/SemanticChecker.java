@@ -11,7 +11,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.6 2003-07-09 16:47:06 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.7 2003-07-09 19:30:35 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -28,9 +28,11 @@ public class SemanticChecker
         SemanticChecker checker = new SemanticChecker();
         Map streamNames = checker.checkStreamNames(prog);
         checker.checkDupFieldNames(prog, streamNames);
+        checker.checkStreamCreators(prog, streamNames);
         checker.checkFunctionValidity(prog);
         checker.checkStatementPlacement(prog);
         checker.checkIORates(prog);
+        checker.checkVariableUsage(prog);
         return checker.good;
     }
     
@@ -183,6 +185,27 @@ public class SemanticChecker
         }
     }
 
+    /**
+     * Check that, everywhere a named stream is created, the name
+     * corresponds to an actual stream (or a reserved name).
+     *
+     * @param prog  parsed program object to check
+     * @param streamNames  map from top-level stream and structure
+     *              names to FEContexts in which they are defined
+     */
+    public void checkStreamCreators(Program prog, final Map streamNames)
+    {
+        prog.accept(new FEReplacer() {
+                public Object visitSCSimple(SCSimple creator)
+                {
+                    if (!streamNames.containsKey(creator.getName()))
+                        report(creator, "no such stream '" +
+                               creator.getName() + "'");
+                    return super.visitSCSimple(creator);
+                }
+            });
+    }
+    
     /**
      * Check that functions do not exist in context they are required
      * to, and that all required functions exist.  In particular,
@@ -512,6 +535,96 @@ public class SemanticChecker
                                "pushing not allowed in functions with " +
                                "zero push rate");
                     return super.visitStmtPush(stmt);
+                }
+            });
+    }
+
+    /**
+     * Check that variables are declared and used correctly.  In
+     * particular, check that variables are declared before their
+     * first use, that local variables and fields don't shadow stream
+     * parameters, and that stream parameters don't appear on the
+     * left-hand side of assignment statements or inside mutating
+     * unary operations.
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkVariableUsage(Program prog)
+    {
+        prog.accept(new SymbolTableVisitor(null) {
+                public Object visitExprVar(ExprVar var)
+                {
+                    // Check: the variable is declared somewhere.
+                    try
+                    {
+                        symtab.lookupVar(var);
+                    }
+                    catch(UnrecognizedVariableException e)
+                    {
+                        report(var, "unrecognized variable");
+                    }
+                    return super.visitExprVar(var);
+                }
+
+                private boolean isStreamParam(String name)
+                {
+                    try
+                    {
+                        int kind = symtab.lookupKind(name);
+                        if (kind == SymbolTable.KIND_STREAM_PARAM)
+                            return true;
+                    }
+                    catch(UnrecognizedVariableException e)
+                    {
+                        // ignore; calling code should have recursive
+                        // calls which will catch this
+                    }
+                    return false;
+                }
+
+                public Object visitStmtVarDecl(StmtVarDecl stmt)
+                {
+                    // Check: none of the locals shadow stream parameters.
+                    for (int i = 0; i < stmt.getNumVars(); i++)
+                    {
+                        String name = stmt.getName(i);
+                        if (isStreamParam(name))
+                            report(stmt,
+                                   "local variable shadows stream parameter");
+                    }
+                    return super.visitStmtVarDecl(stmt);
+                }
+
+                public Object visitStmtAssign(StmtAssign stmt)
+                {
+                    // Check: LHS isn't a stream parameter.
+                    Expression lhs = stmt.getLHS();
+                    if (lhs instanceof ExprVar)
+                    {
+                        ExprVar lhsv = (ExprVar)lhs;
+                        String name = lhsv.getName();
+                        if (isStreamParam(name))
+                            report(stmt, "assignment to stream parameter");
+                    }
+                    return super.visitStmtAssign(stmt);
+                }
+
+                public Object visitExprUnary(ExprUnary expr)
+                {
+                    int op = expr.getOp();
+                    Expression child = expr.getExpr();
+                    if ((child instanceof ExprVar) &&
+                        (op == ExprUnary.UNOP_PREINC ||
+                         op == ExprUnary.UNOP_POSTINC ||
+                         op == ExprUnary.UNOP_PREDEC ||
+                         op == ExprUnary.UNOP_POSTDEC))
+                    {
+                        ExprVar var = (ExprVar)child;
+                        String name = var.getName();
+                        if (isStreamParam(name))
+                            report(expr, "modification of stream parameter");
+                    }
+                    return super.visitExprUnary(expr);
                 }
             });
     }

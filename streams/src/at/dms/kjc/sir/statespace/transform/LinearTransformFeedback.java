@@ -20,6 +20,7 @@ public class LinearTransformFeedback extends LinearTransform {
 
     }
 
+    /* converts a feedback loop to a filter rep. See writeup for combination rules */
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
 	
 	FilterMatrix A1, B1, C1, D1, A2, B2, C2, D2;
@@ -107,17 +108,23 @@ public class LinearTransformFeedback extends LinearTransform {
 	init.copyAt(0,0,init1);
 	init.copyAt(0,state1Count,init2);
 
-
 	LinearFilterRepresentation newRep;
 
 	//no prework function, zero stored inputs
-
 	newRep = new LinearFilterRepresentation(A,B,C,D,0,init);
 
 	return newRep;
     }
 
+    /*
+     * takes the body and loop representations, and the splitter and joiner weights 
+     * checks if the feedbackloop is schedulable, and expands body and/or loop if necessary
+     */
     public static LinearTransform calculateFeedback(LinearFilterRepresentation bodyRep, LinearFilterRepresentation loopRep, int[] weights) {
+
+	// do not accept reps that have a prework
+	if(bodyRep.preworkNeeded()||loopRep.preworkNeeded())	    
+	    return new LinearTransformNull("feedback is unschedulable - has a prework");
 
 	int bodyToOutput, bodyToLoop, inputToBody, loopToBody;
 	int loopPush, loopPop, bodyPush, bodyPop;
@@ -136,6 +143,8 @@ public class LinearTransformFeedback extends LinearTransform {
 	bodyPush = bodyRep.getPushCount();
 	bodyPop = bodyRep.getPopCount();
 
+	// calculate what values body/loop need to be expanded by
+
 	loopLCM = lcm(loopPush,weights[3]);
 	loopFirings = loopLCM / loopPush;
 	joinerFirings = loopLCM / weights[3];
@@ -151,25 +160,24 @@ public class LinearTransformFeedback extends LinearTransform {
 
 	// checks:
 	// 1. loop output + filter input = body input
-
 	if(loopFirings*loopPush + joinerFirings*inputToBody != bodyFirings*bodyPop)  
 	    return new LinearTransformNull("feedback is unschedulable - loop output");
 
 	//2. body output = filter output + loop input
-
 	if(bodyFirings*bodyPush != splitterFirings*bodyToOutput + loopFirings*loopPop)
 	    return new LinearTransformNull("feedback is unschedulable - body output");
-
+	
+	// expand reps by calculated factors
 	newBodyRep = bodyRep.expand(bodyFirings);
 	newLoopRep = loopRep.expand(loopFirings);
 	
+	// multiply splitter/joiner weights by appropriate factors
 	newWeights[0] = splitterFirings*bodyToOutput;
 	newWeights[1] = splitterFirings*bodyToLoop;
 	newWeights[2] = joinerFirings*inputToBody;
 	newWeights[3] =	joinerFirings*loopToBody;
 
 	return new LinearTransformFeedback(newBodyRep,newLoopRep,newWeights);
-
     }
 
 }

@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.11 2004-04-12 20:43:46 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.12 2004-04-13 20:09:57 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -134,10 +134,23 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	
 	CType varType;
 
+
+	// use the more specific numeric type (ie double over int, int over short, etc) 
 	if(oldStream.getInputType().getTypeID() >= oldStream.getOutputType().getTypeID())
 	    varType = oldStream.getInputType();
 	else
 	    varType = oldStream.getOutputType();
+
+	// depending on the type chosen, set the global variable zeroLiteral accordingly
+	switch(varType.getTypeID()) {
+	case TID_DOUBLE: zeroLiteral = new JDoubleLiteral(null, 0.0); break;
+	case TID_FLOAT: zeroLiteral = new JFloatLiteral(null, (float)0.0); break;
+	case TID_LONG: zeroLiteral = new JLongLiteral(null, (long)0); break;
+	case TID_BYTE: zeroLiteral = new JDoubleLiteral(null, (byte)0); break;
+	case TID_SHORT: zeroLiteral = new JShortLiteral(null, (short)0); break;
+	case TID_INT: zeroLiteral = new JIntLiteral(null, 0); break;
+	default: zeroLiteral = new JDoubleLiteral(null, 0.0);
+	}
 
 	int numStates = linearRep.getStateCount();
 	FilterVector initVector = linearRep.getInit();
@@ -154,28 +167,21 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	JThisExpression thisExpr = new JThisExpression(null);
 
 	// create field declarations and field accessors
-
 	for(int i=0; i<numStates; i++) {
 	    varName = "x" + i;
 	    vars[i] = new JVariableDefinition(null, ACC_PUBLIC, varType, varName, null);
 	    fields[i] = new JFieldDeclaration(null, vars[i], null, null);
 	    fieldExpr = new JFieldAccessExpression(null, thisExpr, varName);
 
+	    //depending on the type we have selected, use the appropriate literal
 	    switch(varType.getTypeID()) {
-	    case TID_DOUBLE: litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal()); 
-		             zeroLiteral = new JDoubleLiteral(null, 0.0); break;
-	    case TID_FLOAT: litExpr = new JFloatLiteral(null, (float)initVector.getElement(i).getReal()); 
-		            zeroLiteral = new JFloatLiteral(null, (float)0.0); break;
-	    case TID_LONG: litExpr = new JLongLiteral(null, (long)initVector.getElement(i).getReal()); 
-		           zeroLiteral = new JLongLiteral(null, (long)0); break;
-	    case TID_BYTE: litExpr = new JByteLiteral(null, (byte)initVector.getElement(i).getReal()); 
-		           zeroLiteral = new JDoubleLiteral(null, (byte)0); break;
-	    case TID_SHORT: litExpr = new JShortLiteral(null, (short)initVector.getElement(i).getReal()); 
-		            zeroLiteral = new JShortLiteral(null, (short)0); break;
-	    case TID_INT: litExpr = new JIntLiteral(null, (int)initVector.getElement(i).getReal()); 
-		          zeroLiteral = new JIntLiteral(null, 0); break;
+	    case TID_DOUBLE: litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal()); break;
+	    case TID_FLOAT: litExpr = new JFloatLiteral(null, (float)initVector.getElement(i).getReal()); break;
+	    case TID_LONG: litExpr = new JLongLiteral(null, (long)initVector.getElement(i).getReal()); break;
+	    case TID_BYTE: litExpr = new JByteLiteral(null, (byte)initVector.getElement(i).getReal()); break;
+	    case TID_SHORT: litExpr = new JShortLiteral(null, (short)initVector.getElement(i).getReal()); break;
+	    case TID_INT: litExpr = new JIntLiteral(null, (int)initVector.getElement(i).getReal()); break;
 	    default: litExpr = new JDoubleLiteral(null, initVector.getElement(i).getReal());
-		     zeroLiteral = new JDoubleLiteral(null, 0.0);
 	    }
 
 	    assign = new JAssignmentExpression(null, fieldExpr, litExpr);
@@ -189,7 +195,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	// declare temporary variables (one for each state)
 	// this is necessary to do state updates correctly
-
 	for(int i=0; i<numStates;i++) {
 	    JVariableDefinition tempVar = new JVariableDefinition(null, ACC_PUBLIC, varType, "temp_x" + i, null);
 	    fields[numStates+i] = new JFieldDeclaration(null, tempVar, null, null);
@@ -203,7 +208,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	newInit.setBody(initBody);
 
 	//create a prework function that initializes vars with values from the tape
-
 	JMethodDeclaration newPreWork;
 	if(linearRep.preworkNeeded()) {
 	    newPreWork = makeInitLinearWork(linearRep,
@@ -229,13 +233,11 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	newFilter.setInit(newInit);
        
 	/* these are rates for the prework function */
-
 	newFilter.setInitPeek(linearRep.getPreWorkPopCount());
 	newFilter.setInitPop(linearRep.getPreWorkPopCount());
 	newFilter.setInitPush(0);
 
 	/** make peek rate equal to pop rate **/
-
 	newFilter.setPeek(linearRep.getPopCount());
 	newFilter.setPop (linearRep.getPopCount());
 	newFilter.setPush(linearRep.getPushCount());
@@ -285,7 +287,6 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	body.addAllStatements(popStatements);
 
 	// now, assemble the pieces needed for a new JMethod.
-
 	return new JMethodDeclaration(null, // tokenReference
 				      ACC_PUBLIC,//modifiers
 				      CStdType.Void, // returnType

@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.13 2004-04-09 21:06:51 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.14 2004-04-13 20:09:57 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -61,6 +61,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// just check to see if the hash set has a mapping to something other than null.
 	return (this.streamsToLinearRepresentation.get(stream) != null);
     }
+
     /**
      * Returns the mapping from stream to linear representation that we have. Returns
      * null if we do not have a mapping.
@@ -106,6 +107,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     public void addNonLinear(SIRStream str) {
 	nonLinearStreams.add(str);
     }
+
     /** Checks if stream is non-linear **/
     public boolean isNonLinear(SIRStream key) {
 	return nonLinearStreams.contains(key);

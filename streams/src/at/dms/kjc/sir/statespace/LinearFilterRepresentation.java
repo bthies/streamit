@@ -10,7 +10,7 @@ package at.dms.kjc.sir.statespace;
  * This class also holds initial matrices initA, initB that are to be used to 
  * update the state exactly ONCE (for a prework function).
  *
- * $Id: LinearFilterRepresentation.java,v 1.14 2004-04-07 18:13:46 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.15 2004-04-13 20:09:57 sitij Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -49,9 +49,7 @@ public class LinearFilterRepresentation {
     /**
      * Create a new linear filter representation with matrices A, B, C, and D.
      * Note that we use a copy of all matrices so that we don't end up with
-     * an aliasing problem. peekc is the peek count of the filter that this represenation is for,
-     * which we need for combining filters together (because the difference between
-     * the peek count and the pop count tells us about the buffers that the program is using).
+     * an aliasing problem 
      **/
     public LinearFilterRepresentation(FilterMatrix matrixA,
 				      FilterMatrix matrixB,
@@ -61,7 +59,6 @@ public class LinearFilterRepresentation {
 				      FilterVector vec) {
 
 	// lots of size checking
-
 	if(matrixA.getRows() != matrixA.getCols())
 	    throw new IllegalArgumentException("Matrix A must be square");
 	if(matrixA.getRows() != matrixB.getRows())
@@ -85,7 +82,7 @@ public class LinearFilterRepresentation {
 	this.initVec = (FilterVector)vec.copy();	
 	this.storedInputs = storedInputs;
 
-	if(storedInputs == 0) {  // no separate initialization needed, so use the same matrices
+	if(storedInputs == 0) {  // no separate initialization needed
 	    this.preworkNeeded = false;
 	}
 	else {
@@ -115,7 +112,6 @@ public class LinearFilterRepresentation {
 				      FilterVector vec) {
 
 	// lots of size checking
-
 	if(matrixA.getRows() != matrixA.getCols())
 	    throw new IllegalArgumentException("Matrix A must be square");
 	if(matrixA.getRows() != matrixB.getRows())
@@ -151,8 +147,6 @@ public class LinearFilterRepresentation {
 
 	// we calculate cost on demand (with the linear partitioner)
 	this.cost = null;
-
-
     }
 
 
@@ -215,7 +209,6 @@ public class LinearFilterRepresentation {
     /**
      * Returns a prework A matrix (which is just the identity!)
      **/
-
     private FilterMatrix createPreWorkA(int states) {
 
 	FilterMatrix preA = FilterMatrix.getIdentity(states);
@@ -226,7 +219,6 @@ public class LinearFilterRepresentation {
      * Returns a prework B matrix (which is just the identity and zeros underneath!)
      * inputs should be less than states
      **/
-
     private FilterMatrix createPreWorkB(int states, int inputs) {
 	FilterMatrix preB = new FilterMatrix(states,inputs);
 
@@ -382,10 +374,10 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
     /**
      * Expands this linear representation by factor 
      **/
-
     public LinearFilterRepresentation expand(int factor) {
     
 	// do some argument checks
+
 	if (factor < 1) {
 	    throw new IllegalArgumentException("need a positive multiplier");
 	}
@@ -448,37 +440,6 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	  
 	}
 
-	
-	
-	//System.err.println("--------");
-	//System.err.println("new rows: " + newPeek);
-	//System.err.println("new cols: " + newPush);
-	//System.err.println("new pop: "  + newPop);
-	//System.err.println("old rows: " + oldPeek);
-	//System.err.println("old cols: " + oldPush);
-	//System.err.println("old pop: "  + oldPop);
-	//System.err.println("num copies: " + numCompleteCopies);
-	
-	/*
-	LinearPrinter.println("Matrix oldA:");
-	LinearPrinter.println(oldA.toString());
-	LinearPrinter.println("Matrix oldB:");
-	LinearPrinter.println(oldB.toString());
-	LinearPrinter.println("Matrix oldC:");
-	LinearPrinter.println(oldC.toString());
-	LinearPrinter.println("Matrix oldD:");
-	LinearPrinter.println(oldD.toString());
-
-	LinearPrinter.println("Matrix A:");
-	LinearPrinter.println(newA.toString());
-	LinearPrinter.println("Matrix B:");
-	LinearPrinter.println(newB.toString());
-	LinearPrinter.println("Matrix C:");
-	LinearPrinter.println(newC.toString());
-	LinearPrinter.println("Matrix D:");
-	LinearPrinter.println(newD.toString());
-	*/
-
 	// initial vector is the same
 	FilterVector newInitVec = (FilterVector)this.getInit().copy();
 
@@ -504,7 +465,6 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
     /**
      * Expands this linear representation by factor, using the prework matrices as well 
      **/
-
     public LinearFilterRepresentation expand_with_prework(int factor) {
     
 	// do some argument checks
@@ -589,30 +549,9 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	if(this.preworkNeeded()) {
 
 	    newB.copyAt(0,0,newA.times(preB));
-	    newA = newA.times(preA);
-	    
+	    newA = newA.times(preA);	    
 	}
 	
-	//System.err.println("--------");
-	//System.err.println("new rows: " + newPeek);
-	//System.err.println("new cols: " + newPush);
-	//System.err.println("new pop: "  + newPop);
-	//System.err.println("old rows: " + oldPeek);
-	//System.err.println("old cols: " + oldPush);
-	//System.err.println("old pop: "  + oldPop);
-	//System.err.println("num copies: " + numCompleteCopies);
-	
-	/*
-	LinearPrinter.println("Matrix A:");
-	LinearPrinter.println(newA.toString());
-	LinearPrinter.println("Matrix B:");
-	LinearPrinter.println(newB.toString());
-	LinearPrinter.println("Matrix C:");
-	LinearPrinter.println(newC.toString());
-	LinearPrinter.println("Matrix D:");
-	LinearPrinter.println(newD.toString());
-	*/
-
 	// initial vector is the same
 	FilterVector newInitVec = (FilterVector)this.getInit().copy();
 
@@ -634,12 +573,12 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	
     }
 
+
     /**
      * returns a LinearCost object that represents the number
      * of multiplies and adds that are necessary to implement this
      * linear filter representation (in steady state).
-     **/
-    
+     **/    
     public LinearCost getCost() {
 	if (this.cost==null) {
 	  LinearCost tempCost = calculateCost(this.A);
@@ -651,10 +590,10 @@ We know that addVars >= newPeek2-newPop2, so we are adding states. Thus we must 
 	return this.cost;
     }
 
+
     /**
      * Calculates cost of this.
-     */
-    
+     */    
     private LinearCost calculateCost(FilterMatrix M) {
 	// add up multiplies and adds that are necessary for each column of the matrix. 
 	int muls = 0;

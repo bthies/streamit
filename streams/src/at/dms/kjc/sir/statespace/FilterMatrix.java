@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.9 2004-03-17 20:34:38 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.10 2004-04-13 20:09:57 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -50,6 +50,7 @@ public class FilterMatrix {
     }
 
 
+    // returns an n by n identity FilterMatrix
     public static FilterMatrix getIdentity(int n) {
 
 	if(n<=0)
@@ -183,7 +184,6 @@ public class FilterMatrix {
     }
 
     /** Return the determinant of this matrix (if it is square and real) **/
-
     public double determinant() {
 	
 	if(this.getRows()!=this.getCols())
@@ -221,7 +221,6 @@ public class FilterMatrix {
 
 
     /** Returns the inverse of this matrix, if it exists **/
-
     public FilterMatrix inverse() {
 	
 	double det;
@@ -284,7 +283,6 @@ public class FilterMatrix {
 
 
     /** swap row1, row2 with each other */
-
     public void swapRows(int row1, int row2) {
 
 	int totalRows = this.getRows();
@@ -315,7 +313,6 @@ public class FilterMatrix {
 
 
     /** swap col1, col2 with each other */
-
     public void swapCols(int col1, int col2) {
 
 	int totalCols = this.getCols();
@@ -344,7 +341,6 @@ public class FilterMatrix {
 
 
     /** swap rows val1, val2 and swap cols val1, val2 - Note that order does not matter **/
-
     public void swapRowsAndCols(int val1, int val2) {
 
 	int totalRows = this.getRows();
@@ -363,7 +359,6 @@ public class FilterMatrix {
 
 
     /** multiplies row by specified scalar **/
-
     public void multiplyRow(int row, double scalar) {
 
 	int totalRows = this.getRows();
@@ -385,7 +380,6 @@ public class FilterMatrix {
 
 
    /** multiplies column by specified scalar **/
-
     public void multiplyCol(int col, double scalar) {
 
 	int totalCols = this.getCols();
@@ -406,7 +400,6 @@ public class FilterMatrix {
     }
 
     /** multiplies row and col by specified scalar **/
-
     public void multiplyRowAndCol(int val, double scalar) {
 
 	int totalRows = this.getRows();
@@ -425,7 +418,6 @@ public class FilterMatrix {
 
 
     /** add scalar*row1 to row2 **/
-
     public void addRow(int row1, int row2, double scalar) {
 
 	int totalRows = this.getRows();
@@ -449,7 +441,6 @@ public class FilterMatrix {
 
 
     /** add scalar*col1 to col2 **/
-
     public void addCol(int col1, int col2, double scalar) {
 
 	int totalCols = this.getCols();
@@ -473,7 +464,6 @@ public class FilterMatrix {
 
 
     /** add scalar * row val1 to row val2 and subtract scalar * col val2 from col val1 **/
-
     public void addRowAndCol(int val1, int val2, double scalar) {
 
 	int totalRows = this.getRows();

@@ -110,26 +110,57 @@ public class MagicNetworkSchedule
     private static void createList(FileWriter fw) throws Exception
     {
 
+	//we can only simulate 16 or 64 tile configurations at this
+	//moment, if run everything else on top of these two
+	int realRows = 4, realColumns = 4;
+	int row, column;
+
+	if (RawBackend.rawRows > 4)
+	    realRows = 8;
+	if (RawBackend.rawColumns > 4)
+	    realColumns = 8;
+	
+
 	fw.write("SendSchedules = listi_new();\n");
-	for (int i = 0; i < RawBackend.rawColumns * RawBackend.rawRows; i++) {
-	    Coordinate current = Layout.getTile(i);
-	    fw.write("listi_add(SendSchedules, ");
-	    if (steadySendSchedules.containsKey(current))
-		fw.write("tile" + i + "send);\n");
-	    else 
-		fw.write("0);\n");
+
+	for (row = 0; row < realRows; row++) {
+	    for (column = 0; column < realColumns; column++) {
+		fw.write("listi_add(SendSchedules, ");
+		//we have to create entries for all tiles in the real configuration
+		//so we have to create 0 entries for the tiles not used if we
+		//are simulating a layout different from 4x4 or 8x8
+		if (row < RawBackend.rawRows && column < RawBackend.rawColumns) {
+		    Coordinate current = Layout.getTile(row, column);
+		    
+		    if (steadySendSchedules.containsKey(current))
+			fw.write("tile" + Layout.getTileNumber(current) + "send);\n");
+		    else 
+			fw.write("0);\n");
+		}
+		else 
+		    fw.write("0);\n");
+	    }
 	}
 
 	fw.write("ReceiveSchedules = listi_new();\n");
-	for (int i = 0; i < RawBackend.rawColumns * RawBackend.rawRows; i++) {
-	    Coordinate current = Layout.getTile(i);
-	    fw.write("listi_add(ReceiveSchedules, ");
-	    if (steadyReceiveSchedules.containsKey(current))
-		fw.write("tile" + i + "receive);\n");
-	    else 
-		fw.write("0);\n");
+	for (row = 0; row < realRows; row++) {
+	    for (column = 0; column < realColumns; column++) {
+		fw.write("listi_add(ReceiveSchedules, ");
+		//we have to create entries for all tiles in the real configuration
+		//so we have to create 0 entries for the tiles not used if we
+		//are simulating a layout different from 4x4 or 8x8
+		if (row < RawBackend.rawRows && column < RawBackend.rawColumns) {
+		    Coordinate current = Layout.getTile(row, column);
+		    
+		    if (steadyReceiveSchedules.containsKey(current))
+			fw.write("tile" + Layout.getTileNumber(current) + "receive);\n");
+		    else 
+			fw.write("0);\n");
+		}
+		else 
+		    fw.write("0);\n");
+	    }
 	}
-
 	
 	fw.write("}\n");
     }

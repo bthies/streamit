@@ -16,7 +16,7 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 
-public class ILPPartitioner {
+public class ILPPartitioner extends ListPartitioner {
     /**
      * The following two parameters control when the ILPPartitioner
      * will terminate.  It terminates as soon as one of the following
@@ -35,49 +35,8 @@ public class ILPPartitioner {
     protected static final double GAP_TOLERANCE = 0.20;  // fractional gap to be satisfied with
     protected static final long GAP_TIMEOUT = 30*60;     // stop looking for solution within gap_tolerance
 
-    /**
-     * The work estimate that is given to joiner nodes.
-     */
-    protected static final int JOINER_WORK_ESTIMATE = 1;
-    
-    /**
-     * The toplevel stream we're operating on.
-     */
-    private SIRStream str;
-    /**
-     * The target number of tiles this partitioner is going for.
-     */
-    private int numTiles;
-
-    /**
-     * List of NODES (i.e., filters and joiners) in the stream graph.
-     * This list is in the "canonicalized order" (see lp-partition
-     * document.)
-     */
-    private LinkedList nodes;
-    /**
-     * Maps a stream container (pipeline, splitjoin, feedbackloop) to
-     * an Integer denoting the first index in <nodes> that belongs to
-     * the structure.
-     */
-    private HashMap first;
-    /**
-     * Maps a stream container (pipeline, splitjoin, feedbackloop) to
-     * an Integer denoting the first index in <nodes> that belongs to
-     * the structure.
-     */
-    private HashMap last;
-    /**
-     * The work estimate of the stream.
-     */
-    private WorkEstimate work;
-
     public ILPPartitioner(SIRStream str, int numTiles) {
-	this.str = str;
-	this.numTiles = numTiles;
-	this.nodes = new LinkedList();
-	this.first = new HashMap();
-	this.last = new HashMap();
+	super(str, numTiles);
     }
     
     public void toplevelFusion() {
@@ -97,48 +56,8 @@ public class ILPPartitioner {
 	buildNodesList();
 	double[] sol = calcSolution();
 	HashMap result = buildPartitionMap(sol);
-	printTileWork(result);
-	PartitionDot.printGraph(str, "partitions.dot", result);
+	PartitionUtil.printTileWork(result, work, numTiles);
 	return result;
-    }
-
-    private void printTileWork(HashMap partitions) {
-	int[] tileWork = new int[numTiles];
-
-	String[] tileContents = new String[numTiles];
-	for (int i=0; i<numTiles; i++) {
-	    tileContents[i] = "";
-	}
-
-	int maxWork = -1;
-	for (int i=1; i<nodes.size()-1; i++) {
-	    Object node = nodes.get(i);
-	    int tile = ((Integer)partitions.get(node)).intValue();
-	    tileContents[tile] += "  " + ((SIROperator)node).getName() + "\n";
-	    if (node instanceof SIRFilter) {
-		// for filter, add work estimate of filter
-		tileWork[tile] += work.getWork((SIRFilter)node);
-	    } else if (node instanceof SIRJoiner) {
-		// for joiners, add JOINER_WORK_ESTIMATE
-		tileWork[tile] += ILPPartitioner.JOINER_WORK_ESTIMATE;
-	    }
-	    // keep track of max work
-	    if (tileWork[tile]>maxWork) {
-		maxWork = tileWork[tile];
-	    }
-	}
-
-	// print each tile's work
-	double totalUtil = 0;
-	for (int i=0; i<tileWork.length; i++) {
-	    double util = ((double)tileWork[i]) / ((double)maxWork);
-	    totalUtil += util / ((double)tileWork.length);
-	    System.err.println("tile " + i + " has work:\t" + tileWork[i] 
-			       + "\t Estimated utilization:\t" + Utils.asPercent(util));
-	    System.err.print(tileContents[i]);
-	}
-
-	System.err.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
     }
 
     /**
@@ -527,44 +446,6 @@ public class ILPPartitioner {
 	}
     }
 
-    /**
-     * Returns whether or not <str1> and <str2> are equivalent for the
-     * purposes of constraining symmetrical partitioning in them.
-     */
-    private boolean equivStructure(SIRStream str1, SIRStream str2) {
-	// get starting positions
-	int first1 = ((Integer)first.get(str1)).intValue();
-	int first2 = ((Integer)first.get(str2)).intValue();
-	// get sizes
-	int size1 =  ((Integer)last.get(str1)).intValue() - first1;
-	int size2 = ((Integer)last.get(str2)).intValue() - first2;
-	if (size1 != size2) {
-	    return false;
-	}
-
-	// compare work in streams
-	for (int i=0; i<size1; i++) {
-	    Object o1 = nodes.get(first1+i);
-	    Object o2 = nodes.get(first2+i);
-	    // compare types
-	    if (o1 instanceof SIRFilter && o2 instanceof SIRFilter) {
-		int work1 = work.getWork((SIRFilter)o1);
-		int work2 = work.getWork((SIRFilter)o2);
-		if (work1!=work2) {
-		    System.err.println("  failed because " + o1 + " has work " + work1 + 
-				       " but " + o2 + " has work " + work2);
-		    return false;
-		}
-	    } else if (o1 instanceof SIRJoiner &&  o2 instanceof SIRJoiner) {
-		continue;
-	    } else {
-		return false;
-	    }
-	}
-
-	return true;
-    }
-
     private void constrainSymmetry(LinearProgram lp) {
 	// need to find parallel streams with same amount of work.
 	// start by looking for splitjoins, then compare adjacent
@@ -692,91 +573,5 @@ public class ILPPartitioner {
 	con[lhs2] = -1;
 	con[rhs] = -1;
 	lp.addConstraintGE(con, -1);
-    }
-}
-
-/**
- * This class extends the main streamit dot printer to annotate the
- * dot graphs with partitioning information. 
- **/
-class PartitionDot extends StreamItDot {
-    private HashMap partitions;
-
-    public PartitionDot(PrintStream outputstream,
-			HashMap partitions) {
-	super(outputstream);
-	this.partitions = partitions;
-    }
-
-    /* visit a filter */
-    public Object visitFilter(SIRFilter self,
-                              JFieldDeclaration[] fields,
-                              JMethodDeclaration[] methods,
-                              JMethodDeclaration init,
-                              JMethodDeclaration work,
-                              CType inputType, CType outputType)
-    {
-        // Return a name pair with both ends pointing to this.
-	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
-	String label = self.getName();
-	label += "\\ntile=" + ((Integer)partitions.get(self)).intValue();
-	return new NamePair(makeLabelledNode(label));
-    }
-
-    /* visit a joiner */
-    public Object visitJoiner(SIRJoiner self,
-                              SIRJoinType type,
-                              JExpression[] expWeights)
-    {
-	String label = type.toString();
-	// try to add weights to label
-	try {
-	    int[] weights = self.getWeights();
-	    label += "(";
-	    for (int i=0; i<weights.length; i++) {
-		label += weights[i];
-		if (i!=weights.length-1) {
-		    label+=",";
-		}
-	    }
-	    label += ")";
-	} catch (Exception e) {}
-	label += "\\ntile=" + ((Integer)partitions.get(self)).intValue();
-        return new NamePair(makeLabelledNode(label));
-    }
-    
-    /**
-     * Override to show partitions.
-     */
-    public String getClusterString(SIRStream self) {
-	// if we have a linear rep of this object, color the resulting dot graph rose.
-	Utils.assert(partitions.containsKey(self), "No partition for " + self);
-	int tile = ((Integer)partitions.get(self)).intValue();
-	if (tile!=-1) {
-	    return "subgraph cluster_" + getName() + " {" + 
-		"\n label=\"" + self.getIdent() + "\\n tile=" + tile + "\";\n";
-	} else {
-	    // otherwise, return boring white
-	    return "subgraph cluster_" + getName() + " {" + 
-		"\n label=\"" + self.getIdent() + "\";\n";
-	}
-    }
-
-    /**
-     * Prints dot graph of <str> to <filename>.
-     */
-    public static void printGraph(SIRStream str, String filename,
-				  HashMap partitions) {
-	try {
-	    FileOutputStream out = new FileOutputStream(filename);
-	    StreamItDot dot = new PartitionDot(new PrintStream(out), partitions);
-	    dot.print("digraph streamit {\n");
-	    str.accept(dot);
-	    dot.print("}\n");
-	    out.flush();
-	    out.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
     }
 }

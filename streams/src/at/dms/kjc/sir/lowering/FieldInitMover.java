@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.10 2004-07-12 06:16:48 thies Exp $
+ * $Id: FieldInitMover.java,v 1.11 2004-07-15 00:07:24 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
     public static final int MOVE_ARRAY_INITIALIZERS = 0;
@@ -140,7 +140,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
 		assignmentStatements.add(assignStmt);
 		
 		// only move if specified
-		if (moveArrayInitializers==FieldInitMover.MOVE_ARRAY_INITIALIZERS && expr instanceof JArrayInitializer) {
+		if (!(expr instanceof JArrayInitializer) || moveArrayInitializers==FieldInitMover.MOVE_ARRAY_INITIALIZERS) {
 		    // mutate the field so that it has no initializer expression
 		    self.getVariable().setExpression(null);
 		}

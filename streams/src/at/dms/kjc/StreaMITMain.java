@@ -84,7 +84,9 @@ public class StreaMITMain {
             System.out.println("*/");
             if (KjcOptions.spacetime) {
                 backendClass = "at.dms.kjc.spacetime.SpaceTimeBackend";
-            } else {
+            } if (KjcOptions.spacedynamic) {
+		backendClass = "at.dms.kjc.spacedynamic.RawBackend";
+	    } else {
                 backendClass = "at.dms.kjc.raw.RawBackend";
             }
         } else if (KjcOptions.cluster != -1) {

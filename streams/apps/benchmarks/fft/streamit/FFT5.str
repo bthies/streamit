@@ -1,6 +1,6 @@
 /////////////////////////////////
-/* An iterative implementation of the FFT Algorithm
-/* -Satish Ramaswamy
+// An iterative implementation of the FFT Algorithm
+// -Satish Ramaswamy
 ////////////////////////////////
 
 void->complex filter source() {
@@ -20,8 +20,8 @@ void->complex filter source() {
 }
 
 //////////////////////////////////
-/* The following recursive pipeline serves to bitreverse
-/* every N-inputs.
+// The following recursive pipeline serves to bitreverse
+// every N-inputs.
 //////////////////////////////////
 
 complex->complex pipeline bitreverse(int N) {
@@ -45,7 +45,7 @@ float->void filter sink {
 }
 
 ///////////////////////////////////////
-/* Basic butterfly structure in FFT 
+// Basic butterfly structure in FFT 
 ///////////////////////////////////////
 
 complex->complex filter butterfly(int r, int num) {
@@ -65,7 +65,7 @@ complex->complex filter butterfly(int r, int num) {
 }
     
 ////////////////////////////////////////////////
-/* Creates the sth stage of the FFT's log(N) stages
+// Creates the sth stage of the FFT's log(N) stages
 ////////////////////////////////////////////////
 
 complex->complex pipeline FFTstage(int N, int s) {
@@ -81,8 +81,8 @@ complex->complex pipeline FFTstage(int N, int s) {
 
 
 ////////////////////////////////////////
-/* The following 3 splitX splitjoins are helper functions
-/* for FFTstage
+// The following 3 splitX splitjoins are helper functions
+// for FFTstage
 ////////////////////////////////////////
 
 complex->complex splitjoin split1(int N, int num) {  
@@ -108,7 +108,7 @@ complex->complex splitjoin splitFinal(int N) {
 }
 
 ///////////////////////////////////
-/* Calculates magnitude of complex stream
+// Calculates magnitude of complex stream
 ///////////////////////////////////
 
 complex->float filter magnitude() {
@@ -122,12 +122,23 @@ complex->complex pipeline FFTKernel(int N) {
   add bitreverse(8);
   for(int i=1;i<4;i++) add FFTstage(8,i);
 }  
-void->void pipeline FFT {
+void->void pipeline FFT5 {
   add source();
   add FFTKernel(8);
   add magnitude();
   add sink();
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.7 2002-09-09 20:39:08 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.8 2002-09-30 21:23:02 dmaze Exp $
  */
 
 header {
@@ -96,7 +96,9 @@ MINUS: '-' ;
 MINUS_EQUALS: "-=" ;
 DECREMENT: "--" ;
 STAR: '*';
+STAR_EQUALS: "*=" ;
 DIV: '/';
+DIV_EQUALS: "/=" ;
 MOD: '%';
 LOGIC_AND: "&&";
 LOGIC_OR: "||";

@@ -1286,6 +1286,14 @@ public class Rawify
 			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 			code.appendIns(newIns, false);
 		    }
+		    if(j==0) {
+			FullIns newIns=new FullIns(tile);
+			if(end)
+			    newIns.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+			else
+			    newIns.addRoute(SwitchIPort.CSTO,dest2);
+			code.appendIns(newIns, false);
+		    }
 		    //}
 		}
 	    //Pass last partial sum
@@ -1343,7 +1351,12 @@ public class Rawify
 		    //Pass in partial sum
 		    if(j==0) {
 			FullIns newIns=new FullIns(tile);
-			newIns.addRoute(src2, SwitchOPort.CSTI2);
+			//newIns.addRoute(src2, SwitchOPort.CSTI2);
+			//Pass out partial sum to next filter
+			if(end)
+			    newIns.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+			else
+			    newIns.addRoute(SwitchIPort.CSTO,dest2);
 			code.appendIns(newIns, false);
 		    }
 		}

@@ -160,4 +160,39 @@ public abstract class StreamTransform {
 	}
     }
 
+    /**
+     * If this is an idempotent transform, then returns an identity
+     * transform with no predecessors or sucessors.  Otherwise returns
+     * this.
+     */
+    public final StreamTransform reduce() {
+	if (isIdempotent()) {
+	    return new IdentityTransform();
+	} else {
+	    return this;
+	}
+    }
+
+    /**
+     * Returns whether or not the deep set of transforms starting at
+     * this performs any fusion or fission on the child streams.  If
+     * it is just re-arranging synchronization, then it is idempotent
+     * (and can be replaced by an identity if desired.)
+     *
+     * Should be overridden by non-idempotent transforms to return
+     * false.
+     */
+    protected boolean isIdempotent() {
+	boolean ok = true;
+	// test preds
+	for (int i=0; i<pred.size(); i++) {
+	    ok = ok && ((StreamTransform)pred.get(i)).isIdempotent();
+	}
+	// test succ's
+	for (int i=0; i<succ.size(); i++) {
+	    ok = ok && ((StreamTransform)succ.get(i)).isIdempotent();
+	}
+	return ok;
+    }
+
 }

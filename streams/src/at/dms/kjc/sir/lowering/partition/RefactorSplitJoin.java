@@ -158,6 +158,87 @@ public class RefactorSplitJoin {
     }
 
     /**
+     * Does the opposite transformation of <addSyncPoints> above.  If
+     * any two adjacent children in <pipe> are splitjoins where the
+     * weights of the upstream joiner exactly match the weights of the
+     * downstream joiner, then the splitjoins can be combined into a
+     * single splitjoin.  If this is the case, then <pipe> is mutated.
+     *
+     * This is intended only as a reverse routine for the above
+     * sync. addition.  In particular, it doesn't deal with duplicate
+     * splitters or 1-way splitters, and it doesn't attempt to
+     * "duplicate" or "unroll" whole streams in order for
+     * synchronization to match up.
+     *
+     * Returns whether or not any change was made.
+     */
+    public static boolean removeSyncPoints(SIRPipeline pipe) {
+	boolean madeChange = false;
+	for (int i=0; i<pipe.size()-1; i++) {
+	    // look for adjacent splitjoins
+	    if (pipe.get(i) instanceof SIRSplitJoin && 
+		pipe.get(i+1) instanceof SIRSplitJoin) {
+		// look for matching weights
+		SIRSplitJoin sj1 = (SIRSplitJoin)pipe.get(i);
+		SIRSplitJoin sj2 = (SIRSplitJoin)pipe.get(i+1);
+		// diff number of weights, can't do anything
+		if (sj1.size()!=sj2.size() || sj1.size()==1) {
+		    continue;
+		}
+		// get weights
+		int[] w1 = sj1.getJoiner().getWeights();
+		int[] w2 = sj2.getSplitter().getWeights();
+		// test for equality
+		boolean equal = true;
+		for (int j=0; j<w1.length; j++) {
+		    if (w1[j]!=w2[j]) {
+			equal = false;
+		    }
+		}
+		// don't do anything if a weight is unequal
+		if (!equal) {
+		    continue;
+		}
+		// otherwise, we have a case where we can combine the
+		// streams.
+		madeChange = true;
+		SIRPipeline[] child = new SIRPipeline[sj1.size()];
+		for (int j=0; j<child.length; j++) {
+		    child[j] = new SIRPipeline(sj1,
+					       sj1.get(j).getIdent()+"_"+sj2.get(j).getIdent(),
+					       JFieldDeclaration.EMPTY(),
+					       JMethodDeclaration.EMPTY());
+		    child[j].setInit(SIRStream.makeEmptyInit());
+		    child[j].add(sj1.get(j), sj1.getParams(j));
+		    child[j].add(sj2.get(j), sj2.getParams(j));
+		    // eliminate pipe's if applicable
+		    for (int k=0; k<2; k++) {
+			if (child[j].get(k) instanceof SIRPipeline) {
+			    Lifter.eliminatePipe((SIRPipeline)child[j].get(k));
+			}
+		    }
+		}
+		// make new splitjoin to replace sj1 and sj2
+		SIRSplitJoin sj3 =  new SIRSplitJoin(pipe,
+						     sj1.getIdent()+"_"+sj2.getIdent(),
+						     JFieldDeclaration.EMPTY(),
+						     JMethodDeclaration.EMPTY());
+		sj3.setInit(SIRStream.makeEmptyInit());
+		sj3.setSplitter(sj1.getSplitter());
+		sj3.setJoiner(sj2.getJoiner());
+		// replace sj1 and sj2 with sj3
+		pipe.remove(sj1);
+		pipe.remove(sj2);
+		pipe.add(i, sj3);
+		// subtract one from i since we shrunk the size of the
+		// pipe and need to reconsider this position above
+		i--;
+	    }
+	}
+	return madeChange;
+    }
+
+    /**
      * Checks that <sj> has symmetrical pipeline children.
      */
     private static void checkSymmetry(SIRSplitJoin sj) {
@@ -169,6 +250,18 @@ public class RefactorSplitJoin {
 	    SIRStream child_i = sj.get(i);
 	    Utils.assert(child_i instanceof SIRPipeline &&
 			 ((SIRPipeline)child_i).size() == size_0);
+	}
+    }
+
+    /**
+     * Raises as many children of <sj> as it can into <sj>, using
+     * helper functions below.
+     */
+    public static boolean raiseSJChildren(SIRSplitJoin sj) {
+	if (sj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
+	    return raiseDupDupSJChildren(sj);
+	} else {
+	    return raiseRRSJChildren(sj);
 	}
     }
 
@@ -206,7 +299,7 @@ public class RefactorSplitJoin {
      *      RR(1)
      *        |
      */
-    public static boolean raiseDupDupSJChildren(SIRSplitJoin sj)
+    private static boolean raiseDupDupSJChildren(SIRSplitJoin sj)
     {
 	boolean didRaising = false;
         // Check that sj's splitter is duplicate:
@@ -275,4 +368,94 @@ public class RefactorSplitJoin {
 
         return didRaising;
     }
+
+    /**
+     * In the case of round-robin splitters, performs the opposite
+     * transformation as addHierarchicalChildren above.  Lifts a child
+     * splitjoin <child_i> of <sj> into sj if the sum of <child_i>'s
+     * split weights equals the i'th split weight in <sj>, and if the
+     * sum of <child_i>'s join weights equals the i'th join weight in
+     * <sj>.
+     */
+    private static boolean raiseRRSJChildren(SIRSplitJoin sj) {
+	boolean didRaising = false;
+        // Check that sj's splitter is not a duplicate:
+        if (sj.getSplitter().getType() == SIRSplitType.DUPLICATE) {
+	    return false;
+	}
+        // For sanity, confirm that we have a round-robin joiner.
+        if (sj.getJoiner().getType() != SIRJoinType.ROUND_ROBIN &&
+            sj.getJoiner().getType() != SIRJoinType.WEIGHTED_RR) {
+            return false;
+	}
+	int[] splitWeights = sj.getSplitter().getWeights();
+        int[] joinWeights = sj.getJoiner().getWeights();
+        
+        // Whee.  Let's look at sj's children:
+        for (int index = 0; index < sj.size(); index++) {
+            SIRStream child = sj.get(index);
+            // To continue, child must be a splitjoin with a round-robin
+            if (!(child instanceof SIRSplitJoin))
+                continue;
+            SIRSplitJoin sjChild = (SIRSplitJoin)child;
+            if (sjChild.getSplitter().getType() == SIRSplitType.DUPLICATE)
+                continue;
+
+            // The useful rates, for our purposes, is the sum of the
+            // splitter and joiner weights
+	    int inCount = sjChild.getSplitter().getSumOfWeights();
+            int outCount = sjChild.getJoiner().getSumOfWeights();
+            if (inCount != splitWeights[index] || outCount != joinWeights[index])
+                continue;
+
+            // Okay, we can raise the child.  This involves setting
+            // new (weighted round robin) splitter and joiners, and
+            // moving the child's children into sj.  Do the splitters
+            // and joiners first:
+	    didRaising = true;
+            JExpression[] oldWeights, newWeights, childWeights;
+            int i;
+	    // do splitter
+            oldWeights = sj.getSplitter().getInternalWeights();
+            newWeights = new JExpression[sj.size() + sjChild.size() - 1];
+            childWeights = sjChild.getSplitter().getInternalWeights();
+            for (i = 0; i < index; i++)
+                newWeights[i] = oldWeights[i];
+            for (int j = 0; j < childWeights.length; i++, j++)
+                newWeights[i] = childWeights[j];
+            for (int j = 1; j < oldWeights.length - index; i++, j++)
+                newWeights[i] = oldWeights[index + j];
+            SIRSplitter newSplitter =
+                SIRSplitter.create(sj, SIRSplitType.WEIGHTED_RR, newWeights);
+	    // do joiner
+            oldWeights = sj.getJoiner().getInternalWeights();
+            newWeights = new JExpression[sj.size() + sjChild.size() - 1];
+            childWeights = sjChild.getJoiner().getInternalWeights();
+            for (i = 0; i < index; i++)
+                newWeights[i] = oldWeights[i];
+            for (int j = 0; j < childWeights.length; i++, j++)
+                newWeights[i] = childWeights[j];
+            for (int j = 1; j < oldWeights.length - index; i++, j++)
+                newWeights[i] = oldWeights[index + j];
+            SIRJoiner newJoiner =
+                SIRJoiner.create(sj, SIRJoinType.WEIGHTED_RR, newWeights);
+
+            // ...and raise the children.
+            while (sjChild.size() > 0)
+            {
+                SIRStream child2 = sjChild.get(0);
+                List params = sjChild.getParams(0);
+                sjChild.remove(0);
+                sj.add(index, child2, params);
+                index++;
+            }
+            sj.remove(index);
+            index--;
+            sj.setSplitter(newSplitter);
+            sj.setJoiner(newJoiner);
+        }
+
+        return didRaising;
+    }
+
 }

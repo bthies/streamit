@@ -18,7 +18,12 @@ public class FissionTransform extends StreamTransform {
      */
     private int reps;
 
+    /**
+     * <reps> must be > 1 or you should be using an Identity
+     * transform.
+     */
     public FissionTransform(int reps) {
+	Utils.assert(reps>1);
 	this.reps = reps;
     }
 
@@ -37,4 +42,10 @@ public class FissionTransform extends StreamTransform {
 	return "Fission transform (" + reps + " ways)";
     }
 
+    /**
+     * Overrides StreamTransform.isIdempotent
+     */
+    protected boolean isIdempotent() {
+	return false;
+    }
 }

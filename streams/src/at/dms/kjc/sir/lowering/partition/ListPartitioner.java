@@ -28,7 +28,7 @@ public abstract class ListPartitioner {
     /**
      * The target number of tiles this partitioner is going for.
      */
-    protected int numTiles;
+    protected final int numTiles;
 
     /**
      * List of NODES (i.e., filters and joiners) in the stream graph.

@@ -42,7 +42,7 @@ public class Partitioner {
 	if (count < target) {
 	    // need fission
 	    if (KjcOptions.dppartition) {
-		new DynamicProgPartitioner(str, work, target).toplevel();
+		str = new DynamicProgPartitioner(str, work, target).toplevel();
 	    } else {
 		new GreedyPartitioner(str, work, target).toplevelFission(count);
 	    }
@@ -51,11 +51,14 @@ public class Partitioner {
 	    if (KjcOptions.ilppartition) {
 		new ILPPartitioner(str, work, target).toplevelFusion();
 	    } else if (KjcOptions.dppartition) {
-		new DynamicProgPartitioner(str, work, target).toplevel();
+		str = new DynamicProgPartitioner(str, work, target).toplevel();
 	    } else {
 		new GreedyPartitioner(str, work, target).toplevelFusion();
 	    }
 	}
+
+	// lift the result
+	Lifter.lift(str);
 
 	// dump the final graph
 	StreamItDot.printGraph(str, "after.dot");

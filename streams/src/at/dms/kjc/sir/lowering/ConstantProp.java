@@ -39,6 +39,10 @@ public class ConstantProp {
 	    Propagator propagator = new Propagator(constants);
 	    // propagate constants within init function of <str>
 	    str.getInit().accept(propagator);
+	    // propagate constants within work function of <str>
+	    JMethodDeclaration work= str.getWork();
+	    if(work!=null)
+		work.accept(propagator);
 	    // propagate into fields of <str>
 	    propagateFields(propagator, str);
 	    // unroll loops within init function of <str>

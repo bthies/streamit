@@ -30,7 +30,8 @@ public class ChannelConnectFilter extends Filter
         ASSERT (input == null && output == null);
         ASSERT (in != null && out != null);
         ASSERT (in != out);
-        ASSERT (out.getType ().getName ().equals (in.getType ().getName ()));
+        ASSERT (out.getType ().getName ().equals (in.getType ().getName ()),
+		"Mismatched tape types.  Source output is " + in.getType().getName() + ", but sink input is " + out.getType().getName() );
 
         input = in;
         output = out;

@@ -64,7 +64,8 @@ abstract public class Splitter extends Operator
                         input.setSink (this);
                     } else {
                         // check that the input types agree
-                        ASSERT (channel.getType ().getName ().equals (input.getType ().getName ()));
+                        ASSERT (channel.getType ().getName ().equals (input.getType ().getName ()),
+				"input type = " + input.getType().getName() + " but channel type = " + channel.getType().getName());
                     }
 
                     // now connect the channel to the Splitter

@@ -29,10 +29,45 @@ public class Pipeline extends Stream
      */
     public Pipeline (float x) { super(x);}
 
+    /** 
+     * Constructor with a float, float.
+     */
+    public Pipeline (float x1, float x2) { super(x1, x2);}
+
     /**
      * Constructor with two ints.
      */
     public Pipeline (int x, int y) { super (x, y); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, int b, float[][] c) { super (a, b, c); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, int b, float[] c) { super (a, b, c); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, int b, float[] c, float[] d) { super (a, b, c, d); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, int b, int c, float[][] d) { super (a, b, c, d); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, int b, int c, int d, float[][] e) { super (a, b, c, d, e); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, int b, int c, int d, float[][] e, float[][] f) { super (a, b, c, d, e, f); }
 
     /**
      * Constructor with three ints.
@@ -50,6 +85,28 @@ public class Pipeline extends Stream
     public Pipeline (float x, float y, float z, int a, float b)
     {
         super(x,y,z,a,b);
+    }
+
+    /** 
+     * Constructor with two integers followed by a float
+     **/
+    public Pipeline(int i1, int i2, float f) {
+      super(i1, i2, f);
+    }
+
+    /** 
+     * Constructor with two integers and two floats
+     **/
+    public Pipeline(int i1, int i2, float f1, float f2) {
+      super(i1, i2, f1, f2);
+    }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline(int n1, boolean b1)
+    {
+        super(n1, b1);
     }
 
     /**
@@ -149,7 +206,7 @@ public class Pipeline extends Stream
                     ChannelConnectFilter connect = new ChannelConnectFilter ();
                     Channel in = source.getOutputChannel ();
                     Channel out = sink.getInputChannel ();
-                    connect.useChannels (in, out);
+		    connect.useChannels (in, out);
                 }
                 source = sink;
             }

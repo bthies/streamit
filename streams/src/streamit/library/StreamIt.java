@@ -49,10 +49,11 @@ public class StreamIt extends Pipeline
                 oper.work();
             else if (oper instanceof SplitJoin)
             {
-                ASSERT (function instanceof Operator);
-                ((Operator)function).work();
+                ASSERT(function instanceof Operator);
+                ((Operator) function).work();
             }
-            else ASSERT (false);
+            else
+                ASSERT(false);
 
             if (schedule instanceof Filter)
             {
@@ -82,7 +83,18 @@ public class StreamIt extends Pipeline
                         stream.getOutputChannel().getItemsPushed();
                     ASSERT(
                         newOutputCount - outputCount
-                            == stream.getOutputChannel().getPushCount());
+                            == stream.getOutputChannel().getPushCount(),
+                        "This probably means that you declared the wrong push rate for "
+                            + stream
+                            + "\n"
+                            + "Pushed: "
+                            + newOutputCount
+                            + " and outputCount: "
+                            + outputCount
+                            + " but declared: "
+                            + stream.getOutputChannel().getPushCount()
+                            + " on Stream "
+                            + stream);
                 }
 
             }
@@ -99,7 +111,9 @@ public class StreamIt extends Pipeline
             {
                 if (repSchedule.isBottomSchedule())
                 {
-                    runSchedule(repSchedule.getWorkStream().getObject(), repSchedule.getWorkFunc());
+                    runSchedule(
+                        repSchedule.getWorkStream().getObject(),
+                        repSchedule.getWorkFunc());
                 }
                 else
                 {
@@ -118,10 +132,12 @@ public class StreamIt extends Pipeline
             ASSERT(false);
     }
 
-    public void run()
+    /* removing this to force people to pass arguments
+    public void run ()
     {
         run(null);
     }
+    */
 
     // just a runtime hook to run the stream
     public void run(String args[])
@@ -168,8 +184,14 @@ public class StreamIt extends Pipeline
 
         setupOperator();
 
-        ASSERT(getInputChannel() == null);
-        ASSERT(getOutputChannel() == null);
+        ASSERT(
+            getInputChannel() == null,
+            "The toplevel stream can't have any input or output channels,\n"
+                + "but in this program there is an input to the first filter.");
+        ASSERT(
+            getOutputChannel() == null,
+            "The toplevel stream can't have any input or output channels,\n"
+                + "but in this program there is an output of the last filter.");
 
         // setup the scheduler
         if (printGraph)

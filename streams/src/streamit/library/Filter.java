@@ -16,6 +16,31 @@ public abstract class Filter extends Stream
         super(a, b);
     }
 
+    public Filter(float[] b)
+    {
+        super(b);
+    }
+
+    public Filter(int a, float[] b)
+    {
+        super(a, b);
+    }
+
+    public Filter(int a, int[] b)
+    {
+        super(a, b);
+    }
+
+    public Filter(int a, float[][] b)
+    {
+        super(a, b);
+    }
+
+    public Filter(int a, int b, float[][] c)
+    {
+        super(a, b, c);
+    }
+
     public Filter(float a, int b)
     {
         super(a, b);
@@ -87,6 +112,11 @@ public abstract class Filter extends Stream
     public Filter(int n1, int n2, int n3,
                   int n4, int n5, int n6) {
         super(n1, n2, n3, n4, n5, n6);
+    }
+
+    public Filter(boolean b1)
+    {
+        super(b1);
     }
 
      public Filter(float f)

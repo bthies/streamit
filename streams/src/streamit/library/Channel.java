@@ -71,7 +71,9 @@ public class Channel extends streamit.misc.DestroyedClass
 
             // if I need to get data from my source I better not be a scheduled
             // buffer.
-            ASSERT (maxSize == -1);
+            ASSERT (maxSize == -1, "maxSize should equal -1 (representing not a scheduled buffer)\n" + "Queue: " + queue + ".size: " 
+		    + queue.size() + " amount is: " + amount 
+		    + " and maxSize is: " + maxSize);
 
             source.work ();
         }
@@ -178,6 +180,22 @@ public class Channel extends streamit.misc.DestroyedClass
         enqueue (new Float (d));
     }
 
+    // push a 2-d float array
+    public void push2DFloat(float[][] d)
+    {
+        ASSERT (type == new float[0][0].getClass());
+	
+	// copy the array to maintain copy-semantics
+	float[][] copy = new float[d.length][d[0].length];
+	for (int i=0; i<d.length; i++) {
+	    for (int j=0; j<d[0].length; j++) {
+		copy[i][j] = d[i][j];
+	    }
+	}
+
+        enqueue (copy);
+    }
+
     // push a String
     public void pushString(String str)
     {
@@ -272,6 +290,17 @@ public class Channel extends streamit.misc.DestroyedClass
         return data.floatValue ();
     }
 
+    // pop a float
+    public float[][] pop2DFloat()
+    {
+        ASSERT (type == new float[0][0].getClass());
+
+        float[][] data = (float[][]) pop ();
+        ASSERT (data != null);
+
+        return data;
+    }
+
 
     // pop a String
     public String popString()
@@ -356,6 +385,17 @@ public class Channel extends streamit.misc.DestroyedClass
         return data.floatValue ();
     }
 
+    // peek at a float
+    public float[][] peek2DFloat(int index)
+    {
+        ASSERT (type == new float[0][0].getClass());
+
+        float[][] data = (float[][]) peek (index);
+        ASSERT (data != null);
+
+        return data;
+    }
+
     // peek at a String
     public String peekString(int index)
     {
@@ -389,7 +429,9 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         if (peekCount != null)
         {
-            ASSERT (peekCount.intValue () >= popPushCount.intValue ());
+            ASSERT (peekCount.intValue () >= popPushCount.intValue (),
+		    "The peek count of " + peekCount.intValue() + " is less than the pop count of " + 
+		    popPushCount.intValue() + " in channel connecting " + source + " and " + sink);
             return peekCount.intValue ();
         } else {
             return getPopCount ();

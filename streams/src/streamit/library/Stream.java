@@ -25,6 +25,54 @@ public abstract class Stream extends Operator
         super(a, b);
     }
 
+    public Stream(float[] b)
+    {
+        super(b);
+    }
+
+    public Stream(int a, float[] b)
+    {
+        super(a, b);
+    }
+
+    public Stream(int a, int[] b)
+    {
+        super(a, b);
+    }
+
+    public Stream(int a, float[][] b)
+    {
+        super(a, b);
+    }
+
+    public Stream (int i1, int i2, float f) {
+        super(i1, i2, f);
+    }
+
+    public Stream (int i1, int i2, float f1, float f2) {
+        super(i1, i2, f1, f2);
+    }
+
+    public Stream(int a, int b, float[] c)
+    {
+        super(a, b, c);
+    }
+
+    public Stream(int a, int b, float[][] c)
+    {
+        super(a, b, c);
+    }
+
+    public Stream(int a, int b, int c, int d, float[][] e)
+    {
+        super(a, b, c, d, e);
+    }
+
+    public Stream(int a, int b, int c, int d, float[][] e, float[][] f)
+    {
+        super(a, b, c, d, e, f);
+    }
+
     public Stream(float a, int b)
     {
         super(a, b);
@@ -85,6 +133,21 @@ public abstract class Stream extends Operator
         super (n);
     }
 
+    public Stream(boolean b1)
+    {
+        super(b1);
+    }
+
+    public Stream(int n1, int n2, boolean b1)
+    {
+        super(n1, n2, b1);
+    }
+
+    public Stream(int n1, boolean b1)
+    {
+        super(n1, b1);
+    }
+
     public Stream (int x, int y)
     {
         super (x, y);
@@ -93,6 +156,11 @@ public abstract class Stream extends Operator
     public Stream (int x, int y, int z)
     {
         super (x, y, z);
+    }
+
+    public Stream (int x, int y, int z, float[][] f)
+    {
+        super (x, y, z, f);
     }
 
     public Stream (int x, int y, int z, int a)
@@ -160,6 +228,11 @@ public abstract class Stream extends Operator
 		   int i6, 
 		   float f) {
 	super(i1, i2, i3, i4, i5, i6, f);
+    }
+
+    public Stream(int n1, int n2, float f1[], float f2[])
+    {
+        super(n1, n2, f1, f2);
     }
 
     // RESET FUNCTIONS

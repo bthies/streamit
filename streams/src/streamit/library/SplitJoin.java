@@ -36,9 +36,39 @@ public class SplitJoin extends Stream
         super(n1, n2);
     }
 
+    public SplitJoin(int a, float b)
+    {
+        super(a, b);
+    }
+
+    public SplitJoin(int i1, int i2, float f)
+    {
+        super(i1, i2, f);
+    }
+
+    public SplitJoin(int i1, int i2, float f1, float f2)
+    {
+        super(i1, i2, f1, f2);
+    }
+
     public SplitJoin(int n1, int n2, int n3)
     {
         super(n1, n2, n3);
+    }
+
+    public SplitJoin(int n1, int n2, int n3, float[][] n4)
+    {
+        super(n1, n2, n3, n4);
+    }
+
+    public SplitJoin(int n1, int n2, int n3, int n4, float[][] n5)
+    {
+        super(n1, n2, n3, n4, n5);
+    }
+
+    public SplitJoin(int n1, int n2, int n3, int n4, float[][] n5, float[][] n6)
+    {
+        super(n1, n2, n3, n4, n5, n6);
     }
 
     public SplitJoin(int n1, int n2, int n3, int n4)
@@ -61,6 +91,26 @@ public class SplitJoin extends Stream
     public SplitJoin(float n1, float n2, float n3, int n4)
     {
         super(n1, n2, n3, n4);
+    }
+
+    public SplitJoin(float f1, float f2, int n1) 
+    {
+        super(f1, f2, n1);
+    }
+
+    public SplitJoin(int n1, int n2, float f1[], float f2[])
+    {
+        super(n1, n2, f1, f2);
+    }
+
+    public SplitJoin(int n1, int n2, boolean b1)
+    {
+        super(n1, n2, b1);
+    }
+
+    public SplitJoin(int n1, boolean b1)
+    {
+        super(n1, b1);
     }
 
     // type of a split or a join:

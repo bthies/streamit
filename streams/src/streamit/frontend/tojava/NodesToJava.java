@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.95 2005-04-04 07:05:53 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.96 2005-04-04 20:17:03 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -431,7 +431,17 @@ public class NodesToJava implements FEVisitor
             result = name + "(";
 	} else if (name.startsWith("init_array")) {
 	    // take care of, e.g., init_array_1D_float(String filename, int size)
-	    result = name + "(";
+
+	    // in the library, generate a function call to load file
+	    // from disk.  In the compiler, add a static array
+	    // initializer.  (Can't use static array initializers in
+	    // Java because it might exceed max method size of JVM's.)
+	    if (libraryFormat) {
+		result = name + "(";
+	    } else {
+		result = makeArrayInit(exp);
+		return result;
+	    }
 	} else {
 	    // Math.sqrt will return a double, but we're only supporting
 	    // float's now, so add a cast to float.  Not sure if this is
@@ -448,6 +458,83 @@ public class NodesToJava implements FEVisitor
         }
         result += ")";
         return result;
+    }
+
+    /**
+     * Given a function call of the following form:
+     *
+     * 	 init_array_1D_float(String filename, int size)
+     * 	 init_array_1D_int(String filename, int size)
+     *
+     * generates a static array initializer by loading the initial
+     * values from the file.
+     */
+    private String makeArrayInit(ExprFunCall exp) {
+	String funcName = exp.getName();
+	String filename = null;
+	int size = 0;
+	StringBuffer result = new StringBuffer();
+
+	// GET PARAMS -------
+
+	// first param should be string
+	if (exp.getParams().get(0) instanceof ExprConstStr) {
+	    // for some reason the string literal has quotes on either
+	    // side
+	    String withQuotes = ((ExprConstStr)exp.getParams().get(0)).getVal();
+	    filename = withQuotes.substring(1, withQuotes.length()-1);
+	} else {
+	    System.err.println("Error: expected first argument to " + funcName + " to be a String (the filename)");
+	    System.exit(1);
+	}
+
+	// second param should be an int
+	if (exp.getParams().get(1) instanceof ExprConstInt) {
+	    size = ((ExprConstInt)exp.getParams().get(1)).getVal();
+	} else {
+	    System.err.println("Error: expected first argument to " + funcName + " to be an integer (the size)");
+	    System.exit(1);
+	}
+
+	// LOAD ARRAY -------
+
+	// load int array values
+	if (funcName.equals("init_array_1D_int")) {
+	    int[] array = streamit.misc.Misc.init_array_1D_int(filename, size);
+	    // build result
+	    result.append("{");
+	    for (int i=0; i<size; i++) {
+		if (i!=0) {
+		    result.append(",\n");
+		    result.append(indent);
+		}
+		result.append(array[i]);
+	    }
+	    result.append("}");
+	    return result.toString();
+	}
+
+	// load float array values
+	if (funcName.equals("init_array_1D_float")) {
+	    float[] array = streamit.misc.Misc.init_array_1D_float(filename, size);
+	    // build result
+	    result.append("{");
+	    for (int i=0; i<size; i++) {
+		if (i!=0) {
+		    result.append(",\n");
+		    result.append(indent);
+		}
+		result.append(array[i]);
+		result.append("f"); // float not double
+	    }
+	    result.append("}");
+	    return result.toString();
+	}
+
+	// unrecognized function type
+	System.err.println("Unrecognized array initializer: " + funcName);
+	System.exit(1);
+	return null;
     }
 
     public Object visitExprPeek(ExprPeek exp)

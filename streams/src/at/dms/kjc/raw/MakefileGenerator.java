@@ -48,7 +48,13 @@ public class MakefileGenerator
 		! (KjcOptions.numbers > 0 && NumberGathering.successful))
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
 	    */
-            fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
+	    //            fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
+	    fw.write("BTL-DEVICES += -dram_freq 100\n");
+	    fw.write("ATTRIBUTES += HWIC\n");
+	    //add some other stuff
+	    fw.write("MEMORY_LAYOUT=LEFT_RIGHT_SIDES\n");
+	    fw.write("BTL-DEVICES += -enable_all_side_for_dram -dram lhs\n");
+
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
 	    if (KjcOptions.outputs > 0 ||

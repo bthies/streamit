@@ -377,7 +377,9 @@ public class SwitchCode extends at.dms.util.Utils
 	
 	buf.append(".text\n\n");
 	buf.append("raw_init:\n");
-	buf.append("\tmtsri	SW_PC, %lo(sw_begin)\n");
+	//buf.append("\tmtsri	SW_PC, %lo(sw_begin)\n");
+	buf.append("\tla $3, sw_begin\n");
+	buf.append("\tmtsr SW_PC, $3\n");
 	buf.append("\tmtsri	SW_FREEZE, 0\n");
 	if (FileVisitor.connectedToFR(tile))
 	    buf.append("\tori! $0, $0, 1\n");

@@ -16,7 +16,7 @@ public class HelloWorld1 extends Stream
     }
 
     // this is the defining part of the stream
-    public void Init()
+    public void init()
     {
         add(new CharGenerator("Hello World!"));
         add(new CharPrinter());

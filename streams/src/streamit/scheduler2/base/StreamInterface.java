@@ -1,6 +1,6 @@
 package streamit.scheduler.base;
 
-/* $Id: StreamInterface.java,v 1.1 2002-05-27 03:18:52 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.2 2002-06-09 22:38:47 karczma Exp $ */
 
 /**
  * This interface will provide the basic functionality for
@@ -40,5 +40,5 @@ public interface StreamInterface
      * This will compute the number of executions of each
      * subcomponent in steady state.
      */
-    public void computeSteadyState ();
+    void computeSteadyState ();
 }

@@ -1,0 +1,205 @@
+package streamit.scheduler.hierarchical;
+
+/* $Id: PhasingSchedule.java,v 1.1 2002-06-09 22:38:51 karczma Exp $ */
+
+import java.util.Vector;
+import streamit.scheduler.Schedule;
+import streamit.misc.DestroyedClass;
+
+/**
+ * This class stores all information about PhasingSchedules.
+ * Phasing schedules basically are schedules that have sub-schedules.
+ * Here, a phasing schedule will either have multiple sub-schedules
+ * (sub phasing-schedules), or it will have a single Schedule.
+ * 
+ * Due to lack of multiple inheritance in Java, I am forced to 
+ * implement new functionality by splitting each new object
+ * into an algorithm and "shell" implementation.  Algorithms
+ * provide the common functionality for new object.  "shell" object
+ * simply call algorithm objects to perform appropriate operations.
+ * This is silly, and is a consequence of Java constraining the
+ * programmer so s/he can't shoot him self in the foot.  Good
+ * programmers feel handcuffed, and bad programmers continue coming
+ * up with new creative ways to shoot themselves in the foot.
+ */
+
+public class PhasingSchedule extends DestroyedClass
+{
+    int nPhases;
+    int overallPeek, overallPop, overallPush;
+    final Vector peekSize = new Vector();
+    final Vector popSize = new Vector();
+    final Vector pushSize = new Vector();
+    final Vector phases = new Vector();
+    Schedule schedule;
+    final StreamInterface streamTop, streamBottom;
+
+    /**
+     * Setup a PhasingSchedule with a real Schedule.
+     */
+    public PhasingSchedule(
+        StreamInterface stream,
+        Schedule _schedule,
+        int peekAmount,
+        int popAmount,
+        int pushAmount)
+    {
+        streamTop = stream;
+        streamBottom = stream;
+        schedule = _schedule;
+        nPhases = 1;
+        peekSize.add(new Integer(peekAmount));
+        popSize.add(new Integer(popAmount));
+        pushSize.add(new Integer(pushAmount));
+        overallPeek = peekAmount;
+        overallPop = popAmount;
+        overallPush = pushAmount;
+    }
+
+    /**
+     * Setup a PhasingSchedule for being a proper phasing schedule.
+     */
+    public PhasingSchedule(StreamInterface top, StreamInterface bottom)
+    {
+        streamTop = top;
+        streamBottom = bottom;
+        overallPeek = 0;
+        overallPop = 0;
+        overallPush = 0;
+    }
+
+    /**
+     * get the number of phases in this schedule
+     * @return number of phases in this schedule
+     */
+    public int getNumPhases()
+    {
+        return nPhases;
+    }
+
+    /**
+     * get the number of data peeked by the appropriate phase
+     * @return number of data peeked by phase
+     */
+    public int getPhaseNumPeek(int phase)
+    {
+        // phase must be within range
+        ASSERT(phase >= 0 && phase < nPhases);
+        return ((Integer) peekSize.get(phase)).intValue();
+    }
+
+    /**
+     * get the number of data popped by the appropriate phase
+     * @return number of data popped by phase
+     */
+    public int getPhaseNumPop(int phase)
+    {
+        // phase must be within range
+        ASSERT(phase >= 0 && phase < nPhases);
+        return ((Integer) popSize.get(phase)).intValue();
+    }
+
+    /**
+     * get the number of data pushed by the appropriate phase
+     * @return number of data pushed by phase
+     */
+    public int getPhaseNumPush(int phase)
+    {
+        // phase must be within range
+        ASSERT(phase >= 0 && phase < nPhases);
+        return ((Integer) pushSize.get(phase)).intValue();
+    }
+
+    /**
+     * get a particular phase of the schedule
+     * @return phase of the schedule
+     */
+    public PhasingSchedule getPhase(int phase)
+    {
+        // phase must be within range
+        ASSERT(phase >= 0 && phase < nPhases);
+
+        // and this must be a phasing schedule
+        ASSERT(phases != null);
+
+        return (PhasingSchedule) phases.get(phase);
+    }
+
+    /**
+     * Append a phase to this phasing schedule.  If the sub-stream
+     * being appended is either the top or the bottom of this
+     * stream, this function will store its appropriate push/pop/peek.
+     * Otherwise, it will store 0's, as this sub-stream does not
+     * affect communication outside this stream.
+     */
+    public void appendPhase(PhasingSchedule phase, StreamInterface subStream)
+    {
+        // first append the new phase
+        nPhases++;
+        phases.add(phase);
+
+        // find out how much this phase communicates withoutside world
+        int peek = 0, pop = 0, push = 0;
+
+        if (subStream == streamTop)
+        {
+            peek = phase.getOverallPeek();
+            pop = phase.getOverallPop ();
+        }
+        
+        if (subStream == streamBottom)
+        {
+            push = phase.getOverallPush ();
+        }
+
+        // update this stream's communication
+        overallPeek = MAX(overallPeek, overallPop + peek);
+        overallPop = overallPop + pop;
+        overallPush = overallPush + push;
+    }
+    
+    /**
+     * Get the amount of data that this phasing schedule peeks, when
+     * all of its phases are executed.  This amount is reported as
+     * seen by the object whose schedule is being reported here.
+     * @return peek size for overall schedule
+     */
+    public int getOverallPeek ()
+    {
+        return overallPeek;
+    }
+
+    /**
+     * Get the amount of data that this phasing schedule pops, when
+     * all of its phases are executed.  This amount is reported as
+     * seen by the object whose schedule is being reported here.
+     * @return pop size for overall schedule
+     */
+    public int getOverallPop ()
+    {
+        return overallPop;
+    }
+
+    /**
+     * Get the amount of data that this phasing schedule pushes, when
+     * all of its phases are executed.  This amount is reported as
+     * seen by the object whose schedule is being reported here.
+     * @return push size for overall schedule
+     */
+    public int getOverallPush ()
+    {
+        return overallPush;
+    }
+
+    /**
+     * get a Schedule that corresponds to this phasing schedule
+     * @return corresponding Schedule
+     */
+    Schedule getSchedule()
+    {
+        // better be a single schedule phase
+        ASSERT(schedule != null);
+
+        return schedule;
+    }
+}

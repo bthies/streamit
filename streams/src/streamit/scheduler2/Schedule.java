@@ -1,8 +1,9 @@
 package streamit.scheduler;
 
 import streamit.misc.AssertedClass;
+import java.util.Vector;
 
-/* $Id: Schedule.java,v 1.4 2002-05-24 23:10:31 karczma Exp $ */
+/* $Id: Schedule.java,v 1.5 2002-06-09 22:38:44 karczma Exp $ */
 
 /**
  * <dl>
@@ -22,6 +23,40 @@ import streamit.misc.AssertedClass;
 public class Schedule extends AssertedClass
 {
     /**
+     * all the sub-schedules that are contained by this schedule
+     */
+    final private Vector subScheds;
+    
+    /**
+     * Work function associated with bottom-level schedule
+     */
+    final private Object workFunc;
+
+    /**
+     * Number of times that this schedule is supposed to be repeated
+     */
+    private int nRepetitions = 1;
+
+    /**
+     * Create a schedule that will be used with many sub-schedules.
+     */
+    public Schedule ()
+    {
+        subScheds = new Vector ();
+        workFunc = null;
+    }
+    
+    /**
+     * Create the schedule to be a bottom schedule with a single
+     * work function.
+     */
+    public Schedule (Object workFunction)
+    {
+        workFunc = workFunction;
+        subScheds = null;
+    }
+    
+    /**
      * Checks if the Schedule is a bottom-level schedule.
      * If the Schedule contains a work function that needs
      * to be called, it is a bottom schedule.  If it contains
@@ -32,26 +67,41 @@ public class Schedule extends AssertedClass
     public boolean isBottomSchedule () { return workFunc != null; }
     
     /**
-     * all the sub-schedules that are contained by this schedule
+     * Get the number of phases in this schedule
+     * @return number of phases in this schedule
      */
-    Schedule[] subScheds;
+    public int getNumPhases ()
+    {
+        // make sure that I'm not a bottom schedule
+        ASSERT (subScheds != null);
+        return subScheds.size ();
+    }
 
     /**
-     * Get the subschedules of this schedule.   If this is the final
+     * Get a subschedule of this schedule.   If this is the final
      * (lowest level - one that references a work function) schedule,
      * this function will ASSERT.
      * @return subschedules of this schedule
      */
-    public Schedule[] getSubScheds()
+    public Schedule getSubSched(int nSched)
     {
         ASSERT(subScheds != null);
-        return subScheds;
+        ASSERT(nSched >= 0 && nSched < subScheds.size ());
+        return (Schedule) subScheds.get (nSched);
     }
-
+    
     /**
-     * Work function associated with bottom-level schedule
+     * Add a schedule to the list of sub-schedules of this schedule.
+     * This basically appends another schedule to the subScheds,
+     * thus augmenting the current schedule from the end.
      */
-    Object workFunc;
+    public void addSubSchedule(Schedule subSchedule)
+    {
+        // make sure this is not a bottom schedule
+        ASSERT (subScheds != null);
+        
+        subScheds.add(subSchedule);
+    }
 
     /**
      * Returns the work function associated with a schedule.
@@ -64,11 +114,6 @@ public class Schedule extends AssertedClass
         ASSERT(workFunc != null);
         return workFunc;
     }
-
-    /**
-     * Number of times that this schedule is supposed to be repeated
-     */
-    private int nRepetitions;
 
     /**
      * Get the number of times that this schedule is supposed to be

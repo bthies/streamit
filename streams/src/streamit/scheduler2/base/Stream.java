@@ -2,13 +2,12 @@ package streamit.scheduler.base;
 
 import streamit.misc.DestroyedClass;
 
-/* $Id: Stream.java,v 1.1 2002-05-27 03:18:51 karczma Exp $ */
+/* $Id: Stream.java,v 1.2 2002-06-09 22:38:47 karczma Exp $ */
 
 /**
  * This class provides the basic functionality for
  * all future stream classes.  This will ensure that streams can
- * be used interchangably.  I have to do this because Java doesn't
- * have multi-inheritance :(
+ * be used interchangably.
  * 
  * @version 2
  * @author  Michal Karczmarek

@@ -2,7 +2,7 @@ package streamit.scheduler.base;
 
 import streamit.scheduler.iriter.FilterIter;
 
-/* $Id: Filter.java,v 1.1 2002-05-27 03:18:49 karczma Exp $ */
+/* $Id: Filter.java,v 1.2 2002-06-09 22:38:46 karczma Exp $ */
 
 /**
  * Computes some basic data for Filters.
@@ -13,34 +13,36 @@ import streamit.scheduler.iriter.FilterIter;
 
 public class Filter extends Stream
 {
-    FilterIter filter;
+    final public FilterIter filterIter;
 
-    Filter(FilterIter _filter)
+    public Filter(FilterIter _filterIter)
     {
-        ASSERT(_filter);
-        filter = _filter;
+        ASSERT(_filterIter);
+        filterIter = _filterIter;
+
+        computeSteadyState();
     }
 
     public void computeSteadyState()
     {
         // not tested yet.
-        ASSERT (false);
-        
+        ASSERT(false);
+
         int pop = 0, push = 0;
         int maxPeek = 0;
 
         // go through all the work functions
         int phase;
-        for (phase = 0; phase < filter.getNumWorkPhases(); phase++)
+        for (phase = 0; phase < filterIter.getNumWorkPhases(); phase++)
         {
-            int workPeek = filter.getPeekPhase(phase);
-            int workPop = filter.getPopPhase(phase);
-            int workPush = filter.getPushPhase(phase);
+            int workPeek = filterIter.getPeekPhase(phase);
+            int workPop = filterIter.getPopPhase(phase);
+            int workPush = filterIter.getPushPhase(phase);
 
             // peek will be the maximum of previous peek and current
             // peek - it is possible that previous work function had
             // a peek value that ended up being larger than my peek!
-            maxPeek = MAX (maxPeek, pop + workPeek);
+            maxPeek = MAX(maxPeek, pop + workPeek);
 
             pop += workPop;
             push += workPush;

@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.8 2005-01-12 19:57:10 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.9 2005-01-13 01:49:54 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -258,6 +258,9 @@ public class SIRToStreamIt
             fields[i].accept(this);
         if (init != null)
             init.accept(this);
+	if (self instanceof SIRTwoStageFilter) {
+	    ((SIRTwoStageFilter)self).getInitWork().accept(this);
+	}
         if (work != null)
             work.accept(this);
         pos -= TAB_SIZE;
@@ -669,6 +672,11 @@ public class SIRToStreamIt
         {
             print(ident);
         }
+	else if (ident.equals("initWork")) 
+	{
+	    // initWork is the compiler's name for "prework"
+	    print("prework");
+	}
         else
         {
             // print(CModifier.toString(modifiers));
@@ -691,7 +699,16 @@ public class SIRToStreamIt
             print(")");
         }
 
-        // Print I/O rates, if they're available.
+        // Print I/O rates for initWork function, if they're available.
+        if (ident.equals("initWork")) // or a phase function?
+        {
+            SIRTwoStageFilter filter = (SIRTwoStageFilter)theStream;
+	    print(" pop " + filter.getInitPop());
+	    print(" peek " + filter.getInitPeek());
+	    print(" push " + filter.getInitPush());
+        }
+
+        // Print I/O rates for work function, if they're available.
         if (ident.equals("work")) // or a phase function?
         {
             SIRFilter filter = (SIRFilter)theStream;

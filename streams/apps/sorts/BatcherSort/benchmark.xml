@@ -1,0 +1,19 @@
+<benchmark>
+  <name>BatcherSort</name>
+  <desc>Batcher's sorting algorithm</desc>
+  <description>
+  Identical to a Bitonic Sort, compares and swaps pairs of 
+  elements in parallel. 
+  </description>
+  <reference></reference>
+  <implementations>  
+    <impl lang="StreamIt">
+      <file>BatcherSort.str</file>
+      <desc>Original implementation</desc>
+    </impl>
+    <impl lang="StreamIt">
+      <file>AutoBatcherSort.str</file>
+      <desc>Slightly more fine-grained implementation</desc>
+    </impl>
+  </implementations>
+</benchmark>

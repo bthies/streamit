@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.17 2003-06-27 16:17:07 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.18 2003-07-07 14:09:32 dmaze Exp $
 
 use strict;
 use POSIX qw(strftime);
@@ -17,7 +17,7 @@ use POSIX qw(strftime);
 my $DEBUG = 0;
 
 # admin email addresses where we want the crazy emails to go (space separated)
-my $ADMINS = "dmaze\@cag.lcs.mit.edu";
+my $ADMINS = "streamit-regtest-log\@cag.lcs.mit.edu";
 # user email addresses who want to get regtest-results
 my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 

@@ -46,10 +46,9 @@ if (@ARGV) {
 		 ".:SamplingRateConverter",
 		 ".:FilterBank",
 		 ".:TargetDetect",
-		 ".:FMRadioApp",
+		 ".:LinkedFMTest",
 		 ".:CoarseSerializedBeamFormer",
 		 ".:OneBitDToA",
-		 #".:Test",
 		 );
 }
 
@@ -160,7 +159,7 @@ sub do_test {
     do_compile($path, $base_filename, $options);
     
     # figure out how many outputs are produced
-    my $outputs = get_output_count($path, $base_filename) * $NUM_ITERS;
+    my $outputs = get_output_count($path, $base_filename, $NUM_ITERS);
     
     # run the dynamo rio test and get back the results
     my $report = run_rio($path, $base_filename, $descr, $NUM_ITERS);
@@ -234,16 +233,19 @@ sub run_rio {
 }
 
 
-# Gets the number of outputs produced by one iteration of the stream steady state
+# Gets the number of outputs produced by executing
+# the stream for the specified number of iterations
+# usage: get_output_count($path, $filenamebase, $num_iters)
 sub get_output_count {
     my $path = shift || die ("no path");
     my $filename_base = shift || die ("no filename base");
+    my $num_iters = shift || die ("no iter count ");
 
     print "(output count)";
     
     # run the program for one iter piping its output to wc
     # whose output we will parse and return a value.
-    my $wc_results = `$path/$filename_base.exe -i 1 | wc -l`;
+    my $wc_results = `$path/$filename_base.exe -i $num_iters | wc -l`;
     my ($count) = $wc_results =~ m/(\d*)\n/gi;
     return $count;
 }

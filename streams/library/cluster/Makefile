@@ -1,9 +1,13 @@
 
 CC =		gcc
+CC_IA64 =       ecc
+
 CFLAGS = 	-O2 -I.
+
 AR =            ar
 RANLIB =        ranlib
 LIBRARY =       libcluster.a
+LIBRARY_IA64 =  libcluster_ia64.a
 LIBRARYP =      libcluster_p.a
 
 NAMES =		sock_dscr \
@@ -38,18 +42,26 @@ NAMES =		sock_dscr \
 SOURCES = 	$(NAMES:%=%.cpp)
 DEPS = 		$(NAMES:%=%.d)
 OBJS = 		$(NAMES:%=%.o)
+OBJS_IA64 = 	$(NAMES:%=%_ia64.o)
 OBJSP =         $(NAMES:%=%_p.o)
 
 all: $(LIBRARY)
+
+ia64: $(LIBRARY_IA64)
 
 profile: $(LIBRARYP)
 
 clean:
 	rm -f $(LIBRARY) $(OBJS)
+	rm -f $(LIBRARY_IA64) $(OBJS_IA64)
 	rm -f $(LIBRARYP) $(OBJSP)
 	rm -f *~
 
 $(LIBRARY): $(OBJS)
+	$(AR) r $@ $^
+	$(RANLIB) $@
+
+$(LIBRARY_IA64): $(OBJS_IA64)
 	$(AR) r $@ $^
 	$(RANLIB) $@
 
@@ -60,6 +72,9 @@ $(LIBRARYP): $(OBJSP)
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+%_ia64.o: %.cpp
+	$(CC_IA64) $(CFLAGS) -c -o $@ $<
 
 %_p.o: %.c
 	$(CC) $(CFLAGS) -g -pg -a -c -o $@ $<

@@ -163,16 +163,18 @@ public class Flattener {
 	// we are working with.
 	if (KjcOptions.linearanalysis ||
 	    KjcOptions.linearreplacement ||
-	    (KjcOptions.frequencyreplacement != -1)) {
+	    (KjcOptions.frequencyreplacement != -1) ||
+	    KjcOptions.redundantreplacement) {
 	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.print("Running linear analysis... ");
 	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
 	    System.err.println("done.");
-	    
+
 	    System.err.print("Running redundancy analysis... ");	    
 	    // now, run a redundancy analysis pass and print the results
 	    LinearRedundancyAnalyzer lra = new LinearRedundancyAnalyzer(lfa);
-	    System.err.println("done.");	    
+	    System.err.println("done.");
+
 	    
 	    // now, print out the graph using the LinearPrinter which colors the graph
 	    // nodes based on their linearity.
@@ -202,6 +204,15 @@ public class Flattener {
 		System.err.println("done.");
 		LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
 	    }
+
+	    if (KjcOptions.redundantreplacement) {
+		// do the redundancy replacement
+		System.err.print("Running anti-redundant replacement...");
+		LinearRedundancyReplacer.doReplace(lra, str);
+		System.err.println("done.");
+	    }
+	    
+
 	}
 
 	// if we have don't have a container, wrap it in a pipeline

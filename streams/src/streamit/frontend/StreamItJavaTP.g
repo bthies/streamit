@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.2 2002-07-10 18:16:55 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.3 2002-07-10 18:53:02 dmaze Exp $
  */
 
 header {
@@ -448,14 +448,11 @@ join_statement returns [String t] {t=null; String type = null;}
 	;
 
 split_join_type returns [String t] { t = null; }
-	:
-		( TK_duplicate { t = "DUPLICATE ()"; }
-			// FIX AMBIGUITY HERE!!!
-		| TK_roundrobin { t = "ROUND_ROBIN ()"; }
-		| #(TK_roundrobin
-				t=func_call_params
-				{ t = "WEIGHTED_ROUND_ROBIN " + t; }
-			)
+	:	TK_duplicate { t = "DUPLICATE ()"; }
+	|	TK_roundrobin
+		( (expr expr) => t=func_call_params { t = "WEIGHTED_ROUND_ROBIN" + t; }
+		| (expr) => t=expr { t = "ROUND_ROBIN(" + t + ")"; }
+		| { t = "ROUND_ROBIN()"; }
 		)
 	;
 

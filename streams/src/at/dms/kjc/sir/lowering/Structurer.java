@@ -116,33 +116,61 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 
     /**
      * For each method in <methods>, belonging to stream named
-     * <streamName>, add a parameter representing the structure of
-     * state, and change all references to state to be references to
-     * the structure.  
+     * <streamName>, "flatten" the method by:
+     *   1. adding a parameter for the state of the stream structure
+     *   2. changing all field references within the function to reference the
+     *      contents of the stream structure
+     *   3. renaming the method to a "unique" name that is formed by 
+     *      prepending the stream name to the original method name
      */
-    private void addStructReferences(String streamName,
-				     JMethodDeclaration[] methods) {
+    private void flattenMethods(String streamName,
+				JMethodDeclaration[] methods) {
 	// for each method
 	for (int i=0; i<methods.length; i++) {
+	    // rename the method
+	    methods[i].setName(streamName+"_"+methods[i].getName());
 	    // add the parameter
-	    addParameter(streamName, methods[i]);
+	    addParameter(methods[i], 
+			 streamName, 
+			 LoweringConstants.STATE_PARAM_NAME);
 	    // for each statement in the method, change references
-	    JStatement[] body = methods[i].getStatements();
+	    JStatement[] statements = methods[i].getStatements();
+	    KjcVisitor resolver = new FieldResolver();
+	    for (int j=0; j<statements.length; j++) {
+		statements[j].accept(resolver);
+	    }
 	}
     }
 
     /**
-     * Adds a parameter to the beginning of the parameter list of
-     * <meth> of type <type>.
+     * For the work method <work>, add two parameters corresponding to the
+     * input and output tapes.
      */
-    private void addParameter(String type, JMethodDeclaration meth) {
+    private void addTapeParameters(JMethodDeclaration work) {
+	// add parameter for output tape
+	addParameter(work, 
+		     LoweringConstants.TAPE_TYPE_NAME,
+		     LoweringConstants.OUTPUT_TAPE_NAME);
+	// add parameter for input tape
+	addParameter(work, 
+		     LoweringConstants.TAPE_TYPE_NAME,
+		     LoweringConstants.INPUT_TAPE_NAME);
+    }
+
+    /**
+     * Adds a parameter to the beginning of the parameter list of
+     * <meth> of type <typeName> and name <varName>.
+     */
+    private void addParameter(JMethodDeclaration meth, 
+			      String typeName, 
+			      String varName) {
 	meth.addParameter(new JFormalParameter(/* tokref */ null,
 					       /* desc */ 
 					       JLocalVariable.DES_PARAMETER,
 					       /* type */
-					       CClassType.lookup(type),
+					       CClassType.lookup(typeName),
 					       /* name */
-					       LoweringConstants.PARAM_NAME,
+					       varName, 
 					       /* isFinal */
 					       false));
     }
@@ -162,8 +190,10 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 			    CType inputType, CType outputType) {
 	// create struct type
 	createStruct(self.getName(), fields, EMPTY_LIST);
+	// add tape parameters to work function
+	addTapeParameters(work);
 	// add closure-referencing to methods
-	addStructReferences(self.getName(), methods);
+	flattenMethods(self.getName(), methods);
     }
   
     /* visit a splitter */
@@ -230,7 +260,7 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 	// create structure
 	createStruct(self.getName(), fields, elements);
 	// add closure-referencing to methods
-	addStructReferences(self.getName(), methods);
+	flattenMethods(self.getName(), methods);
     }
   
     /* post-visit a splitjoin */
@@ -252,4 +282,29 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 				      JMethodDeclaration initPath) {
 	fail("Not implemented yet");
     }
+}
+
+/**
+ * This class replaces all references to local fields with a reference
+ * to a state object that is passed as a parameter.
+ */
+class FieldResolver extends KjcEmptyVisitor {
+
+    /**
+     * visits a field expression
+     */
+    public void visitFieldExpression(JFieldAccessExpression self,
+				     JExpression left,
+				     String ident) {
+	// for <this> expressions, replace the LHS with a refernce to
+	// the structure
+	if (self.isThisAccess()) {
+	    self.setPrefix(new JNameExpression(/* tokref */ 
+					       null,
+					       /* ident */
+					       LoweringConstants.
+					       STATE_PARAM_NAME));
+	}
+    }
+    
 }

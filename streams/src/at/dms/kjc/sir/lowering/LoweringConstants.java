@@ -28,7 +28,22 @@ public class LoweringConstants {
      * The name of the parameter that functions get to access their
      * fields.
      */
-    public static final String PARAM_NAME = "data";
+    public static final String STATE_PARAM_NAME = "data";
+
+    /**
+     * The name of the type of the tape parameters to work functions.
+     */
+    public static final String TAPE_TYPE_NAME = "Tape";
+
+    /**
+     * The name of the parameter corresponding to the input tape.
+     */
+    public static final String INPUT_TAPE_NAME = "inTape";
+
+    /**
+     * The name of the parameter corresponding to the output tape.
+     */
+    public static final String OUTPUT_TAPE_NAME = "outTape";
 
     public static JFieldDeclaration getContextField() {
 	// define a variable

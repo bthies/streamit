@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.11 2003-11-13 10:46:10 thies Exp $
+ * $Id: JFieldAccessExpression.java,v 1.12 2004-07-13 20:32:48 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -336,6 +336,7 @@ public class JFieldAccessExpression extends JExpression {
 	return (o instanceof JFieldAccessExpression) &&
 	    field.equals(((JFieldAccessExpression)o).field) &&
 	    prefix.equals(((JFieldAccessExpression)o).prefix);
+	
     }
 
     // ----------------------------------------------------------------------

@@ -54,8 +54,9 @@ public class TemplateBeamFormer extends StreamIt
 							  targetSample,
 							  cfarThreshold));
 #ifdef COARSE
+				    add(new Decimator(coarseDecimationRatio));
 				    add(new CoarseBeamFirFilter(numCoarseFilterTaps,
-								numSamples,
+								numPostDec1,
 								coarseDecimationRatio));
 #endif
 #ifndef COARSE
@@ -65,8 +66,9 @@ public class TemplateBeamFormer extends StreamIt
 #endif
 
 #ifdef COARSE
+				    add(new Decimator(fineDecimationRatio));
 				    add(new CoarseBeamFirFilter(numFineFilterTaps,
-								numPostDec1,
+								numPostDec2,
 								fineDecimationRatio));
 #endif
 #ifndef COARSE
@@ -93,9 +95,18 @@ public class TemplateBeamFormer extends StreamIt
 						     numChannels));
 						    // Need to replace this fir with 
 						    //fft -> elWiseMult -> ifft
+#ifdef COARSE
+				    // don't need a decimator since the decimation factor is 1
+				    // add(new Decimator(1));
+				    add(new CoarseBeamFirFilter(mfSize, 
+							  numPostDec2,
+							  1));
+#endif
+#ifndef COARSE
 				    add(new BeamFirFilter(mfSize, 
 							  numPostDec2,
 							  1));
+#endif
 				    add(new Magnitude());
 				    // with a more sophisticated detector, we need
 				    // someplace to store the data until we can find
@@ -131,7 +142,6 @@ class InputGenerate extends Filter
     int targetSample;
     int myChannel;
     float thresh;
-    //    int i2;
 
     public InputGenerate(int i, int n, int t1, int t2, float c) {
 	super(i, n, t1, t2, c);
@@ -155,22 +165,32 @@ class InputGenerate extends Filter
 	output = new Channel(Float.TYPE, 2);
     }
 
-    public void work()
-    { // InputGenerate::work()
-	if( holdsTarget && (curSample == targetSample) )
-	    {
+    public void work() {
+	if( holdsTarget && (curSample == targetSample) ) {
+#ifdef RANDOM_INPUTS
+	    // this is just something random I invented. --bft
+	    output.pushFloat((float)Math.sqrt(curSample*myChannel));
+	    output.pushFloat((float)Math.sqrt(curSample*myChannel)+1);
+#endif
+#ifndef RANDOM_INPUTS
+	    // real
+	    output.pushFloat((float)Math.sqrt(thresh));
+	    // imag
+	    output.pushFloat(0);
+#endif
+	} else {
+#ifdef RANDOM_INPUTS
+	    // this is just something random I invented. --bft
+	    output.pushFloat(-((float)Math.sqrt(curSample*myChannel)));
+	    output.pushFloat(-((float)Math.sqrt(curSample*myChannel)+1));
+#endif
+#ifndef RANDOM_INPUTS
 		// real
-		output.pushFloat((float)Math.sqrt(thresh));
+		output.pushFloat(0);
 		// imag
 		output.pushFloat(0);
-	    }
-	else
-	    {
-		// real
-		output.pushFloat(0);
-		// imag
-		output.pushFloat(0);
-	    }
+#endif
+	}
 
 	//	System.out.println(i2++);
 	curSample++;
@@ -281,9 +301,6 @@ class BeamFirFilter extends Filter
 	imagBuffer = new float[numTaps];
 	pos = 0;
 
-	// Use identity weights for now...
-	//  Later should become an input parameter to the FIR
-	
 	/* NOTE that these weights are (intentionally) backwards
 	 * compared to some formulations of an FIR.  That is, if we
 	 * could disregard the initial conditions and there were
@@ -303,6 +320,20 @@ class BeamFirFilter extends Filter
 	 *        0    <- initial conditions             w[2]
 	 *        0                                      w[3]
 	 */
+
+#ifdef RANDOM_WEIGHTS
+	// the weights are more-or-less random but designed to give an
+	// output that doesn't need scientific notation
+	for (int j=0; j<nt; j++) {
+	    int idx = j + 1;
+	    // generate real part
+	    real_weight[j] = (float)(Math.sin(idx) / (idx));
+	    imag_weight[j] = (float)(Math.cos(idx) / (idx));
+	}
+#endif
+#ifndef RANDOM_WEIGHTS
+	// Use identity weights for now...
+	//  Later should become an input parameter to the FIR
 	real_weight[0] = 1.0f;
 	imag_weight[0] = 0.0f;
 	for(i = 1; i < numTaps; i ++) {
@@ -311,6 +342,7 @@ class BeamFirFilter extends Filter
 	    realBuffer[i] = 0;
 	    imagBuffer[i] = 0;
 	}
+#endif
     }
 
     public void work()
@@ -378,6 +410,29 @@ class BeamFirFilter extends Filter
     }
 }
 
+class Decimator extends Filter {
+    int decimationFactor;
+
+    public Decimator(int decimationFactor) {
+	super(decimationFactor);
+    }
+
+    public void init(int decimationFactor) {
+	input = new Channel(Float.TYPE, 2*decimationFactor);
+	output = new Channel(Float.TYPE, 2);
+	this.decimationFactor = decimationFactor;
+    }
+
+    public void work() {
+	output.pushFloat(input.popFloat());
+	output.pushFloat(input.popFloat());
+	for (int i=1; i<decimationFactor; i++) {
+	    input.popFloat();
+	    input.popFloat();
+	}
+    }
+}
+
 class CoarseBeamFirFilter extends Filter
 { // class FirFilter...
 
@@ -398,11 +453,22 @@ class CoarseBeamFirFilter extends Filter
 	inputLength = inLength;
 	decimationRatio = decRatio;
 
-	input = new Channel(Float.TYPE, 2*inLength*decRatio);
+	input = new Channel(Float.TYPE, 2*inLength);
 	output = new Channel(Float.TYPE, 2*inLength);
 	real_weight = new float[numTaps];
 	imag_weight = new float[numTaps];
 
+#ifdef RANDOM_WEIGHTS
+	// the weights are more-or-less random but designed to give an
+	// output that doesn't need scientific notation
+	for (int j=0; j<nt; j++) {
+	    int idx = j + 1;
+	    // generate real part
+	    real_weight[j] = (float)(Math.sin(idx) / (idx));
+	    imag_weight[j] = (float)(Math.cos(idx) / (idx));
+	}
+#endif
+#ifndef RANDOM_WEIGHTS
 	// Use identity weights for now...
 	//  Later should become an input parameter to the FIR
 
@@ -413,11 +479,20 @@ class CoarseBeamFirFilter extends Filter
 	    real_weight[i] = 0;
 	    imag_weight[i] = 0;
 	}
+#endif
+	//System.err.println("inputLength=" + inputLength);
+	//System.err.println("numTaps=" + numTaps);
     }
 
     public void work() {
-	// for first <numTaps>, only look at beginning items
-	for (int i=1; i<numTaps; i++) {
+	// for first min(<numTaps>, <inputLength)>, only look at beginning items
+	int min;
+	if (numTaps < inputLength) {
+	    min = numTaps;
+	} else {
+	    min = inputLength;
+	}
+	for (int i=1; i<=min; i++) {
 	    float real_curr = 0;
 	    float imag_curr = 0;
 	    for (int j=0; j<i; j++) {
@@ -432,15 +507,13 @@ class CoarseBeamFirFilter extends Filter
 	    //System.err.println("PUSH imag");
 	    output.pushFloat(real_curr);
 	    output.pushFloat(imag_curr);
-	    // do decimation
-	    for (int k=1; k<decimationRatio; k++) {
-		input.popFloat();
-		input.popFloat();
-	    }
 	}
 
 	// then look at <numTaps> items
-	for (int i=0; i<inputLength-numTaps+1; i++) {
+	for (int i=0; i<inputLength-numTaps; i++) {
+	    // do popping 
+	    input.popFloat();
+	    input.popFloat();
 	    float real_curr = 0;
 	    float imag_curr = 0;
 	    for (int j=0; j<numTaps; j++) {
@@ -457,16 +530,11 @@ class CoarseBeamFirFilter extends Filter
 	    //System.err.println("POP");
 	    output.pushFloat(real_curr);
 	    output.pushFloat(imag_curr);
-	    // do popping and decimation
-	    for (int k=0; k<decimationRatio; k++) {
-		input.popFloat();
-		input.popFloat();
-	    }
 	}
 
-	// pop extra <numTaps-1> items (that are still on the tape
-	// from our last filtering)
-	for (int i=0; i<(numTaps-1); i++) {
+	// pop extra min(<numTaps>, <inputLength>) items (that are
+	// still on the tape from our last filtering)
+	for (int i=0; i<min; i++) {
 	    input.popFloat();
 	    input.popFloat();
 	}
@@ -487,7 +555,6 @@ class Beamform extends Filter
 
     public void init(int myBeam, int nc)
     { // BeamCalc::init()
-	int i;
 	numChannels = nc;
 	myBeamId = myBeam;
 
@@ -496,17 +563,27 @@ class Beamform extends Filter
 	real_weight = new float[numChannels];
 	imag_weight = new float[numChannels];
 
+#ifdef RANDOM_WEIGHTS
+	// the weights are more-or-less random but designed to give an
+	// output that doesn't need scientific notation
+	for (int j=0; j<nc; j++) {
+	    int idx = j + 1;
+	    // generate real part
+	    real_weight[j] = (float)(Math.sin(idx) / (myBeam+idx));
+	    imag_weight[j] = (float)(Math.cos(idx) / (myBeam+idx));
+	}
+#endif
+#ifndef RANDOM_WEIGHTS
 	// For now, use identity weights.
-	for(i = 0; i < numChannels; i++)
-	    {
-		real_weight[i] = 0; 
-		imag_weight[i] = 0; 
-		if( i == myBeamId )
-		    {
-			real_weight[i] = 1;
-			imag_weight[i] = 0;
-		    }
+	for(i = 0; i < numChannels; i++) {
+	    real_weight[i] = 0; 
+	    imag_weight[i] = 0; 
+	    if( i == myBeamId ) {
+		real_weight[i] = 1;
+		imag_weight[i] = 0;
 	    }
+	}
+#endif
     }
 
     public void work()
@@ -607,43 +684,31 @@ class Detector extends Filter
 
     public void work()
     {
-	float val = input.popFloat();
-	if(holdsTarget && targetSample == curSample)
-	    {
-		if( !(val >= thresh) ) {
-#ifdef SERIALIZED
-		    output.pushFloat(0);
-#endif
-#ifndef SERIALIZED
-		    System.out.println(0);
-#endif
+	float inputVal = input.popFloat();
+	float outputVal;
+	if(holdsTarget && targetSample == curSample) {
+		if( !(inputVal >= thresh) ) {
+		    outputVal = 0;
 		} else {
-#ifdef SERIALIZED
-		    output.pushFloat(myBeam);
-#endif
-#ifndef SERIALIZED
-		    System.out.println(myBeam);
-#endif
+		    outputVal = myBeam;
 		}
-	    }
-	else
-	    {
-		if( val >= thresh ) {
-#ifdef SERIALIZED
-		    output.pushFloat(0);
-#endif
-#ifndef SERIALIZED
-		    System.out.println(0);
-#endif
+	} else {
+		if( !(inputVal >= thresh) ) {
+		    outputVal = 0;
 		} else {
+		    outputVal = -myBeam;
+		}
+	}
+
+#ifdef DISPLAY_OUTPUT
+	outputVal = inputVal;
+#endif		
 #ifdef SERIALIZED
-		    output.pushFloat(-myBeam);
+	output.pushFloat(outputVal);
 #endif
 #ifndef SERIALIZED
-		    System.out.println(-myBeam);
+	System.out.println(outputVal);
 #endif
-		}
-	    }
 
 	curSample++;
 

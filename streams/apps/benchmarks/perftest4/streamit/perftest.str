@@ -1,0 +1,214 @@
+
+float->float filter ComplexFIRFilter(int sampFreq, int dec, int t, float freq, float g) {
+
+  float[t] tapsReal;
+  float[t] tapsImag;
+  float[t] inputArray;
+  float phase_correctionReal, phase_correctionImag;
+  float phase_corr_incrReal, phase_corr_incrImag;
+
+  init {
+    float N = (float)t;
+    float M = N - 1.0;
+    phase_corr_incrReal = 1;
+    phase_corr_incrImag = 0;
+	
+    phase_correctionReal = 1;
+    phase_correctionImag = 0;
+
+    if(freq == 0.0) {
+      for(int index = 0; index < t; index++) {
+        tapsReal[index] = (float)(g*(0.54-0.46*cos(2*pi*index/(M))));
+        tapsImag[index] = 0;
+      }
+    }
+    else {
+      float arg = 2*pi*freq/(float)sampFreq;
+      for (int index = 0; index < t; index++) {
+       tapsReal[index] = g*cos(arg*((float)index)*(0.54-0.46*cos(2*pi*index/(M))));
+       tapsImag[index] = -1.0*g*sin(arg*index)*(0.54-0.46*cos(2*pi*index/(M)));
+      }
+      phase_corr_incrReal = cos(arg*((float)dec));
+      phase_corr_incrImag = (-1)*sin(arg*(float)dec);
+    }
+
+  }
+
+  work push 2 pop dec {
+
+    float resultReal = 0;
+    float resultImag = 0;
+
+    for (int i = 0; i < t; i++) {
+	inputArray[i] = pop();
+    }
+
+    for (int i = 0; i < (dec - t); i++) {
+      pop();
+    }
+
+    for(int i = 0; i < t; i++) {
+	    resultReal += tapsReal[i] * inputArray[i];
+	    resultImag += tapsImag[i];
+    }
+
+    if(freq != 0.0){
+
+       phase_correctionReal = (phase_correctionReal *  phase_corr_incrReal) -
+	    (phase_correctionImag * phase_corr_incrImag);
+	phase_correctionImag = (phase_correctionReal * phase_corr_incrImag) -
+	    (phase_correctionImag * phase_corr_incrReal);
+
+	resultReal =  (resultReal *phase_correctionReal) -
+	    (resultImag * phase_correctionImag);
+
+	resultImag =  (resultReal * phase_correctionImag) -
+	    (resultImag * phase_correctionReal);
+    }
+
+    push(resultReal);
+    push(resultImag);   
+  }
+}
+
+
+float->float filter RealFIRFilter(int sampleFreq, int dec, float c, int t, float g) {
+
+  float[t] taps;
+
+  init {
+
+    float arg;
+    float N = (float)t;
+    float M = N - 1.0;
+
+    if (c == 0.0) {
+	for (int index=0; index < t; index++) {
+	    taps[index] =  g*(0.54-0.46*cos(2*pi*((float)index)/(M)));
+	}
+    }
+    else {
+	arg = 2.0*pi*c/((float)sampleFreq);
+	for (int index=0; index < t; index++) {
+	    if (((float)index)-(M/2.0) != 0){     
+		taps[index] =  g*(sin(arg*(index-(M/2.0)))/
+                          pi/(((float)index)-(M/2.0))*
+			  (0.54-0.46*cos(2.0*pi*((float)index)/M)));
+	    }
+
+//print(arg*(index-(M/2.0)));
+//print(sin(arg*(index-(M/2.0))));
+//print(index);
+//print(taps[index]);
+
+	}
+	if ((((int)M)/2)*2 == (int)M ){ 
+	    taps[(int)M/2] =  g*arg/pi;
+	}
+    }
+  }
+
+  work push 1 pop dec peek t {
+
+    float sum = 0.0;
+
+    for (int i=0; i < dec; i++) 
+      sum += taps[i] * pop();
+
+    for (int i = 0; i < t - dec; i++)
+      sum += taps[i + dec] + peek(i);
+
+    push(sum);
+  }
+}
+
+    
+float->float filter QuadratureDemod(int firingRate, float g) {
+
+  work push firingRate pop 2*firingRate {
+
+    float lastValReal, productReal, valReal;
+    float lastValImag, productImag, valImag;
+
+    lastValReal = peek(3);
+    lastValImag = peek(2);
+
+    for (int i = firingRate; i > 0; i--) {
+      valImag = pop();
+      valReal = pop();
+
+      productReal = (valReal *lastValReal) - (valImag * lastValImag);
+      productImag = (valReal * (-lastValImag)) - (valImag *lastValReal);
+
+      lastValReal = valReal;
+      lastValImag = valImag;
+
+      push(g*asin(productImag/(sqrt(pow(productReal,2)+pow(productImag,2)))));
+    }
+  }
+}
+
+
+void->float filter TestSource {
+
+  int i;
+
+  init {
+    i = 0;
+  }
+
+  work push 1 pop 0 {
+
+    push(i++);
+    if(i==10000)
+      i=0;
+  }
+}
+
+
+float->void filter NullSink {
+
+  work push 0 pop 1 {
+    print(pop());
+  }
+}
+
+
+float->float pipeline PerftestPipeline(float center_freq) {
+
+  add ComplexFIRFilter(33000000, 825, 400, center_freq, 2);
+  add QuadratureDemod(5, 1);
+  add RealFIRFilter(8000, 5, 4000, 20, 1);
+}
+
+
+
+float->float splitjoin PerftestSplitJoin {
+
+  split roundrobin(825,825,825,825);
+  add PerftestPipeline(10370400);
+  add PerftestPipeline(10355400);
+  add PerftestPipeline(10340400);
+  add PerftestPipeline(10960500);
+  join roundrobin();
+}
+
+void->void pipeline perftest {
+
+  add TestSource();
+  add PerftestSplitJoin();
+  add NullSink();
+}
+
+
+
+
+float->float filter print_pop() {
+
+  work push 1 pop 1 {
+
+    float x = pop();
+    print(x);
+    push(x);
+  }
+}

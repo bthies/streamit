@@ -12,11 +12,6 @@ is implemented as a single StreamIt filter.
       <file>driver.c</file>
       <file>fft.c</file>
     </impl>
-    <impl lang="Java" dir="streamit">
-      <file toplevel="FFT2">FFT2.java</file>
-      <file>FFTTestSource.java</file>
-      <file>FloatPrinter.java</file>
-    </impl>
     <impl lang="StreamIt" dir="streamit">
       <file>FFT.str</file>
     </impl>

@@ -12,10 +12,6 @@ more parallelism to the compiler.
     <impl lang="C" dir="c">
       <file>firref.c</file>
     </impl>
-    <impl lang="Java" dir="streamit">
-      <file>FIRfine.java</file>
-      <file class="output">FIRfine.out</file>
-    </impl>
     <impl lang="StreamIt" dir="streamit">
       <file>FIR.str</file>
       <file class="output">FIRfine.out</file>

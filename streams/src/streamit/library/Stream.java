@@ -608,9 +608,6 @@ public abstract class Stream extends Operator
             new PrintGraph ().printProgram(selfIter);
         }
 
-        if (!doRun)
-            System.exit(0);
-
         // setup the scheduler
         if (scheduledRun)
         {
@@ -645,6 +642,9 @@ public abstract class Stream extends Operator
                 System.out.println("!ml buff size = " + mlBuffer);
             }
             
+	    if (!doRun)
+		System.exit(0);
+
             // run the init schedule:
             if (nIters != 0)
                 runSchedule(initSched, 1);
@@ -663,6 +663,9 @@ public abstract class Stream extends Operator
         }
         else
         {
+	    if (!doRun)
+		System.exit(0);
+
             while (true)
             {
                 runSinks();

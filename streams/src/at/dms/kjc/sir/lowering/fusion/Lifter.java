@@ -48,7 +48,7 @@ public class Lifter implements StreamVisitor {
     /* pre-visit a pipeline */
     public void preVisitPipeline(SIRPipeline self,
 				 SIRPipelineIter iter) {
-	liftPipelineChildren(self);
+	liftChildren(self);
 	RefactorSplitJoin.removeMatchingSyncPoints(self);
     }
 
@@ -58,7 +58,7 @@ public class Lifter implements StreamVisitor {
 	boolean changing;
 	do {
 	    changing = false;
-	    changing = liftPipelineChildren(self) || changing;
+	    changing = liftChildren(self) || changing;
 	    changing = liftIntoSplitJoin(self) || changing;
 	} while (changing);
     }
@@ -66,7 +66,7 @@ public class Lifter implements StreamVisitor {
     /* pre-visit a feedbackloop */
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
 				     SIRFeedbackLoopIter iter) {
-	liftPipelineChildren(self);
+	liftChildren(self);
     }
 
     /**
@@ -156,6 +156,18 @@ public class Lifter implements StreamVisitor {
     }
 
     /**
+     * Does various types of lifting on <str>.  Returns whether or not
+     * anything changed.  Should be iterated for <str> until nothing
+     * changes.
+     */
+    private boolean liftChildren(SIRContainer str) {
+	boolean changed = false;
+	changed = changed || liftPipelineChildren(str);
+	changed = changed || simplifyTwoStageChildren(str);
+	return changed;
+    }
+
+    /**
      * Returns whether or not something changed.
      */
     private boolean liftPipelineChildren(SIRContainer str) {
@@ -174,6 +186,59 @@ public class Lifter implements StreamVisitor {
 	    anyChange = anyChange || changing;
 	} while (changing);
 	return anyChange;
+    }
+
+    /**
+     * If any children of <str> are two stage filters with
+     * initPop==initPush==0, then replace them with a single phase
+     * filter, appending the contents of initWork to init in the
+     * simplified filter.
+     */
+    private boolean simplifyTwoStageChildren(SIRContainer str) {
+	boolean changed = false;
+	for (int i=0; i<str.size(); i++) {
+	    if (str.get(i) instanceof SIRTwoStageFilter) {
+		SIRTwoStageFilter twoStage = (SIRTwoStageFilter)str.get(i);
+		if (twoStage.getInitPush()==0 &&
+		    twoStage.getInitPop()==0) {
+		    // right now we don't support the case where
+		    // there's a peek expression without pushing or
+		    // popping
+		    final boolean[] ok = { true };
+		    twoStage.getInitWork().getBody().accept(new SLIREmptyVisitor() {
+			    public void visitPeekExpression(SIRPeekExpression self,
+							    CType tapeType,
+							    JExpression arg) {
+				ok[0] = false;
+			    }
+			});
+		    Utils.assert(ok[0], 
+				 "\nDetected peek expression from an initWork function that doesn't" +
+				 "\npop anything.  This isn't supported right now because the Raw backend" + 
+				 "\ndoesn't fire the node even if it is scheduled for execution (as of 2/7/03).");
+		    // then we're going to change it
+		    changed = true;
+		    // construct replacement
+		    SIRFilter filter = new SIRFilter(twoStage.getParent(),
+						     twoStage.getIdent() + "_simp",
+						     twoStage.getFields(),
+						     twoStage.getMethods(),
+						     twoStage.getPeek(),
+						     twoStage.getPop(),
+						     twoStage.getPush(),
+						     twoStage.getWork(),
+						     twoStage.getInputType(),
+						     twoStage.getOutputType());
+		    // append contents of <twoStage> initWork to filter work
+		    JMethodDeclaration newInit = twoStage.getInit();
+		    JBlock initWorkContents = twoStage.getInitWork().getBody();
+		    newInit.getBody().addStatement(initWorkContents);
+		    filter.setInit(newInit);
+		    str.set(i, filter);
+		}
+	    }
+	}
+	return changed;
     }
 
     /**

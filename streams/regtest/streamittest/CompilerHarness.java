@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.10 2002-11-18 20:42:00 dmaze Exp $
+ * $Id: CompilerHarness.java,v 1.11 2002-11-18 20:51:44 dmaze Exp $
  **/
 package streamittest;
 
@@ -27,7 +27,6 @@ public class CompilerHarness extends Harness {
 
     // location of streamit c library files
     static final String C_LIBRARY_PATH = "library/c/";
-    static final String C_LIBRARY_FILES = C_LIBRARY_PATH + "stream*.c";
     
     /**
      * Converts new syntax to old syntax.  Returns true if successful,
@@ -219,26 +218,20 @@ public class CompilerHarness extends Harness {
 					      String exeFileName) {
 
 	String streamit_root = getStreamITRoot();
-	// expand out the library files path
-	String[] libFiles = expandFileName(streamit_root + C_LIBRARY_FILES);
 
-	String[] opts = new String[(8 + // set up args
-				    libFiles.length)];
+	String[] opts = new String[10];
 	
 	opts[0] = GCC_COMMAND;
 	opts[1] = "-O2";
-        opts[2] = "-lsrfftw";
-        opts[3] = "-lsfftw";
-	opts[4] = "-lm";
-	opts[5] = "-I" + streamit_root + C_LIBRARY_PATH;
-	opts[6] = "-o" + exeFileName;
-	opts[7] = inputFileName;
+	opts[2] = "-o" + exeFileName;
+	opts[3] = "-I" + streamit_root + C_LIBRARY_PATH;
+        opts[4] = "-L" + streamit_root + C_LIBRARY_PATH;
+	opts[5] = inputFileName;
+        opts[6] = "-lstreamit";
+        opts[7] = "-lsrfftw";
+        opts[8] = "-lsfftw";
+	opts[9] = "-lm";
 	
-	// copy over the stream library files
-	for (int i=0; i<libFiles.length; i++) {
-	    opts[8+i] = libFiles[i];
-	}
-
 	return opts;
     }
 

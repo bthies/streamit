@@ -26,6 +26,8 @@ public class SIRJoiner extends SIROperator {
      */
     private boolean uniform;
 
+    public int oldSumWeights;
+
     private SIRJoiner(SIRContainer parent, 
 		      SIRJoinType type, 
 		      JExpression[] weights,

@@ -124,6 +124,12 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	}
     }
 
+    // reset splits and joins to have right number of elements.
+    public void rescale() {
+	this.splitter.rescale(2);
+	this.joiner.rescale(2);
+    }
+
     /**
      * Returns a list of the children of this.  The children are
      * stream objects that are contained within this.

@@ -17,13 +17,23 @@ public class SIRSplitter extends SIROperator {
      * in one execution cycle.
      */
     private JExpression[] weights;
+    /**
+     * Whether or not this is uniform--i.e., whether all the weights
+     * in this are the same.  It might be the case that <uniform> is
+     * false but all the weights are, in fact, the same (if formulas
+     * for weighted rr's turn out to the the same); but if it's true,
+     * it implies that they're definately the same.
+     */
+    private boolean uniform;
 
     private SIRSplitter(SIRContainer parent, 
 			SIRSplitType type, 
-			JExpression[] weights) {
+			JExpression[] weights,
+			boolean uniform) {
       super(parent);
       this.weights = weights;
       this.type = type;
+      this.uniform = uniform;
     }
 
     /**
@@ -32,15 +42,18 @@ public class SIRSplitter extends SIROperator {
     public static SIRSplitter create(SIRContainer parent, 
 				     SIRSplitType type, 
 				     int n) {
-	if (type==SIRSplitType.ROUND_ROBIN || type==SIRSplitType.DUPLICATE) {
+	if (type==SIRSplitType.DUPLICATE) {
 	    // fill weights with 1
-	    return new SIRSplitter(parent, type, initLiteralArray(n, 1));
+	    return new SIRSplitter(parent, type, initLiteralArray(n, 1), true);
         } else if (type==SIRSplitType.NULL) {
 	    // for null type, fill with zero weights
-	    return new SIRSplitter(parent, type, initLiteralArray(n, 0));
+	    return new SIRSplitter(parent, type, initLiteralArray(n, 0), true);
 	} else if (type==SIRSplitType.WEIGHTED_RR) {
 	    // if making a weighted round robin, should use other constructor
 	    fail("Need to specify weights for weighted round robin");
+	} else if (type==SIRSplitType.ROUND_ROBIN) {
+	    // if making a round robin, should use other constructor
+	    fail("Need to specify weight for uniform round robin");
 	} else {
 	    fail("Unreckognized splitter type.");
 	}
@@ -54,7 +67,30 @@ public class SIRSplitter extends SIROperator {
      */
     public static SIRSplitter createWeightedRR(SIRContainer parent, 
 					       JExpression[] weights) {
-	return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights);
+	return new SIRSplitter(parent, SIRSplitType.WEIGHTED_RR, weights, 
+			       false);
+    }
+
+    /**
+     * This is for creating a round robin with uniform weights across
+     * the stream.  If weight[] is empty, then assume the weights
+     * should all be one.  If non-empty, then assume the weight is the
+     * first element of <weight>.
+     */
+    public static SIRSplitter createUniformRR(SIRContainer parent, 
+					      JExpression[] weight) {
+	JExpression weightExp;
+	// get the weight for this
+	if (weight.length==0) {
+	    weightExp = new JIntLiteral(1);
+	} else {
+	    weightExp = weight[0];
+	}
+	// make a uniform rr joiner
+	return new SIRSplitter(parent, 
+			       SIRSplitType.WEIGHTED_RR,
+			       initArray(1, weightExp),
+			       true);
     }
 
     /**
@@ -77,11 +113,8 @@ public class SIRSplitter extends SIROperator {
      * rescale the weights to be of the given <extent>
      */
     public void rescale(int extent) {
-	if (type==SIRSplitType.DUPLICATE ||
-	    type==SIRSplitType.ROUND_ROBIN ||
-	    type==SIRSplitType.NULL) {
-	    this.weights = initLiteralArray(extent, ((JIntLiteral)
-						     weights[0]).intValue());
+	if (uniform) {
+	    this.weights = initArray(extent, weights[0]);
 	}
     }
     

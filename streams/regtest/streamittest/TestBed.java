@@ -2,7 +2,7 @@
  * This should help you test your bed. Next version.
  * Currently used as scratch space for testing a small
  * subset of the total test cases.
- * $Id: TestBed.java,v 1.9 2002-07-22 20:41:50 aalamb Exp $
+ * $Id: TestBed.java,v 1.10 2002-07-23 18:08:07 aalamb Exp $
  **/
 package streamittest;
 
@@ -33,13 +33,13 @@ public class TestBed extends StreamITTestCase {
 	//suite.addTest(new TestExamples("testFib", flags));
 	//suite.addTest(new TestExamples("testFib2", flags));
 	//suite.addTest(new TestExamples("testFir", flags));
-	suite.addTest(new TestExamples("testFm", flags));
+	//suite.addTest(new TestExamples("testFm", flags));
 
-// 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
-// 					 CompilerInterface.RAW4));
-// 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
-// 					 CompilerInterface.RAW4 |
-// 					 CompilerInterface.PARTITION));
+ 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
+ 					 CompilerInterface.RAW4));
+ 	suite.addTest(TestExamples.suite(CompilerInterface.NONE |
+ 					 CompilerInterface.RAW4 |
+ 					 CompilerInterface.PARTITION));
 	
 	
 	//suite.addTest(new TestExamples("testFFT3", flags));

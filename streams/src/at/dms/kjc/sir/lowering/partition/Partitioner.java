@@ -38,6 +38,11 @@ public class Partitioner {
 	System.out.print("field prop... ");
 	//	FieldProp.doPropagate(str);
 	System.out.println("done.");
+	// Lift filters out of pipelines if they're the only thing in
+	// the pipe
+	System.out.print("Lifting filters... ");
+	Lifter.lift(str);
+	System.out.println("done.");
 	// if we have too few tiles, then fizz the big ones
 	System.out.print("count tiles... ");
 	int count = new RawFlattener(str).getNumTiles();
@@ -149,6 +154,7 @@ public class Partitioner {
 	    // get how many tiles we have
 	    RawFlattener flattener = new RawFlattener(str);
 	    count = flattener.getNumTiles();
+	    System.out.println("Partitioner detects " + count + " tiles.");
 	    if (count>target) {
 		// get the containers in the order of work for filters
 		// immediately contained

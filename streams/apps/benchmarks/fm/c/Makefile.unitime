@@ -1,7 +1,9 @@
 # makefile for timing on the uniprocessor path
-all:
-	# use gcc and import the math and c libraries with the linker
-	gcc -O3 -lc -lm fmref.c -o fmref
+all: compile
 	# now, time the program for 10 million iterations
 	echo 
 	time  ./fmref
+
+compile:
+	# use gcc and import the math and c libraries with the linker
+	gcc -O3 -lc -lm fmref.c -o fmref

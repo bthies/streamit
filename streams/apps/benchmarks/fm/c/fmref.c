@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.9 2002-07-30 02:20:09 aalamb Exp $
+ * $Id: fmref.c,v 1.10 2002-11-25 18:44:38 aalamb Exp $
  */
 
 #ifdef raw
@@ -125,7 +125,7 @@ void begin(void)
     run_lpf(&fb1, &fb2, &lpf_data);
     run_demod(&fb2, &fb3);
     run_equalizer(&fb3, &fb4, &eq_data);
-    //write_floats(&fb4);
+    write_floats(&fb4);
   }
 }
 
@@ -157,11 +157,15 @@ int fb_ensure_writable(FloatBuffer *fb, int amount)
 
 void get_floats(FloatBuffer *fb)
 {
+  static int x = 0;
   fb_compact(fb);
   
   /* Fill the remaining space in fb with 1.0. */
-  while (fb->rlen < IN_BUFFER_LEN)
-    fb->buff[fb->rlen++] = 1.0;
+  while (fb->rlen < IN_BUFFER_LEN) {
+    fb->buff[fb->rlen++] = (float)x;
+    //fb->buff[fb->rlen++] = 1.0f;
+    x++;
+  }
 }
 
 void init_lpf_data(LPFData *data, float freq, int taps, int decimation)

@@ -92,28 +92,6 @@ public class ClusterBackend {
 
 	SIRPortal.findMessageStatements(str);
 
-	SIRPortal portals[] = SIRPortal.getPortals();
-
-	for (int t = 0; t < portals.length; t++) {
-	    
-	    SIRPortalSender senders[] = portals[t].getSenders();
-	    SIRStream receivers[] = portals[t].getReceivers();
-
-	    System.out.println("\n    Portal: "+portals[t]);
-
-	    for (int i = 0; i < senders.length; i++) {
-		System.out.println("        sender: ("+senders[i].getStream()+")\n"+
-				   "            with latency: ("+senders[i].getLatency()+")");
-	    }
-
-	    for (int i = 0; i < receivers.length; i++) {
-		System.out.println("        receiver: ("+receivers[i]+")");
-	    }
-
-	    System.out.println();
-	}
-
-
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before.dot");
 
@@ -183,6 +161,13 @@ public class ClusterBackend {
 
 	streamit.scheduler2.SDEPData sdep = cscheduler.computeSDEP(firstIter, lastIter);
 
+	System.out.println("\n");
+	System.out.println("Source Init Phases: "+sdep.getNumSrcInitPhases());
+	System.out.println("Destn. Init Phases: "+sdep.getNumDstInitPhases());
+	System.out.println("Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
+	System.out.println("Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
+	
+
 	for (int t = 0; t < 20; t++) {
 	    int phase = sdep.getSrcPhase4DstPhase(t);
 	    int phaserev = sdep.getDstPhase4SrcPhase(t);
@@ -207,13 +192,44 @@ public class ClusterBackend {
 
 	NodeEnumerator.reset();
 	graphFlattener.top.accept(new NodeEnumerator(), new HashSet(), true);
-
 	graphFlattener.top.accept(new RegisterStreams(), new HashSet(), true);
 
 
 	if (KjcOptions.removeglobals) {
 	    RemoveGlobals.doit(graphFlattener.top);
 	}
+
+
+	/// start output portals
+
+
+	SIRPortal portals[] = SIRPortal.getPortals();
+
+	for (int t = 0; t < portals.length; t++) {
+	    
+	    SIRPortalSender senders[] = portals[t].getSenders();
+	    SIRStream receivers[] = portals[t].getReceivers();
+
+	    System.out.println("\n    Portal: "+portals[t]);
+
+	    for (int i = 0; i < senders.length; i++) {
+		SIRStream sender = senders[i].getStream();
+		int id = NodeEnumerator.getSIROperatorId(sender);
+		System.out.println("        sender: ("+sender+") ID:"+id+"\n"+
+				   "            with latency: ("+senders[i].getLatency()+")");
+	    }
+
+	    for (int i = 0; i < receivers.length; i++) {
+		SIRStream receiver = receivers[i];
+		int id = NodeEnumerator.getSIROperatorId(receiver);
+		System.out.println("        receiver: ("+receivers[i]+") ID:"+id);
+	    }
+
+	    System.out.println();
+	}
+
+	/// end output portals
+
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);

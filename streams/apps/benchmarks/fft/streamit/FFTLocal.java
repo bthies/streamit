@@ -1,14 +1,10 @@
 import streamit.*;
 
 class IdentityLocal extends Filter {
-    Channel input = new Channel(Float.TYPE, 1);
-    Channel output = new Channel(Float.TYPE, 1);
-
-    public void init() {}
-
-    public void initIO() {
-        this.streamInput = input;
-        this.streamOutput = output;
+    public void init()
+    {
+        input = new Channel(Float.TYPE, 1);
+        output = new Channel(Float.TYPE, 1);
     }
 
     public void work() {
@@ -18,8 +14,6 @@ class IdentityLocal extends Filter {
 
 class Filter1 extends Filter {
 
-    Channel input = new Channel(Float.TYPE, 1);
-    Channel output = new Channel(Float.TYPE, 1);
     //    float weights[];
     int curr;
     int W;
@@ -29,17 +23,14 @@ class Filter1 extends Filter {
     }
 
     public void init(int N, int W) {
+        input = new Channel(Float.TYPE, 1);
+        output = new Channel(Float.TYPE, 1);
         int i;
         this.W = W;
         //this.weights = new float[W];
         //        for (i=0; i<W; i+=1)
         //            weights[i] = calcWeight(i, N, W);
         curr = 0;
-    }
-
-    public void initIO() {
-        this.streamInput = input;
-        this.streamOutput = output;
     }
 
     private float calcWeight(int a, int b, int c) {
@@ -71,15 +62,11 @@ class Butterfly2 extends SplitJoin {
         this.setSplitter(DUPLICATE());
 
         this.add(new Filter() {
-                Channel input = new Channel(Float.TYPE, 2);
-                Channel output = new Channel(Float.TYPE, 1);
-
-                public void initIO ()
+                public void init ()
                 {
-                    this.streamInput = input;
-                    this.streamOutput = output;
+                    input = new Channel(Float.TYPE, 2);
+                    output = new Channel(Float.TYPE, 1);
                 }
-                public void init () { }
 
                 public void work() {
                     output.pushFloat(input.popFloat() +
@@ -87,15 +74,11 @@ class Butterfly2 extends SplitJoin {
                 }
             });
         this.add(new Filter() {
-                Channel input = new Channel(Float.TYPE, 2);
-                Channel output = new Channel(Float.TYPE, 1);
-
-                public void initIO ()
+                public void init ()
                 {
-                    this.streamInput = input;
-                    this.streamOutput = output;
+                    input = new Channel(Float.TYPE, 2);
+                    output = new Channel(Float.TYPE, 1);
                 }
-                public void init () { }
 
                 public void work() {
                     output.pushFloat(input.popFloat() -
@@ -155,12 +138,10 @@ class FFTKernelLocal extends Pipeline {
 
 class OneSourceLocal extends Filter
 {
-    Channel output = new Channel(Float.TYPE, 1);
-    public void initIO ()
+    public void init ()
     {
-        this.streamOutput = output;
+        output = new Channel(Float.TYPE, 1);
     }
-    public void init () { }
     public void work()
     {
         output.pushFloat(1);
@@ -169,12 +150,10 @@ class OneSourceLocal extends Filter
 
 class FloatPrinterLocal extends Filter
 {
-    Channel input = new Channel(Float.TYPE, 1);
-    public void initIO ()
+    public void init ()
     {
-        this.streamInput = input;
+        input = new Channel(Float.TYPE, 1);
     }
-    public void init () { }
     public void work ()
     {
         System.out.println(input.popFloat ());

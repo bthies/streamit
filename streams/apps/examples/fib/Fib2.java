@@ -1,6 +1,6 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib2.java,v 1.12 2001-10-30 21:33:39 karczma Exp $
+ * $Id: Fib2.java,v 1.13 2001-10-31 19:06:13 karczma Exp $
  */
 
 import streamit.*;
@@ -23,8 +23,6 @@ public class Fib2 extends StreamIt
                     setJoiner(WEIGHTED_ROUND_ROBIN(0, 1));
                     setBody(new Filter()
                         {
-                            Channel input = new Channel(Integer.TYPE, 2);
-                            Channel output = new Channel(Integer.TYPE, 3);
                             public void work()
                             {
                                 int a = input.popInt();
@@ -34,27 +32,23 @@ public class Fib2 extends StreamIt
                                 output.pushInt(b);
                                 output.pushInt(result);
                             }
-                            public void initIO()
+                            public void init ()
                             {
-                                this.streamInput = input;
-                                this.streamOutput = output;
+                                input = new Channel(Integer.TYPE, 2);
+                                output = new Channel(Integer.TYPE, 3);
                             }
-                            public void init () { }
                         });
                     setLoop(new Filter()
                         {
-                            Channel input = new Channel(Integer.TYPE, 1);
-                            Channel output = new Channel(Integer.TYPE, 1);
                             public void work()
                             {
                                 output.pushInt(input.popInt());
                             }
-                            public void initIO()
+                            public void init ()
                             {
-                                this.streamInput = input;
-                                this.streamOutput = output;
+                                input = new Channel(Integer.TYPE, 1);
+                                output = new Channel(Integer.TYPE, 1);
                             }
-                            public void init () { }
                         });
                     setSplitter(WEIGHTED_ROUND_ROBIN(1, 2));
                 }
@@ -65,18 +59,14 @@ public class Fib2 extends StreamIt
             });
         add (new Filter ()
             {
-                Channel input = new Channel (Integer.TYPE, 1);
-
-                public void initIO ()
-                {
-                    this.streamInput = input;
-                }
-
                 public void work ()
                 {
                     System.out.println (input.popInt ());
                 }
-                public void init () { }
+                public void init ()
+                {
+                    input = new Channel (Integer.TYPE, 1);
+                }
             });
     }
 

@@ -1,7 +1,7 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.7 2001-10-31 00:37:52 karczma Exp $
+ * $Id: Flybit.java,v 1.8 2001-10-31 19:06:15 karczma Exp $
  */
 
 import streamit.*;
@@ -9,14 +9,10 @@ import streamit.*;
 class IntSource extends Filter
 {
     int x;
-    Channel output = new Channel(Integer.TYPE, 1);
     public void init()
     {
+        output = new Channel(Integer.TYPE, 1);
         this.x = 0;
-    }
-    public void initIO ()
-    {
-        streamOutput = output;
     }
     public void work()
     {
@@ -26,34 +22,28 @@ class IntSource extends Filter
 
 class IntSub extends Filter
 {
-    Channel input = new Channel(Integer.TYPE, 2);
-    Channel output = new Channel(Integer.TYPE, 1);
-    public void initIO ()
-    {
-        streamInput = input;
-        streamOutput = output;
-    }
     public void work()
     {
         output.pushInt(input.popInt() - input.popInt());
     }
-    public void init () { }
+    public void init ()
+    {
+        input = new Channel(Integer.TYPE, 2);
+        output = new Channel(Integer.TYPE, 1);
+    }
 }
 
 class IntAdd extends Filter
 {
-    Channel input = new Channel(Integer.TYPE, 2);
-    Channel output = new Channel(Integer.TYPE, 1);
-    public void initIO ()
-    {
-        streamInput = input;
-        streamOutput = output;
-    }
     public void work()
     {
         output.pushInt(input.popInt() + input.popInt());
     }
-    public void init () { }
+    public void init ()
+    {
+        input = new Channel(Integer.TYPE, 2);
+        output = new Channel(Integer.TYPE, 1);
+    }
 }
 
 class IntFly extends SplitJoin
@@ -69,16 +59,14 @@ class IntFly extends SplitJoin
 
 class IntPrinter extends Filter
 {
-    Channel input = new Channel(Integer.TYPE, 1);
-    public void initIO ()
-    {
-        streamInput = input;
-    }
     public void work ()
     {
         System.out.println (input.popInt ());
     }
-    public void init () { }
+    public void init ()
+    {
+        input = new Channel(Integer.TYPE, 1);
+    }
 }
 
 public class Flybit extends StreamIt

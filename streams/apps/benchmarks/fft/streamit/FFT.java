@@ -1,14 +1,11 @@
 import streamit.*;
 
 class IdentityFloat extends Filter {
-    Channel input = new Channel(Float.TYPE, 1);
-    Channel output = new Channel(Float.TYPE, 1);
-
-    public void initIO() {
-        this.streamInput = input;
-        this.streamOutput = output;
+    public void init ()
+    {
+        input = new Channel(Float.TYPE, 1);
+        output = new Channel(Float.TYPE, 1);
     }
-    public void init () { }
 
     public void work() {
         output.pushFloat(input.popFloat());
@@ -23,20 +20,15 @@ class Butterfly extends Pipeline {
                 public void init() {
                     this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
                     this.add(new Filter() {
-                            Channel input = new Channel(Float.TYPE, 1);
-                            Channel output = new Channel(Float.TYPE, 1);
                             //float weights[] = new float[W];
                             int curr;
 
                             public void init() {
+                                input = new Channel(Float.TYPE, 1);
+                                output = new Channel(Float.TYPE, 1);
                                 //for (int i=0; i<W; i++)
                                 //    weights[i] = calcWeight(i, N, W);
                                 curr = 0;
-                            }
-
-                            public void initIO() {
-                                this.streamInput = input;
-                                this.streamOutput = output;
                             }
 
                             private float calcWeight(int a, int b, int c) {
@@ -59,15 +51,11 @@ class Butterfly extends Pipeline {
                     this.setSplitter(DUPLICATE());
 
                     this.add(new Filter() {
-                            Channel input = new Channel(Float.TYPE, 2);
-                            Channel output = new Channel(Float.TYPE, 1);
-
-                            public void initIO ()
+                            public void init ()
                             {
-                                this.streamInput = input;
-                                this.streamOutput = output;
+                                input = new Channel(Float.TYPE, 2);
+                                output = new Channel(Float.TYPE, 1);
                             }
-                            public void init () { }
 
                             public void work() {
                                 output.pushFloat(input.popFloat() -
@@ -76,15 +64,11 @@ class Butterfly extends Pipeline {
                         });
 
                     this.add(new Filter() {
-                            Channel input = new Channel(Float.TYPE, 2);
-                            Channel output = new Channel(Float.TYPE, 1);
-
-                            public void initIO ()
+                            public void init ()
                             {
-                                this.streamInput = input;
-                                this.streamOutput = output;
+                                input = new Channel(Float.TYPE, 2);
+                                output = new Channel(Float.TYPE, 1);
                             }
-                            public void init () { }
 
                             public void work() {
                                 output.pushFloat(input.popFloat() +
@@ -125,12 +109,10 @@ class FFTKernel extends Pipeline {
 
 class OneSource extends Filter
 {
-    Channel output = new Channel(Float.TYPE, 1);
-    public void initIO ()
+    public void init ()
     {
-        this.streamOutput = output;
+        output = new Channel(Float.TYPE, 1);
     }
-    public void init () { }
     public void work()
     {
         output.pushFloat(1);
@@ -139,12 +121,10 @@ class OneSource extends Filter
 
 class FloatPrinter extends Filter
 {
-    Channel input = new Channel(Float.TYPE, 1);
-    public void initIO ()
+    public void init ()
     {
-        this.streamInput = input;
+        input = new Channel(Float.TYPE, 1);
     }
-    public void init () { }
     public void work ()
     {
         System.out.println (input.popFloat ());

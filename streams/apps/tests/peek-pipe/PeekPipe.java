@@ -7,20 +7,15 @@ public class PeekPipe extends StreamIt {
     public void init() {
         add(new Filter() {
                 int x;
-                Channel output = new Channel(Integer.TYPE, 1);
-                public void initIO() {
-                    this.streamOutput = output;
-                }
                 public void work() {
                     output.pushInt(x++);
                 }
-                public void init () { }
+                public void init ()
+                {
+                    output = new Channel(Integer.TYPE, 1);
+                }
             });
         add(new Filter() {
-                Channel input = new Channel(Integer.TYPE, 1, 10);
-                public void initIO() {
-                    this.streamInput = input;
-                }
                 public void work() {
                     int i;
                     int sum = 0;
@@ -30,7 +25,10 @@ public class PeekPipe extends StreamIt {
                     System.out.println(sum);
                     input.popInt();
                 }
-                public void init () { }
+                public void init ()
+                {
+                    input = new Channel(Integer.TYPE, 1, 10);
+                }
             });
     }
 }

@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.java: Hello, World example
- * $Id: HelloWorld6.java,v 1.3 2001-10-20 00:16:11 karczma Exp $
+ * $Id: HelloWorld6.java,v 1.4 2001-10-31 19:06:16 karczma Exp $
  */
 
 import streamit.*;
@@ -18,15 +18,10 @@ class HelloWorld6 extends StreamIt
         add (new Filter ()
         {
             int x;
-            Channel output = new Channel (Integer.TYPE, 1);    /* push */
             public void init() {
+                output = new Channel (Integer.TYPE, 1);    /* push */
                 this.x = 0;
             }
-            public void initIO ()
-            {
-                streamOutput = output;
-            }
-
             public void work ()
             {
                 output.pushInt (x++);
@@ -35,13 +30,10 @@ class HelloWorld6 extends StreamIt
         /* add (new AmplifyByN (3)); */
         add (new Filter ()
         {
-            Channel input = new Channel (Integer.TYPE, 1);     /* pop [peek] */
-
-            public void initIO ()
+            public void init ()
             {
-                streamInput = input;
+                input = new Channel (Integer.TYPE, 1);     /* pop [peek] */
             }
-
             public void work ()
             {
                 System.out.println (input.popInt ());

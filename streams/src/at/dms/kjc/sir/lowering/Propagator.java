@@ -612,20 +612,24 @@ public class Propagator extends SLIRReplacingVisitor {
 			System.err.println("WARNING:Cannot Propagate Array Prefix "+expr);
 		}
 	    }
-	} else if((left instanceof JLocalVariableExpression)&&!propVar(left)) {
+	} else if((left instanceof JLocalVariableExpression)) {
 	    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
 	    changed.put(var,Boolean.TRUE);
-	    /*if(newRight instanceof JLocalVariableExpression) {
-	      //if(propVar(right)) {
-	      //if(newRight!=right) {
-	      constants.put(var,newRight);
-	      constants.put(((JLocalVariableExpression)newRight).getVariable(),newRight);
-	      //} else
-	      //constants.put(var,right);
-	      //} else
-	      //constants.remove(var);
-	      } else*/ 
-	    if(newRight instanceof JNewArrayExpression) {
+	    if(newRight instanceof JLocalVariableExpression) {
+		//if(propVar(right)) {
+		//if(newRight!=right) {
+		Object val=constants.get(((JLocalVariableExpression)newRight).getVariable());
+		if(val!=null) {
+		    constants.put(var,val);
+		    //constants.put(((JLocalVariableExpression)newRight).getVariable(),newRight);
+		    added=true;
+		} else
+		    constants.remove(var);
+		//} else
+		//constants.put(var,right);
+		//} else
+		//constants.remove(var);
+	    } else if(newRight instanceof JNewArrayExpression) {
 		JExpression[] dims=((JNewArrayExpression)newRight).getDims();
 		if(dims.length==1) {
 		    if(dims[0] instanceof JIntLiteral) {
@@ -709,6 +713,9 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	// return a constant if we have it
 	if (newExp.isConstant()) {
+	    if(newExp instanceof JDoubleLiteral) {
+		return ((JDoubleLiteral)newExp).convertType(type,null);
+	    }
 	    return newExp;
 	    //} else {
 	    //return doPromote(expr,expr.convertType(type));
@@ -1031,9 +1038,10 @@ public class Propagator extends SLIRReplacingVisitor {
 		JExpression narg = doPromote(args[0],
 					     new JDoubleLiteral(null, 0.0));
 		double darg = narg.doubleValue();
-		if (ident.equals("sin"))
+		if (ident.equals("sin")) {
 		    return new JDoubleLiteral(self.getTokenReference(),
 					      Math.sin(darg));
+		}
 		if (ident.equals("cos"))
 		    return new JDoubleLiteral(self.getTokenReference(),
 					      Math.cos(darg));

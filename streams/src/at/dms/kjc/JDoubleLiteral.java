@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoubleLiteral.java,v 1.4 2002-06-24 00:45:39 thies Exp $
+ * $Id: JDoubleLiteral.java,v 1.5 2002-07-03 14:26:59 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -95,6 +95,10 @@ public class JDoubleLiteral extends JLiteral {
     super(where);
     this.value = value;
   }
+
+    public String toString() {
+	return "Double["+value+"]";
+    }
 
   // ----------------------------------------------------------------------
   // ACCESSORS

@@ -1094,7 +1094,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
           
         print(ident);
-        print("(");
+	
+	//we want single precision versions of the math functions
+	if (isMathMethod(prefix, ident)) 
+	    print("");
+	    
+	print("(");
 	
 	//if this method we are calling is the call to a structure 
 	//receive method that takes a pointer, we have to add the 
@@ -1112,6 +1117,28 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         visitArgs(args, i);
         print(")");
     }
+
+    private boolean isMathMethod(JExpression prefix, String ident) 
+    {
+	if (prefix instanceof JTypeNameExpression &&
+	    ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+	    (ident.equals("acos") ||
+	     ident.equals("asin") ||
+	     ident.equals("atan") ||
+	     ident.equals("atan2") ||
+	     ident.equals("ceil") ||
+	     ident.equals("cos") ||
+	     ident.equals("exp") ||
+	     ident.equals("floorf") ||
+	     ident.equals("log") ||
+	     ident.equals("pow") ||
+	     ident.equals("rint") ||
+	     ident.equals("sqrt") ||
+	     ident.equals("tan")))
+	    return true;
+	return false;
+    }
+    
 
     /**
      * prints a local variable expression

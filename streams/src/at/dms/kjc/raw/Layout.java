@@ -69,7 +69,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public static String getDirection(Coordinate from,
 				      Coordinate to) {
 	if (from == to)
-	    Utils.fail("Calling getDirection on self");
+	    return "st";
 
 	
 	if (from.getRow() == to.getRow()) {

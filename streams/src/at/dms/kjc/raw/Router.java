@@ -1,6 +1,19 @@
 package at.dms.kjc.raw;
 
+import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.*;
+import at.dms.util.Utils;
+import java.util.HashSet;
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Vector;
+import java.util.List;
 import java.util.LinkedList;
+import java.util.ListIterator;
+import java.util.Iterator;
+import streamit.scheduler.*;
+import streamit.scheduler.simple.*;
 
 public class Router {
     
@@ -44,7 +57,18 @@ public class Router {
 		     column >= toCoord.getColumn(); column--)
 		    route.add(Layout.getTile(row, column));
 	}
+	printRoute(from, to, route);
 	return route;
     }
+    
+    public static void printRoute(FlatNode from, FlatNode to, List route) {
+	System.out.println(Namer.getName(from.contents) + " -> " + Namer.getName(to.contents));
+	Iterator it = route.iterator();
+	while (it.hasNext()) {
+	    Coordinate hop = (Coordinate) it.next();
+	    System.out.println(Layout.getTileNumber(hop));
+	}
+    }
+    
 }
 

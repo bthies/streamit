@@ -23,8 +23,8 @@ public class RawBackend {
 
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-	FieldProp.doPropagate(str);
-	Renamer.renameAll(str);
+	//FieldProp.doPropagate(str);
+	//Renamer.renameAll(str);
 	ConstantProp.propagateAndUnroll(str);
 	
 	System.out.println("Done Constant Prop and Unroll...");
@@ -36,22 +36,25 @@ public class RawBackend {
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();
-	/*	
-		if (StreamItOptions.fusion) {
-		System.out.println("Running Fusion");
-		Fusion.fuse((SIRPipeline)str, 
-		(SIRFilter)((SIRPipeline)str).get(0), 
-		(SIRFilter)((SIRPipeline)str).get(1));
-		}
-	*/
-
+		
+	//if (StreamItOptions.fusion) {
+	//   System.out.println("Running Fusion");
+	//    Fusion.fuse((SIRPipeline)str, 
+	//		(SIRFilter)((SIRPipeline)str).get(0), 
+	//		(SIRFilter)((SIRPipeline)str).get(1));
+	//	}
+       
 	/* DON'T KNOW IF THIS SHOULD BE DONE!!
         
 	// flatten split/joins with duplicate splitters and RR joiners
-	
-	if (StreamItOptions.fusion)
-	str = SJFlatten.doFlatten(str);
 	*/
+	
+	if (StreamItOptions.fusion) {
+	    System.out.println("Running SJFusion...");
+	    str = SJFlatten.doFlatten(str);
+	    System.out.println("Done SJFusion...");
+	}
+	
 
         // do constant propagation on fields
         if (StreamItOptions.constprop) {

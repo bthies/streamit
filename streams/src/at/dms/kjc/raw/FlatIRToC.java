@@ -82,7 +82,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    JMethodDeclaration init,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
-	
+	System.out.println(Namer.getName(self));
 	//Entry point of the visitor
 	print("#include <raw.h>\n\n");
 	
@@ -1079,8 +1079,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-	CType type = exp.getType();
-	  
+	CType type = null;
+	
+	try {
+	    type = exp.getType();
+	}
+	catch (Exception e) {
+	    System.err.println("Cannot get type for print statement");
+	    type = CStdType.Integer;
+	}
+	    
 	if (type.equals(CStdType.Boolean))
 	    {
 		Utils.fail("Cannot print a boolean");
@@ -1113,7 +1121,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
        else
 	    {
-		Utils.fail("Unprintable Type");
+		System.out.println("Unprintatble type");
+		print("print_int(");
+		exp.accept(this);
+		print(");");
+		//Utils.fail("Unprintable Type");
 	    }
     }
     
@@ -1246,7 +1258,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
      * prints a double literal
      */
     public void visitDoubleLiteral(double value) {
-        print("((double)" + value + ")");
+        print("((float)" + value + ")");
     }
 
     /**

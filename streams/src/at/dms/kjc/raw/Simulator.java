@@ -173,114 +173,86 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     //this way we can route multiple dests per route instruction
     private void generateSwitchCode(FlatNode fire, List dests) 
     {
-	//keeps the next hop for the sends
-	HashSet sends = new HashSet();
-	//keeps routes for all of the intermediate hops
-	//this hashset points to a hashset 
-	//the secode hash map is indexed by the sources of 
-	//the route instructions for the tile
-	//the second hashmap points to a hashset
-	//of all the dest for a given source
+	//should only have one previous
+	HashMap prev = new HashMap();
+	HashMap next = new HashMap();
 
-	HashMap routes = new HashMap();
-       
-	//maps receivers to their previous hop
-	HashMap receives = new HashMap();
-		
-	//fill the maps
 	ListIterator destsIt = dests.listIterator();
 	while (destsIt.hasNext()) {
-	    FlatNode dest = (FlatNode)destsIt.next();
-	    Coordinate[] hops = 
-		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
-	    //add each route to the maps
-	    sends.add(hops[1]);
-	    //add the intermediate routes
+ 	    FlatNode dest = (FlatNode)destsIt.next();
+ 	    Coordinate[] hops = 
+ 		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
+	    //add to fire's next
+	    if (!next.containsKey(fire)) 
+		next.put(Layout.getTile(fire), new HashSet());
+	    ((HashSet)next.get(Layout.getTile(fire))).add(hops[1]);
+	    //add to all other previous, next
 	    for (int i = 1; i < hops.length -1; i++) {
-		if (!routes.containsKey(hops[i]))
-		    routes.put(hops[i], new HashMap());
-		HashMap prevs = (HashMap)routes.get(hops[i]);
-		if (!prevs.containsKey(hops[i-1]))
-		    prevs.put(hops[i-1], new HashSet());
-		HashSet nexts = (HashSet)prevs.get(hops[i-1]);
-		nexts.add(hops[i+1]);
+		if (prev.containsKey(hops[i]))
+		    if (prev.get(hops[i]) != hops[i-1])
+			Utils.fail("More than one previous tile for a single data item");
+		prev.put(hops[i], hops[i-1]);
+		if (!next.containsKey(hops[i]))
+		    next.put(hops[i], new HashSet());
+		((HashSet)next.get(hops[i])).add(hops[i+1]);
 	    }
-	    //add the receive
-	    receives.put(hops[hops.length-1], hops[hops.length - 2]);
+	    //add the last step, plus the dest to the dest map
+	    if (prev.containsKey(hops[hops.length - 1]))
+		if (prev.get(hops[hops.length - 1]) != hops[hops.length - 2])
+		    Utils.fail("More than one previous tile for a single data item (2)");
+	    prev.put(hops[hops.length-1], hops[hops.length - 2]);
+	    if (!next.containsKey(hops[hops.length-1]))
+		next.put(hops[hops.length - 1], new HashSet());
+	    ((HashSet)next.get(hops[hops.length - 1])).add(hops[hops.length -1]);
 	}
-	//now generate the send, routes, and receives
-	addSends(fire, sends);
-	addRoutes(routes);
-	addReceives(receives);
+	asm(Layout.getTile(fire), prev, next);
     }
-        
-    private void addRoutes(HashMap routes) 
+    
+    private void asm(Coordinate fire, HashMap previous, HashMap next) 
     {
-	//get each router node
-	Iterator routerIt = routes.keySet().iterator();
-	while (routerIt.hasNext()) {
-	    //for each router get all the sources
-	    Coordinate router = (Coordinate)routerIt.next();
-	    //get the router's switch code buffer
-	    if (!switchSchedules.containsKey(router))
-		switchSchedules.put(router, new StringBuffer());
-	
-	    StringBuffer buf = (StringBuffer)switchSchedules.get(router);
-	    //for each source get the dests
-	    Iterator sourcesIt = ((HashMap)routes.get(router)).keySet().iterator();
-	    while(sourcesIt.hasNext()) {
-		//generate the switch code, for each source send to all the dests
-		//in one route instruction
-		Coordinate source = (Coordinate)sourcesIt.next();
-		Iterator destsIt = 
-		    ((HashSet)((HashMap)routes.get(router)).get(source)).iterator();
-		buf.append("\tnop\troute ");
-		while(destsIt.hasNext()) {
-		    Coordinate dest = (Coordinate)destsIt.next();
-		    buf.append("$c" + Layout.getDirection(router, source) + "i->$c" +
-			       Layout.getDirection(router, dest) + "o,");
-		}
-		buf.setCharAt(buf.length() - 1, '\n');
-	    }
-	}
-    }
-        
-    private void addSends(FlatNode fire, HashSet sends) 
-    {
-	if (!switchSchedules.containsKey(Layout.getTile(fire)))
-	    switchSchedules.put(Layout.getTile(fire), new StringBuffer());
-	
-	StringBuffer buf = (StringBuffer)switchSchedules.get(Layout.getTile(fire));
-	
-	Iterator it = sends.iterator();
-	
+	//generate the sends
+	if (!switchSchedules.containsKey(fire))
+	    switchSchedules.put(fire, new StringBuffer());
+	StringBuffer buf = (StringBuffer)switchSchedules.get(fire);
+	Iterator it = ((HashSet)next.get(fire)).iterator();
 	buf.append("\tnop\troute ");
 	while (it.hasNext()) {
 	    Coordinate dest = (Coordinate)it.next();
 	    buf.append("$csto->" + "$c" + 
-		       Layout.getDirection(Layout.getTile(fire), dest) + 
+		       Layout.getDirection(fire, dest) + 
 		       "o,");
 	}
 	//erase the trailing ,
 	buf.setCharAt(buf.length() - 1, '\n');
+	
+
+	//generate all the other 
+	Iterator tiles = next.keySet().iterator();
+	while (tiles.hasNext()) {
+	    Coordinate tile = (Coordinate)tiles.next();
+	    if (tile == fire) 
+		continue;
+	    if (!switchSchedules.containsKey(tile))
+		switchSchedules.put(tile, new StringBuffer());
+	    buf = (StringBuffer)switchSchedules.get(tile);
+	    Coordinate prevTile = (Coordinate)previous.get(tile);
+	    buf.append("\tnop\troute ");
+	    Iterator nexts = ((HashSet)next.get(tile)).iterator();
+	    while(nexts.hasNext()) {
+		Coordinate nextTile = (Coordinate)nexts.next();
+		if (!nextTile.equals(tile))
+		    buf.append("$c" + Layout.getDirection(tile, prevTile) + "i->$c" +
+			       Layout.getDirection(tile, nextTile) + "o,");
+		else 
+		    buf.append("$c" + Layout.getDirection(tile, prevTile) + "i->$c" +
+			       Layout.getDirection(tile, nextTile) + "i,");
+	    }
+	    buf.setCharAt(buf.length() - 1, '\n');
+	}
     }
     
-    private void addReceives(HashMap receives) 
-	{
-	    Iterator it = receives.keySet().iterator();
-	    
-	    while (it.hasNext()) {
-		Coordinate rec = (Coordinate)it.next();
-		Coordinate send = (Coordinate)receives.get(rec);
-		if (!switchSchedules.containsKey(rec))
-		    switchSchedules.put(rec, new StringBuffer());
-		StringBuffer buf = (StringBuffer)switchSchedules.get(rec);
-		buf.append("\tnop\troute ");
-		buf.append("$c" + Layout.getDirection(rec, send) + "i");
-		buf.append("->$csti\n");
-	    }
-	}
-    
+
+   
     private void fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
 	//System.out.println("Firing " + Namer.getName(fire.contents));
@@ -544,3 +516,112 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     }
        
 }
+ //  private void generateSwitchCode(FlatNode fire, List dests) 
+//     {
+// 	//keeps the next hop for the sends
+// 	HashSet sends = new HashSet();
+// 	//keeps routes for all of the intermediate hops
+// 	//this hashset points to a hashset 
+// 	//the secode hash map is indexed by the sources of 
+// 	//the route instructions for the tile
+// 	//the second hashmap points to a hashset
+// 	//of all the dest for a given source
+
+// 	HashMap routes = new HashMap();
+       
+// 	//maps receivers to their previous hop
+// 	HashMap receives = new HashMap();
+		
+// 	//fill the maps
+// 	ListIterator destsIt = dests.listIterator();
+// 	while (destsIt.hasNext()) {
+// 	    FlatNode dest = (FlatNode)destsIt.next();
+// 	    Coordinate[] hops = 
+// 		(Coordinate[])Router.getRoute(fire, dest).toArray(new Coordinate[0]);
+// 	    //add each route to the maps
+// 	    sends.add(hops[1]);
+// 	    //add the intermediate routes
+// 	    for (int i = 1; i < hops.length -1; i++) {
+// 		if (!routes.containsKey(hops[i]))
+// 		    routes.put(hops[i], new HashMap());
+// 		HashMap prevs = (HashMap)routes.get(hops[i]);
+// 		if (!prevs.containsKey(hops[i-1]))
+// 		    prevs.put(hops[i-1], new HashSet());
+// 		HashSet nexts = (HashSet)prevs.get(hops[i-1]);
+// 		nexts.add(hops[i+1]);
+// 	    }
+// 	    //add the receive
+// 	    receives.put(hops[hops.length-1], hops[hops.length - 2]);
+// 	}
+// 	//now generate the send, routes, and receives
+// 	addSends(fire, sends);
+// 	addRoutes(routes);
+// 	addReceives(receives);
+//     }
+//  private void addRoutes(HashMap routes) 
+//     {
+// 	//get each router node
+// 	Iterator routerIt = routes.keySet().iterator();
+// 	while (routerIt.hasNext()) {
+// 	    //for each router get all the sources
+// 	    Coordinate router = (Coordinate)routerIt.next();
+// 	    //get the router's switch code buffer
+// 	    if (!switchSchedules.containsKey(router))
+// 		switchSchedules.put(router, new StringBuffer());
+	
+// 	    StringBuffer buf = (StringBuffer)switchSchedules.get(router);
+// 	    //for each source get the dests
+// 	    Iterator sourcesIt = ((HashMap)routes.get(router)).keySet().iterator();
+// 	    while(sourcesIt.hasNext()) {
+// 		//generate the switch code, for each source send to all the dests
+// 		//in one route instruction
+// 		Coordinate source = (Coordinate)sourcesIt.next();
+// 		Iterator destsIt = 
+// 		    ((HashSet)((HashMap)routes.get(router)).get(source)).iterator();
+// 		buf.append("\tnop\troute ");
+// 		while(destsIt.hasNext()) {
+// 		    Coordinate dest = (Coordinate)destsIt.next();
+// 		    buf.append("$c" + Layout.getDirection(router, source) + "i->$c" +
+// 			       Layout.getDirection(router, dest) + "o,");
+// 		}
+// 		buf.setCharAt(buf.length() - 1, '\n');
+// 	    }
+// 	}
+//     }
+        
+//     private void addSends(FlatNode fire, HashSet sends) 
+//     {
+// 	if (!switchSchedules.containsKey(Layout.getTile(fire)))
+// 	    switchSchedules.put(Layout.getTile(fire), new StringBuffer());
+	
+// 	StringBuffer buf = (StringBuffer)switchSchedules.get(Layout.getTile(fire));
+	
+// 	Iterator it = sends.iterator();
+	
+// 	buf.append("\tnop\troute ");
+// 	while (it.hasNext()) {
+// 	    Coordinate dest = (Coordinate)it.next();
+// 	    buf.append("$csto->" + "$c" + 
+// 		       Layout.getDirection(Layout.getTile(fire), dest) + 
+// 		       "o,");
+// 	}
+// 	//erase the trailing ,
+// 	buf.setCharAt(buf.length() - 1, '\n');
+//     }
+    
+//     private void addReceives(HashMap receives) 
+// 	{
+// 	    Iterator it = receives.keySet().iterator();
+	    
+// 	    while (it.hasNext()) {
+// 		Coordinate rec = (Coordinate)it.next();
+// 		Coordinate send = (Coordinate)receives.get(rec);
+// 		if (!switchSchedules.containsKey(rec))
+// 		    switchSchedules.put(rec, new StringBuffer());
+// 		StringBuffer buf = (StringBuffer)switchSchedules.get(rec);
+// 		buf.append("\tnop\troute ");
+// 		buf.append("$c" + Layout.getDirection(rec, send) + "i");
+// 		buf.append("->$csti\n");
+// 	    }
+// 	}
+    

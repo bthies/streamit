@@ -103,10 +103,21 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 
     public void visitNode(FlatNode node) 
     {
+	if (node.contents instanceof SIRFilter) {
+	    SIRFilter filter = (SIRFilter)node.contents;
+	    buf.append(Namer.getName(node.contents) + "[ label = \"" +
+		       Namer.getName(node.contents) + 
+		       " peek: " + filter.getPeekInt() + 
+		       " pop: " + filter.getPopInt() + 
+		       " push: " + filter.getPushInt() +
+		       "\"];");
+	}
+	
 	for (int i = 0; i < node.ways; i++) {
 	    buf.append(Namer.getName(node.contents) + " -> " 
 		       + Namer.getName(node.edges[i].contents));
 	    buf.append("[label=\"" + node.weights[i] + "\"];\n");
+	    
 	}
     }
 }

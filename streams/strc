@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.46 2004-08-31 19:00:47 mgordon Exp $
+# $Id: strc,v 1.47 2004-10-07 22:03:45 janiss Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -289,7 +289,8 @@ sub get_options
 			    "steadymult=i",
 			    "forceplacement!",
 			    "scheduler=s",
-			    "destroyfieldarray!");
+			    "destroyfieldarray!",
+			    "cacheopt!");
     return $result if !$result;
     # Figure out which partitioning is in use, if any:
     $opts{partition} = "greedier" if $opts{'partition-greedier'};
@@ -532,6 +533,7 @@ sub get_kjc_opts
     $opts{viram} && ($kjcopts .= " --viram");
     $opts{cluster} && ($kjcopts .= " --cluster " . $opts{cluster});
     $opts{destroyfieldarray} && ($kjcopts .= " --destroyfieldarray");
+    $opts{cacheopt} && ($kjcopts .= " --cacheopt");
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");
     $opts{magicdram} && ($kjcopts .= " --magicdram");

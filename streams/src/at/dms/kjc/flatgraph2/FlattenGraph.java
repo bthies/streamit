@@ -276,7 +276,7 @@ public class FlattenGraph {
 		    filter.popCount=linrep.getPopCount();
 		} else {
 		    nodes.remove(filter);
-		    //System.out.println("Splitting: "+filter);
+		    System.out.println("Splitting: "+filter);
 		    UnflatEdge[] in=filter.in;
 		    UnflatEdge[][] out=filter.out;
 		    UnflatEdge[] splitterOut=new UnflatEdge[cols];

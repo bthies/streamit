@@ -226,6 +226,7 @@ public class FilterContent {
     }
     
     public String toString() {
+	//return String.valueOf(System.identityHashCode(this));
 	if(array==null)
 	    return name;
 	else

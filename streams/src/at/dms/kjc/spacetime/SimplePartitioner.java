@@ -42,7 +42,7 @@ public class SimplePartitioner extends Partitioner
 	    UnflatFilter unflatFilter = (UnflatFilter)queue.removeFirst();
 	    //the filter content for the new filter
 	    FilterContent filterContent = getFilterContent(unflatFilter);
-	    
+	    //System.out.println("VISITING: "+unflatFilter);
 	    //remember the work estimation based on the filter content
 	    workEstimation.put(filterContent, 
 			       new Integer(getWorkEstimate(unflatFilter)));
@@ -118,7 +118,7 @@ public class SimplePartitioner extends Partitioner
 		    //remember the work estimation based on the filter content
 		    workEstimation.put(dsContent, 
 				       new Integer(getWorkEstimate(downstream)));
-
+		    //System.out.println("VISITING2: "+unflatFilter);
 		    if (getWorkEstimate(downstream) > bottleNeckWork)
 			bottleNeckWork = getWorkEstimate(downstream);
 
@@ -255,7 +255,7 @@ public class SimplePartitioner extends Partitioner
 	    content=new FileOutputContent(f);
 	else
 	    content=new FilterContent(f);
-	
+	System.out.println("Making: "+content);
 	return content;
     }
     
@@ -281,8 +281,12 @@ public class SimplePartitioner extends Partitioner
 
     private int getWorkEstimate(FilterContent fc) 
     {
-	assert workEstimation.containsKey(fc);
-	return ((Integer)workEstimation.get(fc)).intValue();
+	System.out.println("*******"+workEstimation);
+	System.out.println(fc);
+	//assert workEstimation.containsKey(fc);
+	if(workEstimation.containsKey(fc))
+	    return ((Integer)workEstimation.get(fc)).intValue();
+	else return -1;
     }
     
 

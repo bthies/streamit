@@ -1,6 +1,7 @@
 package at.dms.kjc.flatgraph2;
 
 import at.dms.kjc.sir.*;
+import java.util.HashMap;
 
 /**
  * Intermediate file used in (super) synch removal
@@ -13,6 +14,7 @@ public class UnflatFilter {
     public UnflatEdge[][] out;
     private static int nullNum=0;
     private String name;
+    private static HashMap names=new HashMap(); //Set of all names taken (String->null)
     public double[] array;
     public double constant;
     public int popCount;
@@ -48,10 +50,14 @@ public class UnflatFilter {
 	this.outWeights=outWeights;
 	this.in=in;
 	this.out=out;
-	if(filter!=null)
+	if(filter!=null) {
 	    name=filter.getName();
-	else
-	    name=new Integer(nullNum++).toString();
+	    if(names.containsKey(name)) {
+		name+="_rename_"+String.valueOf(nullNum++);
+	    } else
+		names.put(name,null);
+	} else
+	    name=String.valueOf(nullNum++);
 	for(int i=0;i<in.length;i++) {
 	    in[i].dest=this;
 	    //in[i].destIndex=i;
@@ -93,3 +99,7 @@ public class UnflatFilter {
 	return name;
     }
 }
+
+
+
+

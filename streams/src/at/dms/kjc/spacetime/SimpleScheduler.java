@@ -717,7 +717,7 @@ public class SimpleScheduler
 }
 
 
-public class CompareTraceCommunication implements Comparator 
+class CompareTraceCommunication implements Comparator 
 {
     public int compare (Object o1, Object o2) 
     {
@@ -739,7 +739,7 @@ public class CompareTraceCommunication implements Comparator
 }
 
 
-public class CompareTraceBNWork implements Comparator
+class CompareTraceBNWork implements Comparator
 {
     private Partitioner partitioner;
     

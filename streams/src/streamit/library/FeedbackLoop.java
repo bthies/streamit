@@ -358,28 +358,28 @@ public class FeedbackLoop extends Stream
     // specifies the header
     public void setJoiner(SplitJoin.SplitJoinType type)
     {
-        ASSERT (joiner == null && type != null);
+        assert joiner == null && type != null;
         joiner = type.getJoiner ();
     }
 
     // specifies the body of the feedback loop
     public void setBody (Stream body)
     {
-        ASSERT (this.body == null && body != null);
+        assert this.body == null && body != null;
         this.body = body;
     }
 
     // specifies the splitter
     public void setSplitter (SplitJoin.SplitJoinType type)
     {
-        ASSERT (splitter == null && type != null);
+        assert splitter == null && type != null;
         splitter = type.getSplitter ();
     }
 
     // specifies the feedback path stream
     public void setLoop (Stream loop)
     {
-        ASSERT (this.loop == null && loop != null);
+        assert this.loop == null && loop != null;
         this.loop = loop;
     }
     
@@ -407,26 +407,22 @@ public class FeedbackLoop extends Stream
 
     public int initPathInt (int index)
     {
-        ASSERT (false);
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public short initPathShort (int index)
     {
-        ASSERT (false);
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public float initPathFloat (int index)
     {
-        ASSERT (false);
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     public char initPathChar (int index)
     {
-        ASSERT (false);
-        return 0;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -437,8 +433,7 @@ public class FeedbackLoop extends Stream
      */
     public Object initPathObject (int index)
     {
-        ASSERT (false);
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -474,25 +469,26 @@ public class FeedbackLoop extends Stream
     // not used here!
     public void add(Stream s)
     {
-        ASSERT (false);
+        throw new UnsupportedOperationException();
     }
 
     // connect all the elements of this FeedbackLoop
     public void connectGraph ()
     {
         // make sure that I have the minimal elements to construct this loop
-        ASSERT (joiner);
-        ASSERT (splitter);
-        ASSERT (body);
+        assert joiner != null;
+        assert splitter != null;
+        assert body != null;
 
         // okay, initialize the body and figure out the type of data
         // passed around this loop
         body.setupOperator();
         Channel bodyInput = body.getInputChannel ();
         Channel bodyOutput = body.getOutputChannel ();
-        ASSERT (bodyInput);
-        ASSERT (bodyOutput);
-        ASSERT (bodyOutput.getType ().getName ().equals (bodyInput.getType ().getName ()));
+        assert bodyInput != null;
+        assert bodyOutput != null;
+        assert bodyOutput.getType ().getName ()
+            .equals(bodyInput.getType ().getName ());
 
         // if I don't have a feedback path, just give myself an identity body
         // and initialize whatever the feedback path is
@@ -500,9 +496,10 @@ public class FeedbackLoop extends Stream
         loop.setupOperator ();
         Channel loopInput = loop.getInputChannel ();
         Channel loopOutput = loop.getOutputChannel ();
-        ASSERT (loopInput);
-        ASSERT (loopOutput);
-        ASSERT (loopOutput.getType ().getName ().equals (loopInput.getType ().getName ()));
+        assert loopInput != null;
+        assert loopOutput != null;
+        assert loopOutput.getType ().getName ()
+            .equals(loopInput.getType ().getName ());
 
         // create some extra Identities and give them to the split
         // and the join so they have a Filter for every input/output
@@ -558,7 +555,7 @@ public class FeedbackLoop extends Stream
         }
 
         // now fill up the feedback path with precomputed data:
-        ASSERT(delay == 0 || enqueued.isEmpty());
+        assert delay == 0 || enqueued.isEmpty();
         if (delay != 0)
         {
             Channel feedbackChannel = loop.getOutputChannel ();
@@ -793,10 +790,10 @@ public class FeedbackLoop extends Stream
         // some of these asserts are restrictions on functionality
         // of this function and not on what a correct streamit structure would
         // be
-        ASSERT (body != null);
-        ASSERT (loop != null);
-        ASSERT (joiner != null);
-        ASSERT (splitter != null);
+        assert body != null;
+        assert loop != null;
+        assert joiner != null;
+        assert splitter != null;
 
         // just go through and init the bloody buffers
 

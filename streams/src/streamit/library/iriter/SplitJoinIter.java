@@ -95,7 +95,7 @@ public class SplitJoinIter
 
     public Object getSplitterWork(int nWork)
     {
-        ASSERT(nWork >= 0 && nWork < getSplitterNumWork());
+        assert nWork >= 0 && nWork < getSplitterNumWork();
 
         return splitjoin.getSplitter().getWork(nWork);
     }
@@ -119,7 +119,7 @@ public class SplitJoinIter
 
     public Object getJoinerWork(int nWork)
     {
-        ASSERT(nWork >= 0 && nWork < getJoinerNumWork());
+        assert nWork >= 0 && nWork < getJoinerNumWork();
 
         return splitjoin.getJoiner().getWork(nWork);
     }

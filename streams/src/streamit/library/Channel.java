@@ -40,7 +40,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // indicating the type that will be held in this channel.
     void setupChannel (Class channelType)
     {
-        ASSERT (channelType != null);
+        assert channelType != null;
         type = channelType;
         queue = new LinkedList ();
     }
@@ -68,7 +68,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
     public Channel (Channel original)
     {
-        ASSERT (original != null);
+        assert original != null;
 
         type = original.getType ();
         queue = new LinkedList ();
@@ -82,13 +82,17 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         while (queue.size () < amount)
         {
-            ASSERT (source != null);
+            assert source != null;
 
             // if I need to get data from my source I better not be a scheduled
             // buffer.
-            ASSERT (maxSize == -1, "maxSize should equal -1 (representing not a scheduled buffer)\n" + "Queue: " + queue + ".size: " 
-		    + queue.size() + " amount is: " + amount 
-		    + " and maxSize is: " + maxSize);
+            assert maxSize == -1:
+                "maxSize should equal -1 " +
+                "(representing not a scheduled buffer)\n" +
+                "Queue: " + queue +
+                ".size: " + queue.size() +
+                " amount is: " + amount +
+                " and maxSize is: " + maxSize;
 
             source.work ();
         }
@@ -114,10 +118,10 @@ public class Channel extends streamit.misc.DestroyedClass
 
         // make sure that the channel isn't overflowing
         //if (queue.size () == maxSize) System.out.print ("*");
-        ASSERT (queue.size () <= maxSize || maxSize == -1,
-		"Expecting queue.size () <= maxSize || maxSize == -1,\n" +
-		"   but queue.size()==" + queue.size() + " and maxSize==" + 
-		maxSize);
+        assert queue.size () <= maxSize || maxSize == -1:
+            "Expecting queue.size () <= maxSize || maxSize == -1,\n" +
+            "   but queue.size()==" + queue.size() + " and maxSize==" + 
+            maxSize;
 		
         if (passThrough) sink.work ();
     }
@@ -143,7 +147,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // push something of type <type>
     public void push(Object o)
     {
-        ASSERT (o.getClass () == type);
+        assert o.getClass () == type;
 
         enqueue (o);
     }
@@ -151,7 +155,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // push a boolean
     public void pushBool (boolean b)
     {
-        ASSERT (type == Boolean.TYPE);
+        assert type == Boolean.TYPE;
         
         enqueue (new Boolean (b));
     }
@@ -159,7 +163,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // push an int
     public void pushInt(int i)
     {
-        ASSERT (type == Integer.TYPE);
+        assert type == Integer.TYPE;
 
         enqueue (new Integer (i));
     }
@@ -167,21 +171,21 @@ public class Channel extends streamit.misc.DestroyedClass
     // push a short
     public void pushShort(short s)
     {
-        ASSERT (type == Short.TYPE);
+        assert type == Short.TYPE;
 
         enqueue (new Short (s));
     }
     //push a bit
     public void pushBit(int i)
     {
-	ASSERT (type == Bit.TYPE);
+	assert type == Bit.TYPE;
 	enqueue(new Integer(i));
     }
 
     // push a char
     public void pushChar(char c)
     {
-        ASSERT (type == Character.TYPE);
+        assert type == Character.TYPE;
 
         enqueue (new Character  (c));
     }
@@ -189,7 +193,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // push a double
     public void pushDouble(double d)
     {
-        ASSERT (type == Double.TYPE);
+        assert type == Double.TYPE;
 
         enqueue (new Double (d));
     }
@@ -197,7 +201,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // push a float
     public void pushFloat(float d)
     {
-        ASSERT (type == Float.TYPE);
+        assert type == Float.TYPE;
 
         enqueue (new Float (d));
     }
@@ -205,7 +209,7 @@ public class Channel extends streamit.misc.DestroyedClass
     // push a 2-d float array
     public void push2DFloat(float[][] d)
     {
-        ASSERT (type == new float[0][0].getClass());
+        assert type == new float[0][0].getClass();
 	
 	// copy the array to maintain copy-semantics
 	float[][] copy = new float[d.length][d[0].length];
@@ -235,7 +239,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
         Object data;
         data = dequeue ();
-        ASSERT (data != null);
+        assert data != null;
         
         return data;
     }
@@ -243,11 +247,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop a boolean
     public boolean popBool ()
     {
-        ASSERT (type == Boolean.TYPE);
+        assert type == Boolean.TYPE;
         
         Boolean data;
         data = (Boolean) pop ();
-        ASSERT (data != null);
+        assert data != null;
         
         return data.booleanValue ();
     }
@@ -255,11 +259,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop an int
     public int popInt()
     {
-        ASSERT (type == Integer.TYPE);
+        assert type == Integer.TYPE;
 
         Integer data;
         data = (Integer) pop ();
-        ASSERT (data != null);
+        assert data != null;
 
         return data.intValue ();
     }
@@ -267,11 +271,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop a short
     public short popShort()
     {
-        ASSERT (type == Short.TYPE);
+        assert type == Short.TYPE;
 
         Short s;
         s = (Short) pop ();
-        ASSERT (s != null);
+        assert s != null;
 
         return s.shortValue ();
     }
@@ -279,31 +283,31 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop a char
     public char popChar()
     {
-        ASSERT (type == Character.TYPE);
+        assert type == Character.TYPE;
 
         Character c;
         c = (Character) pop ();
-        ASSERT (c != null);
+        assert c != null;
 
         return c.charValue ();
     }
     //pop a bit
     public int popBit(){
-	ASSERT(type == Bit.TYPE);
+	assert type == Bit.TYPE;
 	Integer data;
 	data = (Integer)pop();
-	ASSERT(data !=null);
+	assert data !=null;
 	return data.intValue();
     }
 
     // pop a double
     public double popDouble()
     {
-        ASSERT (type == Double.TYPE);
+        assert type == Double.TYPE;
 
         Double data;
         data = (Double) pop ();
-        ASSERT (data != null);
+        assert data != null;
 
         return data.doubleValue ();
     }
@@ -311,11 +315,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop a float
     public float popFloat()
     {
-        ASSERT (type == Float.TYPE);
+        assert type == Float.TYPE;
 
         Float data;
         data = (Float) pop ();
-        ASSERT (data != null);
+        assert data != null;
 
         return data.floatValue ();
     }
@@ -323,10 +327,10 @@ public class Channel extends streamit.misc.DestroyedClass
     // pop a float
     public float[][] pop2DFloat()
     {
-        ASSERT (type == new float[0][0].getClass());
+        assert type == new float[0][0].getClass();
 
         float[][] data = (float[][]) pop ();
-        ASSERT (data != null);
+        assert data != null;
 
         return data;
     }
@@ -336,7 +340,7 @@ public class Channel extends streamit.misc.DestroyedClass
     public String popString()
     {
         String data = (String) pop ();;
-        ASSERT (data != null);
+        assert data != null;
 
         return data;
     }
@@ -350,7 +354,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
         Object data;
         data = queue.get (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data;
     }
@@ -358,20 +362,20 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at an int
     public int peekInt(int index)
     {
-        ASSERT (type == Integer.TYPE);
+        assert type == Integer.TYPE;
 
         Integer data;
         data = (Integer) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data.intValue ();
     }
     //peek a bit
     public int peekBit(int index){
-	ASSERT(type == Bit.TYPE);
+	assert type == Bit.TYPE;
 	Integer data;
 	data = (Integer) peek(index);
-	ASSERT(data!=null);
+	assert data!=null;
 	return data.intValue();
     }
 
@@ -379,11 +383,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at a short
     public short peekShort (int index)
     {
-        ASSERT (type == Short.TYPE);
+        assert type == Short.TYPE;
 
         Short data;
         data = (Short) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data.shortValue ();
     }
@@ -391,11 +395,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at a char
     public char peekChar(int index)
     {
-        ASSERT (type == Character.TYPE);
+        assert type == Character.TYPE;
 
         Character data;
         data = (Character) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data.charValue ();
     }
@@ -403,11 +407,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at a double
     public double peekDouble(int index)
     {
-        ASSERT (type == Double.TYPE);
+        assert type == Double.TYPE;
 
         Double data;
         data = (Double) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data.doubleValue ();
     }
@@ -415,11 +419,11 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at a float
     public float peekFloat(int index)
     {
-        ASSERT (type == Float.TYPE);
+        assert type == Float.TYPE;
 
         Float data;
         data = (Float) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data.floatValue ();
     }
@@ -427,10 +431,10 @@ public class Channel extends streamit.misc.DestroyedClass
     // peek at a float
     public float[][] peek2DFloat(int index)
     {
-        ASSERT (type == new float[0][0].getClass());
+        assert type == new float[0][0].getClass();
 
         float[][] data = (float[][]) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data;
     }
@@ -440,7 +444,7 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         String data;
         data = (String) peek (index);
-        ASSERT (data != null);
+        assert data != null;
 
         return data;
     }
@@ -452,7 +456,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
     public int getPopCount ()
     {
-        ASSERT (popPushCount);
+        assert popPushCount != null;
 
         return popPushCount.intValue ();
     }
@@ -468,9 +472,10 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         if (peekCount != null)
         {
-            ASSERT (peekCount.intValue () >= popPushCount.intValue (),
-		    "The peek count of " + peekCount.intValue() + " is less than the pop count of " + 
-		    popPushCount.intValue() + " in channel connecting " + source + " and " + sink);
+            assert peekCount.intValue () >= popPushCount.intValue ():
+                "The peek count of " + peekCount.intValue() +
+                " is less than the pop count of " + popPushCount.intValue() +
+                " in channel connecting " + source + " and " + sink;
             return peekCount.intValue ();
         } else {
             return getPopCount ();
@@ -484,7 +489,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
     public int getPushCount ()
     {
-        ASSERT (popPushCount);
+        assert popPushCount != null;
 
         return popPushCount.intValue ();
     }
@@ -507,10 +512,10 @@ public class Channel extends streamit.misc.DestroyedClass
 
     void setChannelSize (int size)
     {
-        ASSERT (size > 0);
+        assert size > 0;
 
         maxSize = size;
-        ASSERT (queue.size () <= maxSize);
+        assert queue.size () <= maxSize;
     }
 
     void makePassThrough ()

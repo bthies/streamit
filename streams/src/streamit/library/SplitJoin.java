@@ -375,7 +375,7 @@ public class SplitJoin extends Stream
                     break;
                 default :
                     // passed an illegal parameter to the constructor!
-                    SASSERT(false);
+                    assert false : myType;
             }
 
             type = myType;
@@ -383,7 +383,7 @@ public class SplitJoin extends Stream
 
         SplitJoinType addWeight(int weight)
         {
-            SASSERT(weights != null);
+            assert weights != null;
             weights.add(new Integer(weight));
             return this;
         }
@@ -412,7 +412,7 @@ public class SplitJoin extends Stream
                 case 4 :
                     return new NullSplitter();
                 default :
-                    SASSERT(false);
+                    assert false : type;
             }
             return null;
         }
@@ -438,12 +438,11 @@ public class SplitJoin extends Stream
                     return joiner;
                 case 3 :
                     // there are no duplicate joiners!
-                    SASSERT(false);
-                    break;
+                    throw new IllegalStateException("duplicate joiner");
                 case 4 :
                     return new NullJoiner();
                 default :
-                    SASSERT(false);
+                    assert false : type;
             }
             return null;
         }
@@ -604,7 +603,7 @@ public class SplitJoin extends Stream
     // specify the splitter
     public void setSplitter(SplitJoinType type)
     {
-        ASSERT(splitter == null && type != null);
+        assert splitter == null && type != null;
         splitter = type.getSplitter();
 
         splitType = type;
@@ -614,7 +613,7 @@ public class SplitJoin extends Stream
     // must also add all the appropriate outputs to the joiner!
     public void setJoiner(SplitJoinType type)
     {
-        ASSERT(joiner == null && type != null);
+        assert joiner == null && type != null;
         joiner = type.getJoiner();
 
         ListIterator iter;
@@ -622,7 +621,7 @@ public class SplitJoin extends Stream
         while (iter.hasNext())
         {
             Stream s = (Stream) iter.next();
-            ASSERT(s != null);
+            assert s != null;
 
             joiner.add(s);
         }
@@ -633,7 +632,7 @@ public class SplitJoin extends Stream
     // add a stream to the parallel section between the splitter and the joiner
     public void add(Stream s)
     {
-        ASSERT(joiner == null);
+        assert joiner == null;
 
         // add the stream to the Split
         if (splitter != null)
@@ -658,7 +657,7 @@ public class SplitJoin extends Stream
             while (iter.hasNext())
             {
                 Stream s = (Stream) iter.next();
-                ASSERT(s != null);
+                assert s != null;
                 s.setupOperator();
             }
         }
@@ -709,7 +708,7 @@ public class SplitJoin extends Stream
         while (iter.hasNext())
         {
             Stream child = (Stream) iter.next();
-            ASSERT(child);
+            assert child != null;
 
             child.setupBufferLengths(buffers);
 

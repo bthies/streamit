@@ -24,21 +24,21 @@ public class WeightedRoundRobinJoiner extends Joiner
 
     void addWeight(Integer weight)
     {
-        ASSERT(weight != null && weight.intValue() >= 0);
+        assert weight != null && weight.intValue() >= 0;
 
         srcsWeight.add(weight);
     }
 
     public boolean isInputUsed(int index)
     {
-        ASSERT(index < srcsWeight.size());
+        assert index < srcsWeight.size();
         return ((Integer) srcsWeight.get(index)).intValue() != 0;
     }
 
     public void connectGraph()
     {
         // do I even have anything to do?
-        ASSERT(srcs.size() == srcsWeight.size());
+        assert srcs.size() == srcsWeight.size();
         super.connectGraph();
     }
 
@@ -49,7 +49,7 @@ public class WeightedRoundRobinJoiner extends Joiner
     
     public void work()
     {
-        ASSERT(srcsWeight.size() == srcs.size());
+        assert srcsWeight.size() == srcs.size();
 
         int inputIndex;
         for (inputIndex = 0; inputIndex < srcs.size(); inputIndex++)

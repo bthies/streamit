@@ -43,11 +43,13 @@ public class ChannelConnectFilter extends Filter
 
     void useChannels (Channel in, Channel out)
     {
-        ASSERT (input == null && output == null);
-        ASSERT (in != null && out != null);
-        ASSERT (in != out);
-        ASSERT (out.getType ().getName ().equals (in.getType ().getName ()),
-		"Mismatched tape types.  Source output is " + in.getType().getName() + ", but sink input is " + out.getType().getName() );
+        assert input == null && output == null;
+        assert in != null && out != null;
+        assert in != out;
+        assert out.getType ().getName ().equals (in.getType ().getName ()):
+            "Mismatched tape types.  Source output is " +
+            in.getType().getName() + ", but sink input is " +
+            out.getType().getName();
 
         input = in;
         output = out;

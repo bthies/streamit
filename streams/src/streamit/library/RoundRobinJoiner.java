@@ -35,7 +35,7 @@ public class RoundRobinJoiner extends Joiner
         int inputIndex;
         for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
         {
-            ASSERT (input [inputIndex]);
+            assert input [inputIndex] != 0;
             int w;
             for (w = 0; w < weight; w++)
             {

@@ -424,20 +424,17 @@ public abstract class Stream extends Operator
 
     public MessageStub reset()
     {
-        ASSERT(false);
-        return MESSAGE_STUB;
+        throw new UnsupportedOperationException();
     }
 
     public MessageStub reset(int n)
     {
-        ASSERT(false);
-        return MESSAGE_STUB;
+        throw new UnsupportedOperationException();
     }
 
     public MessageStub reset(String str)
     {
-        ASSERT(false);
-        return MESSAGE_STUB;
+        throw new UnsupportedOperationException();
     }
 
     // ------------------------------------------------------------------
@@ -450,7 +447,8 @@ public abstract class Stream extends Operator
     // adds something to the pipeline
     public void add(Stream s)
     {
-        ASSERT(s != null);
+        if (s == null)
+            throw new IllegalArgumentException();
         streamElements.add(s);
     }
 
@@ -529,7 +527,7 @@ public abstract class Stream extends Operator
         }
 
         {
-            ASSERT(s instanceof Schedule);
+            assert s instanceof Schedule;
 
             int index = sizeMap.size();
             sizeMap.put(s, getInteger(index));
@@ -571,9 +569,9 @@ public abstract class Stream extends Operator
             }
             else if (oper instanceof SplitJoin)
             {
-                ASSERT(function instanceof Pair);
+                assert function instanceof Pair;
                 Pair pair = (Pair)function;
-                ASSERT(pair.getFirst() instanceof Operator);
+                assert pair.getFirst() instanceof Operator;
                 Operator sORj = (Operator)pair.getFirst();
                 int funcNum = ((Integer)pair.getSecond()).intValue();
 
@@ -581,11 +579,11 @@ public abstract class Stream extends Operator
             }
             else if (oper instanceof FeedbackLoop)
             {
-                ASSERT(function instanceof Operator);
+                assert function instanceof Operator;
                 ((Operator)function).work();
             }
             else
-                ASSERT(false);
+                assert false : oper;
 
         }
     }
@@ -619,7 +617,7 @@ public abstract class Stream extends Operator
 
         }
         else
-            ASSERT(false);
+            assert false : schedule;
     }
 
     /* removing this to force people to pass arguments
@@ -702,14 +700,14 @@ public abstract class Stream extends Operator
 
         setupOperator();
 
-        ASSERT(
-            getInputChannel() == null,
+        if (getInputChannel() != null)
+            throw new IllegalArgumentException(
             "The toplevel stream can't have any input or output channels,\n"
-                + "but in this program there is an input to the first filter.");
-        ASSERT(
-            getOutputChannel() == null,
+            + "but in this program there is an input to the first filter.");
+        if (getOutputChannel() != null)
+            throw new IllegalArgumentException(
             "The toplevel stream can't have any input or output channels,\n"
-                + "but in this program there is an output of the last filter.");
+            + "but in this program there is an output of the last filter.");
 
         if (finegrained)
         {

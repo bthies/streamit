@@ -389,39 +389,31 @@ public class Pipeline extends Stream
     public void connectGraph ()
     {
         // make sure I have some elements - not sure what to do otherwise
-        ASSERT (!streamElements.isEmpty ());
+        assert !streamElements.isEmpty ();
 
         // go through the list and connect it together:
-        try
-        {
-            ListIterator childIter;
-            childIter = (ListIterator) streamElements.iterator ();
-            Stream source = null;
+        ListIterator childIter;
+        childIter = (ListIterator) streamElements.iterator ();
+        Stream source = null;
 
-            while (childIter.hasNext ())
+        while (childIter.hasNext ())
+        {
+            // advance the iterator:
+            Stream sink = (Stream) childIter.next ();
+            assert sink != null;
+
+            // setup the sink itself
+            sink.setupOperator ();
+
+            if (source != null && source.getOutputChannel () != null)
             {
-                // advance the iterator:
-                Stream sink = (Stream) childIter.next ();
-                ASSERT (sink != null);
-
-                // setup the sink itself
-                sink.setupOperator ();
-
-                if (source != null && source.getOutputChannel () != null)
-                {
-                    // create and connect a pass filter
-                    ChannelConnectFilter connect = new ChannelConnectFilter ();
-                    Channel in = source.getOutputChannel ();
-                    Channel out = sink.getInputChannel ();
-		    connect.useChannels (in, out);
-                }
-                source = sink;
+                // create and connect a pass filter
+                ChannelConnectFilter connect = new ChannelConnectFilter ();
+                Channel in = source.getOutputChannel ();
+                Channel out = sink.getInputChannel ();
+                connect.useChannels (in, out);
             }
-        }
-        catch (NoSuchElementException error)
-        {
-            // this should never happen
-            ASSERT (false);
+            source = sink;
         }
 
         // set myself up with proper input and output
@@ -443,7 +435,7 @@ public class Pipeline extends Stream
         {
             // advance the iterator:
             Stream child = (Stream) childIter.next ();
-            ASSERT (child != null);
+            assert child != null;
             child.setupBufferLengths (buffers);
 
             source = sink;
@@ -451,10 +443,10 @@ public class Pipeline extends Stream
 
             if (source != null)
             {
-                ASSERT (sink);
+                assert sink != null;
 
                 int buffSize = buffers.getBufferSizeBetween (new Iterator(source), new Iterator(sink));
-                ASSERT (buffSize);
+                assert buffSize != 0;
 
                 StreamIt.totalBuffer += buffSize;
                 

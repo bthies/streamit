@@ -890,7 +890,7 @@ public class Operator extends DestroyedClass
         {
             Operator sink;
             sink = (Operator) iter.next ();
-            ASSERT (sink != null);
+            assert sink != null;
 
             // do bunch of work
             int i;
@@ -910,7 +910,7 @@ public class Operator extends DestroyedClass
                 fullChannel = fullChannels.iterator ();
 
             Channel ch = (Channel) fullChannel.next ();
-            ASSERT (ch != null);
+            assert ch != null;
 
             ch.getSink ().work ();
              }
@@ -930,7 +930,7 @@ public class Operator extends DestroyedClass
     public static void passOneData (Channel from, Channel to)
     {
         Class type = from.getType ();
-        SASSERT (type == to.getType ());
+        assert type == to.getType ();
 
         if (type == Integer.TYPE)
         {
@@ -959,7 +959,7 @@ public class Operator extends DestroyedClass
     public static void duplicateOneData (Channel from, Channel [] to)
     {
         Class type = from.getType ();
-        SASSERT (to != null && type == to[0].getType ());
+        assert to != null && type == to[0].getType ();
 
         if (type == Integer.TYPE)
         {
@@ -1053,7 +1053,7 @@ public class Operator extends DestroyedClass
     // the object
     protected void callInit ()
     {
-        ASSERT (initParams != null);
+        assert initParams != null;
 
         if(initParams.getParamName().equals(("int-int-float-float")))
 	    init (initParams.getIntParam("i1"),
@@ -1451,7 +1451,7 @@ public class Operator extends DestroyedClass
 
     public void connectGraph ()
     {
-        ASSERT (false);
+        throw new UnsupportedOperationException();
     }
 
     // ------------------------------------------------------------------
@@ -1462,14 +1462,14 @@ public class Operator extends DestroyedClass
     // returns null if none present
     Channel[] getIOFields (String fieldName)
     {
-        ASSERT (fieldName == "input" || fieldName == "output");
+        assert fieldName == "input" || fieldName == "output";
 
         Channel fieldsInstance [] = null;
 
         try
         {
             Class thisClass = this.getClass ();
-            ASSERT (thisClass != null);
+            assert thisClass != null;
 
             Field ioField;
             ioField  = thisClass.getField (fieldName);
@@ -1494,7 +1494,7 @@ public class Operator extends DestroyedClass
         {
             // this is all the other errors:
             error.getClass ();
-            ASSERT (false);
+            assert false : error;
         }
 
         return fieldsInstance;
@@ -1510,7 +1510,7 @@ public class Operator extends DestroyedClass
 
             if (fieldInstance != null)
             {
-                ASSERT (fieldInstance.length > fieldIndex);
+                assert fieldInstance.length > fieldIndex;
                 field = fieldInstance [fieldIndex];
             }
         }
@@ -1520,26 +1520,26 @@ public class Operator extends DestroyedClass
 
     void setIOField (String fieldName, int fieldIndex, Channel newChannel)
     {
-        ASSERT (fieldName == "input" || fieldName == "output");
+        assert fieldName == "input" || fieldName == "output";
 
         Channel fieldsInstance [];
 
         try
         {
             Class thisClass = this.getClass ();
-            ASSERT (thisClass != null);
+            assert thisClass != null;
 
             Field ioField;
             ioField  = thisClass.getField (fieldName);
 
             if (ioField.getType () == newChannel.getClass ())
             {
-                ASSERT (fieldIndex == 0);
+                assert fieldIndex == 0;
                 ioField.set (this, newChannel);
             } else {
                 fieldsInstance = (Channel []) ioField.get (this);
-                ASSERT (fieldsInstance != null);
-                ASSERT (fieldsInstance.length > fieldIndex);
+                assert fieldsInstance != null;
+                assert fieldsInstance.length > fieldIndex;
 
                 fieldsInstance [fieldIndex] = newChannel;
             }
@@ -1548,7 +1548,7 @@ public class Operator extends DestroyedClass
         catch (Throwable error)
         {
             // this is all the other errors:
-            ASSERT (false);
+            assert false : error;
         }
     }
 

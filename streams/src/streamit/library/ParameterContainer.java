@@ -68,64 +68,64 @@ public class ParameterContainer extends AssertedClass
         
         int getInt ()
         {
-            ASSERT (primitive);
+            assert primitive;
             
             Integer intData = (Integer) data;
-            ASSERT (intData != null);
+            assert intData != null;
             
             return intData.intValue ();
         }
 
         char getChar ()
         {
-            ASSERT (primitive);
+            assert primitive;
             
             Character charData = (Character) data;
-            ASSERT (charData != null);
+            assert charData != null;
             
             return charData.charValue ();
         }
 
         float getFloat ()
         {
-            ASSERT (primitive);
+            assert primitive;
             
             Float floatData = (Float) data;
-            ASSERT (floatData != null);
+            assert floatData != null;
             
             return floatData.floatValue ();
         }
 
 	Object getObject ()
         {
-            ASSERT (!primitive);
+            assert !primitive;
 
             return data;            
         }
 
         boolean getBool ()
         {
-            ASSERT (primitive);
+            assert primitive;
             
             Boolean boolData = (Boolean) data;
-            ASSERT (boolData != null);
+            assert boolData != null;
             
             return boolData.booleanValue ();
         }
         
         short getShort ()
         {
-            ASSERT (primitive);
+            assert primitive;
             
             Short shortData = (Short) data;
-            ASSERT (shortData != null);
+            assert shortData != null;
             
             return shortData.shortValue ();
         }
         
         Object getObj ()
         {
-            ASSERT (!primitive);
+            assert !primitive;
             
             return data;
         }
@@ -182,70 +182,70 @@ public class ParameterContainer extends AssertedClass
     
     public char getCharParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getChar ();
     }
 
     public int getIntParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getInt ();
     }
 
     public float getFloatParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getFloat ();
     }
 
     public Object getObjectParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getObject();
     }
 
     public boolean getBoolParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getBool ();
     }
 
     public short getShortParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getShort ();
     }
 
     public Object getObjParam (String paramName)
     {
-        ASSERT (parameters.containsKey (paramName));
+        assert parameters.containsKey (paramName);
         
         ParamData paramData = (ParamData) parameters.get (paramName);
-        ASSERT (paramData != null);
+        assert paramData != null;
         
         return paramData.getObj ();
     }
@@ -256,7 +256,7 @@ public class ParameterContainer extends AssertedClass
         String str = (String) obj;
         
         // make sure that either both or neither is null
-        ASSERT (obj == null ^ str != null);
+        assert obj == null ^ str != null;
         
         return str;
     }

@@ -70,7 +70,7 @@ public class FeedbackLoopIter
     
     public Object getSplitterWork(int nWork)
     {
-        ASSERT(nWork >= 0 && nWork < getSplitterNumWork ());
+        assert nWork >= 0 && nWork < getSplitterNumWork ();
         return  feedback.getSplitter();
     }
     
@@ -86,7 +86,7 @@ public class FeedbackLoopIter
     
     public Object getJoinerWork(int nWork)
     {
-        ASSERT(nWork >= 0 && nWork < getJoinerNumWork ());
+        assert nWork >= 0 && nWork < getJoinerNumWork ();
         return  feedback.getJoiner();
     }
     

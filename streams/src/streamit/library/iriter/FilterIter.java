@@ -53,25 +53,25 @@ public class FilterIter
     
     public int getInitPeekStage (int stage)
     {
-        ASSERT (filter.isMultiPhaseStyle());
+        assert filter.isMultiPhaseStyle();
         return filter.getInitPeekStage (stage);
     }
 
     public int getInitPopStage (int stage)
     {
-        ASSERT (filter.isMultiPhaseStyle());
+        assert filter.isMultiPhaseStyle();
         return filter.getInitPopStage (stage);
     }
     
     public int getInitPushStage (int stage)
     {
-        ASSERT (filter.isMultiPhaseStyle());
+        assert filter.isMultiPhaseStyle();
         return filter.getInitPushStage (stage);
     }
     
     public Object getInitFunctionStage (int stage)
     {
-        ASSERT (filter.isMultiPhaseStyle());
+        assert filter.isMultiPhaseStyle();
         return filter.getInitFunctionStageName (stage);
     }
     
@@ -93,7 +93,7 @@ public class FilterIter
             return filter.getSteadyPeekPhase(phase);
         } else {
             // if not using the multi-phase style, must have exactly one phase!
-            ASSERT (phase == 0);
+            assert phase == 0;
             return filter.peekCount;
         }
     }
@@ -105,7 +105,7 @@ public class FilterIter
             return filter.getSteadyPopPhase(phase);
         } else {
             // if not using the multi-phase style, must have exactly one phase!
-            ASSERT (phase == 0);
+            assert phase == 0;
             return filter.popCount;
         }
     }
@@ -117,7 +117,7 @@ public class FilterIter
             return filter.getSteadyPushPhase(phase);
         } else {
             // if not using the multi-phase style, must have exactly one phase!
-            ASSERT (phase == 0);
+            assert phase == 0;
             return filter.pushCount;
         }
     }
@@ -129,7 +129,7 @@ public class FilterIter
             return filter.getSteadyFunctionPhaseName(phase);
         } else {
             // if not using the multi-phase style, must have exactly one phase!
-            ASSERT (phase == 0);
+            assert phase == 0;
             return workName;
         }
     }

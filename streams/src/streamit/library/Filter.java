@@ -342,7 +342,7 @@ public abstract class Filter extends Stream
     // add was present in Operator, but is not defined in Filter anymore
     public void add(Stream s)
     {
-        ASSERT(false);
+        throw new UnsupportedOperationException();
     }
 
     // data for support of syntax in the CC paper
@@ -437,25 +437,25 @@ public abstract class Filter extends Stream
 
     public int getInitPeekStage(int stage)
     {
-        ASSERT(initPhases.size() > stage);
+        assert initPhases.size() > stage;
         return ((PhaseInfo) initPhases.get(stage)).e;
     }
 
     public int getInitPopStage(int stage)
     {
-        ASSERT(initPhases.size() > stage);
+        assert initPhases.size() > stage;
         return ((PhaseInfo) initPhases.get(stage)).o;
     }
 
     public int getInitPushStage(int stage)
     {
-        ASSERT(initPhases.size() > stage);
+        assert initPhases.size() > stage;
         return ((PhaseInfo) initPhases.get(stage)).u;
     }
 
     public String getInitFunctionStageName(int stage)
     {
-        ASSERT(initPhases.size() > stage);
+        assert initPhases.size() > stage;
         return ((PhaseInfo) initPhases.get(stage)).name;
     }
 
@@ -466,25 +466,25 @@ public abstract class Filter extends Stream
 
     public int getSteadyPeekPhase(int stage)
     {
-        ASSERT(steadyPhases.size() > stage);
+        assert steadyPhases.size() > stage;
         return ((PhaseInfo) steadyPhases.get(stage)).e;
     }
 
     public int getSteadyPopPhase(int stage)
     {
-        ASSERT(steadyPhases.size() > stage);
+        assert steadyPhases.size() > stage;
         return ((PhaseInfo) steadyPhases.get(stage)).o;
     }
 
     public int getSteadyPushPhase(int stage)
     {
-        ASSERT(steadyPhases.size() > stage);
+        assert steadyPhases.size() > stage;
         return ((PhaseInfo) steadyPhases.get(stage)).u;
     }
 
     public String getSteadyFunctionPhaseName(int stage)
     {
-        ASSERT(steadyPhases.size() > stage);
+        assert steadyPhases.size() > stage;
         return ((PhaseInfo) steadyPhases.get(stage)).name;
     }
 
@@ -493,7 +493,7 @@ public abstract class Filter extends Stream
 
     public void executeNextPhase(String schedName)
     {
-        ASSERT(multiPhaseStyle);
+        assert multiPhaseStyle;
 
         int inputCount=0, outputCount=0;
         if (input != null)
@@ -518,12 +518,11 @@ public abstract class Filter extends Stream
         }
 
         // make sure that the next phase to execute is the one asked for!
-        ASSERT(schedName.equals(phase.name));
+        assert schedName.equals(phase.name);
 
         // make sure that there is enough data to peek!
-        ASSERT(
-            input == null
-                || input.getItemsPushed() - input.getItemsPopped() >= phase.e);
+        assert input == null
+            || input.getItemsPushed() - input.getItemsPopped() >= phase.e;
 
         // execute the phase
         try
@@ -541,8 +540,8 @@ public abstract class Filter extends Stream
         if (input != null)
         {
             newInputCount = input.getItemsPopped();
-            ASSERT(
-                newInputCount - inputCount == phase.o,
+            if (newInputCount - inputCount != phase.o)
+                throw new IllegalArgumentException(
                 "This probably means that you declared the wrong pop rate for "
                     + this
                     + "\n  have newInput=="
@@ -557,8 +556,8 @@ public abstract class Filter extends Stream
         if (output != null)
         {
             newOutputCount = output.getItemsPushed();
-            ASSERT(
-                newOutputCount - outputCount == phase.u,
+            if (newOutputCount - outputCount != phase.u)
+                throw new IllegalArgumentException(
                 "This probably means that you declared the wrong push rate for "
                     + this
                     + "\n"

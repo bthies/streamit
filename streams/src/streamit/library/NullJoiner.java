@@ -27,8 +27,7 @@ public class NullJoiner extends Joiner
     public int [] getWeights ()
     {
         // null joiners do not distribute any weights
-        ASSERT (false);
-        return null;
+        throw new UnsupportedOperationException();
     }
     
     public int getProduction () { return 0; }

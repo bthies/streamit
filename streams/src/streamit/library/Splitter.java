@@ -108,8 +108,6 @@ abstract public class Splitter extends Operator
             // just don't do anything in this case!
             if (s != null)
             {
-                ASSERT(s != null);
-
                 // connect it and retrieve its input and copy it into
                 // the output array for this splitter
                 s.setupOperator();
@@ -129,13 +127,12 @@ abstract public class Splitter extends Operator
                     else
                     {
                         // check that the input types agree
-                        ASSERT(
-                            channel.getType().getName().equals(
-                                input.getType().getName()),
+                        assert channel.getType().getName()
+                            .equals(input.getType().getName()):
                             "input type = "
-                                + input.getType().getName()
-                                + " but channel type = "
-                                + channel.getType().getName());
+                            + input.getType().getName()
+                            + " but channel type = "
+                            + channel.getType().getName();
                     }
 
                     // now connect the channel to the Splitter

@@ -88,9 +88,8 @@ abstract public class Joiner extends Operator
                     else
                     {
                         // check that the input types agree
-                        ASSERT(
-                            channel.getType().getName().equals(
-                                output.getType().getName()));
+                        assert channel.getType().getName().equals(
+                                output.getType().getName());
                     }
 
                     // now connect the channel to me

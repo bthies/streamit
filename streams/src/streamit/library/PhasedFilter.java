@@ -26,7 +26,7 @@ public abstract class PhasedFilter extends Stream
     public PhasedFilter(int a) { super(a); }
     
     // add was present in Operator, but is not defined in Filter anymore
-    public void add(Stream s) { ASSERT (false); }
+    public void add(Stream s) { throw new UnsupportedOperationException(); }
 
     public void setIOTypes(Class in, Class out)
     {

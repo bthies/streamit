@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.2 2001-09-28 03:07:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -68,6 +68,9 @@ public class JClassDeclaration extends JTypeDeclaration {
   {
     super(where, modifiers, ident, interfaces, fields, methods, inners, initializers, javadoc, comment);
     this.superClass = superClass;
+    if (superClass!=null) {
+	this.superName = superClass.toString();
+    }
   }
 
   // ----------------------------------------------------------------------

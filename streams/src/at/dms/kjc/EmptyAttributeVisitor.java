@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.7 2001-11-10 21:40:34 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.8 2002-02-18 14:54:07 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -31,6 +31,8 @@ import at.dms.compiler.JavadocComment;
  *
  * Suggested from: Max R. Andersen(max@cs.auc.dk) */
 public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
+
+    protected boolean forwards=true; //Determines whether to walk forwards or backwards through blocks
 
     // ----------------------------------------------------------------------
     // TYPE DECLARATION
@@ -442,9 +444,15 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
      */
     public Object visitBlockStatement(JBlock self,
 				      JavaStyleComment[] comments) {
-	for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
-	    ((JStatement)it.next()).accept(this);
-	}
+	if(forwards)
+	    for (ListIterator it = self.getStatementIterator(); it.hasNext(); ) {
+		((JStatement)it.next()).accept(this);
+	    }
+	else {
+	    JStatement[] body=self.getStatementArray();
+	    for(int i=body.length-1;i>=0;i--)
+		((JStatement)body[i]).accept(this);
+  	}
 	return self;
     }
 

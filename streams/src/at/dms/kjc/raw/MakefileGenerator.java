@@ -53,7 +53,7 @@ public class MakefileGenerator
 	    fw.write("ATTRIBUTES += HWIC\n");
 	    //add some other stuff
 	    fw.write("MEMORY_LAYOUT=LEFT_RIGHT_SIDES\n");
-	    fw.write("BTL-DEVICES += -enable_all_side_for_dram -dram lhs\n");
+	    fw.write("BTL-DEVICES += -enable_all_sides_for_dram -dram lhs\n");
 
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...

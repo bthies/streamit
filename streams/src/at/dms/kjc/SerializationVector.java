@@ -21,5 +21,11 @@ public class SerializationVector
     {
 	return vec.get(i.intValue());
     }
-    
+
+    /**
+     * Clears the serialization vector.
+     */
+    public static void clear() {
+	vec.clear();
+    }
 }

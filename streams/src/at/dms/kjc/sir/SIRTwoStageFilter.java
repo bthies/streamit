@@ -10,27 +10,35 @@ import at.dms.util.*;
  * is called and the I/O rates are initPop, initPush, and initPeek.
  * On all subsequent invocations, the filter behaves as a normal
  * steady-state filter with the usual work function and I/O rates.
+ *
+ * By way of implementation, this is a special case of a generalized
+ * <code>SIRPhasedFilter</code> that has exactly one phase in each
+ * of the init and work stages.  For largely historical reasons,
+ * this is actually derived from <code>SIRFilter</code>; it would
+ * be "more correct" to actually extend <code>SIRPhasedFilter</code>
+ * directly, but making that change involves making all of the rest
+ * of the compiler aware of phases.  In some places this is easier
+ * than in others; big changes show up in the backends.
+ *
+ * @version $Id: SIRTwoStageFilter.java,v 1.5 2003-05-16 20:47:03 dmaze Exp $
  */
 public class SIRTwoStageFilter extends SIRFilter {
-    /**
-     * The number of items that are peeked on the inital invocation
-     */
-    private int initPeek;
-    /**
-     * The number of items that are popped on the initial invocation.
-     */
-    private int initPop;
-    /**
-     * The number of items that are pushed on the initial invocation.
-     */
-    private int initPush;
-    /**
-     * The initial work function.
-     */
-    private JMethodDeclaration initWork;
+    /* Internal invariant: the init and work phases arrays each have
+     * exactly one element.  This means we need to set up initPhases
+     * and phases even where we wouldn't otherwise. */
 
-    public SIRTwoStageFilter() {
-	super();
+    public SIRTwoStageFilter()
+    {
+        this(null);
+    }
+
+    public SIRTwoStageFilter(String ident) 
+    {
+        super(ident);
+        // setPhases(new SIRWorkFunction[1]);
+        // getPhases()[0] = new SIRWorkFunction();
+        setInitPhases(new SIRWorkFunction[1]);
+        getInitPhases()[0] = new SIRWorkFunction();
     }
 
     public SIRTwoStageFilter(SIRContainer parent,
@@ -47,31 +55,18 @@ public class SIRTwoStageFilter extends SIRFilter {
 			     JMethodDeclaration initWork, 
 			     CType inputType, 
 			     CType outputType) {
-	super(parent, ident, fields, methods, 
-	      peek, pop, push, work,
-	      inputType, outputType);
-	this.initPeek = initPeek;
-	this.initPush = initPush;
-	this.initPop = initPop;
-	// this ensures that <initWork>> is in our methods array, too
-	setInitWork(initWork);
+        super(parent, ident, fields, methods, peek, pop, push, work,
+              inputType, outputType);
+        // super(parent, ident, fields, methods,
+        //       new SIRWorkFunction[1], // initPhases,
+        //       new SIRWorkFunction[1], // phases
+        //       null, inputType, outputType);
+        // Create a single phase for each stage.
+        setInitPhases(new SIRWorkFunction[1]);
+        getInitPhases()[0] = new SIRWorkFunction(initPeek, initPop,
+                                                 initPush, initWork);
+        // getPhases()[0] = new SIRWorkFunction(peek, pop, push, work);
 	checkRep();
-    }
-
-    /**
-     * Copies the state of filter <other> into this.  Fields that are
-     * objects will be shared instead of cloned.
-     */
-    public void copyState(SIRFilter other) {
-	super.copyState(other);
-	if (other instanceof SIRTwoStageFilter) {
-	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)other;
-	    this.initPeek = twoStage.initPeek;
-	    this.initPush = twoStage.initPush;
-	    this.initPop = twoStage.initPop;
-	    this.initWork = twoStage.initWork;
-	    checkRep();
-	}
     }
 
     /**
@@ -82,52 +77,59 @@ public class SIRTwoStageFilter extends SIRFilter {
 	// we think the peek-pop difference should be the same in the
 	// initial and steady states (our simulation routine with the
 	// scheduler makes this assumption).
-	Utils.assert(initPeek-initPop==getPeekInt()-getPopInt(),
+	Utils.assert(getInitPeek()-getInitPop()==
+                     getPeekInt()-getPopInt(),
 		     "\nFor Two Stage Filters, initPeek-initPop must equal peek-pop" +
-		     "\ninitPeek=" + initPeek + 
-		     "\ninitPop=" + initPop + 
+		     "\ninitPeek=" + getInitPeek() + 
+		     "\ninitPop=" + getInitPop() + 
 		     "\nPeek=" + getPeekInt() + 
 		     "\nPop=" + getPopInt());
-	// we need an init work function to be a two-stage filter
-	Utils.assert(initWork!=null);
     }
 
     /**
-     * Sets the work function.  
+     * Sets the work function for the initialization stage.
      */
     public void setInitWork (JMethodDeclaration newWork) {
-	addReplacementMethod(newWork, this.initWork);
-	this.initWork = newWork;
+	addReplacementMethod(newWork, getInitWork());
+        getInitPhases()[0].setWork(newWork);
 	checkRep();
     }
 
     public int getInitPush() {
-	return this.initPush;
+        return getInitPhases()[0].getPushInt();
     }
 
     public int getInitPeek() {
-	return this.initPeek;
+        return getInitPhases()[0].getPeekInt();
     }
 
     public int getInitPop() {
-	return this.initPop;
+        return getInitPhases()[0].getPopInt();
     }
 
     public void setInitPush(int i) {
-	this.initPush = i;
+        getInitPhases()[0].setPush(i);
     }
 
     public void setInitPeek(int i) {
-	this.initPeek = i;
+        getInitPhases()[0].setPeek(i);
     }
 
     public void setInitPop(int i) {
-	this.initPop = i;
+        getInitPhases()[0].setPop(i);
     }
 
     public JMethodDeclaration getInitWork() {
-	Utils.assert(initWork!=null);
-	return this.initWork;
+        return getInitPhases()[0].getWork();
+    }
+
+    /* Overridden from SIRPhasedFilter: */
+    public void setInitPhases(SIRWorkFunction[] initPhases) 
+    {
+        if (initPhases.length != 1)
+            throw new UnsupportedOperationException
+                ("SIRTwoStageFilters have exactly one init phase");
+        super.setInitPhases(initPhases);
     }
 
 }

@@ -18,7 +18,7 @@ import java.util.ArrayList;
  * will need to determine the stream type on its own.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StreamSpec.java,v 1.12 2003-02-21 15:58:33 dmaze Exp $
+ * @version $Id: StreamSpec.java,v 1.13 2003-08-29 21:34:30 thies Exp $
  */
 public class StreamSpec extends FENode
 {
@@ -101,6 +101,25 @@ public class StreamSpec extends FENode
     public int getType()
     {
         return type;
+    }
+
+    /**
+     * Returns the type of this, as a String (Pipeline, SplitJoin, FeedbackLoop, Filter).
+     *
+     * @return  String type of the stream object
+     */
+    public String getTypeString() {
+	switch(type) {
+	case STREAM_FILTER:
+	    return "Filter";
+	case STREAM_PIPELINE:
+	    return "Pipeline";
+	case STREAM_SPLITJOIN:
+	    return "SplitJoin";
+	case STREAM_FEEDBACKLOOP:
+	    return "FeedbackLoop";
+	}
+	return null;
     }
 
     /**

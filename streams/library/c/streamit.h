@@ -53,111 +53,61 @@ typedef struct ContextContainer {
   stream_context *context;
 } _ContextContainer, *ContextContainer;
 typedef struct tape {
-  char *data;
+  void *data;
   int read_pos;
   int write_pos;
   int data_size;
   int mask;
 } tape;
-#define INCR_TAPE_POS(t, v, size) \
-( \
- (t)->v =  \
- ( \
-  ( \
-   (t)->v+size \
-  ) \
-  & (t)->mask \
- ) \
-)
-
+#define INCR_TAPE_LOCALB(p, m, n) ((p) = ((p)+n) & (m))
+#define PUSH_TAPE_LOCALB(d, p, m, type, v) \
+  (*((type *)((d)+INCR_TAPE_LOCALB(p, m, sizeof(type))))=(v))
+#define POP_TAPE_LOCALB(d, p, m, type) \
+  (*((type *)((d)+INCR_TAPE_LOCALB(p, m, sizeof(type)))))
+#define PEEK_TAPE_LOCALB(d, p, m, type, n) \
+  (*((type *)((d)+(((p)+((n)+1)*sizeof(type))&(m)))))
+#define LOCALIZE_TAPE(rt, rd, rp, rm, wt, wd, wp, wm)\
+  ((rd=rt->data), (rp=rt->read_pos), (rm=rt->mask), \
+   (wd=wt->data), (wp=rt->write_pos), (wm=wt->mask))
+#define UNLOCALIZE_TAPE(rt, rp, wt, wp) \
+  ((rt->read_pos=rp), (wt->write_pos=wp))
+#define PUSH_DEFAULTB(type, v) PUSH_TAPE_LOCALB(__wd, __wp, __wm, type, v)
+#define POP_DEFAULTB(type) POP_TAPE_LOCALB(__rd, __rp, __rm, type)
+#define PEEK_DEFAULTB(type, n) PEEK_TAPE_LOCALB(__rd, __rp, __rm, type, n)
+#define VARS_DEFAULTB() void *__rd, *__wd; int __rp, __rm, __wp, __wm;
+#define LOCALIZE_DEFAULTB(c) \
+  LOCALIZE_TAPE((c)->input_tape, __rd, __rp, __rm, \
+                (c)->output_tape, __wd, __wp, __wm)
+#define UNLOCALIZE_DEFAULTB(c) \
+  UNLOCALIZE_TAPE((c)->input_tape, __rp, (c)->output_tape, __wp)
+#define INCR_TAPE_POS(t, v, n) INCR_TAPE_LOCALB((t)->v, (t)->mask, (n))
 #define PEEK_TAPE(t, type, n) \
-  (* \
-   ( \
-    (type *) \
-    ( \
-     (t)->data + \
-     ( \
-      ( \
-       (t)->read_pos \
-       + ( \
-          (n+1)  \
-          * sizeof(type) \
-         ) \
-      ) \
-      & (t)->mask \
-     ) \
-    ) \
-   ) \
-  )
-
+  (*((type *)((t)->data+(((n+1)*sizeof(type))&(t)->mask))))
 #define INCR_TAPE_WRITE(t, size) INCR_TAPE_POS(t, write_pos, size)
 #define INCR_TAPE_READ(t, size) INCR_TAPE_POS(t, read_pos, size)
 #define PUSH_TAPE(t, type, d) \
-  ( \
-   (* \
-    ( \
-     (type *) \
-     ( \
-      (t)->data \
-      + INCR_TAPE_POS(t, write_pos, sizeof (type)) \
-     ) \
-    ) \
-   ) \
-   = (d) \
-  )
-
+  (*((type *)((t)->data+INCR_TAPE_POS(t, write_pos, sizeof(type))))=(d))
 #define POP_TAPE(t, type) \
-  (* \
-   ( \
-    (type *) \
-    ( \
-     (t)->data  \
-     + INCR_TAPE_POS(t, read_pos, sizeof (type)) \
-    ) \
-   ) \
-  ) 
-
+  (*((type *)((t)->data+INCR_TAPE_POS(t, read_pos, sizeof(type)))))
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)
+#define streamit_memcpy(d, s, l) \
+  (((l) == 0) ? memcpy((d), (s), 0) : \
+   ((l) == 1) ? memcpy((d), (s), 1) : \
+   ((l) == 2) ? memcpy((d), (s), 2) : \
+   ((l) == 3) ? memcpy((d), (s), 3) : \
+   ((l) == 4) ? memcpy((d), (s), 4) : \
+   ((l) == 6) ? memcpy((d), (s), 6) : \
+   ((l) == 8) ? memcpy((d), (s), 8) : \
+   ((l) == 12) ? memcpy((d), (s), 12) : \
+   ((l) == 16) ? memcpy((d), (s), 16) : \
+   ((l) == 20) ? memcpy((d), (s), 20) : \
+   memcpy((d), (s), (l)))
 #define READ_ADDR(t) ((t)->data + (t)->read_pos)
 #define WRITE_ADDR(t) ((t)->data + (t)->write_pos)
-
-#ifdef _MSC_VER
-#define streamit_memcpy(d,s,l) (memcpy((d),(s),(l)))
-#else
-#define streamit_memcpy(d, s, l) \
-  switch (l) \
-  { \
-		  case 0: memcpy((d), (s), 0); break; \
-		  case 1: memcpy((d), (s), 1); break; \
-		  case 2: memcpy((d), (s), 2); break; \
-		  case 3: memcpy((d), (s), 3); break; \
-		  case 4: memcpy((d), (s), 4); break; \
-		  case 6: memcpy((d), (s), 6); break; \
-		  case 8: memcpy((d), (s), 8); break; \
-		  case 12: memcpy((d), (s), 12); break; \
-		  case 16: memcpy((d), (s), 16); break; \
-		  case 20: memcpy((d), (s), 20); break; \
-		  default: memcpy((d), (s), (l)); break; \
-  }
-/*
-   (((l) == 0) ? memcpy((d), (s), 0) : \
-    ((l) == 1) ? memcpy((d), (s), 1) : \
-    ((l) == 2) ? memcpy((d), (s), 2) : \
-    ((l) == 3) ? memcpy((d), (s), 3) : \
-    ((l) == 4) ? memcpy((d), (s), 4) : \
-    ((l) == 6) ? memcpy((d), (s), 6) : \
-    ((l) == 8) ? memcpy((d), (s), 8) : \
-    ((l) == 12) ? memcpy((d), (s), 12) : \
-   ((l) == 16) ? memcpy((d), (s), 16) : \
-    ((l) == 20) ? memcpy((d), (s), 20) : \
-    memcpy((d), (s), (l)))
-*/
-
-#endif
 #define COPY_TAPE_ITEM(s, d) \
-  streamit_memcpy(WRITE_ADDR(d), READ_ADDR(s), (d)->data_size)
+  (streamit_memcpy(WRITE_ADDR(d), READ_ADDR(s), (d)->data_size))
 #define FEEDBACK_DELAY(d, c, n, t, f) { \
   int i; \
   for (i = 0; i < (n); i++) { \

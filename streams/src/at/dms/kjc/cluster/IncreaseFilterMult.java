@@ -16,12 +16,40 @@ class IncreaseFilterMult implements StreamVisitor {
     static public void inc(SIRStream str, int mult) {
 	IterFactory.createFactory().createIter(str).accept(new IncreaseFilterMult(mult));
     }
+
+
+    public int calcMult(SIRFilter filter) {
+
+	int mult = 1;
+	
+	int pop = filter.getPopInt();
+	int peek = filter.getPeekInt();
+	int extra = 0;
+	if (peek > pop) extra = peek - pop;
+
+	// make sure that filter's pop rate is at least 25% of
+	// of what it peeks beyond consumed items.
+
+	while (pop * mult * 4 < extra) { 
+	    mult = mult + 1;
+	}
+	
+	return mult;
+    }
     
     public void visitFilter(SIRFilter filter,
 		     SIRFilterIter iter) { 
 	
-	System.out.print("IncMult visiting: "+filter.getName());
-	
+	int _mult = calcMult(filter);
+
+	System.out.print("IncMult visiting: "+filter.getName()+
+			 " mult: "+_mult);
+
+	if (_mult == 1) {
+	    System.out.println(" No change!");
+	    return;
+	}
+
 	JMethodDeclaration work = filter.getWork();
 
 	System.out.print(" work: "+work.getName());
@@ -30,6 +58,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	//
 	// adding a work2 method
 	//
+
 	
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
@@ -62,7 +91,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
 				      new JLocalVariableExpression(null,counter),
-				      new JIntLiteral(mult));
+				      new JIntLiteral(_mult));
 	
 	JMethodCallExpression callExpr = 
 	    new JMethodCallExpression(null, 
@@ -89,7 +118,10 @@ class IncreaseFilterMult implements StreamVisitor {
 
 	// mark the for loop as unrolled
 	// since unrolling it may cause code explosion
-	for_stmt.setUnrolled(true); 
+	
+	if (_mult > 2) {
+	    for_stmt.setUnrolled(true);
+	} 
 
 	block.addStatement(for_stmt);
 
@@ -143,9 +175,9 @@ class IncreaseFilterMult implements StreamVisitor {
 
 	if (peek > pop) extra = peek - pop;
 
-	filter.setPop(pop * mult);
-	filter.setPush(push * mult);
-	filter.setPeek(pop * mult + extra);
+	filter.setPop(pop * _mult);
+	filter.setPush(push * _mult);
+	filter.setPeek(pop * _mult + extra);
 
 	System.out.println(" new work: "+filter.getWork().getName());
     }

@@ -1,8 +1,9 @@
 
 #include <thread_info.h>
 
-thread_info::thread_info(int thread_id) {
+thread_info::thread_info(int thread_id, void (*check_thread_status_during_io)()) {
   this->thread_id = thread_id;
+  this->check_thread_status_during_io = check_thread_status_during_io;
 }
 
 int thread_info::get_thread_id() {

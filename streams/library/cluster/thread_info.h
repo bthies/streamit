@@ -27,6 +27,7 @@
 class thread_info {
   
   int thread_id;
+  void (*check_thread_status_during_io)();
 
   pthread_t pthread;
   int *state_flag;
@@ -36,7 +37,7 @@ class thread_info {
 
  public:
   
-  thread_info(int thread_id);
+  thread_info(int thread_id, void (*check_thread_status_during_io)() = NULL);
 
   int get_thread_id();
 

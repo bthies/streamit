@@ -5,6 +5,7 @@ void->void pipeline FFT6() {
 
   add FFTTestSource(N);
   add FFTKernel2(N);
+  add IFFTKernel2(N);
   add CPrinter();
 }
 
@@ -15,7 +16,7 @@ complex->complex filter CombineDFT(int n) {
 
   init {
     wn.real = cos(2 * pi / n);
-    wn.imag = sin(-2 * pi / n);
+    wn.imag = -sin(2 * pi / n);
   }
 
   work push n pop n {
@@ -47,6 +48,83 @@ complex->complex filter CombineDFT(int n) {
     }
 }
 
+complex->complex filter CombineIDFT(int n, int maxN) {
+
+  complex wn;
+  float invN;
+
+  init {
+    wn.real = cos(2 * pi / n);
+    wn.imag = sin(2 * pi / n);
+  }
+
+  work push n pop n {
+        int i;
+        complex w, y0, y1, y1w, w_next;
+        w.real = 1.0;
+        w.imag = 0.0;
+        complex[n] results;
+
+        for (i = 0; i < n/2; i++)
+        {
+            y0 = peek(i);
+            y1 = peek(n/2 + i);
+            y1w = y1 * w;
+
+            results[i] = y0 + y1w;
+            results[n/2 + i] = y0 - y1w;
+
+            w_next = w * wn;
+            w = w_next;
+        }
+
+        for (i = 0; i < n; i++)
+        {
+            pop();
+            push(results[i]);
+        }
+    }
+}
+
+complex->complex filter CombineIDFTFinal(int n, int maxN) {
+
+  complex wn;
+  float invN;
+
+  init {
+    invN = 1.0 / ((float)maxN);
+    wn.real = cos(2 * pi / n);
+    wn.imag = sin(2 * pi / n);
+  }
+
+  work push n pop n {
+        int i;
+        complex w, y0, y1, y1w, w_next;
+        w.real = invN;
+        w.imag = 0.0;
+        complex[n] results;
+
+        for (i = 0; i < n/2; i++)
+        {
+            y0 = invN * peek(i);
+            y1 = peek(n/2 + i);
+            y1w = y1 * w;
+
+            results[i] = y0 + y1w;
+            results[n/2 + i] = y0 - y1w;
+
+            w_next = w * wn;
+            w = w_next;
+        }
+
+        for (i = 0; i < n; i++)
+        {
+            pop();
+            push(results[i]);
+        }
+    }
+
+}
 
 complex->complex filter FFTReorderSimple(int n) {
 
@@ -101,36 +179,12 @@ complex->complex pipeline FFTKernel2(int n) {
 
 }
 
-
-complex->complex pipeline IFFTKernel2(int N) {
-
-  add FFTKernel2(N);
-  add conjugate();
-  add divide_constant(N);
+complex->complex pipeline IFFTKernel2(int n) {
+  add FFTReorder(n);
+  for(int j=2; j<n; j*=2)
+    add CombineIDFT(j, n);
+  add CombineIDFTFinal(n, n);
 }
-
-
-complex->complex filter conjugate() {
-
-  work push 1 pop 1 {
-
-    complex c = pop();
-    c.imag = -c.imag;
-    push(c);
-  }
-}
-
-
-complex->complex filter divide_constant(int N) {
-
-  work push N pop N {
-
-    for(int i=0; i<N; i++) {
-      push(pop()/N);
-    }
-  }
-}
-
 
 void->complex filter FFTTestSource(int N) {
 
@@ -156,6 +210,19 @@ complex->void filter CPrinter()
 
       print(c.real);
       print(c.imag);
+    }
+}
+
+complex->complex filter PassThroughPrinter()
+{
+    work push 1 pop 1 {
+    
+      complex c = pop();
+
+      print(c.real);
+      print(c.imag);
+ 
+      push (c);
     }
 }
 

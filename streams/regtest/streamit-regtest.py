@@ -12,23 +12,18 @@ class RegTest:
         self.directory = ""
         self.output = ""
         self.make = 0
+        self.disabled = 0
         self.opts = "-i1000"
         self.sources = []
 
-    def setDir(self, dir):
-        self.directory = dir
+    def setDir(self, dir):      self.directory = dir
+    def setDisabled(self, dis): self.disabled = dis
+    def setMake(self, make):    self.make = make
+    def setOutput(self, out):   self.output = out
+    def setOpts(self, opts):    self.opts = opts
+    def addSource(self, src):   self.sources.append(src)
 
-    def setMake(self, make):
-        self.make = make
-    
-    def setOutput(self, out):
-        self.output = out
-
-    def setOpts(self, opts):
-        self.opts = opts
-
-    def addSource(self, src):
-        self.sources.append(src)
+    def isDisabled(self):       return self.disabled
 
     class CommandFailedException(Exception):
         def __init__(self, what, cmd, result):
@@ -112,6 +107,13 @@ class RegTestSet:
                 self.report("No such test case " + name)
         return set
 
+    def limitToEnabled(self):
+        set = RegTestSet()
+        for (name, test) in self.tests.items():
+            if not test.isDisabled():
+                set.add(name, test)
+        return set
+
     def report(self, msg):
         print
         print ">>> " + msg
@@ -163,6 +165,8 @@ class ControlReader:
         elif self.state == self.wantDecl:
             if word == "directory":
                 self.state = self.haveDir
+            elif word == "disabled":
+                self.test.setDisabled(1)
             elif word == "output":
                 self.state = self.haveOutput
             elif word == "make":
@@ -197,6 +201,7 @@ class Options:
         self.buildsys = 0        
         self.test = 1
         self.run = 1
+        self.all = 0
         self.cases = []
         self.cflags = '-g -O2'
         self.set_root(os.environ['STREAMIT_HOME'])
@@ -209,7 +214,7 @@ class Options:
                                        'run', 'norun',
                                        'root=', 'libdir=', 'control=',
                                        'debug', 'profile', 'cflags=',
-                                       'case='])
+                                       'case=', 'all'])
         for (opt, val) in optlist:
             if opt == '--nocheckout': self.checkout = 0
             if opt == '--checkout':   self.checkout = 1
@@ -226,6 +231,7 @@ class Options:
             if opt == '--profile':    self.cflags = '-g -pg -a'
             if opt == '--cflags':     self.cflags = val
             if opt == '--case':       self.cases.append(val)
+            if opt == '--all':        self.all = 1
         return args
 
     def set_root(self, root):
@@ -243,6 +249,8 @@ if opts.checkout:
     raise NotImplementedError("Checkout not supported yet")
 if opts.cases != []:
     set = set.limit(opts.cases)
+elif not opts.all:
+    set = set.limitToEnabled()
 if opts.buildsys:
     raise NotImplementedError("System build not supported yet")
 if opts.test:

@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.14 2003-10-13 23:12:47 mgordon Exp $
+ * $Id: TestApps.java,v 1.15 2003-10-14 23:03:10 mgordon Exp $
  **/
 package streamittest;
 
@@ -53,37 +53,37 @@ public class TestApps extends StreamITTestCase {
     //cannot be called at this time
     public void TestFAT() 
     {
-	String root = APPS_ROOT + "FAT-new";
+	String root = APPS_ROOT + "FAT-new/";
 	doConvertCompileRunVerifyTest(root, "", 0, 1);
     }
     
     public void testforw() 
     {
-	String root = APPS_ROOT + "video";
+	String root = APPS_ROOT + "video/";
 	doConvertCompileRunVerifyTest(root, "forw", 0, 8);
     }
 
     public void testDCT() 
     {
-	String root = APPS_ROOT + "DCT";
+	String root = APPS_ROOT + "DCT/";
 	doConvertCompileRunVerifyTest(root, "DCT", 0, 8);
     }
     
     public void testDCT2D() 
     {
-	String root = APPS_ROOT + "DCT";
+	String root = APPS_ROOT + "DCT/";
 	doConvertCompileRunVerifyTest(root, "DCT2D", 0, 4);
     }
     
     public void testIDCT() 
     {
-	String root = APPS_ROOT + "DCT";
+	String root = APPS_ROOT + "DCT/";
 	doConvertCompileRunVerifyTest(root, "IDCT", 0, 4);
     }
 
     public void testIDCT2D() 
     {
-	String root = APPS_ROOT + "DCT";
+	String root = APPS_ROOT + "DCT/";
 	doConvertCompileRunVerifyTest(root, "IDCT2D", 0, 4);
     }
 

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.34 2003-10-14 07:32:13 thies Exp $
+ * $Id: TestExamples.java,v 1.35 2003-10-14 23:03:10 mgordon Exp $
  **/
 package streamittest;
 
@@ -107,62 +107,62 @@ public class TestExamples extends StreamITTestCase {
     
     public void testMergeSort() 
     {
-	String root = EXAMPLE_ROOT + "MergeSort";
+	String root = EXAMPLE_ROOT + "MergeSort/";
 	doConvertCompileRunVerifyTest(root, "MergeSort", 0, 16);
     }
 
     public void testInsertionSort() 
     {
-	String root = EXAMPLE_ROOT + "InsertionSort";
+	String root = EXAMPLE_ROOT + "InsertionSort/";
 	doConvertCompileRunVerifyTest(root, "InsertionSort", 0, 16);
     }
 
     public void testBubbleSort() 
     {
-	String root = EXAMPLE_ROOT + "BubbleSort";
+	String root = EXAMPLE_ROOT + "BubbleSort/";
 	doConvertCompileRunVerifyTest(root, "BubbleSort", 0, 1);
     }
     
     public void testBatcherSort() 
     {
-	String root = EXAMPLE_ROOT + "BatcherSort";
+	String root = EXAMPLE_ROOT + "BatcherSort/";
 	doConvertCompileRunVerifyTest(root, "BatcherSort", 0, 16);
     }
     
     public void testRadixSort() 
     {
-	String root = EXAMPLE_ROOT + "RadixSort";
+	String root = EXAMPLE_ROOT + "RadixSort/";
 	doConvertCompileRunVerifyTest(root, "RadixSort", 0, 16);
     }
     
     public void testComparisonCounting() 
     {
-	String root = EXAMPLE_ROOT + "ComparisonCounting";
+	String root = EXAMPLE_ROOT + "ComparisonCounting/";
 	doConvertCompileRunVerifyTest(root, "ComparisonCounting", 0, 16);
     }
     
     public void testAutoBatcherSort() 
     {
-	String root = EXAMPLE_ROOT + "BatcherSort";
+	String root = EXAMPLE_ROOT + "BatcherSort/";
 	doConvertCompileRunVerifyTest(root, "AutoBatcherSort", 0, 16);
     }
 
     public void testPhase() 
     {
-	String root = EXAMPLE_ROOT + "phase";
+	String root = EXAMPLE_ROOT + "phase/";
         doSyntaxConvertTest(root, "PhaseTest.str", "PhaseTest.java");
         doCompileTest(root, "PhaseTest.java");
     }
     
     public void testchol() 
     {
-	String root = EXAMPLE_ROOT + "chol-para";
+	String root = EXAMPLE_ROOT + "chol-para/";
 	doConvertCompileRunVerifyTest(root, "chol", 0, 5050);
     }
     
     public void testMedian() 
     {
-	String root = EXAMPLE_ROOT + "median";
+	String root = EXAMPLE_ROOT + "median/";
 	doConvertCompileRunVerifyTest(root, "Median", 0, 160);
     }
     

@@ -209,6 +209,32 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration initPath) {
+										NamePair np;
+        
+	//###
+	// Establish this is a subgraph cluster
+	//###
+	print(getClusterString(self));
+	
+
+	// Visit the splitter and joiner.
+	np = (NamePair)self.getJoiner().accept(this);
+	String joinName = np.first;
+	np = (NamePair)self.getSplitter().accept(this);
+	String splitName = np.first;
+
+	// Visit the body and the loop part.
+	np = (NamePair)self.getBody().accept(this);
+	printEdge(joinName, np.first);
+	printEdge(np.last, splitName);
+	np = (NamePair)self.getLoop().accept(this);
+	
+	printEdge(splitName, np.first);
+	printEdge(np.last, joinName);
+
+											   print("}\n");
+											   return new NamePair(joinName, splitName);
+	
 	
     }
 }

@@ -1,11 +1,16 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
- * $Id: UpDown.java,v 1.4 2001-10-19 18:42:32 dmaze Exp $
+ * $Id: UpDown.java,v 1.5 2001-10-24 16:42:58 dmaze Exp $
  */
 
 import streamit.*;
 
-class UpDownGen extends Filter
+interface UpDownMsg
+{
+    public void setUp(boolean up);
+}
+
+filter UpDownGen implements UpDownMsg
 {
     Channel output = new Channel(Integer.TYPE, 1);
     boolean up;
@@ -31,12 +36,12 @@ class UpDownGen extends Filter
     }
 }
 
-class Limiter extends Filter
+filter Limiter
 {
     Channel input = new Channel(Integer.TYPE, 1);
     Channel output = new Channel(Integer.TYPE, 1);
-    /* UpDownGenPortal p; */
-    public void init(/* UpDownGenPortal p */)
+    /* UpDownMsgPortal p; */
+    public void init(/* UpDownMsgPortal p */)
     {
         /* this.p = p; */
     }
@@ -58,7 +63,7 @@ class Limiter extends Filter
     }
 }
 
-class IntPrinter extends Filter
+filter IntPrinter
 {
     Channel input = new Channel(Integer.TYPE, 1);
     public void work()
@@ -75,7 +80,7 @@ public class UpDown extends StreamIt
 {
     public void init()
     {
-        /* UpDownGenPortal p = new UpDownGenPortal(); */
+        /* UpDownMsgPortal p = new UpDownMsgPortal(); */
         UpDownGen g = new UpDownGen();
         /* p.register(g); */
         

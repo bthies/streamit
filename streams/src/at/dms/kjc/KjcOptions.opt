@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.16 2002-12-12 16:25:41 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.17 2002-12-13 22:51:14 thies Exp $
  */
 
 prefix Kjc
@@ -170,6 +170,12 @@ longname		"dppartition"
 	type		boolean
 	default		"false"
 	help		"Use the dynamic programming partitioner."
+
+longname		"dpscaling"
+	shortcut	"Y"
+	type		boolean
+	default		"false"
+	help		"Collect theoretical scaling statistics for dynamic programming partitioner."
 
 longname		"sketchycodegen"
 	shortcut	"z"

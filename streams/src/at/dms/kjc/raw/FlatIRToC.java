@@ -183,10 +183,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//if we are number gathering and this is the sink, generate the dummy
 	//vars for the assignment of the print expression.
-	if (KjcOptions.numbers > 0 && NumberGathering.successful &&
-	    self == NumberGathering.sink.contents) {
-	    print ("int dummyInt;\n");
-	    print ("float dummyFloat;\n");
+	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
+	    print ("volatile int dummyInt;\n");
+	    print ("volatile float dummyFloat;\n");
 	}
 	
 	if (KjcOptions.altcodegen && !KjcOptions.decoupled){

@@ -29,12 +29,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import Acme.JPM.Encoders.GifEncoder;
-
-import com.eteks.filter.Web216ColorsFilter;
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.pad.GPConverter;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.editor.utils.encoders.GifEncoder;
+import streamit.eclipse.grapheditor.editor.utils.encoders.Web216ColorsFilter;
 
 /**
  *

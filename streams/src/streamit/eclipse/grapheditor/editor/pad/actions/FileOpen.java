@@ -316,8 +316,8 @@ public class FileOpen extends AbstractActionFile {
 					 * correct!
 					 * 
 					if (!fileURL.toString().toLowerCase().endsWith(".jgx")) {
-						graphpad.error(Translator.getString("OldFileFormat"));
-						fileURL = null;
+					    graphpad.error(Translator.getString("OldFileFormat"));
+					    fileURL = null;
 					}
 					*/
 /*

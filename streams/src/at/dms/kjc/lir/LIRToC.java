@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.46 2001-11-07 15:50:20 dmaze Exp $
+ * $Id: LIRToC.java,v 1.47 2001-11-07 17:48:34 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1626,28 +1626,30 @@ public class LIRToC
      * Visits a file reader.
      */
     public void visitFileReader(LIRFileReader self) {
-        String childName = self.getChildName();
-        print("data->" + self.getChildName() +
-              " = streamit_filereader_create(\"" +
+        String childName = "data->" + self.getChildName();
+        print(childName + " = malloc(sizeof(_ContextContainer));");
+        newLine();
+        print(childName + "->context = streamit_filereader_create(\"" +
               self.getFileName() + "\");");
         newLine();
         print("register_child(");
         self.getStreamContext().accept(this);
-        print(", data->" + self.getChildName() + ");");
+        print(", " + childName + "->context);");
     }
 
     /**
      * Visits a file writer.
      */
     public void visitFileWriter(LIRFileWriter self) {
-        String childName = self.getChildName();
-        print("data->" + self.getChildName() +
-              " = streamit_filewriter_create(\"" +
+        String childName = "data->" + self.getChildName();
+        print(childName + " = malloc(sizeof(_ContextContainer));");
+        newLine();
+        print(childName + "->context = streamit_filewriter_create(\"" +
               self.getFileName() + "\");");
         newLine();
         print("register_child(");
         self.getStreamContext().accept(this);
-        print(", data->" + self.getChildName() + ");");
+        print(", " + childName + "->context);");
     }
     
     public void visitSetChild(LIRSetChild self,

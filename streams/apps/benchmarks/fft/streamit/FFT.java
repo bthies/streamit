@@ -113,9 +113,10 @@ class OneSource extends Filter
     {
         output = new Channel(Float.TYPE, 1);
     }
+    int n = 0;
     public void work()
     {
-        output.pushFloat(1);
+        output.pushFloat(n++);
     }
 }
 

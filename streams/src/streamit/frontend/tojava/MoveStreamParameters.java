@@ -1,7 +1,7 @@
 /*
  * MoveStreamParameters.java: make constructors and init functions
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MoveStreamParameters.java,v 1.5 2003-01-10 19:01:15 dmaze Exp $
+ * $Id: MoveStreamParameters.java,v 1.6 2003-02-21 15:34:59 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -95,8 +95,7 @@ public class MoveStreamParameters extends InitMunger
                                                    spec.getParams());
             newFuncs.add(constructor);
             
-            if (spec.getType() == StreamSpec.STREAM_FILTER ||
-                spec.getType() == StreamSpec.STREAM_PHASEDFILTER)
+            if (spec.getType() == StreamSpec.STREAM_FILTER)
             {
                 // Okay, we have some parameters.  We need to add this
                 // to the list of variables and add the parameters to

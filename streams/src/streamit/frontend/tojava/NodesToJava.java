@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.45 2003-02-12 22:25:25 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.46 2003-02-21 15:34:59 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -698,19 +698,30 @@ public class NodesToJava implements FEVisitor
             else
             {
                 result += "class " + spec.getName() + " extends ";
-                switch (spec.getType())
+                if (spec.getType() == StreamSpec.STREAM_FILTER)
                 {
-                case StreamSpec.STREAM_FILTER: result += "Filter";
-                    break;
-                case StreamSpec.STREAM_PIPELINE: result += "Pipeline";
-                    break;
-                case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
-                    break;
-                case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
-                    break;
-                case StreamSpec.STREAM_PHASEDFILTER: result += "PhasedFilter";
-                    break;
+                    // Need to notice now if this is a phased filter.
+                    FuncWork work = spec.getWorkFunc();
+                    if (work.getPushRate() == null &&
+                        work.getPopRate() == null &&
+                        work.getPeekRate() == null)
+                        result += "PhasedFilter";
+                    else
+                        result += "Filter";
                 }
+                else
+                    switch (spec.getType())
+                    {
+                    case StreamSpec.STREAM_PIPELINE:
+                        result += "Pipeline";
+                        break;
+                    case StreamSpec.STREAM_SPLITJOIN:
+                        result += "SplitJoin";
+                        break;
+                    case StreamSpec.STREAM_FEEDBACKLOOP:
+                        result += "FeedbackLoop";
+                        break;
+                    }
                 result += "\n" + indent + "{\n";
                 addIndent();
             }

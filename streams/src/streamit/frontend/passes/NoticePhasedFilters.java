@@ -1,7 +1,7 @@
 /*
  * NoticePhasedFilters.java: convert filters to phased ones where appropriate
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NoticePhasedFilters.java,v 1.3 2003-01-10 18:48:17 dmaze Exp $
+ * $Id: NoticePhasedFilters.java,v 1.4 2003-02-21 15:34:57 dmaze Exp $
  */
 
 package streamit.frontend.passes;
@@ -44,7 +44,7 @@ public class NoticePhasedFilters extends FEReplacer
 
             StreamSpec newSpec =
                 new StreamSpec(spec.getContext(),
-                               StreamSpec.STREAM_PHASEDFILTER,
+                               StreamSpec.STREAM_FILTER,
                                spec.getStreamType(),
                                spec.getName(),
                                spec.getParams(),

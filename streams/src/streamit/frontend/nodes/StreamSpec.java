@@ -1,7 +1,7 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.10 2003-01-09 21:28:30 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.11 2003-02-21 15:34:55 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -36,7 +36,6 @@ public class StreamSpec extends FENode
     public static final int STREAM_PIPELINE = 2;
     public static final int STREAM_SPLITJOIN = 3;
     public static final int STREAM_FEEDBACKLOOP = 4;
-    public static final int STREAM_PHASEDFILTER = 5;
     
     /** Creates a new stream specification given its name, a list of
      * variables, and a list of functions. */

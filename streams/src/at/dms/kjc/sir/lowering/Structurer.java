@@ -373,7 +373,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
  * This class replaces all references to local fields with a reference
  * to a state object that is passed as a parameter.
  */
-class FieldResolver extends KjcEmptyVisitor {
+class FieldResolver extends SLIREmptyVisitor {
 
     /**
      * visits a field expression

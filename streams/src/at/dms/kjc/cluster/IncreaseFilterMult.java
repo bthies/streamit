@@ -20,10 +20,13 @@ class IncreaseFilterMult implements StreamVisitor {
     // SIRStream -> WorkInfo
     private static HashMap previous_work = new HashMap(); 
     
-    public IncreaseFilterMult(int mult) {
+    private int CODE_CACHE_SIZE;
+
+    public IncreaseFilterMult(int mult, int code_cache_size) {
 	this.mult = mult;
 	this.sj_counter = 0;
 	this.start_of_pipeline = false;
+	this.CODE_CACHE_SIZE = code_cache_size;
     }
 
     public void preVisitPipeline(SIRPipeline self, 
@@ -43,8 +46,8 @@ class IncreaseFilterMult implements StreamVisitor {
     }
 
 
-    static public void inc(SIRStream str, int mult) {
-	IterFactory.createFactory().createIter(str).accept(new IncreaseFilterMult(mult));
+    static public void inc(SIRStream str, int mult, int code_cache) {
+	IterFactory.createFactory().createIter(str).accept(new IncreaseFilterMult(mult, code_cache));
     }
 
 
@@ -143,7 +146,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	while (pop * mult * 4 < extra) { 
 	    mult = mult + 1;
 	}
-	
+		
 	return mult;
     }
     
@@ -231,15 +234,23 @@ class IncreaseFilterMult implements StreamVisitor {
 
 	JForStatement for_stmt = new JForStatement(null, init, cond, incr, for_block, null);
 
-	// mark the for loop as unrolled
-	// since unrolling it may cause code explosion
-	
-	if (_mult > 16) {
-	    for_stmt.setUnrolled(true);
+
+	// allow unrolling only if multiplicity increase 
+	// is small or the filter has small code size
+
+	int code_size = CodeEstimate.estimateCode(filter)*_mult;
+
+	if ( (_mult <= 4 && code_size < CODE_CACHE_SIZE*10/8) || 
+	     (code_size < CODE_CACHE_SIZE/3) ) {
+
+	    for_stmt.setUnrolled(false); // allow unrolling
+
+	} else {
+
+	    for_stmt.setUnrolled(true); // disable unrolling
 	} 
 
 	block.addStatement(for_stmt);
-
 
 	//block.addStatement(
         //     new JDoStatement(null, cond, do_block, null));

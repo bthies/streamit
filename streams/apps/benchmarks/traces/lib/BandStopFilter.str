@@ -1,0 +1,19 @@
+/* This is a bandstop filter with the rather simple implementation of
+ * a low pass filter cascaded with a high pass filter. The relevant parameters
+ * are: end of passband=wp and end of stopband=ws, such that 0<=wp<=ws<=pi
+ * gain of passband and size of window for both filters. Note that the high 
+ * pass and low pass filters currently use a rectangular window.
+ *
+ * We take the signal, run both the low and high pass filter separately and then
+ * add the results back together.
+ **/
+float->float pipeline BandStopFilter(float gain, float wp, float ws, int numSamples) {
+  add splitjoin {
+    split duplicate;
+    add LowPassFilter(gain, wp, numSamples);
+    add HighPassFilter(gain, ws, numSamples);
+    join roundrobin;
+  };
+  /* sum the two outputs together. */
+  add Adder(2); 
+}

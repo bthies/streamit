@@ -1,0 +1,14 @@
+/**
+ * This filter expands the input by a factor L. Eg in takes in one
+ * sample and outputs L samples. The first sample is the input
+ * and the rest of the samples are zeros. 
+ **/
+float->float filter Expander(int L) {
+  work peek 1 pop 1 push L {
+    push(pop());
+    for (int i=0; i<(L-1); i++) {
+      push(0);
+    }
+  }
+}
+    

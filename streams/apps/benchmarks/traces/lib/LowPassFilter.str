@@ -1,0 +1,46 @@
+/** 
+ * Simple FIR low pass filter with gain=g, wc=cutoffFreq(in radians) and N samples.
+ * Eg:
+ *                 ^ H(e^jw)
+ *                 |
+ *          ---------------
+ *          |      |      |
+ *          |      |      |
+ *    <-------------------------> w
+ *         -wc            wc
+ *
+ * This implementation is a FIR filter is a rectangularly windowed sinc function 
+ * (eg sin(x)/x), which is the optimal FIR low pass filter in 
+ * mean square error terms.
+ *
+ * Specifically, h[n] has N samples from n=0 to (N-1)
+ * such that h[n] = sin(cutoffFreq*pi*(n-N/2))/(pi*(n-N/2)).
+ * and the field h holds h[-n].
+ */
+float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
+  float[N] h;
+
+  /* since the impulse response is symmetric, I don't worry about reversing h[n]. */
+  init {
+    int OFFSET = N/2;
+    for (int i=0; i<N; i++) {
+      int idx = i + 1;
+      // generate real part
+      if (idx == OFFSET) 
+	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
+	h[i] = g * cutoffFreq / pi; 
+      else 
+	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
+    }
+  }
+
+  /* implement the FIR filtering operation as the convolution sum. */
+  work peek N pop 1 push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) { 
+      sum += h[i]*peek(i);
+    }
+    push(sum);
+    pop();
+  }
+}

@@ -21,6 +21,9 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
 export STARSEARCH_HOME=/home/bits7/NO_BACKUP/streamit/starsearch-11-1-02
 export TOPDIR=${STARSEARCH_HOME}
 
+# for running dotty
+export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
+
 # add STREAMIT_HOME to the path in order to find "knit"
 if [ -z "$PATH" ]
 then

@@ -13,6 +13,9 @@ setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/library/java
 
+# for running dotty
+setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
+
 # the current version of starsearch we're using
 setenv STARSEARCH_HOME /home/bits7/NO_BACKUP/streamit/starsearch-11-1-02
 setenv TOPDIR ${STARSEARCH_HOME}

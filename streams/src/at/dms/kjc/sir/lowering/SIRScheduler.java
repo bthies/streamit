@@ -732,6 +732,19 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 					    self.getPeekInt());
 	}
     }
+
+    /* visit a phased filter */
+    public Object visitPhasedFilter(SIRFilter self,
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init,
+                                    JMethodDeclaration work,
+                                    SIRWorkFunction[] phases,
+                                    CType inputType, CType outputType)
+    {
+        // TODO: implement.
+        return null;
+    }
   
     /* pre-visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
@@ -831,5 +844,12 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 					  Utils.intArrayToList(self.
 							       getWeights()),
 					  self);
+    }
+
+    public Object visitWorkFunction(SIRWorkFunction self,
+                                    JMethodDeclaration work)
+    {
+        // TODO: implement.
+        return null;
     }
 }

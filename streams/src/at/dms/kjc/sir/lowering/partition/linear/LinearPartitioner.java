@@ -15,6 +15,11 @@ import at.dms.kjc.sir.lowering.partition.*;
 
 public class LinearPartitioner {
     /**
+     * Debugging.
+     */
+    static final boolean DEBUG = false;
+
+    /**
      * Relative cost of an add to a multiply (for estimating cost of
      * linear nodes).
      */
@@ -29,18 +34,35 @@ public class LinearPartitioner {
     public static final int COLLAPSE_FREQ = 3;
 
     /**
+     * String names for collapse values
+     */
+    public static final String COLLAPSE_STRING(int collapse) {
+	switch(collapse) {
+	case COLLAPSE_NONE: return "NONE";
+	case COLLAPSE_ANY: return "ANY";
+	case COLLAPSE_LINEAR: return "LINEAR";
+	case COLLAPSE_FREQ: return "FREQ";
+	default: return "UNKNOWN_COLLAPSE_TYPE: " + collapse;
+	}
+    }
+
+    /**
      * Map from stream structures to LDPConfig's.
      */
-    private HashMap configMap;
+    private final HashMap configMap;
 
     /**
      * The linear analyzer for this.
      */
-    private LinearAnalyzer lfa;
+    private final LinearAnalyzer lfa;
     /**
      * Stream we're partitioning.
      */
-    private SIRStream str;    
+    private final SIRStream str;
+    /**
+     * Execution counts for <str> (given original factoring of containers).
+     */
+    private HashMap[] counts;
     
     public LinearPartitioner(SIRStream str, LinearAnalyzer lfa) {
 	this.str = str;
@@ -60,7 +82,7 @@ public class LinearPartitioner {
 
 	// calculate partitions
 	StreamTransform st = calcPartitions();
-	//st.printHierarchy();
+	if (DEBUG) { st.printHierarchy(); }
 
 	// debug output
 	System.out.println("Linear partitioner took " + 
@@ -82,6 +104,9 @@ public class LinearPartitioner {
     private StreamTransform calcPartitions() {
 	// build stream config
 	LDPConfig topConfig = buildStreamConfig();
+	// set execution counts here, because we want to account for
+	// identities that we added to the stream
+	this.counts = SIRScheduler.getExecutionCounts(str);
 	// build up tables.
 	int bottleneck = topConfig.get(COLLAPSE_ANY);
 	StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
@@ -102,6 +127,14 @@ public class LinearPartitioner {
 
     public LinearAnalyzer getLinearAnalyzer() {
 	return this.lfa;
+    }
+
+    /**
+     * Returns the pre-computed execution counts for the stream that
+     * we're partitioning.
+     */
+    public HashMap[] getExecutionCounts() {
+	return counts;
     }
 
     /**

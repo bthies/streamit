@@ -8,6 +8,7 @@ import at.dms.util.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.linear.frequency.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
@@ -26,18 +27,61 @@ class LDPConfigFilter extends LDPConfig {
     }
 
     public int get(int collapse) {
-	// never save anything at the filter level unless you're going
-	// to frequency
-	if (collapse==LinearPartitioner.COLLAPSE_FREQ) {
-	    LinearCost cost = partitioner.getLinearAnalyzer().getLinearRepresentation(filter).getCost();
-	    return cost.getFrequencyCost() - cost.getDirectCost();
+	int savings;
+
+	switch(collapse) {
+
+	case LinearPartitioner.COLLAPSE_ANY: {
+	    // if we still have flexibility, do better out of
+	    // collapsing or not
+	    savings = Math.max(get(LinearPartitioner.COLLAPSE_LINEAR),
+			       Math.max(get(LinearPartitioner.COLLAPSE_FREQ),
+					get(LinearPartitioner.COLLAPSE_NONE)));
+	    break;
+	}
+	    
+	case LinearPartitioner.COLLAPSE_FREQ: {
+	    savings = getFreq();
+	    break;
+	}
+
+	case LinearPartitioner.COLLAPSE_LINEAR:
+	case LinearPartitioner.COLLAPSE_NONE: {
+	    savings = 0;
+	    break;
+	}
+
+	default: {
+	    savings = -1;
+	    Utils.fail("Unrecognized collapse value: " + collapse);
+	}
+	}
+
+	return savings;
+    }
+
+    /**
+     * Returns savings of this node if converted to frequency domain.
+     */
+    private int getFreq() {
+	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
+	if (!lfa.hasLinearRepresentation(filter) || !LEETFrequencyReplacer.canReplace(filter, lfa)) {
+	    return Integer.MIN_VALUE;
 	} else {
-	    return 0;
+	    LinearFilterRepresentation l = lfa.getLinearRepresentation(filter);
+	    return getScalingFactor(l, filter) * (l.getCost().getDirectCost() - l.getCost().getFrequencyCost() );
 	}
     }
 
     public StreamTransform traceback(int collapse) {
-	if (collapse==LinearPartitioner.COLLAPSE_FREQ) {
+	if (collapse==LinearPartitioner.COLLAPSE_ANY) {
+	    // only way to be profitable is with FREQ, so see if we are...
+	    if (getFreq()>0) {
+		return traceback(LinearPartitioner.COLLAPSE_FREQ);
+	    } else {
+		return traceback(LinearPartitioner.COLLAPSE_NONE);
+	    }
+	} else if (collapse==LinearPartitioner.COLLAPSE_FREQ) {
 	    return new FreqReplaceTransform(partitioner.getLinearAnalyzer());
 	} else if (collapse==LinearPartitioner.COLLAPSE_LINEAR) {
 	    return new LinearReplaceTransform(partitioner.getLinearAnalyzer());

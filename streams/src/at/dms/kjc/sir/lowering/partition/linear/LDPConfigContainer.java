@@ -8,6 +8,7 @@ import at.dms.util.*;
 import at.dms.kjc.iterator.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.linear.frequency.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
@@ -73,8 +74,11 @@ abstract class LDPConfigContainer extends LDPConfig {
      * <str> is a stream object representing the current sub-segment that we're operating on
      */
     protected int get(int x1, int x2, int y1, int y2, int collapse, SIRStream str) {
+	String callStr = "get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ", " + LinearPartitioner.COLLAPSE_STRING(collapse) + ", " + (str==null ? "null" : str.getIdent());
+	if (LinearPartitioner.DEBUG) { System.err.println("calling " + callStr); } 
 	// if we've memoized the value before, return it
 	if (A[x1][x2][y1][y2][collapse]>=0) {
+	    if (LinearPartitioner.DEBUG) { System.err.println(" returning memoized value, " + callStr + " = " + A[x1][x2][y1][y2][collapse]); }
 	    return A[x1][x2][y1][y2][collapse];
 	}
 
@@ -82,6 +86,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	if (x1==x2 && y1==y2) {
 	    int childCost = childConfig(x1, y1).get(collapse); 
 	    A[x1][x2][y1][y2][collapse] = childCost;
+	    if (LinearPartitioner.DEBUG) { System.err.println(" returning child cost, " + callStr + " = " + childCost); }
 	    return childCost;
 	}
 
@@ -101,14 +106,14 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_FREQ: {
-	    if (!lfa.hasLinearRepresentation(str)) {
+	    if (!lfa.hasLinearRepresentation(str) || !LEETFrequencyReplacer.canReplace(str, lfa)) {
 		savings = Integer.MIN_VALUE;
 	    } else {
 		// start with savings from linear collapse
 		savings = get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str);
 		// then add the benefit from frequency collapse
-		LinearCost cost = lfa.getLinearRepresentation(str).getCost();
-		savings += cost.getFrequencyCost() - cost.getDirectCost();
+		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
+		savings += getScalingFactor(l, str) * (l.getCost().getDirectCost() - l.getCost().getFrequencyCost() );
 	    }
 	    break;
 	}
@@ -118,7 +123,10 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    if (!lfa.hasLinearRepresentation(str)) {
 		savings = Integer.MIN_VALUE;
 	    } else {
-		savings = 0;
+		// otherwise, calculate savings of children, and cost
+		// of children as collapsed linear nodes
+		int childSavings;
+		int childCost;
 		// make arbitrary horizontal or vertical cut and add
 		// savings of children
 		int[] arr = { 1, ((SIRContainer)str).size()-1 };
@@ -126,33 +134,37 @@ abstract class LDPConfigContainer extends LDPConfig {
 		if (x1<x2) {
 		    Utils.assert(str instanceof SIRSplitJoin);
 		    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
-		    // get number of times each child of <cont> executes
-		    HashMap[] counts = SIRScheduler.getExecutionCounts(sj);
-		    // add savings from two children
-		    int[] steadyCount = { ((int[])counts[1].get(sj.get(0)))[0],
-					  ((int[])counts[1].get(sj.get(1)))[0] };
-		    // add savings from two children
-		    savings += steadyCount[0] * get(x1, x1, y1, y2, collapse, sj.get(0));
-		    savings += steadyCount[1] * get(x1+1, x2, y1, y2, collapse, sj.get(1));
-		    savings += getOutermostSavings((SIRContainer)str, lfa, counts);
+		    // calc savings
+		    childSavings = get(x1, x1, y1, y2, collapse, sj.get(0)) + get(x1+1, x2, y1, y2, collapse, sj.get(1));
+		    // calc cost
+		    LinearAnalyzer.findLinearFilters(sj, KjcOptions.debug, lfa);
+		    LinearFilterRepresentation[] l = { lfa.getLinearRepresentation(sj.get(0)), lfa.getLinearRepresentation(sj.get(1)) };
+		    childCost = ( getScalingFactor(l[0], sj.get(0)) * l[0].getCost().getDirectCost() + 
+				  getScalingFactor(l[1], sj.get(1)) * l[1].getCost().getDirectCost() );
 		} else {
 		    Utils.assert(y1<y2 && str instanceof SIRPipeline);
 		    SIRPipeline pipe = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
-		    // get number of times each child of <cont> executes
-		    HashMap[] counts = SIRScheduler.getExecutionCounts(pipe);
-		    int[] steadyCount = { ((int[])counts[1].get(pipe.get(0)))[0],
-					  ((int[])counts[1].get(pipe.get(1)))[0] };
-		    // add savings from two children
-		    savings += steadyCount[0] * get(x1, x2, y1, y1, collapse, pipe.get(0));
-		    savings += steadyCount[1] * get(x1, x2, y1+1, y2, collapse, pipe.get(1));
-		    savings += getOutermostSavings((SIRContainer)str, lfa, counts);
+		    // calc savings
+		    childSavings = get(x1, x2, y1, y1, collapse, pipe.get(0)) + get(x1, x2, y1+1, y2, collapse, pipe.get(1));
+		    // calc cost
+		    LinearAnalyzer.findLinearFilters(pipe, KjcOptions.debug, lfa);
+		    LinearFilterRepresentation[] l = { lfa.getLinearRepresentation(pipe.get(0)), lfa.getLinearRepresentation(pipe.get(1)) };
+		    childCost = ( getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
+				  getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost() );
 		}
+
+		// get cost of self
+		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
+		int myCost = getScalingFactor(l, str) * l.getCost().getDirectCost();
+
+		// calculate savings as child savings, PLUS diff between child cost and my cost
+		savings = childSavings + (childCost - myCost);
 	    }
 	    break;
 	}
 
 	case LinearPartitioner.COLLAPSE_NONE: {
-	    savings = Integer.MIN_VALUE;
+	    savings = 0;
 	    
 	    // try a vertical cut
 	    for (int xPivot=x1; xPivot<x2; xPivot++) {
@@ -192,6 +204,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 	
 	A[x1][x2][y1][y2][collapse] = savings;
+	if (LinearPartitioner.DEBUG) { System.err.println(" returning " + callStr + " = " + savings); }
 	return savings;
     }
 
@@ -199,6 +212,7 @@ abstract class LDPConfigContainer extends LDPConfig {
      * Traceback function.
      */
     public StreamTransform traceback(int collapse) {
+	if (LinearPartitioner.DEBUG) { printArray(); }
 	StreamTransform st = traceback(0, A.length-1, 0, A[0][0].length-1, collapse, this.cont);
 	return st;
     }

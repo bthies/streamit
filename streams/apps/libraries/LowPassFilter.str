@@ -1,0 +1,86 @@
+/*
+ *  Copyright 2001 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+
+/**
+ * Class LowPassFilter
+ *
+ * Implements a Low Pass FIR Filter
+ */
+
+float->float filter LowPassFilter(float sampleRate, float cutFreq, int numTaps, int decimation) {
+
+  float[numTaps] COEFF;
+
+  init {
+	float m, w, tapTotal;
+	float[numTaps] temptaps;
+	int i;
+
+        m = numTaps - 1.0;
+        //from Oppenheim and Schafer, m is the order of filter
+
+
+        if(cutFreq == 0.0)
+            {
+                //Using a Hamming window for filter taps:
+                tapTotal = 0;
+
+                for(i=0;i<numTaps;i++)
+                    {
+                        temptaps[i] = (0.54 - 0.46*cos((2*pi)*(i/m)));
+                        tapTotal += temptaps[i];
+                    }
+
+                //normalize all the taps to a sum of 1
+                for(i=0;i<numTaps;i++)
+                    {
+                        temptaps[i] = temptaps[i]/tapTotal;
+                    }
+            }
+        else{
+            //ideal lowpass filter ==> Hamming window
+            //has IR h[n] = sin(omega*n)/(n*pi)
+            //reference: Oppenheim and Schafer
+
+            w = (2*pi) * cutFreq/sampleRate;
+
+            for(i=0;i<numTaps;i++)
+                {
+                    //check for div by zero
+                    if(i-m/2 == 0)
+                        temptaps[i] = w/pi;
+                    else
+                        temptaps[i] = sin(w*(i-m/2)) / pi
+                                       / (i-m/2) * (0.54 - 0.46
+                                                    * cos((2*pi)*(i/m)));
+                }
+        }
+        COEFF = temptaps;
+  }
+  
+
+  work push 1 pop 1+decimation peek numTaps {
+       float sum = 0;
+   
+        for (int i=0; i<numTaps; i++) {
+            sum += peek(i)*COEFF[i];
+        }
+
+        pop();
+        for(int i=0; i<decimation;i++)
+            pop();
+        push(sum);
+  }
+}

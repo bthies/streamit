@@ -1,0 +1,41 @@
+/*
+ *  Copyright 2001 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+/**
+ * Class FirFilter
+ *
+ * Implements an FIR Filter
+ */
+
+float->float filter FirFilter(int numTaps) {
+
+  float[numTaps] COEFF;
+
+  init {
+    for (int i=0; i<numTaps; i++) {
+	    COEFF[i] = i;
+	}
+  }
+
+  work push 1 pop 1 peek numTaps {
+
+       float sum = 0.0;
+       for (int i=0; i<numTaps; i++) {
+            sum += peek(i)*COEFF[i];
+        }
+
+        pop();
+        push(sum);
+  }
+}

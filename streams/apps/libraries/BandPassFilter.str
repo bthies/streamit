@@ -1,0 +1,55 @@
+/*
+ *  Copyright 2001 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+
+/**
+ * A local subtractor class.  It subtracts two floats.  It has input = 2 and
+ * output = 1.
+ */
+
+float->float filter FloatSubtract() {
+
+  work push 1 pop 2 {
+
+    push(peek(0) - peek(1));
+    pop(); pop();
+  }
+}
+
+
+/**
+ * Need to have a separate class for now (instead of inlining this
+ * splitjoin) so that constant prop. will work.
+ */
+
+float->float splitjoin BandPassSplitJoin(float sampleRate, float lowFreq, float highFreq, int numTaps) {
+
+  split duplicate();
+  add LowPassFilter(sampleRate,highFreq,numTaps,0);
+  add LowPassFilter(sampleRate,lowFreq,numTaps,0);
+  join roundrobin();
+}
+
+
+/**
+ * Class BandPassFilter
+ *
+ * Implements a Low Pass FIR Filter
+ */
+
+float->float pipeline BandPassFilter(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain) {
+
+  add BandPassSplitJoin(sampleRate, lowFreq, highFreq, numTaps);
+  add FloatSubtract();
+}

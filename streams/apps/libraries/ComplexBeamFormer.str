@@ -1,0 +1,70 @@
+/*
+ *  Copyright 2001 Massachusetts Institute of Technology
+ *
+ *  Permission to use, copy, modify, distribute, and sell this software and its
+ *  documentation for any purpose is hereby granted without fee, provided that
+ *  the above copyright notice appear in all copies and that both that
+ *  copyright notice and this permission notice appear in supporting
+ *  documentation, and that the name of M.I.T. not be used in advertising or
+ *  publicity pertaining to distribution of the software without specific,
+ *  written prior permission.  M.I.T. makes no representations about the
+ *  suitability of this software for any purpose.  It is provided "as is"
+ *  without express or implied warranty.
+ */
+
+/**
+ * Class BeamFormer
+ *
+ * Implements a conventional beamformer.
+ */
+
+float->float filter ComplexBeamFormer(int nBeams, int nChannels, int nSamples) {
+
+  float[nBeams*nChannels*2] beamFormingWeights;
+  float[nChannels*nSamples*2] inputData;
+
+  init {
+    float i_f;
+
+    for(int i = 0; i < nBeams*nChannels*2; i++) {
+      i_f = (float)i;
+      beamFormingWeights[i] = i_f/2.449489743;
+    }
+  }
+ 
+  work push nBeams*nSamples*2 pop nChannels*nSamples*2 {
+    int i, j, k;
+    int v = 0;
+
+    for (i = 0; i < nChannels; i++)
+    {
+      for (j = 0; j < nSamples*2; j++)
+      {
+        inputData[v++] = pop();
+      }
+    }
+
+    for (i = 0;  i < nBeams; i++)
+    {
+      for (j = 0; j < nSamples*2; j += 2)
+      {
+        float outReal = 0.0;
+	float outImag = 0.0;
+        for (k = 0; k < nChannels*2; k += 2)
+        {
+          outReal += (beamFormingWeights[i*nChannels*2+k] *
+		      inputData[k*nSamples+j] -
+		      beamFormingWeights[i*nChannels*2+k+1] *
+		      inputData[k*nSamples+j+1]);
+	  outImag += (beamFormingWeights[i*nChannels*2+k] *
+		      inputData[k*nSamples+j+1] +
+		      beamFormingWeights[i*nChannels*2+k+1] *
+		      inputData[k*nSamples+j]);
+        }
+        push(outReal);
+	push(outImag);
+      }
+    }
+  }
+}
+  

@@ -1,5 +1,5 @@
 CP      = $(CLASSPATH):streamittest/junit.jar:.
-JAVA    = java -classpath $(CP) -Dstreamit_home=$(STREAMIT_HOME)
+JAVA    = java -Xmx1700M -classpath $(CP) -Dstreamit_home=$(STREAMIT_HOME)
 TEXTTEST= $(JAVA) junit.textui.TestRunner
 GUITEST = $(JAVA) junit.swingui.TestRunner
 COMPILER= jikes -classpath $(CP)

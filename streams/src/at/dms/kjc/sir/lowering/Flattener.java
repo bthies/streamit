@@ -46,6 +46,8 @@ public class Flattener {
 	printer1.close();
 	*/
 
+	enableUnrollIfLinear();
+
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
 	
@@ -158,6 +160,65 @@ public class Flattener {
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");
 
+	doLinearAnalysis(str);
+
+	// if we have don't have a container, wrap it in a pipeline
+	// for the sake of SIRScheduler.
+	if (!(str instanceof SIRContainer)) {
+	    str = SIRContainer.makeWrapper(str);
+	}
+
+	// make single structure
+	SIRIterator iter = IterFactory.createIter(str);
+	System.err.print("Structuring... ");
+	JClassDeclaration flatClass = Structurer.structure(iter,
+							   interfaces,
+							   interfaceTables,
+                                                           structs);
+	System.err.println("done.");
+	// build schedule as set of higher-level work functions
+	System.err.print("Scheduling... ");
+	SIRSchedule schedule = SIRScheduler.buildWorkFunctions((SIRContainer)str, flatClass);
+	System.err.println("done.");
+	// add LIR hooks to init and work functions
+	System.err.print("Annotating IR for uniprocessor... ");
+	LowerInitFunctions.lower(iter, schedule);
+        LowerWorkFunctions.lower(iter);
+	System.err.println("done.");
+
+	/* DEBUGGING PRINTING
+	System.out.println("----------- AFTER FLATTENER ------------------");
+	IRPrinter printer = new IRPrinter();
+	flatClass.accept(printer);
+	printer.close();
+	*/
+
+	System.err.println("Generating code...");
+	LIRToC.generateCode(flatClass);
+	//System.err.println("done.");
+    }
+
+    /**
+     * If we're doing linear analysis, then we require maximal
+     * unrolling to occur before the linear stage.  However, the
+     * unrolling can be turned back to normal after the linear stuff
+     * is done (this is important for code size).  So we swap the
+     * unroll factor here and then restore it at the end of the linear
+     * analysis.
+     */
+    private static int origUnroll = -1;
+    public static void enableUnrollIfLinear () {
+	if (KjcOptions.linearanalysis ||
+	    KjcOptions.linearreplacement ||
+	    (KjcOptions.frequencyreplacement != -1) ||
+	    KjcOptions.redundantreplacement) {
+	    origUnroll = KjcOptions.unroll;
+	    KjcOptions.unroll=100000;
+	}
+    }
+
+    public static void doLinearAnalysis(SIRStream str) {
+
 	// if someone wants to run any of the linear tools/optimizations
 	// we need to run linear analysis first to extract the information
 	// we are working with.
@@ -165,6 +226,9 @@ public class Flattener {
 	    KjcOptions.linearreplacement ||
 	    (KjcOptions.frequencyreplacement != -1) ||
 	    KjcOptions.redundantreplacement) {
+	    // restore unroll to original value
+	    KjcOptions.unroll = origUnroll;
+
 	    // run the linear analysis and stores the information garnered in the lfa
 	    System.err.print("Running linear analysis... ");
 	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
@@ -214,41 +278,6 @@ public class Flattener {
 	    
 
 	}
-
-	// if we have don't have a container, wrap it in a pipeline
-	// for the sake of SIRScheduler.
-	if (!(str instanceof SIRContainer)) {
-	    str = SIRContainer.makeWrapper(str);
-	}
-
-	// make single structure
-	SIRIterator iter = IterFactory.createIter(str);
-	System.err.print("Structuring... ");
-	JClassDeclaration flatClass = Structurer.structure(iter,
-							   interfaces,
-							   interfaceTables,
-                                                           structs);
-	System.err.println("done.");
-	// build schedule as set of higher-level work functions
-	System.err.print("Scheduling... ");
-	SIRSchedule schedule = SIRScheduler.buildWorkFunctions((SIRContainer)str, flatClass);
-	System.err.println("done.");
-	// add LIR hooks to init and work functions
-	System.err.print("Annotating IR for uniprocessor... ");
-	LowerInitFunctions.lower(iter, schedule);
-        LowerWorkFunctions.lower(iter);
-	System.err.println("done.");
-
-	/* DEBUGGING PRINTING
-	System.out.println("----------- AFTER FLATTENER ------------------");
-	IRPrinter printer = new IRPrinter();
-	flatClass.accept(printer);
-	printer.close();
-	*/
-
-	System.err.println("Generating code...");
-	LIRToC.generateCode(flatClass);
-	//System.err.println("done.");
     }
     
 }

@@ -613,6 +613,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		Utils.assert(node.incoming!=null && node.incoming.length>=1 && node.incoming[0]!=null, "Unexpected representation of incoming nodes in flatgraph.");
 		return getPartition(node.incoming[0], partitionMap);
 	    }
+	} else if (op instanceof SIRIdentity) {
+	    // if we find identity that wasn't assigned, integrate it
+	    // into its destination (arbitrarily -- could just as well
+	    // be the source)
+	    return getPartition(node.edges[0], partitionMap);
 	} else {
 	    Utils.fail("No partition was assigned to " + op + " of type " + op.getClass());
 	    return null;

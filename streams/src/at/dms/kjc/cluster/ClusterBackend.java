@@ -94,6 +94,9 @@ public class ClusterBackend implements FlatVisitor {
 	ConstantProp.propagateAndUnroll(str);
 	System.out.println(" done.");
 
+        // add initPath functions
+        EnqueueToInitPath.doInitPath(str);
+
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 

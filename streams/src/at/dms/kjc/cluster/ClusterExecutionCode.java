@@ -453,7 +453,7 @@ public class ClusterExecutionCode extends at.dms.util.Utils
     {
 	SIRFilter filter = (SIRFilter)node.contents;
 	// don't support file readers, file writers yet
-	Utils.assert(!(filter instanceof SIRPredefinedFilter), 
+	Utils.assert(!(filter instanceof SIRPredefinedFilter) || (filter instanceof SIRIdentity), 
 		     "Found a " + filter.getName() + ", but cluster backend doesn't yet support pre-defined filters.");
 	
 	//generate the code to define the local variables
@@ -843,11 +843,25 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	} else {
 	    init = initCounts.intValue();
 	}
+	int counts;
+	// hack to get identities to work for now -- we might not know
+	// how many times they execute (since GraphFlattener inserts
+	// some) so in this case just execute them forever
+	Integer count = (Integer)ClusterBackend.steadyExecutionCounts.get(node);
+	if (count!=null) {
+	    counts = count.intValue();
+	} else if (node.contents instanceof SIRIdentity) {
+	    counts = 100000;
+	} else {
+	    counts = -1;
+	    Utils.fail("don't know how many times to execute node " + node.contents);
+	}
+
 	JExpression numIters = new JAddExpression(null,
 						  new JIntLiteral(init),
 						  new JMultExpression(null,
 								      new JLocalVariableExpression(null, var2),
-								      new JIntLiteral(((Integer)ClusterBackend.steadyExecutionCounts.get(node)).intValue())));
+								      new JIntLiteral(counts)));
 
 	JExpression relation = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var), numIters);
 

@@ -4,7 +4,7 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.7 2002-07-18 22:02:45 aalamb Exp $
+# $Id: reap_results.pl,v 1.8 2002-07-25 14:36:03 aalamb Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -72,23 +72,49 @@ print `mkdir -p $result_directory`;
 # process each entry in our results wanted list
 my $temp_num = 1;
 
-# while we still have tests to run
-while(@results_wanted) {
-    # only launch 2 children at a time
-    my $i;
-    for($i=0; $i<2; $i++) {
+# start out by launching two children
+my $i;
+for($i=0; $i<2; $i++) {
+    my $current_test;
+    # shift off the current test
+    $current_test = shift(@results_wanted);
+    
+    # skip if we have a blank line or no test
+    if ($current_test eq "") {
+	$i--; # take care of things so that we swapn exactly 2 children
+	next;
+    }
+    
+    # break up the script command into its constituent parts
+    # (split on colon)
+    my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/, $current_test);    
+    
+    # fork the process to run the simulator as its own process (and take advantage
+    # of the crazy cag machines.
+    if (fork() == 0) {
+	# we are the child
+	do_child_work($temp_num, $dir, $filename, $options, 
+		      $result_directory, $init_output_count, $ss_output_count);
+    } # otherwise we are the parent, and continue spawining kids
+    print "parent: spawned child number ($temp_num)\n";
+    # Increment count
+    $temp_num++;
+}    
+
+# wait for both children to be done
+print "parent: waiting for children.\n";
+my $child_pid = wait();
+while ($child_pid != -1) {
+    print "parent: child ($child_pid) finished.\n";
+    # spawn another child
+    if(@results_wanted) {
 	my $current_test;
 	# shift off the current test
 	$current_test = shift(@results_wanted);
 	
-	# skip if we have a blank line or no test
-	if ($current_test eq "") {
-	    next;
-	}
-	
 	# break up the script command into its constituent parts
 	# (split on colon)
-	my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/, $current_test);    
+	my ($dir, $filename, $options, $init_output_count, $ss_output_count) = split(/:/, $current_test);
 	
 	# fork the process to run the simulator as its own process (and take advantage
 	# of the crazy cag machines.
@@ -100,16 +126,10 @@ while(@results_wanted) {
 	print "parent: spawned child number ($temp_num)\n";
 	# Increment count
 	$temp_num++;
-    }    
-    
-    # wait for both children to be done
-    print "parent: waiting for children.\n";
-    my $child_pid = wait();
-    while ($child_pid != -1) {
-	print "parent: child ($child_pid) finished.\n";
-	$child_pid = wait();
     }
+    $child_pid = wait();
 }
+
 
 print "parent: done waiting for all $temp_num children.\n";
 # generate a summary
@@ -122,7 +142,7 @@ print "parent: done generating webpage.\n";
 
 #remove all old temp directories
 print "parent: removing directories\n"; 
-print `rm -rf /tmp/resultTemp*`;
+#print `rm -rf /tmp/resultTemp*`;
 
 
 
@@ -343,7 +363,7 @@ sub make_blood_makefile {
     # replace the cycle-count line with a sim command line as well
     # which causes the simulation to run for a startup number of cycles and then to print the blood graph
     # for the next steady state number of cycles, recording the FLOPS as necessary
-    $makefile_contents =~ s/(SIM-CYCLES = .*)/$1\nSIM-COMMAND = step($start_cycles); global gFLOPS = 0; fn __clock_handler(hms) {local i;for(i=0;i<gNumProc;i++) {gFLOPS +=imem_instr_is_fpu(get_imem_instr(i,get_pc_for_proc(i)));}}EventManager_RegisterHandler(\\\"clock\\\", \\\"__clock_handler\\\"); graphical_trace_ppm(\\\"$graph_filename\\\", $ss_cycles);? gFLOPS;\n/g;
+    $makefile_contents =~ s/(SIM-CYCLES = .*)/$1\nSIM-COMMAND = step($start_cycles); global gREGFLOPS = 0; fn __reg_clock_handler(hms) {local i;for(i=0;i<gNumProc;i++) {gREGFLOPS +=imem_instr_is_fpu(get_imem_instr(i,get_pc_for_proc(i)));}}EventManager_RegisterHandler(\\\"clock\\\", \\\"__reg_clock_handler\\\"); graphical_trace_ppm(\\\"$graph_filename\\\", $ss_cycles);? gREGFLOPS;\n/g;
 
     # determine the new makefile name
     my $new_makefile = "$old_makefile.blood"; 

@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs results gatherer every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_results.sh,v 1.5 2002-07-24 22:04:49 aalamb Exp $
+# $Id: run_results.sh,v 1.6 2002-07-25 14:36:03 aalamb Exp $
 
 setenv LOGFILE /u/aalamb/streams/regtest/tools/results_log.txt
 # file that gets generated automatically by the regression test framework
@@ -16,7 +16,7 @@ setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi
 
 echo "-------------" > $LOGFILE
 echo "Input file:"   >> $LOGFILE
-cat $RESULT_SCRIPT   >> $LOG_FILE
+cat $RESULT_SCRIPT   >> $LOGFILE
 echo "-------------" >> $LOGFILE
 
 echo "-------------" >> $LOGFILE

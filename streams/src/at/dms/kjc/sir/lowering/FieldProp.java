@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.22 2003-05-02 21:05:41 thies Exp $
+ * $Id: FieldProp.java,v 1.23 2003-07-25 19:35:34 dmaze Exp $
  */
 public class FieldProp implements Constants
 {
@@ -411,9 +411,7 @@ public class FieldProp implements Constants
     private void doPropagation(SIRStream filter)
     {
         JMethodDeclaration[] meths = filter.getMethods();
-        for (int i = 0; i < meths.length; i++)
-        {
-            meths[i].accept(new SLIRReplacingVisitor() {
+        SLIRReplacingVisitor theVisitor = new SLIRReplacingVisitor() {
                     public Object visitAssignmentExpression
                         (JAssignmentExpression self,
                          JExpression left,
@@ -471,11 +469,35 @@ public class FieldProp implements Constants
                         else
                             return orig;
                     }
-                });
+            };
+        for (int i = 0; i < meths.length; i++)
+        {
+            meths[i].accept(theVisitor);
             // Also run some simple algebraic simplification now.
             meths[i].accept(new Propagator(findLocals(meths[i])));
 	    // Raise Variable Declarations to beginning of block
 	    //meths[i].accept(new VarDeclRaiser());
+        }
+        // If this is a filter, also run on I/O rates.
+        if (filter instanceof SIRFilter)
+        {
+            SIRFilter filt = (SIRFilter)filter;
+            Propagator prop = new Propagator(new Hashtable());
+            JExpression newPop = (JExpression)filt.getPop().accept(theVisitor);
+            newPop = (JExpression)newPop.accept(prop);
+            if (newPop!=null && newPop!=filt.getPop()) {
+                filt.setPop(newPop);
+            }
+            JExpression newPeek = (JExpression)filt.getPeek().accept(theVisitor);
+            newPeek = (JExpression)newPeek.accept(prop);
+            if (newPeek!=null && newPeek!=filt.getPeek()) {
+                filt.setPeek(newPeek);
+            }
+            JExpression newPush = (JExpression)filt.getPush().accept(theVisitor);
+            newPush = (JExpression)newPush.accept(prop);
+            if (newPush!=null && newPush!=filt.getPush()) {
+                filt.setPush(newPush);
+            }
         }
     }
 

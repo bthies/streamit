@@ -44,7 +44,7 @@ public class VerticalFission {
      */
     public static SIRPipeline fissMaximal(SIRFilter filter) {
 	int num = getMaxFiss(filter);
-	assert num<2: "Tried to fiss filter that is not fissable.";
+	assert num>1: "Tried to fiss filter that is not fissable.";
 	return fiss(filter, num);
     }
     /**

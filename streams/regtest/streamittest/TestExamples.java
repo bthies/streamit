@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.12 2002-07-18 22:01:39 aalamb Exp $
+ * $Id: TestExamples.java,v 1.13 2002-07-22 19:06:25 aalamb Exp $
  **/
 package streamittest;
 
@@ -323,8 +323,15 @@ public class TestExamples extends StreamITTestCase {
 	String nokiaRoot = EXAMPLE_ROOT + "nokia-fine/";
 	// create a linked version (and also bring in Delay.java)
 	doMake(nokiaRoot, "link");
-	doCompileRunVerifyTest(nokiaRoot,
-			       "Linkeddcalc.java",
-			       "NokiaFine.out");
+	doCompileTest(nokiaRoot,
+		      "Linkeddcalc.java");
+	// run the make script to make the app run a bit longer (like 5M cycles)
+	doMake(nokiaRoot, "more-cycles");
+	doRunTest(nokiaRoot,
+		  "Linkeddcalc.java",
+		  0,72);
+	doCompareTest(nokiaRoot,
+		      "Linkeddcalc.java",
+		      "Linkeddcalc.out");
     }
 }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAddExpression.java,v 1.6 2003-05-28 05:58:42 thies Exp $
+ * $Id: JAddExpression.java,v 1.7 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -48,6 +48,11 @@ public class JAddExpression extends JBinaryArithmeticExpression {
 			JExpression right)
   {
     super(where, left, right);
+  }
+
+  public JAddExpression(JExpression left,
+			JExpression right) {
+      this(null, left, right);
   }
 
   // ----------------------------------------------------------------------

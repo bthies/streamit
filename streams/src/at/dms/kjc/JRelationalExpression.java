@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JRelationalExpression.java,v 1.8 2003-05-28 05:58:44 thies Exp $
+ * $Id: JRelationalExpression.java,v 1.9 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -51,6 +51,12 @@ public class JRelationalExpression extends JBinaryExpression {
   {
     super(where, left, right);
     this.oper = oper;
+  }
+
+  public JRelationalExpression(int oper,
+			       JExpression left,
+			       JExpression right) {
+      this(null, oper, left, right);
   }
 
     public int getOper() {

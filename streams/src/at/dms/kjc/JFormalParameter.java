@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFormalParameter.java,v 1.6 2003-05-28 05:58:43 thies Exp $
+ * $Id: JFormalParameter.java,v 1.7 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -48,6 +48,12 @@ public class JFormalParameter extends JLocalVariable {
 			  String ident,
 			  boolean isFinal) {
     super(where, isFinal ? ACC_FINAL : 0, desc, type, ident, null);
+  }
+
+
+  public JFormalParameter(CType type,
+			  String ident) {
+      this(null, 0, type, ident, false);
   }
 
   // ----------------------------------------------------------------------

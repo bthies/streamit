@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDefinition.java,v 1.10 2004-01-28 16:55:35 dmaze Exp $
+ * $Id: JVariableDefinition.java,v 1.11 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -51,6 +51,24 @@ public class JVariableDefinition extends JLocalVariable {
   {
     super(where, modifiers, DES_LOCAL_VAR, type, ident, initializer);
     assert type != null;
+  }
+
+  public JVariableDefinition(int modifiers,
+			     CType type,
+			     String ident,
+			     JExpression initializer) {
+      this(null, modifiers, type, ident, initializer);
+  }
+
+  public JVariableDefinition(int modifiers,
+			     CType type,
+			     String ident) {
+      this(null, modifiers, type, ident, null);
+  }
+
+  public JVariableDefinition(CType type,
+			     String ident) {
+      this(null, 0, type, ident, null);
   }
 
     public String toString() {

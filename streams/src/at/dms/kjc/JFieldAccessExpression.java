@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.12 2004-07-13 20:32:48 mgordon Exp $
+ * $Id: JFieldAccessExpression.java,v 1.13 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -68,6 +68,11 @@ public class JFieldAccessExpression extends JExpression {
     {
 	this(where, prefix, ident, null);
     }
+    public JFieldAccessExpression(JExpression prefix,
+				  String ident)
+    {
+	this(null, prefix, ident, null);
+    }
 
 
     /**
@@ -76,7 +81,11 @@ public class JFieldAccessExpression extends JExpression {
      * @param	ident		the simple name of the field
      */
     public JFieldAccessExpression(TokenReference where, String ident) {
-	this(where, null, ident);
+	this(where, new JThisExpression(), ident);
+    }
+
+    public JFieldAccessExpression(String ident) {
+	this(null, new JThisExpression(), ident);
     }
 
     // ----------------------------------------------------------------------

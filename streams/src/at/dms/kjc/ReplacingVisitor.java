@@ -97,11 +97,6 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
 	    self.setBody(newBody);
 	}
 
-	newExp = (JExpression)cond.accept(this);
-	if (newExp!=null && newExp!=cond) {
-	    self.setCondition(newExp);
-	}
-
 	return self;
     }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.13 2003-11-13 10:46:10 thies Exp $
+ * $Id: JArrayAccessExpression.java,v 1.14 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -51,6 +51,11 @@ public class JArrayAccessExpression extends JExpression {
 				JExpression accessor) {
       this(where, prefix, accessor, null);
       tryToResolveType();
+  }
+
+  public JArrayAccessExpression(JExpression prefix,
+				JExpression accessor) {
+      this(null, prefix, accessor);
   }
 
   public JArrayAccessExpression(TokenReference where,

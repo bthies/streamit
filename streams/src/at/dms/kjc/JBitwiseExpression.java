@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBitwiseExpression.java,v 1.4 2003-05-28 05:58:43 thies Exp $
+ * $Id: JBitwiseExpression.java,v 1.5 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -52,6 +52,12 @@ public class JBitwiseExpression extends JBinaryArithmeticExpression {
   {
     super(where, left, right);
     this.oper = oper;
+  }
+
+  public JBitwiseExpression(int oper,
+			    JExpression left,
+			    JExpression right) {
+      this(null, oper, left, right);
   }
 
   // ----------------------------------------------------------------------

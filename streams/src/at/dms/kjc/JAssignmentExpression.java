@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAssignmentExpression.java,v 1.11 2003-11-13 10:46:10 thies Exp $
+ * $Id: JAssignmentExpression.java,v 1.12 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -50,6 +50,12 @@ public class JAssignmentExpression extends JBinaryExpression {
 			       JExpression right)
   {
     super(where, left, right);
+  }
+
+  public JAssignmentExpression(JExpression left,
+			       JExpression right)
+  {
+      this(null, left, right);
   }
 
     public JLocalVariableExpression getCopyVar() {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JThisExpression.java,v 1.9 2003-11-13 10:46:11 thies Exp $
+ * $Id: JThisExpression.java,v 1.10 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -32,14 +32,16 @@ public class JThisExpression extends JExpression {
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
 
-    protected JThisExpression() {} // for cloner only
-
   /**
    * Construct a node in the parsing tree
    * @param where the line of this node in the source code
    */
   public JThisExpression(TokenReference where) {
     super(where);
+  }
+
+  public JThisExpression() {
+    this(null);
   }
 
   /**

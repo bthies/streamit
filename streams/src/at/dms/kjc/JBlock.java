@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.19 2003-11-13 10:46:10 thies Exp $
+ * $Id: JBlock.java,v 1.20 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -59,6 +59,10 @@ public class JBlock extends JStatement {
     }
   }
 
+    public JBlock(JStatement[] body) {
+	this(null, body, null);
+    }
+
     /**
      * Construct a node in the parsing tree
      * @param	where		the line of this node in the source code
@@ -73,6 +77,10 @@ public class JBlock extends JStatement {
     // make a copy of <body>
     this.body = new LinkedList(body);
   }
+
+    public JBlock(List body) {
+	this(null, body, null);
+    }
 
     /**
      * Construct a new JBlock with no statements inside.
@@ -114,6 +122,15 @@ public class JBlock extends JStatement {
      */
     public void addStatementFirst(JStatement statement) {
 	body.addFirst(statement);
+    }
+
+    /**
+     * Adds <statement> to front of this.
+     */
+    public void addAllStatementsFirst(List lst) {
+	for (int i=0; i<lst.size(); i++) {
+	    addStatementFirst((JStatement)lst.get(lst.size()-i-1));
+	}
     }
 
     /**

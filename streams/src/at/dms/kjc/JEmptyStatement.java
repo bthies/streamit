@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JEmptyStatement.java,v 1.5 2003-05-28 05:58:43 thies Exp $
+ * $Id: JEmptyStatement.java,v 1.6 2005-01-23 00:33:01 thies Exp $
  */
 
 package at.dms.kjc;
@@ -34,14 +34,16 @@ public class JEmptyStatement extends JStatement {
   // CONSTRUCTORS
   // ----------------------------------------------------------------------
 
-    protected JEmptyStatement() {} // for cloner only
-
   /**
    * Construct a node in the parsing tree
    * @param	where		the line of this node in the source code
    */
   public JEmptyStatement(TokenReference where, JavaStyleComment[] comments) {
     super(where, comments);
+  }
+
+  public JEmptyStatement() {
+      this(null, null);
   }
 
   // ----------------------------------------------------------------------

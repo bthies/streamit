@@ -112,10 +112,10 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 							     JExpression accessor) {
 			prefix.accept(this);
 			accessor.accept(this);
-			if((prefix instanceof JLocalVariableExpression)&&(!safe.contains(((JLocalVariableExpression)prefix).getVariable())))
-			    if(accessor instanceof JIntLiteral)
+			if((prefix instanceof JLocalVariableExpression)&&(!safe.containsKey(((JLocalVariableExpression)prefix).getVariable())))
+			    if(accessor instanceof JIntLiteral) {
 				targets.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
-			    else {
+			    } else {
 				targets.remove(((JLocalVariableExpression)prefix).getVariable());
 				safe.put(((JLocalVariableExpression)prefix).getVariable(),Boolean.TRUE);
 			    }

@@ -124,11 +124,20 @@ public class RawBackend {
 	    System.out.println("Done Vertical Fission...");
 	}
 
-	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
+	// turn on partitioning if there aren't enough tiles for all
+	// the filters
+	int count = new GraphFlattener(str).getNumTiles();
+	int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
+	boolean partitioning = KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition;
+	if (count>numTiles && !partitioning) {
+	    System.out.println("Need " + count + " tiles, so turning on partitioning...");
+	    KjcOptions.dppartition = true;
+	    partitioning = true;
+	}
+
+	if (partitioning) {
 	    System.err.println("Running Partitioning...");
-	    str = Partitioner.doit(str,
-				   RawBackend.rawRows *
-				   RawBackend.rawColumns);
+	    str = Partitioner.doit(str, count, numTiles);
 	    System.err.println("Done Partitioning...");
 	}
 

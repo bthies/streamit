@@ -929,13 +929,26 @@ public class FusePipe {
 
     /**
      * Return a name for the fused filter that consists of those
-     * filters in <filterInfo>
+     * filters in <filterInfo>.  <filterInfo> must be a list of either
+     * SIRFilter's or FilterInfo's.
      */
-    protected static String getFusedName(List filterInfo) {
-	StringBuffer name = new StringBuffer("Fused_");
+    public static String getFusedName(List filterInfo) {
+	StringBuffer name = new StringBuffer("Fused");
 	for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
 	    name.append("_");
-	    name.append(((FilterInfo)it.next()).filter.getIdent());
+	    Object o = it.next();
+	    String childName = null;
+	    if (o instanceof SIRFilter) {
+		childName = ((SIRFilter)o).getIdent();
+	    } else if (o instanceof FilterInfo) {
+		childName = ((FilterInfo)o).filter.getIdent();
+	    } else {
+		throw new RuntimeException("Unexpected type: " + o.getClass());
+	    }
+	    if (childName.toLowerCase().startsWith("fused_")) {
+		childName = childName.substring(6, childName.length());
+	    }
+	    name.append(childName.substring(0, Math.min(childName.length(), 3)));
 	}
 	return name.toString();
     }

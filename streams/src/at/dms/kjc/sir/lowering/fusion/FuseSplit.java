@@ -59,12 +59,14 @@ public class FuseSplit {
 	JMethodDeclaration newInitWork = makeInitWorkFunction(sj, childInfo, rep, rate);
         JMethodDeclaration newWork = makeWorkFunction(sj, childInfo, rep, rate);
 
+	String newName = FusePipe.getFusedName(sj.getParallelStreams());
+	
         // Build the new filter.  If there's no pushing or peeking
         // from initwork, then just inline the initwork in the init function
 	SIRFilter newFilter;
 	if (rate.initPeek==0 && rate.initPush==0) {
 	    newInit.getBody().addAllStatements(newInitWork.getBody().getStatements());
-	    newFilter = new SIRFilter(sj.getParent(), "Fused_" + sj.getIdent(),
+	    newFilter = new SIRFilter(sj.getParent(), newName, 
 						    newFields, newMethods, 
 						    new JIntLiteral(rate.peek),
 						    new JIntLiteral(rate.pop), 
@@ -72,7 +74,7 @@ public class FuseSplit {
 						    newWork, 
 						    sj.getInputType(), sj.getOutputType());
 	} else {
-	    newFilter = new SIRTwoStageFilter(sj.getParent(), "Fused_" + sj.getIdent(),
+	    newFilter = new SIRTwoStageFilter(sj.getParent(), newName,
 						    newFields, newMethods, 
 						    new JIntLiteral(rate.peek),
 						    new JIntLiteral(rate.pop), 

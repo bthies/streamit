@@ -56,7 +56,7 @@ public class Equalizer extends Pipeline {
         super(rate);
     }
 
-    public void init(float rate)
+    public void init(final float rate)
     {
 	samplingRate = rate;
 	mGain1 = 1;
@@ -67,10 +67,10 @@ public class Equalizer extends Pipeline {
 	add(new SplitJoin(){
 		public void init(){
 		    setSplitter(DUPLICATE());
-		    add(new BandPassFilter(samplingRate, 1250, 2500, 50, mGain1));
-		    add(new BandPassFilter(samplingRate, 2500, 5000, 50, mGain2));
-		    add(new BandPassFilter(samplingRate, 5000, 10000, 50, mGain3));
-		    add(new BandPassFilter(samplingRate, 10000, 20000, 50, mGain4));
+		    add(new BandPassFilter(rate, 1250, 2500, 50, mGain1));
+		    add(new BandPassFilter(rate, 2500, 5000, 50, mGain2));
+		    add(new BandPassFilter(rate, 5000, 10000, 50, mGain3));
+		    add(new BandPassFilter(rate, 10000, 20000, 50, mGain4));
 		    setJoiner(ROUND_ROBIN());
 		}
 	    });

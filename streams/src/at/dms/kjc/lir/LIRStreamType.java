@@ -11,9 +11,9 @@ public class LIRStreamType {
     public static final LIRStreamType LIR_PIPELINE = 
 	new LIRStreamType("PIPELINE");
     public static final LIRStreamType LIR_SPLIT_JOIN = 
-	new LIRStreamType("SPLIT-JOIN");
+	new LIRStreamType("SPLIT_JOIN");
     public static final LIRStreamType LIR_FEEDBACK_LOOP = 
-	new LIRStreamType("FEEDBACK LOOP");
+	new LIRStreamType("FEEDBACK_LOOP");
     public static final LIRStreamType LIR_FILTER = 
 	new LIRStreamType("FILTER");
 

@@ -252,7 +252,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			      SIRStream parent,
 			      SIRSplitType type,
 			      int[] weights) {
-	// don't do anything for a splitter
+	// create struct type
+	createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
     }
   
     /* visit a joiner */
@@ -260,7 +261,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			    SIRStream parent,
 			    SIRJoinType type,
 			    int[] weights) {
-	// don't do anything for a joiner
+	// create struct type
+	createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
     }
 
     /**

@@ -222,9 +222,11 @@ public class SIRScheduler {
 	if (schedObject instanceof List) {
 	    // make arg for list -- just the current context
 	    return LoweringConstants.getDataField();
-	} else if (schedObject instanceof SIRFilter) {
+	} else if (schedObject instanceof SIRFilter ||
+		   schedObject instanceof SIRSplitter ||
+		   schedObject instanceof SIRJoiner ) {
 	    // make arg for leaf node
-	    return makeLeafWorkArgument((SIRFilter)schedObject, 
+	    return makeLeafWorkArgument((SIROperator)schedObject, 
 					toplevel);
 	} else {
 	    // otherwise, fail

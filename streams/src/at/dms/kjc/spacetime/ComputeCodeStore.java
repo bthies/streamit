@@ -67,7 +67,7 @@ public class ComputeCodeStore {
     {
 	assert words > 0 : "trying to generate a file dram command of size 0";
 	
-	parent.setComputes();
+	parent.setMapped();
 	String functName = "raw_streaming_dram_request_bypass_" + 
 	    (read ? "read" : "write");
 	String bufferName = buffer.getIdent(init);
@@ -98,7 +98,7 @@ public class ComputeCodeStore {
     {
 	assert bytes > 0 : "trying to generate a dram command of size 0";
 	
-	parent.setComputes();
+	parent.setMapped();
 	String functName = "raw_streaming_dram_request_" +
 	    (read ? "read" : "write") + (presynched ? "_presynched" : "");
 
@@ -151,7 +151,7 @@ public class ComputeCodeStore {
 
     public void addTraceSteady(FilterInfo filterInfo)
     {
-	parent.setComputes();
+	parent.setMapped();
 	RawExecutionCode exeCode;
 
 	//check to see if we have seen this filter already
@@ -175,7 +175,8 @@ public class ComputeCodeStore {
 	    steadyLoop.addStatement(steady);
 	else //add a place holder for debugging 
 	    steadyLoop.addStatement
-		(new JExpressionStatement(null,
+		(
+		 new JExpressionStatement(null,
 					  new JMethodCallExpression(null,
 								    new JThisExpression(null),
 								    filterInfo.filter.toString(),
@@ -236,7 +237,7 @@ public class ComputeCodeStore {
 
     public void addTracePrimePump(FilterInfo filterInfo)
     {
-	parent.setComputes();
+	parent.setMapped();
 	RawExecutionCode exeCode;
 
 	//check to see if we have seen this filter already
@@ -274,7 +275,7 @@ public class ComputeCodeStore {
 
     public void addTraceInit(FilterInfo filterInfo)
     {
-	parent.setComputes();
+	parent.setMapped();
 	RawExecutionCode exeCode;
 	
 	//if we can run direct communication, run it

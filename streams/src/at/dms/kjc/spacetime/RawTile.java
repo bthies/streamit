@@ -11,6 +11,8 @@ public class RawTile extends ComputeNode {
     private boolean switches;
     //true if this tile has compute code
     private boolean computes;
+    //true if a filter has been mapped to it
+    private boolean mapped;
 
     private SwitchCodeStore switchCode;
     private ComputeCodeStore computeCode;
@@ -31,6 +33,7 @@ public class RawTile extends ComputeNode {
 	Y = y;
 	setTileNumber();
 	computes = false;
+	mapped = false;
 	switches = false;
 	switchCode = new SwitchCodeStore(this);
 	computeCode = new ComputeCodeStore(this);
@@ -147,6 +150,18 @@ public class RawTile extends ComputeNode {
     public void setSwitches() {
 	switches = true;
     }
+
+    public void setMapped() 
+    {
+	mapped = true;
+	setComputes();
+    }
+    
+    public boolean isMapped() 
+    {
+	return mapped;
+    }
+    
 
     //this is set by ComputeCodeStore
     public void setComputes() {

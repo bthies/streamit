@@ -7,6 +7,7 @@ import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.kjc.sir.linear.LinearAnalyzer;
 import at.dms.kjc.sir.lowering.partition.*;
+import at.dms.kjc.*;
 
 public class SimpleScheduler 
 {
@@ -94,10 +95,12 @@ public class SimpleScheduler
 
 
 	//schedule the traces either based on work or dependencies
-	
-	//scheduleWork();
-	scheduleCommunication();
-	//scheduleDep();
+	if (KjcOptions.scheduler.equals("work")) 
+	    scheduleWork();
+	else if (KjcOptions.scheduler.equals("comm"))
+	    scheduleCommunication();
+	else if (KjcOptions.scheduler.equals("dep"))
+	    scheduleDep();
 	//set up dependencies
 	setupDepends();
 
@@ -116,7 +119,7 @@ public class SimpleScheduler
 	removePredefined(sortedTraces);
 
 	//reverse the list
-	Collections.reverse(sortedTraces);
+	//Collections.reverse(sortedTraces);
 
 	System.out.println("Sorted Traces: ");
 	Iterator it = sortedTraces.iterator();
@@ -489,7 +492,7 @@ public class SimpleScheduler
 	
 	//if we want to, try to force a single input trace to the source's tile as long as the
 	//source has one output
-	if (true && 
+	if (KjcOptions.forceplacement && 
 	    trace.getHead().getSourceSet().size() == 1) {
 	    Trace upstream = ((Edge)trace.getHead().getSourceSet().iterator().next()).getSrc().getParent();
 	    if (schedule.contains(upstream) && upstream.getTail().getDestSet().size() == 1) { 
@@ -508,7 +511,7 @@ public class SimpleScheduler
 	
 	//if we want to, try to force a single output trace to the dest's tile as long as the
 	//downstream tile has one input
-	if (true && 
+	if (KjcOptions.forceplacement && 
 	    trace.getTail().getDestSet().size() == 1) {
 	    Trace downstream = ((Edge)trace.getTail().getDestSet().iterator().next()).getDest().getParent();
 	    if (schedule.contains(downstream)) {

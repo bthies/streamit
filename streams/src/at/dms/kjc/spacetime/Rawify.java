@@ -311,8 +311,8 @@ public class Rawify
 	    
 	    //generate the dram commands to write into the steady buffer in the primepump stage
 	    if (primepump) {
-		System.out.println(" ** Prime pump steady items " + output.getParent() + " = " +
-				   (edge.primePumpItems() - edge.primePumpInitItems()));
+		//System.out.println(" ** Prime pump steady items " + output.getParent() + " = " +
+		//(edge.primePumpItems() - edge.primePumpInitItems()));
 		writeWords = typeSize * 
 				   (edge.primePumpItems() - edge.primePumpInitItems());
 		//generate the dram command in stage 2 (init schedule, with steady buffers...)
@@ -420,8 +420,8 @@ public class Rawify
 		//only subtract the "steady" primepump items if the outputtracenode is unnecessray
 		//otherwise the outputtracenode handles the copying into the correct buffer
 		if (OffChipBuffer.unnecessary(output)) {
-		    System.out.println("** Filter Output DRAM command " + filterNode + " has " +
-					 filterInfo.primePumpItemsNotConsumed() + " steady primp-pump items");
+		    //System.out.println("** Filter Output DRAM command " + filterNode + " has " +
+		    //			 filterInfo.primePumpItemsNotConsumed() + " steady primp-pump items");
 		    items -= filterInfo.primePumpItemsNotConsumed();
 		}
 		

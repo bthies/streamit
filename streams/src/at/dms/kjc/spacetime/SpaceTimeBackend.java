@@ -152,7 +152,7 @@ public class SpaceTimeBackend
 	SimpleScheduler scheduler = new SimpleScheduler(partitioner, rawChip);
 	scheduler.schedule();
 
-	//MultiplySteadyState.doit(partitioner, scheduler);
+	MultiplySteadyState.doit(partitioner, scheduler);
 	
 	SchedulePrimePump.doit(scheduler);
 	

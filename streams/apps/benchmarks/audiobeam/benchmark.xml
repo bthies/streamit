@@ -1,0 +1,14 @@
+<benchmark>
+  <name>audio-beamformer</name>
+  <desc>Audio beam former</desc>
+  <description>
+  This is a benchmark from the Raw group that does real-time
+  beamforming on a microphone input array.
+  </description>
+  <implementations>
+    <impl lang="C" dir="c">
+      <file>main.c</file>
+      <desc>Hand-coded C version.</desc>
+    </impl>
+  </implementations>
+</benchmark>

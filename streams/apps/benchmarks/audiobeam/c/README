@@ -1,0 +1,86 @@
+Readme file for Oxygen beamforming source code distribution
+-----------------------------------------------------------
+
+This is a very very beta distribution of beamforming source code from
+MIT LCS. 
+
+There is only one source file, main.c, and one header file,
+main.h. You can compile everything using the Makefile included in the
+distribution.
+
+The input to the program is a text file containing floating
+point values for the signal read on each of the microphones. For n
+microphones, each line of the text files represents a temporal sample
+and should contain n floating point values separated by spaces, e.g.:
+
+-1.8569790e-004 -9.0919049e-004  3.6711283e-004 -1.0073081e-005 ...
+
+There are several modes of operation for the program:
+
+1. The most basic mode is to process the microphone data and to
+calculate the output based on one beam focused on a particular point
+in space. The coordinates for the microphones and the focus point are
+specified inside main.c (eventually to be moved to a separate file).
+
+2. Far field search mode. This mode assumes a far-field source (which
+means we have a planar wavefront) and a linear array, and sweeps over
+180 degrees in the plane of the array. The microphone coordinates are
+specified in main.c, and the NUM_ANGLES constant defines how many
+angle values should be tested (a value of 180 means one beam per each
+degree). The energy of the signal over a particular window
+(ANGLE_ENERGY_WINDOW_SIZE) is computed for each beam. The direction
+with maximum energy is considered the direction that the speech signal
+is coming from, and is printed out by the program.
+
+3. Near-field hill climbing mode. This mode accepts a starting
+coordinate and attempts to "hill-climb" through the space seeking the
+maximum energy. Each of the x, y, and z coordinates are perturbed in
+the positive and negative directions at each time interval
+(GRID_ENERGY_WINDOW_SIZE) by a step size (GRID_STEP_SIZE). This
+perturbation, along with the original coordinate, produces seven
+coordinates to be tested. The direction with the maximum energy
+replaces the current reference coordinate. For instance, if we have a
+starting reference coordinate of (1,1,0) and our step size is 0.01, we
+will evaluate the energy for the following seven beams:
+
+(1,1,0)
+(0.99,1,0)
+(1.01,1,0)
+(1,0.99,0)
+(1,1.01,0)
+(1,1,-0.01)
+(1,1,0.01)
+
+Now let's say the beam (1,1.01,0) has the maximum energy; then this
+coordinate will replace the original reference coordinate of (1,1,0).
+
+For methods 2, and 3, we are not outputting anything to disk, we are
+just printing the result. This is because we have just started to work
+with these methods, and have not applied them in real systems. This
+code is currently being ported to RAW.
+
+To get a list of parameters for the delay_and_sum executable that is
+generated when the source is compiled, just type ./delay_and_sum . 
+
+There is some sample data included with the program, in the data
+directory. There is some data for a near-field and far-field
+source. The README.txt file in each directory specifies the microphone
+and source position. The data1 file, when processed with a beamformer
+aligned in the proper direction should produce something like a sinc
+function (see
+http://ccrma-www.stanford.edu/~jos/Interpolation/sinc_function.html).
+
+The data2 file should produce an audio signal of a woman saying "the
+simplest method". If the beamformer is aligned properly, the noise
+should be reduced significantly over the source signal from only one
+of the microphones (use print_datafile.pl to isolate one
+microphone). You can convert the data file that the program produces
+to wave files using sox.
+
+
+
+
+
+---------------------------------
+Eugene Weinstein
+ecoder@mit.edu

@@ -169,8 +169,10 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		i--;
 	}
 	if(parent==self) {
-	    for(int i=newArrays.size()-1;i>=0;i--)
-		self.addStatementFirst((JStatement)newArrays.get(i));
+	    for(int i=newArrays.size()-1;i>=0;i--) {
+		JStatement newState=(JStatement)newArrays.get(i);
+		self.addStatementFirst(newState);
+	    }
 	    Hashtable visitedVars=new Hashtable();
 	    for(int i=varDefs.size()-1;i>=0;i--) {
 		JVariableDeclarationStatement varDec=(JVariableDeclarationStatement)varDefs.get(i);

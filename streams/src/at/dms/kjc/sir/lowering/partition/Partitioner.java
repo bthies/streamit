@@ -46,9 +46,14 @@ public class Partitioner {
 	// if we have too few tiles, then fizz the big ones
 	System.out.print("count tiles... ");
 	int count = new RawFlattener(str).getNumTiles();
-	System.out.println("done.");
+	System.out.println("done:"+count);
 	if (count < target) {
 	    fissAll();
+	    System.out.print("count tiles again... ");
+	    count = new RawFlattener(str).getNumTiles();
+	    System.out.println("done:"+count);
+	    if(count>target)
+		fuseAll();
 	} else {
 	    fuseAll();
 	}

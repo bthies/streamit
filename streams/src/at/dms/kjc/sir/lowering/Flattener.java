@@ -89,10 +89,13 @@ public class Flattener {
 	    printer1.close();
 	    
 	}
-	
+
 	// dump the original graph to a dot format
 	StreamItDot.printGraph(str, "after.dot");
 
+	//Raise NewArray's up to top
+	new VarDeclRaiser().raiseVars(str);
+	
         // do constant propagation on fields
         if (StreamItOptions.constprop) {
 	    System.out.println("Running Constant Propagation of Fields");

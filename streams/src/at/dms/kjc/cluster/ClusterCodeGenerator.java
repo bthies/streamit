@@ -349,6 +349,54 @@ class ClusterCodeGenerator {
 
 	r.add("\n");
 
+	//  +=============================+
+	//  | Init Sockets                |
+	//  +=============================+
+
+	r.add("void __init_sockets_"+id+"() {\n");
+
+	r.add("  mysocket *sock;\n");
+	r.add("\n");
+
+	i = data_in.iterator();
+	while (i.hasNext()) {
+	    NetStream in = (NetStream)i.next();
+
+	    r.add("  sock = init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET);\n");
+	    r.add("  sock->set_check_thread_status(check_status_during_io__"+id+");\n");
+	    r.add("  sock->set_item_size(sizeof("+in.getType()+"));\n");
+	    r.add("  "+in.consumer_name()+".set_socket(sock);\n");
+	    r.add("\n");
+	}
+
+	i = data_out.iterator();
+	while (i.hasNext()) {
+	    NetStream out = (NetStream)i.next();
+
+	    r.add("  sock = init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET);\n");
+	    r.add("  sock->set_check_thread_status(check_status_during_io__"+id+");\n");
+	    r.add("  sock->set_item_size(sizeof("+out.getType()+"));\n");
+	    r.add("  "+out.producer_name()+".set_socket(sock);\n");
+	    r.add("\n");
+	}
+
+	i = msg_from.iterator();
+	while (i.hasNext()) {
+	    int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+	    r.add("  __msg_sock_"+src+"_"+id+"in = init_instance::get_incoming_socket("+src+","+id+",MESSAGE_SOCKET);\n");
+	    r.add("\n");
+	}
+
+	i = msg_to.iterator();
+	while (i.hasNext()) {
+	    int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+	    r.add("  __msg_sock_"+id+"_"+dst+"out = init_instance::get_outgoing_socket("+id+","+dst+",MESSAGE_SOCKET);\n");
+	    r.add("\n");
+	}
+
+	r.add("}\n");
+	r.add("\n");
+
 	return r;
     }
 
@@ -361,42 +409,8 @@ class ClusterCodeGenerator {
 	r.add("\nvoid run_"+id+"() {\n");
 
 	r.add("  int i;\n");
-	r.add("  mysocket *sock;\n");
 
-	i = data_in.iterator();
-	while (i.hasNext()) {
-	    NetStream in = (NetStream)i.next();
-
-	    r.add("  sock = init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET);\n");
-	    r.add("  sock->set_check_thread_status(check_status_during_io__"+id+");\n");
-	    r.add("  sock->set_item_size(sizeof("+in.getType()+"));\n");
-	    r.add("  "+in.consumer_name()+".set_socket(sock);\n");
-	    
-	}
-
-	i = data_out.iterator();
-	while (i.hasNext()) {
-	    NetStream out = (NetStream)i.next();
-
-	    r.add("  sock = init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET);\n");
-	    r.add("  sock->set_check_thread_status(check_status_during_io__"+id+");\n");
-	    r.add("  sock->set_item_size(sizeof("+out.getType()+"));\n");
-	    r.add("  "+out.producer_name()+".set_socket(sock);\n");
-	    
-	}
-
-	i = msg_from.iterator();
-	while (i.hasNext()) {
-	    int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-	    r.add("  __msg_sock_"+src+"_"+id+"in = init_instance::get_incoming_socket("+src+","+id+",MESSAGE_SOCKET);\n");
-	}
-
-	i = msg_to.iterator();
-	while (i.hasNext()) {
-	    int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-	    r.add("  __msg_sock_"+id+"_"+dst+"out = init_instance::get_outgoing_socket("+id+","+dst+",MESSAGE_SOCKET);\n");
-
-	}
+	r.add("  __init_sockets_"+id+"();\n");
 
 	i = msg_to.iterator();
 	while (i.hasNext()) {

@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: SplitJoin.java,v 1.5 2002-07-16 21:41:23 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.6 2002-07-18 05:34:41 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -21,7 +21,8 @@ abstract public class SplitJoin
     extends streamit.scheduler.base.SplitJoin
     implements StreamInterfaceWithSnJ
 {
-    final private StreamAlgorithmWithSnJ algorithm = new StreamAlgorithmWithSnJ(this);
+    final private StreamAlgorithmWithSnJ algorithm =
+        new StreamAlgorithmWithSnJ(this);
 
     final private PhasingSchedule splitPhases[];
     final private PhasingSchedule joinPhases[];
@@ -112,7 +113,7 @@ abstract public class SplitJoin
         ASSERT(nPhase >= 0 && nPhase < getNumJoinPhases());
         return joinPhases[nPhase];
     }
-    
+
     public streamit.scheduler.base.StreamInterface getTop()
     {
         return this;
@@ -278,18 +279,58 @@ abstract public class SplitJoin
         algorithm.advanceSplitSchedule(numPhases);
     }
 
+    public void advanceSplitSchedule()
+    {
+        algorithm.advanceSplitSchedule(1);
+    }
+
     public void advanceJoinSchedule(int numPhases)
     {
         algorithm.advanceJoinSchedule(numPhases);
+    }
+
+    public void advanceJoinSchedule()
+    {
+        algorithm.advanceJoinSchedule(1);
     }
 
     public PhasingSchedule getSplitSteadyPhase(int nPhase)
     {
         return algorithm.getSplitSteadyPhase(nPhase);
     }
+    
+    public PhasingSchedule getNextSplitSteadyPhase ()
+    {
+        return getSplitSteadyPhase (0);
+    }
 
     public PhasingSchedule getJoinSteadyPhase(int nPhase)
     {
         return algorithm.getJoinSteadyPhase(nPhase);
+    }
+    
+    public PhasingSchedule getNextJoinSteadyPhase ()
+    {
+        return getJoinSteadyPhase (0);
+    }
+
+    public SplitFlow getSplitSteadyPhaseFlow (int nPhase)
+    {
+        return algorithm.getSplitSteadyPhaseFlow (nPhase);
+    }
+    
+    public SplitFlow getNextSplitSteadyPhaseFlow ()
+    {
+        return getSplitSteadyPhaseFlow (0);
+    }
+    
+    public JoinFlow getJoinSteadyPhaseFlow (int nPhase)
+    {
+        return algorithm.getJoinSteadyPhaseFlow (nPhase);
+    }
+
+    public JoinFlow getNextJoinSteadyPhaseFlow ()
+    {
+        return getJoinSteadyPhaseFlow (0);
     }
 }

@@ -7,7 +7,7 @@ Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.6 2002-07-06 06:06:09 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.7 2002-07-18 05:34:36 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -123,10 +123,13 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             BigInteger joinPush, joinPop;
 
             // get the feedback production rate and others
-            splitPush = BigInteger.valueOf(splitFlow.pushWeights[1]);
-            splitPop = BigInteger.valueOf(splitFlow.popWeight);
-            joinPop = BigInteger.valueOf(joinFlow.popWeights[1]);
-            joinPush = BigInteger.valueOf(joinFlow.pushWeight);
+            splitPush =
+                BigInteger.valueOf(getSteadySplitFlow().getPushWeight(1));
+            splitPop =
+                BigInteger.valueOf(getSteadySplitFlow().getPopWeight());
+            joinPop = BigInteger.valueOf(getSteadyJoinFlow().getPopWeight(1));
+            joinPush =
+                BigInteger.valueOf(getSteadyJoinFlow().getPushWeight());
 
             // calculate all the fractions
             Fraction bodyFrac = new Fraction(BigInteger.ONE, BigInteger.ONE);
@@ -185,8 +188,8 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
 
         // setup my variables that come from SchedStream:
         {
-            int pop = joinNumRounds * joinFlow.popWeights[0];
-            int push = splitNumRounds * splitFlow.pushWeights[1];
+            int pop = joinNumRounds * getSteadyJoinFlow().getPopWeight(0);
+            int push = splitNumRounds * getSteadySplitFlow().getPushWeight(1);
 
             setSteadyPeek(pop);
             setSteadyPop(pop);

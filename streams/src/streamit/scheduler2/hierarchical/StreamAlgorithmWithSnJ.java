@@ -1,6 +1,9 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamAlgorithmWithSnJ.java,v 1.1 2002-07-16 21:41:24 karczma Exp $ */
+import streamit.scheduler.base.StreamInterfaceWithSnJ.SplitFlow;
+import streamit.scheduler.base.StreamInterfaceWithSnJ.JoinFlow;
+
+/* $Id: StreamAlgorithmWithSnJ.java,v 1.2 2002-07-18 05:34:42 karczma Exp $ */
 
 /**
  * This class provides an implementation for StreamInterface.
@@ -46,9 +49,9 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
     }
 
     /**
-     * Get a phase  for the child's Splitter.  This phase is computed relative
+     * Get a phase  for the stream's Splitter.  This phase is computed relative
      * to how much of the split's schedule has already been consumed.
-     * @return phase of the child's splitter
+     * @return phase of the stream's splitter
      */
     public PhasingSchedule getSplitSteadyPhase(int nPhase)
     {
@@ -58,14 +61,56 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
     }
 
     /**
-     * Get a phase  for the child's Joiner.  This phase is computed relative
+     * Get a phase  for the stream's Joiner.  This phase is computed relative
      * to how much of the joiner's schedule has already been consumed.
-     * @return phase of the child's joiner
+     * @return phase of the stream's joiner
      */
     public PhasingSchedule getJoinSteadyPhase(int nPhase)
     {
         ASSERT(nPhase >= 0);
         int phase = (nJoinPhase + nPhase) % stream.getNumJoinPhases();
         return stream.getJoinPhase(phase);
+    }
+
+    /**
+     * Get the appropriate phase flow for the split of this SplitJoin.
+     * @return phase flow of the split
+     */
+    public SplitFlow getSplitSteadyPhaseFlow (int nPhase)
+    {
+        ASSERT (nPhase >=0);
+        int phase = (nSplitPhase + nPhase) % stream.getNumSplitPhases();
+        return getSplitFlow(phase);
+    }
+
+    /**
+     * Get the appropriate phase flow for the join of this SplitJoin.
+     * @return phase flow of the join
+     */
+    public JoinFlow getJoinSteadyPhaseFlow (int nPhase)
+    {
+        ASSERT (nPhase >=0);
+        int phase = (nJoinPhase + nPhase) % stream.getNumJoinPhases();
+        return getJoinFlow(phase);
+    }
+    
+    /**
+     * Get flow of data through the stream's splitter.  This phase is computed
+     * relative to how much of the split's schedule has already been consumed.
+     * @return flow of data through the stream's splitter
+     */
+    public SplitFlow getSplitFlow(int nPhase)
+    {
+        return stream.getSplitFlow(nPhase);
+    }
+
+    /**
+     * Get flow of data through the stream's joiner.  This phase is computed
+     * relative to how much of the join's schedule has already been consumed.
+     * @return flow of data through the stream's joiner
+     */
+    public JoinFlow getJoinFlow(int nPhase)
+    {
+        return stream.getJoinFlow(nPhase);
     }
 }

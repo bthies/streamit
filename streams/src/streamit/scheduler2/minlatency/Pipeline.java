@@ -1,14 +1,11 @@
 package streamit.scheduler.minlatency;
 
-/* $Id: Pipeline.java,v 1.2 2002-07-16 02:18:46 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.3 2002-07-18 05:34:45 karczma Exp $ */
 
-import java.util.Map;
-import java.util.HashMap;
 import streamit.scheduler.iriter./*persistent.*/
 PipelineIter;
 import streamit.scheduler.hierarchical.StreamInterface;
 import streamit.scheduler.base.StreamFactory;
-import streamit.scheduler.Schedule;
 import streamit.scheduler.hierarchical.PhasingSchedule;
 
 /**

@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: FeedbackLoop.java,v 1.3 2002-07-16 02:18:48 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.4 2002-07-18 05:34:47 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -196,7 +196,7 @@ public class FeedbackLoop
                         (initLoopSched.getOverallPeek()
                             - initLoopSched.getOverallPop()));
 
-                int splitProduction = splitFlow.pushWeights[1];
+                int splitProduction = getSteadySplitFlow().getPushWeight(1);
                 nInitRunSplit =
                     (feedbackDataNeeded + splitProduction - 1)
                         / splitProduction;
@@ -207,7 +207,8 @@ public class FeedbackLoop
 
             // figure out how many times the body needs to be run:
             {
-                int splitDataNeeded = splitFlow.popWeight * nInitRunSplit;
+                int splitDataNeeded =
+                    getSteadySplitFlow().getPopWeight() * nInitRunSplit;
                 int bodyProduction = steadyBodySched.getOverallPush();
                 nInitRunBody =
                     (splitDataNeeded
@@ -217,7 +218,7 @@ public class FeedbackLoop
                 splitBuffer =
                     nInitRunBody * bodyProduction
                         + initBodySched.getOverallPush()
-                        - nInitRunSplit * splitFlow.popWeight;
+                        - nInitRunSplit * getSteadySplitFlow().getPopWeight();
             }
 
             // figure out how many times the join needs to be run
@@ -233,7 +234,7 @@ public class FeedbackLoop
                         (initBodySched.getOverallPeek()
                             - initBodySched.getOverallPop()));
 
-                int joinProduction = joinFlow.pushWeight;
+                int joinProduction = getSteadyJoinFlow().getPushWeight();
                 nInitRunJoin =
                     (bodyDataNeeded + (joinProduction - 1)) / joinProduction;
                 bodyBuffer =
@@ -248,11 +249,11 @@ public class FeedbackLoop
                 joinBuffer =
                     feedbackLoop.getDelaySize()
                         + loopInitProduction
-                        - (nInitRunJoin * joinFlow.popWeights[1]);
+                        - (nInitRunJoin * getSteadyJoinFlow().getPopWeight(1));
 
                 // check if this is a legal schedule in the first place
                 if (feedbackLoop.getDelaySize()
-                    < nInitRunJoin * joinFlow.popWeights[1])
+                    < nInitRunJoin * getSteadyJoinFlow().getPopWeight(1))
                 {
                     ERROR(
                         "Could not schedule this feedback loop.\n"
@@ -328,7 +329,7 @@ public class FeedbackLoop
 
             // attempt to push some data through the feedback loop:
             {
-                while (joinBuffer >= joinFlow.popWeights[1]
+                while (joinBuffer >= getSteadyJoinFlow().getPopWeight(1)
                     && joinExecutions > 0)
                 {
                     // add the execution to the schedule
@@ -336,8 +337,8 @@ public class FeedbackLoop
 
                     // move the data forward
                     movedForward = true;
-                    joinBuffer -= joinFlow.popWeights[1];
-                    bodyBuffer += joinFlow.pushWeight;
+                    joinBuffer -= getSteadyJoinFlow().getPopWeight(1);
+                    bodyBuffer += getSteadyJoinFlow().getPushWeight();
 
                     // check if done, and indicate if so
                     joinExecutions--;
@@ -371,7 +372,7 @@ public class FeedbackLoop
             }
             // attempt to push some data through the split of the loop:
             {
-                while (splitBuffer >= splitFlow.popWeight
+                while (splitBuffer >= getSteadySplitFlow().getPopWeight()
                     && splitExecutions > 0)
                 {
                     // add the execution to the schedule
@@ -379,8 +380,8 @@ public class FeedbackLoop
 
                     // move the data forward
                     movedForward = true;
-                    splitBuffer -= splitFlow.popWeight;
-                    loopBuffer += splitFlow.pushWeights[1];
+                    splitBuffer -= getSteadySplitFlow().getPopWeight();
+                    loopBuffer += getSteadySplitFlow().getPushWeight(1);
 
                     // check if done, and indicate if so
                     splitExecutions--;

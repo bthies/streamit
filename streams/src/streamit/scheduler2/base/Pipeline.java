@@ -3,7 +3,7 @@ package streamit.scheduler.base;
 import streamit.scheduler.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.4 2002-06-30 04:01:05 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.5 2002-07-18 05:34:36 karczma Exp $ */
 
 /**
  * Computes some basic data for Pipelines.  
@@ -69,6 +69,19 @@ abstract public class Pipeline extends Stream
     }
 
     private BigInteger childrenNumExecs[];
+
+    /**
+     * Return how many times a particular child should be executed in
+     * a full steady-state execution of this pipeline.
+     * @return number of executions of a child in steady state
+     */
+    protected int getChildNumExecs(int nChild)
+    {
+        // make sure nChild is in range
+        ASSERT(nChild >= 0 && nChild < getNumChildren());
+
+        return childrenNumExecs[nChild].intValue();
+    }
 
     /**
      * Compute the number of times each child needs to execute
@@ -169,18 +182,5 @@ abstract public class Pipeline extends Stream
             setSteadyPop(pop);
             setSteadyPush(push);
         }
-    }
-
-    /**
-     * Return how many times a particular child should be executed in
-     * a full steady-state execution of this pipeline.
-     * @return number of executions of a child in steady state
-     */
-    protected int getChildNumExecs(int nChild)
-    {
-        // make sure nChild is in range
-        ASSERT(nChild >= 0 && nChild < getNumChildren());
-
-        return childrenNumExecs[nChild].intValue();
     }
 }

@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: FeedbackLoop.java,v 1.3 2002-07-16 21:41:23 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.4 2002-07-18 05:34:41 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -294,18 +294,58 @@ abstract public class FeedbackLoop
         algorithm.advanceSplitSchedule(numPhases);
     }
 
+    public void advanceSplitSchedule()
+    {
+        algorithm.advanceSplitSchedule(1);
+    }
+
     public void advanceJoinSchedule(int numPhases)
     {
         algorithm.advanceJoinSchedule(numPhases);
+    }
+
+    public void advanceJoinSchedule()
+    {
+        algorithm.advanceJoinSchedule(1);
     }
 
     public PhasingSchedule getSplitSteadyPhase(int nPhase)
     {
         return algorithm.getSplitSteadyPhase(nPhase);
     }
+    
+    public PhasingSchedule getNextSplitSteadyPhase ()
+    {
+        return getSplitSteadyPhase (0);
+    }
 
     public PhasingSchedule getJoinSteadyPhase(int nPhase)
     {
         return algorithm.getJoinSteadyPhase(nPhase);
+    }
+    
+    public PhasingSchedule getNextJoinSteadyPhase ()
+    {
+        return getJoinSteadyPhase (0);
+    }
+
+    public SplitFlow getSplitSteadyPhaseFlow (int nPhase)
+    {
+        return algorithm.getSplitSteadyPhaseFlow (nPhase);
+    }
+    
+    public SplitFlow getNextSplitSteadyPhaseFlow ()
+    {
+        return getSplitSteadyPhaseFlow (0);
+    }
+    
+    public JoinFlow getJoinSteadyPhaseFlow (int nPhase)
+    {
+        return algorithm.getJoinSteadyPhaseFlow (nPhase);
+    }
+
+    public JoinFlow getNextJoinSteadyPhaseFlow ()
+    {
+        return getJoinSteadyPhaseFlow (0);
     }
 }

@@ -1,13 +1,13 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: StreamInterfaceWithSnJ.java,v 1.1 2002-07-16 21:41:24 karczma Exp $ */
+/* $Id: StreamInterfaceWithSnJ.java,v 1.2 2002-07-18 05:34:42 karczma Exp $ */
 
 import streamit.scheduler.Schedule;
 
 /**
  * This interface provides the required functional interface for
  * all hierarchical scheduling objects with splits and joins.
- * This is an extension of just reguilar hierarchical scheduling
+ * This is an extension of just regular hierarchical scheduling
  * (as you can see from the extends statement :)
  * Basically, this takes care of getting information about
  * the split and the join in the stream
@@ -19,7 +19,8 @@ import streamit.scheduler.Schedule;
  * @author  Michal Karczmarek
  */
 
-public interface StreamInterfaceWithSnJ extends StreamInterface
+public interface StreamInterfaceWithSnJ
+    extends StreamInterface, streamit.scheduler.base.StreamInterfaceWithSnJ
 {
     /**
      * Get the number of phases that the split of this SplitJoin has.
@@ -44,4 +45,16 @@ public interface StreamInterfaceWithSnJ extends StreamInterface
      * @return phase of the join
      */
     public PhasingSchedule getJoinPhase(int nPhase);
+
+    /**
+     * Get the appropriate phase flow for the split of this SplitJoin.
+     * @return phase flow of the split
+     */
+    public SplitFlow getSplitSteadyPhaseFlow (int nPhase);
+
+    /**
+     * Get the appropriate phase flow for the join of this SplitJoin.
+     * @return phase flow of the join
+     */
+    public JoinFlow getJoinSteadyPhaseFlow (int nPhase);
 }

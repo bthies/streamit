@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: SplitJoin.java,v 1.5 2002-07-16 21:41:28 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.6 2002-07-18 05:34:47 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -128,7 +128,8 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                 {
                     // just divide the amount of data needed by data received
                     // per iteration of the split
-                    int splitDataSent = splitFlow.pushWeights[nChild];
+                    int splitDataSent =
+                        getSteadySplitFlow().getPushWeight(nChild);
                     ASSERT(splitDataSent > 0);
 
                     splitRunCount =
@@ -181,7 +182,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                     }
                 }
             }
-            
+
             if (initSched.getNumPhases() != 0)
                 addInitScheduleStage(initSched);
         }
@@ -208,9 +209,7 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                     StreamInterface child = getHierarchicalChild(nChild);
 
                     int nRun;
-                    for (nRun = 0;
-                        nRun < childrenNumExecs[nChild].intValue();
-                        nRun++)
+                    for (nRun = 0; nRun < getChildNumExecs(nChild); nRun++)
                     {
                         int nPhase;
                         for (nPhase = 0;

@@ -53,13 +53,13 @@ public abstract class ListPartitioner {
      */
     protected WorkEstimate work;
 
-    public ListPartitioner(SIRStream str, int numTiles) {
+    public ListPartitioner(SIRStream str, WorkEstimate work, int numTiles) {
 	this.str = str;
+	this.work = work;
 	this.numTiles = numTiles;
 	this.nodes = new LinkedList();
 	this.first = new HashMap();
 	this.last = new HashMap();
-	this.work = WorkEstimate.getWorkEstimate(str);
 	buildNodesList();
     }
 

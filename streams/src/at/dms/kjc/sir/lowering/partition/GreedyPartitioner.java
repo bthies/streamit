@@ -15,6 +15,10 @@ public class GreedyPartitioner {
      */
     private SIRStream str;
     /**
+     * Most recent work estimate for this.
+     */
+    private WorkEstimate work;
+    /**
      * The target number of tiles this partitioner is going for.
      */
     private int target;
@@ -22,9 +26,10 @@ public class GreedyPartitioner {
     //How many times to attempt fissing till use up all space
     private final int MAX_FISS_ITER=5;
 
-    public GreedyPartitioner(SIRStream str, int target) {
+    public GreedyPartitioner(SIRStream str, WorkEstimate work, int target) {
 	this.str = str;
 	this.target = target;
+	this.work = work;
     }
 
     public void toplevelFission(int startingTileCount) {
@@ -50,7 +55,7 @@ public class GreedyPartitioner {
 
     private void aggressiveFiss() {
 	// get work sorted by work
-	WorkList sorted=WorkEstimate.getWorkEstimate(str).getSortedFilterWork();
+	WorkList sorted=work.getSortedFilterWork();
 	//System.out.println("Sorted:"+sorted);
 	//int lowestFissable=-1;
 	//Find smallest fissable filter
@@ -78,7 +83,7 @@ public class GreedyPartitioner {
      */
     private void fissAll() {
 	// get work sorted by work
-	WorkList sorted = WorkEstimate.getWorkEstimate(str).getSortedFilterWork();
+	WorkList sorted = work.getSortedFilterWork();
 	//System.out.println("Sorted:"+sorted);
 	// keep track of the position of who we've tried to split
 	int pos = sorted.size()-1;
@@ -183,9 +188,11 @@ public class GreedyPartitioner {
 	    StreamItDot.printGraph(str, "during-fusion.dot");
 	    if (count>target) {
 		//boolean tried=false;
+		// make a fresh work estimate
+		this.work = WorkEstimate.getWorkEstimate(str);
 		// get the containers in the order of work for filters
 		// immediately contained
-		WorkList list = WorkEstimate.getWorkEstimate(str).getSortedContainerWork();
+		WorkList list = work.getSortedContainerWork();
 		//System.out.println(list);
 		// work up through this list until we fuse something
 		for (int i=0; i<list.size(); i++) {

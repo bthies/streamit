@@ -16,8 +16,11 @@ class WorkInfo {
 	this.totalWork = totalWork;
     }
 
+    /**
+     * Returns the amount of work.
+     */
     public String toString() {
-	return "totalWork = " + totalWork;
+	return "" + this.totalWork;
     }
 
     public int totalWork() {

@@ -40,8 +40,8 @@ public class ILPPartitioner extends ListPartitioner {
      */
     protected static final int JOINER_WORK_ESTIMATE = 1;
     
-    public ILPPartitioner(SIRStream str, int numTiles) {
-	super(str, numTiles);
+    public ILPPartitioner(SIRStream str, WorkEstimate work, int numTiles) {
+	super(str, work, numTiles);
     }
     
     public void toplevelFusion() {
@@ -57,7 +57,6 @@ public class ILPPartitioner extends ListPartitioner {
      * it has a target of -1.
      */
     private HashMap calcPartitions() {
-	this.work = WorkEstimate.getWorkEstimate(str);
 	buildNodesList();
 	double[] sol = calcSolution();
 	HashMap result = buildPartitionMap(sol);

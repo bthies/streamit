@@ -24,32 +24,36 @@ public class Partitioner {
 	Lifter.lift(str);
 	System.out.println("done.");
 
-	// if we have too few tiles, then fizz the big ones
+	// make work estimate
+	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
+	work.printGraph(str, "work-estimate.dot");
+
+	// detect number of tiles we have
 	System.out.print("count tiles... ");
 	int count = new RawFlattener(str).getNumTiles();
 	System.out.println("found "+count+" tiles.");
 
 	// for statistics gathering
 	if (KjcOptions.dpscaling) {
-	    DynamicProgPartitioner.saveScalingStatistics(str, 256);
+	    DynamicProgPartitioner.saveScalingStatistics(str, work, 256);
 	}
 
 	// do the partitioning
 	if (count < target) {
 	    // need fission
 	    if (KjcOptions.dppartition) {
-		new DynamicProgPartitioner(str, target).toplevelFusion();
+		new DynamicProgPartitioner(str, work, target).toplevel();
 	    } else {
-		new GreedyPartitioner(str, target).toplevelFission(count);
+		new GreedyPartitioner(str, work, target).toplevelFission(count);
 	    }
 	} else {
 	    // need fusion
 	    if (KjcOptions.ilppartition) {
-		new ILPPartitioner(str, target).toplevelFusion();
+		new ILPPartitioner(str, work, target).toplevelFusion();
 	    } else if (KjcOptions.dppartition) {
-		new DynamicProgPartitioner(str, target).toplevelFusion();
+		new DynamicProgPartitioner(str, work, target).toplevel();
 	    } else {
-		new GreedyPartitioner(str, target).toplevelFusion();
+		new GreedyPartitioner(str, work, target).toplevelFusion();
 	    }
 	}
 

@@ -9,6 +9,10 @@ import java.util.*;
 
 /**
  * Provides a means for estimating the amount of work in a stream graph.
+ *
+ * This is meant to be an IMMUTABLE class.  Once you have an instance,
+ * it's estimates will never change.  Thus you can do the estimate
+ * once, then pass it around and share it.
  */
 public class WorkEstimate {
     
@@ -142,6 +146,13 @@ public class WorkEstimate {
 			       ((int)getPercentageWork(obj)) + "%)");
 	}
 	
+    }
+
+    /**
+     * Prints dot graph of work estimates for <str> to <filename>.
+     */
+    public void printGraph(SIRStream str, String filename) {
+	PartitionDot.printWorkGraph(str, filename, workMap);
     }
 
     /**

@@ -19,13 +19,19 @@ import at.dms.kjc.sir.lowering.fission.*;
  * dot graphs with partitioning information. 
  **/
 public class PartitionDot extends StreamItDot {
+    private String prefixLabel;
     private HashMap partitions;
     private static final String[] color_table = {"floralwhite", "blue", "aliceblue", "antiquewhite", "aquamarine", "bisque", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "crimson", "cyan", "darkgoldenrod", "darkgreen", "", "darkkhaki", "darkolivegreen", "darkorange", "", "darkorchid", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "", "", "", "", "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "", "dimgray", "", "dodgerblue", "firebrick", "forestgreen", "gainsboro", "ghostwhite", "gold", "goldenrod"};
 
+    /**
+     * PrefixLabel is a prefix for each node.
+     */
     public PartitionDot(PrintStream outputstream,
-			HashMap partitions) {
+			HashMap partitions,
+			String prefixLabel) {
 	super(outputstream);
 	this.partitions = partitions;
+	this.prefixLabel = prefixLabel;
     }
 
     /* visit a filter */
@@ -42,11 +48,12 @@ public class PartitionDot extends StreamItDot {
 	Utils.assert(partitions.containsKey(self), "Not assigned to tile: " + self.getName());
 	int partition;
 	try {
-	    partition = Integer.valueOf((String)partitions.get(self)).intValue();
+	    partition = Integer.valueOf(""+partitions.get(self)).intValue();
 	} catch (NumberFormatException e) {
 	    partition = -1;
 	}
-	label += "\\npartition=" + partition + "\" color=\"" + color_table[(partition+1)%color_table.length] + "\" style=\"filled";
+	label += "\\n" + prefixLabel + partitions.get(self) + 
+	    "\" color=\"" + color_table[(partition+1)%color_table.length] + "\" style=\"filled";
 	return new NamePair(makeLabelledNode(label));
     }
 
@@ -92,11 +99,26 @@ public class PartitionDot extends StreamItDot {
     /**
      * Prints dot graph of <str> to <filename>.
      */
-    public static void printGraph(SIRStream str, String filename,
-				  HashMap partitions) {
+    public static void printPartitionGraph(SIRStream str, 
+					   String filename,
+					   HashMap partitions) {
+	printGraph(str, filename, partitions, "partition=");
+    }
+
+    static void printWorkGraph(SIRStream str,
+			       String filename,
+			       HashMap partitions) {
+	printGraph(str, filename, partitions, "work=");
+	
+    }
+
+    private static void printGraph(SIRStream str, 
+				   String filename,
+				   HashMap partitions,
+				   String prefixLabel) {
 	try {
 	    FileOutputStream out = new FileOutputStream(filename);
-	    StreamItDot dot = new PartitionDot(new PrintStream(out), partitions);
+	    StreamItDot dot = new PartitionDot(new PrintStream(out), partitions, prefixLabel);
 	    dot.print("digraph streamit {\n");
 	    str.accept(dot);
 	    dot.print("}\n");

@@ -59,12 +59,19 @@ public class RegisterStreams implements FlatVisitor {
 
 	if (node.incoming != null) {
 
+	    int dest = NodeEnumerator.getNodeId(node);
 	    for (i = 0; i < node.incoming.length; i++) {
 		
-		int source = NodeEnumerator.getNodeId(node.incoming[i]);
-		int dest = NodeEnumerator.getNodeId(node);
-		v.add(new NetStream(source, dest, input_t));
-	    }	
+		if (node.incoming[i] != null) {
+		    
+		    int source = NodeEnumerator.getNodeId(node.incoming[i]);
+		    
+		    if (source != -1 && dest != -1) {
+			v.add(new NetStream(source, dest, input_t));
+			
+		    }	
+		}
+	    }
 	}
 
 	filterInStreams.put(node.contents, v);
@@ -73,14 +80,16 @@ public class RegisterStreams implements FlatVisitor {
 
 	if (node.edges != null) {
 
+	    int source = NodeEnumerator.getNodeId(node);
 	    for (i = 0; i < node.edges.length; i++) {
-
-		int source = NodeEnumerator.getNodeId(node);
 
 		if (node.edges[i] != null) {
 
 		    int dest = NodeEnumerator.getNodeId(node.edges[i]);
-		    v.add(new NetStream(source, dest, output_t));
+
+		    if (source != -1 && dest != -1) {
+			v.add(new NetStream(source, dest, output_t));
+		    }
 		}
 	    }
 	}
@@ -109,3 +118,5 @@ public class RegisterStreams implements FlatVisitor {
 	return (Vector)filterOutStreams.get(op);
     }
 }
+
+

@@ -402,11 +402,31 @@ public class LowerInitFunctions implements StreamVisitor {
 	// register children
 	registerChildren(self.getChildren(), prologue);
 
+        // rewrite SIR reg-receiver calls into LIR
+        ListIterator it = init.getStatementIterator();
+        while (it.hasNext())
+        {
+            JStatement stmt = (JStatement)it.next();
+            if (stmt instanceof SIRRegReceiverStatement)
+            {
+                SIRRegReceiverStatement sir_stmt =
+                    (SIRRegReceiverStatement)stmt;
+                LIRRegisterReceiver lir_stmt =
+                    new LIRRegisterReceiver(LoweringConstants.
+                                            getStreamContext(),
+                                            (SIRPortal)sir_stmt.getPortal(),
+                                            sir_stmt.getReceiver().
+                                            getRelativeName(),
+                                            sir_stmt.getItable());
+                it.set(lir_stmt);
+            }
+        }
+
 	// add the prologue to the init function, but AFTER any
 	// variable declarations.  so find where the last variableDecl
 	// is...
 	int count=0;
-	ListIterator it = init.getStatementIterator();
+	it = init.getStatementIterator();
 	while (it.hasNext() && 
 	       it.next() instanceof JVariableDeclarationStatement) {
 	    count++;

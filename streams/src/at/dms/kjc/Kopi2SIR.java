@@ -1510,24 +1510,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    //For weighted round robins, the splitter get built here and set here
 
 	    JExpression[] args = splitter.getArgs();
-	    int[] weights = new int[args.length];
-	    for (int i = 0; i < weights.length; i++) {
-		/*
-		if (!(args[i] instanceof JIntLiteral))
-		    at.dms.util.Utils.fail("Args to Weighted-round-robin must be ints");
-		weights[i] = ((JIntLiteral)args[i]).intValue();
-		*/
-	    }
 	    if (parentStream instanceof SIRSplitJoin)
 		((SIRSplitJoin)parentStream).setSplitter(SIRSplitter.
 							createWeightedRR((SIRSplitJoin)
 									 parentStream, 
-									 weights));
+									 args));
 	    if (parentStream instanceof SIRFeedbackLoop)
 		((SIRFeedbackLoop)parentStream).setSplitter(SIRSplitter.
 							 createWeightedRR((SIRFeedbackLoop)
 									  parentStream, 
-									  weights));
+									  args));
 	    splitType = null;
 	}
 	else
@@ -1552,24 +1544,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    //For weighted round robins, the joiner get built here and set here
 
 	    JExpression[] args = joiner.getArgs();
-	    int[] weights = new int[args.length];
-	    for (int i = 0; i < weights.length; i++) {
-		/*
-		if (!(args[i] instanceof JIntLiteral))
-		    at.dms.util.Utils.fail("Args to Weighted-round-robin must be ints");
-		weights[i] = ((JIntLiteral)args[i]).intValue();
-		*/
-	    }
 	    if (parentStream instanceof SIRSplitJoin)
 		((SIRSplitJoin)parentStream).setJoiner(SIRJoiner.
 							createWeightedRR((SIRSplitJoin)
 									 parentStream, 
-									 weights));
+									 args));
 	    if (parentStream instanceof SIRFeedbackLoop)
 		((SIRFeedbackLoop)parentStream).setJoiner(SIRJoiner.
 							 createWeightedRR((SIRFeedbackLoop)
 									  parentStream, 
-									  weights));
+									  args));
 	    joinType = null;
 	}
 	

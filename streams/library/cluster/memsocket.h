@@ -10,6 +10,8 @@
 
 using namespace std;
 
+#DEFINE NUMBER_OF_BLOCKS 10
+
 class memsocket : public mysocket {
 
   queue<void*> free_buffers;
@@ -40,7 +42,7 @@ class memsocket : public mysocket {
     if (buffer_size == 0) {
 
       pthread_mutex_lock(&free_buffer_lock);
-      for (int y = 0; y < 25; y++) {
+      for (int y = 0; y < NUMBER_OF_BLOCKS; y++) {
 	free_buffers.push(malloc(size));
       }
       pthread_cond_signal(&free_buffer_release_cond);
@@ -91,7 +93,7 @@ class memsocket : public mysocket {
   }
 
   inline bool queue_full() {
-    return queue_size() >= 24;
+    return queue_size() >= NUMBER_OF_BLOCKS;
   }
   
   inline void wait_for_data() {

@@ -1,4 +1,4 @@
-SOURCES  = HDTV.java TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java
+SOURCES  = HDTV.java TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java ConvolutionalInterleaver.java ConvolutionalDeinterleaver.java
 
 COMPILER = java -Xmx512M  at.dms.kjc.Main -s
 LINKER   = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 

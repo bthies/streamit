@@ -10,11 +10,20 @@ public class Test extends StreamIt
 
     public void init() {
 	// add a data source
-	this.add(new TestDataSource());
+	//this.add(new TestDataSource());
+	this.add(new SimpleTestDataSource());
+
+	// try a delay pipeline
+	//this.add(new DelayPipeline(5));
+	
+	// try a Convolutional Interleaver
+	this.add(new ConvolutionalInterleaver(5));
+	this.add(new ConvolutionalDeinterleaver(5));	
+
 
 	// add a reed solomon encoder
-	this.add(new ReedSolomonEncoder());
-	this.add(new ReedSolomonDecoder());
+	//this.add(new ReedSolomonEncoder());
+	//this.add(new ReedSolomonDecoder());
 	
 
 	//this.add(new PreCoder());
@@ -62,6 +71,18 @@ class TestDataSource extends Filter {
     public void work() {
 	output.pushInt(this.x[this.i]);
 	this.i = (this.i + 1) % 10;
+    }
+}
+
+class SimpleTestDataSource extends Filter {
+    int x;
+    public void init() {
+	this.x = 10;
+	output = new Channel(Integer.TYPE, 1);
+    }
+    public void work() {
+	output.pushInt(this.x);
+	this.x++;
     }
 }
 

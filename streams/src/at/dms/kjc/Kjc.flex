@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Kjc.flex,v 1.2 2001-10-23 16:22:47 dmaze Exp $
+ * $Id: Kjc.flex,v 1.3 2002-06-24 23:13:25 thies Exp $
  */
 
 package at.dms.kjc;
@@ -114,8 +114,6 @@ E =	[eE] [+\-]? {D}+
 "else"		{ return TOKEN_LITERAL_else; }
 "extends"		{ return TOKEN_LITERAL_extends; }
 "false"		{ return TOKEN_LITERAL_false; }
-"feedback"		{ return TOKEN_LITERAL_feedback; }
-"filter"		{ return TOKEN_LITERAL_filter; }
 "final"		{ return TOKEN_LITERAL_final; }
 "finally"		{ return TOKEN_LITERAL_finally; }
 "float"		{ return TOKEN_LITERAL_float; }
@@ -132,13 +130,11 @@ E =	[eE] [+\-]? {D}+
 "new"		{ return TOKEN_LITERAL_new; }
 "null"		{ return TOKEN_LITERAL_null; }
 "package"		{ return TOKEN_LITERAL_package; }
-"pipeline"		{ return TOKEN_LITERAL_pipeline; }
 "private"		{ return TOKEN_LITERAL_private; }
 "protected"		{ return TOKEN_LITERAL_protected; }
 "public"		{ return TOKEN_LITERAL_public; }
 "return"		{ return TOKEN_LITERAL_return; }
 "short"		{ return TOKEN_LITERAL_short; }
-"splitjoin"		{ return TOKEN_LITERAL_splitjoin; }
 "static"		{ return TOKEN_LITERAL_static; }
 "strictfp"		{ return TOKEN_LITERAL_strictfp; }
 "super"		{ return TOKEN_LITERAL_super; }

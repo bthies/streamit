@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassImport.java,v 1.7 2003-08-29 19:25:36 thies Exp $
+ * $Id: JClassImport.java,v 1.8 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -154,9 +154,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JClassImport other) {
   super.deepCloneInto(other);
-  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name, other);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, other);
-  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments, other);
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments);
   other.used = this.used;
 }
 

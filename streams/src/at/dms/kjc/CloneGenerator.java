@@ -144,7 +144,7 @@ public class CloneGenerator {
 		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
 		// otherwise call toplevel cloning method
-		sb.append("  other." + name + " = (" + printSourceType(type) + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ", other);\n");
+		sb.append("  other." + name + " = (" + printSourceType(type) + ")at.dms.kjc.AutoCloner.cloneToplevel(this." + name + ");\n");
 	    }
 	}
 	sb.append("}\n");

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAssignmentExpression.java,v 1.10 2003-09-13 05:17:36 thies Exp $
+ * $Id: JAssignmentExpression.java,v 1.11 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -176,7 +176,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JAssignmentExpression other) {
   super.deepCloneInto(other);
-  other.copyVar = (at.dms.kjc.JLocalVariableExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.copyVar, other);
+  other.copyVar = (at.dms.kjc.JLocalVariableExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.copyVar);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryExpression.java,v 1.9 2003-08-29 19:25:36 thies Exp $
+ * $Id: JBinaryExpression.java,v 1.10 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -162,9 +162,9 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JBinaryExpression other) {
   super.deepCloneInto(other);
-  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, other);
-  other.left = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.left, other);
-  other.right = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.right, other);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.left = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.left);
+  other.right = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.right);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

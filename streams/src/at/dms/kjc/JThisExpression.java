@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JThisExpression.java,v 1.8 2003-08-29 19:25:37 thies Exp $
+ * $Id: JThisExpression.java,v 1.9 2003-11-13 10:46:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -227,8 +227,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JThisExpression other) {
   super.deepCloneInto(other);
-  other.self = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.self, other);
-  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix, other);
+  other.self = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.self);
+  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

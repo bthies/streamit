@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.18 2003-09-17 08:27:59 thies Exp $
+ * $Id: JBlock.java,v 1.19 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -262,7 +262,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JBlock other) {
   super.deepCloneInto(other);
-  other.body = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.body, other);
+  other.body = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

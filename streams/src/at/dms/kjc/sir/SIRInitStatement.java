@@ -134,8 +134,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRInitStatement other) {
   super.deepCloneInto(other);
-  other.args = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.args, other);
-  other.target = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.target, other);
+  other.args = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.args);
+  other.target = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

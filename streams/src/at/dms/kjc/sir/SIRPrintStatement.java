@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.9 2003-08-29 19:25:41 thies Exp $
+ * $Id: SIRPrintStatement.java,v 1.10 2003-11-13 10:46:15 thies Exp $
  */
 
 package at.dms.kjc.sir;
@@ -124,7 +124,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRPrintStatement other) {
   super.deepCloneInto(other);
-  other.arg = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.arg, other);
+  other.arg = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.arg);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Phylum.java,v 1.6 2003-08-29 19:25:33 thies Exp $
+ * $Id: Phylum.java,v 1.7 2003-11-13 10:46:06 thies Exp $
  */
 
 package at.dms.compiler;
@@ -66,7 +66,7 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.compiler.Phylum other) {
   super.deepCloneInto(other);
-  other.where = (at.dms.compiler.TokenReference)at.dms.kjc.AutoCloner.cloneToplevel(this.where, other);
+  other.where = (at.dms.compiler.TokenReference)at.dms.kjc.AutoCloner.cloneToplevel(this.where);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

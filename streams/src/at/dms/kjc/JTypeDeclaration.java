@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JTypeDeclaration.java,v 1.8 2003-08-29 19:25:37 thies Exp $
+ * $Id: JTypeDeclaration.java,v 1.9 2003-11-13 10:46:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -411,17 +411,17 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 protected void deepCloneInto(at.dms.kjc.JTypeDeclaration other) {
   super.deepCloneInto(other);
   other.modifiers = this.modifiers;
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, other);
-  other.body = (at.dms.kjc.JPhylum[])at.dms.kjc.AutoCloner.cloneToplevel(this.body, other);
-  other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields, other);
-  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods, other);
-  other.inners = (at.dms.kjc.JTypeDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.inners, other);
-  other.interfaces = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.interfaces, other);
-  other.outerThis = (at.dms.kjc.JFieldDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.outerThis, other);
-  other.defaultConstructor = (at.dms.kjc.JConstructorDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.defaultConstructor, other);
-  other.statInit = (at.dms.kjc.JInitializerDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.statInit, other);
-  other.instanceInit = (at.dms.kjc.JInitializerDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.instanceInit, other);
-  other.sourceClass = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceClass, other);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident);
+  other.body = (at.dms.kjc.JPhylum[])at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+  other.fields = (at.dms.kjc.JFieldDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
+  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+  other.inners = (at.dms.kjc.JTypeDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.inners);
+  other.interfaces = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.interfaces);
+  other.outerThis = (at.dms.kjc.JFieldDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.outerThis);
+  other.defaultConstructor = (at.dms.kjc.JConstructorDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.defaultConstructor);
+  other.statInit = (at.dms.kjc.JInitializerDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.statInit);
+  other.instanceInit = (at.dms.kjc.JInitializerDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.instanceInit);
+  other.sourceClass = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceClass);
   other.uniqueSourceClass = this.uniqueSourceClass;
 }
 

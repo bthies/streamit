@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.7 2003-10-04 02:11:56 jasperln Exp $
+ * $Id: CArrayType.java,v 1.8 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -282,9 +282,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CArrayType other) {
   super.deepCloneInto(other);
-  other.baseType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.baseType, other);
+  other.baseType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.baseType);
   other.arrayBound = this.arrayBound;
-  other.dims = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.dims, other);
+  other.dims = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.dims);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

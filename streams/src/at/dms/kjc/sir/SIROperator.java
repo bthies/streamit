@@ -64,7 +64,7 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
     public JExpression getParentStructureAccess() {
 	// get parents of <str>
 	SIRStream parents[] = getParents();
-	
+
 	// construct result expression
 	JExpression result = LoweringConstants.getDataField();
 	

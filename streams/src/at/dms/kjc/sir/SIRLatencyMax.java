@@ -92,7 +92,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRLatencyMax other) {
   super.deepCloneInto(other);
-  other.max = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.max, other);
+  other.max = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.max);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -2749,24 +2749,24 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   super.deepCloneInto(other);
-  other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application, other);
+  other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application);
   other.parentStream = this.parentStream;
   other.topLevel = this.topLevel;
   other.trash = this.trash;
   other.num = this.num;
   other.lineNumber = this.lineNumber;
-  other.currentMethod = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.currentMethod, other);
+  other.currentMethod = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.currentMethod);
   other.visitedSIROps = this.visitedSIROps;
   other.symbolTable = this.symbolTable;
   other.interfaceList = this.interfaceList;
   other.interfaceTableList = this.interfaceTableList;
   other.structureList = this.structureList;
-  other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList, other);
-  other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params, other);
-  other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames, other);
-  other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars, other);
+  other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
+  other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
+  other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);
+  other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
   other.anonCreation = this.anonCreation;
-  other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency, other);
+  other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIfStatement.java,v 1.10 2003-08-29 19:25:37 thies Exp $
+ * $Id: JIfStatement.java,v 1.11 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -206,9 +206,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JIfStatement other) {
   super.deepCloneInto(other);
-  other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond, other);
-  other.thenClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.thenClause, other);
-  other.elseClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.elseClause, other);
+  other.cond = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.cond);
+  other.thenClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.thenClause);
+  other.elseClause = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.elseClause);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

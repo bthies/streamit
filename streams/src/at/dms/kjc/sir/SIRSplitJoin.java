@@ -36,6 +36,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     public SIRSplitJoin(SIRContainer parent,
 			String ident) {
 	super(parent, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY() );
+	if (ident.startsWith("BandPassFilter")) new RuntimeException().printStackTrace();
     }
 
     /**
@@ -367,8 +368,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRSplitJoin other) {
   super.deepCloneInto(other);
-  other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter, other);
-  other.joiner = (at.dms.kjc.sir.SIRJoiner)at.dms.kjc.AutoCloner.cloneToplevel(this.joiner, other);
+  other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter);
+  other.joiner = (at.dms.kjc.sir.SIRJoiner)at.dms.kjc.AutoCloner.cloneToplevel(this.joiner);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBlockContext.java,v 1.5 2003-08-29 19:25:36 thies Exp $
+ * $Id: CBlockContext.java,v 1.6 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -281,8 +281,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CBlockContext other) {
   super.deepCloneInto(other);
-  other.localClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.localClasses, other);
-  other.localVars = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.localVars, other);
+  other.localClasses = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.localClasses);
+  other.localVars = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.localVars);
   other.parentIndex = this.parentIndex;
   other.localsIndex = this.localsIndex;
   other.localsPosition = this.localsPosition;

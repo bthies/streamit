@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCheckedExpression.java,v 1.7 2003-08-29 19:25:36 thies Exp $
+ * $Id: JCheckedExpression.java,v 1.8 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -127,7 +127,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JCheckedExpression other) {
   super.deepCloneInto(other);
-  other.checked = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.checked, other);
+  other.checked = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.checked);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -44,7 +44,7 @@ public class AutoCloner {
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();
-	Object result = cloneToplevel(oldObj, null);
+	Object result = cloneToplevel(oldObj);
 	// clear registry to promote GC
 	registry = null;
 	return result;
@@ -61,7 +61,7 @@ public class AutoCloner {
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();
-	Object result = cloneToplevel(oldObj, null);
+	Object result = cloneToplevel(oldObj);
 	// clear registry to promote GC
 	registry = null;
 	return result;
@@ -78,7 +78,7 @@ public class AutoCloner {
 
 	toBeCloned = visitor.getToBeCloned();
 	registry = new HashMap();
-	Object result = cloneToplevel(oldObj, null);
+	Object result = cloneToplevel(oldObj);
 	// clear registry to promote GC
 	registry = null;
 	return result;
@@ -94,7 +94,7 @@ public class AutoCloner {
 	toBeCloned = new HashSet();
 
 	registry = new HashMap();
-	Object result = cloneToplevel(kopi2sir, null);
+	Object result = cloneToplevel(kopi2sir);
 	registry = null;
 	return result;
     }
@@ -118,13 +118,8 @@ public class AutoCloner {
      * It should never be called directly by the user -- use deepCopy
      * for that.  This dictates the toplevel cloning policy, and is
      * called on every field that is cloned.
-     *
-     * The parent is the object (if any) that is <o>'s parent. In the
-     * event that <o> is an SIROperator, its parent will be set to
-     * <parent> after cloning.  Parent can be null if this case is
-     * N/A.
      */
-    static public Object cloneToplevel(Object o, Object parent) {
+    static public Object cloneToplevel(Object o) {
 	// if it is null, keep it that way
 	if (o==null) {
 	    return null;
@@ -166,7 +161,7 @@ public class AutoCloner {
 	}
 	// hashtables -- clone along with contents
 	else if (o instanceof Hashtable) {
-	    result = cloneHashtable((Hashtable)o, parent);
+	    result = cloneHashtable((Hashtable)o);
 	} 
 	// arrays -- need to clone children as well
 	else if (o.getClass().isArray()) {
@@ -192,7 +187,7 @@ public class AutoCloner {
 	    }
 	    register(o, result);
 	    if (shouldClone) {
-		cloneWithinArray((Object[])result, parent);
+		cloneWithinArray((Object[])result);
 	    }
 	}
 	// enumerate the list types to make the java compiler happy
@@ -200,19 +195,19 @@ public class AutoCloner {
 	else if (o instanceof ConstList) {
 	    result = ((ConstList)o).clone();
 	    register(o, result);
-	    cloneWithinList((List)result, parent);
+	    cloneWithinList((List)result);
 	} else if (o instanceof LinkedList) {
 	    result = ((LinkedList)o).clone();
 	    register(o, result);
-	    cloneWithinList((List)result, parent);
+	    cloneWithinList((List)result);
 	} else if (o instanceof Stack) {
 	    result = ((Stack)o).clone();
 	    register(o, result);
-	    cloneWithinList((List)result, parent);
+	    cloneWithinList((List)result);
 	} else if (o instanceof Vector) {
 	    result = ((Vector)o).clone();
 	    register(o, result);
-	    cloneWithinList((List)result, parent);
+	    cloneWithinList((List)result);
 	}
 	// unknown types
 	else {
@@ -220,21 +215,27 @@ public class AutoCloner {
 	    result = o;
 	}
 	// try fixing parent
-	fixParent(result, parent);
+	fixParent(o, result);
 	// remember result
 	register(o, result);
 	return result;
     }
 
     /**
-     * If o is an SIROperator, sets it's parent to <parent>.  Either
-     * way, returns o (for convenience).
+     * If o is an SIROperator and it has a parent that has been
+     * cloned, then set parent of <result> to be the cloned parent of
+     * <o>.
      */
-    static private Object fixParent(Object o, Object parent) {
-	if (o instanceof SIROperator && parent!=null && parent instanceof SIRContainer) {
-	    ((SIROperator)o).setParent((SIRContainer)parent);
+    static private void fixParent(Object o, Object result) {
+	if (o instanceof SIROperator) {
+	    SIRContainer parent = ((SIROperator)o).getParent();
+	    if (parent!=null) {
+		SIRContainer clonedParent = (SIRContainer)registry.get(new RegistryWrapper(parent));
+		if (clonedParent!=null) {
+		    ((SIROperator)result).setParent(clonedParent);
+		}
+	    }
 	}
-	return o;
     }
 
     /**
@@ -253,15 +254,15 @@ public class AutoCloner {
      * Helper function.  Should only be called as part of automatic
      * cloning process.
      */
-    static private Object cloneHashtable(Hashtable orig, Object parent) {
+    static private Object cloneHashtable(Hashtable orig) {
 	Hashtable result = new Hashtable();
 	register(orig, result);
 	Enumeration e = orig.keys();
 	while (e.hasMoreElements()) {
 	    Object key = e.nextElement();
 	    Object value = orig.get(key);
-	    result.put(cloneToplevel(key, parent),
-		       cloneToplevel(value, parent));
+	    result.put(cloneToplevel(key),
+		       cloneToplevel(value));
 	}
 	return result;
     }
@@ -270,10 +271,10 @@ public class AutoCloner {
      * Helper function.  Should only be called as part of automatic
      * cloning process.
      */
-    static private void cloneWithinList(List clone, Object parent) {
+    static private void cloneWithinList(List clone) {
 	for (int i=0; i<clone.size(); i++) {
 	    Object old = clone.get(i);
-	    clone.set(i, cloneToplevel(old, parent));
+	    clone.set(i, cloneToplevel(old));
 	}
     }
 
@@ -281,10 +282,10 @@ public class AutoCloner {
      * Helper function.  Should only be called as part of automatic
      * cloning process.
      */
-    static private void cloneWithinArray(Object[] clone, Object parent) {
+    static private void cloneWithinArray(Object[] clone) {
 	// clone elements
 	for (int i=0; i<clone.length; i++) {
-	    clone[i] = cloneToplevel(clone[i], parent);
+	    clone[i] = cloneToplevel(clone[i]);
 	}
     }
 

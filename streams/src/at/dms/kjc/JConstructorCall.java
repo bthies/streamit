@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConstructorCall.java,v 1.7 2003-08-29 19:25:36 thies Exp $
+ * $Id: JConstructorCall.java,v 1.8 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -235,10 +235,10 @@ public Object deepClone() {
 protected void deepCloneInto(at.dms.kjc.JConstructorCall other) {
   super.deepCloneInto(other);
   other.functorIsThis = this.functorIsThis;
-  other.arguments = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.arguments, other);
-  other.clazz = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.clazz, other);
-  other.inClass = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.inClass, other);
-  other.method = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.method, other);
+  other.arguments = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.arguments);
+  other.clazz = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.clazz);
+  other.inClass = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.inClass);
+  other.method = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.method);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

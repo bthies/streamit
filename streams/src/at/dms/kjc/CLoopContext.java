@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CLoopContext.java,v 1.6 2003-08-29 19:25:36 thies Exp $
+ * $Id: CLoopContext.java,v 1.7 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -155,9 +155,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CLoopContext other) {
   super.deepCloneInto(other);
-  other.stmt = (at.dms.kjc.JLoopStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt, other);
-  other.breakContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.breakContextSummary, other);
-  other.continueContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.continueContextSummary, other);
+  other.stmt = (at.dms.kjc.JLoopStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
+  other.breakContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.breakContextSummary);
+  other.continueContextSummary = (at.dms.kjc.CBodyContext)at.dms.kjc.AutoCloner.cloneToplevel(this.continueContextSummary);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

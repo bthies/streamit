@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcPrettyPrinter.java,v 1.6 2003-08-29 19:25:37 thies Exp $
+ * $Id: KjcPrettyPrinter.java,v 1.7 2003-11-13 10:46:11 thies Exp $
  */
 
 package at.dms.kjc;
@@ -1629,7 +1629,7 @@ protected void deepCloneInto(at.dms.kjc.KjcPrettyPrinter other) {
   other.TAB_SIZE = this.TAB_SIZE;
   other.WIDTH = this.WIDTH;
   other.pos = this.pos;
-  other.p = (at.dms.compiler.TabbedPrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p, other);
+  other.p = (at.dms.compiler.TabbedPrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p);
   other.nl = this.nl;
 }
 

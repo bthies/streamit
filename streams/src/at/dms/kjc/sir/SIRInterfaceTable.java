@@ -137,9 +137,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRInterfaceTable other) {
   super.deepCloneInto(other);
-  other.iface = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.iface, other);
-  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods, other);
-  other.vardecl = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.vardecl, other);
+  other.iface = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.iface);
+  other.methods = (at.dms.kjc.JMethodDeclaration[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+  other.vardecl = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.vardecl);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JavaStyleComment.java,v 1.7 2003-08-29 19:25:33 thies Exp $
+ * $Id: JavaStyleComment.java,v 1.8 2003-11-13 10:46:06 thies Exp $
  */
 
 package at.dms.compiler;
@@ -98,7 +98,7 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.compiler.JavaStyleComment other) {
-  other.text = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.text, other);
+  other.text = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.text);
   other.isLineComment = this.isLineComment;
   other.spaceBefore = this.spaceBefore;
   other.spaceAfter = this.spaceAfter;

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CCompilationUnitContext.java,v 1.5 2003-08-29 19:25:36 thies Exp $
+ * $Id: CCompilationUnitContext.java,v 1.6 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -186,9 +186,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CCompilationUnitContext other) {
   super.deepCloneInto(other);
-  other.compiler = (at.dms.compiler.Compiler)at.dms.kjc.AutoCloner.cloneToplevel(this.compiler, other);
-  other.classes = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classes, other);
-  other.cunit = (at.dms.kjc.CCompilationUnit)at.dms.kjc.AutoCloner.cloneToplevel(this.cunit, other);
+  other.compiler = (at.dms.compiler.Compiler)at.dms.kjc.AutoCloner.cloneToplevel(this.compiler);
+  other.classes = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classes);
+  other.cunit = (at.dms.kjc.CCompilationUnit)at.dms.kjc.AutoCloner.cloneToplevel(this.cunit);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

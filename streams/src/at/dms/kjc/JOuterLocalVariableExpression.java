@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JOuterLocalVariableExpression.java,v 1.5 2003-08-29 19:25:37 thies Exp $
+ * $Id: JOuterLocalVariableExpression.java,v 1.6 2003-11-13 10:46:10 thies Exp $
  */
 
 package at.dms.kjc;
@@ -102,7 +102,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JOuterLocalVariableExpression other) {
   super.deepCloneInto(other);
-  other.outer = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.outer, other);
+  other.outer = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.outer);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

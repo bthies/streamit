@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.21 2003-06-02 15:09:39 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.22 2003-10-20 06:37:55 thies Exp $
  **/
 
 public class FilterMatrix {
@@ -564,6 +564,29 @@ public class FilterMatrix {
 	returnString += "]";
 
 	return returnString;
+    }
+
+    /**
+     * Returns REAL PART of matrix with a line for each row; entries
+     * between columns separated by a tab.
+     */
+    public String toTabSeparatedString() {
+	StringBuffer sb = new StringBuffer();
+	for (int i=0; i<internalSizeRows; i++) {
+	    for (int j=0; j<internalSizeCols; j++) {
+		// append real part
+		sb.append(this.getElement(i,j).getReal());
+		// add tab if not at end
+		if (j!=(internalSizeCols-1)) {
+		    sb.append("\t");
+		}
+	    }
+	    // newline if not at end
+	    if (i!=(internalSizeRows-1)) {
+		sb.append("\n");
+	    }
+	}
+	return sb.toString();
     }
 
     /**

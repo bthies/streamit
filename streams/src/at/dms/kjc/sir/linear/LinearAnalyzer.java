@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.linear;
 
 import java.util.*;
+import java.io.FileWriter;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
@@ -16,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.31 2003-06-02 15:09:39 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.32 2003-10-20 06:37:55 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. Never would have guessed that, would you? **/
@@ -83,6 +84,8 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	if (this.streamsToLinearRepresentation.containsKey(key)) {
 	    throw new IllegalArgumentException("tried to add key mapping.");
 	}
+	// uncomment this if you want to generate files for each matrix in the program
+	//writeToFile(key, rep);
 	this.streamsToLinearRepresentation.put(key,rep);
 	checkRep();
     }
@@ -98,6 +101,25 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Adds a mapping from SIRStream to linear filter rep. **/
     public boolean isNonLinear(SIRStream key) {
 	return nonLinearStreams.contains(key);
+    }
+
+    /**
+     * Writes <rep> to files, names of <key>_A, <key>_b
+     */
+    private void writeToFile(SIRStream key, LinearFilterRepresentation rep) {
+	String base = key.getName().replace(' ','_');
+	
+	try {
+	    FileWriter outA = new FileWriter(base + "_A.tsv");
+	    outA.write(rep.getA().toTabSeparatedString());
+	    outA.close();
+	    
+	    FileWriter outB = new FileWriter(base + "_b.tsv");
+	    outB.write(rep.getb().toTabSeparatedString());
+	    outB.close();
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
     }
 
     /**
@@ -195,8 +217,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 				      "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
 	    }
 	    // add a mapping from the filter to its linear form.
-	    this.streamsToLinearRepresentation.put(self,
-						   theVisitor.getLinearRepresentation());
+	    addLinearRepresentation(self, theVisitor.getLinearRepresentation());
 	} else {
 	    nonLinearStreams.add(self);
 	}
@@ -260,7 +281,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 		    // and update the mapping from filters to LinearFilterRepresentations.
 		    LinearPrinter.println(" non-linear child:(" + currentKid + ")");
 		    LinearPrinter.println(" wrapping children.");
-		    doPipelineAdd(self, childrenToWrap, this.streamsToLinearRepresentation);
+		    doPipelineAdd(self, childrenToWrap);
 		    // reset our list
 		    childrenToWrap = new LinkedList();
 		}
@@ -272,7 +293,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// whole pipeline as linear.)  Note: this doesn't add empty
 	// pipelines
 	if (refactorLinearChildren || childrenToWrap.size()==self.size()) {
-	    doPipelineAdd(self, childrenToWrap, this.streamsToLinearRepresentation);
+	    doPipelineAdd(self, childrenToWrap);
 	}
 	// check to make sure that we didn't foobar ourselves.
 	checkRep();
@@ -303,8 +324,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * we do nothing.
      **/
     private void doPipelineAdd(SIRPipeline parentPipe,
-			       List childrenToWrap,
-			       HashMap linearRepMap) {
+			       List childrenToWrap) {
 	
 	// this just prints out the children we are passed
 	LinearPrinter.println(" new child pipe in doPipelineAdd: ");
@@ -352,12 +372,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	
 	
 	// now, calculate the overall linear rep of the child pipeline
-	List repList = getLinearRepList(linearRepMap, childrenToWrap); // list of linear reps
+	List repList = getLinearRepList(streamsToLinearRepresentation, childrenToWrap); // list of linear reps
 	LinearTransform pipeTransform = LinearTransformPipeline.calculate(repList);
 	try {
 	    LinearFilterRepresentation newRep = pipeTransform.transform();
 	    // add a mapping from child pipe to the new linear form.
-	    linearRepMap.put(overallPipe, newRep);
+	    addLinearRepresentation(overallPipe, newRep);
 	    // write output for output parsing scripts (check output mode
 	    // because printing this takes a loooooong time for big matrices) 
 	    if (LinearPrinter.getOutput()) {
@@ -365,13 +385,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 				      "\n-->Matrix:\n" + newRep.getA() +
 				      "\n-->Constant Vector:\n" + newRep.getb());
 	    }
-	
 	} catch (NoTransformPossibleException e) {
 	    // otherwise something bad happened in the combination process.
 	    LinearPrinter.println(" can't combine transform reps: " + e.getMessage());
 	    //throw new RuntimeException("Error combining pipeline!");
 	}
-	return;
     }
 
     /**
@@ -497,7 +515,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 				  "\n-->Constant Vector:\n" + newRep.getb());
 	}
 	// add a mapping from this split join to the new linear representation
-	this.streamsToLinearRepresentation.put(self, newRep);
+	addLinearRepresentation(self, newRep);
     }
     
     

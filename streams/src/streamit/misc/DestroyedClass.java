@@ -41,7 +41,7 @@ public class DestroyedClass extends Misc
         {
             // This REALLY should not happen
             // just assert
-            SASSERT (false);
+            assert false;
         }
     }
 
@@ -60,11 +60,11 @@ public class DestroyedClass extends Misc
     void Destroy ()
     {
         // make sure the object hasn't been Destroyed yet
-        ASSERT (!Destroyed);
+        assert !Destroyed;
         Destroyed = true;
 
         Class objectClass = this.getClass ();
-        ASSERT (objectClass != null);
+        assert objectClass != null;
 
         for ( ; objectClass != DestroyedClass ; objectClass = objectClass.getSuperclass ())
         {
@@ -73,7 +73,7 @@ public class DestroyedClass extends Misc
             try
             {
                 deleteMethod = objectClass.getDeclaredMethod ("DELETE", null);
-                ASSERT (deleteMethod != null);
+                assert deleteMethod != null;
 
                 deleteMethod.invoke (this, null);
             }
@@ -88,7 +88,7 @@ public class DestroyedClass extends Misc
             {
                 // This REALLY shouldn't happen
                 // just assert
-                ASSERT (false);
+                assert false;
             }
         }
     }

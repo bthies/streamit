@@ -132,6 +132,12 @@ public class Flattener {
 
 	str = doStateSpaceAnalysis(str);
 
+	if (KjcOptions.manual != null) {
+	    System.err.print("Running manual optimizations...");
+	    str = ManualPartition.doit(str);
+	    System.err.println("done.");
+	}
+
 	// dump the partitioned graph to a dot format
 	StreamItDot.printGraph(str, "after-partition.dot");
 

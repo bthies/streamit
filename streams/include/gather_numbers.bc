@@ -1,6 +1,6 @@
 
 //how often (in cycles) would we like to update the bloodgraph
-global bg_update_cycles = 100;
+global bg_update_cycles = 1;
 
 
 //Number gathering bc code

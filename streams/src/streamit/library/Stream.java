@@ -514,7 +514,7 @@ public abstract class Stream extends Operator
         boolean scheduledRun = true;
         boolean printGraph = true;
         boolean doRun = true;
-        boolean schedsingleapp = false;
+        boolean singeappsched = false;
         int nIters = -1;
 
         // read the args:
@@ -549,9 +549,9 @@ public abstract class Stream extends Operator
                 {
                     doRun = false;
                 }
-                else if (args[index].equals("-schedsingleapp"))
+                else if (args[index].equals("-singeappsched"))
                 {
-                    schedsingleapp = true;
+                    singeappsched = true;
                 }
                 else
                 {
@@ -585,8 +585,14 @@ public abstract class Stream extends Operator
         if (scheduledRun)
         {
             Iterator selfIter = new streamit.library.iriter.Iterator(this);
-            streamit.scheduler2.Scheduler scheduler =
-                new streamit.scheduler2.minlatency.Scheduler(selfIter);
+            streamit.scheduler2.Scheduler scheduler;
+            if (singeappsched)
+                scheduler =
+                    new streamit.scheduler2.singleappearance.Scheduler(
+                        selfIter);
+            else
+                scheduler =
+                    new streamit.scheduler2.minlatency.Scheduler(selfIter);
 
             scheduler.computeSchedule();
             scheduler.computeBufferUse();

@@ -292,6 +292,7 @@ public class FusePipe {
 	    
 	    // number of executions (num[0] is init, num[1] is steady)
 	    int[] num = new int[2];
+
 	    // for now, guard against empty/incomplete schedules
 	    // by assuming a count of zero.  Talk to Michal about
 	    // have entries of zero-weight in schedule?  FIXME.
@@ -309,6 +310,20 @@ public class FusePipe {
 		num[1] = 0;
 	    }
 	    
+	    // calculate how much data we should buffer between the
+	    // i'th and (i-1)'th filter
+	    int peekBufferSize;
+	    if (i==0) {
+		// for the first filter, don't need any peek buffer
+		peekBufferSize = 0;
+	    } else {
+		// otherwise, need however many were left over during
+		// initialization between this filter and the last
+		FilterInfo last = (FilterInfo)result.get(result.size()-1);
+		peekBufferSize = last.init.num * last.filter.getPushInt()
+		    - num[0] * filter.getPopInt();
+	    }
+
 	    // get ready to make rest of phase-specific info
 	    JVariableDefinition popBuffer[] = new JVariableDefinition[2];
 	    JVariableDefinition popCounter[] = new JVariableDefinition[2];
@@ -317,26 +332,25 @@ public class FusePipe {
 	    
 	    for (int j=0; j<2; j++) {
 		// the pop buffer
-		popBuffer[j] = makePopBuffer(filter, num[j], i);
+		popBuffer[j] = makePopBuffer(filter, peekBufferSize, num[j], i);
 
 		// the pop counter.
 		popCounter[j] = 
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    POP_INDEX_NAME + "_" + j + "_" + i,
 					    new
-					    JIntLiteral(//filter.getPeekInt() - filter.getPopInt()
-							- 1 /* this is since we're starting
+					    JIntLiteral(- 1 /* this is since we're starting
 							       at -1 and doing pre-inc 
 							       instead of post-inc */ ));
 	    
 		// the push counter.  In the steady state, the initial
 		// value of the push counter is the first slot after
-		// the peek values are restored, which is peek-pop-1
+		// the peek values are restored, which is peekBufferSize-1
 		// (-1 since we're pre-incing, not post-incing).  In
 		// the inital work function, the push counter starts
 		// at -1 (since we're pre-incing, not post-incing).
 		int pushInit = 
-		    j==0 ? -1 : filter.getPeekInt() - filter.getPopInt() - 1;
+		    j==0 ? -1 : peekBufferSize - 1;
 		pushCounter[j] = 
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    PUSH_INDEX_NAME + "_" + j + "_" +i,
@@ -351,7 +365,7 @@ public class FusePipe {
 
 	    // add a filter info to <result>
 	    result.add(new 
-		       FilterInfo(filter, peekBuffer, 
+		       FilterInfo(filter, peekBuffer, peekBufferSize,
 				  new PhaseInfo(num[0], 
 						popBuffer[0], 
 						popCounter[0], 
@@ -399,11 +413,11 @@ public class FusePipe {
      * <pos>'th position of its pipeline.
      */
     private static JVariableDefinition makePopBuffer(SIRFilter filter, 
+						     int peekBufferSize,
 						     int num,
 						     int pos) {
 	// get the number of items looked at in an execution round
-	int lookedAt = num * filter.getPopInt() + 
-	    filter.getPeekInt() - filter.getPopInt();
+	int lookedAt = num * filter.getPopInt() + peekBufferSize;
 	// make an initializer to make a buffer of extent <lookedAt>
 	JExpression[] dims = { new JIntLiteral(null, lookedAt) };
 	JExpression initializer = 
@@ -601,8 +615,7 @@ public class FusePipe {
     private static JStatement makePeekRestore(FilterInfo filterInfo,
 					      PhaseInfo phaseInfo) {
 	// make a statement that will copy peeked items into the pop
-	// buffer, assuming the counter will count from 0 to
-	// (peek-pop) [exclusive upper bound]
+	// buffer, assuming the counter will count from 0 to peekBufferSize
 
 	// the lhs of the source of the assignment
 	JExpression sourceLhs = 
@@ -643,10 +656,7 @@ public class FusePipe {
 	// return a for loop that executes (peek-pop) times.
 	return makeForLoop(body,
 			   phaseInfo.loopCounter, 
-			   new JIntLiteral(filterInfo.filter.
-					   getPeekInt() -
-					   filterInfo.filter.
-					   getPopInt()));
+			   new JIntLiteral(filterInfo.peekBufferSize));
     }
 
     /**
@@ -656,8 +666,7 @@ public class FusePipe {
     private static JStatement makePeekBackup(FilterInfo filterInfo,
 					     PhaseInfo phaseInfo) {
 	// make a statement that will copy unpopped items into the
-	// peek buffer, assuming the counter will count from 0 to
-	// (peek-pop) [exclusive upper bound]
+	// peek buffer, assuming the counter will count from 0 to peekBufferSize
 
 	// the lhs of the destination of the assignment
 	JExpression destLhs = 
@@ -678,22 +687,22 @@ public class FusePipe {
 	    
 	// the rhs of the source of the assignment... (add one to the
 	// push index because of our pre-inc convention.)
-	JExpression sourceRhs1 = 
+	JExpression sourceRhs = 
 	    new
 	    JAddExpression(null, 
 			   new JLocalVariableExpression(null, 
 							phaseInfo.loopCounter),
 			   new JAddExpression(null, new JIntLiteral(1),
 					      new JLocalVariableExpression(null,
-									   phaseInfo.pushCounter)));
+									   phaseInfo.popCounter)));
+					      /*
 	// need to subtract the difference in peek and pop counts to
 	// see what we have to backup
 	JExpression sourceRhs =
 	    new JMinusExpression(null,
 				 sourceRhs1,
-				 new JIntLiteral(filterInfo.filter.getPeekInt()
-						 -filterInfo.filter.getPopInt()
-						 ));
+				 new JIntLiteral(filterInfo.peekBufferSize));
+					      */
 
 	// the expression that copies items from the pop buffer to the
 	// peek buffer
@@ -712,8 +721,7 @@ public class FusePipe {
 	// return a for loop that executes (peek-pop) times.
 	return makeForLoop(body,
 			   phaseInfo.loopCounter, 
-			   new JIntLiteral(filterInfo.filter.getPeekInt() -
-					   filterInfo.filter.getPopInt()));
+			   new JIntLiteral(filterInfo.peekBufferSize));
     }
 
     /**
@@ -925,6 +933,11 @@ class FilterInfo {
     public final JFieldDeclaration peekBuffer;
 
     /**
+     * The size of the peek buffer
+     */
+    public final int peekBufferSize;
+
+    /**
      * The info on the initial execution.
      */
     public final PhaseInfo init;
@@ -935,9 +948,10 @@ class FilterInfo {
     public final PhaseInfo steady;
 
     public FilterInfo(SIRFilter filter, JFieldDeclaration peekBuffer,
-		      PhaseInfo init, PhaseInfo steady) {
+		      int peekBufferSize, PhaseInfo init, PhaseInfo steady) {
 	this.filter = filter;
 	this.peekBuffer = peekBuffer;
+	this.peekBufferSize = peekBufferSize;
 	this.init = init;
 	this.steady = steady;
     }
@@ -1231,8 +1245,7 @@ class InitFuser {
 	    FilterInfo info = (FilterInfo)it.next();
 	    // calculate dimensions of the buffer
 	    JExpression[] dims = { new JIntLiteral(null, 
-						   info.filter.getPeekInt() -
-						   info.filter.getPopInt())};
+						   info.peekBufferSize) };
 	    // add a statement initializeing the peek buffer
 	    fusedBlock.addStatementFirst(new JExpressionStatement(null,
 	      new JAssignmentExpression(

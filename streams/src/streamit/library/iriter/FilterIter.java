@@ -12,6 +12,7 @@ public class FilterIter
     }
 
     Filter filter;
+    final String workName = "work";
     
     public Object getObject ()
     {
@@ -25,78 +26,96 @@ public class FilterIter
     
     public int getNumInitStages ()
     {
-        // in the library, there are no init stages - initialization
-        // is already done!
-        return 0;
+        if (filter.isMultiPhaseStyle())
+        {
+            return filter.getNumInitPhases();
+        } else {
+            // if not using the multi-phase style, cannot have any init phases!
+            return 0;
+        }
     }
     
     public int getInitPeekStage (int stage)
     {
-        // library doesn't have an init stage!
-        ASSERT (false);
-        return 0;
+        ASSERT (filter.isMultiPhaseStyle());
+        return filter.getInitPeekStage (stage);
     }
 
     public int getInitPopStage (int stage)
     {
-        // library doesn't have an init stage!
-        ASSERT (false);
-        return 0;
+        ASSERT (filter.isMultiPhaseStyle());
+        return filter.getInitPopStage (stage);
     }
     
     public int getInitPushStage (int stage)
     {
-        // library doesn't have an init stage!
-        ASSERT (false);
-        return 0;
+        ASSERT (filter.isMultiPhaseStyle());
+        return filter.getInitPushStage (stage);
     }
     
     public Object getInitFunctionStage (int stage)
     {
-        // library doesn't have an init stage!
-        ASSERT (false);
-        return null;
+        ASSERT (filter.isMultiPhaseStyle());
+        return filter.getInitFunctionStageName (stage);
     }
     
     public int getNumWorkPhases ()
     {
-        // library has only one phase!
-        return 1;
+        if (filter.isMultiPhaseStyle())
+        {
+            return filter.getNumSteadyPhases();
+        } else {
+            // if not using the multi-phase style, must have exactly one phase!
+            return 1;
+        }
     }
     
     public int getPeekPhase (int phase)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        return filter.peekCount;
+        if (filter.isMultiPhaseStyle())
+        {
+            return filter.getSteadyPeekPhase(phase);
+        } else {
+            // if not using the multi-phase style, must have exactly one phase!
+            ASSERT (phase == 0);
+            return filter.peekCount;
+        }
     }
     
     public int getPopPhase (int phase)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        return filter.popCount;
+        if (filter.isMultiPhaseStyle())
+        {
+            return filter.getSteadyPopPhase(phase);
+        } else {
+            // if not using the multi-phase style, must have exactly one phase!
+            ASSERT (phase == 0);
+            return filter.popCount;
+        }
     }
     
     public int getPushPhase (int phase)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        return filter.pushCount;
+        if (filter.isMultiPhaseStyle())
+        {
+            return filter.getSteadyPushPhase(phase);
+        } else {
+            // if not using the multi-phase style, must have exactly one phase!
+            ASSERT (phase == 0);
+            return filter.pushCount;
+        }
     }
 
     public Object getWorkFunctionPhase (int phase)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        // just return the filter
-        // since the library has only one stage, the filter
-        // will uniquely identify which function is meant
-        return filter;
+        if (filter.isMultiPhaseStyle())
+        {
+            return filter.getSteadyFunctionPhaseName(phase);
+        } else {
+            // if not using the multi-phase style, must have exactly one phase!
+            ASSERT (phase == 0);
+            return workName;
+        }
     }
     
     public boolean equals(Object other)

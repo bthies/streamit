@@ -154,24 +154,13 @@ public class StreamIt extends Pipeline
                     System.out.print(".");
                 numExecutions = 0;
             }
-            int inputCount = 0, outputCount = 0;
-            if (schedule instanceof Filter)
-            {
-                Stream stream = (Stream) schedule;
-                if (stream.getInputChannel() != null)
-                {
-                    inputCount = stream.getInputChannel().getItemsPopped();
-                }
-                if (stream.getOutputChannel() != null)
-                {
-                    outputCount =
-                        stream.getOutputChannel().getItemsPushed();
-                }
-            }
-
             Operator oper = (Operator) schedule;
+            int filterPop, filterPush;
             if (oper instanceof Filter)
-                oper.work();
+            {
+                Filter f = (Filter) oper;
+                f.executeNextPhase ((String)function);
+            }
             else if (oper instanceof SplitJoin || oper instanceof FeedbackLoop)
             {
                 ASSERT(function instanceof Operator);
@@ -180,49 +169,6 @@ public class StreamIt extends Pipeline
             else
                 ASSERT(false);
 
-            if (schedule instanceof Filter)
-            {
-                Stream stream = (Stream) schedule;
-                int newInputCount, newOutputCount;
-                if (stream.getInputChannel() != null)
-                {
-                    newInputCount =
-                        stream.getInputChannel().getItemsPopped();
-                    ASSERT(
-                        newInputCount - inputCount
-                            == stream.getInputChannel().getPopCount(),
-                        "This probably means that you declared the wrong pop rate for "
-                            + stream
-                            + "\n  have newInput=="
-                            + newInputCount
-                            + " and inputCount=="
-                            + inputCount
-                            + " and popCount=="
-                            + stream.getInputChannel().getPopCount()
-                            + " on Stream "
-                            + stream);
-                }
-                if (stream.getOutputChannel() != null)
-                {
-                    newOutputCount =
-                        stream.getOutputChannel().getItemsPushed();
-                    ASSERT(
-                        newOutputCount - outputCount
-                            == stream.getOutputChannel().getPushCount(),
-                        "This probably means that you declared the wrong push rate for "
-                            + stream
-                            + "\n"
-                            + "Pushed: "
-                            + newOutputCount
-                            + " and outputCount: "
-                            + outputCount
-                            + " but declared: "
-                            + stream.getOutputChannel().getPushCount()
-                            + " on Stream "
-                            + stream);
-                }
-
-            }
         }
     }
     void runSchedule(Object schedule)

@@ -127,7 +127,7 @@ public class RefactorSplitJoin {
      */
     public static SIRSplitJoin addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
 	// make result
-	SIRSplitJoin result = new SIRSplitJoin(sj.getParent(), sj.getIdent() + "_Hier", sj.getFields(), sj.getMethods());
+	SIRSplitJoin result = new SIRSplitJoin(sj.getParent(), sj.getIdent() + "_Hier");
 	result.setInit(SIRStream.makeEmptyInit());
 
 	// get copy of children and params

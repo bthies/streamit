@@ -67,13 +67,25 @@ typedef struct tape {
   (((type *)(t)->data)[((t)->read_pos+n+1)%(t)->tape_length])
 #define POP_TAPE(t, type) \
   (((type *)((t)->data))[INCR_TAPE_READ(t)])
-#define COPY_TAPE_ITEM(s, d) \
-  (memcpy((d)->data + (d)->write_pos * (d)->data_size, \
-          (s)->data + (s)->read_pos * (s)->data_size, \
-          (d)->data_size))
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)
+#define streamit_memcpy(d, s, l) \
+  (((l) == 0) ? memcpy((d), (s), 0) : \
+   ((l) == 1) ? memcpy((d), (s), 1) : \
+   ((l) == 2) ? memcpy((d), (s), 2) : \
+   ((l) == 3) ? memcpy((d), (s), 3) : \
+   ((l) == 4) ? memcpy((d), (s), 4) : \
+   ((l) == 6) ? memcpy((d), (s), 6) : \
+   ((l) == 8) ? memcpy((d), (s), 8) : \
+   ((l) == 12) ? memcpy((d), (s), 12) : \
+   ((l) == 16) ? memcpy((d), (s), 16) : \
+   ((l) == 20) ? memcpy((d), (s), 20) : \
+   memcpy((d), (s), (l)))
+#define COPY_TAPE_ITEM(s, d) \
+  (streamit_memcpy((d)->data + (d)->write_pos * (d)->data_size, \
+                   (s)->data + (s)->read_pos * (s)->data_size, \
+                   (d)->data_size))
 #define FEEDBACK_DELAY(d, c, n, t, f) { \
   int i; \
   for (i = 0; i < (n); i++) { \

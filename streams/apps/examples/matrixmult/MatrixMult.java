@@ -194,11 +194,11 @@ class FloatSource extends Filter
 class Sink extends Filter {
     int x;
     public void init() {
-	input = new Channel(Integer.TYPE, 1);
+	input = new Channel(Float.TYPE, 1);
 	x = 0;
     }
     public void work() {
-	input.popInt();
+	input.popFloat();
 	x++;
 	if (x==100) {
 	    System.out.println("done..");

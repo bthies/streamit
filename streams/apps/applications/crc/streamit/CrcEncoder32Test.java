@@ -12,6 +12,7 @@ import java.lang.*;
 import streamit.io.*;
 import java.io.*;
 
+/*
 class EncoderInput
 {
 
@@ -55,6 +56,7 @@ class EncoderInput
   }//readFile
 
 }//class EncoderInput
+*/
 
 class IntIdentity extends Filter
 {
@@ -216,15 +218,15 @@ class ShiftRegisterFilter extends Filter
 
 class CrcInputFilter extends Filter
 {
-    int[] mdata;
+    // int[] mdata;
     boolean counter;
-    EncoderInput mencodefile;
+    // EncoderInput mencodefile;
 
     public void init()
     {
 	counter = false;
-	mencodefile = new EncoderInput();
-	mdata = new int[mencodefile.mInputLength];
+	// mencodefile = new EncoderInput();
+	// mdata = new int[mencodefile.mInputLength];
 	output = new Channel(Integer.TYPE, 1);
     }
 

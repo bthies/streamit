@@ -102,6 +102,43 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//switch
 	print("void raw_init();\n");
 	    
+	print("int count = -1;\n");
+
+	if (filter.getPeekInt() > 0) {
+	    if (circular) {
+		if (filter instanceof SIRTwoStageFilter) {
+		    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+		    int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
+			two.getPeekInt();
+		    buffersize = nextPow2(buffersize + 1);
+		    print ("#define BUFFERSIZE " + buffersize + "\n");
+		    print ("#define BITS " + (buffersize - 1) + "\n");
+		    print(two.getInputType() + 
+			  " buffer[BUFFERSIZE];\n");
+		}
+		else{
+		    int buffersize = nextPow2(filter.getPeekInt());
+		    print ("#define BUFFERSIZE " + buffersize + "\n");
+		    print ("#define BITS " + (buffersize - 1) + "\n");
+		    print(filter.getInputType() + 
+			  " buffer[BUFFERSIZE];\n");
+		}
+	    }
+	    else {
+		if (filter instanceof SIRTwoStageFilter) {
+		    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+		    int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
+			two.getPeekInt();
+		    print(two.getInputType() + 
+			  " buffer[" + buffersize + "];\n");
+		}
+		else {
+		    print(filter.getInputType() + 
+			  " buffer[" + filter.getPeekInt() + "];\n");
+		}
+	    }
+	}
+
 	//Visit fields declared in the filter class
 	for (int i = 0; i < fields.length; i++)
 	   fields[i].accept(this);
@@ -242,13 +279,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private void printCircularTwoStageInitWork() 
     {
 	SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
-	    two.getPeekInt();
-	buffersize = nextPow2(buffersize + 1);
-	print ("#define BUFFERSIZE " + buffersize + "\n");
-	print ("#define BITS " + (buffersize - 1) + "\n");
-	print(two.getInputType() + 
-		       " buffer[BUFFERSIZE];\n");
+	/*int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
+	  two.getPeekInt();
+	  buffersize = nextPow2(buffersize + 1);
+	  print ("#define BUFFERSIZE " + buffersize + "\n");
+	  print ("#define BITS " + (buffersize - 1) + "\n");
+	  print(two.getInputType() + 
+	  " buffer[BUFFERSIZE];\n");*/
 	print(" for (i = 0; i < " + two.getInitPeek() + "; i++)\n");
 	print("   buffer[i] = ");
 	if (two.getInputType().equals(CStdType.Float))
@@ -276,15 +313,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	print("{\n");
 	if (filter.getPeekInt() > 0) {
-	    print("int i, count = -1;\n");
+	    //	    print("int i, count = -1;\n");
+	    print("int i;\n");
 	    if (filter instanceof SIRTwoStageFilter) 
 		printCircularTwoStageInitWork();
 	    else {
-		int buffersize = nextPow2(filter.getPeekInt());
-		print ("#define BUFFERSIZE " + buffersize + "\n");
+		/*int buffersize = nextPow2(filter.getPeekInt());
+		  print ("#define BUFFERSIZE " + buffersize + "\n");
 		print ("#define BITS " + (buffersize - 1) + "\n");
 		print(filter.getInputType() + 
-		       " buffer[BUFFERSIZE];\n");
+		" buffer[BUFFERSIZE];\n");*/
 		print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
 		print("   buffer[i] = ");
 		if (filter.getInputType().equals(CStdType.Float))
@@ -318,11 +356,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private void printTwoStageInitWork() 
     {
 	SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
-	    two.getPeekInt();
-	
-	print(two.getInputType() + 
-		       " buffer[" + buffersize + "];\n");
+	//	int buffersize = (two.getInitPeek() > two.getPeekInt()) ? two.getInitPeek() :
+	//   two.getPeekInt();
+	//	
+	//	print(two.getInputType() + 
+	//	       " buffer[" + buffersize + "];\n");
 	print(" for (i = 0; i < " + two.getInitPeek() + "; i++)\n");
 	print("   buffer[i] = ");
 	if (two.getInputType().equals(CStdType.Float))
@@ -351,12 +389,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	print("{\n");
 	if (filter.getPeekInt() > 0) {
-	    print("int i, count = -1;\n");
+	    //print("int i, count = -1;\n");
+	    print("int i;\n");
 	    if (filter instanceof SIRTwoStageFilter) 
 		printTwoStageInitWork();
 	    else {
-		print(filter.getInputType() + 
-		       " buffer[" + filter.getPeekInt() + "];\n");
+		//	print(filter.getInputType() + 
+		//       " buffer[" + filter.getPeekInt() + "];\n");
 		print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
 		print("   buffer[i] = ");
 		if (filter.getInputType().equals(CStdType.Float))

@@ -103,9 +103,10 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //simulate the firings
 	    //1 item for a joiner, push items for a filter
 	    	    
+	    //System.out.println(Namer.getName(fire.contents) + " pushing " + items);
 
 	    for (int i = 0; i < items; i++) {
-		//System.out.println(Namer.getName(fire.contents) + " pushing " + items);
+	
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0

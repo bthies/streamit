@@ -124,7 +124,7 @@ public class ClusterBackend implements FlatVisitor {
 	SIRPortal.findMessageStatements(str);
 
 	// Increasing filter Multiplicity
-	//IncreaseFilterMult.inc(str, 1);
+	IncreaseFilterMult.inc(str, 1);
 
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");
@@ -151,6 +151,18 @@ public class ClusterBackend implements FlatVisitor {
 	boolean doCacheOptimization = KjcOptions.cacheopt;
 
 	System.err.println("Running Partitioning... target number of threads: "+threads);
+
+	HashMap partitionMap = new HashMap();
+
+	if ( doCacheOptimization ) {
+	    for (;;) {
+		str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0).calcPartitions(partitionMap);
+		boolean decreased = IncreaseFilterMult.decreaseMult(partitionMap);
+		if (!decreased) break;
+	    }
+	}
+
+
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {
 	    // turn on dynamic programming if no other partitioning is turned on
@@ -170,7 +182,8 @@ public class ClusterBackend implements FlatVisitor {
 	    */
 	} 
 
-	HashMap partitionMap = new HashMap();
+	//HashMap partitionMap = new HashMap();
+	partitionMap.clear();
 
 	if ( doCacheOptimization ) {
 	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0).calcPartitions(partitionMap);

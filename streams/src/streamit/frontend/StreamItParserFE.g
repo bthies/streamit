@@ -1,11 +1,15 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.2 2002-08-22 19:25:39 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.3 2002-08-22 22:16:53 dmaze Exp $
  */
 
 header {
 	package streamit.frontend;
+	import streamit.frontend.nodes.*;
 	import java.io.DataInputStream;
+	import java.util.List;
+
+	import java.util.ArrayList;
 }
 
 options {
@@ -37,6 +41,15 @@ tokens {
 		{
 			e.printStackTrace(System.err);
 		}
+	}
+
+	public FEContext getContext(Token t)
+	{
+		int line = t.getLine();
+		if (line == 0) line = -1;
+		int col = t.getColumn();
+		if (col == 0) col = -1;
+		return new FEContext(null, line, col);
 	}
 }
 
@@ -272,118 +285,156 @@ assign_expr
 	:	left_expr ((ASSIGN^ | PLUS_EQUALS^ | MINUS_EQUALS^) right_expr)?
 	;
 
-func_call_params
-	: LPAREN^ (right_expr (COMMA! right_expr)* )? RPAREN!
+func_call_params returns [List l] { l = new ArrayList(); Expression x; }
+	:	LPAREN
+		(	x=right_expr { l.add(x); }
+			(COMMA x=right_expr { l.add(x); })*
+		)?
+		RPAREN
 	;
 
-left_expr
-	:	value
+left_expr returns [Expression x] { x = null; }
+	:	x=value
 	;
 
-right_expr
-	:	ternaryExpr
+right_expr returns [Expression x] { x = null; }
+	:	x=ternaryExpr
 	;
 
-ternaryExpr
-	:	logicOrExpr (QUESTION^ ternaryExpr COLON! ternaryExpr)?
+ternaryExpr returns [Expression x] { x = null; Expression b, c; }
+	:	x=logicOrExpr
+		(QUESTION b=ternaryExpr COLON c=ternaryExpr
+			{ x = new ExprTernary(x.getContext(), ExprTernary.TEROP_COND,
+					x, b, c); }
+		)?
 	;
 
-logicOrExpr
-	:	logicAndExpr ( (LOGIC_OR^ | LOGIC_XOR^) logicOrExpr)?
+logicOrExpr returns [Expression x] { x = null; Expression r; int o = 0; }
+	:	x=logicAndExpr
+		(LOGIC_OR r=logicOrExpr
+			{ x = new ExprBinary(x.getContext(), ExprBinary.BINOP_OR, x, r); }
+		)?
 	;
 
-logicAndExpr
-	:	bitwiseExpr ( LOGIC_AND^ logicAndExpr)?
+logicAndExpr returns [Expression x] { x = null; Expression r; }
+	:	x=bitwiseExpr
+		(LOGIC_AND r=logicAndExpr
+			{ x = new ExprBinary(x.getContext(), ExprBinary.BINOP_AND, x, r); }
+		)?
 	;
 
-bitwiseExpr
-	:	equalExpr ((BITWISE_OR^ | BITWISE_AND^ | BITWISE_XOR^) bitwiseExpr)?
+bitwiseExpr returns [Expression x] { x = null; Expression r; int o = 0; }
+	:	x=equalExpr
+		(	( BITWISE_OR  { o = ExprBinary.BINOP_BOR; }
+			| BITWISE_AND { o = ExprBinary.BINOP_BAND; }
+			| BITWISE_XOR { o = ExprBinary.BINOP_BXOR; }
+			)
+			r=bitwiseExpr
+			{ x = new ExprBinary(x.getContext(), o, x, r); }
+		)?
 	;
 
-equalExpr
-	:	compareExpr ( (EQUAL^ | NOT_EQUAL^) equalExpr)?
+equalExpr returns [Expression x] { x = null; Expression r; int o = 0; }
+	:	x=compareExpr
+		(	( EQUAL     { o = ExprBinary.BINOP_EQ; }
+			| NOT_EQUAL { o = ExprBinary.BINOP_NEQ; }
+			)
+			r = equalExpr
+			{ x = new ExprBinary(x.getContext(), o, x, r); }
+		)?
 	;
 
-compareExpr
-	:	addExpr
-		((LESS_THAN^ | LESS_EQUAL^ | MORE_THAN^ | MORE_EQUAL^) compareExpr)?
+compareExpr returns [Expression x] { x = null; Expression r; int o = 0; }
+	:	x=addExpr
+		(	( LESS_THAN  { o = ExprBinary.BINOP_LT; }
+			| LESS_EQUAL { o = ExprBinary.BINOP_LE; }
+			| MORE_THAN  { o = ExprBinary.BINOP_GT; }
+			| MORE_EQUAL { o = ExprBinary.BINOP_GE; }
+			)
+			r = compareExpr
+			{ x = new ExprBinary(x.getContext(), o, x, r); }
+		)?
 	;
 
-addExpr
-	:	multExpr ( (PLUS^ | MINUS^) addExpr)?
+addExpr returns [Expression x] { x = null; Expression r; int o = 0; }
+	:	x=multExpr
+		(	( PLUS  { o = ExprBinary.BINOP_ADD; }
+			| MINUS { o = ExprBinary.BINOP_SUB; }
+			)
+			r=addExpr
+			{ x = new ExprBinary(x.getContext(), o, x, r); }
+		)?
 	;
 
-multExpr
-	:	inc_dec_expr ( (STAR^ | DIV^ | MOD^) multExpr)?
+multExpr returns [Expression x] { x = null; Expression r; int o = 0; }
+	:	x=inc_dec_expr
+		(	( STAR { o = ExprBinary.BINOP_MUL; }
+			| DIV  { o = ExprBinary.BINOP_DIV; }
+			| MOD  { o = ExprBinary.BINOP_MOD; }
+			)
+			r=multExpr
+			{ x = new ExprBinary(x.getContext(), o, x, r); }
+		)?
 	;
 
-inc_dec_expr
-	:	(incOrDec) => incOrDec
-	|	value_expr
+inc_dec_expr returns [Expression x] { x = null; }
+	:	(incOrDec) => x=incOrDec
+	|	x=value_expr
 	;
 
-incOrDec!
-	:	exp1:left_expr
-		(	INCREMENT { /* #incOrDec = #([POST_INCR], exp1); */ }
-		|	DECREMENT { /* #incOrDec = #([POST_DECR], exp1); */ }
+incOrDec returns [Expression x] { x = null; }
+	:	x=left_expr
+		(	INCREMENT
+			{ x = new ExprUnary(x.getContext(), ExprUnary.UNOP_POSTINC, x); }
+		|	DECREMENT
+			{ x = new ExprUnary(x.getContext(), ExprUnary.UNOP_POSTDEC, x); }
 		)
-	|	INCREMENT exp2:left_expr { /* #incOrDec = #([PRE_INCR], exp2); */ }
-	|	DECREMENT exp3:left_expr { /* #incOrDec = #([PRE_DECR], exp3); */ }
+	|	i:INCREMENT x=left_expr
+			{ x = new ExprUnary(getContext(i), ExprUnary.UNOP_PREINC, x); }
+	|	d:DECREMENT x=left_expr
+			{ x = new ExprUnary(getContext(d), ExprUnary.UNOP_PREDEC, x); }
 	;
 
-value_expr
-	:	minic_value_expr
-	|	streamit_value_expr
+value_expr returns [Expression x] { x = null; }
+	:	x=minic_value_expr
+	|	x=streamit_value_expr
 	;
 
-streamit_value_expr
-	:	TK_pop^ LPAREN! RPAREN!
-	|	TK_peek^ LPAREN! right_expr RPAREN!
+streamit_value_expr returns [Expression x] { x = null; }
+	:	t:TK_pop LPAREN RPAREN
+			{ x = new ExprPop(getContext(t)); }
+	|	u:TK_peek LPAREN x=right_expr RPAREN
+			{ x = new ExprPeek(getContext(u), x); }
 	;
 
-minic_value_expr
-	:	LPAREN! right_expr RPAREN!
-	|	value
-	|	constantExpr
+minic_value_expr returns [Expression x] { x = null; }
+	:	LPAREN! x=right_expr RPAREN!
+	|	x=value
+	|	x=constantExpr
 	;
 
-value
-!:
-  field1:field_ref { /* #value = #field1; */ }
-  (
-    func_params1:func_call_params
-    { /* #value = #([LPAREN, "$call"], #value, #func_params1); */ }
-  )?
-  (
-    array_mod1:array_modifiers
-    { /* #value = #([LSQUARE, "$array"], #value, #array_mod1); */ }
-  )?
-  (
-    (
-      DOT field2:field_ref
-      { /* #value = #(DOT, #value, #field2); */ }
-      
-    )
-    (
-      func_params2:func_call_params
-      { /* #value = #([LPAREN, "$call"], #value, #func_params2); */ }
-    )?
-    (
-      array_mod2:array_modifiers
-      { /* #value = #([LSQUARE, "$array"], #value, #array_mod2); */ }
-    )?
-  )*
-;
-
-field_ref
-	:	varName:ID 
+value returns [Expression x] { x = null; Expression array; List l; }
+	:	name:ID
+		(	l=func_call_params
+			{ x = new ExprFunCall(getContext(name), name.getText(), l); }
+		|	{ x = new ExprVar(getContext(name), name.getText()); }
+			(	DOT field:ID
+				{ x = new ExprField(x.getContext(), x, field.getText()); }
+			|	LSQUARE array=right_expr RSQUARE
+				{ x = new ExprArray(x.getContext(), x, array); }
+			)*
+		)
 	;
 
-constantExpr
-	:	NUMBER
-	|	CHAR_LITERAL
-	|	STRING_LITERAL
-	|!	TK_pi { /* #constantExpr = #([NUMBER, Double.toString(Math.PI)]); */ }
+constantExpr returns [Expression x] { x = null; }
+	:	n:NUMBER
+			{ x = ExprConstant.createConstant(getContext(n), n.getText()); }
+	|	c:CHAR_LITERAL
+			{ x = new ExprConstChar(getContext(c), c.getText()); }
+	|	s:STRING_LITERAL
+			{ x = new ExprConstStr(getContext(s), s.getText()); }
+	|	pi:TK_pi
+			{ x = new ExprConstFloat(getContext(pi), Math.PI); }
 	;
 
 struct_decl
@@ -392,14 +443,3 @@ struct_decl
 		(variable_decl SEMI!)*
 		RCURLY!
 	;
-
-switch_stmt
-	:	TK_switch^
-		LPAREN! right_expr RPAREN!
-		LCURLY!	(case_stmt)* RCURLY!
-	;
-
-case_stmt
-	:	(TK_case^ right_expr | TK_default^) COLON! (statement)*
-	;
-

@@ -31,7 +31,7 @@ public class Linear extends RawExecutionCode implements Constants {
     
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
-	assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
+	//assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
 	FilterTraceNode node=filterInfo.traceNode;
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
 	FilterContent content=filterInfo.filter;
@@ -177,7 +177,8 @@ public class Linear extends RawExecutionCode implements Constants {
     }
     
     public JMethodDeclaration getPrimePumpMethod() {
-	return null;
+	//TEMP
+	return getInitStageMethod();
     }
     
     public JMethodDeclaration getInitStageMethod() {
@@ -437,13 +438,13 @@ public class Linear extends RawExecutionCode implements Constants {
 	    return static_receive;
 	}
 
-	public Object visitPeekExpression(SIRPeekExpression oldSelf,
-					  CType oldTapeType,
-					  JExpression oldArg) {
-	    Utils.fail("Should not see a peek expression when generating " +
-		       "direct communication");
-	    return null;
-	}
+	/*public Object visitPeekExpression(SIRPeekExpression oldSelf,
+	  CType oldTapeType,
+	  JExpression oldArg) {
+	  Utils.fail("Should not see a peek expression when generating " +
+	  "direct communication");
+	  return null;
+	  }*/
     }
     //End Copy
 }

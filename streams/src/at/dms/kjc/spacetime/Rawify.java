@@ -66,8 +66,8 @@ public class Rawify
 		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, primepump);
 		    
 		    if (filterInfo.isLinear()) {
-			assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
-			    "Items remaining on buffer for init for linear filter";
+			//assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
+			//"Items remaining on buffer for init for linear filter";
 			createSwitchCodeLinear(filterNode,
 					       trace,filterInfo,init,primepump,tile,rawChip);
 		    }

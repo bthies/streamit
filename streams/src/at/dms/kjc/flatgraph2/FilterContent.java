@@ -229,8 +229,31 @@ public class FilterContent {
 	//return String.valueOf(System.identityHashCode(this));
 	if(array==null)
 	    return name;
-	else
+	else {
 	    return name+" ["+array.length+","+popCount+"]";
+	    /*StringBuffer out=new StringBuffer(name);
+	      out.append("[");
+	      out.append(popCount);
+	      out.append("][");
+	      double[] array=this.array;
+	      final int len=array.length;
+	      if(len>0) {
+	      out.append(array[0]);
+	      for(int i=1;i<len;i++) {
+	      out.append(",");
+	      out.append(array[i]);
+	      }
+	      }
+	      out.append("]");
+	      out.append(begin);
+	      out.append(",");
+	      out.append(end);
+	      out.append(",");
+	      out.append(pos);
+	      out.append(",");
+	      out.append(total);
+	      return out.toString();*/
+	}
     }
 
     public String getName() {

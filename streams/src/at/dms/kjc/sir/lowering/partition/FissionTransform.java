@@ -30,6 +30,7 @@ class FissionTransform extends IdentityTransform {
 	// make sure we're fissable
 	Utils.assert((str instanceof SIRFilter) && StatelessDuplicate.isFissable((SIRFilter)str),
 		     "Didn't get a filter or it wasn't fissable: " + str);
+	System.err.println("trying to split " + str + " " + reps + " ways.");
 	return StatelessDuplicate.doit((SIRFilter)str, reps);
     }
 }

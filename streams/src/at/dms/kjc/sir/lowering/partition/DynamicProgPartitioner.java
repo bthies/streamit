@@ -426,11 +426,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    } else {
 	    */
 	    // otherwise, use normal procedure
-	    if (tileLimit==1 || (cont.getParent() instanceof SIRSplitJoin)) {
-		// if the tileLimit is 1 or parent is a splitjoin (in
-		// which joiners will be collapsed), then we're fusing
-		// the splitjoin the whole way, so just return the sum
-		// cost
+	    if (tileLimit==1 || 
+		(cont.getParent()!=null && 
+		 cont.getParent().getSuccessor(cont) instanceof SIRJoiner)) {
+		// if the tileLimit is 1 or joiner will be collapsed,
+		// then all tiles are available for the splitjoin
 		return super.get(tileLimit);
 	    } else {
 		// however, if we want to break the splitjoin up, then
@@ -513,6 +513,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    int workCount = work.getWork(filter);
 	    // return decreased work if we're fissable
 	    if (tilesForFission(tileLimit)>1 && isFissable) {
+		/*
+		System.err.println("Trying " + filter + " on " + tileLimit + " tiles and splitting " + 
+				   tilesForFission(tileLimit) + " ways with bottlneck of " + 
+				   workCount / tilesForFission(tileLimit) + FISSION_OVERHEAD);
+		*/
 		return workCount / tilesForFission(tileLimit) + FISSION_OVERHEAD;
 	    } else {
 		return workCount;
@@ -525,7 +530,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	// if next downstream filter is a joiner, even if parent
 	// is not sj)
 	private int tilesForFission(int tileLimit) {
-	    return (filter.getParent() instanceof SIRSplitJoin ?
+	    return (filter.getParent()!=null && 
+		    filter.getParent().getSuccessor(filter) instanceof SIRJoiner ?
 		    tileLimit : 
 		    tileLimit - 1);
 	}
@@ -553,6 +559,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    map.put(filter, new Integer(tileCounter[0]));
 
 	    // do fission if we can
+	    /*
+	    System.err.println("For " + filter.getName() + 
+			       ", traceback allocated " + tileLimit + " tiles; allocated " + tilesForFission(tileLimit)
+			       + " for parallel streams.  isFissable=" + isFissable);
+	    */
 	    if (tilesForFission(tileLimit)>1 && isFissable) {
 		return new FissionTransform(tilesForFission(tileLimit));
 	    } else {

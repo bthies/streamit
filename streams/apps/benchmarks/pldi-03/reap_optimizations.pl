@@ -42,13 +42,13 @@ if (@ARGV) {
     @programs = split("\n", read_file(shift(@ARGV)));
 } else {
     @programs = (
-		 ".:FIRProgram:100",
-		 #".:SamplingRateConverter:1",
-		 #".:FilterBank:1",
-		 #".:TargetDetect:1",
-		 #".:FMRadioApp:1",
-		 #".:CoarseSerializedBeamFormer:1",
-		 #".:Test:1",
+		 ".:FIRProgram",
+		 ".:SamplingRateConverter",
+		 ".:FilterBank",
+		 ".:TargetDetect",
+		 ".:FMRadioApp",
+		 ".:CoarseSerializedBeamFormer",
+		 #".:Test",
 		 );
 }
 
@@ -59,7 +59,7 @@ if (@ARGV) {
 my @result_lines;
 # heading
 push(@result_lines, 
-     "Program\ttarget output size\t" .
+     "Program\t" .
      "normal flops\tnormal fadds\tnormal fmuls\tnormal outputs\t" .
      "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t" .
      "freq 2 flops\tfreq 2 fadds\tfreq 2 fmuls\tfreq 1 outputs\t" .
@@ -76,7 +76,7 @@ foreach $current_program (@programs) {
     #ignore blank lines
    if (not $current_program) {next;}
     # parse the input into path, program and max frequency size
-    my ($path, $base_filename, $max_target_size) = split(":", $current_program);
+    my ($path, $base_filename) = split(":", $current_program);
 
     # copy the input program into the new results dir
     print `cp $path/$base_filename.java $results_dir`;
@@ -98,37 +98,33 @@ foreach $current_program (@programs) {
 					       "$base_filename(linear)");
    save_output($path, $base_filename, "linear");
    
-    # for various sizes of target FFT length
-    my $targetFFTSize;
-    for ($targetFFTSize=1; $targetFFTSize<($max_target_size+1); $targetFFTSize*=2) {
 
-        # now, do the compilation with (smart fftw) frequency replacement
-	my ($freq2_outputs, $freq2_flops, 
-	    $freq2_fadds, $freq2_fmuls) = do_test($path, $base_filename, 
-						  "--unroll 100000 --debug --frequencyreplacement 2 --targetFFTSize $targetFFTSize",
-						  "$base_filename(freq 1, $targetFFTSize)");
-	save_output($path, $base_filename, "freq2-$targetFFTSize");
-	
-        # now, run with both optimizations
-	my ($both_outputs, $both_flops, 
-	    $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
-					       "--unroll 100000 --debug --linearreplacement --frequencyreplacement 2 --targetFFTSize $targetFFTSize",
-					       "base_filename(both, $targetFFTSize)");
-	save_output($path, $base_filename, "both-$targetFFTSize");
-	
-	my $new_data_line = 	     ("$base_filename\t$targetFFTSize\t".
-				      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
-				      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
-				      "$freq2_flops\t$freq2_fadds\t$freq2_fmuls\t$freq2_outputs\t" .
-				      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
+   # now, do the compilation with (smart fftw) frequency replacement
+   my ($freq2_outputs, $freq2_flops, 
+       $freq2_fadds, $freq2_fmuls) = do_test($path, $base_filename, 
+					     "--unroll 100000 --debug --frequencyreplacement 2",
+					     "$base_filename(freq 1)");
+   save_output($path, $base_filename, "freq2");
+   
+   # now, run with both optimizations (fftw and linear)
+   my ($both_outputs, $both_flops, 
+       $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
+					   "--unroll 100000 --debug --linearreplacement --frequencyreplacement 2",
+					   "base_filename(both)");
+   save_output($path, $base_filename, "both");
+   
+   my $new_data_line = 	     ("$base_filename\t".
+			      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
+			      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
+			      "$freq2_flops\t$freq2_fadds\t$freq2_fmuls\t$freq2_outputs\t" .
+			      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
+   
+   open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename)\"");
+   print MHMAIL $new_data_line;
+   close(MHMAIL);
+   
+   push(@result_lines, $new_data_line);
 
-	open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename,$targetFFTSize)\"");
-	print MHMAIL $new_data_line;
-	close(MHMAIL);
-	
-	push(@result_lines, $new_data_line);
-
-    }
 }
 
 

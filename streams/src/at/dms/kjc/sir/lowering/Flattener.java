@@ -6,7 +6,8 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.reordering.*;
-import at.dms.kjc.sir.linear.*; 
+import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.linear.frequency.*; 
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -183,18 +184,16 @@ public class Flattener {
 
 	    // and finally, if we want to run frequency analysis
 	    // 0 means stupid implementation, 1 means nice implemenation
-	    if (KjcOptions.frequencyreplacement == 0) {
-		System.err.print("Running (stupid) frequency replacement... ");
-		StupidFrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize);
+	    if (KjcOptions.frequencyreplacement != FrequencyReplacer.UNKNOWN) {
+		int replacementType = KjcOptions.frequencyreplacement;
+		System.err.print("Running " +
+				 "(" + FrequencyReplacer.getName(replacementType) + ")" +
+				 " frequency replacement...");
+		FrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize, replacementType);
 		System.err.println("done.");
-		LinearDot.printGraph(str, "linear-frequency-stupid.dot", lfa);
+		LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
 	    }
-	    if (KjcOptions.frequencyreplacement == 1) {
-		System.err.print("Running (smart) frequency replacement... ");
-		FrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize);
-		System.err.println("done.");
-		LinearDot.printGraph(str, "linear-frequency.dot", lfa);
-	    }
+
 
 	    
 	}

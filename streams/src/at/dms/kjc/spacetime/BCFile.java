@@ -185,6 +185,7 @@ public class BCFile
 	    FileWriter fw = new FileWriter(BCFILE_NAME);
 	    
 	    fw.write(buf.toString());
+	    fw.close();
 	}
 	catch (Exception e) {
 	    System.err.println("System Error writing " + 

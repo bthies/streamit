@@ -96,10 +96,10 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//call the raw_init() function for the static network
 	if (!KjcOptions.decoupled && !KjcOptions.magic_net) {
 	    print("  raw_init();\n");
-	    print("  raw_init2();\n");
+	    //print("  raw_init2();\n");
 	}
 	
-	print(tile.getComputeCode().getMainFunction() + "();\n");
+	print(tile.getComputeCode().getMainFunction().getName() + "();\n");
 	print("};\n");
     }
 	

@@ -31,7 +31,7 @@ public class RawTile {
 	int columns = 4;
 	if (rawChip.getYSize() > 4 || rawChip.getXSize() > 4)
 	    columns = 8;
-	tileNumber = (X * columns) + Y;
+	tileNumber = (Y * columns) + X;
     }
 
     public RawChip getRawChip() {

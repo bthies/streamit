@@ -71,7 +71,7 @@ public class Makefile
 			buf.append("tile" + num + ".o ");
 		    if (tile.hasSwitchCode() && 
 			!KjcOptions.magic_net && !KjcOptions.decoupled)
-			buf.append("sw" + tile + ".o");
+			buf.append("sw" + num + ".o");
 		    buf.append("\n");
 		}
 	    }	    
@@ -136,6 +136,7 @@ public class Makefile
 	    FileWriter fw = new FileWriter(MAKEFILE_NAME);
 	    
 	    fw.write(buf.toString());
+	    fw.close();
 	}
 	catch (Exception e) {
 	    System.err.println("System Error writing " + 

@@ -51,7 +51,7 @@ public class FilterInfo
     public boolean isTwoStage() 
     {
 	//return (filter instanceof SIRTwoStageFilter);
-	return filter.getWorkList().length>1;
+	return filter.isTwoStage();
     }
 
     private int calculateRemaining() 
@@ -65,7 +65,7 @@ public class FilterInfo
 	//if this is not a twostage, fake it by adding to initFire,
 	//so we always think the preWork is called
 	//if (!(filter instanceof SIRTwoStageFilter))
-	if(filter.getWorkList().length>1)
+	if(filter.isTwoStage())
 	    initFire++;
 	
 	//the number of items produced by the upstream filter in
@@ -77,7 +77,7 @@ public class FilterInfo
 	    upStreamItems = previous.getFilter().getPushInt() * 
 		previous.getInitMult();
 	    //if (previous.getFilter() instanceof SIRTwoStageFilter) {
-	    if (previous.getFilter().getWorkList().length>1) {
+	    if (previous.getFilter().isTwoStage()) {
 		/*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
 		  upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
 		upStreamItems -= previous.getFilter().getPushInt();

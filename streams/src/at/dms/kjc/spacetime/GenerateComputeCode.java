@@ -15,7 +15,9 @@ public class GenerateComputeCode {
 		    if (tile.hasComputeCode()) {
 			FileWriter fw = new FileWriter("tile" + tile.getTileNumber() + 
 						       ".c");
-			fw.write(new TraceIRtoC(tile).toString());
+			TraceIRtoC ttoc  = new TraceIRtoC(tile);
+			ttoc.createCCode();    
+			fw.write(ttoc.getString());
 			fw.close();
 		    }
 		}

@@ -24,7 +24,7 @@ import at.dms.kjc.flatgraph2.FilterContent;
 //no peek expression 
 //all pops before pushe
 
-public class DirectCommunication extends at.dms.util.Utils 
+public class DirectCommunication extends RawExecutionCode 
     implements Constants 
 { 
     FilterInfo filterInfo;
@@ -40,6 +40,9 @@ public class DirectCommunication extends at.dms.util.Utils
 	if (KjcOptions.ratematch)
 	    return false;
 	if (fi.isTwoStage())
+	    return false;
+	if (fi.bottomPeek > 0 ||
+	    fi.remaining > 0)
 	    return false;
 	if (fi.peek > fi.pop)
 	    return false;
@@ -63,7 +66,7 @@ public class DirectCommunication extends at.dms.util.Utils
     {
 	this.filterInfo = filterInfo;
 	generatedVariables = new GeneratedVariables();
-	uniqueID = RawExecutionCode.getUniqueID();
+	uniqueID = getUniqueID();
 	//convert the communication
 	//all the communication is in the work function
 	filterInfo.filter.getWork().accept(new DirectConvertCommunication());
@@ -73,13 +76,16 @@ public class DirectCommunication extends at.dms.util.Utils
     {
 	Vector decls = new Vector();
 	FilterContent filter = filterInfo.filter;
+
+	for (int i = 0; i < filter.getFields().length; i++) 
+	    decls.add(filter.getFields()[i]);
 	
 	//index variable for certain for loops
 	JVariableDefinition exeIndexVar = 
 	    new JVariableDefinition(null, 
 				    0, 
 				    CStdType.Integer,
-				    RawExecutionCode.exeIndex + uniqueID,
+				    exeIndex + uniqueID,
 				    null);
 
 	//remember the JVarDef for latter (in the raw main function)
@@ -91,7 +97,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	    new JVariableDefinition(null, 
 				    0, 
 				    CStdType.Integer,
-				    RawExecutionCode.exeIndex1 + uniqueID,
+				    exeIndex1 + uniqueID,
 				    null);
 
 	generatedVariables.exeIndex1 = exeIndex1Var;
@@ -105,34 +111,13 @@ public class DirectCommunication extends at.dms.util.Utils
     {
 	JBlock statements = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
-	
-	//create the call to the init function
-	
-	//create the params list, for some reason 
-	//calling toArray() on the list breaks a later pass
-	List paramList = filter.getParams();
-	JExpression[] paramArray;
-	if (paramList == null || paramList.size() == 0)
-	    paramArray = new JExpression[0];
-	else
-	    paramArray = (JExpression[])paramList.toArray(new JExpression[0]);
-	
-	//add the call to the init function
-	statements.addStatement
-	    (new 
-	     JExpressionStatement(null,
-				  new JMethodCallExpression
-				  (null,
-				   new JThisExpression(null),
-				   filter.getInit().getName(),
-				   paramArray),
-				  null));
+
 	//add the calls for the work function in the initialization stage
 	statements.addStatement(generateInitWorkLoop(filter));
 	
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
-				      RawExecutionCode.initStage + uniqueID,
+				      initStage + uniqueID,
 				      JFormalParameter.EMPTY,
 				      CClassType.EMPTY,
 				      statements,
@@ -168,11 +153,11 @@ public class DirectCommunication extends at.dms.util.Utils
 	JVariableDefinition loopCounter = new JVariableDefinition(null,
 								  0,
 								  CStdType.Integer,
-								  RawExecutionCode.workCounter,
+								  workCounter,
 								  null);
 	
 	JStatement loop = 
-	    RawExecutionCode.makeForLoop(workBlock, loopCounter, new JIntLiteral(filterInfo.steadyMult));
+	    makeForLoop(workBlock, loopCounter, new JIntLiteral(filterInfo.steadyMult));
 	block.addStatement(new JVariableDeclarationStatement(null,
 							     loopCounter,
 							     null));
@@ -180,7 +165,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
-				      RawExecutionCode.steadyStage + uniqueID,
+				      steadyStage + uniqueID,
 				      JFormalParameter.EMPTY,
 				      CClassType.EMPTY,
 				      block,
@@ -210,7 +195,7 @@ public class DirectCommunication extends at.dms.util.Utils
 	
 	//return the for loop that executes the block init - 1
 	//times
-	return RawExecutionCode.makeForLoop(block, generatedVariables.exeIndex1, 
+	return makeForLoop(block, generatedVariables.exeIndex1, 
 			   new JIntLiteral(filterInfo.initMult));
     }
 
@@ -337,7 +322,7 @@ public class DirectCommunication extends at.dms.util.Utils
 			{left};
 		
 		    return new JMethodCallExpression(null, new JThisExpression(null), 
-						     RawExecutionCode.structReceiveMethodPrefix + 
+						     structReceiveMethodPrefix + 
 						     pop.getType(),
 						     arg);
 		} 

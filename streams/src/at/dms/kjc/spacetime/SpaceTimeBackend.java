@@ -99,6 +99,7 @@ public class SpaceTimeBackend
 	    if(currentFilter!=null) {
 		TraceNode newNode=new FilterTraceNode(new FilterContent(currentFilter.filter,executionCounts),curX,0);
 		currentNode.setNext(newNode);
+		newNode.setPrevious(currentNode);
 		currentNode=newNode;
 		if(curX>=rawColumns-1&&forward>0) {
 		    if(currentFilter.outWeights.length>0&&currentFilter.out[0][0].dest!=null) {
@@ -108,6 +109,7 @@ public class SpaceTimeBackend
 			out.setDests(new InputTraceNode[][]{new InputTraceNode[]{in}});
 			in.setSources(new OutputTraceNode[]{out});
 			currentNode.setNext(out);
+			out.setPrevious(currentNode);
 			currentNode=in;
 			initTraces.add(new Trace(currentNode));
 			steadyTraces.add(new Trace(currentNode));
@@ -120,6 +122,7 @@ public class SpaceTimeBackend
 			out.setDests(new InputTraceNode[][]{new InputTraceNode[]{in}});
 			in.setSources(new OutputTraceNode[]{out});
 			currentNode.setNext(out);
+			out.setPrevious(currentNode);
 			currentNode=in;
 			initTraces.add(new Trace(currentNode));
 			steadyTraces.add(new Trace(currentNode));
@@ -147,32 +150,42 @@ public class SpaceTimeBackend
 	  System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
 	  //System.out.println(((Trace)initTraces.get(i)).getHead());
 	  }
-	  System.out.println(steadyTraces);
-	  for(int i=0;i<steadyTraces.size();i++) {
-	  TraceNode head=((Trace)steadyTraces.get(i)).getHead();
-	  if(head instanceof FilterTraceNode)
-	  System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
-	  else
-	  System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
-	  //System.out.println(((Trace)steadyTraces.get(i)).getHead());
-	  }*/
+	*/
+	System.out.println(steadyTraces);
+	for(int i=0;i<steadyTraces.size();i++) {
+	    TraceNode head=((Trace)steadyTraces.get(i)).getHead();
+	    while (head != null) {
+		if(head instanceof FilterTraceNode)
+		    System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
+		else
+		    System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
+		head = head.getNext();
+	    }
+	    
+	    //System.out.println(((Trace)steadyTraces.get(i)).getHead());
+	}
 	initTraces=null;
 	steadyTraces=null;
 	executionCounts=null;
 
 	//mgordon's stuff
+	System.out.println("Building Initialization Trace Traversal");
 	ListIterator initTrav = TraceTraversal.getTraversal(init).listIterator();    
+	System.out.println("Building Steady-State Trace Traversal");
 	ListIterator steadyTrav = TraceTraversal.getTraversal(steady).listIterator();
 
 	//create the raw execution code and switch code for the initialization phase
+	System.out.println("Creating Initialization Stage");
 	Rawify.run(initTrav, rawChip, true); 
 	//create the raw execution code and switch for the steady-state
+	System.out.println("Creating Steady-State Stage");
 	Rawify.run(steadyTrav, rawChip, false);
 	//generate the switch code assembly files...
 	GenerateSwitchCode.run(rawChip);
 	//generate the compute code from the SIR
 	GenerateComputeCode.run(rawChip);
 	Makefile.generate(rawChip);
+	BCFile.generate(rawChip);
     }
 }
 

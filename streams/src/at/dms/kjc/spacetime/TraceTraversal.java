@@ -29,7 +29,7 @@ public class TraceTraversal
 		for (int j = 0; j < queue.size(); j++) {
 		    Trace current = (Trace)queue.get(j);
 		    boolean satisfied = true;
-
+		    		    
 		    //cycle thru the backedges and see if they were all visited...
 		    for (int k = 0; k < current.getDepends().length; k++) {
 			if (!visited.contains(current.getDepends()[k])) {
@@ -49,6 +49,7 @@ public class TraceTraversal
 
 		//add the trace to the traversal and show that it is visited...
 		if (trace != null) {
+		    //System.out.println("Adding Trace in traversal");
 		    traversal.add(trace);
 		    visited.add(trace);
 		}

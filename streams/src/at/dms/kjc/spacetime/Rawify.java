@@ -34,13 +34,16 @@ public class Rawify
 				     trace, filterInfo, init, tile, rawChip);
 		    //generate the compute code for the trace and place it in
 		    //the tile
-		    tile.getComputeCode().addTrace(filterInfo);
+		    if (init)
+			tile.getComputeCode().addTraceInit(filterInfo);
+		    else
+			tile.getComputeCode().addTraceSteady(filterInfo);
 		}
 		else 
 		    continue;
 		
 		//get the next tracenode
-		traceNode = traceNode.getNext();;
+		traceNode = traceNode.getNext();
 	    }
 	}
 	

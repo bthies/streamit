@@ -20,10 +20,19 @@ public class GenerateSwitchCode {
 			fw.write(getHeader());
 			
 			//write the initialization code
+			for (int i = 0; i < tile.getSwitchCode().size(true); i++) {
+			    fw.write("\t" + 
+				     tile.getSwitchCode().getIns(i, true).toString() + "\n");
+			}
 			
+
 			fw.write("sw_loop:\n");
 			//write the steady state code
-			
+			for (int i = 0; i < tile.getSwitchCode().size(false); i++) {
+			    fw.write("\t" + tile.getSwitchCode().getIns(i, false).toString()
+				     + "\n");
+			}
+
 			fw.write("\tj\tsw_loop\n\n");
 			fw.write(getTrailer());
 			fw.close();
@@ -31,6 +40,8 @@ public class GenerateSwitchCode {
 		}
 	}
 	catch (Exception e) {
+	    e.printStackTrace();
+	    
 	    System.err.println("Serious error writing switch code.");
 	    System.exit(-1);
 	}

@@ -41,18 +41,18 @@ public class RawChip {
 	if (from.getX() == to.getX()) {
 	    int dir = from.getY() - to.getY();
 	    if (dir == -1)
-		return "E";
+		return "S";
 	    else if (dir == 1)
-		return "W";
+		return "N";
 	    else
 		Utils.fail("calling getDirection on non-neighbors");
 	}
 	if (from.getY() == to.getY()) {
 	    int dir = from.getX() - to.getX();
 	    if (dir == -1) 
-		return "S";
+		return "E";
 	    else if (dir == 1)
-		return "N";
+		return "W";
 	    else
 		Utils.fail("calling getDirection on non-neighbors");
 	}

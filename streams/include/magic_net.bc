@@ -99,13 +99,15 @@ fn getTransmitSchedule(tileNum) {
 }
 
 fn addMagicFIFOs(){
+  //printf("\n ---- \nRegistering magic instruction handler\n ---- \n");
   listi_add(gMagicInstrHMS.theList,
             & fn (procNum, rs, imm, result_ptr)
   {
+    //printf("Magic instruction\n");
     if (!((rs == 0) && (imm == 1)))
       return 0;
     
-    //printf("\nInstalling Magic Fifo on tile %d.\n", procNum);
+    printf("Installing Magic Fifo on tile %d.\n", procNum);
     Proc_SetMagicFIFOsEnabled(Machine_GetProc(machine,procNum), 1);
     return 1;
   });

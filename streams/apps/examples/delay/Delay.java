@@ -11,8 +11,8 @@ class Delay extends FeedbackLoop {
 	setDelay(N);
 	setBody(new Filter() {
                 public void init() {
-		    setInput(Float.TYPE);setOutput(Float.TYPE);
-		    setPush(2); setPop(2);
+		    input = new Channel(Float.TYPE, 2);
+		    output = new Channel(Float.TYPE, 2);
                 }
                 public void work() {
 		    this.output.pushFloat(this.input.peekFloat(1));
@@ -21,6 +21,7 @@ class Delay extends FeedbackLoop {
 		    this.input.popFloat();
                 }
 	    });
+	setLoop(new FloatIdentity());
 	setJoiner(ROUND_ROBIN());
     }
 

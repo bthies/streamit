@@ -1,7 +1,7 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.5 2001-10-20 00:16:09 karczma Exp $
+ * $Id: Flybit.java,v 1.6 2001-10-24 18:53:28 dmaze Exp $
  */
 
 import streamit.*;
@@ -54,14 +54,14 @@ class IntAdd extends Filter
     }
 }
 
-class IntFly extends Pipeline // SplitJoin
+class IntFly extends SplitJoin
 {
     public void init()
     {
-        // setSplitter(DUPLICATE());
+        setSplitter(DUPLICATE());
         add(new IntSub());
         add(new IntAdd());
-        // setJoiner(WEIGHTED_ROUND_ROBIN(2, 2));
+        setJoiner(WEIGHTED_ROUND_ROBIN(2, 2));
     }
 }
 

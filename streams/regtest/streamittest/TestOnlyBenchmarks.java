@@ -1,6 +1,6 @@
 /**
  * Class which runs defines which tests are run using the nightly regtest.
- * $Id: TestOnlyBenchmarks.java,v 1.1 2003-10-15 14:47:31 dmaze Exp $
+ * $Id: TestOnlyBenchmarks.java,v 1.2 2003-10-15 15:04:04 dmaze Exp $
  **/
 package streamittest;
 
@@ -8,7 +8,7 @@ import junit.framework.*;
 
 public class TestOnlyBenchmarks extends TestCase {
 
-    public TestNightly(String name) {
+    public TestOnlyBenchmarks(String name) {
 	super (name);
     }
 

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.17 2003-05-28 05:58:59 thies Exp $
+ * $Id: Utils.java,v 1.18 2003-11-11 07:35:04 thies Exp $
  */
 
 package at.dms.util;
@@ -145,6 +145,37 @@ public abstract class Utils implements Serializable, DeepCloneable {
 	return sb.toString();
     }
 
+    public static boolean isMathMethod(JExpression prefix, String ident) 
+    {
+	if (prefix instanceof JTypeNameExpression &&
+	    ((JTypeNameExpression)prefix).getQualifiedName().equals("java/lang/Math") &&
+	   
+	    (ident.equals("acos") ||
+	     ident.equals("asin") ||
+	     ident.equals("atan") ||
+	     ident.equals("atan2") ||
+	     ident.equals("ceil") ||
+	     ident.equals("cos") ||
+	     ident.equals("sin") ||
+	     ident.equals("cosh") ||
+	     ident.equals("sinh") ||
+	     ident.equals("exp") ||
+	     ident.equals("fabs") ||
+	     ident.equals("modf") ||
+	     ident.equals("fmod") ||
+	     ident.equals("frexp") ||
+	     ident.equals("floor") ||	     
+	     ident.equals("log") ||
+	     ident.equals("log10") ||
+	     ident.equals("pow") ||
+	     ident.equals("rint") ||
+	     ident.equals("sqrt") ||
+	     ident.equals("tanh") ||
+	     ident.equals("tan")))
+	    return true;
+	return false;
+    }
+    
     /**
      * Returns <val> as a percentage with maximum of 4 digits
      */

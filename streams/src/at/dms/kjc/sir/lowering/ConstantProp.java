@@ -6,6 +6,7 @@ import java.util.*;
 import at.dms.kjc.*;
 import at.dms.util.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.raw.ArrayCopy;
 import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
@@ -41,6 +42,8 @@ public class ConstantProp {
 	    str.getInit().accept(propagator);
 	    // propagate into fields of <str>
 	    propagateFields(propagator, str);
+	    // Copy Arrays
+	    //ArrayCopy.acceptInit(str.getInit(),constants);
 	    // Raise Vars
 	    str.getInit().accept(new VarDeclRaiser());	
 	    // propagate constants within work function of <str>

@@ -93,6 +93,16 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    final Hashtable safe=new Hashtable();
 	    body.accept(new ReplacingVisitor() {
 		    /**
+		     * If arrays used in any way except in array access the remove from targets
+		     */
+		    public Object visitLocalVariableExpression(JLocalVariableExpression self2,
+							       String ident2) {
+			targets.remove(((JLocalVariableExpression)self2).getVariable());
+			safe.put(((JLocalVariableExpression)self2).getVariable(),Boolean.TRUE);
+			return self2;
+		    }
+
+		    /**
 		     * Considers target
 		     */
 		    public Object visitArrayAccessExpression(JArrayAccessExpression self2,
@@ -146,7 +156,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	if(left instanceof JArrayAccessExpression) {
 	    JExpression prefix=((JArrayAccessExpression)left).getPrefix();
 	    JExpression accessor=((JArrayAccessExpression)left).getAccessor();
-	    if((prefix instanceof JLocalVariableExpression)&&(accessor instanceof JIntLiteral)) {
+	    if((prefix instanceof JLocalVariableExpression)&&(accessor instanceof JIntLiteral)&&(targets.containsKey(((JLocalVariableExpression)prefix).getVariable()))) {
 		JVariableDefinition var=toVar((JArrayAccessExpression)left,newRight);
 		replaced.put(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue()),var);
 		return new JVariableDeclarationStatement(self.getTokenReference(),var,null);

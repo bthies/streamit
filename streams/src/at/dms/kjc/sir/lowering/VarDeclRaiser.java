@@ -21,6 +21,10 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
      * List of variableDeclarations to move to the front of the block
      */
     private LinkedList varDefs;
+    /**
+     * Int used to rename conflicting variable names
+     */
+    private int conflict;
 
     /**
      * Top level block of current analysis
@@ -29,6 +33,7 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 
     public VarDeclRaiser() {
 	super();
+	conflict=0;
     }
 
     // ----------------------------------------------------------------------
@@ -111,6 +116,10 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		for(int j=0;j<varArray.length;j++) {
 		    JLocalVariable var=(JLocalVariable)varArray[j];
 		    if(!visitedVars.containsKey(var.getIdent())) {
+			visitedVars.put(var.getIdent(),Boolean.TRUE);
+			newVars.add(var);
+		    } else {
+			var.setIdent(var.getIdent()+"__conflict__"+conflict++);
 			visitedVars.put(var.getIdent(),Boolean.TRUE);
 			newVars.add(var);
 		    }

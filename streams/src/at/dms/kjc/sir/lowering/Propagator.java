@@ -819,7 +819,7 @@ public class Propagator extends SLIRReplacingVisitor {
 
 		    //System.out.println("Adding portal to constants, variable is: "+var.getVariable().getIdent()+" constants: "+constants);
 
-		    constants.put(var.getVariable(), new SIRPortal());
+		    constants.put(var.getVariable(), new SIRPortal(left.getType()));
 		}
 	}
 

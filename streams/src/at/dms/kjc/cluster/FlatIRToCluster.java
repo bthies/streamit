@@ -324,8 +324,58 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	
 	print("\nvoid handle_message_"+selfID+"(mysocket *sock) {\n");
-	print("  int data = sock->read_int();\n");
-	print("  printf(\"Message receieved! thread: "+selfID+", data: %d\\n\", data);\n");
+	print("  int index = sock->read_int();\n");
+	print("  printf(\"Message receieved! thread: "+selfID+", index: %d\\n\", index);\n");
+
+	SIRPortal[] portals = SIRPortal.getPortalsWithReceiver(self);
+
+	/* there should be only one portal or none */
+
+	if (portals.length == 1) {
+	    
+	    CClass pclass = portals[0].getPortalType().getCClass();
+
+	    CMethod pmethods[] = pclass.getMethods();
+
+	    for (int i = 0 ; i < pmethods.length; i++) {
+
+		String method_name = pmethods[i].getIdent();
+
+		int length = method_name.length();
+
+		if (!method_name.startsWith("<") && 
+		    !method_name.endsWith(">")) {
+
+		    print("  if (index == "+i+") {\n");
+
+		    for (int t = 0; t < methods.length; t++) {
+		    
+			String thread_method_name = methods[t].getName();
+			
+			if (thread_method_name.startsWith(method_name) &&
+			    thread_method_name.charAt(length) == '_' &&
+			    thread_method_name.charAt(length + 1) == '_') {
+			    
+			    //print("    /* ident: "+thread_method_name+" */\n");
+			    int param_count = methods[t].getParameters().length;
+
+			    for (int a = 0; a < param_count; a++) {
+				print("    int p"+a+" = sock->read_int();\n");
+			    }
+
+			    print("    "+thread_method_name+"(");
+			    for (int a = 0; a < param_count; a++) {
+				if (a > 0) print(", ");
+				print("p"+a);
+			    }
+			    print(");\n");
+			}
+		    }
+		    print("  }\n");
+		}
+	    }
+	}
+
 	print("}\n");
 
 	//////////////////////////////////////////////
@@ -1540,7 +1590,36 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    SIRStream receivers[] = ((SIRPortal)portal).getReceivers();
 	    for (int i = 0; i < receivers.length; i++) {
 		int dst = NodeEnumerator.getSIROperatorId(receivers[i]);
-		print("__msg_sock_"+selfID+"_"+dst+"out->write_int(43);");	
+
+		//print("/* iname: "+iname+" ident: "+ident+" type: "+((SIRPortal)portal).getPortalType().getCClass()+"*/\n");
+
+		CClass pclass = ((SIRPortal)portal).getPortalType().getCClass();
+		CMethod methods[] = pclass.getMethods();
+
+		int index = -1;
+
+		for (int t = 0; t < methods.length; t++) {
+
+		    if (methods[t].getIdent().equals(ident)) {
+			index = t;
+			break;
+		    }
+		    //print("/* has method: "+methods[t]+" */\n");
+		}
+
+		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");");
+
+		if (params != null) {
+		    for (int t = 0; t < params.length; t++) {
+			if (params[t] != null) {
+			    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
+			    params[t].accept(this);
+			    print(");");
+			}
+		    }
+		}
+		
+		
 	    }
 	}
     }

@@ -20,20 +20,23 @@ public class SIRPortal extends JLiteral {
     protected LinkedList receivers;
     protected LinkedList senders;
 
-    public SIRPortal() {
+    protected CType type;
+
+    public SIRPortal(CType type) {
 	super(null); // JLiteral(TokenReference where)
-	construct(true);
+	construct(type, true);
     }
 
-    private SIRPortal(boolean register) {
+    private SIRPortal(CType type, boolean addToList) {
 	super(null); // JLiteral(TokenReference where)
-	construct(register);
+	construct(type, addToList);
     }
 
-    private void construct(boolean register) {
+    private void construct(CType type, boolean addToList) {
 	receivers = new LinkedList();
 	senders = new LinkedList();
-	if (register) portals.add(this);    
+	this.type = type; 
+	if (addToList) portals.add(this);    
     }
 
     /*
@@ -42,7 +45,7 @@ public class SIRPortal extends JLiteral {
 
     public static void findMessageStatements(SIRStream str) {
     
-	SIRPortal tmp = new SIRPortal(false);
+	SIRPortal tmp = new SIRPortal(null, false);
 	tmp.traverse(str);
     }
 
@@ -81,6 +84,10 @@ public class SIRPortal extends JLiteral {
 	}
 	SIRPortal[] array = new SIRPortal[list.size()];
 	return (SIRPortal[])list.toArray(array);
+    }
+
+    public CType getPortalType() {
+	return type;
     }
 
     public void addReceiver(SIRStream stream) {

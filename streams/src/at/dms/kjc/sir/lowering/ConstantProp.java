@@ -133,7 +133,6 @@ public class ConstantProp {
 	// iterate through statements of init function, looking for SIRInit's
 	str.getInit().accept(new SLIREmptyVisitor() {
 		public void visitInitStatement(SIRInitStatement self,
-					       JExpression[] args,
 					       SIRStream target) {
 		    recurse(self, constants);
 		}
@@ -155,18 +154,18 @@ public class ConstantProp {
 	// otherwise, augment the hashtable mapping the parameters of
 	// the init function to any constants that appear in the call...
 	// get args to init function
-	JExpression[] args = initStatement.getArgs();
+	List args = initStatement.getArgs();
 	// get parameters of init function
 	JFormalParameter[] parameters = initMethod.getParameters();
 	// build new constants
-	for (int i=0; i<args.length; i++) {
+	for (int i=0; i<args.size(); i++) {
 	    // if we are passing an arg to the init function...
-	    if (args[i] instanceof JLiteral) {
+	    if (args.get(i) instanceof JLiteral) {
 		// if it's already a literal, just record it
-		constants.put(parameters[i], args[i]);
-	    } else if ((args[i] instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args[i]).getVariable())!=null) {
+		constants.put(parameters[i], (JLiteral)args.get(i));
+	    } else if ((args.get(i) instanceof JLocalVariableExpression)&&constants.get(((JLocalVariableExpression)args.get(i)).getVariable())!=null) {
 		// otherwise if it's associated w/ a literal, then record that
-		constants.put(parameters[i], constants.get(args[i]));
+		constants.put(parameters[i], constants.get((JLocalVariableExpression)args.get(i)));
 	    }
 	}
 	// recurse into sub-stream
@@ -213,7 +212,6 @@ class GetChildren extends SLIREmptyVisitor {
      * Visits an init statement -- adds <target> to list of children.
      */
     public void visitInitStatement(SIRInitStatement self,
-				   JExpression[] args,
 				   SIRStream target) {
 	// remember <target> as a child
 	children.add(target);

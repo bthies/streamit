@@ -238,48 +238,39 @@ public class LowerInitFunctions implements StreamVisitor {
     }
 
     /**
-     * Lowers all the SIRInitStatements in <init>, given that the
-     * corresponding structure is <str>, into function calls that the
-     * LIR can recognize.
+     * Adds initialization for child streams in <str>.
      */
-    private void lowerInitStatements(final SIRStream str, 
-				     JMethodDeclaration init) {
-	// go through statements, looking for SIRInitStatement
-	init.accept(new SLIRReplacingVisitor() {
-		public Object visitInitStatement(SIRInitStatement self,
-						 JExpression[] args,
-						 SIRStream target) {
-		    return lowerInitStatement(str, self);
-		}
-	    });
+    private void lowerInitStatements(SIRContainer str) {
+	for (int i=0; i<str.size(); i++) {
+	    // get call to init function
+	    JStatement initCall = lowerInitStatement(str.get(i),
+						       str.getParams(i));
+	    // append call to init of <str>
+	    str.getInit().addStatement(initCall);
+	}
     }
 
     /**
      * Lowers an SIRInitStatement and returns the result.
      */
     private JStatement
-	lowerInitStatement(SIRStream str, SIRInitStatement initStatement) {
-	// get target of initialization
-	SIRStream target = initStatement.getTarget();
+	lowerInitStatement(SIRStream str, List args) {
 	// if the target is a special type that doesn't need
 	// initializing, then just return an empty statement
-	if (!target.needsInit()) {
+	if (!str.needsInit()) {
 	    return new JEmptyStatement(null, null);
 	}
 
-	// get args from <initStatement>
-	JExpression[] args = initStatement.getArgs();
-	
 	// create the new argument--the reference to the child's state
 	JExpression childState 
-	    = LoweringConstants.getChildStruct(target);
+	    = LoweringConstants.getChildStruct(str);
 	// create new argument list
-	JExpression[] newArgs = new JExpression[args.length + 1];
+	JExpression[] newArgs = new JExpression[args.size() + 1];
 	// set new arg
 	newArgs[0] = childState;
 	// set rest of args
-	for (int i=0; i<args.length; i++) {
-	    newArgs[i+1] = args[i];
+	for (int i=0; i<args.size(); i++) {
+	    newArgs[i+1] = (JExpression)args.get(i);
 	}
 	// return method call statement
 	return new JExpressionStatement(
@@ -289,7 +280,7 @@ public class LowerInitFunctions implements StreamVisitor {
 					/* prefix */
 					null,
 					/* ident */
-					LoweringConstants.getInitName(target),
+					LoweringConstants.getInitName(str),
 					/* args */
 					newArgs),
 	      null);
@@ -371,7 +362,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	// translate init statements to function calls with context.
 	// this is modifying <init> without adding/removing extra
 	// stuff.
-	lowerInitStatements(self, init);
+	lowerInitStatements(self);
 
 	// now add some things to the init function... 
 

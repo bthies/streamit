@@ -39,8 +39,12 @@ public class Flattener {
 	
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
-	//FieldProp.doPropagate(str);
-	StreamItDot.printGraph(str, "orig.dot");
+
+	// construct stream hierarchy from SIRInitStatements
+	ConstructSIRTree.doit(str);
+
+	// dump the original graph to a dot format
+	StreamItDot.printGraph(str, "before.dot");
 
 	AdjustGranularity.doit(str, -1);
 
@@ -70,8 +74,8 @@ public class Flattener {
 	    
 	}
 	
-        // flatten split/joins with duplicate splitters and RR joiners
-        //str = SJFlatten.doFlatten(str);
+	// dump the original graph to a dot format
+	StreamItDot.printGraph(str, "after.dot");
 
         // do constant propagation on fields
         if (StreamItOptions.constprop) {
@@ -90,6 +94,7 @@ public class Flattener {
 
 	// name the components
 	Namer.assignNames(str);
+
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str, 
 							   interfaces,

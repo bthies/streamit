@@ -932,6 +932,175 @@ public class Rawify
 	return tiles;
     }
     
+    private static void createInitLinearSwitchCode(FilterTraceNode node,FilterInfo filterInfo,int mult,int buffer,RawTile tile,RawChip rawChip) {
+	System.err.println("Creating switchcode linear: "+node+" "+mult);
+	ComputeNode sourceNode = null;
+	//Get sourceNode and input port
+	if (node.getPrevious().isFilterTrace())
+	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
+					 ((FilterTraceNode)node.getPrevious()).getY());
+	else {
+	    if (KjcOptions.magicdram && node.getPrevious() != null &&
+		node.getPrevious().isInputTrace() &&
+		tile.hasIODevice()) 
+		sourceNode = tile.getIODevice();
+	    else 
+		sourceNode = 
+		    IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
+					       node).getNonRedundant().getDRAM();
+	}
+	SwitchIPort src = rawChip.getIPort(sourceNode, tile);
+	SwitchIPort src2 = rawChip.getIPort2(sourceNode, tile);
+	sourceNode = null;
+	//Get destNode and output port
+	ComputeNode destNode = null;
+	if (node.getNext().isFilterTrace())
+	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
+				       ((FilterTraceNode)node.getNext()).getY());
+	else {
+	    if (KjcOptions.magicdram && node.getNext() != null &&
+		node.getNext().isOutputTrace() && tile.hasIODevice())
+		destNode = tile.getIODevice();
+	    else {
+		destNode = 
+		    IntraTraceBuffer.getBuffer(node, (OutputTraceNode)node.getNext()).
+		    getNonRedundant().getDRAM();
+	    }
+	}
+	SwitchOPort dest = rawChip.getOPort(tile, destNode);
+	SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
+	SwitchCodeStore code = tile.getSwitchCode();
+	//Get filter properties
+	FilterContent content = node.getFilter();
+	final int numCoeff = content.getArray().length;
+	final int peek=content.getPeek();
+	final int pop = content.getPopCount();
+	final int numPop = numCoeff/pop;
+	final boolean begin=content.getBegin();
+	final boolean end=content.getEnd();
+	final int pos=content.getPos();
+	final int turns=mult-numPop;
+	int bufferRemaining=buffer;
+	if(begin) {
+	    //preloop
+	    FullIns ins=new FullIns(tile);
+	    if(end)
+		ins.addRoute(SwitchIPort.CSTO,dest);
+	    else
+		ins.addRoute(SwitchIPort.CSTO,dest2);
+	    code.appendIns(ins,true);
+	    bufferRemaining-=pop*numPop;
+	    //steadyloop
+	    for(int i=0;i<turns;i++) {
+		for(int j=0;j<pop;j++) {
+		    if(bufferRemaining>0) {
+			if(!end) {
+			    ins=new FullIns(tile);
+			    ins.addRoute(SwitchIPort.CSTO,dest);
+			    code.appendIns(ins,true);
+			}
+			bufferRemaining--;
+		    } else {
+			ins=new FullIns(tile);
+			ins.addRoute(src,SwitchOPort.CSTI);
+			if(!end)
+			    ins.addRoute(src,dest);
+			code.appendIns(ins,true);
+		    }
+		}
+		ins=new FullIns(tile);
+		if(end)
+		    ins.addRoute(SwitchIPort.CSTO,dest);
+		else
+		    ins.addRoute(SwitchIPort.CSTO,dest2);
+		code.appendIns(ins,true);
+	    }
+	    //postloop
+	    for(int i=0;i<numPop-1;i++) {
+		for(int j=0;j<pop;j++) {
+		    if(bufferRemaining>0) {
+			if(!end) {
+			    ins=new FullIns(tile);
+			    ins.addRoute(SwitchIPort.CSTO,dest);
+			    code.appendIns(ins,true);
+			}
+			bufferRemaining--;
+		    } else {
+			ins=new FullIns(tile);
+			ins.addRoute(src,SwitchOPort.CSTI);
+			if(!end)
+			    ins.addRoute(src,dest);
+			code.appendIns(ins,true);
+		    }
+		}
+		ins=new FullIns(tile);
+		if(end)
+		    ins.addRoute(SwitchIPort.CSTO,dest);
+		else
+		    ins.addRoute(SwitchIPort.CSTO,dest2);
+		code.appendIns(ins,true);
+	    }
+	    //forward values
+	    final int numForward=pos*numPop;
+	    for(int i=0;i<numForward;i++) {
+		if(bufferRemaining>0) {
+		    if(!end) {
+			ins=new FullIns(tile);
+			ins.addRoute(SwitchIPort.CSTO,dest);
+			code.appendIns(ins,true);
+		    }
+		    bufferRemaining--;
+		} else {
+		    ins=new FullIns(tile);
+		    ins.addRoute(src,SwitchOPort.CSTI);
+		    if(!end)
+			ins.addRoute(src,dest);
+		    code.appendIns(ins,true);
+		}
+	    }
+	} else {
+	    //preloop
+	    FullIns ins=new FullIns(tile);
+	    if(end)
+		ins.addRoute(SwitchIPort.CSTO,dest);
+	    else
+		ins.addRoute(SwitchIPort.CSTO,dest2);
+	    code.appendIns(ins,true);
+	    //steadyloop
+	    for(int i=0;i<turns;i++) {
+		for(int j=0;j<pop;j++) {
+		    ins=new FullIns(tile);
+		    ins.addRoute(src,SwitchOPort.CSTI);
+		    if(!end)
+			ins.addRoute(src,dest);
+		    code.appendIns(ins,true);
+		}
+		ins=new FullIns(tile);
+		if(end)
+		    ins.addRoute(SwitchIPort.CSTO,dest);
+		else
+		    ins.addRoute(SwitchIPort.CSTO,dest2);
+		code.appendIns(ins,true);
+	    }
+	    //postloop
+	    for(int i=0;i<numPop-1;i++) {
+		for(int j=0;j<pop;j++) {
+		    ins=new FullIns(tile);
+		    ins.addRoute(src,SwitchOPort.CSTI);
+		    if(!end)
+			ins.addRoute(src,dest);
+		    code.appendIns(ins,true);
+		}
+		ins=new FullIns(tile);
+		if(end)
+		    ins.addRoute(SwitchIPort.CSTO,dest);
+		else
+		    ins.addRoute(SwitchIPort.CSTO,dest2);
+		code.appendIns(ins,true);
+	    }
+	}
+    }
+
     private static void createLinearSwitchCode(FilterTraceNode node,FilterInfo filterInfo,int mult,RawTile tile,RawChip rawChip) {
 	System.err.println("Creating switchcode linear: "+node+" "+mult);
 	ComputeNode sourceNode = null;
@@ -969,7 +1138,7 @@ public class Rawify
 	}
 	SwitchOPort dest = rawChip.getOPort(tile, destNode);
 	SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
-	destNode = null;
+	//destNode = null;
 	//Get filter properties
 	FilterContent content = node.getFilter();
 	final int numCoeff = content.getArray().length;

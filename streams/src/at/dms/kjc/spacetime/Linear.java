@@ -442,12 +442,14 @@ public class Linear extends BufferedCommunication implements Constants {
 	InlineAssembly inline=new InlineAssembly();
 	blockBody[0]=inline;
 	inline.add(".set noat");
+	final int turns=mult-num;
 	if(begin) {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int readIndex=0;
 	    int writeIndex=0;
 	    int bufferRemaining=buffer; //Use peek buffer while bufferRemaining>0 else use net
+	    assert mult<num:"Not handled yet";
 	    //preloop
 	    for(int i=0;i<num;i++)
 		for(int j=0;j<popCount;j++) {
@@ -460,17 +462,15 @@ public class Linear extends BufferedCommunication implements Constants {
 			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 		    }
 		}
-	    //pre+steadyloop
-	    final int extraTurns=(mult-1)/num;
-	    final int turns=pos*num+extraTurns;
+	    //steadyloop
 	    for(int i=0;i<turns;i++)
 		for(int j=0;j<popCount;j++) {
 		    if(bufferRemaining>0) {
 			//Load value and send to switch
-			//if(end)
-			//inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
-			//else
-			inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			if(end)
+			    inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			else
+			    inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
 			readIndex+=4;
 			bufferRemaining--;
 		    } else
@@ -481,8 +481,7 @@ public class Linear extends BufferedCommunication implements Constants {
 		    }
 		}
 	    //postloop
-	    final int remaining=mult-1-extraTurns*num;
-	    for(int i=0;i<remaining;i++)
+	    for(int i=0;i<topPopNum;i++)
 		for(int j=0;j<popCount;j++) {
 		    if(bufferRemaining>0) {
 			//Load value and send to switch
@@ -496,16 +495,19 @@ public class Linear extends BufferedCommunication implements Constants {
 			inline.add("move  "+tempRegs[0]+",\\t$csti");
 		    inline.add("sw    "+tempRegs[0]+",\\t"+writeIndex+"("+tempReg+")");
 		    writeIndex+=4;
-		    for(int k=topPopNum;k>=i;k--) {
+		    for(int k=topPopNum;k>i;k--) {
 			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
 			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 		    }
 		}
 	    //forward values
-	    final int numForward=pos*num*popCount;
+	    final int numForward=pos*num;
 	    for(int i=0;i<numForward;i++) {
 		if(bufferRemaining>0) {
-		    inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+		    if(end)
+			inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+		    else
+			inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
 		    readIndex+=4;
 		    bufferRemaining--;
 		} else
@@ -523,26 +525,38 @@ public class Linear extends BufferedCommunication implements Constants {
 	    }
 	} else {
 	    //preloop
-	    for(int i=0;i<=topPopNum;i++)
-		for(int j=0;j<popCount;j++)
+	    for(int i=0;i<num;i++)
+		for(int j=0;j<popCount;j++) {
+		    inline.add("move  "+tempRegs[0]+",\\t$csti");
 		    for(int k=i;k>=0;k--) {
-			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			//inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			//inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		    }
+		}
 	    //innerloop
-	    for(int i=0;i<mult-1;i++)
-		for(int j=0;j<popCount;j++)
+	    for(int i=0;i<turns;i++)
+		for(int j=0;j<popCount;j++) {
+		    inline.add("move  "+tempRegs[0]+",\\t$csti");
 		    for(int k=topPopNum;k>=0;k--) {
-			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			//inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			//inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		    }
+		}
 	    //postloop
 	    for(int i=0;i<topPopNum;i++)
-		for(int j=0;j<popCount;j++)
+		for(int j=0;j<popCount;j++) {
+		    inline.add("move  "+tempRegs[0]+",\\t$csti");
 		    for(int k=topPopNum;k>i;k--) {
-			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			//inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			//inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		    }
+		}
 	}
 	inline.add(".set at");
 	return new JBlock(null,blockBody,null);

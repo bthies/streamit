@@ -10,6 +10,36 @@ import at.dms.kjc.sir.*;
 
 class FusionCode {
 
+
+    public static int minMult(int cache_size) {
+
+	int threadCount = NodeEnumerator.getNumberOfNodes();
+	int min_mult = cache_size;
+
+	for (int t = 0; t < threadCount; t++) {
+	    
+	    SIROperator oper = NodeEnumerator.getOperator(t);
+	    int dws = DataEstimate.estimateDWS(oper);
+	    int io = DataEstimate.estimateIOSize(oper);
+	    int avail = cache_size - dws;
+
+	    if (io == 0) io = 1;
+	    int mult = avail / io;
+
+	    System.out.println("DWS: "+dws+" Avail: "+avail+" IO: "+io+" Mult: "+mult);
+
+	    if (mult < min_mult) {
+		min_mult = mult;
+	    }
+	}	    
+	
+	if (min_mult > 100) min_mult = 100;	
+	if (min_mult < 0) min_mult = 1;	
+	System.out.println("Min Multiplicity: "+min_mult);
+
+	return min_mult;
+    }
+
     public static void generateFusionHeader() {
 
 	int threadCount = NodeEnumerator.getNumberOfNodes();
@@ -24,11 +54,16 @@ class FusionCode {
 	p.print("#define __FUSION_H\n");
 
 	p.println();
-	p.print("#define __ITERS 10000\n");
-	p.print("#define __MULT 100\n");
+	//p.print("#define __ITERS 10000\n");
+
+	int min_mult = minMult(16000); // estimating minimum multiplicity 
+	                               // such that for all operators DWS 
+	                               // fits cache
+
+	p.print("#define __MULT "+min_mult+"\n");
 	p.println();
 
-	p.print("/*\n");
+	//p.print("/*\n");
 
 	for (int t = 0; t < threadCount; t++) {
 	    
@@ -93,7 +128,7 @@ class FusionCode {
 	    }
 	}
 
-	p.print(" */\n");
+	//p.print(" */\n");
 	p.print("#endif\n");
 
 	try {
@@ -133,6 +168,7 @@ class FusionCode {
 	p.print("#include <object_write_buffer.h>\n");
 	p.print("#include <read_setup.h>\n");
 	p.print("#include <ccp.h>\n");
+	p.print("#include <read_setup.h>\n");
 	p.print("#include \"fusion.h\"\n");
 	p.println();
 	
@@ -181,9 +217,21 @@ class FusionCode {
 
 	p.println();
 
-	p.print("void main() {\n");
+	p.print("void main(int argc, char **argv) {\n");
 	p.print("  ");
-	
+
+	p.print("  read_setup::read_setup_file();\n");
+	p.print("  __max_iteration = read_setup::max_iteration;\n");
+
+	p.print("  for (int a = 1; a < argc; a++) {\n");
+	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n");
+	p.print("      int tmp;\n");
+	p.print("      sscanf(argv[a + 1], \"%d\", &tmp);\n");
+	p.print("      printf(\"Number of Iterations: %d\n\", tmp);\n");
+	p.print("      __max_iteration = tmp;\n");
+	p.print("    }\n");
+	p.print("  }\n");
+
 	/*
 	for (int i = 0; i < threadNumber; i++) {
 	    //FlatNode tmp = NodeEnumerator.getFlatNode(i);
@@ -277,7 +325,7 @@ class FusionCode {
 	p.print("  // ============= Steady State =============\n");
 	p.println();
 
-	p.print("  for (int n = 0; n < (__ITERS / __MULT); n++) {\n");
+	p.print("  for (int n = 0; n < (__max_iteration / __MULT); n++) {\n");
 
 	for (int ph = 0; ph < n_phases; ph++) {
 	

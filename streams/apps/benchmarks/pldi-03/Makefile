@@ -75,9 +75,7 @@ redundant-beamformer: benchmarks
 	./parse_redundant_output.pl redundant/beam.output
 
 
-
-
-current-test: OneBitDToA.java
+test-current: OneBitDToA.java
 	jikes OneBitDToA.java
 	#$(COMPILER) OneBitDToA.java > OneBitDToA.c
 	java OneBitDToA -i 1000 > output.tsv

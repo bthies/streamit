@@ -68,6 +68,9 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 	 */
 	int iteration = 0;
 
+	public Point max;
+	public Point spacing;
+
 	/**
 	 * Implementation.
 	 *
@@ -94,7 +97,7 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		CellView[] selectedCellViews =
 			jgraph.getGraphLayoutCache().getMapping(selectedCells);
 
-		Point spacing = new Point();
+		spacing = new Point();
 		/*  The Algorithm distributes the nodes on a grid.
 		 *  For this grid you can configure the horizontal spacing.
 		 *  This field specifies the configured value
@@ -136,6 +139,8 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		moveToBarycenter(jgraph, selectedCellViews, levels);
 
 		Point min = findMinimumAndSpacing(selectedCellViews, spacing);
+
+		max = findMaximum(selectedCellViews, spacing);
 
 		// draw the graph in the window
 		drawGraph(jgraph, levels, min, spacing);
@@ -485,6 +490,94 @@ public class SugiyamaLayoutAlgorithm implements LayoutAlgorithm {
 		}
 		return null;
 	}
+
+	// ADDED by Juan Carlos Reyes
+	//
+	
+	protected Point findMaximum(
+			CellView[] graphCellViews,
+			Point spacing) {
+			try {
+
+				// variables
+				/* represents the maximum x value for the paint area
+				 */
+				int max_x = 0;
+
+				/* represents the minimum y value for the paint area
+				 */
+				int max_y = 0;
+
+				// find the maximum & minimum coordinates
+
+				for (int i = 0; i < graphCellViews.length; i++) {
+
+					// the cellView and their bounds
+					
+					
+					
+					CellView cellView = graphCellViews[i];
+					 
+
+					Rectangle cellViewBounds = GraphConstants.getBounds(((DefaultGraphCell) cellView.getCell()).getAttributes());
+
+					// checking min area
+					try {
+						if (cellViewBounds.width > max_x)
+						{
+							max_x = cellViewBounds.width;	
+						}
+						max_y += cellViewBounds.height;
+						/*
+						if (cellViewBounds.width > spacing.x)
+							spacing.x = cellViewBounds.width;
+						if (cellViewBounds.height > spacing.y)
+							spacing.y = cellViewBounds.height;
+							*/
+
+					} catch (Exception e) {
+						System.err.println("---------> ERROR in calculateValues."/*#Frozen*/);
+						e.printStackTrace();
+					}
+				}
+				// if the cell sice is bigger than the userspacing
+				// dublicate the spacingfactor
+				return new Point(max_x, max_y);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
 
 	/** Updates the progress based on the movements count
 	 *

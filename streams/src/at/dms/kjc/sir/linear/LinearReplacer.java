@@ -68,5 +68,91 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
 
+    /** returns the type to use for buffers -- in this case float[] */
+    public CType getArrayType() {
+	return new CArrayType(CStdType.Float, 1);
+    }
+    
+    /** Appends two arrays of field declarations and returns the result. **/
+    public JFieldDeclaration[] appendFieldDeclarations(JFieldDeclaration[] decl1,
+						       JFieldDeclaration[] decl2) {
+	JFieldDeclaration[] allDecls = new JFieldDeclaration[decl1.length + decl2.length];
+	// copy delc1
+	for (int i=0; i<decl1.length; i++) {
+	    allDecls[i] = decl1[i];
+	}
+	// copy decl2
+	for (int i=0; i<decl2.length; i++) {
+	    allDecls[decl1.length+i] = decl2[i];
+	}
+	return allDecls;
+    }
+
+    /* make an array of one java comments from a string. */
+    public JavaStyleComment[] makeComment(String c) {
+	JavaStyleComment[] container = new JavaStyleComment[1];
+	container[0] = new JavaStyleComment(c,
+					    true,   /* isLineComment */
+					    false,  /* space before */
+					    false); /* space after */
+	return container;
+    }
+
+    /**
+     * Create an array allocation expression. Allocates a one dimensional array of floats
+     * for the field of name fieldName of fieldSize.
+     **/
+    public JStatement makeFieldAllocation(String fieldName, int fieldSize, String commentString) {
+	JExpression fieldExpr = makeFieldAccessExpression(fieldName);
+	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr, getNewArrayExpression(fieldSize));
+	JavaStyleComment[] comment = makeComment(commentString); 
+	return new JExpressionStatement(null, fieldAssign, comment);
+    }
+
+    /**
+     * Create a field access expression for
+     **/
+    public JExpression makeFieldAccessExpression(String name) {
+	return new JFieldAccessExpression(null, new JThisExpression(null), name);
+    }
+    
+
+    
+    /**
+     * Create an array allocation expression. Allocates a one dimensional array of floats
+     * for the field of name fieldName of fieldSize.
+     **/
+    public JStatement makeLocalInitialization(String name, float initValue, String commentString) {
+	JExpression fieldExpr = new JFieldAccessExpression(null, new JThisExpression(null), name);
+	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr,
+							    new JFloatLiteral(null,initValue));
+	JavaStyleComment[] comment = makeComment(commentString); 
+	return new JExpressionStatement(null, fieldAssign, comment);
+    }
+
+    /** make a JNewArrayStatement that allocates size elements of a float array */
+    public JNewArrayExpression getNewArrayExpression(int size) {
+	/* make the size array. */
+	JExpression[] arrayDims = new JExpression[1];
+	arrayDims[0] = new JIntLiteral(size);
+	return new JNewArrayExpression(null,           /* token reference */
+				       getArrayType(), /* type */
+				       arrayDims,      /* size */
+				       null);          /* initializer */
+    }
+
+    /* makes a field array access expression of the form this.arrField[index] */
+    public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
+	/* first, make the this.arr1[index] expression */
+	JExpression fieldAccessExpr;
+	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
+	JExpression fieldArrayAccessExpr;
+	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index));
+	
+	return fieldArrayAccessExpr;
+    }
+	
+
+    
     
 }

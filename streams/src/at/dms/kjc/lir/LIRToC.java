@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.20 2001-10-25 17:36:00 dmaze Exp $
+ * $Id: LIRToC.java,v 1.21 2001-10-25 18:19:29 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1712,20 +1712,20 @@ public class LIRToC
                                   LIRFunctionPointer init,
 				  List initStatements)
     {
-        print(typeName + " s = malloc(sizeof(_" + typeName + "));");
+        print(typeName + " data = malloc(sizeof(_" + typeName + "));");
         newLine();
-        print("s->context = create_context(s);");
+        print("data->context = create_context(data);");
         newLine();
         init.accept(this);
-        print("(s);");
+        print("(data);");
         newLine();
-        print("connect_tapes(s->context);");
+        print("connect_tapes(data->context);");
         newLine();
         Iterator iter = initStatements.iterator();
         while (iter.hasNext())
             ((JStatement)(iter.next())).accept(this);
         newLine();
-        print("streamit_run(s->context);");
+        print("streamit_run(data->context);");
     }
 
     /**

@@ -257,6 +257,7 @@ fn print_final_stats() {
     }
     tileNum++;
   }
+  fclose(outputFile);
 }
 
 fn getTileNum(x, y) {

@@ -17,7 +17,14 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * The overhead of work estimated for each fissed node.
      */
     static final int FISSION_OVERHEAD = 1;
-
+    /**
+     * Whether or not we're sharing configurations in symmetrical
+     * splitjoins.  Sharing doesn't work with 2-D partitioning, but
+     * keeping as a variable for documentation purposes in case we
+     * want to revert or experiment.
+     */
+    private static final boolean SHARING_CONFIGS = false;
+    
     /**
      * Map from stream structures to DPConfig's.
      */
@@ -54,6 +61,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
 	// calculate partitions
 	StreamTransform st = calcPartitions(partitions);
+	//st.printHierarchy();
 
 	// debug output
 	PartitionUtil.printTileWork(partitions, numTiles);
@@ -79,7 +87,9 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	int bottleneck = topConfig.get(numTiles);
 	//System.err.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
 	// expand config stubs that were shared for symmetry optimizations
-	expandSharedConfigs();
+	if (SHARING_CONFIGS) {
+	    expandSharedConfigs();
+	}
 	
 	// build up list of partitions 
 	partitions.clear();
@@ -88,7 +98,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
 	StreamTransform result = topConfig.traceback(partitions, curPartition, numTiles);
 
-	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions));
+	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions),
+		     "bottleneck=" + bottleneck + " but PartitionUtil.getMaxWork(partitions)=" + PartitionUtil.getMaxWork(partitions));
 	return result;
     }
 
@@ -173,28 +184,34 @@ public class DynamicProgPartitioner extends ListPartitioner {
 				     SIRJoiner joiner) {
 	    // shouldn't have 0-sized SJ's
 	    Utils.assert(self.size()!=0, "Didn't expect SJ with no children.");
-	    // keep track of last one which a child was equivalent to
-	    SIRStream firstChild = self.get(0);
-	    SIRStream lastEquiv = firstChild;
-	    DPConfig lastConfig = (DPConfig)firstChild.accept(this);
-	    // look for equivalent children
-	    for (int i=1; i<self.size(); i++) {
-		SIRStream child = self.get(i);
-		if (equivStructure(lastEquiv, child)) {
-		    /*
-		      System.err.println("Detected symmetry between " + 
-		      firstChild.getName() + " and " + child.getName());
-		    */
-		    configMap.put(child, lastConfig);
-		} else {
-		    lastEquiv = child;
-		    lastConfig = (DPConfig)child.accept(this);
+	    if (SHARING_CONFIGS) {
+		// keep track of last one which a child was equivalent to
+		SIRStream firstChild = self.get(0);
+		SIRStream lastEquiv = firstChild;
+		DPConfig lastConfig = (DPConfig)firstChild.accept(this);
+		// look for equivalent children
+		for (int i=1; i<self.size(); i++) {
+		    SIRStream child = self.get(i);
+		    if (equivStructure(lastEquiv, child)) {
+			/*
+			  System.err.println("Detected symmetry between " + 
+			  firstChild.getName() + " and " + child.getName());
+			*/
+			configMap.put(child, lastConfig);
+		    } else {
+			lastEquiv = child;
+			lastConfig = (DPConfig)child.accept(this);
+		    }
 		}
-	    }
-	    // if all were equivalent, then add them to uniform list
-	    if (lastEquiv== self.get(0)) {
-		System.out.println("Detected uniform splitjoin: " + self.getName());
-		uniformSJ.add(self);
+		// if all were equivalent, then add them to uniform list
+		if (lastEquiv== self.get(0)) {
+		    System.out.println("Detected uniform splitjoin: " + self.getName());
+		    uniformSJ.add(self);
+		}
+	    } else {
+		for (int i=0; i<self.size(); i++) {
+		    self.get(i).accept(this);
+		}
 	    }
 	    return makeConfig(self);
 	}

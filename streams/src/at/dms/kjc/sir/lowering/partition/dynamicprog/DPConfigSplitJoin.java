@@ -15,7 +15,9 @@ import at.dms.kjc.sir.lowering.partition.*;
 class DPConfigSplitJoin extends DPConfigContainer {
 
     public DPConfigSplitJoin(SIRSplitJoin sj, DynamicProgPartitioner partitioner) {
-	super(sj, partitioner, sj.size(), getHeight(sj));
+	// pass 0 as dummy argument in case uniform height is -1; then assert afterwards
+	super(sj, partitioner, sj.size(), Math.max(0, sj.getUniformHeight()));
+	Utils.assert(sj.getUniformHeight()!=-1, "Require rectangle splitjoins for now.");
     }
 
     protected DPConfig childConfig(int x, int y) {
@@ -30,33 +32,6 @@ class DPConfigSplitJoin extends DPConfigContainer {
 	    c2 = ((SIRPipeline)c1).get(y);
 	}
 	return partitioner.getConfig(c2);
-    }
-
-    /**
-     * Returns the maximum length of a parallel stream in <sj>.
-     */
-    private static int getHeight(SIRSplitJoin sj) {
-	int height = getComponentHeight(sj.get(0));
-	// for now, only deal with splitjoins that are rectangular.
-	// should extend with identities for the general case.
-	for (int i=1; i<sj.size(); i++) {
-	    Utils.assert(height==getComponentHeight(sj.get(i)),
-			 "Detected non-rectangular splitjoin: " + sj + "\n" +
-			 "Only deal with rectangular for now.");
-	}
-	return height;
-    }
-
-    /**
-     * Returns the height of <str>.  Everything but pipelines have a
-     * height of 1 since they are treated as a hierarchical unit.
-     */
-    private static int getComponentHeight(SIRStream str) {
-	if (str instanceof SIRPipeline) {
-	    return ((SIRPipeline)str).size();
-	} else {
-	    return 1;
-	}
     }
 
     protected int get(int tileLimit) {

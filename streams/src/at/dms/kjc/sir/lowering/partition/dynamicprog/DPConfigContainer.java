@@ -42,7 +42,7 @@ abstract class DPConfigContainer extends DPConfig {
 
     protected int get(int tileLimit) {
 	// otherwise, compute it
-	return get(0, A.length, 0, A[0][0].length, tileLimit);
+	return get(0, A.length-1, 0, A[0][0].length-1, tileLimit);
     }
 
     protected int get(int x1, int x2, int y1, int y2, int tileLimit) {
@@ -57,7 +57,7 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// if we are down to one child, then descend into child
 	if (x1==x2 && y1==y2) {
-	    int childCost = childConfig(x1, x2).get(tileLimit);
+	    int childCost = childConfig(x1, y1).get(tileLimit); 
 	    A[x1][x2][y1][y2][tileLimit] = childCost;
 	    //System.err.println("Returning " + childCost + " from descent into child.");
 	    return childCost;
@@ -82,6 +82,7 @@ abstract class DPConfigContainer extends DPConfig {
 		int cost = Math.max(get(x1, xPivot, y1, y2, tPivot),
 				    get(xPivot+1, x2, y1, y2, tileLimit-tPivot));
 		if (cost < min) {
+		    //System.err.println("possible vertical cut at x=" + xPivot + " from y=" + y1 + " to y=" + y2 + " in " + cont.getName());
 		    min = cost;
 		}
 	    }
@@ -93,6 +94,7 @@ abstract class DPConfigContainer extends DPConfig {
 		int cost = Math.max(get(x1, x2, y1, yPivot, tPivot),
 				    get(x1, x2, yPivot+1, y2, tileLimit-tPivot));
 		if (cost < min) {
+		    //System.err.println("possible horizontal cut at y=" + yPivot + " from x=" + x1 + " to x=" + x2 + " in " + cont.getName());
 		    min = cost;
 		}
 	    }
@@ -106,7 +108,7 @@ abstract class DPConfigContainer extends DPConfig {
      * Traceback function.
      */
     public StreamTransform traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit) {
-	StreamTransform st = traceback(partitions, curPartition, 0, A.length, 0, A[0][0].length, tileLimit);
+	StreamTransform st = traceback(partitions, curPartition, 0, A.length-1, 0, A[0][0].length-1, tileLimit);
 	// if the whole container is assigned to one tile, record it
 	// as such.
 	if (tileLimit==1) {
@@ -155,7 +157,8 @@ abstract class DPConfigContainer extends DPConfig {
 		if (cost==A[x1][x2][y1][y2][tileLimit]) {
 		    // there's a division at this <xPivot>.  We'll
 		    // return a vertical cut
-		    StreamTransform result = new VerticalCutTransform(xPivot);
+		    //System.err.println("tracing vertical cut at x=" + xPivot + " from y=" + y1 + " to y=" + y2 + " in " + cont.getName());
+		    StreamTransform result = new VerticalCutTransform(xPivot-x1);
 		    // recurse left and right, adding transforms as post-ops
 		    result.addSucc(traceback(partitions, curPartition, x1, xPivot, y1, y2, tPivot));
 		    // mark that we have a partition here
@@ -176,7 +179,8 @@ abstract class DPConfigContainer extends DPConfig {
 		if (cost==A[x1][x2][y1][y2][tileLimit]) {
 		    // there's a division at this <yPivot>.  We'll
 		    // return a horizontal cut.
-		    StreamTransform result = new HorizontalCutTransform(yPivot);
+		    //System.err.println("tracing horizontal cut at y=" + yPivot + " from x=" + x1 + " to x=" + x2 + " in " + cont.getName());
+		    StreamTransform result = new HorizontalCutTransform(yPivot-y1);
 		    // recurse left and right, adding transforms as post-ops
 		    result.addSucc(traceback(partitions, curPartition, x1, x2, y1, yPivot, tPivot));
 		    // mark that we have a partition here

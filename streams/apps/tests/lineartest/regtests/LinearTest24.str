@@ -1,0 +1,63 @@
+/** 
+ * Test out combining larger structures of splitjoins/etc. made
+ * up of FIRs.
+ **/
+void->void pipeline LinearTest24 {
+  add FloatSource();
+  add pipeline {
+    int FIRSIZE = 8;
+    add MainBody(10, FIRSIZE);
+    add Combiner(10);
+  };
+  add FloatSink();
+}
+
+float->float splitjoin MainBody(int SIZE, int FIRSIZE) {
+  split duplicate;
+  for (int i=0; i<SIZE; i++) {
+    add SimpleAverageFIR(FIRSIZE, 500/(i+1));
+  }
+  join roundrobin;
+}
+
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/* simple filter that computes an N point moving average, scaled by a factor A. */
+float->float filter SimpleAverageFIR(int N, float A) {
+  work push 1 pop 1 peek N {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += peek(i);
+    }
+    push(A * sum / N);
+    pop();
+  }
+}
+
+/* Combines N data elements on the input stream 
+ * into a single element on the output stream with addition. */
+float->float filter Combiner(int N) {
+  work pop N push 1 {
+    float sum = 0;
+    for (int i=0; i<N; i++) {
+      sum += pop();
+    }
+    push(sum);
+  }
+}

@@ -1,7 +1,6 @@
 /** 
- * Test out combining pipelines of FIR filters (eg not replacing them with 
- * their combination when the cost of doing so is 
- * higher.
+ * test program for doing replacement of fir filters 
+ * by a fft, freq multiply and then ifft.
  **/
 void->void pipeline LinearTest23 {
    add FloatSource();

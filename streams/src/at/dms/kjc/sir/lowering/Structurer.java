@@ -16,12 +16,17 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
      * List of the class declarations defined during traversal
      */
     private LinkedList structs;
+    /**
+     * List of methods that have been flattened.
+     */
+    private LinkedList flatMethods;
 
     /**
      * Creates a new structurer.
      */
     private Structurer() {
 	this.structs = new LinkedList();
+	this.flatMethods = new LinkedList();
     }
 
     /**
@@ -31,10 +36,43 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
      * a stream takes its state as the first parameter, and references
      * fields via the state.
      */
-    public static JClassDeclaration[] structure(SIROperator toplevel) {
-	Structurer f = new Structurer();
-	toplevel.accept(f);
-	return (JClassDeclaration[])f.structs.toArray();
+    public static JClassDeclaration structure(SIROperator toplevel) {
+	Structurer structurer = new Structurer();
+	toplevel.accept(structurer);
+	return structurer.toFlatClass();
+    }
+
+    /**
+     * Returns a flattened class representing the stream structure
+     * that was traversed.
+     */
+    private JClassDeclaration toFlatClass() {
+	// construct resulting class
+	return new JClassDeclaration(/* TokenReference where */
+				     null,
+				     /* int modifiers */
+				     at.dms.kjc.Constants.ACC_PUBLIC,
+				     /* java.lang.String ident */
+				     "Main",
+				     /* CClassType superClass */
+				     null,
+				    /* CClassType[] interfaces */
+				     CClassType.EMPTY,
+				     /* JFieldDeclaration[] fields */
+				     null,
+				     /* JMethodDeclaration[] methods */
+				     (JMethodDeclaration[])
+				     flatMethods.toArray(JMethodDeclaration.
+							 EMPTY),
+				     /* JTypeDeclaration[] inners */
+				     (JTypeDeclaration[])
+				     structs.toArray(JClassDeclaration.EMPTY),
+				     /* JPhylum[] initializers */
+				     null,
+				     /* JavadocComment javadoc */
+				     null,
+				     /* JavaStyleComment[] comment */
+				     null);
     }
 
     /**
@@ -99,9 +137,9 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 				  /* JFieldDeclaration[] fields, */
 				  fields,
 				  /* JMethodDeclaration[] methods, */
-				  null,
+				  JMethodDeclaration.EMPTY,
 				  /* JTypeDeclaration[] inners, */
-				  null,
+				  JClassDeclaration.EMPTY,
 				  /* JPhylum[] initializers, */
 				  null,
 				  /* JavadocComment javadoc, */
@@ -115,6 +153,8 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
     }
 
     /**
+     * Requires that <methods> is not null. 
+     *
      * For each method in <methods>, belonging to stream named
      * <streamName>, "flatten" the method by:
      *   1. adding a parameter for the state of the stream structure
@@ -139,6 +179,8 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 	    for (int j=0; j<statements.length; j++) {
 		statements[j].accept(resolver);
 	    }
+	    // add <method> to the list of flattened methods
+	    flatMethods.add(methods[i]);
 	}
     }
 
@@ -259,8 +301,10 @@ public class Structurer extends at.dms.util.Utils implements SIRVisitor {
 				  List elements) {
 	// create structure
 	createStruct(self.getName(), fields, elements);
-	// add closure-referencing to methods
-	flattenMethods(self.getName(), methods);
+	// if there are methods, add closure-referencing to methods
+	if (methods!=null) {
+	    flattenMethods(self.getName(), methods);
+	}
     }
   
     /* post-visit a splitjoin */

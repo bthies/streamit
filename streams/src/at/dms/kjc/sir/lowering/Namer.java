@@ -69,7 +69,7 @@ public class Namer extends at.dms.util.Utils implements SIRVisitor {
 	// end name with the class of the IR object
 	String suffix = splitQualifiedName(str.getClass().toString(), '.')[1];
 	// associate name with <str>
-	names.put(str, name);
+	names.put(str, name.toString());
     }
 
     /**

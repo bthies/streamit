@@ -1,6 +1,6 @@
 package streamit.scheduler2.print;
 
-/* $Id: PrintProgram.java,v 1.3 2003-04-02 03:43:51 thies Exp $ */
+/* $Id: PrintProgram.java,v 1.4 2003-04-02 09:15:57 thies Exp $ */
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -303,7 +303,9 @@ public class PrintProgram extends streamit.misc.AssertedClass
 
             ASSERT(sj.getSplitterNumWork() == 1);
 
-            if (sj.getSplitPop(0) == 1)
+            if (sj.getSplitPop(0) == 0)
+                outputStream.writeBytes("    setSplitter (NULL ());\n");
+            else if (sj.getSplitPop(0) == 1)
                 outputStream.writeBytes("    setSplitter (DUPLICATE ());\n");
             else
             {
@@ -321,15 +323,18 @@ public class PrintProgram extends streamit.misc.AssertedClass
                 outputStream.writeBytes(
                     "    add(new " + getName(sj.getChild(nChild)) + " ());\n");
             }
+            if (sj.getJoinPush(0) == 0)
+                outputStream.writeBytes("    setJoiner (NULL ());\n");
+	    else
             {
                 outputStream.writeBytes("    setJoiner (WEIGHTED_ROUND_ROBIN (");
 
                 int nIn;
                 for (nIn = 0; nIn < sj.getFanIn() - 1; nIn++)
                 {
-                    outputStream.writeBytes(sj.getSplitPushWeights(0)[nIn] + ", ");
+                    outputStream.writeBytes(sj.getJoinPopWeights(0)[nIn] + ", ");
                 }
-                outputStream.writeBytes(sj.getSplitPushWeights(0)[nIn] + "));\n");
+                outputStream.writeBytes(sj.getJoinPopWeights(0)[nIn] + "));\n");
             }
 
             outputStream.writeBytes("  }\n");

@@ -25,7 +25,7 @@ import java.util.Map;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.15 2004-07-08 05:45:35 thies Exp $
+ * @version $Id: GetExprType.java,v 1.16 2004-08-06 18:04:29 thies Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -118,7 +118,12 @@ public class GetExprType extends FENullVisitor
 
     public Object visitExprConstInt(ExprConstInt exp)
     {
-        return new TypePrimitive(TypePrimitive.TYPE_INT);
+	// return a bit type if the value is 0 or 1
+	if (exp.getVal()==0 || exp.getVal()==1) {
+	    return new TypePrimitive(TypePrimitive.TYPE_BIT);
+	} else {
+	    return new TypePrimitive(TypePrimitive.TYPE_INT);
+	}
     }
     
     public Object visitExprConstStr(ExprConstStr exp)
@@ -159,6 +164,14 @@ public class GetExprType extends FENullVisitor
         } catch (UnrecognizedVariableException e) {
             // ignore
         }
+
+	// "abs" returns a float.  We should probably insert other
+	// special cases here for built-in functions, but I'm not
+	// exactly sure which ones have a constant return type and
+	// which ones are polymorphic.  --BFT
+	if (exp.getName().equals("abs")) {
+	    return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+	}
         
         // Otherwise, we can assume that the only function calls are
         // calls to built-in functions in the absence of helper
@@ -170,8 +183,9 @@ public class GetExprType extends FENullVisitor
         // So, if there's any arguments, return the type of the first
         // argument; otherwise, return float as a default.
         List params = exp.getParams();
-        if (params.isEmpty())
+        if (params.isEmpty()) {
             return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
+	}
         return ((Expression)params.get(0)).accept(this);
     }
     
@@ -202,9 +216,28 @@ public class GetExprType extends FENullVisitor
     public Object visitExprUnary(ExprUnary exp)
     {
         // A little more solid ground here: the type of -foo and !foo
-        // will probably always be the same as the type of foo.
-        return exp.getExpr().accept(this);
+        // will be the same as type of foo, except for bits...
+	Type t = (Type)exp.getExpr().accept(this);
+	// if <t> is a bit, then the unary expression could promote it
+	// to an int.
+	if (t.equals(TypePrimitive.bittype)) {
+	    switch (exp.getOp()) {
+	    case ExprUnary.UNOP_NOT: {
+		// it is still a bit if it is negated, I think.
+		return TypePrimitive.bittype;
+	    }
+	    case ExprUnary.UNOP_NEG:
+	    case ExprUnary.UNOP_PREINC:
+	    case ExprUnary.UNOP_POSTINC:
+	    case ExprUnary.UNOP_PREDEC: 
+	    case ExprUnary.UNOP_POSTDEC: {
+		return TypePrimitive.inttype;
+	    }
+	    }
+	}
+	return t;
     }
+
     
     public Object visitExprVar(ExprVar exp)
     {

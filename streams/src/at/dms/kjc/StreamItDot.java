@@ -1,8 +1,6 @@
 package at.dms.kjc;
 
-import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.*;
-import at.dms.util.*;
 import java.util.*;
 import java.io.*;
 

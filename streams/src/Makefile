@@ -57,9 +57,18 @@ STREAMIT_GENERATED = \
   streamit/frontend/StreamItParser.java \
   streamit/frontend/StreamItParserFE.java
 
+# these are used by some streamit applications, but not called
+# from the library directly
+STREAMIT_LIBRARIES = \
+  $(STREAMIT_HOME)/library/java/streamit/io/DataPrinter.class \
+  $(STREAMIT_HOME)/library/java/streamit/io/FileReader.class \
+  $(STREAMIT_HOME)/library/java/streamit/io/FileWriter.class \
+  $(STREAMIT_HOME)/library/java/streamit/Structure.class
+
 JAVA_TARGET = \
   $(KOPI_TARGET) \
   $(KOPI_TOOL_TARGET) \
+  $(STREAMIT_LIBRARIES) \
   $(STREAMIT_HOME)/library/java/streamit/StreamIt.class \
   streamit/frontend/ToJava.class
 

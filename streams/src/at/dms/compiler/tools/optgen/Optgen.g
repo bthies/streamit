@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Optgen.g,v 1.2 2003-06-05 11:25:16 jasperln Exp $
+ * $Id: Optgen.g,v 1.3 2003-06-05 20:01:41 jasperln Exp $
  */
 
 // Import the necessary classes
@@ -44,7 +44,7 @@ options {
 }
 
 {
- private int optshort=-1;
+ private int optshort=-2;
 }
 
 public aCompilationUnit [String sourceFile]

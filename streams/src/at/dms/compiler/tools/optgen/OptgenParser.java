@@ -10,7 +10,7 @@ public class OptgenParser extends at.dms.compiler.tools.antlr.runtime.LLkParser
        implements OptgenTokenTypes
  {
 
- private int optshort=-1;
+ private int optshort=-2;
 
 protected OptgenParser(TokenBuffer tokenBuf, int k) {
   super(tokenBuf,k);

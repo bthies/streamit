@@ -19,17 +19,17 @@ public class DelayPipeline extends Pipeline {
 
 /** Character Unit delay **/
 class Delay extends Filter {
-    int state;
+    float state;
     public void init() {
 	// initial state of delay is 0
-	this.state = 0;
-	input = new Channel(Integer.TYPE,1);
-	output = new Channel(Integer.TYPE,1);
+	this.state = 0.0f;
+	input = new Channel(Float.TYPE,1);
+	output = new Channel(Float.TYPE,1);
     }
     public void work() {
 	// push out the state and then update it with the input
 	// from the channel
-	output.pushInt(this.state);
-	this.state = input.popInt();
+	output.pushFloat(this.state);
+	this.state = input.popFloat();
     }
 }

@@ -32,6 +32,8 @@ class FloatAdder extends Filter
         output.pushFloat((float)(input.peekFloat(0)+input.peekFloat(1)+input.peekFloat(2)+input.peekFloat(3)));
         input.popFloat();
         input.popFloat();
+        input.popFloat();
+        input.popFloat();
     }
 }
 

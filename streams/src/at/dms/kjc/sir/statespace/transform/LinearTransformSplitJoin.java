@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.8 2004-08-05 00:27:55 sitij Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.9 2004-08-05 04:18:29 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -114,11 +114,11 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    expandedPreB = new FilterMatrix(totalStates, storedInputsVal);
 
 	    expandedPreB.copyRowsAt(0,FilterMatrix.getIdentity(storedInputsVal),0,storedInputsVal);
+	
+	    expandedA.copyRowsAndColsAt(0,0,expandedReps[0].getA(),0,0,storedInputsVal,storedInputsVal);
+	    expandedB.copyRowsAt(0,expandedReps[0].getB(),0,storedInputsVal);
+
 	}
-
-
-	expandedA.copyRowsAndColsAt(0,0,expandedReps[0].getA(),0,0,storedInputsVal,storedInputsVal);
-	expandedB.copyRowsAt(0,expandedReps[0].getB(),0,storedInputsVal);
 
 	int startOffset = 0;
 	int stateOffset = storedInputsVal;
@@ -130,7 +130,8 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 	    expandedInit.copyColumnsAt(stateOffset,expandedReps[i].getInit(),storedInputsVal,currStateValue);
 
-	    expandedA.copyRowsAndColsAt(stateOffset,0,expandedReps[i].getA(),storedInputsVal,0,currStateValue,storedInputsVal);
+	    if(storedInputsVal)
+		expandedA.copyRowsAndColsAt(stateOffset,0,expandedReps[i].getA(),storedInputsVal,0,currStateValue,storedInputsVal);
 
 	    expandedA.copyRowsAndColsAt(stateOffset,stateOffset,expandedReps[i].getA(),storedInputsVal,storedInputsVal,currStateValue,currStateValue);
 
@@ -161,7 +162,8 @@ public class LinearTransformSplitJoin extends LinearTransform{
 		// the offset into the current source matrix is (size-j-1)*joinWeights[i]
 		// the number of rows that we are copying is combination weights[i]
 
-		expandedC.copyRowsAndColsAt(currentOffset,0,expandedReps[i].getC(),j*this.roundRobinJoinerWeights[i],0,this.roundRobinJoinerWeights[i],storedInputsVal);
+		if(storedInputsVal)
+		    expandedC.copyRowsAndColsAt(currentOffset,0,expandedReps[i].getC(),j*this.roundRobinJoinerWeights[i],0,this.roundRobinJoinerWeights[i],storedInputsVal);
 
 		expandedC.copyRowsAndColsAt(currentOffset, stateOffset, expandedReps[i].getC(),
 					j*this.roundRobinJoinerWeights[i], storedInputsVal,
@@ -172,8 +174,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 					j*this.roundRobinJoinerWeights[i],
 					this.roundRobinJoinerWeights[i]);
 
-	
-					
+						
 	    }
 	    // update start of the offset for the next expanded rep. 
 	    startOffset += this.roundRobinJoinerWeights[i];

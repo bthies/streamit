@@ -22,10 +22,10 @@ public class MagicDramStore extends MagicDramInstruction
 	for (int i = 0; i < dests.length; i++) {
 	    if (dests[i].isFileOutput()) {
 		FileOutputContent out = (FileOutputContent)((FilterTraceNode)dests[i].getNext()).getFilter();
-		sb.append("\tfprintf(" + Util.getFileHandle(out) + ", \"%e\n\", temp);\n");
-		sb.append("\tprintf(\"[%d]: %e\n\", port, temp);\n");
-		sb.append("if (outputs_" + out.getFileName() + 
-			 " != -1 && ++outputs_" + out.getFileName() + " >= " + 
+		sb.append("\tfprintf(" + Util.getFileHandle(out) + ", \"%e\\n\", temp);\n");
+		sb.append("\tprintf(\"[%d]: %e\\n\", port, temp);\n");
+		sb.append("if (" + Util.getOutputsVar(out) + 
+			 " != -1 && ++" + Util.getOutputsVar(out) + " >= " + 
 			 out.getOutputs() + ") quit_sim();\n");
 	    }
 	    else {

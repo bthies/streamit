@@ -56,7 +56,7 @@ public class MagicDram extends IODevice
 	    while (outfiles.hasNext()) {
 		FileOutputContent out = (FileOutputContent)outfiles.next();
 		fw.write("global " + Util.getFileHandle(out) + ";\n");
-		fw.write("global outputs_" + out.getFileName() + " = 0;\n");
+		fw.write("global " + Util.getOutputsVar(out) + " = 0;\n");
 	    }
 	    
 	    Iterator infiles = inputFiles.iterator();
@@ -73,10 +73,10 @@ public class MagicDram extends IODevice
 	    outfiles = outputFiles.iterator();
 	    while (outfiles.hasNext()) {
 		FileOutputContent out = (FileOutputContent)outfiles.next();
-		fw.write(Util.getFileHandle(out) + " = fopen(" + out.getFileName() +
-			 ", \"w\");\n");
-		fw.write("if (file_" + out.getFileName() + " == 0) {\n");
-		fw.write("\tprintf(\"Error opening file " + out.getFileName() + "\")\n");
+		fw.write(Util.getFileHandle(out) + " = fopen(\"" + out.getFileName() +
+			 "\", \"w\");\n");
+		fw.write("if (" + Util.getFileHandle(out) + " == 0) {\n");
+		fw.write("\tprintf(\"Error opening file " + out.getFileName() + "\");\n");
 		fw.write("\treturn 0;\n");
 		fw.write("}\n");
 	    }
@@ -84,10 +84,10 @@ public class MagicDram extends IODevice
 	    infiles = inputFiles.iterator();
 	    while (infiles.hasNext()) {
 		FileInputContent in = (FileInputContent)infiles.next();
-		fw.write(Util.getFileHandle(in) + " = fopen(" + in.getFileName() +
-			 ", \"r\");\n");
-		fw.write("if (file_" + in.getFileName() + " == 0) {\n");
-		fw.write("\tprintf(\"Error reading from file " + in.getFileName() + "\")\n");
+		fw.write(Util.getFileHandle(in) + " = fopen(\"" + in.getFileName() +
+			 "\", \"r\");\n");
+		fw.write("if (" + Util.getFileHandle(in) + " == 0) {\n");
+		fw.write("\tprintf(\"Error reading from file " + in.getFileName() + "\");\n");
 		fw.write("\treturn 0;\n");
 		fw.write("}\n");
 	    }

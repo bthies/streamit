@@ -21,6 +21,16 @@ public class Util {
     public static String CSTIFPVAR = "__csti_float__";
     public static String CSTIINTVAR = "__csti_integer__";
     
+    //unique ID for each file reader/writer used to
+    //generate var names...
+    private static HashMap fileVarNames;
+    private static int fileID = 0;
+
+    static 
+    {
+	fileVarNames = new HashMap();
+    }
+    
 
     public static int nextPow2(int i) {
 	String str = Integer.toBinaryString(i);
@@ -211,14 +221,27 @@ public class Util {
 	    primePumpBufferSize(in, out);
     }
     
-    public static String getFileHandle(FileInputContent in) 
+    public static String getFileVar(PredefinedContent content) 
     {
-	return "file_" + in.getFileName();
+	if (content instanceof FileInputContent || 
+	    content instanceof FileOutputContent) {
+	    if (!fileVarNames.containsKey(content))
+		fileVarNames.put(content, new String("file" + fileID++));
+	    return (String)fileVarNames.get(content);
+	}
+	else 
+	    Utils.fail("Calling getFileVar() on non-filereader/filewriter");
+	return null;
     }
 
-    public static String getFileHandle(FileOutputContent out) 
+    public static String getFileHandle(PredefinedContent content) 
     {
-	return "file_" + out.getFileName();
+	return "file_" + getFileVar(content);
+    }
+
+    public static String getOutputsVar(FileOutputContent out) 
+    {
+	return "outputs_" + getFileVar(out);
     }
     
 }

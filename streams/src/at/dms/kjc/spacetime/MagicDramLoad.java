@@ -19,7 +19,7 @@ public class MagicDramLoad extends MagicDramInstruction
 	StringBuffer sb = new StringBuffer();
 	if (source.isFileInput()) {
 	    FileInputContent in = (FileInputContent)((FilterTraceNode)source.getPrevious()).getFilter();
-	    sb.append("\t\tfscanf(" + Util.getFileHandle(in) + ", \"%e\n\", &temp);\n");
+	    sb.append("\t\tfscanf(" + Util.getFileHandle(in) + ", \"%e\\n\", &temp);\n");
 	    sb.append("while (io_to_switch_move(machine, port, temp) == 0) yield;\n");
 	}
 	else {

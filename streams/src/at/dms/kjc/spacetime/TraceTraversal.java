@@ -13,7 +13,7 @@ public class TraceTraversal
     {
 	LinkedList traversal = new LinkedList();
 
-	printForrest(forrest);
+	//printForrest(forrest);
 
 	//we'll do one forrest at a time for now
 	for (int i = 0; i < forrest.length; i++) {
@@ -93,7 +93,7 @@ public class TraceTraversal
 	    if (temp != null)
 		System.out.print(" -> ");
 	}
-	System.out.println(")");
+	System.out.println("), connected to " + trace.getEdges().length);
 	for (int i = 0; i < trace.getEdges().length; i++) {
 	    printTraces(trace.getEdges()[i], spaces + 5);
 	}

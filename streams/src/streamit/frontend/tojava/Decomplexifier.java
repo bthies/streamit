@@ -1,7 +1,7 @@
 /*
  * Decomplexifier.java: convert complex expressions to real arithmetic
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Decomplexifier.java,v 1.3 2002-07-16 18:48:29 dmaze Exp $
+ * $Id: Decomplexifier.java,v 1.4 2002-07-16 18:49:57 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -65,7 +65,7 @@ public class Decomplexifier
             else
             {
                 result.statements += (String)varExpr.accept(n2j) + " = " +
-                    (String)exp.accept(n2j);
+                    (String)exp.accept(n2j) + ";\n";
             }
             return result;
         }

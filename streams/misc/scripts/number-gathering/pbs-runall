@@ -1,0 +1,73 @@
+#!/usr/local/bin/bash
+options="-N 20 -O2 --altcodegen"
+results_dir="/home/bits7/mgordon/testresults/"
+if [ ! -d "$results_dir" ]; then 
+    echo "results dir does not exist"
+    exit 1
+fi
+
+
+bench_dir="/u/mgordon/streams/apps/benchmarks/"
+#benchmarks="${bench_dir}beamformer/streamit/BeamFormer.str"
+#benchmarks="${bench_dir}beamformer/streamit/SerializedBeamFormer.str"
+benchmarks="$benchmarks ${bench_dir}bitonic-sort/streamit/BitonicSort2.str"
+#benchmarks="$benchmarks ${bench_dir}cfar/streamit/CFARtest.str"
+#benchmarks="$benchmarks ${bench_dir}fft/streamit/FFT2_newin.str"
+#benchmarks="$benchmarks ${bench_dir}filterbank/streamit/FilterBankNew2.str"
+#benchmarks="$benchmarks ${bench_dir}fir/streamit/FIR.str"
+#benchmarks="$benchmarks ${bench_dir}fm/streamit/FMRadio.str"
+#benchmarks="$benchmarks ${bench_dir}matmul-block/streamit/MatrixMultBlock2.str"
+
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else
+	qsub -m n -N "${bench_name:0:4}1x1" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+	qsub -m n -N "${bench_name:0:4}1x2" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 --rawcol 2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+	qsub -m n -N "${bench_name:0:4}2x2" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+	qsub -m n -N "${bench_name:0:4}2x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 --rawcol 4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+exit 0
+
+#now run matrix mult separately and some other runs separately with no
+#unrolling
+options="--altcodegen --removeglobals --wbs --ratematch -pdp --destroyfieldarray -N 20"
+
+benchmark="${bench_dir}matmul-block/streamit/MatrixMultBlock2.str"
+bench_file=${benchmark##/*/}
+bench_name=${bench_file%.str}
+if [ ! -f "$benchmark" ]; then
+    echo "Benchmark $benchmark does not exist"
+else
+    qsub -m n -N "${bench_name:0:4}1x1sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}1x2sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 --rawcol 2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}2x2sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}2x4sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 --rawcol 4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}4x4sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+fi
+
+benchmark="${bench_dir}beamformer/streamit/SerializedBeamFormer.str"
+bench_file=${benchmark##/*/}
+bench_name=${bench_file%.str}
+if [ ! -f "$benchmark" ]; then
+    echo "Benchmark $benchmark does not exist"
+else
+    qsub -m n -N "${bench_name:0:4}1x1sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}1x2sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 --rawcol 2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+fi
+
+benchmark="${bench_dir}fm/streamit/FMRadio.str"
+bench_file=${benchmark##/*/}
+bench_name=${bench_file%.str}
+if [ ! -f "$benchmark" ]; then
+    echo "Benchmark $benchmark does not exist"
+else
+    qsub -m n -N "${bench_name:0:4}1x1sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}1x2sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 --rawcol 2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    qsub -m n -N "${bench_name:0:4}2x2sm" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+fi

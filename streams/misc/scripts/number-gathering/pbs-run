@@ -1,0 +1,55 @@
+#!/usr/local/bin/bash
+#PBS -o /dev/null
+#PBS -e /dev/null
+#PBS -m n
+#PBS -M mgordon@cag.lcs.mit.edu
+#PBS -q unbound
+#PBS -v STREAMIT_HOME=/u/mgordon/src/streams
+#PBS -N STREAMIT_RUN
+#PBS -S /bin/bash
+
+#qstat @cagfarm-01
+#qsub -q unbound@cagfarm-01 script
+
+
+#must have BENCHMARKS OPTIONS RESULTS_DIR defined
+
+source /u/mgordon/.bashrc
+
+
+root_dir="/home/bits7/mgordon/openpbs/"
+
+if [ ! -f "$BENCHMARK" ]; then
+    echo "$BENCHMARK" "benchmark does not exist"
+    exit 1
+fi
+if [ ! -d "$RESULTS_DIR" ]; then 
+    echo "results dir does not exist" 
+    exit 1
+fi
+
+temp_dir="${HOSTNAME}-$$"
+cd "$root_dir"
+mkdir -v "$temp_dir"
+cd "$temp_dir"
+
+#compile   
+strc $OPTIONS $BENCHMARK 
+
+if [ ! -f "Makefile.streamit" ]; then
+   echo "no Makefile.streamit"
+fi
+    
+#run
+make -f Makefile.streamit clean run
+
+#copy results
+bench_file=${BENCHMARK##/*/}
+bench_name=${bench_file%.str}
+cp "results.out" "$RESULTS_DIR/${bench_name}_${OPTIONS// /}"
+cd ..
+#remove the temp_dir
+rm -rf "$temp_dir"
+
+
+

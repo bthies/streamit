@@ -1,6 +1,6 @@
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.1 2002-06-12 17:57:29 dmaze Exp $
+ * $Id: StreamItLex.g,v 1.2 2002-06-28 21:18:27 dmaze Exp $
  */
 
 header {
@@ -34,7 +34,7 @@ tokens {
 	// Manipulating tapes:
 	"peek"; "pop"; "push";
 	// Basic types:
-	"float"; "int"; "void";
+	"float"; "int"; "void"; "double"; "complex";
 	// Complicated types:
 	"struct"; "template";
 	// Control flow:
@@ -160,7 +160,7 @@ DIGIT
 	;
 
 NUMBER
-	:	 (DIGIT)+ (DOT (DIGIT)+ )? (('e' | 'E') (DIGIT)+ )?
+	:	 (DIGIT)+ (DOT (DIGIT)+ )? (('e' | 'E') (DIGIT)+ )? ('i')?
 	;
 
 ID

@@ -157,9 +157,9 @@ public class Linear extends BufferedCommunication implements Constants {
     public JBlock getSteadyBlock() {
 	JStatement[] body;
 	if(begin)
-	    body=new JStatement[array.length+6];
+	    body=new JStatement[array.length+7];
 	else
-	    body=new JStatement[array.length+5];
+	    body=new JStatement[array.length+6];
 	//Filling register with Constants
 	InlineAssembly inline=new InlineAssembly();
 	inline.add(".set noat");
@@ -187,7 +187,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline=new InlineAssembly();
 	    inline.add("lw "+regs[regs.length-1]+", %0");
 	    inline.addInput("\"m\"("+getConstant()+")");
-	    body[body.length-5]=inline;
+	    body[body.length-6]=inline;
 	}
 
 	//TEST: Send start
@@ -197,7 +197,7 @@ public class Linear extends BufferedCommunication implements Constants {
 
 	//Start Template
 	inline=new InlineAssembly();
-	body[body.length-4]=inline;
+	body[body.length-5]=inline;
 	//Preloop
 	if(begin) {
 	    System.out.println("EXTRA: "+bufferSize);
@@ -205,44 +205,44 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
 	    //if(turns>0) {
-		int bufferRemaining=bufferSize; //Use peek buffer while bufferRemaining>0 else use net
-		for(int i=0;i<=topPopNum;i++)
-		    for(int j=0;j<popCount;j++)
-			if(bufferRemaining>0) {
-			    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			    index+=4;
-			    for(int k=i;k>=0;k--) {
-				inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-				inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
-			    }
-			    bufferRemaining--;
-			} else
-			    for(int k=i;k>=0;k--) {
-				inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-				inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-			    }
-		for(int turn=0;turn<turns;turn++) //Last iteration may not be from buffer
-		    for(int j=0;j<popCount;j++)
-			if(bufferRemaining>0) {
-			    //Load value and send to switch
-			    inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
-			    index+=4;
-			    for(int k=topPopNum;k>=0;k--) {
-				inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
-				inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
-			    }
-			    bufferRemaining--;
-			} else
-			    for(int k=topPopNum;k>=0;k--) {
-				inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-				inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-			    }
-		/*} else
-		  for(int j=0;j<popCount;j++)
-		  for(int k=topPopNum;k>=0;k--) {
-		  inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-		  inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-		  }*/
+	    int bufferRemaining=bufferSize; //Use peek buffer while bufferRemaining>0 else use net
+	    for(int i=0;i<=topPopNum;i++)
+		for(int j=0;j<popCount;j++)
+		    if(bufferRemaining>0) {
+			inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			index+=4;
+			for(int k=i;k>=0;k--) {
+			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			}
+			bufferRemaining--;
+		    } else
+			for(int k=i;k>=0;k--) {
+			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			}
+	    for(int turn=0;turn<turns;turn++) //Last iteration may not be from buffer
+		for(int j=0;j<popCount;j++)
+		    if(bufferRemaining>0) {
+			//Load value and send to switch
+			inline.add("lw!   "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
+			index+=4;
+			for(int k=topPopNum;k>=0;k--) {
+			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+			}
+			bufferRemaining--;
+		    } else
+			for(int k=topPopNum;k>=0;k--) {
+			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+			}
+	    /*} else
+	      for(int j=0;j<popCount;j++)
+	      for(int k=topPopNum;k>=0;k--) {
+	      inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+	      inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+	      }*/
 	} else {
 	    for(int i=0;i<=topPopNum;i++)
 		for(int j=0;j<popCount;j++)
@@ -259,11 +259,11 @@ public class Linear extends BufferedCommunication implements Constants {
 	}
 	//Loop Counter
 	inline=new InlineAssembly();
-	body[body.length-3]=inline;
+	body[body.length-4]=inline;
 	inline.add("addiu "+tempReg+",\\t"+zeroReg+",\\t-"+newSteadyMult);
 	//Innerloop
 	inline=new InlineAssembly();
-	body[body.length-2]=inline;
+	body[body.length-3]=inline;
 	inline.add(getLabel()+": #LOOP");
 	int times=0;
 	int[] oldPopNum=new int[4];
@@ -286,6 +286,9 @@ public class Linear extends BufferedCommunication implements Constants {
 		    }
 		}
 	inline.add("bnea "+tempReg+",\\t"+zeroReg+",\\t"+getLabel());
+	//Remainder InnerLoop
+	inline=new InlineAssembly();
+	body[body.length-2]=inline;
 	//Postloop
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
@@ -305,7 +308,7 @@ public class Linear extends BufferedCommunication implements Constants {
 		if(begin)
 		    return regs[regs.length-1];
 		else
-		    return "$csti";//"$csti2";
+		    return "$csti2";
 	    else
 		popNum--;
 	else if(!src&&elem==popCount-1&&popNum==topPopNum)

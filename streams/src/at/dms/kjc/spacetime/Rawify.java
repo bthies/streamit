@@ -968,7 +968,7 @@ public class Rawify
 	    }
 	}
 	SwitchOPort dest = rawChip.getOPort(tile, destNode);
-	//SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
+	SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
 	destNode = null;
 	//Get filter properties
 	FilterContent content = node.getFilter();
@@ -1066,7 +1066,10 @@ public class Rawify
 				newIns=new FullIns(tile,new MoveIns(SwitchReg.R2,SwitchIPort.CSTO));
 			    else
 				newIns=new FullIns(tile); //Don't pull off last partial sum
-			    newIns.addRoute(SwitchReg.R2,dest); //Send out partial sum
+			    if(end) //Send out partial sum
+				newIns.addRoute(SwitchReg.R2,dest); //Final output to static net1
+			    else
+				newIns.addRoute(SwitchReg.R2,dest2);
 			    code.appendIns(newIns, false);
 			}
 		    }
@@ -1093,7 +1096,7 @@ public class Rawify
 		    //Pass in partial sum
 		    if(j==0) {
 			FullIns newIns=new FullIns(tile);
-			newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
+			newIns.addRoute(src2, SwitchOPort.CSTI2);
 			code.appendIns(newIns, false);
 		    }
 		}
@@ -1115,9 +1118,12 @@ public class Rawify
 		    //Pass in partial sum
 		    if(j==0) {
 			FullIns newIns=new FullIns(tile);
-			newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
+			newIns.addRoute(src2, SwitchOPort.CSTI2);
 			//Pass out partial sum to next filter
-			newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
+			if(end)
+			    newIns.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+			else
+			    newIns.addRoute(SwitchIPort.CSTO,dest2);
 			code.appendIns(newIns, false);
 		    }
 		}
@@ -1152,9 +1158,12 @@ public class Rawify
 			    for(int l=0;l<pendingSends;l++) {
 				ins=new FullIns(tile);
 				if(!begin) {
-				    ins.addRoute(src,SwitchOPort.CSTI); //was src2,csti2
+				    ins.addRoute(src2,SwitchOPort.CSTI2);
 				}
-				ins.addRoute(SwitchIPort.CSTO,dest);
+				if(end)
+				    ins.addRoute(SwitchIPort.CSTO,dest); //Final sum goes to static1
+				else
+				    ins.addRoute(SwitchIPort.CSTO,dest2);
 				code.appendIns(ins,false);
 			    }
 			    pendingSends=0;

@@ -34,7 +34,7 @@ public class StrToRStream {
     public static HashMap[] executionCounts;
     
     /** The structure defined in the application, see SIRStructure **/
-    private static SIRStructure[] structures;
+    public static SIRStructure[] structures;
     
     /**
      * The entry point of the RStream "backend" for the StreamIt
@@ -178,11 +178,12 @@ public class StrToRStream {
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
+	
+	printer1 = new SIRPrinter("beforecodegen.sir");
+	IterFactory.createFactory().createIter(str).accept(printer1);
+	printer1.close();
 
-	//SIRPrinter printer1 = new SIRPrinter("beforecodegen.sir");
-	//IterFactory.createFactory().createIter(str).accept(printer1);
-	//printer1.close();
-
+	StructureIncludeFile.doit(structures);
 
 	FlatIRToRS.generateCode(graphFlattener.top);
 

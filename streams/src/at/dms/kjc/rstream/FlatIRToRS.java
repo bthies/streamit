@@ -29,7 +29,7 @@ import at.dms.util.SIRPrinter;
 public class FlatIRToRS extends ToC implements StreamVisitor
 {
     /** if true generate do loops when identified **/
-    private final boolean GENERATE_DO_LOOPS = true;
+    public static final boolean GENERATE_DO_LOOPS = true;
     /** the hashmap of for loops -> do loops **/   
     private HashMap doloops;
     /** the current filter we are visiting **/
@@ -38,6 +38,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     private NewArrayExprs newArrayExprs;
     /** comment me **/
     private ConvertArrayInitializers arrayInits;
+    /** > 0 if in a for loop header during visit **/
+    private int forLoopHeader = 0;
     
     /**
      * The entry method to this C conversion pass.  Given a flatnode containing
@@ -101,6 +103,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	toC.arrayInits = new ConvertArrayInitializers(node);
 	//find all do loops, 
 	toC.doloops = IDDoLoops.doit(node);
+	//remove unnecessary do loops
+	RemoveDeadLoops.doit(node, toC.doloops);
 	//now iterate over all the methods and generate the c code.
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
@@ -143,8 +147,9 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 
 	//if there are structures in the code, include
 	//the structure definition header files
-	//if (StrToRStream.structures.length > 0) 
-	//    print("#include \"structs.h\"\n");
+	if (StrToRStream.structures.length > 0) 
+	    print("#include \"structs.h\"\n");
+	
 	printExterns();
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
@@ -544,6 +549,9 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	JStatement init;
 	JExpression cond;
 	JStatement incr;
+	
+	//be careful, if you return prematurely, decrement me
+	forLoopHeader++;
 
 	//check if this is a do loop
 	if (GENERATE_DO_LOOPS && doloops.containsKey(self)) {
@@ -552,7 +560,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    //System.out.println("init exp: " + doInfo.init);		       
 	    //System.out.println("cond exp: " + doInfo.cond);
 	    //System.out.println("incr exp: " + doInfo.incr);
-
+		
+	    
 	    print("doloop (");
 	    print(doInfo.induction.getType());
 	    print(" ");
@@ -592,7 +601,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 		print(str);
 	    }
 	}
-	
+	forLoopHeader--;
 	print(") ");
 	
         print("{");
@@ -603,6 +612,8 @@ public class FlatIRToRS extends ToC implements StreamVisitor
         newLine();
 	print("}");
     }
+
+
 
     /**
      * prints an array access expression
@@ -755,6 +766,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     }    
 
     
+    
 
     // Special case for CTypes, to map some Java types to C types.
     protected void print(CType s) {
@@ -828,5 +840,17 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     protected void stackAllocateArray(String str) 
     {
 	assert false : "Should not be called";
+    }
+
+    /**
+     * prints a empty statement
+     */
+    public void visitEmptyStatement(JEmptyStatement self) {
+	//if we are inside a for loop header, we need to print 
+	//the ; of an empty statement
+	if (forLoopHeader > 0) {
+	    newLine();
+	    print(";");
+	}
     }
 }

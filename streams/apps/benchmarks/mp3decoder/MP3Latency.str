@@ -1388,7 +1388,7 @@ void->void pipeline MP3Latency() {
 
 float->float filter LatencyTop() {
     work push 1 pop 1 { push(pop()); }
-    void handleMessage() {}
+    handler handleMessage() {}
 }
 
 int->int filter LatencyBot(portal<LatencyTop> port) {

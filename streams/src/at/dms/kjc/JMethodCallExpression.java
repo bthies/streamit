@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.10 2002-11-10 21:45:43 mgordon Exp $
+ * $Id: JMethodCallExpression.java,v 1.11 2003-03-06 12:56:47 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,6 +29,17 @@ import at.dms.compiler.UnpositionedError;
  * JLS 15.12 Method Invocation Expressions
  */
 public class JMethodCallExpression extends JExpression {
+
+  /**
+   *
+   * Construct a node with default prefix of This.
+   */
+  public JMethodCallExpression(TokenReference where,
+			       String ident,
+			       JExpression[] args)
+  {
+      this(where, new JThisExpression(null), ident, args);
+  }
 
   /**
    * Construct a node in the parsing tree

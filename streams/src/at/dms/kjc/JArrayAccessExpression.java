@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.7 2002-06-22 09:52:13 jasperln Exp $
+ * $Id: JArrayAccessExpression.java,v 1.8 2003-03-06 12:56:47 thies Exp $
  */
 
 package at.dms.kjc;
@@ -35,6 +35,11 @@ public class JArrayAccessExpression extends JExpression {
   // ----------------------------------------------------------------------
 
   /**
+   * This version is the original kopi one; tries to resolve type
+   * automatically.  If you know the type, use the other constructor
+   * since kopi's reconstruction isn't very good if the type goes
+   * through fields, causing null types later on in the compiler.  --bft
+   *
    * Construct a node in the parsing tree
    * This method is directly called by the parser
    * @param	where		the line of this node in the source code
@@ -42,16 +47,21 @@ public class JArrayAccessExpression extends JExpression {
    */
   public JArrayAccessExpression(TokenReference where,
 				JExpression prefix,
-				JExpression accessor)
+				JExpression accessor) {
+      this(where, prefix, accessor, null);
+      tryToResolveType();
+  }
+
+  public JArrayAccessExpression(TokenReference where,
+				JExpression prefix,
+				JExpression accessor,
+				CType type)
   {
     super(where);
 
     this.prefix = prefix;
     this.accessor = accessor;
-
-    // inserted as part of StreamIt pass so that we can resolve types
-    // of local arrays that we're referencing
-    tryToResolveType();
+    this.type = type;
   }
 
     public String toString() {

@@ -20,7 +20,7 @@ import java.util.List;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SeparateInitializers.java,v 1.1 2003-07-09 19:26:43 dmaze Exp $
+ * @version $Id: SeparateInitializers.java,v 1.2 2003-07-09 20:47:45 dmaze Exp $
  */
 public class SeparateInitializers extends FEReplacer
 {
@@ -53,5 +53,15 @@ public class SeparateInitializers extends FEReplacer
 
         // Already added the base statement.
         return null;
+    }
+
+    public Object visitStmtFor(StmtFor stmt)
+    {
+        // Only recurse into the body.
+        Statement newBody = (Statement)stmt.getBody().accept(this);
+        if (newBody == stmt.getBody())
+            return stmt;
+        return new StmtFor(stmt.getContext(), stmt.getInit(),
+                           stmt.getCond(), stmt.getIncr(), newBody);
     }
 }

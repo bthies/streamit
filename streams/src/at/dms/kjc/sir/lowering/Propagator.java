@@ -536,7 +536,8 @@ class Propagator extends SLIRReplacingVisitor {
         // Look for known idempotent functions.
         if (args.length == 1 && args[0].isConstant())
         {
-            if (ident.equals("sin") || ident.equals("cos")) {
+            if (ident.equals("sin") || ident.equals("cos") ||
+                ident.equals("log") || ident.equals("exp")) {
 		JExpression narg = doPromote(args[0],
 					     new JDoubleLiteral(null, 0.0));
 		double darg = narg.doubleValue();
@@ -546,6 +547,12 @@ class Propagator extends SLIRReplacingVisitor {
 		if (ident.equals("cos"))
 		    return new JDoubleLiteral(self.getTokenReference(),
 					      Math.cos(darg));
+                if (ident.equals("log"))
+                    return new JDoubleLiteral(self.getTokenReference(),
+                                              Math.log(darg));
+                if (ident.equals("exp"))
+                    return new JDoubleLiteral(self.getTokenReference(),
+                                              Math.exp(darg));
 	    }
 	}
         return self;

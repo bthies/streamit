@@ -104,8 +104,7 @@ public class BufferDRAMAssignment
 
 	    if (files[i].getHead().isFileWriter()) {
 		assert files[i].getHead().oneInput() : 
-		    "buffer assignment of a joined file writer not implemented " +
-		    "everthing else should be done";
+		    "buffer assignment of a joined file writer not implemented ";
 		FileOutputContent fileOC = 
 		    (FileOutputContent)filter.getFilter();
 		RawTile tile = chip.getTile(files[i].getHead().getNextFilter().getX(), 
@@ -132,8 +131,7 @@ public class BufferDRAMAssignment
 	    }
 	    else if (files[i].getTail().isFileReader()) {
 		assert files[i].getTail().oneOutput() :
-		    "buffer assignment of a split file reader not implemented " +
-		    "everthing else should be done";
+		    "buffer assignment of a split file reader not implemented ";
 		FileInputContent fileIC = (FileInputContent)filter.getFilter();
 		RawTile tile = chip.getTile(files[i].getHead().getNextFilter().getX(), 
 					    files[i].getHead().getNextFilter().getY());

@@ -119,18 +119,28 @@ public class SpaceTimeBackend
 	//Linear Analysis
 	LinearAnalyzer lfa=null;
 	if(KjcOptions.linearanalysis||KjcOptions.linearpartition) {
-	    System.out.println("Running linear analysis... ");
-	    lfa=LinearAnalyzer.findLinearFilters(str,KjcOptions.debug,false);
-	    System.out.println("Done with linear analysis.");
-	    LinearDot.printGraph(str,"linear.dot",lfa);
-	    LinearDotSimple.printGraph(str,"linear-simple.dot",lfa,null);
+	    System.out.print("Running linear analysis...");
+	    lfa=LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, true);
+	    System.out.println("Done");
+	    LinearDot.printGraph(str, "linear.dot", lfa);
+	    LinearDotSimple.printGraph(str,"linear-simple.dot", lfa, null);
 	    //IterFactory.createFactory().createIter(str).accept(new LinearPreprocessor(lfa));
+	    
+	    // if we are supposed to transform the graph
+	    // by replacing work functions with their linear forms, do so now 
+	    if (KjcOptions.linearreplacement) {
+		System.err.print("Running linear replacement...");
+		LinearDirectReplacer.doReplace(lfa, str);
+		System.err.println("done.");
+		// print out the stream graph after linear replacement
+		LinearDot.printGraph(str, "linear-replace.dot", lfa);
+	    }
 	}
 	
 	//get the execution counts from the scheduler
 	HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	//flatten the graph by running (super?) synch removal
-	FlattenGraph.flattenGraph(str,lfa,executionCounts);
+	FlattenGraph.flattenGraph(str, lfa, executionCounts);
 	UnflatFilter[] topNodes=FlattenGraph.getTopLevelNodes();
 	System.out.println("Top Nodes:");
 	for(int i=0;i<topNodes.length;i++)

@@ -201,6 +201,11 @@ public class TraceIRtoC extends ToC
             init.accept(this);
 	    //the ; will print in a statement visitor
 	}
+	else //if null we must print the ; explicitly
+	    print(";");
+	//we must also do this if we encounter a jemptystatement here
+	if (init instanceof JEmptyStatement)
+	    print(";");
 
         print(" ");
         if (cond != null) {

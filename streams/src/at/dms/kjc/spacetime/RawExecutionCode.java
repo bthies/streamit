@@ -22,7 +22,7 @@ import at.dms.kjc.flatgraph2.FilterContent;
 public abstract class RawExecutionCode 
 {
     //if true, inline the work function in the init and steady-state
-    protected static final boolean INLINE_WORK = false;//true;
+    protected static final boolean INLINE_WORK = true;
     
      /*** fields for the var names we introduce ***/
     public static String recvBuffer = "__RECVBUFFER__";
@@ -133,4 +133,22 @@ public abstract class RawExecutionCode
 
 	return new JForStatement(null, init, cond, incr, body, null);
     }
+
+    public static JStatement constToSwitchStmt(int constant) 
+    {
+	//alt code gen is always enabled!
+	JAssignmentExpression send = 
+	    new JAssignmentExpression(null,
+				      new JFieldAccessExpression(null, new JThisExpression(null),
+								 Util.CSTOINTVAR),
+				      new JIntLiteral(constant));
+	
+	return new JExpressionStatement(null, send, null);
+    }
+    
+    public static JStatement boundToSwitchStmt(int constant)  
+    {
+	return constToSwitchStmt(constant - 1);
+    }
+    
 }

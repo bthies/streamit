@@ -317,17 +317,12 @@ public class ComputeCodeStore {
     
     public void sendConstToSwitch(int constant, boolean init) 
     {
-	//alt code gen is always enabled!
-	JAssignmentExpression send = 
-	    new JAssignmentExpression(null,
-				      new JFieldAccessExpression(null, new JThisExpression(null),
-								 Util.CSTOINTVAR),
-				      new JIntLiteral(constant));
+	JStatement send = RawExecutionCode.constToSwitchStmt(constant);
 	
 	if (init)
-	    initBlock.addStatement(new JExpressionStatement(null, send, null));
+	    initBlock.addStatement(send);
 	else 
-	    steadyLoop.addStatement(new JExpressionStatement(null, send, null));	
+	    steadyLoop.addStatement(send);
     }
     
 

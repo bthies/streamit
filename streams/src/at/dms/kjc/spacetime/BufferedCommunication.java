@@ -34,6 +34,7 @@ public class BufferedCommunication extends RawExecutionCode
 	super(filterInfo);
 	FilterTraceNode node=filterInfo.traceNode;
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Buffered Comm.");
+	
 	//set the unique id to append to each variable name
 	//treat all the filters as two stages, i.e.
 	//initWork is always called, so add one to non-2 stages
@@ -41,8 +42,7 @@ public class BufferedCommunication extends RawExecutionCode
 	initFire = filterInfo.initMult;
 	if (!filterInfo.isTwoStage()) {
 	    initFire++;
-	}
-	
+	}	
     }
 
 
@@ -330,7 +330,7 @@ public class BufferedCommunication extends RawExecutionCode
 	FilterContent filter = filterInfo.filter;
 
 	//add the calls to the work function for the priming of the pipeline
-	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));
+	statements.addStatement(getWorkFunctionBlock(false, filterInfo.primePump));
 	//return the method
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 			       CStdType.Void,
@@ -433,14 +433,14 @@ public class BufferedCommunication extends RawExecutionCode
      */
     public JBlock getSteadyBlock() 
     {
-	return getWorkFunctionBlock(filterInfo.steadyMult);
+	return getWorkFunctionBlock(true, filterInfo.steadyMult);
     }
     
 
     /**
      * Generate code to receive data and call the work function mult times
      **/
-    private JBlock getWorkFunctionBlock(int mult)
+    private JBlock getWorkFunctionBlock(boolean steady, int mult)
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
@@ -452,7 +452,20 @@ public class BufferedCommunication extends RawExecutionCode
 	    
 	JStatement workBlock = 
 	    getWorkFunctionCall(filter);
-
+	
+	//if we are compressing the sends and receives on the switch for this
+	//filter, we must send them now
+	if (steady && Rawify.SWITCH_COMP && filterInfo.steadyMult > Rawify.SC_THRESHOLD) {
+	    //if we are compressing the receives, send the trip count to the switch
+	    if (filterInfo.itemsNeededToFire(0, false) > Rawify.SC_INS_THRESH) {
+		block.addStatement(boundToSwitchStmt(filterInfo.itemsNeededToFire(0, false)));
+	    }
+	    //if we are compressing the sends, send the trip count to the switch
+	    if (filterInfo.itemsFiring(0, false) > Rawify.SC_INS_THRESH) {
+		block.addStatement(boundToSwitchStmt(filterInfo.itemsFiring(0, false)));
+	    }
+	}
+	    
 	//reset the simple index
 	if (filterInfo.isSimple()) {
 	    block.addStatement

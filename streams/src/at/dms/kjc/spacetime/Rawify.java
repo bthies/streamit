@@ -23,6 +23,16 @@ public class Rawify
     //or steady will have its switch instructions placed in a loop
     public static int SC_THRESHOLD = 5;
     
+    //a filter that pushes or pops more than SC_INS_THRESH will have these 
+    //instruction placed in a loop on the switch
+    public static int SC_INS_THRESH = 5;
+    
+    //regs on the switch that are used for various loops
+    private static SwitchReg POP_LOOP_REG = SwitchReg.R0;
+    private static SwitchReg PUSH_LOOP_REG = SwitchReg.R1;
+    private static SwitchReg FILTER_FIRE_LOOP_REG = SwitchReg.R2;
+    private static SwitchReg PP_STEADY_LOOP_REG = SwitchReg.R3;
+
     public static void run(SimpleScheduler scheduler, RawChip rawChip,
 			   boolean init) 
     {
@@ -732,9 +742,9 @@ public class Rawify
 		RawTile tile = (RawTile)tiles.next();
 		//loop me
 		//send over both constants
-		Util.sendConstFromTileToSwitch(tile, iterations - 1, init, primepump, SwitchReg.R2);
+		Util.sendConstFromTileToSwitch(tile, iterations - 1, init, primepump, FILTER_FIRE_LOOP_REG);
 		if (primepump && ppSteadyIt > 1) 
-		    Util.sendConstFromTileToSwitch(tile, ppSteadyIt - 1, init, primepump, SwitchReg.R3);
+		    Util.sendConstFromTileToSwitch(tile, ppSteadyIt - 1, init, primepump, PP_STEADY_LOOP_REG);
 		//label 1
 		Label label = new Label();
 		tile.getSwitchCode().appendIns(label, (init || primepump));
@@ -751,7 +761,7 @@ public class Rawify
 		RawTile tile = (RawTile)tiles.next();
 		Label label = (Label)labels.get(tile);
 		//add the branch back
-		BnezdIns branch = new BnezdIns(SwitchReg.R2, SwitchReg.R2, 
+		BnezdIns branch = new BnezdIns(FILTER_FIRE_LOOP_REG, FILTER_FIRE_LOOP_REG, 
 					       label.getLabel());
 		tile.getSwitchCode().appendIns(branch, (init || primepump));
 	    }
@@ -786,7 +796,7 @@ public class Rawify
 			RawTile tile = (RawTile)tiles.next();
 			Label label = (Label)labels.get(tile);
 			//add the branch back
-			BnezdIns branch = new BnezdIns(SwitchReg.R3, SwitchReg.R3, 
+			BnezdIns branch = new BnezdIns(PP_STEADY_LOOP_REG, PP_STEADY_LOOP_REG, 
 						       label.getLabel());
 			tile.getSwitchCode().appendIns(branch, (init || primepump));
 		    }
@@ -1148,31 +1158,17 @@ public class Rawify
 	final boolean begin=content.getBegin();
 	final boolean end=content.getEnd();
 	final int pos=content.getPos();
-	int bufferSize; //Use peek buffer while bufferSize>0 else use net
+
 	int index=content.getTotal()-pos-1;
-	if(index==0) //If first tile
-	    bufferSize=filterInfo.remaining;
-	else { //Find first tile
-	    TraceNode curNode=node;
-	    for(int i=index;i>0;i--)
-		curNode=curNode.getPrevious();
-	    FilterInfo parentInfo=FilterInfo.getFilterInfo((FilterTraceNode)curNode);
-	    bufferSize=parentInfo.remaining;
-	}
-	if(filterInfo.initMult>0)
-	    bufferSize+=peek-pop;
+
 	//int turns=pos*numCoeff; //Default number of turns
 	int turns=pos*numPop; //Default number of turns
-	int extra=0; //Extra turns needed
-	int excess=bufferSize-pop*(int)Math.ceil(((double)peek)/pop);//pop*(numCoeff+turns);
-	if(excess>0) { //Handle excess items on peekbuffer
-	    extra=(int)Math.ceil(((double)excess)/pop);
-	    turns+=extra;
-	}
+
 	final int numTimes=Linear.getMult(numCoeff);
 	final int target=filterInfo.steadyMult-(int)Math.ceil(((double)peek)/pop);
 	final int newSteadyMult=target/numTimes-1;
 	final int remainingExec=target-(newSteadyMult+1)*numTimes;
+	
 	turns+=remainingExec; //Remaining executions
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
@@ -1184,25 +1180,21 @@ public class Rawify
 	FullIns loopCount=new FullIns(tile,new MoveIns(SwitchReg.R3,SwitchIPort.CSTO));
 	code.appendIns(loopCount,false);
 	//Preloop
-	if(begin) {
-	    int bufferRemaining=bufferSize;
+	if (begin) {
 	    for(int i=0;i<numPop;i++)
-		for(int j=0;j<pop;j++)
-		    if(bufferRemaining>0)
-			bufferRemaining--;
-		    else {
-			//Pass first value
-			FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-			ins.addRoute(src, SwitchOPort.CSTI);
-			code.appendIns(ins, false);
-			//Repeat first value
-			for(int k=i-1;k>=0;k--) {
-			    FullIns newIns = new FullIns(tile);
-			    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-			    code.appendIns(newIns, false);
-			}
+		for(int j=0;j<pop;j++) {
+		    //Pass first value
+		    FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		    ins.addRoute(src, SwitchOPort.CSTI);
+		    code.appendIns(ins, false);
+		    //Repeat first value
+		    for(int k=i-1;k>=0;k--) {
+			FullIns newIns = new FullIns(tile);
+			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			code.appendIns(newIns, false);
 		    }
- 	    if(turns>0) {
+		}
+ 	    if(turns > 0) {
 		//Order between values (from peek buffer) and partial sums is reversed
 		//So use Reg2 as a buffer to reorder partial sum and values
 		//Save partial sum
@@ -1210,24 +1202,16 @@ public class Rawify
 		code.appendIns(ins, false);
 		for(int turn=0;turn<turns;turn++)
 		    for(int j = 0; j<pop; j++) {
-			if(bufferRemaining>0) {
-			    //Pass value from peek buffer
-			    ins=new FullIns(tile);
-			    ins.addRoute(SwitchIPort.CSTO,dest);
-			    code.appendIns(ins,false);
-			    bufferRemaining--;
-			} else {
-			    //Pass first value
-			    ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-			    ins.addRoute(src, SwitchOPort.CSTI);
-			    ins.addRoute(src,dest); //Send to next tile
-			    code.appendIns(ins, false);
-			    //Repeat first value
-			    for(int k=numPop-2;k>=0;k--) {
-				FullIns newIns = new FullIns(tile);
-				newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-				code.appendIns(newIns, false);
-			    }
+			//Pass first value
+			ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+			ins.addRoute(src, SwitchOPort.CSTI);
+			ins.addRoute(src,dest); //Send to next tile
+			code.appendIns(ins, false);
+			//Repeat first value
+			for(int k=numPop-2;k>=0;k--) {
+			    FullIns newIns = new FullIns(tile);
+			    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			    code.appendIns(newIns, false);
 			}
 			if(j==0) { //Partial sum
 			    //Save partial sum
@@ -1397,7 +1381,6 @@ public class Rawify
 	turns=index*numPop;//+(int)Math.ceil(((double)bufferSize)/pop); //Make sure to fill peekbuffer
 	System.out.println("SWITCH TURNS: "+turns);
 	if(begin) {
-	    int bufferRemaining=bufferSize;
 	    //int emptySpots=pop*(turns+numPop-1+pos*numPop)-bufferSize;
  	    if(turns>0) {
 		throw new AssertionError("Shouldn't go in here!");
@@ -1434,7 +1417,6 @@ public class Rawify
 	    }
 	    for(int i=0;i<numPop-1;i++)
 		for(int j=0;j<pop;j++) {
-		    bufferRemaining--;
 		    /*if(emptySpots>0)
 			emptySpots--;
 			else {*/
@@ -1471,19 +1453,7 @@ public class Rawify
 	    //Pass remaining values to filters downstream
 	    for(int i=0;i<pos*numPop;i++) {
 		ins = new FullIns(tile);
-		if(bufferRemaining>0) {
-		    ins.addRoute(src,dest);
-		    //Pass up to tile to put into peekbuffer
-		    ins.addRoute(src,SwitchOPort.CSTI);
-		    bufferRemaining--;
-		} else //Pass dummy value
-		    ins.addRoute(SwitchReg.R1,dest);
-		code.appendIns(ins, false);
-	    }
-	    //Buffer up remaining
-	    for(;bufferRemaining>0;bufferRemaining--) {
-		ins = new FullIns(tile);
-		ins.addRoute(src,SwitchOPort.CSTI);
+		ins.addRoute(SwitchReg.R1,dest);
 		code.appendIns(ins, false);
 	    }
 	} else {
@@ -1612,6 +1582,14 @@ public class Rawify
 	    else if(primePump)
 		System.out.println("GENERATING PRIMEPUMP: "+node+" "+mult);
 
+	//the multiplicity of the primepump that places items on the steady buffer
+	int ppSteadyMult = filterInfo.push == 0 ? 0 :
+	    (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
+
+	//switch Compression only in steady state!!!
+	boolean switchCompression = SWITCH_COMP && mult > SC_THRESHOLD && !init &&
+	    !primePump;
+
 	if(!(init||primePump||!linear)) { //Linear switch code in steadystate
 	    /*if(primePump) {
 		int bufferSize;
@@ -1635,43 +1613,18 @@ public class Rawify
 		} else*/
 		createLinearSwitchCode(node,filterInfo,mult,tile,rawChip);
 	    sentItems+=mult;
-	} else if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
+	} else if (switchCompression) {
 	    assert mult > 1;
 	    sentItems = filterInfo.push * mult;
-	    //add code on to send constant from tile, remember to subtract 1 because we 
-	    //don't have a condition at the header of the loop
-	    tile.getComputeCode().sendConstToSwitch(mult - 1, (init || primePump));
-	    //add the code on the switch to receive the constant
-	    MoveIns moveIns = new MoveIns(SwitchReg.R2, 
-					  SwitchIPort.CSTO);
-	    tile.getSwitchCode().appendIns(moveIns, (init || primePump));
-	    //send the const for the primepump items that are placed in steady buffers
-	    if (primePump && filterInfo.push > 0 &&
-		filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 1) {
-		tile.getComputeCode().sendConstToSwitch
-		    ((filterInfo.primePumpItemsNotConsumed() / filterInfo.push) - 1,
-		     (init || primePump));
-		MoveIns moveIns2 = new MoveIns(SwitchReg.R3, 
-					       SwitchIPort.CSTO);
-		tile.getSwitchCode().appendIns(moveIns2, (init || primePump));
-	    }
 	    
-
-	    //add the label
-	    Label label = new Label();
-	    tile.getSwitchCode().appendIns(label, (init || primePump));	
-
-	    createReceiveCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
-	    createSendCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
-	    
-	    generateSwitchLoopTrailer(label, tile, false, primePump);
+	    filterSwitchCodeCompressed(mult, node, filterInfo, init, primePump, tile, rawChip);
 	}
 	else {
 	    for (int i = 0; i < mult; i++) {
 		//append the receive code
-		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		createReceiveCode(i, node, filterInfo, init, primePump, tile, rawChip, false);
 		//append the send code 
-		sentItems += createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+		sentItems += createSendCode(i, node, filterInfo, init, primePump, tile, rawChip, false);
 	    }
 	}
 	
@@ -1706,33 +1659,14 @@ public class Rawify
 
 	if (primePump && filterInfo.push > 0 && 
 	    filterInfo.primePumpItemsNotConsumed() / filterInfo.push > 0) {
-	    int ppSteadyMult = (filterInfo.primePumpItemsNotConsumed() / filterInfo.push);
+
 	    //if(linear) //Linear switch code
 	    //createLinearSwitchCode(node,init,primePump,ppSteadyMult,tile,rawChip);
-	    //make sure mult > SC_THRESHOLD because we need to send the const above
-	    if (SWITCH_COMP && mult > SC_THRESHOLD && ppSteadyMult > 1) {
-		//add the label
-		Label label = new Label();
-		tile.getSwitchCode().appendIns(label, (init || primePump));	
-		
+	    for (int i = 0; i < ppSteadyMult; i++) {
 		//append the receive code
-		createReceiveCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
+		createReceiveCode(i, node, filterInfo, init, primePump, tile, rawChip, false);
 		//append the send code 
-		createSendCode(0, node, parent, filterInfo, false, primePump, tile, rawChip);
-		
-		//generate the branch back
-		//add the branch back
-		BnezdIns branch = new BnezdIns(SwitchReg.R3, SwitchReg.R3, 
-					       label.getLabel());
-		tile.getSwitchCode().appendIns(branch, (init || primePump));
-	    }
-	    else {
-		for (int i = 0; i < ppSteadyMult; i++) {
-		    //append the receive code
-		    createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
-		    //append the send code 
-		    createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
-		}
+		createSendCode(i, node, filterInfo, init, primePump, tile, rawChip, false);
 	    }
 	    
 	    //handle filling the cache line for the steady buffer of the primepump 
@@ -1748,20 +1682,93 @@ public class Rawify
 				filterInfo.totalItemsReceived(init, primePump));
 
     }
-        
-    private static void createReceiveCode(int iteration, FilterTraceNode node, Trace parent, 
-					  FilterInfo filterInfo, boolean init, boolean primePump, RawTile tile,
-					  RawChip rawChip) 
+
+    private static void filterSwitchCodeCompressed(int mult, FilterTraceNode node, FilterInfo filterInfo,
+						   boolean init, boolean primePump, RawTile tile,
+						   RawChip rawChip)
     {
+	assert mult < 65535;
+	
+	assert !init && !primePump;
+	
+	//the items this filter is receiving for this iteration
+	int itemsReceiving = filterInfo.itemsNeededToFire(0, init);
+	//get the number of items sending on this iteration, only matters
+	//if init and if twostage
+	int itemsSending = filterInfo.itemsFiring(0, init);
+
+	//are we going to compress the individual send and receive instructions?
+	boolean sendCompression = (itemsSending > SC_INS_THRESH),
+	    receiveCompression = (itemsReceiving > SC_INS_THRESH);
+
+
+	Label receiveLabel = new Label(), sendLabel = new Label(),
+	    multLabel = new Label();
+	
+	//the multiplicity of the filter
+	sendBoundProcToSwitch(mult, tile, init, primePump, FILTER_FIRE_LOOP_REG);
+	
+	//add the label around the entire firing of the node
+	tile.getSwitchCode().appendIns(multLabel, (init || primePump));
+
+	//receive on the switch the number of items we are receiving, the proc 
+	//sends this for each firing of the filter (see bufferedcommunication, directcommunicatio)
+	if (receiveCompression)
+	    recConstOnSwitch(tile, init, primePump, POP_LOOP_REG);
+	//receive on the switch the number of items we are sending, the proc 
+	//sends this for each firing of the filter (see bufferedcommunication, directcommunicatio)
+	if (sendCompression)
+	    recConstOnSwitch(tile, init, primePump, PUSH_LOOP_REG);
+
+	//generate the label for the receive
+	if (receiveCompression) 
+	    tile.getSwitchCode().appendIns(receiveLabel, (init || primePump));
+	
+	//append the receive code for 1 item if receive compression or pop items if not
+	createReceiveCode(0, node, filterInfo, init, primePump, tile, rawChip, receiveCompression);
+	
+	//generate the loop back for the receive
+	if (receiveCompression) 
+	    generateSwitchLoopTrailer(receiveLabel, tile, init, primePump, POP_LOOP_REG);
+	
+	//generate the label for the send
+	if (sendCompression)
+	    tile.getSwitchCode().appendIns(sendLabel, (init || primePump));
+	
+	
+	//append the send ins for 1 item if send compression or push items if not
+	createSendCode(0, node, filterInfo, init, primePump, tile, rawChip, sendCompression);
+
+	//generate the loop back for the send
+	if (sendCompression)
+	    generateSwitchLoopTrailer(sendLabel, tile, init, primePump, PUSH_LOOP_REG);
+	//generate the loop back for a complete firing of the filter...
+	generateSwitchLoopTrailer(multLabel, tile, false, primePump, FILTER_FIRE_LOOP_REG);
+    }
+    
+        
+    private static void createReceiveCode(int iteration, FilterTraceNode node, FilterInfo filterInfo,
+					  boolean init, boolean primePump, RawTile tile,
+					  RawChip rawChip, boolean compression) 
+    {
+	//the label used if switch instruction compression is used...
+	Label label = null;
+	
 	//if this is the init and it is the first time executing
 	//and a twostage filter, use initpop and multiply this
 	//by the size of the type it is receiving
-	int itemsReceiving = filterInfo.itemsNeededToFire(iteration, init) *
-	    Util.getTypeSize(node.getFilter().getInputType());
+	int itemsReceiving = filterInfo.itemsNeededToFire(iteration, init);
 	
 	//do nothing if there is nothing to do
 	if (itemsReceiving == 0)
 	    return;
+	
+	//if we are placing in a loop, only generate 1 item
+	if (compression)
+	    itemsReceiving = 1;
+	
+	//account for the size of the type
+	itemsReceiving *= Util.getTypeSize(node.getFilter().getInputType());
 
 	appendReceiveInstructions(node, itemsReceiving, filterInfo, init, 
 				  primePump, tile, rawChip);
@@ -1808,17 +1815,15 @@ public class Rawify
 	}
     }
 
-    private static int createSendCode(int iteration, FilterTraceNode node, Trace parent, 
+    private static int createSendCode(int iteration, FilterTraceNode node,
 				       FilterInfo filterInfo, boolean init, boolean primePump, 
-				       RawTile tile, RawChip rawChip) 
+				       RawTile tile, RawChip rawChip, boolean compression) 
     {
 	//get the number of items sending on this iteration, only matters
 	//if init and if twostage
 	int items = filterInfo.itemsFiring(iteration, init);
 	
-	int words = items * Util.getTypeSize(node.getFilter().getOutputType());
-	
-	if (words == 0)
+	if (items == 0)
 	    return 0;
 
 	ComputeNode destNode = null;
@@ -1837,6 +1842,17 @@ public class Rawify
 	    }
 	    
 	}
+	
+
+	//the label for the loop if we are compressing
+	Label label = null;
+
+	//only send over 1 item, so set words to 1 instead of items
+	if (compression)
+	    items = 1;
+	 
+	int words = items * Util.getTypeSize(node.getFilter().getOutputType());
+
 	for (int j = 0; j < words; j++) {
 	    RouteIns ins = new RouteIns(tile);
 	    //add the route from this tile to the next trace node
@@ -1852,44 +1868,48 @@ public class Rawify
 		createMagicDramStore((OutputTraceNode)node.getNext(), 
 				     node, (init || primePump), rawChip);
 	}    
+	
 	return items;
     }
 
-    private static Label generateSwitchLoopHeader(int mult, RawTile tile, boolean init, boolean primePump)
+    //receive a constant on the switch sent from the proc
+    private static void recConstOnSwitch(RawTile tile, boolean init, boolean primePump,
+					 SwitchReg reg) 
+    {
+	//add the code on the switch to receive the constant
+	MoveIns moveIns = new MoveIns(reg, 
+				      SwitchIPort.CSTO);
+	tile.getSwitchCode().appendIns(moveIns, (init || primePump));	
+    }
+    
+    //send a const -1 from the proc to switch
+    private static void sendBoundProcToSwitch(int mult, RawTile tile, boolean init, boolean primePump,
+					      SwitchReg reg) 
     {
 	assert mult > 1;
-	//add code on to send constant from tile, remember to subtract 1 because we 
 	//don't have a condition at the header of the loop
 	tile.getComputeCode().sendConstToSwitch(mult - 1, (init || primePump));
-	//add the code on the switch to receive the constant
-	MoveIns moveIns = new MoveIns(SwitchReg.R2, 
-				      SwitchIPort.CSTO);
-	tile.getSwitchCode().appendIns(moveIns, (init || primePump));
-	//add the label
+	recConstOnSwitch(tile, init, primePump, reg);
+    }
+    
+
+    private static Label generateSwitchLoopHeader(int mult, RawTile tile, boolean init, boolean primePump, 
+						  SwitchReg reg)
+    {
+	sendBoundProcToSwitch(mult, tile, init, primePump, reg);
+	
 	Label label = new Label();
 	tile.getSwitchCode().appendIns(label, (init || primePump));	
 	return label;
     }
     
-    private static void generateSwitchLoopTrailer(Label label, RawTile tile, boolean init, boolean primePump)
+    private static void generateSwitchLoopTrailer(Label label, RawTile tile, boolean init, boolean primePump,
+						  SwitchReg reg)
     {
 	//add the branch back
-	BnezdIns branch = new BnezdIns(SwitchReg.R2, SwitchReg.R2, 
+	BnezdIns branch = new BnezdIns(reg, reg, 
 				       label.getLabel());
 	tile.getSwitchCode().appendIns(branch, (init || primePump));
-    }
-    
-
-    //create the actual switch instructions, but put a loop around them for 
-    //compression
-    private static void generateSwitchInsComp(int items, RouteIns ins, 
-					      RawTile tile, boolean init, boolean primePump)
-    {
-	Label label = generateSwitchLoopHeader(items, tile, init, primePump);
-	//add the instruction
-	tile.getSwitchCode().appendIns(ins, (init || primePump));
-	generateSwitchLoopTrailer(label, tile, init, primePump);
-
     }
     
     /* worry about magic stuff later

@@ -11,11 +11,11 @@ import at.dms.kjc.sir.lowering.partition.*;
 public class SimplePartitioner extends Partitioner
 {
     //trace work threshold, higher number, more restrictive, smaller traces
-    private static final double TRASHOLD = 0.1;
+    private static final double TRASHOLD = 0.8;
     //if true, make traces as long as possible ignoring the work balancing (TRASHOLD)
     private static final boolean IGNORE_WORK_EST = true;
 
-    public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
+    public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts, LinearAnalyzer lfa,
 			     WorkEstimate work, RawChip rawChip) 
     {
 	super(topFilters, exeCounts, lfa, work, rawChip);
@@ -54,7 +54,10 @@ public class SimplePartitioner extends Partitioner
 		TraceNode node;
 		Trace trace;
 		int filtersInTrace = 1;
-	    
+		
+		System.out.println("** Creating trace with first filter = " + 
+				   filterContent);
+
 		//create the input trace node
 		if (unflatFilter.in != null && unflatFilter.in.length > 0) {
 		    Edge[] inEdges = new Edge[unflatFilter.in.length];
@@ -76,18 +79,28 @@ public class SimplePartitioner extends Partitioner
 		    trace = new Trace((InputTraceNode)node);
 		    
 		    if (filterContent.isLinear()) { //Jasper's linear stuff??
-			int times=filterContent.getArray().length/filterContent.getPopCount();
-			if(times>1) {
-			    if(times>16)
-				times=16;
-			    FilterContent[] linearStuff=LinearFission.fiss(filterContent,times);
+			System.out.println("******** Found linear fitler, array is of length " + 
+					   filterContent.getArray().length + " pop is " +
+					   filterContent.getPopCount());
+			//The number of "times" to fiss this linear filter...
+			int times = filterContent.getArray().length/filterContent.getPopCount();
+			if (times > 1) {
+			    assert rawChip.getTotalTiles() == 16 : "Only 4x4 layouts supported right now";
+			    
+			    //for now force to execute on 16 tiles				
+			    if (times > rawChip.getTotalTiles())
+				times = rawChip.getTotalTiles();
+			    //fiss the filter into times elements
+			    FilterContent[] fissedFilters = LinearFission.fiss(filterContent,times);
+			    //remove the original linear filter from the work estimation
 			    workEstimation.remove(filterContent);
-			    for(int i=0;i<linearStuff.length;i++) {
-				FilterContent fissedContent=linearStuff[i];
+			    //now add the fissed filters to the trace
+			    for(int i = 0; i < fissedFilters.length; i++) {
+				FilterContent fissedContent=fissedFilters[i];
 				FilterTraceNode filterNode=new FilterTraceNode(fissedContent);
 				node.setNext(filterNode);
 				filterNode.setPrevious(node);
-				node=filterNode;
+				node = filterNode;
 				//Dummy work estimate for now
 				workEstimation.put(fissedContent, 
 						   new Integer(workEstimate/times));
@@ -136,17 +149,21 @@ public class SimplePartitioner extends Partitioner
 				       new Integer(getWorkEstimate(downstream)));
 		    if (getWorkEstimate(downstream) > bottleNeckWork)
 			bottleNeckWork = getWorkEstimate(downstream);
-		    
-		    if (dsContent.isLinear()) { //Jasper's linear stuff?
-			int times=dsContent.getArray().length/dsContent.getPopCount();
+		    //if we get here we are contecting another linear filters to a
+		    //previous linear filter
+		    if (dsContent.isLinear()) { 
+			assert false : "Trying to add a 2 different linear filters to a trace (Not supported Yet)";
+			//the code for this case is broken
+			//the number of times to fiss the linear filter
+			int times = dsContent.getArray().length/dsContent.getPopCount();
 			if(times>1) {
 			    if(times>16)
 				times=16;
-			    FilterContent[] linearStuff=LinearFission.fiss(dsContent,times);
+			    FilterContent[] fissedFilters=LinearFission.fiss(dsContent,times);
 			    workEstimation.remove(dsContent);
 			    //create filter nodes for each row of the matrix?
-			    for (int i = 0; i < linearStuff.length;i++) {
-				FilterContent fissedContent=linearStuff[i];
+			    for (int i = 0; i < fissedFilters.length;i++) {
+				FilterContent fissedContent=fissedFilters[i];
 				FilterTraceNode filterNode = new FilterTraceNode(fissedContent);
 				node.setNext(filterNode);
 				filterNode.setPrevious(node);
@@ -231,7 +248,7 @@ public class SimplePartitioner extends Partitioner
     }
     
 
-    /** given <unflatFilter> determine if we should continue the current race we are
+    /** given <unflatFilter> determine if we should continue the current trace we are
 	building */
     private boolean continueTrace(UnflatFilter unflatFilter, boolean isLinear, 
 				  int bottleNeckWork, int newTotalFilters) 
@@ -245,19 +262,31 @@ public class SimplePartitioner extends Partitioner
 	    UnflatFilter dest = unflatFilter.out[0][0].dest;
 	    //put file readers and writers in there own trace, so only keep going for 
 	    //none-predefined nodes
-	    if (unflatFilter.filter instanceof SIRPredefinedFilter)
+	    if (unflatFilter.filter instanceof SIRPredefinedFilter) {
+		System.out.println("Cannot continue trace: (Source) " + 
+				   unflatFilter.filter + " is predefined");
 		return false;
+	    }
+	    
 	    //don't continue if the next filter is predefined
-	    if (dest.filter instanceof SIRPredefinedFilter)
+	    if (dest.filter instanceof SIRPredefinedFilter) {
+		System.out.println("Cannot continue trace(Dest): " + 
+				   dest.filter + " is predefined");
 		return false;
+	    }
+	    
 	    //cut out linear filters
-	    if (isLinear||dest.isLinear())
+	    if (isLinear||dest.isLinear()) {
+		System.out.println("Cannot continue trace: Source and Dest are not congruent linearly");
 		return false;
-
+	    }
+	    
 	    //check the size of the trace, the length must be less than number of tiles + 1 
-	    if (newTotalFilters > rawChip.getTotalTiles())
+	    if (newTotalFilters > rawChip.getTotalTiles()) {
+		System.out.println("Cannot continue trace: Filters == number of tiles");
 		return false;
-
+	    }
+	    
 	    //check the work estimation
 	    int destEst = getWorkEstimate(dest);
 	    double ratio = (bottleNeckWork > destEst) ? (double)destEst / (double)bottleNeckWork :
@@ -297,7 +326,7 @@ public class SimplePartitioner extends Partitioner
     {
 	if (unflat.isLinear())
 	    //return 0;
-	    return unflat.array.length*2;
+	    return unflat.array.length*10;
 	return getWorkEstimate(unflat.filter);
     }
 

@@ -249,25 +249,21 @@ public class RawChip {
     {
 	int i, index = 0;
 	//add the north streaming drams
-	String dir = "N";	
 	for (i = 0; i < this.gXSize; i++) {
 	    devices [index] = new StreamingDram(this, index);						
 	    index ++;
 	}
 	//add the east streaming drams
-	dir = "E";	
 	for (i = 0; i < this.gYSize; i++) {
 	    devices [index] = new StreamingDram(this, index);
 	    index ++;
 	}	
 	//add the south streaming drams
-	dir = "S";	
 	for (i = this.gXSize - 1; i >= 0; i--) {
 	    devices [index] = new StreamingDram(this, index);
 	    index ++;
 	}
 	//add the west streaming drams
-	dir = "W";	
 	for (i = this.gYSize - 1; i >= 0; i--) {
 	    devices [index] = new StreamingDram(this, index);
 	    index ++;

@@ -35,6 +35,7 @@ public class DirectCommunication extends RawExecutionCode
 	//generate code direct commmunication code
 	//	if (KjcOptions.ratematch)
 	//    return false;
+	
 	if (filter.isTwoStage()) {
 	    SpaceTimeBackend.println(filter + " can't use direct comm: Two Stage");
 	    return false;
@@ -128,7 +129,7 @@ public class DirectCommunication extends RawExecutionCode
 	FilterContent filter = filterInfo.filter;
 	
 	//add the calls to the work function in the prime pump stage
-	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
+	statements.addStatement(getWorkFunctionBlock(false, filterInfo.primePump));	
 
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
@@ -192,20 +193,34 @@ public class DirectCommunication extends RawExecutionCode
      */
     public JBlock getSteadyBlock() 
     {
-	return getWorkFunctionBlock(filterInfo.steadyMult);
+	return getWorkFunctionBlock(true, filterInfo.steadyMult);
     }
     
     /**
      * Generate code to receive data and call the work function mult times
      **/
-    private JBlock getWorkFunctionBlock(int mult)
+    private JBlock getWorkFunctionBlock(boolean steady, int mult)
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
-	//inline the work function in a while loop
-	JStatement workBlock = 
-	    getWorkFunctionCall(filter);
 	
+	//inline the work function in a while loop
+	JBlock workBlock = new JBlock(null, new JStatement[0], null);
+	workBlock.addStatement(getWorkFunctionCall(filter));
+	
+	//if we are compressing the sends and receives on the switch for this
+	//filter, we must send them now
+	if (steady && Rawify.SWITCH_COMP && filterInfo.steadyMult > Rawify.SC_THRESHOLD) {
+	    //if we are compressing the receives, send the trip count to the switch
+	    if (filterInfo.itemsNeededToFire(0, false) > Rawify.SC_INS_THRESH) {
+		workBlock.addStatement(boundToSwitchStmt(filterInfo.itemsNeededToFire(0, false)));
+	    }
+	    //if we are compressing the sends, send the trip count to the switch
+	    if (filterInfo.itemsFiring(0, false) > Rawify.SC_INS_THRESH) {
+		workBlock.addStatement(boundToSwitchStmt(filterInfo.itemsFiring(0, false)));
+	    }
+	}
+
 	//create the for loop that will execute the work function
 	//local variable for the work loop
 	JVariableDefinition loopCounter = new JVariableDefinition(null,
@@ -218,6 +233,7 @@ public class DirectCommunication extends RawExecutionCode
 
 	JStatement loop = 
 	    makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
+	
 	block.addStatement(new JVariableDeclarationStatement(null,
 							     loopCounter,
 							     null));

@@ -13,7 +13,7 @@ public class SIRRegReceiverStatement extends JStatement {
 
     private JExpression portal;
     private SIRStream receiver;
-    private JMethodDeclaration[] methods;
+    private SIRInterfaceTable itable;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -22,11 +22,11 @@ public class SIRRegReceiverStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRRegReceiverStatement(JExpression portal, SIRStream receiver, JMethodDeclaration[] methods) {
+    public SIRRegReceiverStatement(JExpression portal, SIRStream receiver, SIRInterfaceTable itable) {
 	super(null, null);
 	this.portal = portal;
 	this.receiver = receiver;
-	this.methods = methods;
+	this.itable = itable;
     }
     
     /**
@@ -37,7 +37,7 @@ public class SIRRegReceiverStatement extends JStatement {
 
 	this.portal = null;
 	this.receiver = null;
-	this.methods = null;
+        this.itable = null;
     }
     
     /**
@@ -56,10 +56,17 @@ public class SIRRegReceiverStatement extends JStatement {
     }
 
     /**
+     * Get the interface table for this statement
+     */
+    public SIRInterfaceTable getItable() {
+        return this.itable;
+    }
+
+    /**
      * Get the methods  for this statement
      */
     public JMethodDeclaration[] getMethods() {
-	return this.methods;
+	return this.itable.getMethods();
     }
 
     
@@ -98,7 +105,7 @@ public class SIRRegReceiverStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitRegReceiverStatement(this, portal, receiver, methods);
+	    ((SLIRVisitor)p).visitRegReceiverStatement(this, portal, receiver, getMethods());
 	} else {
 	    // otherwise, do nothing... this node appears in the body of
 	    // work functions, so a KjcVisitor might find it, but doesn't
@@ -116,7 +123,7 @@ public class SIRRegReceiverStatement extends JStatement {
 		visitRegReceiverStatement(this,
 					  portal,
 					  receiver,
-					  methods);
+					  getMethods());
 	} else {
 	    return this;
 	}

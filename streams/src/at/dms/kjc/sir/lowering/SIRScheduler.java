@@ -1,13 +1,17 @@
 package at.dms.kjc.sir.lowering;
 
-import streamit.scheduler1.*;
-import streamit.scheduler1.simple.*;
+import streamit.scheduler2.iriter.Iterator;
+import streamit.iriter.StreamFactory;
+import streamit.scheduler2.base.StreamInterface;
+import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Schedule;
 
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
+import at.dms.kjc.iterator.*;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -20,24 +24,10 @@ import java.util.ListIterator;
  * in a series of calls to filter's work functions.
  */
 public class SIRScheduler implements Constants {
-
     /**
-     * Maps Lists returned by the scheduler to work functions that can
-     * be called.
+     * The toplevel stream we're dealing with.
      */
-    private HashMap listToWork;
-
-    /**
-     * SIRFilter -> SIRTwoStageFilter.
-     *
-     * Each SIRTwoStage filter is represented as a pipeline to two
-     * dummy filters for the sake of the scheduler.  twoStageFilters
-     * maps the first dummy filter to the TwoStageFilter that it is
-     * representing.  This is used to interpret the results from the
-     * scheduler--any list starting with something as a key in this
-     * map can be replaced with the corresponding value in the map.
-     */
-    protected HashMap twoStageFilters;
+    private SIRContainer toplevel;
 
     /**
      * The destination flatClass that we're working on.
@@ -54,20 +44,26 @@ public class SIRScheduler implements Constants {
     /**
      * Creates one of these.
      */
-    private SIRScheduler(JClassDeclaration flatClass) {
+    private SIRScheduler(SIRContainer toplevel, JClassDeclaration flatClass) {
+	this.toplevel = toplevel;
 	this.flatClass = flatClass;
-	this.twoStageFilters = new HashMap();
     }
 
     /**
      * Does the scheduling, adding a work function corresponding to
      * <toplevel> to <flatClass>.  Returns the schedule built as part
-     * of this.
+     * of this.  
+     *
+     * For now, requires a container as input to simplify
+     * implementation - if there's a pre-defined filter at toplevel,
+     * then would have to make wrapper to call it here, which is not
+     * entirely obvious how to do (considering the data structures
+     * being passed around.)
      */
-    public static SIRSchedule buildWorkFunctions(SIRStream toplevel, 
-					      JClassDeclaration flatClass) {
-	Schedule schedule = new SIRScheduler(flatClass).buildWorkFunctions(toplevel);
-	return new SIRSchedule(schedule);
+    public static SIRSchedule buildWorkFunctions(SIRContainer toplevel, 
+						 JClassDeclaration flatClass) {
+	StreamInterface schedInterface = new SIRScheduler(toplevel, flatClass).buildWorkFunctions();
+	return new SIRSchedule(toplevel, schedInterface);
     }
 
     /**
@@ -84,54 +80,52 @@ public class SIRScheduler implements Constants {
 	HashMap[] result = { new HashMap(), new HashMap() } ;
 
 	// get the schedule
-	SIRScheduler scheduler = new SIRScheduler(null);
-	Schedule schedule = scheduler.computeSchedule(str);
+	StreamInterface schedInterface = computeSchedule(str);
 	
 	// fill in the init schedule
-	scheduler.fillExecutionCounts(schedule.getInitSchedule(),
-				      result[0]);
-
+	fillExecutionCounts(schedInterface.getInitSchedule(), result[0]);
 	// fill in the steady-state schedule
-	scheduler.fillExecutionCounts(schedule.getSteadySchedule(), 
-				      result[1]);
+	fillExecutionCounts(schedInterface.getSteadySchedule(), result[1]);
+
+	// debug
+	//printSchedules(schedInterface);
+	//printExecutionCounts(result);
 
 	return result;
     }
 
-    // Creates execution counts of filters in graph.  Requires that
-    // <schedObject> results from a schedule built with this instance
-    // of the scheduler.
-    private void fillExecutionCounts(Object schedObject, HashMap counts) {
-	if (schedObject instanceof List) {
-	    // first see if we have a two-stage filter
-	    SIRTwoStageFilter twoStage = 
-		getTwoStageFilter((List)schedObject);
-	    // if we found a two-stage filter, recurse on it instead
-	    // of the list elements.
-	    if (twoStage!=null) {
-		fillExecutionCounts(twoStage, counts);
-	    } else {
-		// otherwise, visit all of the elements of the list
-		for (ListIterator it = ((List)schedObject).listIterator();
-		     it.hasNext(); ) {
-		    fillExecutionCounts(it.next(), counts);
-		}
+    private static void printExecutionCounts(HashMap[] result) {
+	for (int i=0; i<2; i++) {
+	    System.err.println(i==0 ? "Initial counts:" : "Steady counts:");
+	    for (java.util.Iterator it=result[i].keySet().iterator(); it.hasNext(); ) {
+		SIROperator op = (SIROperator)it.next();
+		int[] count = (int[])result[i].get(op);
+		System.err.println("  " + op.getName() + ": " + (count==null ? "empty" : "" + count[0]));
 	    }
-	} else if (schedObject instanceof SchedRepSchedule) {
-    	    // get the schedRep
-	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
-	    for(int i = 0; i < rep.getTotalExecutions().intValue(); i++)
-		fillExecutionCounts(rep.getOriginalSchedule(), 
-				    counts);
-	} else {
-	    //add one to the count for this node
-	    if (!counts.containsKey(schedObject)) {
-		int[] wrapper = { 1 };
-		counts.put(schedObject, wrapper);
+	}
+    }
+
+    // Creates execution counts of filters in graph.  Requires that
+    // <schedule> results from a schedule built with this instance of
+    // the scheduler.
+    private static void fillExecutionCounts(Schedule schedule, HashMap counts) {
+	if (schedule.isBottomSchedule()) {
+	    // tally up for this node.
+	    SIROperator str = getTarget(schedule);
+	    if (!counts.containsKey(str)) {
+		// initialize counter
+		int[] wrapper = { schedule.getNumReps() };
+		counts.put(str, wrapper);
 	    } else {
-		//add one to counter
-		int[] wrapper = (int[])counts.get(schedObject);
-		wrapper[0]++;
+		// add to counter
+		int[] wrapper = (int[])counts.get(str);
+		wrapper[0] += schedule.getNumReps();
+	    }	    
+	} else {
+	    // otherwise we have a container, so simulate execution of
+	    // children
+	    for (int i=0; i<schedule.getNumPhases(); i++) {
+		fillExecutionCounts(schedule.getSubSched(i), counts);
 	    }
 	}
     }
@@ -140,156 +134,79 @@ public class SIRScheduler implements Constants {
      * The private, instance-wise version of <schedule>, to do the
      * scheduling.
      */
-    private Schedule buildWorkFunctions(SIRStream toplevel) {
+    private StreamInterface buildWorkFunctions() {
 	// get the schedule
-	Schedule schedule = computeSchedule(toplevel);
+	StreamInterface schedInterface = computeSchedule(this.toplevel);
+	// debugging printing
+	//printSchedules(schedInterface);
 	// do steady-state scheduling
-	scheduleSteady(toplevel, schedule);
+	scheduleSteady(schedInterface);
 	// do initial scheduling
-	scheduleInit(toplevel, schedule);
+	scheduleInit(schedInterface);
 	// return schedule
-	return schedule;
+	return schedInterface;
     }
     
     /**
-     * Interface with the scheduler to get a schedule for <toplevel>.
-     * Records all associations of two-stage filters in <twoStageFilters>.
+     * Interface with the scheduler to get a schedule for <str>.
      */
-    private Schedule computeSchedule(SIRStream toplevel) {
-	// make a scheduler
-	Scheduler scheduler = new SimpleHierarchicalSchedulerPow2();
-	// get a representation of the stream structure
-	SchedStream schedStream 
-	    = (SchedStream)toplevel.accept(new SIRSchedBuilder(scheduler,
-							       this));
-	// set it to compute the schedule of <schedStream>
-	scheduler.useStream(schedStream);
-	// debugging output
-	//scheduler.print(System.out);
-	// compute a schedule
-	Schedule result = (Schedule)scheduler.computeSchedule();
-	// debugging output
-	//printSchedule(result.getSteadySchedule(), "sirscheduler steady state");
-	//printSchedule(result.getInitSchedule(), "sirscheduler initialization");
-	// return schedule
-	return result;
+    private static StreamInterface computeSchedule(SIRStream str) {
+	StreamFactory factory = new StreamFactory();
+	StreamInterface schedInterface = factory.newFrom(IterFactory.createIter(str));
+	schedInterface.computeSchedule();
+	return schedInterface;
     }
 
     /**
      * Given the schedule <schedule>, do the steady-state scheduling
-     * for <toplevel>.
+     * for <this.toplevel>.
      */
-    private void scheduleSteady(SIRStream toplevel, Schedule schedule) {
-	// clear listToWork
-	listToWork = new HashMap();
+    private void scheduleSteady(StreamInterface schedInterface) {
 	// indicate we're working on steady schedule
 	this.initMode = false;
 
 	// get steady schedule
-	Object schedObject = schedule.getSteadySchedule();
+	Schedule schedule = schedInterface.getSteadySchedule();
 	// make the steady work
-	JMethodDeclaration steadyWork = makeWork(pruneRep(schedObject),
-						 toplevel);	
+	JMethodDeclaration steadyWork = makeHierWork(schedule);
 	// set <steadyWork> as the work function of <toplevel>
-	toplevel.setWork(steadyWork);
+	this.toplevel.setWork(steadyWork);
     }
     
     /**
      * Given the schedule <schedule>, do the initial scheduling for
-     * <toplevel>.
+     * <this.toplevel>.
      */
-    private void scheduleInit(SIRStream toplevel, Schedule schedule) {
-	// clear listToWork
-	listToWork = new HashMap();
+    private void scheduleInit(StreamInterface schedInterface) {
 	// indicate we're working on init schedule
 	this.initMode = true;
 
-	List schedObject = new LinkedList();
-	schedObject.add(schedule.getInitSchedule());
+	// get init schedule
+	Schedule schedule = schedInterface.getInitSchedule();
+
 	// make the init work
-	JMethodDeclaration initWork = makeWork(pruneRep(schedObject),
-					       toplevel);
+	JMethodDeclaration initWork = makeHierWork(schedule);
 	// make the main function in <flatClass>, containing call to <initWork>
-	addMainFunction(toplevel, initWork);
-    }
-
-    /**
-     * If <schedObject> is a SchedRepSchedule, then just take its
-     * contents until we don't have a SchedRepSchedule.
-     */
-    private Object pruneRep(Object schedObject) {
-	while (schedObject instanceof SchedRepSchedule) {
-	    schedObject =
-		((SchedRepSchedule)schedObject).getOriginalSchedule();
-	}
-	return schedObject;
-    }
-
-    /**
-     * Prints a schedule to the screen, with prefix label <label>
-     */
-    public static void printSchedule(Object schedObject, String label) {
-	// print top-level label
-	System.out.println("---------------------------------");
-	System.out.println(label + " schedule: ");
-	// print the schedule
-	printSchedule(schedObject, 1);
-    }
-
-    /**
-     * Prints a sub-schedule with indentation <tabs>.
-     */
-    private static void printSchedule(Object schedObject, int tabs) {
-	// print indentation
-	for (int i=0; i<tabs; i++) {
-	    System.out.print("  ");
-	}
-	// 
-	if (schedObject instanceof List) {
-	    // print out a list
-	    System.out.println("List " + schedObject.hashCode() + ":");
-	    for (ListIterator it = ((List)schedObject).listIterator();
-		 it.hasNext(); ) {
-		printSchedule(it.next(), tabs+1);
-	    }
-	} else if (schedObject instanceof SchedRepSchedule) {
-	    // get the schedRep
-	    SchedRepSchedule rep = (SchedRepSchedule)schedObject;
-	    // print stuff
-	    System.out.print("Rep x " + rep.getTotalExecutions() + ":");
-	    printSchedule(rep.getOriginalSchedule(), tabs+1);
-	} else if (schedObject instanceof SIRFilter) {
-	    // print name and ident
-	    System.out.println(((SIRFilter)schedObject).getName() + " / " +
-			       ((SIRFilter)schedObject).getIdent() + 
-			       " pop=" + ((SIRFilter)schedObject).getPopInt() + 
-			       " peek=" + ((SIRFilter)schedObject).getPeekInt() +
-			       " push=" + ((SIRFilter)schedObject).getPushInt());
-	} else {
-	    // print out an SIR component
-	    System.out.println(((SIROperator)schedObject).getName());
-	}
+	addMainFunction(initWork);
     }
 
     /**
      * Adds a main function to <flatClass>, with the information
-     * necessary to call the toplevel init function in <toplevel> and
-     * the init schedule that's executed in <initWork>
+     * necessary to call the toplevel init function in <this.toplevel>
+     * and the init schedule that's executed in <initWork>
      */
-    private void addMainFunction(SIRStream toplevel, 
-				 JMethodDeclaration initWork) {
+    private void addMainFunction(JMethodDeclaration initWork) {
 	// make a call to <initWork> from within the main function
 	LinkedList statementList = new LinkedList();
-	statementList.add(makeWorkCall(toplevel, 
+	statementList.add(makeWorkCall(this.toplevel, 
 				       initWork.getName(),
-				       toplevel));
+				       false));
 
 	// construct LIR node
 	LIRMainFunction[] main 
-	    = {new LIRMainFunction(toplevel.getName(),
-				   new LIRFunctionPointer(toplevel.
-							  getInit().
-							  getName()),
+	    = {new LIRMainFunction(this.toplevel.getName(),
+				   new LIRFunctionPointer(this.toplevel.
+							  getInit().getName()),
 				   statementList)};
 	JBlock mainBlock = new JBlock(null, main, null);
 
@@ -308,123 +225,72 @@ public class SIRScheduler implements Constants {
     }
 
     /**
-     * Returns the two-stage filter that is represented by
-     * <schedObject>, or <null> if <schedObject> does not represent a
-     * two-stage filter.
+     * Prints initial and steady-state schedules of <schedInterface>
      */
-    protected SIRTwoStageFilter getTwoStageFilter(List schedObject) {
-	// see if the first element in the list corresponds to a
-	// two-stage filter.
-	if (schedObject.size()>0 && 
-	    twoStageFilters.containsKey(pruneRep(schedObject.get(0)))) {
-	    // if so, return it
-	    return (SIRTwoStageFilter)
-		twoStageFilters.get(pruneRep(schedObject.get(0)));
+    private static void printSchedules(StreamInterface schedInterface) {
+	System.err.println();
+	System.err.println("Init schedule:");
+	printSchedule(schedInterface.getInitSchedule(), 1);
+	System.err.println("Steady schedule:");
+	printSchedule(schedInterface.getSteadySchedule(), 1);
+    }
+
+    /**
+     * Prints a <schedule> with indentation <tabs>.
+     */
+    private static void printSchedule(Schedule schedule, int tabs) {
+	// print indentation
+	for (int i=0; i<tabs; i++) {
+	    System.err.print("  ");
+	}
+	if (schedule.isBottomSchedule()) {
+	    /* This is true, except if we're printing schedules during fusion's mangling.
+	    if (getTarget(schedule) instanceof SIRFilter) {
+		Utils.assert(((SIRStream)getTarget(schedule)).getWork()==schedule.getWorkFunc());
+	    }
+	    */
+	    System.err.println("Repeat " + schedule.getNumReps() + ": " + getTarget(schedule).getName() + " (BOTTOM)");
 	} else {
-	    // otherwise, return null
-	    return null;
+	    System.err.println("Repeat " + schedule.getNumReps() + 
+			       ":  (" + schedule.getNumPhases() + " child" + (schedule.getNumPhases()!=1 ? "ren)" : ")"));
+	    for (int i=0; i<schedule.getNumPhases(); i++) {
+		printSchedule(schedule.getSubSched(i), tabs+1);
+	    }
 	}
     }
 
     /**
-     * If <schedObject> contains two dummy filters representing a
-     * single TwoStageFilter, then use the hashmap <twoStageFilters>
-     * to retrieve the two-staged filter associated with this list,
-     * and return the work function that should be used for the next
-     * invocation of the two-staged filter.  Note that this method is
-     * stateful--the first time it finds a given two-stage filter, it
-     * will return the initWork function.  On subsequent calls, it
-     * will return the work function.
-     *
-     * If <schedObject> does not represent a two-stage filter, this
-     * returns null.
+     * Returns name of work function for <schedule>.
      */
-    private JMethodDeclaration getTwoStageWork(List schedObject) {
-	// see if we have a list corresponding to a two-stage filter
-	SIRTwoStageFilter filter = getTwoStageFilter(schedObject);
-	if (filter!=null) {
-	    // return the init or steady-state work function depending
-	    // on how long the list is.  If the list is just one
-	    // element, then we must be doing init; otherwise steady.
-	    if (schedObject.size()==1) {
-		return filter.getInitWork();
-	    } else {
-		Utils.assert(schedObject.size()==2,
-			     "Unexpected size of " + schedObject.size() + 
-			     " for size of list simulating two-stage filter");
-		return filter.getWork();
+    private String getWorkName(Schedule schedule) {
+	if (schedule.isBottomSchedule()) {
+	    // special case some kinds of filters... 
+	    SIROperator str = getTarget(schedule);
+	    if (str instanceof SIRFileReader) {
+		return LoweringConstants.FILE_READER_WORK_NAME;
+	    } else if (str instanceof SIRFileWriter) {
+		return LoweringConstants.FILE_WRITER_WORK_NAME;
+	    } else if (str instanceof SIRIdentity) {
+		return LoweringConstants.IDENTITY_WORK_NAME;
 	    }
-	}
-	// otherwise, not a two-stage filter; return null
-	return null;
-    }
 
-    /**
-     * Returns a work function for the scheduling object
-     * <schedObject>, which must be either a List (corresponding to a
-     * hierarchical scheduling unit) or an SIRFilter (corresponding to
-     * the base case, in which a filter's work function should be
-     * executed.)
-     */
-    private JMethodDeclaration makeWork(Object schedObject,
-					SIRStream toplevel) {
-	// see what kind of schedObject we have
-	if (schedObject instanceof List) {
-	    // get the list
-	    List list = (List)schedObject;
-	    // first see if this list represents a two-stage filter.
-	    JMethodDeclaration work = getTwoStageWork(list);
-	    if (work != null) {
-		// if so, use its work function.
-		return work;
-	    }
-	    // othwerwise, process <list> as a hierarchical unit...
-	    // see if we've already built a work function for <list>
-	    /* LEAVE THIS OUT FOR NOW -- REUSE BREAKS INITWORK. */
-	    if (listToWork.containsKey(list)) {
-		// if so, return the work function
-		return (JMethodDeclaration)listToWork.get(list);
-	    } else {
-		// otherwise, compute the work function
-		work = makeWorkForList(list, toplevel);
-		// store the new work function in a few places...
-		// first, in listToWork so we can get it next time
-		listToWork.put(list, work);
-		// second, in the flatClass
-		flatClass.addMethod(work);
-		// return work
-		return work;
-	    }
-	} else if (schedObject instanceof SIRFilter) {
-	    // if we have a filter, return the filter's work function
-	    return ((SIRFilter)schedObject).getWork();
-	} else if (schedObject==null) {
-	    // fail
-	    Utils.fail("SIRScheduler expected List or SIRFilter but found " +
-		       schedObject);
-	    // return value doesn't matter
-	    return null;
+	    // otherwise, return the work function name
+	    return ((JMethodDeclaration)schedule.getWorkFunc()).getName();
 	} else {
-	    // otherwise, fail
-	    Utils.fail("SIRScheduler expected List or SIRFilter but found " +
-		       schedObject.getClass());
-	    // return value doesn't matter
-	    return null;
+	    // otherwise, we have hierarchical schedule; call components
+	    JMethodDeclaration work = makeHierWork(schedule);
+	    // return work
+	    return work.getName();
 	}
     }
 
     /**
-     * Given that <list> contains a set of scheduling objects under
-     * toplevel stream <toplevel>, returns a work function
-     * corresponding to <list>.  
+     * Makes work function for hierarchical <schedule>.
      */
-    private JMethodDeclaration makeWorkForList(List list, 
-					       SIRStream toplevel) {
-	JStatement[] statementList = makeWorkStatements(list, toplevel);
+    private JMethodDeclaration makeHierWork(Schedule schedule) {
+	JStatement[] statementList = makeWorkStatements(schedule);
 	// make block for statements
-	JBlock statementBlock = new JBlock(null, 
-					   statementList,
-					   null);
+	JBlock statementBlock = new JBlock(null, statementList, null);
 	// build parameter list--the context to import
 	JFormalParameter[] parameters = {
 	    new JFormalParameter(/* tokref */ 
@@ -432,7 +298,7 @@ public class SIRScheduler implements Constants {
 				 /* desc */ 
 				 JLocalVariable.DES_PARAMETER,
 				 /* type */
-				 CClassType.lookup(toplevel.getName()),
+				 CClassType.lookup(this.toplevel.getName()),
 				 /* name */
 				 LoweringConstants.STATE_PARAM_NAME, 
 				 /* isFinal */
@@ -451,25 +317,24 @@ public class SIRScheduler implements Constants {
 				    /* body       */ statementBlock,
 				    /* javadoc    */ null,
 				    /* comments   */ null);
+	// store work function in flat class
+	flatClass.addMethod(result);
 	// return result
 	return result;
     }
 
     /**
      * Returns a list of JStatements corresponding to a sequence of
-     * calls to the work functions corresponding to the elements of
-     * <list> with top-level stream <toplevel>
+     * calls to the work functions in <schedule>.
      */
-    private JStatement[] makeWorkStatements(List list, 
-					    SIRStream toplevel) {
+    private JStatement[] makeWorkStatements(Schedule schedule) {
 	// build the statements for <work> ...
 	List statementList = new LinkedList();
-	// for each filter...
-	for (ListIterator it = list.listIterator(); it.hasNext(); ) {
-	    Object next = it.next();
-	    // make a statement that does some work (could be for loop
-	    // or function call)
-	    JStatement workStatement = makeWorkStatement(next, toplevel);
+	// for each phase of <schedule>
+	for (int i=0; i<schedule.getNumPhases(); i++) {
+	    // make work statement for sub-schedule
+	    Schedule subSched = schedule.getSubSched(i);
+	    JStatement workStatement = makeWorkStatement(subSched);
 	    // add work statement to list
 	    statementList.add(workStatement);
 	}
@@ -478,44 +343,83 @@ public class SIRScheduler implements Constants {
     }
 
     /**
-     * Makes a statement that does some work as a component of a list
-     * in the schedule.  This statement is either a for loop or a call
-     * to another work function.
+     * Makes a statement that does some work as a phase in the
+     * schedule.  This statement is either a for loop or a call to
+     * another work function.
      */
-    private JStatement makeWorkStatement(Object schedObject, 
-					 SIRStream toplevel) {
-	// see if we have a repeated scheduled object
-	if (schedObject instanceof SchedRepSchedule) {
-	    // get the repeated schedule
-	    SchedRepSchedule repSched = (SchedRepSchedule)schedObject;
-	    // get body of the for loop
-	    JStatement body = makeWorkStatement(repSched.
-						getOriginalSchedule(),
-						toplevel);
-	    // get the count for the for loop
-	    int count = repSched.getTotalExecutions().intValue();
-	    // return a for loop
-	    return Utils.makeForLoop(body, count);
+    private JStatement makeWorkStatement(Schedule schedule) {
+	/*
+	System.err.print("making work name for call to " + getTarget(schedule).getName());
+	if (schedule.isBottomSchedule()) {
+	    System.err.println(" (BOTTOM) ");
 	} else {
-	    // otherwise, get name of work function associated with
-	    // <schedObject>
-	    String workName = getWorkName(schedObject, toplevel);
-	    // make the work statement
-	    return makeWorkCall(schedObject, workName, toplevel);
+	    System.err.println(" (" + schedule.getNumPhases() + " children) ");
+	}
+	*/
+	String workName = getWorkName(schedule);
+	/*
+	System.err.println("got work name " + workName);
+	*/
+
+	JStatement workCall = makeWorkCall(getTarget(schedule), 
+					   workName,
+					   schedule.isBottomSchedule());
+	
+	if (schedule.getNumReps()>1) {
+	    // if we execute multiple times, return a loop
+	    return Utils.makeForLoop(workCall, schedule.getNumReps());
+	} else {
+	    // otherwise, return single call
+	    return workCall;
 	}
     }
 
     /**
-     * Generates a statement that calls the work function for <schedObject>.
+     * Returns the stream operator corresponding to <schedule>.
      */
-    private JStatement makeWorkCall(Object schedObject, 
-				    String workName,
-				    SIRStream toplevel) {
+    private static SIROperator getTarget(Schedule schedule) {
+	// make function call for sub-schedule
+	SIRStream str = ((SIRIterator)schedule.getStream()).getStream();
+	// if it's a filter or not bottom schedule, can return
+	if (str instanceof SIRFilter ||
+	    !schedule.isBottomSchedule()) {
+	    return str;
+	}
+	// otherwise, we have a bottom schedule that isn't a filter.
+	// This must be a splitter or joiner with <str> as its
+	// container.
+	Utils.assert(str instanceof SIRSplitJoin || str instanceof SIRFeedbackLoop);
+	// test for splitter
+	if (schedule.getWorkFunc()==SIRSplitter.WORK_FUNCTION) {
+	    if (str instanceof SIRSplitJoin) {
+		return ((SIRSplitJoin)str).getSplitter();
+	    } else {
+		return ((SIRFeedbackLoop)str).getSplitter();
+	    }
+	}
+	// test for joiner
+	if (schedule.getWorkFunc()==SIRJoiner.WORK_FUNCTION) {
+	    if (str instanceof SIRSplitJoin) {
+		return ((SIRSplitJoin)str).getJoiner();
+	    } else {
+		return ((SIRFeedbackLoop)str).getJoiner();
+	    }
+	}
+	Utils.fail("Didn't find target of schedule.");
+	return null;
+    }
+
+    /**
+     * Generates a statement that calls the work function for <schedule>.
+     */
+    private JStatement makeWorkCall(SIROperator workOp,
+				    String workName, 
+				    boolean isBottom) {
 	// build the parameter to the work function, depending on
 	// whether we're calling a filter work function or a
 	// hierarchical list-work function
 	JExpression[] arguments
-	    = {makeWorkArgument(schedObject, toplevel)} ;
+	    = {makeWorkArgument(workOp, isBottom)} ;
 	// get method call to work function of <filter>
 	JMethodCallExpression workExpr = 
 	    new JMethodCallExpression(/* tokref */
@@ -531,79 +435,31 @@ public class SIRScheduler implements Constants {
     }
 
     /**
-     * Given a <schedObject> and its toplevel container <toplevel>,
-     * return the name of the work function associated with
-     * <schedObject>.  If <schedObject> is a filter or list, this will
-     * involve making a work function; otherwise we can refer to
-     * constant names for splitters/joiners.
+     * Returns the proper argument to the work function for <op> given
+     * toplevel stream <this.toplevel>.
      */
-    private String getWorkName(Object schedObject, SIRStream toplevel) {
-	// if <next> is splitter or joiner, then work is constant
-	if (schedObject instanceof SIRSplitter) {
-	    // if splitter, take splitter name
-	    return LoweringConstants.SPLITTER_WORK_NAME;
-	} else if (schedObject instanceof SIRJoiner) {
-	    // if joiner, take joiner name
-	    return LoweringConstants.JOINER_WORK_NAME;
-	} else if (schedObject instanceof SIRFileReader) {
-	    // if file reader, take file reader name
-	    return LoweringConstants.FILE_READER_WORK_NAME;
-	} else if (schedObject instanceof SIRFileWriter) {
-	    // if file reader, take file reader name
-	    return LoweringConstants.FILE_WRITER_WORK_NAME;
-        } else if (schedObject instanceof SIRIdentity) {
-            // if identity, take identity name
-            return LoweringConstants.IDENTITY_WORK_NAME;
-	} else {
-	    // otherwise, have a list or filter--need to make a work function
-	    JMethodDeclaration work = makeWork(schedObject, toplevel);
-	    // return name of work function
-	    return work.getName();
-	}
-    }
-
-
-    /**
-     * Returns the proper argument to the work function for <schedObject>
-     * given toplevel stream <toplevel>.
-     */
-    private JExpression makeWorkArgument(Object schedObject,
-					 SIRStream toplevel) {
-	if (schedObject instanceof SIRPipeline) {
-	    // the SIRPipeline case is when we're scheduling the
-	    // toplevel init function; an SIRPipeline shouldn't appear
-	    // in the schedule from the scheduler
-	    return LoweringConstants.getDataField();
-	} else if (schedObject instanceof List) {
-	    // arg for list is just the current context, unless we
-	    // have a two-stage filter disguised as a list, in which
-	    // case we treat it as a filter.
-	    SIRTwoStageFilter filter = getTwoStageFilter((List)schedObject);
-	    if (filter!=null) {
-		return makeFilterWorkArgument(filter);
+    private JExpression makeWorkArgument(SIROperator op, boolean isBottom) {
+	if (isBottom) {
+	    // if we're at the bottom, then dereference into specific
+	    // type of receiver
+	    if (op instanceof SIRFilter) {
+		// make arg for filter node
+		return makeFilterWorkArgument((SIRFilter)op);
+	    } else if (op instanceof SIRJoiner || op instanceof SIRSplitter) {
+		return makeSplitJoinWorkArgument(op);
 	    } else {
-		return LoweringConstants.getDataField();
+		Utils.fail("Unexpected operator type: " + op.getClass());
+		return null;
 	    }
-	} else if (schedObject instanceof SIRFilter) {
-	    // make arg for filter node
-	    return makeFilterWorkArgument((SIRFilter)schedObject);
-	} else if (schedObject instanceof SIRSplitter ||
-		   schedObject instanceof SIRJoiner ) {
-	    // make arg for splitter/joiner node 
-	    return makeSplitJoinWorkArgument((SIROperator)schedObject);
 	} else {
-	    // otherwise, fail
-	    Utils.fail("SIRScheduler expected List or SIRFilter but found" +
-		       schedObject.getClass());
-	    // return dummy value
-	    return null;
+	    // otherwise, just pass on the data structure
+	    return LoweringConstants.getDataField();
 	}
     }
 
     /**
-     * Returns an expression that returns the data structure
-     * corresponding to <filter>, tracing pointers from the data
-     * structure for <toplevel>.
+     * Returns an expression that returns the data opucture
+     * corresponding to <filter>.
      * */
     private JExpression makeFilterWorkArgument(SIRFilter str) {
 	// get access to structure of <str>'s parent
@@ -620,9 +476,8 @@ public class SIRScheduler implements Constants {
 
     /**
      * Returns an expression that returns the data structure
-     * corresponding to <str>, tracing pointers from the data
-     * structure for <toplevel>.  <str> is either an SIRSplitter or
-     * and SIRJoiner.
+     * corresponding to <str>.  <str> is either an SIRSplitter or and
+     * SIRJoiner.
      *  
      */
     private JExpression makeSplitJoinWorkArgument(SIROperator str) {
@@ -631,226 +486,5 @@ public class SIRScheduler implements Constants {
 
 	// return reference to context of parent
 	return LoweringConstants.getStreamContext(parent);
-    }
-}
-
-/**
- * This class builds a representation of the stream structure for the
- * scheduler to use.
- */
-class SIRSchedBuilder implements AttributeStreamVisitor {
-
-    /**
-     * The scheduler that dictates construction of the representation
-     * of the stream graph.
-     */
-    private Scheduler scheduler;
-
-    /**
-     * The parent SIRScheduler calling this.
-     */
-    private SIRScheduler sirScheduler;
-
-    /**
-     * Construct one of these with scheduler <scheduler>, and keep
-     * track of associations of two-stage filters in twoStageFilters.
-     */
-    public SIRSchedBuilder(Scheduler scheduler, SIRScheduler sirScheduler) {
-	this.scheduler = scheduler;
-	this.sirScheduler = sirScheduler;
-    }
-
-    /**
-     * Builds a representation of a two-stage filter that the
-     * scheduler can understand: a composition of two normal filters
-     * in a pipeline.
-     */
-    private Object visitTwoStageFilter(SIRTwoStageFilter twoStage) {
-	// make two dummy filters to represent <filter>
-	SIRFilter filter1 = new SIRFilter("dummy1 for " + twoStage.getName());
-	SIRFilter filter2 = new SIRFilter("dummy2 for " + twoStage.getName());
-	// associate <twoStage> with <filter1> in <twoStageFilters>
-	sirScheduler.twoStageFilters.put(filter1, twoStage);
-	// set the peek, pop, and push rates for filter1 and filter2
-	// according to derived formulas.
-	filter1.setPeek(twoStage.getInitPeek() - twoStage.getInitPop() + 1);
-	filter1.setPop(1);
-	filter1.setPush(1);
-	// now for filter2
-	filter2.setPeek(twoStage.getInitPop() + twoStage.getPopInt());
-	filter2.setPop(twoStage.getPopInt());
-	filter2.setPush(twoStage.getPushInt());
-	// if we have a source, munge the filters so that it outputs
-	// the source granularity
-	if (twoStage.getInitPeek()== 0 &&
-	    twoStage.getPeekInt() == 0) {
-	    /*
-	    System.err.println("found twostage source with: " + 
-			       "\n  initpeek=" + twoStage.getInitPeek() +
-			       "\n  initpop=" + twoStage.getInitPop() +
-			       "\n  initpush=" + twoStage.getInitPush() +
-			       "\n  peek=" + twoStage.getPeekInt() +
-			       "\n  pop=" + twoStage.getPopInt() +
-			       "\n  push=" + twoStage.getPushInt());
-	    */
-	    filter1.setPop(0);
-	    filter1.setPeek(0);
-	    filter1.setPush(1);
-	    filter2.setPop(1);
-	    filter2.setPeek(2);
-	}
-	// make a pipeline containing <filter1> and <filter2>
-	SIRPipeline pipe = new SIRPipeline(twoStage.getParent(), 
-					   null, null, null);
-	pipe.add(filter1);
-	pipe.add(filter2);
-	// visit the pipeline that's simulating <twoStage>
-	return pipe.accept(this);
-    }
-    
-    /* visit a structure */
-    public Object visitStructure(SIRStructure self,
-                                 JFieldDeclaration[] fields)
-    {
-        // Do nothing; the scheduler shouldn't care about structures
-        return null;
-    }
-
-    /* visit a filter */
-    public Object visitFilter(SIRFilter self,
-			      JFieldDeclaration[] fields,
-			      JMethodDeclaration[] methods,
-			      JMethodDeclaration init,
-			      JMethodDeclaration work,
-			      CType inputType, CType outputType) {
-	// represent the filter
-	if (self instanceof SIRTwoStageFilter) {
-	    return visitTwoStageFilter((SIRTwoStageFilter)self);
-	} else {
-	    return scheduler.newSchedFilter(self, 
-					    self.getPushInt(), 
-					    self.getPopInt(),
-					    self.getPeekInt());
-	}
-    }
-
-    /* visit a phased filter */
-    public Object visitPhasedFilter(SIRPhasedFilter self,
-                                    JFieldDeclaration[] fields,
-                                    JMethodDeclaration[] methods,
-                                    JMethodDeclaration init,
-                                    JMethodDeclaration work,
-                                    SIRWorkFunction[] phases,
-                                    CType inputType, CType outputType)
-    {
-        // TODO: implement.
-        return null;
-    }
-  
-    /* pre-visit a pipeline */
-    public Object visitPipeline(SIRPipeline self,
-				JFieldDeclaration[] fields,
-				JMethodDeclaration[] methods,
-				JMethodDeclaration init) {
-	// this isn't pretty, but the sched handle should be the fused
-	// filter if this pipeline is representing a fused filter.
-	// Othwerwise, the handle can just be <self>.
-	SIRStream fusedFilter = 
-	    sirScheduler.getTwoStageFilter(self.getChildren());
-	SchedPipeline result = 
-	    scheduler.newSchedPipeline(fusedFilter!=null ? fusedFilter : self);
-	// add children to pipeline
-	for (ListIterator it = self.getChildren().listIterator(); it.hasNext(); ) {
-	    // get child
-	    SIRStream child = (SIRStream)it.next();
-	    // build scheduler representation of child
-	    SchedStream schedChild = (SchedStream)child.accept(this);
-	    // add child to pipe
-	    result.addChild(schedChild);
-	}
-	// return result
-	return result;
-    }
-
-    /* pre-visit a splitjoin */
-    public Object visitSplitJoin(SIRSplitJoin self,
-				 JFieldDeclaration[] fields,
-				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 SIRSplitter splitter,
-				 SIRJoiner joiner) {
-	// represent the pipeline
-	SchedSplitJoin result = scheduler.newSchedSplitJoin(self);
-	// add children to pipeline
-	for (ListIterator it = self.getParallelStreams().listIterator(); it.hasNext(); ) {
-	    // get child
-	    SIRStream child = (SIRStream)it.next();
-	    // build scheduler representation of child
-	    SchedStream schedChild = (SchedStream)child.accept(this);
-	    // add child to pipe
-	    result.addChild(schedChild);
-	}
-	// set split type
-	result.setSplitType((SchedSplitType)splitter.accept(this));
-	// set join type
-	result.setJoinType((SchedJoinType)joiner.accept(this));
-	// return result
-	return result;
-    }
-
-    /* pre-visit a feedbackloop */
-    public Object visitFeedbackLoop(SIRFeedbackLoop self,
-				    JFieldDeclaration[] fields,
-				    JMethodDeclaration[] methods,
-				    JMethodDeclaration init,
-				    JMethodDeclaration initPath) {
-	// get joiner
-	SchedJoinType joiner = (SchedJoinType)self.getJoiner().accept(this);
-	// get body
-	SchedStream body = (SchedStream)self.getBody().accept(this);
-	// get splitter
-	SchedSplitType splitter 
-	    = (SchedSplitType)self.getSplitter().accept(this);
-	// get loop
-	SchedStream loop = (SchedStream)self.getLoop().accept(this);
-
-	// represent the whole feedback loop
-	SchedLoop result = scheduler.newSchedLoop(self,
-						  joiner,
-						  body,
-						  splitter,
-						  loop,
-						  self.getDelayInt());
-	// return result
-	return result;
-    }
-
-    /* visit a splitter */
-    public Object visitSplitter(SIRSplitter self,
-				SIRSplitType type,
-				JExpression[] weights) {
-	// represent the splitter
-	return scheduler.newSchedSplitType(type.toSchedType(), 
-					   Utils.intArrayToList(self.
-								getWeights()), 
-					   self);
-    }
-    
-    /* visit a joiner */
-    public Object visitJoiner(SIRJoiner self,
-			      SIRJoinType type,
-			      JExpression[] weights)  {
-	// represent the joiner
-	return scheduler.newSchedJoinType(type.toSchedType(), 
-					  Utils.intArrayToList(self.
-							       getWeights()),
-					  self);
-    }
-
-    public Object visitWorkFunction(SIRWorkFunction self,
-                                    JMethodDeclaration work)
-    {
-        // TODO: implement.
-        return null;
     }
 }

@@ -147,15 +147,16 @@ public class LowerInitFunctions implements StreamVisitor {
      */
     private int myGetBufferSizeBetween(SIROperator op1, SIROperator op2) {
 	// call scheduler
-	int result = sirSchedule.getBufferSizeBetween(op1, op2);
+	int size = sirSchedule.getBufferSizeBetween(op1, op2);
 	// TERRIBLE HACK to account for extra buffer size needed by
 	// non-zero initPush on uniprocessor (will not work on RAW).
 	// Just augment the buffer size by initPush if the previous
 	// filter is an SIRTwoStageFilter
 	if (op1 instanceof SIRTwoStageFilter) {
-	    result = Utils.nextPow2(result + ((SIRTwoStageFilter)op1).getInitPush());
+	    size += ((SIRTwoStageFilter)op1).getInitPush();
 	}
-	return result;
+	// C library requires power of 2
+	return Utils.nextPow2(size);
     }
 
     /**

@@ -187,9 +187,12 @@ public class Flattener {
 		System.err.println("done.");
 		LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
 	    }
+	}
 
-
-	    
+	// if we have don't have a container, wrap it in a pipeline
+	// for the sake of SIRScheduler.
+	if (!(str instanceof SIRContainer)) {
+	    str = SIRContainer.makeWrapper(str);
 	}
 
 	// make single structure
@@ -202,7 +205,7 @@ public class Flattener {
 	System.err.println("done.");
 	// build schedule as set of higher-level work functions
 	System.err.print("Scheduling... ");
-	SIRSchedule schedule = SIRScheduler.buildWorkFunctions(str, flatClass);
+	SIRSchedule schedule = SIRScheduler.buildWorkFunctions((SIRContainer)str, flatClass);
 	System.err.println("done.");
 	// add LIR hooks to init and work functions
 	System.err.print("Annotating IR for uniprocessor... ");

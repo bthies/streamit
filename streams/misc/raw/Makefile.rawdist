@@ -12,7 +12,7 @@
 
 DISTDIR ?= /home/pkg/brave_new_linux
 
-MASONVER ?= 0140
+MASONVER ?= 0145
 
 ############################
 # do not change what's below

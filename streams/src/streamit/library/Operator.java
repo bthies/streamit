@@ -91,7 +91,7 @@ abstract class Operator extends DestroyedClass
         Channel fieldInstance[];
         fieldInstance = GetIOFields (fieldName);
         
-        ASSERT (fieldInstance != null && fieldInstance.length < fieldIndex);
+        ASSERT (fieldInstance != null && fieldInstance.length > fieldIndex);
         fieldInstance [0] = newChannel;
     }    
 }

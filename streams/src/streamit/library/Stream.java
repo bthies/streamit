@@ -118,7 +118,7 @@ public class Stream extends Operator {
     //    operator's channel).  reason for this is that the source's
     //    operator should know the REAL source of data (particular
     //    Filer which is producing this data)
-    // 4. this operation is done in following order:
+    // 4. this operation is done in-order:
     //    - an Operator gets a proper value for its input
     //    - this Operator processes all its children
     //    - the output from the last child is copied over
@@ -148,7 +148,7 @@ public class Stream extends Operator {
                 // make sure that the channels use the same data types
                 ASSERT (currentSource == null ^ currentDest != null);
                 ASSERT (currentSource == null || currentDest == null ||
-                        currentSource.GetType ().equals (currentDest.GetType ()));
+                        currentSource.GetType ().getName ().equals (currentDest.GetType ().getName ()));
                 
                 // now copy the currentInput into the currentOutput
                 if (currentDest != null)
@@ -156,11 +156,24 @@ public class Stream extends Operator {
                     currentStream.SetIOField ("input", currentSource);
                 }
                 
+                // connect the subgraph
+                currentStream.ConnectGraph ();
+
+                // and setup for the next iteration
                 currentSource = currentStream.GetIOField ("output");
             }
             
             if (currentSource != null)
             {
+                // get the next stream:
+                Channel currentDest = GetIOField ("output");
+                
+                // make sure that the channels use the same data types
+                ASSERT (currentDest != null);
+                ASSERT (currentSource.GetType ().getName ().equals (currentDest.GetType ().getName ()));
+                
+                // now copy the currentInput into the currentOutput
+                SetIOField ("input", currentSource);
             }
         }
         catch (NoSuchElementException error)
@@ -193,7 +206,7 @@ public class Stream extends Operator {
     
     void SetIOField (String fieldName, Channel newChannel)
     {
-        SetIOField (fieldName, 1, newChannel);
+        SetIOField (fieldName, 0, newChannel);
     }
     
     

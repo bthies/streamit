@@ -3,13 +3,13 @@
 package streamit;
 
 public class Channel {
-    Object type;
+    Class type;
     
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
-    public Channel(Object _type) 
+    public Channel(Object dataObject) 
     {
-        type = _type;
+        type = dataObject.getClass ();
     }
 
     // PUSH OPERATIONS ----------------------------------------------
@@ -67,6 +67,6 @@ public class Channel {
     //                  syntax checking functions
     // ------------------------------------------------------------------
     
-    Object GetType () { return type; }
+    Class GetType () { return type; }
 
 }

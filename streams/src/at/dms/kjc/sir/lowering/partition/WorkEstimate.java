@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 import java.util.*;
@@ -54,7 +55,7 @@ class WorkEstimate {
 		    // assume these are map.entry's
 		    int work1 = ((WorkInfo)map.get(o1)).totalWork();
 		    int work2 = ((WorkInfo)map.get(o2)).totalWork();
-		    if (work1==work2) {
+		    if (o1==o2) {
 			return 0;
 		    } else if (work1 < work2) {
 			return -1;
@@ -63,10 +64,16 @@ class WorkEstimate {
 		    }
 		}
 	    });
-	// add the values to the map 
 	treeMap.putAll(map);
-	// return a work list based on the treemap
-	return new WorkList(treeMap.entrySet());
+	// result is a work list based on the treemap
+	WorkList result = new WorkList(treeMap.entrySet());
+	// make sure our sizes our right - was a problem at one point
+	// due to improper comparator function (should preserve .equals)
+	Utils.assert(map.size()==treeMap.size(),
+		     "map.size=" + map.size() + "; treemap.size=" + treeMap.size());
+	Utils.assert(map.size()==result.size(),
+		     "map.size=" + map.size() + "; result.size=" + result.size());
+	return result;
     }
 
     /**

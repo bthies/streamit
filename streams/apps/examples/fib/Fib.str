@@ -1,0 +1,25 @@
+Pipeline Fib {
+    add FeedbackLoop {
+	delay 2;
+	join RoundRobin(0, 1);
+	body PeekAdd();
+	split Duplicate();
+	
+	initPath(int index) {
+	    return index;
+	}
+    }
+    add IntPrinter();
+}
+
+int->int Filter PeekAdd {
+    work push 1 pop 1 peek 2 {
+	push(peek(1) + pop());
+    }
+}
+
+int->void Filter IntPrinter {
+    work pop 1 {
+	System.out.println(pop());
+    }
+}

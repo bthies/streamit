@@ -1,0 +1,71 @@
+Pipeline FFT {
+    add OneSource();
+    add FFTKernel(16);
+    add FloatPrinter();
+}
+
+SplitJoin FFTKernel {
+    add SplitJoin {
+	split RoundRobin(N/2, N/2);
+	for (int i=0; i<2; i++) {
+	    add SplitJoin {
+		split RoundRobin();
+		add Identity();
+		add Identity();
+		join RoundRobin(N/4, N/4);
+	    }
+	}
+	join RoundRobin();
+    }
+    for (int i=2; i<N; i*=2) {
+	add Butterfly(i, N);
+    }
+}
+
+Pipeline Butterfly (int N, int W) {
+    add SplitJoin {
+	split RoundRobin(N, N);
+	add Multiply();
+	add Identity();
+	join RoundRobin();
+    }
+    add SplitJoin {
+	split Duplicate();
+	add Subtract();
+	add Add();
+	join RoundRobin(N, N);
+    }
+}
+
+void->float Filter OneSource {
+    work push 1 {
+	push(1);
+    }
+}
+
+float->float Filter Multiply {
+    // just multiplying by 2 for now instead of calculating weights
+    work push 1 pop 1 {
+	push(2 * pop());
+    }
+}
+
+float->float Filter Add {
+    work push 1 pop 2 {
+	push(pop() + pop());
+    }
+}
+
+float->float Filter Subtract {
+    work push 1 pop 2 {
+	push(pop() - pop());
+    }
+}
+
+float->void Filter FloatPrinter {
+    work pop 1 {
+	System.out.println(pop());
+    }
+}
+
+

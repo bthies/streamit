@@ -1,0 +1,86 @@
+/**
+ * The toplevel class.  Should run the resulting input <MULT> times.
+ */
+Pipeline MergeSort {
+    // we assume an input length that is a power of two
+    int NUM_INPUTS = 16;
+    // the number of times to break up the sequence (just for testing)
+    int MULT = 4;
+    
+    // add the input generator
+    add SortInput(NUM_INPUTS/MULT);
+    // add the sorters mergers
+    add Sorter(NUM_INPUTS);
+    // add a printer
+    add IntPrinter();
+}
+
+/**
+ * The merger component of the merge sort.  Combines two sorted
+ * streams into another sorted stream, producing a total of <N>
+ * elements.
+ */
+int->int Filter Merger (int N) {
+    work push N pop N {
+        // initialize indices
+        int index1 = 0;
+        int index2 = 1;
+
+        // merge values
+        while (index1 < N && index2 < N) {
+            int val1 = peek(index1);
+            int val2 = peek(index2);
+            if (val1 <= val2) {
+		push(val1);
+                index1+=2;
+            } else {
+                push(val2);
+                index2+=2;
+            }
+        }
+
+        // merge remainder if one stream dries out
+	int leftover = index1 < N ? index1 : index2;
+	for (int i=leftover; i < N; i+=2) {
+	    push(peek(i));
+	}
+
+        // pop all the inputs
+        for (int i=0; i<N; i++) {
+	    pop();
+        }
+    }
+}
+
+/**
+ * Sorts a stream of integers.
+ */
+Pipeline Sorter (int N) {
+    // if we have more than two items, then sort in parallel
+    if (N>2) {
+	add SplitJoin {
+	    split RoundRobin();
+	    add Sorter(N/2);
+	    add Sorter(N/2);
+	    join RoundRobin();
+        }
+        add Merger(N);
+    }
+}
+
+/**
+ * Repeatedly pushes a sequence of <N> items in reverse order.
+ */
+void->int Filter SortInput (int N) {
+    work push 1 {
+        for (int i=0; i<N; i++) {
+	    push(N-i);
+        }
+    }
+}
+
+int->void Filter IntPrinter {
+    work pop 1 {
+	System.out.println(pop());
+    }
+}

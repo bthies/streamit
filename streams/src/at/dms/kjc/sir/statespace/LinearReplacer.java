@@ -12,9 +12,14 @@ import at.dms.compiler.*;
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.<br>
  *
- * $Id: LinearReplacer.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearReplacer.java,v 1.2 2004-04-07 19:20:26 sitij Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
+    // set of containers that were replaced
+    HashSet replaced = new HashSet();
+    // whether or not we're currnetly replacing a sub-tree
+    boolean replacing = true;
+
     // in visitors of containers, only make a replacement if we're
     // enabling linear collapsing (note this relies on evaluation
     // order of and-expression), and only clear the children if we
@@ -22,19 +27,52 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     // disconnected stream components).
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
 				     SIRFeedbackLoopIter iter) {
-	if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }
+	if (!KjcOptions.nolinearcollapse && replacing && makeReplacement(self)) { 
+	    replaced.add(self);
+	    // don't replace children
+	    replacing = false;
+	}
     }
     public void preVisitPipeline(    SIRPipeline self,
 				     SIRPipelineIter iter){
-	if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }
+	if (!KjcOptions.nolinearcollapse && replacing && makeReplacement(self)) {
+	    replaced.add(self);
+	    // don't replace children
+	    replacing = false;
+	}
     }
     public void preVisitSplitJoin(   SIRSplitJoin self,
 				     SIRSplitJoinIter iter){
-	if (!KjcOptions.nolinearcollapse && makeReplacement(self)) { self.clear(); }
+	if (!KjcOptions.nolinearcollapse && replacing && makeReplacement(self)) { 
+	    replaced.add(self);
+	    // don't replace children
+	    replacing = false;
+	}
+    }
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
+				     SIRFeedbackLoopIter iter) {
+	// turn replacing back on for parents in the tree
+	if (replaced.contains(self)) {
+	    replacing = true;
+	}
+    }
+    public void postVisitPipeline(    SIRPipeline self,
+				     SIRPipelineIter iter){
+	// turn replacing back on for parents in the tree
+	if (replaced.contains(self)) {
+	    replacing = true;
+	}
+    }
+    public void postVisitSplitJoin(   SIRSplitJoin self,
+				     SIRSplitJoinIter iter){
+	// turn replacing back on for parents in the tree
+	if (replaced.contains(self)) {
+	    replacing = true;
+	}
     }
     public void visitFilter(         SIRFilter self,
 				     SIRFilterIter iter){
-	makeReplacement(self);
+	if (replacing) { makeReplacement(self); }
     }
 
     /**

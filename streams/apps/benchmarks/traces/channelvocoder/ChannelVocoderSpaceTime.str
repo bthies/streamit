@@ -16,26 +16,28 @@
  * value is either the pitch if the sound was voiced or 0 if the
  * sound was unvoiced.
  **/
-void->void pipeline ChannelVocoder {
-    add DataSource();
-    //add FileReader<float>("input");
+
+void->void pipeline ChannelVocoderSpaceTime {
+    //add DataSource();
+    add FileReader<float>("input");
     // low pass filter to filter out high freq noise
     add LowPassFilter(1, (2*pi*5000)/8000, 64); 
     add MainSplitjoin();
-    add FloatPrinter();
-    //add FileWriter<float>("output");
+    //add FloatPrinter();
 }
 
 /** This class is just a wrapper so that we don't have anonymous inner classes. **/
-float->float splitjoin MainSplitjoin {
+float->void splitjoin MainSplitjoin {
   int PITCH_WINDOW = 100; // the number of samples to base the pitch detection on
   int DECIMATION   = 50; // decimation factor
   int NUM_FILTERS  = 4; //18;
   
   split duplicate;
   add PitchDetector(PITCH_WINDOW, DECIMATION);
-  add VocoderFilterBank(NUM_FILTERS, DECIMATION);
-  join roundrobin(1,4); // can't be NUM_FILTERS b/c const prop didn't work
+  add VocoderFilterBank(4, DECIMATION);
+  //join roundrobin(1,2); // can't be NUM_FILTERS b/c const prop didn't work
+  //join roundrobin(1,4); // can't be NUM_FILTERS b/c const prop didn't work
+  join roundrobin(0);
 }
 
 
@@ -71,22 +73,37 @@ void->float filter DataSource() {
 /** 
  * Pitch detector.
  **/
-float->float pipeline PitchDetector(int winsize, int decimation) {
+float->void pipeline PitchDetector(int winsize, int decimation) {
   add CenterClip();
   add CorrPeak(winsize, decimation);
+  add FileWriter<float>("outputP");
 }
 
 
 
 
 /** The channel vocoder filterbank. **/
-float->float splitjoin VocoderFilterBank(int N, int decimation) {
+float->void splitjoin VocoderFilterBank(int N, int decimation) {
 
   split duplicate;
-  for (int i=0; i<N; i++) {
-    add FilterDecimate(i, decimation);
+  add pipeline {
+      add FilterDecimate(0, decimation);
+      add FileWriter<float>("output0");
   }
-  join roundrobin;
+  add pipeline {
+      add FilterDecimate(1, decimation);
+      add FileWriter<float>("output1");
+  }
+  add pipeline {
+      add FilterDecimate(2, decimation);
+      add FileWriter<float>("output2");
+  }
+  add pipeline {
+      add FilterDecimate(3, decimation);
+      add FileWriter<float>("output3");
+  }
+
+  join roundrobin(0);
 }
 
 
@@ -99,8 +116,6 @@ float->float pipeline FilterDecimate(int i, int decimation) {
   //add VocoderBandPassFilter(i, 64); // 64 tap filter
   add BandPassFilter(2, 400*i, 400*(i+1), 64); 
   add Compressor(decimation);
-
-
 }
 
 /** 

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.36 2003-11-25 16:34:22 dmaze Exp $
+# $Id: strc,v 1.37 2004-01-28 17:11:34 dmaze Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -29,6 +29,9 @@ $javac = "javac";
 $cc = "gcc";
 $have_fftw = "1";
 # END AUTOCONFISCATE
+
+# Enable assertions globally:
+$java = $java . " -ea";
 
 use Getopt::Long;
 Getopt::Long::Configure("bundling", "bundling_override", "no_ignore_case");

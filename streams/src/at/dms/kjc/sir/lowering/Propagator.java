@@ -917,7 +917,11 @@ public class Propagator extends SLIRReplacingVisitor {
 	    //if(constant.equals(constants.get(((JLocalVariableExpression)constant).getVariable()))) //Constant has been unchanged
 	    return constant;
 	    }*/
-	return self;
+	if (self.isConstant()) {
+	    return self.getVariable().getValue();
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -1038,7 +1042,19 @@ public class Propagator extends SLIRReplacingVisitor {
 	}
 	// do constant-prop if we have both as constants
 	if (newLeft.isConstant() && newRight.isConstant()) {
-	    return self.constantFolding();
+	    // here we want to compute some constants without mutating
+	    // <self>.  In KOPI the easiest way to do this seems to be
+	    // to mutate the original, get the information, then
+	    // mutate it back!  Otherwise we'd need complicated
+	    // reflection, cloning, or a case statement.  argh.
+	    JExpression oldLeft = self.getLeft();
+	    JExpression oldRight = self.getRight();
+	    self.setLeft(newLeft);
+	    self.setRight(newRight);
+	    Object result = self.constantFolding();
+	    self.setLeft(oldLeft);
+	    self.setRight(oldRight);
+	    return result;
 	} else {
 	    // otherwise, return self
 	    return self;
@@ -1068,7 +1084,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	}
 	// do constant-prop if we have both as constants
 	if (newLeft.isConstant() && newRight.isConstant()) {
-	    return self.constantFolding();
+	    return new JEqualityExpression(null, equal, newLeft, newRight).constantFolding();
 	} else {
 	    // otherwise, return self
 	    return self;

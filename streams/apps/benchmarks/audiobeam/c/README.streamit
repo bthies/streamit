@@ -1,10 +1,19 @@
-These files were copied from
+The main files were copied from
 
 ~ecoder/beamform/delay_and_sum/intel/
 
 on Thu Nov 13 17:45:23 EST 2003
 
+The optimized.{c,h} files were copied from:
+
+~ecoder/beamform/delay_and_sum.compare/
+
+on Tue Dec 2 15:40:01 EST 2003.  They represent hand-optimized
+versions of the C code that they are using to get high performance.
+
 The "data" sub-directory referenced in the README is at:
 
 /home/streamit/compiler-static/audiobeam/data
+
+
 

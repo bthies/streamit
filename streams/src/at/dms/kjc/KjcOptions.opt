@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.26 2003-03-04 23:03:29 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.27 2003-03-22 21:35:01 thies Exp $
  */
 
 prefix Kjc
@@ -170,6 +170,12 @@ longname		"dppartition"
 	type		boolean
 	default		"false"
 	help		"Use the dynamic programming partitioner."
+
+longname		"linearpartition"
+	shortcut	"B"
+	type		boolean
+	default		"false"
+	help		"Use the dynamic programming partitioner for guiding linear transforms."
 
 longname		"dpscaling"
 	shortcut	"Y"

@@ -21,5 +21,14 @@ Uniprocessor (7/29/2002):
 10 million iterations (128 outputs/iteration)
 99.% utilization
 runtime for 10^7 iterations = 226.36 seconds
+
 We want cycles/iteration:
-226.36 sec/10^7 iterations * 128 outputs/1 iteration * 10^5/10^7 outputs * 2.2x10^9 cycles/sec = 6296.576 thoruhgput
+10^7 iterations/226.36 sec * 
+128 outputs/1 iteration
+1 second /2.2x10^9 cycles
+* 10^5 cycles 
+
+= 257.03224 outputs/10^5 cycles
+
+
+

@@ -258,16 +258,20 @@ public class FusePipe {
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    POP_INDEX_NAME + "_" + j + "_" + i,
 					    new
-					    JIntLiteral(filter.getPeekInt()
-							- 1));
+					    JIntLiteral(filter.getPeekInt() - filter.getPopInt()
+							//							- 1
+							- 1 /* this is since we're starting
+							       at -1 and doing pre-inc 
+							       instead of post-inc */ ));
 	    
 		// the push counter.  In the steady state, the initial
 		// value of the push counter is the first slot after
-		// the peek values are restored, which is peek-pop.
-		// In the inital work function, the push counter
-		// starts at zero.
+		// the peek values are restored, which is peek-pop-1
+		// (-1 since we're pre-incing, not post-incing).  In
+		// the inital work function, the push counter starts
+		// at -1 (since we're pre-incing, not post-incing).
 		int pushInit = 
-		    j==0 ? 0 : filter.getPeekInt() - filter.getPopInt();
+		    j==0 ? -1 : filter.getPeekInt() - filter.getPopInt() - 1;
 		pushCounter[j] = 
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    PUSH_INDEX_NAME + "_" + j + "_" +i,
@@ -607,14 +611,16 @@ public class FusePipe {
 	    new JLocalVariableExpression(null,
 					 phaseInfo.popBuffer);
 	    
-	// the rhs of the source of the assignment...
+	// the rhs of the source of the assignment... (add one to the
+	// push index because of our pre-inc convention.)
 	JExpression sourceRhs1 = 
 	    new
 	    JAddExpression(null, 
 			   new JLocalVariableExpression(null, 
 							phaseInfo.loopCounter),
-			   new JLocalVariableExpression(null,
-						       phaseInfo.pushCounter));
+			   new JAddExpression(null, new JIntLiteral(1),
+					      new JLocalVariableExpression(null,
+									   phaseInfo.pushCounter)));
 	// need to subtract the difference in peek and pop counts to
 	// see what we have to backup
 	JExpression sourceRhs =
@@ -967,11 +973,11 @@ class FusingVisitor extends SLIRReplacingVisitor {
 
 	// build increment of index to array
 	JExpression rhs =
-	    new JPostfixExpression(null, 
-				   Constants.OPE_POSTINC, 
-				   new JLocalVariableExpression(null,
-								curInfo.
-								popCounter));
+	    new JPrefixExpression(null, 
+				  Constants.OPE_PREINC, 
+				  new JLocalVariableExpression(null,
+							       curInfo.
+							       popCounter));
 	// return a new array access expression
 	return new JArrayAccessExpression(null, lhs, rhs);
     }
@@ -993,13 +999,16 @@ class FusingVisitor extends SLIRReplacingVisitor {
 	JLocalVariableExpression lhs = 
 	    new JLocalVariableExpression(null, curInfo.popBuffer);
 
-	// build subtraction of peek index from current pop index
+	// build subtraction of peek index from current pop index (add
+	// one to the pop index because of our pre-inc convention)
 	JExpression rhs =
-	    new JMinusExpression(null,
-				 new JLocalVariableExpression(null,
-							      curInfo.
-							      popCounter),
-				 self.getArg());
+	    new JAddExpression(null,
+			      new JAddExpression(null,
+						 new JIntLiteral(1),
+						 new JLocalVariableExpression(null,
+									      curInfo.
+									      popCounter)),
+			      self.getArg());
 
 	// return a new array access expression
 	return new JArrayAccessExpression(null, lhs, rhs);
@@ -1024,11 +1033,11 @@ class FusingVisitor extends SLIRReplacingVisitor {
 
 	// build increment of index to array
 	JExpression rhs =
-	    new JPostfixExpression(null,
-				   Constants.OPE_POSTINC, 
-				   new JLocalVariableExpression(null,
-								nextInfo.
-								pushCounter));
+	    new JPrefixExpression(null,
+				  Constants.OPE_PREINC, 
+				  new JLocalVariableExpression(null,
+							       nextInfo.
+							       pushCounter));
 	// return a new array assignment to the right spot
 	return new JAssignmentExpression(
 		  null,

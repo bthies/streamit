@@ -23,6 +23,10 @@ public class FullIns extends SwitchProcessorIns {
 	srcs=new Vector();
 	dests=new ArrayList();
     }
+
+    public void setProcessorIns(SwitchProcessorIns procIns) {
+	this.procIns=procIns;
+    }
     
     public void addRoute(SwitchSrc src,SwitchOPort dest) {
 	if(src==null||dest==null) 

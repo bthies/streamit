@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime.switchIR;
 //Ports that can be used as output
 public class SwitchOPort  {
     public static final SwitchOPort CSTI=new SwitchOPort("$csti");
+    public static final SwitchOPort CSTI2=new SwitchOPort("$csti2");
     public static final SwitchOPort N=new SwitchOPort("$cNo");
     public static final SwitchOPort E=new SwitchOPort("$cEo");
     public static final SwitchOPort S=new SwitchOPort("$cSo");

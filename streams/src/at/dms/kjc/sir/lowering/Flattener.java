@@ -177,6 +177,13 @@ public class Flattener {
 							   interfaceTables,
                                                            structs);
 	System.err.println("done.");
+
+	// optionally print a version of the source code that we're
+	// sending to the scheduler
+	if (KjcOptions.print_partitioned_source) {
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
+	}
+
 	// build schedule as set of higher-level work functions
 	System.err.print("Scheduling... ");
 	SIRSchedule schedule = SIRScheduler.buildWorkFunctions((SIRContainer)str, flatClass);

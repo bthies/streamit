@@ -123,6 +123,12 @@ public class RawBackend {
 	//constant prop propagates the peek buffer index
 	new VarDeclRaiser().raiseVars(str);
 
+	// optionally print a version of the source code that we're
+	// sending to the scheduler
+	if (KjcOptions.print_partitioned_source) {
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
+	}
+
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
 	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.14 2001-10-16 15:27:23 dmaze Exp $
+ * $Id: LIRToC.java,v 1.15 2001-10-16 18:01:31 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1720,13 +1720,13 @@ public class LIRToC
         streamContext.accept(this);
         print(", JOINER, OUTPUT, 0, ");
         childContext.accept(this);
-        print(", " + inputType + ", " + inputSize + ");");
+        print(", sizeof(" + inputType + "), " + inputSize + ");");
         newLine();
         print("create_splitjoin_tape(");
         streamContext.accept(this);
         print(", SPLITTER, INPUT, 0, ");
         childContext.accept(this);
-        print(", " + outputType + ", " + outputSize + ");");
+        print(", sizeof(" + outputType + "), " + outputSize + ");");
     }
 
     /**
@@ -1746,13 +1746,13 @@ public class LIRToC
         streamContext.accept(this);
         print(", SPLITTER, OUTPUT, 1, ");
         childContext.accept(this);
-        print(", " + inputType + ", " + inputSize + ");");
+        print(", sizeof(" + inputType + "), " + inputSize + ");");
         newLine();
         print("create_splitjoin_tape(");
         streamContext.accept(this);
         print(", JOINER, INPUT, 1, ");
         childContext.accept(this);
-        print(", " + outputType + ", " + outputSize + ");");
+        print(", sizeof(" + outputType + "), " + outputSize + ");");
     }
 
     /**
@@ -1774,13 +1774,13 @@ public class LIRToC
         streamContext.accept(this);
         print(", SPLITTER, OUTPUT, " + position + ", ");
         childContext.accept(this);
-        print(", " + inputType + ", " + inputSize + ");");
+        print(", sizeof(" + inputType + "), " + inputSize + ");");
         newLine();
         print("create_splitjoin_tape(");
         streamContext.accept(this);
         print(", JOINER, INPUT, " + position + ", ");
         childContext.accept(this);
-        print(", " + outputType + ", " + outputSize + ");");
+        print(", sizeof(" + outputType + "), " + outputSize + ");");
     }
 
 

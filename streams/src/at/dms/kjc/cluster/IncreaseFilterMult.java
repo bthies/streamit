@@ -69,6 +69,11 @@ class IncreaseFilterMult implements StreamVisitor {
 	return false;
     }
 
+    // this function is used to find out if a filter with deep peeking 
+    // will have its peek buffer managed in the fused code
+    // if a splitjoin has RR splitter then this is guaranteed
+    // if all split joins are Duplicate then must see if splitjoin
+    // is fused with previous element in the pipeline
 
     private static boolean fusedWithPrev(SIROperator oper, HashMap partitionMap) {
 	SIRStream child = (SIRStream)oper;
@@ -76,21 +81,43 @@ class IncreaseFilterMult implements StreamVisitor {
 
 	assert(!(parent instanceof SIRFeedbackLoop)); 
 
-	while (parent instanceof SIRSplitJoin) {
+	for (;;) {
+
+	    if (parent instanceof SIRSplitJoin) {
+
+		if (((SIRSplitJoin)parent).getSplitter().getType().isRoundRobin()) {
+		    // check if splitjoin is fused
+		    boolean fused = true;
+		    
+		    for (int i = 0; i < parent.size(); i++) {
+			SIRStream str = (SIRStream)parent.get(i);
+			if (!isFusedWith(str, oper, partitionMap)) {
+			    fused = false;
+			    break;
+			}
+		    }
+
+		    // if splitjoin fused peek buffers managed by fused code 
+		    return fused; 
+		}
+		
+	    }
+
+	    if (parent instanceof SIRPipeline) {
+		int child_index = parent.indexOf(child);
+		if (child_index > 0) {
+		    return isFusedWith(parent.get(child_index-1),oper,partitionMap);
+		}
+	    }
+
+	    // recurse up if split join has duplicate splitter
+	    // or if we are the first element in the pipeline
+	    
 	    child = (SIRStream)parent;
 	    parent = parent.getParent();
 	    
 	    assert(!(parent instanceof SIRFeedbackLoop)); 
-	    if (parent == null) return false;
-	}
-
-	if (parent instanceof SIRPipeline) {
-	    int child_index = parent.indexOf(child);
-	    if (child_index == 0) {
-		return false;
-	    } else {
-		return isFusedWith(parent.get(child_index-1),oper,partitionMap);
-	    }
+	    if (parent == null) break; // returns null
 	}
 
 	return false;

@@ -316,6 +316,40 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			       filter.getName());
 	}
     }
+
+    /**
+     * Prints initialization for an array with static initializer, e.g., "int A[2] = {1,2};"
+     *
+     * To promote code reuse with other backends, inputs a visitor to
+     * do the recursive call.
+     */
+    private void declareInitializedArray(CType type, String ident, JExpression expr) {
+	print(((CArrayType)type).getBaseType()); // note this calls print(CType), not print(String)
+	print(" " + ident);
+	JArrayInitializer init = (JArrayInitializer)expr;
+	while (true) {
+	    int length = init.getElems().length;
+	    print("[" + length + "]");
+	    if (length==0) { 
+		// hope that we have a 1-dimensional array in
+		// this case.  Otherwise we won't currently
+		// get the type declarations right for the
+		// lower pieces.
+		break;
+	    }
+	    // assume rectangular arrays
+	    JExpression next = (JExpression)init.getElems()[0];
+	    if (next instanceof JArrayInitializer) {
+		init = (JArrayInitializer)next;
+	    } else {
+		break;
+	    }
+	}
+	print(" = ");
+	expr.accept(this);
+	print(";");
+	return;
+    }
        			
     /**
      * prints a field declaration
@@ -336,16 +370,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//only stack allocate singe dimension arrays
 	if (expr instanceof JNewArrayExpression) {
-	    //print the basetype
-	    print(((CArrayType)type).getBaseType() + " ");
+	    //print the basetype -- note that this prints a type, not a string
+	    print(((CArrayType)type).getBaseType());
 	    //print the field identifier
-	    print(ident);
+	    print(" " + ident);
 	    //print the dims
 	    stackAllocateArray(ident);
 	    print(";");
 	    return;
+	} else if (expr instanceof JArrayInitializer) {
+	    declareInitializedArray(type, ident, expr);
+	    return;
 	}
-
 
         print(type);
         print(" ");
@@ -510,10 +546,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
 	    if (expr instanceof JNewArrayExpression) {
-		//print the type
-		print(((CArrayType)type).getBaseType() + " ");
+		//print the type -- note that this prints a type, not a string
+		print(((CArrayType)type).getBaseType());
 		//print the field identifier
-		print(ident);
+		print(" " + ident);
 		//print the dims
 		stackAllocateArray(ident);
 		print(";");
@@ -522,29 +558,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    else if (dims != null)
 		return;
 	    else if (expr instanceof JArrayInitializer) {
-		print(((CArrayType)type).getBaseType() + " " + ident);
-		JArrayInitializer init = (JArrayInitializer)expr;
-		while (true) {
-		    int length = init.getElems().length;
-		    print("[" + length + "]");
-		    if (length==0) { 
-			// hope that we have a 1-dimensional array in
-			// this case.  Otherwise we won't currently
-			// get the type declarations right for the
-			// lower pieces.
-			break;
-		    }
-		    // assume rectangular arrays
-		    JExpression next = (JExpression)init.getElems()[0];
-		    if (next instanceof JArrayInitializer) {
-			init = (JArrayInitializer)next;
-		    } else {
-			break;
-		    }
-		}
-		print(" = ");
-		expr.accept(this);
-		print(";");
+		declareInitializedArray(type, ident, expr);
 		return;
 	    }
 	}
@@ -1417,7 +1431,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	    //get the basetype and print it 
 	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
-	    print(baseType + " ");
+	    print(baseType);
+	    print(" ");
 	    //print the identifier
 	    left.accept(this);
 	    //print the dims of the array

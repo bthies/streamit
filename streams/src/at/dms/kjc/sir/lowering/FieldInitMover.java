@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.8 2003-10-24 22:04:06 thies Exp $
+ * $Id: FieldInitMover.java,v 1.9 2004-07-12 02:09:45 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
   
@@ -104,7 +104,10 @@ public class FieldInitMover extends EmptyStreamVisitor {
 	    // make an assignment expression to stick in the
 	    // init function
 	    //System.out.println("Initial expression for field: " + expr);
-	    if (expr != null) {
+	    if (expr != null && 
+		// don't move array initializers because they need to
+		// be declared with field.
+		!(expr instanceof JArrayInitializer)) {
 		// build up the this.field = initalValue expression
 		
 		

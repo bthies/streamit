@@ -11,12 +11,16 @@ class RegTest:
     def __init__(self):
         self.directory = ""
         self.output = ""
+        self.make = 0
         self.opts = "-i1000"
         self.sources = []
 
     def setDir(self, dir):
         self.directory = dir
 
+    def setMake(self, make):
+        self.make = make
+    
     def setOutput(self, out):
         self.output = out
 
@@ -57,6 +61,12 @@ class RegTest:
         return result
 
     def dotest(self):
+        if (self.make):
+            result = self.runCommand("make")
+            if (result != 0):
+                self.report("Precompilation failed " + self.whyDied(result))
+                return result
+        
         result = self.runCommand("java at.dms.kjc.Main -s " +
                                  string.join(self.sources) + " > reg-out.c")
         if (result != 0):
@@ -161,6 +171,8 @@ class ControlReader:
                 self.state = self.haveDir
             elif word == "output":
                 self.state = self.haveOutput
+            elif word == "make":
+                self.test.setMake(1)
             elif word == "source":
                 self.state = self.haveSource
             elif word == "opts":

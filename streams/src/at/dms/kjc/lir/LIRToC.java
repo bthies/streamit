@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.23 2001-10-25 19:39:11 dmaze Exp $
+ * $Id: LIRToC.java,v 1.24 2001-10-25 21:02:41 mgordon Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1373,13 +1373,14 @@ public class LIRToC
     }
 
     public void visitMessageStatement(SIRMessageStatement self,
-                                      String portal,
-                                      String message,
+                                      JExpression portal,
+				      int index, 
                                       JExpression[] params,
                                       SIRLatency latency)
     {
-        newLine();
-        print("send_message(" + portal + ", " + message);
+        /*
+	newLine();
+	print("send_message(" + portal + ", " + message);
         if (params != null)
             for (int i = 0; i < params.length; i++)
                 if (params[i] != null)
@@ -1390,6 +1391,7 @@ public class LIRToC
         print(", ");
         latency.accept(this);
         print(");");
+	*/
     }
 
     public void visitPeekExpression(SIRPeekExpression self,
@@ -1478,11 +1480,13 @@ public class LIRToC
     }
     
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
-                                          String fn)
+                                          JExpression portal,
+					  SIRStream receiver, 
+					  CMethod[] methods)
     {
-        print("register_receiver(this->context, ");
+	/*        print("register_receiver(this->context, ");
         print(fn);
-        print(");");
+        print(");");*/
     }
     
     public void visitRegSenderStatement(SIRRegSenderStatement self,

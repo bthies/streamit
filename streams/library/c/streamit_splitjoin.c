@@ -127,33 +127,33 @@ void run_splitter(stream_context *c)
     build_tape_cache(&c->splitter);
 
   input_tape = c->input_tape;
-  // Read until empty.
-  while (input_tape->write_pos != input_tape->read_pos)
+
+  switch(c->splitter.type)
   {
+  case DUPLICATE:
+    /* Read one item and distribute it. */
     INCR_TAPE_READ(input_tape);
-    switch(c->splitter.type)
+    for (slot = 0; slot < c->splitter.fan; slot++)
     {
-    case DUPLICATE:
-      for (slot = 0; slot < c->splitter.fan; slot++)
-      {
-        output_tape = c->splitter.tape[slot];
-        INCR_TAPE_WRITE(output_tape);
-        COPY_TAPE_ITEM(input_tape, output_tape);
-      }
-      break;
-      
-    case ROUND_ROBIN:
-      output_tape = c->splitter.tcache[c->splitter.slot_pos];
+      output_tape = c->splitter.tape[slot];
       INCR_TAPE_WRITE(output_tape);
       COPY_TAPE_ITEM(input_tape, output_tape);
-      c->splitter.slot_pos++;
-      if (c->splitter.slot_pos >= c->splitter.slots)
-        c->splitter.slot_pos = 0;
-      break;
-      
-    default:
-      assert(0);
     }
+    break;
+      
+  case ROUND_ROBIN:
+    /* Read enough items to make one loop around. */
+    for (slot = 0; slot < c->splitter.slots; slot++)
+    {
+      output_tape = c->splitter.tcache[slot];
+      INCR_TAPE_READ(input_tape);
+      INCR_TAPE_WRITE(output_tape);
+      COPY_TAPE_ITEM(input_tape, output_tape);
+    }
+    break;
+    
+  default:
+    assert(0);
   }
 }
 
@@ -171,21 +171,15 @@ void run_joiner(stream_context *c)
 
   output_tape = c->output_tape;
 
-  // Look for items to read until there aren't any more.
   switch (c->joiner.type)
   {
   case ROUND_ROBIN:
-    while(1)
+    for (slot = 0; slot < c->joiner.slots; slot++)
     {
-      input_tape = c->joiner.tcache[c->joiner.slot_pos];
-      if (input_tape->write_pos == input_tape->read_pos)
-        break;
+      input_tape = c->joiner.tcache[slot];
       INCR_TAPE_READ(input_tape);
       INCR_TAPE_WRITE(output_tape);
       COPY_TAPE_ITEM(input_tape, output_tape);
-      c->joiner.slot_pos++;
-      if (c->joiner.slot_pos >= c->joiner.slots)
-        c->joiner.slot_pos = 0;
     }
     break;
     

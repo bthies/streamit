@@ -305,10 +305,10 @@ abstract class DPConfigContainer extends DPConfig {
 		}
 	    }
 	    */
-	    int sum = get(x1, x1, y1, y1, tileLimit, nextToJoiner);
-	    sum += (x1<x2 && x1+1<width[y1]) ? get( x1+1, x2, y1, y1, tileLimit, nextToJoiner) : 0;
-	    sum += (y1<y2 && x1<width[y1+1]) ? get(x1, x1, y1+1, y2, tileLimit, nextToJoiner) : 0;
-	    sum += (x1<x2 && y1<y2 && x1+1<width[y1+1]) ? get(x1+1, x2, y1+1, y2, tileLimit, nextToJoiner) : 0;
+	    int sum = x1<maxWidth[y1][y1] ? get(x1, x1, y1, y1, tileLimit, nextToJoiner) : 0;
+	    sum += (x1<x2 && x1+1<maxWidth[y1][y1]) ? get( x1+1, x2, y1, y1, tileLimit, nextToJoiner) : 0;
+	    sum += (y1<y2 && x1<maxWidth[y1+1][y2]) ? get(x1, x1, y1+1, y2, tileLimit, nextToJoiner) : 0;
+	    sum += (x1<x2 && y1<y2 && x1+1<maxWidth[y1+1][y2]) ? get(x1+1, x2, y1+1, y2, tileLimit, nextToJoiner) : 0;
 	    // since we went to down to one child, the cost is the
 	    // same whether or not there is a joiner, so record both
 	    // ways.
@@ -536,7 +536,8 @@ abstract class DPConfigContainer extends DPConfig {
 		    if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 			// there's a division at this <xPivot>.  We'll
 			// return result of a vertical cut
-
+			//System.err.println("splitting vertical range " + x1 + "-" + x2 + " into " + x1 + "-" + xPivot + "(" + getWithFusionOverhead(x1, xPivot, y1, y2, tPivot, 0, tileLimit) + ")" + 
+			// " and " + (xPivot+1) + "-" + x2 + "(" + getWithFusionOverhead(xPivot+1, x2, y1, y2, tileLimit-tPivot, nextToJoiner, tileLimit) + ")");
 			int[] arr = { 1 + (xPivot-x1), x2-xPivot };
 			PartitionGroup pg = PartitionGroup.createFromArray(arr);
 			// do the vertical cut
@@ -570,8 +571,8 @@ abstract class DPConfigContainer extends DPConfig {
 		int cost = Math.max(getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit),
 				    getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit));
 		if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
-		    //System.err.println("splitting range " + y1 + "-" + y2 + " into " + y1 + "-" + yPivot + "(" + getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit) + ")" + 
-		    //	       " and " + (yPivot+1) + "-" + y2 + "(" + getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit) + ")");
+		    //System.err.println("splitting horizontal range " + y1 + "-" + y2 + " into " + y1 + "-" + yPivot + "(" + getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit) + ")" + 
+		    //" and " + (yPivot+1) + "-" + y2 + "(" + getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit) + ")");
 		    // there's a division at this <yPivot>.  We'll
 		    // return result of a horizontal cut.
 		    int[] arr = { 1 + (yPivot-y1), y2-yPivot };

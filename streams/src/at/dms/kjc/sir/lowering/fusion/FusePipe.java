@@ -612,7 +612,9 @@ public class FusePipe {
 		JBlock oldBody = new JBlock(null, work.getStatements(), null);
 		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
 
-		body = (JBlock)findVarDecls.findAndReplace(body);
+		if (KjcOptions.rename1) {
+		    body = (JBlock)findVarDecls.findAndReplace(body);
+		}
 
 		// move variable declarations from front of <body> to
 		// front of <statements> -- SUBSUMED by varDeclRaiser
@@ -668,8 +670,9 @@ public class FusePipe {
 	}
 
 	//add variable declarations calculated by FindVarDecls
-	findVarDecls.addVariableDeclarations(statements);
-
+	if (KjcOptions.rename1) {
+	    findVarDecls.addVariableDeclarations(statements);
+	}
     }
 
     /**

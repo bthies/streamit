@@ -37,10 +37,22 @@ public class FindVarDecls extends SLIREmptyVisitor {
 	floats = new HashMap();
     }
 
-    public JStatement findAndReplace(JStatement body) {
+    public void newOperator() {
 	int_count = 0;
 	float_count = 0;
 	var_names = new HashMap();
+    }
+    
+    // reset tells if this operator should be assigned new variables
+
+    public JStatement findAndReplace(JStatement body) {
+	
+	//if (reset)
+	    newOperator();
+
+	//int_count = 0;
+	//float_count = 0;
+	//var_names = new HashMap();
 	body.accept(this);
 	//System.out.println("Found ints:"+int_count+" floats:"+float_count);
 	if (int_count > max_int_count) { max_int_count = int_count; }

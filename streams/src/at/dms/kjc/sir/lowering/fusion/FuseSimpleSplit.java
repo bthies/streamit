@@ -460,7 +460,9 @@ public class FuseSimpleSplit {
 		// Get the statements of the old work function
 		JBlock statements = filter.getWork().getBody();
 		//replace variable accesses with numbered variables
-		statements = (JBlock)findVarDecls.findAndReplace(statements);
+		if (KjcOptions.rename1) {
+		    statements = (JBlock)findVarDecls.findAndReplace(statements);
+		}
 		// Make a for loop that repeats these statements according
 		// to reps
 		JStatement loop = Utils.makeForLoop(statements, rep.child[i]);
@@ -487,7 +489,9 @@ public class FuseSimpleSplit {
 	}
 
 	//add variable declarations calculated by FindVarDecls
-	findVarDecls.addVariableDeclarations(newStatements);
+	if (KjcOptions.rename1) {
+	    findVarDecls.addVariableDeclarations(newStatements);
+	}
 
         // Now make a new work function based on this.
         JMethodDeclaration newWork =

@@ -855,7 +855,9 @@ public class FuseSplit {
             // Get the statements of the old work function
             JBlock statements = childInfo[i].filter.getWork().getBody().copy();
 	    //replace variable accesses with numbered variables
-	    statements = (JBlock)findVarDecls.findAndReplace(statements);
+	    if (KjcOptions.rename1) {
+		statements = (JBlock)findVarDecls.findAndReplace(statements);
+	    }
 	    // adjust statements to access arrays instead of peek/pop/push
 	    statements.accept(new FuseSplitVisitor(childInfo[i]));
             // Make a for loop that repeats these statements according
@@ -869,7 +871,9 @@ public class FuseSplit {
 	newStatements.addStatement(doPushing(sj.getJoiner(), childInfo, rep, rate, sj.getOutputType()));
 
 	//add variable declarations calculated by FindVarDecls
-	findVarDecls.addVariableDeclarations(newStatements);
+	if (KjcOptions.rename1) {
+	    findVarDecls.addVariableDeclarations(newStatements);
+	}
 
         // make the work function based on statements
         JMethodDeclaration newWork =

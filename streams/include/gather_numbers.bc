@@ -1,3 +1,8 @@
+
+//how often (in cycles) would we like to update the bloodgraph
+global bg_update_cycles = 100;
+
+
 //Number gathering bc code
 //global gMagicInstrHMS;
 global lastCycle;
@@ -9,6 +14,7 @@ global gGreenP;
 global gBlueP;
 global gBloodCycles;
 global gTraceWidth = 7 + (64 / gNumProc);
+global bg_current_cycle = 0;
 
 global gSteadyState = 0;
 //record the total number of prints for each steady 
@@ -255,7 +261,16 @@ fn update_bloodgraph(hms) {
   if (gBloodCycles <= 0) {
     close_bloodgraph();
   }
-    
+  //decrement the steady state cycle counter that controls the total time 
+  //of the blood graph
+  gBloodCycles--;
+
+  
+  //check if we should update the bloodgraph
+  if (gBloodCycles % bg_update_cycles != 0) {
+    return 0;
+  }
+
   for (j = 0; j < gNumProc; ++j)
     {
       local k;
@@ -280,12 +295,11 @@ fn update_bloodgraph(hms) {
       }
       write_ppm(gPPMFILE,0,0,0);
     }
-  gBloodCycles--;
 }
 
 
 fn setup_bloodgraph(filename, cycles) {
-  gPPMFILE = open_ppm(filename, cycles, gNumProc*gTraceWidth);
+  gPPMFILE = open_ppm(filename, cycles / bg_update_cycles, gNumProc*gTraceWidth);
   if (gPPMFILE == NULL)
   {
     printf("Error opening %s\n",filename);
@@ -295,6 +309,7 @@ fn setup_bloodgraph(filename, cycles) {
   gGreenP = malloc(4);
   gBlueP = malloc(4);
 
+  bg_current_cycle = 0;
   gBloodCycles = cycles;
   EventManager_RegisterHandler("clock", "update_bloodgraph"); 
 }

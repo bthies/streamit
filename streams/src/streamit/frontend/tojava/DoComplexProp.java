@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.18 2003-07-16 15:54:38 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.19 2003-07-30 19:53:09 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -107,6 +107,24 @@ public class DoComplexProp extends SymbolTableVisitor
         return new ExprComplex(exp.getContext(), real, imag);
     }
 
+    /**
+     * Given a List of Expression, return a new List that has all
+     * of the Expressions in l, except with any ExprComplex values
+     * replaced with temporary variables.
+     */
+    private List createListTemporaries(List l)
+    {
+        List nl = new ArrayList();
+        for (Iterator iter = l.iterator(); iter.hasNext(); )
+        {
+            Expression expr = (Expression)iter.next();
+            if (expr instanceof ExprComplex)
+                expr = makeComplexTemporary(expr);
+            nl.add(expr);
+        }
+        return nl;
+    }
+
     protected Expression doExpression(Expression expr)
     {
         return doExprProp(expr);
@@ -161,6 +179,17 @@ public class DoComplexProp extends SymbolTableVisitor
             return makeComplexPair(exp);
         else
             return exp;
+    }
+
+    public Object visitSCSimple(SCSimple creator)
+    {
+        // Run propagation, but insert temporaries for any
+        // complex variables that are left.
+        creator = (SCSimple)super.visitSCSimple(creator);
+        return new SCSimple(creator.getContext(), creator.getName(),
+                            creator.getTypes(),
+                            createListTemporaries(creator.getParams()),
+                            creator.getPortals());
     }
 
     public Object visitStmtAssign(StmtAssign stmt)

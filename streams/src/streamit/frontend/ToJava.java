@@ -17,7 +17,7 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.iterator.*;
 import at.dms.util.*;
 
-class ToJava
+public class ToJava
 {
     public int indent = 0;
     public String getIndent ()

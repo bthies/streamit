@@ -33,7 +33,10 @@ public class SIRInitStatement extends JStatement {
     public SIRInitStatement(List args, 
 			    SIRStream str) {
 	super(null, null);
-	this.args = new LinkedList(args);
+        if (args != null)
+            this.args = new LinkedList(args);
+        else
+            this.args = new LinkedList();
 	this.target = str;
     }
     

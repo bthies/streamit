@@ -423,7 +423,7 @@ public abstract class Filter extends Stream
         initCount();
     }
 
-    public abstract void work();
+    public void work() { ERROR ("You must declare your own \"work\" function in a Filter!\n(unless you're using multi-phased Filters and don't have a \"work\"function"); }
 
     // provide some empty functions to make writing filters a bit easier
     public void init()

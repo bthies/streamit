@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.32 2001-10-29 20:01:59 dmaze Exp $
+ * $Id: LIRToC.java,v 1.33 2001-10-29 20:42:09 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -2049,7 +2049,7 @@ public class LIRToC
         if (isFinal) {
             print("final ");
         }
-        print(type.toString());
+        print(type);
         if (ident.indexOf("$") == -1) {
             print(" ");
             print(ident);
@@ -2114,7 +2114,10 @@ public class LIRToC
     protected void print(CType s) {
         if (s.getTypeID() == TID_BOOLEAN)
             print("int");
-        else
+        else if (s.toString().endsWith("Portal"))
+	    // ignore the specific type of portal in the C library
+	    print("portal");
+	else
             print(s.toString());
     }
 

@@ -53,7 +53,7 @@ typedef struct ContextContainer {
   stream_context *context;
 } _ContextContainer, *ContextContainer;
 typedef struct tape {
-  void *data;
+  char *data;
   int read_pos;
   int write_pos;
   int data_size;
@@ -72,6 +72,9 @@ typedef struct tape {
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)
+#ifdef _MSC_VER
+#define streamit_memcpy(d,s,l) (memcpy((d),(s),(l)))
+#else
 #define streamit_memcpy(d, s, l) \
   (((l) == 0) ? memcpy((d), (s), 0) : \
    ((l) == 1) ? memcpy((d), (s), 1) : \
@@ -84,6 +87,7 @@ typedef struct tape {
    ((l) == 16) ? memcpy((d), (s), 16) : \
    ((l) == 20) ? memcpy((d), (s), 20) : \
    memcpy((d), (s), (l)))
+#endif
 #define READ_ADDR(t) ((t)->data + (t)->read_pos * (t)->data_size)
 #define WRITE_ADDR(t) ((t)->data + (t)->write_pos * (t)->data_size)
 #define COPY_TAPE_ITEM(s, d) \

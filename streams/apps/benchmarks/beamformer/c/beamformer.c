@@ -1,7 +1,7 @@
 /*
  * beamformer.c: Standalone beam-former reference implementation
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: beamformer.c,v 1.2 2003-11-04 16:30:48 dmaze Exp $
+ * $Id: beamformer.c,v 1.3 2003-11-04 16:41:48 dmaze Exp $
  */
 
 #ifdef raw
@@ -251,8 +251,8 @@ void BeamFirSetup(struct BeamFirData *data, int n)
     int idx = j+1;
     data->real_weight[j] = sin(idx) / ((float)idx);
     data->imag_weight[j] = cos(idx) / ((float)idx);
-    data->real_buffer[i] = 0.0;
-    data->imag_buffer[i] = 0.0;
+    data->real_buffer[j] = 0.0;
+    data->imag_buffer[j] = 0.0;
   }
 #else
   data->real_weight[0] = 1.0;

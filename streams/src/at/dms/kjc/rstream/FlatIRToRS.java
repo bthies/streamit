@@ -26,7 +26,7 @@ import at.dms.util.SIRPrinter;
  *
  * @author Michael Gordon
  */
-public class FlatIRToRS extends ToC implements StreamVisitor
+public class FlatIRToRS extends ToC 
 {
     /** if true generate do loops when identified **/
     public static final boolean GENERATE_DO_LOOPS = true;
@@ -36,78 +36,9 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     private SIRFilter filter;
     /** comment me **/
     private NewArrayExprs newArrayExprs;
-    /** comment me **/
-    private ConvertArrayInitializers arrayInits;
     /** > 0 if in a for loop header during visit **/
     private int forLoopHeader = 0;
     
-    /**
-     * The entry method to this C conversion pass.  Given a flatnode containing
-     * the single fused filter of the application, optimize the SIR code, if
-     * enabled, and then generate then convert to C code and dump to a file.
-     *
-     * @param node The flatnode containing the single filter of the application.
-     *
-     */
-    public static void generateCode(FlatNode node) 
-    {
-	FlatIRToRS toC = new FlatIRToRS((SIRFilter)node.contents);
-		
-	//optimizations...
-	System.out.println
-	    ("Optimizing SIR ...");
-
-	ArrayDestroyer arrayDest=new ArrayDestroyer();
-
-	//iterate over all the methods, calling the magic below...
-	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
-	    	    
-	    if (!KjcOptions.nofieldprop) {
-		Unroller unroller;
-		do {
-		    do {
-			unroller = new Unroller(new Hashtable());
-			method.accept(unroller);
-		    } while (unroller.hasUnrolled());
-		    
-		    method.accept(new Propagator(new Hashtable()));
-		    unroller = new Unroller(new Hashtable());
-		    method.accept(unroller);
-		} while(unroller.hasUnrolled());
-		
-		method.accept(new BlockFlattener());
-		method.accept(new Propagator(new Hashtable()));
-	    } 
-	    else
-		method.accept(new BlockFlattener());
-	    method.accept(arrayDest);
-	    method.accept(new VarDeclRaiser());
-	}
-	
-	if(KjcOptions.destroyfieldarray)
-	   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
-	   /*	
-	     try {
-	     SIRPrinter printer1 = new SIRPrinter();
-	     IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-	     printer1.close();
-	     }
-	     catch (Exception e) 
-	     {
-	     }
-	*/
-	//remove unused variables...
-	RemoveUnusedVars.doit(node);
-	//remove array initializers and remember them for placement later...
-	toC.arrayInits = new ConvertArrayInitializers(node);
-	//find all do loops, 
-	toC.doloops = IDDoLoops.doit(node);
-	//remove unnecessary do loops
-	//RemoveDeadDoLoops.doit(node, toC.doloops);
-	//now iterate over all the methods and generate the c code.
-        IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
-    }
     
     
     public FlatIRToRS()
@@ -117,129 +48,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	doloops = new HashMap();
 	newArrayExprs = null;
     }
-
     
-    public FlatIRToRS(SIRFilter f) {
-	this.filter = f;
-	this.str = new StringWriter();
-        this.p = new TabbedPrintWriter(str);
-	doloops = new HashMap();
-	newArrayExprs = new NewArrayExprs(f);
-    }
-
-
-    /**
-     * The main entry point of the visiting done by this class. 
-     * print out c includes, visit the methods, and then generate
-     * the main function in the c code that calls the driver function
-     * that controls execution.
-     *
-     * @param self The filter we are visiting
-     *
-     */
-
-    public void visitFilter(SIRFilter self,
-			    SIRFilterIter iter) {
-	//Entry point of the visitor
-
-	//print("#include <stdlib.h>\n");
-	//print("#include <math.h>\n\n");
-
-	//if there are structures in the code, include
-	//the structure definition header files
-	if (StrToRStream.structures.length > 0) 
-	    print("#include \"structs.h\"\n");
-	
-	printExterns();
-	//Visit fields declared in the filter class
-	JFieldDeclaration[] fields = self.getFields();
-	for (int i = 0; i < fields.length; i++)
-	   fields[i].accept(this);
-	
-	//visit methods of filter, print the declaration first
-	declOnly = true;
-	JMethodDeclaration[] methods = self.getMethods();
-	for (int i =0; i < methods.length; i++)
-	    methods[i].accept(this);
-	
-	//now print the functions with body
-	declOnly = false;
-	for (int i =0; i < methods.length; i++) {
-	    methods[i].accept(this);	
-	}
-	
-	print("int main() {\n");
-	//generate array initializer blocks for fields...
-	printFieldArrayInits();
-	
-	//execute the main function
-	print(Names.main + "();\n");
-	
-	//return 0 even though this should never return!
-	print("  return 0;\n");
-	//closes main()
-	print("}\n");
-       
-	createFile();
-    }
-
-    //iterate over all the assignment blocks that perform
-    //array initialization
-    private void printFieldArrayInits() 
-    {
-	Iterator blocks = arrayInits.fields.iterator();
-	while (blocks.hasNext()) {
-	    ((JBlock)blocks.next()).accept(this);
-	}
-    }
-    
-
-    private void createFile() {
-	System.out.println("Code for application written to str.c");
-	try {
-	    FileWriter fw = new FileWriter("str.c");
-	    fw.write(str.toString());
-	    fw.close();
-	}
-	catch (Exception e) {
-	    System.err.println("Unable to write tile code file for filter " +
-			       filter.getName());
-	}
-    }
-
-    //for now, just print all the common math functions as
-    //external functions
-    protected void printExterns() 
-    {
-	print("#define EXTERNC \n\n");
-	print("extern EXTERNC int printf(char[], ...);\n");
-	print("extern EXTERNC int fprintf(int, char[], ...);\n");
-	print("extern EXTERNC int fopen(char[], char[]);\n");
-	print("extern EXTERNC int fscanf(int, char[], ...);\n");
-	print("extern EXTERNC float acosf(float);\n"); 
-	print("extern EXTERNC float asinf(float);\n"); 
-	print("extern EXTERNC float atanf(float);\n"); 
-	print("extern EXTERNC float atan2f(float, float);\n"); 
-	print("extern EXTERNC float ceilf(float);\n"); 
-	print("extern EXTERNC float cosf(float);\n"); 
-	print("extern EXTERNC float sinf(float);\n"); 
-	print("extern EXTERNC float coshf(float);\n"); 
-	print("extern EXTERNC float sinhf(float);\n"); 
-	print("extern EXTERNC float expf(float);\n"); 
-	print("extern EXTERNC float fabsf(float);\n"); 
-	print("extern EXTERNC float modff(float, float *);\n"); 
-	print("extern EXTERNC float fmodf(float, float);\n"); 
-	print("extern EXTERNC float frexpf(float, int *);\n"); 
-	print("extern EXTERNC float floorf(float);\n"); 	     
-	print("extern EXTERNC float logf(float);\n"); 
-	print("extern EXTERNC float log10f(float, int);\n"); 
-	print("extern EXTERNC float powf(float, float);\n"); 
-	print("extern EXTERNC float rintf(float);\n"); 
-	print("extern EXTERNC float sqrtf(float);\n"); 
-	print("extern EXTERNC float tanhf(float);\n"); 
-	print("extern EXTERNC float tanf(float);\n");
-	     
-    }
     
     /**
      * prints an assignment expression
@@ -492,46 +301,18 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 
 	//set the current method we are visiting
 	method = self;
-
-	//set is init for dynamically allocating arrays...
-	if (filter != null &&
-	    self.getName().startsWith("init"))
-	    isInit = true;
 	
-	//place array initializers...
-	placeArrayInitializers(self);
-
-        print(" ");
+	print(" ");
         if (body != null) 
 	    body.accept(this);
         else 
             print(";");
 
         newLine();
-	isInit = false;
 	method = null;
     }
     
-    private void placeArrayInitializers(JMethodDeclaration meth) 
-    {
-	//do nothing if we have nothing to do
-	if (!arrayInits.locals.containsKey(meth))
-	    return;
-
-	//find the correct place to place the block by bypassing the 
-	//variable declaration
-	JStatement[] statements = meth.getBody().getStatementArray();
-	//the index where to place the initializers
-	int i;
-
-	for (i = 0; i < statements.length; i++) {
-	    if (!(statements[i] instanceof JVariableDeclarationStatement ||
-		  statements[i] instanceof JEmptyStatement))
-		break;
-	}
-	meth.getBody().addStatement(i, (JBlock)arrayInits.locals.get(meth));
-	
-    }
+    
     
 
     // ----------------------------------------------------------------------
@@ -589,7 +370,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	//cond is an expression so print the ;
 	print("; ");
 	if (incr != null) {
-	    FlatIRToRS l2c = new FlatIRToRS(filter);
+	    FlatIRToRS l2c = new FlatIRToRS();
 	    l2c.doloops = this.doloops;
 	    incr.accept(l2c);
 	    // get String
@@ -604,13 +385,13 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	forLoopHeader--;
 	print(") ");
 	
-        print("{");
+        //print("{");
 	newLine();
         pos += TAB_SIZE;
         body.accept(this);
         pos -= TAB_SIZE;
         newLine();
-	print("}");
+	//print("}");
     }
 
 
@@ -853,4 +634,181 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    print(";");
 	}
     }
-}
+
+//     /**
+//      * The main entry point of the visiting done by this class. 
+//      * print out c includes, visit the methods, and then generate
+//      * the main function in the c code that calls the driver function
+//      * that controls execution.
+//      *
+//      * @param self The filter we are visiting
+//      *
+//      */
+
+//     public void visitFilter(SIRFilter self,
+// 			    SIRFilterIter iter) {
+// 	assert false : "Don't call me!";
+	
+// 	//Entry point of the visitor
+
+// 	//print("#include <stdlib.h>\n");
+// 	//print("#include <math.h>\n\n");
+
+// 	//if there are structures in the code, include
+// 	//the structure definition header files
+// 	if (StrToRStream.structures.length > 0) 
+// 	    print("#include \"structs.h\"\n");
+	
+// 	printExterns();
+// 	//Visit fields declared in the filter class
+// 	JFieldDeclaration[] fields = self.getFields();
+// 	for (int i = 0; i < fields.length; i++)
+// 	   fields[i].accept(this);
+	
+// 	//visit methods of filter, print the declaration first
+// 	declOnly = true;
+// 	JMethodDeclaration[] methods = self.getMethods();
+// 	for (int i =0; i < methods.length; i++)
+// 	    methods[i].accept(this);
+	
+// 	//now print the functions with body
+// 	declOnly = false;
+// 	for (int i =0; i < methods.length; i++) {
+// 	    methods[i].accept(this);	
+// 	}
+	
+// 	print("int main() {\n");
+// 	//generate array initializer blocks for fields...
+// 	printFieldArrayInits();
+	
+// 	//execute the main function
+// 	print(Names.main + "();\n");
+	
+// 	//return 0 even though this should never return!
+// 	print("  return 0;\n");
+// 	//closes main()
+// 	print("}\n");
+       
+// 	createFile();
+//     }
+
+//     /**
+//      * The entry method to this C conversion pass.  Given a flatnode containing
+//      * the single fused filter of the application, optimize the SIR code, if
+//      * enabled, and then generate then convert to C code and dump to a file.
+//      *
+//      * @param node The flatnode containing the single filter of the application.
+//      *
+//      */
+//     public static void generateCode(FlatNode node) 
+//     {
+// 	assert false : "don't call me";
+	
+// 	//FlatIRToRS toC = new FlatIRToRS((SIRFilter)node.contents);
+		
+// 	//optimizations...
+// 	System.out.println
+// 	    ("Optimizing SIR ...");
+
+// 	ArrayDestroyer arrayDest=new ArrayDestroyer();
+
+// 	//iterate over all the methods, calling the magic below...
+// 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
+// 	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
+	    	    
+// 	    if (!KjcOptions.nofieldprop) {
+// 		Unroller unroller;
+// 		do {
+// 		    do {
+// 			unroller = new Unroller(new Hashtable());
+// 			method.accept(unroller);
+// 		    } while (unroller.hasUnrolled());
+		    
+// 		    method.accept(new Propagator(new Hashtable()));
+// 		    unroller = new Unroller(new Hashtable());
+// 		    method.accept(unroller);
+// 		} while(unroller.hasUnrolled());
+		
+// 		method.accept(new BlockFlattener());
+// 		method.accept(new Propagator(new Hashtable()));
+// 	    } 
+// 	    else
+// 		method.accept(new BlockFlattener());
+// 	    method.accept(arrayDest);
+// 	    method.accept(new VarDeclRaiser());
+// 	}
+	
+// 	if(KjcOptions.destroyfieldarray)
+// 	   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+// 	   /*	
+// 	     try {
+// 	     SIRPrinter printer1 = new SIRPrinter();
+// 	     IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
+// 	     printer1.close();
+// 	     }
+// 	     catch (Exception e) 
+// 	     {
+// 	     }
+// 	*/
+// 	//remove unused variables...
+// 	RemoveUnusedVars.doit(node);
+// 	//remove array initializers and remember them for placement later...
+// 	toC.arrayInits = new ConvertArrayInitializers(node);
+// 	//find all do loops, 
+// 	toC.doloops = IDDoLoops.doit(node);
+// 	//remove unnecessary do loops
+// 	//RemoveDeadDoLoops.doit(node, toC.doloops);
+// 	//now iterate over all the methods and generate the c code.
+//         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
+//     }
+
+
+    
+//     private void createFile() {
+// 	System.out.println("Code for application written to str.c");
+// 	try {
+// 	    FileWriter fw = new FileWriter("str.c");
+// 	    fw.write(str.toString());
+// 	    fw.close();
+// 	}
+// 	catch (Exception e) {
+// 	    System.err.println("Unable to write tile code file for filter " +
+// 			       filter.getName());
+// 	}
+//     }
+
+//     //for now, just print all the common math functions as
+//     //external functions
+//     protected void printExterns() 
+//     {
+// 	print("#define EXTERNC \n\n");
+// 	print("extern EXTERNC int printf(char[], ...);\n");
+// 	print("extern EXTERNC int fprintf(int, char[], ...);\n");
+// 	print("extern EXTERNC int fopen(char[], char[]);\n");
+// 	print("extern EXTERNC int fscanf(int, char[], ...);\n");
+// 	print("extern EXTERNC float acosf(float);\n"); 
+// 	print("extern EXTERNC float asinf(float);\n"); 
+// 	print("extern EXTERNC float atanf(float);\n"); 
+// 	print("extern EXTERNC float atan2f(float, float);\n"); 
+// 	print("extern EXTERNC float ceilf(float);\n"); 
+// 	print("extern EXTERNC float cosf(float);\n"); 
+// 	print("extern EXTERNC float sinf(float);\n"); 
+// 	print("extern EXTERNC float coshf(float);\n"); 
+// 	print("extern EXTERNC float sinhf(float);\n"); 
+// 	print("extern EXTERNC float expf(float);\n"); 
+// 	print("extern EXTERNC float fabsf(float);\n"); 
+// 	print("extern EXTERNC float modff(float, float *);\n"); 
+// 	print("extern EXTERNC float fmodf(float, float);\n"); 
+// 	print("extern EXTERNC float frexpf(float, int *);\n"); 
+// 	print("extern EXTERNC float floorf(float);\n"); 	     
+// 	print("extern EXTERNC float logf(float);\n"); 
+// 	print("extern EXTERNC float log10f(float, int);\n"); 
+// 	print("extern EXTERNC float powf(float, float);\n"); 
+// 	print("extern EXTERNC float rintf(float);\n"); 
+// 	print("extern EXTERNC float sqrtf(float);\n"); 
+// 	print("extern EXTERNC float tanhf(float);\n"); 
+// 	print("extern EXTERNC float tanf(float);\n");
+	     
+//     }
+
+ }

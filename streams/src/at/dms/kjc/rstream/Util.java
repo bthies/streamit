@@ -83,7 +83,7 @@ public class Util extends at.dms.util.Utils {
 	
 	
 	for (int i = 0; i < dims.length; i++) {
-	    FlatIRToRS ftoc = new FlatIRToRS(null);
+	    FlatIRToRS ftoc = new FlatIRToRS();
 	    dims[i].accept(ftoc);
 	    ret[i] = ftoc.getString();
 	}

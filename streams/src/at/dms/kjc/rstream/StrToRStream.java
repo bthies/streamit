@@ -36,6 +36,11 @@ public class StrToRStream {
     /** The structure defined in the application, see SIRStructure **/
     public static SIRStructure[] structures;
     
+    //given a flatnode map to the execution count
+    public static HashMap initExecutionCounts;
+    public static HashMap steadyExecutionCounts;
+    // get the execution counts from the scheduler
+    
     /**
      * The entry point of the RStream "backend" for the StreamIt
      * Compiler. Given the SIR representation of the application, 
@@ -106,7 +111,9 @@ public class StrToRStream {
 	//convert all file readers/writers to normal 
 	//sirfilters, not predefined filters
 	ConvertFileFilters.doit(str);
-	
+
+	StreamItDot.printGraph(str, "before-synch.dot");
+
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");
 
@@ -127,25 +134,6 @@ public class StrToRStream {
 
 	//Partition the Stream Graph, fuse it down to one tile
 	int count = new GraphFlattener(str).getNumTiles();
-	int numTiles = 1;
-	
-	assert (KjcOptions.partition_dp) : 
-	    "The RStream option must turn on Partitioning";
-
-	System.err.println("Running Partitioning...");
-	str = Partitioner.doit(str,      //stream graph
-			       count,    //initial count of filters and collasped joiners
-			       numTiles, //always 1
-			       true);    //joiner's need tiles to true
-	System.err.println("Done Partitioning...");
-	
-
-	StreamItDot.printGraph(str, "after-partition.dot");
-
-	//	SIRPrinter printer1 = new SIRPrinter("partition.sir");
-	//IterFactory.createFactory().createIter(str).accept(printer1);
-	//printer1.close();
-	
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
@@ -169,23 +157,29 @@ public class StrToRStream {
 	GraphFlattener graphFlattener = new GraphFlattener(str);
 	System.out.println("Flattener End.");
 	
-	//Generate the tile code
-	ExecutionCode.doit(graphFlattener.top, executionCounts);
+	//create the execution counts for other passes
+	createExecutionCounts(str, graphFlattener);
+	
 
-	if (KjcOptions.removeglobals) {
-	    RemoveGlobals.doit(graphFlattener.top);
-	}
+	//Generate the tile code
+	//ExecutionCode.doit(graphFlattener.top, executionCounts);
+
+	//if (KjcOptions.removeglobals) {
+	//    RemoveGlobals.doit(graphFlattener.top);
+	//}
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
 	
-	printer1 = new SIRPrinter("beforecodegen.sir");
-	IterFactory.createFactory().createIter(str).accept(printer1);
-	printer1.close();
+	//printer1 = new SIRPrinter("beforecodegen.sir");
+	//IterFactory.createFactory().createIter(str).accept(printer1);
+	//printer1.close();
 
 	StructureIncludeFile.doit(structures);
+	
+	GenerateCCode.generate(graphFlattener.top);
 
-	FlatIRToRS.generateCode(graphFlattener.top);
+	//FlatIRToRS.generateCode(graphFlattener.top);
 
 	System.exit(0);
     }
@@ -207,5 +201,130 @@ public class StrToRStream {
 	    set.add(obj);
 	}
     }
-}
 
+    
+    private static void createExecutionCounts(SIRStream str,
+					      GraphFlattener graphFlattener) {
+	// make fresh hashmaps for results
+	HashMap[] result = { initExecutionCounts = new HashMap(), 
+			     steadyExecutionCounts = new HashMap()} ;
+	
+	// then filter the results to wrap every filter in a flatnode,
+	// and ignore splitters
+	for (int i=0; i<2; i++) {
+	    for (Iterator it = executionCounts[i].keySet().iterator();
+		 it.hasNext(); ){
+		SIROperator obj = (SIROperator)it.next();
+		int val = ((int[])executionCounts[i].get(obj))[0];
+		//System.err.println("execution count for " + obj + ": " + val);
+		/** This bug doesn't show up in the new version of
+		 * FM Radio - but leaving the comment here in case
+		 * we need to special case any other scheduler bugsx.
+		 
+		 if (val==25) { 
+		 System.err.println("Warning: catching scheduler bug with special-value "
+		 + "overwrite in RawBackend");
+		 val=26;
+		 }
+	       	if ((i == 0) &&
+		    (obj.getName().startsWith("Fused__StepSource") ||
+		     obj.getName().startsWith("Fused_FilterBank")))
+		    val++;
+	       */
+		if (graphFlattener.getFlatNode(obj) != null)
+		    result[i].put(graphFlattener.getFlatNode(obj), 
+				  new Integer(val));
+	    }
+	}
+	
+	//Schedule the new Identities and Splitters introduced by GraphFlattener
+	for(int i=0;i<GraphFlattener.needsToBeSched.size();i++) {
+	    FlatNode node=(FlatNode)GraphFlattener.needsToBeSched.get(i);
+	    int initCount=-1;
+	    if(node.incoming.length>0) {
+		if(initExecutionCounts.get(node.incoming[0])!=null)
+		    initCount=((Integer)initExecutionCounts.get(node.incoming[0])).intValue();
+		if((initCount==-1)&&(executionCounts[0].get(node.incoming[0].contents)!=null))
+		    initCount=((int[])executionCounts[0].get(node.incoming[0].contents))[0];
+	    }
+	    int steadyCount=-1;
+	    if(node.incoming.length>0) {
+		if(steadyExecutionCounts.get(node.incoming[0])!=null)
+		    steadyCount=((Integer)steadyExecutionCounts.get(node.incoming[0])).intValue();
+		if((steadyCount==-1)&&(executionCounts[1].get(node.incoming[0].contents)!=null))
+		    steadyCount=((int[])executionCounts[1].get(node.incoming[0].contents))[0];
+	    }
+	    if(node.contents instanceof SIRIdentity) {
+		if(initCount>=0)
+		    initExecutionCounts.put(node,new Integer(initCount));
+		if(steadyCount>=0)
+		    steadyExecutionCounts.put(node,new Integer(steadyCount));
+	    } else if(node.contents instanceof SIRSplitter) {
+		//System.out.println("Splitter:"+node);
+		int[] weights=node.weights;
+		FlatNode[] edges=node.edges;
+		int sum=0;
+		for(int j=0;j<weights.length;j++)
+		    sum+=weights[j];
+		for(int j=0;j<edges.length;j++) {
+		    if(initCount>=0)
+			initExecutionCounts.put(edges[j],new Integer((initCount*weights[j])/sum));
+		    if(steadyCount>=0)
+			steadyExecutionCounts.put(edges[j],new Integer((steadyCount*weights[j])/sum));
+		}
+		if(initCount>=0)
+		    result[0].put(node,new Integer(initCount));
+		if(steadyCount>=0)
+		    result[1].put(node,new Integer(steadyCount));
+	    } else if(node.contents instanceof SIRJoiner) {
+		FlatNode oldNode=graphFlattener.getFlatNode(node.contents);
+		if(executionCounts[0].get(node.oldContents)!=null)
+		    result[0].put(node,new Integer(((int[])executionCounts[0].get(node.oldContents))[0]));
+		if(executionCounts[1].get(node.oldContents)!=null)
+		    result[1].put(node,new Integer(((int[])executionCounts[1].get(node.oldContents))[0]));
+	    }
+	}
+	
+	//now, in the above calculation, an execution of a joiner node is 
+	//considered one cycle of all of its inputs.  For the remainder of the
+	//raw backend, I would like the execution of a joiner to be defined as
+	//the joiner passing one data item down stream
+	for (int i=0; i < 2; i++) {
+	    Iterator it = result[i].keySet().iterator();
+	    while(it.hasNext()){
+		FlatNode node = (FlatNode)it.next();
+		if (node.contents instanceof SIRJoiner) {
+		    int oldVal = ((Integer)result[i].get(node)).intValue();
+		    int cycles=oldVal*((SIRJoiner)node.contents).oldSumWeights;
+		    if((node.schedMult!=0)&&(node.schedDivider!=0))
+			cycles=(cycles*node.schedMult)/node.schedDivider;
+		    result[i].put(node, new Integer(cycles));
+		}
+		if (node.contents instanceof SIRSplitter) {
+		    int sum = 0;
+		    for (int j = 0; j < node.ways; j++)
+			sum += node.weights[j];
+		    int oldVal = ((Integer)result[i].get(node)).intValue();
+		    result[i].put(node, new Integer(sum*oldVal));
+		    //System.out.println("SchedSplit:"+node+" "+i+" "+sum+" "+oldVal);
+		}
+	    }
+	}
+    }
+    
+    
+    public static int getMult(FlatNode node, boolean init) 
+    {
+	Integer mult;
+	if (init) 
+	    mult = (Integer)initExecutionCounts.get(node);
+	else 
+	    mult = (Integer)steadyExecutionCounts.get(node);
+
+	if (mult == null)
+	    return 0;
+	
+	return mult.intValue();
+    }
+    
+}

@@ -10,24 +10,24 @@ import java.util.Vector;
 import at.dms.util.Utils;
 
 /**
- * This class *partially* converts array initializers to a bunch of assignment
- * statements.  First it removes the array intializer from ae declaration and 
- * replaces it with a new array expression of the correct size.  The it
- * remembers the array initializer in a hashmap indexed by the var.
- *
+ * This class converts array initializers to a bunch of assignment
+ * statements.  For locals it removes the array intializer from declaration and 
+ * replaces it with a new array expression of the correct size, placed at the 
+ * beginning of the method (after other array decls).  For fields it remembers the 
+ * assignment blocks in a hashset for later placement.
+ * 
  * @author Michael Gordon
  * 
  */
 
-public class ConvertArrayInitializers extends SLIRReplacingVisitor implements FlatVisitor
+public class ConvertArrayInitializers extends SLIRReplacingVisitor
 {
     /** Hashset mapping String -> JBlock to perform initialization of array **/
     public HashSet fields;
-    /** Hashset mapping JLocalVariable -> JBlock to perform initialization of array **/
-    public HashMap locals;
     /** current method we are visiting **/
     private JMethodDeclaration method;
     
+    private JBlock currentBlock;
 
     /**
      * Create a new object and visit the ir starting at node.  Convert
@@ -38,29 +38,43 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor implements Fl
      *
      *
      */
-    public ConvertArrayInitializers(FlatNode node) 
+    public ConvertArrayInitializers() 
     {
 	System.out.println("Converting Array Initializers...");
 	fields = new HashSet();
-	locals = new HashMap();
-	node.accept(this, null, true);
     }
     
-    public void visitNode(FlatNode node) 
+    public void convertFilter(SIRFilter filter) 
     {
-	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-
-	    for (int i = 0; i < filter.getMethods().length; i++) {
-		filter.getMethods()[i].accept(this);
-	    }
-	    
-	    for (int i = 0; i < filter.getFields().length; i++) {
-		filter.getFields()[i].accept(this);
-	    }
+	for (int i = 0; i < filter.getMethods().length; i++) {
+	    currentBlock = new JBlock(null, new JStatement[0], null);
+	    filter.getMethods()[i].accept(this);
+	    placeArrayInitializers(filter.getMethods()[i]);
+	}
+	
+	for (int i = 0; i < filter.getFields().length; i++) {
+	    filter.getFields()[i].accept(this);
 	}
     }
 
+    private void placeArrayInitializers(JMethodDeclaration meth) 
+    {
+	if (currentBlock.isEmpty())
+	    return;
+
+	//find the correct place to place the block by bypassing the 
+	//variable declaration
+	JStatement[] statements = meth.getBody().getStatementArray();
+	//the index where to place the initializers
+	int i;
+
+	for (i = 0; i < statements.length; i++) {
+	    if (!(statements[i] instanceof JVariableDeclarationStatement ||
+		  statements[i] instanceof JEmptyStatement))
+		break;
+	}
+	meth.getBody().addStatement(i, currentBlock);
+    }
 
     public Object visitMethodDeclaration(JMethodDeclaration self,
 					 int modifiers,
@@ -95,12 +109,8 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor implements Fl
 					  JExpression expr) {
 	if (expr != null) {
 	    if (expr instanceof JArrayInitializer) {
-		if (!locals.containsKey(method))
-		    locals.put(method, new JBlock(null, new JStatement[0], null));
-		
-		JBlock initBlock = (JBlock)locals.get(method);
 		arrayInitBlock(self, (JArrayInitializer)expr, 
-			       initBlock,
+			       currentBlock,
 			       new Vector());
 		
 		//something about method should go here...

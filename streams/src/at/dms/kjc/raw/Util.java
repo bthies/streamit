@@ -221,7 +221,8 @@ public class Util extends at.dms.util.Utils {
 		buf.append("static_send");
 	    buf.append("(");    
 	    //temporary fix for type changing filters
-	    buf.append("(" + tapeType + ")");
+	    //commented out by MGordon 9/24, this should not longer be necessary
+	    //buf.append("(" + tapeType + ")");
 	}
 	return buf.toString();
     }

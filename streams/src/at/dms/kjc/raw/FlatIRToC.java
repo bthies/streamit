@@ -1097,7 +1097,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	//we want single precision versions of the math functions
 	if (isMathMethod(prefix, ident)) 
-	    print("");
+	    print("f");
 	    
 	print("(");
 	

@@ -62,18 +62,22 @@ class DataSource extends Filter
     // Outer product of target beam and predec pulse shape
     // into sub matrix of output.
     int i, j;
-    for(i = 0; i < numberOfChannels; i++)
+    for(i = 0; i < numberOfChannels*2; i += 2)
     {
-      for(j = 0; j < numberOfSamples*2; j++ )
+      for(j = 0; j < numberOfSamples*2; j += 2 )
       {
-// 	if( j < targetSample || j > targetSample+predecPulseSize )
-// 	{
+ 	if( j < targetSample || j > targetSample+predecPulseSize )
+ 	{
 	  output.pushFloat(0.0f);
-// 	}
-// 	else // outer prod of target beam and predec pulse shape
-// 	{
-// 	  output.pushFloat(predecPulseShape[j-targetSample]*steeringVectors[targetBeam+i*numberOfBeams]);
-// 	}
+	  output.pushFloat(0.0f);
+ 	}
+ 	else // outer prod of target beam and predec pulse shape
+ 	{
+ 	  output.pushFloat(predecPulseShape[j-targetSample]*steeringVectors[targetBeam+i*numberOfBeams]
+			   - predecPulseShape[j-targetSample+1]*steeringVectors[targetBeam+i*numberOfBeams+1]);
+	  output.pushFloat(predecPulseShape[j-targetSample]*steeringVectors[targetBeam+i*numberOfBeams+1]
+			   + predecPulseShape[j-targetSample+1]*steeringVectors[targetBeam+i*numberOfBeams]);
+ 	}
       }
     }
   }

@@ -104,8 +104,8 @@ public class TraceIRtoC extends SLIREmptyVisitor
     private void optimizations() 
     {
 	for (int i = 0; i < tile.getComputeCode().getMethods().length; i++) {
-	     if (!KjcOptions.nofieldprop) {
-		 
+	    //if (!KjcOptions.nofieldprop) {
+	    if (false) {
 		 Unroller unroller;
 		 do {
 		     do {
@@ -121,7 +121,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	     } else
 		 tile.getComputeCode().getMethods()[i].accept(new BlockFlattener());
 	     
-	     tile.getComputeCode().getMethods()[i].accept(new ArrayDestroyer());
+	    //tile.getComputeCode().getMethods()[i].accept(new ArrayDestroyer());
 	     tile.getComputeCode().getMethods()[i].accept(new VarDeclRaiser());
 	}
 	
@@ -159,8 +159,8 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	
 	//if there are structures in the code, include
 	//the structure definition header files
-	if (SpaceTimeBackend.structures.length > 0) 
-	   print("#include \"structs.h\"\n");
+	//	if (SpaceTimeBackend.structures.length > 0) 
+	// print("#include \"structs.h\"\n");
 
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
@@ -168,6 +168,19 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	if (!KjcOptions.raw_uni) {
 	    print("void raw_init();\n");
 	    print("void raw_init2();\n");
+	}
+
+	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
+	    print("void static_send_print(");
+	    print("int i) {\n");
+	    print("\tprint_int(i);\n");
+	    print("\tstatic_send(i);\n");
+	    print("}\n\n");
+	    print("void static_send_print_f(");
+	    print("float f) {\n");
+	    print("\tprint_float(f);\n");
+	    print("\tstatic_send(f);\n");
+	    print("}\n\n");
 	}
     }
 

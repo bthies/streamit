@@ -33,7 +33,8 @@ public class DirectCommunication extends RawExecutionCode
 	
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
-	if (fi.traceNode.getPrevious().isInputTrace())
+	if (fi.traceNode.getPrevious() != null && 
+	    fi.traceNode.getPrevious().isInputTrace())
 	    return false;
 	if (KjcOptions.ratematch)
 	    return false;
@@ -64,6 +65,18 @@ public class DirectCommunication extends RawExecutionCode
     {
 	super(filterInfo);
 	System.out.println("Generating code for " + filterInfo.filter + " using Direct Comm.");
+
+	//if the next filter is not a filtertraceNode, it is a outputtracenode
+	//so we have to write the output of the filter to the next filter's 
+	//input buffer
+	if (filterInfo.traceNode.getNext() != null &&
+	    !filterInfo.traceNode.getNext().isFilterTrace()) {
+	    JMethodDeclaration[] methods = filterInfo.filter.getMethods();
+	    InterTraceCommunication inter = new InterTraceCommunication(filterInfo);
+	    for (int i = 0; i < methods.length; i++) {
+		methods[i].accept(inter);
+	    }
+	}
     }
 
     public JFieldDeclaration[] getVarDecls() 
@@ -365,6 +378,8 @@ public class DirectCommunication extends RawExecutionCode
     
     
 	private Object altCodeGen(SIRPopExpression self) {
+	    Utils.fail("not supported");
+	    
 	    //direct communcation is only generated if the input/output types are scalar
 	    if (self.getType().isFloatingPoint())
 		return 

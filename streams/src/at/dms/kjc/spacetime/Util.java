@@ -123,13 +123,16 @@ public class Util {
 	} 
 	else {
 	    buf.append("(");
-	    if (SpaceTimeBackend.FILTER_DEBUG_MODE)
-		buf.append("static_send_print");
+	    if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
+		if (tapeType.isFloatingPoint()) 
+		    buf.append("static_send_print_f");
+		else
+		    buf.append("static_send_print");
+	    }
 	    else
 		buf.append("static_send");
 	    buf.append("(");    
-	    //temporary fix for type changing filters
-	    buf.append("(" + tapeType + ")");
+
 	}
 	return buf.toString();
     }

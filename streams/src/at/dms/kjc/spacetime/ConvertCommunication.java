@@ -1,7 +1,5 @@
 package at.dms.kjc.spacetime;
 
-import at.dms.kjc.flatgraph.FlatNode;
-import at.dms.kjc.flatgraph.FlatVisitor;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
@@ -20,11 +18,13 @@ import java.math.BigInteger;
 class ConvertCommunication extends SLIRReplacingVisitor 
 {
     GeneratedVariables generatedVariables;
+    FilterInfo filterInfo;
 	
-	
-    public ConvertCommunication(GeneratedVariables generateds) 
+    public ConvertCommunication(GeneratedVariables generateds,
+				FilterInfo fitlerInfo) 
     {
 	generatedVariables = generateds;
+	this.filterInfo = filterInfo;
     }
 	
     //for pop expressions convert to the form

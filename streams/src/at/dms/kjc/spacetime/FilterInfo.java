@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.FilterContent;
 import at.dms.util.Utils;
+import java.util.HashSet;
 
 /** 
     A class to hold all the various information for a filter
@@ -39,9 +40,6 @@ public class FilterInfo
 	peek = filter.getPeekInt();
 
 	if (isTwoStage()) {
-	    /*prePeek = ((SIRTwoStageFilter)filter).getInitPeek();
-	      prePush = ((SIRTwoStageFilter)filter).getInitPush();
-	      prePop = ((SIRTwoStageFilter)filter).getInitPop();*/
 	    prePeek = filter.getInitPeek();
 	    prePush = filter.getInitPush();
 	    prePop = filter.getInitPop();
@@ -52,7 +50,6 @@ public class FilterInfo
     
     public boolean isTwoStage() 
     {
-	//return (filter instanceof SIRTwoStageFilter);
 	return filter.isTwoStage();
     }
 
@@ -81,6 +78,26 @@ public class FilterInfo
 	return ret;
     }
     
+    public FilterTraceNode[] getNextFilters() 
+    {
+	FilterTraceNode[] ret;
+	
+	if (traceNode.getNext() == null) 
+	    return new FilterTraceNode[0];
+	else if (traceNode.getNext().isFilterTrace()) {
+		ret = new FilterTraceNode[1];
+		ret[0] = (FilterTraceNode)traceNode.getNext();
+	}
+	else { //output trace node
+	    HashSet set = new HashSet();
+	    OutputTraceNode output = (OutputTraceNode)traceNode.getNext();
+	    for (int i = 0; i < output.getDests().length; i++) 
+		for (int j = 0; j < output.getDests()[i].length; j++)
+		    set.add(output.getDests()[i][j].getNext());
+	    ret = (FilterTraceNode[])set.toArray(new FilterTraceNode[0]);
+	}
+	return ret;
+    }
 
     private int calculateRemaining() 
     {
@@ -128,5 +145,32 @@ public class FilterInfo
 	     Math.max((initFire - 2), 0) * pop);
 	
 	return remaining;
+    }
+
+    //does this filter require a receive buffer during code 
+    //generation
+    public boolean noBuffer() 
+    {
+	//always need a buffer for rate matching.
+	//	    if (KjcOptions.ratematch)
+	//	return false;
+	
+	if (peek == 0 &&
+	    prePeek == 0)
+	    return true;
+	return false;		
+    }
+
+    //can we use a simple (non-circular) receive buffer for this filter
+    public boolean isSimple()
+    {
+ 	if (noBuffer())
+ 	    return false;
+	
+ 	if (peek == pop &&
+ 	    remaining == 0 &&
+ 	    (prePop == prePeek))
+ 	    return true;
+ 	return false;
     }
 }

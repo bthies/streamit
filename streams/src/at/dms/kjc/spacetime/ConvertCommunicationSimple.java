@@ -20,11 +20,13 @@ import java.math.BigInteger;
 public class ConvertCommunicationSimple extends SLIRReplacingVisitor 
 {
     GeneratedVariables generatedVariables;
+    FilterInfo filterInfo;
 	
-	
-    public ConvertCommunicationSimple(GeneratedVariables generateds) 
+    public ConvertCommunicationSimple(GeneratedVariables generateds,
+				      FilterInfo fitlerInfo)  
     {
 	generatedVariables = generateds;
+	this.filterInfo = filterInfo;
     }
 	
     //for pop expressions convert to the form

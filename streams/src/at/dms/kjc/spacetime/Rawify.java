@@ -39,8 +39,6 @@ public class Rawify
 		    else
 			tile.getComputeCode().addTraceSteady(filterInfo);
 		}
-		else 
-		    continue;
 		
 		//get the next tracenode
 		traceNode = traceNode.getNext();
@@ -104,7 +102,8 @@ public class Rawify
 	//after the initialization phase if the upstream filter produces more than
 	//we consume in init
 	if (init) {
-	    if (node.getPrevious().isFilterTrace()) {		
+	    if (node.getPrevious() != null &&
+		node.getPrevious().isFilterTrace()) {		
 		if (filterInfo.remaining > 0) {
 		    for (int i = 0; 
 			 i < filterInfo.remaining * Util.getTypeSize(node.getFilter().getInputType()); 

@@ -52,14 +52,24 @@ public class BufferedCommunication extends RawExecutionCode
     {
 	SLIRReplacingVisitor convert;
 	
-	if (isSimple()) {
+	if (filterInfo.isSimple()) {
 	    convert = 
-		new ConvertCommunicationSimple(generatedVariables);
+		new ConvertCommunicationSimple(generatedVariables, filterInfo);
 	}
 	else
-	    convert = new ConvertCommunication(generatedVariables);
+	    convert = new ConvertCommunication(generatedVariables, filterInfo);
 	
 	JMethodDeclaration[] methods = filterInfo.filter.getMethods();
+
+	if (filterInfo.traceNode.getNext() != null &&
+	    !filterInfo.traceNode.getNext().isFilterTrace()) {
+	    	InterTraceCommunication inter = new InterTraceCommunication(filterInfo);
+		for (int i = 0; i < methods.length; i++) {
+		    methods[0].accept(inter);
+		}
+	}
+	
+	
 	for (int i = 0; i < methods.length; i++) {
 	    //iterate over the statements and call the ConvertCommunication
 	    //class to convert peek, pop
@@ -103,7 +113,7 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	//only add the receive buffer and its vars if the 
 	//filter receives data
-	if (!noBuffer()) {
+	if (!filterInfo.noBuffer()) {
 	    //initialize the buffersize to be the size of the 
 	    //struct being passed over it
 	    int buffersize;
@@ -113,7 +123,7 @@ public class BufferedCommunication extends RawExecutionCode
 	    maxpeek = (filterInfo.prePeek > maxpeek) ? filterInfo.prePeek : maxpeek;
 	    
 	    
-	    if (isSimple()) {
+	    if (filterInfo.isSimple()) {
 		//simple filter (no remaining items)
 		if (KjcOptions.ratematch) {
 		    //i don't know, the prepeek could be really large, so just in case
@@ -131,7 +141,7 @@ public class BufferedCommunication extends RawExecutionCode
 		    new JVariableDefinition(null, 
 					    0, 
 					    CStdType.Integer,
-					    simpleIndex + uniqueID,
+					    simpleIndex + filterInfo.filter.getName(),
 					    new JIntLiteral(-1));
 		
 		//remember the JVarDef for latter (in the raw main function)
@@ -166,7 +176,7 @@ public class BufferedCommunication extends RawExecutionCode
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					new CArrayType(filter.getInputType(), 
 						       1 /* dimension */ ),
-					recvBuffer + uniqueID,
+					recvBuffer + filterInfo.filter.getName(),
 					bufferInitExp
 					(filter, filter.getInputType(), 
 					 buffersize));
@@ -177,7 +187,7 @@ public class BufferedCommunication extends RawExecutionCode
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					CStdType.Integer,
-					recvBufferSize + uniqueID,
+					recvBufferSize + filterInfo.filter.getName(),
 					new JIntLiteral(buffersize));
 	    
 	    //the size of the buffer 
@@ -185,7 +195,7 @@ public class BufferedCommunication extends RawExecutionCode
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
 					CStdType.Integer,
-					recvBufferBits + uniqueID,
+					recvBufferBits + filterInfo.filter.getName(),
 					new JIntLiteral(buffersize - 1));
 	    
 	    //the receive buffer index (start of the buffer)
@@ -193,7 +203,7 @@ public class BufferedCommunication extends RawExecutionCode
 		new JVariableDefinition(null, 
 					0, 
 					CStdType.Integer,
-					recvBufferIndex + uniqueID,
+					recvBufferIndex + filterInfo.filter.getName(),
 					new JIntLiteral(-1));
 	    
 	    //the index to the end of the receive buffer)
@@ -201,7 +211,7 @@ public class BufferedCommunication extends RawExecutionCode
 		new JVariableDefinition(null, 
 					0, 
 					CStdType.Integer,
-					recvIndex + uniqueID,
+					recvIndex + filterInfo.filter.getName(),
 					new JIntLiteral(-1));
 
 	    generatedVariables.recvBuffer = recvBufVar;
@@ -316,23 +326,28 @@ public class BufferedCommunication extends RawExecutionCode
 		(JBlock)ObjectDeepCloner.deepCopy
 		(filter.getInitWork().getBody());
 
-	    //add the code to receive the items into the buffer
-	    statements.addStatement
-		(makeForLoop(receiveCode(filter, filter.getInputType(), 
-					 generatedVariables),
-			     generatedVariables.exeIndex,
-			     new JIntLiteral(filterInfo.peek)));
+	    //add the code to receive the items into the buffer from the network
+	    //but only if its upstream neighbor is a filter trace node...
+	    if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+		statements.addStatement
+		    (makeForLoop(receiveCode(filter, filter.getInputType(), 
+					     generatedVariables),
+				 generatedVariables.exeIndex,
+				 new JIntLiteral(filterInfo.peek)));
+	    }
 	    
 	    //now inline the init work body
 	    statements.addStatement(body);
 	    //if a simple filter, reset the simpleIndex
-	    if (isSimple()) {
+	    if (filterInfo.isSimple() && 
+		filterInfo.traceNode.getPrevious().isFilterTrace()) {
 		statements.addStatement
 		    (new JExpressionStatement(null,
 					      (new JAssignmentExpression
 					       (null,
-						new JLocalVariableExpression
-						(null, generatedVariables.simpleIndex),
+						new JFieldAccessExpression
+						(null, new JThisExpression(null), 
+						 generatedVariables.simpleIndex.getIdent()),
 						new JIntLiteral(-1))), null));
 	    }
 	}
@@ -341,7 +356,8 @@ public class BufferedCommunication extends RawExecutionCode
 	//add the code to collect enough data necessary to fire the 
 	//work function for the first time
 	    
-	    if (filterInfo.bottomPeek > 0) {
+	    if (filterInfo.bottomPeek > 0 && 
+		filterInfo.traceNode.getPrevious().isFilterTrace()) {
 		statements.addStatement
 		    (makeForLoop(receiveCode(filter, filter.getInputType(),
 					     generatedVariables),
@@ -356,7 +372,8 @@ public class BufferedCommunication extends RawExecutionCode
 
 	//add the code to collect all data produced by the upstream filter 
 	//but not consumed by this filter in the initialization stage
-	if (filterInfo.remaining > 0) {
+	if (filterInfo.remaining > 0 &&
+	    filterInfo.traceNode.getPrevious().isFilterTrace()) {
 	   statements.addStatement
 		(makeForLoop(receiveCode(filter, filter.getInputType(),
 					 generatedVariables),
@@ -371,6 +388,20 @@ public class BufferedCommunication extends RawExecutionCode
 				       null));
 	}
 	
+	//reset the simple index if we are receiving from another trace
+	//to allow it to write to the buffer in the correct index
+	if (filterInfo.isSimple() && 
+		filterInfo.traceNode.getPrevious().isInputTrace()) {
+		statements.addStatement
+		    (new JExpressionStatement(null,
+					      (new JAssignmentExpression
+					       (null,
+						new JFieldAccessExpression
+						(null, new JThisExpression(null),
+						 generatedVariables.simpleIndex.getIdent()),
+						new JIntLiteral(-1))), null));
+	}
+
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
 				      initStage + uniqueID,
@@ -386,76 +417,85 @@ public class BufferedCommunication extends RawExecutionCode
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
 
-	//is we are rate matching generate the appropriate code
-	if (KjcOptions.ratematch) 
-	    block = generateRateMatchSteadyState(filter);
-	else {
-	    //not rate matching
+	//not rate matching
 	    
-	    //reset the simple index
-	    if (isSimple()){
-		block.addStatement
-		    (new JExpressionStatement(null,
-					      (new JAssignmentExpression
-					       (null,
-						new JLocalVariableExpression
-						(null, generatedVariables.simpleIndex),
-						new JIntLiteral(-1))), null));
-	    }
-	    
+	//reset the simple index
+	if (filterInfo.isSimple()) {
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     generatedVariables.simpleIndex.getIdent()),
+					    new JIntLiteral(-1))), null));
+	}
 	
+	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
 	    //add the statements to receive pop items into the buffer
 	    block.addStatement
 		(makeForLoop(receiveCode(filter, filter.getInputType(),
 					 generatedVariables),
 			     generatedVariables.exeIndex,
 			     new JIntLiteral(filterInfo.pop)));
+	}
+	    
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.
+	    deepCopy(filter.getWork().getBody());
 
+	//if we are in debug mode, print out that the filter is firing
+	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
+	    block.addStatement
+		(new SIRPrintStatement(null,
+				       new JStringLiteral(null, filter.getName() + " firing."),
+				       null));
+	}
+
+	//add the cloned work function to the block
+	block.addStatement(workBlock);
 	
-
-	    JBlock workBlock = 
-		(JBlock)ObjectDeepCloner.
-		deepCopy(filter.getWork().getBody());
-
-	    //if we are in debug mode, print out that the filter is firing
-	    if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
-		block.addStatement
-		    (new SIRPrintStatement(null,
-					   new JStringLiteral(null, filter.getName() + " firing."),
-					   null));
-	    }
-
-	    //add the cloned work function to the block
-	    block.addStatement(workBlock);
-	
-	    //if we are in decoupled mode do not put the work function in a for loop
-	    //and add the print statements
-	    if (KjcOptions.decoupled) {
-		block.addStatementFirst
-		    (new SIRPrintStatement(null, 
-					   new JIntLiteral(0),
-					   null));
-		block.addStatement(block.size(), 
-				   new SIRPrintStatement(null, 
-							 new JIntLiteral(1),
-							 null));
-	    }
-	    else {
-		//create the for loop that will execute the work function
-		//local variable for the work loop
-		JVariableDefinition loopCounter = new JVariableDefinition(null,
-									  0,
-									  CStdType.Integer,
-									  workCounter,
-									  null);
+	//if we are in decoupled mode do not put the work function in a for loop
+	//and add the print statements
+	if (KjcOptions.decoupled) {
+	    block.addStatementFirst
+		(new SIRPrintStatement(null, 
+				       new JIntLiteral(0),
+				       null));
+	    block.addStatement(block.size(), 
+			       new SIRPrintStatement(null, 
+						     new JIntLiteral(1),
+						     null));
+	}
+	else {
+	    //create the for loop that will execute the work function
+	    //local variable for the work loop
+	    JVariableDefinition loopCounter = new JVariableDefinition(null,
+								      0,
+								      CStdType.Integer,
+								      workCounter,
+								      null);
 	 	 
-		JStatement loop = makeForLoop(block, loopCounter, new JIntLiteral(filterInfo.steadyMult));
-		block = new JBlock(null, new JStatement[0], null);
-		block.addStatement(new JVariableDeclarationStatement(null,
-								     loopCounter,
-								     null));
-		block.addStatement(loop);
-	    }
+	    JStatement loop = makeForLoop(block, loopCounter, new JIntLiteral(filterInfo.steadyMult));
+	    block = new JBlock(null, new JStatement[0], null);
+	    block.addStatement(new JVariableDeclarationStatement(null,
+								 loopCounter,
+								 null));
+	    block.addStatement(loop);
+	}
+	
+	//reset the simple index if we are receiving from another trace
+	//to allow it to write to the buffer in the correct index
+	if (filterInfo.isSimple() && 
+	    filterInfo.traceNode.getPrevious().isInputTrace()) {
+	    block.addStatement
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     generatedVariables.simpleIndex.getIdent()),
+					    new JIntLiteral(-1))), null));
 	}
 	
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
@@ -474,41 +514,45 @@ public class BufferedCommunication extends RawExecutionCode
     JStatement generateInitWorkLoop(FilterContent filter, 
 				    GeneratedVariables generatedVariables) 
     {
-	JStatement innerReceiveLoop = 
-	    makeForLoop(receiveCode(filter, filter.getInputType(),
-				    generatedVariables),
-			generatedVariables.exeIndex,
-			new JIntLiteral(filter.getPopInt()));
-	
-	JExpression isFirst = 
-	    new JEqualityExpression(null,
-				    false,
-				    new JLocalVariableExpression
-				    (null, 
-				     generatedVariables.exeIndex1),
-				    new JIntLiteral(0));
-	JStatement ifStatement = 
-	    new JIfStatement(null,
-			     isFirst,
-			     innerReceiveLoop,
-			     null, 
-			     null);
-	
 	JBlock block = new JBlock(null, new JStatement[0], null);
-
-	//if a simple filter, reset the simpleIndex
-	if (isSimple()){
+	
+	//if a simple filter and the previous trace is a filter , reset the simpleIndex
+	if (filterInfo.isSimple() && 
+	    filterInfo.traceNode.getPrevious().isFilterTrace()){
 	    block.addStatement
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
 					   (null,
-					    new JLocalVariableExpression
-					    (null, generatedVariables.simpleIndex),
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null), 
+					     generatedVariables.simpleIndex.getIdent()),
 					    new JIntLiteral(-1))), null));
 	}
 	
-	//add the if statement
-	block.addStatement(ifStatement);
+	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
+	    JStatement innerReceiveLoop = 
+		makeForLoop(receiveCode(filter, filter.getInputType(),
+					generatedVariables),
+			    generatedVariables.exeIndex,
+			    new JIntLiteral(filter.getPopInt()));
+	    
+	    JExpression isFirst = 
+		new JEqualityExpression(null,
+				    false,
+					new JFieldAccessExpression
+					(null, new JThisExpression(null),
+					 generatedVariables.exeIndex1.getIdent()),
+					new JIntLiteral(0));
+	    JStatement ifStatement = 
+		new JIfStatement(null,
+				 isFirst,
+				 innerReceiveLoop,
+				 null, 
+				 null);
+	    
+	    //add the if statement
+	    block.addStatement(ifStatement);
+	}
 	
 	//clone the work function and inline it
 	JBlock workBlock = 
@@ -533,10 +577,12 @@ public class BufferedCommunication extends RawExecutionCode
     JBlock generateRateMatchSteadyState(FilterContent filter)
 				
     {
+	Utils.fail("This is not supported");
+	
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
 	//reset the simple index
-	if (isSimple()){
+	if (filterInfo.isSimple()){
 	    block.addStatement
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -680,34 +726,8 @@ public class BufferedCommunication extends RawExecutionCode
 	
     }
 
-    private boolean noBuffer() 
-    {
-	//always need a buffer for rate matching.
-	//	    if (KjcOptions.ratematch)
-	//	return false;
-	
-	if (filterInfo.peek == 0 &&
-	    filterInfo.prePeek == 0)
-	    return true;
-	return false;		
-    }
-
-    private boolean isSimple()
-    {
- 	if (noBuffer())
- 	    return false;
-	
- 	if (filterInfo.peek == filterInfo.pop &&
- 	    filterInfo.remaining == 0 &&
- 	    (filterInfo.prePop == filterInfo.prePeek))
- 	    return true;
- 	return false;
-    }
-
-    
-
     private JStatement receiveCode(FilterContent filter, CType type, GeneratedVariables generatedVariables) {
-	if (noBuffer()) 
+	if (filterInfo.noBuffer()) 
 	    return null;
 
 	//the name of the method we are calling, this will
@@ -727,9 +747,9 @@ public class BufferedCommunication extends RawExecutionCode
 	//create the array access expression to access the buffer 
 	JArrayAccessExpression arrayAccess = 
 	    new JArrayAccessExpression(null,
-				       new JLocalVariableExpression
-				       (null,
-					generatedVariables.recvBuffer),
+				       new JFieldAccessExpression
+				       (null, new JThisExpression(null),
+					generatedVariables.recvBuffer.getIdent()),
 				       bufferIndex(filter,
 						   generatedVariables));
 	
@@ -752,23 +772,24 @@ public class BufferedCommunication extends RawExecutionCode
     }
 
 
-     //return the buffer access expression for the receive code
+    //return the buffer access expression for the receive code
     //depends if this is a simple filter
     private JExpression bufferIndex(FilterContent filter, 
 				    GeneratedVariables generatedVariables) 
     {
-	if (isSimple()) {
-	    return new JLocalVariableExpression
-		(null, 
-		 generatedVariables.exeIndex);
+	if (filterInfo.isSimple()) {
+	    return new JFieldAccessExpression
+		(null, new JThisExpression(null),
+		 generatedVariables.exeIndex.getIdent());
 	}
 	else {
 	    //create the increment of the index var
 	    JPrefixExpression bufferIncrement = 
 		new JPrefixExpression(null, 
 				      OPE_PREINC,
-				      new JLocalVariableExpression
-				      (null,generatedVariables.recvIndex));
+				      new JFieldAccessExpression
+				      (null, new JThisExpression(null),
+				       generatedVariables.recvIndex.getIdent()));
 	
 	    
 	    //create the modulo expression
@@ -776,9 +797,9 @@ public class BufferedCommunication extends RawExecutionCode
 		new JBitwiseExpression(null, 
 				       OPE_BAND,
 				       bufferIncrement, 
-				       new JLocalVariableExpression
-				       (null,
-					generatedVariables.recvBufferBits));
+				       new JFieldAccessExpression
+				       (null, new JThisExpression(null),
+					generatedVariables.recvBufferBits.getIdent()));
 	    
 	    return indexAnd;
 	}

@@ -13,6 +13,8 @@ public class TraceTraversal
     {
 	LinkedList traversal = new LinkedList();
 
+	//	System.out.println(forrest.length);
+
 	//we'll do one forrest at a time for now
 	for (int i = 0; i < forrest.length; i++) {
 	    HashSet visited = new HashSet();
@@ -49,19 +51,23 @@ public class TraceTraversal
 
 		//add the trace to the traversal and show that it is visited...
 		if (trace != null) {
-		    //System.out.println("Adding Trace in traversal");
+		    //System.out.println("Adding Trace in traversal " + trace);
 		    traversal.add(trace);
 		    visited.add(trace);
 		}
-		else
+		else {
 		    Utils.fail("Trace should not be null!");
-
+		}
+		
 		//cycle thru all the edges and add them to the queue if 
 		//they are not already in there...
 		for (int j = 0; j < trace.getEdges().length; j++) {
-		    if (!queue.contains(trace.getEdges()[j]))
+		    if (!queue.contains(trace.getEdges()[j])) {
 			queue.add(trace.getEdges()[j]);
+			//System.out.println("Adding trace to queue " + trace.getEdges()[j]);
+		    }
 		}
+		//System.out.println(queue.size());
 	    }	    
 	}
 

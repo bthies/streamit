@@ -70,7 +70,7 @@ public class SpaceTimeBackend
 	Lifter.liftAggressiveSync(str);
        	StreamItDot.printGraph(str, "before.dot");
 
-	str = Partitioner.doit(str, 4);
+	//	str = Partitioner.doit(str, 32);
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
@@ -170,10 +170,15 @@ public class SpaceTimeBackend
 	    while (head != null) {
 		if(head instanceof FilterTraceNode)
 		    System.out.println(((FilterTraceNode)head).getFilter()+" "+((FilterTraceNode)head).getX()+" "+((FilterTraceNode)head).getY());
-		else {
+		else if (head.isInputTrace()) {
 		    System.out.println(head);
 		    System.out.println("Input! "+((FilterTraceNode)head.getNext()).getX()+" "+((FilterTraceNode)head.getNext()).getY());
 		}
+		else {
+		    System.out.println(head);
+		    System.out.println("Output!");
+		}
+		
 		head = head.getNext();
 		
 	    }
@@ -185,10 +190,13 @@ public class SpaceTimeBackend
 	steadyTraces=null;
 	executionCounts=null;
 
+	Trace[] traceForrest = new Trace[1];
+	traceForrest[0] = traces[0];
+
 	//mgordon's stuff
 	System.out.println("Building Trace Traversal");
-	ListIterator initTrav = TraceTraversal.getTraversal(traces).listIterator();    
-	ListIterator steadyTrav = TraceTraversal.getTraversal(traces).listIterator();    
+	ListIterator initTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
+	ListIterator steadyTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    
 
 
 	//create the raw execution code and switch code for the initialization phase

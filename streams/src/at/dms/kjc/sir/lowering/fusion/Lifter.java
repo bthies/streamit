@@ -188,12 +188,7 @@ public class Lifter implements StreamVisitor {
     /* pre-visit a splitjoin */
     public void preVisitSplitJoin(SIRSplitJoin self,
 				  SIRSplitJoinIter iter) {
-	boolean changing;
-	do {
-	    changing = false;
-	    changing = liftChildren(self) || changing;
-	    changing = liftIntoSplitJoin(self) || changing;
-	} while (changing);
+	visitSplitJoin(self, iter);
     }
 
     /* pre-visit a feedbackloop */
@@ -219,11 +214,27 @@ public class Lifter implements StreamVisitor {
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
+	// have to visit on way up, because pipeline child might have
+	// done a sync during descent.
+	visitSplitJoin(self, iter);
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
+    }
+
+    /**
+     * Fundamental lifting op for splitjoins.
+     */
+    private void visitSplitJoin(SIRSplitJoin self,
+				SIRSplitJoinIter iter) {
+	boolean changing;
+	do {
+	    changing = false;
+	    changing = liftChildren(self) || changing;
+	    changing = liftIntoSplitJoin(self) || changing;
+	} while (changing);
     }
 
     /**

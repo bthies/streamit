@@ -144,9 +144,10 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * Returns a list of the children of this.  The children are
      * stream objects that are contained within this (including the
      * splitter and joiner. Specifically, the first element in the
-     * list is the splitter(SIRSplitter), the second is the
-     * joiner(SIRJoiner), and the remaining elements are the children
-     * ordered from left to right.
+     * list is the splitter(SIRSplitter),  the next elements are
+     * the child streams (SIRStream)
+     * ordered from left to right, and the final element is the
+     * joiner(SIRJoiner).
      */
     public List getChildren() {
 	// build result from child streams

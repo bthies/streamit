@@ -264,7 +264,7 @@ public abstract class SIRContainer extends SIRStream {
 	SIRPipeline wrapper = new SIRPipeline(oldParent, str.getIdent());
 	wrapper.setInit(SIRStream.makeEmptyInit());
 	wrapper.add(str);
-	if (oldParent.getParent()!=null) {
+	if (oldParent!=null) {
 	    oldParent.replace(str, wrapper);
 	}
 	return wrapper;

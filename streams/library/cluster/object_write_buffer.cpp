@@ -31,6 +31,11 @@ void object_write_buffer::write_float(float data) {
   write(&data, sizeof(float));
 }
 
+void *object_write_buffer::get_ptr(int offset) {
+  return (void*)(buf + offset);
+}
+
+
 void object_write_buffer::read(void *data, int dsize) {
   memcpy(data, buf + read_offset, dsize);
   read_offset += dsize;

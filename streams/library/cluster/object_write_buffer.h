@@ -3,7 +3,7 @@
 
 class object_write_buffer {
 
-  char buf[512];
+  char buf[10000];
 
   int size;
 
@@ -22,6 +22,7 @@ class object_write_buffer {
   void write_int(int data);
   void write_float(float data);
   
+  void *get_ptr(int offset);
   void read(void *ptr, int size);
   int read_int();
   float read_float();

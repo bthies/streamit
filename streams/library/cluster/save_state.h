@@ -22,11 +22,14 @@ class save_state {
 			   int steady_iter, 
 			   void (*write_object)(object_write_buffer *)) {
 
+    /*
+
     object_write_buffer *buf = new object_write_buffer();
     write_object(buf);
     //save_buffer(thread, steady_iter, buf);
     
     save_manager::push_item(new checkpoint_info(thread, steady_iter, buf));
+    */
   }
 
   static void save_buffer(int thread, int steady_iter, object_write_buffer *buf) {
@@ -38,13 +41,27 @@ class save_state {
     mysocket file_sock(fd);
     
     int size = buf->get_size() / 4;
+    int offset = 0;
+
     buf->set_read_offset(0);
 
-    for (int i = 0; i < size; i++) {
+    char tmp[1024];
 
-      char tmp[4];
-      buf->read((void*)tmp, 4);
-      file_sock.write_chunk((char*)tmp, 4);
+    for (;;) {
+      
+      if (size > 1024) {
+		
+	file_sock.write_chunk((char*)buf->get_ptr(offset), 1024);
+	offset += 1024;
+	size -= 1024;
+
+      } else {
+		
+	file_sock.write_chunk((char*)buf->get_ptr(offset), size);
+	break;
+
+      }
+
     }
 
     close(fd);
@@ -101,6 +118,7 @@ class save_state {
           sprintf(fname, "%s%d.%d", PATH, t, iter);
 	  int fd = open(fname, O_RDONLY);
 	  if (fd == -1) return -1;
+	  close(fd);
     }
     
     return 0;

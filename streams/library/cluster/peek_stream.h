@@ -101,7 +101,7 @@ class peek_stream : public serializable {
       int t = depth - queue_size;
       while (t > 0) {
 	T *buf = push_queue();
-	sock->read_chunk((char*)buf, sizeof(T));
+	input->read_item((void*)buf, sizeof(T));
 	t--;
       }
     }

@@ -8,6 +8,9 @@
 
 class data_producer : public socket_holder, public serializable {
 
+  char data_buf[2048];
+  int buf_size;
+
   int items_sent;
 
   mysocket *socket;

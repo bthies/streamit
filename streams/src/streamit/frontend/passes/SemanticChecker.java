@@ -27,7 +27,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.11 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.12 2003-12-10 16:33:00 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -45,6 +45,7 @@ public class SemanticChecker
         Map streamNames = checker.checkStreamNames(prog);
         checker.checkDupFieldNames(prog, streamNames);
         checker.checkStreamCreators(prog, streamNames);
+        checker.checkStreamTypes(prog);
         checker.checkFunctionValidity(prog);
         checker.checkStatementPlacement(prog);
         checker.checkIORates(prog);
@@ -231,6 +232,52 @@ public class SemanticChecker
             });
     }
     
+    /**
+     * Check that stream type declarations are valid.  In particular,
+     * check that there is exactly one void->void declaration
+     * and that it corresponds to a named stream.
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkStreamTypes(Program prog)
+    {
+        theTopLevel = null;
+
+        // Check for duplicate top-level streams.
+        prog.accept(new FEReplacer() {
+                public Object visitStreamSpec(StreamSpec ss)
+                {
+                    StreamType st = ss.getStreamType();
+                    if (st.getIn() instanceof TypePrimitive &&
+                        st.getOut() instanceof TypePrimitive &&
+                        ((TypePrimitive)st.getIn()).getType() ==
+                        TypePrimitive.TYPE_VOID &&
+                        ((TypePrimitive)st.getOut()).getType() ==
+                        TypePrimitive.TYPE_VOID)
+                    {
+                        // Okay, we have a void->void object.
+                        if (ss.getName() == null)
+                            report(ss, "anonymous stream cannot be top-level");
+                        else if (theTopLevel == null)
+                            theTopLevel = ss;
+                        else
+                        {
+                            report(theTopLevel,
+                                   "first declared top-level stream" +
+                                   theTopLevel.getName());
+                            report(ss, "duplicate top-level stream " +
+                                   ss.getName());
+                        }
+                    }
+                    return super.visitStreamSpec(ss);
+                }
+            });
+        if (theTopLevel == null)
+            report((FEContext)null, "no top-level stream declared");
+    }
+
+    private StreamSpec theTopLevel;
+
     /**
      * Check that functions do not exist in context they are required
      * to, and that all required functions exist.  In particular,

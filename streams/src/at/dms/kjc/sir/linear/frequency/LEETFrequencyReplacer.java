@@ -16,15 +16,18 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.3 2003-02-03 20:35:05 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.4 2003-02-04 17:34:42 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
-    /** the name of the function in the C library that does fast convolution via the frequency domain. **/
-    //public static final String FAST_CONV_EXTERNAL = "do_fast_convolution_fftw";
     /** the name of the function in the C library that converts a buffer of real data from the time
      * domain to the frequency domain (replacing the value in the buffer with the half complex array
      * representation of the frequency response. **/
-    public static final String CONVERT_EXTERNAL   = "convert_to_freq";
+    public static final String TO_FREQ_EXTERNAL   = "convert_to_freq";
+    /** the name of the function in the C library that converts a buffer of half complex array in the
+     * frequency domain to a buffer of real data in the time domain. **/
+    public static final String FROM_FREQ_EXTERNAL   = "convert_from_freq";
+    /** the name of the function in the C library that scales an array by 1/size. **/
+    public static final String SCALE_EXTERNAL = "scale_by_size";
     /** the name of the function in the C library that multiplies two complex arrays together. **/
     public static final String MULTIPLY_EXTERNAL  = "do_halfcomplex_multiply";
 
@@ -78,9 +81,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	}
 
 	LinearFilterRepresentation linearRep = this.linearityInformation.getLinearRepresentation(self);
-	/* if there is not an FIR filter, we are done. */
-	if (!linearRep.isFIR()) {
-	    LinearPrinter.println("  aborting -- filter is not FIR"); 
+	/* if this filter doesn't have a pop of one, we abort. **/
+	if (linearRep.getPopCount() != 1) {
+	    LinearPrinter.println("  aborting -- filter is not FIR (pop = " +
+				  linearRep.getPopCount() + ")"); 
 	    return;
 	}	
 
@@ -263,6 +267,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
 	/** add in code to convert the weight field to the frequency domain. **/
 	body.addStatement(makeTimeToFrequencyConversion(weightField, filterSize));
+	/** add in code to scale the weight field by 1/N (because FFTW doesn't do it. */
+	body.addStatement(makeFrequencyScale(weightField, filterSize));
+
 	
 	/** assemble the new pieces that we made and stick them into a new method. */
 	return new JMethodDeclaration(null,                 /* token reference */
@@ -286,12 +293,28 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	externalArgs[0] = new JFieldAccessExpression(null, new JThisExpression(null),
 						     fieldToConvert.getIdent());
 	externalArgs[1] = new JIntLiteral(filterSize);
-	JMethodCallExpression externalCall = new JMethodCallExpression(null,               /* token reference*/
-								       null,               /* prefix */
-								       CONVERT_EXTERNAL,   /* ident */
-								       externalArgs);      /* args */
-	JavaStyleComment[] comment = makeComment("callout to " + CONVERT_EXTERNAL +
+	JExpression externalCall = new JMethodCallExpression(null,               /* token reference*/
+							     null,               /* prefix */
+							     TO_FREQ_EXTERNAL,   /* ident */
+							     externalArgs);      /* args */
+	JavaStyleComment[] comment = makeComment("callout to " + TO_FREQ_EXTERNAL +
 						 " to convert from time to freq. "); 
+	return new JExpressionStatement(null,externalCall,comment);           
+    }
+
+    /** An assignment to scale each element in an array by 1/size via a callout. **/
+    public JStatement makeFrequencyScale(JVariableDefinition fieldToScale,
+					 int filterSize) {
+	JExpression[] externalArgs = new JExpression[2];
+	externalArgs[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+						     fieldToScale.getIdent());
+	externalArgs[1] = new JIntLiteral(filterSize);
+	JExpression externalCall = new JMethodCallExpression(null,           /* token reference*/
+							     null,           /* prefix */
+							     SCALE_EXTERNAL, /* ident */
+							     externalArgs);  /* args */
+	JavaStyleComment[] comment = makeComment("callout to " + SCALE_EXTERNAL +
+						 " (scales buffer by 1/" + filterSize + ")."); 
 	return new JExpressionStatement(null,externalCall,comment);           
     }
 
@@ -399,26 +422,47 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
 	// now, convert the input buffer to frequency
 	body.addStatement(makeTimeToFrequencyConversion(inputBufferField, filterSize));
-	
-	
+		
 	// make a callout to the complex multiplication routine.
-	JExpression[] externalArgs = new JExpression[3];
-	externalArgs[0] = new JLocalVariableExpression(null, inputBufferField);
-	externalArgs[1] = new JFieldAccessExpression(null, new JThisExpression(null), weightField.getIdent());
-	externalArgs[2] = new JIntLiteral(filterSize);
+	// the prototype is:
+	// static void do_halfcomplex_multiply(float *Y, float *X, float *H, int size);
+	JExpression[] externalArgs = new JExpression[4];
+	externalArgs[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+						     outputBufferField.getIdent());
+	externalArgs[1] = new JFieldAccessExpression(null, new JThisExpression(null),
+						     inputBufferField.getIdent());
+	externalArgs[2] = new JFieldAccessExpression(null, new JThisExpression(null),
+						     weightField.getIdent());
+	externalArgs[3] = new JIntLiteral(filterSize);
 	JMethodCallExpression externalCall = new JMethodCallExpression(null,           /* token reference */
 								       null,               /* prefix */
 								       MULTIPLY_EXTERNAL, /* ident */
 								       externalArgs);      /* args */
-	JavaStyleComment[] comment = makeComment("callout to " + MULTIPLY_EXTERNAL +
-						 " to calculate Y[k] = X[k].*H[k]"); 
-	body.addStatement(new JExpressionStatement(null,externalCall,comment));            /* comments */
+	JavaStyleComment[] externalComment = makeComment("callout to " + MULTIPLY_EXTERNAL +
+							 " to calculate Y[k] = X[k].*H[k]"); 
+	body.addStatement(new JExpressionStatement(null,externalCall,externalComment)); /* comments */
+
+	
+	// make a callout to the inverse transform routine to get the real output
+	externalArgs = new JExpression[2];
+	externalArgs[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+						     outputBufferField.getIdent());
+	externalArgs[1] = new JIntLiteral(filterSize);
+	externalCall = new JMethodCallExpression(null,           /* token reference */
+						 null,               /* prefix */
+						 FROM_FREQ_EXTERNAL, /* ident */
+						 externalArgs);      /* args */
+	externalComment = makeComment("callout to " + FROM_FREQ_EXTERNAL +
+				      " to calculate y[n] = IFFT(Y[k])"); 
+	body.addStatement(new JExpressionStatement(null,externalCall,externalComment)); /* comments */
+	
+	
 	
 	/* if we are in the normal work function, push out the first x-1
 	   values from the local buffer added to the partial results */
 	if (functionType == WORK) {
 	    for (int i=0; i<(x-1); i++) {
-		body.addStatement(makeArrayAddAndPushStatement(partialField.getIdent(), inputBufferField, i));
+		body.addStatement(makeArrayAddAndPushStatement(partialField, outputBufferField, i));
 	    }
 	}
 	
@@ -426,12 +470,13 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	//now, put in code that will push the appropriate N values of inputBuffer[x-1 to N+(x-1)]
 	//back on the tape
 	for (int i=(x-1); i<(N+x-1); i++) {
-	    body.addStatement(makeArrayPushStatement(inputBufferField, i));
+	    body.addStatement(makeArrayPushStatement(outputBufferField, i));
 	}
 	
 	/* now, copy the last x-1 values in the input buffer into the partial results buffer. */
 	for (int i=0; i<x-1; i++) {
-	    body.addStatement(makePartialCopyExpression(partialField.getIdent(), i, inputBufferField, (N+x-1)+i));
+	    body.addStatement(makePartialCopyExpression(partialField, i,
+							outputBufferField, (N+x-1)+i));
 	}
 	
 		     
@@ -456,17 +501,19 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 
 
-    /** Makes a copy expression from the local variable to the field of the form this.field[index1] = arr[index2] **/
-    public JStatement makePartialCopyExpression(String field, int index1, JLocalVariable arr, int index2) {
-	/* first, make the this.field[index] expression */
-	JFieldAccessExpression fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), field);
-	JArrayAccessExpression fieldArrayAccessExpr;
-	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index1));
-	/* now make the array access expression arr[index]. **/
-	JLocalVariableExpression arrExpr = new JLocalVariableExpression(null, arr);
-	JArrayAccessExpression arrAccessExpr = new JArrayAccessExpression(null, arrExpr, new JIntLiteral(index2));
+    /**
+     * Makes a copy expression from one array field to another array
+     * field of the form this.field1[index1] = this.field2[index2].
+     **/
+    public JStatement makePartialCopyExpression(JLocalVariable field1, int index1,
+						JLocalVariable field2, int index2) {
+	/** make this.field1[index1] expression. **/
+	JExpression fieldAccessExpr1 = makeArrayFieldAccessExpr(field1, index1);
+	/** make this.field2[index2] expression. **/
+	JExpression fieldAccessExpr2 = makeArrayFieldAccessExpr(field2, index2);
+	
 	/* now make the assignment expression */
-	JAssignmentExpression assignExpr = new JAssignmentExpression(null, fieldArrayAccessExpr, arrAccessExpr);
+	JExpression assignExpr = new JAssignmentExpression(null, fieldAccessExpr1, fieldAccessExpr2);
 	/* now write it all in an expression statement */
 	return new JExpressionStatement(null, assignExpr, null);
 	
@@ -477,17 +524,17 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	return new JExpressionStatement(null, new SIRPopExpression(CStdType.Float), null);
     }
 
-    /** makes an array push statement of the following form: push(this.field[index] + arr2[index]) **/
-    public JStatement makeArrayAddAndPushStatement(String field, JLocalVariable arr, int index) {
-	/* first, make the this.field[index] expression */
-	JFieldAccessExpression fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), field);
-	JArrayAccessExpression fieldArrayAccessExpr;
-	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index));
-	/* now make the array access expression arr[index]. **/
-	JLocalVariableExpression arrExpr = new JLocalVariableExpression(null, arr);
-	JArrayAccessExpression arrAccessExpr = new JArrayAccessExpression(null, arrExpr, new JIntLiteral(index));
+    /** makes an array push statement of the following form: push(this.arr1[index] + this.arr2[index]) **/
+    public JStatement makeArrayAddAndPushStatement(JLocalVariable arr1, JLocalVariable arr2, int index) {
+
+	/* first, make the this.arr1[index] expression. */
+	JExpression fieldArrayAccessExpr1 = makeArrayFieldAccessExpr(arr1, index);
+	
+	/* first, make the this.arr2[index] expression. */
+	JExpression fieldArrayAccessExpr2 = makeArrayFieldAccessExpr(arr2, index);
+	
 	/* make the add expression */
-	JAddExpression addExpr = new JAddExpression(null, fieldArrayAccessExpr, arrAccessExpr);
+	JAddExpression addExpr = new JAddExpression(null, fieldArrayAccessExpr1, fieldArrayAccessExpr2);
 	/* now make the push expression */
 	SIRPushExpression pushExpr = new SIRPushExpression(addExpr, CStdType.Float);
 	/* and return an expression statement */
@@ -496,11 +543,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
        
     
 
-    /* makes an array push statement of the following form: push(arr[index]) */
+    /* makes an array push statement of the following form: push(this.arr[index]) */
     public JStatement makeArrayPushStatement(JLocalVariable arr, int index) {
-	/* first make the array access expression arr[index]. **/
-	JLocalVariableExpression arrExpr = new JLocalVariableExpression(null, arr);
-	JArrayAccessExpression arrAccessExpr = new JArrayAccessExpression(null, arrExpr, new JIntLiteral(index));
+	/* first make the array access expression this.arr[index]. **/
+	JExpression arrAccessExpr = makeArrayFieldAccessExpr(arr, index);
 	/* now make the push expression */
 	SIRPushExpression pushExpr = new SIRPushExpression(arrAccessExpr, CStdType.Float);
 	/* and return an expression statement */
@@ -523,6 +569,17 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 				       null);          /* initializer */
     }
 
+    /* makes a field array access expression of the form this.arrField[index] */
+    public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
+	/* first, make the this.arr1[index] expression */
+	JExpression fieldAccessExpr;
+	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
+	JExpression fieldArrayAccessExpr;
+	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index));
+	
+	return fieldArrayAccessExpr;
+    }
+	
 
     /* make an array of one java comments from a string. */
     public JavaStyleComment[] makeComment(String c) {
@@ -535,22 +592,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     }
 
 
-    /** returns an array of floating point numbers that correspond to the real part of the FIR filter's weights  **/
-    public float[] getRealArray(LinearFilterRepresentation filterRep, int size) {return getArray(filterRep, size, 0);} 
-    /** returns an array of floating point numbers that correspond to the imaginary part of the FIR filter's weights **/
-    public float[] getImagArray(LinearFilterRepresentation filterRep, int size) {return getArray(filterRep, size, 1);}
-
     /**
-     * the method that does the actual work for getRealArray and getImagArray.
-     * part == 0, means get real part, part == 1 means get imaginary part.
-     * if size is greater than the size of the filter rep, the rest of the array is left as 0
-     * Note that the filter size is actually larger than the size of the FIR coefficients
-     * in the filter's linear representation. 
+     * returns an array of floating point numbers that correspond
+     * to the real part of the FIR filter's weights.
      **/
-    public float[] getArray(LinearFilterRepresentation filterRep, int size, int part) {
-	if (!filterRep.isFIR()) {
-	    throw new RuntimeException("non fir filter passed to getArray()");
-	}
+    public float[] getRealArray(LinearFilterRepresentation filterRep, int size) {
 	/* use the matrix that is hidden inside the filter representation */
 	FilterMatrix source = filterRep.getA();
 	if (source.getRows() > size) {
@@ -563,9 +609,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	for (int i=0; i<source.getRows(); i++) {
 	    ComplexNumber currentElement = source.getElement(i,0);
 	    /* assign different piece depending on part parameter */
-	    arr[i] = (part == 0) ? (float)currentElement.getReal() : (float)currentElement.getImaginary();
+	    arr[i] = (float)currentElement.getReal();
 	}
-
+	
 	return arr;
     }
 

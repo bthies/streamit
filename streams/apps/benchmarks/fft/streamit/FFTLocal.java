@@ -178,7 +178,7 @@ class FloatPrinterLocal extends Filter
 
 public class FFTLocal extends StreamIt {
     public static void main(String args[]) {
-        new FFT().run();
+        new FFTLocal().run();
     }
 
     public void init() {

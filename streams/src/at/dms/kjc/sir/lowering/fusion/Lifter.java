@@ -92,6 +92,7 @@ public class Lifter implements StreamVisitor {
     public static boolean eliminatePipe(final SIRPipeline str) {
 	// get parent
 	SIRContainer parent = str.getParent();
+	Utils.assert(parent.contains(str), "Inconsistency in IR:  this stream has a parent which doesn't contain it:\n  stream: " + str + "\n  parent: " + parent);
 
 	// consider only if we have have a parent that's a pipe or if
 	// we only have a single child

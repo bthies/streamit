@@ -45,7 +45,7 @@ foreach (@input_lines) {
     print "$filename-$postfix:";
     # run the program for the specified number of iterations until we find a number of iterations
     # that takes greater than a second. Then scale the number up for a total running time
-    # of around 10 seconds.
+    # of around 20 seconds.
     my $iters = 1;
     my $one_sec_iters = 0; # use to save the number of iters that takes a second (to produce output)
     my $flag = 1; # 0 is true
@@ -55,7 +55,7 @@ foreach (@input_lines) {
 	    # remember the number of iters that takes a second
 	    $one_sec_iters = $iters;
 	    # scale iters to total expected time is 10 seconds
-	    $iters = int(10 * ($iters/$current_time));
+	    $iters = int(20 * ($iters/$current_time));
 	    # set the flag that we are done
 	    $flag = 0;
 	} else {

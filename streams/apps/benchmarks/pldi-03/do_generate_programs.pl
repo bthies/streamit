@@ -42,6 +42,8 @@ foreach (@input_lines) {
     `mv $OUTPUTDIR/before.dot $OUTPUTDIR/$filename-$postfix-before.dot`;
     `mv $OUTPUTDIR/after.dot $OUTPUTDIR/$filename-$postfix-after.dot`;
     `mv $OUTPUTDIR/linear.dot $OUTPUTDIR/$filename-$postfix-linear.dot`;
+    `mv $OUTPUTDIR/linear-simple.dot $OUTPUTDIR/$filename-$postfix-linear-simple.dot`;
+    `mv $OUTPUTDIR/partitions.dot $OUTPUTDIR/$filename-$postfix-partitions.dot`;
 
     # normal c->exe
     do_c_compile($OUTPUTDIR, "$filename-$postfix");

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.34 2002-08-16 21:24:49 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.35 2002-08-16 21:36:39 dmaze Exp $
  */
 
 header {
@@ -642,12 +642,6 @@ variable_list returns [String t]
 		}
 	;
 
-array_modifiers returns [Expression e] {e=null;}
-// NB: previous versions of this had #(LSQUARE (e=expr)+); check to see
-// how multi-dimensional arrays actually come through.
-	: #(LSQUARE e=expression)
-	;
-
 minic_expr returns [Expression x] { x = null; }
 	: x=minic_ternary_expr
 	| x=minic_binary_expr
@@ -716,8 +710,8 @@ value_expression returns [Expression x]
 	: id:ID { x = new ExprVar(id.getText()); }
 	| #(DOT left=expression field:ID)
 		{ x = new ExprField(left, field.getText()); }
-	| #(LSQUARE left=expression #(LSQUARE right=expression))
-		{ x = new ExprArray(left, right); }
+	| #(LSQUARE x=expression
+			#(LSQUARE (right=expression { x = new ExprArray(x, right); } )+ ))
 	| #(LPAREN fn:ID l=func_param_list)
 		{ x = new ExprFunCall(fn.getText(), l); }
 	;

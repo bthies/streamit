@@ -7,11 +7,12 @@
 void->void pipeline OneBitDToA {
   add DataSource();
   add NoiseShaper();
+  add LowPassFilter(1,pi/20,64);
   add DataSink();
 }
 
 /** 
- * This is a first order noise shaper. It is build with a
+ * This is a first order noise shaper. It is built with a
  * feedback loop. See Oppenheim, Shafer and Buck, 2nd ed.
  * page 211 for a more detailed explaination.
  **/
@@ -23,7 +24,7 @@ float->float feedbackloop NoiseShaper {
   }
   loop Delay();
   split roundrobin(1,1);
-  enqueue(0);
+  enqueue 0;
 }
 
 
@@ -61,7 +62,7 @@ float->void filter DataSink {
   }
 }
 
-/** Simple data selector filter (for filtering out multiplexed output) **/
+/** Simple data selector filter (for filtering out multiplexed output for debugging) **/
 float->float filter DataSelector {
   work pop 2 push 1 {
     pop();

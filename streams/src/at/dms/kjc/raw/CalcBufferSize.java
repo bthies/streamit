@@ -43,7 +43,7 @@ public class CalcBufferSize extends at.dms.util.Utils implements FlatVisitor
 	}
     }
 
-    private static int nextPow2(int i) {
+    public static int nextPow2(int i) {
 	String str = Integer.toBinaryString(i);
 	if  (str.indexOf('1') == -1)
 	    return 0;

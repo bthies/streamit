@@ -8,7 +8,7 @@
 complex[N_ch][N_rg][N_pri]->complex[N_ch][N_rg/N_dn][N_pri] pipeline SubAnalysis(int N_ch,int N_rg,int N_pri,int N_dn,int N_lp,int N_td, complex w, complex[N_lp] h_lp, complex[N_td] h_td){
     add FormChg20(N_ch,N_rg,N_pri);
     add ElAnal(N_ch,N_rg,N_pri,N_dn,N_lp,N_td,w,h_lp,h_td);
-    add FromChg21(N_ch, N_rg/N_dn, N_pri);
+    add FormChg21(N_ch, N_rg/N_dn, N_pri);
 }
 								     
 // this SplitJoin gets as its input the elements of different subbbands and pushes them through RnAnal

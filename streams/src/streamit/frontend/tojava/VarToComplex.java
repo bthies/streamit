@@ -1,31 +1,25 @@
-/*
- * VarToComplex.java: split variables into separate real/complex parts
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: VarToComplex.java,v 1.7 2002-11-20 20:43:56 dmaze Exp $
- */
-
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
+import streamit.frontend.passes.SymbolTableVisitor;
 
 /**
  * Convert variables with a complex type into separate real and imaginary
  * parts.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: VarToComplex.java,v 1.8 2003-06-24 21:09:51 dmaze Exp $
  */
-public class VarToComplex extends FEReplacer
+public class VarToComplex extends SymbolTableVisitor
 {
-    private SymbolTable symtab;
-    private GetExprType getExprType;
-    
     public VarToComplex(SymbolTable st, StreamType strt)
     {
-        symtab = st;
-        getExprType = new GetExprType(st, strt);
+        super(st, strt);
     }
     
     public Object visitExprVar(ExprVar exp)
     {
-        Type type = (Type)exp.accept(getExprType);
+        Type type = (Type)exp.accept(new GetExprType(symtab, streamType));
         if (type.isComplex())
         {
             Expression real = new ExprField(exp.getContext(), exp, "real");
@@ -56,7 +50,7 @@ public class VarToComplex extends FEReplacer
     {
         // If the type of the expression is complex, decompose it;
         // otherwise, move on.
-        Type type = (Type)exp.accept(getExprType);
+        Type type = (Type)exp.accept(new GetExprType(symtab, streamType));
         if (type.isComplex())
         {
             Expression real = new ExprField(exp.getContext(), exp, "real");

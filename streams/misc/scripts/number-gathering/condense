@@ -44,6 +44,8 @@ echo "Benchmark;Options;Tiles in Config;Tiles Assigned;Cycles per Steady;Outputs
 files=$(ls $indir)
 for file in $files; do
     #extract the info and write to the output file
-    extract_concat $file
+    if [ -f "$indir/$file" ]; then
+	extract_concat $file
+    fi
 done
 

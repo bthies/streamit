@@ -46,19 +46,16 @@ public abstract class Filter extends Stream
         super (a,b,c,d,e);
     }
 
-<<<<<<< Filter.java
     public Filter()
     {
         super();
     }
 
-=======
     public Filter(char c)
     {
         super(c);
     }
 
->>>>>>> 1.22
     public Filter(int i)
     {
         super(i);
@@ -73,12 +70,12 @@ public abstract class Filter extends Stream
     }
 
     public Filter(int n1, int n2, int n3,
-		  int n4, float f1) {
+                  int n4, float f1) {
         super(n1, n2, n3, n4, f1);
     }
 
     public Filter(int n1, int n2, int n3,
-		  int n4, int n5, int n6) {
+                  int n4, int n5, int n6) {
         super(n1, n2, n3, n4, n5, n6);
     }
 

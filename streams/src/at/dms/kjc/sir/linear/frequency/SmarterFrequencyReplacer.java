@@ -15,12 +15,14 @@ import at.dms.compiler.*;
  *
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
+ *
+ * This frequency replacer is used to generate the 
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.8 2002-11-20 18:38:42 aalamb Exp $
+ * $Id: SmarterFrequencyReplacer.java,v 1.1 2002-11-20 18:38:42 aalamb Exp $
  **/
-public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
+public class SmarterFrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
-    public static final String FAST_CONV_EXTERNAL = "do_fast_convolution_fftw";
+    public static final String FAST_CONV_EXTERNAL = "do_fast_convolution_std";
     /** the name of the buffer in which to place the input data. */
     public static final String INPUT_BUFFER_NAME = "timeBuffer";
 
@@ -44,7 +46,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the target number of outputs to produce each firing of FIR filters. */
     int targetNumberOfOutputs;
     
-    private FrequencyReplacer(LinearAnalyzer lfa, int targetSize) {
+    private SmarterFrequencyReplacer(LinearAnalyzer lfa, int targetSize) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer!");
 	}
@@ -65,7 +67,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     public static void doReplace(LinearAnalyzer lfa, SIRStream str, int targetSize) {
 	LinearPrinter.println("Beginning frequency replacement...");
 	// make a new replacer with the information contained in the analyzer
-	FrequencyReplacer replacer = new FrequencyReplacer(lfa, targetSize);
+	SmarterFrequencyReplacer replacer = new SmarterFrequencyReplacer(lfa, targetSize);
 	// pump the replacer through the stream graph.
 	IterFactory.createIter(str).accept(replacer);
     }
@@ -227,10 +229,15 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	
 	JBlock body = new JBlock();
 
+	/* add in statements to allocate memory for the fields.*/
+	body.addStatement(makeFieldAllocation(realWeightField.getIdent(),  filterSize));
+	body.addStatement(makeFieldAllocation(imagWeightField.getIdent(),  filterSize));
+	body.addStatement(makeFieldAllocation(partialField.getIdent(), x-1));
+
 	/* add statements to initialize the partial results field. */
-	//for (int i=0; i<(x-1); i++) {
-	//    body.addStatement(makeArrayAssignment(partialField, i, 0.0f));
-	//}
+	for (int i=0; i<(x-1); i++) {
+	    body.addStatement(makeArrayAssignment(partialField, i, 0.0f));
+	}
 
 	
 	/* calculate the weights of the fields based on the filter
@@ -244,26 +251,9 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 			    time_response_i, /* imag input */
 			    frequency_response_r,     /* filter's frequency response, real (output) */
 			    frequency_response_i);    /* filter's frequency response, imag (output) */
-
-	/* Since FFTW does not do 1/N renormalization on inverse FFT,
-	   we need to scale frequency_response by that factor. Also interesting to
-	   note is that we are only actually going to use half the values of H (eg freq_response) */
-	for (int i=0; i<filterSize; i++) {
-	    frequency_response_r[i] = frequency_response_r[i]/filterSize;
-	    frequency_response_i[i] = frequency_response_i[i]/filterSize;
-	}
-	
-	/* add in statements to allocate memory for the fields. We are taking advantage of the fact
-	 that we have real data as input and output so the frequency response is congugate symmetric,
-	 so therefore we only have to store the first half of them. */
-	int actualFilterSize = (filterSize/2) + (filterSize&0x1); // want filterSize/2 rounded up
-	body.addStatement(makeFieldAllocation(realWeightField.getIdent(), actualFilterSize));
-	body.addStatement(makeFieldAllocation(imagWeightField.getIdent(), actualFilterSize));
-	body.addStatement(makeFieldAllocation(partialField.getIdent(),    x-1));
-	
-	
+				    
 	/* assign the weights that we just calculated (in the compiler) to the weights array in the filter. */
-	for (int i=0; i<actualFilterSize; i++) {
+	for (int i=0; i<filterSize; i++) {
 	    /* create array assignments for both the real and imaginary coefficient arrays. */
 	    body.addStatement(makeArrayAssignment(realWeightField, /* field */
 						  i,                          /* index */

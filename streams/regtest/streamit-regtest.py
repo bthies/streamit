@@ -63,7 +63,10 @@ class RegTestSet:
     def limit(self, names):
         set = RegTestSet()
         for name in names:
-            set.add(name, self.tests[name])
+            try:
+                set.add(name, self.tests[name])
+            except (KeyError):
+                self.report("No such test case " + name)
         return set
 
     def report(self, msg):
@@ -92,7 +95,8 @@ class ControlReader:
             line = f.readline()
             if line == "":
                 break
-            # TODO: drop comments
+            # Strip out comments.
+            line = string.split(line, '#')[0]
             for word in string.split(line):
                 self.read_word(word)
         f.close()

@@ -74,7 +74,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
                     int splitDataSent = getSplitType ().getOutputWeight (childNum);
                     ASSERT (splitDataSent > 0);
 
-                    splitRunCount = childInitDataConsumption / splitDataSent;
+                    splitRunCount = (childInitDataConsumption + splitDataSent) / splitDataSent;
                 } else {
                     // the child doesn't need any data to intitialize, so I
                     // don't need to run the split for it at all

@@ -85,6 +85,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	interfaceTableList = new Vector(100);
 	searchList = new LinkedList();
 	application = null;
+	initBuiltinFilters();
     }
 
     public Kopi2SIR(JCompilationUnit[] app) {
@@ -98,11 +99,33 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	interfaceTableList = new Vector(100);
 	searchList = new LinkedList();
 	this.application = app;
+	initBuiltinFilters();
     }
 
     private String printLine(JPhylum l) {
 	return (String.valueOf(l.getTokenReference().getLine()) + ": ");
     }
+
+    //add any special filters to the symbol table
+    //when they are added, they will be cloned and any parameters that need to be set
+    //will be set...
+    private void initBuiltinFilters() {
+	addVisitedOp("FileReader", new SIRFileReader(null, 
+						     new JIntLiteral(null, 0),
+						     new JIntLiteral(null, 0),
+						     new JIntLiteral(null, 1),
+						     null, 
+						     ""));
+	addVisitedOp("FileWriter", new SIRFileWriter(null, 
+						     new JIntLiteral(null, 0),
+						     new JIntLiteral(null, 1),
+						     new JIntLiteral(null, 0),
+						     null, 
+						     ""));
+    }	
+		     
+						    
+	
 
     private void addVisitedOp(String className, SIROperator sirop)  {
 	if (visitedSIROps.get(className) != null)
@@ -299,6 +322,36 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    return false;
     }
 	  
+    //this method is called when getting a filter out of the symbol table
+    //if the given filter is a builtin filter (FILE i/o) set what needs to be set
+    private void setBuiltinArgs(SIROperator stream, JExpression[] args) 
+    {
+	//set the file name and the type for the SIRFileReader
+	if (stream instanceof SIRFileReader) {
+	    if (args.length != 2) 
+		at.dms.util.Utils.fail(lineNumber + ": Exactly 2 args required for FileReader");
+	    if (!(args[0] instanceof JStringLiteral))
+		at.dms.util.Utils.fail(lineNumber + ": First argument to FileReader must be a string");
+	    ((SIRFileReader)stream).setFileName(((JStringLiteral)args[0]).stringValue());
+	    //the second arg will be turned into string by visitFieldExpression because it is a type
+	    if (!(args[1] instanceof JStringLiteral))
+		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileReader must be a type");
+	    ((SIRFileReader)stream).setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+	    return;
+	}
+	else if (stream instanceof SIRFileWriter) {
+	    if (args.length != 2) 
+		at.dms.util.Utils.fail(lineNumber + ": Exactly 2 args required for FileWriter");
+	    if (!(args[0] instanceof JStringLiteral))
+		at.dms.util.Utils.fail(lineNumber + ": First argument to FileWriter must be a string");
+	    ((SIRFileWriter)stream).setFileName(((JStringLiteral)args[0]).stringValue());
+	    //the second arg will be turned into string by visitFieldExpression because it is a type
+	    if (!(args[1] instanceof JStringLiteral))
+		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileWriter must be a type");
+	    ((SIRFileWriter)stream).setInputType(getType(((JStringLiteral)args[1]).stringValue()));
+	    return;
+	}
+    }
 
     private JMethodDeclaration[] buildPortalMethodArray(JClassDeclaration portal, 
 							JClassDeclaration clazz) 
@@ -763,6 +816,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		    deepCopy(getVisitedOp(type.toString()));
 		printMe("Adding " + ident + " to symbol table");
 		
+		//If this a builtin filter set its args
+		setBuiltinArgs(ST, ((JUnqualifiedInstanceCreation)retObj).
+				     getParams());
 		SIRInitStatement newSIRInit = 
 		    new SIRInitStatement(null, 
 					 null, 
@@ -1244,7 +1300,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    /*Channel declaration, treat the args as special */
 	{
 	    Vector v = new Vector(3);
-	    v.add((String)params[0].accept(this));
+	    v.add((JStringLiteral)params[0].accept(this));
 	    v.add((JExpression)params[1].accept(this));
 	    if (params.length > 2) { 
 		v.add((JExpression)params[2].accept(this));
@@ -1450,7 +1506,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 				       ((JUnqualifiedInstanceCreation)SIROp).
 				       getType().getCClass().getIdent());
 	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
-	    //SIRStream newST = (SIRStream) st.clone();
+	    //if this is a builtin filter, set the args
+	    setBuiltinArgs(newST, ((JUnqualifiedInstanceCreation)SIROp).getParams());
 	    newST.setParent((SIRContainer)parentStream);
 	}
 	//Die if it is none of the above case
@@ -1781,9 +1838,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
         blockStart("FieldExpression", self);
 	//return a string if this is a field expression that accesses the type
-	//argument in a channel instaniation
+	//argument in a channel instaniation or SIRFile* new expression
 	if (supportedType(left.getType().getCClass().getIdent())) {
-	    return left.getType().getCClass().getIdent();
+	    return new JStringLiteral(null, left.getType().getCClass().getIdent());
 	}
 	//Never need to visit a field expression
 	return self;
@@ -1859,7 +1916,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 					   "Input declaration on non-Filter");
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
-		filter.setInputType(getType((String)v.elementAt(0)));
+		filter.setInputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
 		filter.setPop((JExpression)v.elementAt(1));
 		//If a peek value is given, and it is greater than pops
 		//set the peek
@@ -1877,7 +1934,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
 		filter.setPush((JExpression)v.elementAt(1));
-		filter.setOutputType(getType((String)v.elementAt(0)));
+		filter.setOutputType(getType(((JStringLiteral)v.elementAt(0)).stringValue()));
 		return null;
 	    }
 

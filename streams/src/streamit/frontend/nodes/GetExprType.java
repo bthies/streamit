@@ -24,7 +24,7 @@ import java.util.List;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.11 2003-10-09 19:50:59 dmaze Exp $
+ * @version $Id: GetExprType.java,v 1.12 2004-01-05 21:50:21 dmaze Exp $
  */
 public class GetExprType extends FENullVisitor
 {
@@ -58,9 +58,11 @@ public class GetExprType extends FENullVisitor
             return new TypePrimitive(TypePrimitive.TYPE_BOOLEAN);
         }
         
-        // Otherwise, this requires type unification.  Punt for the
-        // moment (though it wouldn't actually be hard).
-        return exp.getLeft().accept(this);
+        // The type of the expression is some type that both sides
+        // promote to, otherwise.
+        Type tl = (Type)exp.getLeft().accept(this);
+        Type tr = (Type)exp.getRight().accept(this);
+        return tl.leastCommonPromotion(tr);
     }
 
     public Object visitExprComplex(ExprComplex exp)
@@ -143,9 +145,11 @@ public class GetExprType extends FENullVisitor
     
     public Object visitExprTernary(ExprTernary exp)
     {
-        // Again, should do type unification on the two sides.
-        // And might not want to blindly assert ?:.
-        return exp.getB().accept(this);
+        // Do type unification on the two sides.
+        // (Might not want to blindly assert ?:.)
+        Type tb = (Type)exp.getB().accept(this);
+        Type tc = (Type)exp.getC().accept(this);
+        return tb.leastCommonPromotion(tc);
     }
 
     public Object visitExprTypeCast(ExprTypeCast exp)

@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.19 2004-01-27 16:02:14 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.20 2004-01-27 20:56:47 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -557,14 +557,79 @@ public class SemanticChecker
                     if (lt != null && rt != null)
                     {                        
                         Type ct = lt.leastCommonPromotion(rt);
+                        Type inttype =
+                            new TypePrimitive(TypePrimitive.TYPE_INT);
+                        Type bittype =
+                            new TypePrimitive(TypePrimitive.TYPE_BIT);
+                        Type cplxtype =
+                            new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
+                        Type floattype =
+                            new TypePrimitive(TypePrimitive.TYPE_FLOAT);
                         if (ct == null)
                         {
                             report (expr,
                                     "incompatible types in binary expression");
                             return expr;
                         }
-                        // TODO: check to see whether ct is an appropriate
-                        // type for the operator.
+                        // Check whether ct is an appropriate type.
+                        switch (expr.getOp())
+                        {
+                        // Arithmetic operations:
+                        case ExprBinary.BINOP_ADD:
+                        case ExprBinary.BINOP_DIV:
+                        case ExprBinary.BINOP_MUL:
+                        case ExprBinary.BINOP_SUB:
+                            if (!ct.promotesTo(cplxtype))
+                                report(expr,
+                                       "cannot perform arithmetic on " + ct);
+                            break;
+
+                        // Bitwise and integer operations:
+                        case ExprBinary.BINOP_BAND:
+                        case ExprBinary.BINOP_BOR:
+                        case ExprBinary.BINOP_BXOR:
+                            if (!ct.promotesTo(inttype))
+                                report(expr,
+                                       "cannot perform bitwise operations on "
+                                       + ct);
+                            break;
+
+                        case ExprBinary.BINOP_MOD:
+                            if (!ct.promotesTo(inttype))
+                                report(expr, "cannot perform % on " + ct);
+                            break;
+                            
+                        // Boolean operations:
+                        case ExprBinary.BINOP_AND:
+                        case ExprBinary.BINOP_OR:
+                            if (!ct.promotesTo(bittype))
+                                report(expr,
+                                       "cannot perform boolean operations on "
+                                       + ct);
+                            break;
+
+                        // Comparison operations:
+                        case ExprBinary.BINOP_GE:
+                        case ExprBinary.BINOP_GT:
+                        case ExprBinary.BINOP_LE:
+                        case ExprBinary.BINOP_LT:
+                            if (!ct.promotesTo(floattype))
+                                report(expr,
+                                       "cannot compare non-real type " + ct);
+                            break;
+                        
+                        // Equality, can compare anything:
+                        case ExprBinary.BINOP_EQ:
+                        case ExprBinary.BINOP_NEQ:
+                            break;
+                        
+                        // And now we should have covered everything.
+                        default:
+                            report(expr,
+                                   "semantic checker missed a binop type");
+                            break;
+                        }
+                        return expr;
                     }
 
                     return super.visitExprBinary(expr);

@@ -51,7 +51,7 @@ class DataSource extends Filter
     steeringVectors    = new float [numberOfBeams*numberOfChannels];
     predecPulseShape   = new float [predecPulseSize];
 
-    output = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
+    output = new Channel (Float.TYPE, nChannels*nSamples);
 
     // NEED TO GENERATE STEERING VECTORS AND PREDEC PULSE SHAPE HERE
   }

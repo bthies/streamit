@@ -1,4 +1,3 @@
-#include <raw.h>
 #include <math.h>
 #include <stdio.h>
 	
@@ -6,15 +5,15 @@
 
 
 const int K=4;
-const int N=20;
-const int Q=15;
+const int N=5;
+const int Q=10;
 const int W=7;
 //const int m=N*Q+W-1;
 //const int n=K*N;
 // can't do the above in c, calculate
 // by hand.
-const int m=306;
-const int n=80;
+const int m=56;
+const int n=20;
 
 void Decode(float C[Q][K], float h[W][K], float *r);
 void AddSigma(int n,float sigma,float AhA[K*N][K*N],float AhAsig[K*N][K*N]);
@@ -68,16 +67,16 @@ doDecode() {
 	}
 
 	Decode(C,h,r);
-	raw_test_pass_reg("done");
+	//raw_test_pass_reg("done");
 
   return 0;
 }
 
 void main() {
-  doDecode();
-  doDecode();
-  doDecode();
-  exit(1);
+  int i;
+  for (i =0; i<200000; i++) {
+    doDecode();
+  }
 }
 
 

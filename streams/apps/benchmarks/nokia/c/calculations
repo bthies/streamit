@@ -30,5 +30,39 @@ workCount = 25843348 / 26451760 = 0.97699919
 workCount = 25645256 / 26240832 = 0.97730346
 
 
-(K,N,Q,W) = (4,5,10,7)
+Uniprocessor (7/29/2002):
+(Xenon 2.2 GHz, 512MB cache)
+1 20 element array outputs / iteration = 20 outputs/iteration)
+100% utilization
+runtime for 200000 iterations = 211.050 seconds
+
+We want cycles/iteration:
+200000 iterations/211.050 sec * 
+20 outputs/1 iteration
+1 second / 2.2x10^9 cycles
+* 10^5 cycles 
+
+=  0.8614934 outputs/10^5 cycles
+
+
+-------------------------------------------
+(K,N,Q,W) = (4,20,15,7)
+
+Uniprocessor (7/29/2002):
+(Xenon 2.2 GHz, 512MB cache)
+1 80 element array outputs / iteration = 80 outputs/iteration)
+99.9% utilization
+runtime for 2000 iterations = 119.15 seconds
+
+We want cycles/iteration:
+2000 iterations/119.15 sec * 
+80 outputs/1 iteration
+1 second / 2.2x10^9 cycles
+* 10^5 cycles 
+
+=  0.061038416 outputs/10^5 cycles
+
+
+
+
 

@@ -1,0 +1,3 @@
+all:
+	gcc -lm nokia_uni.c -o nokia_uni
+	time nokia_uni

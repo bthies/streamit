@@ -18,9 +18,9 @@ public class CoarseSerializedBeamFormer extends StreamIt
 
     public void init()
     {
-	final int numChannels           = 1;//12; 
+	final int numChannels           = 12; 
 	final int numSamples            = 64; 
-	final int numBeams              = 1; //4; 
+	final int numBeams              = 4; 
 	final int numCoarseFilterTaps   = 64; 
 	final int numFineFilterTaps     = 64; 
 	 

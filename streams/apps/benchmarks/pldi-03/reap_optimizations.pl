@@ -19,10 +19,11 @@
 use strict;
 
 # the streamit frontend, the streamit compiler, the C compiler and dynamorio
-my $STREAMIT_FRONTEND = "java streamit.frontend.ToJava --full";
-my $STREAMIT_COMPILER = "java -Xmx1500M  at.dms.kjc.Main -s";
-my $STREAMIT_GCC      = "gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c";
-my $STREAMIT_DYNAMORIO= "dynamorio";
+my $STREAMIT_FRONTEND    = "java streamit.frontend.ToJava --full";
+my $STREAMIT_COMPILER    = "java -Xmx1500M  at.dms.kjc.Main -s";
+my $STREAMIT_GCC         = "gcc -O2 -lm -I/u/aalamb/streams/library/c -L/u/aalamb/streams/library/c";
+my $STREAMIT_GCC_POSTFIX = "-lstreamit -lsrfftw -lsfftw -lm";
+my $STREAMIT_DYNAMORIO   = "dynamorio";
 
 # the program to use to compare output
 my $CMP = "/u/aalamb/streams/regtest/tools/compare_uni/pl";
@@ -61,8 +62,7 @@ push(@result_lines,
      "Program\ttarget output size\t" .
      "normal flops\tnormal fadds\tnormal fmuls\tnormal outputs\t" .
      "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t" .
-     "freq 0 flops\tfreq 0 fadds\tfreq 0 fmuls\tfreq 0 outputs\t" .
-     "freq 1 flops\tfreq 1 fadds\tfreq 1 fmuls\tfreq 1 outputs\t" .
+     "freq 2 flops\tfreq 2 fadds\tfreq 2 fmuls\tfreq 1 outputs\t" .
      "both flops\tboth fadds\tboth fmuls\tboth outputs\t");
 
 # determine the next available results directory (eg results0, results1, etc.)
@@ -87,14 +87,14 @@ foreach $current_program (@programs) {
     # compile normally without frequency replacement
    my ($normal_outputs, $normal_flops, 
        $normal_fadds, $normal_fmuls) = do_test($path, $base_filename,
-					       "--constprop --unroll 100000 --debug", 
+					       "--unroll 100000 --debug", 
 					       "$base_filename(normal)");
    save_output($path, $base_filename, "normal");
 
    # compile with linear replacement
    my ($linear_outputs, $linear_flops, 
        $linear_fadds, $linear_fmuls) = do_test($path, $base_filename, 
-					       "--constprop --unroll 100000 --debug --linearreplacement", 
+					       "--unroll 100000 --debug --linearreplacement", 
 					       "$base_filename(linear)");
    save_output($path, $base_filename, "linear");
    
@@ -102,32 +102,24 @@ foreach $current_program (@programs) {
     my $targetFFTSize;
     for ($targetFFTSize=1; $targetFFTSize<($max_target_size+1); $targetFFTSize*=2) {
 
-        # now, do the compilation with (stupid) frequency replacement
-	my ($freq0_outputs, $freq0_flops, 
-	    $freq0_fadds, $freq0_fmuls) = do_test($path, $base_filename, 
-						  "--constprop --unroll 100000 --debug --frequencyreplacement 0 --targetFFTSize $targetFFTSize",
-						  "$base_filename(freq 0, $targetFFTSize)");
-	save_output($path, $base_filename, "freq0-$targetFFTSize");
-
-        # now, do the compilation with (smart) frequency replacement
-	my ($freq1_outputs, $freq1_flops, 
-	    $freq1_fadds, $freq1_fmuls) = do_test($path, $base_filename, 
-						  "--constprop --unroll 100000 --debug --frequencyreplacement 1 --targetFFTSize $targetFFTSize",
+        # now, do the compilation with (smart fftw) frequency replacement
+	my ($freq2_outputs, $freq2_flops, 
+	    $freq2_fadds, $freq2_fmuls) = do_test($path, $base_filename, 
+						  "--unroll 100000 --debug --frequencyreplacement 2 --targetFFTSize $targetFFTSize",
 						  "$base_filename(freq 1, $targetFFTSize)");
-	save_output($path, $base_filename, "freq1-$targetFFTSize");
+	save_output($path, $base_filename, "freq2-$targetFFTSize");
 	
         # now, run with both optimizations
 	my ($both_outputs, $both_flops, 
 	    $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
-					       "--constprop --unroll 100000 --debug --linearreplacement --frequencyreplacement 1 --targetFFTSize $targetFFTSize",
+					       "--unroll 100000 --debug --linearreplacement --frequencyreplacement 2 --targetFFTSize $targetFFTSize",
 					       "base_filename(both, $targetFFTSize)");
 	save_output($path, $base_filename, "both-$targetFFTSize");
 	
 	my $new_data_line = 	     ("$base_filename\t$targetFFTSize\t".
 				      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
 				      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
-				      "$freq0_flops\t$freq0_fadds\t$freq0_fmuls\t$freq0_outputs\t" .
-				      "$freq1_flops\t$freq1_fadds\t$freq1_fmuls\t$freq1_outputs\t" .
+				      "$freq2_flops\t$freq2_fadds\t$freq2_fmuls\t$freq2_outputs\t" .
 				      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
 
 	open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename,$targetFFTSize)\"");
@@ -219,7 +211,7 @@ sub do_compile {
     `cd $new_path; $STREAMIT_COMPILER $options $filename_base.java >& $filename_base.c`;
     # compile the C code to generate an executable
     print "(c->exe)";
-    `cd $new_path; $STREAMIT_GCC $filename_base.c -o $filename_base.exe`;
+    `cd $new_path; $STREAMIT_GCC $filename_base.c -o $filename_base.exe $STREAMIT_GCC_POSTFIX`;
 
 }
 

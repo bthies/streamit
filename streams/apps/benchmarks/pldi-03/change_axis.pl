@@ -24,7 +24,7 @@ while (<STDIN>) {
     # calculate the multiplication savings
     my $normal_fmuls_per_output = $normal_fmuls/$normal_outputs;
     my $freq_fmuls_per_output   = $freq_fmuls  /$freq_outputs;
-    my $savings = $freq_fmuls_per_output / $normal_fmuls_per_output;
+    my $savings = $normal_fmuls_per_output / $freq_fmuls_per_output;
 
     # update the data hashes
     $row_hash{$fir_size}     .= "$savings\t";

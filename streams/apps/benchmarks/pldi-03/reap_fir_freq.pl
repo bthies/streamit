@@ -16,11 +16,12 @@ use strict;
 my $first_arg = shift(@ARGV);
 
 # the streamit frontend, the streamit compiler, the C compiler and dynamorio
-my $STREAMIT_COMPILER = "java -Xmx1500M  at.dms.kjc.Main -s";
-my $STREAMIT_GCC      = "gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c";
-my $STREAMIT_DYNAMORIO= "dynamorio";
+my $STREAMIT_COMPILER    = "java -Xmx1500M  at.dms.kjc.Main -s";
+my $STREAMIT_GCC         = "gcc -O2 -I/u/aalamb/streams/library/c -L/u/aalamb/streams/library/c";
+my $STREAMIT_GCC_POSTFIX = "-lstreamit -lsrfftw -lsfftw -lm";
+my $STREAMIT_DYNAMORIO   = "dynamorio";
 
-my $STANDARD_OPTIONS = "--constprop --unroll 100000 --debug";
+my $STANDARD_OPTIONS = "--unroll 100000 --debug";
 my $FREQ_OPTIONS     = "--frequencyreplacement $first_arg";
 
 # the filename to write out the results to. (append first command line arg to name)
@@ -130,7 +131,7 @@ sub do_compile {
     `$STREAMIT_COMPILER $options $new_path/$filename_base.java >& $new_path/$filename_base.c`;
     # compile the C code to generate an executable
     print "(c->exe)";
-    `$STREAMIT_GCC $new_path/$filename_base.c -o $new_path/$filename_base.exe`;
+    `$STREAMIT_GCC $new_path/$filename_base.c $STREAMIT_GCC_POSTFIX -o $new_path/$filename_base.exe`;
 
 }
 

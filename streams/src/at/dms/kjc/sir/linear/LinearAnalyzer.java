@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.12 2002-11-26 22:06:41 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.13 2002-12-02 23:01:35 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -26,7 +26,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     int splitJoinsSeen     = 0;
     int feedbackLoopsSeen  = 0;
 
-    
     private LinearAnalyzer() {
 	this.filtersToLinearRepresentation = new HashMap();
 	checkRep();
@@ -214,8 +213,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	
 
 	// if the new child pipe has 0-1 children, we are done
-	if (newChildPipe.size() <= 1) {
-	    LinearPrinter.println("  " + ((newChildPipe.size()==0)? "(no children)" : "(one child)"));
+	if (newChildPipe.size() == 0) {
+	    LinearPrinter.println("  (no children)");
+	    return;
+	} else if (newChildPipe.size() == 1) {
+	    LinearPrinter.println("  (one child)");
+	    LinearPrinter.println("  resetting parent pointer for " + newChildPipe.get(0));
+	    newChildPipe.get(0).setParent(parentPipe);
 	    return;
 	}
 	
@@ -303,7 +307,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println(" joiner: " + joiner.getType() + 
 			      makeStringFromIntArray(joinWeights));
 
+
+	// this is just debugging information that gets printed
 	Iterator childIter = self.getChildren().iterator();
+	boolean nonLinearFlag = false;
 	while(childIter.hasNext()) {
 	    SIROperator currentChild = (SIROperator)childIter.next();
 	    if (currentChild instanceof SIRStream) {
@@ -311,9 +318,17 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 		LinearPrinter.println(" child: " + currentChild + "(" +
 				      (childLinearity ? "linear" : "non-linear") +
 				      ")");
+		// so we know if the splitjoin has any non-linear children.
+		nonLinearFlag = (nonLinearFlag || (!childLinearity)); 
 	    } else {
 		LinearPrinter.println(" child: " + currentChild);
 	    }
+	}
+
+	// if we had any non-linear children, give up.
+	if (nonLinearFlag) {
+	    LinearPrinter.println(" aborting split join combination  -- non-linear child stream detected.");
+	    return;
 	}
 
 	// first things first -- for each child we need a linear rep, so
@@ -321,33 +336,29 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// of linear representations. Remember that the first two elements
 	// are the splitter and the joiner so we get rid of them right off the
 	// bat.
-	LinkedList repList = new LinkedList();
-	List childList = self.getChildren();
+	List repList = new LinkedList();
+	List childList = self.getChildren(); // get copy of the child list 
 	childList.remove(0); childList.remove(childList.size()-1); // remove the splitter and the joiner
 	childIter = childList.iterator();
 	while (childIter.hasNext()) {
 	    SIRStream currentChild = (SIRStream)childIter.next();
-	    boolean childLinearity = this.hasLinearRepresentation(currentChild);
-	    // if we have a linear rep, add it to our list, otherwise we are done
-	    if (childLinearity) {
-		repList.add(this.getLinearRepresentation(currentChild));
-	    } else {
-		LinearPrinter.println(" aborting split join combination  -- non-linear child detected.");
-		return;
-	    }
-	}	    
-				  
+	    repList.add(this.getLinearRepresentation(currentChild));
+	}
+	
 	// the transform that we will set based on the splitter type.
 	LinearTransform sjTransform = null;
 	
 	// dispatch based on the splitter 
-	if (splitter.getType() == SIRSplitType.DUPLICATE) {
+	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
 	    // process duplicate splitter
 	    sjTransform = LinearTransformSplitJoin.calculateDuplicate(repList, joinWeights);
-	} else if ((splitter.getType() == SIRSplitType.WEIGHTED_RR) ||
-		   (splitter.getType() == SIRSplitType.ROUND_ROBIN)) {
-	    // process roundrobin splitter
-	    sjTransform = LinearTransformSplitJoin.calculateRoundRobin(repList, joinWeights, splitWeights);
+	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN) ||
+		   splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
+	    // first, convert the repList to a list of equivalent reps that would result
+	    // from transforming the roundrobin duplicate to a splitjoin
+	    repList = convertToDuplicate(repList, splitWeights);
+	    // then, process the split join
+	    sjTransform = LinearTransformSplitJoin.calculateDuplicate(repList, joinWeights);		
 	} else if (splitter.getType() == SIRSplitType.NULL) {
 	    LinearPrinter.println(" Ignoring null splitter.");
 	} else {
@@ -362,16 +373,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
 	// do the actual transform
 	LinearPrinter.println(" performing transform.");
-	LinearFilterRepresentation newRep = null;
+	LinearFilterRepresentation newRep;
 	try {
 	    newRep = sjTransform.transform();
 	} catch (NoTransformPossibleException e) {
 	    LinearPrinter.println(" error performing transform: " + e.getMessage());
-	}
-
-	// If the new rep is null, some error occured and we are done
-	if (newRep == null) {
-	    LinearPrinter.println(" transform unsuccessful. stop.");
 	    return;
 	}
 	
@@ -388,6 +394,111 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     
     
 
+
+    /**
+     * This procedure modifies the list of LinearFilterRepresentations
+     * that are in a SIRSplitJoin with a roundrobin splitter to
+     * the representations that would be present in a SIRSplitJoin with
+     * a duplicate splitter.
+     * The general procedure for doing this is as follows:
+     *
+     * Wrap each of the children in a (virtual) pipeline that contains
+     * a decimator followed by the child. The decimator takes in
+     * the sum of the splitter weights and outputs the data that was originally
+     * destined for that child. Then we use a pipeline transformation to calculate the
+     * overall linear rep of those two combinations.
+     **/
+    private List convertToDuplicate(List repList, int[] splitterWeights) {
+	// check the length of the two lists
+	if (splitterWeights.length != repList.size()) {
+	    throw new RuntimeException("Splitter weights don't match the number of reps in convertToDuplicate");
+	}
+	int repCount = repList.size();
+	List newList = new LinkedList();
+
+	// figure out the total sum of the splitter weights
+	int totalSplitWeight = 0;
+	for (int i=0; i<repCount; i++) {
+	    totalSplitWeight += splitterWeights[i];
+	}
+
+	// for each child filter of the splitjoin
+	Iterator childIter = repList.iterator();
+	int childPosition = 0;
+	while(childIter.hasNext()) {
+	    // cast current child appropriately (stupid java)
+	    LinearFilterRepresentation currentChildRep;
+	    currentChildRep = (LinearFilterRepresentation)childIter.next();
+	    // create the appropriate decimator linearRep
+	    LinearFilterRepresentation currentDecimatorRep;
+	    currentDecimatorRep = makeDecimator(totalSplitWeight, splitterWeights, childPosition);
+
+	    // make a pipelin list (decimator, child) to pass to pipeline transform 
+	    List virtualPipeline = new LinkedList();
+	    virtualPipeline.add(currentDecimatorRep);
+	    virtualPipeline.add(currentChildRep);
+
+	    
+	    // create a pipeline transformation and execute it
+	    LinearTransform pipeTransform = LinearTransformPipeline.calculate(virtualPipeline);
+	    LinearFilterRepresentation equivalentDuplicateRep;
+	    try {equivalentDuplicateRep = pipeTransform.transform();
+	    } catch (NoTransformPossibleException e) {
+		throw new RuntimeException("error with pipeline transformation of decimator and child:" +
+					   e.getMessage());
+	    }
+
+	    // update the new repList with the transformed rep
+	    newList.add(equivalentDuplicateRep);
+
+	    // update child position
+	    childPosition++;
+	    
+	// lather, rise and repeat
+	}
+
+	// return the new repList.
+	return newList;
+    }
+
+    /**
+     * Creates a decimator filter representation. A decimator filter inputs all of the
+     * data used for a single firing of a round robin splitter (vSum) and it outputs
+     * only the data that was originally bound for child childPos (counting from left).
+     * This transformation is used to transform a splitjoin with a roundrobin splitter
+     * to a splitjoins with a duplicate splitter.
+     **/
+    private LinearFilterRepresentation makeDecimator(int vSum, int[] splitWeights, int childPos) {
+	// make matrix (A starts out all zeros)
+	// we want to input vSum items and output as many items as the
+	// child would have gotten in the original splitter (eg splitWeights[childPos])
+	// which implies the new matrix has vSum rows and splitWeights[childPos] cols
+
+	FilterMatrix newA = new FilterMatrix(vSum, splitWeights[childPos]);
+	FilterVector newb = new FilterVector(vSum);
+
+	// determine the first non-zero row;
+	int firstRow = 0;
+	for (int i=0; i<childPos; i++) {
+	    firstRow += splitWeights[i];
+	}
+	
+	// set the splitWeights[childPos] rows of ones
+	for (int i=0; i<splitWeights[childPos]; i++) { // row i
+	    for (int j=0; j<vSum; j++) { // j col
+		newA.setElement(firstRow + i, j, ComplexNumber.ONE);
+	    }
+	}
+
+	// make a new decimator rep out of the new A and b
+	return new LinearFilterRepresentation(newA, newb, vSum); // pop==peek
+    }
+    
+
+
+
+
+	
 
     /** returns a string like "(a[0], a[1], ... a[N-1])". **/
     private String makeStringFromIntArray(int[] arr) {
@@ -513,42 +624,3 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
     }
 }
-
-
-
-
-
-
-
-
-// ----------------------------------------
-// Code for visitor class.
-// ----------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    

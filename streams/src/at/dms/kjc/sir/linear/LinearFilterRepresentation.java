@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.15 2002-11-25 21:33:00 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.16 2002-12-02 23:01:35 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -77,11 +77,6 @@ public class LinearFilterRepresentation {
 	// seen only non-zero terms, therefore we don't have a
 	// constant component.
 	return false;
-    }
-
-    /** placeholder to let us compile for regtests **/
-    public LinearFilterRepresentation expand(int f) {
-	throw new RuntimeException("deprecated");
     }
 
     /**

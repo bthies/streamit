@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.7 2002-11-22 18:20:46 thies Exp $
+ * $Id: LinearReplacer.java,v 1.8 2002-12-02 23:01:35 aalamb Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -60,12 +60,11 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     }
 
 
-    
-
     public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {makeReplacement(self, iter);}
     public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter){makeReplacement(self, iter);}
     public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){makeReplacement(self, iter);}
     public void visitFilter(SIRFilter self, SIRFilterIter iter){makeReplacement(self, iter);}
+
 
     /**
      * Visit a pipeline, splitjoin or filter, replacing them with a new filter
@@ -97,7 +96,12 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	LinearFilterRepresentation linearRep;
 	linearRep = this.linearityInformation.getLinearRepresentation(self);
 	SIRStream newImplementation;
-	newImplementation = makeEfficientImplementation(parent, self, linearRep);
+	newImplementation = makeEfficientImplementation(self, linearRep);
+	newImplementation.setParent(parent);
+	// do the acutal replacment of the current pipeline with the new implementation
+	parent.replace(self, newImplementation);
+
+	LinearPrinter.println("Relative child name: " + newImplementation.getRelativeName());
 
 	// remove the mappings from all of the children of this stream in our linearity information
 	// first, we need to find them all, and then we need to remove them all
@@ -112,8 +116,6 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	}
 	// all done.
 
-	// do the acutal replacment of the current pipeline with the new implementation
-	parent.replace(self, newImplementation);
 	// add a mapping from the new filter to the old linear rep (because it still computes the same thing)
 	this.linearityInformation.addLinearRepresentation(newImplementation, linearRep); // add same old linear rep
     }
@@ -126,9 +128,8 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
      * most efficient implementation and then create an IR structure that implements
      * that. For now, we always return the direct matrix multply implementation.
      **/
-    private SIRStream makeEfficientImplementation(SIRContainer parent,
-							 SIRStream oldStream,
-							 LinearFilterRepresentation linearRep) {
+    private SIRStream makeEfficientImplementation(SIRStream oldStream,
+						  LinearFilterRepresentation linearRep) {
 	// if we have a linear representation of this filter
 	if (!linearityInformation.hasLinearRepresentation(oldStream)) {
 	    throw new RuntimeException("no linear info");
@@ -144,7 +145,6 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	// create a new filter with the new work and init functions
 	
 	SIRFilter newFilter = new SIRFilter("Linear" + oldStream.getIdent());
-	newFilter.setParent(parent);
 	newFilter.setWork(newWork);
 	newFilter.setInit(newInit);
 	newFilter.setPeek(linearRep.getPeekCount());

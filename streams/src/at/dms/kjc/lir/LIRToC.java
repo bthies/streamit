@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.48 2001-11-07 18:47:09 dmaze Exp $
+ * $Id: LIRToC.java,v 1.49 2001-11-08 21:20:47 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -499,7 +499,7 @@ public class LIRToC
                                         CType type,
                                         String ident,
                                         JExpression expr) {
-        print(CModifier.toString(modifiers));
+        // print(CModifier.toString(modifiers));
         print(type);
         print(" ");
         print(ident);
@@ -2093,7 +2093,7 @@ public class LIRToC
      * prints a float literal
      */
     public void visitFloatLiteral(float value) {
-        print(value + "F");
+        print(value);
     }
 
     /**

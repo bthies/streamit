@@ -37,7 +37,7 @@ public class LowPassFilter extends Filter {
                      final int numTaps, final int decimation)
     {
 	float pi, m, w;
-	float temptaps[];
+	//float temptaps[];
 	int i;
         samplingRate = sampleRate;
         cutoffFreq = cutFreq;
@@ -45,7 +45,7 @@ public class LowPassFilter extends Filter {
 
         pi = (float)java.lang.Math.PI;
         //build the taps, and call super.init(taps[])
-        temptaps = new float[numberOfTaps];
+        //temptaps = new float[numberOfTaps];
 
         m = numberOfTaps -1;
         //from Oppenheim and Schafer, m is the order of filter
@@ -64,14 +64,14 @@ public class LowPassFilter extends Filter {
 
                 for(i=0;i<numberOfTaps;i++)
                     {
-                        temptaps[i] = (float)(0.54 - 0.46*java.lang.Math.cos((2*pi)*(i/m)));
-                        tapTotal = tapTotal + temptaps[i];
+                        COEFF[i] = (float)(0.54 - 0.46*java.lang.Math.cos((2*pi)*(i/m)));
+                        tapTotal = tapTotal + COEFF[i];
                     }
 
                 //normalize all the taps to a sum of 1
                 for(i=0;i<numberOfTaps;i++)
                     {
-                        temptaps[i] = temptaps[i]/tapTotal;
+                        COEFF[i] = COEFF[i]/tapTotal;
                     }
             }
         else{
@@ -85,14 +85,14 @@ public class LowPassFilter extends Filter {
                 {
                     //check for div by zero
                     if(i-m/2 == 0)
-                        temptaps[i] = w/pi;
+                        COEFF[i] = w/pi;
                     else
-                        temptaps[i] = (float)(java.lang.Math.sin(w*(i-m/2)) / pi
+                        COEFF[i] = (float)(java.lang.Math.sin(w*(i-m/2)) / pi
                                        / (i-m/2) * (0.54 - 0.46
                                                     * java.lang.Math.cos((2*pi)*(i/m))));
                 }
         }
-        COEFF = temptaps;
+        //COEFF = temptaps;
         // Is this actually useful?  StreamIt doesn't like .length,
         // and at any rate, COEFF.length will always be numTaps, which
         // will always have the same value as numberOfTaps.  --dzm

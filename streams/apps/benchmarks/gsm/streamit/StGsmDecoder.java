@@ -667,7 +667,7 @@ class LTPInputSplitJoin extends SplitJoin
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
 	this.add(new LTPPipeline());
-	//this.add(new ShortIdentity());
+	this.add(new Identity(Short.TYPE));
 	//this.add(new ShortPrinter('d'));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }

@@ -66,15 +66,15 @@ public class StatelessDuplicate {
 	// make new filters
 	makeDuplicates();
 
-	// make an init function
-	JMethodDeclaration init = makeSJInit();
-
 	// make result
 	SIRSplitJoin result 
 	    = new SIRSplitJoin(origFilter.getParent(),
 			       origFilter.getName() + "_SplitJoin",
 			       new JFieldDeclaration[0], /* fields */
 			       new JMethodDeclaration[0] /* methods */);
+
+	// make an init function
+	JMethodDeclaration init = makeSJInit(result);
 
 	// create the splitter
 	/*
@@ -103,16 +103,13 @@ public class StatelessDuplicate {
 	}
 	// set the init function
 	result.setInit(init);
-	// set the child filters
-	result.setParallelStreams(newFilters);
-	// replace original in parent
-	replace(origFilter.getParent(), result, origFilter);
+	origFilter.getParent().replace(origFilter, result);
     }
 
     /**
      * Returns an init function for the containing splitjoin.
      */
-    private JMethodDeclaration makeSJInit() {
+    private JMethodDeclaration makeSJInit(SIRSplitJoin sj) {
 	// start by cloning the original init function, so we can get
 	// the signature right
 	JMethodDeclaration result = (JMethodDeclaration)
@@ -123,13 +120,12 @@ public class StatelessDuplicate {
 	LinkedList bodyList = new LinkedList();
 	for (ListIterator it = newFilters.listIterator(); it.hasNext(); ) {
 	    // build up the argument list
-	    JExpression[] args = new JExpression[params.length];
-	    for (int i=0; i<args.length; i++) {
-		args[i] = new JLocalVariableExpression(null, params[i]);
+	    LinkedList args = new LinkedList();
+	    for (int i=0; i<params.length; i++) {
+		args.add(new JLocalVariableExpression(null, params[i]));
 	    }
-	    // make an init statement for the child
-	    bodyList.add(new SIRInitStatement(null, null, 
-					      args, (SIRStream)it.next()));
+	    // add the child and the argument to the parent
+	    sj.add((SIRStream)it.next(), args);
 	}
 	// replace the body of the init function with statement list
 	// we just made
@@ -241,33 +237,4 @@ public class StatelessDuplicate {
 	// append the popLoop to the statements in the work function
 	filter.getWork().getBody().addStatement(makePopLoop(extraPopCount));
     }
-
-    /**
-     * In <parent>, replace <origFilter> with <result>
-     */
-    private static void replace(SIRContainer parent, 
-				final SIRSplitJoin result,
-				final SIRFilter origFilter) {
-	// replace <filterList> with <fused>
-	parent.replace(origFilter, result);
-
-	// replace the SIRInitStatement in the parent
-	parent.getInit().accept(new SLIRReplacingVisitor() {
-		public Object visitInitStatement(SIRInitStatement oldSelf,
-						 JExpression[] oldArgs,
-						 SIRStream oldTarget) {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-		    
-		    if (self.getTarget()==origFilter) {
-			self.setTarget(result);
-		    } 
-		    return self;
-		}
-	    });
-    }
-
-
 }

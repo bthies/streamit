@@ -76,26 +76,23 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
     
     /**
-     * This is the toplevel call for doing partitioning.
+     * This is the toplevel call for doing partitioning.  Returns the
+     * partitioned stream.
      */
     public SIRStream toplevel() {
-	// calculate partitions
 	LinkedList partitions = new LinkedList();
-	SIRStream result = calcPartitions(partitions, true);
-	//	if (KjcOptions.debug) { 
-	// st.printHierarchy();
-	    // }
+	return calcPartitions(partitions, true);
+    }
 
-	// remove unnecessary identities
-	Lifter.eliminateIdentities(result);
-
-	// reclaim children here, since they might've been shuffled
-	// around in the config process
-	if (result instanceof SIRContainer) {
-	    ((SIRContainer)result).reclaimChildren();
-	}
-
-	return result;
+    /**
+     * The toplevel call for calculating partitions without changing
+     * anything in the stream.  Returns a list of partition records
+     * for the partitioning of this.  Also lifts stream at end.
+     */
+    public LinkedList calcPartitions() {
+	LinkedList partitions = new LinkedList();
+	calcPartitions(partitions, false);
+	return partitions;
     }
 
     /**
@@ -107,9 +104,6 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * left alone and only <partitions> are filled up.
      */
     private SIRStream calcPartitions(LinkedList partitions, boolean doTransform) {
-	// debug setup
-	long start = System.currentTimeMillis();
-
 	// build stream config
 	System.out.println("  Building stream config... ");
 	DPConfig topConfig = buildStreamConfig();
@@ -144,40 +138,32 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    expandSharedConfigs();
 	}
 	
+	System.out.println("  Tracing back...");
+
 	// build up list of partitions 
 	partitions.clear();
 	PartitionRecord curPartition = new PartitionRecord();
 	partitions.add(curPartition);
 
-	System.out.println("  Tracing back...");
+	transformOnTraceback = doTransform;
+	SIRStream result = topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
 
-	// first just get partitions
-	/*
-	transformOnTraceback = false;
-	topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
-	// debug output
-	PartitionUtil.printTileWork(partitions, numTiles);
-	PartitionDot.printPartitionGraph(str, "partitions.dot", PartitionRecord.asMap(partitions));
-	Utils.assert(partitions.size()<=numTiles, "Assigned " + partitions.size() + " tiles, but we only have " + numTiles);
-	System.out.println("Dynamic programming partitioner took " + 
-			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
-	*/
+	// remove unnecessary identities
+	Lifter.eliminateIdentities(result);
 
-	// then do transformations.  This will mess up <partitions>
-	// and <curPartition> but it doesn't matter.
-	SIRStream result;
-	if (doTransform) {
-	    transformOnTraceback = true;
-	    result = topConfig.traceback(partitions, curPartition, tilesUsed, 0, str);
-	} else {
-	    result = null;
+	// reclaim children here, since they might've been shuffled
+	// around in the config process
+	if (result instanceof SIRContainer) {
+	    ((SIRContainer)result).reclaimChildren();
 	}
 
-	/* This is no longer the case because of estimating fusion overhead.
-	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions),
-		     "bottleneck=" + bottleneck + " but PartitionUtil.getMaxWork(partitions)=" + PartitionUtil.getMaxWork(partitions));
-	*/
-	return result;
+	// can only print if we didn't transform
+	if (!doTransform) {
+	    Lifter.lift(result);
+	    PartitionDot.printPartitionGraph(result, "partitions.dot", PartitionRecord.asMap(partitions));
+	}
+	
+    	return result;
     }
 
     /**
@@ -186,7 +172,9 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * toplevel stream.
      */
     private DPConfig buildStreamConfig() {
+	// make canonical representation
 	RefactorSplitJoin.addDeepRectangularSyncPoints(str);
+	// dump to graph
 	StreamItDot.printGraph(str, "dp-partition-input.dot");
 	return (DPConfig)str.accept(new ConfigBuilder());
     }

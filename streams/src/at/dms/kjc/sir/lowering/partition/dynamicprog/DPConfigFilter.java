@@ -85,7 +85,11 @@ class DPConfigFilter extends DPConfig {
 		curPartition.add(SIRJoiner.createUniformRR(filter.getParent(), new JIntLiteral(1)), 0);
 		partitions.add(curPartition);
 	    }
-	    return StatelessDuplicate.doit(filter, tilesForFission(tileLimit, nextToJoiner));
+	    if (!DynamicProgPartitioner.transformOnTraceback) {
+		return filter;
+	    } else {
+		return StatelessDuplicate.doit(filter, tilesForFission(tileLimit, nextToJoiner));
+	    }
 	} else {
 	    curPartition.add(filter, partitioner.getWorkEstimate().getWork(filter));
 	    return filter;

@@ -523,7 +523,7 @@ abstract class DPConfigContainer extends DPConfig {
 	// if the whole container is assigned to one tile, record it
 	// as such.
 	if (tileLimit==1) {
-	    curPartition.add(cont);
+	    IterFactory.createFactory().createIter(cont).accept(new RecordingStreamVisitor(curPartition, partitioner.getWorkEstimate()));
 	} 
 	return result;
     }
@@ -554,23 +554,33 @@ abstract class DPConfigContainer extends DPConfig {
 	// if we only have one tile left, return fusion transform with
 	// children fused first
 	if (tileLimit==1) {
-	    // fuse everything.  
-
-	    //  This wrapper business is a mess.  Could probably be
-	    //  simplified -- just moving legacy code out of end of
-	    //  FuseAll, being sure to preserve functionality.
-	    SIRPipeline wrapper = SIRContainer.makeWrapper(str);
-	    wrapper.reclaimChildren();
-	    SIRPipeline wrapper2 = FuseAll.fuse(str);
-	    Lifter.eliminatePipe(wrapper2);
-	    Lifter.lift(wrapper);
-	    // make sure we've fused
-	    Utils.assert(wrapper.size()==1 && wrapper.get(0) instanceof SIRFilter, "Wrapper contains " + wrapper.size() + " entries, with get(0)==" + wrapper.get(0));
-	    // return child
-	    Lifter.eliminatePipe(wrapper);
-	    SIRStream result = wrapper.get(0);
-	    indent--;
-	    return result;
+	    // everything goes in this partition
+	    for (int y=y1; y<=y2; y++) {
+		for (int x=x1; x<=Math.min(x2,width[y]-1); x++) {
+		    IterFactory.createFactory().createIter(childConfig(x,y).getStream()).accept(new RecordingStreamVisitor(curPartition, partitioner.getWorkEstimate()));
+		}
+	    }
+	    if (!DynamicProgPartitioner.transformOnTraceback) {
+		return str;
+	    } else {
+		// fuse everything.
+		
+		//  This wrapper business is a mess.  Could probably be
+		//  simplified -- just moving legacy code out of end of
+		//  FuseAll, being sure to preserve functionality.
+		SIRPipeline wrapper = SIRContainer.makeWrapper(str);
+		wrapper.reclaimChildren();
+		SIRPipeline wrapper2 = FuseAll.fuse(str);
+		Lifter.eliminatePipe(wrapper2);
+		Lifter.lift(wrapper);
+		// make sure we've fused
+		Utils.assert(wrapper.size()==1 && wrapper.get(0) instanceof SIRFilter, "Wrapper contains " + wrapper.size() + " entries, with get(0)==" + wrapper.get(0));
+		// return child
+		Lifter.eliminatePipe(wrapper);
+		SIRStream result = wrapper.get(0);
+		indent--;
+		return result;
+	    }
 	}
 
 	// otherwise, we're going to try making a cut... but first see
@@ -770,4 +780,44 @@ abstract class DPConfigContainer extends DPConfig {
      * Returns config for child at index <x, y>
      */
     protected abstract DPConfig childConfig(int x, int y);
+}
+
+/**
+ * Records all filters, splitters, and joiners in a given stream into
+ * a partition record.
+ */
+class RecordingStreamVisitor extends EmptyStreamVisitor {
+    private final PartitionRecord curPartition;
+    private final WorkEstimate workEstimate;
+
+    public RecordingStreamVisitor(PartitionRecord _curPartition,
+				  WorkEstimate _workEstimate) {
+	this.curPartition = _curPartition;
+	this.workEstimate = _workEstimate;
+    }
+    
+    /**
+     * This is called before all visits to a stream structure (Filter,
+     * Pipeline, SplitJoin, FeedbackLoop)
+     */
+    public void preVisitStream(SIRStream self,
+			       SIRIterator iter) {
+	// add the stream
+	if (self instanceof SIRContainer) {
+	    // containers
+	    curPartition.add((SIRContainer)self);
+	} else {
+	    // filters
+	    curPartition.add(self, workEstimate.getWork((SIRFilter)self));
+	}
+	// also add splitters, joiners
+	if (self instanceof SIRSplitJoin) {
+	    curPartition.add(((SIRSplitJoin)self).getSplitter(), 0);
+	    curPartition.add(((SIRSplitJoin)self).getJoiner(), 0);
+	}
+	if (self instanceof SIRFeedbackLoop) {
+	    curPartition.add(((SIRFeedbackLoop)self).getSplitter(), 0);
+	    curPartition.add(((SIRFeedbackLoop)self).getJoiner(), 0);
+	}
+    }
 }

@@ -24,6 +24,7 @@ public class GenerateComputeCode {
 	}
 	catch (Exception e) {
 	    System.err.println("Serious error writing compute code.");
+	    e.printStackTrace();
 	    System.exit(-1);
 	}
     }

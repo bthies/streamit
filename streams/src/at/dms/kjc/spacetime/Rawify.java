@@ -8,7 +8,7 @@ import at.dms.util.Utils;
 import java.util.LinkedList;
 
 /** This class will rawify the SIR code and it creates the 
- * switch code.  It does not rawify the switch code in place. 
+ * switch code.  It does not rawify the compute code in place. 
 **/
 public class Rawify
 {

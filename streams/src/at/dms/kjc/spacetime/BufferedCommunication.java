@@ -426,8 +426,9 @@ public class BufferedCommunication extends RawExecutionCode
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
-	if (filterInfo.getNextFilters().length > 1)
-	    Utils.fail("split joins not supported");
+	//get the upsteam filter assuming that it does not pass thru another trace
+	//this is only here for compatablility with the intra-tile, inter-trace
+	//implementation
 	FilterInfo upstream = FilterInfo.getFilterInfo(filterInfo.getNextFilters()[0]);
 	
 

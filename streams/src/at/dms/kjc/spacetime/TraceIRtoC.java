@@ -929,7 +929,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
 	    print(Util.staticNetworkReceivePrefix());
 	    visitArgs(args,0);
-	    print(Util.staticNetworkReceiveSuffix(args[0].getType()));
+	    print(Util.staticNetworkReceiveSuffix(self.getType()));
 	    return;  
 	}
 	

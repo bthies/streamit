@@ -154,9 +154,7 @@ public class DirectCommunication extends RawExecutionCode
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
 	FilterInfo upstream = null;
-	if (filterInfo.getNextFilters().length > 1)
-	    Utils.fail("split joins not supported");
-	else if (filterInfo.getNextFilters().length == 1) 
+	if (filterInfo.getNextFilters().length == 1) 
 	    upstream = FilterInfo.getFilterInfo(filterInfo.getNextFilters()[0]);
 	
 	//inline the work function in a while loop
@@ -403,8 +401,6 @@ public class DirectCommunication extends RawExecutionCode
     
     
 	private Object altCodeGen(SIRPopExpression self) {
-	    Utils.fail("not supported");
-	    
 	    //direct communcation is only generated if the input/output types are scalar
 	    if (self.getType().isFloatingPoint())
 		return 

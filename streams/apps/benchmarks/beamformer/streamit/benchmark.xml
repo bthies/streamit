@@ -4,12 +4,18 @@
   <description>
 Template application to perform beam-forming on a set of inputs.  The
 input file should be preprocessed with 'cpp'; running 'make' will
-produce all of the possible outputs.  Each input passes through an FIR
-filter which amplifies inputs with a particular delay from the source,
-and then tests if the result is greater than some threshold.  The
-"coarse" beam former decimates its input to perform less actual
-calculation; the "serialized" beam former collects all of its outputs
-and prints them, rather than printing them in the child stages.
+produce all of the possible outputs.  The application has two stages.
+The top stage gathers input from a set of parallel channels, with FIR
+filters to delay each channel by a different amount.  The bottom stage
+steers the channels into a set of beams, with a detector to sense if
+the signal in a particular location exceeds a given threshold.  The
+"serialized" versions of the beamformer guarantee a deterministic
+output order; otherwise there are outputs in parallel, with ordering
+that depends on the schedule that is chosen.  The "coarse" versions of
+the beamformer perform the same computation, but are written at a
+coarser level of granularity so that some filters do not need to
+retain internal state.  This facilitates some compiler analyses, but
+causes the I/O rates of the filters to be much larger.
   </description>
   <reference>(none)</reference>
   <implementations>

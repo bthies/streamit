@@ -5,8 +5,8 @@ class FloatIdentity extends Filter
 {
 	public void init ()
 	{
-		setInput (Float.TYPE); setOutput (Float.TYPE);
-		setPush (1); setPop (1);
+            input = new Channel(Float.TYPE, 1);
+            output = new Channel(Float.TYPE, 1);
 	}
 	public void work ()
 	{
@@ -32,8 +32,8 @@ class LatFilt extends Filter {// this is the intermediate stage of the lattice f
     public LatFilt(float k_par) {super (k_par);}
 
   public void init(float k_par) {
-   setInput(Float.TYPE); setOutput(Float.TYPE);
-   setPush(2);setPop(2);setPeek(2);
+      input = new Channel(Float.TYPE, 2, 2);
+      output = new Channel(Float.TYPE, 2);
    this.k_par=k_par;
    }
   
@@ -73,8 +73,7 @@ class CompStage extends Pipeline {// this class combines the delaying phase and 
 
 class LastStage extends Filter {   // this class is the last stage of a lattice filter
 public void init(){ 
-   setInput(Float.TYPE);
-   setPop(2);
+    input = new Channel(Float.TYPE, 2);
    }
 
 public void work(){
@@ -86,8 +85,7 @@ public void work(){
 class Counter extends Filter {
     float i;
 public void init(){ 
-   setOutput(Float.TYPE);
-   setPush(1);
+    output = new Channel(Float.TYPE, 1);
    i = 1;
    }
 

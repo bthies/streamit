@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.11 2002-10-25 13:22:49 aalamb Exp $
+ * $Id: TestLinear.java,v 1.12 2002-10-28 22:31:55 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -18,6 +18,9 @@ public class TestLinear extends TestCase {
 
     public static Test suite() {
 	TestSuite suite = new TestSuite();
+
+	suite.addTest(new TestLinear("testFFT"));
+
 	suite.addTest(new TestLinear("testSimple"));
 	suite.addTest(new TestLinear("testComplexNumberCreationAndAccess"));
 	suite.addTest(new TestLinear("testComplexNumberEquality"));
@@ -55,7 +58,9 @@ public class TestLinear extends TestCase {
 	
 	return suite;
     }
+
     
+    /** Simple infrastructure tests. **/
     public void testSimple() {
 	assertTrue("was true", true);
     }
@@ -976,107 +981,194 @@ public class TestLinear extends TestCase {
 	
 
 
-    
 
+    /** test the javafied version of the fft implementation that we use in C **/
+    public void testFFT() {
+	float[] in = new float[16];
+	in[0]=0.000000f;
+	in[1]=0.000000f;
+	in[2]=0.000000f;
+	in[3]=0.000000f;
+	in[4]=0.000000f;
+	in[5]=1.000000f;
+	in[6]=1.000000f;
+	in[7]=1.000000f;
+	in[8]=1.000000f;
+	in[9]=1.000000f;
+	in[10]=1.000000f;
+	in[11]=1.000000f;
+	in[12]=0.000000f;
+	in[13]=0.000000f;
+	in[14]=0.000000f;
+	in[15]=0.000000f;
+	float[] out_r = new float[16];
+	out_r[0]=7.000000f;
+	out_r[1]=-5.027339f;
+	out_r[2]=1.000000f;
+	out_r[3]=1.496606f;
+	out_r[4]=-1.000000f;
+	out_r[5]=-0.668179f;
+	out_r[6]=1.000000f;
+	out_r[7]=0.198912f;
+	out_r[8]=-1.000000f;
+	out_r[9]=0.198912f;
+	out_r[10]=1.000000f;
+	out_r[11]=-0.668179f;
+	out_r[12]=-1.000000f;
+	out_r[13]=1.496606f;
+	out_r[14]=1.000000f;
+	out_r[15]=-5.027339f;
+	float[] out_i = new float[16];
+	out_i[0]=-0.000000f;
+	out_i[1]=-0.000000f;
+	out_i[2]=0.000000f;
+	out_i[3]=0.000000f;
+	out_i[4]=-0.000000f;
+	out_i[5]=0.000000f;
+	out_i[6]=0.000000f;
+	out_i[7]=-0.000000f;
+	out_i[8]=0.000000f;
+	out_i[9]=0.000000f;
+	out_i[10]=0.000000f;
+	out_i[11]=-0.000000f;
+	out_i[12]=-0.000000f;
+	out_i[13]=-0.000000f;
+	out_i[14]=0.000000f;
+	out_i[15]=0.000000f;
+	
+	/* compute the fft with our javafied version, and compare against the output of the c program. */
+	float[] java_output_r = new float[16];
+	float[] java_output_i = new float[16];
+	LinearFFT.fft_float(16, false, in, null, java_output_r, java_output_i); /* forward transform */
+	
+	compareArrays(out_r, java_output_r);
+	compareArrays(out_i, java_output_i);
 
-    ///////////// Utility function that I don't want to clutter the acutal
-    ///////////// implementation with.
-    
-    /**
-     * Creates a matrix that represents the string
-     * passed in (a la matlab notation).
-     * eg.<p>
-     * <pre>
-     * "[[0 1 0][1 0 1][0 0 1]]"
-     *
-     * would yield the following matrix:
-     * |0 1 0|
-     * |1 0 1|
-     * |0 0 1|
-     *</pre><p>
-     *
-     * It is good to note that the parser is very intolerant to
-     * syntax errors. The notation must be exactly like the one
-     * above, no imaginary parts allowed, one space between all elements.
-     * The size of the first row is assumed to be the size of all rows.
-     **/
-    public FilterMatrix parseMatrix(String matlabNotation) {
-	// chop off left and right end braces
-	matlabNotation = matlabNotation.substring(1);
-	matlabNotation = matlabNotation.substring(0,matlabNotation.length()-1);
+	/* just for chuckles, do the inverse fft to get back in */
+	float[] recovered_in_r = new float[16];
+	float[] recovered_in_i = new float[16];
+	LinearFFT.fft_float(16, true, java_output_r, java_output_i, recovered_in_r, recovered_in_i);
 
-	// first count the number of left braces (])
-	int numRows = 0;
-	for (int i=0; i<matlabNotation.length(); i++) {
-	    if (matlabNotation.charAt(i) == ']') {
-		numRows++;
-	    }
-	}
-	// now, figure out the number of columns
-	// by parsing down the string starting from char
-	// 2 (eg the first non brace) and stopping at the first right
-	// brace.
-	int numCols = 1;
-	for (int i=2; (matlabNotation.charAt(i) != ']'); i++) {
-	    if (matlabNotation.charAt(i) == ' ') {
-		numCols++;
-	    }
-	}
-
-	// Now, create a new matrix of the suitable size
-	FilterMatrix newMatrix = new FilterMatrix(numRows, numCols);
-
-	// Now, parse the string into the actual data
-	StringTokenizer rowTokenizer = new StringTokenizer(matlabNotation, "][");
-	// process the first and last strings differently (to remove the [[ and ]])
-	int currentRow = 0;
-	while(rowTokenizer.hasMoreTokens()) {
-	    String currentString = rowTokenizer.nextToken();
-	    processRow(newMatrix, currentRow, currentString);
-	    currentRow++;
-	}
-
-	return newMatrix;
+	compareArrays(in, recovered_in_r);
+	compareArrays(new float[16], recovered_in_i);
     }
 
-    /** processes a row of data for parseMatrix **/
-    private void processRow(FilterMatrix fm, int row, String rowString) { 
-	// chop up row by spaces
-	StringTokenizer elemTokenizer = new StringTokenizer(rowString, " ");
-	int currentCol = 0;
-	while(elemTokenizer.hasMoreTokens()) {
-	    String currentString = elemTokenizer.nextToken();
-	    // parse out the number value
-	    double currentVal = Double.parseDouble(currentString);
-	    // make the corresponding complex number
-	    ComplexNumber newEntry = new ComplexNumber(currentVal, 0);
-	    // add an entry in the matrix
-	    fm.setElement(row, currentCol, newEntry);
-	    currentCol++;
+    /** compares array */
+    private void compareArrays(float[] arr1, float[] arr2) {
+	float MAXDIFF = .0001f;
+	assertTrue("lengths equal", arr1.length == arr2.length);
+	/* assert each element */
+	for (int i=0; i<arr1.length; i++) {
+	    boolean closeEnough = (Math.abs(arr1[i] - arr2[i]) < MAXDIFF);
+	    assertTrue(("arr1[" +  i + "]=" + arr1[i] + ", arr2[" + i + "]=" + arr2[i]),
+		       closeEnough);
 	}
     }
 	    
+    
 
-    /**
-     * Creates an array of integers from a string
-     * of the form "1 2 3 4" where the integers are
-     * separated by a space.
-     **/
-    private static int[] parseArray(String arrayString) {
-	// basically, split on space
-	StringTokenizer st = new StringTokenizer(arrayString, " ");
-	// make a new array
-	int arr[] = new int[st.countTokens()];
-	int currentIndex = 0;
-	while(st.hasMoreTokens()) {
-	    arr[currentIndex] = Integer.parseInt(st.nextToken());
-	    currentIndex++;
+
+    
+
+
+	///////////// Utility function that I don't want to clutter the acutal
+	///////////// implementation with.
+    
+	/**
+	* Creates a matrix that represents the string
+	* passed in (a la matlab notation).
+	* eg.<p>
+	* <pre>
+	* "[[0 1 0][1 0 1][0 0 1]]"
+	*
+	* would yield the following matrix:
+	* |0 1 0|
+	* |1 0 1|
+	* |0 0 1|
+	*</pre><p>
+	*
+	* It is good to note that the parser is very intolerant to
+	* syntax errors. The notation must be exactly like the one
+	* above, no imaginary parts allowed, one space between all elements.
+	* The size of the first row is assumed to be the size of all rows.
+	**/
+	public FilterMatrix parseMatrix(String matlabNotation) {
+	    // chop off left and right end braces
+	    matlabNotation = matlabNotation.substring(1);
+	    matlabNotation = matlabNotation.substring(0,matlabNotation.length()-1);
+
+	    // first count the number of left braces (])
+	    int numRows = 0;
+	    for (int i=0; i<matlabNotation.length(); i++) {
+		if (matlabNotation.charAt(i) == ']') {
+		    numRows++;
+		}
+	    }
+	    // now, figure out the number of columns
+	    // by parsing down the string starting from char
+	    // 2 (eg the first non brace) and stopping at the first right
+	    // brace.
+	    int numCols = 1;
+	    for (int i=2; (matlabNotation.charAt(i) != ']'); i++) {
+		if (matlabNotation.charAt(i) == ' ') {
+		    numCols++;
+		}
+	    }
+
+	    // Now, create a new matrix of the suitable size
+	    FilterMatrix newMatrix = new FilterMatrix(numRows, numCols);
+
+	    // Now, parse the string into the actual data
+	    StringTokenizer rowTokenizer = new StringTokenizer(matlabNotation, "][");
+	    // process the first and last strings differently (to remove the [[ and ]])
+	    int currentRow = 0;
+	    while(rowTokenizer.hasMoreTokens()) {
+		String currentString = rowTokenizer.nextToken();
+		processRow(newMatrix, currentRow, currentString);
+		currentRow++;
+	    }
+
+	    return newMatrix;
 	}
-	return arr;
-    }
+
+	/** processes a row of data for parseMatrix **/
+	private void processRow(FilterMatrix fm, int row, String rowString) { 
+	    // chop up row by spaces
+	    StringTokenizer elemTokenizer = new StringTokenizer(rowString, " ");
+	    int currentCol = 0;
+	    while(elemTokenizer.hasMoreTokens()) {
+		String currentString = elemTokenizer.nextToken();
+		// parse out the number value
+		double currentVal = Double.parseDouble(currentString);
+		// make the corresponding complex number
+		ComplexNumber newEntry = new ComplexNumber(currentVal, 0);
+		// add an entry in the matrix
+		fm.setElement(row, currentCol, newEntry);
+		currentCol++;
+	    }
+	}
+	    
+
+	/**
+	 * Creates an array of integers from a string
+	 * of the form "1 2 3 4" where the integers are
+	 * separated by a space.
+	 **/
+	private static int[] parseArray(String arrayString) {
+	    // basically, split on space
+	    StringTokenizer st = new StringTokenizer(arrayString, " ");
+	    // make a new array
+	    int arr[] = new int[st.countTokens()];
+	    int currentIndex = 0;
+	    while(st.hasMoreTokens()) {
+		arr[currentIndex] = Integer.parseInt(st.nextToken());
+		currentIndex++;
+	    }
+	    return arr;
+	}
 
 
 
     
 
-}
+    }

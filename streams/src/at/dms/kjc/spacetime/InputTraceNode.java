@@ -159,4 +159,11 @@ public class InputTraceNode extends TraceNode
 	}
 	return false;
     }
+
+    public boolean onlyFileInput() 
+    {
+	return (oneInput() &&
+		sources[0].getSrc().isFileReader());
+    }
+    
 }

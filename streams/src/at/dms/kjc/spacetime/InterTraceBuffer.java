@@ -56,5 +56,10 @@ public class InterTraceBuffer extends OffChipBuffer
 	//
 	sizeSteady = (Address.ZERO.add(Util.steadyBufferSize(edge))).add32Byte(0);	
     }
+
+    public Edge getEdge() 
+    {
+	return edge;
+    }
     
 }

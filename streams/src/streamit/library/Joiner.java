@@ -1,12 +1,10 @@
 package streamit;
 
-import streamit.scheduler.SchedJoinType;
-import streamit.scheduler.Scheduler;
-
 import java.util.*;
+import streamit.scheduler.iriter.SplitJoinIter;
 
 // many inputs, 1 output
-public class Joiner extends Operator
+abstract public class Joiner extends Operator
 {
     List srcs = new ArrayList ();
 
@@ -76,20 +74,33 @@ public class Joiner extends Operator
         }
     }
 
-    public void work ()
-    {
-        ASSERT (false);
-    }
+    abstract public void work ();
 
     // ----------------------------------------------------------------
-    // This code constructs an independent graph for the scheduler
+    // This function constructs a weight distribution table
     // ----------------------------------------------------------------
 
-    SchedJoinType getSchedType (Scheduler scheduler)
+    public abstract int [] getWeights ();
+
+    public int getType ()
     {
-        // you must override this function!
-        ASSERT (false);
-        return null;
+        if (this instanceof RoundRobinJoiner)
+        {
+            return SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN;
+        } else
+        if (this instanceof WeightedRoundRobinJoiner)
+        {
+            return SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN;
+        } else
+        if (this instanceof NullJoiner)
+        {
+            return SplitJoinIter.SJ_NULL;
+        } else
+        {
+            // the joiner doesn't conform to any recognized type!
+            ASSERT (false);
+            return SplitJoinIter.SJ_ERROR;
+        }
     }
 }
 

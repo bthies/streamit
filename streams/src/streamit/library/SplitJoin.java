@@ -4,8 +4,6 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.math.BigInteger;
 
-import streamit.scheduler.*;
-
 // creates a split/join
 public class SplitJoin extends Stream
 {
@@ -298,49 +296,13 @@ public class SplitJoin extends Stream
         }
     }
 
-    // ----------------------------------------------------------------
-    // This code constructs an independent graph for the scheduler
-    // ----------------------------------------------------------------
-
-    SchedStream constructSchedule ()
-    {
-        // create a new splitjoin
-        SchedSplitJoin splitJoin = scheduler.newSchedSplitJoin (this);
-
-        // setup the splitter
-        if (splitter != null)
-        {
-            SchedSplitType splitType;
-            splitType = splitter.getSchedType (scheduler);
-            splitJoin.setSplitType (splitType);
-        }
-
-        // setup the joiner
-        if (joiner != null)
-        {
-            SchedJoinType joinType;
-            joinType = joiner.getSchedType (scheduler);
-            splitJoin.setJoinType (joinType);
-        }
-
-        // add all the children:
-        {
-            ListIterator iter;
-            iter = childrenStreams.listIterator ();
-
-            while (iter.hasNext ())
-            {
-                Stream child = (Stream) iter.next ();
-                ASSERT (child);
-
-                SchedStream schedChild = child.constructSchedule ();
-                splitJoin.addChild (schedChild);
-            }
-        }
-
-        return splitJoin;
-    }
-
+     // allow access to the children of this pipeline
+     
+    public int getNumChildren () { return streamElements.size (); }
+    public Stream getChildN (int n) { return (Stream) streamElements.get (n); }
+    public Splitter getSplitter () { return splitter; }
+    public Joiner getJoiner () { return joiner; }
+    
     void setupBufferLengths (Schedule schedule)
     {
         ListIterator iter;

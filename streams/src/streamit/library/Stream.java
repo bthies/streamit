@@ -2,8 +2,6 @@ package streamit;
 
 import java.util.*;
 import java.lang.reflect.*;
-import streamit.scheduler.*;
-import streamit.scheduler.simple.SimpleHierarchicalScheduler;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
 public abstract class Stream extends Operator
@@ -220,34 +218,6 @@ public abstract class Stream extends Operator
     }
 
     public abstract void connectGraph ();
-
-    // ----------------------------------------------------------------
-    // This code constructs an independent graph for the scheduler
-    // ----------------------------------------------------------------
-
-    static Scheduler scheduler;
-
-    SchedStream constructSchedule ()
-    {
-        // go through my children and dispatch on their
-        SchedPipeline pipeline = scheduler.newSchedPipeline (this);
-
-        ListIterator childIter;
-        childIter = (ListIterator) streamElements.iterator ();
-
-        while (childIter.hasNext ())
-        {
-            // advance the iterator:
-            Stream child = (Stream) childIter.next ();
-            ASSERT (child);
-
-            SchedStream childStream;
-            childStream = child.constructSchedule ();
-            pipeline.addChild (childStream);
-        }
-
-        return pipeline;
-    }
 
     /**
      * Initialize the buffer lengths for a stream, given a schedule:

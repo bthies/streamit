@@ -2,7 +2,6 @@ package streamit;
 
 import java.util.*;
 import java.math.BigInteger;
-import streamit.scheduler.Schedule;
 
 /**
  *  implements a pipeline - stream already has all the functionality,

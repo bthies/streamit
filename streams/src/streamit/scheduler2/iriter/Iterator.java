@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: Iterator.java,v 1.2 2002-05-01 23:20:04 karczma Exp $ */
+/* $Id: Iterator.java,v 1.3 2002-05-22 00:28:19 karczma Exp $ */
 
 /**
  * <dl>
@@ -22,8 +22,39 @@ package streamit.scheduler.iriter;
 
 public interface Iterator
 {
-    FilterIter isFilter ();
-    PipelineIter isPipeline ();
-    SplitJoinIter isSplitJoin ();
-    FeedbackLoopIter isFeedbackLoop ();
+    /**
+     * Checks if the iterator points to a Filter.  If so, returns
+     * a Filter iterator that points to the same object.  If not,
+     * returns null.
+     * @return iterator to a Filter or null if self doesn't point to 
+     * a Filter
+     */
+    FilterIter isFilter();
+
+    /**
+     * Checks if the iterator points to a Pipeline.  If so, returns
+     * a Pipeline iterator that points to the same object.  If not,
+     * returns null.
+     * @return iterator to a Pipeline or null if self doesn't point to
+     * a Pipeline
+     */
+    PipelineIter isPipeline();
+    
+    /**
+     * Checks if the iterator points to a SplitJoin.  If so, returns
+     * a SplitJoin iterator that points to the same object.  If not,
+     * returns null.
+     * @return iterator to a SplitJoin or null if self doesn't point to
+     * a SplitJoin
+     */
+    SplitJoinIter isSplitJoin();
+
+    /**
+     * Checks if the iterator points to a FeedbackLoop.  If so, returns
+     * a FeedbackLoop iterator that points to the same object.  If not,
+     * returns null.
+     * @return iterator to a FeedbackLoop or null if self doesn't point
+     * to a FeedbackLoop
+     */
+    FeedbackLoopIter isFeedbackLoop();
 }

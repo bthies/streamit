@@ -2,8 +2,6 @@ package streamit;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import streamit.scheduler.SchedSplitType;
-import streamit.scheduler.Scheduler;
 
 public class DuplicateSplitter extends Splitter
 {
@@ -12,31 +10,27 @@ public class DuplicateSplitter extends Splitter
         duplicateOneData (input, output);
     }
 
-    // ----------------------------------------------------------------
-    // This code constructs an independent graph for the scheduler
-    // ----------------------------------------------------------------
-
-    SchedSplitType getSchedType (Scheduler scheduler)
+    public int [] getWeights ()
     {
-        ArrayList weights = new ArrayList (dest.size ());
-
+        // not tested yet
+        ASSERT (0);
+        
+        int numChildren = dest.size ();
+        int [] weights = new int [numChildren + 1];
+        int inputTotal = 0;
+        
+        int i;
+        for (i=0;i<numChildren;i++)
         {
-            Iterator filterIter = dest.iterator ();
-
-            Integer one = new Integer (1);
-            Integer zero = new Integer (0);
-
-            int index;
-            for (index = 0; index < dest.size (); index++)
+            if (((Stream)dest.get (i)).input != null)
             {
-                Stream filter = (Stream) filterIter.next ();
-                ASSERT (filter);
-
-                if (filter.getIOField ("input") != null) weights.add (one);
-                else weights.add (zero);
+                weights [i + 1] = 1;
+                inputTotal ++;
             }
         }
-
-        return scheduler.newSchedSplitType (SchedSplitType.DUPLICATE, weights, this);
+        
+        weights [0] = inputTotal;
+        
+        return weights;
     }
 }

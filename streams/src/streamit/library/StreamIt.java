@@ -1,11 +1,6 @@
 package streamit;
 
 import streamit.Pipeline;
-import streamit.scheduler.simple.SimpleHierarchicalSchedulerPow2;
-import streamit.scheduler.simple.SimpleHierarchicalScheduler;
-import streamit.scheduler.SchedStream;
-import streamit.scheduler.SchedRepSchedule;
-
 import java.util.List;
 import java.util.ListIterator;
 

@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler.*;
+import streamit.scheduler.Schedule;
 
 // a filter is the lowest-level block of streams
 public abstract class Filter extends Stream
@@ -146,20 +146,6 @@ public abstract class Filter extends Stream
         {
             pushCount = getOutputChannel ().getPushCount ();
         }
-    }
-
-    // construct a schedule - construct an appropriate filter schedule
-    // and return it
-    SchedStream constructSchedule ()
-    {
-        initCount ();
-        ASSERT (popCount >= 0 && pushCount >= 0);
-        ASSERT (popCount > 0 || pushCount > 0);
-
-        SchedFilter self = scheduler.newSchedFilter (this, pushCount, popCount, peekCount);
-        self.setProduction (pushCount);
-        self.setConsumption (popCount);
-        return self;
     }
 
     void setupBufferLengths (Schedule schedule)

@@ -1,7 +1,5 @@
 package streamit;
 
-import streamit.scheduler.*;
-
 // the feedback loop
 public class FeedbackLoop extends Stream
 {
@@ -52,6 +50,11 @@ public class FeedbackLoop extends Stream
         ASSERT (this.loop == null && loop != null);
         this.loop = loop;
     }
+    
+    public Stream getBody () { return body; }
+    public Stream getLoop () { return loop; }
+    public Splitter getSplitter () { return splitter; }
+    public Joiner getJoiner () { return joiner; }
 
     /**
      * initialize the loop - push index-th element into the feedback loop channel.
@@ -249,18 +252,6 @@ public class FeedbackLoop extends Stream
     // ----------------------------------------------------------------
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
-
-    SchedStream constructSchedule ()
-    {
-        // initialize the children
-        SchedStream bodySched = (body == null ? null : body.constructSchedule ());
-        SchedStream loopSched = (loop == null ? null : loop.constructSchedule ());
-
-        // create the loop
-        SchedLoop stream = scheduler.newSchedLoop (this, joiner.getSchedType (scheduler), bodySched, splitter.getSchedType (scheduler), loopSched, delay);
-
-        return stream;
-    }
 
     void setupBufferLengths (Schedule schedule)
     {

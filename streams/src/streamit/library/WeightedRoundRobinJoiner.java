@@ -1,7 +1,5 @@
 package streamit;
 
-import streamit.scheduler.SchedJoinType;
-import streamit.scheduler.Scheduler;
 import java.util.*;
 
 public class WeightedRoundRobinJoiner extends Joiner {
@@ -42,12 +40,21 @@ public class WeightedRoundRobinJoiner extends Joiner {
         }
     }
 
-    // ----------------------------------------------------------------
-    // This code constructs an independent graph for the scheduler
-    // ----------------------------------------------------------------
-
-    SchedJoinType getSchedType (Scheduler scheduler)
+    public int [] getWeights ()
     {
-        return scheduler.newSchedJoinType (SchedJoinType.WEIGHTED_ROUND_ROBIN, srcsWeight, this);
+        // not debugged yet
+        ASSERT (0);
+        int numChildren = srcs.size ();
+        int [] weights = new int [numChildren + 1];
+        int sumOutput = 0;
+        
+        for (int i = 0; i < numChildren; i++)
+        {
+            weights [i+1] = ((Integer)srcs.get (i)).intValue ();
+            sumOutput += weights [i+1];
+        }
+        
+        weights [0] = sumOutput;
+        return weights;
     }
 }

@@ -214,6 +214,7 @@ public class Flattener {
 	    KjcOptions.linearreplacement ||
 	    KjcOptions.linearreplacement2 ||
 	    KjcOptions.linearreplacement3 ||
+	    KjcOptions.atlas ||
 	    KjcOptions.linearpartition ||
 	    KjcOptions.frequencyreplacement ||
 	    KjcOptions.redundantreplacement) {
@@ -251,7 +252,7 @@ public class Flattener {
 		// if we are supposed to transform the graph
 		// by replacing work functions with their linear forms (using indirection)
 		if (KjcOptions.linearreplacement2) {
-		    System.err.print("Running indirect linear replacement ... ");
+		    System.err.print("Running indirect linear replacement... ");
 		    LinearIndirectReplacer.doReplace(lfa, str);
 		    System.err.println("done.");
 		    // print out the stream graph after linear replacement
@@ -261,11 +262,21 @@ public class Flattener {
 		// if we are supposed to transform the graph
 		// by replacing work functions with diagonal matrix multiplies
 		if (KjcOptions.linearreplacement3) {
-		    System.err.print("Running diagonal linear replacement ... ");
+		    System.err.print("Running diagonal linear replacement... ");
 		    LinearDiagonalReplacer.doReplace(lfa, str);
 		    System.err.println("done.");
 		    // print out the stream graph after linear replacement
 		    LinearDot.printGraph(str, "linear-diagonal-replace.dot", lfa);
+		}
+
+		// if we are supposed to transform the graph
+		// by replacing work functions with diagonal matrix multiplies
+		if (KjcOptions.atlas) {
+		    System.err.print("Running ATLAS linear replacement... ");
+		    LinearAtlasReplacer.doReplace(lfa, str);
+		    System.err.println("done.");
+		    // print out the stream graph after linear replacement
+		    LinearDot.printGraph(str, "linear-atlas-replace.dot", lfa);
 		}
 
 		// and finally, if we want to run frequency analysis

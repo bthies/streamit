@@ -12,15 +12,34 @@ public class SIRPopExpression extends JExpression {
      * Type of the item to peek.
      */
     protected CType tapeType;
-
+    /**
+     * The number of items to pop.  If this is anything other than 1,
+     * then the value returned by this is undefined.
+     */
+    private int numPop;
+    
     /**
      * Construct a node in the parsing tree
      * @param	where		the line of this node in the source code
      */
     public SIRPopExpression(CType tapeType)
     {
+	this(tapeType, 1);
+    }
+
+    /**
+     * Construct a node that pops N items, and returns an undefined
+     * value.  For quick advances of the tape.
+     *
+     * !!!!!!!!! WARNING !!!!!!!!!!  There is extremely limited
+     * support for this in the IR.  Right now it just has the correct
+     * code generated for it in the uniprocessor backend.
+     */
+    public SIRPopExpression(CType tapeType, int N)
+    {
 	super(null);
         this.tapeType = tapeType;
+	this.numPop = N;
     }
 
     /**
@@ -75,6 +94,13 @@ public class SIRPopExpression extends JExpression {
     // ----------------------------------------------------------------------
     // CODE GENERATION
     // ----------------------------------------------------------------------
+
+    /**
+     * Returns how many items this pops.
+     */
+    public int getNumPop() {
+	return numPop;
+    }
 
     /**
      * Accepts the specified visitor.

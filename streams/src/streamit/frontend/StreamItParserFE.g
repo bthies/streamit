@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.39 2003-07-08 20:44:22 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.40 2003-08-29 17:36:39 dmaze Exp $
  */
 
 header {
@@ -130,7 +130,7 @@ work_decl returns [FuncWork f]
 	int type = 0;
 }
 	:	(	tw:TK_work { c = getContext(tw); type = Function.FUNC_WORK; }
-		|	tpw:TK_prework { c = getContext(tw);
+		|	tpw:TK_prework { c = getContext(tpw);
 							 type = Function.FUNC_PREWORK; }
 		|	tp:TK_phase id:ID { c = getContext(tp); name = id.getText();
 			                    type = Function.FUNC_PHASE;}

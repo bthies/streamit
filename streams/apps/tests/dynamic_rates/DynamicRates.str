@@ -1,0 +1,42 @@
+void->void pipeline DynamicRates 
+{
+    add Filter1();
+    add Filter2();
+    add Filter3();
+}
+
+void->int filter Filter1() 
+{
+    int i = 0;
+    
+    work push 1 {
+	if (i == 10) 
+	    i = 0;
+	push(i++);
+    }
+}
+
+
+int->int filter Filter2() 
+{
+    work push 1 pop [1,*] {
+	int val, i, tot = 0;
+	
+	val = pop();
+	
+	for (i = 0; i < val; i++) {
+	    tot += pop();
+	}
+	
+	push(tot);
+    }
+}
+
+int->void filter Filter3() 
+{
+    work pop 1 
+	{
+	    print(pop());
+	}
+}
+

@@ -1,0 +1,64 @@
+
+void->void pipeline DynamicRatesComp1 
+{
+    add Filter1();
+    add splitjoin {
+	split duplicate;
+	add parallelPipe();
+	add parallelPipe();
+	join roundrobin(0);
+    }
+}
+
+
+
+int->void pipeline parallelPipe() 
+{
+    add myFilter();
+    add Filter2();
+    add myFilter();
+    add Filter3();
+}
+
+
+int->int filter myFilter() {
+    work push 1 pop 1 {
+	push(pop() + 1);
+    }
+}
+
+int->void filter Filter3() 
+{
+    work pop 1 
+	{
+	    print(pop());
+	}
+}
+
+
+
+int->int filter Filter2() 
+{
+    work push 1 pop [1,*] {
+	int val, i, tot = 0;
+	
+	val = pop();
+	
+	for (i = 0; i < val; i++) {
+	    tot += pop();
+	}
+	
+	push(tot);
+    }
+}
+
+void->int filter Filter1() 
+{
+    int i = 0;
+    
+    work push 1 {
+	if (i == 10) 
+	    i = 0;
+	push(i++);
+    }
+}

@@ -476,7 +476,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    } else {
 	    */
 	    StreamTransform result = null;
-	    if (tileLimit==1 || (cont.getParent() instanceof SIRSplitJoin)) {
+	    if (tileLimit==1 || (cont.getParent()!=null && 
+				 cont.getParent().getSuccessor(cont) instanceof SIRJoiner)) {
 		result = super.traceback(map, tileCounter, tileLimit);
 	    } else {
 		// if we're not fusing into a single tile, need to:

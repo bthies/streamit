@@ -1,0 +1,731 @@
+/**
+ *  Gsm.str:
+ *  Rewritten GSM Vocoder, from StGsmDecoder.java
+ *  10/06/03
+ *  J. Wong
+ */
+
+
+
+
+
+int -> int filter RPEDecodeFilter {
+
+    int[13] mXmc;    
+    int[8] FAC;
+    int[13] xmp;
+    int[40] ep;
+
+    #include "Helper.str"
+
+    init {
+	////////////////////////////////////////////
+	// assign the members of the FAC array
+	FAC[0] = 29218;
+	FAC[1] = 26215;
+	FAC[2] = 23832;
+	FAC[3] = 21846;
+	FAC[4] = 20165;
+	FAC[5] = 18725;
+	FAC[6] = 17476;
+	FAC[7] = 16384;
+	////////////////////////////////////////////
+    }
+
+    work push 40 pop 15 {
+	int i, k, xmaxc, mc, exp, mant, temp, temp1, temp2, temp3;
+	int ep_length = 40;
+
+	for (i = 0; i < 13; i++)
+	    {
+		mXmc[i] = pop();
+	    }
+	xmaxc = pop();    //mRpeMagnitude
+	mc = pop();       //mRpeGridPosition
+
+	 
+	//Get the exponent, mantissa of Xmaxc:
+       
+	exp = 0;
+	if (xmaxc > 15)
+	    {
+		exp = gsm_sub(intify(xmaxc / 8), 1);
+	    }
+	mant = gsm_sub(xmaxc, intify(exp * 8));
+	////print("Mantissa is " + mant);
+	//normalize mantissa 0 <= mant <= 7;
+	
+	if (mant == 0)
+	    {
+		exp = -4;
+		mant = 7;
+	    }
+	else
+	    {
+		while (mant <= 7) 
+		    {
+			mant = intify(mant * 2 | 1);
+			exp = exp - 1;
+		    }
+		mant = gsm_sub(mant, 8);
+	    }
+	////print("Normalized mantissa is " + mant);
+
+	/* 
+	 *  This part is for decoding the RPE sequence of coded Xmc[0..12]
+	 *  samples to obtain the xMp[0..12] array.  Table 4.6 is used to get
+	 *  the mantissa of xmaxc (FAC[0..7]).
+	 */
+	
+	//System.err.//println("Size of FAC is " + FAC.length);
+	//System.err.//println("Gets called at mant = " + mant);
+	temp1 = FAC[mant];
+	//print("temp1 is " + temp1 + " with exp " + exp);
+	temp2 = gsm_sub(6, exp);
+	//print("temp2 is " + temp2);
+
+	int blahblah = gsm_sub(temp2, 1);
+	//print("blahblah is " + blahblah);
+
+	temp3 = intify(1 * gsm_exp(2, gsm_sub(temp2, 1)));
+	//print("temp3 is " + temp3);
+	for (i = 0; i < 13; i++)
+	    {
+		temp = gsm_sub(intify(mXmc[i] * 2), 7);    //3 bit unsigned
+		temp = temp * gsm_exp(2, 12);                 //16 bit signed
+		temp = gsm_mult_r(temp1, temp);
+		temp = gsm_add(temp, temp3);
+		xmp[i] = intify(temp / gsm_exp(2, temp2));
+		////print("xmp[i] is " + xmp[i]);
+	    }
+
+	/**
+	 *  This procedure computes the reconstructed long term residual signal
+	 *  ep[0..39] for the LTP analysis filter.  The inputs are the Mc
+	 *  which is the grid position selection and the xMp[0..12] decoded
+	 *  RPE samples which are upsampled by a factor of 3 by inserting zero
+	 *  values.
+	 */
+	//output!
+
+	for(k = 0; k < 40; k++)
+	    {
+		ep[k] = 0;
+	    }
+	for(i = 0; i < 12; i++)
+	    {
+		//System.out.//println("accessing " + (mc+(3*i)));
+		ep[mc + (3 * i)] = xmp[i];
+	    } 
+	//output the sucker!
+	for (i = 0; i < ep_length; i++)
+	    {
+		push(ep[i]);
+	    }
+	//System.err.//println("Got to RPEDecode!");
+    }
+}
+	
+
+int->int filter LTPFilter {
+
+    int[4] QLB;
+    int[160] drp;
+    int nrp;
+
+#include "Helper.str"
+
+    init {
+	nrp = 40;   //initial condition
+
+	////////////////////////////////////////////
+	// assign the members of the QLB array
+
+	QLB[0] = 3277;
+	QLB[1] = 11469;
+	QLB[2] = 21299;
+	QLB[3] = 32767;
+	////////////////////////////////////////////
+    }	
+
+
+    work push 1 pop 162 {
+	
+	int i, nr, brp, drpp;
+	int mBcr = pop();  //mLtpGain
+	int mNcr = pop();  //mLtpOffset
+	//do it!
+	for (i = 0; i < 160; i++)
+	    {
+		drp[i] = pop(); //drp from AdditionUpdateFilter
+	    }
+	nr = mNcr;
+	if ((mNcr < 40) || (mNcr > 120))
+	    {
+		nr = nrp;
+	    }
+	nrp = nr;
+
+	//Decoding of the LTP gain mBcr
+	brp = QLB[mBcr];
+	drpp = 1;
+	for (i = 121; i < 161; i++)
+	    {
+		drpp = gsm_mult_r(brp, drp[i - nr]);   //delay and multiply operations
+	    } 
+	
+	push(drpp);   
+	//System.err.//println("Got to LTPFilter!");
+    }
+}
+
+int->int filter AdditionUpdateFilter {
+ 
+    int[40] ep;
+    int[160] drp;
+
+#include "Helper.str"
+
+    init { 
+	int i;		
+	for (i = 0; i < 160; i++)
+	    {
+		drp[i] = 0;   //initial conditions
+	    }
+    	}	
+
+    work push 160 pop 41 {
+	
+	int i, j, k, drpp;
+	//get inputs:
+	for (i = 0; i < 40; i++)
+	    {
+		ep[i] = pop();
+	    }
+	drpp = pop();
+
+	for (j = 121; j < 160; j++)  //add part!
+	    {
+		drp[j] = gsm_add(ep[j - 121], drpp);
+	    }
+	for (k = 0; k < 120; k++)    //update part!
+	    {
+		drp[k] = drp[k + 40];
+	    }
+	
+	for (i = 0; i < 160; i++)  //output!
+	    {
+		push(drp[i]);
+	    }
+	//System.err.//println("Got to Addition Update Filter!");
+    }
+}
+
+
+int->int filter ReflectionCoeffLARppInternal(int INVA, int MIC, int B) {
+
+#include "Helper.str"
+
+    init {
+
+	}
+ 
+    work push 1 pop 1 {
+	 int LARc, LARpp, temp1, temp2;
+        
+        LARc = pop();
+        temp1 = intify((gsm_add(LARc, MIC)) * gsm_exp(2,10));
+        temp2 = intify(B * gsm_exp(2,10));
+        temp1 = gsm_sub(temp1, temp2);
+        temp1 = gsm_mult_r(INVA, temp1);
+        LARpp = gsm_add(temp1, temp1);
+        push(LARpp);
+    }
+}   
+
+int->int splitjoin ReflectionCoeffLARpp {
+     split roundrobin;
+	 add ReflectionCoeffLARppInternal(13107, -32, 0);
+        add ReflectionCoeffLARppInternal(13107, -32, 0);
+        add ReflectionCoeffLARppInternal(13107, -16, 2048);
+        add ReflectionCoeffLARppInternal(13107, -16, -2560);
+        add ReflectionCoeffLARppInternal(19223, -8, 94);
+        add ReflectionCoeffLARppInternal(17476, -8, -1792);
+        add ReflectionCoeffLARppInternal(31454, -4, -341);
+        add ReflectionCoeffLARppInternal(29708, -4, -1144);
+    
+    join roundrobin;
+    }
+     
+
+
+int->int filter ReflectinoCoeffLARpInternal {
+
+#include "Helper.str"
+
+    int mprevLARpp;
+
+    init {
+	mprevLARpp = 0;
+	}
+
+    work push 1 pop 1 {
+	 int i, j, k;
+        int mLARp, mLARpp;
+        
+        mLARpp = pop();
+        // Jikes can't do a data-flow analysis.  Sigh.
+        mLARp = 0;
+
+        // The remainder of this could almost certainly be broken down
+        // nicely into component filters with feedback loops.  Think
+        // about this more later.  --dzm
+
+	//Interpolation of mLARpp to get mLARp:
+	for (k = 0; k < 13; k++)
+        {
+            mLARp = gsm_add(intify(mprevLARpp / 4), intify(mLARpp / 4));
+            mLARp = gsm_add(mLARp,  intify(mprevLARpp / 2));
+        }
+
+	for (k = 13; k < 27; k++)
+            mLARp = gsm_add(intify(mprevLARpp / 2), intify(mLARpp / 2));
+
+	for (k = 27; k < 39; k++)
+        {
+            mLARp = gsm_add(intify(mprevLARpp / 4), intify(mLARpp / 4));
+            mLARp = gsm_add(mLARp, intify(mLARpp / 2));
+        }
+
+        /* Visibly wrong; I think it's supposed to be mLARp = mLARp,
+           which is a nop, so punt this loop entirely.  --dzm
+	for (k = 40; k < 160; k++)
+            mLARp = mLARpp;
+        */
+
+        mprevLARpp = mLARpp;
+        push(mLARp);
+    }
+}
+
+int->int filter ReflectionCoeffmrrp {
+
+#include "Helper.str"
+
+    init {
+	}
+
+
+    work push 1 pop 1 {
+	 int mLARp, temp, mrrp;
+        mLARp = pop();
+        temp = gsm_abs(mLARp);
+        if (temp < 11059)
+            temp = intify(temp * 2);
+        else if (temp < 20070)
+            temp = gsm_add(temp,  11059);
+        else
+            temp = gsm_add( (temp / 4),  26112);
+        mrrp = temp;
+        if (mLARp < 0)
+            mrrp = gsm_sub(0, mrrp);
+        push(mrrp);
+    }
+}
+
+int->int pipeline ReflectionCoeffCalc {
+
+add ReflectionCoeffLARpp();
+add ReflectionCoeffLARpp();
+add ReflectionCoeffLARpp();
+}
+
+int->int splitjoin ReflectionCoeff {
+    
+    split roundrobin(120, 40, 8);
+    
+    add int->void filter {
+	work push 0 pop 1 {
+		pop();
+	}
+    }
+
+    add Identity<int>();
+    add ReflectionCoeffCalc();
+
+    join roundrobin(0, 40, 8);
+}
+
+
+int->int filter IntegerTermReorder {
+
+#include "Helper.str"
+ 
+int[40] mdrp;
+int[8] mrrp;
+
+   init { }
+
+    work push 360 pop 48 {
+	 int val;
+        int i, j;
+        
+        // Read in mdrp and mrrp:
+        for (j = 0; j < 40; j++)
+            mdrp[j] = pop();
+        for (j = 0; j < 8; j++)
+            mrrp[j] = pop();
+
+        // Now write out (mrrp, element of mdrp):
+        for (i = 0; i < 40; i++)
+        {
+            for (j = 0; j < 8; j++)
+                push(mrrp[j]);
+            push(mdrp[i]);
+        }
+    }
+}	
+    
+
+int->int filter IntegerTermSynthCalc {
+
+#include "Helper.str"
+
+int[8] mrrp;
+int[9] v;
+
+    init { 
+	for (int i = 0; i < 9; i++)
+	    v[i] = 0;
+    }
+
+    work push 1 pop 9 {
+	int i;
+        int sri;
+        
+        for (i = 0; i < 8; i++)
+            mrrp[i] = pop();
+        sri = pop();
+        for (i = 1; i < 8; i++)
+        {
+            sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
+            v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
+        }
+        v[0] = sri;
+        push(sri);
+    }
+}
+
+
+int->int pipeline IntegerTermSynth {
+
+add IntegerTermReorder();
+add IntegerTermSynthCalc();
+
+}
+
+int->int filter LARInputFilter {
+
+#include "Helper.str"
+#include "DecoderInput.str"
+
+int[260] mdata;
+int[260] single_frame;
+boolean donepushing;
+
+
+    init {
+	donepushing = false;
+	}	
+
+    work push 8 pop 260 {
+	int i, j, k;
+	//int frame_index = 0;
+	for (i = 0; i < 260; i++)
+	    {
+		mdata[i] = pop();
+	    }
+
+	if (donepushing)
+	    {
+		//AssertedClass.SERROR("Done Pushing at LARInputFilter!");
+	    }
+	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	//   {
+		for (k = 0; k < 260; k++)
+		    {
+			single_frame[k] = mdata[k];
+		    }
+		getParameters(single_frame);
+		//frame_index += 260;
+	  
+	
+		//now, push the stuff on!
+		for (i = 0; i < 8; i++)
+		    {
+			push(mLarParameters[i]);
+		    }
+		donepushing = true;
+		//    }
+	//System.err.//println("LARinputFilter gooo!");
+
+    }
+}
+
+int->int filter PostProcessingFilter {
+
+#include "Helper.str"
+
+int msr;    
+
+    init {
+	msr = 0;
+	}
+
+    work push 1 pop 1 {
+	int a;
+	int i, k, temp;
+        
+        temp = pop();
+
+	//De-emphasis filtering!
+        temp = gsm_add(temp, gsm_mult_r(msr, 28180));
+        msr = temp; // to next execution
+
+	//upscaling of output signal:
+        temp = gsm_add(temp, temp);
+        
+	//truncation of the output variable:
+        temp = intify(temp / 8);
+        temp = gsm_mult(temp, 8);
+        
+        push(temp);
+    }
+}
+
+
+int->int filter LTPInputFilter {
+
+int[260] mdata;
+int[260] single_frame;
+boolean donepushing;
+
+#include "Helper.str"
+#include "DecoderInput.str"
+
+    init {
+	donepushing = false;
+	}
+
+    work push 8 pop 260 {
+	int i, j, k;
+	//int frame_index = 0;
+	for (i = 0; i < 260; i++)
+	    {
+		mdata[i] = pop();
+	    }
+
+	if (donepushing)
+	    {
+		//AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
+	    }
+	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	//  {
+		for (k = 0; k < 260; k++)
+		    {
+			single_frame[k] = mdata[k];
+		    }
+		getParameters(single_frame);
+		//frame_index += 260;
+	  	  
+	  
+		//now, push the stuff on!
+		for (i = 0; i < 4; i++)
+		    {
+			push(mLtpGain[i]);
+			push(mLtpOffset[i]);
+		    }
+		//  }
+	donepushing = true;
+	//System.err.//println("LTP Input filter gooooo!");
+    }
+}	
+
+int->int pipeline LTPPipeline {
+
+add FileReader<int>("IntBinarySmallEndianDecoderInput1");
+add LTPInputFilter();
+
+}
+
+int->int pipeline LARPipeline {
+
+add FileReader<int>("IntBinarySmallEndianDecoderInput1");
+add LARInputFilter();
+
+}
+
+int->int splitjoin LTPInputSplitJoin {
+
+split roundrobin(0,1);
+add LTPPipeline();
+add Identity<int>();
+join roundrobin(2, 160);
+
+}
+
+int->int pipeline LTPLoopStream {
+
+add LTPInputSplitJoin();
+add LTPFilter();
+
+}
+
+int->int feedbackloop DecoderFeedback {
+
+join roundrobin(40,1);
+body StupidStream();
+loop LTPLoopStream();
+split duplicate;
+enqueue 0;
+
+}
+
+
+int->int pipeline StupidStream {
+
+add AdditionUpdateFilter();
+}
+
+
+int->int splitjoin LARInputSplitJoin {
+
+split roundrobin(1,0);
+add Identity<int>();
+add LARPipeline();
+join roundrobin(160, 8);
+}
+
+
+int->int filter RPEInputFilter {
+
+int[260] mdata;
+int[260] single_frame;
+boolean donepushing;
+
+#include "Helper.str"
+#include "DecoderInput.str"
+
+    init {
+	donepushing = false;
+	}
+
+    work push 60 pop 260 {
+	int i, j, k, a;
+	//int frame_index = 0;
+	//System.err.//println("I get here!!!");
+	for (i = 0; i < 260; i++)
+	    {
+		mdata[i] = pop();
+		
+	    }
+
+	if (donepushing)
+	    {
+		//AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
+	    }
+
+	//for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	//  {
+		for (k = 0; k < 260; k++)
+		    {
+			single_frame[k] = mdata[k];
+		    }
+		getParameters(single_frame);
+		//frame_index += 260;
+	  
+	  
+		//now, push the stuff on!
+		for (i = 0; i < 4; i++)
+		    {
+			for (a = 0; a < 13; a++)
+			    {
+				push(mSequence[i+4*a]);
+			    }
+			push(mRpeMagnitude[i]);
+			push(mRpeGridPosition[i]);
+		    }
+		donepushing = true;
+		//  }
+	//System.err.//println("RPE Input Filter yeah!");
+    }
+}
+
+
+int->int filter HoldFilter {
+
+int[160] mDrp;
+
+    init { }
+
+    work push 40 pop 160 {
+ 	int i, j;
+	for (i = 0; i < 160; i++)
+	    {
+		mDrp[i] = pop();
+	    }
+	for (j = 0; j < 40; j++)
+	    {
+		push(mDrp[j + 120]);
+	    }
+	//System.err.//println("Hold filter go!");
+    }
+    
+}
+
+void->void pipeline Gsm {
+
+	add FileReader<int>("IntBinarySmallEndianDecoderInput1");
+	//add Identity//Print(1);
+	add RPEInputFilter();
+	//add Identity//Print(1);
+	add RPEDecodeFilter();
+	//add IdentityPrint(1);
+	add DecoderFeedback();
+	add HoldFilter();
+	add LARInputSplitJoin();
+	add ReflectionCoeff();
+	add IntegerTermSynth();
+	add PostProcessingFilter();
+	add IntegerPrint();
+	//add FileWriter<int>("BinarySmallEndianDecoderOutput1Int");
+}
+
+int->int filter IdentityPrint(int rate) {
+    int ratea;
+
+    init {
+	ratea = rate;
+    }
+
+    work push 1 pop 1 {
+	for (int i = 0; i < ratea; i++)
+	    {
+		int a = pop();
+		////print(a);
+		push(a);
+	    }			
+    }
+}
+
+
+
+int->void filter IntegerPrint {
+
+    init {}
+
+    work push 0 pop 1 {
+	int a = pop();
+	print(a);
+}
+}

@@ -5,23 +5,23 @@
 //{
 
 //member variables!
-public short[] mLarParameters;
-public short[] mLtpOffset;
-public short[] mLtpGain;
-public short[] mRpeGridPosition;
-public short[] mRpeMagnitude;
-public short[] mSequence;
+public int[] mLarParameters;
+public int[] mLtpOffset;
+public int[] mLtpGain;
+public int[] mRpeGridPosition;
+public int[] mRpeMagnitude;
+public int[] mSequence;
 
 public void initInputArrays() {
-    mLarParameters = new short[8];
-    mLtpOffset = new short[4];
-    mLtpGain = new short[4];
-    mRpeGridPosition = new short[4];
-    mRpeMagnitude = new short[4];
-    mSequence = new short[4*13];
+    mLarParameters = new int[8];
+    mLtpOffset = new int[4];
+    mLtpGain = new int[4];
+    mRpeGridPosition = new int[4];
+    mRpeMagnitude = new int[4];
+    mSequence = new int[4*13];
 }
 
-public void getParameters(short[] input)
+public void getParameters(int[] input)
 {
     int i, j, k, l, m;
     int input_index = 0;
@@ -49,6 +49,7 @@ public void getParameters(short[] input)
 	
 	  
 	    mLarParameters[i] = 0;
+	    //System.err.println("pre index is " + input_index);
 	    for (j = 0; j < num_bits; j++, input_index++)
 		{
 		    mLarParameters[i] |= input[input_index] << (num_bits - 1 - i);
@@ -58,6 +59,8 @@ public void getParameters(short[] input)
     //Sub-frames 1 through 4!
     for (k = 0; k < 4; k++)
 	{
+	    //System.err.println("k is " + k) ;
+	    //System.err.println("index is " + input_index);
 	    mLtpOffset[k] = 0;
 	    for (l = 0; l < 7; l++)
 		{

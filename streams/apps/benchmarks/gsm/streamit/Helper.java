@@ -2,7 +2,7 @@
 
 //class Helper
 //{
-short shortify(int a)
+int intify(int a)
 {
     if (a >= 32767)
 	{
@@ -16,15 +16,15 @@ short shortify(int a)
 		}
 	    else
 		{
-		    return (short) a;
+		    return a;
 		}
 	}
 }
     
-short gsm_add(short a, short b)
+int gsm_add(int a, int b)
 
 {
-    long ltmp = (long) a + (long) b;
+    int ltmp = a + b;
     if (ltmp >= 32767)
 	{
 	    return 32767;
@@ -37,14 +37,14 @@ short gsm_add(short a, short b)
 		}
 	    else
 		{
-		    return (short) ltmp;
+		    return ltmp;
 		}
 	}
 }
 
-short gsm_sub(short a, short b)
+int gsm_sub(int a, int b)
 {
-    long ltmp = (long) a - (long) b;
+    int ltmp = a - b;
     if (ltmp >= 32767)
 	{
 	    return 32767;
@@ -57,14 +57,14 @@ short gsm_sub(short a, short b)
 		}
 	    else
 		{
-		    return (short) ltmp;
+		    return ltmp;
 		}
 	}
 }
 
-short gsm_mult(short a, short b)
+int gsm_mult(int a, int b)
 {
-    long temp = (long) a * (long) b >> 15;
+    int temp =  a *  b >> 15;
     if (temp >= 32767)
 	{
 	    return 32767;
@@ -77,21 +77,21 @@ short gsm_mult(short a, short b)
 		}
 	    else
 		{
-		    return (short) temp;
+		    return (int) temp;
 		}
 	}       
 }
 
-short gsm_mult_r(short a, short b)
+int gsm_mult_r(int a, int b)
 {
-    long temp = ((long) a * (long) b) + 16384;
-    short answer = (short) (temp >> 15);
+    int temp = ( a *  b) + 16384;
+    int answer = (int) (temp >> 15);
     return answer;
 }
 
-short gsm_abs(short a)
+int gsm_abs(int a)
 {
-    short answer;
+    int answer;
     int temp;
     if (a < 0)
 	{
@@ -114,7 +114,7 @@ short gsm_abs(short a)
 				}
 			    else
 				{
-				    answer = (short) temp;
+				    answer = (int) temp;
 				}
 			}
 		}

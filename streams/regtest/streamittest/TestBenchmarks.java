@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.10 2002-10-28 23:38:47 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.11 2002-11-05 22:27:40 thies Exp $
  **/
 package streamittest;
 
@@ -64,8 +64,13 @@ public class TestBenchmarks extends StreamITTestCase {
     public void testBeamFormer() 
     {
         String root = BENCH_ROOT + "beamformer/streamit/";
+        doMake(root);
+	// plain beamformer
         doCompileTest(root, "BeamFormer.java");
         doRunTest(root, "BeamFormer.java", 0, 4);
+	// coarse-grained beamformer
+        doCompileTest(root, "CoarseBeamFormer.java");
+        doRunTest(root, "CoarseBeamFormer.java", 0, 256);
     }
 
     public void testBitonicSort() 

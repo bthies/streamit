@@ -1911,6 +1911,46 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
+
+    /**
+     * Visits a file reader.
+     */
+    public void visitFileReader(LIRFileReader self) {
+	blockStart("LIRFileReader");
+	attrStart("streamContext");
+	self.getStreamContext().accept(this);
+	attrEnd();
+	attrPrint("file name", self.getFileName());
+	blockEnd();
+    }
+    
+    /**
+     * Visits a file writer.
+     */
+    public void visitFileWriter(LIRFileWriter self) {
+	blockStart("LIRFileWriter");
+	attrStart("streamContext");
+	self.getStreamContext().accept(this);
+	attrEnd();
+	attrPrint("file name", self.getFileName());
+	blockEnd();
+    }
+    
+    /**
+     * Visits a special work function call.
+     */
+    public void visitRunSpecialWork(LIRRunSpecialWork self) {
+	blockStart("LIRRunSpecialWork");
+	attrStart("streamContext");
+	self.getStreamContext().accept(this);
+	attrEnd();
+        attrStart("childContext");
+        self.getChildContext().accept(this);
+        attrEnd();
+	attrPrint("type", self.getType().toString());
+	blockEnd();
+    }
+    
     /**
      * Visits a set a parallel stream.
      */

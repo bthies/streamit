@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.5 2001-10-15 18:40:32 thies Exp $
+## $Id: Makefile,v 1.6 2001-11-06 18:03:34 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -47,7 +47,11 @@ JAVAFILES +=	LIRFunctionPointer \
 		LIRMainFunction \
 		LIRSetParallelStream \
 		LIRSetLoopOfFeedback \
-		LIRSetBodyOfFeedback
+		LIRSetBodyOfFeedback \
+		LIRFileReader \
+		LIRFileWriter \
+		LIRRunSpecialWork \
+		LIRSpecialWorkType
 
 MESSAGES =	../KjcMessages
 

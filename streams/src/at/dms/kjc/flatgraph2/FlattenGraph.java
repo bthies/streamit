@@ -5,21 +5,24 @@ import java.io.FileWriter;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.spacetime.*;
+import at.dms.kjc.sir.linear.*;
 
 /**
  * Flatten with new synch removal
  */
 public class FlattenGraph {
-    private static int filterCount=0;
+    //private static int filterCount=0;
     private static ArrayList topLevelNodes=new ArrayList();
     private static HashMap nodes=new HashMap();
     private static HashMap simpleNull=new HashMap();
     private static HashMap complexNull=new HashMap();
-
+    private static LinearAnalyzer lfa;
+    private static HashMap[] execCounts;
+    
     public static int getFilterCount() {
-	if(nodes!=null)
-	    return nodes.size();
-	return filterCount;
+	//if(nodes!=null)
+	return nodes.size();
+	//return filterCount;
     }
     
     //Don't call unless not using this anymore
@@ -32,6 +35,8 @@ public class FlattenGraph {
 	simpleNull=null;
 	complexNull.clear();
 	complexNull=null;
+	lfa=null;
+	execCounts=null;
     }
 
     public static UnflatFilter[] getTopLevelNodes() {
@@ -43,8 +48,10 @@ public class FlattenGraph {
 	return out;
     }
     
-    public static void flattenGraph(SIRStream graph) {
+    public static void flattenGraph(SIRStream graph,LinearAnalyzer lfa,HashMap[] execCounts) {
 	System.out.println("Flattening Graph..");
+	FlattenGraph.lfa=lfa;
+	FlattenGraph.execCounts=execCounts;
 	if(graph instanceof SIRFilter) {
 	    UnflatFilter filter=new UnflatFilter(graph);
 	    topLevelNodes.add(filter);
@@ -60,6 +67,9 @@ public class FlattenGraph {
 	    if(!(node==null||topLevelNodes.contains(node.dest)))
 		topLevelNodes.add(node.dest);
 	}
+	System.out.println("INPUT: "+lfa+" "+execCounts);
+	//if(lfa!=null&&execCounts!=null)
+	extractLinear();
 	dumpGraph("newbefore.dot");
 	System.out.println("Done Flattening, Starting Sync Removal..");
 	syncRemove();
@@ -237,6 +247,79 @@ public class FlattenGraph {
 	} else
 	    Utils.fail("Unhandled Stream Type: "+graph);
 	return null;
+    }
+
+    private static void extractLinear() {
+	Object[] filters=nodes.keySet().toArray();
+	for(int i=0;i<filters.length;i++) {
+	    UnflatFilter filter=(UnflatFilter)filters[i];
+	    System.out.println("VISITING: "+filter);
+	    LinearFilterRepresentation linrep=null;
+	    if(lfa!=null)
+		linrep=lfa.getLinearRepresentation(filter.filter);
+	    int initMult=0;
+	    int steadyMult=0;
+	    int[] ans=(int[])execCounts[0].get(filter.filter);
+	    if(ans!=null)
+		initMult=ans[0];
+	    ans=(int[])execCounts[1].get(filter.filter);
+	    if(ans!=null)
+		steadyMult=ans[0];
+	    System.err.println("MULT: "+initMult+" "+steadyMult);
+	    if(linrep!=null) {
+		final int cols=linrep.getA().getCols();
+		if(cols==1) { 
+		    filter.initMult=initMult;
+		    filter.steadyMult=steadyMult;
+		    filter.array=getArray(linrep,0);
+		    filter.constant=getConst(linrep,0);
+		    filter.popCount=linrep.getPopCount();
+		} else {
+		    nodes.remove(filter);
+		    System.out.println("Splitting: "+filter);
+		    UnflatEdge[] in=filter.in;
+		    UnflatEdge[][] out=filter.out;
+		    UnflatEdge[] splitterOut=new UnflatEdge[cols];
+		    for(int j=0;j<cols;j++)
+			splitterOut[j]=new UnflatEdge();
+		    UnflatFilter splitter=new UnflatFilter(null,new int[]{1},new int[]{1},in,new UnflatEdge[][]{splitterOut});
+		    simpleNull.put(splitter,null);
+		    int[] joinerW=new int[cols];
+		    for(int j=0;j<cols;j++)
+			joinerW[j]=1;
+		    UnflatEdge[] joinerIn=new UnflatEdge[cols];
+		    for(int j=0;j<cols;j++)
+			joinerIn[j]=new UnflatEdge();
+		    UnflatFilter joiner=new UnflatFilter(null,joinerW,new int[]{1},joinerIn,out);
+		    simpleNull.put(joiner,null);
+		    for(int j=0;j<cols;j++) {
+			UnflatFilter newFilt=new UnflatFilter(filter.filter,splitterOut[j],joinerIn[j]);
+			newFilt.initMult=initMult;
+			newFilt.steadyMult=steadyMult;
+			newFilt.array=getArray(linrep,j);
+			newFilt.constant=getConst(linrep,j);
+			newFilt.popCount=linrep.getPopCount();
+			nodes.put(newFilt,null);
+		    }
+		}
+	    } else {
+		filter.initMult=initMult;
+		filter.steadyMult=steadyMult;
+	    }
+	}
+    }
+    
+    private static double[] getArray(LinearFilterRepresentation linRep,int col) {
+	FilterMatrix a=linRep.getA();
+	final int rows=a.getRows();
+	double[] out=new double[rows];
+	for(int i=0;i<rows;i++)
+	    out[i]=a.getElement(i,col).getReal();
+	return out;
+    }
+    
+    private static double getConst(LinearFilterRepresentation linRep,int col) {
+	return linRep.getb().getElement(col).getReal();
     }
     
     private static boolean change=false;

@@ -13,6 +13,10 @@ public class UnflatFilter {
     public UnflatEdge[][] out;
     private static int nullNum=0;
     private String name;
+    public double[] array;
+    public double constant;
+    public int popCount;
+    public int initMult, steadyMult;
     
     //Do not call unless not using this anymore
     public void clear() {

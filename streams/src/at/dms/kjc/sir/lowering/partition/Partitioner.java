@@ -97,16 +97,8 @@ public class Partitioner {
 	    // if the joiners need tiles, use the graph flattener
 	    return countTilesNeeded(str, new GraphFlattener(str), joinersNeedTiles);
 	} else {
-	    // otherwise count number of filters.  (Should this count
-	    // identity filters or not?  Unclear, depending on
-	    // backend, so for now be conservative and count them.)
-	    final int[] count = { 0 };
-	    IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
-		    public void visitFilter(SIRFilter self,
-					    SIRFilterIter iter) {
-			count[0]++;
-		    }});
-	    return count[0];
+	    // otherwise count number of filters
+	    return countFilters(str);
 	}
     }
 
@@ -119,9 +111,24 @@ public class Partitioner {
 	    // if the joiners need tiles, use the graph flattener
 	    return flattener.getNumTiles();
 	} else {
-	    // otherwise count tiles
-	    return countTilesNeeded(str, joinersNeedTiles);
+	    // otherwise count number of filters
+	    return countFilters(str);
 	}
     }
 
+    /**
+     * Returns the number of filters in the graph.
+     */
+    private static int countFilters(SIRStream str) {
+	// Should this count identity filters or not?  Unclear,
+	// depending on backend, so for now be conservative and count
+	// them.
+	final int[] count = { 0 };
+	IterFactory.createFactory().createIter(str).accept(new EmptyStreamVisitor() {
+		public void visitFilter(SIRFilter self,
+					SIRFilterIter iter) {
+		    count[0]++;
+		}});
+	return count[0];
+    }
 }

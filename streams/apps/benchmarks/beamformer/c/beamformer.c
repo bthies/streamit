@@ -1,7 +1,7 @@
 /*
  * beamformer.c: Standalone beam-former reference implementation
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: beamformer.c,v 1.3 2003-11-04 16:41:48 dmaze Exp $
+ * $Id: beamformer.c,v 1.4 2003-11-04 17:14:14 dmaze Exp $
  */
 
 #ifdef raw
@@ -47,7 +47,7 @@ implementation.
 struct BeamFirData
 {
   int len, count, pos;
-  float *real_weight, *imag_weight, *real_buffer, *imag_buffer;
+  float *weight, *buffer;
 };
 
 void begin(void);
@@ -224,8 +224,9 @@ void InputGenerate(int channel, float *inputs, int n)
 #endif
     } else {
 #ifdef RANDOM_INPUTS
-      inputs[2*i] = -sqrt(i*channel);
-      inputs[2*i+1] = -(sqrt(i*channel)+1);
+      float root = sqrt(i*channel);
+      inputs[2*i] = -root;
+      inputs[2*i+1] = -(root+1);
 #else
       inputs[2*i] = 0;
       inputs[2*i+1] = 0;
@@ -241,27 +242,23 @@ void BeamFirSetup(struct BeamFirData *data, int n)
   data->len = n;
   data->count = 0;
   data->pos = 0;
-  data->real_weight = malloc(sizeof(float)*n);
-  data->imag_weight = malloc(sizeof(float)*n);
-  data->real_buffer = malloc(sizeof(float)*n);
-  data->imag_buffer = malloc(sizeof(float)*n);
+  data->weight = malloc(sizeof(float)*2*n);
+  data->buffer = malloc(sizeof(float)*2*n);
   
 #ifdef RANDOM_WEIGHTS
   for (j = 0; j < n; j++) {
     int idx = j+1;
-    data->real_weight[j] = sin(idx) / ((float)idx);
-    data->imag_weight[j] = cos(idx) / ((float)idx);
-    data->real_buffer[j] = 0.0;
-    data->imag_buffer[j] = 0.0;
+    data->weight[j*2] = sin(idx) / ((float)idx);
+    data->weight[j*2+1] = cos(idx) / ((float)idx);
+    data->buffer[j*2] = 0.0;
+    data->buffer[j*2+1] = 0.0;
   }
 #else
-  data->real_weight[0] = 1.0;
-  data->imag_weight[0] = 0.0;
-  for (i = 1; i < n; i++) {
-    data->real_weight[i] = 0.0;
-    data->imag_weight[i] = 0.0;
-    data->real_buffer[i] = 0.0;
-    data->imag_buffer[i] = 0.0;
+  data->weight[0] = 1.0;
+  data->weight[1] = 0.0;
+  for (i = 1; i < 2*n; i++) {
+    data->weight[i] = 0.0;
+    data->buffer[i] = 0.0;
   }
 #endif
 }
@@ -276,21 +273,30 @@ void BeamFirFilter(struct BeamFirData *data,
   float imag_curr = 0;
   int i;
   int modPos;
+  int len, mask, mask2;
   
-  modPos = data->len - 1 - data->pos;
-  data->real_buffer[modPos] = in[0];
-  data->imag_buffer[modPos] = in[1];
+  len = data->len;
+  mask = len - 1;
+  mask2 = 2 * len - 1;
+  modPos = 2*(len - 1 - data->pos);
+  data->buffer[modPos] = in[0];
+  data->buffer[modPos+1] = in[1];
   
-  for (i = 0; i < data->len; i++) {
-    real_curr += data->real_buffer[modPos] * data->real_weight[i] +
-      data->imag_buffer[modPos] * data->imag_weight[i];
+  /* Profiling says: this is the single inner loop that matters! */
+  for (i = 0; i < 2*len; i+=2) {
+    float rd = data->buffer[modPos];
+    float id = data->buffer[modPos+1];
+    float rw = data->weight[i];
+    float iw = data->weight[i+1];
+    float rci = rd * rw + id * iw;
     /* sign error?  this is consistent with StreamIt --dzm */
-    imag_curr += data->imag_buffer[modPos] * data->real_weight[i] +
-      data->real_buffer[modPos] * data->imag_weight[i];
-    modPos = (modPos + 1) & (data->len-1);
+    float ici = id * rw + rd * iw;
+    real_curr += rci;
+    imag_curr += ici;
+    modPos = (modPos + 2) & mask2;
   }
   
-  data->pos = (data->pos + 1) & (data->len-1);
+  data->pos = (data->pos + 1) & mask;
   out[0] = real_curr;
   out[1] = imag_curr;
   data->count += decimation_ratio;
@@ -298,9 +304,8 @@ void BeamFirFilter(struct BeamFirData *data,
   {
     data->count = 0;
     data->pos = 0;
-    for (i = 0; i < data->len; i++) {
-      data->real_buffer[i] = 0.0;
-      data->imag_buffer[i] = 0.0;
+    for (i = 0; i < 2*data->len; i++) {
+      data->buffer[i] = 0.0;
     }
   }
 }

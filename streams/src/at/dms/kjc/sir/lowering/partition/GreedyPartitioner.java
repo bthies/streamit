@@ -281,16 +281,7 @@ public class GreedyPartitioner {
 				cur=next;
 			    }
 			    if(best!=Integer.MAX_VALUE) {
-				SIRPipeline temp=new SIRPipeline(cont,null);
-				temp.add(cont.get(index));
-				temp.add(cont.get(index+1));
-				elim = FusePipe.fuse((SIRPipeline)temp);
-			
-				cont.remove(index);
-				cont.remove(index);
-				cont.add(index,temp);
-
-				Lifter.eliminatePipe((SIRPipeline)temp);
+				elim = FusePipe.fuseTwo((SIRPipeline)cont, index);
 			    }
 			}
 			// try lifting

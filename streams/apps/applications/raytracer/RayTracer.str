@@ -1,0 +1,192 @@
+// vim: filetype=java
+
+struct Vector3 {
+  float x;
+  float y;
+  float z;
+}
+
+struct Ray {
+  Vector3 o;
+  Vector3 d;
+/*  float o.x;
+  float o.y;
+  float o.z;
+  float d.x;
+  float d.y;
+  float d.z; */
+}
+
+struct Color {
+  float r;
+  float g;
+  float b;
+}
+
+struct HitInfo {
+  float   t;
+  Color   c;
+  Vector3 pos;
+  Vector3 n;
+}
+
+void->Ray filter RaySource(int nx, int ny) {
+  int i, j;
+
+  init {
+    i = 0;
+    j = 0;
+  }
+
+  work push 1 {
+    Ray r;
+
+    r.o.x = 0;
+    r.o.y = 0;
+    r.o.z = 0;
+    r.d.x = (i - nx / 2.0) / nx;
+    r.d.y = (j - ny / 2.0) / ny;
+    r.d.z = -1;
+    j++;
+    if (j == ny) {
+      i++;
+      j = 0;
+      if (i == nx) {
+        i = 0; // TODO: done with the image
+      }
+    }
+    push(r);
+  }
+}
+
+Ray->HitInfo filter CircleIntersect(float x, float y, float z, float r,
+    float cr, float cg, float cb) {
+//Ray->Color filter CircleIntersect(Vector3 cent, float r, Color c) {
+  Vector3 center;
+  float radius;
+  Color diffuse;
+
+  init {
+    center.x = x;
+    center.y = y;
+    center.z = z;
+    radius = r;
+    diffuse.r = cr;
+    diffuse.g = cg;
+    diffuse.b = cb;
+  }
+
+  work pop 1 push 1 {
+    Ray ray;
+    float A, B, C;      // for the quadratic formula
+    float t;
+    float discrim;      // the discriminant
+    Vector3 o_minus_c;
+    HitInfo hi;
+
+    ray = pop();
+
+    o_minus_c.x = ray.o.x - center.x;
+    o_minus_c.y = ray.o.y - center.y;
+    o_minus_c.z = ray.o.z - center.z;
+
+    A = ray.d.x * ray.d.x + ray.d.y * ray.d.y + ray.d.z * ray.d.z;
+    B = ray.d.x * o_minus_c.x + ray.d.y * o_minus_c.y
+         + ray.d.z * o_minus_c.z;
+    C = (o_minus_c.x * o_minus_c.x + o_minus_c.y * o_minus_c.y
+         + o_minus_c.z * o_minus_c.z) - radius*radius;
+
+    discrim = B*B - A*C;  // 4 factored out; see _Realistic Ray Tracing_
+    if (discrim <= 0) {   // missed => black
+      hi.t = -1;
+      hi.c.r = 0;
+      hi.c.g = 0;
+      hi.c.b = 0;
+      push(hi);
+    }
+    else { // hit; calculate t
+      discrim = sqrt(discrim);
+      hi.t = (-B - discrim) / A;       // 2 was canceled
+      hi.c = diffuse;
+      hi.pos.x = ray.o.x + hi.t * ray.d.x;
+      hi.pos.y = ray.o.y + hi.t * ray.d.y;
+      hi.pos.z = ray.o.z + hi.t * ray.d.z;
+      hi.n.x = hi.pos.x - center.x;
+      hi.n.y = hi.pos.y - center.y;
+      hi.n.z = hi.pos.z - center.z;
+      push(hi);
+    }
+  }
+}
+
+HitInfo->HitInfo filter NormalizeNorm {
+  work pop 1 push 1 {
+    HitInfo h;
+    float magnitude;
+    h = pop();
+    magnitude = sqrt(h.n.x * h.n.x + h.n.y * h.n.y + h.n.z * h.n.z);
+    h.n.x = h.n.x / magnitude;
+    h.n.y = h.n.y / magnitude;
+    h.n.z = h.n.z / magnitude;
+    push(h);
+  }
+}
+
+HitInfo->Color filter Lighting(float x, float y, float z) {
+  work pop 1 push 1 {
+    // TODO: test for object occulsion
+    HitInfo h;
+    Vector3 lightRay;
+    Color c;
+    h = pop();
+    lightRay.x = x - h.pos.x;
+    lightRay.y = y - h.pos.y;
+    lightRay.z = z - h.pos.z;
+    // normalize
+    // TODO: put this in another filter?
+    float magnitude = sqrt(lightRay.x * lightRay.x + lightRay.y * lightRay.y + lightRay.z * lightRay.z);
+    lightRay.x = lightRay.x / magnitude;
+    lightRay.y = lightRay.y / magnitude;
+    lightRay.z = lightRay.z / magnitude;
+
+    float dotProd = lightRay.x * h.n.x + lightRay.y * h.n.y + lightRay.z * h.n.z;
+    c.r = h.c.r * dotProd;
+    c.g = h.c.g * dotProd;
+    c.b = h.c.b * dotProd;
+
+    push(c);
+  }
+}
+
+// TODO: write out a PPM file
+Color->void filter WritePPM(int nx, int ny) {
+  work pop 1 {
+    Color c;
+
+    c = pop();
+    print(c.r);
+  }
+}
+
+void->void pipeline RayTracer {
+  int nx, ny;
+  Vector3 v;
+  Color c;
+  nx = 32;
+  ny = 32;
+  v.x = 0;
+  v.y = 0;
+  v.z = -2;
+  c.r = 1;
+  c.g = 0;
+  c.b = 0;
+
+  add RaySource(nx, ny);
+//  add CircleIntersect(v, 0.5, c);
+  add CircleIntersect(0, 0, -2, 0.5, 1.0, 0.0, 0.0);
+//  add CircleIntersect(-0.25, 0, -1.5, 0.25, 0.0, 0.0, 1.0);
+  add NormalizeNorm();
+  add Lighting(-2, 1, 0);
+  add WritePPM(nx, ny);
+}
+ 

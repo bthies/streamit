@@ -1,33 +1,27 @@
-/*
- * This version is the same as Beamformer, except that the top
- * splitjoin and bottom splitjoin are nested hierarchically into
- * smaller splitjoins so that the current version of the partitioner
- * can decrease the width of the splitjoin.  (Also some of the
- * parameters might be different, but not the structure of the code.)
+/**
+ * This is a template for the beamformer.  It can be configured either
+ * to have serial output (with serialized outputs from all parallel
+ * printers) or not.
  */
 
 import streamit.*;
 
-public class BeamFormer extends StreamIt
+public class TemplateBeamFormer extends StreamIt
 {
-    static public void main(String[] t)
-    {
-	BeamFormer test = new BeamFormer();
-	test.run(t);
+    public static void main(String[] args) {
+	TemplateBeamFormer b = new TemplateBeamFormer();
+	b.run(args);
     }
 
     public void init()
     {
-	// how many streams per hierarchical splitjoin in the detect phase
-	final int GENERATE_BLOCKING     = 1; 
-	// how many streams per hierarchical splitjoin in the detect phase
-	final int DETECT_BLOCKING       = 2;
-
 	final int numChannels           = 12;//48;
 	final int numSamples            = 64;//4096;
 	final int numBeams              = 4;//16;
 	final int numCoarseFilterTaps   = 64;//
 	final int numFineFilterTaps     = 64;//
+	// under current implementation, decimation ratios must divide
+	// numSamples!  (otherwise we pop off the end of a column.) --bft
 	final int coarseDecimationRatio = 1;
 	final int fineDecimationRatio   = 2;
 	final int numSegments           = 1;
@@ -50,36 +44,40 @@ public class BeamFormer extends StreamIt
 		public void init() {
 		    int _i;
 		    setSplitter(NULL());
-		    for(_i=0; _i<numChannels; _i+=GENERATE_BLOCKING) {
+		    for(_i=0; _i<numChannels; _i+=1) {
 			final int i = _i;
-			//this was within a pipeline; i don't think
-			//it needed to be.  - cll
-			add(new SplitJoin() {
+			add(new Pipeline() {
 				public void init() {
-				    setSplitter(NULL());
-				    for (int _k=0; _k<GENERATE_BLOCKING; _k++) {
-					final int k = _k;
-					add(new Pipeline() {
-						public void init() {
-						    add(new InputGenerate(i+k,
-									  numSamples,
-									  targetBeam,
-									  targetSample,
-									  cfarThreshold));
-						    add(new BeamFirFilter(numCoarseFilterTaps,
-									  numSamples,
-									  coarseDecimationRatio));
-						    add(new BeamFirFilter(numFineFilterTaps,
-									  numPostDec1,
-									  fineDecimationRatio));
-						}
-					    });
-				    }
-				    setJoiner(ROUND_ROBIN(2));
+				    add(new InputGenerate(i,
+							  numSamples,
+							  targetBeam,
+							  targetSample,
+							  cfarThreshold));
+#ifdef COARSE
+				    add(new CoarseBeamFirFilter(numCoarseFilterTaps,
+								numSamples,
+								coarseDecimationRatio));
+#endif
+#ifndef COARSE
+				    add(new BeamFirFilter(numCoarseFilterTaps,
+							  numSamples,
+							  coarseDecimationRatio));
+#endif
+
+#ifdef COARSE
+				    add(new CoarseBeamFirFilter(numFineFilterTaps,
+								numPostDec1,
+								fineDecimationRatio));
+#endif
+#ifndef COARSE
+				    add(new BeamFirFilter(numFineFilterTaps,
+							  numPostDec1,
+							  fineDecimationRatio));
+#endif
 				}
 			    });
 		    }
-		    setJoiner(ROUND_ROBIN(2*GENERATE_BLOCKING));
+		    setJoiner(ROUND_ROBIN(2));
 		}
 	    });
 
@@ -87,41 +85,40 @@ public class BeamFormer extends StreamIt
 		public void init() {
 		    int _i;
 		    setSplitter(DUPLICATE());
-		    for(_i=0; _i<numBeams; _i+=DETECT_BLOCKING) {
+		    for(_i=0; _i<numBeams; _i+=1) {
 			final int i = _i;
-			add(new SplitJoin() {
+			add (new Pipeline() {
 				public void init() {
-				    setSplitter(DUPLICATE());
-				    for (int _k=0; _k<DETECT_BLOCKING; _k++) {
-					final int k = _k;
-					add (new Pipeline() {
-						public void init() {
-						    add(new Beamform(i+k, 
-								     numChannels));
+				    add(new Beamform(i, 
+						     numChannels));
 						    // Need to replace this fir with 
 						    //fft -> elWiseMult -> ifft
-						    add(new  BeamFirFilter(mfSize, 
-									   numPostDec2,
-									   1));
-						    add(new Magnitude());
-						    // with a more sophisticated detector, we need
-						    // someplace to store the data until we can find
-						    // the targets...
-						    add(new Detector(i+k,
-								     numPostDec2,
-								     targetBeam,
-								     targetSamplePostDec,
-								     cfarThreshold));
-						}
-					    });
-				    }
-				    setJoiner(NULL());
+				    add(new BeamFirFilter(mfSize, 
+							  numPostDec2,
+							  1));
+				    add(new Magnitude());
+				    // with a more sophisticated detector, we need
+				    // someplace to store the data until we can find
+				    // the targets...
+				    add(new Detector(i,
+						     numPostDec2,
+						     targetBeam,
+						     targetSamplePostDec,
+						     cfarThreshold));
 				}
 			    });
 		    }
+		    #ifdef SERIALIZED
+		    setJoiner(ROUND_ROBIN());
+                    #endif
+                    #ifndef SERIALIZED
 		    setJoiner(NULL());
+                    #endif
 		}
 	    });
+        #ifdef SERIALIZED
+	add(new FloatPrinter());
+        #endif
     }
 }
 
@@ -176,7 +173,6 @@ class InputGenerate extends Filter
 	    }
 
 	//	System.out.println(i2++);
-
 	curSample++;
 
 	if( curSample >= numberOfSamples )
@@ -203,6 +199,19 @@ class OneToOne extends Filter {
 
     public void work() {
 	output.pushFloat(input.popFloat());
+    }
+}
+
+class FloatPrinter extends Filter {
+    public FloatPrinter() {
+	super();
+    }
+    public void init() {
+	input = new Channel(Float.TYPE, 1);
+    }
+
+    public void work() {
+	System.out.println(input.popFloat());
     }
 }
 
@@ -237,49 +246,7 @@ class DummySink extends Filter {
 	input.popFloat();
     }
 }
-/*
-  class BeamFirFilter extends Pipeline {
 
-  public BeamFirFilter(int nt, int inLength, int decRatio) {
-  super(nt, inLength, decRatio);
-  }
-
-  public void init(int nt, int inLength, int decRatio) {
-  add(new BeamFirZeros(nt, inLength, decRatio));
-  add(new BaseFirFilter(nt, inLength, decRatio));
-  add(new BeamFirSink(nt, inLength, decRatio));
-  }
-
-  }
-
-  class BeamFirZeros extends SplitJoin {
-    
-  public BeamFirZeros(int nt, int inLength, int decRatio) {
-  super(nt, inLength, decRatio);
-  }
-    
-  public void init(int nt, int inLength, int decRatio) {
-  setSplitter(WEIGHTED_ROUND_ROBIN(0,1));
-  add(new ZeroSource());
-  add(new OneToOne());
-  setJoiner(WEIGHTED_ROUND_ROBIN(2*(nt-1), 2*(inLength)));
-  }
-  }
-
-  class BeamFirSink extends SplitJoin {
-
-  public BeamFirSink(int nt, int inLength, int decRatio) {
-  super(nt, inLength, decRatio);
-  }
-    
-  public void init(int nt, int inLength, int decRatio) {
-  setSplitter(WEIGHTED_ROUND_ROBIN(2*(inLength), 2*(nt-1)));
-  add(new OneToOne());
-  add(new DummySink());
-  setJoiner(WEIGHTED_ROUND_ROBIN(1,0));
-  }
-  }
-*/
 class BeamFirFilter extends Filter
 { // class FirFilter...
 
@@ -316,6 +283,26 @@ class BeamFirFilter extends Filter
 
 	// Use identity weights for now...
 	//  Later should become an input parameter to the FIR
+	
+	/* NOTE that these weights are (intentionally) backwards
+	 * compared to some formulations of an FIR.  That is, if we
+	 * could disregard the initial conditions and there were
+	 * complex values on the the tape, then filter would compute
+	 * something equivalent to:
+	 *
+	 *   peek(0) * weight[numTaps] + ... + peek(numTaps) * weight[0]
+	 * 
+	 *  this formulation makes sense when you visualize the FIR operation:
+	 *
+	 *   input stream                               weights
+         *      in[4]
+	 *      in[3]                                     /|\   <- the weights move
+	 *      in[2]                                      |       UP during the 
+	 *      in[1]                                    w[0]      course of execution
+	 *      in[0]                                    w[1]
+	 *        0    <- initial conditions             w[2]
+	 *        0                                      w[3]
+	 */
 	real_weight[0] = 1.0f;
 	imag_weight[0] = 0.0f;
 	for(i = 1; i < numTaps; i ++) {
@@ -346,16 +333,21 @@ class BeamFirFilter extends Filter
 	modPos = pos;
 	for (i = 0; i < numTaps; i++) {
 	    real_curr += 
-		realBuffer[modPos]*real_weight[i] + imagBuffer[modPos] * imag_weight[i];
+		realBuffer[modPos] * real_weight[i] + imagBuffer[modPos] * imag_weight[i];
 	    imag_curr +=
 		imagBuffer[modPos] * real_weight[i] + realBuffer[modPos] * imag_weight[i];
-	    // increment position in this round of summing
-	    modPos++;
-	    if (modPos==numTaps) { modPos = 0; }
+	    // adjust position in this round of summing.
+	    if (modPos==0) { 
+		modPos = numTaps;
+	    }
+	    modPos--;
 	}
 	
 	// increment sum
-	pos = (pos+1)%numTaps;
+	pos++;
+	if (pos==numTaps) { 
+	    pos = 0;
+	}
 
 	// push output
 	output.pushFloat(real_curr);
@@ -382,8 +374,101 @@ class BeamFirFilter extends Filter
 		realBuffer[i] = 0;
 		imagBuffer[i] = 0;
 	    }
-	} else if (count>inputLength) {
-	    //System.out.println("ERROR:  don't expect count to exceed inputLength");
+	}
+    }
+}
+
+class CoarseBeamFirFilter extends Filter
+{ // class FirFilter...
+
+    float[] real_weight;
+    float[] imag_weight;
+    int numTaps;
+    int inputLength;
+    int decimationRatio;
+
+    public CoarseBeamFirFilter(int nt, int inLength, int decRatio) {
+	super(nt, inLength, decRatio);
+    }
+
+    public void init(int nt, int inLength, int decRatio)
+    { // BeamFirFilter::init()
+	int i;
+	numTaps = nt;
+	inputLength = inLength;
+	decimationRatio = decRatio;
+
+	input = new Channel(Float.TYPE, 2*inLength*decRatio);
+	output = new Channel(Float.TYPE, 2*inLength);
+	real_weight = new float[numTaps];
+	imag_weight = new float[numTaps];
+
+	// Use identity weights for now...
+	//  Later should become an input parameter to the FIR
+
+	// NOTE:  weights are as "backwards" as explained in beamfirfilter
+	real_weight[0] = 1.0f;
+	imag_weight[0] = 0.0f;
+	for(i = 1; i < numTaps; i++) {
+	    real_weight[i] = 0;
+	    imag_weight[i] = 0;
+	}
+    }
+
+    public void work() {
+	// for first <numTaps>, only look at beginning items
+	for (int i=1; i<numTaps; i++) {
+	    float real_curr = 0;
+	    float imag_curr = 0;
+	    for (int j=0; j<i; j++) {
+		int realIndex = 2*(i-j-1);
+		int imagIndex = realIndex+1;
+		real_curr += real_weight[j] * input.peekFloat(realIndex) + imag_weight[j] * input.peekFloat(imagIndex);
+		imag_curr += real_weight[j] * input.peekFloat(imagIndex) + imag_weight[j] * input.peekFloat(realIndex);
+		//System.err.println("  real += wr[" + j + "] * peek("+realIndex+") + wi["+j+"] * peek("+imagIndex+")");
+		//System.err.println("  imag += wr[" + j + "] * peek("+imagIndex+") + wi["+j+"] * peek("+realIndex+")");
+	    }
+	    //System.err.println("PUSH real");
+	    //System.err.println("PUSH imag");
+	    output.pushFloat(real_curr);
+	    output.pushFloat(imag_curr);
+	    // do decimation
+	    for (int k=1; k<decimationRatio; k++) {
+		input.popFloat();
+		input.popFloat();
+	    }
+	}
+
+	// then look at <numTaps> items
+	for (int i=0; i<inputLength-numTaps+1; i++) {
+	    float real_curr = 0;
+	    float imag_curr = 0;
+	    for (int j=0; j<numTaps; j++) {
+		int realIndex = 2*(numTaps-j-1);
+		int imagIndex = realIndex+1;
+		//System.err.println("  real += wr[" + j + "] * peek("+realIndex+") + wi["+j+"] * peek("+imagIndex+")");
+		//System.err.println("  imag += wr[" + j + "] * peek("+imagIndex+") + wi["+j+"] * peek("+realIndex+")");
+		real_curr += real_weight[j] * input.peekFloat(realIndex) + imag_weight[j] * input.peekFloat(imagIndex);
+		imag_curr += real_weight[j] * input.peekFloat(imagIndex) + imag_weight[j] * input.peekFloat(realIndex);
+	    }
+	    //System.err.println("PUSH real");
+	    //System.err.println("PUSH imag");
+	    //System.err.println("POP");
+	    //System.err.println("POP");
+	    output.pushFloat(real_curr);
+	    output.pushFloat(imag_curr);
+	    // do popping and decimation
+	    for (int k=0; k<decimationRatio; k++) {
+		input.popFloat();
+		input.popFloat();
+	    }
+	}
+
+	// pop extra <numTaps-1> items (that are still on the tape
+	// from our last filtering)
+	for (int i=0; i<(numTaps-1); i++) {
+	    input.popFloat();
+	    input.popFloat();
 	}
     }
 }
@@ -515,31 +600,48 @@ class Detector extends Filter
 
 	thresh = 0.1f;
 	input = new Channel(Float.TYPE, 1);
+#ifdef SERIALIZED
+	output = new Channel(Float.TYPE, 1);
+#endif
     }
 
     public void work()
     {
 	float val = input.popFloat();
-	if (val>=thresh) {
-	    /*
-	      System.err.println("something over threshold in detect: mybeam = " + myBeam + " curSample=" +curSample + " targetSample=" + targetSample + "holdstarget=" + holdsTarget);
-	    */
-	}
 	if(holdsTarget && targetSample == curSample)
 	    {
 		if( !(val >= thresh) ) {
+#ifdef SERIALIZED
+		    output.pushFloat(0);
+#endif
+#ifndef SERIALIZED
 		    System.out.println(0);
+#endif
 		} else {
+#ifdef SERIALIZED
+		    output.pushFloat(myBeam);
+#endif
+#ifndef SERIALIZED
 		    System.out.println(myBeam);
+#endif
 		}
 	    }
 	else
 	    {
 		if( val >= thresh ) {
+#ifdef SERIALIZED
+		    output.pushFloat(0);
+#endif
+#ifndef SERIALIZED
 		    System.out.println(0);
+#endif
 		} else {
+#ifdef SERIALIZED
+		    output.pushFloat(-myBeam);
+#endif
+#ifndef SERIALIZED
 		    System.out.println(-myBeam);
-		    //System.out.println("OK not found on beam " + myBeam);
+#endif
 		}
 	    }
 

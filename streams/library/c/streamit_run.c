@@ -75,5 +75,6 @@ void streamit_run (stream_context *c)
     while (1)
     {
         c->work_function (c->stream_data);
+        dispatch_messages();
     }
 }

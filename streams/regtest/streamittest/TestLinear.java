@@ -5,13 +5,14 @@ import at.dms.kjc.sir.linear.ComplexNumber;
 import at.dms.kjc.sir.linear.FilterMatrix;
 import at.dms.kjc.sir.linear.FilterVector;
 import at.dms.kjc.sir.linear.LinearForm;
+import at.dms.kjc.sir.linear.LinearTransform;
 
 import java.util.*;
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.8 2002-09-18 17:14:43 aalamb Exp $
+ * $Id: TestLinear.java,v 1.9 2002-09-23 21:28:06 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -35,6 +36,7 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterMatrixEquals"));
 	suite.addTest(new TestLinear("testFilterMatrixCopy"));
 	suite.addTest(new TestLinear("testFilterMatrixCopyAt"));
+	suite.addTest(new TestLinear("testFilterMatrixCopyColumnsAt"));
 	suite.addTest(new TestLinear("testFilterMatrixScale"));
 	suite.addTest(new TestLinear("testFilterMatrixParsing"));
 	suite.addTest(new TestLinear("testFilterMatrixAddition"));
@@ -48,6 +50,9 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testLinearFormEquals"));
 	suite.addTest(new TestLinear("testLinearFormMultiply"));
 	suite.addTest(new TestLinear("testLinearFormDivide"));
+
+	suite.addTest(new TestLinear("testLinearTransformLcm"));
+	suite.addTest(new TestLinear("testLinearTransformGcd"));
 
 	return suite;
     }
@@ -429,6 +434,52 @@ public class TestLinear extends TestCase {
 	try{zero.copyAt(3,3,chunk); fail();} catch(IllegalArgumentException e){};
 	try{zero.copyAt(3,0,chunk); fail();} catch(IllegalArgumentException e){};
     }
+
+    /** test copying matrix columns at a particular location. **/
+    public void testFilterMatrixCopyColumnsAt() {
+	FilterMatrix mat1 = parseMatrix("[[1 2 3 4][5 6 7 8][9 10 11 12][13 14 15 16]]");
+	FilterMatrix mat2 = parseMatrix("[[1 2 3][4 5 6][7 8 9]]");
+
+	FilterMatrix temp;
+
+	// test very simple copy -- col to various places of mat1
+	// (note the use of copy() to keep mat1 unchanged)
+	FilterMatrix source = parseMatrix("[[9][8][7][6]]");
+	FilterMatrix expected = parseMatrix("[[9 2 3 4][8 6 7 8][7 10 11 12][6 14 15 16]]");
+	temp = mat1.copy();
+	temp.copyColumnsAt(0, source, 0, 1);
+	assertTrue(temp.equals(expected));
+
+	expected = parseMatrix("[[1 9 3 4][5 8 7 8][9 7 11 12][13 6 15 16]]");
+	temp = mat1.copy();
+	temp.copyColumnsAt(1, source, 0, 1);
+	assertTrue(temp.equals(expected));
+
+	expected = parseMatrix("[[1 2 9 4][5 6 8 8][9 10 7 12][13 14 6 16]]");
+	temp = mat1.copy();
+	temp.copyColumnsAt(2, source, 0, 1);
+	assertTrue(temp.equals(expected));
+	
+	expected = parseMatrix("[[1 2 3 9][5 6 7 8][9 10 11 7][13 14 15 6]]");
+	temp = mat1.copy();
+	temp.copyColumnsAt(3, source, 0, 1);
+	assertTrue(temp.equals(expected));
+
+	// make sure that we do the appropriate bounds checking
+	try{mat1.copyColumnsAt(4,source,0,1); fail();}catch(IllegalArgumentException e){} // dstOffset bad
+	try{mat1.copyColumnsAt(1,source,1,1); fail();}catch(IllegalArgumentException e){} // srcOffset bad
+	try{mat1.copyColumnsAt(1,source,0,2); fail();}catch(IllegalArgumentException e){} // srcSize is bad
+
+	source = parseMatrix("[[1 2 3 4 5][1 2 3 4 5][1 2 3 4 5][1 2 3 4 5][1 2 3 4 5]]");
+	try{mat1.copyColumnsAt(0,source,0,5); fail();}catch(IllegalArgumentException e){} // dstSize is bad
+
+	// dimension mismatch
+	source = parseMatrix("[[1][2][3]]");
+	try{mat1.copyColumnsAt(0,source,0,1); fail();}catch(IllegalArgumentException e){} // srcSize is bad
+	source = parseMatrix("[[1][2][3][4][5]]");
+	try{mat1.copyColumnsAt(0,source,0,1); fail();}catch(IllegalArgumentException e){} // srcSize is bad
+    }
+
     
     /** test the scale operation in FilterMatricies. **/
     public void testFilterMatrixScale() {
@@ -784,6 +835,49 @@ public class TestLinear extends TestCase {
 
 
 
+    /** test the implementation of lcm in LinearTransform. **/
+    public void testLinearTransformLcm() {
+	assertTrue(LinearTransform.lcm(3,4) == 12);
+	assertTrue(LinearTransform.lcm(1,1) == 1);
+	assertTrue(LinearTransform.lcm(5,7) == 35);
+
+	assertTrue(LinearTransform.lcm(2,6) == 6);
+	assertTrue(LinearTransform.lcm(1,6) == 6);
+	assertTrue(LinearTransform.lcm(6,2) == 6);
+	assertTrue(LinearTransform.lcm(6,1) == 6);
+
+	assertTrue(LinearTransform.lcm(6,3) == 6);
+	assertTrue(LinearTransform.lcm(6,2) == 6);
+	assertTrue(LinearTransform.lcm(6,6) == 6);
+	assertTrue(LinearTransform.lcm(3,6) == 6);
+	assertTrue(LinearTransform.lcm(2,6) == 6);
+
+	// now, test the multiple number version
+	assertTrue(LinearTransform.lcm(parseArray("1 2 3")) == 6);
+	assertTrue(LinearTransform.lcm(parseArray("4")) == 4);
+	assertTrue(LinearTransform.lcm(parseArray("3 4 8")) == 24);
+	assertTrue(LinearTransform.lcm(parseArray("3 3 3 3 3 3")) == 3);
+	assertTrue(LinearTransform.lcm(parseArray("3 3 3 3 3 1")) == 3);
+	assertTrue(LinearTransform.lcm(parseArray("3 3 3 4 3 3 3 3 3")) == 12);
+
+
+    }
+    
+    /** test the implementation of gcd in LinearTransform. **/
+    public void testLinearTransformGcd() {
+	assertTrue(LinearTransform.gcd(1,5) == 1);
+	assertTrue(LinearTransform.gcd(parseArray("1 5")) == 1);
+	assertTrue(LinearTransform.gcd(parseArray("1")) == 1);
+	assertTrue(LinearTransform.gcd(parseArray("5")) == 5);
+
+	assertTrue(LinearTransform.gcd(parseArray("2 3")) == 1);
+	assertTrue(LinearTransform.gcd(parseArray("6 3")) == 3);
+	assertTrue(LinearTransform.gcd(parseArray("2 2")) == 2);
+	assertTrue(LinearTransform.gcd(parseArray("2 3 2 3")) == 1);
+	assertTrue(LinearTransform.gcd(parseArray("4 6 4 6")) == 2);
+	
+    }    
+
 
 
     ///////////// Utility function that I don't want to clutter the acutal
@@ -864,7 +958,23 @@ public class TestLinear extends TestCase {
     }
 	    
 
-		
+    /**
+     * Creates an array of integers from a string
+     * of the form "1 2 3 4" where the integers are
+     * separated by a space.
+     **/
+    private static int[] parseArray(String arrayString) {
+	// basically, split on space
+	StringTokenizer st = new StringTokenizer(arrayString, " ");
+	// make a new array
+	int arr[] = new int[st.countTokens()];
+	int currentIndex = 0;
+	while(st.hasMoreTokens()) {
+	    arr[currentIndex] = Integer.parseInt(st.nextToken());
+	    currentIndex++;
+	}
+	return arr;
+    }
 
 
 

@@ -6,7 +6,7 @@
 #include <sys/poll.h>
 
 extern unsigned get_myip();
-extern unsigned lookup_ip(char *host);
+extern unsigned lookup_ip(const char *host);
 extern void print_ip(FILE *f, unsigned ip);
 
 class mysocket {

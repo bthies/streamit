@@ -38,7 +38,7 @@ unsigned get_myip() {
 
 }
 
-unsigned lookup_ip(char *hostname) {
+unsigned lookup_ip(const char *hostname) {
 
   struct hostent *host = gethostbyname(hostname);
   return *(unsigned *)host->h_addr_list[0];

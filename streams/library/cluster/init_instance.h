@@ -24,12 +24,12 @@ class init_instance {
   static map<sock_dscr, int> in_sockets, out_sockets;
   static map<sock_dscr, bool> in_done, out_done;
 
-  static map<int, string> thread_machines;
+  static map<int, unsigned> thread_machines;
 
  public:
 
   static void read_config_file();
-  static char* get_node_name(int node);
+  static unsigned get_node_ip(int node);
 
   static void add_incoming(int from, int to, int type);
   static void add_outgoing(int from, int to, int type);

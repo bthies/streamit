@@ -1,0 +1,1031 @@
+/* 802.11a transmitter
+
+Steps:
+
+1) signal field
+
+ - generate signal field based on data rate
+ - convolutional code (rate = 1/2)
+ - interleave twice
+ - BPSK
+ - insert pilots
+ - IFFT
+
+2) data
+
+ - prepend with 16 0's, append with 6 zeros, then append with more zeros
+   to make length integer multiple of bits per OFDM symbol
+ - XOR with scrambling sequence
+ - convolutional code
+ - interleave twice
+ - BPSK/QPSK/QAM
+ - insert pilots
+ - IFFT
+
+*/
+
+void->bit filter generate_data() {
+
+  int y;
+
+  init {
+
+    y = 0;
+  }
+
+  work push 1 pop 0 {
+    push(0);
+  }
+}
+
+
+bit->void filter output_b() {
+
+  work push 0 pop 1 {
+    print(pop());
+  }
+}
+
+
+complex->void filter output_c() {
+
+  work push 0 pop 1 {
+    complex c = pop();
+    print(c.real);
+    print(c.imag);
+  }
+}
+
+
+void->void pipeline transmit() {
+
+  int data_rate = 36;
+  int length = 100;  // in octets, LSB for each octet should come FIRST
+
+  int modulation, 
+      coding_rate, 
+      bits_per_sub, 
+      bits_per_sym,  
+      data_bits_per_sym;
+
+
+  if(data_rate == 6) {
+     modulation = 0;
+     coding_rate = 0;
+     bits_per_sub = 1;
+     bits_per_sym = 48;
+     data_bits_per_sym = 24;
+  }
+  else if(data_rate == 9) {
+     modulation = 0;
+     coding_rate = 1;
+     bits_per_sub = 1;
+     bits_per_sym = 48;
+     data_bits_per_sym = 36;
+  }
+  else if(data_rate == 12) {
+     modulation = 1;
+     coding_rate = 0;
+     bits_per_sub = 2;
+     bits_per_sym = 96;
+     data_bits_per_sym = 48;
+  }
+  else if(data_rate == 18) {
+     modulation = 1;
+     coding_rate = 1;
+     bits_per_sub = 2;
+     bits_per_sym = 96;
+     data_bits_per_sym = 72;
+  }
+  else if(data_rate == 24) {
+     modulation = 2;
+     coding_rate = 0;
+     bits_per_sub = 4;
+     bits_per_sym = 192;
+     data_bits_per_sym = 96;
+  }
+  else if(data_rate == 36) {
+     modulation = 2;
+     coding_rate = 1;
+     bits_per_sub = 4;
+     bits_per_sym = 192;
+     data_bits_per_sym = 144;
+  }
+  else if(data_rate == 48) {
+     modulation = 3;
+     coding_rate = 3;
+     bits_per_sub = 6;
+     bits_per_sym = 288;
+     data_bits_per_sym = 192;
+  }
+  else {  // data_rate == 54
+     modulation = 3;
+     coding_rate = 2;
+     bits_per_sub = 6;
+     bits_per_sym = 288;
+     data_bits_per_sym = 216;
+  }
+
+  int total_in_bits = 8*length;
+  int subtotal_out_bits = total_in_bits+22;
+
+  int total_out_symbs = (int)((subtotal_out_bits)/data_bits_per_sym);
+
+  if(data_bits_per_sym*total_out_symbs != subtotal_out_bits)
+    total_out_symbs++;
+
+
+  add void->complex splitjoin {
+    split roundrobin(0);
+    add add_seqs();   
+    add header_and_data(data_rate,length,modulation,coding_rate,bits_per_sub,bits_per_sym,data_bits_per_sym);
+    join roundrobin(321,80*(total_out_symbs+1)+1);
+  }
+
+  add complex->complex splitjoin {
+    split roundrobin(320,2,80*(total_out_symbs+1));
+    add Identity<complex>();
+    add halve_and_combine();
+    add Identity<complex>();
+    join roundrobin(320,1,80*(total_out_symbs+1));
+  }
+
+
+  add output_c();
+
+/*
+  add encoded_data(data_rate,length,modulation,coding_rate,bits_per_sub,bits_per_sym,data_bits_per_sym);
+
+  add output_b();
+*/
+}
+
+
+void->complex pipeline header_and_data(int data_rate, int length, int modulation, int coding_rate, int bits_per_sub, int bits_per_sym, int data_bits_per_sym){
+
+  add FileReader<bit>("data1.bin");
+
+  int total_in_bits = 8*length;
+  int subtotal_out_bits = total_in_bits+22;
+
+  int total_out_symbs = (int)((subtotal_out_bits)/data_bits_per_sym);
+
+  if(data_bits_per_sym*total_out_symbs != subtotal_out_bits)
+    total_out_symbs++;
+    
+  int total_out_complex = 64*total_out_symbs;
+
+  add bit->complex splitjoin {
+
+    split roundrobin(0,8*length);
+      add encoded_header(data_rate,length);
+      add encoded_data(data_rate,length,modulation,coding_rate,bits_per_sub,bits_per_sym,data_bits_per_sym);
+    join roundrobin(64,total_out_complex);
+  }
+
+  add cyclicIFFT();
+
+  add complex->complex splitjoin {
+
+    split roundrobin(1,81*total_out_symbs,79,1);
+      add Identity<complex>();
+      add append_symbols();
+      add Identity<complex>();
+      add halve();
+    join roundrobin(1,80*total_out_symbs,79,1);
+  }
+
+}
+
+
+void->bit pipeline encoded_header(int data_rate, int len) {
+
+  add generate_header(data_rate,len);
+  add conv_code(0);
+  add permute_1(48);
+  add BPSK();
+  add insert_pilots(false);
+  add insert_zeros_complex(6,26,1,26,5);
+}
+
+
+void->bit filter generate_header(int data_rate, int len) {
+
+  work push 24 pop 0 {
+
+    int temp = 1;
+    boolean odd = false; // for parity bit
+
+// first push the 4 bit code for data rate
+    if(data_rate == 6) {
+      push(1); push(1); push(0); push(1); odd = true;
+    }
+    else if(data_rate == 9) {
+      push(1); push(1); push(1); push(1); odd = false;
+    }
+    else if(data_rate == 12) {
+      push(0); push(1); push(0); push(1); odd = false;
+    }
+    else if(data_rate == 18) {
+      push(0); push(1); push(1); push(1); odd = true;
+    }
+    else if(data_rate == 24) {
+      push(1); push(0); push(0); push(1); odd = false;
+    }
+    else if(data_rate == 36) {
+      push(1); push(0); push(1); push(1); odd = true;
+    }
+    else if(data_rate == 48) {
+      push(0); push(0); push(0); push(1); odd = true;
+    }
+    else if(data_rate == 48) {
+      push(0); push(0); push(1); push(1); odd = false;
+    }
+
+    push(0); // reserved bit
+
+   // push length (number of octets) as a 12 bit number, LSB first
+    for(int i=0; i<12; i++) {
+      if((temp&len)==0)
+        push(0);
+      else {
+        push(1);
+        odd = !odd;
+      }
+      temp *= 2;
+    }
+
+
+    // parity bit
+    if(odd)
+      push(1);
+    else
+      push(0);
+
+
+    // tail bits
+    for(int i=0; i<6; i++)
+      push(0);
+
+  }
+}
+
+
+void->bit pipeline encoded_data(int data_rate, int len, int modulation, int coding_rate, int bits_per_sub, int bits_per_sym, int data_bits_per_sym) {
+
+  int subtotal = len*8 + 22;  // 22 zeros added, 16 to front, 6 to back
+  int rem = subtotal % data_bits_per_sym;
+  int extra; 
+  if(rem == 0)
+    extra = 0;
+  else
+    extra = data_bits_per_sym - rem;
+  int total = subtotal + extra;  // should be a multiple of data_bits_per_sym
+
+  add insert_zeros(16,len*8,6+extra);
+
+  add scramble();
+  add zero_tail_bits(16+len*8,total);
+
+  add conv_code(coding_rate);
+  add permute_1(bits_per_sym);
+  add permute_2(bits_per_sub);
+
+
+  if(modulation==0)
+    add BPSK();
+  else if(modulation==1)
+    add QPSK();
+  else if(modulation==2)
+    add QAM16();
+  else // modulation==3 
+    add QAM64();
+
+  add insert_pilots(true);
+
+// turn each 52 length seq to a 64 length seq by inserting 6 zeros before, 1 zero between, 5 zeros after: 52+6+1+5=64
+// this is done to make IFFT computation easier
+  add insert_zeros_complex(6,26,1,26,5);     
+}
+
+
+// bit filter to insert zeros
+
+bit->bit splitjoin insert_zeros(int begin_zeros, int total, int end_zeros) {
+
+  split roundrobin(0,total,0);
+  add zero_gen();
+  add Identity<bit>;
+  add zero_gen();
+  join roundrobin(begin_zeros,total,end_zeros);
+}
+
+
+void->bit filter zero_gen() {
+
+  work push 1 pop 0 {
+    push(0);
+  }
+}
+
+
+
+// complex filter to insert zeros
+
+complex->complex splitjoin insert_zeros_complex(int begin_zeros, int total1, int mid_zeros, int total2, int end_zeros) {
+
+  split roundrobin(0,total1,0,total2,0);
+  add zero_gen_complex();
+  add Identity<complex>;
+  add zero_gen_complex();
+  add Identity<complex>;
+  add zero_gen_complex();
+  join roundrobin(begin_zeros,total1,mid_zeros,total2,end_zeros);
+}
+
+
+void->complex filter zero_gen_complex() {
+
+  work push 1 pop 0 {
+    complex c = 0.0;
+    push(c);
+  }
+}
+
+
+// replace the 6 values after pre_total with zero
+
+bit->bit filter zero_tail_bits(int pre_total, int total) {
+
+  work push total pop total {
+
+    for(int i=0; i<pre_total; i++)
+      push(pop());
+
+    for(int i=0; i<6; i++) {
+      push(0);
+      pop();
+    }
+
+    for(int i=pre_total+6; i<total; i++)
+      push(pop());
+  }
+}
+
+
+//data scrambler with poly x^7 + x^4 + 1
+
+bit->bit pipeline scramble() {
+
+  add interleave_scramble_seq();
+  add xor_pair();
+
+}
+
+
+
+bit->bit filter xor_pair() {
+
+  work push 1 pop 2 {
+
+    push(pop()^pop());
+  }
+}
+
+
+bit->bit splitjoin interleave_scramble_seq() {
+
+  split roundrobin(1,0);
+  add Identity<bit>;
+  add scramble_seq();
+  join roundrobin();
+}
+
+
+void->bit filter scramble_seq() {
+
+  int len = 7;
+  bit[len] temp; 
+
+  init {
+
+// seed is 1011101
+
+    temp[6] = 1;
+    temp[5] = 0;
+    temp[4] = 1;
+    temp[3] = 1;
+    temp[2] = 1;
+    temp[1] = 0;
+    temp[0] = 1;
+
+  }
+
+  work push 1 pop 0 {
+
+    bit out;
+    out = temp[6]^temp[3];
+
+    for(int i=len-1; i>0; i--)
+      temp[i] = temp[i-1];
+
+    temp[0] = out;
+    push(out);
+
+  }
+}
+
+
+
+//convolutional coder using 7 blocks
+
+bit->bit pipeline conv_code(int coding_rate) {
+
+  add conv_code_filter();
+
+  if(coding_rate == 1)
+    add puncture_1();
+
+  else if(coding_rate == 2)
+    add puncture_2();
+}
+
+
+bit->bit filter conv_code_filter() {
+
+  int len = 7;
+  bit[len] temp;
+
+  init {
+
+    for(int i=0; i<len; i++)
+      temp[i] = 0;
+  }
+  
+  work push 2 pop 1 {
+
+    bit out_a, out_b;
+
+    for(int i=len-1; i>0; i--)
+      temp[i] = temp[i-1];
+    temp[0] = pop();
+
+    out_a = temp[0]^temp[2]^temp[3]^temp[5]^temp[6];
+    out_b = temp[0]^temp[1]^temp[2]^temp[3]^temp[6];
+
+    push(out_a); push(out_b);
+  }
+}
+
+
+// for r = 3/4
+
+bit->bit filter puncture_1() {
+
+  work push 4 pop 6 {
+
+    push(pop()); push(pop()); push(pop());
+    pop(); pop();
+    push(pop());
+  }
+}
+
+
+// for r = 2/3
+
+bit->bit filter puncture_2() {
+
+  work push 3 pop 4 {
+
+    push(pop()); push(pop()); push(pop());
+    pop();
+  }
+}
+
+
+// first permutation - interleaves stream
+
+bit->bit splitjoin permute_1(int bits_per_sym) {
+
+  int splits = bits_per_sym/16;
+
+  split roundrobin(16);
+  for(int i=0; i<splits; i++)
+    add Identity<bit>;
+  join roundrobin();
+}
+
+
+// second permutation
+
+bit->bit pipeline permute_2(int bits_per_sub) {
+
+  if((bits_per_sub==1)||(bits_per_sub==2))
+    add Identity<bit>;
+  else if(bits_per_sub==4) 
+    add swapHalf(12);
+  else // if bits_per_sub==6
+    add swapHalf(18);
+}
+
+
+// leaves first N elements unchanged, does pairwise swaps for next N elements
+// N should be even
+
+bit->bit splitjoin swapHalf(int N) {
+
+  split roundrobin(N);
+  add Identity<bit>;
+  add swap();
+  join roundrobin(N);
+
+}
+
+
+// swaps pair of elements in a stream
+
+bit->bit filter swap() {
+
+  work push 2 pop 2 {
+
+    bit first, second;
+    second = pop(); first = pop();
+    push(first); push(second);
+  }
+}
+
+
+
+bit->complex filter BPSK() {
+
+  work push 1 pop 1 {
+
+    bit b; complex c;
+    c.imag = 0.0;
+
+    b = pop();
+
+    if(b==0)
+      c.real = -1.0; 
+    else
+      c.real = 1.0;
+    push(c);
+  }
+}
+
+
+bit->complex filter QPSK() {
+
+  work push 1 pop 2 {
+
+    bit b0,b1; complex c;
+
+    b0 = pop(); b1 = pop();
+
+    if(b0==0)
+      c.real = -1.0;
+    else
+      c.real = 1.0;
+
+    if(b1==0)
+      c.imag = -1.0; 
+    else
+      c.imag = 1.0;
+
+    c = c/sqrt(2);
+    push(c);
+
+  }
+}
+
+
+bit->complex filter QAM16() {
+
+  work push 1 pop 4 {
+
+    bit b0,b1,b2,b3; complex c;
+
+    b0 = pop(); b1 = pop(); b2 = pop(); b3 = pop();
+
+    if(b0==0) {
+      if(b1==0) 
+        c.real = -3.0;
+      else
+        c.real = -1.0;
+    }
+    else {
+      if(b1==0) 
+        c.real = 3.0;
+      else
+        c.real = 1.0;
+    }
+
+    if(b2==0) {
+      if(b3==0) 
+        c.imag = -3.0;
+      else
+        c.imag = -1.0;
+    }
+    else {
+      if(b3==0) 
+        c.imag = 3.0;
+      else
+        c.imag = 1.0;
+    }
+  
+   c = c/sqrt(10);
+   push(c);
+  }
+}
+
+
+bit->complex filter QAM64() {
+
+  work push 1 pop 6 {
+
+    bit b0,b1,b2,b3,b4,b5; complex c;
+
+    b0 = pop(); b1 = pop(); b2 = pop(); b3 = pop(); b4 = pop(); b5 = pop();
+
+    if(b0==0) {
+      if(b1==0) {
+        if(b2==0)
+          c.real = -7.0;
+        else
+          c.real = -5.0;
+      }
+      else {
+        if(b2==0)
+          c.real = -1.0;
+        else
+          c.real = -3.0;
+      }
+    }
+    else {
+      if(b1==0) {
+        if(b2==0)
+          c.real = 7.0;
+        else
+          c.real = 5.0;
+      }
+      else {
+        if(b2==0)
+          c.real = 1.0;
+        else
+          c.real = 3.0;
+      }
+    }
+
+    if(b3==0) {
+      if(b4==0) {
+        if(b5==0)
+          c.imag = -7.0;
+        else
+          c.imag = -5.0;
+      }
+      else {
+        if(b5==0)
+          c.imag = -1.0;
+        else
+          c.imag = -3.0;
+      }
+    }
+    else {
+      if(b4==0) {
+        if(b5==0)
+          c.imag = 7.0;
+        else
+          c.imag = 5.0;
+      }
+      else {
+        if(b5==0)
+          c.imag = 1.0;
+        else
+          c.imag = 3.0;
+      }
+    }
+
+    c = c/sqrt(42); 
+    push(c);
+  }
+}
+
+
+complex->complex pipeline insert_pilots(boolean data) {
+
+  add complex->complex splitjoin {
+    split roundrobin(48,0);
+    add Identity<complex>;
+    if(data)
+      add pilot_generator();
+    else
+      add header_pilot_generator();
+    join roundrobin(48,4);
+  }
+
+  add complex->complex filter {
+
+    work push 52 pop 52 {
+
+      complex p1,p2,p3,p4;
+      p1 = peek(48); p2 = peek(49); p3 = peek(50); p4 = peek(51);
+
+      for(int i=-26; i<-21; i++)
+        push(pop());
+
+      push(p1);
+
+      for(int i=-20; i<-7; i++)
+        push(pop());
+
+      push(p2);
+
+      for(int i=-6;i<6; i++)  // no zero value
+        push(pop());
+
+      push(p3);
+
+      for(int i=8;i<21;i++)
+        push(pop());
+
+      push(p4);
+
+      for(int i=22; i<=26; i++)
+        push(pop());
+
+      pop(); pop(); pop(); pop();
+    }
+  }  
+
+}
+
+
+void->complex filter header_pilot_generator() {
+
+  work push 4 pop 0 {
+
+    complex one = 1.0; complex neg_one = -1.0;
+
+    push(one); push(one); push(one); push(neg_one);
+  }
+}
+
+
+void->complex filter pilot_generator() {
+
+  complex c1,c2,c3,c4;
+  int len = 7;
+  bit[len] temp;
+
+  init {
+    c1.real = 1.0; c2.real = 1.0; c3.real = 1.0; c4.real = -1.0;
+    for(int i=1; i<len; i++)
+      temp[i] = 1;
+    temp[0] = 0;  // state after the header gets its pilots
+ }
+
+  work push 4 pop 0 {
+
+    complex factor;
+    bit out;
+    out = temp[6]^temp[3];
+
+    for(int i=len-1; i>0; i--)
+      temp[i] = temp[i-1];
+
+    temp[0] = out;
+
+    if(out==0)
+      factor.real = 1.0;
+    else
+      factor.real = -1.0;
+    
+
+    push(factor*c1); push(factor*c2); push(factor*c3); push(factor*c4);
+  }
+}
+
+
+complex->complex pipeline cyclicIFFT() {
+
+  add fftshift_1d(64);
+  add IDFT(64);
+  add complex->complex splitjoin {
+
+    split duplicate();
+    add remove_first(64,16);
+    add Identity<complex>();
+    add remove_last(64,1);
+    join roundrobin(16,64,1);
+  }
+
+}
+
+
+complex->complex pipeline cyclicIFFT2() {
+
+  add fftshift_1d(64);
+  add IDFT(64);
+
+  add complex->complex splitjoin {
+
+    split duplicate();
+    add remove_first(64,32);
+    add Identity<complex>();
+    add Identity<complex>();
+    add remove_last(64,1);
+    join roundrobin(32,64,64,1);
+  }
+
+}
+
+// assuming pre_total >= post_total
+
+complex->complex filter remove_first(int pre_total, int post_total) {
+
+  work push post_total pop pre_total {
+
+    int stop = pre_total - post_total;
+
+    for(int i=0; i<stop; i++)
+      pop();
+
+    for(int i=0; i<post_total; i++)
+      push(pop());
+  }
+}
+
+
+
+// assuming pre_total >= post_total
+
+complex->complex filter remove_last(int pre_total, int post_total) {
+
+  work push post_total pop pre_total {
+
+    for(int i=0; i<post_total; i++)
+      push(pop());
+
+    for(int i=post_total; i<pre_total; i++)
+      pop();
+  }
+}
+
+
+// 1 dimensional fftshift (swaps first half and second half)
+
+// input: N complex
+// output: N complex
+
+complex->complex filter fftshift_1d(int N) {
+
+  int half;
+
+  init {
+    if((N % 2)==0)
+      half = N/2;
+    else
+      half = (N+1)/2;
+  }
+
+  work push N pop N peek N {
+
+    for(int i=half; i<N; i++)
+      push(peek(i));
+
+    for(int i=0; i<half; i++)
+      push(pop());
+
+    for(int i=half; i<N; i++)
+      pop();
+  }
+}
+
+
+complex->complex filter halve() {
+
+  work push 1 pop 1 {
+
+    push(pop()/2);
+  }
+}
+
+
+complex->complex filter halve_and_combine() {
+
+  work push 1 pop 2 {
+
+    push((pop() + pop())/2);
+  }
+}
+
+
+complex->complex splitjoin append_symbols() {
+
+  split roundrobin(79,2);
+  add Identity<complex>();
+  add halve_and_combine();
+  join roundrobin(79,1);
+}
+
+
+void->complex filter short_seq() {
+
+  complex pos, neg, zero;
+
+  init {
+    zero = 0.0;
+    pos = sqrt(13.0/6.0)*(1.0 + 1.0i);
+    neg = sqrt(13.0/6.0)*(-1.0 - 1.0i);
+  }
+
+  work push 64 pop 0 {
+
+    push(zero); push(zero); push(zero); push(zero); push(zero);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(neg);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(neg);
+    push(zero); push(zero); push(zero); push(neg);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(zero);
+    push(zero); push(zero); push(zero); push(neg);
+    push(zero); push(zero); push(zero); push(neg);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(pos);
+    push(zero); push(zero); push(zero); push(zero);
+    push(zero); push(zero); push(zero);
+  }
+
+}
+
+
+void->complex filter long_seq() {
+
+  complex pos,neg,zero;
+
+  init {
+    zero = 0.0;
+    pos = 1.0;
+    neg = -1.0;
+
+  }
+
+  work push 64 pop 0 {
+
+    push(zero); push(zero);
+    push(zero); push(zero); push(zero); push(zero);
+    push(pos); push(pos); push(neg); push(neg);
+    push(pos); push(pos); push(neg); push(pos);
+    push(neg); push(pos); push(pos); push(pos);
+    push(pos); push(pos); push(pos); push(neg);
+    push(neg); push(pos); push(pos); push(neg);
+    push(pos); push(neg); push(pos); push(pos);
+    push(pos); push(pos); push(zero);
+    push(pos); push(neg); push(neg); push(pos);
+    push(pos); push(neg); push(pos); push(neg);
+    push(pos); push(neg); push(neg); push(neg);
+    push(neg); push(neg); push(pos); push(pos);
+    push(neg); push(neg); push(pos); push(neg);
+    push(pos); push(neg); push(pos); push(pos);
+    push(pos); push(pos);
+    push(zero); push(zero); push(zero); push(zero); push(zero);
+  }
+}
+
+
+void->complex pipeline add_seqs() {
+
+  add splitjoin {
+    split roundrobin(0);
+    add short_seq();
+    add long_seq();
+    join roundrobin(64,64);
+  }
+
+  add cyclicIFFT2();
+
+  add splitjoin {
+    split roundrobin(1,159,2,159,1);
+    add halve();
+    add Identity<complex>();
+    add halve_and_combine();
+    add Identity<complex>();
+    add Identity<complex>();
+    join roundrobin(1,159,1,159,1);
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+

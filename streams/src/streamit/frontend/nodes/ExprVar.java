@@ -7,7 +7,7 @@ package streamit.frontend.nodes;
  * variables and determine the types of variables.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprVar.java,v 1.4 2003-07-30 19:58:33 dmaze Exp $
+ * @version $Id: ExprVar.java,v 1.5 2003-07-30 20:10:17 dmaze Exp $
  */
 public class ExprVar extends Expression
 {
@@ -27,6 +27,19 @@ public class ExprVar extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprVar(this);
+    }
+
+    /**
+     * Determine if this expression can be assigned to.  Variables can
+     * generally be assigned to, particularly if they are local
+     * variables.  Determining whether a variable is a (constant)
+     * stream parameter is beyond the intended use of this function.
+     *
+     * @return always true
+     */
+    public boolean isLValue()
+    {
+        return true;
     }
 
     public String toString()

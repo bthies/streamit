@@ -6,7 +6,7 @@ package streamit.frontend.nodes;
  * and the name of the field being referenced.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ExprField.java,v 1.3 2003-06-30 20:23:12 dmaze Exp $
+ * @version $Id: ExprField.java,v 1.4 2003-07-30 20:10:17 dmaze Exp $
  */
 public class ExprField extends Expression
 {
@@ -32,6 +32,17 @@ public class ExprField extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprField(this);
+    }
+
+    /**
+     * Determine if this expression can be assigned to.  Fields can
+     * always be assigned to.
+     *
+     * @return always true
+     */
+    public boolean isLValue()
+    {
+        return true;
     }
 
     public String toString()

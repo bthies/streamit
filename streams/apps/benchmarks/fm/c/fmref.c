@@ -1,8 +1,10 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.7 2002-05-13 17:48:06 dmaze Exp $
+ * $Id: fmref.c,v 1.8 2002-07-29 14:05:48 aalamb Exp $
  */
+
+#define raw
 
 #ifdef raw
 #include <raw.h>

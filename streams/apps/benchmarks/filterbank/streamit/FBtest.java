@@ -4,11 +4,11 @@ import streamit.io.*;
 class source extends Filter {
     int N, pos;
     float[] r;
-    public source(float[] r) {super(r);}
-    public void init(float[] r){
+    public source(int N, float[] r) {super(N, r);}
+    public void init(int N, float[] r){
 	output = new Channel(Float.TYPE,1);
 	this.r=r;
-	N=r.length;
+	this.N=N;
         this.pos = 0;
     }
     public void work(){
@@ -73,9 +73,9 @@ class FBtest extends StreamIt {
 	
 
 	
-	add (new source(r));
+	add (new source(N_sim,r));
 	add (new FilterBank(N_samp,N_ch,N_col,H,F));
-	add (new sink(r.length));
+	add (new sink(N_sim));
     }
     
     

@@ -25,14 +25,14 @@ import streamit.*;
 
 public class FIR extends Pipeline {
 
-    public FIR (float[] COEFF)
+    public FIR (int N, float[] COEFF)
     {
-        super (COEFF);
+        super (N, COEFF);
     }
 
-    public void init(float[] COEFF) {
-	add (new Delay_N(COEFF.length-1));
-	add (new FirFilter(COEFF));
+    public void init(int N, float[] COEFF) {
+	add (new Delay_N(N-1));
+	add (new FirFilter(N, COEFF));
     }
 
 }

@@ -27,26 +27,26 @@ import streamit.io.*;
 public class Bank extends Pipeline {
  
 
-    public Bank (int N,float[] H,float[] F)
+    public Bank (int N,int L,float[] H,float[] F)
     {
-        super (N,H,F);
+        super (N,L,H,F);
 	}
 
-    public void init(  int N,float[] H,float[] F ) {
+    public void init(  int N,int L,float[] H,float[] F ) {
 	
   
 	///add (new source(r)); They are here for debugging purposes
 	//add (new FIR(H));
         // Bill says to inline:
-	add (new Delay_N(H.length-1));
-	add (new FirFilter(H));
+	add (new Delay_N(L-1));
+	add (new FirFilter(L,H));
         //
 	add (new DownSamp(N));
 	add (new UpSamp(N));
 	//add (new FIR(F));
         // inlining again:
-	add (new Delay_N(F.length-1));
-	add (new FirFilter(F));
+	add (new Delay_N(L-1));
+	add (new FirFilter(L,F));
 	///add (new sink(r.length));
     }
     

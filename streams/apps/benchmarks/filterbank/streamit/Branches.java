@@ -46,7 +46,7 @@ public class Branches extends SplitJoin {
 		    F_ch[j]=F[i][j];
 		}
 
-		add (new Bank(N_samp,H_ch,F_ch));
+		add (new Bank(N_samp,N_col,H_ch,F_ch));
 	    }
 			
 	setJoiner(ROUND_ROBIN());

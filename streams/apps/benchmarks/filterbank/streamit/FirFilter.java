@@ -28,19 +28,19 @@ public class FirFilter extends Filter {
     int N;
     float COEFF[];
 
-    public FirFilter (float[] COEFF)
+    public FirFilter (int N, float[] COEFF)
     {
-        super (COEFF);
+        super (N, COEFF);
     }
 
-    public void init(float[] COEFF) {
-	this.N=COEFF.length;
-	this.COEFF=new float[COEFF.length];
+    public void init(int N, float[] COEFF) {
+	this.N=N;
+	this.COEFF=new float[N];
 	
 	for (int i=0; i<this.N;i++)
 	    this.COEFF[i]=COEFF[i];
 
-	input = new Channel(Float.TYPE, 1, COEFF.length);
+	input = new Channel(Float.TYPE, 1, N);
 	output = new Channel(Float.TYPE, 1);
     }
 

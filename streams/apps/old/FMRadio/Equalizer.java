@@ -29,7 +29,7 @@ class FloatAdder extends Filter
 
     public void work() {
         //subtract one from the other, round robin.
-        output.pushFloat((float)(input.popFloat()+input.popFloat()+input.popFloat()+input.popFloat()));
+         output.pushFloat((float)(input.popFloat()+input.popFloat()+input.popFloat()+input.popFloat()));
     }
 }
 

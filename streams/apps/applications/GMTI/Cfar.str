@@ -1,10 +1,10 @@
 /*
-  Since dynamic rates are not (yet) supported, we cannot output PrelimTargets as a list of all triples that satisfy the threshold criteria (because we do not know how many there will be a priori). Therefore, for PrelimTargets we output a value for each point in the data cube - a 0 representing that the point did not satisfy the criteria, a 1 representing that the point did satisfy the criteria
+  Since dynamic rates are not (yet) supported, we cannot output PrelimTargets as a list of all triples that satisfy the threshold criteria (because we do not know how many there will be a priori). Therefore, for PrelimTargets we output a value for each point in the data cube - a 0 representing that the point did not satisfy the criteria, a non-zero value representing that the point did satisfy the criteria, with the value being the SNR (signal to noise ratio) at that point
 */
 
 
 // input: Ncnb*(Nsrg+Npc-1)*Ndop complex (Data)
-// output: 2*Ncnb*(Nsrg+Npc-1)*Ndop floats (NP, PrelimTargets)
+// output: Ncnb*(Nsrg+Npc-1)*Ndop floats (PrelimTargets)
 
 complex->float pipeline Cfar(GmtiParamType GmtiParam) {
 
@@ -31,20 +31,19 @@ complex->float pipeline Cfar(GmtiParamType GmtiParam) {
 
   add get_prelim_recurs(x,y,z,G,Ncfar,mu,1);
 
-
-// interleave NP and PrelimTarget
+// put the data back in the correct order
   add splitjoin {
     split roundrobin(sub_total);
-    for(int i=0; i<2*y; i++)
+    for(int i=0; i<y; i++)
       add iden(1);
     join roundrobin(1);
-  }  
+  }
 }
 
 
 
 // input: Ncnb*Ndop+Ncnb*(Nsrg+Npc-1)*Ndop (oldsum,DataPow)
-// output: (y-j+1)*(x*z+x*z) (y-j+1 NPslice,PrelimTarget)
+// output: (y-j+1)*(x*z) (y-j+1 PrelimTarget)
 
 float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, int mu, int j) {
 
@@ -81,7 +80,7 @@ float->float pipeline get_prelim_recurs(int x, int y, int z, int G, int Ncfar, i
         add remove(x*z+x*y*z);
     }
 
-    join roundrobin(2*x*z, 2*x*z*(y-j));
+    join roundrobin(x*z, x*z*(y-j));
   }
 }
 
@@ -196,7 +195,7 @@ float->float pipeline new_sum(int x, int y, int z, int G, int Ncfar, int j) {
 
 
 // input: Ncnb*Ndop+Ncnb*Ndop float (Sum,DatPowSlice)
-// output: Ncnb*Ndop+Ncnb*Ndop float (NPslice,PrelimTarget portion)
+// output: Ncnb*Ndop float (PrelimTarget portion)
 
 float->float pipeline FindTargets(int x, int z, int mu, int Td) {
 
@@ -217,12 +216,7 @@ float->float pipeline FindTargets(int x, int z, int mu, int Td) {
 
   add normalized_power(total);  // outputs NPslice
 
-  add splitjoin {
-    split duplicate();
-    add iden(total);
-    add above_thresh(total,mu_f);
-    join roundrobin(total);
-  }  
+  add above_thresh(total,mu_f);  // passes values above threshold mu_f
 }
 
 
@@ -239,3 +233,5 @@ float->float filter normalized_power(int tot) {
     }
   }
 }
+
+

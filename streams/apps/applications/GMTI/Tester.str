@@ -26,9 +26,6 @@ void->complex filter generate {
     a[11] = 9;
     a[12] = 9;
     a[13] = 9;
-
-   
-
   }
 
   work push 1 pop 0 {
@@ -48,7 +45,28 @@ max_val.real = 1000.0;
   c.real += 1.0;
 
   }
+}
 
+
+// takes two floats, assigns the first to be the real part and the second to be the imaginary part of a complex
+
+// input: 2 floats
+// output: 1 complex
+
+float->complex filter combine_floats() {
+
+  work push 1 pop 2 {
+
+    float temp1, temp2;
+    complex temp_out;
+
+    temp1 = pop();
+    temp2 = pop();
+    temp_out.real = temp1;
+    temp_out.imag = temp2;
+
+    push(temp_out);
+  }
 }
 
 
@@ -69,8 +87,6 @@ complex->void filter output_c {
    print(c.real); print(c.imag);
   }
 }
-
-
 
 
 void->void pipeline Tester {
@@ -284,38 +300,50 @@ int T1_tot = N*Nch;
 int Wabf_tot = Nch*Nbm;
 int Astapset_tot = Nbm*Nstag*(NstapTS + Nbm*Nstag)*Ndop;      
 
-  add generate();
+// get the data input from file, and convert every pair of floats to a complex
+  add FileReader<float>("data.bin");
+  add combine_floats();
 
+// first round of GMTI, outputs V1,T1,Wabf,Data1
   add AdaptiveBeamform(GmtiParam,AntParams);
 
-  add output_final(V1_tot,T1_tot+Wabf_tot+data1_tot); // don't need V1
+// don't need V1
+  add output_final(V1_tot,T1_tot+Wabf_tot+data1_tot);
 
+// split T1,Wabf and Data1
   add splitjoin {
     split roundrobin(T1_tot+Wabf_tot,data1_tot);
+
+// leave T1,Wabf unchanged
     add iden_c(T1_tot+Wabf_tot);
     
-    add pipeline {
+// these stages do not use T1,Wabf
+    add pipeline { 
       add PulseCompression(GmtiParam);
       add DopFilt(GmtiParam);
     }
+
     join roundrobin(T1_tot+Wabf_tot,data3_tot);
   }
 
-  add splitjoin {
+// put data3 in front of T1,Wabf
+  add splitjoin { 
     split duplicate();
     add output_final(T1_tot+Wabf_tot,data3_tot);
     add output_initial(T1_tot+Wabf_tot,data3_tot);  
     join roundrobin(data3_tot,T1_tot+Wabf_tot);
   }
 
-  add Stap(GmtiParam,AntParams);
+// Data3,T1,Wabf inputted in that order, Stap outputs Astapset,Data4
+  add Stap(GmtiParam,AntParams);  
+
+// remove Astapset, which is not needed
   add output_final(Astapset_tot,data4_tot);
 
+// Data4 inputted, TargetReport outputted
   add Detector(GmtiParam);
+
   add output_f();
-
-//add output_c();
-
 }
 
 

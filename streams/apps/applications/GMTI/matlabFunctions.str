@@ -1,4 +1,15 @@
-// these filters assume matrices are inputted by rows
+/* This is an informal library of structures to use for the GMTI app
+ 
+  All structures assume matrices are inputted by rows. Therefore, the matrix
+
+   |1 2 3|
+   |4 5 6|
+   |7 8 9|
+
+  is represented by the stream 1 2 3 4 5 6 7 8 9
+*/
+
+
 // l by p matrix multiplied by p by r matrix
 
 // input: l*p+p*r floats (l by p matrix, p by r matrix)
@@ -62,6 +73,24 @@ complex->complex filter MatrixMultComplex1(int l, int p, int r) {
 }
 
 
+//complex l by p matrix multiplied by p by r matrix
+
+// input: p*r+l*p complex (p by r matrix, l by p matrix - reverse order)
+// output: l*r complex (l by r matrix)
+
+complex->complex pipeline MatrixMultComplex_back(int l, int p, int r) {
+
+  add splitjoin {
+    split roundrobin(p*r,l*p);
+    add transposeComplex(p,r);
+    add transposeComplex(l,p);
+    join roundrobin(r*p,p*l);
+  }
+  add MatrixMultComplex1(r,p,l);
+  add transposeComplex(r,l);
+}
+
+
 // computes transpose of x by y matrix
 
 // input: x*y floats (x by y matrix)
@@ -78,7 +107,7 @@ float->float splitjoin transpose(int x, int y) {
 }
 
 
-// computes transpose of x by y matrix
+// computes transpose of x by y complex matrix
 
 // input: x*y complex (x by y matrix)
 // output: y*x complex (y by x matrix)
@@ -93,7 +122,6 @@ complex->complex splitjoin transposeComplex(int x, int y) {
   join roundrobin(x);
 
 }
-
 
 
 // generates N points evenly spaced from start to end
@@ -117,7 +145,6 @@ void->float filter linspace(float start, float end, int N) {
       }
     }
   }
-
 }
 
 
@@ -131,13 +158,18 @@ void->float filter Hamming(int N) {
   work push N pop 0 {
 
     for(int i=0; i<N; i++) {
-      push(0.54-0.46*cos(2*pi*i/(N-1)));
+      push(0.54-0.46*cos(2*pi*i/(N-1)));  // formula for Hamming window
     }
   }
 }
 
+/*
+ 31 or 30 point cheb filter with 60 dB attenuation
+ these values are simply hard coded into an array
+ values were obtained from MATLAB
 
-// 31 or 30 point cheb filter with 60 dB attenuation
+ for testing purposes, 6 and 7 point filters are also included
+*/
 
 // input: none
 // output: N floats
@@ -234,7 +266,7 @@ void->float filter zeros(int N) {
 }
 
 
-// generates N zeros
+// generates N complex zeros
 
 // input: none
 // output: N complex
@@ -255,10 +287,26 @@ void->complex filter zeros_c(int N) {
   }
 }
 
+/*
+  replicates M by N matrix P by Q times
+  
+  suppose the matrix is:  |5 3|
+                          |7 4|
 
-// replicates M by N matrix P by Q times
-// assumes matrix entered by rows
-// outputs new matrix by rows
+  the output of repmat(2,2,2,3) is: (in matrix format)
+
+
+    3 "columns" of the input matrix
+      / | \
+     /  |  \
+    /   |   \
+  |5 3 5 3 5 3|  \  
+  |7 4 7 4 7 4|   \  
+  |5 3 5 3 5 3|   /  2 "rows" of the input matrix
+  |7 4 7 4 7 4|  /   
+
+*/
+
 
 // input: M*N floats (M by N matrix)
 // output: M*N*P*Q floats (M*P by N*Q matrix)
@@ -267,11 +315,11 @@ float->float splitjoin repmat(int M, int N, int P, int Q) {
 
   split duplicate();  
   for(int i=0; i<P; i++) 
-    add repmat_xdir(M,N,Q);  // creates one M by N 'row'  
-  join roundrobin(M*N*Q);    // puts all those 'rows' together
+    add repmat_xdir(M,N,Q);  // creates one M by N "row"  
+  join roundrobin(M*N*Q);    // puts all those "row" together
 }
 
-// replicates the M by N matrix horizontally
+// replicates the M by N matrix horizontally, ie creates one "row"
 
 // input: M*N floats (M by N matrix)
 // output: M*N*Q floats (M by N*Q matrix)
@@ -300,8 +348,7 @@ float->float splitjoin copy_row(int row_len, int copy_times) {
 
 
 // replicates M by N complex matrix P by Q times
-// assumes matrix entered by rows
-// outputs new matrix by rows
+// see repmat for example
 
 // input: M*N complex (M by N matrix)
 // output: M*N*P*Q complex (M*P by N*Q matrix)
@@ -310,11 +357,11 @@ complex->complex splitjoin repmatComplex(int M, int N, int P, int Q) {
 
   split duplicate();  
   for(int i=0; i<P; i++) 
-    add repmat_xdir_c(M,N,Q);  // creates one M by N 'row'
-  join roundrobin(M*N*Q);      // puts all those 'rows' together
+    add repmat_xdir_c(M,N,Q);  // creates one M by N "row"
+  join roundrobin(M*N*Q);      // puts all those "rows" together
 }
 
-// replicates the M by N matrix horizontally
+// replicates the M by N matrix horizontally, ie creates one "row"
 
 // input: M*N complex (M by N matrix)
 // output: M*N*Q complex (M by N*Q matrix)
@@ -342,7 +389,7 @@ complex->complex splitjoin copy_row_c(int row_len, int copy_times) {
 }
 
 
-// outputs N inputs
+// outputs N inputs unchanged
 
 // input: N floats
 // output: N floats
@@ -356,7 +403,7 @@ float->float filter iden(int N) {
 }
 
 
-// outputs N inputs
+// outputs N complex inputs unchanged
 
 // input: N complex
 // output: N complex
@@ -389,7 +436,7 @@ float->float filter sum_vector(int N) {
 }
 
 
-// sums N elements
+// sums N complex elements
 
 // input: N complex
 // output: 1 complex
@@ -439,13 +486,24 @@ complex->complex splitjoin sum_rowsComplex(int m, int n) {
 // sums cols of an m by n matrix
 
 // input: m*n floats (m by n matrix)
-// output: n floats (m length vector)
+// output: n floats (n length vector)
 
-float->float splitjoin sum_cols(int m, int n) {
+float->float pipeline sum_cols(int m, int n) {
 
-  add transpose(m,n);
+  add transpose(m,n);  // simply sum rows of transpose
   add sum_rows(n,m);
-  add transpose(n,m);
+}
+
+
+// sums cols of an m by n complex matrix
+
+// input: m*n complex (m by n matrix)
+// output: n complex (n length vector)
+
+float->float pipeline sum_colsComplex(int m, int n) {
+
+  add transposeComplex(m,n);  // simply sum rows of transpose
+  add sum_rowsComplex(n,m);
 }
 
 
@@ -467,7 +525,7 @@ float->float filter reverse_1(int N) {
 }
 
 
-// reverses the stream of values
+// reverses the stream of complex values
 
 // input: N complex
 // output: N complex
@@ -496,6 +554,11 @@ float->float pipeline add_consec(int len, int num) {
   add sum_rows(len,num);
 }
 
+
+// interleaves num streams, each of length float
+
+// input: len*num floats
+// output: len*num floats
 
 float->float splitjoin interleave_multiple(int len, int num) {
 
@@ -755,6 +818,7 @@ complex->complex splitjoin split_to_reverse_c(int n) {
 
 }
 
+
 // takes an m by n matrix and removes the last n-m columns
 // ASSUMES n >= m
 
@@ -816,7 +880,7 @@ float->float filter divide_by_constant(int len) {
 }
 
 
-// divides stream of values by first value
+// divides stream of complex values by first value
 
 // input: len+1 complex
 // output: len complex
@@ -830,7 +894,6 @@ complex->complex filter divide_by_constant_c(int len) {
 
     for(int i=0; i<len; i++) 
       push(pop()/val);
-
   }
 }
 
@@ -849,12 +912,11 @@ float->float filter multiply_by_constant(int len) {
 
     for(int i=0; i<len; i++) 
       push(pop()*val);
-
   }
 }
 
 
-// multiplies stream of values by first value
+// multiplies stream of complex values by first value
 
 // input: len+1 complex
 // output: len complex
@@ -868,7 +930,6 @@ complex->complex filter multiply_by_constant_c(int len) {
 
     for(int i=0; i<len; i++) 
       push(pop()*val);
-
   }
 }
 
@@ -888,7 +949,7 @@ float->float filter addval(float val, int N) {
 }
 
 
-// adds value val to stream of N values
+// adds complex value val to complex stream of N values
 
 // input: N complex
 // output: N complex
@@ -933,7 +994,7 @@ float->float filter mult_val(float val, int N) {
 }
 
 
-// multiplies stream of N values by val
+// multiplies stream of N complex values by complex val
 
 // input: N complex
 // output: N complex
@@ -948,7 +1009,7 @@ complex->complex filter mult_valComplex(complex val, int N) {
 }
 
 
-// divides stream of N values by val
+// divides complex stream of N values by complex val
 
 // input: N complex
 // output: N complex
@@ -962,9 +1023,20 @@ complex->complex filter div_valComplex(complex val, int N) {
   }
 }
 
+/*
+ Kronecker tensor product
+ takes all possible products between elements of first and second matrices
 
-// Kronecker tensor product
-// takes all possible products between elements of first and second matrices
+ suppose the input is:  |8 9|   |1 2 3|
+                        |6 7| ,   
+                               
+
+ kronComplex(2,2,3,1) is (in matrix form):
+
+ |8*1 8*2 8*3 9*1 9*2 9*3|  =  |8 16 24 9 18 27|
+ |6*1 6*2 6*3 7*1 7*2 7*3|     |6 12 18 7 14 21|
+
+*/
 
 // input: m*n + p*q complex (m by n matrix, p by q matrix)
 // output: m*n*p*q complex (m*p by n*q matrix)
@@ -1060,7 +1132,7 @@ float->float filter sqr_sum(int len) {
 }
 
 
-// computes the sum of squares of len values
+// computes the sum of squares of len complex values
 
 // input: N complex
 // output: 1 complex
@@ -1103,7 +1175,7 @@ float->float filter norm(int len) {
 }
 
 
-// computes the norm (square root of sum of squares) of len values
+// computes the norm (square root of sum of squares) of len complex values
 
 // input: N complex
 // output: 1 complex
@@ -1127,7 +1199,7 @@ complex->complex filter normComplex(int len) {
 }
 
 
-// normalizes a complex stream
+// normalizes a complex stream (divides each term by the entire norm)
 
 // input: len complex
 // output: len complex
@@ -1143,7 +1215,6 @@ complex->complex pipeline normalizeComplex(int len) {
 
   add divide_by_constant_c(len);
 }
-
 
 
 // takes the complex conjugate of len values
@@ -1167,7 +1238,7 @@ complex->complex filter complex_conjugate(int len) {
 }
 
 
-// computes Hermatian of x by y matrix
+// computes Hermatian(complex conjugate transpose) of x by y complex matrix
 
 // input: x*y complex (x by y matrix)
 // output: y*x complex (y by x matrix)
@@ -1180,7 +1251,7 @@ complex->complex pipeline Hermatian(int x, int y) {
 }
 
 
-// converts small values (< threshold) to zero
+// converts small complex values (< threshold) to zero
 
 // input: len complex
 // output: len complex
@@ -1258,7 +1329,7 @@ float->float filter replace_zeros(int len) {
 }
 
 
-// outputs 1 if above thresh, 0 otherwise
+// passes a value if above thresh, passes 0 otherwise
 
 // input: len complex
 // output: len complex
@@ -1272,13 +1343,12 @@ float->float filter above_thresh(int len, float thresh) {
     for(int i=0; i<len; i++) {
       temp = pop();
       if(temp>thresh)
-        push(1.0);
+        push(temp);
       else
         push(0.0);
     }
   }
 }
-
 
 
 // takes the complex exponential of len values
@@ -1292,6 +1362,60 @@ complex->complex filter exp_vector(int len) {
 
     for(int i=0; i<len; i++)
       push(exp(pop()));
+  }
+}
+
+
+// takes the sine of len values
+
+// input: len complex
+// output: len complex
+
+complex->complex filter sin_vector(int len) {
+
+  work push len pop len {
+
+    for(int i=0; i<len; i++)
+      push(sin(pop()));
+  }
+}
+
+
+// takes the abs value of len values
+
+// input: len complex
+// output: len complex
+
+complex->complex filter abs_vector(int len) {
+
+  work push len pop len {
+
+    complex temp;
+
+    for(int i=0; i<len; i++) {
+      temp.real = abs(pop());
+      push(temp);
+    }
+  }
+}
+
+
+
+// takes the square of len values
+
+// input: len complex
+// output: len complex
+
+complex->complex filter sqr_vector(int len) {
+
+  work push len pop len {
+
+    complex temp;
+
+    for(int i=0; i<len; i++) {
+      temp = abs(pop());
+      push(temp*temp);
+    }
   }
 }
 
@@ -1368,7 +1492,7 @@ float->float pipeline getCol3D(int x, int y, int z, int col) {
 }
 
 
-// outputs a portion of a 3D matrix
+// outputs a portion of a complex 3D matrix
 
 // input: x*y*z complex (x by y by z matrix)
 // output: (endx-startx+1)*(endy-starty+1)*(endz-startz+1) complex
@@ -1425,9 +1549,10 @@ complex->complex filter partial_3d_matrix(int x, int y, int z, int startx, int e
 complex->complex pipeline partial_2d_matrix(int x, int y, int startx, int endx, int starty, int endy) { 
 
   add partial_3d_matrix(x,y,1,startx,endx,starty,endy,0,0);
-
 }
 
+
+// outputs the inital part of a complex stream
 
 // input: total1+total2 complex
 // output: total1 complex
@@ -1445,6 +1570,8 @@ complex->complex filter output_initial(int total1, int total2) {
 }
 
 
+// outputs the initial part of a stream
+
 // input: total1+total2 float
 // output: total1 float
 
@@ -1460,6 +1587,8 @@ float->float filter output_initial_f(int total1, int total2) {
   }
 }
 
+
+// outputs the final part of a complex stream
 
 // input: total1+total2 complex
 // output: total1 complex
@@ -1477,6 +1606,8 @@ complex->complex filter output_final(int total1, int total2) {
 }
 
 
+// outputs the final part of a stream
+
 // input: total1+total2 float
 // output: total1 float
 
@@ -1492,6 +1623,8 @@ float->float filter output_final_f(int total1, int total2) {
   }
 }
 
+
+// removes elements from a stream
 
 // input: total floats
 // output: zero floats
@@ -1572,11 +1705,10 @@ complex->complex pipeline fftshift_cols(int x, int y) {
   add transposeComplex(x,y);     // convert cols to rows
   add fftshift_rows(y,x);        // fftshift on converted rows
   add transposeComplex(y,x);     // convert rows back to cols
-
 }
 
 
-// generates integers from start to end, inclusive
+// generates integers(in complex form) from start to end, inclusive
 
 // input: none
 // output: end-start+1 complex

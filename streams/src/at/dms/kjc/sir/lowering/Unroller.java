@@ -23,6 +23,10 @@ class Unroller extends SLIRReplacingVisitor {
      */
     private Hashtable constants;
     /**
+     * Holds compile time values
+     */
+    private Hashtable values;
+    /**
      * Whether or not anything has been unrolled.
      */
     private boolean hasUnrolled;
@@ -36,27 +40,32 @@ class Unroller extends SLIRReplacingVisitor {
 	this.constants = constants;
 	this.hasUnrolled = false;
 	currentModified=new Hashtable();
+	values=new Hashtable();
     }
-
+    
     /**
      * checks prefix
      */
     public Object visitPrefixExpression(JPrefixExpression self,
 					int oper,
 					JExpression expr) {
-	if(expr instanceof JLocalVariableExpression)
+	if(expr instanceof JLocalVariableExpression) {
 	    currentModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
+	    values.remove(((JLocalVariableExpression)expr).getVariable());
+	}
 	return super.visitPrefixExpression(self,oper,expr);
     }
-
+    
     /**
      * checks postfix
      */
     public Object visitPostfixExpression(JPostfixExpression self,
 					 int oper,
 					 JExpression expr) {
-	if(expr instanceof JLocalVariableExpression)
+	if(expr instanceof JLocalVariableExpression){
 	    currentModified.put(((JLocalVariableExpression)expr).getVariable(),Boolean.TRUE);
+	    values.remove(((JLocalVariableExpression)expr).getVariable());
+	}
 	return super.visitPostfixExpression(self,oper,expr);
     }
 
@@ -68,6 +77,8 @@ class Unroller extends SLIRReplacingVisitor {
 					    JExpression right) {
 	if(left instanceof JLocalVariableExpression) {
 	    currentModified.put(((JLocalVariableExpression)left).getVariable(),Boolean.TRUE);
+	    if(right instanceof JLiteral)
+		values.put(((JLocalVariableExpression)left).getVariable(),right);
 	}
 	return super.visitAssignmentExpression(self,left,right);
     }
@@ -88,7 +99,8 @@ class Unroller extends SLIRReplacingVisitor {
 	    self.setBody(newStmt);
 	}
 	// check for loop induction variable
-	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
+	
+	UnrollInfo info = getUnrollInfo(init, cond, incr, body,values);
 	// check to see if var was modified
 	// if we can unroll...
 	if(info!=null&&(!currentModified.containsKey(info.var))) {
@@ -113,7 +125,7 @@ class Unroller extends SLIRReplacingVisitor {
 				       JExpression cond,
 				       JStatement incr,
 				       JStatement body) {
-	UnrollInfo info = getUnrollInfo(init, cond, incr, body);
+	UnrollInfo info = getUnrollInfo(init, cond, incr, body,new Hashtable());
 	// if we didn't get any unroll info, return -1
 	if (info==null) { return -1; }
 	// get the initial value of the counter
@@ -137,6 +149,7 @@ class Unroller extends SLIRReplacingVisitor {
     private JBlock doUnroll(UnrollInfo info, JForStatement self) {
 	// make a list of statements
 	List statementList = new LinkedList();
+	statementList.add(self.getInit());
 	// get the initial value of the counter
 	int counter = info.initVal;
 	// simulate execution of the loop...
@@ -148,7 +161,8 @@ class Unroller extends SLIRReplacingVisitor {
 	    UnrollInfo newInfo = getUnrollInfo(newSelf.getInit(),
 					       newSelf.getCondition(),
 					       newSelf.getIncrement(),
-					       newSelf.getBody());
+					       newSelf.getBody(),
+					       values);
 	    // replace induction variable with its value current value
 	    Hashtable newConstants = new Hashtable();
 	    newConstants.put(newInfo.var, new JIntLiteral(counter));
@@ -159,9 +173,11 @@ class Unroller extends SLIRReplacingVisitor {
 	    // increment counter
 	    counter = incrementCounter(counter, info);
 	}
+	statementList.add(new JExpressionStatement(self.getTokenReference(),new JAssignmentExpression(self.getTokenReference(),new JLocalVariableExpression(self.getTokenReference(),info.var),new JIntLiteral(info.finalVal)),null));
 	// mark that we've unrolled
 	this.hasUnrolled = true;
 	// return new block instead of the for loop
+	constants.remove(info.var);
 	return new JBlock(null, 
 			  (JStatement[])statementList.
 			  toArray(new JStatement[0]),
@@ -210,73 +226,87 @@ class Unroller extends SLIRReplacingVisitor {
      * This will return <null> if the loop can not be unrolled. 
      */
     private static UnrollInfo getUnrollInfo(JStatement init,
-				     JExpression cond,
-				     JStatement incr,
-				     JStatement body) {
+					    JExpression cond,
+					    JStatement incr,
+					    JStatement body,
+					    Hashtable values) {
 	try {
-	    // inspect initialization...
-	    JAssignmentExpression initExpr 
-		= (JAssignmentExpression)
-		((JExpressionListStatement)init).getExpression(0);
-	    JLocalVariable var 
-		= ((JLocalVariableExpression)initExpr.getLeft()).getVariable();
-	    int initVal 
-		= ((JIntLiteral)initExpr.getRight()).intValue();
-
+	    JLocalVariable var;
+	    int initVal=0;
+	    int finalVal=0;
 	    // inspect condition...
 	    JRelationalExpression condExpr = (JRelationalExpression)cond;
-	    // make sure variable is the same
-	    if (var != 
-		((JLocalVariableExpression)condExpr.getLeft()).getVariable()) {
-		return null;
-	    }
+	    var=((JLocalVariableExpression)condExpr.getLeft()).getVariable();
+	    if(init instanceof JExpressionListStatement) {
+		JAssignmentExpression initExpr 
+		    = (JAssignmentExpression)
+		    ((JExpressionListStatement)init).getExpression(0);
+		if(((JLocalVariableExpression)initExpr.getLeft()).getVariable()==var)
+		    initVal 
+			= ((JIntLiteral)initExpr.getRight()).intValue();
+		else if(values.containsKey(var))
+		    initVal=((JIntLiteral)values.get(var)).intValue();
+		else
+		    throw new Exception("Not Constant!");
+	    } else if(values.containsKey(var))
+		initVal=((JIntLiteral)values.get(var)).intValue();
+	    else
+		throw new Exception("Not Constant!");
 	    // get the upper limit
-	    int finalVal = ((JIntLiteral)condExpr.getRight()).intValue();
-
+	    if(condExpr.getRight() instanceof JIntLiteral)
+		finalVal = ((JIntLiteral)condExpr.getRight()).intValue();
+	    //else
+	    //System.err.println("Cond: "+((JFieldAccessExpression)condExpr.getRight()).isConstant());
 	    // inspect increment...
-            int incrVal, oper;
-            JLocalVariableExpression incrVar;
-            JExpression incrExpr =
-                ((JExpressionListStatement)incr).getExpression(0);
-            if (incrExpr instanceof JCompoundAssignmentExpression)
-            {
-                JCompoundAssignmentExpression cae =
-                    (JCompoundAssignmentExpression)incrExpr;
-                oper = cae.getOperation();
-                incrVal = ((JIntLiteral)cae.getRight()).intValue();
-                incrVar =
-                    (JLocalVariableExpression)cae.getLeft();
-            }
-            else if (incrExpr instanceof JPrefixExpression)
-            {
-                JPrefixExpression pfx = (JPrefixExpression)incrExpr;
-                oper = pfx.getOper();
-                incrVal = 1;
-                incrVar = (JLocalVariableExpression)pfx.getExpr();
-            }
-            else if (incrExpr instanceof JPostfixExpression)
-            {
-                JPostfixExpression pfx = (JPostfixExpression)incrExpr;
-                oper = pfx.getOper();
-                incrVal = 1;
-                incrVar = (JLocalVariableExpression)pfx.getExpr();
-            }
-            else
-                return null;
-            
-            // make sure the variable is the same
-            if (var != incrVar.getVariable())
-                return null;
+	    int incrVal, oper;
+	    JLocalVariableExpression incrVar;
+	    JExpression incrExpr;
+	    if(incr instanceof JExpressionListStatement)
+		incrExpr =
+		    ((JExpressionListStatement)incr).getExpression(0);
+	    else {
+		incrExpr =
+		    ((JExpressionStatement)incr).getExpression();
+	    }
+	    if (incrExpr instanceof JCompoundAssignmentExpression)
+		{
+		    JCompoundAssignmentExpression cae =
+			(JCompoundAssignmentExpression)incrExpr;
+		    oper = cae.getOperation();
+		    incrVal = ((JIntLiteral)cae.getRight()).intValue();
+		    incrVar =
+			(JLocalVariableExpression)cae.getLeft();
+		}
+	    else if (incrExpr instanceof JPrefixExpression)
+		{
+		    JPrefixExpression pfx = (JPrefixExpression)incrExpr;
+		    oper = pfx.getOper();
+		    incrVal = 1;
+		    incrVar = (JLocalVariableExpression)pfx.getExpr();
+		}
+	    else if (incrExpr instanceof JPostfixExpression)
+		{
+		    JPostfixExpression pfx = (JPostfixExpression)incrExpr;
+		    oper = pfx.getOper();
+		    incrVal = 1;
+			incrVar = (JLocalVariableExpression)pfx.getExpr();
+		}
+	    else
+		return null;
+	    
+	    // make sure the variable is the same
+	    if (var != incrVar.getVariable())
+		return null;
 	    
 	    // return result
 	    return new UnrollInfo(var, initVal, finalVal, oper, incrVal);
-	} catch (ClassCastException e) {
+	} catch (Exception e) {
 	    // uncommment these lines if you want to trace a case of something
 	    // not unrolling ---
-	    /*
-	      System.out.println("Didn't unroll because:");
-	      e.printStackTrace();
-	    */
+	    
+	    //System.err.println("Didn't unroll because:");
+	    //e.printStackTrace();
+	    
 	    // assume we failed 'cause assumptions violated -- return null
 	    return null;
 	}

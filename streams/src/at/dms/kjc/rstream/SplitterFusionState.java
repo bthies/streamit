@@ -24,6 +24,11 @@ public class SplitterFusionState extends FusionState
 
 	splitter = (SIRSplitter)node.contents;
 
+	necessary = setNecessary();
+	
+	//if (!necessary)
+	    //System.out.println("** Found unnecessary splitter");
+
 	bufferVar = new JVariableDefinition[1];
 	bufferVarInit = new JVariableDefinition[1];
 	
@@ -31,6 +36,63 @@ public class SplitterFusionState extends FusionState
 	bufferVarInit[0] = makeBuffer(true);
     }
 
+    private boolean setNecessary() 
+    {
+	if (node.isDuplicateSplitter() && node.ways > 0) {
+	    //check that all the down stream buffersize are equal for both init and steady, 
+	    //there is no peek buffer for immediate downstream 
+	    int bufferSizeSteady = FusionState.getFusionState(node.edges[0]).getBufferSize(node, false);
+	    int bufferSizeInit = FusionState.getFusionState(node.edges[0]).getBufferSize(node, true);
+
+	    //make sure that the downstream buffersizes equal the buffer size incoming to this splitter
+	    if (this.getBufferSize(null, true) !=  bufferSizeInit) {
+		//System.out.println("Splitter buffer size not equal to downstream buffersize (init)");
+		return true;
+	    }
+	    if (this.getBufferSize(null, false) !=  bufferSizeSteady) {
+		//System.out.println("Splitter buffer size not equal to downstream buffersize (steady) " + 
+		return true;
+	    }
+	    //make sure that we have a filter
+	    if (!node.edges[0].isFilter()) {
+		//System.out.println("Downstream not filter");
+		return true;
+	    }
+	    if (FusionState.getFusionState(node.edges[0]).getPeekBufferSize() != 0) {
+		//System.out.println("Downstream peek buffer > 0");
+		return true;
+	    }
+	    
+	    for (int i = 1; i < node.ways; i++) {
+		//make sure that there is a filter connected
+		if (!node.edges[i].isFilter()) {
+		    //System.out.println("Downstream not filter");
+		    return true;
+		}
+		//check the peek buffer, it must be zero
+		if (FusionState.getFusionState(node.edges[0]).getPeekBufferSize() != 0) {
+		    //System.out.println("Downstream peek buffer > 0");
+		    return true;
+		}
+		//if all buffer size's are equal, good
+		if (bufferSizeSteady != FusionState.getFusionState(node.edges[i]).getBufferSize(node, false)) {
+		    //System.out.println("Unequal buffer sizes of children (steady)");
+		    return true;
+		}
+		if (bufferSizeInit != FusionState.getFusionState(node.edges[i]).getBufferSize(node, true)) {
+		    //System.out.println("Unequal buffer sizes of children (init)");
+		    return true;
+		}
+		
+	    }
+	    //got here, so everything passed! it is not true that this splitter needs to be generated
+	    return false;
+	}   
+	//not a duplicate splitter
+	return true;
+    }
+    
+    
 
     /**
      * Check that all the data received from the splitter
@@ -60,8 +122,15 @@ public class SplitterFusionState extends FusionState
     public void initTasks(Vector fields, Vector functions,
 			  JBlock initFunctionCalls, JBlock main) 
     {
-	//I don't think there is anything to do here
+	//if this filter is unnecessary, make sure all the downstream neighbor
+	//filter's share the same incoming buffer, the buffer of the splitter...
+	if (!necessary) {
+	    for (int i = 0; i < node.ways; i++)
+		((FilterFusionState)FusionState.getFusionState(node.edges[i])).
+		    sharedBufferVar(bufferVarInit[0], bufferVar[0]);
+	}
     }
+    
     
     
     public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
@@ -81,12 +150,13 @@ public class SplitterFusionState extends FusionState
 						   null));
 	
 	//add the block to do the data reordering
-	if (node.isDuplicateSplitter())
-	    enclosingBlock.addStatement(getDuplicateCode(enclosingBlock, mult, isInit));
+	if (node.isDuplicateSplitter()) {
+	    //enclosingBlock.addStatement(getDuplicateCode(enclosingBlock, mult, isInit));
+	}
 	else {
 	    enclosingBlock.addStatement(getRRCode(enclosingBlock, mult, isInit));
 	}
-
+	
 	return statements.getStatementArray();
     }
     
@@ -96,11 +166,11 @@ public class SplitterFusionState extends FusionState
 	
 	JVariableDefinition induction = 
 	    GenerateCCode.newIntLocal(RRCOUNTER, myUniqueID, 0);
-	
+
 	//add the decl of the induction variable
 	enclosingBlock.addStatementFirst(new JVariableDeclarationStatement
 					(null, induction, null));
-	
+
 	for (int i = 0; i < node.ways; i++) {
 	    JVariableDefinition innerVar = 
 		GenerateCCode.newIntLocal(RRINNERVAR + myUniqueID + "_", i, 0);
@@ -165,11 +235,25 @@ public class SplitterFusionState extends FusionState
 	
 	return GenerateCCode.makeDoLoop(loops, induction, new JIntLiteral(mult));
     }
+
+    public int getBufferSize(FlatNode prev, boolean init) 
+    {
+	return  StrToRStream.getMult(node, init) * distinctRoundItems();
+    }
+    
 				 
+    public JVariableDefinition getBufferVar(FlatNode prev, boolean init) 
+    {
+	return init ? bufferVarInit[0] : bufferVar[0];
+    }
+    
 
     private JStatement getDuplicateCode(JBlock enclosingBlock, int mult, boolean isInit) 
     {
 	JBlock assigns = new JBlock(null, new JStatement[0], null);
+
+	if (!necessary)
+	    return assigns;
 
 	JVariableDefinition induction = 
 	    GenerateCCode.newIntLocal(DUPLICATECOUNTER, myUniqueID, 0);

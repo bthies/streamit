@@ -179,6 +179,12 @@ public class JoinerFusionState extends FusionState
 	}
     }
 
+    public int getBufferSize(FlatNode prev, boolean init) 
+    {
+	return StrToRStream.getMult(node, init) * node.getIncomingWeight(prev);
+    }
+    
+
     private JVariableDefinition makeIncomingBuffer(FlatNode incoming, int way, boolean isInit) 
     {
 	int mult = StrToRStream.getMult(node, isInit);

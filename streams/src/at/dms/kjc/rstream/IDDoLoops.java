@@ -19,7 +19,7 @@ import java.util.Iterator;
  * @author Michael Gordon
  */
 
-public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constants
+public class IDDoLoops extends SLIRReplacingVisitor implements FlatVisitor, Constants
 {
     private int forLevel = 0;
     private HashMap varUses;
@@ -34,11 +34,16 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
      * @param top The top level of the application
      * @return Returns a hashmap of JForStatements -> DoLoopInfo
      */
-    public static HashMap doit(FlatNode top)
+    public static void doit(FlatNode top)
     {
 	IDDoLoops doLoops = new IDDoLoops();
 	top.accept(doLoops, null, true);
-	return doLoops.loops;
+    }    
+
+    public static void doit(SIRFilter filter) 
+    {
+	IDDoLoops doLoops = new IDDoLoops();
+	doLoops.visitFilter(filter);
     }
 
     /**
@@ -52,41 +57,44 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    JMethodDeclaration[] methods = filter.getMethods();
-	    for (int i = 0; i < methods.length; i++) {
-		varUses = UseDefInfo.getUsesMap(methods[i]);
-		//iterate over the statements
-		for (ListIterator it = methods[i].getStatementIterator();
-		     it.hasNext(); ){
-		    ((JStatement)it.next()).accept(this);
-		    assert this.forLevel == 0;
-		}
+	    visitFilter((SIRFilter)node.contents);
+	}
+    }
+    
+    private void visitFilter(SIRFilter filter) 
+    {
+	JMethodDeclaration[] methods = filter.getMethods();
+	for (int i = 0; i < methods.length; i++) {
+	    varUses = UseDefInfo.getUsesMap(methods[i]);
+	    //iterate over the statements
+	    JBlock block = methods[i].getBody();
+	    for (int j = 0; j < block.getStatementArray().length; j++) {
+		block.setStatement(j,
+				   (JStatement)block.getStatementArray()[j].accept(this));
+		assert this.forLevel == 0;
+	    }
+	    
+	    //now go back thru the statements and delete the var defs
+	    //for the induction variables
+	    JStatement[] statements = methods[i].getBody().getStatementArray();
+	    for (int k = 0; k < statements.length; k++) {
+		if (!(statements[k] instanceof JEmptyStatement || 
+		      statements[k] instanceof JVariableDeclarationStatement))
+		    break;
 		
-
-		//now go back thru the statements and delete the var defs
-		//for the induction variables
-		JStatement[] statements = methods[i].getBody().getStatementArray();
-		for (int k = 0; k < statements.length; k++) {
-		    if (!(statements[k] instanceof JEmptyStatement || 
-			  statements[k] instanceof JVariableDeclarationStatement))
-			break;
-		    
-		    if (statements[k] instanceof JVariableDeclarationStatement) {
-			JVariableDeclarationStatement varDecl = 
-			    (JVariableDeclarationStatement) statements[k];
-			Vector newVars = new Vector();
-			for (int j = 0; j < varDecl.getVars().length; j++) {
-			    if (!inductionVars.contains(varDecl.getVars()[j]))
-				newVars.add(varDecl.getVars()[j]);
-			}
-			varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
+		if (statements[k] instanceof JVariableDeclarationStatement) {
+		    JVariableDeclarationStatement varDecl = 
+			(JVariableDeclarationStatement) statements[k];
+		    Vector newVars = new Vector();
+		    for (int j = 0; j < varDecl.getVars().length; j++) {
+			if (!inductionVars.contains(varDecl.getVars()[j]))
+			    newVars.add(varDecl.getVars()[j]);
 		    }
+			varDecl.setVars((JVariableDefinition[])newVars.toArray(new JVariableDefinition[0]));
 		}
 	    }
 	}
     }
-    
     
     private IDDoLoops() 
     {
@@ -99,11 +107,12 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
     /**
      * See comments in method.
      */
-    public void visitForStatement(JForStatement self,
+    public Object visitForStatement(JForStatement self,
 				  JStatement init,
 				  JExpression cond,
 				  JStatement incr,
 				  JStatement body) {
+	boolean passed = false;
 	JLocalVariable induction = null;
 	//put the do loop information in this class...
 	DoLoopInformation info = new DoLoopInformation();
@@ -160,16 +169,32 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		    //System.out.println("Identified Do loop...");
 		    loops.put(self, info);
 		    inductionVars.add(info.induction);
+		    passed = true;
 		}
 	    }
 	}
 	
 	//check for nested for loops that can be converted...
-	body.accept(this);
+	JStatement newBody = (JStatement)body.accept(this);
+	if (newBody!=null && newBody!=body) {
+	    self.setBody(newBody);
+	}
 	
 	//leaving for loop
 	forLevel--;
 	assert forLevel >= 0;
+	
+	if (passed) {
+	    return new JDoLoopStatement(info.induction,
+					info.init,
+					info.cond,
+					info.incr, newBody, true);
+	}
+	else {
+	    System.out.println("For Loop could not be converted to do loop");
+	    self.setBody(newBody);
+	    return self;
+	}
     }
     
     /**
@@ -331,8 +356,14 @@ public class IDDoLoops extends SLIREmptyVisitor implements FlatVisitor, Constant
 		    info.cond = cond.getRight();
 		    break;
 		case OPE_LE:
-		    info.cond = new JAddExpression(null, cond.getRight(),
-						   new JIntLiteral(1));
+		    if (Util.passThruParens(cond.getRight()) instanceof JIntLiteral) {
+			JIntLiteral right = (JIntLiteral)Util.passThruParens(cond.getRight());
+			info.cond = new JIntLiteral(right.intValue() + 1);
+		    }
+		    else
+			info.cond = new JAddExpression(null, cond.getRight(),
+						       new JIntLiteral(1));
+		    
 		    break;
 		    //don't handle > or >=, it is not supported yet
 		    /*case OPE_GT:
@@ -515,4 +546,12 @@ class CheckLoopBody extends SLIREmptyVisitor
 	for (int i = 0; i < args.length; i++) 
 	    args[i].accept(this);    
     }
+}
+
+class DoLoopInformation 
+{
+    JExpression init;
+    JExpression cond;
+    JExpression incr;
+    JLocalVariable induction;
 }

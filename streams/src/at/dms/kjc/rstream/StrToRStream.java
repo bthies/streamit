@@ -30,6 +30,8 @@ import at.dms.util.Utils;
  * 
  */
 public class StrToRStream {
+    /** if true generate do loops when identified **/
+    public static final boolean GENERATE_DO_LOOPS = false;
     /** The execution counts from the scheduler: [0] init, [1] steady **/
     public static HashMap[] executionCounts;
     
@@ -90,10 +92,6 @@ public class StrToRStream {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
-	//SIRPrinter printer1 = new SIRPrinter();
-	//str.accept(printer1);
-	//printer1.close();
-
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
 
@@ -132,12 +130,8 @@ public class StrToRStream {
 	IterFactory.createFactory().createIter(str).accept(printer1);
 	printer1.close();
 
-	//Partition the Stream Graph, fuse it down to one tile
-	int count = new GraphFlattener(str).getNumTiles();
-
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
-	
 	
 	//VarDecl Raise to move peek index up so
 	//constant prop propagates the peek buffer index
@@ -152,21 +146,12 @@ public class StrToRStream {
 	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
 	
-	//flatten the "graph", there should be only one filter, so this 
-	//just wraps the filter inside a flat node
+	//flatten the "graph"
 	GraphFlattener graphFlattener = new GraphFlattener(str);
 	System.out.println("Flattener End.");
 	
 	//create the execution counts for other passes
 	createExecutionCounts(str, graphFlattener);
-	
-
-	//Generate the tile code
-	//ExecutionCode.doit(graphFlattener.top, executionCounts);
-
-	//if (KjcOptions.removeglobals) {
-	//    RemoveGlobals.doit(graphFlattener.top);
-	//}
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);

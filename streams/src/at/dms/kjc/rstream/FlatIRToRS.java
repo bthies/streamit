@@ -28,8 +28,7 @@ import at.dms.util.SIRPrinter;
  */
 public class FlatIRToRS extends ToC 
 {
-    /** if true generate do loops when identified **/
-    public static final boolean GENERATE_DO_LOOPS = false;//true;
+    
     /** the hashmap of for loops -> do loops **/   
     private HashMap doloops;
     /** the current filter we are visiting **/
@@ -38,6 +37,9 @@ public class FlatIRToRS extends ToC
     private NewArrayExprs newArrayExprs;
     /** > 0 if in a for loop header during visit **/
     private int forLoopHeader = 0;
+
+    public int doLoops = 0;
+    public int staticDoLoops = 0;
     
     
     public FlatIRToRS() 
@@ -330,9 +332,13 @@ public class FlatIRToRS extends ToC
     public void visitDoLoopStatement(JDoLoopStatement self) 
     {
 	assert self.countUp() : "Currently we only handle doloops with positive increment";
-	
+
+	doLoops++;
+	if (self.staticBounds())
+	    staticDoLoops++;
+
 	print("doloop (");
-	print(self.getInduction().getType());
+	print(self.getInduction().getType() + " ");
 	print(self.getInduction().getIdent());
 	print(" = ");
 	self.getInitValue().accept(this);
@@ -359,7 +365,7 @@ public class FlatIRToRS extends ToC
                                   JStatement incr,
                                   JStatement body) {
 
-	if (GENERATE_DO_LOOPS && self instanceof JDoLoopStatement) {
+	if (StrToRStream.GENERATE_DO_LOOPS && self instanceof JDoLoopStatement) {
 	    visitDoLoopStatement((JDoLoopStatement)self);
 	    return;
 	}

@@ -13,7 +13,10 @@ public abstract class FusionState
 {
     protected static int uniqueID = 0;
     
-    
+    //true if this node *needs* to code generated for correctness
+    //false for some identity's and duplicate splitters
+    protected boolean necessary = true;
+
     protected FlatNode node;
     protected int peekBufferSize;
     protected JVariableDefinition[] bufferVar;
@@ -36,6 +39,14 @@ public abstract class FusionState
 	peekBufferSize = 0;
     }
 
+    public abstract int getBufferSize(FlatNode prev, boolean init);
+    
+
+    public boolean isNecesary() 
+    {
+	return necessary;
+    }
+    
     public abstract void initTasks(Vector fields, Vector functions,
 				   JBlock initFunctionCalls, JBlock main);
     
@@ -57,13 +68,8 @@ public abstract class FusionState
 	return (FusionState)fusionState.get(node);
     }
     
-    //for splitters and filters ignore prev, this is overrided for joiners
-    public JVariableDefinition getBufferVar(FlatNode prev, boolean init)
-    {
-	return init ? bufferVarInit[0] : bufferVar[0];
-    }
-
-
+    public abstract JVariableDefinition getBufferVar(FlatNode prev, boolean init);
+    
     public int getPeekBufferSize() 
     {
 	return peekBufferSize;

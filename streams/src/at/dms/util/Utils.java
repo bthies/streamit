@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.22 2004-07-12 19:02:01 mgordon Exp $
+ * $Id: Utils.java,v 1.23 2004-08-18 14:37:41 mgordon Exp $
  */
 
 package at.dms.util;
@@ -320,6 +320,46 @@ public abstract class Utils implements Serializable, DeepCloneable {
 	}
     }
 
+    
+    
+    /**
+     * Given a statement, return the expression that this statement is 
+     * composed of, if not an expression statement return null.
+     *
+     *
+     * @param orig The statement
+     *
+     *
+     * @return null if <orig> does not contain an expression or
+     * the expression if it does.
+     */
+    public static JExpression getExpression(JStatement orig)
+    {
+	if (orig instanceof JExpressionListStatement) {
+	    JExpressionListStatement els = (JExpressionListStatement)orig;
+	    if (els.getExpressions().length == 1)
+		return passThruParens(els.getExpression(0));
+	    else
+		return null;
+	}
+	else if (orig instanceof JExpressionStatement) {
+	    return passThruParens(((JExpressionStatement)orig).getExpression());
+	}
+	else 
+	    return null;
+    }
+
+    /**
+     * Return the first non-parentheses expressions contained in <orig> 
+     **/
+    public static JExpression passThruParens(JExpression orig) 
+    {
+	if (orig instanceof JParenthesedExpression) {
+	    return passThruParens(((JParenthesedExpression)orig).getExpr());
+	}
+	return orig;
+    }
+    
   /**
    * Splits a string like:
    *   "java/lang/System/out"

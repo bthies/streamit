@@ -25,9 +25,13 @@ public class FilterFusionState extends FusionState
     private JVariableDefinition pushCounterVarInit;
     private JVariableDefinition peekBufferVar;
     private JVariableDefinition loopCounterVar;
-
     
     private SIRFilter filter;
+
+    //if this is true, don't generate the declaration of the pop buffer,
+    //this is set by a duplicate splitter if this filter shares its buffer
+    //with other filters to implement the duplication
+    private boolean dontGeneratePopDecl = false;
 
     /** this will create both the init and the steady buffer **/
     public FilterFusionState(FlatNode fnode)
@@ -45,18 +49,32 @@ public class FilterFusionState extends FusionState
 	bufferVarInit = new JVariableDefinition[1];
 
 	createVariables();
+	
+	setNecessary();
     }
     
+    private void setNecessary() 
+    {
+	if (filter instanceof SIRIdentity &&
+	    peekBufferSize == 0) {
+	    necessary = false;
+	}
+	else
+	    necessary = true;
+    }
+    
+
     private void createVariables() 
     {
 	int myConsume;
 	
-	if (filter instanceof SIRTwoStageFilter &&
+	/*	if (filter instanceof SIRTwoStageFilter &&
 	    StrToRStream.getMult(node, true) > 0) 
 	    myConsume = ((SIRTwoStageFilter)filter).getInitPop() + 
 		(StrToRStream.getMult(node, true) - 1) * filter.getPopInt();
-	else 
-	    myConsume = StrToRStream.getMult(node, true) * filter.getPopInt();
+		else*/ 
+	
+	myConsume = StrToRStream.getMult(node, true) * filter.getPopInt();
 
 
 	peekBufferSize = getLastProducedInit() - myConsume;
@@ -154,12 +172,35 @@ public class FilterFusionState extends FusionState
 	return isInit ? pushCounterVarInit : pushCounterVar;
     }
 
+    public int getBufferSize(FlatNode prev, boolean init) 
+    {
+	return StrToRStream.getMult(node, init) * filter.getPopInt() + peekBufferSize;
+    }
+    
+
+    public JVariableDefinition getBufferVar(FlatNode prev, boolean init) 
+    {
+	if (!necessary) {
+	    return FusionState.getFusionState(node.edges[0]).getBufferVar(node, init);
+	}
+	return init ? bufferVarInit[0] : bufferVar[0];
+    }
+    
+    //this is called by an unnecesary duplicate splitters to make sure that 
+    //all its downstream neighbors share the same incoming buffer
+    public void sharedBufferVar(JVariableDefinition bufInit,
+				JVariableDefinition buf)
+    {
+	dontGeneratePopDecl = true;
+	bufferVarInit[0] = bufInit;
+	bufferVar[0] = buf;
+    }
+    
     public JVariableDefinition getPushBufferVar(boolean isInit)  
     {
 	assert node.ways == 1;
 	
 	return getFusionState(node.edges[0]).getBufferVar(node, isInit);
-	
     }
     
     private int getLastProducedInit() 
@@ -175,6 +216,9 @@ public class FilterFusionState extends FusionState
 
     public JStatement getPopBufDecl(boolean isInit) 
     {
+	if (dontGeneratePopDecl)
+	    return null;
+	
 	JVariableDefinition buf = isInit ? bufferVarInit[0] : bufferVar[0];
 	
 	if (buf == null)
@@ -331,6 +375,10 @@ public class FilterFusionState extends FusionState
     public void initTasks(Vector fields, Vector functions,
 			  JBlock initFunctionCalls, JBlock main) 
     {
+	//don't do anything if this filter is not being generated
+	if (!necessary)
+	    return;
+
 	//add helper functions
 	for (int i = 0; i < filter.getMethods().length; i++) {
 	    if (filter.getMethods()[i] != filter.getInit() &&
@@ -355,7 +403,6 @@ public class FilterFusionState extends FusionState
 					(null, new JThisExpression(null),
 					 filter.getInit().getName(), new JExpression[0]),
 					null));
-
 	*/
 
 	//inline init functions in initFunctionCalls
@@ -378,6 +425,10 @@ public class FilterFusionState extends FusionState
     public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
     {
 	JBlock statements = new JBlock(null, new JStatement[0], null);
+
+	//don't generate code if this filter is not needed
+	if (!necessary)
+	    return statements.getStatementArray();
 	
 	int mult = StrToRStream.getMult(getNode(), isInit);
 
@@ -445,4 +496,8 @@ public class FilterFusionState extends FusionState
 	return statements.getStatementArray();
     }
     
+    public SIRFilter getFilter() 
+    {
+	return filter;
+    }
 }

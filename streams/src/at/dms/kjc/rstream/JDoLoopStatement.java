@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoLoopStatement.java,v 1.1 2004-08-13 18:06:13 mgordon Exp $
+ * $Id: JDoLoopStatement.java,v 1.2 2004-08-18 14:37:40 mgordon Exp $
  */
 
 package at.dms.kjc.rstream;
@@ -36,7 +36,46 @@ public class JDoLoopStatement extends JForStatement
     private JExpression condValue;
     private boolean countUp;
     private boolean zeroInit;
-    
+  
+     
+    public JDoLoopStatement (JLocalVariable induction,
+			     JExpression initVal,
+			     JExpression condVal,
+			     JExpression incrVal,
+			     JStatement body,
+			     boolean countUp)
+    {
+	//try to construct a legal for loop that will represent this do loop
+	super(null, new JExpressionStatement(null, 
+					     new JAssignmentExpression
+					     (null, 
+					      new JLocalVariableExpression(null, induction),
+					      initVal), 
+					     null),
+	      new JRelationalExpression(null,
+					Constants.OPE_LT,
+					new JLocalVariableExpression(null, induction),
+					condVal),
+	      new JExpressionStatement(null,
+				       new JCompoundAssignmentExpression
+				       (null, OPE_PLUS,
+					new JLocalVariableExpression(null, induction),
+					incrVal), 
+				       null),
+	      body,
+	      null);
+	
+	assert countUp;
+	
+	this.induction = induction;
+	this.initValue = initVal;
+	this.incrValue = incrVal;
+	this.condValue = condVal;
+	this.countUp = countUp;
+	this.zeroInit =  (Util.passThruParens(initVal) instanceof JIntLiteral &&
+			  ((JIntLiteral)Util.passThruParens(initVal)).intValue() == 0);
+	
+    }
    
     public JDoLoopStatement (JLocalVariable induction,
 			     JExpression initVal,
@@ -105,5 +144,58 @@ public class JDoLoopStatement extends JForStatement
     {
 	return incrValue;
     }
+
+    public boolean staticBounds() 
+    {
+	return (Util.passThruParens(initValue) instanceof JIntLiteral &&
+		Util.passThruParens(condValue) instanceof JIntLiteral &&
+		Util.passThruParens(incrValue) instanceof JIntLiteral);	
+    }
     
+    public int getTripCount() 
+    {
+	assert staticBounds();
+	
+	int init, cond, incr;
+	
+	init = ((JIntLiteral)Util.passThruParens(initValue)).intValue();
+	cond = ((JIntLiteral)Util.passThruParens(condValue)).intValue();
+	incr = ((JIntLiteral)Util.passThruParens(incrValue)).intValue();
+	
+	int tripCount = (int)java.lang.Math.round((((double)(cond  - init) / (double)incr)) + 0.5);
+	
+	assert tripCount >= 0;
+	
+	return tripCount;
+    }
+    
+
+    
+    //for cloning only
+    protected JDoLoopStatement() 
+    {
+	
+    }
+    
+
+    /** THE FOLLOWING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */
+
+    /** Returns a deep clone of this object. */
+    public Object deepClone() {
+	at.dms.kjc.rstream.JDoLoopStatement other = new at.dms.kjc.rstream.JDoLoopStatement();
+	at.dms.kjc.AutoCloner.register(this, other);
+	deepCloneInto(other);
+	return other;
+    }
+    
+    /** Clones all fields of this into <other> */
+    protected void deepCloneInto(at.dms.kjc.rstream.JDoLoopStatement other) {
+	super.deepCloneInto(other);
+	other.initValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.initValue);
+	other.incrValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.incrValue);
+	other.condValue = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.condValue);
+	other.countUp = countUp;
+	other.zeroInit = zeroInit;
+	other.induction = (at.dms.kjc.JLocalVariable)at.dms.kjc.AutoCloner.cloneToplevel(this.induction);
+    }
 }

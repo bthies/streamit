@@ -147,6 +147,9 @@ public class GenerateCCode
 
 	str.append(toRS.getString());
 	
+	System.out.println("Static doloops/doloop: " + toRS.staticDoLoops + " / " +
+			   toRS.doLoops);
+
 	System.out.println("Code for application written to str.c");
 	try {
 	    FileWriter fw = new FileWriter("str.c");
@@ -164,7 +167,6 @@ public class GenerateCCode
 
 	while (traversal.hasNext()) {
 	    FlatNode node = (FlatNode)traversal.next();
-	    System.out.println("Visiting " + node.contents);
 	    generateCode(node, isInit);
 
 	}
@@ -347,7 +349,8 @@ public class GenerateCCode
 	arrayInits.convertFilter(filter);
 
 	//find all do loops, 
-	//toC.doloops = IDDoLoops.doit(node);
+	if (StrToRStream.GENERATE_DO_LOOPS)
+	    IDDoLoops.doit(filter);
 	//remove unnecessary do loops
 	//RemoveDeadDoLoops.doit(node, toC.doloops);
     }

@@ -12,8 +12,8 @@ class IdentityFloat extends Filter {
     }
 }
 
-class Butterfly extends Pipeline {
-    public Butterfly(int N, int W) { super (N, W); }
+class Butterfly_inlined extends Pipeline {
+    public Butterfly_inlined(int N, int W) { super (N, W); }
 
     public void init(final int N, final int W) {
         this.add(new SplitJoin() {
@@ -118,11 +118,11 @@ class FFTKernel extends Pipeline {
                     this.setJoiner(ROUND_ROBIN());
                 }});
         for (int i=1; i<N; i*=2)
-            this.add(new Butterfly(i, N));
+            this.add(new Butterfly_inlined(i, N));
     }
 }
 
-class OneSource extends Filter
+class OneSource_inlined extends Filter
 {
     public void init ()
     {
@@ -135,7 +135,7 @@ class OneSource extends Filter
     }
 }
 
-class FloatPrinter extends Filter
+class FloatPrinter_inlined extends Filter
 {
     public void init ()
     {
@@ -153,10 +153,8 @@ public class FFT_inlined extends StreamIt {
     }
 
     public void init() {
-        this.add(new OneSource());
+        this.add(new OneSource_inlined());
         this.add(new FFTKernel(32));
-        this.add(new FloatPrinter());
+        this.add(new FloatPrinter_inlined());
     }
 }
-
-

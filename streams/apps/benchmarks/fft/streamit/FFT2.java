@@ -18,7 +18,7 @@ class CombineDFT extends Filter
         nWay = n;
         input = new Channel(Float.TYPE, 2 * n);
         output = new Channel(Float.TYPE, 2 * n);
-        wn_r = (float) Math.cos(2 * 3.141592654 / ((double) n));
+	wn_r = (float) Math.cos(2 * 3.141592654 / ((double) n));
         wn_i = (float) Math.sin(2 * 3.141592654 / ((double) n));
         results = new float[2 * n];
     }
@@ -70,8 +70,8 @@ class FFTReorderSimple extends Filter
         nWay = n;
         totalData = nWay * 2;
         
-        input = new Channel (Float.TYPE, nWay * 2);
-        output = new Channel (Float.TYPE, nWay * 2);
+        input = new Channel (Float.TYPE, n * 2);
+        output = new Channel (Float.TYPE, n * 2);
     }
     
     public void work ()
@@ -104,11 +104,10 @@ class FFTReorder extends Pipeline
     
     public void init (int nWay)
     {
-        while (nWay > 2)
-        {
-            add (new FFTReorderSimple (nWay));
-            nWay = nWay / 2;
-        }
+	int i;
+	for (i=1; i<(nWay/2); i*=2) {
+	    add (new FFTReorderSimple (nWay/i));
+	}
     }
 }
 
@@ -142,12 +141,10 @@ class FFTKernel2 extends Pipeline
     }
     public void init(final int nWay)
     {
+	int i;
         add (new FFTReorder (nWay));
-        int n = 2;
-        while (n <= nWay)
-        {
-            add (new CombineDFT (n));
-            n = n * 2;
+	for (i=2; i<=nWay; i*=2) {
+            add (new CombineDFT (i));
         }
     }
 }
@@ -161,10 +158,8 @@ public class FFT2 extends StreamIt
     public void init()
     {
         add(new OneSource());
-        add(new FFTKernel2(16));
+        add(new FFTKernel2(32));
         add(new FloatPrinter());
     }
 }
-
-
 

@@ -295,7 +295,7 @@ class FMRadio extends Pipeline
 	add(new Pipeline() {
 		public void init() {
 		    add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
-		    add(new Decimator(5));
+		    add(new Compressor(5));
 		}
 	    });
 	add(new FMDemodulator(samplingRate, maxAmplitude, bandwidth));
@@ -396,15 +396,15 @@ class FMDemodulator extends Filter {
 
 
 /**
- * Class Decimator
+ * Class Compressor
  *
  * Implements a decimator by a parameter M. This means that
  * we only output every Mth sample. In StreamIt parlance
  * this means that we push the first output and pop M.
  **/
-class Decimator extends Filter {
+class Compressor extends Filter {
     int M;
-    public Decimator(int decimation) {
+    public Compressor(int decimation) {
 	super(decimation);
     }
     public void init(final int decimation) {

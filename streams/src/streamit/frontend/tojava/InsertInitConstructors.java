@@ -11,10 +11,61 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.7 2003-05-13 19:32:54 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.8 2003-06-25 15:19:48 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
+    /**
+     * Returns true if this type needs a constructor generated.
+     * This happens if the type is complex, or if it is not a
+     * primitive type.  (Complex primitive types use the Java
+     * 'Complex' class.)
+     */
+    private static boolean needsConstructor(Type type)
+    {
+        return type.isComplex() || !(type instanceof TypePrimitive);
+    }
+
+    /**
+     * Return an ordered list of all of the constructors that need to
+     * be generated to initialize a particular variable.
+     */
+    static private List stmtsForConstructor(FEContext ctx,
+                                            Expression name, Type type)
+    {
+        List result = new java.util.ArrayList();
+
+        // If the type doesn't involve a constructor, there are no
+        // generated statements.
+        if (!needsConstructor(type))
+            return result;
+
+        // No; generate the constructor.
+        result.add(new StmtJavaConstructor(ctx, name, type));
+
+        // Now, if this is a structure type, we might need to
+        // recursively generate constructors for the structure
+        // members.
+        if (type instanceof TypeStruct)
+        {
+            TypeStruct ts = (TypeStruct)type;
+            for (int i = 0; i < ts.getNumFields(); i++)
+            {
+                String fname = ts.getField(i);
+                Type ftype = ts.getType(fname);
+                if (needsConstructor(ftype))
+                {
+                    // Construct the new left-hand side:
+                    Expression lhs = new ExprField(ctx, name, fname);
+                    // Get child constructors and add them:
+                    result.addAll(stmtsForConstructor(ctx, lhs, ftype));
+                }
+            }
+        }
+        
+        return result;
+    }
+    
     public Object visitStreamSpec(StreamSpec spec)
     {
         spec = (StreamSpec)super.visitStreamSpec(spec);
@@ -33,13 +84,11 @@ public class InsertInitConstructors extends InitMunger
             for (int i = 0; i < field.getNumFields(); i++)
             {
                 Type type = field.getType(i);
-                if (type.isComplex() || !(type instanceof TypePrimitive))
+                if (needsConstructor(type))
                 {
-                    Statement constructor =
-                        new StmtJavaConstructor(field.getContext(),
-                                                field.getName(i),
-                                                field.getType(i));
-                    newStmts.add(constructor);
+                    FEContext ctx = field.getContext();
+                    Expression lhs = new ExprVar(ctx, field.getName(i));
+                    newStmts.addAll(stmtsForConstructor(ctx, lhs, type));
                 }
             }
         }

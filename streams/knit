@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.17 2003-03-10 22:05:05 dmaze Exp $
+# $Id: knit,v 1.18 2003-03-11 21:40:47 dmaze Exp $
 #
 
 use strict;
@@ -35,45 +35,45 @@ exit(0);
 sub usage
   {
     my ($fh, $more) = @_;
-    print $fh <<'EOT';
+    my $text = <<'EOT';
 knit: StreamIt compiler wrapper
 
 Usage: knit [options] file.str ...
 	
 Options:
   --help              Show this screen
-  --java              Input file is "old" syntax
+* --more-help         Include internal-only options
+* --java              Input file is "old" syntax
   --output filename   Write a binary to filename
   --raw n             Compile for RAW, with an n-by-n grid
+* --viram, -V         Compile for VIRAM, a vector uniprocessor
   --verbose           Print commands as they are executed
   --library           Run in the Java library instead of compiling
 
 Options available for all backends:
   --frequencyreplacement (0|1)
                       Convert FIR filters to frequency; 1 is efficient
-  --fusion, -f        Fuse entire program to a single filter
-  --linearanalysis    Perform linear analysis
+* --fusion, -f        Fuse entire program to a single filter
   --linearreplacement Perform linear transformations based on analysis
   --nofieldprop, -L   Do not propagate constant field values
   --redundantreplacement, -t
                       Create linear filters without redundant computation
-  --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
+* --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
   --sjtopipe, -J      Convert split-joins to pipelines
   --sync, -k          Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
-  --viram, -V         Compile for VIRAM, a vector uniprocessor
 
 Options specific to RAW backend:
-  --altcodegen, -z    Alternate RAW communication code generation
+* --altcodegen, -z    Alternate RAW communication code generation
   --dppartition, -y   Use the dynamic programming partitioner
-  --dpscaling, -Y     Collect theoretical scaling statistics
-  --ilppartition, -A  Use the integer linear programming partitioner
-  --magic-net, -M     Generate RAW "magic network" code
-  --noanneal, -W      Do not run simulated annealing for layout
+* --dpscaling, -Y     Collect theoretical scaling statistics
+* --ilppartition, -A  Use the integer linear programming partitioner
+* --magic-net, -M     Generate RAW "magic network" code
+* --noanneal, -W      Do not run simulated annealing for layout
   --numbers, -N       Automatically gather numbers and put in results.out
   --partition, -a     Automatically partition stream graph
   --ptraccess, -Q     Access buffers through a pointer
-  --ratematch, -x     Turn on rate matching
+* --ratematch, -x     Turn on rate matching
   --raw-uni, -U       Use RAW backend to generate uniprocessor code
   --removeglobals, -G Inline all functions and turn globals into locals
   --simulatework, -T  Use simulator for work estimation
@@ -82,6 +82,12 @@ Options specific to uniprocessor backend:
   --poptopeek, -P     Convert all pop expressions into peeks
   --profile           Compile with profiling information
 EOT
+    if ($more) {
+      $text =~ s/^\*/ /mg;
+    } else {
+      $text =~ s/^\*.*\n//mg;
+    }
+    print $fh $text;
 }
 
 sub get_options
@@ -102,7 +108,6 @@ sub get_options
 	       "fusion|f",
 	       "ilppartition|A",
 	       "library",
-	       "linearanalysis|i",
 	       "linearreplacement|I",
 	       "magic-net|magic_net|M",
 	       "noanneal|W",
@@ -225,7 +230,6 @@ sub get_kjc_opts
       ($kjcopts .= " -F" . $opts{frequencyreplacement});
     $opts{fusion} && ($kjcopts .= " -o");
     $opts{ilppartition} && ($kjcopts .= " -A");
-    $opts{linearanalysis} && ($kjcopts .= " -i");
     $opts{linearreplacement} && ($kjcopts .= " -I");
     $opts{'magic-net'} && ($kjcopts .= " -M");
     $opts{noanneal} && ($kjcopts .= " -W");

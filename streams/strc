@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.26 2003-10-15 17:46:13 thies Exp $
+# $Id: strc,v 1.27 2003-10-17 21:53:38 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -133,7 +133,6 @@ Options specific to RAW backend:
   --partition, -p     Automatically partition stream graph
 +   --partition-dp      Dynamic programming partitioner (default)
 +   --partition-greedy  Greedy partitioner
-*   --partition-ilp     Integer linear programming partitioner
 * --altcodegen        Alternate RAW communication code generation
 * --decoupled         Generate dummy communication code
 * --dpscaling         Collect theoretical scaling statistics
@@ -209,7 +208,6 @@ sub get_options
 			    "partition|p",
 			    "partition-dp|pdp",
 			    "partition-greedy|pgreedy",
-			    "partition-ilp|pilp",
 			    "poptopeek",
 			    "marksteady!",
 			    "printsched!",
@@ -235,13 +233,12 @@ sub get_options
 			    "destroyfieldarray!");
     return $result if !$result;
     # Figure out which partitioning is in use, if any:
-    $opts{partition} = "ilp" if $opts{'partition-ilp'};
     $opts{partition} = "greedy" if $opts{'partition-greedy'};
     $opts{partition} = "dp" if $opts{'partition-dp'};
     # Default to DP partitioning, if we've selected partitioning
     # but none of these options.
     $opts{partition} = "dp" if $opts{partition} &&
-      !grep {$opts{partition} eq $_} ('dp', 'greedy', 'ilp');
+      !grep {$opts{partition} eq $_} ('dp', 'greedy');
     # If the user specified -O#, transform that into appropriate options,
     # but don't override things otherwise on the command line.
     if (exists $opts{optimize})
@@ -414,7 +411,6 @@ sub get_kjc_opts
       {
 	$opts{partition} eq 'dp' && ($kjcopts .= " --partition_dp");
 	$opts{partition} eq 'greedy' && ($kjcopts .= " --partition_greedy");
-	$opts{partition} eq 'ilp' && ($kjcopts .= " --partition_ilp");
       }
     $opts{altcodegen} && ($kjcopts .= " --altcodegen");
     $opts{atlas} && ($kjcopts .= " --atlas");

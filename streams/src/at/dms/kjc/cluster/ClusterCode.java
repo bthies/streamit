@@ -857,7 +857,19 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.println();
-	p.print("\nall: run_cluster");
+	p.print("all: run_cluster");
+	p.println();
+	p.println();
+
+
+	p.print("clean:");
+	p.println();
+	p.print("\trm -f run_cluster master.o");
+
+	for (int i = 0; i < threadNumber; i++) {
+	    p.print(" thread"+i+".o");
+	}
+
 	p.println();
 	p.println();
 

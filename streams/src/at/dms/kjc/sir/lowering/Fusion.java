@@ -67,7 +67,7 @@ public class Fusion {
 	    // get old statement list
 	    List old = f1.getWork().getStatements();
 	    // clone the list
-	    List oldClone = (List)ObjectDeepCloner.deepCopy(old);
+	    List oldClone = (List)ObjectDeepCloner.deepCopy(old, false);
 	    // add these statements to new body
 	    newStatements.addAllStatements(0, oldClone);
 	}
@@ -124,7 +124,7 @@ public class Fusion {
 	    // get old statement list
 	    List old = f2.getWork().getStatements();
 	    // clone the list
-	    List oldClone = (List)ObjectDeepCloner.deepCopy(old);
+	    List oldClone = (List)ObjectDeepCloner.deepCopy(old, false);
 	    // add these statements to the end of the new body
 	    newConsumers.addAllStatements(0, oldClone);
 	}

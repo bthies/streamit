@@ -236,7 +236,7 @@ public class SJFlatten
             SIRFilter filter = (SIRFilter)childIter.next();
             // Get the old statement list, and clone it.
             List old = filter.getWork().getStatements();
-            List oldClone = (List)ObjectDeepCloner.deepCopy(old);
+            List oldClone = (List)ObjectDeepCloner.deepCopy(old, false);
             // Add a block containing these statements.
             JStatement[] stmts = new JStatement[oldClone.size()];
             stmts = (JStatement[])oldClone.toArray(stmts);

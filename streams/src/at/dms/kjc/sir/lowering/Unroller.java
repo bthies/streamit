@@ -68,8 +68,8 @@ class Unroller extends SLIRReplacingVisitor {
 	// simulate execution of the loop...
 	while (counter < info.finalVal) {
 	    // create new for statement, just to replace the variable
-	    JForStatement newSelf 
-		= (JForStatement)ObjectDeepCloner.deepCopy(self);
+	    JForStatement newSelf
+		= (JForStatement)ObjectDeepCloner.deepCopy(self, false);
 	    // get unroll info for <newSelf>
 	    UnrollInfo newInfo = getUnrollInfo(newSelf.getInit(),
 					       newSelf.getCondition(),

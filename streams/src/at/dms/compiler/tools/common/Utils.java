@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.2 2002-12-11 20:17:41 karczma Exp $
+ * $Id: Utils.java,v 1.3 2004-01-27 23:13:02 dmaze Exp $
  */
 
 package at.dms.compiler.tools.common;
@@ -37,10 +37,8 @@ public abstract class Utils {
    *
    * @exception	RuntimeException	the entire token reference
    */
-  public static final void assert(boolean b) {
-    if (!b) {
-      throw new InconsistencyException();
-    }
+  public static final void kopi_assert(boolean b) {
+      assert b;
   }
 
   /**

@@ -1,0 +1,45 @@
+<!--
+  Copyright 2003 by the Massachusetts Institute of Technology.
+
+  Permission to use, copy, modify, and distribute this
+  software and its documentation for any purpose and without
+  fee is hereby granted, provided that the above copyright
+  notice appear in all copies and that both that copyright
+  notice and this permission notice appear in supporting
+  documentation, and that the name of M.I.T. not be used in
+  advertising or publicity pertaining to distribution of the
+  software without specific, written prior permission.
+  M.I.T. makes no representations about the suitability of
+  this software for any purpose.  It is provided "as is"
+  without express or implied warranty.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" [
+<!ELEMENT code - - (#PCDATA)>
+]>
+<html>
+  <head>
+    <title>Overview of streamit.frontend.controlflow</title>
+  </head>
+  <body>
+    <p>
+Control-flow and data-flow analysis for the StreamIt front-end IR.
+Data-flow analysis is important for several applications, and is used
+by the front-end's semantic checker to verify correctness of types in
+pipelines.  {@link streamit.frontend.controlflow.CFG} provides an
+immutable control-flow graph representation for a function, which is
+built by {@link streamit.frontend.controlflow.CFGBuilder#buildCFG}.
+The graph is built up of {@link
+streamit.frontend.controlflow.CFGNode}s, each of which contains at
+most one statement or expression.
+    </p>
+    <p>
+Data-flow analyses have two parts.  A generic engine is provided in
+the {@link streamit.frontend.controlflow.DataFlow} class; actual
+analyses are derived from this class, and must provide the initial
+lattice value and a flow function.  Lattice values are derived from
+{@link streamit.frontend.controlflow.Lattice}.
+    </p>
+@author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+@version $Id: package.html,v 1.1 2004-01-27 21:23:43 dmaze Exp $
+  </body>
+</html>

@@ -474,7 +474,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (ident.equals("work") ||
 	    ident.equals("add") ||
 	    ident.equals("initIO") ||
-	    ident.equals("initPath"))
+	    ident.startsWith("initPath"))
 	    return true;
 	return false;
     }
@@ -528,7 +528,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 								     null,
 								     null)); 
 	}
-	else if (ident.equals("initPath")) {
+	else if (ident.startsWith("initPath")) {
 	    if (!(parentStream instanceof SIRFeedbackLoop))
 		at.dms.util.Utils.fail("initPath declared for non-Feedbackloop");
 	    ((SIRFeedbackLoop)parentStream).setInitPath(new JMethodDeclaration(null,

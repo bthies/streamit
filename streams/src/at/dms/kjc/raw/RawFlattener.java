@@ -48,7 +48,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		FlatNode[] edges = ((FlatNode)entry.getValue()).edges;
 		int increment = 1;
 		for (int i=0; i<edges.length; i++) {
-		    if (edges[i].contents instanceof SIRJoiner) {
+		    if (edges[i]!=null &&
+			edges[i].contents instanceof SIRJoiner) {
 			increment = 0;
 		    }
 		}

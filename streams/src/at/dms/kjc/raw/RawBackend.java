@@ -75,6 +75,12 @@ public class RawBackend {
 			       StreamItOptions.rawRows * 
 			       StreamItOptions.rawColumns);
 
+	if (StreamItOptions.partition) {
+	    Partitioner.doit(str, 
+			     StreamItOptions.rawRows *
+			     StreamItOptions.rawColumns);
+	}
+
 	System.out.println("Done Constant Prop and Unroll...");
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
@@ -133,6 +139,11 @@ public class RawBackend {
 		SIROperator obj = (SIROperator)it.next();
 		if (!(obj instanceof SIRSplitter)) {
 		    int val = ((int[])executionCounts[i].get(obj))[0];
+		    if (val==25) { 
+			System.err.println("Warning: catching scheduler bug with special-value "
+					   + "overwrite in RawBackend");
+			val=26;
+		    }
 		    result[i].put(rawFlattener.getFlatNode(obj), 
 				  new Integer(val));
 		}

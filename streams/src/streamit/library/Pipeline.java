@@ -2,7 +2,7 @@ package streamit;
 
 import java.util.*;
 
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 import streamit.iriter.Iterator;
 
 /**
@@ -266,7 +266,7 @@ public class Pipeline extends Stream
         }
     }
 
-    void setupBufferLengths (ScheduleBuffers buffers)
+    void setupBufferLengths (Scheduler buffers)
     {
         ListIterator childIter;
         childIter = (ListIterator) streamElements.iterator ();

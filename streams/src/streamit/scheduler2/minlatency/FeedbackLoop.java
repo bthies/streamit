@@ -17,11 +17,9 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 public class FeedbackLoop
     extends streamit.scheduler2.hierarchical.FeedbackLoop
 {
-    final float phaseFrac;
-    public FeedbackLoop(FeedbackLoopIter iterator, float _phaseFrac, StreamFactory factory)
+    public FeedbackLoop(FeedbackLoopIter iterator, StreamFactory factory)
     {
         super(iterator, factory);
-        phaseFrac = _phaseFrac;
     }
 
     private interface FLoopSchedulingUtility

@@ -16,11 +16,9 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
 {
-    final float phaseFrac;
-    public SplitJoin(SplitJoinIter iterator, float _phaseFrac, StreamFactory factory)
+    public SplitJoin(SplitJoinIter iterator, StreamFactory factory)
     {
         super(iterator, factory);
-        phaseFrac = _phaseFrac;
     }
 
     private abstract class SJSchedulingUtility

@@ -16,14 +16,11 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 {
-    final float phaseFracSS;
     public Pipeline(
         PipelineIter iterator,
-        float _phaseFracSS,
         StreamFactory factory)
     {
         super(iterator, factory);
-        phaseFracSS = _phaseFracSS;
     }
 
     private abstract class PipelineSchedulingUtility

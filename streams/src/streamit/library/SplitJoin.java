@@ -1,7 +1,7 @@
 package streamit;
 
 import java.util.*;
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 import streamit.iriter.Iterator;
 
 // creates a split/join
@@ -486,7 +486,7 @@ public class SplitJoin extends Stream
         return joiner;
     }
 
-    void setupBufferLengths(ScheduleBuffers buffers)
+    void setupBufferLengths(Scheduler buffers)
     {
         ListIterator iter;
         iter = childrenStreams.listIterator();

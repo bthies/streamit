@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 import java.util.Vector;
 
 // a filter is the lowest-level block of streams
@@ -453,7 +453,7 @@ public abstract class Filter extends Stream
         }
     }
 
-    void setupBufferLengths(ScheduleBuffers buffers)
+    void setupBufferLengths(Scheduler buffers)
     {
         // this function doesn't need to do anything
     }

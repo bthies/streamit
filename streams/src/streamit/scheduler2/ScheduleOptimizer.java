@@ -31,12 +31,8 @@ public class ScheduleOptimizer extends AssertedClass
 
     public void optimize()
     {
-        System.out.println("[");
         symbolicUnoptimizedInit = convertToSymbolic(unoptimizedInit);
-        System.out.println("]");
-        System.out.println("[");
         symbolicUnoptimizedSteady = convertToSymbolic(unoptimizedSteady);
-        System.out.println("]");
 
         Integer oldUnoptimizedInit;
         Integer oldUnoptimizedSteady;
@@ -77,7 +73,17 @@ public class ScheduleOptimizer extends AssertedClass
 
         return optimizedSteady;
     }
-
+    
+    public Schedule getUnoptimizedInitSched ()
+    {
+        return unoptimizedInit;
+    }
+    
+    public Schedule getUnoptimizedSteadySched ()
+    {
+        return unoptimizedSteady;
+    }
+    
     // ---------------- Beef of the class ----------------
 
     Map integers = new HashMap();
@@ -132,33 +138,12 @@ public class ScheduleOptimizer extends AssertedClass
                 self.add(getInteger(sched.getSubSchedNumExecs(nPhase)));
                 self.add(sched2symbolicIdx.get(sched.getSubSched(nPhase)));
             }
-
-            System.out.print("$" + symbolicIdx + " = { ");
-            for (int nPhase = 0; nPhase < self.size(); nPhase += 2)
-            {
-                Integer times = (Integer)self.get(nPhase);
-                Integer idx = (Integer)self.get(nPhase + 1);
-
-                if (times.intValue() > 1)
-                    System.out.print("{" + times + " $" + idx + "} ");
-                else
-                    System.out.print("$" + idx + " ");
-
-            }
-            System.out.println("}");
         }
         else
         {
             // this is an actual leaf - create a vector with just
             // a single entry - the schedule
             self.add(sched);
-            System.out.println(
-                "$"
-                    + symbolicIdx
-                    + " = "
-                    + sched.getStream().getObject()
-                    + "."
-                    + sched.getWorkFunc());
         }
 
         if (symbolic2symbolicIdx.containsKey(self))

@@ -1,7 +1,7 @@
 package streamit;
 
 import java.util.*;
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
 public abstract class Stream extends Operator
@@ -311,5 +311,5 @@ public abstract class Stream extends Operator
     /**
      * Initialize the buffer lengths for a stream, given a schedule:
      */
-    abstract void setupBufferLengths (ScheduleBuffers buffers);
+    abstract void setupBufferLengths (Scheduler buffers);
 }

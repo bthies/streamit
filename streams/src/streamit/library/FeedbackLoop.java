@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Scheduler;
 import streamit.iriter.Iterator;
 
 // the feedback loop
@@ -264,7 +264,7 @@ public class FeedbackLoop extends Stream
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    void setupBufferLengths (ScheduleBuffers buffers)
+    void setupBufferLengths (Scheduler buffers)
     {
         // some of these asserts are restrictions on functionality
         // of this function and not on what a correct streamit structure would

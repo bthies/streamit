@@ -15,11 +15,9 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class Filter extends streamit.scheduler2.hierarchical.Filter
 {
-    final float phaseFrac;
-    public Filter(FilterIter iterator, float _phaseFrac)
+    public Filter(FilterIter iterator)
     {
         super(iterator);
-        phaseFrac = _phaseFrac;
     }
 
     public void computeSchedule()

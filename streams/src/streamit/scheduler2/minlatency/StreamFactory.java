@@ -3,7 +3,6 @@ package streamit.scheduler2.minlatency;
 import streamit.misc.DestroyedClass;
 import streamit.scheduler2.iriter.Iterator;
 import streamit.scheduler2.base.StreamInterface;
-import java.util.HashMap;
 
 /**
  * This class basically implements the StreamFactory interface.  In the 
@@ -15,49 +14,27 @@ public class StreamFactory
     extends DestroyedClass
     implements streamit.scheduler2.base.StreamFactory
 {
-    final float phaseFrac;
-    
-    public StreamFactory (float _phaseFrac)
-    {
-        phaseFrac = _phaseFrac;
-    }
-    
-    final HashMap flAncestor = new HashMap ();
-
     public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         
-        if (parent == null) 
-        {
-            flAncestor.put(streamIter, new Boolean (true));
-        } else if (parent.isFeedbackLoop () != null)
-        {
-            flAncestor.put(streamIter, new Boolean (false));
-        } else {
-            flAncestor.put(streamIter, flAncestor.get(parent));
-        }
-        
-        boolean usePhaseFrac = ((Boolean)flAncestor.get(streamIter)).booleanValue();
-        float localPhaseFrac = (usePhaseFrac ? phaseFrac : 0);
-        
         if (streamIter.isFilter() != null)
         {
-            return new Filter(streamIter.isFilter(), localPhaseFrac);
+            return new Filter(streamIter.isFilter());
         }
 
         if (streamIter.isPipeline() != null)
         {
-            return new Pipeline(streamIter.isPipeline(), localPhaseFrac, this);
+            return new Pipeline(streamIter.isPipeline(), this);
         }
         
         if (streamIter.isSplitJoin() != null)
         {
-            return new SplitJoin(streamIter.isSplitJoin(), localPhaseFrac, this);
+            return new SplitJoin(streamIter.isSplitJoin(), this);
         }
 
         if (streamIter.isFeedbackLoop() != null)
         {
-            return new FeedbackLoop(streamIter.isFeedbackLoop(), localPhaseFrac, this);
+            return new FeedbackLoop(streamIter.isFeedbackLoop(), this);
         }
 
         ERROR ("Unsupported type passed to StreamFactory!");

@@ -10,6 +10,7 @@ typedef enum stream_type {
 } stream_type;
 typedef enum splitjoin_type {
   ROUND_ROBIN,
+  WEIGHTED_ROUND_ROBIN,
   DUPLICATE,
   COMBINE,
   NULL_SJ

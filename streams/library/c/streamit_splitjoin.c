@@ -15,7 +15,7 @@ void set_splitter(stream_context *c, splitjoin_type type, int n, ...)
   assert(c->type == SPLIT_JOIN ||
          c->type == FEEDBACK_LOOP);
   set_splitjoin(&c->type_data.splitjoin_data.splitter, type, n);
-  if (type == ROUND_ROBIN)
+  if (type == WEIGHTED_ROUND_ROBIN)
   {
     va_list ap;
     va_start(ap, n);
@@ -30,7 +30,7 @@ void set_joiner(stream_context *c, splitjoin_type type, int n, ...)
   assert(c->type == SPLIT_JOIN ||
          c->type == FEEDBACK_LOOP);
   set_splitjoin(&c->type_data.splitjoin_data.joiner, type, n);
-  if (type == ROUND_ROBIN)
+  if (type == WEIGHTED_ROUND_ROBIN)
   {
     va_list ap;
     va_start(ap, n);
@@ -133,7 +133,7 @@ static void build_tape_cache(one_to_many *p)
 {
   int i, j, slot;
 
-  assert(p->type == ROUND_ROBIN);
+  assert(p->type == WEIGHTED_ROUND_ROBIN);
   assert(p->tcache == NULL);
 
   p->tcache = malloc(p->slots * sizeof(tape *));
@@ -160,7 +160,7 @@ void run_splitter(stream_context *c)
   input_tape = c->type_data.splitjoin_data.splitter.one_tape;
 
   /* Make the splitter tape cache valid if it's needed. */
-  if (c->type_data.splitjoin_data.splitter.type == ROUND_ROBIN &&
+  if (c->type_data.splitjoin_data.splitter.type == WEIGHTED_ROUND_ROBIN &&
       !c->type_data.splitjoin_data.splitter.tcache)
     build_tape_cache(&c->type_data.splitjoin_data.splitter);
 
@@ -176,8 +176,19 @@ void run_splitter(stream_context *c)
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
     break;
-      
+
   case ROUND_ROBIN:
+    /* Read enough items to make one loop around. */
+    for (slot = 0; slot < c->type_data.splitjoin_data.splitter.fan; slot++)
+    {
+      output_tape = c->type_data.splitjoin_data.splitter.tape[slot];
+      INCR_TAPE_READ(input_tape);
+      INCR_TAPE_WRITE(output_tape);
+      COPY_TAPE_ITEM(input_tape, output_tape);
+    }
+    break;    
+      
+  case WEIGHTED_ROUND_ROBIN:
     /* Read enough items to make one loop around. */
     for (slot = 0; slot < c->type_data.splitjoin_data.splitter.slots; slot++)
     {
@@ -205,13 +216,23 @@ void run_joiner(stream_context *c)
   output_tape = c->type_data.splitjoin_data.joiner.one_tape;
 
   /* Make the splitter tape cache valid if it's needed. */
-  if (c->type_data.splitjoin_data.joiner.type == ROUND_ROBIN &&
+  if (c->type_data.splitjoin_data.joiner.type == WEIGHTED_ROUND_ROBIN &&
       !c->type_data.splitjoin_data.joiner.tcache)
     build_tape_cache(&c->type_data.splitjoin_data.joiner);
 
   switch (c->type_data.splitjoin_data.joiner.type)
   {
   case ROUND_ROBIN:
+    for (slot = 0; slot < c->type_data.splitjoin_data.joiner.fan; slot++)
+    {
+      input_tape = c->type_data.splitjoin_data.joiner.tape[slot];
+      INCR_TAPE_READ(input_tape);
+      INCR_TAPE_WRITE(output_tape);
+      COPY_TAPE_ITEM(input_tape, output_tape);
+    }
+    break;
+    
+  case WEIGHTED_ROUND_ROBIN:
     for (slot = 0; slot < c->type_data.splitjoin_data.joiner.slots; slot++)
     {
       input_tape = c->type_data.splitjoin_data.joiner.tcache[slot];

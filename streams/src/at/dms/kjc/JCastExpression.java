@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCastExpression.java,v 1.4 2002-07-12 19:46:42 clleger Exp $
+ * $Id: JCastExpression.java,v 1.5 2003-03-12 21:01:40 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -59,6 +59,10 @@ public class JCastExpression extends JExpression {
   public CType getType() {
     return dest;
   }
+
+    public JExpression getExpr() {
+	return expr;
+    }
 
   // ----------------------------------------------------------------------
   // SEMANTIC ANALYSIS

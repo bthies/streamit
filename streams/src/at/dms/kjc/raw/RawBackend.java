@@ -23,7 +23,6 @@ public class RawBackend {
 			interfaces,
 			SIRInterfaceTable[]
 			interfaceTables) {
-	// DEBUGGING PRINTING
 	System.out.println("Entry to RAW Backend");
 
 	// move field initializations into init function
@@ -42,22 +41,6 @@ public class RawBackend {
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();
-	
-	//SIRPrinter printer1 = new SIRPrinter();
-	//str.accept(printer1);
-	//printer1.close();
-		
-	//if (StreamItOptions.fusion) {
-	//   System.out.println("Running Fusion");
-	//    Fusion.fuse((SIRPipeline)str, 
-	//		(SIRFilter)((SIRPipeline)str).get(0), 
-	//		(SIRFilter)((SIRPipeline)str).get(1));
-	//	}
-       
-	/* DON'T KNOW IF THIS SHOULD BE DONE!!
-        
-	// flatten split/joins with duplicate splitters and RR joiners
-	*/
 	
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running SJFusion...");
@@ -86,10 +69,7 @@ public class RawBackend {
 			     StreamItOptions.rawColumns);
 	}
 
-	System.out.println("Done Constant Prop and Unroll...");
-	//SIRPrinter printer1 = new SIRPrinter();
-	//str.accept(printer1);
-	//printer1.close();
+	str.getInit().accept(new VarDeclRaiser()); 
 
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);

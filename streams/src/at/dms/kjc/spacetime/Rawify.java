@@ -537,6 +537,21 @@ public class Rawify
 	
 	StreamingDram[] dest = {IntraTraceBuffer.getBuffer(traceNode, filter).getDRAM()};
 	
+	//generate comments to make the code easier to read when debugging
+	dest[0].getNeighboringTile().getSwitchCode().
+	    appendComment(init || primepump, 
+			  "Start join: This is the dest (" + filter.toString() + ")");
+
+	Iterator sources = traceNode.getSourceSet().iterator();
+	while (sources.hasNext()) {
+	    StreamingDram dram = 
+		InterTraceBuffer.getBuffer((Edge)sources.next()).getNonRedundant().getDRAM();
+	    dram.getNeighboringTile().getSwitchCode().
+		appendComment(init || primepump, 
+			      "Start join: This a source (" + dram.toString() + ")");
+	}
+	//end of comments 
+
 	for (int i = 0; i < iterations; i++) {
 	    for (int j = 0; j < traceNode.getWeights().length; j++) {
 		//get the source buffer, pass thru redundant buffer(s)
@@ -567,6 +582,22 @@ public class Rawify
 						  RawChip.cacheLineWords - remainder, 
 						  init || primepump);
 	}
+
+	//generate comments to make the code easier to read when debugging
+	dest[0].getNeighboringTile().getSwitchCode().
+	    appendComment(init || primepump, 
+			  "End join: This is the dest (" + filter.toString() + ")");
+
+	sources = traceNode.getSourceSet().iterator();
+	while (sources.hasNext()) {
+	    StreamingDram dram = 
+		InterTraceBuffer.getBuffer((Edge)sources.next()).getNonRedundant().getDRAM();
+	    dram.getNeighboringTile().getSwitchCode().
+		appendComment(init || primepump, 
+			  "End join: This a source (" + dram.toString() + ")");
+	    
+	}
+	//end of comments 
     }
     
     //generate the switch code to split the output trace 
@@ -583,7 +614,7 @@ public class Rawify
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 	//calculate the number of items sent
 	int items = filterInfo.totalItemsSent(init, primepump);
-	
+	StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
 	//the numbers of times we should cycle thru this "splitter"
 	assert items % traceNode.totalWeights() == 0: 
 	    "weights on output trace node does not divide evenly with items sent";
@@ -617,6 +648,19 @@ public class Rawify
 		    "Error: Inconsistent primepump stats for output trace node\n " + traceNode.debugString();
 	    }
 	}
+
+	//add some comments to the switch code
+	sourcePort.getNeighboringTile().getSwitchCode().
+	    appendComment(init || primepump,
+			  "Start split: This is the source (" + filter.toString() + ")");
+	Iterator dests = traceNode.getDestSet().iterator();
+	while (dests.hasNext()) {
+	    StreamingDram dram =
+		InterTraceBuffer.getBuffer((Edge)dests.next()).getDRAM();
+	    dram.getNeighboringTile().getSwitchCode().
+		appendComment(init || primepump, 
+			      "Start split: This a dest (" + dram.toString() + ")");
+	}
 	
 	//	SpaceTimeBackend.println("Split Output Trace: " + traceNode + "it: " + iterations + " ppSteadyIt: " + 
 	//ppSteadyIt);
@@ -630,7 +674,6 @@ public class Rawify
 	//disregard the dummy values coming out of the dram
 	//for the primepump we always read out of the init buffer for real output tracenodes
 	int typeSize = Util.getTypeSize(filterInfo.filter.getOutputType());
-	StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
 	int mod = 
 		(((iterations + ppSteadyIt) * traceNode.totalWeights() * typeSize) % RawChip.cacheLineWords);
 	//don't cache align file readers
@@ -640,6 +683,20 @@ public class Rawify
 	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
 	}
 	
+	//add some comments to the switch code
+	sourcePort.getNeighboringTile().getSwitchCode().
+	    appendComment(init || primepump,
+			  "End split: This is the source (" + filter.toString() + ")");
+	dests = traceNode.getDestSet().iterator();
+	while (dests.hasNext()) {
+	    StreamingDram dram =
+		InterTraceBuffer.getBuffer((Edge)dests.next()).getDRAM();
+	    dram.getNeighboringTile().getSwitchCode().
+		appendComment(init || primepump, 
+			      "End split: This a dest (" + dram.toString() + ")");
+	}
+	
+								      
     }
 
     private static void performSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,

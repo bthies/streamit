@@ -169,6 +169,12 @@ public class SwitchCodeStore {
 	}
     }
     
+
+    public void appendComment(boolean init, String str) 
+    {
+	appendIns(new Comment(str), init);
+    }
+    
     
     /* 
     public void addCommAddrRoute(RawTile dest) 

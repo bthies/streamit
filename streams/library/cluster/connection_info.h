@@ -1,22 +1,22 @@
 #ifndef __CONNECTION_INFO
 #define __CONNECTION_INFO
 
-#include <mysocket.h>
+#include <socket_holder.h>
 
 class connection_info {
 
   int from_id, to_id; // thread id's
 
-  mysocket *sock;
+  socket_holder *sock_h;
   
  public:
 
-  connection_info(int from, int to, mysocket *s);
+  connection_info(int from, int to, socket_holder *s);
 
   int get_from();
   int get_to();
 
-  mysocket *get_socket();
+  socket_holder *get_socket_holder();
 
 };
 

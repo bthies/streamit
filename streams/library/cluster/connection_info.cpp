@@ -1,10 +1,10 @@
 
 #include <connection_info.h>
 
-connection_info::connection_info(int from, int to, mysocket *s) {
+connection_info::connection_info(int from, int to, socket_holder *s) {
   this->from_id = from;
   this->to_id = to;
-  this->sock = s;
+  this->sock_h = s;
 }
 
 int connection_info::get_from() {
@@ -15,6 +15,6 @@ int connection_info::get_to() {
   return to_id;
 }
 
-mysocket *connection_info::get_socket() {
-  return sock;
+socket_holder *connection_info::get_socket_holder() {
+  return sock_h;
 }

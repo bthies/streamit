@@ -18,6 +18,17 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     static final int FISSION_OVERHEAD = 1;
     /**
+     * The overhead of work estimated for horizontal fission of
+     * containers (could calculate more precisely; only doing
+     * horizontal filter fusion precisely for now.)
+     */
+    static final int HORIZONTAL_CONTAINER_OVERHEAD = 100;
+    /**
+     * The factor by which a filter's input or output rate should be
+     * multiplied to estimate the horizontal fusion overhead.
+     */
+    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 5;
+    /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but
      * keeping as a variable for documentation purposes in case we

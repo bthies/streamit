@@ -17,7 +17,11 @@ abstract class DPConfigContainer extends DPConfig {
      * The stream for this container.
      */
     protected SIRContainer cont;
-
+    /**
+     * Work estimate containing our children.
+     */
+    protected WorkEstimate work;
+    
     /**
      * <width> and <height> represent the dimensions of the stream.
      */
@@ -25,6 +29,7 @@ abstract class DPConfigContainer extends DPConfig {
 				int width, int height) {
 	super(partitioner);
 	this.cont = cont;
+	this.work = partitioner.getWorkEstimate();
 	this.A = new int[width][width][height][height][partitioner.getNumTiles()+1][2];
     }
 
@@ -89,8 +94,8 @@ abstract class DPConfigContainer extends DPConfig {
 	int min = Integer.MAX_VALUE;
 	for (int xPivot=x1; xPivot<x2; xPivot++) {
 	    for (int tPivot=1; tPivot<tilesAvail; tPivot++) {
-		int cost = Math.max(get(x1, xPivot, y1, y2, tPivot, 1),
-				    get(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1));
+		int cost = Math.max(getWithFusionOverhead(x1, xPivot, y1, y2, tPivot, 1, tilesAvail),
+				    getWithFusionOverhead(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1, tilesAvail));
 		if (cost < min) {
 		    //System.err.println("possible vertical cut at x=" + xPivot + " from y=" + y1 + " to y=" + y2 + " in " + cont.getName());
 		    min = cost;
@@ -105,8 +110,8 @@ abstract class DPConfigContainer extends DPConfig {
 	// false (0) for the top, and true (1) for the bottom.
 	for (int yPivot=y1; yPivot<y2; yPivot++) {
 	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
-		int cost = Math.max(get(x1, x2, y1, yPivot, tPivot, 0),
-				    get(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner));
+		int cost = Math.max(getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit),
+				    getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit));
 		if (cost < min) {
 		    //System.err.println("possible horizontal cut at y=" + yPivot + " from x=" + x1 + " to x=" + x2 + " in " + cont.getName());
 		    min = cost;
@@ -116,6 +121,48 @@ abstract class DPConfigContainer extends DPConfig {
 	
 	A[x1][x2][y1][y2][tileLimit][nextToJoiner] = min;
 	return min;
+    }
+
+    /**
+     * <tileLimit> is number of tiles for this partition of children.
+     * <tilesAvail> is number of tiles that were available in parent.
+     */
+    private int getWithFusionOverhead(int x1, int x2, int y1, int y2, int tileLimit, int nextToJoiner, int tilesAvail) {
+	// get cost
+	int cost = get(x1, x2, y1, y2, tileLimit, nextToJoiner);
+	int overhead = 0;
+	// add rough estimate of overhead for horizontal fusion.  Do
+	// this at the toplevel node--where we had more tiles before,
+	// but only one afterwards.
+	if (tileLimit==1 && tilesAvail>1 && x1<x2) {
+	    // for filters, add cost estimate according to their
+	    // rates; otherwise, add generic cost estimate...
+	    // do input filters
+	    for (int i=x1; i<=x2; i++) {
+		DPConfig config = childConfig(i,y1);
+		if (config instanceof DPConfigFilter) {
+		    // add input rate
+		    SIRFilter filter = (SIRFilter)config.getStream();
+		    overhead += filter.getPopInt() * work.getReps(filter) * DynamicProgPartitioner.HORIZONTAL_FILTER_OVERHEAD_FACTOR;
+		} else {
+		    // add generic rate
+		    overhead += DynamicProgPartitioner.HORIZONTAL_CONTAINER_OVERHEAD;
+		}
+	    }
+	    // do output filters
+	    for (int i=x1; i<=x2; i++) {
+		DPConfig config = childConfig(i,y2);
+		if (config instanceof DPConfigFilter) {
+		    // add input rate
+		    SIRFilter filter = (SIRFilter)config.getStream();
+		    overhead += filter.getPushInt() * DynamicProgPartitioner.HORIZONTAL_FILTER_OVERHEAD_FACTOR;
+		} else {
+		    // add generic rate
+		    overhead += DynamicProgPartitioner.HORIZONTAL_CONTAINER_OVERHEAD;
+		}
+	    }
+	}
+	return cost + overhead;
     }
 
     /**
@@ -179,8 +226,8 @@ abstract class DPConfigContainer extends DPConfig {
 	int tilesAvail = tileLimit - (1-nextToJoiner);
 	for (int xPivot=x1; xPivot<x2; xPivot++) {
 	    for (int tPivot=1; tPivot<tilesAvail; tPivot++) {
-		int cost = Math.max(get(x1, xPivot, y1, y2, tPivot, 1),
-				    get(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1));
+		int cost = Math.max(getWithFusionOverhead(x1, xPivot, y1, y2, tPivot, 1, tilesAvail),
+				    getWithFusionOverhead(xPivot+1, x2, y1, y2, tilesAvail-tPivot, 1, tilesAvail));
 		if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 		    // there's a division at this <xPivot>.  We'll
 		    // return a vertical cut
@@ -210,8 +257,8 @@ abstract class DPConfigContainer extends DPConfig {
 	// child since it will need its own.
 	for (int yPivot=y1; yPivot<y2; yPivot++) {
 	    for (int tPivot=1; tPivot<tileLimit; tPivot++) {
-		int cost = Math.max(get(x1, x2, y1, yPivot, tPivot, 0),
-				    get(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner));
+		int cost = Math.max(getWithFusionOverhead(x1, x2, y1, yPivot, tPivot, 0, tileLimit),
+				    getWithFusionOverhead(x1, x2, yPivot+1, y2, tileLimit-tPivot, nextToJoiner, tileLimit));
 		if (cost==A[x1][x2][y1][y2][tileLimit][nextToJoiner]) {
 		    // there's a division at this <yPivot>.  We'll
 		    // return a horizontal cut.

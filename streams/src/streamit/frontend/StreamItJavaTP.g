@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.20 2002-07-20 17:38:59 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.21 2002-07-22 19:13:00 dmaze Exp $
  */
 
 header {
@@ -136,7 +136,7 @@ filter_body returns [String t]
 		)*
 		{
 			t += getIndent() + "public void work() " + work.body + "\n";
-			t += init.getText(indent, cur_class_params, cur_type, work, n2j);
+			t += init.getText(indent, cur_class_params, null, cur_type, work, n2j);
 			t += init.getConstructor(indent, cur_class_params, cur_class_name, n2j);
 		}
 	;
@@ -199,7 +199,7 @@ struct_stream_decl2[String superclass] returns [String t]
 				t = t + getIndent () + "}\n";
 				indent--;
 			}
-			t += init.getText(indent+1, cur_class_params, null, null, n2j);
+			t += init.getText(indent+1, cur_class_params, null, null, null, n2j);
 			t += init.getConstructor(indent+1, cur_class_params,
 				name.getText(), n2j);
 			t += getIndent() + "}\n";

@@ -37,7 +37,7 @@ import streamit.io.*;
     }
 	    
 
-
+/*
 class AdapTest extends StreamIt {
     final int K=3;
     final int N=3;
@@ -110,7 +110,7 @@ class Sink extends Filter{
 		
 }
 
-
+*/
 class Sourceh extends Filter {
    float [][] d;
     int     K;
@@ -120,7 +120,7 @@ class Sourceh extends Filter {
 	output = new Channel(Float.TYPE, K*W);
 	this.W=W;
 	this.K=K;
-	
+	this.d=d;
 	    }
     public void work(){
 	for(int i=0;i<K;i++)

@@ -1,13 +1,25 @@
 import streamit.*;
 import streamit.io.*;
 
-class dcalc extends Pipeline {
-    int K=3;
-    int N=3;
-    int Q;
-    int W;
-    float[][] h;
-    float[][] C;
+class dcalc extends StreamIt {
+    int K=2;
+    int N=2;
+    int Q=2;
+    int W=2;
+    	float[][] h=
+      {
+	  {1,3},
+          {2,5}
+	};
+	float[][] C=
+	{
+	    {1,0},
+	    {1,2}
+	};
+    float[] r= {1,2,3,4,5,6};
+
+
+
     
 
 	
@@ -18,44 +30,26 @@ class dcalc extends Pipeline {
      * Pipeline.  But the compiler assumes there is exactly 1 toplevel
      * StreamIt class when it's compiling.
      */
-    /*
-    static public void main (String[] t)
+    
+    static public void main(String[] t)
     {
 	dcalc test=new dcalc();
 	test.run(t);
     }
-    */
+    
 
     public void init() {
-	float[][] AH=
-      {
-	  {1,3,7},
-          {2,0,5},
-  	  {3,0,0}
-	};
-	float[][] L=
-	{
-	    {1,0,0},
-	    {1,2,0},
-	    {3,1,2}
-	}; 
-	float[][] LT=
-	{
-	    {1,1,3},
-	    {0,2,1},
-	    {0,0,2}
-	};
-	add(new SourceD());
+	add(new Sourcer(Q*N+W-1,r));
 	add(new AddAHL(W,Q,N,K,h,C));
 	add(new AhrL(Q*N+W-1,K*N));
 	add(new LrL(K*N));
 	add(new backs(K*N));
-	add(new SinkD());	
+	add(new SinkD(K*N));	
          }
 
 class AddAHL extends SplitJoin{// calculates the matrix AH (row oriented?) and L and adds them to the tape
     public AddAHL(int W,int Q,int N, int K, float[][] h, float[][] C   ) {super (W,Q,N,K,h,C);}
-    public void init(int M,int L) {
+    public void init(int W,int Q,int N, int K, float[][] h, float [][] C) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(Q*N+W-1,0));
 	add (new FloatIdentity());
 	add (new SourceAHL(W,Q,N,K,h,C));
@@ -116,32 +110,57 @@ class LrL extends SplitJoin{// performes the forward substitution
     
     
 
-class SourceD extends Filter {
-    float r[]={1,1,1};
-    
-    public void init(){
-	output = new Channel(Float.TYPE, Q*N+W-1);
+class Sourcer extends Filter {
+    int N;
+    float[] r;
+    public Sourcer(int N, float[] r) {super(N,r);}
+    public void init(int N, float[] r){
+	output = new Channel(Float.TYPE, N);
+	this.r=r;
+	this.N=N;
     }
     public void work(){
-	for(int i=0;i<Q*N+W-1;i++)
+	for(int i=0;i<N;i++)
 	     output.pushFloat(r[i]);
     }
 }
 
 class SinkD extends Filter{
-    
-    public void init(){
-	input = new Channel(Float.TYPE, K*N);
-     }
+    int N;
+    public SinkD(int N) {super(N);}
+    public void init(int N){
+	input = new Channel(Float.TYPE, N);
+	this.N=N;
+	setPop(N);
+
+    }
     public void work() {
 
-	for (int i=0; i< K*N;i++)
-	    System.out.println(input.popFloat());
+	for (int i=0; i< N;i++)
+	    {
+		System.out.print("This is ");
+		System.out.print(i);
+		System.out.print(" : ");
+		System.out.println(input.popFloat());
+	    }
+	    
     }
 }
 		    
 		
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

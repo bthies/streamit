@@ -6,6 +6,11 @@ import streamit.scheduler.*;
 public abstract class Filter extends Stream
 {
 
+    public Filter(float a, float b, int c, int d)
+    {
+        super(a, b, c, d);
+    }
+
     public Filter(float a, float b, int c)
     {
         super(a, b, c);

@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.18 2003-04-19 00:18:07 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.19 2003-04-19 21:41:29 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -89,6 +89,18 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	    return false;
 	}	
 	*/
+
+	/** for now, don't try converting to frequency inside any
+	 * feedback loop.  This is a conservative way to avoid making
+	 * scheduling feedbackloops impossible.
+	 */
+	SIRContainer parent = str.getParent();
+	while (parent!=null) {
+	    if (parent instanceof SIRFeedbackLoop) {
+		return false;
+	    }
+	    parent = parent.getParent();
+	}
 
 	/* if there is not a real valued FIR (all coefficients are real), we are done. */
 	if (!linearRep.isPurelyReal()) {

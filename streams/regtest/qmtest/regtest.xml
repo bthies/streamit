@@ -5,7 +5,7 @@
   <option target="uni">-O1</option>
   <option target="uni">-O2</option>
   <option target="raw4"/>
-  <option target="raw4">-O1 -u0 --forceunroll</option>
-  <option target="raw4">-O2 -u0 --forceunroll</option>
-  <option target="raw4">-O2 --altcodegen -u0 --forceunroll</option>
+  <option target="raw4">-O1</option>
+  <option target="raw4">-O2</option>
+  <option target="raw4">-O2 --altcodegen</option>
 </regtest>

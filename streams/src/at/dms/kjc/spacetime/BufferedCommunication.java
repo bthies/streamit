@@ -152,6 +152,8 @@ public class BufferedCommunication extends RawExecutionCode
 		buffersize = Util.nextPow2(maxpeek + filterInfo.remaining);
 	    }
 
+
+
 	    //adjust the size of the buffer if this is the first traceNode of a trace
 	    if (filterInfo.traceNode.getPrevious().isInputTrace()) {
 		//compute how many items the previous filter generates
@@ -418,18 +420,6 @@ public class BufferedCommunication extends RawExecutionCode
 	FilterContent filter = filterInfo.filter;
 
 	//not rate matching
-	    
-	//reset the simple index
-	if (filterInfo.isSimple()) {
-	    block.addStatement
-		(new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JFieldAccessExpression
-					    (null, new JThisExpression(null),
-					     generatedVariables.simpleIndex.getIdent()),
-					    new JIntLiteral(-1))), null));
-	}
 	
 	if (filterInfo.traceNode.getPrevious().isFilterTrace()) {
 	    //add the statements to receive pop items into the buffer
@@ -482,6 +472,18 @@ public class BufferedCommunication extends RawExecutionCode
 								 loopCounter,
 								 null));
 	    block.addStatement(loop);
+	}
+	
+	//reset the simple index
+	if (filterInfo.isSimple()) {
+	    block.addStatementFirst
+		(new JExpressionStatement(null,
+					  (new JAssignmentExpression
+					   (null,
+					    new JFieldAccessExpression
+					    (null, new JThisExpression(null),
+					     generatedVariables.simpleIndex.getIdent()),
+					    new JIntLiteral(-1))), null));
 	}
 	
 	//reset the simple index if we are receiving from another trace

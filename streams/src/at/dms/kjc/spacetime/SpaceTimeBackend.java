@@ -21,6 +21,7 @@ import at.dms.util.SIRPrinter;
 public class SpaceTimeBackend 
 {
     public static boolean FILTER_DEBUG_MODE = false;
+    
     public static SIRStructure[] structures;
     final private static boolean testSoftPipe=false;
 

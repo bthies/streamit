@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.14 2002-12-03 19:37:14 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.15 2002-12-10 20:05:34 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -218,7 +218,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * Since the parent pointer is automatically set when SIRPipeline.add is called
      * we keep the list of children that we want to wrap in a list instead. If it is
      * a list that is more than one but less than the size of the parent pipeline,
-     * we wrap the children in a new wrapper pipeline named with getUniqueWrapperName,
+     * we wrap the children in a new wrapper pipeline,
      * find the corresponding combinaed linear form, update the mapping, and return.
      * Otherwise (eg if the list is either 0,1,or all pipeline children)
      * we do nothing.
@@ -253,7 +253,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // we are actually going to wrap the children in a pipeline
 	    // set up the new overall pipeline (parent gets set when we add it to the
 	    // parent pipeline
-	    overallPipe = new SIRPipeline(getUniqueWrapperName());
+	    overallPipe = new SIRPipeline("LinearWrapper");
 	    overallPipe.setInit(SIRStream.makeEmptyInit()); // set to empty init method
 	    // remember the location of the first wrapper pipe's child
 	    // in the original parent pipeline (so we can insert the wrapper
@@ -306,18 +306,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    repList.add(kidMap.get(kidIter.next()));
 	}
 	return repList;
-    }
-
-    /** Field used to unique wrapping pipeline names. **/
-    int wrapperNonce = -1;
-    /**
-     * Returns a unique name for a wrapping pipeline.
-     **/
-    private String getUniqueWrapperName() {
-	wrapperNonce++;
-	return ("LinearWrapper"+this.wrapperNonce);
-    }
-	
+    }	
 
     
     //public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter) {}

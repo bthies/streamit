@@ -80,7 +80,19 @@ public class FuseSplit {
 	int numParts = partition.size();
 	if (numParts==1) {
 	    // if fusing whole thing
-	    return fuse(sj);
+	    SIRStream fused=fuse(sj);
+	    if(fused instanceof SIRFilter)
+		lastFused=(SIRFilter)fused;
+	    else {
+		if(KjcOptions.partition_greedier)
+		    if(fused instanceof SIRPipeline) {
+			FusePipe.fuse((SIRPipeline)fused);
+			Lifter.eliminatePipe((SIRPipeline)fused);
+		    } else
+			Lifter.eliminateSJ((SIRSplitJoin)fused);
+		lastFused=((SIRContainer)fused).get(0);
+	    }
+	    return fused;
 	} else if (numParts==sj.size()) {
 	    // if not fusing at all
 	    return sj;
@@ -97,14 +109,18 @@ public class FuseSplit {
             // leave the 1-way components alone, since they weren't
             // getting fused originally
             if (partition.get(i)>1) {
-                SIRContainer fused=(SIRContainer)fuse((SIRSplitJoin)sj.get(i));
-		if(KjcOptions.partition_greedier)
-		    if(fused instanceof SIRPipeline) {
-			FusePipe.fuse((SIRPipeline)fused);
-			Lifter.eliminatePipe((SIRPipeline)fused);
-		    } else
-			Lifter.eliminateSJ((SIRSplitJoin)fused);
-		lastFused=fused.get(0);
+                SIRStream fused=fuse((SIRSplitJoin)sj.get(i));
+		if(fused instanceof SIRFilter)
+		    lastFused=(SIRFilter)fused;
+		else {
+		    if(KjcOptions.partition_greedier)
+			if(fused instanceof SIRPipeline) {
+			    FusePipe.fuse((SIRPipeline)fused);
+			    Lifter.eliminatePipe((SIRPipeline)fused);
+			} else
+			    Lifter.eliminateSJ((SIRSplitJoin)fused);
+		    lastFused=((SIRContainer)fused).get(0);
+		}
             }
         }
 	Lifter.eliminateSJ(sj);

@@ -11,7 +11,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.4 2003-07-30 20:31:52 dmaze Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.5 2003-10-08 23:05:46 dmaze Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -104,8 +104,9 @@ public class DisambiguateUnaries extends SymbolTableVisitor
         // this reason.  Do visit the init statement (any code it
         // adds gets put before the loop, which is fine) and the
         // body (which should always be a StmtBlock).
-        Statement newInit = (Statement)stmt.getInit().accept(this);
         Statement newBody = (Statement)stmt.getBody().accept(this);
+        successors = new java.util.ArrayList();
+        Statement newInit = (Statement)stmt.getInit().accept(this);
         if (newInit == stmt.getInit() && newBody == stmt.getBody())
             return stmt;
         return new StmtFor(stmt.getContext(), newInit, stmt.getCond(),
@@ -119,6 +120,7 @@ public class DisambiguateUnaries extends SymbolTableVisitor
         // at the end of the loop body, and continue statements
         // would go in the wrong place.
         Statement newBody = (Statement)stmt.getBody().accept(this);
+        successors = new java.util.ArrayList();
         if (newBody == stmt.getBody())
             return stmt;
         return new StmtWhile(stmt.getContext(), stmt.getCond(), newBody);

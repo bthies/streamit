@@ -1,10 +1,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "streamit.h"
 #include "streamit_internal.h"

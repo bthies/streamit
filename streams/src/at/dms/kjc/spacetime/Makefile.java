@@ -131,7 +131,8 @@ public class Makefile
 		       "-magic_instruction -magic_crossbar C1H1\n");
 	
 	buf.append("include $(TOPDIR)/Makefile.include\n\n");
-	buf.append("RGCCFLAGS += -O3\n\n");
+	//buf.append("RGCCFLAGS += -O3\n\n");
+	buf.append("RGCCFLAGS += -O2\n\n"); //Avoiding a bug in slgcc --jasperln
 	buf.append("BTL-MACHINE-FILE = " + BCFile.BCFILE_NAME + "\n\n");
 	
 	if (rawChip.getXSize() > 4 || rawChip.getYSize() > 4)

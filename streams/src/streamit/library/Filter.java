@@ -147,7 +147,7 @@ public abstract class Filter extends Stream
     }
 
     public Filter(Object o1) {super(o1);}
-    
+    public Filter(Object o1, int i1) {super(o1,i1);}
     public Filter(Object o1,Object o2) {super(o1,o2);}
 
     public Filter(Object o1,Object o2,Object o3) {super(o1,o2,o3);}

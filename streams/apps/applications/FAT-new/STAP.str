@@ -12,7 +12,7 @@
  * during the initialization part;
  */
 
-complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,int N_stag,int N_ts, int[] T_stap) {//
+complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,int N_stag,int N_ts, int[N_ts] T_stap) {//
     init{}
 
     work push 1 pop (N_bm*N_stag+N_bm*N_stag*N_srg*N_dop) {
@@ -25,7 +25,7 @@ complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,i
 
 	int stack =N_bm*N_stag; // stack is the size of the stacked vector
 
-	float Norm_Fact = (float) Math.sqrt(N_ts);
+	float Norm_Fact = sqrt(N_ts);
 
 	for (int i=0; i<N_bm;i++)
 	    for (int j=0; j<N_srg; j++)
@@ -72,6 +72,6 @@ complex->complex[N_dop][N_srg][N_dop] filter STAP(int N_bm,int N_srg,int N_dop,i
 		}
 	}
 
-	output.push(OutArr);
+	push(OutArr);
     }
 }

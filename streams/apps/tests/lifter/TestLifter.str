@@ -1,0 +1,62 @@
+void->void pipeline TestLifter {
+
+    add source();
+    add	pipeline {
+	add pipeline {
+	    add splitjoin {
+		split duplicate;
+		add pipeline {
+		    add pipeline {
+			add incr();
+		    }
+		}
+		add incr();
+		join roundrobin;
+	    }
+	}
+    }
+    add splitjoin {
+	split duplicate;
+	add splitjoin {
+	    split duplicate;
+	    add splitjoin {
+		split duplicate;
+		add incr();
+		add incr();
+		join roundrobin;
+	    }
+	    join roundrobin;
+	}
+	add pipeline {
+	    add pipeline {
+		add splitjoin {
+		    split duplicate;
+		    add incr();
+		    add incr();
+		    join roundrobin;
+		}
+	    }
+	}
+	join roundrobin;
+    }
+    add printer();
+}
+
+void->int filter source {
+    int i = 0;
+    work push 1 {
+	push(i++);
+    }
+}
+
+int->int filter incr {
+    work push 1 pop 1 {
+	push(pop()+1);
+    }
+}
+
+int->void filter printer {
+    work pop 1 {
+	print(pop());
+    }
+}

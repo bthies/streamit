@@ -1,4 +1,4 @@
 # makefile for uniprocessor timing
 all:
-	gcc -O3 -lm firref_uni.c -o firref_uni
-	time ./firref_uni
+	gcc -O3 -lm firref.c -o firref
+	time ./firref

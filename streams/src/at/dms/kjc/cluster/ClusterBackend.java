@@ -92,7 +92,10 @@ public class ClusterBackend implements FlatVisitor {
 	
 	// propagate constants and unroll loop
 	System.out.print("Running Constant Prop and Unroll...");
+
+	Unroller.setLimitNoTapeLoops(true, 4);
 	ConstantProp.propagateAndUnroll(str);
+
 	System.out.println(" done.");
 
         // add initPath functions
@@ -174,6 +177,8 @@ public class ClusterBackend implements FlatVisitor {
 	}
 	
 	System.err.println("Done Partitioning...");
+
+	Unroller.setLimitNoTapeLoops(false, 0);
 
 	if (KjcOptions.sjtopipe) {
 	    SJToPipe.doit(str);

@@ -43,7 +43,17 @@ public class Unroller extends SLIRReplacingVisitor {
      * linear analysis) full unrolling is required.
      */
     private final boolean unrollOuterLoops;
+
+    private int unrollLimit;
+
+    static boolean limitNoTapeLoops = false;
+    static int unrollLimitNoTapeLoops = 0;
     
+    static public void setLimitNoTapeLoops(boolean b, int limit) {
+	limitNoTapeLoops = b;
+	unrollLimitNoTapeLoops = limit;
+    }
+
     /**
      * Creates one of these given that <constants> maps
      * JLocalVariables to JLiterals for the scope that we'll be
@@ -207,7 +217,9 @@ public class Unroller extends SLIRReplacingVisitor {
 
 	// to do the right thing if someone set an unroll factor of 0
 	// (or 1, which means to do nothing)
+
 	if((KjcOptions.unroll>1 || inContainerInit) && !self.getUnrolled()) { //Ignore if already unrolled
+
 	    // first recurse into body...
 	    Hashtable saveModified=currentModified;
 	    currentModified=new Hashtable();
@@ -226,6 +238,18 @@ public class Unroller extends SLIRReplacingVisitor {
 	    // unrollings up, but don't want to eliminate record of
 	    // previous unrolling
 	    hasUnrolled = saveHasUnrolled || childHasUnrolled;
+
+	    // if we are not in init then limit unroll factor for loops that
+	    // do not have tape operations in them
+	    unrollLimit = KjcOptions.unroll;
+	    if (limitNoTapeLoops && !inContainerInit) {
+		boolean tape_op = FindTapeOps.findTapeOps(body);
+		if (!tape_op) {
+		    if (KjcOptions.unroll > unrollLimitNoTapeLoops) {
+			unrollLimit = unrollLimitNoTapeLoops;
+		    }
+		}
+	    }
 
 	    // only unroll if we're set to unroll outer loops, or if
 	    // child hasn't unrolled, or if we're doing the init
@@ -313,7 +337,7 @@ public class Unroller extends SLIRReplacingVisitor {
 	// and only unroll if it is within our max unroll range
 	int count = getNumExecutions(info);
 
-	return count <= KjcOptions.unroll;
+	return count <= unrollLimit;
     }
 
     /**
@@ -411,20 +435,20 @@ public class Unroller extends SLIRReplacingVisitor {
     private JBlock doPartialUnroll(final UnrollInfo info, JForStatement self) {
 	int numExec=getNumExecutions(info);
 	//int numLoops=numExec/KjcOptions.unroll;
-	int remain=numExec%KjcOptions.unroll;
-	JStatement[] newBody=new JStatement[KjcOptions.unroll];
+	int remain=numExec%unrollLimit;
+	JStatement[] newBody=new JStatement[unrollLimit];
 	//if(newBody.length>=2) {
 	//newBody[0]=self.getBody();
 	//newBody[1]=self.getIncrement();
 	//}
-	if(KjcOptions.unroll>=1) {
+	if(unrollLimit>=1) {
 	    JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
 	    newBody[0]=cloneBody;
 	}
 	{
 	    final JLocalVariable inductVar=info.var;
 	    final int incrVal=info.incrVal;
-	    for(int i=1;i<KjcOptions.unroll;i++) {
+	    for(int i=1;i<unrollLimit;i++) {
 		JStatement cloneBody=(JStatement)ObjectDeepCloner.deepCopy(self.getBody());
 		//JStatement cloneIncr=(JStatement)ObjectDeepCloner.deepCopy(makeIncr(info,info.incrVal));
 		final int incremented=i;
@@ -461,7 +485,7 @@ public class Unroller extends SLIRReplacingVisitor {
 									null),
 					       
 					       self.getCondition(),
-					       makeIncr(info,KjcOptions.unroll*info.incrVal),
+					       makeIncr(info,unrollLimit*info.incrVal),
 					       body,
 					       null);
 	newFor.setUnrolled(true);

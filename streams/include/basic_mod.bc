@@ -1,0 +1,355 @@
+// basic.bc
+//
+// This file creates the basic machine configuration for
+// a raw prototype.
+//
+// It creates any IO devices, and creates "machine",
+// specifying sizes for various memories and so on.
+//
+// In its current incarnation, this file creates a machine with DRAMS
+// along the east side, a PCI bus to the north of the northwesternmost
+// tile, and a print service to the south of the southeasternmost tile.
+
+
+include("<dev/barebones.bc>");
+
+{
+// we need this outside of the "if" clause so that gDRAMDevices is
+// created no matter what
+
+ include("<dev/dram.bc>");
+ bc_io_constants_init();
+
+ // this defines the serial rom routines
+include("<dev/serial_rom.bc>");
+include("<dev/static_data_logger.bc>");
+include("<dev/tn_probe.bc>");
+
+arg_process(
+  & fn(argv, foundArg)
+    {
+      if (!(arg_scan("-fastboot") != -1))
+      {
+        local index = 0;
+        local result;
+
+        // allows for multiple bootroms
+        while ((*int_EA(gArgv,foundArg+1+index) != NULL) && strncmp(*int_EA(gArgv, foundArg+1+index),"-",1))
+        {
+          // calculate port address of NW tile, coming in from west
+          // attach a serial port there   (fileName, port)
+          // only the top leftmost bootrom is interrupting
+          result = dev_serial_rom_init(*int_EA(gArgv,foundArg+1+index),
+                                       gXSize+gXSize+gYSize+gYSize-1-index, 0, (index == 0));
+          if (result == 0)
+          {
+            printf("error reading bootrom %s",*int_EA(gArgv,foundArg+1+index));
+            exit(-1);
+          }
+          index++;
+        }
+      }
+      else
+        printf("// -standard_bootrom option nullified by -fastboot\n");
+    },
+  "-standard_bootrom");
+
+ // -pipe_channel <filename_root>
+ arg_process(
+   & fn(argv, foundArg)
+ {
+   include("<dev/pipe_channel.bc>");
+   {
+     local result = dev_pipe_channel_init(*(int_EA(gArgv, foundArg+1)), gXSize+gYSize);
+     if (result == 0)
+       exit(-1);
+   }
+ },
+   "-pipe_channel");
+
+arg_process(
+  & fn(argv, foundArg)
+    {
+      // this defines the number gathering routines
+      local streamit_home = getenv("STREAMIT_HOME");	
+      local numberpath = malloc(strlen(streamit_home) + 30); 	
+      sprintf(numberpath, "%s%s", streamit_home, "include/gather_numbers.bc");
+      include(numberpath);
+//      include("gather_numbers.bc");
+
+      // add the number gathering to the south of the SE tile
+      {
+        local str = malloc(256);
+        local result;
+
+        sprintf(str, "/tmp/%s.log", *int_EA(gArgv,0));
+
+        result = dev_gather_numbers_init("/dev/null", gXSize+gYSize);
+        if (result == 0)
+          exit(-1);
+      }
+    },
+  "-print_service");
+
+arg_process(
+   & fn(argv, foundArg)
+     {
+       include("<dev/fileSys.bc>");
+       include("<dev/pciBus.bc>");
+       include("<dev/pciDevice.bc>");
+       include("<dev/pciBridge.bc>");
+
+       {
+         local bridge;
+         local bus;
+
+         //  dev_interrupt_queue_device_init(gXSize+gYSize, 4, 8);
+         //  bridge = dev_pci_bridge_init(0, 4);
+         // bus = dev_pci_bridge_get_bus(bridge);
+
+         //  dev_echo_init(bus, 1);
+         //  dev_filesys_init(bus, 1);
+         //  dev_pc_text_fb_init(bus,2);
+
+         bus = devPciBusInit(5);
+         bridge = dev_pci_bridge_init(bus, 0, 0);
+         dev_filesys_init(bus, 1);
+       }
+     },
+   "-pci");
+
+
+ {
+    global gHostDLLName   = NULL;
+    global gRGDBrequested = 0;
+    // rgdb's target default port == touch tone phone code for rgdb
+    global gRGDBport      = 7432;
+
+arg_process(
+   & fn(argv, foundArg)
+     {
+       local rgdb_port = *int_EA(gArgv,foundArg+1);
+       if (rgdb_port != NULL)
+         gRGDBport = rgdb_port;
+       gRGDBrequested = 1;
+     },
+   "-rgdb");
+
+arg_process(
+   & fn(argv, foundArg)
+     {
+       verify ((*int_EA(gArgv,foundArg+1) != NULL) && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0),
+               "-host_dll <path_and_name of host interface dll>");
+
+       gHostDLLName = (*int_EA(gArgv,foundArg+1));
+     },
+   "-host_dll");
+
+arg_process(
+   & fn(argv, foundArg)
+     {
+       verify(gHostDLLName != NULL, "-host requires -host_dll <dll_path_and_name>");
+       include("<dev/hostif.bc>");
+
+       if (gRGDBrequested == 0)
+         dev_hostif_init(2*(gXSize+gYSize)-1, 4096, 0, gHostDLLName);
+       else
+         dev_hostif_init(2*(gXSize+gYSize)-1, 4096, gRGDBport, gHostDLLName);
+     },
+   "-host");
+
+ }
+
+// Repeatedly scans for "-arg", and compiles an argument vector.
+// -arg must be followed by two strings, the tile id and the
+// argument string.  For example:
+//
+//   -arg 0 1 -arg 3 "3 abc"
+//
+// passes one argument "1" to the program loaded into tile 0 and
+// two arguments "3" and "abc" to the program loaded into tile 3.
+// Using the wildcard "-" for the tile id passes the arguments
+// to all tiles.  Multiple arguments can be passed to the same
+// tile by using double quotes or by using multiple -arg arguments
+// for btl.  The order of the arguments is preserved.
+{
+  local ntiles = gXSize*gYSize;
+  local numMatchesFound =
+    arg_process(
+      & fn(argv, foundArg)
+      {
+        local tile = *int_EA(gArgv, foundArg+1);
+        local args = *int_EA(gArgv, foundArg+2);
+
+        if (tile == NULL || args == NULL)
+        {
+          printf("Warning: ignoring invalid -arg %s %s\n", tile, args);
+        }
+        else
+        {
+          local x;
+          if (arg_scan("-host") == -1)
+          {
+            printf("Error: using -arg requires -host!\n");
+            exit(-1);
+          }
+          host_store_arg(tile, args, ntiles);
+        }
+      },
+      "-arg");
+
+  // once all arguments are parsed, write them into files for
+  // dma'ing them into the tiles
+
+  if (numMatchesFound != 0)
+    host_write_arg(ntiles);
+}
+
+
+
+ arg_process(
+   & fn(argv, foundArg)
+     {
+       verify(gHostDLLName != NULL, "-host_stop_time requires -host_dll <dll_path_and_name> to be specified");
+       // tell host interface to "stop time"
+       // this replaces all time related values with a constant
+       // so simulations are consistent
+       dev_hostif_stop_time(1);
+     },
+   "-host_stop_time");
+
+
+ {
+    global gRawVideoDLLName = NULL;
+    global gRawVideoDevIncluded = 0;
+arg_process(
+   & fn(argv, foundArg)
+     {
+       verify ((*int_EA(gArgv,foundArg+1) != NULL) && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0),
+               "-raw_video_dll <path_and_name of raw video dll>");
+       gRawVideoDLLName = (*int_EA(gArgv,foundArg+1));
+       if(!gRawVideoDevIncluded)
+       {
+         include("<dev/raw_video.bc>");
+         gRawVideoDevIncluded = 1;
+       }
+       dev_raw_video_dynamically_link(gRawVideoDLLName);
+     },"-raw_video_dll");
+
+arg_process(
+   & fn(argv, foundArg)
+     {
+       verify(gRawVideoDLLName != NULL, "-raw_video_source requires -raw_video_dll <dll_path_and_name> to be specified");
+       if(!gRawVideoDevIncluded)
+       {
+         include("<dev/raw_video.bc>");
+         gRawVideoDevIncluded = 1;
+       }
+       verify ((*int_EA(gArgv,foundArg+1) != NULL) && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0) &&
+               (*int_EA(gArgv,foundArg+2) != NULL) && (strncmp(*int_EA(gArgv, foundArg+2),"-",1) != 0) &&
+               (*int_EA(gArgv,foundArg+3) != NULL) && (strncmp(*int_EA(gArgv, foundArg+3),"-",1) != 0),
+               "-raw_video_source require portnum and a quoted video device and an input number");
+       dev_raw_video_source_init(strtol(*int_EA(gArgv,foundArg+1), NULL, 10), *int_EA(gArgv,foundArg+2), strtol(*int_EA(gArgv,foundArg+3),NULL, 10));
+     }, "-raw_video_source");
+
+arg_process(
+   & fn(argv, foundArg)
+     {
+       verify(gRawVideoDLLName != NULL, "-raw_video_display requires -raw_video_dll <dll_path_and_name> to be specified");
+       if(!gRawVideoDevIncluded)
+       {
+         include("<dev/raw_video.bc>");
+         gRawVideoDevIncluded = 1;
+       }
+       verify ((*int_EA(gArgv,foundArg+1) != NULL) && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0),
+               "-raw_video_display requires a port number");
+       dev_raw_video_display_init(strtol(*int_EA(gArgv,foundArg+1), NULL, 10));
+     }, "-raw_video_display");
+ }
+
+// repeatedly scans for "-dram_rhs", and calls this function on it.
+arg_process(
+  & fn(argv, foundArg)
+    {
+      {
+        local i;
+        local result;
+        local store_ack;
+        store_ack = 0;
+        if(*int_EA(gArgv,foundArg+1) != NULL  && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0))
+        {
+          if((strncmp(*int_EA(gArgv, foundArg+1),"store_ack",9) == 0))
+          {
+            //turn on store acks in the DRAM module
+            store_ack = 1;
+          }
+        }
+        for (i = 0; i < gYSize; i++)
+        {
+          result = dev_dram_init(gXSize + i, i * (0x80000000 / gYSize),
+                                 (i + 1) * (0x80000000 / gYSize), store_ack);
+
+          if (result == 0)
+            exit(-1);
+        }
+      }
+    },
+  "-drams_rhs");
+
+arg_process(
+	& fn(argv, foundArg)
+	{
+		local num;
+//
+		verify ((*int_EA(gArgv,foundArg+1) != NULL) && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0), "-static_data_logger needs a port to listen on");
+		num = strtol(*int_EA(gArgv,foundArg+1), NULL, 10);
+		dev_static_data_logger_init(num);
+	},
+	"-static_data_logger");
+
+arg_process(
+	& fn(argv, foundArg)
+	{
+		dev_tn_probe_init();
+	},
+	"-tn_probe");
+
+arg_process(
+	& fn(argv, foundArg)
+	{
+	  include("<bug/bbprofile.bc>");
+	  dev_bb_profiler_init();
+	},
+	"-bbprofile");
+
+// will not work with RTL 
+ arg_process(
+   & fn(argv,foundArg)
+     {
+       include("<dev/magic_instruction.bc>");
+     },
+   "-magic_instruction");
+
+ // requires -magic_instr
+ arg_process(
+   & fn(argv,foundArg)
+     {
+       local ptr = *int_EA(gArgv,foundArg+1);
+       verify ((*int_EA(gArgv,foundArg+1) != NULL)
+               && (strncmp(*int_EA(gArgv, foundArg+1),"-",1) != 0),
+               "-magic_crossbar requires a parameter:  [C#M#]\n"
+               "e.g. C1H2 for constant latency of 1, per-hop latency of 2\n"
+               "does not include one cycle spent in dispatch stage at destination\n");
+       include("<dev/magic_crossbar.bc>");
+       add_magic_crossbar_support(ptr);
+     },
+   "-magic_crossbar");
+}
+
+{
+  local i;
+  for (i = 0; i < gArgc; i++)
+    printf("%s ",  *int_EA(gArgv, i));
+
+  printf("\n");
+}

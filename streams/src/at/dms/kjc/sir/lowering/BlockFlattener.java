@@ -55,9 +55,9 @@ public class BlockFlattener extends SLIRReplacingVisitor implements FlatVisitor 
 		    flattenBlocks(child);
 		}
 	    }
-	if (str instanceof SIRFilter)
-	    for (int i = 0; i < ((SIRFilter)str).getMethods().length; i++) {
-		((SIRFilter)str).getMethods()[i].accept(this);
+	if (str instanceof SIRFilter || str instanceof SIRPhasedFilter)
+	    for (int i = 0; i < ((SIRStream)str).getMethods().length; i++) {
+		((SIRStream)str).getMethods()[i].accept(this);
 	    }
     }
 

@@ -47,13 +47,9 @@ public class ScheduleOptimizer extends AssertedClass
         {
             oldUnoptimizedInit = symbolicUnoptimizedInit;
             oldUnoptimizedSteady = symbolicUnoptimizedSteady;
-            printSymbolicSchedule(symbolicUnoptimizedSteady);
             collectRepeats();
-            printSymbolicSchedule(symbolicUnoptimizedSteady);
             liftSingles();
-            printSymbolicSchedule(symbolicUnoptimizedSteady);
             liftSingles2();
-            printSymbolicSchedule(symbolicUnoptimizedSteady);
         }
         while (oldUnoptimizedInit.intValue()
             != symbolicUnoptimizedInit.intValue()

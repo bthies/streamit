@@ -197,12 +197,7 @@ public class Channel extends streamit.misc.DestroyedClass
 	// make a copy of structures in case they are subsequently
 	// modified -- the changes should not appear in the consumer
 	if (o instanceof Structure) {
-	    try {
-		o = ((Structure)o).clone();
-	    } catch (CloneNotSupportedException e) {
-		System.err.println("Unexpected error cloning structure.");
-		new RuntimeException().printStackTrace();
-	    }
+	    o = (Structure)Cloner.doCopy(o);
 	}
         
         enqueue (o);
@@ -417,12 +412,7 @@ public class Channel extends streamit.misc.DestroyedClass
 	// modified -- the changes should not appear in the producer
 	// or in subsequent peek / pop's
 	if (data instanceof Structure) {
-	    try {
-		data = ((Structure)data).clone();
-	    } catch (CloneNotSupportedException e) {
-		System.err.println("Unexpected error cloning structure.");
-		new RuntimeException().printStackTrace();
-	    }
+	    data = (Structure)Cloner.doCopy(data);
 	}
 
         return data;

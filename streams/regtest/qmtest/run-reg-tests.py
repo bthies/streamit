@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.11 2004-01-21 22:30:27 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.12 2004-01-22 14:56:45 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -171,7 +171,7 @@ End time: %s
 Elapsed time: %s
 Directory: %s
 
-https://www2.cag.lcs.mit.edu/rt/Streamit/listing.html has full results.
+https://www2.cag.lcs.mit.edu/rt/StreamIt/listing.html has full results.
 %s/results.qmr
 is the QMTest results file.
 

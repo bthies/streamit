@@ -1,7 +1,7 @@
 /*
  * InsertInitConstructors.java: insert object field constructors
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InsertInitConstructors.java,v 1.2 2002-09-23 14:52:22 dmaze Exp $
+ * $Id: InsertInitConstructors.java,v 1.3 2002-09-23 16:06:56 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -50,15 +50,8 @@ public class InsertInitConstructors extends InitMunger
         
         // Okay.  Prepend the new statements to the init function.
         List newFuncs = new ArrayList(spec.getFuncs());
-        Function init = findInit(spec.getContext(), spec.getFuncs());
-        newFuncs.remove(init);
-        StmtBlock body = (StmtBlock)init.getBody();
-        newStmts.addAll(body.getStmts());
-        Statement newBody = new StmtBlock(body.getContext(), newStmts);
-        init = new Function(init.getContext(), init.getCls(),
-                            init.getName(), init.getReturnType(),
-                            init.getParams(), newBody);
-        newFuncs.add(init);
+        newFuncs = replaceInitWithPrepended(spec.getContext(), newFuncs,
+                                            newStmts);
         
         return new StreamSpec(spec.getContext(), spec.getType(),
                               spec.getStreamType(), spec.getName(),

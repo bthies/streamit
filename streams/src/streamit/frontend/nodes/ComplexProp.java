@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.12 2003-04-02 22:43:13 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.13 2003-07-10 15:45:36 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -97,7 +97,6 @@ public class ComplexProp extends FEReplacer
             {
                 // Deal with real and imaginary parts piecewise:
             case ExprBinary.BINOP_ADD:
-            case ExprBinary.BINOP_SUB:
                 if (lr == null)
                     real = rr;
                 else if (rr == null)
@@ -107,6 +106,23 @@ public class ComplexProp extends FEReplacer
                 
                 if (li == null)
                     imag = ri;
+                else if (ri == null)
+                    imag = li;
+                else
+                    imag = new ExprBinary(ctx, exp.getOp(), li, ri);
+                
+                return new ExprComplex(ctx, real, imag);
+
+            case ExprBinary.BINOP_SUB:
+                if (lr == null)
+                    real = new ExprUnary(ctx, ExprUnary.UNOP_NEG, rr);
+                else if (rr == null)
+                    real = lr;
+                else
+                    real = new ExprBinary(ctx, exp.getOp(), lr, rr);
+                
+                if (li == null)
+                    imag = new ExprUnary(ctx, ExprUnary.UNOP_NEG, ri);
                 else if (ri == null)
                     imag = li;
                 else

@@ -1,8 +1,15 @@
 <benchmark>
   <name>beamformer</name>
-  <desc> </desc>
+  <desc>Multi-channel beam former</desc>
   <description>
-
+Template application to perform beam-forming on a set of inputs.  The
+input file should be preprocessed with 'cpp'; running 'make' will
+produce all of the possible outputs.  Each input passes through an FIR
+filter which amplifies inputs with a particular delay from the source,
+and then tests if the result is greater than some threshold.  The
+"coarse" beam former decimates its input to perform less actual
+calculation; the "serialized" beam former collects all of its outputs
+and prints them, rather than printing them in the child stages.
   </description>
   <reference>(none)</reference>
   <implementations>

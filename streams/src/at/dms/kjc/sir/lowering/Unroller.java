@@ -14,6 +14,11 @@ import at.dms.compiler.JavadocComment;
  */
 public class Unroller extends SLIRReplacingVisitor {
     /**
+     * The maximum loop size that this will unroll.  (It always
+     * unrolls loops surrounding add statements in init.)
+     */
+    private final static int MAX_UNROLL_FACTOR = 16;
+    /**
      * Map allowing the current block to access the modified
      * list of the current for loop
      */
@@ -163,9 +168,8 @@ public class Unroller extends SLIRReplacingVisitor {
 	// check for loop induction variable
 	
 	UnrollInfo info = getUnrollInfo(init, cond, incr, body,values,constants);
-	// check to see if var was modified
-	// if we can unroll...
-	if(info!=null&&(!currentModified.containsKey(info.var))) {
+	// see if we can unroll...
+	if(shouldUnroll(info, body, currentModified)) {
 	    // Set modified
 	    saveModified.putAll(currentModified);
 	    currentModified=saveModified;
@@ -179,6 +183,35 @@ public class Unroller extends SLIRReplacingVisitor {
     }
 
     /**
+     * Returns whether or not we should unroll a loop with unrollinfo
+     * <info>, body <body> and <currentModified> as in
+     * visitForStatement.
+     */
+    private boolean shouldUnroll(UnrollInfo info, JStatement body, Hashtable currentModified) {
+	// if no unroll info or variable is modified in loop, fail
+	if (info==null || currentModified.containsKey(info.var)) {
+	    return false;
+	}
+	// otherwise if there is an SIRInitStatement in the loop, then
+	// definately unroll for the sake of graph expansion
+	final boolean[] hasInit = { false };
+	body.accept(new SLIREmptyVisitor() {
+		public void visitInitStatement(SIRInitStatement self,
+					       SIRStream target) {
+		    super.visitInitStatement(self, target);
+		    hasInit[0] = true;
+		}
+	    });
+	if (hasInit[0]) {
+	    return true;
+	}
+	// otherwise calculate how many times the loop will execute,
+	// and only unroll if it is within our max unroll range
+	int count = getNumExecutions(info);
+	return count <= MAX_UNROLL_FACTOR;
+    }
+
+    /**
      * Returns the number of times a for-loop with the given
      * characteristics will execute, or -1 if the count cannot be
      * determined.
@@ -188,6 +221,14 @@ public class Unroller extends SLIRReplacingVisitor {
 				       JStatement incr,
 				       JStatement body) {
 	UnrollInfo info = getUnrollInfo(init, cond, incr, body,new Hashtable(),new Hashtable());
+	return getNumExecutions(info);
+    }
+
+    /**
+     * Returns how many times a for loop with unroll info <info> will
+     * execute.
+     */
+    private static int getNumExecutions(UnrollInfo info) {
 	// if we didn't get any unroll info, return -1
 	if (info==null) { return -1; }
 	// get the initial value of the counter

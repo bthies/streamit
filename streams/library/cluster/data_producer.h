@@ -6,10 +6,14 @@
 #include <serializable.h>
 #include <mysocket.h>
 
+#include <stdlib.h>
+
+#define BUFFER_SIZE 1400
+
 class data_producer : public socket_holder, public serializable {
 
-  char data_buf[2048];
-  int buf_size;
+  char *data_buffer;
+  int buf_offset;
 
   int items_sent;
 

@@ -7,7 +7,9 @@
 #include <pthread.h>
 #include <queue>
 
+#include <service.h>
 #include <object_write_buffer.h>
+#include <thread_info.h>
 
 #define LOCK(var)   pthread_mutex_lock(var)
 #define UNLOCK(var) pthread_mutex_unlock(var)
@@ -16,33 +18,34 @@ class checkpoint_info {
 
  public:
   
-  int thread;
+  thread_info *t_info;
   int steady_iter;
   object_write_buffer *buf;
 
-  checkpoint_info(int thread, int steady_iter, object_write_buffer *buf) {
-    this->thread = thread;
+  checkpoint_info(thread_info *t_info, int steady_iter, object_write_buffer *buf) {
+    this->t_info = t_info;
     this->steady_iter = steady_iter;
     this->buf = buf;
   }
 
 };
 
-void *run_save_manager(void *);
-
-class save_manager {
+class save_manager : public service {
  
   static pthread_mutex_t queue_lock;
   static queue <checkpoint_info*> checkpoints;
 
- public:
-
   static checkpoint_info *pop_item(); // removes a checkpoint from queue
 
-  static void push_item(checkpoint_info *info); // pushes a checkpoint onto queue
+  virtual void run();
 
-  static void run(); // starts the save manager in a separate thread
+ public:
+
+  static void push_item(checkpoint_info *info); // adds checkpoint to queue
 
 };
 
 #endif
+
+
+

@@ -6,7 +6,7 @@ ccp_session::ccp_session(unsigned ip, mysocket *sock) {
   this->sock = sock;
   this->alive_cmd_sent = false;
   this->alive_response_received = false;
-  this->extended_alive_limit = false;
+  this->latest_checkpoint = 0;
 }
 
 mysocket *ccp_session::get_socket() {
@@ -17,39 +17,68 @@ unsigned ccp_session::get_ip() {
   return ip;
 }
 
-int ccp_session::read_data() {
-  
+int ccp_session::read_int(int *ptr) {
+
   char c[4];
   int retval = sock->read_chunk(&(c[0]), 1);
-
+  
   if (retval == -1) {
 
     // socket closed
     return -1;
-
+    
   } else {
-
-    if (alive_cmd_sent && !alive_response_received) {
-
-        int retval = sock->read_chunk(&(c[1]), 3);
-
-	if (retval != -1) {
+    
+    int retval = sock->read_chunk(&(c[1]), 3);
+      
+    if (retval != -1) {
 	  
-	  if ( *((int*)c) == 1 ) {
-	    alive_response_received = true;	    
+      *ptr = *((int*)c);
+      
+      return 0;
 
-	  }
-
-	} else {
-	  
-	  // socket closed
-	  return -1;
-	}
+    } else {
+      
+      // socket closed
+      return -1;
     }
-
-    return 0;
-
   }
+}
+
+
+void ccp_session::wait_until_configuration_read() {
+
+  int retval;
+  int tmp;
+
+  if (alive_cmd_sent && !alive_response_received) {
+
+    retval = read_int(&tmp);
+    if (retval == -1) return;
+    alive_response_received = true;	    
+    latest_checkpoint = tmp; 
+    
+  }
+
+  retval = read_int(&tmp);
+}
+
+
+int ccp_session::read_data() {
+  
+  int retval;
+  int tmp;
+
+  if (alive_cmd_sent && !alive_response_received) {
+
+    retval = read_int(&tmp);
+    if (retval == -1) return -1;
+    alive_response_received = true;	    
+    latest_checkpoint = tmp; 
+    return 0;
+    
+  }
+
 }
 
 
@@ -67,8 +96,6 @@ int difference(timeval tv1, timeval tv2) {
 void ccp_session::extend_alive_limit() {
 
   alive_cmd_sent = false;
-
-  extended_alive_limit = true;
 
 }
 
@@ -96,12 +123,11 @@ bool ccp_session::is_alive() {
     /* difference in 1/100 seconds */
     int diff = difference(last_alive_request, now);
     
-    if ((extended_alive_limit && diff > 1000) || diff > 100) {
+    if (diff > 100) {
 
       if (alive_response_received == true) {
 	
 	alive_cmd_sent = false;
-	extended_alive_limit = false;
 	return true;
       } else {
 	
@@ -112,4 +138,10 @@ bool ccp_session::is_alive() {
   }
   
   return true;
+}
+
+
+int ccp_session::get_latest_checkpoint() {
+
+  return latest_checkpoint;
 }

@@ -16,7 +16,9 @@ class ccp_session {
   bool alive_cmd_sent;
   bool alive_response_received;
   
-  bool extended_alive_limit;
+  int latest_checkpoint;
+
+  int read_int(int *ptr);
 
  public:
 
@@ -29,6 +31,11 @@ class ccp_session {
 
   bool is_alive();
   void extend_alive_limit(); // temporarily extends alive limit
+
+  void wait_until_configuration_read(); // waits until node confirms that it has received
+                                        // the cluster configuration
+
+  int get_latest_checkpoint();
 };
 
 

@@ -5,6 +5,7 @@ thread_info::thread_info(int thread_id, void (*check_thread_status_during_io)())
   this->thread_id = thread_id;
   this->check_thread_status_during_io = check_thread_status_during_io;
   this->active = false;
+  this->latest_checkpoint = 0;
 }
 
 int thread_info::get_thread_id() {
@@ -47,6 +48,11 @@ pthread_t thread_info::get_pthread() {
 
 int *thread_info::get_state_flag() {
   return &state_flag;
+}
+
+
+int *thread_info::get_latest_checkpoint() {
+  return &latest_checkpoint;
 }
 
 

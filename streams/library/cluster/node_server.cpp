@@ -104,7 +104,7 @@ void node_server::run_server(mysocket *sock) {
 
     case ALIVE_COMMAND:
 
-      resp.push_back(1);
+      resp.push_back(find_latest_checkpoint());
       break;
 
     case CLUSTER_CONFIG:
@@ -112,6 +112,7 @@ void node_server::run_server(mysocket *sock) {
       init_instance::reset_all();
       read_cluster_config(sock);
       if (thread_init != NULL) thread_init();   // initialize sockets and threads according to configuration
+      resp.push_back(1);
       break;
 
     case STOP_ALL_THREADS:
@@ -162,6 +163,34 @@ void node_server::run_server(mysocket *sock) {
     
   }
 }
+
+int node_server::find_latest_checkpoint() {
+  
+  int resp = 0;
+
+  bool any = false;
+
+  for (vector<thread_info*>::iterator iter = thread_list.begin();
+       iter < thread_list.end();
+       ++iter) {
+
+    thread_info *info = *iter;
+    
+    if (info->is_active()) {
+  
+      int latest = *info->get_latest_checkpoint();
+
+      //printf("latest chkpt: (%d->%d)", info->get_thread_id(), latest);
+
+      if (latest < resp || !any) resp = latest;
+      
+      any = true;
+    }
+  }
+
+  return resp;
+}
+
 
 vector<int> node_server::stop_all() {
   

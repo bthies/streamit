@@ -34,6 +34,7 @@ class thread_info {
 
   pthread_t pthread;
   int state_flag;
+  int latest_checkpoint;
 
   bool active;
 
@@ -59,6 +60,7 @@ class thread_info {
  
   pthread_t get_pthread();
   int *get_state_flag();
+  int *get_latest_checkpoint();
 };
 
 

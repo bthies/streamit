@@ -4,7 +4,8 @@
 data_producer::data_producer() {
   socket = NULL;
   items_sent = 0;
-  buf_size = 0;
+  data_buffer = (char*)malloc(BUFFER_SIZE);;
+  buf_offset = 0;
 }
 
 void data_producer::write_object(object_write_buffer *buf) {
@@ -23,22 +24,27 @@ void data_producer::set_socket(mysocket *socket) {
   this->socket = socket;
 }
 
-void data_producer::write_item(void *buf, int size) {
+void data_producer::write_item(void *data, int size) {
 
   /*
   socket->write_chunk((char*)buf, size);
   items_sent++;
   */
 
-  memcpy( data_buf + buf_size , buf, size);
-  buf_size += size;
   items_sent++;
 
-  if (buf_size >= 100) {
-    socket->write_chunk(this->data_buf, buf_size);
-    buf_size = 0;
-  }
-  
+  memcpy(data_buffer + buf_offset, data, size);
+  buf_offset += size;
+
+  if (buf_offset == BUFFER_SIZE) {
+
+    //data_sender::push_item(new data_info(socket, data_buffer, buf_offset));
+    //data_buffer = (char*)malloc(BUFFER_SIZE);;
+    //buf_offset = 0;
+
+    socket->write_chunk((char*)data_buffer, buf_offset);
+    buf_offset = 0;
+  }		  
   
 }
 

@@ -3,7 +3,7 @@
 
 class object_write_buffer {
 
-  char buf[10000];
+  char buf[20000];
 
   int size;
 

@@ -1,5 +1,6 @@
 
 #include <ccp.h>
+#include <delete_chkpts.h>
 
 ccp::ccp() {
   machines_in_partition = 0;
@@ -180,10 +181,27 @@ int ccp::run_ccp() {
       }
     }
 
+    int latest_chkpt = 0;
+
+    bool any = false;
+
+    for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
+
+      int tmp = (*i)->get_latest_checkpoint();
+
+      if (tmp < latest_chkpt || !any) latest_chkpt = tmp;
+
+      any = true;
+    }
+
+    //printf("latest chkpt is: [%d]", latest_chkpt);
+    //fflush(stdout);
+
+    delete_chkpts::set_max_iter(latest_chkpt);
 
     /*** afters select querry threads if they are alive ***/
 
-    /*
+    
     
     for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i)
       {
@@ -202,7 +220,7 @@ int ccp::run_ccp() {
 	}
       }
 
-    */
+    
 
   }
 }
@@ -232,6 +250,10 @@ void ccp::handle_change_in_number_of_nodes() {
       }
       
       send_cluster_config(initial_iteration);
+
+      for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
+	(*i)->extend_alive_limit();
+      }
 
       waiting_to_start_execution = false;
     }
@@ -277,15 +299,7 @@ void ccp::handle_change_in_number_of_nodes() {
 	printf("thread: %d ip: (%d.%d.%d.%d)\n", t, (ip % 256), ((ip>>8) % 256), ((ip>>16) % 256), ((ip>>24) % 256)); 
       }
 
-      int iter;
-
-      for (iter = 1; ; iter++) { 
-
-	if (save_state::test_iter(iter, number_of_threads) == -1) break;
-
-      }
-
-      iter--; // adjust iteration
+      int iter = save_state::find_max_iter(number_of_threads);
 
       printf("Latest checkpoint found is: %d\n", iter);
 
@@ -318,8 +332,15 @@ void ccp::send_cluster_config(int iter) {
       (*i)->get_socket()->write_int(iter);
     }
   }
-
   printf("done.\n");
+
+  for (vector<ccp_session*>::iterator i = sessions.begin(); i < sessions.end(); ++i) {
+    
+    (*i)->wait_until_configuration_read();
+
+  }
+  
+  printf("All nodes have received configuration and have initialized!\n"); 
 
 }
 

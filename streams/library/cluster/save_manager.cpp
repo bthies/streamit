@@ -35,28 +35,33 @@ checkpoint_info *save_manager::pop_item() {
 
 void save_manager::run() {
 
-  pthread_t id;
-  pthread_create(&id, NULL, run_save_manager, NULL);
-}
-
-void *run_save_manager(void *) {
-  
   checkpoint_info *info;
 
   for (;;) {
     
-    info = save_manager::pop_item();
+    info = pop_item();
 
     if (info == NULL) {
       usleep(10000); // 1/100th of a second
 
     } else {
       
-      save_state::save_buffer(info->thread, info->steady_iter, info->buf);
+      thread_info *t_info = info->t_info; 
+
+      int thread_id = t_info->get_thread_id();
       
+      save_state::save_buffer(thread_id, info->steady_iter, info->buf);
+
+      (*t_info->get_latest_checkpoint()) = info->steady_iter;
+
+      //printf("save(%d.%d)", thread_id, info->steady_iter);
+      //fflush(stdout);
+
       delete info->buf;
       delete info;
     }
   }
 }
+
+
 

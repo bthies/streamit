@@ -46,12 +46,12 @@
 
 // params: <# of threads> 
 // <thread id>  <ip address>  <iteration>  (* number of threads)
-// response - none
+// response: 1 - ok
 
 #define ALIVE_COMMAND 70
 
 // params: none
-// response: max checkcpoint iteration (>0)
+// response: max checkcpoint iteration (>0) 0 - no checkpoint 
 
 #define STOP_ALL_THREADS 80
 
@@ -72,6 +72,8 @@ class node_server {
   vector<int> list_incoming_data_links(int id);
   vector<int> list_outgoing_data_links(int id);
   vector<int> stop_all();
+
+  int find_latest_checkpoint();
 
   mysocket *wait_for_connection();
   static mysocket *connect_to_ccp(unsigned ip);

@@ -6,11 +6,12 @@ import at.dms.kjc.sir.linear.FilterMatrix;
 import at.dms.kjc.sir.linear.FilterVector;
 import at.dms.kjc.sir.linear.LinearForm;
 
+import java.util.*;
 
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.6 2002-08-30 20:11:20 aalamb Exp $
+ * $Id: TestLinear.java,v 1.7 2002-09-18 01:08:02 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -33,7 +34,11 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterMatrixModifier"));
 	suite.addTest(new TestLinear("testFilterMatrixEquals"));
 	suite.addTest(new TestLinear("testFilterMatrixCopy"));
+	suite.addTest(new TestLinear("testFilterMatrixCopyAt"));
 	suite.addTest(new TestLinear("testFilterMatrixScale"));
+	suite.addTest(new TestLinear("testFilterMatrixParsing"));
+	suite.addTest(new TestLinear("testFilterMatrixAddition"));
+	suite.addTest(new TestLinear("testFilterMatrixMultiplication"));
 	
 	suite.addTest(new TestLinear("testFilterVector"));
 
@@ -378,7 +383,32 @@ public class TestLinear extends TestCase {
 	// clone both matrix 2 and the matrix 1 copy and test equality
 	assertTrue("copy1==copy2", matrix1Copy.copy().equals(matrix2.copy()));
 	
-    }	
+    }
+
+    /** Test copying a one matrix starting into another starting at a particular place. **/
+    public void testFilterMatrixCopyAt() {
+	FilterMatrix zero   = parseMatrix("[[0 0 0 0][0 0 0 0][0 0 0 0][0 0 0 0]]");
+	FilterMatrix chunk  = parseMatrix("[[1 2][3 4]]");
+	FilterMatrix chunk2 = parseMatrix("[[9 8 7][6 5 4]]");
+
+	// test copying the chunks around to various offsets in zero
+	assertTrue(zero.copyAt(0,0,chunk).equals(parseMatrix("[[1 2 0 0][3 4 0 0][0 0 0 0][0 0 0 0]]")));
+	assertTrue(zero.copyAt(0,1,chunk).equals(parseMatrix("[[0 1 2 0][0 3 4 0][0 0 0 0][0 0 0 0]]")));
+	assertTrue(zero.copyAt(1,0,chunk).equals(parseMatrix("[[0 0 0 0][1 2 0 0][3 4 0 0][0 0 0 0]]")));
+	assertTrue(zero.copyAt(2,2,chunk).equals(parseMatrix("[[0 0 0 0][0 0 0 0][0 0 1 2][0 0 3 4]]")));
+
+
+	// copy chunk into itself
+	assertTrue(chunk.copyAt(0,0,chunk).equals(chunk));
+	// copy chunk into chunk2
+	assertTrue(chunk2.copyAt(0,0,chunk).equals(parseMatrix("[[1 2 7][3 4 4]]")));
+	assertTrue(chunk2.copyAt(0,1,chunk).equals(parseMatrix("[[9 1 2][6 3 4]]")));
+
+	// check bounds validation
+	try{chunk.copyAt(0,0,chunk2); fail();} catch(IllegalArgumentException e){};
+	try{zero.copyAt(3,3,chunk); fail();} catch(IllegalArgumentException e){};
+	try{zero.copyAt(3,0,chunk); fail();} catch(IllegalArgumentException e){};
+    }
     
     /** test the scale operation in FilterMatricies. **/
     public void testFilterMatrixScale() {
@@ -416,7 +446,78 @@ public class TestLinear extends TestCase {
 	assertTrue("unscale", matrix1Orig.equals(matrix1));
     }
 
-    /** Test the FilterVector class **/
+    /**
+     * Test the creation of filter matricies from parsing a matlab like string.
+     * (to facilitate writing additional test cases easily.
+     **/
+    public void testFilterMatrixParsing() {
+	FilterMatrix mat = new FilterMatrix(2,2);
+
+	assertTrue(mat.equals(parseMatrix("[[0 0][0 0]]")));
+	assertTrue((parseMatrix("[[0 0][0 0]]")).equals(mat));
+
+	// make a diagonal matrix
+	mat.setElement(0,0,ComplexNumber.ONE);
+	mat.setElement(1,1,ComplexNumber.ONE);
+	assertTrue(mat.equals(parseMatrix("[[1 0][0 1]]")));
+	assertTrue((parseMatrix("[[1 0][0 1]]")).equals(mat));
+
+	// make a slightly more involved matrix
+	mat = new FilterMatrix(3,3);
+	mat.setElement(0,0,new ComplexNumber(1.2,0));
+	mat.setElement(0,1,new ComplexNumber(3.2,0));
+	mat.setElement(2,2,new ComplexNumber(5,0));
+	mat.setElement(1,2,new ComplexNumber(7,0));
+	assertTrue(mat.equals(parseMatrix("[[1.2 3.2 0][0 0 7][0 0 5]]")));
+	assertTrue((parseMatrix("[[1.2 3.2 0][0 0 7][0 0 5]]")).equals(mat));
+    }
+
+    /** Test the implementation of (element wise) matrix addition. **/
+    public void testFilterMatrixAddition() {
+	FilterMatrix mat1 = parseMatrix("[[3 2 1][6 5 4][9 8 7]]");
+	FilterMatrix mat2 = parseMatrix("[[1 1 1][2 2 2][3 4 5]]");
+	FilterMatrix sum  = parseMatrix("[[4 3 2][8 7 6][12 12 12]]");
+
+	assertTrue(sum.equals(mat1.plus(mat2)));
+	assertTrue(mat1.plus(mat2).equals(sum));
+	
+	FilterMatrix mat3 = parseMatrix("[[1 2 3 4][1 2 3 4][1 2 3 4]]");
+	try{mat1.plus(mat3);fail();} catch(IllegalArgumentException e){}
+	try{mat3.plus(mat1);fail();} catch(IllegalArgumentException e){}
+	try{mat2.plus(mat3);fail();} catch(IllegalArgumentException e){}
+	try{mat3.plus(mat2);fail();} catch(IllegalArgumentException e){}
+    }
+
+    
+    /** Test the implementation of matrix multiplication that linear analysis relies on. **/
+    public void testFilterMatrixMultiplication() {
+	FilterMatrix ident= parseMatrix("[[1 0 0][0 1 0][0 0 1]]"); 
+	FilterMatrix mat1 = parseMatrix("[[1 2 3][4 5 6][7 8 9]]");
+	FilterMatrix mat2 = parseMatrix("[[0 2 0][3 0 2][3 2 1]]");
+	FilterMatrix prod;
+	
+	// test simple multiplication
+	assertTrue(mat1.times(ident).equals(mat1));
+	assertTrue(ident.times(mat1).equals(mat1));
+
+	// test mat1*mat2 (i did the prod by hand)
+	prod = parseMatrix("[[15 8 7][33 20 16][51 32 25]]");
+	assertTrue(mat1.times(mat2).equals(prod));
+	// now, mat2*mat1
+	prod = parseMatrix("[[8 10 12][17 22 27][18 24 30]]");
+	assertTrue(mat2.times(mat1).equals(prod));
+	
+	// test to make sure that the dimensions need to line up
+	mat1 = parseMatrix("[[1 2 3][4 5 6]]");
+	mat2 = parseMatrix("[[1][2][3]]");
+	prod = parseMatrix("[[14][32]]");
+	assertTrue(mat1.times(mat2).equals(prod));
+	// expect an exception when multiplying the other way
+	try {mat2.times(mat2);fail("bad dimens!");} catch (IllegalArgumentException e) {}
+    }
+
+    
+    /** Test the FilterVector class. **/
     public void testFilterVector() {
 	// there are fewer tests here because most of the functionality is inhereted from
 	// FilterMatrix
@@ -660,6 +761,93 @@ public class TestLinear extends TestCase {
     public void testLinearFormDivide() {
     }
     
+
+
+
+
+
+    ///////////// Utility function that I don't want to clutter the acutal
+    ///////////// implementation with.
+    
+    /**
+     * Creates a matrix that represents the string
+     * passed in (a la matlab notation).
+     * eg.<p>
+     * <pre>
+     * "[[0 1 0][1 0 1][0 0 1]]"
+     *
+     * would yield the following matrix:
+     * |0 1 0|
+     * |1 0 1|
+     * |0 0 1|
+     *</pre><p>
+     *
+     * It is good to note that the parser is very intolerant to
+     * syntax errors. The notation must be exactly like the one
+     * above, no imaginary parts allowed, one space between all elements.
+     * The size of the first row is assumed to be the size of all rows.
+     **/
+    public FilterMatrix parseMatrix(String matlabNotation) {
+	// chop off left and right end braces
+	matlabNotation = matlabNotation.substring(1);
+	matlabNotation = matlabNotation.substring(0,matlabNotation.length()-1);
+
+	// first count the number of left braces (])
+	int numRows = 0;
+	for (int i=0; i<matlabNotation.length(); i++) {
+	    if (matlabNotation.charAt(i) == ']') {
+		numRows++;
+	    }
+	}
+	// now, figure out the number of columns
+	// by parsing down the string starting from char
+	// 2 (eg the first non brace) and stopping at the first right
+	// brace.
+	int numCols = 1;
+	for (int i=2; (matlabNotation.charAt(i) != ']'); i++) {
+	    if (matlabNotation.charAt(i) == ' ') {
+		numCols++;
+	    }
+	}
+
+	// Now, create a new matrix of the suitable size
+	FilterMatrix newMatrix = new FilterMatrix(numRows, numCols);
+
+	// Now, parse the string into the actual data
+	StringTokenizer rowTokenizer = new StringTokenizer(matlabNotation, "][");
+	// process the first and last strings differently (to remove the [[ and ]])
+	int currentRow = 0;
+	while(rowTokenizer.hasMoreTokens()) {
+	    String currentString = rowTokenizer.nextToken();
+	    processRow(newMatrix, currentRow, currentString);
+	    currentRow++;
+	}
+
+	return newMatrix;
+    }
+
+    /** processes a row of data for parseMatrix **/
+    private void processRow(FilterMatrix fm, int row, String rowString) { 
+	// chop up row by spaces
+	StringTokenizer elemTokenizer = new StringTokenizer(rowString, " ");
+	int currentCol = 0;
+	while(elemTokenizer.hasMoreTokens()) {
+	    String currentString = elemTokenizer.nextToken();
+	    // parse out the number value
+	    double currentVal = Double.parseDouble(currentString);
+	    // make the corresponding complex number
+	    ComplexNumber newEntry = new ComplexNumber(currentVal, 0);
+	    // add an entry in the matrix
+	    fm.setElement(row, currentCol, newEntry);
+	    currentCol++;
+	}
+    }
+	    
+
+		
+
+
+
     
 
 }

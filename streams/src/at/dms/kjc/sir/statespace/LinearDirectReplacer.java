@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearDirectReplacer.java,v 1.2 2004-02-13 17:05:53 thies Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -264,7 +264,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    }
 	    
 	    // now, we need to create the appropriate constant to represent the offset
-	    ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
+	    // NOTE:  adding second index of 0 so that it compiles under statespace (bft)
+	    ComplexNumber currentOffset = representation.getB().getElement(currentPushIndex,0);
 	    if (!currentOffset.isReal()) {
 		throw new RuntimeException("Non real complex number in offset vector");
 	    }
@@ -398,7 +399,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    }
 
 	    // calcuate the cost of doing a direct replacement of this container
-	    LinearCost containerCost = linearInformation.getLinearRepresentation(self).getCost();
+	    LinearCost containerCost = null; //linearInformation.getLinearRepresentation(self).getCost();
+	    Utils.fail("This part is not implemented in statespace.");
 
 	    // calculate the cost of doing the optimal replacement of the children.
 	    LinearReplaceCalculator childCalculator = new LinearReplaceCalculator(linearInformation);
@@ -430,7 +432,8 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 		// the only mappings that we have in the map are the streams we want to include
 		SIRStream currentStream = (SIRStream)keyIter.next();
 		LinearFilterRepresentation currentChildRep = linearInformation.getLinearRepresentation(currentStream);
-		LinearCost currentChildCost = currentChildRep.getCost();
+		LinearCost currentChildCost = null; //currentChildRep.getCost();
+		Utils.fail("This part is not implemented in statespace.");
 		currentCost = currentCost.plus(currentChildCost);
 	    }
 	    return currentCost;

@@ -7,7 +7,7 @@ package at.dms.kjc.sir.statespace;
  * This class holds the A, B, C, D in the equations y = Ax+Bu, x' = Cx + Du which calculates the output
  * vector y and new state vector x' using the input vector u and the old state vector x.<br>
  *
- * $Id: LinearFilterRepresentation.java,v 1.2 2004-02-12 22:32:57 sitij Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.3 2004-02-13 17:05:53 thies Exp $
  * Modified to state space form by Sitij Agrawal  2/9/04
  **/
 
@@ -103,8 +103,11 @@ public class LinearFilterRepresentation {
      * the "Linear Analysis and Optimization of Stream Programs" paper:
      * http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf
      **/
-    /*
     public LinearFilterRepresentation expand(int newPeek, int newPop, int newPush) {
+	at.dms.util.Utils.fail("Not implemented yet.");
+	return null;
+    }
+    /*
 	// do some argument checks
 	if (newPeek < this.getPeekCount()) {
 	    throw new IllegalArgumentException("newPeek is less than old peek");

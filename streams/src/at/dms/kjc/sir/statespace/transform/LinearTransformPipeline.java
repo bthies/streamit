@@ -17,7 +17,7 @@ import at.dms.kjc.sir.statespace.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformPipeline.java,v 1.1 2004-02-09 17:55:22 thies Exp $
+ * $Id: LinearTransformPipeline.java,v 1.2 2004-02-13 17:05:56 thies Exp $
  **/
 public class LinearTransformPipeline extends LinearTransform {
     List repList;
@@ -39,6 +39,10 @@ public class LinearTransformPipeline extends LinearTransform {
     }
 
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
+	at.dms.util.Utils.fail("Not implemented yet.");
+	return null;
+    }
+    /*
 	// we know that our rep list has at least two children in it.
 	// start running down the rep list transforming things
 	LinearFilterRepresentation rep1; // the current "upstream" filter
@@ -87,8 +91,8 @@ public class LinearTransformPipeline extends LinearTransform {
 	    // A' = Ae1*Ae2
 	    FilterMatrix Aprime = rep1Expanded.getA().times(rep2Expanded.getA());
 	    // b' = be1*Ae2 + be2
-	    FilterMatrix partialProduct = rep1Expanded.getb().times(rep2Expanded.getA());
-	    FilterVector bprime = FilterVector.toVector(partialProduct.plus(rep2Expanded.getb()));
+	    FilterMatrix partialProduct = rep1Expanded.getB().times(rep2Expanded.getA(),0);
+	    FilterVector bprime = FilterVector.toVector(partialProduct.plus(rep2Expanded.getB()));
 	    	    
 	    // now, assemble the overall linear rep.
 	    LinearFilterRepresentation combinedRep;
@@ -108,6 +112,7 @@ public class LinearTransformPipeline extends LinearTransform {
 	// all we have to do is to return the combined rep and we are done
 	return rep1;
     }
+    */
 
     
 

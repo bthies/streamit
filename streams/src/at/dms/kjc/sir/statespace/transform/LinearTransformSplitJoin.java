@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.1 2004-02-09 17:55:22 thies Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.2 2004-02-13 17:05:56 thies Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -49,6 +49,10 @@ public class LinearTransformSplitJoin extends LinearTransform{
      * order.
      **/
     public LinearFilterRepresentation transform() throws NoTransformPossibleException {
+	at.dms.util.Utils.fail("Not implemented yet.");
+	return null;
+    }
+	/*
 	int filterCount = linearRepresentations.length;
 	LinearPrinter.println(" preparing to combine splitjoin of " +
 			      filterCount +
@@ -111,7 +115,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 		expandedA.copyColumnsAt(currentOffset, expandedReps[i].getA(),
 					j*this.roundRobinJoinerWeights[i],
 					this.roundRobinJoinerWeights[i]);
-		expandedb.copyColumnsAt(currentOffset, expandedReps[i].getb(),
+		expandedb.copyColumnsAt(currentOffset, expandedReps[i].get(),
 					j*this.roundRobinJoinerWeights[i],
 					this.roundRobinJoinerWeights[i]);
 					
@@ -134,7 +138,7 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	// splitjoin with the new A and b, along with the new pop count.
 	return new LinearFilterRepresentation(expandedA, expandedb, newPopCount);
     }
-
+	*/
 
     /**
      * Utility method.

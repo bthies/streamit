@@ -40,6 +40,7 @@ public class KjcOptions extends at.dms.util.Options {
     public boolean ratematch = false;
     public boolean simplesjfusion = false;
     public boolean linearanalysis = false;
+    public boolean linearreplacement = false;
     public boolean viram = false;
     
     public boolean processOption(int code, Getopt g) {
@@ -96,6 +97,8 @@ public class KjcOptions extends at.dms.util.Options {
 	    simplesjfusion = !false;return true;
 	case 'i':
 	    linearanalysis = !false;return true;
+	case 'I':
+	    linearreplacement = !false;return true;
 	case 'V':
 	    viram = !false;return true;
 	    
@@ -106,7 +109,7 @@ public class KjcOptions extends at.dms.util.Options {
 
     public String[] getOptions() {
 	String[]	parent = super.getOptions();
-	String[]	total = new String[parent.length + 27];
+	String[]	total = new String[parent.length + 28];
 	System.arraycopy(parent, 0, total, 0, parent.length);
 	total[parent.length + 0] = "  --beautify, -b:       Beautifies the source code [false]";
 	total[parent.length + 1] = "  --verbose, -v:        Prints out information during compilation [false]";
@@ -127,15 +130,16 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 16] = "  --streamit, -s:       Turns on StreaMIT mode [false]";    
 
 	total[parent.length + 17] = "  --raw, -r<int>:            Compile for RAW with a square layout, with <int> tiles per side";
-	total[parent.length + 18] = "  --constprop, -c:       Turns on StreamIt Constant Prop";
+	total[parent.length + 18] = "  --constprop, -c:       Turns on StreamIt Field Prop";
 	total[parent.length + 19] = "  --unroll, -u:          StreamIt Unroll";
 	total[parent.length + 20] = "  --fusion, -o:          Perform filter fusion";
 	total[parent.length + 21] = "  --partition, -a:       Automatically partition stream graph";
 	total[parent.length + 22] = "  --sync, -k:            Turn on sync removal";
 	total[parent.length + 23] = "  --ratematch, -x:       Turn on rate matching for raw";
 	total[parent.length + 24] = "  --simplesjfusion, -S:  Revert to the old, simple SplitJoin fusion algorithm";
-	total[parent.length + 25] = "  --linearanalysis, -i:  Perform linear analysis and transformations";
-	total[parent.length + 26] = "  --viram, -V:           Compile for VIRAM, a vector uniprocessor";
+	total[parent.length + 25] = "  --linearanalysis, -i:  Perform linear analysis";
+	total[parent.length + 26] = "  --linearreplacement, -I:  Perform linear transformations based on linear analysis.";
+	total[parent.length + 27] = "  --viram, -V:           Compile for VIRAM, a vector uniprocessor";
 	return total; 
     }
 
@@ -202,6 +206,7 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("ratematch", LongOpt.NO_ARGUMENT, null, 'x'),
 	new LongOpt("simplesjfusion", LongOpt.NO_ARGUMENT, null, 'S'),
 	new LongOpt("linearanalysis", LongOpt.NO_ARGUMENT, null, 'i'),
+	new LongOpt("linearreplacement", LongOpt.NO_ARGUMENT, null, 'I'),
 	new LongOpt("viram", LongOpt.NO_ARGUMENT, null, 'V')
     };
 }

@@ -13,5 +13,6 @@ public class StreamItOptions
     public static boolean ratematch = false;
     public static boolean simplesjfusion = false;
     public static boolean linearanalysis = false;
+    public static boolean linearreplacement = false;
     public static boolean viram = false;
 }

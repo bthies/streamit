@@ -61,7 +61,8 @@ JAVA_SRCS = \
   $(KOPI_GENERATED) \
   $(KOPI_TOOL_SRCS)
 
-DEBUG_OPT = -g
+#DEBUG_OPT = -g
+DEBUG_OPT =
 
 JAVA_OPT = -nowarn +F
 

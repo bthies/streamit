@@ -12,7 +12,7 @@ my $FREQ_OPTIONS     = "--frequencyreplacement";
 
 # the filename to write out the results to. (append first command line arg to name)
 my $RESULTS_FILENAME = "freq_fir_results.tsv";
-my $PROGRAM_NAME = "Test";
+my $PROGRAM_NAME = "Test4";
 
 # array to hold results
 my @result_lines;
@@ -31,7 +31,7 @@ my $i;
 # for various FIR lengths
 my @fir_lengths;
 #for ($i=1; $i<32; $i*=sqrt(2)) {
-for ($i=1; $i<64; $i++) {
+for ($i=1; $i<128; $i++) {
     push(@fir_lengths, int($i));
 }
 

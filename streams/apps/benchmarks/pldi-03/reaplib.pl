@@ -314,7 +314,7 @@ sub set_fir_length {
 
     my $contents = read_file($filename);
     # do the find and replace
-    $contents =~ s/new LowPassFilter\(1, \(3.141592653589793f \/ 3\), \d*\)/new LowPassFilter\(1, \(3.141592653589793f \/ 3\), $fir_length\)/i;
+    $contents =~ s/new .*LowPassFilter\(1, \(3.141592653589793f \/ 3\), \d*\)/new LowPassFilter\(1, \(3.141592653589793f \/ 3\), $fir_length\)/i;
     
     # write back the modified file
     write_file($contents, $filename);

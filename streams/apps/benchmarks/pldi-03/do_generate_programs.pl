@@ -39,11 +39,21 @@ foreach (@input_lines) {
     print `cp $OUTPUTDIR/$filename.c $OUTPUTDIR/$filename-$postfix.c`;
     
     # save the generated dot files (before, after, and linear)
-    `mv $OUTPUTDIR/before.dot $OUTPUTDIR/$filename-$postfix-before.dot`;
-    `mv $OUTPUTDIR/after.dot $OUTPUTDIR/$filename-$postfix-after.dot`;
-    `mv $OUTPUTDIR/linear.dot $OUTPUTDIR/$filename-$postfix-linear.dot`;
-    `mv $OUTPUTDIR/linear-simple.dot $OUTPUTDIR/$filename-$postfix-linear-simple.dot`;
-    `mv $OUTPUTDIR/partitions.dot $OUTPUTDIR/$filename-$postfix-partitions.dot`;
+    if (-e "$OUTPUTDIR/before.dot") {
+	`mv $OUTPUTDIR/before.dot $OUTPUTDIR/$filename-$postfix-before.dot`;
+    }
+    if (-e "$OUTPUTDIR/after.dot") {
+	`mv $OUTPUTDIR/after.dot $OUTPUTDIR/$filename-$postfix-after.dot`;
+    }
+    if (-e "$OUTPUTDIR/linear.dot") {
+	`mv $OUTPUTDIR/linear.dot $OUTPUTDIR/$filename-$postfix-linear.dot`;
+    }
+    if (-e "$OUTPUTDIR/linear-simple.dot") {
+	`mv $OUTPUTDIR/linear-simple.dot $OUTPUTDIR/$filename-$postfix-linear-simple.dot`;
+    } 
+    if (-e "$OUTPUTDIR/partitions.dot") {
+	`mv $OUTPUTDIR/partitions.dot $OUTPUTDIR/$filename-$postfix-partitions.dot`;
+    }
 
     # normal c->exe
     do_c_compile($OUTPUTDIR, "$filename-$postfix");

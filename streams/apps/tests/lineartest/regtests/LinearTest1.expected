@@ -7,3 +7,8 @@ FloatIdentity_1.matrix
 [[1.0+0.0i]]
 FloatIdentity_1.vector
 [[0.0+0.0i]]
+LinearWrapper0_1.matrix
+[[1.0+0.0i]
+ [0.0+0.0i]]
+LinearWrapper0_1.vector
+[[5.0+0.0i]]

@@ -1,0 +1,2 @@
+jikes /u/aalamb/streams/compiler/kopi/kjc/sir/linear/*.java
+java streamit.frontend.ToJava --full  regtests/LinearTest29.str > regtests/LinearTest29.java

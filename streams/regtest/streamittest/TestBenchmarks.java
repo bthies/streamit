@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.14 2002-11-07 22:41:08 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.15 2002-11-07 23:00:52 dmaze Exp $
  **/
 package streamittest;
 
@@ -161,6 +161,7 @@ public class TestBenchmarks extends StreamITTestCase {
         doSyntaxConvertTest(root, "MatrixMultBlock.str", "MatrixMultBlock.java");
         doCompileTest(root, "MatrixMultBlock.java");
         doRunTest(root, "MatrixMultBlock.java", 0, 108);
+        doCompareTest(root, "MatrixMultBlock.java", "MatrixMultBlock.out");
     }
 }
 

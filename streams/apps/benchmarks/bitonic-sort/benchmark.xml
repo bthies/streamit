@@ -13,9 +13,11 @@
     </impl>
     <impl lang="StreamIt" dir="streamit">
       <file>BitonicSort.str</file>
+      <desc>Original implementation</desc>
     </impl>
     <impl lang="StreamIt" dir="streamit">
       <file>BitonicSortRecursive.str</file>
+      <desc>Recursive implementation</desc>
     </impl>
   </implementations>
 </benchmark>

@@ -37,7 +37,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
 
-    public boolean isWork = false;
+    public boolean isWork = true; //false;
     
     public TraceIRtoC(RawTile tile) 
     {
@@ -232,7 +232,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	
 	//If this is the raw Main function then set is work to true
 	//used for stack allocating arrays
-	isWork = ident.startsWith(RawExecutionCode.steadyStage);
+	//isWork = ident.startsWith(RawExecutionCode.steadyStage);
 	   
         newLine();
 	// print(CModifier.toString(modifiers));
@@ -268,7 +268,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
             print(";");
 
         newLine();
-	isWork = false;
+	//isWork = false;
     }
 
       // ----------------------------------------------------------------------

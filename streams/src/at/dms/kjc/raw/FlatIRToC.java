@@ -154,7 +154,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("volatile float router_mem_f;\n");
 	    print("register int router asm(\"$24\");\n");
 	    print("register float router_f asm(\"$24\");\n\n");
-	    print("static inline float static_receive_sketch() {\n");
+	    print("static inline int static_receive_sketch() {\n");
 	    print("  int __return;\n");
 	    print("  router=router_mem;\n");
 	    print("  /* receive */ asm (\"or %0,$0,%1\" : \"=r\" (__return), \"=r\" (router) : \"1\" (router));\n");
@@ -177,7 +177,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("void raw_init();\n");
         print("void raw_init2();\n");
 	    
-		
+	
 	print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
 	print("unsigned int " + INT_HEADER_WORD + ";\n");
 

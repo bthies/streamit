@@ -201,7 +201,7 @@ class WritePPM extends Filter
 public class RayTracer_works extends StreamIt
 {
   public static void main(String[] args) {
-    RayTracer program = new RayTracer();
+    RayTracer_works program = new RayTracer_works();
     program.run(args);
   }
   public void init() {

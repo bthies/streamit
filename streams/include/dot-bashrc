@@ -21,6 +21,9 @@ CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
 export STARSEARCH_HOME=/home/bits7/NO_BACKUP/streamit/starsearch/
 export TOPDIR=${STARSEARCH_HOME}
 
+# the path to ATLAS
+export ATLAS_HOME=/home/bits7/NO_BACKUP/streamit/ATLAS
+
 # for running dotty
 export LEFTYPATH=/home/bits7/NO_BACKUP/streamit/dotty
 

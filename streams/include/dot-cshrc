@@ -20,6 +20,9 @@ setenv LEFTYPATH /home/bits7/NO_BACKUP/streamit/dotty
 setenv STARSEARCH_HOME /home/bits7/NO_BACKUP/streamit/starsearch
 setenv TOPDIR ${STARSEARCH_HOME}
 
+# the path to ATLAS
+setenv ATLAS_HOME /home/bits7/NO_BACKUP/streamit/ATLAS
+
 # add STREAMIT_HOME to the path in order to find "knit"
 if ($?PATH) then
   setenv PATH ${PATH}:${STREAMIT_HOME}

@@ -52,7 +52,8 @@ global gLastInsCycle = 0;
 //this array stores the pc for each processor if they are in a cache miss stall
 //used so we do not count cache misses multiple times
 global current_cache_miss_pc;
-
+//used to get the number of instructions fired per tile per steady state
+//or blood graph sampling period
 global ins_fired_per_tile;
 
 fn gather_numbers_calc(procNum, rs, imm, result_ptr)
@@ -80,7 +81,8 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
   if (gSteadyState == 1) {
     gSteadyStatePrints++;
   }
-
+  
+//don't go in here if we are done gathering steady state numbers...
   if (gNumberDone != 1)  {
     currentPrints++;
     if (currentPrints == printsPerCycle) {
@@ -96,7 +98,7 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	
 	print_final_stats();
 	if (gGenerate_BloodGraph) {
-	  setup_bloodgraph("bloodgraph.ppm", gMaxCyclesPerSteady / bg_update_cycles);
+	  setup_bloodgraph("bloodgraph.ppm", gMaxCyclesPerSteady);
 	}
 	else {
 	  //don't exit here unless you don't want a blood graph
@@ -113,7 +115,7 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	gSteadyState = 1;
 	//write the stats for this steady state
 	steady_state_boundary(dif);
-      }	
+      }
       reset_steady_counts(time_lo);
     }
   }
@@ -324,6 +326,7 @@ fn update_bloodgraph(hms) {
 		  + ((status >> 4) & 1)
 		  + ((status >> 5) & 1)
 		  + ((status >> 6) & 1));
+      
       delta = (popcount << 16)/gTraceWidth;
       
       for (k = 0; k < gTraceWidth-1; k++)
@@ -338,7 +341,8 @@ fn update_bloodgraph(hms) {
 
 
 fn setup_bloodgraph(filename, cycles) {
-  printf("Generating bloodgraph for %d cycles (max of steady-state)...\n", cycles);
+  printf("Generating bloodgraph for %d cycles (max of steady-state), sampling every %d ...\n", 
+	 cycles, bg_update_cycles);
   gPPMFILE = open_ppm(filename, cycles / bg_update_cycles, gNumProc*gTraceWidth);
   if (gPPMFILE == NULL)
   {

@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.15 2002-06-21 20:01:26 aalamb Exp $
+ * $Id: FieldProp.java,v 1.16 2002-06-28 01:24:32 jasperln Exp $
  */
 public class FieldProp implements Constants
 {
@@ -77,9 +77,12 @@ public class FieldProp implements Constants
             new FieldProp().propagate((SIRFilter)str);
             new FieldProp().propagate((SIRFilter)str);
             // Run the unroller...
-            Unroller unroller = new Unroller(new Hashtable());
+            Unroller unroller;
             for (int i = 0; i < str.getMethods().length; i++) {
-                str.getMethods()[i].accept(unroller);
+		do {
+		    unroller = new Unroller(new Hashtable());
+		    str.getMethods()[i].accept(unroller);
+		} while(unroller.hasUnrolled());
 	    }
             // Then try to propagatate again.
             new FieldProp().propagate((SIRFilter)str);

@@ -97,10 +97,12 @@ public class Flattener {
 	str.accept(printer1);
 	printer1.close();
 	
-	//Flatten Blocks
-	new BlockFlattener().flattenBlocks(str);
-	//Analyze Branches
-	new BranchAnalyzer().analyzeBranches(str);
+	if (StreamItOptions.constprop) {
+	    //Flatten Blocks
+	    new BlockFlattener().flattenBlocks(str);
+	    //Analyze Branches
+	    new BranchAnalyzer().analyzeBranches(str);
+	}
 	//Destroys arrays into local variables if possible
 	new ArrayDestroyer().destroyArrays(str);
 	//Raise variables to the top of their block

@@ -14,23 +14,28 @@ import at.dms.compiler.TokenReference;
  * This class propagates constants and partially evaluates all
  * expressions as much as possible.
  */
-class Propagator extends SLIRReplacingVisitor {
+public class Propagator extends SLIRReplacingVisitor {
     /**
      * Map of known constants/Overloaded for copy prop (JLocalVariable -> JLiteral/JLocalVariableExpr/Array)
      * When storing information about an array JLiteral/JLocalVariablesExpr are stored in the Array being mapped to
      */
-    private Hashtable constants;
+    protected Hashtable constants;
 
     /**
-     * Map of constants changed (JLocalVariable -> JLiteral)
+     * Map of constants changed (JLocalVariable -> Boolean.TRUE)
      */
     private Hashtable changed;
+
+    /**
+     * If anything was added
+     */
+    protected boolean added;
 
     /**
      * Determines whether this instance of Propagator writes
      * actual changes or not
      */
-    private boolean write;
+    protected boolean write;
 
     /**
      * Used for naming constprop vars
@@ -48,6 +53,7 @@ class Propagator extends SLIRReplacingVisitor {
 	super();
 	this.constants = constants;
 	changed=new Hashtable();
+	added=false;
 	write=true;
     }
     
@@ -55,6 +61,7 @@ class Propagator extends SLIRReplacingVisitor {
 	super();
 	this.constants = constants;
 	changed=new Hashtable();
+	added=false;
 	this.write=write;
     }
     
@@ -113,6 +120,7 @@ class Propagator extends SLIRReplacingVisitor {
 		    self.setExpression(newExp);
 		// remember the value for the duration of our visiting
 		constants.put(self, newExp);
+		added=true;
 		changed.put(self,Boolean.TRUE);
 	    } else if(newExp instanceof JNewArrayExpression) {
 		JExpression dim;
@@ -120,6 +128,7 @@ class Propagator extends SLIRReplacingVisitor {
 		    dim=((JNewArrayExpression)expr).getDims()[0];
 		    if(dim instanceof JIntLiteral) {
 			constants.put(self,new Object[((JIntLiteral)dim).intValue()]);
+			added=true;
 			changed.put(self,Boolean.TRUE);
 		    }
 		}
@@ -127,6 +136,7 @@ class Propagator extends SLIRReplacingVisitor {
 		if(write)
 		    self.setExpression(newExp);
 		constants.put(self, newExp);
+		added=true;
 		changed.put(self,Boolean.TRUE);
 	    }
 	}
@@ -402,6 +412,7 @@ class Propagator extends SLIRReplacingVisitor {
 		    if(lit!=null)
 			if(lit instanceof JIntLiteral) {
 			    constants.put(var,new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_POSTINC) ? 1 : -1)));
+			    added=true;
 			    return lit;
 			}
 		}
@@ -426,6 +437,7 @@ class Propagator extends SLIRReplacingVisitor {
 			if(lit instanceof JIntLiteral) {
 			    JIntLiteral out=new JIntLiteral(lit.getTokenReference(),((JIntLiteral)lit).intValue()+((self.getOper()==OPE_PREINC) ? 1 : -1));
 			    constants.put(var,out);
+			    added=true;
 			    return out;
 			}
 		}
@@ -469,6 +481,7 @@ class Propagator extends SLIRReplacingVisitor {
 		JLocalVariable var=((JLocalVariableExpression)left).getVariable();
 		//constants.remove(var);
 		constants.put(var,newRight);
+		added=true;
 		changed.put(var,Boolean.TRUE);
 	    } else if(left instanceof JArrayAccessExpression) {
 		JExpression expr=((JArrayAccessExpression)left).getPrefix();
@@ -509,14 +522,16 @@ class Propagator extends SLIRReplacingVisitor {
 		JExpression dim;
 		if(((JNewArrayExpression)newRight).getDims().length==1) {
 		    dim=((JNewArrayExpression)newRight).getDims()[0];
-		    if(dim instanceof JIntLiteral)
+		    if(dim instanceof JIntLiteral) {
 			constants.put(var,new Object[((JIntLiteral)dim).intValue()]);
-		    else
+			added=true;
+		    } else
 			constants.remove(var);
 		} else
 		    constants.remove(var);
 	    } else if(self.getCopyVar()!=null) {
 		constants.put(var,self.getCopyVar());
+		added=true;
 	    } else {
 		constants.remove(var);
 	    }
@@ -1033,6 +1048,21 @@ class Propagator extends SLIRReplacingVisitor {
 	return super.visitBlockStatement(self,comments);
     }
     
+    //Visit the block starting from index statement
+    public Object visitBlockStatement(int index,
+				      JBlock self) {
+	for (;index<self.size();index++) {
+	    JStatement oldBody = self.getStatement(index);
+	    Object newBody = oldBody.accept(this);
+	    if (!(newBody instanceof JStatement))
+		continue;
+	    if (newBody!=null && newBody!=oldBody) {
+		self.setStatement(index,(JStatement)newBody);
+	    }
+	}
+	return self;
+    }
+
     private String propName() {
 	return "__constpropvar_"+propNum++;
     }

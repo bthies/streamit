@@ -9,21 +9,26 @@ import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import java.lang.Math;
 import at.dms.compiler.TokenReference;
+import at.dms.kjc.raw.*;
 
 /**
  * This class flattens blocks which makes it easier for some optimizations
  * Necessary for BranchAnalyzer
  */
-public class BlockFlattener extends SLIRReplacingVisitor {
+public class BlockFlattener extends SLIRReplacingVisitor implements FlatVisitor {
     public BlockFlattener() {
 	super();
+    }
+
+    public void visitNode(FlatNode node) {
+	flattenBlocks(node.contents);
     }
 
     // ----------------------------------------------------------------------
     // Flatten blocks
     // ----------------------------------------------------------------------
 
-    public void flattenBlocks(SIRStream str) {
+    public void flattenBlocks(SIROperator str) {
 	if (str instanceof SIRFeedbackLoop)
 	    {
 		SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
@@ -51,8 +56,8 @@ public class BlockFlattener extends SLIRReplacingVisitor {
 		}
 	    }
 	if (str instanceof SIRFilter)
-	    for (int i = 0; i < str.getMethods().length; i++) {
-		str.getMethods()[i].accept(this);
+	    for (int i = 0; i < ((SIRFilter)str).getMethods().length; i++) {
+		((SIRFilter)str).getMethods()[i].accept(this);
 	    }
     }
 
@@ -66,8 +71,55 @@ public class BlockFlattener extends SLIRReplacingVisitor {
 		self.removeStatement(i);
 		self.addAllStatements(i,((JBlock)statement).getStatements());
 		size+=((JBlock)statement).size()-1;
+	    } else
+		statement.accept(this);
+	}
+	return self;
+    }
+
+    /**
+     * prints a method declaration
+     */
+    public Object visitMethodDeclaration(JMethodDeclaration self,
+					 int modifiers,
+					 CType returnType,
+					 String ident,
+					 JFormalParameter[] parameters,
+					 CClassType[] exceptions,
+					 JBlock body) {
+	for (int i = 0; i < parameters.length; i++) {
+	    if (!parameters[i].isGenerated()) {
+		parameters[i].accept(this);
 	    }
 	}
+	if (body != null) {
+	    body.accept(this);
+	}
+	return self;
+    }
+
+    /**
+     * visits a for statement
+     */
+    public Object visitForStatement(JForStatement self,
+				    JStatement init,
+				    JExpression cond,
+				    JStatement incr,
+				    JStatement body) {
+	body.accept(this);
+	return self;
+    }
+
+    /**
+     * prints a if statement
+     */
+    public Object visitIfStatement(JIfStatement self,
+				   JExpression cond,
+				   JStatement thenClause,
+				   JStatement elseClause) {
+	thenClause.accept(this);
+	if(elseClause!=null)
+	    elseClause.accept(this);
 	return self;
     }
 }

@@ -12,7 +12,7 @@ import at.dms.compiler.JavadocComment;
 /**
  * This class unrolls loops where it can.
  */
-class Unroller extends SLIRReplacingVisitor {
+public class Unroller extends SLIRReplacingVisitor {
     /**
      * Map allowing the current block to access the modified
      * list of the current for loop
@@ -43,6 +43,52 @@ class Unroller extends SLIRReplacingVisitor {
 	values=new Hashtable();
     }
     
+    public static void unroll(SIRStream str) {
+	if (str instanceof SIRFeedbackLoop)
+	    {
+		SIRFeedbackLoop fl = (SIRFeedbackLoop)str;
+		unroll(fl.getBody());
+		unroll(fl.getLoop());
+	    }
+        if (str instanceof SIRPipeline)
+	    {
+		SIRPipeline pl = (SIRPipeline)str;
+		Iterator iter = pl.getChildren().iterator();
+		while (iter.hasNext())
+		    {
+			SIRStream child = (SIRStream)iter.next();
+			unroll(child);
+		    }
+	    }
+        if (str instanceof SIRSplitJoin)
+	    {
+		SIRSplitJoin sj = (SIRSplitJoin)str;
+		Iterator iter = sj.getParallelStreams().iterator();
+		while (iter.hasNext())
+		    {
+			SIRStream child = (SIRStream)iter.next();
+			unroll(child);
+		    }
+	    }
+	if (str instanceof SIRFilter)
+	    for (int i = 0; i < str.getMethods().length; i++) {
+		Unroller unroller;
+		//Very aggressive
+		//Intended as a last and final unroll pass
+		//do {
+		//do { //Unroll as much as possible
+		//unroller=new Unroller(new Hashtable());
+		//str.getMethods()[i].accept(unroller);
+		str.getMethods()[i].accept(new Propagator(new Hashtable()));
+		//  } while(unroller.hasUnrolled());
+		//Constant Prop then check to see if any new unrolling can be done
+		//str.getMethods()[i].accept(new Propagator(new Hashtable()));
+		//unroller=new Unroller(new Hashtable());
+		//str.getMethods()[i].accept(unroller);
+		//} while(unroller.hasUnrolled());
+	    }
+    }
+
     /**
      * checks prefix
      */

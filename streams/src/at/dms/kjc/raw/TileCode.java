@@ -325,6 +325,13 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	if (Layout.joiners.contains(node)) {
 	    realTiles.add(Layout.getTile(node.contents));
 	    joinerCode(node);
+	    //After done with node drops its contents for garbage collection
+	    node.contents=null;
+	    //node.edges=null;
+	    //for(int i=0;i<node.incoming.length;i++) {
+	    //node.incoming[i].contents=null;
+	    //}
+	    //node.incoming=null;
 	}
 	if (node.contents instanceof SIRFilter) {
 	    //do not generate code for the file manipulators
@@ -332,6 +339,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		return;
 	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);
+	    //After done with node drops its contents for garbage collection
+	    //Need to keep contents for filter type checking but dropping methods
+	    ((SIRFilter)node.contents).setMethods(null);
 	}
     }
 }

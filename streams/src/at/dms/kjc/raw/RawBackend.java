@@ -53,22 +53,35 @@ public class RawBackend {
         if (StreamItOptions.constprop) {
 	    System.out.println("Running Constant Propagation of Fields");
 	    FieldProp.doPropagate(str);
+	    //System.out.println("Analyzing Branches..");
+	    //new BlockFlattener().flattenBlocks(str);
+	    //new BranchAnalyzer().analyzeBranches(str);
 	}
 	
 	AdjustGranularity.doit(str, 
 			       StreamItOptions.rawRows * 
 			       StreamItOptions.rawColumns);
-
+	
 	if (StreamItOptions.partition) {
 	    Partitioner.doit(str, 
 			     StreamItOptions.rawRows *
 			     StreamItOptions.rawColumns);
 	}
 
+	//Unroll
+	//System.out.println("Unrolling..");
+	//Unroller.unroll(str);
+	//Flattening Blocks
+	//System.out.println("Flattening Blocks..");
+	//new BlockFlattener().flattenBlocks(str);
 	//Destroys arrays into local variables if possible
-	new ArrayDestroyer().destroyArrays(str);
+	//System.out.println("Destroying Arrays..");
+	//new ArrayDestroyer().destroyArrays(str);
 	//Raise VarDecls to front of blocks
-	new VarDeclRaiser().raiseVars(str);
+	//System.out.println("Raising Variables..");
+	//new VarDeclRaiser().raiseVars(str);
+	//System.out.println("Done Optimizations!");
+
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");
@@ -83,6 +96,13 @@ public class RawBackend {
 	//Layout.handAssign(rawFlattener.top);
 	System.out.println("Assign End.");
 	//Generate the switch code
+	
+
+	//System.out.println("Flattening Blocks..");
+	//rawFlattener.top.accept(new BlockFlattener(),new HashSet(),false);
+	
+	
+
 	System.out.println("Switch Code Begin...");
 	SwitchCode.generate(rawFlattener.top);
 	//	SwitchCode.dumpCode();

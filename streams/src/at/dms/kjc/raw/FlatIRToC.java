@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
-
+import java.util.Hashtable;
 
 /**
  * This class dumps the tile code for each filter into a file based 
@@ -40,6 +40,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     public static void generateCode(FlatNode node) 
     {
 	FlatIRToC toC = new FlatIRToC((SIRFilter)node.contents);
+
+	//Optimizations
+	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
+	    if (StreamItOptions.constprop) {
+		System.out.println("Optimizing "+((SIRFilter)node.contents).getMethods()[i].getName()+"..");
+		//System.out.println("Unrolling..");
+		//((SIRFilter)node.contents).getMethods()[i].accept(new Unroller(new Hashtable()));
+		//System.out.println("Analyzing Branches..");
+		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
+		//((SIRFilter)node.contents).getMethods()[i].accept(new BranchAnalyzer());
+		//System.out.println("Constant Folding..");
+		//((SIRFilter)node.contents).getMethods()[i].accept(new Propagator(new Hashtable()));
+	    } else
+		((SIRFilter)node.contents).getMethods()[i].accept(new BlockFlattener());
+	    ((SIRFilter)node.contents).getMethods()[i].accept(new ArrayDestroyer());
+	    ((SIRFilter)node.contents).getMethods()[i].accept(new VarDeclRaiser());
+	}
 	
         ((SIRFilter)node.contents).accept(toC);
     }

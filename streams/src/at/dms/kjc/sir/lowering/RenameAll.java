@@ -201,6 +201,15 @@ public class RenameAll extends SLIRReplacingVisitor
 	return self;
     }
 
+    /**
+     * renames local variable expression
+     */
+    /*public Object visitLocalVariableExpression(JLocalVariableExpression self,
+      String ident) {
+      self.getVariable().setIdent(symtab.nameFor(self.getVariable().getIdent()));
+      return self;
+      }*/
+    
     public Object visitVariableDefinition(JVariableDefinition self,
                                           int modifiers,
                                           CType type,

@@ -15,6 +15,7 @@ import at.dms.kjc.sir.*;
 import at.dms.util.*;
 import java.io.*;
 import java.util.*;
+import at.dms.compiler.JavaStyleComment;
 
 /**
  * This class implements general deep cloning using the serializable interface
@@ -84,6 +85,18 @@ public class ObjectDeepCloner
 	// set the list of what we should clone
 	CloningVisitor visitor = new CloningVisitor();
 	oldObj.accept(visitor);
+	toBeCloned = visitor.getToBeCloned();
+	return doCopy(oldObj);
+    }
+
+    /**
+     * Clone everything starting from this offset of the block
+     * Useful in BranchAnalyzer
+     */
+    static public Object deepCopy(int offset,JBlock oldObj) {
+	// set the list of what we should clone
+	CloningVisitor visitor = new CloningVisitor();
+	visitor.visitBlockStatement(offset,oldObj,oldObj.getComments());
 	toBeCloned = visitor.getToBeCloned();
 	return doCopy(oldObj);
     }
@@ -178,6 +191,17 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 
     public CloningVisitor() {
 	this.toBeCloned = new LinkedList();
+    }
+    
+    /**
+     * Used by deepCopy(int offset,JBlock oldObj) above
+     */
+    public void visitBlockStatement(int offset,
+				    JBlock self,
+				    JavaStyleComment[] comments) {
+	for(;offset<self.size();offset++) {
+	    self.getStatement(offset).accept(this);
+	}
     }
 
     /**
@@ -379,3 +403,4 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
     }
     
 }
+

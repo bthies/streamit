@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JAddExpression.java,v 1.3 2002-04-10 01:35:22 jasperln Exp $
+ * $Id: JAddExpression.java,v 1.4 2002-06-28 01:24:22 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -119,12 +119,16 @@ public class JAddExpression extends JBinaryArithmeticExpression {
    * @exception	UnpositionedError	this error will be positioned soon
    */
   public static CType computeType(CType	leftType, CType rightType) throws UnpositionedError {
+      if(rightType==null)
+	  return leftType;
+      if(leftType==null)
+	  return rightType;
     if (leftType.equals(CStdType.String)) {
       if (rightType == CStdType.Void) {
 	throw new UnpositionedError(KjcMessages.ADD_BADTYPE, leftType, rightType);
       }
       return CStdType.String;
-    } else if (rightType.equals(CStdType.String)) {
+    } else if(rightType.equals(CStdType.String)) {
       if (leftType == CStdType.Void) {
 	throw new UnpositionedError(KjcMessages.ADD_BADTYPE, leftType, rightType);
       }

@@ -1,4 +1,22 @@
-normal:--unroll 100000:FIRProgram
-part:--linearpartition:FIRProgram
-partatlas:--linearpartition --atlas:FIRProgram
-freq:--frequencyreplacement:FIRProgram
+normal::FIRProgram
+unroll:--unroll 100000:FIRProgram
+
+linearnc:--unroll 10000 --linearreplacement --nolinearcollapse:FIRProgram
+linearnc2:--unroll 10000 --linearreplacement2 --nolinearcollapse:FIRProgram
+linearnc3:--unroll 10000 --linearreplacement3 --nolinearcollapse:FIRProgram
+
+freqnc:--unroll 10000 --frequencyreplacement --nolinearcollapse:FIRProgram
+freq:--unroll 10000 --frequencyreplacement:FIRProgram
+
+linear:--unroll 10000 --linearreplacement:FIRProgram
+linearfreq:--unroll 10000 --linearreplacement --frequencyreplacement:FIRProgram
+
+part:--unroll 10000 --linearpartition:FIRProgram
+partatlas:--unroll 10000 --linearpartition --atlas:FIRProgram
+
+freq3:--unroll 100000 --linearreplacement3:FIRProgram
+linearfreq3:--unroll 100000 --linearreplacement3 --frequencyreplacement:FIRProgram
+
+atlas:--unroll 100000 --atlas:FIRProgram
+atlasfreq:--unroll 100000 --atlas --frequencyreplacement:FIRProgram
+

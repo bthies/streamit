@@ -26,7 +26,7 @@ class SIRFineGrainedUtil {
 	    if (sum==0) {
 		return 1;
 	    } else {
-		return 0;
+		return sum;
 	    }
 	}
     }
@@ -115,7 +115,7 @@ class SIRFineGrainedUtil {
 	// sure to have at least 1 work function
 	int sum = joiner.getSumOfWeights();
 	if (sum==0) {
-	    return joiner.getSumOfWeights();
+	    return 1;
 	} else {
 	    return sum;
 	}

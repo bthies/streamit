@@ -216,7 +216,7 @@ class BitReverse extends Filter
 /** 
  * The top-level stream construct of the FFT kernel  
  */  
-class FFT3Kernel extends Pipeline 
+class FFT3Kernel extends Pipeline
 {
   public FFT3Kernel(int N, int logN, float W_re[], float W_im[])  
   { 
@@ -235,7 +235,7 @@ class FFT3Kernel extends Pipeline
     this.add(new ButterflyGroup(W_re[0], W_im[0], N/2));   
 
     /* the middle ComputeStages - N/2i bflygrps with i bflies each */ 
-    for (int i=(N/4); i>=2; i=i/2) 
+    for (int i=(N/4); i>1; i=i/2) 
       this.add(new ComputeStage(i, N, W_re, W_im)); 
 
     /* the last ComputeStage - N/2 bflygrps with 1 bfly each */ 
@@ -307,8 +307,8 @@ class ComplexPrinter extends Filter
  */ 
 class FFT3 extends StreamIt 
 {
-  int N; 
-  int logN; 
+    //int N; 
+    //int logN; 
   float W_re[]; 
   float W_im[]; 
 
@@ -319,8 +319,8 @@ class FFT3 extends StreamIt
   public void init() 
   { 
     /* Make sure N is a power_of_2, N >= 4 and 2^logN = N */  
-    N =  32; //16; 
-    logN = 5; //4;   
+    final int N =  32; //16; 
+    final int logN = 5; //4;   
 
     /* Initialize roots of unity array W[].   
      * W[] is bit-reversal permuted for easier access later -   

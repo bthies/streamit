@@ -129,6 +129,14 @@ public class Channel extends DestroyedClass
 
         enqueue (o);
     }
+    
+    // push a boolean
+    public void pushBool (boolean b)
+    {
+        ASSERT (type == Boolean.TYPE);
+        
+        enqueue (new Boolean (b));
+    }
 
     // push an int
     public void pushInt(int i)
@@ -190,6 +198,18 @@ public class Channel extends DestroyedClass
         ASSERT (data != null);
         
         return data;
+    }
+    
+    // pop a boolean
+    public boolean popBool ()
+    {
+        ASSERT (type == Boolean.TYPE);
+        
+        Boolean data;
+        data = (Boolean) pop ();
+        ASSERT (data != null);
+        
+        return data.booleanValue ();
     }
 
     // pop an int

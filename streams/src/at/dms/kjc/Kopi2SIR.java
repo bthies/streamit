@@ -246,7 +246,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             lineNumber = getLineFromMe.getTokenReference().getLine();
 	printMe("attribute_visit" + str +"\n");
     }
-    
+
     /* creates a new SIROperator setting parentStream to this object
        also, if the SIROperator is one to one, parentStream is set */
     private SIROperator newSIROP(JClassDeclaration clazz)  {
@@ -428,6 +428,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		((SIRIdentity)stream).setType(getType(((JStringLiteral)args[0]).stringValue()));
 	    else if (args[0] instanceof JMethodCallExpression)
 		((SIRIdentity)stream).setType(((JMethodCallExpression)args[0]).getPrefix().getType());
+            else if (args[0] instanceof JClassExpression)
+                ((SIRIdentity)stream).setType(((JClassExpression)args[0]).getClassType());
 	    else 
 		Utils.fail(lineNumber + "Illegal arg to Identity");
 	}

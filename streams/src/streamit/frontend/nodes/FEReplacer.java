@@ -1,10 +1,15 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.1 2002-07-10 18:03:31 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.2 2002-07-10 19:43:09 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
+
+import java.util.Iterator;
+import java.util.List;
+
+import java.util.ArrayList;
 
 /**
  * Replace nodes in a front-end tree.  This is a skeleton for writing
@@ -60,6 +65,21 @@ public class FEReplacer implements FEVisitor
             return exp;
         else
             return new ExprField(left, exp.getName());
+    }
+
+    public Object visitExprFunCall(ExprFunCall exp)
+    {
+        boolean hasChanged = false;
+        List newParams = new ArrayList();
+        for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
+        {
+            Expression param = (Expression)iter.next();
+            Expression newParam = (Expression)param.accept(this);
+            newParams.add(newParam);
+            if (param != newParam) hasChanged = true;
+        }
+        if (!hasChanged) return exp;
+        return new ExprFunCall(exp.getName(), newParams);
     }
     
     public Object visitExprTernary(ExprTernary exp)

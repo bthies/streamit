@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.9 2001-10-10 14:03:39 dmaze Exp $
+ * $Id: SLIRVisitor.java,v 1.10 2001-10-15 18:39:31 thies Exp $
  */
 
 package at.dms.kjc;
@@ -202,6 +202,38 @@ public interface SLIRVisitor extends KjcVisitor
     void visitMainFunction(LIRMainFunction self,
 			   String typeName,
 			   LIRFunctionPointer init);
+
+
+    /**
+     * Visits a set body of feedback loop.
+     */
+    void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+				JExpression streamContext,
+				CType inputType,
+				CType outputType,
+				int inputSize,
+				int outputSize);
+
+    /**
+     * Visits a set loop of feedback loop.
+     */
+    void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+				JExpression streamContext,
+				CType inputType,
+				CType outputType,
+				int inputSize,
+				int outputSize);
+
+    /**
+     * Visits a set a parallel stream.
+     */
+    void visitSetParallelStream(LIRSetParallelStream self,
+				JExpression streamContext,
+				int position,
+				CType inputType,
+				CType outputType,
+				int inputSize,
+				int outputSize);
 
 }
 

@@ -49,8 +49,8 @@ class Butterfly1 extends SplitJoin {
 
     public void init(final int N, final int W) {
         this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
-        this.add(new Filter1(N, W));
         this.add(new IdentityLocal());
+        this.add(new Filter1(N, W));
         this.setJoiner(ROUND_ROBIN());
     }
 }
@@ -129,7 +129,7 @@ class FFTKernelLocal extends Pipeline {
     public void init(final int N) {
         int i;
         this.add(new SplitJoin1(N));
-        for (i=2; i<N; i*=2) {
+        for (i=1; i<N; i*=2) {
             this.add(new Butterfly1(i, N));
             this.add(new Butterfly2(i, N));
         }

@@ -19,6 +19,7 @@ class Butterfly extends Pipeline {
         this.add(new SplitJoin() {
                 public void init() {
                     this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
+                    this.add(new IdentityFloat());
                     this.add(new Filter() {
                             //float weights[] = new float[W];
                             int curr;
@@ -42,7 +43,6 @@ class Butterfly extends Pipeline {
                             }
 
                         });
-                    this.add(new IdentityFloat());
                     this.setJoiner(ROUND_ROBIN());
                 }});
 
@@ -58,7 +58,7 @@ class Butterfly extends Pipeline {
                             }
 
                             public void work() {
-                                output.pushFloat(input.popFloat() -
+                                output.pushFloat(input.popFloat() +
                                                  input.popFloat());
                             }
                         });
@@ -71,10 +71,11 @@ class Butterfly extends Pipeline {
                             }
 
                             public void work() {
-                                output.pushFloat(input.popFloat() +
+                                output.pushFloat(input.popFloat() -
                                                  input.popFloat());
                             }
                         });
+
                     this.setJoiner(WEIGHTED_ROUND_ROBIN(N, N));
                 }});
     }}
@@ -102,7 +103,7 @@ class FFTKernel extends Pipeline {
                                 }});
                     this.setJoiner(ROUND_ROBIN());
                 }});
-        for (int i=2; i<N; i*=2)
+        for (int i=1; i<N; i*=2)
             this.add(new Butterfly(i, N));
     }
 }
@@ -113,10 +114,10 @@ class OneSource extends Filter
     {
         output = new Channel(Float.TYPE, 1);
     }
-    int n = 0;
+
     public void work()
     {
-        output.pushFloat(n++);
+        output.pushFloat(1);
     }
 }
 
@@ -139,7 +140,7 @@ public class FFT extends StreamIt {
 
     public void init() {
         this.add(new OneSource());
-        this.add(new FFTKernel(16));
+        this.add(new FFTKernel(32));
         this.add(new FloatPrinter());
     }
 }

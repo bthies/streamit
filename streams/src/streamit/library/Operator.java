@@ -49,10 +49,10 @@ abstract class Operator extends DestroyedClass
             Class thisClass = this.getClass ();
             ASSERT (thisClass != null);
             
-            Field fields;
-            fields  = thisClass.getField (fieldName);
+            Field ioField;
+            ioField  = thisClass.getField (fieldName);
             
-            fieldInstance [0] = (Channel) fields.get (this);
+            fieldInstance [0] = (Channel) ioField.get (this);
             ASSERT (fieldInstance != null);
         }
         catch (NoSuchFieldException noError)

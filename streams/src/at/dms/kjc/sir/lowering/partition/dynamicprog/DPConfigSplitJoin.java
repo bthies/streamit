@@ -16,8 +16,8 @@ class DPConfigSplitJoin extends DPConfigContainer {
 
     public DPConfigSplitJoin(SIRSplitJoin sj, DynamicProgPartitioner partitioner) {
 	// pass 0 as dummy argument in case uniform height is -1; then assert afterwards
-	super(sj, partitioner, sj.size(), Math.max(0, sj.getUniformHeight()));
-	Utils.assert(sj.getUniformHeight()!=-1, "Require rectangle splitjoins for now.");
+	super(sj, partitioner, sj.size(), Math.max(0, sj.getRectangularHeight()));
+	Utils.assert(sj.isRectangular(), "Require rectangular splitjoins in DPConfig.");
     }
 
     protected DPConfig childConfig(int x, int y) {

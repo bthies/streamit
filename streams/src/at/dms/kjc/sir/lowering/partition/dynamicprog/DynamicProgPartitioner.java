@@ -86,6 +86,9 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private StreamTransform calcPartitions(LinkedList partitions) {
 	// build stream config
 	DPConfig topConfig = buildStreamConfig();
+	// rebuild our work estimate, since we might have introduced
+	// identity nodes to make things rectangular
+	work = WorkEstimate.getWorkEstimate(str);
 	// build up tables.
 	int bottleneck = topConfig.get(numTiles, 0);
 	int tilesUsed = numTiles;
@@ -196,6 +199,12 @@ public class DynamicProgPartitioner extends ListPartitioner {
 				     JMethodDeclaration init,
 				     SIRSplitter splitter,
 				     SIRJoiner joiner) {
+	    // we require rectangular splitjoins, so if this is not
+	    // rectangular, make it so
+	    if (!self.isRectangular()) {
+		self.makeRectangular();
+	    }
+
 	    // shouldn't have 0-sized SJ's
 	    Utils.assert(self.size()!=0, "Didn't expect SJ with no children.");
 	    if (SHARING_CONFIGS) {

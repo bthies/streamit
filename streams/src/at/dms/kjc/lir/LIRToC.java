@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.5 2001-10-09 16:57:05 dmaze Exp $
+ * $Id: LIRToC.java,v 1.6 2001-10-09 16:59:25 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1414,9 +1414,6 @@ public class LIRToC
     public void visitPrintStatement(SIRPrintStatement self,
                                     JExpression exp)
     {
-        print("/* dzm: this is non-portable! */");
-        newLine();
-        print("printf(\"");
         switch (exp.getType().getTypeID())
         {
         case TID_BOOLEAN:

@@ -243,7 +243,12 @@ public class ComputeCodeStore {
 	    System.out.println(" ** Warning: Init function is null");
 	
     }
-    
+
+
+    public void addTracePrimePump(FilterInfo filterInfo)
+    {
+	
+    }
 
     public void addTraceInit(FilterInfo filterInfo)
     {

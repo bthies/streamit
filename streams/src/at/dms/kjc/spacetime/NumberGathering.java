@@ -53,6 +53,5 @@ public class NumberGathering
 	}
 	assert false : "FileOutputContent not found";
 	return -1;
-    }
-    
+    }    
 }

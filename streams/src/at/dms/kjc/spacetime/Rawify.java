@@ -108,6 +108,17 @@ public class Rawify
 	
     }
 
+    private static void addComputeCode(boolean init, boolean primepump, RawTile tile, FilterInfo filterInfo) 
+    {
+	if (init)
+	    tile.getComputeCode().addTraceInit(filterInfo);
+	else if (primepump)
+	    tile.getComputeCode().addTracePrimePump(filterInfo);
+	else //steady
+	    tile.getComputeCode().addTraceSteady(filterInfo);
+    }
+    
+
     private static void handleFileInput(InputTraceNode input, boolean init, boolean primepump, 
 					RawChip chip)
     {

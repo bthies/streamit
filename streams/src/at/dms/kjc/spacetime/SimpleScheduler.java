@@ -429,7 +429,22 @@ public class SimpleScheduler
 	    tiles.add(rawChip.getTile(i));
 	}
 	
-
+	//if we want to, try to force a single input trace to the source's tile
+	if (true && trace.getHead().getSourceSet().size() == 1) {
+	    Trace upstream = ((Edge)trace.getHead().getSourceSet().iterator().next()).getSrc().getParent();
+	    if (schedule.contains(upstream)) {
+		RawTile tile = rawChip.getTile(upstream.getTail().getPrevFilter().getX(),
+					       upstream.getTail().getPrevFilter().getY());
+		HashMap layout = new HashMap();
+		//try to place on the tile ignoring the tile avail
+		if (getLayout(trace.getHead().getNextFilter(), tile, layout, true))
+		    return layout;
+		else 
+		    tiles.remove(tile);
+	    }
+	}
+	
+	
 	//first try starting tiles that are either endpoints of upstream
 	//or starts of downstream
 	Iterator sources = trace.getHead().getSourceSet().iterator();
@@ -444,15 +459,14 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		//System.out.println("     (trying source " + tile + " at " + currentTime + ")");
+		System.out.println("     (for " + trace + " trying source " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile,
-			      layout))
+			      layout, false))
 		    return layout;
 		else //we tried this tile, remove it...
 		    tiles.remove(tile);
 	    }
-	    
 	}
 	
 	Iterator dests = trace.getTail().getDestSet().iterator();
@@ -466,10 +480,10 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		//System.out.println("     (trying dest " + tile + " at " + currentTime + ")");
+		System.out.println("     (for " + trace + " trying dest " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile, 
-			      layout))
+			      layout, false))
 		    return layout;
 		else //we tried this tile, remove it...
 		    tiles.remove(tile);
@@ -480,10 +494,10 @@ public class SimpleScheduler
 	while (tilesIt.hasNext()) {
 	    RawTile tile = (RawTile)tilesIt.next();
 	    HashMap layout = new HashMap();
-	    //System.out.println("     (trying " + tile + " at " + currentTime + ")");
+	    System.out.println("     (for " + trace + " trying " + tile + " at " + currentTime + ")");
 	    //if successful, return layout
 	    if (getLayout(trace.getHead().getNextFilter(), tile,
-			  layout))
+			  layout, false))
 		return layout;
 	}
 	//if we got here, then we could not find a layout
@@ -491,25 +505,25 @@ public class SimpleScheduler
     }
 
     
-    private boolean getLayout(FilterTraceNode filter, RawTile tile, HashMap layout)
+    private boolean getLayout(FilterTraceNode filter, RawTile tile, HashMap layout, boolean ignoreAvail)
     {
-	
+	System.out.println("For " + filter + " trying " + tile);
 	//check if this tile is available, if not return false
-	if (!isTileAvail(tile)) {
-	    //System.out.println("       (Tile not currently available)");
+	if (!ignoreAvail && !isTileAvail(tile)) {
+	    System.out.println("       (Tile not currently available)");
 	    return false;
 	}
 	
 	//cannot assign a tile twice...
 	if (layout.containsValue(tile)) {
-	    //	    System.out.println("       (Tile Already Assigned)");
+	    System.out.println("       (Tile Already Assigned)");
 	    return false;
 	}
 
 	//if this is an endpoint, it must be on a border tile
 	if ((filter.getNext().isOutputTrace() || filter.getPrevious().isInputTrace()) &&
 	    !tile.hasIODevice()) {
-	    //System.out.println("       (Endpoint not at border tile)");
+	    System.out.println("       (Endpoint not at border tile)");
 	    return false;
 	}
 	
@@ -522,8 +536,11 @@ public class SimpleScheduler
 	    if (out.hasFileOutput()) {
 		assert out.oneOutput();
 		//make sure no one else uses this tile to write
-		if (writesFile[tile.getTileNumber()])
+		if (writesFile[tile.getTileNumber()]) {
+		    System.out.println("       (Tile already used for file writer)");
 		    return false; 
+		}
+		
 	    }
 	}
 	
@@ -532,8 +549,11 @@ public class SimpleScheduler
 	    if (in.hasFileInput()) {
 		assert in.oneInput();
 		//make sure no one else uses this tile to write
-		if (readsFile[tile.getTileNumber()])
+		if (readsFile[tile.getTileNumber()]) {
+		    System.out.println("       (Tile already used for file reader)");
 		    return false;
+		}
+		
 	    }
 	}
 	
@@ -562,21 +582,23 @@ public class SimpleScheduler
 	    //next filter, if any work return true
 	    boolean found = false;
 	    //try the middle tiles first
-	    for (int i = 0; i < neighbors.size(); i++) 
+	    for (int i = 0; i < neighbors.size(); i++) {
 		if (!((RawTile)neighbors.get(i)).hasIODevice() &&
 		    getLayout((FilterTraceNode)filter.getNext(), 
-			      (RawTile)neighbors.get(i), layout)) {
+			      (RawTile)neighbors.get(i), layout, ignoreAvail)) {
 		    found = true;
 		    break;
 		}
+	    }
 	    //try border tiles
-	    for (int i = 0; !found && i < neighbors.size(); i++) 
+	    for (int i = 0; !found && i < neighbors.size(); i++) {
 		if (((RawTile)neighbors.get(i)).hasIODevice() &&
 		    getLayout((FilterTraceNode)filter.getNext(), 
-			      (RawTile)neighbors.get(i), layout)) {
+			      (RawTile)neighbors.get(i), layout, ignoreAvail)) {
 		    found = true;
 		    break;
 		}
+	    }
 	    //nothing found return false
 	    if (!found) {
 		//remove the current tile from the layout

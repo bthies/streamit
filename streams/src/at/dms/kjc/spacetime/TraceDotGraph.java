@@ -12,7 +12,8 @@ import java.util.Iterator;
 
 public class TraceDotGraph 
 {
-    public static void dumpGraph(List steadyTrav, Trace[] io, String fileName, boolean DRAM, RawChip rawChip) 
+    public static void dumpGraph(List steadyTrav, Trace[] io, String fileName, boolean DRAM, RawChip rawChip, 
+				 Partitioner partitioner) 
     {
 	SpaceTimeBackend.println("Creating Trace Dot Graph...");	
 	try {
@@ -35,7 +36,8 @@ public class TraceDotGraph
 		TraceNode node = trace.getHead();
 		fw.write("subgraph cluster" + trace.hashCode() + " {\n");
 		fw.write("  color=blue;\n");
-		fw.write("  label = \"" + order++ + "\";\n");
+		fw.write("  label = \"Exe Order: " + order++ + ",BN Work: " +  
+			 partitioner.getTraceBNWork(trace) + "\";\n");
 		while (node != null) {
 		    if (node.isFilterTrace() && !node.getNext().isOutputTrace())
 			fw.write("  " + node.hashCode() + " -> " + node.getNext().hashCode() + ";\n");
@@ -65,6 +67,7 @@ public class TraceDotGraph
 		    if (node.isFilterTrace()) {
 			fw.write("  " + node.hashCode() + "[ label=\"" + ((FilterTraceNode)node).toString(rawChip));
 			FilterInfo filter = FilterInfo.getFilterInfo((FilterTraceNode)node);
+			fw.write("\\nWork: " + partitioner.getFilterWork((FilterTraceNode)node));
 			fw.write("\\nMult: (" + filter.initMult + ", " + filter.primePump + ", " + filter.steadyMult + ")");
 			fw.write("\\nPre-peek, pop, push: (" + filter.prePeek + ", " + filter.prePop + ", " + filter.prePush + ")");
 			fw.write("\\npeek, pop, push: (" + filter.peek + ", " + filter.pop + ", " + filter.push + ")");

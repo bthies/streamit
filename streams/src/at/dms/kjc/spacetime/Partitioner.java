@@ -22,6 +22,9 @@ public abstract class Partitioner
     protected WorkEstimate work;
     protected Trace[] topTraces;
     public Trace[] io;
+    //filtercontent -> work estimation
+    protected HashMap workEstimation;
+
     
     public Partitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
 		       WorkEstimate work, RawChip rawChip) 
@@ -50,6 +53,11 @@ public abstract class Partitioner
     {
 	assert traceGraph != null;
 	return traceGraph;
+    }
+
+    public int getFilterWork(FilterTraceNode node) 
+    {
+	return ((Integer)workEstimation.get(node.getFilter())).intValue();
     }
 
     public int getTraceBNWork(Trace trace) 

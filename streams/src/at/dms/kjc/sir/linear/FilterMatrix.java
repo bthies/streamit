@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.15 2003-04-06 23:33:23 thies Exp $
+ * $Id: FilterMatrix.java,v 1.16 2003-04-08 09:49:14 thies Exp $
  **/
 
 public class FilterMatrix {
@@ -289,6 +289,19 @@ public class FilterMatrix {
     }	
 
     /**
+     * Return the transpose of this matrix.
+     */
+    public FilterMatrix transpose() {
+	FilterMatrix result = new FilterMatrix(this.getCols(), this.getRows());
+	for (int i=0; i<this.getRows(); i++) {
+	    for (int j=0; j<this.getCols(); j++) {
+		result.setElement(j, i, getElement(i, j));
+	    }
+	}
+	return result;
+    }
+
+    /**
      * Return whether or not all the elements of this have integral
      * components.
      */
@@ -461,4 +474,5 @@ public class FilterMatrix {
 
 	return returnString;
     }
+
 }

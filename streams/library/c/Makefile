@@ -1,3 +1,8 @@
+#
+# Makefile: Build the StreaMIT C runtime library
+# $Id: Makefile,v 1.2 2001-10-11 14:04:21 dmaze Exp $
+#
+
 CC =		cc
 CFLAGS =	-g
 AR =		ar

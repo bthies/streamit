@@ -17,7 +17,8 @@ public class StreaMITMain {
 	Kopi2SIR k2s = new Kopi2SIR();
         SIRStream stream = (SIRStream)top.accept(k2s);
         JClassDeclaration flat = Flattener.flatten(stream, 
-						   k2s.getInterfaces());
+						   k2s.getInterfaces(),
+						   k2s.getInterfaceTables());
         System.out.println("*/\n");
 	System.out.println("#include \"streamit.h\"\n");
 	System.out.println("#include <stdio.h>\n");

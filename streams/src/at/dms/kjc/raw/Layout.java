@@ -63,8 +63,6 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     public static Coordinate getTile(int row, int column) 
     {
-	System.out.println(row + " " + column);
-	
 	return coordinates[row][column];
     }
     

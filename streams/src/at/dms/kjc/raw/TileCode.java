@@ -4,6 +4,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.List;
+import at.dms.kjc.sir.lowering.*;
 import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -16,16 +17,18 @@ import java.io.*;
  * on the tile number assigned 
  */
 public class TileCode extends at.dms.util.Utils implements FlatVisitor {
-    public static HashSet filters;
+    //Hash set of tiles mapped to filters or joiners
+    //all other tiles are routing tiles
+    public static HashSet realTiles;
     public static HashSet tiles;
-    
+
     public static void generateCode(FlatNode topLevel) 
     {
 	//create a set containing all the coordinates of all
 	//the nodes in the FlatGraph plus all the tiles involved
 	//in switching
-	//generate the code for all tiles containing filters
-	filters = new HashSet();
+	//generate the code for all tiles containing filters and joiners
+	realTiles = new HashSet();
 	topLevel.accept(new TileCode(), new HashSet(), true);
 	tiles = new HashSet();
 	tiles.addAll(Simulator.initSchedules.keySet());
@@ -35,14 +38,114 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	while(tileIterator.hasNext()) {
 	    Coordinate tile = (Coordinate)tileIterator.next();
 	    //do not generate code for this tile
-	    //if it contains a filter
+	    //if it contains a filter or a joiner
 	    //we have already generated the code in the visitor
-	    if (filters.contains(tile))
+	    if (realTiles.contains(tile))
 		continue;
 	    noFilterCode(tile);
 	}
     }
     
+    private static void joinerCode(FlatNode joiner) 
+    {
+	try {
+	    FileWriter fw = 
+		new FileWriter("tile" + Layout.getTileNumber(Layout.getTile(joiner)) 
+			       + ".c");
+	    
+	    fw.write("#include <raw.h>\n\n");
+	    
+	    fw.write(createJoinerWork(joiner));
+	    	    
+	    //write the extern for the function to init the 
+	    //switch
+	    fw.write("void raw_init();\n\n");
+	    fw.write("void begin(void) {\n");
+	    fw.write("  raw_init();\n");
+	    fw.write("  work();\n");
+	    fw.write("}\n");
+	    fw.close();
+	    System.out.println("Code for " + Namer.getName(joiner.contents) +
+			       " written to tile" + Layout.getTileNumber(Layout.getTile(joiner)) +
+			       ".c");
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	    
+	    Utils.fail("Error writing switch code for tile " +
+		       Layout.getTileNumber(Layout.getTile(joiner)));
+	}
+    }
+    
+    private static String createJoinerWork(FlatNode joiner) 
+    {
+	boolean fp = false;
+	StringBuffer ret = new StringBuffer();
+	int buffersize = nextPow2((Integer)SimulationCounter.maxJoinerBufferSize.get(joiner),
+				  joiner);
+	//get the type, since this joiner is guaranteed to be connected to a filter
+	CType ctype = getJoinerType(joiner);  //??
+	if (ctype.equals(CStdType.Float))
+	    fp = true;
+	String type = ctype.toString(); 	
+	ret.append("#define BUFSIZE " + buffersize + "\n\n");
+	
+	ret.append("void work() { \n");
+		
+	HashSet buffers = (HashSet)JoinerSimulator.buffers.get(joiner);
+	Iterator bufIt = buffers.iterator();
+	//print all the var definitions
+	while (bufIt.hasNext()) {
+	    String current = (String)bufIt.next();
+	    ret.append("int first" + current + " = 0;\n");
+	    ret.append("int last" + current + " = 0;\n");
+	    ret.append(type + " buffer" + current + "[BUFSIZE];\n");
+	}
+	//print the init schedule
+		
+	JoinerScheduleNode init = (JoinerScheduleNode)Simulator.initJoinerCode.get(joiner);
+	while (init != null) {
+	    ret.append(init.getC(fp));
+	    init = init.next;
+	}
+	//print the steady state schedule
+	JoinerScheduleNode steady = (JoinerScheduleNode)Simulator.steadyJoinerCode.get(joiner);
+	ret.append("while(1) {\n");
+	while (steady != null) {
+	    ret.append("  " + steady.getC(fp));
+	    steady = steady.next;
+	}
+	ret.append("}}\n");
+	return ret.toString();
+	
+    }
+    
+    private static CType getJoinerType(FlatNode joiner) 
+    {
+	//search backward until we find the first filter
+	while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
+	    joiner = joiner.incoming[0];
+	}
+	if (joiner != null) 
+	    return ((SIRFilter)joiner.contents).getOutputType();
+	else 
+	    return CStdType.Null;
+    }
+    
+
+    private static int nextPow2(Integer i, FlatNode node) 
+    {
+	System.out.println(Namer.getName(node.contents) + " BufferSize = " + i);
+	
+	//	return 1024;
+	
+	String str = Integer.toBinaryString(i.intValue());
+	if  (str.indexOf('1') == -1)
+	    return 0;
+	int bit = str.length() - str.indexOf('1');
+	return (int)Math.pow(2, bit);
+    }
+        
     private static void noFilterCode(Coordinate tile) 
     {
 	try {
@@ -50,7 +153,6 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 		new FileWriter("tile" + Layout.getTileNumber(tile) 
 			       + ".c");
 	    
-	    //Entry point of the visitor
 	    fw.write("#include <raw.h>\n\n");
 	    
 	    //write the extern for the function to init the 
@@ -60,6 +162,11 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("  raw_init();\n");
 	    fw.write("}\n");
 	    fw.close();
+	    System.out.println("Code " +
+			       " written to tile" + Layout.getTileNumber(tile) +
+			       ".c");
+
+
 	}
 	catch (Exception e) {
 	    Utils.fail("Error writing switch code for tile " +
@@ -68,12 +175,17 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     }
     
         
-    //generate the code for the tiles containing filters
+    //generate the code for the tiles containing filters and joiners
     //remember which tiles we have generated code for
     public void visitNode(FlatNode node) 
     {
+	//this is a mapped joiner
+	if (Layout.joiners.contains(node)) {
+	    realTiles.add(Layout.getTile(node.contents));
+	    joinerCode(node);
+	}
 	if (node.contents instanceof SIRFilter) {
-	    filters.add(Layout.getTile(node.contents));
+	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);
 	}
     }

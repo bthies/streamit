@@ -214,7 +214,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	print("{\n");
 	if (filter.getPeekInt() > 0) {
-	    print("int i, count = 0;\n");
+	    print("int i, count = -1;\n");
 	    print(filter.getInputType() + 
 		  " buffer[" + filter.getPeekInt() + "];\n");
 	    print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
@@ -245,7 +245,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print("static_receive_f();\n");
 	    else
 		print("static_receive();\n");
-	    print(" count = 0;\n");
+	    print(" count = -1;\n");
 	}
 		print(" }\n}\n");
     }
@@ -1073,7 +1073,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     public void visitPopExpression(SIRPopExpression self,
                                    CType tapeType)
     {
-        print("(buffer[count++])");
+        print("(buffer[++count])");
     }
     
     public void visitPrintStatement(SIRPrintStatement self,

@@ -1,5 +1,7 @@
 package at.dms.kjc.raw;
-
+import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
+import at.dms.kjc.sir.lowering.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;

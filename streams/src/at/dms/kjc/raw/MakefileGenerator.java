@@ -19,7 +19,7 @@ public class MakefileGenerator
 	    FileWriter fw = new FileWriter("Makefile");
 	    //create a set of all the tiles with code
 	    HashSet tiles = new HashSet();
-	    tiles.addAll(TileCode.filters);
+	    tiles.addAll(TileCode.realTiles);
 	    tiles.addAll(TileCode.tiles);
 
 	    Iterator tilesIterator = tiles.iterator();

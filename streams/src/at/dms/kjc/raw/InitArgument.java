@@ -32,8 +32,7 @@ public class InitArgument extends SLIREmptyVisitor
 				   JExpression[] args,
 				   SIRStream target) {
 	if (target == targetFilter) {
-	     System.out.println("Found init statement");
-	     for (int i = 0; i < args.length; i++) {
+	    for (int i = 0; i < args.length; i++) {
 		 FlatIRToC ftoc = new FlatIRToC();
 		 args[i].accept(ftoc);
 		 buf.append(ftoc.getString() + ",");

@@ -23,16 +23,15 @@ public class RawBackend {
 
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-
 	FieldProp.doPropagate(str);
 	Renamer.renameAll(str);
 	ConstantProp.propagateAndUnroll(str);
 	
 	System.out.println("Done Constant Prop and Unroll...");
 
-	SIRPrinter printer1 = new SIRPrinter();
-	str.accept(printer1);
-	printer1.close();
+	//SIRPrinter printer1 = new SIRPrinter();
+	//str.accept(printer1);
+	//printer1.close();
 	
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
@@ -64,7 +63,11 @@ public class RawBackend {
 	System.out.println("Namer Begin...");
 	Namer.assignNames(str);
 	System.out.println("Namer End.");
-	//Flatten the graph
+
+	//SIRPrinter printer1 = new SIRPrinter();
+	//str.accept(printer1);
+	//printer1.close();
+
 	System.out.println("Flattener Begin...");
 	RawFlattener.flatten(str);
 	RawFlattener.dumpGraph();

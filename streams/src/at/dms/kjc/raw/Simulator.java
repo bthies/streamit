@@ -41,13 +41,15 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     
     public static void simulate(FlatNode top) 
     {
+	System.out.println("Simulator Running...");
+	
 	Schedule schedule = SIRScheduler.getSchedule(getTopMostParent(top));
 
 	HashMap initExecutionCounts = new HashMap();
 	HashMap steadyExecutionCounts = new HashMap();
 	
-	HashMap initJoinerCode = new HashMap();
-	HashMap steadyJoinerCode = new HashMap();
+	initJoinerCode = new HashMap();
+        steadyJoinerCode = new HashMap();
 	
 	//generate the joiner schedule
 	JoinerSimulator.createJoinerSchedules(top);
@@ -391,7 +393,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		    if (counters.getArcCountOutgoing(node, i) == 0)
 			counters.resetArcCountOutgoing(node, i);
 		    counters.decrementArcCountOutgoing(node, i);
-		    list.add(getDestination(node.edges[i], 
+		    list.addAll(getDestination(node.edges[i], 
 					    counters, joinerBuffer,
 					    previous));
 		}
@@ -486,6 +488,10 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		return false;
 	}
 	else if (node.contents instanceof SIRJoiner) {
+	    //first of all, a joiner can only fire it is the most downstream
+	    //joiner in a joiner group
+	    if (!Layout.joiners.contains(node))
+		return false;
 	    //determine if a joiner can fire
 	    //if the buffer associated with its current 
 	    //input has an item in it

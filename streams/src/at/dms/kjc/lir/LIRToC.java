@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.79 2003-01-21 18:00:57 dmaze Exp $
+ * $Id: LIRToC.java,v 1.80 2003-04-06 11:58:55 thies Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1359,7 +1359,9 @@ public class LIRToC
             boolean isStructField = false;
             try
             {
-                if (left.getType().getCClass().getSuperClass().getIdent().equals("Structure"))
+		CType ctype = left.getType();
+		// only class types have a proper cclass; the other's assert
+                if (ctype instanceof CClassType && ctype.getCClass().getSuperClass().getIdent().equals("Structure"))
                     isStructField = true;
             }
             catch (NullPointerException e)

@@ -23,6 +23,12 @@ public interface SLIRAttributeVisitor extends AttributeVisitor {
     Object visitInitStatement(SIRInitStatement self,
 			    JExpression[] args,
 			    SIRStream target);
+
+    /**
+     * Visits an interface table.
+     */
+    Object visitInterfaceTable(SIRInterfaceTable self);
+    
     /**
      * Visits a latency.
      */

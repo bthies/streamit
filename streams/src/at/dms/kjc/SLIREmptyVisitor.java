@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.2 2001-10-30 19:58:25 thies Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.3 2001-10-31 17:10:45 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -35,6 +35,11 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
 	    args[i].accept(this);
 	}
     }
+
+    /**
+     * Visits an interface table.
+     */
+    public void visitInterfaceTable(SIRInterfaceTable self) {}
 
     /**
      * Visits a latency.

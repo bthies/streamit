@@ -53,6 +53,13 @@ public class SLIRReplacingVisitor extends ReplacingVisitor
     }
 
     /**
+     * Visits an interface table.
+     */
+    public Object visitInterfaceTable(SIRInterfaceTable self) {
+        return self;
+    }
+
+    /**
      * Visits a latency.
      */
     public Object visitLatency(SIRLatency self) {

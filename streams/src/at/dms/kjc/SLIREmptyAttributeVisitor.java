@@ -51,6 +51,13 @@ public class SLIREmptyAttributeVisitor extends EmptyAttributeVisitor
     }
 
     /**
+     * Visits an interface table.
+     */
+    public Object visitInterfaceTable(SIRInterfaceTable self) { 
+        return self;
+    }
+
+    /**
      * Visits a latency.
      */
     public Object visitLatency(SIRLatency self) {

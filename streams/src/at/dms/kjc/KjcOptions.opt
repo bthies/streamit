@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.51 2003-10-31 19:07:31 thies Exp $
+ * $Id: KjcOptions.opt,v 1.52 2003-11-20 07:48:58 jasperln Exp $
  */
 
 prefix Kjc
@@ -158,6 +158,11 @@ longname		"partition_greedy"
 	type		boolean
 	default		"false"
 	help		"Use greedy partitioner to fit stream graph to target."
+
+longname		"partition_greedier"
+	type		boolean
+	default		"false"
+	help		"Use greedier partitioner to fit stream graph to target."
 
 longname		"linearpartition"
 	shortcut	"L"

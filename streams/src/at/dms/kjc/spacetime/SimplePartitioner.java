@@ -18,7 +18,9 @@ public class SimplePartitioner
     //sirfilter -> work estimation
     private WorkEstimate work;
     //filtercontent -> work estimation
-    public HashMap workEstimation;
+    private HashMap workEstimation;
+    //trace->bottleNeck work estimation
+    private HashMap traceBNWork;
     //the completed trace graph
     private Trace[] traceGraph;
 
@@ -30,6 +32,7 @@ public class SimplePartitioner
 	this.lfa = lfa;
 	this.work = work;
 	workEstimation = new HashMap();
+	traceBNWork = new HashMap();
     }
     
 
@@ -135,6 +138,8 @@ public class SimplePartitioner
 			unflatFilter = downstream;
 		    }
 		}
+
+		traceBNWork.put(trace, new Integer(bottleNeckWork));
 
 		//we are finished the current trace, create the outputtracenode
 		if (unflatFilter.out != null && unflatFilter.out.length > 0) {
@@ -338,5 +343,12 @@ public class SimplePartitioner
 	}
 	return out.toString();
     }
+
+    public int getTraceBNWork(Trace trace) 
+    {
+	assert traceBNWork.containsKey(trace);
+	return ((Integer)traceBNWork.get(trace)).intValue();
+    }
+    
 }
 

@@ -121,6 +121,7 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		    } else {
 			var.setIdent(var.getIdent()+"__conflict__"+conflict++);
 			visitedVars.put(var.getIdent(),Boolean.TRUE);
+			//System.err.println("Conflict:"+var.getIdent());
 			newVars.add(var);
 		    }
 		}

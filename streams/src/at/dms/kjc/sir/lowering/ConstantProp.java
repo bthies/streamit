@@ -142,6 +142,9 @@ public class ConstantProp {
 	    InitPropagator prop=new InitPropagator(constants);
 	    str.getInit().accept(prop);
 	    constants=prop.getConstants();
+	    for (int i=0; i<str.size(); i++) {
+		recurseInto(str.get(i), str.getParams(i), constants);
+	    }
 	}
     }
 

@@ -1082,7 +1082,6 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)prefix.accept(this);
 	if(newExp instanceof JLocalVariableExpression) {
 	    Object array=constants.get(((JLocalVariableExpression)newExp).getVariable());
-	    System.out.println("ArrayLength["+prefix+"]="+array);
 	    if(array instanceof Object[])
 		return new JIntLiteral(null,((Object[])array).length);
 	}

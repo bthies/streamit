@@ -1,6 +1,6 @@
 /**
  * Class which runs defines which tests are run using the nightly regtest.
- * $Id: TestOnlyApps.java,v 1.1 2003-10-17 07:03:54 jasperln Exp $
+ * $Id: TestOnlyApps.java,v 1.2 2003-10-17 12:07:02 jasperln Exp $
  **/
 package streamittest;
 
@@ -21,7 +21,7 @@ public class TestOnlyApps extends TestCase {
         CompilerInterface cif =
             CompilerInterface.createCompilerInterface(flags);
 	TestSuite suite = new TestSuite("Apps " + cif.getOptionsString());
-	suite.addTest(TestExamples.suite(flags));
+	suite.addTest(TestApps.suite(flags));
 	return suite;	
     }
 

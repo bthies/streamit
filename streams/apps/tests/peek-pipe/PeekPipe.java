@@ -12,6 +12,7 @@ public class PeekPipe extends StreamIt {
                 }
                 public void init ()
                 {
+		    x = 0;
                     output = new Channel(Integer.TYPE, 1);
                 }
             });

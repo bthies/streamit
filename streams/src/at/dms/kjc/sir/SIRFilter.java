@@ -175,7 +175,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     public int getPopInt() {
 	// need int literal to get number
 	if (!(pop instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for pop value, but the constant hasn't been resolved yet.  It is of class " + pop.getClass());
+	    Utils.fail("Trying to get integer value for pop value in filter " + this.getName() + ", but the constant hasn't been resolved yet.  It is of class " + pop.getClass());
 	}
 	return ((JIntLiteral)pop).intValue();
     }
@@ -189,7 +189,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     public int getPeekInt() {
 	// need int literal to get number
 	if (!(peek instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for peek value, but the constant hasn't been resolved yet.  It is of class " + peek.getClass());
+	    Utils.fail("Trying to get integer value for peek value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet.  It is of class " + peek.getClass());
 	}
 	return ((JIntLiteral)peek).intValue();
     }
@@ -203,7 +203,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     public int getPushInt() {
 	// need int literal to get number
 	if (!(push instanceof JIntLiteral)) {
-	    Utils.fail("Trying to get integer value for push value, but the constant hasn't been resolved yet.  It is of class " + push.getClass());
+	    Utils.fail("Trying to get integer value for push value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet.  It is of class " + push.getClass());
 	}
 	return ((JIntLiteral)push).intValue();
     }

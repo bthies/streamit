@@ -44,6 +44,9 @@ test-bed: compile
 test-apps: compile
 	$(TESTER) streamittest.TestApps
 
+# run example tests
+test-examples: compile
+	$(TESTER) streamittest.TestExamples
 
 
 #checkin tests

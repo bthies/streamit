@@ -24,6 +24,8 @@ public class MagicDramLoop extends MagicDramInstruction
 
     public void addIns(MagicDramInstruction in) 
     {
+	if (in instanceof MagicDramLoop) 
+	    Utils.fail("Cannot have nested loop in magic dram loop");
 	ins.add(in);
     }
     

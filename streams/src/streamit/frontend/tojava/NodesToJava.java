@@ -28,7 +28,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.87 2004-11-15 06:12:28 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.88 2004-11-15 12:34:47 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -102,16 +102,35 @@ public class NodesToJava implements FEVisitor
         }
     }
 
+    public String convertTypeFull(Type type) {
+	return convertTypeFull(type, true);
+    }
+
     // Do the same conversion, but including array dimensions.
-    public String convertTypeFull(Type type)
+    public String convertTypeFull(Type type, boolean includePrimitive)
     {
         if (type instanceof TypeArray)
         {
             TypeArray array = (TypeArray)type;
-            return "[" + (String)array.getLength().accept(this) + "]"
-		+ convertTypeFull(array.getBase());
+	    String output = "";
+	    // first get primitive type
+	    if (includePrimitive) {
+		Type primitive = array;
+		while (primitive instanceof TypeArray) {
+		    primitive = ((TypeArray)primitive).getBase();
+		}
+		output = convertTypeFull(primitive);
+	    }
+	    return output +
+		"[" + (String)array.getLength().accept(this) + "]"
+		+ convertTypeFull(array.getBase(), false);
+	    
         }
-        return convertType(type);
+	if (includePrimitive) {
+	    return convertType(type);
+	} else {
+	    return "";
+	}
     }
 
     // Get a constructor for some type.

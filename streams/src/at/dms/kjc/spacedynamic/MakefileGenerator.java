@@ -162,6 +162,9 @@ public class MakefileGenerator
     {
 	FileWriter fw = new FileWriter("fileio.bc");
 
+	if (KjcOptions.malloczeros)
+	    fw.write("gMEM_INIT_VAL = 0x0;\n");
+
 	if (KjcOptions.magic_net) 
 	    fw.write("gTurnOffNativeCompilation = 1;\n");
 

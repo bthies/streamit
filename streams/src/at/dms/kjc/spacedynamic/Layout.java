@@ -50,6 +50,8 @@ public class Layout extends at.dms.util.Utils implements
     
     private RawChip rawChip;
 
+    private double oldCost = 0.0;
+
     public Layout(StreamGraph streamGraph) 
     {
 	this.streamGraph = streamGraph;
@@ -367,9 +369,9 @@ public class Layout extends at.dms.util.Utils implements
 	    }    
 	}
 	double cost = placementCost(true);
-	dumpLayout("layout.dot");
+	dumpLayout("hand_layout.dot");
 	System.out.println("Layout cost: " + cost);
-	//assert cost >= 0.0 : "Illegal Layout";
+	assert cost >= 0.0 : "Illegal Layout";
     }
     
     /** return the cost of this layout calculated by the cost function, 
@@ -378,6 +380,8 @@ public class Layout extends at.dms.util.Utils implements
     **/
     public double placementCost(boolean debug) 
     {
+	
+
 	/** tiles used already to route dynamic data between 
 	    SSGs, a tile can only be used once **/
 	HashSet dynTilesUsed = new HashSet();
@@ -392,12 +396,10 @@ public class Layout extends at.dms.util.Utils implements
 	    double dynamicCost = 0.0;
 	    double staticCost = 0.0;
 	    
+	    //right now we assume all layouts are legal from dynamic perspective
 	    dynamicCost = getDynamicCost(ssg, dynTilesUsed);
-	    if (dynamicCost < 0.0) {
-		if (debug)
-		    System.out.println("Dynamic routes cross!");
-		return -1.0;
-	    }
+
+	    //get the static cost
 	    staticCost = getStaticCost(ssg, staticTilesUsed);
 	    if (staticCost < 0.0) {
 		if (debug)
@@ -433,16 +435,19 @@ public class Layout extends at.dms.util.Utils implements
 	    if (!(assigned.contains(src)))
 		continue;
 	    
-	    assert getTile(src) != null;
+	    RawTile srcTile = getTile(src);
+
+	    assert srcTile != null;
 
 	    //add the src tile to the list of tiles used by this SSG
-	    tiles.add(getTile(src));
+	    tiles.add(srcTile);
 	    
 	    //make sure we have not previously tried to route through this tile
 	    //in a previous SSG
-	    if (usedTiles.contains(getTile(src))) {
-		System.out.println(getTile(src));
+	    if (usedTiles.contains(srcTile)) {
+		//System.out.println(srcTile);
 		return -1.0;
+		//cost += 1E5;
 	    }
 	    
 	    //don't worry about nodes that aren't assigned tiles
@@ -455,20 +460,34 @@ public class Layout extends at.dms.util.Utils implements
 	    while (dsts.hasNext()) {
 		FlatNode dst = (FlatNode)dsts.next();
 		assert assigned.contains(dst);
-		assert getTile(dst) != null;
+		RawTile dstTile = getTile(dst);
+		
+		assert dstTile != null;
+		
 		//add the dst tile to the list of tiles used by this SSG
-		tiles.add(getTile(dst));
+		tiles.add(dstTile);
 		
 		//make sure we have not previously (in another SSG) tried to route 
 		//thru the tile assigned to the dst
-		if (usedTiles.contains(getTile(dst))) {
-		    //System.out.println(getTile(dst));
+		if (usedTiles.contains(dstTile)) {
+		    //System.out.println(dstTile);
+		    //cost += 1E5;
 		    return -1.0;
 		}
 		
 		RawTile[] route = 
-		    (RawTile[])router.getRoute(ssg, getTile(src), getTile(dst)).toArray(new RawTile[0]);
+		    (RawTile[])router.getRoute(ssg, srcTile, dstTile).toArray(new RawTile[0]);
 		
+		//check if we cannot find a route from src to dst that does not go 
+		//thru another ssg
+		if (route.length == 0) {
+		    System.out.println("Cannot find route from src to dst within SSG " + 
+		    		       src + "(" + srcTile + ") -> " + dst + "(" + dstTile + ")");
+		    //cost += 1E5;
+		    return -1.0;
+		}
+		
+
 		//find the cost of the route, penalize routes that go thru 
 		//tiles assigned to filters or joiners, reward routes that go thru 
 		//non-assigned tiles
@@ -537,8 +556,8 @@ public class Layout extends at.dms.util.Utils implements
 		}
 
 		//calculate communication cost of this node and add it to the cost sum
-		cost += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(src)) *
-					   numAssigned * 10));
+		cost += (/*(items * hops) + */(items * Util.getTypeSize(Util.getOutputType(src)) *
+					   numAssigned));
 	    }   
 	}
 	SpaceDynamicBackend.addAll(usedTiles, tiles);
@@ -551,7 +570,12 @@ public class Layout extends at.dms.util.Utils implements
     
     
     /** Get the cost of sending output of this SSG over the dynamic network 
-	for right now disregard the min, max, and average rate declarations **/ 
+	for right now disregard the min, max, and average rate declarations
+
+	NOTE:  THIS FUNCTION DOES NOT CHECK FOR STARVATION OR DEADLOCK FROM
+	SHARING DYNAMIC LINKS.  WE SHOULD CHECK THAT TWO PARALLEL SECTION OF 
+	A STREAM GRAPH DO NOT SHARE A LINK.
+    **/ 
     private double getDynamicCost(StaticStreamGraph ssg, HashSet usedTiles) 
     {
 	double cost = 0.0;
@@ -560,32 +584,29 @@ public class Layout extends at.dms.util.Utils implements
 	for (int j = 0; j < ssg.getOutputs().length; j++) {
 	    FlatNode src = ssg.getOutputs()[j];
 	    FlatNode dst = ssg.getNext(src);
-	    
-	    Iterator route = XYRouter.getRoute(ssg, getTile(src), getTile(dst)).iterator();
+	    RawTile srcTile = getTile(src);
+	    RawTile dstTile = getTile(dst);
+
+	    Iterator route = XYRouter.getRoute(ssg, srcTile, dstTile).iterator();
 	    //System.out.print("Dynamic Route: ");
 
 	    //********* TURNS IN DYNAMIC NETWORK COST IN TERMS OF LATENCY ****//
-	    //*** ADD THIS COMPONENT ***//
+	    if (srcTile.getX() != dstTile.getX() &&
+		srcTile.getY() != dstTile.getY())
+		cost += 1.0;
 
 	    //** Don't share links, could lead to starvation?? ***///
-
-	    // ** but below is too restrictive so relax it **//
-
+	    
 	    while (route.hasNext()) {
 		ComputeNode tile = (ComputeNode)route.next();
 		assert tile != null;
 		//System.out.print(tile);
 		//add to cost only if these an no endpoints of the route
-		if (tile != getTile(src) && tile != getTile(dst))
+		if (tile != srcTile && tile != dstTile) {
 		    cost += 1.0;
-		if (usedTiles.contains(tile)) {
-		    System.out.println("tile uesd twice for dynamic route: " + tile);
-		    return -1.0;
-		}
-		
+		}		
 		usedTiles.add(tile);
 	    }
-	    //System.out.println();
 	}
 	return cost;
     }
@@ -619,7 +640,7 @@ public class Layout extends at.dms.util.Utils implements
     }
 
 
-    public void simAnnealAssign(FlatNode node) 
+    public void simAnnealAssign()
     {
 	System.out.println("Simulated Annealing Assignment");
 	int nsucc =0, j = 0;
@@ -629,9 +650,8 @@ public class Layout extends at.dms.util.Utils implements
 
 	try {
 	    random = new Random(17);
-	    //random placement
-	    //randomPlacement();
-	    assert false;
+	    //create an initial placement
+	    initialPlacement();
 	    
 	    filew = new FileWriter("simanneal.out");
 	    int configuration = 0;
@@ -657,7 +677,9 @@ public class Layout extends at.dms.util.Utils implements
 
 	    //The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
-	    for (int two = 0; two < rawChip.getYSize() ; two++) {
+	    for (int two = 0; two < 2/*rawChip.getYSize()*/; two++) {
+		System.out.print("\nRunning Annealing Step (" + currentCost + ", " +
+				 minCost + ")");
 		double t = annealMaxTemp(); 
 		double tFinal = annealMinTemp();
 		while (true) {
@@ -674,6 +696,9 @@ public class Layout extends at.dms.util.Utils implements
 			    filew.write(configuration++ + " " + currentCost + "\n");
 			    nsucc++;
 			}
+
+			if (configuration % 500 == 0)
+			    System.out.print(".");
 
 			//keep the layout with the minimum cost
 			if (currentCost < minCost) {
@@ -702,7 +727,7 @@ public class Layout extends at.dms.util.Utils implements
 	    }
 	   
 	    currentCost = placementCost(false);
-	    System.out.println("Final Cost: " + currentCost + 
+	    System.out.println("\nFinal Cost: " + currentCost + 
 			       " Min Cost : " + minCost + 
 			       " in  " + j + " iterations.");
 	    if (minCost < currentCost) {
@@ -718,9 +743,64 @@ public class Layout extends at.dms.util.Utils implements
 	dumpLayout("layout.dot");
     }
     
+    private void initialPlacement() 
+    {
+	assert router instanceof FreeTileRouter : 
+	    "Using non-supported router";
+
+	//build the list of nodes that we have to assign to tiles
+	//and build it in data-flow order for each SSG
+	LinkedList assignMe = new LinkedList();
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    Iterator flatNodes = ssg.getFlatNodes().iterator();
+	    while (flatNodes.hasNext()) {
+		FlatNode node = (FlatNode)flatNodes.next();
+		//if we should assign this node to a tile
+		//then add it to the traversal
+		if (assigned.contains(node))
+		    assignMe.add(node);
+	    }
+	    
+	}
+	
+	Iterator traversal = assignMe.iterator();
+
+	int row = 0;
+	int column = 0;
+
+	//start laying out at top right corner because of file reader
+	for (row = 0; row < rawChip.getYSize(); row ++) {
+	    if (row % 2 == 0) {
+		for (column = rawChip.getXSize() -1; column >= 0;) {
+		    if (!traversal.hasNext())
+			break;
+		    FlatNode node = (FlatNode)traversal.next();
+		    assign(rawChip.getTile(column, row), node);
+		    column--;
+		}
+	    }
+	    else {
+		for (column = 0; column < rawChip.getXSize();) {
+		    if (!traversal.hasNext())
+			break; 
+		    FlatNode node = (FlatNode)traversal.next();
+		    assign(rawChip.getTile(column, row), node); 
+		    column++;
+		}
+	    }
+	    //if nothing more to do then break
+	    if (!traversal.hasNext())
+		break;
+	}
+
+
+	dumpLayout("initial-layout.dot");
+    }
     
-     private double annealMaxTemp() throws Exception
-     {
+    
+    private double annealMaxTemp() throws Exception
+    {
  	double T = 1.0;
  	int total = 0, accepted = 0;
  	HashMap sirInit  = (HashMap)SIRassignment.clone();
@@ -832,6 +912,7 @@ public class Layout extends at.dms.util.Utils implements
 	}
     }
     
+
     private int getRandom() 
     {
 	return random.nextInt(rawChip.getTotalTiles());

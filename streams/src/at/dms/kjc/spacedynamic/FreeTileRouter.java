@@ -59,20 +59,37 @@ public class FreeTileRouter implements Router
 	Layout layout = ssg.getStreamGraph().getLayout();
 
 	//only try this scheme if the rawchip isn't too filled with assigned tiles
-	if (((double)layout.getTilesAssigned()) / ((double)layout.getRawChip().getTotalTiles()) >
-	    .85)
-	    return yxRouter.getRoute(ssg, src, dst);
+	//if (((double)layout.getTilesAssigned()) / ((double)layout.getRawChip().getTotalTiles()) >
+	//   .85)
+	//    return yxRouter.getRoute(ssg, src, dst);
 
 	//call the recursive function to find the route with the last amount of occupied tiles
-	return findBestRoute(layout, (RawTile)src, (RawTile)dst).route;
+	RouteAndOccupiedCount bestRoute = 
+	    findBestRoute(ssg, layout, (RawTile)src, (RawTile)dst);
+	
+	//make sure that if we don't have a route, then that is because we cannot
+	//find a path that does not cross another ssg's node
+	assert !(bestRoute.route.size() == 0 &&
+		 !(bestRoute.occupied == Integer.MAX_VALUE));
+	
+	return bestRoute.route;
     }
 
     /** find the best route, remember of src is an occupied tile, then it will count it **/
-    private RouteAndOccupiedCount findBestRoute(Layout layout, RawTile src, RawTile dst) 
+    private RouteAndOccupiedCount findBestRoute(StaticStreamGraph ssg, Layout layout, 
+						RawTile src, RawTile dst) 
     {
 	RawChip rawChip = layout.getRawChip();
 	
 	LinkedList route = new LinkedList();
+	
+	//make sure we do not route thru another SSG, set the route to be really high
+	if (layout.getNode(src) != null && 
+	    !ssg.getFlatNodes().contains(layout.getNode(src))) {
+	    return new RouteAndOccupiedCount(route, Integer.MAX_VALUE);
+	}
+	
+
 	//if the source == dst just add the dest and return, the end of the recursion
 	if (src == dst) {
 	    route.add(dst);
@@ -86,13 +103,14 @@ public class FreeTileRouter implements Router
 	//obtained, in this case the total number of tiles +1
 	RouteAndOccupiedCount takeX = 
 	    new RouteAndOccupiedCount(new LinkedList(),
-				      rawChip.getTotalTiles() + 1);
+				      Integer.MAX_VALUE);
+	
 	RouteAndOccupiedCount takeY = 
 	    new RouteAndOccupiedCount(new LinkedList(),
-				      rawChip.getTotalTiles() + 1);
+				      Integer.MAX_VALUE);
 	
 	if (xDir != 0) {
-	    takeX = findBestRoute(layout, 
+	    takeX = findBestRoute(ssg, layout, 
 				  rawChip.getTile(src.getX() + xDir, 
 						  src.getY()),
 				  dst);
@@ -101,12 +119,23 @@ public class FreeTileRouter implements Router
 	//only try the y direction if the x direction has an occupied tile
 	//and we need to route in that direction
 	if (takeX.occupied > 0 && yDir != 0) {
-	    takeY = findBestRoute(layout,
+	    takeY = findBestRoute(ssg, layout,
 				  rawChip.getTile(src.getX(),
 						  src.getY() + yDir),
 				  dst);
 	}
 	
+	//we might not be able to make it from this source to the dest staying
+	//within our own SSG so check for this and if so, propagate this information
+	if (takeX.route.size() == 0 && takeY.route.size() == 0) {
+	    assert takeX.occupied == Integer.MAX_VALUE &&
+		takeY.occupied == Integer.MAX_VALUE :
+		takeX.occupied + " " + takeY.occupied;
+	    //just return, the illegal route
+	    return takeX;
+	}
+	
+
 	//get the best route
 	RouteAndOccupiedCount bestRoute = 
 	    takeX.occupied <= takeY.occupied ? takeX : takeY;
@@ -121,5 +150,4 @@ public class FreeTileRouter implements Router
 
 	return bestRoute;
     }
-    
 }

@@ -416,7 +416,10 @@ public class StreamGraph
 	//now ready to layout	
 	layout = new Layout(this);
 	//for right now just handAssign!!
-	layout.handAssign();
+	if (KjcOptions.noanneal)
+	    layout.handAssign();
+	else 
+	    layout.simAnnealAssign();
     }
 
 

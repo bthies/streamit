@@ -102,7 +102,7 @@ public class SpaceDynamicBackend {
 	//assign tiles to each static stream graph
 	//	streamGraph.tileAssignment();
 	streamGraph.handTileAssignment();
-	
+		
 	//dump a dot representation of the graph
 	streamGraph.dumpStaticStreamGraph();
 	

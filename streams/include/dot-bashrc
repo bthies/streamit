@@ -42,3 +42,17 @@ TEXINPUTS=${STREAMIT_HOME}/include/tex:${TEXINPUTS}
 
 #include for Eclipse plugins
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/eclipse
+
+#include builtin Eclipse plugins
+export ECLIPSE_PLUG=/home/bits7/NO_BACKUP/streamit/eclipse/plugins
+PRE=${ECLIPSE_PLUG}/org.eclipse.
+VER="_2.1.0"
+CLASSPATH=${PRE}ui.workbench.texteditor${VER}/texteditor.jar
+CLASSPATH=${PRE}jface${VER}/jface.jar
+CLASSPATH=${PRE}ui.editors${VER}/editors.jar
+CLASSPATH=${PRE}jface.text${VER}/jfacetext.jar
+CLASSPATH=${PRE}swt.motif${VER}/ws/motif/swt.jar
+CLASSPATH=${PRE}ui.views${VER}/views.jar
+CLASSPATH=${PRE}core.runtime${VER}/runtime.jar
+CLASSPATH=${PRE}ui.workbench${VER}/workbench.jar
+CLASSPATH=${PRE}text${VER}/text.jar

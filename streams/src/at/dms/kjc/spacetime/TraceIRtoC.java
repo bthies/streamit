@@ -36,8 +36,6 @@ public class TraceIRtoC extends SLIREmptyVisitor
 
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
-
-    public boolean isWork = true; //false;
     
     public TraceIRtoC(RawTile tile) 
     {
@@ -232,7 +230,6 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	
 	//If this is the raw Main function then set is work to true
 	//used for stack allocating arrays
-	//isWork = ident.startsWith(RawExecutionCode.steadyStage);
 	   
         newLine();
 	// print(CModifier.toString(modifiers));
@@ -268,7 +265,6 @@ public class TraceIRtoC extends SLIREmptyVisitor
             print(";");
 
         newLine();
-	//isWork = false;
     }
 
       // ----------------------------------------------------------------------
@@ -322,12 +318,12 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//	System.out.println(ident);
 	//System.out.println(expr);
 
-	//if we are in a work function, we want to stack allocate all arrays
+	//we want to stack allocate all arrays
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (isWork && type.isArrayType()) {
+	if (type.isArrayType()) {
 	    String[] dims = ArrayDim.findDim(tile.getComputeCode(), ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
@@ -1174,9 +1170,9 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    return;
 	}
 
-	//stack allocate all arrays in the work function 
+	//stack allocate all arrays 
 	//done at the variable definition
-	if (isWork && right instanceof JNewArrayExpression &&
+	if (right instanceof JNewArrayExpression &&
  	    (left instanceof JLocalVariableExpression)) {
 	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
 

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.12 2003-10-06 19:40:35 dmaze Exp $
+# $Id: strc,v 1.13 2003-10-06 19:56:20 dmaze Exp $
 #
 
 use strict;
@@ -53,15 +53,15 @@ if (!exists $opts{java})
     # which is to say, 1 if there are no non-java files, 0 otherwise
   }
 $fns = new_to_old($fns) unless ($opts{java} || $opts{tokopi});
-exit(1) if !@$fns;
+exit(1) if !$fns;
 if ($opts{'library'}) {
     run_in_library($fns);
     exit(0);
 }
 $fns = old_to_c($fns) unless $opts{tokopi};
-exit(1) if !@$fns;
+exit(1) if !$fns;
 $fns = new_to_c($fns) if $opts{tokopi};
-exit(1) if !@$fns;
+exit(1) if !$fns;
 c_to_out($fns, $opts{output}) unless ($opts{raw} || $opts{cluster});
 exit(0);
 
@@ -287,7 +287,7 @@ sub new_to_old
     $libflag = "--library" if $opts{library};
     my $result = call("$java streamit.frontend.ToJava --output $target " .
 		      "$libflag " . join(' ', @$fns));
-    return [] if $result != 0;
+    return undef if $result != 0;
     return [$target];
   }
 
@@ -304,12 +304,14 @@ sub old_to_c
 	$target = $opts{output} . ".c" if $opts{outputs};
 	my $result = call("$java $xmx at.dms.kjc.Main -s $kjcopts " .
 			  "$jfiles > $target");
-	return [] if $result != 0;
+	return undef if $result != 0;
 	return [$target];
       }
     else
       {
-	call("$java $xmx at.dms.kjc.Main -s $kjcopts $jfiles");
+	my $result = call("$java $xmx at.dms.kjc.Main -s $kjcopts $jfiles");
+	return undef if $result != 0;
+	return ["tile0.c"] if $opts{standalone};
 	return [];
       }
   }

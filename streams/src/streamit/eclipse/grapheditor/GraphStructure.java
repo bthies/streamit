@@ -36,20 +36,28 @@ public class GraphStructure implements Serializable{
 		graph = new HashMap();
 	}
 	
-	
+	/**
+	 * Create hierarchy in which <parenNode> encapsulates <children>
+	 * @param parentNode
+	 * @param children
+	 */
 	public void addHierarchy(GEStreamNode parentNode, ArrayList children)
 	{
 		this.graph.put(parentNode, children);
 	}
 			
-	// Add a node that will be a child node of the node parent.
+	/**
+	 * Add <node> that will be a child node of the node <parent>.
+	 */
 	public void addNode(GEStreamNode node, GEStreamNode parent, int index)
 	{
 		ArrayList nodeList = this.getChildren(parent); 
 		nodeList.add(index, node);
 	}
 	
-	// Delete node and all of the children belonging to that node	
+	/**
+	 * Delete <node> and all of the children belonging to that node
+	 */ 	
 	public void deleteNode(GEStreamNode node)
 	{
 		ArrayList nodeList = this.getChildren(node);
@@ -63,12 +71,19 @@ public class GraphStructure implements Serializable{
 		this.graph.remove(node);
 	}
 	
-	// Provide the children of node n 
-	public ArrayList getChildren(GEStreamNode n)
+	
+	/**
+	 * Get the children of <node>
+	 * @return ArrayList with the children of <node>
+	 */ 
+	public ArrayList getChildren(GEStreamNode node)
 	{
-		return (ArrayList) this.graph.get(n);
+		return (ArrayList) this.graph.get(node);
 	}
 	
+	/**
+	 * Construct graph so that it could be drawn by a GUI component
+	 */
 	public void constructGraph()
 	{
 		this.topLevel.construct();
@@ -83,6 +98,22 @@ public class GraphStructure implements Serializable{
 	    }
 	}
 	
+	/** 
+	 * Sets the toplevel node to <strNode>
+	 * @param strNode
+	 */
+	public void setTopLevel(GEStreamNode strNode)
+	{
+		this.topLevel = strNode;
+	}
 	
+	/**
+	 * Gets the toplevel node
+	 * @return this.topLevel
+	 */
+	public GEStreamNode getTopLevel ()
+	{
+		return this.topLevel;
+	}
 }
 

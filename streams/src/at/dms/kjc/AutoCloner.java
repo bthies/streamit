@@ -24,6 +24,16 @@ public class AutoCloner {
      */
     private static HashMap registry;
     
+    //Do not use unless not going to use this anymore
+    public static void clear() {
+	toBeCloned.clear();
+	toBeCloned=null;
+	if(registry!=null) {
+	    registry.clear();
+	    registry=null;
+	}
+    }
+
     /**
      * Deep copy a stream structure.
      */

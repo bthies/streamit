@@ -16,7 +16,7 @@ public class MakefileGenerator
 {
     public static final String MAKEFILE_NAME = "Makefile.streamit";
     //true if we want to use hardware icaching in the raw simulator
-    public static final boolean HWIC = true;
+    public static final boolean HWIC = false;
 
     public static void createMakefile() 
     {

@@ -18,6 +18,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
     private List steadySchedule = null;
     private List initSchedule = null;
     int initDataConsumption = 0;
+    int initDataProduction = 0;
 
     SimpleSchedLoop (SimpleHierarchicalScheduler scheduler, Object stream, SchedJoinType join, SchedStream body, SchedSplitType split, SchedStream loop, int delay)
     {

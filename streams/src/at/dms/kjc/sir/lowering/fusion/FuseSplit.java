@@ -69,7 +69,8 @@ public class FuseSplit {
     
     /**
      * Flattens a split/join, subject to the following constraints:
-     *  1. Each parallel component of the stream is a filter.
+     *  1. Each parallel component of the stream is a filter.  Further, it is
+     *     not a two-stage filter that peeks.
      *  2. If the splitter is anything other than duplicate, then
      *     there is no peeking from within the parallel streams.
      *  3. The SplitJoin is contained in a pipeline, to ease our mending
@@ -88,7 +89,11 @@ public class FuseSplit {
             if (!(str instanceof SIRFilter))
                 return sj;
             SIRFilter filter = (SIRFilter)str;
-            if (filter.getPeekInt() > filter.getPopInt()) {
+	    // don't allow two-stage filters that peek, since we
+	    // aren't dealing with how to fuse their initWork
+	    // functions.
+            if (filter instanceof SIRTwoStageFilter &&
+		filter.getPeekInt() > filter.getPopInt()) {
                 return sj;
 	    }
         }

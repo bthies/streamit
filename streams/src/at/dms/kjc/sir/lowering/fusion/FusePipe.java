@@ -96,8 +96,15 @@ public class FusePipe {
      * in order for us to fuse it.
      */
     private static boolean isFusable(SIRStream str) {
+	// don't allow two-stage filters that peek
+	if (str instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)str;
+	    if (twoStage.getInitPeek()-twoStage.getInitPop()>0) {
+		return false;
+	    }
+	}
 	return (str instanceof SIRFilter) && ((SIRFilter)str).needsWork();
-    }
+	}
 	
     /**
      * Fuses filters <first> ... <last>.  For now, assumes: 
@@ -162,6 +169,14 @@ public class FusePipe {
      * <filters>.
      */
     private static SIRFilter fuse(List filters) {
+	// check that all the filters are fusable
+	for (ListIterator it = filters.listIterator(); it.hasNext(); ) {
+	    SIRStream str = (SIRStream)it.next();
+	    if (!isFusable(str)) {
+		Utils.fail("Trying to fuse a filter that is unfusable: " + 
+			   str + " " + str.getName());
+	    }
+	}
 	// construct a dummy result to be filled in later.  This is
 	// necessary because in the process of patching the parent
 	// init function, we need to know about the new target.  Not a

@@ -246,6 +246,64 @@ public class AdjustGranularity {
 	// fuse the splits
 	FuseSplit.doFlatten(str);
 
+	StreamItDot.printGraph (str, "bill-fft1.dot");
+	FusePipe.fuse((SIRPipeline)
+		      ((SIRSplitJoin)
+		       ((SIRPipeline)
+			((SIRPipeline)str).get(1)).get(0)).get(0));
+	StreamItDot.printGraph (str, "bill-fft2.dot");
+	FusePipe.fuse((SIRPipeline)
+		      ((SIRSplitJoin)
+		       ((SIRPipeline)
+			((SIRPipeline)str).get(1)).get(0)).get(1));
+
+	StreamItDot.printGraph (str, "bill-fft3.dot");
+	// now take the leftovers from the splitjoin fusion and fuse them, too
+	SIRPipeline pipe = (SIRPipeline)((SIRPipeline)str).get(1);
+	for (int i=0; i<10; i+=2) {
+	    FusePipe.fuse((SIRFilter)pipe.get(i+1), (SIRFilter)pipe.get(i+3));
+	    FusePipe.fuse((SIRFilter)pipe.get(i+2), (SIRFilter)pipe.get(i+3));
+	}
+
+	StreamItDot.printGraph (str, "bill-fft4.dot");
+
+        FusePipe.fuse( (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(7)),
+                       (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(8)) );
+        FusePipe.fuse( (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(4)),
+                       (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(5)) );
+
+	StreamItDot.printGraph (str, "bill-fft5.dot");
+	StatelessDuplicate.doit ((SIRFilter)((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get (1)).get(0)).get(0),2);
+	StreamItDot.printGraph (str, "bill-fft6.dot");
+	StatelessDuplicate.doit ((SIRFilter)((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get (1)).get(0)).get(1),2);
+
+	// constant-prop through new filters
+	ConstantProp.propagateAndUnroll(str);
+	FieldProp.doPropagate(str);
+
+	Namer.assignNames(str);
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+	StreamItDot.printGraph(str, "after.dot");
+    }
+
+    /*
+	RawFlattener rawFlattener;
+
+	StreamItDot.printGraph(str, "before.dot");
+	System.err.println("Working on FFT...");
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+
+	// fuse the splits
+	FuseSplit.doFlatten(str);
+
 	FusePipe.fuse((SIRPipeline)
 		      ((SIRSplitJoin)
 		       ((SIRPipeline)
@@ -270,6 +328,7 @@ public class AdjustGranularity {
 	WorkEstimate.getWorkEstimate(str).printWork();
 	StreamItDot.printGraph(str, "after.dot");
     }
+    */
 
     private static void doFM16_2(SIRStream str) {
 	RawFlattener rawFlattener;

@@ -18,7 +18,7 @@ public class MP3Simple extends StreamIt
     public void init()
     {
         // add .raw to the name to run on RAW
-        add (new FileReader ("/u/karczma/streamit-traces/Blur.float.raw", Float.TYPE));
+        add (new FileReader ("/u/karczma/traces-streamit/Blur.float.raw", Float.TYPE));
         add (new MultiChannelPCMSynthesis (2));
         add (new Filter ()
         {

@@ -11,7 +11,7 @@ import at.dms.compiler.*;
 /**
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.
- * $Id: LinearReplacer.java,v 1.16 2003-04-08 20:43:08 thies Exp $
+ * $Id: LinearReplacer.java,v 1.17 2003-04-14 17:52:22 aalamb Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // in visitors of containers, only make a replacement if we're
@@ -131,7 +131,22 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 	return new JExpressionStatement(null, new JAssignmentExpression(null, left, right), null);
     }
     
+    /** Creates a local variable expression. **/
+    public JExpression makeLocalVarExpression(JLocalVariable var) {
+	return new JLocalVariableExpression(null, var);
+    }
 
+    /** Creates a less than expression: left < right. **/
+    public JExpression makeLessThanExpression(JExpression left, JExpression right) {
+	return new JRelationalExpression(null, OPE_LT, left, right);
+    }
+
+    /** Creates a post increment statement: expr++. **/
+    public JStatement makeIncrementStatement(JExpression expr) {
+	JExpression incExpr = new JPostfixExpression(null, OPE_POSTINC, expr);
+	return new JExpressionStatement(null, incExpr, null);
+    }
+    
     
     /**
      * Initializes a field to a particular integer value.

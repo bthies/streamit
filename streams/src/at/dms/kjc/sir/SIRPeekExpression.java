@@ -76,7 +76,8 @@ public class SIRPeekExpression extends JExpression {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitPeekExpression(this, arg);
 	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	    // visit the argument
+	    arg.accept(p);
 	}
     }
 

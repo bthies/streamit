@@ -19,7 +19,9 @@ public class Flattener {
 	// make single structure
 	JClassDeclaration flatClass = Structurer.structure(str);
 	// build schedule as set of higher-level work functions
-	flatClass.accept(new IRPrinter());
+	IRPrinter printer = new IRPrinter();
+	flatClass.accept(printer);
+	printer.close();
 	// add LIR hooks to init functions
 	return null;
     }

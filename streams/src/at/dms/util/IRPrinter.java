@@ -7,12 +7,15 @@ package at.dms.util;
 
 import java.io.*;
 
+import at.dms.kjc.SLIRVisitor;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.sir.*;
+import at.dms.kjc.lir.*;
 
-public class IRPrinter extends Utils implements KjcVisitor
+public class IRPrinter extends Utils implements SLIRVisitor
 {
     /**
      * Amount the current line of text should be indented by
@@ -288,12 +291,14 @@ public class IRPrinter extends Utils implements KjcVisitor
     {
         blockStart("ClassBody");
 
-        for (int i = 0; i < decls.length ; i++)
-            decls[i].accept(this);
+	for (int i = 0; i < decls.length ; i++)
+	    decls[i].accept(this);
         for (int i = 0; i < methods.length ; i++)
             methods[i].accept(this);
-        for (int i = 0; i < body.length ; i++)
-            body[i].accept(this);
+	if (body!=null) {
+	    for (int i = 0; i < body.length ; i++)
+		body[i].accept(this);
+	}
 
         blockEnd();
     }
@@ -1392,4 +1397,296 @@ public class IRPrinter extends Utils implements KjcVisitor
         blockEnd();
     }
 
+    /**
+     * SIR NODES
+     */
+
+    /**
+     * Visits an init statement.
+     */
+    public void visitInitStatement(SIRInitStatement self,
+			    JExpression[] args,
+			    SIRStream target) {
+	blockStart("SIRInitStatement");
+	attrPrint("target", target.getName());
+	attrStart("args");
+	for (int i=0; i<args.length; i++) {
+	    args[i].accept(this);
+	}
+	attrEnd();
+	blockEnd();
+    }
+
+    /**
+     * Visits a latency.
+     */
+    public void visitLatency(SIRLatency self) {
+	blockStart("SIRLatency");
+	if (self==SIRLatency.BEST_EFFORT) {
+	    printData("BEST EFFORT");
+	}
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a max latency.
+     */
+    public void visitLatencyMax(SIRLatencyMax self) {
+	blockStart("SIRLatencyMax");
+	attrPrint("max", String.valueOf(self.getMax()));
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a latency range.
+     */
+    public void visitLatencyRange(SIRLatencyRange self) {
+	blockStart("SIRLatencyRange");
+	attrPrint("max", String.valueOf(self.getMax()));
+	attrPrint("min", String.valueOf(self.getMin()));
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a latency set.
+     */
+    public void visitLatencySet(SIRLatencySet self) {
+	blockStart("SIRLatencySet");
+	Utils.fail("Printing list of latencies not implemented yet.");
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a message statement.
+     */
+    public void visitMessageStatement(SIRMessageStatement self,
+			       SIRPortal portal,
+			       String ident,
+			       JExpression[] args,
+			       SIRLatency latency) {
+	Utils.fail("Printing message statements unimplemented");
+    }
+
+
+    /**
+     * Visits a peek expression.
+     */
+    public void visitPeekExpression(SIRPeekExpression self,
+			     JExpression arg) {
+	blockStart("SIRPeekExpression");
+	attrStart("arg");
+	arg.accept(this);
+	attrEnd();
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a pop expression.
+     */
+    public void visitPopExpression(SIRPopExpression self) {
+	blockStart("SIRPopExpression");
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a print statement.
+     */
+    public void visitPrintStatement(SIRPrintStatement self,
+			     JExpression arg) {
+	blockStart("SIRPrintStatement");
+	attrStart("arg");
+	arg.accept(this);
+	attrEnd();
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a push expression.
+     */
+    public void visitPushExpression(SIRPushExpression self,
+			     JExpression arg) {
+	blockStart("SIRPushExpression");
+	attrStart("arg");
+	arg.accept(this);
+	attrEnd();
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a register-receiver statement.
+     */
+    public void visitRegReceiverStatement(SIRRegReceiverStatement self,
+				   String portal) {
+	Utils.fail("Printing reg. receiver statements unimplemented");
+    }
+
+
+    /**
+     * Visits a register-sender statement.
+     */
+    public void visitRegSenderStatement(SIRRegSenderStatement self,
+				 String portal,
+				 SIRLatency latency) {
+	Utils.fail("Printing reg. sender statements unimplemented");
+    }
+
+
+    /**
+     * LIR NODES.
+     */
+
+    /**
+     * Visits a function pointer.
+     */
+    public void visitFunctionPointer(LIRFunctionPointer self,
+				     String name) {
+	blockStart("LIRFunctionPointer");
+	attrPrint("name", name);
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits an LIR node.
+     */
+    public void visitNode(LIRNode self) {
+	blockStart("LIRNode");
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a child registration node.
+     */
+    public void visitSetChild(LIRSetChild self,
+			      JExpression streamContext,
+			      JExpression childContext) {
+	blockStart("LIRSetChild");
+	attrStart("parentContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrStart("childContext");
+	childContext.accept(this);
+	attrEnd();
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits a decoder registration node.
+     */
+    public void visitSetDecode(LIRSetDecode self,
+                        JExpression streamContext,
+                        LIRFunctionPointer fp) {
+	blockStart("LIRSetDecode");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrStart("decode function");
+	fp.accept(this);
+	attrEnd();
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits an encoder registration node.
+     */
+    public void visitSetEncode(LIRSetEncode self,
+			       JExpression streamContext,
+			       LIRFunctionPointer fp) {
+	blockStart("LIRSetEncode");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrStart("encode function");
+	fp.accept(this);
+	attrEnd();
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits a peek-rate-setting node.
+     */
+    public void visitSetPeek(LIRSetPeek self,
+			     JExpression streamContext,
+			     int peek) {
+	blockStart("LIRSetPeek");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	printData("peek count: " + peek);
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits a pop-rate-setting node.
+     */
+    public void visitSetPop(LIRSetPop self,
+                     JExpression streamContext,
+                     int pop) {
+	blockStart("LIRSetPop");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	printData("pop count: " + pop);
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits a push-rate-setting node.
+     */
+    public void visitSetPush(LIRSetPush self,
+                      JExpression streamContext,
+                      int push) {
+	blockStart("LIRSetPush");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	printData("push count: " + push);
+	blockEnd();
+    }
+
+
+    /**
+     * Visits a stream-type-setting node.
+     */
+    public void visitSetStreamType(LIRSetStreamType self,
+                            JExpression streamContext,
+                            LIRStreamType streamType) {
+	blockStart("LIRSetStreamType");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	printData("type: " + streamType);
+	blockEnd();
+    }
+
+    
+    /**
+     * Visits a work-function-setting node.
+     */
+    public void visitSetWork(LIRSetWork self,
+                      JExpression streamContext,
+                      LIRFunctionPointer fn) {
+	blockStart("LIRSetWork");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrStart("work function");
+	fn.accept(this);
+	attrEnd();
+	blockEnd();
+    }
 }

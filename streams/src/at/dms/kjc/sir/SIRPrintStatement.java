@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: SIRPrintStatement.java,v 1.3 2001-10-02 19:58:52 thies Exp $
+ * $Id: SIRPrintStatement.java,v 1.4 2001-10-02 20:36:11 thies Exp $
  */
 
 package at.dms.kjc.sir;
@@ -90,7 +90,7 @@ public class SIRPrintStatement extends JStatement {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitPrintStatement(this, arg);
 	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	    arg.accept(p);
 	}
     }
 }

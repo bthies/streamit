@@ -66,7 +66,7 @@ public class SIRPopExpression extends JExpression {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitPopExpression(this); 
 	} else {
-	    at.dms.util.Utils.fail("Use SLIR visitor to visit an SIR node.");
+	    // otherwise, do nothing
 	}
     }
 

@@ -56,6 +56,8 @@ public class Flattener {
 	ConstantProp.propagateAndUnroll(str);
 	System.err.println("done.");
 
+	lowerFilterContents(str, true);
+
 	// Convert Peeks to Pops
 	if (KjcOptions.poptopeek) {
 	    System.err.print("Converting pop to peek... ");
@@ -108,8 +110,6 @@ public class Flattener {
 	System.err.println("Trying to duplicate " + toDuplicate);
 	StatelessDuplicate.doit(toDuplicate, 2);
 	*/
-
-	lowerFilterContents(str, true);
 
 	str = doLinearAnalysis(str);
 

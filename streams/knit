@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.32 2003-07-01 22:22:50 janiss Exp $
+# $Id: knit,v 1.33 2003-07-10 19:55:57 sitij Exp $
 #
 
 use strict;
@@ -128,7 +128,7 @@ EOT
 sub get_options
   {
     $opts{home} = $ENV{STREAMIT_HOME};
-    $opts{memory} = "512M";
+    $opts{memory} = "1700M";
     GetOptions(\%opts,
 	       "help",
 	       "more-help|help-more",
@@ -227,12 +227,12 @@ sub old_to_c
       {
 	my $target = change_extension($fns->[0], "java", "c");
 	$target = $opts{output} . ".c" if $opts{outputs};
-	call("$java at.dms.kjc.Main -s $kjcopts $jfiles > $target");
+	call("$java -Xmx1700M at.dms.kjc.Main -s $kjcopts $jfiles > $target");
 	return [$target];
       }
     else
       {
-	call("$java at.dms.kjc.Main -s $kjcopts $jfiles");
+	call("$java -Xmx1700M at.dms.kjc.Main -s $kjcopts $jfiles");
 	return [];
       }
   }
@@ -245,7 +245,7 @@ sub run_in_library
       {
 	  my $class = remove_extension($java, "java");
 	  call("javac $java");
-	  call("java $class " . get_lib_opts());
+	  call("java -Xmx1700M $class " . get_lib_opts());
       }
   }
 

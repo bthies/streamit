@@ -95,10 +95,4 @@ public final class FusionTransform extends StreamTransform {
 	return "Fusion transform (" + partitions.size() + " components)";
     }
 
-    /**
-     * Overrides StreamTransform.isIdempotent
-     */
-    protected boolean isIdempotent() {
-	return false;
-    }
 }

@@ -28,6 +28,8 @@ public final class LinearReplaceTransform extends StreamTransform {
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
+	// again detect that <str> is linear, since it is a newly constructed stream
+	LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
 	LinearDirectReplacer.doReplace(lfa, str);
 	// kind of hard to get a handle on the new stream... return
 	// null for now; this shouldn't get dereferenced in linear

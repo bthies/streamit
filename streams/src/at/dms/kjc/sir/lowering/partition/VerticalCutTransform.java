@@ -11,7 +11,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 /**
  * Vertical cut transform on a stream graph.
  */
-public final class VerticalCutTransform extends StreamTransform {
+public final class VerticalCutTransform extends IdempotentTransform {
     /**
      * Position of the cut.  That is, the index of the last child that
      * is included in the TOP piece (after the cut is made).

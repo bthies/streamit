@@ -66,6 +66,13 @@ public abstract class StreamTransform {
     }
 
     /**
+     * Returns the number of predecessors.
+     */
+    public int getPredSize() {
+	return pred.size();
+    }
+    
+    /**
      * Adds a successor child transform to this.
      */
     public void addSucc(StreamTransform st) {
@@ -77,6 +84,13 @@ public abstract class StreamTransform {
      */
     public StreamTransform getSucc(int i) {
 	return (StreamTransform)succ.get(i);
+    }
+
+    /**
+     * Returns the number of successors.
+     */
+    public int getSuccSize() {
+	return succ.size();
     }
     
     /*****************************************************************/
@@ -110,8 +124,9 @@ public abstract class StreamTransform {
 	for (int i=0; i<cont.size(); i++) {
 	    SIRStream child = (SIRStream)cont.get(i);
 	    SIRStream newChild = ((StreamTransform)transforms.get(i)).doTransform(child);
-	    // some people did their own replacing, so only do it if it's not done
-	    if (child!=newChild && cont.get(i)!=newChild) {
+	    // some people did their own replacing, returning the orig
+	    // stream or null, so only do it if it's not done
+	    if (newChild!=null && child!=newChild && cont.get(i)!=newChild) {
 		cont.replace(child, newChild);
 	    }
 	}
@@ -178,21 +193,9 @@ public abstract class StreamTransform {
      * this performs any fusion or fission on the child streams.  If
      * it is just re-arranging synchronization, then it is idempotent
      * (and can be replaced by an identity if desired.)
-     *
-     * Should be overridden by non-idempotent transforms to return
-     * false.
      */
     protected boolean isIdempotent() {
-	boolean ok = true;
-	// test preds
-	for (int i=0; i<pred.size(); i++) {
-	    ok = ok && ((StreamTransform)pred.get(i)).isIdempotent();
-	}
-	// test succ's
-	for (int i=0; i<succ.size(); i++) {
-	    ok = ok && ((StreamTransform)succ.get(i)).isIdempotent();
-	}
-	return ok;
+	return false;
     }
 
 }

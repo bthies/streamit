@@ -12,7 +12,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
  * Identity transform on a stream graph.
  */
 
-public final class IdentityTransform extends StreamTransform {
+public final class IdentityTransform extends IdempotentTransform {
 
     public IdentityTransform() {
 	super();
@@ -28,5 +28,4 @@ public final class IdentityTransform extends StreamTransform {
     public String toString() {
 	return "Identity Transform";
     }
-
 }

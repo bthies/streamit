@@ -11,7 +11,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
 /**
  * Horizontal cut transform on a stream graph.
  */
-public final class HorizontalCutTransform extends StreamTransform {
+public final class HorizontalCutTransform extends IdempotentTransform {
     /**
      * Position of the cut.  That is, the index of the last child in
      * the splitjoin that is included in the LEFT piece (after the cut

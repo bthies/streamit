@@ -41,11 +41,4 @@ public class FissionTransform extends StreamTransform {
     public String toString() {
 	return "Fission transform (" + reps + " ways)";
     }
-
-    /**
-     * Overrides StreamTransform.isIdempotent
-     */
-    protected boolean isIdempotent() {
-	return false;
-    }
 }

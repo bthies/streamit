@@ -33,7 +33,7 @@ public class Filter extends Polygon implements IStream {
 	private String fDynamicText;
 	private String fNumWork;
 
-	public Filter(IValue filterVal, String name, String streamNameWithId, Expanded allExpanded, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
+	public Filter(IValue filterVal, String name, String streamNameWithId, OptionData optionData, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 
 		// create filter
@@ -41,7 +41,7 @@ public class Filter extends Polygon implements IStream {
 		fNameWithoutId = name;
 		fId = filterVal.getValueString();
 		String filterName = getNameWithId();
-		fExpanded = allExpanded.containsStream(filterName, true);
+		fExpanded = optionData.containsStream(filterName, true);
 
 		// filter style
 		setOutline(true);
@@ -60,11 +60,11 @@ public class Filter extends Polygon implements IStream {
 		IVariable[] inputVars = factoryInst.findVariables(filterVars, "input");
 		IVariable[] outputVars = factoryInst.findVariables(filterVars, "output");
 		if (forward) {
-			fTopChannel = new Channel(inputVars, filterName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fBottomChannel = new Channel(outputVars, filterName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fTopChannel = new Channel(inputVars, filterName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fBottomChannel = new Channel(outputVars, filterName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		} else {
-			fBottomChannel = new Channel(inputVars, filterName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fTopChannel = new Channel(outputVars, filterName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fBottomChannel = new Channel(inputVars, filterName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fTopChannel = new Channel(outputVars, filterName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		}
 
 		if (!fExpanded) {

@@ -293,10 +293,29 @@
                hoverIcon="icons/full/obj16/collapseall.gif"
                icon="icons/full/obj16/collapseall.gif"
                tooltip="%CollapseAction.tooltip"
-               class="streamit.eclipse.debugger.actions.CollapseAllViewAction"
+               class="streamit.eclipse.debugger.actions.CollapseAllViewActionDelegate"
                toolbarPath="additions"
-               disabledIcon="icons/full/obj16/faded_collapseall.gif"
-               id="streamit.eclipse.debugger.graph.collapseall">
+               id="streamit.eclipse.debugger.actions.CollapseAllViewActionDelegate">
+         </action>
+         <action
+               label="%ExpandAction.label"
+               hoverIcon="icons/full/obj16/expandall.gif"
+               icon="icons/full/obj16/expandall.gif"
+               tooltip="%ExpandAction.tooltip"
+               class="streamit.eclipse.debugger.actions.ExpandAllViewActionDelegate"
+               toolbarPath="additions"
+               id="streamit.eclipse.debugger.actions.ExpandAllViewActionDelegate">
+         </action>
+         <action
+               label="%HideAction.label"
+               hoverIcon="icons/full/obj16/hidelines.gif"
+               icon="icons/full/obj16/hidelines.gif"
+               tooltip="%HideAction.tooltip"
+               class="streamit.eclipse.debugger.actions.HideLinesViewActionDelegate"
+               toolbarPath="additions"
+               style="toggle"
+               state="false"
+               id="streamit.eclipse.debugger.actions.HideLinesViewActionDelegate">
          </action>
       </viewContribution>
    </extension>

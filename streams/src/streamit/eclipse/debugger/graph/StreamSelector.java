@@ -63,8 +63,6 @@ public class StreamSelector implements MouseListener {
 	private static void selected() {
 		fSelection.setForegroundColor(ColorConstants.menuForegroundSelected);
 		fSelection.setBackgroundColor(ColorConstants.menuBackgroundSelected);
-		
-		StreamItViewsManager.setCollapseAll(true);
 	}
 		
 	private static void unselected() {

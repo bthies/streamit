@@ -37,7 +37,7 @@ public class FeedbackLoop extends Ellipse implements IStream {
 	private int fTallestChild;
 	private int fChildWidth;
 
-	public FeedbackLoop(IValue feedbackloopVal, String name, String streamNameWithId, Expanded allExpanded, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
+	public FeedbackLoop(IValue feedbackloopVal, String name, String streamNameWithId, OptionData optionData, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 		
 		// create feedbackloop
@@ -45,12 +45,13 @@ public class FeedbackLoop extends Ellipse implements IStream {
 		fNameWithoutId = name;
 		fId = feedbackloopVal.getValueString();
 		String feedbackloopName = getNameWithId();
-		fExpanded = allExpanded.containsStream(feedbackloopName, false);
+		fExpanded = optionData.containsStream(feedbackloopName, false);
 		fHeader = new Label(feedbackloopName);
 		Dimension feedbackloopSize = FigureUtilities.getTextExtents(feedbackloopName, factoryInst.getFont());
 
 		// feedbackloop style
-		setOutline(true);
+		if (optionData.isHideLines() && fExpanded) setOutline(false);
+		else setOutline(true);
 		setForegroundColor(ColorConstants.menuForeground);
 		setBackgroundColor(ColorConstants.white);
 		
@@ -103,16 +104,17 @@ public class FeedbackLoop extends Ellipse implements IStream {
 				streamType = type.getSuperclass().getName();
 				
 				if (streamType.equals("streamit.library.Filter")) {
-					fChildren.add(new Filter(val, streamName, streamNameWithId, allExpanded, this, i != flip, false, true, childrenSize, factoryInst));
+					fChildren.add(new Filter(val, streamName, streamNameWithId, optionData, this, i != flip, false, true, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.Pipeline")) {
-					fChildren.add(new Pipeline(val, streamName, streamNameWithId, allExpanded,  this, i != flip, false, true, childrenSize, factoryInst));
+					fChildren.add(new Pipeline(val, streamName, streamNameWithId, optionData,  this, i != flip, false, true, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.SplitJoin")) {
-					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, allExpanded, this, i != flip, false, true, childrenSize, factoryInst));	
+					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, optionData, this, i != flip, false, true, childrenSize, factoryInst));	
 				} else if (streamType.equals("streamit.library.FeedbackLoop")) {
-					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, allExpanded, this, i != flip, false, true, childrenSize, factoryInst));
+					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, optionData, this, i != flip, false, true, childrenSize, factoryInst));
 				}
 				childrenSize.width += IStreamItGraphConstants.MARGIN/2;
 			}
+			if (fChildren.size() == 0) setOutline(true);
 			
 			// expanded splitter
 			fJoiner = new Polygon();
@@ -134,11 +136,11 @@ public class FeedbackLoop extends Ellipse implements IStream {
 		// create channels
 		IVariable[] splitjoinVars = feedbackloopVal.getVariables();
 		if (forward) {
-			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), feedbackloopName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), feedbackloopName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), feedbackloopName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), feedbackloopName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		} else {
-			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), feedbackloopName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), feedbackloopName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), feedbackloopName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), feedbackloopName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		}
 
 		// collapsed content

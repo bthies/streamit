@@ -1,7 +1,3 @@
-/*******************************************************************************
- * StreamIt Texteditor Plugin
- * @author kkuo
- *******************************************************************************/
 package streamit.eclipse.debugger.texteditor;
 
 import org.eclipse.core.resources.IFile;
@@ -14,6 +10,9 @@ import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.texteditor.MarkerAnnotation;
 import org.eclipse.ui.texteditor.ResourceMarkerAnnotationModel;
 
+/**
+ * @author kkuo
+ */
 public class StreamItDocumentProvider extends CompilationUnitDocumentProvider {
 	
 	protected class StreamItAnnotationModel extends ResourceMarkerAnnotationModel {
@@ -35,5 +34,4 @@ public class StreamItDocumentProvider extends CompilationUnitDocumentProvider {
 		}
 		return super.createAnnotationModel(element);
 	}
-	
 }

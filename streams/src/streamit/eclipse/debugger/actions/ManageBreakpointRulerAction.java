@@ -1,9 +1,3 @@
-/*******************************************************************************
- * StreamIt Debugger Plugin adapted from
- * org.eclipse.jdt.internal.debug.ui.actions.ManageBreakpointRulerAction
- * @author kkuo
- *******************************************************************************/
-
 package streamit.eclipse.debugger.actions;
 
 import java.util.ArrayList;
@@ -51,6 +45,9 @@ import org.eclipse.ui.texteditor.IUpdate;
 import streamit.eclipse.debugger.core.BreakpointRulerData;
 import streamit.eclipse.debugger.core.StrToJavaMapper;
 
+/**
+ * @author kkuo
+ */
 public class ManageBreakpointRulerAction extends Action implements IUpdate {	
 	
 	protected IVerticalRulerInfo fRuler;
@@ -71,9 +68,7 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 		fAddLabel= ActionMessages.getString("ManageBreakpointRulerAction.add.label"); //$NON-NLS-1$
 		fRemoveLabel= ActionMessages.getString("ManageBreakpointRulerAction.remove.label"); //$NON-NLS-1$
 
-		// TODO when .str changes, .java should also change!
 		// TODO error when .str is already open (at start-up)
-
 		updateBreakpointData();
 	}
 	
@@ -341,8 +336,12 @@ public class ManageBreakpointRulerAction extends Action implements IUpdate {
 					}
 				}	
 			}
-		} catch (Exception e) {
-			JDIDebugUIPlugin.errorDialog(ActionMessages.getString("ManageBreakpointRulerAction.error.adding.message1"), e); //$NON-NLS-1$
+		} catch (BadLocationException ble) {
+			JDIDebugUIPlugin.errorDialog(ActionMessages.getString("ManageBreakpointRulerAction.error.adding.message1"), ble); //$NON-NLS-1$
+		} catch (JavaModelException jme) {
+			JDIDebugUIPlugin.errorDialog(ActionMessages.getString("ManageBreakpointRulerAction.error.adding.message1"), jme); //$NON-NLS-1$
+		} catch (CoreException ce) {
+			JDIDebugUIPlugin.errorDialog(ActionMessages.getString("ManageBreakpointRulerAction.error.adding.message1"), ce); //$NON-NLS-1$
 		}
 	}
 	

@@ -1,7 +1,3 @@
-/*******************************************************************************
- * StreamIt Debugger Plugin
- * @author kkuo
- *******************************************************************************/
 package streamit.eclipse.debugger;
 
 import java.net.MalformedURLException;
@@ -22,7 +18,7 @@ import streamit.eclipse.debugger.texteditor.StreamItEditorPreferencePage;
 
 /**
  * This is the top-level class of the Debugger plugin tool.
- *
+ * @author kkuo
  * @see AbstractUIPlugin for additional information on UI plugins
  */
 public class StreamItDebuggerPlugin extends AbstractUIPlugin {

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * StreamIt Plugin adapted from Example Readme Tool
- * modifier - Kimberly Kuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.texteditor;
 
 import java.util.Iterator;
@@ -42,6 +27,8 @@ import streamit.eclipse.debugger.StreamItDebuggerPlugin;
 /**
  * This class implements a sample preference page that is 
  * added to the preference dialog based on the registration.
+ * 
+ * @author kkuo
  */
 public class StreamItEditorPreferencePage extends PreferencePage 
     implements IWorkbenchPreferencePage {

@@ -1,8 +1,3 @@
-/*******************************************************************************
- * StreamIt Editor adapted from Example Java Editor
- * modifier - Kimberly Kuo
- *******************************************************************************/
-
 package streamit.eclipse.debugger.texteditor;
 
 import org.eclipse.core.resources.IFile;
@@ -29,6 +24,8 @@ import streamit.eclipse.debugger.grapheditor.TestSwingEditorPlugin;
 
 /**
  * StreamIt specific text editor.
+ * 
+ * @author kkuo
  */
 public class StreamItEditor extends TextEditor {
 

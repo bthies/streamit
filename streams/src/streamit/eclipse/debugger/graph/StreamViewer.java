@@ -1,5 +1,6 @@
 package streamit.eclipse.debugger.graph;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
@@ -44,6 +45,7 @@ public class StreamViewer extends Viewer {
 	private Image fUpArrow;
 	private Image fDownArrow;
 	private Font fParentFont;
+	private boolean fHideLines;
 
 	public StreamViewer(Composite parent) {
 		super();
@@ -76,6 +78,8 @@ public class StreamViewer extends Viewer {
 		fDownArrow = reg.get(IStreamItDebuggerPluginConstants.DOWN_ARROW_IMAGE);
 		fParentFont = parent.getFont();
 		StreamItViewFactory.getInstance().setUtilities(fPlus, fMinus, fUpArrow, fDownArrow, fParentFont);
+		
+		fHideLines = false;
 	}
 
 	/* (non-Javadoc)
@@ -117,18 +121,19 @@ public class StreamViewer extends Viewer {
 			// clean graph
 			fInput = null;
 			setRoot(null);
-			StreamItViewsManager.setCollapseAll(false);
 			return;
 		}
 		
 		if (!(input instanceof IVariable)) return;
 		fInput = (IVariable) input;
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", getAllExpanded(false)));
+		OptionData od = getOptionData(false);
+		od.setHideLines(fHideLines);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", od, false));
 	}
 	
-	protected Expanded getAllExpanded(boolean highlighting) {
-		if (fRoot == null) return new Expanded(highlighting);
-		return ((MainPipeline) fRoot).getAllExpanded(highlighting);
+	protected OptionData getOptionData(boolean highlighting) {
+		if (fRoot == null) return new OptionData(highlighting);
+		return ((MainPipeline) fRoot).getOptionData(highlighting);
 	}
 	
 	private void setRoot(Figure root) {
@@ -163,26 +168,45 @@ public class StreamViewer extends Viewer {
 	
 	public void setSelection(String streamNameWithId, boolean highlighting) {
 		if (fInput == null) return;
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, streamNameWithId, getAllExpanded(highlighting)));
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, streamNameWithId, getOptionData(highlighting), false));
 	}
 	
 	public void toggleStream(String streamNameWithId) {
 		if (fInput == null) return;
-		Expanded e = getAllExpanded(false);
-		e.toggleStream(streamNameWithId);
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, streamNameWithId, e));
+		OptionData od = getOptionData(false);
+		od.toggleStream(streamNameWithId);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, streamNameWithId, od, false));
 	}
 	
 	public void toggleChannel(String channelId) {
 		if (fInput == null) return;
-		Expanded e = getAllExpanded(false);
-		e.toggleChannel(channelId);
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, StreamSelector.getSelectionName(), e));
+		OptionData od = getOptionData(false);
+		od.toggleChannel(channelId);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, StreamSelector.getSelectionName(), od, false));
 	}
 	
+	// for CollapseAllViewActionDelegate
 	public void collapseAll() {
-		if (fRoot == null) return;
-		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", new Expanded(false)));
+		if (fInput == null) return;
+		OptionData od = getOptionData(false);
+		od.clearExpanded();
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", od, false));
+	}
+	
+	// for ExpandAllViewActionDelegate
+	public void expandAll() {
+		if (fInput == null) return;
+		OptionData od = getOptionData(false);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", od, true));
+	}
+	
+	// for HideLinesViewActionDelegate
+	public void hideLines(boolean hide) {
+		fHideLines = hide;
+		if (fInput == null) return;
+		OptionData od = getOptionData(false);
+		od.setHideLines(fHideLines);
+		setRoot(StreamItViewFactory.getInstance().makeStream(fInput, "", od, false));
 	}
 	
 	/* (non-Javadoc)
@@ -209,7 +233,7 @@ public class StreamViewer extends Viewer {
 					IVariable var = StreamItViewFactory.getInstance().getVariable(vars, "program");
 					setSelection(var.getReferenceTypeName() + var.getValue().getValueString(), true);
 				}
-			} catch (Exception e) {
+			} catch (CoreException e) {
 			}
 		}		
 	}

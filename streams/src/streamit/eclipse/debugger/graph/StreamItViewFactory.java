@@ -40,11 +40,13 @@ public class StreamItViewFactory {
 		return fInstance;
 	}
 	
-	public Figure makeStream(IVariable topLevelPipeline, String streamNameWithId, Expanded allExpandedChildren) {
+	public Figure makeStream(IVariable topLevelPipeline, String streamNameWithId, OptionData optionData, boolean expandAll) {
 		try {
-			return new MainPipeline(topLevelPipeline, streamNameWithId, allExpandedChildren, getInstance());			
+			optionData.setExpandAll(expandAll);
+			Figure f = new MainPipeline(topLevelPipeline, streamNameWithId, optionData, getInstance());
+			optionData.setExpandAll(false);
+			return f;			
 		} catch (DebugException e) {
-			System.out.println("makeStream error:  " + e.toString());
 		}
 		return null;
 	}

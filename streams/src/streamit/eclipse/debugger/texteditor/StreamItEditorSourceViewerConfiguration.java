@@ -1,18 +1,3 @@
-/*******************************************************************************
- * StreamIt Editor adapted from JavaSourceViewerConfiguration.java
- * modifier - Kimberly Kuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.texteditor;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
@@ -45,6 +30,8 @@ import org.eclipse.ui.texteditor.ITextEditor;
  * <p>
  * This class may be instantiated; it is not intended to be subclassed.
  * </p>
+ * 
+ * @author kkuo
  */
 public class StreamItEditorSourceViewerConfiguration extends SourceViewerConfiguration {
 	

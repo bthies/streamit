@@ -1,18 +1,3 @@
-/*******************************************************************************
- * StreamIt Editor adapted from Example Java Editor
- * modifier - Kimberly Kuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.texteditor;
 
 import org.eclipse.ui.texteditor.ITextEditor;
@@ -22,6 +7,8 @@ import org.eclipse.ui.texteditor.TextEditorAction;
  * A toolbar action which toggles the presentation model of the
  * connected text editor. The editor shows either the highlight range
  * only or always the whole document.
+ * 
+ * @author kkuo
  */
 public class PresentationAction extends TextEditorAction {
 

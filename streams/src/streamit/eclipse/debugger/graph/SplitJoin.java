@@ -36,7 +36,7 @@ public class SplitJoin extends Polygon implements IStream {
 	private int fTallestChild;
 	private int fChildWidth;
 	
-	public SplitJoin(IValue splitjoinVal, String name, String streamNameWithId, Expanded allExpanded, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
+	public SplitJoin(IValue splitjoinVal, String name, String streamNameWithId, OptionData optionData, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 	
 		// create splitjoin
@@ -44,15 +44,16 @@ public class SplitJoin extends Polygon implements IStream {
 		fNameWithoutId = name;
 		fId = splitjoinVal.getValueString();
 		String splitjoinName = getNameWithId();
-		fExpanded = allExpanded.containsStream(splitjoinName, false);
+		fExpanded = optionData.containsStream(splitjoinName, false);
 		fHeader = new Label(splitjoinName);
 		Dimension splitjoinSize = FigureUtilities.getTextExtents(splitjoinName, factoryInst.getFont());
 
 		// splitjoin style
-		setOutline(true);
+		if (optionData.isHideLines() && fExpanded) setOutline(false);
+		else setOutline(true);
 		setForegroundColor(ColorConstants.menuForeground);
 		setBackgroundColor(ColorConstants.white);
-		
+
 		// possible highlight
 		if (streamNameWithId.equals(splitjoinName)) StreamSelector.setSelection(this);
 		
@@ -94,16 +95,17 @@ public class SplitJoin extends Polygon implements IStream {
 				streamName = type.getName();
 				streamType = type.getSuperclass().getName();
 				if (streamType.equals("streamit.library.Filter")) {
-					fChildren.add(new Filter(val, streamName, streamNameWithId, allExpanded, this, forward, false, true, childrenSize, factoryInst));
+					fChildren.add(new Filter(val, streamName, streamNameWithId, optionData, this, forward, false, true, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.Pipeline")) {
-					fChildren.add(new Pipeline(val, streamName, streamNameWithId, allExpanded,  this, forward, false, true, childrenSize, factoryInst));
+					fChildren.add(new Pipeline(val, streamName, streamNameWithId, optionData,  this, forward, false, true, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.SplitJoin")) {
-					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, allExpanded, this, forward, false, true, childrenSize, factoryInst));	
+					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, optionData, this, forward, false, true, childrenSize, factoryInst));	
 				} else if (streamType.equals("streamit.library.FeedbackLoop")) {
-					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, allExpanded, this, forward, false, true, childrenSize, factoryInst));
+					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, optionData, this, forward, false, true, childrenSize, factoryInst));
 				}
 				childrenSize.width += IStreamItGraphConstants.MARGIN/2;
 			}
+			if (fChildren.size() == 0) setOutline(true);
 			
 			// expanded splitter
 			fJoiner = new Polygon();
@@ -111,7 +113,7 @@ public class SplitJoin extends Polygon implements IStream {
 		
 			// expanded size
 			fTallestChild = childrenSize.height;
-			fChildWidth = childrenSize.width;
+			fChildWidth = childrenSize.width;			
 			splitjoinSize.width = Math.max(childrenSize.width, splitjoinSize.width*2 + IStreamItGraphConstants.CHANNEL_WIDTH + IStreamItGraphConstants.MARGIN*2);
 			splitjoinSize.height = Math.max(childrenSize.height, splitjoinSize.height) + IStreamItGraphConstants.CHANNEL_WIDTH*2 + splitjoinSize.height*2 + IStreamItGraphConstants.MARGIN*2 + factoryInst.getArrowHeight()*2;
 		}
@@ -125,11 +127,11 @@ public class SplitJoin extends Polygon implements IStream {
 		// create channels
 		IVariable[] splitjoinVars = splitjoinVal.getVariables();
 		if (forward) {
-			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), splitjoinName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), splitjoinName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), splitjoinName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), splitjoinName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		} else {
-			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), splitjoinName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), splitjoinName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fBottomChannel = new Channel(factoryInst.findVariables(splitjoinVars, "input"), splitjoinName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fTopChannel = new Channel(factoryInst.findVariables(splitjoinVars, "output"), splitjoinName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		}
 
 		// collapsed content

@@ -137,7 +137,7 @@ public class StreamItMainTab extends JavaLaunchConfigurationTab {
 		mainComp.setLayoutData(gd);
 		mainComp.setFont(font);
 		
-		// TODO change
+		// TODO change what Main Tab says
 		fMainLabel = new Label(mainComp, SWT.NONE);
 		fMainLabel.setText(LauncherMessages.getString("JavaMainTab.Main_cla&ss__4")); //$NON-NLS-1$
 		gd = new GridData();

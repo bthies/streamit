@@ -29,5 +29,5 @@ public class IStreamItGraphConstants {
 
 	// stream layout
 	protected static final int MARGIN = 4;
-	protected static final int CHANNEL_WIDTH = 16;
+	protected static final int CHANNEL_WIDTH = 20;//16;
 }

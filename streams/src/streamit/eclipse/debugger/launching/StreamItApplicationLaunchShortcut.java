@@ -1,19 +1,3 @@
-/*******************************************************************************
- * StreamIt Launcher adapted from 
- * org.eclipse.jdt.internal.debug.ui.streamit.eclipse.debugger.launching.JavaApplicationLaunchShortcut
- * @author kkuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.launching;
 
 import java.util.ArrayList;
@@ -54,6 +38,8 @@ import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 /**
  * Performs single click launching for local Java applications.
+ * 
+ * @author kkuo
  */
 public class StreamItApplicationLaunchShortcut implements ILaunchShortcut {
 
@@ -82,10 +68,10 @@ public class StreamItApplicationLaunchShortcut implements ILaunchShortcut {
 				//MessageDialog.openError(getShell(), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7"), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7")); //$NON-NLS-1$ //$NON-NLS-2$
 				MessageDialog.openError(getShell(), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7"), LaunchingMessages.getString("JavaApplicationAction.Project")); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-		} catch (Exception e) {
+		} catch (CoreException e) {
 			//MessageDialog.openError(getShell(), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7"), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7")); //$NON-NLS-1$ //$NON-NLS-2$
 			MessageDialog.openError(getShell(), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7"), LaunchingMessages.getString("JavaApplicationAction.File")); //$NON-NLS-1$ //$NON-NLS-2$
-		}	
+		}
 	}
 
 	/**
@@ -114,7 +100,7 @@ public class StreamItApplicationLaunchShortcut implements ILaunchShortcut {
 							IResource resource = chooseStreamItFile(files, mode);
 							if (resource != null) launch(resource, mode);
 							return;
-						} catch (Exception e) {
+						} catch (CoreException e) {
 							MessageDialog.openError(getShell(), LauncherMessages.getString("JavaApplicationAction.Launch_failed_7"), LaunchingMessages.getString("JavaApplicationAction.Selection")); //$NON-NLS-1$ //$NON-NLS-2$
 							return;							
 						}

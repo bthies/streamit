@@ -29,10 +29,10 @@ public class MainPipeline extends RectangleFigure implements IStream {
 	private boolean fExpanded;
 	private Vector fChildren;
 	
-	private Expanded fAllExpanded;
+	private OptionData fOptionData;
 
 	// top level pipeline
-	public MainPipeline(IVariable pipelineVar, String streamNameWithId, Expanded allExpanded, StreamItViewFactory factoryInst) throws DebugException {
+	public MainPipeline(IVariable pipelineVar, String streamNameWithId, OptionData optionData, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 		
 		// create pipeline
@@ -40,9 +40,9 @@ public class MainPipeline extends RectangleFigure implements IStream {
 		IValue pipelineVal = pipelineVar.getValue();
 		fNameWithoutId = pipelineVar.getReferenceTypeName();
 		fId = pipelineVal.getValueString();
-		fAllExpanded = allExpanded;
+		fOptionData = optionData;
 		String pipelineName = getNameWithId();
-		fExpanded = fAllExpanded.containsStream(pipelineName, false);
+		fExpanded = fOptionData.containsStream(pipelineName, false);
 		Dimension pipelineSize = FigureUtilities.getTextExtents(pipelineName, factoryInst.getFont());
 
 		// pipeline style
@@ -93,13 +93,13 @@ public class MainPipeline extends RectangleFigure implements IStream {
 				streamName = type.getName();
 				streamType = type.getSuperclass().getName();
 				if (streamType.equals("streamit.library.Filter")) {
-					fChildren.add(new Filter(val, streamName, streamNameWithId, fAllExpanded, this, true, true, i == last, childrenSize, factoryInst));
+					fChildren.add(new Filter(val, streamName, streamNameWithId, fOptionData, this, true, true, i == last, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.Pipeline")) {
-					fChildren.add(new Pipeline(val, streamName, streamNameWithId, fAllExpanded, this, true, true, i == last, childrenSize, factoryInst));
+					fChildren.add(new Pipeline(val, streamName, streamNameWithId, fOptionData, this, true, true, i == last, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.SplitJoin")) {
-					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, fAllExpanded, this, true, true, i == last, childrenSize, factoryInst));	
+					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, fOptionData, this, true, true, i == last, childrenSize, factoryInst));	
 				} else if (streamType.equals("streamit.library.FeedbackLoop")) {
-					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, fAllExpanded, this, true, true, i == last, childrenSize, factoryInst));				
+					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, fOptionData, this, true, true, i == last, childrenSize, factoryInst));				
 				}
 			}
 
@@ -220,9 +220,9 @@ public class MainPipeline extends RectangleFigure implements IStream {
 		return fId;
 	}
 
-	public Expanded getAllExpanded(boolean highlighting) {
-		fAllExpanded.setHighlightSelect(highlighting);
-		return fAllExpanded;
+	public OptionData getOptionData(boolean highlighting) {
+		fOptionData.setHighlightSelect(highlighting);
+		return fOptionData;
 	}
 	/* (non-Javadoc)
 	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelToggleWidth()

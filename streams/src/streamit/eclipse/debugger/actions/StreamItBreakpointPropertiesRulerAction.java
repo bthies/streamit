@@ -1,19 +1,3 @@
-/*******************************************************************************
- * StreamIt Debugger Plugin adapted from
- * org.eclipse.jdt.internal.debug.ui.actions.JavaBreakpointPropertiesRulerAction
- * @author kkuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.actions;
 
 import java.util.Iterator;
@@ -34,6 +18,8 @@ import org.eclipse.ui.texteditor.ITextEditor;
  * Presents a custom properties dialog to configure
  * the attibutes of a Java Breakpoint from the ruler popup menu of a 
  * text editor.
+ * 
+ * @author kkuo
  */
 public class StreamItBreakpointPropertiesRulerAction extends ManageBreakpointRulerAction {
 

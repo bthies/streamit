@@ -1,5 +1,6 @@
 package streamit.eclipse.debugger.core;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.debug.core.IJavaMethodBreakpoint;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.internal.debug.ui.BreakpointUtils;
@@ -92,7 +94,8 @@ public class PreDebuggingRunnable implements Runnable {
 					return;
 				}
 			}
-		} catch (Exception e) {
+		} catch (CoreException ce) {
+		} catch (IOException ce) {
 		}
 	}
 	
@@ -110,7 +113,7 @@ public class PreDebuggingRunnable implements Runnable {
 		return null;
 	}
 	
-	private void processFilter(IType streamType, IFile javaFile, LaunchData launchData) throws Exception {
+	private void processFilter(IType streamType, IFile javaFile, LaunchData launchData) throws JavaModelException {
 		// add mapping between filter name and variables
 		IField[] fields = streamType.getFields();
 		String[] vars = new String[fields.length];

@@ -1,4 +1,3 @@
-
 package streamit.eclipse.debugger.wizards;
 
 import java.text.MessageFormat;

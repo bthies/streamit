@@ -33,7 +33,7 @@ public class Pipeline extends RectangleFigure implements IStream {
 	private Channel fBottomChannel;
 	private Vector fChildren;
 
-	public Pipeline(IValue pipelineVal, String name, String streamNameWithId, Expanded allExpanded, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
+	public Pipeline(IValue pipelineVal, String name, String streamNameWithId, OptionData optionData, Figure parent, boolean forward, boolean verticalLayout, boolean lastChild, Dimension parentSize, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 		
 		// create pipeline
@@ -41,14 +41,15 @@ public class Pipeline extends RectangleFigure implements IStream {
 		fNameWithoutId = name;
 		fId = pipelineVal.getValueString();
 		String pipelineName = getNameWithId();
-		fExpanded = allExpanded.containsStream(pipelineName, false);
+		fExpanded = optionData.containsStream(pipelineName, false);
 		Dimension pipelineSize = FigureUtilities.getTextExtents(pipelineName, factoryInst.getFont());
 
 		// pipeline style
-		setBorder(new LineBorder());
+		if (optionData.isHideLines() && fExpanded) setOutline(false);
+		else setBorder(new LineBorder());
 		setOpaque(true);
 		setForegroundColor(ColorConstants.menuForeground);
-		setBackgroundColor(ColorConstants.white);		
+		setBackgroundColor(ColorConstants.white);
 
 		// possible highlight
 		if (streamNameWithId.equals(pipelineName)) StreamSelector.setSelection(this);
@@ -93,21 +94,24 @@ public class Pipeline extends RectangleFigure implements IStream {
 				streamName = type.getName();
 				streamType = type.getSuperclass().getName();
 				if (streamType.equals("streamit.library.Filter")) {
-					fChildren.add(new Filter(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));
+					fChildren.add(new Filter(val, streamName, streamNameWithId, optionData, this, forward, true, i == last, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.Pipeline")) {
-					fChildren.add(new Pipeline(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));
+					fChildren.add(new Pipeline(val, streamName, streamNameWithId, optionData, this, forward, true, i == last, childrenSize, factoryInst));
 				} else if (streamType.equals("streamit.library.SplitJoin")) {
-					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));	
+					fChildren.add(new SplitJoin(val, streamName, streamNameWithId, optionData, this, forward, true, i == last, childrenSize, factoryInst));	
 				} else if (streamType.equals("streamit.library.FeedbackLoop")) {
-					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, allExpanded, this, forward, true, i == last, childrenSize, factoryInst));				
+					fChildren.add(new FeedbackLoop(val, streamName, streamNameWithId, optionData, this, forward, true, i == last, childrenSize, factoryInst));				
 				}
 			}
 		
 			// expanded size
-			if (fChildren.size() == 0)
+			if (fChildren.size() == 0) {
 				pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*3);
-			else
+				setOutline(true);
+				setBorder(new LineBorder());
+			} else {
 				pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*3 + ((IStream) fChildren.get(0)).getTopChannelToggleWidth()*2);
+			}
 			pipelineSize.height = Math.max(childrenSize.height, pipelineSize.height + factoryInst.getArrowHeight());
 		}
 		setSize(pipelineSize);
@@ -120,11 +124,11 @@ public class Pipeline extends RectangleFigure implements IStream {
 		// create channels
 		IVariable[] pipelineVars = pipelineVal.getVariables();
 		if (forward) {
-			fTopChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), pipelineName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fBottomChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), pipelineName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fTopChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), pipelineName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fBottomChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), pipelineName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		} else {
-			fBottomChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), pipelineName + '1', parent, true, forward, lastChild, allExpanded, factoryInst);
-			fTopChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), pipelineName + '0', parent, false, forward, lastChild, allExpanded, factoryInst);
+			fBottomChannel = new Channel(factoryInst.findVariables(pipelineVars, "input"), pipelineName + '1', parent, true, forward, lastChild, optionData, factoryInst);
+			fTopChannel = new Channel (factoryInst.findVariables(pipelineVars, "output"), pipelineName + '0', parent, false, forward, lastChild, optionData, factoryInst);
 		}
 		fTopChannel.turnOff(fExpanded);
 		fBottomChannel.turnOff(fExpanded);

@@ -7,7 +7,7 @@ import org.eclipse.jface.resource.ImageRegistry;
 import streamit.eclipse.debugger.IStreamItDebuggerPluginConstants;
 import streamit.eclipse.debugger.StreamItDebuggerPlugin;
 import streamit.eclipse.debugger.graph.Channel;
-import streamit.eclipse.debugger.graph.Expanded;
+import streamit.eclipse.debugger.graph.OptionData;
 
 /**
  * @author kkuo
@@ -17,7 +17,7 @@ public class HighlightDatumAction extends Action {
 	private ChangeVariableValueInputDialog fInputDialog;
 	private Channel fChannel;
 	private int fIndex;
-	private Expanded fAllExpanded;
+	private OptionData fAllExpanded;
 	
 	public HighlightDatumAction() {
 		super(ActionMessages.getString("HighlightDatum.highlightDatum")); //$NON-NLS-1$
@@ -31,7 +31,7 @@ public class HighlightDatumAction extends Action {
 	 * Updates the enabled state of this action based
 	 * on the selection
 	 */
-	public void update(Channel c, int y, Expanded allExpanded) {
+	public void update(Channel c, int y, OptionData optionData) {
 		fIndex = c.onDatum(y);
 		if (fIndex < 0) {
 			setEnabled(false);
@@ -41,7 +41,7 @@ public class HighlightDatumAction extends Action {
 		
 		setEnabled(true);
 		fChannel = c;
-		fAllExpanded = allExpanded;
+		fAllExpanded = optionData;
 		if (c.isHighlighted(fIndex, fAllExpanded)) {
 			setText(ActionMessages.getString("HighlightDatum.unhighlightDatum"));
 		} else {

@@ -50,7 +50,7 @@ public class ChannelSelector implements MouseListener {
 				fChangeQueueValuesAction.update(c);
 				fShowQueueValuesAction.update(c);
 				StreamViewer v = getStreamViewer(getActivePage());
-				fHighlightAction.update(c, me.getLocation().y, v.getAllExpanded(false));
+				fHighlightAction.update(c, me.getLocation().y, v.getOptionData(false));
 				createContextMenu(v);
 			} else {
 				disableActions();
@@ -86,7 +86,7 @@ public class ChannelSelector implements MouseListener {
 	 */
 	public void mouseDoubleClicked(MouseEvent me) {
 		Channel c = (Channel) me.getSource();
-		fHighlightAction.update(c, me.getLocation().y, getStreamViewer(getActivePage()).getAllExpanded(false));
+		fHighlightAction.update(c, me.getLocation().y, getStreamViewer(getActivePage()).getOptionData(false));
 		fHighlightAction.run();
 	}
 

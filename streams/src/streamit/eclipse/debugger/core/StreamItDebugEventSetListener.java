@@ -1,5 +1,6 @@
 package streamit.eclipse.debugger.core;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -22,14 +23,19 @@ import org.eclipse.debug.internal.ui.DebugUIPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.debug.core.IJavaMethodBreakpoint;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import streamit.eclipse.debugger.graph.StreamViewer;
 import streamit.eclipse.debugger.launching.IStreamItLaunchingConstants;
 import streamit.eclipse.debugger.texteditor.IStreamItEditorConstants;
 
+/**
+ * @author kkuo
+ */
 public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDebugEventSetListener {
 	
 	private static StreamItDebugEventSetListener fInstance = new StreamItDebugEventSetListener();
@@ -89,7 +95,7 @@ public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDeb
 			filteredEvents.toArray(toReturn);
 			return toReturn;
 
-		} catch (Exception e) {
+		} catch (CoreException e) {
 		}
 		return events;
 	}
@@ -141,7 +147,7 @@ public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDeb
 				}
 			}
 			
-			// TODO fix
+			// TODO fix Breakpoint Stepping
 			/*
 			int detail = event.getDetail();
 			if (detail == DebugEvent.BREAKPOINT)
@@ -164,10 +170,10 @@ public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDeb
 				top.resume();
 				return true;
 			}
-		} catch (Exception e) {
+		} catch (CoreException e) {
 			try {
 				top.resume();
-			} catch (Exception ef) {
+			} catch (CoreException ef) {
 			}
 		}
 		return false;
@@ -201,7 +207,8 @@ public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDeb
 					IDocument doc = strEditor.getDocumentProvider().getDocument(strEditor.getEditorInput());
 					IRegion strLine = doc.getLineInformation(lineNumber);
 					strEditor.selectAndReveal(strLine.getOffset(), strLine.getLength());
-				} catch (Exception e) {
+				} catch (CoreException e) {
+				} catch (BadLocationException e) {
 				}
 			}
 		};
@@ -218,11 +225,11 @@ public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDeb
 		return getLaunchData(absoluteJavaFileName).getFilterVariables(filterName);
 	}
 
-	public static void setInitBreakpoint(String absoluteJavaFileName, IJavaMethodBreakpoint breakpoint) throws Exception {
+	public static void setInitBreakpoint(String absoluteJavaFileName, IJavaMethodBreakpoint breakpoint) throws CoreException {
 		getLaunchData(absoluteJavaFileName).setInitBreakpoint(breakpoint);
 	}
 
-	public LaunchData beforeLaunch(String absoluteJavaFileName, String javaFileName, IFile javaFile) throws Exception {
+	public LaunchData beforeLaunch(String absoluteJavaFileName, String javaFileName, IFile javaFile) throws IOException, CoreException, WorkbenchException {
 		LaunchData launchData = new LaunchData();
 		fLaunchData.put(absoluteJavaFileName, launchData);
 

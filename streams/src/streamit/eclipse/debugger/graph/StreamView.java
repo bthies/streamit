@@ -7,19 +7,15 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
-import streamit.eclipse.debugger.core.StreamItViewsManager;
-
 /**
  * @author kkuo
  */
 public class StreamView extends ViewPart implements ISelectionListener {
 
 	private StreamViewer fViewer;
-	private boolean fDisabled;
 
 	public StreamView() {
 		super();
-		fDisabled = false;
 	}
 
 	/* (non-Javadoc)
@@ -38,10 +34,6 @@ public class StreamView extends ViewPart implements ISelectionListener {
 	 */
 	public void setFocus() {
 		fViewer.getControl().setFocus();
-		if (fDisabled) return;
-		
-		StreamItViewsManager.setCollapseAll(this, false);
-		fDisabled = true;
 	}
 	
 	/* (non-Javadoc)

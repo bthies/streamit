@@ -1,14 +1,9 @@
-/*******************************************************************************
- * StreamIt Debugger Plugin adapted from
- * org.eclipse.jdt.internal.debug.ui.actions.ManageBreakpointRulerAction
- * @author kkuo
- *******************************************************************************/
-
 package streamit.eclipse.debugger.actions;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IType;
@@ -28,6 +23,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import streamit.eclipse.debugger.texteditor.StreamItEditorMessages;
 
+/**
+ * @author kkuo
+ */
 public class ManageWatchpointRulerAction extends ManageBreakpointRulerAction {
 	
 	public ManageWatchpointRulerAction(ITextEditor editor, IVerticalRulerInfo ruler) {
@@ -137,7 +135,7 @@ public class ManageWatchpointRulerAction extends ManageBreakpointRulerAction {
 							}
 						}
 						
-						if (field == null) throw new Exception();
+						if (field == null) throw new BadLocationException();
 												
 						Map attributes = new HashMap(10);
 						BreakpointUtils.addJavaBreakpointAttributes(attributes, field);
@@ -153,19 +151,26 @@ public class ManageWatchpointRulerAction extends ManageBreakpointRulerAction {
 					}
 				}	
 			}
-		} catch (Exception e) {
-			if (getTextEditor() != null) {
-				IEditorStatusLine statusLine= (IEditorStatusLine) getTextEditor().getAdapter(IEditorStatusLine.class);
-				if (statusLine != null) {
-					statusLine.setMessage(true, ActionMessages.getString("ManageWatchpointActionDelegate.CantAdd"), null);
-				}
-			}		
-			if (JDIDebugUIPlugin.getActiveWorkbenchShell() != null) {
-				JDIDebugUIPlugin.getActiveWorkbenchShell().getDisplay().beep();
-			}
-
+		} catch (BadLocationException ble) {
+			addMarkerError();
+		} catch (JavaModelException jme) {
+			addMarkerError();
+		} catch (CoreException ce) {
+			addMarkerError();
 		}		
 		fTextEditor.setFocus();
+	}
+	
+	private void addMarkerError() {
+		if (getTextEditor() != null) {
+			IEditorStatusLine statusLine= (IEditorStatusLine) getTextEditor().getAdapter(IEditorStatusLine.class);
+			if (statusLine != null) {
+				statusLine.setMessage(true, ActionMessages.getString("ManageWatchpointActionDelegate.CantAdd"), null);
+			}
+		}		
+		if (JDIDebugUIPlugin.getActiveWorkbenchShell() != null) {
+			JDIDebugUIPlugin.getActiveWorkbenchShell().getDisplay().beep();
+		}
 	}
 	
 	protected boolean includesJavaRulerLine(Position position, IDocument document) {

@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 /**
+ * @author kkuo
  * A simple input dialog for soliciting an input string
  * from the user.
  * <p>

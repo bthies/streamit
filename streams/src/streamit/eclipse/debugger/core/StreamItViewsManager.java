@@ -22,8 +22,6 @@ import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.JavaUI;
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
@@ -38,7 +36,6 @@ import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
@@ -197,7 +194,7 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 						}
 					}
 				}
-			} catch (Exception e) {
+			} catch (CoreException e) {
 			}
 			
 		} else if (id.equals(IStreamItEditorConstants.ID_STREAMIT_EDITOR)) {
@@ -256,7 +253,7 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 						}
 					}
 				}
-			} catch (Exception e) {
+			} catch (CoreException e) {
 			}
 		}
 	}
@@ -357,26 +354,6 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 		String strFileName = StreamItDebugEventSetListener.getStrFileName(javaFile);
 		IFile strFile = javaFile.getProject().getFile(strFileName);
 		return page.findEditor(new FileEditorInput(strFile));
-	}
-	
-	public static void setCollapseAll(IViewPart part, boolean enable) {
-		IContributionItem[] items = ((IViewSite) part.getSite()).getActionBars().getToolBarManager().getItems();
-		IContributionItem item;
-		String id;
-		for (int i = 0; i < items.length; i++) {
-			item = items[i];
-			id = item.getId();
-			if (id.equals("streamit.eclipse.debugger.graph.collapseall")) {
-				((ActionContributionItem) item).getAction().setEnabled(enable);
-				return;
-			}
-		}
-	}
-	
-	public static void setCollapseAll(boolean enable) {
-		IViewPart part = getActivePage().findView(IStreamItDebuggerConstants.ID_STREAMVIEW);
-		if (part == null) return;
-		StreamItViewsManager.setCollapseAll(part, enable);
 	}
 
 	/* (non-Javadoc)

@@ -1,19 +1,3 @@
-/*******************************************************************************
- * StreamIt Launcher adapted from 
- * org.eclipse.jdt.debug.ui.launchConfigurations.JavaArgumentsTab
- * @author kkuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.launching;
 
 import org.eclipse.core.runtime.CoreException;
@@ -46,7 +30,7 @@ import org.eclipse.ui.help.WorkbenchHelp;
  * <p>
  * This class may be instantiated. This class is not intended to be subclassed.
  * </p>
- * @since 2.0
+ * @author kkuo
  */
 public class StreamItArgumentsTab extends JavaLaunchConfigurationTab {
 

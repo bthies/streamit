@@ -1,7 +1,3 @@
-/*******************************************************************************
- * StreamIt Debugger adapted from
- * modifier - Kimberly Kuo
- *******************************************************************************/
 package streamit.eclipse.debugger.actions;
 
 import org.eclipse.core.resources.IFile;
@@ -30,6 +26,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import streamit.eclipse.debugger.core.BreakpointRulerData;
 import streamit.eclipse.debugger.core.StrToJavaMapper;
 
+/**
+ * @author kkuo
+ */ 
 public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerAction {
 	
 	private IBreakpoint fJavaBreakpoint;

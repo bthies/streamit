@@ -4,6 +4,7 @@ import java.util.Vector;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IDebugElement;
 import org.eclipse.debug.core.model.IValue;
@@ -109,7 +110,7 @@ public class VariableViewerFilter extends ViewerFilter {
 				if (name.equals("this") || name.equals("program")) return true;
 			}
 
-		} catch (Exception e) {
+		} catch (DebugException e) {
 		}
 		return false;	
 	}
@@ -121,7 +122,7 @@ public class VariableViewerFilter extends ViewerFilter {
 		return false;
 	}
 	
-	private void accumulate(IVariable[] vars) throws Exception {
+	private void accumulate(IVariable[] vars) throws DebugException {
 		IVariable element = null;
 		IValue next = null;
 		for (int i = 0; i < vars.length; i++) {

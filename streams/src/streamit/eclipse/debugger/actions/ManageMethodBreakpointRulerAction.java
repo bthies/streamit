@@ -1,13 +1,9 @@
-/*******************************************************************************
- * StreamIt Debugger Plugin adapted from
- * org.eclipse.jdt.internal.debug.ui.actions.ManageBreakpointRulerAction
- * @author kkuo
- *******************************************************************************/
 package streamit.eclipse.debugger.actions;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IType;
@@ -27,6 +23,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import streamit.eclipse.debugger.texteditor.StreamItEditorMessages;
 
+/**
+ * @author kkuo
+ */
 public class ManageMethodBreakpointRulerAction extends ManageBreakpointRulerAction {	
 	
 	public ManageMethodBreakpointRulerAction(ITextEditor editor, IVerticalRulerInfo ruler) {
@@ -137,7 +136,7 @@ public class ManageMethodBreakpointRulerAction extends ManageBreakpointRulerActi
 							}
 						}						
 						
-						if (method == null) throw new Exception();
+						if (method == null) throw new BadLocationException();
 						
 						// Add method breakpoint to .java
 						Map attributes = new HashMap(10);
@@ -157,17 +156,25 @@ public class ManageMethodBreakpointRulerAction extends ManageBreakpointRulerActi
 					}
 				}	
 			}
-		} catch (Exception e) {
-			if (getTextEditor() != null) {
-				IEditorStatusLine statusLine= (IEditorStatusLine) getTextEditor().getAdapter(IEditorStatusLine.class);
-				if (statusLine != null) {
-					statusLine.setMessage(true, ActionMessages.getString("ManageMethodBreakpointActionDelegate.CantAdd"), null);
-				}
-			}		
-			if (JDIDebugUIPlugin.getActiveWorkbenchShell() != null) {
-				JDIDebugUIPlugin.getActiveWorkbenchShell().getDisplay().beep();
-			}
+		} catch (BadLocationException ble) {
+			addMarkerError();
+		} catch (JavaModelException jme) {
+			addMarkerError();
+		} catch (CoreException ce) {
+			addMarkerError();
 		}		
 		fTextEditor.setFocus();
+	}
+
+	private void addMarkerError() {
+		if (getTextEditor() != null) {
+			IEditorStatusLine statusLine= (IEditorStatusLine) getTextEditor().getAdapter(IEditorStatusLine.class);
+			if (statusLine != null) {
+				statusLine.setMessage(true, ActionMessages.getString("ManageMethodBreakpointActionDelegate.CantAdd"), null);
+			}
+		}		
+		if (JDIDebugUIPlugin.getActiveWorkbenchShell() != null) {
+			JDIDebugUIPlugin.getActiveWorkbenchShell().getDisplay().beep();
+		}
 	}
 }

@@ -1,7 +1,3 @@
-/*******************************************************************************
- * StreamIt Plugin adapted from Example Readme Tool
- * modifier - Kimberly Kuo
- *******************************************************************************/
 package streamit.eclipse.debugger.launching;
 
 import streamit.eclipse.debugger.StreamItDebuggerPlugin;
@@ -9,6 +5,8 @@ import streamit.eclipse.debugger.StreamItDebuggerPlugin;
 /**
  * This interface contains constants for use only within the
  * StreamItEditor package.
+ * 
+ * @author kkuo
  */
 public interface IStreamItLaunchingConstants {
 

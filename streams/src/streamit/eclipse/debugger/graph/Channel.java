@@ -37,7 +37,7 @@ public class Channel extends Label {
 	private String fId;
 	private ChannelToggle fIcon;
 
-	public Channel(IVariable[] vars, String id, Figure parent, boolean input, boolean forward, boolean lastChild, Expanded allExpanded, StreamItViewFactory factoryInst) throws DebugException {
+	public Channel(IVariable[] vars, String id, Figure parent, boolean input, boolean forward, boolean lastChild, OptionData optionData, StreamItViewFactory factoryInst) throws DebugException {
 		super();
 		fId = id;
 		fInput = input;
@@ -59,7 +59,7 @@ public class Channel extends Label {
 		}
 		fVoid = false;
 		fDraw = fInput || lastChild;
-		fExpanded = allExpanded.containsChannel(id);
+		fExpanded = optionData.containsChannel(id);
 		fArray = false;
 		fComplex = false;
 		
@@ -82,7 +82,7 @@ public class Channel extends Label {
 				var = factoryInst.getVariable(val.getVariables(), "value");
 			fQueue.add(var);
 
-			if (allExpanded.isHighlighted(var)) {
+			if (optionData.isHighlighted(var)) {
 				if (fArray) fHighlights.put(var, new Label(getValueStringFromArray(var)));
 				else if (fComplex) fHighlights.put(var, new Label(getValueStringFromComplex(var))); 
 				else fHighlights.put(var, new Label(var.getValue().getValueString()));
@@ -426,13 +426,13 @@ public class Channel extends Label {
 		return index;
 	}
 	
-	public boolean isHighlighted(int index, Expanded allExpanded) {
-		return allExpanded.isHighlighted((IVariable) fQueue.get(index));
+	public boolean isHighlighted(int index, OptionData optionData) {
+		return optionData.isHighlighted((IVariable) fQueue.get(index));
 	}
 	
-	public void highlight(int index, Expanded allExpanded) {
+	public void highlight(int index, OptionData optionData) {
 		IVariable datum = (IVariable) fQueue.get(index);
-		allExpanded.toggleChannel(datum);
+		optionData.toggleChannel(datum);
 		
 		// create highlight
 		String text;
@@ -468,9 +468,9 @@ public class Channel extends Label {
 		fHighlights.put(datum, highlight);
 	}
 	
-	public void unhighlight(int index, Expanded allExpanded) {
+	public void unhighlight(int index, OptionData optionData) {
 		IVariable datum = (IVariable) fQueue.get(index);
-		allExpanded.toggleChannel(datum);
+		optionData.toggleChannel(datum);
 
 		remove((Figure) fHighlights.remove(datum));
 	}

@@ -1,10 +1,11 @@
 package streamit.eclipse.debugger.actions;
 
-/**
- * @author kkuo
-*/import java.util.MissingResourceException;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+/**
+ * @author kkuo
+ */ 
 public class ActionMessages {
 
 	private static final String RESOURCE_BUNDLE= "streamit.eclipse.debugger.actions.ActionMessages";//$NON-NLS-1$

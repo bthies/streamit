@@ -11,7 +11,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.4 2003-07-09 15:29:21 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.5 2003-07-09 15:34:46 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -397,7 +397,8 @@ public class SemanticChecker
                         report(func,
                                "filter declared void input type, but " +
                                "non-zero pop rate");
-                    if (!typeIsVoid(st.getIn()) && !canPop && !phased)
+                    if (!typeIsVoid(st.getIn()) && !canPop && !phased &&
+                        !isPhase)
                         report(func,
                                "filter declared non-void input type, but "+
                                "has zero pop rate");
@@ -405,7 +406,8 @@ public class SemanticChecker
                         report(func,
                                "filter declared void output type, but " +
                                "non-zero push rate");
-                    if (!typeIsVoid(st.getOut()) && !canPush && !phased)
+                    if (!typeIsVoid(st.getOut()) && !canPush && !phased &&
+                        !isPhase)
                         report(func,
                                "filter declared non-void output type, but " +
                                "has zero push rate");

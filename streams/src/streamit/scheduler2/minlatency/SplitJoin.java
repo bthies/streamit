@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: SplitJoin.java,v 1.8 2003-04-06 22:52:20 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.9 2003-04-07 05:26:37 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
@@ -87,7 +87,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                     {
                         // get the phase and check that I've enough 
                         // peek data in the buffer to run it
-                        PhasingSchedule childPhase = getChildNextPhase(child);
+                        PhasingSchedule childPhase = getChildPhase(child, nPhase);
                         ASSERT(
                             postSplitBuffers[nChild]
                                 >= childPhase.getOverallPeek());
@@ -355,8 +355,9 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                 for (nChild = 0; nChild < getNumChildren(); nChild++)
                 {
                     int childSplitterPhases = 0;
+                    int childSplitterPush = 0;
                     while (postSplitBuffers[nChild]
-                        + splitterOverallPush[nChild]
+                        + childSplitterPush
                         - childOverallPeek[nChild]
                         < 0)
                     {
@@ -365,11 +366,22 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                                 childSplitterPhases);
                         childSplitterPhases++;
 
-                        splitterOverallPush[nChild]
+                        childSplitterPush
                             += splitFlow.getPushWeight(nChild);
                     }
 
                     splitterPhases = MAX(splitterPhases, childSplitterPhases);
+                }
+                
+                for (int nPhase = 0; nPhase < splitterPhases; nPhase++)
+                {
+                    SplitFlow splitFlow =
+                        utility.getSplitSteadyPhaseFlow(
+                            splitterPhases);
+                    for (nChild = 0; nChild < getNumChildren();nChild++)
+                    {
+                        splitterOverallPush [nChild] += splitFlow.getPushWeight(nChild);
+                    }
                 }
             }
 

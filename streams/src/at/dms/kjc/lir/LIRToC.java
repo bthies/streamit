@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.88 2003-12-08 19:47:08 dmaze Exp $
+ * $Id: LIRToC.java,v 1.89 2003-12-08 22:34:43 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -2006,6 +2006,25 @@ public class LIRToC
     {
         // This should never be called directly.
         print("/* Unexpected visitNode */");
+    }
+
+    /**
+     * Visits an LIR register-receiver statement.
+     */
+    public void visitRegisterReceiver(LIRRegisterReceiver self,
+                                      JExpression streamContext,
+                                      SIRPortal portal,
+                                      String childName,
+                                      SIRInterfaceTable itable)
+    {
+        print("register_receiver(");
+        portal.accept(this);
+        print(", ");
+        streamContext.accept(this);
+        print("->" + childName + "->" + CONTEXT_NAME + ", ");
+        print(itable.getVarDecl().getIdent());
+        print(", LATENCY_BEST_EFFORT);");
+        // (But shouldn't there be a latency field in here?)
     }
 
     /**

@@ -1651,6 +1651,27 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	blockEnd();
     }
 
+    /**
+     * Visits an LIR register-receiver statement.
+     */
+    public void visitRegisterReceiver(LIRRegisterReceiver self,
+                                      JExpression streamContext,
+                                      SIRPortal portal,
+                                      String childName,
+                                      SIRInterfaceTable itable) {
+        blockStart("LIRRegisterReceiver");
+        attrStart("parentContext");
+        streamContext.accept(this);
+        attrEnd();
+        attrStart("portal");
+        portal.accept(this);
+        attrEnd();
+        attrPrint("childName", childName);
+        attrStart("itable");
+        itable.accept(this);
+        attrEnd();
+        blockEnd();
+    }
 
     /**
      * Visits a child registration node.

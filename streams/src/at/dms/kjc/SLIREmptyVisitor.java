@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIREmptyVisitor.java,v 1.13 2003-12-02 21:12:09 dmaze Exp $
+ * $Id: SLIREmptyVisitor.java,v 1.14 2003-12-08 22:34:41 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -166,6 +166,19 @@ public class SLIREmptyVisitor extends KjcEmptyVisitor
      * Visits an LIR node.
      */
     public void visitNode(LIRNode self) {}
+
+    /**
+     * Visits an LIR register-receiver statement.
+     */
+    public void visitRegisterReceiver(LIRRegisterReceiver self,
+                                      JExpression streamContext,
+                                      SIRPortal portal,
+                                      String childName,
+                                      SIRInterfaceTable itable) {
+        streamContext.accept(this);
+        portal.accept(this);
+        itable.accept(this);
+    }
 
     /**
      * Visits a child registration node.

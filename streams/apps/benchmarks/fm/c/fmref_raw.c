@@ -1,17 +1,14 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.9 2002-07-30 02:20:09 aalamb Exp $
+ * $Id: fmref_raw.c,v 1.1 2002-07-30 02:20:09 aalamb Exp $
  */
 
-#ifdef raw
 #include <raw.h>
-#else
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#endif
 #include <math.h>
 
 #define SAMPLING_RATE 200000
@@ -21,9 +18,7 @@
 #define BANDWIDTH 10000
 #define DECIMATION 4
 /* Must be at least NUM_TAPS+1: */
-#define IN_BUFFER_LEN 10000
-
-void begin(void);
+#define IN_BUFFER_LEN 128
 
 typedef struct FloatBuffer
 {
@@ -71,16 +66,21 @@ static int numiters = -1;
 #ifndef raw
 int main(int argc, char **argv)
 {
-  int i;
-  for (i=0; i<1000; i++) {
-    begin();
+  int option;
+
+  while ((option = getopt(argc, argv, "i:")) != -1)
+  {
+    switch(option)
+    {
+    case 'i':
+      numiters = atoi(optarg);
+    }
   }
-  
+
+  begin();
   return 0;
 }
 #endif
-
-
 
 void begin(void)
 {
@@ -88,9 +88,6 @@ void begin(void)
   FloatBuffer fb1, fb2, fb3, fb4;
   LPFData lpf_data;
   EqualizerData eq_data;
-
-  // set up number of iterations
-  numiters = 10000;
 
   fb1.rpos = fb1.rlen = 0;
   fb2.rpos = fb2.rlen = 0;
@@ -125,7 +122,7 @@ void begin(void)
     run_lpf(&fb1, &fb2, &lpf_data);
     run_demod(&fb2, &fb3);
     run_equalizer(&fb3, &fb4, &eq_data);
-    //write_floats(&fb4);
+    write_floats(&fb4);
   }
 }
 
@@ -265,10 +262,16 @@ void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data)
 
 void write_floats(FloatBuffer *fb)
 {
+  static int i = 0;
   /* printf() any data that's available: */
 #ifdef raw
-  while (fb->rpos < fb->rlen)
-    print_float(fb->buff[fb->rpos++]);
+  while (fb->rpos < fb->rlen) {
+    raw_test_pass_reg(i++);
+    fb->rpos++;
+  }
+  /*raw_test_done(1);*/
+  /** printf("%f\n", fb->buff[fb->rpos++]);**/
+  /**print_float(fb->buff[fb->rpos++]);**/
 #else
   while (fb->rpos < fb->rlen)
     printf("%f\n", fb->buff[fb->rpos++]);

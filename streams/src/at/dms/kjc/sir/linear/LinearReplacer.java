@@ -11,24 +11,28 @@ import at.dms.compiler.*;
 /**
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.
- * $Id: LinearReplacer.java,v 1.13 2003-03-08 21:13:57 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.14 2003-03-30 21:50:56 thies Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
+    // in visitors of containers, clear the children if we make a
+    // replacement to prevent the visitor from descending into
+    // disconnected stream components
     public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {makeReplacement(self);}
+				     SIRFeedbackLoopIter iter) {if (makeReplacement(self)) { self.clear(); }}
     public void preVisitPipeline(    SIRPipeline self,
-				     SIRPipelineIter iter){makeReplacement(self);}
+				     SIRPipelineIter iter){if (makeReplacement(self)) { self.clear(); }}
     public void preVisitSplitJoin(   SIRSplitJoin self,
-				     SIRSplitJoinIter iter){makeReplacement(self);}
+				     SIRSplitJoinIter iter){if (makeReplacement(self)) { self.clear(); }}
     public void visitFilter(         SIRFilter self,
 				     SIRFilterIter iter){makeReplacement(self);}
 
 
     /**
-     * Visit a pipeline, splitjoin or filter, replacing them with a new filter
-     * that presumably calculates things more efficiently.
+     * Visit a pipeline, splitjoin or filter, replacing them with a
+     * new filter that presumably calculates things more efficiently.
+     * Returns whether or not any replacement was done.
      **/
-    public abstract void makeReplacement(SIRStream self);
+    public abstract boolean makeReplacement(SIRStream self);
 
 
     

@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearDirectReplacer.java,v 1.1 2003-02-28 22:34:52 aalamb Exp $
+ * $Id: LinearDirectReplacer.java,v 1.2 2003-03-30 21:50:56 thies Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -64,7 +64,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
      * that directly implements the linear representation. This only
      * occurs if the replace calculator says that this stream should be replaced.
      **/
-    public void makeReplacement(SIRStream self) {
+    public boolean makeReplacement(SIRStream self) {
 // 	if (!this.replaceGuide.shouldReplace(self)) {
 // 	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
 // 	    LinearPrinter.println(" stop.");
@@ -76,13 +76,13 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	    // we are done, this is the top level stream
 	    LinearPrinter.println(" aborting, top level stream: " + self);
 	    LinearPrinter.println(" stop.");
-	    return;
+	    return false;
 	}
 	LinearPrinter.println(" parent: " + parent);
 	if (!this.linearityInformation.hasLinearRepresentation(self)) {
 	    LinearPrinter.println(" no linear information about: " + self);
 	    LinearPrinter.println(" stop.");
-	    return;
+	    return false;
 	}
 	
 	// generate a new implementation as a single filter
@@ -111,6 +111,9 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	// add a mapping from the new filter to the old linear rep (because it still computes the same thing)
 	this.linearityInformation.addLinearRepresentation(newImplementation, linearRep); // add same old linear rep
+
+	// return that we replaced something
+	return true;
     }
 
     /**

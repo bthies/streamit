@@ -14,7 +14,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.19 2003-03-22 23:37:00 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.20 2003-03-30 21:50:56 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -87,6 +87,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * fresh linear analyzer.
      *
      * If the debug flag is set, then we print a lot of debugging information
+     *
+     * <refactorLinearChildren> indicates whether or not we should
+     * refactor linear children into a separate pipeline, if some of
+     * their siblings are not linear.
      **/
     public static LinearAnalyzer findLinearFilters(SIRStream str, boolean debug, boolean refactorLinearChildren) {
 	return findLinearFilters(str, debug, new LinearAnalyzer(refactorLinearChildren));

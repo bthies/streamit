@@ -10,7 +10,7 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.7 2003-03-12 15:59:25 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.8 2003-03-30 21:50:56 thies Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -51,20 +51,20 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
      * that directly implements the linear representation. This only
      * occurs if the replace calculator says that this stream should be replaced.
      **/
-    public void makeReplacement(SIRStream self) {
+    public boolean makeReplacement(SIRStream self) {
 	LinearPrinter.println("starting redundancy replacement for " + self);
 	SIRContainer parent = self.getParent();
 	if (parent == null) {
 	    // we are done, this is the top level stream
 	    LinearPrinter.println(" aborting, top level stream: " + self);
 	    LinearPrinter.println(" stop.");
-	    return;
+	    return false;
 	}
 	LinearPrinter.println(" parent: " + parent);
 	if (!this.linearInformation.hasLinearRepresentation(self)) {
 	    LinearPrinter.println(" no linear information about: " + self);
 	    LinearPrinter.println(" stop.");
-	    return;
+	    return false;
 	}
 	
 	// pull out the linear representation
@@ -73,7 +73,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	/* if there is not a real valued FIR (all coefficients are real), we are done. */
 	if (!linearRep.isPurelyReal()) {
 	    LinearPrinter.println("  aborting -- filter has non real coefficients."); 
-	    return;
+	    return false;
 	}
 
 
@@ -117,6 +117,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	// add a mapping from the new filter to the old linear rep (because it still computes
 	// the same thing add same old linear rep
 	this.linearInformation.addLinearRepresentation(newImplementation, linearRep);
+
+	// return true since we replaced something
+	return true;
     }
 
 

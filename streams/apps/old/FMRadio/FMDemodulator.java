@@ -17,12 +17,12 @@ import streamit.*;
 /**
  * Class FMDemodulator
  *
- * Implements an FM Demodulator 
+ * Implements an FM Demodulator
  *
  */
 
 class FMDemodulator extends Filter {
-    
+
   float mGain;
   float sampleRate;
   float maxAmplitude;
@@ -30,29 +30,29 @@ class FMDemodulator extends Filter {
 
     public FMDemodulator (float sampRate, float max, float bandwidth)
     {
-	super ();
-	sampleRate = sampRate;
-	maxAmplitude = max;
-	modulationBandwidth = bandwidth;
+        super ();
+        sampleRate = sampRate;
+        maxAmplitude = max;
+        modulationBandwidth = bandwidth;
     }
 
     public void init()
     {
-	Channel input = new Channel (Float.TYPE, 1);
-	Channel output = new Channel (Float.TYPE, 1);
+        input = new Channel (Float.TYPE, 1);
+        output = new Channel (Float.TYPE, 1);
 
-	mGain = maxAmplitude*(sampleRate
-			    /(modulationBandwidth*(float)Math.PI));
+        mGain = maxAmplitude*(sampleRate
+                            /(modulationBandwidth*(float)Math.PI));
     }
 
     public void work() {
-	float temp = 0;
-	//may have to switch to complex?
-	temp = (float)((input.peekFloat(0)) * (input.peekFloat(1)));
-	//if using complex, use atan2
-	temp = (float)(mGain * Math.atan(temp));
+        float temp = 0;
+        //may have to switch to complex?
+        temp = (float)((input.peekFloat(0)) * (input.peekFloat(1)));
+        //if using complex, use atan2
+        temp = (float)(mGain * Math.atan(temp));
 
-	input.popFloat();
-	output.pushFloat(temp);
+        input.popFloat();
+        output.pushFloat(temp);
     }
 }

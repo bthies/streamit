@@ -39,15 +39,11 @@ public class vMatMul extends Filter {
 
     }
 
-    Channel input = new Channel (Float.TYPE, numberOfRowsA*numberOfColARowB);
-    Channel output = new Channel (Float.TYPE, numberOfRowsA*numberOfColumnsB);
-
-    public void initIO ()
+    public void init ()
     {
-        streamInput  = input;
-        streamOutput = output;
+        input = new Channel (Float.TYPE, numberOfRowsA*numberOfColARowB);
+        output = new Channel (Float.TYPE, numberOfRowsA*numberOfColumnsB);
     }
-
 
     public void work() {
         int i, j, k;

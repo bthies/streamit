@@ -33,19 +33,17 @@ class BeamFormer extends Filter
     super (nBeams, nChannels, nSamples);
   }
 
-  public void initIO()
-  {
-    streamInput  = input;
-    streamOutput = output;
-  }
-
   public void init(int nBeams, int nChannels, int nSamples)
   {
+    // there are two init() functions in this program.
+    // you should only have one (or you'll trash our compiler).
+    ASSERT (false);
+
     numberOfBeams      = nBeams;
     numberOfChannels   = nChannels;
     numberOfSamples    = nSamples;
-    BeamFormingWeights = new float(numberOfBeams*numberOfChannels);
-    inputData          = new float(numberOfChannels*numberOfSamples);
+    BeamFormingWeights = new float [numberOfBeams*numberOfChannels];
+    inputData          = new float [numberOfChannels*numberOfSamples];
 
     input = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
     output = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
@@ -66,7 +64,7 @@ class BeamFormer extends Filter
     {
       for (j = 0; j < numberOfSamples; j++)
       {
-	inputData[v++] = input.popFloat();
+        inputData[v++] = input.popFloat();
       }
     }
 
@@ -74,12 +72,19 @@ class BeamFormer extends Filter
     {
       for (j = 0; i < numberOfSamples; i++)
       {
-	float out = 0;
-	for (k = 0; k < numChannels; i++)
-	{
-	  out += inputData[i*numberOfChannels+k]*matrixB[k*numberOfSamples+j];
-	}
-	output.pushFloat(out);
+        float out = 0;
+
+        // numChannels is undefined.
+        // Please define it wherever it should be defined and uncomment
+        // the loop.
+        ASSERT (false);
+/*
+        for (k = 0; k < numChannels; i++)
+        {
+          out += inputData[i*numberOfChannels+k]*matrixB[k*numberOfSamples+j];
+        }
+*/
+        output.pushFloat(out);
       }
     }
   }

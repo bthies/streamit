@@ -31,15 +31,10 @@ public class vRamp extends Filter {
         super ();
     }
 
-    Channel output = new Channel (Float.TYPE, numberOfElems);
-
-    public void initIO ()
-    {
-        streamOutput = output;
-    }
-
     public void init (int numStart, int numStride, int numElems)
     {
+        output = new Channel (Float.TYPE, numberOfElems);
+
         numberOfElems = numElems;
         start = numStart;
         stride = numStride;

@@ -80,7 +80,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
-	    Propagator newProp=new Propagator((Hashtable)constants.clone(),false);
+	    Propagator newProp=new Propagator(cloneTable(constants),false);
 	    cond.accept(newProp);
 	    body.accept(newProp);
 	    Enumeration remove=newProp.changed.keys();
@@ -89,7 +89,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.remove(var);
 		changed.put(var,Boolean.TRUE);
 	    }
-	    Hashtable saveConstants=(Hashtable)constants.clone();
+	    Hashtable saveConstants=cloneTable(constants);
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    // reset if we found a constant
 	    if (newExp.isConstant()) {
@@ -162,7 +162,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    }
 	    Propagator[] propagators=new Propagator[body.length];
 	    for (int i = 0; i < body.length; i++) {
-		Propagator prop=new Propagator((Hashtable)constants.clone(),true);
+		Propagator prop=new Propagator(cloneTable(constants),true);
 		propagators[i]=prop;
 		body[i].accept(prop);
 	    }
@@ -177,6 +177,16 @@ public class Propagator extends SLIRReplacingVisitor {
 			Object key=enum.nextElement();
 			if(!(prop.constants.get(key).equals(constants.get(key))))
 			    remove.add(key);
+			if((prop.constants.get(key) instanceof Object[])&&(constants.get(key) instanceof Object[])) {
+			    Object[] array1=(Object[])prop.constants.get(key);
+			    Object[] array2=(Object[])constants.get(key);
+			    if(array1.length!=array2.length)
+				remove.add(key);
+			    else
+				for(int j=0;j<array1.length;j++)
+				    if(((array1[j]!=array2[j])&&(array1[j]!=null)&&(!array1[j].equals(array2[j]))))
+					remove.add(key);
+			}
 		    }
 		    for(int j=0;j<remove.size();j++) {
 			constants.remove(remove.get(j));
@@ -220,9 +230,11 @@ public class Propagator extends SLIRReplacingVisitor {
 				   JStatement elseClause) {
 	if(!write) {
 	    cond.accept(this);
+	    //Hashtable saveConstants=(Hashtable)constants.clone();
 	    thenClause.accept(this);
 	    if(elseClause!=null)
 		elseClause.accept(this);
+	    //constants=saveConstants;
 	} else {
 	    /*
 	    SIRPrinter printer = new SIRPrinter();
@@ -247,8 +259,8 @@ public class Propagator extends SLIRReplacingVisitor {
 			return new JEmptyStatement(self.getTokenReference(), null);
 		}
 	    // propagate through then and else
-	    Propagator thenProp=new Propagator((Hashtable)constants.clone(),true);
-	    Propagator elseProp=new Propagator((Hashtable)constants.clone(),true);
+	    Propagator thenProp=new Propagator(cloneTable(constants),true);
+	    Propagator elseProp=new Propagator(cloneTable(constants),true);
 	    thenClause.accept(thenProp);
 	    if (elseClause != null) {
 		elseClause.accept(elseProp);
@@ -278,7 +290,18 @@ public class Propagator extends SLIRReplacingVisitor {
 		Object thenKey = e.nextElement();
 		Object thenVal = thenProp.constants.get(thenKey);
 		Object elseVal = elseProp.constants.get(thenKey);
-		if (thenVal.equals(elseVal)) {
+		if((thenVal instanceof Object[])&&(elseVal instanceof Object[])) {
+		    Object[] newArray=new Object[((Object[])thenVal).length];
+		    if(((Object[])thenVal).length==((Object[])elseVal).length) {
+			for(int i=0;i<((Object[])thenVal).length;i++) {
+			    Object thenObj=((Object[])thenVal)[i];
+			    Object elseObj=((Object[])elseVal)[i];
+			    if((thenObj!=null)&&(elseObj!=null)&&(thenObj.equals(elseObj)))
+				newArray[i]=thenObj;
+			}
+			newConstants.put(thenKey,newArray);
+		    }
+		} else if (thenVal.equals(elseVal)) {
 		    newConstants.put(thenKey, thenVal);
 		}
 	    }
@@ -294,6 +317,23 @@ public class Propagator extends SLIRReplacingVisitor {
 	    constants = newConstants;
 	}
 	return self;
+    }
+
+    //Handles the deep clonning of arrays correctly
+    private Hashtable cloneTable(Hashtable table) {
+	Hashtable out=new Hashtable(table);
+	Enumeration keys=table.keys();
+	while(keys.hasMoreElements()) {
+	    Object key=keys.nextElement();
+	    Object val=table.get(key);
+	    if(val instanceof Object[]) {
+		Object[] array=(Object[])val;
+		Object[] newArray=new Object[array.length];
+		System.arraycopy(array,0,newArray,0,array.length);
+		out.put(key,newArray);
+	    }
+	}
+	return out;
     }
 
     /**
@@ -314,7 +354,7 @@ public class Propagator extends SLIRReplacingVisitor {
 	    cond.accept(this);
 	    body.accept(this);
 	} else {
-	    Propagator newProp=new Propagator((Hashtable)constants.clone(),false);
+	    Propagator newProp=new Propagator(cloneTable(constants),false);
 	    init.accept(newProp);
 	    incr.accept(newProp);
 	    cond.accept(newProp);
@@ -325,7 +365,7 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.remove(var);
 		changed.put(var,Boolean.TRUE);
 	    }
-	    Hashtable saveConstants=(Hashtable)constants.clone();
+	    Hashtable saveConstants=cloneTable(constants);
 	    // cond should never be a constant, or else we have an
 	    // infinite or empty loop.  Thus I won't check for it... 
 	    // recurse into init
@@ -796,8 +836,20 @@ public class Propagator extends SLIRReplacingVisitor {
 		    self.setRight(newRight);
 		}
 	    }
-	    return self;
+	    /*if(write) {
+	      if(self instanceof JConditionalAndExpression) {
+	      if (left.isConstant() && right.isConstant()) {
+	      return new JBooleanLiteral(null, left.booleanValue() && right.booleanValue());
+	      } else if((left.isConstant()&&left.booleanValue()==false)||(right.isConstant()&&right.booleanValue()==false))
+	      return new JBooleanLiteral(null,false);
+	      else if(left.isConstant()&&left.booleanValue()==true)
+	      return right;
+	      else if(right.isConstant()&&right.booleanValue()==true)
+	      return left;
+	      }
+	      }*/
 	}
+	return self;
     }
 
     /**
@@ -1020,7 +1072,7 @@ public class Propagator extends SLIRReplacingVisitor {
 				//} else if(left instanceof JLocalVariableExpression) {
 				CType type;
 				//Types worth copying
-				if((right instanceof JFieldAccessExpression)||(right instanceof JArrayAccessExpression)) {
+				if((right instanceof JFieldAccessExpression)||((right instanceof JArrayAccessExpression)&&(((JArrayAccessExpression)right).getAccessor() instanceof JIntLiteral))) {
 				    if(right.getType()!=null)
 					type=right.getType();
 				    else

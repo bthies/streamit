@@ -68,20 +68,6 @@ public class RawBackend {
 			     StreamItOptions.rawColumns);
 	}
 
-	//Unroll
-	//System.out.println("Unrolling..");
-	//Unroller.unroll(str);
-	//Flattening Blocks
-	//System.out.println("Flattening Blocks..");
-	//new BlockFlattener().flattenBlocks(str);
-	//Destroys arrays into local variables if possible
-	//System.out.println("Destroying Arrays..");
-	//new ArrayDestroyer().destroyArrays(str);
-	//Raise VarDecls to front of blocks
-	//System.out.println("Raising Variables..");
-	//new VarDeclRaiser().raiseVars(str);
-	//System.out.println("Done Optimizations!");
-
        	System.out.println("Flattener Begin...");
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");
@@ -96,11 +82,6 @@ public class RawBackend {
 	//Layout.handAssign(rawFlattener.top);
 	System.out.println("Assign End.");
 	//Generate the switch code
-	
-
-	//System.out.println("Flattening Blocks..");
-	//rawFlattener.top.accept(new BlockFlattener(),new HashSet(),false);
-	
 	
 
 	System.out.println("Switch Code Begin...");

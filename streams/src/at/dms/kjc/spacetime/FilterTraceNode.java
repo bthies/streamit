@@ -53,7 +53,12 @@ public class FilterTraceNode extends TraceNode
     public int getInitMult() {
 	return filter.getInitMult();
     }
-    
+
+    public int getPrimePumpMult() 
+    {
+	return filter.getPrimePump();
+    }
+
     public int getSteadyMult() {
 	return filter.getSteadyMult();
     }

@@ -33,16 +33,23 @@ public class Rawify
 		    FilterInfo filterInfo = FilterInfo.getFilterInfo((FilterTraceNode)traceNode);
 		    //switch code for the trace
 		    //generate switchcode based on the presence of buffering		    
-		    if (filterInfo.isDirect()) 
-			createSwitchCodeDirect((FilterTraceNode)traceNode, 
-				     trace, filterInfo, init, tile, rawChip);
+		    int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
+		    
+		    if (filterInfo.isDirect())
+			createSwitchCode((FilterTraceNode)traceNode, 
+					 trace, filterInfo, init, false, tile, rawChip, mult);
 		    else
 			createSwitchCodeBuffered((FilterTraceNode)traceNode, 
-				     trace, filterInfo, init, tile, rawChip);
+				     trace, filterInfo, init, tile, rawChip, mult);
 		    //generate the compute code for the trace and place it in
 		    //the tile
-		    if (init)
+		    if (init) {
+			//create the prime pump stage switch code 
+			//after the initialization switch code
+			createPrimePumpSwitchCode((FilterTraceNode)traceNode, 
+				     trace, filterInfo, init, tile, rawChip);
 			tile.getComputeCode().addTraceInit(filterInfo);
+		    }
 		    else
 			tile.getComputeCode().addTraceSteady(filterInfo);
 		}
@@ -70,6 +77,14 @@ public class Rawify
 	    EndSteadyState(rawChip);
     }
 
+    private static void createPrimePumpSwitchCode(FilterTraceNode node, Trace parent,
+						  FilterInfo filterInfo,
+						  boolean init, RawTile tile, RawChip rawChip) 
+    {
+	//call create switch code with init false (not in init) and primepump true
+	createSwitchCode(node, parent, filterInfo, false, true, tile, rawChip, filterInfo.primePump);
+    }
+    
     private static void createMagicDramInput(InputTraceNode node, Trace parent,
 					     boolean init, RawChip rawChip) 
     {
@@ -89,15 +104,12 @@ public class Rawify
 	int currentWeight = node.getWeights()[0];
 	//the current buffer, index into the sources array
 	int currentBuffer = 0;
-	//the total number of items the upstream filter is receiving for this stage
-	int totalItemsRec = 0;
-
+	
 	//generate the magic dram statements
 	//iterate over the number of firings 
 	for (int i = 0; i < mult; i++) {
 	    int itemsReceiving = itemsNeededToFire(filterInfo, i, init) *
 		Util.getTypeSize(next.getFilter().getInputType());
-	    totalItemsRec += itemsReceiving;
 	    //for each item generate an instruction
 	    for (int j = 0; j < itemsReceiving; j++) {
 		//keep track of the output buffer we are loading from
@@ -112,13 +124,15 @@ public class Rawify
 	    }
 	}
 
-	//take care of the remaining items, same as above
-	if (init &&
-	    filterInfo.remaining > 0) {
+	//take care of the remaining items and the items generated in the
+	//primepump stage, same as above
+	if (init) {
+	    int items = filterInfo.remaining + 
+		(itemsNeededToFire(filterInfo, 1, !init) * filterInfo.primePump);
+	    
 	    for (int i = 0; 
-		 i < filterInfo.remaining * Util.getTypeSize(next.getFilter().getInputType()); 
+		 i < items * Util.getTypeSize(next.getFilter().getInputType()); 
 		 i++) {
-		totalItemsRec++;
 		if (currentWeight <= 0) {
 		    currentBuffer = (currentBuffer + 1) % (node.getSources().length);
 		    currentWeight = node.getWeights()[currentBuffer];
@@ -128,19 +142,19 @@ public class Rawify
 	    }
 	}
 	
-	//remember the buffers that we have seen and the sizes...
+	//add the buffers to this drams list of buffer so that it knows
+	//to generate the malloc of the buffer and the associated indices
 	for (int i = 0; i < node.getSources().length; i++) {
-	    int size = (int)((double)(node.getWeights()[i] / node.totalWeights()) * totalItemsRec);
-	    if (init) size += filterInfo.remaining;
-	    dram.addBuffer(node.getSources()[i], node, size);
-	}
+            dram.addBuffer(node.getSources()[i], node);
+        }
+
     }
-    
+
     private static void createMagicDramOutput(OutputTraceNode node, Trace parent,
 					     boolean init, RawChip rawChip) 
     {
 	FilterTraceNode prev = (FilterTraceNode)node.getPrevious();
-	FilterInfo filterInfo = FilterInfo.getFilterInfo(prev);
+
 	
 	if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
 	    Utils.fail("Tile not connected to io device");
@@ -150,12 +164,31 @@ public class Rawify
 	LinkedList insList = init ? dram.initInsList : dram.steadyInsList;
 	//get the multiplicity based on the init variable
 	int mult = (init) ? prev.getInitMult() : prev.getSteadyMult();
+
+	//generate the individual store commands, store the total items
+	createMagicDramStores(node, prev, init, mult, insList);
 	
+	//generate the code for the primepump stage
+	if (init) 
+	    createMagicDramStores(node, prev, !init, prev.getPrimePumpMult(),
+				  dram.initInsList);
+	
+    }
+    
+    /**
+     * Give the multiplicity and some other stuff, generate the store instructions for
+     * the dram.
+     **/
+    private static void createMagicDramStores(OutputTraceNode node, FilterTraceNode prev, 
+					      boolean init, int mult, LinkedList insList)
+					      
+    {
+	FilterInfo filterInfo = FilterInfo.getFilterInfo(prev);
 	//the current number of items that remain to get from the current output buffer
 	int currentWeight = node.getWeights()[0];
 	//the current buffer, index  into the sources array
 	int currentBuffer = 0;
-
+	
 	//generate the magic dram statements
 	//iterate over the number of firings 
 	for (int i = 0; i < mult; i++) {
@@ -176,23 +209,20 @@ public class Rawify
 	}
     }
     
-    private static void createSwitchCodeDirect(FilterTraceNode node, Trace parent, 
-						 FilterInfo filterInfo,
-						 boolean init, RawTile tile,
-						 RawChip rawChip) 
+
+    private static void createSwitchCode(FilterTraceNode node, Trace parent, 
+					 FilterInfo filterInfo,
+					 boolean init, boolean primePump, RawTile tile,
+					 RawChip rawChip, int mult) 
     {
-	//get the multiplicity based on the init variable
-	int mult = (init) ? node.getInitMult() : node.getSteadyMult();
-		
 	for (int i = 0; i < mult; i++) {
 	    //append the receive code
 	    if (generateSwitchCodeReceive(node) && node.getPrevious() != null)
-		createReceiveCode(i, node, parent, filterInfo, init, tile, rawChip);
-	    //append the send code
+		createReceiveCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
+	    //append the send code 
 	    if (generateSwitchCodeSend(node) && node.getNext() != null)
-		createSendCode(i, node, parent, filterInfo, init, tile, rawChip);
+		createSendCode(i, node, parent, filterInfo, init, primePump, tile, rawChip);
 	}
-	//don't have to worry about remaining
     }
     
     //determine whether we would generate switch code for this node, 
@@ -228,19 +258,10 @@ public class Rawify
     private static void createSwitchCodeBuffered(FilterTraceNode node, Trace parent, 
 						 FilterInfo filterInfo,
 						 boolean init, RawTile tile,
-						 RawChip rawChip) 
+						 RawChip rawChip, int mult) 
     {
-	//get the multiplicity based on the init variable
-	int mult = (init) ? node.getInitMult() : node.getSteadyMult();
-	
-	for (int i = 0; i < mult; i++) {
-	    //append the receive code
-	    if (generateSwitchCodeReceive(node) && node.getPrevious() != null)
-		createReceiveCode(i, node, parent, filterInfo, init, tile, rawChip);
-	    //append the send code
-	    if (generateSwitchCodeSend(node) && node.getNext() != null)
-		createSendCode(i, node, parent, filterInfo, init, tile, rawChip);
-	}
+	//create the switch code for each firing 
+	createSwitchCode(node, parent, filterInfo, init, false, tile, rawChip, mult);
 	
 	//now we must take care of the remaining items on the input tape 
 	//after the initialization phase if the upstream filter produces more than
@@ -266,7 +287,7 @@ public class Rawify
     }
     
     private static void createReceiveCode(int iteration, FilterTraceNode node, Trace parent, 
-				   FilterInfo filterInfo, boolean init, RawTile tile,
+				   FilterInfo filterInfo, boolean init, boolean primePump, RawTile tile,
 				   RawChip rawChip) 
     {
 	//if this is the init and it is the first time executing
@@ -295,13 +316,16 @@ public class Rawify
 	    //tile's compute processor
 	    ins.addRoute(sourceNode,
 			 tile);
-	    tile.getSwitchCode().appendIns(ins, init);
+	    //append the instruction to the appropriate schedule
+	    //for the primepump append to the end of the init stage
+	    //so set final arg to true if init or primepump
+	    tile.getSwitchCode().appendIns(ins, (init || primePump));
 	}
     }
 
     private static void createSendCode(int iteration, FilterTraceNode node, Trace parent, 
-				   FilterInfo filterInfo, boolean init, RawTile tile,
-				   RawChip rawChip) 
+				       FilterInfo filterInfo, boolean init, boolean primePump, 
+				       RawTile tile, RawChip rawChip) 
     {
 	//get the items needed to fire and multiply it by the type 
 	//size
@@ -326,7 +350,9 @@ public class Rawify
 	    //add the route from this tile to the next trace node
 	    ins.addRoute(tile, destNode);
 	    //append the instruction
-	    tile.getSwitchCode().appendIns(ins, init);
+	    //for the primepump append to the end of the init stage
+	    //so set final arg to true if init or primepump
+	    tile.getSwitchCode().appendIns(ins, (init||primePump));
 	}	
     }
 

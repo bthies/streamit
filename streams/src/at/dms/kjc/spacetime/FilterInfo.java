@@ -143,7 +143,7 @@ public class FilterInfo
 	int upStreamItems = 0;
 	
 	if (previous.length == 1) {
-	    //calculate upstream items received during init  SPLITTER?
+	    //calculate upstream items received during init  SPLITTER? change this...
 	    upStreamItems = previous[0].getFilter().getPushInt() * 
 		previous[0].getInitMult();
 	    if (previous[0].getFilter().isTwoStage()) {
@@ -164,6 +164,7 @@ public class FilterInfo
 	else
 	    bottomPeek = 0;
 	
+	//may want to change to use initItemsReceived...
 	remaining = upStreamItems -
 	    (prePeek + 
 	     bottomPeek + 
@@ -202,4 +203,27 @@ public class FilterInfo
  	    return true;
  	return false;
     }
+
+    //return the number of items produced in the init stage
+    public int initItemsSent() 
+    {
+	int items = push * initMult;
+	if (isTwoStage()) {
+	    /*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
+	      upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
+	    items -= push;
+	    items += prePush;
+	}	
+	return items;
+    }
+    
+    public int initItemsReceived() 
+    {
+	int initFire = initMult;
+	if (isTwoStage())
+	    initFire++;
+	
+	return (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+    }
+    
 }

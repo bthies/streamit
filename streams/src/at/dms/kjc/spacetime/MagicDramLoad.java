@@ -19,7 +19,9 @@ public class MagicDramLoad extends MagicDramInstruction
 	StringBuffer sb = new StringBuffer();
 	sb.append("while (io_to_switch_move(machine, port, " + MagicDram.getBufferIdent(source, dest) +
 		      "_buffer[" + MagicDram.getBufferIdent(source, dest) + "_ld]) == 0) yield;\n");
-	sb.append("\t\t" + MagicDram.getBufferIdent(source, dest) + "_ld++;\n");
+	sb.append("\t\t" + MagicDram.getBufferIdent(source, dest) + "_ld = (" + 
+		  MagicDram.getBufferIdent(source, dest) + "_ld + 1) % " + 
+		  MagicDram.getBufferIdent(source, dest) + "_size;\n");
 	sb.append("\t\tyield;\n");
 	return sb.toString();
     }

@@ -126,6 +126,8 @@ public class DirectCommunication extends RawExecutionCode
 
 	//add the calls for the work function in the initialization stage
 	statements.addStatement(generateInitWorkLoop(filter));
+	//add the calls to the work function in the prime pump stage
+	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
 	
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
@@ -134,7 +136,7 @@ public class DirectCommunication extends RawExecutionCode
 				      CClassType.EMPTY,
 				      statements,
 				      null,
-				      null); 
+				      null);
     }
     
     public JMethodDeclaration[] getHelperMethods() 
@@ -149,7 +151,18 @@ public class DirectCommunication extends RawExecutionCode
 	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	
     }
     
-    public JBlock getSteadyBlock()
+    /** 
+     * Return the block to call the work function in the steady state
+     */
+    public JBlock getSteadyBlock() 
+    {
+	return getWorkFunctionBlock(filterInfo.steadyMult);
+    }
+    
+    /**
+     * Generate code to receive data and call the work function mult times
+     **/
+    private JBlock getWorkFunctionBlock(int mult)
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
@@ -188,7 +201,7 @@ public class DirectCommunication extends RawExecutionCode
 	
 
 	JStatement loop = 
-	    makeForLoop(workBlock, loopCounter, new JIntLiteral(filterInfo.steadyMult));
+	    makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
 	block.addStatement(new JVariableDeclarationStatement(null,
 							     loopCounter,
 							     null));

@@ -22,6 +22,8 @@ public class ComputeCodeStore {
     //steady index for steady state calls
     protected int steadyIndex;
     protected JBlock steadyLoop;
+    //the block that executes each tracenode's init schedule
+    protected JBlock initBlock;
     //this hash map holds RawExecutionCode that was generated
     //so when we see the filter for the first time in the init
     //and if we see the same filter again, we do not have to 
@@ -41,6 +43,10 @@ public class ComputeCodeStore {
 	
 
 	initIndex = 1;
+	//add the block for the init stage calls
+	initBlock = new JBlock(null, new JStatement[0], null);
+	rawMain.addStatement(initBlock);
+
 	steadyIndex = 0;
 	//create the body of steady state loop
 	steadyLoop = new JBlock(null, new JStatement[0], null);
@@ -115,8 +121,7 @@ public class ComputeCodeStore {
 							 filterInfo.filter.getInit().getName(),
 							 paramArray),
 							null));
-	
-				  
+					  
     }
     
 
@@ -144,11 +149,11 @@ public class ComputeCodeStore {
 	//add the method
 	addMethod(initStage);
 
+
 	//now add a call to the init stage in main at the appropiate index
 	//and increment the index
-	rawMain.getBody().
-	    addStatement(initIndex++,
-			 new JExpressionStatement
+	initBlock.
+	    addStatement(new JExpressionStatement
 			 (null, 
 			  new JMethodCallExpression(null,
 						    new JThisExpression(null),

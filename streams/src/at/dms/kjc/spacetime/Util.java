@@ -143,4 +143,71 @@ public class Util {
 	else 
 	    return "))";
     }
+    
+    //the size of the buffer between in, out for the steady state
+    public static int steadyBufferSize(InputTraceNode in,
+				       OutputTraceNode out) 
+    {
+	int itemsReceived, itemsSent;
+	//calculate the items the input trace receives
+	FilterTraceNode next = (FilterTraceNode)in.getNext();
+	itemsSent = (next.getSteadyMult() * next.getFilter().getPopInt()) *
+	    (in.getWeight(out) / in.totalWeights());
+	
+	//calculate the items the output trace sends
+	FilterTraceNode prev = (FilterTraceNode)out.getPrevious();
+	itemsReceived = (prev.getSteadyMult() * prev.getFilter().getPushInt()) *
+	    (out.getWeight(in) / out.totalWeights());
+	//see if they are different
+	if (itemsSent != itemsReceived)
+	    Utils.fail("Calculating steady state: items received != items send on buffer");
+	
+	return itemsSent * getTypeSize(next.getFilter().getInputType());
+    }
+    
+    //the size of the buffer between in / out for the init stage
+    public static int initBufferSize(InputTraceNode in, 
+				     OutputTraceNode out) 
+    {
+	int itemsReceived, itemsSent;
+	//calculate the items the input trace receives
+	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
+	itemsSent =  next.initItemsReceived() *
+	    (in.getWeight(out) / in.totalWeights());
+	
+	//calculate the items the output trace sends
+	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
+	itemsReceived = prev.initItemsSent() *
+	    (out.getWeight(in) / out.totalWeights());
+	
+	//see if they are different
+	if (itemsSent != itemsReceived)
+	    Utils.fail("Calculating steady state: items received != items send on buffer");
+	
+	return itemsSent * getTypeSize(next.filter.getInputType()); 
+    }
+
+    //the size of the buffer between in / out for the prime pump stage
+    public static int primePumpBufferSize(InputTraceNode in, 
+					  OutputTraceNode out) 
+    {
+	//items received into buffer
+	int itemsReceived;
+
+	//calculate the items the output trace sends, because
+	//the downstream filter may not receive them all
+	FilterTraceNode prev = (FilterTraceNode)out.getPrevious();
+	itemsReceived = (prev.getPrimePumpMult() * prev.getFilter().getPushInt()) *
+	    (out.getWeight(in) / out.totalWeights());
+
+	return itemsReceived * getTypeSize(prev.getFilter().getOutputType());
+    }
+    
+    public static int magicBufferSize(InputTraceNode in, 
+				 OutputTraceNode out) 
+    {
+	return Math.max(steadyBufferSize(in, out),
+			initBufferSize(in, out)) + 
+	    primePumpBufferSize(in, out);
+    }
 }

@@ -412,6 +412,9 @@ public class BufferedCommunication extends RawExecutionCode
 						new JIntLiteral(-1))), null));
 	}
 
+	//add the calls to the work function for the priming of the pipeline
+	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));
+
 	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
 				      CStdType.Void,
 				      initStage + uniqueID,
@@ -422,7 +425,20 @@ public class BufferedCommunication extends RawExecutionCode
 				      null); 
     }
     
+    
+    /** 
+     * Return the block to call the work function in the steady state
+     */
     public JBlock getSteadyBlock() 
+    {
+	return getWorkFunctionBlock(filterInfo.steadyMult);
+    }
+    
+
+    /**
+     * Generate code to receive data and call the work function mult times
+     **/
+    private JBlock getWorkFunctionBlock(int mult)
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
@@ -509,7 +525,7 @@ public class BufferedCommunication extends RawExecutionCode
 								      workCounter,
 								      null);
 	 	 
-	    JStatement loop = makeForLoop(block, loopCounter, new JIntLiteral(filterInfo.steadyMult));
+	    JStatement loop = makeForLoop(block, loopCounter, new JIntLiteral(mult));
 	    block = new JBlock(null, new JStatement[0], null);
 	    block.addStatement(new JVariableDeclarationStatement(null,
 								 loopCounter,

@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.io.FileWriter;
+import java.util.ArrayList;
 
 public class MagicDram extends IODevice
 {
@@ -15,7 +16,7 @@ public class MagicDram extends IODevice
     //the names of the buffer indices
     private HashSet indices;
     //the names and sizes of the buffers
-    private HashMap buffers;
+    private ArrayList buffers;
 
     public MagicDram(RawChip chip, int port, RawTile tile) 
     {
@@ -24,7 +25,7 @@ public class MagicDram extends IODevice
 	steadyInsList = new LinkedList();
 	initInsList = new LinkedList();
 	indices = new HashSet();
-	buffers = new HashMap();
+	buffers = new ArrayList();
     }
     
     public static void GenerateCode(RawChip chip)
@@ -71,25 +72,23 @@ public class MagicDram extends IODevice
 		fw.write("\tlocal " + current + "_st = 0;\n");
 	    }
 	    
-	    Iterator bufs = buffers.keySet().iterator();
+	    Iterator bufs = buffers.iterator();
 	    while (bufs.hasNext()) {
-		String current = (String)bufs.next();
-		fw.write("\tlocal " + current + " = malloc(" + buffers.get(current) + ");\n");
+		Buffer current = (Buffer)bufs.next();
+		String bufferIdent = getBufferIdent(current.out, current.in);
+		fw.write("\tlocal " + bufferIdent + "_size = " + 
+			 Util.magicBufferSize(current.in, current.out) + ";\n");
+		fw.write("\tlocal " + bufferIdent + "_buffer = malloc(" + bufferIdent + "_size);\n");
 	    }
 	    
 	    //write the init magic dram instructions
+	    fw.write("// Initialization Stage \n");
 	    Iterator it = initInsList.iterator();
 	    while (it.hasNext())
 		fw.write("\t" + ((MagicDramInstruction)it.next()).toC());
 	    //write the steady magic dram instructions with a while loop around them
+	    fw.write("// Steady State \n");
 	    fw.write("\twhile(1) {\n");
-	    //reset the indices..
-	    inds = indices.iterator();
-	    while (inds.hasNext()) {
-		String current = (String)inds.next();
-		fw.write("\t\t" + current + "_ld = 0;\n");
-		fw.write("\t\t" + current + "_st = 0;\n");
-	    }
 	    it = steadyInsList.iterator();
 	    if (!it.hasNext())
 		fw.write("\t\tyield;\n");
@@ -105,52 +104,44 @@ public class MagicDram extends IODevice
 	}
     }
     
-    public static void testMagicDramCode(RawChip chip)
-    {
-	for (int i = 0; i < chip.getDevices().length; i++) {
-	    if (chip.getDevices()[i] == null) 
-		continue;
-	    System.out.println("  ----- " + chip.getDevices()[i].getPort() + " --------- ");
-	    Iterator bufs = ((MagicDram)chip.getDevices()[i]).buffers.keySet().iterator();
-	    while(bufs.hasNext()) {
-		String buf = (String)bufs.next();
-		int size = ((Integer)((MagicDram)chip.getDevices()[i]).buffers.get(buf)).intValue();
-		System.out.println(buf + " " + size);
-	    }
-	    System.out.println("init:");
-	    Iterator it = ((MagicDram)chip.getDevices()[i]).initInsList.iterator();
-	    while (it.hasNext()) 
-		System.out.println("\t" + ((MagicDramInstruction)it.next()).toC());
-	    System.out.println("steady:");
-	    it = ((MagicDram)chip.getDevices()[i]).steadyInsList.iterator();
-	    while (it.hasNext()) 
-		System.out.println("\t" + ((MagicDramInstruction)it.next()).toC());
-	}
-    }
-
     
-    public void addBuffer(OutputTraceNode out, InputTraceNode in, int size) 
+    public void addBuffer(OutputTraceNode out, InputTraceNode in) 
     {
 	//add the index
-	if (!indices.contains(getBufferIdent(out, in)))
-	    indices.add(new String(getBufferIdent(out, in)));
+	indices.add(new String(getBufferIdent(out, in)));
 	
-	//add the buffer, 
-	if (!buffers.containsKey(getBufferIdent(out, in) + "_buffer"))
-	    buffers.put(new String(getBufferIdent(out, in) + "_buffer"), new Integer(size));
-	else {
-	    //if already present see if the new size for this stage is larger than the previous
-	    //stage size
-	    int oldVal = ((Integer)buffers.get(getBufferIdent(out, in) + "_buffer")).intValue();
-	    if (size > oldVal)
-		buffers.put(new String(getBufferIdent(out, in) + "_buffer"), new Integer(size));
-	}
-		
+	if (!buffers.contains(new Buffer(in, out)))
+	    buffers.add(new Buffer(in, out));
     }
-
+    
     public static String getBufferIdent(OutputTraceNode out, InputTraceNode in) 
     {
 	return out.getIdent() + "_" + in.getIdent();
     }
     
+}
+ 
+class Buffer 
+{
+    public InputTraceNode in;
+    public OutputTraceNode out;
+    
+    public Buffer(InputTraceNode i, OutputTraceNode o) 
+    {
+	in = i;
+	out = o;
+    }
+
+    public boolean equals(Object buf) 
+    {
+	if (!(buf instanceof Buffer))
+	    return false;
+
+	Buffer b = (Buffer)buf;
+	    
+	if (this.in == b.in && 
+	    this.out == b.out)
+	    return true;
+	return false;
+    }
 }

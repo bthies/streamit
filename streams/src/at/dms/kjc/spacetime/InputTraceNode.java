@@ -51,5 +51,13 @@ public class InputTraceNode extends TraceNode
 	    sum += weights[i];
 	return sum;
     }
-    
+
+    public int getWeight(OutputTraceNode out) 
+    {
+	for (int i = 0; i < sources.length; i++)
+	    if (sources[i] == out)
+		return weights[i];
+	Utils.fail("Cannot find weight for OutputTraceNode");
+	return -1;
+    }
 }

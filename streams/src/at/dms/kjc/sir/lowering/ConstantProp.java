@@ -38,17 +38,7 @@ public class ConstantProp {
 	    // make a propagator
 	    Propagator propagator = new Propagator(constants);
 	    // propagate into split/join weights, if we have them
-	    if (str instanceof SIRSplitJoin) {
-		propagator.visitArgs(((SIRSplitJoin)str).
-				     getJoiner().getInternalWeights());
-		propagator.visitArgs(((SIRSplitJoin)str).
-				     getSplitter().getInternalWeights());
-	    } else if (str instanceof SIRFeedbackLoop) {
-		propagator.visitArgs(((SIRFeedbackLoop)str).
-				     getJoiner().getInternalWeights());
-		propagator.visitArgs(((SIRFeedbackLoop)str).
-				     getSplitter().getInternalWeights());
-	    }
+	    propagateSplitJoins(propagator, str);
 	    // propagate constants within init function of <str>
 	    str.getInit().accept(propagator);
 	    // unroll loops within init function of <str>
@@ -71,22 +61,41 @@ public class ConstantProp {
     }
 
     /**
+     * Given a propagator <propagator>, this propagates constants into
+     * any Splitter or Joiner nodes in <str>, in order to resolve the
+     * weights of the splitting/joining.
+     */
+    private void propagateSplitJoins(Propagator propagator, SIRStream str) {
+	// only have something to do for splitjoins and feedbackloops
+	if (str instanceof SIRSplitJoin) {
+	    propagator.visitArgs(((SIRSplitJoin)str).
+				 getJoiner().getInternalWeights());
+	    propagator.visitArgs(((SIRSplitJoin)str).
+				 getSplitter().getInternalWeights());
+	} else if (str instanceof SIRFeedbackLoop) {
+	    propagator.visitArgs(((SIRFeedbackLoop)str).
+				 getJoiner().getInternalWeights());
+	    propagator.visitArgs(((SIRFeedbackLoop)str).
+				 getSplitter().getInternalWeights());
+	}
+    }
+
+    /**
      * Recurses from <str> into all its substreams.
      */
-    private void recurse(SIRStream str, Hashtable constants) {
+    private void recurse(SIRStream str, final Hashtable constants) {
 	// if we're at the bottom, we're done
 	if (str.getInit()==null) {
 	    return;
 	}
 	// iterate through statements of init function, looking for SIRInit's
-	List statementList = str.getInit().getStatementList();
-	for (ListIterator it = statementList.listIterator(); it.hasNext(); ) {
-	    JStatement next = (JStatement)it.next();
-	    // if we found a sub-stream, recurse into it
-	    if (next instanceof SIRInitStatement) {
-		recurse((SIRInitStatement)next, constants);
-	    }
-	}
+	str.getInit().accept(new SLIREmptyVisitor() {
+		public void visitInitStatement(SIRInitStatement self,
+					       JExpression[] args,
+					       SIRStream target) {
+		    recurse(self, constants);
+		}
+	    });
     }
 
     /**
@@ -707,49 +716,67 @@ class Unroller extends EmptyAttributeVisitor {
 	// if we can unroll...
 	if (info!=null) {
 	    // do unrolling
-	    return doUnroll(info, body);
+	    return doUnroll(info, self);
 	}
 	return self;
     }
 
     /**
-     * Given the loop body <body> and unroll info <info>, perform the
-     * unrolling and return a statement block of the new statements.
+     * Given the loop <self> and original unroll info <info>, perform
+     * the unrolling and return a statement block of the new
+     * statements.
      */
-    private JBlock doUnroll(UnrollInfo info, JStatement body) {
-	// get number of times to unroll
-	int count = calcUnrollFactor(info);
-	System.out.println("unroll count: " + count);
-	// duplicate <body> the given number of times, enclosing
-	// in a statement block
-	JStatement[] newBody;
-	if (body instanceof JBlock) {
-	    JBlock block = (JBlock)body;
-	    // prevent nested JBlock structures by flattening them here
-	    newBody = new JStatement[count*block.size()];
-	    // fill in the new body
-	    for (int i=0; i<count; i++) {
-		int j = 0;
-		for (ListIterator it = block.getStatementIterator(); 
-		     it.hasNext(); 
-		     j++) {
-		    newBody[i*block.size()+j] 
-			= (JStatement)ObjectDeepCloner.deepCopy(it.next());
-		}
-	    }
-	} else {
-	    newBody = new JStatement[count];
-	    // fill in the new body
-	    for (int i=0; i<count; i++) {
-		newBody[i] = (JStatement)ObjectDeepCloner.deepCopy(body);
-	    }
+    private JBlock doUnroll(UnrollInfo info, JForStatement self) {
+	// make a list of statements
+	List statementList = new LinkedList();
+	// get the initial value of the counter
+	int counter = info.initVal;
+	// simulate execution of the loop...
+	while (counter < info.finalVal) {
+	    // create new for statement, just to replace the variable
+	    JForStatement newSelf 
+		= (JForStatement)ObjectDeepCloner.deepCopy(self);
+	    // get unroll info for <newSelf>
+	    UnrollInfo newInfo = getUnrollInfo(newSelf.getInit(),
+					       newSelf.getCondition(),
+					       newSelf.getIncrement(),
+					       newSelf.getBody());
+	    // replace induction variable with its value current value
+	    Hashtable newConstants = new Hashtable();
+	    newConstants.put(newInfo.var, new JIntLiteral(counter));
+	    // do the replacement
+	    newSelf.getBody().accept(new Propagator(newConstants));
+	    // add to statement list
+	    statementList.add(newSelf.getBody());
+	    // increment counter
+	    counter = incrementCounter(counter, info);
 	}
 	// mark that we've unrolled
 	this.hasUnrolled = true;
 	// return new block instead of the for loop
-	return new JBlock(null, newBody, null);
+	return new JBlock(null, 
+			  (JStatement[])statementList.
+			  toArray(new JStatement[0]),
+			  null);
     }
-
+    
+    /**
+     * Given the UnrollInfo <info> and that <counter> was the old
+     * value of the count, returns the new value of the count.
+     */
+    private int incrementCounter(int counter, UnrollInfo info) {
+	switch(info.oper) {
+	case OPE_PLUS: 
+	    return counter + info.incrVal;
+	case OPE_STAR: 
+	    return counter * info.incrVal;
+	default: 
+	    Utils.fail("Can only unroll add/mul increments for now.");
+	    // dummy value
+	    return 0;
+	}
+    }
+    
     /**
      * Return whether or not this has unrolled any loops.
      */
@@ -811,7 +838,7 @@ class Unroller extends EmptyAttributeVisitor {
 	    int incrVal = ((JIntLiteral)incrExpr.getRight()).intValue();
 	    
 	    // return result
-	    return new UnrollInfo(initVal, finalVal, oper, incrVal);
+	    return new UnrollInfo(var, initVal, finalVal, oper, incrVal);
 	} catch (ClassCastException e) {
 	    System.out.println("Didn't unroll because:");
 	    e.printStackTrace();
@@ -846,6 +873,10 @@ class Unroller extends EmptyAttributeVisitor {
 
     class UnrollInfo {
 	/**
+	 * The induction variable in the loop.
+	 */
+	public final JLocalVariable var;
+	/**
 	 * The initial value of the induction variable.
 	 */
 	public final int initVal;
@@ -862,7 +893,12 @@ class Unroller extends EmptyAttributeVisitor {
 	 */
 	public final int incrVal;
 	
-	public UnrollInfo(int initVal, int finalVal, int oper, int incrVal) {
+	public UnrollInfo(JLocalVariable var,
+			  int initVal, 
+			  int finalVal, 
+			  int oper, 
+			  int incrVal) {
+	    this.var = var;
 	    this.initVal = initVal;
 	    this.finalVal = finalVal;
 	    this.oper = oper;

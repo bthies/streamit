@@ -477,7 +477,7 @@ class Propagator extends EmptyAttributeVisitor {
 	    self.setLeft(newLeft);
 	}
 	if (newRight.isConstant()) {
-	    self.setLeft(newRight);
+	    self.setRight(newRight);
 	}
 	// do constant-prop if we have both as constants
 	if (newLeft.isConstant() && newRight.isConstant()) {

@@ -15,13 +15,15 @@ import at.dms.compiler.*;
  *
  * 0 = stupid replacement<br>
  * 1 = smart replacement (reuse partial results) <br>
- * 2 = fftw replacement (use FFTW to calculate FFT, take advantage of real input/output symmetries<br>
+ * 2 = fftw replacement (use FFTW to calculate FFT, take advantage of real input/output symmetries)<br>
+ * 3 = leet multidimensional fftw replacement (FFTW and converts any filter with pop=1)<br>
  **/
 public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     public static final int UNKNOWN = -1;
     public static final int STUPID  =  0;
     public static final int SMARTER =  1;
     public static final int FFTW    =  2;
+    public static final int LEET    =  3;
     
     /**
      * start the process of replacement on str using the Linearity information in lfa.
@@ -50,8 +52,11 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	    replacer = new SmarterFrequencyReplacer(lfa, targetSize);
 	} else if (replacementType == FFTW) {
 	    replacer = new FFTWFrequencyReplacer(lfa);	    
+	} else if (replacementType == LEET) {
+	    replacer = new LEETFrequencyReplacer(lfa);	    
 	} else {
-	    throw new RuntimeException("Error -- invalid frequency replacement type: " + replacementType);
+	    throw new RuntimeException("Error -- invalid frequency replacement type: " +
+				       replacementType + "valid range is 0->3");
 	}
 	
 	// pump the replacer through the stream graph.
@@ -66,6 +71,8 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	    return "smarter";
 	} else if (replacementType == FFTW) {
 	    return "fftw";
+	} else if (replacementType == LEET) {
+	    return "leet";
 	} else {
 	    return "unknown";
 	}

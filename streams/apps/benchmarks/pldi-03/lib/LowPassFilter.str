@@ -20,7 +20,7 @@ float->float filter LowPassFilter(float g, float cutoffFreq, int N) {
       // generate real part
       if (idx == OFFSET) 
 	/* take care of div by 0 error (lim x->oo of sin(x)/x actually equals 1)*/
-	h[i] = g * cutoffFreq; 
+	h[i] = g * cutoffFreq / pi; 
       else 
 	h[i] = g * sin(cutoffFreq * (idx-OFFSET)) / (pi*(idx-OFFSET));
     }

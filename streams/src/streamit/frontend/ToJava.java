@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.42 2003-08-26 19:35:42 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.43 2003-09-02 17:46:40 dmaze Exp $
  */
 public class ToJava
 {
@@ -212,6 +212,9 @@ public class ToJava
         }
 
         if (!SemanticChecker.check(prog))
+            return;
+        prog = (Program)prog.accept(new AssignLoopTypes());
+        if (prog == null)
             return;
 
         TempVarGen varGen = new TempVarGen();

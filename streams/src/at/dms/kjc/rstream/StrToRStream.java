@@ -48,7 +48,6 @@ public class StrToRStream {
      * @param structs The structures used in this StreamIt application
      * 
      *
-     * @exception None
      * 
      */
     public static void run(SIRStream str,
@@ -104,7 +103,6 @@ public class StrToRStream {
 	//convert all file readers/writers to normal 
 	//sirfilters, not predefined filters
 	ConvertFileFilters.doit(str);
-
 	
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");
@@ -115,6 +113,10 @@ public class StrToRStream {
 	//	str = Flattener.doLinearAnalysis(str);
 	//      str = Flattener.doStateSpaceAnalysis(str);
 	
+	//if Splitjoin to pipe is enabled, run it...
+	if (KjcOptions.sjtopipe) {
+	    SJToPipe.doit(str);
+	}
 
 	//Partition the Stream Graph, fuse it down to one tile
 	int count = new GraphFlattener(str).getNumTiles();
@@ -130,12 +132,9 @@ public class StrToRStream {
 			       true);    //joiner's need tiles to true
 	System.err.println("Done Partitioning...");
 	
-	//if Splitjoin to pipe is enabled, run it...
-	if (KjcOptions.sjtopipe) {
-	    SJToPipe.doit(str);
-	}
-	
+
 	StreamItDot.printGraph(str, "after-partition.dot");
+
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
@@ -172,11 +171,12 @@ public class StrToRStream {
 	
 	//VarDecl Raise to move array assignments down?
 	new VarDeclRaiser().raiseVars(str);
-	
-	System.out.println("Tile Code begin...");
-	FlatIRToRS.generateCode(graphFlattener.top);
-	System.out.println("Tile Code End.");
 
+	//find all do loops, probably want to mo
+	IDDoLoops.doit(graphFlattener.top);
+
+	FlatIRToRS.generateCode(graphFlattener.top);
+	
 	System.exit(0);
     }
 

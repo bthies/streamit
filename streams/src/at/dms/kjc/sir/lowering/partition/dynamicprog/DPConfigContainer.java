@@ -545,11 +545,15 @@ abstract class DPConfigContainer extends DPConfig {
 			}
 			*/
 
-			// if <cont> is a pipeline, we first need to
-			// remove matching sync points.  Also test
-			// y1<y2 because lifter will eliminate pipe if
-			// it's just a wrapper.
-			if (cont instanceof SIRPipeline && y1<y2) {
+			// Here we might have either a splitjoin
+			// or a pipeline.  If it's a splitjoin,
+			// then y1==y2 (by invariant of
+			// max. synchronized input) and we don't
+			// need the sync removal.  If it's a
+			// pipeline, only need sync removal if
+			// y1<y2, since otherwise lifter will
+			// handle it.
+			if (y1<y2) {
 			    StreamTransform newResult = new RemoveSyncTransform();
 			    newResult.addSucc(result);
 			    result = newResult;

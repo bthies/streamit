@@ -18,6 +18,16 @@ abstract class LDPConfig implements Cloneable {
      * The partitioner this is part of.
      */
     protected LinearPartitioner partitioner;
+    /**
+     * Number of partitions assigned so far, during traceback... just
+     * used for dot output, stored here for convenience.
+     */
+    public static int numAssigned;
+    /**
+     * Mapping from filter to partition number, just for convenience
+     * in traceback.
+     */
+    public static HashMap partitions;
 
     protected LDPConfig(LinearPartitioner partitioner) {
 	this.partitioner = partitioner;

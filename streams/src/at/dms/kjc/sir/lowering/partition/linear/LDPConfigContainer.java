@@ -542,10 +542,12 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_FREQ: {
+	    recordChildPartitons(x1, x2, y1, y2);
 	    return new FreqReplaceTransform(partitioner.getLinearAnalyzer());
 	}
 	    
 	case LinearPartitioner.COLLAPSE_LINEAR: {
+	    recordChildPartitons(x1, x2, y1, y2);
 	    return new LinearReplaceTransform(partitioner.getLinearAnalyzer());
 	}
 
@@ -614,6 +616,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 			// recurse
 			for (int i=x1; i<=x2; i++) {
 			    result.addSucc(traceback(i, i, y1, y2, LinearPartitioner.COLLAPSE_ANY, verticalObj.get(i)));
+			    if (i!=x2) { numAssigned++; }
 			}
 			// all done
 			return result.reduce();
@@ -635,6 +638,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 			    StreamTransform result = new VerticalCutTransform(xPivot-x1);
 			    // recurse left and right, adding transforms as post-ops
 			    result.addSucc(traceback(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)));
+			    // for dot output
+			    numAssigned++;
 			    result.addSucc(traceback(x1+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)));
 			    
 			    // Here we might have either a splitjoin
@@ -690,6 +695,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    StreamTransform result = new HorizontalCutTransform(yPivot-y1);
 		    // recurse left and right, adding transforms as post-ops
 		    result.addSucc(traceback(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, cont.get(0)));
+		    // for dot output
+		    numAssigned++;
 		    result.addSucc(traceback(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, cont.get(1)));
 
 		    // all done
@@ -714,6 +721,22 @@ abstract class LDPConfigContainer extends LDPConfig {
      * Returns config for child at index <x, y>
      */
     protected abstract LDPConfig childConfig(int x, int y);
+
+    /**
+     * For sake of dot output, records which partitions all children
+     * are assigned to.
+     */
+    private void recordChildPartitons(int x1, int x2, int y1, int y2) {
+	for (int i=x1; i<=x2; i++) {
+	    for (int j=y1; j<=y2; j++) {
+		IterFactory.createIter(childConfig(i,j).getStream()).accept(new EmptyStreamVisitor() {
+			public void visitFilter(SIRFilter self, SIRFilterIter iter) {
+			    LDPConfig.partitions.put(self, new Integer(LDPConfig.numAssigned));
+			}
+		    });
+	    }
+	}
+    }
 
     /**
      * Prints the array of memoized values of this.

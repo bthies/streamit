@@ -115,14 +115,17 @@ class LDPConfigFilter extends LDPConfig {
 	}
 	    
 	case LinearPartitioner.COLLAPSE_FREQ: {
+	    partitions.put(filter, new Integer(numAssigned));
 	    return new FreqReplaceTransform(partitioner.getLinearAnalyzer());
 	}
 	    
 	case LinearPartitioner.COLLAPSE_LINEAR: {
+	    partitions.put(filter, new Integer(numAssigned));
 	    return new LinearReplaceTransform(partitioner.getLinearAnalyzer());
 	}
 
 	case LinearPartitioner.COLLAPSE_NONE: {
+	    partitions.put(filter, new Integer(numAssigned));
 	    return new IdentityTransform();
 	}
 	}

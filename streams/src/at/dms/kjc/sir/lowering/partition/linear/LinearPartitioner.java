@@ -121,7 +121,12 @@ public class LinearPartitioner {
 	this.counts = SIRScheduler.getExecutionCounts(str);
 	// build up tables.
 	int cost = topConfig.get(COLLAPSE_ANY);
+	// clear dot traces
+	LDPConfig.numAssigned = 0;
+	LDPConfig.partitions = new HashMap();
 	StreamTransform result = topConfig.traceback(COLLAPSE_ANY);
+	// make dot graph of partitions
+	PartitionDot.printPartitionGraph(str, "partitions.dot", LDPConfig.partitions);
 	return result;
     }
 

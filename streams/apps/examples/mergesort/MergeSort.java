@@ -10,76 +10,76 @@ class Merger extends Filter {
     int N;
 
     public Merger(int N) {
-	super(N);
+        super(N);
     }
 
     public void init(int N) {
-	this.N = N;
-	input = new Channel(Integer.TYPE, N);
-	output = new Channel(Integer.TYPE, N);
+        this.N = N;
+        input = new Channel(Integer.TYPE, N);
+        output = new Channel(Integer.TYPE, N);
     }
 
     public void work() {
-	// initialize indices
-	int index1 = 0;
-	int index2 = 1;
-	
-	// merge values
-	while (index1<=N-2 && index2<=N-1) {
-	    int val1 = input.peekInt(index1);
-	    int val2 = input.peekInt(index2);
-	    if (val1 <= val2) {
-		output.pushInt(val1);
-		index1++;
-	    } else {
-		output.pushInt(val2);
-		index2++;
-	    }
-	}
+        // initialize indices
+        int index1 = 0;
+        int index2 = 1;
 
-	// merge remainder if one stream dries out
-	if (index1<=N-2) {
-	    // then index1 <= N-2
-	    for (int i=index1; i<=N-2; i+=2) {
-		output.pushInt(input.peekInt(index1));
-	    }
-	} else {
-	    // then index2 <= N-1
-	    for (int i=index2; i<=N-1; i+=2) {
-		output.pushInt(input.peekInt(index2));
-	    }
-	}
+        // merge values
+        while (index1 < N && index2 < N) {
+            int val1 = input.peekInt(index1);
+            int val2 = input.peekInt(index2);
+            if (val1 <= val2) {
+                output.pushInt(val1);
+                index1+=2;
+            } else {
+                output.pushInt(val2);
+                index2+=2;
+            }
+        }
 
-	// pop all the inputs
-	for (int i=0; i<N; i++) {
-	    input.popInt();
-	}
+        // merge remainder if one stream dries out
+        if (index1 < N) {
+            // then index1 <= N-2
+            for (int i=index1; i < N; i+=2) {
+                output.pushInt(input.peekInt(i));
+            }
+        } else {
+            // then index2 <= N-1
+            for (int i=index2; i < N; i+=2) {
+                output.pushInt(input.peekInt(i));
+            }
+        }
+
+        // pop all the inputs
+        for (int i=0; i<N; i++) {
+            input.popInt();
+        }
     }
-    
+
 }
 
 /**
  * Sorts a stream of integers.
  */
 class Sorter extends Pipeline {
-    
+
     public Sorter(int N) {
-	super(N);
+        super(N);
     }
 
     public void init(final int N) {
-	// if we have more than two items, then sort in parallel
-	if (N>2) {
-	    add(new SplitJoin() {
-		    public void init() {
-			setSplitter(ROUND_ROBIN());
-			this.add(new Sorter(N/2));
-			this.add(new Sorter(N/2));
-			setJoiner(ROUND_ROBIN());
-		    }
-		});
-	}
-	add(new Merger(N));
+        // if we have more than two items, then sort in parallel
+        if (N>2) {
+            add(new SplitJoin() {
+                    public void init() {
+                        setSplitter(ROUND_ROBIN());
+                        this.add(new Sorter(N/2));
+                        this.add(new Sorter(N/2));
+                        setJoiner(ROUND_ROBIN());
+                    }
+                });
+        }
+        add(new Merger(N));
     }
 
 }
@@ -92,18 +92,18 @@ class SortInput extends Filter {
     int N;
 
     public SortInput(int N) {
-	super(N);
+        super(N);
     }
-    
+
     public void init(int N) {
-	this.N = N;
-	output = new Channel(Integer.TYPE, N);
+        this.N = N;
+        output = new Channel(Integer.TYPE, N);
     }
-    
+
     public void work() {
-	for (int i=0; i<N; i++) {
-	    output.pushInt(N-i);
-	}
+        for (int i=0; i<N; i++) {
+            output.pushInt(N-i);
+        }
     }
 }
 
@@ -127,22 +127,22 @@ class IntPrinter extends Filter {
 class MergeSort extends StreamIt {
 
     public static void main(String args[]) {
-	new MergeSort().run(args);
+        new MergeSort().run(args);
     }
 
     public void init() {
-	// we assume an input length that is a power of two
-	final int NUM_INPUTS = 16;
-	// the number of times to run the input (this is the number of
-	// times we break up the input sequence--just a testing thing.)
-	final int MULT = 4;
-	
-	// add the input generator
-	add(new SortInput(NUM_INPUTS/MULT));
-	// add the sorters mergers
-	add(new Sorter(NUM_INPUTS));
-	// add a printer
-	add(new IntPrinter());
+        // we assume an input length that is a power of two
+        final int NUM_INPUTS = 16;
+        // the number of times to run the input (this is the number of
+        // times we break up the input sequence--just a testing thing.)
+        final int MULT = 4;
+
+        // add the input generator
+        add(new SortInput(NUM_INPUTS/MULT));
+        // add the sorters mergers
+        add(new Sorter(NUM_INPUTS));
+        // add a printer
+        add(new IntPrinter());
     }
 
 }

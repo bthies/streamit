@@ -25,7 +25,7 @@ CC_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT)
 CXX_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT) 
 LINK_OPT += $(DEBUG_OPT) $(LINK_LIBS)
 JAVA_OPT += $(DEBUG_OPT) $(CLASSPATH_OPT)
-JAVA_SRCS_DEPS = $(filter %.java.dep, $(JAVA_SRCS:%.java=%.java.dep))
+JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_SRCS:%.java=%.java.deps))
 
 # compile .java files
 %.class : %.java
@@ -75,15 +75,15 @@ ifneq ($(strip $(JAVA_SRCS)),)
 		@echo >> Makefile.deps
 endif
 
-# create .dep files from .java files
-%.java.dep : %.java
+# create .deps files from .java files
+%.java.deps : %.java
 	jikes +M +F $(JAVAC_DEPS_OPT) $(JAVA_OPT) $*.java
-	@rm -f $*.java.dep
-	@echo $*.class : $*.java.dep >> $*.java.dep
-	@cat $*.u >> $*.java.dep
-	@echo java_deps_clean : $*.u $*.class $*.java.dep >> $*.java.dep
+	@rm -f $*.java.deps
+	@echo $*.class : $*.java.deps >> $*.java.deps
+	@cat $*.u >> $*.java.deps
+	@echo java_deps_clean : $*.u $*.class $*.java.deps >> $*.java.deps
 	@# append dependecies from java_deps_clean to all generated .u files
-	@sed 's/.*\:/java_deps_clean :/;s/\.java$$/\.u/' $*.u >> $*.java.dep
+	@sed 's/.*\:/java_deps_clean :/;s/\.java$$/\.u/' $*.u >> $*.java.deps
 
 ifeq (,$(CLEAN_RULE))
 CLEAN_RULE = defined
@@ -91,7 +91,7 @@ clean: generic_clean
 endif
 
 java_deps_clean : 
-	@rm -f $^ $(JAVA_SRCS_DEPS:%.java.dep=%.u)
+	@rm -f $^ $(JAVA_SRCS_DEPS:%.java.deps=%.u)
 
 generic_clean: java_deps_clean
 	rm -f core $(OBJ_FILES) $(CLASS_FILES) $(TARGET) 

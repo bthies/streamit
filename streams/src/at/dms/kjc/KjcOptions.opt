@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.20 2003-01-21 19:18:53 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.21 2003-01-30 02:54:11 thies Exp $
  */
 
 prefix Kjc
@@ -281,3 +281,10 @@ longname		"magic_net"
 	type		boolean
 	default		"false"
 	help		"Generate Magic Network Code."
+
+longname		"sjtopipe"
+	shortcut	"J"
+	type		boolean
+	default		"false"
+	help		"Convert splitjoins to pipelines."
+

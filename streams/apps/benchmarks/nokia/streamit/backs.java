@@ -42,8 +42,8 @@ public void work() {
       {
 	  sum=y[i];
 	      for (int j=i+1; j<N ; j++)
-		  sum -= LT[i][j]*d[i];
-	  y[i]=sum/LT[i][i];
+		  sum -= LT[i][j]*y[j];
+	      y[i]=sum/LT[i][i];
           output.pushFloat(y[i]);
       }
 }

@@ -41,7 +41,7 @@ public void work() {
 	  sum= y[i];
 	      for (int j=0; j<i ; j++)
 		  sum -= L[i][j]*y[j];
-	  y[i]=sum/L[i][i];
+	      y[i]=sum/L[i][i];
           output.pushFloat(y[i]);
       }
 }

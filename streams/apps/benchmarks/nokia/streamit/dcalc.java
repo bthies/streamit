@@ -16,7 +16,7 @@ class dcalc extends StreamIt {
 	    {1,0},
 	    {1,2}
 	};
-    float[] r= {1,2,3,4,5,6};
+    float[] r= {1,2,3,4,5};
 
 
 
@@ -42,7 +42,7 @@ class dcalc extends StreamIt {
 	add(new Sourcer(Q*N+W-1,r));
 	add(new AddAHLAhA(W,Q,N,K,h,C));
 	add(new AhrdAhA(Q*N+W-1,K*N));
-	//	add(new LrL(K*N));
+       	//      add(new LrL(K*N));
 	//      add(new backs(K*N));
 	add(new Ahrchold(K*N));
 	add(new LrL(K*N));
@@ -108,9 +108,9 @@ class split_ahrd extends SplitJoin{//In:2* Ahr(N)+ 2 * L(N*(N+1)/2)
     public split_ahrd( int N) {super (N);}
     public void init(int N) {
 	setSplitter(WEIGHTED_ROUND_ROBIN(N,N*(N+1)+N));
-	add (new FloatIdentity());
+	add (new vectdouble(N));
 	add (new dsolve(N));
-	setJoiner(WEIGHTED_ROUND_ROBIN(N,N));
+	setJoiner(WEIGHTED_ROUND_ROBIN(2*N,N));
     }
 
 }
@@ -121,7 +121,7 @@ class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,Ah
 	setSplitter(WEIGHTED_ROUND_ROBIN(M*(N+1)+N*(N+1)/2,N*(N+1)/2));
 	add (new Ahrd(M,N));
 	add (new FloatIdentity());                
-	setJoiner(WEIGHTED_ROUND_ROBIN(2*N,N*(N+1)/2));
+	setJoiner(WEIGHTED_ROUND_ROBIN(3*N,N*(N+1)/2));
     }
 
 }
@@ -222,11 +222,9 @@ class error_est extends Filter{ // this class estimates the error in signal dete
 	
     public error_est(int N) {super(N);}
     public void init(int N){
-	setInput(Float.TYPE);
-	setOutput(Float.TYPE);
 	this.N=N;
-	setPop(2*N);
-	setPush(1);
+	input = new Channel(Float.TYPE, 2*N);
+	output = new Channel(Float.TYPE, 1);
 	Ahr=new float[N];
 	d= new float[N];
 
@@ -235,7 +233,7 @@ class error_est extends Filter{ // this class estimates the error in signal dete
 
 	for (int i=0; i< N;i++)
 	    Ahr[i]=input.popFloat();
-	for (int i=0; i <N; i++)
+	for (int i=N-1; i >=0; i--)
 	    d[i]=input.popFloat();
 	for (int i=0; i <N ; i++)
 	    sigma+=(d[i]-Ahr[i])*(d[i]-Ahr[i]);
@@ -254,7 +252,7 @@ class choldsigma extends Filter // this Filter performs the cholesky decompositi
     
     float[]  p; // p is the out put elements on the diagonal
     float    sum; // sum will be used as a buffer
-       float    sigma;
+    float    sigma;
 public choldsigma(int N){ super (N);}
           public void init (int N) {
 	      input = new Channel(Float.TYPE, N*(N+1)/2+1);
@@ -283,7 +281,7 @@ public void work() {
 	  for (int k=i-1 ; k>=0; k--) sum-=A[k][i]*A[k][j];
       if ( i==j)
 	  {
-	      p[i]=(float)Math.sqrt(sum+sigma);
+	      p[i]=(float)Math.sqrt(sum+sigma/N);
 	      output.pushFloat(p[i]);
 	      }
       else
@@ -307,15 +305,15 @@ class  Ahrchold extends SplitJoin{// copies Ahr to its out put and performes the
 	add (new Lest(N));
 	setJoiner(WEIGHTED_ROUND_ROBIN(N,N*(N+1)));
     }
-
 }
 
+    
 class Lest extends Pipeline{//  this pipeline estimates the error and then performes the cholskey decomp
     public Lest( int N) {super (N);}
     public void init(int N) {
 	add (new error_split(N));     
 	add (new choldsigma(N));
-	add (new vectdouble(N));
+	add (new vectdouble(N*(N+1)/2));
     }
 
 }

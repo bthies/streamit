@@ -12,7 +12,7 @@ import java.lang.reflect.*;
 public class DestroyedClass extends AssertedClass
 {
     private boolean destroyed = false;
-    private static Class thisClass;
+    private static Class destroyedClass;
     
     
     // The class initializer initializes thisClass
@@ -20,7 +20,7 @@ public class DestroyedClass extends AssertedClass
     {
         try
         {
-            thisClass = Class.forName ("streamit.DestroyedClass");
+            destroyedClass = Class.forName ("streamit.DestroyedClass");
         }
         catch (ClassNotFoundException error)
         {
@@ -51,7 +51,7 @@ public class DestroyedClass extends AssertedClass
         Class objectClass = this.getClass ();
         ASSERT (objectClass != null);
         
-        for ( ; objectClass != thisClass ; objectClass = objectClass.getSuperclass ())
+        for ( ; objectClass != destroyedClass ; objectClass = objectClass.getSuperclass ())
         {
             Method deleteMethod = null;
             

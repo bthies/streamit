@@ -487,6 +487,33 @@ public class Propagator extends SLIRReplacingVisitor {
 	return self;
 	}*/
 
+    /**
+     * Visits a peek expression.
+     */
+    public Object visitPeekExpression(SIRPeekExpression self,
+				      CType tapeType,
+				      JExpression arg) {
+	JExpression newExp = (JExpression)arg.accept(this);
+	if (write&&newExp!=null && newExp!=arg) {
+	    self.setArg(newExp);
+	}
+	
+	return self;
+    }
+
+    /**
+     * Visits a push expression.
+     */
+    public Object visitPushExpression(SIRPushExpression self,
+				    CType tapeType,
+				    JExpression arg) {
+	JExpression newExp = (JExpression)arg.accept(this);
+	if (write&&newExp!=null && newExp!=arg) {
+	    self.setArg(newExp);
+	}
+	
+	return self;
+    }
     
     public Object visitPostfixExpression(JPostfixExpression self,
 					int oper,

@@ -74,4 +74,12 @@ public class DLListIterator extends AssertedClass
     {
         return element == other.element;
     }
+    
+    /**
+     * get the DLListElement of this DLListIterator
+     */
+    DLListElement getListElement ()
+    {
+        return element;
+    }
 }

@@ -32,8 +32,8 @@ public class DLListElement extends AssertedClass
         this.data = data;
         
         // and insert the element into the actual list
-        prev.nextElem.prevElem = this;
-        prev.nextElem = this;
+        nextElem.prevElem = this;
+        prevElem.nextElem = this;
     }
     
     /**

@@ -90,6 +90,25 @@ public class DLList extends AssertedClass implements DLList_const
 
         removeElement(toRemove);
     }
+    
+    /**
+     * Remove an entry pointed to by pos, and return an iterator
+     * pointing to the next element.
+     * 
+     * This function will ADVANCE pos! This is OK, because after
+     * the execution of this function, pos should be invalid, anyway. 
+     */
+    public DLListIterator erase (DLListIterator pos)
+    {
+        DLListElement listElement = pos.getListElement();
+        
+        // make sure I'm not removing the root element!
+        ASSERT(listElement != theList);
+        
+        pos.next ();
+        removeElement (listElement);
+        return pos;
+    }
 
     private void removeElement(DLListElement elem)
     {

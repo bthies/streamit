@@ -1,6 +1,6 @@
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.3 2003-03-17 22:51:14 karczma Exp $ */
+/* $Id: RBTree.java,v 1.4 2003-07-22 18:38:41 karczma Exp $ */
 
 public class RBTree extends AssertedClass
 {
@@ -139,7 +139,7 @@ public class RBTree extends AssertedClass
                     insertionPoint.left = NULL;
                     insertionPoint.right = NULL;
 
-                    size++;
+                    size = size + 1;
                     break;
                 }
             }
@@ -165,7 +165,7 @@ public class RBTree extends AssertedClass
                         insertionPoint.left = NULL;
                         insertionPoint.right = NULL;
 
-                        size++;
+                        size = size + 1;
                         break;
                     }
                 }
@@ -323,6 +323,8 @@ public class RBTree extends AssertedClass
             // perform the fixup from CLR
             RBDeleteFixup(splicedChild);
         }
+        
+        size = size - 1;
     }
 
     private void leftRotate(RBNode pivot)

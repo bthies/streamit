@@ -1319,13 +1319,19 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIRInitStatement createInitStatement(Object SIROp, String regMethod) 
     {
 	SIRStream newST = null;
-	//Already an SIRinit statement
-	if (SIROp instanceof SIRInitStatement) {
-	    return (SIRInitStatement)SIROp;
-	}
+
+	//Already an SIRinit statement (this is a local variable expression)
+	//we used the init statement from the symbol table
 	//Using a local variable that has been already defined as a stream construct
+	if (SIROp instanceof SIRInitStatement) {
+	    //now we must set the parent and do any other steps that are necessary 
+	    // when registering
+	    newST = (SIRStream)((SIRInitStatement)SIROp).getTarget();
+	    newST.setParent((SIRContainer)parentStream);
+	}
 	if (SIROp instanceof SIRStream)
 	    newST = (SIRStream)SIROp;
+
 	//Creating a named class
 	//if it is a named creation, lookup in the symbol table for the visited
 	//node and add it to the pipeline
@@ -1354,10 +1360,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    ((SIRFeedbackLoop)parentStream).setLoop(newST);
 	else
 	    at.dms.util.Utils.fail("Invalid Registration Method");
-	
-	return new SIRInitStatement(null, null, 
-				    ((JUnqualifiedInstanceCreation)SIROp).getParams(),
-				    newST);
+
+	//Already an SIRinit statement (this is a local variable expression)
+	//we used the init statement from the symbol table
+	//Using a local variable that has been already defined as a stream construct
+	if (SIROp instanceof SIRInitStatement) 
+	    	    return (SIRInitStatement)SIROp;
+	else 
+	    return new SIRInitStatement(null, null, 
+					((JUnqualifiedInstanceCreation)SIROp).getParams(),
+					newST);
     }
     
     /**
@@ -1403,10 +1415,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Add not called on Pipeline or SplitJoin");
 	    if (args.length > 1)
 		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
-	    //Visit the argument (Exactly one)
+	    //Visit the argument (Exactly one))
 	    Object SIROp = args[0].accept(this);
-	    
-	    
+	    	    
 	    //reset currentMethod on all returns
 	    currentMethod = parentMethod;
 	    //create the init statement to return

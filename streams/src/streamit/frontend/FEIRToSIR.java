@@ -2,7 +2,6 @@ package streamit.frontend;
 
 import java.util.*;
 import streamit.frontend.nodes.*;
-import streamit.frontend.tojava.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
 
@@ -10,9 +9,11 @@ public class FEIRToSIR implements FEVisitor {
   private SIRStream topLevel;
   private SIRStream parent;
   private Hashtable classTable;
+    private Map cclassTable;
 
   public FEIRToSIR() {
     classTable = new Hashtable();
+    cclassTable = new HashMap();
   }
   
   public void debug(String s) {
@@ -428,6 +429,8 @@ public class FEIRToSIR implements FEVisitor {
     return new JFieldAccessExpression(null,
 				      (JExpression) exp.getLeft().accept(this),
 				      exp.getName());
+    // TODO: need to add a CField parameter here, or else our code bombs
+    // out later.  --dzm
   }
 
   public Object visitExprFunCall(ExprFunCall exp) {
@@ -944,20 +947,10 @@ public class FEIRToSIR implements FEVisitor {
     return null;
   }
 
-  public Object visitStmtIODecl(StmtIODecl io) {
-    debug("In visitStmtIODecl\n");
-    debug("  UNIMPLEMENTED\n");
-    /* Ignore these */
-    return null;
-  }
-
   public Object visitOther(FENode node) {
     debug("In visitStmtOther\n");
     debug("  UNIMPLEMENTED\n");
     /* unimplemented */
-    if (node instanceof StmtIODecl) {
-      return visitStmtIODecl((StmtIODecl) node);
-    }
     debug("  Got: " + node + "\n");
     return null;
   }

@@ -18,7 +18,13 @@ public class TraceExtractor {
 	    Q.add(topFilters[i]);
 	while(Q.size()>0) {
 	    UnflatFilter filter=(UnflatFilter)Q.removeFirst();
-	    FilterContent content=new FilterContent(filter);
+	    FilterContent content;
+	    if(filter.filter instanceof SIRFileReader)
+		content=new FileInputContent(filter);
+	    else if(filter.filter instanceof SIRFileWriter)
+		content=new FileOutputContent(filter);
+	    else
+		content=new FilterContent(filter);
 	    boolean linear=content.getArray()!=null;
 	    System.out.println("IS LINEAR: "+linear);
 	    if(content.isLinear()) {
@@ -34,7 +40,7 @@ public class TraceExtractor {
 		if(filter.in!=null&&filter.in.length>0) {
 		    //node=new InputTraceNode(filter.inWeights,getInNodes(outNodes,filter.in));
 		    node=getInNode(outNodes,inNodes,filter);
-		    trace=new Trace(node);
+		    trace=new Trace((InputTraceNode)node);
 		    FilterTraceNode filterNode=new FilterTraceNode(content);
 		    node.setNext(filterNode);
 		    filterNode.setPrevious(node);
@@ -43,12 +49,17 @@ public class TraceExtractor {
 		    node=new FilterTraceNode(content);
 		    trace=new Trace(node);
 		}
-		if(!(filter.filter instanceof SIRPredefinedFilter)) //Don't map FileReader/Writer
-		    traces.add(trace);
+		//if(!(filter.filter instanceof SIRPredefinedFilter)) //Don't map FileReader/Writer
+		traces.add(trace);
 		boolean cont=true;
 		while(cont&&filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
 		    UnflatFilter newFilter=filter.out[0][0].dest;
-		    content=new FilterContent(newFilter);
+		    if(newFilter.filter instanceof SIRFileReader)
+			content=new FileInputContent(newFilter);
+		    else if(newFilter.filter instanceof SIRFileWriter)
+			content=new FileOutputContent(newFilter);
+		    else
+			content=new FilterContent(newFilter);
 		    System.out.println("IS LINEAR: "+linear);
 		    if(content.isLinear()) {
 			FilterContent[] linearStuff=LinearFission.fiss(content,content.getArray().length);
@@ -81,11 +92,11 @@ public class TraceExtractor {
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=null;
-		    if(filter.filter instanceof SIRFileReader) {
-			SIRFileReader read=(SIRFileReader)filter.filter;
-			outNode=new EnterTraceNode(read.getFileName(),true,filter.outWeights);
-		    } else
-			outNode=new OutputTraceNode(filter.outWeights);
+		    //if(filter.filter instanceof SIRFileReader) {
+		    //SIRFileReader read=(SIRFileReader)filter.filter;
+		    //outNode=new EnterTraceNode(read.getFileName(),true,filter.outWeights);
+		    //} else
+		    outNode=new OutputTraceNode(filter.outWeights);
 		    node.setNext(outNode);
 		    outNode.setPrevious(node);
 		    outNodes.put(filter,outNode);
@@ -130,11 +141,11 @@ public class TraceExtractor {
 	for(int i=0;i<in.length;i++)
 	    inNode[i]=(OutputTraceNode)outNodes.get(in[i].src);
 	InputTraceNode output=null;
-	if(filter.filter instanceof SIRFileWriter) {
-	    SIRFileWriter write=(SIRFileWriter)filter.filter;
-	    output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
-	} else
-	    output=new InputTraceNode(filter.inWeights,inNode);
+	//if(filter.filter instanceof SIRFileWriter) {
+	//SIRFileWriter write=(SIRFileWriter)filter.filter;
+	//output=new ExitTraceNode(write.getFileName(),true,filter.inWeights,inNode);
+	//} else
+	output=new InputTraceNode(filter.inWeights,inNode);
 	inNodes.put(filter,output);
 	return output;
     }
@@ -178,10 +189,13 @@ public class TraceExtractor {
     }
 
     private static String traceName(Trace trace) {
-	TraceNode node=trace.getHead();
-	if(node instanceof InputTraceNode)
-	    node=node.getNext();
+	TraceNode node=trace.getHead().getNext();
+	//if(node instanceof InputTraceNode)
+	//node=node.getNext();
 	StringBuffer out=null;
+	System.out.println(node);
+	System.out.println(node.getPrevious());
+	System.out.println(node.getNext());
 	if(((FilterTraceNode)node).getFilter().getArray()!=null)
 	    out=new StringBuffer("color=cornflowerblue, style=filled, label=\""+node.toString());
 	else

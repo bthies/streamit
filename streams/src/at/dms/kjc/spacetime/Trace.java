@@ -1,5 +1,7 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.util.Utils;
+
 /** 
  * 
  **/
@@ -35,6 +37,8 @@ public class Trace
     }
 
     public Trace(TraceNode node) {
+	if(!(node instanceof FilterTraceNode))
+	    Utils.fail("FilterTraceNode expected: "+node);
 	head = new InputTraceNode();
 	head.setNext(node);
 	node.setPrevious(head);
@@ -58,7 +62,13 @@ public class Trace
 	if(node!=null)
 	    end=node;
 	len=size;
-	tail=(OutputTraceNode)end;
+	if(end instanceof OutputTraceNode)
+	    tail=(OutputTraceNode)end;
+	else {
+	    tail=new OutputTraceNode();
+	    end.setNext(tail);
+	    tail.setPrevious(end);
+	}
 	return size;
     }
     

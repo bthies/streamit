@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.46 2003-09-25 20:10:51 dmaze Exp $
+# $Id: strc,v 1.1 2003-09-30 15:52:36 dmaze Exp $
 #
 
 use strict;

@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.11 2002-10-04 02:27:05 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.12 2003-04-02 22:43:13 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -247,8 +247,6 @@ public class ComplexProp extends FEReplacer
         // So assume every unary operation is like negation.  In that
         // case, -(a+bi) == (-a)+(-b)i.
         Expression expr = (Expression)exp.getExpr().accept(this);
-        if (expr == exp.getExpr())
-            return exp;
         int op = exp.getOp();
         if (!(expr instanceof ExprComplex))
             return new ExprUnary(exp.getContext(), op, expr);

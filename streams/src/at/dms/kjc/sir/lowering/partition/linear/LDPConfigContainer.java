@@ -637,8 +637,11 @@ abstract class LDPConfigContainer extends LDPConfig {
 			    result.addSucc(traceback(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)));
 			    result.addSucc(traceback(x1+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)));
 			    
-			    // if <str> is a pipeline, we first need to remove matching sync points
-			    if (str instanceof SIRPipeline) {
+			    // if <cont> is a pipeline, we first need to
+			    // remove matching sync points.  Also test
+			    // y1<y2 because lifter will eliminate pipe if
+			    // it's just a wrapper.
+			    if (str instanceof SIRPipeline && y1<y2) {
 				StreamTransform newResult = new RemoveSyncTransform();
 				newResult.addSucc(result);
 				result = newResult;

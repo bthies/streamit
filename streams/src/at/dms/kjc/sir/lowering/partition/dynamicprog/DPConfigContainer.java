@@ -545,12 +545,11 @@ abstract class DPConfigContainer extends DPConfig {
 			}
 			*/
 
-			// if <cont> is a pipeline and we're making
-			// the first vertical cut, we first need to
+			// if <cont> is a pipeline, we first need to
 			// remove matching sync points.  Also test
 			// y1<y2 because lifter will eliminate pipe if
 			// it's just a wrapper.
-			if (cont instanceof SIRPipeline && firstVertCut && y1<y2) {
+			if (cont instanceof SIRPipeline && y1<y2) {
 			    StreamTransform newResult = new RemoveSyncTransform();
 			    newResult.addSucc(result);
 			    result = newResult;
@@ -609,7 +608,7 @@ abstract class DPConfigContainer extends DPConfig {
 			for (int i5=0; i5<A[0][0][0][0].length; i5++) {
 			    for (int i6=0; i6<2; i6++) {
 				System.err.println(getStream().getIdent() + "[" + i1 + "][" + i2 + "][" + i3 + "][" + i4 + "][" + 
-						   i5 + "][" + i6 + "] = " + A[i1][i2][i3][i4][i5][i5]);
+						   i5 + "][" + i6 + "] = " + A[i1][i2][i3][i4][i5][i6]);
 			    }
 			}
 		    }

@@ -15,6 +15,7 @@ CLASSPATH=${CLASSPATH}:/usr/uns/java/antlr.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/jgraph/jgraph.jar
 CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
 
 # the current version of starsearch we're using

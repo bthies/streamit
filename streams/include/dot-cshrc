@@ -11,6 +11,7 @@ setenv CLASSPATH ${CLASSPATH}:/usr/uns/java/antlr.jar
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/jgraph/jgraph.jar
 setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/library/java
 
 # for running dotty

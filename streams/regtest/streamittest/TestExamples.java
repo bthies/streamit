@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.28 2003-07-11 14:25:03 dmaze Exp $
+ * $Id: TestExamples.java,v 1.29 2003-08-29 22:26:43 thies Exp $
  **/
 package streamittest;
 
@@ -64,6 +64,7 @@ public class TestExamples extends StreamITTestCase {
         {
             // feedback loop
             suite.addTest(new TestExamples("testFib", flags));
+            suite.addTest(new TestExamples("testFibFeed", flags));
             suite.addTest(new TestExamples("testFib2", flags));
             // file reader
             suite.addTest(new TestExamples("testFile", flags));
@@ -125,8 +126,19 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testFib() {
-	doCompileRunVerifyTest(EXAMPLE_ROOT + "fib/",
+	String root = EXAMPLE_ROOT + "fib/";
+        doSyntaxConvertTest(root, "Fib.str", "Fib.java");
+	doCompileRunVerifyTest(root,
 			       "Fib.java",
+			       "Fib.out",
+			       0,1);
+    }
+    
+    public void testFibFeed() {
+	String root = EXAMPLE_ROOT + "fib/";
+        doSyntaxConvertTest(root, "FibFeed.str", "FibFeed.java");
+	doCompileRunVerifyTest(root,
+			       "FibFeed.java",
 			       "Fib.out",
 			       0,1);
     }

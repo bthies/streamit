@@ -1,0 +1,21 @@
+//want to run with magic crossbar support!!
+
+gMagicCrossbar.transmit_addr = ;
+
+gMagicCrossbar.receive_addr = ;
+
+fn streamit_magic_network_suppor() {
+  //add the function that initializes things
+  listi_add(gMagicInstrHMS.theList,
+            & fn (procNum, rs, imm, result_ptr)
+              {
+                     if (!((rs == 0) && (imm == 1)))
+                       return 0;
+		     
+		     // add stuff here
+
+		     // need to do this
+                     Proc_SetMagicFIFOsEnabled(proc, 1);
+                     return 1;
+                   });
+}

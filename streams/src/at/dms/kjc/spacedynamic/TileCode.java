@@ -91,10 +91,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("#include <math.h>\n\n");
   
 	    if(KjcOptions.altcodegen) {
-		fw.write("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
-		fw.write("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
-		fw.write("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
-		fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+		fw.write(FlatIRToC.getNetRegsDecls());
 	    }
 
 	    if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
@@ -113,10 +110,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //the structure definition header files
 	    //this must be included after the above declarations 
 	    //(of CSTO*, CSTI*)
-	    /*
-	    if (SpaceDynamicBackend.structures.length > 0) 
-		fw.write("#include \"structs.h\"\n");
-	    */
+
+	    
+	    fw.write("#include \"structs.h\"\n");
+
 	    if (KjcOptions.decoupled) {
 		fw.write("float " + Util.CSTOFPVAR + ";\n");
 		fw.write("float " + Util.CSTIFPVAR + ";\n");

@@ -105,7 +105,7 @@ public class JoinerScheduleNode
 	ret.append("{\n");
 	if (type.isClassType()) {
 	    //call the struct's receive method
-	    ret.append("__popPointer" + type + "(&");
+	    ret.append("__popPointerStatic" + type + "(&");
 	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
 	    ret.append(");\n");
 	}
@@ -137,7 +137,7 @@ public class JoinerScheduleNode
 	ret.append("{\n");
 	if (type.isClassType()) {
 	    //call the struct's push method
-	    ret.append("push" + type + "(&");
+	    ret.append("pushStatic" + type + "(&");
 	    ret.append("__buffer" + buffer + "[__first" + buffer + "++]");
 	    ret.append(");\n");
 	}

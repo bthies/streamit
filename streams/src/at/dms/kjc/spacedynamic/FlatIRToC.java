@@ -157,6 +157,23 @@ public class FlatIRToC extends ToC implements StreamVisitor
         print("};\n");
     }
     */
+
+    public static String getNetRegsDecls() 
+    {
+	StringBuffer buf = new StringBuffer();
+ 
+	buf.append("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
+	buf.append("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
+	buf.append("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
+	buf.append("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+	buf.append("register float " + Util.CGNOFPVAR + " asm(\"$cgno\");\n");
+	buf.append("register float " + Util.CGNIFPVAR + " asm(\"$cgni\");\n");
+	buf.append("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
+	buf.append("register int " + Util.CGNIINTVAR + " asm(\"$cgni\");\n");
+	
+	return buf.toString();
+    }
+    
     
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
@@ -180,15 +197,7 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	}
 	
 	if (KjcOptions.altcodegen && !KjcOptions.decoupled){
-	    print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
-	    print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
-	    print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
-	    print("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
-	    print("register float " + Util.CGNOFPVAR + " asm(\"$cgno\");\n");
-	    print("register float " + Util.CGNIFPVAR + " asm(\"$cgni\");\n");
-	    print("register int " + Util.CGNOINTVAR + " asm(\"$cgno\");\n");
-	    print("register int " + Util.CGNIINTVAR + " asm(\"$cgni\");\n");
-	    //this is now in structs.h
+	    print(getNetRegsDecls());
 	    //print("unsigned " + DYNMSGHEADER + ";\n");
 	}
 	

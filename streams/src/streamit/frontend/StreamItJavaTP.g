@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.10 2002-07-15 21:10:52 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.11 2002-07-16 15:24:54 dmaze Exp $
  */
 
 header {
@@ -395,7 +395,7 @@ for_statement returns [String t]
 }
 	: #(TK_for init=inline_statement cond=expr incr=inline_statement
 			body=statement)
-		{ t = "for (" + init + "; " + cond + "; " + incr + ") " + body; }
+		{ t = "for (" + init + "; " + cond + "; " + incr + ") {" + body + " }"; }
 	;
 
 while_statement returns [String t]

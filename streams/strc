@@ -1,8 +1,8 @@
 #!/usr/bin/perl -w
 #
-# knit: StreamIt compiler wrapper
+# strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.1 2003-09-30 15:52:36 dmaze Exp $
+# $Id: strc,v 1.2 2003-09-30 15:53:05 dmaze Exp $
 #
 
 use strict;
@@ -32,9 +32,9 @@ if ($opts{help})
 if (!@ARGV)
   {
     print <<EOH;
-knit: StreamIt compiler wrapper
-Usage: knit [options] file.str ...
-Run 'knit --help' for option listing
+strc: StreamIt compiler wrapper
+Usage: strc [options] file.str ...
+Run 'strc --help' for option listing
 EOH
     exit(0);
   }
@@ -60,9 +60,9 @@ sub usage
   {
     my ($fh, $more) = @_;
     my $text = <<'EOT';
-knit: StreamIt compiler wrapper
+strc: StreamIt compiler wrapper
 
-Usage: knit [options] file.str ...
+Usage: strc [options] file.str ...
 	
 Options:
   --help              Show this screen

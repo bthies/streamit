@@ -132,6 +132,7 @@ public class AutoCloner {
 	// equality
 	else if (typeName.startsWith("at.dms.kjc.C") ||
 		 o instanceof JLiteral ||
+		 o instanceof JavaStyleComment ||
 		 o instanceof SIRSplitType ||
 		 o instanceof SIRJoinType ||
 		 o instanceof String ||

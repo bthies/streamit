@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JStringLiteral.java,v 1.7 2003-05-28 05:58:44 thies Exp $
+ * $Id: JStringLiteral.java,v 1.8 2003-06-27 01:23:09 thies Exp $
  */
 
 package at.dms.kjc;
@@ -148,6 +148,7 @@ public class JStringLiteral extends JLiteral {
    * @param	p		the visitor
    */
   public void accept(KjcVisitor p) {
+      /*
     StringBuffer s = new StringBuffer();
     for (int i = 0; i < value.length(); i++) {
       char c = value.charAt(i);
@@ -165,6 +166,7 @@ public class JStringLiteral extends JLiteral {
       }
     }
     value = s.toString();
+      */
     p.visitStringLiteral(value);
   }
  /**
@@ -172,6 +174,7 @@ public class JStringLiteral extends JLiteral {
    * @param	p		the visitor
    */
     public Object accept(AttributeVisitor p) {
+	/*
 	StringBuffer s = new StringBuffer();
 	for (int i = 0; i < value.length(); i++) {
 	    char c = value.charAt(i);
@@ -189,6 +192,7 @@ public class JStringLiteral extends JLiteral {
 	    }
 	}
 	value = s.toString();
+	*/
 	return p.visitStringLiteral(this, value);
     }
 

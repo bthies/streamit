@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.29 2003-03-31 16:18:09 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.30 2003-04-04 03:08:54 aalamb Exp $
  */
 
 prefix Kjc
@@ -236,6 +236,13 @@ longname		"linearreplacement"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformations based on linear analysis."
+
+longname		"linearreplacement2"
+	shortcut	"Z"
+	type		boolean
+	default		"false"
+	help		"Perform linear transformation using a level of indirection."
+
 
 longname		"frequencyreplacement"
 	shortcut	"F"

@@ -63,8 +63,8 @@ public class SIRScheduler {
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
 	// print the schedules
-	printSchedule(schedule.getSteadySchedule(), "steady state");
-	printSchedule(schedule.getInitSchedule(), "initialization");
+	printSchedule(schedule.getSteadySchedule(), "steady state ");
+	printSchedule(schedule.getInitSchedule(), "initialization ");
 	// make work function implementing the steady-state schedule
 	JMethodDeclaration steadyWork = makeWork(schedule.getSteadySchedule(), 
 						 toplevel);

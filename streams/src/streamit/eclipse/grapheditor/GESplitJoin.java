@@ -3,10 +3,17 @@
  */
 package streamit.eclipse.grapheditor;
 
-import java.io.*;
-import java.util.*;
-import com.jgraph.graph.*;
+import java.awt.Color;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import javax.swing.BorderFactory;
 import com.jgraph.JGraph;
+import com.jgraph.graph.ConnectionSet;
+import com.jgraph.graph.DefaultEdge;
+import com.jgraph.graph.DefaultPort;
+import com.jgraph.graph.GraphConstants;
 import streamit.eclipse.grapheditor.jgraphextension.*;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -50,12 +57,14 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 */
 	private boolean isExpanded;
 
-
 	/**
-	 * The frame in which the contents of the SplitJoin (whatever is specified
-	 * by localGraphStruct) will be drawn.
+	 * The level of how deep the elements of this splitjoin are with respect to 
+	 * other container nodes that they belong to.
+	 * The toplevel pipeline has level 0. The elements of another pipeline within
+	 * this toplevel pipeline would have its level equal to 1 (same applies to other 
+	 * container nodes such as splitjoins and feedback loops).
 	 */
-	private LiveJGraphInternalFrame frame;
+	private int level;
 
 	/**
 	 * GESplitJoin constructor.
@@ -104,22 +113,13 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 * Constructs the splitjoin and returns the last node in the splitjoin that wil be connecting
 	 * to the next graph structure.
 	 */	
-	public GEStreamNode construct(GraphStructure graphStruct, int level)
+	public GEStreamNode construct(GraphStructure graphStruct, int lvel)
 	{
 		System.out.println("Constructing the SplitJoin " +this.getName());
-		this.draw();
+		this.level = lvel;
 		
 		graphStruct.addToLevelContainer(level, this);
-		level++;
-		
-		/*
-		DefaultGraphModel model = new DefaultGraphModel();
-		this.localGraphStruct.setGraphModel(model);
-		JGraph jgraph = new JGraph(model);
-		jgraph.addMouseListener(new JGraphMouseAdapter(jgraph));					
-		frame = new LiveJGraphInternalFrame(this.localGraphStruct.getJGraph());
-		this.localGraphStruct.internalFrame = frame;
-		*/
+		lvel++;
 		
 		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph()));
 		//graphStruct.getJGraph().getGraphLayoutCache().setVisible(this, true);
@@ -127,7 +127,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		//this.localGraphStruct.setJGraph(graphStruct.getJGraph());
 		this.localGraphStruct = graphStruct;	
 		
-		this.splitter.construct(graphStruct, level); //this.splitter.construct(this.localGraphStruct); 
+		this.splitter.construct(graphStruct, lvel); //this.splitter.construct(this.localGraphStruct); 
 		
 		ArrayList nodeList = (ArrayList) this.getSuccesors();
 		Iterator listIter =  nodeList.listIterator();
@@ -136,7 +136,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = ((GEStreamNode) listIter.next());
-			lastNodeList.add(strNode.construct(graphStruct,level));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
+			lastNodeList.add(strNode.construct(graphStruct,lvel));// lastNodeList.add(strNode.construct(this.localGraphStruct)); 
 			
 			System.out.println("Connecting " + splitter.getName()+  " to "+ strNode.getName());	
 			graphStruct.connectDraw(splitter, strNode); //this.localGraphStruct.connectDraw(splitter, strNode); 
@@ -144,7 +144,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		
 		listIter =  lastNodeList.listIterator();
 		
-		this.joiner.construct(graphStruct, level); //this.joiner.construct(this.localGraphStruct); 
+		this.joiner.construct(graphStruct, lvel); //this.joiner.construct(this.localGraphStruct); 
 		
 		while(listIter.hasNext())
 		{
@@ -155,30 +155,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	
 		//this.localGraphStruct.getGraphModel().insert(localGraphStruct.getCells().toArray(),localGraphStruct.getAttributes(), localGraphStruct.getConnectionSet(), null, null);
 		graphStruct.getGraphModel().insert(graphStruct.getCells().toArray(),graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
-	
-	
-		this.port = new DefaultPort();
-		this.add(this.port);
 		
-		/*
-		frame.setGraphCell(this);
-		frame.setGraphStruct(graphStruct);
-		frame.setGraphModel(graphStruct.getGraphModel());
-		frame.create(this.getName());
-		frame.setSize(400, 400);
-		*/
-		
-		this.initDrawAttributes(graphStruct);
-						
-		//graphStruct.internalFrame.getContentPane().add(frame);
-		/*
-		try {	
-			frame.setSelected(true);
-		} catch(Exception pve) {}
-		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		manager.arrange();
-		*/
-		
+		this.initDrawAttributes(graphStruct);		
 		return this;
 	}
 	
@@ -188,11 +166,12 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 */	
 	public void initDrawAttributes(GraphStructure graphStruct)
 	{
+		this.port = new DefaultPort();
+		this.add(this.port);
+		
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
-		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
 		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.green));
-		
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
 		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);	
 	}
@@ -216,13 +195,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	 	
 	 }
 	 
-	/**
-	 * Draw this SplitJoin
-	 */
-	public void draw()
-	{
-		System.out.println("Drawing the SplitJoin " +this.getName());
-	}	
+
 	
 	/**
 	 * Expand or collapse the GESplitJoin structure depending on wheter it was already 
@@ -256,17 +229,12 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		
 		//Iterator eIter = (DefaultGraphModel.getEdges(localGraphStruct.getGraphModel(), new Object[]{this})).iterator();
 		Iterator eIter = localGraphStruct.getGraphModel().edges(this.getPort());
-		
 		ArrayList edgesToRemove =  new ArrayList();
-		
 		
 		while (eIter.hasNext())
 		{
 			DefaultEdge edge = (DefaultEdge) eIter.next();
-		
-			
 			Iterator sourceIter = this.getSourceEdges().iterator();	
-			System.out.println(" edge hash" +edge.hashCode());
 			while (sourceIter.hasNext())
 			{
 				DefaultEdge s = (DefaultEdge) sourceIter.next();
@@ -308,8 +276,14 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 	
 		}
 		
+		
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
-		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
+		//jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
+		
+		for (int i = level; i >= 0; i--)
+		{
+			this.localGraphStruct.hideContainersAtLevel(i);
+		}
 		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		manager.arrange();	
@@ -337,15 +311,12 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		while (splitEdgeIter.hasNext())
 		{
 			DefaultEdge edge = (DefaultEdge) splitEdgeIter.next();
-			
-			
 			Iterator sourceIter = this.getJoiner().getSourceEdges().iterator();
 			while(sourceIter.hasNext())
 			{
 				DefaultEdge target = (DefaultEdge) sourceIter.next();
 				if(target.equals(edge))
 				{
-					System.out.println("source equals edge");
 					cs.disconnect(edge, true);
 					cs.connect(edge, this.getPort(), true);
 					this.addSourceEdge(edge);
@@ -359,7 +330,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 				DefaultEdge source = (DefaultEdge) targetIter.next();
 				if (source.equals(edge))
 				{
-					System.out.println("target equals target");
 					cs.disconnect(edge,false);
 					cs.connect(edge, this.getPort(),false);
 					this.addTargetEdge(edge);
@@ -378,7 +348,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 				DefaultEdge source = (DefaultEdge) sourceIter.next();
 				if(source.equals(edge))
 				{
-					System.out.println("source equals edge");
 					cs.disconnect(edge, true);
 					cs.connect(edge, this.getPort(), true);
 					this.addSourceEdge(edge);
@@ -392,7 +361,6 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 				DefaultEdge target = (DefaultEdge) targetIter.next();
 				if (target.equals(edge))
 				{
-					System.out.println("target equals target");
 					cs.disconnect(edge,false);
 					cs.connect(edge, this.getPort(),false);
 					this.addTargetEdge(edge);
@@ -416,30 +384,59 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
 		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
 		
+		for (int i = level - 1; i >= 0; i--)
+		{
+			this.localGraphStruct.hideContainersAtLevel(i);
+		}	
+
+		
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
 		manager.arrange();
+		
+		for (int i = level - 1; i >= 0; i--)
+		{
+			this.localGraphStruct.setLocationContainersAtLevel(i);
+		}	
+		
 			
 	}
 	
+	/**
+	 * Sets the location of the Container nodes that have a level less than or equal 
+	 * to this.level. The bounds of the container node are set in such a way that the 
+	 * elements that it contains are enclosed.
+	 * Also, changes the location of the label so that it is more easily viewable.
+	 */
 	private void setLocationAfterExpand()
 	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, true);
-		Object[] containedCells = this.getContainedElements().toArray();
-		
-		CellView[] containedCellViews = 
-			this.localGraphStruct.getJGraph().getGraphLayoutCache().getMapping(containedCells);
-
-		Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
-		
-		System.out.println("Bounds of the contained elements is" + cellBounds.toString());
-		GraphConstants.setAutoSize(this.attributes, false);
-		GraphConstants.setBounds(this.attributes, cellBounds);
-		
-		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), null , null, null);
+		for (int i = level; i >= 0; i--)
+		{
+			this.localGraphStruct.setLocationContainersAtLevel(i);
+		}
 	}
 	
+	/**
+	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
+	 * they cannot be made visible.
+	 * @return true if it was possible to hide the node; otherwise, return false.
+	 */
+	public boolean hide()
+	{
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().
+			setVisible(new Object[]{this}, false);
+		return true;
+	}
 	
-	
-
+	/**
+	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
+	 * they cannot be made visible. 
+	 * @return true if it was possible to make the node visible; otherwise, return false.
+	 */	
+	public boolean unhide()
+	{
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().
+			setVisible(new Object[]{this}, true);
+		return true;
+	}	
 }

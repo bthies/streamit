@@ -3,12 +3,17 @@
  */
 package streamit.eclipse.grapheditor;
 
-import java.io.*;
-import java.util.*;
-import com.jgraph.graph.*;
 import java.awt.Color;
-import javax.swing.BorderFactory; 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Map;
+
+import javax.swing.BorderFactory;
+
 import com.jgraph.JGraph;
+import com.jgraph.graph.DefaultPort;
+import com.jgraph.graph.GraphConstants;
 
 /**
  *  GEPhasedFilter is the graph editor's internal representation of a phased filter.
@@ -132,7 +137,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		(graphStruct.getAttributes()).put(this, this.attributes);
 				
 		GraphConstants.setAutoSize(this.attributes, true);
-		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
+		//GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
 		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.red));
 		GraphConstants.setBackground(this.attributes, Color.blue);
 		
@@ -180,7 +185,33 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		System.out.println("The user object is " +this.getUserObject().toString());
 		System.out.println(jgraph.convertValueToString(this)); 
 	}
+
 	public void collapse(JGraph jgraph){};
 	public void expand(JGraph jgraph){};
+	
+	/**
+	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
+	 * they cannot be made visible.
+	 * @return true if it was possible to hide the node; otherwise, return false.
+	 */
+	public boolean hide()
+	{
+		return false;
+	}
 
+	/**
+	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
+	 * they cannot be made visible. 
+	 * @return true if it was possible to make the node visible; otherwise, return false.
+	 */	
+	public boolean unhide()
+	{
+		return false;
+	};
+
+	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
+	 * not a container node, then a list with no elements is returned.
+	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
+	 */
+	public ArrayList getContainedElements(){return new ArrayList();};
 }

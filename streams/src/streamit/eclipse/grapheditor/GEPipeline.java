@@ -3,14 +3,13 @@
  */
 package streamit.eclipse.grapheditor;
 
+import java.awt.Color;
+import javax.swing.BorderFactory;
 import java.io.*;
 import java.util.*;
 import streamit.eclipse.grapheditor.jgraphextension.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
-import java.awt.Color;
-import java.awt.Rectangle;
-import javax.swing.BorderFactory; 
 
 /**
  * GEPipeline is the graph internal representation of a pipeline. 
@@ -43,13 +42,6 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	private int level;
 	
 	/**
-	 * The frame in which the contents of the pipeline (whatever is specified
-	 * by localGraphStruct) will be drawn.
-	 */
-	private LiveJGraphInternalFrame frame;
-	
-
-	/**
 	 * GEPipeline constructor.
 	 * @param name The name of this GEPipeline.
 	 */
@@ -63,13 +55,14 @@ public class GEPipeline extends GEStreamNode implements Serializable{
  	 * Constructs the pipeline and returns <this> so that the GEPipeline can 
  	 * be connected to its succesor and predecessor.
  	*/
-	public GEStreamNode construct(GraphStructure graphStruct, int level)
+	public GEStreamNode construct(GraphStructure graphStruct, int lvel)
 	{
 		System.out.println("Constructing the pipeline" +this.getName());
 		boolean first = true;
+		this.level = lvel;
 		
-		graphStruct.addToLevelContainer(level, this);
-		level++;
+		graphStruct.addToLevelContainer(this.level, this);
+		lvel++;
 		graphStruct.getJGraph().addMouseListener(new JGraphMouseAdapter(graphStruct.getJGraph()));
 		
 		this.localGraphStruct = graphStruct;
@@ -83,7 +76,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		while(listIter.hasNext())
 		{
 			GEStreamNode strNode = (GEStreamNode) listIter.next();
-			GEStreamNode lastTemp = strNode.construct(graphStruct, level); //GEStreamNode lastTemp = strNode.construct(this.localGraphStruct);
+			GEStreamNode lastTemp = strNode.construct(graphStruct, lvel); //GEStreamNode lastTemp = strNode.construct(this.localGraphStruct);
 			
 			if(!first)
 			{
@@ -117,7 +110,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
-		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));	
+		//GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));	
 		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.blue));
 		GraphConstants.setBackground(this.attributes, Color.blue);	
 		
@@ -209,8 +202,14 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		}
 		
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
-		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
+		//this.hide(); //jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, false);
 		
+		for (int i = level; i >= 0; i--)
+		{
+			this.localGraphStruct.hideContainersAtLevel(i);
+		}
+		
+		 
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		manager.arrange();
 		setLocationAfterExpand();
@@ -224,7 +223,7 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 	{
 		Object[] nodeList = this.getSuccesors().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
-		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		this.unhide(); //jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, true);
 		
 		GEStreamNode firstInPipe = (GEStreamNode) nodeList[0];
 		GEStreamNode finalInPipe = (GEStreamNode) nodeList[nodeList.length-1];
@@ -310,18 +309,37 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 			finalInPipe.removeTargetEdge((DefaultEdge)removeArray[i]);
 
 		}
-												
-		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
+
+		GraphConstants.setAutoSize(this.attributes, true);			
+		this.localGraphStruct.getGraphModel().edit(localGraphStruct.getAttributes(), cs, null, null);
+	
 		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
+		
+		for (int i = level - 1; i >= 0; i--)
+		{
+			this.localGraphStruct.hideContainersAtLevel(i);
+		}	
+		
 		
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
 		manager.arrange();	
+		
+		for (int i = level - 1; i >= 0; i--)
+		{
+			this.localGraphStruct.setLocationContainersAtLevel(i);
+		}	
 	}
 	
 	private void setLocationAfterExpand()
 	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, true);
+		
+		for (int i = level; i >= 0; i--)
+		{
+			this.localGraphStruct.setLocationContainersAtLevel(i);
+		}
+		/*
+		this.unhide();
 		Object[] containedCells = this.getSuccesors().toArray();
 		
 		CellView[] containedCellViews = 
@@ -334,26 +352,41 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		GraphConstants.setBounds(this.attributes, cellBounds);
 		
 		this.localGraphStruct.getGraphModel().
-				edit(localGraphStruct.getAttributes(), null , null, null);
-	}
-	
-	public void hide()
-	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().
-				setVisible(new Object[]{this}, true);
-	}
-	
-	public void unhide()
-	{
-		this.localGraphStruct.getJGraph().getGraphLayoutCache().
-				setVisible(new Object[]{this}, false);
+			edit(localGraphStruct.getAttributes(), null , null, null);
+			*/
 	}
 	
 	/**
-	 * Draw this Pipeline
-	 */	
-	public void draw()
+ 	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
+ 	 * they cannot be made visible.
+ 	 * @return true if it was possible to hide the node; otherwise, return false.
+ 	 */
+	public boolean hide()
 	{
-		System.out.println("Drawing the pipeline " +this.getName());
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().
+			setVisible(new Object[]{this}, false);
+		return true;
 	}
+
+	/**
+ 	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
+ 	 * they cannot be made visible. 
+ 	 * @return true if it was possible to make the node visible; otherwise, return false.
+ 	 */	
+	public boolean unhide()
+	{
+		this.localGraphStruct.getJGraph().getGraphLayoutCache().
+			setVisible(new Object[]{this}, true);
+		return true;
+	}	
+	
+	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
+ 	 * not a container node, then a list with no elements is returned.
+ 	 * @return ArrayList of contained elements. If <this> is not a container, return empty list.
+ 	 */
+	public ArrayList getContainedElements()
+	{
+		return this.getSuccesors();
+	}	
+	
 }

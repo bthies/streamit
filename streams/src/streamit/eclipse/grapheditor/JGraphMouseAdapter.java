@@ -11,8 +11,7 @@ import com.jgraph.JGraph;
 import com.jgraph.graph.CellView;
 
 import com.jgraph.graph.GraphConstants;
-import java.util.Map;
-import java.util.Hashtable;
+
 
 import streamit.eclipse.grapheditor.jgraphextension.*;
 

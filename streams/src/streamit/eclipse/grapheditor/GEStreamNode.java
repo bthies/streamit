@@ -3,11 +3,14 @@
  */ 
 package streamit.eclipse.grapheditor;
  
-import java.util.*;
-import java.io.*;
-import com.jgraph.graph.*;
-import com.jgraph.graph.DefaultGraphCell;
+import java.io.Serializable;
+import java.util.ArrayList;
+
 import com.jgraph.JGraph;
+import com.jgraph.graph.DefaultEdge;
+import com.jgraph.graph.DefaultGraphCell;
+import com.jgraph.graph.DefaultPort;
+import com.jgraph.graph.Port;
 
 /**
  * GEStreamNode is the graph internal representation of a node. 
@@ -223,7 +226,25 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	abstract public void collapseExpand(JGraph jgraph);
 	abstract public void collapse(JGraph jgraph);
 	abstract public void expand(JGraph jgraph);
+
+	/**
+	 * Hide the GEStreamNode in the display. Note that some nodes cannot be hidden or 
+	 * they cannot be made visible.
+	 * @return true if it was possible to hide the node; otherwise, return false.
+	 */
+	abstract public boolean hide();
+
+	/**
+	 * Make the GEStreamNode visible in the display. Note that some nodes cannot be hidden or 
+	 * they cannot be made visible. 
+	 * @return true if it was possible to make the node visible; otherwise, return false.
+	 */	
+	abstract public boolean unhide();
 	
-	abstract public void draw();
-	
+	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
+	 * not a container node (can't have any contained elements), then null is returned.
+	 * @return ArrayList of contained elements. If <this> is not a container, return null.
+	 */
+	abstract public ArrayList getContainedElements();
+
 }

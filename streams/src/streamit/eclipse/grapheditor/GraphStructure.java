@@ -4,6 +4,8 @@
 
 package streamit.eclipse.grapheditor;
 
+import java.awt.Rectangle;
+import java.io.Serializable;
 import java.util.*;
 import java.io.*;
 import java.awt.*;
@@ -12,6 +14,14 @@ import com.jgraph.JGraph;
 import streamit.eclipse.grapheditor.jgraphextension.*;
 
 import javax.swing.JScrollPane;
+
+import com.jgraph.JGraph;
+import com.jgraph.graph.AbstractCellView;
+import com.jgraph.graph.CellView;
+import com.jgraph.graph.ConnectionSet;
+import com.jgraph.graph.DefaultEdge;
+import com.jgraph.graph.DefaultGraphModel;
+import com.jgraph.graph.GraphConstants;
 //import com.sun.rsasign.t;
 
 /**
@@ -329,6 +339,72 @@ public class GraphStructure implements Serializable{
 		}		
 	}
 	
+	public void hideContainersAtLevel(int level)
+	{
+		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		if (levelList != null)
+		{
+			Iterator listIter = levelList.iterator();
+			while(listIter.hasNext())
+			{
+				 GEStreamNode node = (GEStreamNode) listIter.next();
+				 node.hide();
+			}
+		}				
+	}
+	
+	public void unhideContainersAtLevel(int level)
+	{
+		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		if (levelList != null)
+		{
+			Iterator listIter = levelList.iterator();
+			while(listIter.hasNext())
+			{
+				 GEStreamNode node = (GEStreamNode) listIter.next();
+				 node.unhide();
+			}
+		}				
+	}
+	
+	/**
+	 * Sets the location of the Container nodes at level. The bounds of the container
+	 * node are set in such a way that the elements that it contains are enclosed.
+	 * Also, changes the location of the label so that it is more easily viewable.
+	 * @param level The level of the containers whose location will be set. 
+	 */
+	
+	public void setLocationContainersAtLevel(int level)
+	{
+		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
+		if (levelList != null)
+		{
+			Iterator listIter = levelList.iterator();
+			while(listIter.hasNext())
+			{
+				GEStreamNode node = (GEStreamNode) listIter.next();
+				System.out.println("node is "+ node);
+				this.jgraph.getGraphLayoutCache().setVisible(new Object[]{node}, true);
+				Object[] containedCells = node.getContainedElements().toArray();
+		
+				CellView[] containedCellViews = 
+					this.jgraph.getGraphLayoutCache().getMapping(containedCells);
+
+				Rectangle cellBounds = AbstractCellView.getBounds(containedCellViews);
+				cellBounds.height += 20;
+				cellBounds.width += 20;
+				
+				// The lines below are supposed to change label location, but they don't
+				//GraphConstants.setValue(node.getAttributes(), "hello");
+				//GraphConstants.setHorizontalAlignment(node.getAttributes(), 1);
+				GraphConstants.setVerticalAlignment(node.getAttributes(), 1);
+				GraphConstants.setAutoSize(node.getAttributes(), false);
+				GraphConstants.setBounds(node.getAttributes(), cellBounds);
+			
+				this.model.edit(this.getAttributes(), null , null, null);
+			}
+		}
+	}
 	
 	/**
 	 * Get the JGraph of GraphStructure.
@@ -419,48 +495,14 @@ public class GraphStructure implements Serializable{
 	{
 		return (ArrayList) this.graph.get(node);
 	}
-
-
-	// TODO remove this method since it is  no longer required
-	// with the addition of the layout algorithms.
+	
+/*	
 	public Rectangle setRectCoords(GEStreamNode node)
 	{
-		Rectangle rect =  new Rectangle(x, y, width, height);
-		/*
-		if (node.getType() == GEType.PHASED_FILTER) {
-			y+=500;	
-			rect.y = y;
-		}
-		else if (node.getType() == GEType.SPLIT_JOIN) {
-			x+= 600;
-			rect.x = x;
-		}
-		else {		
-			if (node.getEncapsulatingNode() != null) {
-				if ((node.getEncapsulatingNode().getType() == GEType.SPLIT_JOIN) && 
-					(node.getType() != GEType.JOINER) && 
-					(node.getType() != GEType.SPLITTER))  
-				{
-					x += 100;
-				}
-				else if (node.getType() == GEType.JOINER) {
-					rect.height = 400;
-					rect.width = 400;
-					y += 120;
-					rect.y = y;
-					y += 120;
-				}
-				else {
-					y += 120;
-				}
-			}
-			else {
-				y += 120;
-			}
-		}
-		*/
+		Rectangle rect = new Rectangle(x, y, width, height);
 		return rect;
 	}
+*/
 }
 
 

@@ -4,7 +4,7 @@
 
 package streamit.eclipse.grapheditor;
 
-import java.io.*;
+import java.io.Serializable;
 
 /**
  * GEWorkFunction is representation of a work function.

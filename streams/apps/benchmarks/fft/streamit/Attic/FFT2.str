@@ -1,6 +1,6 @@
 complex->complex filter CombineDFT(int n)
 {  
-    complex Ws[n];
+    complex[n] Ws;
 
     init
     {
@@ -15,7 +15,7 @@ complex->complex filter CombineDFT(int n)
     work push n peek n pop n 
     {
         int i;
-	complex results[n];
+	complex[n] results;
 
 	for (i = 0; i < n/2; i ++)
         {

@@ -255,6 +255,22 @@ public class RenameAll extends SLIRReplacingVisitor
 	return self;
     }
 
+    public Object visitForStatement(JForStatement self,
+				    JStatement init,
+				    JExpression cond,
+				    JStatement incr,
+				    JStatement body) {
+	
+        RASymbolTable ost = symtab;
+        symtab = new RASymbolTable(ost);
+	JStatement[] temp = { init };
+	findDecls(temp);
+	Object result = super.visitForStatement(self, init, cond, incr, body);
+	//System.err.println("switching symtab from " + symtab + " back to " + ost);
+	symtab = ost;
+	return result;
+    }
+
     // Hmm.  Are there anonymous creations at this point?  Ignore for now.
 
     public Object visitNameExpression(JNameExpression self,

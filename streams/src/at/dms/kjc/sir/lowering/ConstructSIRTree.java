@@ -67,22 +67,91 @@ class InitializationHoister extends SLIRReplacingVisitor {
 	SIRInitStatement self = 
 	    (SIRInitStatement)
 	    super.visitInitStatement(oldSelf, oldTarget);
-				
-	// add <child, params> to parent
-	parent.add(self.getTarget(), self.getArgs());
 
 	// Since all of the args seem to be constant for now (and I
 	// think the RAW backend assumes it), this is a nice place to
-	// check it
+	// check it.  Check that we have either literals or array
+	// references.
 	for (int i=0; i<self.getArgs().size(); i++) {
-	    Utils.assert((self.getArgs().get(i) instanceof JLiteral)||(self.getArgs().get(i) instanceof JLocalVariableExpression),
+	    JExpression arg = (JExpression)self.getArgs().get(i);
+	    Utils.assert(isConstantArg(arg),
 			 "Expected constant arguments to init, but found non-constant " +
 			 self.getArgs().get(i) + " in parent " + parent + "\n");
 	}
 	
+	// to simplify compilation, remove constant arguments.
+	removeConstantArgs(self);
+				
+	// add <child, params> to parent
+	parent.add(self.getTarget(), self.getArgs());
+
 	// return an empty statement to eliminate the init
 	// statement
 	return new JEmptyStatement(null, null);
+    }
+
+    /**
+     * Removes constant args from <self>.
+     */
+    private void removeConstantArgs(SIRInitStatement self) {
+	List args = self.getArgs();
+	LinkedList newArgs = new LinkedList();
+	JMethodDeclaration init = self.getTarget().getInit();
+	final JFormalParameter[] params = init.getParameters();
+	JBlock initBlock = init.getBody();
+
+	// go through args and only keep non-constant ones
+	for (int i=0; i<args.size(); i++) {
+	    final int iter = i;
+	    if (!isConstantArg((JExpression)args.get(i))) {
+		// keep track of new arg
+		newArgs.add((JExpression)args.get(i));
+	    } else {
+		// for arrays, change parameter into local decl -- in
+		// case we were using parameter name to hold the
+		// constants that we're propagating in.
+		if (params[i].getType().isArrayType()) {
+		    final JVariableDefinition def = new JVariableDefinition(null, 0, 
+									    params[i].getType(), 
+									    params[i].getIdent(),
+									    null);
+		    // replace all references to <params[i]> with references to <def>
+		    initBlock.accept(new SLIRReplacingVisitor() {
+			    public Object visitLocalVariableExpression(JLocalVariableExpression myself,
+								       String ident) {
+				if (myself.getVariable()==params[iter]) {
+				    return new JLocalVariableExpression(null, def);
+				} else {
+				    return myself;
+				}
+			    }
+			});
+		    // add definition at front of init block
+		    JVariableDefinition defs[] = { def } ;
+		    initBlock.addStatementFirst(new JVariableDeclarationStatement(null, defs, null));
+		}
+	    }
+	}
+
+	// set new args in caller
+	self.setArgs(newArgs);
+	// set new params in callee
+	init.setParameters((JFormalParameter[])newArgs.toArray(new JFormalParameter[0]));
+    }
+
+    /**
+     * Judges whether or not <exp> counts as a constant argument.  For
+     * now we count all literals and all array references as constant
+     * (array refs should only count as constant if they've been
+     * constant-propped, but we haven't bothered with this yet.)
+     */
+    private boolean isConstantArg (JExpression arg) {
+	return (arg instanceof JLiteral) || isArrayArg(arg);
+    }
+
+    private boolean isArrayArg(JExpression arg) {
+	return (arg instanceof JLocalVariableExpression &&
+		((JLocalVariableExpression)arg).getType().isArrayType());
     }
 }
 

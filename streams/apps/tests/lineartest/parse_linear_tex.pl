@@ -25,14 +25,15 @@ sub main {
 
     my @filter_contents;
     my @pipeline_contents;
+    my @splitjoin_contents;
 
     # do a pattern match to extract the matrix/vector pairs for filters
     @filter_contents = $output_contents =~ m/Linear filter found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
-
     @pipeline_contents = $output_contents =~ m/Linear pipeline found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
+    @splitjoin_contents = $output_contents =~ m/Linear splitjoin found: .*?name=(.*?) (.*?)\n-->Matrix:\n(.*?)-->Constant Vector:\n(.*?]]\n)/sig;
 
     # combine the set of contents together
-    my @contents = (@filter_contents, @pipeline_contents);
+    my @contents = (@filter_contents, @pipeline_contents, @splitjoin_contents);
 
     # now, make a hash map with name mapping to matrix data \t vector data
     my %data;
@@ -50,8 +51,6 @@ sub main {
     print_nice_tex(\%data);
 
 }
-
-
 
 
 # prints out key\nvalue pairs for the contents of the hash

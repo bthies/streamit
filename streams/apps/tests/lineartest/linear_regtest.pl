@@ -16,7 +16,11 @@ my @tests = ("regtests/LinearTest1.java",
 	     "regtests/LinearTest7.java",
 	     "regtests/LinearTest8.java",
 	     "regtests/LinearTest9.str",
-	     "regtests/LinearTest10.str",);
+	     "regtests/LinearTest10.str",
+	     "regtests/LinearTest11.str",
+	     "regtests/LinearTest12.str",
+	     "regtests/LinearTest13.str",
+	     "regtests/LinearTest14.str",);
 
 my $current_test;
 foreach $current_test (@tests) {

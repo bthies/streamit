@@ -17,25 +17,16 @@ my $benchmark_path = "$apps_path/benchmarks";
 
 my @files = (
 	     
-	     #"$benchmark_path/beamformer/streamit/BeamFormer.java",
-	     "$benchmark_path/bitonic-sort/streamit/BitonicSort.java",
-
+	     
 	     # has some sort of problem with the lowering phase -- non constant
 	     # something...
 	     #"$benchmark_path/bitonic-sort/streamit/BitonicSort_inlined.java",
 	     
-	     # Runs out of memory with 512 M of ram....
+	     "$benchmark_path/bitonic-sort/streamit/BitonicSort.java",
 	     "$benchmark_path/bitonic-sort/streamit/BitonicSortRecursive.java",
-	     
-	     # seems to work fine now
 	     "$benchmark_path/fft/streamit/*.java",
-
-	     # had an issue in checkRep that I fixed.
 	     "$benchmark_path/fir/streamit/FIRfine.java",
-
-	     
 	     "$benchmark_path/fm/streamit/LinkedFMTest.java",
-
 	     "$benchmark_path/gsm/streamit/Gsm.java",
 	     "$benchmark_path/nokia/streamit/Linkeddcalc.java",
 	     "$benchmark_path/vocoder/streamit/*.java",
@@ -46,10 +37,7 @@ my @files = (
 
 	     "$applications_path/crc/CrcEncoder32Test.java",
 	     "$applications_path/DCT/DCT.java",
-	     "$applications_path/nokia-fine/Linkeddcalc.java",
-
-
-	     
+	     "$applications_path/nokia-fine/Linkeddcalc.java",	     
 	     
 	     
 	     "$examples_path/autocor/AutoCor.java",
@@ -71,7 +59,6 @@ my @files = (
 
 	     
 	     );
-
 
 # delete the output files from any previous runs
 `rm -rf $RESULTS_DIR`;
@@ -98,8 +85,8 @@ foreach $current_file (@files) {
 
     # run the compiler and save its output to $base_filename.output
     my $command = ("java -Xmx1500M at.dms.kjc.Main -s --constprop --linearanalysis --debug " .
-			    "$current_file >& $base_filename.output");
-    `$command`;
+		   "$current_file >& $base_filename.output");
+    print `$command`;
 
     # copy the "linear.dot" file into the result directory
     print `cp linear.dot $base_filename.dot`;
@@ -132,7 +119,7 @@ foreach $current_file (@files) {
 
     # add the data from parsing the output with the parse_lienar_tex.pl part
     print GFILE tex("\\subsection{Matrix Representations of $section_name}\n");
-    print GFILE tex(`parse_linear_tex.pl $base_filename.output`);
+    print GFILE `parse_linear_tex.pl $base_filename.output`;
 
     # add a section with the linearity report
     print GFILE tex("\\subsection{Filter breakdown for $section_name}\n");
@@ -145,13 +132,13 @@ foreach $current_file (@files) {
     print GFILE tex("\\begin{figure}\n\\center\n");    
     print GFILE tex("\\epsfxsize=\\hsize\n");
     print GFILE tex("\\epsfysize=\\vsize\n");
-    print GFILE tex("\\epsfbox{$base_filename.ps}\n");
+    print GFILE ("\\epsfbox{$base_filename.ps}\n");
     print GFILE tex("\\caption{Linearity graph for $current_file}\n");
     print GFILE tex("\\end{figure}\n");
     print GFILE tex("\\clearpage\n\n");
      
     # delete the output to conserve disk space.
-    print `rm $base_filename.output`;
+    #print `rm $base_filename.output`;
 
 }
 
@@ -163,7 +150,7 @@ close(GFILE);
 
 # format the passed in string for tex (eg convert all _ to \_)
 sub tex {
-    my $data = shift || die ("no data passed to tex\n");
+    my $data = shift;
     # do _ --> \_
     $data =~ s/\_/\\\_/gi;
     return $data;

@@ -14,7 +14,7 @@ TRANSFORMATION-OPTIONS =  --constprop --linearanalysis --linearreplacement
 LINEAR-REG-TEST = linear_regtest.pl
 
 # current test
-CURRENT-TEST = regtests/LinearTest11
+CURRENT-TEST = regtests/LinearTest15
 
 all: clean java-compile uni-compile raw-compile
 
@@ -42,15 +42,7 @@ linear-regtest: linear-compile
 
 clean:
 	rm -f *.class
-	rm -f $(UNI-SOURCE)
-	rm -f $(UNI-EXE)
-	rm -f Makefile.streamit
-	rm -f sw*.s sw*.o
-	rm -f tile*.o tile*.c tile*.lnk
-	rm -f tile.*
-	rm -f fileio.bc kernel
-	rm -f *.dot
-	rm -f *.output
-	rm -f regtests/*.output
-	rm -f regtests/*.parsed
-	rm -f regtests/*~
+	rm -f *.dot *.output
+	rm -f regtests/*.output regtests/*.parsed regtests/*~
+	rm -f regtests/LinearTest10.java regtests/LinearTest11.java regtests/LinearTest12.java regtests/LinearTest13.java 
+	rm -f regtests/LinearTest14.java regtests/LinearTest15.java

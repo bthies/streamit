@@ -56,7 +56,7 @@ public class BandPassFilter extends Pipeline {
     }
 
 
-    public void init(float sampleRate, float lowFreq, float highFreq, int numTaps, float gain)
+    public void init(final float sampleRate, final float lowFreq, final float highFreq, final int numTaps, final float gain)
     {
         //all frequencies are in hz
         samplingRate = sampleRate;

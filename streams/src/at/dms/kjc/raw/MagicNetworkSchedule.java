@@ -220,6 +220,7 @@ public class MagicNetworkSchedule
 		//increment the index
 		index += reps;
 	    }
+
 	    
 	    fw.write("start_of_steady = hms_new();\n");
 	    fw.write("temp.next = start_of_steady;\n");

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.24 2002-10-04 00:35:35 thies Exp $
+ * $Id: TestExamples.java,v 1.25 2002-10-29 21:58:25 thies Exp $
  **/
 package streamittest;
 
@@ -62,7 +62,10 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testFile", flags));
 	suite.addTest(new TestExamples("testHello", flags));
 
-	suite.addTest(new TestExamples("testMatrixMult", flags));
+	// test only 8 tile since code size is a problem otherwise
+	if (!(flagsContainRaw(flags) && !flagsContainRaw(8, flags))) {
+	    suite.addTest(new TestExamples("testMatrixMult", flags));
+	}
 
 	suite.addTest(new TestExamples("testMergeSort", flags));
 	suite.addTest(new TestExamples("testMergeSort16", flags));

@@ -422,7 +422,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
 
 
-	dumpLayout("initial.dot");
+	dumpLayout("initial-layout.dot");
     }
     
     private static double placementCost() 

@@ -113,6 +113,7 @@ public class RawBackend {
 
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
+	PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
 	RawFlattener rawFlattener = new RawFlattener(str);
 	rawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");

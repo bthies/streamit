@@ -161,7 +161,7 @@ public class BufferedCommunication extends RawExecutionCode
 	    //	filterInfo.primePump;
 	    
 	    //buffersize *= maxExe;
-	    
+	    /*
 	    
 	    FilterTraceNode[] previousFilters = filterInfo.getPreviousFilters();
 	    if (previousFilters.length == 1) {
@@ -174,9 +174,11 @@ public class BufferedCommunication extends RawExecutionCode
 		//greatest number of executions...
 		buffersize *= maxExe;
 	    }
-	    else 
+	    else {
+		//splitjoin
 		Utils.fail("Split/joins not supported");
-	    
+	    }
+	    */
 
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 

@@ -151,13 +151,13 @@ public class Util {
 	int itemsReceived, itemsSent;
 	//calculate the items the input trace receives
 	FilterTraceNode next = (FilterTraceNode)in.getNext();
-	itemsSent = (next.getSteadyMult() * next.getFilter().getPopInt()) *
-	    (in.getWeight(out) / in.totalWeights());
+	itemsSent = (int)((next.getSteadyMult() * next.getFilter().getPopInt()) *
+	    ((double)in.getWeight(out) / in.totalWeights()));
 	
 	//calculate the items the output trace sends
 	FilterTraceNode prev = (FilterTraceNode)out.getPrevious();
-	itemsReceived = (prev.getSteadyMult() * prev.getFilter().getPushInt()) *
-	    (out.getWeight(in) / out.totalWeights());
+	itemsReceived = (int)((prev.getSteadyMult() * prev.getFilter().getPushInt()) *
+	    ((double)out.getWeight(in) / out.totalWeights()));
 	//see if they are different
 	if (itemsSent != itemsReceived)
 	    Utils.fail("Calculating steady state: items received != items send on buffer");
@@ -172,13 +172,13 @@ public class Util {
 	int itemsReceived, itemsSent;
 	//calculate the items the input trace receives
 	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
-	itemsSent =  next.initItemsReceived() *
-	    (in.getWeight(out) / in.totalWeights());
+	itemsSent =  (int)(next.initItemsReceived() *
+	    ((double)in.getWeight(out) / in.totalWeights()));
 	
 	//calculate the items the output trace sends
 	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
-	itemsReceived = prev.initItemsSent() *
-	    (out.getWeight(in) / out.totalWeights());
+	itemsReceived = (int)(prev.initItemsSent() *
+	    ((double)out.getWeight(in) / out.totalWeights()));
 	
 	//see if they are different
 	if (itemsSent != itemsReceived)
@@ -197,8 +197,8 @@ public class Util {
 	//calculate the items the output trace sends, because
 	//the downstream filter may not receive them all
 	FilterTraceNode prev = (FilterTraceNode)out.getPrevious();
-	itemsReceived = (prev.getPrimePumpMult() * prev.getFilter().getPushInt()) *
-	    (out.getWeight(in) / out.totalWeights());
+	itemsReceived = (int)((prev.getPrimePumpMult() * prev.getFilter().getPushInt()) *
+	    ((double)out.getWeight(in) / out.totalWeights()));
 
 	return itemsReceived * getTypeSize(prev.getFilter().getOutputType());
     }

@@ -129,32 +129,12 @@ public class FilterInfo
 	//the number of times this filter fires in the initialization
 	//schedule
 	int initFire = initMult;
-	//for now assume it is a filter trace node
-	FilterTraceNode[] previous = getPreviousFilters();
 
 	//if this is not a twostage, fake it by adding to initFire,
 	//so we always think the preWork is called
 	//if (!(filter instanceof SIRTwoStageFilter))
 	if(filter.isTwoStage())
 	    initFire++;
-	
-	//the number of items produced by the upstream filter in
-	//initialization
-	int upStreamItems = 0;
-	
-	if (previous.length == 1) {
-	    //calculate upstream items received during init  SPLITTER? change this...
-	    upStreamItems = previous[0].getFilter().getPushInt() * 
-		previous[0].getInitMult();
-	    if (previous[0].getFilter().isTwoStage()) {
-		/*upStreamItems -= ((SIRTwoStageFilter)previous.getFilter()).getPushInt();
-		  upStreamItems += ((SIRTwoStageFilter)previous.getFilter()).getInitPush();*/
-		upStreamItems -= previous[0].getFilter().getPushInt();
-		upStreamItems += previous[0].getFilter().getInitPush();
-	    }
-	}
-	else if (previous.length > 1)
-	    Utils.fail("Splits/Joins not supported");
 	
 	//see my thesis for an explanation of this calculation
 	if (initFire  - 1 > 0) {
@@ -165,7 +145,7 @@ public class FilterInfo
 	    bottomPeek = 0;
 	
 	//may want to change to use initItemsReceived...
-	remaining = upStreamItems -
+	remaining = initItemsReceived() -
 	    (prePeek + 
 	     bottomPeek + 
 	     Math.max((initFire - 2), 0) * pop);
@@ -217,13 +197,31 @@ public class FilterInfo
 	return items;
     }
     
+    //return the number of items received in the init stage including
+    //the remaining items on the tape that are not consumed in the 
+    //schedule
     public int initItemsReceived() 
     {
-	int initFire = initMult;
-	if (isTwoStage())
-	    initFire++;
+	FilterTraceNode[] previous = getPreviousFilters();
+	//the number of items produced by the upstream filter in
+	//initialization
+	int upStreamItems = 0;
 	
-	return (prePeek + bottomPeek + Math.max((initFire - 2), 0) * pop);
+	if (previous.length == 1) {
+	    upStreamItems = FilterInfo.getFilterInfo(previous[0]).initItemsSent();
+	}
+	else if (previous.length > 1) {
+	    //splitjoin
+	    InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
+	    
+	    //add all the upstream filters items that reach this filter
+	    for (int i = 0; i < previous.length; i++) {
+		OutputTraceNode out = (OutputTraceNode)previous[i].getNext();
+		upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
+		    ((double)out.getWeight(in) / out.totalWeights()));
+	    }
+	}
+	return upStreamItems;
     }
     
 }

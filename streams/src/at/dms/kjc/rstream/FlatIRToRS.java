@@ -205,84 +205,6 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	    passParentheses(right) instanceof JQualifiedAnonymousCreation ||
 	    passParentheses(right) instanceof JUnqualifiedAnonymousCreation)
 	    return;
-
-	//print the correct code for array assignment
-	//this must be run after renaming!!!!!!
-	if (left.getType() == null || right.getType() == null) {
-	    lastLeft=left;
-	    print("(");
-	    left.accept(this);
-	    print(" = ");
-	    right.accept(this);
-	    print(")");
-	    return;
- 	}
-
-	if ((left.getType().isArrayType()) &&
-	     ((right.getType().isArrayType() || right instanceof SIRPopExpression) &&
-	      !(right instanceof JNewArrayExpression))) {
-	    	    
-	    String ident = "";
-	    	    
-	    if (left instanceof JFieldAccessExpression) 
-		ident = ((JFieldAccessExpression)left).getIdent();
-	    else if (left instanceof JLocalVariableExpression) 
-		ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-	    else 
-		Utils.fail("Assigning an array to an unsupported expression of type " + left.getClass() + ": " + left);
-	    
-	    String[] dims = ArrayDim.findDim(new FlatIRToRS(), filter.getFields(), method, ident);
-	    //if we cannot find the dim, just create a pointer copy
-	    if (dims == null) {
-		lastLeft=left;
-		print("(");
-		left.accept(this);
-		print(" = ");
-		right.accept(this);
-		print(")");
-		return;
-	    }
-	    print("{\n");
-	    print("int ");
-	    //print the index var decls
-	    for (int i = 0; i < dims.length -1; i++)
-		print(Names.ARRAY_COPY + i + ", ");
-	    print(Names.ARRAY_COPY + (dims.length - 1));
-	    print(";\n");
-	    for (int i = 0; i < dims.length; i++) {
-		print("for (" + Names.ARRAY_COPY + i + " = 0; " + Names.ARRAY_COPY + i +  
-		      " < " + dims[i] + "; " + Names.ARRAY_COPY + i + "++)\n");
-	    }
-	    left.accept(this);
-	    for (int i = 0; i < dims.length; i++)
-		print("[" + Names.ARRAY_COPY + i + "]");
-	    print(" = ");
-	    right.accept(this);
-	    for (int i = 0; i < dims.length; i++)
-		print("[" + Names.ARRAY_COPY + i + "]");
-	    print(";\n}\n");
-	    return;
-	}
-
-	//stack allocate all arrays when not in init function
-	//done at the variable definition
-	if (right instanceof JNewArrayExpression &&
- 	    (left instanceof JLocalVariableExpression) && !isInit) {
-	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
-
-	    //get the basetype and print it 
-	    CType baseType = ((CArrayType)((JNewArrayExpression)right).getType()).getBaseType();
-	    print(baseType + " ");
-	    //print the identifier
-	    left.accept(this);
-	    //print the dims of the array
-	    String ident;
-	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-	    stackAllocateArray(ident);
-	    return;
-	}
-           
-
 	
 	lastLeft=left;
         print("(");
@@ -291,8 +213,68 @@ public class FlatIRToRS extends ToC implements StreamVisitor
         right.accept(this);
         print(")");
     }
-    
 
+    /**
+     * prints a field declaration
+     */
+    public void visitFieldDeclaration(JFieldDeclaration self,
+                                      int modifiers,
+                                      CType type,
+                                      String ident,
+                                      JExpression expr) {
+	newLine();
+        	
+	if (expr instanceof JArrayInitializer) {
+	    declareInitializedArray(type, ident, expr);
+	    return;
+	}
+
+	if (type.isArrayType()) {
+	    handleArrayDecl(ident, type);
+
+	    if (expr != null) {
+		print(" = ");
+		expr.accept(this);
+	    }
+	}
+	else {
+	    print(type);
+	    print(" ");
+	    print(ident);
+	    
+	    if (expr != null) {
+		print("\t= ");
+		expr.accept(this);
+	    }   //initialize all fields to 0
+	    else if (type.isOrdinal())
+		print (" = 0");
+	    else if (type.isFloatingPoint())
+		print(" = 0.0f");
+	    
+	}
+	print(";");
+    }
+    
+    private void handleArrayDecl(String ident, CType type) 
+    {
+	
+	String brackets = "[[";
+	
+	CType currentType = ((CArrayType)type).getElementType();
+	while (currentType.isArrayType()) {
+	    brackets = brackets + ",";
+	    currentType = ((CArrayType)currentType).getElementType();
+	}
+	
+	brackets = brackets + "]]";
+	
+	//current type should now be the base type
+	print(currentType);
+	print(" ");
+	print(ident);
+	print(brackets);
+    }
+    
 
     /**
      * prints a variable declaration statement
@@ -300,59 +282,95 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     public void visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
                                         CType type,
-                                        String ident,
-                                        JExpression expr) {
-        //we want to stack allocate all arrays not in the init
-        //we convert an assignment statement into the stack allocation statement'
-        //so, just remove the var definition, if the new array expression
-        //is not included in this definition, just remove the definition,
-        //when we visit the new array expression we will print the definition...
-        if (type.isArrayType() && !isInit) {
-            String[] dims = ArrayDim.findDim(new FlatIRToRS(), filter.getFields(), method, ident);
-            //but only do this if the array has corresponding
-            //new expression, otherwise don't print anything.
-            if (expr instanceof JNewArrayExpression) {
-                //print the type
-                print(((CArrayType)type).getBaseType() + " ");
-                //print the field identifier
-                print(ident);
-                //print the dims
-                stackAllocateArray(ident);
-                print(";");
-                return;
-            }
-            else if (dims != null)
-                return;
-            else if (expr instanceof JArrayInitializer) {
-                print(((CArrayType)type).getBaseType() + " " +
-                      ident + "[" + ((JArrayInitializer)expr).getElems().length + "] = ");
-                expr.accept(this);
-                print(";");
-                return;
-            }
-        }
-    if (expr!=null) {
-            printLocalType(type);
-        } else {
-            print(type);
-        }
-        print(" ");
-        print(ident);
-        if (expr != null) {
-            print(" = ");
-            expr.accept(this);
-        } else {
-            if (type.isOrdinal())
-                print (" = 0");
-            else if (type.isFloatingPoint())
-                print(" = 0.0f");
-        }
+                                        String ident,                                        
+					JExpression expr) {
 
-        print(";\n");
+	if (expr instanceof JArrayInitializer) {
+		declareInitializedArray(type, ident, expr);
+		return;
+        }
+	
+	if (type.isArrayType()) {
+	    handleArrayDecl(ident, type);
 
+	    if (expr != null) {
+		print(" = ");
+		expr.accept(this);
+	    }
+
+	}
+	else {
+	    print(type);
+	    
+	    print(" ");
+	    print(ident);
+	    if (expr != null) {
+		print(" = ");
+		expr.accept(this);
+	    } else {
+		if (type.isOrdinal())
+		    print (" = 0");
+		else if (type.isFloatingPoint())
+		    print(" = 0.0f");
+	    }
+	    
+	}
+	print(";\n");
     }
 
-  
+    /**
+     * prints an array allocator expression
+     */
+    public void visitNewArrayExpression(JNewArrayExpression self,
+                                        CType type,
+                                        JExpression[] dims,
+                                        JArrayInitializer init)
+    {
+	assert dims.length > 0 : "Zero Dimension array" ;
+	assert init == null : "Initializers of Abstract Arrays not supported in RStream yet";
+	
+	print(" absarray" + dims.length + "(");
+	dims[0].accept(this);
+	for (int i = 1; i < dims.length; i++) {
+	    print(",");
+	    dims[i].accept(this);
+	}
+	print(")");
+	
+
+	/*
+	print("calloc(");
+        dims[0].accept(this);
+        print(", sizeof(");
+        print(type);
+	if(dims.length>1)
+	    print("*");
+        print("))");
+	if(dims.length>1) {
+	    for(int off=0;off<(dims.length-1);off++) {
+		//Right now only handles JIntLiteral dims
+		//If cast expression then probably a failure to reduce
+		int num=((JIntLiteral)dims[off]).intValue();
+		for(int i=0;i<num;i++) {
+		    print(",\n");
+		    //If lastLeft null then didn't come right after an assignment
+		    lastLeft.accept(this);
+		    print("["+i+"]=calloc(");
+		    dims[off+1].accept(this);
+		    print(", sizeof(");
+		    print(type);
+		    if(off<(dims.length-2))
+			print("*");
+		    print("))");
+		}
+	    }
+	}
+        if (init != null) {
+            init.accept(this);
+        }
+	*/
+    }
+    
     /**
      * prints a method declaration
      */
@@ -486,6 +504,32 @@ public class FlatIRToRS extends ToC implements StreamVisitor
     }
 
     /**
+     * prints an array length expression
+     */
+    public void visitArrayAccessExpression(JArrayAccessExpression self,
+                                           JExpression prefix,
+                                           JExpression accessor) {
+	
+	String access = "[[";
+	JExpression exp = prefix;
+	
+	while (exp instanceof JArrayAccessExpression) {
+	    JArrayAccessExpression arr = (JArrayAccessExpression)exp;
+	    FlatIRToRS toRS = new FlatIRToRS();
+	    arr.getAccessor().accept(toRS);
+	    
+	    access = access + toRS.getString() + ", ";
+	    exp = arr.getPrefix();
+	}
+	
+	exp.accept(this);
+	print(access);
+	accessor.accept(this);
+	print("]]");
+    }
+    
+
+    /**
      * prints a method call expression
      */
     public void visitMethodCallExpression(JMethodCallExpression self,
@@ -513,7 +557,7 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 		   argument, prepend an & to get the address and pass the pointer 
 		   to the fscanf
 		*/
-		if (ident == Names.fscanf && i == 2)
+		if (ident.equals(Names.fscanf) && i == 2)
 		    print("&");
                 args[i].accept(this);
             }
@@ -607,7 +651,26 @@ public class FlatIRToRS extends ToC implements StreamVisitor
 	assert false : "RStream Front-end should not see a push statement";
     }    
 
-      // ----------------------------------------------------------------------
+    
+
+    // Special case for CTypes, to map some Java types to C types.
+    protected void print(CType s) {
+	if (s instanceof CArrayType){
+	    handleArrayDecl("", s);
+	    //assert false : "Should not be printing an array type";
+        }
+        else if (s.getTypeID() == TID_BOOLEAN)
+            print("int");
+        else if (s.toString().endsWith("Portal"))
+	    // ignore the specific type of portal in the C library
+	    print("portal");
+	else
+            print(s.toString());
+    }
+
+
+
+    // ----------------------------------------------------------------------
     // UNUSED STREAM VISITORS
     // ----------------------------------------------------------------------
 

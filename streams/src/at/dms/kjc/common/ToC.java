@@ -1105,21 +1105,6 @@ public abstract class ToC extends SLIREmptyVisitor
             print(s.toString());
     }
 
-    protected void printLocalType(CType s) 
-    {
-	if (s instanceof CArrayType){
-	    print(((CArrayType)s).getElementType());
-	    print("*");
-	}
-        else if (s.getTypeID() == TID_BOOLEAN)
-            print("int");
-        else if (s.toString().endsWith("Portal"))
-	    // ignore the specific type of portal in the C library
-	    print("portal");
-	else
-            print(s.toString());
-    }
-
     protected void print(Object s) {
         print(s.toString());
     }

@@ -276,11 +276,8 @@ public class TraceIRtoC extends ToC
 	    }
 	}
 	
-	if (expr!=null) {
-	    printLocalType(type);
-	} else {
-	    print(type);
-	}	    
+	print(type);
+
         print(" ");
 	print(ident);
         if (expr != null) {

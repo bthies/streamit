@@ -462,11 +462,9 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	}
 	
-	if (expr!=null) {
-	    printLocalType(type);
-	} else {
-	    print(type);
-	}	    
+
+	print(type);
+
         print(" ");
 	print(ident);
         if (expr != null) {

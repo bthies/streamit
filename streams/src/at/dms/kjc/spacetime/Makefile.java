@@ -94,7 +94,7 @@ public class Makefile
 	buf.append("\ninclude $(COMMONDIR)/Makefile.all\n");
 	//add the drams to all sides
 	if (!KjcOptions.magicdram) 
-	    buf.append("BTL-ARGS += -dram lhs -enable_all_sides_for_dram -dram ths\n\n");
+	    buf.append("BTL-ARGS += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs\n\n");
 	
 	buf.append("clean:\n");
 	buf.append("\trm -f *.o\n");

@@ -87,11 +87,13 @@ public class InputTraceNode extends TraceNode
 
     public int getWeight(Edge out) 
     {
+	int sum = 0;
+
 	for (int i = 0; i < sources.length; i++)
 	    if (sources[i] == out)
-		return weights[i];
-	Utils.fail(this + " cannot find weight for Edge " + out);
-	return -1;
+		sum += weights[i];
+	
+	return sum;
     }
     
     public boolean oneInput() 

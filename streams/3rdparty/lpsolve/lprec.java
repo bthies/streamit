@@ -1,5 +1,12 @@
-/* $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/3rdparty/lpsolve/lprec.java,v 1.1 2002-10-05 05:25:54 thies Exp $ */
+/* $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/3rdparty/lpsolve/lprec.java,v 1.2 2002-10-07 09:00:59 thies Exp $ */
 /* $Log: not supported by cvs2svn $
+/* Revision 1.1  2002/10/05 05:25:54  thies
+/* This is a first check-in of the linear programming partitioner stuff
+/* -- it isn't done yet, but the program itself is almost setup.
+/*
+/* These are the 3rdparty classes to solve an LP -- ported from lp_solve
+/* 2.0.
+/*
 # Revision 1.3  1996/06/07  01:31:45  hma
 # changed some member functions to be public
 #
@@ -161,7 +168,6 @@ public lprec (int nrows, int ncolumns)
   trace=FALSE;
 
   rows=nrows;
-  System.err.println("rows=" + rows);
   columns=ncolumns;
   sum=nsum;
   rows_alloc=rows;

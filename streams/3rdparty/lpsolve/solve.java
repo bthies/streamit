@@ -1,5 +1,12 @@
-/* $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/3rdparty/lpsolve/solve.java,v 1.1 2002-10-05 05:25:54 thies Exp $ */
+/* $Header: /afs/csail.mit.edu/group/commit/reps/projects/streamit/cvsroot/streams/3rdparty/lpsolve/solve.java,v 1.2 2002-10-07 09:00:59 thies Exp $ */
 /* $Log: not supported by cvs2svn $
+/* Revision 1.1  2002/10/05 05:25:54  thies
+/* This is a first check-in of the linear programming partitioner stuff
+/* -- it isn't done yet, but the program itself is almost setup.
+/*
+/* These are the 3rdparty classes to solve an LP -- ported from lp_solve
+/* 2.0.
+/*
 # Revision 1.6  1996/06/07  01:31:11  hma
 # changed some member functions to be public
 #
@@ -2270,8 +2277,8 @@ void invert()
 	fcol[j - 1] = FALSE;
 	setpivcol(Lower[Rows + j], j + Rows, pcol);
 	row_nr = 1;
-	while((frow[row_nr] == FALSE || pcol[row_nr] == FALSE)
-		 && row_nr <= Rows)
+	// re-arranged the order of conditionals to fix exception --BFT
+	while(row_nr <= Rows && (frow[row_nr] == FALSE || pcol[row_nr] == FALSE))
 	  row_nr++; /* this sometimes sets row_nr to Rows + 1 and makes
 		       rhsmincol crash. Solved in 2.0? MB */
         if(row_nr == Rows + 1)

@@ -142,6 +142,9 @@ public class ClusterBackend implements FlatVisitor {
 	*/
 
 	int threads = KjcOptions.cluster;
+
+	boolean limitICode = KjcOptions.cacheopt;
+
 	System.err.println("Running Partitioning... target number of threads: "+threads);
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {
@@ -149,10 +152,16 @@ public class ClusterBackend implements FlatVisitor {
 	    if (!KjcOptions.partition_greedy && !KjcOptions.partition_greedier) {
 		KjcOptions.partition_dp = true;
 	    }
-	    str = Partitioner.doit(str, 0, threads, false, true);
-	}
+	    str = Partitioner.doit(str, 0, threads, false, limitICode);
+	    /*
+	    if (str instanceof SIRContainer) {
+		((SIRContainer)str).reclaimChildren();
+	    }
+	    */
+	} 
+
 	HashMap partitionMap = new HashMap();
-	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, true).calcPartitions(partitionMap);
+	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, limitICode).calcPartitions(partitionMap);
 	System.err.println("Done Partitioning...");
 
 	if (KjcOptions.sjtopipe) {

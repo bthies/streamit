@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.7 2004-03-08 18:39:39 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.8 2004-03-08 21:48:03 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -282,6 +282,76 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 
 	this.feedbackLoopsSeen++;
+
+	LinearPrinter.println("Visiting Feedbackloop: " + "(" + self + ")");
+	
+	// This bit just goes and prints out the body and loop of the feedbackloop (for debugging)
+	SIRStream Body = self.getBody();
+	SIRStream Loop = self.getLoop();
+
+	String linearString = (this.hasLinearRepresentation(Body)) ? "linear" : "non-linear";
+	LinearPrinter.println("  " + Body + "(" + linearString + ")");
+
+	linearString = (this.hasLinearRepresentation(Loop)) ? "linear" : "non-linear";
+	LinearPrinter.println("  " + Loop + "(" + linearString + ")");
+
+
+	// grab the next child. If we have a linear rep
+	if (!this.hasLinearRepresentation(Body)||!this.hasLinearRepresentation(Loop)) {
+	    // some part was non-linear.  This means that we won't be linear, so mark as such
+	    nonLinearStreams.add(self);		
+	}
+	else {
+	    LinearFilterRepresentation bodRep, loopRep;
+	    bodRep = this.getLinearRepresentation(Body);
+	    loopRep = this.getLinearRepresentation(Loop);
+
+	    SIRSplitter split = self.getSplitter();
+	    SIRJoiner join = self.getJoiner();
+	    
+	    int[] weights = new int[4];
+
+	    weights[0] = split.getWeight(0);
+	    weights[1] = split.getWeight(1);
+	    weights[2] = join.getWeight(0);
+	    weights[3] = join.getWeight(1);
+
+
+	    LinearTransform feedTransform = LinearTransformFeedback.calculateFeedback(bodRep,loopRep,weights);
+
+
+
+	if (feedTransform == null) {  
+	    LinearPrinter.println(" no transform found. stop");
+	    nonLinearStreams.add(self);
+	    return;
+	}
+
+	// do the actual transform
+	LinearPrinter.println(" performing transform.");
+	LinearFilterRepresentation newRep;
+	try {
+	    newRep = feedTransform.transform();
+	} catch (NoTransformPossibleException e) {
+	    LinearPrinter.println(" error performing transform: " + e.getMessage());
+	    nonLinearStreams.add(self);
+	    return;
+	}
+	
+	LinearPrinter.println(" transform successful.");
+	// check for debugging so we don't waste time producing output if not needed
+	if (LinearPrinter.getOutput()) {
+	    LinearPrinter.println("Linear splitjoin found: " + self +
+				  "\n-->MatrixA:\n" + newRep.getA() +
+				  "\n-->MatrixB:\n" + newRep.getB() +
+				  "\n-->MatrixC:\n" + newRep.getC() +
+				  "\n-->MatrixD:\n" + newRep.getD() +
+				  "\n-->Initial:\n" + newRep.getInit());
+	}
+	// add a mapping from this split join to the new linear representation
+	addLinearRepresentation(self, newRep);
+
+	}
     }
 
 

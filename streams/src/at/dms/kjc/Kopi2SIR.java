@@ -296,40 +296,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (!((SIRFilter)current).hasMethod("init"))
 		 at.dms.util.Utils.fail("Filter must have an init statement.");
 	}
-
-	//Build the splitters and joiners now that we have seen all the elements that are added
-	//use the type that was set when we visited the setSplitter/setJoiner function call
-	//do not set the joiner/splitter if the type is a weighted round robin
-	//because we do not have to, we can determine the number of elements from the weights
-	if (current instanceof SIRFeedbackLoop) {
-	    if (!(((SIRFeedbackLoop)current).getSplitter().getType() ==
-		  SIRSplitType.WEIGHTED_RR))
-		((SIRFeedbackLoop)current).setSplitter(SIRSplitter.create((SIRFeedbackLoop)
-									  current, 
-									  ((SIRFeedbackLoop)current).
-									  getSplitter().getType(), 2));
-	    if (!(((SIRFeedbackLoop)current).getJoiner().getType() ==
-		  SIRJoinType.WEIGHTED_RR))
-		((SIRFeedbackLoop)current).setJoiner(SIRJoiner.create((SIRFeedbackLoop)current, 
-								      ((SIRFeedbackLoop)current).
-								      getJoiner().getType(), 2));
-	}
+	
+	// rescale weights of splitter/joiner to match the splitjoin
 	if (current instanceof SIRSplitJoin) {
-	    if (!(((SIRSplitJoin)current).getSplitter().getType() ==
-		  SIRSplitType.WEIGHTED_RR))
-		((SIRSplitJoin)current).setSplitter(SIRSplitter.create((SIRSplitJoin)current, 
-								       ((SIRSplitJoin)current).
-								       getSplitter().getType(),
-								       ((SIRSplitJoin)current).
-								       size()));
-
-	    if (!(((SIRSplitJoin)current).getJoiner().getType() ==
-		  SIRJoinType.WEIGHTED_RR))
-	    ((SIRSplitJoin)current).setJoiner(SIRJoiner.create((SIRSplitJoin)current, 
-							       ((SIRSplitJoin)current).getJoiner().
-							       getType(), 
-							       ((SIRSplitJoin)current).
-							       size()));
+	    ((SIRSplitJoin)current).rescale();
+	} else if (current instanceof SIRFeedbackLoop) {
+	    ((SIRFeedbackLoop)current).rescale();
 	}
     }
 
@@ -1738,7 +1710,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	//after we have visited the entire stream, we will call setSplitter again
 	//with the correct number of splitting streams ( in postVisit() )
 	if (splitterType.getIdent().equals("ROUND_ROBIN"))
-	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.ROUND_ROBIN, 2);
+	    // here we're supporting the syntax where
+	    // round_robin(<weight>) will create a uniform weighted
+	    // round robin that is extended across the width of the
+	    // stream
+	    splitter = SIRSplitter.createUniformRR((SIRContainer)parentStream, splitterType.getArgs());
 	else if (splitterType.getIdent().equals("DUPLICATE"))
 	    splitter = SIRSplitter.create((SIRContainer)parentStream, SIRSplitType.DUPLICATE, 2);
 	else if (splitterType.getIdent().equals("NULL"))
@@ -1765,9 +1741,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	JMethodCallExpression joiner = (JMethodCallExpression)type;
 	SIRJoiner joinType = null;
 
-	if (joiner.getIdent().equals("ROUND_ROBIN"))
-	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.ROUND_ROBIN, 2);
-	else if (joiner.getIdent().equals("COMBINE"))
+	if (joiner.getIdent().equals("ROUND_ROBIN")) {
+	    // here we're supporting the syntax where
+	    // round_robin(<weight>) will create a uniform weighted
+	    // round robin that is extended across the width of the
+	    // stream
+	    joinType = SIRJoiner.createUniformRR((SIRContainer)parentStream, joiner.getArgs());
+	} else if (joiner.getIdent().equals("COMBINE"))
 	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);	  	
 	else if (joiner.getIdent().equals("NULL"))
 	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);

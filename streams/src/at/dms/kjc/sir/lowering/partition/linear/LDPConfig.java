@@ -84,6 +84,7 @@ abstract class LDPConfig implements Cloneable {
 		     "\n  strPop=" + strPush +
 		     "\n  linPush=" + linPush +
 		     "\n  linPop=" + linPop);
+	Utils.assert(pushRatio>0, "Found non-positive scaling factor:" + pushRatio);
 	return pushRatio;
     }
 }

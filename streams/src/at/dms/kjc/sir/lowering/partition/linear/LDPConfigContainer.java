@@ -28,17 +28,30 @@ abstract class LDPConfigContainer extends LDPConfig {
      * y1..y2) of stream s given collapse policy <c>.
      */
     private int[][][][][] A;
-
+    /**
+     * Specifies the width of the y_i'th component of this
+     */
+    private int[] width;
     
     /**
-     * <width> and <height> represent the dimensions of the stream.
+     * <width>[] and <height> represent the dimensions of the stream.
+     * Requires that width.length==height; width[i] specifies the
+     * width of the i'th component of this and is internalized in
+     * representation of this.
      */
     protected LDPConfigContainer(SIRContainer cont, LinearPartitioner partitioner, 
-				int width, int height) {
+				int[] width, int height) {
 	super(partitioner);
 	this.cont = cont;
 	this.partitioner = partitioner;
-	this.A = new int[width][width][height][height][4];
+	this.width = width;
+	// find maxWidth
+	int maxWidth = -1;
+	for (int i=0; i<height; i++) {
+	    maxWidth = Math.max(maxWidth, width[i]);
+	}
+	// for simplicity, allocate the bounding box for A
+	this.A = new int[maxWidth][maxWidth][height][height][4];
 	initA();
     }
 
@@ -62,13 +75,26 @@ abstract class LDPConfigContainer extends LDPConfig {
     public SIRStream getStream() {
 	return cont;
     }
-
+    
     /**
      * Requires <str> is a container.
      */
     protected void setStream(SIRStream str) {
 	Utils.assert(str instanceof SIRContainer);
 	this.cont = (SIRContainer)str;
+    }
+
+    /**
+     * Debugging output.
+     */
+    private static int indent = 0;
+    private void debugMessage(String str) {
+	if (LinearPartitioner.DEBUG) {
+	    for (int i=0; i<indent; i++) {
+		System.err.print(" ");
+	    }
+	    System.err.println(str);
+	}
     }
 
     protected int get(int collapse) {
@@ -80,11 +106,24 @@ abstract class LDPConfigContainer extends LDPConfig {
      * <str> is a stream object representing the current sub-segment that we're operating on
      */
     protected int get(int x1, int x2, int y1, int y2, int collapse, SIRStream str) {
+	indent++;
 	String callStr = "get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ", " + LinearPartitioner.COLLAPSE_STRING(collapse) + ", " + (str==null ? "null" : str.getIdent());
-	if (LinearPartitioner.DEBUG) { System.err.println("calling " + callStr); } 
+	debugMessage("calling " + callStr); 
+
+	// if we've exceeded the width of this node, then trim down to actual width
+	int maxWidth = width[y1];
+	for (int i=y1+1; i<=y2; i++) {
+	    maxWidth = Math.max(maxWidth, width[i]);
+	}
+	if (x2>maxWidth-1) {
+	    debugMessage(" scaling x2 back to " + (maxWidth-1));
+	    x2 = maxWidth-1;
+	}
+
 	// if we've memoized the value before, return it
 	if (A[x1][x2][y1][y2][collapse]>=0) {
-	    if (LinearPartitioner.DEBUG) { System.err.println(" returning memoized value, " + callStr + " = " + A[x1][x2][y1][y2][collapse]); }
+	    debugMessage(" returning memoized value, " + callStr + " = " + A[x1][x2][y1][y2][collapse]);
+	    indent--;
 	    return A[x1][x2][y1][y2][collapse];
 	}
 
@@ -92,7 +131,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 	if (x1==x2 && y1==y2) {
 	    int childCost = childConfig(x1, y1).get(collapse); 
 	    A[x1][x2][y1][y2][collapse] = childCost;
-	    if (LinearPartitioner.DEBUG) { System.err.println(" returning child cost, " + callStr + " = " + childCost); }
+	    System.err.println(" returning child cost, " + callStr + " = " + childCost);
+	    indent--;
 	    return childCost;
 	}
 
@@ -136,15 +176,89 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	case LinearPartitioner.COLLAPSE_NONE: {
 	    cost = Integer.MAX_VALUE;
-	    // try a vertical cut
-	    for (int xPivot=x1; xPivot<x2; xPivot++) {
-		// break along <xPivot>
-		int[] arr = { 1 + (xPivot-x1), x2-xPivot };
-		PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
-		cost = Math.min( cost, 
-				 get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
-				 get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
+
+	    // see if we can do a vertical cut -- first, that there
+	    // are two streams to cut between
+	    boolean tryVertical = x1<x2;
+
+	    // then, that all the child streams have same width
+	    if (tryVertical) {
+		int childWidth = width[y1];
+		for (int i=y1+1; i<=y2; i++) {
+		    if (width[i]!=childWidth) {
+			tryVertical = false;
+		    }
+		}
+	    }
+
+	    // then, that there's a non-linear child stream, or a row
+	    // that contains a mixture of linear and non-linear
+	    // streams, or linear streams with different costs.  In
+	    // this case, we might want to treat the children
+	    // differently.
+	    if (tryVertical && y1<y2) {
+		tryVertical = false;
+		search: 
+		for (int y=y1; y<=y2; y++) {
+		    int rowCost = -1;
+		    if (lfa.hasLinearRepresentation(childConfig(x1, y).getStream())) {
+			rowCost = lfa.getLinearRepresentation(childConfig(x1, y).getStream()).getCost().getDirectCost();
+		    } 
+		    for (int x=x1+1; x<=x2; x++) {
+			int childCost = -1;
+			if (lfa.hasLinearRepresentation(childConfig(x, y).getStream())) {
+			    childCost = lfa.getLinearRepresentation(childConfig(x, y).getStream()).getCost().getDirectCost();
+			}
+			if (childCost!=rowCost) {
+			    tryVertical = true;
+			    break search;
+			}
+		    }
+		}
+	    }
+	    
+	    // get the object we're doing vertical cuts on, and try to
+	    // remove any synchronization
+	    SIRSplitJoin verticalObj = null;
+	    if (tryVertical) {
+		if (str instanceof SIRPipeline) {
+		    // make a copy of our pipeline, since we're about
+		    // to split across it.  Don't worry about parent
+		    // field of children, since they seem to be
+		    // switched around a lot during partitioning (and
+		    // restored after)
+		    SIRPipeline copy = new SIRPipeline(str.getParent(), str.getIdent()+"_copy");
+		    for (int i=0; i<((SIRPipeline)str).size(); i++) { copy.add(((SIRPipeline)str).get(i)); }
+		    // now remove synchronization in <copy>.
+		    RefactorSplitJoin.removeMatchingSyncPoints(copy);
+		    // now if we only have one splitjoin left as the child, we can do a cut
+		    if (copy.size()==1) {
+			verticalObj = (SIRSplitJoin)copy.get(0);
+		    } else {
+			// otherwise can't do a cut
+			tryVertical = false;
+		    }
+		} else if (str instanceof SIRSplitJoin) {
+		    verticalObj = (SIRSplitJoin)str;
+		} else {
+		    Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
+		}
+	    }
+	    Utils.assert(!(tryVertical && verticalObj==null));
+
+	    // try a vertical cut if possible
+	    if (tryVertical) {
+		for (int xPivot=x1; xPivot<x2; xPivot++) {
+		    // break along <xPivot>
+		    int[] arr = { 1 + (xPivot-x1), x2-xPivot };
+		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
+		    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
+		    cost = Math.min( cost, 
+				     get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
+				     get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
+		}
+	    } else {
+		debugMessage(" Not trying vertical cut.");
 	    }
 
 	    // optimization: don't both with a horizontal cut if we're
@@ -155,7 +269,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    // consider each pipeline individually.
 	    boolean tryHoriz = false;
 	    if (x1==x2) {
-		// if we have a pipeline, try the horizontal cut always
+		// if we have a pipeline or we can't make vertical
+		// cut, must try the horizontal cut
 		tryHoriz = true;
 	    } else {
 		// if we're in 2-D cut mode, then see if there's a chance to try it
@@ -163,8 +278,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    // if we have a splijtoin, only try horiz if one of
 		    // children is non-linear
 		    search: 
-		    for (int x=x1; x<=x2; x++) {
-			for (int y=y1; y<=y2; y++) {
+		    for (int y=y1; y<=y2; y++) {
+			for (int x=x1; x<=Math.min(x2, width[y]-1); x++) {
 			    if (!lfa.hasLinearRepresentation(childConfig(x, y).getStream())) {
 				tryHoriz = true;
 				break search;
@@ -201,6 +316,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 				     get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
 				     get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
 		}
+	    } else {
+		debugMessage(" Not trying vertical cut.");
 	    }
 	    break;
 	}
@@ -213,7 +330,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 	
 	A[x1][x2][y1][y2][collapse] = cost;
-	if (LinearPartitioner.DEBUG) { System.err.println(" returning " + callStr + " = " + cost); }
+	debugMessage(" returning " + callStr + " = " + cost);
+	indent--;
 	return cost;
     }
 
@@ -230,6 +348,16 @@ abstract class LDPConfigContainer extends LDPConfig {
      * Traceback helper function.
      */
     protected StreamTransform traceback(int x1, int x2, int y1, int y2, int collapse, SIRStream str) {
+
+	// if we've exceeded the width of this node, then trim down to actual width
+	int maxWidth = width[y1];
+	for (int i=y1+1; i<=y2; i++) {
+	    maxWidth = Math.max(maxWidth, width[i]);
+	}
+	if (x2>maxWidth-1) {
+	    if (LinearPartitioner.DEBUG) { System.err.println("  scaling x2 back to " + (maxWidth-1)); }
+	    x2 = maxWidth-1;
+	}
 
 	// if we're down to one node, then descend into it
 	if (x1==x2 && y1==y2) {
@@ -258,7 +386,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    return traceback(x1, x2, y1, y2, options[i], str);
 		}
 	    }
-	    Utils.fail("Didn't find traceback; was looking for ANY.");
+	    Utils.fail("Didn't find traceback; was looking for ANY of " + cont + "[" + x1 + "][" + x2 + "][" + y1 + "][" + y2 + 
+		       "][" + LinearPartitioner.COLLAPSE_STRING(collapse) + "] = " + A[x1][x2][y1][y2][collapse]);
 	    break;
 	}
 
@@ -271,26 +400,99 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 
 	case LinearPartitioner.COLLAPSE_NONE: {
-	    // try a vertical cut
-	    for (int xPivot=x1; xPivot<x2; xPivot++) {
-		// break along <xPivot>
-		if (A[x1][x2][y1][y2][collapse] == (get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
-							/* dummy arg since get operation should just be lookup now */ null) +
-						    get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
-							/* dummy arg since get operation should just be lookup now */ null)) ) {
-		    // found the optimum
-		    int[] arr = { 1 + (xPivot-x1), x2-xPivot };
-		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
+	    // see if we can do a vertical cut -- first, that there
+	    // are two streams to cut between
+	    boolean tryVertical = x1<x2;
 
-		    // generate transform
-		    StreamTransform result = new VerticalCutTransform(xPivot-x1);
-		    // recurse left and right, adding transforms as post-ops
-		    result.addSucc(traceback(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)));
-		    result.addSucc(traceback(x1+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)));
+	    // then, that all the child streams have same width
+	    if (tryVertical) {
+		int childWidth = width[y1];
+		for (int i=y1+1; i<=y2; i++) {
+		    if (width[i]!=childWidth) {
+			tryVertical = false;
+		    }
+		}
+	    }
 
-		    // all done
-		    return result.reduce();
+	    // then, that there's a non-linear child stream, or a row
+	    // that contains a mixture of linear and non-linear
+	    // streams, or linear streams with different costs.  In
+	    // this case, we might want to treat the children
+	    // differently.
+	    LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
+	    if (tryVertical && y1<y2) {
+		tryVertical = false;
+		search: 
+		for (int y=y1; y<=y2; y++) {
+		    int rowCost = -1;
+		    if (lfa.hasLinearRepresentation(childConfig(x1, y).getStream())) {
+			rowCost = lfa.getLinearRepresentation(childConfig(x1, y).getStream()).getCost().getDirectCost();
+		    } 
+		    for (int x=x1+1; x<=x2; x++) {
+			int childCost = -1;
+			if (lfa.hasLinearRepresentation(childConfig(x, y).getStream())) {
+			    childCost = lfa.getLinearRepresentation(childConfig(x, y).getStream()).getCost().getDirectCost();
+			}
+			if (childCost!=rowCost) {
+			    tryVertical = true;
+			    break search;
+			}
+		    }
+		}
+	    }
+	    
+	    // get the object we're doing vertical cuts on, and try to
+	    // remove any synchronization
+	    SIRSplitJoin verticalObj = null;
+	    if (tryVertical) {
+		if (str instanceof SIRPipeline) {
+		    // make a copy of our pipeline, since we're about
+		    // to split across it.  Don't worry about parent
+		    // field of children, since they seem to be
+		    // switched around a lot during partitioning (and
+		    // restored after)
+		    SIRPipeline copy = new SIRPipeline(str.getParent(), str.getIdent()+"_copy");
+		    for (int i=0; i<((SIRPipeline)str).size(); i++) { copy.add(((SIRPipeline)str).get(i)); }
+		    // now remove synchronization in <copy>.
+		    RefactorSplitJoin.removeMatchingSyncPoints(copy);
+		    // now if we only have one splitjoin left as the child, we can do a cut
+		    if (copy.size()==1) {
+			verticalObj = (SIRSplitJoin)copy.get(0);
+		    } else {
+			// otherwise can't do a cut
+			tryVertical = false;
+		    }
+		} else if (str instanceof SIRSplitJoin) {
+		    verticalObj = (SIRSplitJoin)str;
+		} else {
+		    Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
+		}
+	    }
+	    Utils.assert(!(tryVertical && verticalObj==null));
+
+	    // try a vertical cut if possible
+	    if (tryVertical) {
+		// try a vertical cut
+		for (int xPivot=x1; xPivot<x2; xPivot++) {
+		    // break along <xPivot>
+		    if (A[x1][x2][y1][y2][collapse] == (get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
+							    /* dummy arg since get operation should just be lookup now */ null) +
+							get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
+							    /* dummy arg since get operation should just be lookup now */ null)) ) {
+			// found the optimum
+			int[] arr = { 1 + (xPivot-x1), x2-xPivot };
+			PartitionGroup pg = PartitionGroup.createFromArray(arr);
+			SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
+			
+			// generate transform
+			StreamTransform result = new VerticalCutTransform(xPivot-x1);
+			// recurse left and right, adding transforms as post-ops
+			result.addSucc(traceback(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)));
+			result.addSucc(traceback(x1+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)));
+			
+			// all done
+			return result.reduce();
+		    }
 		}
 	    }
 

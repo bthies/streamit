@@ -83,6 +83,8 @@ class LDPConfigFilter extends LDPConfig {
 	    }
 	}
 
+	if (LinearPartitioner.DEBUG) { System.err.println("Returning filter.get " + filter.getIdent() + "[" + LinearPartitioner.COLLAPSE_STRING(collapse) + "] = " + cost); }
+
 	// memoize value and return it
 	A[collapse] = cost;
 	return cost;

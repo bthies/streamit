@@ -104,7 +104,7 @@ public class MakefileGenerator
 	    
 	    fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");	
 	    fw.write("global path = malloc(strlen(streamit_home) + 30);\n");
-	    fw.write("sprintf(path, \"%s%s\", streamit_home, \"include/basic_mod.bc\");\n");
+	    fw.write("sprintf(path, \"%s%s\", streamit_home, \"/include/basic_mod.bc\");\n");
 	    //include the modified basic.bc file
 	    fw.write("include(path);\n");
 	}

@@ -45,14 +45,22 @@ typedef struct tape {
   int data_size;
   int tape_length;
 } tape;
+#define INCR_TAPE_WRITE(t) \
+  ((++((t)->write_pos) >= (t)->tape_length) ? \
+    (t)->write_pos = 0 : (t)->write_pos)
+#define INCR_TAPE_READ(t) \
+  ((++((t)->read_pos) >= (t)->tape_length) ? \
+    (t)->read_pos = 0 : (t)->read_pos)
 #define PUSH_TAPE(t, type, d) \
-  { if (++((t)->write_pos) >= (t)->tape_length) (t)->write_pos = 0; \
-    ((type *)((t)->data))[(t)->write_pos] = (d); }
+  (((type *)((t)->data))[INCR_TAPE_WRITE(t)] = (d))
 #define PEEK_TAPE(t, type, n) \
-  (((type *)(t)->data)[((t)->read_pos+n)%(t)->tape_length])
+  (((type *)(t)->data)[((t)->read_pos+n+1)%(t)->tape_length])
 #define POP_TAPE(t, type) \
-  ((((++((t)->read_pos)) >= (t)->tape_length) ? ((t)->read_pos = 0) : 0), \
-   ((type *)((t)->data))[(t)->read_pos])
+  (((type *)((t)->data))[INCR_TAPE_READ(t)])
+#define COPY_TAPE_ITEM(s, d) \
+  (memcpy((d)->data + (d)->write_pos * (d)->data_size, \
+          (s)->data + (s)->read_pos * (s)->data_size, \
+          (d)->data_size))
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)

@@ -1512,9 +1512,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    JExpression[] args = splitter.getArgs();
 	    int[] weights = new int[args.length];
 	    for (int i = 0; i < weights.length; i++) {
+		/*
 		if (!(args[i] instanceof JIntLiteral))
 		    at.dms.util.Utils.fail("Args to Weighted-round-robin must be ints");
 		weights[i] = ((JIntLiteral)args[i]).intValue();
+		*/
 	    }
 	    if (parentStream instanceof SIRSplitJoin)
 		((SIRSplitJoin)parentStream).setSplitter(SIRSplitter.
@@ -1552,9 +1554,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    JExpression[] args = joiner.getArgs();
 	    int[] weights = new int[args.length];
 	    for (int i = 0; i < weights.length; i++) {
+		/*
 		if (!(args[i] instanceof JIntLiteral))
 		    at.dms.util.Utils.fail("Args to Weighted-round-robin must be ints");
 		weights[i] = ((JIntLiteral)args[i]).intValue();
+		*/
 	    }
 	    if (parentStream instanceof SIRSplitJoin)
 		((SIRSplitJoin)parentStream).setJoiner(SIRJoiner.

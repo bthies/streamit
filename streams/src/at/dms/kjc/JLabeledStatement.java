@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLabeledStatement.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JLabeledStatement.java,v 1.3 2001-10-29 12:53:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -157,6 +157,13 @@ public class JLabeledStatement extends JStatement {
   public CodeLabel getBreakLabel() {
     return endLabel;
   }
+
+    /**
+     * Set the body of this.
+     */
+    public void setBody(JStatement body) {
+	this.body = body;
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

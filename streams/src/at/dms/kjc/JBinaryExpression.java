@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryExpression.java,v 1.2 2001-10-29 10:26:02 thies Exp $
+ * $Id: JBinaryExpression.java,v 1.3 2001-10-29 12:53:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -120,6 +120,20 @@ public abstract class JBinaryExpression extends JExpression {
      */
     public void setRight(JExpression right) {
 	this.right = right;
+    }
+
+    /**
+     * Returns what appears on left.
+     */
+    public JExpression getLeft() {
+	return left;
+    }
+
+    /**
+     * Returns what appears on right.
+     */
+    public JExpression getRight() {
+	return right;
     }
 
   // ----------------------------------------------------------------------

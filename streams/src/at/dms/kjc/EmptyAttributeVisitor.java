@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.3 2001-10-29 10:26:02 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.4 2001-10-29 12:53:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -376,18 +376,10 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
      */
     public Object visitCompoundStatement(JCompoundStatement self,
 					 JStatement[] body) {
-	visitCompoundStatement(body);
-	return self;
-    }
-
-    /**
-     * prints a compound statement
-     */
-    public Object visitCompoundStatement(JStatement[] body) {
 	for (int i = 0; i < body.length; i++) {
 	    body[i].accept(this);
 	}
-	return null;
+	return self;
     }
 
     /**

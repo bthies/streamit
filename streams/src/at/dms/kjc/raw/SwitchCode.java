@@ -20,7 +20,7 @@ public class SwitchCode extends at.dms.util.Utils
 {
  // the max-ahead is the maximum number of lines that this will
     // recognize as a pattern for folding into a loop
-    private static final int MAX_LOOKAHEAD = 10000;
+    private static final int MAX_LOOKAHEAD = 100;
     //the maximum number of repetitions allowed for a switch sequence
     //this is 2^16 because that is the largest immediate allowed 
     private static final int MAX_REP = 65535;
@@ -400,10 +400,9 @@ public class SwitchCode extends at.dms.util.Utils
 
 	return buf.toString();
     }
-}
 
  //class used to encapsulate a sequence: the starting line and the repetition count
-class Repetition 
+static class Repetition 
 {
     public Set lines;
     public int repetitions;
@@ -425,4 +424,6 @@ class Repetition
 	return ret;
     }
     
+}
+
 }

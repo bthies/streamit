@@ -99,7 +99,7 @@ public class MakefileGenerator
 	    if (KjcOptions.altcodegen) {
 		fw.write("\nDMEM_PORTS  = 1\n");
 		fw.write("ISSUE_WIDTH = 1\n\n");
-		fw.write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS\n");
+		fw.write("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS)\n");
 		fw.write("RGCCFLAGS += -missue_width=$(ISSUE_WIDTH) -mdmem_ports=$(DMEM_PORTS)\n");
 
 		//fw.write("\ntile%.s: tile%.c\n");

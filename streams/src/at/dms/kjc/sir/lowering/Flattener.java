@@ -146,7 +146,7 @@ public class Flattener {
 	    //Analyze Branches
 	    //System.err.print("Analyzing branches... ");
 	    //new BranchAnalyzer().analyzeBranches(str);
-	    System.err.println("done.");
+	    //System.err.println("done.");
 	}
 	//Destroys arrays into local variables if possible
 	//System.err.print("Destroying arrays... ");

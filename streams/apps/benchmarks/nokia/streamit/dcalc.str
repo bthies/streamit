@@ -9,7 +9,7 @@ float->float splitjoin LrL(int N) {
 
 
 // calculates the matrix AH (row oriented?) and L and adds them to the tape, plus a copy of AhA
-float->float pipeline AddAHLAhA(int W,int Q,int N, int K, float[W][K] h, float[Q][K] C) {
+void->float pipeline AddAHLAhA(int W,int Q,int N, int K, float[W][K] h, float[Q][K] C) {
 
 	add SourceAHL(W,Q,N,K,h,C);
 }

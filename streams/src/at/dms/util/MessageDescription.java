@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MessageDescription.java,v 1.1 2001-08-30 16:32:58 thies Exp $
+ * $Id: MessageDescription.java,v 1.2 2003-05-16 04:54:29 thies Exp $
  */
 
 package at.dms.util;
@@ -26,7 +26,7 @@ import java.text.MessageFormat;
  * This class defines message descriptions (errors, warnings, notices, ...)
  *
  * The message format is a text message with placeholders for its arguments
- * of the form {0}, {1}, ... . Each placeholder will be replaced by the string
+ * of the form 0, 1, ... . Each placeholder will be replaced by the string
  * representation of the corresponding argument.
  */
 public class MessageDescription {

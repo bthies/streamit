@@ -1,15 +1,14 @@
 This file describes the contents of the CVS Streams repository:
 
 streams/apps		Applications written in StreamIt.
-streams/compiler	StreamIt compiler.
 streams/docs		Publications, internal documents.
 streams/include         Common files used for StreamIt development (shell includes, bc devices).
 streams/knit            StreamIt tool chain integrator -- "knit Program.str" compiles stuff
-streams/library/java	Java library for running StreamIt code.
 streams/library/c       C runtime system for running compiler's uniprocessor output.
+streams/library/c       C runtime system for running compiler's cluster output.
 streams/misc		Code stuff that doesn't belong anywhere else.
 streams/prj.el          StreamIt configuration information for JDEE development environment (dmaze)
 streams/README          This file
 streams/README.source   README file which describes the layout of the StreamIt source tree
 streams/regtest		A regression test framework for the compiler.
-
+streams/src		All compiler sources -- compiler, scheduler, eclipse, Java library, etc.

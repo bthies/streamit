@@ -33,7 +33,6 @@ public class Harness {
 	return home;
     }
 
-    
     /** run command natively, ignoring stdout (eg for gcc, make) **/
     public static boolean executeNative(String[] cmdArray) throws Exception {
 	return executeNative(cmdArray, null);
@@ -115,6 +114,46 @@ public class Harness {
 	}
 	// if we get here, execution succeeded
 	return true;
+    }
+
+    /**
+     * Appends the contents of <srcFile> to <dstFile>, first appending
+     * <label> (surrounded by newlines) to <dstFile>.
+     */
+    public static boolean appendFile(String label, 
+				     String srcFile,
+				     String dstFile) {
+	String[] cmdArray = new String[3];
+	// run via csh (following other examples)
+	try {
+	    cmdArray[0] = "csh";
+	    cmdArray[1] = "-c";
+	    cmdArray[2] = ("echo \\\n\\\n" + label + "\\\n\\\n >> " + dstFile + "; " + // append label
+			   "cat " + srcFile + " >> " + dstFile);               // append srcFile
+	    return executeNative(cmdArray);
+	} catch (Exception e) {
+	    ResultPrinter.printError("appending file caused exception (?): " + e);
+	    e.printStackTrace();
+	    return false;
+	}
+    }
+
+    /**
+     * Deletes <filename>.
+     */
+    public static boolean deleteFile(String filename) {
+	String[] cmdArray = new String[3];
+	// run via csh (following other examples)
+	try {
+	    cmdArray[0] = "csh";
+	    cmdArray[1] = "-c";
+	    cmdArray[2] = "rm -f " + filename;
+	    return executeNative(cmdArray);
+	} catch (Exception e) {
+	    ResultPrinter.printError("deleting " + filename + " caused exception (?): " + e);
+	    e.printStackTrace();
+	    return false;
+	}
     }
 
     /**

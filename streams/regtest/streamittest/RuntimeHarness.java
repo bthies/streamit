@@ -170,7 +170,6 @@ public class RuntimeHarness extends Harness {
 	}
     }
 
-
     /**
      * Runs make in the root directory specified.
      **/

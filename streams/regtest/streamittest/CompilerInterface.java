@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.15 2002-11-20 15:23:01 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.16 2002-12-10 05:36:05 thies Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -30,9 +30,9 @@ public class CompilerInterface {
     public static final int DEBUG              = 0x8000;
     public static final int POPTOPEEK          =0x10000;
     public static final int DPPARTITION        =0x20000;
+    public static final int NUMBERS            =0x40000;
+    public static final int REMOVE_GLOBALS     =0x80000;
     
-
-
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
     //public static final String OPTION_CONSTPROP          = "--constprop";
@@ -48,15 +48,22 @@ public class CompilerInterface {
     public static final String OPTION_DEBUG              = "--debug";
     public static final String OPTION_POPTOPEEK          = "--poptopeek";
     public static final String OPTION_DPPARTITION        = "--dppartition";
-       
+    public static final String OPTION_NUMBERS            = "--numbers";
+    public static final String OPTION_REMOVE_GLOBALS     = "--removeglobals";
+
+    // number of steady-state executions to run program for if
+    // gathering numbers from within the compiler
+    private static final int NUMBERS_STEADY_CYCLES = 3;
+    // name of the results file for each run
+    private static final String RESULTS_FOR_RUN = "results.out";
+    // name of the cumulative results file
+    private static final String RESULTS_CUMULATIVE = "results.all";
     
     // suffix to add to the various pieces of compilation
     public static final String SUFFIX_C    = ".c";
     public static final String SUFFIX_EXE  = ".exe";
     public static final String SUFFIX_DATA = ".data";
     public static final String SUFFIX_DATA_RAW = ".raw";
-    
-
     
     // fields
     /** option mask that was passed in **/
@@ -142,6 +149,13 @@ public class CompilerInterface {
 					       getOptionsString(),
 					       initOutput, ssOutput);
 	    }
+	    // if we're gathering numbers, append the results for this run to the results log
+	    if ((this.compilerFlags & NUMBERS) == NUMBERS) {
+		Harness.appendFile("Following numbers for " + getOptionsString() + " :", 
+				   root + RESULTS_FOR_RUN, 
+				   root + RESULTS_CUMULATIVE);
+		Harness.deleteFile(root + RESULTS_FOR_RUN);
+	    }
 	    return result;
 	} else {
 	    // execute the program directly on the uniprocessor
@@ -214,6 +228,20 @@ public class CompilerInterface {
 		options[numOptions] = "" + i;
 		numOptions++;
 	    }
+	}
+
+	// numbers option
+	if ((flags & NUMBERS) == NUMBERS) {
+	    options[numOptions] = OPTION_NUMBERS;
+	    numOptions++;
+	    options[numOptions] = "" + NUMBERS_STEADY_CYCLES;
+	    numOptions++;
+	}
+
+	// remove globals option
+	if ((flags & REMOVE_GLOBALS) == REMOVE_GLOBALS) {
+	    options[numOptions] = OPTION_REMOVE_GLOBALS;
+	    numOptions++;
 	}
 
 	// if we are running linear analysis

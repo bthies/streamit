@@ -117,7 +117,9 @@ public class Propagator extends SLIRReplacingVisitor {
 	if (expr instanceof JLocalVariableExpression) {
 	    Object obj = constants.get(((JLocalVariableExpression)expr).getVariable());
 	    if (obj instanceof SIRPortal) {
-		((SIRPortal)obj).addReceiver(receiver);
+                SIRPortal p = (SIRPortal)obj;
+                p.addReceiver(receiver);
+                self.setPortal(p);
 	    }
 	}
 	return self;

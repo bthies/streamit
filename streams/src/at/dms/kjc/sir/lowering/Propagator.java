@@ -407,7 +407,7 @@ class Propagator extends SLIRReplacingVisitor {
 	prefix.accept(this);
 	JExpression newExp = (JExpression)accessor.accept(this);
 	if (newExp.isConstant()) {
-	    self.setAccessor(accessor);
+	    self.setAccessor(newExp);
 	}
 	return self;
     }

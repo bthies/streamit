@@ -94,6 +94,8 @@ class WorkEstimate {
 	    SIRContainer parent = filter.getParent();
 	    // get work
 	    int work = ((WorkInfo)entry.getValue()).totalWork();
+	    if(parent instanceof SIRSplitJoin)
+		work/=2; //Account for using semiFuse of SplitJoins
 	    // if it doesn't contain parent, add parent
 	    if (!containerMap.containsKey(parent)) {
 		containerMap.put(parent, new WorkInfo(work));

@@ -228,7 +228,7 @@ public class Partitioner {
 				}
 			    }
 			    if(attempt) {
-				SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
+				SIRStream newstr = FuseSplit.semiFuse((SIRSplitJoin)cont);
 				// if we fused something, quit loop
 				if (newstr!=cont) { 
 				    aggressive=0;
@@ -247,7 +247,7 @@ public class Partitioner {
 				}
 			    }
 			    if(attempt) {
-				SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
+				SIRStream newstr = FuseSplit.semiFuse((SIRSplitJoin)cont);
 				// if we fused something, quit loop
 				if (newstr!=cont) { 
 				    aggressive=0;
@@ -257,7 +257,7 @@ public class Partitioner {
 			    } /*else
 				System.out.println("SplitJoin has all Identity Children! Ignoring.");*/
 			} else {
-			    SIRStream newstr = FuseSplit.fuse((SIRSplitJoin)cont);
+			    SIRStream newstr = FuseSplit.semiFuse((SIRSplitJoin)cont);
 			    // if we fused something, quit loop
 			    if (newstr!=cont) { 
 				aggressive=0;

@@ -27,21 +27,24 @@ public class FuseSplit {
     private static final String PUSH_READ_NAME = "___PUSH_READ";
     private static final String PUSH_WRITE_NAME = "___PUSH_WRITE";
 
-    /*public static SIRStream semiFuse(SIRSplitJoin sj) {
-	if(sj.size()%2==0&&
-	   sj.size()>2) {
+    public static SIRStream semiFuse(SIRSplitJoin sj) {
+	if(sj.size()<=3)
+	    return fuse(sj);
+	else if(sj.size()%2==0) {
 	    int half=sj.size()/2;
-	    System.out.println("SEMI! "+half);
-	    int[] partition=new int[half+1];
-	    for(int i=0;i<half-1;i++)
+	    int[] partition=new int[half];
+	    for(int i=0;i<half;i++)
 		partition[i]=2;
-	    partition[half-1]=1;
+	    return fuse(sj,partition);
+	} else {
+	    int half=sj.size()/2;
+	    int[] partition=new int[half+1];
+	    for(int i=0;i<half;i++)
+		partition[i]=2;
 	    partition[half]=1;
 	    return fuse(sj,partition);
 	}
-	System.out.println("NOT SEMI!");
-	return fuse(sj);
-	}*/
+    }
 
 
     //Uses partition to partion children and fuses only the children corresponding non 1 elements of partition

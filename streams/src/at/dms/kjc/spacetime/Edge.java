@@ -37,7 +37,7 @@ public class Edge {
 
     public String toString() 
     {
-	return src.toString() + "->" + dest.toString();
+	return src.toString() + "->" + dest.toString() + "(" + hashCode() + ")";
     }
 }
 

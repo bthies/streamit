@@ -168,26 +168,33 @@ public class Util {
 	itemsSent = (int)((next.steadyMult * next.pop) *
 	    ((double)in.getWeight(edge) / in.totalWeights()));
 	
+	//	System.out.println(in.getWeight(edge) + "/" +  in.totalWeights());
+
 	//calculate the items the output trace sends
 	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
 	itemsReceived = (int)((prev.steadyMult * prev.push) *
 	    ((double)out.getWeight(edge) / out.totalWeights()));
 	/*
-	System.out.println("Steady Buffer: " + in + " -> " + out + ", sent = " + 
+	System.out.println("Steady Buffer: " + edge + ", sent " +
 			   itemsSent + ", received = " + itemsReceived);
-	System.out.println(((double)in.getWeight(out) / in.totalWeights()));
-	System.out.println(in.getWeights().length + " " + in.getWeights()[0]);
-	for (int i = 0; i < in.getWeights().length; i++) {
-	    System.out.println(in.getSources()[i] + " " + in.getWeights()[i]);
-	}
+	System.out.println(out);
 	for (int i = 0; i < out.getWeights().length; i++) {
 	    System.out.println(" ---- Weight = " + out.getWeights()[i]);
 	    for (int j = 0; j < out.getDests()[i].length; j++) 
-		System.out.println(out.getDests()[i][j]);
+		System.out.println(out.getDests()[i][j] + " " + out.getDests()[i][j].hashCode());
 	     System.out.println(" ---- ");
 	}
+	//	System.out.println(out.getWeight(edge)+ " / "   + out.totalWeights());
+	//System.out.println(((double)out.getWeight(edge) / out.totalWeights()));	
+
+	System.out.println(in);
+	//System.out.println(in.getWeights().length + " " + in.getWeights()[0]);
+	System.out.println("-------");
+	for (int i = 0; i < in.getWeights().length; i++) {
+	    System.out.println(in.getSources()[i] + " " + in.getWeights()[i] + " " + in.getSources()[i].hashCode());
+	}
+	System.out.println("-------");
 	*/
-	
 	//see if they are different
 	assert (itemsSent == itemsReceived) :
 	    "Calculating steady state: items received != items send on buffer";
@@ -207,11 +214,42 @@ public class Util {
 	itemsSent =  (int)(next.initItemsReceived() *
 	    ((double)in.getWeight(edge) / in.totalWeights()));
 	
+	System.out.println("Sent from buffer: " + next.initItemsReceived() + " * " + 
+			   in.getWeight(edge) + " / " +  in.totalWeights());
+	System.out.println(next + ": " + next.initMult + " " + next.prePeek + " " + 
+			   next.prePop + " " + next.peek + " " + next.pop);
+	
 	//calculate the items the output trace sends
 	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
 	itemsReceived = (int)(prev.initItemsSent() *
 	    ((double)out.getWeight(edge) / out.totalWeights()));
+
+	System.out.println("Received into buffer: " + prev.initItemsSent() + " * " + 
+			   out.getWeight(edge) + " / " +  out.totalWeights());
+	System.out.println(prev + ": " + prev.initMult + " " + prev.prePush + " " +
+			   prev.push);
 	
+	System.out.println("Init Buffer: " + edge + ", sent " +
+			   itemsSent + ", received = " + itemsReceived);
+	/*
+	System.out.println(out);
+	for (int i = 0; i < out.getWeights().length; i++) {
+	    System.out.println(" ---- Weight = " + out.getWeights()[i]);
+	    for (int j = 0; j < out.getDests()[i].length; j++) 
+		System.out.println(out.getDests()[i][j] + " " + out.getDests()[i][j].hashCode());
+	     System.out.println(" ---- ");
+	}
+	//System.out.println(out.getWeight(edge)+ " / "   + out.totalWeights());
+	//System.out.println(((double)out.getWeight(edge) / out.totalWeights()));	
+
+	System.out.println(in);
+	//System.out.println(in.getWeights().length + " " + in.getWeights()[0]);
+	System.out.println("-------");
+	for (int i = 0; i < in.getWeights().length; i++) {
+	    System.out.println(in.getSources()[i] + " " + in.getWeights()[i] + " " + in.getSources()[i].hashCode());
+	}
+	System.out.println("-------");
+	*/
 	//see if they are different
 	assert (itemsSent == itemsReceived) :
 	    "Calculating steady state: items received != items send on buffer";

@@ -78,7 +78,10 @@ public class ComputeCodeStore {
 	    "transfer size for dram must be a multiple of cache line size";
 
 	int cacheLines = bytes / RawChip.cacheLineBytes;
-	JExpression[] args = {new JIntLiteral(1),
+	JExpression[] args = {new JFieldAccessExpression(null, 
+							 new JThisExpression(null),
+							 buffer.getIdent()),
+			      new JIntLiteral(1),
 			      new JIntLiteral(cacheLines)};
 
 	//the dram command

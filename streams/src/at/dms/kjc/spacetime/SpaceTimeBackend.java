@@ -418,6 +418,7 @@ public class SpaceTimeBackend
 	    //LinkedList initList = TraceTraversal.getTraversal(traces);
 	    List initList = Arrays.asList(traces);
 	    List steadyList = TraceTraversal.getTraversal(traceForrest);
+	    TraceDotGraph.dumpGraph(steadyList, "preDRAMsteady.dot", false);
 	    //assign the buffers not assigned by Jasp to drams
 	    BufferDRAMAssignment.run(steadyList, rawChip);
 	    //communicate the addresses for the off-chip buffers
@@ -427,8 +428,8 @@ public class SpaceTimeBackend
 		//on the corresponding tile.
 		CommunicateAddrs.doit(rawChip);
 	    }
-	    TraceDotGraph.dumpGraph(initList, "inittraces.dot");
-	    TraceDotGraph.dumpGraph(steadyList, "steadyforrest.dot");
+	    TraceDotGraph.dumpGraph(initList, "inittraces.dot", true);
+	    TraceDotGraph.dumpGraph(steadyList, "steadyforrest.dot", true);
 	    //create the raw execution code and switch code for the initialization phase
 	    System.out.println("Creating Initialization Stage");
 	    Rawify.run(initList.iterator(), rawChip, true); 

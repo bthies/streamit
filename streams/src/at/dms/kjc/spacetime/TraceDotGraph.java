@@ -11,7 +11,7 @@ import java.util.Iterator;
 
 public class TraceDotGraph 
 {
-    public static void dumpGraph(List steadyTrav, String fileName) 
+    public static void dumpGraph(List steadyTrav, String fileName, boolean DRAM) 
     {
 	try {
 	    boolean first = true;
@@ -30,9 +30,9 @@ public class TraceDotGraph
 		    if (node.isFilterTrace() && !node.getNext().isOutputTrace())
 			fw.write("  " + node.hashCode() + " -> " + node.getNext().hashCode() + ";\n");
 		    if (node.isInputTrace()) 
-			bufferArc(IntraTraceBuffer.getBuffer((InputTraceNode)node, (FilterTraceNode)node.getNext()), fw);
+			bufferArc(IntraTraceBuffer.getBuffer((InputTraceNode)node, (FilterTraceNode)node.getNext()), fw, DRAM);
 		    if (node.isOutputTrace())
-			bufferArc(IntraTraceBuffer.getBuffer((FilterTraceNode)node.getPrevious(), (OutputTraceNode)node), fw);
+			bufferArc(IntraTraceBuffer.getBuffer((FilterTraceNode)node.getPrevious(), (OutputTraceNode)node), fw, DRAM);
 		    
 		    fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
 		    if (node.isFilterTrace()) {
@@ -57,7 +57,7 @@ public class TraceDotGraph
 		OffChipBuffer buffer = (OffChipBuffer)buffers.next();
 		if (buffer.isIntraTrace())
 		    continue;
-		bufferArc(buffer, fw);
+		bufferArc(buffer, fw, DRAM);
 	    }
 	    fw.write("}\n");
 	    fw.close();
@@ -68,14 +68,16 @@ public class TraceDotGraph
 	
     }
     
-    private static void bufferArc(OffChipBuffer buffer, FileWriter fw) throws Exception 
+    private static void bufferArc(OffChipBuffer buffer, FileWriter fw, boolean DRAM) throws Exception 
     {
 	fw.write(buffer.getSource().hashCode() + " -> " + buffer.getDest().hashCode() + 
-		 "[label=\"" + buffer.getDRAM());
-	if (buffer.redundant())
-	    fw.write("\", style=dashed");
-	else
-	    fw.write(buffer.getSize() + "(" + buffer.getIdent() + ")\", style=bold");
+		 "[label=\"" + (DRAM ? buffer.getDRAM().toString(): "not assigned\""));
+	if (DRAM) {
+	    if (buffer.redundant())
+		fw.write("\", style=dashed");
+	    else
+		fw.write(buffer.getSize() + "(" + buffer.getIdent() + ")\", style=bold");
+	}
 	fw.write("];\n");	
     }
     

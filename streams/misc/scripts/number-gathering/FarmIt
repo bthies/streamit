@@ -15,9 +15,9 @@ if [ -z "$STREAMIT_HOME" ]; then
     exit 1
 fi
 
-#the texec prefix for compiling and running
-texec_prefix="java at.dms.kjc.raw.TExecWrapper texec -m 30"
-#texec_prefix=""
+#the texec prefix for compiling and running -- disabled now because it
+#didn't help with killing the BTL thread.
+#texec_prefix="java at.dms.kjc.raw.TExecWrapper texec -m 30"
 
 #the nice option, it is null we do not want to be nice
 nice=""
@@ -172,9 +172,9 @@ issue_commands() {
     command="$command setenv STREAMIT_HOME $STREAMIT_HOME;"
     command="$command source \$STREAMIT_HOME/include/dot-cshrc;"
     #compile
-    command="$command $nice $texec_prefix java -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file;"
+    command="$command $nice java -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file;"
     #run
-    command="$command $nice $texec_prefix gmake -f Makefile.streamit run;"
+    command="$command $nice gmake -f Makefile.streamit run;"
     echo -ne "\033[1m\e[32;40mCompiling/Running $bench_file (${config}x${config}) on $machine...\033[0m\n"; tput sgr0
     # redirect output to log file
     ssh $current_machine "$command" > "$rootdir/log/${bench_name}-raw${config}${options// /}" 2>&1

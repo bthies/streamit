@@ -339,7 +339,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	    for (int i = 0 ; i < pmethods.length; i++) {
 
-		String method_name = pmethods[i].getIdent();
+		CMethod portal_method = pmethods[i];
+		CType portal_method_params[] = portal_method.getParameters();
+
+		String method_name = portal_method.getIdent();
 
 		int length = method_name.length();
 
@@ -356,11 +359,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 			    thread_method_name.charAt(length) == '_' &&
 			    thread_method_name.charAt(length + 1) == '_') {
 			    
-			    //print("    /* ident: "+thread_method_name+" */\n");
 			    int param_count = methods[t].getParameters().length;
 
 			    for (int a = 0; a < param_count; a++) {
-				print("    int p"+a+" = sock->read_int();\n");
+				if (portal_method_params[a].toString().equals("int")) {
+				    print("    int p"+a+" = sock->read_int();\n");
+				}
+				if (portal_method_params[a].toString().equals("float")) {
+				    print("    float p"+a+" = sock->read_float();\n");
+				}
 			    }
 
 			    print("    "+thread_method_name+"(");
@@ -1609,12 +1616,22 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");");
 
+		CType method_params[] = methods[index].getParameters();
+
 		if (params != null) {
 		    for (int t = 0; t < params.length; t++) {
 			if (params[t] != null) {
-			    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
-			    params[t].accept(this);
-			    print(");");
+
+			    if (method_params[t].toString().equals("int")) {
+				print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
+				params[t].accept(this);
+				print(");");
+			    }
+			    if (method_params[t].toString().equals("float")) {
+				print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
+				params[t].accept(this);
+				print(");");
+			    }
 			}
 		    }
 		}

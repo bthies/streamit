@@ -115,47 +115,37 @@ jar:
 streamit.jar: $(JAVA_TARGET)
 	rm -rf classes
 	mkdir classes
+	find . -name '*.class' | grep -v './classes/' | grep -v './streamit/eclipse/' | cpio -p -d -V classes
 	$(STREAMIT_HOME)/misc/get-antlr antlr.jar
 	cd classes && jar xf ../antlr.jar
-	find . -name '*.class' | cpio -p -d -V classes
 	find . -name '*.properties' | cpio -d -p -V classes
-	cd $(STREAMIT_HOME)/src/streamit/library && \
-		find . -name '*.class' | \
-		cpio -p -d -V $(STREAMIT_HOME)/src/classes
 	echo "Main-Class: at.dms.kjc.Main" > manifest.streamit
 	jar cf $@ -C classes .
 	jar umf manifest.streamit $@
 	rm -rf classes
 	rm -rf manifest.streamit
 
+# same as streamit.jar, but also includes eclipse classes
 streamit-eclipse.jar: $(JAVA_TARGET)
 	rm -rf classes
 	mkdir classes
+	find . -name '*.class' | grep -v './classes/' | cpio -p -d -V classes
 	$(STREAMIT_HOME)/misc/get-antlr antlr.jar
 	cd classes && jar xf ../antlr.jar
-	find . -name '*.class' -or -name '*.java' | cpio -p -d -V classes
 	find . -name '*.properties' | cpio -d -p -V classes
-	cd $(STREAMIT_HOME)/src/streamit/library && \
-		find . -name '*.class' -or -name '*.java' | \
-		cpio -p -d -V $(STREAMIT_HOME)/src/classes
-	cd $(STREAMIT_HOME)/src/streamit/eclipse && \
-		find . -name '*.class' -or -name '*.java' | \
-		cpio -p -d -V $(STREAMIT_HOME)/src/classes
 	echo "Main-Class: at.dms.kjc.Main" > manifest.streamit
 	jar cf $@ -C classes .
 	jar umf manifest.streamit $@
 	rm -rf classes
 	rm -rf manifest.streamit
 
+# only includes streamit frontend, library, scheduler classes
 streamit-lib.jar: $(JAVA_TARGET)
 	rm -rf classes
 	mkdir classes
+	find streamit -name '*.class' | grep -v './streamit/eclipse/' | cpio -d -p -V classes
 	$(STREAMIT_HOME)/misc/get-antlr antlr.jar
 	cd classes && jar xf ../antlr.jar
-	find streamit -name '*.class' | cpio -d -p -V classes
-	cd $(STREAMIT_HOME)/src/streamit/library && \
-		find . -name '*.class' | \
-		cpio -p -d -V $(STREAMIT_HOME)/src/classes
 	jar cf $@ -C classes .
 	rm -rf classes
 

@@ -47,11 +47,16 @@ public class Layout extends at.dms.util.Utils implements
     /** cost function constants **/
 
     //the multipler for the dynamic network cost
-    public static double DYN_MULT = 1000;
+    public static double DYN_MULT = 10;
     //the weight of an ilegale static layout
     public static double ILLEGAL_WEIGHT = 1E6;
-    //the weights assigned to a static route that goes thru an assigned tile
-    public static double ASSIGNED_WEIGHT = 100;
+    //the weights assigned to a static hop that goes thru an assigned tile
+    public static double ASSIGNED_WEIGHT = 1000;
+    //the weight assigned to routing an item through a router tile
+    public static double ROUTER_WEIGHT = 0.5;
+    //scaling factor for the memory cost of the layout (for tiles that allocate more 
+    //than the dcache size
+    public static double MEMORY_SCALE = 0.2;
 
     //simualted annealing constants
     public static int MINTEMPITERATIONS = 200;
@@ -466,7 +471,7 @@ public class Layout extends at.dms.util.Utils implements
 	    
 	    memoryCost = getMemoryCost(ssg);
 
-	    cost += (dynamicCost * DYN_MULT) + staticCost + memoryCost;
+	    cost += (dynamicCost * DYN_MULT) + staticCost + (memoryCost * MEMORY_SCALE);
 	}
 	
 	return cost;
@@ -601,7 +606,7 @@ public class Layout extends at.dms.util.Utils implements
 		    else {
 			//router tile, only penalize it if we have routed through it before
 			if (routers.contains(route[i]))
-			    numAssigned += 0.5;
+			    numAssigned += ROUTER_WEIGHT;
 			else //now it is a router tile
 			    routers.add(route[i]);
 		    }
@@ -679,6 +684,8 @@ public class Layout extends at.dms.util.Utils implements
 	for (int j = 0; j < ssg.getOutputs().length; j++) {
 	    FlatNode src = ssg.getOutputs()[j];
 	    FlatNode dst = ssg.getNext(src);
+	    int typeSize = Util.getTypeSize(ssg.getOutputType(src));
+	    
 	    ComputeNode srcTile = getComputeNode(src);
 	    ComputeNode dstTile = getComputeNode(dst);
 
@@ -688,7 +695,7 @@ public class Layout extends at.dms.util.Utils implements
 	    //********* TURNS IN DYNAMIC NETWORK COST IN TERMS OF LATENCY ****//
 	    if (srcTile.getX() != dstTile.getX() &&
 		srcTile.getY() != dstTile.getY())
-		cost += 1.0;
+		cost += (1.0 * typeSize);
 
 	    //** Don't share links, could lead to starvation?? ***///
 	    
@@ -698,7 +705,7 @@ public class Layout extends at.dms.util.Utils implements
 		//System.out.print(tile);
 		//add to cost only if these an no endpoints of the route
 		if (tile != srcTile && tile != dstTile) {
-		    cost += 1.0;
+		    cost += (1.0 * typeSize);
 		}		
 		usedTiles.add(tile);
 	    }

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.9 2001-10-30 17:32:36 thies Exp $
+ * $Id: JBlock.java,v 1.10 2001-11-10 19:07:31 thies Exp $
  */
 
 package at.dms.kjc;
@@ -167,6 +167,13 @@ public class JBlock extends JStatement {
      */
     public List getStatements() {
 	return body;
+    }
+
+    /**
+     * Returns i'th statement.
+     */
+    public JStatement getStatement(int i) {
+	return (JStatement)body.get(i);
     }
 
     /**

@@ -28,9 +28,9 @@ public class RawBackend {
 
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
-	//FieldProp.doPropagate(str);
 	//Renamer.renameAll(str);
 	ConstantProp.propagateAndUnroll(str);
+	FieldProp.doPropagate(str);
 	
 	System.out.println("Done Constant Prop and Unroll...");
 
@@ -59,7 +59,6 @@ public class RawBackend {
 	    FuseAll.fuse(str);
 	    System.out.println("Done SJFusion...");
 	}
-	
 
         // do constant propagation on fields
         if (StreamItOptions.constprop) {
@@ -72,29 +71,34 @@ public class RawBackend {
 	Namer.assignNames(str);
 	System.out.println("Namer End.");
 
+	AdjustGranularity.doit(str, 
+			       StreamItOptions.rawRows * 
+			       StreamItOptions.rawColumns);
+
+	System.out.println("Done Constant Prop and Unroll...");
 	//SIRPrinter printer1 = new SIRPrinter();
 	//str.accept(printer1);
 	//printer1.close();
 
 	System.out.println("Flattener Begin...");
-	RawFlattener.flatten(str);
-	RawFlattener.dumpGraph("flatgraph.dot");
+	RawFlattener rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("flatgraph.dot");
 	System.out.println("Flattener End.");
 	//create the execution counts for other passes
-	createExecutionCounts(str);
+	createExecutionCounts(str, rawFlattener);
 
 	// layout the components (assign filters to tiles)
-	Layout.simAnnealAssign(RawFlattener.top);
+	Layout.simAnnealAssign(rawFlattener.top);
 	//Layout.handAssign(RawFlattener.top);
 	System.out.println("Assign End.");
 	//Generate the switch code
 	System.out.println("Switch Code Begin...");
-	SwitchCode.generate(RawFlattener.top);
+	SwitchCode.generate(rawFlattener.top);
 	//	SwitchCode.dumpCode();
 	System.out.println("Switch Code End.");
 	//Generate the tile code
 	System.out.println("Tile Code begin...");
-	TileCode.generateCode(RawFlattener.top);
+	TileCode.generateCode(rawFlattener.top);
 	System.out.println("Tile Code End.");
 	//generate the makefiles
 	System.out.println("Creating Makefile.");
@@ -102,9 +106,6 @@ public class RawBackend {
 	System.out.println("Exiting");
 	System.exit(0);
     }
-
-    
-
 
     //helper function to add everything in a collection to the set
     public static void addAll(HashSet set, Collection c) 
@@ -115,7 +116,8 @@ public class RawBackend {
 	}
     }
    
-    private static void createExecutionCounts(SIRStream str) {
+    private static void createExecutionCounts(SIRStream str,
+					      RawFlattener rawFlattener) {
 	// get the execution counts from the scheduler
 	HashMap[] executionCounts = SIRScheduler.getExecutionCounts(str);
 
@@ -131,7 +133,8 @@ public class RawBackend {
 		SIROperator obj = (SIROperator)it.next();
 		if (!(obj instanceof SIRSplitter)) {
 		    int val = ((int[])executionCounts[i].get(obj))[0];
-		    result[i].put(FlatNode.getFlatNode(obj), new Integer(val));
+		    result[i].put(rawFlattener.getFlatNode(obj), 
+				  new Integer(val));
 		}
 	    }
 	}

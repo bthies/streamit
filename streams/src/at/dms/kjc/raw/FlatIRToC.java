@@ -431,7 +431,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                         String ident,
                                         JExpression expr) {
         // print(CModifier.toString(modifiers));
-        printLocalType(type);
+	if (expr!=null) {
+	    printLocalType(type);
+	} else {
+	    print(type);
+	}	    
         print(" ");
         print(ident);
         if (expr != null) {

@@ -26,13 +26,6 @@ public class FlatNode {
         /* the current edges we are connecting, all edges before this are connected */
     private int currentEdge;
     private int currentIncoming;
-    
-    //maps sir operators to their corresponding flatnode
-    private static HashMap SIRMap;
-
-    static {
-	SIRMap = new HashMap();
-    }
 
     /* create a new node with <op> */
     public FlatNode(SIROperator op) 
@@ -59,18 +52,8 @@ public class FlatNode {
 	    weights = splitter.getWeights();
 	    inputs = 0;
 	}
-	//add to hash map
-	SIRMap.put(op, this);
-	
     }
     
-    public static FlatNode getFlatNode(SIROperator key) {
-	FlatNode node = (FlatNode)SIRMap.get(key);
-	if (node == null)
-	    Utils.fail("Cannot Find FlatNode for SIROperator: " + key);
-	return node;
-    }
-
     public void addEdges(FlatNode to) {
 	//do not connect to oneself
 	if (!(this.equals(to))) {

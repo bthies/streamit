@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.7 2002-09-18 01:08:02 aalamb Exp $
+ * $Id: TestLinear.java,v 1.8 2002-09-18 17:14:43 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -391,18 +391,38 @@ public class TestLinear extends TestCase {
 	FilterMatrix chunk  = parseMatrix("[[1 2][3 4]]");
 	FilterMatrix chunk2 = parseMatrix("[[9 8 7][6 5 4]]");
 
+	FilterMatrix temp;
+	
 	// test copying the chunks around to various offsets in zero
-	assertTrue(zero.copyAt(0,0,chunk).equals(parseMatrix("[[1 2 0 0][3 4 0 0][0 0 0 0][0 0 0 0]]")));
-	assertTrue(zero.copyAt(0,1,chunk).equals(parseMatrix("[[0 1 2 0][0 3 4 0][0 0 0 0][0 0 0 0]]")));
-	assertTrue(zero.copyAt(1,0,chunk).equals(parseMatrix("[[0 0 0 0][1 2 0 0][3 4 0 0][0 0 0 0]]")));
-	assertTrue(zero.copyAt(2,2,chunk).equals(parseMatrix("[[0 0 0 0][0 0 0 0][0 0 1 2][0 0 3 4]]")));
+	temp = zero.copy();
+	temp.copyAt(0,0,chunk);
+	assertTrue(temp.equals(parseMatrix("[[1 2 0 0][3 4 0 0][0 0 0 0][0 0 0 0]]")));
 
+	temp = zero.copy();
+	temp.copyAt(0,1,chunk);
+	assertTrue(temp.equals(parseMatrix("[[0 1 2 0][0 3 4 0][0 0 0 0][0 0 0 0]]")));
+
+	temp = zero.copy();
+	temp.copyAt(1,0,chunk);
+	assertTrue(temp.equals(parseMatrix("[[0 0 0 0][1 2 0 0][3 4 0 0][0 0 0 0]]")));
+	
+	temp = zero.copy();
+	temp.copyAt(2,2,chunk);
+	assertTrue(temp.equals(parseMatrix("[[0 0 0 0][0 0 0 0][0 0 1 2][0 0 3 4]]")));
 
 	// copy chunk into itself
-	assertTrue(chunk.copyAt(0,0,chunk).equals(chunk));
+	temp = chunk.copy();
+	temp.copyAt(0,0,temp);
+	assertTrue(temp.equals(chunk));
+
 	// copy chunk into chunk2
-	assertTrue(chunk2.copyAt(0,0,chunk).equals(parseMatrix("[[1 2 7][3 4 4]]")));
-	assertTrue(chunk2.copyAt(0,1,chunk).equals(parseMatrix("[[9 1 2][6 3 4]]")));
+	temp = chunk2.copy();
+	temp.copyAt(0,0,chunk);
+	assertTrue(temp.equals(parseMatrix("[[1 2 7][3 4 4]]")));
+
+	temp = chunk2.copy();
+	temp.copyAt(0,1,chunk);
+	assertTrue(temp.equals(parseMatrix("[[9 1 2][6 3 4]]")));
 
 	// check bounds validation
 	try{chunk.copyAt(0,0,chunk2); fail();} catch(IllegalArgumentException e){};

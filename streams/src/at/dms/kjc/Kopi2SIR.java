@@ -186,7 +186,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
     private void blockStart(String str, JPhylum getLineFromMe)  {
-	lineNumber = getLineFromMe.getTokenReference().getLine();
+        if (getLineFromMe != null &&
+            getLineFromMe.getTokenReference() != null)
+            lineNumber = getLineFromMe.getTokenReference().getLine();
 	printMe("attribute_visit" + str +"\n");
     }
     

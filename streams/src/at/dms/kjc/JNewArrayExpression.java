@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.8 2003-08-29 19:25:37 thies Exp $
+ * $Id: JNewArrayExpression.java,v 1.9 2003-10-09 13:49:49 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -59,6 +59,19 @@ public class JNewArrayExpression extends JExpression {
     this.dims = dims;
     this.init = init;
   }
+
+    public String toString() {
+	StringBuffer out=new StringBuffer("JNewArrayExpr[");
+	if(dims!=null&&dims.length>0) {
+	    out.append(dims[0].toString());
+	    for(int i=1;i<dims.length;i++) {
+		out.append(",");
+		if(dims[i].toString()!=null)
+		    out.append(dims[i].toString());
+	    }
+	}
+	return out.append("]").toString();
+    }
 
   // ----------------------------------------------------------------------
   // ACCESSORS

@@ -1,0 +1,65 @@
+// $ANTLR 1.5A: "antlr.g" -> "ANTLRLexer.java"$
+
+package at.dms.compiler.tools.antlr.compiler;
+
+public interface ANTLRTokenTypes {
+	int EOF = 1;
+	int NULL_TREE_LOOKAHEAD = 3;
+	int LITERAL_tokens = 4;
+	int LITERAL_header = 5;
+	int STRING_LITERAL = 6;
+	int ACTION = 7;
+	int DOC_COMMENT = 8;
+	int LITERAL_class = 9;
+	int LITERAL_extends = 10;
+	int LITERAL_Lexer = 11;
+	int OPTIONS = 12;
+	int ASSIGN = 13;
+	int SEMI = 14;
+	int RCURLY = 15;
+	int LITERAL_charVocabulary = 16;
+	int CHAR_LITERAL = 17;
+	int INT = 18;
+	int OR = 19;
+	int RANGE = 20;
+	int TOKENS = 21;
+	int TOKEN_REF = 22;
+	int OPEN_ELEMENT_OPTION = 23;
+	int CLOSE_ELEMENT_OPTION = 24;
+	int LITERAL_Parser = 25;
+	int LITERAL_protected = 26;
+	int LITERAL_public = 27;
+	int LITERAL_private = 28;
+	int ARG_ACTION = 29;
+	int LITERAL_returns = 30;
+	int COLON = 31;
+	int LITERAL_throws = 32;
+	int COMMA = 33;
+	int LITERAL_exception = 34;
+	int LITERAL_catch = 35;
+	int RULE_REF = 36;
+	int NOT_OP = 37;
+	int SEMPRED = 38;
+	int LPAREN = 39;
+	int RPAREN = 40;
+	int QUESTION = 41;
+	int STAR = 42;
+	int PLUS = 43;
+	int IMPLIES = 44;
+	int WILDCARD = 45;
+	int LITERAL_options = 46;
+	int WS = 47;
+	int COMMENT = 48;
+	int SL_COMMENT = 49;
+	int ML_COMMENT = 50;
+	int ESC = 51;
+	int DIGIT = 52;
+	int XDIGIT = 53;
+	int VOCAB = 54;
+	int NESTED_ARG_ACTION = 55;
+	int NESTED_ACTION = 56;
+	int WS_LOOP = 57;
+	int INTERNAL_RULE_REF = 58;
+	int WS_OPT = 59;
+	int NOT_USEFUL = 60;
+}

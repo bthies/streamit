@@ -1,0 +1,133 @@
+/*
+ * Copyright (C) 1990-2001 DMS Decision Management Systems Ges.m.b.H.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ * $Id: KjcOptions.opt,v 1.1 2001-08-30 16:32:53 thies Exp $
+ */
+
+prefix Kjc
+
+parent at.dms.util.Options
+
+usage		"usage: at.dms.kjc.Main [option]* [--help] <java-files>"
+
+package at.dms.kjc
+
+longname		"beautify"
+	shortcut	"b"
+	type		boolean
+	default		"false"
+	help		"Beautifies the source code"
+
+longname		"verbose"
+	shortcut	"v"
+	type		boolean
+	default		"false"
+	help		"Prints out information during compilation"
+
+longname		"java"
+	shortcut	"j"
+	type		boolean
+	default		"false"
+	help		"Generates java source code instead of class"
+
+longname		"encoding"
+	shortcut	"e"
+	type		String
+	default		"null"
+	requireArgument
+	help		"Sets the character encoding for the source file(s)."
+
+longname		"nowrite"
+	shortcut	"n"
+	type		boolean
+	default		"false"
+	help		"Only checks files, doesn't generate code"
+
+longname		"warning"
+	shortcut	"w"
+	type		int
+	default		"1"
+	optionalDefault	"2"
+  //	enum		"0", "1", "2", "3", "4"
+	help		"Maximal level of warnings to be displayed"
+
+longname		"nowarn"
+	shortcut	"*"
+	type		boolean
+	default		"false"
+	help		"Not used, for compatibility purpose"
+
+longname		"optimize"
+	shortcut	"O"
+	type		int
+	default		"1"
+	optionalDefault	"2"
+  //	enum		"0", "1", "2", "3"
+	help		"Optimizes X times"
+
+longname		"multi"
+	shortcut	"m"
+	type		boolean
+	default		"false"
+	help		"Compiles in multi threads mode"
+
+longname		"deprecation"
+	shortcut	"D"
+	type		boolean
+	default		"false"
+	help		"Tests for deprecated members"
+
+longname		"proc"
+	shortcut	"p"
+	type		int
+	default		"2"
+	requireArgument
+	help		"Maximal number of threads to use"
+
+longname		"destination"
+	shortcut	"d"
+	type		String
+	default		"null"
+	requireArgument
+	help		"Writes files to destination"
+
+longname		"classpath"
+	shortcut	"C"
+	type		String
+	default		"null"
+	requireArgument
+	help		"Changes class path to classpath"
+
+longname		"debug"
+	shortcut	"g"
+	type		boolean
+	default		"false"
+	help		"Produces debug information (does nothing yet)"
+
+longname		"lang"
+	shortcut	"l"
+	type		String
+	default		"1.1"
+	requireArgument
+	help		"Sets the source language (1.1, 1.2, kopi)"
+
+longname		"filter"
+	shortcut	"f"
+	type		String
+	default		"at.dms.kjc.DefaultFilter"
+	requireArgument
+	help		"Warning filter"

@@ -1,0 +1,61 @@
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+TODO
+----------------------------------------------------------------------
+graf 010604	a JConstructorCall is not an expression !
+graf 010604	explain build variable TOOLS_BUILT
+graf 010529	replace new JStatement[0]
+graf 010524	check warning for inherited private fields
+graf 010510	fix strictfp
+graf 010509	xkopi.xkjc.XCursor still used ?
+graf 010430	check ANTLR error messages on syntax errors
+graf 010429	create JTypeName phylum : use in jTypeName
+graf 010429	change name of at.dms.compiler.Compiler
+graf 010427	integrate visitClassBody in caller
+graf 010425	remove parseCommandLine(..., -->> Vector <<--)
+graf 010423	check JBinaryExpression.genBranch
+graf 010421	make static access to ClassPath non-static
+graf 010421	replace static CTopLevel class by non-static
+		replace CClassType.lookup by non-static
+graf 010411	JExpression: add accessor isLValue (use in assignment)
+graf 010410	replace checkBody and checkBody1
+graf 000206	Add a warning for private fields that are never set
+
+
+SORT ERRORS
+
+REMOVE !!!
+
+CHECK OVERRIDING OF FINAL (PRIVATE) METHODS
+
+CHECK UNUSED PRIVATE METHODS
+
+CHECKTYPE => DON'T THROW ANY EXCEPTION BUT RETURN A BOOLEAN
+
+CHECK HANDLERS CODE POSITION
+
+ADD ABSTRACT METHODS COMING FROM INTERFACE IN THE GENERATED CLASSFILES FOR ABSTRACT CLASSES
+
+CINITIALIZERCONTEXT: check returns
+
+CINTERFACECONTEXT: check final fields
+
+Warnings:
+	- loop conditional call vector.size()...
+	- self assignment
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+DONE
+----------------------------------------------------------------------
+lackner 010717  JExpression/subclasses: add isFinal (used in assignment in loops)
+graf 010427	change name of at.dms.util.InternalError
+		replace RuntimeExecption
+		replace fail and assert
+graf 010603	create compiler/base/CompilerMessages.msg
+graf 010412	dereferenceVariable used ?
+graf 010410	rename plantLocalVar into plantLocalVarInstruction, ...
+		add plantNoArgInstruction
+graf 010508	replace copyInto ...
+graf 010503	check code.genExceptionHandler
+graf 010421	change copyright year
+graf 010421	PRIVATE DATA MEMBERS -> DATA MEMBERS

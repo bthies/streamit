@@ -1,0 +1,23 @@
+// $ANTLR 1.5A: Msggen.g -> MsggenLexerTokenTypes.txt$
+MsggenLexer    // output token vocab name
+LITERAL_package="package"=4
+LITERAL_prefix="prefix"=5
+LITERAL_parent="parent"=6
+HEADER=7
+IDENT=8
+DOT=9
+LITERAL_message="message"=10
+LITERAL_error="error"=11
+LITERAL_caution="caution"=12
+LITERAL_warning="warning"=13
+LITERAL_notice="notice"=14
+LITERAL_info="info"=15
+STRING=16
+WS=17
+SL_COMMENT=18
+ML_COMMENT=19
+ESC=20
+OCT_DIGIT=21
+HEX_DIGIT=22
+DUMMY=23
+VOCAB=24

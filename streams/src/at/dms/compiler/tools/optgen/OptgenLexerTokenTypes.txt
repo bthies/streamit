@@ -1,0 +1,29 @@
+// $ANTLR 1.5A: Optgen.g -> OptgenLexerTokenTypes.txt$
+OptgenLexer    // output token vocab name
+LITERAL_prefix="prefix"=4
+LITERAL_parent="parent"=5
+LITERAL_version="version"=6
+LITERAL_usage="usage"=7
+LITERAL_help="help"=8
+LITERAL_package="package"=9
+HEADER=10
+IDENT=11
+DOT=12
+STRING=13
+LITERAL_longname="longname"=14
+LITERAL_shortcut="shortcut"=15
+LITERAL_type="type"=16
+LITERAL_default="default"=17
+LITERAL_optionalDefault="optionalDefault"=18
+LITERAL_requireArgument="requireArgument"=19
+LITERAL_int="int"=20
+LITERAL_boolean="boolean"=21
+LITERAL_String="String"=22
+WS=23
+SL_COMMENT=24
+ML_COMMENT=25
+ESC=26
+OCT_DIGIT=27
+HEX_DIGIT=28
+DUMMY=29
+VOCAB=30

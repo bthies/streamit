@@ -1,0 +1,3 @@
+vgp ??????	put code related at top of constant pool to avoid "ld_w"
+graf 990905	instructions in internal form should not use optimized opcodes (like iload_0)
+

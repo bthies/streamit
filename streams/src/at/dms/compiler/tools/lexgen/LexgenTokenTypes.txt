@@ -1,0 +1,12 @@
+// $ANTLR 1.5A: Lexgen.g -> LexgenTokenTypes.txt$
+Lexgen    // output token vocab name
+"@prefix"=4
+"@package"=5
+"@vocabulary"=6
+IDENT=7
+DOT=8
+STRING=9
+"@literal"=10
+"@keyword"=11
+"@operator"=12
+"@token"=13

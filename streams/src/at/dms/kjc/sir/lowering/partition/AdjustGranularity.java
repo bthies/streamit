@@ -745,7 +745,8 @@ public class AdjustGranularity {
 	*/
     }
 
-    private static void doFM16_2(SIRStream str) {
+    private static void doFM16_2(SIRStream _str) {
+	SIRPipeline str = (SIRPipeline)_str;
 	RawFlattener rawFlattener;
 
 	System.err.println("Working on FM 16...");
@@ -765,19 +766,13 @@ public class AdjustGranularity {
 	ConstantProp.propagateAndUnroll(lowPass.getParent());
 	FieldProp.doPropagate((lowPass.getParent()));
 
-	// fuse the last three filters
-	SIRFilter adder = (SIRFilter)Namer.getStream("FloatSubtract_2_3_2");
-	SIRFilter printer = (SIRFilter)Namer.getStream("FloatAdder_2_3_3");
-	//	SIRFilter printer = (SIRFilter)Namer.getStream("FloatPrinter_2_3_4");
-	FusePipe.fuse(adder, printer);
-
-	/*
-	// fuse the splitjoin in each stream
+	/* fuse the splitjoin in each stream */
 	SIRSplitJoin split1 = (SIRSplitJoin)Namer.getStream("BandPassSplitJoin_2_3_1_2_1");
 	SIRSplitJoin split2 = (SIRSplitJoin)Namer.getStream("BandPassSplitJoin_2_3_1_3_1");
 	SIRPipeline pipe1 = (SIRPipeline)split1.getParent();
 	SIRPipeline pipe2 = (SIRPipeline)split2.getParent();
 
+	/*
 	// fuse the splits
 	FuseSplit.fuse(split1);
 	FuseSplit.fuse(split2);
@@ -785,7 +780,20 @@ public class AdjustGranularity {
 	// fuse the results
 	FusePipe.fuse(pipe1);
 	FusePipe.fuse(pipe2);
+	*/
+	
+	// fuse the final result
+	//	SIRSplitJoin split = (SIRSplitJoin)Namer.getStream("EqualizerSplitJoin_2_3_1");
 
+	/*
+	Lifter.eliminatePipe((SIRPipeline)split.get(0));
+	Lifter.eliminatePipe((SIRPipeline)split.get(1));
+	*/
+	/*
+	FuseSplit.fuse(split);
+	*/
+
+	/*
 	// then fizz it three times
 	StatelessDuplicate.doit((SIRFilter)pipe1.get(0), 3);
 	StatelessDuplicate.doit((SIRFilter)pipe2.get(0), 3);
@@ -798,6 +806,17 @@ public class AdjustGranularity {
 	   StatelessDuplicate.doit((SIRFilter)Namer.getStream("LowPassFilter_2_3_1_3_1_3"), 2);
 	   /**/
 	
+	// fuse the last three filters
+	//	FusePipe.fuse((SIRPipeline)((SIRPipeline)str.get(1)).get(2));
+
+	// split the result
+	//	StatelessDuplicate.doit((SIRFilter)((SIRPipeline)str.get(1)).get(2), 4);
+	//	StatelessDuplicate.doit((SIRFilter)((SIRPipeline)((SIRPipeline)str.get(1)).get(2)).get(0), 6);
+
+	SIRFilter adder = (SIRFilter)Namer.getStream("FloatSubtract_2_3_2");
+	SIRFilter printer = (SIRFilter)Namer.getStream("FloatPrinter_2_3_4");
+	FusePipe.fuse(adder, printer);
+
 	ConstantProp.propagateAndUnroll(str);
 	FieldProp.doPropagate(str);	
 	/*

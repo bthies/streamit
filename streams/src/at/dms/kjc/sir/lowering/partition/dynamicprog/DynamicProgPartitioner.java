@@ -36,7 +36,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * Threshold value of instruction code size before cost goes up
      * dramatically.
      */
-    static final int ICODE_THRESHOLD = 100;
+    static final int ICODE_THRESHOLD = 16000;
+    //static final int ICODE_THRESHOLD = 100;
     /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but
@@ -191,7 +192,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    if (limitICode) {
 		System.err.println("  Max iCode size: " + cost.getICodeSize());
 	    }
- 	} while (!limitICode || cost.getICodeSize()>ICODE_THRESHOLD);
+ 	} while (limitICode && cost.getICodeSize()>ICODE_THRESHOLD);
 	
 	int tilesUsed = numTiles;
 	// decrease the number of tiles to the fewest that we need for

@@ -28,7 +28,7 @@ public class NodeEnumerator implements FlatVisitor {
 	return i.intValue();
     }
 
-    public static int getSIRFilterId(SIRFilter f) {
+    public static int getSIROperatorId(SIROperator f) {
     
 	Integer i = (Integer)nodeIds.get(f);
 

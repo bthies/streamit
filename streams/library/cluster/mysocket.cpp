@@ -148,6 +148,28 @@ void mysocket::write_int(int a) {
   return;
 }
 
+double mysocket::read_double() {
+  double a;
+  read_chunk((char*)&a, sizeof(a));
+  return a;
+}
+
+void mysocket::write_double(double a) {
+  write_chunk((char*)&a, sizeof(a));
+  return;
+}
+
+float mysocket::read_float() {
+  float a;
+  read_chunk((char*)&a, sizeof(a));
+  return a;
+}
+
+void mysocket::write_float(float a) {
+  write_chunk((char*)&a, sizeof(a));
+  return;
+}
+
 
 int mysocket::get_fd() {
   return fd;

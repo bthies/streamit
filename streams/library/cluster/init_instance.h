@@ -38,7 +38,8 @@ class init_instance {
   static void add_outgoing(int from, int to, unsigned to_ip_addr);
 
   static void initialize_sockets();
-
+  static void close_sockets();
+  
   static int get_incoming_socket(int from , int to);
   static int get_outgoing_socket(int from , int to);
 
@@ -48,6 +49,7 @@ class init_instance {
   static int listen();
 
   static pthread_mutex_t accept_lock;
+  static pthread_mutex_t bind_lock;
 
 };
 

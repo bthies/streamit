@@ -167,6 +167,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("#include <mysocket.h>\n");
 	p.print("#include <init_instance.h>\n");
 
+	p.print("\n");
+
+	p.print("extern int __number_of_iterations;\n");
+
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
 	for (int i = 0; i < fields.length; i++)
@@ -186,7 +190,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("mysocket *"+out.name()+"out;\n");
 	}
 
-	print("\nvoid __declare_sockets_"+NodeEnumerator.getSIRFilterId(self)+"() {\n");
+	print("\nvoid __declare_sockets_"+NodeEnumerator.getSIROperatorId(self)+"() {\n");
 
 	if (in != null) {
 	    print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+");\n");
@@ -214,7 +218,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	//now the run function
-	print("\nvoid run_"+NodeEnumerator.getSIRFilterId(self)+"() {\n");
+	print("\nvoid run_"+NodeEnumerator.getSIROperatorId(self)+"() {\n");
 
 	print("  int i;\n");
 
@@ -227,12 +231,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	}
 
 	print("  "+self.getInit().getName()+"();\n");
-	print("  for (i = 0; i < 20; i++) { \n");
+	print("  for (i = 0; i < __number_of_iterations; i++) { \n");
 	print("    "+self.getWork().getName()+"();\n");
 	print("  } \n");
 	print("}\n");
        
-	createFile(NodeEnumerator.getSIRFilterId(self));
+	createFile(NodeEnumerator.getSIROperatorId(self));
     }
 
     public void visitPhasedFilter(SIRPhasedFilter self,
@@ -1396,7 +1400,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	NetStream in = RegisterStreams.getFilterInStream(filter);
 
-	print(in.name()+"in->read_int()");
+	if (tapeType.equals(CStdType.Integer)) {
+
+	    print(in.name()+"in->read_int()");
+	    
+	} else if (tapeType.equals(CStdType.Float)) {
+
+	    print(in.name()+"in->read_float()");
+
+	}
 
 	//Utils.fail("FlatIRToCluster should see no pop expressions");
     }
@@ -1470,11 +1482,20 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	
 	NetStream out = RegisterStreams.getFilterOutStream(filter);
 
-	print(out.name()+"out->write_int(");
+	if (tapeType.equals(CStdType.Integer)) {
 
-	val.accept(this);
+	    print(out.name()+"out->write_int(");
+	    val.accept(this);
+	    print(")");
+	    
+	} else if (tapeType.equals(CStdType.Float)) {
 
-	print(")");
+	    print(out.name()+"out->write_float(");
+	    val.accept(this);
+	    print(")");
+
+	}
+
 
 	//print(Util.staticNetworkSendPrefix(tapeType));
 	//print(Util.staticNetworkSendSuffix());

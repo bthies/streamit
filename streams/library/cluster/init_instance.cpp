@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 pthread_mutex_t init_instance::accept_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t init_instance::bind_lock = PTHREAD_MUTEX_INITIALIZER;
 
 vector<int_pair> init_instance::in_connections;
 vector<int_pair> init_instance::out_connections;
@@ -41,7 +42,9 @@ static void *accept_thread(void *param) {
   // this now locked my main thread
   //LOCK(&init_instance::accept_lock);
 
-  init_instance::listen();
+  if (init_instance::listen() == -1) {
+    exit(-1);
+  }
 
   UNLOCK(&init_instance::accept_lock);
 
@@ -55,6 +58,8 @@ void init_instance::read_config_file() {
 
   FILE *f = fopen("cluster-config.txt", "r");
 
+  printf("Reading cluster config file...\n");
+
   for (;;) {
   
     fscanf(f, "%d %s", &node, name);
@@ -63,10 +68,12 @@ void init_instance::read_config_file() {
 
     string s(name);
     thread_machines[node] = s;
-    printf("node:%d name:%s\n", node, name);
+    printf("thread:%d machine:%s\n", node, name);
 
   }
 
+  printf("\n");
+  
   fclose(f);
 }
 
@@ -114,11 +121,13 @@ void init_instance::initialize_sockets() {
     pthread_t id;
   
     LOCK(&accept_lock);
+    LOCK(&bind_lock);
 
     pthread_create(&id, NULL, accept_thread, (void*)"Thread");
   
   }  
 
+  LOCK(&bind_lock);
 
   // make connections to other hosts etc.
 
@@ -141,7 +150,11 @@ void init_instance::initialize_sockets() {
 
     while (sock == NULL) {
       sock = open_socket::connect(ip_addr, 22222);
-      sleep(1);
+
+      if (sock == NULL) {
+	printf("Trying again ...\n");
+	sleep(1);     
+      }
     }
 
     //printf("socket connected !!\n");
@@ -153,18 +166,21 @@ void init_instance::initialize_sockets() {
 
     out_sockets[pair] = sock->get_fd();
 
-    printf("Out Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock->get_fd());
+    //printf("Out Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock->get_fd());
 
     ++i1;
     ++i2;
 
   }
 
+  printf("All outgoing connections created!\n");
+
   // wait for accept thread to finnish
 
   LOCK(&accept_lock);
   UNLOCK(&accept_lock);
 
+  printf("\n");
   
 }
 
@@ -208,14 +224,18 @@ int init_instance::listen() {
 
   listenfd = ::socket(AF_INET, SOCK_STREAM, 0);
   if (listenfd == -1) {
-    
+
+    perror("socket()");
     return -1;
   }
+
+  flag = 1;
 
   retval = setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR,
 			  (char*)&flag, sizeof flag);
   if (retval == -1) {
   
+    perror("setsockopt()");
     return -1;
   }
 
@@ -229,6 +249,7 @@ int init_instance::listen() {
 
   if (retval == -1) {
   
+    perror("bind()");
     return -1;
   }
 
@@ -236,6 +257,7 @@ int init_instance::listen() {
 
   if (retval == -1) {
 
+    perror("listen()");
     return -1;
   }
 
@@ -243,11 +265,14 @@ int init_instance::listen() {
 
   if (retval == -1) {
 
+    perror("fcntl()");
     return -1;
   }
 
   printf("Socket bound and listening....done\n");
   
+  UNLOCK(&bind_lock);
+
 
   ///////////////////////////////////////////
   // listening on the socket
@@ -313,12 +338,12 @@ int init_instance::listen() {
 	      in_done[pair] = true;
 
 	      in_sockets[pair] = sock;
-	      printf("In Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock);
+	      //printf("In Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock);
 
 	      socks_accepted++;
 	    } else {
 
-	      printf("int pair already seen!\n");
+	      printf("Warning! Int pair already seen!\n");
 	      close(sock);
 	      
 	    }
@@ -327,7 +352,10 @@ int init_instance::listen() {
 
 	  if (socks_accepted >= in_connections.size()) { 
 	    
-	    printf("All connections accepted!\n");
+	    printf("All incoming connections created!\n");
+
+	    close(listenfd);
+
 	    return 0;
 	  }
 	}
@@ -336,5 +364,20 @@ int init_instance::listen() {
   }
 }
 
+void init_instance::close_sockets() {
+
+  map<int_pair, int>::iterator i;
+
+  printf("Closing sockets...\n");
+
+  for (i = in_sockets.begin(); i != in_sockets.end(); ++i) {
+    close((*i).second);
+  }
+
+  for (i = out_sockets.begin(); i != out_sockets.end(); ++i) {
+    close((*i).second);
+  }
+
+}
 
 

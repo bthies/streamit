@@ -162,8 +162,12 @@ public class ClusterBackend {
 
 
 	System.out.println("Cluster Code begin...");
+
 	ClusterCode.generateCode(graphFlattener.top);
 	ClusterCode.generateMasterFile();
+	ClusterCode.generateMakeFile();
+	ClusterCode.generateConfigFile();
+
 	System.out.println("Cluster Code End.");	
 
 	/*

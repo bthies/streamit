@@ -26,7 +26,13 @@ class mysocket {
 
   int read_int();
   void write_int(int);
-  
+
+  double read_double();
+  void write_double(double);
+
+  float read_float();
+  void write_float(float);
+
 };
 
 #endif

@@ -253,9 +253,9 @@ public class FlatNode {
      * ie now hashcode is synched with equals() and equality
      * doesn't change just because ones ways, etc changes
      */
-    /*public int hashCode() {
-      return hashCode;
-      }*/
+    public int hashCode() {
+	return uin;
+    }
     
     public String getName() {
 	//if((contents instanceof SIRIdentity)||(contents instanceof SIRJoiner)) {

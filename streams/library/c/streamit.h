@@ -67,10 +67,10 @@ typedef struct tape {
 #define PEEK_TAPE_LOCALB(d, p, m, type, n) \
   (*((type *)((d)+(((p)+((n)+1)*sizeof(type))&(m)))))
 #define LOCALIZE_TAPE(rt, rd, rp, rm, wt, wd, wp, wm)\
-  ((rd=rt->data), (rp=rt->read_pos), (rm=rt->mask), \
-   (wd=wt->data), (wp=rt->write_pos), (wm=wt->mask))
+  ((rt ? ((rd=rt->data), (rp=rt->read_pos), (rm=rt->mask)) : 0), \
+   (wt ? ((wd=wt->data), (wp=wt->write_pos), (wm=wt->mask)) : 0))
 #define UNLOCALIZE_TAPE(rt, rp, wt, wp) \
-  ((rt->read_pos=rp), (wt->write_pos=wp))
+  ((rt ? (rt->read_pos=rp) : 0), (wt ? (wt->write_pos=wp) : 0))
 #define PUSH_DEFAULTB(type, v) PUSH_TAPE_LOCALB(__wd, __wp, __wm, type, v)
 #define POP_DEFAULTB(type) POP_TAPE_LOCALB(__rd, __rp, __rm, type)
 #define PEEK_DEFAULTB(type, n) PEEK_TAPE_LOCALB(__rd, __rp, __rm, type, n)

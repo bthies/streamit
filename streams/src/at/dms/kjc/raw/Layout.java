@@ -712,8 +712,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		HashSet ret = new HashSet();
 		ret.add(node);
 		return ret;
-	    }	
-	    else return getDownStreamHelper(node.edges[0]);
+	    }	//if this joiner was not mapped then visit its down stream
+	    else return (node.edges.length > 0 ? getDownStreamHelper(node.edges[0]) :
+			 getDownStreamHelper(null));  //be careful about null joiners
 	}
 	else if (node.contents instanceof SIRSplitter) {
 	    HashSet ret = new HashSet();
@@ -840,6 +841,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner) {
+	    //we have a null joiner so just return
+	    if (node.edges.length == 0)
+		return;
+	    //now see if we need this joiner
 	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
 		//do not assign the joiner if JoinerRemoval wants is removed...
 		if (JoinerRemoval.unnecessary != null && 

@@ -17,7 +17,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.14 2003-04-09 11:14:30 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.15 2003-04-14 17:52:59 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -53,6 +53,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     public static final int minFIRSize = 2;
     /** We multiply the FIR size to get the target FFT size if it is not specified. **/
     public static final int fftSizeFactor = 2;
+
+    /** name of the loop variable to use **/
+    public static final String LOOPVARNAME = "__freqIndex__";
     
     
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -377,11 +380,19 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     
     /** Creates an assignment expression of the form: this.f[index]=value; **/
     public JStatement makeArrayAssignment(JLocalVariable field, int index, float value) {
-	return makeArrayAssignment(field, index, new JFloatLiteral(null, value));
+	return makeArrayAssignment(field, new JIntLiteral(index), new JFloatLiteral(null, value),null);
+    }
+
+
+    /** Creates an assignment expression of the form: this.f[index]=rhs; **/
+    public JStatement makeArrayAssignment(JLocalVariable field, JVariableDefinition index,
+					  JExpression assignedValue, String comment) {
+	return makeArrayAssignment(field, makeLocalVarExpression(index), assignedValue, comment);
     }
     
     /** Creates an assignment expression of the form: this.f[index]=rhs; **/
-    public JStatement makeArrayAssignment(JLocalVariable field, int index, JExpression assignedValue) {
+    public JStatement makeArrayAssignment(JLocalVariable field, JExpression index,
+					  JExpression assignedValue, String comment) {
 	/* make the field access expression (eg this.field)*/
 	JFieldAccessExpression fldAccessExpr;
 	fldAccessExpr = new JFieldAccessExpression(null, /* token reference */
@@ -391,40 +402,23 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	JArrayAccessExpression arrAccessExpr;
 	arrAccessExpr = new JArrayAccessExpression(null,                    /* token reference */
 						   fldAccessExpr,           /* prefix */
-						   new JIntLiteral(index)); /* accessor */
+						   index); /* accessor */
 	/* now, make the assignment expression */
 	JAssignmentExpression assignExpr;
 	assignExpr = new JAssignmentExpression(null,          /* token reference */
 					       arrAccessExpr, /* lhs */
 					       assignedValue); /* rhs */
 	/* return an expression statement */
-	return new JExpressionStatement(null, assignExpr, new JavaStyleComment[0]);
+	JavaStyleComment[] jscomment = new JavaStyleComment[0];
+	if (comment != null) {jscomment = makeComment(comment);}
+	return new JExpressionStatement(null, assignExpr, jscomment);
     }
 
-    /** Creates an assignment expression of the form: f[index]=value; **/
-    public JStatement makeLocalArrayAssignment(JLocalVariable var, int index, float value) {
-	/* make the local variable expression to access var */
-	JLocalVariableExpression varExpr = new JLocalVariableExpression(null, var);
-	/* make the field access expression (eg this.field)*/
-	JArrayAccessExpression arrAccessExpr;
-	arrAccessExpr = new JArrayAccessExpression(null,                    /* token reference */
-						   varExpr,                 /* prefix */
-						   new JIntLiteral(index)); /* accessor */
-	/* the literal value to assign */
-	JFloatLiteral literalValue = new JFloatLiteral(null, value);
-	/* now, make the assignment expression */
-	JAssignmentExpression assignExpr;
-	assignExpr = new JAssignmentExpression(null,          /* token reference */
-					       arrAccessExpr, /* lhs */
-					       literalValue); /* rhs */
-	/* return an expression statement */
-	return new JExpressionStatement(null, assignExpr, new JavaStyleComment[0]);
-    }
 
     
 
-    /*
-     * make both the work and the new work function.
+    /**
+     * make both the initWork and the work function (because they are not very different).<p>
      *
      * We make a function that copies N elements from the input
      * tape into a local array, calls the library function with the local array
@@ -433,7 +427,10 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
      * and if we are making the work function then the x-1 partials are added to the first x-1 elements
      * of the results and we push out the first N+x-1 elements. For both types of work we
      * then save the last x-1 elements of the DFT output in
-     * the partial results fields for the next execution. Note that filterSize = N + 2(x-1).
+     * the partial results fields for the next execution. Note that filterSize = N + 2(x-1).<p>
+     *
+     * If the GENFORLOOPS flag is set, then we will actually generate for loops in the
+     * work function rather than generating unrolled code.<p>
      */
     public JMethodDeclaration makeNewWork(int functionType, /* either INITWORK or WORK */
 					  JVariableDefinition[] weightFields,
@@ -450,19 +447,25 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	/* the body of the new work function */
 	JBlock body = new JBlock();
 
+	// loop index.
+	JVariableDefinition loopVar = new JVariableDefinition(null,0,CStdType.Integer,
+							      LOOPVARNAME, null);
+	body.addStatement(new JVariableDeclarationStatement(null, loopVar,
+							    makeComment("loop variable")));
 
-	/* first, copy the data from the input tape into the input buffer, element by element */
-	for (int i=0; i<(N+x-1); i++) {
-	    SIRPeekExpression currentPeekExpr   = new SIRPeekExpression(new JIntLiteral(i), CStdType.Float);
-	    /* note that currentAssignExpr is buff[i] = peek(i) */
-	    body.addStatement(makeArrayAssignment(inputBufferField, i, currentPeekExpr));
-	}
-	
-	/* add statements to set the rest of the input buffer (eg pad with zeros). */
-	for (int i=(N+x-1); i<(N+2*(x-1)); i++) {
-	    body.addStatement(makeArrayAssignment(inputBufferField, i, 0.0f));
-	}
+	/* copy input to buffer */
+	// for (i=0; i<(N+x-1); i++) { inputBuffer[i]=peek(i);}
+	SIRPeekExpression currentPeekExpr = new SIRPeekExpression(makeLocalVarExpression(loopVar),
+								  CStdType.Float);
+	JStatement forBody = makeArrayAssignment(inputBufferField, loopVar,
+						 currentPeekExpr, "copy input to buffer");
+	body.addStatement(makeConstantForLoop(loopVar, 0, N+x-1, forBody));
 
+	/* fill the rest of the input buffer with zeros */
+	// for (i=(N+x-1); i<(N+2*(x-1)); i++) {inputBuffer[i] = 0;}
+	forBody = makeArrayAssignment(inputBufferField, loopVar, new JFloatLiteral(0),"pad with zeros"); 
+	body.addStatement(makeConstantForLoop(loopVar, (N+x-1), N+2*(x-1), forBody));
+    	
 	// now, convert the input buffer to frequency (we only have to do this for each set of inputs once)
 	body.addStatement(makeTimeToFrequencyConversion(inputBufferField, filterSize));
 		
@@ -509,41 +512,64 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	    body.addStatement(new JExpressionStatement(null,externalCall,externalComment));
 	}
 	
-	
+
 	/* if we are in the normal work function, push out the first x-1
 	   values from the local buffer added to the partial results for each
 	   * of the output buffers, interleaved.*/
+
+	JBlock pushForBody = new JBlock();
 	if (functionType == WORK) {
-	    for (int currentOutput=0; currentOutput<(x-1); currentOutput++) {
-		// for each of the output buffers
-		for (int currentFIR=0; currentFIR<numFIRs; currentFIR++) {
-		    body.addStatement(makeArrayAddAndPushStatement(partialFields[currentFIR],
-								   outputBufferFields[currentFIR],
-								   currentOutput));
-		}
+	    for (int currentFIR=0; currentFIR<numFIRs; currentFIR++) {
+		JStatement currentPushStatement;
+		currentPushStatement = makeArrayAddAndPushStatement(partialFields[currentFIR],
+								    outputBufferFields[currentFIR],
+								    loopVar);
+		pushForBody.addStatement(currentPushStatement);
 	    }
+	    // generate a for loop which contains a statement like the following
+	    // for each of the fields:
+	    // for (i=0; i<x-1; i++) {
+	    //  push(outputBuffer_1[i]);
+	    //  ......
+	    //  push(outputBuffer_x[i]); }
+	    body.addStatement(makeConstantForLoop(loopVar, 0, x-1, pushForBody));
 	}
 	
 	
-	//now, put in code that will push the appropriate N values of inputBuffer[x-1 to N+(x-1)]
-	//back on the tape
-	for (int currentOutput=(x-1); currentOutput<(N+x-1); currentOutput++) {
-	    for (int currentFIR = 0; currentFIR < numFIRs; currentFIR++) {
-		body.addStatement(makeArrayPushStatement(outputBufferFields[currentFIR],
-							 currentOutput));
-	    }
+	/* now, put in code that will push the appropriate N values of inputBuffer[x-1 to N+(x-1)]. */
+	pushForBody = new JBlock();
+	for (int currentFIR=0; currentFIR<numFIRs; currentFIR++) {
+	    JStatement currentPushStatement;
+	    currentPushStatement = makeArrayPushStatement(outputBufferFields[currentFIR],
+							  loopVar);
+	    pushForBody.addStatement(currentPushStatement);
 	}
-	
+	// for(i=x-i; i<(N+x-1); i++) 
+	//  push(outputBuffer_1[i]);
+	//  ......
+	//  push(outputBuffer_x[i]); }
+	body.addStatement(makeConstantForLoop(loopVar, x-1, N+x-1, pushForBody));
+
 	/* now, copy the last x-1 values in the input buffer into the partial results buffer. */
-	for (int currentOutput=0; currentOutput < x-1; currentOutput++) {
-	    for (int currentFIR = 0; currentFIR < numFIRs; currentFIR++) {
-		body.addStatement(makePartialCopyExpression(partialFields[currentFIR],
-							    currentOutput,
-							    outputBufferFields[currentFIR],
-							    (N+x-1)+currentOutput));
-	    }
+	pushForBody = new JBlock();
+	for (int currentFIR=0; currentFIR<numFIRs; currentFIR++) {
+	    JExpression indexOffsetExpr = new JAddExpression(null,
+							     makeLocalVarExpression(loopVar),
+							     new JIntLiteral(N+x-1));
+	    JStatement copyStatement;
+	    copyStatement = makePartialCopyExpression(partialFields[currentFIR],
+						      makeLocalVarExpression(loopVar),
+						      outputBufferFields[currentFIR],
+						      indexOffsetExpr);
+	    // copy statement: partial_i[loopVar] = partail_i[loopVar+(N+x-1)] */
+	    pushForBody.addStatement(copyStatement);
 	}
-	
+	// for(i=0; i<x-1; i++) 
+	//  partial_1[i] = outputBuffer_1[i+N+(x-1)]
+	//  ......
+	//  partial_N[i] = outputBuffer_N[i+N+(x-1)]
+	body.addStatement(makeConstantForLoop(loopVar, 0, x-1, pushForBody));
+
 	
 	/* stick in the appropriate number (N+x-1) of pop calls */
 	makePopStatements(body, N+x-1);
@@ -568,8 +594,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
      * Makes a copy expression from one array field to another array
      * field of the form this.field1[index1] = this.field2[index2].
      **/
-    public JStatement makePartialCopyExpression(JLocalVariable field1, int index1,
-						JLocalVariable field2, int index2) {
+    public JStatement makePartialCopyExpression(JLocalVariable field1, JExpression index1,
+						JLocalVariable field2, JExpression index2) {
 	/** make this.field1[index1] expression. **/
 	JExpression fieldAccessExpr1 = makeArrayFieldAccessExpr(field1, index1);
 	/** make this.field2[index2] expression. **/
@@ -584,25 +610,22 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
     /** adds <n> popFloat() statements to the end of <body>. **/
     public void makePopStatements(JBlock body, int n) {
-	// put them in a loop if <n> exceeds the unroll count
-	if (n>KjcOptions.unroll) {
-	    SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float);
-	    // wrap the pop expression so it is a statement.
-	    JExpressionStatement popWrapper = new JExpressionStatement(null, popExpr, null);
-	    body.addStatement(Utils.makeForLoop(popWrapper, n));
-	} else {
-	    for (int i=0; i<n; i++) {
-		SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float);
-		// wrap the pop expression so it is a statement.
-		JExpressionStatement popWrapper = new JExpressionStatement(null, popExpr, null);
-		body.addStatement(popWrapper);
-	    }
-	}
+	// always put them in a loop exceeds the unroll count
+	SIRPopExpression popExpr = new SIRPopExpression(CStdType.Float);
+	// wrap the pop expression so it is a statement.
+	JExpressionStatement popWrapper = new JExpressionStatement(null, popExpr, null);
+	body.addStatement(Utils.makeForLoop(popWrapper, n));
     }
 
-    /** makes an array push statement of the following form: push(this.arr1[index] + this.arr2[index]) **/
-    public JStatement makeArrayAddAndPushStatement(JLocalVariable arr1, JLocalVariable arr2, int index) {
+    /**
+     * makes an array push statement of the following form:
+     * push(this.arr1[indexVar] + this.arr2[indexVar]);
+     **/
+    public JStatement makeArrayAddAndPushStatement(JLocalVariable arr1, JLocalVariable arr2,
+						   JVariableDefinition indexVar) {
 
+	JExpression index = makeLocalVarExpression(indexVar);
+	    
 	/* first, make the this.arr1[index] expression. */
 	JExpression fieldArrayAccessExpr1 = makeArrayFieldAccessExpr(arr1, index);
 	
@@ -619,8 +642,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
        
     
 
-    /* makes an array push statement of the following form: push(this.arr[index]) */
-    public JStatement makeArrayPushStatement(JLocalVariable arr, int index) {
+    /* makes an array push statement of the following form: push(this.arr[indexVar]) */ 
+    public JStatement makeArrayPushStatement(JLocalVariable arr, JVariableDefinition indexVar) {
+	JExpression index = makeLocalVarExpression(indexVar);
 	/* first make the array access expression this.arr[index]. **/
 	JExpression arrAccessExpr = makeArrayFieldAccessExpr(arr, index);
 	/* now make the push expression */
@@ -658,6 +682,22 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	return arr;
     }
 
+    /**
+     * Generates the a for loop of the form:
+     * for(loopVar = initVal; loopVar<maxVal; loopVar++) {loopBody}, 
+     **/
+    public JStatement makeConstantForLoop(JVariableDefinition loopVar,
+					  int initVal, int maxVal,
+					  JStatement forBody) {
+	JStatement  forInit = makeAssignmentStatement(makeLocalVarExpression(loopVar),
+						      new JIntLiteral(initVal));  //i=initVal
+	JExpression forCond = makeLessThanExpression(makeLocalVarExpression(loopVar),
+						     new JIntLiteral(maxVal));  //i<maxVal
+	JStatement  forIncr = makeIncrementStatement(makeLocalVarExpression(loopVar));  //i++
+    	return new JForStatement(null, forInit, forCond, forIncr, forBody, null);
+    }
+
+    
 
     /**
      * calculates the appropriate size FFT to perform. It is passed a target N, the number

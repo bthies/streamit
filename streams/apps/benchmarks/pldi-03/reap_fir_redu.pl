@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # this script execites the the Test program with various lengths of FIR filter
-# and the frequency replacer to see what the effect of scaling is on the
+# and the linear redundancy replacer to see what the effect of scaling is on the
 # operation reductions.
 
 use strict;
@@ -13,10 +13,10 @@ my $STREAMIT_GCC_POSTFIX = "-lstreamit -lsrfftw -lsfftw -lm";
 my $STREAMIT_DYNAMORIO   = "dynamorio";
 
 my $STANDARD_OPTIONS = "--unroll 100000 --debug";
-my $FREQ_OPTIONS     = "--frequencyreplacement 3";
+my $REDU_OPTIONS     = "--redundantreplacement";
 
 # the filename to write out the results to. (append first command line arg to name)
-my $RESULTS_FILENAME = "freq_fir_results.tsv";
+my $RESULTS_FILENAME = "freq_fir_results_redu.tsv";
 
 # the number of iterations to run the program for
 my $NUM_ITERS = 10000;
@@ -29,7 +29,7 @@ my @result_lines;
 push(@result_lines, 
      "Program\tFIR size\t" .
      "normal flops\tnormal fadds\tnormal fmuls\tnormal outputs\t" .
-     "freq flops\tfreq fadds\tfreq fmuls\tfreq outputs\t");
+     "redu flops\tredu fadds\tredu fmuls\tredu outputs\t");
 
 # generate the java program from the streamit syntax
 print `rm -f $PROGRAM_NAME.java`;
@@ -39,8 +39,11 @@ print `make $PROGRAM_NAME.java`;
 my $i;
 # for various FIR lengths
 my @fir_lengths;
-#for ($i=1; $i<32; $i*=sqrt(2)) {
-for ($i=1; $i<32; $i++) {
+for($i=1; $i<64; $i*=sqrt(2)) {
+    push(@fir_lengths, int($i));
+}
+@fir_lengths = ();
+for ($i=128; $i<256; $i++) {
     push(@fir_lengths, int($i));
 }
 
@@ -66,25 +69,25 @@ foreach $firLength (@fir_lengths) {
     my ($normal_fmuls) =  $report =~ m/saw (.*) fmuls/;
     
 
-    print "$PROGRAM_NAME($firLength, freq):";
-    do_compile(".", $PROGRAM_NAME, "$STANDARD_OPTIONS $FREQ_OPTIONS");
+    print "$PROGRAM_NAME($firLength, redundant):";
+    do_compile(".", $PROGRAM_NAME, "$STANDARD_OPTIONS $REDU_OPTIONS");
     
     # figure out how many outputs are produced 
-    my $freq_outputs = get_output_count(".", $PROGRAM_NAME) * $NUM_ITERS;
+    my $redu_outputs = get_output_count(".", $PROGRAM_NAME) * $NUM_ITERS;
 	
     # run the dynamo rio test and get back the results
     $report = run_test(".", $PROGRAM_NAME, $NUM_ITERS);
     print "\n";
     
     # extract the flops, fadds and fmul count from the report
-    my ($freq_flops) =  $report =~ m/saw (.*) flops/;
-    my ($freq_fadds) =  $report =~ m/saw (.*) fadds/;
-    my ($freq_fmuls) =  $report =~ m/saw (.*) fmuls/;
+    my ($redu_flops) =  $report =~ m/saw (.*) flops/;
+    my ($redu_fadds) =  $report =~ m/saw (.*) fadds/;
+    my ($redu_fmuls) =  $report =~ m/saw (.*) fmuls/;
 
     push(@result_lines, 
 	 "$PROGRAM_NAME\t$firLength\t".
 	 "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
-	 "$freq_flops\t$freq_fadds\t$freq_fmuls\t$freq_outputs\t");
+	 "$redu_flops\t$redu_fadds\t$redu_fmuls\t$redu_outputs\t");
 }
 
 

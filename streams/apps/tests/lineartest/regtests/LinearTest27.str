@@ -28,7 +28,7 @@ void->void pipeline LinearTest27 {
 float->float filter PrintingFilter {
   work pop 1 push 1 {
     float t = pop();
-    println(t);
+    //println(t);
     push(t);
   }
 }

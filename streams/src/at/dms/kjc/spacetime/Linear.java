@@ -269,7 +269,7 @@ public class Linear extends RawExecutionCode implements Constants {
     }
 
     public JFieldDeclaration[] getVarDecls() {
-	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+1];
+	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+3];
 	for(int i=0;i<array.length;i++)
 	    try {
 		fields[i]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getWeight(i),new JFloatLiteral(null,Float.toString((float)array[i]))),null,null);
@@ -281,6 +281,34 @@ public class Linear extends RawExecutionCode implements Constants {
 	} catch(PositionedError e) {
 	    Utils.fail("Couldn't convert constant: "+constant);
 	}
+	//Adapted from Gordo's Code
+	//index variable for certain for loops
+	JVariableDefinition exeIndexVar = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    exeIndex + uniqueID,
+				    null);
+
+	//remember the JVarDef for latter (in the raw main function)
+	generatedVariables.exeIndex = exeIndexVar;
+	fields[array.length+1]=new JFieldDeclaration(null, exeIndexVar, null, null);
+	
+	//index variable for certain for loops
+	JVariableDefinition exeIndex1Var = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    exeIndex1 + uniqueID,
+				    null);
+
+	generatedVariables.exeIndex1 = exeIndex1Var;
+	fields[array.length+2]=new JFieldDeclaration(null, exeIndex1Var, null, null);
+	//End Gordo's Code
 	return fields;
     }
 }
+
+
+
+

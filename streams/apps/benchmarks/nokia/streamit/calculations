@@ -1,0 +1,18 @@
+7/30/02 -- AAL 
+got rid of the code that writes 4 outputs, now only writes 1 "done" when it is finished with a 2x2 matrix.
+
+first  iteration done at 0x0000000000016ffd (94205 cycles)
+second iteration done at 0x0000000000018e71 (102001 cycles) (delta=7796)
+third  iteration done at 0x000000000001ace5 (109797 cycles) (delta=7796)
+
+
+==> iter takes 7796/7796 cycles (average = 7796)
+
+since we are producing 1 4 float array,  
+4 outputs every 7796 cycles, so normalized to 10^5 cycles, 4*(100000/7796) = 51.308363
+
+flops reported are 580 flops, which is (580/7796) * 250 = 18.599282 MFLOPS
+
+workCount = 30977 / 150720 = 0.2055268
+workCount = 9586 / 124736  = 0.076850308
+workCount = 9840 / 124736  = 0.078884711

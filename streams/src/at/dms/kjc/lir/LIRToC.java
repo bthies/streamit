@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.29 2001-10-26 22:08:53 dmaze Exp $
+ * $Id: LIRToC.java,v 1.30 2001-10-29 15:41:44 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1502,9 +1502,28 @@ public class LIRToC
 					  SIRStream receiver, 
 					  JMethodDeclaration[] methods)
     {
-	/*        print("register_receiver(this->context, ");
-        print(fn);
-        print(");");*/
+        /* Create a local block to declare a static virtual-method table
+         * in. */
+        print("{");
+        pos += TAB_SIZE;
+        newLine();
+        print("static message_fn vtbl[] = { ");
+        boolean first = true;
+        for (int i = 0; i < methods.length; i++)
+        {
+            if (!first) print(", ");
+            first = false;
+            print(methods[i].getName());
+        }
+        print("};");
+        newLine();
+        print("register_receiver(");
+        portal.accept(this);
+        print(", data->context, vtbl, LATENCY_BEST_EFFORT);");
+        // (But shouldn't there be a latency field in here?)
+        pos -= TAB_SIZE;
+        newLine();
+        print("}");
     }
     
     public void visitRegSenderStatement(SIRRegSenderStatement self,

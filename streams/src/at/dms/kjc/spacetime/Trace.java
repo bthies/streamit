@@ -139,6 +139,16 @@ public class Trace
 	return "Trace:"+head.getNext();
     }
 
+    public boolean depends(Trace trace) {
+	if(depends==null)
+	    return dependsTemp.contains(trace);
+	else
+	    for(int i=0;i<depends.length;i++)
+		if(depends[i]==trace)
+		    return true;
+	return false;
+    }
+
     public void doneDependencies() {
 	depends=new Trace[dependsTemp.size()];
 	dependsTemp.toArray(depends);

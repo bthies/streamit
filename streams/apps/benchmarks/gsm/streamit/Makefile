@@ -23,3 +23,6 @@ clean:
 	rm -f Gsm.java
 	rm -f BinaryDecoderOutput1
 	rm -f BinarySmallEndianDecoderOutput1
+
+more-imem:
+	perl -pi -e 's/SIM-CYCLES = \d*/$$&\nATTRIBUTES = IMEM_LARGE/' Makefile.streamit

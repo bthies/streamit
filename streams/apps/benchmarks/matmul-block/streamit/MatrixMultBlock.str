@@ -1,7 +1,7 @@
 /*
  * MatrixMultBlock.str: block matrix multiply
  * Translated from Jasper's old-syntax code
- * $Id: MatrixMultBlock.str,v 1.1 2002-11-07 16:30:56 dmaze Exp $
+ * $Id: MatrixMultBlock.str,v 1.2 2002-11-07 22:21:04 dmaze Exp $
  */
 
 void->void pipeline MatrixMultBlock
@@ -38,30 +38,11 @@ float->float pipeline MatrixBlockMultiply(int x0, int y0, int x1, int y1,
                         x1 * y1 / (blockDiv * blockDiv));
     };
     
-    add splitjoin {
-        split roundrobin((x0 * y0 + x1 * y1) / blockDiv);
-        for (int y = 0; y < blockDiv; y++)
-        {
-            add pipeline {
-                add splitjoin {
-                    split roundrobin((x0 * y0 + x1 * y1) /
-                                     (blockDiv * blockDiv));
-                    for (int x = 0; x < blockDiv; x++)
-                    {
-                        add BlockMultiply(x0 / blockDiv,
-                                          y0 / blockDiv,
-                                          x1 / blockDiv,
-                                          y1 / blockDiv);
-                    }
-                    join roundrobin(x1 * y0 /
-                                    (blockDiv * blockDiv));
-                };
-                add BlockAdd(x1 / blockDiv, y0 / blockDiv, blockDiv);
-            };
-        }
-        join roundrobin(x1 * y0 / (blockDiv * blockDiv));
-    };
-    
+    add BlockMultiply(x0 / blockDiv,
+                      y0 / blockDiv,
+                      x1 / blockDiv,
+                      y1 / blockDiv);
+    add BlockAdd(x1 / blockDiv, y0 / blockDiv, blockDiv);
     add BlockCombine(x1, y0, blockDiv);
 }
 

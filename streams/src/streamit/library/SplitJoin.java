@@ -66,7 +66,13 @@ public class SplitJoin extends Stream
         super(n1, n2, n3, n4, n5);
     }
 
-    public SplitJoin(int n1, int n2, int n3, int n4, float[][] n5, float[][] n6)
+    public SplitJoin(
+        int n1,
+        int n2,
+        int n3,
+        int n4,
+        float[][] n5,
+        float[][] n6)
     {
         super(n1, n2, n3, n4, n5, n6);
     }
@@ -76,14 +82,31 @@ public class SplitJoin extends Stream
         super(n1, n2, n3, n4);
     }
 
-    public SplitJoin(int n1, int n2, int n3, int n4, int n5, int n6,
-		     int n7, float f1)
+    public SplitJoin(
+        int n1,
+        int n2,
+        int n3,
+        int n4,
+        int n5,
+        int n6,
+        int n7,
+        float f1)
     {
         super(n1, n2, n3, n4, n5, n6, n7, f1);
     }
 
-    public SplitJoin(int n1, int n2, int n3, int n4, int n5, int n6,
-		     int n7, int n8, int n9, int n10, float f1)
+    public SplitJoin(
+        int n1,
+        int n2,
+        int n3,
+        int n4,
+        int n5,
+        int n6,
+        int n7,
+        int n8,
+        int n9,
+        int n10,
+        float f1)
     {
         super(n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, f1);
     }
@@ -93,7 +116,7 @@ public class SplitJoin extends Stream
         super(n1, n2, n3, n4);
     }
 
-    public SplitJoin(float f1, float f2, int n1) 
+    public SplitJoin(float f1, float f2, int n1)
     {
         super(f1, f2, n1);
     }
@@ -125,159 +148,206 @@ public class SplitJoin extends Stream
         int type;
         List weights;
 
-        SplitJoinType (int myType)
+        SplitJoinType(int myType)
         {
             switch (myType)
             {
-                case 1: // round robin and
-                case 2: // weighted round robin - need a weight list
-                    weights = new LinkedList ();
+                case 1 : // round robin and
+                case 2 : // weighted round robin - need a weight list
+                    weights = new LinkedList();
                     break;
-                case 3: // duplicate
-                case 4: // null - no in/out
+                case 3 : // duplicate
+                case 4 : // null - no in/out
                     break;
-                default:
+                default :
                     // passed an illegal parameter to the constructor!
-                    SASSERT (false);
+                    SASSERT(false);
             }
 
             type = myType;
         }
 
-        SplitJoinType addWeight (int weight)
+        SplitJoinType addWeight(int weight)
         {
-            SASSERT (weights != null);
-            weights.add (new Integer (weight));
+            SASSERT(weights != null);
+            weights.add(new Integer(weight));
             return this;
         }
 
-        Splitter getSplitter ()
+        Splitter getSplitter()
         {
             switch (type)
             {
-                case 1:
+                case 1 :
                     {
-                        RoundRobinSplitter splitter =  new RoundRobinSplitter (((Integer)weights.remove (0)).intValue ());
+                        RoundRobinSplitter splitter =
+                            new RoundRobinSplitter(
+                                ((Integer) weights.remove(0)).intValue());
                         return splitter;
                     }
-                case 2:
-                    WeightedRoundRobinSplitter splitter = new WeightedRoundRobinSplitter ();
-                    while (!weights.isEmpty ())
+                case 2 :
+                    WeightedRoundRobinSplitter splitter =
+                        new WeightedRoundRobinSplitter();
+                    while (!weights.isEmpty())
                     {
-                        splitter.addWeight ((Integer)weights.remove (0));
+                        splitter.addWeight((Integer) weights.remove(0));
                     }
                     return splitter;
-                case 3:
-                    return new DuplicateSplitter ();
-                case 4:
-                	return new NullSplitter ();
-                default:
-                    SASSERT (false);
+                case 3 :
+                    return new DuplicateSplitter();
+                case 4 :
+                    return new NullSplitter();
+                default :
+                    SASSERT(false);
             }
             return null;
         }
 
-        Joiner getJoiner ()
+        Joiner getJoiner()
         {
             switch (type)
             {
-                case 1:
+                case 1 :
                     {
-                        RoundRobinJoiner joiner =  new RoundRobinJoiner (((Integer)weights.remove (0)).intValue ());
+                        RoundRobinJoiner joiner =
+                            new RoundRobinJoiner(
+                                ((Integer) weights.remove(0)).intValue());
                         return joiner;
                     }
-                case 2:
-                    WeightedRoundRobinJoiner joiner = new WeightedRoundRobinJoiner ();
-                    while (!weights.isEmpty ())
+                case 2 :
+                    WeightedRoundRobinJoiner joiner =
+                        new WeightedRoundRobinJoiner();
+                    while (!weights.isEmpty())
                     {
-                        joiner.addWeight ((Integer)weights.remove (0));
+                        joiner.addWeight((Integer) weights.remove(0));
                     }
                     return joiner;
-                case 3: 
+                case 3 :
                     // there are no duplicate joiners!
-                    SASSERT (false);
+                    SASSERT(false);
                     break;
-                case 4:
-                    return new NullJoiner ();
-                default:
-                    SASSERT (false);
+                case 4 :
+                    return new NullJoiner();
+                default :
+                    SASSERT(false);
             }
             return null;
         }
     }
 
-    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1)
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(int w1)
     {
-        return new SplitJoinType (2).addWeight (w1);
+        return new SplitJoinType(2).addWeight(w1);
     }
 
-    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2)
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(int w1, int w2)
     {
-        return new SplitJoinType (2).addWeight (w1).addWeight (w2);
+        return new SplitJoinType(2).addWeight(w1).addWeight(w2);
     }
 
-    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3)
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(int w1, int w2, int w3)
     {
-        return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3);
+        return new SplitJoinType(2).addWeight(w1).addWeight(w2).addWeight(w3);
     }
 
-    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4)
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4)
     {
-        return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3).addWeight (w4);
+        return new SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4);
     }
 
-    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7)
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
+        int w5,
+        int w6,
+        int w7)
     {
-        return new SplitJoinType (2).addWeight (w1).addWeight (w2).addWeight (w3).addWeight (w4).addWeight (w5).addWeight (w6).addWeight (w7);
+        return new SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7);
     }
 
-    public static SplitJoinType WEIGHTED_ROUND_ROBIN (int w1, int w2, int w3, int w4, int w5, int w6, int w7, int w8, int w9, int w10, int w11, int w12, int w13, int w14, int w15, int w16, int w17, int w18)
+    public static SplitJoinType WEIGHTED_ROUND_ROBIN(
+        int w1,
+        int w2,
+        int w3,
+        int w4,
+        int w5,
+        int w6,
+        int w7,
+        int w8,
+        int w9,
+        int w10,
+        int w11,
+        int w12,
+        int w13,
+        int w14,
+        int w15,
+        int w16,
+        int w17,
+        int w18)
     {
-        return new SplitJoinType (2).addWeight (w1).
-        								 addWeight (w2).
-        								 addWeight (w3).
-        								 addWeight (w4).
-        								 addWeight (w5).
-        								 addWeight (w6).
-        								 addWeight (w7).
-        								 addWeight (w8).
-        								 addWeight (w9).
-        								 addWeight (w10).
-        								 addWeight (w11).
-        								 addWeight (w12).
-        								 addWeight (w13).
-        								 addWeight (w14).
-        								 addWeight (w15).
-        								 addWeight (w16).
-        								 addWeight (w17).
-        								 addWeight (w18);
+        return new SplitJoinType(2)
+            .addWeight(w1)
+            .addWeight(w2)
+            .addWeight(w3)
+            .addWeight(w4)
+            .addWeight(w5)
+            .addWeight(w6)
+            .addWeight(w7)
+            .addWeight(w8)
+            .addWeight(w9)
+            .addWeight(w10)
+            .addWeight(w11)
+            .addWeight(w12)
+            .addWeight(w13)
+            .addWeight(w14)
+            .addWeight(w15)
+            .addWeight(w16)
+            .addWeight(w17)
+            .addWeight(w18);
     }
 
-    public static SplitJoinType ROUND_ROBIN ()
+    public static SplitJoinType ROUND_ROBIN()
     {
-        return new SplitJoinType (1).addWeight (1);
+        return new SplitJoinType(1).addWeight(1);
     }
 
-    public static SplitJoinType ROUND_ROBIN (int weight)
+    public static SplitJoinType ROUND_ROBIN(int weight)
     {
-        return new SplitJoinType (1).addWeight (weight);
+        return new SplitJoinType(1).addWeight(weight);
     }
 
-    public static SplitJoinType DUPLICATE ()
+    public static SplitJoinType DUPLICATE()
     {
-        return new SplitJoinType (3);
+        return new SplitJoinType(3);
     }
-    
-    public static SplitJoinType NULL ()
+
+    public static SplitJoinType NULL()
     {
-        return new SplitJoinType (4);
+        return new SplitJoinType(4);
     }
 
     // specify the splitter
     public void setSplitter(SplitJoinType type)
     {
-        ASSERT (splitter == null && type != null);
-        splitter = type.getSplitter ();
+        ASSERT(splitter == null && type != null);
+        splitter = type.getSplitter();
 
         splitType = type;
     }
@@ -286,17 +356,17 @@ public class SplitJoin extends Stream
     // must also add all the appropriate outputs to the joiner!
     public void setJoiner(SplitJoinType type)
     {
-        ASSERT (joiner == null && type != null);
-        joiner = type.getJoiner ();
+        ASSERT(joiner == null && type != null);
+        joiner = type.getJoiner();
 
         ListIterator iter;
-        iter = childrenStreams.listIterator ();
-        while (iter.hasNext ())
+        iter = childrenStreams.listIterator();
+        while (iter.hasNext())
         {
-            Stream s = (Stream) iter.next ();
-            ASSERT (s != null);
+            Stream s = (Stream) iter.next();
+            ASSERT(s != null);
 
-            joiner.add (s);
+            joiner.add(s);
         }
 
         joinType = type;
@@ -305,85 +375,105 @@ public class SplitJoin extends Stream
     // add a stream to the parallel section between the splitter and the joiner
     public void add(Stream s)
     {
-        ASSERT (joiner == null);
+        ASSERT(joiner == null);
 
         // add the stream to the Split
         if (splitter != null)
         {
-            splitter.add (s);
+            splitter.add(s);
         }
 
         // save the stream to add to the Join
         if (childrenStreams == null)
         {
-            childrenStreams = new LinkedList ();
+            childrenStreams = new LinkedList();
         }
-        childrenStreams.add (s);
+        childrenStreams.add(s);
     }
 
-    public void connectGraph ()
+    public void connectGraph()
     {
         // setup all children of this splitjoin
         {
             ListIterator iter;
-            iter = childrenStreams.listIterator ();
-            while (iter.hasNext ())
+            iter = childrenStreams.listIterator();
+            while (iter.hasNext())
             {
-                Stream s = (Stream) iter.next ();
-                ASSERT (s != null);
-                s.setupOperator ();
+                Stream s = (Stream) iter.next();
+                ASSERT(s != null);
+                s.setupOperator();
             }
         }
         // connect the SplitJoin with the Split and the Join
         if (splitter != null)
         {
-            splitter.setupOperator ();
-            input = splitter.getIOField ("input", 0);
+            splitter.setupOperator();
+            input = splitter.getIOField("input", 0);
         }
 
         if (joiner != null)
         {
-            joiner.setupOperator ();
-            output = joiner.getIOField ("output", 0);
+            joiner.setupOperator();
+            output = joiner.getIOField("output", 0);
         }
     }
 
-     // allow access to the children of this pipeline
-     
-    public int getNumChildren () { return childrenStreams.size (); }
-    public Stream getChildN (int n) { return (Stream) childrenStreams.get (n); }
-    public Splitter getSplitter () { return splitter; }
-    public Joiner getJoiner () { return joiner; }
-    
-    void setupBufferLengths (ScheduleBuffers buffers)
+    // allow access to the children of this pipeline
+
+    public int getNumChildren()
+    {
+        return childrenStreams.size();
+    }
+    public Stream getChildN(int n)
+    {
+        return (Stream) childrenStreams.get(n);
+    }
+    public Splitter getSplitter()
+    {
+        return splitter;
+    }
+    public Joiner getJoiner()
+    {
+        return joiner;
+    }
+
+    void setupBufferLengths(ScheduleBuffers buffers)
     {
         ListIterator iter;
-        iter = childrenStreams.listIterator ();
+        iter = childrenStreams.listIterator();
 
         // go through all the children
-        while (iter.hasNext ())
+        while (iter.hasNext())
         {
-            Stream child = (Stream) iter.next ();
-            ASSERT (child);
+            Stream child = (Stream) iter.next();
+            ASSERT(child);
 
-            child.setupBufferLengths (buffers);
+            child.setupBufferLengths(buffers);
 
             // init the split channel
             {
-                int splitBufferSize = buffers.getBufferSizeBetween (new Iterator(this), new Iterator(child));
+                int splitBufferSize =
+                    buffers.getBufferSizeBetween(
+                        new Iterator(this),
+                        new Iterator(child));
 
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
-                child.getInputChannel ().setChannelSize (splitBufferSize);
+                if (splitBufferSize != 0)
+                    child.getInputChannel().setChannelSize(splitBufferSize);
             }
 
             // init the join channel
             {
-                int joinBufferSize = buffers.getBufferSizeBetween (new Iterator(child), new Iterator(this));
+                int joinBufferSize =
+                    buffers.getBufferSizeBetween(
+                        new Iterator(child),
+                        new Iterator(this));
 
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
-                child.getOutputChannel ().setChannelSize (joinBufferSize);
+                if (joinBufferSize != 0)
+                    child.getOutputChannel().setChannelSize(joinBufferSize);
             }
         }
     }

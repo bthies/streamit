@@ -76,6 +76,11 @@ public abstract class Filter extends Stream
         super (a,b,c,d,e);
     }
 
+    public Filter(int a, int b, int c, int d)
+    {
+        super (a,b,c,d);
+    }
+
     public Filter(int a, int b, int c, float d, int e)
     {
         super (a,b,c,d,e);

@@ -35,7 +35,7 @@ public class RoundRobinJoiner extends Joiner
         int i;
         for (i=0;i<numChildren;i++)
         {
-            if (srcs.get(i) != null && ((Stream)srcs.get (i)).input != null)
+            if (srcs.get(i) != null && ((Stream)srcs.get (i)).output != null)
             {
                 weights [i] = weight;
             }
@@ -52,7 +52,7 @@ public class RoundRobinJoiner extends Joiner
         int i;
         for (i=0;i<numChildren;i++)
         {
-            if (srcs.get(i) != null && ((Stream)srcs.get (i)).input != null)
+            if (srcs.get(i) != null && ((Stream)srcs.get (i)).output != null)
             {
                 outputTotal += weight;
             }

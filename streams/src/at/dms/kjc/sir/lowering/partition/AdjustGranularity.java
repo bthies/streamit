@@ -57,6 +57,8 @@ public class AdjustGranularity {
 	    doBeam16_3(str);
 	} else if (app.equals("beam4")) {
 	    doBeam16_4(str);
+	} else if (app.equals("beam4x4")) {
+	    doBeam16_4_4(str);
 	} else if (app.equals("bb1")) {
 	    doBigBeam1(str, 2);
 	} else if (app.equals("bb2")) {
@@ -393,6 +395,31 @@ public class AdjustGranularity {
 			   " tiles");
 	*/
 	//	WorkEstimate.getWorkEstimate(str).printWork();
+    }
+
+    private static void doBeam16_4_4(SIRStream str) {
+	// fuse the top splitjoin
+	for (int i=0; i<4; i++) {
+	    SIRPipeline pipe = (SIRPipeline) ((SIRSplitJoin) ((SIRPipeline)str).get(0) ).get(i);
+
+	    SIRFilter f1 = (SIRFilter) pipe.get(0);
+	    SIRFilter f2 = (SIRFilter) pipe.get(1);
+
+	    FusePipe.fuse(f1, f2);
+	}
+
+	// fuse downstream sj
+	SIRSplitJoin split = (SIRSplitJoin) ((SIRPipeline)str).get(1);
+	for (int i=0; i<4; i++) {
+	    SIRPipeline pipe = (SIRPipeline)split.get(i);
+
+	    FusePipe.fuse(pipe);
+	}
+	/*
+	FuseSplit.fuse(split);
+	*/
+
+	StreamItDot.printGraph(str, "after.dot");
     }
 
     private static void doBeam16_3(SIRStream str) {

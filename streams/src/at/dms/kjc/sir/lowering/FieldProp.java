@@ -444,21 +444,6 @@ public class FieldProp implements Constants
         meth.accept(new SLIREmptyVisitor() {
                 private HashSet no = new HashSet();
                 
-		public void visitVariableDefinition(JVariableDefinition self,
-						    int modifiers,
-						      CType type,
-						    String ident,
-						    JExpression expr) {
-		    super.visitVariableDefinition(self,modifiers,type,ident,expr);
-		    if (expr != null) {
-			if(no.contains(self)) return;
-			if (expr instanceof JLiteral) {
-			    yes.put(self,expr);
-			}
-		    }
-		}
-		
-
                 public void visitAssignmentExpression
                     (JAssignmentExpression self,
                      JExpression left,
@@ -508,13 +493,13 @@ public class FieldProp implements Constants
                     super.visitPrefixExpression(self, oper, expr);
                     // Again, instant death.
                     if (expr instanceof JLocalVariableExpression)
-			{
-			    JLocalVariable lv =
+                    {
+                        JLocalVariable lv =
                             ((JLocalVariableExpression)expr).getVariable();
-			    yes.remove(lv);
-			    no.add(lv);
-			}
-		}
+                        yes.remove(lv);
+                        no.add(lv);
+                    }
+                }
                 public void visitPostfixExpression
                     (JPostfixExpression self,
                      int oper,

@@ -35,9 +35,13 @@ public class Partitioner {
 	StreamItDot.printGraph(str, "before.dot");
 	// propagate fields to make sure we can resolve the constants
 	// in work functions
-	FieldProp.doPropagate(str);
+	System.out.print("field prop... ");
+	//	FieldProp.doPropagate(str);
+	System.out.println("done.");
 	// if we have too few tiles, then fizz the big ones
+	System.out.print("count tiles... ");
 	int count = new RawFlattener(str).getNumTiles();
+	System.out.println("done.");
 	if (count < target) {
 	    fissAll();
 	} else {

@@ -1,0 +1,85 @@
+package streamit.frontend.passes;
+
+import streamit.frontend.nodes.*;
+import streamit.frontend.tojava.TempVarGen;
+
+/**
+ * Give a rigid ordering to operations such as ++, --, and pop().
+ * Do this by a post-order depth-first traversal of expression trees;
+ * if we see a unary increment or decrement or a pop() or peek()
+ * operation, move it into a separate statement and replace it with
+ * a temporary variable.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: DisambiguateUnaries.java,v 1.1 2003-05-20 15:52:23 dmaze Exp $
+ */
+public class DisambiguateUnaries extends SymbolTableVisitor
+{
+    private TempVarGen varGen;
+    
+    public DisambiguateUnaries(TempVarGen varGen)
+    {
+        super(null);
+        this.varGen = varGen;
+    }
+    
+    public Object visitExprUnary(ExprUnary expr)
+    {
+        // Is this preinc or predec?  If not, we don't care.
+        // (Might we care about postinc or postdec?)
+        int op = expr.getOp();
+        if (op == ExprUnary.UNOP_PREINC || op == ExprUnary.UNOP_PREDEC)
+        {
+            // Insert a statement: a = a + 1.
+            // Assume that the child expression of expr is a valid
+            // left-hand side; it can usefully be a field, array
+            // reference, or local variable.
+            FEContext ctx = expr.getContext();
+            Expression lhs = expr.getExpr();
+            Expression rhs =
+                new ExprBinary(ctx,
+                               op == ExprUnary.UNOP_PREINC ?
+                               ExprBinary.BINOP_ADD :
+                               ExprBinary.BINOP_SUB,
+                               lhs,
+                               new ExprConstInt(ctx, 1));
+            addStatement(new StmtAssign(ctx, lhs, rhs, 0));
+            return lhs;
+        }
+        return expr;
+    }
+
+    /**
+     * Helper function that visits an arbitrary expression,
+     * creates a helper variable containing its value, and returning
+     * the helper.
+     */
+    private Object visitPeekOrPop(Expression expr)
+    {
+        // Create a temporary variable...
+        FEContext ctx = expr.getContext();
+        String name = varGen.varName(varGen.nextVar(null));
+        Type type = getType(expr);
+        addStatement(new StmtVarDecl(ctx, type, name, null));
+        // Generate an assignment to that..
+        Expression var = new ExprVar(ctx, name);
+        addStatement(new StmtAssign(ctx, var, expr, 0));
+        // ...and return the variable.
+        return var;
+    }
+
+    public Object visitExprPeek(ExprPeek expr)
+    {
+        // Why do we need to visit peek expressions here?  If we have
+        // peek(0) + pop() + peek(0), the two peeks have different
+        // values, since the pop() shifts the input tape by one.
+        // If we only moved pops, both peeks would refer to peek(1),
+        // which is wrong.
+        return visitPeekOrPop(expr);
+    }
+
+    public Object visitExprPop(ExprPop expr)
+    {
+        return visitPeekOrPop(expr);
+    }
+}

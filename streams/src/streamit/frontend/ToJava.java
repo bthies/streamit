@@ -120,6 +120,7 @@ class ToJava
                  * "this", which doesn't exist. */
                 TempVarGen varGen = new TempVarGen();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
+                prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
                 prog = (Program)prog.accept(new RenameBitVars());
                 prog = (Program)prog.accept(new FindFreeVariables());
                 if (!libraryFormat)

@@ -4,7 +4,7 @@ complex->complex filter CombineDFT(int n)
 
     init
     {
-	complex wn = exp(2i * pi / n);	
+	complex wn = Math.cos(2*Math.PI/n)+1i*Math.sin(2*Math.PI/n);	
 	Ws[0].real=1;
 	Ws[0].imag=0;
 	for (int i=1; i < n; i++)
@@ -74,7 +74,7 @@ complex->complex pipeline FFTReorder(int nWay)
     }    
 }
 
-complex->complex pipeline FFT2 (int nWay)
+complex->complex pipeline check(int nWay)
 {
         add FFTReorder(nWay);
         int n = 2;
@@ -86,6 +86,32 @@ complex->complex pipeline FFT2 (int nWay)
     
 }
 
+void->float filter source(){
+    int i;
+
+    init{
+    i=0;
+    }
+    
+    work pop 0 push 1 {
+	push(i);
+	i++;
+    }
+}
+
+float->void filter sink(){
+    init {}
+    work pop 1 push 0 {
+	pop();
+    }
+}
+
+void->void pipeline FFT2() {
+    add source();
+    add check(8);
+    add sink();
+}
+	
 /*
 
 public class FFT2 extends StreamIt

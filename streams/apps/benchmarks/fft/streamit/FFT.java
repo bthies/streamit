@@ -1,179 +1,145 @@
+/*
+parsing:
+done parsing. outputing:
+ <# pipeline <# -> void void #> FFT <# { <# add OneSource ( #> <# add FFTKernel <# ( 16 #> #> <# add FloatPrinter ( #> #> #> <# splitjoin <# -> float float #> FFTKernel <# ( <# N int #> #> <# { <# add <# splitjoin <# { split <# for <# i int <# = 0 #> #> <# < i 2 #> <# ++ i #> <# { <# add <# splitjoin <# { split add add join #> #> #> #> #> join #> #> #> <# for <# i int <# = 2 #> #> <# < i N #> <# { <# add Butterfly <# ( i N #> #> #> #> #> #> <# pipeline <# -> float float #> Butterfly <# ( <# N int #> <# W int #> #> <# { <# add <# splitjoin <# { split <# add Multiply ( #> add join #> #> #> <# add <# splitjoin <# { split <# add Subtract ( #> <# add Add ( #> join #> #> #> #> #> <# filter <# -> void float #> OneSource { <# work <# push 1 #> <# { <# push 1 #> #> #> #> <# filter <# -> float float #> Multiply { <# work <# push 1 #> <# pop 1 #> <# { <# push <# * 2 pop #> #> #> #> #> <# filter <# -> float float #> Add { <# work <# push 1 #> <# pop 2 #> <# { <# push <# + <# peek 0 #> <# peek 1 #> #> #> pop pop #> #> #> <# filter <# -> float float #> Subtract { <# work <# push 1 #> <# pop 2 #> <# { <# push <# - <# peek 0 #> <# peek 1 #> #> #> pop pop #> #> #> <# filter <# -> float void #> FloatPrinter { <# work <# pop 1 #> <# { <# $call <# . <# . System out #> println #> <# ( pop #> #> #> #> #> null
+done outputing. walking:
+*/
 import streamit.*;
+import streamit.io.*;
 
-class IdentityLocal extends Filter {
-    public void init()
+class Complex extends Structure {
+  public double real, imag;
+}
+
+class FFT extends StreamIt
+{
+    static public void main (String [] args)
     {
-        input = new Channel(Float.TYPE, 1);
-        output = new Channel(Float.TYPE, 1);
+        new FFT().run (args);
     }
+    public void init() {
+            add(new OneSource());
+            add(new FFTKernel(16));
+            add(new FloatPrinter());
+        }
+}
 
-    public void work() {
-        output.pushFloat(input.popFloat());
+class FFTKernel extends SplitJoin
+{
+    private int N;
+    public void init(final int N) {
+        this.N = N;
+            add(new SplitJoin() {
+                public void init() {
+                        setSplitter(null);
+                        for (int i  = 0; (i < 2); ++i) {
+                            add(new SplitJoin() {
+                                public void init() {
+                                        setSplitter(null);
+                                        null;
+                                        null;
+                                        setJoiner(null);
+                                    }
+                            });
+                        }
+                        setJoiner(null);
+                    }
+            });
+            for (int i  = 2; (i < N); ) 
+        }
+    public FFTKernel(final int N) {
+        super(N);
     }
 }
 
-class Filter1 extends Filter {
-
-    //    float weights[];
-    int curr;
-    int W;
-
-    public Filter1(int N, int W) {
+class Butterfly extends Pipeline
+{
+    private int N;
+    private int W;
+    public void init(final int N, final int W) {
+        this.N = N;
+        this.W = W;
+            add(new SplitJoin() {
+                public void init() {
+                        setSplitter(null);
+                        add(new Multiply());
+                        null;
+                        setJoiner(null);
+                    }
+            });
+            add(new SplitJoin() {
+                public void init() {
+                        setSplitter(null);
+                        add(new Subtract());
+                        add(new Add());
+                        setJoiner(null);
+                    }
+            });
+        }
+    public Butterfly(final int N, final int W) {
         super(N, W);
     }
-
-    public void init(int N, int W) {
-        input = new Channel(Float.TYPE, 1);
-        output = new Channel(Float.TYPE, 1);
-        int i;
-        this.W = W;
-        //this.weights = new float[W];
-        //        for (i=0; i<W; i+=1)
-        //            weights[i] = calcWeight(i, N, W);
-        curr = 0;
-    }
-
-    private float calcWeight(int a, int b, int c) {
-        return 1;
-    }
-
-    public void work() {
-        output.pushFloat(input.popFloat()*
-                         2); //weights[curr++]);
-        if(curr>= W) curr = 0;
-    }
 }
 
-class Butterfly1 extends SplitJoin {
-    public Butterfly1(int N, int W) { super (N, W); }
-
-    public void init(final int N, final int W) {
-        this.setSplitter(WEIGHTED_ROUND_ROBIN(N, N));
-        this.add(new IdentityLocal());
-        this.add(new Filter1(N, W));
-        this.setJoiner(ROUND_ROBIN());
-    }
-}
-
-class Butterfly2 extends SplitJoin {
-    public Butterfly2(int N, int W) { super (N, W); }
-
-    public void init(final int N, final int W) {
-        this.setSplitter(DUPLICATE());
-
-        this.add(new Filter() {
-                public void init ()
-                {
-                    input = new Channel(Float.TYPE, 2);
-                    output = new Channel(Float.TYPE, 1);
-                }
-
-                public void work() {
-                    output.pushFloat(input.peekFloat(0) +
-                                     input.peekFloat(1));
-		    input.popFloat();
-		    input.popFloat();
-                }
-            });
-        this.add(new Filter() {
-                public void init ()
-                {
-                    input = new Channel(Float.TYPE, 2);
-                    output = new Channel(Float.TYPE, 1);
-                }
-
-                public void work() {
-                    output.pushFloat(input.peekFloat(0) -
-                                     input.peekFloat(1));
-		    input.popFloat();
-		    input.popFloat();
-                }
-            });
-
-        this.setJoiner(WEIGHTED_ROUND_ROBIN(N, N));
-    }
-}
-
-class SplitJoin2 extends SplitJoin {
-    public SplitJoin2(int N) {
-        super(N);
-    }
-
-    public void init(int N) {
-        this.setSplitter(ROUND_ROBIN());
-        this.add(new IdentityLocal());
-        this.add(new IdentityLocal());
-        this.setJoiner(WEIGHTED_ROUND_ROBIN((int)
-                                            N/4,
-                                            (int)
-                                            N/4));
-    }
-}
-
-class SplitJoin1 extends SplitJoin {
-    public SplitJoin1(int N) {
-        super(N);
-    }
-
-    public void init(int N) {
-        int i;
-        this.setSplitter(WEIGHTED_ROUND_ROBIN((int)N/2, (int)N/2));
-        for (i=0; i<2; i+=1)
-            this.add(new SplitJoin2(N));
-        this.setJoiner(ROUND_ROBIN());
-    }
-}
-
-class FFTKernelLocal extends Pipeline {
-    public FFTKernelLocal(int N)
-    {
-        super (N);
-    }
-
-    public void init(final int N) {
-        int i;
-        this.add(new SplitJoin1(N));
-        for (i=1; i<N; i*=2) {
-            this.add(new Butterfly1(i, N));
-            this.add(new Butterfly2(i, N));
-        }
-    }
-}
-
-class OneSourceLocal extends Filter
+class OneSource extends Filter
 {
-    public void init ()
-    {
-        output = new Channel(Float.TYPE, 1);
-    }
-    public void work()
-    {
+    public void work() {
         output.pushFloat(1);
     }
+    public void init(final int N, final int W) {
+        this.N = N;
+        this.W = W;
+        output = new Channel(Float.TYPE, 1);
+    }
+    public OneSource(final int N, final int W) {
+        super(N, W);
+    }
 }
 
-class FloatPrinterLocal extends Filter
+class Multiply extends Filter
 {
-    public void init ()
-    {
+    public void work() {
+        output.pushFloat((2 * input.popFloat()));
+    }
+    public void init() {
+        input = new Channel(Float.TYPE, 1);
+        output = new Channel(Float.TYPE, 1);
+    }
+}
+
+class Add extends Filter
+{
+    public void work() {
+        output.pushFloat((input.peekFloat(0) + input.peekFloat(1)));
+        input.popFloat();
+        input.popFloat();
+    }
+    public void init() {
+        input = new Channel(Float.TYPE, 2);
+        output = new Channel(Float.TYPE, 1);
+    }
+}
+
+class Subtract extends Filter
+{
+    public void work() {
+        output.pushFloat((input.peekFloat(0) - input.peekFloat(1)));
+        input.popFloat();
+        input.popFloat();
+    }
+    public void init() {
+        input = new Channel(Float.TYPE, 2);
+        output = new Channel(Float.TYPE, 1);
+    }
+}
+
+class FloatPrinter extends Filter
+{
+    public void work() {
+        ;
+    }
+    public void init() {
         input = new Channel(Float.TYPE, 1);
     }
-    public void work ()
-    {
-        System.out.println(input.popFloat ());
-    }
 }
-
-public class FFT extends StreamIt {
-    public static void main(String args[]) {
-        new FFT().run(args);
-    }
-
-    public void init() {
-        this.add(new OneSourceLocal());
-        this.add(new FFTKernelLocal(32));
-        this.add(new FloatPrinterLocal());
-    }
-}
-
 

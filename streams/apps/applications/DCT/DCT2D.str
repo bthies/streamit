@@ -1,4 +1,3 @@
-
 void->void pipeline DCT2D() {
     int M=2;
     int N=2;
@@ -7,10 +6,6 @@ void->void pipeline DCT2D() {
     add core2D(N,M);
     add sink(N*M);
 }
-
-
-
-
 
 // this filter is a source, used for testing the filter
 void->float filter source (int N) {
@@ -23,11 +18,8 @@ void->float filter source (int N) {
     }
 
     work push N {
-
 	for (int i=0; i<N; i++)
 	    push(i);
-
-	
     }
 }
 
@@ -38,7 +30,6 @@ float->void filter sink(int N) {
 	    println(pop());
     }
 }
-
 	
 // this is the complete 2 dimensional DCT 
 // inputs are supposed to be N at a time, that is, the first N
@@ -48,13 +39,9 @@ float->float pipeline core2D(int N, int M) {
     add rows(M,N);
 }
 
-
-
-
 // this split join performes the DCT in one direction with 
 // (with length n) and dimension m, elements are read n at a time
 // outputs are generated in the other
-
 float->float splitjoin rows(int N, int M){
 
     split roundrobin(N);
@@ -64,10 +51,6 @@ float->float splitjoin rows(int N, int M){
 
     join roundrobin(1);
 }
-    
-
-
-
 
 // this pipeline performs the core DCT operation
 float->float pipeline DCTcore(int N) {
@@ -81,9 +64,6 @@ float->float pipeline DCTcore(int N) {
     }
 }
 
-
-
-
 // this split join gets the weighted bit reversed input and performes
 // the DCT recursion
 float->float splitjoin recurse(int N) {
@@ -92,8 +72,6 @@ float->float splitjoin recurse(int N) {
     add reordDCT(N/2);
     join roundrobin(1);
 }
-	
-
 
 // this pipeline performes the second DCT operation which requires 
 // combining the outputs
@@ -101,10 +79,6 @@ float->float pipeline reordDCT(int N) {
     add DCTcore(N);
     add outmix(N);
 }
-
-
-
-
 
 // peeks and pops subject of further inquiry
 // this filter performs the combinations at the output
@@ -122,14 +96,6 @@ float->float filter outmix(int N){
 	push(in_arr[N-1]);
     }
 }
-
-       
-
-       
-
-
-
-
 
 //this filter handles the case of N=2
 float->float filter TwoPointDCT() {
@@ -153,8 +119,6 @@ float->float filter TwoPointDCT() {
 	push((a-b)/scale);
     }
 }
-
-
 
 // this filter mixes the inputs with correct with correct weights
 float->float filter decimate(int N) {
@@ -186,24 +150,13 @@ float->float filter decimate(int N) {
     }
 }
 
-
-
-
-
 // this round roubin splitjoin uses the reversal filter to perform the bit reversal
 // operation. only the second half of a sequence is reversed.
 float->float splitjoin bitrev(int N) {
     split roundrobin(N/2);
-   add DamnIdentity();
+   add Identity<float>();
    add reversal(N/2);
    join roundrobin(N/2);
-}
-
-
-float->float filter DamnIdentity() {
-    work push 1 pop 1 {
-	push(pop());
-    }
 }
 
 // this filter takes care of the bit reversal operation necessary for 
@@ -221,20 +174,3 @@ float->float filter reversal(int N) {
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

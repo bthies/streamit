@@ -13,6 +13,7 @@ import java.io.*;
 import at.dms.compiler.*;
 import at.dms.kjc.sir.lowering.*;
 import java.util.Hashtable;
+import java.math.BigInteger;
 
 public class RawExecutionCode extends at.dms.util.Utils 
     implements FlatVisitor, Constants
@@ -439,10 +440,33 @@ public class RawExecutionCode extends at.dms.util.Utils
 			   new JIntLiteral(initFire - 1));
     }
     
+    private int lcm(int x, int y) { // least common multiple
+	int v = x, u = y;
+	while (x != y)
+	    if (x > y) {
+		x -= y; v += u;
+	    } else {
+		y -= x; u += v;
+	    }
+	return (u+v)/2;
+    }
+
 
     //generate the code for the steady state loop
     JStatement generateSteadyStateLoop(SIRFilter filter) 
     {
+	int unrollFactor = 1;
+	
+	//if this filter has a buffer, 
+	//the unroll factor is equal to the lcm of pop
+	//and the buffersize
+	if (filter.getPeekInt() > 0) {
+	    unrollFactor = 
+		lcm(filter.getPopInt(),
+		    CalcBufferSize.getConsBufSize
+		    (Layout.getNode(Layout.getTile(filter))));
+	}
+	
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	
 	//add the statements to receive pop items into the buffer
@@ -452,10 +476,12 @@ public class RawExecutionCode extends at.dms.util.Utils
 			 new JIntLiteral(filter.getPopInt())));
 	
 	//clone and inline the work function
-	JBlock workBlock = 
-	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
-	block.addStatement(workBlock);
-	
+	for (int i = 0; i < unrollFactor; i++) {
+	    JBlock workBlock = 
+		(JBlock)ObjectDeepCloner.
+		deepCopy(filter.getWork().getBody());
+	    block.addStatement(workBlock);
+	}
 	//return the infinite loop
 	return new JWhileStatement(null, 
 				   new JBooleanLiteral(null, true),
@@ -514,7 +540,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	    
 	    //create the method call expression
 	    JMethodCallExpression exp =
-		new JMethodCallExpression(null, null,
+		new JMethodCallExpression(null,  new JThisExpression(null),
 					  receiveMethod,
 					  arg);
 

@@ -1,3 +1,8 @@
+/////////////////////////////////
+/* An iterative implementation of the FFT Algorithm
+/* -Satish Ramaswamy
+////////////////////////////////
+
 void->complex filter source() {
   work push 8{	    
     complex t;

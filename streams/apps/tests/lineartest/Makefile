@@ -52,7 +52,7 @@ test-current-freq: linear-compile library-compile
 	./test-freq.exe -i 100 > freq.out
 	./test-normal.exe -i 1000 > norm.out
 	./parse_linear_output.pl test-freq.c
-	$(COMPARE) norm.out freq.out
+	$(COMPARE) freq.out norm.out
 
 
 
@@ -73,9 +73,13 @@ test-current-redundant: linear-compile
 	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > current.output
 	./parse_redundant_output.pl current.output
 
+test-freq: linear-compile library-compile
+	sl test-freq.c -o test-freq.exe
+	./test-freq.exe -i 1
 
 
-linear-regtest: linear-compile
+
+linear-regtest: linear-compile 
 	# just run our regression testing script
 	$(LINEAR-REG-TEST)
 

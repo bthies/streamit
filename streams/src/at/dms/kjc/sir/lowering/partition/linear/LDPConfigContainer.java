@@ -146,9 +146,9 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    // only aliasing from i2=i1..high matters, but we'd just as well go i2=low...high
 		    for (int i2=low; i2<=high; i2++) {
 			for (int xWidth=0; xWidth<width[low]-1; xWidth++) {
-			    for (int xStart=1; xStart<width[low]-xWidth; xWidth++) {
+			    for (int xStart=1; xStart<width[low]-xWidth; xStart++) {
 				A[xStart][xStart+xWidth][i1][i2] = A[0][xWidth][i1][i2];
-				strCache[xStart][xStart+xWidth][i1][i2] = strCache[xStart][xStart+xWidth][i1][i2];
+				strCache[xStart][xStart+xWidth][i1][i2] = strCache[0][xWidth][i1][i2];
 			    }
 			}
 		    }

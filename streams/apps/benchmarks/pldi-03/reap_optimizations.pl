@@ -11,6 +11,10 @@
 #
 # This is the latest reincarnation of a continually mutating script
 # to gather numbers for linear analysis and replacement.
+#
+# If a filename is passed as an argument, this script will use that as
+# the input file specifying which programs to run. If no argument is passed,
+# this script just uses the default one.
 
 use strict;
 
@@ -29,6 +33,27 @@ my $RESULTS_FILENAME = "freq_results.tsv";
 # the number of iterations to run the program for
 my $NUM_ITERS = 10000;
 
+# format for script programs is 
+#directory:filename:max size for frequency
+my @programs;
+# if we have a filename, read it in and use that, otherwise use
+if (@ARGV) {
+    @programs = split("\n", read_file(shift(@ARGV)));
+} else {
+    @programs = (
+		 ".:FIRProgram:100",
+		 #".:SamplingRateConverter:1",
+		 #".:FilterBank:1",
+		 #".:TargetDetect:1",
+		 #".:FMRadioApp:1",
+		 #".:CoarseSerializedBeamFormer:1",
+		 #".:Test:1",
+		 );
+}
+
+
+
+
 # array to hold results
 my @result_lines;
 # heading
@@ -39,28 +64,18 @@ push(@result_lines,
      "freq flops\tfreq fadds\tfreq fmuls\tfreq outputs\t" .
      "both flops\tboth fadds\tboth fmuls\tboth outputs\t");
 
-
-# format for script programs is 
-#directory:filename
-my @programs = (
-		".:FIRProgram",
-		#".:SamplingRateConverter",
-		#".:FilterBank",
-		#".:TargetDetect",
-		#".:FMRadioApp",
-		#".:CoarseSerializedBeamFormer",
-		#".:Test",
-		);
-
 # determine the next available results directory (eg results0, results1, etc.)
 my $results_dir_num = 0;
-while (-e "results$results_dir_num") {$results_dir_num++;}
-my $results_dir = "results$results_dir_num";
+while (-e "/tmp/freqResults$results_dir_num") {$results_dir_num++;}
+my $results_dir = "/tmp/freqResults$results_dir_num";
 print `mkdir $results_dir`;
 
-foreach (@programs) {
-    # parse the input into path and program
-    my ($path, $base_filename) = split(":");
+my $current_program;
+foreach $current_program (@programs) {
+    #ignore blank lines
+   if (not $current_program) {next;}
+    # parse the input into path, program and max frequency size
+    my ($path, $base_filename, $max_target_size) = split(":", $current_program);
 
     # copy the input program into the new results dir
     print `cp $path/$base_filename.java $results_dir`;
@@ -102,9 +117,8 @@ foreach (@programs) {
 
     
     # for various sizes of target FFT length
-    my $MAX_TARGET_SIZE = 4096;
     my $targetFFTSize;
-    for ($targetFFTSize=1; $targetFFTSize<($MAX_TARGET_SIZE+1); $targetFFTSize*=2) {
+    for ($targetFFTSize=1; $targetFFTSize<($max_target_size+1); $targetFFTSize*=2) {
 	
         # now, do the compilation with the frequency replacement
 	print "$base_filename(freq, $targetFFTSize):";
@@ -138,13 +152,17 @@ foreach (@programs) {
 	my ($both_fadds) =  $report =~ m/saw (.*) fadds/;
 	my ($both_fmuls) =  $report =~ m/saw (.*) fmuls/;
 
+	my $new_data_line = 	     ("$base_filename\t$targetFFTSize\t".
+				      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
+				      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
+				      "$freq_flops\t$freq_fadds\t$freq_fmuls\t$freq_outputs\t" .
+				      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
+
+	open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename,$targetFFTSize)\"");
+	print MHMAIL $new_data_line;
+	close(MHMAIL);
 	
-	push(@result_lines, 
-	     "$base_filename\t$targetFFTSize\t".
-	     "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
-	     "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
-	     "$freq_flops\t$freq_fadds\t$freq_fmuls\t$freq_outputs\t" .
-	     "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
+	push(@result_lines, $new_data_line);
 
     }
 
@@ -168,11 +186,18 @@ foreach (@programs) {
 
 
 # now, when we are done with all of the tests, write out the results to a tsv file.
-print "writing tsv";
+print "(writing tsv)";
 open (RFILE, ">$results_dir/$RESULTS_FILENAME");
 print RFILE join("\n", @result_lines);
 close RFILE;
-print "done\n";
+print "(done)";
+
+
+print "(sending mail)";
+open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"Overall results mail\"");
+print MHMAIL join("\n", @result_lines);
+close(MHMAIL);
+print "(done)\n";
 
 
 ########

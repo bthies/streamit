@@ -1,9 +1,28 @@
 FRONTEND = java streamit.frontend.ToJava
 
-all: clean benchmark
+all: clean benchmarks
+
+beamformer-results: CoarseSerializedBeamFormer.java
+	./reap_freq.pl scripts/beamformer.script
+fir-results: FIRProgram.java
+	./reap_freq.pl scripts/fir.script
+fm-results: FMRadioApp.java
+	./reap_freq.pl scripts/fmradio.script
+target-results: TargetDetect.java
+	./reap_freq.pl scripts/target.script
+filterbank-results: FilterBank.java
+	./reap_freq.pl scripts/filterbank.script
+test-results: Test.java
+	./reap_freq.pl scripts/test.script
+linearreplacement-results:
+	./reap_freq.pl scripts/linearreplacement.script
 
 
-benchmark: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java
+
+
+benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java
+
+script: benchmarks
 	./reap_freq.pl
 
 

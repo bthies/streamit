@@ -74,7 +74,7 @@ public class JoinerScheduleNode
 	    ret.append(dupRecCode(arrayAccess));
 	}
 	else if (type == FIRE) {
-	    ret.append("static_send(__buffer" + buffer +
+	    ret.append("static_send_from_mem((void*)&__buffer" + buffer +
 		       "[__first" + buffer + "++]");
 	    ret.append(arrayAccess);
 	    ret.append(");\n");
@@ -83,15 +83,18 @@ public class JoinerScheduleNode
 	    
 	}
 	else if (type == RECEIVE) { //receive
-	    if (nextDup) 
+	    ret.append("static_receive_to_mem((void*)&");
+	    if (nextDup) {
 		ret.append(DUPVAR);
-	    else 
+	    }
+	    else {
 		ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    }
 	    ret.append(arrayAccess);
-	    ret.append("= static_receive");
-	    if (fp)
-		ret.append("_f");
-	    ret.append("();\n");
+	    //	    ret.append("= static_receive_to_mem");
+	    //	    if (fp)
+	    //		ret.append("_f");
+	    ret.append(");\n");
 	    if (nextDup) {
 		ret.append(dupRecCode(arrayAccess));
 	    }

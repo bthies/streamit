@@ -80,7 +80,7 @@ public class RawBackend {
 			       StreamItOptions.rawColumns);
 	
 	if (StreamItOptions.partition) {
-	    Partitioner.doit(str, 
+	    Partitioner.doit(str,
 			     StreamItOptions.rawRows *
 			     StreamItOptions.rawColumns);
 	}

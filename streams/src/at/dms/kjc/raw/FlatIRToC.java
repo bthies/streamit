@@ -21,7 +21,8 @@ import java.util.Hashtable;
 public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 {
     private boolean DEBUG = false;
-    
+    private boolean NOCOMM = false;
+
     protected boolean			forInit;	// is on a for init
     protected int				TAB_SIZE = 2;
     protected int				WIDTH = 80;
@@ -231,7 +232,15 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("int " + recvBufferIndex + "= -1;\n");
 	    print("int " + sendBufferIndex + "= -1;\n");
 	}
+
 	
+
+	if (!self.getInputType().equals(CStdType.Void))
+	    print("void get(void *v) {*((" + self.getInputType() + "*)v) = (" + self.getInputType() + ") 1;}\n"); 
+	if (!self.getOutputType().equals(CStdType.Void)) {
+	    print(self.getOutputType() + " __test__;\n");
+	    print("void put(" + self.getOutputType() + " i) {__test__ = i;}\n");
+	}
 	//print the declarations for the array indexs for pushing and popping
 	//if this filter deals with arrays
 	if (self.getInputType().isArrayType() || self.getOutputType().isArrayType()) {
@@ -611,7 +620,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    int bottomPeek; 
 	    //fill the peek buffer 
 	    if (filter instanceof SIRTwoStageFilter) {
-		bottomPeek = ((SIRTwoStageFilter)filter).getInitPeek();
+		bottomPeek = ((SIRTwoStageFilter)filter).getInitPeek() - 
+		    ((SIRTwoStageFilter)filter).getInitPop();
 	    } 
 	    else {
 		bottomPeek = 0;
@@ -699,7 +709,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  ARRAY_INDEX + i + "++)\n");
 	}
 	print("{\n");
-	print("static_receive_to_mem((void*)&(");
+	if (NOCOMM)
+	    print("get((void*)&(");
+	else
+	    print("static_receive_to_mem((void*)&(");
+
 	if (circular)
 	    print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
 	else if (ratematch)
@@ -731,7 +745,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	else if (filter.getInputType().isClassType())
 	    printClassReceive();
 	else {
-	    print("static_receive_to_mem((void*)&(");
+	    if (NOCOMM)
+		print("get((void*)&(");
+	    else
+		print("static_receive_to_mem((void*)&(");
+
 	    if (ratematch || circular)
 		print("   " + recvBuffer + "[(++" + recvIndex + ") & " + RECVBITS + "]");
 	    else 
@@ -1814,7 +1832,11 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType tapeType,
 			    JExpression val) 
     {
-	print("(static_send(");
+	if (NOCOMM)
+	    print("(put(");
+	else 
+	    print("(static_send(");
+
 	//temporary fix for type changing filters
 	print("(" + tapeType + ")");
 	
@@ -1835,7 +1857,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  ARRAY_INDEX + i + "++)\n");
 	}
 	print("{");
-	print("static_send((" + baseType + ") ");
+	if (NOCOMM)
+	    print("put(("  + baseType + ") ");
+	else
+	    print("static_send((" + baseType + ") ");
 	val.accept(this);
 	for (int i = 0; i < dims.length; i++) {
 	    print("[" + ARRAY_INDEX + i + "]");

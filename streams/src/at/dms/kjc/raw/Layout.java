@@ -229,21 +229,26 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    random = new Random(17);
 	    //random placement
 	    randomPlacement();
-	    //filew = new FileWriter("simanneal.out");
-
+	    filew = new FileWriter("simanneal.out");
+	    int configuration = 0;
 
 	    currentCost = placementCost();
 	    System.out.println("Initial Cost: " + currentCost);
 	    
+	    if (StreamItOptions.noanneal) {
+		dumpLayout("noanneal.dot");
+		return;
+	    }
 	    //as a little hack, we will cache the layout with the minimum cost
 	    //these two hashmaps store this layout
 	    HashMap sirMin = (HashMap)SIRassignment.clone();
 	    HashMap tileMin = (HashMap)tileAssignment.clone();
 	    minCost = currentCost;
 	    
-	    if (currentCost == 0.0)
+	    if (currentCost == 0.0) {
+		dumpLayout("layout.dot");
 		return;
-
+	    }
 	    //run the annealing twice.  The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
 	    for (int two = 0; two < StreamItOptions.rawRows ; two++) {
@@ -254,23 +259,26 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    nsucc = 0;
 		    for (k = 0; k < nover; k++) {
 			if (perturbConfiguration(t)) {
-			    //filew.write(placementCost() + "\n");
+			    filew.write(configuration++ + " " + placementCost() + "\n");
 			    nsucc++;
+			}
+		
+			currentCost = placementCost();
+			//keep the layout with the minimum cost
+			//this will be the final layout
+			if (currentCost < minCost) {
+			    minCost = currentCost;
+			    //save the layout with the minimum cost
+		        sirMin = (HashMap)SIRassignment.clone();
+			tileMin = (HashMap)tileAssignment.clone();
 			}
 			if (placementCost() == 0.0)
 			    break;
 		    }
 		    
 		    t *= TFACTR;
-		    currentCost = placementCost();
-		    //keep the layout with the minimum cost
-		    //this will be the final layout
-		    if (currentCost < minCost) {
-			minCost = currentCost;
-			//save the layout with the minimum cost
-		        sirMin = (HashMap)SIRassignment.clone();
-			tileMin = (HashMap)tileAssignment.clone();
-		    }
+		   
+		    
 		    if (nsucc == 0) break;
 		    if (currentCost == 0)
 			break;
@@ -278,6 +286,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			break;
 		    j++;
 		}
+		if (currentCost == 0)
+		    break;
 	    }
 	   
 	    currentCost = placementCost();
@@ -289,7 +299,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		tileAssignment = tileMin;
 	    }
 	    
-	    //filew.close();
+	    filew.close();
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
@@ -559,7 +569,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	
 	buf.append("digraph Layout {\n");
 	buf.append("size = \"8, 10.5\"");
-	buf.append("node [shape=box,fixedsize=true,width=4,height=1];\nnodesep=.5;\nranksep=\"3.5 equally\";\nedge[arrowhead=dot, style=dotted]\n");
+	buf.append("node [shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
 	for (int i = 0; i < StreamItOptions.rawRows; i++) {
 	    buf.append("{rank = same;");
 	    for (int j = 0; j < StreamItOptions.rawColumns; j++) {
@@ -577,7 +587,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		}
 	    }
 	}
-	buf.append("edge[color = red,arrowhead = normal, style = bold];\n");
+	buf.append("edge[color = red,arrowhead = normal, arrowsize = 2.0, style = bold];\n");
 	Iterator it = tileAssignment.values().iterator();
 	while(it.hasNext()) {
 	    FlatNode node = (FlatNode) it.next();
@@ -585,7 +595,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		continue;
 	    buf.append("tile" +   getTileNumber(node) + "[label=\"" + 
 		       //getTileNumber(node) + "\"];\n");
-		       node.getName() + "\"];\n");
+		       shortName(node.getName()) + "\"];\n");
 	     
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
@@ -618,6 +628,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
 
+    private static String shortName(String str) {
+	return str.substring(0, str.indexOf("_"));
+    }
     private static HashSet getDownStream(FlatNode node) 
     {
 	if (node == null)

@@ -57,8 +57,9 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 
 	joinerCode = initJoinerCode;
-	//	System.out.println("\n\nInit Execution Counts");
-	//	RawBackend.printCounts(RawBackend.initExecutionCounts);
+	//System.out.println("\n\nInit Execution Counts");
+	//RawBackend.printCounts(RawBackend.initExecutionCounts);
+	
 	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");

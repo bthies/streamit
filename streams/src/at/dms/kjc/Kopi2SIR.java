@@ -1827,6 +1827,40 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    //we want to ignore remove this method from the block
 	     return null;
 	}
+        else if (ident.equals("setIOTypes")) {
+            // Phased filter syntax for setting I/O types.  This has
+            // two arguments, which are null or Class objects.
+            if (parentStream instanceof SIRFilter)
+            {
+                SIRFilter filter = (SIRFilter)parentStream;
+                if (args[0] instanceof JClassExpression)
+                    filter.setInputType(((JClassExpression)args[0]).getClassType());
+                else if (args[0] instanceof JStringLiteral)
+                    filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
+
+                if (args[1] instanceof JClassExpression)
+                    filter.setOutputType(((JClassExpression)args[1]).getClassType());
+                else if (args[1] instanceof JStringLiteral)
+                    filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+            }
+            else if (parentStream instanceof SIRPhasedFilter)
+            {
+                SIRPhasedFilter filter = (SIRPhasedFilter)parentStream;
+                if (args[0] instanceof JClassExpression)
+                    filter.setInputType(((JClassExpression)args[0]).getClassType());
+                else if (args[0] instanceof JStringLiteral)
+                    filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
+
+                if (args[1] instanceof JClassExpression)
+                    filter.setOutputType(((JClassExpression)args[1]).getClassType());
+                else if (args[1] instanceof JStringLiteral)
+                    filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+            }
+            else
+                at.dms.util.Utils.fail(printLine(self) +
+                                       "setIOTypes() outside a filter");
+            return null;
+        }
         else if (ident.equals("phase")) {
             // This is special.  There should be one parameter, which
             // is an anonymous stream creator; we need to get information

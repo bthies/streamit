@@ -87,6 +87,7 @@ public class SpaceTimeBackend
 	GenerateSwitchCode.run(rawChip);
 	//generate the compute code from the SIR
 	GenerateComputeCode.run(rawChip);
+	Makefile.generate(rawChip);
     }
 }
 

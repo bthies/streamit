@@ -29,7 +29,7 @@ public class RawTile {
 	//because the simulator only simulates 4x4 or 8x8 we
 	//have to translate the tile number according to these layouts
 	int columns = 4;
-	if (rawChip.getYSize() > 4)
+	if (rawChip.getYSize() > 4 || rawChip.getXSize() > 4)
 	    columns = 8;
 	tileNumber = (X * columns) + Y;
     }

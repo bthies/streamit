@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.5 2004-02-19 16:44:49 dmaze Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.6 2004-02-20 14:39:18 dmaze Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -34,6 +34,8 @@ public class SIRToStreamIt
         // Flattener code: run constant prop and such.
         ConstantProp.propagateAndUnroll(str);
         ConstructSIRTree.doit(str);
+        FieldProp.doPropagate(str);
+        new BlockFlattener().flattenBlocks(str);
         
         SIRToStreamIt s2s = new SIRToStreamIt(new TabbedPrintWriter(new PrintWriter(System.out)));
 

@@ -28,17 +28,15 @@ class DataSource extends Filter
   int targetBeam;
   int targetSample;
 
-  float threshold
+  float threshold;
+
+  int currentSample;
+  int currentBeam;
 
   public DataSource (int nBeams, int nSamples,
 		     int tarBeam, int tarSample, float thresh)
   {
     super (nBeams, nSamples, tarBeam, tarSample, thresh);
-  }
-
-  public void initIO()
-  {
-    streamInput = input;
   }
 
   public void init(int nBeams, int nSamples,
@@ -50,17 +48,40 @@ class DataSource extends Filter
     targetSample       = tarSample;
     threshold          = thresh;
 
-    input = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
+    currentBeam = 0;
+    currentSample = 0;
+
+    input = new Channel (Float.TYPE, 1);
   }
 
   public void work()
   {
-    // Need to associate each input value with a beam and sample
-    //   check if input is above detection threshold
-    //   if input is above detection threshhold and not in right place
-    //     error
-    //   if input is in right place but not above detection threshold
-    //     error
+    // No noise in input data -> no need for cfar filter -> detection is elementwise
+    float inputData = input.popFloat();
+    if(input >= threshold)
+    {
+      if(currentSample != targetSample && currentBeam != targetBeam)
+      {
+	// Bad things
+      }
+    }
+    if(input < threshold)
+    {
+      if(currentSample == targetSample && currentBeam == targetBeam))
+      {
+	// More Bad things
+      }
+    }
+    currentSample++;
+    if (currentSample > numSamples)
+    {
+      currentSample = 0;
+      currentBeam++;
+    }
+    if(currentBeam > numBeams)
+    {
+      currentBeam = 0;
+    }
   }
 
 }

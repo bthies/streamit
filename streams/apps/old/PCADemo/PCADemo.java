@@ -14,17 +14,32 @@ public class PCADemo extends StreamIt
 
   public void init()
   {
-    int numChannels         = 48;
-    int numSamples          = 4096;
-    int numBeams            = 16;
-    int numCoarseFilterTaps = 64;
-    int numFineFilterTaps   = 16;
+    int numChannels           = 48;
+    int numSamples            = 4096;
+    int numBeams              = 16;
+    int numCoarseFilterTaps   = 16;
+    int numFineFilterTaps     = 64;
+    int coarseDecimationRatio = 1;
+    int fineDecimationRation  = 1;
+    int numPostDec1           = numSamples/coarseDecimationRatio;
+    int numPostDec2           = numPostDec1/fineDecimationRation;
+    int mfSize                = numSegments*numPostDec2;
+    int pulseSize             = numPostDec2/2;
+    int predecPulseSize       = pulseSize*coarseDecimationRatio*fineDecimationRatio;
+    int targetBeam            = numBeams/4;
+    int targetSample          = numSamples/4;
+    int targetSamplePostdec   = 1 + targetSample/coarseDecimationRatio/fineDecimationRatio;
+    float dOverLambda         = 0.5;
+    float cfarThreshold       = 0.95*dOverLambda*numChannels*(0.5*pulseSize);
 
-    add(new DataSource(numChannels, numSamples));
+    add(new DataSource(numChannels, numSamples, numBeams,
+		       targetBeam, targetSample, predecPulseSize));
     add(new FirFilter(numCoarseFilterTaps));
     add(new FirFilter(numFineFilterTaps));
     add(new BeamFormer(numBeams, numChannels, numSamples));
     add(new FirFilter(numSamples));
-    add(new TestDetector(numChannels*numSamples));
+    add(new ComplexToMag);
+    add(new TestDetector(numBeams, numSamples, targetBeam,
+			 targetSample, cfarThreshold));
   }
 }

@@ -17,7 +17,8 @@ benchmarks: FIRProgram.java \
 	    CoarseSerializedBeamFormer.java \
 	    LinkedFMTest.java \
 	    OneBitDToA.java \
-            ChannelVocoder.java
+            ChannelVocoder.java \
+	    Oversampler.java
 
 
 

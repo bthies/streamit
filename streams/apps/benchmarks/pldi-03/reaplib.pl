@@ -8,8 +8,12 @@ use strict;
 # the streamit frontend, the streamit compiler, the C compiler and dynamorio
 my $STREAMIT_FRONTEND    = "java streamit.frontend.ToJava --full";
 my $STREAMIT_COMPILER    = "java -Xmx1500M  at.dms.kjc.Main -s";
-my $STREAMIT_GCC         = "gcc -O2 -I/u/aalamb/streams/library/c -L/u/aalamb/streams/library/c";
-my $STREAMIT_GCC_POSTFIX = "-lstreamit -lsrfftw -lsfftw -lm";
+my $STREAMIT_GCC         = ("gcc -O2 " .
+			    "-I" . $ENV{"STREAMIT_HOME"} . "/library/c " .
+			    "-I" . $ENV{"ATLAS_HOME"} . "/include " .
+			    "-L" . $ENV{"STREAMIT_HOME"} . "/library/c " .
+			    "-L" . $ENV{"ATLAS_HOME"} . "/lib/Linux_P4SSE2 ");
+my $STREAMIT_GCC_POSTFIX = "-lcblas -latlas -lstreamit -lsrfftw -lsfftw -lm";
 my $STREAMIT_DYNAMORIO   = "dynamorio";
 
 # the program to use to compare output
@@ -200,7 +204,7 @@ sub time_execution {
     #temp file
     my $TEMP_FILE = "timing_output" . rand() . ".txt";
     # crazy redirect hack to get access to the output of the "time" command
-    `/usr/local/bin/bash -c \"time $filename_base.exe -i $num_iters\" >/dev/null  2>$TEMP_FILE`;
+    `/usr/local/bin/bash -c \"time $path/$filename_base.exe -i $num_iters\" >/dev/null  2>$TEMP_FILE`;
     my $time_result = read_file($TEMP_FILE);
     `rm $TEMP_FILE`;
 
@@ -266,7 +270,7 @@ sub save_tsv {
 
     # now, save a copy of the tsv file to the results diectory
     my $save_dir = "opt_results";
-    `mkdir $save_dir`;
+    `mkdir -p $save_dir`;
     my $date_stamp = get_date_time_stamp();
     # pull out just the name from the full filename
     my @parts = split("/", $filename);

@@ -2,7 +2,7 @@
 # AAL 6/25/2002 Script that runs regression tests every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb).
-# $Id: run_reg_tests.sh,v 1.6 2002-07-08 17:47:34 thies Exp $
+# $Id: run_reg_tests.sh,v 1.7 2002-07-15 21:42:48 aalamb Exp $
 
 # Environmental Variables
 # home directory for CVS
@@ -45,7 +45,7 @@ echo "Starting Regression Test Run" >>& $REG_LOG
 echo "**********" >>& $REG_LOG
 # get the latest copy from 
 cd $STREAMIT_HOME
-cvs update >>& $REG_LOG
+cvs update -dP >>& $REG_LOG
 cd compiler
 cd kopi
 ./compile >>& $REG_LOG

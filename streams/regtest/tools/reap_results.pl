@@ -4,14 +4,16 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.3 2002-07-12 20:21:39 aalamb Exp $
+# $Id: reap_results.pl,v 1.4 2002-07-15 21:42:48 aalamb Exp $
 
 # The basic idea is for each directory and file, 
-# run the streamit compiler targeting raw, modify the 
-# Makefile.streamit to run the simulator to produce 
-# a blood-graph and save the bloodgraph to an appropriate location.
-# (other performance information might also be gleaned from the 
-# output of the raw simulator
+# run the streamit compiler targeting raw, run the
+# simulator to gather numbers like cycles/steady state execution
+# Then, we create a new instrmented Makefile (Makefile.streamit.blood) from  
+# Makefile.streamit that saves flops numbers and creates a  
+# a blood-graph saved to an appropriate location.
+# (other performance information is also be gleaned from the 
+# output of the raw simulator)
 
 
 use strict;
@@ -32,11 +34,11 @@ if ($input_file_name ne "") {
     print "reading tests from input file: $input_file_name\n"; 
     @results_wanted = split("\n", read_file($input_file_name));
 } else {
-    @results_wanted = ("$examples_dir/fft:FFT_inlined.java:--raw 4:0:32",
-		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition:0:32",
-		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --fusion:0:32",
-		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop:0:32",
-		       "$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop --fusion:0:32",
+    @results_wanted = (#"$examples_dir/fft:FFT_inlined.java:--raw 4:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 4 --partition:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --fusion:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop:0:32",
+		       #"$examples_dir/fft:FFT_inlined.java:--raw 4 --partition --constprop --fusion:0:32",
 		       #"$examples_dir/fft:FFT_inlined.java:--raw 8:0:32",
 		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --fusion:0:32",
 		       #"$examples_dir/fft:FFT_inlined.java:--raw 8 --constprop:0:32",
@@ -45,6 +47,8 @@ if ($input_file_name ne "") {
 		       #"$examples_dir/fib:Fib.java:--raw 4 --partition:0:1",
 		       #"$examples_dir/fib:Fib.java:--raw 4 --partition --fusion:0:1",
 		       #"$examples_dir/fib:Fib.java:--raw 4 --partition --fusion --constprop:0:1",
+
+		       "$examples_dir/nokia-fine/:Linkeddcalc.java:--raw 8:0:72",
 		       
 		       #"$apps_dir/FMRadio:LinkedFMTest.java:--raw 8 --partition"
 		       );
@@ -103,8 +107,8 @@ generate_summary($result_directory, "$result_directory/summary.txt");
 print "parent: done generating summary.\n";
 
 #remove all old temp directories
-#print "parent: removing directories\n"; 
-#print `rm -rf /tmp/resultTemp*`;
+print "parent: removing directories\n"; 
+print `rm -rf /tmp/resultTemp*`;
 
 
 

@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.2 2002-07-12 20:21:39 aalamb Exp $
+# $Id: reaplib.pl,v 1.3 2002-07-15 21:42:48 aalamb Exp $
 
 use strict;
 
@@ -98,7 +98,12 @@ sub parse_results {
 	$total_ss_iterations++;
     }
     # assemble return string
-    my $average_cycles_per_ss = $running_sum / $total_ss_iterations;
+    my $average_cycles_per_ss;
+    if ($total_ss_iterations != 0) {
+	$average_cycles_per_ss = $running_sum / $total_ss_iterations;
+    } else {
+	$average_cycles_per_ss = 0;
+    }
     return "$first_ss_iter_cycle_count:$average_cycles_per_ss";
 }
 
@@ -268,7 +273,9 @@ sub make_tex_table {
 
     # set up doc preamble
     my $tex = "\\documentclass{article}\n";
+    $tex.= "\\usepackage{lscape}\n";
     $tex .= "\\begin{document}\n";
+    $tex .= "\\begin{landscape}\n";
 
     # set up table header
     my $header = shift(@data); # grab first row (headings)
@@ -292,7 +299,7 @@ sub make_tex_table {
     # end the table
     $tex .= "\\end{tabular}\n";
 
-
+    $tex .= "\\end{landscape}\n";
     $tex .= "\\end{document}\n";
 
     # finally, replace _ with \_ because tex sux

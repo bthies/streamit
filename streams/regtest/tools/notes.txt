@@ -1,3 +1,17 @@
+Check bottom of 6.673 lecturer's comments for last line and send to tamara: tamarind
+
+
+
+
 global gFLOPS = 0;
 fn __clock_handler(hms) {local i;for(i=0;i<gNumProc;i++) {gFLOPS +=imem_instr_is_fpu(get_imem_instr(i,get_pc_for_proc(i)));}}
 EventManager_RegisterHandler("clock", "__clock_handler");
+
+
+Linkeddcalc:
+
+~300000 cycles for initialization
+[01: 00001b6de]: 74081.937500
+[01: 00001b6ff]: 3.009301
+[01: 00001b720]: 0.993980
+

@@ -57,13 +57,50 @@ public class FusePipe {
     protected static final String INIT_PARAM_NAME = "___param";
 
     /**
+     * Fuses all candidate portions of <pipe>.  Candidates for fusion
+     * are sequences of filters that do not have special,
+     * compiler-defined work functions.
+     */
+    public static void fuse(SIRPipeline pipe) {
+	int start = 0;
+	do {
+	    // find start of candidate stretch for fusion
+	    while (start < pipe.size()-1 && !isFusable(pipe.get(start))) {
+		start++;
+	    }
+	    // find end of candidate stretch for fusion
+	    int end = start;
+	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1))) {
+		end++;
+	    }
+	    // if we found anything to fuse
+	    if (end > start) {
+		fuse(pipe, 
+		     (SIRFilter)pipe.get(start),
+		     (SIRFilter)pipe.get(end));
+		System.out.println("Fusing " + (end-start+1) + " filters!");
+	    }
+	    start = end + 1;
+	} while (start < pipe.size()-1);
+    }
+
+    /**
+     * Returns whether or note <str> is a candidate component for
+     * fusion.  For now, <str> must be a filter with a work function
+     * in order for us to fuse it.
+     */
+    private static boolean isFusable(SIRStream str) {
+	return (str instanceof SIRFilter) && ((SIRFilter)str).needsWork();
+    }
+	
+    /**
      * Fuses filters <first> ... <last> in Pipeline <parent>.  For
      * now, assumes: 
      *
      *  1. all of <first> ... <last> are consecutive filters in <parent>.
      *
      */
-    public static void doit(SIRPipeline parent,
+    public static void fuse(SIRPipeline parent,
 			    SIRFilter first,
 			    SIRFilter last) {
 	// make a list of the filters to be fused
@@ -216,17 +253,25 @@ public class FusePipe {
 		// the pop buffer
 		popBuffer[j] = makePopBuffer(filter, num[j], i);
 
-		// the pop counter
+		// the pop counter.
 		popCounter[j] = 
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    POP_INDEX_NAME + "_" + j + "_" + i,
-					    new JIntLiteral(0));
+					    new
+					    JIntLiteral(filter.getPeekInt()
+							- 1));
 	    
-		// the push counter
+		// the push counter.  In the steady state, the initial
+		// value of the push counter is the first slot after
+		// the peek values are restored, which is peek-pop.
+		// In the inital work function, the push counter
+		// starts at zero.
+		int pushInit = 
+		    j==0 ? 0 : filter.getPeekInt() - filter.getPopInt();
 		pushCounter[j] = 
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    PUSH_INDEX_NAME + "_" + j + "_" +i,
-					    new JIntLiteral(0));
+					    new JIntLiteral(pushInit));
 
 		// the exec counter
 		loopCounter[j] = 
@@ -386,28 +431,32 @@ public class FusePipe {
 	    // if the current filter doesn't execute at all, continue
 	    // (FIXME this is part of some kind of special case for 
 	    // filters that don't execute at all in a schedule, I think.)
-	    if (curPhase.num==0) { continue; }
+	    if (curPhase.num!=0) {
 
-	    // if in the steady-state phase, restore the peek values
-	    if (!init) {
-		statements.addStatement(makePeekRestore(cur, curPhase));
+		// if in the steady-state phase, restore the peek values
+		if (!init) {
+		    statements.addStatement(makePeekRestore(cur, curPhase));
+		}
+		// get the filter's work function
+		JMethodDeclaration work = cur.filter.getWork();
+		// take a deep breath and clone the body of the work function
+		JBlock oldBody = new JBlock(null, work.getStatements(), null);
+		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
+		// mutate <statements> to make them fit for fusion
+		FusingVisitor fuser = 
+		    new FusingVisitor(curPhase, nextPhase, i!=0,
+				      i!=filterInfo.size()-1);
+		for (ListIterator it = body.getStatementIterator(); 
+		     it.hasNext() ; ) {
+		    ((JStatement)it.next()).accept(fuser);
+		}
+		// get <body> into a loop in <statements>
+		statements.addStatement(makeForLoop(body,
+						    curPhase.loopCounter,
+						    new 
+						    JIntLiteral(curPhase.num))
+					);
 	    }
-	    // get the filter's work function
-	    JMethodDeclaration work = cur.filter.getWork();
-	    // take a deep breath and clone the body of the work function
-	    JBlock oldBody = new JBlock(null, work.getStatements(), null);
-	    JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
-	    // mutate <statements> to make them fit for fusion
-	    FusingVisitor fuser = new FusingVisitor(curPhase, nextPhase, i!=0,
-						    i!=filterInfo.size()-1);
-	    for (ListIterator it = body.getStatementIterator(); it.hasNext();){
-		((JStatement)it.next()).accept(fuser);
-	    }
-	    // get <body> into a loop in <statements>
-	    statements.addStatement(makeForLoop(body,
-						curPhase.loopCounter,
-						new JIntLiteral(curPhase.num))
-				    );
 	    // get the postlude--copying state to the peek buffer
 	    statements.addStatement(makePeekBackup(cur, curPhase));
 	}
@@ -433,7 +482,7 @@ public class FusePipe {
 	// the rhs of the source of the assignment
 	JExpression sourceRhs = 
 	    new JLocalVariableExpression(null, 
-					 phaseInfo.popCounter);
+					 phaseInfo.loopCounter);
 
 	// the lhs of the dest of the assignment
 	JExpression destLhs = 
@@ -443,7 +492,7 @@ public class FusePipe {
 	// the rhs of the dest of the assignment
 	JExpression destRhs = 
 	    new JLocalVariableExpression(null,
-					 phaseInfo.popCounter);
+					 phaseInfo.loopCounter);
 
 	// the expression that copies items from the pop buffer to the
 	// peek buffer
@@ -459,32 +508,13 @@ public class FusePipe {
 	// finally we have the body of the loop
 	JStatement body = new JExpressionStatement(null, copyExp, null);
 
-	// make a for loop that executes (peek-pop-1) times.
-	JStatement loop = makeForLoop(body,
-				      phaseInfo.popCounter, 
-				      new JIntLiteral(filterInfo.filter.
-						      getPeekInt() -
-						      filterInfo.filter.
-						      getPopInt() - 1));
-
-	// follow the for loop with a statement assigning the
-	// pushCount to the popCount, so that the producer will start
-	// filling up the queue at the right place.
-	JAssignmentExpression assignExp =
-	    new 
-	    JAssignmentExpression(null,
-				  new JLocalVariableExpression(null,
-							       phaseInfo.
-							       pushCounter),
-				  new JLocalVariableExpression(null,
-							       phaseInfo.
-							       popCounter));
-	JExpressionStatement assign = 
-	    new JExpressionStatement(null, assignExp, null);
-
-	// return the statement sequence
-	JStatement[] sequence = { loop, assign };
-	return new JBlock(null, sequence, null);
+	// return a for loop that executes (peek-pop) times.
+	return makeForLoop(body,
+			   phaseInfo.loopCounter, 
+			   new JIntLiteral(filterInfo.filter.
+					   getPeekInt() -
+					   filterInfo.filter.
+					   getPopInt()));
     }
 
     /**
@@ -514,14 +544,22 @@ public class FusePipe {
 	    new JLocalVariableExpression(null,
 					 phaseInfo.popBuffer);
 	    
-	// the rhs of the source of the assignment
-	JExpression sourceRhs = 
+	// the rhs of the source of the assignment...
+	JExpression sourceRhs1 = 
 	    new
 	    JAddExpression(null, 
 			   new JLocalVariableExpression(null, 
 							phaseInfo.loopCounter),
 			   new JLocalVariableExpression(null,
-							phaseInfo.popCounter));
+						       phaseInfo.pushCounter));
+	// need to subtract the difference in peek and pop counts to
+	// see what we have to backup
+	JExpression sourceRhs =
+	    new JMinusExpression(null,
+				 sourceRhs1,
+				 new JIntLiteral(filterInfo.filter.getPeekInt()
+						 -filterInfo.filter.getPopInt()
+						 ));
 
 	// the expression that copies items from the pop buffer to the
 	// peek buffer
@@ -537,20 +575,21 @@ public class FusePipe {
 	// finally we have the body of the loop
 	JStatement body = new JExpressionStatement(null, copyExp, null);
 
-	// return a for loop that executes (peek-pop-1) times.
+	// return a for loop that executes (peek-pop) times.
 	return makeForLoop(body,
 			   phaseInfo.loopCounter, 
 			   new JIntLiteral(filterInfo.filter.getPeekInt() -
-					   filterInfo.filter.getPopInt() - 1));
+					   filterInfo.filter.getPopInt()));
     }
 
     /**
      * Returns a for loop that uses local variable <var> to count
-     * <count> times with the body of the loop being <body>.
+     * <count> times with the body of the loop being <body>.  If count
+     * is non-positive, just returns the initial assignment statement.
      */
-    private static JForStatement makeForLoop(JStatement body,
-					     JLocalVariable var,
-					     JExpression count) {
+    private static JStatement makeForLoop(JStatement body,
+					  JLocalVariable var,
+					  JExpression count) {
 	// make init statement - assign zero to <var>.  We need to use
 	// an expression list statement to follow the convention of
 	// other for loops and to get the codegen right.
@@ -559,6 +598,14 @@ public class FusePipe {
 				      new JLocalVariableExpression(null, var),
 				      new JIntLiteral(0)) };
 	JStatement init = new JExpressionListStatement(null, initExpr, null);
+	// if count==0, just return init statement
+	if (count instanceof JIntLiteral) {
+	    int intCount = ((JIntLiteral)count).intValue();
+	    if (intCount<=0) {
+		// return assignment statement
+		return init;
+	    }
+	}
 	// make conditional - test if <var> less than <count>
 	JExpression cond = 
 	    new JRelationalExpression(null,
@@ -590,7 +637,7 @@ public class FusePipe {
 	    ((FilterInfo)filterInfo.get(0)).filter.getParent().getInit();
 	
 	// make an init function builder out of <filterList>
-	InitFuser initFuser = new InitFuser(filterInfo, result);
+	InitFuser initFuser = new InitFuser(filterInfo, initWork, result);
 	
 	// traverse <parentInit> with initFuser
 	parentInit.accept(initFuser);
@@ -674,11 +721,16 @@ public class FusePipe {
 	FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
 
 	// calculate the peek, pop, and push count of the fused filter
-	int peekCount = first.filter.getPeekInt();
 	int popCount = 
 	    (first.init.num + first.steady.num) * first.filter.getPopInt();
+	int peekCount = 
+	    (first.filter.getPeekInt() - first.filter.getPopInt()) + popCount;
 	int pushCount = 
 	    (last.init.num + last.steady.num) * last.filter.getPushInt();
+
+	System.out.println(" Fused filter peek = " + peekCount);
+	System.out.println("              pop  = " + popCount);
+	System.out.println("              push = " + pushCount);
 
 	// make a new filter to represent the fused combo
 	result.copyState(new SIRFilter(first.filter.getParent(),
@@ -696,6 +748,7 @@ public class FusePipe {
 	// set init functions and work functions of fused filter
 	result.setInit(init);
 	result.setWork(steadyWork);
+	result.setInitWork(initWork);
     }
 				
 }
@@ -935,16 +988,24 @@ class InitFuser extends SLIRReplacingVisitor {
     private JMethodDeclaration initFunction;
 
     /**
+     * The initWork function of the filter we're fusing.
+     */
+    private JMethodDeclaration initWork;
+
+    /**
      * <fusedFilter> represents what -will- be the result of the
      * fusion.  It has been allocated, but is not filled in with
      * correct values yet.
      */
-    public InitFuser(List filterInfo, SIRFilter fusedFilter) {
+    public InitFuser(List filterInfo, 
+		     JMethodDeclaration initWork,
+		     SIRFilter fusedFilter) {
 	this.filterInfo = filterInfo;
+	this.initWork = initWork;
+	this.fusedFilter = fusedFilter;
 	this.fusedBlock = new JBlock(null, new JStatement[0], null);
 	this.fusedParam = new LinkedList();
 	this.fusedArgs = new LinkedList();
-	this.fusedFilter = fusedFilter;
     }
 
     /**
@@ -1049,6 +1110,13 @@ class InitFuser extends SLIRReplacingVisitor {
 					  dims,
 					  null)), null));
 	}
+	// add call to initWork function
+	JExpression call = 
+	    new JMethodCallExpression(null,
+				      new JThisExpression(null),
+				      initWork.getName(),
+				      JExpression.EMPTY);
+	fusedBlock.addStatement(new JExpressionStatement(null, call, null));
 	// now we can make the init function
 	this.initFunction = new JMethodDeclaration(null,
 				      at.dms.kjc.Constants.ACC_PUBLIC,

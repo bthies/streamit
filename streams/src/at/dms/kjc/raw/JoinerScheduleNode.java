@@ -42,7 +42,7 @@ public class JoinerScheduleNode
     public String getC(CType ctype) {
 	StringBuffer ret = new StringBuffer();
 	StringBuffer arrayAccess = new StringBuffer();
-	boolean fp = ctype.equals(CStdType.Float);
+	boolean fp = ctype.isFloatingPoint();
 	String dims[] = null; 
 	
 	//true if the next node is a dup
@@ -74,16 +74,30 @@ public class JoinerScheduleNode
 	    ret.append(dupRecCode(arrayAccess));
 	}
 	else if (type == FIRE) {
-	    ret.append("/* send */ asm volatile(\" lw $csto, %0\" : \"=m\"(__buffer" + 
-		       buffer + "[__first" + buffer + "++]");
+	    if (KjcOptions.altcodegen) {
+		ret.append("csto.");
+		if (fp)
+		    ret.append("fp");
+		else 
+		    ret.append("integer");
+		ret.append(" = ");
+	    }
+	    else 
+		ret.append("/* send */ asm volatile(\" lw $csto, %0\" : \"=m\"(");
+	    ret.append("__buffer" + buffer + "[__first" + buffer + "++]");
 	    ret.append(arrayAccess);
-	    ret.append("));\n");
+	    //end the send statement...
+	    if (KjcOptions.altcodegen) 
+		ret.append(";\n");
+	    else 
+		ret.append("));\n");
 	    ret.append("}\n");
 	    ret.append("__first" + buffer + " = __first" + buffer + " & __MINUSONE__;\n");
-	    
+	   
 	}
 	else if (type == RECEIVE) { //receive
-	    ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
+	    if (!KjcOptions.altcodegen) 
+		ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
 	    if (nextDup) {
 		ret.append(DUPVAR);
 	    }
@@ -91,10 +105,18 @@ public class JoinerScheduleNode
 		ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
 	    }
 	    ret.append(arrayAccess);
-	    //	    ret.append("= static_receive_to_mem");
-	    //	    if (fp)
-	    //		ret.append("_f");
-	    ret.append("));\n");
+	    
+	    if (KjcOptions.altcodegen){
+		ret.append(" = csti.");
+		if (fp) 
+		    ret.append("fp");
+		else 
+		    ret.append("integer");
+		ret.append(";\n");
+	    }
+	    else
+		ret.append("));\n");
+
 	    if (nextDup) {
 		ret.append(dupRecCode(arrayAccess));
 	    }

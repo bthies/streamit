@@ -126,6 +126,7 @@ public class RawBackend {
 
 	// layout the components (assign filters to tiles)	
 	Layout.simAnnealAssign(rawFlattener.top);
+	//Layout.handAssign(rawFlattener.top);
 	
 	//Layout.handAssign(rawFlattener.top);
 	System.out.println("Assign End.");

@@ -158,23 +158,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
-	if(KjcOptions.sketchycodegen) {
-	    print("volatile int router_mem;\n");
-	    print("volatile float router_mem_f;\n");
-	    print("register int router asm(\"$24\");\n");
-	    print("register float router_f asm(\"$24\");\n\n");
-	    print("static inline int static_receive_sketch() {\n");
-	    print("  int __return;\n");
-	    print("  router=router_mem;\n");
-	    print("  /* receive */ asm (\"or %0,$0,%1\" : \"=r\" (__return), \"=r\" (router) : \"1\" (router));\n");
-	    print("  return __return;\n");
-	    print("}\n\n");
-	    print("static inline float static_receive_sketch_f() {\n");
-	    print("  float __return;\n");
-	    print("  router_f=router_mem_f;\n");
-	    print("  /* receive */ asm (\"or %0,$0,%1\" : \"=r\" (__return), \"=r\" (router_f) : \"1\" (router_f));\n");
-	    print("  return __return;\n");
-	    print("}\n\n");
+	if(KjcOptions.altcodegen) {
+	    print("union static_network {\n");
+	    print("  int integer;\n");
+	    print("  float fp;\n");
+	    print("};\n\n");
+	    print("extern volatile union static_network csto;\n");
+	    print("extern volatile union static_network csti;\n");
 	}
 
 	//print the inline asm 
@@ -986,19 +976,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
-	    if(KjcOptions.sketchycodegen) {
-		if(args[0].getType().isFloatingPoint())
-		    print("router_f=router_mem_f;\n");
-		else
-		    print("router=router_mem;\n");
-		print ("/* receive */ asm (\"sw %1, %0\" : \"=m\" (");
+	    if(KjcOptions.altcodegen) {
 		visitArgs(args, 0);
-		print("), \"=r\" (");
+		print(" = ");
 		if(args[0].getType().isFloatingPoint())
-		    print("router_f) : \"r\" (router_f))");
+		    print("csti.fp");
 		else
-		    print("router) : \"1\" (router))");
-	    } else {
+		    print("csti.integer");
+		print(";");
+       	    } 
+	    else {
 		print ("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
 		visitArgs(args, 0);
 		print("));");
@@ -1483,23 +1470,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType tapeType,
 			    JExpression val) 
     {
-	if(KjcOptions.sketchycodegen) {
-	    print ("/* send */ asm (\"or %0, $0, %1\" : \"=r\" (");
-	    if(tapeType.isFloatingPoint()) {
-		print("router_f) : \"r\" ((float)");
-		val.accept(this);
-		print("));\nrouter_f=router_mem_f");
-	    } else {
-		print("router) : \"r\" ((int)");
-		val.accept(this);
-		print("));\nrouter=router_mem");
-	    }
+	if(KjcOptions.altcodegen) {
+	    if(tapeType.isFloatingPoint()) 
+		print("csto.fp = ");
+	    else 
+		print("csto.integer = ");
+	    //temporary fix for type changing filters
+	    print("(" + tapeType + ")");
+	    val.accept(this);
 	} else {
 	    if (NOCOMM)
 		print("(put(");
 	    else 
-		print("(static_send(");
-	    
+		print("(static_send(");    
 	    //temporary fix for type changing filters
 	    print("(" + tapeType + ")");
 	    
@@ -1521,22 +1504,17 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
 	}
 
-	if(KjcOptions.sketchycodegen) {
-	    print ("/* send */ asm (\"or %0, $0, %1\" : \"=r\" (");
+	if(KjcOptions.altcodegen) {
+	    print("{\n");
 	    if(tapeType.isFloatingPoint()) {
-		print("router_f) : \"r\" ((float)");
-		val.accept(this);
-		for (int i = 0; i < dims.length; i++) {
-		    print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-		}
-		print("));\nrouter_f=router_mem_f");
-	    } else {
-		print("router) : \"r\" ((int)");
-		val.accept(this);
-		for (int i = 0; i < dims.length; i++) {
-		    print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
-		}
-		print("));\nrouter=router_mem");
+		print("csto.fp = ");
+	    }
+	    else {
+		print("csti.integer = ");
+	    }
+	    val.accept(this);
+	    for (int i = 0; i < dims.length; i++) {
+		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
 	    }
 	    print(";\n}\n");
 	} else {

@@ -109,19 +109,39 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	    (SIRPopExpression)
 	    super.visitPopExpression(oldSelf, oldTapeType);  
 
-	String floatSuffix;
-	if(KjcOptions.sketchycodegen)
-	    floatSuffix="_sketch";
+	if (KjcOptions.altcodegen) 
+	    return altCodeGen(self);
 	else
-	    floatSuffix="";
-	//append the _f if this pop expression pops floats
-	if (self.getType().equals(CStdType.Float) ||
-	    self.getType().equals(CStdType.Double))
-	    if(KjcOptions.sketchycodegen)
-		floatSuffix = "_sketch_f";
-	    else
-		floatSuffix = "_f";
+	    return normalCodeGen(self);
+    }
+    
+    private Object altCodeGen(SIRPopExpression self) {
+	String variable = "integer";
+	CType type = CStdType.Integer;
+
+	if (self.getType().isFloatingPoint()) {
+	    type = CStdType.Float;
+	    variable = "fp";
+	}	
+
+	//hopefully this works: the "." in the var name
+	JLocalVariableExpression csti = 
+	    new JLocalVariableExpression(null,
+					 new JGeneratedLocalVariable(null, 0, type, 
+							    "csti." + variable,
+							    null));
+							    
+	return csti;
+    }
+    
+    private Object normalCodeGen(SIRPopExpression self) {
+	String floatSuffix;
 	
+	floatSuffix = "";
+
+	//append the _f if this pop expression pops floats
+	if (self.getType().isFloatingPoint())
+	    floatSuffix = "_f";
 	
 	//create the method call for static_receive()
 	JMethodCallExpression static_receive = 
@@ -133,7 +153,7 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	
 	return static_receive;
     }
-    
+
     public Object visitPeekExpression(SIRPeekExpression oldSelf,
 				      CType oldTapeType,
 				      JExpression oldArg) {

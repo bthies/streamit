@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.27 2003-03-22 21:35:01 thies Exp $
+ * $Id: KjcOptions.opt,v 1.28 2003-03-22 22:23:43 thies Exp $
  */
 
 prefix Kjc
@@ -127,6 +127,12 @@ longname		"filter"
 	help		"Warning filter"
 
 // Begin StreamIt Options ----------------------------------------------
+
+longname		"print_partitioned_source"
+	shortcut	"c"
+	type		boolean
+	default		"false"
+	help		"Dumps StreamIt program that has same communication pattern as graph AFTER partitioning (for scheduler debugging)."
 
 longname		"debug"
 	shortcut	"g"

@@ -136,7 +136,7 @@ public class Util extends at.dms.util.Utils {
 	if (joiner != null) 
 	    return ((SIRFilter)joiner.contents).getOutputType();
 	else 
-	    return CStdType.Null;
+	    return CStdType.Void;
     }
     
     public static CType getOutputType(FlatNode node) {

@@ -114,7 +114,7 @@ public class SIRScheduler implements Constants {
     private static void checkSchedule(SIRStream str, Scheduler scheduler, HashMap[] execCounts) {
 	// this only works if <str> is stand-alone -- that is, it
 	// starts with a source and ends with a sink
-	if (str.getInputType()!=CStdType.Null || str.getOutputType()!=CStdType.Null) {
+	if (str.getInputType()!=CStdType.Void || str.getOutputType()!=CStdType.Void) {
 	    return;
 	}
 	try {

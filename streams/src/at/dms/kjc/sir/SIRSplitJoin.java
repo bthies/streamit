@@ -88,39 +88,32 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * Returns the output type of this.
      */
     public CType getOutputType() {
-	// first look for a non-null type (since some of them might
+	// first look for a non-void type (since some of them might
 	// not be feeding into the joiner)
 	for (int i=0; i<size(); i++) {
 	    CType type = get(i).getOutputType();
-	    if (type!=CStdType.Null) {
+	    if (type!=CStdType.Void) {
 		return type;
 	    }
 	}
-	// otherwise, they're all null, so return null
-	return CStdType.Null;
+	// otherwise, they're all void, so return void
+	return CStdType.Void;
     }
     
     /**
      * Returns the input type of this.
      */
     public CType getInputType() {
-	// first look for a non-null type (since some of them might
+	// first look for a non-void type (since some of them might
 	// not be reading in from the splitter)
-	boolean isVoid=false;
 	for (int i=0; i<size(); i++) {
 	    CType type = get(i).getInputType();
-	    if (type!=CStdType.Null) {
-		if(type==CStdType.Void)
-		    isVoid=true;
-		else
-		    return type;
+	    if (type!=CStdType.Void) {
+		return type;
 	    }
 	}
-	// otherwise, they're all null (or void)
-	if(isVoid)
-	    return CStdType.Void;
-	else
-	    return CStdType.Null;
+	// otherwise, they're all void
+	return CStdType.Void;
     }
 
     public int getPushForSchedule(HashMap[] counts) {
@@ -268,9 +261,9 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 		}
 		// add identities to wrapper
 		for (int j=height; j<max; j++) {
-		    if (wrapper.getOutputType()!=CStdType.Null) {
+		    if (wrapper.getOutputType()!=CStdType.Void) {
 			wrapper.add(new SIRIdentity(child.getOutputType()));
-		    } else if (wrapper.getInputType()!=CStdType.Null) {
+		    } else if (wrapper.getInputType()!=CStdType.Void) {
 			wrapper.add(0, new SIRIdentity(child.getInputType()));
 		    } else {
 			Utils.fail("Trying to extend a void->void child stream into a rectangular splitjoin.");

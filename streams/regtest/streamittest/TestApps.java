@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestApps.java,v 1.3 2002-06-28 22:18:38 aalamb Exp $
+ * $Id: TestApps.java,v 1.4 2002-07-01 19:17:46 aalamb Exp $
  **/
 package streamittest;
 
@@ -17,6 +17,10 @@ public class TestApps extends StreamITTestCase {
     static String STREAM_ROOT = null;
     static String APPS_ROOT = null;
 
+    public TestApps(String name) {
+	this(name, DEFAULT_FLAGS);
+    }
+    
     /**
      * Creates a new TestApps which will use the compiler options
      * specified by flags (defined in CompilerInterface.java).

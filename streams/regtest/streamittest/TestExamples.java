@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.3 2002-06-28 22:18:38 aalamb Exp $
+ * $Id: TestExamples.java,v 1.4 2002-07-01 19:17:46 aalamb Exp $
  **/
 package streamittest;
 
@@ -17,6 +17,10 @@ public class TestExamples extends StreamITTestCase {
     static String STREAM_ROOT = null;
     static String EXAMPLE_ROOT = null;
 
+    public TestExamples(String name) {
+	this(name, DEFAULT_FLAGS);
+    }
+    
     /**
      * Creates a new TestExamples which will use the compiler options
      * specified by flags (defined in CompilerInterface.java).
@@ -133,8 +137,11 @@ public class TestExamples extends StreamITTestCase {
     }
     
     public void testFm() {
-	doCompileTest(EXAMPLE_ROOT + "fm/",
-		      "*.java");
+	String root = EXAMPLE_ROOT + "fm/"; 
+	doMake(root);
+	doCompileRunVerifyTest(root,
+			       "LinkedFMTest.java",
+			       "LinkedFMTest.out");
     }
 
     public void testFile() {

@@ -5,15 +5,28 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.5 2002-06-28 22:18:38 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.6 2002-07-01 19:17:46 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
     static final String APPS_PATH     = "apps/";
 
+    static final int    DEFAULT_FLAGS = CompilerInterface.NONE;
+    
     /** Compiler interface for this test to use **/
     CompilerInterface compiler;
+
+    /**
+     * Create a new StreamITTestCase with the default compiler options.
+     **/
+    public StreamITTestCase(String name) {
+	this(name, DEFAULT_FLAGS);
+    }
     
+    /**
+     * Create a new StreamItTestCase with the
+     * specified compiler flags.
+     **/
     public StreamITTestCase(String name, int flags) {
 	super(name);
 	// create a compiler interface for the test case to use (set up the compiler options)
@@ -25,7 +38,7 @@ class StreamITTestCase extends TestCase {
      **/
     public void doCompileTest(String root,
 			      String filename) {
-
+	
     	assertTrue("Compile " + root + filename + "(" + compiler.getOptionsString() + ")",
 		   compiler.streamITCompile(root,
 					    filename));

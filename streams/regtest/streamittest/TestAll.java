@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.4 2002-06-25 20:02:31 aalamb Exp $
+ * $Id: TestAll.java,v 1.5 2002-07-01 19:17:46 aalamb Exp $
  **/
 package streamittest;
 
@@ -42,7 +42,7 @@ public class TestAll extends TestCase {
     public static void addUniprocessorTests(TestSuite allTests) {
 	// try with no optimizations running
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE));
-
+	
 	// try with const prop
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.CONSTPROP));
@@ -58,8 +58,9 @@ public class TestAll extends TestCase {
 				       CompilerInterface.UNROLL |
 				       CompilerInterface.FUSION |
 				       CompilerInterface.PARTITION));
-    }
 
+    }
+    
     /**
      * add the raw tests to the test suite framework.
      **/

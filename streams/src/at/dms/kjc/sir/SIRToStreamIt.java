@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.2 2004-02-17 20:34:23 dmaze Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.3 2004-02-18 20:04:00 dmaze Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -148,6 +148,23 @@ public class SIRToStreamIt
     {
         CType inType = self.getInputType();
         CType outType = self.getOutputType();
+        // Consider special-case inputs and outputs for feedback loops.
+        if (self instanceof SIRFeedbackLoop)
+        {
+            SIRFeedbackLoop fl = (SIRFeedbackLoop)self;
+
+            SIRJoiner joiner = fl.getJoiner();
+            if (joiner.getType() == SIRJoinType.NULL ||
+                (joiner.getType() == SIRJoinType.WEIGHTED_RR &&
+                 joiner.getWeight(0) == 0))
+                inType = CStdType.Void;
+
+            SIRSplitter splitter = fl.getSplitter();
+            if (splitter.getType() == SIRSplitType.NULL ||
+                (splitter.getType() == SIRSplitType.WEIGHTED_RR &&
+                 splitter.getWeight(0) == 0))
+                outType = CStdType.Void;
+        }
         if (inType != null && outType != null)
         {
             print(inType);

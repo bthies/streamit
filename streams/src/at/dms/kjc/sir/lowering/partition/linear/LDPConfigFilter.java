@@ -19,80 +19,108 @@ class LDPConfigFilter extends LDPConfig {
      * The filter corresponding to this.
      */
     private SIRFilter filter;
-	
+    /**
+     * Memoized values for this.
+     */
+    private int[] A;
+    
     public LDPConfigFilter(SIRFilter filter, LinearPartitioner partitioner) {
 	super(partitioner);
 	this.filter = filter;
-	this.A = null;
+	this.A = new int[4];
+	for (int i=0; i<A.length; i++) {
+	    A[i] = -1;
+	}
     }
 
     public int get(int collapse) {
-	int savings;
+	// return memoized value if we have it
+	if (A[collapse]!=-1) {
+	    return A[collapse];
+	}
+
+	// otherwise calculate cost...
+	int cost;
+	
+	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
+	// we don't worry about counting cost of non-linear nodes
+	if (!lfa.hasLinearRepresentation(filter)) {
+	    cost = 0;
+	} else {
+	    // otherwise get the representation
+	    LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(filter);
+	    
+	    switch(collapse) {
+		
+	    case LinearPartitioner.COLLAPSE_ANY: {
+		// if we still have flexibility, do better out of
+		// collapsing or not
+		cost = Math.min(get(LinearPartitioner.COLLAPSE_LINEAR),
+				Math.min(get(LinearPartitioner.COLLAPSE_FREQ),
+					 get(LinearPartitioner.COLLAPSE_NONE)));
+		break;
+	    }
+		
+	    case LinearPartitioner.COLLAPSE_FREQ: {
+		if (!LEETFrequencyReplacer.canReplace(filter, lfa)) {
+		    cost = Integer.MAX_VALUE;
+		} else {
+		    cost = getScalingFactor(linearRep, filter) * linearRep.getCost().getFrequencyCost();
+		}
+		break;
+	    }
+		
+	    case LinearPartitioner.COLLAPSE_LINEAR:
+	    case LinearPartitioner.COLLAPSE_NONE: {
+		cost = getScalingFactor(linearRep, filter) * linearRep.getCost().getDirectCost();
+		break;
+	    }
+		
+	    default: {
+		Utils.fail("Unrecognized collapse value: " + collapse);
+		cost = -1;
+	    }
+	    }
+	}
+
+	// memoize value and return it
+	A[collapse] = cost;
+	return cost;
+    }
+
+    public StreamTransform traceback(int collapse) {
 
 	switch(collapse) {
-
+	    
 	case LinearPartitioner.COLLAPSE_ANY: {
-	    // if we still have flexibility, do better out of
-	    // collapsing or not
-	    savings = Math.max(get(LinearPartitioner.COLLAPSE_LINEAR),
-			       Math.max(get(LinearPartitioner.COLLAPSE_FREQ),
-					get(LinearPartitioner.COLLAPSE_NONE)));
+	    // take min of other three options
+	    int[] options = { LinearPartitioner.COLLAPSE_FREQ, 
+			      LinearPartitioner.COLLAPSE_LINEAR, 
+			      LinearPartitioner.COLLAPSE_NONE };
+	    for (int i=0; i<options.length; i++) {
+		if (A[collapse] == get(options[i])) {
+		    return traceback(options[i]);
+		}
+	    }
+	    Utils.fail("Didn't find traceback; was looking for ANY.");
 	    break;
 	}
 	    
 	case LinearPartitioner.COLLAPSE_FREQ: {
-	    savings = getFreq();
-	    break;
-	}
-
-	case LinearPartitioner.COLLAPSE_LINEAR:
-	case LinearPartitioner.COLLAPSE_NONE: {
-	    savings = 0;
-	    break;
-	}
-
-	default: {
-	    savings = -1;
-	    Utils.fail("Unrecognized collapse value: " + collapse);
-	}
-	}
-
-	return savings;
-    }
-
-    /**
-     * Returns savings of this node if converted to frequency domain.
-     */
-    private int getFreq() {
-	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
-	if (!lfa.hasLinearRepresentation(filter) || !LEETFrequencyReplacer.canReplace(filter, lfa)) {
-	    return Integer.MIN_VALUE;
-	} else {
-	    LinearFilterRepresentation l = lfa.getLinearRepresentation(filter);
-	    /*
-	    System.err.println("For " + filter + " scalingfactor=" + getScalingFactor(l, filter) + 
-			       " and savings = ( " + l.getCost().getDirectCost() + " (direct) - " + l.getCost().getFrequencyCost() + 
-			       " (freq) ) = " + (l.getCost().getDirectCost() - l.getCost().getFrequencyCost()));
-	    */
-	    return getScalingFactor(l, filter) * (l.getCost().getDirectCost() - l.getCost().getFrequencyCost());
-	}
-    }
-
-    public StreamTransform traceback(int collapse) {
-	if (collapse==LinearPartitioner.COLLAPSE_ANY) {
-	    // only way to be profitable is with FREQ, so see if we are...
-	    if (getFreq()>0) {
-		return traceback(LinearPartitioner.COLLAPSE_FREQ);
-	    } else {
-		return traceback(LinearPartitioner.COLLAPSE_NONE);
-	    }
-	} else if (collapse==LinearPartitioner.COLLAPSE_FREQ) {
 	    return new FreqReplaceTransform(partitioner.getLinearAnalyzer());
-	} else if (collapse==LinearPartitioner.COLLAPSE_LINEAR) {
+	}
+	    
+	case LinearPartitioner.COLLAPSE_LINEAR: {
 	    return new LinearReplaceTransform(partitioner.getLinearAnalyzer());
-	} else {
+	}
+
+	case LinearPartitioner.COLLAPSE_NONE: {
 	    return new IdentityTransform();
 	}
+	}
+
+	Utils.fail("Couldn't find traceback for option: " + collapse + " for " + filter);
+	return null;
     }
 
     public SIRStream getStream() {

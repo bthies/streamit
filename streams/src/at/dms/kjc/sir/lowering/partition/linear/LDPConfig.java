@@ -14,13 +14,6 @@ import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
 abstract class LDPConfig implements Cloneable {
-    /**  
-     * A_s[x1][x2][y1][y2][c] holds savings if children (x1..x2,
-     * y1..y2) of stream s given collapse policy <c>. If this
-     * corresponds to a filter's config, then A is null.
-     */
-    protected int[][][][][] A;
-
     /**
      * The partitioner this is part of.
      */
@@ -92,31 +85,6 @@ abstract class LDPConfig implements Cloneable {
 		     "\n  linPush=" + linPush +
 		     "\n  linPop=" + linPop);
 	return pushRatio;
-    }
-
-    /**
-     * Prints the array of memoized values of this.
-     */
-    public void printArray() {
-	String msg = "Printing array for " + getStream().getIdent() + " --------------------------";
-	System.err.println(msg);
-	for (int i1=0; i1<A.length; i1++) {
-	    for (int i2=0; i2<A[0].length; i2++) {
-		for (int i3=0; i3<A[0][0].length; i3++) {
-		    for (int i4=0; i4<A[0][0][0].length; i4++) {
-			System.err.println();
-			for (int i5=0; i5<4; i5++) {
-			    System.err.println(getStream().getIdent() + "[" + i1 + "][" + i2 + "][" + i3 + "][" + i4 + "][" + 
-					       LinearPartitioner.COLLAPSE_STRING(i5) + "] = " + A[i1][i2][i3][i4][i5]);
-			}
-		    }
-		}
-	    }
-	}
-	for (int i=0; i<msg.length(); i++) {
-	    System.err.print("-");
-	}
-	System.err.println();
     }
 }
 

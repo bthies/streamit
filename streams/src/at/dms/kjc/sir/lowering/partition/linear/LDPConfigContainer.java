@@ -23,6 +23,12 @@ abstract class LDPConfigContainer extends LDPConfig {
      * Partitioner corresponding to this.
      */
     protected LinearPartitioner partitioner;
+    /**  
+     * A_s[x1][x2][y1][y2][c] holds savings if children (x1..x2,
+     * y1..y2) of stream s given collapse policy <c>.
+     */
+    private int[][][][][] A;
+
     
     /**
      * <width> and <height> represent the dimensions of the stream.
@@ -94,101 +100,51 @@ abstract class LDPConfigContainer extends LDPConfig {
 	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
 	lfa.findLinearFilters(str, KjcOptions.debug, lfa);
 
-	int savings;
+	int cost;
 	switch(collapse) {
 	case LinearPartitioner.COLLAPSE_ANY: {
 	    // if we still have flexibility, do better out of
 	    // collapsing or not
-	    savings = Math.max(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str),
-			       Math.max(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_FREQ, str),
+	    cost = Math.min(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str),
+			       Math.min(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_FREQ, str),
 					get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_NONE, str)));
 	    break;
 	}
 
 	case LinearPartitioner.COLLAPSE_FREQ: {
 	    if (!lfa.hasLinearRepresentation(str) || !LEETFrequencyReplacer.canReplace(str, lfa)) {
-		savings = Integer.MIN_VALUE;
+		cost = Integer.MAX_VALUE;
 	    } else {
-		// start with savings from linear collapse
-		savings = get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str);
-		// then add the benefit from frequency collapse
+		// otherwise, return freq costn
 		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
-		savings += getScalingFactor(l, str) * (l.getCost().getDirectCost() - l.getCost().getFrequencyCost() );
+		cost = getScalingFactor(l, str) * l.getCost().getFrequencyCost();
 	    }
 	    break;
 	}
 
 	case LinearPartitioner.COLLAPSE_LINEAR: {
-	    // if we don't have a linear node, return negative infinity
+	    // if we don't have a linear node, return infinity
 	    if (!lfa.hasLinearRepresentation(str)) {
-		savings = Integer.MIN_VALUE;
+		cost = Integer.MAX_VALUE;
 	    } else {
-		// otherwise, calculate savings of children, and cost
-		// of children as collapsed linear nodes
-		int childSavings;
-		int childCost;
-		// make arbitrary horizontal or vertical cut and add
-		// savings of children
-		int[] arr = { 1, ((SIRContainer)str).size()-1 };
-		PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		if (x1<x2) {
-		    Utils.assert(str instanceof SIRSplitJoin);
-		    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
-		    // calc savings
-		    childSavings = get(x1, x1, y1, y2, collapse, sj.get(0)) + get(x1+1, x2, y1, y2, collapse, sj.get(1));
-		    // calc cost
-		    LinearAnalyzer.findLinearFilters(sj, KjcOptions.debug, lfa);
-		    LinearFilterRepresentation[] l = { lfa.getLinearRepresentation(sj.get(0)), lfa.getLinearRepresentation(sj.get(1)) };
-		    childCost = ( getScalingFactor(l[0], sj.get(0)) * l[0].getCost().getDirectCost() + 
-				  getScalingFactor(l[1], sj.get(1)) * l[1].getCost().getDirectCost() );
-		} else {
-		    Utils.assert(y1<y2 && str instanceof SIRPipeline);
-		    SIRPipeline pipe = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
-		    // calc savings
-		    childSavings = get(x1, x2, y1, y1, collapse, pipe.get(0)) + get(x1, x2, y1+1, y2, collapse, pipe.get(1));
-		    // calc cost
-		    LinearAnalyzer.findLinearFilters(pipe, KjcOptions.debug, lfa);
-		    LinearFilterRepresentation[] l = { lfa.getLinearRepresentation(pipe.get(0)), lfa.getLinearRepresentation(pipe.get(1)) };
-		    childCost = ( getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
-				  getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost() );
-		    /*
-		    System.err.println("childCost = " + getScalingFactor(l[0], pipe.get(0)) +" * " + l[0].getCost().getDirectCost() + " + " 
-				       + getScalingFactor(l[1], pipe.get(1)) + " * " + l[1].getCost().getDirectCost()
-				       + " = " + getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
-				       getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost());
-		    */
-		}
-
-		// get cost of self
+		// otherwise, return cost of collapsed node
 		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
-		int myCost = getScalingFactor(l, str) * l.getCost().getDirectCost();
-
-		// calculate savings as child savings, PLUS diff between child cost and my cost
-		savings = childSavings + (childCost - myCost);
-		/*
-		System.err.println("for linear collapse " + y1 + "--" + y2 + ":");
-		System.err.println("  scalingFactor = " + getScalingFactor(l, str));
-		System.err.println("  l.getCost().getDirectCost() = " + l.getCost().getDirectCost());
-		System.err.println("  myCost = " + getScalingFactor(l, str) * l.getCost().getDirectCost());
-		System.err.println("  childCost = " + childCost);
-		System.err.println("  childSavings = " + childSavings);
-		*/
+		cost = getScalingFactor(l, str) * l.getCost().getDirectCost();
 	    }
 	    break;
 	}
 
 	case LinearPartitioner.COLLAPSE_NONE: {
-	    savings = 0;
-	    
+	    cost = Integer.MAX_VALUE;
 	    // try a vertical cut
 	    for (int xPivot=x1; xPivot<x2; xPivot++) {
 		// break along <xPivot>
 		int[] arr = { 1 + (xPivot-x1), x2-xPivot };
 		PartitionGroup pg = PartitionGroup.createFromArray(arr);
 		SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)str, pg);
-		savings = Math.max( savings, 
-				    get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
-				    get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
+		cost = Math.min( cost, 
+				 get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
+				 get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
 	    }
 
 	    // optimization: don't both with a horizontal cut if we're
@@ -241,24 +197,24 @@ abstract class LDPConfigContainer extends LDPConfig {
 			factored = null;
 			Utils.fail("Unrecognized stream type: " + str);
 		    }
-		    savings = Math.max( savings, 
-					get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
-					get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
+		    cost = Math.min( cost, 
+				     get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
+				     get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
 		}
 	    }
 	    break;
 	}
 	    
 	default: {
-	    savings = -1;
+	    cost = -1;
 	    Utils.fail("Unrecognized collapse value: " + collapse);
 	}
 	    
 	}
 	
-	A[x1][x2][y1][y2][collapse] = savings;
-	if (LinearPartitioner.DEBUG) { System.err.println(" returning " + callStr + " = " + savings); }
-	return savings;
+	A[x1][x2][y1][y2][collapse] = cost;
+	if (LinearPartitioner.DEBUG) { System.err.println(" returning " + callStr + " = " + cost); }
+	return cost;
     }
 
     /**
@@ -293,7 +249,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	switch(collapse) {
 
 	case LinearPartitioner.COLLAPSE_ANY: {
-	    // take max of other three options
+	    // take min of other three options
 	    int[] options = { LinearPartitioner.COLLAPSE_FREQ, 
 			      LinearPartitioner.COLLAPSE_LINEAR, 
 			      LinearPartitioner.COLLAPSE_NONE };
@@ -396,24 +352,27 @@ abstract class LDPConfigContainer extends LDPConfig {
     protected abstract LDPConfig childConfig(int x, int y);
 
     /**
-     * Returns the extra savings that come by combining the children
-     * of <cont> into an entire linear node (equivalent to <cont>).
-     *
-     * Requires that <lfa> contains a linear representation for <cont>
-     * as well as all its children.
+     * Prints the array of memoized values of this.
      */
-    private int getOutermostSavings(SIRContainer str, LinearAnalyzer lfa, HashMap[] counts) {
-	// tabulate cost of doing separately
-	int separate = 0;
-	for (int i=0; i<str.size(); i++) {
-	    int steadyCount = ((int[])counts[1].get(str.get(i)))[0];
-	    separate += steadyCount * lfa.getLinearRepresentation(str.get(i)).getCost().getDirectCost();
+    public void printArray() {
+	String msg = "Printing array for " + getStream().getIdent() + " --------------------------";
+	System.err.println(msg);
+	for (int i1=0; i1<A.length; i1++) {
+	    for (int i2=0; i2<A[0].length; i2++) {
+		for (int i3=0; i3<A[0][0].length; i3++) {
+		    for (int i4=0; i4<A[0][0][0].length; i4++) {
+			System.err.println();
+			for (int i5=0; i5<4; i5++) {
+			    System.err.println(getStream().getIdent() + "[" + i1 + "][" + i2 + "][" + i3 + "][" + i4 + "][" + 
+					       LinearPartitioner.COLLAPSE_STRING(i5) + "] = " + A[i1][i2][i3][i4][i5]);
+			}
+		    }
+		}
+	    }
 	}
-
-	// get the combined cost
-	int combined = lfa.getLinearRepresentation(str).getCost().getDirectCost();
-
-	// return difference (remember positive is good)
-	return separate - combined;
+	for (int i=0; i<msg.length(); i++) {
+	    System.err.print("-");
+	}
+	System.err.println();
     }
 }

@@ -147,6 +147,18 @@ public class IMEMEstimation extends EmptyStreamVisitor
 		jProcess.waitFor();
 	    }
 	    
+	    //remove the files
+	    {
+		String[] cmdArray = new String[4];
+		cmdArray[0] = "rm";
+		cmdArray[1] = "tile0.c";
+		cmdArray[2] = "Makefile.streamit";
+		cmdArray[3] = "fileio.bc";
+		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		jProcess.waitFor();
+	    }
+	    
+
 	    //now see if the compile succeeds
 	    {
 		String[] cmdArray = new String[6];

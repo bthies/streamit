@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.18 2002-07-31 04:38:39 jasperln Exp $
+ * $Id: FieldProp.java,v 1.19 2002-09-21 15:15:10 jasperln Exp $
  */
 public class FieldProp implements Constants
 {
@@ -127,7 +127,7 @@ public class FieldProp implements Constants
 
 	doPropagation(filter);
     }
-
+    
     /** Helper function to determine if a field has been invalidated. */
     private boolean isFieldInvalidated(String name)
     {
@@ -418,6 +418,9 @@ public class FieldProp implements Constants
                     {
                         // Don't visit the left-hand side of the
                         // expression.
+			// Visit if Array Expression --jasperln
+			if(left instanceof JArrayAccessExpression)
+			    ((JArrayAccessExpression)left).setAccessor((JExpression)((JArrayAccessExpression)left).getAccessor().accept(this));
                         return new JAssignmentExpression
                             (self.getTokenReference(),
                              left,

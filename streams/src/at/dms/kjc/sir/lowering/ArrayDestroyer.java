@@ -93,7 +93,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    final Hashtable safe=new Hashtable();
 	    body.accept(new ReplacingVisitor() {
 		    /**
-		     * If arrays used in any way except in array access the remove from targets
+		     * If arrays used in any way except in array access then remove from targets
 		     */
 		    public Object visitLocalVariableExpression(JLocalVariableExpression self2,
 							       String ident2) {
@@ -206,3 +206,4 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	return new JVariableDefinition(array.getTokenReference(),0,array.getType(),array.getPrefix().getIdent()+"__destroyed_"+((JIntLiteral)array.getAccessor()).intValue(),init);
     }
 }
+

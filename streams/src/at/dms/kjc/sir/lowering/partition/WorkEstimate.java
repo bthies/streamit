@@ -15,8 +15,14 @@ class WorkEstimate {
      */
     private HashMap workMap;
 
+    /**
+     * The total amount of work contained in the stream.
+     */
+    private int toplevelWork;
+
     private WorkEstimate() {
 	this.workMap = new HashMap();
+	this.toplevelWork = 0;
     }
 
     /**
@@ -25,7 +31,6 @@ class WorkEstimate {
     public static WorkEstimate getWorkEstimate(SIRStream str) {
 	WorkEstimate result = new WorkEstimate();
 	result.doit(str);
-	result.printWork();
 	return result;
     }
 
@@ -38,13 +43,28 @@ class WorkEstimate {
     }
 
     /**
+     * Returns the percent of the total stream's work that is consumed
+     * by filter <obj>.  Returns this in the range of 0-100.
+     */
+    public float getPercentageWork(SIRFilter obj) {
+	return 100 * 
+	    ((float)((WorkInfo)workMap.get(obj)).totalWork) / toplevelWork;
+    }
+
+    /**
      * prints work of all functions to system.err.
      */
-    private void printWork() {
+    public void printWork() {
 	System.err.println("\nWORK ESTIMATES:");
 	for (Iterator it = workMap.keySet().iterator(); it.hasNext(); ) {
-	    Object obj = it.next();
-	    System.err.println(obj + "\t\t" + workMap.get(obj));
+	    SIRFilter obj = (SIRFilter)it.next();
+	    String objName = obj.toString();
+	    System.err.print(objName);
+	    for (int i=objName.length();  i<70; i++) {
+		System.err.print(" ");
+	    }
+	    System.err.println("\t" + getWork(obj) + "\t" + "(" +
+			       ((int)getPercentageWork(obj)) + "%)");
 	}
 	
     }
@@ -56,7 +76,7 @@ class WorkEstimate {
 	// get execution counts for filters in <str>
 	HashMap executionCounts = SIRScheduler.getExecutionCounts(str)[1];
 
-	// for each filter, build a work count;
+	// for each filter, build a work count
 	for (Iterator it = executionCounts.keySet().iterator();
 	     it.hasNext(); ){
 	    SIROperator obj = (SIROperator)it.next();
@@ -64,6 +84,7 @@ class WorkEstimate {
 		int count = ((int[])executionCounts.get(obj))[0];
 		int work = WorkVisitor.getWork((SIRFilter)obj);
 		workMap.put(obj, new WorkInfo(count*work));
+		toplevelWork += count*work;
 	    }
 	}
     }

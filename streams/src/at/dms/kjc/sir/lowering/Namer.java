@@ -3,10 +3,7 @@ package at.dms.kjc.sir.lowering;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.LinkedList;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * This generates a mapping of stream structure to name for each
@@ -48,6 +45,24 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 	}
 	// name the stream structure
 	toplevel.accept(new Namer());
+    }
+
+    /**
+     * Returns the stream associated with name <name>.  This takes
+     * linear time instead of constant (could optimize by maintaining
+     * a reverse map if desired.)  Requires that this contains a
+     * stream by the name of <name>.
+     */
+    public static SIROperator getStream(String name) {
+	for (Iterator it = names.entrySet().iterator(); it.hasNext(); ) {
+	    Map.Entry entry = (Map.Entry)it.next();
+	    if (entry.getValue().equals(name)) {
+		return (SIROperator)entry.getKey();
+	    }
+	}
+	Utils.fail("Couldn't find stream by name of \"" + name + "\"");
+	// stupid compiler
+	return null;
     }
 
     /**

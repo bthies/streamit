@@ -16,7 +16,7 @@ public class MP3Simple extends StreamIt
     {
         add (new FileReader ("Blur.float.raw", Float.TYPE));
         add (new MultiChannelPCMSynthesis (2));
-        add (new FileReader ("Blur.short.out", Short.TYPE));
+        add (new FileWriter ("Blur.short.out", Short.TYPE));
 		//add(new SoundOutput(44100, 2));
     }
 }

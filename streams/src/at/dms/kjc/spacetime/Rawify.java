@@ -936,31 +936,11 @@ public class Rawify
     /*private static void createSwitchCodeLinear(FilterTraceNode node, Trace parent, 
 					       FilterInfo filterInfo, boolean init, boolean primePump, 
 					       RawTile tile, RawChip rawChip) {*/
-    private static void createLinearSwitchCode(FilterTraceNode node,boolean init,boolean primePump,int mult,RawTile tile,RawChip rawChip) {
-	System.err.println("Creating switchcode linear: "+node+" "+mult+" "+init+" "+primePump);
+    //private static void createLinearSwitchCode(FilterTraceNode node,boolean init,boolean primePump,int mult,RawTile tile,RawChip rawChip) {
+    private static void createLinearSwitchCode(FilterTraceNode node/*,boolean init,boolean primePump*/,int mult,RawTile tile,RawChip rawChip) {
+	System.err.println("Creating switchcode linear: "+node+" "+mult);
 	ComputeNode sourceNode = null;
-
-	//int mult;
-	//if (init)
-	//mult = filterInfo.initMult;
-	//else 
-	//mult = filterInfo.steadyMult;
-	
-	/* OLD
-	  if (node.getPrevious().isFilterTrace())
-	  sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(),  
-	  ((FilterTraceNode)node.getPrevious()).getY());
-	  else {
-	  if (KjcOptions.magicdram && node.getPrevious() !=  null &&
-	  node.getPrevious().isInputTrace() &&
-	  tile.hasIODevice()) 
-	  sourceNode = tile.getIODevice();
-	  else { 
-	  System.err.println("BLAH1");
-	  return;
-	  }
-	  }*/
-	
+	//Get sourceNode and input port
 	if (node.getPrevious().isFilterTrace())
 	    sourceNode = rawChip.getTile(((FilterTraceNode)node.getPrevious()).getX(), 
 					 ((FilterTraceNode)node.getPrevious()).getY());
@@ -974,26 +954,11 @@ public class Rawify
 		    IntraTraceBuffer.getBuffer((InputTraceNode)node.getPrevious(), 
 					       node).getNonRedundant().getDRAM();
 	}
-	
 	SwitchIPort src = rawChip.getIPort(sourceNode, tile);
 	SwitchIPort src2 = rawChip.getIPort2(sourceNode, tile);
 	sourceNode = null;
+	//Get destNode and output port
 	ComputeNode destNode = null;
-
-	/* OLD
-	  if (node.getNext().isFilterTrace())
-	  destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(),  
-	  ((FilterTraceNode)node.getNext()).getY());
-	  else {
-	  if (KjcOptions.magicdram && node.getNext() !=  null &&
-	  node.getNext().isOutputTrace() && tile.hasIODevice())
-	  destNode = tile.getIODevice();
-	  else {
-	  System.err.println("BLAH2");
-	  return;
-	  }
-	  }*/
-
 	if (node.getNext().isFilterTrace())
 	    destNode = rawChip.getTile(((FilterTraceNode)node.getNext()).getX(), 
 				       ((FilterTraceNode)node.getNext()).getY());
@@ -1008,59 +973,45 @@ public class Rawify
 	    }
 	    
 	}
-	
 	SwitchOPort dest = rawChip.getOPort(tile, destNode);
 	SwitchOPort dest2 = rawChip.getOPort2(tile, destNode);
 	destNode = null;
+	//Get filter properties
 	FilterContent content = node.getFilter();
-	final int peek = content.getArray().length;
+	final int numCoeff = content.getArray().length;
 	final int pop = content.getPopCount();
-	final int numPop = peek/pop;
+	final int numPop = numCoeff/pop;
 	final boolean begin=content.getBegin();
 	final boolean end=content.getEnd();
 	//System.out.println("SRC: "+src);
 	//System.out.println("DEST: "+dest);
+	//Begin codegen
 	SwitchCodeStore code = tile.getSwitchCode();
 	//System.err.println("Getting HERE!");
-	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),init||primePump);
-	code.appendIns(new Comment("HERE!"),init||primePump);
+	code.appendIns(new MoveIns(SwitchReg.R3,SwitchIPort.CSTO),false); //Getting loop counter
+	code.appendIns(new Comment("HERE!"),false);
 	boolean first=true;
+	//Preloop
 	for(int i = 0; i<numPop-1; i++)
 	    for(int j = 0; j<pop; j++) {
 		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		/*if (KjcOptions.magicdram && node.getPrevious() != null &&
-		  node.getPrevious().isInputTrace())
-		  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		  node, (init || primePump), rawChip);*/
 		ins.addRoute(src, SwitchOPort.CSTI);
 		//if(!first) {
 		if(!end) {
-		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
-		      node.getPrevious().isInputTrace())
-		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		      node, (init || primePump), rawChip);
-		      if (KjcOptions.magicdram && node.getNext() != null &&
-		      node.getNext().isOutputTrace())
-		      createMagicDramStore((OutputTraceNode)node.getNext(), 
-		      node, (init || primePump), rawChip);*/
 		    ins.addRoute(src,dest);
 		    //}
 		}
-		code.appendIns(ins, init||primePump);
+		code.appendIns(ins, false);
 		for(int k = i-1; k>= 0; k--) {
 		    FullIns newIns = new FullIns(tile);
 		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		    code.appendIns(newIns, init||primePump);
+		    code.appendIns(newIns, false);
 		}
 		FullIns newIns=null;
 		if(!begin) {
 		    newIns=new FullIns(tile);
-		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
-		      node.getPrevious().isInputTrace())
-		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		      node, (init || primePump), rawChip);*/
 		    newIns.addRoute(src2, SwitchOPort.CSTI2);
-		    code.appendIns(newIns, init||primePump);
+		    code.appendIns(newIns, false);
 		}
 		/*if(!first) {
 		  newIns = new FullIns(tile);
@@ -1073,193 +1024,138 @@ public class Rawify
 	for(int turn=0;turn<turns;turn++)
 	    for(int j = 0; j<pop; j++) {
 		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		/*if (KjcOptions.magicdram && node.getPrevious() != null &&
-		  node.getPrevious().isInputTrace())
-		  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		  node, (init || primePump), rawChip);*/
 		ins.addRoute(src, SwitchOPort.CSTI);
 		if(!first) {
 		    if(!end) {
-			/*if (KjcOptions.magicdram && node.getPrevious() != null &&
-			  node.getPrevious().isInputTrace())
-			  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-			  node, (init || primePump), rawChip);
-			  if (KjcOptions.magicdram && node.getNext() != null &&
-			  node.getNext().isOutputTrace())
-			  createMagicDramStore((OutputTraceNode)node.getNext(), 
-			  node, (init || primePump), rawChip);*/
 			ins.addRoute(src,dest);
 		    }
 		}
-		code.appendIns(ins, init||primePump);
+		code.appendIns(ins, false);
 		for(int k = numPop-2; k>= 0; k--) {
 		    FullIns newIns = new FullIns(tile);
 		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-		    code.appendIns(newIns, init||primePump);
+		    code.appendIns(newIns, false);
 		}
 		FullIns newIns=null;
 		if(!begin) {
 		    newIns=new FullIns(tile);
-		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
-		      node.getPrevious().isInputTrace())
-		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		      node, (init || primePump), rawChip);*/
 		    newIns.addRoute(src2, SwitchOPort.CSTI2);
-		    code.appendIns(newIns, init||primePump);
+		    code.appendIns(newIns, false);
 		}
 		if(!first) {
 		    newIns = new FullIns(tile);
-		    /*if (KjcOptions.magicdram && node.getNext() != null &&
-		      node.getNext().isOutputTrace())
-		      createMagicDramStore((OutputTraceNode)node.getNext(), 
-		      node, (init || primePump), rawChip);*/
 		    newIns.addRoute(SwitchIPort.CSTO,dest2);
-		    code.appendIns(newIns, init||primePump);
+		    code.appendIns(newIns, false);
 		}
 		first=false;
 	    }
+	//Innerloop
 	Label label = code.getFreshLabel();
-	//code.appendIns(label, init||primePump);
-	final int numTimes = Linear.getMult(peek);
+	code.appendIns(label,false);
+	final int numTimes=Linear.getMult(numCoeff);
 	int pendingSends=0;
 	int times=0;
 	FullIns ins=null;
 	//final int turns2=content.getTotal()-content.getPos()+1;
-	final int turns2=content.getPos();
+	//final int turns2=content.getPos();
 	//final int turns2=1;
-	for(int turn=0;turn<turns2+1;turn++) {
-	    if(turn==turns2)
-		code.appendIns(label, init||primePump);
-	    for(int i = 0;i<numTimes;i++) {
-		for(int j=0;j<pop;j++) {
-		    if(numPop==1&&j==0)
+	//for(int turn=0;turn<turns2+1;turn++) {
+	//if(turn==turns2)
+	//code.appendIns(label, false);
+	for(int i = 0;i<numTimes;i++) {
+	    for(int j=0;j<pop;j++) {
+		/* preloop?
+		   if(numPop==1&&j==0)
+		   pendingSends++;
+		   times++;
+		   ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		   ins.addRoute(src, SwitchOPort.CSTI);
+		   if(!end) {
+		   ins.addRoute(src,dest);
+		   }
+		   
+		   if(times>1) { //had turn>0&&
+		   if(!end)
+		   ins.addRoute(SwitchIPort.CSTO,dest2);
+		   else
+		   ins.addRoute(SwitchIPort.CSTO,dest);
+		   }
+		   code.appendIns(ins, false);
+		   if(times==4) {
+		   times=0;
+		   if(true||!begin) {
+		   //if(turn==0)
+		   //pendingSends++;
+		   if(pendingSends>0) {
+		   for(int l=0;l<pendingSends;l++) {
+		   ins=new FullIns(tile);
+		   if(!begin) { //had OLDturn>0
+		   ins.addRoute(src2,SwitchOPort.CSTI2);
+		   }
+		   if(l<1) { // had turn>0&&
+		   if(!end)
+		   ins.addRoute(SwitchIPort.CSTO,dest2);
+		   else
+		   ins.addRoute(SwitchIPort.CSTO,dest);
+		   }
+		   
+		   //if(!begin)
+		   code.appendIns(ins,false);
+		   }
+		   pendingSends=0;
+		   }
+		   }
+		   }*/
+		for(int k=0;k<numPop;k++) {
+		    if(j==0&&k==numPop-1)
 			pendingSends++;
 		    times++;
-		    ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
-		      node.getPrevious().isInputTrace())
-		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		      node, (init || primePump), rawChip);*/
-		    ins.addRoute(src, SwitchOPort.CSTI);
-		    if(!end) {
-			/*if (KjcOptions.magicdram && node.getPrevious() != null &&
-			  node.getPrevious().isInputTrace())
-			  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-			  node, (init || primePump), rawChip);
-			  if (KjcOptions.magicdram && node.getNext() != null &&
-			  node.getNext().isOutputTrace())
-			  createMagicDramStore((OutputTraceNode)node.getNext(), 
-			  node, (init || primePump), rawChip);*/
-			ins.addRoute(src,dest);
+		    if(k==0) {
+			ins=new FullIns(tile,new MoveIns(SwitchReg.R1, src));
+			ins.addRoute(src, SwitchOPort.CSTI);
+			if(!end) {
+			    ins.addRoute(src,dest);
+			}
+			/*if(times>1) {
+			  if(!end)
+			  ins.addRoute(SwitchIPort.CSTO,dest2);
+			  else
+			  ins.addRoute(SwitchIPort.CSTO,dest);
+			  }*/
+		    } else {
+			ins=new FullIns(tile);
+			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 		    }
-
-		    if(turn>0&&times>1) {
-			if(!end)
-			    ins.addRoute(SwitchIPort.CSTO,dest2);
-			else
-			    ins.addRoute(SwitchIPort.CSTO,dest);
-		    }
-		
-		    /*if(times>2) {
-		      if(!begin) {
-		      if (KjcOptions.magicdram && node.getPrevious() != null &&
-		      node.getPrevious().isInputTrace())
-		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		      node, (init || primePump), rawChip);
-		      ins.addRoute(src2,SwitchOPort.CSTI2);
-		      }
-		      pendingSends--;
-		      }*/
-		    /*if(turn>1) {
-		      if(!begin) {
-		      if (KjcOptions.magicdram && node.getPrevious() != null &&
-		      node.getPrevious().isInputTrace())
-		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		      node, (init || primePump), rawChip);
-		      ins.addRoute(src2,SwitchOPort.CSTI2);
-		      }
-		      }*/
-		    code.appendIns(ins, init||primePump);
+		    code.appendIns(ins, false);
 		    if(times==4) {
 			times=0;
 			if(true||!begin) {
-			    //if(turn==0)
-			    //pendingSends++;
+				//if(turn==0)
+				//pendingSends++;
 			    if(pendingSends>0) {
 				for(int l=0;l<pendingSends;l++) {
 				    ins=new FullIns(tile);
-				    if(/*turn>0&&*/!begin) {
-				/*if (KjcOptions.magicdram && node.getPrevious() != null &&
-				  node.getPrevious().isInputTrace())
-				  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-				  node, (init || primePump), rawChip);*/
-					ins.addRoute(src2,SwitchOPort.CSTI2);
+				    if(/*OLDturn>0&&*/!begin) {
+					ins.addRoute(src,SwitchOPort.CSTI); //was src2,csti2
 				    }
-				    /*if (KjcOptions.magicdram && node.getNext() != null &&
-				      node.getNext().isOutputTrace())
-				      createMagicDramStore((OutputTraceNode)node.getNext(), 
-				      node, (init || primePump), rawChip);*/
-			    
-				    if(turn>0&&l<1) {
-					if(!end)
-					    ins.addRoute(SwitchIPort.CSTO,dest2);
-					else
-					    ins.addRoute(SwitchIPort.CSTO,dest);
-				    }
-			    
+				    /*if(l<1) { //had turn>0&&
+				      if(!end)
+				      ins.addRoute(SwitchIPort.CSTO,dest2);
+				      else
+				      ins.addRoute(SwitchIPort.CSTO,dest);
+				      }*/
+				    ins.addRoute(SwitchIPort.CSTO,dest);
 				    //if(!begin)
-				    code.appendIns(ins,init||primePump);
+				    code.appendIns(ins,false);
 				}
 				pendingSends=0;
 			    }
 			}
 		    }
-		    for(int k = 1;k<numPop;k++) {
-			if(j==0&&k==numPop-1)
-			    pendingSends++;
-			times++;
-			ins=new FullIns(tile);
-			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-			code.appendIns(ins, init||primePump);
-			if(times==4) {
-			    times=0;
-			    if(true||!begin) {
-				//if(turn==0)
-				//pendingSends++;
-				if(pendingSends>0) {
-				    for(int l=0;l<pendingSends;l++) {
-					ins=new FullIns(tile);
-					if(/*turn>0&&*/!begin) {
-					    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
-					      node.getPrevious().isInputTrace())
-					      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					      node, (init || primePump), rawChip);*/
-					    ins.addRoute(src2,SwitchOPort.CSTI2);
-					}
-				/*if (KjcOptions.magicdram && node.getNext() != null &&
-				  node.getNext().isOutputTrace())
-				  createMagicDramStore((OutputTraceNode)node.getNext(), 
-				  node, (init || primePump), rawChip);*/
-				
-					if(turn>0&&l<1) {
-					    if(!end)
-						ins.addRoute(SwitchIPort.CSTO,dest2);
-					    else
-						ins.addRoute(SwitchIPort.CSTO,dest);
-					}
-
-				//if(!begin)
-					code.appendIns(ins,init||primePump);
-				    }
-				    pendingSends=0;
-				}
-			    }
-			}
-		    }
 		}
-	    
 	    }
 	}
+	//}
 	/*for(int i=0;i<numTimes-1;i++) {
 	  FullIns newIns=new FullIns(tile);
 	  newIns.addRoute(SwitchIPort.CSTO,dest);
@@ -1272,6 +1168,7 @@ public class Rawify
 	
 	//ins.setProcessorIns(new JumpIns(label.getLabel()));
 	ins.setProcessorIns(new BnezdIns(SwitchReg.R3,SwitchReg.R3,label.getLabel()));
+	//Postloop
     }
 
 
@@ -1331,7 +1228,7 @@ public class Rawify
 		System.out.println("GENERATING PRIMEPUMP: "+node+" "+mult);
 
 	if(!(init||primePump||!linear)) { //Linear switch code in steadystate
-	    createLinearSwitchCode(node,init,primePump,mult,tile,rawChip);
+	    createLinearSwitchCode(node,mult,tile,rawChip);
 	    sentItems+=mult;
 	} else if (SWITCH_COMP && mult > SC_THRESHOLD && !init) {
 	    assert mult > 1;

@@ -1,0 +1,39 @@
+dnl
+dnl configure.in: StreamIt configuration script
+dnl Process this file with 'autoconf' to produce a configure script.
+dnl $Id: configure.in,v 1.1 2003-08-11 19:58:45 dmaze Exp $
+dnl
+
+AC_INIT([streamit], [0.0])
+
+dnl checks for programs
+dnl This needs an install-sh:
+dnl AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_RANLIB
+AC_PROG_CC
+dnl Also consider checking for Java compilers (jikes/javac),
+dnl perl (for knit's #! line), Java libraries (antlr).
+
+dnl checks for libraries
+AC_CHECK_LIB(sfftw, fftw_create_plan, :,
+	AC_MSG_ERROR([can't find single-precision fftw library]),
+        [-lm])
+AC_CHECK_LIB(srfftw, rfftw_create_plan, :,
+	AC_MSG_ERROR([can't find single-precision fftw library]),
+	[-lm -lsfftw])
+
+dnl checks for header files
+AC_CHECK_HEADER(sfftw.h, :,
+	AC_MSG_ERROR([can't find single-precision fftw library]))
+AC_CHECK_HEADER(srfftw.h, :,
+	AC_MSG_ERROR([can't find single-precision fftw library]))
+
+dnl checks for types
+dnl checks for structures
+dnl checks for compiler characteristics
+dnl checks for library functions
+dnl checks for system services
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT

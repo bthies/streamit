@@ -312,7 +312,7 @@ public class Channel extends DestroyedClass
     }
 
     // peek at a float
-    public double peekFloat(int index)
+    public float peekFloat(int index)
     {
         ASSERT (type == Float.TYPE);
 

@@ -153,6 +153,7 @@ class ToJava
                 parser = new StreamItParserFE(lexer);
                 prog = parser.program();
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
+                prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());
                 String javaOut = (String)prog.accept(new NodesToJava(null));
                 outWriter.write(javaOut);

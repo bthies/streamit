@@ -153,6 +153,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
 
+    private boolean supportedType(String type) {
+	if (type.equals("Integer") ||
+	    type.equals("Character") ||
+	    type.equals("Boolean") ||
+	    type.equals("Byte") ||
+	    type.equals("Double") ||
+	    type.equals("Float")||
+	    type.equals("Short") ||
+	    type.equals("String") ||
+	    type.equals("Long")) 
+	    return true;
+	else 
+	    return false;
+    }
+	  
+
+
+
     public Object visitClassDeclaration(JClassDeclaration self,
                                       int modifiers,
                                       String ident,
@@ -237,6 +255,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                JMethodDeclaration[] methods,
                                JPhylum[] body)
     {
+	blockStart("ClassBody");
 	for (int i = 0; i < decls.length ; i++)
             trash = decls[i].accept(this);
 	
@@ -282,6 +301,59 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
     
 
+    /* this methods sets the input type of the given filter.  If
+       Type gives the type */
+    private void setInputType(SIRFilter filter, String type) {
+	// based on the string type, set the type
+	if (type.equals("Integer"))
+	    filter.setInputType(CStdType.Integer);
+	else if (type.equals("Character"))
+	    filter.setInputType(CStdType.Char);
+	else if (type.equals("Boolean"))
+	    filter.setInputType(CStdType.Boolean);
+	else if (type.equals("Byte"))
+	    filter.setInputType(CStdType.Byte);
+	else if (type.equals("Double"))
+	    filter.setInputType(CStdType.Double);
+	else if (type.equals("Float"))
+	    filter.setInputType(CStdType.Float);
+	else if (type.equals("Short"))
+	    filter.setInputType(CStdType.Short);
+	else if (type.equals("String"))
+	    filter.setInputType(CStdType.String);	
+	else if (type.equals("Long"))
+	    filter.setInputType(CStdType.Long);
+	else
+	    at.dms.util.Utils.fail("Non-Supported Type for Filter Input");
+    }
+
+
+    /* this methods sets the output type of the given filter.  If
+       Type gives the type */
+    private void setOutputType(SIRFilter filter, String type) {
+	// based on the string type, set the type
+	if (type.equals("Integer"))
+	    filter.setOutputType(CStdType.Integer);
+	else if (type.equals("Character"))
+	    filter.setOutputType(CStdType.Char);
+	else if (type.equals("Boolean"))
+	    filter.setOutputType(CStdType.Boolean);
+	else if (type.equals("Byte"))
+	    filter.setOutputType(CStdType.Byte);
+	else if (type.equals("Double"))
+	    filter.setOutputType(CStdType.Double);
+	else if (type.equals("Float"))
+	    filter.setOutputType(CStdType.Float);
+	else if (type.equals("Short"))
+	    filter.setOutputType(CStdType.Short);
+	else if (type.equals("String"))
+	    filter.setOutputType(CStdType.String);	
+	else if (type.equals("Long"))
+	    filter.setOutputType(CStdType.Long);
+	else
+	    at.dms.util.Utils.fail("Non-Supported Type for Filter Output");
+    }
+
     // ----------------------------------------------------------------------
     // METHODS AND FIELDS
     // ----------------------------------------------------------------------
@@ -303,11 +375,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Input declaration on non-Filter");
 	    SIRFilter filter = (SIRFilter)parentStream;
 	    Vector v = (Vector)expr.accept(this);
-	    String channelType = (String)v.elementAt(0);
-	    if (channelType.equals("Integer"))
-		filter.setInputType(CStdType.Integer);
-	    else
-		at.dms.util.Utils.fail("Non-Supported Type for Filter Input");
+	    setInputType(filter, (String)v.elementAt(0));
 	    filter.setPop(((Integer)v.elementAt(1)).intValue());
 	    if (v.size() > 2) {
 		if (((Integer)v.elementAt(2)).intValue() < 
@@ -327,13 +395,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Output declaration on non-Filter");
 	    SIRFilter filter = (SIRFilter)parentStream;
 	    Vector v = (Vector)expr.accept(this);
-	    String channelType = (String)v.elementAt(0);
 	    int push = ((Integer)v.elementAt(1)).intValue();
 	    filter.setPush(push);
-	    if (channelType.equals("Integer"))
-		filter.setOutputType(CStdType.Integer);
-	    else
-		at.dms.util.Utils.fail("Non-Supported Type for Filter Output");
+	    setOutputType(filter, (String)v.elementAt(0));
 	    return self;
 	}
 	else {   /*Normal field declaration, add this field */
@@ -367,6 +431,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (exceptions.length == 0)
 	    exceptions = CClassType.EMPTY;
 
+	/*Install work functio*/
 	if (ident.equals("work")) {
 	    if (parentStream instanceof SIRFilter) {
 		((SIRFilter)parentStream).setWork(new JMethodDeclaration(null,
@@ -383,6 +448,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Work Function Declared for Non-Filter");
 	}
 	
+	/*Install init function for filter*/
+	if (ident.equals("init") && (parentStream instanceof SIRFilter)) {
+	    ((SIRFilter)parentStream).setInit(new JMethodDeclaration(null,
+								     modifiers,
+								     returnType,
+								     ident,
+								     parameters,
+								     exceptions,
+								     body,
+								     null,
+								     null)); 
+	}
 	return self;
     }
     
@@ -979,7 +1056,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                      String ident)
     {
         blockStart("FieldExpression");
-	return left.getType().getCClass().getIdent();
+	if (supportedType(left.getType().getCClass().getIdent()))
+	    return left.getType().getCClass().getIdent();
+	else return self;
     }
 
     /**
@@ -1142,7 +1221,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitBooleanLiteral(boolean value)
     {
         blockStart("BooleanLiteral");
-	return null;
+	return new Boolean(value);
     }
 
     /**
@@ -1151,7 +1230,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitByteLiteral(byte value)
     {
         blockStart("ByteLiteral");
-	return null;
+	return new Byte(value);
     }
 
     /**
@@ -1160,7 +1239,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitCharLiteral(char value)
     {
         blockStart("CharLiteral");
-	return null;
+	return new Character(value);
     }
 
     /**
@@ -1169,7 +1248,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitDoubleLiteral(double value)
     {
         blockStart("DoubleLiteral");
-	return null;
+	return new Double(value);
     }
 
     /**
@@ -1178,7 +1257,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitFloatLiteral(float value)
     {
         blockStart("FloatLiteral");
-	return null;
+	return new Float(value);
     }
 
     /**
@@ -1196,7 +1275,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitLongLiteral(long value)
     {
         blockStart("LongLiteral");
-	return null;
+	return new Long(value);
     }
 
     /**
@@ -1205,7 +1284,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitShortLiteral(short value)
     {
         blockStart("ShortLiteral");
-	return null;
+	return new Short(value);
     }
 
     /**
@@ -1214,7 +1293,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitStringLiteral(String value)
     {
         blockStart("StringLiteral");
-	return null;
+	return value;
     }
 
     /**

@@ -74,10 +74,11 @@ typedef struct tape {
 #define PUSH_DEFAULTB(type, v) PUSH_TAPE_LOCALB(__wd, __wp, __wm, type, v)
 #define POP_DEFAULTB(type) POP_TAPE_LOCALB(__rd, __rp, __rm, type)
 #define PEEK_DEFAULTB(type, n) PEEK_TAPE_LOCALB(__rd, __rp, __rm, type, n)
-#define VARS_DEFAULTB() void *__rd, *__wd; int __rp, __rm, __wp, __wm;
+#define VARS_DEFAULTB() void *__rd, *__wd; int __rp, __rm, __wp, __wm
 #define LOCALIZE_DEFAULTB(c) \
-  LOCALIZE_TAPE((c)->input_tape, __rd, __rp, __rm, \
-                (c)->output_tape, __wd, __wp, __wm)
+  int __localize_defaultb_dummy = \
+    (LOCALIZE_TAPE((c)->input_tape, __rd, __rp, __rm, \
+                (c)->output_tape, __wd, __wp, __wm))
 #define UNLOCALIZE_DEFAULTB(c) \
   UNLOCALIZE_TAPE((c)->input_tape, __rp, (c)->output_tape, __wp)
 #define INCR_TAPE_POS(t, v, n) INCR_TAPE_LOCALB((t)->v, (t)->mask, (n))

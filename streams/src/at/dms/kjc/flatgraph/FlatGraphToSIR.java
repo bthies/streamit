@@ -42,6 +42,7 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 
 	    if (!(parent instanceof SIRPipeline)) {
 		pipeline = new SIRPipeline(parent, "Pipeline" + id++);
+		pipeline.setInit(SIRStream.makeEmptyInit());
 		parent.add(pipeline);
 	    }
 	    else 
@@ -67,6 +68,7 @@ public class FlatGraphToSIR extends at.dms.util.Utils
 	
 	if (current.isSplitter()) {
 	    SIRSplitJoin splitJoin = new SIRSplitJoin(parent, "SplitJoin" + id++);
+	    splitJoin.setInit(SIRStream.makeEmptyInit());
 	    //add this splitjoin to the parent!
 	    parent.add(splitJoin);
 	    //make sure we have not seen this splitter

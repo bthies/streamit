@@ -7,7 +7,7 @@ public class SchedLoop extends SchedStream
     SchedSplitType split;
     SchedJoinType join;
     SchedStream body, loop;
-    int delay;
+    BigInteger delay;
 
     BigInteger numSplitExecutions, numJoinExecutions;
 
@@ -18,7 +18,27 @@ public class SchedLoop extends SchedStream
         this.body = body;
         this.split = split;
         this.loop = loop;
-        this.delay = delay;
+        this.delay = BigInteger.valueOf (delay);
+    }
+
+    public SchedStream getLoopBody ()
+    {
+        return body;
+    }
+
+    public SchedStream getLoopFeedbackPath ()
+    {
+        return loop;
+    }
+
+    public SchedJoinType getLoopJoin ()
+    {
+        return join;
+    }
+
+    public SchedSplitType getLoopSplit ()
+    {
+        return split;
     }
 
     void computeSteadySchedule ()
@@ -112,6 +132,63 @@ public class SchedLoop extends SchedStream
         }
 
         // done
+    }
+
+    /**
+     * Get the number of times the split is executed in a single steady state
+     * execution of this feedback loop.
+     */
+    public BigInteger getNumSplitExecutions ()
+    {
+        ASSERT (numSplitExecutions);
+        return numSplitExecutions;
+    }
+
+    /**
+     * Get the number of times the join is executed in a single steady state
+     * execution of this feedback loop.
+     */
+    public BigInteger getNumJoinExecutions ()
+    {
+        ASSERT (numJoinExecutions);
+        return numJoinExecutions;
+    }
+
+    /**
+     * Get the number of times the body is executed in a single steady state
+     * execution of this feedback loop.
+     */
+    public BigInteger getNumBodyExecutions ()
+    {
+        ASSERT (body);
+
+        BigInteger result = body.getNumExecutions ();
+        ASSERT (result);
+
+        return result;
+    }
+
+    /**
+     * Get the number of times the loop is executed in a single steady state
+     * execution of this feedback loop.
+     */
+    public BigInteger getNumLoopExecutions ()
+    {
+        ASSERT (loop);
+
+        BigInteger result = loop.getNumExecutions ();
+        ASSERT (result);
+
+        return result;
+    }
+
+    /**
+     * Get the loop delay, as specified in the program.
+     */
+    public BigInteger getLoopDelay ()
+    {
+        ASSERT (delay);
+        return delay;
     }
 }
 

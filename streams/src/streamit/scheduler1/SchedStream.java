@@ -14,7 +14,7 @@ public abstract class SchedStream extends AssertedClass
 
     Object stream;
 
-    public Object getStream ()
+    public Object getStreamObject ()
     {
         return stream;
     }

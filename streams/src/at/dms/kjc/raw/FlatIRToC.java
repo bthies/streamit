@@ -41,7 +41,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     //true if we are using the second buffer management scheme 
     //circular buffers with anding
     public boolean debug = false;//true;
-    public boolean isWork = false;
     
     //fields for all of the vars names we introduce in the c code
     private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
@@ -369,9 +368,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
 	    return;
 	
-	//If this is the raw Main function then set is work to true
-	//used for stack allocating arrays
-	isWork = ident.equals(RawExecutionCode.rawMain);
 	   
         newLine();
 	// print(CModifier.toString(modifiers));
@@ -407,7 +403,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
             print(";");
 
         newLine();
-	isWork = false;
     }
 
     private void dummyWork(int push) {
@@ -477,12 +472,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	System.out.println(ident);
 	//System.out.println(expr);
 
-	//if we are in a work function, we want to stack allocate all arrays
+	//we want to stack allocate all arrays
 	//we convert an assignment statement into the stack allocation statement'
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (isWork && type.isArrayType()) {
+	if (type.isArrayType()) {
 	    String[] dims = ArrayDim.findDim(filter, ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
@@ -1329,9 +1324,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    return;
 	}
 
-	//stack allocate all arrays in the work function 
+	//stack allocate all arrays 
 	//done at the variable definition
-	if (isWork && right instanceof JNewArrayExpression &&
+	if (right instanceof JNewArrayExpression &&
  	    (left instanceof JLocalVariableExpression)) {
 	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
 

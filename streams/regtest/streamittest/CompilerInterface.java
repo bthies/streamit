@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.26 2003-10-13 16:08:35 thies Exp $
+ * $Id: CompilerInterface.java,v 1.27 2003-10-17 22:26:11 thies Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -52,6 +52,7 @@ public class CompilerInterface {
     public static final String OPTION_PARTITION_GREEDY   = "--partition_greedy";
 
     public static final String OPTION_RAW                = "--raw";
+    public static final String OPTION_OUTPUTS            = "--outputs";
 
     public static final String OPTION_LINEAR_ANALYSIS    = "--linearanalysis";
     public static final String OPTION_LINEAR_REPLACEMENT = "--linearreplacement";
@@ -75,6 +76,8 @@ public class CompilerInterface {
     // number of steady-state executions to run program for if
     // gathering numbers from within the compiler
     private static final int NUMBERS_STEADY_CYCLES = 3;
+    // number of outputs to allow on Raw before terminating
+    private static final int NUM_RAW_OUTPUTS = 1000;
     // name of the results file for each run
     private static final String RESULTS_FOR_RUN = "results.out";
     // name of the cumulative results file
@@ -286,12 +289,18 @@ public class CompilerInterface {
 	    numOptions++;
 	}
 
-	// if we are compiling to 4 raw tiles 
+	// if we are compiling to raw tiles 
 	for (int i=1; i<=8; i++) {
 	    if ((flags & RAW[i]) == RAW[i]) {
 		options[numOptions] = OPTION_RAW;
 		numOptions++;
 		options[numOptions] = "" + i;
+		numOptions++;
+		// also add a limit on the number of outputs, so that
+		// regtest doesn't hang.
+		options[numOptions] = OPTION_OUTPUTS;
+		numOptions++;
+		options[numOptions] = "" + NUM_RAW_OUTPUTS;
 		numOptions++;
 	    }
 	}

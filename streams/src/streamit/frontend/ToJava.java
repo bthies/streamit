@@ -110,6 +110,7 @@ class ToJava
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
                 prog = (Program)prog.accept(new NoticePhasedFilters());
                 prog = (Program)prog.accept(new DoComplexProp(varGen));
+                prog = (Program)prog.accept(new TranslateEnqueue());
                 prog = (Program)prog.accept(new InsertIODecls());
                 prog = (Program)prog.accept(new InsertInitConstructors());
                 prog = (Program)prog.accept(new MoveStreamParameters());

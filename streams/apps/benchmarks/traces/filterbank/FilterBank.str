@@ -1,0 +1,78 @@
+/**
+ * This is a generic filter bank that decomposes an incoming stream into
+ * M frequency bands. It then performs some processing on them (the exact
+ * processing is yet to be determined, and then reconstructs them.
+ **/
+void->void pipeline FilterBank {
+    //add DataSource();
+    add FileReader<float>("input");
+    add FilterBankPipeline(3);
+    //add FloatPrinter();
+    add FileReader<float>("output");
+}
+
+
+/** 
+ * Total FilterBank structure -- the splitjoin and the final adder.
+ **/
+float->float pipeline FilterBankPipeline(int M) {
+  add FilterBankSplitJoin(M);
+  add Adder(M);
+}
+
+
+/**
+ * Filterbank splitjoin (everything before the final adder. )
+ **/
+float->float splitjoin FilterBankSplitJoin(int M) {
+  split duplicate;
+  for (int i=0; i<M; i++) {
+    add ProcessingPipeline(M,i);
+  }
+  join roundrobin;
+}
+
+/** 
+ * The main processing pipeline: analysis, downsample, process, upsample, synthesis.
+ * I use simple bandpass filters for the Hi(z) and Fi(z).
+ **/
+float->float pipeline ProcessingPipeline(int M, int i) {
+  /* analysis pipeline */
+  add pipeline {
+    /* take the subband from i*pi/M to (i+1)*pi/M */
+    add BandPassFilter(1, (i*pi/M), ((i+1)*pi/M), 100);
+    /* decimate by M */
+    add Compressor(M);
+  };
+
+  /* process the subband */
+  add ProcessFilter(i);
+  
+  /* synthesis pipeline */
+  add pipeline {
+    /* upsample by M */
+    add Expander(M);
+    /* synthesize (eg interpolate) */
+    add BandStopFilter(M, (i*pi/M), ((i+1)*pi/M), 100);
+  };
+}
+
+
+/* This is (obviously) the data source. */
+void->float filter DataSource() {
+  int n = 0;
+  float w1 = pi/10;
+  float w2 = pi/20;
+  float w3 = pi/30;
+  work push 1 {
+    push(cos(w1*n) + cos(w2*n) + cos(w3*n));
+    n++;
+  }
+}
+
+/* this is the filter that we are processing the sub bands with. */
+float->float filter ProcessFilter(int order) {
+  work pop 1 push 1 {
+    push(pop());
+  }
+}

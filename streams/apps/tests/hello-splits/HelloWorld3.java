@@ -38,11 +38,11 @@ public class HelloWorld3 extends Stream
                 public void Init() 
                 {
                     UseSplitter(Splitter.DUPLICATE_SPLITTER ());
-                    //Add(new BufferedCharPrinter());
+                    Add(new BufferedCharPrinter());
                     //Add(new XORLoop());
+                    //Add(new ChannelConnectFilter (new char [1]));
                     Add(new ChannelConnectFilter (new char [1]));
-                    Add(new ChannelConnectFilter (new char [1]));
-                    UseJoiner(Joiner.WEIGHTED_ROUND_ROBIN(1,1));
+                    UseJoiner(Joiner.WEIGHTED_ROUND_ROBIN(0,1));
                 }
             });
         Add(new BufferedCharPrinter());
@@ -120,7 +120,7 @@ class BufferedCharPrinter extends Filter
         // flush the buffer if we hit null-terminated string
         if (c=='\0')
         {
-            System.out.println(sb);
+            System.out.println("@" + sb + "@");
             sb = new StringBuffer();
         } else {
             sb.append(c);

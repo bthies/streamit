@@ -39,23 +39,23 @@ sub save_output {
 #########
 # subroutine to do a compile test, and parse results.
 # Return value is (outputs, flops, fadds, fmuls).
-# do_test($path, $base_filename, $options, $descr)
+# do_test($path, $base_filename, $options, $descr, $iterations)
 #########
 sub do_test {
     my $path = shift || die ("no flops");
     my $base_filename = shift || die ("no base");
     my $options = shift || die("no options");
     my $descr = shift || die ("no description");
-    
+    my $iters = shift || $NUM_ITERS;
     # compile with specified options
     print "$descr:";
     do_compile($path, $base_filename, $options);
     
     # figure out how many outputs are produced
-    my $outputs = get_output_count($path, $base_filename, $NUM_ITERS);
+    my $outputs = get_output_count($path, $base_filename, $iters);
     
     # run the dynamo rio test and get back the results
-    my $report = run_rio($path, $base_filename, $NUM_ITERS);
+    my $report = run_rio($path, $base_filename, $iters);
     print "\n";
     
     # extract the flops, fadds and fmul count from the report
@@ -81,6 +81,19 @@ sub do_compile {
     do_streamit_compile($new_path, $filename_base, $options);
     # compile the C code to generate an executable
     do_c_compile($new_path, $filename_base);
+}
+
+########
+# Subroutine to use the streamit frontend. Generates $filename.java from $filename.str
+# usage: do_frontend_compile($path, $filename);
+########
+sub do_frontend_compile {
+    my $new_path      = shift || die ("no path passed to do_frontend_compile.");
+    my $filename_base = shift || die ("no filename passed to do_frontend_compile.");
+
+    # run streamit compiler to generate C code.
+    print "(str->java)";
+    `cd $new_path; $STREAMIT_FRONTEND $filename_base.str > $filename_base.java`;
 }
 
 ########
@@ -174,9 +187,9 @@ sub time_execution {
     print "(time $num_iters)";
     
     #temp file
-    my $TEMP_FILE = "timing_output.txt";
+    my $TEMP_FILE = "timing_output" . rand() . ".txt";
     # crazy redirect hack to get access to the output of the "time" command
-    `/usr/local/bin/bash -c \"time $filename_base.exe -i $num_iters\" >& $TEMP_FILE`;
+    `/usr/local/bin/bash -c \"time $filename_base.exe -i $num_iters\" >/dev/null  2>$TEMP_FILE`;
     my $time_result = read_file($TEMP_FILE);
     `rm $TEMP_FILE`;
 
@@ -257,12 +270,13 @@ sub set_fir_length {
 sub remove_prints {
     my $path = shift || die ("no path");
     my $base_filename = shift || die ("no base");
+    print "(-print)";
     # read in the c file
-    my $contents = read_file("$base_filename.c");
+    my $contents = read_file("$path/$base_filename.c");
     # replace printf with //printf
     $contents =~ s/printf/\/\/printf/g;
     # write the changes back to disk
-    write_file($contents, "$base_filename.c");
+    write_file($contents, "$path/$base_filename.c");
 }
 
 

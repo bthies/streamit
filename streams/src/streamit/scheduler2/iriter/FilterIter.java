@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: FilterIter.java,v 1.4 2002-05-25 00:29:35 karczma Exp $ */
+/* $Id: FilterIter.java,v 1.5 2002-05-25 19:24:24 karczma Exp $ */
 
 /**
  * <dl>
@@ -25,7 +25,7 @@ public interface FilterIter extends IteratorBase
     
     public int getNumWorkPhases ();
     public int getPeekPhase (int phase);
-    public int getPopAmount (int phase);
-    public int getPushAmount (int phase);
-    public Object getWorkFunctionStage (int phase);
+    public int getPopPhase (int phase);
+    public int getPushPhase (int phase);
+    public Object getWorkFunctionPhase (int phase);
 }

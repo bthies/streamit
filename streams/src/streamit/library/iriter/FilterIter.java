@@ -76,7 +76,7 @@ public class FilterIter
         return filter.peekCount;
     }
     
-    public int getPopAmount (int phase)
+    public int getPopPhase (int phase)
     {
         // library has only one phase!
         ASSERT (phase == 1);
@@ -84,7 +84,7 @@ public class FilterIter
         return filter.popCount;
     }
     
-    public int getPushAmount (int phase)
+    public int getPushPhase (int phase)
     {
         // library has only one phase!
         ASSERT (phase == 1);
@@ -92,7 +92,7 @@ public class FilterIter
         return filter.pushCount;
     }
 
-    public Object getWorkFunctionStage (int phase)
+    public Object getWorkFunctionPhase (int phase)
     {
         // library has only one phase!
         ASSERT (phase == 1);

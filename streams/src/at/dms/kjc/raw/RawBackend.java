@@ -156,12 +156,11 @@ public class RawBackend {
 		 + "overwrite in RawBackend");
 		 val=26;
 		 }
-		*/
-		if ((i == 0) &&
+	       	if ((i == 0) &&
 		    (obj.getName().startsWith("Fused__StepSource") ||
 		     obj.getName().startsWith("Fused_FilterBank")))
 		    val++;
-		
+	       */
 		if (rawFlattener.getFlatNode(obj) != null)
 		    result[i].put(rawFlattener.getFlatNode(obj), 
 				  new Integer(val));

@@ -324,8 +324,13 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    return ((SIRFilter)fire.contents).getPopInt();
     }
    
-    private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts) 
+    private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, SimulationCounter counters) 
     {
+	if (fire.contents instanceof SIRTwoStageFilter &&
+	    (!counters.hasFired(fire)) &&
+	    ((SIRTwoStageFilter)fire.contents).getInitPush() == 0 &&
+	    ((SIRTwoStageFilter)fire.contents).getInitPop() == 0)
+	    return;
 	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
 	if (oldVal - 1 < 0)
 	    Utils.fail("Executed too much");
@@ -338,7 +343,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	if (fire.contents instanceof SIRFilter) {
 	    //	    System.out.println("Firing " + fire.contents.getName());
 	    //decrement the schedule execution counter
-	    decrementExecutionCounts(fire, executionCounts);
+	    decrementExecutionCounts(fire, executionCounts, counters);
 	    
 	    //consume the date from the buffer
 	    counters.decrementBufferCount(fire, 
@@ -394,7 +399,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     {
 	//	System.out.println("Firing " + fire.contents.getName());
 	//The joiner is passing a data item, record this as an execution
-	decrementExecutionCounts(fire, executionCounts);
+	decrementExecutionCounts(fire, executionCounts, counters);
 	
 	//else, this joiner fired because it has data that can be sent downstream
 	JoinerScheduleNode current = new JoinerScheduleNode();

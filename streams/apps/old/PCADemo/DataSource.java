@@ -48,8 +48,8 @@ class DataSource extends Filter
     targetBeam         = tarBeam;
     targetSample       = tarSample;
     predecPulseSize    = predecPulseSize;
-    steeringVectors    = new float(numberOfBeams*numberOfChannels);
-    predecPulseShape   = new float(predecPulseSize);
+    steeringVectors    = new float [numberOfBeams*numberOfChannels];
+    predecPulseShape   = new float [predecPulseSize];
 
     output = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
 
@@ -58,23 +58,23 @@ class DataSource extends Filter
 
   public void work()
   {
+    System.out.println("Running the DataSource Filter...");
     // Outer product of target beam and predec pulse shape
     // into sub matrix of output.
     int i, j;
-    for(i = 0; i < numChannels; i++)
+    for(i = 0; i < numberOfChannels; i++)
     {
-      for(j = 0; j < numSamples; j++ )
+      for(j = 0; j < numberOfSamples; j++ )
       {
-	if( j < targetSample || j > targetSample+predecPulseSize )
-	{
-	  output.pushFloat(0.0);
-	}
-	else // outer prod of target beam and predec pulse shape
-	{
-	  output.pushFloat(predecPulseShape[j-targetSample]*steeringVectors[targetBeam+i*numBeams]);
-	}
+// 	if( j < targetSample || j > targetSample+predecPulseSize )
+// 	{
+	  output.pushFloat(0.0f);
+// 	}
+// 	else // outer prod of target beam and predec pulse shape
+// 	{
+// 	  output.pushFloat(predecPulseShape[j-targetSample]*steeringVectors[targetBeam+i*numberOfBeams]);
+// 	}
       }
     }
   }
-
 }

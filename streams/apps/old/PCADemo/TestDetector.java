@@ -15,12 +15,12 @@
 import streamit.*;
 
 /**
- * Class DataSource
+ * Class TestDetector
  *
- * Implements the data source for the PCA demo app
+ * Implements a (VERY) simple detection algorithm
  */
 
-class DataSource extends Filter
+class TestDetector extends Filter
 {
   int numberOfSamples;
   int numberOfBeams;
@@ -33,14 +33,14 @@ class DataSource extends Filter
   int currentSample;
   int currentBeam;
 
-  public DataSource (int nBeams, int nSamples,
+  public TestDetector (int nBeams, int nSamples,
 		     int tarBeam, int tarSample, float thresh)
   {
     super (nBeams, nSamples, tarBeam, tarSample, thresh);
   }
 
   public void init(int nBeams, int nSamples,
-		   int tarBeam, int tarSample, thresh)
+		   int tarBeam, int tarSample, float thresh)
   {
     numberOfBeams      = nBeams;
     numberOfSamples    = nSamples;
@@ -56,29 +56,39 @@ class DataSource extends Filter
 
   public void work()
   {
+    System.out.println("Detecting...");
     // No noise in input data -> no need for cfar filter -> detection is elementwise
     float inputData = input.popFloat();
-    if(input >= threshold)
-    {
-      if(currentSample != targetSample && currentBeam != targetBeam)
-      {
-	// Bad things
-      }
-    }
-    if(input < threshold)
-    {
-      if(currentSample == targetSample && currentBeam == targetBeam))
-      {
-	// More Bad things
-      }
-    }
+    if (inputData == 0)
+      System.out.println("Got zero - good stuff.");
+    if (inputData != 0)
+      System.err.println("Did not get zero - very bad stuff.");
+
+//     if(inputData >= threshold)
+//     {
+//       if(currentSample != targetSample && currentBeam != targetBeam)
+//       {
+// 	// Bad things
+//       }
+//     }
+//     if(inputData < threshold)
+//     {
+//       if(currentSample == targetSample && currentBeam == targetBeam)
+//       {
+// 	// More Bad things
+//       }
+//       else if (inputData != 1)
+//       {
+// 	System.err.println("Getting screwy data out of the pipe.");
+//       }
+//     }
     currentSample++;
-    if (currentSample > numSamples)
+    if (currentSample > numberOfSamples)
     {
       currentSample = 0;
       currentBeam++;
     }
-    if(currentBeam > numBeams)
+    if(currentBeam > numberOfBeams)
     {
       currentBeam = 0;
     }

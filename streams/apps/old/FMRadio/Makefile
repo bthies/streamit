@@ -1,6 +1,6 @@
 LIBRARIES = 	"../libraries"
-IMPORTS   = 	"import streamit.*; \
-	         import streamit.io.*; \
+IMPORTS   = 	"import streamit.library.*; \
+	         import streamit.library.io.*; \
 		 import java.lang.Math;"
 
 LIB_FILES =	${LIBRARIES}/LowPassFilter.java \

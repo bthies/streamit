@@ -1,7 +1,7 @@
 # Makefile links all java files into a single "linked" java file in order
 # to make the job of gathering numbers easier.
-IMPORTS   = 	"import streamit.*; \
-	         import streamit.io.*; \
+IMPORTS   = 	"import streamit.library.*; \
+	         import streamit.library.io.*; \
 		 import java.lang.Math;"
 
 LIB_FILES =	AdapTest.java \

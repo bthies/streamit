@@ -5,8 +5,8 @@ SOURCES = HDTV.java $(LIB_FILES)
 COMPILER = java -Xmx512M  at.dms.kjc.Main -s
 LINKER   = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
 
-IMPORTS   = 	"import streamit.*; \
-	         import streamit.io.*; \
+IMPORTS   = 	"import streamit.library.*; \
+	         import streamit.library.io.*; \
 		 import java.lang.Math;"
 
 MAIN	  = 	HDTV

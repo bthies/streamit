@@ -3,8 +3,8 @@
 # single "linked" file that can be compiled with streamit 
 # (used for regression testing)
 LIBRARIES = 	"../libraries"
-IMPORTS   = 	"import streamit.*; \
-	         import streamit.io.*; \
+IMPORTS   = 	"import streamit.library.*; \
+	         import streamit.library.io.*; \
 		 import java.lang.Math;"
 
 LIB_FILES =	Bank.java \

@@ -2,8 +2,8 @@
 # Assembles all the java sources in this directory into a 
 # single "linked" file that can be compiled with streamit 
 # (used for regression testing)
-IMPORTS   = 	"import streamit.*; \
-	         import streamit.io.*; \
+IMPORTS   = 	"import streamit.library.*; \
+	         import streamit.library.io.*; \
 		 import java.lang.Math;"
 
 LIB_FILES =	MultiChannelPCMSynthesis.java \

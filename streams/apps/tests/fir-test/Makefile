@@ -1,5 +1,5 @@
 LIBRARIES = 	"../../libraries"
-IMPORTS   = 	"import streamit.*; "
+IMPORTS   = 	"import streamit.library.*; "
 
 LIB_FILES = 	${LIBRARIES}/FloatOneSource.java \
 		${LIBRARIES}/FloatPrinter.java \

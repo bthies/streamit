@@ -1,0 +1,460 @@
+/**
+ * This is a template for the beamformer.  It can be configured either
+ * to have serial output (with serialized outputs from all parallel
+ * printers) or not.
+ */
+
+void->void pipeline TemplateBeamFormer {
+    int numChannels           = 12;//48;
+    int numSamples            = 64;//4096;
+    int numBeams              = 4;//16;
+    int numCoarseFilterTaps   = 64;//
+    int numFineFilterTaps     = 64;//
+    // under current implementation, decimation ratios must divide
+    // numSamples!  (otherwise we pop off the end of a column.) --bft
+    int coarseDecimationRatio = 1;
+    int fineDecimationRatio   = 2;
+    int numSegments           = 1;
+    int numPostDec1           = numSamples/coarseDecimationRatio;
+    int numPostDec2           = numPostDec1/fineDecimationRatio;
+    int mfSize                = numSegments*numPostDec2;
+    int pulseSize             = numPostDec2/2;
+    int predecPulseSize       = pulseSize*coarseDecimationRatio*fineDecimationRatio;
+    int targetBeam            = numBeams/4;
+    int targetSample          = numSamples/4;
+    // targetSamplePostDec used to have a 1 added to it, but that
+    // seemed to do the wrong thing --bft
+    int targetSamplePostDec   = targetSample/coarseDecimationRatio/fineDecimationRatio;
+    float dOverLambda         = 0.5;
+    float cfarThreshold       = 0.95 * dOverLambda*numChannels* (0.5*pulseSize);
+
+    add splitjoin {
+	split roundrobin(0);
+	for (int i=0; i<numChannels; i++) {
+	    add pipeline {
+		add InputGenerate(i, numSamples, targetBeam, targetSample, cfarThreshold);
+#ifdef COARSE
+		add Decimator(coarseDecimationRatio);
+		add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
+#endif
+#ifndef COARSE
+		add BeamFirFilter(numCoarseFilterTaps, numSamples, coarseDecimationRatio);
+#endif
+
+#ifdef COARSE
+		add Decimator(fineDecimationRatio);
+		add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
+#endif
+#ifndef COARSE
+		add BeamFirFilter(numFineFilterTaps, numPostDec1, fineDecimationRatio);
+#endif
+	    }
+	}
+	join roundrobin(2);
+    }
+
+    add splitjoin {
+	split duplicate;
+	for (int i=0; i<numBeams; i++) {
+	    add pipeline {
+		add BeamForm(i, numChannels);
+		// Need to replace this fir with fft -> elWiseMult -> ifft
+#ifdef COARSE
+		// don't need a decimator since the decimation factor is 1
+		// add(new Decimator(1));
+		add CoarseBeamFirFilter(mfSize, numPostDec2,1);
+#endif
+#ifndef COARSE
+		add BeamFirFilter(mfSize, numPostDec2, 1);
+#endif
+		add Magnitude();
+		// with a more sophisticated detector, we need
+		// someplace to store the data until we can find
+		// the targets...
+		add Detector(i, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
+	    }
+	}
+#ifdef SERIALIZED
+	    join roundrobin();
+#endif
+#ifndef SERIALIZED
+	    join roundrobin(0);
+#endif
+    }
+#ifdef SERIALIZED
+    add FloatPrinter();
+#endif
+}
+
+void->float filter InputGenerate (int myChannel, int numberOfSamples, int tarBeam, int targetSample, float thresh) {
+    int curSample;
+    boolean holdsTarget;
+
+    init {
+	curSample = 0;
+	holdsTarget = (tarBeam == myChannel);
+    }
+
+    work push 2 {
+	if( holdsTarget && (curSample == targetSample) ) {
+#ifdef RANDOM_INPUTS
+	    // this is just something random I invented. --bft
+	    push(sqrt(curSample*myChannel));
+	    push(sqrt(curSample*myChannel)+1);
+#endif
+#ifndef RANDOM_INPUTS
+	    // real
+	    push(sqrt(thresh));
+	    // imag
+	    push(0);
+#endif
+	} else {
+#ifdef RANDOM_INPUTS
+	    // this is just something random I invented. --bft
+	    push(-sqrt(curSample*myChannel));
+	    push(-(sqrt(curSample*myChannel)+1));
+#endif
+#ifndef RANDOM_INPUTS
+	    // real
+	    push(0);
+	    // imag
+	    push(0);
+#endif
+	}
+
+	//	System.out.println(i2++);
+	curSample++;
+
+	if (curSample >= numberOfSamples) {
+	    curSample = 0;
+	}
+    }
+}
+
+float->void filter FloatPrinter {
+    work pop 1 { print ( pop() ); }
+}
+
+float->float filter BeamFirFilter (int numTaps, int inputLength, int decimationRatio) {
+    float[numTaps] real_weight;
+    float[numTaps] imag_weight;
+    int numTapsMinusOne;
+    float[numTaps] realBuffer;
+    float[numTaps] imagBuffer;
+    // number of items we've seen in relation to inputLength
+    int count;
+    // our current writing position into the buffers
+    int pos;
+
+    init {
+	int i;
+	numTapsMinusOne = numTaps-1;
+	pos = 0;
+
+	/* NOTE that these weights are (intentionally) backwards
+	 * compared to some formulations of an FIR.  That is, if we
+	 * could disregard the initial conditions and there were
+	 * complex values on the the tape, then filter would compute
+	 * something equivalent to:
+	 *
+	 *   peek(0) * weight[numTaps] + ... + peek(numTaps) * weight[0]
+	 * 
+	 *  this formulation makes sense when you visualize the FIR operation:
+	 *
+	 *   input stream                               weights
+         *      in[4]
+	 *      in[3]                                     /|\   <- the weights move
+	 *      in[2]                                      |       UP during the 
+	 *      in[1]                                    w[0]      course of execution
+	 *      in[0]                                    w[1]
+	 *        0    <- initial conditions             w[2]
+	 *        0                                      w[3]
+	 */
+
+#ifdef RANDOM_WEIGHTS
+	// the weights are more-or-less random but designed to give an
+	// output that doesn't need scientific notation
+	for (int j=0; j<numTaps; j++) {
+	    int idx = j + 1;
+	    // generate real part
+	    real_weight[j] = sin(idx) / ((float)idx);
+	    imag_weight[j] = cos(idx) / ((float)idx);
+	}
+#endif
+#ifndef RANDOM_WEIGHTS
+	// Use identity weights for now...
+	//  Later should become an input parameter to the FIR
+	real_weight[0] = 1.0;
+	imag_weight[0] = 0.0;
+	for(i = 1; i < numTaps; i ++) {
+	    real_weight[i] = 0;
+	    imag_weight[i] = 0;
+	    realBuffer[i] = 0;
+	    imagBuffer[i] = 0;
+	}
+#endif
+    }
+
+    work pop 2*decimationRatio push 2 {
+	float real_curr = 0;
+	float imag_curr = 0;
+	int i;
+	int modPos;
+
+	// pop a new item into the buffer
+	realBuffer[numTapsMinusOne - pos] = pop();
+	/*
+	  if (realBuffer[pos]>0) {
+	  System.err.println("popping >0 with pos=" + pos + " in " + this);
+	  }
+	*/
+	imagBuffer[numTapsMinusOne - pos] = pop();
+
+	// calculate sum
+	modPos = numTapsMinusOne - pos;
+	for (i = 0; i < numTaps; i++) {
+	    real_curr += 
+		realBuffer[modPos] * real_weight[i] + imagBuffer[modPos] * imag_weight[i];
+	    imag_curr +=
+		imagBuffer[modPos] * real_weight[i] + realBuffer[modPos] * imag_weight[i];
+	    // adjust position in this round of summing.
+	    modPos = (modPos + 1) & numTapsMinusOne;
+	}
+	
+	// increment sum
+	pos = (pos + 1) & numTapsMinusOne;
+
+	// push output
+	push (real_curr);
+	push (imag_curr);
+
+	// decimate
+	for (i = 2; i < 2*decimationRatio; i++) {
+	    pop();
+	}
+
+	// increment count
+	count+=decimationRatio;
+
+	// when we reach inLength, reset
+	if (count==inputLength) {
+	    count = 0;
+	    pos = 0;
+	    for (i=0; i<numTaps; i++) {
+		realBuffer[i] = 0;
+		imagBuffer[i] = 0;
+	    }
+	}
+    }
+}
+
+float->float filter Decimator(int decimationFactor) {
+    init {}
+    work pop 2*decimationFactor push 2 {
+	push(pop());
+	push(pop());
+	for (int i=1; i<decimationFactor; i++) {
+	    pop();
+	    pop();
+	}
+    }
+}
+
+float->float filter CoarseBeamFirFilter (int numTaps, int inputLength, int decimationRatio) {
+    float[numTaps] real_weight;
+    float[numTaps] imag_weight;
+
+    init {
+	int i;
+
+#ifdef RANDOM_WEIGHTS
+	// the weights are more-or-less random but designed to give an
+	// output that doesn't need scientific notation
+	for (int j=0; j<numTaps; j++) {
+	    int idx = j + 1;
+	    // generate real part
+	    real_weight[j] = sin(idx) / ((float)idx);
+	    imag_weight[j] = cos(idx) / ((float)idx);
+	}
+#endif
+#ifndef RANDOM_WEIGHTS
+	// Use identity weights for now...
+	//  Later should become an input parameter to the FIR
+
+	// NOTE:  weights are as "backwards" as explained in beamfirfilter
+	real_weight[0] = 1.0;
+	imag_weight[0] = 0.0;
+	for(i = 1; i < numTaps; i++) {
+	    real_weight[i] = 0;
+	    imag_weight[i] = 0;
+	}
+#endif
+    }
+
+    work pop 2*inputLength push 2*inputLength {
+	// for first min(<numTaps>, <inputLength)>, only look at beginning items
+	int min;
+	if (numTaps < inputLength) {
+	    min = numTaps;
+	} else {
+	    min = inputLength;
+	}
+	for (int i=1; i<=min; i++) {
+	    float real_curr = 0;
+	    float imag_curr = 0;
+	    for (int j=0; j<i; j++) {
+		int realIndex = 2*(i-j-1);
+		int imagIndex = realIndex+1;
+		real_curr += real_weight[j] * peek(realIndex) + imag_weight[j] * peek(imagIndex);
+		imag_curr += real_weight[j] * peek(imagIndex) + imag_weight[j] * peek(realIndex);
+		//System.err.println("  real += wr[" + j + "] * peek("+realIndex+") + wi["+j+"] * peek("+imagIndex+")");
+		//System.err.println("  imag += wr[" + j + "] * peek("+imagIndex+") + wi["+j+"] * peek("+realIndex+")");
+	    }
+	    //System.err.println("PUSH real");
+	    //System.err.println("PUSH imag");
+	    push(real_curr);
+	    push(imag_curr);
+	}
+
+	// then look at <numTaps> items
+	for (int i=0; i<inputLength-numTaps; i++) {
+	    // do popping 
+	    pop();
+	    pop();
+	    float real_curr = 0;
+	    float imag_curr = 0;
+	    for (int j=0; j<numTaps; j++) {
+		int realIndex = 2*(numTaps-j-1);
+		int imagIndex = realIndex+1;
+		real_curr += real_weight[j] * peek(realIndex) + imag_weight[j] * peek(imagIndex);
+		imag_curr += real_weight[j] * peek(imagIndex) + imag_weight[j] * peek(realIndex);
+	    }
+	    push(real_curr);
+	    push(imag_curr);
+	}
+
+	// pop extra min(<numTaps>, <inputLength>) items (that are
+	// still on the tape from our last filtering)
+	for (int i=0; i<min; i++) {
+	    pop();
+	    pop();
+	}
+    }
+}
+
+float->float filter BeamForm (int myBeamId, int numChannels) {
+    float[numChannels] real_weight;
+    float[numChannels] imag_weight;
+
+    init {
+#ifdef RANDOM_WEIGHTS
+	// the weights are more-or-less random but designed to give an
+	// output that doesn't need scientific notation
+	for (int j=0; j<numChannels; j++) {
+	    int idx = j + 1;
+	    // generate real part
+	    real_weight[j] = sin(idx) / ((float)(myBeamId+idx));
+	    imag_weight[j] = cos(idx) / ((float)(myBeamId+idx));
+	}
+#endif
+#ifndef RANDOM_WEIGHTS
+	// For now, use identity weights.
+	for (i = 0; i < numChannels; i++) {
+	    real_weight[i] = 0; 
+	    imag_weight[i] = 0; 
+	    if (i == myBeamId) {
+		real_weight[i] = 1;
+		imag_weight[i] = 0;
+	    }
+	}
+#endif
+    }
+
+    work pop 2*numChannels push 2 {
+	float real_curr = 0;
+	float imag_curr = 0;
+	for (int i=0; i<numChannels; i++) {
+	    float real_pop = pop();
+	    float imag_pop = pop();
+	    // Need to check this boundary cond
+	    real_curr += 
+		real_weight[i] * real_pop - imag_weight[i] * imag_pop;
+	    imag_curr +=
+		real_weight[i] * imag_pop + imag_weight[i] * real_pop;
+	}
+	push (real_curr);
+	push (imag_curr);
+    }
+}
+
+float->float filter Magnitude {
+    init {}
+    work pop 2 push 1 {
+	float f1 = pop();
+	float f2 = pop();
+	push (mag(f1, f2));
+    }
+
+    /**
+     * Return magnitude of (<real>, <imag>)
+     */
+    float mag(float real, float imag) {
+	return (float) sqrt(real*real + imag*imag);
+    }
+}
+
+#ifdef SERIALIZED
+float->float
+#endif
+#ifndef SERIALIZED
+float->void
+#endif
+    filter Detector (int _myBeam, int numSamples, int targetBeam, int targetSample, float cfarThreshold) {
+    int curSample;
+    int myBeam;
+    boolean holdsTarget;
+    float thresh;
+    
+    init {
+	curSample = 0;
+	holdsTarget = (_myBeam == targetBeam);
+	myBeam = _myBeam+1;
+	thresh = 0.1;
+    }
+
+    work pop 1 
+#ifdef SERIALIZED
+	push 1
+#endif
+	{
+	    float inputVal = pop();
+	    float outputVal;
+	    if(holdsTarget && targetSample == curSample) {
+		if( !(inputVal >= thresh) ) {
+		    outputVal = 0;
+		} else {
+		    outputVal = myBeam;
+		}
+	    } else {
+		if( !(inputVal >= thresh) ) {
+		    outputVal = 0;
+		} else {
+		    outputVal = -myBeam;
+		}
+	    }
+#ifdef DISPLAY_OUTPUT
+	    outputVal = inputVal;
+#endif		
+#ifdef SERIALIZED
+	    push (outputVal);
+#endif
+#ifndef SERIALIZED
+	    print (outputVal);
+#endif
+
+	    curSample++;
+	    
+	    if( curSample >= numSamples )
+		curSample = 0;
+	}
+}

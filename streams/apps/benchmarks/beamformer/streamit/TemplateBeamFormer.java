@@ -329,8 +329,8 @@ class BeamFirFilter extends Filter
 	for (int j=0; j<nt; j++) {
 	    int idx = j + 1;
 	    // generate real part
-	    real_weight[j] = (float)(Math.sin(idx) / (idx));
-	    imag_weight[j] = (float)(Math.cos(idx) / (idx));
+	    real_weight[j] = (float)(((float)Math.sin(idx)) / (idx));
+	    imag_weight[j] = (float)(((float)Math.cos(idx)) / (idx));
 	}
 #endif
 #ifndef RANDOM_WEIGHTS
@@ -460,8 +460,8 @@ class CoarseBeamFirFilter extends Filter
 	for (int j=0; j<nt; j++) {
 	    int idx = j + 1;
 	    // generate real part
-	    real_weight[j] = (float)(Math.sin(idx) / (idx));
-	    imag_weight[j] = (float)(Math.cos(idx) / (idx));
+	    real_weight[j] = (float)(((float)Math.sin(idx)) / (idx));
+	    imag_weight[j] = (float)(((float)Math.cos(idx)) / (idx));
 	}
 #endif
 #ifndef RANDOM_WEIGHTS
@@ -565,8 +565,8 @@ class Beamform extends Filter
 	for (int j=0; j<nc; j++) {
 	    int idx = j + 1;
 	    // generate real part
-	    real_weight[j] = (float)(Math.sin(idx) / (myBeam+idx));
-	    imag_weight[j] = (float)(Math.cos(idx) / (myBeam+idx));
+	    real_weight[j] = (float)(((float)Math.sin(idx)) / (myBeam+idx));
+	    imag_weight[j] = (float)(((float)Math.cos(idx)) / (myBeam+idx));
 	}
 #endif
 #ifndef RANDOM_WEIGHTS

@@ -54,7 +54,7 @@ public class SIRScheduler {
      */
     private Schedule schedule(SIRStream toplevel) {
 	// make a scheduler
-	Scheduler scheduler = new SimpleHierarchicalScheduler();
+	Scheduler scheduler = new SimpleHierarchicalSchedulerPow2();
 	// get a representation of the stream structure
 	SchedStream schedStream 
 	    = (SchedStream)toplevel.accept(new SIRSchedBuilder(scheduler));

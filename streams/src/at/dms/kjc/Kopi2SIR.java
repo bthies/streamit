@@ -173,41 +173,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	return newExp;
     }
-
-    /* registers the SIR construct with its parent based on
-       the type of the parentStream,  called only during a class declaration
-       or anonymous creation
-    */
-    private void registerWithParent(SIRStream me) {
-	if (me.getParent() == null)
-	    return;
-	if (me.getParent() instanceof SIRPipeline) {
-	    if (!currentMethod.equals("add"))
-		at.dms.util.Utils.fail("Anonymous Stream Creation not in add() in Pipeline");
-	    ((SIRPipeline)me.getParent()).add(me);
-	}
-	else if (me.getParent() instanceof SIRFeedbackLoop) {
-	    if (currentMethod.equals("setBody"))
-		((SIRFeedbackLoop)me.getParent()).setBody(me);
-	    else if (currentMethod.equals("setLoop"))
-		((SIRFeedbackLoop)me.getParent()).setLoop(me);
-	    else 
-		at.dms.util.Utils.fail("Anonymous Stream Creation not in setBody() in FeedbackLoop");
-	}
-	else if (me.getParent() instanceof SIRSplitJoin) {
-	    if (!currentMethod.equals("add"))
-		at.dms.util.Utils.fail("Anonymous Stream Creation not in add() in SplitJoin");
-	    ((SIRSplitJoin)me.getParent()).add(me);
-	}
-	else
-	    at.dms.util.Utils.fail("Unimplemented SIRStream (cannot register)");
-    }
-    
    
     //Perform any post visiting operations after a class is declared
     private void postVisit(SIROperator current) {
-	if (current instanceof SIRStream)
-	    registerWithParent((SIRStream)current);
 	if (current instanceof SIRFeedbackLoop) {
 	    if (splitType != null)
 		((SIRFeedbackLoop)current).setSplitter(SIRSplitter.create((SIRFeedbackLoop)
@@ -1319,34 +1287,30 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIRInitStatement createInitStatement(Object SIROp, String regMethod) 
     {
 	SIRStream newST = null;
-
-	//Already an SIRinit statement
-	if (SIROp instanceof SIRInitStatement) {
-	    return (SIRInitStatement)SIROp;
-	}
-	//Using a local variable that has been already defined as a stream construct
-	if (SIROp instanceof SIRStream)
+	/*
+	  //Already an SIRinit statement
+	  if (SIROp instanceof SIRInitStatement) {
+	  return (SIRInitStatement)SIROp;
+	  }
+	  //Using a local variable that has been already defined as a stream construct
+	  if (SIROp instanceof SIRStream)
 	    newST = (SIRStream)SIROp;
+	*/
 
-	/********************************************************************/
-	/* THIS BREAKS IT, but was inserted in place of what's above (up to */
-	/* "= null"                                                         */
-	/********************************************************************
-	//Already an SIRinit statement (this is a local variable expression)
-	//we used the init statement from the symbol table
-	//Using a local variable that has been already defined as a stream construct
+
+	// Already an SIRinit statement (this is a local variable expression or a anonymous
+	// creation)
+	// we use the init statement from the symbol table (for a local var) or created it in the 
+	// or the one created in the AnonymousCreation
 	if (SIROp instanceof SIRInitStatement) {
 	    //now we must set the parent and do any other steps that are necessary 
 	    // when registering
 	    newST = (SIRStream)((SIRInitStatement)SIROp).getTarget();
 	    newST.setParent((SIRContainer)parentStream);
 	}
+
 	if (SIROp instanceof SIRStream)
 	    newST = (SIRStream)SIROp;
-	/********************************************************************/
-	/************** END BREAKAGE ****************************************/
-	/********************************************************************/
-
 
 	//Creating a named class
 	//if it is a named creation, lookup in the symbol table for the visited
@@ -1365,10 +1329,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	//now find the registration method
 	if (regMethod.equals("add")) {
-	    if (parentStream instanceof SIRPipeline)
+	    if (parentStream instanceof SIRPipeline){
 		((SIRPipeline)parentStream).add(newST);
-	    else 
+	    }
+	    else {
 		((SIRSplitJoin)parentStream).add(newST);
+	    }
 	}
 	else if (regMethod.equals("setBody"))
 	    ((SIRFeedbackLoop)parentStream).setBody(newST);

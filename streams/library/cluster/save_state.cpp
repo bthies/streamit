@@ -1,5 +1,15 @@
 
 #include <save_state.h>
+#include <netsocket.h>
+#include <init_instance.h>
+#include <save_manager.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <dirent.h>
 
 void save_state::save_to_file(thread_info *t_info, 
 			      int steady_iter, 
@@ -21,7 +31,7 @@ void save_state::save_buffer(int thread, int steady_iter, object_write_buffer *b
   sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
   
   int fd = creat(fname, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-  mysocket file_sock(fd);
+  netsocket file_sock(fd);
   
   int size = buf->get_size();
   int offset = 0;
@@ -63,7 +73,7 @@ void save_state::load_from_file(int thread,
   printf("thread: %d file: %s\n", thread, fname);
   
   int fd = open(fname, O_RDONLY);
-  mysocket file_sock(fd);
+  netsocket file_sock(fd);
   
   for (;;) {
     char tmp[4];

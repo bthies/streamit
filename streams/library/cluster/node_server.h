@@ -2,7 +2,7 @@
 #ifndef __NODE_SERVER_H
 #define __NODE_SERVER_H
 
-#include <mysocket.h>
+#include <netsocket.h>
 #include <open_socket.h>
 #include <thread_info.h>
 #include <init_instance.h>
@@ -75,11 +75,11 @@ class node_server {
 
   int find_latest_checkpoint();
 
-  mysocket *wait_for_connection();
-  static mysocket *connect_to_ccp(unsigned ip);
-  void run_server(mysocket *sock);
+  netsocket *wait_for_connection();
+  static netsocket *connect_to_ccp(unsigned ip);
+  void run_server(netsocket *sock);
 
-  static int read_cluster_config(mysocket *sock);
+  static int read_cluster_config(netsocket *sock);
 
  public:
   

@@ -2,6 +2,7 @@
 #ifndef __INIT_INSTANCE_H
 #define __INIT_INSTANCE_H
 
+#include <mysocket.h>
 #include <sock_dscr.h>
 
 #include <map>
@@ -21,7 +22,7 @@ class init_instance {
   static short listen_port;
   
   static vector<sock_dscr> in_connections, out_connections;
-  static map<sock_dscr, int> in_sockets, out_sockets;
+  static map<sock_dscr, mysocket*> in_sockets, out_sockets;
   static map<sock_dscr, bool> in_done, out_done;
 
   static map<int, unsigned> thread_machines;
@@ -45,8 +46,8 @@ class init_instance {
   static void initialize_sockets();
   static void close_sockets();
   
-  static int get_incoming_socket(int from, int to, int type);
-  static int get_outgoing_socket(int from, int to, int type);
+  static mysocket* get_incoming_socket(int from, int to, int type);
+  static mysocket* get_outgoing_socket(int from, int to, int type);
 
 
   //// helpers

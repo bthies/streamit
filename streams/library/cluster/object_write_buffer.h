@@ -29,6 +29,4 @@ class object_write_buffer {
 
 };
 
-
-
 #endif

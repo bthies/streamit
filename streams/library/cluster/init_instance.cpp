@@ -1,7 +1,9 @@
 
 #include <init_instance.h>
+
 #include <open_socket.h>
-#include <mysocket.h>
+#include <netsocket.h>
+#include <memsocket.h>
 
 #include <pthread.h>
 #include <sys/time.h>
@@ -26,8 +28,8 @@ vector<sock_dscr> init_instance::out_connections;
 map<sock_dscr, bool> init_instance::in_done;
 map<sock_dscr, bool> init_instance::out_done;
 
-map<sock_dscr, int> init_instance::in_sockets;
-map<sock_dscr, int> init_instance::out_sockets;
+map<sock_dscr, mysocket*> init_instance::in_sockets;
+map<sock_dscr, mysocket*> init_instance::out_sockets;
 
 short init_instance::listen_port = 22222;
 
@@ -153,17 +155,18 @@ void init_instance::initialize_sockets() {
     out_done[sd] = false;
   }
 
-  /*
 
   // create local socket pair where applicable
 
   //printf("Creating kernel level pipes");
-  printf("Creating local socket pairs");
+  printf("Creating shared memory sockets...\n");
   fflush(stdout);
   
   for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
   
     sock_dscr sd = *i;
+
+    if (sd.type != DATA_SOCKET) continue;
 
     map<sock_dscr, bool>::iterator i = in_done.find(sd);
 
@@ -174,25 +177,27 @@ void init_instance::initialize_sockets() {
 
       // create pipe
 
-      //printf("Creataing pipe for socket %d %d %d\n", sd.from, sd.to, sd.type);
-      printf(".");
+      printf("Creataing memory socket %d->%d type:%d\n", sd.from, sd.to, sd.type);
+      //printf(".");
       fflush(stdout);
       
       //int pfd[2];
       //int retval = pipe(pfd);
       //if (retval != 0) perror("pipe");
 
-      int sockets[2];
-      if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
-	perror("opening stream socket pair");
-	exit(1);
-      }
+      //int sockets[2];
+      //if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
+      //  perror("opening stream socket pair");
+      //  exit(1);
+      //}
 
       //out_sockets[sd] = pfd[0];
       //in_sockets[sd] = pfd[1];
      
-      out_sockets[sd] = sockets[0];
-      in_sockets[sd] = sockets[1];
+      memsocket *ms = new memsocket();
+
+      out_sockets[sd] = ms;//sockets[0];
+      in_sockets[sd] = ms;//sockets[1];
       
       out_done[sd] = true;
       in_done[sd] = true;
@@ -201,8 +206,6 @@ void init_instance::initialize_sockets() {
   }
 
   printf("done\n");
-  
-  */
 
   for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
   
@@ -259,7 +262,7 @@ void init_instance::initialize_sockets() {
     data[1] = sd.to;
     data[2] = sd.type;
 
-    mysocket *sock = NULL;
+    netsocket *sock = NULL;
 
     while (sock == NULL) {
       sock = open_socket::connect(ip_addr, 22222);
@@ -277,7 +280,7 @@ void init_instance::initialize_sockets() {
 
     //printf("socket done: recieved reply %d %d !!\n", data[0], data[1]);
 
-    out_sockets[sd] = sock->get_fd();
+    out_sockets[sd] = new netsocket(sock->get_fd());
 
     //printf("Out Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock->get_fd());
 
@@ -296,27 +299,27 @@ void init_instance::initialize_sockets() {
   
 }
 
-int init_instance::get_incoming_socket(int from, int to, int type) {
+mysocket* init_instance::get_incoming_socket(int from, int to, int type) {
 
   sock_dscr sd(from, to, type);
 
-  map<sock_dscr, int>::iterator i = in_sockets.find(sd);
+  map<sock_dscr, mysocket*>::iterator i = in_sockets.find(sd);
 
   if (i == in_sockets.end()) {
-    return -1;
+    return NULL;
   } else {
     return (*i).second;
   }
 }
 
-int init_instance::get_outgoing_socket(int from , int to, int type) {
+mysocket* init_instance::get_outgoing_socket(int from , int to, int type) {
 
   sock_dscr sd(from, to, type);
 
-  map<sock_dscr, int>::iterator i = out_sockets.find(sd);
+  map<sock_dscr, mysocket*>::iterator i = out_sockets.find(sd);
 
   if (i == out_sockets.end()) {
-    return -1;
+    return NULL;
   } else {
     return (*i).second;
   }
@@ -426,7 +429,7 @@ int init_instance::listen() {
 
 	  //printf("have connection on socket (%d)\n", sock);
 	
-	  mysocket socket(sock);
+	  netsocket socket(sock);
 
 	  int data[3];
 
@@ -449,7 +452,7 @@ int init_instance::listen() {
 	      //printf("int pair FOUND!\n");
 	      in_done[sd] = true;
 
-	      in_sockets[sd] = sock;
+	      in_sockets[sd] = new netsocket(sock);
 	      //printf("In Socket Added from:%d to:%d socket:%d\n", pair.from, pair.to, sock);
 
 	      socks_accepted++;
@@ -478,16 +481,16 @@ int init_instance::listen() {
 
 void init_instance::close_sockets() {
 
-  map<sock_dscr, int>::iterator i;
+  map<sock_dscr, mysocket*>::iterator i;
 
   printf("Closing sockets...\n");
 
   for (i = in_sockets.begin(); i != in_sockets.end(); ++i) {
-    close((*i).second);
+    ((*i).second)->close();
   }
 
   for (i = out_sockets.begin(); i != out_sockets.end(); ++i) {
-    close((*i).second);
+    ((*i).second)->close();
   }
 
 }

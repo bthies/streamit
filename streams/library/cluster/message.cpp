@@ -1,7 +1,7 @@
 
-#include <stdlib.h>
+#include <message.h>
 
-#include "message.h"
+#include <stdlib.h>
 
 message::message(int size, int method_id, int execute_at) {
   this->size = size;

@@ -2,7 +2,7 @@
 #ifndef __MESSAGE_H
 #define __MESSAGE_H
 
-#include "mysocket.h"
+#include <mysocket.h>
 
 class message {
 
@@ -30,6 +30,5 @@ public:
   message *remove_from_stack(message *top); // returns the new stack
 
 };
-
 
 #endif

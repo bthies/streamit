@@ -1,7 +1,7 @@
 
 #include <master_server.h>
   
-node_info::node_info(unsigned ip, mysocket *socket) {
+node_info::node_info(unsigned ip, netsocket *socket) {
   this->ip = ip;
   this->socket = socket;
 }
@@ -10,7 +10,7 @@ unsigned node_info::get_ip() {
   return ip; 
 }
 
-mysocket *node_info::get_socket() { 
+netsocket *node_info::get_socket() { 
   return socket; 
 }
 
@@ -33,7 +33,7 @@ void master_server::print_commands() {
 
 node_info *master_server::connect(unsigned ip) {
   
-  mysocket *socket = open_socket::connect(ip, 22223);  
+  netsocket *socket = open_socket::connect(ip, 22223);  
   if (socket == NULL) { return NULL; } 
   node_info *node = new node_info(ip, socket);
 
@@ -54,7 +54,7 @@ node_info *master_server::connect(unsigned ip) {
 vector<int> master_server::list(node_info *node) {
   
   vector<int> threads;
-  mysocket *socket = node->get_socket();
+  netsocket *socket = node->get_socket();
   socket->write_int(LIST_COMMAND); // list threads
   
   for (;;) {
@@ -70,7 +70,7 @@ vector<int> master_server::list(node_info *node) {
 
 int master_server::pause_proper(node_info *node, int id) {
   
-  mysocket *socket = node->get_socket();  
+  netsocket *socket = node->get_socket();  
   socket->write_int(PAUSE_PROPER_COMMAND);
   socket->write_int(id);
 
@@ -80,7 +80,7 @@ int master_server::pause_proper(node_info *node, int id) {
 
 int master_server::pause_any(node_info *node, int id) {
   
-  mysocket *socket = node->get_socket();  
+  netsocket *socket = node->get_socket();  
   socket->write_int(PAUSE_ANY_COMMAND);
   socket->write_int(id);
 
@@ -90,7 +90,7 @@ int master_server::pause_any(node_info *node, int id) {
 
 int master_server::resume(node_info *node, int id) {
   
-  mysocket *socket = node->get_socket();  
+  netsocket *socket = node->get_socket();  
   socket->write_int(RESUME_COMMAND);
   socket->write_int(id);
 
@@ -101,7 +101,7 @@ vector<int> master_server::indata(node_info *node, int id) {
 
   vector<int> threads;
 
-  mysocket *socket = node->get_socket();  
+  netsocket *socket = node->get_socket();  
   socket->write_int(LIST_INCOMING_DATA_LINKS);
   socket->write_int(id);
 
@@ -119,7 +119,7 @@ vector<int> master_server::outdata(node_info *node, int id) {
 
   vector<int> threads;
 
-  mysocket *socket = node->get_socket();  
+  netsocket *socket = node->get_socket();  
   socket->write_int(LIST_OUTGOING_DATA_LINKS);
   socket->write_int(id);
 

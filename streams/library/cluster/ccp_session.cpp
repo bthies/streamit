@@ -1,7 +1,7 @@
 
 #include <ccp_session.h>
 
-ccp_session::ccp_session(unsigned ip, mysocket *sock) {
+ccp_session::ccp_session(unsigned ip, netsocket *sock) {
   this->ip = ip;
   this->sock = sock;
   this->alive_cmd_sent = false;
@@ -9,7 +9,7 @@ ccp_session::ccp_session(unsigned ip, mysocket *sock) {
   this->latest_checkpoint = 0;
 }
 
-mysocket *ccp_session::get_socket() {
+netsocket *ccp_session::get_socket() {
   return sock;
 }
 

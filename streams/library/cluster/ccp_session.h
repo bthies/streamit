@@ -4,13 +4,13 @@
 
 #include <sys/time.h>
 
-#include <mysocket.h>
+#include <netsocket.h>
 #include <node_server.h>
 
 class ccp_session {
 
   unsigned ip;
-  mysocket *sock;
+  netsocket *sock;
 
   timeval last_alive_request;
   bool alive_cmd_sent;
@@ -22,9 +22,9 @@ class ccp_session {
 
  public:
 
-  ccp_session(unsigned ip, mysocket *sock);
+  ccp_session(unsigned ip, netsocket *sock);
 
-  mysocket *get_socket();
+  netsocket *get_socket();
   unsigned get_ip();
 
   int read_data();

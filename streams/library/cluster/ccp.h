@@ -1,26 +1,11 @@
 #ifndef __CCP_H
 #define __CCP_H
 
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <ctype.h>
-#include <unistd.h>
-#include <strings.h>
-#include <stdlib.h>
-#include <fcntl.h>
-#include <stdio.h>
+#include <netsocket.h>
+#include <ccp_session.h>
 
 #include <vector>
 #include <map>
-
-#include <mysocket.h>
-#include <ccp_session.h>
-#include <node_server.h>
-#include <save_state.h>
 
 class ccp {
 

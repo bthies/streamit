@@ -6,21 +6,21 @@
 #include <vector>
 #include <map>
 
-#include <mysocket.h>
+#include <netsocket.h>
 #include <open_socket.h>
 #include <node_server.h>
 
 class node_info {
 
   unsigned ip;
-  mysocket *socket;
+  netsocket *socket;
 
  public:
   
-  node_info(unsigned ip, mysocket *socket); 
+  node_info(unsigned ip, netsocket *socket); 
 
   unsigned get_ip();
-  mysocket *get_socket();
+  netsocket *get_socket();
 };
 
 class master_server {

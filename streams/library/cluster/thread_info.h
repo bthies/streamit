@@ -6,6 +6,7 @@
 
 #include <pthread.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <vector>
 
 #define RUN_STATE 0

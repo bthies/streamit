@@ -1,6 +1,22 @@
 
 #include <ccp.h>
+
+#include <node_server.h>
+#include <save_state.h>
 #include <delete_chkpts.h>
+
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <strings.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <stdio.h>
 
 ccp::ccp() {
   machines_in_partition = 0;
@@ -38,6 +54,8 @@ void ccp::read_config_file() {
     partition[id] = m_id;
     printf("thread %d -> %s (%d)\n", id, buf, m_id);
   }
+
+  fclose(f);
 
   printf("Number of nodes in partition: (%d)\n", max);
   machines_in_partition = max;
@@ -147,7 +165,7 @@ int ccp::run_ccp() {
 	    
 	  } else {
 	  
-	    mysocket *sock = new mysocket(fd);
+	    netsocket *sock = new netsocket(fd);
 	  
 	    ccp_session *s = new ccp_session(ip, sock);
 	    sessions.push_back(s);

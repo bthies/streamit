@@ -2,47 +2,29 @@
 #ifndef __MYSOCKET_H
 #define __MYSOCKET_H
 
-#include <stdio.h>
-#include <sys/poll.h>
-
-extern unsigned get_myip();
-extern unsigned lookup_ip(const char *host);
-extern void print_ip(FILE *f, unsigned ip);
+#include <stdlib.h>
 
 class mysocket {
 
- private:
-  int fd;
-
-  static int total_data_received;
-  static int total_data_sent;
+ protected:
 
   void (*check_thread_fptr)();
 
- protected:
-  void set_socket(int s) { fd = s; }
-
  public:
 
-  mysocket() {}
-  mysocket(int s, void (*check_thread_status_during_io)() = NULL);
+  mysocket();
+
+  void set_check_thread_status(void (*check_thread_status_during_io)());
 
   void check_thread_status();
 
-  int eof();
-  void close();
-  
-  bool data_available();
-  int get_fd();
-
-  static int get_total_data_received();
-  static int get_total_data_sent();
-
-  int write_OOB(char val);
-  int check_OOB(char *val);
-  
-  int read_chunk(char *buf, int len);  
-  int write_chunk(char *buf, int len);
+  virtual void set_item_size(int size) = 0;
+  virtual int eof() = 0;
+  virtual void close() = 0;
+  virtual bool data_available() = 0;
+  virtual int get_fd() = 0;
+  virtual int read_chunk(char *buf, int len) = 0;  
+  virtual int write_chunk(char *buf, int len) = 0;
 
   int read_int();
   void write_int(int);

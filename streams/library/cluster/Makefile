@@ -11,7 +11,6 @@ NAMES =		sock_dscr \
 		connection_info \
 		timer \
 		sdep \
-		mysocket \
 		data_consumer \
 		data_producer \
 		open_socket \
@@ -26,8 +25,13 @@ NAMES =		sock_dscr \
 		save_manager \
 		delete_chkpts \
 		service \
-		read_setup
+		read_setup \
+		mysocket \
+		netsocket \
+		memsocket
 
+SOURCES = 	$(NAMES:%=%.cpp)
+DEPS = 		$(NAMES:%=%.d)
 OBJS = 		$(NAMES:%=%.o)
 OBJSP =         $(NAMES:%=%_p.o)
 
@@ -55,12 +59,17 @@ $(LIBRARYP): $(OBJSP)
 %_p.o: %.c
 	$(CC) $(CFLAGS) -g -pg -a -c -o $@ $<
 
+deps:	
+	$(CC) $(CFLAGS) -MD -E $(SOURCES) > /dev/null
+
+
+-include $(DEPS)
 
 # Explicit file dependencies:
-init_instance.o: init_instance.h sock_dscr.h open_socket.h mysocket.h
-int_pair.o: int_pair.h
-mysocket.o: mysocket.h
-open_socket.o: open_socket.h mysocket.h
-timer.o: timer.h
+#init_instance.o: init_instance.h sock_dscr.h open_socket.h netsocket.h
+#int_pair.o: int_pair.h
+#netsocket.o: netsocket.h
+#open_socket.o: open_socket.h netsocket.h
+#timer.o: timer.h
 
 

@@ -1,15 +1,14 @@
 
-
 #ifndef __OPEN_SOCKET_H
 #define __OPEN_SOCKET_H
 
-#include <mysocket.h>
+#include <netsocket.h>
 
-class open_socket : public mysocket {
+class open_socket {
 
  public:
-  static mysocket *listen(short port);
-  static mysocket *connect(unsigned ipaddr, short port);
+  static netsocket *listen(short port);
+  static netsocket *connect(unsigned ipaddr, short port);
 
 };
 

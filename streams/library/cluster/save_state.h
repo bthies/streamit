@@ -1,18 +1,8 @@
 #ifndef __SAVE_STATE__H
 #define __SAVE_STATE__H
 
-#include <mysocket.h>
-#include <init_instance.h>
-#include <save_manager.h>
-#include <object_write_buffer.h>
 #include <thread_info.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <dirent.h>
+#include <object_write_buffer.h>
 
 #define PATH "/u/janiss/checkpoints/"
 

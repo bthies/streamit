@@ -15,7 +15,7 @@
 #include <stdio.h>
 
 
-mysocket *open_socket::listen(short port) {
+netsocket *open_socket::listen(short port) {
 
   int listenfd;
   int retval;
@@ -120,7 +120,7 @@ mysocket *open_socket::listen(short port) {
 
 	//printf("done (%d)\n", sock);
 
-	return new mysocket(sock);
+	return new netsocket(sock);
       }
     }
   }
@@ -128,7 +128,7 @@ mysocket *open_socket::listen(short port) {
 
 
 
-mysocket *open_socket::connect(unsigned ipaddr, short port) {
+netsocket *open_socket::connect(unsigned ipaddr, short port) {
 
   int sock;
   int retval;
@@ -165,6 +165,6 @@ mysocket *open_socket::connect(unsigned ipaddr, short port) {
 
   //printf("done\n");
  
-  return new mysocket(sock);
+  return new netsocket(sock);
 }
 

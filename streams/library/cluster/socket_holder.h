@@ -6,10 +6,14 @@
 
 class socket_holder {
 
- public:
+ protected:
+  mysocket *sock;
 
-  virtual mysocket *get_socket() = 0;
-  virtual void set_socket(mysocket *) = 0;
+ public:
+  socket_holder() { sock = NULL; }
+
+  mysocket *get_socket() { return sock; }
+  void set_socket(mysocket *sock) { this->sock = sock; }
 };
 
 #endif

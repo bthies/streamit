@@ -9,7 +9,7 @@ node_server::node_server(vector <thread_info*> list, void (*thread_init)()) {
 
 void node_server::run(unsigned ccp_ip) {
 
-  mysocket *sock;
+  netsocket *sock;
 
   if (ccp_ip == 0) {
     init_instance::read_config_file();
@@ -29,9 +29,9 @@ void node_server::run(unsigned ccp_ip) {
   }
 }
 
-mysocket *node_server::wait_for_connection() {
+netsocket *node_server::wait_for_connection() {
 
-  mysocket *sock;
+  netsocket *sock;
   
   for (;;) {
     sock = open_socket::listen(22223);
@@ -40,9 +40,9 @@ mysocket *node_server::wait_for_connection() {
 }
 
 
-mysocket *node_server::connect_to_ccp(unsigned ccp_ip) {
+netsocket *node_server::connect_to_ccp(unsigned ccp_ip) {
 
-  mysocket *sock;
+  netsocket *sock;
   
   for (;;) {
     sock = open_socket::connect(ccp_ip, 3000);
@@ -52,7 +52,7 @@ mysocket *node_server::connect_to_ccp(unsigned ccp_ip) {
 }
 
 
-int node_server::read_cluster_config(mysocket *sock) {
+int node_server::read_cluster_config(netsocket *sock) {
   
   int tmp;
 
@@ -86,7 +86,7 @@ int node_server::read_cluster_config(mysocket *sock) {
 }
 
 
-void node_server::run_server(mysocket *sock) {
+void node_server::run_server(netsocket *sock) {
 
   int cmd, par1;
   int thread_id;

@@ -1,10 +1,13 @@
 
 #include <data_producer.h>
 
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+
 extern int __out_data_buffer;
 
 data_producer::data_producer() {
-  socket = NULL;
   items_sent = 0;
   data_buffer = (char*)malloc(2000);
   buf_offset = 0;
@@ -18,41 +21,42 @@ void data_producer::read_object(object_write_buffer *buf) {
   items_sent = buf->read_int();
 }
 
-mysocket *data_producer::get_socket() {
-  return socket;
-}
+void data_producer::write_chunk(void *data, int size, int nitems) {
 
-void data_producer::set_socket(mysocket *socket) {
-  this->socket = socket;
-}
-
-void data_producer::write_item(void *data, int size) {
+  char *ptr = (char*)data;
 
   if (__out_data_buffer == 0) {
 
-    socket->write_chunk((char*)data, size);
-    items_sent++;
+    sock->write_chunk(ptr, size);
 
   } else {
 
-    items_sent++;
-
-    memcpy(data_buffer + buf_offset, data, size);
-    buf_offset += size;
-
-    if (buf_offset >= __out_data_buffer) {
-
-      socket->write_chunk((char*)data_buffer, buf_offset);
+    while (buf_offset + size >= __out_data_buffer) {
+      int fits = __out_data_buffer - buf_offset;
+      memcpy(data_buffer + buf_offset, data, fits);
+      sock->write_chunk((char*)data_buffer, __out_data_buffer);      
       buf_offset = 0;
-    }		
+      ptr += fits;
+      size -= fits;
+    }
+
+    if (size > 0) {
+      memcpy(data_buffer + buf_offset, data, size);
+      buf_offset += size;
+    }
   }  
+
+  items_sent += nitems;
 }
 
+void data_producer::write_item(void *data, int size) {
+  write_chunk(data, size, 1); 
+}
 
 void data_producer::write_int(int data) {
-  write_item(&data, sizeof(int)); 
+  write_chunk(&data, sizeof(int), 1); 
 }
 
 void data_producer::write_float(float data) {
-  write_item(&data, sizeof(float)); 
+  write_chunk(&data, sizeof(float), 1); 
 }

@@ -82,10 +82,12 @@ public class ComputeCodeStore {
 	
 	//send over the address
 	JFieldAccessExpression dynNetSend = 
-	    new JFieldAccessExpression(null, Util.CSTOINTVAR);
+	    new JFieldAccessExpression(null, new JThisExpression(null),
+				       Util.CSTOINTVAR);
 	
 	JFieldAccessExpression bufAccess = 
-	    new JFieldAccessExpression(null, buffer.getIdent());
+	    new JFieldAccessExpression(null, new JThisExpression(null),
+				       buffer.getIdent());
 	
 	JAssignmentExpression assExp = 
 	    new JAssignmentExpression(null, dynNetSend, bufAccess);

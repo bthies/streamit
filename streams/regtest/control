@@ -1,12 +1,12 @@
 test fft {
   directory docs/examples/hand/fft
-  source FFT.java
+  source FFT-inlined.java
   disabled
 }
 
 test fft-local {
   directory docs/examples/hand/fft
-  source FFTLocal.java
+  source FFT.java
   output FFT.out
 }
 

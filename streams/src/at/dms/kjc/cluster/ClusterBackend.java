@@ -66,6 +66,10 @@ public class ClusterBackend implements FlatVisitor {
 			   SIRStructure[]
 			   structs) {
 
+	boolean doCacheOptimization = KjcOptions.cacheopt;
+	int code_cache = 16000;
+	int data_cache = 16000;
+
 	System.out.println("Entry to Cluster Backend");
 	System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
 	System.out.println("  rename1 is: "+KjcOptions.rename1);
@@ -117,14 +121,23 @@ public class ClusterBackend implements FlatVisitor {
 	System.out.print("Running Constant Field Propagation...");
 	FieldProp.doPropagate(str);
 	System.out.println(" done.");
+
+
 	//System.out.println("Analyzing Branches..");
 	//new BlockFlattener().flattenBlocks(str);
 	//new BranchAnalyzer().analyzeBranches(str);
 
 	SIRPortal.findMessageStatements(str);
 
+	// optimize so that IncreaseFilterMult has accurate estimates
+	// of code size
+	Optimizer.optimize(str); 
+	Estimator.estimate(str);
+
 	// Increasing filter Multiplicity
-	IncreaseFilterMult.inc(str, 1);
+	if ( doCacheOptimization ) {
+	    IncreaseFilterMult.inc(str, 1, code_cache);
+	}
 
 	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before-partition.dot");
@@ -146,22 +159,28 @@ public class ClusterBackend implements FlatVisitor {
 	}
 	*/
 
-	int threads = KjcOptions.cluster;
+	Optimizer.optimize(str);
+	Estimator.estimate(str);
 
-	boolean doCacheOptimization = KjcOptions.cacheopt;
+	int threads = KjcOptions.cluster;
 
 	System.err.println("Running Partitioning... target number of threads: "+threads);
 
 	HashMap partitionMap = new HashMap();
 
 	if ( doCacheOptimization ) {
-	    for (;;) {
-		str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0).calcPartitions(partitionMap);
-		boolean decreased = IncreaseFilterMult.decreaseMult(partitionMap);
-		if (!decreased) break;
+
+	    boolean decreased;
+
+	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
+	    decreased = IncreaseFilterMult.decreaseMult(partitionMap);
+
+	    if (decreased) {
+		// Repartition second time
+		str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
+		decreased = IncreaseFilterMult.decreaseMult(partitionMap);
 	    }
 	}
-
 
 	// actually fuse components if fusion flag is enabled
 	if (KjcOptions.fusion) {
@@ -171,7 +190,7 @@ public class ClusterBackend implements FlatVisitor {
 	    }
 	    
 	    if ( doCacheOptimization ) {
-		str = CachePartitioner.doit(str);
+		str = CachePartitioner.doit(str, code_cache, data_cache);
 	    } else {		
 		str = Partitioner.doit(str, 0, threads, false, false);
 	    }
@@ -186,8 +205,11 @@ public class ClusterBackend implements FlatVisitor {
 	partitionMap.clear();
 
 	if ( doCacheOptimization ) {
-	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0).calcPartitions(partitionMap);
+	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
 	} else {
+	    // Fix up a bug that might be caused by previous 
+	    // pass of partitioner
+	    str.setParent(null); 
 	    str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
 	}
 	

@@ -54,12 +54,46 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	blockEnd();
     }
 	    
-	
+    String getSplitString(SIRSplitType s) {
+	if (s == SIRSplitType.ROUND_ROBIN)
+	    return "Round-Robin";
+	if (s == SIRSplitType.DUPLICATE)
+	    return "Duplicate";
+	if (s == SIRSplitType.NULL)
+	    return "Null";
+	if (s == SIRSplitType.WEIGHTED_RR)
+	    return "Weighted Round-Robin";
+	else return "Unknown";
+    }
+
+
+    String getJoinString(SIRJoinType s) {
+	if (s == SIRJoinType.ROUND_ROBIN)
+	    return "Round-Robin";
+	if (s == SIRJoinType.COMBINE)
+	    return "Combine";
+	if (s == SIRJoinType.NULL)
+	    return "Null";
+	if (s == SIRJoinType.WEIGHTED_RR)
+	    return "Weighted Round-Robin";
+	else return "Unknown";
+    }
+
+
     /* visit a splitter */
     public void visitSplitter(SIRSplitter self,
 		       SIRStream parent,
 		       SIRSplitType type,
 		       int[] weights){
+	
+	blockStart("Splitter");
+	attrPrint("Type", getSplitString(type));
+	attrStart("Weights");
+	if (weights != null)
+	    for (int i = 0; i < weights.length; i++)
+		attrPrint("weight: " ,(new Integer(weights[i])).toString());
+	attrEnd();
+	blockEnd();
     }
     
     /* visit a joiner */
@@ -67,6 +101,14 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 		     SIRStream parent,
 		     SIRJoinType type,
 		     int[] weights){
+	blockStart("Joiner");
+	attrPrint("Type", getJoinString(type));
+	attrStart("Weights");
+	if (weights != null)
+	    for (int i = 0; i < weights.length; i++)
+		attrPrint("weight: ", (new Integer(weights[i])).toString());
+	attrEnd();
+	blockEnd();
     }
 
     

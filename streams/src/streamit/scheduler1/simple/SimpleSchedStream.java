@@ -13,5 +13,11 @@ interface SimpleSchedStream extends SchedStreamInterface
      * initialize itself.
      * This DOES NOT include the (peek - pop) amount!
      */
-    public int getInitDataCount ();
+    public int getInitDataConsumption ();
+
+    /**
+     * Return number of data produced by this stream.  Normally this is 0,
+     * but feedback loops might need to produce some data.
+     */
+     public int getInitDataProduction ();
 }

@@ -30,7 +30,12 @@ public class SimpleSchedFilter extends SchedFilter implements SimpleSchedStream
         return null;
     }
 
-    public int getInitDataCount ()
+    public int getInitDataConsumption ()
+    {
+        return 0;
+    }
+
+    public int getInitDataProduction ()
     {
         return 0;
     }

@@ -14,7 +14,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
     final SimpleHierarchicalScheduler scheduler;
     private List steadySchedule;
     private List initSchedule;
-    int initDataCount = -1;
+    int initDataConsumption = -1;
 
     SimpleSchedSplitJoin (SimpleHierarchicalScheduler scheduler, Object stream)
     {
@@ -56,24 +56,24 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
                 child.computeSchedule ();
 
                 // get the amount of data needed to initilize this child
-                int childInitDataCount = child.getInitDataCount ();
+                int childInitDataConsumption = child.getInitDataConsumption ();
 
                 // add the amount of data needed to allow for peeking
                 // this is the total amount needed to intialize this path
                 // of the split join
-                childInitDataCount += (child.getPeekConsumption () - child.getConsumption ());
+                childInitDataConsumption += (child.getPeekConsumption () - child.getConsumption ());
 
                 // now figure out how many times the split needs to be run in
                 // initialization to accomodate this child
                 int splitRunCount;
-                if (childInitDataCount != 0)
+                if (childInitDataConsumption != 0)
                 {
                     // just divide the amount of data needed by data received
                     // per iteration of the split
                     int splitDataSent = getSplitType ().getOutputWeight (childNum);
                     ASSERT (splitDataSent > 0);
 
-                    splitRunCount = childInitDataCount / splitDataSent;
+                    splitRunCount = childInitDataConsumption / splitDataSent;
                 } else {
                     // the child doesn't need any data to intitialize, so I
                     // don't need to run the split for it at all
@@ -92,7 +92,7 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
         {
             // compute and save the amount of data consumed by
             // this split join on initialization
-            initDataCount = initSplitRunCount * getSplitType ().getRoundConsumption ();
+            initDataConsumption = initSplitRunCount * getSplitType ().getRoundConsumption ();
 
             // run through the split an appropriate number of times
             // and append it to the init schedule
@@ -180,11 +180,16 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
 
                     // for the incoming schedule, add the extra left-over data after intialization
                     int splitInitData = getSplitType ().getOutputWeight (nChild) * initSplitRunCount;
-                    inBuffer = inBuffer.add (BigInteger.valueOf (splitInitData - child.getInitDataCount ()));
+                    inBuffer = inBuffer.add (BigInteger.valueOf (splitInitData - child.getInitDataConsumption ()));
 
                     // and make sure that we get the max of this amount and the amount needed to do initilization in the first place
                     inBuffer = inBuffer.max (BigInteger.valueOf (splitInitData));
 
+                    // for the outgoing schedule, add the amount of data
+                    // produced by the child on initialization
+                    outBuffer = outBuffer.add (BigInteger.valueOf (child.getInitDataProduction ()));
+
+                    // save these data
                     scheduler.schedule.setJoinBufferSize (splitObject, child.getStreamObject (), inBuffer);
                     scheduler.schedule.setSplitBufferSize (child.getStreamObject (), joinObject, outBuffer);
                 }
@@ -227,10 +232,15 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
         return initSchedule;
     }
 
-    public int getInitDataCount ()
+    public int getInitDataConsumption ()
     {
-        ASSERT (initDataCount >= 0);
-        return initDataCount;
+        ASSERT (initDataConsumption >= 0);
+        return initDataConsumption;
+    }
+
+    public int getInitDataProduction ()
+    {
+        return 0;
     }
 }
 

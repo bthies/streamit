@@ -17,7 +17,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
     SimpleHierarchicalScheduler scheduler;
     private List steadySchedule = null;
     private List initSchedule = null;
-    int initDataCount = 0;
+    int initDataConsumption = 0;
 
     SimpleSchedLoop (SimpleHierarchicalScheduler scheduler, Object stream, SchedJoinType join, SchedStream body, SchedSplitType split, SchedStream loop, int delay)
     {
@@ -203,8 +203,15 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         return initSchedule;
     }
 
-    public int getInitDataCount ()
+    public int getInitDataConsumption ()
     {
-        return initDataCount;
+        ASSERT (initDataConsumption >= 0);
+        return initDataConsumption;
+    }
+
+    public int getInitDataProduction ()
+    {
+        ASSERT (initDataProduction >= 0);
+        return initDataProduction;
     }
 }

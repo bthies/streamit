@@ -13,9 +13,11 @@ public class ResultPrinter {
     static final boolean VERBOSE         = false;
     static final String ERROR_FILE       = "regtest_errors.txt";
     static final String RESULTS_FILE     = "regtest_results.txt";
+    static final String SUCCESS_FILE      = "regtest_success.txt";
  
-    static FileWriter errorStream   = null;
-    static FileWriter resultStream  = null;
+    static FileWriter errorStream    = null;
+    static FileWriter resultStream   = null;
+    static FileWriter successStream  = null;
 
     /**
      * Prints the filename of the program that is being tested,
@@ -26,36 +28,9 @@ public class ResultPrinter {
 		 filename + "(" + options + ")\n");
     }				      
     /**
-     * Prints the results of running raw_compare.pl on raw output
-     * to a results file. Specifically, it prints the last output line
-     * compared against, and the pc that generated that line.
-     **/
-    public static void printRawResults(String rawResults) {
-	// parse the result string -- it is two numbers separated
-	// by a space. The first number is the final cycle count of
-	// when a result was produced. The second is the last line of the
-	// expected output that was compared (to make sure that things don't
-	// go awry -- this should be around 1000).
-	
-	StringTokenizer st = new StringTokenizer(rawResults, " "); // split on space
-	String programCycles  = st.nextToken();
-	String comparisonLine = st.nextToken();
-
-	int cycles = Integer.parseInt(programCycles, 16);
-
-	// assemble the message that we are going to be putting into
-	// the results file
-	String message = (programCycles + " " +
-			  cycles + " " +
-			  comparisonLine);
-
-	printRaw(message);
-    }
-
-    /**
      * Prints stuff to the raw results file.
      **/
-    private static void printRaw(String message) {
+    public static void printRaw(String message) {
 	// make the filewriter if necessary
 	if (resultStream == null) {
 	    MakeFileWriters();
@@ -108,16 +83,42 @@ public class ResultPrinter {
     }
 
     /**
+     * Print a success message (so that we can also report on
+     * how many tests passed as opposed to how many failed.
+     **/
+    public static void printSuccess(String message) {
+	// make the filewriter if necessary
+	if (successStream == null) {
+	    MakeFileWriters();
+	}
+	try {
+	    // write to the output file
+	    successStream.write(message + "\n");
+	    successStream.flush();
+	} catch (Exception e) {
+	    System.out.println("Error printing to the success output");
+	    e.printStackTrace();
+	    throw new RuntimeException();
+	}
+	if (VERBOSE) {
+	    System.out.println(message);
+	}
+    }
+	
+
+    /**
      * Create a filewriter to write error messages to.
      **/
     public static void MakeFileWriters() {
 	try {
 	    // create the file writer for the error messages
-	    errorStream =   new FileWriter(ERROR_FILE);
+	    errorStream   = new FileWriter(ERROR_FILE);
 	    // create the file writer for the results file in append mode
-	    resultStream = new FileWriter(RESULTS_FILE, true);
+	    resultStream  = new FileWriter(RESULTS_FILE, true);
+	    // create the file writer for the results file
+	    successStream = new FileWriter(SUCCESS_FILE);
 	} catch (Exception e) {
-	    System.out.println("Error -- failed to create FileWriter for regression test output");
+	    System.out.println("Error -- failed to create FileWriter:" + e.getMessage());
 	    e.printStackTrace();
 	}
     }	
@@ -135,8 +136,12 @@ public class ResultPrinter {
 		// force disk flush
 		resultStream.flush();
 	    }
+	    if (successStream != null) {
+		// force disk flush
+		successStream.flush();
+	    }
 	} catch (Exception e) {
-	    System.out.println("Error -- failed to flush filewriter");
+	    System.out.println("Error -- failed to flush filewriter:" + e.getMessage());
 	    e.printStackTrace();
 	}
     }

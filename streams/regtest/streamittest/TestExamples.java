@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.6 2002-07-02 19:54:45 aalamb Exp $
+ * $Id: TestExamples.java,v 1.7 2002-07-03 19:30:50 aalamb Exp $
  **/
 package streamittest;
 
@@ -143,9 +143,18 @@ public class TestExamples extends StreamITTestCase {
     public void testFm() {
 	String root = EXAMPLE_ROOT + "fm/"; 
 	doMake(root);
-	doCompileRunVerifyTest(root,
-			       "LinkedFMTest.java",
-			       "LinkedFMTest.out");
+	doCompileTest(root,
+		      "LinkedFMTest.java");
+	// run make, this time with the target extra-run
+	// which changes the streamit makefile so the simulator runs
+	// for more cycles
+	doMake(root, "extra-run");
+	doRunTest(root,
+		  "LinkedFMTest.java");
+	// do the comparison test
+	doCompareTest(root,
+		      "LinkedFMTest.java",
+		      "LinkedFMTest.out");
     }
 
     public void testFile() {

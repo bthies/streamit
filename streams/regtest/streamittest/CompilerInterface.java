@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.5 2002-06-28 22:18:38 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.6 2002-07-03 19:30:50 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -198,7 +198,15 @@ public class CompilerInterface {
      * Executes the make command in the specified directory.
      **/
     public boolean runMake(String root) {
-	return RuntimeHarness.make(root);
+	return RuntimeHarness.make(root, "");
+    }
+
+    /**
+     * Executes the make command in the specified directory
+     * for the specified target .
+     **/
+    public boolean runMake(String root, String target) {
+	return RuntimeHarness.make(root, target);
     }
     
     /**

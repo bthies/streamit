@@ -1,6 +1,7 @@
 package streamittest;
 
 import java.io.*;
+import java.util.StringTokenizer;
 
 /**
  * Class which contains code to execute a compiled StreamIT program, and compares
@@ -120,17 +121,39 @@ public class RuntimeHarness extends Harness {
 
 	    // if we got a good comparison, print out the results (eg speed) to the result printer
 	    if (result == true) {
-		String resultString = outStream.toString();
-		if (!resultString.equals("")) {
+		String resultString = outStream.toString();		    
+		// parse the result string -- it is two numbers separated
+		// by a space. The first number is the final cycle count of
+		// when a result was produced. The second is the last line of the
+		// expected output that was compared (to make sure that things don't
+		// go awry -- this should be around 1000).
+
+		try {
+		    StringTokenizer st = new StringTokenizer(resultString, " "); // split on space
+		    String programCycles  = st.nextToken();
+		    String comparisonLine = st.nextToken();
+
+		    // convert program cycles from hex to decimal
+		    int cycles = Integer.parseInt(programCycles, 16);
+		    
+		    // assemble the message that we are going to be putting into
+		    // the results file
+		    String message = (programCycles + " " +
+				      cycles + " " +
+				      comparisonLine);
+		    
 		    // make a note that we are starting a comparison in the results file
 		    ResultPrinter.printRawHeader(root + filename,
 						 flattenCommandArray(options));
 		    
-		    ResultPrinter.printRawResults(resultString);
-		} else {
-		    ResultPrinter.printError("ERROR: result of executing command was true, but no " +
-					     "output was generated.");
-		}
+		    ResultPrinter.printRaw(message);
+		} catch (java.util.NoSuchElementException e) {
+		    // if we catch this exception it means that there was an error parsing the
+		    // output generated from comparing the output. Print an error.
+		    ResultPrinter.printError("Ouput from comparison did not parse: " +
+					     resultString + "-->" + e.getMessage());
+		    return false;
+		} 
 
 	    }
 
@@ -147,9 +170,9 @@ public class RuntimeHarness extends Harness {
     /**
      * Runs make in the root directory specified.
      **/
-    static boolean make(String root) {
+    static boolean make(String root, String target) {
 	try {
-	    return executeNative(getMakeCommandArray(root));
+	    return executeNative(getMakeCommandArray(root, target));
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while running make: " +
 				     e.getMessage());
@@ -209,11 +232,21 @@ public class RuntimeHarness extends Harness {
 
     
     /** Get a command line argument array for running make **/
-    public static String[] getMakeCommandArray(String root) {
-	String[] cmdLineArgs = new String[3];
+    public static String[] getMakeCommandArray(String root, String target) {
+	int cmdSize = 3;
+	// if we have a make target, make array of size 4
+	if (!target.equals("")) {
+	    cmdSize++;
+	}
+	
+	String[] cmdLineArgs = new String[cmdSize];
 	cmdLineArgs[0] = MAKE_COMMAND;
 	cmdLineArgs[1] = MAKE_DIR_OPTION;
 	cmdLineArgs[2] = root;
+
+	if (!target.equals("")) {
+	    cmdLineArgs[3] = target;
+	}
 	return cmdLineArgs;
     }
 

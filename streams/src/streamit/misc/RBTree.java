@@ -1,6 +1,6 @@
 package streamit.misc;
 
-/* $Id: RBTree.java,v 1.4 2003-07-22 18:38:41 karczma Exp $ */
+/* $Id: RBTree.java,v 1.5 2003-08-18 20:13:30 janiss Exp $ */
 
 public class RBTree extends AssertedClass
 {
@@ -303,12 +303,16 @@ public class RBTree extends AssertedClass
             splicedNode.right.parent = splicedNode;
             
             // and node's parent:
-            if (splicedNode.parent.left == node)
-            {
-                splicedNode.parent.left = splicedNode;
-            } else {
-                splicedNode.parent.right = splicedNode;
-            }
+	    if (splicedNode.parent == null) {
+		root = splicedNode;
+	    } else {
+		if (splicedNode.parent.left == node)
+		    {
+			splicedNode.parent.left = splicedNode;
+		    } else {
+			splicedNode.parent.right = splicedNode;
+		    }
+	    }
             
             // set node's left, right, parent AND nodeData
             // to be null (not even NULL)

@@ -187,7 +187,8 @@ public class Util extends at.dms.util.Utils {
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) 
 	    return "";
 	else 
-	    return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
+	    //return "/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (";
+	    return "/* receive */ asm volatile (\"move %0, $csti\" : \"=r\" (";
     }
 
     public static String staticNetworkReceiveSuffix(CType tapeType) {

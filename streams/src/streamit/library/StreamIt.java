@@ -1,7 +1,7 @@
 package streamit;
 
 import streamit.Pipeline;
-import streamit.scheduler.simple.SimpleHierarchicalScheduler;
+import streamit.scheduler.simple.SimpleHierarchicalSchedulerPow2;
 import streamit.scheduler.SchedStream;
 
 import java.util.List;
@@ -32,14 +32,41 @@ public class StreamIt extends Pipeline
         } else ASSERT (false);
     }
 
-    // just a runtime hook to run the stream
-    public void run()
+    public void run ()
     {
+        run (null);
+    }
+
+    // just a runtime hook to run the stream
+    public void run(String args [])
+    {
+        boolean scheduledRun = true;
+
+        // read the args:
+        if (args != null)
+        {
+            int length = args.length;
+            int index;
+            for (index = 0; index < length; index++)
+            {
+                if (args [index].equals ("-nosched"))
+                {
+                    scheduledRun = false;
+                } else {
+                    ERROR ("Unrecognized argument: " + args [index] + ".");
+                }
+            }
+        }
+
         setupOperator ();
 
+        ASSERT (getInputChannel () == null);
+        ASSERT (getOutputChannel () == null);
+
         // setup the scheduler
+        if (scheduledRun)
         {
-            scheduler = new SimpleHierarchicalScheduler ();
+            scheduler = new SimpleHierarchicalSchedulerPow2 ();
 
             SchedStream stream;
             stream = (SchedStream) constructSchedule ();
@@ -47,31 +74,25 @@ public class StreamIt extends Pipeline
 
             scheduler.useStream (stream);
             scheduler.computeSchedule ();
+
+            // setup the buffer lengths for the stream setup here:
+            setupBufferLengths (scheduler.getSchedule ());
+
+            // run the init schedule:
+            runSchedule (scheduler.getSchedule ().getInitSchedule ());
+
+            // and run the steady schedule forever:
+            while (true)
+            {
+                runSchedule (scheduler.getSchedule ().getSteadySchedule ());
+            }
+        } else {
+            while (true)
+            {
+                runSinks ();
+                drainChannels ();
+            }
         }
-
-        ASSERT (getInputChannel () == null);
-        ASSERT (getOutputChannel () == null);
-
-        // setup the buffer lengths for the stream setup here:
-        setupBufferLengths (scheduler.getSchedule ());
-
-        // run the init schedule:
-        runSchedule (scheduler.getSchedule ().getInitSchedule ());
-
-        // and run the steady schedule forever:
-        while (true)
-        {
-            runSchedule (scheduler.getSchedule ().getSteadySchedule ());
-        }
-
-        // not necessary anymore
-        /*
-        while (true)
-        {
-            runSinks ();
-            drainChannels ();
-        }
-        */
     }
 }
 

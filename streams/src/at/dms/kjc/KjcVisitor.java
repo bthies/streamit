@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcVisitor.java,v 1.1 2001-08-30 16:32:53 thies Exp $
+ * $Id: KjcVisitor.java,v 1.2 2001-10-02 21:19:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -56,12 +56,14 @@ public interface KjcVisitor {
 			     String superName,
 			     CClassType[] interfaces,
 			     JPhylum[] body,
+			     JFieldDeclaration[] fields,
 			     JMethodDeclaration[] methods,
 			     JTypeDeclaration[] decls);
   /**
    * visits a class body
    */
   void visitClassBody(JTypeDeclaration[] decls,
+		      JFieldDeclaration[] fields,
 		      JMethodDeclaration[] methods,
 		      JPhylum[] body);
 
@@ -75,6 +77,7 @@ public interface KjcVisitor {
 				  CClassType[] interfaces,
 				  JTypeDeclaration[] decls,
 				  JPhylum[] body,
+				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods);
 
   /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcEmptyVisitor.java,v 1.1 2001-09-27 23:28:34 thies Exp $
+ * $Id: KjcEmptyVisitor.java,v 1.2 2001-10-02 21:19:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -57,6 +57,7 @@ public abstract class KjcEmptyVisitor implements KjcVisitor {
 				      String superName,
 				      CClassType[] interfaces,
 				      JPhylum[] body,
+				      JFieldDeclaration[] fields,
 				      JMethodDeclaration[] methods,
 				      JTypeDeclaration[] decls) {
     }
@@ -64,6 +65,7 @@ public abstract class KjcEmptyVisitor implements KjcVisitor {
      * visits a class body
      */
     public void visitClassBody(JTypeDeclaration[] decls,
+			       JFieldDeclaration[] fields,
 			       JMethodDeclaration[] methods,
 			       JPhylum[] body) {
     }
@@ -78,6 +80,7 @@ public abstract class KjcEmptyVisitor implements KjcVisitor {
 					   CClassType[] interfaces,
 					   JTypeDeclaration[] decls,
 					   JPhylum[] body,
+					   JFieldDeclaration[] fields,
 					   JMethodDeclaration[] methods) {
     }
 

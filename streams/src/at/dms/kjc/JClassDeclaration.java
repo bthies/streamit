@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.5 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JClassDeclaration.java,v 1.6 2001-10-02 21:19:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -568,6 +568,7 @@ public class JClassDeclaration extends JTypeDeclaration {
 			    superName,
 			    interfaces,
 			    body,
+			    fields,
 			    methods,
 			    inners);
   }
@@ -604,6 +605,7 @@ public class JClassDeclaration extends JTypeDeclaration {
 				 interfaces,
 				 inners,
 				 body,
+				 fields,
 				 methods);
   }
 

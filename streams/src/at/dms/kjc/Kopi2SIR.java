@@ -1827,7 +1827,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a boolean literal
      */
-    public Object visitBooleanLiteral(boolean value)
+  public Object visitBooleanLiteral(JBooleanLiteral self,
+			     boolean value)
     {
         blockStart("BooleanLiteral");
 	return new JBooleanLiteral(null, value);
@@ -1836,7 +1837,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a byte literal
      */
-    public Object visitByteLiteral(byte value)
+  public Object visitByteLiteral(JByteLiteral self,
+			  byte value)
     {
         blockStart("ByteLiteral");
 	return new JByteLiteral(null, value);
@@ -1845,7 +1847,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a character literal
      */
-    public Object visitCharLiteral(char value)
+  public Object visitCharLiteral(JCharLiteral self,
+			  char value)
     {
         blockStart("CharLiteral");
 	return new JCharLiteral(null, value);
@@ -1854,7 +1857,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a double literal
      */
-    public Object visitDoubleLiteral(double value)
+  public Object visitDoubleLiteral(JDoubleLiteral self,
+			    double value)
     {
         blockStart("DoubleLiteral");
 	return new JDoubleLiteral(null, value);
@@ -1863,7 +1867,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a float literal
      */
-    public Object visitFloatLiteral(float value)
+  public Object visitFloatLiteral(JFloatLiteral self,
+			   float value)
     {
         blockStart("FloatLiteral");
 	return new JFloatLiteral(null, value);
@@ -1872,7 +1877,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a int literal
      */
-    public Object visitIntLiteral(int value)
+  public Object visitIntLiteral(JIntLiteral self,
+			 int value)
     {
         blockStart("IntLiteral");
 	return new JIntLiteral(null,value);
@@ -1881,7 +1887,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a long literal
      */
-    public Object visitLongLiteral(long value)
+  public Object visitLongLiteral(JLongLiteral self,
+			  long value)
     {
         blockStart("LongLiteral");
 	return new JLongLiteral(null, value);
@@ -1890,7 +1897,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a short literal
      */
-    public Object visitShortLiteral(short value)
+  public Object visitShortLiteral(JShortLiteral self,
+			   short value)
     {
         blockStart("ShortLiteral");
 	return new JShortLiteral(null, value);
@@ -1899,7 +1907,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a string literal
      */
-    public Object visitStringLiteral(String value)
+  public Object visitStringLiteral(JStringLiteral self,
+			    String value)
     {
         blockStart("StringLiteral");
 	return new JStringLiteral(null, value);
@@ -1908,7 +1917,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     /**
      * visits a null literal
      */
-    public Object visitNullLiteral()
+  public Object visitNullLiteral(JNullLiteral self)
     {
         blockStart("NullLiteral");
 	return new JNullLiteral(null);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.1 2001-10-29 04:09:18 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.2 2001-10-29 04:40:54 thies Exp $
  */
 
 package at.dms.kjc;
@@ -893,73 +893,92 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     }
 
     /**
-     * prints a boolean literal
+     * visits a boolean literal
      */
-    public Object visitBooleanLiteral(boolean value) {
-	return null;
+    public Object visitBooleanLiteral(JBooleanLiteral self,
+				      boolean value)
+    {
+	return new JBooleanLiteral(null, value);
     }
 
     /**
-     * prints a byte literal
+     * visits a byte literal
      */
-    public Object visitByteLiteral(byte value) {
-	return null;
+    public Object visitByteLiteral(JByteLiteral self,
+				   byte value)
+    {
+	return new JByteLiteral(null, value);
     }
 
     /**
-     * prints a character literal
+     * visits a character literal
      */
-    public Object visitCharLiteral(char value) {
-	return null;
+    public Object visitCharLiteral(JCharLiteral self,
+				   char value)
+    {
+	return self;
     }
 
     /**
-     * prints a double literal
+     * visits a double literal
      */
-    public Object visitDoubleLiteral(double value) {
-	return null;
+    public Object visitDoubleLiteral(JDoubleLiteral self,
+				     double value)
+    {
+	return self;
     }
 
     /**
-     * prints a float literal
+     * visits a float literal
      */
-    public Object visitFloatLiteral(float value) {
-	return null;
+    public Object visitFloatLiteral(JFloatLiteral self,
+				    float value)
+    {
+	return self;
     }
 
     /**
-     * prints a int literal
+     * visits a int literal
      */
-    public Object visitIntLiteral(int value) {
-	return null;
+    public Object visitIntLiteral(JIntLiteral self,
+				  int value)
+    {
+	return self;
     }
 
     /**
-     * prints a long literal
+     * visits a long literal
      */
-    public Object visitLongLiteral(long value) {
-	return null;
+    public Object visitLongLiteral(JLongLiteral self,
+				   long value)
+    {
+	return self;
     }
 
     /**
-     * prints a short literal
+     * visits a short literal
      */
-    public Object visitShortLiteral(short value) {
-	return null;
+    public Object visitShortLiteral(JShortLiteral self,
+				    short value)
+    {
+	return self;
     }
 
     /**
-     * prints a string literal
+     * visits a string literal
      */
-    public Object visitStringLiteral(String value) {
-	return null;
+    public Object visitStringLiteral(JStringLiteral self,
+				     String value)
+    {
+	return self;
     }
 
     /**
-     * prints a null literal
+     * visits a null literal
      */
-    public Object visitNullLiteral() {
-	return null;
+    public Object visitNullLiteral(JNullLiteral self)
+    {
+	return self;
     }
 
     /**

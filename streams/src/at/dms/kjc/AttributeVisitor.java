@@ -553,52 +553,61 @@ public interface AttributeVisitor {
   /**
    * visits a boolean literal
    */
-  Object visitBooleanLiteral(boolean value);
+  Object visitBooleanLiteral(JBooleanLiteral self,
+			     boolean value);
 
   /**
    * visits a byte literal
    */
-  Object visitByteLiteral(byte value);
+  Object visitByteLiteral(JByteLiteral self,
+			  byte value);
 
   /**
    * visits a character literal
    */
-  Object visitCharLiteral(char value);
+  Object visitCharLiteral(JCharLiteral self,
+			  char value);
 
   /**
    * visits a double literal
    */
-  Object visitDoubleLiteral(double value);
+  Object visitDoubleLiteral(JDoubleLiteral self,
+			    double value);
 
   /**
    * visits a float literal
    */
-  Object visitFloatLiteral(float value);
+  Object visitFloatLiteral(JFloatLiteral self,
+			   float value);
 
   /**
    * visits a int literal
    */
-  Object visitIntLiteral(int value);
+  Object visitIntLiteral(JIntLiteral self,
+			 int value);
 
   /**
    * visits a long literal
    */
-  Object visitLongLiteral(long value);
+  Object visitLongLiteral(JLongLiteral self,
+			  long value);
 
   /**
    * visits a short literal
    */
-  Object visitShortLiteral(short value);
+  Object visitShortLiteral(JShortLiteral self,
+			   short value);
 
   /**
    * visits a string literal
    */
-  Object visitStringLiteral(String value);
+  Object visitStringLiteral(JStringLiteral self,
+			    String value);
 
   /**
    * visits a null literal
    */
-  Object visitNullLiteral();
+  Object visitNullLiteral(JNullLiteral self);
 
   /**
    * visits a package name declaration

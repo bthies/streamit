@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoubleLiteral.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JDoubleLiteral.java,v 1.3 2001-10-29 04:40:54 thies Exp $
  */
 
 package at.dms.kjc;
@@ -174,7 +174,7 @@ public class JDoubleLiteral extends JLiteral {
    * @param	p		the visitor
    */
   public Object accept(AttributeVisitor p) {
-      return    p.visitDoubleLiteral(value);
+      return    p.visitDoubleLiteral(this, value);
   }
 
   /**

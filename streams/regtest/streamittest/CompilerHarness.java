@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.8 2002-11-07 22:40:58 dmaze Exp $
+ * $Id: CompilerHarness.java,v 1.9 2002-11-18 20:40:25 dmaze Exp $
  **/
 package streamittest;
 
@@ -222,15 +222,17 @@ public class CompilerHarness extends Harness {
 	// expand out the library files path
 	String[] libFiles = expandFileName(streamit_root + C_LIBRARY_FILES);
 
-	String[] opts = new String[(6 + // set up args
+	String[] opts = new String[(8 + // set up args
 				    libFiles.length)];
 	
 	opts[0] = GCC_COMMAND;
 	opts[1] = "-O2";
-	opts[2] = "-lm";
-	opts[3] = "-I" + streamit_root + C_LIBRARY_PATH;
-	opts[4] = "-o" + exeFileName;
-	opts[5] = inputFileName;
+        opts[2] = "-lsrfftw";
+        opts[3] = "-lsfftw";
+	opts[4] = "-lm";
+	opts[5] = "-I" + streamit_root + C_LIBRARY_PATH;
+	opts[6] = "-o" + exeFileName;
+	opts[7] = inputFileName;
 	
 	// copy over the stream library files
 	for (int i=0; i<libFiles.length; i++) {

@@ -110,7 +110,7 @@ foreach $current_program (@programs) {
    my ($both_outputs, $both_flops, 
        $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
 					   "--unroll 100000 --debug --linearreplacement --frequencyreplacement 2",
-					   "base_filename(both)");
+					   "$base_filename(both)");
    save_output($path, $base_filename, "both");
    
    my $new_data_line = 	     ("$base_filename\t".

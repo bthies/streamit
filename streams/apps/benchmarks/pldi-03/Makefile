@@ -2,6 +2,8 @@ FRONTEND = java streamit.frontend.ToJava
 COMPILER = java -Xmx1500M  at.dms.kjc.Main -s
 SL       = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c
 
+BEAMFORMER-HOME = $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit
+
 all: clean benchmarks
 
 
@@ -53,9 +55,10 @@ fir-scaling1: Test.java
 fir-scaling2: Test.java
 	./reap_fir.pl 2 | mhmail aalamb@mit.edu -s "() FIR scaling results are ready"
 
-CoarseSerializedBeamFormer.java:
-	make -C $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit
-	cp $(STREAMIT_HOME)/apps/benchmarks/beamformer/streamit/CoarseSerializedBeamFormer.java .
+CoarseSerializedBeamFormer.java: $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java
+	cp $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java .
+$(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java:
+	make -C $(BEAMFORMER-HOME)
 
 FMRadioApp.java:
 
@@ -70,9 +73,10 @@ test: Test.java
 	$(SL) Test-freq.c -o Test-freq.exe
 
 clean:
+	make -C $(BEAMFORMER-HOME) clean
 	rm -f *.dot *.ps *.c *.exe *.class *.output
 	rm -f dynamorio.log* countflops.log
 	rm -f Test.java
-	rm -f FIRProgram.java SamplingRateConverter.java 
-	rm -f FilterBank.java TargetDetect.java
+	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
+	rm -f CoarseSerializedBeamFormer.java
 	rm -rf streamgraphs

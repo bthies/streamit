@@ -1,7 +1,7 @@
 /*
  * StmtPush.java: a push statement
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtPush.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
+ * $Id: StmtPush.java,v 1.3 2003-06-24 21:40:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -32,5 +32,22 @@ public class StmtPush extends Statement
     public Object accept(FEVisitor v)
     {
         return v.visitStmtPush(this);
+    }
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof StmtPush))
+            return false;
+        return value.equals(((StmtPush)other).getValue());
+    }
+    
+    public int hashCode()
+    {
+        return value.hashCode();
+    }
+
+    public String toString()
+    {
+        return "push(" + value + ")";
     }
 }

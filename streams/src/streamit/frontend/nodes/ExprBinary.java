@@ -60,4 +60,49 @@ public class ExprBinary extends Expression
     {
         return v.visitExprBinary(this);
     }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ExprBinary))
+            return false;
+        ExprBinary eb = (ExprBinary)other;
+        if (!(left.equals(eb.getLeft())))
+            return false;
+        if (!(right.equals(eb.getRight())))
+            return false;
+        if (op != eb.getOp())
+            return false;
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        return left.hashCode() ^ right.hashCode() ^ new Integer(op).hashCode();
+    }
+
+    public String toString()
+    {
+        String theOp;
+        switch (op)
+        {
+        case ExprBinary.BINOP_ADD: theOp = "+"; break;
+        case ExprBinary.BINOP_SUB: theOp = "-"; break;
+        case ExprBinary.BINOP_MUL: theOp = "*"; break;
+        case ExprBinary.BINOP_DIV: theOp = "/"; break;
+        case ExprBinary.BINOP_AND: theOp = "&&"; break;
+        case ExprBinary.BINOP_OR: theOp = "||"; break;
+        case ExprBinary.BINOP_EQ: theOp = "=="; break;
+        case ExprBinary.BINOP_NEQ: theOp = "!="; break;
+        case ExprBinary.BINOP_LT: theOp = "<"; break;
+        case ExprBinary.BINOP_LE: theOp = "<="; break;
+        case ExprBinary.BINOP_GT: theOp = ">"; break;
+        case ExprBinary.BINOP_GE: theOp = ">="; break;
+        case ExprBinary.BINOP_BAND: theOp = "&"; break;
+        case ExprBinary.BINOP_BOR: theOp = "|"; break;
+        case ExprBinary.BINOP_BXOR: theOp = "^"; break;
+        default: theOp = "? (" + op + ")"; break;
+        }
+        return "(" + left.toString() + ")" + theOp +
+            "(" + right.toString() + ")";
+    }
 }

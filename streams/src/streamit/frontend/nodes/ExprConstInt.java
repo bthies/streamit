@@ -1,7 +1,7 @@
 /*
  * ExprConstInt.java: an integer-valued constant
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprConstInt.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
+ * $Id: ExprConstInt.java,v 1.3 2003-06-24 21:40:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -42,5 +42,22 @@ public class ExprConstInt extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprConstInt(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ExprConstInt))
+            return false;
+        return val == ((ExprConstInt)other).getVal();
+    }
+    
+    public int hashCode()
+    {
+        return new Integer(val).hashCode();
+    }
+    
+    public String toString()
+    {
+        return Integer.toString(val);
     }
 }

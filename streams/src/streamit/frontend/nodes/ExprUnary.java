@@ -1,7 +1,7 @@
 /*
  * ExprUnary.java: a unary expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprUnary.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
+ * $Id: ExprUnary.java,v 1.3 2003-06-24 21:40:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -42,5 +42,38 @@ public class ExprUnary extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprUnary(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof ExprUnary))
+            return false;
+        ExprUnary eu = (ExprUnary)other;
+        if (op != eu.getOp())
+            return false;
+        if (!(expr.equals(eu.getExpr())))
+            return false;
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        return new Integer(op).hashCode() ^ expr.hashCode();
+    }
+    
+    public String toString()
+    {
+        String preOp = "", postOp = "";
+        switch(op)
+        {
+        case UNOP_NOT: preOp = "!"; break;
+        case UNOP_NEG: preOp = "-"; break;
+        case UNOP_PREINC: preOp = "++"; break;
+        case UNOP_POSTINC: postOp = "++"; break;
+        case UNOP_PREDEC: preOp = "--"; break;
+        case UNOP_POSTDEC: postOp = "--"; break;
+        default: preOp = "?(" + op + ")"; break;
+        }
+        return preOp + "(" + expr.toString() + ")" + postOp;
     }
 }

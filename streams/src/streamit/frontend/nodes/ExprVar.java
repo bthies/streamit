@@ -1,7 +1,7 @@
 /*
  * ExprVar.java: a named variable reference
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ExprVar.java,v 1.2 2002-08-20 20:04:28 dmaze Exp $
+ * $Id: ExprVar.java,v 1.3 2003-06-24 21:40:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -30,5 +30,10 @@ public class ExprVar extends Expression
     public Object accept(FEVisitor v)
     {
         return v.visitExprVar(this);
+    }
+
+    public String toString()
+    {
+        return name;
     }
 }

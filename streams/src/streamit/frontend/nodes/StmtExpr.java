@@ -1,7 +1,7 @@
 /*
  * StmtExpr.java: a statement just containing an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtExpr.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
+ * $Id: StmtExpr.java,v 1.3 2003-06-24 21:40:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -38,6 +38,23 @@ public class StmtExpr extends Statement
     public Object accept(FEVisitor v)
     {
         return v.visitStmtExpr(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof StmtExpr))
+            return false;
+        return expr.equals(((StmtExpr)other).getExpression());
+    }
+    
+    public int hashCode()
+    {
+        return expr.hashCode();
+    }
+    
+    public String toString()
+    {
+        return expr.toString();
     }
 }
 

@@ -1,7 +1,7 @@
 /*
  * StmtAssign.java: an assignment statement
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtAssign.java,v 1.2 2002-09-06 16:28:43 dmaze Exp $
+ * $Id: StmtAssign.java,v 1.3 2003-06-24 21:40:14 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -63,5 +63,20 @@ public class StmtAssign extends Statement
     public Object accept(FEVisitor v)
     {
         return v.visitStmtAssign(this);
+    }
+
+    public String toString()
+    {
+        String theOp;
+        switch (op)
+        {
+        case 0: theOp = "="; break;
+        case ExprBinary.BINOP_ADD: theOp = "+="; break;
+        case ExprBinary.BINOP_SUB: theOp = "-="; break;
+        case ExprBinary.BINOP_MUL: theOp = "*="; break;
+        case ExprBinary.BINOP_DIV: theOp = "/="; break;
+        default: theOp = "?= (" + op + ")"; break;
+        }
+        return lhs + " " + theOp + " " + rhs;
     }
 }

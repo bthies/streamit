@@ -92,17 +92,24 @@ hdtv-stream-graph: java-compile
 
 stream-graphs: hdtv-stream-graph individual-stream-graphs
 
-ps: stream-graphs
+
+dvi: stream-graphs
 	latex hdtv_writeup.tex
 	bibtex hdtv_writeup
 	latex hdtv_writeup.tex
 	latex hdtv_writeup.tex
-	dvips hdtv_writeup.dvi -o hdtv_writeup.ps
 
+
+ps: dvi
+	dvips hdtv_writeup.dvi -o hdtv_writeup.ps
 pdf: ps
 	dvipdf hdtv_writeup.dvi
 
-doc: stream-graphs ps pdf
 
-doc-view: clean latex
+doc: ps pdf
+
+ps-view: clean ps
 	gv hdvt_writeup.ps &
+
+pdf-view: clean pdf
+	acroread hdtv_writeup.pdf &

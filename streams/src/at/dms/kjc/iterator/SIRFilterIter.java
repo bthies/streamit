@@ -30,9 +30,9 @@ class SIRFilterIter extends SIRIterator implements FilterIter {
     }
 
     /**
-     * Returns the object the iterator points to.
+     * Return the stream pointed to by this.
      */
-    public Object getObject() {
+    public SIRStream getStream() {
 	checkValidity();
 	return obj;
     }

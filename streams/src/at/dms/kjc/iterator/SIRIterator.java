@@ -10,6 +10,12 @@ abstract class SIRIterator implements Iterator {
     private Root root;
 
     /**
+     * Whether or not this individual node is valid.  An iterator is
+     * safe to use if (and only if) both it and its root are valid.
+     */
+    private boolean validNode = true;
+
+    /**
      * The parent of this iterator.
      */
     private SIRIterator parent;
@@ -53,6 +59,19 @@ abstract class SIRIterator implements Iterator {
     public FeedbackLoopIter isFeedbackLoop() {
 	return null;
     }
+    
+    /**
+     * Return the stream pointed to by this.  (Redundant with
+     * getStream(), but required for Iterator interface.)
+     */
+    public Object getObject() {
+	return getStream();
+    }
+
+    /**
+     * Return the stream pointed to by this.
+     */
+    public abstract SIRStream getStream();
 
     /**
      * Get the parent of this.
@@ -63,11 +82,35 @@ abstract class SIRIterator implements Iterator {
     }
 
     /**
+     * Returns position of this in parent.
+     */
+    public int getPos() {
+	checkValidity();
+	return pos;
+    }
+
+    /**
+     * Invalidates this individual node, but does not invalidate the
+     * tree above it.
+     */
+    public void invalidateNode() {
+	this.validNode = false;
+    }
+
+    /**
+     * Invalidates the entire tree of which this iterator is a part --
+     * that is, everyone that shares the same root as this.
+     */
+    public void invalidateTree() {
+	this.root.invalidate();
+    }
+
+    /**
      * Check the validity of this iterator, and print an error message
      * with a stack trace if not valid.
      */
     protected void checkValidity() {
-	if (!root.isValid()) {
+	if (!(root.isValid() && validNode)) {
 	    new InvalidIteratorException().printStackTrace();
 	}
     }

@@ -5,9 +5,6 @@ import streamit.scheduler.iriter.*;
 
 class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
 
-    public static final int BODY = 0;
-    public static final int LOOP = 1;
-
     /**
      * Object pointed to by this iterator.
      */
@@ -33,9 +30,9 @@ class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
     }
 
     /**
-     * Returns the object the iterator points to.
+     * Return the stream pointed to by this.
      */
-    public Object getObject() {
+    public SIRStream getStream() {
 	checkValidity();
 	return obj;
     }
@@ -47,7 +44,7 @@ class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
     public Iterator getBody () { 
 	return IterFactory.createIter(obj.getBody(),
 				      this,
-				      BODY);
+				      SIRFeedbackLoop.BODY);
     }
 
     /**
@@ -57,7 +54,7 @@ class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
     public Iterator getLoop () { 
 	return IterFactory.createIter(obj.getLoop(),
 				      this,
-				      LOOP);
+				      SIRFeedbackLoop.LOOP);
     }
 
     /**

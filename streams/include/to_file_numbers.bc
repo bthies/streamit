@@ -28,7 +28,7 @@ if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NUL
 fn dev_NG_to_file(id, filename, port, type)
 {
   local receive_device_descriptor = hms_new();
-  //local this_is_fucked = 0;
+  local i;
 
   // open the file
   receive_device_descriptor.fileName = filename;
@@ -48,6 +48,10 @@ fn dev_NG_to_file(id, filename, port, type)
     exit(-1);
   }
     
+  for (i = 0; i < gNGfws; i++) {
+      //make sure everyone is done the init/pp stage
+    gNGItems[i] = 0;
+  }
 
   verify(receive_device_descriptor.theFile != NULL,
          "### Failed to open output file\n");
@@ -70,7 +74,6 @@ fn dev_NG_to_file(id, filename, port, type)
       //get the cycle
       Proc_GetCycleCounter(proc, &time_hi, &time_lo);
       //update the numbers gathering stuff
-      NG_numbers_record_item(id);
       if (type == 0) {
 	//write to file
 	fprintf(theFile,format,value);
@@ -91,6 +94,7 @@ fn dev_NG_to_file(id, filename, port, type)
 	printf("Invalid format arg passed to dev_NG_to_file\n");
 	exit(-1);
       }
+      NG_numbers_record_item(id);
     }
   };
 

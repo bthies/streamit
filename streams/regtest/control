@@ -1,6 +1,6 @@
 test fft {
   directory docs/examples/hand/fft
-  source FFT-inlined.java
+  source FFT_inlined.java
   disabled
 }
 

@@ -1750,7 +1750,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	} else if (joiner.getIdent().equals("COMBINE"))
 	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);	  	
 	else if (joiner.getIdent().equals("NULL"))
-	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.COMBINE, 2);
+	    joinType = SIRJoiner.create((SIRContainer)parentStream, SIRJoinType.NULL, 2);
 	else if (joiner.getIdent().equals("WEIGHTED_ROUND_ROBIN"))
 	    joinType = SIRJoiner.createWeightedRR((SIRContainer)parentStream, joiner.getArgs());
 	else 

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.19 2003-10-10 14:49:39 dmaze Exp $
+# $Id: strc,v 1.20 2003-10-13 04:47:05 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -234,6 +234,14 @@ sub get_options
 			    "cluster!",
 			    "destroyfieldarray!");
     return $result if !$result;
+    # Figure out which partitioning is in use, if any:
+    $opts{partition} = "ilp" if $opts{'partition-ilp'};
+    $opts{partition} = "greedy" if $opts{'partition-greedy'};
+    $opts{partition} = "dp" if $opts{'partition-dp'};
+    # Default to DP partitioning, if we've selected partitioning
+    # but none of these options.
+    $opts{partition} = "dp" if $opts{partition} &&
+      !grep {$opts{partition} eq $_} ('dp', 'greedy', 'ilp');
     # If the user specified -O#, transform that into appropriate options,
     # but don't override things otherwise on the command line.
     if (exists $opts{optimize})
@@ -243,6 +251,7 @@ sub get_options
 	    $opts{unroll} = 256 unless exists $opts{unroll};
 	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
 	    $opts{simulatework} = 1 unless exists $opts{simulatework};
+	    $opts{partition} = "dp" unless $opts{partition};
 	  }
 	if ($opts{optimize} >= 1)
 	  {
@@ -251,20 +260,13 @@ sub get_options
 	    $opts{wbs} = 1 unless exists $opts{wbs};
 	    $opts{destroyfieldarray} = 1 unless
 	      exists $opts{destroyfieldarray};
+	    $opts{partition} = "dp" unless $opts{partition};
 	  }
 	if ($opts{optimize} >= 0)
 	  {
 	    $opts{unroll} = 0 unless exists $opts{unroll};
 	  }
       }
-    # Figure out which partitioning is in use, if any:
-    $opts{partition} = "ilp" if $opts{'partition-ilp'};
-    $opts{partition} = "greedy" if $opts{'partition-greedy'};
-    $opts{partition} = "dp" if $opts{'partition-dp'};
-    # Default to DP partitioning, if we've selected partitioning
-    # but none of these options.
-    $opts{partition} = "dp" if $opts{partition} &&
-      !grep {$opts{partition} eq $_} ('dp', 'greedy', 'ilp');
     return 1;
   }
 

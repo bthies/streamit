@@ -1,0 +1,13 @@
+<benchmark>
+  <name>mp3decoder</name>
+  <desc>MP3 decoder</desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>MP3.str</file>
+    </impl>
+  </implementations>
+</benchmark>

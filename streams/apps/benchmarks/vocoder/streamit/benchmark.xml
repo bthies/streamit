@@ -1,0 +1,13 @@
+<benchmark>
+  <name>vocoder</name>
+  <desc>Vocoder for bitrate reduction in speech</desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>VocoderTopLevel.str</file>
+    </impl>
+  </implementations>
+</benchmark>

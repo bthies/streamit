@@ -1,0 +1,13 @@
+<benchmark>
+  <name>perftest4</name>
+  <desc> </desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>perftest.str</file>
+    </impl>
+  </implementations>
+</benchmark>

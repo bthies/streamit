@@ -1,0 +1,13 @@
+<benchmark>
+  <name>filterbank</name>
+  <desc>Passes a signal through a filterbank</desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>FilterBankNew.str</file>
+    </impl>
+  </implementations>
+</benchmark>

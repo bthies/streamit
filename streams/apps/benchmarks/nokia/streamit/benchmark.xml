@@ -1,0 +1,13 @@
+<benchmark>
+  <name>nokia</name>
+  <desc> </desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>dcalc.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.15 2003-10-07 02:39:47 thies Exp $
+# $Id: strc,v 1.16 2003-10-07 03:19:20 thies Exp $
 #
 
 use strict;
@@ -393,9 +393,9 @@ sub get_kjc_opts
   {
     my $kjcopts = "";
     $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
-    $opts{partition} eq 'dp' && ($kjcopts .= " -y");
-    $opts{partition} eq 'greedy' && ($kjcopts .= " -a");
-    $opts{partition} eq 'ilp' && ($kjcopts .= " -A");
+    (exists $opts{partition}) && $opts{partition} eq 'dp' && ($kjcopts .= " -y");
+    (exists $opts{partition}) && $opts{partition} eq 'greedy' && ($kjcopts .= " -a");
+    (exists $opts{partition}) && $opts{partition} eq 'ilp' && ($kjcopts .= " -A");
     $opts{altcodegen} && ($kjcopts .= " -z");
     $opts{atlas} && ($kjcopts .= " -E");
     $opts{'clone-with-serialization'} && ($kjcopts .= " -K");

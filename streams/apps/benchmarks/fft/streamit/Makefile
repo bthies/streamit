@@ -7,8 +7,7 @@ IMPORTS   = 	"import streamit.*; \
 	         import streamit.io.*; \
 		 import java.lang.Math;"
 
-LIB_FILES =	FFT2.java \
-		FFTTestSource.java \
+LIB_FILES =	FFTTestSource.java \
 		FloatPrinter.java
 
 MAIN	  = 	FFT2

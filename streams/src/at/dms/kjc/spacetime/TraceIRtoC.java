@@ -1804,7 +1804,6 @@ public class TraceIRtoC extends SLIREmptyVisitor
      * prints InlineAssembly code
      */
     public void visitInlineAssembly(InlineAssembly self,String[] asm,String[] input) {
-	System.err.println("VISITING: "+asm);
 	print("asm volatile(\"");
 	if(asm.length>0)
 	    print(asm[0]);

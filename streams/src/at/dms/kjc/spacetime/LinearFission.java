@@ -23,6 +23,7 @@ public class LinearFission {
 	    System.arraycopy(array,0,temp,0,len);
 	    out[0].setArray(temp);
 	    out[0].setBegin(true);
+	    out[0].setEnd(false);
 	    out[0].setPos(realNum-1);
 	    int idx=len;
 	    for(int i=1;i<realNum-1;i++,idx+=len) {
@@ -30,11 +31,13 @@ public class LinearFission {
 		System.arraycopy(array,idx,temp,0,len);
 		out[i].setArray(temp);
 		out[i].setPos(realNum-i-1);
-		//out[i].setBegin(false);
+		out[i].setBegin(false);
+		out[i].setEnd(false);
 	    }
 	    temp=new double[len];
 	    System.arraycopy(array,idx,temp,0,array.length-idx);
 	    out[realNum-1].setArray(temp);
+	    out[realNum-1].setBegin(false);
 	    out[realNum-1].setEnd(true);
 	    out[realNum-1].setPos(0);
 	} else {

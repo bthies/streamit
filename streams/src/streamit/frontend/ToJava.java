@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.56 2004-11-16 06:10:25 thies Exp $
+ * @version $Id: ToJava.java,v 1.57 2005-03-28 18:29:20 thies Exp $
  */
 public class ToJava
 {
@@ -254,6 +254,7 @@ public class ToJava
                 outWriter = new FileWriter(outputFile);
             else
                 outWriter = new OutputStreamWriter(System.out);
+            outWriter.write("import java.io.Serializable;\n");
             outWriter.write("import streamit.library.*;\n");
             outWriter.write("import streamit.library.io.*;\n");
 

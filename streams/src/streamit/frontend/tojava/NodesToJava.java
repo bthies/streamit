@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.93 2005-03-02 00:44:03 madrake Exp $
+ * @version $Id: NodesToJava.java,v 1.94 2005-03-28 18:29:30 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -554,7 +554,7 @@ public class NodesToJava implements FEVisitor
         {
             TypeStruct struct = (TypeStruct)iter.next();
             result += indent + "class " + struct.getName() +
-                " extends Structure {\n";
+                " extends Structure implements Serializable {\n";
             addIndent();
             for (int i = 0; i < struct.getNumFields(); i++)
             {

@@ -251,7 +251,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         if (expr != null) {
             print("\t= ");
 	    expr.accept(this);
-        }
+        }   //initialize all fields to 0
+	else if (type.isOrdinal())
+	    print (" = 0");
+	else if (type.isFloatingPoint())
+	    print(" = 0.0f");
+
         print(";");
     }
 

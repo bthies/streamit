@@ -136,7 +136,7 @@ public class ConstantProp {
  * This class propagates constants and partially evaluates all
  * expressions as much as possible.
  */
-class Propagator extends EmptyAttributeVisitor {
+class Propagator extends SLIRReplacingVisitor {
     /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */

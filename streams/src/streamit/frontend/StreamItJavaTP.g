@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.5 2002-07-11 21:02:50 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.6 2002-07-11 21:25:12 dmaze Exp $
  */
 
 header {
@@ -28,7 +28,7 @@ options {
 	StreamType cur_type = null;
 	List cur_class_params = null;
 	String cur_class_name = null;
-	NodesToJava n2j = null;
+	NodesToJava n2j = new NodesToJava(null);
 	ComplexProp cplx_prop = new ComplexProp();
 	TempVarGen varGen;
 	TJSymTab symTab = null;

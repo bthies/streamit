@@ -61,7 +61,7 @@ public class StreaMITMain {
 	else if (KjcOptions.cluster) {
 	    System.out.println("*/");
 	    
-	    /* Compiling for raw */
+	    /* Compiling for a cluster */
 	    ClusterBackend.run(stream, 
 			   k2s.getInterfaces(),
 			   k2s.getInterfaceTables(),

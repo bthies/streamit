@@ -39,8 +39,12 @@ public class GreedyPartitioner {
 	    System.out.print("count tiles again... ");
 	    count = new RawFlattener(str).getNumTiles();
 	    System.out.println("done:"+count);
-	    if(count>=target)
+	    if(count>=target) {
 		break;
+	    } else {
+		// redo work estimate
+		this.work = WorkEstimate.getWorkEstimate(str);
+	    }
 	}
 	if(count>target) {
 	    fuseAll();
@@ -149,7 +153,6 @@ public class GreedyPartitioner {
 
 	// add a tile for the joiner if it's not followed by a joiner
 	// or a nullshow
-
 	FlatNode successor = flattener.getFlatNode(filter).edges[0];
 	if (successor!=null && !(successor.contents instanceof SIRJoiner)) {
 	    result += 1;

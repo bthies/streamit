@@ -284,12 +284,10 @@ public class AdjustGranularity {
 	// get the inner splitjoin and fuse its pipes
 	SIRSplitJoin split = (SIRSplitJoin)Namer.getStream("EqualizerSplitJoin_2_3_1");
 	FuseAll.fuse(split);
-	
+
 	// now fizz each side of the split-join by 3
-	StatelessDuplicate.doit((SIRFilter)((SIRPipeline)split.get(0)).get(0),
-				3);
-	StatelessDuplicate.doit((SIRFilter)((SIRPipeline)split.get(1)).get(0),
-				3);
+	StatelessDuplicate.doit((SIRFilter)split.get(0),3);
+	StatelessDuplicate.doit((SIRFilter)split.get(1),3);
 	// constant-prop through new filters
 	ConstantProp.propagateAndUnroll(split);
 	FieldProp.doPropagate(split);

@@ -7,11 +7,64 @@ import java.util.*;
 
 //import java.util.*;
 
+//ADDED TO COMPILE
+
+/**
+ * Inner class to represent dot graph components.
+ */
+class NamePair {
+    /** Name of the first node in an object. */
+    String first;
+    /** Name of the last node in an object. */
+    String last;
+    /** Create a new NamePair with both fields null. */
+    public NamePair() { first = null; last = null; }
+    /** Create a new NamePair with both fields the same. */
+    public NamePair(String s) { first = s; last = s; }
+    /** Create a new NamePair with two different names. */
+    public NamePair(String f, String l) { first = f; last = l; }
+}
+
+//END ADDED
+
 public class GraphEncoder implements AttributeStreamVisitor {
     //May Want outputStream or stdout. Not sure
     private PrintStream outputStream;
     private ArrayList nodesList;
     
+
+    //ADDED TO COMPILE
+
+    private int lastNode;
+
+    public void print(String f) 
+    {
+	outputStream.print(f);
+    }
+
+    void printEdge(String from, String to)
+    {
+        if (from == null || to == null)
+            return;
+        print(from + " -> " + to + "\n");
+    }
+
+    /**
+     * Prints out the subgraph cluser line that is needed in to make clusters. This method is overridden to make colored
+     * pipelines and splitjoins in LinearDot.
+     **/
+    public String getClusterString(SIRStream self) {
+	return "subgraph cluster_" + getName() + " {\n label=\"" + self.getName() + "\";\n";
+    }
+    
+    public String getName()
+    {
+        lastNode++;
+        return "node" + lastNode;
+    }
+
+    //END ADDED
+
     public GraphEncoder(PrintStream outputStream) 
     {
 		this.nodesList = new ArrayList();
@@ -92,6 +145,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               JMethodDeclaration init,
                               JMethodDeclaration work,
                               CType inputType, CType outputType) {
+	return null;
 	
     }
     
@@ -104,6 +158,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     SIRWorkFunction[] initPhases,
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType) {
+	return null;
 	
     }
     
@@ -111,6 +166,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
     public Object visitSplitter(SIRSplitter self,
                                 SIRSplitType type,
                                 JExpression[] expWeights) {
+	return null;
 	
     }
     
@@ -118,13 +174,14 @@ public class GraphEncoder implements AttributeStreamVisitor {
     public Object visitJoiner(SIRJoiner self,
                               SIRJoinType type,
                               JExpression[] expWeights) {
+	return null;
 	
     }
     
     /* visit a work function */
     public Object visitWorkFunction(SIRWorkFunction self,
                                     JMethodDeclaration work) {
-	return new Node("WORK_FUNCTION");
+	return new NamePair("WORK_FUNCTION");
     }
     
     /* Pre-visit a pipeline
@@ -134,7 +191,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init) {                 	
                                 	
-		NamePair pair = new NamePair();
+	NamePair pair = new NamePair();
         
         //###
 		// Establish this is a subgraph cluster

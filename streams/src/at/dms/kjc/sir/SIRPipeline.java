@@ -132,23 +132,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Add a stream to the end of the pipeline, and set that stream's
-     * parent to this.
-     */
-    public void add(SIRStream str) {
-	add(size(), str);
-    }
-
-    /**
-     * Adds stream <str> to this pipeline, at index <index>, and sets
-     * the parent of <str> to be this.
-     */
-    public void add(int index, SIRStream str) {
-	super.add(index, str);
-	str.setParent(this);
-    }
-
-    /**
      * See documentation in SIRContainer.
      */
     public void replace(SIRStream oldStr, SIRStream newStr) {

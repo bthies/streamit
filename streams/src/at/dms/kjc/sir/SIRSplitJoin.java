@@ -101,14 +101,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 
     
     /**
-     * Add a stream to the SplitJoin, and set <str>'s parent field to this.
-     */
-    public void add(SIRStream str) {
-	super.add(str);
-	str.setParent(this);
-    }
-    
-    /**
      * Sets the parallel streams in this, and resets the count on the
      * splitters and joiners, if they depended on the number of
      * <children> before.  Only clears the argument list if there are

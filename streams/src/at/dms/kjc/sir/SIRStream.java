@@ -2,6 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
+import java.util.*;
 
 /**
  * This class represents a stream structure with one input and one
@@ -126,6 +127,19 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public void setWork (JMethodDeclaration newWork) {
 	addReplacementMethod(newWork, this.work);
 	this.work = newWork;
+    }
+
+    /**
+     * Get the parameters that were used to initialize this.  Returns
+     * null if this is a top-level stream; returns an empty list if
+     * the parameters haven't been resolved yet.
+     */
+    public List getParams() {
+	if (parent==null) {
+	    return null;
+	} else {
+	    return parent.getParams(parent.indexOf(this));
+	} 
     }
 
     /**

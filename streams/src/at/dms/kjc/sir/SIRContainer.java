@@ -88,32 +88,33 @@ public abstract class SIRContainer extends SIRStream {
      * Add a <child> with empty parameters.
      */
     public void add(SIRStream str) {
-	children.add(str);
-	params.add(new LinkedList());
+	this.add(str, new LinkedList());
     }
 
     /**
      * Adds <str> at index <index> with empty parameters.
      */
     public void add(int index, SIRStream str) {
-	children.add(index, str);
-	params.add(index, new LinkedList());
-    }
-
-    /**
-     * Adds <str> at index <index> with parameters <param>.
-     */
-    public void add(int index, SIRStream str, List param) {
-	children.add(index, str);
-	params.add(index, param);
+	this.add(index, str, new LinkedList());
     }
 
     /**
      * Adds <str> at the end of this with parameters <param>.
      */
     public void add(SIRStream str, List param) {
-	this.children.add(str);
-	this.params.add(param);
+	this.add(size(), str, param);
+    }
+
+    /**
+     * Adds <str> at index <index> with parameters <param>, and sets
+     * parent of <str> to this.
+     */
+    public void add(int index, SIRStream str, List param) {
+	children.add(index, str);
+	params.add(index, param);
+	if (str!=null) {
+	    str.setParent(this);
+	}
     }
 
     /**

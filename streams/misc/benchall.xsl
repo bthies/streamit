@@ -2,7 +2,7 @@
 <!--
   benchall.xsl: convert an XML listing of StreamIt benchmarks to HTML
   David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
-  $Id: benchall.xsl,v 1.3 2003-09-29 15:03:44 kkuo Exp $
+  $Id: benchall.xsl,v 1.4 2003-10-16 17:09:09 dmaze Exp $
 
   Notes for the uninitiated: this is an XSL Transform stylesheet.  Use
   an XSLT processor, such as xsltproc, to convert XML to XML using this;
@@ -35,12 +35,14 @@
 
   <xsl:template match="dir">
     <xsl:param name="subdir">.</xsl:param>
-    <xsl:param name="depth">2</xsl:param>
+    <xsl:param name="depth">1</xsl:param>
     <!-- Create an HTML header, labelled with the name attribute of the
-         directory node. -->
-    <xsl:element name="h{$depth}">
-      <h2><xsl:value-of select="@name"/></h2>
-    </xsl:element>
+         directory node, but only if there are subdirectories. -->
+    <xsl:if test="dir and @name != '.'">
+      <xsl:element name="h{$depth}">
+        <xsl:value-of select="@name"/>
+      </xsl:element>
+    </xsl:if>
     <xsl:apply-templates>
       <xsl:with-param name="subdir">
         <xsl:value-of select="$subdir"/>/<xsl:value-of select="@name"/>

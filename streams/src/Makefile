@@ -66,10 +66,19 @@ STREAMIT_LIBRARIES = \
   ../library/java/streamit/Structure.class \
   ../library/java/streamit/Portal.class
 
+# these are invoked by reflection from StreaMITMain
+STREAMIT_BACKENDS = \
+  ../eclipse/grapheditor/GraphEncoder.class \
+  at/dms/kjc/spacetime/SpaceTimeBackend.class \
+  at/dms/kjc/raw/RawBackend.class \
+  at/dms/kjc/cluster/ClusterBackend.class \
+  at/dms/kjc/sir/lowering/Flattener.class
+
 JAVA_TARGET = \
   $(KOPI_TARGET) \
   $(KOPI_TOOL_TARGET) \
   $(STREAMIT_LIBRARIES) \
+  $(STREAMIT_BACKENDS) \
   ../library/java/streamit/StreamIt.class \
   ../library/java/streamit/StreamItFilter.class \
   ../library/java/streamit/StreamItFeedbackLoop.class \

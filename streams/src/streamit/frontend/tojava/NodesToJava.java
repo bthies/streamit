@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.91 2005-02-01 05:18:05 rabbah Exp $
+ * @version $Id: NodesToJava.java,v 1.92 2005-02-17 00:13:09 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -396,6 +396,10 @@ public class NodesToJava implements FEVisitor
         return exp.getVal();
     }
 
+    public Object visitExprDynamicToken(ExprDynamicToken exp) {
+	return "Rate.DYNAMIC_RATE";
+    }
+
     public Object visitExprField(ExprField exp)
     {
         String result = "";
@@ -452,6 +456,13 @@ public class NodesToJava implements FEVisitor
     public Object visitExprPop(ExprPop exp)
     {
         return popFunction(ss.getStreamType()) + "()";
+    }
+
+    public Object visitExprRange(ExprRange exp) {
+	String min = (String)exp.getMin().accept(this);
+	String ave = (String)exp.getAve().accept(this);
+	String max = (String)exp.getMax().accept(this);
+	return "new Rate(" + min + ", " + ave + ", " + max + ")";
     }
 
     public Object visitExprTernary(ExprTernary exp)

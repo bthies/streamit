@@ -54,6 +54,8 @@ global gLastInsCycle = 0;
 //used so we do not count cache misses multiple times
 global current_cache_miss_pc;
 
+global ins_fired_per_tile;
+
 fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 {
   local sender_x;
@@ -95,8 +97,6 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	
 	print_final_stats();
 	if (gGenerate_BloodGraph) {
-	  printf("Generating bloodgraph for %d cycles (avg of steady-state)...\n", 
-		gMaxCyclesPerSteady / bg_update_cycles);
 	  setup_bloodgraph("bloodgraph.ppm", gMaxCyclesPerSteady / bg_update_cycles);
 	}
 	else {
@@ -112,49 +112,71 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	      
 	//from now on, we are in the steady state
 	gSteadyState = 1;
-
-	if (steadyStateExecutions > quitAfter - 4) {
-	  gLastFiveCycles += dif;
-	}
-
-	if (dif > gMaxCyclesPerSteady)
-	  gMaxCyclesPerSteady = dif;
-	
-	if (dif < gMinCyclesPerSteady || gMinCyclesPerSteady < 0)
-	  gMinCyclesPerSteady = dif;
-
-	totalCycles += dif;
-	if (totalCycles < 0) {
-	  printf("\n** Total Cycles Overflow **\n\n");
-	}
-	gWorkCountTotal += gWorkCount;
-	if (gWorkCountTotal < 0) {
-	  printf("\n** Total Work Count Overflow **\n\n");
-	}
-	gFpuCountTotal += gFpuCount;
-	gMemCountTotal += gMemCount;
-	gBrCountTotal += gBrCount;
-	gAdminCountTotal += gAdminCount;
-	gAluCountTotal += gAluCount;
-	gCacheMissCountTotal += gCacheMissCount;
-	
-	printf("Cycles: %d,  MFLOPS: %d, Cache Misses: %d, Outputs: %d\n", 
-	       dif, (250*gFpuCount)/dif, gCacheMissCount, printsPerCycle);
-	fprintf(outputFile, "%d %d %d %d\n", dif, (250*gFpuCount)/dif, gCacheMissCount, gWorkCount);
+	//write the stats for this steady state
+	steady_state_boundary(dif);
       }	
-      //set the last steady state time
-      lastSteadyStartCycle = time_lo;
-      //reset the flops count and workCount
-      gFpuCount = 0;
-      gMemCount = 0;
-      gBrCount = 0;
-      gAdminCount = 0;
-      gAluCount = 0;
-      gWorkCount = 0;
-      gCacheMissCount = 0;
+      reset_steady_counts(time_lo);
     }
   }
   return 1;
+}
+
+//reset any counters that count over a steady state
+fn reset_steady_counts(time_lo) {
+  local i;
+
+  //set the last steady state time
+  lastSteadyStartCycle = time_lo;
+  //reset the flops count and workCount
+  gFpuCount = 0;
+  gMemCount = 0;
+  gBrCount = 0;
+  gAdminCount = 0;
+  gAluCount = 0;
+  gWorkCount = 0;
+  gCacheMissCount = 0;
+  //reset the ins fired per tile per steady
+  for (i = 0; i < gNumProc; i++) {
+    ins_fired_per_tile[i] = 0;
+  }
+}
+
+//do everything necessary when we finish a steady-state (after the 1st)
+//diff is the difference from the last steady-state
+fn steady_state_boundary(dif) {
+  local i;
+  if (steadyStateExecutions > quitAfter - 4) {
+    gLastFiveCycles += dif;
+  }
+  
+  if (dif > gMaxCyclesPerSteady)
+    gMaxCyclesPerSteady = dif;
+  
+  if (dif < gMinCyclesPerSteady || gMinCyclesPerSteady < 0)
+    gMinCyclesPerSteady = dif;
+  
+  totalCycles += dif;
+  if (totalCycles < 0) {
+    printf("\n** Total Cycles Overflow **\n\n");
+  }
+  gWorkCountTotal += gWorkCount;
+  if (gWorkCountTotal < 0) {
+    printf("\n** Total Work Count Overflow **\n\n");
+  }
+  gFpuCountTotal += gFpuCount;
+  gMemCountTotal += gMemCount;
+  gBrCountTotal += gBrCount;
+  gAdminCountTotal += gAdminCount;
+  gAluCountTotal += gAluCount;
+  gCacheMissCountTotal += gCacheMissCount;
+  
+  printf("Cycles: %d,  MFLOPS: %d, Cache Misses: %d, Outputs: %d\n", 
+	 dif, (250*gFpuCount)/dif, gCacheMissCount, printsPerCycle);
+  fprintf(outputFile, "%d %d %d %d ", dif, (250*gFpuCount)/dif, gCacheMissCount, gWorkCount);
+  for (i = 0; i < gNumProc; i++) {
+    fprintf(outputFile, "%d ", ins_fired_per_tile[i]);
+  }
+  fprintf(outputFile, "\n");
 }
 
 fn print_final_stats() {
@@ -206,10 +228,10 @@ fn print_final_stats() {
   fprintf(outputFile, 
 	  "tiles in config;tiles assigned;avg cycles/steady;max cycles/steady;min cycles/steady;avg cyc/ss last 5 ss;"); 
   fprintf(outputFile,  
-	  "prints;thruput;MFLOPS;"); 
+	  "thruput;MFLOPS;"); 
   fprintf(outputFile,  
 	  "instr issued;fpu;mem;branch;admin;alu;max instr issued;\n"); 
-  fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d%;%d;%d\n", 
+  fprintf(outputFile, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\n", 
 	  gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter, 
 	  gMaxCyclesPerSteady, gMinCyclesPerSteady, 
 	  (gLastFiveCycles/5),  
@@ -233,9 +255,11 @@ fn gather_numbers_init()
   });
   
   current_cache_miss_pc = malloc(4*gNumProc);
+  ins_fired_per_tile = malloc(4*gNumProc);
   //init the cache miss pc's, no one is experiencing a cache miss
   for (i = 0; i < gNumProc; i++)
   {
+    ins_fired_per_tile[i] = 0;
     current_cache_miss_pc[i] = -1;
   }
 
@@ -248,7 +272,7 @@ fn gather_numbers_init()
   fprintf(outputFile, "Tiles assigned (to filters or joiners): %d\n", gStreamItTilesUsed);
   fprintf(outputFile, "Final unroll factor used: %d\n", gStreamItUnrollFactor);
   fprintf(outputFile, "With %d items outputted per steady state.\n\n", printsPerCycle);
-  fprintf(outputFile, "cycles MFLOPS cache_misses work_count\n");
+  fprintf(outputFile, "cycles MFLOPS cache_misses work_count ins_fired(tile 0...%d)\n", (gNumProc - 1));
   fprintf(outputFile, "--------------------------\n");
 
   //register the workcount event
@@ -315,6 +339,7 @@ fn update_bloodgraph(hms) {
 
 
 fn setup_bloodgraph(filename, cycles) {
+  printf("Generating bloodgraph for %d cycles (avg of steady-state)...\n", cycles);
   gPPMFILE = open_ppm(filename, cycles / bg_update_cycles, gNumProc*gTraceWidth);
   if (gPPMFILE == NULL)
   {
@@ -390,6 +415,8 @@ fn __event_instr_count(hms)
   gLastInsCycle = time_lo;
   
   AtomicIncrement(&gWorkCount);
+  
+  ins_fired_per_tile[tileNumber]++;
 
   if (InstrWord_IsFPU(instrWord))
   {

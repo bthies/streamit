@@ -279,7 +279,7 @@ public class FuseSplit {
 		new JVariableDefinition(null,
 					at.dms.kjc.Constants.ACC_FINAL,
 					new CArrayType(Utils.voidToInt(filter.
-						       getInputType()), 
+						       getOutputType()), 
 						       1 /* dimension */ ),
 					PUSH_BUFFER_NAME + "_" + i,
 					null);

@@ -934,8 +934,12 @@ public class IRPrinter extends Utils implements SLIRVisitor
         blockStart("NewArrayExpression");
         attrPrint("type", type.toString());
         attrStart("dims");
-        for (int i = 0; i < dims.length; i++)
-            dims[i].accept(this);
+        for (int i = 0; i < dims.length; i++) {
+	    // could be null if you're doing something like "new int[10][]"
+	    if (dims[i]!=null) {
+		dims[i].accept(this);
+	    }
+	}
         attrEnd();
         attrPrint("init", init);
         blockEnd();

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.11 2002-11-07 23:17:57 thies Exp $
+ * $Id: Utils.java,v 1.12 2003-04-06 12:03:16 thies Exp $
  */
 
 package at.dms.util;
@@ -256,7 +256,7 @@ public abstract class Utils implements Serializable {
 
     /**
      * Returns a block with a loop counter declaration and a for loop
-     * that executes <contents> for <count> number of times.  If the
+     * that executes <body> for <count> number of times.  If the
      * count is just one, then return the body instead of a loop.
      */
     public static JStatement makeForLoop(JStatement body, int count) {
@@ -266,32 +266,48 @@ public abstract class Utils implements Serializable {
 	} else if (count==1) {
 	    // if the count is one, then just return the body
 	    return body;
+	} else {
+	    return makeForLoop(body, new JIntLiteral(count));
 	}
-	// define a variable to be our loop counter
-	JVariableDefinition var = 
-	    new JVariableDefinition(/* where */ null,
-				    /* modifiers */ 0,
-				    /* type */ CStdType.Integer,
-				    /* ident */ 
-				    LoweringConstants.getUniqueVarName(),
-				    /* initializer */
-				    new JIntLiteral(0));
+    }
+
+    /**
+     * Returns a block with a loop counter declaration and a for loop
+     * that executes <body> for <count> number of times.
+     */
+    public static JStatement makeForLoop(JStatement body, JExpression count) {
+	return makeForLoop(body, count, 	    
+			   new JVariableDefinition(/* where */ null,
+						   /* modifiers */ 0,
+						   /* type */ CStdType.Integer,
+						   /* ident */ 
+						   LoweringConstants.getUniqueVarName(),
+						   /* initializer */
+						   new JIntLiteral(0)));
+    }
+
+    /**
+     * Returns a block with a loop counter declaration and a for loop
+     * that executes <body> for <count> number of times.  Use
+     * <loopIndex> as the loop counter.
+     */
+    public static JStatement makeForLoop(JStatement body, JExpression count, JVariableDefinition loopIndex) {
 	// make a declaration statement for our new variable
 	JVariableDeclarationStatement varDecl =
-	    new JVariableDeclarationStatement(null, var, null);
+	    new JVariableDeclarationStatement(null, loopIndex, null);
 	// make a test if our variable is less than <count>
 	JExpression cond = 
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
-				      new JLocalVariableExpression(null, var),
-				      new JIntLiteral(count));
+				      new JLocalVariableExpression(null, loopIndex),
+				      count);
 	// make an increment for <var>
 	JStatement incr = 
 	    new JExpressionStatement(null,
 				     new JPostfixExpression(null,
 							    Constants.
 							    OPE_POSTINC,
-			       new JLocalVariableExpression(null, var)),
+			       new JLocalVariableExpression(null, loopIndex)),
 				     null);
 	// make the for statement
 	JStatement forStatement = 

@@ -47,14 +47,22 @@ public class LowerInitFunctions implements StreamVisitor {
 	for (ListIterator it = children.listIterator(); it.hasNext(); ) {
 	    // extract child
 	    SIROperator child = (SIROperator)it.next();
-	    if (child instanceof SIRStream) {
-		// register the stream
-		prologue.add(new LIRSetChild(LoweringConstants.
-					     getStreamContext(),
-					     /* child type */
-					     child.getName(),
-					     /* child name */
-					     child.getRelativeName()));
+	    if (child instanceof SIRFileReader) {
+		// get reader
+		SIRFileReader reader = (SIRFileReader)child;
+		// register it
+		prologue.add(new LIRFileReader(LoweringConstants.
+					       getStreamContext(),
+					       child.getRelativeName(),
+					       reader.getFileName()));
+	    } else if (child instanceof SIRFileWriter) {
+		// get writer
+		SIRFileWriter writer = (SIRFileWriter)child;
+		// register it
+		prologue.add(new LIRFileWriter(LoweringConstants.
+					       getStreamContext(),
+					       child.getRelativeName(),
+					       writer.getFileName()));
 	    } else if (child instanceof SIRJoiner) {
 		// get joiner
 		SIRJoiner joiner = (SIRJoiner)child;
@@ -73,6 +81,14 @@ public class LowerInitFunctions implements StreamVisitor {
 						splitter.getType(),
 						splitter.getWays(),
 						splitter.getWeights()));
+	    } else if (child instanceof SIRStream) {
+		// register the stream
+		prologue.add(new LIRSetChild(LoweringConstants.
+					     getStreamContext(),
+					     /* child type */
+					     child.getName(),
+					     /* child name */
+					     child.getRelativeName()));
 	    } else {
 		Utils.fail("Unexpected child type: " + child.getClass());
 	    }
@@ -282,6 +298,12 @@ public class LowerInitFunctions implements StreamVisitor {
 			    JMethodDeclaration init,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
+	// only worry about actual SIRFilter's, not special cases like
+	// FileReader's and FileWriter's
+	if (!self.getClass().toString().endsWith("at.dms.kjc.sir.SIRFilter")) {
+	    return;
+	}
+
 	// set stream type to filter
 	init.addStatement(new LIRSetStreamType(LoweringConstants.
 					       getStreamContext(),

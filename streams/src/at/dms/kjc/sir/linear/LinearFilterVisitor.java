@@ -840,7 +840,20 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitTryFinallyStatement(JTryFinallyStatement self, JBlock tryClause, JBlock finallyClause){return null;}
 //     public Object visitTypeDeclarationStatement(JTypeDeclarationStatement self, JTypeDeclaration decl){return null;}
 //     public Object visitTypeNameExpression(JTypeNameExpression self, CType type){return null;}
-//     public Object visitUnaryMinusExpression(JUnaryExpression self, JExpression expr){return null;}
+
+    /* visit a unary minus expression to negate a value. */
+    public Object visitUnaryMinusExpression(JUnaryExpression self, JExpression expr){
+	/* visit the internal expression to see if it is linear. */
+	LinearForm exprForm = (LinearForm)expr.accept(this);
+	if (exprForm != null) {
+	    // if it was linear, multiply it my -1 and return
+	    return exprForm.negate();
+	} else {
+	    return exprForm;
+	}
+    }
+	
+	    
 //     public Object visitUnaryPlusExpression(JUnaryExpression self, JExpression expr){return null;}
     /** Visits a unary promote expression, which is basically a type cast.
      * Since we aren't really worried about

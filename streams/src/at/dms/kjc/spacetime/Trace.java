@@ -169,11 +169,11 @@ public class Trace
 
     public void setPrimePump(int pp) {
 	primePump=pp;
-	TraceNode cur=head.getNext();
-	while(cur instanceof FilterTraceNode) {
-	    ((FilterTraceNode)cur).getFilter().setPrimePump(pp);
-	    cur=cur.getNext();
-	}
+	/*TraceNode cur=head.getNext();
+	  while(cur instanceof FilterTraceNode) {
+	  ((FilterTraceNode)cur).getFilter().setPrimePump(pp);
+	  cur=cur.getNext();
+	  }*/
     }
 
     public int getPrimePump() {

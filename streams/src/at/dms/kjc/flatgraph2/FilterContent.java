@@ -19,7 +19,7 @@ public class FilterContent {
     private String name;
     private SIRWorkFunction[] init,steady;
     private CType inputType,outputType;
-    private int initMult, steadyMult, primePump;
+    private int initMult, steadyMult;//, primePump;
     private JMethodDeclaration[] methods;
     private List paramList;
     private JMethodDeclaration initFunction;
@@ -56,7 +56,7 @@ public class FilterContent {
 	outputType=content.outputType;
 	initMult=content.initMult;
 	steadyMult=content.steadyMult;
-	primePump=content.primePump;
+	//primePump=content.primePump;
 	methods=content.methods;
 	paramList=content.paramList;
 	initFunction=content.initFunction;
@@ -205,13 +205,14 @@ public class FilterContent {
 
     public void setPrimePump(int pp) 
     {
-	primePump = pp;
+	//primePump = pp;
+	throw new RuntimeException("Deprecated");
     }
     
-    public int getPrimePump() 
-    {
-	return primePump;
-    }
+    /*public int getPrimePump() 
+      {
+      return primePump;
+      }*/
 
     public boolean isTwoStage() 
     {

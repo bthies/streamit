@@ -309,6 +309,8 @@ public class Util {
     //line divisible int
     public static int cacheLineDiv(int i) 
     {
+	if (i % RawChip.cacheLineBytes == 0)
+	    return i;
 	return (RawChip.cacheLineBytes - (i % RawChip.cacheLineBytes)) + i;
     }
     

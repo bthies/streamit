@@ -76,9 +76,19 @@ public class CommunicateAddrs
 
 	    //allocate the buffer on the allocating tile
 	    ((StringBuffer)fields.get(allocatingTile)).append
-		(buffer.getType().toString() + " " + 
-		 buffer.getIdent() + "[" + 
-		 buffer.getSize().toString() + "];\n");
+		(buffer.getType().toString() + "* " + 
+		 buffer.getIdent() + ";\n");
+	    
+	    //		 buffer.getSize().toString() + "];\n");
+	    //malloc the buffer
+	    ((StringBuffer)functions.get(allocatingTile)).append
+		("  " + buffer.getIdent() + " = (" + buffer.getType() + 
+		 "*) malloc(32 + (" + buffer.getSize().toString() + " * sizeof(" +
+		 buffer.getType() + ")));\n");
+	    //align the buffer
+	    ((StringBuffer)functions.get(allocatingTile)).append
+		("  " + buffer.getIdent() + " = ((u_int32_t)" + buffer.getIdent() +
+		 ") & 0xffffff00;\n");
 
 	    //if allocator != neighbor, create declaration of 
 	    //pointer on neighbor and communicate the address

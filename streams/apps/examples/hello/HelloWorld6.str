@@ -1,0 +1,40 @@
+/*
+ * HelloWorld6.java: Hello, World example
+ * $Id: HelloWorld6.str,v 1.1 2001-09-25 15:08:19 dmaze Exp $
+ */
+
+class HelloWorld6 extends Pipeline
+{
+    static public void main (String [] t)
+    {
+        HelloWorld6 test = new HelloWorld6 ();
+        test.run ();
+    }
+
+    public void init ()
+    {
+        add (new Filter ()
+        {
+            int x = 0;
+            Channel input = new Channel (Integer.TYPE, 1);     /* pop [peek] */
+            Channel output = new Channel (Integer.TYPE, 1);    /* push */
+
+            public void work ()
+            {
+                output.pushInt (x++);
+            }
+        });
+        add (new AmplifyByN (3));
+        add (new Filter ()
+        {
+            Channel input = new Channel (Integer.TYPE, 1);     /* pop [peek] */
+            Channel output = new Channel (Integer.TYPE, 1);    /* push */
+
+            public void work ()
+            {
+                System.out.println (input.popInt ());
+            }
+        });
+    }
+}
+

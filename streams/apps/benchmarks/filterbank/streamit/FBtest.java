@@ -2,17 +2,18 @@ import streamit.*;
 import streamit.io.*;
 
 class source extends Filter {
-    int N;
+    int N, pos;
     float[] r;
     public source(float[] r) {super(r);}
     public void init(float[] r){
-	output = new Channel(Float.TYPE,r.length);
+	output = new Channel(Float.TYPE,1);
 	this.r=r;
 	N=r.length;
+        this.pos = 0;
     }
     public void work(){
-	for(int i=0;i<N;i++)
-	     output.pushFloat(r[i]);
+        output.pushFloat(r[pos++]);
+        if (pos >= N) pos = 0;
     }
 
 }
@@ -21,22 +22,11 @@ class sink extends Filter{
     int N;
     public sink(int N) {super(N);}
     public void init(int N){
-	input = new Channel(Float.TYPE, N);
+        input = new Channel(Float.TYPE, 1);
 	this.N=N;
-	//setPop(N);
     }
     public void work() {
-	System.out.println("Starting");
-
-	for (int i=0; i< N;i++)
-	    {
-		//System.out.print("This is ");
-		//System.out.print(i);
-		//System.out.print(" : ");
-		System.out.println(input.popFloat());
-}
-
-	    
+        System.out.println(input.popFloat());
     }
 
 }
@@ -54,7 +44,7 @@ class FBtest extends StreamIt {
 
     public void init() {
 	int N_sim=1024*2;
-	int N_samp=32;
+	int N_samp=/* 32 */ 6;
 	int N_ch=N_samp;
 	int N_col=32;
 

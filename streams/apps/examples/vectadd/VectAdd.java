@@ -17,7 +17,9 @@ class VectAddKernel extends Filter
   } 
   public void work() 
   {
-    output.pushInt(input.popInt() + input.popInt()); 
+    output.pushInt(input.peekInt(0) + input.peekInt(1)); 
+    input.pop();
+    input.pop();
   } 
 } 
 

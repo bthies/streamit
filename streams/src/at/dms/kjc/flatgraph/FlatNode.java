@@ -274,6 +274,16 @@ public class FlatNode {
 	
 	return sum;
     }
+
+    public int getIncomingWeight(FlatNode prev) 
+    {
+	for (int i = 0; i < inputs; i++) {
+	    if (incoming[i] == prev)
+		return incomingWeights[i];
+	}
+	assert false : "Node " + prev + " not connected to " + this;
+	return -1;
+    }
     
 
     public int getWeight(FlatNode to) 

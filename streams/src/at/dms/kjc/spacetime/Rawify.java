@@ -1121,9 +1121,10 @@ public class Rawify
 	Label label = code.getFreshLabel();
 	final int numTimes=Linear.getMult(numCoeff);
 	final int target=filterInfo.steadyMult-2-extra; //2 iterations start before innerloop
-	final int newSteadyMult=target/numTimes;
-	final int remainingExec=target-newSteadyMult*numTimes;
-	//final int remainingExec=1;
+	//final int newSteadyMult=target/numTimes;
+	final int newSteadyMult=1;
+	//final int remainingExec=target-newSteadyMult*numTimes;
+	final int remainingExec=0;
 	int pendingSends=0;
 	//int pendingReceives=0;
 	int deferredSends=0; //Add a delay
@@ -1222,7 +1223,9 @@ public class Rawify
 	    pendingSends=0;
 	}
 	//Postloop
-	turns=index*numPop+extra;
+	//turns=index*numPop+extra;
+	//turns=pos*numPop;
+	turns=index*numPop;
 	System.out.println("SWITCH TURNS: "+turns);
 	if(begin) {
 	    //int emptySpots=pop*(turns+numPop-1)-bufferSize;
@@ -1268,7 +1271,7 @@ public class Rawify
 			}
 		    }
 	    }
-	    for(int i=0;i<numPop;i++)
+	    for(int i=0;i<numPop-1;i++)
 		for(int j=0;j<pop;j++) {
 		    /*if(emptySpots>0)
 			emptySpots--;
@@ -1278,13 +1281,23 @@ public class Rawify
 		    ins.addRoute(src, SwitchOPort.CSTI);
 		    code.appendIns(ins, false);
 		    //Repeat first value
-		    for(int k=i-1;k>=0;k--) {
+		    for(int k=numPop-2;k>i;k--) {
 			FullIns newIns = new FullIns(tile);
 			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 			code.appendIns(newIns, false);
 		    }
 		    //}
 		}
+	    //Pass last partial sum
+	    ins = new FullIns(tile);
+	    ins.addRoute(SwitchIPort.CSTO,dest2);
+	    code.appendIns(ins,false);
+	    //Pass remaining values to filters downstream
+	    for(int i=0;i<pos*numPop;i++) {
+		ins = new FullIns(tile);
+		ins.addRoute(src,dest);
+		code.appendIns(ins, false);
+	    }
 	} else {
 	    for(int turn=0;turn<turns;turn++)
 		for(int j = 0; j<pop; j++) {
@@ -1312,14 +1325,14 @@ public class Rawify
 			code.appendIns(newIns, false);
 		    }
 		}
-	    for(int i = 0; i<numPop; i++) {
+	    for(int i = 0; i<numPop-1; i++) {
 		for(int j = 0; j<pop; j++) {
 		    //Pass first value
 		    ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
 		    ins.addRoute(src, SwitchOPort.CSTI);
 		    code.appendIns(ins, false);
 		    //Repeat first value
-		    for(int k = i-1; k>= 0; k--) {
+		    for(int k=numPop-2;k>i;k--) {
 			FullIns newIns = new FullIns(tile);
 			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
 			code.appendIns(newIns, false);
@@ -1332,7 +1345,20 @@ public class Rawify
 		    }
 		}
 	    }
-	}	
+	    //Pass last partial sum
+	    ins = new FullIns(tile);
+	    if(end)
+		ins.addRoute(SwitchIPort.CSTO,dest);
+	    else
+		ins.addRoute(SwitchIPort.CSTO,dest2);		
+	    code.appendIns(ins,false);
+	    //Pass remaining values to filters downstream
+	    for(int i=0;i<pos*numPop;i++) {
+		ins = new FullIns(tile);
+		ins.addRoute(src,dest);
+		code.appendIns(ins, false);
+	    }
+	}
     }
 
 

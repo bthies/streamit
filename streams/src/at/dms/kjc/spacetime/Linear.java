@@ -176,10 +176,10 @@ public class Linear extends BufferedCommunication implements Constants {
 	}
 	final int mult=getMult(array.length);
 	final int target=filterInfo.steadyMult-2-extra; //2 iterations start before innerloop
-	final int newSteadyMult=target/mult;
-	//final int newSteadyMult=1;
-	final int remainingExec=target-newSteadyMult*mult;
-	//final int remainingExec=1;
+	//final int newSteadyMult=target/mult;
+	final int newSteadyMult=1;
+	//final int remainingExec=target-newSteadyMult*mult;
+	final int remainingExec=0;
 	assert newSteadyMult>0:"SteadyMult on linear filter not high enough!";
 	inline.add("addiu! "+zeroReg+",\\t"+zeroReg+",\\t"+newSteadyMult); //Send steadyMult to switch
 	//TODO: Save registers here
@@ -291,7 +291,9 @@ public class Linear extends BufferedCommunication implements Constants {
 	//Postloop
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
-	turns=index*num+extra;
+	//turns=index*num+extra;
+	//turns=pos*num;
+	turns=index*num;
 	System.out.println("TILE TURNS: "+turns);
 	/*if(begin) {
 	  inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
@@ -302,7 +304,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
-	    int emptySpots=popCount*(turns+topPopNum)-bufferSize;
+	    int emptySpots=popCount*(turns+num)-bufferSize;
 	    //Order reversed
 	    for(int turn=0;turn<turns;turn++) //Last iteration may not be from buffer
 		for(int j=0;j<popCount;j++)
@@ -323,10 +325,10 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 		    }
-	    for(int i=0;i<=topPopNum;i++)
+	    for(int i=0;i<=topPopNum-1;i++)
 		for(int j=0;j<popCount;j++)
 		    if(emptySpots>0) {
-			for(int k=topPopNum;k>=i;k--) {
+			for(int k=topPopNum;k>i;k--) {
 			    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 			}
@@ -337,7 +339,7 @@ public class Linear extends BufferedCommunication implements Constants {
 			inline.add("move  "+tempRegs[0]+",\\t$csti");
 			inline.add("sw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
 			index+=4;
-			for(int k=topPopNum;k>=i;k--) {
+			for(int k=topPopNum;k>i;k--) {
 			    inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
@@ -350,9 +352,9 @@ public class Linear extends BufferedCommunication implements Constants {
 			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		    }
-	    for(int i=0;i<=topPopNum;i++)
+	    for(int i=0;i<topPopNum;i++)
 		for(int j=0;j<popCount;j++)
-		    for(int k=topPopNum;k>=i;k--) {
+		    for(int k=topPopNum;k>i;k--) {
 			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
 			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
 		    }

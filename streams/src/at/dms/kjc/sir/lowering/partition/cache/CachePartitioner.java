@@ -17,8 +17,12 @@ public class CachePartitioner extends ListPartitioner {
      * Threshold value of instruction code size before cost goes up
      * dramatically.
      */
-    static final int ICODE_THRESHOLD = 16000;
+    static int CODE_CACHE_SIZE;
+    static int DATA_CACHE_SIZE;
     
+    public static int getCodeCacheSize() { return CODE_CACHE_SIZE; }
+    public static int getDataCacheSize() { return DATA_CACHE_SIZE; }
+
     /**
      * Whether or not we're transforming the stream on traceback.  If
      * not, then we're just gathering the partition info for dot
@@ -35,15 +39,18 @@ public class CachePartitioner extends ListPartitioner {
      */
     private HashMap configMap;
 
-    public CachePartitioner(SIRStream str, WorkEstimate work, int numTiles) {
+    public CachePartitioner(SIRStream str, WorkEstimate work, int numTiles,
+			    int code_cache_size, int data_cache_size) {
 	super(str, work, numTiles);
 	this.configMap = new HashMap();
+	CODE_CACHE_SIZE = code_cache_size;
+	DATA_CACHE_SIZE = data_cache_size;
     }
 
     /**
      * Toplevel call.
      */
-    public static SIRStream doit(SIRStream str) {
+    public static SIRStream doit(SIRStream str, int code_cache, int data_cache) {
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
 	Lifter.lift(str);
@@ -53,7 +60,7 @@ public class CachePartitioner extends ListPartitioner {
 	work.printGraph(str, "work-before-partition.dot");
 	work.getSortedFilterWork().writeToFile("work-before-partition.txt");
 
-	str = new CachePartitioner(str, work, 0).toplevel();
+	str = new CachePartitioner(str, work, 0, code_cache, data_cache).toplevel();
 
 	// lift the result
 	Lifter.lift(str);

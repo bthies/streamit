@@ -62,8 +62,8 @@ class CConfigFilter extends CConfig {
 	// fuse with anyone else.  We don't want all containers of
 	// this filter to have a high cost just because this guy
 	// exceeded the icode limit.
-	if (iCodeSize>partitioner.ICODE_THRESHOLD) {
-	    iCodeSize = partitioner.ICODE_THRESHOLD;
+	if (iCodeSize>partitioner.getCodeCacheSize()) {
+	    iCodeSize = partitioner.getCodeCacheSize();
 	}
 	return iCodeSize;
     }

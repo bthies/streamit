@@ -30,8 +30,17 @@ class FusionInfo {
 
     CCost getCost() {
 	int cost = work_estimate;
-	if (code_size > 16000) cost += cost/2; // ICode > L1 Instruction Cache 
-	if (data_size > 10000) cost += cost/3; // Data > 2/3 of L1 Data Cache
+
+	// ICode > (L1 Instruction Cache) / 0.8 
+	if (code_size > (CachePartitioner.getCodeCacheSize()*10/8)) {
+	    cost += cost/2; 
+	}
+	
+	// Data > 2/3 of L1 Data Cache
+	if (data_size > (CachePartitioner.getDataCacheSize()*2/3)) {
+	    cost += cost/2;
+	}
+	
 	return new CCost(cost);
     }
 

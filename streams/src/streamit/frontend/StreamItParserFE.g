@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.51 2005-02-01 19:09:23 rabbah Exp $
+ * $Id: StreamItParserFE.g,v 1.52 2005-02-17 00:12:28 thies Exp $
  */
 
 header {
@@ -165,13 +165,59 @@ work_decl returns [FuncWork f]
 		|	tp:TK_phase id:ID { c = getContext(tp); name = id.getText();
 			                    type = Function.FUNC_PHASE;}
 		)
-		(	TK_push push=right_expr
-		|	TK_pop pop=right_expr
-		|	TK_peek peek=right_expr
+		(	TK_push push=rate_expr
+		|	TK_pop pop=rate_expr
+		|	TK_peek peek=rate_expr
 		)*
 		s=block
 		{ f = new FuncWork(c, type, name, s, peek, pop, push); }
 	;
+
+// returns either a range or a dynamic expression
+rate_expr returns [Expression e]  { e = null; }
+	:	( s:STAR {// convert plain '*' to range '[*,*,*]' for consistency with SIR + library
+                e = new ExprRange(getContext(s),
+                    new ExprDynamicToken(getContext(s)),
+                    new ExprDynamicToken(getContext(s)),
+                    new ExprDynamicToken(getContext(s))); } )
+        | e=range_expr
+        | e=right_expr
+	;
+
+// returns a range, like [min, ave, max]
+range_expr returns [Expression e]
+{
+    e = null;
+    FEContext c = null;
+    Expression min = null, r2 = null, r3 = null; 
+}   : ( l:LSQUARE { c = getContext(l); }
+            min=dynamic_expr COMMA 
+            // even though it's really the second argument that is
+            // optional, have to write it this way to avoid ambiguity in
+            // the parsing
+            r2=dynamic_expr (COMMA r3=dynamic_expr)?
+          RSQUARE
+        )
+        { Expression ave, max;
+            if (r3==null) {
+                ave = null;
+                max = r2;
+            } else {
+                ave = r2;
+                max = r3;
+            }
+            e = new ExprRange(c, min, ave, max); 
+        }
+    ;
+
+// returns a dynamic expression, which is either a plain (right)
+// expression or '*'
+dynamic_expr returns [Expression e]
+{
+    e = null;
+}   : ( s:STAR {e = new ExprDynamicToken(getContext(s)); } )
+    | e=right_expr
+    ;
 
 init_decl returns [Function f] { Statement s; f = null; }
 	:	t:TK_init s=block { f = Function.newInit(getContext(t), s); }

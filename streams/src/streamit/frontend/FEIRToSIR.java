@@ -608,6 +608,13 @@ public class FEIRToSIR implements FEVisitor, Constants {
     return new JStringLiteral(null, exp.getVal());
   }
 
+    public Object visitExprDynamicToken(ExprDynamicToken exp) {
+	debug("In visitFieldDecl\n");
+	debug("  UNIMPLEMENTED\n");
+	/* unimplemented */
+	return null;
+    }
+
   public Object visitExprField(ExprField exp) {
     debug("In visitExprField\n");
     Type lhsType = getType(exp.getLeft());
@@ -644,6 +651,13 @@ public class FEIRToSIR implements FEVisitor, Constants {
     debug("In visitExprPop\n");
     return new SIRPopExpression(parent.getInputType());
   }
+
+    public Object visitExprRange(ExprRange exp) {
+	debug("In visitFieldDecl\n");
+	debug("  UNIMPLEMENTED\n");
+	/* unimplemented */
+	return null;
+    }
 
   public Object visitExprTernary(ExprTernary exp) {
     debug("In visitExprTernary\n");

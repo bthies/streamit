@@ -148,6 +148,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	fw.setMethods(JMethodDeclaration.EMPTY());
 	fw.setFields(JFieldDeclaration.EMPTY());
 	addVisitedOp("FileWriter", fw);
+
+	SIRIdentity sirId = new SIRIdentity(null, "Identity",
+					    null);
+	addVisitedOp("Identity", sirId);
     }	
 		     
 						    
@@ -381,6 +385,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    ((SIRFileWriter)stream).setOutputType(CStdType.Void);
 	    return;
 	}
+	else if (stream instanceof SIRIdentity) {
+	    if (args.length != 1)
+		at.dms.util.Utils.fail(lineNumber + ": Exactly 1 arg required for Identity");
+	    if (!(args[0] instanceof JStringLiteral))
+		at.dms.util.Utils.fail(lineNumber + ": Argument to Identity must be a type");
+	    ((SIRIdentity)stream).setType(getType(((JStringLiteral)args[0]).stringValue()));
+	}
     }
 
     private JMethodDeclaration[] buildPortalMethodArray(JClassDeclaration portal, 
@@ -444,7 +455,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	// create a new SIROperator
 	current = newSIROP(self);
-
+	//check if this is a regular class, not a streamit class
+	//if (current == null)
+	//    System.out.println(printLine(self) + " visiting class ");
+	    
 	//If this class is public then it is the topLevel stream (entry point)
 	if (self.getSourceClass().getSuperClass().getIdent().equals("StreamIt")) {
 	    if (topLevel == null)
@@ -1614,6 +1628,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 				       ": cannot find declaration of stream " +
 				       ((JUnqualifiedInstanceCreation)SIROp).
 				       getType().getCClass().getIdent());
+
 	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
 	    //if this is a builtin filter, set the args
 	    setBuiltinArgs(newST, ((JUnqualifiedInstanceCreation)SIROp).getParams());
@@ -1645,9 +1660,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	//Using a local variable that has been already defined as a stream construct
 	if (SIROp instanceof SIRInitStatement) 
 	    	    return (SIRInitStatement)SIROp;
-	else 
-	    return new SIRInitStatement(Arrays.asList(((JUnqualifiedInstanceCreation)SIROp).getParams()),
-					newST);
+	else {
+	    if (newST instanceof SIRIdentity) 
+		return new SIRInitStatement(Arrays.asList(JExpression.EMPTY),
+					    newST);
+	    else
+		return new SIRInitStatement(Arrays.asList(((JUnqualifiedInstanceCreation)SIROp).getParams()),
+					    newST);
+	}
     }
     
     /**
@@ -2062,10 +2082,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		    //defining an array to be passed over the tape...
 		    JMethodCallExpression methCall = (JMethodCallExpression)v.elementAt(0);
 		    if (methCall.getIdent().equals("getClass")) {
-			if (!(methCall.getPrefix().getType() instanceof CArrayType))
-			    Utils.fail(printLine(self) + "Malformed type on input declaration");
-			//record the dims of the array
-			((CArrayType)methCall.getPrefix().getType()).setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
+			//array, record the dimension
+			if (methCall.getPrefix().getType() instanceof CArrayType)
+			    ((CArrayType)methCall.getPrefix().getType()).
+				setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
 			filter.setInputType(methCall.getPrefix().getType());
 		    }
 		}
@@ -2098,9 +2118,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		    //defining an array to be passed over the tape...
 		    JMethodCallExpression methCall = (JMethodCallExpression)v.elementAt(0);
 		    if (methCall.getIdent().equals("getClass")) {
-			if (!(methCall.getPrefix().getType() instanceof CArrayType))
-			    Utils.fail(printLine(self) + "Malformed type on input declaration");
-			((CArrayType)methCall.getPrefix().getType()).setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
+			//array, record the dimension
+			if (methCall.getPrefix().getType() instanceof CArrayType)
+			    ((CArrayType)methCall.getPrefix().getType()).
+				setDims(((JNewArrayExpression)methCall.getPrefix()).getDims());
 			filter.setOutputType(methCall.getPrefix().getType());
 		    }
 		}

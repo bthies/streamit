@@ -18,6 +18,7 @@ public class MakefileGenerator
     
     public static void createMakefile() 
     {
+		
 	try {
 	    //FileWriter fw = new FileWriter("Makefile");
 	    FileWriter fw = new FileWriter(MAKEFILE_NAME);
@@ -42,12 +43,14 @@ public class MakefileGenerator
 	    Iterator tilesIterator = tiles.iterator();
 	    
 	    fw.write("#-*-Makefile-*-\n\n");
-	    if (! (KjcOptions.numbers > 0 && NumberGathering.successful))
+	    if (KjcOptions.outputs < 0 &&
+		! (KjcOptions.numbers > 0 && NumberGathering.successful))
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
             fw.write("ATTRIBUTES = IMEM_LARGE\n");
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
-	    if (KjcOptions.numbers > 0 && NumberGathering.successful ||
+	    if (KjcOptions.outputs > 0 ||
+		KjcOptions.numbers > 0 && NumberGathering.successful ||
 		KjcOptions.decoupled) {
 		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
 		fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
@@ -152,6 +155,10 @@ public class MakefileGenerator
 	fw.write("global gStreamItTiles = " + RawBackend.rawRows * RawBackend.rawColumns +
 		 ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
+	
+	if (KjcOptions.outputs > 0) 
+	    fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
+	
 	if (KjcOptions.decoupled) {
 	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");
 	    fw.write("global gFilterNames;\n");
@@ -196,6 +203,25 @@ public class MakefileGenerator
 	fw.write(") {return 1; }\n");
 	fw.write("return 0;\n");
 	fw.write("}\n");
+	
+	if (KjcOptions.outputs > 0) {
+	    fw.write("{\n");
+	    fw.write("  local outputpath = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("  sprintf(outputpath, \"%s%s\", streamit_home, \"/include/output.bc\");\n");
+	    //include the number gathering code and install the device file
+	    fw.write("  include(outputpath);\n");
+	    //call the number gathering initialization function
+	    fw.write("  {\n");
+	    fw.write("    local str = malloc(256);\n");
+	    fw.write("    local result;\n");
+	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
+	    fw.write("    result = dev_output_init(\"/dev/null\", gXSize+gYSize);\n");
+	    fw.write("    if (result == 0)\n");
+	    fw.write("      exit(-1);\n");
+	    fw.write("  }\n");
+	    fw.write("}\n");
+	}
+	
 
 	//number gathering code
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {

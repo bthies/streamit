@@ -26,8 +26,8 @@ CXX_OPT += $(INCLUDE_DIR_OPT) $(DEBUG_OPT)
 LINK_OPT += $(DEBUG_OPT) $(LINK_LIBS)
 JAVA_OPT += $(DEBUG_OPT) $(CLASSPATH_OPT)
 JAVA_SRCS_DEPS = $(filter %.java.deps, $(JAVA_TARGET:%.class=%.java.deps))
+JAVA_SRCS_CLEAN = $(filter %.java.clean, $(JAVA_TARGET:%.class=%.java.clean))
 
-#ifneq ($(MAKECMDGOALS),clean)
 # compile .java files
 %.class : %.java
 	$(JAVAC) $(JAVA_OPT) $<
@@ -63,7 +63,7 @@ $(C_TARGET) : $(OBJ_FILES)
 	@rm -f $(TARGET)
 	$(CXX) -o $(TARGET) $(LINK_OPT) $(OBJ_FILES) $(LINK_LIBS) 
 
-Makefile.deps: $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS)
+Makefile.deps: $(CXXSRCS) $(CSRCS) $(JAVA_SRCS) $(JAVA_SRCS_DEPS) $(JAVA_SRCS_CLEAN)
 	@rm -f Makefile.deps
 	@echo > Makefile.deps
 ifneq ($(strip $(CXXSRCS)),)
@@ -89,8 +89,6 @@ ifneq ($(strip $(JAVA_SRCS)),)
 		@echo >> Makefile.deps
 endif
 
-
-
 # create .deps files from .java files
 ifneq ($(MAKECMDGOALS),clean)
 # if I'm not cleaning, try to generate proper .deps and .clean files:
@@ -112,7 +110,7 @@ ifneq ($(MAKECMDGOALS),clean)
 
 %.java.clean : %.u
 	@echo java_deps_clean : $*.u $*.class $*.java.deps $*.java.clean > $*.java.clean
-	# write dependecies from java_deps_clean to all generated .java.clean files
+	@# write dependecies from java_deps_clean to all generated .java.clean files
 	@sed 's/.*\:/java_deps_clean :/;s/\.java$$/\.u/' $*.u >> $*.java.clean
 
 else
@@ -133,6 +131,9 @@ ifeq ($(MAKECMDGOALS),clean)
 
 %.u :
 	@touch $*.u
+
+java_class_compile :
+	
 endif
 	
 

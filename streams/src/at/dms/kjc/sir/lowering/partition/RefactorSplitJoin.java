@@ -270,8 +270,9 @@ public class RefactorSplitJoin {
             }
             sj.remove(index);
             index--;
+            sj.setJoiner(newJoiner);
         }
-        
+
         return sj;
     }
 }

@@ -8,6 +8,8 @@ import streamit.scheduler2.iriter.PipelineIter;
 import streamit.scheduler2.iriter.SplitJoinIter;
 import streamit.scheduler2.iriter.FeedbackLoopIter;
 import streamit.scheduler2.iriter.IteratorBase;
+import streamit.scheduler2.iriter.SplitterIter;
+import streamit.scheduler2.iriter.JoinerIter;
 import streamit.scheduler2.iriter.Iterator;
 
 public class PrintGraph extends streamit.misc.AssertedClass
@@ -68,13 +70,20 @@ public class PrintGraph extends streamit.misc.AssertedClass
     String getName(Object obj)
     {
         String name = obj.toString();
-        return name
-            .replace('@', '_')
-            .replace('$', '_')
-            .replace('.', '_')
-            .replace(' ', '_')
-            .replace('=', '_')
-            .replace(',', '_');
+	// if there is a dollar sign in the returned name, then this
+	// indicates an anonymous class in the library.  We don't want
+	// to label the anonymous nodes, so just return empty in this
+	// case.
+	if (name.indexOf("$")>-1) {
+	    return "";
+	} else {
+	    return name
+		.replace('@', '_')
+		.replace('.', '_')
+		.replace(' ', '_')
+		.replace('=', '_')
+		.replace(',', '_');
+	}
     }
 
     String getName(IteratorBase iter)
@@ -85,6 +94,55 @@ public class PrintGraph extends streamit.misc.AssertedClass
     String getUniqueName(IteratorBase iter)
     {
         return getName(iter.getObject()) + "_" + iter.getObject().hashCode();
+    }
+
+    String getNameForSplit(SplitterIter iter) {
+	if (iter.getSplitterNumWork()>1) {
+	    return "phased splitter";
+	} else {
+	    // detect duplicate if pop is unary
+	    if (iter.getSplitPop(0)==1) {
+		// duplicate splitter
+		return "duplicate";
+	    } else if (iter.getSplitPop(0)==0) {
+		// null splitter
+		return "roundrobin(0)";
+	    } else {
+		// roundrobin splitter... enumerate weights
+		int weights[] = iter.getSplitPushWeights(0);
+		StringBuffer result = new StringBuffer("roundrobin(");
+		for (int i=0; i<weights.length; i++) { 
+		    result.append(weights[i]);
+		    if (i!=weights.length-1) {
+			result.append(", ");
+		    } else {
+			result.append(")");
+		    }
+		}
+		return result.toString();
+	    }
+	}
+    }
+
+    String getNameForJoin(JoinerIter iter) {
+	if (iter.getJoinerNumWork()>1) {
+	    return "phased joiner";
+	} else if (iter.getJoinPush(0)==0) {
+	    // null joiner
+	    return "roundrobin(0)";
+	} else {
+	    int weights[] = iter.getJoinPopWeights(0);
+	    StringBuffer result = new StringBuffer("roundrobin(");
+	    for (int i=0; i<weights.length; i++) { 
+		result.append(weights[i]);
+		if (i!=weights.length-1) {
+		    result.append(", ");
+		} else {
+		    result.append(")");
+		}
+	    }
+	    return result.toString();
+	}
     }
 
     void printFilter(FilterIter filter, DataOutputStream outputStream)
@@ -155,12 +213,12 @@ public class PrintGraph extends streamit.misc.AssertedClass
             outputStream.writeBytes(
                 getUniqueTopStreamName(sj.getUnspecializedIter())
                     + " [ label=\""
-                    + "split"
+		    + getNameForSplit(sj)
                     + "\" ]\n");
             outputStream.writeBytes(
                 getUniqueBottomStreamName(sj.getUnspecializedIter())
                     + " [ label=\""
-                    + "join"
+		    + getNameForJoin(sj)
                     + "\" ]\n");
 
             String splitName =
@@ -206,12 +264,12 @@ public class PrintGraph extends streamit.misc.AssertedClass
             outputStream.writeBytes(
                 getUniqueTopStreamName(fl.getUnspecializedIter())
                     + " [ label=\""
-                    + "join"
+		    + getNameForJoin(fl)
                     + "\" ]\n");
             outputStream.writeBytes(
                 getUniqueBottomStreamName(fl.getUnspecializedIter())
                     + " [ label=\""
-                    + "split"
+		    + getNameForSplit(fl)
                     + "\" ]\n");
 
             // Visit the body and the loop part.

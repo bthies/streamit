@@ -1,0 +1,15 @@
+<benchmark>
+  <name>MergeSort</name>
+  <desc>Standard Merge Sort Algorithm</desc>
+  <description>
+  Sorting algorithm that splits unordered list into halves, recursively sorts them
+  and then merges back to get the final sorted list.  Has algorithmic
+  complexity of O(n log n).  
+  </description>
+  <reference>http://linux.wku.edu/~lamonml/algor/sort/merge.html</reference>
+  <implementations>  
+    <impl lang="StreamIt">
+      <file>MergeSort.str</file>
+    </impl>   
+  </implementations>
+</benchmark>

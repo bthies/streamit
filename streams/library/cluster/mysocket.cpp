@@ -3,6 +3,7 @@
 
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -75,6 +76,28 @@ bool mysocket::data_available() {
     return false;
 
 }
+
+
+int mysocket::write_OOB(char val) {
+  int retval;
+
+  retval = send(fd, &val, 1, MSG_OOB);
+  if (retval == 1) return 0;
+  return -1;
+}
+
+int mysocket::check_OOB(char *val) {
+  int flag;
+
+  if (ioctl(fd, SIOCATMARK, &flag) == -1) { perror("ioctl"); return 0; }
+  if (flag) {
+    if (recv(fd, &flag, 1, MSG_OOB) == -1) { perror("recv"); return 0; }
+    *val = flag;
+    return 1;
+  }
+  return 0;
+}
+
 
 
 int mysocket::write_chunk(char *buf, int len) {

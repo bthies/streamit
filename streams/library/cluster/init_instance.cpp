@@ -117,9 +117,12 @@ void init_instance::initialize_sockets() {
     out_done[sd] = false;
   }
 
-  // create pipes where applicable
+  /*
 
-  printf("Creating kernel level pipes");
+  // create local socket pair where applicable
+
+  //printf("Creating kernel level pipes");
+  printf("Creating local socket pairs");
   fflush(stdout);
   
   for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
@@ -130,25 +133,40 @@ void init_instance::initialize_sockets() {
 
     if (i != in_done.end()) {
     
+      // connection is both in the list of 'out connections' 
+      // and in the list of 'in connections'
+
       // create pipe
 
       //printf("Creataing pipe for socket %d %d %d\n", sd.from, sd.to, sd.type);
       printf(".");
       fflush(stdout);
       
-      int pfd[2];
-      int retval = pipe(pfd);
-      if (retval != 0) perror("pipe");
+      //int pfd[2];
+      //int retval = pipe(pfd);
+      //if (retval != 0) perror("pipe");
 
-      out_sockets[sd] = pfd[1];
-      in_sockets[sd] = pfd[0];
+      int sockets[2];
+      if (socketpair(AF_UNIX, SOCK_STREAM, 0, sockets) < 0) {
+	perror("opening stream socket pair");
+	exit(1);
+      }
+
+      //out_sockets[sd] = pfd[0];
+      //in_sockets[sd] = pfd[1];
+     
+      out_sockets[sd] = sockets[0];
+      in_sockets[sd] = sockets[1];
       
       out_done[sd] = true;
       in_done[sd] = true;
+
     }
   }
 
   printf("done\n");
+  
+  */
 
   for (vector<sock_dscr>::iterator i = in_connections.begin(); i < in_connections.end(); ++i) {
   

@@ -30,6 +30,9 @@ class mysocket {
 
   static int get_total_data_received();
   static int get_total_data_sent();
+
+  int write_OOB(char val);
+  int check_OOB(char *val);
   
   int read_chunk(char *buf, int len);  
   int write_chunk(char *buf, int len);

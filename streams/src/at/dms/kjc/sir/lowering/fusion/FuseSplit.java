@@ -152,7 +152,7 @@ public class FuseSplit {
 	}
 	// calculate the peek as the amount we'll look into the input
 	// during execution
-	int peek = rep.splitter*pop+maxPeek;
+	int peek = pop+maxPeek;
 
         // Build the new filter.
         SIRFilter newFilter = new SIRFilter(sj.getParent(),

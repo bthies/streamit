@@ -4,8 +4,8 @@ import antlr.BaseAST;
 
 class ToJava
 {
-    public static int indent = 0;
-    public static String getIndent ()
+    public int indent = 0;
+    public String getIndent ()
     {
         int x = indent;
         String r = "";
@@ -13,7 +13,7 @@ class ToJava
         return r;
     }
 
-    public static String toStringTree(BaseAST t) {
+    public String toStringTree(BaseAST t) {
         String ts=getIndent ();
         ts += t.toString() + "\n";
         if ( t.getFirstChild()!=null ) indent ++;
@@ -28,7 +28,7 @@ class ToJava
     }
 
     /** Print out a child-sibling tree in LISP notation */
-    public static String toStringList(BaseAST t) {
+    public String toStringList(BaseAST t) {
         String ts="";
         if ( t.getFirstChild()!=null ) ts+=" <#";
         ts += " "+t.toString();
@@ -42,7 +42,21 @@ class ToJava
         return ts;
     }
 
-    public static void main (String [] args)
+    public void printUsage()
+    {
+        System.err.println(
+"streamit.frontend.ToJava: StreamIt syntax translator\n" +
+"Usage: java streamit.frontend.ToJava < in.str > out.java\n" +
+"\n" +
+"Options:\n" +
+"  --adhoc        Use partial parsing and ad-hoc translation (default)\n" +
+"  --full         Use full parsing (experimental)\n" +
+"  --help         Print this message\n" +
+"  --output file  Write output to file, not stdout\n" +
+"\n");
+    }
+
+    public void run(String [] args)
     {
         StreamItParser parser = null;
         try
@@ -63,6 +77,11 @@ class ToJava
         {
             e.printStackTrace(System.err);
         }
+    }
+
+    public static void main(String[] args)
+    {
+        new ToJava().run(args);
     }
 }
 

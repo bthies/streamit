@@ -63,8 +63,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 
-	//System.out.println("\n\nSteady Execution Counts");
-	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
+	System.out.println("\n\nSteady Execution Counts");
+	RawBackend.printCounts(RawBackend.steadyExecutionCounts);
 
 	counters.resetBuffers();
 
@@ -327,10 +327,13 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts, SimulationCounter counters) 
     {
 	if (fire.contents instanceof SIRTwoStageFilter &&
-	    (!counters.hasFired(fire)) &&
+	    (!counters.hasFired(fire)) && initSimulation &&
 	    ((SIRTwoStageFilter)fire.contents).getInitPush() == 0 &&
-	    ((SIRTwoStageFilter)fire.contents).getInitPop() == 0)
+	    ((SIRTwoStageFilter)fire.contents).getInitPop() == 0 &&
+	    !(((SIRTwoStageFilter)fire.contents).getInitPeek() == 0)) {
+	    counters.setFired(fire);
 	    return;
+	}
 	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
 	if (oldVal - 1 < 0)
 	    Utils.fail("Executed too much");
@@ -341,7 +344,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
 	if (fire.contents instanceof SIRFilter) {
-	    //	    System.out.println("Firing " + fire.contents.getName());
+	    if (fire.getName().startsWith("Fused_ConvMat"))
+		System.out.println("=-=-=-=-=-=-=-=-=-=-=-Firing " + fire.contents.getName());
 	    //decrement the schedule execution counter
 	    decrementExecutionCounts(fire, executionCounts, counters);
 	    
@@ -358,8 +362,9 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		    SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
 		    if (!(two.getInitPeek() == 0 &&
 			  two.getInitPush() == 0 &&
-			  two.getInitPop() == 0))
+			  two.getInitPop() == 0)) {
 			ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
+		    }
 		}
 	    //now this node has fired
 	    counters.setFired(fire);

@@ -16,7 +16,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.28 2003-04-11 06:29:31 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.29 2003-04-11 06:36:05 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. never would have guessed that, would you? **/
@@ -131,40 +131,6 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	return lfa;
     }
     
-    /**
-     * Returns a filter that is a clone of <self> but has all
-     * unrolling (and other pre-partitioning processing) done on
-     * it.
-     */
-    private static SIRFilter getUnrolledFilter(SIRFilter self) {
-	SIRFilter result;
-	if (KjcOptions.unroll>=100000) {
-	    // this means that <self> was already unrolled enough
-	    result = self;
-	} else {
-	    result = (SIRFilter)ObjectDeepCloner.deepCopy(self);
-	    // set all loops to be unrolled again
-	    IterFactory.createIter(result).accept(new EmptyStreamVisitor() {
-		    public void preVisitStream(SIRStream self, SIRIterator iter) {
-			for (int i=0; i<self.getMethods().length; i++) {
-			    self.getMethods()[i].accept(new SLIREmptyVisitor() {
-				    public void visitForStatement(JForStatement self, JStatement init, JExpression cond,
-								  JStatement incr, JStatement body) {
-					self.setUnrolled(false);
-				    }
-				});
-			}
-		    }
-		});
-	    // now do unrolling
-	    int origUnroll = KjcOptions.unroll;
-	    KjcOptions.unroll = 100000;
-	    FieldProp.doPropagate(result);
-	    KjcOptions.unroll = origUnroll;
-	}
-	return result;
-    }
-
     /////////////////////////////////////
     ///////////////////// Visitor methods
     /////////////////////////////////////

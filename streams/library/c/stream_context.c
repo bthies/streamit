@@ -11,9 +11,6 @@ stream_context *create_context(void *p)
 {
     stream_context *c = NULL;
 
-    // assuming that every context must have some data associated with it
-    assert (p);
-
     // allocate the space
     c = (stream_context*) malloc (sizeof (stream_context));
 

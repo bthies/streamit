@@ -146,14 +146,14 @@ public class ManageMethodBreakpointRulerAction extends ManageBreakpointRulerActi
 						if (((IMethod)method).isConstructor()) methodName = "<init>"; //$NON-NLS-1$
 						String methodSignature= method.getSignature();
 						if (!type.isBinary()) methodSignature = ManageMethodBreakpointActionDelegate.resolveMethodSignature(type, methodSignature);
-						JDIDebugModel.createMethodBreakpoint(getJavaResource(), type.getFullyQualifiedName(), methodName, methodSignature, true, false, false, -1, methodStart, methodEnd, 0, true, attributes);
+						JDIDebugModel.createMethodBreakpoint(getJavaResource(), type.getFullyQualifiedName(), methodName, methodSignature, true, false, false, validJavaLineNumber, methodStart, methodEnd, 0, true, attributes);
 
 						// Add method breakpoint to .str
 						IRegion strLine= getDocument().getLineInformation(strRulerLineNumber - 1);
 						methodStart = strLine.getOffset();
 						methodEnd = methodStart + strLine.getLength() - 1;
 						BreakpointUtils.addJavaBreakpointAttributes(attributes, method);
-						JDIDebugModel.createMethodBreakpoint(getResource(), type.getFullyQualifiedName(), methodName, methodSignature, true, false, false, -1, methodStart, methodEnd, 0, true, attributes);
+						JDIDebugModel.createMethodBreakpoint(getFile(), type.getFullyQualifiedName(), methodName, methodSignature, true, false, false, strRulerLineNumber, methodStart, methodEnd, 0, true, attributes);
 					}
 				}	
 			}

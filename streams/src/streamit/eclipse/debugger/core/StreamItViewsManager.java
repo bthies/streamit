@@ -3,6 +3,8 @@ package streamit.eclipse.debugger.core;
 import java.util.ArrayList;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -18,6 +20,7 @@ import org.eclipse.debug.ui.AbstractDebugView;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IContributionItem;
@@ -47,9 +50,14 @@ import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import streamit.eclipse.debugger.graph.StreamOverview;
+import streamit.eclipse.debugger.graph.StreamOverviewer;
 import streamit.eclipse.debugger.graph.StreamView;
 import streamit.eclipse.debugger.graph.StreamViewer;
+import streamit.eclipse.debugger.grapheditor.TestSwingEditorPlugin;
 import streamit.eclipse.debugger.launching.IStreamItLaunchingConstants;
+import streamit.eclipse.debugger.launching.StreamItApplicationLaunchShortcut;
+import streamit.eclipse.debugger.texteditor.IStreamItEditorConstants;
 import streamit.eclipse.debugger.ui.LaunchViewerFilter;
 import streamit.eclipse.debugger.ui.StreamItModelPresentation;
 import streamit.eclipse.debugger.ui.VariableViewerFilter;
@@ -63,7 +71,8 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 	private static LaunchViewerFilter fLaunchViewerFilter = new LaunchViewerFilter();
 	private static StreamItModelPresentation fStreamItModelPresentation = new StreamItModelPresentation();
 	private static VariableViewerFilter fVariableViewerFilter = new VariableViewerFilter();
-
+	private static StreamItApplicationLaunchShortcut fLaunchShortcut = new StreamItApplicationLaunchShortcut();
+	
 	private StreamItViewsManager() {
 		super();
 	}
@@ -190,6 +199,11 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 				}
 			} catch (Exception e) {
 			}
+			
+		} else if (id.equals(IStreamItEditorConstants.ID_STREAMIT_EDITOR)) {
+			IFile strFile = ((IFileEditorInput) ((ITextEditor) ref.getPart(false)).getEditorInput()).getFile();
+			LogFileManager.getInstance().setLogFile(strFile);
+			TestSwingEditorPlugin.getInstance().launchGraph(strFile);
 		}
 	}
 	
@@ -269,6 +283,16 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 		return (StreamViewer) ((StreamView) viewPart).getViewer();
 	}
 	
+	public static StreamOverviewer getStreamOverviewer() {
+		return getStreamOverviewer(getActivePage());
+	}
+
+	public static StreamOverviewer getStreamOverviewer(IWorkbenchPage page) {
+		IViewPart viewPart = page.findView(IStreamItDebuggerConstants.ID_STREAMOVERVIEW);
+		if (viewPart == null) return null;
+		return (StreamOverviewer) ((StreamOverview) viewPart).getViewer();
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPartListener2#partActivated(org.eclipse.ui.IWorkbenchPartReference)
 	 */
@@ -290,24 +314,38 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 			// also close str
 			IWorkbenchPage page = ref.getPage();
 			IEditorPart strEditor = findStreamItEditor(page, ref);
-			if (strEditor != null) getActivePage().closeEditor(strEditor, true);
-		} else if (id.equals(JavaUI.ID_CU_EDITOR)) {
+			if (strEditor != null) {
+				TestSwingEditorPlugin.getInstance().closeGraphFile(((IFileEditorInput) strEditor.getEditorInput()).getFile());
+				getActivePage().closeEditor(strEditor, true);
+			}			
+			
+		} else if (id.equals(IStreamItEditorConstants.ID_STREAMIT_EDITOR)) {
 			// also close java
 			IWorkbenchPage page = ref.getPage();
-			IEditorPart javaEditor = findJavaEditor(page, ref);
-			if (javaEditor != null) getActivePage().closeEditor(javaEditor, true);
-			
+			try {
+				IEditorPart javaEditor = findJavaEditor(page, ref);
+				if (javaEditor != null) {
+					getActivePage().closeEditor(javaEditor, true);
+					TestSwingEditorPlugin.getInstance().closeGraphFile(((IFileEditorInput) ((ITextEditor) ref.getPart(false)).getEditorInput()).getFile());
+				}			
+			} catch (CoreException e) {
+			}
 		}
 	}
-	
-	private IEditorPart findJavaEditor(IWorkbenchPage page, IWorkbenchPartReference ref) {
+
+	private IEditorPart findJavaEditor(IWorkbenchPage page, IWorkbenchPartReference ref) throws CoreException {
 		IEditorInput input = ((IEditorPart) ref.getPart(false)).getEditorInput();
 		if (!(input instanceof IFileEditorInput)) return null;
 
 		IFile strFile = ((IFileEditorInput) input).getFile();
 		String strFileName = input.getName();
-		String javaFileName = strFileName.substring(0, strFileName.indexOf(".str")) + ".java";
-		IFile javaFile = strFile.getProject().getFile(javaFileName);
+		String strName = strFile.getName();
+		strName = strName.substring(0, strName.lastIndexOf('.' + IStreamItLaunchingConstants.STR_FILE_EXTENSION));
+		IProject project = strFile.getProject();
+		ILaunchConfiguration configuration = fLaunchShortcut.findLaunchConfiguration(project.getName(), strName, ILaunchManager.RUN_MODE);
+		String mainClassName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "");
+		String javaFileName = mainClassName + '.' + IStreamItLaunchingConstants.JAVA_FILE_EXTENSION;
+		IFile javaFile = project.getFile(javaFileName);
 		return page.findEditor(new FileEditorInput(javaFile));
 	}
 	
@@ -355,7 +393,7 @@ public class StreamItViewsManager implements IPartListener2, ISelectionListener 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPartListener2#partVisible(org.eclipse.ui.IWorkbenchPartReference)
 	 */
-	public void partVisible(IWorkbenchPartReference ref) {
+	public void partVisible(IWorkbenchPartReference ref) {		
 		if (!ref.getId().equals(JavaUI.ID_CU_EDITOR)) return;
 
 		IWorkbenchPage page = ref.getPage();

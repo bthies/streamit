@@ -1,45 +1,20 @@
 /*******************************************************************************
  * StreamIt Debugger adapted from
- * org.eclipse.jdt.internal.debug.ui.actions.EnableDisableBreakpointRulerActionDelegate
  * modifier - Kimberly Kuo
- *******************************************************************************/
-
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package streamit.eclipse.debugger.actions;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IBreakpoint;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.debug.core.IJavaLineBreakpoint;
+import org.eclipse.jdt.debug.core.IJavaWatchpoint;
 import org.eclipse.jdt.internal.debug.core.JDIDebugPlugin;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
 import org.eclipse.jdt.internal.debug.ui.actions.AbstractBreakpointRulerAction;
 import org.eclipse.jdt.internal.debug.ui.actions.ActionMessages;
-import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.text.BadLocationException;
@@ -47,29 +22,18 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.IVerticalRulerInfo;
-import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
-import streamit.eclipse.debugger.launching.IStreamItLaunchingConstants;
-import streamit.eclipse.debugger.launching.StreamItApplicationLaunchShortcut;
-import streamit.eclipse.debugger.launching.StreamItLocalApplicationLaunchConfigurationDelegate;
+import streamit.eclipse.debugger.core.BreakpointRulerData;
+import streamit.eclipse.debugger.core.StrToJavaMapper;
 
 public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerAction {
 	
 	private IBreakpoint fJavaBreakpoint;
-
-	// From streamit.eclipse.debugger.texteditor.ManageBreakpointRulerAction
-	protected String fStrFileName;
-	protected String fJavaFileName;
-	protected String fStrName;
-	protected IJavaElement fJavaFile;
-	protected IEditorPart fJavaEditorPart;
-	protected HashMap fStrToJava;
-	protected HashMap fJavaToStr;
-	protected StreamItApplicationLaunchShortcut launchShortcut;
-	protected StreamItLocalApplicationLaunchConfigurationDelegate launchDelegate;
+	protected BreakpointRulerData fData;
 
 	/**
 	 * Creates the action to enable/disable breakpoints
@@ -80,17 +44,7 @@ public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerA
 		setText(ActionMessages.getString("EnableDisableBreakpointRulerAction.&Enable_Breakpoint_1")); //$NON-NLS-1$
 
 		// From streamit.eclipse.debugger.texteditor.ManageBreakpointRulerAction
-		fStrFileName = getResource().getName();
-		fStrName = fStrFileName.substring(0, fStrFileName.lastIndexOf('.' + IStreamItLaunchingConstants.STR_FILE_EXTENSION));
-		fStrFileName = getResource().getLocation().toOSString();
-		fJavaFileName = fStrName + ".java";
-		fJavaFile = null;
-		fJavaEditorPart = null;
-		fStrToJava = null;
-		fJavaToStr = null;
-
-		launchShortcut = new StreamItApplicationLaunchShortcut();
-		launchDelegate = new StreamItLocalApplicationLaunchConfigurationDelegate();
+		fData = StrToJavaMapper.getInstance().loadStrFile(getFile(), false);
 	}
 
 	/**
@@ -162,24 +116,15 @@ public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerA
 			if (position != null) {
 				IDocument doc = getJavaDocument();
 				try {
-					int markerLineNumber= doc.getLineOfOffset(position.getOffset());
-					int rulerLine= getInfo().getLineOfLastMouseButtonActivity() + 1;
+					int markerLine = doc.getLineOfOffset(position.getOffset());
+					int line = getInfo().getLineOfLastMouseButtonActivity() + 1;
 					
 					// find mapping to .java
-					Iterator javaRulerLine;
-					Object isThere = fStrToJava.get(new Integer(rulerLine));
-					if (isThere == null) return false;
-					else javaRulerLine = ((Set) isThere).iterator();
-					
-					
-					while (javaRulerLine.hasNext()) {
-						if (((Integer) javaRulerLine.next()).intValue() - 1 == markerLineNumber) {
-							if (getTextEditor().isDirty()) {
-								return jBreakpoint.getLineNumber() == markerLineNumber + 1;
-							}						
-							return true;
-						}
-					}
+					if (jBreakpoint instanceof IJavaWatchpoint) line = fData.getJavaWatchpoinLineNumber(line); 
+					else line = fData.getJavaBreakpointLineNumber(line);
+					if (line < 0) return false;
+					if (line - 1 == markerLine) return true;
+
 				} catch (BadLocationException x) {
 					JDIDebugUIPlugin.log(x);
 				}
@@ -190,83 +135,32 @@ public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerA
 	}
 	
 	// From streamit.eclipse.debugger.texteditor.ManageBreakpointRulerAction
-	protected IEditorPart getJavaEditorPart() {
-		if (fJavaEditorPart == null) openJavaFile();
-		return fJavaEditorPart;
-	}
-	
-	protected IJavaElement getJavaFile() {
-		if (fJavaFile == null) openJavaFile();
-		return fJavaFile;
-	}
-	
-	protected void openJavaFile() {
-		IProject project = getResource().getProject();
-		IFile javaFile = project.getFile(fJavaFileName);
-		try {
-			if (!javaFile.exists() && project.hasNature(JavaCore.NATURE_ID)) {
-				ILaunchConfiguration configuration = launchShortcut.findLaunchConfiguration(project.getName(), fStrName, ILaunchManager.RUN_MODE);
-				launchDelegate.launchJava(configuration);
-
-				// handle a secondary file
-				String mainClassName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "");
-				if (!mainClassName.equals(fStrName)) fJavaFileName = mainClassName + ".java";
-				javaFile = project.getFile(fJavaFileName);
-			}
-			fJavaFile = JavaCore.create(javaFile);
-			fJavaEditorPart = JavaUI.openInEditor(fJavaFile);
-			mapStrToJava(javaFile);
-			
-			// open graph editor if not already open
-			
-		} catch (Exception e) {
-		}
-	}
-	
-	protected void mapStrToJava(IFile javaFile) throws Exception {
-		fStrToJava = new HashMap();
-		fJavaToStr = new HashMap();
+	/** 
+	 * Returns the resource for which to create the marker, 
+	 * or <code>null</code> if there is no applicable resource.
+	 *
+	 * @return the resource for which to create the marker or <code>null</code>
+	 */
+	protected IFile getFile() {
 		
-		// look for commented mappings
-		InputStream inputStream = javaFile.getContents();
-		InputStreamReader isr = new InputStreamReader(javaFile.getContents());
-		BufferedReader br = new BufferedReader(isr);
-		String strLine = null;
-		int javaLineNumber = 0;
-		String token = "// " + fStrFileName + ':';
+		IEditorInput input= getTextEditor().getEditorInput();
 		
-		while (true) {
-			javaLineNumber++;
-			strLine = br.readLine();
-			if (strLine == null) break;
-			if (strLine.indexOf(token) != -1) {
-				Integer strLineNumber = Integer.valueOf(strLine.substring(strLine.indexOf(token) + token.length()));
-				Object isThere = fStrToJava.get(strLineNumber);			
-				if (isThere == null) {
-					Set javaLNs = new TreeSet();
-					javaLNs.add(new Integer(javaLineNumber));
-					fStrToJava.put(strLineNumber, javaLNs);
-				} else {
-					((Set) isThere).add(new Integer(javaLineNumber));				
-				}
-				fJavaToStr.put(new Integer(javaLineNumber), strLineNumber);
-			}		
-		}
+		IFile resource= (IFile) input.getAdapter(IFile.class);
 		
-		inputStream.close();
+		return resource;
 	}
 	
 	protected IResource getJavaResource() {
-		return getJavaFile().getResource();
+		return fData.getJavaFile();
 	}
 
 	protected IDocument getJavaDocument() {
-		return JavaUI.getDocumentProvider().getDocument(getJavaEditorPart().getEditorInput());
+		return JavaUI.getDocumentProvider().getDocument(fData.getJavaEditorPart().getEditorInput());
 	}
 	
 	protected AbstractMarkerAnnotationModel getJavaAnnotationModel() {
 		IDocumentProvider provider = JavaUI.getDocumentProvider();
-		IAnnotationModel model = provider.getAnnotationModel(getJavaEditorPart().getEditorInput());
+		IAnnotationModel model = provider.getAnnotationModel(fData.getJavaEditorPart().getEditorInput());
 		if (model instanceof AbstractMarkerAnnotationModel) {
 			return (AbstractMarkerAnnotationModel) model;
 		}

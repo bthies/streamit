@@ -4,16 +4,6 @@
  * @author kkuo
  *******************************************************************************/
 
-/*******************************************************************************
- * Copyright (c) 2000, 2003 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials 
- * are made available under the terms of the Common Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/cpl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
 package streamit.eclipse.debugger.actions;
 
 import java.util.HashMap;
@@ -151,14 +141,14 @@ public class ManageWatchpointRulerAction extends ManageBreakpointRulerAction {
 												
 						Map attributes = new HashMap(10);
 						BreakpointUtils.addJavaBreakpointAttributes(attributes, field);
-						JDIDebugModel.createWatchpoint(getJavaResource(),type.getFullyQualifiedName(), field.getElementName(), -1, fieldStart, fieldEnd, 0, true, attributes);
+						JDIDebugModel.createWatchpoint(getJavaResource(),type.getFullyQualifiedName(), field.getElementName(), validJavaLineNumber, fieldStart, fieldEnd, 0, true, attributes);
 
 						// Add watchpoint in .str
 						IRegion strLine= getDocument().getLineInformation(strRulerLineNumber - 1);
 						fieldStart = strLine.getOffset();
 						fieldEnd = fieldStart + strLine.getLength() - 1;
 						BreakpointUtils.addJavaBreakpointAttributes(attributes, field);
-						JDIDebugModel.createWatchpoint(getResource(),type.getFullyQualifiedName(), field.getElementName(), -1, fieldStart, fieldEnd, 0, true, attributes);
+						JDIDebugModel.createWatchpoint(getFile(),type.getFullyQualifiedName(), field.getElementName(), strRulerLineNumber, fieldStart, fieldEnd, 0, true, attributes);
 
 					}
 				}	

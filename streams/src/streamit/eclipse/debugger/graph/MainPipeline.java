@@ -224,4 +224,11 @@ public class MainPipeline extends RectangleFigure implements IStream {
 		fAllExpanded.setHighlightSelect(highlighting);
 		return fAllExpanded;
 	}
+	/* (non-Javadoc)
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelToggleWidth()
+	 */
+	public int getTopChannelToggleWidth() {
+		return 0;
+	}
+
 }

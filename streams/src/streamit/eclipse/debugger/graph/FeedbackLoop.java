@@ -318,5 +318,10 @@ public class FeedbackLoop extends Ellipse implements IStream {
 	public String getId() {
 		return fId;
 	}
-	
+	/* (non-Javadoc)
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelToggleWidth()
+	 */
+	public int getTopChannelToggleWidth() {
+		return fTopChannel.getChannelToggleWidth();
+	}	
 }

@@ -7,6 +7,7 @@ package streamit.eclipse.debugger;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPluginDescriptor;
@@ -16,6 +17,7 @@ import org.eclipse.ui.internal.IPreferenceConstants;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
+import streamit.eclipse.debugger.core.LogFileManager;
 import streamit.eclipse.debugger.texteditor.StreamItEditorPreferencePage;
 
 /**
@@ -87,6 +89,8 @@ public class StreamItDebuggerPlugin extends AbstractUIPlugin {
 			
 		} catch (MalformedURLException e) {
 		}
+		
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(LogFileManager.getInstance(), IResourceChangeEvent.POST_CHANGE);
 	}
 	
 	/** 

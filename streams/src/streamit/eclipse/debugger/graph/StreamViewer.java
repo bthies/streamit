@@ -5,6 +5,7 @@ import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.draw2d.geometry.Dimension;
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.jdt.debug.core.IJavaObject;
 import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaVariable;
@@ -31,7 +32,6 @@ import streamit.eclipse.debugger.core.StreamItViewsManager;
  */
 public class StreamViewer extends Viewer {
 
-
 	private IVariable fInput;
 	private Figure fRoot;
 
@@ -53,6 +53,7 @@ public class StreamViewer extends Viewer {
 		
 		// create SWT controls for viewer
 		fCanvasC = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+		fCanvasC.setAlwaysShowScrollBars(true);
 		fCanvasC.setExpandHorizontal(true);
 		fCanvasC.setExpandVertical(true);
 
@@ -89,6 +90,10 @@ public class StreamViewer extends Viewer {
 	 */
 	public Object getInput() {
 		return fInput;
+	}
+	
+	protected Figure getRoot() {
+		return fRoot;
 	}
 
 	/* (non-Javadoc)
@@ -129,10 +134,31 @@ public class StreamViewer extends Viewer {
 	private void setRoot(Figure root) {
 		fRoot = root;
 		fPanel.removeAll();
-		if (fRoot == null) return;
+		if (fRoot == null) {
+			fCanvasC.setMinSize(fCanvasC.computeSize(0, 0));
+			StreamOverviewer v = StreamItViewsManager.getStreamOverviewer();
+			if (v == null) return;
+			v.setInput(null);
+			return;
+		} 
 		fPanel.add(fRoot);
 		Dimension d = fRoot.getSize();
 		fCanvasC.setMinSize(fCanvasC.computeSize(d.width, d.height));
+		
+		Figure f = StreamSelector.getSelection();
+		if (f == null) return;
+		Point p = f.getLocation();
+		setOrigin(p);
+		
+		StreamOverviewer v = StreamItViewsManager.getStreamOverviewer();
+		if (v == null) return;
+		v.setInput(fRoot);
+	}
+	
+	public void setOrigin(Point p) {
+		int height = fCanvasC.getBounds().height;
+		if (p.y < height) fCanvasC.setOrigin(0, 0);
+		else fCanvasC.setOrigin(p.x, p.y);
 	}
 	
 	public void setSelection(String streamNameWithId, boolean highlighting) {

@@ -72,6 +72,7 @@ public class StreamItBreakpointPropertiesRulerAction extends ManageBreakpointRul
 	 * @see IUpdate#update()
 	 */
 	public void update() {
+		updateBreakpointData();
 		setBreakpoint(determineBreakpoint());
 		if (getBreakpoint() == null || !(getBreakpoint() instanceof IJavaBreakpoint)) {
 			setBreakpoint(null);
@@ -84,7 +85,7 @@ public class StreamItBreakpointPropertiesRulerAction extends ManageBreakpointRul
 	protected IBreakpoint determineBreakpoint() {
 		IBreakpointManager breakpointManager = DebugPlugin.getDefault().getBreakpointManager();
 		
-		Iterator i = getJavaMarkers().iterator();
+		Iterator i = getJavaMarkers(false).iterator();
 		while (i.hasNext()) {
 			IBreakpoint breakpoint = breakpointManager.getBreakpoint((IMarker) i.next());
 			if (breakpoint instanceof IJavaLineBreakpoint) return (IJavaLineBreakpoint)breakpoint;

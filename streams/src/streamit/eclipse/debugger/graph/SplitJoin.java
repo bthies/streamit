@@ -188,7 +188,8 @@ public class SplitJoin extends Polygon implements IStream {
 				int currentWidth = splitjoinTopCenter.x - fChildWidth/2 + IStreamItGraphConstants.MARGIN/2;
 				for (int i = 0; i < fChildren.size(); i++)
 					currentWidth = ((IStream) fChildren.get(i)).setHorizontalLocation(splitjoinTopCenter.y + IStreamItGraphConstants.CHANNEL_WIDTH + headerSize.height + IStreamItGraphConstants.MARGIN + arrowSize.height, fTallestChild, currentWidth);
-					
+				
+				
 				// fSplitter
 				Point bottomLeft = ((IStream) fChildren.get(0)).getTopChannelTopLeft();
 				Point bottomRight = ((IStream) fChildren.get(fChildren.size() - 1)).getTopChannelTopRight();
@@ -331,5 +332,10 @@ public class SplitJoin extends Polygon implements IStream {
 	public boolean isExpanded() {
 		return fExpanded;
 	}
-	
+	/* (non-Javadoc)
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelToggleWidth()
+	 */
+	public int getTopChannelToggleWidth() {
+		return fTopChannel.getChannelToggleWidth();
+	}	
 }

@@ -28,12 +28,16 @@ public class LaunchData {
 	// key = IVariable datum, entry = HashMap attributes
 	private static HashMap fDataAttributes = new HashMap();
 
-	// for setting input	
+	// for setting input
 	private IJavaMethodBreakpoint fInitBreakpoint;
+	
+	// 1 based
+	private int fPreviousLineNumber;
 
 	protected LaunchData() {
 		fJavaToStrLineNumbers = new HashMap();
 		fFilterNameToStateVariables = new HashMap();
+		fPreviousLineNumber = -1;
 	}
 	
 	protected void mapJavaToStr(IFile javaFile) throws CoreException, IOException {
@@ -105,4 +109,13 @@ public class LaunchData {
 		if (fInitBreakpoint == null) return false;
 		return fInitBreakpoint.equals(b);
 	}
+
+	public int getPreviousLineNumber() {
+		return fPreviousLineNumber;
+	}
+
+	public void setPreviousLineNumber(int i) {
+		fPreviousLineNumber = i;
+	}
+
 }

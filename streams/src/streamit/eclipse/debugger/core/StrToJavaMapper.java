@@ -12,14 +12,13 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.internal.debug.ui.actions.BreakpointLocationVerifier;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.PartInitException;
 
 import streamit.eclipse.debugger.launching.IStreamItLaunchingConstants;
 import streamit.eclipse.debugger.launching.StreamItApplicationLaunchShortcut;
@@ -43,35 +42,55 @@ public class StrToJavaMapper {
 		return fInstance;
 	}
 	
-	public BreakpointRulerData loadStrFile(IResource strFile, ITextEditor editor) {
+	public BreakpointRulerData loadStrFile(IFile strFile, boolean force) {
+
+		if (force) fStrFiles.remove(strFile);
 
 		BreakpointRulerData data = (BreakpointRulerData) fStrFiles.get(strFile);
-		if (data != null) return data;
-		
-		String absoluteStrFileName = strFile.getLocation().toOSString(); 
-		String strName = strFile.getName();
-		strName = strName.substring(0, strName.lastIndexOf('.' + IStreamItLaunchingConstants.STR_FILE_EXTENSION));
-		String javaFileName = strName + ".java";
-		IProject project = strFile.getProject();
-		IFile javaFile = project.getFile(javaFileName);
 		IWorkbenchPage page = StreamItViewsManager.getActivePage();
-		
 		try {
-			if (!javaFile.exists() && project.hasNature(JavaCore.NATURE_ID)) {
-				ILaunchConfiguration configuration = launchShortcut.findLaunchConfiguration(project.getName(), strName, ILaunchManager.RUN_MODE);
+			if (data != null) {
+				if (data.getJavaEditorPart().getEditorInput() != null) return data;
+				IEditorPart javaEditorPart = page.openEditor(data.getJavaFile(), JavaUI.ID_CU_EDITOR);				
+				data.setJavaEditorPart(javaEditorPart);
+				return data;
+			}
+
+			String absoluteStrFileName = strFile.getLocation().toOSString(); 
+			String strName = strFile.getName();
+			strName = strName.substring(0, strName.lastIndexOf('.' + IStreamItLaunchingConstants.STR_FILE_EXTENSION));
+			IProject project = strFile.getProject();
+			ILaunchConfiguration configuration = launchShortcut.findLaunchConfiguration(project.getName(), strName, ILaunchManager.RUN_MODE);
+			String mainClassName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "");
+			String javaFileName = mainClassName + '.' + IStreamItLaunchingConstants.JAVA_FILE_EXTENSION;
+			IFile javaFile = project.getFile(javaFileName);
+			
+			// TODO project.hasNature(StreamItProjectNature.NATURE_ID)
+
+			IEditorPart javaEditorPart;
+			if ((force || !javaFile.exists()) && strFile.getContents().available() != 0) {
 				launchDelegate.launchJava(configuration);
 
 				// handle a secondary file
-				String mainClassName = configuration.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, "");
-				if (!mainClassName.equals(strName)) javaFileName = mainClassName + ".java";
 				javaFile = project.getFile(javaFileName);
-				javaFile.setReadOnly(true);
+				javaFile.refreshLocal(IResource.DEPTH_ONE, null);
+				
+				javaEditorPart = page.openEditor(javaFile, JavaUI.ID_CU_EDITOR);
+				if (javaEditorPart != null) {
+					//page.removePartListener(StreamItViewsManager.getInstance());
+					//page.closeEditor(javaEditorPart, false);
+					//page.addPartListener(StreamItViewsManager.getInstance());
+					//javaEditorPart = page.openEditor(javaFile, JavaUI.ID_CU_EDITOR);
+				} 
+			} else {
+				javaEditorPart = page.openEditor(javaFile, JavaUI.ID_CU_EDITOR);
 			}
-			IEditorPart javaEditorPart = page.openEditor(javaFile, JavaUI.ID_CU_EDITOR);
 			data = new BreakpointRulerData(javaFile, javaEditorPart);
 			IDocument doc = JavaUI.getDocumentProvider().getDocument(javaEditorPart.getEditorInput());
 			mapStrToJava(absoluteStrFileName, javaFile, doc, data);
-		} catch (Exception e) {
+		} catch (PartInitException pie) {
+		} catch (CoreException ce) {
+		} catch (IOException ioe) {
 		}
 		
 		page.addPartListener(StreamItViewsManager.getInstance());

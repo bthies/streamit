@@ -54,15 +54,25 @@ public class StreamItLocalApplicationLaunchConfigurationDelegate extends Abstrac
 			// run streamit.frontend.ToJava
 			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
 			StringTokenizer st = new StringTokenizer(secondaryFileNames);
+			/*
 			String[] args = new String[3 + st.countTokens()];
 			args[0] = IStreamItLaunchingConstants.FILE_OUTPUT_OPTION;
 			args[2] = project.getFile(strFileName).getLocation().toOSString();
 			IFile javaFile = project.getFile(javaFileName);
-			javaFile.setReadOnly(false);
 			args[1] = javaFile.getLocation().toOSString();
 			for (int i = 3; st.hasMoreTokens(); i++) {
 				args[i] = project.getFile(st.nextToken()).getLocation().toOSString();
 			}
+			*/
+			String[] args = new String[4 + st.countTokens()];
+			args[0] = IStreamItLaunchingConstants.FILE_OUTPUT_OPTION;
+			IFile javaFile = project.getFile(javaFileName);
+			args[1] = javaFile.getLocation().toOSString();
+			args[2] = "--library";
+			args[3] = project.getFile(strFileName).getLocation().toOSString();
+			for (int i = 4; st.hasMoreTokens(); i++) {
+				args[i] = project.getFile(st.nextToken()).getLocation().toOSString();
+			}	
 			
 			// hijack error stream
 			PrintStream err = System.err;
@@ -70,6 +80,7 @@ public class StreamItLocalApplicationLaunchConfigurationDelegate extends Abstrac
 			System.setErr(new PrintStream(newErr));
 
 			// run streamit.frontend.ToJava
+			javaFile.setReadOnly(false);
 			streamit.frontend.ToJava.main(args);
 			javaFile.setReadOnly(true);
 
@@ -90,8 +101,7 @@ public class StreamItLocalApplicationLaunchConfigurationDelegate extends Abstrac
 			Map options = javaProject.getOptions(false);
 			options.put(JavaCore.COMPILER_SOURCE_FILE_ATTR, JavaCore.DO_NOT_GENERATE);
 			javaProject.setOptions(options);
-			*/
-			
+			*/			
 			project.build(IncrementalProjectBuilder.INCREMENTAL_BUILD, monitor);
 
 			if (mode.equals(ILaunchManager.DEBUG_MODE))
@@ -136,7 +146,9 @@ public class StreamItLocalApplicationLaunchConfigurationDelegate extends Abstrac
 		System.setErr(new PrintStream(newErr));
 
 		// run streamit.frontend.ToJava
+		javaFile.setReadOnly(false);
 		streamit.frontend.ToJava.main(args);
+		javaFile.setReadOnly(true);
 			
 		// restore error stream
 		System.setErr(err);
@@ -161,5 +173,4 @@ public class StreamItLocalApplicationLaunchConfigurationDelegate extends Abstrac
 	protected Shell getShell() {
 		return JDIDebugUIPlugin.getActiveWorkbenchShell();
 	}
-
 }

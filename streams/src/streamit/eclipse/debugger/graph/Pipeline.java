@@ -104,7 +104,10 @@ public class Pipeline extends RectangleFigure implements IStream {
 			}
 		
 			// expanded size
-			pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*3 + factoryInst.getImageWidth()*2);
+			if (fChildren.size() == 0)
+				pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*3);
+			else
+				pipelineSize.width = IStreamItGraphConstants.MARGIN*2 + Math.max(childrenSize.width, pipelineSize.width*2 + IStreamItGraphConstants.MARGIN*3 + ((IStream) fChildren.get(0)).getTopChannelToggleWidth()*2);
 			pipelineSize.height = Math.max(childrenSize.height, pipelineSize.height + factoryInst.getArrowHeight());
 		}
 		setSize(pipelineSize);
@@ -132,7 +135,7 @@ public class Pipeline extends RectangleFigure implements IStream {
 		// parent size
 		if (verticalLayout) {
 			// (total height of children, width of widest child)
-			parentSize.height = parentSize.height + fTopChannel.getSize().height + pipelineSize.height;// + fOutputChannel.getSize().height;
+			parentSize.height = parentSize.height + fTopChannel.getSize().height + pipelineSize.height;
 			if (lastChild) parentSize.height += fBottomChannel.getSize().height;
 			parentSize.width = Math.max(parentSize.width, pipelineSize.width);
 		} else {
@@ -253,5 +256,12 @@ public class Pipeline extends RectangleFigure implements IStream {
 	 */
 	public String getId() {
 		return fId;
+	}
+		
+	/* (non-Javadoc)
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelToggleWidth()
+	 */
+	public int getTopChannelToggleWidth() {
+		return fTopChannel.getChannelToggleWidth();
 	}
 }

@@ -20,7 +20,7 @@ import streamit.eclipse.debugger.texteditor.StreamItEditor;
 /**
  * @author kkuo
  */
-public class ManageBreakpointActionDelegate implements IWorkbenchWindowActionDelegate, IPartListener {
+public class ManageBreakpointActionDelegate implements IPartListener, IWorkbenchWindowActionDelegate {
 
 	protected ManageBreakpointRulerAction fRulerAction;
 	protected ManageBreakpointRulerInfo fRulerInfo;
@@ -60,6 +60,7 @@ public class ManageBreakpointActionDelegate implements IWorkbenchWindowActionDel
 		if (!fInitialized) {
 			initialize(action);
 		}
+
 	}
 
 	protected void initialize(IAction action) {

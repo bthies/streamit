@@ -14,12 +14,9 @@ public interface IStreamItDebuggerConstants {
 	public static final int OTHER_BREAKPOINTS = 3;
 	
 	// eclipse ids
-	public static final String PLUGIN_ID = StreamItDebuggerPlugin.getUniqueIdentifier();
-	public static final String ID_CHANNELVIEW = PLUGIN_ID + ".ui.ChannelView";
-	public static final String ID_FILTERVIEW = PLUGIN_ID + ".ui.FilterView";
-	//public static final String ID_GRAPHVIEW = PLUGIN_ID + ".graph.GraphView";
-	//public static final String ID_GRAPHOVERVIEW = PLUGIN_ID + ".graph.GraphOverview";
+	public static final String PLUGIN_ID = StreamItDebuggerPlugin.getUniqueIdentifier();	
 	public static final String ID_STREAMVIEW = PLUGIN_ID + ".graph.StreamView";
+	public static final String ID_STREAMOVERVIEW = PLUGIN_ID + ".graph.StreamOverview";
 	public static final String ID_JAVA_METHOD_BREAKPOINT = "org.eclipse.jdt.debug.javaMethodBreakpointMarker";
 	 
 	//

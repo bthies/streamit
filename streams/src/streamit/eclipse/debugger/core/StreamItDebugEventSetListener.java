@@ -1,7 +1,6 @@
 package streamit.eclipse.debugger.core;
 
 import java.util.HashMap;
-import java.util.StringTokenizer;
 import java.util.Vector;
 
 import org.eclipse.core.resources.IFile;
@@ -10,7 +9,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.IDebugEventSetListener;
+import org.eclipse.debug.core.IDebugEventFilter;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -18,7 +17,6 @@ import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.model.IStackFrame;
 import org.eclipse.debug.core.model.IThread;
-import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.internal.ui.DebugUIPlugin;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -30,8 +28,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import streamit.eclipse.debugger.graph.StreamViewer;
 import streamit.eclipse.debugger.launching.IStreamItLaunchingConstants;
+import streamit.eclipse.debugger.texteditor.IStreamItEditorConstants;
 
-public class StreamItDebugEventSetListener implements IDebugEventSetListener {
+public class StreamItDebugEventSetListener implements IDebugEventFilter { //IDebugEventSetListener {
 	
 	private static StreamItDebugEventSetListener fInstance = new StreamItDebugEventSetListener();
 
@@ -42,8 +41,10 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 	 * Creates a new StreamItDebugEventSetListener.
 	 */
 	private StreamItDebugEventSetListener() {
-		DebugPlugin.getDefault().addDebugEventListener(this);
+		//DebugPlugin.getDefault().addDebugEventListener(this);
+		DebugPlugin.getDefault().addDebugEventFilter(this);
 	}
+	
 	/**
 	 * Returns the singleton StreamItDebugEventSetListener.
 	 */
@@ -51,43 +52,70 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 		return fInstance;
 	}
 	
-	public void handleDebugEvents(DebugEvent[] events) {
+//	public void handleDebugEvents(DebugEvent[] events) {
+	public DebugEvent[] filterDebugEvents(DebugEvent[] events) {
 		try {
+			/*
 			for (int i = 0; i < events.length; i++) {
 				int kind = events[i].getKind(); 
 				if (kind == DebugEvent.SUSPEND) {
 					int detail = events[i].getDetail();
-					if (detail == DebugEvent.BREAKPOINT || detail == DebugEvent.STEP_END) handleSuspend(events[i]);
+					if (detail == DebugEvent.BREAKPOINT || detail == DebugEvent.STEP_END) 
+						handleSuspend(events[i]);
 				} else if (kind == DebugEvent.TERMINATE && events[i].getSource() instanceof IDebugTarget) {
 					terminate(events[i]);
 				}
 			}
+			*/
+			Vector filteredEvents = new Vector();
+			for (int i = 0; i < events.length; i++) {
+				int kind = events[i].getKind();
+				if (kind == DebugEvent.TERMINATE && events[i].getSource() instanceof IDebugTarget) {
+					filteredEvents.add(events[i]);
+					terminate(events[i]);
+				} else if (kind != DebugEvent.SUSPEND) {
+					filteredEvents.add(events[i]);
+					continue;
+				}
+
+				int detail = events[i].getDetail();
+				if (detail == DebugEvent.BREAKPOINT || detail == DebugEvent.STEP_END) {
+					if (!handleSuspend(events[i])) filteredEvents.add(events[i]);
+				}
+			}
+			if (filteredEvents.size() == 0) return null;
+
+			DebugEvent[] toReturn = new DebugEvent[filteredEvents.size()];
+			filteredEvents.toArray(toReturn);
+			return toReturn;
+
 		} catch (Exception e) {
 		}
+		return events;
 	}
 	
 	// redirect from .java to .str
-	private void handleSuspend(DebugEvent event) {
+	private boolean handleSuspend(DebugEvent event) {
 	
 		// only handle if IThread
 		Object o = event.getSource();
-		if (!(o instanceof IThread)) return;
+		if (!(o instanceof IThread)) return false;
 
  		// only handle if StreamIt Launch
 		IThread thread = (IThread) o;
 		ILaunch launch = thread.getLaunch();
-		if (launch.getLaunchConfiguration().getName().indexOf(IStreamItLaunchingConstants.ID_STR_APPLICATION) == -1) return;
+		if (launch.getLaunchConfiguration().getName().indexOf(IStreamItLaunchingConstants.ID_STR_APPLICATION) == -1) return false;
 
 		// get cause of launch
 		IStackFrame top = null;
 		try {
 			top = thread.getTopStackFrame();
-			if (top == null) return;
+			if (top == null) return false;
 			ISourceLocator locator = launch.getSourceLocator();
 			o = locator.getSourceElement(top);
 			
 			// only handle if from .java
-			if (!(o instanceof ICompilationUnit)) return;
+			if (!(o instanceof ICompilationUnit)) return false;
 			ICompilationUnit unit = (ICompilationUnit) o;
 			IFile javaFile = (IFile) unit.getResource();
 			
@@ -98,10 +126,11 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 			// make sure that a corresponding line exists
 			if (lineNumber < 1) {
 				top.resume();
-				return;
+				launchData.setPreviousLineNumber(-1);
+				return true;
 			}
 		
-			// highlight in .str
+			// highlight in .str			
 			DebugUIPlugin.getStandardDisplay().syncExec(getSelecter(javaFile.getProject().getFile(getStrFileName(javaFile)), lineNumber - 1, top));
 	 		boolean resume = false;
 			IBreakpoint[] b = thread.getBreakpoints();
@@ -109,16 +138,39 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 				if (launchData.isInitBreakpoint(b[i])) {
 					handleInitEntry(top);
 					resume = true;
-				}			
+				}
 			}
-			if (b.length == 0) resume = true;
-			if (resume) top.resume();
+			
+			// TODO fix
+			/*
+			int detail = event.getDetail();
+			if (detail == DebugEvent.BREAKPOINT)
+				System.out.println("breakpoint suspend at java " + top.getLineNumber() + " " + " str " + lineNumber);
+			else if (detail == DebugEvent.STEP_END)
+				System.out.println("step suspend at java " + top.getLineNumber() + " " + " str " + lineNumber);
+			System.out.println("b.length " + b.length);
+			*/
+
+			if (b.length == 0 && lineNumber == launchData.getPreviousLineNumber()) {
+				resume = true;
+			}
+				
+			launchData.setPreviousLineNumber(lineNumber);
+			// don't continue if breakpoint suspend (resume = false)
+			
+			
+			
+			if (resume) {
+				top.resume();
+				return true;
+			}
 		} catch (Exception e) {
 			try {
 				top.resume();
 			} catch (Exception ef) {
 			}
 		}
+		return false;
 	}
 	
 	public static String getStrFileName(IFile javaFile) {
@@ -140,9 +192,9 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 				try {
 					// highlight in graph
 					IVariable[] vars = top.getVariables();
-										
+
 					// open .str if not already open					
-					ITextEditor strEditor = (ITextEditor) StreamItViewsManager.getActivePage().openEditor(strFile).getAdapter(ITextEditor.class);											
+					ITextEditor strEditor = (ITextEditor) StreamItViewsManager.getActivePage().openEditor(strFile, IStreamItEditorConstants.ID_STREAMIT_EDITOR).getAdapter(ITextEditor.class);											
 					if (strEditor == null) return;
 					
 					// highlight text just in case search for marker fails
@@ -187,37 +239,6 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 		return launchData;
 	}
 	
-	private String getType(IVariable var) throws DebugException {
-		IVariable[] vars = var.getValue().getVariables();
-		StringTokenizer st;
-		String type = IStreamItDebuggerConstants.VOID_VALUE;
-		String pc;
-		boolean setPeek;
-
-		// iterate through Channel variables
-		String varName, varType;
-		for (int i = 0; i < vars.length; i++) {
-			varName = vars[i].getName();
-			varType = vars[i].getReferenceTypeName();
-			if (varName.equals(IStreamItDebuggerConstants.TYPE_FIELD) && varType.equals(IStreamItDebuggerConstants.CLASS_CLASS)) {
-				st = new StringTokenizer(vars[i].getValue().getValueString(), "()");
-				if (st.countTokens() < 1) continue;
-				return st.nextToken();
-			}
-		}
-		return type;		
-	}
-
-	private IVariable findVariable(IVariable var, String fieldName, String className) throws Exception {
-		IVariable[] vars = var.getValue().getVariables();
-		for (int i = 0; i < vars.length; i++) {
-			if (vars[i].getName().equals(fieldName) && vars[i].getReferenceTypeName().equals(className)) {
-				return vars[i];
-			}
-		}
-		return null;
-	}
-
 	private void handleInitEntry(IStackFrame top) throws DebugException {
 		// get top-level pipeline
 		IVariable[] vars = top.getVariables();
@@ -242,50 +263,6 @@ public class StreamItDebugEventSetListener implements IDebugEventSetListener {
 				if (v != null) v.setSelection(streamNameWithId, true);
 			}
 		};
-	}
-	
-	private String getStreamName(IStackFrame top) throws DebugException {
-		IVariable[] vars = top.getVariables();
-		if (vars.length < 1) return "";
-		else {
-			IValue pipelineVal = vars[0].getValue();	
-			return vars[0].getReferenceTypeName() + pipelineVal.getValueString();
-		}
-	}
-
-	private void getQueueItems(Vector peekItems, int peekCount, IValue header, IVariable[] nextVars) throws Exception {
-		// find next & element variable
-		String varName, varType;
-		IVariable next = null;
-		IVariable element = null;
-		IVariable[] elementVars;
-		for (int i = 0; i < nextVars.length; i++) {
-			varName = nextVars[i].getName();
-			varType = nextVars[i].getReferenceTypeName();
-			if (varName.equals(IStreamItDebuggerConstants.NEXT_FIELD) && varType.equals(IStreamItDebuggerConstants.LINKEDLISTENTRY_CLASS)) {
-				next = nextVars[i];
-			} else if (varName.equals(IStreamItDebuggerConstants.ELEMENT_FIELD)) {
-				element = nextVars[i];
-			}
-		}
-
-		// save element unless it is null (element is null at the beginning of recursion)
-		if (!element.getValue().getValueString().equals(IStreamItDebuggerConstants.NULL_VALUE)) {
-			elementVars = element.getValue().getVariables();
-			for (int j = 0; j < elementVars.length; j++) {
-				if (elementVars[j].getName().equals(IStreamItDebuggerConstants.VALUE_FIELD)) {
-					peekItems.add(elementVars[j]);
-					break;
-				}
-			}
-		}
-	
-		// if next variable == header, you've come full circle
-		if (next.getValue().equals(header)) return;
-	
-		// continue to the following next
-		if (peekItems.size() == peekCount) return;
-		getQueueItems(peekItems, peekCount, header, next.getValue().getVariables());				
 	}
 	
 	private void terminate(DebugEvent event) throws CoreException {

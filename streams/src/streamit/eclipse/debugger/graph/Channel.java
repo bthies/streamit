@@ -5,6 +5,7 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
@@ -13,6 +14,8 @@ import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.LineBorder;
 import org.eclipse.draw2d.geometry.Dimension;
 import org.eclipse.draw2d.geometry.Point;
+import org.eclipse.jdt.debug.core.IJavaArray;
+import org.eclipse.jdt.debug.core.IJavaValue;
 
 /**
  * @author kkuo
@@ -28,6 +31,8 @@ public class Channel extends Label {
 	private boolean fVoid;
 	private boolean fDraw;
 	private boolean fExpanded;
+	private boolean fArray;
+	private boolean fComplex;
 	
 	private String fId;
 	private ChannelToggle fIcon;
@@ -55,18 +60,33 @@ public class Channel extends Label {
 		fVoid = false;
 		fDraw = fInput || lastChild;
 		fExpanded = allExpanded.containsChannel(id);
+		fArray = false;
+		fComplex = false;
 		
 		// contents
 		vars = factoryInst.findVariables(factoryInst.findVariables(factoryInst.findVariables(vars, "queue"), "header"), "next");
 		Vector v = factoryInst.getLinkedListElements(vars);
 		fQueue = new Vector();
 		fHighlights = new HashMap();
-		IVariable var; 
+		IVariable var;
+		IValue val;
 		for (int i = 0; i < v.size(); i++) {
-			var = factoryInst.getVariable(((IVariable) v.get(i)).getValue().getVariables(), "value");
+			var = (IVariable) v.get(i);
+			val = var.getValue();
+			if (i == 0) {
+				if (val instanceof IJavaArray) fArray = true;
+				else if (val.getReferenceTypeName().equals("Complex")) fComplex = true;
+			}
+			
+			if (!fArray && !fComplex)
+				var = factoryInst.getVariable(val.getVariables(), "value");
 			fQueue.add(var);
-			if (allExpanded.isHighlighted(var))
-				fHighlights.put(var, new Label(var.getValue().getValueString()));
+
+			if (allExpanded.isHighlighted(var)) {
+				if (fArray) fHighlights.put(var, new Label(getValueStringFromArray(var)));
+				else if (fComplex) fHighlights.put(var, new Label(getValueStringFromComplex(var))); 
+				else fHighlights.put(var, new Label(var.getValue().getValueString()));
+			}
 		}
 		int realSize = setChannelText();
 		
@@ -114,8 +134,13 @@ public class Channel extends Label {
 					return fDraw;
 				} 
 				
-				// icon				
-				fIcon.setLocation(p.getTranslated(-IStreamItGraphConstants.MARGIN/2 - StreamItViewFactory.getInstance().getImageWidth(), IStreamItGraphConstants.MARGIN));
+				// icon
+				if (fQueue.size() < 4) {
+					fIcon.setVisible(false);
+				} else {
+					int w = -IStreamItGraphConstants.MARGIN/2 - fIcon.getSize().width; 	
+					fIcon.setLocation(p.getTranslated(w, IStreamItGraphConstants.MARGIN));
+				}
 				
 				// highlights
 				int realSize = fQueue.size();
@@ -138,7 +163,8 @@ public class Channel extends Label {
 						d.expand(0, IStreamItGraphConstants.MARGIN/2);
 					highlight.setSize(d);
 					highlight.setOpaque(true);
-					highlight.setBackgroundColor(ColorConstants.tooltipBackground);
+					highlight.setForegroundColor(ColorConstants.menuBackgroundSelected);
+					highlight.setBackgroundColor(ColorConstants.menuForegroundSelected);
 					add(highlight);
 
 					highlight.setLocation(getLocation().getTranslated(0, index*datumSize));
@@ -157,10 +183,15 @@ public class Channel extends Label {
 		else size = 3;
 
 		StringBuffer text = new StringBuffer("");
+		IVariable var;
 
 		if ((fInput && fForward) || (!fInput && !fForward)) {
 			for (int i = 0; i < size; i++) {
-				text.insert(0, ((IVariable) fQueue.get(i)).getValue().getValueString());
+				var = (IVariable) fQueue.get(i);
+				if (fArray) text.insert(0, getValueStringFromArray(var));
+				else if (fComplex) text.insert(0, getValueStringFromComplex(var));
+				else text.insert(0, var.getValue().getValueString());
+
 				if (i < size - 1) text.insert(0, "\n");
 			}
 
@@ -168,7 +199,11 @@ public class Channel extends Label {
 			else if (realSize == 2) text.insert(0, "\n");
 		} else {
 			for (int i = 0; i < size; i++) {
-				text.append(((IVariable) fQueue.get(i)).getValue().getValueString());
+				var = (IVariable) fQueue.get(i);
+				if (fArray) text.append(getValueStringFromArray(var));
+				else if (fComplex) text.append(getValueStringFromComplex(var));
+				else text.append(var.getValue().getValueString());
+
 				if (i < size - 1) text.append("\n");
 			}
 			if (realSize < 2) text.append("\n\n");
@@ -180,6 +215,26 @@ public class Channel extends Label {
 		return realSize;
 	}
 	
+	private String getValueStringFromArray(IVariable var) throws DebugException {
+		StringBuffer array = new StringBuffer("");
+		IJavaValue[] vals = ((IJavaArray) var.getValue()).getValues();
+		for (int j = 0; j < vals.length; j++) {
+			array.append("{");
+			IVariable[] vars = vals[j].getVariables();
+			for (int k = 0; k < vars.length; k++) {
+				array.append("[" + vars[k].getValue().getValueString() + "]");
+			}
+			array.append("}");
+		}
+		return array.toString();
+	}
+	
+	private String getValueStringFromComplex(IVariable var) throws DebugException {
+		StreamItViewFactory factoryInst = StreamItViewFactory.getInstance();
+		IVariable[] vars = var.getValue().getVariables();
+		return factoryInst.getValueString(vars, "real") + '+' + factoryInst.getValueString(vars, "imag") + 'i';
+	}
+
 	public void turnOff(boolean expanded) {
 		// only called by non-top-level pipelines
 		fTurnedOff = expanded;
@@ -193,18 +248,26 @@ public class Channel extends Label {
 	}
 	
 	public String getQueueAsString() throws DebugException {
-		StreamItViewFactory factoryInst = StreamItViewFactory.getInstance();
 		StringBuffer text = new StringBuffer("");
-
 		int size = fQueue.size();
+		IVariable var;
+
 		if ((fInput && fForward) || (!fInput && !fForward)) {
 			for (int i = 0; i < size; i++) {
-				text.insert(0, ((IVariable) fQueue.get(i)).getValue().getValueString());
-				if (i < size - 1) text.insert(0, "\n");
+				var = (IVariable) fQueue.get(i);
+				if (fArray) text.insert(0, getValueStringFromArray(var));
+				else if (fComplex) text.insert(0, getValueStringFromComplex(var));
+				else text.insert(0, var.getValue().getValueString());
+
+				if (i < size - 1) text.insert(0, "\n");				
 			}
 		} else {
 			for (int i = 0; i < size; i++) {
-				text.append(((IVariable) fQueue.get(i)).getValue().getValueString());
+				var = (IVariable) fQueue.get(i);
+				if (fArray) text.append(getValueStringFromArray(var));
+				else if (fComplex) text.append(getValueStringFromComplex(var));
+				else text.append(var.getValue().getValueString());
+
 				if (i < size - 1) text.append("\n");
 			}
 		}
@@ -216,32 +279,136 @@ public class Channel extends Label {
 		StringTokenizer st = new StringTokenizer(input);
 		int size = fQueue.size();
 		if (size != st.countTokens()) return false;
-
+		
 		if ((fInput && fForward) || (!fInput && !fForward)) {
 			for (int i = size - 1; i > -1; i--) {
-				if (!((IVariable) fQueue.get(i)).verifyValue(st.nextToken())) return false;
+				if (fArray) {
+					if (!verifyArray((IVariable) fQueue.get(i), st.nextToken())) return false;
+				} else if (fComplex) {
+					if (!verifyComplex((IVariable) fQueue.get(i), st.nextToken())) return false;
+				} else {
+					if (!((IVariable) fQueue.get(i)).verifyValue(st.nextToken())) return false;
+				}
 			}
 		} else {
 			for (int i = 0; i < size; i++) {
-				if (!((IVariable) fQueue.get(i)).verifyValue(st.nextToken())) return false;			
+				if (fArray) {
+					if (!verifyArray((IVariable) fQueue.get(i), st.nextToken())) return false;
+				} else if (fComplex) {
+					if (!verifyComplex((IVariable) fQueue.get(i), st.nextToken())) return false;
+				} else {
+					if (!((IVariable) fQueue.get(i)).verifyValue(st.nextToken())) return false;
+				}
 			}
 		}
 		
 		return true;
 	}
 
+	private boolean verifyArray(IVariable var, String array) throws DebugException {
+		IJavaValue[] vals = ((IJavaArray) var.getValue()).getValues();
+		int index = 0;
+		int verifyStop;
+		for (int j = 0; j < vals.length; j++) {
+			if (array.charAt(index) != '{') return false;
+			index++;
+			IVariable[] vars = vals[j].getVariables();
+			for (int k = 0; k < vars.length; k++) {
+				if (array.charAt(index) != '[') return false;
+				index++;
+				
+				verifyStop = array.indexOf(']', index);
+				if (!vars[k].verifyValue(array.substring(index, verifyStop))) return false;
+				index = verifyStop;
+
+				if (array.charAt(index) != ']') return false;
+				index++;
+			}
+			if (array.charAt(index) != '}') return false;
+			index++;
+		}
+		return true;
+	}
+	
+	private boolean verifyComplex(IVariable var, String complex) throws DebugException {	
+		StreamItViewFactory factoryInst = StreamItViewFactory.getInstance();
+		IVariable[] vars = var.getValue().getVariables();
+		
+		int plus = complex.indexOf('+');
+		int i = complex.indexOf('i');
+		if (plus == -1 || i == -1) return false;
+		String real = complex.substring(0, plus);
+		String imag = complex.substring(plus + 1, i);
+		
+		if (!factoryInst.getVariable(vars, "real").verifyValue(real)) return false;
+		if (!factoryInst.getVariable(vars, "imag").verifyValue(imag)) return false;
+		
+		return true;
+	}
+	
 	public void update(String input) throws DebugException {
 		StringTokenizer st = new StringTokenizer(input);
 		int size = fQueue.size();
 		if ((fInput && fForward) || (!fInput && !fForward)) {
-			for (int i = size - 1; i > -1; i--) ((IVariable) fQueue.get(i)).setValue(st.nextToken());	
+			for (int i = size - 1; i > -1; i--) {
+				if (fArray) {
+					updateArray((IVariable) fQueue.get(i), st.nextToken());
+				} else if (fComplex) {
+					updateComplex((IVariable) fQueue.get(i), st.nextToken());
+				} else {
+					((IVariable) fQueue.get(i)).setValue(st.nextToken());	
+				}
+			}
 		} else {
-			for (int i = 0; i < size; i++) ((IVariable) fQueue.get(i)).setValue(st.nextToken());
+			for (int i = 0; i < size; i++) {
+				if (fArray) {
+					updateArray((IVariable) fQueue.get(i), st.nextToken());
+				} else if (fComplex) {
+					updateComplex((IVariable) fQueue.get(i), st.nextToken());
+				} else {
+					((IVariable) fQueue.get(i)).setValue(st.nextToken());					
+				}
+			} 
 		}
 		
 		setChannelText();
 	}
 	
+	private void updateArray(IVariable var, String array) throws DebugException {
+		IJavaValue[] vals = ((IJavaArray) var.getValue()).getValues();
+		int index = 0;
+		int updateStop;
+		
+		for (int j = 0; j < vals.length; j++) {
+			index++;
+			IVariable[] vars = vals[j].getVariables();
+			for (int k = 0; k < vars.length; k++) {
+				index++;
+				
+				updateStop = array.indexOf(']', index);
+				vars[k].setValue(array.substring(index, updateStop));
+				index = updateStop;
+
+				index++;
+			}
+			index++;
+		}
+	}
+	
+	private void updateComplex(IVariable var, String complex) throws DebugException {
+		StreamItViewFactory factoryInst = StreamItViewFactory.getInstance();
+		IVariable[] vars = var.getValue().getVariables();
+		
+		int plus = complex.indexOf('+');
+		int i = complex.indexOf('i');
+		if (plus == -1 || i == -1) return;
+		String real = complex.substring(0, plus);
+		String imag = complex.substring(plus + 1, i);
+		
+		factoryInst.getVariable(vars, "real").setValue(real);
+		factoryInst.getVariable(vars, "imag").setValue(imag);
+	}
+
 	// for HighlightDatumAction
 	public int onDatum(int y) {
 		if (fTurnedOff) return -1;
@@ -270,7 +437,9 @@ public class Channel extends Label {
 		// create highlight
 		String text;
 		try {
-			text = datum.getValue().getValueString();
+			if (fArray) text = getValueStringFromArray(datum);
+			else if (fComplex) text = getValueStringFromComplex(datum); 
+			else text = datum.getValue().getValueString();
 		} catch (DebugException e) {
 			text = "";
 		}
@@ -291,7 +460,8 @@ public class Channel extends Label {
 			d.expand(0, IStreamItGraphConstants.MARGIN/2);
 		highlight.setSize(d);
 		highlight.setOpaque(true);
-		highlight.setBackgroundColor(ColorConstants.tooltipBackground);
+		highlight.setForegroundColor(ColorConstants.menuBackgroundSelected);
+		highlight.setBackgroundColor(ColorConstants.menuForegroundSelected);
 		add(highlight);
 
 		highlight.setLocation(getLocation().getTranslated(0, index*datumSize));
@@ -303,5 +473,10 @@ public class Channel extends Label {
 		allExpanded.toggleChannel(datum);
 
 		remove((Figure) fHighlights.remove(datum));
+	}
+	
+	public int getChannelToggleWidth() {
+		if (fIcon == null) return 0;
+		return fIcon.getSize().width;
 	}
 }

@@ -13,7 +13,7 @@ public class IStreamItGraphConstants {
 	
 	// metrics
 	protected static String NA = "N/A";
-	protected static String STRUCTURE_TYPE_LABEL = "\nStructure Type:\t\t";
+	protected static String STRUCTURE_TYPE_LABEL = "\nStream Type:\t\t";
 	protected static String FILTER_STRUCTURE = "filter";
 	protected static String PIPELINE_STRUCTURE = "pipeline";
 	protected static String SPLITJOIN_STRUCTURE = "splitjoin";
@@ -30,23 +30,4 @@ public class IStreamItGraphConstants {
 	// stream layout
 	protected static final int MARGIN = 4;
 	protected static final int CHANNEL_WIDTH = 16;
-	
-	/*
-	protected static int FILTER_WIDTH = 150;
-	protected static int PIPELINE_WIDTH = 175;
-	protected static int CHANNEL_WIDTH = 15;
-	
-	protected static int FILTER_HEIGHT = 132;
-	protected static int PIPELINE_HEIGHT = 70;
-	protected static int CHANNEL_HEIGHT = 15;
-	
-	//	graph overview layout
-	 protected static int OVERVIEW_FILTER_WIDTH = 85;
-	 protected static int OVERVIEW_PIPELINE_WIDTH = 90;
-	 protected static int OVERVIEW_CHANNEL_WIDTH = 15;
-	 
-	 protected static int OVERVIEW_FILTER_HEIGHT = 15;
-	 protected static int OVERVIEW_PIPELINE_HEIGHT = 101;
-	 protected static int OVERVIEW_CHANNEL_HEIGHT = 15;
-	 */	 
 }

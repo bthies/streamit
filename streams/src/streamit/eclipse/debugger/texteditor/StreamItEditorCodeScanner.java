@@ -27,6 +27,8 @@ import org.eclipse.jdt.internal.ui.text.JavaWordDetector;
 import org.eclipse.jdt.ui.text.IColorManager;
 import org.eclipse.jdt.ui.text.IJavaColorConstants;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.TextAttribute;
+import org.eclipse.jface.text.rules.EndOfLineRule;
 import org.eclipse.jface.text.rules.ICharacterScanner;
 import org.eclipse.jface.text.rules.IRule;
 import org.eclipse.jface.text.rules.IToken;
@@ -127,14 +129,15 @@ public final class StreamItEditorCodeScanner extends AbstractJavaScanner {
 	private static List lTypes;
 	private static List lConstants; 
 	private static List lStrCommon;
-		
+	private static StreamItColorProvider fProvider;
+	
 	/**
 	 * Creates a Java code scanner
 	 */
 	public StreamItEditorCodeScanner(IColorManager manager, IPreferenceStore store) {
 		super(manager, store);
+		fProvider = new StreamItColorProvider();
 		initialize();
-		// CHANGED kkuo
 	}
 	
 	/*
@@ -150,7 +153,8 @@ public final class StreamItEditorCodeScanner extends AbstractJavaScanner {
 	protected List createRules() {
 		
 		List rules = new ArrayList();
-		
+
+/*
 		// Add rule for character constants.
 		Token token= getToken(IJavaColorConstants.JAVA_STRING);
 		rules.add(new SingleLineRule("'", "'", token, '\\')); //$NON-NLS-2$ //$NON-NLS-1$
@@ -183,7 +187,6 @@ public final class StreamItEditorCodeScanner extends AbstractJavaScanner {
 		
 		token= getToken(IJavaColorConstants.JAVA_KEYWORD);
 
-		// CHANGED kkuo
 		initializeCategory();
 		for (int i = 0; i < lKeywords.size(); i++)
 			wordRule.addWord((String) lKeywords.get(i), token);
@@ -197,8 +200,82 @@ public final class StreamItEditorCodeScanner extends AbstractJavaScanner {
 		// kkuo - added word rules for StreamIt's commonly used words
 		for (int i = 0; i < lStrCommon.size(); i++)
 			wordRule.addWord((String) lStrCommon.get(i), token);
-		// end CHANGED kkuo
+		rules.add(wordRule);
+*/
+
+		IToken keyword = new 
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.KEYWORD)));
+		IToken strKeyword = new
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.
+							 STRKEYWORD)));
+		IToken type = new 
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.TYPE)));
+		IToken string = new 
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.STRING)));
+		IToken comment = new 
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.
+							 SINGLE_LINE_COMMENT)));
+		IToken strCommon = new 
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.
+							 STRCOMMON)));
+		IToken other = new 
+			Token(new TextAttribute(fProvider.
+						getColor(StreamItColorProvider.DEFAULT)));
+				
+		// Add rule for single line comments.
+		rules.add(new EndOfLineRule("//", comment)); //$NON-NLS-1$
+		
+		// Add rule for strings and character constants.
+		rules.add(new SingleLineRule("\"", "\"", string, '\\')); 
+		//$NON-NLS-2$ //$NON-NLS-1$
+		
+		rules.add(new SingleLineRule("'", "'", string, '\\')); //$NON-NLS-2$ 
+		//$NON-NLS-1$
+		
+		// Add generic whitespace rule.
+		rules.add(new WhitespaceRule(new JavaWhitespaceDetector()));
+		
+		// Add word rule for new keywords, 4077
+		Object version= null;
+		try {
+			version= JavaCore.getOptions().get(SOURCE_VERSION);
+		} catch (NullPointerException x) {
+			// plugin not initialized - happens in test code
+		}
+
+		Token token;
+		if (version instanceof String) {
+			token= getToken(IJavaColorConstants.JAVA_DEFAULT);
+			fVersionedWordRule= new VersionedWordRule(new JavaWordDetector(), token, "1.4", true, (String) version); //$NON-NLS-1$
 			
+			token= getToken(IJavaColorConstants.JAVA_KEYWORD);
+			for (int i=0; i<fgNewKeywords.length; i++)
+				fVersionedWordRule.addWord(fgNewKeywords[i], token);
+
+			rules.add(fVersionedWordRule);
+		}
+
+		// Add word rule for keywords, types, and constants.
+		WordRule wordRule = new WordRule(new JavaWordDetector(), other);
+		initializeCategory();
+		for (int i = 0; i < lKeywords.size(); i++)
+			wordRule.addWord((String) lKeywords.get(i), keyword);
+		// kkuo - added word rules for StreamIt keywords
+		for (int i = 0; i < lStrKeywords.size(); i++)
+			wordRule.addWord((String) lStrKeywords.get(i), strKeyword);
+		for (int i = 0; i < lTypes.size(); i++)
+			wordRule.addWord((String) lTypes.get(i), type);
+		for (int i = 0; i < lConstants.size(); i++)
+			wordRule.addWord((String) lConstants.get(i), type);
+		// kkuo - added word rules for StreamIt's commonly used words
+		for (int i = 0; i < lStrCommon.size(); i++)
+			wordRule.addWord((String) lStrCommon.get(i), strCommon);
 		rules.add(wordRule);
 		
 		setDefaultReturnToken(getToken(IJavaColorConstants.JAVA_DEFAULT));

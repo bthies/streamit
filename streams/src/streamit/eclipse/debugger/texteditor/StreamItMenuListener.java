@@ -28,6 +28,7 @@ import streamit.eclipse.debugger.actions.ManageMethodBreakpointRulerAction;
 import streamit.eclipse.debugger.actions.ManageWatchpointRulerAction;
 import streamit.eclipse.debugger.core.BreakpointRulerData;
 import streamit.eclipse.debugger.core.StrToJavaMapper;
+import streamit.eclipse.debugger.grapheditor.TestSwingEditorPlugin;
 
 /**
  * @author kkuo
@@ -57,9 +58,9 @@ public class StreamItMenuListener implements IMenuListener {
 		if (e instanceof StreamItEditor) {
 			ITextEditor editor = (ITextEditor) e;
 			IEditorInput input = editor.getEditorInput();
-			IResource resource = (IResource) input.getAdapter(IFile.class);
-			if (resource == null) resource = (IResource) input.getAdapter(IResource.class);
-			BreakpointRulerData data = StrToJavaMapper.getInstance().loadStrFile(resource, editor);
+			IFile resource = (IFile) input.getAdapter(IFile.class);
+			if (resource == null) resource = (IFile) input.getAdapter(IResource.class);
+			BreakpointRulerData data = StrToJavaMapper.getInstance().loadStrFile(resource, false);
 			ISelection selection = editor.getSelectionProvider().getSelection();
 
 			if (selection instanceof ITextSelection) {
@@ -100,6 +101,8 @@ public class StreamItMenuListener implements IMenuListener {
 				setAction(item, enabledMethodBreakpoint, addMethodBreakpoint, "ManageMethodBreakpointRulerAction");
 			} else if (id.equals(IStreamItActionConstants.ID_WATCHPOINT_ACTION)) {
 				setAction(item, enabledWatchpoint, addWatchpoint, "ManageWatchpointRulerAction");
+			} else if (id.equals(IStreamItActionConstants.ID_GRAPHEDITOR_ACTION)) {
+				setAction(item, true, !TestSwingEditorPlugin.getInstance().getGraphEditorState(), "GraphEditorAction");
 			}
 		}
 	}

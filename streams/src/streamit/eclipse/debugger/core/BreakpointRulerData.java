@@ -29,7 +29,6 @@ public class BreakpointRulerData {
 	public void setStrToJava(HashMap strToJavaBreakpoint, HashMap strToJavaWatchpoints) {
 		fStrToJavaBreakpoints = strToJavaBreakpoint;
 		fStrToJavaWatchpoints = strToJavaWatchpoints;
-		
 	}
 
 	// only returns valid java line numbers for breakpoints
@@ -54,6 +53,10 @@ public class BreakpointRulerData {
 
 	public IFile getJavaFile() {
 		return fJavaFile;
+	}
+	
+	public void setJavaEditorPart(IEditorPart javaEditorPart) {
+		fJavaEditorPart = javaEditorPart;
 	}
 
 }

@@ -17,4 +17,5 @@ public interface IStream {
 	public String getId();
 	public boolean isWithinIcon(Point p);
 	public boolean isExpanded();
+	public int getTopChannelToggleWidth();
 }

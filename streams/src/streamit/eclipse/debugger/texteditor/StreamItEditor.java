@@ -5,11 +5,27 @@
 
 package streamit.eclipse.debugger.texteditor;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.ui.IWorkingCopyManager;
+import org.eclipse.jdt.ui.JavaUI;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.editors.text.TextEditor;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
+
+import streamit.eclipse.debugger.core.BreakpointRulerData;
+import streamit.eclipse.debugger.core.StrToJavaMapper;
+import streamit.eclipse.debugger.grapheditor.TestSwingEditorPlugin;
 
 /**
  * StreamIt specific text editor.
@@ -102,5 +118,59 @@ public class StreamItEditor extends TextEditor {
 	
 		setSourceViewerConfiguration(new StreamItEditorSourceViewerConfiguration(this));
 		setRulerContextMenuId("#StreamItRulerContext"); //$NON-NLS-1$
+		
     }
+    
+    /* (non-Javadoc)
+	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#handleCursorPositionChanged()
+	 */
+	protected void handleCursorPositionChanged() {
+		super.handleCursorPositionChanged();
+		
+		IFile strFile = ((IFileEditorInput) getEditorInput()).getFile();
+		BreakpointRulerData data = StrToJavaMapper.getInstance().loadStrFile(strFile, false);
+		int strLineNumber = Integer.parseInt(getCursorPosition().substring(0, getCursorPosition().indexOf(" ")));
+		int validJavaLineNumber = data.getJavaBreakpointLineNumber(strLineNumber);
+		if (validJavaLineNumber < 0) return;
+		IDocument document = JavaUI.getDocumentProvider().getDocument(data.getJavaEditorPart().getEditorInput());
+		try {
+			IRegion line = document.getLineInformation(validJavaLineNumber - 1);
+			IType type = getType(data.getJavaEditorPart().getEditorInput(), line);
+			if (type != null) {
+				TestSwingEditorPlugin.getInstance().highlightNodeInGraph(strFile, type.getFullyQualifiedName());
+				return;
+			}
+				
+			validJavaLineNumber = data.getJavaWatchpoinLineNumber(strLineNumber);
+			line = document.getLineInformation(validJavaLineNumber - 1);
+			type = getType(data.getJavaEditorPart().getEditorInput(), line);
+			if (type != null) {
+				TestSwingEditorPlugin.getInstance().highlightNodeInGraph(strFile, type.getFullyQualifiedName());
+				return;
+			}
+				
+		} catch (JavaModelException jme) {
+		} catch (BadLocationException ble) {
+		}
+	}
+	
+	protected static IType getType(IEditorInput editorInput, IRegion line) throws JavaModelException {
+		if (editorInput instanceof IFileEditorInput) {
+			IWorkingCopyManager manager= JavaUI.getWorkingCopyManager();
+			ICompilationUnit unit= manager.getWorkingCopy(editorInput);
+						
+			if (unit != null) {
+				synchronized (unit) {
+					unit.reconcile();
+				}
+				IJavaElement e = unit.getElementAt(line.getOffset());
+				if (e instanceof IType) {
+					return (IType)e;
+				} else if (e instanceof IMember) {
+					return ((IMember)e).getDeclaringType();
+				}
+			}
+		}
+		return null;
+	}
 }

@@ -35,6 +35,7 @@ public class HighlightDatumAction extends Action {
 		fIndex = c.onDatum(y);
 		if (fIndex < 0) {
 			setEnabled(false);
+			setText(ActionMessages.getString("HighlightDatum.highlightDatum"));
 			return;
 		}
 		

@@ -150,7 +150,7 @@ public class Filter extends Polygon implements IStream {
 			int divisor = Integer.valueOf(pushCount).intValue();
 			int totalItemsPushed = Integer.valueOf(factoryInst.getValueString(outputVars, "totalItemsPushed")).intValue();
 			numWork = totalItemsPushed/divisor;
-			fNumWork = String.valueOf(numWork);			
+			fNumWork = String.valueOf(numWork);
 		}
 
 		fStaticText = IStreamItGraphConstants.POP_COUNT_LABEL + popCount 
@@ -298,5 +298,11 @@ public class Filter extends Polygon implements IStream {
 	 */
 	public String getId() {
 		return fId;
-	}	
+	}
+	/* (non-Javadoc)
+	 * @see streamit.eclipse.debugger.graph.IStream#getTopChannelToggleWidth()
+	 */
+	public int getTopChannelToggleWidth() {
+		return fTopChannel.getChannelToggleWidth();
+	}
 }

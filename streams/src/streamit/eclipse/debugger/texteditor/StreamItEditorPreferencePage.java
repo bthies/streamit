@@ -391,6 +391,7 @@ public class StreamItEditorPreferencePage extends PreferencePage
 			lMember.add((String) i.next());
 		lMember.deselectAll();
 		lMember.setSelection(0);
+		lMember.showSelection();
 	
 		tfAddMember.setText(IPreferenceStore.STRING_DEFAULT_DEFAULT);
 	}

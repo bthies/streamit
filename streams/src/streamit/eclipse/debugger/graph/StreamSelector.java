@@ -4,6 +4,7 @@ import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.MouseEvent;
 import org.eclipse.draw2d.MouseListener;
+import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 
@@ -35,10 +36,22 @@ public class StreamSelector implements MouseListener {
 		IStream is = (IStream) fSelection;
 		updateLaunchVariableViews(is);
 		
+		Point p = me.getLocation();
 		if (is.isWithinIcon(me.getLocation())) {
 			// expand or collapse
 			StreamItViewsManager.getStreamViewer().toggleStream(is.getNameWithId());
+		} else {
+			StreamOverviewer ov = StreamItViewsManager.getStreamOverviewer();
+			if (ov == null) return;
+			Point s = p.getScaled(.25);
+			ov.setZoom(s);
+			ov.setOrigin(s.x, s.y);
+			
 		}
+	}
+	
+	protected static Figure getSelection() {
+		return fSelection;
 	}
 	
 	protected static void setSelection(Figure f) {

@@ -1477,10 +1477,10 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a message statement.
      */
     public void visitMessageStatement(SIRMessageStatement self,
-			       String portal,
-			       String ident,
-			       JExpression[] args,
-			       SIRLatency latency) {
+				      JExpression portal,
+				      int index,
+				      JExpression[] args,
+				      SIRLatency latency) {
 	Utils.fail("Printing message statements unimplemented");
     }
 
@@ -1545,7 +1545,9 @@ public class IRPrinter extends Utils implements SLIRVisitor
      * Visits a register-receiver statement.
      */
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
-				   String portal) {
+					  JExpression portal,
+					  SIRStream receiver,
+					  CMethod[] methods) {
 	Utils.fail("Printing reg. receiver statements unimplemented");
     }
 

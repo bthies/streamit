@@ -155,9 +155,18 @@ public class RemoveGlobals extends at.dms.util.Utils
 	    //set found to true if this method accesses global vars
 	    //otherwise this will be a function call that we inline
 	    //I have decided to inline as much as possible
+	    
+	    //this should not be necessary, but just incase
+	    prefix.accept(this);
+	    //the args may be function calls themselves, so we must visit 
+	    //the args, this was a fun bug to find!
+	    for (int i = 0; i < args.length; i++) 
+		args[i].accept(this);
+
 	    if (filter.hasMethod(self.getIdent()) && !children.contains(self)) {
-		if (AccessesGlobals.accessesGlobals(self.getIdent(), filter))
+		if (AccessesGlobals.accessesGlobals(self.getIdent(), filter)) {
 		    found = true;
+		}
 		else {
 		    RemoveGlobals.functionsToKeep.add
 			(RemoveGlobals.getMethod(filter, ident));

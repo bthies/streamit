@@ -111,7 +111,18 @@ class FusionCode {
 		if (no_peek) p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
 
 		int source_size = 0, dest_size = 0, max_size;
+		
+		if (src_oper instanceof SIRJoiner) {
+		    SIRJoiner j = (SIRJoiner)src_oper;
+		    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(src));
+		    int steady_int = 0;
+		    if (steady != null) { steady_int = (steady).intValue(); }
+		    int push_n = j.getSumOfWeights();
+		    int total = (steady_int * push_n);
+		    p.print("//source pushes: "+steady_int+" * "+push_n+" = ("+total+" items)\n");
 
+		    source_size = total;
+		}
 
 		if (src_oper instanceof SIRFilter) {
 		    SIRFilter f = (SIRFilter)src_oper;
@@ -141,6 +152,22 @@ class FusionCode {
 
 		    int total = (steady_int * pop_n) + (peek_n - pop_n);
 
+		    p.print(" = ("+total+" items)\n");
+
+		    dest_size = total;
+		}
+
+		if (dst_oper instanceof SIRSplitter) {
+		    SIRSplitter s = (SIRSplitter)dst_oper;
+		    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
+		    int steady_int = 0;
+		    if (steady != null) { steady_int = (steady).intValue(); }
+
+		    int pop_n = s.getSumOfWeights();
+		    if (s.getType().isDuplicate()) pop_n = 1;
+		    p.print("//destination pops: "+steady_int+" * "+pop_n+" ");		    
+
+		    int total = (steady_int * pop_n);
 		    p.print(" = ("+total+" items)\n");
 
 		    dest_size = total;

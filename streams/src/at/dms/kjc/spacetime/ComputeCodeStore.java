@@ -83,7 +83,7 @@ public class ComputeCodeStore {
 	//send over the address
 	JFieldAccessExpression dynNetSend = 
 	    new JFieldAccessExpression(null, new JThisExpression(null),
-				       Util.CSTOINTVAR);
+				       Util.CGNOINTVAR);
 	
 	JFieldAccessExpression bufAccess = 
 	    new JFieldAccessExpression(null, new JThisExpression(null),

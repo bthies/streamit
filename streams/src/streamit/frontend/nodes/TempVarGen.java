@@ -36,7 +36,7 @@ package streamit.frontend.nodes;
  * </pre>
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TempVarGen.java,v 1.2 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: TempVarGen.java,v 1.3 2003-12-04 21:03:49 dmaze Exp $
  */
 public class TempVarGen
 {
@@ -71,7 +71,7 @@ public class TempVarGen
      */
     public static String varName(int num)
     {
-        return "__temp_var_" + num;
+        return "__s" + num;
     }
 
     /**

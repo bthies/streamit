@@ -1,13 +1,170 @@
-/*
-parsing:
-done parsing. outputing:
- <# filter <# -> complex complex #> CombineDFT <# ( <# n int #> #> { <# Ws complex <# [ n #> #> <# init <# { <# wn complex <# = <# + <# $call <# . Math cos #> <# ( <# * 2 <# / <# . Math PI #> n #> #> #> #> <# * 1i <# $call <# . Math sin #> <# ( <# * 2 <# / <# . Math PI #> n #> #> #> #> #> #> #> #> <# = <# . <# $array Ws <# [ 0 #> #> real #> 1 #> <# = <# . <# $array Ws <# [ 0 #> #> imag #> 0 #> <# for <# i int <# = 1 #> #> <# < i n #> <# ++ i #> <# = <# $array Ws <# [ i #> #> <# * <# $array Ws <# [ <# - i 1 #> #> #> wn #> #> #> #> #> <# work <# push n #> <# peek n #> <# pop n #> <# { <# i int #> <# results complex <# [ n #> #> <# for <# = i 0 #> <# < i <# / n 2 #> #> <# ++ i #> <# { <# y0 complex #> <# y1 complex #> <# y1t complex #> <# = y0 <# peek i #> #> <# = y1 <# peek <# + <# / n 2 #> i #> #> #> <# = y1t <# * y1 <# $array Ws <# [ i #> #> #> #> <# = <# $array results <# [ i #> #> <# + y0 y1t #> #> <# = <# $array results <# [ <# + <# / n 2 #> i #> #> #> <# - y0 y1t #> #> #> #> <# for <# = i 0 #> <# < i n #> <# ++ i #> <# { pop <# push <# $array results <# [ i #> #> #> #> #> #> #> #> <# filter <# -> complex complex #> FFTReorderSimple <# ( <# n int #> #> { <# work <# peek n #> <# push n #> <# pop n #> <# { <# i int #> <# for <# = i 0 #> <# < i n #> <# += i 2 #> <# { <# push <# peek i #> #> #> #> <# for <# = i 1 #> <# < i n #> <# += i 2 #> <# { <# push <# peek i #> #> #> #> <# for <# = i 0 #> <# < i n #> <# ++ i #> <# { pop #> #> #> #> #> <# pipeline <# -> complex complex #> FFTReorder <# ( <# nWay int #> #> <# { <# n int <# = nWay #> #> <# while <# > n 2 #> <# { <# add FFTReorderSimple <# ( n #> #> <# = n <# / n 2 #> #> #> #> #> #> <# pipeline <# -> complex complex #> check <# ( <# nWay int #> #> <# { <# add FFTReorder <# ( nWay #> #> <# n int <# = 2 #> #> <# while <# <= n nWay #> <# { <# add CombineDFT <# ( n #> #> <# = n <# * n 2 #> #> #> #> #> #> <# filter <# -> void float #> source ( { <# i int #> <# init <# { <# = i 0 #> #> #> <# work <# pop 0 #> <# push 1 #> <# { <# push i #> <# ++ i #> #> #> #> <# filter <# -> float void #> sink ( { <# init { #> <# work <# pop 1 #> <# push 0 #> <# { pop #> #> #> <# pipeline <# -> void void #> FFT2 ( <# { <# add source ( #> <# add check <# ( 8 #> #> <# add sink ( #> #> #> null
-done outputing. walking:
-*/
-import streamit.*;
-import streamit.io.*;
+import streamit.StreamIt;
+import streamit.Filter;
+import streamit.Channel;
+import streamit.Pipeline;
+import streamit.SplitJoin;
 
-class Complex extends Structure {
-  public double real, imag;
+class CombineDFT extends Filter
+{
+    CombineDFT(int i)
+    {
+        super(i);
+    }
+    float wn_r, wn_i;
+    int nWay;
+    float results[];
+    public void init(int n)
+    {
+        nWay = n;
+        input = new Channel(Float.TYPE, 2 * n);
+        output = new Channel(Float.TYPE, 2 * n);
+        wn_r = (float) Math.cos(2 * 3.141592654 / ((double) n));
+        wn_i = (float) Math.sin(2 * 3.141592654 / ((double) n));
+        results = new float[2 * n];
+    }
+
+    public void work()
+    {
+        int i;
+        float w_r = 1;
+        float w_i = 0;
+        for (i = 0; i < nWay; i += 2)
+        {
+            float y0_r = input.peekFloat(i);
+            float y0_i = input.peekFloat(i+1);
+            float y1_r = input.peekFloat(nWay + i);
+            float y1_i = input.peekFloat(nWay + i + 1);
+
+            float y1w_r = y1_r * w_r - y1_i * w_i;
+            float y1w_i = y1_r * w_i + y1_i * w_r;
+
+            results[i] = y0_r + y1w_r;
+            results[i + 1] = y0_i + y1w_i;
+
+            results[nWay + i] = y0_r - y1w_r;
+            results[nWay + i + 1] = y0_i - y1w_i;
+
+            float w_r_next = w_r * wn_r - w_i * wn_i;
+            float w_i_next = w_r * wn_i + w_i * wn_r;
+            w_r = w_r_next;
+            w_i = w_i_next;
+        }
+
+        for (i = 0; i < 2 * nWay; i++)
+        {
+            input.popFloat ();
+            output.pushFloat(results[i]);
+        }
+    }
 }
+
+class FFTReorderSimple extends Filter
+{
+    FFTReorderSimple (int i) { super (i); }
+    
+    int nWay;
+    int totalData;
+    
+    public void init (int n)
+    {
+        nWay = n;
+        totalData = nWay * 2;
+        
+        input = new Channel (Float.TYPE, nWay * 2);
+        output = new Channel (Float.TYPE, nWay * 2);
+    }
+    
+    public void work ()
+    {
+        int i;
+        
+        for (i = 0; i < totalData; i+=4)
+        {
+            output.pushFloat (input.peekFloat (i));
+            output.pushFloat (input.peekFloat (i+1));
+        }
+        
+        for (i = 2; i < totalData; i+=4)
+        {
+            output.pushFloat (input.peekFloat (i));
+            output.pushFloat (input.peekFloat (i+1));
+        }
+        
+        for (i=0;i<nWay;i++)
+        {
+            input.popFloat ();
+            input.popFloat ();
+        }
+    }
+}
+
+class FFTReorder extends Pipeline 
+{
+    FFTReorder (int i) { super (i); }
+    
+    public void init (int nWay)
+    {
+        while (nWay > 2)
+        {
+            add (new FFTReorderSimple (nWay));
+            nWay = nWay / 2;
+        }
+    }
+}
+
+class FFTKernel1 extends Pipeline
+{
+    public FFTKernel1 (int i) { super (i); }
+    public void init (final int nWay)
+    {
+        if (nWay > 2)
+        {
+            add (new SplitJoin ()
+            {
+                public void init ()
+                {
+                    setSplitter (ROUND_ROBIN (2));
+                    add (new FFTKernel1 (nWay / 2));
+                    add (new FFTKernel1 (nWay / 2));
+                    setJoiner (ROUND_ROBIN (nWay));
+                }
+            });
+        }
+        add (new CombineDFT (nWay));
+    }
+}
+
+class FFTKernel2 extends Pipeline
+{
+    public FFTKernel2(int i)
+    {
+        super(i);
+    }
+    public void init(final int nWay)
+    {
+        add (new FFTReorder (nWay));
+        int n = 2;
+        while (n <= nWay)
+        {
+            add (new CombineDFT (n));
+            n = n * 2;
+        }
+    }
+}
+
+public class FFT2 extends StreamIt
+{
+    public static void main(String[] args)
+    {
+        new FFT2().run(args);
+    }
+    public void init()
+    {
+        add(new OneSource());
+        add(new FFTKernel2(16));
+        add(new FloatPrinter());
+    }
+}
+
+
 

@@ -39,6 +39,12 @@ public class Flattener {
 
 	AdjustGranularity.doit(str, -1);
 
+	if (StreamItOptions.partition) {
+	    Partitioner.doit(str, 
+			     StreamItOptions.rawRows *
+			     StreamItOptions.rawColumns);
+	}
+
 	/*
 	SIRFilter toDuplicate = ((SIRFilter)
 				 ((SIRPipeline)

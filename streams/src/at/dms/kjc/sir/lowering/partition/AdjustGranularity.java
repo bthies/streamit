@@ -30,7 +30,7 @@ public class AdjustGranularity {
 	    doFM16_2(str);
 	} else if (app.equals("fft")) {
 	    // do custom transforms for fft
-	    if (num==16) {
+	    if (num!=1) {
 		doFFT16(str);
 	    } else {
 		doFFT1(str);
@@ -63,6 +63,8 @@ public class AdjustGranularity {
 	    doBigBeam2(str);
 	} else if (app.equals("bb3")) {
 	    doBigBeam1(str, 3);
+	} else if (app.equals("bb4")) {
+	    doBigBeam1OnlyBottomSplit(str);
 	} else if (app.equals("crc32")) {
 	    doCRC32(str);
 	} else {
@@ -90,6 +92,42 @@ public class AdjustGranularity {
 		}
 		FusePipe.fuse((SIRPipeline)sj.get(i));
 	    }
+	}
+	
+	/*
+	FuseSplit.fuse((SIRSplitJoin)str.get(1));
+	StreamItDot.printGraph(str, "1.dot");
+	FuseSplit.fuse((SIRSplitJoin)str.get(3));
+	FusePipe.fuse((SIRFilter)str.get(3),
+		      (SIRFilter)str.get(4));
+	*/
+
+	//ConstantProp.propagateAndUnroll(str);
+	//FieldProp.doPropagate(str);
+
+	StreamItDot.printGraph(str, "balanced.dot");
+	Namer.assignNames(str);
+    }
+
+    private static void doBigBeam1OnlyBottomSplit(SIRStream _str) {
+	SIRPipeline str = (SIRPipeline)_str;	
+
+	StreamItDot.printGraph(str, "unbalanced.dot");
+	System.err.println("Working on the big beamform...");
+
+	FieldProp.doPropagate(str);
+
+	FuseAll.fuse(str);
+
+	// fuse hierarchical splitjoins
+	SIRSplitJoin sj = (SIRSplitJoin)str.get(1);
+	for (int i=0; i<sj.size(); i++) {
+	    SIRSplitJoin toFuse = (SIRSplitJoin)((SIRPipeline)(sj.get(i))).get(0);
+	    SIRStream result = FuseSplit.fuse(toFuse);
+	    if (result==toFuse) {
+		System.err.println("Rejected for fusion: " + toFuse);
+	    }
+	    FusePipe.fuse((SIRPipeline)sj.get(i));
 	}
 	
 	/*
@@ -296,6 +334,7 @@ public class AdjustGranularity {
 			   " tiles");
 	*/
 
+	FieldProp.doPropagate(str);
 	WorkEstimate.getWorkEstimate(str).printWork();
 
 	// fuse the top splitjoin
@@ -718,6 +757,8 @@ public class AdjustGranularity {
 			   " tiles");
 	WorkEstimate.getWorkEstimate(str).printWork();
 
+	FieldProp.doPropagate(str);
+
 	// fizzzzz the low-pass filter
 	SIRFilter lowPass = (SIRFilter)Namer.getStream("LowPassFilter_2_1");
 	StatelessDuplicate.doit(lowPass, 4);
@@ -756,6 +797,7 @@ public class AdjustGranularity {
 	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
 			   " tiles");
 	*/
+	FieldProp.doPropagate(str);
 	WorkEstimate.getWorkEstimate(str).printWork();
 	StreamItDot.printGraph(str, "before.dot");
 
@@ -886,10 +928,10 @@ public class AdjustGranularity {
 
 	// fuse the splits
 	FuseSplit.doFlatten(str);
-
+	FuseSplit.doFlatten(str);
 	StreamItDot.printGraph (str, "bill-fft.dot");
 
-	FusePipe.fuse((SIRPipeline)
+	/*FusePipe.fuse((SIRPipeline)
 		      ((SIRSplitJoin)
 		       ((SIRPipeline)
 			((SIRPipeline)str).get(1)).get(0)).get(0));
@@ -897,21 +939,40 @@ public class AdjustGranularity {
 		      ((SIRSplitJoin)
 		       ((SIRPipeline)
 			((SIRPipeline)str).get(1)).get(0)).get(1));
-
+	*/
 	// now take the leftovers from the splitjoin fusion and fuse them, too
 	SIRPipeline pipe = (SIRPipeline)((SIRPipeline)str).get(1);
-	for (int i=0; i<10; i+=2) {
-	    FusePipe.fuse((SIRFilter)pipe.get(i+1), (SIRFilter)pipe.get(i+3));
-	    FusePipe.fuse((SIRFilter)pipe.get(i+2), (SIRFilter)pipe.get(i+3));
+	for (int i=0; i<3; i++) {
+	    FusePipe.fuse((SIRFilter)pipe.get(i+1), (SIRFilter)pipe.get(i+5));
 	}
+	FusePipe.fuse((SIRFilter)pipe.get(4), (SIRFilter)pipe.get(5));
+	FusePipe.fuse((SIRFilter)pipe.get(8), (SIRFilter)pipe.get(9));
+	
+       
+	FusePipe.fuse( (SIRPipeline)
+		       ((SIRSplitJoin)
+			((SIRPipeline)
+			 ((SIRPipeline)
+			 ((SIRPipeline)str).get(1)).get(0)).get(0)).get(0));
 
-        FusePipe.fuse( (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(7)),
-                       (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(8)) );
-        FusePipe.fuse( (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(4)),
-                      (SIRFilter)(((SIRPipeline)((SIRPipeline)str).get(1)).get(5)) );
-
+	FusePipe.fuse( (SIRPipeline)
+		       ((SIRSplitJoin)
+			((SIRPipeline)
+			 ((SIRPipeline)
+			 ((SIRPipeline)str).get(1)).get(0)).get(0)).get(1));
+	
+	/*FuseSplit.doFlatten(str);
+	FusePipe.fuse( (SIRPipeline)
+		       ((SIRPipeline)
+		       ((SIRPipeline)
+			((SIRPipeline)str).get(1)).get(0)));
+	*/
+	/*
 	StatelessDuplicate.doit ((SIRFilter)((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get (1)).get(0)).get(0),2);
 	StatelessDuplicate.doit ((SIRFilter)((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get (1)).get(0)).get(1),2);
+	*/
+	
+	StreamItDot.printGraph (str, "test.dot");
 
 	// constant-prop through new filters
 	ConstantProp.propagateAndUnroll(str);
@@ -922,7 +983,7 @@ public class AdjustGranularity {
 	rawFlattener.dumpGraph("after-adjust.dot");
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
 			   " tiles");
-	WorkEstimate.getWorkEstimate(str).printWork();
+	//WorkEstimate.getWorkEstimate(str).printWork();
 	StreamItDot.printGraph(str, "after.dot");
     }
 }

@@ -35,11 +35,76 @@ class WorkEstimate {
     }
 
     /**
+     * Returns a sorted worklist corresponding to a given work
+     * estimate.  The entries will be sorted by increasing values of
+     * work.  These entries will map FILTERS to work estimate, for all
+     * filters in the graph.
+     */
+    public WorkList getSortedFilterWork() {
+	return buildWorkList(workMap);
+    }
+
+    /**
+     * Builds a worklist out of <map>
+     */
+    private WorkList buildWorkList(final HashMap map) {
+	// first make a treemap to do the sorting for us
+	TreeMap treeMap = new TreeMap(new Comparator() {
+		public int compare(Object o1, Object o2) {
+		    // assume these are map.entry's
+		    int work1 = ((WorkInfo)map.get(o1)).totalWork();
+		    int work2 = ((WorkInfo)map.get(o2)).totalWork();
+		    if (work1==work2) {
+			return 0;
+		    } else if (work1 < work2) {
+			return -1;
+		    } else {
+			return 1;
+		    }
+		}
+	    });
+	// add the values to the map 
+	treeMap.putAll(map);
+	// return a work list based on the treemap
+	return new WorkList(treeMap.entrySet());
+    }
+
+    /**
+     * Returns a sorted worklist in increasing order of work for all
+     * containers in this graph that contain at least a single filter.
+     * The caller might then try fusing the first elements of this
+     * list.
+     */
+    public WorkList getSortedContainerWork() {
+	// make a hashmap mapping containers to work they contain
+	HashMap containerMap = new HashMap();
+	// fill up the map with the filter's work
+	for (Iterator it = workMap.entrySet().iterator(); it.hasNext(); ) {
+	    Map.Entry entry = (Map.Entry)it.next();
+	    // get filter
+	    SIRFilter filter = (SIRFilter)entry.getKey();
+	    // get its parent
+	    SIRContainer parent = filter.getParent();
+	    // get work
+	    int work = ((WorkInfo)entry.getValue()).totalWork();
+	    // if it doesn't contain parent, add parent
+	    if (!containerMap.containsKey(parent)) {
+		containerMap.put(parent, new WorkInfo(work));
+	    } else {
+		// otherwise, just increment the work
+		((WorkInfo)containerMap.get(parent)).incrementWork(work);
+	    }
+	}
+	// return sorted list
+	return buildWorkList(containerMap);
+    }
+
+    /**
      * Returns the work estimate for filter <obj>.  Requires that
      * <obj> was present in the original graph used to construct this.
      */
     public int getWork(SIRFilter obj) {
-	return ((WorkInfo)workMap.get(obj)).totalWork;
+	return ((WorkInfo)workMap.get(obj)).totalWork();
     }
 
     /**
@@ -48,7 +113,7 @@ class WorkEstimate {
      */
     public float getPercentageWork(SIRFilter obj) {
 	return 100 * 
-	    ((float)((WorkInfo)workMap.get(obj)).totalWork) / toplevelWork;
+	    ((float)((WorkInfo)workMap.get(obj)).totalWork()) / toplevelWork;
     }
 
     /**
@@ -87,22 +152,6 @@ class WorkEstimate {
 		toplevelWork += count*work;
 	    }
 	}
-    }
-}
-
-class WorkInfo {
-
-    /**
-     * Returns total amount of work enclosed in this node.
-     */
-    public final int totalWork;
-
-    public WorkInfo(int totalWork) {
-	this.totalWork = totalWork;
-    }
-
-    public String toString() {
-	return "totalWork = " + totalWork;
     }
 }
 

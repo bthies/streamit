@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.15 2004-04-29 21:49:56 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.16 2004-05-12 18:38:25 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -339,7 +339,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 			// make literal weight (special case if the weight is an integer)
 			JLiteral weightNode;
 			if (currentWeight.isReal() && currentWeight.isIntegral()) {
-			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			    weightNode = new JIntLiteral(null, (int)Math.round(currentWeight.getReal()));
 			} else {
 			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			}
@@ -385,7 +385,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 			    // make literal weight (special case if the weight is an integer)
 			    JLiteral weightNode;
 			    if (currentWeight.isReal() && currentWeight.isIntegral()) {
-				weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+				weightNode = new JIntLiteral(null, (int)Math.round(currentWeight.getReal()));
 			    } else {
 				weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			    }
@@ -483,7 +483,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 			// make literal weight (special case if the weight is an integer)
 			JLiteral weightNode;
 			if (currentWeight.isReal() && currentWeight.isIntegral()) {
-			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			    weightNode = new JIntLiteral(null, (int)Math.round(currentWeight.getReal()));
 			} else {
 			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			}
@@ -529,7 +529,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 			    // make literal weight (special case if the weight is an integer)
 			    JLiteral weightNode;
 			    if (currentWeight.isReal() && currentWeight.isIntegral()) {
-				weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+				weightNode = new JIntLiteral(null, (int)Math.round(currentWeight.getReal()));
 			    } else {
 				weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			    }
@@ -709,7 +709,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 			// make literal weight (special case if the weight is an integer)
 			JLiteral weightNode;
 			if (currentWeight.isReal() && currentWeight.isIntegral()) {
-			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+			    weightNode = new JIntLiteral(null, (int)Math.round(currentWeight.getReal()));
 			} else {
 			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			}
@@ -755,7 +755,7 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 			    // make literal weight (special case if the weight is an integer)
 			    JLiteral weightNode;
 			    if (currentWeight.isReal() && currentWeight.isIntegral()) {
-				weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
+				weightNode = new JIntLiteral(null, (int)Math.round(currentWeight.getReal()));
 			    } else {
 				weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			    }

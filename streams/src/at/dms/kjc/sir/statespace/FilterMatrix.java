@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.12 2004-04-29 21:49:56 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.13 2004-05-12 18:38:25 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -182,6 +182,72 @@ public class FilterMatrix {
 					       numCols + ")");
 	}
     }
+
+
+    /** 
+     * Returns the QR factorization as the matrix [Q R]
+     * Only works with square matrices
+     **/
+    public FilterMatrix getQR() {
+
+	if(this.internalSizeRows != this.internalSizeCols) {
+	    throw new IllegalArgumentException("need square matrix");
+	}
+
+	int n = this.internalSizeRows;
+	double temp, diag;
+
+	FilterMatrix Q = new FilterMatrix(n,n);
+	FilterMatrix R = new FilterMatrix(n,n);
+
+	FilterVector V[] = new FilterVector[n]; 
+	FilterVector Qcols[] = new FilterVector[n];
+	FilterVector tempVec;
+	FilterMatrix tempMat;
+
+	for(int i=0; i<n; i++) {
+	    V[i] = new FilterVector(n);
+	    V[i].copyFromColumn(this,i);
+	}
+    
+	for(int i=0; i<n; i++) {
+
+	    diag = V[i].length();
+	    R.setElement(i,i, new ComplexNumber(diag, 0));
+
+	    Qcols[i] = new FilterVector(n);
+
+	    for(int k=0; k<n; k++) {
+		temp = V[i].getElement(k).getReal()/diag;
+		Qcols[i].setElement(k,new ComplexNumber(temp,0));
+	    }
+
+	    for(int j=i+1; j<n; j++) {
+		temp = Qcols[i].dotProduct(V[j]);
+		R.setElement(i,j, new ComplexNumber(temp, 0));
+		
+		tempVec = (FilterVector)Qcols[i].copy();
+		tempVec.scale(new ComplexNumber(-temp, 0));
+		tempMat = V[j].plus(tempVec);
+		V[j].copyRowsAt(0,tempMat,0,1);
+	    }
+	}
+
+	
+	for(int i=0; i<n; i++)
+	    Q.copyRowsAt(i,Qcols[i],0,1);
+
+	Q = Q.transpose();
+
+	FilterMatrix QR = new FilterMatrix(n,2*n);
+
+	QR.copyColumnsAt(0,Q,0,n);
+	QR.copyColumnsAt(n,R,0,n);
+
+	return QR;
+
+    }
+
 
     /** Return the determinant of this matrix (if it is square and real) **/
     public double determinant() {

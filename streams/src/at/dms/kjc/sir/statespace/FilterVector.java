@@ -10,7 +10,7 @@ import java.util.*;
  * implemented as a row vector and not a column vector is sort of
  * immaterial.<br>
  *
- * $Id: FilterVector.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: FilterVector.java,v 1.2 2004-05-12 18:38:25 sitij Exp $
  **/
 
 public class FilterVector extends FilterMatrix {
@@ -52,6 +52,53 @@ public class FilterVector extends FilterMatrix {
 	}
 	return fv;
     }
+
+    /** return the length of this vector **/
+    public double length() {
+	int size = this.getSize();
+	double sum = 0.0;
+	double temp;
+
+	for(int i=0; i<size; i++) {
+	    temp = this.getElement(i).getReal();
+	    sum += temp*temp;
+	}
+
+	sum = Math.sqrt(sum);
+	return sum;	    
+    }
+
+    /** return the dot product of this and B **/
+    public double dotProduct(FilterVector B) {
+	
+	if(this.getSize() != B.getSize())
+	    throw new IllegalArgumentException("Vectors must be same length");
+
+	int n = this.getSize();
+	double sum = 0.0;
+
+	for(int i=0; i<n; i++)
+	    sum += this.getElement(i).getReal()*B.getElement(i).getReal();
+
+	return sum;
+    }
+
+
+    /** copy from a Matrix Column **/
+    public void copyFromColumn(FilterMatrix M, int col) {
+
+	if(M.getCols() <= col)
+	    throw new IllegalArgumentException("invalid col reference");
+
+	if(M.getRows() != this.getSize())
+	    throw new IllegalArgumentException("mismatched parameters");
+
+	int size = this.getSize();
+
+	for(int i=0; i< size; i++)
+	    this.setElement(i,M.getElement(i,col));
+    }
+
 
     /**
      * Converts the matrix to a (row) vector (assuming that the matrix is actually a

@@ -63,14 +63,12 @@ public class LinearOptimizer {
 	LinearPrinter.println("got reduction up to value " + s1);
 
 	if(s1 > 0) {
-	    if(areRemovable(s1)) {
-		LinearPrinter.println("Removable");
-		removeStates(s1);
-	    }
+
+	    qr_Algorithm(s1);
+	    removeStates(s1);
 	}
 
-	/*
-		
+	/*		
 	transposeSystem();
 	s2 = reduceParameters();
 	LinearPrinter.println("got reduction up to value " + s2);
@@ -126,57 +124,38 @@ public class LinearOptimizer {
 		addMultiple(0,i,-temp);
 	    }
 	}
-
-	// now we remove the last state (we will add it at the end)
-	/*
-	FilterMatrix newA, newB, newC, newTotalMatrix;
-
-	newA = new FilterMatrix(newStates,newStates);
-	newB = new FilterMatrix(newStates,inputs);
-	newC = new FilterMatrix(outputs,newStates);
-	newTotalMatrix = new FilterMatrix(newStates+outputs,newStates+inputs);
-
-	newA.copyRowsAndColsAt(0,0,totalMatrix,0,0,newStates,newStates);
-	newB.copyRowsAndColsAt(0,0,totalMatrix,0,newStates+1,newStates,inputs);
-	newC.copyRowsAndColsAt(0,0,totalMatrix,newStates+1,0,outputs,newStates);
-	newTotalMatrix.copyAt(0,0,newA);
-	newTotalMatrix.copyAt(0,newStates,newB);
-	newTotalMatrix.copyAt(newStates,0,newC);
-
-	if(preNeeded) {
-	    FilterMatrix newPreA, newPreB, newTotalPreMatrix;
-
-	    newPreA = new FilterMatrix(newStates,newStates);
-	    newPreB = new FilterMatrix(newStates,pre_inputs);
-            newTotalPreMatrix = new FilterMatrix(newStates,newStates+pre_inputs);
-
-            newPreA.copyRowsAndColsAt(0,0,totalPreMatrix,0,0,newStates,newStates);
-            newPreB.copyRowsAndColsAt(0,0,totalPreMatrix,0,newStates+1,newStates,pre_inputs);
-            newTotalPreMatrix.copyAt(0,0,newPreA);
-            newTotalPreMatrix.copyAt(0,newStates,newPreB);
-
-            totalPreMatrix = newTotalPreMatrix; 
-	}
-	
-        totalMatrix = newTotalMatrix;
-	states = newStates;
-	*/
     }
 
 
-    // removes states  1..index
-    private void removeStates(int index) {
+    private void removeStates(int end_index) {
 
-	int newStates = states-index;
+	int temp_index = end_index;
+
+	for(int i=end_index; i>0; i--) {
+	    
+	    if(isRemovable(i,temp_index)) {
+		removeState(i);
+		temp_index--;
+	    }
+	}
+
+    }
+
+
+    // removes state index
+    private void removeState(int index) {
+
+	int newStates = states-1;
 
 	FilterMatrix newTotalMatrix = new FilterMatrix(newStates+outputs,newStates+inputs);	
 	int lastCols = states+inputs-(index+1);
 	int lastRows = states+outputs-(index+1);
 
-	newTotalMatrix.setElement(0,0,totalMatrix.getElement(0,0));
+        newTotalMatrix.copyRowsAndColsAt(0,0,totalMatrix,0,0,index,index);
+	newTotalMatrix.copyRowsAndColsAt(0,index,totalMatrix,0,index+1,index,lastCols);
 	
-	newTotalMatrix.copyRowsAndColsAt(1,0,totalMatrix,index+1,0,lastRows,1);
-	newTotalMatrix.copyRowsAndColsAt(1,1,totalMatrix,index+1,index+1,lastRows,lastCols);
+	newTotalMatrix.copyRowsAndColsAt(index,0,totalMatrix,index+1,0,lastRows,index);
+	newTotalMatrix.copyRowsAndColsAt(index,index,totalMatrix,index+1,index+1,lastRows,lastCols);
 	
 	totalMatrix = newTotalMatrix;
 
@@ -185,22 +164,22 @@ public class LinearOptimizer {
 	    int lastPreCols = states+pre_inputs-(index+1);
 	    int lastPreRows = states-(index+1);
 
-	    
-	    newPreMatrix.setElement(0,0,totalPreMatrix.getElement(0,0));;
+	    newPreMatrix.copyRowsAndColsAt(0,0,totalPreMatrix,0,0,index,index);
+	    newPreMatrix.copyRowsAndColsAt(0,index,totalPreMatrix,0,index+1,index,lastCols);
 	   
 	    if(index < states-1) {
-		newPreMatrix.copyRowsAndColsAt(1,0,totalPreMatrix,index+1,0,lastPreRows,1);
-		newPreMatrix.copyRowsAndColsAt(1,1,totalPreMatrix,index+1,index+1,lastPreRows,lastPreCols);
+		newPreMatrix.copyRowsAndColsAt(index,0,totalPreMatrix,index+1,0,lastPreRows,index);
+		newPreMatrix.copyRowsAndColsAt(index,index,totalPreMatrix,index+1,index+1,lastPreRows,lastPreCols);
 	    }
 	    totalPreMatrix = newPreMatrix;
 	}
 
 	FilterVector newInitVec = new FilterVector(newStates);
 
-	newInitVec.setElement(0,initVec.getElement(0));
-	if(index < states-1)
-	    newInitVec.copyColumnsAt(1,initVec,index,states-(index+1));
+	newInitVec.copyColumnsAt(0,initVec,0,index);
 
+	if(index < states-1)
+	    newInitVec.copyColumnsAt(index,initVec,index+1,states-(index+1));
 	
 	initVec = newInitVec;
 
@@ -208,37 +187,120 @@ public class LinearOptimizer {
     }
 
 
-    // checks whether or not states 1..index are removable
-    // assumes state 0 is the constant 1, 
-    private boolean areRemovable(int index) {
+    // checks whether or not state index is removable 
+    private boolean isRemovable(int index, int end_index) {
 
-	for(int i=1; i<= index; i++) {
-	    // first check that each state has initial value 0
-	    // note that this should automatically be true because we zeroed out these states earlier
-	    if(!initVec.getElement(index).equals(ComplexNumber.ZERO))
+	// first check that the state has initial value 0
+	// note that this should automatically be true because we zeroed out every state earlier
+	if(!initVec.getElement(index).equals(ComplexNumber.ZERO))
+	    return false;
+
+	// check that state doesn't get updated by a later state
+	// we already know each state doesn't get updated by states greater than end_index, and by earlier states
+	for(int i=index+1; i<=end_index; i++) {
+	    if(!totalMatrix.getElement(index,i).equals(ComplexNumber.ZERO))
 		return false;
-
-	    // check that each state doesn't get updated by state 0
-	    // (we already know each state doesn't get updated by states greater than index)
-	    if(!totalMatrix.getElement(i,0).equals(ComplexNumber.ZERO))
-		return false;
-
-	    if(preNeeded) {
-		// check that each state doesn't get updated by state 0 in the prework matrix
-		if(!totalPreMatrix.getElement(i,0).equals(ComplexNumber.ZERO))
-		    return false;
-
-		//check that each state doesn't get initialized by inputs
-		for(int j=0; j<pre_inputs; j++) {
-		    if(!totalPreMatrix.getElement(i,states+j).equals(ComplexNumber.ZERO))
-			return false;
-		}
-	    }
 	}
 	
-	// set of states passes all the tests, so they are removable
+	if(preNeeded) {
+	    // check that state doesn't get updated by state 0 in the prework matrix
+	    if(!totalPreMatrix.getElement(index,0).equals(ComplexNumber.ZERO))
+		return false;
+
+	    //check that state doesn't get initialized by inputs
+	    for(int j=0; j<pre_inputs; j++) {
+		if(!totalPreMatrix.getElement(index,states+j).equals(ComplexNumber.ZERO))
+		    return false;
+	    }
+	}
+		
+	// state passes all the tests, so it is removable
 	return true;
     }
+
+
+
+    private void qr_Algorithm(int end_index) {
+
+	off_diagonalize(end_index);
+
+	FilterMatrix blockA = new FilterMatrix(end_index, end_index);
+	FilterMatrix blockC = new FilterMatrix(outputs, end_index);
+	FilterMatrix currInit = new FilterMatrix(end_index,1);
+	blockA.copyRowsAndColsAt(0,0,totalMatrix,0,0,end_index,end_index);
+	blockC.copyRowsAndColsAt(0,0,totalMatrix,states,0,outputs,end_index);
+
+	for(int i=0; i<end_index;i++)
+	    currInit.setElement(i,0,initVec.getElement(i));
+
+	FilterMatrix QR, Q, R;
+
+	Q = new FilterMatrix(end_index,end_index);
+        R = new FilterMatrix(end_index,end_index);
+
+	int total = 1000*end_index*end_index*end_index;
+
+	for(int i=0; i<total; i++) {
+
+	  QR = blockA.getQR();
+	  Q.copyColumnsAt(0,QR,0,end_index);
+	  R.copyColumnsAt(0,QR,end_index,end_index);
+	  blockA = R.times(Q);
+
+	  blockC = blockC.times(Q.transpose());
+	  currInit = Q.times(currInit);
+	}
+
+	totalMatrix.copyRowsAndColsAt(0,0,blockA,0,0,end_index,end_index);
+	totalMatrix.copyRowsAndColsAt(states,0,blockC,0,0,outputs,end_index);
+
+	for(int i=0; i<end_index; i++)
+	    initVec.setElement(i,currInit.getElement(i,0));
+    }
+
+
+    private void off_diagonalize(int end_index) {
+
+	int j = 0;
+	double curr, temp, val;
+	boolean found = false;
+
+	for(int i=0; i<end_index-1; i++) {
+
+	    curr = totalMatrix.getElement(i+1,i).getReal();
+	    if(curr == 0.0) {
+		j = i+2;
+		found = false;
+		while((!found)&&(j<end_index)) {
+		    temp = totalMatrix.getElement(j,i).getReal();
+		    if(temp != 0.0) {
+			swap(j,i+1);
+			found = true;
+		    }
+		    j++;
+		}
+	    }
+	    else {
+		found = true;
+	    }
+		
+	    if(found) {
+		curr = totalMatrix.getElement(i+1,i).getReal();
+
+		for(int k=i+2; k<end_index; k++) {
+
+		    temp = totalMatrix.getElement(k,i).getReal();
+		    if(temp != 0.0) {
+			val = -temp/curr;
+			addMultiple(i+1,k,val);
+		    }
+		}
+		
+	    }
+
+	}
+    }
+
 
 
     private int reduceParameters() {

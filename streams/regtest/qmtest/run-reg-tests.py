@@ -2,7 +2,7 @@
 #
 # run-reg-tests.py: Yet another test to run regression tests
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: run-reg-tests.py,v 1.3 2003-11-20 22:10:04 dmaze Exp $
+# $Id: run-reg-tests.py,v 1.4 2003-11-24 17:20:40 dmaze Exp $
 #
 # Taking history from run_reg_tests.pl: this is the third implementation
 # of a script to run StreamIt regression tests.  It is written in Python,
@@ -47,6 +47,7 @@ class RunRegTests:
             self.prep()
             self.run_tests()
             self.report()
+            self.set_latest()
         except PrepError, e:
             self.mail_admins(str(e))
 
@@ -159,9 +160,18 @@ and load 'results.qmr'.
            self.working_dir,
            self.streamit_home)
         
+        last_results = ''
+        try:
+            fn = regtest_root + '/latest/streams/results.qmr'
+            os.stat(fn) # throws OSError if fn doesn't exist
+            last_results = ' ' + fn
+        except:
+            pass
+        
         pop = popen2.Popen4(self.streamit_home +
                             '/regtest/qmtest/examine-results.py ' +
-                            self.streamit_home + '/results.qmr')
+                            self.streamit_home + '/results.qmr' +
+                            last_results)
         summary = pop.fromchild.read()
         pop.wait()
         self.mail_all(header + summary)
@@ -183,4 +193,17 @@ and load 'results.qmr'.
         s.sendmail(from_whom, to_whom, msg.as_string())
         s.close()
 
-RunRegTests().main()
+    def set_latest(self):
+        """Repoint the 'latest' symlink at this directory."""
+        try:
+            os.remove(os.path.join(regtest_root, 'latest'))
+        except:
+            pass
+        try:
+            os.symlink(os.path.join(regtest_root, 'latest'),
+                       self.working_dir)
+        except:
+            pass
+
+if __name__ == "__main__":
+    RunRegTests().main()

@@ -1,7 +1,9 @@
+## This is in a state of flux between old StreamIt and new StreamIt. I
+## stopped trying to get it to work when I realized that
+## linear_regtest does all the important stuff.  -BFT.
+
 # Command to run the streamit compiler
-STREAMIT-COMPILER = java -Xmx512M at.dms.kjc.Main -s 
-# command to compile uniprocessor streamit programs
-UNI-COMPILER      = sl
+STREAMIT-COMPILER = strc
 # front end for converting new syntax to java
 NEW-FRONTEND = java streamit.frontend.ToJava --full 
 
@@ -32,22 +34,20 @@ all: clean java-compile uni-compile raw-compile
 
 
 linear-compile-old:
-	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/*.java 
-	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/transform/*.java
-	jikes $(STREAMIT_HOME)/compiler/at/dms/kjc/sir/linear/frequency/*.java
+	jikes $(STREAMIT_HOME)/src/at/dms/kjc/sir/linear/*.java 
+	jikes $(STREAMIT_HOME)/src/at/dms/kjc/sir/linear/transform/*.java
+	jikes $(STREAMIT_HOME)/src/at/dms/kjc/sir/linear/frequency/*.java
 linear-compile:
-	make -C $(STREAMIT_HOME)/compiler
+	make -C $(STREAMIT_HOME)/src
 library-compile:
 	make -C $(STREAMIT_HOME)/library/c
 
 
 test-current-replace: linear-compile
-	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
-	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > test-normal.c
-	$(STREAMIT-COMPILER) $(LINTRANS-OPTIONS) $(CURRENT-TEST).java > test-replace.c
-	$(UNI-COMPILER) test-normal.c -o test-normal.exe
-	$(UNI-COMPILER) test-replace.c -o test-replace.exe
-
+	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).str
+	cp a.out test-normal.exe
+	$(STREAMIT-COMPILER) $(LINTRANS-OPTIONS) $(CURRENT-TEST).str
+	cp a.out test-replace.exe
 
 test-current-freq: linear-compile library-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java

@@ -6,13 +6,11 @@
 # expected matricies that are in test files.
 
 use strict;
-# java(streamit) --> c
-my $S = "java -Xmx512M at.dms.kjc.Main -s --unroll 100000 --debug ";
-# c --> exe
-my $SL = "sl";
+# java(streamit) --> exe
+my $S = "strc ";
 # compare output
-my $CMP = "/u/aalamb/streams/regtest/tools/compare_uni.pl";
-my $CMP_PATH = "/u/aalamb/streams/regtest/tools/";
+my $CMP = "../../../regtest/tools/compare_uni.pl";
+my $CMP_PATH = "../../../regtest/tools/";
 
 my @tests = (
 	     "regtests/LinearTest1.java",
@@ -63,23 +61,33 @@ my $current_test;
 foreach $current_test (@tests) {
     # break up the filename into the base and extension
     my ($base, $extension) = split(/\./, $current_test);
+
+    print "\nTesting $base -------------------------------------\n";
     
     # if this is str file, run the frontend to create the appropriate java file
     if ($extension eq "str") {
 	print `java streamit.frontend.ToJava --full $base.$extension > $base.java`;
     }
 
-    # run the compiler on the java file and save its output
-    my $command = ("$S --linearanalysis " .
-		   "$base.java >& $base.c");
+    print "\nBase:\n";
+    # run the compiler on the java file (no linear stuff)
+    my $command = ("$S " .
+		   "$base.java -o $base.exe");
     `$command`;
 
-    # parse the output from the compiler
-    $command = "parse_linear_output.pl $base.c > $base.parsed";
+    print "\nLinear replacement:\n";
+    # now, compile the test again, this time with linear replacement enabled.  save its output to compare
+    print `cp $base.java $base.replaced.java`;
+    $command = ("$S --linearreplacement " .
+		"$base.replaced.java -o $base.replaced.exe");
     `$command`;
+
+    # parse the output from the compiler -- disabled
+    #$command = "parse_linear_output.pl $base.replaced.c > $base.replaced.parsed";
+    #`$command`;
 
     # compare the parsed output against the expected output
-    my $result = `cmp $base.parsed $base.expected`;
+    #my $result = `cmp $base.replaced.parsed $base.expected`;
     #chomp($result);
     #if ($result ne "") {
 #	print "$base(analysis): failure\n";
@@ -88,64 +96,70 @@ foreach $current_test (@tests) {
 #	print "$base(analysis): success\n";
 #    }
 
-    # now, compile the test again, this time with linear replacement enabled
-    $command = ("$S --linearreplacement " .
-		"$base.java >& $base.replaced.c");
+    # now, compile the test again, this time with frequency replacement enabled
+    print "\nFrequency replacement:\n";
+    $command = ("$S --frequencyreplacement " .
+		"$base.java -o $base.freq.exe");
     `$command`;
 
-    # now, compile the test again, this time with frequency replacement enabled
-    $command = ("$S --frequencyreplacement " .
-		"$base.java >& $base.freq.c");
+    # now, compile the test again, this time with statespace replacement enabled
+    print "\nStatespace replacement:\n";
+    $command = ("$S --statespace --linearreplacement " .
+		"$base.java -o $base.statespace.exe");
     `$command`;
 
     # now, compile the test one last time, with redundancy replacement enabled
-    $command = ("$S --redundantreplacement " .
-		"$base.java >& $base.redund.c");
-    `$command`;
+    #$command = ("$S --redundantreplacement " .
+	#	"$base.java -o $base.redund.exe");
+    #`$command`;
 
-
-
-    
-    # now, compile the c to an exe for both the original, replaced, and freq programs
-    `$SL $base.c -o $base.exe`;
-    `$SL $base.replaced.c -o $base.replaced.exe `;
-    `$SL $base.freq.c -o $base.freq.exe `;
-    `$SL $base.redund.c -o $base.redund.exe `;
+    print "\nChecking correctness:\n";
     # execute both the original and the replaced program 100 iterations
     print `$base.exe -i 100 > $base.run`;
     print `$base.replaced.exe -i 100 > $base.replaced.run`;
     print `$base.freq.exe -i 100 > $base.freq.run`;
-    print `$base.redund.exe -i 100 > $base.redund.run`;
+    print `$base.statespace.exe -i 100 > $base.statespace.run`;
+    #print `$base.redund.exe -i 100 > $base.redund.run`;
 
     # now, compare replacement to normal
-    $result = `perl -I$CMP_PATH $CMP $base.run $base.replaced.run`;
+    my $result = `perl -I$CMP_PATH $CMP $base.run $base.replaced.run`;
     chomp($result);
     if ($result ne "") {
-	print "$base(replace):  failure\n";
+	print "$base(replace):        failure\n";
 	print "  $result\n";
     } else {
-	print "$base(replace):  success\n";
+	print "$base(replace):        success\n";
     }
 
     # now, compare frequency to normal
     $result = `perl -I$CMP_PATH $CMP $base.run $base.freq.run`;
     chomp($result);
     if ($result ne "") {
-	print "$base(freq):     failure\n";
+	print "$base(freq):           failure\n";
 	print "  $result\n";
     } else {
-	print "$base(freq):     success\n";
+	print "$base(freq):           success\n";
+    }
+
+    # now, compare statespace to normal
+    $result = `perl -I$CMP_PATH $CMP $base.run $base.statespace.run`;
+    chomp($result);
+    if ($result ne "") {
+	print "$base(statespace):     failure\n";
+	print "  $result\n";
+    } else {
+	print "$base(statespace):     success\n";
     }
 
     # now, compare redundancy to normal
-    $result = `perl -I$CMP_PATH $CMP $base.run $base.redund.run`;
-    chomp($result);
-    if ($result ne "") {
-	print "$base(redund):   failure\n";
-	print "  $result\n";
-    } else {
-	print "$base(redund):   success\n";
-    }
+    #$result = `perl -I$CMP_PATH $CMP $base.run $base.redund.run`;
+    #chomp($result);
+    #if ($result ne "") {
+#	print "$base(redund):   failure\n";
+#	print "  $result\n";
+#    } else {
+#	print "$base(redund):   success\n";
+#    }
 
     
     

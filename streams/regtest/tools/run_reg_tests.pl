@@ -7,7 +7,7 @@
 # Usage: run_reg_test.pl -- runs all of the regtests  (eg make test-all)
 #        run_reg_test.pl nightly -- runs nightly regtests (eg make test-nightly)
 #
-# $Id: run_reg_tests.pl,v 1.14 2003-03-31 21:51:06 dmaze Exp $
+# $Id: run_reg_tests.pl,v 1.15 2003-05-12 14:37:14 aalamb Exp $
 
 use strict;
 
@@ -24,7 +24,7 @@ my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 # automatic testing so that the text tester gets used all of the time.
 $ENV{"AUTOMATIC_TEST"}="true";
 # path for RAW tools
-$ENV{"TOPDIR"}="/home/bits6/NO_BACKUP/streamit/starsearch";
+$ENV{"TOPDIR"}="/home/bits7/NO_BACKUP/streamit/starsearch";
 # Root location to store the reg test working files
 my $REGTEST_ROOT = "/home/bits7/NO_BACKUP/streamit/regtest_working";
 # Root location to store RT output
@@ -140,8 +140,9 @@ print MHMAIL $apps_executed;
 close(MHMAIL);
 
 # generate RT-compatible output too
-saved_execute("$streamit_home/regtest/tools/html_results.pl $streamit_home/ $REG_LOG $REG_ERR $SUCCESS $RT_ROOT/Summary $RT_ROOT/listing.html");
-
+open(MHMAIL, "|mhmail $ADMINS -s \"Output from html_execute.pl\"");
+print MHMAIL saved_execute("$streamit_home/regtest/tools/html_results.pl $streamit_home/ $REG_LOG $REG_ERR $SUCCESS $RT_ROOT/Summary $RT_ROOT/listing.html");
+close (MHMAIL);
 
 
 

@@ -8,6 +8,9 @@ import java.util.*;
 import grapheditor.jgraphextension.*;
 import com.jgraph.graph.*;
 import com.jgraph.JGraph;
+import java.awt.Color;
+import javax.swing.BorderFactory; 
+
 
 /**
  * GEPipeline is the graph internal representation of a pipeline. 
@@ -124,6 +127,11 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));	
+		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.blue));
+		GraphConstants.setBackground(this.attributes, Color.blue);	
+			
+			
+			
 			
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
 		graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[]{this}, nodeList.toArray());
@@ -222,49 +230,108 @@ public class GEPipeline extends GEStreamNode implements Serializable{
 		manager.arrange();	
 
 	}
-	
+
+	/**
+	 * Collapse the GraphStructure.
+	 */
+
 	public void collapse(JGraph jgraph)
 	{
 		Object[] nodeList = this.getSuccesors().toArray();
 		ConnectionSet cs = this.localGraphStruct.getConnectionSet();	
-		
 		jgraph.getGraphLayoutCache().setVisible(new Object[]{this}, true);
 		
-		Iterator firstEdgeIter = localGraphStruct.getGraphModel().edges(((GEStreamNode) nodeList[0]).getPort());
-		Iterator lastEdgeIter = localGraphStruct.getGraphModel().edges(((GEStreamNode) nodeList[nodeList.length-1]).getPort());
+		GEStreamNode firstInPipe = (GEStreamNode) nodeList[0];
+		GEStreamNode finalInPipe = (GEStreamNode) nodeList[nodeList.length-1];
+		
+		Iterator initialEdgeIter = localGraphStruct.getGraphModel().edges(firstInPipe.getPort());
+		Iterator finalEdgeIter = localGraphStruct.getGraphModel().edges(finalInPipe.getPort());
+		
+		ArrayList edgesToRemove =  new ArrayList();
 		
 		
-		if (firstEdgeIter.hasNext())
+		while (initialEdgeIter.hasNext())
 		{
-			DefaultEdge fEdge = (DefaultEdge) firstEdgeIter.next();
-			cs.disconnect(fEdge,false);
-			cs.connect(fEdge, this, false);
+			DefaultEdge edge = (DefaultEdge) initialEdgeIter.next();
+				
+			Iterator sourceIter = finalInPipe.getSourceEdges().iterator();
+			while(sourceIter.hasNext())
+			{
+				DefaultEdge target = (DefaultEdge) sourceIter.next();
+				if(target.equals(edge))
+				{
+					System.out.println("source equals edge");
+					cs.disconnect(edge, true);
+					cs.connect(edge, this.getPort(), true);
+					this.addSourceEdge(edge);
+					edgesToRemove.add(edge);
+				}
+			}
+			
+			Iterator targetIter = firstInPipe.getTargetEdges().iterator();	
+			while(targetIter.hasNext())
+			{
+				DefaultEdge source = (DefaultEdge) targetIter.next();
+				if (source.equals(edge))
+				{
+					System.out.println("target equals target");
+					cs.disconnect(edge,false);
+					cs.connect(edge, this.getPort(),false);
+					this.addTargetEdge(edge);
+					edgesToRemove.add(edge);
+				}
+			}
+		}
+		
+		while (finalEdgeIter.hasNext())
+		{
+			DefaultEdge edge = (DefaultEdge) finalEdgeIter.next();
+			
+			Iterator sourceIter = finalInPipe.getSourceEdges().iterator();
+			while(sourceIter.hasNext())
+			{
+				DefaultEdge source = (DefaultEdge) sourceIter.next();
+				if(source.equals(edge))
+				{
+					System.out.println("source equals edge");
+					cs.disconnect(edge, true);
+					cs.connect(edge, this.getPort(), true);
+					this.addSourceEdge(edge);
+					edgesToRemove.add(edge);
+				}
+			}
+			
+			Iterator targetIter = firstInPipe.getTargetEdges().iterator();	
+			while(targetIter.hasNext())
+			{
+				DefaultEdge target = (DefaultEdge) targetIter.next();
+				if (target.equals(edge))
+				{
+					System.out.println("target equals target");
+					cs.disconnect(edge,false);
+					cs.connect(edge, this.getPort(),false);
+					this.addTargetEdge(edge);
+					edgesToRemove.add(edge);
+				}
+			}			
 		}	
-		
-		ArrayList lList = new ArrayList();
-		while (lastEdgeIter.hasNext())
+			
+		Object[] removeArray = edgesToRemove.toArray();
+		for(int i = 0; i<removeArray.length;i++)
 		{
-			lList.add(lastEdgeIter.next());
+			firstInPipe.removeSourceEdge((DefaultEdge)removeArray[i]);
+			firstInPipe.removeTargetEdge((DefaultEdge)removeArray[i]);
+			finalInPipe.removeSourceEdge((DefaultEdge)removeArray[i]);
+			finalInPipe.removeTargetEdge((DefaultEdge)removeArray[i]);
+
 		}
-		if (lList.size() == 1)
-		{
-			DefaultEdge lEdge = (DefaultEdge) lastEdgeIter.next();
-			cs.disconnect(lEdge, true);
-			cs.connect(lEdge, nodeList[nodeList.length-1], true);	
-		}
-		else if (lList.size() > 1)
-		{
-			lastEdgeIter.next();
-			DefaultEdge lEdge = (DefaultEdge) lastEdgeIter.next();
-			cs.disconnect(lEdge, true);
-			cs.connect(lEdge, nodeList[nodeList.length-1], true);		
-		}
-		
+												
 		this.localGraphStruct.getGraphModel().edit(null, cs, null, null);
 		jgraph.getGraphLayoutCache().setVisible(nodeList, false);
-		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
-		manager.arrange();	
 		
+		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
+		JGraphLayoutManager manager = new JGraphLayoutManager(jgraph);
+		manager.arrange();	
 	}
 	
 	/**

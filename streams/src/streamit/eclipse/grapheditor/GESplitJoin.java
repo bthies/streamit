@@ -10,6 +10,8 @@ import com.jgraph.JGraph;
 import grapheditor.jgraphextension.*;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Color;
+import javax.swing.BorderFactory; 
 
 /**
  * GESplitJoin is the graph internal representation of  a splitjoin. It is composed 
@@ -169,6 +171,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
+		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.green));
 		
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
 		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);
@@ -331,7 +334,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 		Iterator splitEdgeIter = localGraphStruct.getGraphModel().edges(this.getSplitter().getPort());
 		Iterator joinEdgeIter = localGraphStruct.getGraphModel().edges(this.getJoiner().getPort());
 		
-		ArrayList removeArray =  new ArrayList();
+		ArrayList edgesToRemove =  new ArrayList();
 		
 		
 		while (splitEdgeIter.hasNext())
@@ -349,7 +352,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 					cs.disconnect(edge, true);
 					cs.connect(edge, this.getPort(), true);
 					this.addSourceEdge(edge);
-					removeArray.add(edge);
+					edgesToRemove.add(edge);
 				}
 			}
 			
@@ -363,7 +366,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 					cs.disconnect(edge,false);
 					cs.connect(edge, this.getPort(),false);
 					this.addTargetEdge(edge);
-					removeArray.add(edge);
+					edgesToRemove.add(edge);
 				}
 			}
 		}
@@ -382,7 +385,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 					cs.disconnect(edge, true);
 					cs.connect(edge, this.getPort(), true);
 					this.addSourceEdge(edge);
-					removeArray.add(edge);
+					edgesToRemove.add(edge);
 				}
 			}
 			
@@ -396,12 +399,23 @@ public class GESplitJoin extends GEStreamNode implements Serializable{
 					cs.disconnect(edge,false);
 					cs.connect(edge, this.getPort(),false);
 					this.addTargetEdge(edge);
-					removeArray.add(edge);
+					edgesToRemove.add(edge);
 				}
 			}
 			
 		}	
 			
+		Object[] removeArray = edgesToRemove.toArray();
+		for(int i = 0; i<removeArray.length;i++)
+		{
+			this.splitter.removeSourceEdge((DefaultEdge)removeArray[i]);
+			this.splitter.removeTargetEdge((DefaultEdge)removeArray[i]);
+			this.joiner.removeSourceEdge((DefaultEdge)removeArray[i]);
+			this.joiner.removeTargetEdge((DefaultEdge)removeArray[i]);
+
+		}
+
+		
 			
 			
 		

@@ -78,7 +78,7 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, graphStruct.setRectCoords(this));
-		GraphConstants.setBorder(this.attributes , BorderFactory.createRaisedBevelBorder());
+		GraphConstants.setBorder(this.attributes , BorderFactory.createLineBorder(Color.orange));
 		GraphConstants.setBackground(this.attributes, Color.orange);
 		
 		this.port = new DefaultPort();

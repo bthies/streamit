@@ -781,8 +781,9 @@ public class Propagator extends SLIRReplacingVisitor {
 				array[((JIntLiteral)accessor).intValue()]=newRight;
 				//System.err.println("Assign:"+var+"["+accessor+"]="+newRight);
 				} else*/
-			    if(self.getCopyVar()!=null) {
-				array[((JIntLiteral)accessor).intValue()]=self.getCopyVar();
+			    int index=((JIntLiteral)accessor).intValue();
+			    if(self.getCopyVar()!=null&&index<array.length) {
+				array[index]=self.getCopyVar();
 				/*if(newRight instanceof JLocalVariableExpression) {
 				  constants.put(((JLocalVariableExpression)newRight).getVariable(),newRight);
 				  changed.put(var,Boolean.TRUE);

@@ -11,7 +11,8 @@ import at.dms.kjc.sir.linear.*;
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.<p>
- * $Id: LinearTransformPipeline.java,v 1.7 2002-11-26 22:07:15 aalamb Exp $
+ *
+ * $Id: LinearTransformPipeline.java,v 1.8 2002-12-10 20:07:09 aalamb Exp $
  **/
 public class LinearTransformPipeline extends LinearTransform {
     List repList;
@@ -58,13 +59,21 @@ public class LinearTransformPipeline extends LinearTransform {
 	    int chanPeek = chanPop + (e2-o2);
 
 	    // calculate expanded peek, pop, and push rates
-	    int ee1 = chanPeek*o1/u1 + (e1-o1);
+	    int ee1 = divCeiling(chanPeek,u1) * o1 + (e1-o1);
 	    int oe1 = chanPop*o1/u1;
 	    int ue1 = chanPeek;
 	    int ee2 = chanPeek;
 	    int oe2 = chanPop;
 	    int ue2 = chanPop*u2/o2;
 
+	    LinearPrinter.println("  expansion for upstream filter:(peek,pop,push):" +
+				  "(" + e1 + "," + o1 + "," + u1 + ")-->" +
+				  "(" + ee1 + "," + oe1 + "," + ue1 + ")");
+	    LinearPrinter.println("  expansion for downstream filter:(peek,pop,push):" +
+				  "(" + e2 + "," + o2 + "," + u2 + ")-->" +
+				  "(" + ee2 + "," + oe2 + "," + ue2 + ")");
+
+	    
 	    // now, actually create the expanded reps.
 	    LinearFilterRepresentation rep1Expanded = rep1.expand(ee1, oe1, ue1);
 	    LinearFilterRepresentation rep2Expanded = rep2.expand(ee2, oe2, ue2);

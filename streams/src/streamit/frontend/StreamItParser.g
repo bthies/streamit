@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.2 2002-06-28 21:20:30 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.3 2002-07-09 15:36:05 dmaze Exp $
  */
 
 header {
@@ -156,7 +156,7 @@ print_statement
 
 data_type
 	:	primitive_type
-	|	TK_complex primitive_type
+	|	TK_complex
 	|	TK_void
 	|	id:ID
 	;

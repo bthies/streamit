@@ -26,7 +26,6 @@ class DPConfigFilter extends DPConfig {
 	super(partitioner);
 	this.filter = filter;
 	this.isFissable = StatelessDuplicate.isFissable(filter);
-	this.A = null;
     }
 
     public int get(int tileLimit, int nextToJoiner) {
@@ -42,7 +41,7 @@ class DPConfigFilter extends DPConfig {
     // see how many tiles we can devote to fissed filters;
     // depends on if we need a separate tile for a joiner.
     private int tilesForFission(int tileLimit, int nextToJoiner) {
-	return nextToJoiner==1 ? tileLimit : tileLimit - 1;
+	return Math.min(DynamicProgPartitioner.MAX_FISSION_FACTOR, nextToJoiner==1 ? tileLimit : tileLimit - 1);
     }
 
     public SIRStream getStream() {

@@ -13,15 +13,6 @@ import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
 abstract class DPConfig implements Cloneable {
-    /**  
-     * A_s[x1][x2][y1][y2][n][j] holds minimum cost of assigning
-     * children (x1..x2, y1..y2) of stream s to n tiles.  <j> is 1 if
-     * these children are next to a downstream joiner in the current
-     * configuration; <j> is zero otherwise.  If this corresponds to a
-     * filter's config, then A is null.
-     */
-    protected int[][][][][][] A;
-
     /**
      * The partitioner this is part of.
      */

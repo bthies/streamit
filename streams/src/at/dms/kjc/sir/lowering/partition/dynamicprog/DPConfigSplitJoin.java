@@ -15,22 +15,20 @@ import at.dms.kjc.sir.lowering.partition.*;
 class DPConfigSplitJoin extends DPConfigContainer {
 
     public DPConfigSplitJoin(SIRSplitJoin sj, DynamicProgPartitioner partitioner) {
-	// pass 0 as dummy argument in case uniform height is -1; then assert afterwards
-	super(sj, partitioner, sj.size(), Math.max(0, sj.getRectangularHeight()));
-	Utils.assert(sj.isRectangular(), "Require rectangular splitjoins in DPConfig.");
+	super(sj, partitioner, wrapInArray(sj.size()), 1);
+	Utils.assert(sj.getRectangularHeight()==1, "Require sj's with height of 1 now.");
+    }
+    
+    /**
+     * Wraps <i> in a 1-element array
+     */
+    private static int[] wrapInArray(int i) {
+	int[] result = { i };
+	return result;
     }
 
     protected DPConfig childConfig(int x, int y) {
-	SIRStream c1 = cont.get(x), c2;
-	// if we're just accessing a hierarchical unit, return it
-	if (y==0 && !(c1 instanceof SIRPipeline)) {
-	    c2 = c1;
-	} else {
-	    // otherwise, we're looking inside a hierarchical unit -- must
-	    // be a pipeline
-	    Utils.assert(c1 instanceof SIRPipeline);
-	    c2 = ((SIRPipeline)c1).get(y);
-	}
-	return partitioner.getConfig(c2);
+	Utils.assert(y==0, "Looking for y=" + y + " in DPConfigSplitJoin.get");
+	return partitioner.getConfig(cont.get(x));
     }
 }

@@ -13,9 +13,10 @@ import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.*;
 
 class DPConfigFeedbackLoop extends DPConfigContainer {
+    private static final int[] WIDTH = { 1, 1 };
 
     public DPConfigFeedbackLoop(SIRFeedbackLoop cont, DynamicProgPartitioner partitioner) {
-	super(cont, partitioner, 1, 2);
+	super(cont, partitioner, WIDTH, 2);
     }
 
     protected DPConfig childConfig(int x, int y) {

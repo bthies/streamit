@@ -15,12 +15,37 @@ import at.dms.kjc.sir.lowering.partition.*;
 class DPConfigPipeline extends DPConfigContainer {
 
     public DPConfigPipeline(SIRPipeline cont, DynamicProgPartitioner partitioner) {
-	super(cont, partitioner, 1, cont.size());
+	super(cont, partitioner, getWidths(cont), cont.size());
     }
 
     protected DPConfig childConfig(int x, int y) {
-	Utils.assert(x==0);
-	return partitioner.getConfig(cont.get(y));
+	SIRStream c1 = cont.get(y), c2;
+	// if we're just accessing a hierarchical unit, return it
+	if (x==0 && !(c1 instanceof SIRSplitJoin)) {
+	    c2 = c1;
+	} else {
+	    // otherwise, we're looking inside a hierarchical unit -- must
+	    // be a splitjoin
+	    Utils.assert(c1 instanceof SIRSplitJoin, "Trying to get (" + x + ", " + y  + "), which is " + c1.getName());
+	    c2 = ((SIRSplitJoin)c1).get(x);
+	}
+	return partitioner.getConfig(c2);
     }
 
+    /**
+     * Returns the width of all child streams... sj's have width of
+     * their size; all else has width of 1.
+     */
+    private static final int[] getWidths(SIRPipeline cont) {
+	int[] result = new int[cont.size()];
+	for (int i=0; i<result.length; i++) {
+	    SIRStream child = cont.get(i);
+	    if (child instanceof SIRSplitJoin) {
+		result[i] = ((SIRSplitJoin)child).size();
+	    } else {
+		result[i] = 1;
+	    }
+	}
+	return result;
+    }
 }

@@ -18,16 +18,20 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     static final int FISSION_OVERHEAD = 1;
     /**
+     * The maximum amount to fiss (before network takes over).
+     */
+    static final int MAX_FISSION_FACTOR = 3;
+    /**
      * The overhead of work estimated for horizontal fission of
      * containers (could calculate more precisely; only doing
      * horizontal filter fusion precisely for now.)
      */
-    static final int HORIZONTAL_CONTAINER_OVERHEAD = 100;
+    static final int HORIZONTAL_CONTAINER_OVERHEAD = 0; //100;
     /**
      * The factor by which a filter's input or output rate should be
      * multiplied to estimate the horizontal fusion overhead.
      */
-    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 5;
+    static final int HORIZONTAL_FILTER_OVERHEAD_FACTOR = 0; //5;
     /**
      * Whether or not we're sharing configurations in symmetrical
      * splitjoins.  Sharing doesn't work with 2-D partitioning, but
@@ -35,7 +39,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * want to revert or experiment.
      */
     private static final boolean SHARING_CONFIGS = false;
-    
+
     /**
      * Map from stream structures to DPConfig's.
      */
@@ -75,7 +79,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 
 	// calculate partitions
 	StreamTransform st = calcPartitions(partitions);
-	//st.printHierarchy();
+	if (KjcOptions.debug) { st.printHierarchy(); }
 
 	// debug output
 	PartitionUtil.printTileWork(partitions, numTiles);
@@ -96,11 +100,16 @@ public class DynamicProgPartitioner extends ListPartitioner {
      */
     private StreamTransform calcPartitions(LinkedList partitions) {
 	// build stream config
+	System.out.println("  Building stream config... ");
 	DPConfig topConfig = buildStreamConfig();
+	if (DPConfigContainer.aliases>0) {
+	    System.out.println("  Aliasing " + DPConfigContainer.aliases + " entries of memo table.");
+	}
 	// rebuild our work estimate, since we might have introduced
 	// identity nodes to make things rectangular
 	work = WorkEstimate.getWorkEstimate(str);
 	// build up tables.
+	System.out.println("  Calculating partition info...");
 	int bottleneck = topConfig.get(numTiles, 0);
 	int tilesUsed = numTiles;
 	// decrease the number of tiles to the fewest that we need for
@@ -114,6 +123,11 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	    System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
 	}
 	*/
+	
+	if (KjcOptions.debug && topConfig instanceof DPConfigContainer) {
+	    ((DPConfigContainer)topConfig).printArray();
+	}
+
 	// expand config stubs that were shared for symmetry optimizations
 	if (SHARING_CONFIGS) {
 	    expandSharedConfigs();
@@ -124,6 +138,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	PartitionRecord curPartition = new PartitionRecord();
 	partitions.add(curPartition);
 
+	System.out.println("  Tracing back...");
 	StreamTransform result = topConfig.traceback(partitions, curPartition, tilesUsed, 0);
 
 	/* This is no longer the case because of estimating fusion overhead.
@@ -139,6 +154,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
      * toplevel stream.
      */
     private DPConfig buildStreamConfig() {
+	RefactorSplitJoin.addDeepRectangularSyncPoints(str);
+	StreamItDot.printGraph(str, "dp-partition-input.dot");
 	return (DPConfig)str.accept(new ConfigBuilder());
     }
 
@@ -212,44 +229,15 @@ public class DynamicProgPartitioner extends ListPartitioner {
 				     JMethodDeclaration init,
 				     SIRSplitter splitter,
 				     SIRJoiner joiner) {
-	    // we require rectangular splitjoins, so if this is not
-	    // rectangular, make it so
-	    if (!self.isRectangular()) {
-		self.makeRectangular();
-	    }
-
 	    // shouldn't have 0-sized SJ's
 	    Utils.assert(self.size()!=0, "Didn't expect SJ with no children.");
-	    if (SHARING_CONFIGS) {
-		// keep track of last one which a child was equivalent to
-		SIRStream firstChild = self.get(0);
-		SIRStream lastEquiv = firstChild;
-		DPConfig lastConfig = (DPConfig)firstChild.accept(this);
-		// look for equivalent children
-		for (int i=1; i<self.size(); i++) {
-		    SIRStream child = self.get(i);
-		    if (equivStructure(lastEquiv, child)) {
-			/*
-			  System.err.println("Detected symmetry between " + 
-			  firstChild.getName() + " and " + child.getName());
-			*/
-			configMap.put(child, lastConfig);
-		    } else {
-			lastEquiv = child;
-			lastConfig = (DPConfig)child.accept(this);
-		    }
-		}
-		// if all were equivalent, then add them to uniform list
-		if (lastEquiv== self.get(0)) {
-		    //System.out.println("Detected uniform splitjoin: " + self.getName());
-		    uniformSJ.add(self);
-		}
+	    super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
+	    // if parent is a pipeline, don't need a config for this splitjoin
+	    if (self.getParent() instanceof SIRPipeline) {
+		return self;
 	    } else {
-		for (int i=0; i<self.size(); i++) {
-		    self.get(i).accept(this);
-		}
+		return makeConfig(self);
 	    }
-	    return makeConfig(self);
 	}
 
 	public Object visitPipeline(SIRPipeline self,

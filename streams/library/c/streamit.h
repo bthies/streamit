@@ -372,12 +372,54 @@ void ERROR (void *data, char *error_msg);
  * @}
  */
 
-/** 
- * Do convolution in frequency domain. This function takes in x[n] in x
- * and H(w) in H_r, H_i for real and imaginary parts respectively.
- * size tells us how large the buffers are. This function then computes 
- * X(w), Y(w) = X(w)H(w) and then y[n]. We store y[n] in x when we are done.
+
+
+/* Multiplies an FFTW halfcomplex array by a known set of
+ * constants.
+ * output: Y (float array of size size)
+ * input1: X (float array of size size)
+ * input2: H (float array of size size)
+ *
+ * All arrays are  Hermitian, meaning that for all
+ * i 0<=i<n, x[i] = conj(x[n-i]).  FFTW then stores this in a single
+ * array, where for 0<=i<=n/2, x[i] is the real part of X[i] (and also
+ * the real part of X[n-i]), and for 0<i<n/2, x[n-i] is the complex part
+ * of X[i] (and the negated complex part of X[n-i]).  It appears to
+ * follow from the documentation that X[0] is strictly real (which is
+ * due to the math of the FFT.
+ *
+ * The output can be safely set to be one of the inputs if desired.
  */
-void do_fast_convolution(float* x, float* H_r, float* H_i, int size);
+void do_halfcomplex_multiply(float *Y, float *X, float *H, int size);
+
+/**
+ * Replaces the contents of input_buff with the value of its FFT
+ * scaled by a factor of 1/size (because fftw does not do 
+ * this scaling in the reverse FFT, we precompute the scaling now).
+ * Since buff is a completly realarray, the corresponding complex
+ * valued FFT(buff) is stored in the "half complex array" format of
+ * fftw (see http://www.fftw.org/doc/fftw_2.html#SEC5)
+ **/
+void convert_to_freq(float* input_buff, int size);
+
+/**
+ * Replaces the contents of input_buff with the value of its IFFT
+ * (doesn't include the 1/size scaling factor in the definition
+ * -- that is an FFTW thing.
+ * Since input_buff is in "half complex array" which corresponds to
+ * a completely real valued inverse FFT.
+ **/
+void convert_from_freq(float* input_buff, int size);
+
+/** 
+ * Scales the passed buffer by 1/size. Used to renormalize the
+ * filter coefficients when they have been converted into the
+ * frequency domain (fftw does not do the scaling automatically).
+ **/
+void scale_by_size(float* buffer, int size);
+
+
+
+
 
 #endif /* STREAMIT_H */

@@ -1,7 +1,7 @@
 /*
  * interface to the fftw library to replace streamit_fft.c (which 
  * contians a simple non optimized implementation of fft)
- * $Id: streamit_fftw.c,v 1.4 2003-02-03 21:18:29 aalamb Exp $
+ * $Id: streamit_fftw.c,v 1.5 2003-02-04 17:36:12 aalamb Exp $
  */
 
 #include <sfftw.h>
@@ -64,7 +64,7 @@ static struct rfftw_plan_list *get_plan(int size)
  *
  * The output can be safely set to be one of the inputs if desired.
  */
-static void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
+void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
 {
   int i;
   
@@ -125,7 +125,8 @@ static void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
  * valued FFT(buff) is stored in the "half complex array" format of
  * fftw (see http://www.fftw.org/doc/fftw_2.html#SEC5)
  **/
-void convert_to_freq(float* input_buff, int size) {
+void convert_to_freq(float* input_buff, int size) 
+{
   struct rfftw_plan_list *plan;
   int i;
 
@@ -135,14 +136,51 @@ void convert_to_freq(float* input_buff, int size) {
   /* Run the forward FFT on the input buffer. */
   rfftw_one(plan->rtoc_plan, (fftw_real *)input_buff, (fftw_real *)plan->buff);
 
-  /* copy over the frequency response and do the
-     normalization by 1/N that FFTW doesn't do. */
+  /* copy the values from the plan buffer (eg the output) into the 
+   * input buffer (return value is passed via input). **/
   for (i=0; i<size; i++) {
-    input_buff[i] = plan->buff[i]/size;
+    input_buff[i] = plan->buff[i];
   }
 
   /** and we are done. Return value is the input_buffer parameter. **/
 }
+
+/** 
+ * Scales the passed buffer by 1/size. Used to renormalize the
+ * filter coefficients when they have been converted into the
+ * frequency domain (fftw does not do the scaling automatically).
+ **/
+void scale_by_size(float* buffer, int size) 
+{
+  int i;
+  for (i=0; i<size; i++) {
+    buffer[i] = buffer[i]/size;
+  }
+}
+
+
+/**
+ * Replaces the contents of input_buff with the value of its IFFT
+ * (doesn't include the 1/size scaling factor in the definition
+ * -- that is an FFTW thing.
+ * Since input_buff is in "half complex array" which corresponds to
+ * a completely real valued inverse FFT.
+ **/
+void convert_from_freq(float* input_buff, int size) 
+{
+  struct rfftw_plan_list *plan;
+
+  /* Start off by finding the plan pair, or creating one. */
+  plan = get_plan(size);
+
+  /* Run the backward FFT (trashing storage). */
+  // reverse is specified by the plan. Then comes input followed by output.
+  rfftw_one(plan->ctor_plan, (fftw_real *)input_buff, (fftw_real *)input_buff);
+  
+  /** and we are done. Return value is the input_buffer parameter. **/
+}
+
+
 
 
 /** debugging routine that prints a halfcomplex array. **/
@@ -156,5 +194,13 @@ void _debug_print_halfcomplex(char* prefix, float* complex_arr, int size) {
   // if size even, also print out the middle element which is purely real.
   if ((size % 2) == 0) {
     printf("%s[%d]:%f\n", prefix, (size/2), complex_arr[size/2]);
+  }
+}
+
+/** debugging routine that prints a real array. **/
+void _debug_print_real(char* prefix, float* arr, int size) {
+  int i;
+  for (i=0; i<size; i++) {
+    printf("%s[%d]:%f\n", prefix, i, arr[i]);
   }
 }

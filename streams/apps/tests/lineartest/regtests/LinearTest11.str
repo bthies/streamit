@@ -1,0 +1,53 @@
+/** Test combining pipelines when they don't rate match**/
+void->void pipeline SimpleStreamItProgram {
+  add FloatSource();
+  add LinearPipe();
+  //add LinearPipe();
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  float x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = x + 1;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** Pipeline of linear filters whose rates don't match. **/
+float->float pipeline LinearPipe {
+  add LinearFilter1(4,4);
+  add ParamIdentity(2);
+}
+
+/** 
+ * Simple filter that just computes a small matrix. 
+ * Still keeping peek==pop.
+ **/
+float->float filter LinearFilter1(int numPeeks, int numPushes) {
+  work peek numPeeks pop numPeeks push numPushes{
+    for (int i=0; i<numPushes; i++) {
+      int sum = 0;
+      for (int j=0; j<numPeeks; j++) {
+	sum += peek(j)*((i+1)*(j + 1) +i);
+      }
+      push(sum);
+    }
+  }
+}
+float->float filter ParamIdentity(int size) {
+  work peek size pop size push size {
+    for (int i=0; i<size; i++) {
+      push(peek(i));
+    }
+  }
+}

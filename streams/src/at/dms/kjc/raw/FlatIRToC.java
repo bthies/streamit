@@ -169,8 +169,16 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
+
+	//if we are number gathering and this is the sink, generate the dummy
+	//vars for the assignment of the print expression.
+	if (KjcOptions.numbers > 0 && NumberGathering.successful &&
+	    self == NumberGathering.sink.contents) {
+	    print ("int dummyInt;\n");
+	    print ("float dummyFloat;\n");
+	}
 	
-	if(KjcOptions.altcodegen && !KjcOptions.decoupled){
+	if (KjcOptions.altcodegen && !KjcOptions.decoupled){
 	    print("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
 	    print("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
 	    print("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
@@ -1486,6 +1494,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     JExpression exp)
     {
 	CType type = null;
+
 	
 	try {
 	    type = exp.getType();
@@ -1494,6 +1503,25 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    System.err.println("Cannot get type for print statement");
 	    type = CStdType.Integer;
 	}
+	
+	//if we have the number gathering stuff on, convert each print 
+	//to a magic instruction, there are only print statements in the sink
+	//all other prints have been removed...
+	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
+	    //assign the expression to a dummy var do it does not get
+	    //optimized out...
+	    print("dummy");
+	    if (type.isFloatingPoint())
+		print("Float");
+	    else 
+		print("Int");
+	    print(" = ");
+	    exp.accept(this);
+	    print(";\n");
+	    print("__asm__ volatile (\"magc $0, $0, 2\");\n");
+	    return;
+	}
+
 	    
 	if (type.equals(CStdType.Boolean))
 	    {

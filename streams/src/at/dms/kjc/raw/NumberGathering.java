@@ -84,17 +84,50 @@ public class NumberGathering extends at.dms.util.Utils
 		    ("Sink not called in Steady State");
 		continue;
 	    }
-
+	    //we are successsful
 	    System.out.println("Generating Number Gathering Code...");
 	    //set the globals that are read by makefilegenerator	
 	    successful = true;
 	    skipPrints = init * prints;
 	    printsPerSteady = prints * steady;
+	    //remove the prints from all other tiles
+	    //change the prints in the sink to be a magic print
+	    RemovePrintln.doit(top, sink);
 	    System.out.println("The Sink: " + sink.contents.getName());
 	    return true;
 	}
 	System.out.println("Cannot Generate Number Gathering Code.  Could not find a suitable sink...");
 	return false;
+    }
+
+    static class RemovePrintln extends SLIRReplacingVisitor implements FlatVisitor {
+	private static FlatNode sink;
+	
+	public static void doit(FlatNode top, FlatNode sinkNode) 
+	{
+	    sink = sinkNode;
+	    top.accept(new RemovePrintln(), null, true);
+	}
+	
+	public void visitNode(FlatNode node) 
+	{
+	    //iterate over all the methods of all the flatnodes 
+	    if (node.isFilter()) {
+		//do not remove print statements for the sink
+		//they are converted into a magic instruction by FLATIRTOC
+		if (node == sink) 
+		    return;
+		SIRFilter filter = (SIRFilter)node.contents;
+		for (int i = 0; i < filter.getMethods().length; i++)
+		    filter.getMethods()[i].accept(this);	
+	    }
+	}
+	//remove the print statement if this isn't the sink
+	public Object visitPrintStatement(SIRPrintStatement self,
+					  JExpression arg) {
+	    JExpression newExp = (JExpression)arg.accept(this);
+	    return new JExpressionStatement(null, newExp, null);
+	}
     }
 
     static class Sink implements FlatVisitor 

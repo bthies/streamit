@@ -5,6 +5,7 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.linear.*;
+import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.iterator.*;
 import at.dms.compiler.*;
 
@@ -17,7 +18,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.15 2003-04-14 17:52:59 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.16 2003-04-16 19:51:22 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -236,6 +237,11 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					   self.getOutputType());         /* output type */
 	// need to explicitly set the init function
 	freqFilter.setInit(freqInit);
+
+	// do unrolling on the new filter.  (Unrolling is part of
+	// field prop; will get field prop as added bonus, shouldn't
+	// hurt except for exec. time.)
+	FieldProp.doPropagate(freqFilter);
 	
 	// now replace the current filter (self) with the frequency version
 	self.getParent().replace(self, freqFilter);

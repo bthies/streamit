@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.22 2003-03-30 21:48:28 thies Exp $
+# $Id: knit,v 1.23 2003-03-31 18:16:32 thies Exp $
 #
 
 use strict;
@@ -51,8 +51,8 @@ Options:
   --library           Run in the Java library instead of compiling
 
 Options available for all backends:
-  --frequencyreplacement (0|1)
-                      Convert FIR filters to frequency; 1 is efficient
+  --frequencyreplacement, -F
+                      Convert FIR filters to frequency
 * --fusion, -f        Fuse entire program to a single filter
   --linearreplacement Perform linear transformations based on analysis
 * --linearpartition, -B
@@ -106,7 +106,7 @@ sub get_options
 	       "altcodegen|z",
 	       "dppartition|y",
 	       "dpscaling|Y",
-	       "frequencyreplacement|F=i",
+	       "frequencyreplacement|F",
 	       "fusion|f",
 	       "ilppartition|A",
 	       "library",
@@ -229,8 +229,7 @@ sub get_kjc_opts
     $opts{altcodegen} && ($kjcopts .= " -z");
     $opts{dppartition} && ($kjcopts .= " -y");
     $opts{dpscaling} && ($kjcopts .= " -Y");
-    $opts{frequencyreplacement} &&
-      ($kjcopts .= " -F" . $opts{frequencyreplacement});
+    $opts{frequencyreplacement} && ($kjcopts .= " -F");
     $opts{fusion} && ($kjcopts .= " -o");
     $opts{ilppartition} && ($kjcopts .= " -A");
     $opts{linearreplacement} && ($kjcopts .= " -I");

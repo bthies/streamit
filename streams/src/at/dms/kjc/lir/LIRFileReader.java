@@ -39,6 +39,10 @@ public class LIRFileReader extends LIRNode {
 	this.fileName = fileName;
     }
 
+    public String getChildName() {
+        return childName;
+    }
+
     public String getFileName() {
 	return fileName;
     }

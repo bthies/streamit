@@ -12,7 +12,7 @@ import at.dms.kjc.sir.statespace.*;
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.5 2004-03-02 23:24:23 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.6 2004-03-03 20:41:59 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -154,7 +154,7 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    FilterMatrix preworkA2_new = LinearFilterRepresentation.createPreWorkA(newVar2Total);
 		    FilterMatrix preworkB2_new = LinearFilterRepresentation.createPreWorkB(newVar2Total,extraVars);
 		    
-		    LinearFilterRepresentation rep1MoreExpanded = rep1Expanded.expand(n);
+		    LinearFilterRepresentation rep1MoreExpanded = rep1Expanded.expand_with_prework(n);
 		    FilterMatrix preworkA1_new = rep1MoreExpanded.getA();
 		    FilterMatrix preworkB1_new = rep1MoreExpanded.getB();
 		    FilterMatrix C1_temp = rep1MoreExpanded.getC();
@@ -177,59 +177,63 @@ The way filter 2 operates has been altered. Previously, filter2 used its first n
 
 Now, filter2 should use its first extraVars variables to represent peek(0),peek(1),...,peek(extraVars-1), and use its first newPop2-extraVars inputs to represent peek(extraVars),peek(extraVars+1),...,peek(newPeek2-1), The remaining inputs should be used to update the extraVars variables.
 
-We know that extraVars > newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? extraVars = n*newPush1 < newPeek2 < (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = extraVars + newPop1 > newPeek2, so extraVars > newPeek2-newPop1.
+We know that extraVars >= newPeek2-newPop2, so we are adding states. Thus we must expanded some of the matrices, and reorder their contents. Why is that inequality true? extraVars = n*newPush1 < newPeek2 <= (n+1)*newPush1, and newPush1 = newPop2, so (n+1)*newPush1 = extraVars + newPush1 = extraVars + newPop1 >= newPeek2, so extraVars >= newPeek2-newPop1.
 		    */
 
 
-		    /***************** This isn't quite correct, need to fix up **************/
+		    if(extraVars > removeVars) {
 
-		    LinearPrinter.println("AAA" + A2.toString());
-		    LinearPrinter.println("BBB" + B2.toString());
+			LinearPrinter.println("A2init-old" + A2.toString());
+			LinearPrinter.println("B2init-old" + B2.toString());
+			
+			FilterMatrix tempA2, tempB2, tempC2, tempD2;
+			
+			tempA2 = new FilterMatrix(newVar2Total,newVar2Total);
+			tempA2.copyRowsAndColsAt(extraVars,extraVars,A2,removeVars,removeVars,state2-removeVars,state2-removeVars);
+			tempA2.copyRowsAndColsAt(extraVars,0,A2,removeVars,0,state2-removeVars,removeVars);
+			tempA2.copyRowsAndColsAt(extraVars,removeVars,B2,removeVars,0,state2-removeVars,extraVars-removeVars);
 
-		    FilterMatrix tempA2, tempB2, tempC2, tempD2;
+			tempB2 = new FilterMatrix(newVar2Total,newPop2);
+			tempB2.copyRowsAndColsAt(extraVars,0,B2,removeVars,extraVars-removeVars,state2-removeVars,removeVars);
 
-		    tempA2 = new FilterMatrix(newVar2Total,newVar2Total);
-		    tempA2.copyRowsAndColsAt(extraVars,extraVars,A2,removeVars,removeVars,state2-removeVars,state2-removeVars);
-		    tempA2.copyRowsAndColsAt(extraVars,0,A2,0,0,newVar2Total-extraVars,removeVars);
-		    tempA2.copyRowsAndColsAt(extraVars,removeVars,B2,0,0,newVar2Total-extraVars,extraVars-removeVars);
+			for(int i=0; i<extraVars; i++)
+			    tempB2.setElement(i,i,ComplexNumber.ONE);
 
-		    tempB2 = new FilterMatrix(newVar2Total,newPop2);
-		    tempB2.copyRowsAndColsAt(extraVars,0,B2,removeVars,extraVars-removeVars,state2-removeVars,removeVars);
-
-		    for(int i=0; i<extraVars; i++)
-			tempB2.setElement(i,i,ComplexNumber.ONE);
-
-
-		    tempC2 = new FilterMatrix(newPush2,newVar2Total);
-		    tempC2.copyColumnsAt(extraVars,C2,removeVars,state2-removeVars);
-		    tempC2.copyColumnsAt(0,C2,0,removeVars);
-		    tempC2.copyColumnsAt(removeVars,D2,0,extraVars-removeVars);
-
-		    tempD2 = new FilterMatrix(newPush2,newPop2);
-		    //	    tempD2.copyColumnsAt(extraVars,D2,removeVars,newPop2-removeVars);
-		    tempD2.copyColumnsAt(0,D2,extraVars-removeVars,removeVars);
+			
+			//LinearPrinter.println("A2init-new" + tempA2.toString());
+			//LinearPrinter.println("B2init-new" + tempB2.toString());
 
 
-
-
-		    //		    LinearPrinter.println("A2:" + tempA2.toString());
-		    //LinearPrinter.println("B2:" + tempB2.toString());
-		    //LinearPrinter.println("C2:" + tempC2.toString());
-		    //LinearPrinter.println("D2:" + tempD2.toString());
+			tempC2 = new FilterMatrix(newPush2,newVar2Total);
+			tempC2.copyColumnsAt(extraVars,C2,removeVars,state2-removeVars);
+			tempC2.copyColumnsAt(0,C2,0,removeVars);
+			tempC2.copyColumnsAt(removeVars,D2,0,extraVars-removeVars);
+			
+			tempD2 = new FilterMatrix(newPush2,newPop2);
+			tempD2.copyColumnsAt(0,D2,extraVars-removeVars,removeVars);
 
 
 
-		    FilterVector init2_temp = new FilterVector(newVar2Total);
-		    init2_temp.copyAt(0,extraVars-removeVars,init2);
+
+			//LinearPrinter.println("A2:" + tempA2.toString());
+			//LinearPrinter.println("B2:" + tempB2.toString());
+			//LinearPrinter.println("C2:" + tempC2.toString());
+			//LinearPrinter.println("D2:" + tempD2.toString());
+
+
+
+			FilterVector init2_temp = new FilterVector(newVar2Total);
+			init2_temp.copyAt(0,extraVars-removeVars,init2);
+			
+			A2 = tempA2;
+			B2 = tempB2;
+			C2 = tempC2;
+			D2 = tempD2;
+			init2 = init2_temp;
+			
+			state2 = newVar2Total;
 		    
-		    A2 = tempA2;
-		    B2 = tempB2;
-		    C2 = tempC2;
-		    D2 = tempD2;
-		    init2 = init2_temp;
-
-		    state2 = newVar2Total;
-		    
+		    }
 		}
 
 	    }

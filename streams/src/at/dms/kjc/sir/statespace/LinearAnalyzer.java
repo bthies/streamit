@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.4 2004-02-23 21:32:25 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.5 2004-03-03 20:41:50 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -257,13 +257,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // since printing the matrices takes so long, if debugging is not on,
 	    // don't even generate the string.
 	    if (LinearPrinter.getOutput()) {
-		LinearPrinter.println("Linear filter found: " + self +
+		/*	LinearPrinter.println("Linear filter found: " + self +
 				      "\n-->MatrixA:\n" + mainVisitor.getA() + 
 				      "\n-->MatrixB:\n" + mainVisitor.getB() +
 				      "\n-->MatrixC:\n" + mainVisitor.getC() +
 				      "\n-->MatrixD:\n" + mainVisitor.getD() +
 				      "\n-->Inital:\n" + mainVisitor.getInitVec());
-	    }
+		*/ }
 	    // add a mapping from the filter to its linear form.
 	    addLinearRepresentation(self, mainVisitor.getLinearRepresentation());
 	} else {
@@ -431,13 +431,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // write output for output parsing scripts (check output mode
 	    // because printing this takes a loooooong time for big matrices) 
 	    if (LinearPrinter.getOutput()) {
-		LinearPrinter.println("Linear pipeline found: " + overallPipe +
+		/*	LinearPrinter.println("Linear pipeline found: " + overallPipe +
 				      "\n-->MatrixA:\n" + newRep.getA() +
 				      "\n-->MatrixB:\n" + newRep.getB() +
 				      "\n-->MatrixC:\n" + newRep.getC() +
 				      "\n-->MatrixD:\n" + newRep.getD() +
 				      "\n-->Initial:\n" + newRep.getInit());
-	    }
+		*/ }
 	} catch (NoTransformPossibleException e) {
 	    // otherwise something bad happened in the combination process.
 	    LinearPrinter.println(" can't combine transform reps: " + e.getMessage());

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFloatLiteral.java,v 1.5 2002-07-01 21:27:22 jasperln Exp $
+ * $Id: JFloatLiteral.java,v 1.6 2003-04-06 11:57:26 thies Exp $
  */
 
 package at.dms.kjc;
@@ -94,6 +94,10 @@ public class JFloatLiteral extends JLiteral {
   public JFloatLiteral(TokenReference where, float value) {
     super(where);
     this.value = value;
+  }
+
+  public JFloatLiteral(float value) {
+      this(null, value);
   }
 
     public String toString() {

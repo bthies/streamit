@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.3 2001-10-22 22:01:24 mgordon Exp $
+ * $Id: CClassType.java,v 1.4 2003-04-06 11:57:25 thies Exp $
  */
 
 package at.dms.kjc;
@@ -84,7 +84,7 @@ public class CClassType extends CType {
     return clazz != BAC_CLASS;
   }
 
-  protected void setClass(CClass clazz) {
+  public void setClass(CClass clazz) {
     this.clazz = clazz;
   }
 

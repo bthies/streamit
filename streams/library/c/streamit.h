@@ -332,6 +332,10 @@ void streamit_filereader_work(ContextContainer c);
 stream_context *streamit_filewriter_create(char *filename);
 /** Work function for a file reader object. */
 void streamit_filewriter_work(ContextContainer c);
+/** Create a new identity filter. */
+stream_context *streamit_identity_create(void);
+/** Work function for an identity filter. */
+void streamit_identity_work(ContextContainer c);
 
 /**
  * @}

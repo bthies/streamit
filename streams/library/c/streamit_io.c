@@ -1,6 +1,6 @@
 /*
  * streamit_io.c: implementation of built-in IO filters
- * $Id: streamit_io.c,v 1.3 2001-11-16 21:56:18 karczma Exp $
+ * $Id: streamit_io.c,v 1.4 2002-08-08 21:41:43 dmaze Exp $
  */
 
 #include <stdlib.h>
@@ -73,4 +73,34 @@ void streamit_filewriter_work(ContextContainer cc)
   /* Do the fwrite() directly from the input tape. */
   INCR_TAPE_READ(c->input_tape, c->input_tape->data_size);
   fwrite(READ_ADDR(c->input_tape), c->input_tape->data_size, 1, frd->fp);
+}
+
+/* These don't really belong here (as I/O), but they do (as predefined
+ * filters). */
+stream_context *streamit_identity_create(void)
+{
+  stream_context *c;
+  
+  c = create_context(NULL);
+
+  set_stream_type(c, FILTER);
+  set_push(c, 1);
+  set_peek(c, 1);
+  set_pop(c, 1);
+  set_work(c, (work_fn)streamit_identity_work);
+  
+  return c;
+}
+
+void streamit_identity_work(ContextContainer cc)
+{
+  VARS_DEFAULTB();
+  stream_context *c = cc->context;
+  int s = c->input_tape->data_size;
+  LOCALIZE_DEFAULTB(c);
+  /* We don't have the type (though we could), do this the hard way... */
+  streamit_memcpy(__wd + __wp, __rd + __rp, s);
+  INCR_TAPE_READ(c->input_tape, s);
+  INCR_TAPE_WRITE(c->output_tape, s);
+  UNLOCALIZE_DEFAULTB(c);
 }

@@ -13,6 +13,7 @@ public class LinearTest7 extends StreamIt {
     public void init() {
 	this.add(new Source());
 	this.add(new FloatToInt());
+	this.add(new IntFilter0());
 	this.add(new IntFilter1());
 	this.add(new IntFilter2());
 	this.add(new IntFilter3());
@@ -81,6 +82,30 @@ class IntToFloat extends Filter {
 
 
 /**
+ * test using multiplication
+ **/
+class IntFilter0 extends Filter {
+    public void init() {
+	input = new Channel(Integer.TYPE, 3);
+	output = new Channel(Integer.TYPE, 3);
+    }
+    public void work() {
+	int i1 = input.popInt();
+	int i2 = input.popInt();
+	int i3 = input.popInt();
+
+	// col 3 = [0 0 2]+[0]
+	output.pushInt(i1*2);
+	// col 2 = [0 3 0]+[0]
+	output.pushInt(3*i2);
+	// col 1 = [4 0 0]+[0]
+	output.pushInt(i3*2*2);
+    }
+}
+
+
+
+/**
  * test using the bit shift operators
  **/
 class IntFilter1 extends Filter {
@@ -94,9 +119,10 @@ class IntFilter1 extends Filter {
 	int i3 = input.popInt();
 
 	// col 2 = [4 3 2]+[3]
-	output.pushInt(i1*2 + 3*i2 * 4*i3 + (3));
-	// col 1 = [.5 4 1]+[80]
-	output.pushInt(i1<<1 + i2>>2 + (i3<<3)>>3 + 5>>4);
+	output.pushInt(i1*2 + 3*i2 + 4*i3 + 3);
+	// col 1 = [1 .25 2]+[80]
+	output.pushInt((i1<<1) + (i2>>2) + ((i3<<3)>>3) + (5<<4));
+	
     }
 }
 
@@ -136,7 +162,7 @@ class IntFilter3 extends Filter {
 	int i3 = input.popInt();
 	
 	// col1= [8 4 2]+[8]
-	output.pushInt(i1<<1 +i2<<2 + i3<<3 + 1<<3);
+	output.pushInt((i1<<1) + (i2<<2) + (i3<<3) + (1<<3));
 	    
     }
 }
@@ -162,7 +188,7 @@ class IntFilter4 extends Filter {
 }
 
 /**
- * ___Really___ Simple shift expressions
+ * Another simple shift expressions
  **/
 class IntFilter5 extends Filter {
     public void init() {
@@ -187,7 +213,7 @@ class IntFilter5 extends Filter {
 }
 
 /**
- * ___Really___ Simple shift expressions
+ * Simple shift expressions
  * Start combining the expressions
  **/
 class IntFilter6 extends Filter {
@@ -201,7 +227,7 @@ class IntFilter6 extends Filter {
 	int i3 = input.popInt();
 	
 	// col3= [0 4 4]+[0]
-	output.pushInt(i1<<2 + i2<<2);
+	output.pushInt((i1<<2) + (i2<<2));
 
 	// col2= [0 8 0]+[0]
 	output.pushInt(i2<<3);

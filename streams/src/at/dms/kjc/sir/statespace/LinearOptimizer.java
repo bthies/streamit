@@ -11,6 +11,7 @@ public class LinearOptimizer {
 	int inputs = l.getPopCount();
 	int totalRows = states + outputs;
 	int totalCols = states + inputs;
+	boolean preNeeded = l.preworkNeeded();
 
 	FilterVector init = l.getInit();
 
@@ -18,7 +19,17 @@ public class LinearOptimizer {
 	totalMatrix.copyAt(0,0,l.getA());
 	totalMatrix.copyAt(0,states,l.getB());
 	totalMatrix.copyAt(states,0,l.getC());
-	//totalMatrix.copyAt(states,states,l.getD());
+
+	FilterMatrix totalPreMatrix = null;
+
+	if(preNeeded) {
+	    int totalPreCols = states + l.getPreWorkPopCount();
+	    totalPreMatrix = new FilterMatrix(totalRows,totalPreCols);
+
+	    totalPreMatrix.copyAt(0,0,l.getPreWorkA());
+	    totalPreMatrix.copyAt(0,states,l.getPreWorkB());
+	}
+
 
 	int i = states-1;
 	int j = totalCols-1;
@@ -56,6 +67,8 @@ public class LinearOptimizer {
 	    
 		if(r >= 0) {
 		    totalMatrix.swapRowsAndCols(r,i);
+		    if(preNeeded)
+			totalPreMatrix.swapRowsAndCols(r,i);
 		    init.swapCols(r,i);
 
 		    LinearPrinter.println("SWAPPED " + i + " " + r);
@@ -70,8 +83,14 @@ public class LinearOptimizer {
 		for(int k=0; k<i; k++) {
 		    if(!totalMatrix.getElement(k,j).equals(ComplexNumber.ZERO)) {
 			double temp = totalMatrix.getElement(k,j).getReal();
-			totalMatrix.addRowAndCol(i,k,-temp/curr);
-			init.addCol(k,i,-temp/curr);
+			double val = -temp/curr;
+			totalMatrix.addRowAndCol(i,k,val);
+			if(preNeeded)
+			    totalPreMatrix.addRowAndCol(i,k,val);
+			init.addCol(k,i,val);
+
+
+			LinearPrinter.println("ADDED MULTIPLE " + i + " " + k + " " + val);
 			
 		    }
 		}
@@ -84,7 +103,7 @@ public class LinearOptimizer {
 	if(i==j)
 	    LinearPrinter.println("i = j = " + i);
 
-	FilterMatrix newA,newB,newC,newD,newpreA,newpreB;
+	FilterMatrix newA,newB,newC,newD;
 	FilterVector newInit;
 	LinearFilterRepresentation newRep;
 
@@ -96,9 +115,22 @@ public class LinearOptimizer {
 	newA.copyRowsAndColsAt(0,0,totalMatrix,0,0,states,states);
 	newB.copyRowsAndColsAt(0,0,totalMatrix,0,states,states,inputs);
 	newC.copyRowsAndColsAt(0,0,totalMatrix,states,0,outputs,states);
-	//newD.copyRowsAndColsAt(0,0,totalMatrix,states,states,outputs,inputs);
 
-	newRep = new LinearFilterRepresentation(newA,newB,newC,newD,l.getStoredInputCount(),init);
+	if(preNeeded) {
+
+	    int preInputs = l.getPreWorkPopCount();
+
+	    FilterMatrix newPreA = new FilterMatrix(states,states);
+	    FilterMatrix newPreB = new FilterMatrix(states,preInputs);
+
+	    newPreA.copyRowsAndColsAt(0,0,totalPreMatrix,0,0,states,states);
+	    newPreB.copyRowsAndColsAt(0,0,totalPreMatrix,0,states,states,preInputs);
+
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,newPreA,newPreB,l.getStoredInputCount(),init);
+
+	}
+	else
+	    newRep = new LinearFilterRepresentation(newA,newB,newC,newD,l.getStoredInputCount(),init);
 
 	return newRep;
     }

@@ -37,7 +37,7 @@ public class LinearTransformFeedback extends LinearTransform {
 	B2 = bodyRep.getB();
 	C2 = bodyRep.getC();
 	D2 = bodyRep.getD();
-	init2 = loopRep.getInit();
+	init2 = bodyRep.getInit();
 
 	totalInput = inputToBody;
 	totalOutput = bodyToOutput;

@@ -658,4 +658,12 @@ public abstract class Filter extends Stream
     {
         // this function doesn't need to do anything
     }
+
+    public Stream getChild(int nChild)
+    {
+        ERROR ("Filters do not have children!");
+        return null;
+    }
+     
+
 }

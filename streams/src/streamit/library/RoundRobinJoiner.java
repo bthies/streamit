@@ -25,6 +25,11 @@ public class RoundRobinJoiner extends Joiner
         this.weight = weight;
     }
 
+    /*
+
+    This work function has been replaced by a single work function
+    in Joiner (parent of this class)
+    
     public void work ()
     {
         int inputIndex;
@@ -38,6 +43,7 @@ public class RoundRobinJoiner extends Joiner
             }
         }
     }
+    */
 
     public int [] getWeights ()
     {

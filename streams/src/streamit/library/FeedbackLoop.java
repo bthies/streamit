@@ -388,6 +388,17 @@ public class FeedbackLoop extends Stream
     public Splitter getSplitter () { return splitter; }
     public Joiner getJoiner () { return joiner; }
 
+
+    public Stream getChild(int nChild)
+    {
+        if (nChild == 0) return getBody ();
+        if (nChild == 0) return getLoop ();
+        
+        ERROR ("FeedbackLoop only has two children!");
+        
+        return null;
+    }
+     
     /**
      * initialize the loop - push index-th element into the feedback loop channel.
      * these initPath functions are implemented for many different types that

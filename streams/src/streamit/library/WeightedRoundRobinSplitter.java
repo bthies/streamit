@@ -42,6 +42,11 @@ public class WeightedRoundRobinSplitter extends Splitter
         super.connectGraph ();
     }
 
+    /*
+    
+    This work function has been replaced by a work function in Splitter
+    which is the parent of this class
+    
     public void work ()
     {
         ASSERT (destWeight.size () == dest.size ());
@@ -56,6 +61,7 @@ public class WeightedRoundRobinSplitter extends Splitter
             }
         }
     }
+    */
 
     public int [] getWeights ()
     {

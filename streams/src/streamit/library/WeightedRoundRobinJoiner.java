@@ -42,6 +42,11 @@ public class WeightedRoundRobinJoiner extends Joiner
         super.connectGraph();
     }
 
+    /*
+
+    This work function has been replaced by a single work function
+    in Joiner (parent of this class)
+    
     public void work()
     {
         ASSERT(srcsWeight.size() == srcs.size());
@@ -60,6 +65,7 @@ public class WeightedRoundRobinJoiner extends Joiner
             }
         }
     }
+    */
 
     public int[] getWeights()
     {

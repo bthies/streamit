@@ -18,54 +18,103 @@ package streamit.library;
 
 import java.util.*;
 // 1 input, many output
+
+import streamit.misc.Pair;
+
+import streamit.library.iriter.SplitJoinIter;
+import streamit.library.iriter.FeedbackLoopIter;
+
 abstract public class Splitter extends Operator
 {
-    List dest = new ArrayList ();
+    public static boolean finegrained = false;
+
+    List dest = new ArrayList();
     public Channel input = null;
-    public Channel output [] = null;
+    public Channel output[] = null;
 
-    public void init () { }
+    public void init()
+    {}
 
-    abstract public void work ();
-    
-    void add (Stream s)
+    SplitJoinIter sjIter;
+    FeedbackLoopIter flIter;
+
+    public void useSJ(SplitJoinIter sj)
     {
-        dest.add (s);
+        sjIter = sj;
     }
 
-    public boolean isOutputUsed (int index)
+    public void useFL(FeedbackLoopIter fl)
+    {
+        flIter = fl;
+    }
+
+    int nWork = 0;
+
+    public void work()
+    {
+        int throughput[] =
+            (sjIter != null
+                ? sjIter.getSplitPushWeights(nWork)
+                : flIter.getSplitPushWeights(nWork));
+
+        int totalWork =
+            (sjIter != null
+                ? sjIter.getSplitterNumWork()
+                : flIter.getSplitterNumWork());
+
+        nWork++;
+        nWork = nWork % totalWork;
+
+        for (int nCh = 0; nCh < dest.size(); nCh++)
+        {
+            for (int nData = 0; nData < throughput[nCh]; nData++)
+            {
+                passOneData(input, output[nCh]);
+            }
+
+        }
+
+    }
+
+    void add(Stream s)
+    {
+        dest.add(s);
+    }
+
+    public boolean isOutputUsed(int index)
     {
         return true;
     }
 
-    public void connectGraph ()
+    public void connectGraph()
     {
         // do I even have anything to do?
-        if (dest.isEmpty ()) return;
+        if (dest.isEmpty())
+            return;
 
         // yep, create an output array of appropriate size
-        output = new Channel [dest.size ()];
+        output = new Channel[dest.size()];
 
         // go through my members and connect them all with
         // ChannelConnectFilter
         int outputIndx = 0;
-        ListIterator iter = dest.listIterator ();
-        while (iter.hasNext ())
+        ListIterator iter = dest.listIterator();
+        while (iter.hasNext())
         {
             // get the stream
-            Stream s = (Stream) iter.next ();
+            Stream s = (Stream)iter.next();
 
             // it is possible that the stream will legitimately be null
             // just don't do anything in this case!
             if (s != null)
             {
-                ASSERT (s != null);
+                ASSERT(s != null);
 
                 // connect it and retrieve its input and copy it into
                 // the output array for this splitter
-                s.setupOperator ();
-                Channel channel = s.getIOField ("input");
-                output [outputIndx] = channel;
+                s.setupOperator();
+                Channel channel = s.getIOField("input");
+                output[outputIndx] = channel;
 
                 // if it is not a source, make sure that it consumes data
                 // of the same kind as everything else in this Splitter
@@ -74,31 +123,57 @@ abstract public class Splitter extends Operator
                     // handle input channel
                     if (input == null)
                     {
-                        input = new Channel (channel);
-                        input.setSink (this);
-                    } else {
+                        input = new Channel(channel);
+                        input.setSink(this);
+                    }
+                    else
+                    {
                         // check that the input types agree
-                        ASSERT (channel.getType ().getName ().equals (input.getType ().getName ()),
-				"input type = " + input.getType().getName() + " but channel type = " + channel.getType().getName());
+                        ASSERT(
+                            channel.getType().getName().equals(
+                                input.getType().getName()),
+                            "input type = "
+                                + input.getType().getName()
+                                + " but channel type = "
+                                + channel.getType().getName());
                     }
 
                     // now connect the channel to the Splitter
-                    channel.setSource (this);
+                    channel.setSource(this);
                 }
             }
 
-            outputIndx ++;
+            outputIndx++;
         }
     }
 
-    public String toString() {
-	return "joiner";
+    public String toString()
+    {
+        return "joiner";
+    }
+
+    Pair splitWorks[];
+
+    public Object getWork(int nWork)
+    {
+        if (splitWorks == null)
+        {
+            splitWorks =
+                new Pair[sjIter != null
+                    ? sjIter.getSplitterNumWork()
+                    : flIter.getSplitterNumWork()];
+        }
+        if (splitWorks[nWork] == null)
+        {
+            splitWorks[nWork] = new Pair(this, new Integer(nWork));
+        }
+
+        return splitWorks[nWork];
     }
 
     // ----------------------------------------------------------------
     // This function constructs a weights list for the scheduler
     // ----------------------------------------------------------------
-    abstract public int [] getWeights ();
-    public abstract int getConsumption ();
+    abstract public int[] getWeights();
+    public abstract int getConsumption();
 }
-

@@ -682,6 +682,11 @@ public class SplitJoin extends Stream
     {
         return (Stream) childrenStreams.get(n);
     }
+    public Stream getChild(int nChild)
+    {
+        return getChildN (nChild);
+    }
+     
     public Splitter getSplitter()
     {
         return splitter;

@@ -348,6 +348,11 @@ public class Pipeline extends Stream
     public int getNumChildren () { return streamElements.size (); }
     public Stream getChildN (int n) { return (Stream) streamElements.get (n); }
     
+    public Stream getChild(int nChild)
+    {
+        return getChildN (nChild);
+    }
+     
     // connectGraph will walk the entire subgraph (so it should be called
     // on the "master", encapsulating Stream) and give each element
     // this function works in the following way:

@@ -23,6 +23,14 @@ public class RoundRobinSplitter extends Splitter
     {
         this.weight = weight;
     }
+    
+    
+    
+    /*
+    
+    This work function has been replaced by a work function in Splitter
+    which is the parent of this class
+    
     public void work ()
     {
         int outputIndex;
@@ -35,6 +43,7 @@ public class RoundRobinSplitter extends Splitter
             }
         }
     }
+    */
 
     public int [] getWeights ()
     {

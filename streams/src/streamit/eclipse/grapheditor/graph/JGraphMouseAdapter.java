@@ -8,7 +8,7 @@ import java.awt.event.MouseAdapter;
 
 import org.jgraph.JGraph;
 
-
+  
 /**
  * MouseAdapter for a given JGraph 
  * @author jcarlos

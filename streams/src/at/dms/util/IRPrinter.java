@@ -355,7 +355,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("name", ident);
         attrList("implements", interfaces);
         visitClassBody(new JTypeDeclaration[0], 
-		       JFieldDeclaration.EMPTY,
+		       JFieldDeclaration.EMPTY(),
 		       methods, body);
         blockEnd();
     }

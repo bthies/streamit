@@ -15,12 +15,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.7 2002-03-07 01:46:27 thies Exp $
+ * $Id: Utils.java,v 1.8 2002-03-07 13:30:43 thies Exp $
  */
 
 package at.dms.util;
 
 import at.dms.kjc.*;
+import at.dms.kjc.sir.lowering.LoweringConstants;
 import java.lang.reflect.Array;
 import java.util.Vector;
 import java.util.List;
@@ -233,6 +234,58 @@ public abstract class Utils implements Serializable {
   public static String[] splitQualifiedName(String name) {
     return splitQualifiedName(name, '/');
   }
+
+    /**
+     * Returns a block with a loop counter declaration and a for loop
+     * that executes <contents> for <count> number of times.  If the
+     * count is just one, then return the body instead of a loop.
+     */
+    public static JStatement makeForLoop(JStatement body, int count) {
+	if (count<=0) {
+	    // if the count isn't positive, return an empty statement
+	    return new JEmptyStatement(null, null); 
+	} else if (count==1) {
+	    // if the count is one, then just return the body
+	    return body;
+	}
+	// define a variable to be our loop counter
+	JVariableDefinition var = 
+	    new JVariableDefinition(/* where */ null,
+				    /* modifiers */ 0,
+				    /* type */ CStdType.Integer,
+				    /* ident */ 
+				    LoweringConstants.getUniqueVarName(),
+				    /* initializer */
+				    new JIntLiteral(0));
+	// make a declaration statement for our new variable
+	JVariableDeclarationStatement varDecl =
+	    new JVariableDeclarationStatement(null, var, null);
+	// make a test if our variable is less than <count>
+	JExpression cond = 
+	    new JRelationalExpression(null,
+				      Constants.OPE_LT,
+				      new JLocalVariableExpression(null, var),
+				      new JIntLiteral(count));
+	// make an increment for <var>
+	JStatement incr = 
+	    new JExpressionStatement(null,
+				     new JPostfixExpression(null,
+							    Constants.
+							    OPE_POSTINC,
+			       new JLocalVariableExpression(null, var)),
+				     null);
+	// make the for statement
+	JStatement forStatement = 
+	    new JForStatement(/* tokref */ null,
+			      /* init */ new JEmptyStatement(null, null),
+			      cond,
+			      incr,
+			      body,
+			      /* comments */ null);
+	// return the block
+	JStatement[] statements = {varDecl, forStatement};
+	return new JBlock(null, statements, null);
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

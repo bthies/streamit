@@ -173,8 +173,9 @@ class LTPFilter extends Filter
     public void work()  //output:  drpp
     {
 	short i, nr, brp, drpp;
-	short mBcr = input.popShort();  //mLtpGain
-	short mNcr = input.popShort();  //mLtpOffset
+	short mBcr, mNcr;
+        mBcr = input.popShort();  //mLtpGain
+	mNcr = input.popShort();  //mLtpOffset
 	//do it!
 	for (i = 0; i < 160; i++)
 	    {

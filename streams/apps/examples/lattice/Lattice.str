@@ -1,0 +1,74 @@
+// this file needs ~/streams/apps/examples/delay/DelayOne.str
+
+// this generates the delays in the lattice structure
+float->float splitjoin LatDel {
+    split duplicate;
+    add Identity<float>();
+    add DelayOne();
+    join roundrobin;
+}
+
+// this is the intermediate stage of the lattice filter
+float->float filter LatFilt(float k_par) {
+    work pop 2 peek 2 push 2 {
+	float e_i = 0;
+	float e_bar_i = 0;
+	e_i = peek(0) - k_par*peek(1);
+	e_bar_i = peek(1) - k_par*peek(0);
+	push(e_i);
+	push(e_bar_i);
+	pop();
+	pop();
+    }
+}
+
+//this stage is the first stage of a lattice filter
+float->float splitjoin ZeroStage {
+    split duplicate;
+    add Identity<float>();
+    add Identity<float>();
+    join roundrobin;
+}
+
+// this class combines the delaying phase and coefficients
+float->float pipeline CompStage(float k_par) {
+    add LatDel();
+    add LatFilt(k_par);
+}
+
+// this class is the last stage of a lattice filter
+float->void filter LastStage {
+    work pop 2 {
+	print(pop());
+	pop();
+    }
+}
+
+void->float filter Counter {
+    float i;
+    init {
+	i = 1;
+    }
+
+    work push 1 {
+	push(i);
+	i = 0;
+    }
+}
+
+void->void pipeline Lattice {
+    add Counter();
+    add ZeroStage();
+    for (int i = 2; i < 10; i++) add CompStage(i);
+    add LastStage();
+}
+   
+
+
+
+
+
+
+
+
+

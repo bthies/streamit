@@ -63,6 +63,14 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Construct a new SIRPipeline with empty fields and methods.
+     */
+    public SIRFeedbackLoop(SIRContainer parent,
+			   String ident) {
+	this(parent, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY() );
+    }
+
+    /**
      * Returns the output type of this.
      */
     public CType getOutputType() {

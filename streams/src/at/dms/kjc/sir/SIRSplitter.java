@@ -180,7 +180,7 @@ public class SIRSplitter extends SIROperator {
     }
 
     public String toString() {
-	return "SIRSplitter:"+getIdent();
+	return "SIRSplitter:"+getName();
     }
 
     /**

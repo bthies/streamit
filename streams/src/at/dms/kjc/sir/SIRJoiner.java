@@ -173,6 +173,10 @@ public class SIRJoiner extends SIROperator {
 	return type.toString() + "_Joiner";
     }
 
+    public String toString() {
+	return "SIRJoiner:"+getName();
+    }
+
     /**
      * Returns JExpression weights of this.
      */

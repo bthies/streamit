@@ -68,8 +68,7 @@ public class FuseSimpleSplit {
 					     SRepInfo rep,
 					     SRate rate,
 					     SIRFilter newFilter) {
-	SIRPipeline pipe = new SIRPipeline(sj.getParent(), "Wrapper_for_" + newFilter.getName(),
-					   JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+	SIRPipeline pipe = new SIRPipeline(sj.getParent(), newFilter.getName() + "_Wrap");
 	// make a dummy init function
 	pipe.setInit(SIRStream.makeEmptyInit());
 

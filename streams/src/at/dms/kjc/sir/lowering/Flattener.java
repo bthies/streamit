@@ -72,8 +72,6 @@ public class Flattener {
 	// dump the original graph to a dot format
 	StreamItDot.printGraph(str, "before.dot");
 
-	AdjustGranularity.doit(str, -1);
-
 	if (KjcOptions.fusion) {
 	    System.err.print("Running FuseAll...");
 	    FuseAll.fuse(str);

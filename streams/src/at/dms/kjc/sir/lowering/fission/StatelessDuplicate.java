@@ -127,11 +127,7 @@ public class StatelessDuplicate {
 	makeDuplicates();
 
 	// make result
-	SIRSplitJoin result 
-	    = new SIRSplitJoin(origFilter.getParent(),
-			       origFilter.getName() + "_SplitJoin",
-			       new JFieldDeclaration[0], /* fields */
-			       new JMethodDeclaration[0] /* methods */);
+	SIRSplitJoin result = new SIRSplitJoin(origFilter.getParent(), origFilter.getIdent() + "_Fiss");
 
 	// replace in parent
 	origFilter.getParent().replace(origFilter, result);

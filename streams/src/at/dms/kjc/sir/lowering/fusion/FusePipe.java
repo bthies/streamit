@@ -139,8 +139,7 @@ public class FusePipe {
 	    internalFuse(parent);
 	} else {
 	    // otherwise, create a sub-pipeline to contain first..last.
-	    SIRPipeline newPipe = new SIRPipeline(parent, parent.getIdent() + "_Cont",
-						  JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+	    SIRPipeline newPipe = new SIRPipeline(parent, parent.getIdent() + "_Cont");
 	    for (int i=lastIndex; i>=firstIndex; i--) {
 		newPipe.add(0, parent.get(i), parent.getParams(i));
 		parent.remove(i);

@@ -20,6 +20,31 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     private SIRJoiner joiner;
 
     /**
+     * Construct a new SIRSplitJoin with the given fields and methods.
+     */
+    public SIRSplitJoin(SIRContainer parent,
+			String ident,
+			JFieldDeclaration[] fields,
+			JMethodDeclaration[] methods) {
+	super(parent, ident, fields, methods);
+    }
+
+    /**
+     * Construct a new SIRSplitJoin with empty fields and methods.
+     */
+    public SIRSplitJoin(SIRContainer parent,
+			String ident) {
+	super(parent, ident, JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY() );
+    }
+
+    /**
+     * Construct a new SIRPipeline with null fields, parent, and methods.
+     */
+    public SIRSplitJoin() {
+	super();
+    }
+
+    /**
      * sets the splitter for this SplitJoin, and sets the parent of
      * <b>s</b> to be this.
      */
@@ -298,22 +323,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 				init,
 				splitter,
 				joiner);
-    }
-
-    /**
-     * Construct a new SIRPipeline with the given fields and methods.
-     */
-    public SIRSplitJoin(SIRContainer parent,
-			String ident,
-			JFieldDeclaration[] fields,
-			JMethodDeclaration[] methods) {
-	super(parent, ident, fields, methods);
-    }
-     /**
-     * Construct a new SIRPipeline with null fields, parent, and methods.
-     */
-    public SIRSplitJoin() {
-	super();
     }
 
     public String toString() {

@@ -147,7 +147,7 @@ portal *create_portal(void);
 void register_receiver(portal *p, stream_context *receiver,
                        interface_table *vtbl, latency *l);
 /* void register_sender(portal *p, stream_context *sender, latency *l); */
-void send_message(portal *p, int msgid, latency *l, ...);
+void send_message(portal *p, int msgid, latency *l, void *params);
 void streamit_run(stream_context *c);
 
 #endif /* STREAMIT_H */

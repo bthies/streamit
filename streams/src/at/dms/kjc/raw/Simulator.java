@@ -9,6 +9,10 @@ public abstract class Simulator {
     
     public static HashMap initJoinerCode;
     public static HashMap steadyJoinerCode;
+    
+    public FlatNode toplevel;
 
     public abstract void simulate(FlatNode top);
+    public abstract boolean canFire(FlatNode node, HashMap executionCounts, 
+				    SimulationCounter counters);
 }

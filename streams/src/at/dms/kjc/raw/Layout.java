@@ -605,7 +605,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	     
 	     //we only map joiners and filters to tiles and they each have
 	     //only one output
-	     Iterator downstream = getDownStreamReal(node).iterator();
+	     Iterator downstream = getDownStream(node).iterator();
 	     int y=getTile(node).getRow();
 	     while(downstream.hasNext()) {
 		 FlatNode n = (FlatNode)downstream.next();
@@ -635,7 +635,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     }
 
     private static String shortName(String str) {
-	return str.substring(0, Math.min(str.length(), 15));
+	//	return str.substring(0, Math.min(str.length(), 15));
+	return str;
     }
 
     private static HashSet getDownStream(FlatNode node) 
@@ -644,30 +645,18 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return new HashSet();
 	HashSet ret = new HashSet();
 	for (int i = 0; i < node.ways; i++) {
-	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],true));
+	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
 	}
 	return ret;
     }
 
-    private static HashSet getDownStreamReal(FlatNode node) 
-    {
-	if (node == null)
-	    return new HashSet();
-	HashSet ret = new HashSet();
-	for (int i = 0; i < node.ways; i++) {
-	    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],false));
-	}
-	return ret;
-    }
-    
-
-    private static HashSet getDownStreamHelper(FlatNode node,boolean addZeros) {
+    private static HashSet getDownStreamHelper(FlatNode node) {
 	if (node == null)
 	    return new HashSet();
 	
 	if (node.contents instanceof SIRFilter) {
 	    if (identities.contains(node))
-		return getDownStreamHelper(node.edges[0],addZeros);
+		return getDownStreamHelper(node.edges[0]);
 	    HashSet ret = new HashSet();
 	    ret.add(node);
 	    return ret;
@@ -678,7 +667,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		ret.add(node);
 		return ret;
 	    }	
-	    else return getDownStreamHelper(node.edges[0],addZeros);
+	    else return getDownStreamHelper(node.edges[0]);
 	}
 	else if (node.contents instanceof SIRSplitter) {
 	    HashSet ret = new HashSet();
@@ -694,9 +683,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	      }
 			  */
 	    for (int i = 0; i < node.ways; i++) {
-		//if(addZeros||(node.weights[i]!=0))
 		if(node.weights[i]!=0)
-		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i],addZeros));
+		    RawBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
 	    }
 	    return ret;
 	}
@@ -704,10 +692,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	
 	return null;
     }
-    
-      
-    
-	    
+        
     //but not north neighbor or west
     private static List getNeighbors(Coordinate coord) 
     {

@@ -14,14 +14,14 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Iterator;
-
+import at.dms.kjc.sir.lowering.partition.WorkEstimate;
 
 /**
  * This class generates a schedule for the switch code by simulating the 
  * init schedule and one
  * steady state execution of the schedule
  */
-public class FineGrainSimulator extends Simulator  implements FlatVisitor
+public class WorkBasedSimulator extends Simulator  implements FlatVisitor
 {
     
     private HashMap switchSchedules;
@@ -37,9 +37,24 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
     //true if we are simulating the init schedule
     private boolean initSimulation;
 
+
+    //variable for the event-driven simulation
+    private int currentTime;
+    //the heap of waiting to execute events
+    private EventHeap eventHeap;
+    //all the nodes that are currently executing...
+    //well this is really all the nodes that have received enough data
+    //to fire and cannot receive any more
+    private HashSet firingNodes;
+    //the queue of items ready to be injected onto the network...
+    //the pendingQueue needs to be a linked list so that we pop off of it in the same order 
+    //we added to it...FIFO
+    private LinkedList pendingQueue;
+    
+
     public void simulate(FlatNode top) 
     {
-	System.out.println("FineGrainSimulator Running...");
+	System.out.println("WorkBasedSimulator Running...");
 	
 	initJoinerCode = new HashMap();
         steadyJoinerCode = new HashMap();
@@ -58,30 +73,35 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
 	joinerCode = initJoinerCode;
 	
-	//	System.out.println("\n\nInit Execution Counts");
+	//System.out.println("\n\nInit Execution Counts");
 	//RawBackend.printCounts(RawBackend.initExecutionCounts);
 	
-	initSchedules = (new FineGrainSimulator(top, true)).goInit(initExecutionCounts, counters, null);
+	//the init simulation stays the same, based on a furthest downstream will fire
+	//one will notice all of the if (initSimulation) cases in the functions
+	initSchedules = (new WorkBasedSimulator(top, true)).goInit(initExecutionCounts, counters, null);
 	testExecutionCounts(initExecutionCounts);
 	System.out.println("End of init simulation");
 	
 	//System.out.println("\n\nSteady Execution Counts");
 	//RawBackend.printCounts(RawBackend.steadyExecutionCounts);
 
+	//reset the necessary counters in the simulation, such as the 
+	//execution counts
 	counters.resetBuffers();
 
+	//now run the simulator based on the work estimation
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new FineGrainSimulator(top, false)).go(steadyExecutionCounts, counters, null);
+	steadySchedules = (new WorkBasedSimulator(top, false)).go(steadyExecutionCounts, counters, null);
 	testExecutionCounts(steadyExecutionCounts);
 	System.out.println("End of steady-state simulation");
     }
     
     
-    public FineGrainSimulator() {
+    public WorkBasedSimulator() {
     }
     
 
-    private FineGrainSimulator(FlatNode top, boolean init) 
+    private WorkBasedSimulator(FlatNode top, boolean init) 
     {
 	switchSchedules = new HashMap();
 	currentJoinerCode = new HashMap();
@@ -170,24 +190,23 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	}
     }
     
+
     //The start of the simulation for the initialization schedule
     private HashMap goInit(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
     {
 	//create the initpath calls
 	callInitPaths(counters);
-	//simulate
-	return go(counts, counters, lastToFire);
+	return goInitLoop(counts, counters, lastToFire);
     }
-	    
- 
-    /* the main simulation method */
-    private HashMap go(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    
+    //the initialization phase simulation loop...
+    private HashMap goInitLoop(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
     {
 	FlatNode fire, dest;
-		
+	//simulate
 	while(true) {
 	    //find out who should fire
-	    fire = whoShouldFire(lastToFire, counts, counters);
+	    fire = whoShouldFireDownStream(lastToFire, counts, counters);
 	    //if no one left to fire, stop
 	    if (fire == null)
 		break;
@@ -197,7 +216,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //1 item for a joiner, push items for a filter
 	    for (int i = 0; i < items; i++) {
 		//get the destinations of this item
-		//could be multiple dests with duplicate splitters
+		//could be multiple dest with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
 		if (KjcOptions.magic_net) {
 		    //generating code for the raw magic network
@@ -213,10 +232,284 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		}
 		//see if anyone downstream can fire
 		//if (fire != lastToFire)
-		go(counts, counters, fire);
+		goInit(counts, counters, fire);
 	    }
 	}
 	return switchSchedules;
+    }
+	    
+ 
+    /* the main simulation method */
+    private HashMap go(HashMap counts, SimulationCounter counters, FlatNode lastToFire) 
+    {
+	currentTime = 0;
+	eventHeap = new EventHeap();
+	firingNodes = new HashSet();
+	pendingQueue = new LinkedList();
+
+	//this will add the event for the source nodes
+	addEvents(counts, counters, this);
+	
+	//the simulation loop
+	do {
+	    /*	    
+		   System.out.println("-----------------------");
+		   System.out.println("Pending:");
+		   Iterator pit = pendingQueue.iterator();
+		   while (pit.hasNext()) {
+		   SimulatorEvent e = (SimulatorEvent)pit.next();
+		   System.out.println(e.node + " " + e.time + " " + e.isLast);
+		   }
+		   System.out.println("--------");
+		   System.out.println("Scheduled");
+		   Iterator sit = eventHeap.iterator();
+		   while (sit.hasNext()) {
+		   SimulatorEvent e = (SimulatorEvent)sit.next();
+		   System.out.println(e.node + " " + e.time + " " + e.isLast);
+		   }
+		   System.out.println("--------");
+	    */
+	    //get next node to fire and fire it
+	    SimulatorEvent event = eventHeap.getNextEvent();
+	    if (event != null) {
+		//increment the simulation time
+		currentTime = event.time;
+		FlatNode fire = event.node;
+		//System.out.println("sending from " + event.node.contents.getName() + " " + currentTime);
+		//simulate the firings
+		//1 item for a joiner, push items for a filter
+		if (KjcOptions.magic_net) {
+		    //generating code for the raw magic network
+		    appendMagicNetNodes(fire, event.dests);
+		    
+		}
+		else {
+		    //not generating code for the magic network
+		    //generate switch code for all intermediate
+		    //hops
+		    generateSwitchCode(fire, event.dests);
+		} 
+		//update the simulation state to reflect the sent item...
+		sendItemUpdate(fire, event.dests, counts, counters);
+
+		//this node is finished firing, remove it from the list of firing nodes...
+		if (event.isLast)
+		    firingNodes.remove(fire);
+	    }	    
+	    //add events for nodes that can fire...
+	    addEvents(counts, counters, this);
+	    /*
+	      if (!pendingQueue.isEmpty() && eventHeap.isEmpty()) {
+	      Iterator it = pendingQueue.iterator();
+	      while (it.hasNext()) {
+	      SimulatorEvent e = (SimulatorEvent)it.next();
+	      System.out.println(e.node + " " + e.time + " " + e.isLast);
+	      }
+	    }
+	    */	    
+	} while (!eventHeap.isEmpty() || !pendingQueue.isEmpty());
+
+	return switchSchedules;
+    }
+
+    private void sendItemUpdate(FlatNode src, List dests, HashMap counts, SimulationCounter counters) 
+    {
+	//create the joiner schedule node that will place this item on the switch processor
+	//extracting it from the proper buffer...
+	if (src.isJoiner()) {
+	    //this joiner fired because it has data that can be sent downstream
+	    JoinerScheduleNode current = new JoinerScheduleNode();
+	    current.buffer = counters.getJoinerBuffer(src);
+	    current.type = JoinerScheduleNode.FIRE;
+	    addJoinerCode(src, current);
+	    //decrement the buffer
+	    counters.decrementJoinerBufferCount(src, counters.getJoinerBuffer(src));
+	    //step the schedule
+	    counters.incrementJoinerSchedule(src);
+
+	}
+
+	//increment the incoming buffer count at the dests
+	Iterator destsIt = dests.iterator();
+	//remember what we visited for duplicate identity removal
+	HashSet visited = new HashSet();
+	
+	//now, update the necessary state at the destination
+	while (destsIt.hasNext()) {
+	    FlatNode dest = (FlatNode)destsIt.next();
+	    counters.incrementBufferCount(dest);
+	    if (dest.isJoiner()) {
+		counters.decrementBufferCount(dest, 1);
+		//get the joiner buffer as determined by getDestination and stored in a list 
+		//		String joinerBuffer = counters.getJoinerReceiveBuffer(dest);
+		//System.out.println(src.contents.getName() + " to joiner Buffer (Receive): " + joinerBuffer);//
+
+		//try this bitches!!!!
+		//get the buffer this item is being sent to...
+		String joinerBuffer = buildJoinerBufferString(src, src.edges[0], dest);
+		//record that the data was placed in this buffer...
+		counters.incrementJoinerBufferCount(dest, joinerBuffer);
+		//add to the joiner code for this dest
+		JoinerScheduleNode current = new JoinerScheduleNode();
+		current.buffer = joinerBuffer;
+		//if we have seen this dest already, then we are passing
+		//thru a duplicate splitter with identity filters...
+		//create the code to duplicate the item inside the joiner
+		if (visited.contains(dest))
+		    current.type = JoinerScheduleNode.DUPLICATE;
+		else //otherwise, normal receive
+		    current.type = JoinerScheduleNode.RECEIVE;
+		addJoinerCode(dest, current);
+		
+		visited.add(dest);
+	    }
+	}
+    }
+    
+
+    private void addEvents(HashMap exeCounts, SimulationCounter sCounters, Simulator sim)
+    {
+	buildandQueueEvents(exeCounts, sCounters, sim);
+	moveFromPendingtoScheduled();
+    }
+    
+    //find all nodes that can fire and put them in the queue of pending sends.  These
+    //sends are waiting to be scheduled 
+    private void buildandQueueEvents(HashMap exeCounts, SimulationCounter sCounters, Simulator sim) 
+    {
+	//find all nodes that can fire, without 
+	//regard to if they are already scheduled to fire
+	HashSet nodes = NodesToFire.whoCanFire(exeCounts, sCounters, sim);
+	
+	//now, remove the nodes that already have send events pending...
+	Iterator firing = firingNodes.iterator();
+	while (firing.hasNext())
+	    nodes.remove(firing.next());
+	
+	//now, put each item to be fired from each node in <nodes> into the pending queue
+	Iterator nodesIt = nodes.iterator();
+	
+	while (nodesIt.hasNext()) {
+	    FlatNode node = (FlatNode)nodesIt.next();
+	    //System.out.println("placing " + node.contents.getName() + " in the pending queue.");
+	    
+
+	    //perform the firing
+	    //keep track of everything needed when a node fires
+	    int items = fireMe(node, sCounters, exeCounts);
+	    
+	    for (int i = 0; i < items; i++) {
+		//if this is the last item, set isLast to true
+		boolean isLast = (i == items - 1);
+		
+		SimulatorEvent event = new SimulatorEvent("send", i, node, 
+							  getDestination(node, sCounters), 
+							  isLast);
+		//		System.out.println("Creating Event " + node.contents.getName() + " " + i);
+		pendingQueue.add(event);
+		
+	    }
+	    
+	    //add this node to the list of firing nodes...
+	    if (items > 0)
+		firingNodes.add(node);
+	}
+	
+    }
+    
+    //move events from the pending queue and schedule them to be fired...
+    private void moveFromPendingtoScheduled() 
+    {
+	Iterator it = pendingQueue.iterator();
+	//This set will store all the events we scheduled on this call,
+	//so we can remove them from the pending queue
+	HashSet scheduled = new HashSet();	
+
+	//iterate over the pending queue
+	while (it.hasNext()) {
+	    SimulatorEvent event = (SimulatorEvent)it.next();
+	    
+	    //check that its downstream dest(s) is not firing...
+	    Iterator dests = event.dests.iterator();
+	    boolean waitForDest = false;
+	    
+	    //do not schedule the item if its dests are firing...
+	    while (dests.hasNext()) {
+		FlatNode dest = (FlatNode)dests.next();
+		if (firingNodes.contains(dest)) {
+		    waitForDest = true;
+		    //System.out.println("Cannot Schedule " + event.node.contents.getName() +
+		    //		       "because of dest " + dest.contents.getName());
+		    break;
+		}
+	    }
+	    
+	    //need to wait for the dest(s) to be ready to receive
+	    //so do not schedule this event
+	    //look for others to add to the event queue
+	    if (waitForDest)
+		continue;
+	    
+	    //System.out.println("Scheduling " + event.node);
+	    //add to the scheduled set
+	    scheduled.add(event);
+	    //we can add this event now...
+	    addEvent(event);
+	}
+	//iterate over the newly scheduled events and remove them from the 
+	//pending queue
+	Iterator remove = scheduled.iterator();
+	while (remove.hasNext())
+	    pendingQueue.remove(remove.next());
+    }
+
+    //add the event to the event heap
+    private void addEvent(SimulatorEvent event) 
+    {
+	//add to the time of the event, the current time and the work estimation
+	event.time += (currentTime + getWorkEstimate(event.node));
+	eventHeap.addEvent(event);
+    }
+    
+    //this class will visit the entire stream graph and return all the nodes
+    //that can currently fire.  It does not know about what is in the event queue
+    //or the pending queue, that is checked above...
+    static class NodesToFire implements FlatVisitor
+    {
+	private static HashSet nodesToFire;
+	private static HashMap counts;
+	private static SimulationCounter counters;
+	private static Simulator simulator;
+
+	public static HashSet whoCanFire(HashMap exeCounts, SimulationCounter sCounters, Simulator sim) 
+	{
+	    nodesToFire = new HashSet();
+	    counts = exeCounts;
+	    counters = sCounters;
+	    simulator = sim;
+	    simulator.toplevel.accept(new NodesToFire(), null, true);
+	    return nodesToFire;
+	}
+	
+	public void visitNode(FlatNode node) 
+	{
+	    if (simulator.canFire(node, counts, counters)) {
+		nodesToFire.add(node);
+	    }
+	}
+    }
+    
+	
+    //get the work estimation for a filter or joiner, a joiner defaults to 1 work cycle
+    private int getWorkEstimate(FlatNode node)
+    {
+	if (node.isFilter())
+	    return WorkEstimate.getWorkEstimate((SIRFilter)node.contents).getWork((SIRFilter)node.contents);
+	else if (node.isJoiner())
+	    return 1;
+	
+	Utils.fail("Trying to get work estimation for non-filter/joiner");
+	return -1;
     }
 
     private void appendMagicNetNodes(FlatNode fire, List dests) {
@@ -351,7 +644,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    buf.setCharAt(buf.length() - 1, '\n');
 	}
     }
-    
+
     private int itemsNeededToFire(FlatNode fire, SimulationCounter counters,
 				  HashMap executionCounts) 
     {
@@ -472,16 +765,18 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	//The joiner is passing a data item, record this as an execution
 	decrementExecutionCounts(fire, executionCounts, counters);
 	
-	//else, this joiner fired because it has data that can be sent downstream
-	JoinerScheduleNode current = new JoinerScheduleNode();
-	current.buffer = counters.getJoinerBuffer(fire);
-	current.type = JoinerScheduleNode.FIRE;
-	addJoinerCode(fire, current);
+	if (initSimulation) {
+	    //this joiner fired because it has data that can be sent downstream
+	    JoinerScheduleNode current = new JoinerScheduleNode();
+	    current.buffer = counters.getJoinerBuffer(fire);
+	    current.type = JoinerScheduleNode.FIRE;
+	    addJoinerCode(fire, current);
+	    //decrement the buffer
+	    counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
+	    //step the schedule
+	    counters.incrementJoinerSchedule(fire);
+	}
 	
-	//decrement the buffer
-	counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
-	//step the schedule
-	counters.incrementJoinerSchedule(fire);
 	return 1;
     }
 
@@ -499,27 +794,41 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    FlatNode dest = (FlatNode)it.next();
 	    if (!(dest.contents instanceof SIRJoiner))
 		continue;
-	    //decrement the buffer from the joiner
-	    counters.decrementBufferCount(dest, 1);
-	    //get the joiner buffer as determined by getDestination and stored in a list 
-	    String joinerBuffer = counters.getJoinerReceiveBuffer(dest);
-	    //as determined by the simulation
-	    counters.incrementJoinerBufferCount(dest, joinerBuffer);
-	    //add to the joiner code for this dest
-	    JoinerScheduleNode current = new JoinerScheduleNode();
-	    current.buffer = joinerBuffer;
-	    if (visited.contains(dest))
-		current.type = JoinerScheduleNode.DUPLICATE;
-	    else
-		current.type = JoinerScheduleNode.RECEIVE;
-	    addJoinerCode(dest, current);
-	    
-	    visited.add(dest);
+	    if (initSimulation) {  //do all the record keeping for the initialization schedule
+		//for the steady state schedule, this is done in receiveUpdate()!!!
+		//decrement the buffer from the joiner
+		counters.decrementBufferCount(dest, 1);
+		
+		//get the joiner buffer as determined by getDestination and stored in a list 
+		String joinerBuffer = counters.getJoinerReceiveBuffer(dest);
+		//as determined by the simulation
+		counters.incrementJoinerBufferCount(dest, joinerBuffer);
+		//add to the joiner code for this dest
+		JoinerScheduleNode current = new JoinerScheduleNode();
+		current.buffer = joinerBuffer;
+		if (visited.contains(dest))
+		    current.type = JoinerScheduleNode.DUPLICATE;
+		else
+		    current.type = JoinerScheduleNode.RECEIVE;
+		addJoinerCode(dest, current);
+		
+		visited.add(dest);
+	    }
 	}
 	return list;
     }
     
-
+    //call with src, src.edges[0], dest
+    private String buildJoinerBufferString(FlatNode previous, FlatNode current, FlatNode dest) 
+    {
+	if (dest == current)
+	    return getJoinerBuffer(current, previous);
+	
+	return getJoinerBuffer(current, previous) + buildJoinerBufferString(current,
+									    current.edges[0], 
+									    dest);
+    }
+	    
     //get the destination of the data item
     private List getDestinationHelper(FlatNode node, SimulationCounter counters, String
 				 joinerBuffer, FlatNode previous) 
@@ -532,7 +841,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		return getDestinationHelper(node.edges[0], counters,
 					    joinerBuffer, node);
 	    }
-	    counters.incrementBufferCount(node);
+	    //update the receiver's incoming buffer if init, for steady
+	    //this is done in receiveUpdate
+	    if (initSimulation) 
+		counters.incrementBufferCount(node);
 	    LinkedList list = new LinkedList();
 	    list.add(node);
 	    return list;
@@ -542,9 +854,16 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    //last joiner in a joiner group
 	    //this list is kept in the layout class
 	    if (Layout.joiners.contains(node)) {
-		joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
-		counters.addJoinerReceiveBuffer(node, joinerBuffer);
-		counters.incrementBufferCount(node);
+
+		//move this stuff!!!
+		if (initSimulation) {
+		    joinerBuffer = joinerBuffer + getJoinerBuffer(node, previous);
+		    counters.addJoinerReceiveBuffer(node, joinerBuffer);
+		    //update the receiver's incoming buffer if init, for steady
+		    //this is done in receiveUpdate
+		    counters.incrementBufferCount(node);
+		}
+		
 		LinkedList list = new LinkedList();
 		list.add(node);
 		return list;
@@ -608,7 +927,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 
     //for now, find the most-downstream filter to fire
     //from the starting node
-    private FlatNode whoShouldFire(FlatNode current, HashMap executionCounts, 
+    private FlatNode whoShouldFireDownStream(FlatNode current, HashMap executionCounts, 
 				    SimulationCounter counters) 
     {
 	FlatNode start = current;

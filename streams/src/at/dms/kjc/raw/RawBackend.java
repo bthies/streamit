@@ -57,7 +57,11 @@ public class RawBackend {
 	else
 	    RawBackend.rawColumns = KjcOptions.raw;
 
-	simulator = new FineGrainSimulator();
+	//use the work based simulator to layout the communication instructions
+	if (KjcOptions.wbs)
+	    simulator = new WorkBasedSimulator();
+	else 
+	    simulator = new FineGrainSimulator();
 
 	//this must be run now, FlatIRToC relies on it!!!
 	RenameAll.renameAllFilters(str);
@@ -94,7 +98,7 @@ public class RawBackend {
 	}
 
 	Lifter.liftAggressiveSync(str);
-	StreamItDot.printGraph(str, "before.dot");
+       	StreamItDot.printGraph(str, "before.dot");
 
 	// gather application-characterization statistics
 	if (KjcOptions.stats) {
@@ -208,6 +212,11 @@ public class RawBackend {
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(graphFlattener.top);
 	System.out.println("Tile Code End.");
+
+	//	SIRPrinter printer1 = new SIRPrinter();
+	//IterFactory.createIter(str).accept(printer1);
+	//printer1.close();
+
 	//generate the makefiles
 	System.out.println("Creating Makefile.");
 	MakefileGenerator.createMakefile();

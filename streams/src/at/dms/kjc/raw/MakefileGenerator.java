@@ -48,8 +48,10 @@ public class MakefileGenerator
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
 	    if (KjcOptions.numbers > 0 && NumberGathering.successful ||
-		KjcOptions.decoupled)
+		KjcOptions.decoupled) {
 		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
+		fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
+	    }
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    //if we are using the magic network, tell btl
 	    if (KjcOptions.magic_net)
@@ -140,7 +142,7 @@ public class MakefileGenerator
 	fw.write("include(\"<dev/basic.bc>\");\n");
 
 	//workaround for magic instruction support...
-	if (KjcOptions.magic_net) 
+	if (KjcOptions.magic_net || (KjcOptions.numbers > 0 && NumberGathering.successful)) 
 	    fw.write("include(\"<dev/magic_instruction.bc>\");\n");
 	
 	//let the simulation know how many tiles are mapped to 
@@ -211,15 +213,19 @@ public class MakefileGenerator
 	    fw.write("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/gather_numbers.bc\");\n");
 	    //include the number gathering code and install the device file
 	    fw.write("  include(numberpath);\n");
-	     // add print service to the south of the SE tile
-	    fw.write("  {\n");
-	    fw.write("    local str = malloc(256);\n");
-	    fw.write("    local result;\n");
-	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
-	    fw.write("    result = dev_gather_numbers_init(\"/dev/null\", gXSize+gYSize);\n");
-	    fw.write("    if (result == 0)\n");
-	    fw.write("      exit(-1);\n");
-	    fw.write("  }\n");
+	    //call the number gathering initialization function
+	    fw.write("  gather_numbers_init();\n");
+	    /*  only number gathering crap
+	    // add print service to the south of the SE tile
+	      fw.write("  {\n");
+	      fw.write("    local str = malloc(256);\n");
+	      fw.write("    local result;\n");
+	      fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
+	      fw.write("    result = dev_gather_numbers_init(\"/dev/null\", gXSize+gYSize);\n");
+	      fw.write("    if (result == 0)\n");
+	      fw.write("      exit(-1);\n");
+	      fw.write("  }\n");
+	    */
 	    fw.write("}\n");
 	}
 

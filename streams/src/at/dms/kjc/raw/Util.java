@@ -259,5 +259,41 @@ public class Util extends at.dms.util.Utils {
 		getAssignedEdgesHelper(node.edges[i], set);
 	}
     }
+
+    //get all filters/joiners that are directly connected downstream to this
+    //node, but go thru all splitters.  The node itself is a joiner or 
+    //filter,  NOTE, THIS HAS NOT BEEN TESTED BUT IT SHOULD WORK, I DID NOT 
+    //NEED IT FOR WHAT I WROTE IT FOR
+    public static HashSet getDirectDownstream(FlatNode node) 
+    {
+	if (node == null || node.isSplitter())
+	    Utils.fail("getDirectDownStream(...) error. Node not filter or joiner.");
+	if (node.ways > 0)
+	    return getDirectDownstreamHelper(node.edges[0]);
+	else 
+	    return new HashSet();
+    }
+    
+    private static HashSet getDirectDownstreamHelper(FlatNode current) 
+    {
+	if (current == null)
+	    return new HashSet();
+	else if (current.isFilter() || current.isJoiner()) {
+	    HashSet ret = new HashSet();
+	    ret.add(current);
+	    return ret;
+	}
+	else if (current.isSplitter()) {
+	    HashSet ret = new HashSet();
+	    
+	    for (int i = 0; i < current.ways; i++) {
+		if(current.weights[i]!=0)
+		    RawBackend.addAll(ret, getDirectDownstreamHelper(current.edges[i]));
+	    }
+	    return ret;
+	}
+	return null;
+    }    
 }
+
 

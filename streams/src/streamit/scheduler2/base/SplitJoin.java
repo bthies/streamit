@@ -304,7 +304,22 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 {
                     if (!childRate.equals(newChildRate))
                     {
-                        ERROR("Inconsistant program - cannot be scheduled without growing buffers infinitely!");
+			String name = "" + splitjoin.getObject();
+			String msg = "ERROR:\n" +
+			    "Two paths in the splitjoin \"" + name + "\" have different I/O rates.\n" +
+			    "One path produces items at a rate of " + childRate + ", while another has a rate of " + newChildRate + ".\n" + 
+			    "Thus, the program cannot be executed without growing a buffer infinitely.\n" +
+			    "Please check that the round-robin weights match the I/O rates of the\n" +
+			    "child streams.\n";
+			// anonymous names aren't too helpful
+			if (name.startsWith("Anon")) {
+			    msg += "\n" + 
+				"Note:  the name \"" + name + "\" indicates that this splitjoin is an\n" +
+				"anonymous wrapper in your program.  You can identify this wrapper by\n" +
+				"opening up the <filename>.java file and searching for this identifier,\n" +
+				"or by refactoring your program to give the splitjoin its own name.\n";
+			}
+                        ERROR(msg);
                     }
                 }
             }

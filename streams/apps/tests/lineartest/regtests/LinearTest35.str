@@ -1,0 +1,103 @@
+/** 
+ * Test out combining splitjoins, with multiple split 
+ * joins in weighted roundrobin fashion. This is a simpler
+ * version of LinearTest18, in order to figure out a bug
+ * in my frequency replacement before too long.
+ **/
+void->void pipeline LinearTest35 {
+  add FloatSource();
+  //add LinearSJ();
+  add MockFIRFilter2(0);
+  add FloatSink();
+}
+
+void->float filter FloatSource {
+  int x;
+  init {
+    x = 0;
+  }
+  work push 1 {
+    push(x);
+    x = (x + 1)%4;
+  }
+}
+
+float->void filter FloatSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** A linear split join to test combination with different round robin weightings. **/
+float->float splitjoin LinearSJ {
+  split duplicate;
+  for (int i=0; i<1; i++) {
+    add MockFIRFilter(i);
+  }
+  //add NormalFIRFilter1;
+  //add NormalFIRFilter2;
+  join roundrobin;
+
+}
+
+/** This is a mock up of an FIR filter. N is where the counting starts from **/
+float->float filter MockFIRFilter(int N) {
+  float[10] weights;
+  init {
+    for (int i=0; i<10; i++) {
+      weights[i] = N + i;
+    }
+  }
+  work pop 1 peek 10 push 1 {
+    float sum = 0;
+    /** do the MAC like normal **/
+    for (int i=0; i<10; i++) {
+      sum = sum + (peek(i) * weights[i]);
+    }
+    push(sum);
+    pop();
+  }
+}
+
+
+/** This is a mock up of an FIR filter. N is where the counting starts from **/
+float->float filter MockFIRFilter2(int N) {
+  float[9] weights;
+  init {
+    for (int i=0; i<9; i++) {
+      float t = N + i;
+      weights[i] = t;
+    }
+  }
+  work pop 1 peek 9 push 1 {
+    float sum = 0;
+
+    /** do the MAC like normal **/
+    for (int i=0; i<9; i++) {
+      sum = sum + (peek(i) * weights[i]);
+    }
+    push(sum);
+    pop();
+  }
+}
+
+
+
+float->float filter NormalFIRFilter1 {
+  work peek 3 pop 1 push 1 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    float t3 = peek(2);
+    push(3*t3 + 2*t2 + 1*t1);
+    pop();
+  }
+}
+
+float->float filter NormalFIRFilter2 {
+  work peek 2 pop 1 push 1 {
+    float t1 = peek(0);
+    float t2 = peek(1);
+    push(t2 + t1);
+    pop();
+  }
+}

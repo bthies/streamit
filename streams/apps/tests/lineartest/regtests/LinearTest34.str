@@ -4,10 +4,10 @@
 
 void->void pipeline LinearTest34 {
   add SimpleSource();
-  add NormalFIRFilter();
-  add NormalFIRFilter2();
+  //add NormalFIRFilter();
+  //add NormalFIRFilter2();
   //add MultiFIRFilter();
-  //add SimpleMultiFIRFilter();
+  add SimpleMultiFIRFilter();
   add SimpleSink();
 }
 
@@ -46,8 +46,8 @@ float->float filter SimpleMultiFIRFilter {
     float t1 = peek(0);
     float t2 = peek(1);
     float t3 = peek(2);
-    push(1*t3 + 1*t2 + 1*t1);
-    push(2*t3 + 2*t2 + 2*t1);
+    push(1*t3 + 2*t2 + 3*t1);
+    push(0*t3 + 2*t2 + 1*t1);
     pop();
   }
 }

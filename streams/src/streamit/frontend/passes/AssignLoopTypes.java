@@ -13,7 +13,7 @@ import java.util.*;
  * don't declare I/O types, the program visitor returns null.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: AssignLoopTypes.java,v 1.1 2003-09-02 17:46:42 dmaze Exp $
+ * @version $Id: AssignLoopTypes.java,v 1.2 2003-09-03 18:05:47 dmaze Exp $
  */
 public class AssignLoopTypes extends FEReplacer
 {
@@ -55,11 +55,22 @@ public class AssignLoopTypes extends FEReplacer
         if (ss.getType() != StreamSpec.STREAM_FEEDBACKLOOP)
             return ss;
         StreamType st = ss.getStreamType();
-        Type loopType = st.getLoop();
-        // Do we think the loop type is void?
-        if (!(loopType instanceof TypePrimitive) ||
-            ((TypePrimitive)loopType).getType() != TypePrimitive.TYPE_VOID)
-            return ss;
+        if (st != null)
+        {
+            Type loopType = st.getLoop();
+            // Do we think the loop type is void?
+            if (!(loopType instanceof TypePrimitive) ||
+                ((TypePrimitive)loopType).getType() != TypePrimitive.TYPE_VOID)
+                return ss;
+        }
+        else
+        {
+            // Untyped anonymous loop.  Let st be a completely
+            // random guess, but definitely go on with the detection.
+            st = new StreamType(ss.getContext(),
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT),
+                                new TypePrimitive(TypePrimitive.TYPE_FLOAT));
+        }
         
         // So now we're looking for the loop stream.  Work under the
         // assumption that all loop statements and all body statements

@@ -32,6 +32,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 
 	boolean oldDecoupledValue = KjcOptions.decoupled;
 	boolean oldMagicNetValue = KjcOptions.magic_net;
+	boolean oldRateMatchValue = KjcOptions.ratematch;
+
 	int work = 0;
 	//clone the Filter and create a dummy pipeline with just this
 	//new cloned filter
@@ -54,6 +56,8 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	KjcOptions.decoupled = true;
 	// set magic net to false
 	KjcOptions.magic_net = false;
+	//set rate match to false
+	KjcOptions.ratematch = false;
 
 	//make a new FlatGraph with only this filter...
 	FlatNode top = new FlatNode(filter);
@@ -130,6 +134,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 
 	KjcOptions.decoupled = oldDecoupledValue;
 	KjcOptions.magic_net = oldMagicNetValue;
+	KjcOptions.ratematch = oldRateMatchValue;
 	return work;
     }
 

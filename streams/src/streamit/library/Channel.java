@@ -194,6 +194,17 @@ public class Channel extends streamit.misc.DestroyedClass
     {
         assert o.getClass () == type;
 
+	// make a copy of structures in case they are subsequently
+	// modified -- the changes should not appear in the consumer
+	if (o instanceof Structure) {
+	    try {
+		o = ((Structure)o).clone();
+	    } catch (CloneNotSupportedException e) {
+		System.err.println("Unexpected error cloning structure.");
+		new RuntimeException().printStackTrace();
+	    }
+	}
+        
         enqueue (o);
     }
     
@@ -285,7 +296,7 @@ public class Channel extends streamit.misc.DestroyedClass
         Object data;
         data = dequeue ();
         assert data != null;
-        
+
         return data;
     }
     
@@ -401,6 +412,18 @@ public class Channel extends streamit.misc.DestroyedClass
         Object data;
         data = queue.get (index);
         assert data != null;
+
+	// make a copy of structures in case they are subsequently
+	// modified -- the changes should not appear in the producer
+	// or in subsequent peek / pop's
+	if (data instanceof Structure) {
+	    try {
+		data = ((Structure)data).clone();
+	    } catch (CloneNotSupportedException e) {
+		System.err.println("Unexpected error cloning structure.");
+		new RuntimeException().printStackTrace();
+	    }
+	}
 
         return data;
     }

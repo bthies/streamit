@@ -1,14 +1,18 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.3 2002-05-07 23:31:03 dmaze Exp $
+ * $Id: fmref.c,v 1.4 2002-05-08 14:36:18 dmaze Exp $
  */
 
-#include <math.h>
+#ifdef raw
+#include <raw.h>
+#else
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#endif
+#include <math.h>
 
 #define SAMPLING_RATE 200000
 #define CUTOFF_FREQUENCY 108000000
@@ -18,6 +22,8 @@
 #define DECIMATION 4
 /* Must be at least NUM_TAPS+1: */
 #define IN_BUFFER_LEN 128
+
+void begin(void);
 
 typedef struct FloatBuffer
 {
@@ -55,14 +61,13 @@ void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data);
 
 void write_floats(FloatBuffer *fb);
 
+/* Globals: */
+static int numiters = -1;
+
+#ifndef raw
 int main(int argc, char **argv)
 {
-  int numiters = -1;
   int option;
-  int i;
-  FloatBuffer fb1, fb2, fb3, fb4;
-  LPFData lpf_data;
-  EqualizerData eq_data;
 
   while ((option = getopt(argc, argv, "i:")) != -1)
   {
@@ -72,6 +77,18 @@ int main(int argc, char **argv)
       numiters = atoi(optarg);
     }
   }
+
+  begin();
+  return 0;
+}
+#endif
+
+void begin(void)
+{
+  int i;
+  FloatBuffer fb1, fb2, fb3, fb4;
+  LPFData lpf_data;
+  EqualizerData eq_data;
 
   fb1.rpos = fb1.rlen = 0;
   fb2.rpos = fb2.rlen = 0;
@@ -108,8 +125,6 @@ int main(int argc, char **argv)
     run_equalizer(&fb3, &fb4, &eq_data);
     write_floats(&fb4);
   }
-
-  return 0;
 }
 
 void fb_compact(FloatBuffer *fb)
@@ -132,7 +147,9 @@ int fb_ensure_writable(FloatBuffer *fb, int amount)
     return 1;
 
   /* Hmm.  We're probably hosed in this case. */
+#ifndef raw
   printf("fb_ensure_writable(%p): couldn't ensure %d bytes (only %d available)\n", fb, amount, available);
+#endif
   return 0;
 }
 
@@ -246,6 +263,11 @@ void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data)
 void write_floats(FloatBuffer *fb)
 {
   /* printf() any data that's available: */
+#ifdef raw
+  while (fb->rpos < fb->rlen)
+    print_float(fb->buff[fb->rpos++]);
+#else
   while (fb->rpos < fb->rlen)
     printf("%f\n", fb->buff[fb->rpos++]);
+#endif
 }

@@ -33,10 +33,6 @@ public class Layout extends at.dms.util.Utils implements
     private  BufferedReader inputBuffer;
     private  Random random;
     
-    /** maps flatnode -> flatnode, of dynamic outputs to inputs in the 
-	stream graph **/
-    private HashMap dynamicComm;
-
     private StreamGraph streamGraph;
 
     /* hashset of Flatnodes representing all the joiners
@@ -84,15 +80,6 @@ public class Layout extends at.dms.util.Utils implements
 			       (rawChip.getYSize() * rawChip.getXSize()) +
 			       " tiles.");
 	    System.exit(-1);
-	}
-
-	//set up the dynamic connections of the entire stream graph
-	dynamicComm = new HashMap();
-	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
-	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
-	    for (int j = 0; j < ssg.getOutputs().length; j++) {
-		dynamicComm.put(ssg.getOutputs()[j], ssg.getNext(ssg.getOutputs()[j]));
-	    }
 	}
     }
 
@@ -250,6 +237,8 @@ public class Layout extends at.dms.util.Utils implements
 	return str;
     }
 
+
+    /** get all the downstream *assigned* nodes of <node> **/
     private HashSet getDownStream(FlatNode node) 
     {
 	if (node == null)
@@ -260,50 +249,28 @@ public class Layout extends at.dms.util.Utils implements
 	}
 	return ret;
     }
+    
 
-    private HashSet getDownStreamHelper(FlatNode node) {
+    /** called by getDownStream to recursive pass thru all the non-assigned 
+	nodes and get the assiged destinations of a node **/
+    private HashSet getDownStreamHelper(FlatNode node) 
+    {
 	if (node == null)
 	    return new HashSet();
-	
-	if (node.contents instanceof SIRFilter) {
-	    if (identities.contains(node))
-		return getDownStreamHelper(node.edges[0]);
-	    HashSet ret = new HashSet();
+	//if this node must be assigned to a tile, return it
+	HashSet ret = new HashSet();	
+	if (assigned.contains(node)) {
 	    ret.add(node);
 	    return ret;
 	}
-	else if (node.contents instanceof SIRJoiner) {
-	    if (joiners.contains(node)) {
-		HashSet ret = new HashSet();
-		ret.add(node);
-		return ret;
-	    }	
-	    else {
-		return getDownStreamHelper((node.edges.length > 0 ? node.edges[0] : null));
-	    }
-	}
-	else if (node.contents instanceof SIRSplitter) {
-	    HashSet ret = new HashSet();
-	    /*
-	      if (node.contents.getParent() instanceof SIRFeedbackLoop) {
-	      //add the connection to all the nodes outside of the feedback
-	      if (node.ways > 1) {
-	      SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.edges[0]));
-	      ret.add(node.edges[1]);
-	      }
-	      else 
-	      ret.add(node.edges[0]);
-	      }
-			  */
-	    for (int i = 0; i < node.ways; i++) {
-		if(node.weights[i]!=0)
-		    SpaceDynamicBackend.addAll(ret, getDownStreamHelper(node.edges[i]));
+	else { //otherwise find the downstream neighbors that are assigned
+	    for (int i = 0; i < node.edges.length; i++) {
+		if (node.weights[i] != 0)
+		    SpaceDynamicBackend.addAll(ret, 
+					       getDownStream(node.edges[i]));
 	    }
 	    return ret;
 	}
-	Utils.fail("Serious Error in Simulated Annealing");
-	
-	return null;
     }
         
     /** Assign a StreamGraph that is composed of one filter 
@@ -362,32 +329,202 @@ public class Layout extends at.dms.util.Utils implements
 		}
 	    }    
 	}
-	assert isDynamicallyLegal() : "Error in layout, dynamic routes cross";
+	
+	assert cost(true) > 0.0 : "Illegal Layout";
 	dumpLayout("layout.dot");
     }
-
-    /** Make sure that routes over the dynamic network never cross! **/
-    private boolean isDynamicallyLegal() 
+    
+    /** return the cost of this layout calculated by the cost function, 
+	if the cost is negative, this layout is illegal.
+	if <debug> then print out why this layout was illegal
+    **/
+    public double cost(boolean debug) 
     {
-	Iterator dynSrcs = dynamicComm.keySet().iterator();
-	//set of tiles used so far for routing over the dynamic network
-	HashSet usedTiles = new HashSet();
+	/** tiles used already to route dynamic data between 
+	    SSGs, a tile can only be used once **/
+	HashSet dynTilesUsed = new HashSet();
+	/** Tiles already used by previous SSGs to route data
+	    over the static network, a switch can only route 
+	    data from one SSG **/
+	HashSet staticTilesUsed = new HashSet();
+	double cost = 0.0;
 
-	while (dynSrcs.hasNext()) {
-	    FlatNode src = (FlatNode)dynSrcs.next();
-	    FlatNode dst = (FlatNode)dynamicComm.get(src);
+	for (int i = 0; i < streamGraph.getStaticSubGraphs().length; i++) {
+	    StaticStreamGraph ssg = streamGraph.getStaticSubGraphs()[i];
+	    double dynamicCost = 0.0;
+	    double staticCost = 0.0;
 
-	    List route = XYRouter.getRoute(getTile(src), getTile(dst));
+	    dynamicCost = getDynamicCost(ssg, dynTilesUsed);
+	    if (dynamicCost < 0.0) {
+		if (debug)
+		    System.out.println("Dynamic routes cross!");
+		return -1.0;
+	    }
+	    staticCost = getStaticCost(ssg, staticTilesUsed);
+	    if (staticCost < 0.0) {
+		if (debug)
+		    System.out.println("Static route of SSG crosses another SSG!");
+		return -1.0;
+	    }
+	    cost += dynamicCost + staticCost;
+	}
+	
+	return cost;
+    }
+    
+    
+    /** get the cost of the static communication of this ssg and also
+	determine if the communication is legal, it does not cross paths with 
+	other SSGs, usedTiles holds tiles that have been used by previous SSGs **/
+    private double getStaticCost(StaticStreamGraph ssg, HashSet usedTiles) 
+    {
+	//the tiles used by THIS SSG for routing
+	//this set is filled with tiles that are not assigned but 
+	//have been used to route items previously by this SSG
+	HashSet routers = new HashSet();
+	//allt tiles used for this SSG, add it to used tiles at the end, if legal
+	HashSet tiles = new HashSet();
+	
+	Iterator nodes = ssg.getFlatNodes().iterator();
+	double cost = 0.0;
+
+	//calculate the communication cost for each node that is assign a tile in
+	//the ssg
+	while (nodes.hasNext()) {
+	    FlatNode src = (FlatNode)nodes.next();
+	    //add the src tile to the list of tiles used by this SSG
+	    tiles.add(getTile(src));
 	    
-	    Iterator tiles = route.iterator();
-	    while (tiles.hasNext()) {
-		ComputeNode tile = (ComputeNode)tiles.next();
+	    //make sure we have not previously tried to route through this tile
+	    //in a previous SSG
+	    if (usedTiles.contains(getTile(src)))
+		return -1.0;
+
+	    //don't worry about nodes that aren't assigned tiles
+	    if (!assigned.contains(src))
+		continue;
+	    //get all the dests for this node that are assigned tiles
+	    Iterator dsts = getDownStream(src).iterator();
+
+
+	    while (dsts.hasNext()) {
+		FlatNode dst = (FlatNode)dsts.next();
+		assert assigned.contains(dst);
+		//add the dst tile to the list of tiles used by this SSG
+		tiles.add(getTile(dst));
+		
+		//make sure we have not previously (in another SSG) tried to route 
+		//thru the tile assigned to the dst
+		if (usedTiles.contains(getTile(dst)))
+		    return -1.0;
+		
+		RawTile[] route = 
+		    (RawTile[])Router.getRoute(ssg, src, dst).toArray(new RawTile[0]);
+		
+		//find the cost of the route, penalize routes that go thru 
+		//tiles assigned to filters or joiners, reward routes that go thru 
+		//non-assigned tiles
+		double numAssigned = 0.0;
+		
+		for (int i = 1; i < route.length - 1; i++) {
+		    //make sure that this route does not pass thru any tiles assigned to other SSGs
+		    //otherwise we have a illegal layout!!!!
+		    if (usedTiles.contains(route[i]))
+			return -1.0;
+		    //add this tile to the set of tiles used by this SSG
+		    tiles.add(route[i]);
+		    
+		    if (getNode(route[i]) != null) //assigned tile
+			numAssigned += 100.0;
+		    else {
+			//router tile, only penalize it if we have routed through it before
+			if (routers.contains(route[i]))
+			    numAssigned += 0.5;
+			else //now it is a router tile
+			    routers.add(route[i]);
+		    }
+		}
+		
+		int hops = route.length - 2;
+		//the number of items sent over this channel for one execution of entire
+		//SSG, from src to dest
+		int items = 0;
+		
+		//now calculate the number of items sent per firing of SSG
+		
+		//if we are sending thru a splitter we have to be careful because not
+		//all the data that the src produces goes to the dest
+		if (src.edges[0].isSplitter()) {
+		    //if the dest is a filter, then just calculate the number of items
+		    //the dest filter receives
+		    if (dst.isFilter())
+			items = ssg.getMult(dst, false) * dst.getFilter().getPopInt();
+		    else {
+			//this is a joiner
+			assert dst.isJoiner();
+			//the percentage of items that go to this dest
+			double rate = 1.0;
+			
+			//we are sending to a joiner thru a splitter, this will only happen
+			//for a feedback loop, the feedback path is always way 0 thru the joiner
+			if (dst.inputs > 1) 
+			    rate = ((double)dst.incomingWeights[0]) / 
+				((double) dst.getTotalIncomingWeights());
+			//now calculate the rate at which the splitter sends to the joiner
+			rate = rate * 
+			    (((double)src.edges[0].weights[0]) / ((double)src.edges[0].getTotalOutgoingWeights()));
+			//now calculate the number of items sent to this dest by this filter
+			items = (int) rate * ssg.getMult(dst, false) * src.getFilter().getPopInt();
+		    }
+		}
+		else {
+		    //sending without intermediate splitter
+		    //get the number of items sent
+		    int push = 0;
+		    if (src.isFilter())
+			push = src.getFilter().getPushInt();
+		    else //joiner
+			push = 1;
+		    items = ssg.getMult(src, false) * push;
+		}
+
+		//calculate communication cost of this node and add it to the cost sum
+		cost += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(src)) *
+					   numAssigned * 10));
+	    }   
+	}
+	SpaceDynamicBackend.addAll(usedTiles, tiles);
+	return cost;	
+    }
+
+
+    
+
+    
+    
+    /** Get the cost of sending output of this SSG over the dynamic network 
+	for right now disregard the min, max, and average rate declarations **/ 
+    private double getDynamicCost(StaticStreamGraph ssg, HashSet usedTiles) 
+    {
+	double cost = 0.0;
+    
+	 //check if the dynamic communication is legal
+	for (int j = 0; j < ssg.getOutputs().length; j++) {
+	    FlatNode src = ssg.getOutputs()[j];
+	    FlatNode dst = ssg.getNext(src);
+	    
+	    Iterator route = XYRouter.getRoute(getTile(src), getTile(dst)).iterator();
+	    
+	    while (route.hasNext()) {
+		cost += 1.0;
+		ComputeNode tile = (ComputeNode)route.next();
 		if (usedTiles.contains(tile))
-		    return false;
+		    return -1.0;
 		usedTiles.add(tile);
 	    }
+	    
 	}
-	return true;
+	return cost;
     }
     
     
@@ -418,6 +555,11 @@ public class Layout extends at.dms.util.Utils implements
 	return false;
     }
 
+
+    
+    /** END simulated annealing methods **/
+
+    /** visit each flatnode and decide whether is should be assigned **/
     public void visitNode(FlatNode node) 
     {
 	if (node.contents instanceof SIRFilter &&
@@ -436,10 +578,12 @@ public class Layout extends at.dms.util.Utils implements
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner) {
+	    //don't assign a null joiner that does not have an output
 	    if (node.edges.length == 0) {
 		assert node.getTotalIncomingWeights() == 0;
 		return;
 	    }
+	    //do not assign joiners directly connected to other joiners or null joiners
 	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
 		//do not assign the joiner if JoinerRemoval wants is removed...
 		//if (JoinerRemoval.unnecessary != null && 

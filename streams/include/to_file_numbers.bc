@@ -11,7 +11,7 @@ if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NUL
 
 
 //type: 0 = int, 1 = float, can be extended
-fn dev_to_file(filename, port, type)
+fn dev_NG_to_file(filename, port, type, id)
 {
   local receive_device_descriptor = hms_new();
 
@@ -22,6 +22,7 @@ fn dev_to_file(filename, port, type)
   receive_device_descriptor.format = "";
   receive_device_descriptor.ioPort = port;
   receive_device_descriptor.type = type;
+  receive_device_descriptor.id = id;
   
   if (type == 0)
     receive_device_descriptor.format = "%d\n";
@@ -45,6 +46,10 @@ fn dev_to_file(filename, port, type)
     local filename = this.fileName;
     local ioPort = this.ioPort;
     local type = this.type;
+    local i, time_hi, time_lo;
+    local proc = Machine_GetProc(machine, 0);
+    //get the cycle
+    Proc_GetCycleCounter(proc, &time_hi, &time_lo);
     
     while (1)
     {
@@ -52,8 +57,7 @@ fn dev_to_file(filename, port, type)
       local proc = Machine_GetProc(machine, 0);
       local value = this.receive();
       
-      //get the cycle
-      Proc_GetCycleCounter(proc, &time_hi, &time_lo);
+      NG_numbers_record_item(id);
       if (type == 0) {
 	//write to file
 	fprintf(theFile,format,value);
@@ -83,4 +87,61 @@ fn dev_to_file(filename, port, type)
 				   port,
 				   0, //don't wait for static trigger 
 				   receive_device_descriptor);
+}
+
+//need to define 
+//items to skip for each filewriter
+//items in the steady state for each file writer
+//total items received into each fw
+//is steady = 0
+//total number of fw
+
+fn NG_numbers_record_item(id) 
+{
+  //update the total number of item received into fw
+  gNGItems[id]++;
+  //see if we have executed a steady-state
+  NG_update();
+}
+
+fn NG_update() {
+  local i, time_hi, time_lo;
+  local proc = Machine_GetProc(machine, 0);
+  
+
+  if (gNGisSteady == 0) {
+    for (i = 0; i < gNGfws; i++) {
+      //make sure everyone is done the init/pp stage
+      if (gNGItems[i] < gNGskip[i]) {
+	//someone is still in the init/pp stage
+	return;
+      } 
+    }
+    //if we get here everyone is done with init/pp
+    //subtract the number to skip from init/pp from
+    //everyone's items
+    for (i = 0; i < gNGfws; i++) {
+      gNGItems[i] -= gNGskip[i];
+    }
+  } 
+  
+  if (gNGisSteady == 1) {
+    //in steady-state, check to see if
+    //have executed a full steady state
+    for (i = 0; i < gNGfws; i++) {
+      if (gNGItems[i] < gNGsteady[i])
+	return;
+    }
+    
+    //if we get here we have executed a full steady state
+    //first subtract from everyone's items
+    for (i = 0; i < gNGfws; i++) {
+      gNGItems[i] -= gNGsteady[i];
+    } 
+
+    //get the cycle
+    Proc_GetCycleCounter(proc, &time_hi, &time_lo);
+    //next print what we want to print 
+    printf("SS: cycle = %d, dif = %d, MFLOPS = 
+  }
 }

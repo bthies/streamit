@@ -1,6 +1,7 @@
 package streamit;
 
 import streamit.scheduler.SchedJoinType;
+import streamit.scheduler.Scheduler;
 
 import java.util.*;
 
@@ -86,7 +87,7 @@ public class Joiner extends Operator
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    SchedJoinType getSchedType ()
+    SchedJoinType getSchedType (Scheduler scheduler)
     {
         // you must override this function!
         ASSERT (false);

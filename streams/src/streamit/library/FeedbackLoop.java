@@ -199,7 +199,7 @@ public class FeedbackLoop extends Stream
         SchedStream loopSched = (loop == null ? null : loop.constructSchedule ());
 
         // create the loop
-        SchedLoop stream = scheduler.newSchedLoop (this, joiner.getSchedType (), bodySched, splitter.getSchedType (), loopSched, delay);
+        SchedLoop stream = scheduler.newSchedLoop (this, joiner.getSchedType (scheduler), bodySched, splitter.getSchedType (scheduler), loopSched, delay);
 
         return stream;
     }

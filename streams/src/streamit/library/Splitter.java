@@ -1,6 +1,7 @@
 package streamit;
 
 import streamit.scheduler.SchedSplitType;
+import streamit.scheduler.Scheduler;
 
 import java.util.*;
 
@@ -86,7 +87,7 @@ public class Splitter extends Operator
     // This code constructs an independent graph for the scheduler
     // ----------------------------------------------------------------
 
-    SchedSplitType getSchedType ()
+    SchedSplitType getSchedType (Scheduler scheduler)
     {
         // you must override this function
         ASSERT (false);

@@ -232,7 +232,7 @@ public class SplitJoin extends Stream
         if (splitter != null)
         {
             SchedSplitType splitType;
-            splitType = splitter.getSchedType ();
+            splitType = splitter.getSchedType (scheduler);
             splitJoin.setSplitType (splitType);
         }
 
@@ -240,7 +240,7 @@ public class SplitJoin extends Stream
         if (joiner != null)
         {
             SchedJoinType joinType;
-            joinType = joiner.getSchedType ();
+            joinType = joiner.getSchedType (scheduler);
             splitJoin.setJoinType (joinType);
         }
 

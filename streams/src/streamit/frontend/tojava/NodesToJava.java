@@ -1,13 +1,14 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.19 2002-08-20 20:04:30 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.20 2002-09-06 15:54:19 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * NodesToJava is a front-end visitor that produces Java code from
@@ -16,10 +17,25 @@ import java.util.Iterator;
 public class NodesToJava implements FEVisitor
 {
     private StreamType st;
+    // A string consisting of an even number of spaces.
+    private String indent;
     
     public NodesToJava(StreamType st)
     {
         this.st = st;
+        this.indent = "";
+    }
+
+    // Add two spaces to the indent.
+    private void addIndent() 
+    {
+        indent += "  ";
+    }
+    
+    // Remove two spaces from the indent.
+    private void unIndent()
+    {
+        indent = indent.substring(2);
     }
 
     // Convert a Type to a String.  If visitors weren't so generally
@@ -147,6 +163,24 @@ public class NodesToJava implements FEVisitor
             prefix = "(" + convertType(type) + ")";
         }
         return prefix + name + suffix;
+    }
+
+    // Return a representation of a list of Parameter objects.
+    public String doParams(List params)
+    {
+        String result = "(";
+        boolean first = true;
+        for (Iterator iter = params.iterator(); iter.hasNext(); )
+        {
+            Parameter param = (Parameter)iter.next();
+            if (!first) result += ", ";
+            result += convertType(param.getType());
+            result += " ";
+            result += param.getName();
+            first = false;
+        }
+        result += ")";
+        return result;
     }
 
     // Return a representation of lhs = rhs, with no trailing semicolon.
@@ -338,5 +372,289 @@ public class NodesToJava implements FEVisitor
     public Object visitExprVar(ExprVar exp)
     {
         return exp.getName();
+    }
+
+    public Object visitFunction(Function func)
+    {
+        String result = "";
+        result += convertType(func.getReturnType()) + " " + func.getName();
+        result += doParams(func.getParams());
+        result += (String)func.getBody().accept(this);
+        return result;
+    }
+    
+    public Object visitFuncWork(FuncWork func)
+    {
+        // Nothing special here; we get to ignore the I/O rates.
+        return visitFunction(func);
+    }
+
+    public Object visitProgram(Program prog)
+    {
+        // Nothing special here either.  Just accumulate all of the
+        // structures and streams.
+        String result = "";
+        for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
+        {
+            TypeStruct struct = (TypeStruct)iter.next();
+            result += indent + "class " + struct.getName() +
+                " extends Structure {\n";
+            addIndent();
+            for (int i = 0; i < struct.getNumFields(); i++)
+            {
+                String name = struct.getField(i);
+                Type type = struct.getType(name);
+                result += indent + convertType(type) + " " + name + ";\n";
+            }
+            unIndent();
+            result += indent + "}\n";
+        }
+        for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
+            result += (String)((StreamSpec)iter.next()).accept(this);
+        return result;
+    }
+
+    public Object visitSCAnon(SCAnon creator)
+    {
+        return creator.getSpec().accept(this);
+    }
+    
+    public Object visitSCSimple(SCSimple creator)
+    {
+        String result = "new " + creator.getName() + "(";
+        boolean first = true;
+        for (Iterator iter = creator.getParams().iterator(); iter.hasNext(); )
+        {
+            Expression param = (Expression)iter.next();
+            if (!first) result += ", ";
+            result += (String)param.accept(this);
+            first = false;
+        }
+        result += ")";
+        return result;
+    }
+
+    public Object visitSJDuplicate(SJDuplicate sj)
+    {
+        return "DUPLICATE()";
+    }
+
+    public Object visitSJRoundRobin(SJRoundRobin sj)
+    {
+        return "ROUND_ROBIN(" + (String)sj.getWeight().accept(this) + ")";
+    }
+
+    public Object visitSJWeightedRR(SJWeightedRR sj)
+    {
+        String result = "WEIGHTED_ROUND_ROBIN(";
+        boolean first = true;
+        for (Iterator iter = sj.getWeights().iterator(); iter.hasNext(); )
+        {
+            Expression weight = (Expression)iter.next();
+            if (!first) result += ", ";
+            result += (String)weight.accept(this);
+            first = false;
+        }
+        result += ")";
+        return result;
+    }
+
+    public Object visitStmtAdd(StmtAdd stmt)
+    {
+        return "add(" + (String)stmt.getCreator().accept(this) + ")";
+    }
+    
+    public Object visitStmtAssign(StmtAssign stmt)
+    {
+        // Assume both sides are the right type.
+        return (String)stmt.getLHS().accept(this) + " = " +
+            (String)stmt.getRHS().accept(this);
+    }
+
+    public Object visitStmtBlock(StmtBlock stmt)
+    {
+        String result = "{\n";
+        addIndent();
+        for (Iterator iter = stmt.getStmts().iterator(); iter.hasNext(); )
+            result += indent + (String)((Statement)(iter.next())).accept(this) + ";\n";
+        unIndent();
+        result += indent + "}";
+        return result;
+    }
+
+    public Object visitStmtBody(StmtBody stmt)
+    {
+        return "body(" + (String)stmt.getCreator().accept(this) + ")";
+    }
+    
+    public Object visitStmtBreak(StmtBreak stmt)
+    {
+        return "break";
+    }
+    
+    public Object visitStmtContinue(StmtContinue stmt)
+    {
+        return "continue";
+    }
+
+    public Object visitStmtDoWhile(StmtDoWhile stmt)
+    {
+        String result = "do ";
+        result += (String)stmt.getBody().accept(this);
+        result += "while (" + (String)stmt.getCond().accept(this) + ")";
+        return result;
+    }
+
+    public Object visitStmtEnqueue(StmtEnqueue stmt)
+    {
+        // Errk: this doesn't become nice Java code.
+        return "/* enqueue(" + (String)stmt.getValue().accept(this) +
+            ") */";
+    }
+    
+    public Object visitStmtExpr(StmtExpr stmt)
+    {
+        return (String)stmt.getExpression().accept(this);
+    }
+
+    public Object visitStmtFor(StmtFor stmt)
+    {
+        String result = "for (";
+        if (stmt.getInit() != null)
+            result += (String)stmt.getInit().accept(this);
+        result += "; ";
+        if (stmt.getCond() != null)
+            result += (String)stmt.getCond().accept(this);
+        result += "; ";
+        if (stmt.getIncr() != null)
+            result += (String)stmt.getIncr().accept(this);
+        result += ") ";
+        result += (String)stmt.getBody().accept(this);
+        return result;
+    }
+
+    public Object visitStmtIfThen(StmtIfThen stmt)
+    {
+        // must have an if part...
+        String result = "if (" + (String)stmt.getCond().accept(this) + ") ";
+        result += (String)stmt.getCons().accept(this);
+        if (stmt.getAlt() != null)
+            result += " else " + (String)stmt.getAlt().accept(this);
+        return result;
+    }
+
+    public Object visitStmtJoin(StmtJoin stmt)
+    {
+        return "setJoiner(" + (String)stmt.getJoiner().accept(this) + ")";
+    }
+    
+    public Object visitStmtLoop(StmtLoop stmt)
+    {
+        return "loop(" + (String)stmt.getCreator().accept(this) + ")";
+    }
+
+    public Object visitStmtPush(StmtPush stmt)
+    {
+        return pushFunction(st) + "(" +
+            (String)stmt.getValue().accept(this) + ")";
+    }
+
+    public Object visitStmtReturn(StmtReturn stmt)
+    {
+        if (stmt.getValue() == null) return "return";
+        return "return " + (String)stmt.getValue().accept(this);
+    }
+
+    public Object visitStmtSplit(StmtSplit stmt)
+    {
+        return "setSplitter(" + (String)stmt.getSplitter().accept(this) + ")";
+    }
+
+    public Object visitStmtVarDecl(StmtVarDecl stmt)
+    {
+        String result = convertType(stmt.getType()) + " " + stmt.getName();
+        // TODO: insert constructors for non-primitive types
+        if (stmt.getInit() != null)
+            result += " = " + (String)stmt.getInit().accept(this);
+        return result;
+    }
+
+    public Object visitStmtWhile(StmtWhile stmt)
+    {
+        return "while (" + (String)stmt.getCond().accept(this) +
+            ") " + (String)stmt.getBody().accept(this);
+    }
+
+    public Object visitStreamSpec(StreamSpec spec)
+    {
+        String result = "";
+        // Anonymous classes look different from non-anonymous ones.
+        // This appears in two places: (a) as a top-level (named)
+        // stream; (b) in an anonymous stream creator (SCAnon).
+        if (spec.getName() != null)
+        {
+            // Non-anonymous stream:
+            result += indent + "class " + spec.getName() + " extends ";
+            switch (spec.getType())
+            {
+            case StreamSpec.STREAM_FILTER: result += "Filter";
+                break;
+            case StreamSpec.STREAM_PIPELINE: result += "Pipeline";
+                break;
+            case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
+                break;
+            case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
+                break;
+            }
+            result += "\n" + indent + "{\n";
+            addIndent();
+        }
+        else
+        {
+            // Anonymous stream:
+            switch (spec.getType())
+            {
+            case StreamSpec.STREAM_FILTER: result += "Filter";
+                break;
+            case StreamSpec.STREAM_PIPELINE: result += "Pipeline";
+                break;
+            case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
+                break;
+            case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
+                break;
+            }
+            result += "() {\n" + indent;
+            addIndent();
+        }
+        
+        // At this point we get to ignore wholesale the stream type, except
+        // that we want to save it.
+        StreamType oldST = st;
+        st = spec.getStreamType();
+
+        // We should unignore the stream parameters long enough to write
+        // a constructor for non-anonymous streams.
+
+        // Output field definitions:
+        for (Iterator iter = spec.getVars().iterator(); iter.hasNext(); )
+        {
+            Statement varDecl = (Statement)iter.next();
+            result += indent + (String)varDecl.accept(this) + "\n";
+        }
+        
+        // Output method definitions:
+        for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+            result += (String)(((Function)iter.next()).accept(this));
+
+        st = oldST;
+        unIndent();
+        result += "}\n";
+        return result;
+    }
+    
+    public Object visitStreamType(StreamType type)
+    {
+        // Nothing to do here.
+        return "";
     }
 }

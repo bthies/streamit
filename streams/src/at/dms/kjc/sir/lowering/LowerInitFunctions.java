@@ -413,8 +413,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
+				 JMethodDeclaration init) {
 	// do standard container stuff
 	visitContainer(self, init);
 	// register tapes between children in init function
@@ -454,8 +453,7 @@ public class LowerInitFunctions implements StreamVisitor {
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
 	// do nothing -- all work is in preVisit
     }
 

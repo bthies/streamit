@@ -101,8 +101,7 @@ public class LowerWorkFunctions implements StreamVisitor
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
+				 JMethodDeclaration init){
     }
   
     /* pre-visit a splitjoin */
@@ -132,8 +131,7 @@ public class LowerWorkFunctions implements StreamVisitor
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
     }
   
     /* post-visit a splitjoin */

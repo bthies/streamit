@@ -29,8 +29,7 @@ public class FuseAll extends EmptyStreamVisitor {
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
 	FusePipe.fuse(self);
     }
 }

@@ -392,8 +392,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
+				 JMethodDeclaration init) {
 	// don't do anything--visit on the way up
     }
   
@@ -441,8 +440,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
 	postVisit(self.getName(), fields, methods, self.getChildren());
     }
   

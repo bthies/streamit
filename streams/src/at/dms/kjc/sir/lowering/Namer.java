@@ -187,8 +187,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				 SIRStream parent,
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
-				 JMethodDeclaration init,
-				 List elements) {
+				 JMethodDeclaration init) {
 	preVisit(self);
     }
 
@@ -232,8 +231,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
 				  SIRStream parent,
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
-				  JMethodDeclaration init,
-				  List elements) {
+				  JMethodDeclaration init) {
 	postVisit();
     }
 

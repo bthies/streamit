@@ -737,17 +737,16 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				SIRStream parent,
 				JFieldDeclaration[] fields,
 				JMethodDeclaration[] methods,
-				JMethodDeclaration init,
-				List elements) {
+				JMethodDeclaration init) {
 	// this isn't pretty, but the sched handle should be the fused
 	// filter if this pipeline is representing a fused filter.
 	// Othwerwise, the handle can just be <self>.
 	SIRStream fusedFilter = 
-	    sirScheduler.getTwoStageFilter(elements);
+	    sirScheduler.getTwoStageFilter(self.getChildren());
 	SchedPipeline result = 
 	    scheduler.newSchedPipeline(fusedFilter!=null ? fusedFilter : self);
 	// add children to pipeline
-	for (ListIterator it = elements.listIterator(); it.hasNext(); ) {
+	for (ListIterator it = self.getChildren().listIterator(); it.hasNext(); ) {
 	    // get child
 	    SIRStream child = (SIRStream)it.next();
 	    // build scheduler representation of child
@@ -765,13 +764,12 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init,
-				 List elements,
 				 SIRSplitter splitter,
 				 SIRJoiner joiner) {
 	// represent the pipeline
 	SchedSplitJoin result = scheduler.newSchedSplitJoin(self);
 	// add children to pipeline
-	for (ListIterator it = elements.listIterator(); it.hasNext(); ) {
+	for (ListIterator it = self.getParallelStreams().listIterator(); it.hasNext(); ) {
 	    // get child
 	    SIRStream child = (SIRStream)it.next();
 	    // build scheduler representation of child

@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.20 2002-02-20 16:28:17 thies Exp $
+## $Id: Makefile,v 1.21 2002-02-22 13:24:18 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -48,6 +48,7 @@ JAVAFILES +=	StreamVisitor \
 		SIRJoiner \
 		SIRMessageStatement \
 		SIROperator \
+		SIRTwoStageFilter \
 		SIRPeekExpression \
 		SIRPipeline \
 		SIRPopExpression \

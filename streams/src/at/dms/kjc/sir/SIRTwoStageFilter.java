@@ -53,24 +53,38 @@ public class SIRTwoStageFilter extends SIRFilter {
 	this.initPeek = initPeek;
 	this.initPush = initPush;
 	this.initPop = initPop;
-	// this ensures that <initWork> is in our methods array, too
+	// this ensures that <initWork>> is in our methods array, too
 	setInitWork(initWork);
-	// we think the peek-pop difference should be the same in the
-	// initial and steady states (our simulation routine with the
-	// scheduler makes this assumption).
-	Utils.assert(initPeek-initPop==getPeekInt()-getPopInt());
+	checkRep();
     }
 
     /**
      * Copies the state of filter <other> into this.  Fields that are
      * objects will be shared instead of cloned.
      */
-    public void copyState(SIRTwoStageFilter other) {
+    public void copyState(SIRFilter other) {
 	super.copyState(other);
-	this.initPeek = other.initPeek;
-	this.initPush = other.initPush;
-	this.initPop = other.initPop;
-	this.initWork = other.initWork;
+	if (other instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)other;
+	    this.initPeek = twoStage.initPeek;
+	    this.initPush = twoStage.initPush;
+	    this.initPop = twoStage.initPop;
+	    this.initWork = twoStage.initWork;
+	    checkRep();
+	}
+    }
+
+    /**
+     * Checks the representation of this to make sure it's consistent
+     * with our assumptions.
+     */
+    private void checkRep() {
+	// we think the peek-pop difference should be the same in the
+	// initial and steady states (our simulation routine with the
+	// scheduler makes this assumption).
+	Utils.assert(initPeek-initPop==getPeekInt()-getPopInt());
+	// we need an init work function to be a two-stage filter
+	Utils.assert(initWork!=null);
     }
 
     /**
@@ -80,6 +94,7 @@ public class SIRTwoStageFilter extends SIRFilter {
     private void setInitWork (JMethodDeclaration newWork) {
 	addReplacementMethod(newWork, this.initWork);
 	this.initWork = newWork;
+	checkRep();
     }
 
     public int getInitPush() {
@@ -95,6 +110,7 @@ public class SIRTwoStageFilter extends SIRFilter {
     }
 
     public JMethodDeclaration getInitWork() {
+	Utils.assert(initWork!=null);
 	return this.initWork;
     }
 

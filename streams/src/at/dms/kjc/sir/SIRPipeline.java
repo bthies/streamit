@@ -46,8 +46,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	    // add it to <p>'s elements
 	    p.add(childClone);
 	}
-	System.err.println("cloning " + this + " into " + p);
-	new RuntimeException().printStackTrace();
 	return p;
     }
     

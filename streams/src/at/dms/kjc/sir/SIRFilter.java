@@ -30,7 +30,11 @@ public class SIRFilter extends SIRStream implements Cloneable {
     private CType inputType, outputType;
 
     public SIRFilter() {
-	super();
+	this(null);
+    }
+
+    public SIRFilter(String ident) {
+	super(null, ident, null, null);
 	this.pop = new JIntLiteral(0);
 	this.push = new JIntLiteral(0);
 	this.peek = new JIntLiteral(0);
@@ -214,6 +218,10 @@ public class SIRFilter extends SIRStream implements Cloneable {
     }
     public CType getOutputType() {
 	return this.outputType;
+    }
+
+    public String toString() {
+	return "SIRFilter name=" + getName() + " ident=" + getIdent();
     }
 }
 

@@ -16,7 +16,6 @@ void BF_create(BF_Data* this)
    */
   vsip_cmview_f* bfWeightsTrans  = vsip_cmcreate_f(NUM_CHANNELS, NUM_BEAMS, VSIP_ROW, VSIP_MEM_NONE);
 
-  this->time = 0;
   createBf(steeringVectors, bfWeightsTrans);
 
   /* Store the transpose of the weights. */
@@ -41,11 +40,7 @@ void BF_create(BF_Data* this)
 void BF_processPulse(BF_Data* this, vsip_cmview_f* inputMat, vsip_cmview_f* outputMat)
 {
   int i, j;
-  clock_t start, stop;
-  start = clock();
   vsip_cmprod_f(this->bfWeights, inputMat, outputMat);
-  stop = clock();
-  this->time += ((double)(stop-start))/CLOCKS_PER_SEC;
 }
 
 void BF_destroy(BF_Data* this)

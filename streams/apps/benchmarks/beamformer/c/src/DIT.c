@@ -54,11 +54,7 @@ void DIT_create(DIT_Data* this)
 void DIT_processPulse(DIT_Data* this, vsip_cmview_f* outputMat)
 {
   int i, j;
-  clock_t start, stop;
-  start = clock();
   createRawData(this->steeringVectors, this->predecPulseShape, outputMat);
-  stop = clock();
-  this->time += ((double)(stop-start))/CLOCKS_PER_SEC;
 }
 
 void DIT_destroy(DIT_Data* this)

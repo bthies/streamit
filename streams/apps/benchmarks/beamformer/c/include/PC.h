@@ -26,7 +26,6 @@ struct _PC_Data
 #else
   vsip_cfir_f*    pcFir;
 #endif
-  double            time;
 };
 
 void PC_create(PC_Data* this);

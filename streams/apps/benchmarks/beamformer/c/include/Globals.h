@@ -2,7 +2,6 @@
 #define _GLOBALS_H_
 
 #include <vsip.h>
-#include <time.h>
 #include "Utils.h"
 
 enum Status

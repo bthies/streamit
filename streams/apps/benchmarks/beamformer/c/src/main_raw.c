@@ -1,3 +1,6 @@
+#include <raw.h>
+#include <stdio.h>
+
 #include <vsip.h>
 #include "Globals.h"
 #include "DIT.h"
@@ -5,13 +8,13 @@
 #include "BF.h"
 #include "PC.h"
 #include "Utils.h"
-#include "time.h"
+
 
 #define NUM_PULSES 10000
 
 #define DEBUG_0
 
-int main( int argc, char* argv[] )
+int main()
 {
   int i;
   vsip_cmview_f* ditLpfData;

@@ -11,7 +11,6 @@ struct _LPF_Data
   vsip_cvview_f*    outputRowView;
   vsip_cfir_f*      coarseFir;
   vsip_cfir_f*      fineFir;
-  double            time;
 };
 
 void LPF_create(LPF_Data* this,

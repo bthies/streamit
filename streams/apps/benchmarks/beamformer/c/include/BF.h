@@ -9,7 +9,6 @@ struct _BF_Data
 {
   /* The beamforming weights are stored in a transposed manner for efficiency. */
   vsip_cmview_f* bfWeights;
-  double            time;
 };
 
 void BF_create(BF_Data* this);

@@ -7,7 +7,6 @@ void PC_create(PC_Data* this)
   vsip_cvview_f* pulseShape = vsip_cvcreate_f(PULSE_SIZE, VSIP_MEM_NONE);
   vsip_cvview_f* predecPulseShape = vsip_cvcreate_f(PREDEC_PULSE_SIZE, VSIP_MEM_NONE);
 
-  this->time = 0;
   this->numPulses     = 0;
   this->matchedFilter = vsip_cvcreate_f((NUM_RANGES/(FINE_DECIMATION_RATIO*
 						     COARSE_DECIMATION_RATIO))*NUM_SEGMENTS, VSIP_MEM_NONE);
@@ -63,7 +62,6 @@ void PC_processPulse(PC_Data* this, vsip_cmview_f* inputMat)
   int i,j;
   float value;
   unsigned short success = 1;
-  clock_t start, stop;
 
   /* Initialize - this could be moved to the PC_create() method for a minor speed up
    * for now I will keep it here for simplicity.
@@ -77,7 +75,6 @@ void PC_processPulse(PC_Data* this, vsip_cmview_f* inputMat)
   vsip_block_f* rBlock     = vsip_mgetblock_f(this->result);
   float* rData;
 
-  start = clock();
 #ifdef DEBUG_0
   checkIfAllZeroCf(inputMat, __FILE__, __LINE__);
 #endif
@@ -158,8 +155,6 @@ void PC_processPulse(PC_Data* this, vsip_cmview_f* inputMat)
   /*  printf( "SUCCESS!!!!\n"); **/
   this->numPulses++;
   /**vsip_cmcopy_f_f(this->sndHalfData, this->fstHalfData);**/
-  stop = clock();
-  this->time += ((double)(stop-start))/CLOCKS_PER_SEC;
 }
 
 void PC_destroy(PC_Data* this)

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.15 2002-11-26 22:12:47 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.16 2002-12-12 16:25:41 aalamb Exp $
  */
 
 prefix Kjc
@@ -219,13 +219,6 @@ longname		"frequencyreplacement"
 	default		"-1"
 	requireArgument
 	help		"Convert FIR filters to a frequency implementation. 0 implies inefficient implementation, 1 implies efficient implementation"
-
-longname		"targetFFTSize"
-	shortcut	"t"
-	type		int
-	default		"1"
-	requireArgument
-	help		"The target number of outputs (N) to produce (used with frequencyreplacement)"
 
 longname 		"removeglobals"
 	shortcut	"G"

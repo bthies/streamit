@@ -204,6 +204,17 @@ public class LowerInitFunctions implements StreamVisitor {
 	}
     }
 
+    private void doFeedbackLoopDelay(SIRFeedbackLoop str,
+                                     int delay,
+                                     JMethodDeclaration initPath,
+                                     JMethodDeclaration init) {
+        JExpression parentContext = LoweringConstants.getStreamContext();
+        init.addStatement(new LIRSetDelay(parentContext,
+                                          delay,
+                                          str.getInputType(),
+                                          new LIRFunctionPointer(initPath)));
+    }
+
     /**
      * Lowers all the SIRInitStatements in <init>, given that the
      * corresponding structure is <str>, into function calls that the
@@ -386,6 +397,8 @@ public class LowerInitFunctions implements StreamVisitor {
 	visitContainer(self, init);
 	// register tapes
 	registerFeedbackLoopTapes(self, init);
+        // set up the delay function
+        doFeedbackLoopDelay(self, delay, initPath, init);
     }
 
     /* post-visit a pipeline */

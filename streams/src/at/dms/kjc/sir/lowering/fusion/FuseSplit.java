@@ -131,7 +131,12 @@ public class FuseSplit {
 
 	// calculate the push/pop/peek ratio
 	int push = rep.joiner * sj.getJoiner().getSumOfWeights();
-	int pop = rep.splitter * sj.getSplitter().getSumOfWeights();;
+	int pop;
+	if (sj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
+	    pop = rep.splitter;
+	} else {
+	    pop = rep.splitter * sj.getSplitter().getSumOfWeights();;
+	}
 	// require pop == peek for now
 	int peek = pop;
 
@@ -441,7 +446,7 @@ public class FuseSplit {
 								  new SIRPopExpression(sj.
 										       getInputType()),
 								  null),
-					 rep.splitter * sj.getSplitter().getSumOfWeights()));
+					 rep.splitter));
 	}
 
         // Now make a new work function based on this.

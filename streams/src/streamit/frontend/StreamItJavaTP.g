@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.23 2002-08-12 20:07:00 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.24 2002-08-12 20:54:42 dmaze Exp $
  */
 
 header {
@@ -452,9 +452,18 @@ substream_statement[String operation] returns [String t]
 {
   t = null;
   String params, inline;
+  Type type;
+	List pl;
 }
-	: name:ID params=func_call_params
-		{ t = operation + "(new " + name.getText() + params + ")"; }
+	: (ID LESS_THAN) =>
+		name1:ID LESS_THAN type=data_type pl=func_param_list
+		{ t = operation + "(new " + name1.getText() + "(";
+			t += n2j.typeToClass(type);
+			for (Iterator iter = pl.iterator(); iter.hasNext(); )
+				t += ", " + ((Expression)iter.next()).accept(n2j);
+			t += "))"; }
+	| name2:ID params=func_call_params
+		{ t = operation + "(new " + name2.getText() + params + ")"; }
 	| inline=inline_stream
 		{ t = operation + "(" + inline + ")"; }
 	;

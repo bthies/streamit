@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.16 2002-07-16 19:01:49 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.17 2002-07-16 19:08:29 dmaze Exp $
  */
 
 header {
@@ -510,6 +510,10 @@ assign_statement returns [String t] {t=null; Expression l, x;}
 						(String)cplx.getReal().accept(n2j) + ";\n";
 					t += lhs + ".imag = " +
 						(String)cplx.getImag().accept(n2j);
+				}
+				else if (((Type)x.accept(new GetExprType(symTab, cur_type))).isComplex())
+				{
+					t = lhs + " = " + (String)x.accept(n2j);
 				}
 				else
 				{

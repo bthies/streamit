@@ -45,7 +45,8 @@ typedef union latency {
 #define LATENCY_BEST_EFFORT ((latency){ special: _BEST_EFFORT })
 typedef void (*streamit_handler)(void *);
 typedef void (*work_fn)(void *);
-typedef streamit_handler *interface_table;
+typedef void (*message_fn)(void *data, void *params);
+typedef message_fn *interface_table;
 typedef struct tape {
   void *data;
   int read_pos;
@@ -112,8 +113,13 @@ typedef struct stream_context {
   stream_type_data type_data;
 } stream_context;
 stream_context *create_context(void *p);
+typedef struct portal_receiver {
+  struct portal_receiver *next;
+  stream_context *context;
+  interface_table *vtbl;
+} portal_receiver;
 typedef struct portal {
-  stream_context_list *destinations;
+  portal_receiver *receiver;
 } portal;
 void set_stream_type(stream_context *c, stream_type type);
 void set_peek(stream_context *c, int peeks);
@@ -141,7 +147,7 @@ portal *create_portal(void);
 void register_receiver(portal *p, stream_context *receiver,
                        interface_table *vtbl, latency *l);
 void register_sender(portal *p, stream_context *sender, latency *l);
-void send_message(portal *p, int msgid, latency *l, ...);
+void send_message(portal *p, int msgid, latency *l, void *params);
 void streamit_run(stream_context *c);
 
 #endif /* STREAMIT_H */

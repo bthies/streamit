@@ -435,23 +435,96 @@ public class Linear extends BufferedCommunication implements Constants {
 	return LABEL_PREFIX+uin;
     }
     
-    /*public JMethodDeclaration getPrimePumpMethod() {
-      JBlock statements = new JBlock(null, new JStatement[0], null);
-      FilterContent filter = filterInfo.filter;
-      
-      //add the calls to the work function in the prime pump stage
-      //statements.addStatement(getSteadyBlock());//getWorkFunctionBlock(filterInfo.primePump));	
-      
-      return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-      CStdType.Void,
-      primePumpStage + uniqueID,
-      JFormalParameter.EMPTY,
-      CClassType.EMPTY,
-      statements,
-      null,
-      null);
-      }*/
-    
+    public JBlock getSlowExecute(int mult,int buffer) {
+	JStatement[] blockBody=new JStatement[1];
+	InlineAssembly inline=new InlineAssembly();
+	blockBody[0]=inline;
+	inline.add(".set noat");
+	if(begin) {
+	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
+	    inline.add("la "+tempReg+", %0");
+	    int readIndex=0;
+	    int writeIndex=0;
+	    int bufferRemaining=buffer; //Use peek buffer while bufferRemaining>0 else use net
+	    //preloop
+	    for(int i=0;i<=topPopNum;i++)
+		for(int j=0;j<popCount;j++) {
+		    assert bufferRemaining>0:"Buffer shouldn't run out here!";
+		    inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+		    readIndex+=4;
+		    bufferRemaining--;
+		    for(int k=i;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+		    }
+		}
+	    //innerloop
+	    for(int i=0;i<mult-1;i++)
+		for(int j=0;j<popCount;j++) {
+		    if(bufferRemaining>0) {
+			//Load value and send to switch
+			inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			readIndex+=4;
+			bufferRemaining--;
+		    } else
+			inline.add("move  "+tempRegs[0]+",\\t$csti");
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+		    }
+		}
+	    //postloop
+	    for(int i=0;i<topPopNum;i++)
+		for(int j=0;j<popCount;j++) {
+		    if(bufferRemaining>0) {
+			//Load value and send to switch
+			inline.add("lw!   "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+			readIndex+=4;
+			bufferRemaining--;
+		    } else
+			inline.add("move  "+tempRegs[0]+",\\t$csti");
+		    inline.add("sw    "+tempRegs[0]+",\\t"+writeIndex+"("+tempReg+")");
+		    writeIndex++;
+		    for(int k=topPopNum;k>i;k--) {
+			inline.add("mul.s "+tempRegs[1]+",\\t"+tempRegs[0]+",\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
+		    }
+		}
+	    //Transfer rest of buffer
+	    for(;bufferRemaining>0;bufferRemaining--) {
+		inline.add("lw    "+tempRegs[0]+",\\t"+readIndex+"("+tempReg+")");
+		readIndex+=4;
+		inline.add("sw    "+tempRegs[0]+",\\t"+writeIndex+"("+tempReg+")");
+		writeIndex++;
+	    }
+	} else {
+	    //preloop
+	    for(int i=0;i<=topPopNum;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=i;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	    //innerloop
+	    for(int i=0;i<mult-1;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	    //postloop
+	    for(int i=0;i<topPopNum;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>i;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	}
+	inline.add(".set at");
+	return new JBlock(null,blockBody,null);
+	//return new JMethodDeclaration(null,at.dms.kjc.Constants.ACC_PUBLIC,CStdType.Void,primePumpStage+uniqueID,JFormalParameter.EMPTY,CClassType.EMPTY,block,null,null);
+    }
+
     public JMethodDeclaration getInitStageMethod() {
 	//return linearInit;
 	JMethodDeclaration method=super.getInitStageMethod();
@@ -488,5 +561,6 @@ public class Linear extends BufferedCommunication implements Constants {
 
     protected JStatement getWorkFunctionCall(FilterContent filter) {
 	return new JEmptyStatement(null,null);
+	//throw new AssertionError("Shouldn't be called");
     }
 }

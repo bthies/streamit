@@ -3,4 +3,8 @@
 # get-antlr: download an antlr.jar from the ANTLR Web site
 
 test -f $1 && exit 0
-cp /u/thies/public_html/antlr.jar $1
+wget http://www.antlr.org/download/antlr-2.7.2.tar.gz
+gunzip antlr-2.7.2.tar.gz
+tar xf antlr-2.7.2.tar antlr-2.7.2/antlr.jar
+mv antlr-2.7.2/antlr.jar $1
+rm -rf antlr-2.7.2 antlr-2.7.2.tar

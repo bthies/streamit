@@ -42,23 +42,29 @@ class IncreaseFilterMult implements StreamVisitor {
 	int mult = -1;
 
 	while (iter.hasNext()) {
-	    SIRStream ss = (SIRStream)iter.next();
-	    int i1[] = (int[])before.get(ss);
-	    int i2[] = (int[])after.get(ss);
+	    SIROperator oper = (SIROperator)iter.next();
+	    int i1[] = (int[])before.get(oper);
+	    int i2[] = (int[])after.get(oper);
 
-	    if (previous_work.containsKey(ss)) {
-		SIRFilter f = (SIRFilter)ss;
-		WorkInfo info = (WorkInfo)previous_work.get(ss);
+	    if (i1 == null || i2 == null) {
+		
+		//System.out.println("Warning! "+oper+
+		//		   " schedule1("+i1+") "+
+		//		   " schedule2("+i2+")");
+		continue;
+	    }
+
+
+	    if (i1 == null && i2 == null) continue;
+
+	    if (previous_work.containsKey(oper)) {
+		SIRFilter f = (SIRFilter)oper;
+		WorkInfo info = (WorkInfo)previous_work.get(oper);
 		i2[0] *= info.multiple;
 	    }
 
 	    int ratio = i2[0] / i1[0];
 	    assert(i2[0] % i1[0] == 0);
-
-	    //System.out.println(ss+
-	    //		       " s1: "+i1[0]+
-	    //		       " s2: "+i2[0]+
-	    //		       " ratio: "+ratio);
 
 	    assert (mult == -1 || mult == ratio);
 	    mult = ratio;

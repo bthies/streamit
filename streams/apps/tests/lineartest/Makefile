@@ -18,7 +18,7 @@ BOTH-OPTIONS      =  --unroll 100000 --linearanalysis --linearreplacement --freq
 LINEAR-REG-TEST = linear_regtest.pl
 
 # current test
-CURRENT-TEST = regtests/LinearTest31
+CURRENT-TEST = regtests/LinearTest21
 
 all: clean java-compile uni-compile raw-compile
 

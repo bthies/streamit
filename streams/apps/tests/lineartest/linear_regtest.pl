@@ -46,18 +46,12 @@ my @tests = (
 	     "regtests/LinearTest28.str",
 	     "regtests/LinearTest29.str",
 	     "regtests/LinearTest30.str",
+	     "regtests/LinearTest31.str",
 	     );
 
-@tests = (
-	  "regtests/LinearTest26.str",
-	  #"regtests/LinearTest27.str",
-	  #"regtests/LinearTest28.str",
-	  #"regtests/LinearTest29.str",
-	  #"regtests/LinearTest30.str",
-
-	  	  
-	  
-);
+#@tests = (
+#	  "regtests/LinearTest10.str",
+#);
 
 
 my $current_test;

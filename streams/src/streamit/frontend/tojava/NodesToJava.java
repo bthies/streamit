@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.89 2004-11-16 06:10:28 thies Exp $
+ * @version $Id: NodesToJava.java,v 1.90 2004-11-16 09:56:09 thies Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -840,16 +840,18 @@ public class NodesToJava implements FEVisitor
                 (String)max.accept(this) + ")";
         }
         
-        result += ";\n" + indent + receiver + "." + stmt.getName() + "(";
+        result += ";\n" + indent + receiver + ".enqueueMessage(this, \"" + stmt.getName() + "\", new Object[] {";
         boolean first = true;
         for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
         {
             Expression param = (Expression)iter.next();
             if (!first) result += ", ";
             first = false;
-            result += (String)param.accept(this);
+	    // wrapInObject will take the primitive type output here
+	    // and wrap it in an object for the sake of reflection
+            result += receiver + ".wrapInObject(" + (String)param.accept(this) + ")";
         }
-        result += ")";
+        result += "})";
         return result;
     }
 
@@ -935,14 +937,6 @@ public class NodesToJava implements FEVisitor
             result.append(doParams(func.getParams(), null));
             result.append(" { }\n");
         }
-	if(libraryFormat) {
-	    //implement fireMessage
-	    result.append(indent+"protected void fireMessage(int message,Object[] args) {\n");
-	    addIndent();
-	    result.append(indent+"System.out.println(\"Firing Message: \"+message);\n");
-	    unIndent();
-	    result.append(indent+"}\n");
-	}
 	unIndent();
         result.append(indent + "}\n");
 

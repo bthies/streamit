@@ -28,6 +28,10 @@ import streamit.scheduler2.constrained.NoPathException;
 // the basic stream class (pipe's).  has 1 input and 1 output.
 public abstract class Stream extends Operator
 {
+    /**
+     * The toplevel stream in the whole program.
+     */
+    public static Stream toplevel;    
 
     public Channel input = null;
     public Channel output = null;
@@ -582,12 +586,14 @@ public abstract class Stream extends Operator
 
 		sORj.prepareToWork();
                 sORj.work();
+		sORj.cleanupWork();
             }
             else if (oper instanceof FeedbackLoop)
             {
                 assert function instanceof Operator;
                 ((Operator)function).prepareToWork();
                 ((Operator)function).work();
+                ((Operator)function).cleanupWork();
             }
             else
                 assert false : oper;
@@ -650,6 +656,9 @@ public abstract class Stream extends Operator
         boolean printSDEP = false;
         String sdepTOPString = null, sdepBOTTOMString = null;
         int nIters = -1;
+
+	// we're running this as the toplevel stream
+	toplevel = this;
 
         // read the args:
         if (args != null)

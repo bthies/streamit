@@ -537,6 +537,7 @@ public abstract class Filter extends Stream
             if (schedName.equals ("work")) work (); else
             if (schedName.equals ("prework")) prework (); else
             getClass().getMethod(phase.name, null).invoke(this, null);
+	    cleanupWork();
         }
         catch (Throwable x)
         {

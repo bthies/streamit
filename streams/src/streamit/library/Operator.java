@@ -43,6 +43,18 @@ public class Operator extends DestroyedClass
      */
     int currentMaxPeek = -1;
     /**
+     * The number of times this has executed its work or prework
+     * function.  Incremented only AFTER the work function has
+     * completely finished.
+     */
+    int numExecutions = 0;
+    /**
+     * The queue of Message objects to be delivered in this, sorted by
+     * increasing order of delivery time.  Everything in this list has
+     * yet to be delivered.
+     */
+    private LinkedList messageQueue = new LinkedList();
+    /**
      * The following methods relate to maintaining the
      * currentPopped/Pushed/MaxPeek described above...
      */
@@ -57,6 +69,42 @@ public class Operator extends DestroyedClass
 	currentPopped = 0;
 	currentPushed = 0;
 	currentMaxPeek = -1;
+	deliverMessages();
+    }
+    /**
+     * Enqueues <message> for delivery to this.
+     */
+    public void enqueueMessage(Message m) {
+	// maintain messageQueue by order of delivery time
+	int time = m.getDeliveryTime();
+	for (int i=0; i<messageQueue.size(); i++) {
+	    int other = ((Message)messageQueue.get(i)).getDeliveryTime();
+	    if (other > time) {
+		messageQueue.add(i, m);
+		return;
+	    }
+	}
+	// otherwise add at end
+	messageQueue.add(m);
+    }
+    /**
+     * Delivers all messages that should be processed before the next
+     * execution.
+     */
+    private void deliverMessages() {
+	// deliver before the next execution
+	while (messageQueue.size()>0 && ((Message)messageQueue.get(0)).getDeliveryTime()==numExecutions+1) {
+	    Message m = (Message)messageQueue.removeFirst();
+	    m.deliver(this);
+	}
+    }
+    
+    /**
+     * This function should be called right after any call to work()
+     * on the operator.
+     */
+    public void cleanupWork() {
+	numExecutions++;
     }
     /**
      * Register a pop, push, or peek.
@@ -74,6 +122,15 @@ public class Operator extends DestroyedClass
     }
     public void registerPeek(int i) {
 	currentMaxPeek = currentPopped + i;
+    }
+    /**
+     * Returns the number of times this has executed a work or prework
+     * function (or a phase, in the case of containers).  Only counts
+     * completely finished executions of work or prework (not
+     * executions that are in progress.)
+     */
+    public int getNumExecutions() {
+	return numExecutions;
     }
 
     public Operator(float x1, float y1, int z1)
@@ -959,6 +1016,7 @@ public class Operator extends DestroyedClass
             {
 		sink.prepareToWork();
                 sink.work ();
+		sink.cleanupWork();
             }
         }
     }
@@ -976,6 +1034,7 @@ public class Operator extends DestroyedClass
 
 	    ch.getSink ().prepareToWork();
             ch.getSink ().work ();
+	    ch.getSink ().cleanupWork();
              }
     }
 

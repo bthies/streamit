@@ -101,6 +101,7 @@ public class Channel extends streamit.misc.DestroyedClass
 
 	    source.prepareToWork();
             source.work ();
+	    source.cleanupWork();
         }
     }
 
@@ -133,6 +134,7 @@ public class Channel extends streamit.misc.DestroyedClass
         if (passThrough) {
 	    sink.prepareToWork();
 	    sink.work ();
+	    sink.cleanupWork();
 	}
     }
 

@@ -1,8 +1,8 @@
 package streamittest;
 
 import java.io.*;
-import java.util.Vector;
-import java.util.StringTokenizer;
+import java.util.*;
+
 
 
 /**
@@ -106,7 +106,6 @@ public class Harness {
 	String[] sourceFiles = new String[filenames.size()];
 	for (int i=0; i<sourceFiles.length; i++) {
 	    sourceFiles[i] = (String)filenames.elementAt(i);
-	    //System.out.println("expanded: " + sourceFiles[i]);
 	}
 	return sourceFiles;
     }

@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.4 2002-06-25 20:02:31 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
@@ -16,12 +16,15 @@ class StreamITTestCase extends TestCase {
     
     public StreamITTestCase(String name, int flags) {
 	super(name);
+	// create a compiler interface for the test case to use (set up the compiler options)
 	this.compiler = CompilerInterface.createCompilerInterface(flags);
     }
 
 
     /**
      * Reads out the environment variable STREAMIT_HOME
+     * (which gets set via calling java with -Dstreamit_home=$STREAMIT_HOME
+     * command line argument).
      **/
     public static String getStreamITRoot() {
 	return System.getProperty("streamit_home"); // imported using the -D command line
@@ -33,7 +36,7 @@ class StreamITTestCase extends TestCase {
     public void doCompileTest(String root,
 			      String filename) {
 
-	// print out test details for verbose output
+	// print out test details when verbose output is on
 	ResultPrinter.printTest(this.getClass().getName(),
 				this.getName() + " compile ",
 				"compiling " + root + filename + " with " + compiler.getOptionsString());
@@ -55,8 +58,6 @@ class StreamITTestCase extends TestCase {
 
 	// run the compilation tests
 	doCompileTest(root, filename);
-
-
 
 	// test execution
 

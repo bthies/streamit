@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.3 2002-06-24 21:25:36 aalamb Exp $
+ * $Id: TestAll.java,v 1.4 2002-06-25 20:02:31 aalamb Exp $
  **/
 package streamittest;
 
@@ -30,7 +30,7 @@ public class TestAll extends TestCase {
     public static Test suite() {
 	TestSuite allTests = new TestSuite();
 
-	//addUniprocessorTests(allTests);
+	addUniprocessorTests(allTests);
 	addRawTests(allTests);
 
 	return allTests;
@@ -58,7 +58,6 @@ public class TestAll extends TestCase {
 				       CompilerInterface.UNROLL |
 				       CompilerInterface.FUSION |
 				       CompilerInterface.PARTITION));
-
     }
 
     /**
@@ -69,7 +68,6 @@ public class TestAll extends TestCase {
 	// raw with 4 partitioning
 	// const prop on/off for all three
 
-	/*
 	// raw with 4 tiles
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW4));
@@ -79,18 +77,14 @@ public class TestAll extends TestCase {
 				       CompilerInterface.RAW4 |
 				       CompilerInterface.CONSTPROP));
 				       
-	*/				       
 	// raw with 8 tiles
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW8));
-	/*
+
 	// raw with 8 tiles, constprop
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW8 |
 				       CompilerInterface.CONSTPROP));
-
-	*/
-
     }
 
 

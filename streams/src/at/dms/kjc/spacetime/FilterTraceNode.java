@@ -14,11 +14,9 @@ public class FilterTraceNode extends TraceNode
     private boolean predefined;
 
     public FilterTraceNode(FilterContent filter,
-			   /*int initMult, int steadyMult, */int x, int y) {
+			   int x, int y) {
 	predefined = (filter instanceof PredefinedContent);
 	this.filter = filter;
-	//this.initMult = initMult;
-	//this.steadyMult = steadyMult;
 	this.x = x;
 	this.y = y;
     }
@@ -70,25 +68,6 @@ public class FilterTraceNode extends TraceNode
     {
 	return (filter instanceof FileOutputContent);
     }
-
-        /*
-	  THESE FUNCTIONS SHOULD NOT BE CALLED
-	  USE FILTERINFO
-
-    public int getInitMult() {
-	return filter.getInitMult();
-    }
-
-    public int getPrimePumpMult() 
-    {
-	return filter.getPrimePump();
-    }
-
-    public int getSteadyMult() {
-	return filter.getSteadyMult();
-    }
-    */
-
 }
 
 

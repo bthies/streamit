@@ -100,7 +100,7 @@ public class OutputTraceNode extends TraceNode
 	int sum = 0;
 	
 	for (int i = 0; i < dests.length; i++) {
-	    for (int j = 0; i < dests[i].length; j++)
+	    for (int j = 0; j < dests[i].length; j++)
 		if (dests[i][j] == in) {
 		    sum += weights[i];
 		    break;
@@ -128,7 +128,7 @@ public class OutputTraceNode extends TraceNode
     {
 	HashSet set = new HashSet();
 	for (int i = 0; i < dests.length; i++) {
-	    for (int j = 0; i < dests[i].length; j++)
+	    for (int j = 0; j < dests[i].length; j++)
 		set.add(dests[i][j]);
 	}
 	return set;

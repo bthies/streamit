@@ -406,6 +406,7 @@ class ReflectionCoeff extends SplitJoin
                 public void init() 
                 {
                     this.input = new Channel(Short.TYPE, 1);
+		    this.output = new Channel(Short.TYPE, 0);
                 }
                 public void work()
                 {

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.25 2003-10-15 10:49:32 thies Exp $
+# $Id: strc,v 1.26 2003-10-15 17:46:13 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -92,7 +92,7 @@ Options:
   --more-help         Include extra options
 * --much-more-help    Include internal-only options
 + --java              Input file is "old" syntax (in Java)
-  --output filename   Write a binary to filename
+  --output, -o file   Write a binary to given filename
   --raw n, -r n       Compile for RAW, with an n-by-n grid
   --standalone, -S    Generate C file without library dependencies
 * --cluster           Compile for a networked cluster

@@ -48,17 +48,17 @@ public class SchedulePrimePump
 	    Iterator sources = trace.getHead().getSourceSet().iterator();
 	    if (sources.hasNext()) {
 		Trace src = ((Edge)sources.next()).getSrc().getParent();
-		int diff = src.getPrimePump() - trace.getPrimePump();
+		int diff = Math.abs(src.getPrimePump() - trace.getPrimePump());
 		//if (diff != 0 && diff != 1)
 		//   System.out.println("Illegal primepump schedule1 " + trace);
 		assert diff == 0 || diff == 1 :
-			"Illegal primepump schedule";
+			"Illegal primepump schedule " + diff;
 		while (sources.hasNext()) {
 		    src = ((Edge)sources.next()).getSrc().getParent();
 		    //assert all one off
 		    //if (src.getPrimePump() - trace.getPrimePump() != diff)
 		    //System.out.println("Illegal primepump schedule2 " + trace);
-		    assert src.getPrimePump() - trace.getPrimePump() == diff :
+		    assert Math.abs(src.getPrimePump() - trace.getPrimePump()) == diff :
 			"Illegal primepump schedule";
 		}
 	    }
@@ -67,17 +67,17 @@ public class SchedulePrimePump
 	    Iterator dests = trace.getTail().getDestSet().iterator();
 	    if (dests.hasNext()) {
 		Trace dst = ((Edge)dests.next()).getDest().getParent();    
-		int diff = trace.getPrimePump() - dst.getPrimePump();
+		int diff = Math.abs(trace.getPrimePump() - dst.getPrimePump());
 		//if (diff != 0 && diff != 1)
 		//    System.out.println("Illegal primepump schedule3 " + trace);
 		assert diff == 0 || diff == 1 :
-		    "Illegal primepump schedule";
+		    "Illegal primepump schedule " + diff;
 		while (dests.hasNext()) {
 		    dst =  ((Edge)dests.next()).getDest().getParent();    
 		    //if (trace.getPrimePump() - dst.getPrimePump() != diff)
 		    //System.out.println("Illegal primepump schedule3 " + trace);
-		    assert trace.getPrimePump() - dst.getPrimePump() == diff :
-		    	"Illegal primepump schedule";
+		    assert Math.abs(trace.getPrimePump() - dst.getPrimePump()) == diff :
+		    	"Illegal primepump schedule " + diff + " != " + Math.abs(trace.getPrimePump() - dst.getPrimePump());
 		}
 	    }
 	    

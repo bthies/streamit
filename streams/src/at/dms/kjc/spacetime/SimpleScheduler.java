@@ -95,13 +95,69 @@ public class SimpleScheduler
 
 	//schedule the traces either based on work or dependencies
 	
-	scheduleWork();
+	//scheduleWork();
+	scheduleCommunication();
 	//scheduleDep();
 	//set up dependencies
 	setupDepends();
 
     }
     
+    private void scheduleCommunication() 
+    {
+	//sort traces...
+	Trace[] tempArray = (Trace[])partitioner.getTraceGraph().clone();
+	Arrays.sort(tempArray, 
+		    new CompareTraceCommunication());
+	LinkedList sortedTraces = new LinkedList(Arrays.asList(tempArray));
+
+	//schedule predefined filters first, but don't put them in the 
+	//schedule just assign them tiles...
+	removePredefined(sortedTraces);
+
+	//reverse the list
+	Collections.reverse(sortedTraces);
+
+	System.out.println("Sorted Traces: ");
+	Iterator it = sortedTraces.iterator();
+	while (it.hasNext()) {
+	    Trace trace = (Trace)it.next();
+	    System.out.println(" * " + trace);
+	}
+	
+
+	//start to schedule the traces
+	while (!sortedTraces.isEmpty()) {
+	    Trace trace = null;
+	    //find the first trace we can schedule
+	    Iterator traces = sortedTraces.iterator();
+	    while (traces.hasNext()) {
+	    	trace = (Trace)traces.next();
+	    	if (canScheduleTrace(trace))
+		    break;
+	    }
+
+	    assert trace != null;
+	    //System.out.println("Trying to schedule " + trace);
+	    while (true) {
+		HashMap layout = canLayoutTrace(trace);
+		//if we cannot schedule this trace...
+		if (layout == null) {
+		    //try to schedule other traces that will fit before the 
+		    //room becomes available for this trace
+		    //while (scheduleSmallerTrace(sortedTraces, trace)) {}
+		    //increment current time to next smallest avail time
+		    currentTime = nextTime(currentTime);
+		}
+		else {
+		    scheduleTrace(layout, trace, sortedTraces);
+		    break;
+		}
+	    }
+	}	
+    }
+    
+
     //schedule according to data-flow dependencies
     private void scheduleDep() 
     {
@@ -273,7 +329,7 @@ public class SimpleScheduler
 	}
 	
     }
-    
+        
 
     //see if we can schedule any smaller traces to run and finish before the 
     //earliest time the current trace can start execution
@@ -343,7 +399,7 @@ public class SimpleScheduler
     private void scheduleTrace(HashMap layout, Trace trace, LinkedList sortedList) 
     {
 	assert layout != null && trace != null;
-	//	System.out.println("Scheduling Trace: " + trace);
+	System.out.println("Scheduling Trace: " + trace + " at time " + currentTime);
 	//remove this trace from the list of traces to schedule
 	sortedList.remove(trace);
 	//add the trace to the schedule
@@ -362,11 +418,13 @@ public class SimpleScheduler
 	    ((FilterTraceNode)node).setXY(tile.getX(), 
 					  tile.getY());
 
-	    //add to the avail time for the tile
+	    //add to the avail time for the tile, use either the current time or the tile's avail
+	    //whichever is greater
 	    //add the bottleneck work
-	    tileAvail[tile.getTileNumber()] = currentTime 
+	    tileAvail[tile.getTileNumber()] = 
+		((currentTime > tileAvail[tile.getTileNumber()]) ? currentTime : tileAvail[tile.getTileNumber()])
 		+ partitioner.getTraceBNWork(trace);
-	    
+	    System.out.println("   * new avail for " + tile + " = " + tileAvail[tile.getTileNumber()]);
 	    //	    System.out.println("  *(" + currentTime + ") Assigning " + node + " to " + tile + 
 	    //		       "(new avail: " + tileAvail[tile.getTileNumber()] + ")");
 
@@ -429,18 +487,41 @@ public class SimpleScheduler
 	    tiles.add(rawChip.getTile(i));
 	}
 	
-	//if we want to, try to force a single input trace to the source's tile
-	if (false && trace.getHead().getSourceSet().size() == 1) {
+	//if we want to, try to force a single input trace to the source's tile as long as the
+	//source has one output
+	if (true && 
+	    trace.getHead().getSourceSet().size() == 1) {
 	    Trace upstream = ((Edge)trace.getHead().getSourceSet().iterator().next()).getSrc().getParent();
-	    if (schedule.contains(upstream)) {
+	    if (schedule.contains(upstream) && upstream.getTail().getDestSet().size() == 1) { 
 		RawTile tile = rawChip.getTile(upstream.getTail().getPrevFilter().getX(),
 					       upstream.getTail().getPrevFilter().getY());
-		HashMap layout = new HashMap();
-		//try to place on the tile ignoring the tile avail
-		if (getLayout(trace.getHead().getNextFilter(), tile, layout, true))
-		    return layout;
-		else 
-		    tiles.remove(tile);
+		if (tiles.contains(tile)) {
+		    HashMap layout = new HashMap();
+		    //try to place on the tile ignoring the tile avail
+		    if (getLayout(trace.getHead().getNextFilter(), tile, layout, true))
+			return layout;
+		    else 
+			tiles.remove(tile);
+		}
+	    }
+	}
+	
+	//if we want to, try to force a single output trace to the dest's tile as long as the
+	//downstream tile has one input
+	if (true && 
+	    trace.getTail().getDestSet().size() == 1) {
+	    Trace downstream = ((Edge)trace.getTail().getDestSet().iterator().next()).getDest().getParent();
+	    if (schedule.contains(downstream)) {
+		RawTile tile = rawChip.getTile(downstream.getTail().getPrevFilter().getX(),
+					       downstream.getTail().getPrevFilter().getY());
+		if (tiles.contains(tile) && downstream.getHead().getSourceSet().size() == 1) {
+		    HashMap layout = new HashMap();
+		    //try to place on the tile ignoring the tile avail
+		    if (getLayout(trace.getHead().getNextFilter(), tile, layout, true))
+			return layout;
+		    else 
+			tiles.remove(tile);
+		}
 	    }
 	}
 	
@@ -459,7 +540,7 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		System.out.println("     (for " + trace + " trying source " + tile + " at " + currentTime + ")");
+		//System.out.println("     (for " + trace + " trying source " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile,
 			      layout, false))
@@ -480,7 +561,7 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		System.out.println("     (for " + trace + " trying dest " + tile + " at " + currentTime + ")");
+		//System.out.println("     (for " + trace + " trying dest " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile, 
 			      layout, false))
@@ -494,7 +575,7 @@ public class SimpleScheduler
 	while (tilesIt.hasNext()) {
 	    RawTile tile = (RawTile)tilesIt.next();
 	    HashMap layout = new HashMap();
-	    System.out.println("     (for " + trace + " trying " + tile + " at " + currentTime + ")");
+	    //System.out.println("     (for " + trace + " trying " + tile + " at " + currentTime + ")");
 	    //if successful, return layout
 	    if (getLayout(trace.getHead().getNextFilter(), tile,
 			  layout, false))
@@ -507,23 +588,23 @@ public class SimpleScheduler
     
     private boolean getLayout(FilterTraceNode filter, RawTile tile, HashMap layout, boolean ignoreAvail)
     {
-	System.out.println("For " + filter + " trying " + tile);
+	//System.out.println("For " + filter + " trying " + tile);
 	//check if this tile is available, if not return false
 	if (!ignoreAvail && !isTileAvail(tile)) {
-	    System.out.println("       (Tile not currently available)");
+	    //System.out.println("       (Tile not currently available)");
 	    return false;
 	}
 	
 	//cannot assign a tile twice...
 	if (layout.containsValue(tile)) {
-	    System.out.println("       (Tile Already Assigned)");
+	    //System.out.println("       (Tile Already Assigned)");
 	    return false;
 	}
 
 	//if this is an endpoint, it must be on a border tile
 	if ((filter.getNext().isOutputTrace() || filter.getPrevious().isInputTrace()) &&
 	    !tile.hasIODevice()) {
-	    System.out.println("       (Endpoint not at border tile)");
+	    //System.out.println("       (Endpoint not at border tile)");
 	    return false;
 	}
 	
@@ -537,7 +618,7 @@ public class SimpleScheduler
 		assert out.oneOutput();
 		//make sure no one else uses this tile to write
 		if (writesFile[tile.getTileNumber()]) {
-		    System.out.println("       (Tile already used for file writer)");
+		    //System.out.println("       (Tile already used for file writer)");
 		    return false; 
 		}
 		
@@ -550,7 +631,7 @@ public class SimpleScheduler
 		assert in.oneInput();
 		//make sure no one else uses this tile to write
 		if (readsFile[tile.getTileNumber()]) {
-		    System.out.println("       (Tile already used for file reader)");
+		    //System.out.println("       (Tile already used for file reader)");
 		    return false;
 		}
 		
@@ -630,6 +711,28 @@ public class SimpleScheduler
     }
     
 
+}
+
+
+public class CompareTraceCommunication implements Comparator 
+{
+    public int compare (Object o1, Object o2) 
+    {
+	assert o1 instanceof Trace && o2 instanceof Trace;
+	Trace trace1 = (Trace)o1;
+	Trace trace2 = (Trace)o2;
+	int comm1 = trace1.getHead().getSourceSet().size() + 
+	    trace1.getTail().getDestSet().size();
+	int comm2 = trace2.getHead().getSourceSet().size() + 
+	    trace2.getTail().getDestSet().size();
+
+	if (comm1 < comm2)
+	    return -1;
+	else if (comm1 == comm2)
+	    return 0;
+	else
+	    return 1;
+    }
 }
 
 

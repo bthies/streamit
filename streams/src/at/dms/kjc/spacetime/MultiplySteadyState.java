@@ -7,7 +7,7 @@ import java.util.HashSet;
 
 public class MultiplySteadyState 
 {
-    private static final int MULTIPLER = 20;
+    private static final int MULTIPLER = 60;
     
     public static void doit(Partitioner partitioner, SimpleScheduler scheduler) 
     {

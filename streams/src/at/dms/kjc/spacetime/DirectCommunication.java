@@ -145,12 +145,14 @@ public class DirectCommunication extends RawExecutionCode
     {
 	//inline
 	//return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+		
 	return new JExpressionStatement(null, 
 					new JMethodCallExpression(null,
 								  new JThisExpression(null),
 								  filter.getWork().getName(),
 								  new JExpression[0]),
 					null);
+	
     }
 
     public JMethodDeclaration getInitStageMethod() 

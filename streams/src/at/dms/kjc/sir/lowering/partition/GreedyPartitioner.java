@@ -8,6 +8,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
+import at.dms.kjc.flatgraph.*;
 
 public class GreedyPartitioner {
     /**
@@ -37,7 +38,7 @@ public class GreedyPartitioner {
 	for(int i=0;i<MAX_FISS_ITER;i++) {
 	    fissAll();
 	    //System.out.print("count tiles again... ");
-	    count = new RawFlattener(str).getNumTiles();
+	    count = new GraphFlattener(str).getNumTiles();
 	    //System.out.println("done:"+count);
 	    if(count>=target) {
 		break;
@@ -66,7 +67,7 @@ public class GreedyPartitioner {
 	for(int i=sorted.size()-1;i>=0;i--) {
 	    SIRFilter filter=sorted.getFilter(i);
 	    if(StatelessDuplicate.isFissable(filter)) {
-		RawFlattener flattener = new RawFlattener(str);
+		GraphFlattener flattener = new GraphFlattener(str);
 		int dec=tilesForFission(filter, flattener, 2);
 		target-=dec;
 		if(fuseAll()<=target) {
@@ -100,7 +101,7 @@ public class GreedyPartitioner {
 	    }
 	    StreamItDot.printGraph(str, "during-fission.dot");
 	    // make raw flattener for latest version of stream graph
-	    RawFlattener flattener = new RawFlattener(str);
+	    GraphFlattener flattener = new GraphFlattener(str);
 	    // get work at <pos>
 	    int work = sorted.getWork(pos);
 	    // make a list of candidates that have the same amount of work
@@ -123,7 +124,7 @@ public class GreedyPartitioner {
     /**
      * Returns whether or not it's legal to fiss <candidates>
      */
-    private boolean canFiss(LinkedList candidates, RawFlattener flattener) {
+    private boolean canFiss(LinkedList candidates, GraphFlattener flattener) {
 	// count the number of new tiles required
 	int newTiles = 0;
 	// go through the candidates and count tiles, check that can
@@ -146,7 +147,7 @@ public class GreedyPartitioner {
      * current configuration of <str> if <filter> is split into <ways>
      * copies.
      */
-    private int tilesForFission(SIRFilter filter, RawFlattener flattener, int ways) {
+    private int tilesForFission(SIRFilter filter, GraphFlattener flattener, int ways) {
 	int result = 0;
 	// add tiles for the copies of <filter>
 	result += ways-1;
@@ -186,7 +187,7 @@ public class GreedyPartitioner {
 	int aggressive=0;
 	do {
 	    // get how many tiles we have
-	    RawFlattener flattener = new RawFlattener(str);
+	    GraphFlattener flattener = new GraphFlattener(str);
 	    count = flattener.getNumTiles();
 	    System.out.println("Partitioner detects " + count + " tiles.");
 	    if (count>target) {

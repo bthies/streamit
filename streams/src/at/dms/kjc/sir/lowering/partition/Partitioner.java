@@ -9,6 +9,7 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
+import at.dms.kjc.flatgraph.*;
 
 public class Partitioner {
     /**
@@ -26,7 +27,7 @@ public class Partitioner {
 	work.getSortedFilterWork().writeToFile("work-before.txt");
 
 	// detect number of tiles we have
-	int count = new RawFlattener(str).getNumTiles();
+	int count = new GraphFlattener(str).getNumTiles();
 	System.err.println("  Found "+count+" tiles.");
 
 	// for statistics gathering

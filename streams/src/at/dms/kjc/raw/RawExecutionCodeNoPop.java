@@ -172,7 +172,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	if (node.inputs > 0) {
 	    previous = node.incoming[0];
 	    prevInitCount = Util.getCountPrev(RawBackend.initExecutionCounts, 
-					 previous, node);
+					      previous, node);
 	    if (prevInitCount > 0) {
 		if (previous.contents instanceof SIRSplitter || 
 		    previous.contents instanceof SIRJoiner) {
@@ -240,7 +240,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
     
 
     private void createLocalVariables(FlatNode node, JBlock block,
-			      LocalVariables localVariables)
+				      LocalVariables localVariables)
     {
 	SIRFilter filter = (SIRFilter)node.contents;
 
@@ -441,17 +441,17 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
     }
 
     private boolean noBuffer(SIRFilter filter) 
-	{
-	    if (filter.getPeekInt() == 0 &&
-		(!(filter instanceof SIRTwoStageFilter) ||
-		 (((SIRTwoStageFilter)filter).getInitPeek() == 0)))
-		return true;
-	    return false;		
-	}
+    {
+	if (filter.getPeekInt() == 0 &&
+	    (!(filter instanceof SIRTwoStageFilter) ||
+	     (((SIRTwoStageFilter)filter).getInitPeek() == 0)))
+	    return true;
+	return false;		
+    }
     
 		    
     // private void defineLocalVars(JBlock block,
-// 				 LocalVariables localVariables
+    // 				 LocalVariables localVariables
     
 
     private void rawMainFunction(FlatNode node, JBlock statements,
@@ -474,13 +474,13 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	//add the call to the init function
 	statements.addStatement
 	    (new 
-		JExpressionStatement(null,
-				     new JMethodCallExpression
-					 (null,
-					  new JThisExpression(null),
-					  filter.getInit().getName(),
-					  paramArray),
-				     null));
+	     JExpressionStatement(null,
+				  new JMethodCallExpression
+				  (null,
+				   new JThisExpression(null),
+				   filter.getInit().getName(),
+				   paramArray),
+				  null));
 	
 	//add the call to initWork
 	if (filter instanceof SIRTwoStageFilter) {
@@ -504,8 +504,8 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 		JAddExpression addPop = 
 		    new JAddExpression(null,
 				       new JLocalVariableExpression
-					   (null, 
-					    localVariables.recvBufferIndex),
+				       (null, 
+					localVariables.recvBufferIndex),
 				       new JIntLiteral(two.getInitPop()));
 		
 		JParenthesedExpression exp = new JParenthesedExpression(null, addPop);
@@ -515,8 +515,8 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 					   OPE_BAND,
 					   exp, 
 					   new JLocalVariableExpression
-					       (null,
-						localVariables.recvBufferBits));
+					   (null,
+					    localVariables.recvBufferBits));
 
 		JAssignmentExpression assignment = new
 		    JAssignmentExpression(null, 
@@ -533,8 +533,8 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	}	
 	    
 	if (initFire - 1 > 0) {
-	//add the code to collect enough data necessary to fire the 
-	//work function for the first time
+	    //add the code to collect enough data necessary to fire the 
+	    //work function for the first time
 	    
 	    if (bottomPeek > 0) {
 		statements.addStatement
@@ -551,7 +551,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	//add the code to collect all data produced by the upstream filter 
 	//but not consumed by this filter in the initialization stage
 	if (remaining > 0) {
-	   statements.addStatement
+	    statements.addStatement
 		(makeForLoop(receiveCode(filter, localVariables),
 			     localVariables.exeIndex,
 			     new JIntLiteral(remaining))); 
@@ -602,9 +602,9 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	    JAddExpression addPop = 
 		new JAddExpression(null,
 				   new JLocalVariableExpression
-				       (null, 
-					localVariables.recvBufferIndex),
-				       new JIntLiteral(filter.getPopInt()));
+				   (null, 
+				    localVariables.recvBufferIndex),
+				   new JIntLiteral(filter.getPopInt()));
 	    
 	    JParenthesedExpression exp = new JParenthesedExpression(null, addPop);
 	    
@@ -613,14 +613,14 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 				       OPE_BAND,
 				       exp, 
 				       new JLocalVariableExpression
-					   (null,
-					    localVariables.recvBufferBits));
+				       (null,
+					localVariables.recvBufferBits));
 	    
 	    JAssignmentExpression assignment = new
 		JAssignmentExpression(null, 
 				      new JLocalVariableExpression
-					  (null,
-					   localVariables.recvBufferIndex),
+				      (null,
+				       localVariables.recvBufferIndex),
 				      mask);
 	    
 	    block.addStatement
@@ -675,64 +675,75 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 
 	
 
-	    JBlock workBlock = 
-		(JBlock)ObjectDeepCloner.
-		deepCopy(filter.getWork().getBody());
-	    block.addStatement(workBlock);
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.
+	    deepCopy(filter.getWork().getBody());
+	block.addStatement(workBlock);
 
 	    
-	    if (!isSimple(filter) && !noBuffer(filter)) {
-		JAddExpression addPop = 
-		    new JAddExpression(null,
+	if (!isSimple(filter) && !noBuffer(filter)) {
+	    JAddExpression addPop = 
+		new JAddExpression(null,
+				   new JLocalVariableExpression
+				   (null, 
+				    localVariables.recvBufferIndex),
+				   new JIntLiteral(filter.getPopInt()));
+		
+	    JParenthesedExpression exp = new JParenthesedExpression(null, addPop);
+		
+	    JBitwiseExpression mask = 
+		new JBitwiseExpression(null, 
+				       OPE_BAND,
+				       exp, 
 				       new JLocalVariableExpression
-					   (null, 
-					    localVariables.recvBufferIndex),
-				       new JIntLiteral(filter.getPopInt()));
-		
-		JParenthesedExpression exp = new JParenthesedExpression(null, addPop);
-		
-		JBitwiseExpression mask = 
-		    new JBitwiseExpression(null, 
-					   OPE_BAND,
-					   exp, 
-					   new JLocalVariableExpression
-					       (null,
-						localVariables.recvBufferBits));
+				       (null,
+					localVariables.recvBufferBits));
 	
-		JAssignmentExpression assignment = new
-		    JAssignmentExpression(null, 
-					  new JLocalVariableExpression
-					      (null,
-					       localVariables.recvBufferIndex),
-					  mask);
+	    JAssignmentExpression assignment = new
+		JAssignmentExpression(null, 
+				      new JLocalVariableExpression
+				      (null,
+				       localVariables.recvBufferIndex),
+				      mask);
 		
-		block.addStatement
-		    (new JExpressionStatement(null, assignment, null));
-		//we must also wrab the receiving index in the 
-		//buffer
-		JAssignmentExpression assignment2 = new 
-		    JAssignmentExpression(null,
-					  new JLocalVariableExpression
-					      (null, 
-					       localVariables.recvIndex),
-					  new JBitwiseExpression
-					      (null,
-					       OPE_BAND,
-					       new JLocalVariableExpression
-						   (null,
-						    localVariables.recvIndex),
-					       new JLocalVariableExpression
-						   (null,
-						    localVariables.recvBufferBits)));
+	    block.addStatement
+		(new JExpressionStatement(null, assignment, null));
+	    //we must also wrab the receiving index in the 
+	    //buffer
+	    JAssignmentExpression assignment2 = new 
+		JAssignmentExpression(null,
+				      new JLocalVariableExpression
+				      (null, 
+				       localVariables.recvIndex),
+				      new JBitwiseExpression
+				      (null,
+				       OPE_BAND,
+				       new JLocalVariableExpression
+				       (null,
+					localVariables.recvIndex),
+				       new JLocalVariableExpression
+				       (null,
+					localVariables.recvBufferBits)));
 		
-		block.addStatement
-		 (new JExpressionStatement(null, assignment2, null));
-	    }
+	    block.addStatement
+		(new JExpressionStatement(null, assignment2, null));
+	}
 	    
-	    //	}
+	//	}
 		
-	    //	return block;
+	//	return block;
 	
+	if (KjcOptions.decoupled) {
+	    block.addStatementFirst
+		(new SIRPrintStatement(null, 
+				       new JIntLiteral(0),
+				       null));
+	    block.addStatement(block.size(), 
+				new SIRPrintStatement(null, 
+						      new JIntLiteral(1),
+						      null));
+	}
+	    
 	//return the infinite loop
 	return new JWhileStatement(null, 
 				   new JBooleanLiteral(null, true),
@@ -793,7 +804,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
     //return the buffer access expression for the receive code
     //depends if this is a simple filter
     private JExpression bufferIndex(SIRFilter filter, 
-				     LocalVariables localVariables) 
+				    LocalVariables localVariables) 
     {
 	if (isSimple(filter)) {
 	    return new JLocalVariableExpression
@@ -810,13 +821,13 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	    /*
 	    //create the modulo expression
 	    JModuloExpression indexMod = 
-		new JModuloExpression(null, bufferIncrement, 
-				  new JLocalVariableExpression
-				  (null,
-				   localVariables.recvBufferSize));
+	    new JModuloExpression(null, bufferIncrement, 
+	    new JLocalVariableExpression
+	    (null,
+	    localVariables.recvBufferSize));
 	    */
 	    
-	     //create the modulo expression
+	    //create the modulo expression
 	    JBitwiseExpression indexAnd = 
 		new JBitwiseExpression(null, 
 				       OPE_BAND,
@@ -869,7 +880,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	    new JPostfixExpression(null, 
 				   Constants.OPE_POSTINC, 
 				   new JLocalVariableExpression(null,
-								   var));
+								var));
 	JStatement incr = 
 	    new JExpressionStatement(null, incrExpr, null);
 
@@ -909,7 +920,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 		(SIRPeekExpression)
 		super.visitPeekExpression(oldSelf, oldTapeType, oldArg);
 
-	      //create the array access expression
+	    //create the array access expression
 	    JArrayAccessExpression bufferAccess = 
 		new JArrayAccessExpression(null,
 					   new JLocalVariableExpression
@@ -986,10 +997,10 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	    /*
 	    //create the mod expression
 	    JModuloExpression indexMod = 
-		new JModuloExpression(null, index,
-				      new JLocalVariableExpression
-				      (null,
-				       localVariables.recvBufferSize));
+	    new JModuloExpression(null, index,
+	    new JLocalVariableExpression
+	    (null,
+	    localVariables.recvBufferSize));
 	    */
 
 	    //create the array access expression

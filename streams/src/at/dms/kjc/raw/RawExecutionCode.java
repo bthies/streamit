@@ -672,13 +672,24 @@ public class RawExecutionCode extends at.dms.util.Utils
 
 	
 
-	    JBlock workBlock = 
-		(JBlock)ObjectDeepCloner.
-		deepCopy(filter.getWork().getBody());
-	    block.addStatement(workBlock);
-	    //	}
-		
-	    //	return block;
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.
+	    deepCopy(filter.getWork().getBody());
+	block.addStatement(workBlock);
+	//	}
+	
+	//	return block;
+	
+	if (KjcOptions.decoupled) {
+	    block.addStatementFirst
+		(new SIRPrintStatement(null, 
+				       new JIntLiteral(0),
+				       null));
+	    block.addStatement(block.size(), 
+				    new SIRPrintStatement(null, 
+							  new JIntLiteral(1),
+							  null));
+	}
 	
 	//return the infinite loop
 	return new JWhileStatement(null, 

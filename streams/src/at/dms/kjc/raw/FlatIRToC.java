@@ -21,7 +21,6 @@ import java.util.Hashtable;
 public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 {
     private boolean DEBUG = false;
-    private boolean NOCOMM = false;
 
     protected int				TAB_SIZE = 2;
     protected int				WIDTH = 80;
@@ -158,14 +157,24 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
 	
-	if(KjcOptions.altcodegen) {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("union static_network {\n");
 	    print("  int integer;\n");
 	    print("  float fp;\n");
 	    print("};\n\n");
+	}
+	
+	if (KjcOptions.altcodegen) {
 	    print("extern volatile union static_network csto;\n");
 	    print("extern volatile union static_network csti;\n");
 	}
+    
+	if (KjcOptions.decoupled) {
+	    print("volatile union static_network csto;\n");
+	    print("volatile union static_network csti;\n");
+	}
+	   
+	
 
 	//print the inline asm 
 	//        print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
@@ -182,16 +191,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//not used any more
 	//print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
 	//print("unsigned int " + INT_HEADER_WORD + ";\n");
-
-
-	//print the methods used for decoupled execution
-	if (!self.getInputType().equals(CStdType.Void))
-	    print("void get(void *v) {*((" + self.getInputType() + "*)v) = (" + self.getInputType() + ") 1;}\n"); 
-	if (!self.getOutputType().equals(CStdType.Void)) {
-	    print(self.getOutputType() + " __test__;\n");
-	    print("void put(" + self.getOutputType() + " i) {__test__ = i;}\n");
-	}
-
+       
 	//Visit fields declared in the filter class
 	JFieldDeclaration[] fields = self.getFields();
 	for (int i = 0; i < fields.length; i++)
@@ -228,10 +228,18 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (KjcOptions.magic_net)
 	    print("  __asm__ volatile (\"magc $0, $0, 1\");\n");
 	
+	//initialize the dummy network receive value
+	if (KjcOptions.decoupled) {
+	    if (self.getInputType().isFloatingPoint()) 
+		print("  csti.fp = 1.0;\n");
+	    else 
+		print("  csti.integer = 1;\n");
+	}
+
 	//call the raw_init() function for the static network
 	//only if we are not using a uniprocessor or the
 	//magic network
-	if (!KjcOptions.raw_uni && !KjcOptions.magic_net) {
+	if (!KjcOptions.raw_uni && !KjcOptions.magic_net && !KjcOptions.decoupled) {
 	    print("  raw_init();\n");
 	    print("  raw_init2();\n");
 	}
@@ -976,7 +984,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
-	    if(KjcOptions.altcodegen) {
+	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 		visitArgs(args, 0);
 		print(" = ");
 		if(args[0].getType().isFloatingPoint())
@@ -1470,7 +1478,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType tapeType,
 			    JExpression val) 
     {
-	if(KjcOptions.altcodegen) {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    if(tapeType.isFloatingPoint()) 
 		print("csto.fp = ");
 	    else 
@@ -1479,10 +1487,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("(" + tapeType + ")");
 	    val.accept(this);
 	} else {
-	    if (NOCOMM)
-		print("(put(");
-	    else 
-		print("(static_send(");    
+	    print("(static_send(");    
 	    //temporary fix for type changing filters
 	    print("(" + tapeType + ")");
 	    
@@ -1504,7 +1509,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
 	}
 
-	if(KjcOptions.altcodegen) {
+	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("{\n");
 	    if(tapeType.isFloatingPoint()) {
 		print("csto.fp = ");
@@ -1519,10 +1524,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(";\n}\n");
 	} else {
 	    print("{");
-	    if (NOCOMM)
-		print("put(("  + baseType + ") ");
-	    else
-		print("static_send((" + baseType + ") ");
+	    print("static_send((" + baseType + ") ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");

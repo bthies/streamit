@@ -148,6 +148,12 @@ public class RawBackend {
 	    SinkUnroller.doit(rawFlattener.top);
 	    NumberGathering.doit(rawFlattener.top);
 	}
+	
+	//remove print statements in the original app
+	//if we are running with decoupled
+	if (KjcOptions.decoupled)
+	    RemovePrintStatements.doIt(rawFlattener.top);
+	
 	//Generate the tile code
 	//run the specific class depending
 	//on if pops have been removed
@@ -160,6 +166,8 @@ public class RawBackend {
 	    RemoveGlobals.doit(rawFlattener.top);
 	}
 	
+	
+
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(rawFlattener.top);
 	System.out.println("Tile Code End.");

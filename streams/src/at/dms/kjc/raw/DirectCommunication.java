@@ -78,6 +78,17 @@ public class DirectCommunication extends at.dms.util.Utils
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
 
+	if (KjcOptions.decoupled) {
+	    workBlock.addStatementFirst
+		(new SIRPrintStatement(null, 
+				       new JIntLiteral(0),
+				       null));
+	    workBlock.addStatement(workBlock.size(), 
+				    new SIRPrintStatement(null, 
+							  new JIntLiteral(1),
+							  null));
+	}
+
 	statements.addStatement
 	    (new JWhileStatement(null, 
 				 new JBooleanLiteral(null, true),
@@ -109,7 +120,7 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	    (SIRPopExpression)
 	    super.visitPopExpression(oldSelf, oldTapeType);  
 
-	if (KjcOptions.altcodegen) 
+	if (KjcOptions.altcodegen || KjcOptions.decoupled) 
 	    return altCodeGen(self);
 	else
 	    return normalCodeGen(self);

@@ -64,13 +64,21 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    //	    fw.write("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
 	    //fw.write("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
 
-	    if(KjcOptions.altcodegen) {
+	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 		fw.write("union static_network {\n");
 		fw.write("  int integer;\n");
 		fw.write("  float fp;\n");
 		fw.write("};\n\n");
+	    }
+	    
+	    if (KjcOptions.altcodegen) {
 		fw.write("extern volatile union static_network csto;\n");
 		fw.write("extern volatile union static_network csti;\n");
+	    }
+	    
+	    if (KjcOptions.decoupled) {
+		fw.write("volatile union static_network csto;\n");
+		fw.write("volatile static_network csti;\n");
 	    }
 
 	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
@@ -78,7 +86,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write(createJoinerWork(joiner));
 	    //write the extern for the function to init the 
 	    //switch, but there is no switch for the magic network
-	    if (!KjcOptions.magic_net) {
+	    if (!KjcOptions.magic_net && !KjcOptions.decoupled) {
 		fw.write("void raw_init();\n\n");
 		fw.write("void raw_init2();\n\n");
 	    }
@@ -89,6 +97,15 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    else
 		fw.write("  __asm__ volatile (\"magc $0, $0, 1\");\n");
+	    
+	    //initialize the dummy network receive value
+	    if (KjcOptions.decoupled) {
+		if (Util.getJoinerType(joiner).isFloatingPoint()) 
+		    fw.write("  csti.fp = 1.0;\n");
+		else 
+		    fw.write("  csti.integer = 1;\n");
+	    }
+	    
 	    fw.write("  work();\n");
 	    fw.write("}\n");
 	    fw.close();
@@ -336,8 +353,9 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     //remember which tiles we have generated code for
     public void visitNode(FlatNode node) 
     {
-	//this is a mapped joiner
-	if (Layout.joiners.contains(node)) {
+	//this is a mapped joiner, we do not want to generate code for
+	//joiners in the decoupled case
+	if (Layout.joiners.contains(node) && !KjcOptions.decoupled) {
 	    realTiles.add(Layout.getTile(node.contents));
 	    joinerCode(node);
 	    //After done with node drops its contents for garbage collection

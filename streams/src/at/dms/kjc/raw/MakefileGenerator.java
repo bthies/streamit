@@ -32,6 +32,11 @@ public class MakefileGenerator
 		tiles.remove(Layout.getTile((FlatNode)frs.next()));
 	    }
 
+	    //remove joiners from the hashset if we are in decoupled mode, 
+	    //we do not want to simulate joiners
+	    if (KjcOptions.decoupled) 
+		removeJoiners(tiles);
+
 	    Iterator tilesIterator = tiles.iterator();
 	    
 	    fw.write("#-*-Makefile-*-\n\n");
@@ -81,8 +86,8 @@ public class MakefileGenerator
 		fw.write(tile + " = " +
 			 "tile" + tile + ".o ");
 		//if we are using the magic net, we do not create 
-		//the switch assembly files
-		if (!KjcOptions.magic_net) 
+		//the switch assembly files, same if we are running decoupledxx
+		if (!KjcOptions.magic_net && !KjcOptions.decoupled) 
 		    fw.write("sw" + tile + ".o");
 		fw.write("\n");
 	    }
@@ -102,6 +107,14 @@ public class MakefileGenerator
 	    }
     }
     
+    //remove all tiles mapped to joiners from the coordinate hashset *tiles*
+    private static void removeJoiners(HashSet tiles) {
+	Iterator it = Layout.joiners.iterator();
+	while (it.hasNext()) {
+	    tiles.remove(Layout.getTile((FlatNode)it.next()));
+	}
+    }
+
     private static void createBCFile(boolean hasIO) throws Exception 
     {
 	FileWriter fw = new FileWriter("fileio.bc");

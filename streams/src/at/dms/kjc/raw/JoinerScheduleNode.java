@@ -74,7 +74,7 @@ public class JoinerScheduleNode
 	    ret.append(dupRecCode(arrayAccess));
 	}
 	else if (type == FIRE) {
-	    if (KjcOptions.altcodegen) {
+	    if (KjcOptions.altcodegen || KjcOptions.decoupled) {
 		ret.append("csto.");
 		if (fp)
 		    ret.append("fp");
@@ -87,7 +87,7 @@ public class JoinerScheduleNode
 	    ret.append("__buffer" + buffer + "[__first" + buffer + "++]");
 	    ret.append(arrayAccess);
 	    //end the send statement...
-	    if (KjcOptions.altcodegen) 
+	    if (KjcOptions.altcodegen || KjcOptions.decoupled) 
 		ret.append(";\n");
 	    else 
 		ret.append("));\n");
@@ -96,7 +96,7 @@ public class JoinerScheduleNode
 	   
 	}
 	else if (type == RECEIVE) { //receive
-	    if (!KjcOptions.altcodegen) 
+	    if (!KjcOptions.altcodegen || KjcOptions.decoupled) 
 		ret.append("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
 	    if (nextDup) {
 		ret.append(DUPVAR);
@@ -106,7 +106,7 @@ public class JoinerScheduleNode
 	    }
 	    ret.append(arrayAccess);
 	    
-	    if (KjcOptions.altcodegen){
+	    if (KjcOptions.altcodegen || KjcOptions.decoupled){
 		ret.append(" = csti.");
 		if (fp) 
 		    ret.append("fp");

@@ -49,19 +49,13 @@ complex->complex filter FFTReorderSimple(int n)
         int i;
         
         for (i = 0; i < n; i+=2)
-        {
             push(peek(i));
-        }
         
         for (i = 1; i < n; i+=2)
-        {
             push(peek(i));
-        }
         
         for (i=0;i<n;i++)
-        {
             pop();
-        }
     }
 }
 
@@ -103,7 +97,7 @@ void->float filter source(){
 float->void filter sink(){
     init {}
     work pop 1 push 0 {
-	print pop();
+	print(pop());
     }
 }
 

@@ -78,7 +78,7 @@ public class SIRPhasedFilterIter extends SIRIterator implements FilterIter
     }
     
     public Object getWorkFunctionPhase(int phase) {
-        return obj.getPhases()[phase].getWork();
+	return obj.getPhases()[phase].getWork();
     }
     
     public void accept(StreamVisitor v) {

@@ -44,10 +44,10 @@ public class SwitchScheduleNode
 	for (int i = 0; i < destinations.size(); i++) {
 	    if (send)
 		buf.append("$csto->" + 
-			   getHeading(node, (FlatNode)destinations.get(i), send) + 
+			   //getHeading(node, (FlatNode)destinations.get(i), send) + 
 			   ",");
 	    else {
-		buf.append(getHeading(node, (FlatNode)destinations.get(i), send) + 
+		buf.append(//getHeading(node, (FlatNode)destinations.get(i), send) + 
 			   "->$csti,");
 	    }
 	}

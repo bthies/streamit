@@ -29,12 +29,13 @@ class ComplexToMag extends Filter
 
   public void init()
   {
-    input = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
-    output = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
+    input = new Channel (Float.TYPE, 1);
+    output = new Channel (Float.TYPE, 1);
   }
 
   public void work()
   {
-	output.pushFloat(input.popFloat());
+    System.out.println("Running the Complex to Mag converter...");
+    output.pushFloat(input.popFloat());
   }
 }

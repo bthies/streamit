@@ -25,7 +25,7 @@ class BeamFormer extends Filter
   int numberOfBeams;
   int numberOfChannels;
   int numberOfSamples;
-  float BeamFormingWeights[];
+  float beamFormingWeights[];
   float inputData[];
 
   public BeamFormer (int nBeams, int nChannels, int nSamples)
@@ -38,7 +38,7 @@ class BeamFormer extends Filter
     numberOfBeams      = nBeams;
     numberOfChannels   = nChannels;
     numberOfSamples    = nSamples;
-    BeamFormingWeights = new float [numberOfBeams*numberOfChannels];
+    beamFormingWeights = new float [numberOfBeams*numberOfChannels];
     inputData          = new float [numberOfChannels*numberOfSamples];
 
     input = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
@@ -49,6 +49,8 @@ class BeamFormer extends Filter
 
   public void work()
   {
+    System.out.println("Running the Beamformer...");
+
     int i, j, k;
     int v = 0;
     for (i = 0; i < numberOfChannels; i++)
@@ -64,9 +66,10 @@ class BeamFormer extends Filter
       for (j = 0; i < numberOfSamples; i++)
       {
         float out = 0;
-        for (k = 0; k < numOfChannels; i++)
+        for (k = 0; k < numberOfChannels; i++)
         {
-          out += inputData[i*numberOfChannels+k]*matrixB[k*numberOfSamples+j];
+          out += beamFormingWeights[i*numberOfChannels+k]*
+	    inputData[k*numberOfSamples+j];
         }
         output.pushFloat(out);
       }

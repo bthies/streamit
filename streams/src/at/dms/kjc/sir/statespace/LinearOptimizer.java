@@ -74,6 +74,7 @@ public class LinearOptimizer {
 	transposeSystem();
 	s1 = reduceParameters(false);
 	transposeSystem();	
+	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s1);	
 			
 	if(s1 >= 0) {
@@ -82,10 +83,17 @@ public class LinearOptimizer {
 	    removeUnobservableStates(s1);
 	}
 	
-	
+	LinearPrinter.println("After observable reduction, before reachable reduction: " + totalMatrix);	
+
+
 	// remove unreachable states 
-	s2 = reduceParameters(true); 
+	s2 = reduceParameters(true);
+	cleanAll();
 	LinearPrinter.println("got reduction up to value " + s2); 
+
+
+	LinearPrinter.println("Before QR algorithm: " + totalMatrix);
+
 			
 	if(s2 >= 0) {
 	    // for now, leave at least 1 state
@@ -98,9 +106,11 @@ public class LinearOptimizer {
 	}  
 		
 	cleanAll();
+
+	LinearPrinter.println("After state reduction, before min param: " + totalMatrix);
 	
 	// minimally parametrize the system
-	
+		
 	    minParametrize(true);      // put in reachable canonical form
 	    cleanAll();
 	    
@@ -123,8 +133,8 @@ public class LinearOptimizer {
 		LinearPrinter.println("Reachable rep is better");
 		return tempReachableRep;
 	    }
-		  
-	    //        	return extractRep();
+	  
+	    //                return extractRep();
     }
 
 
@@ -620,12 +630,12 @@ public class LinearOptimizer {
 			tempComplex = totalMatrix.getElement(i,states+currStage);
 			if(!tempComplex.equals(ComplexNumber.ZERO)) {
 			    // do NOT do row operations with values too close to MAX_PRECISION
-			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater			    
+			    // therefore, we will use MAX_PRECISION_BUFFER, which is greater	     
 			    if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
 				addMultiple(currRow,i,-tempComplex.getReal(),normal);
+				// set the value to be exactly zero (in case it is very small but non-zero)
+				totalMatrix.setElement(i,states+currStage,ComplexNumber.ZERO);
 			    }
-			// set the value to be exactly zero (in case it is very small but non-zero)
-			totalMatrix.setElement(i,states+currStage,ComplexNumber.ZERO);
 			}
 		    }
 		}
@@ -676,9 +686,9 @@ public class LinearOptimizer {
 				if(Math.abs(tempComplex.getReal()) > ComplexNumber.MAX_PRECISION_BUFFER) {
 				    addMultiple(currRow,i,-tempComplex.getReal(),normal);	
 				    LinearPrinter.println("VALUE: " + totalMatrix.getElement(i,currCol).getReal());
+				    // set the value to be exactly zero (in case it is very small but non-zero)
+				    totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);	       
 				}
-			    // set the value to be exactly zero (in case it is very small but non-zero)
-			    totalMatrix.setElement(i,currCol,ComplexNumber.ZERO);
 			}
 		    }
 		    currRow++;

@@ -8,7 +8,8 @@
 use strict;
 
 my @tests = ("regtests/LinearTest1",
-	     "regtests/LinearTest2",);
+	     "regtests/LinearTest2",
+	     "regtests/LinearTest3",);
 
 my $current_test;
 foreach $current_test (@tests) {

@@ -18,7 +18,6 @@ LINEAR-REG-TEST = linear_regtest.pl
 all: clean java-compile uni-compile raw-compile
 
 
-
 java-run: java-compile
 	java LinearTest -i 100
 java-compile:
@@ -42,9 +41,11 @@ linear-compile:
 linear-test: linear-compile
 	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) $(SOURCE)
 
+
 test-current: linear-compile
-	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest2$(SOURCE-EXT) > current.output
+	$(STREAMIT-COMPILER) $(COMPILER-OPTIONS) regtests/LinearTest4$(SOURCE-EXT) > current.output
 	./parse_linear_output.pl current.output
+
 
 
 linear-regtest: linear-compile

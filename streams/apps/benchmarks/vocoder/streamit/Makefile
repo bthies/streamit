@@ -45,3 +45,5 @@ all:
 more-cycles:
 	perl -pi -e "s/SIM-CYCLES = \d*/SIM-CYCLES = 5000000/g" Makefile.streamit
 
+more-imem:
+	perl -pi -e 's/SIM-CYCLES = \d*/$$&\nATTRIBUTES = IMEM_LARGE/' Makefile.streamit

@@ -60,27 +60,27 @@ do
     if [ "$j" = "2" ]
 	then
         # MODULATION
-	echo strc -cluster 1 -u 128 -fusion -modfusion Scaling.str
+	echo strc -cluster 1 -u 128 -fusion -standalone -modfusion Scaling.str
     fi    
     if [ "$j" = "3" ]
 	then
         # COPY-SHIFT
-	echo strc -cluster 1 -u 128 -fusion Scaling.str
+	echo strc -cluster 1 -u 128 -fusion -standalone Scaling.str
     fi    
     if [ "$j" = "4" ]
 	then
         # COPY-SHIFT + PEEK-SCALING
-	echo strc -cluster 1 -u 128 -fusion -peekratio 4 Scaling.str
+	echo strc -cluster 1 -u 128 -fusion -standalone -peekratio 4 Scaling.str
     fi    
     if [ "$j" = "5" ]
 	then
         # COPY-SHIFT + SCALAR-REPLACE
-	echo strc -cluster 1 -u 128 -fusion -destroyfieldarray Scaling.str
+	echo strc -cluster 1 -u 128 -fusion -standalone -destroyfieldarray Scaling.str
     fi    
     if [ "$j" = "6" ]
 	then
         # COPY-SHIFT + SCALAR-REPLACE + PEEK-SCALING
-	echo strc -cluster 1 -u 128 -fusion -destroyfieldarray -peekratio 4 Scaling.str
+	echo strc -cluster 1 -u 128 -fusion -standalone -destroyfieldarray -peekratio 4 Scaling.str
     fi
     # do cluster-config
     echo "echo -n '0 ' > cluster-config.txt"

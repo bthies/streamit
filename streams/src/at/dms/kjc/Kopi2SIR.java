@@ -1242,12 +1242,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	// Keep track of the list of methods for this interface with a 
 	// interface table, to be passed on with a callback to Kopi2SIR
-	interfaceTableList.add(new SIRInterfaceTable(null, 
-						     interfaces[0], 
-						     (JMethodDeclaration[])
-						     matchedMethods.clone()));
-
-	return new SIRRegReceiverStatement(prefix,st, matchedMethods);
+        SIRInterfaceTable itable =
+            new SIRInterfaceTable(null, 
+                                  interfaces[0], 
+                                  (JMethodDeclaration[])
+                                  matchedMethods.clone());
+	interfaceTableList.add(itable);
+	return new SIRRegReceiverStatement(prefix,st, itable);
     }
 
 

@@ -119,13 +119,12 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 
     
     /**
-     * Create an array allocation expression. Allocates a one dimensional array of floats
-     * for the field of name fieldName of fieldSize.
+     * Initializes a field to a particular integer value.
      **/
-    public JStatement makeLocalInitialization(String name, float initValue, String commentString) {
+    public JStatement makeFieldInitialization(String name, int initValue, String commentString) {
 	JExpression fieldExpr = new JFieldAccessExpression(null, new JThisExpression(null), name);
 	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr,
-							    new JFloatLiteral(null,initValue));
+							    new JIntLiteral(null,initValue));
 	JavaStyleComment[] comment = makeComment(commentString); 
 	return new JExpressionStatement(null, fieldAssign, comment);
     }

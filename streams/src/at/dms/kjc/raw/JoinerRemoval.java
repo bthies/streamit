@@ -14,14 +14,17 @@ public class JoinerRemoval implements FlatVisitor
 	unnecessary = new HashSet();
 	if (!StreamItOptions.ratematch)
 	    return;
+
 	System.out.println("Looking for Joiners to remove...");
+	
+	//calculation the block exe for each node
+	BlockExecutionCounts.calcBlockCounts(top);
 	
 	top.accept(new JoinerRemoval(), null, true);
     }
 
     protected JoinerRemoval() 
     {
-	
     }
 
     public void visitNode(FlatNode node) 
@@ -50,6 +53,8 @@ public class JoinerRemoval implements FlatVisitor
 		    SIRFilter filter = (SIRFilter)node.incoming[i].contents;
 		    int exe = ((Integer)RawBackend.steadyExecutionCounts.get(node.incoming[i])).intValue();
 		    int prod = exe * filter.getPushInt();
+		    if (exe != BlockExecutionCounts.getBlockCount(node.incoming[i]))
+			return;
 		    if (prod != node.incomingWeights[i])
 			return;
 		}

@@ -36,8 +36,6 @@ public class RateMatchSim extends Simulator implements FlatVisitor
     //true if we are simulating the init schedule
     private boolean initSimulation;
 
-    private HashSet newExecutionCounts;
-
     public void simulate(FlatNode top) 
     {
 	System.out.println("RateMatchSim Running...");
@@ -51,6 +49,8 @@ public class RateMatchSim extends Simulator implements FlatVisitor
 	SimulationCounter counters = 
 	    new SimulationCounter(JoinerSimulator.schedules);
 	
+	//generate the block execution counts
+	BlockExecutionCounts.calcBlockCounts(top);
 	
 	//create copies of the executionCounts
 	HashMap initExecutionCounts = (HashMap)RawBackend.initExecutionCounts.clone();
@@ -315,29 +315,36 @@ public class RateMatchSim extends Simulator implements FlatVisitor
 	    }
 	    return ((SIRFilter)fire.contents).getPopInt();
 	}
+
+	return ((SIRFilter)fire.contents).getPopInt() * 
+	    BlockExecutionCounts.getBlockCount(fire);
 	//if inside a feedback loop then just execution one 
 	//work function call
-	if (((SIRStream)fire.contents).insideFeedbackLoop())
-	    return ((SIRFilter)fire.contents).getPopInt();
-	else
-	    return ((SIRFilter)fire.contents).getPopInt() * 
-		((Integer)executionCounts.get(fire)).intValue();
+	//	if (((SIRStream)fire.contents).insideFeedbackLoop())
+	//    return ((SIRFilter)fire.contents).getPopInt();
+	//else
+	//    return ((SIRFilter)fire.contents).getPopInt() * 
+	//	((Integer)executionCounts.get(fire)).intValue();
     }
    
     private void decrementExecutionCounts(FlatNode fire, HashMap executionCounts) 
     {
 	//if we are inside of a feedback loop we have to execute the old way
 	//one work() at a time
-	if (initSimulation || fire.contents instanceof SIRJoiner ||
-	    ((SIRStream)fire.contents).insideFeedbackLoop()) {
-	    int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
+		
+	if (initSimulation) {
 	    if (oldVal - 1 < 0)
 		Utils.fail("Executed too much");
 	    executionCounts.put(fire, new Integer(oldVal - 1));
 	}
-	else
-	    executionCounts.put(fire, new Integer(0));
-		
+	else {
+	    if (oldVal - BlockExecutionCounts.getBlockCount(fire) < 0)
+		Utils.fail("Executed too much");
+	    
+	    executionCounts.put(fire, new Integer(oldVal - 
+						  BlockExecutionCounts.getBlockCount(fire)));
+	}
     }
     
     //consume the data and return the number of items produced
@@ -375,8 +382,7 @@ public class RateMatchSim extends Simulator implements FlatVisitor
 	    counters.setFired(fire);
 	    //if this is not inside of a feedback loop fire everything
 	    //at once
-	    if (!((SIRStream)fire.contents).insideFeedbackLoop())
-		ret *= ((Integer)executionCounts.get(fire)).intValue();
+	    ret *= BlockExecutionCounts.getBlockCount(fire);
 	    //decrement the schedule execution counter
 	    decrementExecutionCounts(fire, executionCounts);
 	    return ret; 

@@ -46,6 +46,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     private static String ARRAY_INDEX = "__ARRAY_INDEX__";
     private static String ARRAY_COPY = "__ARRAY_COPY__";
 
+    private final String FLOAT_HEADER_WORD = "__FLOAT_HEADER_WORD__";
+    private final String INT_HEADER_WORD = "__INT_HEADER_WORD__";
+
+
     //fields for the var names we introduce with the rate match code
     private static String recvBuffer = "__RECVBUFFER__";
     private static String sendBuffer = "__SENDBUFFER__";
@@ -196,14 +200,20 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
-	
+		
+	//print the inline asm 
+        print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
+        print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
+
 	//print the extern for the function to init the 
 	//switch
 	print("void raw_init();\n");
 	    
 	print("int " + TAPE_INDEX + " = -1;\n");
 	print("int " + BUFFER_INDEX + ";\n");
-
+	
+	print("unsigned int " + FLOAT_HEADER_WORD + ";\n");
+	print("unsigned int " + INT_HEADER_WORD + ";\n");
 
 	if (ratematch) {
 	    print("int " + recvBufferIndex + "= -1;\n");
@@ -281,6 +291,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
+	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
+	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
 	print("  " + self.getInit().getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
@@ -311,8 +323,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     
    			
     private void rateMatch(SIRFilter self) {
-
-	System.out.println(self.getName());
 
 	int recvbufsize = CalcBufferSize.
 	    getConsBufSize(Layout.getNode(Layout.getTile(self)));
@@ -356,6 +366,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	print("void begin(void) {\n");
 	print("  raw_init();\n");
+	print(FLOAT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 0, 0, 0, 3, 0);\n");
+	print(INT_HEADER_WORD + " = construct_dyn_hdr(3, 1, 1, 0, 0, 3, 0);\n");
 	print("  " + self.getInit().getName() + "(");
 	print(InitArgument.getInitArguments(self));
 	print (");\n");
@@ -502,11 +514,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	Integer init = (Integer)RawBackend.initExecutionCounts.
 	    get(Layout.getNode(Layout.getTile(filter)));
-	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
-	    get(Layout.getNode(Layout.getTile(filter)));
+	//	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
+	//    get(Layout.getNode(Layout.getTile(filter)));
 	
 	int initCount = 0;
-	int steadyCount = 0;
+	int steadyCount = 
+	    BlockExecutionCounts.getBlockCount(Layout.getNode(Layout.getTile(filter)));
 	
 	if (init != null) 
 	    initCount = init.intValue();
@@ -522,8 +535,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	
 
-	if (steady != null)
-	    steadyCount = steady.intValue();
+	//	if (steady != null)
+	//    steadyCount = steady.intValue();
 	
 	//initialization
 	//receive what the previous filter produces
@@ -608,6 +621,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     
     private void printRateMatchSend() 
     {
+	Utils.fail("not used");
 	CType tapeType = filter.getOutputType();
 	
 	if (tapeType.isArrayType()) {
@@ -620,36 +634,40 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		      ARRAY_INDEX + i + "++)\n");
 	    }
 	    print("{");
-	    print("static_send((" + baseType + ") ");
+	    print("static_send_from_mem((void*)&(" + baseType + ") ");
+	    print(sendBuffer + "[(++" + sendIndex + ") & " + SENDBITS + "]");
 	    
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + ARRAY_INDEX + i + "]");
 	    }
+	    print(")");
 	}
 	else if(tapeType.isClassType()) {
 	}
 	else {
 	    print("static_send((" + tapeType + ")");	    
+	    print(sendBuffer + "[(++" + sendIndex + ") & " + SENDBITS + "])");
 	}
-	print(sendBuffer + "[(++" + sendIndex + ") & " + SENDBITS + "])");
+
     }
     
     
     private void printRateMatchWorkTrailer(int push) 
     {
-	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
-	    get(Layout.getNode(Layout.getTile(filter)));
+	//	Integer steady = (Integer)RawBackend.steadyExecutionCounts.
+	//    get(Layout.getNode(Layout.getTile(filter)));
 	
-	int steadyCount = 0;
+	int steadyCount = 
+	    BlockExecutionCounts.getBlockCount(Layout.getNode(Layout.getTile(filter)));
 	
-	if (steady != null)
-	    steadyCount = steady.intValue();
+	//if (steady != null)
+	//   steadyCount = steady.intValue();
 	
 
 	//close the execution loop
 	print("}\n");
 
-	if (push > 0) {
+	/*	if (push > 0) {
 	    //send everything
 	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + (push * steadyCount) +
 		  "; " + exeIndex + "++)\n");
@@ -662,10 +680,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print(sendBufferIndex + " &= " + SENDBITS + ";\n");
 	    print(sendIndex + " &= " + SENDBITS + ";\n");
 	}
-	
+	*/
 	print(recvBufferIndex + " &= " + RECVBITS + ";\n");
 	print(recvIndex + " &= " + RECVBITS + ";\n");
-
+       
 	
 	//end the while loop
 	print("}\n");
@@ -688,7 +706,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     
     private void printRateMatchInitWorkTrailer(int push) 
     {
-	if (push > 0) {
+	/*	if (push > 0) {
 	    //send everything
 	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + push +
 		  "; " + exeIndex + "++)\n");
@@ -700,7 +718,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("}\n");
 	    print(sendBufferIndex + " &= " + SENDBITS + ";\n");
 	    print(sendIndex + " &= " + SENDBITS + ";\n");
-	}
+	    }*/
 	print("}\n");
     }
     
@@ -739,21 +757,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  ARRAY_INDEX + i + "++)\n");
 	}
 	print("{\n");
-	 if (circular)
-		print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
-	    else if (ratematch)
-		print("   " + recvBuffer + "[" + recvBufferIndex + " & " + RECVBITS + "]");
-	    else 
-		print("   " + BUFFER + "[" + BUFFER_INDEX + "]");
-
+	print("static_receive_to_mem((void*)&(");
+	if (circular)
+	    print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
+	else if (ratematch)
+	    print("   " + recvBuffer + "[" + recvBufferIndex + " & " + RECVBITS + "]");
+	else 
+	    print("   " + BUFFER + "[" + BUFFER_INDEX + "]");
+	
 	for (int i = 0; i < dims.length; i++) 
 	    print("[" + ARRAY_INDEX + i + "]");
 	
+	print("));\n");
 	//print(" = ");
 	//if (baseType.equals(CStdType.Float))
-	///	print("static_receive_f();\n");
-		//else 
-	//   print("static_receive();\n");
+	//    print("static_receive_f();\n");
+	//else 
+	//print("static_receive();\n");
 	print("}\n");
     }
     
@@ -769,16 +789,19 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	else if (filter.getInputType().isClassType())
 	    printClassReceive();
 	else {
+	    print("static_receive_to_mem((void*)&(");
 	    if (circular)
-		print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "] = ");
+		print("   " + BUFFER + "[" + BUFFER_INDEX + " & " + BITS + "]");
 	    else if (ratematch)
-		print("   " + recvBuffer + "[(++" + recvIndex + ") & " + RECVBITS + "] = ");
+		print("   " + recvBuffer + "[(++" + recvIndex + ") & " + RECVBITS + "]");
 	    else 
-		print("   " + BUFFER + "[" + BUFFER_INDEX + "] = ");
-	    if (filter.getInputType().equals(CStdType.Float))
-		print("static_receive_f();\n");
-	    else 
-		print("static_receive();\n");
+		print("   " + BUFFER + "[" + BUFFER_INDEX + "]");
+	    print("));\n");
+	    //	    print(" = ");
+	    //  if (filter.getInputType().equals(CStdType.Float))
+	    //print("static_receive_f();\n");
+	    // else 
+	    //	print("static_receive();\n");
 	    
 	}
 	print("}\n");
@@ -1824,29 +1847,37 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		print("print_int(");
+		//print("print_int(");
+		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		print("gdn_send(");
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		print("print_int(");
+		//print("print_int(");
+		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		print("gdn_send(");
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		print("print_float(");
+		//print("print_float(");
+		print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
+		print("gdn_send(");
 		exp.accept(this);
 		print(");");
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		print("print_int(");
+		//print("print_int(");
+		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		print("gdn_send(");
 		exp.accept(this);
 		print(");");
 	    }
-       else
+	else
 	    {
 		System.out.println("Unprintatble type");
 		print("print_int(");
@@ -1901,7 +1932,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     JExpression val)
     {
 	//based on the type of the tape, call the approp function
-	if (ratematch) {
+	/*	if (ratematch) {
 	    if (tapeType.isClassType()) {
 	    }
 	    else if (tapeType.isClassType()) {
@@ -1929,14 +1960,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		print(";\n");
 	    }
 	}
-	else {
+	else {*/
 	    if (tapeType.isArrayType())
 		pushArray(self, tapeType, val);
 	    else if (tapeType.isClassType())
 		pushClass(self, tapeType, val);
 	    else 
 		pushScalar(self, tapeType, val);
-	}
+	    //	}
     }
     
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,

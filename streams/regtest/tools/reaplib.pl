@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.8 2002-07-24 22:04:49 aalamb Exp $
+# $Id: reaplib.pl,v 1.9 2002-12-12 23:31:35 aalamb Exp $
 
 use strict;
 
@@ -137,7 +137,8 @@ sub write_report {
     $utilization_percent = int($utilization_percent * 100) / 100;
     # figure out the mFLOPS number
     my ($foo, $actual_flops, $bar) = $flops_count =~ m/(.*?) (.*?) (.*?)/g;
-    my $MFLOPS = ($actual_flops/$ss_cycles) * 250; 
+    # remember that we ran the thing for 2 steady state cycles, so we need to divide by 2
+    my $MFLOPS = ($actual_flops/($ss_cycles*2)) * 250;  
     $MFLOPS = int($MFLOPS * 100) / 100;
     
 

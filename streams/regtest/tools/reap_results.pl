@@ -4,7 +4,7 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.11 2002-10-08 16:57:37 aalamb Exp $
+# $Id: reap_results.pl,v 1.12 2002-12-12 23:31:34 aalamb Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -57,7 +57,7 @@ if ($input_file_name ne "") {
 } else {
     my $examples_dir = "$streams/docs/examples/hand";
     my $apps_dir     = "$streams/apps";
-    @results_wanted = ("$apps_dir/BeamFormer-fine:BeamFormer.java:--raw 4 --partition:0:1",
+    @results_wanted = ("$apps_dir/benchmarks/fm/streamit/:LinkedFMTest.java:--unroll 100000 --partition --raw 6 --removeglobals:0:1",
 		       #"$apps_dir/FMRadio:LinkedFMTest.java:--raw 8 --partition"
 		       );
 }

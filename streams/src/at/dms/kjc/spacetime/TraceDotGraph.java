@@ -15,6 +15,7 @@ public class TraceDotGraph
     {
 	try {
 	    boolean first = true;
+	    int order = 1;
 	    FileWriter fw = new FileWriter(fileName);
 	    fw.write("digraph TraceDotGraph {\n");
 	    fw.write("size = \"8, 10.5\";\n");
@@ -24,6 +25,7 @@ public class TraceDotGraph
 		TraceNode node = trace.getHead();
 		fw.write("subgraph cluster" + trace.hashCode() + " {\n");
 		fw.write("  color=blue;\n");
+		fw.write("  label = \"" + order++ + "\";\n");
 		while (node != null) {
 		    if (node.isFilterTrace() && !node.getNext().isOutputTrace())
 			fw.write("  " + node.hashCode() + " -> " + node.getNext().hashCode() + ";\n");

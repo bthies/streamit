@@ -21,7 +21,7 @@ public class InterTraceBuffer extends OffChipBuffer
     
     public static InterTraceBuffer getBuffer(Edge edge) 
     {
-	if (!bufferStore.contains(edge)) {
+	if (!bufferStore.containsKey(edge)) {
 	    bufferStore.put(edge, new InterTraceBuffer(edge));
 	}
 	return (InterTraceBuffer)bufferStore.get(edge);
@@ -29,13 +29,14 @@ public class InterTraceBuffer extends OffChipBuffer
     
     public boolean redundant() 
     {
-	return !necessary((OutputTraceNode)source);
+	return unnecessary((OutputTraceNode)source);
     }
     
     public OffChipBuffer getNonRedundant() 
     {
 	if (redundant()) {
-	    return OffChipBuffer.getBuffer(source.getPrevious(), source).getNonRedundant();
+	    return IntraTraceBuffer.getBuffer((FilterTraceNode)source.getPrevious(), 
+					      (OutputTraceNode)source).getNonRedundant();
 	}
 	return this;
     }

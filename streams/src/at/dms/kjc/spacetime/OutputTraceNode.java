@@ -129,6 +129,15 @@ public class OutputTraceNode extends TraceNode
 	return (weights.length == 1 &&
 		dests[0].length == 1);
     }
+    
+    public Edge getSingleEdge() 
+    {
+	assert oneOutput() :
+	    "Calling getSingleEdge() on OutputTrace with less/more than one output";
+	return dests[0][0];
+    }
+    
+
 
     public boolean noOutputs() 
     {

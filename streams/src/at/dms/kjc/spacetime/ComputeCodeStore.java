@@ -9,6 +9,11 @@ import java.util.List;
 public class ComputeCodeStore {
     public static String main = "__RAWMAIN__";
 
+    //set to false if you do not want to generate 
+    //the work functions calls or inline them
+    //useful for debugging
+    private static final boolean CODE = false;
+
     protected JFieldDeclaration[] fields;
     protected JMethodDeclaration[] methods;
     //this method calls all the initialization routines
@@ -128,7 +133,18 @@ public class ComputeCodeStore {
 	}
 	//add the steady state
 	JBlock steady = exeCode.getSteadyBlock();
-	steadyLoop.addStatement(steadyIndex++, steady);
+	if (CODE)
+	    steadyLoop.addStatement(steadyIndex++, steady);
+	else //add a place holder for debugging 
+	    steadyLoop.addStatement
+		(steadyIndex++,		
+		 new JExpressionStatement(null,
+					  new JMethodCallExpression(null,
+								    new JThisExpression(null),
+								    filterInfo.filter.toString(),
+								    new JExpression[0]),
+					  null));
+	
 	/* addMethod(steady);
 	steadyLoop.addStatement(steadyIndex++, 
 				new JExpressionStatement
@@ -204,7 +220,8 @@ public class ComputeCodeStore {
 	JMethodDeclaration initStage = exeCode.getInitStageMethod();
 	if(initStage!=null) {
 	    //add the method
-	    addMethod(initStage);
+	    if (CODE) 
+		addMethod(initStage);
 	    
 	    
 	    //now add a call to the init stage in main at the appropiate index

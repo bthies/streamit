@@ -157,72 +157,91 @@ public class Util {
     }
     
     //the size of the buffer between in, out for the steady state
-    public static int steadyBufferSize(InputTraceNode in,
-				       OutputTraceNode out) 
+    public static int steadyBufferSize(Edge edge)
     {
 	int itemsReceived, itemsSent;
+	InputTraceNode in = edge.getDest();
+	OutputTraceNode out = edge.getSrc();
+	
 	//calculate the items the input trace receives
 	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
 	itemsSent = (int)((next.steadyMult * next.pop) *
-	    ((double)in.getWeight(out) / in.totalWeights()));
+	    ((double)in.getWeight(edge) / in.totalWeights()));
 	
 	//calculate the items the output trace sends
 	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
 	itemsReceived = (int)((prev.steadyMult * prev.push) *
-	    ((double)out.getWeight(in) / out.totalWeights()));
+	    ((double)out.getWeight(edge) / out.totalWeights()));
+	/*
+	System.out.println("Steady Buffer: " + in + " -> " + out + ", sent = " + 
+			   itemsSent + ", received = " + itemsReceived);
+	System.out.println(((double)in.getWeight(out) / in.totalWeights()));
+	System.out.println(in.getWeights().length + " " + in.getWeights()[0]);
+	for (int i = 0; i < in.getWeights().length; i++) {
+	    System.out.println(in.getSources()[i] + " " + in.getWeights()[i]);
+	}
+	for (int i = 0; i < out.getWeights().length; i++) {
+	    System.out.println(" ---- Weight = " + out.getWeights()[i]);
+	    for (int j = 0; j < out.getDests()[i].length; j++) 
+		System.out.println(out.getDests()[i][j]);
+	     System.out.println(" ---- ");
+	}
+	*/
+	
 	//see if they are different
-	if (itemsSent != itemsReceived)
-	    Utils.fail("Calculating steady state: items received != items send on buffer");
+	assert (itemsSent == itemsReceived) :
+	    "Calculating steady state: items received != items send on buffer";
 	
 	return itemsSent * getTypeSize(next.filter.getInputType());
     }
     
     //the size of the buffer between in / out for the init stage
-    public static int initBufferSize(InputTraceNode in, 
-				     OutputTraceNode out) 
+    public static int initBufferSize(Edge edge)
     {
 	int itemsReceived, itemsSent;
+	InputTraceNode in = edge.getDest();
+	OutputTraceNode out = edge.getSrc();
+
 	//calculate the items the input trace receives
 	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
 	itemsSent =  (int)(next.initItemsReceived() *
-	    ((double)in.getWeight(out) / in.totalWeights()));
+	    ((double)in.getWeight(edge) / in.totalWeights()));
 	
 	//calculate the items the output trace sends
 	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
 	itemsReceived = (int)(prev.initItemsSent() *
-	    ((double)out.getWeight(in) / out.totalWeights()));
+	    ((double)out.getWeight(edge) / out.totalWeights()));
 	
 	//see if they are different
-	if (itemsSent != itemsReceived)
-	    Utils.fail("Calculating steady state: items received != items send on buffer");
+	assert (itemsSent == itemsReceived) :
+	    "Calculating steady state: items received != items send on buffer";
 	
 	return itemsSent * getTypeSize(next.filter.getInputType()); 
     }
 
     //the size of the buffer between in / out for the prime pump stage
-    public static int primePumpBufferSize(InputTraceNode in, 
-					  OutputTraceNode out) 
+    public static int primePumpBufferSize(Edge edge) 
     {
 	//items received into buffer
 	int itemsReceived;
-
+	InputTraceNode in = edge.getDest();
+	OutputTraceNode out = edge.getSrc();
 	//calculate the items the output trace sends, because
 	//the downstream filter may not receive them all
 	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
 	itemsReceived = (int)((prev.primePump * prev.push) *
-	    ((double)out.getWeight(in) / out.totalWeights()));
+	    ((double)out.getWeight(edge) / out.totalWeights()));
 
 	return itemsReceived * getTypeSize(prev.filter.getOutputType());
     }
     
-    public static int magicBufferSize(InputTraceNode in, 
-				 OutputTraceNode out) 
+    public static int magicBufferSize(Edge edge)
     {
 	//i don't remember why I have the + down there,
 	//but i am not going to change
-	return Math.max(steadyBufferSize(in, out),
-			initBufferSize(in, out)) + 
-	    primePumpBufferSize(in, out);
+	return Math.max(steadyBufferSize(edge),
+			initBufferSize(edge)) + 
+	    primePumpBufferSize(edge);
     }
     
     public static String getFileVar(PredefinedContent content) 

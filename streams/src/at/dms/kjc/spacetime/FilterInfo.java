@@ -99,51 +99,6 @@ public class FilterInfo
 	return filter.isTwoStage();
     }
 
-    //for the filter trace node, get all upstream filter trace nodes,
-    //going thru input and output trace nodes
-    public FilterTraceNode[] getPreviousFilters() 
-    {
-	FilterTraceNode[] ret;
-	
-	if (traceNode.getPrevious() == null)
-	    return new FilterTraceNode[0];
-	
-	if (traceNode.getPrevious().isFilterTrace()) {
-	    ret = new FilterTraceNode[1];
-	    ret[0] = (FilterTraceNode)traceNode.getPrevious();
-	} else { //input trace node
-	    InputTraceNode input = (InputTraceNode)traceNode.getPrevious();
-	    
-	    //here we assume each trace has at least one filter trace node
-	    ret = new FilterTraceNode[input.getSources().length];
-	    for (int i = 0; i < ret.length; i++) {
-		    ret[i] = (FilterTraceNode)input.getSources()[i].getPrevious();
-	    }
-	}    
-	return ret;
-    }
-    
-    public FilterTraceNode[] getNextFilters() 
-    {
-	FilterTraceNode[] ret;
-	
-	if (traceNode.getNext() == null) 
-	    return new FilterTraceNode[0];
-	else if (traceNode.getNext().isFilterTrace()) {
-		ret = new FilterTraceNode[1];
-		ret[0] = (FilterTraceNode)traceNode.getNext();
-	}
-	else { //output trace node
-	    HashSet set = new HashSet();
-	    OutputTraceNode output = (OutputTraceNode)traceNode.getNext();
-	    for (int i = 0; i < output.getDests().length; i++) 
-		for (int j = 0; j < output.getDests()[i].length; j++)
-		    set.add(output.getDests()[i][j].getNext());
-	    ret = (FilterTraceNode[])set.toArray(new FilterTraceNode[0]);
-	}
-	return ret;
-    }
-
     private int calculateRemaining() 
     {
 	//the number of times this filter fires in the initialization
@@ -227,23 +182,25 @@ public class FilterInfo
     //schedule
     public int initItemsReceived() 
     {
-	FilterTraceNode[] previous = getPreviousFilters();
 	//the number of items produced by the upstream filter in
 	//initialization
 	int upStreamItems = 0;
 	
-	if (previous.length == 1) {
-	    upStreamItems = FilterInfo.getFilterInfo(previous[0]).initItemsSent();
+	if (traceNode.getPrevious().isFilterTrace()) {
+	    upStreamItems = 
+		FilterInfo.getFilterInfo((FilterTraceNode)traceNode.getPrevious()).initItemsSent();
 	}
-	else if (previous.length > 1) {
-	    //splitjoin
+	else { //previous is an input trace
 	    InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
 	    
 	    //add all the upstream filters items that reach this filter
-	    for (int i = 0; i < previous.length; i++) {
-		OutputTraceNode out = (OutputTraceNode)previous[i].getNext();
-		upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
-		    ((double)out.getWeight(in) / out.totalWeights()));
+	    for (int i = 0; i < in.getWeights().length; i++) {
+		Edge incoming = in.getSources()[i];
+		upStreamItems =
+		    (int)(FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious()).initItemsSent() *
+			  ((double)incoming.getSrc().getWeight(incoming) / incoming.getSrc().totalWeights()));
+		//upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
+		//   ((double)out.getWeight(in) / out.totalWeights()));
 	    }
 	}
 	return upStreamItems;
@@ -304,4 +261,52 @@ public class FilterInfo
 	
 	return items;
     }
+
+/*  Not needed now, but needed for magic crap
+      public FilterTraceNode[] getNextFilters() 
+    {
+	FilterTraceNode[] ret;
+	
+	if (traceNode.getNext() == null) 
+	    return new FilterTraceNode[0];
+	else if (traceNode.getNext().isFilterTrace()) {
+	    ret = new FilterTraceNode[1];
+	    ret[0] = (FilterTraceNode)traceNode.getNext();
+	}
+	else { //output trace node
+	    HashSet set = new HashSet();
+	    OutputTraceNode output = (OutputTraceNode)traceNode.getNext();
+	    for (int i = 0; i < output.getDests().length; i++) 
+		for (int j = 0; j < output.getDests()[i].length; j++)
+		    set.add(output.getDests()[i][j].getNext());
+	    ret = (FilterTraceNode[])set.toArray(new FilterTraceNode[0]);
+	}
+	return ret;
+    }
+
+
+     //for the filter trace node, get all upstream filter trace nodes,
+    //going thru input and output trace nodes
+    public FilterTraceNode[] getPreviousFilters() 
+    {
+	FilterTraceNode[] ret;
+	
+	if (traceNode.getPrevious() == null)
+	    return new FilterTraceNode[0];
+	
+	if (traceNode.getPrevious().isFilterTrace()) {
+	    ret = new FilterTraceNode[1];
+	    ret[0] = (FilterTraceNode)traceNode.getPrevious();
+	} else { //input trace node
+	    InputTraceNode input = (InputTraceNode)traceNode.getPrevious();
+	    
+	    //here we assume each trace has at least one filter trace node
+	    ret = new FilterTraceNode[input.getSources().length];
+	    for (int i = 0; i < ret.length; i++) {
+		ret[i] = (FilterTraceNode)input.getSources()[i].getSrc().getPrevious();
+	    }
+	}    
+	return ret;
+    }
+*/
 }

@@ -152,10 +152,6 @@ public class DirectCommunication extends RawExecutionCode
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	FilterContent filter = filterInfo.filter;
-	FilterInfo upstream = null;
-	if (filterInfo.getNextFilters().length == 1) 
-	    upstream = FilterInfo.getFilterInfo(filterInfo.getNextFilters()[0]);
-	
 	//inline the work function in a while loop
 	JBlock workBlock = 
 	    (JBlock)ObjectDeepCloner.

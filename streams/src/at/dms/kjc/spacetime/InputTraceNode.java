@@ -84,6 +84,14 @@ public class InputTraceNode extends TraceNode
     {
 	return (sources.length == 1);
     }
+
+    public Edge getSingleEdge() 
+    {
+	assert oneInput() : 
+	    "Calling getSingeEdge() on InputTrace with less/more than one input";
+	return sources[0];
+    }
+    
     
     public boolean noInputs() 
     {

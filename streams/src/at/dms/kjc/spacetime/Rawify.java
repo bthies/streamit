@@ -33,10 +33,10 @@ public class Rawify
 		    FilterTraceNode filterNode = (FilterTraceNode)traceNode;
 		    if (filterNode.isPredefined()) {
 			//predefined node, may have to do something
-			if (KjcOptions.magicdram) 
-			    magicHandlePredefined(filterNode, rawChip, init);
-			else 
-			    Utils.fail("Predefined filters not supported");
+			//if (KjcOptions.magicdram) 
+			//    magicHandlePredefined(filterNode, rawChip, init);
+			//else 
+			Utils.fail("Predefined filters not supported");
 		    }
 		    else { //regular filter!
 			RawTile tile = rawChip.getTile((filterNode).getX(), 
@@ -462,34 +462,7 @@ public class Rawify
     }
     
 
-    private static void magicHandlePredefined(FilterTraceNode predefined, RawChip rawChip, boolean init) 
-    {
-	if (init) {
-	    //tell the magic dram that it should open the file and create vars for this file
-	    if (predefined.isFileInput()) {
-		//get the filter connected to this file output, just take the first one
-		//because they all should be mapped to the same tile
-		FilterTraceNode next = FilterInfo.getFilterInfo(predefined).getNextFilters()[0];
-		if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
-		    Utils.fail("Tile not connected to io device");
-		MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
-		dram.inputFiles.add((FileInputContent)predefined.getFilter());
-	    }
-	    else if (predefined.isFileOutput()) {
-		//tell the magic dram that it should open the file and create vars for this file
-		
-		//get the filter connected to this file output, just take the first one
-		//because they all should be mapped to the same tile
-		FilterTraceNode prev = FilterInfo.getFilterInfo(predefined).getPreviousFilters()[0];
-		//find the iodevice
-		if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
-		    Utils.fail("Tile not connected to io device");
-		//get the dram
-		MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
-		dram.outputFiles.add((FileOutputContent)predefined.getFilter());		
-	    }
-	}
-    }
+    
     
     private static void createPrimePumpSwitchCode(FilterTraceNode node, Trace parent,
 						  FilterInfo filterInfo,
@@ -955,8 +928,36 @@ public class Rawify
 				     node, (init || primePump), rawChip);
 	}	
     }
-
-
-
+    
+    /* worry about magic stuff later
+    private static void magicHandlePredefined(FilterTraceNode predefined, RawChip rawChip, boolean init) 
+    {
+	if (init) {
+	    //tell the magic dram that it should open the file and create vars for this file
+	    if (predefined.isFileInput()) {
+		//get the filter connected to this file output, just take the first one
+		//because they all should be mapped to the same tile
+		FilterTraceNode next = FilterInfo.getFilterInfo(predefined).getNextFilters()[0];
+		if (!rawChip.getTile(next.getX(), next.getY()).hasIODevice()) 
+		    Utils.fail("Tile not connected to io device");
+		MagicDram dram = (MagicDram)rawChip.getTile(next.getX(), next.getY()).getIODevice();
+		dram.inputFiles.add((FileInputContent)predefined.getFilter());
+	    }
+	    else if (predefined.isFileOutput()) {
+		//tell the magic dram that it should open the file and create vars for this file
+		
+		//get the filter connected to this file output, just take the first one
+		//because they all should be mapped to the same tile
+		FilterTraceNode prev = FilterInfo.getFilterInfo(predefined).getPreviousFilters()[0];
+		//find the iodevice
+		if (!rawChip.getTile(prev.getX(), prev.getY()).hasIODevice()) 
+		    Utils.fail("Tile not connected to io device");
+		//get the dram
+		MagicDram dram = (MagicDram)rawChip.getTile(prev.getX(), prev.getY()).getIODevice();
+		dram.outputFiles.add((FileOutputContent)predefined.getFilter());		
+	    }
+	}
+    }
+    */
 }
 

@@ -50,27 +50,27 @@ public abstract class OffChipBuffer
     public abstract OffChipBuffer getNonRedundant();
     
     //return true if the inputtracenode does anything necessary
-    public static boolean necessary(InputTraceNode input) 
+    public static boolean unnecessary(InputTraceNode input) 
     {
 	if (input.noInputs())
-	    return false;
+	    return true;
 	if (input.oneInput() &&
-	    (OffChipBuffer.getBuffer(input.getSources()[0], input).getDRAM() ==
-	     OffChipBuffer.getBuffer(input, input.getNext()).getDRAM()))
-	    return false;
-	return true;
+	    (InterTraceBuffer.getBuffer(input.getSingleEdge()).getDRAM() ==
+	     IntraTraceBuffer.getBuffer(input, (FilterTraceNode)input.getNext()).getDRAM()))
+	    return true;
+	return false;
     }
     
     //return true if outputtracenode does anything
-    public static boolean necessary(OutputTraceNode output) 
+    public static boolean unnecessary(OutputTraceNode output) 
     {
 	if (output.noOutputs())
-	    return false;
+	    return true;
 	if (output.oneOutput() && 
-	    (OffChipBuffer.getBuffer(output.getPrevious(), output).getDRAM() ==
-	     OffChipBuffer.getBuffer(output, output.getDests()[0][0]).getDRAM()))
-	    return false;
-	return true;
+	    (IntraTraceBuffer.getBuffer((FilterTraceNode)output.getPrevious(), output).getDRAM() ==
+	     InterTraceBuffer.getBuffer(output.getSingleEdge()).getDRAM()))
+	    return true;
+	return false;
     }
 
     public void setDRAM(StreamingDram DRAM) 

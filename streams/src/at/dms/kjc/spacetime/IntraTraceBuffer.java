@@ -52,7 +52,7 @@ public class IntraTraceBuffer extends OffChipBuffer
 	    if (((OutputTraceNode)dest).noOutputs())
 		return true;
 	} else //if the inputtrace is not necessray
-	    return !necessary((InputTraceNode)source);
+	    return unnecessary((InputTraceNode)source);
 	return false;
     }
     
@@ -65,8 +65,7 @@ public class IntraTraceBuffer extends OffChipBuffer
 		return null;
 	    //if redundant get the previous buffer and call getNonRedundant
 	    if (redundant())
-		return OffChipBuffer.getBuffer(((InputTraceNode)source).getSources()[0],
-					       source).getNonRedundant();
+		return InterTraceBuffer.getBuffer(((InputTraceNode)source).getSingleEdge()).getNonRedundant();
 	    //otherwise return this...
 	    return this;
 	}

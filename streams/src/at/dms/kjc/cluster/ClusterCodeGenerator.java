@@ -674,8 +674,14 @@ class ClusterCodeGenerator {
 	}
 
 	if (init_counts > 0) {
-	    
+	 
 	    r.add("  if (_steady == 0) {\n");
+	
+	    if (oper instanceof SIRTwoStageFilter) {
+		r.add("    "+((SIRTwoStageFilter)oper).getInitWork().getName()+"__"+id+"();\n");
+		init_counts--;
+	    }
+
 	    r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //check_status__"+id+"();\n");
@@ -688,7 +694,7 @@ class ClusterCodeGenerator {
 	    }
 	    r.add("    }\n");
 	    r.add("  }\n");
-	    
+
 	}
 
 	r.add("  _steady++;\n");

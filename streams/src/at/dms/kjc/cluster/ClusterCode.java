@@ -1141,106 +1141,105 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.println();
-
-	p.print("CC=gcc");
-	p.println();
-
-	p.println();
 	
+	p.print("CC = gcc");
+	p.println();
+
+	p.print("CC_IA64 = ecc");
+	p.println();
+
+	p.println();
+
+	p.print("CCFLAGS = -O3");
+	p.println();
+
+	p.print("CCFLAGS_IA64 = -O3");
+	p.println();
+
+	p.println();
+	p.print("NAMES = ");
+	
+	{
+	    int i;
+	    for (i = 0; i < threadNumber - 1; i++) {
+		p.print("\tthread"+i+" \\");
+		p.println();
+	    }
+	    p.print("\tthread"+i);
+	    p.println();
+	}
+
+	p.println();
+
+	p.print("SOURCES = \t$(NAMES:%=%.cpp)\n");
+	p.print("OBJS = \t$(NAMES:%=%.o)\n");
+	p.print("OBJS_IA64 = \t$(NAMES:%=%_ia64.o)\n");
+
+	p.println();
+
 	if (KjcOptions.standalone) {
-	    p.print("all: fusion");
+	    p.print("all: fusion\n");
 	} else {
-	    p.print("all: run_cluster");
+	    p.print("all: run_cluster\n");
 	}
 
 	p.println();
-	p.println();
 
-
-	p.print("clean:");
-	p.println();
-	p.print("\trm -f run_cluster master.o");
-
-	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".o");
+	if (KjcOptions.standalone) {
+	    p.print("ia64: fusion_ia64\n");
+	} else {
+	    p.print("ia64: run_cluster_ia64\n");
 	}
+
+	p.println();
+
+	p.print("clean:\n");
+	p.print("\trm -f run_cluster fusion master*.o fusion*.o thread*.o\n");
+	p.println();
 
 	p.println();
 
 	// =============== run_cluster
 
-	p.println();
-	p.print("run_cluster: master.o");
-
-	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".o");
-	}
-
-	p.println();
-
-	p.print("\t$(CC) -O3 -o run_cluster master.o");
-	
-	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".o");
-	}
-
-	p.print(" -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster");
-
+	p.print("run_cluster: master.o $(OBJS)\n");
+	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster\n");
 	p.println();
 
 	// =============== fusion
 
+	p.print("fusion: fusion.o $(OBJS)\n");
+	p.print("\t$(CC) $(CCFLAGS) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster\n");
 	p.println();
-	p.print("fusion: fusion.o");
-
-	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".o");
-	}
-
-	p.println();
-
-	p.print("\t$(CC) -O3 -o fusion fusion.o");
 	
-	for (int i = 0; i < threadNumber; i++) {
-	    p.print(" thread"+i+".o");
-	}
-
-	p.print(" -L$(STREAMIT_HOME)/library/cluster -lpthread -lstdc++ -lcluster");
-
-	p.println();
-
-	// ================= master.o
-
-	p.println();
-
-	p.print("master.o: fusion.h master.cpp");
-	p.println();
-	p.print("\t$(CC) -O3 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
-	p.println();
-
-	// ================= fusion.o
-
-	p.println();
-
-	p.print("fusion.o: fusion.h fusion.cpp");
-	p.println();
-	p.print("\t$(CC) -O3 -I$(STREAMIT_HOME)/library/cluster -c fusion.cpp");
-	p.println();
-
-	p.println();
-
-
-	for (int i = 0; i < threadNumber; i++) {
-
-	    p.print("thread"+i+".o: fusion.h thread"+i+".cpp");
-	    p.println();
-	    p.print("\t$(CC) -O3 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
-	    p.println();
-	    p.println();
-
-	}
-
+	// =============== %.o : %.cpp
 	
+	p.print("%.o: %.cpp fusion.h\n");
+	p.print("\t$(CC) $(CCFLAGS) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
+	p.println();
+
+	p.println();
+
+	// =============== run_cluster_ia64
+
+	p.print("run_cluster_ia64: master_ia64.o $(OBJS_IA64)\n");
+	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster_ia64\n");
+	p.println();
+
+	// =============== fusion_ia64
+
+	p.print("fusion_ia64: fusion_ia64.o $(OBJS_IA64)\n");
+	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -o $@ $^ -L$(STREAMIT_HOME)/library/cluster -lpthread -lcluster_ia64\n");
+
+	p.println();
+
+	// =============== %_ia64.o : %.cpp
+
+	p.print("%_ia64.o: %.cpp fusion.h\n");
+	p.print("\t$(CC_IA64) $(CCFLAGS_IA64) -I$(STREAMIT_HOME)/library/cluster -c -o $@ $<\n");
+	p.println();
+
+
+
 	try {
 	    FileWriter fw = new FileWriter("Makefile.cluster");
 	    fw.write(str.toString());

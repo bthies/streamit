@@ -72,6 +72,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public SIRSplitter getSplitter() 
     {
+	Utils.assert(this.splitter!=null);
 	return this.splitter;
     }
     
@@ -88,6 +89,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public SIRJoiner getJoiner() 
     {
+	Utils.assert(this.splitter!=null);
 	return this.joiner;
     }
     

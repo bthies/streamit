@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.4 2002-07-15 18:58:17 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.5 2002-07-15 20:02:44 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -130,7 +130,7 @@ public class NodesToJava implements FEVisitor
 
     public Object visitExprFunCall(ExprFunCall exp)
     {
-        String result = exp.getName() + "(";
+        String result = "Math." + exp.getName() + "(";
         boolean first = true;
         for (Iterator iter = exp.getParams().iterator(); iter.hasNext(); )
         {

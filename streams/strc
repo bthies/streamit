@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.3 2003-09-30 18:36:15 dmaze Exp $
+# $Id: strc,v 1.4 2003-10-01 13:24:46 dmaze Exp $
 #
 
 use strict;
@@ -213,18 +213,22 @@ sub get_options
       {
 	if ($opts{optimize} >= 2)
 	  {
-	    $opts{unroll} = 4096 unless exists $opts{unroll};
+	    $opts{unroll} = 256 unless exists $opts{unroll};
 	    $opts{removeglobals} = 1 unless exists $opts{removeglobals};
 	    $opts{simulatework} = 1 unless exists $opts{simulatework};
 	  }
 	if ($opts{optimize} >= 1)
 	  {
-	    $opts{unroll} = 256 unless exists $opts{unroll};
+	    $opts{unroll} = 16 unless exists $opts{unroll};
 	    $opts{altcodegen} = 1 unless exists $opts{altcodegen};
 	    $opts{ratematch} = 1 unless exists $opts{ratematch};
 	    $opts{wbs} = 1 unless exists $opts{wbs};
 	    $opts{destroyfieldarray} = 1 unless
 	      exists $opts{destroyfieldarray};
+	  }
+	if ($opts{optimize} >= 0)
+	  {
+	    $opts{unroll} = 0 unless exists $opts{unroll};
 	  }
       }
     return 1;

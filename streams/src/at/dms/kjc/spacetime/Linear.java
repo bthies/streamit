@@ -5,6 +5,7 @@ import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.flatgraph2.*;
 import at.dms.compiler.PositionedError;
+import java.util.ArrayList;
 
 //If filter is linear
 
@@ -28,6 +29,7 @@ public class Linear extends RawExecutionCode implements Constants {
     
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
+	assert filterInfo.remaining<=0:"Items remaining in buffer not supported for linear filters.";
 	FilterTraceNode node=filterInfo.traceNode;
 	System.out.println("["+node.getX()+","+node.getY()+"] Generating code for " + filterInfo.filter + " using Linear.");
 	FilterContent content=filterInfo.filter;
@@ -51,6 +53,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	    body=new JStatement[array.length+3];
 	else
 	    body=new JStatement[array.length+2];
+	//Filling register with Constants
 	InlineAssembly inline=new InlineAssembly();
 	inline.add(".set noat");
 	body[0]=inline;
@@ -66,6 +69,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	    inline.addInput("\"m\"("+getConstant()+")");
 	    body[body.length-2]=inline;
 	}
+	//Start Template
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
 	for(int i=0;i<idx.length-1;i++)
@@ -94,26 +98,27 @@ public class Linear extends RawExecutionCode implements Constants {
 	int times=0;
 	int[] oldIdx=new int[4];
 	int[] oldPop=new int[4];
-	for(int turn=0;turn<pos+4;turn++) {
-	for(int i=0;i<mult;i++)
-	    for(int j=0;j<popCount;j++)
-		for(int k=idx.length-1;k>=0;k--) {
-		    int offset=idx[k]+j;
-		    inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
-		    oldIdx[times]=k;
-		    oldPop[times]=j;
-		    times++;
-		    if(times==4) {
-			times=0;
-			for(int l=0;l<4;l++) {
-			    int popNum=oldIdx[l];
-			    int elem=oldPop[l];
-			    inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+	System.out.println("Times: "+mult+" "+popCount+" "+idx.length);
+	for(int turn=0;turn<pos+1;turn++) { //Synch up linear tiles
+	    for(int i=0;i<mult;i++)
+		for(int j=0;j<popCount;j++)
+		    for(int k=idx.length-1;k>=0;k--) {
+			int offset=idx[k]+j;
+			inline.add("mul.s "+tempRegs[times]+",\\t$csti,\\t"+regs[offset]);
+			oldIdx[times]=k;
+			oldPop[times]=j;
+			times++;
+			if(times==4) {
+			    times=0;
+			    for(int l=0;l<4;l++) {
+				int popNum=oldIdx[l];
+				int elem=oldPop[l];
+				inline.add("add.s "+getInterReg(false,popNum,elem)+",\\t"+getInterReg(true,popNum,elem)+",\\t"+tempRegs[l]);
+			    }
 			}
 		    }
-		}
-	if(turn==pos-1)
-	    inline.add(getLabel()+": #LOOP");
+	    if(turn==pos-1)
+		inline.add(getLabel()+": #LOOP");
 	}
 	inline.add("j "+getLabel());
 	inline.add(".set at");
@@ -147,7 +152,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	    if(rem>=4)
 		rem-=4;
 	}
-	System.out.println("MULTIPLE: "+i);
+	System.out.println("MULTIPLE: "+num+" "+i);
 	return i;
     }
 
@@ -164,11 +169,103 @@ public class Linear extends RawExecutionCode implements Constants {
     }
 
     public JMethodDeclaration getInitStageMethod() {
-	return linearInit;
+	//return linearInit;
+
+	//Copied From DirectCommunication
+	JBlock statements = new JBlock(null, new JStatement[0], null);
+	FilterContent filter = filterInfo.filter;
+
+	//add the calls for the work function in the initialization stage
+	statements.addStatement(generateInitWorkLoop(filter));
+	//add the calls to the work function in the prime pump stage
+	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
+	
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+				      CStdType.Void,
+				      initStage + uniqueID,
+				      JFormalParameter.EMPTY,
+				      CClassType.EMPTY,
+				      statements,
+				      null,
+				      null);
     }
     
     public JMethodDeclaration[] getHelperMethods() {
-	return emptyMethods;
+	//return emptyMethods;
+	
+	//Copied From DirectCommunication
+	ArrayList methods = new ArrayList();
+	
+	//add all helper methods, except work function
+	for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
+	    if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork())))
+		methods.add(filterInfo.filter.getMethods()[i]);
+	
+	return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	
+    }
+
+    //Copied from DirectCommunication
+    JStatement generateInitWorkLoop(FilterContent filter)
+    {
+	JBlock block = new JBlock(null, new JStatement[0], null);
+
+	//clone the work function and inline it
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	
+	//if we are in debug mode, print out that the filter is firing
+	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
+	    block.addStatement
+		(new SIRPrintStatement(null,
+				       new JStringLiteral(null, filter.getName() + " firing (init)."),
+				       null));
+	}
+	
+	block.addStatement(workBlock);
+	
+	//return the for loop that executes the block init - 1
+	//times
+	return makeForLoop(block, generatedVariables.exeIndex1, 
+			   new JIntLiteral(filterInfo.initMult));
+    }
+
+    //Copied From DirectCommunication
+    private JBlock getWorkFunctionBlock(int mult)
+    {
+	JBlock block = new JBlock(null, new JStatement[0], null);
+	FilterContent filter = filterInfo.filter;
+	//inline the work function in a while loop
+	JBlock workBlock = 
+	    (JBlock)ObjectDeepCloner.
+	    deepCopy(filter.getWork().getBody());
+	
+	//create the for loop that will execute the work function
+	//local variable for the work loop
+	JVariableDefinition loopCounter = new JVariableDefinition(null,
+								  0,
+								  CStdType.Integer,
+								  workCounter,
+								  null);
+	
+	
+
+	JStatement loop = 
+	    makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
+	block.addStatement(new JVariableDeclarationStatement(null,
+							     loopCounter,
+							     null));
+	block.addStatement(loop);
+	/*
+	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+				      CStdType.Void,
+				      steadyStage + uniqueID,
+				      JFormalParameter.EMPTY,
+				      CClassType.EMPTY,
+				      block,
+				      null,
+				      null);
+	*/
+	return block;
     }
 
     public JFieldDeclaration[] getVarDecls() {
@@ -187,5 +284,3 @@ public class Linear extends RawExecutionCode implements Constants {
 	return fields;
     }
 }
-
-

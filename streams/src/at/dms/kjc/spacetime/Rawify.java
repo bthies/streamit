@@ -976,7 +976,7 @@ public class Rawify
 	//final int turns2=content.getTotal()-content.getPos()+1;
 	final int turns2=content.getPos();
 	//final int turns2=1;
-	for(int turn=0;turn<turns2+4;turn++) {
+	for(int turn=0;turn<turns2+1;turn++) {
 	    if(turn==turns2)
 		code.appendIns(label, init||primePump);
 	    for(int i = 0;i<numTimes;i++) {

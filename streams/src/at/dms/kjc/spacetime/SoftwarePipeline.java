@@ -26,7 +26,7 @@ public class SoftwarePipeline {
 		    if(oldPrimePump==1)
 			oldPrimePump=srcPrimePump;
 		    else
-			assert oldPrimePump==srcPrimePump:"Case Not Supported Yet";
+			assert oldPrimePump==srcPrimePump:"Case Not Supported Yet "+trace;
 		    if(trace.depends(srcTrace)) { //Hack to get rid of loops
 			found=true;
 		    } else

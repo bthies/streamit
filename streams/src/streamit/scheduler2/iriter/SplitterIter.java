@@ -1,7 +1,5 @@
 package streamit.scheduler2.iriter;
 
-/* $Id: SplitterIter.java,v 1.4 2002-12-02 23:54:11 karczma Exp $ */
-
 /**
  * An interface for retrieving data about streams with a Splitter.
  * 

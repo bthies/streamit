@@ -1,7 +1,5 @@
 package streamit.scheduler2.singleappearance;
 
-/* $Id: Filter.java,v 1.6 2002-12-02 23:54:14 karczma Exp $ */
-
 import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
 import streamit.scheduler2.Schedule;

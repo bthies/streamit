@@ -1,7 +1,5 @@
 package streamit.scheduler2.iriter;
 
-/* $Id: IteratorBase.java,v 1.3 2002-12-02 23:54:11 karczma Exp $ */
-
 /**
  * <dl>
  * <dt>Purpose: Base iterator for StreamIt stream graph to provide

@@ -1,7 +1,5 @@
 package streamit.scheduler2.iriter;
 
-/* $Id: FilterIter.java,v 1.7 2002-12-02 23:54:10 karczma Exp $ */
-
 /**
  * <dl>
  * <dt>Purpose: An Iterator for StreamIt Graph

@@ -1,7 +1,5 @@
 package streamit.scheduler2.constrained;
 
-/* $Id: Pipeline.java,v 1.3 2003-04-01 22:36:35 karczma Exp $ */
-
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
 

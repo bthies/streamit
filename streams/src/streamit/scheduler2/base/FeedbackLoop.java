@@ -2,12 +2,8 @@ package streamit.scheduler2.base;
 
 import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
-import streamit.scheduler2.iriter./*persistent.*/
-Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
-
-/* $Id: FeedbackLoop.java,v 1.12 2003-05-06 10:23:44 thies Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.

@@ -1,7 +1,5 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: Pipeline.java,v 1.7 2003-05-06 10:23:50 thies Exp $ */
-
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
 import streamit.scheduler2.base.StreamFactory;

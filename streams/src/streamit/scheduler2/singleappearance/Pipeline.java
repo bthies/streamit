@@ -1,14 +1,9 @@
 package streamit.scheduler2.singleappearance;
 
-/* $Id: Pipeline.java,v 1.6 2002-12-02 23:54:14 karczma Exp $ */
-
-import java.util.Map;
-import java.util.HashMap;
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
 import streamit.scheduler2.hierarchical.StreamInterface;
 import streamit.scheduler2.base.StreamFactory;
-import streamit.scheduler2.Schedule;
 import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**

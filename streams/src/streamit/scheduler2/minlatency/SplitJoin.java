@@ -1,7 +1,5 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: SplitJoin.java,v 1.10 2003-05-06 10:23:55 thies Exp $ */
-
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
 import streamit.scheduler2.hierarchical.StreamInterface;

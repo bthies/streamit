@@ -1,6 +1,5 @@
 package streamit.scheduler2.constrained;
 
-import streamit.misc.Pair;
 import streamit.misc.DLList;
 import streamit.misc.OMap;
 import streamit.misc.OMapIterator;

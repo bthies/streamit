@@ -1,7 +1,5 @@
 package streamit.scheduler2.singleappearance;
 
-/* $Id: StreamFactory.java,v 1.2 2003-05-06 10:24:03 thies Exp $ */
-
 import streamit.misc.DestroyedClass;
 import streamit.scheduler2.iriter.Iterator;
 import streamit.scheduler2.base.StreamInterface;

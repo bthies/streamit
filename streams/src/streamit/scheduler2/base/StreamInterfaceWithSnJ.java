@@ -1,7 +1,5 @@
 package streamit.scheduler2.base;
 
-/* $Id: StreamInterfaceWithSnJ.java,v 1.2 2002-12-02 23:54:07 karczma Exp $ */
-
 /**
  * This interface provides the required functional interface for
  * all scheduling objects with splits and joins.

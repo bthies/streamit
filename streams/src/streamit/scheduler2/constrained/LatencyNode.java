@@ -2,7 +2,6 @@ package streamit.scheduler2.constrained;
 
 import streamit.misc.DLList;
 import streamit.misc.OMap;
-import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class LatencyNode extends streamit.misc.AssertedClass
 {

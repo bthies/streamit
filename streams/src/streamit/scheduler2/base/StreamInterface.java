@@ -3,8 +3,6 @@ package streamit.scheduler2.base;
 import streamit.scheduler2.Schedule;
 import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: StreamInterface.java,v 1.7 2002-12-02 23:54:07 karczma Exp $ */
-
 /**
  * This interface will provide the basic functionality for
  * all future stream classes.  This will ensure that streams can

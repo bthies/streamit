@@ -3,8 +3,6 @@ package streamit.scheduler2.base;
 import streamit.scheduler2.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.10 2003-05-06 10:23:44 thies Exp $ */
-
 /**
  * Computes some basic data for Pipelines.  
  *

@@ -1,9 +1,5 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamInterface.java,v 1.6 2002-12-02 23:54:09 karczma Exp $ */
-
-import streamit.scheduler2.Schedule;
-
 /**
  * This interface provides the required functional interface for
  * all hierarchical scheduling objects.  Hierarchical scheduling

@@ -4,8 +4,6 @@ import streamit.misc.AssertedClass;
 import streamit.misc.Pair;
 import java.util.Vector;
 
-/* $Id: Schedule.java,v 1.9 2003-05-06 10:23:40 thies Exp $ */
-
 /**
  * <dl>
  * <dt>Purpose: Schedule for External Users

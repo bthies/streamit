@@ -1,7 +1,5 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: FeedbackLoop.java,v 1.4 2003-05-06 10:23:55 thies Exp $ */
-
 import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler2.hierarchical.StreamInterface;

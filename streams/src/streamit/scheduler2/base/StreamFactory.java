@@ -2,8 +2,6 @@ package streamit.scheduler2.base;
 
 import streamit.scheduler2.iriter./*persistent.*/Iterator;
 
-/* $Id: StreamFactory.java,v 1.4 2003-05-06 10:23:45 thies Exp $ */
-
 /**
  * The StreamFactory interface provides a factory interface for
  * the scheduler.  Since it is the streams themselves that calculate

@@ -6,8 +6,6 @@ import java.util.Vector;
 import streamit.misc.AssertedClass;
 import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: ScheduleOptimizer.java,v 1.2 2003-05-06 10:23:41 thies Exp $ */
-
 /**
  * This class takes a schedule produced by the scheduler and optimizes it
  * into a more compact schedule.

@@ -2,8 +2,6 @@ package streamit.scheduler2.iriter;
 
 import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: PipelineIter.java,v 1.6 2002-12-02 23:54:11 karczma Exp $ */
-
 /**
  * <dl>
  * <dt>Purpose: An Iterator for StreamIt Graph

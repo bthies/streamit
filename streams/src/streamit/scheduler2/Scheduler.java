@@ -3,8 +3,6 @@ package streamit.scheduler2;
 import streamit.misc.AssertedClass;
 import streamit.scheduler2.iriter.Iterator;
 
-/* $Id: Scheduler.java,v 1.2 2003-05-06 10:23:41 thies Exp $ */
-
 /**
  * <dl>
  * <dt>Purpose: Main scheduler class to be used as an interface for all 

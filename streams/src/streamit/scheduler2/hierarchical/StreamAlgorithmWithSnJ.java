@@ -3,8 +3,6 @@ package streamit.scheduler2.hierarchical;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.SplitFlow;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.JoinFlow;
 
-/* $Id: StreamAlgorithmWithSnJ.java,v 1.7 2003-05-06 10:23:51 thies Exp $ */
-
 /**
  * This class provides an implementation for StreamInterface.
  * 

@@ -19,8 +19,6 @@ import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler2.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.12 2003-05-06 10:23:41 thies Exp $ */
-
 /**
  * This class uses a valid schedule and an iterator to determine 
  * the size of buffers required to execute the schedule.  The class

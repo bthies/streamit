@@ -1,6 +1,6 @@
 /*
  * HelloWorld6.c: semi-translated (out of Kopi) "Hello World"
- * $Id: HelloWorld6.c.java,v 1.1 2001-09-25 22:59:12 dmaze Exp $
+ * $Id: HelloWorld6.c.java,v 1.2 2001-09-26 17:35:09 karczma Exp $
  */
 
 import streamit.internal.*;
@@ -30,7 +30,7 @@ class StreamitGenerated
 
     class HelloWorld6_2_data
     {
-        StreamContext *c;
+        StreamContext c;
     }
 
     void HelloWorld6_2_init(HelloWorld6_2_data d, Object p)
@@ -57,7 +57,7 @@ class StreamitGenerated
     {
         StreaMIT.set_stream_type(d.c, StreaMIT.PIPELINE);
         StreaMIT.set_work(d.c, HelloWorld6_work);
-  
+
         d.child1 = StreaMIT.malloc(StreaMIT.sizeof(HelloWorld6_1_data.class));
         d.child1.c = StreaMIT.create_context(d.child1);
         StreaMIT.register_child(d.c, d.child1.c);
@@ -66,25 +66,25 @@ class StreamitGenerated
         d.child2 = StreaMIT.malloc(StreaMIT.sizeof(HelloWorld6_2_data.class));
         d.child2.c = StreaMIT.create_context(d.child2);
         StreaMIT.register_child(d.c, d.child2.c);
-        HelloWorld6_2_init(d->child2, d);
+        HelloWorld6_2_init(d.child2, d);
     }
 
     void HelloWorld6_work(Object dv, Tape in_tape, Tape out_tape)
     {
-        int itape[1];
+        int itape[] = new int [1];
         HelloWorld6_data d = dv;
         d.child1.x++;
         itape[0] = d.child1.x;
         StreaMIT.printf("%d\n", itape[0]);
     }
-    
+
     int main(int argc, char argv[][])
     {
         HelloWorld6_data test =
             StreaMIT.malloc(StreaMIT.sizeof(HelloWorld6_data.class));
         test.c = StreaMIT.create_context(test);
         HelloWorld6_init(test, null);
-        
+
         StreaMIT.streamit_run(test.c);
     }
 }

@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation
  * 
- * $Id: FFTWFrequencyReplacer.java,v 1.5 2002-11-08 01:22:05 aalamb Exp $
+ * $Id: FFTWFrequencyReplacer.java,v 1.6 2002-11-11 16:44:17 aalamb Exp $
  **/
 public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
@@ -203,7 +203,12 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
 	body.addStatement(makeFieldAllocation(imagWeightField.getIdent(),  filterSize));
 	body.addStatement(makeFieldAllocation(partialField.getIdent(), x-1));
 
+	/* add statements to initialize the partial results field. */
+	for (int i=0; i<(x-1); i++) {
+	    body.addStatement(makeArrayAssignment(partialField, i, 0.0f));
+	}
 
+	
 	/* calculate the weights of the fields based on the filter
 	 * coefficients that are found in the linear representation. */	
 	float[] frequency_response_r = new float[filterSize];

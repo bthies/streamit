@@ -1,7 +1,7 @@
 /*
  * beamformer.c: Standalone beam-former reference implementation
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: beamformer.c,v 1.1 2003-11-02 19:02:24 dmaze Exp $
+ * $Id: beamformer.c,v 1.2 2003-11-04 16:30:48 dmaze Exp $
  */
 
 #ifdef raw
@@ -21,9 +21,9 @@ StreamIt implementation, not have dependencies on extra libraries, and
 generally be a fairer comparison with the StreamIt code (that is,
 equivalent to our other benchmarks).
 
-This version gets consistent output with the StreamIt version
-when compiled with RANDOM_INPUTS and RANDOM_WEIGHTS, except that
-the order of outputs is different.
+This version gets consistent output with the StreamIt version when
+compiled with RANDOM_INPUTS and RANDOM_WEIGHTS.  The algorithm should
+be equivalent to the SERIALIZED implementation.
 
 FLAGS: the StreamIt TemplateBeamFormer can be built with COARSE
 defined or not, with SERIALIZED defined or not, and with RANDOM_INPUTS
@@ -39,7 +39,9 @@ flags are both RANDOM_WEIGHTS and RANDOM_INPUTS.
 RANDOM_INPUTS and RANDOM_WEIGHTS are easy to do, so they are
 implemented here as well.  We ignore SERIALIZED, though we do go
 through the detectors in a deterministic order which should give the
-right answer.  COARSE is left for a future implementation.
+right answer, and add a reordering stage equivalent to what SERIALZIED
+adds to get results in the same order.  COARSE is left for a future
+implementation.
 */
 
 struct BeamFirData
@@ -58,7 +60,7 @@ void BeamFormWeights(int beam, float *weights);
 void BeamForm(int beam, const float *weights, const float *input,
               float *output);
 void Magnitude(float *in, float *out, int n);
-void Detector(int beam, float *data);
+void Detector(int beam, float *data, float *output);
 
 #define NUM_CHANNELS 12
 #define NUM_SAMPLES 1024
@@ -124,24 +126,23 @@ int main(int argc, char **argv)
  * The input generator produces 2*TARGET_SAMPLE values.
  */
 
-struct ChannelData
-{
-  float inputs[2*NUM_SAMPLES*NUM_CHANNELS];
-  float predec[2*NUM_POST_DEC_1*NUM_CHANNELS];
-  float postdec[2*NUM_POST_DEC_2*NUM_CHANNELS];
-};
-
 void begin(void)
 {
+#ifdef AVOID_PRINTF
+  volatile float result;
+#endif
   struct BeamFirData coarse_fir_data[NUM_CHANNELS];
   struct BeamFirData fine_fir_data[NUM_CHANNELS];
   struct BeamFirData mf_fir_data[NUM_BEAMS];
-  struct ChannelData channel[NUM_CHANNELS];
+  float inputs[2*NUM_SAMPLES*NUM_CHANNELS];
+  float predec[2*NUM_POST_DEC_1*NUM_CHANNELS];
+  float postdec[NUM_CHANNELS][2*NUM_POST_DEC_2*NUM_CHANNELS];
   float beam_weights[NUM_BEAMS][2*NUM_CHANNELS];
   float beam_input[2*NUM_CHANNELS*NUM_POST_DEC_2];
   float beam_output[2*NUM_POST_DEC_2];
   float beam_fir_output[2*NUM_POST_DEC_2];
   float beam_fir_mag[NUM_POST_DEC_2];
+  float detector_out[NUM_BEAMS][NUM_POST_DEC_2];
   int i, j;
 
   for (i = 0; i < NUM_CHANNELS; i++)
@@ -154,28 +155,29 @@ void begin(void)
     BeamFirSetup(&mf_fir_data[i], MF_SIZE);
     BeamFormWeights(i, beam_weights[i]);
   }
+
   while (numiters == -1 || numiters-- > 0) {      
     for (i = 0; i < NUM_CHANNELS; i++) {
       for (j = 0; j < NUM_CHANNELS; j++)
-        InputGenerate(i, channel[i].inputs + j*NUM_SAMPLES*2,
+        InputGenerate(i, inputs + j*NUM_SAMPLES*2,
                       NUM_SAMPLES);
       for (j = 0; j < NUM_POST_DEC_1 * NUM_CHANNELS; j++)
         BeamFirFilter(&coarse_fir_data[i],
                       NUM_SAMPLES, COARSE_DECIMATION_RATIO,
-                      channel[i].inputs + j * COARSE_DECIMATION_RATIO*2,
-                      channel[i].predec + j * 2);
+                      inputs + j * COARSE_DECIMATION_RATIO*2,
+                      predec + j * 2);
       for (j = 0; j < NUM_POST_DEC_2 * NUM_CHANNELS; j++)
         BeamFirFilter(&fine_fir_data[i],
                       NUM_POST_DEC_1, FINE_DECIMATION_RATIO,
-                      channel[i].predec + j * FINE_DECIMATION_RATIO * 2,
-                      channel[i].postdec + j * 2);
+                      predec + j * FINE_DECIMATION_RATIO * 2,
+                      postdec[i] + j * 2);
     }
     /* Assemble beam-forming input: */
     for (i = 0; i < NUM_CHANNELS; i++)
       for (j = 0; j < NUM_POST_DEC_2; j++)
       {
-        beam_input[j*NUM_CHANNELS*2+2*i] = channel[i].postdec[2*j];
-        beam_input[j*NUM_CHANNELS*2+2*i+1] = channel[i].postdec[2*j+1];
+        beam_input[j*NUM_CHANNELS*2+2*i] = postdec[i][2*j];
+        beam_input[j*NUM_CHANNELS*2+2*i+1] = postdec[i][2*j+1];
       }
     for (i = 0; i < NUM_BEAMS; i++)
     {
@@ -190,8 +192,19 @@ void begin(void)
                       NUM_POST_DEC_2, 1,
                       beam_output+j*2, beam_fir_output+j*2);
       Magnitude(beam_fir_output, beam_fir_mag, NUM_POST_DEC_2);
-      Detector(i, beam_fir_mag);
+      Detector(i, beam_fir_mag, detector_out[i]);
     }
+    for (j = 0; j < NUM_POST_DEC_2; j++)
+      for (i = 0; i < NUM_BEAMS; i++)
+#ifdef AVOID_PRINTF
+        result = detector_out[i][j];
+#else
+#ifdef raw
+        print_float(detector_out[i][j]);
+#else
+        printf("%f\n", detector_out[i][j]);
+#endif
+#endif
   }
 }
 
@@ -337,7 +350,7 @@ void Magnitude(float *in, float *out, int n)
     out[i] = sqrt(in[2*i]*in[2*i] + in[2*i+1]*in[2*i+1]);
 }
 
-void Detector(int beam, float *data)
+void Detector(int beam, float *data, float *output)
 {
   int sample;
   /* Should be exactly NUM_POST_DEC_2 samples. */
@@ -356,10 +369,6 @@ void Detector(int beam, float *data)
         outputVal = 0;
     }
     outputVal = data[sample];
-#ifdef raw
-    print_float(outputVal);
-#else
-    printf("%f\n", outputVal);
-#endif
+    output[sample]= outputVal;
   }
 }

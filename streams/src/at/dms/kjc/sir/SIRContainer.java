@@ -22,23 +22,6 @@ public abstract class SIRContainer extends SIRStream {
       super(parent, ident, fields, methods);
     }
 
-  // ----------------------------------------------------------------------
-  // CLONING STUFF
-  // ----------------------------------------------------------------------
-
-    private Object serializationHandle;
-    
-    private void writeObject(ObjectOutputStream oos) throws IOException {
-	this.serializationHandle = ObjectDeepCloner.getHandle(this);
-	oos.defaultWriteObject();
-    }
-    
-    protected Object readResolve() throws Exception {
-	return ObjectDeepCloner.getInstance(serializationHandle, this);
-    }
-
-  // ----------------------------------------------------------------------
-
     /**
      * Returns the relative name by which this object refers to child
      * <child>, or null if <child> is not a child of this.

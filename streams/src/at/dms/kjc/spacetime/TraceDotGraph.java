@@ -12,7 +12,7 @@ import java.util.Iterator;
 
 public class TraceDotGraph 
 {
-    public static void dumpGraph(List steadyTrav, Trace[] io, String fileName, boolean DRAM) 
+    public static void dumpGraph(List steadyTrav, Trace[] io, String fileName, boolean DRAM, RawChip rawChip) 
     {
 	SpaceTimeBackend.println("Creating Trace Dot Graph...");	
 	try {
@@ -63,7 +63,7 @@ public class TraceDotGraph
 		    
 		    
 		    if (node.isFilterTrace()) {
-			fw.write("  " + node.hashCode() + "[ label=\"" + node.toString());
+			fw.write("  " + node.hashCode() + "[ label=\"" + ((FilterTraceNode)node).toString(rawChip));
 			FilterInfo filter = FilterInfo.getFilterInfo((FilterTraceNode)node);
 			fw.write("\\nMult: (" + filter.initMult + ", " + filter.primePump + ", " + filter.steadyMult + ")");
 			fw.write("\\nPre-peek, pop, push: (" + filter.prePeek + ", " + filter.prePop + ", " + filter.prePush + ")");

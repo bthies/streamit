@@ -154,7 +154,7 @@ public class SpaceTimeBackend
 
 	//MultiplySteadyState.doit(partitioner, scheduler);
 	
-	SchedulePrimePump.doit(scheduler.getSchedule());
+	SchedulePrimePump.doit(scheduler);
 	
 	//mgordon's stuff
 	assert !KjcOptions.magicdram :
@@ -163,7 +163,7 @@ public class SpaceTimeBackend
 	//we can now use filter infos, everything is set
 	FilterInfo.canUse();
 
-	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "preDRAMsteady.dot", false);
+	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "preDRAMsteady.dot", false, rawChip);
 	//assign the buffers not assigned by Jasp to drams
 	BufferDRAMAssignment.run(scheduler.getSchedule(), rawChip, partitioner.io);
 	//communicate the addresses for the off-chip buffers
@@ -173,8 +173,8 @@ public class SpaceTimeBackend
 	    //on the corresponding tile.
 	    CommunicateAddrs.doit(rawChip);
 	}
-	TraceDotGraph.dumpGraph(scheduler.getInitSchedule(), partitioner.io, "inittraces.dot", true);
-	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "steadyforrest.dot", true);
+	TraceDotGraph.dumpGraph(scheduler.getInitSchedule(), partitioner.io, "inittraces.dot", true, rawChip);
+	TraceDotGraph.dumpGraph(scheduler.getSchedule(), partitioner.io, "steadyforrest.dot", true, rawChip);
 	//create the raw execution code and switch code for the initialization phase
 	System.out.println("Creating Initialization Stage");
 	Rawify.run(scheduler, rawChip, true); 

@@ -55,8 +55,24 @@ public class SimpleScheduler
     }
     
     
+    //return true if t1 is scheduled before t2
     public boolean scheduledBefore(Trace t1, Trace t2) 
     {
+
+	if (partitioner.isIO(t1)) {
+	    //assume that file readers come before everything
+	    if (t1.getTail().isFileReader())
+		return true;
+	    if (t2.getTail().isFileReader()) 
+		return false;
+	    //assume file writes come after everything	    
+	    if (t1.getHead().isFileWriter())
+		return false;
+	    if (t2.getHead().isFileWriter())
+		return true;
+	}
+	
+
 	assert schedule.contains(t1) && schedule.contains(t2) &&
 	    t1 != t2;
 	if (schedule.indexOf(t1) < schedule.indexOf(t2))
@@ -66,12 +82,9 @@ public class SimpleScheduler
 
     public void schedule() 
     {
-
-	//sort traces...
-	Trace[] tempArray = (Trace[])partitioner.getTraceGraph().clone();
-	Arrays.sort(tempArray, 
-		    new CompareTraceBNWork(partitioner));
-	LinkedList sortedTraces = new LinkedList(Arrays.asList(tempArray));
+	initSchedule = InitSchedule.getInitSchedule(partitioner.topTraces);
+	
+	//set current time
 	currentTime = 0;
 	
 	//set all the available times to zero
@@ -80,20 +93,89 @@ public class SimpleScheduler
 	    tileAvail[i] = 0;
 
 
+	//schedule the traces either based on work or dependencies
+	
+	scheduleWork();
+	//scheduleDep();
+	//set up dependencies
+	setupDepends();
+
+    }
+    
+    //schedule according to data-flow dependencies
+    private void scheduleDep() 
+    {
+	LinkedList sortedTraces = (LinkedList)initSchedule.clone();
+
 	//schedule predefined filters first, but don't put them in the 
 	//schedule just assign them tiles...
 	removePredefined(sortedTraces);
 
-	//reverse the list
-	Collections.reverse(sortedTraces);
-
 	//start to schedule the traces
-
 	while (!sortedTraces.isEmpty()) {
 	    Trace trace = (Trace)sortedTraces.get(0);
-	    System.out.println("Trying to schedule " + trace);
+	    //System.out.println("Trying to schedule " + trace);
 	    while (true) {
-		HashMap layout = canScheduleTrace(trace);
+		HashMap layout = canLayoutTrace(trace);
+		//if we cannot schedule this trace...
+		if (layout == null) {
+		    //try to schedule other traces that will fit before the 
+		    //room becomes available for this trace
+		    //while (scheduleSmallerTrace(sortedTraces, trace)) {}
+		    //increment current time to next smallest avail time
+		    currentTime = nextTime(currentTime);
+		}
+		else {
+		    scheduleTrace(layout, trace, sortedTraces);
+		    break;
+		}
+	    }
+	}
+	
+    }
+    
+    //schedule according to work load
+    private void scheduleWork() 
+    {
+
+	//sort traces...
+	Trace[] tempArray = (Trace[])partitioner.getTraceGraph().clone();
+	Arrays.sort(tempArray, 
+		    new CompareTraceBNWork(partitioner));
+	LinkedList sortedTraces = new LinkedList(Arrays.asList(tempArray));
+
+	//schedule predefined filters first, but don't put them in the 
+	//schedule just assign them tiles...
+	removePredefined(sortedTraces);
+	
+
+
+	//reverse the list
+	Collections.reverse(sortedTraces);
+	
+	System.out.println("Sorted Traces: ");
+	Iterator it = sortedTraces.iterator();
+	while (it.hasNext()) {
+	    Trace trace = (Trace)it.next();
+	    System.out.println(" * " + trace + " (work: " +
+			       partitioner.getTraceBNWork(trace) + ")");
+	}
+	
+
+	//start to schedule the traces
+	while (!sortedTraces.isEmpty()) {
+	    Trace trace = null;
+	    //find the first trace we can schedule
+	    Iterator traces = sortedTraces.iterator();
+	    while (traces.hasNext()) {
+		trace = (Trace)traces.next();
+		if (canScheduleTrace(trace))
+		    break;
+	    }
+	    assert trace != null;
+	    //System.out.println("Trying to schedule " + trace);
+	    while (true) {
+		HashMap layout = canLayoutTrace(trace);
 		//if we cannot schedule this trace...
 		if (layout == null) {
 		    //try to schedule other traces that will fit before the 
@@ -108,17 +190,43 @@ public class SimpleScheduler
 		}
 	    }
 	}
-	
-	//set up dependencies
-	setupDepends();
-	initSchedule = InitSchedule.getInitSchedule(partitioner.topTraces);
     }
 
+    private boolean canScheduleTrace(Trace trace) 
+    {
+	//check to make sure all srcs are in the same "state" either scheduled or not
+	Iterator sources = trace.getHead().getSourceSet().iterator();
+	if (sources.hasNext()) {
+	    Trace src = ((Edge)sources.next()).getSrc().getParent();	
+	    boolean isScheduled = schedule.contains(src);
+	    while (sources.hasNext()) {
+		src = ((Edge)sources.next()).getSrc().getParent();
+		if (isScheduled != schedule.contains(src))
+		    return false;
+	    }
+	}
+	
+	//check to make sure all dests are in the same "state" either scheduled or not
+	 Iterator dests = trace.getTail().getDestSet().iterator();
+	 if (dests.hasNext()) {
+	     Trace dst = ((Edge)dests.next()).getDest().getParent();    
+	     boolean isScheduled = schedule.contains(dst);
+	     while (dests.hasNext()) {
+		 dst =  ((Edge)dests.next()).getDest().getParent();    
+		 if (isScheduled != schedule.contains(dst))
+		     return false;
+	     }
+	 }
+	 //everything passed
+	 return true;
+    }
+    
+    
     private void removePredefined(LinkedList sortedTraces) 
     {
 	for (int i = 0; i < partitioner.io.length; i++) {
 	    /*  Some old code, ignore
-	    HashMap layout = canScheduleTrace(partitioner.io[i]);
+	    HashMap layout = canLayoutTrace(partitioner.io[i]);
 	    assert layout != null : "Cannot find tile for predefined filter";
 	    //"assign" the predefined to a tile...
 	    FilterTraceNode node = partitioner.io[i].getHead().getNextFilter();
@@ -188,17 +296,21 @@ public class SimpleScheduler
 	
 	//see if we can schedule any trace to finish before finishBefore
 	Iterator it = sortedTraces.iterator();
-	assert it.next() == bigTrace;
+	//assert it.next() == bigTrace;
 	while (it.hasNext()) {
 	    Trace trace = (Trace)it.next();
-	    System.out.println("   (Trying to schedule smaller trace " + trace + ")");
+	    //see if we can legally schedule the trace
+	    if (!canScheduleTrace(trace))
+		continue;
+	    //	    System.out.println("   (Trying to schedule smaller trace " + trace + ")");
 	    //see when it will finish, if smaller than finishBefore
 	    if ((currentTime + partitioner.getTraceBNWork(trace)) <= 
 		    finishBefore) {
 		//see if we can schedule the trace now
-		HashMap layout = canScheduleTrace(trace);
+		HashMap layout = canLayoutTrace(trace);
 		if (layout != null) {
 		    //schedule the trace and return true
+		    System.out.println("  Scheduling smaller trace " + trace);
 		    scheduleTrace(layout, trace, sortedTraces);
 		    return true;
 		}
@@ -306,7 +418,7 @@ public class SimpleScheduler
     
     //see if we can schedule the trace at current time given tile avail
     //return the layout mapping filtertracenode -> rawtile
-    private HashMap canScheduleTrace(Trace trace) 
+    private HashMap canLayoutTrace(Trace trace) 
     {
 	if (getAvailTiles() < trace.getNumFilters())
 	    return null;
@@ -331,7 +443,7 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		System.out.println("     (trying source " + tile + " at " + currentTime + ")");
+		//System.out.println("     (trying source " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile,
 			      layout))
@@ -353,7 +465,7 @@ public class SimpleScheduler
 		if (!tiles.contains(tile))
 		    continue;
 		HashMap layout = new HashMap();
-		System.out.println("     (trying dest " + tile + " at " + currentTime + ")");
+		//System.out.println("     (trying dest " + tile + " at " + currentTime + ")");
 		//if successful, return layout
 		if (getLayout(trace.getHead().getNextFilter(), tile, 
 			      layout))
@@ -367,7 +479,7 @@ public class SimpleScheduler
 	while (tilesIt.hasNext()) {
 	    RawTile tile = (RawTile)tilesIt.next();
 	    HashMap layout = new HashMap();
-	    System.out.println("     (trying " + tile + " at " + currentTime + ")");
+	    //System.out.println("     (trying " + tile + " at " + currentTime + ")");
 	    //if successful, return layout
 	    if (getLayout(trace.getHead().getNextFilter(), tile,
 			  layout))

@@ -11,7 +11,7 @@ import at.dms.kjc.sir.lowering.partition.*;
 public class SimplePartitioner extends Partitioner
 {
     //trace work threshold, higher number, more restrictive, smaller traces
-    private static final double TRASHOLD = 0.001;
+    private static final double TRASHOLD = 0.5;
     //filtercontent -> work estimation
     private HashMap workEstimation;
 

@@ -323,8 +323,10 @@ public class Rawify
 	    
 	    //generate the dram commands to write into the steady buffer in the primepump stage
 	    if (primepump) {
+		System.out.println(" ** Prime pump steady items " + output.getParent() + " = " +
+				   (edge.primePumpItems() - edge.primePumpInitItems()));
 		writeWords = typeSize * 
-		    (edge.primePumpItems() - edge.primePumpInitItems());
+				   (edge.primePumpItems() - edge.primePumpInitItems());
 		//generate the dram command in stage 2 (init schedule, with steady buffers...)
 		if (writeWords > 0) {
 		    if (destBuffer.getEdge().getDest().isFileWriter()  && 
@@ -427,10 +429,14 @@ public class Rawify
 	    //if this is the primepump, subtract the primepump items not comsumed
 	    //in the primepump stage, they get transfered below
 	    if (primepump) {
-		SpaceTimeBackend.println("Filter Output DRAM command " + filterNode + " has " +
-					 filterInfo.primePumpItemsNotConsumed() + "steady primp-pump items");
+		//only subtract the "steady" primepump items if the outputtracenode is unnecessray
+		//otherwise the outputtracenode handles the copying into the correct buffer
+		if (OffChipBuffer.unnecessary(output)) {
+		    System.out.println("** Filter Output DRAM command " + filterNode + " has " +
+					 filterInfo.primePumpItemsNotConsumed() + " steady primp-pump items");
+		    items -= filterInfo.primePumpItemsNotConsumed();
+		}
 		
-		items -= filterInfo.primePumpItemsNotConsumed();
 	    }
 	    
 	    if (items > 0 ) {
@@ -448,7 +454,10 @@ public class Rawify
 							 buffer, false);
 		}
 	    }
-	    if (primepump && filterInfo.primePumpItemsNotConsumed() > 0) {
+	    //only write the prime pump data into the steady state buffer if 
+	    //the outputtracenode is unnecessary, otherwise it will be done twice, bad!
+	    if (primepump && filterInfo.primePumpItemsNotConsumed() > 0 &&
+		OffChipBuffer.unnecessary(output)) {
 		int words =
 		    (filterInfo.primePumpItemsNotConsumed() * 
 		     Util.getTypeSize(filterNode.getFilter().getOutputType()));

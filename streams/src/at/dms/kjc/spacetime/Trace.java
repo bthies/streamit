@@ -175,7 +175,7 @@ public class Trace
 	  cur=cur.getNext();
 	  }*/
     }
-
+    
     public int getPrimePump() {
 	return primePump;
     }

@@ -58,9 +58,17 @@ public class FilterTraceNode extends TraceNode
     public FilterContent getFilter() {
 	return filter;
     }
+
     public String toString() {
-	return filter.toString() + "[" + x + ", " + y + "]";
+	return filter.toString() + " [" + x + ", " + y + "]";   
     }
+    
+    public String toString(RawChip chip) 
+    {
+	return filter.toString() + " [" + x + ", " + y + "]" + 
+	    "(" + chip.getTile(x, y).getTileNumber() + ")";   
+    }
+    
     
     public boolean isFileInput()
     {

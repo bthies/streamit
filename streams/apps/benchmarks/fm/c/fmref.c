@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.1 2002-05-07 22:54:55 dmaze Exp $
+ * $Id: fmref.c,v 1.2 2002-05-07 22:56:38 dmaze Exp $
  */
 
 #include <math.h>
@@ -190,7 +190,7 @@ void run_lpf(FloatBuffer *fbin, FloatBuffer *fbout, LPFData *data)
 void run_demod(FloatBuffer *fbin, FloatBuffer *fbout)
 {
   float temp, gain;
-  gain = MAX_AMPLITUDE * SAMPLING_RATE / BANDWIDTH * M_PI;
+  gain = MAX_AMPLITUDE * SAMPLING_RATE / (BANDWIDTH * M_PI);
   temp = fbin->buff[fbin->rpos] * fbin->buff[fbin->rpos + 1];
   temp = gain * atan(temp);
   fbin->rpos++;

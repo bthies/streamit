@@ -31,11 +31,13 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
        that are mapped to tiles */
     public static HashSet joiners;
     
-    public static int MINTEMPITERATIONS = 50000;
-    public static int MAXTEMPITERATIONS = 50000;
-    public static int ANNEALITERATIONS = 100;
+    public static int MINTEMPITERATIONS = 100;
+    public static int MAXTEMPITERATIONS = 100;
+    public static int ANNEALITERATIONS = 10000;
     public static double TFACTR = 0.9;
-    
+
+    private static FileWriter filew;
+        
     public Layout() 
     {
 	joiners = new HashSet();
@@ -202,41 +204,118 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public static void simAnnealAssign(FlatNode node) 
     {
 	System.out.println("Simulated Annealing Assignment");
-	int nsucc, j;
+	int nsucc =0, j = 0, lastCost = 0, currentCost = 0;
 	//number of paths tried at a temp
-	int nover = 100 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	int nover = 100 ;//* StreamItOptions.rawRows * StreamItOptions.rawColumns;
 	//max number of sucessful path lengths before continuing
-	int nlimit = 10 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	//	int nlimit = 10 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
 	int cost = 0;
-	double t = 0.5;
-	
-	init(node);
-	random = new Random(17);
-	//random placement
-	randomPlacement();
-	
-	System.out.println("Initial Cost: " + placementCost());
-	for (j = 0; j < ANNEALITERATIONS; j++) {
-	    nsucc = 0;
-	    for (int k = 0; k < nover; k++) {
-		if (perturbConfiguration(t)) {
-		    nsucc++;
+	try {
+	    init(node);
+	    random = new Random(17);
+	    //random placement
+	    randomPlacement();
+	    
+	    double t = annealMaxTemp(); 
+	     double tFinal = annealMinTemp();
+	     // System.out.println(t);
+	     // System.out.println(tFinal);
+	     //filew = new FileWriter("simanneal.out");
+	    
+	    System.out.println("Initial Cost: " + placementCost());
+	    //  for (j = 0; j < ANNEALITERATIONS; j++) {
+	    while (true) {
+		
+		int k = 0;
+		nsucc = 0;
+		for (k = 0; k < nover; k++) {
+		    if (perturbConfiguration(t)) {
+			//filew.write(placementCost() + "\n");
+			nsucc++;
+		    }
+		    //if (nsucc >= nlimit) break;
+		    if (placementCost() == 0)
+			break;
 		}
-		if (nsucc >= nlimit) break;
-		if (placementCost() == 0)
+		
+		t *= TFACTR;
+		if (nsucc == 0) break;
+		currentCost = placementCost();
+		//if (currentCost == lastCost)
+		//  break;
+		if (currentCost == 0)
 		    break;
+		if (t <= tFinal)
+		    break;
+		lastCost = currentCost;
+		j++;
 	    }
-	    t *= TFACTR;
-	    if (nsucc == 0) break;
-	    if (placementCost() == 0)
-		    break;
+	    System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
+	    //filew.close();
 	}
-	System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
-      
+	catch (Exception e) {
+	    e.printStackTrace();
+	}
 	dumpLayout();
 
     }
     
+     private static double annealMaxTemp() throws Exception
+     {
+ 	double T = 1.0;
+ 	int total = 0, accepted = 0;
+ 	HashMap sirInit  = (HashMap)SIRassignment.clone();
+ 	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+ 	for (int i = 0; i < MAXTEMPITERATIONS; i++) {
+ 	    T = 2.0 * T;
+	    total = 0;
+	    accepted = 0;
+	    for (int j = 0; j < 100; j++) {
+		//c_old <- c_init
+		SIRassignment = sirInit;
+		tileAssignment = tileInit;
+		if (perturbConfiguration(T))
+		    accepted ++;
+		total++;
+	    }
+ 	    if (((double)accepted) / ((double)total) > .9)
+ 		break;
+ 	}
+ 	//c_old <- c_init
+ 	SIRassignment = sirInit;
+ 	tileAssignment = tileInit;
+ 	return T;
+     }
+
+  private static double annealMinTemp() throws Exception
+     {
+ 	double T = 1.0;
+ 	int total = 0, accepted = 0;
+ 	HashMap sirInit  = (HashMap)SIRassignment.clone();
+ 	HashMap tileInit = (HashMap)tileAssignment.clone();
+	
+ 	for (int i = 0; i < MINTEMPITERATIONS; i++) {
+ 	    T = 0.5 * T;
+	    total = 0;
+	    accepted = 0;
+	    for (int j = 0; j < 100; j++) {
+		//c_old <- c_init
+		SIRassignment = sirInit;
+		tileAssignment = tileInit;
+		if (perturbConfiguration(T))
+		    accepted ++;
+		total++;
+	    }
+ 	    if (((double)accepted) / ((double)total) > .1)
+ 		break;
+ 	}
+ 	//c_old <- c_init
+ 	SIRassignment = sirInit;
+ 	tileAssignment = tileInit;
+ 	return T;
+     }
+
     private static void randomPlacement() 
     {
 	//assign the fileReaders to the last row
@@ -321,7 +400,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     }
     
     //return true if the perturbation is accepted
-    private static boolean perturbConfiguration(double T) 
+    private static boolean perturbConfiguration(double T) throws Exception
     {
 	int first;
 	int second;
@@ -332,7 +411,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	while (true) {
 	    first = getRandom();
 	    second = getRandom();
-	
+	    //do not swap same tile or two null tiles
 	    if (first == second)
 		continue;
 	    if ((getNode(getTile(first)) == null) &&
@@ -354,10 +433,13 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
 	if (e_new >= e_old)
 	    P = Math.exp((((double)e_old) - ((double)e_new)) / T);
-	if (R < P)
+	
+	if (R < P) {
 	    return true;
+	}
 	else {
 	    //reject configuration
+
 	    assign(getTile(second), secondNode);
 	    assign(getTile(first), firstNode);
 	    return false;

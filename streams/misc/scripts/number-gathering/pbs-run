@@ -2,9 +2,9 @@
 #PBS -o /dev/null
 #PBS -e /dev/null
 #PBS -m n
-#PBS -M mgordon@cag.lcs.mit.edu
+#PBS -M $USER@cag.lcs.mit.edu
 #PBS -q unbound
-#PBS -v STREAMIT_HOME=/u/mgordon/src/streams
+#PBS -v STREAMIT_HOME=/u/$USER/src/streams
 #PBS -N STREAMIT_RUN
 #PBS -S /bin/bash
 
@@ -13,13 +13,13 @@
 
 #must have BENCHMARK OPTIONS RESULTS_DIR defined
 
-source /u/mgordon/.bashrc
+source /u/$USER/.bashrc
 
 bench_file=${BENCHMARK##/*/}
 bench_name=${bench_file%.str}
 bench_dir=${BENCHMARK%$bench_file}
 
-root_dir="/home/bits7/mgordon/openpbs/"
+root_dir="/home/bits7/$USER/openpbs/"
 
 if [ ! -f "$BENCHMARK" ]; then
     echo "$BENCHMARK" "benchmark does not exist"
@@ -45,14 +45,14 @@ cd "$temp_dir"
 
 #compile   
 #strc $OPTIONS $BENCHMARK 
-strc $OPTIONS $bench_file > compile.out
+strc $OPTIONS $bench_file >& compile.out
 
 if [ ! -f "Makefile.streamit" ]; then
    echo "no Makefile.streamit"
 fi
     
 #run
-make -f Makefile.streamit clean run > run.out
+make -f Makefile.streamit clean run >& run.out
 
 #copy results
 

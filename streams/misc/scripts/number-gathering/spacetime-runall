@@ -1,13 +1,12 @@
 #!/usr/local/bin/bash
-options="--spacetime --scheduler work -N 10 --unroll 256 --destroyfieldarray"
-results_dir="/home/bits7/mgordon/micro/"
+results_dir="/home/bits7/$USER/spacetime"
 if [ ! -d "$results_dir" ]; then 
     echo "results dir does not exist"
     exit 1
 fi
 
 
-bench_dir="/u/mgordon/streams/apps/benchmarks/traces/"
+bench_dir="/u/$USER/streams/apps/benchmarks/traces/"
 
 benchmarks="${bench_dir}/beamformer/CoarseSerializedBeamFormerSpaceTime.str"
 benchmarks="$benchmarks ${bench_dir}/fm/FMRadioSpaceTime.str"
@@ -17,7 +16,7 @@ benchmarks="$benchmarks ${bench_dir}/fir/FIRProgramSpaceTime.str"
 benchmarks="$benchmarks ${bench_dir}/oversampler/OversamplerSpaceTime.str"
 benchmarks="$benchmarks ${bench_dir}/rateconverter/SamplingRateConverterSpaceTime.str"
 
-
+options="--spacetime --scheduler work -N 10 --unroll 256 --destroyfieldarray"
 for benchmark in $benchmarks; do
     bench_file=${benchmark##/*/}
     bench_name=${bench_file%.str}

@@ -96,7 +96,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		method.accept(new VarDeclRaiser());
 	    }
 	}
-	arrayDest.destroyFieldArrays((SIRFilter)node.contents);
+	if(KjcOptions.destroyfieldarray)
+	    arrayDest.destroyFieldArrays((SIRFilter)node.contents);
 	/*	
 	  try {
 	    SIRPrinter printer1 = new SIRPrinter();

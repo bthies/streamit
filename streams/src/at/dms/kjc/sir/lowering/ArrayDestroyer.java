@@ -77,7 +77,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		//varDefs=new HashMap();
 		str.getMethods()[i].accept(this);
 	    }
-	    destroyFieldArrays((SIRFilter)str);
+	    if(KjcOptions.destroyfieldarray)
+		destroyFieldArrays((SIRFilter)str);
 	}
     }
     
@@ -120,7 +121,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 			    unsafe.put(self.getIdent(),Boolean.TRUE);
 			    return self;
 			}
-			return super.visitFieldExpression(self,left,ident);
+			return self;
 		    }
 		    
 		    /**
@@ -231,7 +232,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	JMethodDeclaration[] methods=filter.getMethods();
 	for(int i=0;i<methods.length;i++) {
 	    JMethodDeclaration method=methods[i];
-	    if(!(method.getName().startsWith("work")||method.getName().startsWith("init")))
+	    if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork")))
 		method.getBody().accept(this);
 	}
     }

@@ -1695,17 +1695,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
 		filter.setInputType(getType((String)v.elementAt(0)));
-		filter.setPop(((JIntLiteral)v.elementAt(1)).intValue());
+		filter.setPop((JExpression)v.elementAt(1));
 		//If a peek value is given, and it is greater than pops
 		//set the peek
 		if (v.size() > 2) {
 		    if (((JIntLiteral)v.elementAt(2)).intValue() < 
 			((JIntLiteral)v.elementAt(1)).intValue())
 			at.dms.util.Utils.fail("Peeks less than Pops!");
-		    filter.setPeek(((JIntLiteral)v.elementAt(2)).intValue());
+		    filter.setPeek((JExpression)v.elementAt(2));
 		}
 		else  //Otherwise set the peeks to the number of pops
-		    filter.setPeek(((JIntLiteral)v.elementAt(1)).intValue());
+		    filter.setPeek((JExpression)v.elementAt(1));
 		return null;
 	    }
        	    else if (((JFieldAccessExpression)left).getIdent().equals("output")) {
@@ -1713,8 +1713,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		    at.dms.util.Utils.fail("Output declaration on non-Filter");
 		SIRFilter filter = (SIRFilter)parentStream;
 		Vector v = (Vector)right.accept(this);
-		int push = ((JIntLiteral)v.elementAt(1)).intValue();
-		filter.setPush(push);
+		filter.setPush((JIntLiteral)v.elementAt(1));
 		filter.setOutputType(getType((String)v.elementAt(0)));
 		return null;
 	    }

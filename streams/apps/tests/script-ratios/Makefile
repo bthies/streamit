@@ -1,4 +1,4 @@
-LIBRARIES = 	"../../../../apps/libraries"
+LIBRARIES = 	"../../libraries"
 IMPORTS   = 	"import streamit.library.*; "
 
 LIB_FILES = 	${LIBRARIES}/FloatOneSource.java \

@@ -35,7 +35,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private Object trash;
 
     private int num = 0;
-
+    
+    //Global state holding the current method we are processing if any 
+    //set/reset in visitMethodCall
+    private String currentMethod;
+    
     //This hashtable acts as a symbol table to store named (not anonymous)
     //SIR classes
     private Hashtable visitedSIROps;
@@ -45,6 +49,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	parentStream = null;
 	topLevel = null;
 	parentOperator = null;
+	currentMethod = null;
 	visitedSIROps = new Hashtable(100);
     }
 
@@ -88,6 +93,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    parentOperator = parentStream = current;
 	    return current;
 	}
+	if (TYPE.equals("FeedbackLoop")) {
+	    SIRFeedbackLoop current = new SIRFeedbackLoop();
+	    current.setParent(parentStream);
+	    current.setFields(JFieldDeclaration.EMPTY);
+	    current.setMethods(JMethodDeclaration.EMPTY);
+	    parentOperator = parentStream = current;
+	    return current;
+	}
 	at.dms.util.Utils.fail("You are creating an unsupported streaMIT Operator: "
 			       + TYPE + ".");
 	return null;
@@ -117,7 +130,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	String type = "";
 
 	// Extract type
-	if (exp.startsWith("push") || exp.startsWith("push"))
+	if (exp.startsWith("push") || exp.startsWith("peek"))
 	    type = exp.substring(4);
 	else if(exp.startsWith("pop"))
 	    type = exp.substring(3);
@@ -184,8 +197,20 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private void registerWithParent(SIRStream me) {
 	if (me.getParent() == null)
 	    return;
-	if (me.getParent() instanceof SIRPipeline)
+	if (me.getParent() instanceof SIRPipeline) {
+	    if (!currentMethod.equals("add"))
+		at.dms.util.Utils.fail("Anonymous Stream Creation not in add() in Pipeline");
 	    ((SIRPipeline)me.getParent()).add(me);
+	}
+	else if (me.getParent() instanceof SIRFeedbackLoop) {
+	    //Can only add using setBody in Feedbackloop
+	    if (currentMethod.equals("setBody"))
+		((SIRFeedbackLoop)me.getParent()).setBody(me);
+	    else if (currentMethod.equals("setLoop"))
+		((SIRFeedbackLoop)me.getParent()).setLoop(me);
+	    else 
+		at.dms.util.Utils.fail("Anonymous Stream Creation not in setBody() in FeedbackLoop");
+	}
 	else
 	    at.dms.util.Utils.fail("Unimplemented SIRStream (cannot register)");
     }
@@ -209,6 +234,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 					    null));
     }
 
+    //Perform any post visiting operations after a class is declared
     private void postVisit(SIROperator current) {
 	if (current instanceof SIRStream)
 	    registerWithParent((SIRStream)current);
@@ -282,9 +308,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (current == null) 
 	    printMe("Null");
 	
-	printMe( "Out " + self.getSourceClass().getSuperClass().getIdent()
-			    + num);
-
 	/* Perform any operations needed after the childern are visited */
 	postVisit(current);
 
@@ -298,6 +321,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	parentStream = oldParentStream;
 	parentOperator = oldParentOperator;
 	
+	printMe( "Out " + self.getSourceClass().getSuperClass().getIdent()
+			    + num);
 	return self;
     }
 
@@ -457,17 +482,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    SIRFilter filter = (SIRFilter)parentStream;
 	    Vector v = (Vector)expr.accept(this);
 	    setInputType(filter, (String)v.elementAt(0));
-	    filter.setPop(((Integer)v.elementAt(1)).intValue());
+	    filter.setPop(((JIntLiteral)v.elementAt(1)).intValue());
 	    //If a peek value is given, and it is greater than pops
 	    //set the peek
 	    if (v.size() > 2) {
-		if (((Integer)v.elementAt(2)).intValue() < 
-		    ((Integer)v.elementAt(1)).intValue())
+		if (((JIntLiteral)v.elementAt(2)).intValue() < 
+		    ((JIntLiteral)v.elementAt(1)).intValue())
 		    at.dms.util.Utils.fail("Peeks less than Pops!");
-		filter.setPeek(((Integer)v.elementAt(2)).intValue());
+		filter.setPeek(((JIntLiteral)v.elementAt(2)).intValue());
 	    }
 	    else  //Otherwise set the peeks to the number of pops
-		filter.setPeek(((Integer)v.elementAt(1)).intValue());
+		filter.setPeek(((JIntLiteral)v.elementAt(1)).intValue());
 	    return self;
 	}
 	
@@ -478,7 +503,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		at.dms.util.Utils.fail("Output declaration on non-Filter");
 	    SIRFilter filter = (SIRFilter)parentStream;
 	    Vector v = (Vector)expr.accept(this);
-	    int push = ((Integer)v.elementAt(1)).intValue();
+	    int push = ((JIntLiteral)v.elementAt(1)).intValue();
 	    filter.setPush(push);
 	    setOutputType(filter, (String)v.elementAt(0));
 	    return self;
@@ -493,11 +518,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
 
-    private boolean ignoreMethod(String ident) {
+    private boolean ignoreMethodDeclaration(String ident) {
 	if (ident.equals("init") ||
 	    ident.equals("work") ||
 	    ident.equals("add") ||
-	    ident.equals("initIO"))
+	    ident.equals("initIO") ||
+	    ident.equals("initPath"))
 	    return true;
 	return false;
     }
@@ -553,17 +579,30 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 								     null,
 								     null)); 
 	}
-	else if (!ignoreMethod(ident) && (parentStream instanceof SIRStream))
+	else if (ident.equals("initPath")) {
+	    if (!(parentStream instanceof SIRFeedbackLoop))
+		at.dms.util.Utils.fail("initPath declared for non-Feedbackloop");
+	    ((SIRFeedbackLoop)parentStream).setInitPath(new JMethodDeclaration(null,
+									       modifiers,
+									       returnType,
+									       ident,
+									       parameters,
+									       exceptions,
+									       body,
+									       null,
+									       null)); 
+	}
+	else if (!ignoreMethodDeclaration(ident) && (parentStream instanceof SIRStream))
 	    ((SIRStream)parentStream).addMethod(new JMethodDeclaration(null,
-								     modifiers,
-								     returnType,
-								     ident,
-								     parameters,
-								     exceptions,
-								     body,
-								     null,
+								       modifiers,
+								       returnType,
+								       ident,
+								       parameters,
+								       exceptions,
+								       body,
+								       null,
 								       null));
-	    
+	
 	return self;
     }
     
@@ -795,7 +834,6 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
        
 	blockStart("BlockStatement");
         for (int i = 0; i < body.length; i++) {
-	    System.out.println(i);
 	    Object st = body[i].accept(this);
 	    if (st instanceof JStatement)
 		body[i] = (JStatement)st;
@@ -825,8 +863,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                          JExpression expr)
     {
         blockStart("UnaryPlusExpression");
-        trash = expr.accept(this);   
-	return self;
+        JExpression newExpr = (JExpression)expr.accept(this);   
+	return new JUnaryPlusExpression(null, newExpr);
     }
 
     /**
@@ -836,8 +874,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           JExpression expr)
     {
         blockStart("UnaryMinusExpression");
-        trash = expr.accept(this);
-	return self;
+	JExpression newExpr = (JExpression)expr.accept(this);   
+	return new JUnaryMinusExpression(null, newExpr);
     }
 
     /**
@@ -847,8 +885,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                                  JExpression expr)
     {
         blockStart("BitwiseComplementExpression");
-        trash = expr.accept(this);
-	return self;
+	JExpression newExpr = (JExpression)expr.accept(this);   
+	return new JBitwiseComplementExpression(null, newExpr);
     }
 
     /**
@@ -858,8 +896,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                                  JExpression expr)
     {
         blockStart("LogicalComplementExpression");
-        trash = expr.accept(this);
-	return self;
+	JExpression newExpr = (JExpression)expr.accept(this);   
+	return new JLogicalComplementExpression(null, newExpr);
     }
 
     /**
@@ -900,7 +938,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                      JExpression right)
     {
         blockStart("ShiftExpression");
-	return self;
+	JExpression newLeft = (JExpression)left.accept(this);
+	JExpression newRight = (JExpression)right.accept(this);
+	return new JShiftExpression(null, oper, newLeft, newRight);
     }
 
     /**
@@ -912,7 +952,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           JExpression right)
     {
         blockStart("RelationalExpression");
-	return self;
+	JExpression newLeft = (JExpression)left.accept(this);
+	JExpression newRight = (JExpression)right.accept(this);
+	return new JRelationalExpression(null, oper, newLeft, newRight);
     }
 
     /**
@@ -947,8 +989,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
         // Not parenthesized?
         blockStart("ParenthesedExpression");
-        trash = expr.accept(this);
-	return self;
+	JExpression newExpr = (JExpression)expr.accept(this);   
+	return new JParenthesedExpression(null, newExpr);
     }
 
     /**
@@ -1028,13 +1070,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    /*Channel declaration, treat the args as special */
 	{
 	    String channelType = (String)params[0].accept(this);
-	    Integer num = (Integer)params[1].accept(this);
+	    JIntLiteral num = (JIntLiteral)params[1].accept(this);
 	    Vector v = new Vector(3);
 	    v.add(channelType);
 	    v.add(num);
-	    Integer num2;
+	    JIntLiteral num2;
 	    if (params.length > 2) { 
-		num2 = (Integer)params[2].accept(this);
+		num2 = (JIntLiteral)params[2].accept(this);
 		v.add(num2);
 	    }
 	    return v;
@@ -1082,9 +1124,23 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                       JExpression right)
     {
         blockStart("BinaryExpression");
-	trash = left.accept(this);
-        trash = right.accept(this);
-	return self;
+	JExpression newLeft = (JExpression)left.accept(this);
+        JExpression newRight = (JExpression)right.accept(this);
+	if (oper.equals("+"))
+	    return new JAddExpression(null, newLeft, newRight);
+	else if (oper.equals("||"))
+	    return new JConditionalOrExpression(null, newLeft, newRight);
+	else if (oper.equals("/"))
+	    return new JDivideExpression(null, newLeft, newRight);
+	else if (oper.equals("-"))
+	    return new JMinusExpression(null, newLeft, newRight);
+	else if (oper.equals("%"))
+	    return new JModuloExpression(null, newLeft, newRight);
+	else if (oper.equals("*"))
+	    return new JMultExpression(null, newLeft, newRight);
+	else
+	    at.dms.util.Utils.fail("Unknown binary expression");
+	return new JDivideExpression(null, newLeft, newRight);
     }
 
     /**
@@ -1095,36 +1151,115 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                           String ident,
                                           JExpression[] args)
     {
+	//Save method we were processing
+	String parentMethod = currentMethod;
 	blockStart("MethodCallExpression: " + self.getIdent());
-        
+        //Set currentMethod to this method, we are processing it!
+	currentMethod = self.getIdent();
+	
 	if (isSIRExp(self)) {
 	    printMe("SIR Expression " + ident);
+	    //reset currentMethod on all returns
+	    currentMethod = parentMethod;
 	    return newSIRExp(self, args);
 	}
 	else if (ident.equals("add")) {            //Handle an add call in a pipeline
 	    //Parent must be a pipeline
-	    if (parentStream instanceof SIRPipeline) {
-		if (args.length > 1)
-		    at.dms.util.Utils.fail("Exactly one arg to add() allowed");
-		//Visit the argument (Exactly one)
-		JExpression SIROp = (JExpression) args[0].accept(this);
-		//if it is a anonymous creation do nothing, it will be added elsewhere
-		//if it is a named creation, lookup in the symbol table for the visited
-		//node and add it to the pipeline
-		if (SIROp instanceof JUnqualifiedInstanceCreation) {
-		    SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
-						getType().getCClass().getIdent());
-		    ((SIRPipeline)parentStream).add(st);
-		}
+	    if (!(parentStream instanceof SIRPipeline)) 
+		at.dms.util.Utils.fail("Add method called on Non-Pipeline");
+	    if (args.length > 1)
+		at.dms.util.Utils.fail("Exactly one arg to add() allowed");
+	    //Visit the argument (Exactly one)
+	    JExpression SIROp = (JExpression) args[0].accept(this);
+	    //if it is a anonymous creation do nothing, it will be added in visitClassDecl
+	    //if it is a named creation, lookup in the symbol table for the visited
+	    //node and add it to the pipeline
+	    if (SIROp instanceof JUnqualifiedInstanceCreation) {
+		SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
+						       getType().getCClass().getIdent());
+		((SIRPipeline)parentStream).add(st);
 	    }
+	} else if (ident.equals("setDelay")) {
+	    if (!(parentStream instanceof SIRFeedbackLoop))
+		at.dms.util.Utils.fail("SetDelay called on Non-FeedbackLoop");
+	    if (args.length > 1)
+		at.dms.util.Utils.fail("Too many args to setDelay");
+	    int delay  = ((JIntLiteral)args[0].accept(this)).intValue();
+	    ((SIRFeedbackLoop)parentStream).setDelay(delay);
+	}
+	else if (ident.equals("setBody")) {
+	    if (!(parentStream instanceof SIRFeedbackLoop)) 
+		at.dms.util.Utils.fail("setBody called on non-FeedbackLoop");
+	    if (args.length > 1)
+		at.dms.util.Utils.fail("Exactly one arg to setBody() allowed");
+	    //Visited the argument
+	    JExpression SIROp = (JExpression) args[0].accept(this);
+	    //if it is a anonymous creation do nothing, it will be added in visitClassDecl
+	    //if it is a named creation, lookup in the symbol table for the visited
+	    //node and add it to the pipeline
+	    if (SIROp instanceof JUnqualifiedInstanceCreation) {
+		SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
+						       getType().getCClass().getIdent());
+		((SIRFeedbackLoop)parentStream).setBody(st);
+	    }
+	}
+	else if (ident.equals("setLoop")) {
+	    if (!(parentStream instanceof SIRFeedbackLoop)) 
+		at.dms.util.Utils.fail("setLoop called on non-FeedbackLoop");
+	    if (args.length > 1)
+		at.dms.util.Utils.fail("Exactly one arg to setLoop() allowed");
+	    //Visited the argument
+	    JExpression SIROp = (JExpression) args[0].accept(this);
+	    //if it is a anonymous creation do nothing, it will be added in visitClassDecl
+	    //if it is a named creation, lookup in the symbol table for the visited
+	    //node and add it to the pipeline
+	    if (SIROp instanceof JUnqualifiedInstanceCreation) {
+		SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
+						       getType().getCClass().getIdent());
+		((SIRFeedbackLoop)parentStream).setLoop(st);
+	    }
+	}
+       
+	else if (ident.equals("setSplitter")) {
+	    if (!(parentStream instanceof SIRFeedbackLoop))
+		at.dms.util.Utils.fail("setSplitter called on non-FeedbackLoop");
+	    ((SIRFeedbackLoop)parentStream).setSplitter(buildSplitter(args[0]));
+	}
+	else if (ident.equals("setJoiner")) {
+	    if (!(parentStream instanceof SIRFeedbackLoop))
+		 at.dms.util.Utils.fail("setSplitter called on non-FeedbackLoop");
+	     ((SIRFeedbackLoop)parentStream).setJoiner(buildJoiner(args[0]));
 	}
 	else {             //Not an SIR call
 	    for (int i = 0; i < args.length; i++)
 		args[i] = (JExpression) args[i].accept(this);
 	}
+	//reset currentMethod
+	currentMethod = parentMethod;
 	return self;
     }
     
+
+    private SIRSplitter buildSplitter(JExpression type) 
+    {
+	if (!(type instanceof JMethodCallExpression))
+	    at.dms.util.Utils.fail("arg to setSplitter must be a method call");
+	int n = 2;
+	
+	return SIRSplitter.create(parentStream, SIRSplitType.ROUND_ROBIN, 2);
+	//return SIRSplitter.create(parentStream, SIRSplitType.DUPLICATE, 2);
+    }
+
+    private SIRJoiner buildJoiner(JExpression type) 
+    {
+	if (!(type instanceof JMethodCallExpression))
+	    at.dms.util.Utils.fail("arg to setJoiner must be a method call");
+	return SIRJoiner.create(parentStream, SIRJoinType.ROUND_ROBIN, 2);
+    }
+    
+    
+    
+
     /**
    * visits a local variable expression
    */
@@ -1391,7 +1526,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Object visitIntLiteral(int value)
     {
         blockStart("IntLiteral");
-	return new Integer(value);
+	return new JIntLiteral(null,value);
     }
 
     /**

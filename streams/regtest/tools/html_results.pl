@@ -18,7 +18,7 @@
 # Note: The contents of the error file are not acutally used at the
 # present time. error messages are parsed out of the log file instead.
 #
-# $Id: html_results.pl,v 1.1 2003-03-31 21:50:21 dmaze Exp $
+# $Id: html_results.pl,v 1.2 2003-04-09 15:39:09 dmaze Exp $
 
 use strict;
 
@@ -65,7 +65,7 @@ sub generate_summary {
 
   open OUT, ">$out";
   print OUT "<table border=0 cellspacing=0 cellpadding=1 width=100%>\n";
-  print OUT "<tr><th>".
+  print OUT "<tr><th align=left>".
     "<a href=\"<% \$RT::WebPath %>/StreamIt/listing.html\">Regtest</a>".
       "</th><th>&nbsp;</th></tr>\n";
   print OUT "<tr class=oddline><td>Last run</td><td>" . `date` .

@@ -9,7 +9,7 @@ package at.dms.kjc.sir.linear;
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
  *
- * $Id: ComplexNumber.java,v 1.5 2002-08-30 20:13:25 aalamb Exp $
+ * $Id: ComplexNumber.java,v 1.6 2002-10-27 19:18:04 aalamb Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
@@ -39,20 +39,20 @@ public class ComplexNumber {
     /** Get the imaginary part of this complex number. **/
     public double getImaginary() {return this.imaginaryPart;}
     /** returns true of abs(imaginary part) is less than MAX_PRECISION **/
-    public boolean isReal() {return (Math.abs(this.imaginaryPart) < MAX_PRECISION);}
+    public boolean isReal() {return (Math.abs(this.getImaginary()) < MAX_PRECISION);}
     /** returns true if the real part of this is an integer **/
-    public boolean isRealInteger() { return (Math.floor(this.realPart) == this.realPart);}
+    public boolean isRealInteger() { return (Math.floor(this.getReal()) == this.getReal());}
 
     /////// Arithemetic Operations
     /** compute the negative of this complex number **/
     public ComplexNumber negate() {
-	return new ComplexNumber(-1*this.realPart, -1*this.imaginaryPart);
+	return new ComplexNumber(-1*this.getReal(), -1*this.getImaginary());
     }
     /** Compute the sum of this and the passed complex number **/
     public ComplexNumber plus(ComplexNumber other) {
 	if (other == null) {throw new IllegalArgumentException("Null object passed to plus");}
-	return new ComplexNumber(this.realPart + other.realPart,
-				 this.imaginaryPart + other.imaginaryPart);
+	return new ComplexNumber(this.getReal() + other.getReal(),
+				 this.getImaginary() + other.getImaginary());
     }
     /** Multiply this by the specified complex number, and return their product. **/
     public ComplexNumber times(ComplexNumber other) {
@@ -114,8 +114,8 @@ public class ComplexNumber {
 	//(other.getImaginary() == this.getImaginary()));
 
 	// we get into precision issues, so we ignore any differences after the 10th decimal place.
-	double realDiff = Math.abs(other.realPart - this.realPart);
-	double imagDiff = Math.abs(other.imaginaryPart - this.imaginaryPart);
+	double realDiff = Math.abs(other.getReal() - this.getReal());
+	double imagDiff = Math.abs(other.getImaginary() - this.getImaginary());
 
 	return ((realDiff < MAX_PRECISION) &&
 		(imagDiff < MAX_PRECISION));	
@@ -130,5 +130,5 @@ public class ComplexNumber {
     public String toString() {
 	return (this.getReal() + "+" + this.getImaginary() + "i");
     }
-    
+
 }

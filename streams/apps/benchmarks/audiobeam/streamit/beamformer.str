@@ -1,0 +1,215 @@
+void->void pipeline main_single_position
+{
+    int   num_mics = 15;
+    bool  hamming  = false;
+    float sound_speed   = 342;
+    float sampling_rate = 1600;
+
+    float mic_locations[num_mics][3];
+    float source_location[3];
+
+    for (int i = 0; i < num_mics; i++) {
+	  mic_locations[i][0] = 1.5;
+	  mic_locations[i][1] = 2.79 + (i * 0.03);
+	  mic_locations[i][2] = 0.0;
+    }
+    source_location[0] = 1.5;
+    source_location[0] = 3.0;
+    source_location[0] = 0.0;
+
+    add FileReader<float>("beamformer-input.txt");
+    add calculate_single_position(num_mics, hamming, sound_speed, sampling_rate, 
+					    mic_locations, source_location);
+
+}
+
+
+float->void pipeline calculate_single_position(int num_mics, bool hamming,
+							     float sound_speed, float sampling_rate,
+							     float mic_locations[num_mics][3],
+							     float source_location[3])
+{
+    int   num_beams = 1;
+
+    float delays[num_beams][num_mics];
+    float distances[num_mics];
+    float weights[num_mics];
+    
+    float min_delay = 999e999;
+    float max_delay = 0;
+    int   index     = 0;
+	  
+    for (int i = 0; i < num_mics; i++) {
+	  distances[i] = sqrt((mic_locations[i][0] - source_location[0]) *
+				    (mic_locations[i][0] - source_location[0]) + 
+				    (mic_locations[i][1] - source_location[1]) * 
+				    (mic_locations[i][1] - source_location[1]) + 
+				    (mic_locations[i][2] - source_location[2]) * 
+				    (mic_locations[i][2] - source_location[2]));
+
+	  delays[0][i] = (distances[i] / sound_speed) * sampling_rate;
+	  
+	  if (delays[0][i] < min_delay) {
+		min_delay = delays[0][i];
+	  }
+	  
+	  if (delays[0][i] > max_delay) {
+		max_delay = delays[0][i];
+	  }
+    }
+
+    min_delay = floor(min_delay) - 1;
+    max_delay = ceil(max_delay);
+	  
+    for (int i = 0; i < num_mics; i++) {
+	  delays[0][i] -= min_delay;
+    }
+	  
+    if (hamming) {
+	  if ((num_mics % 2) == 1) {
+		int half = num_mics / 2;
+		for (int y = -half; y <= half; y++) {
+		    weights[index++] = 0.54 + 0.46 * cos(pi * y / half);
+		}
+	  }
+    }
+    else {
+	  int half = num_mics / 4;
+	  for (int z = 1; z >= -1; z -= 2) {
+		for (y = -half; y <= half; y++) {
+		    weights[index++] = 0.54 + 0.46 * cos(pi * y / half);
+		}
+	  }
+    }
+
+    add process_signal(num_mics, num_beams, max_delay, delays, weights);
+
+    add float->void filter {
+	  float time_index, time_index_increment;
+
+	  init {
+		time_index = 0;
+		time_index_increment = 1.0 / sampling_rate;
+	  }
+
+	  work pop 1 {
+		print(time_index);
+		print(pop());
+		time_index += time_index_increment;
+	  }
+    }
+}
+
+
+float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
+						 float delays[num_beams][num_mics]
+						 float weights[num_mics])
+{
+
+    float->float filter {
+	  int   queue_head;
+	  float sample_queue[max_delay + 1][num_mics];
+
+	  init {
+		queue_head = 0;
+
+		for (int beam = 0; beam < num_beams; beam++) {
+		    for (int mic = 0; mic < num_mics; mic++) {
+			  sample_queue[beam][mic] = 0;
+		    }
+		}
+	  }
+
+	  work pop num_mics push (2 * num_beams * num_mics) {
+		int   low_index;
+		int   high_index;
+		float interpolated_value;
+		
+		if ((queue_head + 1) > max_delay) {
+		    queue_head = queue_head - max_delay;
+		}
+		else {
+		    queue_head = queue_head + 1;
+		}
+		
+		for (int mic = 0; mic < num_mics; mic++) {
+		    sample_queue[queue_head][mic] = pop();
+		}
+		
+		for (int beam = 0; beam < num_beams; beam++) {
+		    for (int mic = 0; mic < num_mics; mic++) {
+			  int   delay_floor = (int) floor(delays[beam][mic]);
+			  int   delay_ceil  = (int) ceil(delays[beam][mic]);
+			  
+			  if ((queue_head + delay_floor)  > max_delay) {
+				low_index = queue_head + delay_floor - max_delay - 1;
+			  }
+			  else {
+				low_index = queue_head + delay_floor;
+			  }
+			  
+			  if ((queue_head + delay_ceil)  > max_delay) {
+				high_index = queue_head + delay_ceil - max_delay - 1;
+			  }
+			  else {
+				high_index = queue_head + delay_ceil;
+			  }
+			  
+			  push(sample_queue[low_index][mic]);
+			  push(sample_queue[high_index][mic]);
+		    }
+		}
+	  }
+    }
+
+    float->float splitjoin {
+	  split rounrobin(2 * num_mics);
+	  
+        for (int beam = 0; beam < num_beams; beam++) {
+		add do_beamforming(num_mics, beam, delays, weights);
+        }
+	  
+	  join roundrobin;
+    }
+}
+    
+
+float->float pipeline do_beamforming(int num_mics, int beam, 
+						 float delays[num_beams][num_mics], 
+						 float weights[num_mics])
+{
+    add float->float splitjoin {
+	  split roundrobin(2);
+
+	  for (int mic = 0; mic < num_mics; mic++) {
+		add float->float filter {
+		    work pop 2 push 1{
+			  float sample_low_index  = pop();
+			  float sample_high_index = pop();
+			  float interpolated_value;
+
+			  float delay = delays[beam][mic];
+			  int   delay_floor = (int) floor(delay);
+        
+			  interpolated_value = (((sample_high_index - sample_low_index) * 
+							 (delay - delay_floor)) +
+							sample_low_index);
+			  
+			  push(interpolated_value * weights[mic]);
+		    }
+		}
+	  }
+
+	  join rounrobin(2);
+    }
+    
+    add float->float filter {
+	  work pop num_mics push 1 {
+		int sum = 0;
+		for (int i = 0; i < num_mics; i++) {
+		    sum += pop();
+		}
+		push(sum / num_mics);
+	  }
+    }
+}

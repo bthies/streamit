@@ -8,38 +8,10 @@ FM-HOME = $(STREAMIT_HOME)/apps/benchmarks/fm/streamit
 
 all: clean benchmarks
 
-
-
-fir-results: FIRProgram.java
-	./reap_freq.pl scripts/fir.script
-target-results: TargetDetect.java
-	./reap_freq.pl scripts/target.script
-filterbank-results: FilterBank.java
-	./reap_freq.pl scripts/filterbank.script
-sampling-results: SamplingRateConverter.java
-	./reap_freq.pl scripts/sample.script
-fm-results: LinkedFMTest.java
-	./reap_freq.pl scripts/fmradio.script
-beamformer-results: CoarseSerializedBeamFormer.java
-	./reap_freq.pl scripts/beamformer.script
-test-results: Test.java
-	./reap_freq.pl scripts/test.script
-
-
-
 benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
 
 
 
-
-
-fir-scaling: fir-scaling0 fir-scaling1 fir-scaling2
-fir-scaling0: Test.java
-	./reap_fir.pl 0 | mhmail aalamb@mit.edu -s "(Stupid) FIR scaling results are ready"
-fir-scaling1: Test.java
-	./reap_fir.pl 1 | mhmail aalamb@mit.edu -s "(Smart) FIR scaling results are ready"
-fir-scaling2: Test.java
-	./reap_fir.pl 2 | mhmail aalamb@mit.edu -s "() FIR scaling results are ready"
 
 # rule to make the beamformer application and copy it to this directory
 CoarseSerializedBeamFormer.java: $(BEAMFORMER-HOME)/CoarseSerializedBeamFormer.java
@@ -68,7 +40,7 @@ clean:
 	rm -f dynamorio.log* countflops.log
 	rm -f Test.java BF*.java
 	rm -f FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java 
-	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java
+	rm -f CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
 	rm -rf streamgraphs
 
 report_clean:

@@ -48,6 +48,7 @@ if (@ARGV) {
 		 ".:TargetDetect",
 		 ".:FMRadioApp",
 		 ".:CoarseSerializedBeamFormer",
+		 ".:OneBitDToA",
 		 #".:Test",
 		 );
 }
@@ -99,17 +100,17 @@ foreach $current_program (@programs) {
    save_output($path, $base_filename, "linear");
    
 
-   # now, do the compilation with (smart fftw) frequency replacement
+   # now, do the compilation with (leet fftw) frequency replacement
    my ($freq2_outputs, $freq2_flops, 
        $freq2_fadds, $freq2_fmuls) = do_test($path, $base_filename, 
-					     "--unroll 100000 --debug --frequencyreplacement 2",
+					     "--unroll 100000 --debug --frequencyreplacement 3",
 					     "$base_filename(freq 1)");
    save_output($path, $base_filename, "freq2");
    
    # now, run with both optimizations (fftw and linear)
    my ($both_outputs, $both_flops, 
        $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
-					   "--unroll 100000 --debug --linearreplacement --frequencyreplacement 2",
+					   "--unroll 100000 --debug --linearreplacement --frequencyreplacement 3",
 					   "$base_filename(both)");
    save_output($path, $base_filename, "both");
    

@@ -191,13 +191,17 @@ public class FeedbackLoop extends Stream
                 {
                     feedbackChannel.pushInt (initPathInt (index));
                 } else
-                if (type == Float.TYPE)
+                if (type == Short.TYPE)
                 {
-                    feedbackChannel.pushFloat (initPathFloat (index));
+                    feedbackChannel.pushShort (initPathShort (index));
                 } else
                 if (type == Character.TYPE)
                 {
                     feedbackChannel.pushChar (initPathChar (index));
+                } else
+                if (type == Float.TYPE)
+                {
+                    feedbackChannel.pushFloat (initPathFloat (index));
                 } else
                 {
                     // this is essentially a default

@@ -1,7 +1,7 @@
 /*
  * StreamType.java: record class for recording I/O types of streams
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamType.java,v 1.1 2002-06-12 17:57:41 dmaze Exp $
+ * $Id: StreamType.java,v 1.2 2002-07-10 18:05:02 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -41,7 +41,7 @@ public class StreamType
     
     private static String annotatedFunction(String name, String type)
     {
-        String suffix = "";
+        String prefix = "", suffix = "";
         // Check for known suffixes:
         if (type.equals("int"))
             suffix = "Int";
@@ -49,6 +49,8 @@ public class StreamType
             suffix = "Float";
         else if (type.equals("double"))
             suffix = "Double";
-        return name + suffix;
+        else if (name.startsWith("input"))
+            prefix = "(" + type + ")";
+        return prefix + name + suffix;
     }   
 }

@@ -24,6 +24,14 @@ public class FileState
 	return file;
     }
     
+    public boolean isFP() 
+    {
+	if (isReader())
+	    return ((FileInputContent)file).isFP();
+	else
+	    return ((FileOutputContent)file).isFP();
+    }
+    
 
     public void setVisited(boolean init, boolean primepump) 
     {

@@ -40,11 +40,20 @@ public class BCFile
 		 ";\n");
 	buf.append("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 
+	//include the file reader/writer devices
+	buf.append("global to_file_path = malloc(strlen(streamit_home) + 30);\n"); 
+	buf.append("global from_file_path = malloc(strlen(streamit_home) + 30);\n"); 
+	buf.append("sprintf(to_file_path, \"%s%s\", streamit_home, \"/include/to_file.bc\");\n"); 
+	buf.append("sprintf(from_file_path, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n"); 
+	buf.append("include(to_file_path);\n"); 
+	buf.append("include(from_file_path);\n"); 
+	
 	buf.append("fn quit_sim()\n{\n");
 	buf.append("\tgInterrupted = 1;\n");
 	buf.append("\texit_now(0);\n");
 	buf.append("}\n");
 	
+	files();
 
 	if (KjcOptions.decoupled)
 	    decoupled();
@@ -62,6 +71,41 @@ public class BCFile
 
 	writeFile();
     }
+
+    private void files()
+    {
+	buf.append("\n{\n");	
+	for (int i = 0; i < rawChip.getXSize(); i++) {
+	    for (int j = 0; j < rawChip.getYSize(); j++) {
+		RawTile tile = rawChip.getTile(i, j);
+		for (int d = 0; d < tile.getIODevices().length; d++) {
+		    if (tile.getIODevices()[d] instanceof StreamingDram) {
+			StreamingDram dram = (StreamingDram)tile.getIODevices()[d];
+			if (dram.isFileWriter() || dram.isFileReader())
+			    buf.append("  local slavePort" + dram.getPort() + " = " + 
+				       "dev_streaming_dram_at_port(" + dram.getPort() + 
+				       ").get_slave_port_fn();\n");
+			if (dram.isFileReader()) {
+			    buf.append("  dev_from_file(\"" + 
+				       dram.getFileReader().getFileName() +
+				       "\", slavePort" + dram.getPort() + 
+				       (dram.getFileReader().isFP() ? ", 1" : ", 0") +
+				       ");\n");
+			}
+			if (dram.isFileWriter()) {
+			    buf.append("  dev_to_file(\"" + 
+				       dram.getFileWriter().getFileName() +
+				       "\", slavePort" + dram.getPort() + 
+				       (dram.getFileWriter().isFP() ? ", 1" : ", 0") +
+				       ");\n");
+			}
+		    }
+		}
+	    }
+	}
+	buf.append("\n}\n");
+    }
+    
     
     //create the function that sets everything up in the simulator
     private void setupFunction() 

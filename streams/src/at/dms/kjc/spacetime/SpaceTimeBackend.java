@@ -38,6 +38,9 @@ public class SpaceTimeBackend
 			   structs) {
 	structures = structs;
 	
+	//first of all enable altcodegen by default
+	KjcOptions.altcodegen = true;
+
 	int rawRows = -1;
 	int rawColumns = -1;
 

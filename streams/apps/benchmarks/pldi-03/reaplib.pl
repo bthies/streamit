@@ -7,7 +7,7 @@ use strict;
 
 # the streamit frontend, the streamit compiler, the C compiler and dynamorio
 my $STREAMIT_FRONTEND    = "java streamit.frontend.ToJava --full";
-my $STREAMIT_COMPILER    = "java -Xmx1500M  at.dms.kjc.Main -s";
+my $STREAMIT_COMPILER    = "strc";
 my $STREAMIT_GCC         = ("gcc -O2 " .
 			    "-I" . $ENV{"STREAMIT_HOME"} . "/library/c " .
 			    "-I" . $ENV{"ATLAS_HOME"} . "/include " .

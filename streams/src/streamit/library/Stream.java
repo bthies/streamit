@@ -63,6 +63,11 @@ public abstract class Stream extends Operator
         super(a, b, c);
     }
 
+    public Stream (int a, float[] c, float[] d) 
+    { 
+        super (a, c, d); 
+    }
+
     public Stream(int a, int b, int c, int d, float[][] e)
     {
         super(a, b, c, d, e);
@@ -71,6 +76,11 @@ public abstract class Stream extends Operator
     public Stream(int a, int b, int c, int d, float[][] e, float[][] f)
     {
         super(a, b, c, d, e, f);
+    }
+
+    public Stream(int a, int b, int c, float[][] e, float[][] f)
+    {
+        super(a, b, c, e, f);
     }
 
     public Stream(float a, int b)

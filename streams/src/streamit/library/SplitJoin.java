@@ -126,6 +126,8 @@ public class SplitJoin extends Stream
         super(n1, n2, f1, f2);
     }
 
+    public SplitJoin (int a, int b, int c, float[][] x, float[][]y) { super (a, b, c,x,y); }
+
     public SplitJoin(int n1, int n2, boolean b1)
     {
         super(n1, n2, b1);

@@ -91,6 +91,14 @@ public class Operator extends DestroyedClass
             .add("c", c);
     }
 
+    public Operator (int a, float[] c, float[] d) 
+    { 
+        initParams = new ParameterContainer("int-float[]-float[]")
+            .add("a",a)
+            .add("c",c)
+            .add("d",d);
+    }
+
     public Operator(int a, int b, float[][] c)
     {
         initParams = new ParameterContainer("int-int-float[][]")
@@ -124,6 +132,16 @@ public class Operator extends DestroyedClass
             .add("d", d)
             .add("e", e)
             .add("f", f);
+    }
+
+    public Operator(int a, int b, int c, float[][] x, float[][] y)
+    {
+        initParams = new ParameterContainer("int-int-int-float[][]-float[][]")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+            .add("x", x)
+            .add("y", y);
     }
 
     public Operator(float a, int b)
@@ -378,6 +396,9 @@ public class Operator extends DestroyedClass
     public void init(int a, int b, float[][] c) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
+    public void init(int a, float b[], float c[]) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
     public void init(int a, int b, int c, float[][] d) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
@@ -431,6 +452,9 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(int x, int y, float[] z1, float[] z2) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, int c, float[][] x, float[][] y) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float x, int y) { invalidInitError (); }
@@ -829,12 +853,24 @@ public class Operator extends DestroyedClass
                   initParams.getIntParam("b"),
                   (float[])initParams.getObjParam("c"));
 	else
+        if(initParams.getParamName().equals("int-float[]-float[]"))
+            init (initParams.getIntParam("a"),
+                  (float[])initParams.getObjParam("c"),
+                  (float[])initParams.getObjParam("d"));
+    else
         if(initParams.getParamName().equals("int-int-float[]-float[]"))
             init (initParams.getIntParam("a"),
                   initParams.getIntParam("b"),
                   (float[])initParams.getObjParam("c"),
                   (float[])initParams.getObjParam("d"));
 	else
+        if(initParams.getParamName().equals("int-int-int-float[][]-float[][]"))
+            init (initParams.getIntParam("a"),
+                  initParams.getIntParam("b"),
+                  initParams.getIntParam("c"),
+                  (float[][])initParams.getObjParam("x"),
+                  (float[][])initParams.getObjParam("y"));
+    else
         if(initParams.getParamName().equals("int-int-float[][]"))
             init (initParams.getIntParam("a"),
                   initParams.getIntParam("b"),

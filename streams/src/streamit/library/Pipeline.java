@@ -30,6 +30,11 @@ public class Pipeline extends Stream
     public Pipeline (float x) { super(x);}
 
     /** 
+     * Constructor with a float[].
+     */
+    public Pipeline (float [] x) { super(x);}
+
+    /** 
      * Constructor with a float, float.
      */
     public Pipeline (float x1, float x2) { super(x1, x2);}
@@ -47,7 +52,17 @@ public class Pipeline extends Stream
     /**
      * Constructor.
      */
+    public Pipeline (int a, int b, int c, float[][] x, float[][]y) { super (a, b, c,x,y); }
+
+    /**
+     * Constructor.
+     */
     public Pipeline (int a, int b, float[] c) { super (a, b, c); }
+
+    /**
+     * Constructor.
+     */
+    public Pipeline (int a, float[] c, float[] d) { super (a, c, d); }
 
     /**
      * Constructor.

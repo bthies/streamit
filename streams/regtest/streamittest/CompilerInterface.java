@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.24 2003-09-23 20:40:16 dmaze Exp $
+ * $Id: CompilerInterface.java,v 1.25 2003-09-26 18:47:29 dmaze Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -46,7 +46,8 @@ public class CompilerInterface {
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
     //public static final String OPTION_CONSTPROP          = "--constprop";
-    public static final String OPTION_UNROLL             = "--unroll 100000";
+    public static final String OPTION_UNROLL             = "--unroll";
+    public static final String OPTION_UNROLL_COUNT       = "100000";
     public static final String OPTION_FUSION             = "--fusion";
     public static final String OPTION_PARTITION          = "--partition";
 
@@ -264,6 +265,8 @@ public class CompilerInterface {
 	if ((flags & UNROLL) == UNROLL) {
 	    options[numOptions] = OPTION_UNROLL;
 	    numOptions++;
+            options[numOptions] = OPTION_UNROLL_COUNT;
+            numOptions++;
 	}
 	
 	// if we want to turn on fusion

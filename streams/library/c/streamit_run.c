@@ -6,6 +6,8 @@
 
 void connect_tapes (stream_context *c)
 {
+    stream_context_list *child;
+
     assert (c);
 
     switch (c->type)
@@ -13,33 +15,52 @@ void connect_tapes (stream_context *c)
     case FILTER:
         // filter doesn't need to connect its children's tapes
         break;
-    case PIPELINE:
-        {
-            // if no children, quit
-            if (c->type_data.pipeline_data.first_child == NULL) break;
-            
-            // set the first and last child's tapes
-            {
-                c->type_data.pipeline_data.first_child->context->input_tape = c->input_tape;
-                c->type_data.pipeline_data.last_child->context->output_tape = c->output_tape;
-            }
 
-            // now go through all the children, and initialize them
-            {
-                stream_context_list *child;
-                for (child = c->type_data.pipeline_data.first_child; child; child = child->next)
-                {
-                    connect_tapes (child->context);
-                }
-            }
-        }
+    case PIPELINE:
+        // if no children, quit
+        if (c->type_data.pipeline_data.first_child == NULL) break;
+        
+        // set the first and last child's tapes
+        c->type_data.pipeline_data.first_child->context->input_tape =
+            c->input_tape;
+        c->type_data.pipeline_data.last_child->context->output_tape =
+            c->output_tape;
+
+        // now go through all the children, and initialize them
+        for (child = c->type_data.pipeline_data.first_child;
+             child;
+             child = child->next)
+            connect_tapes (child->context);
+
         break;
+
     case SPLIT_JOIN:
-      // split/join code deals with tapes magically.
-      break;
+        // Attach the input and output tapes to the "one" side of
+        // the splitter and joiner.
+        c->type_data.splitjoin_data.splitter.one_tape = c->input_tape;
+        c->type_data.splitjoin_data.joiner.one_tape = c->output_tape;
+        
+        // Go through all of the children and initialize them.
+        for (child = c->type_data.pipeline_data.first_child;
+             child;
+             child = child->next)
+            connect_tapes (child->context);
+
+        break;
     case FEEDBACK_LOOP:
-      // similarly for feedback loops.
-      break;
+        // Attach the input and output tapes to slot 0 on the
+        // many side of the splitter and joiner.
+        c->type_data.splitjoin_data.joiner.tape[0] = c->input_tape;
+        c->type_data.splitjoin_data.splitter.tape[0] = c->output_tape;
+        
+        // Go through all of the children and initialize them.
+        for (child = c->type_data.pipeline_data.first_child;
+             child;
+             child = child->next)
+            connect_tapes (child->context);
+
+        break;
+
     default:
         assert (0);
         break;

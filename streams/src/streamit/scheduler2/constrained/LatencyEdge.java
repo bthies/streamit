@@ -103,10 +103,18 @@ public class LatencyEdge extends Misc implements SDEPData
                 int dstStage = 0, srcStage = 0;
                 int nDataInChannel = initDataInChannel;
                 {
+                    int minProducedData =
+                        dst.getInitPop(inputChannel)
+                            + (dst.getSteadyStatePeek(inputChannel)
+                                - dst.getSteadyStatePop(inputChannel))
+                            - initDataInChannel;
+
                     int totalConsumed = 0;
                     for (dstStage = 0;
                         dstStage < dst.getInitNumPhases()
-                            || totalConsumed < initDataInChannel;
+                            || totalConsumed < initDataInChannel
+                            || nDataInChannel + totalConsumed
+                                < minProducedData;
                         dstStage++)
                     {
                         int dataNeeded =
@@ -114,8 +122,9 @@ public class LatencyEdge extends Misc implements SDEPData
 
                         while (dataNeeded > nDataInChannel)
                         {
-                            nDataInChannel
-                                += src.getPhasePush(srcStage, outputChannel);
+                            int dataPushed =
+                                src.getPhasePush(srcStage, outputChannel);
+                            nDataInChannel += dataPushed;
                             srcStage++;
                         }
 
@@ -425,7 +434,7 @@ public class LatencyEdge extends Misc implements SDEPData
 
         int dstPhaseLow = 0,
             dstPhaseHigh = numInitDstExec + numSteadyDstExec;
-       
+
         // make the binary search biased towards finding the low answer
         while (dstPhaseHigh - dstPhaseLow > 1)
         {

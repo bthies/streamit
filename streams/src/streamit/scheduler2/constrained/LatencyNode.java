@@ -172,6 +172,19 @@ public class LatencyNode extends streamit.misc.AssertedClass
         return initNodePhases.getNumPhases();
     }
 
+    public int getInitPeek(int nChannel)
+    {
+        return initNodePhases.getOverallPeek(nChannel);
+    }
+    public int getInitPop(int nChannel)
+    {
+        return initNodePhases.getOverallPop(nChannel);
+    }
+    public int getInitPush(int nChannel)
+    {
+        return initNodePhases.getOverallPush(nChannel);
+    }
+
     public int getSteadyNumPhases()
     {
         return steadyNodePhases.getNumPhases();

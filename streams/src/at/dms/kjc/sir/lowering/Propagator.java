@@ -545,9 +545,13 @@ public class Propagator extends SLIRReplacingVisitor {
 						    JExpression right) {
 	switch(oper) {
 	case OPE_SR:
-	    return new JAssignmentExpression(null,left,new JShiftExpression(null,OPE_SR,left,right)).accept(this);
 	case OPE_SL:
-	    return new JAssignmentExpression(null,left,new JShiftExpression(null,OPE_SL,left,right)).accept(this);
+	case OPE_BSR:
+	    return new JAssignmentExpression(null,left,new JShiftExpression(null,oper,left,right)).accept(this);
+	case OPE_BAND:
+	case OPE_BXOR:
+	case OPE_BOR:
+	    return new JAssignmentExpression(null,left,new JBitwiseExpression(null,oper,left,right)).accept(this);
 	case OPE_PLUS:
 	    return new JAssignmentExpression(null,left,new JAddExpression(null,left,right)).accept(this);
 	case OPE_MINUS:
@@ -559,20 +563,10 @@ public class Propagator extends SLIRReplacingVisitor {
 	case OPE_PERCENT:
 	    return new JAssignmentExpression(null,left,new JModuloExpression(null,left,right)).accept(this);
 	default:
+	    throw new InconsistencyException("unexpected operator " + oper);
 	}
-	if(left instanceof JLocalVariableExpression) {
-	    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
-	    constants.remove(var);
-	    changed.put(var,Boolean.TRUE);
-	} //else
-	//System.err.println("WARNING: Compound Assignment of nonvariable: "+left);
-	JExpression newRight = (JExpression)right.accept(this);
-	if (write&&(newRight!=right)) {
-            self.setRight(newRight);
-	}
-	return self;
     }
-    
+
     /*public Object visitFieldExpression(JFieldAccessExpression self,
 				       JExpression left,
 				       String ident)

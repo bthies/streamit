@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.10 2003-05-28 05:58:42 thies Exp $
+ * $Id: JArrayAccessExpression.java,v 1.11 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -283,9 +283,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JArrayAccessExpression other) {
   super.deepCloneInto(other);
-  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix);
-  other.accessor = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.accessor);
-  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
+  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix, this);
+  other.accessor = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.accessor, this);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

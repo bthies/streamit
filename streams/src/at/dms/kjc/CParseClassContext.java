@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CParseClassContext.java,v 1.2 2003-05-28 05:58:42 thies Exp $
+ * $Id: CParseClassContext.java,v 1.3 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -118,10 +118,10 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CParseClassContext other) {
-  other.fields = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
-  other.methods = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
-  other.inners = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.inners);
-  other.body = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+  other.fields = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.fields, this);
+  other.methods = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.methods, this);
+  other.inners = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.inners, this);
+  other.body = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.body, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

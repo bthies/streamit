@@ -77,7 +77,7 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRJoinType other) {
-  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

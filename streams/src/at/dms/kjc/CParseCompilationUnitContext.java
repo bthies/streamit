@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CParseCompilationUnitContext.java,v 1.2 2003-05-28 05:58:42 thies Exp $
+ * $Id: CParseCompilationUnitContext.java,v 1.3 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -121,11 +121,11 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CParseCompilationUnitContext other) {
-  other.pack = (at.dms.kjc.JPackageName)at.dms.kjc.AutoCloner.cloneToplevel(this.pack);
-  other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
-  other.packageImports = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.packageImports);
-  other.classImports = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classImports);
-  other.typeDeclarations = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.typeDeclarations);
+  other.pack = (at.dms.kjc.JPackageName)at.dms.kjc.AutoCloner.cloneToplevel(this.pack, this);
+  other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName, this);
+  other.packageImports = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.packageImports, this);
+  other.classImports = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.classImports, this);
+  other.typeDeclarations = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.typeDeclarations, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

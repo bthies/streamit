@@ -164,10 +164,10 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRPhasedFilter other) {
   super.deepCloneInto(other);
-  other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType);
-  other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType);
-  other.initPhases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases);
-  other.phases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases);
+  other.inputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.inputType, this);
+  other.outputType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.outputType, this);
+  other.initPhases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.initPhases, this);
+  other.phases = (at.dms.kjc.sir.SIRWorkFunction[])at.dms.kjc.AutoCloner.cloneToplevel(this.phases, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

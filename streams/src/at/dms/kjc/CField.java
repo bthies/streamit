@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CField.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CField.java,v 1.4 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -190,8 +190,8 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CField other) {
   super.deepCloneInto(other);
-  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.value = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.value);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.value = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.value, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -118,8 +118,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRRegSenderStatement other) {
   super.deepCloneInto(other);
-  other.portal = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.portal);
-  other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency);
+  other.portal = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.portal, this);
+  other.latency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.latency, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.11 2003-05-28 05:58:44 thies Exp $
+ * $Id: JLocalVariable.java,v 1.12 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -290,9 +290,9 @@ protected void deepCloneInto(at.dms.kjc.JLocalVariable other) {
   other.assigned = this.assigned;
   other.loopVariable = this.loopVariable;
   other.modifiers = this.modifiers;
-  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name);
-  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr);
+  other.name = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.name, this);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr, this);
   other.index = this.index;
   other.position = this.position;
 }

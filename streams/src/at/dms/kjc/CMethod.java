@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMethod.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CMethod.java,v 1.4 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -397,9 +397,9 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CMethod other) {
   super.deepCloneInto(other);
-  other.returnType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.returnType);
-  other.parameters = (at.dms.kjc.CType[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);
-  other.exceptions = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.exceptions);
+  other.returnType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.returnType, this);
+  other.parameters = (at.dms.kjc.CType[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters, this);
+  other.exceptions = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.exceptions, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNewArrayExpression.java,v 1.6 2003-05-28 05:58:44 thies Exp $
+ * $Id: JNewArrayExpression.java,v 1.7 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -227,9 +227,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JNewArrayExpression other) {
   super.deepCloneInto(other);
-  other.type = (at.dms.kjc.CArrayType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.dims = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.dims);
-  other.init = (at.dms.kjc.JArrayInitializer)at.dms.kjc.AutoCloner.cloneToplevel(this.init);
+  other.type = (at.dms.kjc.CArrayType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.dims = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.dims, this);
+  other.init = (at.dms.kjc.JArrayInitializer)at.dms.kjc.AutoCloner.cloneToplevel(this.init, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

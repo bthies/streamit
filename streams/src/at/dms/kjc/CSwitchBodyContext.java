@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CSwitchBodyContext.java,v 1.4 2003-05-28 05:58:42 thies Exp $
+ * $Id: CSwitchBodyContext.java,v 1.5 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -150,8 +150,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CSwitchBodyContext other) {
   super.deepCloneInto(other);
-  other.stmt = (at.dms.kjc.JSwitchStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt);
-  other.labels = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
+  other.stmt = (at.dms.kjc.JSwitchStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.stmt, this);
+  other.labels = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.labels, this);
   other.defaultExist = this.defaultExist;
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CConstructorContext.java,v 1.3 2003-05-28 05:58:42 thies Exp $
+ * $Id: CConstructorContext.java,v 1.4 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -184,7 +184,7 @@ public Object deepClone() {
 protected void deepCloneInto(at.dms.kjc.CConstructorContext other) {
   super.deepCloneInto(other);
   other.isSuperConstructorCalled = this.isSuperConstructorCalled;
-  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo);
+  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -47,7 +47,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRFileWriter other) {
   super.deepCloneInto(other);
-  other.fileName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName);
+  other.fileName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.fileName, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

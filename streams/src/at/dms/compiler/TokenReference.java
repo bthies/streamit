@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TokenReference.java,v 1.5 2003-05-28 05:58:39 thies Exp $
+ * $Id: TokenReference.java,v 1.6 2003-08-21 09:44:16 thies Exp $
  */
 
 package at.dms.compiler;
@@ -119,7 +119,7 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.compiler.TokenReference other) {
-  other.file = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.file);
+  other.file = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.file, this);
   other.line = this.line;
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Compiler.java,v 1.3 2003-05-28 05:58:39 thies Exp $
+ * $Id: Compiler.java,v 1.4 2003-08-21 09:44:16 thies Exp $
  */
 
 package at.dms.compiler;
@@ -286,8 +286,8 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.compiler.Compiler other) {
   other.timestamp = this.timestamp;
-  other.err = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.err);
-  other.workingDirectory = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.workingDirectory);
+  other.err = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.err, this);
+  other.workingDirectory = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.workingDirectory, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassDeclaration.java,v 1.9 2003-05-28 05:58:43 thies Exp $
+ * $Id: JClassDeclaration.java,v 1.10 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -637,9 +637,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JClassDeclaration other) {
   super.deepCloneInto(other);
-  other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass);
-  other.self = (at.dms.kjc.CClassContext)at.dms.kjc.AutoCloner.cloneToplevel(this.self);
-  other.superName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.superName);
+  other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass, this);
+  other.self = (at.dms.kjc.CClassContext)at.dms.kjc.AutoCloner.cloneToplevel(this.self, this);
+  other.superName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.superName, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

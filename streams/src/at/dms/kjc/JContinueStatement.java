@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JContinueStatement.java,v 1.5 2003-05-28 05:58:43 thies Exp $
+ * $Id: JContinueStatement.java,v 1.6 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -132,8 +132,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JContinueStatement other) {
   super.deepCloneInto(other);
-  other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label);
-  other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target);
+  other.label = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.label, this);
+  other.target = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.target, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

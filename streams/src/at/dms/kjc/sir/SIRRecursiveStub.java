@@ -135,10 +135,10 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRRecursiveStub other) {
   super.deepCloneInto(other);
-  other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className);
-  other.kopi2SIR = (at.dms.kjc.Kopi2SIR)at.dms.kjc.AutoCloner.cloneToplevel(this.kopi2SIR);
-  other.feir2sir = this.feir2sir;
-  other.expanded = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.expanded);
+  other.className = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.className, this);
+  other.kopi2SIR = (at.dms.kjc.Kopi2SIR)at.dms.kjc.AutoCloner.cloneToplevel(this.kopi2SIR, this);
+  other.feir2sir = (streamit.frontend.FEIRToSIR)at.dms.kjc.AutoCloner.cloneToplevel(this.feir2sir, this);
+  other.expanded = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.expanded, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -2678,24 +2678,24 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   super.deepCloneInto(other);
-  other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application);
-  other.parentStream = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.parentStream);
-  other.topLevel = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.topLevel);
-  other.trash = (java.lang.Object)at.dms.kjc.AutoCloner.cloneToplevel(this.trash);
+  other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application, this);
+  other.parentStream = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.parentStream, this);
+  other.topLevel = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.topLevel, this);
+  other.trash = (java.lang.Object)at.dms.kjc.AutoCloner.cloneToplevel(this.trash, this);
   other.num = this.num;
   other.lineNumber = this.lineNumber;
-  other.currentMethod = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.currentMethod);
-  other.visitedSIROps = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.visitedSIROps);
-  other.symbolTable = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.symbolTable);
-  other.interfaceList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.interfaceList);
-  other.interfaceTableList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.interfaceTableList);
-  other.structureList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.structureList);
-  other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList);
-  other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params);
-  other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames);
-  other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars);
+  other.currentMethod = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.currentMethod, this);
+  other.visitedSIROps = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.visitedSIROps, this);
+  other.symbolTable = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.symbolTable, this);
+  other.interfaceList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.interfaceList, this);
+  other.interfaceTableList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.interfaceTableList, this);
+  other.structureList = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.structureList, this);
+  other.searchList = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.searchList, this);
+  other.params = (at.dms.kjc.JFormalParameter[])at.dms.kjc.AutoCloner.cloneToplevel(this.params, this);
+  other.paramNames = (java.lang.String[])at.dms.kjc.AutoCloner.cloneToplevel(this.paramNames, this);
+  other.finalVars = (java.util.LinkedList)at.dms.kjc.AutoCloner.cloneToplevel(this.finalVars, this);
   other.anonCreation = this.anonCreation;
-  other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency);
+  other.nextLatency = (at.dms.kjc.sir.SIRLatency)at.dms.kjc.AutoCloner.cloneToplevel(this.nextLatency, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

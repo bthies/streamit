@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.5 2003-05-28 05:58:42 thies Exp $
+ * $Id: CClass.java,v 1.6 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -806,16 +806,16 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CClass other) {
   super.deepCloneInto(other);
-  other.sourceFile = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceFile);
-  other.qualifiedName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.qualifiedName);
-  other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName);
-  other.interfaces = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.interfaces);
-  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.innerClasses = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.innerClasses);
-  other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass);
+  other.sourceFile = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceFile, this);
+  other.qualifiedName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.qualifiedName, this);
+  other.packageName = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.packageName, this);
+  other.interfaces = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.interfaces, this);
+  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.innerClasses = (at.dms.kjc.CClassType[])at.dms.kjc.AutoCloner.cloneToplevel(this.innerClasses, this);
+  other.superClass = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.superClass, this);
   other.hasOuterThis = this.hasOuterThis;
-  other.fields = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.fields);
-  other.methods = (at.dms.kjc.CMethod[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods);
+  other.fields = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.fields, this);
+  other.methods = (at.dms.kjc.CMethod[])at.dms.kjc.AutoCloner.cloneToplevel(this.methods, this);
   other.qualifiedAndAnonymous = this.qualifiedAndAnonymous;
 }
 

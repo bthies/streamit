@@ -238,8 +238,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRJoiner other) {
   super.deepCloneInto(other);
-  other.type = (at.dms.kjc.sir.SIRJoinType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights);
+  other.type = (at.dms.kjc.sir.SIRJoinType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.weights = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.weights, this);
   other.uniform = this.uniform;
   other.oldSumWeights = this.oldSumWeights;
 }

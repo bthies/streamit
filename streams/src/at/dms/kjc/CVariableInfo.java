@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CVariableInfo.java,v 1.2 2003-05-28 05:58:42 thies Exp $
+ * $Id: CVariableInfo.java,v 1.3 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -135,7 +135,7 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CVariableInfo other) {
-  other.infos = (int[])at.dms.kjc.AutoCloner.cloneToplevel(this.infos);
+  other.infos = (int[])at.dms.kjc.AutoCloner.cloneToplevel(this.infos, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

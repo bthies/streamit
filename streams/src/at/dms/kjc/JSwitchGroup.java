@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchGroup.java,v 1.4 2003-05-28 05:58:44 thies Exp $
+ * $Id: JSwitchGroup.java,v 1.5 2003-08-21 09:44:21 thies Exp $
  */
 
 package at.dms.kjc;
@@ -171,9 +171,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JSwitchGroup other) {
   super.deepCloneInto(other);
-  other.labels = (at.dms.kjc.JSwitchLabel[])at.dms.kjc.AutoCloner.cloneToplevel(this.labels);
-  other.stmts = (at.dms.kjc.JStatement[])at.dms.kjc.AutoCloner.cloneToplevel(this.stmts);
-  other.pos = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.pos);
+  other.labels = (at.dms.kjc.JSwitchLabel[])at.dms.kjc.AutoCloner.cloneToplevel(this.labels, this);
+  other.stmts = (at.dms.kjc.JStatement[])at.dms.kjc.AutoCloner.cloneToplevel(this.stmts, this);
+  other.pos = (at.dms.kjc.CodeLabel)at.dms.kjc.AutoCloner.cloneToplevel(this.pos, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCatchClause.java,v 1.4 2003-05-28 05:58:43 thies Exp $
+ * $Id: JCatchClause.java,v 1.5 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -151,8 +151,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JCatchClause other) {
   super.deepCloneInto(other);
-  other.exception = (at.dms.kjc.JFormalParameter)at.dms.kjc.AutoCloner.cloneToplevel(this.exception);
-  other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body);
+  other.exception = (at.dms.kjc.JFormalParameter)at.dms.kjc.AutoCloner.cloneToplevel(this.exception, this);
+  other.body = (at.dms.kjc.JBlock)at.dms.kjc.AutoCloner.cloneToplevel(this.body, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

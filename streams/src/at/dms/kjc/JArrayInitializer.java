@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayInitializer.java,v 1.4 2003-05-28 05:58:42 thies Exp $
+ * $Id: JArrayInitializer.java,v 1.5 2003-08-21 09:44:20 thies Exp $
  */
 
 package at.dms.kjc;
@@ -172,8 +172,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JArrayInitializer other) {
   super.deepCloneInto(other);
-  other.type = (at.dms.kjc.CArrayType)at.dms.kjc.AutoCloner.cloneToplevel(this.type);
-  other.elems = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.elems);
+  other.type = (at.dms.kjc.CArrayType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.elems = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.elems, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -278,8 +278,8 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRContainer other) {
   super.deepCloneInto(other);
-  other.children = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.children);
-  other.params = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.params);
+  other.children = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.children, this);
+  other.params = (at.dms.util.MutableList)at.dms.kjc.AutoCloner.cloneToplevel(this.params, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

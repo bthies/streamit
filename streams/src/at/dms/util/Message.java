@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Message.java,v 1.4 2003-05-28 05:58:59 thies Exp $
+ * $Id: Message.java,v 1.5 2003-08-21 09:44:29 thies Exp $
  */
 
 package at.dms.util;
@@ -120,8 +120,8 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.util.Message other) {
-  other.description = (at.dms.util.MessageDescription)at.dms.kjc.AutoCloner.cloneToplevel(this.description);
-  other.parameters = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters);
+  other.description = (at.dms.util.MessageDescription)at.dms.kjc.AutoCloner.cloneToplevel(this.description, this);
+  other.parameters = (java.lang.Object[])at.dms.kjc.AutoCloner.cloneToplevel(this.parameters, this);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

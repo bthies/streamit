@@ -571,6 +571,9 @@ public class FuseSplit {
 	for (int i=0; i<sj.size(); i++) {
 	    SIRStream child = sj.get(i);
 	    List params = sj.getParams(i);
+	    if (!child.needsInit()) {
+		continue;
+	    }
 	    init.addStatement(new JExpressionStatement(null,
 						   new JMethodCallExpression(null, 
 						     new JThisExpression(null),

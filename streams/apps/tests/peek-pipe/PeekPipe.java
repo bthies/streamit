@@ -22,11 +22,12 @@ public class PeekPipe extends StreamIt {
 		    this.streamInput = input;
 		}
 		public void work() {
+                    int i;
 		    int sum = 0;
-		    for (int i=0; i<10; i++) {
+		    for (i=0; i<10; i++) {
 			sum += input.peekInt(i);
 		    }
-		    System.out.println("sum = " + sum);
+		    System.out.println(sum);
 		    input.popInt();
 		}
 	    });

@@ -177,7 +177,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (self.getPeekInt() > 4 * self.getPopInt()) 
 	    circular = false;
 	
-	System.out.println(self.getName());
+	//	System.out.println(self.getName());
 
 	//Entry point of the visitor
 	print("#include <raw.h>\n");

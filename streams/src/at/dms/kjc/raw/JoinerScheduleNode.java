@@ -7,11 +7,14 @@ public class JoinerScheduleNode
     public static final int FIRE = 0;
     public static final int RECEIVE = 1;
     public static final int INITPATH = 2;
-
+    public static final int DUPLICATE = 3;
+    
     public JoinerScheduleNode next;
     public int type;
     public String buffer;
     public int initPathIndex = 0;
+
+    public static final String DUPVAR = "__DUPVAR__";
 
     public JoinerScheduleNode() 
     {
@@ -42,6 +45,11 @@ public class JoinerScheduleNode
 	boolean fp = ctype.equals(CStdType.Float);
 	String dims[] = null; 
 	
+	//true if the next node is a dup
+	boolean nextDup = false;
+	nextDup = (type == RECEIVE && next != null &&
+		   next.type == DUPLICATE);
+	
 	if (ctype.isArrayType()) {
 	    dims = Util.makeString(((CArrayType)ctype).getDims());
 	    fp = ((CArrayType)ctype).getBaseType().equals(CStdType.Float);
@@ -61,41 +69,71 @@ public class JoinerScheduleNode
 		}
 	    }
 	}
-	if (type == FIRE) {
+	ret.append("{\n");
+   	if (type == DUPLICATE) {
+	    ret.append(dupRecCode(arrayAccess));
+	}
+	else if (type == FIRE) {
 	    ret.append("static_send(__buffer" + buffer +
 		       "[__first" + buffer + "++]");
 	    ret.append(arrayAccess);
 	    ret.append(");\n");
+	    ret.append("}\n");
 	    ret.append("__first" + buffer + " = __first" + buffer + " & __MINUSONE__;\n");
 	    
 	}
 	else if (type == RECEIVE) { //receive
-	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	    if (nextDup) 
+		ret.append(DUPVAR);
+	    else 
+		ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
 	    ret.append(arrayAccess);
 	    ret.append("= static_receive");
 	    if (fp)
 		ret.append("_f");
 	    ret.append("();\n");
-	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
-	    
+	    if (nextDup) {
+		ret.append(dupRecCode(arrayAccess));
+	    }
+	    else {
+		ret.append("}\n");
+		ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
+	    }
 	}
 	else if (type == INITPATH){
 	    ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
 	    ret.append(arrayAccess);
 	    ret.append("= initPath(" + 
 		       initPathIndex + ");\n");
+	    ret.append("}\n");
 	    ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
 	}
-	
+
 	return ret.toString();
     }
     
+    private StringBuffer dupRecCode(StringBuffer arrayAccess) {
+	StringBuffer ret = new StringBuffer();
+	ret.append("__buffer" + buffer + "[__last" + buffer + "++]");
+	ret.append(arrayAccess);
+	ret.append(" = " + DUPVAR);
+	ret.append(arrayAccess);
+	ret.append(";\n");
+	ret.append("}\n");
+	ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
+	return ret;
+    }
+    
+
     /**
      * Returns whether <other> has the same type and buffer name as
      * this.
      */
     public boolean equals(JoinerScheduleNode other) {
-	return type==other.type && buffer.equals(other.buffer) && initPathIndex == other.initPathIndex;
+	if (type == DUPLICATE)
+	    return false;
+	else 
+	    return type==other.type && buffer.equals(other.buffer) && initPathIndex == other.initPathIndex;
     }
 
     /**

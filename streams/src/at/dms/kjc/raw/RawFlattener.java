@@ -32,6 +32,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
     {
 	this.SIRMap = new HashMap();
 	feedbackSplitters = new HashSet();
+	
 	//create the flat graph
 	createGraph(toplevel);
 	//now we need to fix up the graph a bit
@@ -167,8 +168,8 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 
     public FlatNode getFlatNode(SIROperator key) {
 	FlatNode node = (FlatNode)SIRMap.get(key);
-	if (node == null)
-	    Utils.fail("Cannot Find FlatNode for SIROperator: " + key);
+	//	if (node == null)
+	//  Utils.fail("Cannot Find FlatNode for SIROperator: " + key);
 	return node;
     }
 

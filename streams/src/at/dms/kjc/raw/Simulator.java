@@ -195,9 +195,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
-		generateSwitchCode(fire, getDestination(fire.edges[0], 
-							counters, "", 
-							fire));
+		generateSwitchCode(fire, getDestination(fire, 
+							counters));
 		//see if anyone downstream can fire
 		//if (fire != lastToFire)
 		go(counts, counters, fire);
@@ -328,8 +327,11 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     //consume the data and return the number of items produced
     private int fireMe(FlatNode fire, SimulationCounter counters, HashMap executionCounts) 
     {
+	if (!Layout.isAssigned(fire))
+	    Utils.fail("");
+	
 	if (fire.contents instanceof SIRFilter) {
-	    //	    System.out.println("Firing " + fire.contents.getName());
+	    //System.out.println("Firing " + fire.contents.getName());
 	    //decrement the schedule execution counter
 	    decrementExecutionCounts(fire, executionCounts);
 	    
@@ -385,47 +387,70 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     
     private int fireJoiner(FlatNode fire, SimulationCounter counters, HashMap executionCounts)
     {
-	//receive data and put it into the correct buffer
-	if (counters.getBufferCount(fire) > 0) {
+	//System.out.println("Firing " + fire.contents.getName());
+	//The joiner is passing a data item, record this as an execution
+	decrementExecutionCounts(fire, executionCounts);
+	
+	//else, this joiner fired because it has data that can be sent downstream
+	JoinerScheduleNode current = new JoinerScheduleNode();
+	current.buffer = counters.getJoinerBuffer(fire);
+	current.type = JoinerScheduleNode.FIRE;
+	addJoinerCode(fire, current);
+	
+	//decrement the buffer
+	counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
+	//step the schedule
+	counters.incrementJoinerSchedule(fire);
+	return 1;
+    }
+
+
+    //return the destinations of the data item and generate the code
+    //to receive data into the joiner
+    private List getDestination(FlatNode node, SimulationCounter counters)
+    {
+	List list = getDestinationHelper(node.edges[0], counters, "", node);
+	HashSet visited = new HashSet();
+	//generate joiner receive code	
+	//iterate over the list 
+	Iterator it = list.iterator();
+	while(it.hasNext()) {
+	    FlatNode dest = (FlatNode)it.next();
+	    if (!(dest.contents instanceof SIRJoiner))
+		continue;
 	    //decrement the buffer from the joiner
-	    counters.decrementBufferCount(fire, 1);
+	    counters.decrementBufferCount(dest, 1);
 	    //get the joiner buffer as determined by getDestination and stored in a list 
-	    String joinerBuffer = counters.getJoinerReceiveBuffer(fire);
+	    String joinerBuffer = counters.getJoinerReceiveBuffer(dest);
 	    //as determined by the simulation
-	    counters.incrementJoinerBufferCount(fire, joinerBuffer);
-	    //add to the joiner code for this fire
+	    counters.incrementJoinerBufferCount(dest, joinerBuffer);
+	    //add to the joiner code for this dest
 	    JoinerScheduleNode current = new JoinerScheduleNode();
 	    current.buffer = joinerBuffer;
-	    current.type = JoinerScheduleNode.RECEIVE;
-	    addJoinerCode(fire, current);
-	    return 0; 
-	}
-	else {
-	    //	    System.out.println("Firing " + fire.contents.getName());
-	    //The joiner is passing a data item, record this as an execution
-	    decrementExecutionCounts(fire, executionCounts);
-
-	    //else, this joiner fired because it has data that can be sent downstream
-	    JoinerScheduleNode current = new JoinerScheduleNode();
-	    current.buffer = counters.getJoinerBuffer(fire);
-	    current.type = JoinerScheduleNode.FIRE;
-	    addJoinerCode(fire, current);
+	    if (visited.contains(dest))
+		current.type = JoinerScheduleNode.DUPLICATE;
+	    else
+		current.type = JoinerScheduleNode.RECEIVE;
+	    addJoinerCode(dest, current);
 	    
-	    //decrement the buffer
-	    counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
-	    //step the schedule
-	    counters.incrementJoinerSchedule(fire);
-	    return 1;
+	    visited.add(dest);
 	}
+	return list;
     }
+    
+
     //get the destination of the data item
-    private  List getDestination(FlatNode node, SimulationCounter counters, String
+    private List getDestinationHelper(FlatNode node, SimulationCounter counters, String
 				 joinerBuffer, FlatNode previous) 
     {
 	//if we reached a node then this is a destination
 	//add to its buffer and
 	//create a list and add it
 	if (node.contents instanceof SIRFilter) {
+	    if (!Layout.isAssigned(node)) {
+		return getDestinationHelper(node.edges[0], counters,
+				      joinerBuffer, node);
+	    }
 	    counters.incrementBufferCount(node);
 	    LinkedList list = new LinkedList();
 	    list.add(node);
@@ -444,7 +469,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		return list;
 	    }
 	    else {
-		return getDestination(node.edges[0], counters, 
+		return getDestinationHelper(node.edges[0], counters, 
 				      joinerBuffer + getJoinerBuffer(node, 
 								     previous),
 				      node);
@@ -462,7 +487,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		    if (counters.getArcCountOutgoing(node, i) == 0)
 			counters.resetArcCountOutgoing(node, i);
 		    counters.decrementArcCountOutgoing(node, i);
-		    list.addAll(getDestination(node.edges[i], 
+		    list.addAll(getDestinationHelper(node.edges[i], 
 					    counters, joinerBuffer,
 					    previous));
 		}
@@ -473,7 +498,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		for (int i = 0; i < node.ways; i++) {
 		    if (counters.getArcCountOutgoing(node, i) > 0) {
 			counters.decrementArcCountOutgoing(node, i);
-			return getDestination(node.edges[i], 
+			return getDestinationHelper(node.edges[i], 
 					      counters, joinerBuffer,
 					      previous);
 		    }
@@ -486,7 +511,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		for (int i = 0; i < node.ways; i++) {
 		    if (counters.getArcCountOutgoing(node, i) > 0) {
 			counters.decrementArcCountOutgoing(node, i);
-			return getDestination(node.edges[i], 
+			return getDestinationHelper(node.edges[i], 
 					      counters, joinerBuffer,
 					      previous);
 		    }
@@ -547,6 +572,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
     {
 	if (node == null)
 	    return false;
+	if (!Layout.isAssigned(node))
+	    return false;
 
 	if (node.contents instanceof SIRFilter) {
 	    if (node.contents instanceof SIRTwoStageFilter) {
@@ -554,7 +581,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		//	   counters.getBufferCount(node) + " >= " +
 		//	   itemsNeededToFire(node, counters) );
 	    }
-
+	    
 
 	    //check if this node has fired the number of times given by
 	    //the schedule
@@ -581,8 +608,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //this does not count as an execution of the joiner
 	    //only sending data counts as an execution, that is why we check that 
 	    //next
-	    if (counters.getBufferCount(node) > 0) 
-		return true;
+	    //if (counters.getBufferCount(node) > 0) 
+	    //	return true;
 	    
 	    //check if this node has fired the number of times given by
 	    //the schedule

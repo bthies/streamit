@@ -25,7 +25,7 @@ public class Router {
 	Coordinate fromCoord, toCoord;
 	fromCoord = Layout.getTile(from);
 	toCoord = Layout.getTile(to);
-
+	
 	route.add(Layout.getTile(from));
 	
 	int row = fromCoord.getRow();

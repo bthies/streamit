@@ -143,8 +143,9 @@ public class RawBackend {
 			val=26;
 		    }
 		    */
-		    result[i].put(rawFlattener.getFlatNode(obj), 
-				  new Integer(val));
+		    if (rawFlattener.getFlatNode(obj) != null)
+			result[i].put(rawFlattener.getFlatNode(obj), 
+				      new Integer(val));
 		}
 	    }
 	}

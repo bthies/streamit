@@ -111,6 +111,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	//print the temp for the for loop
 	ret.append("  int rep;\n");
 	//print the index vars if the type is an array type
+	//and the duplication var for duplicate splitjoins with identities inside 
 	if (Util.getJoinerType(joiner).isArrayType()) {
 	    String dims[] = 
 		Util.makeString(((CArrayType)Util.getJoinerType(joiner)).getDims());
@@ -118,8 +119,19 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    for (int i = 0; i < dims.length -1; i++)
 		ret.append(ARRAY_INDEX + i + ", ");
 	    ret.append(ARRAY_INDEX + (dims.length -1) + ";\n");
-	}
 
+	    ret.append(type + " " + JoinerScheduleNode.DUPVAR);
+	    for (int i = 0; i < dims.length; i++)
+		ret.append("[" + dims[i] + "]");
+	    ret.append(";\n");
+		       
+	}
+	else {
+	    //print the duplication var if not array type
+	    ret.append(type + " " + JoinerScheduleNode.DUPVAR);
+	    ret.append(";\n");
+	}
+	    
 	HashSet buffers = (HashSet)JoinerSimulator.buffers.get(joiner);
 	Iterator bufIt = buffers.iterator();
 	//print all the var definitions
@@ -317,6 +329,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	if (node.contents instanceof SIRFilter) {
 	    //do not generate code for the file manipulators
 	    if (FileVisitor.fileNodes.contains(node))
+		return;
+	    if (!Layout.isAssigned(node))
 		return;
 	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);

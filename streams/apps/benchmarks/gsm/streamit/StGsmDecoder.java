@@ -142,7 +142,7 @@ class Helper
 	{
 	    return 32767;
 	}
-	else
+else
 	{
 	    if (a <= -32768)
 	    {
@@ -702,7 +702,7 @@ class PostProcessingFilter extends Filter
 	
 	for (short j = 0; j < srop.length; j++)
 	{
-	    output.pushShort(srop[j]);
+	    //output.pushShort(srop[j]);
 	}
     }
 }
@@ -711,6 +711,7 @@ class DecoderFeedback extends FeedbackLoop
 {
     public void init()
     {
+	this.setDelay(1);
 	this.setJoiner(WEIGHTED_ROUND_ROBIN (40, 1));  //sequence: ep[0....39], drpp
   	this.setBody(new AdditionUpdateFilter());
 	this.setSplitter(DUPLICATE ());   
@@ -719,6 +720,12 @@ class DecoderFeedback extends FeedbackLoop
 	//       the simplest way to implement things, theinput will be filtered internally.
  	this.setLoop(new LTPLoopStream());
     }
+
+    public short initPathShort(int index)
+    {
+	return 40;
+    }
+	
 }
 
 class LTPLoopStream extends Pipeline

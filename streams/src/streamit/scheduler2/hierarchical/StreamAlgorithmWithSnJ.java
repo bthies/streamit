@@ -3,7 +3,7 @@ package streamit.scheduler2.hierarchical;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.SplitFlow;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.JoinFlow;
 
-/* $Id: StreamAlgorithmWithSnJ.java,v 1.5 2003-04-06 19:40:34 karczma Exp $ */
+/* $Id: StreamAlgorithmWithSnJ.java,v 1.6 2003-04-07 04:45:34 karczma Exp $ */
 
 /**
  * This class provides an implementation for StreamInterface.
@@ -83,6 +83,14 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         PhasingSchedule phase = new PhasingSchedule (stream);
         
         int numSteadyPhases = (isSplitter ? stream.getNumSplitPhases() : stream.getNumJoinPhases());
+        
+        // if the splitter or joiner is NULL, it doesn't have
+        // steady phases - don't even try to create a phase for it!
+        if (numSteadyPhases == 0) 
+        {
+            ASSERT (nPhases == 0);
+            return phase;
+        } 
         
         // round up to a steady-state:
         // if there aren't enough executions here to make it worth

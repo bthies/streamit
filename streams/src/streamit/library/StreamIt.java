@@ -50,7 +50,10 @@ public class StreamIt extends Pipeline
                 if (stream.getInputChannel () != null)
                 {
                 	newInputCount = stream.getInputChannel ().getItemsPopped ();
-                	ASSERT (newInputCount - inputCount == stream.getInputChannel ().getPopCount()); 
+                	ASSERT (newInputCount - inputCount == stream.getInputChannel ().getPopCount(), "This probably means that you declared the wrong pop rate for " + stream + "\n  have newInput==" + newInputCount +
+				" and inputCount==" + inputCount +
+				" and popCount==" + stream.getInputChannel ().getPopCount() +
+				" on Stream " + stream); 
                 }
                 if (stream.getOutputChannel () != null)
                 {

@@ -13,34 +13,40 @@
  */
 
 
-// This is the complete FIR pipeline
+// This is the complete Filter Bank Split Join Structure
 
 import streamit.*;
 import streamit.io.*;
 
 /**
- * Class FirFilter
+ * Class Branches
  *
- * Implements an FIR Filter
+ * Implements Branches  Structure
  */
 
-public class Bank extends Pipeline {
- 
+public class Branches extends SplitJoin {
 
-    public Bank (int N,float[] H,float[] F)
+
+ public Branches (int N_samp,int N_rows,int N_ch,int N_dum ,float[][] H,float[][] F)
+
     {
-        super (N,H,F);
-	}
+        super (N_samp,N_rows,N_ch,N_dum,H,F);
+    }
 
-    public void init(  int N,float[] H,float[] F ) {
-	
-  
-	//add (new source(r)); They are here for debugging purposes
-	add (new FIR(H));
-	add (new DownSamp(N));
-	add (new UpSamp(N));
-	add (new FIR(F));
-	//add (new sink(r.length));
+    public void init( int N_samp,int N_ch,int N_col,int N_dum,float[][] H,float[][] F ) {
+
+	float[] H_ch=new float[N_col];
+	float[] F_ch=new float[N_col];
+	setSplitter(DUPLICATE());
+	for (int i=0; i < N_ch; i++)
+	    	for (int j=0; j<N_col;j++)
+		{
+		    H_ch[j]=H[i][j];
+		    F_ch[j]=F[i][j];
+		    add (new Bank(N_samp,H_ch,F_ch));
+		}	
+	setJoiner(ROUND_ROBIN());
+		    
     }
     
 

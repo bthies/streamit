@@ -12,91 +12,30 @@
  *  without express or implied warranty.
  */
 
-
-// This is the complete FIR pipeline
+// This is the complete Filter Bank Split Join Structure
 
 import streamit.*;
 import streamit.io.*;
 
 /**
- * Class FirFilter
+ * Class Branches
  *
- * Implements an FIR Filter
+ * Implements Branches  Structure
  */
-
-public class Bank extends Pipeline {
- 
-
-    public Bank (int N,float[] H,float[] F)
+public class FilterBank extends Pipeline {
+    
+    
+    public FilterBank (int N_samp,int N_rows,int N_ch ,float[][] H,float[][] F)
     {
-        super (N,H,F);
-	}
-
-    public void init(  int N,float[] H,float[] F ) {
-	
-  
-	//add (new source(r)); They are here for debugging purposes
-	add (new FIR(H));
-	add (new DownSamp(N));
-	add (new UpSamp(N));
-	add (new FIR(F));
-	//add (new sink(r.length));
+        super (N_samp,N_rows,N_ch,H,F);
     }
     
-
+    public void init( int N_samp,int N_ch,int N_col,float[][] H,float[][] F ) {
+	
+	add (new Branches(N_samp,N_ch,N_col,0,H,F));
+	add (new Combine(N_samp));
+	
+    }
+    
+    
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -11,8 +11,8 @@ class delay extends FeedbackLoop {
 	setDelay(N);
 	setBody(new Filter() {
                 public void init() {
-		    input = new Channel(Float.TYPE, 2);
-		    output = new Channel(Float.TYPE, 2);
+		    this.input = new Channel(Float.TYPE, 2);
+		    this.output = new Channel(Float.TYPE, 2);
                 }
                 public void work() {
 		    this.output.pushFloat(this.input.peekFloat(1));

@@ -189,7 +189,6 @@ public class GreedyPartitioner {
 	    RawFlattener flattener = new RawFlattener(str);
 	    count = flattener.getNumTiles();
 	    //System.out.println("Partitioner detects " + count + " tiles.");
-	    StreamItDot.printGraph(str, "during-fusion.dot");
 	    if (count>target) {
 		//boolean tried=false;
 		// make a fresh work estimate
@@ -203,49 +202,55 @@ public class GreedyPartitioner {
 		    SIRContainer cont = list.getContainer(i);
 		    if (cont instanceof SIRSplitJoin) {
 			//System.out.println("trying to fuse " + cont.size() + "-way split " + ((SIRSplitJoin)cont).getName());
-			List children=cont.getChildren();
 			if(aggressive==0) {
+			    // skip this container if it has an identity child
 			    boolean attempt=true;
-			    for(int j=0;j<children.size();j++) {
-				SIROperator child=(SIROperator)children.get(j);
-				if((!(child instanceof SIRSplitter))&&(!(child instanceof SIRJoiner))&&(child instanceof SIRIdentity)) {
-				    //System.out.println("FOUND:"+children.get(j));
+			    for(int j=0;j<cont.size();j++) {
+				if (cont.get(j) instanceof SIRIdentity) {
 				    attempt=false;
 				}
 			    }
 			    if(attempt) {
 				SIRStream newstr = FuseSplit.semiFuse((SIRSplitJoin)cont);
+				// replace toplevel stream if we're replacing it
+				if (cont==str) {
+				    str = newstr;
+				}
 				// if we fused something, quit loop
-				if (newstr!=cont) { 
+				if (newstr!=cont) {
 				    aggressive=0;
-				    //tried=true;
 				    break;
 				}
-			    } /*else
-				System.out.println("SplitJoin has Identity Child! Ignoring.");*/
+			    }
 			} else if(aggressive==1) {
+			    // skip this container if it has nothing but identity children
 			    boolean attempt=false;
-			    for(int j=0;j<children.size();j++) {
-				SIROperator child=(SIROperator)children.get(j);
-				if((!(child instanceof SIRSplitter))&&(!(child instanceof SIRJoiner))&&!(child instanceof SIRIdentity)) {
-				    //System.out.println("FOUND:"+children.get(j));
+			    for(int j=0;j<cont.size();j++) {
+				if (!(cont.get(j) instanceof SIRIdentity)) {
 				    attempt=true;
 				}
 			    }
 			    if(attempt) {
 				SIRStream newstr = FuseSplit.semiFuse((SIRSplitJoin)cont);
+				// replace toplevel stream if we're replacing it
+				if (cont==str) {
+				    str = newstr;
+				}
 				// if we fused something, quit loop
-				if (newstr!=cont) { 
+				if (newstr!=cont) {
 				    aggressive=0;
-				//tried=true;
 				    break;
 				}
-			    } /*else
-				System.out.println("SplitJoin has all Identity Children! Ignoring.");*/
+			    }
 			} else {
+			    // otherwise, always fuse if we can
 			    SIRStream newstr = FuseSplit.semiFuse((SIRSplitJoin)cont);
+			    // replace toplevel stream if we're replacing it
+			    if (cont==str) {
+				str = newstr;
+			    }
 			    // if we fused something, quit loop
-			    if (newstr!=cont) { 
+			    if (newstr!=cont) {
 				aggressive=0;
 				//tried=true;
 				break;
@@ -256,10 +261,11 @@ public class GreedyPartitioner {
 			System.out.println("trying to fuse " + (count-target) + " from " 
 					   + cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
 			*/
-			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
-			// try lifting
+			int elim = FusePipe.fuse((SIRPipeline)cont, count-target);
+
 			Lifter.eliminatePipe((SIRPipeline)cont);
-			if (num!=0) {
+			// try lifting
+			if (elim!=0) {
 			    aggressive=0;
 			    break;
 			}

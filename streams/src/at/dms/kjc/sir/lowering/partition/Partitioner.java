@@ -12,9 +12,10 @@ import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
 
 public class Partitioner {
     /**
-     * Tries to adjust <str> into <num> pieces of equal work.
+     * Tries to adjust <str> into <num> pieces of equal work, and
+     * return new stream.
      */
-    public static void doit(SIRStream str, int target) {
+    public static SIRStream doit(SIRStream str, int target) {
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
 	System.err.print("Lifting filters... ");
@@ -64,5 +65,6 @@ public class Partitioner {
 	work.printGraph(str, "work-after.dot");
 	work.getSortedFilterWork().writeToFile("work-after.txt");
 	*/
+	return str;
     }
 }

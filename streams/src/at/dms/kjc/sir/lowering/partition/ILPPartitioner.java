@@ -57,7 +57,6 @@ public class ILPPartitioner extends ListPartitioner {
      * it has a target of -1.
      */
     private HashMap calcPartitions() {
-	buildNodesList();
 	double[] sol = calcSolution();
 	HashMap result = buildPartitionMap(sol);
 	return result;
@@ -118,51 +117,6 @@ public class ILPPartitioner extends ListPartitioner {
 	    }
 	}
 	return result;
-    }
-
-    /**
-     * Constructs <nodes>, <first> and <last> out of <str>.
-     */
-    private void buildNodesList() {
-	// add dummy start node
-	nodes.add(new DummyNode());
-
-	// add nodes in stream
-	SIRIterator it = IterFactory.createIter(str);
-	it.accept(new EmptyStreamVisitor() {
-
-		public void preVisitStream(SIRStream self,
-					   SIRIterator iter) {
-		    first.put(self, new Integer(nodes.size()));
-		}
-
-		public void postVisitStream(SIRStream self,
-					    SIRIterator iter) {
-		    last.put(self, new Integer(nodes.size()-1));
-		}
-
-		public void visitFilter(SIRFilter self,
-					SIRFilterIter iter) {
-		    preVisitStream(self, iter);
-		    nodes.add(self);
-		    postVisitStream(self, iter);
-		}
-
-		public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-						 SIRFeedbackLoopIter iter) {
-		    super.preVisitFeedbackLoop(self, iter);
-		    nodes.add(self.getJoiner());
-		}
-		
-		public void postVisitSplitJoin(SIRSplitJoin self,
-					       SIRSplitJoinIter iter) {
-		    nodes.add(self.getJoiner());
-		    super.postVisitSplitJoin(self, iter);
-		}
-	    });
-
-	// add dummy end node
-	nodes.add(new DummyNode());
     }
 
     /**

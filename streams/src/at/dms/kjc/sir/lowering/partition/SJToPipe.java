@@ -68,16 +68,27 @@ public class SJToPipe implements StreamVisitor {
     /* post-visit a pipeline */
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
+	convertChildren(self);
     }
 
     /* post-visit a splitjoin */
     public void postVisitSplitJoin(SIRSplitJoin self,
 				   SIRSplitJoinIter iter) {
-	RefactorSplitJoin.convertToPipeline(self);
+	convertChildren(self);
     }
 
     /* post-visit a feedbackloop */
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
+	convertChildren(self);
+    }
+
+    private void convertChildren(SIRContainer cont) {
+	for (int i=0; i<cont.size(); i++) {
+	    SIRStream child = cont.get(i);
+	    if (child instanceof SIRSplitJoin) {
+		cont.replace(child, RefactorSplitJoin.convertToPipeline((SIRSplitJoin)child));
+	    }
+	}
     }
 }

@@ -8,16 +8,25 @@ import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.Lifter;
 import java.util.List;
 
+/**
+ * This class is for refactoring pipelines.
+ *
+ * All methods in this class are written in an immutable way.  Calling
+ * them does not mutate the arguments, or the parents of the
+ * arguments.  (This is to facilitate their use in partitioning.
+ *
+ * !!! NOTE that this implies that, if you're trying to replace a
+ * stream in the stream graph, you'll need to do this manually after
+ * return from the method.
+ */
 public class RefactorPipeline {
 
     /**
-     * Mutates <pipe> to replace children at indices first...last with
-     * a pipeline that contains those children.
+     * Returns a new pipeline that is like <pipe> but replaces
+     * children at indices first...last with a pipeline that contains
+     * those children.
      */
-    public static void addHierarchicalChild(SIRPipeline pipe, int first, int last) {
-
-	PartitionDot.printGraph(pipe, "debug1.dot");
-
+    public static SIRPipeline addHierarchicalChild(SIRPipeline pipe, int first, int last) {
 	// make partition group to represent this partitioning
 	int[] group = new int[pipe.size()+first-last];
 	for (int i=0; i<first; i++) {
@@ -28,23 +37,23 @@ public class RefactorPipeline {
 	    group[i] = 1;
 	}
 	// do partitioning
-	addHierarchicalChildren(pipe, PartitionGroup.createFromArray(group));
-
-	PartitionDot.printGraph(pipe, "debug2.dot");
+	return addHierarchicalChildren(pipe, PartitionGroup.createFromArray(group));
     }
 
     /**
      * Given a pipeline <pipe> and a partitioning <partition> of its
-     * children, mutates the pipeline so that all the elements of each
-     * partition are factored into their own pipelines.
+     * children, returns a new pipeline that has all the elements of
+     * each partition factored into their own pipelines.
      */
-    public static void addHierarchicalChildren(SIRPipeline pipe, PartitionGroup partition) {
+    public static SIRPipeline addHierarchicalChildren(SIRPipeline pipe, PartitionGroup partition) {
+	// make result
+	SIRPipeline result = new SIRPipeline(pipe.getParent(), pipe.getIdent() + "_Hier", 
+					     JFieldDeclaration.EMPTY(), JMethodDeclaration.EMPTY());
+	result.setInit(SIRStream.makeEmptyInit());
+
 	// get copy of list of old children, and parameters passed to them
 	List children = pipe.getChildren();
 	List params = pipe.getParams();
-
-	// clear old children
-	pipe.clear();
 
 	// for all the partitions...
 	for(int i=0;i<partition.size();i++) {
@@ -53,7 +62,7 @@ public class RefactorPipeline {
 		// if there is only one stream in the partition, then
 		// we don't need to do anything; just add the child
 		int pos = partition.getFirst(i);
-		pipe.add((SIRStream)children.get(pos), (List)params.get(pos));
+		result.add((SIRStream)children.get(pos), (List)params.get(pos));
 	    } else {
 		// the child pipeline
 		SIRPipeline childPipe = new SIRPipeline(pipe,
@@ -68,8 +77,10 @@ public class RefactorPipeline {
 		}
 
 		// update new toplevel pipeline
-		pipe.add(childPipe);
+		result.add(childPipe);
 	    }
 	}
+	
+	return result;
     }
 }

@@ -36,7 +36,7 @@ public final class HorizontalCutTransform extends StreamTransform {
 	    // add one because of indexing convention in partitiongroup
 	    int[] partitions = { cutPos + 1 , pipe.size() - cutPos - 1 };
 	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
-	    RefactorPipeline.addHierarchicalChildren(pipe, group);
+	    return RefactorPipeline.addHierarchicalChildren(pipe, group);
 	} else if (str instanceof SIRSplitJoin) {
 	    // represents a cut in the children's children, since we are cutting each pipeline
 	    SIRSplitJoin sj = (SIRSplitJoin)str;
@@ -47,8 +47,8 @@ public final class HorizontalCutTransform extends StreamTransform {
 	    return RefactorSplitJoin.addSyncPoints(sj, group);
 	} else {
 	    Utils.fail("Expected Pipeline or SplitJoin, but got: " + str.getClass());
+	    return str;
 	}
-	return str;
     }
 
     public String toString() {

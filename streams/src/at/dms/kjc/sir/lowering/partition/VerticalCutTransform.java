@@ -34,8 +34,7 @@ public final class VerticalCutTransform extends StreamTransform {
 	// add one because of indexing convention in partitiongroup
 	int[] partitions = { cutPos + 1, sj.size() - cutPos - 1};
 	PartitionGroup group = PartitionGroup.createFromArray(partitions);
-	RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
-	return sj;
+	return RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)sj, group);
     }
 
     public String toString() {

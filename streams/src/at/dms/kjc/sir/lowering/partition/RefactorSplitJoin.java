@@ -22,6 +22,9 @@ public class RefactorSplitJoin {
      * possibly be lifted with more clever scheduling) and that have
      * the same input and output type.  Otherwise this returns the
      * original <sj>.
+     *
+     * Note that this is an immutable method -- does not modify <sj>
+     * or its parent.
      */
     public static SIRStream convertToPipeline(SIRSplitJoin sj) {
 	if (sj.getInputType()!=sj.getOutputType()) {
@@ -115,24 +118,25 @@ public class RefactorSplitJoin {
 		FusePipe.fuse((SIRPipeline)result);
 	    }
 	}
-	// replace <sj> with <pipe> and return <pipe>
-	if (sj.getParent()!=null) {
-	    sj.getParent().replace(sj, pipe);
-	}
 	return pipe;
     }
 
     /**
      * Given a splitjoin <sj> and a partitioning <partition> of its
-     * children, mutates <sj> so that all the elements of each
-     * partition are factored into their own splitjoin.
+     * children, returns a new splitjoin with each partition factored
+     * into its own child splitjoin.
+     *
+     * Note that this is an immutable method -- does not modify <sj>
+     * or its parent.
      */
-    public static void addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
+    public static SIRSplitJoin addHierarchicalChildren(SIRSplitJoin sj, PartitionGroup partition) {
+	// make result
+	SIRSplitJoin result = new SIRSplitJoin(sj.getParent(), sj.getIdent() + "_Hier", sj.getFields(), sj.getMethods());
+	result.setInit(SIRStream.makeEmptyInit());
+
 	// get copy of children and params
 	List children = sj.getParallelStreams();
 	List params = sj.getParams();
-	// clear old children
-	sj.clear();
 	
 	// the new and old weights for the splitter and joiner
 	int[] oldSplit=sj.getSplitter().getWeights();
@@ -147,7 +151,7 @@ public class RefactorSplitJoin {
 		// if there is only one stream in the partition, then
 		// we don't need to do anything; just add the children
 		int pos = partition.getFirst(i);
-		sj.add((SIRStream)children.get(pos), (List)params.get(pos));
+		result.add((SIRStream)children.get(pos), (List)params.get(pos));
 		newSplit[i]=new JIntLiteral(oldSplit[pos]);
 		newJoin[i]=new JIntLiteral(oldJoin[pos]);
 	    } else {
@@ -179,12 +183,15 @@ public class RefactorSplitJoin {
 		// update new toplevel splitjoin
 		newSplit[i]=new JIntLiteral(sumSplit);
 		newJoin[i]=new JIntLiteral(sumJoin);
-		sj.add(childSplitJoin);
+		result.add(childSplitJoin);
 	    }
 	}
 	// set the splitter and joiner types according to the new weights
-	sj.setSplitter(SIRSplitter.create(sj,sj.getSplitter().getType(),newSplit));
-	sj.setJoiner(SIRJoiner.create(sj,sj.getJoiner().getType(),newJoin));
+	result.setSplitter(SIRSplitter.create(sj,sj.getSplitter().getType(),newSplit));
+	result.setJoiner(SIRJoiner.create(sj,sj.getJoiner().getType(),newJoin));
+
+	// return new sj
+	return result;
     }
 
     /**
@@ -204,8 +211,8 @@ public class RefactorSplitJoin {
      *      |                        \ | /
      *      |                          .
      *
-     * The returned element is also replaced in the parent (that is,
-     * the parent is mutated.)
+     * Note that this is an immutable method -- does not modify <sj>
+     * or its parent.
      */
     public static SIRPipeline addSyncPoints(SIRSplitJoin sj, PartitionGroup partition) {
 	// check what we're getting
@@ -264,9 +271,6 @@ public class RefactorSplitJoin {
 	    result.add(newSJ);
 	}
 
-	// replace in parent
-	sj.getParent().replace(sj,result);
-
 	return result;
     }
 
@@ -275,6 +279,8 @@ public class RefactorSplitJoin {
      * <pipe>.  Note that this might INCREASE the tile count because
      * more joiners are introduced into the graph.  If this is not
      * desired, use only removeMatchingSyncPoints (below).
+     *
+     * Note that this method MUTATES its argument.
      */
     public static boolean removeSyncPoints(SIRPipeline pipe) {
 	boolean madeChange = false;
@@ -341,10 +347,10 @@ public class RefactorSplitJoin {
 		// it.  Only do this if we're actually grouping
 		// something; otherwise we're already all set.
 		if (partition<sj1.size()) {
-		    addHierarchicalChildren(sj1, PartitionGroup.createFromAssignments(sj1.getParallelStreams(), map1));
+		    pipe.set(i, addHierarchicalChildren(sj1, PartitionGroup.createFromAssignments(sj1.getParallelStreams(), map1)));
 		}
 		if (partition<sj2.size()) {
-		    addHierarchicalChildren(sj2, PartitionGroup.createFromAssignments(sj2.getParallelStreams(), map2));
+		    pipe.set(i+1, addHierarchicalChildren(sj2, PartitionGroup.createFromAssignments(sj2.getParallelStreams(), map2)));
 		}
 	    }
 	}
@@ -369,6 +375,8 @@ public class RefactorSplitJoin {
      * procedure.
      *
      * Returns whether or not any change was made.
+     *
+     * Note that this method MUTATES its argument.
      */
     public static boolean removeMatchingSyncPoints(SIRPipeline pipe) {
 	boolean madeChange = false;
@@ -455,6 +463,8 @@ public class RefactorSplitJoin {
     /**
      * Raises as many children of <sj> as it can into <sj>, using
      * helper functions below.
+     *
+     * Note that this method MUTATES its argument.
      */
     public static boolean raiseSJChildren(SIRSplitJoin sj) {
 	if (sj.getSplitter().getType()==SIRSplitType.DUPLICATE) {
@@ -497,6 +507,9 @@ public class RefactorSplitJoin {
      *      \   /
      *      RR(1)
      *        |
+     *
+     * Note that this method MUTATES its argument.
+     *
      */
     private static boolean raiseDupDupSJChildren(SIRSplitJoin sj)
     {
@@ -577,6 +590,8 @@ public class RefactorSplitJoin {
      * split weights equals the i'th split weight in <sj>, and if the
      * sum of <child_i>'s join weights equals the i'th join weight in
      * <sj>.
+     *
+     * Note that this method MUTATES its argument.
      */
     private static boolean raiseRRSJChildren(SIRSplitJoin sj) {
 	boolean didRaising = false;

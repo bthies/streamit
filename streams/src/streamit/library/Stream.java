@@ -90,6 +90,7 @@ public class Stream extends Operator {
         while (true)
         {
             RunSinks ();
+            DrainChannels ();
         }
     }
 

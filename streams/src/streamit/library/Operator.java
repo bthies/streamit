@@ -50,10 +50,34 @@ abstract class Operator extends DestroyedClass
         }
     }
     
+    void DrainChannels ()
+    {
+        while (!fullChannels.isEmpty ())
+        {
+	        // empty any full channels:
+    	    Iterator fullChannel;
+        	fullChannel = fullChannels.iterator ();
+        
+	        while (fullChannel.hasNext ())
+	        {
+	        	Channel ch = (Channel) fullChannel.next ();
+	        	ASSERT (ch != null);
+	        	
+	        	ch.GetSink ().Work ();
+	        }
+	     }
+    }
+    
+    
     void AddFullChannel (Channel channel)
     {
         fullChannels.add (channel);
     }
+    
+    void RemoveFullChannel (Channel channel)
+	{
+		fullChannels.remove (channel);
+	}
 
     // send a message to a handler that returns <stub> within <delay>
     // units of my input/output (to be specified more clearly...)

@@ -14,21 +14,18 @@ public class SplitJoin extends Stream {
     }
 
     // specify the splitter
-    public Stream splitter(Splitter s) 
+    public void UseSplitter(Splitter s) 
     {
-        return null;
     }
 
     // specify the joiner
-    public Stream joiner(Joiner s) 
+    public void UseJoiner(Joiner s) 
     {
-        return null;
     }
 
     // add a stream to the parallel section between the splitter and the joiner
-    public Stream add(Stream s) 
+    public void Add(Stream s) 
     {
-        return null;
     }
 
 }

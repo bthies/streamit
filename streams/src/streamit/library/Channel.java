@@ -34,6 +34,28 @@ public class Channel extends DestroyedClass
     {
         EnsureData (1);
     }
+    
+    private void Enqueue (Object o)
+    {
+    	queue.addLast (o);
+    	
+    	// overflow at 50 chars in the queue
+    	if (queue.size () == 50)
+    	{
+    		source.AddFullChannel (this);
+    	}
+    }
+    
+    private Object Dequeue ()
+    {
+    	if (queue.size () == 50)
+    	{
+    		source.RemoveFullChannel (this);
+    	}
+    	
+    	return queue.removeFirst ();
+    }
+    
 
     // PUSH OPERATIONS ----------------------------------------------
 
@@ -42,7 +64,7 @@ public class Channel extends DestroyedClass
     {
         ASSERT (o.getClass () == type);
         
-        queue.addLast(o);
+        Enqueue (o);
     }
 
     // push an int
@@ -50,7 +72,7 @@ public class Channel extends DestroyedClass
     {
         ASSERT (type == Integer.TYPE);
         
-        queue.addLast (new Integer (i));
+        Enqueue (new Integer (i));
     }
 
     // push a char
@@ -58,7 +80,7 @@ public class Channel extends DestroyedClass
     {
         ASSERT (type == Character.TYPE);
         
-        queue.addLast (new Character  (c));
+        Enqueue (new Character  (c));
     }
 
     // push a double
@@ -66,7 +88,7 @@ public class Channel extends DestroyedClass
     {
         ASSERT (type == Double.TYPE);
         
-        queue.addLast (new Double (d));
+        Enqueue (new Double (d));
     }
 
     // push a String
@@ -83,7 +105,7 @@ public class Channel extends DestroyedClass
         EnsureData ();
         
         Object data;
-        data = queue.removeFirst ();
+        data = Dequeue ();
         ASSERT (data != null);
         
         return data;

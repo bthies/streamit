@@ -359,13 +359,11 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                 // SIR object
                 name = (String) getStreamObject ().getClass ().getMethod ("getName", null).invoke (getStreamObject (), null);
             }
-            if (name.startsWith ("DecoderFeedback")) {
-                fakeDecoderFeedback ();
-                return;
-            }
         } catch (Throwable e)
-        {
-            ERROR (e);
+        { }
+        if (name.startsWith ("DecoderFeedback")) {
+            fakeDecoderFeedback ();
+            return;
         }
 
         ERROR ("Couldn't schedule loop " + name + ".\n" +

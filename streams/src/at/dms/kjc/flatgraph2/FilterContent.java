@@ -65,6 +65,9 @@ public class FilterContent {
 	constant=content.constant;
 	popCount=content.popCount;
 	linear=content.linear;
+	begin=content.begin;
+	end=content.end;
+	pos=content.pos;
     }
 
     public FilterContent(SIRPhasedFilter filter) {
@@ -93,6 +96,16 @@ public class FilterContent {
 	    linear=true;
 	    constant=unflat.constant;
 	    popCount=unflat.popCount;
+	    int mod=array.length%popCount;
+	    if(mod!=0) {
+		final int len=array.length+popCount-mod;
+		double[] temp=new double[len];
+		System.arraycopy(array,0,temp,0,array.length);
+		array=temp;
+	    }
+	    begin=true;
+	    end=true;
+	    pos=0;
 	} else {
 	    linear=false;
 	    init=filter.getInitPhases();
@@ -114,8 +127,8 @@ public class FilterContent {
 	}
     }
     
-    public FilterContent(String name,double[] array,double constant) {
-    }
+    //public FilterContent(String name,double[] array,double constant) {
+    //}
     
     /*public LinearFilterRepresentation getLinear() {
 	//return linear;
@@ -127,7 +140,15 @@ public class FilterContent {
     }
 
     public void setArray(double[] array) {
-	this.array=array;
+	//this.array=array;
+	int mod=array.length%popCount;
+	if(mod!=0) {
+	    final int len=array.length+popCount-mod;
+	    double[] temp=new double[len];
+	    System.arraycopy(array,0,temp,0,array.length);
+	    array=temp;
+	} else
+	    this.array=array;
     }
 
     public void setBegin(boolean begin) {

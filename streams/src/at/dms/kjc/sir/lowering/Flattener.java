@@ -166,8 +166,7 @@ public class Flattener {
 				  boolean transform) {
 	System.out.println("Running Linear Analysis");
 	// run the linear analysis and stores the information garnered in the lfa
-	LinearFilterAnalyzer lfa = LinearFilterAnalyzer.findLinearFilters(str,
-									  StreamItOptions.debug);
+	LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, StreamItOptions.debug);
 
 	// now, print out the graph using the LinearPrinter which colors the graph
 	// nodes based on their linearity.

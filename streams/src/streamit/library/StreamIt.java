@@ -15,6 +15,7 @@ import java.util.ListIterator;
 public class StreamIt extends Pipeline
 {
     int numExecutions = 0;
+    boolean printdot = false;
     void runSchedule (Object schedule)
     {
         if (schedule instanceof Filter)
@@ -22,7 +23,7 @@ public class StreamIt extends Pipeline
             numExecutions ++;
             if (numExecutions == 10000)
             {
-                System.out.print (".");
+                if (printdot) System.out.print (".");
                 numExecutions = 0;
             }
             ((Operator) schedule).work ();
@@ -83,6 +84,10 @@ public class StreamIt extends Pipeline
                 {
                     index++;
                     nIters = Integer.valueOf (args[index]).intValue ();
+                } else
+                if (args [index].equals ("-printdot"))
+                {
+                    printdot = true;
                 } else
                 if (args [index].equals ("-norun"))
                 {

@@ -1,0 +1,64 @@
+FarmIt
+
+A number gathering script that farms out compiles/runs on specified
+cagfarms and gathers all of the results into a one file that is in an
+excel-friendly format.
+
+IT DOES NOT CHECK FOR CORRECTNESS!  That is left to the reg test.
+
+usage:
+
+"FarmIt low_raw_size high_row_size starting_cagfarm ending_cagfarm
+compiler_options benchmark_file output_file"
+
+A simple example should suffice to explain the options:
+
+FarmIt 1 8 22 33 "-a -N 5" working_benchmarks results
+
+The above states that we want to run the benchmarks listed in the file
+"working_benchmarks" on raw sizes 1x1 thru 8x8 (inclusive) on cagfarms
+22 thru 33 with the options "-a -N 5" (the -raw option is
+automatically generated) and place the results in the file "results".
+
+Preliminaries:
+
+* You must setup ssh-agent to allow ssh logins without passwords.  It is
+not hard...
+http://www.csua.berkeley.edu/ssh-howto.html#agent
+
+* At the beginning of the script, the script will try to log into each
+machine that you have specified and print the date in sequence, 
+if you have never logged on that machine before you will have to
+answer yes to accept the machine's public key.  If it cannot log on to
+a specific machine, it will not try to run jobs on that machine.
+
+* You should run the script on a machine different from the ones
+you are farming out the runs on.
+
+* STREAMIT_HOME must be defined
+
+* you can change the working directory of the script.  Right now it
+runs everything on /home/bits6/NO_BACKUP/$USER/results.  This
+directory must exist before the script runs (it will yell at you if it
+does not exist).
+
+* You must specify "-N x" in the options argument.  This scripts relies
+on -N to generate the results.  It will just run the benchmarks without
+-N and delete all the tmp files.
+
+* "benchmarks" file: on separate lines, the absolute path name of each
+java file that you want to run (with the .java extension).  
+It only supports apps that are a single file (so use Linked*.java).
+See the file working_benchmarks in this directory for an example.
+
+* I think you can run multiple instances of this script concurrently
+as long as the work machines are different for the different instances,  
+I have not tested it though.
+
+Output:
+
+It places all of the results in "outputfile" in a format that is
+easily imported into excel.  All columns are delimited by ";" and text
+is quoted.  To import into excel, open the file in excel.  It will
+bring up the "Text Import Wizard".  Select delimited then next.  Check
+off semicolon and change the "text qualifier to {none}", then click finished.

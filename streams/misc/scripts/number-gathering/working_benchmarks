@@ -1,0 +1,6 @@
+$STREAMIT_HOME/apps/benchmarks/beamformer/streamit/BeamFormer.java
+$STREAMIT_HOME/apps/benchmarks/fm/streamit/LinkedFMTest.java
+$STREAMIT_HOME/apps/benchmarks/fft/streamit/LinkedFFT2.java
+$STREAMIT_HOME/apps/benchmarks/fir/streamit/FIRfine.java
+$STREAMIT_HOME/apps/benchmarks/filterbank/streamit/LinkedFBtest.java
+$STREAMIT_HOME/apps/benchmarks/bitonic-sort/streamit/BitonicSort.java

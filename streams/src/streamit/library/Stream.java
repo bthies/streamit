@@ -512,7 +512,7 @@ public abstract class Stream extends Operator
     public void run(String args[])
     {
         boolean scheduledRun = true;
-        boolean printGraph = false;
+        boolean printGraph = true;
         boolean doRun = true;
         boolean schedsingleapp = false;
         int nIters = -1;

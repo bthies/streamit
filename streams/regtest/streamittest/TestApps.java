@@ -1,6 +1,6 @@
 /**
  * Test the programs in the apps/applications directory
- * $Id: TestApps.java,v 1.10 2003-01-31 15:10:38 thies Exp $
+ * $Id: TestApps.java,v 1.11 2003-02-03 20:50:09 aalamb Exp $
  **/
 package streamittest;
 
@@ -10,7 +10,7 @@ import junit.framework.*;
 public class TestApps extends StreamITTestCase {
     static String STREAM_ROOT = null;
     static String APPS_ROOT = null;
-
+    
     public TestApps(String name) {
 	this(name, DEFAULT_FLAGS);
     }
@@ -34,13 +34,19 @@ public class TestApps extends StreamITTestCase {
     
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
-
+	
 	suite.addTest(new TestApps("testCrc", flags));
-	suite.addTest(new TestApps("testMP3Simple", flags));
-
-	// this one doesn't fit on any raw4
+	
+	// this one doesn't fit on raw 8 without partitioning
+	if (((flags & CompilerInterface.RAW[8]) == CompilerInterface.RAW[8]) &&
+	    (!((flags & CompilerInterface.PARTITION) == CompilerInterface.PARTITION))) {
+	    // don't add it to the regtest.
+	} else {
+	    // otherwise, we are good to go
+	    suite.addTest(new TestApps("testMP3Simple", flags));
+	}
 	suite.addTest(new TestApps("testNokiaFine", flags));
-
+	
 	return suite;
     }
 

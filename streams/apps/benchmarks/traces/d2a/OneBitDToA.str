@@ -1,0 +1,140 @@
+/** 
+ * This app is intended to implement a one bit d to a oversampler
+ * and noise shaper. This type of application is used in CD players
+ * to enable using a cheap d to a converter and still keep performance
+ * acceptable.
+ **/
+void->void pipeline OneBitDToA {
+    // the source of data (eventually, this should be an audio stream)
+    //add DataSource();
+    add FileReader<float>("input");
+
+    // go through the process of oversampling
+    add OverSampler();
+    
+    // The noise shaper moves some of the noise into higher frequencies
+    add NoiseShaper();
+    // This low pass filter filters out the noise that is in higher frequencies.
+    add LowPassFilter(1,pi/100,256);
+    //add DataSink();
+    add FileWriter<float>("output");
+}
+
+/** 
+ * This is a 16x oversampler -- eg it upsamples
+ * its input by a factor of 16. The 16 factor is
+ * achieved in four steps. In each step we upsample
+ * and then low pass filter with cutoff of pi/2. 
+ **/
+float->float pipeline OverSampler {
+  for (int i=0; i<4; i++) {
+    add Expander(2);
+    add LowPassFilter(2,pi/2,64);
+  }
+}
+
+
+/** 
+ * This is a first order noise shaper. It is built with a
+ * feedback loop. See Oppenheim, Shafer and Buck, 2nd ed.
+ * page 211 for a more detailed explaination.
+ **/
+float->float feedbackloop NoiseShaper {
+  join roundrobin(1,1);
+  body pipeline {
+    add AdderFilter();
+    add QuantizerAndError();
+  }
+  loop Delay();
+  split roundrobin(1,1);
+  enqueue 0;
+}
+
+
+
+
+
+/**
+ * Simple data source that outputs a combination of 
+ * three sine waves with a period of 100 samples.
+ **/
+void->float filter DataSource {
+  int SIZE = 100;
+  float[SIZE] data;
+  int index;
+  init {
+    // initialize the data array.
+    for (int i=0; i<SIZE; i++) {
+      float t = i;
+      data[i] = (sin((2*pi)*(t/SIZE)) + 
+		 sin((2*pi)*(1.7*t/SIZE) + (pi/3)) +
+		 sin((2*pi)*(2.1*t/SIZE) + (pi/5)));
+    }
+    index = 0;
+  }
+  work push 1 {
+    push(data[index]);
+    index = (index + 1)%SIZE;
+  }
+}
+
+/** Simple sink that prints out the data that it receives. **/
+float->void filter DataSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** Simple data selector filter (for filtering out multiplexed output for debugging) **/
+float->float filter DataSelector {
+  work pop 2 push 1 {
+    //push(pop());
+    pop();
+    push(pop());
+  }
+}
+
+
+/**
+ * Quantizer filter that converts the input into
+ * either 1 or -1 as a first output and then
+ * outputs the error value (input-output) as second
+ * output.
+ **/
+float->float filter QuantizerAndError {
+  work pop 1 push 2 {
+    float inputValue = pop();
+    float outputValue;
+
+    // calculate output based on sign of input
+    if (inputValue < 0) {
+      outputValue = -1;
+    } else {
+      outputValue = 1;
+    }
+    
+    // now calculate the error value
+    float errorValue = (outputValue-inputValue);
+
+    // and push both of the values on to the output tape
+    push(outputValue);
+    push(errorValue);
+  }
+}
+
+/** Simple adder (add two sequential values on tape). **/
+float->float filter AdderFilter {
+  work pop 2 push 1 {
+    push (pop() + pop());
+  }
+}
+
+/** Unit delay -- delays values by one. **/
+float->float filter Delay {
+  float state;
+  init {state = 0;}
+  work pop 1 push 1 {
+    push(state);
+    state = pop();
+  }
+}

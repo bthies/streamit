@@ -26,9 +26,15 @@ import java.util.HashMap;
  * and an ordered list of field names and types.  You can retrieve the
  * list of names, and the type a particular name maps to.  The names
  * must be unique within a given structure.
+ *<p>
+ * There is an important assumption in testing for equality and
+ * type promotions: two structure types are considered equal if
+ * they have the same name, regardless of any other characteristics.
+ * This allows structures and associated structure-reference types
+ * to sanely compare equal.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypeStruct.java,v 1.4 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: TypeStruct.java,v 1.5 2004-02-13 21:43:28 dmaze Exp $
  */
 public class TypeStruct extends Type
 {
@@ -109,6 +115,37 @@ public class TypeStruct extends Type
     public Type getType(String f)
     {
         return (Type)types.get(f);
+    }
+
+    // Remember, equality and such only test on the name.
+    public boolean equals(Object other)
+    {
+        if (other instanceof TypeStruct)
+        {
+            TypeStruct that = (TypeStruct)other;
+            return this.name.equals(that.name);
+        }
+        
+        if (other instanceof TypeStructRef)
+        {
+            TypeStructRef that = (TypeStructRef)other;
+            return name.equals(that.getName());
+        }
+        
+        if (this.isComplex() && other instanceof Type)
+            return ((Type)other).isComplex();
+        
+        return false;
+    }
+    
+    public int hashCode()
+    {
+        return name.hashCode();
+    }
+    
+    public String toString()
+    {
+        return name;
     }
 }
 

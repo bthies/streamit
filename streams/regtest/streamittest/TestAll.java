@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.16 2002-11-20 15:23:01 aalamb Exp $
+ * $Id: TestAll.java,v 1.17 2002-11-27 01:31:38 thies Exp $
  **/
 package streamittest;
 
@@ -19,11 +19,11 @@ public class TestAll extends TestCase {
      **/
     public static Test makeTestSuite(int flags) {
 	TestSuite suite = new TestSuite();
-	//suite.addTest(TestTests.suite(flags));
-	//suite.addTest(TestExamples.suite(flags));
-	//suite.addTest(TestApps.suite(flags));
+	suite.addTest(TestTests.suite(flags));
+	suite.addTest(TestExamples.suite(flags));
+	suite.addTest(TestApps.suite(flags));
 	suite.addTest(TestBenchmarks.suite(flags));
-	//suite.addTest(TestTemplate.suite(flags));
+	suite.addTest(TestTemplate.suite(flags));
 	return suite;	
     }
 

@@ -1,0 +1,15 @@
+<benchmark>
+  <name>BubbleSort</name>
+  <desc>Bubble Sorting Algorithm</desc>
+  <description>
+  Simple comparison based algorithm, compares each item with adjacent one,
+  swapping their orders if required.  Causes larger values to "bubble" to
+  end of the list.  Runs in O(n^2) general case.
+  </description>
+  <reference>http://linux.wku.edu/~lamonml/algor/sort/bubble.html</reference>
+  <implementations>  
+    <impl lang="StreamIt">
+      <file>BubbleSort.str</file>
+    </impl>   
+  </implementations>
+</benchmark>

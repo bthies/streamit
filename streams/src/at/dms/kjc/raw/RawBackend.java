@@ -182,7 +182,6 @@ public class RawBackend {
 	    executionCounts = SIRScheduler.getExecutionCounts(str);
 	    PartitionDot.printScheduleGraph(str, "schedule.dot", executionCounts);
 	    graphFlattener = new GraphFlattener(str);
-	    graphFlattener.dumpGraph("flatgraph.dot");
 	    System.out.println("Flattener End.");
 
 	    //create the execution counts for other passes

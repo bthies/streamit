@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.56 2004-05-25 02:30:57 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.57 2004-06-25 19:33:23 mgordon Exp $
  */
 
 prefix Kjc
@@ -402,5 +402,8 @@ longname		"scheduler"
 	requireArgument
 	help		"For the SpaceTime RAW backend, either work, dep, or comm."
 
-
-
+longname 		"rstream"
+	shortcut	"R"
+	type 		boolean
+	default		"false"
+	help		"Generate code for the RStream front-end."

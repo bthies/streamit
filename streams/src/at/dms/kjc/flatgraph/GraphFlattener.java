@@ -50,7 +50,8 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    ((FlatNode)it.next()).swapSplitterEdges();
 	    
 	}
-	
+	//dump the flatgraph of the application
+	dumpGraph("flatgraph.dot");
     }
 
     /**

@@ -77,6 +77,8 @@ public class StreaMITMain {
             backendClass = KjcOptions.backend;
         } else if (KjcOptions.graph) {
             backendClass = "streamit.eclipse.grapheditor.graph.GraphEncoder";
+	} else if (KjcOptions.rstream) {
+	    backendClass = "at.dms.kjc.rstream.StrToRStream";
         } else if (KjcOptions.raw != -1) {
             System.out.println("*/");
             if (KjcOptions.spacetime) {

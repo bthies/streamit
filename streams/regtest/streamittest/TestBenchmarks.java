@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.24 2003-07-11 14:25:03 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.25 2003-09-13 05:18:03 thies Exp $
  **/
 package streamittest;
 
@@ -66,6 +66,19 @@ public class TestBenchmarks extends StreamITTestCase {
     {
         String root = BENCH_ROOT + "beamformer/streamit/";
         doMake(root);
+	// first test java versions as hand-written
+	testBeamFormerJava(root);
+	// then generate java from new syntax and test those, too
+        doSyntaxConvertTest(root, "BeamFormer.str", "BeamFormer.java");
+        doSyntaxConvertTest(root, "CoarseBeamFormer.str", "CoarseBeamFormer.java");
+        doSyntaxConvertTest(root, "SerializedBeamFormer.str", "SerializedBeamFormer.java");
+        doSyntaxConvertTest(root, "SerializedCoarseBeamFormer.str", "SerializedCoarseBeamFormer.java");
+	// run java tests again
+	testBeamFormerJava(root);
+    }
+
+    // only tests the java versions of the programs
+    private void testBeamFormerJava(String root) {
 	// plain beamformer
         doCompileTest(root, "BeamFormer.java");
         doRunTest(root, "BeamFormer.java", 0, 4);

@@ -44,15 +44,16 @@ void save_state::save_buffer(int thread, int steady_iter, object_write_buffer *b
     
     if (size > 1024) {
       
-      file_sock.write_chunk((char*)buf->get_ptr(offset), 1024);
+      buf->read(tmp, 1024);
+      file_sock.write_chunk(tmp, 1024);
       offset += 1024;
       size -= 1024;
       
     } else {
       
-      file_sock.write_chunk((char*)buf->get_ptr(offset), size);
+      buf->read(tmp, size);
+      file_sock.write_chunk(tmp, size);
       break;
-      
     }
     
   }

@@ -7,6 +7,8 @@
 #define PATH "/u/janiss/checkpoints/"
 
 class save_state {
+
+  object_write_buffer owb_buf;
   
  public:
 

@@ -67,7 +67,7 @@ public class PartitionUtil {
      * The following functions are for saving data to disk.
      */
     static private PrintStream out;
-    static void setupScalingStatistics() {
+    public static void setupScalingStatistics() {
 	try {
 	    out = new PrintStream(new FileOutputStream("dp_scaling.txt"));	
 	    out.println("Number of tiles" + "\t" + 
@@ -79,14 +79,14 @@ public class PartitionUtil {
 	}
     }
 
-    static void doScalingStatistics(LinkedList partitions, int numTiles) {
+    public static void doScalingStatistics(LinkedList partitions, int numTiles) {
 	out.println(numTiles + "\t" + 
 		    partitions.size() + "\t" + 
 		    getMaxWork(partitions) + "\t" + 
 		    getTotalUtilization(partitions, numTiles));
     }
 
-    static void stopScalingStatistics() {
+    public static void stopScalingStatistics() {
 	out.close();
     }
 

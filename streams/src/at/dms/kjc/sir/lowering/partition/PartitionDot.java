@@ -18,7 +18,7 @@ import at.dms.kjc.sir.lowering.fission.*;
  * This class extends the main streamit dot printer to annotate the
  * dot graphs with partitioning information. 
  **/
-class PartitionDot extends StreamItDot {
+public class PartitionDot extends StreamItDot {
     private HashMap partitions;
 
     public PartitionDot(PrintStream outputstream,

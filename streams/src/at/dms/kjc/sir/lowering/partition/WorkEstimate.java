@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Provides a means for estimating the amount of work in a stream graph.
  */
-class WorkEstimate {
+public class WorkEstimate {
     
     /**
      * Maps stream constructs to a WorkInfo node.

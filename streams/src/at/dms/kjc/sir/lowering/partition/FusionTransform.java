@@ -12,7 +12,7 @@ import at.dms.kjc.sir.lowering.fusion.*;
  * Represents a fusion of children in a stream graph.
  */
 
-class FusionTransform extends IdentityTransform {
+public class FusionTransform extends IdentityTransform {
     /**
      * Integers denoting the sorted positions of the partitions in
      * this.  That is, if <partitions> holds <3, 1, 0, 7> then

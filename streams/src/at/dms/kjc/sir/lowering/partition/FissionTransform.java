@@ -12,7 +12,7 @@ import at.dms.kjc.sir.lowering.fission.*;
  * Represents a fission of a filter in a stream graph.
  */
 
-class FissionTransform extends IdentityTransform {
+public class FissionTransform extends IdentityTransform {
     /**
      * The number of ways to fiss.
      */

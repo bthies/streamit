@@ -11,7 +11,7 @@ import at.dms.kjc.sir.lowering.*;
  * This represents a symbolic transformation on a stream graph.
  */
 
-abstract class StreamTransform {
+public abstract class StreamTransform {
     /**
      * List of child transforms.
      */
@@ -24,7 +24,7 @@ abstract class StreamTransform {
     /**
      * Perform the transform on <str> and return new stream.
      */
-    abstract SIRStream doTransform(SIRStream str);
+    public abstract SIRStream doTransform(SIRStream str);
 
     /**
      * Adds a child transform to this.

@@ -63,6 +63,14 @@ public abstract class ListPartitioner {
 	buildNodesList();
     }
 
+    public int getNumTiles() {
+	return numTiles;
+    }
+
+    public WorkEstimate getWorkEstimate() {
+	return work;
+    }
+
     /**
      * Constructs <nodes>, <first> and <last> out of <str>.
      */

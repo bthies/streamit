@@ -8,7 +8,7 @@ import java.util.*;
  * This is just a structure for recording what has been assigned to a
  * given partition.
  */
-class PartitionRecord {
+public class PartitionRecord {
     /**
      * List of ORIGINAL SIROperator's that are assigned to this
      * partition.  Note that some SIROperators can be split across

@@ -322,6 +322,17 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     }
 
     /**
+     * Returns the C type of the object, which is always a
+     * stream_context. In the generated C code, there will be a
+     * structure by this name to hold the state of the stream.  This
+     * is SPECIFIC TO THE UNIPROCESSOR BACKEND.
+     */
+    public String getTypeNameInC() {
+	return getName();
+    }
+    
+
+    /**
      * gets the init function
      */
     public JMethodDeclaration getInit() {

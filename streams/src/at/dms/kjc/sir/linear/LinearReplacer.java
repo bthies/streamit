@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.5 2002-10-25 17:22:44 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.6 2002-10-30 21:25:54 aalamb Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -73,11 +73,11 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
      * occurs if the replace calculator says that this stream should be replaced.
      **/
     private void makeReplacement(SIRStream self, SIRIterator iter) {
-	if (!this.replaceGuide.shouldReplace(self)) {
-	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
-	    LinearPrinter.println(" stop.");
-	    return;
-	}
+// 	if (!this.replaceGuide.shouldReplace(self)) {
+// 	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
+// 	    LinearPrinter.println(" stop.");
+// 	    return;
+// 	}
 	LinearPrinter.println("Creating linear replacement for " + self);
 	SIRContainer parent = self.getParent();
 	if (parent == null) {

@@ -71,6 +71,8 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	    generalSchedule(node);
 	}
 	catch (Exception e) {
+	    e.printStackTrace();
+	    
 	    System.err.println("Error Generating Switch Assembly Code");
 	}
     }
@@ -128,6 +130,8 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
     {
 	FileWriter fw = new FileWriter("sw" + Layout.getTile(node.contents) + 
 				       ".s");
+	System.out.println("Inside the general Schedule");
+	
 	SIRFilter filter = (SIRFilter)node.contents;
 	int peek, pop, push, receive;
 	//must get peek items from the upstream node on the first invocation
@@ -169,7 +173,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	    for (int i = 0; i < push; i++) {
 		if (currentSend == null)
 		    currentSend = firstSend;
-		fw.write(currentReceive.toAssembly(node, true));
+		fw.write(currentSend.toAssembly(node, true));
 		currentSend = currentSend.next;
 	    }
 	}
@@ -178,6 +182,8 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	//now the steady state schedule
 	//pop receives followed by peek sends
 	//finish when they both end at that same time...
+	currentReceive = firstReceive;
+	currentSend = firstSend;
 	while (currentReceive != null && currentSend != null) {
 	    for (int i = 0; i < pop; i++) {
 		if (currentReceive == null)
@@ -189,7 +195,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	    for (int i = 0; i < push; i++) {
 		if (currentSend == null)
 		    currentSend = firstSend;
-		fw.write(currentReceive.toAssembly(node, true));
+		fw.write(currentSend.toAssembly(node, true));
 		currentSend = currentSend.next;
 	    }
 	}

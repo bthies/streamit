@@ -3,6 +3,7 @@ package at.dms.kjc.raw;
 import java.util.Vector;
 import at.dms.kjc.sir.lowering.Namer;
 import at.dms.util.Utils;
+import at.dms.kjc.*;
 
 
 /**
@@ -69,16 +70,31 @@ public class SwitchScheduleNode
 	StringBuffer buf = new StringBuffer();
 	int toTile = Layout.getTile(to.contents);
 	int fromTile = Layout.getTile(from.contents);
-	if (fromTile - 4 == toTile)
-	    buf.append("$cN");
-	if (fromTile -1 == toTile) 
-	    buf.append("$cW");
-	if (fromTile +1 == toTile)
-	    buf.append("$cE");
-	if (fromTile +4 == toTile)
-	    buf.append("$cS");
-	if (buf.toString().equals(""))
-	    Utils.fail("Nodes not directly connected");
+	if (StreamItOptions.raw == 16) {
+	    if (fromTile - 4 == toTile)
+		buf.append("$cN");
+	    if (fromTile -1 == toTile) 
+		buf.append("$cW");
+	    if (fromTile +1 == toTile)
+		buf.append("$cE");
+	    if (fromTile +4 == toTile)
+		buf.append("$cS");
+	    if (buf.toString().equals(""))
+		Utils.fail("Nodes not directly connected");
+	}
+	else if (StreamItOptions.raw == 4) {
+	    if (fromTile - 2 == toTile)
+		buf.append("$cN");
+	    if (fromTile -1 == toTile) 
+		buf.append("$cW");
+	    if (fromTile +1 == toTile)
+		buf.append("$cE");
+	    if (fromTile +2 == toTile)
+		buf.append("$cS");
+	    if (buf.toString().equals(""))
+		Utils.fail("Nodes not directly connected");
+	}
+
 	//sending
 	if (send)
 	    buf.append("o");

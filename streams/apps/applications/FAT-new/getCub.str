@@ -1,9 +1,9 @@
 /* This is a filter produces the Cube of a MatCub type
 */
-MatCub -> complex[][][] filter getCub(int N_bm, int N_srg, int N_pri) {
+MatCub -> complex[N_bm][N_srg][N_pri] filter getCub(int N_bm, int N_srg, int N_pri) {
     init{}
     work pop 1 push 1 {
-	MatCun InSturct;
+	MatCub InStruct;
 	complex[N_bm][N_srg][N_pri] Out_Arr;
 
 	InStruct= pop();

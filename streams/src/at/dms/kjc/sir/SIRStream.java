@@ -116,6 +116,10 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	return ident;
     }
 
+    public String toString() {
+	return (this.getClass()) + " " + getIdent();
+    }
+
     /**
      * Sets the work function.
      */

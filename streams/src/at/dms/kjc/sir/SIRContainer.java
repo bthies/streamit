@@ -2,7 +2,7 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
-import java.util.List;
+import java.util.*;
 import java.io.*;
 
 /**
@@ -10,9 +10,14 @@ import java.io.*;
  * hierarchical unit.
  */
 public abstract class SIRContainer extends SIRStream {
+    /**
+     * The child streams of this.
+     */
+    protected LinkedList children;
 
     protected SIRContainer() {
 	super();
+	this.children = new LinkedList();
     }
 
     protected SIRContainer(SIRContainer parent,
@@ -20,6 +25,7 @@ public abstract class SIRContainer extends SIRStream {
 			   JFieldDeclaration[] fields,
 			   JMethodDeclaration[] methods) {
       super(parent, ident, fields, methods);
+      this.children = new LinkedList();
     }
 
     /**

@@ -14,11 +14,6 @@ import java.io.*;
  */
 public class SIRPipeline extends SIRContainer implements Cloneable {
     /**
-     * The elements of the pipeline.  Each element should be an SIRStream.
-     */
-    private LinkedList elements;
-
-    /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
     public SIRPipeline(SIRContainer parent,
@@ -26,8 +21,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 		       JFieldDeclaration[] fields,
 		       JMethodDeclaration[] methods) {
 	super(parent, ident, fields, methods);
-	// initialize elements array
-	this.elements = new LinkedList();
     }
 
     /**
@@ -37,14 +30,14 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	SIRPipeline p = new SIRPipeline(this.parent, this.ident,
 					this.fields, this.methods);
 	p.setInit(this.init);
-	for(int i = 0; i < elements.size(); i++) {
+	for(int i = 0; i < children.size(); i++) {
 	    // get child
-	    SIRStream child = (SIRStream)this.elements.get(i);
+	    SIRStream child = (SIRStream)this.children.get(i);
 	    // clone child
 	    SIRStream childClone = (SIRStream)child; //.clone();
 	    // set child's parent to <p>
 	    //childClone.setParent(p);
-	    // add it to <p>'s elements
+	    // add it to <p>'s children
 	    p.add(childClone);
 	}
 	return p;
@@ -55,7 +48,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public CType getOutputType() {
 	// output type is output type of last element in list
-	return ((SIRStream)elements.getLast()).getOutputType();
+	return ((SIRStream)children.getLast()).getOutputType();
     }
     
     /**
@@ -70,7 +63,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public CType getInputType() {
 	// input type is input type of first element of the list
-	return ((SIRStream)elements.getFirst()).getInputType();
+	return ((SIRStream)children.getFirst()).getInputType();
     }
     
     /**
@@ -79,7 +72,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public String getChildName(SIROperator str) {
 	// return "stream" + (x+1), where x is the index of <str> in this pipe
-	int index = elements.indexOf(str);
+	int index = children.indexOf(str);
 	if (index==-1) {
 	    return null;
 	} else {
@@ -93,14 +86,14 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public List getChildren() {
 	// the children are just the components of the pipeline
-	return (List)elements.clone();
+	return (List)children.clone();
     }
 
     /**
      * Whether or not <str> is an immediate child of this.
      */
     public boolean contains(SIROperator str) {
-	return elements.contains(str);
+	return children.contains(str);
     }
 
     /**
@@ -112,7 +105,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	// make result
 	LinkedList result = new LinkedList();
 	// start iterating through children at <first>
-	ListIterator iter = elements.listIterator(elements.indexOf(first));
+	ListIterator iter = children.listIterator(children.indexOf(first));
 	Object o;
 	do {
 	    // get next child and add to result list
@@ -125,13 +118,13 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Sets children of this to be all the elements of <elements>, and
-     * set all the parent fields in <elements> to be this.
+     * Sets children of this to be all the children of <children>, and
+     * set all the parent fields in <children> to be this.
      */
-    public void setChildren(LinkedList elements) {
-	this.elements.clear();
-	for (int i=0; i<elements.size(); i++) {
-	    add((SIRStream)elements.get(i));
+    public void setChildren(LinkedList children) {
+	this.children.clear();
+	for (int i=0; i<children.size(); i++) {
+	    add((SIRStream)children.get(i));
 	}
     }
 
@@ -143,11 +136,11 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     public List getTapePairs() {
 	// construct result
 	LinkedList result = new LinkedList();
-	// go through list of elements
-	for (int i=0; i<elements.size()-1; i++) {
+	// go through list of children
+	for (int i=0; i<children.size()-1; i++) {
 	    // make an entry from one stream to next
-	    SIROperator[] entry = { (SIROperator)elements.get(i),
-				    (SIROperator)elements.get(i+1) };
+	    SIROperator[] entry = { (SIROperator)children.get(i),
+				    (SIROperator)children.get(i+1) };
 	    // add entry 
 	    result.add(entry);
 	}
@@ -160,7 +153,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * parent to this.
      */
     public void add(SIRStream str) {
-	add(elements.size(), str);
+	add(children.size(), str);
     }
 
     /**
@@ -168,7 +161,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * the parent of <str> to be this.
      */
     public void add(int index, SIRStream str) {
-	elements.add(index, str);
+	children.add(index, str);
 	str.setParent(this);
     }
 
@@ -176,11 +169,11 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * See documentation in SIRContainer.
      */
     public void replace(SIRStream oldStr, SIRStream newStr) {
-	int index = elements.indexOf(oldStr);
+	int index = children.indexOf(oldStr);
 	Utils.assert(index!=-1,
 		     "Trying to replace with bad parameters, since " + this
 		     + " doesn't contain " + oldStr);
-	elements.set(index, newStr);
+	children.set(index, newStr);
 	// set parent of new stream
 	newStr.setParent(this);
     }
@@ -192,14 +185,14 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public void replace(SIRStream start, SIRStream end, SIRStream newStream) {
 	// get positions of start and ending streams
-	int index1 = elements.indexOf(start);
-	int index2 = elements.indexOf(end);
+	int index1 = children.indexOf(start);
+	int index2 = children.indexOf(end);
 	Utils.assert(index1!=-1 && index1!=-1 && index1 <= index2,
 		     "Trying to replace with bad parameters, from start at "
 		     + "position " + index1 + " to end at position " + index2);
 	// remove the old streams
 	for (int i=index1; i<=index2; i++) {
-	    elements.remove(index1);
+	    children.remove(index1);
 	}
 	// add the new stream
 	add(index1, newStream);
@@ -209,14 +202,14 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * Remove a stream from the pipeline.
      */
     public void remove(SIRStream str) {
-	elements.remove(str);
+	children.remove(str);
     }
 
     /**
      * Return i'th stream in this pipeline.
      */
     public SIRStream get(int i) {
-	return (SIRStream)elements.get(i);
+	return (SIRStream)children.get(i);
     }
 
     /**
@@ -224,14 +217,14 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * does not appear in this.
      */
     public int indexOf(SIRStream str) {
-	return elements.indexOf(str);
+	return children.indexOf(str);
     }
 
     /**
      * Returns the number of substreams in this.
      */
     public int size() {
-	return elements.size();
+	return children.size();
     }
 
     /**
@@ -243,17 +236,17 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 			   fields,
 			   methods,
 			   init,
-			   elements);
+			   children);
 	/* visit components */
-	for (int i=0; i<elements.size(); i++) {
-	    ((SIRStream)elements.get(i)).accept(v);
+	for (int i=0; i<children.size(); i++) {
+	    ((SIRStream)children.get(i)).accept(v);
 	}
 	v.postVisitPipeline(this,
 			    parent,
 			    fields,
 			    methods,
 			    init,
-			    elements);
+			    children);
     }
 
 
@@ -266,7 +259,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 			       fields,
 			       methods,
 			       init,
-			       elements);
+			       children);
     }
 }
 

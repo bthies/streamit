@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.26 2003-04-18 14:53:21 dmaze Exp $
+# $Id: knit,v 1.27 2003-05-28 17:31:34 dmaze Exp $
 #
 
 use strict;
@@ -51,23 +51,36 @@ Options:
   --library           Run in the Java library instead of compiling
 
 Options available for all backends:
+* --clone-with-serialization, -K
+*                     Use old serialization code to copy objects
   --frequencyreplacement, -F
                       Convert FIR filters to frequency
 * --fusion, -f        Fuse entire program to a single filter
-  --linearreplacement Perform linear transformations based on analysis
+  --linearreplacement, -I
+                      Perform linear transformations based on analysis
+* --linearreplacement2, -Z
+*                     Do linear replacement using a level of indirection
+* --linearreplacement3, -R
+*                     Do linear replacement using diagonal replacement
 * --linearpartition, -B
-                      Automatically selecting targets of linear analyses
+*                     Automatically selecting targets of linear analyses
   --memory, -Xmx      Specify Java runtime heap limit
   --nofieldprop, -L   Do not propagate constant field values
+  --nolinearcollapse, -H
+                      Do not combine filters with linear replacement
+* --print-partitioned-source, -c
+*                     Print equivalent source after partitioning
   --redundantreplacement, -t
                       Create linear filters without redundant computation
 * --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
   --sjtopipe, -J      Convert split-joins to pipelines
+* --stats             Gather statistics for program characterization
   --sync, -k          Turn on sync removal
   --unroll, -u        Specify loop unrolling limit
 
 Options specific to RAW backend:
 * --altcodegen, -z    Alternate RAW communication code generation
+* --decoupled, -X     Generate dummy communication code
   --dppartition, -y   Use the dynamic programming partitioner
 * --dpscaling, -Y     Collect theoretical scaling statistics
 * --ilppartition, -A  Use the integer linear programming partitioner
@@ -77,11 +90,13 @@ Options specific to RAW backend:
   --partition, -a     Automatically partition stream graph
   --ptraccess, -Q     Access buffers through a pointer
 * --ratematch, -x     Turn on rate matching
+* --rawcol, -q        Specify number of columns; --raw has number of rows
   --raw-uni, -U       Use RAW backend to generate uniprocessor code
   --removeglobals, -G Inline all functions and turn globals into locals
   --simulatework, -T  Use simulator for work estimation
 
 Options specific to uniprocessor backend:
+* --atlas, -E         Use ATLAS for generated matrix multiplies
   --poptopeek, -P     Convert all pop expressions into peeks
   --profile           Compile with profiling information
 
@@ -112,6 +127,9 @@ sub get_options
 	       "raw|r=i",
 	       "verbose|v",
 	       "altcodegen|z",
+	       "atlas|E",
+	       "clone-with-serialization|clone_with_serialization|K",
+	       "decoupled|X",
 	       "dppartition|y",
 	       "dpscaling|Y",
 	       "frequencyreplacement|F",
@@ -121,10 +139,13 @@ sub get_options
 	       "library",
 	       "linearpartition|B",
 	       "linearreplacement|I",
+	       "linearreplacement2|Z",
+	       "linearreplacement3|R",
 	       "magic-net|magic_net|M",
 	       "memory|Xmx=s",
 	       "noanneal|W",
 	       "nofieldprop|L",
+	       "nolinearcollapse|H",
 	       "norun",
 	       "nosched",
 	       "numbers|N=i",
@@ -132,15 +153,18 @@ sub get_options
 	       "poptopeek|P",
 	       "printdot",
 	       "printsched",
+	       "print-partitioned-source|print_partitioned_source|c",
 	       "profile",
 	       "ptraccess|Q",
 	       "ratematch|x",
+	       "rawcol|q=i",
 	       "raw-uni|raw_uni|U",
 	       "redundantreplacement|t",
 	       "removeglobals|G",
 	       "simplesjfusion|S",
 	       "simulatework|T",
 	       "sjtopipe|J",
+	       "stats",
 	       "sync|k",
 	       "unroll|u=i",
 	       "viram|V");
@@ -240,26 +264,35 @@ sub get_kjc_opts
     my $kjcopts = "";
     $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
     $opts{altcodegen} && ($kjcopts .= " -z");
+    $opts{atlas} && ($kjcopts .= " -E");
+    $opts{'clone-with-serialization'} && ($kjcopts .= " -K");
+    $opts{decoupled} && ($kjcopts .= " -X");
     $opts{dppartition} && ($kjcopts .= " -y");
     $opts{dpscaling} && ($kjcopts .= " -Y");
     $opts{frequencyreplacement} && ($kjcopts .= " -F");
     $opts{fusion} && ($kjcopts .= " -o");
     $opts{ilppartition} && ($kjcopts .= " -A");
-    $opts{linearreplacement} && ($kjcopts .= " -I");
     $opts{linearpartition} && ($kjcopts .= " -B");
+    $opts{linearreplacement} && ($kjcopts .= " -I");
+    $opts{linearreplacement2} && ($kjcopts .= " -Z");
+    $opts{linearreplacement3} && ($kjcopts .= " -R");
     $opts{'magic-net'} && ($kjcopts .= " -M");
     $opts{noanneal} && ($kjcopts .= " -W");
     $opts{nofieldprop} && ($kjcopts .= " -L");
+    $opts{nolinearcollapse} && ($kjcopts .= " -H");
     $opts{numbers} && ($kjcopts .= " -N" . $opts{numbers});
     $opts{partition} && ($kjcopts .= " -a");
     $opts{poptopeek} && ($kjcopts .= " -P");
+    $opts{'print-partitioned-source'} && ($kjcopts .= " -c");
     $opts{ptraccess} && ($kjcopts .= " -Q");
     $opts{ratematch} && ($kjcopts .= " -x");
+    $opts{rawcol} && ($kjcopts .= " -q");
     $opts{'raw-uni'} && ($kjcopts .= " -U");
     $opts{removeglobals} && ($kjcopts .= " -G");
     $opts{simplesjfusion} && ($kjcopts .= " -S");
     $opts{simulatework} && ($kjcopts .= " -T");
     $opts{sjtopipe} && ($kjcopts .= " -J");
+    $opts{stats} && ($kjcopts .= " -.");
     $opts{sync} && ($kjcopts .= " -k");
     $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " -V");

@@ -10,7 +10,7 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.4 2003-03-03 20:13:05 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.5 2003-03-05 21:09:04 aalamb Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -190,7 +190,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    // make the variable definition for the index field
 	    JVariableDefinition indexDef = new JVariableDefinition(null, /* token reference */
 								   ACC_FINAL, /* modifiers */
-								   CStdType.Float, /* type */
+								   CStdType.Integer, /* type */
 								   indexFieldName, /* identity */
 								   null); /* initializer */
 
@@ -225,10 +225,10 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
 	    String fieldName = tupleData.getName(t);
 	    String indexName = fieldName + INDEX_POSTFIX;
-	    int    fieldSize = tupleData.getMaxUse(t);
+	    int    fieldSize = tupleData.getMaxUse(t) + 1;
 	    // make a field allocation for fieldName of size maxUse
 	    body.addStatement(makeFieldAllocation(fieldName, fieldSize, "state for " + t));
-	    body.addStatement(makeLocalInitialization(indexName, 0, "index for " + t));
+	    body.addStatement(makeFieldInitialization(indexName, 0, "index for " + t));
 	}
 
 	return new JMethodDeclaration(null,                  /* token reference */
@@ -242,6 +242,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 				      null);                 /* java style comment */
 	
     }
+
     /**
      * Make either the work or the init work function. If type is WORK, then work is made,
      * if type is INITWORK, then not surprisingly initWork gets made. Both have peek and
@@ -264,8 +265,8 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    Iterator tupleIter = tupleData.reused.iterator();
 	    while(tupleIter.hasNext()) {
 		LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
-		// basically, we want to store data for each use, 0-->maxUse
-		for (int use = 1; use<tupleData.getMaxUse(t); use++) {
+		// basically, we want to store data for each use, 1-->maxUse
+		for (int use = 1; use<(tupleData.getMaxUse(t)+1); use++) {
 		    JExpression fieldAccessExpr = makeFieldAccessExpression(tupleData.getName(t));
 		    JExpression arrayIndex = new JIntLiteral(use);
 		    JExpression arrayAccessExpression = new JArrayAccessExpression(null,
@@ -283,13 +284,113 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		    JExpression assignExpr = new JAssignmentExpression(null,
 								       arrayAccessExpression,
 								       computationExpression);
-		    body.addStatement(new JExpressionStatement(null,
-							       assignExpr,
-							       null));
+		    body.addStatement(new JExpressionStatement(null,assignExpr,null));
 		}
 	    }
 	}
 
+	// now, we should calculate all of the tuples for this execution
+	// eg for use 0 (we do this here so that it always shows up in both
+	// work and initWork) -- note that the array index expression is the
+	// tuple index.
+	Iterator tupleIter = tupleData.reused.iterator();
+	while(tupleIter.hasNext()) {
+	    LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+	    JExpression fieldAccessExpr = makeFieldAccessExpression(tupleData.getName(t));
+	    JExpression arrayIndex = makeFieldAccessExpression(tupleData.getName(t)+INDEX_POSTFIX);
+	    // this expression is state_field[state_field_index]
+	    JExpression arrayAccessExpression = new JArrayAccessExpression(null,
+									   fieldAccessExpr,
+									   arrayIndex);
+	    // generate the appropriate computation expression for this tuple
+	    // note that no effective indexes need to be computed
+	    JExpression computationExpression = makeTupleComputation(t);
+	    
+	    // make an assignment from the computation expression (eg peek*const)
+	    // to the field access array.
+	    JExpression assignExpr = new JAssignmentExpression(null,
+							       arrayAccessExpression,
+							       computationExpression);
+	    body.addStatement(new JExpressionStatement(null, assignExpr, null));
+	}
+    
+	// now, for each column in the linear rep (eg the coefficients for each
+	// term we need to push out, make a list of all of the tuples
+	// that we need to compute. We will then process the list to generate
+	// the appropriate push expression
+	FilterMatrix A = linearRep.getA();
+	for (int currentCol = A.getCols()-1; currentCol >= 0; currentCol--) {
+	    List termList = new LinkedList();
+	    for (int currentRow = 0; currentRow< A.getRows(); currentRow++) {
+		// make a tuple for the current term
+		LinearComputationTuple t = new LinearComputationTuple(A.getRows() - 1 - currentRow, // index
+								      A.getElement(currentRow, currentCol));
+		// stick this term in the front of the list
+		termList.add(0,t);
+	    }
+	    // now, we want to go through each term that we need to make and
+	    // generate the appropriate calculation -- either field access
+	    // or computation, depending on if the tuple is in the 
+	    // comp map or not.
+	    List expressionList = new LinkedList(); // list to store JExpressions to compute terms
+	    Iterator termIter = termList.iterator();
+	    while(termIter.hasNext()) {
+		LinearComputationTuple t = (LinearComputationTuple)termIter.next();
+		// if this tuple is in comp map, we have a stoed version of it so we should use that
+		JExpression termExpr = null;
+		if (tupleData.compMap.containsKey(t)) {
+		    termExpr = makeTupleAccess(t,tupleData);
+		} else {
+		    termExpr = makeTupleComputation(t); // make a straightup computation
+		}
+		// if the term is not null, add it to the term list
+		if (termExpr != null) {
+		    expressionList.add(termExpr);
+		}
+	    }
+	    // now, we need to combine all of the terms in the term expr list into
+	    // a single push statement. (assuming of course, that there are terms in the expr list.
+	    if (expressionList.size() > 0) {
+		JExpression pushArg;
+		// if there is only one expression, we are done
+		if (expressionList.size() == 1) {
+		    pushArg = (JExpression)expressionList.get(0);
+		} else {
+		    // list is gaurenteed to have at least two elements in it
+		    Iterator exprIter = expressionList.iterator();
+		    JExpression expr1 = (JExpression)exprIter.next();
+		    JExpression expr2 = (JExpression)exprIter.next();
+		    pushArg = new JAddExpression(null, expr1, expr2);
+		    // iterate through the rest of the list, adding add exprs as we go
+		    while(exprIter.hasNext()) {
+			JExpression nextExpr = (JExpression)exprIter.next();
+			pushArg = new JAddExpression(null, pushArg, nextExpr);
+		    }
+		}
+		// now, add a push expression to the body of the function
+		JExpression pushExpr = new SIRPushExpression(pushArg, CStdType.Float);
+		body.addStatement(new JExpressionStatement(null,pushExpr,null));
+	    }
+	}
+
+	// finally, generate appropriate index increments for each of the
+	// reused tuples.
+	Iterator reusedIter = tupleData.reused.iterator();
+	while(reusedIter.hasNext()) {
+	    LinearComputationTuple t = (LinearComputationTuple)reusedIter.next();
+	    body.addStatement(makeIndexUpdateStatement(t,tupleData));
+	}
+
+	// and as a final nudge to correctness, put in the appropriate number
+	// of pop.
+	for (int i=0; i<linearRep.getPopCount(); i++) {
+	    JExpression popExpr = new SIRPopExpression(CStdType.Float);
+	    body.addStatement(new JExpressionStatement(null, popExpr, null));
+	}
+			      
+	
+	
+	// put together the body with all of the appropriate KOPI nonsense
 	String ident = (type == WORK) ? "work" : "initWork";
 	return new JMethodDeclaration(null,                  /* token reference */
 				      ACC_PUBLIC,            /* modifiers */
@@ -319,13 +420,53 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	}
 
 	JExpression indexExpr    = new JIntLiteral(tuple.getPosition());
-	JExpression peekExpr     = new SIRPeekExpression(indexExpr);
+	JExpression peekExpr     = new SIRPeekExpression(indexExpr,CStdType.Float);
 	JExpression coeffExpr    = new JFloatLiteral(null, (float)tuple.getCoefficient().getReal());
 	JExpression multExpr     = new JMultExpression(null, coeffExpr, peekExpr);
 
 	return multExpr;
     }
 
+
+    /**
+     * Creats a tuple access to a tuple state field for the specified
+     * tuple. The expression is of the form:
+     * tuple_field[(tuple_index + use) % maxUse(tuple)
+     * where tuple is in the mapping from t->(use,tuple) in compMap.
+     **/
+    public JExpression makeTupleAccess(LinearComputationTuple t, RedundancyReplacerData tupleData) {
+	// pull out the original tuple (that we are looking up the stored values from)
+	TupleCoupling coupling = (TupleCoupling)tupleData.compMap.get(t);
+	LinearComputationTuple origTuple = coupling.tuple;
+	int                          use = coupling.use;
+	// get an expression for the state and index fields
+	JExpression fieldExpr = makeFieldAccessExpression(tupleData.getName(origTuple));
+	JExpression indexExpr = makeFieldAccessExpression(tupleData.getName(origTuple)+INDEX_POSTFIX);
+	// now, make the array index expression (eg (tuple_index + use) % maxUse)
+	JExpression addExpr   = new JAddExpression(null, indexExpr, new JIntLiteral(use));
+	JExpression maxUseExpr= new JIntLiteral(tupleData.getMaxUse(origTuple)+1);
+	JExpression modExpr   = new JModuloExpression(null, addExpr, maxUseExpr);
+	// now, finally make the array access expression
+	return new JArrayAccessExpression(null, fieldExpr, modExpr);
+    }
+
+    /**
+     * Creates an index increment of the form
+     * tuple_index = (tuple_index + 1) % maxUse(tuple)
+     **/
+    public JStatement makeIndexUpdateStatement(LinearComputationTuple t, RedundancyReplacerData tupleData) {
+	JExpression indexExpr = makeFieldAccessExpression(tupleData.getName(t)+INDEX_POSTFIX);
+	JExpression addExpr   = new JAddExpression(null, indexExpr, new JIntLiteral(1));
+	JExpression maxUseExpr= new JIntLiteral(tupleData.getMaxUse(t) + 1);
+	JExpression modExpr   = new JModuloExpression(null, addExpr, maxUseExpr);
+	JExpression assignExpr= new JAssignmentExpression(null, indexExpr, modExpr);
+	return new JExpressionStatement(null, assignExpr, null);
+    }
+	
+				       
+
+
+    
 
     ///////////////////////////////////////////////////////////////
     // Inner Classes that calculate the necessary data structures

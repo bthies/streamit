@@ -20,6 +20,10 @@ public class FilterTraceNode extends TraceNode
 	this.x = x;
 	this.y = y;
     }
+
+    public FilterTraceNode(FilterContent filter) {
+	this.filter=filter;
+    }
     
     public void setX(int x) {
 	this.x = x;

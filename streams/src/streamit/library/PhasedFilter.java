@@ -1,11 +1,11 @@
 package streamit;
 
+import streamit.scheduler2.ScheduleBuffers;
+
 public abstract class PhasedFilter extends Stream
 {
-    public PhasedFilter()
-    {
-        super();
-    }
+    public PhasedFilter() { super(); }
+    public PhasedFilter(int a) { super(a); }
     
     // add was present in Operator, but is not defined in Filter anymore
     public void add(Stream s) { ASSERT (false); }
@@ -36,6 +36,11 @@ public abstract class PhasedFilter extends Stream
     {
         // Placeholder?
         wf.work();
+    }
+
+    void setupBufferLengths (ScheduleBuffers buffers)
+    {
+        // Filter claims this doesn't need to do anything, sure.
     }
 }
 

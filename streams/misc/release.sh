@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.35 2003-10-17 16:19:48 thies Exp $
+# $Id: release.sh,v 1.36 2003-10-17 17:08:59 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -94,6 +94,9 @@ rm -rf $WORKING/streams/apps/examples/phase
 rm -rf $WORKING/streams/apps/examples/sample-trellis
 rm -rf $WORKING/streams/apps/examples/toy-trellis
 rm -rf $WORKING/streams/apps/examples/updown
+rm -rf $WORKING/streams/apps/tests/portals
+# autobatchersort gets the wrong answer
+rm -rf $WORKING/streams/apps/sorts/BatcherSort/AutoBatcherSort.*
 
 # Some parts of the compiler aren't useful to release; trim those here.
 rm -rf $WORKING/streams/src/at/dms/kjc/cluster

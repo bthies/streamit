@@ -13,6 +13,7 @@ public class TraceTraversal
     {
 	LinkedList traversal = new LinkedList();
 	
+	SpaceTimeBackend.println("Size of forrest: " + forrest.length);
 
 	//printForrest(forrest);
 
@@ -49,10 +50,14 @@ public class TraceTraversal
 		    // found a Trace to add, remove it and break
 		    if (satisfied) {
 			trace = current;
-			queue.remove(j);
 			break;
 		    }
 		}
+		//if the trace is null, we could not find anything to add
+		//so break and look at the next head
+		if (trace == null) 
+		    break;
+		
 		addToTraversal(trace, traversal, visited, queue);
 	    }	    
 	}
@@ -67,6 +72,7 @@ public class TraceTraversal
 	assert trace != null : "Trace should not be null!";
 	
 	System.out.println("Adding Trace in traversal " + trace);
+	queue.remove(trace);
 	traversal.add(trace);
 	visited.add(trace);
 	

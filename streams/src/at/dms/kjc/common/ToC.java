@@ -43,7 +43,6 @@ public abstract class ToC extends SLIREmptyVisitor
     protected JMethodDeclaration method;
     /** Needed to pass info from assignment to visitNewArray **/
     protected JExpression lastLeft;
-
     
     public String getString() {
         if (str != null)
@@ -159,6 +158,7 @@ public abstract class ToC extends SLIREmptyVisitor
     public void visitWhileStatement(JWhileStatement self,
                                     JExpression cond,
                                     JStatement body) {
+	newLine();
         print("while (");
         cond.accept(this);
         print(") ");
@@ -259,23 +259,25 @@ public abstract class ToC extends SLIREmptyVisitor
      */
     public void visitCompoundStatement(JStatement[] body) {
         for (int i = 0; i < body.length; i++) {
-            if (body[i] instanceof JIfStatement &&
+	    /* if (body[i] instanceof JIfStatement &&
                 i < body.length - 1 &&
                 !(body[i + 1] instanceof JReturnStatement)) {
                 newLine();
             }
             if (body[i] instanceof JReturnStatement && i > 0) {
                 newLine();
-            }
+		}*/
 
-            newLine();
+            if (!(body[i] instanceof JEmptyStatement))
+		newLine();
             body[i].accept(this);
-
-            if (body[i] instanceof JVariableDeclarationStatement &&
-                i < body.length - 1 &&
-                !(body[i + 1] instanceof JVariableDeclarationStatement)) {
-                newLine();
-            }
+	    /*
+	      if (body[i] instanceof JVariableDeclarationStatement &&
+	      i < body.length - 1 &&
+	      !(body[i + 1] instanceof JVariableDeclarationStatement)) {
+	      newLine();
+	      }
+	    */
         }
     }
 

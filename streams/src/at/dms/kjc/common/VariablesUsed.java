@@ -1,6 +1,7 @@
 package at.dms.kjc.common;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import java.util.ListIterator;
 import at.dms.kjc.flatgraph.*;
@@ -8,8 +9,7 @@ import java.util.HashSet;
 
 /**
  * This class will return a HashSet containing all the
- * variables (locals and fields) used (use or def) from the entry
- * point of the visitor. 
+ * variables (locals and fields) used (ignoring defines)
  *
  * @author Michael Gordon
  * 
@@ -18,31 +18,51 @@ import java.util.HashSet;
 public class VariablesUsed extends SLIREmptyVisitor
 {
     private HashSet vars;
+    /** 
+     * if this is true, and a variable is assigned to a complex expression 
+     * (assiged to something other than a literal), count the variables as used
+     * because the expression may have side-effects.
+     **/
+    private boolean countComplexAss;
 
     /**
-     * Given <entry>, the starting point of the visit, return 
-     * a HashSet of all variables used or defined during the IR visit.
+     * Return a hashset of all the variables that are used in this tree, meaning 
+     * all the variables that it is important to keep because they are not dead.
      *
      *
-     * @param entry The contruct that starts the visiting
+     * @param entry the root of the tree,
+     * @param countComplexAssignments if this is true, and a variable is assigned
+     * to a complex expression 
+     * (assiged to something other than a literal), count the variables as used
+     * because the expression may have side-effects.
      *
-     *
-     * @return A Hashset containing JLocalVariables for accessed locals 
-     * or Strings for accessed fields
-     *
+     * @return the hash set of JLocalVariables or Strings (for fields)
      */
-    public static HashSet getVars(JPhylum entry) 
+
+    public static HashSet getVars(JPhylum entry, boolean countComplexAssignments) 
     {
-	VariablesUsed used = new VariablesUsed();
+	VariablesUsed used = new VariablesUsed(countComplexAssignments);
 	
 	entry.accept(used);
 	
 	return used.vars;
     }
     
-    public static HashSet getVars(FlatNode node) 
+    /**
+     * Return a hashset of all the variables that are used in flatnode, meaning 
+     * all the variables that it is important to keep because they are not dead.
+     *
+     * @param node The flatnode to visit
+     * @param countComplexAssignments if this is true, and a variable is assigned
+     * to a complex expression 
+     * (assiged to something other than a literal), count the variables as used
+     * because the expression may have side-effects.
+     *
+     * @return the hash set of JLocalVariables or Strings (for fields)
+     */
+    public static HashSet getVars(FlatNode node, boolean countComplexAssignments)  
     {
-	VariablesUsed used = new VariablesUsed();
+	VariablesUsed used = new VariablesUsed(countComplexAssignments);
 	
 	if (node.isFilter()) {
 	    SIRFilter filter = (SIRFilter)node.contents;
@@ -57,12 +77,13 @@ public class VariablesUsed extends SLIREmptyVisitor
 	return used.vars;
     }
     
-
-    private VariablesUsed() 
+    private VariablesUsed(boolean complexAss) 
     {
 	vars = new HashSet();
+	countComplexAss = complexAss;
     }
     
+
 
     public void visitFieldExpression(JFieldAccessExpression self,
                                      JExpression left,
@@ -76,4 +97,61 @@ public class VariablesUsed extends SLIREmptyVisitor
     {
 	vars.add(self.getVariable());
     }
+    
+    /**
+     * prints an assignment expression
+     */
+    public void visitAssignmentExpression(JAssignmentExpression self,
+					  JExpression left,
+					  JExpression right) {
+	//count a complex right expression as a use for the left
+	if (countComplexAss) {
+	    //there are no side effects, so never
+	    //count it as a use for the left
+	    if (!HasSideEffect.hasSideEffects(right) &&
+		!HasSideEffect.hasSideEffects(left))
+		visitLValue(left);
+	    else  //otherwise a use for the left
+		left.accept(this);
+	}
+	else //don't count a complex right expression as a use for the left
+	    visitLValue(left);
+
+	right.accept(this);
+    }
+    
+
+    /**
+     * prints a compound expression
+     */
+    public void visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+						  int oper,
+						  JExpression left,
+						  JExpression right) {
+	
+	//count a complex right expression as a use for the left
+	if (countComplexAss) {
+	    //there are no side effects, so never
+	    //count it as a use for the left
+	    if (!HasSideEffect.hasSideEffects(right) && 
+		!HasSideEffect.hasSideEffects(left))
+		visitLValue(left);
+	    else  //otherwise a use for the left
+		left.accept(this);
+	}
+	else //don't count a complex right expression as a use for the left
+	    visitLValue(left);
+
+	right.accept(this);
+    }
+
+    private void visitLValue(JExpression expr) 
+    {
+	//for an array access expression only record the 
+	//accessors as being referenced...
+	if (Utils.passThruParens(expr) instanceof JArrayAccessExpression) {
+	    ((JArrayAccessExpression)expr).getAccessor().accept(this);
+	    visitLValue(((JArrayAccessExpression)expr).getPrefix());
+	}
+    }    
 }

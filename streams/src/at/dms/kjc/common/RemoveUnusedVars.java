@@ -8,6 +8,14 @@ import java.util.HashSet;
 import java.util.Vector;
 import at.dms.util.Utils;
 
+/**
+ * Class to remove unused variables from the IR. Unused variables are defined
+ * as vars that are never used, only def'ed and only if the defs do not have
+ * any side effects.
+ *
+ * @author Michael Gordon
+ */
+
 public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisitor
 {
     /** holds alls vars referenced in the filter
@@ -16,8 +24,18 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
     /** Holds idents of arrays that are fields have have zero dimensionality **/
     private HashSet zeroDimArrays;
 
+    
+    /**
+     * Remove dead variables from all code in <node>.  See class definition.
+     *
+     *
+     *
+     * @param node The top level flatnode.
+     *
+     */
     public static void doit(FlatNode node) 
     {
+	System.out.println("Removing Dead Variables...");
 	new RemoveUnusedVars(node);
     }
 
@@ -33,15 +51,13 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 	if (node.isFilter()) {
 	    SIRFilter filter = (SIRFilter)node.contents;
 	    
-	    //get all the vars used in this filter
-	    varsUsed = VariablesUsed.getVars(node);
-	    //check the local variable defs and also get
-	    //all the names of zero dimensional arrays
+	    varsUsed = VariablesUsed.getVars(node, true);
+
+
 	    for (int i = 0; i < filter.getMethods().length; i++) {
 		filter.getMethods()[i].accept(this);
 	    }
-	    //remove zero dimensional arrays
-	    varsUsed.removeAll(zeroDimArrays);
+	    
 	    //now check the fields
 	    Vector newFields = new Vector();
 	    for (int i = 0; i < filter.getFields().length; i++) {
@@ -52,28 +68,22 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 	}
     }
     
-    /**
-     * Find all arrays that are initialized with all zero bounds and 
-     * remember them so they can be removed...
-     */
     public Object visitAssignmentExpression(JAssignmentExpression self,
 					    JExpression left,
 					    JExpression right) {
-	if (Utils.passThruParens(right) instanceof JNewArrayExpression) {
-	    JNewArrayExpression newArray = (JNewArrayExpression)Utils.passThruParens(right);
-	    for (int i = 0; i < newArray.getDims().length; i++) {
-		if (!((newArray.getDims()[i] instanceof JIntLiteral &&
-		      ((JIntLiteral)newArray.getDims()[i]).intValue() == 0))) {
-		    //non int 0 so we cannot remove this array, call normal visitor
-		    return doBinaryExpression(self, left, right);
-		}		    
-		//if we get here all the dims are zero...
-		if (Utils.passThruParens(left) instanceof JFieldAccessExpression)
-		    zeroDimArrays.add(((JFieldAccessExpression)Utils.passThruParens(left)).getIdent());
+	//remove an assignment expression if it 
+	if (left instanceof JFieldAccessExpression) {
+	    if (!varsUsed.contains(((JFieldAccessExpression)left).getIdent()) &&
+		!HasSideEffect.hasSideEffects(right) &&
+		!HasSideEffect.hasSideEffects(left))
 		return null;
-	    }    
-	    
-	} 
+	} else if (left instanceof JLocalVariableExpression) {
+	    if (!varsUsed.contains(((JLocalVariableExpression)left).getVariable()) &&
+		!HasSideEffect.hasSideEffects(right) &&
+		!HasSideEffect.hasSideEffects(left))
+		return null;
+	}
+	
 	return doBinaryExpression(self, left, right);
     }
 
@@ -104,6 +114,10 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 	    if (result != null) 
 		newDecls.add(result);
 	}
+	
+	if (newDecls.size() == 0)
+	    return new JEmptyStatement(null, null);
+
 	return new JVariableDeclarationStatement(null, 
 						 (JVariableDefinition[])
 						 newDecls.toArray(new JVariableDefinition[0]),
@@ -142,3 +156,5 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 	return self;
     }
 }
+
+

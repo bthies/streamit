@@ -1186,22 +1186,15 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		
 		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//the receive buffer ptr to help stupid GCC
-		if (ident.equals(RawExecutionCode.recvBuffer)) 
-		    print(RawExecutionCode.recvBuffer + "_Alloc");
-		else 
-		    left.accept(this);
-		
+		print(ident + "_Alloc");
+				
 		//print the dims of the array
 		stackAllocateArray(ident);
-		
-		
+				
 		//HACK FOR THE ISCA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		//the receive buffer ptr to help stupid GCC
-		if (ident.equals(RawExecutionCode.recvBuffer)) {
-		    print(";\n");
-		    print(baseType + " *" + ident + " = " + RawExecutionCode.recvBuffer + "_Alloc");
-		    
-		}
+		print(";\n");
+		print(baseType + " *" + ident + " = " + ident + "_Alloc");
 	    }
 	    else {
 		//the way it used to be before the hack

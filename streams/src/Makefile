@@ -100,8 +100,11 @@ streamit.jar: $(JAVA_TARGET)
 	cd $(STREAMIT_HOME)/library/java && \
 		find . -name '*.class' | \
 		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
+	echo "Main-Class: at.dms.kjc.Main" > manifest.streamit
 	jar cf $@ -C classes .
+	jar umf manifest.streamit $@
 	rm -rf classes
+	rm -rf manifest.streamit
 
 streamit-lib.jar: $(JAVA_TARGET)
 	rm -rf classes

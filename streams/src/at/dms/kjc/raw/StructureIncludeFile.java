@@ -36,7 +36,7 @@ public class StructureIncludeFile
 	try {
 	    FileWriter fw = new FileWriter(dir + "/structs.h");
 	    createStructureDefs(structs, fw);
-	    if (!KjcOptions.raw_uni)
+	    if (!KjcOptions.standalone)
 		createPushPopFunctions(structs, fw);
 	    fw.close();
 	}
@@ -63,7 +63,7 @@ public class StructureIncludeFile
 	    }
 	    fw.write("} " + current.getIdent() + ";\n");
 	    //write the defs for the push/pop functions
-	    if (!KjcOptions.raw_uni) {
+	    if (!KjcOptions.standalone) {
 		fw.write("inline void push" + current.getIdent() + "(" + current.getIdent() +
 			 "*);\n");
 		fw.write("inline " + current.getIdent() + " pop" + current.getIdent() + "();\n");

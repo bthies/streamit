@@ -129,7 +129,7 @@ public class ClusterBackend implements FlatVisitor {
 	    System.out.println("Done FuseAll...");
 	}
 
-	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
+	if (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_ilp) {
 	    System.err.println("Running Partitioning...");
 	    	    str = Partitioner.doit(str, 4);
 	    System.err.println("Done Partitioning...");

@@ -176,7 +176,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//do not print the raw header if compiling
 	//for uniprocessor
-	if (!KjcOptions.raw_uni) 
+	if (!KjcOptions.standalone) 
 	    print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
@@ -223,7 +223,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
 	//a uniprocessor
-	if (!KjcOptions.raw_uni) {
+	if (!KjcOptions.standalone) {
 	    print("void raw_init();\n");
 	    print("void raw_init2();\n");
 	}
@@ -252,7 +252,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	//if we are generating raw code print the begin
 	//method for the simulator
-	if (!KjcOptions.raw_uni) {
+	if (!KjcOptions.standalone) {
 	    print("void begin(void) {\n");
 	}
 	else {
@@ -281,14 +281,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//call the raw_init() function for the static network
 	//only if we are not using a uniprocessor or the
 	//magic network
-	if (!KjcOptions.raw_uni && !KjcOptions.magic_net && !KjcOptions.decoupled) {
+	if (!KjcOptions.standalone && !KjcOptions.magic_net && !KjcOptions.decoupled) {
 	    print("  raw_init();\n");
 	    print("  raw_init2();\n");
 	}
 	//execute the raw main function
 	print(RawExecutionCode.rawMain + "();\n");
 	//return 0 if we are generating normal c code
-	if (KjcOptions.raw_uni) 
+	if (KjcOptions.standalone) 
 	    print("  return 0;\n");
 	print("}\n");
        
@@ -1605,7 +1605,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1616,7 +1616,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1627,7 +1627,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_float(");
 		else 
 		    print("printf(\"%f\\n\", "); 
@@ -1638,7 +1638,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1649,7 +1649,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.String)) 
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_string(");
 		else
 		    print("printf(\"%s\\n\", "); 

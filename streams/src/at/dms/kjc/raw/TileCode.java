@@ -343,7 +343,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    FileWriter fw = 
 		new FileWriter("tile" + Layout.getTileNumber(tile) 
 			       + ".c");
-	    if (!KjcOptions.raw_uni) 
+	    if (!KjcOptions.standalone) 
 		fw.write("#include <raw.h>\n\n");
 	    
 	    //write the extern for the function to init the 

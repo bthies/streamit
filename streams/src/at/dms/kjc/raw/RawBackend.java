@@ -128,10 +128,10 @@ public class RawBackend {
 	// the filters
 	int count = new GraphFlattener(str).getNumTiles();
 	int numTiles = RawBackend.rawRows * RawBackend.rawColumns;
-	boolean partitioning = KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition;
+	boolean partitioning = KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_ilp;
 	if (count>numTiles && !partitioning) {
 	    System.out.println("Need " + count + " tiles, so turning on partitioning...");
-	    KjcOptions.dppartition = true;
+	    KjcOptions.partition_dp = true;
 	    partitioning = true;
 	}
 

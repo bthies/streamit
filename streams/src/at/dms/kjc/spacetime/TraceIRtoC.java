@@ -164,7 +164,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//print the extern for the function to init the 
 	//switch, do not do this if we are compiling for
 	//a uniprocessor
-	if (!KjcOptions.raw_uni) {
+	if (!KjcOptions.standalone) {
 	    print("void raw_init();\n");
 	    print("void raw_init2();\n");
 	}
@@ -1420,7 +1420,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1431,7 +1431,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1442,7 +1442,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_float(");
 		else 
 		    print("printf(\"%f\\n\", "); 
@@ -1453,7 +1453,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_int(");
 		else
 		    print("printf(\"%d\\n\", "); 
@@ -1464,7 +1464,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
 	else if (type.equals(CStdType.String)) 
 	    {
-		if (!KjcOptions.raw_uni)
+		if (!KjcOptions.standalone)
 		    print("print_string(");
 		else
 		    print("printf(\"%s\\n\", "); 

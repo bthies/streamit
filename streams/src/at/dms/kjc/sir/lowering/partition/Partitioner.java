@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering.partition;
 
 import java.util.*;
 
+import at.dms.util.*;
 import at.dms.kjc.*;
 import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
@@ -48,18 +49,19 @@ public class Partitioner {
 	// do the partitioning
 	if (curCount < targetCount) {
 	    // need fission
-	    if (KjcOptions.dppartition) {
+	    if (KjcOptions.partition_dp) {
 		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
 	    } else {
 		new GreedyPartitioner(str, work, targetCount).toplevelFission(curCount);
 	    }
 	} else {
 	    // need fusion
-	    if (KjcOptions.ilppartition) {
+	    if (KjcOptions.partition_ilp) {
 		new ILPPartitioner(str, work, targetCount).toplevelFusion();
-	    } else if (KjcOptions.dppartition) {
+	    } else if (KjcOptions.partition_dp) {
 		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
 	    } else {
+		Utils.assert(KjcOptions.partition_greedy);
 		new GreedyPartitioner(str, work, targetCount).toplevelFusion();
 	    }
 	}

@@ -149,6 +149,8 @@ public class SpaceTimeBackend
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
 	
+	CommCompRatio.ratio(partitioner);
+
 	System.out.println("Scheduling Traces...");
 	SimpleScheduler scheduler = new SimpleScheduler(partitioner, rawChip);
 	scheduler.schedule();

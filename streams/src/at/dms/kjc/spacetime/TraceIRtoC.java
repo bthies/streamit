@@ -34,6 +34,9 @@ public class TraceIRtoC extends SLIREmptyVisitor
     protected int TAB_SIZE = 2;
     protected int WIDTH = 80;
 
+    //true if we are currently visit an init() method
+    protected boolean isInit = false;
+
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
     
@@ -291,6 +294,10 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    print(";");
 	    return;
 	}
+	
+	//set is init for dynamically allocating arrays...
+	if (self.getName().startsWith("init"))
+	    isInit = true;
 
         print(" ");
         if (body != null) 
@@ -299,6 +306,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
             print(";");
 
         newLine();
+	isInit = false;
     }
 
       // ----------------------------------------------------------------------
@@ -357,7 +365,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//so, just remove the var definition, if the new array expression
 	//is not included in this definition, just remove the definition,
 	//when we visit the new array expression we will print the definition...
-	if (type.isArrayType()) {
+	if (type.isArrayType() && !isInit) {
 	    String[] dims = ArrayDim.findDim(tile.getComputeCode(), ident);
 	    //but only do this if the array has corresponding 
 	    //new expression, otherwise don't print anything.
@@ -1260,7 +1268,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	//stack allocate all arrays 
 	//done at the variable definition
 	if (right instanceof JNewArrayExpression &&
- 	    (left instanceof JLocalVariableExpression)) {
+ 	    (left instanceof JLocalVariableExpression) && !isInit) {
 	    //	    (((CArrayType)((JNewArrayExpression)right).getType()).getArrayBound() < 2)) {
 
 	    //get the basetype and print it 
@@ -1270,31 +1278,11 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    
 	    //Before the ISCA hack this was how we printed the var ident
 	    //	    left.accept(this);
-	    
+	    left.accept(this);	    
+
 	    String ident;
 	    ident = ((JLocalVariableExpression)left).getVariable().getIdent();
-
-
-	    
-	    if (KjcOptions.ptraccess) {
-		
-		//HACK FOR THE ICSA PAPER, !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		//turn all array access into access of a pointer pointing to the array
-		print(ident + "_Alloc");
-		
-		//print the dims of the array
-		stackAllocateArray(ident);
-
-		//print the pointer def and the assignment to the array
-		print(";\n");
-		print(baseType + " *" + ident + " = " + ident + "_Alloc");
-	    }
-	    else {
-		//the way it used to be before the hack
-		 left.accept(this);
-		 //print the dims of the array
-		 stackAllocateArray(ident);
-	    }
+	    stackAllocateArray(ident);
 	    return;
 	}
            

@@ -62,7 +62,9 @@ class LDPConfigFilter extends LDPConfig {
 	    }
 		
 	    case LinearPartitioner.COLLAPSE_FREQ: {
-		if (!LEETFrequencyReplacer.canReplace(filter, lfa)) {
+		if (!LEETFrequencyReplacer.canReplace(filter, lfa)
+		    // currently don't support frequency implementation on raw
+		    || KjcOptions.raw!=-1) {
 		    cost = Long.MAX_VALUE;
 		} else {
 		    cost = getScalingFactor(linearRep, filter) * linearRep.getCost().getFrequencyCost();

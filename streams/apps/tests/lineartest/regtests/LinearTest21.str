@@ -40,7 +40,7 @@ float->float pipeline FIRPipelineGood {
  }
 
  float->float filter LinearFilterOne {
-   work push 1 pop 4 peek 4 {
+   work push 1 pop 1 peek 4 {
      push(4*peek(0) +
 	  3*peek(1) +
 	  2*peek(2) +

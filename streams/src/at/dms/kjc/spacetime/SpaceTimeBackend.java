@@ -458,7 +458,11 @@ public class SpaceTimeBackend
 		MagicDram.GenerateCode(rawChip);
 	    }
 	    Makefile.generate(rawChip);
-	    BCFile.generate(rawChip);
+	    //generate the bc file depending on if we have number gathering enabled
+	    if (KjcOptions.numbers > 0)
+		BCFile.generate(rawChip, NumberGathering.doit(rawChip, io));
+	    else 
+		BCFile.generate(rawChip, null);
 	}
     }
 

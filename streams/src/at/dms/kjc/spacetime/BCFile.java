@@ -3,22 +3,28 @@ package at.dms.kjc.spacetime;
 import java.lang.StringBuffer;
 import at.dms.kjc.*;
 import java.io.FileWriter;
+import at.dms.kjc.flatgraph2.*;
 
 public class BCFile 
 {
     private RawChip rawChip;
     private StringBuffer buf;
+    private NumberGathering ng;
+    private boolean numbers;
 
     public static final String BCFILE_NAME = "setup.bc";
 
-    public static void generate(RawChip rc) 
+    public static void generate(RawChip rc, NumberGathering gn) 
     {
-	(new BCFile(rc)).doit();
+	(new BCFile(rc, gn)).doit();
     }
     
-    public BCFile(RawChip rc) 
+    public BCFile(RawChip rc, NumberGathering g) 
     {
 	rawChip = rc;
+	ng = g;
+	//set numbers to true if we are given a number gathering object
+	numbers = (ng != null);
     }
     
     public void doit() 
@@ -35,14 +41,22 @@ public class BCFile
 	
 	//let the simulation know how many tiles are mapped to 
 	//filters or joiners
+	buf.append("global gMHz = 250;\n");
 	buf.append("global gStreamItTilesUsed = " + rawChip.computingTiles() + ";\n");
 	buf.append("global gStreamItTiles = " + rawChip.getXSize() * rawChip.getYSize() +
 		 ";\n");
-	buf.append("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
+	buf.append("global streamit_home = getenv(\"STREAMIT_HOME\");\n\n");      
+
+	buf.append("global to_file_path = malloc(strlen(streamit_home) + 30);\n"); 
+	buf.append("global from_file_path = malloc(strlen(streamit_home) + 30);\n\n"); 
+
+	//number gathering stuff
+	if (numbers) {
+	    numberGathering();
+	}
+	
 
 	//include the file reader/writer devices
-	buf.append("global to_file_path = malloc(strlen(streamit_home) + 30);\n"); 
-	buf.append("global from_file_path = malloc(strlen(streamit_home) + 30);\n"); 
 	buf.append("sprintf(to_file_path, \"%s%s\", streamit_home, \"/include/to_file.bc\");\n"); 
 	buf.append("sprintf(from_file_path, \"%s%s\", streamit_home, \"/include/from_file.bc\");\n"); 
 	buf.append("include(to_file_path);\n"); 
@@ -62,8 +76,6 @@ public class BCFile
 	if (KjcOptions.magicdram) 
 	    magicDram();
 
-	if (KjcOptions.numbers > 0) // && NumberGathering.successful)
-	    numberGathering();
 	if (KjcOptions.magic_net)
 	    magicNet();
 	flopsCount();
@@ -71,10 +83,39 @@ public class BCFile
 
 	writeFile();
     }
+    
+    private void numberGathering() 
+    {
+	//include the device
+	buf.append("global to_file_numbers_path = malloc(strlen(streamit_home) + 40);\n"); 
+	buf.append("sprintf(to_file_numbers_path, \"%s%s\", streamit_home, \"/include/to_file_numbers.bc\");\n"); 
+	buf.append("include(to_file_numbers_path);\n"); 
+	//define the vars
+	//define the number of items received so far and zero it
+	buf.append("global gNGItems;\n");
+	buf.append("global gNGskip;\n");
+	buf.append("global gNGsteady;\n");
+	buf.append("global gNGfws = " + ng.fileWriters.length + ";\n");
+	//malloc and set the arrays
+	buf.append("\n{ //Number Gathering \n");
+	buf.append("  gNGItems = malloc(gNGfws * 4);\n");
+	buf.append("  gNGskip = malloc(gNGfws * 4);\n");
+	buf.append("  gNGsteady = malloc(gNGfws * 4);\n\n");
+	for (int i = 0; i < ng.fileWriters.length; i++) {
+	    buf.append("  gNGskip[" + i + "] = " + ng.skip[i] + ";\n");
+	    buf.append("  gNGsteady[" + i + "] = " + ng.steady[i] + ";\n");
+	}
+	//install the event handlers
+	buf.append("\n  install_event_handlers();\n");
+	buf.append("}\n");
+	
+    }
+    
 
     private void files()
     {
 	buf.append("\n{\n");	
+	//print the declartions of the slave port var
 	for (int i = 0; i < rawChip.getXSize(); i++) {
 	    for (int j = 0; j < rawChip.getYSize(); j++) {
 		RawTile tile = rawChip.getTile(i, j);
@@ -85,6 +126,17 @@ public class BCFile
 			    buf.append("  local slavePort" + dram.getPort() + " = " + 
 				       "dev_streaming_dram_at_port(" + dram.getPort() + 
 				       ").get_slave_port_fn();\n");
+		    }
+		}
+	    }
+	}
+	
+	for (int i = 0; i < rawChip.getXSize(); i++) {
+	    for (int j = 0; j < rawChip.getYSize(); j++) {
+		RawTile tile = rawChip.getTile(i, j);
+		for (int d = 0; d < tile.getIODevices().length; d++) {
+		    if (tile.getIODevices()[d] instanceof StreamingDram) {
+			StreamingDram dram = (StreamingDram)tile.getIODevices()[d];
 			if (dram.isFileReader()) {
 			    buf.append("  dev_from_file(\"" + 
 				       dram.getFileReader().getFileName() +
@@ -93,8 +145,15 @@ public class BCFile
 				       ");\n");
 			}
 			if (dram.isFileWriter()) {
-			    buf.append("  dev_to_file(\"" + 
-				       dram.getFileWriter().getFileName() +
+			    //if numbers call the ng file writer
+			    if (numbers) 
+				buf.append("  dev_NG_to_file(" + 
+					   ng.getID((FileOutputContent)dram.getFileWriter().getContent()) + 
+					   ", \"");
+			    else 
+				buf.append("  dev_to_file(\"");
+			    
+			    buf.append(dram.getFileWriter().getFileName() +
 				       "\", slavePort" + dram.getPort() + 
 				       (dram.getFileWriter().isFP() ? ", 1" : ", 0") +
 				       ");\n");
@@ -157,31 +216,6 @@ public class BCFile
 	 buf.append("  addMagicFIFOs();\n");
 	 buf.append("  create_schedules();\n");
 	 buf.append("}\n");
-    }
-    
-
-    private void numberGathering() 
-    {
-	/*
-	  buf.append("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
-	  buf.append("global skipPrints = " + NumberGathering.skipPrints + ";\n");
-	  buf.append("global quitAfter = " + KjcOptions.numbers + ";\n");
-	  buf.append("global gSinkX = " + 
-		   Layout.getTile(NumberGathering.sink).getColumn() +
-		   ";\n");
-	  buf.append("global gSinkY = " + 
-		   Layout.getTile(NumberGathering.sink).getRow() +
-		   ";\n");
-	  
-	  buf.append("{\n");
-	  buf.append("  local numberpath = malloc(strlen(streamit_home) + 30);\n");
-	  buf.append("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/gather_numbers.bc\");\n");
-	  //include the number gathering code and install the device file
-	  buf.append("  include(numberpath);\n");
-	  //call the number gathering initialization function
-	  buf.append("  gather_numbers_init();\n");
-	  buf.append("}\n");
-	*/
     }
 
     //create the function to tell the simulator what tiles are mapped

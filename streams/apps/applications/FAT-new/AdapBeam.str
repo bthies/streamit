@@ -6,9 +6,9 @@
  */
 
 
-complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_srg, int N_pri,float alpha, float[] a, float[] b, float[] d)  {
+complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_srg, int N_pri,float alpha, float[N_bm] a, float[N_ch] b, float[N_bm] d)  {
     complex [N_ch][N_bm] V; // the steering matrix
-    complex [N_ch][5*N_ch] A_ext;// the extended version of A which will have dimensions N_ch*(6N_ch)
+    complex [N_ch][6*N_ch] A_ext;// the extended version of A which will have dimensions N_ch*(6N_ch)
     complex[N_ch] v0_stap; // will be used in generating the v_stap
 
     init {
@@ -16,10 +16,9 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
     
 	for ( int i=0; i <N_bm ; i++)
 	    for (int j=0; j < N_ch ; j++)
-		V[j][i]=Comp.Mult(b[j],Comp.etoj(-d[i]-a[i]*j));
+		V[j][i]=b[j]*exp(-d[i]-a[i]*j);
 
-	alpha=(float) Math.sqrt(alpha);
-	A_ext= new Complex[N_ch][6*N_ch];
+	alpha= sqrt(alpha);
 
 	// are the initial values zero? no they are not (from hasani)
 	for (int i=0; i < N_ch; i++)
@@ -31,7 +30,7 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	    }
 	//
 
-	dummy=e^(2i*3.1415926535/N_ch);
+	dummy=exp(2i*3.1415926535/N_ch);
 	v0_stap[0]=1;
 	for (int i=1; i < N_ch; i++)
 	    v0_stap[i]=v0_stap[i-1]*dummy;
@@ -48,13 +47,14 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	CubVect Vstap_Ocub(N_ch,N_bm,N_srg,N_pri);
     
 	// these dummy variables are used for matrix multipication 
-	complex dummy1,dummy2; 
+	complex dummy1;
+	complex dummy2; 
 
-	InCube=input.pop();
+	InCube=pop();
 
 	for (int i=0;i< N_ch; i++)
 	    for (int j=0; j < 5*N_ch; j++)
-		A_ext[i][j]=InCube[i][j][1]/((float)Math.sqrt(5*N_ch));
+		A_ext[i][j]=InCube[i][j][1]/csqrt(5*N_ch);
 
 	L=LQ.comp(N_ch,6*N_ch,A_ext);
 
@@ -111,11 +111,11 @@ complex[N_ch][N_srg][N_pri]->complex filter AdapBeam( int N_ch,int N_bm,int N_sr
 	    }
 	}
 
-	for (int i=; i < N_bm; i++)
+	for (int i=0; i < N_bm; i++)
 	    push(v_stap[i]);
 
 	Vstap_Ocub.Vect=v_stap;
 
-	output.push(W_Ocub);
+	push(W_Ocub);
     }
 }

@@ -29,7 +29,26 @@ public class RoundRobinSplitter extends Splitter
         ASSERT (0);
         
         int numChildren = dest.size ();
-        int [] weights = new int [numChildren + 1];
+        int [] weights = new int [numChildren];
+        
+        int i;
+        for (i=0;i<numChildren;i++)
+        {
+            if (((Stream)dest.get (i)).input != null)
+            {
+                weights [i] = weight;
+            }
+        }
+        
+        return weights;
+    }
+
+    public int getConsumption ()
+    {
+        // not tested yet
+        ASSERT (0);
+        
+        int numChildren = dest.size ();
         int inputTotal = 0;
         
         int i;
@@ -37,13 +56,10 @@ public class RoundRobinSplitter extends Splitter
         {
             if (((Stream)dest.get (i)).input != null)
             {
-                weights [i + 1] = weight;
                 inputTotal += weight;
             }
         }
         
-        weights [0] = inputTotal;
-        
-        return weights;
+        return inputTotal;
     }
 }

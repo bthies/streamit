@@ -16,21 +16,22 @@ public class DuplicateSplitter extends Splitter
         ASSERT (0);
         
         int numChildren = dest.size ();
-        int [] weights = new int [numChildren + 1];
-        int inputTotal = 0;
+        int [] weights = new int [numChildren];
         
         int i;
         for (i=0;i<numChildren;i++)
         {
             if (((Stream)dest.get (i)).input != null)
             {
-                weights [i + 1] = 1;
-                inputTotal ++;
+                weights [i] = 1;
             }
         }
         
-        weights [0] = inputTotal;
-        
         return weights;
+    }
+    
+    public int getConsumption ()
+    {
+        return 1;
     }
 }

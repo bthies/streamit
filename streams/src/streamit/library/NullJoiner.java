@@ -17,5 +17,7 @@ public class NullJoiner extends Joiner
         ASSERT (false);
         return null;
     }
+    
+    public int getProduction () { return 0; }
 
 }

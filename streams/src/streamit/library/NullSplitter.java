@@ -17,4 +17,6 @@ public class NullSplitter extends Splitter
         ASSERT (false);
         return null;
     }
+    
+    public int getConsumption () { return 0; }
 }

@@ -1,8 +1,8 @@
 package streamit.iriter;
 
 import streamit.FeedbackLoop;
-import streamit.Splitter;
-import streamit.Joiner;
+import streamit.NullSplitter;
+import streamit.NullJoiner;
 
 public class FeedbackLoopIter
     extends streamit.misc.DestroyedClass
@@ -30,48 +30,44 @@ public class FeedbackLoopIter
         return new Iterator (feedback.getLoop ());
     }
 
-    public int getSplitterType ()
+    public int getSplitterNumWork ()
     {
-        return feedback.getSplitter ().getType ();
-    }
-    
-    public int getJoinerType ()
-    {
-        return feedback.getJoiner ().getType ();
-    }
-    
-    public int getNumWorkSplitter ()
-    {
-        switch (getSplitterType ())
+        if (feedback.getSplitter() instanceof NullSplitter)
         {
-            case SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN:
-            case SplitJoinIter.SJ_DUPLICATE:
-                return 1;
-            default: 
-                return 0;
+            return 0;
+        } else {
+            return 1;
         }
     }
     
-    public int getNumWorkJoiner ()
+    public int getJoinerNumWork ()
     {
-        switch (getJoinerType ())
+        if (feedback.getJoiner() instanceof NullJoiner)
         {
-            case SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN:
-                return 1;
-            default: 
-                return 0;
+            return 0;
+        } else {
+            return 1;
         }
     }
     
-    public int[] getSplitWeights (int n)
+    public int[] getSplitPushWeights (int nWork)
     {
         return feedback.getSplitter ().getWeights ();
     }
     
-    public int[] getJoinWeights (int n)
+    public int[] getJoinPopWeights (int nWork)
     {
         return feedback.getJoiner ().getWeights ();
     }
-
+    
+    public int getSplitPop (int nWork)
+    {
+        return feedback.getSplitter ().getConsumption ();
+    }
+    
+    public int getJoinPush (int nWork)
+    {
+        return feedback.getJoiner ().getProduction ();
+    }
 }
 

@@ -43,19 +43,41 @@ public class WeightedRoundRobinSplitter extends Splitter
 
     public int [] getWeights ()
     {
-        // not debugged yet
+        // not tested yet
         ASSERT (0);
-        int numChildren = dest.size ();
-        int [] weights = new int [numChildren + 1];
-        int sumInput = 0;
         
-        for (int i = 0; i < numChildren; i++)
+        int numChildren = dest.size ();
+        int [] weights = new int [numChildren];
+        
+        int i;
+        for (i=0;i<numChildren;i++)
         {
-            weights [i+1] = ((Integer)destWeight.get (i)).intValue ();
-            sumInput += weights [i+1];
+            if (((Stream)dest.get (i)).input != null)
+            {
+                weights [i] = ((Integer)destWeight.get (i)).intValue ();
+            }
         }
         
-        weights [0] = sumInput;
         return weights;
+    }
+
+    public int getConsumption ()
+    {
+        // not tested yet
+        ASSERT (0);
+        
+        int numChildren = dest.size ();
+        int inputTotal = 0;
+        
+        int i;
+        for (i=0;i<numChildren;i++)
+        {
+            if (((Stream)dest.get (i)).input != null)
+            {
+                inputTotal += ((Integer)destWeight.get (i)).intValue ();
+            }
+        }
+        
+        return inputTotal;
     }
 }

@@ -81,27 +81,8 @@ abstract public class Joiner extends Operator
     // ----------------------------------------------------------------
 
     public abstract int [] getWeights ();
+    public abstract int getProduction ();
 
-    public int getType ()
-    {
-        if (this instanceof RoundRobinJoiner)
-        {
-            return SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN;
-        } else
-        if (this instanceof WeightedRoundRobinJoiner)
-        {
-            return SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN;
-        } else
-        if (this instanceof NullJoiner)
-        {
-            return SplitJoinIter.SJ_NULL;
-        } else
-        {
-            // the joiner doesn't conform to any recognized type!
-            ASSERT (false);
-            return SplitJoinIter.SJ_ERROR;
-        }
-    }
 }
 
 

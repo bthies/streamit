@@ -33,7 +33,26 @@ public class RoundRobinJoiner extends Joiner
         ASSERT (0);
         
         int numChildren = srcs.size ();
-        int [] weights = new int [numChildren + 1];
+        int [] weights = new int [numChildren];
+        
+        int i;
+        for (i=0;i<numChildren;i++)
+        {
+            if (((Stream)srcs.get (i)).input != null)
+            {
+                weights [i] = weight;
+            }
+        }
+        
+        return weights;
+    }
+    
+    public int getProduction ()
+    {
+        // not tested yet
+        ASSERT (0);
+        
+        int numChildren = srcs.size ();
         int outputTotal = 0;
         
         int i;
@@ -41,13 +60,10 @@ public class RoundRobinJoiner extends Joiner
         {
             if (((Stream)srcs.get (i)).input != null)
             {
-                weights [i + 1] = weight;
                 outputTotal += weight;
             }
         }
         
-        weights [0] = outputTotal;
-        
-        return weights;
+        return outputTotal;
     }
 }

@@ -80,31 +80,6 @@ abstract public class Splitter extends Operator
     // This function constructs a weights list for the scheduler
     // ----------------------------------------------------------------
     abstract public int [] getWeights ();
-
-    public int getType ()
-    {
-        if (this instanceof RoundRobinSplitter)
-        {
-            return SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN;
-        } else
-        if (this instanceof WeightedRoundRobinSplitter)
-        {
-            return SplitJoinIter.SJ_WEIGHTED_ROUND_ROBIN;
-        } else
-        if (this instanceof DuplicateSplitter)
-        {
-            return SplitJoinIter.SJ_DUPLICATE;
-        } else
-        if (this instanceof NullSplitter)
-        {
-            return SplitJoinIter.SJ_NULL;
-        } else
-        {
-            // the splitter doesn't conform to any recognized type!
-            ASSERT (false);
-            return SplitJoinIter.SJ_ERROR;
-        }
-    }
-    
+    public abstract int getConsumption ();
 }
 

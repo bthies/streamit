@@ -160,7 +160,7 @@ class ToJava
                 DataInputStream dis = new DataInputStream(inStream);
                 StreamItLex lexer = new StreamItLex(dis);
                 parser = new StreamItParserFE(lexer);
-                parser.fileName = fileName;
+                parser.setFilename(fileName);
                 prog = parser.program();
                 /* What's the right order for these?  Clearly generic
                  * things like MakeBodiesBlocks need to happen first.

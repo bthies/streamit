@@ -173,14 +173,64 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
-     * If all the streams in this are the same "height" (see
-     * getComponentHeight), returns this length.  Otherwise returns
-     * -1.
+     * Returns whether or not all streams in this have the same
+     * "height" (see getComponentHeight).
      */
-    public int getUniformHeight() {
+    public boolean isRectangular() {
+	return getRectangularHeight()!=-1;
+    }
+
+    /**
+     * If this is not rectangular, then pad the shorter streams in
+     * this with Identity filters until all component streams have the
+     * same length.  Put the identity filters at the end of the
+     * shorter streams (unless shorter stream is a sink, in which case
+     * put them at the beginning.)
+     */
+    public void makeRectangular() {
+	if (isRectangular()) {
+	    return;
+	}
+	// find max height of component of this
+	int max = getComponentHeight(get(0));
+	for (int i=1; i<size(); i++) {
+	    max = Math.max(max, getComponentHeight(get(i)));
+	}
+	// pad all short streams with identities
+	for (int i=0; i<size(); i++) {
+	    SIRStream child = get(i);
+	    int height = getComponentHeight(child);
+	    // if we have to pad...
+	    if (height<max) {
+		// if we have anything but a pipeline, wrap it in a
+		// pipeline so we can add to it.
+		SIRPipeline wrapper;
+		if (child instanceof SIRPipeline) {
+		    wrapper = (SIRPipeline)child;
+		} else {
+		    wrapper = SIRContainer.makeWrapper(child);
+		}
+		// add identities to wrapper
+		for (int j=height; j<max; j++) {
+		    if (wrapper.getOutputType()!=CStdType.Null) {
+			wrapper.add(new SIRIdentity(child.getOutputType()));
+		    } else if (wrapper.getInputType()!=CStdType.Null) {
+			wrapper.add(0, new SIRIdentity(child.getInputType()));
+		    } else {
+			Utils.fail("Trying to extend a void->void child stream into a rectangular splitjoin.");
+		    }
+		}
+	    }
+	}
+    }
+
+    /**
+     * If this is a rectangular splitjoin, returns the "height" of all
+     * streams in the rectangule (see getComponentHeight).  If this is
+     * non-rectangular, returns -1.
+     */
+    public int getRectangularHeight() {
 	int height = getComponentHeight(get(0));
-	// for now, only deal with splitjoins that are rectangular.
-	// should extend with identities for the general case.
 	for (int i=1; i<size(); i++) {
 	    if (height!=getComponentHeight(get(i))) {
 		return -1;

@@ -242,15 +242,18 @@ public abstract class SIRContainer extends SIRStream {
      * Returns a wrapper for <str>.  Also mutates parent of <str> to
      * contain the wrapper in between itself and <str>.
      */
-    public static SIRContainer makeWrapper(SIRStream str) {
-	SIRPipeline wrapper = new SIRPipeline(str.getParent(),
+    public static SIRPipeline makeWrapper(SIRStream str) {
+	// wrapper.add below changes the parent of str, so grab the
+	// old parent now.
+	SIRContainer oldParent = str.getParent();
+	SIRPipeline wrapper = new SIRPipeline(oldParent,
 					      "wrapper_" + str.getName(), 
 					      JFieldDeclaration.EMPTY(), 
 					      JMethodDeclaration.EMPTY());
 	wrapper.setInit(SIRStream.makeEmptyInit());
 	wrapper.add(str);
-	if (str.getParent()!=null) {
-	    str.getParent().replace(str, wrapper);
+	if (oldParent.getParent()!=null) {
+	    oldParent.replace(str, wrapper);
 	}
 	return wrapper;
     }

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.13 2002-11-15 20:29:09 dmaze Exp $
+# $Id: knit,v 1.14 2002-11-15 21:27:15 dmaze Exp $
 #
 
 use strict;
@@ -61,6 +61,9 @@ Options specific to RAW backend:
   --ratematch, -x     Turn on rate matching
   --removeglobals, -G Inline all functions and turn globals into locals
   --sketchycodegen    Avoid volatile assembly
+
+Options specific to uniprocessor backend:
+  --profile           Compile with profiling information
 EOT
 }
 
@@ -85,6 +88,7 @@ sub get_options
 	       "noanneal|N",
 	       "partition|a",
 	       "poptopeek|P",
+	       "profile",
 	       "ptraccess|Q",
 	       "ratematch|x",
 	       "removeglobals|G",
@@ -157,8 +161,19 @@ sub c_to_out
   {
     my ($fns, $target) = @_;
     my $sh = $opts{home};
-    call("gcc -g -O2 -o$target -I$sh/library/c " . join(' ', @$fns) .
-	 " -L$sh/library/c -lstreamit -lm");
+    my ($gcc, $libs);
+    if ($opts{profile})
+      {
+	$gcc = "gcc -pg -a";
+	$libs = "-nodefaultlibs -lstreamit_p -lm_p -lc_p -lgcc";
+      }
+    else
+      {
+	$gcc = "gcc";
+	$libs = "-lstreamit -lm";
+      }
+    call("$gcc -g -O2 -o$target -I$sh/library/c " . join(' ', @$fns) .
+	 " -L$sh/library/c $libs");
   }
 
 sub get_kjc_opts

@@ -140,7 +140,22 @@ public class StreamItDot implements AttributeStreamVisitor
     {
         // Return a name pair with both ends pointing to this.
 	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
-	return new NamePair(makeLabelledNode(self.getIdent()));
+	String label = self.getIdent();
+	try {
+	    label += "\\npush=" + self.getPushInt();
+	    label += "\\npop=" + self.getPopInt();
+	    label += "\\npeek=" + self.getPeekInt();
+	    if (self instanceof SIRTwoStageFilter) {
+		SIRTwoStageFilter two = (SIRTwoStageFilter)self;
+		label += "\\ninitPush=" + two.getInitPush();
+		label += "\\ninitPop=" + two.getInitPop();
+		label += "\\ninitPeek=" + two.getInitPeek();
+	    }
+	} catch (Exception e) {
+	    // if constants not resolved for the ints, will get an exception
+	}
+	
+	return new NamePair(makeLabelledNode(label));
     }
     
     /* visit a splitter */

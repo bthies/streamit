@@ -19,7 +19,8 @@ public class MatrixMult extends StreamIt
         //add (new MatrixMultiply (3, 4, 5, 3));
 	add (new MatrixMultiply (10, 10, 10, 10));
         //add (new FileWriter ("matmul.out", Float.TYPE));
-	add (new Sink());
+	add(new FloatPrinter());
+	//add (new Sink());
     }
 }
 
@@ -191,6 +192,24 @@ class FloatSource extends Filter
         if (num == maxNum) num = 0;
     }
 }
+
+class FloatPrinter extends Filter
+{
+    FloatPrinter ()
+    {
+	super();
+    }
+    
+    public void init () {
+        input = new Channel (Float.TYPE, 1);
+    }
+    
+    public void work ()
+    {
+        System.out.println(input.popFloat());
+    }
+}
+
 class Sink extends Filter {
     int x;
     public void init() {

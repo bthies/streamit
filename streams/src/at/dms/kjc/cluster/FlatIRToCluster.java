@@ -845,12 +845,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	// print(CModifier.toString(modifiers));
 	print(returnType);
 	print(" ");
-	//just print initPath() instead of initPath<Type>
-	if (ident.startsWith("initPath"))
-	    print("initPath"); 
-	else 
-	    print(ident);
-	print("__"+selfID);
+	print(ident);
+	// this breaks initpath
+	if (!ident.startsWith("__Init_Path_")) {
+	    print("__"+selfID);
+	}
 	print("(");
 	int count = 0;
 	

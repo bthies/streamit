@@ -79,7 +79,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     private SIROperator newSIROP(JClassDeclaration clazz) {
 	String TYPE = clazz.getSourceClass().getSuperClass().getIdent();
     
-	if (TYPE.equals("Pipeline")) {
+	if (TYPE.equals("Pipeline") || TYPE.equals("StreamIt")) {
 	    SIRPipeline current = new SIRPipeline((SIRContainer)parentStream, 
 				   JFieldDeclaration.EMPTY,
 				   JMethodDeclaration.EMPTY);
@@ -268,7 +268,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	current = newSIROP(self);
 
 	//If this class is public then it is the topLevel stream (entry point)
-	if (self.getSourceClass().isPublic()) {
+	if (self.getSourceClass().getSuperClass().getIdent().equals("StreamIt")) {
 	    if (topLevel == null)
 		topLevel = (SIRStream) current;
 	    else
@@ -423,6 +423,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	printMe("FieldDeclaration " + ident);
 	/* Input declaration set the fields for the current
 	   stream */ 
+	if (CModifier.contains(CModifier.ACC_STATIC, modifiers))
+	    at.dms.util.Utils.fail("Cannot declare fields static");
+	
 	if (ident.equals("input")) {
 	    if (!(parentStream instanceof SIRFilter))
 		at.dms.util.Utils.fail("Input declaration on non-Filter");
@@ -1142,7 +1145,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	if (SIROp instanceof JUnqualifiedInstanceCreation) {
 	    SIRStream st = (SIRStream)getVisitedOp(((JUnqualifiedInstanceCreation)SIROp).
 						   getType().getCClass().getIdent());
-	    SIRStream newST = (SIRStream) st.clone();
+	    
+	    SIRStream newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
+	    //SIRStream newST = (SIRStream) st.clone();
 	    newST.setParent((SIRContainer)parentStream);
 	    if (regMethod.equals("add")) {
 		if (parentStream instanceof SIRPipeline)

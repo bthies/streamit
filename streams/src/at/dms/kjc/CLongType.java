@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CLongType.java,v 1.1 2001-08-30 16:32:50 thies Exp $
+ * $Id: CLongType.java,v 1.2 2001-10-22 22:01:24 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -41,6 +41,11 @@ public class CLongType extends CNumericType {
     super(TID_LONG);
   }
 
+    private Object readResolve() throws Exception {
+	return CStdType.Long;
+    }
+
+    
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------

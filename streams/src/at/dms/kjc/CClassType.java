@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.2 2001-09-25 22:52:38 thies Exp $
+ * $Id: CClassType.java,v 1.3 2001-10-22 22:01:24 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -59,6 +59,12 @@ public class CClassType extends CType {
     }
   }
 
+    private Object readResolve() {
+	if (this.getQualifiedName().equals(Constants.JAV_STRING))
+	    return CStdType.String;
+	return this;
+    }
+
   public static CClassType lookup(String qualifiedName) {
     if (qualifiedName.indexOf('/') >= 0) {
       CClassType	type = (CClassType)allCClassType.get(qualifiedName);
@@ -74,7 +80,7 @@ public class CClassType extends CType {
     }
   }
 
-  protected boolean isChecked() {
+    protected boolean isChecked() {
     return clazz != BAC_CLASS;
   }
 

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.67 2002-06-28 20:11:29 dmaze Exp $
+ * $Id: LIRToC.java,v 1.68 2002-07-01 21:42:00 jasperln Exp $
  */
 
 package at.dms.kjc.lir;
@@ -19,6 +19,8 @@ public class LIRToC
     extends at.dms.util.Utils
     implements Constants, SLIRVisitor
 {
+    //Needed to pass info from assignment to visitNewArray
+    JExpression lastLeft;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -1111,7 +1113,28 @@ public class LIRToC
         dims[0].accept(this);
         print(" * sizeof(");
         print(type);
+	if(dims.length>1)
+	    print("*");
         print("))");
+	if(dims.length>1) {
+	    for(int off=0;off<(dims.length-1);off++) {
+		//Right now only handles JIntLiteral dims
+		//If cast expression then probably a failure to reduce
+		int num=((JIntLiteral)dims[off]).intValue();
+		for(int i=0;i<num;i++) {
+		    print(",\n");
+		    //If lastLeft null then didn't come right after an assignment
+		    lastLeft.accept(this);
+		    print("["+i+"]=malloc(");
+		    dims[off+1].accept(this);
+		    print(" * sizeof(");
+		    print(type);
+		    if(off<(dims.length-2))
+			print("*");
+		    print("))");
+		}
+	    }
+	}
         if (init != null) {
             init.accept(this);
         }
@@ -1400,11 +1423,13 @@ public class LIRToC
           }
         */
 
+	lastLeft=left;
         print("(");
         left.accept(this);
         print(" = ");
         right.accept(this);
         print(")");
+	lastLeft=null;
     }
 
     /**

@@ -1,7 +1,7 @@
 /*
  * NameAnonymousFunctions.java: replace anonymous functions with named ones
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NameAnonymousFunctions.java,v 1.4 2003-08-29 22:51:24 thies Exp $
+ * $Id: NameAnonymousFunctions.java,v 1.5 2003-09-16 20:53:05 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -19,6 +19,7 @@ public class NameAnonymousFunctions extends FEReplacer
         {
         case Function.FUNC_INIT: name = "init"; break;
         case Function.FUNC_WORK: name = "work"; break;
+        case Function.FUNC_PREWORK: name = "prework"; break;
         case Function.FUNC_HANDLER: return func;
         case Function.FUNC_HELPER: return func;
         default: return func;

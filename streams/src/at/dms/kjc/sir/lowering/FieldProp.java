@@ -68,7 +68,11 @@ public class FieldProp
         
         // Having recursed, do the flattening, if it's appropriate.
         if (str instanceof SIRFilter)
+        {
+            // Run propagate/unroll twice, just to be sure.
             new FieldProp().propagate((SIRFilter)str);
+            new FieldProp().propagate((SIRFilter)str);
+        }
         
         // All done, return the object.
         return str;
@@ -300,8 +304,10 @@ public class FieldProp
                             return orig;
                     }
                 });
-            // Also run some simple algebraic simplification now.
+            // Also run some simple algebraic simplification and loop
+            // unrolling now.
             meths[i].accept(new Propagator(new Hashtable()));
+            meths[i].accept(new Unroller(new Hashtable()));
         }
     }
 }

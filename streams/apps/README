@@ -8,18 +8,14 @@ apps/old          -- Random mung that seems to have collected in CVS and that I 
 
 
 
-Here are the applications contained in this directory:
+Here is a partial list of the applications contained in this the sub directories.
 
-old/AMRadio			An old attempt at an AMRadio (not using now)
+old/AMRadio		An old attempt at an AMRadio (not using now)
 
 benchmarks/beamformer	The original Beamformer implementation, which leads
 			to buffer overflow.
 
-BeamFormer-fine		More fine-grained Beamformer, which moves some state
-			into a filter to prevent exploding I/O ratios.  This
-			is what we used for ASPLOS, etc.
-
-Crc			CRC encoder and decoder.
+applications/crc	CRC encoder and decoder.
 
 FMRadio			An old FMRadio; new one is in docs/examples/hand/fm.
 

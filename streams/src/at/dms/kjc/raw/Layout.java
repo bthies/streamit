@@ -204,61 +204,78 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public static void simAnnealAssign(FlatNode node) 
     {
 	System.out.println("Simulated Annealing Assignment");
-	int nsucc =0, j = 0, lastCost = 0, currentCost = 0;
-	//number of paths tried at a temp
+	int nsucc =0, j = 0, currentCost = 0, minCost = 0;
+	//number of paths tried at an iteration
 	int nover = 100 ;//* StreamItOptions.rawRows * StreamItOptions.rawColumns;
-	//max number of sucessful path lengths before continuing
-	//	int nlimit = 10 * StreamItOptions.rawRows * StreamItOptions.rawColumns;
-	int cost = 0;
+
 	try {
 	    init(node);
 	    random = new Random(17);
 	    //random placement
 	    randomPlacement();
-	       
-	    double t = annealMaxTemp(); 
-	     double tFinal = annealMinTemp();
-	     // System.out.println(t);
-	     // System.out.println(tFinal);
-	     //filew = new FileWriter("simanneal.out");
 	    
-	    System.out.println("Initial Cost: " + placementCost());
-	    //  for (j = 0; j < ANNEALITERATIONS; j++) {
-	    while (true) {
-		
-		int k = 0;
-		nsucc = 0;
-		for (k = 0; k < nover; k++) {
-		    if (perturbConfiguration(t)) {
-			//filew.write(placementCost() + "\n");
-			nsucc++;
+	    //filew = new FileWriter("simanneal.out");
+	    
+	    currentCost = placementCost();
+	    System.out.println("Initial Cost: " + currentCost);
+	    
+	    //as a little hack, we will cache the layout with the minimum cost
+	    //these two hashmaps store this layout
+	    HashMap sirMin = (HashMap)SIRassignment.clone();
+	    HashMap tileMin = (HashMap)tileAssignment.clone();
+	    minCost = currentCost;
+
+	    //run the annealing twice.  The first iteration is really just to get a 
+	    //good initial layout.  Some random layouts really kill the algorithm
+	    for (int two = 0; two < 2; two++) {
+		double t = annealMaxTemp(); 
+		double tFinal = annealMinTemp();
+		while (true) {
+		    int k = 0;
+		    nsucc = 0;
+		    for (k = 0; k < nover; k++) {
+			if (perturbConfiguration(t)) {
+			    //filew.write(placementCost() + "\n");
+			    nsucc++;
+			}
+			if (placementCost() == 0)
+			    break;
 		    }
-		    //if (nsucc >= nlimit) break;
-		    if (placementCost() == 0)
+		    
+		    t *= TFACTR;
+		    currentCost = placementCost();
+		    //keep the layout with the minimum cost
+		    //this will be the final layout
+		    if (currentCost < minCost) {
+			minCost = currentCost;
+			//save the layout with the minimum cost
+		        sirMin = (HashMap)SIRassignment.clone();
+			tileMin = (HashMap)tileAssignment.clone();
+		    }
+		    if (nsucc == 0) break;
+		    if (currentCost == 0)
 			break;
+		    if (t <= tFinal)
+			break;
+		    j++;
 		}
-		
-		t *= TFACTR;
-		if (nsucc == 0) break;
-		currentCost = placementCost();
-		//if (currentCost == lastCost)
-		//  break;
-		if (currentCost == 0)
-		    break;
-		if (t <= tFinal)
-		    break;
-		lastCost = currentCost;
-		j++;
+	    }
+	   
+	    currentCost = placementCost();
+	    System.out.println("Final Cost: " + currentCost + 
+			       " Min Cost : " + minCost + 
+			       " in  " + j + " iterations.");
+	    if (minCost < currentCost) {
+		SIRassignment = sirMin;
+		tileAssignment = tileMin;
 	    }
 	    
-	    System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
 	    //filew.close();
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
 	}
 	dumpLayout();
-
     }
     
      private static double annealMaxTemp() throws Exception

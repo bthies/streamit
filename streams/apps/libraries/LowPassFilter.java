@@ -28,14 +28,15 @@ public class LowPassFilter extends Filter {
     float cutoffFreq, samplingRate;
     int mDecimation;
 
-    public LowPassFilter(float sampleRate, float cutFreq, int numTaps)
+    public LowPassFilter(float sampleRate, float cutFreq, int numTaps, int decimation)
     {
-        super(sampleRate, cutFreq, numTaps);
+        super(sampleRate, cutFreq, numTaps, decimation);
     }
 
-    public void init(float sampleRate, float cutFreq, int numTaps)
+    public void init(float sampleRate, float cutFreq, int numTaps, int decimation)
     {
-        input = new Channel (Float.TYPE, 1);
+	mDecimation = decimation;
+        input = new Channel (Float.TYPE, 1+mDecimation);
         output = new Channel (Float.TYPE, 1);
 
         //all frequencies are in hz
@@ -97,8 +98,8 @@ public class LowPassFilter extends Filter {
         }
 
         input.popFloat();
-        //for(int i=0;i<mDecimation;i++)
-        //    input.popFloat();
+        for(int i=0;i<mDecimation;i++)
+            input.popFloat();
         output.pushFloat(sum);
     }
 }

@@ -68,8 +68,8 @@ public class BandPassFilter extends Pipeline {
         add(new SplitJoin() {
                 public void init () {
                     setSplitter(DUPLICATE());
-                    add(new LowPassFilter(samplingRate, mHighFreq, numberOfTaps));
-                    add(new LowPassFilter(samplingRate, mLowFreq, numberOfTaps));
+                    add(new LowPassFilter(samplingRate, mHighFreq, numberOfTaps, 0));
+                    add(new LowPassFilter(samplingRate, mLowFreq, numberOfTaps, 0));
                     setJoiner(ROUND_ROBIN());
                 }
             });

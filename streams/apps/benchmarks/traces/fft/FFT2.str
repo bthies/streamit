@@ -1,9 +1,12 @@
 
-void->void pipeline FFT2_newin() {
-
-  add FFTTestSource(64);
-  add FFTKernel2(64);
-  add FloatPrinter();
+void->void pipeline FFT2() {
+    //add FileReader<float>("input");
+    add FFTTestSource(64);
+    add FFTReorder(64);
+    for(int j=2; j<=64; j*=2)
+	add CombineDFT(j);
+    //add FileWriter<float>("output");
+    add FloatPrinter();
 }
 
 
@@ -104,32 +107,35 @@ float->float pipeline FFTReorder(int n) {
 }
 
 
-float->float pipeline FFTKernel1(int n) {
 
-  if(n>2) {
-    add splitjoin {
-      split roundrobin(2);
-      add FFTKernel1(n/2);
-      add FFTKernel1(n/2);
-      join roundrobin(n);
-    }
-  }
-  add CombineDFT(n);
+float->float filter Nothing 
+{
+    work pop 1 push 1
+	{
+	    push(pop());
+	}
 }
 
 
-float->float splitjoin FFTKernel2(int n) {
+// void->void splitjoin FFTKernel2(int n) {
 
-  split roundrobin(2*n);
-  for(int i=0; i<2; i++) {
-    add pipeline {
-      add FFTReorder(n);
-      for(int j=2; j<=n; j*=2)
-        add CombineDFT(j);
-    }
-  }
-  join roundrobin(2*n);
-}
+//   split roundrobin(0);
+//   add pipeline {
+//       add FileReader<float>("input0");
+//       add FFTReorder(n);
+//       for(int j=2; j<=n; j*=2)
+// 	  add CombineDFT(j);
+//       add FileWriter<float>("output0");
+//   }
+//   add pipeline {
+//       add FileReader<float>("input1");
+//       add FFTReorder(n);
+//       for(int j=2; j<=n; j*=2)
+// 	  add CombineDFT(j);
+//       add FileWriter<float>("output1");
+//   }
+//   join roundrobin(0);
+// }
 
 
 void->float filter FFTTestSource(int N) {

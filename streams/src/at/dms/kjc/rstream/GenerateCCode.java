@@ -90,6 +90,18 @@ public class GenerateCCode
 	//add things to the main method, the only thing
 	//before this should be peek buffer declarations
 	placeFieldArrayInits();
+	
+	//add comments to the blocks
+	JavaStyleComment[] comment1 = 
+	    {new JavaStyleComment("SIR: Init Schedule",
+				  true, false, false)};
+	init.addStatementFirst(new JEmptyStatement(null, comment1));
+	JavaStyleComment[] comment2 = 
+	    {new JavaStyleComment("SIR: Steady-State Schedule",
+				  true, false, false)};
+	steady.addStatementFirst(new JEmptyStatement(null, comment2));
+	
+
 	//add the initfunction calls
 	main.addStatement(initFunctionCalls);
 	

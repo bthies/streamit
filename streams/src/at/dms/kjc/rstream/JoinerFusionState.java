@@ -6,6 +6,7 @@ import java.util.Vector;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
+import at.dms.compiler.*;
 
 //each filter owns its popBuffer, the popBufferIndex, and the pushIndex
 //into the next filters popBuffer.
@@ -159,6 +160,13 @@ public class JoinerFusionState extends FusionState
 	JBlock innerLoops = new JBlock(null, new JStatement[0], null);
 
 	int mult = StrToRStream.getMult(getNode(), isInit);
+	
+	//add a comment
+	JavaStyleComment[] comment = {new JavaStyleComment(joiner.toString(),
+							   true,
+							   false,
+							   false)};
+	statements.addStatement(new JEmptyStatement(null, comment));
 
 	if (mult == 0)
 	    return statements.getStatementArray();

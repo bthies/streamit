@@ -6,6 +6,7 @@ import java.util.Vector;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
+import at.dms.compiler.*;
 
 //each filter owns its popBuffer, the popBufferIndex, and the pushIndex
 //into the next filters popBuffer.
@@ -205,7 +206,9 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	JBlock oldBody = new JBlock(null, init.getStatements(), null);
 	
 	JStatement body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
-
+	JavaStyleComment[] comment = {new JavaStyleComment(filter.toString() + " init()",
+						      true, false, false)};
+	initFunctionCalls.addStatement(new JEmptyStatement(null, comment));
 	initFunctionCalls.addStatement(body);
 
 	//if this buffer peeks add the declaration for the peek buffer
@@ -224,6 +227,14 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	if (!necessary)
 	    return statements.getStatementArray();
 	
+	JavaStyleComment[] comment = {new JavaStyleComment(filter.toString(),
+							   true,
+							   false,
+							   false)};
+
+
+	statements.addStatement(new JEmptyStatement(null, comment));
+				 
 	int mult = StrToRStream.getMult(getNode(), isInit);
 
 	

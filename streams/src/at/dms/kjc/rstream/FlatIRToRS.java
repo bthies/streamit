@@ -764,6 +764,34 @@ public class FlatIRToRS extends ToC
     }
     
 
+     /**
+    
+      */
+    public void visitComments(JavaStyleComment[] comments) {
+	for (int i = 0; i < comments.length; i++)
+	    visitComment(comments[i]);
+    }
+    
+    /**
+    
+     */
+    public void visitComment(JavaStyleComment comment) {
+	//don't print random comments, only sir comments
+	if (!comment.getText().startsWith("SIR"))
+	    return;
+	
+	String str = "";
+	if (comment.isLineComment())
+	    str = "\n";
+	if (comment.hadSpaceBefore())
+	    str = str + " ";
+	str = str + "/*" + comment.getText() + "*/";
+	if (comment.hadSpaceAfter())
+	    str = str + " ";
+	
+	print(str);
+    }
+    
 
     /**
      * prints a cast expression

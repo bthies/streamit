@@ -6,6 +6,7 @@ import java.util.Vector;
 import at.dms.kjc.*;
 import at.dms.util.Utils;
 import at.dms.kjc.sir.*;
+import at.dms.compiler.*;
 
 //each filter owns its popBuffer, the popBufferIndex, and the pushIndex
 //into the next filters popBuffer.
@@ -152,19 +153,27 @@ public class SplitterFusionState extends FusionState
     
     public JStatement[] getWork(JBlock enclosingBlock, boolean isInit) 
     {
+	
 	JBlock statements = new JBlock(null, new JStatement[0], null);
 	
 	int mult = StrToRStream.getMult(getNode(), isInit);
 
+	JavaStyleComment[] comment = {new JavaStyleComment(splitter.toString(),
+							   true,
+							   false,
+							   false)};
+	
+	statements.addStatement(new JEmptyStatement(null, comment));
+	
 	if (mult == 0)
 	    return statements.getStatementArray();
 	
 	//add the block to do the data reordering
 	if (node.isDuplicateSplitter()) {
-	    enclosingBlock.addStatement(getDuplicateCode(enclosingBlock, mult, isInit));
+	    statements.addStatement(getDuplicateCode(enclosingBlock, mult, isInit));
 	}
 	else {
-	    enclosingBlock.addStatement(getRRCode(enclosingBlock, mult, isInit));
+	    statements.addStatement(getRRCode(enclosingBlock, mult, isInit));
 	}
 
 	//either way, we have to generate code to save the non-pop'ed items now
@@ -184,7 +193,7 @@ public class SplitterFusionState extends FusionState
 				     StrToRStream.getMult(node, isInit) * distinctRoundItems(),
 				     remaining[0]));
 	}
-	
+
 	return statements.getStatementArray();
     }
     

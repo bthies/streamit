@@ -26,7 +26,7 @@ public class TraceIRtoC extends SLIREmptyVisitor
     
     //if this is true only print methods decls, not body
     public boolean declOnly = true;
-    
+
     //the writer and its associated crap
     private TabbedPrintWriter p;
     protected StringWriter str; 
@@ -1466,8 +1466,11 @@ public class TraceIRtoC extends SLIREmptyVisitor
 		 type.equals(CStdType.Integer) ||
 		 type.equals(CStdType.Short))
 	    {
-		if (!KjcOptions.standalone)
-		    print("print_int(");
+		if (!KjcOptions.standalone) {
+		    //print("print_int(");
+		    print("raw_test_pass_reg(");
+		}
+		
 		else
 		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -1477,8 +1480,10 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
 	else if (type.equals(CStdType.Char))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    print("raw_test_pass_reg(");
 		    print("print_int(");
+		}
 		else
 		    print("printf(\"%d\\n\", "); 
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
@@ -1488,8 +1493,10 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    print("raw_test_pass_reg(");
 		    print("print_float(");
+		}
 		else 
 		    print("printf(\"%f\\n\", "); 
 		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
@@ -1499,8 +1506,11 @@ public class TraceIRtoC extends SLIREmptyVisitor
 	    }
         else if (type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.standalone)
+		if (!KjcOptions.standalone) {
+		    print("raw_test_pass_reg(");
 		    print("print_int(");
+		}
+		
 		else
 		    print("printf(\"%d\\n\", "); 
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");

@@ -164,6 +164,35 @@ public class StreamItDot implements AttributeStreamVisitor
 	
 	return new NamePair(makeLabelledNode(label));
     }
+
+    /* visit a phased filter */
+    public Object visitPhasedFilter(SIRFilter self,
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init,
+                                    JMethodDeclaration work,
+                                    SIRWorkFunction[] phases,
+                                    CType inputType, CType outputType)
+    {
+        NamePair pair = new NamePair();
+        
+        // Print this within a subgraph.
+        print(getClusterString(self));
+        
+        // Walk through each of the phases.
+        for (int i = 0; i < phases.length; i++)
+        {
+            NamePair p2 = (NamePair)phases[i].accept(this);
+            printEdge(pair.last, p2.first);
+            // Update the known edges.
+            if (pair.first == null)
+                pair.first = p2.first;
+            pair.last = p2.last;
+        }
+
+        print("}\n");
+        return pair;
+    }
     
     /* visit a splitter */
     public Object visitSplitter(SIRSplitter self,
@@ -208,6 +237,22 @@ public class StreamItDot implements AttributeStreamVisitor
         return new NamePair(makeLabelledInvisNode(label));
     }
     
+    /* visit a work function */
+    public Object visitWorkFunction(SIRWorkFunction self,
+                                    JMethodDeclaration work)
+    {
+	String label = self.getName();
+	try {
+	    label += "\\npush=" + self.getPushInt();
+	    label += "\\npop=" + self.getPopInt();
+	    label += "\\npeek=" + self.getPeekInt();
+	} catch (Exception e) {
+	    // if constants not resolved for the ints, will get an exception
+	}
+	
+	return new NamePair(makeLabelledNode(label));
+    }
+
     /* pre-visit a pipeline */
     public Object visitPipeline(SIRPipeline self,
                                 JFieldDeclaration[] fields,

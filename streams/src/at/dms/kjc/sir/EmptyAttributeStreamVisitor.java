@@ -25,6 +25,18 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
 	return self;
     }
   
+    /* visit a phased filter */
+    public Object visitPhasedFilter(SIRFilter self,
+                                    JFieldDeclaration[] fields,
+                                    JMethodDeclaration[] methods,
+                                    JMethodDeclaration init,
+                                    JMethodDeclaration work,
+                                    SIRWorkFunction[] phases,
+                                    CType inputType, CType outputType)
+    {
+        return self;
+    }
+  
     /* visit a splitter */
     public Object visitSplitter(SIRSplitter self,
 			 SIRSplitType type,
@@ -37,6 +49,13 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
 			SIRJoinType type,
 		       JExpression[] weights) {
 	return self;
+    }
+
+    /* visit a work function */
+    public Object visitWorkFunction(SIRWorkFunction self,
+                                    JMethodDeclaration work)
+    {
+        return self;
     }
 	
     /* pre-visit a pipeline */

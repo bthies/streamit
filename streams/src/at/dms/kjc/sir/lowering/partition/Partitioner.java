@@ -15,9 +15,6 @@ public class Partitioner {
      * Tries to adjust <str> into <num> pieces of equal work.
      */
     public static void doit(SIRStream str, int target) {
-	// dump the orig graph
-	StreamItDot.printGraph(str, "before.dot");
-
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
 	System.out.print("Lifting filters... ");
@@ -26,7 +23,8 @@ public class Partitioner {
 
 	// make work estimate
 	WorkEstimate work = WorkEstimate.getWorkEstimate(str);
-	work.printGraph(str, "work-estimate.dot");
+	work.printGraph(str, "work-before.dot");
+	work.getSortedFilterWork().writeToFile("work-before.txt");
 
 	// detect number of tiles we have
 	System.out.print("count tiles... ");
@@ -60,7 +58,9 @@ public class Partitioner {
 	// lift the result
 	Lifter.lift(str);
 
-	// dump the final graph
-	StreamItDot.printGraph(str, "after.dot");
+	// get the final work estimate
+	work = WorkEstimate.getWorkEstimate(str);
+	work.printGraph(str, "work-after.dot");
+	work.getSortedFilterWork().writeToFile("work-after.txt");
     }
 }

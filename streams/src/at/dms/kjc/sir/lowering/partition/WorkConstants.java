@@ -4,10 +4,11 @@ package at.dms.kjc.sir.lowering.partition;
  * This interface contains estimates of work for various operations.
  */
 interface WorkConstants {
+    // measured delay between consecutive constant print statements
+    int PRINT = 17;
     // operations
     int PEEK = 4;
     int POP = 4;
-    int PRINT = 4;
     int PUSH = 4;
     int SWITCH = 4;
 

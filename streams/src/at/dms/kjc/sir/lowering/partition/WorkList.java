@@ -4,6 +4,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.compiler.*;
 import java.util.*;
+import java.io.*;
 
 /**
  * A wrapper for a linked list to save ourself a lot of casting with
@@ -36,4 +37,40 @@ class WorkList extends java.util.LinkedList {
 	return (SIRContainer)((Map.Entry)super.get(i)).getKey();
     }
 
+    /**
+     * Write the contents of this to filename <filename>.
+     */
+    public void writeToFile(String filename) {
+	PrintStream out = null;
+	try {
+	    out = new PrintStream(new FileOutputStream(filename));
+	} catch (FileNotFoundException e) {
+	    e.printStackTrace();
+	}
+	// first get max-length string so we justify the work column
+	int max = 0;
+	for (int i=size()-1; i>=0; i--) {
+	    SIRStream str = (SIRStream)((Map.Entry)super.get(i)).getKey();
+	    if (max<str.getIdent().length()) {
+		max = str.getIdent().length();
+	    }
+	}
+	// then print, justified
+	String title1 = "Filter";
+	out.print(title1);
+	for (int i=title1.length(); i<max; i++) {
+	    out.print(" ");
+	}
+	out.println("\t" + "Work");
+	for (int i=size()-1; i>=0; i--) {
+	    SIRStream str = (SIRStream)((Map.Entry)super.get(i)).getKey();
+	    int work = getWork(i);
+	    out.print(str.getIdent());
+	    for (int j=str.getIdent().length(); j<max; j++) {
+		out.print(" ");
+	    }
+	    out.println("\t" + work);
+	}
+	out.close();
+    }
 }

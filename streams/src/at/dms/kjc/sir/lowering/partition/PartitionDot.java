@@ -21,7 +21,7 @@ import at.dms.kjc.sir.lowering.fission.*;
 public class PartitionDot extends StreamItDot {
     private String prefixLabel;
     private HashMap partitions;
-    private static final String[] color_table = {"white", "blue", "aliceblue", "antiquewhite", "aquamarine", "bisque", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "crimson", "cyan", "darkgoldenrod", "darkgreen", "", "darkkhaki", "darkolivegreen", "darkorange", "", "darkorchid", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "", "", "", "", "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "", "dimgray", "", "dodgerblue", "firebrick", "forestgreen", "gainsboro", "ghostwhite", "gold", "goldenrod"};
+    private static final String[] color_table = {"white", "blue", "aliceblue", "antiquewhite", "aquamarine", "bisque", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "crimson", "cyan", "darkgoldenrod", "darkgreen", "darkkhaki", "darkolivegreen", "darkorange", "darkorchid", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "dimgray", "dodgerblue", "firebrick", "forestgreen", "gainsboro", "ghostwhite", "gold", "goldenrod"};
 
     /**
      * PrefixLabel is a prefix for each node.

@@ -568,8 +568,11 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
             JMethodDeclaration target = findMethod(ident);
             if (target != null)
                 target.accept(this);
-            else
+            else {
+		System.err.println("Warning:  Work estimator couldn't find target method \"" + ident + "\"" + "\n" + 
+				   "   Will assume constant work overhead of " + WorkConstants.METHOD_CALL);
                 work += METHOD_CALL;
+	    }
         }
     }
 

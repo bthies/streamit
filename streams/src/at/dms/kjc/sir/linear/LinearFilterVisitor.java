@@ -605,10 +605,6 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    return this.variablesToLinearForms.get(wrapper);
 	} else {
 	    LinearPrinter.println("   (no mapping found for " + wrapper + ")");
-	    Iterator keyIter = this.variablesToLinearForms.keySet().iterator();
-	    while(keyIter.hasNext()) {
-		LinearPrinter.println("key: " + keyIter.next());
-	    }
 	    return null;
 	}
     }

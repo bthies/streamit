@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.6 2002-09-23 21:26:22 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.7 2002-09-30 15:59:24 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -106,9 +106,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// incidentally, this output is parsed by some perl scripts to verify results,
 	// so it probably shouldn't be changed.
 	if (theVisitor.computesLinearFunction()) {
-	    LinearPrinter.println("Linear filter found: " + self +
-				  "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
-				  "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
+	    // since printing the matrices takes so long, if debugging is not on,
+	    // don't even generate the string.
+	    if (LinearPrinter.getOutput()) {
+		LinearPrinter.println("Linear filter found: " + self +
+				      "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
+				      "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
+	    }
 	    // add a mapping from the filter to its linear form.
 	    this.filtersToLinearRepresentation.put(self,
 						   theVisitor.getLinearRepresentation());
@@ -189,9 +193,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// if we have an overall rep, then we should add a mapping from this pipeline to
 	// that rep, and return.
 	if (overallRep != null) {
-	    LinearPrinter.println("Linear pipeline found: " + self +
-				  "\n-->Matrix:\n" + overallRep.getA() +
-				  "\n-->Constant Vector:\n" + overallRep.getb());
+	    // check for debugging mode (because assembling the string takes a loooong time)
+	    if (LinearPrinter.getOutput()) {
+		LinearPrinter.println("Linear pipeline found: " + self +
+				      "\n-->Matrix:\n" + overallRep.getA() +
+				      "\n-->Constant Vector:\n" + overallRep.getb());
+	    }
 	    // add a mapping from the pipeline to its linear form.
 	    this.filtersToLinearRepresentation.put(self, overallRep);
 	    checkRep(); // to make sure we didn't shoot ourselves somehow
@@ -293,9 +300,12 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
 	
 	LinearPrinter.println(" transform successful.");
-	LinearPrinter.println("Linear splitjoin found: " + self +
-			      "\n-->Matrix:\n" + newRep.getA() +
-			      "\n-->Constant Vector:\n" + newRep.getb());
+	// check for debugging so we don't waste time producing output if not needed
+	if (LinearPrinter.getOutput()) {
+	    LinearPrinter.println("Linear splitjoin found: " + self +
+				  "\n-->Matrix:\n" + newRep.getA() +
+				  "\n-->Constant Vector:\n" + newRep.getb());
+	}
 	// add a mapping from this split join to the new linear representation
 	this.filtersToLinearRepresentation.put(self, newRep);
     }

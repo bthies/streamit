@@ -9,7 +9,7 @@ import at.dms.compiler.*;
 
 
 /**
- * A LinearFilterDirectReplacer replaces the contents of the work functions for
+ * A LinearReplacer replaces the contents of the work functions for
  * linear filters (as determined by the linear filter analyzer) with an appripriate
  * direct implementation (eg a bunch of push statements with the specified
  * combination of input values. <p>
@@ -20,11 +20,11 @@ import at.dms.compiler.*;
  * }
  * </pre>
  * <p>
- * $Id: LinearFilterDirectReplacer.java,v 1.5 2002-09-26 18:22:26 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.1 2002-09-30 15:59:24 aalamb Exp $
  **/
-public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Constants{
+public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     LinearAnalyzer linearityInformation;
-    public LinearFilterDirectReplacer(LinearAnalyzer lfa) {
+    public LinearReplacer(LinearAnalyzer lfa) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer passed to constructor!");
 	}

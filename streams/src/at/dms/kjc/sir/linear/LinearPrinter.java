@@ -4,6 +4,9 @@ package at.dms.kjc.sir.linear;
 class LinearPrinter {
     /** flag to control output generation. **/
     private static boolean outputEnabled = false;
+    public static boolean getOutput() {
+	return outputEnabled;
+    }
     public static void setOutput(boolean outFlag) {
 	outputEnabled = outFlag;
     }

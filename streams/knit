@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.39 2003-09-22 16:12:33 dmaze Exp $
+# $Id: knit,v 1.40 2003-09-22 16:34:52 dmaze Exp $
 #
 
 use strict;
@@ -211,6 +211,8 @@ sub get_options
 	    $opts{altcodegen} = 1 unless exists $opts{altcodegen};
 	    $opts{ratematch} = 1 unless exists $opts{ratematch};
 	    $opts{wbs} = 1 unless exists $opts{wbs};
+	    $opts{destroyfieldarray} = 1 unless
+	      exists $opts{destroyfieldarray};
 	  }
       }
     return 1;

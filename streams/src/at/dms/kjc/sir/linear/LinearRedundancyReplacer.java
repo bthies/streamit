@@ -10,9 +10,20 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.3 2003-02-28 22:34:52 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.4 2003-03-03 20:13:05 aalamb Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
+    /** The prefix to use to name fields. **/
+    public static final String STATE_FIELD_PREFIX = "statefield";
+    /** The postfix to use for the index variable. **/
+    public static final String INDEX_POSTFIX = "_index";
+
+    /** The constant to signify that we are making a work function (and not init work). **/
+    public static final int WORK = 1;
+    /** The constant to signify that we are making the init work function (and not work). **/
+    public static final int INITWORK = 2;
+    
+    
     /** The field that has all of the linear information necessary (eg streams->linear reps). **/
     LinearAnalyzer linearInformation;
     /** The field that has all of the redundancy information necessary to create replacements. **/
@@ -81,13 +92,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	// transformation, we need to make a whole new SIRStream and
 	// replace self with it.
 	SIRStream newImplementation;
-	newImplementation = makeEfficientImplementation(linearRep, tupleData);
-	newImplementation.setParent(parent);
-	// do the acutal replacment of the current pipeline with the new implementation
-	parent.replace(self, newImplementation);
-	
-	LinearPrinter.println("Relative child name: " + newImplementation.getRelativeName());
-	
+	newImplementation = makeEfficientImplementation(self, linearRep, tupleData);
+
+
 	// remove the mappings from all of the children of this stream in our linearity information
 	// first, we need to find them all, and then we need to remove them all
 	HashSet oldKeys = getAllChildren(self);
@@ -100,6 +107,12 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    this.linearInformation.removeLinearRepresentation(currentKid);
 	}
 	// all done.
+
+	// do the acutal replacment of the current pipeline with the new implementation
+	parent.replace(self, newImplementation);
+	
+	LinearPrinter.println("Relative child name: " + newImplementation.getRelativeName());
+	
 	
 	// add a mapping from the new filter to the old linear rep (because it still computes
 	// the same thing add same old linear rep
@@ -107,34 +120,211 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
     }
 
 
-    SIRStream makeEfficientImplementation(LinearFilterRepresentation linearRep,
+    SIRStream makeEfficientImplementation(SIRStream self,
+					  LinearFilterRepresentation linearRep,
 					  RedundancyReplacerData tupleData) {
 
 	// We are tasked to make an efficient implementation using the tuple
 	// data and the filter rep. This should be a lot of fun.
+	
+	// first of all, make the appropriate field declarations,
+	// one for each reused tuple.
 
-	// first of all, make the appropriate 
+	// this is the place for all of the fields (state and index);
+	JFieldDeclaration[] newFields = appendFieldDeclarations(makeFields(tupleData), self.getFields());
 
+	    // now, make the new init, initWork and work functions
+	JMethodDeclaration init     = makeInit(tupleData);
+	JMethodDeclaration initWork = makeWork(INITWORK, linearRep, tupleData);
+	JMethodDeclaration work     = makeWork(WORK,     linearRep, tupleData);
 
-	return null;
+	// put all of the new pieces together into a new two stage filter.
+	int peek = linearRep.getPeekCount();
+	int pop  = linearRep.getPopCount();
+	int push = linearRep.getPushCount();
+	SIRTwoStageFilter newFilter;
+	newFilter = new SIRTwoStageFilter(self.getParent(),           /* parent */
+					  "Redundant"+self.getIdent(),/* ident */
+					  newFields,                  /* fields */
+					  new JMethodDeclaration[0],  /* methods Note:
+									 -- init, work, and
+									 initWork are special. */
+					  new JIntLiteral(peek),      /* peek */
+					  new JIntLiteral(pop),       /* pop */
+					  new JIntLiteral(push),      /* push */
+					  work,                       /* work */
+					  peek,                       /* initPeek */
+					  pop,                        /* initPop */
+					  push,                       /* initPush */
+					  initWork,                   /* initWork */
+					  self.getInputType(),        /* input type */
+					  self.getOutputType());      /* output type */
+	// need to explicitly set the init function (for some reason)
+	newFilter.setInit(init);
+	
+	return newFilter;
     }
-					  
+    
+    /** Makes the state and index fields for each of the tuple. **/
+    public JFieldDeclaration[] makeFields(RedundancyReplacerData tupleData) {
+	// use the set of reused tuples from tupleData. For each tuple that is reused,
+	// make a field with the name stored in nameMap.
+	JFieldDeclaration[] newFields = new JFieldDeclaration[2*tupleData.reused.size()];
 
+	Iterator tupleIter = tupleData.reused.iterator();
+	int currentIndex = 0;
+	while(tupleIter.hasNext()) {
+ 	    LinearComputationTuple tuple = (LinearComputationTuple)tupleIter.next();
+	    // make the names for the two fields for this tuple
+	    String stateFieldName = tupleData.getName(tuple);
+	    if (stateFieldName == null) {throw new RuntimeException("null name in name map!");}
+	    String indexFieldName = stateFieldName + INDEX_POSTFIX;
+	    
 
+	    // make the variable definition for the state field
+	    JVariableDefinition stateDef = new JVariableDefinition(null, /* token reference */
+								   ACC_FINAL, /* modifiers */
+								   getArrayType(), /* type */
+								   stateFieldName, /* identity */
+								   null); /* initializer */
+	    // make the variable definition for the index field
+	    JVariableDefinition indexDef = new JVariableDefinition(null, /* token reference */
+								   ACC_FINAL, /* modifiers */
+								   CStdType.Float, /* type */
+								   indexFieldName, /* identity */
+								   null); /* initializer */
 
-
-
-
-
-
-
-
-
-
-
-
+	    // now, add the two fields to our array
+	    newFields[2*currentIndex] = new JFieldDeclaration(null, /* token reference */
+							      stateDef, /* variable def */
+							      null, /* java doc */
+							      makeComment("state for " + tuple));
+	    newFields[2*currentIndex+1] = new JFieldDeclaration(null, /* token reference */
+								indexDef, /* variable def */
+								null, /* java doc */
+								makeComment("index for " + tuple));
+	    
+	    currentIndex++;
+	}
+	return newFields;
+    }
 
     
+    /** Make a new init method that allocates the state fields and zeros the index fields. **/
+    public JMethodDeclaration makeInit(RedundancyReplacerData tupleData) {
+	// The new body of the init function.
+	JBlock body = new JBlock();
+
+	// the only thing that the init function has to do is to
+	// allocate space for all of the state fields. Note that the
+	// space that is necessary is equal to the size of a float times
+	// the max use of the tuple.
+	Iterator tupleIter = tupleData.reused.iterator();
+	while(tupleIter.hasNext()) {
+
+	    LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+	    String fieldName = tupleData.getName(t);
+	    String indexName = fieldName + INDEX_POSTFIX;
+	    int    fieldSize = tupleData.getMaxUse(t);
+	    // make a field allocation for fieldName of size maxUse
+	    body.addStatement(makeFieldAllocation(fieldName, fieldSize, "state for " + t));
+	    body.addStatement(makeLocalInitialization(indexName, 0, "index for " + t));
+	}
+
+	return new JMethodDeclaration(null,                  /* token reference */
+				      ACC_PUBLIC,            /* modifiers */
+				      CStdType.Void,         /* return type */
+				      "init",                /* identifier */
+				      JFormalParameter.EMPTY,/* paramters */
+				      CClassType.EMPTY,      /* exceptions */
+				      body,                  /* body */
+				      null,                  /* java doc */
+				      null);                 /* java style comment */
+	
+    }
+    /**
+     * Make either the work or the init work function. If type is WORK, then work is made,
+     * if type is INITWORK, then not surprisingly initWork gets made. Both have peek and
+     * pop that are equal to the original filter.
+     **/
+    public JMethodDeclaration makeWork(int type,
+				       LinearFilterRepresentation linearRep,
+				       RedundancyReplacerData tupleData) {
+	if ((type != WORK) && (type != INITWORK)) {
+	    throw new IllegalArgumentException("type was not INITWORK or WORK");
+	}
+
+
+	// The new body of the function function.
+	JBlock body = new JBlock();
+
+	// if we are making initWork, add statements to fill up the
+	// state arrays all the way.
+	if (type == INITWORK) {
+	    Iterator tupleIter = tupleData.reused.iterator();
+	    while(tupleIter.hasNext()) {
+		LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+		// basically, we want to store data for each use, 0-->maxUse
+		for (int use = 1; use<tupleData.getMaxUse(t); use++) {
+		    JExpression fieldAccessExpr = makeFieldAccessExpression(tupleData.getName(t));
+		    JExpression arrayIndex = new JIntLiteral(use);
+		    JExpression arrayAccessExpression = new JArrayAccessExpression(null,
+										   fieldAccessExpr,
+										   arrayIndex);
+		    // generate the appropriate computation expression
+		    LinearComputationTuple effectiveTuple;
+		    effectiveTuple = new LinearComputationTuple(t.getPosition() -
+								(use * linearRep.getPopCount()),
+								t.getCoefficient());
+		    JExpression computationExpression = makeTupleComputation(effectiveTuple);
+
+		    // make an assignment from the computation expression (eg peek*const)
+		    // to the field access array.
+		    JExpression assignExpr = new JAssignmentExpression(null,
+								       arrayAccessExpression,
+								       computationExpression);
+		    body.addStatement(new JExpressionStatement(null,
+							       assignExpr,
+							       null));
+		}
+	    }
+	}
+
+	String ident = (type == WORK) ? "work" : "initWork";
+	return new JMethodDeclaration(null,                  /* token reference */
+				      ACC_PUBLIC,            /* modifiers */
+				      CStdType.Void,         /* return type */
+				      ident,                 /* identifier */
+				      JFormalParameter.EMPTY,/* paramters */
+				      CClassType.EMPTY,      /* exceptions */
+				      body,                  /* body */
+				      null,                  /* java doc */
+				      null);                 /* java style comment */
+	
+    }
+				       
+
+    /**
+     * Generate a JExpression that computes the value specified by
+     * a computation tuple. Specifically, given <index,coefficient>
+     * computes peek(index)*coefficient.
+     **/
+    public JExpression makeTupleComputation(LinearComputationTuple tuple) {
+	// do some checks...
+	if (!tuple.getCoefficient().isReal()) {
+	    throw new IllegalArgumentException("non real coefficents are not supported.");
+	}
+	if (tuple.getCoefficient().equals(ComplexNumber.ZERO)) {
+	    throw new IllegalArgumentException("zero coefficients not allowed.");
+	}
+
+	JExpression indexExpr    = new JIntLiteral(tuple.getPosition());
+	JExpression peekExpr     = new SIRPeekExpression(indexExpr);
+	JExpression coeffExpr    = new JFloatLiteral(null, (float)tuple.getCoefficient().getReal());
+	JExpression multExpr     = new JMultExpression(null, coeffExpr, peekExpr);
+
+	return multExpr;
+    }
 
 
     ///////////////////////////////////////////////////////////////
@@ -146,6 +336,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
      * the redundancy elimination optimization.
      **/
     class RedundancyReplacerData {
+	
 	/**
 	 * Mapping of Tuples to maximum use (eg the max number of work function
 	 * executions in the future that this tuple could be used in.
@@ -161,15 +352,23 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	 * to generate variable names in the replaced code.
 	 **/
 	private HashMap nameMap;
+
 	/**
-	 * Mapping of Tuples to their StoredValue. We use a direct
-	 * computation unless minUse(t)==0 and maxUse(t) >0, in which
-	 * case we a stored value of the form of the form (use) where
-	 * use is the number of work function executions ago that
-	 * t was calculated.
+	 * Mapping of Tuples to tuple couplings. The tuple couplings
+	 * represent the actual value that is necessary in terms of
+	 * the index of the current tuple. The key is the "tuple" that is
+	 * calculated in the current work function that can be replaced by the
+	 * stored value in the tuple coupling. The mapping is necessary
+	 * so we know which terms to replace with their stored value.
 	 **/
 	private HashMap compMap;
-	 
+
+	/**
+	 * Set of tuples that get reused.
+	 **/
+	private HashSet reused;
+
+	
 
 	/** constructor that will generate the appropriate data structures. **/
 	RedundancyReplacerData(LinearRedundancy redundancy, int popCount) {
@@ -182,7 +381,7 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    maxUse       = new HashMap();
 	    nameMap      = new HashMap();
 	    compMap      = new HashMap();
-
+	    reused       = new HashSet();
 
 	    // calculate min and max use along with labeling all of the
 	    // computation nodes with some string (a simple number).
@@ -209,18 +408,30 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		    }
 		}
 		// label this tuple with "tup:tupleIndex" (and inc tupleIndex)
-		this.nameMap.put(tuple, ("tup" + tupleIndex++));
+		this.nameMap.put(tuple, (STATE_FIELD_PREFIX + "_tup" + tupleIndex++));
+	    }
+
+	    // now, we are going to compute the redundant tuples set -- the set of tuples
+	    // that need to be saved each step for future use. While we are doing
+	    // this, we are also going to do some sanity checks
+	    tupleIter = tuplesToUses.keySet().iterator();
+	    while(tupleIter.hasNext()) {
+	 	LinearComputationTuple t = (LinearComputationTuple)tupleIter.next();
+		if ((this.getMinUse(t) == 0) &&
+		    (this.getMaxUse(t) >  0)) {
+		    this.reused.add(t);
+		}
 	    }
 	    
 	    // now, we are going to compute the compMap information
-	    tupleIter = tuplesToUses.keySet().iterator();
+	    tupleIter = reused.iterator();
 	    while(tupleIter.hasNext()) {
 		LinearComputationTuple tuple = (LinearComputationTuple)tupleIter.next();
-		// if this tuple is reused (eg minUse=0, maxUse>0) then add a mapping
-		// from itself to itself.
-		if ((this.getMinUse(tuple) == 0) && (this.getMaxUse(tuple) > 0)) {
-		    this.compMap.put(tuple, new TupleCoupling(tuple, 0));
-		}
+		// we know this tuple is reused, so we need to add a mapping
+		// to itself so we use the stored value in the new filter
+		// rather than computing it twice.
+		this.compMap.put(tuple, new TupleCoupling(tuple, 0));
+
 		// get an iterator over the list of uses
 		Iterator useIter = ((List)tuplesToUses.get(tuple)).iterator();
 		while(useIter.hasNext()) {
@@ -248,8 +459,15 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		    }
 		}
 	    }
+
+
+	    
 	}
 
+
+
+
+	
 	////// Accessors
 	/** get the int value of the min use for this tuple. **/
 	public int getMinUse(LinearComputationTuple t) {
@@ -265,7 +483,15 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    }
 	    return ((Integer)this.maxUse.get(t)).intValue();
 	}
-	
+	/** get the name associated with this tuple. **/
+	public String getName(LinearComputationTuple t) {
+	    if (!(this.nameMap.containsKey(t))) {
+		throw new IllegalArgumentException("unknown tuple for name: " + t);
+	    }
+	    return (String)this.nameMap.get(t);
+	}
+						    
+	    
 						   
 	
 
@@ -275,10 +501,12 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	    returnString += hash2String(this.minUse);
 	    returnString += "maxUse:\n";
 	    returnString += hash2String(this.maxUse);
-	    returnString += "compMap:\n";
-	    returnString += hash2String(this.compMap);
 	    returnString += "nameMap:\n";
 	    returnString += hash2String(this.nameMap);
+	    returnString += "compMap:\n";
+	    returnString += hash2String(this.compMap);
+	    returnString += "reused:\n";
+	    returnString += set2String(this.reused);
 	    return returnString;
 	}
 	/** utility to convert a hash to a string. **/
@@ -290,6 +518,16 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 		str += (key + "-->" +
 			m.get(key) + "\n");
 	    }
+	    return str;
+	}
+	/** utility to convert a set to a string. **/
+	private String set2String(HashSet s) {
+	    String str = "(";
+	    Iterator iter = s.iterator();
+	    while(iter.hasNext()) {
+		str += iter.next() + ",";
+	    }
+	    str = str.substring(0,str.length()-1) + ")";
 	    return str;
 	}
     }

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.9 2002-07-20 17:44:09 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.10 2002-07-22 14:34:08 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -52,7 +52,7 @@ public class NodesToJava implements FEVisitor
     }
 
     // Get a Java Class object corresponding to a type.
-    public static String typeToClass(Type t)
+    public String typeToClass(Type t)
     {
         if (t instanceof TypePrimitive)
         {
@@ -70,6 +70,10 @@ public class NodesToJava implements FEVisitor
         }
         else if (t instanceof TypeStruct)
             return ((TypeStruct)t).getName() + ".class";
+        else if (t instanceof TypeArray)
+            return "(new " + convertType(((TypeArray)t).getBase()) +
+                "[" + (String)((TypeArray)t).getLength().accept(this) +
+                "]).getClass()";
         // Errp.
         return null;
     }

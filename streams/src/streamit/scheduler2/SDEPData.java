@@ -44,6 +44,10 @@ public interface SDEPData
      * node nDstPhase times. In other words, nDstPhase phase execution of the
      * downstream node sees the information wavefront of the 
      * getSrcPhase4DstPhase(nDstPhase) phase execution of the upstream node.
+     * 
+     * Note, that counting here ALWAYS starts at ONE! That means that 
+     * getSrcPhase4DstPhase (0) is always 0, because the question asked here
+     * is about executing ZERO phases of the downstream node! 
      */
     public int getSrcPhase4DstPhase(int nDstPhase);
     
@@ -51,7 +55,10 @@ public interface SDEPData
      * Get the reverse SDEP function value for nSrcPhase of the upstream node.
      * This will return the phase execution of the downstream node which
      * will see data produced by nSrcPhase phase execution of the upstream
-     * node.  
+     * node.
+     * 
+     * Note, that counting here ALWAYS starts at ONE! That is we're dealing
+     * with NUMBERS OF EXECUTION of phases, not indexes of phases. 
      */
     public int getDstPhase4SrcPhase(int nSrcPhase);
 }

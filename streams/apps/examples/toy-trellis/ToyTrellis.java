@@ -8,8 +8,7 @@ class ToyTrellis extends StreamIt
 {
     static public void main (String [] t)
     {
-        ToyTrellis test = new ToyTrellis ();
-        test.run (t);
+        new ToyTrellis ().run (t);
     }
 
     public void init ()

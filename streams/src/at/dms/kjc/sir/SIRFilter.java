@@ -25,7 +25,8 @@ public class SIRFilter extends SIRStream implements Cloneable {
     private JExpression push;
     /**
      * The input and output types.  That is, the type of the items on
-     * the input and output channels, respectively.
+     * the input and output channels, respectively.  Each type is void
+     * if and only if this is a source or sink, respectively.
      */
     private CType inputType, outputType;
 
@@ -213,6 +214,7 @@ public class SIRFilter extends SIRStream implements Cloneable {
     public CType getInputType(){
 	return inputType;
     }
+
     public void setOutputType(CType t) {
 	this.outputType = t;
     }

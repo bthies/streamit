@@ -37,7 +37,8 @@ public class Rawify
 		    int mult = (init) ? filterInfo.initMult : filterInfo.steadyMult;
 		    
 		    if(filterInfo.isLinear())
-			createSwitchCodeLinear((FilterTraceNode)traceNode,trace,filterInfo,init,false,tile,rawChip,mult);
+			createSwitchCodeLinear((FilterTraceNode)traceNode,
+					       trace,filterInfo,init,false,tile,rawChip,mult);
 		    else if (filterInfo.isDirect())
 			createSwitchCode((FilterTraceNode)traceNode, 
 					 trace, filterInfo, init, false, tile, rawChip, mult);
@@ -56,14 +57,35 @@ public class Rawify
 		    else
 			tile.getComputeCode().addTraceSteady(filterInfo);
 		}
+		else if (traceNode instanceof EnterTraceNode) {
+		    if (init) 
+			openInputFile((EnterTraceNode)traceNode);
+		}
+		else if (traceNode instanceof ExitTraceNode) {
+		    if (init)
+			openOutputFile((ExitTraceNode)traceNode);
+		}
+		
 		
 		//get the next tracenode
 		traceNode = traceNode.getNext();
 	    }
+	    
 	}
 	
     }
 
+    private static void openInputFile(EnterTraceNode enterNode) 
+    {
+	
+    }
+    
+    private static void openOutputFile(ExitTraceNode exitNode) 
+    {
+	
+    }
+    
+    
     private static void createPrimePumpSwitchCode(FilterTraceNode node, Trace parent,
 						  FilterInfo filterInfo,
 						  boolean init, RawTile tile, RawChip rawChip) 
@@ -105,7 +127,9 @@ public class Rawify
 				       TraceBufferSchedule.getInputBuffers(node)));
     }
     
-    private static void createSwitchCodeLinear(FilterTraceNode node,Trace parent,FilterInfo filterInfo,boolean init,boolean primePump,RawTile tile,RawChip rawChip,int mult) {
+    private static void createSwitchCodeLinear(FilterTraceNode node,Trace parent,
+					       FilterInfo filterInfo,boolean init,boolean primePump,
+					       RawTile tile,RawChip rawChip,int mult) {
 	//createReceiveCode(0, node, parent, filterInfo, init, primePump, tile, rawChip);
 	ComputeNode sourceNode=null;
 	if (node.getPrevious().isFilterTrace())
@@ -293,6 +317,7 @@ public class Rawify
 		node.getPrevious().isInputTrace())
 		createMagicDramLoad((InputTraceNode)node.getPrevious(), 
 				    node, (init || primePump), rawChip);
+	    
 	}
     }
 

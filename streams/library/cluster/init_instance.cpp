@@ -29,8 +29,6 @@ map<sock_dscr, bool> init_instance::out_done;
 map<sock_dscr, int> init_instance::in_sockets;
 map<sock_dscr, int> init_instance::out_sockets;
 
-//vector<unsigned> init_instance::out_ip_addrs;
-
 short init_instance::listen_port = 22222;
 
 map<int, string> init_instance::thread_machines;
@@ -100,23 +98,10 @@ void init_instance::add_incoming(int from, int to, int type) {
 
 void init_instance::add_outgoing(int from, int to, int type) {
 
-  //unsigned ip = lookup_ip(init_instance::get_node_name(to));
-  //add_outgoing(from, to, ip);
-
   sock_dscr sd(from, to, type);
   out_connections.push_back(sd);
-
-  //out_ip_addrs.push_back(to_ip_addr);
-
 }
 
-
-//void init_instance::add_outgoing(int from, int to, unsigned to_ip_addr) {
-//
-//  int_pair pair(from, to);
-//  out_connections.push_back(pair);
-//  out_ip_addrs.push_back(to_ip_addr);
-//}
 
 void init_instance::initialize_sockets() {
 
@@ -124,16 +109,12 @@ void init_instance::initialize_sockets() {
   
     sock_dscr sd = *i;
     in_done[sd] = false;
-    //printf("set to false in_done %d %d\n", sd.from, sd.to);
-    
   } 
 
   for (vector<sock_dscr>::iterator i = out_connections.begin(); i < out_connections.end(); ++i) {
   
     sock_dscr sd = *i;
     out_done[sd] = false;
-    //printf("set to false out_done %d %d\n", sd.from, sd.to);
-
   }
 
   // create pipes where applicable
@@ -175,7 +156,6 @@ void init_instance::initialize_sockets() {
     map<sock_dscr, bool>::iterator i2 = in_done.find(sd);
 
     if (i2 != in_done.end() && (*i2).second == true) {
-      //printf("erasing in %d %d\n", sd.from, sd.to); 
       in_connections.erase(i);
       i--;
     }
@@ -187,7 +167,6 @@ void init_instance::initialize_sockets() {
     map<sock_dscr, bool>::iterator i2 = out_done.find(sd);
 
     if (i2 != out_done.end() && (*i2).second == true) { 
-      //printf("erasing out %d %d\n", sd.from, sd.to); 
       out_connections.erase(i);
       i--;
     }
@@ -213,7 +192,6 @@ void init_instance::initialize_sockets() {
   int num = out_connections.size();
 
   vector<sock_dscr>::iterator i1 = out_connections.begin();
-  //vector<unsigned>::iterator i2 = out_ip_addrs.begin();
 
   for (int t = 0; t < num; t++) {
   

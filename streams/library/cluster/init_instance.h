@@ -24,8 +24,6 @@ class init_instance {
   static map<sock_dscr, int> in_sockets, out_sockets;
   static map<sock_dscr, bool> in_done, out_done;
 
-  //static vector<unsigned> out_ip_addrs;
-
   static map<int, string> thread_machines;
 
  public:
@@ -36,8 +34,6 @@ class init_instance {
   static void add_incoming(int from, int to, int type);
   static void add_outgoing(int from, int to, int type);
   
-  //static void add_outgoing(int from, int to, unsigned to_ip_addr);
-
   static void initialize_sockets();
   static void close_sockets();
   

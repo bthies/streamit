@@ -1,0 +1,24 @@
+<benchmark>
+  <name>delay</name>
+  <desc>Sample delay elements</desc>
+  <description>
+Sample filters that show how an input might be delayed a fixed number
+of elements.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <desc>Implementation as a feedback loop (discouraged)</desc>
+      <file>Delay.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Single-element delay within a filter</desc>
+      <file>DelayOne.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Multiple-element delay using a circular buffer in a
+      filter</desc>
+      <file>DelayMany.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -359,8 +359,16 @@ public class LowerInitFunctions implements StreamVisitor {
 	// register children
 	registerChildren(self.getChildren(), prologue);
 
-	// add the prologue to the init function
-	init.addAllStatements(0, prologue);
+	// add the prologue to the init function, but AFTER any
+	// variable declarations.  so find where the last variableDecl
+	// is...
+	int count=0;
+	ListIterator it = init.getStatementIterator();
+	while (it.hasNext() && 
+	       it.next() instanceof JVariableDeclarationStatement) {
+	    count++;
+	}
+	init.addAllStatements(count, prologue);
     }
 	
     /* pre-visit a pipeline */

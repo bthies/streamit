@@ -2,7 +2,7 @@
 <!--
   benchall.xsl: convert an XML listing of StreamIt benchmarks to HTML
   David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
-  $Id: benchall.xsl,v 1.2 2003-09-25 12:42:28 dmaze Exp $
+  $Id: benchall.xsl,v 1.3 2003-09-29 15:03:44 kkuo Exp $
 
   Notes for the uninitiated: this is an XSL Transform stylesheet.  Use
   an XSLT processor, such as xsltproc, to convert XML to XML using this;
@@ -39,7 +39,7 @@
     <!-- Create an HTML header, labelled with the name attribute of the
          directory node. -->
     <xsl:element name="h{$depth}">
-      <xsl:value-of select="@name"/>
+      <h2><xsl:value-of select="@name"/></h2>
     </xsl:element>
     <xsl:apply-templates>
       <xsl:with-param name="subdir">
@@ -53,17 +53,37 @@
     <xsl:param name="subdir">.</xsl:param>
     <xsl:param name="depth">3</xsl:param>
     <xsl:element name="h{$depth}">
-      <xsl:value-of select="name"/> - <xsl:value-of select="desc"/>      
+      <table border="1"> 
+        <colgroup> 
+          <col align="left" />
+          <col align="char" char="."/> 
+        </colgroup> 
+        <thead> 
+          <tr>
+            <th colspan="2" bgcolor="#C0C0C0">
+	      <xsl:value-of select="name"/> - <xsl:value-of select="desc"/>
+   	    </th> 
+          </tr> 
+        </thead> 
+        <tbody> 
+          <tr>
+            <td><b>Description</b></td> 
+            <td><xsl:value-of select="description"/></td>
+          </tr> 
+	  <xsl:apply-templates select="reference"/>
+	  <xsl:apply-templates select="implementations">
+            <xsl:with-param name="subdir" select="$subdir"/>
+     	  </xsl:apply-templates>
+        </tbody> 
+      </table>
     </xsl:element>
-    <p><xsl:value-of select="description"/></p>
-    <xsl:apply-templates select="reference"/>
-    <xsl:apply-templates select="implementations">
-      <xsl:with-param name="subdir" select="$subdir"/>
-    </xsl:apply-templates>
   </xsl:template>
 
   <xsl:template match="reference">
-    <p><b>Reference:</b> <xsl:apply-templates/></p>
+    <tr>
+      <td><b>Reference</b></td> 
+      <td><xsl:apply-templates/></td>
+    </tr> 
   </xsl:template>
 
   <xsl:template match="implementations">
@@ -85,17 +105,23 @@
       </xsl:if>
       <xsl:text>/</xsl:text>
     </xsl:variable>
-    <p><b><xsl:value-of select="@lang"/></b>:
-    <xsl:if test="desc"><xsl:value-of select="desc"/><br/></xsl:if>
-    <xsl:for-each select="file">
-      <xsl:element name="a">
-        <xsl:attribute name="href">
-          <xsl:value-of select="concat($path,.)"/>
-        </xsl:attribute>
-        <xsl:value-of select="."/>
-      </xsl:element>
-      <xsl:text> </xsl:text>
-    </xsl:for-each>
-  </p>
+    <tr>
+      <td><b><xsl:value-of select="@lang"/></b></td>
+      <td>
+	<xsl:for-each select="file">
+	  <xsl:element name="a">
+            <xsl:attribute name="href">
+              <xsl:value-of select="concat($path,.)"/>
+            </xsl:attribute>
+            <xsl:value-of select="."/>
+          </xsl:element>
+          <xsl:text> </xsl:text>
+	</xsl:for-each>
+        <xsl:if test="desc">(<xsl:value-of select="desc"/>)<br/></xsl:if>
+      </td>
+    </tr>
   </xsl:template>
 </xsl:stylesheet>
+
+
+

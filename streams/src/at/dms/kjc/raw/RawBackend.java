@@ -129,10 +129,15 @@ public class RawBackend {
 
 	//Generate the switch code	
 	CalcBufferSize.createBufferSizePow2(rawFlattener.top);
-	System.out.println("Switch Code Begin...");
-	SwitchCode.generate(rawFlattener.top);
-	//	SwitchCode.dumpCode();
-	System.out.println("Switch Code End.");
+
+	if (KjcOptions.magic_net) {
+	    MagicNetworkSchedule.generateSchedules(rawFlattener.top);
+	}
+	else {
+	    System.out.println("Switch Code Begin...");
+	    SwitchCode.generate(rawFlattener.top);
+	    System.out.println("Switch Code End.");
+	}
 	
 	//Generate number gathering simulator code
 	if (KjcOptions.numbers > 0) {

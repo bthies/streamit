@@ -19,6 +19,10 @@ public class Coordinate {
     {
 	return row;
     }
+
+    public String toString() {
+	return "(" + row + ", " + column + ")";
+    }
 }
 
     

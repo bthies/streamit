@@ -198,14 +198,66 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
-		generateSwitchCode(fire, getDestination(fire, 
-							counters));
+		if (KjcOptions.magic_net) {
+		    //generating code for the raw magic network
+		    appendMagicNetNodes(fire, getDestination(fire, 
+							      counters));
+		}
+		else {
+		    //not generating code for the magic network
+		    //generate switch code for all intermediate
+		    //hops
+		    generateSwitchCode(fire, getDestination(fire, 
+							    counters));
+		}
 		//see if anyone downstream can fire
 		//if (fire != lastToFire)
 		go(counts, counters, fire);
 	    }
 	}
 	return switchSchedules;
+    }
+
+    private void appendMagicNetNodes(FlatNode fire, List dests) {
+	Coordinate source = Layout.getTile(fire);
+	
+	HashMap receiveSchedules = MagicNetworkSchedule.steadyReceiveSchedules;
+	HashMap sendSchedules = MagicNetworkSchedule.steadySendSchedules;
+	
+	//append the current information to the correct schedule
+	//depending of if it is the steady state or init
+	if (initSimulation) {
+	    receiveSchedules = MagicNetworkSchedule.initReceiveSchedules;
+	    sendSchedules = MagicNetworkSchedule.initSendSchedules;
+	}
+	
+	//if the source schedule does not exist create it
+	if (!sendSchedules.containsKey(source))
+	    sendSchedules.put(source, new LinkedList());
+	
+	LinkedList sourceSendSchedule = (LinkedList)sendSchedules.get(source);
+
+	//generate a list of coordinates to add to the send schedule for the source
+	LinkedList destsCoordinate = new LinkedList();
+
+
+	//iterate thru the dests adding to the receive schedules for the dests
+	Iterator it = dests.iterator();
+	while(it.hasNext()) {
+	    Coordinate currentDest = Layout.getTile((FlatNode)it.next());
+	    
+	    if (!receiveSchedules.containsKey(currentDest))
+		receiveSchedules.put(currentDest, new LinkedList());
+	    LinkedList destReceiveSchedule = (LinkedList)receiveSchedules.get(currentDest);
+	    
+	    destReceiveSchedule.add(source);
+
+	    //add to the list of coordinate dests
+	    destsCoordinate.add(currentDest);
+	}
+
+	//add the list of coordinates to the source send schedule
+	sourceSendSchedule.add(destsCoordinate);
     }
 
 

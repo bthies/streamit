@@ -1,7 +1,7 @@
 dnl
 dnl configure.in: StreamIt configuration script
 dnl Process this file with 'autoconf' to produce a configure script.
-dnl $Id: configure.in,v 1.2 2003-09-25 20:14:49 dmaze Exp $
+dnl $Id: configure.in,v 1.3 2003-09-26 17:46:16 dmaze Exp $
 dnl
 
 AC_INIT([streamit], [0.0])
@@ -15,10 +15,16 @@ AC_PROG_CC
 AC_PATH_PROG(PERL, perl)
 AC_PATH_PROG(PYTHON, python)
 AC_PATH_PROG(JAVA, java)
-AC_PATH_PROG(JAVAC, javac)
+AC_PATH_PROG(JAVAC, jikes)
 AC_PATH_PROG(JIKES, jikes)
-dnl Also consider checking for Java compilers (jikes/javac),
-dnl perl (for knit's #! line), Java libraries (antlr).
+AC_PATH_PROG(LATEX, latex)
+AC_PATH_PROG(BIBTEX, bibtex)
+AC_PATH_PROG(DVIPS, dvips)
+AC_PATH_PROG(MPOST, mpost)
+AC_PATH_PROG(PS2PDF, ps2pdf)
+AC_PATH_PROG(HEVEA, hevea)
+AC_PATH_PROG(IMAGEN, imagen)
+dnl Also consider checking for Java libraries (antlr).
 
 dnl checks for libraries
 HAVE_FFTW=1
@@ -36,5 +42,5 @@ dnl checks for compiler characteristics
 dnl checks for library functions
 dnl checks for system services
 
-AC_CONFIG_FILES([knit Makefile library/c/Makefile])
+AC_CONFIG_FILES([knit Makefile library/c/Makefile misc/Makefile.vars])
 AC_OUTPUT

@@ -149,7 +149,14 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	print("#include <raw.h>\n");
 	print("#include <stdlib.h>\n");
 	print("#include <math.h>\n\n");
-		
+	
+	if(KjcOptions.sketchycodegen) {
+	    print("volatile int router_mem;\n");
+	    print("volatile float router_mem_f;\n");
+	    print("register int router asm(\"$24\");\n");
+	    print("register float router_f asm(\"$24\");\n\n");
+	}
+
 	//print the inline asm 
 	//        print("static inline void static_send_from_mem(void *val) instr_one_input(\"lw $csto,0(%0)\");\n");
 	//        print("static inline void static_receive_to_mem(void *val) instr_one_input(\"sw $csti,0(%0)\");\n");
@@ -470,7 +477,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                  JStatement elseClause) {
         print("if (");
         cond.accept(this);
-        print(") ");
+        print(") {");
         pos += thenClause instanceof JBlock ? 0 : TAB_SIZE;
         thenClause.accept(this);
         pos -= thenClause instanceof JBlock ? 0 : TAB_SIZE;
@@ -480,11 +487,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
             } else {
                 newLine();
             }
-            print("else ");
+            print("} else {");
             pos += elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
             elseClause.accept(this);
             pos -= elseClause instanceof JBlock || elseClause instanceof JIfStatement ? 0 : TAB_SIZE;
         }
+	print("}");
     }
 
     /**
@@ -929,9 +937,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//generate the inline asm instruction to execute the 
 	//receive if this is a receive instruction
 	if (ident.equals(RawExecutionCode.receiveMethod)) {
-	    print ("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
-	    visitArgs(args, 0);
-	    print("));");
+	    if(KjcOptions.sketchycodegen) {
+		if(args[0].getType().isFloatingPoint())
+		    print("router_f=router_mem_f;\n");
+		else
+		    print("router=router_mem;\n");
+		print ("/* receive */ asm (\"sw %1, %0\" : \"=m\" (");
+		visitArgs(args, 0);
+		print("), \"=r\" (");
+		if(args[0].getType().isFloatingPoint())
+		    print("router_f) : \"r\" (router_f))");
+		else
+		    print("router) : \"1\" (router))");
+	    } else {
+		print ("/* receive */ asm volatile (\"sw $csti, %0\" : \"=m\" (");
+		visitArgs(args, 0);
+		print("));");
+	    }
 	    return;  
        }
 
@@ -1400,16 +1422,29 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType tapeType,
 			    JExpression val) 
     {
-	if (NOCOMM)
-	    print("(put(");
-	else 
-	    print("(static_send(");
-
-	//temporary fix for type changing filters
-	print("(" + tapeType + ")");
-	
-	val.accept(this);
-        print("))");
+	if(KjcOptions.sketchycodegen) {
+	    print ("/* send */ asm (\"or %0, $0, %1\" : \"=r\" (");
+	    if(tapeType.isFloatingPoint()) {
+		print("router_f) : \"r\" ((float)");
+		val.accept(this);
+		print("));\nrouter_f=router_mem_f");
+	    } else {
+		print("router) : \"r\" ((int)");
+		val.accept(this);
+		print("));\nrouter=router_mem");
+	    }
+	} else {
+	    if (NOCOMM)
+		print("(put(");
+	    else 
+		print("(static_send(");
+	    
+	    //temporary fix for type changing filters
+	    print("(" + tapeType + ")");
+	    
+	    val.accept(this);
+	    print("))");	    
+	}
     }
 
     private void pushArray(SIRPushExpression self, 
@@ -1424,16 +1459,37 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		  RawExecutionCode.ARRAY_INDEX + i + " < " + dims[i] + " ; " +
 		  RawExecutionCode.ARRAY_INDEX + i + "++)\n");
 	}
-	print("{");
-	if (NOCOMM)
-	    print("put(("  + baseType + ") ");
-	else
-	    print("static_send((" + baseType + ") ");
-	val.accept(this);
-	for (int i = 0; i < dims.length; i++) {
-	    print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+
+	if(KjcOptions.sketchycodegen) {
+	    print ("/* send */ asm (\"or %0, $0, %1\" : \"=r\" (");
+	    if(tapeType.isFloatingPoint()) {
+		print("router_f) : \"r\" ((float)");
+		val.accept(this);
+		for (int i = 0; i < dims.length; i++) {
+		    print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+		}
+		print("));\nrouter_f=router_mem_f");
+	    } else {
+		print("router) : \"r\" ((int)");
+		val.accept(this);
+		for (int i = 0; i < dims.length; i++) {
+		    print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+		}
+		print("));\nrouter=router_mem");
+	    }
+	    print(";\n}\n");
+	} else {
+	    print("{");
+	    if (NOCOMM)
+		print("put(("  + baseType + ") ");
+	    else
+		print("static_send((" + baseType + ") ");
+	    val.accept(this);
+	    for (int i = 0; i < dims.length; i++) {
+		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");
+	    }
+	    print(");\n}\n");
 	}
-	print(");\n}\n");
     }
 
     public void pushClass(SIRPushExpression self, 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.10 2002-11-13 03:15:01 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.11 2002-11-13 15:32:36 jasperln Exp $
  */
 
 prefix Kjc
@@ -170,6 +170,12 @@ longname		"dppartition"
 	type		boolean
 	default		"false"
 	help		"Use the dynamic programming partitioner."
+
+longname		"sketchycodegen"
+	shortcut	"z"
+	type		boolean
+	default		"false"
+	help		"Try to avoid volatile assembly"
 
 longname		"sync"
 	shortcut	"k"

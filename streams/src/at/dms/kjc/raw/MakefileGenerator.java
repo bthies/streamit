@@ -77,6 +77,12 @@ public class MakefileGenerator
 	    fw.write("\ninclude $(COMMONDIR)/Makefile.all\n\n");
 	    fw.write("clean:\n");
 	    fw.write("\trm -f *.o\n\n");
+	    if(KjcOptions.sketchycodegen) {
+		fw.write("%.s:  %.c\n");
+		fw.write("\t$(RGCC) $(RGCCFLAGS) $(INCLUDES) $(DEFS) -S $< -o $@\n");
+		fw.write("\tgrep -v router_mem $@ > $@.new\n");
+		fw.write("\tmv $@.new $@");
+	    }
 	    fw.close();
 	}
 	catch (Exception e) 

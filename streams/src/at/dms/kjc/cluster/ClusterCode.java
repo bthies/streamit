@@ -343,9 +343,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
 		    p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
-		    p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
+		    p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+offs+"]\n");
 		    p.print("    #else\n");
-		    p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
+		    p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+offs+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
 		    p.print("    #endif\n");
 		    p.print("  #else\n");
 
@@ -368,16 +368,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    offs++;
 		}
 
-		p.print("  HEAD_"+_s2+"_"+_d2+" += "+num+";\n");
-		p.print("  #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
-		p.print("  HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+		p.print("    HEAD_"+_s2+"_"+_d2+" += "+num+";\n");
+		p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		p.print("    #endif\n");
 		p.print("  #endif\n");
 
 	    }
 
-	    p.print("  TAIL_"+_s1+"_"+_d1+" += "+sum+";\n");
-	    p.print("  #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
-	    p.print("  TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+	    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+	    p.print("    TAIL_"+_s1+"_"+_d1+" += "+sum+";\n");
+	    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+	    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+	    p.print("    #endif\n");
 	    p.print("  #endif\n");
 	    
 	    /*
@@ -715,9 +719,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    
 			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
 			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
-			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+offs+"] = \n");
 			p.print("    #else\n");
-			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+offs+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
 			p.print("    #endif\n");
 			p.print("  #else\n");
 
@@ -752,16 +756,20 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			offs++;
 		    }
 		    
-		    p.print("  TAIL_"+_s1+"_"+_d1+" += "+num+";\n");
-		    p.print("  #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
-		    p.print("  TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+		    p.print("    TAIL_"+_s1+"_"+_d1+" += "+num+";\n");
+		    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+		    p.print("    #endif\n");
 		    p.print("  #endif\n");
 		    
 		}
 		
-		p.print("  HEAD_"+_s2+"_"+_d2+" += "+sum+";\n");
-		p.print("  #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
-		p.print("  HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+		p.print("    HEAD_"+_s2+"_"+_d2+" += "+sum+";\n");
+		p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		p.print("    #endif\n");
 		p.print("  #endif\n");
 
 		/*

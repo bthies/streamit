@@ -14,7 +14,7 @@ public class SwitchProcessorIns implements SwitchIns {
 	    return op+" "+arg1;
 	if(arg3==null)
 	    return op+" "+arg1+", "+arg2;
-	return op+" "+arg1+", "+arg2+" "+arg3;
+	return op+" "+arg1+", "+arg2+", "+arg3;
     }
     
     //Creates just a NOP

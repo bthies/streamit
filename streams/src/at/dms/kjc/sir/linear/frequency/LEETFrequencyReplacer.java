@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.9 2003-02-28 22:35:07 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.10 2003-03-03 20:12:46 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -357,16 +357,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 
 
     
-    /**
-     * Create an array allocation expression. Allocates a one dimensional array of floats
-     * for the field of name fieldName of fieldSize.
-     **/
-    public JStatement makeFieldAllocation(String fieldName, int fieldSize, String commentString) {
-	JExpression fieldExpr = new JFieldAccessExpression(null, new JThisExpression(null), fieldName);
-	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr, getNewArrayExpression(fieldSize));
-	JavaStyleComment[] comment = makeComment(commentString); 
-	return new JExpressionStatement(null, fieldAssign, comment);
-    }
 
     
     /** Creates an assignment expression of the form: this.f[index]=value; **/
@@ -614,45 +604,6 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	return new JExpressionStatement(null, pushExpr, null);
     }
 	
-    /** returns the type to use for buffers -- in this case float[] */
-    public CType getArrayType() {
-	return new CArrayType(CStdType.Float, 1);
-    }
-    
-    /** make a JNewArrayStatement that allocates size elements of a float array */
-    public JNewArrayExpression getNewArrayExpression(int size) {
-	/* make the size array. */
-	JExpression[] arrayDims = new JExpression[1];
-	arrayDims[0] = new JIntLiteral(size);
-	return new JNewArrayExpression(null,           /* token reference */
-				       getArrayType(), /* type */
-				       arrayDims,      /* size */
-				       null);          /* initializer */
-    }
-
-    /* makes a field array access expression of the form this.arrField[index] */
-    public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
-	/* first, make the this.arr1[index] expression */
-	JExpression fieldAccessExpr;
-	fieldAccessExpr = new JFieldAccessExpression(null, new JThisExpression(null), arrField.getIdent());
-	JExpression fieldArrayAccessExpr;
-	fieldArrayAccessExpr = new JArrayAccessExpression(null, fieldAccessExpr, new JIntLiteral(index));
-	
-	return fieldArrayAccessExpr;
-    }
-	
-
-    /* make an array of one java comments from a string. */
-    public JavaStyleComment[] makeComment(String c) {
-	JavaStyleComment[] container = new JavaStyleComment[1];
-	container[0] = new JavaStyleComment(c,
-					    true,   /* isLineComment */
-					    false,  /* space before */
-					    false); /* space after */
-	return container;
-    }
-
-
     /**
      * returns an array of floating point numbers that correspond
      * to the real part of the FIR filter's weights. Size is the size

@@ -44,10 +44,10 @@ public class SimplePartitioner extends Partitioner
 		visited.add(unflatFilter);
 		//the filter content for the new filter
 		FilterContent filterContent = getFilterContent(unflatFilter);
-		//System.out.println("VISITING: "+unflatFilter);
 		//remember the work estimation based on the filter content
+		int workEstimate=getWorkEstimate(unflatFilter);
 		workEstimation.put(filterContent, 
-				   new Integer(getWorkEstimate(unflatFilter)));
+				   new Integer(workEstimate));
 		
 		TraceNode node;
 		Trace trace;
@@ -73,22 +73,36 @@ public class SimplePartitioner extends Partitioner
 		    }
 		    trace = new Trace((InputTraceNode)node);
 		    
-		    /*if (filterContent.isLinear()) { //Jasper's linear stuff??
-		      FilterContent[] linearStuff=LinearFission.fiss(filterContent,
-		      filterContent.getArray().length);
-		      for(int i=0;i<linearStuff.length;i++) {
-		      FilterTraceNode filterNode=new FilterTraceNode(linearStuff[i]);
-		      node.setNext(filterNode);
-		      filterNode.setPrevious(node);
-		      node=filterNode;
-		      }
-		      }
-		      else {*/
-		    FilterTraceNode filterNode = new FilterTraceNode(filterContent);
-		    node.setNext(filterNode);
-		    filterNode.setPrevious(node);
-		    node = filterNode;
-		    //}
+		    if (filterContent.isLinear()) { //Jasper's linear stuff??
+			int times=filterContent.getArray().length/filterContent.getPopCount();
+			if(times>1) {
+			    if(times>16)
+				times=16;
+			    FilterContent[] linearStuff=LinearFission.fiss(filterContent,times);
+			    workEstimation.remove(filterContent);
+			    for(int i=0;i<linearStuff.length;i++) {
+				FilterContent fissedContent=linearStuff[i];
+				FilterTraceNode filterNode=new FilterTraceNode(fissedContent);
+				node.setNext(filterNode);
+				filterNode.setPrevious(node);
+				node=filterNode;
+				//Dummy work estimate for now
+				workEstimation.put(fissedContent, 
+						   new Integer(workEstimate/times));
+			    }
+			} else {
+			    FilterTraceNode filterNode = new FilterTraceNode(filterContent);
+			    node.setNext(filterNode);
+			    filterNode.setPrevious(node);
+			    node = filterNode;
+			}
+		    }
+		    else {
+			FilterTraceNode filterNode = new FilterTraceNode(filterContent);
+			node.setNext(filterNode);
+			filterNode.setPrevious(node);
+			node = filterNode;
+		    }
 		}
 		else {  //null incoming arcs
 		    node = new FilterTraceNode(filterContent);
@@ -118,32 +132,46 @@ public class SimplePartitioner extends Partitioner
 		    //remember the work estimation based on the filter content
 		    workEstimation.put(dsContent, 
 				       new Integer(getWorkEstimate(downstream)));
-		    //System.out.println("VISITING2: "+unflatFilter);
 		    if (getWorkEstimate(downstream) > bottleNeckWork)
 			bottleNeckWork = getWorkEstimate(downstream);
-
-		    /*if (dsContent.isLinear()) { //Jasper's linear stuff?
-		      FilterContent[] linearStuff = 
-		      LinearFission.fiss(dsContent, dsContent.getArray().length);
-		      //create filter nodes for each row of the matrix?
-		      for (int i = 0; i < linearStuff.length;i++) {
-		      FilterTraceNode filterNode = new FilterTraceNode(linearStuff[i]);
-		      node.setNext(filterNode);
-		      filterNode.setPrevious(node);
-		      node = filterNode;
-		      unflatFilter = downstream;
-		      }
-		      }
-		    else*/
-		    if (!(downstream.filter instanceof SIRPredefinedFilter)) {
-			FilterTraceNode filterNode = new FilterTraceNode(dsContent);
-			node.setNext(filterNode);
-			filterNode.setPrevious(node);
-			node = filterNode;
-			unflatFilter = downstream;
+		    
+		    if (dsContent.isLinear()) { //Jasper's linear stuff?
+			int times=dsContent.getArray().length/dsContent.getPopCount();
+			if(times>1) {
+			    if(times>16)
+				times=16;
+			    FilterContent[] linearStuff=LinearFission.fiss(dsContent,times);
+			    workEstimation.remove(dsContent);
+			    //create filter nodes for each row of the matrix?
+			    for (int i = 0; i < linearStuff.length;i++) {
+				FilterContent fissedContent=linearStuff[i];
+				FilterTraceNode filterNode = new FilterTraceNode(fissedContent);
+				node.setNext(filterNode);
+				filterNode.setPrevious(node);
+				node = filterNode;
+				unflatFilter = downstream;
+				//Dummy work estimate for now
+				workEstimation.put(fissedContent, 
+						   new Integer(workEstimate/times));
+			    }
+			} else if (!(downstream.filter instanceof SIRPredefinedFilter)) {
+			    FilterTraceNode filterNode = new FilterTraceNode(dsContent);
+			    node.setNext(filterNode);
+			    filterNode.setPrevious(node);
+			    node = filterNode;
+			    unflatFilter = downstream;
+			}
 		    }
+		    else
+			if (!(downstream.filter instanceof SIRPredefinedFilter)) {
+			    FilterTraceNode filterNode = new FilterTraceNode(dsContent);
+			    node.setNext(filterNode);
+			    filterNode.setPrevious(node);
+			    node = filterNode;
+			    unflatFilter = downstream;
+			}
 		}
-
+		
 		traceBNWork.put(trace, new Integer(bottleNeckWork));
 
 		//we are finished the current trace, create the outputtracenode
@@ -256,7 +284,6 @@ public class SimplePartitioner extends Partitioner
 	    content=new FileOutputContent(f);
 	else
 	    content=new FilterContent(f);
-	System.out.println("Making: "+content);
 	return content;
     }
     

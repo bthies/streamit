@@ -1,5 +1,44 @@
+OVERVIEW
+--------
+
+This very basic ray tracer begins at RaySource where the rays are generated.
+From RaySource, they pass through the "scene", which consists of a hard coded
+Circle (currently center=(0,0,-2), radius=0.5, color=(1,0,0) [red]).  The
+CircleIntersect filter gives us the HitInfo, which has its normal normalized
+(NormalizeNorm filter), the lighting calculation is done for a hard coded
+light source (currently at location (-2,1,0)), and the resulting color is
+printed to stdout from the WritePPM filter.
+
+Note that WritePPM takes the size of the image as a parameter because
+ideally it would know when the first pixel was printed and would print the
+PPM header in that case.  That header should be in the following format:
+
+P6
+nx ny
+255
+
+
+Where nx,ny are the dimensions of the image.  (Note: there must be two
+endlines after 255.)  
+
+To do any real ray tracing, the CircleIntersect (and of course eventually
+TriangleIntersect) filters would need to be parameterized based on the input
+from a scene file.  An alternative to this would be to have a scene parser
+that generates the StreamIt code corresponding to the scene.
+
+What needs to be done:
+  Line 55: TODO: done with image
+     should exit here: all pixels have been processed
+  Line 137: TODO: test for object occlusion
+     to test for an occluding object (i.e., check if the object is shadowed),
+     we should send the Ray "lightRay" back through the scene.  If it hits
+     something, we're in shadow, if not, we're directly lit.
+
+EXPLICIT GUIDE TO GETTING PPM FILE FROM STREAMIT FILE
+-----------------------------------------------------
+
 Here's how to take the output of RayTracer_works and conver to a PPM
-file (viewable with XV).
+file (viewable with xv).
 
 Do, for example,
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: OptionDefinition.java,v 1.3 2003-06-05 11:25:16 jasperln Exp $
+ * $Id: OptionDefinition.java,v 1.4 2003-06-05 11:40:39 jasperln Exp $
  */
 
 package at.dms.compiler.tools.optgen;
@@ -164,10 +164,12 @@ class OptionDefinition {
     String	prefix ="\"  --";
 
     prefix += longname;
-    prefix += ", -";
-    prefix += shortname;
-    if (argument != null) {
-      prefix += "<" + type + ">";
+    if(shortname.length()<2) {
+	prefix += ", -";
+	prefix += shortname;
+	if (argument != null) {
+	    prefix += "<" + type + ">";
+	}
     }
     prefix += ": ";
     for (int i = prefix.length(); i < 25; i++) {
@@ -205,16 +207,18 @@ class OptionDefinition {
   }
 
   public void printShortOption(PrintWriter out) {
-    out.print(shortname);
-    if (argument != null) {
-      if (argument.equals("")) {
-	out.print(":");
-      } else {
-	out.print("::");
+      if(shortname.length()<2) {
+	  out.print(shortname);
+	  if (argument != null) {
+	      if (argument.equals("")) {
+		  out.print(":");
+	      } else {
+		  out.print("::");
+	      }
+	  }
       }
-    }
   }
-
+    
   // --------------------------------------------------------------------
   // DATA MEMBERS
   // --------------------------------------------------------------------

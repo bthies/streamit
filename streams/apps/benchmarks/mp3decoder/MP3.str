@@ -68,7 +68,7 @@ float->float filter Antialias {
 
 
 
-float->float pipeline FilterBank() {
+float->int pipeline FilterBank() {
 
   add Antialias();
   add IMDCT();
@@ -142,7 +142,7 @@ float->float pipeline FilterBank() {
 }
 
 
-float->float pipeline PCMSynthesis() {
+float->int pipeline PCMSynthesis() {
 
   add float->float filter {
 
@@ -1357,13 +1357,13 @@ float->float filter IMDCT {
 }
 
 
-float->float pipeline MultiChannelPCMSynthesis(int n) {
+float->int pipeline MultiChannelPCMSynthesis(int n) {
 
   add MultiChannelPCMSynthesisInterval(n);
 }
 
 
-float->float splitjoin MultiChannelPCMSynthesisInterval(int n) {
+float->int splitjoin MultiChannelPCMSynthesisInterval(int n) {
 
   int granuleInputSize = 1;
 

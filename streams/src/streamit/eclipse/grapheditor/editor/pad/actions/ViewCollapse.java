@@ -20,8 +20,7 @@ public class ViewCollapse extends AbstractActionDefault {
 
 	/**
 	 * Constructor for ViewCollapse.
-	 * @param graphpad
-	 * @param name
+	 * @param graphpad GPGraphpad
 	 */
 	public ViewCollapse(GPGraphpad graphpad) {
 		super(graphpad);
@@ -61,7 +60,7 @@ public class ViewCollapse extends AbstractActionDefault {
 				/** Can only collapse GEStreamNodes **/
 				if (!(cells[firstCell] instanceof GEStreamNode))
 				{
-					System.out.println("WARNING: CAN ONLY COLLAPSE GESTREAMNODES");
+					System.err.println("WARNING: CAN ONLY COLLAPSE GESTREAMNODES");
 					return;
 				}
 				
@@ -79,7 +78,8 @@ public class ViewCollapse extends AbstractActionDefault {
 						graphStruct.containerNodes.collapseContainersAtLevel(j);
 					}
 					container.collapse();
-					graphStruct.containerNodes.setCurrentLevelView(currentLevelView);	
+					graphStruct.containerNodes.setCurrentLevelView(currentLevelView);
+					
 	
 				}
 				/** Selected non-container node to collapse - will collapse encapsulating node **/
@@ -95,7 +95,9 @@ public class ViewCollapse extends AbstractActionDefault {
 						graphStruct.containerNodes.collapseContainersAtLevel(j);
 					}
 					container.collapse();
-					graphStruct.containerNodes.setCurrentLevelView(currentLevelView);	
+					graphStruct.containerNodes.setCurrentLevelView(currentLevelView);
+					
+					
 				}				
 			}
 			/** More than one cell was selected - this is not allowed **/

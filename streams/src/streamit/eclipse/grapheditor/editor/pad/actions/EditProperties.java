@@ -40,12 +40,15 @@ public class EditProperties extends AbstractActionFile {
 	 */
 	public void actionPerformed(ActionEvent e)
 	{
+		/** Get the selected cell */
 		GEStreamNode cell = (GEStreamNode) graphpad.getCurrentDocument().getGraph().getSelectionCell();
 		
 		if (cell != null)
 		{
 			String type = cell.getType();
 			Controller _control = null;
+			
+			/** Determine what type of controller is being used */
 			if (type == GEType.PIPELINE)
 			{
 				_control = new GEPipelineController();	
@@ -71,12 +74,13 @@ public class EditProperties extends AbstractActionFile {
 				_control = new GEFeedbackLoopController();
 			}
 			
+			/** Display the configuration dialog. If the user presses OK and the properties 
+			 *  that were selected are valid .... */
 			if (_control.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
 			{
+				/** Set the properties of the GEStreamNode */
 				GEProperties.setNodeProperties(cell, 
 											   _control.getConfiguration(),
-											   //graphpad.getCurrentGraph())
-											   //graphpad.getCurrentDocument().getGraphStructure().getJGraph()
 											   graphpad.getCurrentDocument().getGraphStructure());
 				graphpad.getCurrentDocument().getTreePanel().update();
 				graphpad.getCurrentDocument().updateUI();

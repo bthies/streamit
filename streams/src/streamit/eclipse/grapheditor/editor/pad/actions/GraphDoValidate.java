@@ -4,14 +4,15 @@
 package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.event.ActionEvent;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
-import streamit.eclipse.grapheditor.graph.GEFeedbackLoop;
-import streamit.eclipse.grapheditor.graph.GEJoiner;
-import streamit.eclipse.grapheditor.graph.GEPhasedFilter;
-import streamit.eclipse.grapheditor.graph.GESplitJoin;
-import streamit.eclipse.grapheditor.graph.GESplitter;
-import streamit.eclipse.grapheditor.graph.GEStreamNode;
 
 /**
  *  Actions that calidate the Graph Structure so that it represents legal StreamIt code.
@@ -32,6 +33,47 @@ public class GraphDoValidate extends AbstractActionDefault {
 	 */
 	public void actionPerformed(ActionEvent e) 
 	{
+		
+		System.out.println("File Save Action Performed");
+		
+			PrintWriter out = null;
+		
+			StringBuffer strBuff = new StringBuffer();
+			graphpad.getCurrentDocument().getGraphStructure().outputCode(strBuff);
+
+			try 
+			{
+				IFile ifile = graphpad.getCurrentDocument().getIFile();
+				if (ifile != null)
+				{
+				
+					ByteArrayInputStream bais = new ByteArrayInputStream(strBuff.toString().getBytes());
+					FileInputStream fis = new FileInputStream(graphpad.getCurrentDocument().getFile());
+					ifile.setContents(bais, false, false, null);
+				
+					ifile.getParent().refreshLocal(IResource.DEPTH_ONE, null);
+				}
+			
+			} 
+			catch (Exception exception) 
+			{
+				exception.printStackTrace();
+			}
+		
+			
+			if (out != null) 
+			{
+				try 
+				{
+					out.close();
+				} 
+				catch (Exception exception) 
+				{
+					exception.printStackTrace();
+				}
+			}
+		}
+		/*
 		Object[] cells = getCurrentGraph().getVertices(getCurrentGraph().getSelectionCells());
 		byte errorCode = 0;
 		for (int i=0; i < cells.length;i++)
@@ -149,7 +191,7 @@ public class GraphDoValidate extends AbstractActionDefault {
 		return true;		
 	}
 
-	
+	*/
 	
 
 }

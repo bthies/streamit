@@ -61,6 +61,65 @@ public class EditDelete extends AbstractActionDefault {
 			for (int i=0; i < cells.length; i++)
 			{
 				/** Case when we are deleting a GEStreamNode */
+				if (cells[i] instanceof GEContainer)
+				{
+					GEContainer node = (GEContainer) cells[i];
+					node.deleteNode(getCurrentGraph().getModel());
+				}
+				else if (cells[i] instanceof GEStreamNode)
+				{
+					GEStreamNode node = (GEStreamNode) cells[i];
+					node.deleteNode(getCurrentGraph().getModel());
+				}
+				/** Case when we are deleting a DefaultEdge */
+				else if ((cells[i] instanceof DefaultEdge) && (cells[i] !=null))
+				{
+					DefaultEdge edge = (DefaultEdge) cells[i];
+					
+					if (edge.getSource() != null)
+					{
+						GEStreamNode sourceNode = (GEStreamNode) ((DefaultPort)edge.getSource()).getParent();
+						if (sourceNode != null)
+						{
+							sourceNode.getSourceEdges().remove(edge);						
+						}
+					}
+					if (edge.getTarget() != null)
+					{					
+						GEStreamNode targetNode = (GEStreamNode) ((DefaultPort)edge.getTarget()).getParent();
+						if (targetNode != null)
+						{
+							targetNode.getTargetEdges().remove(edge);
+						}
+					}
+				}
+			}
+			/** Must delete the ports of the cell */
+			cells = DefaultGraphModel.getDescendants(getCurrentGraph().getModel(), cells)
+									.toArray();
+			getCurrentGraph().getModel().remove(cells);
+			
+			graphpad.getCurrentDocument().getTreePanel().update();
+			graphpad.getCurrentDocument().updateUI();
+			graphpad.update();	
+		}
+	}
+
+
+
+	/**
+	 * Delete a GEStreamNode or an edge in the GraphStructure. When a Container 
+	 * node is deleted, 
+	 */
+	public void actionPerformedOld(ActionEvent e) 
+	{	
+		Object[] cells = getCurrentGraph().getSelectionCells();
+		getCurrentGraph().clearSelection();
+		if (cells != null) 
+		{	
+			for (int i=0; i < cells.length; i++)
+			{
+				/** Case when we are deleting a GEStreamNode */
 				if (cells[i] instanceof GEStreamNode)
 				{
 					GEStreamNode node = (GEStreamNode) cells[i];
@@ -135,7 +194,8 @@ public class EditDelete extends AbstractActionDefault {
 						{
 							getCurrentGraph().getModel().remove(((GEStreamNode)containedCells[j]).getSourceEdges().toArray());
 							getCurrentGraph().getModel().remove(((GEStreamNode)containedCells[j]).getTargetEdges().toArray());;							
-						}	
+						}
+						
 						containedCells = DefaultGraphModel.getDescendants(getCurrentGraph().getModel(), containedCells)
 															.toArray();
 						getCurrentGraph().getModel().remove(containedCells);			

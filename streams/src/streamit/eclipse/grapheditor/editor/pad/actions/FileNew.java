@@ -1,28 +1,9 @@
 /*
- * @(#)FileNew.java	1.2 30.01.2003
- *
- * Copyright (C) 2003 sven.luzar
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
  */
 package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.event.ActionEvent;
 
-import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.GraphLayoutCache;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
@@ -34,10 +15,8 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
 import streamit.eclipse.grapheditor.graph.NodeCreator;
 
 /**
- * 
- * @author sven.luzar
- * @version 1.0
- *
+ * Action that creates a new document in the Graph Editor to allow the editing of a new graph structure.
+ * @author jcarlos
  */
 public class FileNew extends AbstractActionDefault {
 
@@ -51,7 +30,7 @@ public class FileNew extends AbstractActionDefault {
 	}
 
 	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+	 * Create a new document in the Graph Editor to allow the editing of a new graph structure. 
 	 */
 	public void actionPerformed(ActionEvent e) {
 		
@@ -60,23 +39,32 @@ public class FileNew extends AbstractActionDefault {
 		if (selectProvider.getAnswer() == GPSelectProvider.OPTION_CANCEL )
 			return;
 		
-		
+		/** Set the graph model provider (should be the default) */
 		GraphModelProvider graphModelProvider = selectProvider.getSelectedGraphModelProvider() ;
 		if (graphModelProvider == null)
 			return;
 
+		/** Create a new graph structure */
 		GraphStructure graphStruct = new GraphStructure();
+		
+		/** Set the JGraph properties for the graph */	
 		GPGraph gGraph = new GPGraph(graphStruct.getGraphModel());
 		gGraph.setEditable(false);
 		gGraph.setDisconnectable(false);
 		gGraph.setGraphLayoutCache(new GraphLayoutCache(graphStruct.getGraphModel(), gGraph, false, true));
 		graphStruct.setJGraph(gGraph);
 	
-		
+		/** Add a new document to the graph editor */
 		GPDocument doc= graphpad.addDocument(null, graphModelProvider, gGraph , gGraph.getModel(), graphStruct, null);
 		
+		/** Create a default toplevel pipeline for the graph editor. There should always be a toplevel
+		 * node present. */
 		NodeCreator.createDefaultToplevelPipeline(graphStruct); 
-						
+
+		/** Create the hierarchy panel using the graphstructure */
+		graphpad.getCurrentDocument().treePanel.setGraphStructure(graphpad.getCurrentDocument().getGraphStructure());		
+		graphpad.getCurrentDocument().treePanel.createJTree();
+		graphpad.getCurrentDocument().updateUI();						
 		graphpad.update();
 	}
 	/** Empty implementation. 

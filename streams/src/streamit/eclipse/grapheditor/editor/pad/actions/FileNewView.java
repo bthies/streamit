@@ -53,7 +53,7 @@ public class FileNewView extends AbstractActionFile {
 			null,
 			getCurrentGraph().getModel(),
 			getCurrentDocument().getGraphUndoManager());
-		// Copy Existing View Attributes
+		/** Copy Existing View Attributes */
 		Object[] cells = getCurrentGraph().getRoots();
 		Object[] all =
 			DefaultGraphModel

@@ -42,25 +42,31 @@ public class ViewExpand extends AbstractActionDefault {
 	 */
 	public void actionPerformed(ActionEvent e) 
 	{
-		
 		graphpad.getCurrentDocument().setResizeAction(null);
-					
 		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
-		int currentLevelView = graphStruct.containerNodes.getCurrentLevelView();
 		
+		/** Expand the containers at the current level */
+		int currentLevelView = graphStruct.containerNodes.getCurrentLevelView();
 		graphStruct.containerNodes.expandContainersAtLevel(currentLevelView);
 		
+		/** Set the container locations (layout the containers) now that they
+		 * have been expanded in the currentLevel view */
 		ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
 										get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
 		ac.actionPerformed(null);
+		
+		/** Since we have expanded, we need to update the current level */
 		graphStruct.containerNodes.setCurrentLevelView(++currentLevelView);
 		
+		/** Scale the view in order to zoom out to better view the expanded graph */
 		graphpad.getCurrentDocument().setScale(graphpad.getCurrentGraph().getScale() / 1.2);
 		if (graphpad.getCurrentGraph().getSelectionCell() != null)
 		{
 			graphpad.getCurrentGraph().scrollCellToVisible(getCurrentGraph().getSelectionCell());
 		}
-	//	centerLayout();
+	
+		/** Layout the graph so that the graph is centered */
+		centerLayout();
 	}	
 
 	/**
@@ -68,6 +74,8 @@ public class ViewExpand extends AbstractActionDefault {
 	 * toplevel node. The Sugiyama layout algorithm places the nodes that are not connected to 
 	 * the graph outside of the toplevel.
 	 */
+	// TODO: Fix centerLayout so that splitjoin inner childs don't get centered and so that the 
+	// feedbackloop gets formatted in a special manner. 
 	public void centerLayout()
 		{ 
 			Map attributes = graphpad.getCurrentDocument().getGraphStructure().getTopLevel().getAttributes();
@@ -108,6 +116,7 @@ public class ViewExpand extends AbstractActionDefault {
 								(!(strNode.getType() == GEType.JOINER)))				
 							{
 								doCenterLayout = false;	
+								
 							}						
 						}			
 						if (doCenterLayout)

@@ -1,23 +1,4 @@
-/*
- * @(#)ToolBoxSplitter.java	1.2 05.02.2003
- *
- * Copyright (C) 2003 sven.luzar
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- *
- */
+
 package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.Component;
@@ -29,10 +10,8 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
 
 /**
- * 
- * @author sven.luzar
- * @version 1.0
- *
+ * Action to add a GESplitter to the graph editor. 
+ * @author jcarlos
  */
 public class ToolBoxSplitter extends AbstractActionDefault {
 
@@ -49,6 +28,7 @@ public class ToolBoxSplitter extends AbstractActionDefault {
 	 */
 	public void actionPerformed(ActionEvent e) {
 	}
+	
 	/**
 	 * @see org.jgraph.pad.actions.AbstractActionDefault#getToolComponent(String)
 	 */
@@ -61,8 +41,8 @@ public class ToolBoxSplitter extends AbstractActionDefault {
 		return button;
 	}
 
-	/** 
-	 * 
+	/**
+	 * Set the button as enabled or not enabled depending on its status.
 	 */
 	public void update() {
 		super.update();

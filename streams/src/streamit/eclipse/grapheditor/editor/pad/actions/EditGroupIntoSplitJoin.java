@@ -5,11 +5,11 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-
-import javax.swing.JOptionPane;
+import java.util.Iterator;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
+import streamit.eclipse.grapheditor.graph.ErrorCode;
 import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEJoiner;
 import streamit.eclipse.grapheditor.graph.GEProperties;
@@ -42,8 +42,9 @@ public class EditGroupIntoSplitJoin extends AbstractActionDefault {
 		Object[] cells = getCurrentGraph().getSelectionCells();
 		GESplitter splitter = null;
 		GEJoiner joiner = null;
-		ArrayList succList = new ArrayList(); 
-		GEContainer toplevel = graphpad.getCurrentDocument().getGraphStructure().getTopLevel();
+		ArrayList succList = new ArrayList();
+		GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure(); 
+		GEContainer toplevel = graphStruct.getTopLevel();
 		
 		/** Traverse all the cells that were selected to be grouped into a splitjoin*/
 		for (int j = 0; j < cells.length; j++)
@@ -65,50 +66,67 @@ public class EditGroupIntoSplitJoin extends AbstractActionDefault {
 		/** Display error message in case that there is no splitter */
 		if (splitter == null)
 		{
-			JOptionPane.showMessageDialog(graphpad,
-				"The SplitJoin does not have an assigned Splitter.",
-				"Error",
-				JOptionPane.ERROR_MESSAGE);
-
+			ErrorCode.handleErrorCode(ErrorCode.CODE_NO_SPLITTER);
 			return;	
 		}
 		
 		/** Display an error message in case that there is no joiner */
 		else if (joiner == null)
 		{
-			JOptionPane.showMessageDialog(graphpad,
-				"The SplitJoin does not have an assigned Joiner.",
-				"Error",
-				JOptionPane.ERROR_MESSAGE);			
+			ErrorCode.handleErrorCode(ErrorCode.CODE_NO_JOINER);
 			return;
 		}
 		
+		/** Remove the splitter and joiner from their previous container */
 		splitter.getEncapsulatingNode().removeNodeFromContainer(splitter);
 		joiner.getEncapsulatingNode().removeNodeFromContainer(joiner);
 		
-		GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure();
-		
-		/** Create a new splitjoin */
+		/** Create a new splitjoin and add it to the toplevel container*/
 		GESplitJoin splitjoin = new GESplitJoin("Splitjoin_"+ GEProperties.id_count++, splitter, joiner);
-		splitjoin.setEncapsulatingNode(toplevel);
-		Object[] nodeList = succList.toArray();
+		toplevel.addNodeToContainer(splitjoin);
 		
-		/** Set the parent of the selected cells to be the newly create splitjoin */
-
+		
+		Object[] nodeList = succList.toArray();
+		ArrayList containersToGroup = new ArrayList();
+		
+		/** Go through the list of selected cells (in this case all cells are GEStreamNodes)*/
 		for (int i = 0; i < nodeList.length; i++)
 		{
 			GEStreamNode node = (GEStreamNode)nodeList[i];
-			GEProperties.setParentProperty(node, splitjoin);
+			
+			/** Only want to change the parent of a node whenever its encapsulating node is the 
+			 * toplevel pipeline. */
+			if (node.getEncapsulatingNode() == toplevel)
+			{
+				GEProperties.setParentProperty(node, splitjoin);	
+			}
+			/** If the encapsulating node is not toplevel, then we must change the 
+			 *  encapsulating node of the oldest ancestor that is not the toplevel. */
+			else
+			{
+				GEStreamNode container = node.getOldestContainerAncestor(toplevel);
+				if ( ! (containersToGroup.contains(container)))
+				{
+					containersToGroup.add(container);
+					GEProperties.setParentProperty(container, splitjoin);
+				}	
+			}
+			
 		}
 
-		
+		/** Set the newly created splitjoin as the parent of the oldest ancestors from the selected nodes.*/
+		for (Iterator contToGroupIter= containersToGroup.iterator(); contToGroupIter.hasNext();)
+		{
+			GEStreamNode container = (GEStreamNode)contToGroupIter.next();
+			GEProperties.setParentProperty(container, splitjoin);
+		}
+
 		/** Initialize the splitjoin propreties and add the splitjoin to the toplevel container */
 		splitjoin.initiliazeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
-		toplevel.addNodeToContainer(splitjoin);
-		
+				
 		/** Update the hierarchy panel */
 		EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
-																get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
+										get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
 		ac.actionPerformed(null);
 	
 	}

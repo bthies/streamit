@@ -30,7 +30,8 @@ import streamit.eclipse.grapheditor.editor.pad.GPInternalFrame;
 import streamit.eclipse.grapheditor.editor.utils.UserProperties;
 
 /**
- * implementation of the exit command
+ * 
+ * Actions that implemens the exit command.
  *
  * @author sven.luzar
  * @version 1.0
@@ -65,11 +66,6 @@ public class FileExit extends AbstractActionDefault {
 			}
 		}
 
-		// save all dialog related user settings
-//		Frame frame = graphpad.getFrame();
-//		if (frame!=null && frame instanceof JFrameP){
-//			(JFrameP)frame.save();
-//		}
 		UserProperties.saveAll();
 		graphpad.exit();
 	}

@@ -22,6 +22,7 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 import streamit.eclipse.grapheditor.graph.GraphEncoder;
 
 /**
+ * Action that opens a StreamIt file in the Graph Editor.
  * @author jcarlos
  *
  */
@@ -37,23 +38,19 @@ public class FileOpen extends AbstractActionFile {
 		System.out.println("Called FileOpen constructor");
 	}
 
-	/** Shows a file chooser with the
-	 *  file filters from the file formats
+	/** 
+	 * Shows a file chooser with the file filters from the file formats
 	 *  to select a file.
 	 *
-	 *  Furthermore the method uses the selected
-	 *  file format for the read process.
-	 *
-	 *  @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
-	 *  @see GraphModelProviderRegistry
+	 *  Furthermore the method uses the selected file format for the read process.
 	 */
-	
-	public void actionPerformed(ActionEvent e) {
-		// show the file chooser
+	public void actionPerformed(ActionEvent e) 
+	{
+		/** Show the file chooser */
 		GPFileChooser chooser = new GPFileChooser(null);
 		chooser.setDialogTitle(Translator.getString("openLabel"));
 
-		// return if cancel
+		/** Return if cancel */
 		int result = chooser.showOpenDialog(graphpad);
 		if (result == JFileChooser.CANCEL_OPTION)
 			return;
@@ -96,7 +93,7 @@ public class FileOpen extends AbstractActionFile {
 		}
 		if (name != null) 
 		{
-			// get all open files to test against
+			/** Get all open files to test against */
 			GPDocument[] docs = graphpad.getAllDocuments();
 			if (docs != null) 
 			{
@@ -104,7 +101,7 @@ public class FileOpen extends AbstractActionFile {
 				{
 					URL docname = docs[i].getFilename();
 		
-					// check if names are the same
+					/** check if names are the same */
 					if (docname != null && name.equals(docname)) 
 					{
 							graphpad.removeGPInternalFrame(docs[i].getInternalFrame());
@@ -128,11 +125,13 @@ public class FileOpen extends AbstractActionFile {
 		selectProvider.show() ;
 		if (selectProvider.getAnswer() == GPSelectProvider.OPTION_CANCEL )
 			return false;
-				
+		
+		/** Set the graph model provider (should be the default) */		
 		GraphModelProvider graphModelProvider = selectProvider.getSelectedGraphModelProvider() ;
 		if (graphModelProvider == null)
 			return false;
-
+		
+		/** Get the full path of the file that was passed as an argument */
 		String fileName = "";
 		URL fileURL = null;
 		try 
@@ -155,22 +154,27 @@ public class FileOpen extends AbstractActionFile {
 		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
 		System.out.println("JAVA FILE: "+ fileName.substring(0, fileName.indexOf(".")+ 1 )+"java");
 		
+		/** Compile the streamit file witht the given parameters in order to generate a graphstructure */
 		streamit.frontend.ToJava.main(new String[] {"--output", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java", fileName});
 		at.dms.kjc.Main.compile(new String[] {"--streamit", "--graph", "--verbose", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java"});
 		
 		//graphpad.addDocument(graphModelProvider);
-		
+
+		/** Set the JGraph properties for the graph */		
 		GPGraph gGraph = new GPGraph(GraphEncoder.graph.getGraphModel());
 		gGraph.setGraphLayoutCache(new GraphLayoutCache(gGraph.getModel(), gGraph, false, true));
 		gGraph.setEditable(false);
 		gGraph.setDisconnectable(false);
 		
+		/** Add a new document inner window to the Graph Editor */
 		GPDocument doc= graphpad.addDocument(fileURL, graphModelProvider, gGraph , gGraph.getModel(), GraphEncoder.graph, null);
 		//GPDocument doc= graphpad.addDocument(null, graphModelProvider, gGraph , GraphEncoder.graph.getGraphModel(), null);
 	
+		/** Construct the graphical representation of the graphstructure in the newly added document */
 		GraphEncoder.graph.setJGraph(gGraph);
 		GraphEncoder.graph.constructGraph(doc.getScrollPane());
 
+		/** Create the hierarchy panel using the graphstructure */
 		graphpad.getCurrentDocument().treePanel.setGraphStructure(graphpad.getCurrentDocument().getGraphStructure());		
 		graphpad.getCurrentDocument().treePanel.createJTree();
 		graphpad.getCurrentDocument().updateUI();
@@ -178,9 +182,9 @@ public class FileOpen extends AbstractActionFile {
 		return true;
 	}
 
-	/** Empty implementation.
-	 *  This Action should be available
-	 *  each time.
+	/** 
+	 * Empty implementation.
+	 * This Action should be available each time.
 	 */
 	public void update() {
 	};

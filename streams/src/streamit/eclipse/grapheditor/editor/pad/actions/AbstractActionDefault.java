@@ -155,21 +155,6 @@ public abstract class AbstractActionDefault
 			graphpad.getCurrentDocument().setSelectionAttributes(map);
 	}
 
-	public void setFontSizeForSelection(float size) {
-		if (graphpad != null && graphpad.getCurrentDocument() != null)
-			graphpad.getCurrentDocument().setFontSizeForSelection(size);
-	}
-
-	public void setFontStyleForSelection(int style) {
-		if (graphpad != null && graphpad.getCurrentDocument() != null)
-			graphpad.getCurrentDocument().setFontStyleForSelection(style);
-	}
-
-	public void setFontNameForSelection(String fontName) {
-		if (graphpad != null && graphpad.getCurrentDocument() != null)
-			graphpad.getCurrentDocument().setFontNameForSelection(fontName);
-	}
-
 	public GPDocument getCurrentDocument() {
 		return graphpad.getCurrentDocument();
 	}

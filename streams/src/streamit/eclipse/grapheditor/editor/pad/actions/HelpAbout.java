@@ -37,16 +37,14 @@ public class HelpAbout extends AbstractActionDefault {
 	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
 	 */
 	public void actionPerformed(ActionEvent e) {
-		if (aboutDlg == null) {
-			// Create a frame containing an instance of
-			// LibraryPanel.
-			
+		if (aboutDlg == null) 
+		{	
 			String iconName = Translator.getString("Logo");
 			ImageIcon logoIcon = ImageLoader.getImageIcon(iconName);
 			
-			try {
-				String title = Translator.getString("AboutFrameTitle");
-				
+			try 
+			{
+				String title = Translator.getString("AboutFrameTitle");	
 				aboutDlg = new GPAboutDialog(graphpad.getFrame(), title, logoIcon);
 			} catch (MissingResourceException mre) {
 				aboutDlg =

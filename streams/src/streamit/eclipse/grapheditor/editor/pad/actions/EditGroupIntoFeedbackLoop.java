@@ -16,7 +16,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
@@ -24,6 +23,7 @@ import streamit.eclipse.grapheditor.editor.controllers.GEStreamNodeConfiguration
 import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
+import streamit.eclipse.grapheditor.graph.ErrorCode;
 import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEFeedbackLoop;
 import streamit.eclipse.grapheditor.graph.GEJoiner;
@@ -37,6 +37,7 @@ import streamit.eclipse.grapheditor.graph.GraphStructure;
  * A GEFeedbackLoop requires a splitter, a joiner, a loop and a body.
  * The user will have the freedom to determine which of the cells will be the 
  * cell and which one will be the body. 
+ * 
  * @author jcarlos
  */
 public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
@@ -80,20 +81,13 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 		/** Must have a splitter among the selected cells */
 		if (splitter == null)
 		{
-			JOptionPane.showMessageDialog(graphpad,
-				"The SplitJoin does not have an assigned Splitter.",
-				"Error",
-				JOptionPane.ERROR_MESSAGE);
-	
+			ErrorCode.handleErrorCode(ErrorCode.CODE_NO_SPLITTER);	
 			return;	
 		}
 		/** Must have a joiner among the selected cells */
 		else if (joiner == null)
 		{
-			JOptionPane.showMessageDialog(graphpad,
-				"The SplitJoin does not have an assigned Joiner.",
-				"Error",
-				JOptionPane.ERROR_MESSAGE);			
+			ErrorCode.handleErrorCode(ErrorCode.CODE_NO_JOINER);			
 			return;
 		}
 		
@@ -116,19 +110,29 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 			String bodyName = properties.getProperty(GEProperties.KEY_FLOOP_BODY);
 			String loopName = properties.getProperty(GEProperties.KEY_FLOOP_LOOP);
 			
+			/** No loop was selected for the GEFeedbackLoop to be constructed */
+			if (loopName == "")
+			{
+				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_LOOP_IN_FLOOP);
+			}
+			/** No body was selected for the GEFeedbackLoop to be constructed */
+			if (bodyName =="")
+			{
+				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_BODY_IN_FLOOP);
+			}
+			
 			/** Cannot have the body and the loop be the same */
 			if (bodyName == loopName)
 			{
-				JOptionPane.showMessageDialog(graphpad,
-					"Cannot select the same node for both the body and the loop",
-					"Error",
-					JOptionPane.ERROR_MESSAGE);			
+				ErrorCode.handleErrorCode(ErrorCode.CODE_SAME_BODY_AND_LOOP);	
 				return;
 			}
 		
-			/** Get the GEStreamNodes corresponding to the body and loop names. */
+			
 			GEStreamNode body = null;
 			GEStreamNode loop = null;
+			
+			/** Get the GEStreamNodes corresponding to the body and loop names. */
 			for (Iterator nodeIter = succList.iterator(); nodeIter.hasNext();)
 			{
 				GEStreamNode node = (GEStreamNode) nodeIter.next();
@@ -136,7 +140,7 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 				{
 					body = node;
 				}
-				if (node.getName() == loopName)
+				else if (node.getName() == loopName)
 				{
 					loop = node;
 				}
@@ -145,20 +149,14 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 			/** Must have selected a valid loop for the feedbackloop */	
 			if (loop == null)
 			{
-				JOptionPane.showMessageDialog(graphpad,
-					"Must select a loop for the feedbackloop",
-					"Error",
-					JOptionPane.ERROR_MESSAGE);			
+				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_LOOP_IN_FLOOP);	
 				return;
 			}
 			
 			/** Must have selected a valid body for the feedbackloop */
 			if (body == null)
 			{
-				JOptionPane.showMessageDialog(graphpad,
-					"Must select a body for the feedbackloop",
-					"Error",
-					JOptionPane.ERROR_MESSAGE);			
+				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_BODY_IN_FLOOP);
 				return;				
 			}
 		
@@ -167,23 +165,18 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 			body.getEncapsulatingNode().removeNodeFromContainer(body);
 			splitter.getEncapsulatingNode().removeNodeFromContainer(splitter);
 			joiner.getEncapsulatingNode().removeNodeFromContainer(joiner);
-			
-			
+						
 			GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure(); 
 			
 			/** Create the GEFeedbackLoop that will hold the selected components */
 			GEFeedbackLoop floop = new GEFeedbackLoop("FeedbackLoop_"+ GEProperties.id_count++, 
 														splitter, joiner, body, loop);
-			floop.setEncapsulatingNode(toplevel);
-			
-	
-			floop.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
 			toplevel.addNodeToContainer(floop);
-			
+			floop.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
 			
 			/** Update hierarchy panel */
 			EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
-															get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
+											get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
 			ac.actionPerformed(null);
 		}		
 	}
@@ -246,7 +239,14 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 		 */
 		public String getLoopName()
 		{
-			return loopJComboBox.getSelectedItem().toString();
+			if (loopJComboBox.getSelectedItem() == null)
+			{
+				return "";
+			}
+			else
+			{
+				return loopJComboBox.getSelectedItem().toString();
+			}
 		}
 		
 		/**
@@ -254,7 +254,14 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 		 */
 		public String getBodyName()
 		{
-			return bodyJComboBox.getSelectedItem().toString();
+			if (bodyJComboBox.getSelectedItem() == null)
+			{
+				return "";
+			}
+			else
+			{
+				return bodyJComboBox.getSelectedItem().toString();
+			}
 		}
 		
 		

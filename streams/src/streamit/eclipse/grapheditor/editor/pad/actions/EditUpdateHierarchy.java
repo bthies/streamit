@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
 
 /**
+ * Action that updates the hierarchy panel.
  * @author jcarlos
  *
  */

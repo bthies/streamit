@@ -1,7 +1,4 @@
-/*
- * @(#)ToolBoxNode.java	1.2 05.02.2003
- *
- */
+
 package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.Component;
@@ -13,7 +10,8 @@ import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.pad.GPBarFactory;
 
 /**
- * Add nodes to the graph.
+ * Action to add a GEStreamNode (the one chosen by the user) to the graph editor. 
+ * @author jcarlos
  */
 public class ToolBoxNode extends AbstractActionDefault {
 
@@ -45,7 +43,7 @@ public class ToolBoxNode extends AbstractActionDefault {
 	}
 	
 	/**
-	 * Update method
+	 * Set the button as enabled or not enabled depending on its status.
 	 */
 	public void update() {
 		super.update();

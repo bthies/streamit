@@ -427,12 +427,12 @@ public class Propagator extends SLIRReplacingVisitor {
 	    JStatement newIncr = (JStatement)incr.accept(this);
 	    if (newIncr!=null && newIncr!=incr)
 		self.setIncr(newIncr);
-	    write=true;
 
 	    JExpression newExp = (JExpression)cond.accept(this);
 	    if (newExp!=null && newExp!=cond) {
 		self.setCond(newExp);
 	    }
+	    write=true;
 	    
 	    // recurse into body
 	    JStatement newBody = (JStatement)body.accept(this);

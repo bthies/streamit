@@ -1,0 +1,72 @@
+/** 
+ * This app is intended to implement a one bit d to a oversampler. 
+ **/
+void->void pipeline Oversampler {
+    // the source of data (eventually, this should be an audio stream)
+    //add DataSource();
+    add FileReader<float>("input");
+    // go through the process of oversampling
+    add OverSampler();
+    //add DataSink();
+    add FileWriter<float>("output");
+}
+
+/** 
+ * This is a 16x oversampler -- eg it upsamples
+ * its input by a factor of 16. The 16 factor is
+ * achieved in four steps. In each step we upsample
+ * and then low pass filter with cutoff of pi/2. 
+ **/
+float->float pipeline OverSampler {
+  for (int i=0; i<4; i++) {
+    add Expander(2);
+    add LowPassFilter(2,pi/2,64);
+  }
+}
+
+
+
+
+
+
+
+/**
+ * Simple data source that outputs a combination of 
+ * three sine waves with a period of 100 samples.
+ **/
+void->float filter DataSource {
+  int SIZE = 100;
+  float[SIZE] data;
+  int index;
+  init {
+    // initialize the data array.
+    for (int i=0; i<SIZE; i++) {
+      float t = i;
+      data[i] = (sin((2*pi)*(t/SIZE)) + 
+		 sin((2*pi)*(1.7*t/SIZE) + (pi/3)) +
+		 sin((2*pi)*(2.1*t/SIZE) + (pi/5)));
+    }
+    index = 0;
+  }
+  work push 1 {
+    push(data[index]);
+    index = (index + 1)%SIZE;
+  }
+}
+
+/** Simple sink that prints out the data that it receives. **/
+float->void filter DataSink {
+  work pop 1 {
+    println(pop());
+  }
+}
+
+/** Simple data selector filter (for filtering out multiplexed output for debugging) **/
+float->float filter DataSelector {
+  work pop 2 push 1 {
+    //push(pop());
+    pop();
+    push(pop());
+  }
+}
+

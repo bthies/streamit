@@ -349,27 +349,32 @@ public class RateMatchSim extends Simulator implements FlatVisitor
 	    counters.decrementBufferCount(fire, 
 					  itemsNeededToFire(fire, counters, executionCounts));
 	    
-
-	    //now this node has fired
-	    counters.setFired(fire);
-
+	    
 	    //for a steady state execution return the normal push
 	    int ret = ((SIRFilter)fire.contents).getPushInt();
 	    if (initSimulation) {
 		//if the filter is a two stage, and it has not fired
 		//return the initPush() unless the initWork does nothing
-		if (fire.contents instanceof SIRTwoStageFilter)
-		    if (!counters.hasFired(fire) && initSimulation) {
+		if (fire.contents instanceof SIRTwoStageFilter) {
+		    if (!counters.hasFired(fire)) {
 			SIRTwoStageFilter two = (SIRTwoStageFilter)fire.contents;
 			if (!(two.getInitPeek() == 0 &&
 			      two.getInitPush() == 0 &&
-			      two.getInitPop() == 0))
+			      two.getInitPop() == 0)){
 			    ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
+			}
 		    }
+		}
 		//decrement the schedule execution counter
+		//now this node has fired
+		counters.setFired(fire);
 		decrementExecutionCounts(fire, executionCounts);
 		return ret;
 	    }
+	    //now this node has fired
+	    counters.setFired(fire);
+	    //if this is not inside of a feedback loop fire everything
+	    //at once
 	    if (!((SIRStream)fire.contents).insideFeedbackLoop())
 		ret *= ((Integer)executionCounts.get(fire)).intValue();
 	    //decrement the schedule execution counter

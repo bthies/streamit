@@ -454,7 +454,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			((SIRTwoStageFilter)filter).getInitPush();
 		    if (ratematch) {
 			if (isInitWork) {
-			    Utils.fail("Not implemented");
+			    printRateMatchInitWorkHeader(pop, peek);
+			    body.accept(this);
+			    printRateMatchInitWorkTrailer(push);
 			}
 			else {
 			    printRateMatchWorkHeader(pop, peek, push, body);
@@ -508,12 +510,21 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	if (init != null) 
 	    initCount = init.intValue();
+
+	//if this is a two stage filter, count one of the initial executions 
+	//as the initWork execution and decrement the number of times the 
+	//work function is called in the init Schedule
+	if (filter instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+	    if (!(two.getInitPeek() == 0 && two.getInitPush() == 0 &&
+		  two.getInitPop() == 0))
+		initCount--;
+	}
+	
+
 	if (steady != null)
 	    steadyCount = steady.intValue();
 	
-	if (peek > 0 && initCount == 0) {
-	    
-	}
 	//initialization
 	//receive what the previous filter produces
 	
@@ -521,25 +532,42 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	int prevPush = 0;
 	
 	FlatNode node = Layout.getNode(Layout.getTile(filter));
+	FlatNode previous = null;
 	
 	if (node.inputs > 0) {
-	    FlatNode previous = node.incoming[0];
-	    if (previous == null)
-		System.out.println("prev null" + node.contents.getName());
-	    if (previous.contents == null)
-		System.out.println("prev contents null" + node.contents.getName());
+	    previous = node.incoming[0];
 	    prevInitCount = Util.getCountPrev(RawBackend.initExecutionCounts, 
 					 previous, node);
 	    if (prevInitCount > 0) {
 		if (previous.contents instanceof SIRSplitter || 
 		    previous.contents instanceof SIRJoiner) 
 		    prevPush = 1;
-		else 
+		else
 		    prevPush = ((SIRFilter)previous.contents).getPushInt();
 	    }
 	}
-	if (prevInitCount > 0 && prevPush > 0) {
-	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + (prevInitCount * prevPush) +
+	
+	int initialItemsToReceive = (prevInitCount * prevPush);
+	
+	//if the previous node is a two stage filter then count its initWork
+	//in the initialItemsTo Receive
+	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
+	    initialItemsToReceive -= ((SIRTwoStageFilter)previous.contents).getPushInt();
+	    initialItemsToReceive += ((SIRTwoStageFilter)previous.contents).getInitPush();
+	}
+	
+	//subtract the number of items the initWork took from the previous 
+	//stream for the initialization code.
+	if (filter instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
+	    if (!(two.getInitPeek() == 0 && two.getInitPush() == 0 &&
+		  two.getInitPop() == 0)) {
+		initialItemsToReceive -= two.getInitPeek();
+	    }
+	}
+	
+	if (initialItemsToReceive > 0) {
+	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initialItemsToReceive +
 		  "; " + exeIndex + "++)\n");
 	    printReceive();
 	}   
@@ -646,6 +674,35 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
     }
 
+    private void printRateMatchInitWorkHeader(int pop, int peek) 
+    {
+	print("{\n");
+	int initialItemsToReceive = peek;
+	//receive init peek items
+	if (initialItemsToReceive > 0) {
+	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + initialItemsToReceive +
+		  "; " + exeIndex + "++)\n");
+	    printReceive();
+	}   
+    }
+    
+    private void printRateMatchInitWorkTrailer(int push) 
+    {
+	if (push > 0) {
+	    //send everything
+	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + push +
+		  "; " + exeIndex + "++)\n");
+	    print("{\n");
+	    printRateMatchSend();
+	    //end the send
+	    print(";\n");
+	    //end the send loop
+	    print("}\n");
+	    print(sendBufferIndex + " &= " + SENDBITS + ";\n");
+	    print(sendIndex + " &= " + SENDBITS + ";\n");
+	}
+	print("}\n");
+    }
     
     
     private void printCircularWorkHeader(boolean isSteadyState, int pop, int peek) 

@@ -2,6 +2,7 @@ import streamit.*;
 
 /**
  * Test the linear filter analyzer when filters use fields.
+ * And when structures are used for holding data.
  **/
 public class LinearTest4 extends StreamIt {
     public static void main(String[] args) {
@@ -13,7 +14,6 @@ public class LinearTest4 extends StreamIt {
 	this.add(new FloatIdentity());
 	this.add(new FloatFilter1());
 	this.add(new FloatFilter2());
-	this.add(new FloatFilter3());
 	this.add(new Sink());
     }
 }
@@ -128,60 +128,3 @@ class FloatFilter2 extends Filter {
 	output.pushFloat(ec.data + ec.data2);
     }
 }
-
-
-/**
- * Test multiple external and internal fields
- **/
-class FloatFilter3 extends Filter {
-    
-    public void init() {
-	input = new Channel(Float.TYPE, 3);
-	output = new Channel(Float.TYPE, 3);
-    }
-    public void work() {
-	float t1 = input.popInt();
-	float t2 = input.popInt();
-	float t3 = input.popInt();
-
-	ExternalClass ec = new ExternalClass();
-	ec.data = t1 + t2 + t3;
-
-	output.pushFloat(ec.data);
-	output.pushFloat(t1);
-	output.pushFloat(t2);
-    }
-}
-
-
-/**
- * Test multiple external and internal fields
- **/
-class ExternalClass2 extends Structure {
-    float data1;
-    float data2;
-}
-
-class FloatFilter3 extends Filter {
-    // local fields to play with
-    float f1;
-    float f2;
-    
-    public void init() {
-	input = new Channel(Float.TYPE, 3);
-	output = new Channel(Float.TYPE, 5);
-    }
-    public void work() {
-	float t1 = input.popInt();
-	float t2 = input.popInt();
-	float t3 = input.popInt();
-
-	ExternalClass  ec  = new ExternalClass();
-	ExternalClass2 ec2 = new ExternalClass2();
-
-    }
-}
-
-
-
-

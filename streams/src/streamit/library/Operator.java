@@ -1053,6 +1053,15 @@ public class Operator extends DestroyedClass
         // don't re-initialize
         if (initialized) return;
 
+        callInit();
+        connectGraph ();
+        initialized = true;
+    }
+
+    // this function calls the init function, based on state in
+    // the object
+    protected void callInit ()
+    {
         ASSERT (initParams != null);
 
         if(initParams.getParamName().equals(("int-int-float-float")))
@@ -1447,9 +1456,6 @@ public class Operator extends DestroyedClass
             // labels don't match - print an error
             ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.\n(paramName=" + initParams.getParamName() + ")");
         }
-
-        connectGraph ();
-        initialized = true;
     }
 
     public void connectGraph ()

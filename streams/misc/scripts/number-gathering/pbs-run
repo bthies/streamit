@@ -9,13 +9,15 @@
 #PBS -S /bin/bash
 
 #qstat @cagfarm-01
-#qsub -q unbound@cagfarm-01 script
+#qsub -q short@cagfarm-01 script
 
-
-#must have BENCHMARKS OPTIONS RESULTS_DIR defined
+#must have BENCHMARK OPTIONS RESULTS_DIR defined
 
 source /u/mgordon/.bashrc
 
+bench_file=${BENCHMARK##/*/}
+bench_name=${bench_file%.str}
+bench_dir=${BENCHMARK%$bench_file}
 
 root_dir="/home/bits7/mgordon/openpbs/"
 
@@ -28,28 +30,40 @@ if [ ! -d "$RESULTS_DIR" ]; then
     exit 1
 fi
 
-temp_dir="${HOSTNAME}-$$"
+#temp_dir="${HOSTNAME}-$$"
+temp_dir="${bench_name}${OPTIONS// /}_${HOSTNAME}_$$"
 cd "$root_dir"
+#remove the directory if it exists
+rm -rf "$temp_dir"
 mkdir -v "$temp_dir"
+#copy the benchmark file
+cp $BENCHMARK "$temp_dir"
+#copy any input files
+#ls $bench_dir/input* > $temp_dir/benchdir
+cp $bench_dir/input* "$temp_dir"   
 cd "$temp_dir"
 
 #compile   
-strc $OPTIONS $BENCHMARK 
+#strc $OPTIONS $BENCHMARK 
+strc $OPTIONS $bench_file > compile.out
 
 if [ ! -f "Makefile.streamit" ]; then
    echo "no Makefile.streamit"
 fi
     
 #run
-make -f Makefile.streamit clean run
+make -f Makefile.streamit clean run > run.out
 
 #copy results
-bench_file=${BENCHMARK##/*/}
-bench_name=${bench_file%.str}
+
+
 cp "results.out" "$RESULTS_DIR/${bench_name}_${OPTIONS// /}"
+#leave this in the directory when we are done...
+echo "done" > done
+
 cd ..
 #remove the temp_dir
-rm -rf "$temp_dir"
+#rm -rf "$temp_dir"
 
 
 

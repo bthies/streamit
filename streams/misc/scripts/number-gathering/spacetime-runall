@@ -1,0 +1,115 @@
+#!/usr/local/bin/bash
+options="--spacetime --scheduler work -N 10 --unroll 256 --destroyfieldarray"
+results_dir="/home/bits7/mgordon/micro/"
+if [ ! -d "$results_dir" ]; then 
+    echo "results dir does not exist"
+    exit 1
+fi
+
+
+bench_dir="/u/mgordon/streams/apps/benchmarks/traces/"
+
+benchmarks="${bench_dir}/beamformer/CoarseSerializedBeamFormerSpaceTime.str"
+benchmarks="$benchmarks ${bench_dir}/fm/FMRadioSpaceTime.str"
+benchmarks="$benchmarks ${bench_dir}/channelvocoder/ChannelVocoderSpaceTime.str"
+benchmarks="$benchmarks ${bench_dir}/filterbank/FilterBankSpaceTime.str"
+benchmarks="$benchmarks ${bench_dir}/fir/FIRProgramSpaceTime.str"
+benchmarks="$benchmarks ${bench_dir}/oversampler/OversamplerSpaceTime.str"
+benchmarks="$benchmarks ${bench_dir}/rateconverter/SamplingRateConverterSpaceTime.str"
+
+
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+#	qsub -m n -N "${bench_name:0:4}1x1" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+#	qsub -m n -N "${bench_name:0:4}1x2" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r1 --rawcol 2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+#	qsub -m n -N "${bench_name:0:4}2x2" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+#	qsub -m n -N "${bench_name:0:4}2x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r2 --rawcol 4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+
+options="--spacetime --scheduler comm -N 10 --unroll 256 --destroyfieldarray"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+exit 0
+
+options="--spacetime --forceplacement --scheduler work -N 20 --steadymult 40"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+options="--spacetime --scheduler work -N 20"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+options="--spacetime --scheduler comm -N 20"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+options="--spacetime --scheduler comm -N 20 --forceplacement"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+options="--spacetime --scheduler comm -N 20 --forceplacement --steadymult 20"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+options="--spacetime --scheduler dep -N 20 --forceplacement"
+for benchmark in $benchmarks; do
+    bench_file=${benchmark##/*/}
+    bench_name=${bench_file%.str}
+    if [ ! -f "$benchmark" ]; then
+	echo "Benchmark $benchmark does not exist"
+    else 
+	qsub -m n -N "${bench_name:0:4}4x4" -q short@cagfarm-01 -v "BENCHMARK=$benchmark,OPTIONS=\"-r4 ${options}\",RESULTS_DIR=$results_dir" pbs-run
+    fi
+done
+
+exit 0

@@ -353,6 +353,7 @@ class RPEDecodeFilter extends Filter
 	    }
 	for(short i = 0; i < 12; i++)
 	    {
+		System.out.println("accessing " + (mc+(3*i)));
 		ep[mc + (3 * i)] = xmp[i];
 	    } 
 	//output the sucker!
@@ -360,7 +361,7 @@ class RPEDecodeFilter extends Filter
 	{
 	    output.pushShort(ep[i]);
 	}
-	System.err.println("Got to RPEDecode!");
+	//System.err.println("Got to RPEDecode!");
     }
 }
 
@@ -403,7 +404,7 @@ class LTPFilter extends Filter
 	} 
 	
 	output.pushShort(drpp);   
-	System.err.println("Got to LTPFilter!");
+	//System.err.println("Got to LTPFilter!");
     }
 }
 
@@ -445,7 +446,7 @@ class AdditionUpdateFilter extends Filter
 	{
 	    output.pushShort(drp[i]);
 	}
-	System.err.println("Got to Addition Update Filter!");
+	//System.err.println("Got to Addition Update Filter!");
     }
 }
 
@@ -654,7 +655,7 @@ class ShortTermSynthFilter extends Filter
 	{
 	    output.pushShort(sr[j]);
 	}
-	System.err.println("Got to ShortTermSynth Filter!");
+	//System.err.println("Got to ShortTermSynth Filter!");
     }
 }
 
@@ -708,7 +709,7 @@ class PostProcessingFilter extends Filter
 	{
 	    if(a == srop.length - 1)
 	    {
-		System.out.println("Running last iteration of PostProcess!");
+		//System.out.println("Running last iteration of PostProcess!");
 	    }
 	    output.pushShort(srop[a]);
 	}
@@ -805,7 +806,7 @@ class RPEInputFilter extends Filter
 
     public void work()
     {
-	System.err.println("I get here!!!");
+	//System.err.println("I get here!!!");
 	for (int i = 0; i < mdata.length; i++)
 	{
 	    mdata[i] = input.popShort();
@@ -973,7 +974,7 @@ class HoldFilter extends Filter
 	{
 	    output.pushShort(mDrp[j + 120]);
 	}
-	System.err.println("Hold filter go!");
+	//System.err.println("Hold filter go!");
     }
     
 }

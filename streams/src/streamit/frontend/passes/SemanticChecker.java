@@ -28,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.17 2004-01-26 19:36:19 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.18 2004-01-26 21:49:58 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -878,10 +878,15 @@ public class SemanticChecker
                     StreamType st = ss.getStreamType();
                     if (st == null)
                         return new StrictTypeLattice(true); // top
-                    if (forInput)
-                        return new StrictTypeLattice(st.getIn());
-                    else
-                        return new StrictTypeLattice(st.getOut());
+                    Type theType = forInput ? st.getIn() : st.getOut();
+                    // For feedback loops, void input/output is
+                    // special, and equivalent to top here:
+                    if (!forSJ &&
+                        theType instanceof TypePrimitive &&
+                        ((TypePrimitive)theType).getType() ==
+                        TypePrimitive.TYPE_VOID)
+                        return new StrictTypeLattice(true);
+                    return new StrictTypeLattice(theType);
                 }
 
                 public Lattice flowFunction(CFGNode node, Lattice in)

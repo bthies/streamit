@@ -123,6 +123,35 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
+     * Returns the successor of <child>.  If <child> is the last child
+     * of this, then returns the next succesor of <this> in the parent
+     * of <this>.  Note that this is as fine-grained as possible -
+     * e.g., the successor of a parallel stream in a SplitJoin should
+     * be a joiner.
+     */
+    public SIROperator getSuccessor(SIRStream child) {
+	List myChildren = getChildren();
+	int i = myChildren.indexOf(child);
+	if (i==myChildren.size()-1) {
+	    // if it's at the end of the whole program, return null
+	    if (getParent()==null) {
+		return null;
+	    } else {
+		// otherwise, go for first element in parent's successor
+		SIROperator succ = getParent().getSuccessor(this);
+		// recurse down through the successor to find it's first
+		// child
+		while (succ instanceof SIRContainer) {
+		    succ = (SIROperator)((SIRContainer)succ).getChildren().get(0);
+		}
+		return succ;
+	    }
+	} else {
+	    return (SIROperator)myChildren.get(i+1);
+	}
+    }
+
+    /**
      * Removes the i'th child of this.
      */
     public void remove(int i) {

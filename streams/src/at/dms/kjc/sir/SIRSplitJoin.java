@@ -195,6 +195,20 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Overrides SIRStream.getSuccessor.  All parallel streams should
+     * have the joiner as their successor.  The splitter has the first
+     * parallel stream as its successor.
+     */
+    public SIROperator getSuccessor(SIRStream child) {
+	// all parallel streams should have the joiner as their successor
+	if (getParallelStreams().contains(child)) {
+	    return joiner;
+	} else {
+	    return super.getSuccessor(child);
+	}
+    }
+
+    /**
      * Accepts attribute visitor <v> at this node.
      */
     public Object accept(AttributeStreamVisitor v) {

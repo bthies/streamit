@@ -146,6 +146,19 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Overrides SIRStream.getSuccessor.  The loop stream should have
+     * the joiner as its successor.  All others are in order set by
+     * <children>.
+     */
+    public SIROperator getSuccessor(SIRStream child) {
+	if (child==getLoop()) {
+	    return joiner;
+	} else {
+	    return super.getSuccessor(child);
+	}
+    }
+
+    /**
      * Returns a list of tuples (two-element arrays) of SIROperators,
      * representing a tape from the first element of each tuple to the
      * second.

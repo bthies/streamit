@@ -805,19 +805,37 @@ class RecordingStreamVisitor extends EmptyStreamVisitor {
 	// add the stream
 	if (self instanceof SIRContainer) {
 	    // containers
-	    curPartition.add((SIRContainer)self);
+	    if (!curPartition.contains(self)) {
+		curPartition.add((SIRContainer)self);
+	    }
 	} else {
 	    // filters
-	    curPartition.add(self, workEstimate.getWork((SIRFilter)self));
+	    if (!curPartition.contains(self)) {
+		curPartition.add(self, workEstimate.getWork((SIRFilter)self));
+	    }
 	}
 	// also add splitters, joiners
 	if (self instanceof SIRSplitJoin) {
-	    curPartition.add(((SIRSplitJoin)self).getSplitter(), 0);
-	    curPartition.add(((SIRSplitJoin)self).getJoiner(), 0);
+	    SIRSplitter splitter = ((SIRSplitJoin)self).getSplitter();
+	    if (!curPartition.contains(splitter)) {
+		curPartition.add(splitter, 0);
+	    }
+
+	    SIRJoiner joiner = ((SIRSplitJoin)self).getJoiner();
+	    if (!curPartition.contains(joiner)) {
+		curPartition.add(joiner, 0);
+	    }
 	}
 	if (self instanceof SIRFeedbackLoop) {
-	    curPartition.add(((SIRFeedbackLoop)self).getSplitter(), 0);
-	    curPartition.add(((SIRFeedbackLoop)self).getJoiner(), 0);
+	    SIRSplitter splitter = ((SIRFeedbackLoop)self).getSplitter();
+	    if (!curPartition.contains(splitter)) {
+		curPartition.add(splitter, 0);
+	    }
+
+	    SIRJoiner joiner = ((SIRFeedbackLoop)self).getJoiner();
+	    if (!curPartition.contains(joiner)) {
+		curPartition.add(joiner, 0);
+	    }
 	}
     }
 }

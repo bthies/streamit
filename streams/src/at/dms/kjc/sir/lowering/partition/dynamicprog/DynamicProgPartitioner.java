@@ -85,14 +85,22 @@ public class DynamicProgPartitioner extends ListPartitioner {
     }
 
     /**
-     * The toplevel call for calculating partitions without changing
-     * anything in the stream.  Returns a list of partition records
-     * for the partitioning of this.  Also lifts stream at end.
+     * The toplevel call for calculating partitions without fusing
+     * anything in the stream.  Note that the stream might be
+     * re-arranged if the partitioner couldn't undo the
+     * canonicalization that it used; that's why a new stream is
+     * returned.  The hashmap that is passed in is cleared and filled
+     * with a mapping from SIROperator to String denoting list of
+     * partition numbers that a given SIROperator is assigned to.
      */
-    public LinkedList calcPartitions() {
+    public SIRStream calcPartitions(HashMap partitionMap) {
 	LinkedList partitions = new LinkedList();
-	calcPartitions(partitions, false);
-	return partitions;
+	SIRStream result = calcPartitions(partitions, false);
+
+	partitionMap.clear();
+	partitionMap.putAll(PartitionRecord.asIntegerMap(partitions));
+
+	return result;
     }
 
     /**
@@ -160,7 +168,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	// can only print if we didn't transform
 	if (!doTransform) {
 	    Lifter.lift(result);
-	    PartitionDot.printPartitionGraph(result, "partitions.dot", PartitionRecord.asMap(partitions));
+	    PartitionDot.printPartitionGraph(result, "partitions.dot", PartitionRecord.asStringMap(partitions));
 	}
 	
     	return result;

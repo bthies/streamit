@@ -32,7 +32,11 @@ class DPConfigFilter extends DPConfig {
 	int workCount = partitioner.getWorkEstimate().getWork(filter);
 	// return decreased work if we're fissable
 	int cost;
-	if (tilesForFission(tileLimit, nextToJoiner)>1 && isFissable) {
+	if (tilesForFission(tileLimit, nextToJoiner)>1 && isFissable 
+	    // don't currently support fission on cluster backend
+	    // because it requires mix of transforming and no
+	    // transforming -- wouldn't be too hard to add.
+	    && KjcOptions.cluster==-1) {
 	    cost = workCount / tilesForFission(tileLimit, nextToJoiner) + DynamicProgPartitioner.FISSION_OVERHEAD;
 	} else {
 	    cost = workCount;
@@ -64,7 +68,11 @@ class DPConfigFilter extends DPConfig {
     public SIRStream traceback(LinkedList partitions, PartitionRecord curPartition, int tileLimit, int nextToJoiner, SIRStream str) {
 	// do fission if we can
 	int tff = tilesForFission(tileLimit, nextToJoiner);
-	if (tff>1 && isFissable) {
+	if (tff>1 && isFissable
+	    // don't currently support fission on cluster backend
+	    // because it requires mix of transforming and no
+	    // transforming -- wouldn't be too hard to add.
+	    && KjcOptions.cluster==-1) {
 	    // record fission tiles
 	    for (int i=0; i<tff; i++) {
 		curPartition.add(filter, 

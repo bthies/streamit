@@ -22,7 +22,7 @@ import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 
 /**
  * GESplitJoin is the graph internal representation of  a splitjoin. It is composed 
- * of a splitter, a joiner, and the children of the splitter which in turn are also the 
+ * of a splitter, a joiner, and the succesors of the splitter which in turn are also the 
  * parents of the joiner.
  * @author jcarlos
  */
@@ -42,7 +42,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 * All of the GEStreamNode structures inside of the GESplitJoin (not including
 	 * the GESplitter and the GEJoiner).
 	 */
-	private ArrayList children;
+	//private ArrayList children;
 	 
 	/**
 	 * The sub-graph structure that is contained within this SplitJoin.
@@ -64,7 +64,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 * this toplevel pipeline would have its level equal to 1 (same applies to other 
 	 * container nodes such as splitjoins and feedback loops).
 	 */
-	private int level;
+//	private int level;
 
 
 	public GEStreamNode firstNode;
@@ -81,7 +81,9 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		super(GEType.SPLIT_JOIN , name);
 		this.splitter = split;
 		this.joiner = join;
-		this.setChildren(split.getSuccesors());
+//
+	//	this.succesors = split.getSuccesors(); 
+//		this.setChildren(split.getSuccesors());
 		this.localGraphStruct = new GraphStructure();
 		this.isExpanded = false;
 
@@ -91,10 +93,11 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	 * Set the children of <this>
 	 * @param children The new value (ArrayList) of the children of GESplitJoin
 	 */
+	/*
 	private void setChildren(ArrayList children)
 	{
 		this.children = children;
-	}
+	}*/
 	
 	/**
 	 * Get the splitter part of this
@@ -186,7 +189,8 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.TOP);
 		(graphStruct.getGraphModel()).insert(new Object[] {this}, null, null, null, null);
-		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);	
+//		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getChildren().toArray(), false);
+		graphStruct.getJGraph().getGraphLayoutCache().setVisible(this.getContainedElements().toArray(), false);	
 	}
 	
 	/**
@@ -201,8 +205,13 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 	
 	 public ArrayList getContainedElements()
 	 {
-	 	ArrayList tempList = getSplitter().getSuccesors();
-	 	tempList.add(0, this.getSplitter());
+	 	ArrayList tempList = new ArrayList();
+	 	tempList.add(this.splitter);
+	 	Object[] innerElements = this.splitter.getSuccesors().toArray();
+	 	for (int i = 0; i < innerElements.length; i++)
+	 	{
+	 		tempList.add(innerElements[i]);
+	 	}
 	 	tempList.add(this.getJoiner());
 	 	return tempList;
 	 	
@@ -412,10 +421,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
 		
-		for (int i = level - 1; i >= 0; i--)
-		{
-			this.localGraphStruct.setLocationContainersAtLevel(i);
-		}	
+
 		
 			
 	}
@@ -498,7 +504,7 @@ public class GESplitJoin extends GEStreamNode implements Serializable, GEContain
 		out.println(" { ");	
 					
 		out.println(tab + "split " + this.splitter.name + "();");	
-		Iterator childIter  = this.children.iterator();
+		Iterator childIter  = this.getSuccesors().iterator();
 		while(childIter.hasNext())
 		{
 			out.println(tab + "add " + ((GEStreamNode) childIter.next()).name + "();");

@@ -42,9 +42,9 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	protected String type;
 	
 	/**
-	 * The children of the GEStreamNode. 
+	 * The succesors of the GEStreamNode. 
 	 */
-	protected ArrayList children;
+	protected ArrayList succesors;
 	
 	/**
 	 * The immediate GEStreamNode that contains this GEStreamNode.
@@ -96,7 +96,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	
 	/**
 	 * The level at which the GEStreamNode is located. The TopLevel node is at level zero, so 
-	 * every immediate node it contains is at level 1. The childrent of containers at level 1
+	 * every immediate node it contains is at level 1. The elements of containers at level 1
 	 * will have level corresponding to 2, and so on. The default value of the level is 1 
 	 * (so that the node's parent will be the Toplevel node).
 	 */
@@ -115,7 +115,7 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
 	{
 		super("<HTML><H4>"+name+"</H4></html>");
 		this.type = type;
-		this.children = new ArrayList();
+		this.succesors = new ArrayList();
 		this.name = name;
 		this.setInfo(name);
 		this.isInfoDisplayed = true;
@@ -151,28 +151,28 @@ public abstract class GEStreamNode extends DefaultGraphCell implements Serializa
  	 * Add a child to this GEStreamNode.
  	 * @return True if teh child was added succesfully, otherwise false.
  	 */
-	public boolean addChild(GEStreamNode strNode)
+	public boolean addSuccesor(GEStreamNode strNode)
 	{
-		return this.children.add(strNode);
+		return this.succesors.add(strNode);
 	}
 		
 	/**
 	 * Add a child to this GEStreamNode at index i.
 	 * @return True if teh child was added succesfully, otherwise false.
 	 */
-	public void addChild(GEStreamNode strNode, int i)
+	public void addSuccesor(GEStreamNode strNode, int i)
 	{
-		this.children.add(i, strNode);
+		this.succesors.add(i, strNode);
 	}
 		
 		
 	/**
- 	 * Get the children of <this>.
- 	 * @return An ArrayList with the children of the GEStreamNode. 
+ 	 * Get the succesors of the GEStreamNode.
+ 	 * @return An ArrayList with the succesors of the GEStreamNode. 
  	 */
 	public ArrayList getSuccesors()
 	{
-		return this.children;
+		return this.succesors;
 	}
 
 	/**

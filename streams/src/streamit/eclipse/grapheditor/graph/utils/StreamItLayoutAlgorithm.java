@@ -26,14 +26,13 @@ public class StreamItLayoutAlgorithm {
 	public void perform(GraphStructure graphStruct)
 	{
 		
-		for (int i = graphStruct.containerNodes.maxlevel; i >=0; i--)
+		for (int i = graphStruct.containerNodes.getMaxLevelView(); i >=0; i--)
 		{
 			Iterator containerIterator = graphStruct.containerNodes.getContainersAtLevel(i).iterator();
 			while (containerIterator.hasNext())
 			{
 				GEContainer node = (GEContainer) containerIterator.next();
-			//	node.calculateDimension();
-				
+			//	node.calculateDimension();			
 			}
 		}
 		

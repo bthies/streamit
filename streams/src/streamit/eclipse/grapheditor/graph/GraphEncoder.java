@@ -355,7 +355,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			
 			GEStreamNode currNode = (GEStreamNode) oper.accept(this);
-			pipeline.addChild(currNode);
+			pipeline.addSuccesor(currNode);
 			if (first)
 			{
 				pipeline.setFirstNodeInContainer(currNode);
@@ -407,7 +407,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		split.setEncapsulatingNode(splitjoin);
 		join.setEncapsulatingNode(splitjoin);
 		
-		splitjoin.addChild(split);
+//		splitjoin.addSuccesor(split);
 		splitjoin.firstNode = split;
 	
 		// ...and walk through the body.
@@ -416,12 +416,12 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			
 			SIROperator oper = (SIROperator)iter.next();
 			GEStreamNode strNode = (GEStreamNode)oper.accept(this);		
-	 		split.addChild(strNode);
+	 		split.addSuccesor(strNode);
 //1/20/04 Removed since it affected layout algorithm strNode.addChild(join);		
 			strNode.setEncapsulatingNode(splitjoin);
-			splitjoin.addChild(strNode);
+//			splitjoin.addSuccesor(strNode);
 		}
-		splitjoin.addChild(join);
+//		splitjoin.addSuccesor(join);
 		
 		graph.addHierarchy(splitjoin, split.getSuccesors());
 		

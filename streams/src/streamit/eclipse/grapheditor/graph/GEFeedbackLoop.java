@@ -83,7 +83,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		
 		//TODO: The children are never set. 
 		//Temporary solution: set them to the value returned by this.getContainedElements() 
-		this.children = this.getContainedElements();
+		this.succesors = this.getContainedElements();
 	}
 
 	/**
@@ -295,8 +295,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 				DefaultEdge target = (DefaultEdge) sourceIter.next();
 				if(target.equals(edge))
 				{
-					System.out.println(" GEFeedbackLoop Collapse: target edges were equal");
-					System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
+					//System.out.println(" GEFeedbackLoop Collapse: target edges were equal");
+					//System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
 					if (!(this.equals(((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode())))
 					{
 						cs.disconnect(edge, false);
@@ -316,8 +316,8 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 				DefaultEdge target = (DefaultEdge) targetIter.next();
 				if (target.equals(edge))
 				{
-					System.out.println(" GEFeedbackLoop Collapse: source edges were equal");
-					System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
+					//System.out.println(" GEFeedbackLoop Collapse: source edges were equal");
+					//System.out.println(" The container of the edge is " + ((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getEncapsulatingNode());
 					if (!(this.equals(((GEStreamNode) ((DefaultPort)edge.getTarget()).getParent()).getEncapsulatingNode())))
 					{
 						cs.disconnect(edge,true);
@@ -349,10 +349,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();
 	
-		for (int i = level - 1; i >= 0; i--)
-		{
-			this.localGraphStruct.setLocationContainersAtLevel(i);
-		}				
+			
 	}
 
 	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
@@ -379,6 +376,7 @@ public class GEFeedbackLoop extends GEStreamNode implements Serializable, GECont
 	 * elements that it contains are enclosed.
 	 * Also, changes the location of the label so that it is more easily viewable.
 	 */
+	
 	private void setLocationAfterExpand()
 	{
 		for (int i = level; i >= 0; i--)

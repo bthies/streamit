@@ -28,7 +28,10 @@ public class ContainerNodes {
 	 */
 	private HashMap levelContainers;
 	private ArrayList allContainers;
-	public int maxlevel;
+	
+	private int currentLevelView;
+	private int maxlevel;
+	
 
 	/**
 	 * 
@@ -37,6 +40,7 @@ public class ContainerNodes {
 	{
 		allContainers = new ArrayList();
 		levelContainers = new HashMap();
+		currentLevelView = 0;
 		maxlevel = 0;
 	}
 
@@ -87,8 +91,6 @@ public class ContainerNodes {
 			while(listIter.hasNext())
 			{
 				 GEContainer node = (GEContainer) listIter.next();
-				 
-				//if (((GEStreamNode)node).getSuccesors().size() != 0)
 				if (node.getContainedElements().size() != 0)
 				 {
 					node.expand();
@@ -96,10 +98,7 @@ public class ContainerNodes {
 			}
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+		return false;	
 	}
 
 	/**
@@ -108,14 +107,14 @@ public class ContainerNodes {
 	 */		
 	public void collapseContainersAtLevel(int level)
 	{
+		System.out.println ("Level to collapse is " + level);
 		ArrayList levelList = (ArrayList) this.levelContainers.get(new Integer(level));
 		if (levelList != null)
 		{
 			Iterator listIter = levelList.iterator();
 			while(listIter.hasNext())
 			{
-				 GEContainer node = (GEContainer) listIter.next();
-				// if (((GEStreamNode)node).getSuccesors().size() != 0 )
+				GEContainer node = (GEContainer) listIter.next();
 				if (node.getContainedElements().size() != 0 )
 				 {
 					node.collapse();
@@ -123,6 +122,23 @@ public class ContainerNodes {
 			}
 		}		
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	/**
 	 * Make invisible all of the container nodes located at level.
@@ -210,16 +226,51 @@ public class ContainerNodes {
 		
 	}
 	
+
+	/**
+	 * Get the current level of expansion/collapsing of the GraphStructure.
+	 * @return currentLevelView
+	 */
+	public int getCurrentLevelView()
+	{
+		return this.currentLevelView;
+	}
 	
+	/**
+	 * Sets the level at which the Graph Structure is to be expanded/collapsed. 
+	 * @param levelView 
+	 */	
+	public void setCurrentLevelView(int levelView)
+	{/*
+		if (levelView < 0)
+		{
+			this.currentLevelView = 0;
+		}
+		else if (levelView > this.maxlevel)
+		{
+			this.currentLevelView = maxlevel;
+		}
+		else
+		{*/
+			this.currentLevelView = levelView;	
+		//}
+	}
 
-
-
-
-
-
-
-
-
-
-
+	/**
+ 	 * Get the maximum level at which nodes are present.
+ 	 * @return maxlevel
+ 	*/
+	public int getMaxLevelView()
+	{
+		return this.maxlevel;
+	}
+	
+	/**
+	 * Set the maximum level view at which there are nodes present.
+	 * @param maxLevel
+	 */
+	public void setMaxLevelView(int maxLevel)
+	{
+		this.maxlevel = maxLevel;
+	}
 }

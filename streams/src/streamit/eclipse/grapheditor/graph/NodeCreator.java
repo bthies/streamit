@@ -131,7 +131,7 @@ public class NodeCreator {
 		
 		if ((parentNode.getSuccesors().size() == 0) && (parentNode.getType() ==GEType.PIPELINE))
 		{
-			parentNode.addChild(node);
+			parentNode.addSuccesor(node);
 			node.isNodeConnected = true;
 		}
 	

@@ -320,11 +320,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		//JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct.getJGraph());
 		JGraphLayoutManager manager = new JGraphLayoutManager(this.localGraphStruct);
 		manager.arrange();	
-		
-		for (int i = level - 1; i >= 0; i--)
-		{
-			this.localGraphStruct.setLocationContainersAtLevel(i);
-		}	
+
 	}
 	
 	/**
@@ -361,7 +357,7 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 		}
 		out.println(" { ");	
 				
-		Iterator childIter  = this.children.iterator();
+		Iterator childIter  = this.getSuccesors().iterator();
 		while(childIter.hasNext())
 		{
 			out.println(tab + "add " + ((GEStreamNode) childIter.next()).name + "();");
@@ -372,9 +368,9 @@ public class GEPipeline extends GEStreamNode implements Serializable, GEContaine
 	}
 	
 	/**
-	 * Determine the dimension of the pipeline. This is determined by how many children
-	 * the pipeline has. The height is the sum of the heights of the children. 
-	 * The width ids the maximum width of the children.  
+	 * Determine the dimension of the pipeline. This is determined by how many elements
+	 * the pipeline has. The height is the sum of the heights of the elements. 
+	 * The width ids the maximum width of the elements inside the pipeline  
 	 *
 	 */
 	public void calculateDimension()

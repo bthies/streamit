@@ -68,7 +68,7 @@ public class GraphStructure implements Serializable{
 	/**
 	 * The current level at which the graph is being examined.
 	 */
-	public int currentLevelView = 0;
+//	public int currentLevelView = 0;
 
 	/**
 	 * The IFile corresponding to this GraphStructure. The IFile contains the
@@ -234,7 +234,7 @@ public class GraphStructure implements Serializable{
 					{
 							
 						System.out.println("THE STARTNODE EQUALS THE SPLITTER");
-						startParent.addChild(endNode);
+						startParent.addSuccesor(endNode);
 						connectDraw(splitter, endNode);
 						connectDraw(endNode, joiner);
 						break;			
@@ -267,7 +267,7 @@ public class GraphStructure implements Serializable{
 					if (endNode == joiner)
 					{
 						System.out.println("THE ENDNODE EQUALS THE JOINER");
-						startParent.addChild(startNode);
+						startParent.addSuccesor(startNode);
 						connectDraw(splitter, startNode);
 						connectDraw(startNode, joiner);
 						break;
@@ -332,6 +332,10 @@ public class GraphStructure implements Serializable{
 		this.jgraph.getGraphLayoutCache().setVisible(jgraph.getRoots(), true);
 		this.jgraph.getGraphLayoutCache().setVisible(this.containerNodes.getAllContainers().toArray(), false);
 				
+		this.containerNodes.setCurrentLevelView(this.containerNodes.getMaxLevelView());
+		System.out.println("THE CURRENT LEVEL IS " + this.containerNodes.getCurrentLevelView());
+		
+		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this);
 		manager.arrange();	
 /*				
@@ -526,23 +530,6 @@ public class GraphStructure implements Serializable{
 		this.topLevel = strNode;
 	}
 
-	/**
-	 * Get the current level of expansion/collapsing of the GraphStructure.
-	 * @return this.currentLevelView
-	 */
-	public int getCurrentLevelView()
-	{
-		return this.currentLevelView;
-	}
-	
-	/**
-	 * Sets the level at which the Graph Structure is to be expanded/collapsed. 
-	 * @param levelView 
-	 */	
-	public void setCurrentLevelView(int levelView)
-	{
-		this.currentLevelView = levelView;
-	}
 
 	/**
 	 * Get the global attributes of the GraphStructure.
@@ -588,7 +575,7 @@ public class GraphStructure implements Serializable{
 	{
 	    this.topLevel.outputCode(out);
 	    
-	    ArrayList childList = this.topLevel.children;
+	    ArrayList childList = this.topLevel.succesors;
 	    Iterator childIter = childList.iterator();
 	    
 	    while (childIter.hasNext())

@@ -57,7 +57,10 @@ public class Partitioner {
 	} else {
 	    // need fusion
 	    if (KjcOptions.partition_ilp) {
-		new ILPPartitioner(str, work, targetCount).toplevelFusion();
+		Utils.fail("ILP Partitioner no longer supported.");
+		// don't reference the ILPPartitioner because it won't
+		// build without CPLEX, which is problematic for release
+		// new ILPPartitioner(str, work, targetCount).toplevelFusion();
 	    } else if (KjcOptions.partition_dp) {
 		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
 	    } else {

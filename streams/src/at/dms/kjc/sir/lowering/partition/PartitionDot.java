@@ -2,7 +2,6 @@ package at.dms.kjc.sir.lowering.partition;
 
 import java.util.*;
 import java.io.*;
-import lpsolve.*;
 
 import at.dms.kjc.*;
 import at.dms.util.*;

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.8 2002-03-07 13:30:43 thies Exp $
+ * $Id: Utils.java,v 1.9 2002-07-29 11:01:48 thies Exp $
  */
 
 package at.dms.util;
@@ -285,6 +285,15 @@ public abstract class Utils implements Serializable {
 	// return the block
 	JStatement[] statements = {varDecl, forStatement};
 	return new JBlock(null, statements, null);
+    }
+
+    /**
+     * If <type> is void, then return <int> type; otherwise return
+     * <type>.  This is a hack to get around the disallowance of void
+     * arrays in C--should fix this better post-asplos.
+     */
+    public static CType voidToInt(CType type) {
+	return type==CStdType.Void ? CStdType.Integer : type;
     }
 
   // ----------------------------------------------------------------------

@@ -90,11 +90,11 @@ public class FuseSplit {
 	sj.getParent().replace(sj, newFilter);
 
 	// if we're the only filter left in parent, eliminate parent
-	if (sj.getParent() instanceof SIRPipeline &&
-	    sj.getParent().size()==1 && 
-	    sj.getParent().getParent()!=null) {
-	    Lifter.eliminatePipe((SIRPipeline)sj.getParent());
-	}
+	/*if (sj.getParent() instanceof SIRPipeline &&
+	  sj.getParent().size()==1 && 
+	  sj.getParent().getParent()!=null) {
+	  Lifter.eliminatePipe((SIRPipeline)sj.getParent());
+	  }*/
 
         return newFilter;
     }

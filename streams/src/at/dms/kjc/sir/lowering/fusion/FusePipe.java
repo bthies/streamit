@@ -97,12 +97,12 @@ public class FusePipe {
 	int start = 0;
 	do {
 	    // find start of candidate stretch for fusion
-	    while (start < pipe.size()-1 && !isFusable(pipe.get(start))) {
+	    while (start < pipe.size()-1 && !isFusable(pipe.get(start),pipe.getChildren())) {
 		start++;
 	    }
 	    // find end of candidate stretch for fusion
 	    int end = start;
-	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1))
+	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1),pipe.getChildren())
 		   && (end-start+1<maxLength)) {
 		end++;
 	    }
@@ -136,12 +136,12 @@ public class FusePipe {
 	int start = 0;
 	do {
 	    // find start of candidate stretch for fusion
-	    while (start < pipe.size()-1 && !isFusable(pipe.get(start))) {
+	    while (start < pipe.size()-1 && !isFusable(pipe.get(start),pipe.getChildren())) {
 		start++;
 	    }
 	    // find end of candidate stretch for fusion
 	    int end = start;
-	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1))) {
+	    while ((end+1) < pipe.size() && isFusable(pipe.get(end+1),pipe.getChildren())) {
 		end++;
 	    }
 	    // if we found anything to fuse
@@ -158,10 +158,13 @@ public class FusePipe {
      * fusion.  For now, <str> must be a filter with a work function
      * in order for us to fuse it.
      */
-    private static boolean isFusable(SIRStream str) {
+    private static boolean isFusable(SIRStream str,List pipelineElems) {
 	// don't allow two-stage filters that peek
 	if (str instanceof SIRTwoStageFilter) {
 	    //System.err.println("Couldn't fuse " + str + " because it is 2-stage filter");
+	    //Can fuse in this specific case
+	    if((pipelineElems.get(0)==str)&&(((SIRTwoStageFilter)str).getInitPush()==0))
+		return true;
 	    return false;
 	}
 	if ((str instanceof SIRFilter) && ((SIRFilter)str).needsWork()) {
@@ -216,37 +219,95 @@ public class FusePipe {
 	// check that all the filters are fusable
 	for (ListIterator it = filters.listIterator(); it.hasNext(); ) {
 	    SIRStream str = (SIRStream)it.next();
-	    if (!isFusable(str)) {
+	    if (!isFusable(str,filters)) {
 		Utils.fail("Trying to fuse a filter that is unfusable: " + 
 			   str + " " + str.getName());
 	    }
 	}
-
+	
 	// rename the components of the filters
 	RenameAll renamer = new RenameAll();
 	for (ListIterator it=filters.listIterator(); it.hasNext(); ) {
 	    renamer.renameFilterContents((SIRFilter)it.next());
 	}
-
+	
 	// construct set of filter info
 	List filterInfo = makeFilterInfo(filters);
 
-	// make the initial work function
-	JMethodDeclaration initWork =  makeWork(filterInfo, true);
+	SIRFilter result;
 
-	// make the steady-state work function
-	JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
+	InitFuser initFuser;
 
-	// make the fused init functions
-	InitFuser initFuser = makeInitFunction(filterInfo);
+	if(filters.get(0) instanceof SIRTwoStageFilter) {
+	    SIRTwoStageFilter twostage=(SIRTwoStageFilter)filters.get(0);
+	    // make a statement list for the init function
+	    //JBlock statements = new JBlock(null, new JStatement[0], null);
+	    // add the variable declarations
+	    //makeWorkDecls(filterInfo,statements,true);
+	    //makeWorkDecls(filterInfo,statements,false);
+	    JMethodDeclaration initWork=twostage.getInitWork();
+	    //Adding Decls
+	    //for(int i=statements.size()-1;i>=0;i--)
+	    //initWork.addStatementFirst(statements.getStatement(i));
+	    System.out.println("OldStuff:"+twostage.getInitPush()+" "+twostage.getInitPop()+" "+twostage.getInitPeek());
+	    if(makeWork(filterInfo, true)!=null)
+		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter");
 
-	// fuse all other fields and methods
-	SIRFilter result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
+	    // make the steady-state work function
+	    JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
+	    
+	    // make the fused init functions
+	    initFuser = makeInitFunction(filterInfo);
+	    
+	    JMethodDeclaration init=initFuser.getInitFunction();
+
+	    FilterInfo first = (FilterInfo)filterInfo.get(0);
+	    FilterInfo last = (FilterInfo)filterInfo.get(filterInfo.size()-1);
+
+	    int steadyPop = first.steady.num * first.filter.getPopInt();
+	    int steadyPeek = 
+		(first.filter.getPeekInt() - first.filter.getPopInt()) + steadyPop;
+	    int steadyPush = last.steady.num * last.filter.getPushInt();
+	    
+	    // fuse all other fields and methods
+	    result = new SIRTwoStageFilter(first.filter.getParent(),
+					   getFusedName(filterInfo),
+					   getFields(filterInfo),
+					   getMethods(filterInfo, 
+						      init, 
+						      initWork, 
+						      steadyWork),
+					   new JIntLiteral(steadyPeek), 
+					   new JIntLiteral(steadyPop),
+					   new JIntLiteral(steadyPush),
+					   steadyWork,
+					   twostage.getInitPeek(),
+					   twostage.getInitPop(),
+					   twostage.getInitPush(),
+					   initWork,
+					   Utils.voidToInt(first.filter.
+						     getInputType()),
+					   Utils.voidToInt(last.filter.
+						     getOutputType()));
+	    result.setInit(init);
+	} else {
+	    // make the initial work function
+	    JMethodDeclaration initWork =  makeWork(filterInfo, true);
+	    
+	    // make the steady-state work function
+	    JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
+	    
+	    // make the fused init functions
+	    initFuser = makeInitFunction(filterInfo);
+	    
+	    // fuse all other fields and methods
+	    result = makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork);
+	}
 	
 	// insert the fused filter in the parent
 	replace((SIRPipeline)((SIRFilter)filters.get(0)).getParent(), 
 		filters, result, initFuser.getInitArgs());
-
+	
 	// return result
 	return result;
     }
@@ -848,12 +909,18 @@ public class FusePipe {
 	// add methods from each filter that aren't work methods
 	for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
 	    FilterInfo info = (FilterInfo)it.next();
-	    List methods = Arrays.asList(info.filter.getMethods());
+	    SIRFilter filter=info.filter;
+	    List methods = Arrays.asList(filter.getMethods());
 	    for (ListIterator meth = methods.listIterator(); meth.hasNext(); ){
 		JMethodDeclaration m = (JMethodDeclaration)meth.next();
-		// add methods that aren't work
+		// add methods that aren't work (or initwork)
 		if (m!=info.filter.getWork()) {
-		    result.add(m);
+		    if(filter instanceof SIRTwoStageFilter) {
+			if(m!=((SIRTwoStageFilter)filter).getInitWork())
+			    result.add(m);
+		    }
+		    else
+			result.add(m);
 		}
 	    }
 	}
@@ -919,6 +986,8 @@ public class FusePipe {
 		(first.filter.getPeekInt() - first.filter.getPopInt()) + initPop;
 	    int initPush = last.init.num * last.filter.getPushInt();
 	    
+	    System.out.println("New Stuff:"+initPush+" "+initPop+" "+initPeek);
+
 	    // make a new filter to represent the fused combo
 	    result = new SIRTwoStageFilter(first.filter.getParent(),
 					   getFusedName(filterInfo),

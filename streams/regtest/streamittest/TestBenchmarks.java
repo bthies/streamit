@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.29 2003-10-02 18:48:26 dmaze Exp $
+ * $Id: TestBenchmarks.java,v 1.30 2003-10-02 19:49:13 dmaze Exp $
  **/
 package streamittest;
 
@@ -117,6 +117,12 @@ public class TestBenchmarks extends StreamITTestCase {
 	doCompareTest(root,
 		      "LinkedFFT2.java",
 		      "LinkedFFT2.out");
+
+        // new syntax from Sitij:
+        doSyntaxConvertTest(root, "FFT2.str", "FFT2.java");
+        doCompileTest(root, "FFT2.java");
+        doRunTest(root, "FFT2.java", 0, 256);
+        doCompareTest(root, "FFT2.java", "LinkedFFT2.out");
     }
 
     public void testFilterbank()

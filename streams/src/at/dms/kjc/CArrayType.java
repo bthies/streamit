@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.6 2003-08-29 19:25:36 thies Exp $
+ * $Id: CArrayType.java,v 1.7 2003-10-04 02:11:56 jasperln Exp $
  */
 
 package at.dms.kjc;
@@ -67,7 +67,7 @@ public class CArrayType extends CClassType {
   public String toString() {
     String	res = baseType.toString();
     for (int i = 0; i < arrayBound; i++) {
-      res += "[]";
+      res += "*";
     }
     return res;
   }

@@ -1,6 +1,6 @@
 package streamit.misc;
 
-/* $Id: OMap.java,v 1.1 2003-03-17 22:51:12 karczma Exp $ */
+/* $Id: OMap.java,v 1.2 2003-03-19 15:22:38 karczma Exp $ */
 
 public class OMap extends AssertedClass
 {
@@ -41,6 +41,16 @@ public class OMap extends AssertedClass
     {
         set = new OSet(new MapComperator(customComperator));
         last = new OMapIterator(set.end());
+    }
+    
+    public OMapIterator begin ()
+    {
+        return new OMapIterator(set.begin ());
+    }
+    
+    public OMapIterator end ()
+    {
+        return last.copy ();
     }
 
     public int size()

@@ -340,15 +340,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	
 	if (exp.getIdent().startsWith("push")) {
 	    newExp = new SIRPushExpression(args[0]);
-	    ((SIRPushExpression)newExp).setTapeType(((SIRFilter)parentStream).getOutputType());
+	    ((SIRPushExpression)newExp).setTapeType(parentStream.getOutputType());
 	}
 	if (exp.getIdent().startsWith("pop")) {
 	    newExp = new SIRPopExpression();
-	    ((SIRPopExpression)newExp).setTapeType(((SIRFilter)parentStream).getInputType());
+	    ((SIRPopExpression)newExp).setTapeType(parentStream.getInputType());
 	}
 	if (exp.getIdent().startsWith("peek")) {
 	    newExp = new SIRPeekExpression(args[0]);
-	    ((SIRPeekExpression)newExp).setTapeType(((SIRFilter)parentStream).getInputType()); 
+	    ((SIRPeekExpression)newExp).setTapeType(parentStream.getInputType()); 
 	}
 	if (exp.getIdent().startsWith("println")) {
 	    newExp = new SIRPrintStatement(null, args[0], null);

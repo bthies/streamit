@@ -20,16 +20,16 @@ public class LinearPartitioner {
     static final boolean DEBUG = false;
 
     /**
+     * The threshold for the number of multiplies in a node before we
+     * stop unrolling and generate a matrix multiply with loops.
+     */
+    public static final int MAX_MULT_TO_UNROLL = 512;
+
+    /**
      * Whether or not we're trying to cut splitjoins horizontally and
      * vertically (otherwise we just consider each child pipeline).
      */
     static final boolean ENABLE_TWO_DIMENSIONAL_CUTS = false;
-
-    /**
-     * Relative cost of an add to a multiply (for estimating cost of
-     * linear nodes).
-     */
-    public static final int MULTIPLY_OVERHEAD = 3;
 
     /**
      * Different configurations to look for.

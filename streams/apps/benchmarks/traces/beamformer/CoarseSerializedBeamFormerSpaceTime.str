@@ -27,101 +27,103 @@ void->void pipeline CoarseSerializedBeamFormer {
     int targetSamplePostDec   = targetSample/coarseDecimationRatio/fineDecimationRatio;
     float dOverLambda         = 0.5;
     float cfarThreshold       = 0.95 * dOverLambda*numChannels* (0.5*pulseSize);
-
+//   add FileReader<float>("input0");	
+//	    add Pass(); 
     add splitjoin {
 	split roundrobin(0);
 	//for (int i=0; i<numChannels; i++) {
 	add pipeline {
-	    add InputGenerate(0 , numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input0");
+	    //add InputGenerate(0 , numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input0");	
+
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(1, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input1");
+	    //add InputGenerate(1, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input1");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(2, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input2");
+	    //add InputGenerate(2, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input2");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(3, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input3");
+	    //add InputGenerate(3, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input3");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(4, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input4");
+	    //add InputGenerate(4, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input4");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(5, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input5");
+	    //add InputGenerate(5, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input5");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(6, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input6");
+	    //add InputGenerate(6, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input6");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(7, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input7");
+	    //add InputGenerate(7, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input7");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(8, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input8");
+	    //add InputGenerate(8, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input8");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(9, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input9");
+	    //add InputGenerate(9, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input9");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(10, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input10");
+	    //add InputGenerate(10, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input10");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
 	    add CoarseBeamFirFilter(numFineFilterTaps, numPostDec2, fineDecimationRatio);
 	}
 	add pipeline {
-	    add InputGenerate(11, numSamples, targetBeam, targetSample, cfarThreshold);
-	    //add FileReader<float>("input11");
+	    //add InputGenerate(11, numSamples, targetBeam, targetSample, cfarThreshold);
+	    add FileReader<float>("input11");
 	    add Decimator(coarseDecimationRatio);
 	    add CoarseBeamFirFilter(numCoarseFilterTaps, numPostDec1, coarseDecimationRatio);
 	    add Decimator(fineDecimationRatio);
@@ -139,35 +141,28 @@ void->void pipeline CoarseSerializedBeamFormer {
 	    add CoarseBeamFirFilter(mfSize, numPostDec2,1);
 	    add Magnitude();
 	    add Detector(0, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
-	    add FloatPrinter();
-
-	    //add FileWriter<float>("output0");
+	    add FileWriter<float>("output0");
 	}
 	add pipeline {
 	    add BeamForm(1, numChannels);
 	    add CoarseBeamFirFilter(mfSize, numPostDec2,1);
 	    add Magnitude();
 	    add Detector(1, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
-	    //add FileWriter<float>("output1");
-	    add FloatPrinter();
-
+	    add FileWriter<float>("output1");
 	}
 	add pipeline {
 	    add BeamForm(2, numChannels);
 	    add CoarseBeamFirFilter(mfSize, numPostDec2,1);
 	    add Magnitude();
 	    add Detector(2, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
-	    //add FileWriter<float>("output2");
-	    add FloatPrinter();
-
+	    add FileWriter<float>("output2");
 	}
 	add pipeline {
 	    add BeamForm(3, numChannels);
 	    add CoarseBeamFirFilter(mfSize, numPostDec2,1);
 	    add Magnitude();
 	    add Detector(3, numPostDec2, targetBeam, targetSamplePostDec, cfarThreshold);
-	    //	    add FileWriter<float>("output3");
-	    add FloatPrinter();
+	    add FileWriter<float>("output3");
 	}
 	//}
 	
@@ -177,6 +172,12 @@ void->void pipeline CoarseSerializedBeamFormer {
     }
     //add FloatPrinter();
 
+}
+
+float->float filter Pass() {
+	work push 1 pop 1 {
+		push(pop());
+}
 }
 
 void->float filter InputGenerate (int myChannel, int numberOfSamples, int tarBeam, int targetSample, float thresh) {
@@ -504,4 +505,5 @@ float->float
 	    if( curSample >= numSamples )
 		curSample = 0;
 	}
+
 }

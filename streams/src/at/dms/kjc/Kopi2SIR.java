@@ -373,6 +373,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 		Utils.fail(printLine(exp) + 
 		"Type of push argument does not match filter output type "); */
 	    newExp = new SIRPushExpression(args[0]);
+	 
 	    ((SIRPushExpression)newExp).setTapeType(parentStream.getOutputType());
 	}
 	if (exp.getIdent().startsWith("pop")) {

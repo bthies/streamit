@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JClassExpression.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JClassExpression.java,v 1.9 2004-11-04 21:40:48 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -63,6 +63,12 @@ public class JClassExpression extends JExpression {
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------
+
+    public JExpression getPrefix() 
+    {
+	return prefix;
+    }
+    
 
   /**
    * Compute the type of this expression (called after parsing)

@@ -14,7 +14,7 @@
 # Note: The contents of the error file are not acutally used at the present time. 
 #  error messages are parsed out of the log file instead.
 #
-# $Id: parse_results.pl,v 1.5 2002-07-23 18:09:08 aalamb Exp $
+# $Id: parse_results.pl,v 1.6 2002-08-15 21:10:06 aalamb Exp $
 
 use strict;
 
@@ -100,7 +100,8 @@ sub generate_failure_report {
 
     # If we parsed errors, print out an error heading
     if (keys %failed) {
-	print "\n\nFailures (see log file for details)\n";
+	print ("\n\n" . count_total_options(\%failed) . 
+	       " Failures (see log file for details)\n");
 	print "-------------------------------\n";
 	my $current_key;
 	foreach $current_key (sort keys %failed) {
@@ -110,7 +111,8 @@ sub generate_failure_report {
 
     # If we parsed successes, print out an error heading
     if (keys %succeeded) {
-	print "\n\nSuccesses (see log file for details)\n";
+	print ("\n\n" . count_total_options(\%succeeded) . 
+	       " Successes (see log file for details)\n");
 	print "-------------------------------\n";
 	my $current_key;
 	foreach $current_key (sort keys %succeeded) {
@@ -123,6 +125,7 @@ sub generate_performance_report {
     my $results_filename = shift || die("no result filename passed");
 
     print "Performance Numbers\n";
+    print "(Note: only numbers that have changed are shown)\n";
     print "--------------------------------\n";
 
     
@@ -166,15 +169,42 @@ sub generate_performance_report {
 	# each entry has pc, date, last line compared separated by -->
 	# so split on --> and use results
 	my @entries = split("-->", $results_hash{$current_key});
-	while (@entries) {
+
+	# go through the entries a first time. If the performance 
+	# has changed, then we print out all the data that we have
+	my $change_flag = 1;
+	# start up the pipeline
+	my $last_pc = shift(@entries);
+	my $last_date = shift(@entries);
+	my $last_last_line = shift(@entries);
+	while (@entries and ($change_flag == 1)) {
 	    my $current_pc = shift (@entries);
 	    my $current_date = shift (@entries);
 	    my $current_last_line = shift (@entries);
 
-	    print("  $current_date ($current_pc) / ($current_last_line)" .
-		  "   = " . $current_pc / $current_last_line . "\n");
+	    my $current_tput = $current_pc / $current_last_line;
+	    my $last_tput    = $last_pc    / $last_last_line;
+	    if ($current_tput != $last_tput) {$change_flag = 0;}
+
+	    # copy over the current values into the old values
+	    $last_pc = $current_pc;
+	    $last_last_line = $current_last_line;
 	}
-	
+
+	# if there was a change print out all the data
+	if ($change_flag == 0) {	    
+	    # split again
+	    @entries = split("-->", $results_hash{$current_key});	
+	    
+	    while (@entries) {
+		my $current_pc = shift (@entries);
+		my $current_date = shift (@entries);
+		my $current_last_line = shift (@entries);
+		my $current_tput = $current_pc / $current_last_line;
+		print("  $current_date ($current_pc) / ($current_last_line)" .
+		      "   =  $current_tput\n");
+	    }
+	}
     }
 
 }
@@ -203,6 +233,27 @@ sub read_file {
 
     return $file_contents;
 }
+
+
+# counts the number of compiler options there are in the success or failure
+# hashes. These hashes each have "Compile|Execute|Verify filename" as keys
+# and multiple lines of <sp><sp><sp>options
+# this sub go through and counts all of those options for all keys, so we can report the
+# number of successes and the number of failures that we have
+sub count_total_options {
+    my $hashref = shift || die ("No hash ref passed to count_total_options");
+    
+    # basic idea: for each key, we count the number of newlines
+    my $total_options = 0;
+    my $current_key;
+    foreach $current_key (keys %$hashref) {
+	my @items = split("\n", $$hashref{$current_key});
+	$total_options += @items;
+    }
+    return $total_options;
+}
+    
+
 
 
 

@@ -10,25 +10,26 @@ void->void pipeline FIRBank {
     int B = 2048; // largest power of 2 above (N+K)
 
     add FileReader<float>("input.dat");
-
+    
     add splitjoin {
-	split roundrobin(N);
-	for (int i=0; i<M; i++) {
-	    add pipeline {
-		add Expand(N, B);
-		add FFTKernel2(B);
-		add Multiply(M, B, i);
-		add IFFTKernel2(B);
-		add Contract(N, B);
-	    }
-	}
-	join roundrobin(N);
+	  split roundrobin(N);
+	  for (int i=0; i<M; i++) {
+		add pipeline {
+		    add Expand(N, B);
+		    add FFTKernel2(B);
+		    add Multiply(M, B, i);
+		    add IFFTKernel2(B);
+		    add Contract(N, B);
+		}
+	  }
+	  join roundrobin(N);
     }
-
+    
     /* transpose only to test correctness with column-major output */
     //add Transpose(M, N);
-
+    
     add Printer();
+    //add FileWriter<float>("output.dat");
 }
 
 float->float splitjoin Transpose(int M, int N) {
@@ -41,27 +42,27 @@ float->float splitjoin Transpose(int M, int N) {
 
 float->float filter Expand(int N, int B) {
     work pop N push 2*B {
-	for (int i = 0; i < N; i++) {
-	    push(pop()); // real
-	    push(0.0);   // imag
-	}
-	for (int i = N; i < B; i++) {
-	    push(0.0);  // real
-	    push(0.0);  // imag
-	}
+	  for (int i = 0; i < N; i++) {
+		push(pop()); // real
+		push(0.0);   // imag
+	  }
+	  for (int i = N; i < B; i++) {
+		push(0.0);  // real
+		push(0.0);  // imag
+	  }
     }
 }
 
 float->float filter Contract(int N, int B) {
     work pop 2*B push N {
-	for (int i = 0; i < N; i++) {
-	    push(pop()); // real
-	    pop();       // imag
-	}
-	for (int i = N; i < B; i++) {
-	    pop();       // real
-	    pop();       // imag
-	}
+	  for (int i = 0; i < N; i++) {
+		push(pop()); // real
+		pop();       // imag
+	  }
+	  for (int i = N; i < B; i++) {
+		pop();       // real
+		pop();       // imag
+	  }
     }
 }
 
@@ -72,47 +73,48 @@ float->void filter Printer {
 }
 
 float->float filter Multiply(int M, int B, int row) {
-
+    
     init {
-	// dummy coefficient generation -- if you want real
-	// coefficients, comment this out and use static initializer
-	// declared below.  The real coefficients will be easy to
-	// calculate once Lincoln Labs releases C version of this
-	// benchmark in late May, 2005.  In terms of the matlab code,
-	// this filter should hold coefficients from row <row> of the
-	// coefficient matrix.
-	for (int i = 0; i<B; i++) {
-	    coeff[i][0] = i;
-	    coeff[i][1] = i;
-	}
+	  // dummy coefficient generation -- if you want real
+	  // coefficients, comment this out and use static initializer
+	  // declared below.  The real coefficients will be easy to
+	  // calculate once Lincoln Labs releases C version of this
+	  // benchmark in late May, 2005.  In terms of the matlab code,
+	  // this filter should hold coefficients from row <row> of the
+	  // coefficient matrix.
+	  for (int i = 0; i<B; i++) {
+		coeff[i][0] = i;
+		coeff[i][1] = i;
+	  }
     }
-
+    
     work pop 2*B push 2*B { 
-	for (int j = 0; j < B; j++) {
-	    // get in1
-	    float real1 = pop();
-	    float imag1 = pop();
-	    // get in2
-	    float real2 = coeff[j][0];
-	    float imag2 = coeff[j][1];
-	    // compute product
-	    float real3 = real1*real2 - imag1*imag2;
-	    float imag3 = real1*imag2 + imag1*real2;
-	    // push
-	    push(real3);
-	    push(imag3);
-	}
+	  for (int j = 0; j < B; j++) {
+		// get in1
+		float real1 = pop();
+		float imag1 = pop();
+		// get in2
+		float real2 = coeff[j][0];
+		float imag2 = coeff[j][1];
+		// compute product
+		float real3 = real1*real2 - imag1*imag2;
+		float imag3 = real1*imag2 + imag1*real2;
+		// push
+		push(real3);
+		push(imag3);
+	  }
     }
-
+    
     // there are really [B][2*M] coefficients, but each filter will
     // use only 2 indices of the second dimension.  To prevent the
     // array from being duplicated across all parallel streams, only
     // store the relevant piece here.  This filter accesses
     // coeff[B][2*i] and coeff[B][2*i+1] in the expanded version.
     float [B][2] coeff;
-
-    /* float[B][2*M] coeff;  = {{1.005111e+00,
-                            0.000000e+00,
+    
+    /* float[B][2*M] coeff = 
+                     {{1.005111e+00,
+                      0.000000e+00,
 			    1.041721E+00,
 			    0.000000E+00,
 			    1.101635E+00,
@@ -82037,108 +82039,91 @@ float->float filter Multiply(int M, int B, int row) {
 // FFT -------------------------------------------------------------------
 
 float->float filter CombineDFT(int n) {
-
-  // coefficients, real and imaginary interleaved
-  float[n] w;
-
-  init {
-      float wn_r = (float)cos(2 * 3.141592654 / n);
-      float wn_i = (float)sin(-2 * 3.141592654 / n);
-      float real = 1;
-      float imag = 0;
-      float next_real, next_imag;
-      for (int i=0; i<n; i+=2) {
-	  w[i] = real;
-	  w[i+1] = imag;
-	  next_real = real * wn_r - imag * wn_i;
-	  next_imag = real * wn_i + imag * wn_r;
-	  real = next_real;
-	  imag = next_imag;
-      }
-  }
-
-  work push 2*n pop 2*n {
-        int i;
-	float[2*n] results;
-
-        for (i = 0; i < n; i += 2)
-        {
-	    // this is a temporary work-around since there seems to be
-	    // a bug in field prop that does not propagate nWay into the
-	    // array references.  --BFT 9/10/02
-	    
-	    //int tempN = nWay;
-	    //Fixed --jasperln
-            
-            // removed nWay, just using n  --sitij 9/26/03
-
-	    int i_plus_1 = i+1;
-
-	    float y0_r = peek(i);
+    // coefficients, real and imaginary interleaved
+    float[n] w;
+    
+    init {
+	  float wn_r = (float)cos(2 * 3.141592654 / n);
+	  float wn_i = (float)sin(-2 * 3.141592654 / n);
+	  float real = 1;
+	  float imag = 0;
+	  float next_real, next_imag;
+	  for (int i = 0; i < n; i += 2) {
+		w[i] = real;
+		w[i+1] = imag;
+		next_real = real * wn_r - imag * wn_i;
+		next_imag = real * wn_i + imag * wn_r;
+		real = next_real;
+		imag = next_imag;
+	  }
+    }
+    
+    work push 2*n pop 2*n {
+	  float[2*n] results;
+	  
+        for (int i = 0; i < n; i += 2) {
+		int i_plus_1 = i+1;
+		
+		float y0_r = peek(i);
             float y0_i = peek(i_plus_1);
             
-	    float y1_r = peek(n + i);
+		float y1_r = peek(n + i);
             float y1_i = peek(n + i_plus_1);
-
-	    // load into temps to make sure it doesn't got loaded
-	    // separately for each load
-	    float weight_real = w[i];
-	    float weight_imag = w[i_plus_1];
-
+		
+		// load into temps to make sure it doesn't got loaded
+		// separately for each load
+		float weight_real = w[i];
+		float weight_imag = w[i_plus_1];
+		
             float y1w_r = y1_r * weight_real - y1_i * weight_imag;
             float y1w_i = y1_r * weight_imag + y1_i * weight_real;
-
+		
             results[i] = y0_r + y1w_r;
             results[i + 1] = y0_i + y1w_i;
-
-	    results[n + i] = y0_r - y1w_r;
+		
+		results[n + i] = y0_r - y1w_r;
             results[n + i + 1] = y0_i - y1w_i;
         }
 
-        for (i = 0; i < 2 * n; i++)
-        {
-            pop();
-            push(results[i]);
-        }
+        for (int i = 0; i < 2 * n; i++) {
+		pop();
+		push(results[i]);
+	  }
     }
 
 }
 
 float->float filter FFTReorderSimple(int n) {
 
-  int totalData;
+    int totalData;
+    
+    init {
+	  totalData = 2*n; 
+    }
 
-  init {
-    totalData = 2*n; 
-  }
-
-  work push 2*n pop 2*n {
-        for (int i = 0; i < totalData; i+=4)
-        {
-            push(peek(i));
-            push(peek(i+1));
-        }
+    work push 2*n pop 2*n {
+        for (int i = 0; i < totalData; i+=4) {
+		push(peek(i));
+		push(peek(i+1));
+	  }
         
-        for (int i = 2; i < totalData; i+=4)
-        {
-            push(peek(i));
-            push(peek(i+1));
-        }
+        for (int i = 2; i < totalData; i+=4) {
+		push(peek(i));
+		push(peek(i+1));
+	  }
         
-        for (int i = 0; i < n; i++)
-        {
-            pop();
-            pop();
-        }
+        for (int i = 0; i < n; i++) {
+		pop();
+		pop();
+	  }
     }
 }
 
 
 float->float pipeline FFTReorder(int n) {
 
-  for (int i = 1; i< (n/2); i *= 2)
-    add FFTReorderSimple(n/i);
-
+    for (int i = 1; i< (n/2); i *= 2)
+	  add FFTReorderSimple(n/i);
 }
 
 

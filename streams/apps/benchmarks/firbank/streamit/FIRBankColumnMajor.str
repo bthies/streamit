@@ -82048,10 +82048,9 @@ float->float filter CombineDFT(int n) {
   }
 
   work push 2*n pop 2*n {
-        int i;
 	float[2*n] results;
 
-        for (i = 0; i < n; i += 2)
+        for (int i = 0; i < n; i += 2)
         {
 	    // this is a temporary work-around since there seems to be
 	    // a bug in field prop that does not propagate nWay into the
@@ -82085,7 +82084,7 @@ float->float filter CombineDFT(int n) {
             results[n + i + 1] = y0_i - y1w_i;
         }
 
-        for (i = 0; i < 2 * n; i++)
+        for (int i = 0; i < 2 * n; i++)
         {
             pop();
             push(results[i]);

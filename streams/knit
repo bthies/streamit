@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.4 2002-07-23 19:41:25 dmaze Exp $
+# $Id: knit,v 1.5 2002-09-23 20:46:02 dmaze Exp $
 #
 
 use strict;
@@ -46,6 +46,7 @@ sub get_options
     GetOptions(\%opts,
 	       "help",
 	       "java!",
+	       "old-converter",
 	       "output|o=s",
 	       "raw=i",
 	       "verbose|v");
@@ -74,7 +75,14 @@ sub new_to_old
     foreach my $str (@$fns)
       {
 	my $java = change_extension($str, "str", "java");
-	call("java streamit.frontend.ToJava < $str > $java");
+	if ($opts{'old-converter'})
+	  {
+	    call("java streamit.frontend.ToJava < $str > $java");
+	  }
+	else
+	  {
+	    call("java streamit.frontend.ToJava --full $str --output $java");
+	  }
 	push @out, $java;
       }
     return \@out;

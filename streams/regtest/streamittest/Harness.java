@@ -64,7 +64,8 @@ public class Harness {
 	BufferedReader jOutStream = new BufferedReader(outReader);
 	BufferedReader jErrorStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
 
-        System.out.println("In directory: " + cwd.getPath());
+        if (cwd != null)
+            System.out.println("In directory: " + cwd.getPath());
 	System.out.println("Starting:\n" + flattenCommandArray(cmdArray));
 
 	// block until the child process is done (time limiting is done outside the JVM).

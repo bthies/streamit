@@ -333,12 +333,14 @@ public class FuseSimpleSplit {
 	for (int i=0; i<sj.size(); i++) {
 	    SIRStream child = sj.get(i);
 	    List params = sj.getParams(i);
-	    init.addStatement(new JExpressionStatement(null,
-						   new JMethodCallExpression(null, 
-						     new JThisExpression(null),
-						     child.getInit().getName(),
-						     (JExpression[])params.toArray(new JExpression[0])),
-						       null));
+	    if (child.needsInit()) {
+		init.addStatement(new JExpressionStatement(null,
+							   new JMethodCallExpression(null, 
+										     new JThisExpression(null),
+										     child.getInit().getName(),
+										     (JExpression[])params.toArray(new JExpression[0])),
+							   null));
+	    }
 	}
         return init;
     }

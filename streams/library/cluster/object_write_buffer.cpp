@@ -31,16 +31,20 @@ void object_write_buffer::write_float(float data) {
   write(&data, sizeof(float));
 }
 
+void object_write_buffer::read(void *data, int dsize) {
+  memcpy(data, buf + read_offset, dsize);
+  read_offset += dsize;
+}
+
+
 int object_write_buffer::read_int() {
   int result;
-  memcpy(&result, buf + read_offset, sizeof(int));
-  read_offset+=4;
+  read(&result, sizeof(int));
   return result;
 }
 
 float object_write_buffer::read_float() {
   float result;
-  memcpy(&result, buf + read_offset, sizeof(float));
-  read_offset+=4;
+  read(&result, sizeof(float));
   return result;
 }

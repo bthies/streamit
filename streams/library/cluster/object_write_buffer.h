@@ -22,6 +22,7 @@ class object_write_buffer {
   void write_int(int data);
   void write_float(float data);
   
+  void read(void *ptr, int size);
   int read_int();
   float read_float();
 

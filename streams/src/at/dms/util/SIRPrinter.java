@@ -40,8 +40,6 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	    fields[i].accept(this);
 	for (int i = 0; i < methods.length; i++)
 	    methods[i].accept(this);
-	if (init != null)
-	    init.accept(this);
 	attrPrint("peek", (new Integer(peek)).toString());
 	attrPrint("Pop", (new Integer(pop)).toString());
 	attrPrint("push", (new Integer(push)).toString());
@@ -49,8 +47,6 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	    attrPrint("InputType", inputType.toString());
 	if (outputType != null)
 	    attrPrint("OutputType", outputType.toString());
-	if (work != null)
-	    work.accept(this);
 	blockEnd();
     }
 	    
@@ -107,8 +103,6 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	    fields[i].accept(this);
 	for (int i = 0; i < methods.length; i++)
 	    methods[i].accept(this);
-	if (init != null)
-	init.accept(this);
 	blockEnd();
     }
 

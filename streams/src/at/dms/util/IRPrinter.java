@@ -1415,7 +1415,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
 			    JExpression[] args,
 			    SIRStream target) {
 	blockStart("SIRInitStatement");
-	attrPrint("target", target.getName());
+	//attrPrint("target", target.getName());
 	attrStart("args");
 	for (int i=0; i<args.length; i++) {
 	    args[i].accept(this);

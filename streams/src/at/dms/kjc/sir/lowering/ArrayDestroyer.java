@@ -100,6 +100,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    final HashMap targets=new HashMap();
 	    final HashMap unsafe=new HashMap();
 	    body.accept(new SLIRReplacingVisitor() {
+		    HashMap declared=new HashMap();
+
 		    /**
 		     * If vars used in any way except in array access then remove from targets
 		     */
@@ -123,7 +125,37 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 			}
 			return self;
 		    }
-		    
+		   
+		    public Object visitAssignmentExpression(JAssignmentExpression self,
+							    JExpression left,
+							    JExpression right) {
+			if((left instanceof JLocalVariableExpression)&&(right instanceof JNewArrayExpression)) {
+			    JLocalVariable var=((JLocalVariableExpression)left).getVariable();
+			    if(!declared.containsKey(var)) {
+				declared.put(var,Boolean.TRUE);
+				return self;
+			    }
+			}
+			return super.visitAssignmentExpression(self,left,right);
+		    }
+
+		    public Object visitMethodCallExpression(JMethodCallExpression self,
+							    JExpression prefix,
+							    String ident,
+							    JExpression[] args) {
+			if(!(KjcOptions.removeglobals&&ident.equals("memset"))
+			   ||ident.equals("sizeof")) {
+			    if (prefix != null) {
+				JExpression newExp = (JExpression)prefix.accept(this);
+				if (newExp!=null && newExp!=prefix) {
+				    self.setPrefix(newExp);
+				}
+			    }
+			    visitArgs(args);
+			}
+			return self;
+		    }
+
 		    /**
 		     * Considers target
 		     */
@@ -211,6 +243,8 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    String name=names[i];
 	    //CType type=(CType)((HashMap)targetsField.get(name)).remove(Boolean.TRUE);
 	    CType type=getType(name,filter);
+	    if(type==null)
+		break;
 	    keySet=((HashMap)targetsField.get(name)).keySet();
 	    Integer[] ints=new Integer[keySet.size()];
 	    keySet.toArray(ints);

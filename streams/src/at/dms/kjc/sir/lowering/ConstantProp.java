@@ -35,8 +35,22 @@ public class ConstantProp {
     private void propagateAndUnroll(SIRStream str, Hashtable constants) {
 	Unroller unroller;
 	do {
+	    // make a propagator
+	    Propagator propagator = new Propagator(constants);
+	    // propagate into split/join weights, if we have them
+	    if (str instanceof SIRSplitJoin) {
+		propagator.visitArgs(((SIRSplitJoin)str).
+				     getJoiner().getInternalWeights());
+		propagator.visitArgs(((SIRSplitJoin)str).
+				     getSplitter().getInternalWeights());
+	    } else if (str instanceof SIRFeedbackLoop) {
+		propagator.visitArgs(((SIRFeedbackLoop)str).
+				     getJoiner().getInternalWeights());
+		propagator.visitArgs(((SIRFeedbackLoop)str).
+				     getSplitter().getInternalWeights());
+	    }
 	    // propagate constants within init function of <str>
-	    str.getInit().accept(new Propagator(constants));
+	    str.getInit().accept(propagator);
 	    // unroll loops within init function of <str>
 	    unroller = new Unroller(constants);
 	    str.getInit().accept(unroller);

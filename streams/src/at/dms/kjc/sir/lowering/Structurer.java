@@ -259,7 +259,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     public void visitSplitter(SIRSplitter self,
 			      SIRStream parent,
 			      SIRSplitType type,
-			      int[] weights) {
+			      JExpression[] weights) {
 	// create struct type (no - not needed anymore by runtime)
 	// createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
     }
@@ -268,7 +268,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
     public void visitJoiner(SIRJoiner self,
 			    SIRStream parent,
 			    SIRJoinType type,
-			    int[] weights) {
+			    JExpression[] weights) {
 	// create struct type (no - not needed anymore by runtime)
 	// createStruct(self.getName(), JFieldDeclaration.EMPTY, EMPTY_LIST);
     }

@@ -112,7 +112,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
     public void visitSplitter(SIRSplitter self,
 			      SIRStream parent,
 			      SIRSplitType type,
-			      int[] weights) {
+			      JExpression[] weights) {
 	plainVisit(self);
     }
 
@@ -122,7 +122,7 @@ public class Namer extends at.dms.util.Utils implements StreamVisitor {
     public void visitJoiner(SIRJoiner self,
 			    SIRStream parent,
 			    SIRJoinType type,
-			    int[] weights) {
+			    JExpression[] weights) {
 	plainVisit(self);
     }
 

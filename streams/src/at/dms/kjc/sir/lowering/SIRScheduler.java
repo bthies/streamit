@@ -452,10 +452,11 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
     public Object visitSplitter(SIRSplitter self,
 				SIRStream parent,
 				SIRSplitType type,
-				int[] weights) {
+				JExpression[] weights) {
 	// represent the splitter
 	return scheduler.newSchedSplitType(type.toSchedType(), 
-					   Utils.intArrayToList(weights), 
+					   Utils.intArrayToList(self.
+								getWeights()), 
 					   self);
     }
     
@@ -463,10 +464,11 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
     public Object visitJoiner(SIRJoiner self,
 			      SIRStream parent,
 			      SIRJoinType type,
-			      int[] weights)  {
+			      JExpression[] weights)  {
 	// represent the joiner
 	return scheduler.newSchedJoinType(type.toSchedType(), 
-					  Utils.intArrayToList(weights),
+					  Utils.intArrayToList(self.
+							       getWeights()),
 					  self);
     }
 }

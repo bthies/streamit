@@ -314,7 +314,7 @@ public class LowerInitFunctions implements StreamVisitor {
     public void visitSplitter(SIRSplitter self,
 			      SIRStream parent,
 			      SIRSplitType type,
-			      int[] weights) {
+			      JExpression[] weights) {
 	// do nothing at a splitter
     }
     
@@ -322,7 +322,7 @@ public class LowerInitFunctions implements StreamVisitor {
     public void visitJoiner(SIRJoiner self,
 			    SIRStream parent,
 			    SIRJoinType type,
-			    int[] weights) {
+			    JExpression[] weights) {
 	// do nothing at a joiner
     }
 

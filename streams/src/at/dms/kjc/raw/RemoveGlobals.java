@@ -550,7 +550,7 @@ public class RemoveGlobals extends at.dms.util.Utils
 					   JExpression left,
 					   String ident)
 	{
-	    
+	    super.visitFieldExpression(self, left, ident);
 	    //if this field access is just a this expression, convert it
 	    //to a local variable access
 	    //otherwise it is accessing a field of a variable, so just

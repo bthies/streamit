@@ -354,6 +354,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    args[0] = (JExpression) args[0].accept(this);
 	
 	if (exp.getIdent().startsWith("push")) {
+	    if (!args[0].getType().equals(parentStream.getOutputType()))
+		Utils.fail(printLine(exp) + 
+			   "Type of push argument does not match filter output type");
 	    newExp = new SIRPushExpression(args[0]);
 	    ((SIRPushExpression)newExp).setTapeType(parentStream.getOutputType());
 	}
@@ -1890,16 +1893,18 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             if (parentStream instanceof SIRFilter)
             {
                 SIRFilter filter = (SIRFilter)parentStream;
-                if (args[0] instanceof JClassExpression)
-                    filter.setInputType(((JClassExpression)args[0]).getClassType());
+		System.out.println(args[0]);
+		
+                if (args[0] instanceof JClassExpression) 
+		    filter.setInputType(((JClassExpression)args[0]).getClassType());
                 else if (args[0] instanceof JStringLiteral)
                     filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
 		else 
 		    Utils.fail(printLine(self) + "Malformed input type on I/O declaration");
 
-                if (args[1] instanceof JClassExpression)
+                if (args[1] instanceof JClassExpression) 
                     filter.setOutputType(((JClassExpression)args[1]).getClassType());
-                else if (args[1] instanceof JStringLiteral)
+		else if (args[1] instanceof JStringLiteral)
                     filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
 		else 
 		    Utils.fail(printLine(self) + "Malformed output type on I/O declaration");

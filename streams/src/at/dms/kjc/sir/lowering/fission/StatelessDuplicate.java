@@ -47,9 +47,14 @@ public class StatelessDuplicate {
     }
 
     /**
-     * We don't yet support fission of two-stage filters that peek.
+     * Checks whether or not <filter> can be fissed.
      */
     public static boolean isFissable(SIRFilter filter) {
+	// check that it is stateless
+	if (!isStateless(filter)) {
+	    return false;
+	}
+	// We don't yet support fission of two-stage filters that peek.
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;
 	    if (twoStage.getInitPop()>0) {
@@ -57,6 +62,17 @@ public class StatelessDuplicate {
 	    }
 	}
 	return true;
+    }
+
+    /**
+     * Returns whether or not <filter> is stateless.
+     */
+    private static boolean isStateless(SIRFilter filter) {
+	// for now just do a conservative check -- if it has no
+	// fields, then it is stateless.  This actually isn't too bad
+	// if fieldprop has removed the field references; otherwise we
+	// could use something more robust.
+	return filter.getFields().length==0;
     }
 
     /**
@@ -134,7 +150,7 @@ public class StatelessDuplicate {
 	LinkedList bodyList = new LinkedList();
 	for (ListIterator it = newFilters.listIterator(); it.hasNext(); ) {
 	    // build up the argument list
-	    LinkedList args = new LinkedList();
+ 	    LinkedList args = new LinkedList();
 	    for (ListIterator pit = params.listIterator(); pit.hasNext(); ) {
 		args.add((JExpression)pit.next());
 	    }

@@ -594,7 +594,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("for (" + exeIndex + " = 0; " + exeIndex + " < " + (push * initCount) +
 		  "; " + exeIndex + "++)\n");
 	    print("{\n");
-	    printRateMatchSend();
+	    //printRateMatchSend();
 	    //end the send
 	    print(";\n");
 	    //end the send loop

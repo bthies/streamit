@@ -35,7 +35,7 @@ public class BlockExecutionCounts implements FlatVisitor
 	    node.contents instanceof SIRSplitter) {
 	    blockCounts.put(node, new Integer(1));
 	    return;
-	}
+	} 
 	if (((SIRStream)node.contents).insideFeedbackLoop()) {
 	    blockCounts.put(node, new Integer(1));
 	    return;
@@ -44,15 +44,16 @@ public class BlockExecutionCounts implements FlatVisitor
 	SIRFilter filter = (SIRFilter)node.contents;
 
 	//block count of sources are 1
-
+	
 	//must be a multiple!!!!!!
 	if (filter.getPopInt() == 0) {
 	    blockCounts.put(node, new Integer(1));
 	}
 	else {
-	    blockCounts.put(node, 
-		    	    new Integer(((Integer)RawBackend.
-		    			 steadyExecutionCounts.get(node)).intValue()));
+	    blockCounts.put(node, new Integer(1));
+	    //blockCounts.put(node, 
+	    //			    new Integer(((Integer)RawBackend.
+	    //		 steadyExecutionCounts.get(node)).intValue()));
 	}
 	return;
     }

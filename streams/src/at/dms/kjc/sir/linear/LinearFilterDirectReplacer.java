@@ -20,7 +20,7 @@ import at.dms.compiler.*;
  * }
  * </pre>
  * <p>
- * $Id: LinearFilterDirectReplacer.java,v 1.2 2002-09-11 19:15:04 aalamb Exp $
+ * $Id: LinearFilterDirectReplacer.java,v 1.3 2002-09-11 19:36:07 aalamb Exp $
  **/
 public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Constants{
     LinearFilterAnalyzer linearityInformation;
@@ -102,7 +102,7 @@ public class LinearFilterDirectReplacer extends EmptyStreamVisitor implements Co
 
 	return new JMethodDeclaration(null, // tokenReference
 				      ACC_PUBLIC,//modifiers
-				      new CVoidType(), // returnType
+				      CStdType.Void, // returnType
 				      "work",
 				      new JFormalParameter[0], // params
 				      new CClassType[0], // exceptions

@@ -33,23 +33,26 @@ public class Flattener {
      * <interfaceTables> represents the mapping from interfaces to methods
      * that implement a given interface in a given class.
      */
-    public static JClassDeclaration flatten(SIRStream str,
-					    JInterfaceDeclaration[] 
-					    interfaces,
-					    SIRInterfaceTable[]
-					    interfaceTables,
-                                            SIRStructure[] structs) {
-	// DEBUGGING PRINTING
+    public static void flatten(SIRStream str,
+			       JInterfaceDeclaration[] 
+			       interfaces,
+			       SIRInterfaceTable[]
+			       interfaceTables,
+			       SIRStructure[] structs) {
+	/* DEBUGGING PRINTING
         System.out.println("--------- ON ENTRY TO FLATTENER ----------------");
 	SIRPrinter printer1 = new SIRPrinter();
 	IterFactory.createIter(str).accept(printer1);
 	printer1.close();
+	*/
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
 
 	// propagate constants and unroll loops
+	System.err.print("Expanding graph... ");
 	ConstantProp.propagateAndUnroll(str);
+	System.err.println("done.");
 
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
@@ -61,9 +64,11 @@ public class Flattener {
 	AdjustGranularity.doit(str, -1);
 
 	if (StreamItOptions.partition) {
+	    System.err.println("Partitioning...");
 	    Partitioner.doit(str, 
 			     StreamItOptions.rawRows *
 			     StreamItOptions.rawColumns);
+	    System.err.println("...done with Partitioning.");
 	}
 
 	/* Not general code: Just a test for sync-removal on TwoWeightedRR.java */ 
@@ -81,13 +86,15 @@ public class Flattener {
 	*/
 
 	if (StreamItOptions.fusion) {
-	    System.out.println("Running Fusion");
+	    System.err.println("Running FuseAll...");
 	    FuseAll.fuse(str);
-	    // DEBUGGING PRINTING
+	    System.err.println("...done with Fuseall.");
+	    /* DEBUGGING PRINTING
 	    System.out.println("--------- AFTER FUSION ------------");
 	    printer1 = new SIRPrinter();
 	    IterFactory.createIter(str).accept(printer1);
 	    printer1.close();
+	    */
 	    
 	}
 
@@ -95,65 +102,86 @@ public class Flattener {
 	StreamItDot.printGraph(str, "after.dot");
 
 	//Raise NewArray's up to top
+	System.err.print("Raising variable declarations... ");
 	new VarDeclRaiser().raiseVars(str);
+	System.err.println("done.");
 	
         // do constant propagation on fields
         if (StreamItOptions.constprop) {
-	    System.out.println("Running Constant Propagation of Fields");
+	    System.err.print("Propagating fields... ");
 	    FieldProp.doPropagate(str);
+	    System.err.println("done.");
 	}
 
 	// move field initializations into init function
+	System.err.print("Moving initial assignments... ");
 	FieldInitMover.moveStreamInitialAssignments(str);
+	System.err.println("done.");
 
-	// DEBUGGING PRINTING
+	/* DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();
 	IterFactory.createIter(str).accept(printer1);
 	printer1.close();
+	*/
 	
 	if (StreamItOptions.constprop) {
 	    //Flatten Blocks
+	    System.err.print("Flattening blocks... ");
 	    new BlockFlattener().flattenBlocks(str);
+	    System.err.println("done.");
 	    //Analyze Branches
+	    System.err.print("Analyzing branches... ");
 	    new BranchAnalyzer().analyzeBranches(str);
+	    System.err.println("done.");
 	}
 	//Destroys arrays into local variables if possible
+	System.err.print("Destroying arrays... ");
 	new ArrayDestroyer().destroyArrays(str);
+	System.err.println("done.");
 	//Raise variables to the top of their block
+	System.err.print("Raising variables... ");
 	new VarDeclRaiser().raiseVars(str);
+	System.err.println("done.");
 
 	// if someone wants to run linear analysis (or linear replacement)
 	if (StreamItOptions.linearanalysis || StreamItOptions.linearreplacement) {
 	    // pass the program (str) and whether or not we want
 	    // to do direct replacement code for the work functions
 	    // of linear filters.
+	    System.err.print("Running linear analysis... ");
 	    runLinearAnalysis(str, StreamItOptions.linearreplacement);
+	    System.err.println("done.");
 	}
 
-	// DEBUGGING PRINTING
-	System.out.println("--------- AFTER Linear Analysis --------");
-
-	
 	// make single structure
 	SIRIterator iter = IterFactory.createIter(str);
+	System.err.print("Structuring... ");
 	JClassDeclaration flatClass = Structurer.structure(iter,
 							   interfaces,
 							   interfaceTables,
                                                            structs);
+	System.err.println("done.");
 	// build schedule as set of higher-level work functions
+	System.err.print("Scheduling... ");
 	Schedule schedule = SIRScheduler.buildWorkFunctions(str, flatClass);
+	System.err.println("done.");
 	// add LIR hooks to init and work functions
+	System.err.print("Annotating IR for uniprocessor... ");
 	LowerInitFunctions.lower(iter, schedule);
         LowerWorkFunctions.lower(iter);
+	System.err.println("done.");
 
-	// DEBUGGING PRINTING
+	/* DEBUGGING PRINTING
 	System.out.println("----------- AFTER FLATTENER ------------------");
 	IRPrinter printer = new IRPrinter();
 	flatClass.accept(printer);
 	printer.close();
+	*/
 
-	return flatClass;
+	System.err.print("Generating code...");
+	LIRToC.generateCode(flatClass);
+	System.err.println("done.");
     }
 
 

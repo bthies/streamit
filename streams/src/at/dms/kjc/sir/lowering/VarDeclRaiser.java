@@ -71,11 +71,11 @@ public class VarDeclRaiser extends SLIRReplacingVisitor {
 		Iterator iter = sj.getParallelStreams().iterator();
 		if (str.getInit()!=null) 
 		    str.getInit().accept(this);
-            while (iter.hasNext())
-		{
-		    SIRStream child = (SIRStream)iter.next();
-		    raiseVars(child);
-		}
+		while (iter.hasNext())
+		    {
+			SIRStream child = (SIRStream)iter.next();
+			raiseVars(child);
+		    }
 	    }
 	if (str instanceof SIRFilter)
 	    for (int i = 0; i < str.getMethods().length; i++) {

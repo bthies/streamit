@@ -338,7 +338,7 @@ fn update_bloodgraph(hms) {
 
 
 fn setup_bloodgraph(filename, cycles) {
-  printf("Generating bloodgraph for %d cycles (avg of steady-state)...\n", cycles);
+  printf("Generating bloodgraph for %d cycles (max of steady-state)...\n", cycles);
   gPPMFILE = open_ppm(filename, cycles / bg_update_cycles, gNumProc*gTraceWidth);
   if (gPPMFILE == NULL)
   {

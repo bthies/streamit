@@ -14,9 +14,9 @@ public class SoftwarePipeline {
 	    InputTraceNode input=(InputTraceNode)trace.getHead();
 	    //System.out.println(trace+" "+input.getSources().length);
 	    Edge[] srcs=input.getSources();
+	    int oldPrimePump=1;
 	    for(int j=0;j<srcs.length;j++) {
 		OutputTraceNode src=srcs[j].getSrc();
-		int oldPrimePump=1;
 		if(!((FilterTraceNode)src.getPrevious()).isPredefined()) {
 		    Trace srcTrace=src.getParent();
 		    boolean found=false;

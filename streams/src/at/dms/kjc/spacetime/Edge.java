@@ -52,7 +52,7 @@ public class Edge {
 
     public String toString() 
     {
-	return src.toString() + "->" + dest.toString() + "(" + hashCode() + ")";
+	return src + "->" + dest + "(" + hashCode() + ")";
     }
 
     public int initItems() 
@@ -134,4 +134,3 @@ public class Edge {
     }
     
 }
-

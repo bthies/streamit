@@ -328,59 +328,61 @@ public class SpaceTimeBackend
 	
 	Trace[] traceForrest = new Trace[1];
 	//traceForrest[0] = traces[0];
-	if(false&&REAL) {
-	    //System.out.println("TracesGraph: "+traceGraph.length);
-	    //for(int i=0;i<traceGraph.length;i++)
-	    //System.out.println(traceGraph[i]);
-	    traces=traceGraph;
-	    int index=0;
-	    traceForrest[0]=traceGraph[0];
-	    Trace realTrace=traceGraph[0];
-	    while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
-		realTrace=traceGraph[++index];
-	    TraceNode node=realTrace.getHead();
-	    FilterTraceNode currentNode=null;
-	    if(node instanceof InputTraceNode)
-		currentNode=(FilterTraceNode)node.getNext();
-	    else
-		currentNode=(FilterTraceNode)node;
-	    currentNode.setXY(0,0);
-	    System.out.println("SETTING: "+currentNode+" (0,0)");
-	    int curX=1;
-	    int curY=0;
-	    int forward=1;
-	    int downward=1;
-	    //ArrayList traceList=new ArrayList();
-	    //traceList.add(new Trace(currentNode));
-	    TraceNode nextNode=currentNode.getNext();
-	    while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
-		currentNode=(FilterTraceNode)nextNode;
-		System.out.println("SETTING: "+nextNode+" ("+curX+","+curY+")");
-		currentNode.setXY(curX,curY);
-		if(curX>=rawColumns-1&&forward>0) {
-		    forward=-1;
-		    curY+=downward;
-		} else if(curX<=0&&forward<0) {
-		    forward=1;
-		    if(curY==0)
-			downward=1;
-		    if(curY==rawRows-1)
-			downward=-1;
-		    if((curY==0)||(curY==rawRows-1)) {
-		    } else
-			curY+=downward;
-		} else
-		    curX+=forward;
-		nextNode=currentNode.getNext();
-	    }
-	    //traces=new Trace[traceList.size()];
-	    //traceList.toArray(traces);
-	    for(int i=1;i<traces.length;i++) {
-		traces[i-1].setEdges(new Trace[]{traces[i]});
-		traces[i].setDepends(new Trace[]{traces[i-1]});
-	    }
-	    //System.out.println(traceList);
-	} else if(true&&REAL) {
+	/*if(false&&REAL) {
+	  //System.out.println("TracesGraph: "+traceGraph.length);
+	  //for(int i=0;i<traceGraph.length;i++)
+	  //System.out.println(traceGraph[i]);
+	  traces=traceGraph;
+	  int index=0;
+	  traceForrest[0]=traceGraph[0];
+	  Trace realTrace=traceGraph[0];
+	  while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
+	  realTrace=traceGraph[++index];
+	  TraceNode node=realTrace.getHead();
+	  FilterTraceNode currentNode=null;
+	  if(node instanceof InputTraceNode)
+	  currentNode=(FilterTraceNode)node.getNext();
+	  else
+	  currentNode=(FilterTraceNode)node;
+	  currentNode.setXY(0,0);
+	  System.out.println("SETTING: "+currentNode+" (0,0)");
+	  int curX=1;
+	  int curY=0;
+	  int forward=1;
+	  int downward=1;
+	  //ArrayList traceList=new ArrayList();
+	  //traceList.add(new Trace(currentNode));
+	  TraceNode nextNode=currentNode.getNext();
+	  while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
+	  currentNode=(FilterTraceNode)nextNode;
+	  System.out.println("SETTING: "+nextNode+" ("+curX+","+curY+")");
+	  currentNode.setXY(curX,curY);
+	  if(curX>=rawColumns-1&&forward>0) {
+	  forward=-1;
+	  curY+=downward;
+	  } else if(curX<=0&&forward<0) {
+	  forward=1;
+	  if(curY==0)
+	  downward=1;
+	  if(curY==rawRows-1)
+	  downward=-1;
+	  if((curY==0)||(curY==rawRows-1)) {
+	  } else
+	  curY+=downward;
+	  } else
+	  curX+=forward;
+	  nextNode=currentNode.getNext();
+	  }
+	  //traces=new Trace[traceList.size()];
+	  //traceList.toArray(traces);
+	  for(int i=1;i<traces.length;i++) {
+	  traces[i-1].setEdges(new Trace[]{traces[i]});
+	  traces[i].setDepends(new Trace[]{traces[i-1]});
+	  }
+	  //System.out.println(traceList);
+	  } else */
+
+	if(true&&REAL) {
 	    int len=traceGraph.length;
 	    int newLen=len;
 	    for(int i=0;i<len;i++)

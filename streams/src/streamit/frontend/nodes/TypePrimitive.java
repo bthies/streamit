@@ -21,7 +21,7 @@ package streamit.frontend.nodes;
  * the specified type parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: TypePrimitive.java,v 1.7 2003-12-18 18:57:29 dmaze Exp $
+ * @version $Id: TypePrimitive.java,v 1.8 2004-01-28 22:12:42 dmaze Exp $
  */
 public class TypePrimitive extends Type
 {
@@ -109,7 +109,7 @@ public class TypePrimitive extends Type
         case TYPE_COMPLEX:
             return t2 == TYPE_COMPLEX;
         default:
-            return false;
+            assert false : t1;
         }
     }
 

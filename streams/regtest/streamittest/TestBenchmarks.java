@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.20 2003-01-25 09:49:19 thies Exp $
+ * $Id: TestBenchmarks.java,v 1.21 2003-03-03 18:26:26 aalamb Exp $
  **/
 package streamittest;
 
@@ -155,7 +155,7 @@ public class TestBenchmarks extends StreamITTestCase {
     {
         String root = BENCH_ROOT + "vocoder/streamit/";
         doMake(root);
-        doCompileTest(root, "LinkedMain.java");
+        doCompileTest(root, "LinkedVocoderToplevel.java");
         doMake(root, "more-imem"); 
         doRunTest(root, "LinkedVocoderToplevel.java", 0, 1);
         doCompareTest(root, "LinkedVocoderToplevel.java", "LinkedVocoderToplevel.out");

@@ -16,6 +16,11 @@ import at.dms.kjc.sir.*;
  * prop.) then these children are cleared before reconstructing them.
  */
 public class ConstructSIRTree {
+    /**
+     * If we find a non-constant argument while building the SIR tree,
+     * we will set this exception to the first error that is thrown.
+     */
+    private static RuntimeException nonConstantArgError = null;
 
     public static void doit(SIRStream str) {
 	// visit the hoister in all containers
@@ -45,6 +50,12 @@ public class ConstructSIRTree {
 		    }
 		}
 	    });
+	// dump the dot graph of <str>
+	SimpleDot.printGraph(str, "first-sir-tree.dot");
+	// if we had an exception, throw it
+	if (nonConstantArgError!=null) {
+	    throw nonConstantArgError;
+	}
     }
 
     static class InitializationHoister extends SLIRReplacingVisitor {
@@ -71,18 +82,28 @@ public class ConstructSIRTree {
 	    // think the RAW backend assumes it), this is a nice place to
 	    // check it.  Check that we have either literals or array
 	    // references.
-	    for (int i=0; i<self.getArgs().size(); i++) {
-		JExpression arg = (JExpression)self.getArgs().get(i);
-		Utils.assert(isConstantArg(arg),
-			     "Expected constant arguments to init, but found non-constant " +
-			     self.getArgs().get(i) + " in parent " + parent + "\n");
+	    try {
+		for (int i=0; i<self.getArgs().size(); i++) {
+		    JExpression arg = (JExpression)self.getArgs().get(i);
+		    Utils.assert(isConstantArg(arg),
+				 "Expected constant arguments to init, but found non-constant " +
+				 self.getArgs().get(i) + " in parent " + parent + "\n");
+		}
+		
+		// to simplify compilation, remove constant arguments.
+		if (self.getTarget().needsInit()) {
+		    removeConstantArgs(self);
+		}
+	    } catch (RuntimeException e) {
+		// don't throw this exception until we're done
+		// building the SIR tree, so that we can see what
+		// the graph might look like even if there are
+		// some non-constant args.
+		if (nonConstantArgError==null) {
+		    nonConstantArgError = e;
+		}
 	    }
-	
-	    // to simplify compilation, remove constant arguments.
-	    if (self.getTarget().needsInit()) {
-		removeConstantArgs(self);
-	    }
-				
+	    
 	    // add <child, params> to parent
 	    parent.add(self.getTarget(), self.getArgs());
 

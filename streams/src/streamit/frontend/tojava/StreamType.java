@@ -1,26 +1,39 @@
 /*
  * StreamType.java: record class for recording I/O types of streams
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamType.java,v 1.2 2002-07-10 18:05:02 dmaze Exp $
+ * $Id: StreamType.java,v 1.3 2002-07-15 18:58:17 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
 
+import streamit.frontend.nodes.Type;
+import streamit.frontend.nodes.TypeArray;
+import streamit.frontend.nodes.TypePrimitive;
+import streamit.frontend.nodes.TypeStruct;
+
 public class StreamType
 {    
-    public String fromType, toType;
+    public Type fromType, toType;
     
     // Helper to return a Class object name corresponding to a type.
-    public static String typeToClass(String s)
+    public static String typeToClass(Type t)
     {
-        if (s.equals("int"))
-            return "Integer.TYPE";
-        else if (s.equals("float"))
-            return "Float.TYPE";
-        else if (s.equals("double"))
-            return "Double.TYPE";
-        else
-            return s + ".class";
+        if (t instanceof TypePrimitive)
+        {
+            switch (((TypePrimitive)t).getType())
+            {
+            case TypePrimitive.TYPE_INT:
+                return "Integer.TYPE";
+            case TypePrimitive.TYPE_FLOAT:
+                return "Float.TYPE";
+            case TypePrimitive.TYPE_DOUBLE:
+                return "Double.TYPE";
+            }
+        }
+        else if (t instanceof TypeStruct)
+            return ((TypeStruct)t).getName() + ".class";
+        // Errp.
+        return null;
     }
 
     // Helpers to get the names of particular functions:
@@ -39,18 +52,27 @@ public class StreamType
         return annotatedFunction("input.peek", fromType);
     }
     
-    private static String annotatedFunction(String name, String type)
+    private static String annotatedFunction(String name, Type type)
     {
         String prefix = "", suffix = "";
         // Check for known suffixes:
-        if (type.equals("int"))
-            suffix = "Int";
-        else if (type.equals("float"))
-            suffix = "Float";
-        else if (type.equals("double"))
-            suffix = "Double";
-        else if (name.startsWith("input"))
-            prefix = "(" + type + ")";
+        if (type instanceof TypePrimitive)
+        {
+            switch (((TypePrimitive)type).getType())
+            {
+            case TypePrimitive.TYPE_INT:
+                suffix = "Int";
+                break;
+            case TypePrimitive.TYPE_FLOAT:
+                suffix = "Float";
+                break;
+            case TypePrimitive.TYPE_DOUBLE:
+                suffix = "Double";
+                break;
+            }
+        }
+        if (type instanceof TypeStruct && name.startsWith("input"))
+            prefix = "(" + ((TypeStruct)type).getName() + ")";
         return prefix + name + suffix;
     }   
 }

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.6 2002-07-11 21:25:12 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.7 2002-07-15 18:58:13 dmaze Exp $
  */
 
 header {
@@ -9,8 +9,10 @@ header {
 	import streamit.frontend.tojava.*;
 	import streamit.frontend.nodes.*;
 	import java.util.ArrayList;
+	import java.util.HashMap;
 	import java.util.Iterator;
 	import java.util.List;
+	import java.util.Map;
 }
 
 options {
@@ -28,6 +30,7 @@ options {
 	StreamType cur_type = null;
 	List cur_class_params = null;
 	String cur_class_name = null;
+	Map structs = new HashMap();
 	NodesToJava n2j = new NodesToJava(null);
 	ComplexProp cplx_prop = new ComplexProp();
 	TempVarGen varGen;
@@ -98,7 +101,7 @@ filter_decl returns [String t]
 					{
 						VariableDeclaration param =
 							(VariableDeclaration)iter.next();
-						t += param.getField(getIndent());
+						t += param.getField(n2j, getIndent());
 					}
 					cur_class_params = params;
 				}
@@ -133,8 +136,8 @@ filter_body returns [String t]
 		)*
 		{
 			t += getIndent() + "public void work() " + work.body + "\n";
-			t += init.getText(indent, cur_class_params, cur_type, work);
-			t += init.getConstructor(indent, cur_class_params, cur_class_name);
+			t += init.getText(indent, cur_class_params, cur_type, work, n2j);
+			t += init.getConstructor(indent, cur_class_params, cur_class_name, n2j);
 		}
 	;
 
@@ -156,6 +159,7 @@ struct_stream_decl2[String superclass] returns [String t]
 	:
 		type=stream_type name:ID
 		{
+			// This is wrong; use new type scheme
 			if (type.fromType.equals("void") &&
 				type.toType.equals("void"))
 				superclass = "StreamIt";
@@ -170,7 +174,7 @@ struct_stream_decl2[String superclass] returns [String t]
 				{
 					VariableDeclaration param =
 						(VariableDeclaration)iter.next();
-					t += param.getField(getIndent());
+					t += param.getField(n2j, getIndent());
 				}
 				cur_class_params = params;
 			}
@@ -192,9 +196,9 @@ struct_stream_decl2[String superclass] returns [String t]
 				t = t + getIndent () + "}\n";
 				indent--;
 			}
-			t += init.getText(indent+1, cur_class_params, null, null);
+			t += init.getText(indent+1, cur_class_params, null, null, n2j);
 			t += init.getConstructor(indent+1, cur_class_params,
-				name.getText());
+				name.getText(), n2j);
 			t += getIndent() + "}\n";
 			symTab = symTab.getParent();
 		}
@@ -203,7 +207,7 @@ struct_stream_decl2[String superclass] returns [String t]
 stream_type returns [StreamType type]
 {
 	type = new StreamType();
-	String ft, tt;
+	Type ft, tt;
 }
 	: #(ARROW ft=data_type tt=data_type)
 		{ type.fromType = ft; type.toType = tt; }
@@ -220,21 +224,21 @@ stream_param_list returns [List lst]
 stream_param returns [VariableDeclaration var]
 {
 	var = new VariableDeclaration();
-	String type;
+	Type type;
 }
 	: #(name:ID type=data_type)
 		{ var.type = type; var.name = name.getText();
 			symTab.register(name.getText(), type); }
 	;
 
-data_type returns [String t] {t = "";}
-	:	TK_int { t = "int"; }
-	|	TK_float { t = "float"; }
-	|	TK_double { t = "double"; }
-	|	TK_char { t = "char"; }
-	|	TK_void { t = "void"; }
-	|	TK_complex { t = "Complex"; }
-	|	cust_name:ID { t = cust_name.getText(); }
+data_type returns [Type t] {t = null;}
+	:	TK_int { t = new TypePrimitive(TypePrimitive.TYPE_INT); }
+	|	TK_float { t = new TypePrimitive(TypePrimitive.TYPE_FLOAT); }
+	|	TK_double { t = new TypePrimitive(TypePrimitive.TYPE_DOUBLE); }
+	// |	TK_char { t = "char"; } -- do we actually want this?  --dzm
+	|	TK_void { t = new TypePrimitive(TypePrimitive.TYPE_VOID); }
+	|	TK_complex { t = new TypePrimitive(TypePrimitive.TYPE_COMPLEX); }
+	|	cust_name:ID { t = (Type)structs.get(cust_name.getText()); }
 	;
 
 /*
@@ -322,7 +326,8 @@ work_func_decl returns [WorkFunction wf]
 function_decl returns [String t]
 {
   t = null;
-  String return_type, params, code;
+  String params, code;
+	Type return_type;
 }
 :
   #(
@@ -490,9 +495,8 @@ assign_statement returns [String t] {t=null; Expression l, x;}
 		{
 			String lhs = (String)l.accept(n2j);
 			// Check to see if the name is a Complex variable.
-			String type = symTab.lookup(lhs);
-			// NB: this fails badly on array refs and the like.
-			if (type != null && type.equals("Complex"))
+			Type type = symTab.lookup(lhs);
+			if (type != null && type.isComplex())
 			{
 				if (x instanceof ExprComplex)
 				{
@@ -519,18 +523,21 @@ assign_statement returns [String t] {t=null; Expression l, x;}
 
 variable_decl returns [String t]
 {
-  t = "";
-  String type = "", array_mod = "", array_mods = "";
-  String init_value = "";
+	t = "";
+	String init_value = "";
+	Type type;
+	Expression array_dim;
 }
 	:	 #(name:ID
 			type=data_type
-			(array_mod=array_modifiers {array_mods += array_mod;})*
+			(array_dim=array_modifiers
+				{type = new TypeArray(type, array_dim);})*
 			(init_value=variable_init)?
 		)
 		{
-			t = type + " " + name.getText () + " " + array_mods + init_value;
-			symTab.register(name.getText(), type + array_mods);
+			t = n2j.convertType(type) + " " + name.getText () +
+				" " + init_value;
+			symTab.register(name.getText(), type);
 		}
 	;
 
@@ -608,14 +615,10 @@ variable_list returns [String t]
 		}
 	;
 
-array_modifiers returns [String t]
-{
-  t = "";
-  String e = null;
-}
-	: #(LSQUARE 
-			(e=expr { t = t + "[" + e + "]"; })+
-		)
+array_modifiers returns [Expression e] {e=null;}
+// NB: previous versions of this had #(LSQUARE (e=expr)+); check to see
+// how multi-dimensional arrays actually come through.
+	: #(LSQUARE e=expression)
 	;
 
 minic_expr returns [Expression x] { x = null; }

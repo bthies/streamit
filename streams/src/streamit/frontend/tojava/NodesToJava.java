@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.3 2002-07-11 20:58:49 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.4 2002-07-15 18:58:17 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -20,6 +20,35 @@ public class NodesToJava implements FEVisitor
     public NodesToJava(StreamType st)
     {
         this.st = st;
+    }
+
+    // Convert a Type to a String.  If visitors weren't so generally
+    // useless for other operations involving Types, we'd use one here.
+    public String convertType(Type type)
+    {
+        // This is So Wrong in the greater scheme of things.
+        if (type instanceof TypeArray)
+        {
+            TypeArray array = (TypeArray)type;
+            String base = convertType(array.getBase());
+            return base + "[]";
+        }
+        else if (type instanceof TypeStruct)
+        {
+            return ((TypeStruct)type).getName();
+        }
+        else if (type instanceof TypePrimitive)
+        {
+            switch (((TypePrimitive)type).getType())
+            {
+            case TypePrimitive.TYPE_INT: return "int";
+            case TypePrimitive.TYPE_FLOAT: return "float";
+            case TypePrimitive.TYPE_DOUBLE: return "double";
+            case TypePrimitive.TYPE_COMPLEX: return "Complex";
+            case TypePrimitive.TYPE_VOID: return "void";
+            }
+        }
+        return null;
     }
     
     public Object visitExprArray(ExprArray exp)

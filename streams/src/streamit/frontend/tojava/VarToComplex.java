@@ -1,7 +1,7 @@
 /*
  * VarToComplex.java: split variables into separate real/complex parts
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: VarToComplex.java,v 1.1 2002-07-10 18:09:31 dmaze Exp $
+ * $Id: VarToComplex.java,v 1.2 2002-07-15 18:58:17 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -24,8 +24,8 @@ public class VarToComplex extends FEReplacer
     public Object visitExprVar(ExprVar exp)
     {
         String name = exp.getName();
-        String type = symtab.lookup(name);
-        if (type.equals("Complex"))
+        Type type = symtab.lookup(name);
+        if (type.isComplex())
         {
             Expression real = new ExprField(exp, "real");
             Expression imag = new ExprField(exp, "imag");
@@ -43,8 +43,8 @@ public class VarToComplex extends FEReplacer
         {
             ExprVar left = (ExprVar)exp.getLeft();
             String name = left.getName();
-            String type = symtab.lookup(name);
-            if (type.equals("Complex"))
+            Type type = symtab.lookup(name);
+            if (type.isComplex())
                 return exp;
         }
         // Otherwise recurse normally.

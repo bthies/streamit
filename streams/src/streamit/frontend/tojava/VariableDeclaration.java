@@ -1,27 +1,30 @@
 /*
  * VariableDeclaration.java: record class for variable declarations
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: VariableDeclaration.java,v 1.1 2002-06-12 17:57:41 dmaze Exp $
+ * $Id: VariableDeclaration.java,v 1.2 2002-07-15 18:58:17 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
 
+import streamit.frontend.nodes.Type;
+
 public class VariableDeclaration
 {
-    public String type, name;
+    public Type type;
+    public String name;
     
-    public String getDecl() 
+    public String getDecl(NodesToJava n2j) 
     {
-        return type + " " + name;
+        return n2j.convertType(type) + " " + name;
     }
 
-    public String getField(String indent)
+    public String getField(NodesToJava n2j, String indent)
     {
-        return indent + "private " + getDecl() + ";\n";
+        return indent + "private " + getDecl(n2j) + ";\n";
     }
     
-    public String getParam()
+    public String getParam(NodesToJava n2j)
     {
-        return "final " + getDecl();
+        return "final " + getDecl(n2j);
     }
 }

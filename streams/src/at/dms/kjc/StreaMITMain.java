@@ -14,6 +14,15 @@ public class StreaMITMain {
      * Prints out C code for the program being compiled.
      */
     public static void compile(JCompilationUnit[] app) {
+	
+	//using the raw backend to generate uniprocessor code
+	//so set the number of tiles to 1 and 
+	//turn partitioning on...
+	if (KjcOptions.raw_uni) {
+	    KjcOptions.raw = 1;
+	    KjcOptions.partition = true;
+	}
+	
 	System.out.println("/*");
 	Kopi2SIR k2s = new Kopi2SIR(app);
 	SIRStream stream = null;

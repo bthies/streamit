@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.11 2003-10-02 21:11:26 dmaze Exp $
+ * $Id: fmref.c,v 1.12 2003-10-09 07:53:11 thies Exp $
  */
 
 #ifdef raw
@@ -52,8 +52,8 @@ void run_demod(FloatBuffer *fbin, FloatBuffer *fbout);
 
 #define EQUALIZER_BANDS 10
 float eq_cutoffs[EQUALIZER_BANDS + 1] =
-  { 55.00, 77.78, 110.00, 155.56, 220.00, 311.12,
-    440.00, 622.25, 880.00, 1244.50, 1760.00 };
+  { 55.000004, 77.78174, 110.00001, 155.56354, 220.00002, 311.12695,
+    440.00003, 622.25415, 880.00006, 1244.5078, 1760.0001 };
 typedef struct EqualizerData
 {
   LPFData lpf[EQUALIZER_BANDS + 1];
@@ -235,8 +235,11 @@ void init_equalizer(EqualizerData *data)
   for (i = 0; i < EQUALIZER_BANDS + 1; i++)
     data->fb[i].rpos = data->fb[i].rlen = 0;
 
-  for (i = 0; i < EQUALIZER_BANDS; i++)
-    data->gain[i] = 1.0;
+  for (i = 0; i < EQUALIZER_BANDS; i++) {
+    // the gain amplifies the middle bands the most
+    float val = (((float)i)-(((float)(EQUALIZER_BANDS-1))/2.0f)) / 5.0f;
+    data->gain[i] = val > 0 ? 2.0-val : 2.0+val;
+  }
 }
 
 void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data)

@@ -84,15 +84,17 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	for (int i = 0; i < methods.length; i++)
 	    methods[i].accept(this);
         SIRWorkFunction[] phases = self.getPhases();
-        blockStart("phases");
-        for (int i = 0; i < phases.length; i++)
-        {
-            attrPrint("peek", phases[i].getPeek());
-            attrPrint("pop", phases[i].getPop());
-            attrPrint("push", phases[i].getPush());
-            phases[i].getWork().accept(this);
+        if (phases != null) {
+            blockStart("phases");
+            for (int i = 0; i < phases.length; i++)
+            {
+                attrPrint("peek", phases[i].getPeek());
+                attrPrint("pop", phases[i].getPop());
+                attrPrint("push", phases[i].getPush());
+                phases[i].getWork().accept(this);
+            }
+            blockEnd();
         }
-        blockEnd();
 	if (self.getInputType() != null)
 	    attrPrint("InputType", self.getInputType().toString());
 	if (self.getOutputType() != null)

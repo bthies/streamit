@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * Regression test for linear filter extraction and
  * manipulation framework.
- * $Id: TestLinear.java,v 1.14 2002-11-25 21:32:38 aalamb Exp $
+ * $Id: TestLinear.java,v 1.15 2003-04-11 00:27:41 aalamb Exp $
  **/
 
 public class TestLinear extends TestCase {
@@ -43,6 +43,8 @@ public class TestLinear extends TestCase {
 	suite.addTest(new TestLinear("testFilterMatrixParsing"));
 	suite.addTest(new TestLinear("testFilterMatrixAddition"));
 	suite.addTest(new TestLinear("testFilterMatrixMultiplication"));
+
+	suite.addTest(new TestLinear("testFilterMatrixRealConstructor"));
 	
 	suite.addTest(new TestLinear("testFilterVector"));
 
@@ -649,6 +651,28 @@ public class TestLinear extends TestCase {
 	try {mat2.times(mat2);fail("bad dimens!");} catch (IllegalArgumentException e) {}
     }
 
+    /** Test the FilterMatrixReal class -- implements a matrix of only real numbers. **/
+    public void testFilterMatrixRealConstructor() {
+	FilterMatrix     mat1 = parseMatrix("[[1 2 3][4 5 6]]");
+	FilterMatrix     mat2 = parseMatrix("[[4 2 3][4 8 6]]");
+
+	// try and construct a real matrix from an entirely zero complex matrix
+	FilterMatrixReal matr = new FilterMatrixReal(new FilterMatrix(5,4));
+	// try and make a matrix where there is a complex number
+	FilterMatrix matcomplex = new FilterMatrix(2,2);
+	matcomplex.setElement(1,0,new ComplexNumber(1,2));
+	try {
+	    FilterMatrixReal foo = new FilterMatrixReal(matcomplex);
+	    fail("could make a real filter matrix from a non real filter matrix.");
+	} catch (Exception e) {} //expect an exception
+	
+	FilterMatrixReal mat1r = new FilterMatrixReal(mat1);
+	
+	//fail("not yet implemented");
+    }
+
+
+    
     
     /** Test the FilterVector class. **/
     public void testFilterVector() {
@@ -1046,7 +1070,33 @@ public class TestLinear extends TestCase {
 	assertTrue("push count", expandedRep.getPushCount() == 10);
 	assertTrue("expanded matrix", expandedRep.getA().equals(expandedMatrix));
 	assertTrue("expanded vector", expandedRep.getb().equals(expandedVector));
+
+		// now, expand the rep to the left (eg have it push one extra 
+	// output
+	expandedMatrix = parseMatrix("[[3 0 0 0 0 0 0 0 0 0][6 0 0 0 0 0 0 0 0 0][0 1 2 3 0 0 0 0 0 0][0 4 5 6 0 0 0 0 0 0][0 0 0 0 1 2 3 0 0 0][0 0 0 0 4 5 6 0 0 0][0 0 0 0 0 0 0 1 2 3][0 0 0 0 0 0 0 4 5 6]]");
+	expandedVector = FilterVector.toVector(parseMatrix("[[9 7 8 9 7 8 9 7 8 9]]"));
+
+
+	// expand a case that was failing
+	// build the original matrix
+	FilterMatrix badMatrix = parseMatrix("[[0 2 0 0][0 0 0 3]]");
+	FilterVector badVector = FilterVector.toVector(parseMatrix("[[0 0 0 0]]"));
+	LinearFilterRepresentation badRep = new LinearFilterRepresentation(badMatrix, badVector, 1);
+	// build the correct matrix 
+	FilterMatrix expectedMatrix = parseMatrix("[[0 0 0 0 0][3 0 2 0 0][0 0 0 0 3]]");
+	FilterVector expectedVector = FilterVector.toVector(parseMatrix("[[0 0 0 0 0]]"));
+		
+	expandedRep = badRep.expand(3,1,5);
+	//System.out.println("expanded matrix: " + expandedRep.getA());
+	//System.out.println("expanded vector: " + expandedRep.getb());
+
 	
+	assertTrue("peek count", expandedRep.getPeekCount() == 3);
+	assertTrue("pop count", expandedRep.getPopCount() == 1);
+	assertTrue("push count", expandedRep.getPushCount() == 5);
+	assertTrue("expanded matrix", expandedRep.getA().equals(expectedMatrix));
+	assertTrue("expanded vector", expandedRep.getb().equals(expectedVector));
+
 	
 	
     }

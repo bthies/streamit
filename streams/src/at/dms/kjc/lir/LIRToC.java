@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.96 2005-03-10 00:08:50 rabbah Exp $
+ * $Id: LIRToC.java,v 1.97 2005-03-18 18:16:59 rabbah Exp $
  */
 
 package at.dms.kjc.lir;
@@ -930,7 +930,7 @@ public class LIRToC
 	//if we are inside a for loop header, we need to print 
 	//the ; of an empty statement
 	if (forLoopHeader > 0) {
-	    // RMR (don't offset the ; by a new line // newLine();
+	    // RMR (don't offset the ; by a new line) // newLine();
 	    print(";");
 	}
     }
@@ -2406,6 +2406,7 @@ public class LIRToC
     public void visitWorkEntry(LIRWorkEntry self)
     {
         print("VARS_DEFAULTB();");
+	  newLine();
         print("LOCALIZE_DEFAULTB(");
         self.getStreamContext().accept(this);
         print(");");

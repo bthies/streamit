@@ -3,7 +3,7 @@ package streamit.scheduler2.base;
 import streamit.scheduler2.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.7 2002-12-02 23:54:07 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.8 2003-01-24 16:46:51 thies Exp $ */
 
 /**
  * Computes some basic data for Pipelines.  
@@ -165,6 +165,7 @@ abstract public class Pipeline extends Stream
 
                 childrenNumExecs[nChild] =
                     childrenNumExecs[nChild].divide(gcd);
+
             }
         }
 

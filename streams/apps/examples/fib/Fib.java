@@ -1,6 +1,6 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib.java,v 1.8 2002-06-12 07:06:40 thies Exp $
+ * $Id: Fib.java,v 1.9 2002-10-21 21:01:21 mgordon Exp $
  */
 
 import streamit.*;
@@ -35,18 +35,7 @@ class Fib extends StreamIt
                                 input.pop();
                             }
                         });
-                    setLoop(new Filter()
-                        {
-                            public void init ()
-                            {
-                                input = new Channel(Integer.TYPE, 1);
-                                output = new Channel(Integer.TYPE, 1);
-                            }
-                            public void work()
-                            {
-                                output.pushInt(input.popInt());
-                            }
-                        });
+                    setLoop(new Identity(Integer.TYPE));
                     setSplitter(DUPLICATE());
                 }
                 public int initPathInt(int index)

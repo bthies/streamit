@@ -88,19 +88,16 @@ class XORLoop extends FeedbackLoop
 // outputs xor of successive items in stream
 class XORFilter extends Filter
 {
-    Channel input = new Channel(Character.TYPE, 2);
-    Channel output = new Channel(Character.TYPE, 1);
-    public void initIO ()
-    {
-        streamInput = input;
-        streamOutput = output;
-    }
-
     public void work()
     {
         char c1 = input.popChar();
         char c2 = input.popChar();
         output.pushChar((char)((int)c1 ^ (int)c2));
+    }
+    public void init ()
+    {
+        input = new Channel(Character.TYPE, 2);
+        output = new Channel(Character.TYPE, 1);
     }
 }
 
@@ -108,17 +105,12 @@ class XORFilter extends Filter
 // to the screen
 class BufferedCharPrinter extends Filter
 {
-    Channel input = new Channel(Character.TYPE, 1);
-    public void initIO ()
-    {
-        streamInput = input;
-    }
-
     // string it's queueing up
     private StringBuffer sb;
 
     public void init()
     {
+        input = new Channel(Character.TYPE, 1);
         sb = new StringBuffer();
     }
 

@@ -51,15 +51,11 @@ public class HelloWorld2 extends StreamIt
                                 setSplitter (WEIGHTED_ROUND_ROBIN (2, 1, 4, 2));
                                 this.add (new Filter ()
                                 {
-                                    Channel input = new Channel(Character.TYPE, 1);
-                                    Channel output = new Channel (Character.TYPE, 2);
-
-                                    public void initIO ()
+                                    public void init ()
                                     {
-                                        this.streamInput = input;
-                                        this.streamOutput = output;
+                                        input = new Channel(Character.TYPE, 1);
+                                        output = new Channel (Character.TYPE, 2);
                                     }
-
                                     public void work()
                                     {
                                        input.popChar ();
@@ -68,15 +64,11 @@ public class HelloWorld2 extends StreamIt
                                 });
                                 this.add (new Filter ()
                                 {
-                                    Channel input = new Channel(Character.TYPE, 1);
-                                    Channel output = new Channel (Character.TYPE, 8);
-
-                                    public void initIO ()
+                                    public void init ()
                                     {
-                                        this.streamInput = input;
-                                        this.streamOutput = output;
+                                        input = new Channel(Character.TYPE, 1);
+                                        output = new Channel (Character.TYPE, 8);
                                     }
-
                                     public void work()
                                     {
                                         char c = input.popChar ();

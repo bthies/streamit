@@ -9,7 +9,7 @@ public class DuplicateSplitter extends Splitter
 {
     public void work ()
     {
-        duplicateOneData (streamInput, streamOutput);
+        duplicateOneData (input, output);
     }
 
     // ----------------------------------------------------------------
@@ -32,7 +32,7 @@ public class DuplicateSplitter extends Splitter
                 Stream filter = (Stream) filterIter.next ();
                 ASSERT (filter);
 
-                if (filter.getIOField ("streamInput") != null) weights.add (one);
+                if (filter.getIOField ("input") != null) weights.add (one);
                 else weights.add (zero);
             }
         }

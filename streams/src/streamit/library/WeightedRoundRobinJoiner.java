@@ -37,7 +37,7 @@ public class WeightedRoundRobinJoiner extends Joiner {
             int inputCount;
             for (inputCount = ((Integer)srcsWeight.get (inputIndex)).intValue (); inputCount > 0 ; inputCount--)
             {
-                passOneData (streamInput [inputIndex], streamOutput);
+                passOneData (input [inputIndex], output);
             }
         }
     }

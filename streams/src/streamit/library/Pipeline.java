@@ -77,12 +77,12 @@ public class Pipeline extends Stream
                 // setup the sink itself
                 sink.setupOperator ();
 
-                if (source != null && source.getIOField ("streamOutput") != null)
+                if (source != null && source.getOutputChannel () != null)
                 {
                     // create and connect a pass filter
                     ChannelConnectFilter connect = new ChannelConnectFilter ();
-                    Channel in = source.getIOField ("streamOutput");
-                    Channel out = sink.getIOField ("streamInput");
+                    Channel in = source.getOutputChannel ();
+                    Channel out = sink.getInputChannel ();
                     connect.useChannels (in, out);
                 }
                 source = sink;
@@ -96,8 +96,8 @@ public class Pipeline extends Stream
 
         // set myself up with proper input and output
         {
-            streamInput = ((Stream)streamElements.getFirst ()).getIOField ("streamInput");
-            streamOutput = ((Stream)streamElements.getLast ()).getIOField ("streamOutput");
+            input = ((Stream)streamElements.getFirst ()).getInputChannel ();
+            output = ((Stream)streamElements.getLast ()).getOutputChannel ();
         }
     }
 

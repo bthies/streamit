@@ -9,10 +9,9 @@ import java.util.*;
 public class Splitter extends Operator
 {
     List dest = new ArrayList ();
-    public Channel streamInput = null;
-    public Channel streamOutput [] = null;
+    public Channel input = null;
+    public Channel output [] = null;
 
-    public void initIO () { }
     public void init () { }
 
     public void work ()
@@ -36,7 +35,7 @@ public class Splitter extends Operator
         if (dest.isEmpty ()) return;
 
         // yep, create an output array of appropriate size
-        streamOutput = new Channel [dest.size ()];
+        output = new Channel [dest.size ()];
 
         // go through my members and connect them all with
         // ChannelConnectFilter
@@ -56,21 +55,21 @@ public class Splitter extends Operator
                 // connect it and retrieve its input and copy it into
                 // the output array for this splitter
                 s.setupOperator ();
-                Channel channel = s.getIOField ("streamInput");
-                streamOutput [outputIndx] = channel;
+                Channel channel = s.getIOField ("input");
+                output [outputIndx] = channel;
 
                 // if it is not a source, make sure that it consumes data
                 // of the same kind as everything else in this Splitter
                 if (channel != null)
                 {
                     // handle input channel
-                    if (streamInput == null)
+                    if (input == null)
                     {
-                        streamInput = new Channel (channel);
-                        streamInput.setSink (this);
+                        input = new Channel (channel);
+                        input.setSink (this);
                     } else {
                         // check that the input types agree
-                        ASSERT (channel.getType ().getName ().equals (streamInput.getType ().getName ()));
+                        ASSERT (channel.getType ().getName ().equals (input.getType ().getName ()));
                     }
 
                     // now connect the channel to the Splitter

@@ -9,8 +9,8 @@ import streamit.scheduler.simple.SimpleHierarchicalScheduler;
 public abstract class Stream extends Operator
 {
 
-    public Channel streamInput = null;
-    public Channel streamOutput = null;
+    public Channel input = null;
+    public Channel output = null;
 
     LinkedList streamElements = new LinkedList ();
 
@@ -54,8 +54,6 @@ public abstract class Stream extends Operator
     {
         super (params);
     }
-
-    public void initIO () { }
 
     // RESET FUNCTIONS
 
@@ -106,12 +104,12 @@ public abstract class Stream extends Operator
 
     Channel getOutputChannel ()
     {
-        return streamOutput;
+        return output;
     }
 
     Channel getInputChannel ()
     {
-        return streamInput;
+        return input;
     }
 
     public abstract void connectGraph ();

@@ -15,8 +15,8 @@ public class RoundRobinJoiner extends Joiner {
         int inputIndex;
         for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
         {
-            ASSERT (streamInput [inputIndex]);
-            passOneData (streamInput [inputIndex], streamOutput);
+            ASSERT (input [inputIndex]);
+            passOneData (input [inputIndex], output);
         }
     }
 

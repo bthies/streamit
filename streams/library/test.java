@@ -2,18 +2,16 @@ import streamit.*;
 
 class PrintInt extends Filter
 {
-    Channel input = new Channel (Integer.TYPE, 1);
-    Channel output = new Channel (Integer.TYPE, 1);
-    public void initIO ()
-    {
-        streamInput = input;
-        streamOutput = output;
-    }
     public void work ()
     {
         int data = input.popInt ();
         System.out.println (data);
         output.pushInt (data);
+    }
+    public void init ()
+    {
+        input = new Channel (Integer.TYPE, 1);
+        output = new Channel (Integer.TYPE, 1);
     }
 }
 
@@ -34,14 +32,11 @@ public class test extends StreamIt
                 setJoiner (WEIGHTED_ROUND_ROBIN (0,1));
                 setBody (new Filter ()
                 {
-                    Channel input = new Channel (Integer.TYPE);
-                    Channel output = new Channel (Integer.TYPE);
-                    public void initIO ()
+                    public void init ()
                     {
-                        streamInput = input;
-                        streamOutput = output;
+                        input = new Channel (Integer.TYPE);
+                        output = new Channel (Integer.TYPE);
                     }
-
                     public void work ()
                     {
                         output.pushInt (input.peekInt (0) + input.peekInt (1));

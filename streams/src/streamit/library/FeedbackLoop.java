@@ -106,8 +106,8 @@ public class FeedbackLoop extends Stream
         // okay, initialize the body and figure out the type of data
         // passed around this loop
         body.setupOperator();
-        Channel bodyInput = body.getIOField ("streamInput");
-        Channel bodyOutput = body.getIOField ("streamOutput");
+        Channel bodyInput = body.getInputChannel ();
+        Channel bodyOutput = body.getOutputChannel ();
         ASSERT (bodyInput);
         ASSERT (bodyOutput);
         ASSERT (bodyOutput.getType ().getName ().equals (bodyInput.getType ().getName ()));
@@ -116,8 +116,8 @@ public class FeedbackLoop extends Stream
         // and initialize whatever the feedback path is
         if (loop == null) loop = new Identity (bodyOutput.getType ());
         loop.setupOperator ();
-        Channel loopInput = loop.getIOField ("streamInput");
-        Channel loopOutput = loop.getIOField ("streamOutput");
+        Channel loopInput = loop.getInputChannel ();
+        Channel loopOutput = loop.getOutputChannel ();
         ASSERT (loopInput);
         ASSERT (loopOutput);
         ASSERT (loopOutput.getType ().getName ().equals (loopInput.getType ().getName ()));
@@ -133,7 +133,7 @@ public class FeedbackLoop extends Stream
                 Filter joinerIn = new Identity (bodyInput.getType ());
                 joinerIn.setupOperator ();
                 joiner.add (joinerIn);
-                channelIn = joinerIn.getIOField ("streamInput");
+                channelIn = joinerIn.getIOField ("input");
             } else {
                 joiner.add (null);
             }
@@ -143,8 +143,8 @@ public class FeedbackLoop extends Stream
 
             {
                 ChannelConnectFilter connect = new ChannelConnectFilter ();
-                Channel in = joiner.getIOField ("streamOutput", 0);
-                Channel out = body.getIOField ("streamInput");
+                Channel in = joiner.getIOField ("output", 0);
+                Channel out = body.getInputChannel ();
                 connect.useChannels (in, out);
             }
 
@@ -155,7 +155,7 @@ public class FeedbackLoop extends Stream
                 Filter splitterOut = new Identity (bodyOutput.getType ());
                 splitterOut.setupOperator ();
                 splitter.add (splitterOut);
-                channelOut = splitterOut.getIOField ("streamOutput");
+                channelOut = splitterOut.getIOField ("output");
             } else {
                 splitter.add (null);
             }
@@ -164,20 +164,20 @@ public class FeedbackLoop extends Stream
 
             {
                 ChannelConnectFilter connect = new ChannelConnectFilter ();
-                Channel in = body.getIOField ("streamOutput");
-                Channel out = splitter.getIOField ("streamInput", 0);
+                Channel in = body.getOutputChannel ();
+                Channel out = splitter.getIOField ("input", 0);
                 connect.useChannels (in, out);
             }
 
             // copy the input/output from the identities to the input/output
             // fields of the feedback loop
-            streamInput = channelIn;
-            streamOutput = channelOut;
+            input = channelIn;
+            output = channelOut;
         }
 
         // now fill up the feedback path with precomputed data:
         {
-            Channel feedbackChannel = loop.getIOField ("streamOutput");
+            Channel feedbackChannel = loop.getOutputChannel ();
             for (int index = 0; index < delay; index++)
             {
                 Class type = feedbackChannel.getType ();
@@ -271,11 +271,11 @@ public class FeedbackLoop extends Stream
         // now setup the buffer sizes:
 
         // between joiner and body
-        joiner.getIOField ("streamOutput", 0).makePassThrough ();
+        joiner.getIOField ("output", 0).makePassThrough ();
         body.getInputChannel ().setChannelSize (schedule.getBufferSizeBetween (joiner, body).intValue ());
 
         // between body and splitter
-        splitter.getIOField ("streamInput", 0).setChannelSize (schedule.getBufferSizeBetween (body, splitter).intValue ());
+        splitter.getIOField ("input", 0).setChannelSize (schedule.getBufferSizeBetween (body, splitter).intValue ());
         body.getOutputChannel ().makePassThrough ();
 
         // between splitter and loop
@@ -286,7 +286,7 @@ public class FeedbackLoop extends Stream
 
         // make sure that the input/output channels push data through right away:
         if (getInputChannel () != null) getInputChannel ().makePassThrough ();
-        if (getOutputChannel () != null) splitter.getIOField ("streamOutput", 0).makePassThrough ();
+        if (getOutputChannel () != null) splitter.getIOField ("output", 0).makePassThrough ();
     }
 }
 

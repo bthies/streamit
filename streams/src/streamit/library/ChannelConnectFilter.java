@@ -7,38 +7,35 @@ public class ChannelConnectFilter extends Filter
     {
         super ();
         type = ioType;
-        initIO ();
     }
 
     public ChannelConnectFilter () { super (); }
 
-    public void initIO ()
+    public void init ()
     {
         if (type != null)
         {
-            streamInput = new Channel (type, 1);
-            streamOutput = new Channel (type, 1);
+            input = new Channel (type, 1);
+            output = new Channel (type, 1);
         }
     }
 
-    public void init () { }
-
     public void work()
     {
-        passOneData (streamInput, streamOutput);
+        passOneData (input, output);
     }
 
     void useChannels (Channel in, Channel out)
     {
-        ASSERT (streamInput == null && streamOutput == null);
+        ASSERT (input == null && output == null);
         ASSERT (in != null && out != null);
         ASSERT (in != out);
         ASSERT (out.getType ().getName ().equals (in.getType ().getName ()));
 
-        streamInput = in;
-        streamOutput = out;
+        input = in;
+        output = out;
 
-        streamInput.setSink (this);
-        streamOutput.setSource (this);
+        input.setSink (this);
+        output.setSource (this);
     }
 }

@@ -31,9 +31,6 @@ public class SplitJoin extends Stream
         super(n1, n2);
     }
 
-    // initializing IO will be handled by the add function
-    public void initIO () { }
-
     // type of a split or a join:
     public static class SplitJoinType
     {
@@ -213,15 +210,15 @@ public class SplitJoin extends Stream
         if (splitter != null)
         {
             splitter.setupOperator ();
-            streamInput = splitter.getIOField ("streamInput", 0);
-            ASSERT (streamInput != null);
+            input = splitter.getIOField ("input", 0);
+            ASSERT (input != null);
         }
 
         if (joiner != null)
         {
             joiner.setupOperator ();
-            streamOutput = joiner.getIOField ("streamOutput", 0);
-            ASSERT (streamOutput != null);
+            output = joiner.getIOField ("output", 0);
+            ASSERT (output != null);
         }
     }
 

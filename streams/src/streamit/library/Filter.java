@@ -48,8 +48,8 @@ public abstract class Filter extends Stream
     // also make sure that any input/output point to the filter itself
     public void connectGraph ()
     {
-        Channel myInput = getIOField ("streamInput");
-        Channel myOutput = getIOField ("streamOutput");
+        Channel myInput = getInputChannel ();
+        Channel myOutput = getOutputChannel ();
 
         if (myOutput != null)
         {
@@ -77,15 +77,15 @@ public abstract class Filter extends Stream
     // and the function that is supposed to initialize the constants above
     final void initCount ()
     {
-        if (streamInput != null)
+        if (getInputChannel () != null)
         {
-            popCount = streamInput.getPopCount ();
-            peekCount = streamInput.getPeekCount ();
+            popCount = getInputChannel ().getPopCount ();
+            peekCount = getInputChannel ().getPeekCount ();
         }
 
-        if (streamOutput != null)
+        if (getOutputChannel () != null)
         {
-            pushCount = streamOutput.getPushCount ();
+            pushCount = getOutputChannel ().getPushCount ();
         }
     }
 

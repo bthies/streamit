@@ -49,8 +49,8 @@ public class StreamIt extends Pipeline
             scheduler.computeSchedule ();
         }
 
-        ASSERT (streamInput == null);
-        ASSERT (streamOutput == null);
+        ASSERT (getInputChannel () == null);
+        ASSERT (getOutputChannel () == null);
 
         // setup the buffer lengths for the stream setup here:
         setupBufferLengths (scheduler.getSchedule ());

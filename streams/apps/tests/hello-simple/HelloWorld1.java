@@ -30,12 +30,10 @@ public class HelloWorld1 extends StreamIt
             {
                 add (new Filter ()
                 {
-                    Channel input = new Channel (Character.TYPE, 1, 2);
-                    Channel output = new Channel (Character.TYPE, 1);
-                    public void initIO ()
+                    public void init ()
                     {
-                        streamInput = input;
-                        streamOutput = output;
+                        input = new Channel (Character.TYPE, 1, 2);
+                        output = new Channel (Character.TYPE, 1);
                     }
                     public void work ()
                     {

@@ -91,9 +91,9 @@ public class Operator extends DestroyedClass
 
     // initIO initializes all input/output channels
     // as required
-    public void initIO ()
+    final public void initIO ()
     {
-        // You must provide an initIO function
+        // You must not provide an initIO function
         // to initialize
         ASSERT (false);
     }
@@ -306,7 +306,6 @@ public class Operator extends DestroyedClass
             ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.");
         }
 
-        initIO ();
         connectGraph ();
         initialized = true;
     }
@@ -324,7 +323,7 @@ public class Operator extends DestroyedClass
     // returns null if none present
     Channel[] getIOFields (String fieldName)
     {
-        ASSERT (fieldName == "streamInput" || fieldName == "streamOutput");
+        ASSERT (fieldName == "input" || fieldName == "output");
 
         Channel fieldsInstance [] = null;
 
@@ -382,7 +381,7 @@ public class Operator extends DestroyedClass
 
     void setIOField (String fieldName, int fieldIndex, Channel newChannel)
     {
-        ASSERT (fieldName == "streamInput" || fieldName == "streamOutput");
+        ASSERT (fieldName == "input" || fieldName == "output");
 
         Channel fieldsInstance [];
 

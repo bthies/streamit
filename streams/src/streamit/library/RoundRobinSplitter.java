@@ -12,7 +12,7 @@ public class RoundRobinSplitter extends Splitter
         int outputIndex;
         for (outputIndex = 0; outputIndex < dest.size (); outputIndex++)
         {
-            passOneData (streamInput, streamOutput [outputIndex]);
+            passOneData (input, output [outputIndex]);
         }
     }
 

@@ -1,19 +1,43 @@
-// TODO - use faster DCT
-// TODO - i2b and b2i wrappers
-// TODO - try breaking up output encoding into chunks
-
 // --- The Main Loop ---
 
-void->void pipeline Transcoder {
+void->void pipeline JPEGtoBMP {
     add FileReader<int>("./input.jpg.int");
     add JPEGByteStream_Parser;
     add ChannelUnencoding;
     add YCbCrtoRGB;
-    add WriteRawData;
-    add RGBtoYCbCr;
-    add ChannelEncoding;
-    add JPEGByteStream_Creator;
+
+    // There ought to be a better way to do this.
+    add BlockDescrambler;
+    add FlipVertically;    
+
+    add BMPByteStream_Creator;
     add FileWriter<int>("./output.jpg.int");
+}
+
+int->int splitjoin BlockDescrambler {
+    split roundrobin(8*3);
+    for (int i = 0; i < 8; i++) {
+	add Identity<int>;
+    }
+    join roundrobin(640*3);
+}
+
+int->int splitjoin FlipVertically {
+    split roundrobin(3);
+    for (int i = 0; i < 640; i++) {
+       add ReversePixelOrder(480*3);
+    }
+    join roundrobin(3); 
+}
+
+int->int filter ReversePixelOrder(int len) {
+    work pop len push len {
+        int[len] order;
+        for (int i = 0; i < len; i++) 
+          order[i] = pop();
+        for (int i = len-1; i >= 0; i--)
+          push(order[i]);
+    }
 }
 
 int->int splitjoin WriteRawData {
@@ -484,6 +508,48 @@ float->float splitjoin helper_Parallel_8_iDCT_1D_Y(int size) {
   }
   join roundrobin(1);
 }
+
+int->int filter BMPByteStream_Creator {
+  boolean ran;
+  /* 0x42, 0x4d, 0x36, 0x10, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x36, 0x00, 0x00, 0x00 */
+  int[14] FileHeader = {66, 77, 54, 16, 14, 0, 0, 0, 0, 0, 54, 0, 0, 0};
+
+  /* 0x28, 0x00, 0x00, 0x00, 0x80, 0x02, 0x00, 0x00, 0xe0, 0x01, 0x00, 0x00,
+     0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00,
+     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+     0x00, 0x00, 0x00, 0x00 */ 
+  int[40] BMPInformation = {40, 0, 0, 0, 128, 2, 0, 0, 224, 1, 0, 0, 
+                            1, 0, 24, 0, 0, 0, 0, 0, 0, 16, 14, 0, 
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  
+  init {
+    ran = false;
+  }
+
+  work pop 1 push 1 {
+    if (!ran) {
+      ran = true;
+
+      for (int i = 0; i < 14; i++) {
+        push(FileHeader[i]);
+      }
+
+      for (int i = 0; i < 40; i++) {
+        push(BMPInformation[i]);
+      }
+
+      for (int i = 0; i < (921600); i++) {
+        push(pop());
+      }
+
+      print("Done writing image"); 
+
+    }
+  }
+ 
+
+}  
 
 // --- JPEG File Format Reading/Writing
 

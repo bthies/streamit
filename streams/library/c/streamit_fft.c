@@ -1,7 +1,7 @@
 /* 
  * contains all of the code necessary to do implement multiplication in frequency
  * and then do a reverse FFT.
- * $Id: streamit_fft.c,v 1.2 2002-12-19 19:18:32 dmaze Exp $
+ * $Id: streamit_fft.c,v 1.3 2002-12-19 19:44:49 dmaze Exp $
  */
 
 #include<stdio.h>
@@ -85,16 +85,6 @@ static unsigned ReverseBits ( unsigned index, unsigned NumBits )
 }
 
 
-static double Index_to_frequency ( unsigned NumSamples, unsigned Index )
-{
-    if ( Index >= NumSamples )
-        return 0.0;
-    else if ( Index <= NumSamples/2 )
-        return (double)Index / (double)NumSamples;
-
-    return -(double)(NumSamples-Index) / (double)NumSamples;
-}
-
 #define CHECKPOINTER(p)  CheckPointer(p,#p)
 
 static void CheckPointer ( void *p, char *name )
@@ -165,7 +155,6 @@ static void fft_float (unsigned  NumSamples,
         double cm1 = cos ( -delta_angle );
         double w = 2 * cm1;
         double ar[3], ai[3];
-        double temp;
 
         for ( i=0; i < NumSamples; i += BlockSize )
         {
@@ -223,8 +212,7 @@ static void fft_float (unsigned  NumSamples,
  * This uses the fft implementation found on the web from: 
  * Don Cross (dcross@intersrv.com)
  */
-do_fast_convolution_std(float* x, float* H_r, float* H_i, int size) {
-  int i;
+void do_fast_convolution_std(float* x, float* H_r, float* H_i, int size) {
   float *X_r,  *X_i;
   float *Y_r, *Y_i;
   

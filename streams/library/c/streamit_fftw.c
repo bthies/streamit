@@ -1,7 +1,7 @@
 /*
  * interface to the fftw library to replace streamit_fft.c (which 
  * contians a simple non optimized implementation of fft)
- * $Id: streamit_fftw.c,v 1.2 2002-11-20 19:30:31 aalamb Exp $
+ * $Id: streamit_fftw.c,v 1.3 2002-12-19 19:44:49 dmaze Exp $
  */
 
 #include <sfftw.h>
@@ -82,7 +82,7 @@ static void do_halfcomplex_multiply(float *buff, float *H_r, float *H_i,
  * takes an input array of floats (in the time domain) 
  * and produces an output array of floats in the same array.
  */
-do_fast_convolution_fftw(float* x, float* H_r, float* H_i, int size) {
+void do_fast_convolution_fftw(float* x, float* H_r, float* H_i, int size) {
   struct rfftw_plan_list *plan;
 
   /* Start off by finding the plan pair, or creating one. */

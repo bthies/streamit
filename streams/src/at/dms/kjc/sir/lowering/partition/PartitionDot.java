@@ -19,7 +19,45 @@ import at.dms.kjc.sir.lowering.fission.*;
 public class PartitionDot extends StreamItDot {
     private String prefixLabel;
     private HashMap partitions;
-    private static final String[] color_table = {"white", "blue", "aliceblue", "antiquewhite", "aquamarine", "bisque", "blue", "blueviolet", "brown", "burlywood", "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "crimson", "cyan", "darkgoldenrod", "darkgreen", "darkkhaki", "darkolivegreen", "darkorange", "darkorchid", "darksalmon", "darkseagreen", "darkslateblue", "darkslategray", "darkturquoise", "darkviolet", "deeppink", "deepskyblue", "dimgray", "dodgerblue", "firebrick", "forestgreen", "gainsboro", "ghostwhite", "gold", "goldenrod"};
+    // randomized order of color table so that like colors do not end up next to each other.
+    private static final String[] color_table = {"white",
+						 "crimson",
+						 "darkorchid",
+						 "brown",
+						 "gold",
+						 "deeppink",
+						 "darkorange",
+						 "darkseagreen",
+						 "blue",
+						 "darkgreen",
+						 "cadetblue",
+						 "antiquewhite",
+						 "darkkhaki",
+						 "aliceblue",
+						 "dodgerblue",
+						 "darkgoldenrod",
+						 "chartreuse",
+						 "aquamarine",
+						 "firebrick",
+						 "deepskyblue",
+						 "blueviolet",
+						 "darkturquoise",
+						 "darksalmon",
+						 "blue",
+						 "bisque",
+						 "dimgray",
+						 "forestgreen",
+						 "darkslateblue",
+						 "darkviolet",
+						 "goldenrod",
+						 "gainsboro",
+						 "darkolivegreen",
+						 "burlywood",
+						 "chocolate",
+						 "ghostwhite",
+						 "cyan",
+						 "coral",
+						 "darkslategray"};
 
     /**
      * PrefixLabel is a prefix for each node.

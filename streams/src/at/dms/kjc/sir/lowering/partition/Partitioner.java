@@ -47,26 +47,31 @@ public class Partitioner {
 	}
 
 	// do the partitioning
-	if (curCount < targetCount) {
-	    // need fission
-	    if (KjcOptions.partition_dp) {
-		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
-	    } else {
+	if (KjcOptions.partition_dp) {
+	    /* // uncomment these lines if you want a partitions.dot
+	       // file of the partitions chosen by the DP partitioner.
+	       // Unfortunately we have to run partitioning twice to
+	       // get this.
+	       
+	       SIRStream str2 = (SIRStream)ObjectDeepCloner.deepCopy(str);
+	       new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
+	    */
+	    str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
+	}
+	else if (KjcOptions.partition_greedy) {
+	    if (curCount < targetCount) {
+		// need fission
 		new GreedyPartitioner(str, work, targetCount).toplevelFission(curCount);
-	    }
-	} else {
-	    // need fusion
-	    if (KjcOptions.partition_ilp) {
-		Utils.fail("ILP Partitioner no longer supported.");
-		// don't reference the ILPPartitioner because it won't
-		// build without CPLEX, which is problematic for release
-		// new ILPPartitioner(str, work, targetCount).toplevelFusion();
-	    } else if (KjcOptions.partition_dp) {
-		str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
 	    } else {
-		Utils.assert(KjcOptions.partition_greedy);
+		// need fusion
 		new GreedyPartitioner(str, work, targetCount).toplevelFusion();
 	    }
+		
+	} else if (KjcOptions.partition_ilp) {
+	    Utils.fail("ILP Partitioner no longer supported.");
+	    // don't reference the ILPPartitioner because it won't
+	    // build without CPLEX, which is problematic for release
+	    // new ILPPartitioner(str, work, targetCount).toplevelFusion();
 	}
 
 	// lift the result

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.26 2001-10-26 21:19:19 dmaze Exp $
+ * $Id: LIRToC.java,v 1.27 2001-10-26 22:01:04 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1393,7 +1393,8 @@ public class LIRToC
 
     public void visitMessageStatement(SIRMessageStatement self,
                                       JExpression portal,
-				      int index, 
+                                      String iname,
+                                      String ident,
                                       JExpression[] params,
                                       SIRLatency latency)
     {

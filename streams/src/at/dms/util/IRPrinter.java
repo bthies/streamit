@@ -1478,14 +1478,16 @@ public class IRPrinter extends Utils implements SLIRVisitor
      */
     public void visitMessageStatement(SIRMessageStatement self,
 				      JExpression portal,
-				      int index,
+                                      String iname,
+                                      String ident,
 				      JExpression[] args,
 				      SIRLatency latency) {
 	blockStart("SIRMessageStatement");
 	attrStart("portal");
 	portal.accept(this);
 	attrEnd();
-	attrPrint("index", String.valueOf(index));
+        attrPrint("iname", iname);
+        attrPrint("ident", ident);
 	attrStart("args");
 	for (int i = 0; i < args.length; i++)
 	    args[i].accept(this);

@@ -1228,6 +1228,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    at.dms.util.Utils.fail("A portal can only implement one interface at this time");
 	
 	//Get the portal methods of the portal Interface
+        // Save this code; we're not using it now, but it might be useful
+        // for finding the right interface, if/when multi-interface
+        // portals happen.
+        /*
 	CMethod[] portalMethods = interfaces[0].getCClass().getMethods();
 
 	for (int i = 0; i < portalMethods.length; i++) {
@@ -1238,8 +1242,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	}
 	if (index == -1)  //cannot find method
 	    at.dms.util.Utils.fail("Cannot find portal method " + methCall.getIdent() + " in portal interface");
+        */
+        String interfaceName = interfaces[0].getIdent();
+        
 	//Assuming all messages best effort
-	return new SIRMessageStatement(prefix, index, args, SIRLatency.BEST_EFFORT);
+	return new SIRMessageStatement(prefix, interfaceName, methCall.getIdent(), args, SIRLatency.BEST_EFFORT);
     }
 		
 

@@ -15,6 +15,10 @@ public class SIRMessageStatement extends JStatement {
      */
     private JExpression portal;
     /**
+     * The name of the interface the portal corresponds to.
+     */
+    private String iname;
+    /**
      * The name of the method to invoke in the portal.
      */
     private String ident;
@@ -26,10 +30,6 @@ public class SIRMessageStatement extends JStatement {
      * The latency with which the message should be delivered.
      */
     private SIRLatency latency;
-    /**
-     * The index of the method in the interface
-     */
-    private int index;
 
     // ----------------------------------------------------------------------
     // CONSTRUCTORS
@@ -38,12 +38,13 @@ public class SIRMessageStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRMessageStatement(JExpression portal, int index, JExpression[] args, SIRLatency latency) {
+    public SIRMessageStatement(JExpression portal, String iname, String ident, JExpression[] args, SIRLatency latency) {
 	super(null, null);
 
 	this.portal = portal;
+        this.iname = iname;
+        this.ident = ident;
 	this.args = args;
-	this.index = index;
 	this.latency = latency;
     }
 
@@ -55,16 +56,20 @@ public class SIRMessageStatement extends JStatement {
 	super(null, null);
 
 	this.portal = null;
-	this.index = -1;
+        this.iname = null;
+        this.ident = null;
 	this.args = null;
 	this.latency = null;
     }
 
-    public int getIndex () {
-	return index;
-    }
     public JExpression getPortal() {
 	return portal;
+    }
+    public String getInterfaceName() {
+        return iname;
+    }
+    public String getMessageName() {
+        return ident;
     }
     public SIRLatency getLatency() {
 	return latency;
@@ -73,18 +78,18 @@ public class SIRMessageStatement extends JStatement {
 	return args;
     }
 
-    public void setIndex (int index) {
-	this.index = index;
-    }
-
     public void setPortal (JExpression p) {
 	this.portal = p;
     }
-    
+    public void setInterfaceName (String iname) {
+        this.iname = iname;
+    }
+    public void setMessageName (String ident) {
+        this.ident = ident;
+    }
     public void setArgs (JExpression[] a) {
 	this.args = a;
     }
-
     public void setLatency (SIRLatency l) {
 	this.latency = l;
     }
@@ -120,7 +125,8 @@ public class SIRMessageStatement extends JStatement {
 	if (p instanceof SLIRVisitor) {
 	    ((SLIRVisitor)p).visitMessageStatement(this, 
 						   portal,
-						   index,
+                                                   iname,
+                                                   ident,
 						   args,
 						   latency);
 	} else {

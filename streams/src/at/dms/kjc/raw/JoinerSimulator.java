@@ -94,6 +94,8 @@ public class JoinerSimulator
 	    else {
 		//weighted round robin
 		for (int i = 0; i < node.inputs; i++) {
+		    //System.out.println(i + " " + counters.getCount(node, i) +
+		    //		       Namer.getName(node.incoming[i].contents));
 		    if (counters.getCount(node, i) > 0) {
 			counters.decrementCount(node, i);
 			simulateDataItem(node.incoming[i], schedNode,
@@ -102,13 +104,18 @@ public class JoinerSimulator
 		    }
 		}
 		//none were greater than zero, reset all counters
-		//and send to the first
+		//and send to the first non zero
 		for (int i = 0; i < node.inputs; i++) {
 		    counters.resetCount(node, i);
 		}
-		counters.decrementCount(node, 0);
-		simulateDataItem(node.incoming[0], schedNode,
-					 counters, "0" + buf);
+		for (int i = 0; i < node.inputs; i++) {
+		    if (counters.getCount(node, i) > 0) {
+			counters.decrementCount(node, i);
+			simulateDataItem(node.incoming[i], schedNode,
+					 counters, i + buf);
+			return;
+		    }
+		}
 	    }
 	    
 	}

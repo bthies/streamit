@@ -180,7 +180,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	random = new Random(17);
 	//random placement
 	randomPlacement();
-	System.out.println("Initial Cost: " + placementCost(toplevel));
+	System.out.println("Initial Cost: " + placementCost());
 	for (j = 0; j < ANNEALITERATIONS; j++) {
 	    nsucc = 0;
 	    for (int k = 0; k < nover; k++) {
@@ -188,15 +188,15 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    nsucc++;
 		}
 		if (nsucc >= nlimit) break;
-		if (placementCost(toplevel) == 0)
+		if (placementCost() == 0)
 		    break;
 	    }
 	    t *= TFACTR;
 	    if (nsucc == 0) break;
-	    if (placementCost(toplevel) == 0)
+	    if (placementCost() == 0)
 		    break;
 	}
-	System.out.println("Final Cost: " + placementCost(toplevel) + " in  " + j + " iterations.");
+	System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
 	dumpLayout();
     }
     
@@ -211,7 +211,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	init(node);
 	random = new Random(17);
 	randomPlacement();
-	System.out.println("Initial placement cost: " + placementCost(toplevel));
+	System.out.println("Initial placement cost: " + placementCost());
 	//clone the random placement
 
 	HashMap sir  = (HashMap)SIRassignment.clone();
@@ -229,7 +229,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
 	int i, bestIter = 0;
       
-	bestCost = placementCost(toplevel);
+	bestCost = placementCost();
 	int cost = bestCost;
 	sirBest = (HashMap)SIRassignment.clone();
 	tileBest = (HashMap)tileAssignment.clone();
@@ -238,7 +238,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    perturbConfiguration(T);
 	    T = .999 * T;
 	    if (T <= Tf) break;
-	    cost = placementCost(toplevel);
+	    cost = placementCost();
 	    if (cost < bestCost) {
 		bestIter = i;
 		sirBest = (HashMap)SIRassignment.clone();
@@ -254,7 +254,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
 	else
 	    bestIter = i;
-	System.out.println("Final placement cost: " + placementCost(toplevel) +
+	System.out.println("Final placement cost: " + placementCost() +
 			   " " + bestIter);
 	dumpLayout();
     }
@@ -319,15 +319,24 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
     
-    private static int placementCost(FlatNode node) 
+    private static int placementCost() 
+    {
+	Iterator nodes = assigned.iterator();
+	HashSet routers = new HashSet();
+	int sum = 0;
+	while(nodes.hasNext()) {
+	    sum += placementCostHelper((FlatNode)nodes.next(), routers);
+	}
+	return sum;
+    }
+	
+    private static int placementCostHelper(FlatNode node, HashSet routers) 
     {
 	//get all placed downstream nodes
 	Iterator downstream = getDownStream(node).iterator();
-	HashSet routers = new HashSet();
 	int sum = 0;
 	while (downstream.hasNext()) {
 	    FlatNode dest = (FlatNode)downstream.next();
-	    sum += placementCost(dest);
 	    Coordinate[] route = (Coordinate[])Router.getRoute(node, dest).toArray(new Coordinate[1]);
 	    //find the number assigned on the path
 	    double numAssigned = 0.0;
@@ -374,7 +383,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int first;
 	int second;
 	
-	int e_old = placementCost(toplevel);
+	int e_old = placementCost();
 	
 	//find 2 suitable nodes to swap
 	while (true) {
@@ -396,7 +405,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	assign(getTile(second), firstNode);
 	
 	//DECIDE if we should keep the change
-	int e_new = placementCost(toplevel);
+	int e_new = placementCost();
 	double P = 1.0;
 	double R = random.nextDouble();
 
@@ -544,7 +553,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	while (keys.hasNext()) {
 	    handAssignNode((FlatNode)keys.next());
 	}
-	System.out.println("Final Cost: " + placementCost(toplevel));
+	System.out.println("Final Cost: " + placementCost());
 	dumpLayout();
     }
 

@@ -78,6 +78,15 @@ public class FlatNode {
 	    to.addIncomingFrom(this);
 	}
     }
+    
+    public static void addEdges(FlatNode from, FlatNode to) {
+	if (from != null) {
+	    from.addEdgeTo(to);
+	}
+	if (to != null)
+	    to.addIncomingFrom(from);
+    }
+    
 
     public void addEdgeTo(FlatNode to) 
     {

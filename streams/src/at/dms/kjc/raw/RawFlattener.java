@@ -65,20 +65,20 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	    SIRFeedbackLoop loop = (SIRFeedbackLoop)current;
 	    FlatNode joinerNode = new FlatNode(loop.getJoiner());
 	    if (top == null) {
-		currentNode = joinerNode;
+		//currentNode = joinerNode;
 		top = joinerNode;
-	    }
+		}
 	    FlatNode splitterNode = new FlatNode(loop.getSplitter());
 
-	    currentNode.addEdges(joinerNode);
+	    FlatNode.addEdges(currentNode, joinerNode);
 	    	    
 	    currentNode = joinerNode;
 	    createGraph(loop.getBody());
-	    currentNode.addEdges(splitterNode);
+	    FlatNode.addEdges(currentNode, splitterNode);
 	    
 	    currentNode = splitterNode;
 	    createGraph(loop.getLoop());
-	    currentNode.addEdges(joinerNode);
+	    FlatNode.addEdges(currentNode, joinerNode);
 	    currentNode = splitterNode;
 	}
     }

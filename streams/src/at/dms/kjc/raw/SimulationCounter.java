@@ -27,6 +27,8 @@ public class SimulationCounter {
 
     private HashMap joinerBufferCounts;
     
+    private HashMap joinerInitPathCalls;
+    
     static 
     {
 	maxJoinerBufferSize = new HashMap();
@@ -35,6 +37,7 @@ public class SimulationCounter {
     public SimulationCounter(HashMap joinerSchedules) {
 	arcCountsIncoming = new HashMap();
 	arcCountsOutgoing = new HashMap();
+	joinerInitPathCalls = new HashMap();
 	bufferCount = new HashMap();
 	fired = new HashSet();
 	currentJoinerScheduleNode = (HashMap)joinerSchedules.clone();
@@ -155,7 +158,33 @@ public class SimulationCounter {
 	arcCountsOutgoing.put(node, currentArcCounts);
     }
 
-        
+    public boolean canFeedbackJoinerFire(FlatNode node) {
+	//check if this joiner is mapped
+	if (!Layout.joiners.contains(node))
+	    return false;
+	//check if this is a feedbackloop joiner
+	if (!(((SIRJoiner)node.contents).getParent() instanceof SIRFeedbackLoop))
+	    return false;
+	//get the delay
+	int delay = ((SIRFeedbackLoop)node.contents.getParent()).getDelay();
+	
+	if (!(joinerInitPathCalls.containsKey(node)))
+	    joinerInitPathCalls.put(node, new Integer(0));
+	
+	boolean ret = false;
+	
+	int timesFired = ((Integer)joinerInitPathCalls.get(node)).intValue();
+	if (timesFired < delay)
+	   ret = true;
+	
+	return ret;
+    }
+    
+    public void incrementInitPathCall(FlatNode node) 
+    {
+	int timesFired = ((Integer)joinerInitPathCalls.get(node)).intValue();
+	joinerInitPathCalls.put(node, new Integer(timesFired + 1));
+    }
 }
 
 

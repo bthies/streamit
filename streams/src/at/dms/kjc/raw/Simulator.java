@@ -86,6 +86,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //if no one left to fire, stop
 	    if (fire == null)
 		break;
+	    
+	    //	    System.out.println(Namer.getName(fire.contents));
+
 	    //keep track of everything needed when a node fires
 	    consumeData(fire, counters, counts);
 	    //simulate the firings
@@ -224,26 +227,30 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	}
 	else if (fire.contents instanceof SIRJoiner) {
 	    //System.out.println("Firing a joiner");
-	    
-	    JoinerScheduleNode previous = 
-		(JoinerScheduleNode)currentJoinerCode.get(fire);
-	    JoinerScheduleNode current = new JoinerScheduleNode();
-	    current.buffer = counters.getJoinerBuffer(fire);
-	    current.type = JoinerScheduleNode.FIRE;
-	    previous.next = current;
-	    //set current
-	    currentJoinerCode.put(fire, current);
-	    //decrement the buffer
-	    counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
-	    //step the schedule
-	    counters.incrementJoinerSchedule(fire);
+
+	    //determine if this joiner fired because of an initpath call
+	    //if so just increment the number of calls to the initpath
+	    if (counters.canFeedbackJoinerFire(fire)) {
+		counters.incrementInitPathCall(fire);
+	    }
+	    else { //else, this joiner fired because it received data
+		//that can be sent on
+		JoinerScheduleNode previous = 
+		    (JoinerScheduleNode)currentJoinerCode.get(fire);
+		JoinerScheduleNode current = new JoinerScheduleNode();
+		current.buffer = counters.getJoinerBuffer(fire);
+		current.type = JoinerScheduleNode.FIRE;
+		previous.next = current;
+		//set current
+		currentJoinerCode.put(fire, current);
+		//decrement the buffer
+		counters.decrementJoinerBufferCount(fire, counters.getJoinerBuffer(fire));
+		//step the schedule
+		counters.incrementJoinerSchedule(fire);
+	    }
 	}
     }
     
-    
-	 
-	    
-
     //get the destination of the data item
     private  List getDestination(FlatNode node, SimulationCounter counters, String
 				 joinerBuffer, FlatNode previous) 
@@ -325,20 +332,25 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		    }
 		}
 		//none were greater than zero, reset all counters
-		//and send to the first
+		//and send to the first non-zero weight
 		for (int i = 0; i < node.ways; i++) {
 		    counters.resetArcCountOutgoing(node, i);
 		}
-		counters.decrementArcCountOutgoing(node, 0);
-		return getDestination(node.edges[0], counters,
-				      joinerBuffer, previous);
+		for (int i = 0; i < node.ways; i++) {
+		    if (counters.getArcCountOutgoing(node, i) > 0) {
+			counters.decrementArcCountOutgoing(node, i);
+			return getDestination(node.edges[i], 
+					      counters, joinerBuffer,
+					      previous);
+		    }
+		}
 	    }
 	    
 	}
 	else {
 	    throw new RuntimeException("SimulateDataItem");
 	}
-	//return null;
+	return null;
     }
 
     //for now, find the most-downstream filter to fire
@@ -358,8 +370,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		return node;
 	    queue.remove(0);
 	    for (int i = 0; i < node.inputs; i++) {
-		if (!visited.contains(node.incoming[i]))
-		    queue.add(node.incoming[i]);
+		if (node.incomingWeights[i] > 0)
+		    if (!visited.contains(node.incoming[i]))
+			queue.add(node.incoming[i]);
 	    }
 	}
 	//no node can fire
@@ -407,6 +420,10 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //joiner in a joiner group
 	    if (!Layout.joiners.contains(node))
 		return false;
+	    //if this joiner is inside of a feedbackloop then it can fire
+	    //as many times as the delay
+	    if (counters.canFeedbackJoinerFire(node))
+		return true;
 	    //determine if a joiner can fire
 	    //if the buffer associated with its current 
 	    //input has an item in it
@@ -419,9 +436,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	else 
 	    return false;
     }
-    
-    
-	
+   	
     //look for bottom node
     public void visitNode(FlatNode node) 
     {

@@ -56,12 +56,17 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    fw.write("#include <raw.h>\n");
 	    fw.write("#include <math.h>\n\n");
 	    fw.write(createJoinerWork(joiner));
-	    	    
+	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
+		fw.write(createInitPath(joiner) + "\n");	    
 	    //write the extern for the function to init the 
 	    //switch
 	    fw.write("void raw_init();\n\n");
 	    fw.write("void begin(void) {\n");
+	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
+		fw.write("  int i;\n\n");
 	    fw.write("  raw_init();\n");
+	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)
+		fw.write(initPathCallCode(joiner));
 	    fw.write("  work();\n");
 	    fw.write("}\n");
 	    fw.close();
@@ -77,6 +82,30 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	}
     }
     
+    private static String createInitPath(FlatNode joiner) {
+	if (!(joiner.contents.getParent() instanceof SIRFeedbackLoop))
+	    return "";
+	
+	FlatIRToC toC = new FlatIRToC();
+	toC.declOnly = false;
+	
+	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
+	initPath.accept(toC);
+	return toC.getString();
+    }
+
+    private static String initPathCallCode(FlatNode joiner) {
+	if (!(joiner.contents.getParent() instanceof SIRFeedbackLoop))
+	    return "";
+	
+	StringBuffer buf = new StringBuffer();
+	int delay = ((SIRFeedbackLoop)joiner.contents.getParent()).getDelay();
+	JMethodDeclaration initPath = ((SIRFeedbackLoop)joiner.contents.getParent()).getInitPath();
+	buf.append("\n  for (i = 0; i < " + delay + "; i++) \n");
+	buf.append("    static_send(" + initPath.getName() + "(i));\n");
+	return buf.toString();
+    }
+
     private static String createJoinerWork(FlatNode joiner) 
     {
 	boolean fp = false;
@@ -122,9 +151,18 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
     
     private static CType getJoinerType(FlatNode joiner) 
     {
+	boolean found;
 	//search backward until we find the first filter
 	while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
-	    joiner = joiner.incoming[0];
+	    found = false;
+	    for (int i = 0; i < joiner.inputs; i++) {
+		if (joiner.incomingWeights[i] > 0) {
+		    joiner = joiner.incoming[i];
+		    found = true;
+		}
+	    }
+	    if (!found)
+		Utils.fail("cannot find any upstream filter from " + Namer.getName(joiner.contents));
 	}
 	if (joiner != null) 
 	    return ((SIRFilter)joiner.contents).getOutputType();

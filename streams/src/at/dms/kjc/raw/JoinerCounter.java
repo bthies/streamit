@@ -40,7 +40,7 @@ public class JoinerCounter {
 	if (currentCounts[inputN] > 0)
 	    currentCounts[inputN]--;
 	else 
-	    System.err.println("Trying to decrement a input with a zero count.");
+	    System.err.println("Trying to decrement an input with a zero count.");
 	
 	counts.put(node, currentCounts);
     }

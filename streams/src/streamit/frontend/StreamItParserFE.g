@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.5 2002-09-11 18:51:17 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.6 2002-09-11 19:47:32 dmaze Exp $
  */
 
 header {
@@ -295,9 +295,9 @@ for_incr_statement returns [Statement s] { s = null; }
 	;
 
 expr_statement returns [Statement s] { s = null; Expression x; }
-// Does this disallow function calls?  --dzm
 	:	(incOrDec) => x=incOrDec { s = new StmtExpr(x); }
 	|	(assign_expr) => s=assign_expr
+	|	(func_call) => x=func_call { s = new StmtExpr(x); }
 	|	x=streamit_value_expr { s = new StmtExpr(x); }
 	;
 
@@ -309,6 +309,11 @@ assign_expr returns [Statement s] { s = null; Expression l, r; int o = 0; }
 		)
 		r=right_expr
 		{ s = new StmtAssign(l.getContext(), l, r, o); }
+	;
+
+func_call returns [Expression x] { x = null; List l; }
+	:	name:ID l=func_call_params
+		{ x = new ExprFunCall(getContext(name), name.getText(), l); }
 	;
 
 func_call_params returns [List l] { l = new ArrayList(); Expression x; }
@@ -435,21 +440,18 @@ streamit_value_expr returns [Expression x] { x = null; }
 
 minic_value_expr returns [Expression x] { x = null; }
 	:	LPAREN x=right_expr RPAREN
+	|	(func_call) => x=func_call
 	|	x=value
 	|	x=constantExpr
 	;
 
 value returns [Expression x] { x = null; Expression array; List l; }
-	:	name:ID
-		(	l=func_call_params
-			{ x = new ExprFunCall(getContext(name), name.getText(), l); }
-		|	{ x = new ExprVar(getContext(name), name.getText()); }
-			(	DOT field:ID
-				{ x = new ExprField(x.getContext(), x, field.getText()); }
-			|	LSQUARE array=right_expr RSQUARE
-				{ x = new ExprArray(x.getContext(), x, array); }
-			)*
-		)
+	:	name:ID { x = new ExprVar(getContext(name), name.getText()); }
+		(	DOT field:ID
+			{ x = new ExprField(x.getContext(), x, field.getText()); }
+		|	LSQUARE array=right_expr RSQUARE
+			{ x = new ExprArray(x.getContext(), x, array); }
+		)*
 	;
 
 constantExpr returns [Expression x] { x = null; }

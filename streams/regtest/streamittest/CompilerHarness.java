@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.6 2002-09-30 21:24:35 thies Exp $
+ * $Id: CompilerHarness.java,v 1.7 2002-11-05 22:54:45 aalamb Exp $
  **/
 package streamittest;
 
@@ -21,7 +21,7 @@ public class CompilerHarness extends Harness {
     // main compiler java class
     static final String JAVA_MAIN = "at.dms.kjc.Main";
     // java memory option
-    static final String JAVA_OPTION_MEM = "-Xmx1024M";
+    static final String JAVA_OPTION_MEM = "-Xmx1700M";
 
     // location of streamit c library files
     static final String C_LIBRARY_PATH = "library/c/";

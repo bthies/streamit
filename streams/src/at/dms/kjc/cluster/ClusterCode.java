@@ -377,6 +377,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <master_server.h>\n");
 	p.print("#include <save_state.h>\n");
+	p.print("#include <save_manager.h>\n");
 	p.print("#include <object_write_buffer.h>\n");
 	p.print("#include <ccp.h>\n");
 	p.println();
@@ -502,6 +503,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    p.print("  thread_list.push_back(t_info);\n");	    
 	}
 
+	p.print("  save_manager::run();\n");
 	p.print("  node_server *node = new node_server(thread_list, init);\n");
 
 	p.print("\n");

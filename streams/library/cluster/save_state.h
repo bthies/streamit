@@ -3,6 +3,7 @@
 
 #include <mysocket.h>
 #include <init_instance.h>
+#include <save_manager.h>
 #include <object_write_buffer.h>
 
 #include <sys/types.h>
@@ -21,9 +22,14 @@ class save_state {
 			   int steady_iter, 
 			   void (*write_object)(object_write_buffer *)) {
 
-    object_write_buffer buf;
+    object_write_buffer *buf = new object_write_buffer();
+    write_object(buf);
+    //save_buffer(thread, steady_iter, buf);
+    
+    save_manager::push_item(new checkpoint_info(thread, steady_iter, buf));
+  }
 
-    write_object(&buf);
+  static void save_buffer(int thread, int steady_iter, object_write_buffer *buf) {
 
     char fname[256];
     sprintf(fname, "%s%d.%d", PATH, thread, steady_iter);
@@ -31,19 +37,18 @@ class save_state {
     int fd = creat(fname, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
     mysocket file_sock(fd);
     
-    int size = buf.get_size() / 4;
-    buf.set_read_offset(0);
+    int size = buf->get_size() / 4;
+    buf->set_read_offset(0);
 
     for (int i = 0; i < size; i++) {
 
       char tmp[4];
-      buf.read((void*)tmp, 4);
+      buf->read((void*)tmp, 4);
       file_sock.write_chunk((char*)tmp, 4);
     }
 
     close(fd);
-  }
-
+  } 
 
 
   static void load_from_file(int thread, 

@@ -20,6 +20,7 @@ NAMES =		sock_dscr \
 		init_instance \
 		node_server \
 		master_server \
+		save_manager \
 		ccp_session \
 		ccp
 

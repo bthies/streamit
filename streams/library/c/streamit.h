@@ -372,4 +372,12 @@ void ERROR (void *data, char *error_msg);
  * @}
  */
 
+/** 
+ * Do convolution in frequency domain. This function takes in x[n] in x
+ * and H(w) in H_r, H_i for real and imaginary parts respectively.
+ * size tells us how large the buffers are. This function then computes 
+ * X(w), Y(w) = X(w)H(w) and then y[n]. We store y[n] in x when we are done.
+ */
+void do_fast_convolution(float* x, float* H_r, float* H_i, int size);
+
 #endif /* STREAMIT_H */

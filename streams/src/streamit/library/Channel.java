@@ -84,15 +84,20 @@ public class Channel extends streamit.misc.DestroyedClass
         {
             assert source != null;
 
-            // if I need to get data from my source I better not be a scheduled
-            // buffer.
-            assert maxSize == -1:
-                "maxSize should equal -1 " +
-                "(representing not a scheduled buffer)\n" +
-                "Queue: " + queue +
-                ".size: " + queue.size() +
-                " amount is: " + amount +
-                " and maxSize is: " + maxSize;
+	    if (maxSize!=-1) {
+		// give a better error message
+		ERROR("ERROR:\n" + 
+		      "Trying to pop or peek beyond the declared rate in stream " + sink + "\n" +
+		      "Make sure that your pop/peek statements match the declared rates.\n" +
+		      "\n" +
+		      "Internal message:\n" +
+		      "maxSize should equal -1 " +
+		      "(representing not a scheduled buffer)\n" +
+		      "Queue: " + queue +
+		      ".size: " + queue.size() +
+		      " amount is: " + amount +
+		      " and maxSize is: " + maxSize);
+	    }
 
 	    source.prepareToWork();
             source.work ();

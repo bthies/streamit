@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: JoinerIter.java,v 1.2 2002-05-27 02:56:39 karczma Exp $ */
+/* $Id: JoinerIter.java,v 1.3 2002-06-30 04:01:14 karczma Exp $ */
 
 /**
  * An interface for retrieving data about streams with a Joiner.
@@ -24,6 +24,12 @@ public interface JoinerIter
      * Stream
      */
     public int getJoinerNumWork ();
+
+    /**
+     * Returns n-th work function associated with this Joiner.
+     * @return n-th work function for the Joiner
+     */
+    public Object getJoinerWork(int nWork);
 
     /**
      * Returns distribution of weights on a particular invocation

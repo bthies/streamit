@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: SplitterIter.java,v 1.2 2002-05-27 02:56:39 karczma Exp $ */
+/* $Id: SplitterIter.java,v 1.3 2002-06-30 04:01:15 karczma Exp $ */
 
 /**
  * An interface for retrieving data about streams with a Splitter.
@@ -22,6 +22,12 @@ public interface SplitterIter
      * @return number of work functions for this Splitter
      */
     public int getSplitterNumWork ();
+    
+    /**
+     * Returns n-th work function associated with this Splitter.
+     * @return n-th work function for the Splitter
+     */
+    public Object getSplitterWork (int nWork);
 
     /**
      * Returns distribution of weights on a particular invocation

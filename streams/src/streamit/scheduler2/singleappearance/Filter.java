@@ -1,8 +1,8 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Filter.java,v 1.1 2002-06-09 22:38:55 karczma Exp $ */
+/* $Id: Filter.java,v 1.2 2002-06-30 04:01:19 karczma Exp $ */
 
-import streamit.scheduler.iriter.FilterIter;
+import streamit.scheduler.iriter./*persistent.*/FilterIter;
 import streamit.scheduler.Schedule;
 import streamit.scheduler.hierarchical.PhasingSchedule;
 
@@ -35,7 +35,8 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                 initStage < filterIter.getNumInitStages();
                 initStage++)
             {
-                Object initFunc = filterIter.getInitFunctionStage(initStage);
+                Object initFunc =
+                    filterIter.getInitFunctionStage(initStage);
                 int peek = filterIter.getInitPeekStage(initStage);
                 int pop = filterIter.getInitPopStage(initStage);
                 int push = filterIter.getInitPushStage(initStage);
@@ -44,7 +45,10 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                 initPop += pop;
                 initPush += push;
 
-                initSchedule.addSubSchedule(new Schedule(initFunc));
+                initSchedule.addSubSchedule(
+                    new Schedule(
+                        initFunc,
+                        filterIter.getUnspecializedIter()));
             }
 
             initPhasingSchedule =
@@ -54,7 +58,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                     initPeek,
                     initPop,
                     initPush);
-            algorithm.addInitScheduleStage (initPhasingSchedule);
+            algorithm.addInitScheduleStage(initPhasingSchedule);
         }
 
         // now do the steady schedule
@@ -76,7 +80,10 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                 steadyPop += pop;
                 steadyPush += push;
 
-                steadySchedule.addSubSchedule(new Schedule(steadyFunc));
+                steadySchedule.addSubSchedule(
+                    new Schedule(
+                        steadyFunc,
+                        filterIter.getUnspecializedIter()));
             }
 
             steadyPhasingSchedule =
@@ -86,7 +93,7 @@ public class Filter extends streamit.scheduler.hierarchical.Filter
                     steadyPeek,
                     steadyPop,
                     steadyPush);
-            algorithm.addSchedulePhase (steadyPhasingSchedule);
+            algorithm.addSchedulePhase(steadyPhasingSchedule);
         }
     }
 }

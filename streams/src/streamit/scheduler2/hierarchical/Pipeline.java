@@ -1,8 +1,8 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: Pipeline.java,v 1.2 2002-06-14 15:28:49 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.3 2002-06-30 04:01:10 karczma Exp $ */
 
-import streamit.scheduler.iriter.PipelineIter;
+import streamit.scheduler.iriter./*persistent.*/PipelineIter;
 import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.Schedule;
 
@@ -110,6 +110,11 @@ abstract public class Pipeline
         return algorithm.getPhasingInitSchedule ();
     }
     
+    public Schedule getInitSchedule ()
+    {
+        return algorithm.getInitSchedule();
+    }
+    
     public int getNumSteadyPhases()
     {
         return algorithm.getNumSteadyPhases();
@@ -138,5 +143,10 @@ abstract public class Pipeline
     public PhasingSchedule getPhasingSteadySchedule()
     {
         return algorithm.getPhasingSteadySchedule ();
+    }
+
+    public Schedule getSteadySchedule ()
+    {
+        return algorithm.getSteadySchedule();
     }
 }

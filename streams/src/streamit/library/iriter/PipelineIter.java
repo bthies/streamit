@@ -18,6 +18,11 @@ public class PipelineIter
         return pipeline;
     }
     
+    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    {
+        return new Iterator(pipeline);
+    }
+    
     public int getNumChildren ()
     {
         return pipeline.getNumChildren ();
@@ -26,6 +31,18 @@ public class PipelineIter
     public streamit.scheduler.iriter.Iterator getChild (int n)
     {
         return new Iterator (pipeline.getChildN (n));
+    }
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof PipelineIter)) return false;
+        PipelineIter otherPipe = (PipelineIter) other;
+        return otherPipe.getObject() == this.getObject();
+    }
+    
+    public int hashCode()
+    {
+        return pipeline.hashCode();
     }
 }
 

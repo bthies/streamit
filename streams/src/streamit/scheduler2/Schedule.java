@@ -3,7 +3,7 @@ package streamit.scheduler;
 import streamit.misc.AssertedClass;
 import java.util.Vector;
 
-/* $Id: Schedule.java,v 1.5 2002-06-09 22:38:44 karczma Exp $ */
+/* $Id: Schedule.java,v 1.6 2002-06-30 04:01:03 karczma Exp $ */
 
 /**
  * <dl>
@@ -31,7 +31,12 @@ public class Schedule extends AssertedClass
      * Work function associated with bottom-level schedule
      */
     final private Object workFunc;
-
+    
+    /**
+     * Stream iterator corresponding to the work function of this schedule.
+     */
+    final private streamit.scheduler.iriter.Iterator workStream;
+    
     /**
      * Number of times that this schedule is supposed to be repeated
      */
@@ -44,27 +49,30 @@ public class Schedule extends AssertedClass
     {
         subScheds = new Vector ();
         workFunc = null;
+        workStream = null;
     }
     
     /**
      * Create the schedule to be a bottom schedule with a single
      * work function.
      */
-    public Schedule (Object workFunction)
+    public Schedule (Object workFunction, streamit.scheduler.iriter.Iterator stream)
     {
         workFunc = workFunction;
+        workStream = stream;
         subScheds = null;
     }
     
     /**
      * Checks if the Schedule is a bottom-level schedule.
      * If the Schedule contains a work function that needs
-     * to be called, it is a bottom schedule.  If it contains
+     * to be called, it is a bottom schedule.  This work function
+     * is always attached to a workStream.  If it contains
      * a bunch of sub-schedules, which need to be executed
      * in order, this is not a bottom schedule.
      * @return true if this Schedule is a bottom schedule
      */
-    public boolean isBottomSchedule () { return workFunc != null; }
+    public boolean isBottomSchedule () { return workStream != null; }
     
     /**
      * Get the number of phases in this schedule
@@ -111,10 +119,22 @@ public class Schedule extends AssertedClass
      */
     public Object getWorkFunc()
     {
-        ASSERT(workFunc != null);
+        ASSERT(isBottomSchedule ());
         return workFunc;
     }
 
+    /**
+     * Returns the stream on which the work function will be called
+     * If the schedule isn't a bottom-level schedule, this
+     * function will ASSERT.
+     * @return schedule's stream
+     */
+    public streamit.scheduler.iriter.Iterator getWorkStream()
+    {
+        ASSERT(isBottomSchedule ());
+        return workStream;
+    }
+    
     /**
      * Get the number of times that this schedule is supposed to be
      * repeated

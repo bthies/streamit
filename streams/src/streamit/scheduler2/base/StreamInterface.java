@@ -2,7 +2,7 @@ package streamit.scheduler.base;
 
 import streamit.scheduler.Schedule;
 
-/* $Id: StreamInterface.java,v 1.3 2002-06-13 22:43:25 karczma Exp $ */
+/* $Id: StreamInterface.java,v 1.4 2002-06-30 04:01:06 karczma Exp $ */
 
 /**
  * This interface will provide the basic functionality for
@@ -21,6 +21,18 @@ public interface StreamInterface
      * computes both the steady state and initialization schedules.
      */
     public void computeSchedule ();
+    
+    /**
+     * Get the steady schedule computed for this stream.
+     * @return steady schedule
+     */
+    public Schedule getSteadySchedule ();
+    
+    /**
+     * Get the initialization schedule computed for this stream.
+     * @return initialization schedule
+     */
+    public Schedule getInitSchedule ();
     
     /**
      * return number of data peeked in a minimal steady execution

@@ -2,7 +2,7 @@ package streamit.scheduler.iriter;
 
 import streamit.scheduler.iriter.Iterator;
 
-/* $Id: PipelineIter.java,v 1.4 2002-05-25 00:29:36 karczma Exp $ */
+/* $Id: PipelineIter.java,v 1.5 2002-06-30 04:01:14 karczma Exp $ */
 
 /**
  * <dl>
@@ -19,6 +19,22 @@ import streamit.scheduler.iriter.Iterator;
 
 public interface PipelineIter extends IteratorBase
 {
+    /**
+     * Returns an Iterator that pointst to the same object as this 
+     * specialized iterator.
+     * @return an Iterator that points to the same object
+     */
+    public Iterator getUnspecializedIter();
+    
+    /**
+     * Returns the number of children this pipeline has.
+     * @return number of children
+     */
     public int getNumChildren ();
+    
+    /**
+     * Returns an Iterator to a particular child of this pipeline.
+     * @return a child
+     */
     public Iterator getChild (int n);
 }

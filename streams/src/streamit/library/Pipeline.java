@@ -4,6 +4,7 @@ import java.util.*;
 import java.math.BigInteger;
 
 import streamit.scheduler.ScheduleBuffers;
+import streamit.iriter.Iterator;
 
 /**
  *  implements a pipeline - stream already has all the functionality,
@@ -188,7 +189,7 @@ public class Pipeline extends Stream
             {
                 ASSERT (sink);
 
-                int buffSize = buffers.getBufferSizeBetween (source, sink);
+                int buffSize = buffers.getBufferSizeBetween (new Iterator(source), new Iterator(sink));
                 ASSERT (buffSize);
 
                 source.getOutputChannel ().makePassThrough ();

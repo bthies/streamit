@@ -1,8 +1,8 @@
 package streamit.scheduler.base;
 
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler.iriter./*persistent.*/Iterator;
 
-/* $Id: StreamFactory.java,v 1.1 2002-05-27 03:18:51 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.2 2002-06-30 04:01:06 karczma Exp $ */
 
 /**
  * The StreamFactory interface provides a factory interface for

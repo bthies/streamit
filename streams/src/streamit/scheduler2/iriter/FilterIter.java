@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: FilterIter.java,v 1.5 2002-05-25 19:24:24 karczma Exp $ */
+/* $Id: FilterIter.java,v 1.6 2002-06-30 04:01:14 karczma Exp $ */
 
 /**
  * <dl>
@@ -17,15 +17,71 @@ package streamit.scheduler.iriter;
 
 public interface FilterIter extends IteratorBase
 {
-    public int getNumInitStages ();
-    public int getInitPeekStage (int phase);
-    public int getInitPopStage (int phase);
-    public int getInitPushStage (int phase);
-    public Object getInitFunctionStage (int phase);
+    /**
+     * Returns an Iterator that pointst to the same object as this 
+     * specialized iterator.
+     * @return an Iterator that points to the same object
+     */
+    public Iterator getUnspecializedIter();
     
+    /**
+     * Returns the number of init functions for this Filter.
+     * @return number of init functions for this Filter
+     */
+    public int getNumInitStages ();
+    
+    /**
+     * Returns the amount of data that a particular init function peeks.
+     * @return peek amount of an init function
+     */
+    public int getInitPeekStage (int stage);
+
+    /**
+     * Returns the amount of data that a particular init function pops.
+     * @return pop amount of an init function
+     */
+    public int getInitPopStage (int stage);
+
+    /**
+     * Returns the amount of data that a particular init function pushes.
+     * @return push amount of an init function
+     */
+    public int getInitPushStage (int stage);
+    
+    /**
+     * Returns a particular init function for this filter.
+     * @return init function
+     */
+    public Object getInitFunctionStage (int stage);
+    
+    /**
+     * Returns the number of work functions this filter has (number of
+     * its phases).
+     * @return number of init functions for this Filter
+     */
     public int getNumWorkPhases ();
+
+    /**
+     * Returns the amount of data that a particular phase of this peeks.
+     * @return peek amount for a particular work function
+     */
     public int getPeekPhase (int phase);
+
+    /**
+     * Returns the amount of data that a particular phase of this pops.
+     * @return pop amount for a particular work function
+     */
     public int getPopPhase (int phase);
+
+    /**
+     * Returns the amount of data that a particular phase of this pushes.
+     * @return push amount for a particular work function.
+     */
     public int getPushPhase (int phase);
+    
+    /**
+     * Returns a particular work function (phase of this filter).
+     * @return work function
+     */
     public Object getWorkFunctionPhase (int phase);
 }

@@ -1,14 +1,14 @@
 package streamit.scheduler.base;
 
-import streamit.scheduler.iriter.FeedbackLoopIter;
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler.iriter./*persistent.*/FeedbackLoopIter;
+import streamit.scheduler.iriter./*persistent.*/Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-import streamit.scheduler.iriter.SplitterIter;
+import streamit.scheduler.iriter./*persistent.*/SplitterNJoinerIter;
 import streamit.scheduler.iriter.JoinerIter;
 
-/* $Id: StreamWithSplitNJoin.java,v 1.1 2002-05-27 03:18:53 karczma Exp $ */
+/* $Id: StreamWithSplitNJoin.java,v 1.2 2002-06-30 04:01:06 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for Streams that contain
@@ -45,7 +45,7 @@ abstract class StreamWithSplitNJoin extends Stream
      * @return structure that holds amount of data 
      * handled by the splitter
      */
-    SplitSteadyFlow getSplitSteadyFlow (SplitterIter splitter)
+    SplitSteadyFlow getSplitSteadyFlow (SplitterNJoinerIter splitter)
     {
         // not tested yet.
         ASSERT (false);
@@ -73,7 +73,7 @@ abstract class StreamWithSplitNJoin extends Stream
      * @return structure that holds amount of data 
      * handled by the joiner
      */
-    JoinSteadyFlow getJoinSteadyFlow (JoinerIter joiner)
+    JoinSteadyFlow getJoinSteadyFlow (SplitterNJoinerIter joiner)
     {
         // not tested yet.
         ASSERT (false);

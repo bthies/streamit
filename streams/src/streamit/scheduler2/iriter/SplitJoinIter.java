@@ -1,8 +1,6 @@
 package streamit.scheduler.iriter;
 
-import streamit.scheduler.iriter.Iterator;
-
-/* $Id: SplitJoinIter.java,v 1.6 2002-05-27 00:11:48 karczma Exp $ */
+/* $Id: SplitJoinIter.java,v 1.7 2002-06-30 04:01:14 karczma Exp $ */
 
 /**
  * <dl>
@@ -17,8 +15,15 @@ import streamit.scheduler.iriter.Iterator;
  * @author  Michal Karczmarek
  */
 
-public interface SplitJoinIter extends IteratorBase, SplitterIter, JoinerIter
+public interface SplitJoinIter extends IteratorBase, SplitterNJoinerIter
 {
+    /**
+     * Returns an Iterator that pointst to the same object as this 
+     * specialized iterator.
+     * @return an Iterator that points to the same object
+     */
+    public Iterator getUnspecializedIter();
+    
     /**
      * Returns the number of children that this SplitJoin has.
      * If some of the children and sinks or joins, they still

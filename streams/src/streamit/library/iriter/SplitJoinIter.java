@@ -20,6 +20,11 @@ public class SplitJoinIter
         return splitjoin;
     }
     
+    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    {
+        return new Iterator(splitjoin);
+    }
+    
     public int getNumChildren ()
     {
         return splitjoin.getNumChildren ();
@@ -42,6 +47,12 @@ public class SplitJoinIter
         }
     }
     
+    public Object getSplitterWork(int nWork)
+    {
+        ASSERT(nWork >= 0 && nWork < getSplitterNumWork ());
+        return  splitjoin.getSplitter();
+    }
+    
     public int getJoinerNumWork ()
     {
         if (splitjoin.getJoiner() instanceof NullJoiner)
@@ -50,6 +61,12 @@ public class SplitJoinIter
         } else {
             return 1;
         }
+    }
+    
+    public Object getJoinerWork(int nWork)
+    {
+        ASSERT(nWork >= 0 && nWork < getJoinerNumWork ());
+        return  splitjoin.getJoiner();
     }
     
     public int[] getSplitPushWeights (int nWork)
@@ -72,6 +89,18 @@ public class SplitJoinIter
     public int getJoinPush (int nWork)
     {
         return splitjoin.getJoiner ().getProduction ();
+    }
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof SplitJoinIter)) return false;
+        SplitJoinIter otherSJ = (SplitJoinIter) other;
+        return otherSJ.getObject() == this.getObject();
+    }
+    
+    public int hashCode()
+    {
+        return splitjoin.hashCode();
     }
 }
 

@@ -2,7 +2,7 @@ package streamit.misc;
 
 import streamit.misc.AssertedClass;
 
-/* $Id: Pair.java,v 1.1 2002-05-24 23:10:36 karczma Exp $ */
+/* $Id: Pair.java,v 1.2 2002-06-30 04:01:01 karczma Exp $ */
 
 /**
  * <dl>
@@ -27,7 +27,7 @@ public class Pair extends AssertedClass
      * Constructor simply stores the two objects.
      * @return none
      */
-    Pair(Object _first, Object _second)
+    public Pair(Object _first, Object _second)
     {
         first = _first;
         second = _second;

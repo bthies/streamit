@@ -1,6 +1,7 @@
 package streamit;
 
 import streamit.scheduler.ScheduleBuffers;
+import streamit.iriter.Iterator;
 
 // the feedback loop
 public class FeedbackLoop extends Stream
@@ -281,17 +282,17 @@ public class FeedbackLoop extends Stream
 
         // between joiner and body
         joiner.getIOField ("output", 0).makePassThrough ();
-        body.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (joiner, body));
+        body.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (new Iterator(this), new Iterator(body)));
 
         // between body and splitter
-        splitter.getIOField ("input", 0).setChannelSize (buffers.getBufferSizeBetween (body, splitter));
+        splitter.getIOField ("input", 0).setChannelSize (buffers.getBufferSizeBetween (new Iterator(body), new Iterator(this)));
         body.getOutputChannel ().makePassThrough ();
 
         // between splitter and loop
-        loop.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (splitter, loop));
+        loop.getInputChannel ().setChannelSize (buffers.getBufferSizeBetween (new Iterator(this), new Iterator(loop)));
 
         // between loop and joiner
-        loop.getOutputChannel ().setChannelSize (buffers.getBufferSizeBetween (loop, joiner));
+        loop.getOutputChannel ().setChannelSize (buffers.getBufferSizeBetween (new Iterator(loop), new Iterator(this)));
 
         // make sure that the input/output channels push data through right away:
         if (getInputChannel () != null) getInputChannel ().makePassThrough ();

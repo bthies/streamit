@@ -1,8 +1,6 @@
 package streamit.scheduler.iriter;
 
-import streamit.scheduler.iriter.Iterator;
-
-/* $Id: FeedbackLoopIter.java,v 1.5 2002-05-27 00:11:48 karczma Exp $ */
+/* $Id: FeedbackLoopIter.java,v 1.6 2002-06-30 04:01:13 karczma Exp $ */
 
 /**
  * <dl>
@@ -17,17 +15,24 @@ import streamit.scheduler.iriter.Iterator;
  * @author  Michal Karczmarek
  */
 
-public interface FeedbackLoopIter extends IteratorBase, SplitterIter, JoinerIter
+public interface FeedbackLoopIter extends IteratorBase, SplitterNJoinerIter
 {
+    /**
+     * Returns an Iterator that pointst to the same object as this 
+     * specialized iterator.
+     * @return an Iterator that points to the same object
+     */
+    public Iterator getUnspecializedIter();
+    
     /**
      * Returns an iterator for the body of the FeedbackLoop.
      * @return iterator for the body of the FeedbackLoop
      */
-    public Iterator getBody ();
+    public Iterator getBodyChild ();
 
     /**
      * Returns an iterator for the loop of the FeedbackLoop.
      * @return iterator for the loop of the FeedbackLoop
      */
-    public Iterator getLoop ();
+    public Iterator getLoopChild ();
 }

@@ -1,11 +1,11 @@
 package streamit.scheduler.base;
 
-import streamit.scheduler.iriter.FeedbackLoopIter;
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler.iriter./*persistent.*/FeedbackLoopIter;
+import streamit.scheduler.iriter./*persistent.*/Iterator;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: FeedbackLoop.java,v 1.3 2002-06-13 22:43:24 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.4 2002-06-30 04:01:05 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for FeedbackLoops.
@@ -26,8 +26,8 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
         feedbackLoop = _feedbackLoop;
         
         // create new objects for the body and the loop
-        body = factory.newFrom (feedbackLoop.getBody ());
-        loop = factory.newFrom (feedbackLoop.getLoop ());
+        body = factory.newFrom (feedbackLoop.getBodyChild ());
+        loop = factory.newFrom (feedbackLoop.getLoopChild ());
         
         // compute my steady schedule
         // my children already have computed their steady schedules,

@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: IteratorBase.java,v 1.1 2002-05-25 00:29:36 karczma Exp $ */
+/* $Id: IteratorBase.java,v 1.2 2002-06-30 04:01:14 karczma Exp $ */
 
 /**
  * <dl>
@@ -24,4 +24,29 @@ public interface IteratorBase
      * Returns the object the iterator points to.
      */
     public Object getObject ();
+
+    /**
+     * Returns equality between this and another iterator.
+     * This function must check that the two iterators are equivalent
+     * (point to the same stream), and not just compare the references.
+     * 
+     * This function is already defined in Object.  It is included in this
+     * interface description to indicate that the iterators need to
+     * override the default function
+     * 
+     * @return true if this iterator is the same as the other iterator
+     */
+    public boolean equals(Object other);
+    
+    /**
+     * Returns a hash code of an iterator.  If two iterators are equivalent,
+     * they must return the same value.
+     *
+     * This function is already defined in Object.  It is included in this
+     * interface description to indicate that the iterators need to
+     * override the default function
+     * 
+     * @return hash code for this iterator
+     */
+    public int hashCode();
 }

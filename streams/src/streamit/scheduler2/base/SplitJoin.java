@@ -1,10 +1,10 @@
 package streamit.scheduler.base;
 
-import streamit.scheduler.iriter.SplitJoinIter;
+import streamit.scheduler.iriter./*persistent.*/SplitJoinIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: SplitJoin.java,v 1.4 2002-06-14 15:28:47 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.5 2002-06-30 04:01:06 karczma Exp $ */
 
 /**
  * Computes some basic steady state data for SplitJoins.

@@ -20,12 +20,17 @@ public class FeedbackLoopIter
         return feedback;
     }
     
-    public streamit.scheduler.iriter.Iterator getBody ()
+    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
+    {
+        return new Iterator(feedback);
+    }
+    
+    public streamit.scheduler.iriter.Iterator getBodyChild ()
     {
         return new Iterator (feedback.getBody ());
     }
 
-    public streamit.scheduler.iriter.Iterator getLoop ()
+    public streamit.scheduler.iriter.Iterator getLoopChild ()
     {
         return new Iterator (feedback.getLoop ());
     }
@@ -42,6 +47,12 @@ public class FeedbackLoopIter
         }
     }
     
+    public Object getSplitterWork(int nWork)
+    {
+        ASSERT(nWork >= 0 && nWork < getSplitterNumWork ());
+        return  feedback.getSplitter();
+    }
+    
     public int getJoinerNumWork ()
     {
         if (feedback.getJoiner() instanceof NullJoiner)
@@ -50,6 +61,12 @@ public class FeedbackLoopIter
         } else {
             return 1;
         }
+    }
+    
+    public Object getJoinerWork(int nWork)
+    {
+        ASSERT(nWork >= 0 && nWork < getJoinerNumWork ());
+        return  feedback.getJoiner();
     }
     
     public int[] getSplitPushWeights (int nWork)
@@ -72,6 +89,18 @@ public class FeedbackLoopIter
     public int getJoinPush (int nWork)
     {
         return feedback.getJoiner ().getProduction ();
+    }
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof FeedbackLoopIter)) return false;
+        FeedbackLoopIter otherLoop = (FeedbackLoopIter) other;
+        return otherLoop.getObject() == this.getObject();
+    }
+    
+    public int hashCode()
+    {
+        return feedback.hashCode();
     }
 }
 

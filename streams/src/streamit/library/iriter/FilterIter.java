@@ -18,47 +18,43 @@ public class FilterIter
         return filter;
     }
 
-    public int getNumInitStages ()
+    public streamit.scheduler.iriter.Iterator getUnspecializedIter()
     {
-        // in the library, there is only 1 stage, ever
-        return 1;
+        return new Iterator(filter);
     }
     
-    public int getInitPeekStage (int phase)
+    public int getNumInitStages ()
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        // library doesn't access the tape in init
+        // in the library, there are no init stages - initialization
+        // is already done!
+        return 0;
+    }
+    
+    public int getInitPeekStage (int stage)
+    {
+        // library doesn't have an init stage!
+        ASSERT (false);
         return 0;
     }
 
-    public int getInitPopStage (int phase)
+    public int getInitPopStage (int stage)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        // library doesn't access the tape in init
+        // library doesn't have an init stage!
+        ASSERT (false);
         return 0;
     }
     
-    public int getInitPushStage (int phase)
+    public int getInitPushStage (int stage)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        // library doesn't access the tape in init
+        // library doesn't have an init stage!
+        ASSERT (false);
         return 0;
     }
     
-    public Object getInitFunctionStage (int phase)
+    public Object getInitFunctionStage (int stage)
     {
-        // library has only one phase!
-        ASSERT (phase == 0);
-        
-        // just return null
-        // it doesn't matter what gets returned, because init
-        // functions do not access the tape in the library
+        // library doesn't have an init stage!
+        ASSERT (false);
         return null;
     }
     
@@ -101,5 +97,17 @@ public class FilterIter
         // since the library has only one stage, the filter
         // will uniquely identify which function is meant
         return filter;
+    }
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof FilterIter)) return false;
+        FilterIter otherFilter = (FilterIter) other;
+        return otherFilter.getObject() == this.getObject();
+    }
+    
+    public int hashCode()
+    {
+        return filter.hashCode();
     }
 }

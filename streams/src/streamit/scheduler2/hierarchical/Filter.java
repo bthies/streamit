@@ -1,8 +1,8 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: Filter.java,v 1.2 2002-06-13 22:43:28 karczma Exp $ */
+/* $Id: Filter.java,v 1.3 2002-06-30 04:01:10 karczma Exp $ */
 
-import streamit.scheduler.iriter.FilterIter;
+import streamit.scheduler.iriter./*persistent.*/FilterIter;
 import streamit.scheduler.Schedule;
 
 /**
@@ -90,6 +90,11 @@ abstract public class Filter
         return algorithm.getPhasingInitSchedule ();
     }
     
+    public Schedule getInitSchedule ()
+    {
+        return algorithm.getInitSchedule();
+    }
+    
     public int getNumSteadyPhases()
     {
         return algorithm.getNumSteadyPhases();
@@ -118,5 +123,10 @@ abstract public class Filter
     public PhasingSchedule getPhasingSteadySchedule()
     {
         return algorithm.getPhasingSteadySchedule ();
+    }
+    
+    public Schedule getSteadySchedule ()
+    {
+        return algorithm.getSteadySchedule();
     }
 }

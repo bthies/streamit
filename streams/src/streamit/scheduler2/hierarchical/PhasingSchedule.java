@@ -1,6 +1,6 @@
 package streamit.scheduler.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.2 2002-06-13 22:43:29 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.3 2002-06-30 04:01:10 karczma Exp $ */
 
 import java.util.Vector;
 import streamit.scheduler.Schedule;
@@ -213,9 +213,21 @@ public class PhasingSchedule extends DestroyedClass
      */
     Schedule getSchedule()
     {
-        // better be a single schedule phase
-        ASSERT(schedule != null);
-
-        return schedule;
+        // is this phasing schedule just a wrapper for a real schedule?
+        if (schedule != null)
+        {
+            // yes: return the schedule and be happy
+            return schedule;
+        } else {
+            // now: create a schedule out of my phasing schedule...
+            Schedule sched = new Schedule ();
+            int phase;
+            for (phase = 0; phase < getNumPhases(); phase++)
+            {
+                sched.addSubSchedule(getPhase(phase).getSchedule());
+            }
+            
+            return sched;
+        }
     }
 }

@@ -4,6 +4,7 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.math.BigInteger;
 import streamit.scheduler.ScheduleBuffers;
+import streamit.iriter.Iterator;
 
 // creates a split/join
 public class SplitJoin extends Stream
@@ -319,7 +320,7 @@ public class SplitJoin extends Stream
 
             // init the split channel
             {
-                int splitBufferSize = buffers.getBufferSizeBetween (this, child);
+                int splitBufferSize = buffers.getBufferSizeBetween (new Iterator(this), new Iterator(child));
 
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.
@@ -328,7 +329,7 @@ public class SplitJoin extends Stream
 
             // init the join channel
             {
-                int joinBufferSize = buffers.getBufferSizeBetween (child, this);
+                int joinBufferSize = buffers.getBufferSizeBetween (new Iterator(child), new Iterator(this));
 
                 // if the size of the buffer is zero, there is no corresponding
                 // channel, so don't try to set it.

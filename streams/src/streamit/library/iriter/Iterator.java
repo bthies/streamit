@@ -19,7 +19,7 @@ public class Iterator implements streamit.scheduler.iriter.Iterator
     {
         return stream;
     }
-
+    
     // members of streamit.scheduler.iriter.Iterator
 
     public streamit.scheduler.iriter.FilterIter isFilter()
@@ -49,5 +49,16 @@ public class Iterator implements streamit.scheduler.iriter.Iterator
             return new streamit.iriter.FeedbackLoopIter((FeedbackLoop) stream);
         return null;
     }
-
+    
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof Iterator)) return false;
+        Iterator otherIter = (Iterator) other;
+        return otherIter.getObject() == this.getObject();
+    }
+    
+    public int hashCode()
+    {
+        return stream.hashCode();
+    }
 }

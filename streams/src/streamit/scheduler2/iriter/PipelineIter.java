@@ -2,7 +2,7 @@ package streamit.scheduler.iriter;
 
 import streamit.scheduler.iriter.Iterator;
 
-/* $Id: PipelineIter.java,v 1.3 2002-05-22 00:28:19 karczma Exp $ */
+/* $Id: PipelineIter.java,v 1.4 2002-05-25 00:29:36 karczma Exp $ */
 
 /**
  * <dl>
@@ -17,7 +17,7 @@ import streamit.scheduler.iriter.Iterator;
  * @author  Michal Karczmarek
  */
 
-public interface PipelineIter
+public interface PipelineIter extends IteratorBase
 {
     public int getNumChildren ();
     public Iterator getChild (int n);

@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: FilterIter.java,v 1.3 2002-05-22 00:28:19 karczma Exp $ */
+/* $Id: FilterIter.java,v 1.4 2002-05-25 00:29:35 karczma Exp $ */
 
 /**
  * <dl>
@@ -15,7 +15,7 @@ package streamit.scheduler.iriter;
  * @author  Michal Karczmarek
  */
 
-public interface FilterIter
+public interface FilterIter extends IteratorBase
 {
     public int getNumInitStages ();
     public int getInitPeekStage (int phase);

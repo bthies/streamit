@@ -2,7 +2,7 @@ package streamit.scheduler.iriter;
 
 import streamit.scheduler.iriter.Iterator;
 
-/* $Id: FeedbackLoopIter.java,v 1.3 2002-05-22 00:28:19 karczma Exp $ */
+/* $Id: FeedbackLoopIter.java,v 1.4 2002-05-25 00:29:35 karczma Exp $ */
 
 /**
  * <dl>
@@ -17,7 +17,7 @@ import streamit.scheduler.iriter.Iterator;
  * @author  Michal Karczmarek
  */
 
-public interface FeedbackLoopIter
+public interface FeedbackLoopIter extends IteratorBase
 {
     /**
      * Returns an iterator for the body of the FeedbackLoop.

@@ -2,7 +2,7 @@ package streamit.scheduler.iriter;
 
 import streamit.scheduler.iriter.Iterator;
 
-/* $Id: SplitJoinIter.java,v 1.4 2002-05-24 23:10:33 karczma Exp $ */
+/* $Id: SplitJoinIter.java,v 1.5 2002-05-25 00:29:36 karczma Exp $ */
 
 /**
  * <dl>
@@ -17,7 +17,7 @@ import streamit.scheduler.iriter.Iterator;
  * @author  Michal Karczmarek
  */
 
-public interface SplitJoinIter
+public interface SplitJoinIter extends IteratorBase
 {
     public class SplitJoinWeights extends streamit.misc.DestroyedClass
     {

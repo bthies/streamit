@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: Iterator.java,v 1.3 2002-05-22 00:28:19 karczma Exp $ */
+/* $Id: Iterator.java,v 1.4 2002-05-25 00:29:35 karczma Exp $ */
 
 /**
  * <dl>
@@ -20,7 +20,7 @@ package streamit.scheduler.iriter;
  * @author  Michal Karczmarek
  */
 
-public interface Iterator
+public interface Iterator extends IteratorBase
 {
     /**
      * Checks if the iterator points to a Filter.  If so, returns

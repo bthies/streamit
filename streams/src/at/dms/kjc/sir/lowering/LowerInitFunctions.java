@@ -218,19 +218,22 @@ public class LowerInitFunctions implements StreamVisitor {
     }
 
     /**
-     * Lowers all the SIRInitStatements in <init>, given that the
-     * corresponding structure is <str>, into function calls that the
-     * LIR can recognize.
+     * Lowers all the SIRInitStatements in <list> (a list of
+     * JStatements), given that the corresponding structure is <str>,
+     * into function calls that the LIR can recognize.
      */
-    private void lowerInitStatements(final SIRStream str,
-				     JMethodDeclaration init) {
-	init.accept(new SLIREmptyVisitor() {
-		public void visitInitStatement(SIRInitStatement self,
-					       JExpression[] args,
-					       SIRStream target) {
-		    lowerInitStatement(str, self);
-		}
-	    });
+    private void lowerInitStatements(SIRStream str,
+				     List statements) {
+	// go through statements, looking for SIRInitStatement
+	for (int i=0; i<statements.size(); i++) {
+	    Object o = statements.get(i);
+	    if (o instanceof SIRInitStatement) {
+		statements.set(i,
+			       lowerInitStatement(str, (SIRInitStatement)o));
+	    } else if (o instanceof JBlock) {
+		lowerInitStatements(str, ((JBlock)o).getStatementList());
+	    }
+	}
     }
 
     /**
@@ -331,7 +334,7 @@ public class LowerInitFunctions implements StreamVisitor {
 	// translate init statements to function calls with context.
 	// this is modifying <init> without adding/removing extra
 	// stuff.
-	lowerInitStatements(self, init);
+	lowerInitStatements(self, init.getStatementList());
 
 	// now add some things to the init function... 
 

@@ -45,6 +45,7 @@ public class Flattener {
 	LowerInitFunctions.lower(str, schedule);
 
 	// DEBUGGING PRINTING
+	System.out.println("-----------------------------------");
 	IRPrinter printer = new IRPrinter();
 	flatClass.accept(printer);
 	printer.close();

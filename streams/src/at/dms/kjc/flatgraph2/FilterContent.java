@@ -29,11 +29,12 @@ public class FilterContent {
     private double[] array;
     private double constant;
     private int popCount;
+    private int peek;
     private boolean linear;
     private boolean begin;
     private boolean end;
     private int pos;
-    private int total;
+    //private int total; Unneeded
 
     public FilterContent(FilterContent content) {
 	name=content.name;
@@ -51,11 +52,12 @@ public class FilterContent {
 	array=content.array;
 	constant=content.constant;
 	popCount=content.popCount;
+	peek=content.peek;
 	linear=content.linear;
 	begin=content.begin;
 	end=content.end;
 	pos=content.pos;
-	total=content.total;
+	//total=content.total;
     }
 
     public FilterContent(SIRPhasedFilter filter) {
@@ -70,7 +72,7 @@ public class FilterContent {
 	initFunction = filter.getInit();
 	is2stage = steady.length > 1;
 	linear=false;
-	total=1;
+	//total=1;
     }
 
     public FilterContent(UnflatFilter unflat) {
@@ -85,6 +87,7 @@ public class FilterContent {
 	    linear=true;
 	    constant=unflat.constant;
 	    popCount=unflat.popCount;
+	    peek=array.length;
 	    int mod=array.length%popCount;
 	    if(mod!=0) {
 		final int len=array.length+popCount-mod;
@@ -95,7 +98,7 @@ public class FilterContent {
 	    begin=true;
 	    end=true;
 	    pos=0;
-	    total=1;
+	    //total=1;
 	    //methods=filter.getMethods(); //Keep nonlinear rep
 	    //steady=filter.getPhases(); //Keep nonlinear rep
 	    //fields=filter.getFields(); //Keep nonlinear rep
@@ -154,13 +157,13 @@ public class FilterContent {
 	return pos;
     }
 
-    public void setTotal(int total) {
-	this.total=total;
-    }
+    /*public void setTotal(int total) {
+      this.total=total;
+      }*/
 
-    public int getTotal() {
-	return total;
-    }
+    /*public int getTotal() {
+      return total;
+      }*/
 
     public double[] getArray() {
 	return array;
@@ -174,6 +177,10 @@ public class FilterContent {
 	return popCount;
     }
 
+    public int getPeek() {
+	return peek;
+    }
+
     public boolean isTwoStage() 
     {
 	return is2stage;
@@ -183,7 +190,7 @@ public class FilterContent {
 	if(array==null)
 	    return name;
 	else {
-	    if(true)
+	    if(false)
 		return name+" ["+array.length+","+popCount+"]";
 	    else {
 		StringBuffer out=new StringBuffer(name);
@@ -205,8 +212,8 @@ public class FilterContent {
 		out.append(end);
 		out.append(",");
 		out.append(pos);
-		out.append(",");
-		out.append(total);
+		//out.append(",");
+		//out.append(total);
 		return out.toString();
 	    }
 	}

@@ -28,12 +28,13 @@ public class Linear extends BufferedCommunication implements Constants {
     private boolean begin;
     private double constant;
     private int popCount;
+    private int peek;
     private int[] idx;
     private int num; //idx.length
     private int topPopNum; //idx.length-1
     private long uin;
     private int pos;
-    
+    private int bufferSize;
 
     public Linear(FilterInfo filterInfo) {
 	super(filterInfo);
@@ -45,6 +46,10 @@ public class Linear extends BufferedCommunication implements Constants {
 	begin=content.getBegin();
 	constant=content.getConstant();
 	popCount=content.getPopCount();
+	peek=content.getPeek();
+	bufferSize=filterInfo.remaining;
+	if(filterInfo.initMult>0)
+	    bufferSize+=peek-popCount;
 	//Can be made better
 	assert array.length<=regs.length-array.length/popCount-1:"Not enough registers for coefficients";
 	num=array.length/popCount;
@@ -52,7 +57,6 @@ public class Linear extends BufferedCommunication implements Constants {
 	System.out.println("POS: "+pos);
 	idx=new int[num];
 	topPopNum=num-1;
-	System.out.println("TOPPOPNUM: "+topPopNum);
 	for(int i=0,j=0;j<num;i+=popCount,j++) {
 	    //System.err.println("Adding idx: "+i);
 	    idx[j]=i;
@@ -176,7 +180,11 @@ public class Linear extends BufferedCommunication implements Constants {
 	body[body.length-4]=inline;
 	//Preloop
 	final int turns=pos*num;
+	//final int extra=bufferSize-popCount*(turns+num-2); //How many extra before switching from peekbuffer to network
+	//final int extraTurns=(int)Math.ceil(((double)extra)/popCount)+1;
 	if(begin) {
+	    //System.out.println("STATS: "+popCount+" "+pos+" "+num+" "+turns+" "+topPopNum);
+	    System.out.println("EXTRA: "+bufferSize);
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
@@ -202,13 +210,20 @@ public class Linear extends BufferedCommunication implements Constants {
 			    }
 			}
 		}
-	    }
-	    //TODO: Handle Remaining Items
-	    for(int j=0;j<popCount;j++)
-		for(int k=topPopNum;k>=0;k--) {
-		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-		}
+		//TODO: Handle Remaining Items
+		
+
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
+	    } else
+		for(int j=0;j<popCount;j++)
+		    for(int k=topPopNum;k>=0;k--) {
+			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		    }
 	} else {
 	    for(int i=0;i<=topPopNum;i++)
 		for(int j=0;j<popCount;j++)

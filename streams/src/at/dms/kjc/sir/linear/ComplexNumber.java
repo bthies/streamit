@@ -9,11 +9,13 @@ package at.dms.kjc.sir.linear;
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
  *
- * $Id: ComplexNumber.java,v 1.2 2002-08-12 20:15:51 aalamb Exp $
+ * $Id: ComplexNumber.java,v 1.3 2002-08-14 18:13:19 aalamb Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
     private final double imaginaryPart;
+
+    public static final ComplexNumber ZERO = new ComplexNumber(0,0);
     
     /** Create a complex number with real part re and imaginary part im **/
     public ComplexNumber(double re, double im) {

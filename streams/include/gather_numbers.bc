@@ -353,19 +353,27 @@ fn dev_gather_numbers_calc(printServiceStruct)
 	      fprintf(outputFile, "Thruput per 10^5: %d\n", 
 		      (100000) / (totalCycles/gSteadyStatePrints));
 	      fprintf(outputFile, "Total Non-Blocked Cycles: %d\n\n", 
-		      (gWorkCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles)));
+		      (gWorkCountTotal));
+	      // The following should not longer be necessary
+	      // - ((gNumProc - gStreamItTilesUsed) * totalCycles)));
 	 
 	      //we need to account for the unused tiles, should show up as jump instructions
 	      fprintf(outputFile, "Instruction Mix:\n");
 	      fprintf(outputFile, "FPU: %d\n", gFpuCountTotal);
 	      fprintf(outputFile, "MEM: %d\n", gMemCountTotal);
-	      fprintf(outputFile, "BRANCH: %d\n", gBrCountTotal - 
-		      ((gNumProc - gStreamItTilesUsed) * totalCycles));
+	      fprintf(outputFile, "BRANCH: %d\n", gBrCountTotal); 
+	      // the following should no longer be necessary
+              //   ((gNumProc - gStreamItTilesUsed) * totalCycles));
 	      fprintf(outputFile, "ADMIN: %d\n", gAdminCountTotal);
 	      fprintf(outputFile, "ALU: %d\n\n", gAluCountTotal);
 	      
+	      //printf("gWorkCountTotal: %d\n", gWorkCountTotal);
+	      //printf("((gNumProc - gStreamItTilesUsed) * totalCycles): %d\n", 
+	      //	     ((gNumProc - gStreamItTilesUsed) * totalCycles));
+
 	      fprintf(outputFile, "workCount* = %d / %d\n", 
-		      (gWorkCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		      gWorkCountTotal,
+		       //- ((gNumProc - gStreamItTilesUsed) * totalCycles)),
 		      gStreamItTiles*totalCycles);
 	      fprintf(outputFile, "Avg MFLOPS: %d\n", (250*gFpuCountTotal)/totalCycles);	   
 	      fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n");
@@ -383,9 +391,9 @@ fn dev_gather_numbers_calc(printServiceStruct)
 		      gStreamItTiles, gStreamItTilesUsed, totalCycles/quitAfter,
 		      ((100000) / (totalCycles/gSteadyStatePrints)),
 		      (250*gFpuCountTotal)/totalCycles,
-		      (gWorkCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
+		      gWorkCountTotal, // - ((gNumProc - gStreamItTilesUsed) * totalCycles)),
 		      gFpuCountTotal, gMemCountTotal, 
-		      gBrCountTotal - ((gNumProc - gStreamItTilesUsed) * totalCycles),
+		      gBrCountTotal, //- ((gNumProc - gStreamItTilesUsed) * totalCycles),
 		      gAdminCountTotal, gAluCountTotal, 
 		      gStreamItTiles*totalCycles);
 	      //we are done getting the numbers, deregister the handler.
@@ -405,8 +413,13 @@ fn dev_gather_numbers_calc(printServiceStruct)
 
 
 	      totalCycles += dif;
+	      if (totalCycles < 0) {
+		printf("\n** Total Cycles Overflow **\n\n");
+	      }
 	      gWorkCountTotal += gWorkCount;
-	      
+	      if (gWorkCountTotal < 0) {
+		printf("\n** Total Work Count Overflow **\n\n");
+	      }
 	      gFpuCountTotal += gFpuCount;
 	      gMemCountTotal += gMemCount;
 	      gBrCountTotal += gBrCount;
@@ -531,10 +544,11 @@ fn setup_bloodgraph(filename, cycles) {
 fn __event_instr_count(hms)
 {
   local instrWord = hms.instrWord;
+  local lWorkCount = gWorkCount;
 
   AtomicIncrement(&gWorkCount);
 
-  if (InstrWord_IsFPU(instrWord))
+   if (InstrWord_IsFPU(instrWord))
   {
     AtomicIncrement(&gFpuCount);
   }

@@ -59,8 +59,10 @@ public class Partitioner {
 	Lifter.lift(str);
 
 	// get the final work estimate
+	/*
 	work = WorkEstimate.getWorkEstimate(str);
 	work.printGraph(str, "work-after.dot");
 	work.getSortedFilterWork().writeToFile("work-after.txt");
+	*/
     }
 }

@@ -2,6 +2,7 @@ package at.dms.kjc.sir.lowering.partition;
 
 import at.dms.kjc.*;
 import at.dms.util.*;
+import at.dms.kjc.raw.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.compiler.*;
@@ -99,11 +100,18 @@ public class WorkEstimate {
 	    SIRContainer parent = filter.getParent();
 	    // get work
 	    int work = ((WorkInfo)entry.getValue()).getTotalWork();
-	    if(parent instanceof SIRSplitJoin)
-		work/=2; //Account for using semiFuse of SplitJoins
+	    if(parent instanceof SIRSplitJoin) {
+		// Account for using semiFuse of SplitJoins.  For the
+		// greedy partitioner, the real work cost of the
+		// container is the increment in work to the next
+		// coarser version of the container.  In this case we
+		// can semi-fuse, each child with its neighbor,
+		// thereby raising the work by this factor.
+		work/=parent.size()/2; 
+	    }
 	    // if it doesn't contain parent, add parent
 	    if (!containerMap.containsKey(parent)) {
-		containerMap.put(parent, new WorkInfo(1, work));
+		containerMap.put(parent, WorkInfo.create(parent, work));
 	    } else {
 		// otherwise, just increment the work
 		((WorkInfo)containerMap.get(parent)).incrementWork(work);
@@ -179,9 +187,11 @@ public class WorkEstimate {
 	    SIROperator obj = (SIROperator)it.next();
 	    if (obj instanceof SIRFilter) {
 		int reps = ((int[])executionCounts.get(obj))[0];
-		int work = WorkVisitor.getWork((SIRFilter)obj);
-		workMap.put(obj, new WorkInfo(reps,work));
-		toplevelWork += reps*work;
+		//int work = RawWorkEstimator.estimateWork((SIRFilter)obj); 
+		int workEstimate = WorkVisitor.getWork((SIRFilter)obj);
+		WorkInfo wi = WorkInfo.create((SIRFilter)obj,reps,workEstimate);
+		workMap.put(obj, wi);
+		toplevelWork += reps*wi.getTotalWork();
 	    }
 	}
     }

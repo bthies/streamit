@@ -61,7 +61,8 @@ class WorkList extends java.util.LinkedList {
 	for (int i=title1.length(); i<max; i++) {
 	    out.print(" ");
 	}
-	out.println("\t" + "Reps" + "\t" + "Work" + "\t" + "TotalWork");
+	out.println("\t" + "Reps" + "\t" + "Measured Work" + "\t" + "Estimated Work" +
+		    "\t" + "(Measured-Estimated)/Measured" + "\t" + "Total Measured Work");
 	for (int i=size()-1; i>=0; i--) {
 	    SIRStream str = (SIRStream)((Map.Entry)super.get(i)).getKey();
 	    WorkInfo workInfo = (WorkInfo)((Map.Entry)super.get(i)).getValue();
@@ -69,7 +70,9 @@ class WorkList extends java.util.LinkedList {
 	    for (int j=str.getIdent().length(); j<max; j++) {
 		out.print(" ");
 	    }
-	    out.println("\t" + workInfo.getReps() + "\t" + workInfo.getUnitWork() + "\t" + workInfo.getTotalWork());
+	    out.println("\t" + workInfo.getReps() + "\t" + workInfo.getUnitWork() + "\t" + workInfo.getInexactUnitWork() + 
+			"\t" + (((float)workInfo.getUnitWork()-(float)workInfo.getInexactUnitWork())/(float)workInfo.getUnitWork()) + 
+			"\t" + workInfo.getTotalWork());
 	}
 	out.close();
     }

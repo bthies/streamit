@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.23 2003-08-01 18:23:25 dmaze Exp $
+ * $Id: CompilerInterface.java,v 1.24 2003-09-23 20:40:16 dmaze Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -37,6 +37,11 @@ public class CompilerInterface {
     public static final int DPSCALE            = 0x400000;
     public static final int LINEARPARTITION    = 0x800000;
     public static final int TOKOPI             = 0x1000000;
+    public static final int ALTCODEGEN         = 0x2000000;
+    public static final int DESTROYFIELDARRAY  = 0x4000000;
+    public static final int RATEMATCH          = 0x8000000;
+    public static final int WBS                = 0x10000000;
+    public static final int SIMULATEWORK       = 0x20000000;
     
     // Options
     public static final String OPTION_STREAMIT           = "--streamit";
@@ -61,6 +66,11 @@ public class CompilerInterface {
 
     public static final String OPTION_LINEARPARTITION    = "--linearpartition";
     public static final String OPTION_TOKOPI             = "--tokopi";
+    public static final String OPTION_ALTCODEGEN         = "--altcodegen";
+    public static final String OPTION_DESTROYFIELDARRAY  = "--destroyfieldarray";
+    public static final String OPTION_RATEMATCH          = "--ratematch";
+    public static final String OPTION_WBS                = "--wbs";
+    public static final String OPTION_SIMULATEWORK       = "--simulatework";
 
     // number of steady-state executions to run program for if
     // gathering numbers from within the compiler
@@ -346,6 +356,36 @@ public class CompilerInterface {
 	    options[numOptions] = OPTION_LINEARPARTITION;
 	    numOptions++;
 	}
+
+        // alternate RAW code generation
+        if ((flags & ALTCODEGEN) == ALTCODEGEN) {
+            options[numOptions] = OPTION_ALTCODEGEN;
+            numOptions++;
+        }
+        
+        // convert arrays in structures to fields
+        if ((flags & DESTROYFIELDARRAY) == DESTROYFIELDARRAY) {
+            options[numOptions] = OPTION_DESTROYFIELDARRAY;
+            numOptions++;
+        }
+        
+        // rate match adjacent filters
+        if ((flags & RATEMATCH) == RATEMATCH) {
+            options[numOptions] = OPTION_RATEMATCH;
+            numOptions++;
+        }
+        
+        // work-based simulator
+        if ((flags & WBS) == WBS) {
+            options[numOptions] = OPTION_WBS;
+            numOptions++;
+        }
+        
+        // work simulation
+        if ((flags & SIMULATEWORK) == SIMULATEWORK) {
+            options[numOptions] = OPTION_SIMULATEWORK;
+            numOptions++;
+        }
 
 	// copy over the options that were used into an options
 	// array that is the correct size

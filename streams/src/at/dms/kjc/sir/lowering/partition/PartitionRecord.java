@@ -32,16 +32,20 @@ public class PartitionRecord {
 
     /**
      * Add operator <op> with work amount <k> to this partition.
+     * Requires that this does not already contain <op>.
      */
     public void add(SIROperator op, int k) {
+	Utils.assert(!this.contains(op));
 	contents.add(op);
 	work += k;
     }
 
     /**
-     * Add container <cont> to this.
+     * Add container <cont> to this. Requires that this does not
+     * already contain <cont>.
      */
     public void add(SIRContainer cont) {
+	Utils.assert(!this.contains(cont));
 	add(cont, 0);
     }
 
@@ -60,12 +64,19 @@ public class PartitionRecord {
     }
 
     /**
+     * Returns whether or not this partition contains <op>.
+     */
+    public boolean contains(SIROperator op) {
+	return contents.contains(op);
+    }
+
+    /**
      * Given that <partitions> is a list of PartitionRecords, returns
      * a hashmap in which each SIROperator that's in one of the
      * partitions is mapped to a STRING representing the list of
      * partitions it's assigned to.
      */
-    public static HashMap asMap(LinkedList partitions) {
+    public static HashMap asStringMap(LinkedList partitions) {
 	HashMap result = new HashMap();
 	for (int i=0; i<partitions.size(); i++) {
 	    PartitionRecord pr = (PartitionRecord)partitions.get(i);
@@ -74,6 +85,30 @@ public class PartitionRecord {
 		    result.put(pr.get(j), result.get(pr.get(j))+","+i);
 		} else {
 		    result.put(pr.get(j), ""+i);
+		}
+	    }
+	}
+	return result;
+    }
+
+    /**
+     * Given that <partitions> is a list of PartitionRecords, returns
+     * a hashmap in which each SIROperator that's in one of the
+     * partitions is mapped to an Integer representing the list of
+     * partitions it's assigned to.  
+     *
+     * Unlike asStringMap, requires that each operator is mapped to
+     * only one partition.
+     */
+    public static HashMap asIntegerMap(LinkedList partitions) {
+	HashMap result = new HashMap();
+	for (int i=0; i<partitions.size(); i++) {
+	    PartitionRecord pr = (PartitionRecord)partitions.get(i);
+	    for (int j=0; j<pr.size(); j++) {
+		if (result.containsKey(pr.get(j))) {
+		    Utils.fail("This operator is mapped to two partitions in asIntegerMap: " + pr.get(j));
+		} else {
+		    result.put(pr.get(j), new Integer(i));
 		}
 	    }
 	}

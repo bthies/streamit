@@ -61,7 +61,8 @@ public class FuseSplit {
 		if (partition.get(i)>1) {
 		    for (int j=partition.getFirst(i); j<=partition.getLast(i); j++) {
 			if (!(sj.get(j) instanceof SIRFilter)) {
-			    System.err.println("Tried to fuse non-filter in SJ; returning original SJ.");
+			    StreamItDot.printGraph(sj, "debug.dot");
+			    System.err.println("Tried to fuse non-filter in SJ; returning original SJ: " + sj.getName());
 			    return sj;
 			}
 		    }

@@ -102,7 +102,7 @@ public class Lifter implements StreamVisitor {
 	// consider only if we have have a parent that's a pipe or if
 	// we only have a single child
 	if (parent!=null && (str.size()==1 || parent instanceof SIRPipeline)) {
-	    
+
 	    // this assumes that we're not worrying about fields and
 	    // methods in containers -- otherwise we need renaming and
 	    // better handling of possible init function arguments?
@@ -110,7 +110,8 @@ public class Lifter implements StreamVisitor {
 			 "Not expecting to find fields in container in Lifter.");
 	    Utils.assert(str.getMethods()==null || str.getMethods().length==0 ||
 			 (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()),
-			 "Not expecting to find methods in container in Lifter.");
+			 "Not expecting to find methods in container in Lifter, but found " + str.getMethods().length + " in " + str.getName() + ":\n" 
+			 + str.getMethods()[0]);
 	    
 	    int index = parent.indexOf(str);
 	    for (int i=0; i<str.size(); i++) {

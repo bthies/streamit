@@ -214,7 +214,7 @@ public class FusePipe {
 	
 	if(pipe.get(0) instanceof SIRTwoStageFilter) {
 	    if (initWork!=null) {
-		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter");
+		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter (don't fully support 2-stage fusion yet)");
 	    }
 	    initWork = ((SIRTwoStageFilter)pipe.get(0)).getInitWork();
 	}

@@ -2,7 +2,7 @@
 #
 # rt-results.py: present QMTest results in CAG RT
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: rt-results.py,v 1.3 2003-12-17 19:22:02 dmaze Exp $
+# $Id: rt-results.py,v 1.4 2003-12-17 20:48:05 dmaze Exp $
 
 import os
 import os.path
@@ -179,7 +179,9 @@ $Tickets->LimitQueue(VALUE => "StreamIt Bugs", OPERATOR => "=");
 while (my $t = $Tickets->Next) {
   my $Values = $t->CustomFieldValues("Regtest");
   while (my $v = $Values->Next) {
-    push @{$TestTickets->{$v->Content}}, $t;
+    my $Content = $v->Content;
+    $Content =~ s/[\\r\\n]//g;
+    push @{$TestTickets->{$Content}}, $t;
   }
 }
 </%INIT>\n""")

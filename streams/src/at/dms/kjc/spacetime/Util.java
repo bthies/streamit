@@ -5,6 +5,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import java.util.List;
+import java.util.Collection;
 import at.dms.kjc.sir.lowering.*;
 import java.util.ListIterator;
 import java.util.Iterator;
@@ -254,4 +255,12 @@ public class Util {
 	return (RawChip.cacheLineBytes - (i % RawChip.cacheLineBytes)) + i;
     }
     
+    //helper function to add everything in a collection to the set
+    public static void addAll(HashSet set, Collection c) 
+    {
+	Iterator it = c.iterator();
+	while (it.hasNext()) {
+	    set.add(it.next());
+	}
+    }
 }

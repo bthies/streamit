@@ -22,7 +22,7 @@ public class Router
 	int column = src.getY();
 
 	//For now just route the packets in a stupid manner
-	//row then column
+	//x then y
 	if (src.getX() != dst.getX()) {
 	    if (src.getX() < dst.getX()) {
 		for (row = src.getX() + 1; 
@@ -50,5 +50,12 @@ public class Router
 	}
 	return route;
     }
+    
+    public static int distance(ComputeNode src, ComputeNode dst) 
+    {  //return the manhattan distance for the simple router above
+	return Math.abs(src.getX() - dst.getX()) + 
+	    Math.abs(src.getY() - dst.getY());
+    }
+    
 }
 

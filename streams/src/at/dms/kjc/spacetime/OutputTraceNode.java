@@ -4,6 +4,8 @@ import at.dms.util.Utils;
 import at.dms.kjc.*;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Vector;
+import java.util.Iterator;
 
 
 /** 
@@ -18,7 +20,8 @@ public class OutputTraceNode extends TraceNode
     private static int[] EMPTY_WEIGHTS=new int[0];
     private static InputTraceNode[][] EMPTY_DESTS=new InputTraceNode[0][0];
     private Trace parent;
-
+    private Iterator sortedOutputs;
+    
     public OutputTraceNode(int[] weights,
 			   InputTraceNode[][] dests) {
 	this.parent = parent;
@@ -136,4 +139,39 @@ public class OutputTraceNode extends TraceNode
 	return (weights.length == 1 &&
 		dests[0].length == 1);
     }
+    
+    /** return an iterator that iterates over the 
+     * inputtracenodes in descending order of the number
+     *  of items sent to the inputtracenode
+     **/
+    public Iterator getSortedOutputs() 
+    {
+	if (sortedOutputs == null) {
+	    //if there are no dest just return an empty iterator
+	    if (weights.length == 0) 
+		sortedOutputs = getDestSet().iterator();
+	    //just do a simple linear insert over the dests
+	    //only has to be done once
+	    Vector sorted = new Vector();
+	    Iterator dests = getDestSet().iterator();
+	    //add one element
+	    sorted.add(dests.next());
+	    while (dests.hasNext()) {
+		InputTraceNode current = (InputTraceNode)dests.next();
+		for (int i = 0; i < sorted.size(); i++) {
+		    //if this is the correct place to insert it, 
+		    //add it and break
+		    if (getWeight(current) > 
+			getWeight((InputTraceNode)sorted.get(i))) {
+			sorted.add(i, current);
+			break;
+		    }
+		    
+		}
+	    }
+	    sortedOutputs = sorted.iterator();
+	}
+	return sortedOutputs;
+    }
+    
 }

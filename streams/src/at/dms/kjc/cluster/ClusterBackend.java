@@ -159,20 +159,29 @@ public class ClusterBackend {
 	streamit.scheduler2.iriter.Iterator lastIter = 
 	    IterFactory.createIter(last);	
 
-	streamit.scheduler2.SDEPData sdep = cscheduler.computeSDEP(firstIter, lastIter);
-
-	System.out.println("\n");
-	System.out.println("Source Init Phases: "+sdep.getNumSrcInitPhases());
-	System.out.println("Destn. Init Phases: "+sdep.getNumDstInitPhases());
-	System.out.println("Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
-	System.out.println("Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
 	
 
-	for (int t = 0; t < 20; t++) {
-	    int phase = sdep.getSrcPhase4DstPhase(t);
-	    int phaserev = sdep.getDstPhase4SrcPhase(t);
-	    System.out.println("sdep ["+t+"] = "+phase+
-			       " reverse_sdep["+t+"] = "+phaserev);
+	streamit.scheduler2.SDEPData sdep;
+
+	try {
+	    sdep = cscheduler.computeSDEP(firstIter, lastIter);
+
+	    System.out.println("\n");
+	    System.out.println("Source Init Phases: "+sdep.getNumSrcInitPhases());
+	    System.out.println("Destn. Init Phases: "+sdep.getNumDstInitPhases());
+	    System.out.println("Source Steady Phases: "+sdep.getNumSrcSteadyPhases());
+	    System.out.println("Destn. Steady Phases: "+sdep.getNumDstSteadyPhases());
+	    
+	    
+	    for (int t = 0; t < 20; t++) {
+		int phase = sdep.getSrcPhase4DstPhase(t);
+		int phaserev = sdep.getDstPhase4SrcPhase(t);
+		System.out.println("sdep ["+t+"] = "+phase+
+				   " reverse_sdep["+t+"] = "+phaserev);
+	    }
+
+	} catch (streamit.scheduler2.constrained.NoPathException ex) {
+
 	}
 
 	DoSchedules.findSchedules(selfIter, firstIter, str);

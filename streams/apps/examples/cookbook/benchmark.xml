@@ -1,0 +1,37 @@
+<benchmark>
+  <name>cookbook</name>
+  <desc>Source code from the StreamIt Cookbook</desc>
+  <description>
+These are the examples in the StreamIt Cookbook.
+  </description>
+  <implementations>
+    <impl lang="StreamIt">
+      <desc>Minimal program, section 2.1</desc>
+      <file>Minimal.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Moving average filter, section 2.2</desc>
+      <file>MovingAverage.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Low-pass filter, section 2.3</desc>
+      <file>LPFProgram.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Band-pass filter, section 2.4</desc>
+      <file>BPFProgram.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Equalizer, section 2.5</desc>
+      <file>EqualizerProgram.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Echo effect, section 2.6</desc>
+      <file>EchoProgram.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Fibonacci number generator, section 2.7</desc>
+      <file>FibProgram.str</file>
+    </impl>
+  </implementations>
+</benchmark>

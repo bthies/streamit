@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.52 2005-01-28 00:50:33 janiss Exp $
+# $Id: strc,v 1.53 2005-02-23 20:22:07 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -182,6 +182,8 @@ Options specific to Raw backend:
 + --removeglobals     Inline all functions and turn globals into locals
 + --simulatework, -s  Use simulator for work estimation
 * --spacetime         Use space-time partitioner
+* --spacedynamic      Use the space-muliplexing Raw backend with dynamic rate support
+* --dynamicnet        Use dynamic network for communication for space multplexing raw backend
 * --magicdram         Use magic DRAMs in the space-tile partitioner
   --wbs               Use work-based simulator for communication code
   --steadymul n       For the SpaceTime RAW backend, multiply the steady-state multiplicities by n
@@ -275,6 +277,8 @@ sub get_options
 			    "simulatework|s",
 			    "sjtopipe",
 			    "spacetime!",
+			    "spacedynamic!",
+			    "dynamicnet!",
 			    "statespace!",
 			    "absarray!",
 			    "doloops!",
@@ -550,6 +554,8 @@ sub get_kjc_opts
     $opts{peekratio} && ($kjcopts .= " --peekratio " . $opts{peekratio});
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");
+    $opts{spacedynamic} && ($kjcopts .= " --spacedynamic");
+    $opts{dynamicnet} && ($kjcopts .= " --dynamicnet");
     $opts{magicdram} && ($kjcopts .= " --magicdram");
     $opts{absarray} && ($kjcopts .= " --absarray");
     $opts{doloops} && ($kjcopts .= " --doloops");

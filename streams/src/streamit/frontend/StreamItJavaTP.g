@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.26 2002-08-13 21:11:22 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.27 2002-08-15 14:50:34 dmaze Exp $
  */
 
 header {
@@ -433,6 +433,9 @@ inline_statement returns [String t] { t = ""; }
 	|	t=print_statement
 	|	t=assign_statement
 	|	t=expr_assign_statement
+	|	TK_break { t = "break"; }
+	|	TK_continue { t = "continue"; }
+	|	t=return_statement
 	|	(variable_decl) => t=variable_decl
 	|	(expr_statement) => t=expr_statement
 	;
@@ -520,6 +523,10 @@ print_statement returns [String t] {t = null;}
 assign_statement returns [String t] {t=null; Expression l, x;}
 	: #(ASSIGN l=value_expression x=expression_reduced)
 		{ t = n2j.doAssignment(l, x, symTab); }
+	;
+
+return_statement returns [String t] {t = null; String v = null;}
+	: #(TK_return { t = "return"; } (v=expr { t += " " + v; })?)
 	;
 
 variable_decl returns [String t]

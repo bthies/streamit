@@ -1,0 +1,13 @@
+<benchmark>
+  <name>fft</name>
+  <desc>Generate the FFT of a sequence</desc>
+  <description>
+Does the FFT for a sequence with length equal to a power of two.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>FFT2.str</file>
+    </impl>
+  </implementations>
+</benchmark>

@@ -1,0 +1,13 @@
+<benchmark>
+  <name>fir</name>
+  <desc>FIR filter</desc>
+  <description>
+Uses an FIR filter on an input.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>FIR.str</file>
+    </impl>
+  </implementations>
+</benchmark>

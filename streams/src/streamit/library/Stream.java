@@ -387,7 +387,7 @@ public abstract class Stream extends Operator
     /*************************************************************/
 
     int numExecutions = 0;
-    boolean printdot = false;
+    boolean marksteady = false;
     boolean printsched = false;
 
     int uncompressedSize = 0;
@@ -446,7 +446,7 @@ public abstract class Stream extends Operator
             numExecutions++;
             if (numExecutions == 10000)
             {
-                if (printdot)
+                if (marksteady)
                     System.out.print(".");
                 numExecutions = 0;
             }
@@ -537,9 +537,9 @@ public abstract class Stream extends Operator
                     index++;
                     nIters = Integer.valueOf(args[index]).intValue();
                 }
-                else if (args[index].equals("-printdot"))
+                else if (args[index].equals("-marksteady"))
                 {
-                    printdot = true;
+                    marksteady = true;
                 }
                 else if (args[index].equals("-printsched"))
                 {
@@ -619,7 +619,7 @@ public abstract class Stream extends Operator
             while (nIters != 0)
             {
                 runSchedule(steadySched, 1);
-                if (printdot)
+                if (marksteady)
                     System.out.print("*");
                 if (nIters > 0)
                     nIters--;

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.6 2003-10-02 04:20:22 thies Exp $
+# $Id: strc,v 1.7 2003-10-04 23:33:34 thies Exp $
 #
 
 use strict;
@@ -139,7 +139,7 @@ Options specific to Java library backend:
   --iterations, -i    Specify number of iterations to run
   --norun             Schedule but do not run the program
   --nosched           Run the program in pull mode, not under the scheduler
-  --printdot          Print . at each steady-state execution
+  --marksteady        Print * after each steady-state execution
   --printsched        Dump the program schedule
 EOT
     if ($more) {
@@ -188,7 +188,7 @@ sub get_options
 			    "numbers|N=i",
 			    "partition|a",
 			    "poptopeek|P",
-			    "printdot!",
+			    "marksteady!",
 			    "printsched!",
 			    "print-partitioned-source|print_partitioned_source|c",
 			    "profile!",
@@ -422,7 +422,7 @@ sub get_lib_opts
     $opts{iterations} && ($libopts .= " -i " . $opts{iterations});
     $opts{nosched} && ($libopts .= " -nosched");
     $opts{norun} && ($libopts .= " -norun");
-    $opts{printdot} && ($libopts .= " -printdot");
+    $opts{marksteady} && ($libopts .= " -marksteady");
     $opts{printsched} && ($libopts .= " -printsched");
     return $libopts;
   }

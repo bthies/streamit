@@ -73,7 +73,7 @@ STREAMIT_BACKENDS = \
   at/dms/kjc/sir/lowering/Flattener.class
 ifeq ($(CAG_BUILD),1)
 STREAMIT_BACKENDS += \
-  streamit/eclipse/grapheditor/GraphEncoder.class \
+  streamit/eclipse/grapheditor/graph/GraphEncoder.class \
   at/dms/kjc/spacetime/SpaceTimeBackend.class \
   at/dms/kjc/cluster/ClusterBackend.class
 endif

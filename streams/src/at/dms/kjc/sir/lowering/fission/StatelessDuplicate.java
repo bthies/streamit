@@ -14,6 +14,15 @@ import java.util.*;
  */
 public class StatelessDuplicate {
     /**
+     * Toggle that indicates whether a round-robing splitter should be
+     * used in the resulting splitjoin if pop==peek for the filter
+     * we're fissing.  This seems like it would be a good idea, but it
+     * turns out to usually be faster to duplicate all data and
+     * decimate at the nodes.
+     */
+    private static final boolean USE_ROUNDROBIN_SPLITTER = false;
+    
+    /**
      * The filter we're duplicating.
      */
     private SIRFilter origFilter;
@@ -136,18 +145,16 @@ public class StatelessDuplicate {
 	JMethodDeclaration init = makeSJInit(result);
 
 	// create the splitter
-	/*
-	if (origFilter.getPeekInt()==origFilter.getPopInt()) {
+	if (USE_ROUNDROBIN_SPLITTER && origFilter.getPeekInt()==origFilter.getPopInt()) {
 	    // without peeking, it's a round-robin 
 	    JExpression splitWeight = new JIntLiteral(origFilter.getPopInt());
 	    result.setSplitter(SIRSplitter.
 			       createUniformRR(result, splitWeight));
 	} else {
-	*/
 	    // with peeking, it's just a duplicate splitter
 	    result.setSplitter(SIRSplitter.
 			       create(result, SIRSplitType.DUPLICATE, reps));
-	    //	}
+	}
 
 	// create the joiner
 	int pushCount = origFilter.getPushInt();
@@ -228,11 +235,9 @@ public class StatelessDuplicate {
 	SIRFilter cloned = (SIRFilter)ObjectDeepCloner.deepCopy(origFilter);
 	// if there is no peeking, then we can returned <cloned>.
 	// Otherwise, we need a two-stage filter.
-	/*
-	if (origFilter.getPeekInt()==origFilter.getPopInt()) {
+	if (USE_ROUNDROBIN_SPLITTER && origFilter.getPeekInt()==origFilter.getPopInt()) {
 	    return cloned;
 	} else {
-	*/
 	    SIRTwoStageFilter result = new SIRTwoStageFilter();
 	    result.copyState(cloned);
 	    // make the work function
@@ -243,7 +248,7 @@ public class StatelessDuplicate {
 	    makeDuplicateInitWork(result, i);
 	    // return result
 	    return result;
-	    //	}
+	}
     }
 
     private void setRates(SIRTwoStageFilter filter, int i) { 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.5 2001-10-03 12:32:23 thies Exp $
+ * $Id: JBlock.java,v 1.6 2001-10-12 05:52:19 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -167,6 +167,10 @@ public class JBlock extends JStatement {
      */
     public ListIterator getStatementIterator() {
 	return body.listIterator();
+    }
+
+    public void removeStatement(int i) {
+	body.remove(i);
     }
 
     // <body> containts JStatements

@@ -88,6 +88,16 @@ public class StructureIncludeFile
 		    if (x == 0) network = "Dynamic";
 		    else network = "Static";
 		    
+		    if (x == 0) {
+			//for the dynamic network we must create two push functions
+			//one that sends a header and one that does not,
+			//the one that does not send the header is used by enclosing structs
+			//push functions, only one header is sent and it accounts for the 
+			//total size of the struct
+			 fw.write("inline void pushNested" + network + current.getIdent() + 
+				  "(" + current.getIdent() + "*);\n");
+		    }
+			
 		    fw.write("inline void push" + network + current.getIdent() + 
 			     "(" + current.getIdent() + "*);\n");
 		    fw.write("inline " + current.getIdent() + " pop" + network + 
@@ -115,7 +125,9 @@ public class StructureIncludeFile
 
 	    fw.write("inline " + current.getIdent() + " pop" + network + 
 		     current.getIdent() + "() {\n");
-	    fw.write("\t" + current.getIdent() + " temp;\n");
+	    fw.write("\t" + current.getIdent() + "* temp = (" + 
+		     current.getIdent() + "*)" + 
+		     "malloc(sizeof(" + current.getIdent() + "));\n");
 	    for (int j = 0; j < current.getFields().length; j++) {
 		fw.write("\t//" + current.getFields()[j].getType() + "\n");
 		if (current.getFields()[j].getType().isArrayType()) {
@@ -124,16 +136,16 @@ public class StructureIncludeFile
 		}
 		else if (current.getFields()[j].getType().isClassType()) {
 		 
-		    fw.write("\ttemp." + current.getFields()[j].getVariable().getIdent() +
+		    fw.write("\ttemp->" + current.getFields()[j].getVariable().getIdent() +
 			     " = pop" + network + current.getFields()[j].getType() + "();\n");
 		}
 		else {
 		    fw.write("\t" + Util.networkReceivePrefix(dynamic));
-		    fw.write("temp." + current.getFields()[j].getVariable().getIdent());
+		    fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
 		    fw.write(Util.networkReceiveSuffix(dynamic, current.getFields()[j].getType()) + "\n");
 		}
 	    }
-	    fw.write("\treturn temp;\n}\n");
+	    fw.write("\treturn *temp;\n}\n");
 
 	    //create the pop functions that take a pointer argument
 	    //these are more efficent, we use these when we can
@@ -159,33 +171,61 @@ public class StructureIncludeFile
 	    }
 	    fw.write("}\n");
 	    
-	    //create the push functions
-	    
-	    fw.write("inline void push" + network + current.getIdent() + "(" + current.getIdent() +
-		     "* temp) {\n");
-	    
-	    if (network.equals("Dynamic")) {
-		//we must generate the header for the dynamic network send...
-		fw.write(Util.CGNOINTVAR + " = " + FlatIRToC.DYNMSGHEADER + ";\n");
-	    }
+	    //create the push functions, 
+	    //for the dynamic network we must create two push functions
+	    //one that sends a header and one that does not,
+	    //the one that does not send the header is used by enclosing structs
+	    //push functions, only one header is sent and it accounts for the 
+	    //total size of the struct
+	    for (int funct = 0; funct < 2; funct++) {
+		//if we are generating a dynamic push function that does not need to send a header
+		//set this to "Nested"
+		String dynHeader = "";
+		
+		//the static network only needs one push method
+		if (network.equals("Static") && funct == 1)
+		    break;
+		//set dynHeader to nested if this is dynamic and 2nd function decl
+		if (network.equals("Dynamic") && funct == 1)
+		    dynHeader = "Nested";
 
-	    for (int j = 0; j < current.getFields().length; j++) {
-		//if this field is a struct type, use its method to push the field
-		if (current.getFields()[j].getType().isArrayType()) {
-		    //System.out.println(((CArrayType)current.getFields()[j].getType()).getDims()[0]);
-		    //assert false;
+		fw.write("inline void push" + dynHeader + network + 
+			 current.getIdent() + "(" + current.getIdent() +
+			 "* temp) {\n");
+		
+		if (network.equals("Dynamic") && funct == 0) {
+		    //we must generate the header for the dynamic network send (not the nested version)
+		    fw.write(Util.CGNOINTVAR + " = " + FlatIRToC.DYNMSGHEADER + ";\n");
 		}
-		else if (current.getFields()[j].getType().isClassType()) {
-		    fw.write("push" + network + current.getFields()[j].getType() + "(&temp->" +
-			     current.getFields()[j].getVariable().getIdent() + ");\n");
+		
+		for (int j = 0; j < current.getFields().length; j++) {
+		    //if this field is a struct type, use its method to push the field
+		    if (current.getFields()[j].getType().isArrayType()) {
+			//System.out.println(((CArrayType)current.getFields()[j].getType()).getDims()[0]);
+			//assert false;
+		    }
+		    else if (current.getFields()[j].getType().isClassType()) {
+			//if we have a nested struct in this struct and we are sending the struct
+			//over the dynamic network, we use the push function of the nested struct that
+			//does not send over a header, call this function pushNested***
+			String nested = "";
+			if (network.equals("Dynamic")) {
+			    nested = "Nested";
+			}
+			
+			fw.write("push" + nested + network + current.getFields()[j].getType() + "(&temp->" +
+				 current.getFields()[j].getVariable().getIdent() + ");\n");
+		    }
+		    else {
+			fw.write("\t" + Util.networkSendPrefix(dynamic, current.getFields()[j].getType()));
+			fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
+			fw.write(Util.networkSendSuffix(dynamic) + ";\n");
+		    }
 		}
-		else {
-		    fw.write("\t" + Util.networkSendPrefix(dynamic, current.getFields()[j].getType()));
-		    fw.write("temp->" + current.getFields()[j].getVariable().getIdent());
-		    fw.write(Util.networkSendSuffix(dynamic) + ";\n");
-		}
+		fw.write("}\n");
 	    }
-	    fw.write("}\n");
+	    
+
 	}
     }
     

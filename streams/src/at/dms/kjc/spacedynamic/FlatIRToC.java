@@ -282,7 +282,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    
 	    if (downstream != null) {
 		int size = Util.getTypeSize(ssg.getOutputType(flatNode));
-
+		/*System.out.println(flatNode + " " + layout.getTile(flatNode) + 
+				   " dynamically sends to + " + downstream + " " + 
+				   layout.getTile(downstream) + ", size = " + size);
+		*/
 		print(" " + DYNMSGHEADER + " = construct_dyn_hdr(0, " +
 		      size + ", 0, " +
 		      (layout.getTile(self)).getY() + ", " +

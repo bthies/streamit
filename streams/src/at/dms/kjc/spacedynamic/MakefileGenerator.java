@@ -58,7 +58,7 @@ public class MakefileGenerator
 		
 		fw.write("ATTRIBUTES = IMEM_EXTRA_LARGE\n");
 		fw.write("MEMORY_LAYOUT=FOUR_SIDES\n");
-		fw.write("BTL-DEVICES += -dram_streaming -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
+		fw.write("BTL-DEVICES += -dram lhs -enable_all_sides_for_dram -dram ths -dram bhs \n");
 	    }
 	    
 	    //if we are generating number gathering code, 

@@ -257,8 +257,7 @@ public class StaticStreamGraph
 	while (nextsIt.hasNext()) {
 	    FlatNode source = (FlatNode)nextsIt.next();
 	    FlatNode dest = (FlatNode)nexts.get(source);
-	    assert dest != null;
-	    //System.out.println(dest);
+	    assert dest != null : source.toString();
 	    streamGraph.getParentSSG(dest).addPrev(dest, source);
 	}
 	
@@ -586,6 +585,8 @@ public class StaticStreamGraph
     public void addNext(FlatNode node, FlatNode next) 
     {
 	assert flatNodes.contains(node);
+
+	//System.out.println("Add next " + node + " -> " + next);
 
 	//create a new outputs array with the old outputs + this
 	FlatNode[] oldOutputs = outputs;

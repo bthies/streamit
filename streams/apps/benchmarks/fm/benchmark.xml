@@ -12,7 +12,8 @@ filter is in turn the difference of a pair of low-pass filters.
       <file>fmref.c</file>
     </impl>
     <impl lang="StreamIt" dir="streamit">
-      <file>FMRadio.str</file>
+      <file class="source">FMRadio.str</file>
+      <file class="output">FMRadio.out</file>
     </impl>
   </implementations>
 </benchmark>

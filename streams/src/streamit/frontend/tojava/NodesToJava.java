@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.78 2003-12-15 21:36:27 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.79 2003-12-15 22:51:57 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -506,7 +506,11 @@ public class NodesToJava implements FEVisitor
     
     public Object visitSCSimple(SCSimple creator)
     {
-        String result = "new " + creator.getName() + "(";
+        String result;
+        if (libraryFormat)
+            result = creator.getName() + ".__construct(";
+        else
+            result = "new " + creator.getName() + "(";
         boolean first = true;
         for (Iterator iter = creator.getParams().iterator(); iter.hasNext(); )
         {
@@ -865,6 +869,96 @@ public class NodesToJava implements FEVisitor
         return result.toString();
     }
 
+    /**
+     * For a non-anonymous StreamSpec in the library path, generate
+     * extra functions we need to construct the object.  In the
+     * compiler path, generate an empty constructor.
+     */
+    private String maybeGenerateConstruct(StreamSpec spec)
+    {
+        StringBuffer result = new StringBuffer();
+        
+        // The StreamSpec at this point has no parameters; we need to
+        // find the parameters of the init function.
+        Function init = spec.getInitFunc();
+        // (ASSERT: init != null)
+        List params = init.getParams();
+        
+        // In the library path, generate the __construct() mechanism:
+        if (libraryFormat)
+        {
+            // Generate fields for each of the parameters.
+            for (Iterator iter = params.iterator(); iter.hasNext(); )
+            {
+                Parameter param = (Parameter)iter.next();
+                result.append(indent + "private " +
+                              convertType(param.getType()) +
+                              " __param_" + param.getName() + ";\n");
+            }
+
+            // Generate a __construct() method that saves these.
+            result.append(indent + "public static " + spec.getName() +
+                          " __construct(");
+            boolean first = true;
+            for (Iterator iter = params.iterator(); iter.hasNext(); )
+            {
+                Parameter param = (Parameter)iter.next();
+                if (!first) result.append(", ");
+                first = false;
+                result.append(convertType(param.getType()) + " " +
+                              param.getName());
+            }
+            result.append(")\n" + indent + "{\n");
+            addIndent();
+            result.append(indent + spec.getName() + " __obj = new " +
+                          spec.getName() + "();\n");
+            for (Iterator iter = params.iterator(); iter.hasNext(); )
+            {
+                Parameter param = (Parameter)iter.next();
+                String name = param.getName();
+                result.append(indent + "__obj.__param_" + name + " = " +
+                              name + ";\n");
+            }
+            result.append(indent + "return __obj;\n");
+            unIndent();
+            result.append("}\n");
+            
+            // Generate a callInit() method.
+            result.append(indent + "protected void callInit()\n" +
+                          indent + "{\n");
+            addIndent();
+            result.append(indent + "init(");
+            first = true;
+            for (Iterator iter = params.iterator(); iter.hasNext(); )
+            {
+                Parameter param = (Parameter)iter.next();
+                if (!first) result.append(", ");
+                first = false;
+                result.append("__param_" + param.getName());
+            }
+            result.append(");\n");
+            unIndent();
+            result.append("}\n");
+        }
+        // In the compiler path, generate an empty constructor.
+        else // (!libraryFormat)
+        {
+            result.append(indent + "public " + spec.getName() + "(");
+            boolean first = true;
+            for (Iterator iter = params.iterator(); iter.hasNext(); )
+            {
+                Parameter param = (Parameter)iter.next();
+                if (!first) result.append(", ");
+                first = false;
+                result.append(convertType(param.getType()) + " " +
+                              param.getName());
+            }
+            result.append(")\n" + indent + "{\n" + indent + "}\n");
+        }
+        
+        return result.toString();
+    }
+
     public Object visitStreamSpec(StreamSpec spec)
     {
         String result = "";
@@ -935,6 +1029,9 @@ public class NodesToJava implements FEVisitor
                     }
                 result += ifaces + "\n" + indent + "{\n";
                 addIndent();
+                // If we're in the library backend, we need a construct()
+                // method too; in the compiler backend, a constructor.
+                result += maybeGenerateConstruct(spec);
             }
         }
         else

@@ -1,26 +1,25 @@
-/*
- * FEVisitor.java: visit a tree of front-end nodes
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEVisitor.java,v 1.9 2003-04-15 19:22:17 dmaze Exp $
- */
-
 package streamit.frontend.nodes;
 
 /**
- * A FEVisitor implements part of the "visitor" design pattern for
- * StreamIt front-end nodes.  The pattern basically exchanges type
- * structures for function calls, so a different function in the visitor
- * is called depending on the run-time type of the object being visited.
+ * Visitor interface for StreamIt front-end nodes.  This class
+ * implements part of the "visitor" design pattern for StreamIt
+ * front-end nodes.  The pattern basically exchanges type structures
+ * for function calls, so a different function in the visitor is
+ * called depending on the run-time type of the object being visited.
  * Calling visitor methods returns some value, the type of which
  * depends on the semantics of the visitor in question.  In general,
- * you will create a visitor object, and then pass it to the accept()
- * method of the object in question.
+ * you will create a visitor object, and then pass it to the
+ * <code>FENode.accept()</code> method of the object in question.
+ *
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: FEVisitor.java,v 1.10 2003-05-13 21:45:30 dmaze Exp $
  */
 public interface FEVisitor
 {
     public Object visitExprArray(ExprArray exp);
     public Object visitExprBinary(ExprBinary exp);
     public Object visitExprComplex(ExprComplex exp);
+    public Object visitExprConstBoolean(ExprConstBoolean exp);
     public Object visitExprConstChar(ExprConstChar exp);
     public Object visitExprConstFloat(ExprConstFloat exp);
     public Object visitExprConstInt(ExprConstInt exp);

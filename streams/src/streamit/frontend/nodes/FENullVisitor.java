@@ -1,7 +1,7 @@
 /*
  * FENullVisitor.java: visitor implementation that always returns null
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FENullVisitor.java,v 1.4 2003-04-15 19:22:17 dmaze Exp $
+ * $Id: FENullVisitor.java,v 1.5 2003-05-13 21:45:30 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -18,6 +18,7 @@ public class FENullVisitor implements FEVisitor
     public Object visitExprArray(ExprArray exp) { return null; }
     public Object visitExprBinary(ExprBinary exp) { return null; }
     public Object visitExprComplex(ExprComplex exp) { return null; }
+    public Object visitExprConstBoolean(ExprConstBoolean exp) { return null; }
     public Object visitExprConstChar(ExprConstChar exp) { return null; }
     public Object visitExprConstFloat(ExprConstFloat exp) { return null; }
     public Object visitExprConstInt(ExprConstInt exp) { return null; }

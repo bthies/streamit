@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.18 2003-05-13 19:32:50 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.19 2003-05-13 21:45:30 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -107,6 +107,7 @@ public class FEReplacer implements FEVisitor
             return new ExprComplex(exp.getContext(), real, imag);
     }
     
+    public Object visitExprConstBoolean(ExprConstBoolean exp) { return exp; }
     public Object visitExprConstChar(ExprConstChar exp) { return exp; }
     public Object visitExprConstFloat(ExprConstFloat exp) { return exp; }
     public Object visitExprConstInt(ExprConstInt exp) { return exp; }

@@ -406,6 +406,11 @@ public class FEIRToSIR implements FEVisitor {
     return null;
   }
 
+  public Object visitExprConstBoolean(ExprConstBoolean exp) {
+    debug("In visitExprConstBoolean\n");
+    return new JBooleanLiteral(null, exp.getVal());
+  }
+
   public Object visitExprConstChar(ExprConstChar exp) {
     debug("In visitExprConstChar\n");
     return new JCharLiteral(null, exp.getVal());

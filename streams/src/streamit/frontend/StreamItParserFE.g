@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.28 2003-05-13 21:19:18 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.29 2003-05-13 21:45:28 dmaze Exp $
  */
 
 header {
@@ -517,9 +517,9 @@ constantExpr returns [Expression x] { x = null; }
 	|	pi:TK_pi
 			{ x = new ExprConstFloat(getContext(pi), Math.PI); }
 	|	t:TK_true
-			{ x = new ExprConstInt(getContext(t), 1); }
+			{ x = new ExprConstBoolean(getContext(t), true); }
 	|	f:TK_false
-			{ x = new ExprConstInt(getContext(f), 0); }
+			{ x = new ExprConstBoolean(getContext(f), false); }
 	;
 
 struct_decl returns [TypeStruct ts]

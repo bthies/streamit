@@ -15,7 +15,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.2 2003-06-25 15:43:30 dmaze Exp $
+ * @version $Id: NoRefTypes.java,v 1.3 2003-07-01 15:55:28 dmaze Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -103,6 +103,27 @@ public class NoRefTypes extends FEReplacer
             newTypes.add(remapType(stmt.getType(i)));
         return new StmtVarDecl(stmt.getContext(), newTypes,
                                stmt.getNames(), stmt.getInits());
+    }
+
+    public Object visitStreamSpec(StreamSpec ss)
+    {
+        // Visit the parameter list, then let FEReplacer do the
+        // rest of the work.
+        List newParams = new java.util.ArrayList();
+        for (Iterator iter = ss.getParams().iterator(); iter.hasNext(); )
+        {
+            Parameter param = (Parameter)iter.next();
+            Type type = remapType(param.getType());
+            param = new Parameter(type, param.getName());
+            newParams.add(param);
+        }
+        return super.visitStreamSpec(new StreamSpec(ss.getContext(),
+                                                    ss.getType(),
+                                                    ss.getStreamType(),
+                                                    ss.getName(),
+                                                    newParams,
+                                                    ss.getVars(),
+                                                    ss.getFuncs()));
     }
 
     public Object visitStreamType(StreamType st)

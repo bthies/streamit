@@ -1,6 +1,6 @@
 /* -*- Java -*-
  * Fib.str: Fibonacci number example
- * $Id: Fib.str,v 1.1 2001-09-27 16:58:35 dmaze Exp $
+ * $Id: Fib.java,v 1.1 2001-10-12 15:04:23 thies Exp $
  */
 
 import streamit.*;
@@ -27,11 +27,12 @@ class Fib extends Pipeline
                             Channel output = new Channel(Integer.TYPE, 1);
                             public void work()
                             {
-                                output.push(input.peek(1) + input.peek(0));
+                                output.pushInt(input.peekInt(1) + 
+					       input.peekInt(0));
                                 input.pop();
                             }
                         });
-                    setSplitter(DUPLICATE);
+                    setSplitter(DUPLICATE());
                 }
                 int initPath(int index)
                 {

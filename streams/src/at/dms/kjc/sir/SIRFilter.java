@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.33 2004-01-27 23:13:23 dmaze Exp $
+ * @version $Id: SIRFilter.java,v 1.34 2005-02-17 00:11:26 thies Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -155,6 +155,30 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
      */
     public int getPushInt() {
         return getPhases()[0].getPushInt();
+    }
+
+    /**
+     * Return string representation of pop rate (either int literal
+     * or range, e.g., [1,2,3]).
+     */
+    public String getPopString() {
+        return getPhases()[0].getPopString();
+    }
+
+    /**
+     * Return string representation of peek rate (either int literal
+     * or range, e.g., [1,2,3]).
+     */
+    public String getPeekString() {
+        return getPhases()[0].getPeekString();
+    }
+
+    /**
+     * Return string representation of push rate (either int literal
+     * or range, e.g., [1,2,3]).
+     */
+    public String getPushString() {
+        return getPhases()[0].getPushString();
     }
 
     /* Overridden from SIRStream: */

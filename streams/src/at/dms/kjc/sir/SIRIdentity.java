@@ -145,7 +145,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRIdentity other) {
   super.deepCloneInto(other);
-  other.rate = rate;
+  other.rate = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.rate);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

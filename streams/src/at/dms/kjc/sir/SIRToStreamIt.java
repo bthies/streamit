@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * Dump an SIR tree into a StreamIt program.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SIRToStreamIt.java,v 1.9 2005-01-13 01:49:54 thies Exp $
+ * @version $Id: SIRToStreamIt.java,v 1.10 2005-02-17 00:11:26 thies Exp $
  */
 public class SIRToStreamIt
     extends at.dms.util.Utils
@@ -2017,6 +2017,20 @@ public class SIRToStreamIt
                     params[i].accept(this);
                 }
         print(");");
+    }
+
+    public void visitRangeExpression(SIRRangeExpression self) {
+	print("[");
+	self.getMin().accept(this);
+	print(",");
+	self.getAve().accept(this);
+	print(",");
+	self.getMax().accept(this);
+	print("]");
+    }
+
+    public void visitDynamicToken(SIRDynamicToken self) {
+	print("*");
     }
 
     public void visitPeekExpression(SIRPeekExpression self,

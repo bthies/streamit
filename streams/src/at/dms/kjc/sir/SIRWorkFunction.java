@@ -162,6 +162,42 @@ public class SIRWorkFunction extends Utils
 	return ((JIntLiteral)push).intValue();
     }
 
+    /**
+     * Returns string representation of pop rate (either in literal or
+     * range, like [1,2,3]).
+     */
+    public String getPopString() {
+	if (pop instanceof JLiteral) {
+	    return ""+getPopInt();
+	} else {
+	    return pop.toString();
+	}
+    }
+
+    /**
+     * Returns string representation of peek rate (either in literal or
+     * range, like [1,2,3]).
+     */
+    public String getPeekString() {
+	if (peek instanceof JLiteral) {
+	    return ""+getPeekInt();
+	} else {
+	    return peek.toString();
+	}
+    }
+
+    /**
+     * Returns string representation of push rate (either in literal or
+     * range, like [1,2,3]).
+     */
+    public String getPushString() {
+	if (push instanceof JLiteral) {
+	    return ""+getPushInt();
+	} else {
+	    return push.toString();
+	}
+    }
+
     public String getIdent()
     {
         return "<<work function>>";

@@ -158,7 +158,8 @@ public class RawBackend {
 	
 	//Generate number gathering simulator code
 	if (KjcOptions.numbers > 0) {
-	    SinkUnroller.doit(rawFlattener.top);
+	    // do this on demand from NumberGathering
+	    //SinkUnroller.doit(rawFlattener.top);
 	    if (!NumberGathering.doit(rawFlattener.top)) {
 		System.err.println("Could not generate number gathering code.  Exiting...");
 		System.exit(1);

@@ -17,9 +17,13 @@ import java.util.Hashtable;
 import java.math.BigInteger;
 
 /**
- * This class will unroll and propagate for all sinks 
- * in the stream graph
- **/
+ * This class will unroll and propagate for all sinks in the stream
+ * graph.  NOTE that this will not unroll any for loops freshly unless
+ * they're marked with their "hasUnrolled==false".  This is because in
+ * other places of the compiler, we are careful not to unroll the same
+ * loop twice (if we have a partial unrolling factor.)  Consider using
+ * Unroller.unrollFilter to completely unroll something.
+ */
 public class SinkUnroller extends at.dms.util.Utils 
     implements FlatVisitor, Constants 
 {
@@ -33,27 +37,27 @@ public class SinkUnroller extends at.dms.util.Utils
 	    //do not unroll file writers...
 	    if (node.contents instanceof SIRFileWriter)
 		return; 
-	    //if this is a sink unroll
+	    //if this is a sink, unroll its work funtion
 	    if (((SIRFilter)node.contents).getPushInt() == 0) {
 		System.out.println("Propagating and Unrolling Sink " + 
 				   ((SIRFilter)node.contents).getName()+"...");
-		for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-		    Unroller unroller;
+		FieldProp.doPropagate((SIRStream)node.contents);
+		/*
+		Unroller unroller;
+		do {
 		    do {
-			do {
-			    //unroll
-			    unroller = new Unroller(new Hashtable());
-			    ((SIRFilter)node.contents).getMethods()[i].accept(unroller);
-			} while(unroller.hasUnrolled());
-			//propagate constants 
-			((SIRFilter)node.contents).getMethods()[i].
-			    accept(new Propagator(new Hashtable()));
-			//unroll again
+			//unroll
 			unroller = new Unroller(new Hashtable());
-			((SIRFilter)node.contents).getMethods()[i].accept(unroller);
-		    } while(unroller.hasUnrolled());	
-		}
-
+			((SIRFilter)node.contents).getWork().accept(unroller);
+		    } while(unroller.hasUnrolled());
+		    //propagate constants 
+		    ((SIRFilter)node.contents).getWork().
+			accept(new Propagator(new Hashtable()));
+		    //unroll again
+		    unroller = new Unroller(new Hashtable());
+		    ((SIRFilter)node.contents).getWork().accept(unroller);
+		} while(unroller.hasUnrolled());
+		*/
 	    }
 	}
     }

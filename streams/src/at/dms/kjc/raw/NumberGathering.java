@@ -44,7 +44,14 @@ public class NumberGathering extends at.dms.util.Utils
 	//no control flow
 	//in the work function
 	int prints = CheckPrint.check((SIRFilter)sink.contents);
+	// if we failed, unroll the filter on the loops that we
+	// indicated
+	if (prints==-1) {
+	    SinkUnroller.doit(sink);
+	    prints = CheckPrint.check((SIRFilter)sink.contents);
+	}
 	if (prints < 1) {
+	    System.out.println("Cannot generate number gathering code: Print(s) in control flow");
 	    return false;
 	}
 	
@@ -179,7 +186,6 @@ class CheckPrint extends SLIREmptyVisitor
 	
 	filter.getWork().accept(new CheckPrint());
 	if (printInControlFlow) {
-	    System.out.println("Cannot generate number gathering code: Print(s) in control flow");
 	    return -1;
 	}
 	return prints;
@@ -249,8 +255,25 @@ class CheckPrint extends SLIREmptyVisitor
 	if (incr != null) {
 	    incr.accept(this);
 	}
-	body.accept(this);
-	controlFlow--;
+	// see if we can already infer the number of times this loop executes
+	int numExec = Unroller.getNumExecutions(init, cond, incr, body);
+	if (numExec!=-1) {
+	    // if so, just multiply the prints by the execution count
+	    controlFlow--;
+	    int origPrints = prints;
+	    prints = 0;
+	    body.accept(this);
+	    prints = prints * numExec + origPrints;
+	} else {
+	    // if not, see if there are any prints in the loop anyway
+	    int origPrints = prints;
+	    body.accept(this);
+	    // mark the loop for unrolling if so
+	    if (origPrints<prints) {
+		self.setUnrolled(false);
+	    }
+	    controlFlow--;
+	}
     }
     
     public void visitDoStatement(JDoStatement self,

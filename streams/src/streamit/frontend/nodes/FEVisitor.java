@@ -1,7 +1,7 @@
 /*
  * FEVisitor.java: visit a tree of front-end nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEVisitor.java,v 1.7 2002-09-20 15:09:55 dmaze Exp $
+ * $Id: FEVisitor.java,v 1.8 2003-01-10 18:22:01 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -53,6 +53,7 @@ public interface FEVisitor
     public Object visitStmtIfThen(StmtIfThen stmt);
     public Object visitStmtJoin(StmtJoin stmt);
     public Object visitStmtLoop(StmtLoop stmt);
+    public Object visitStmtPhase(StmtPhase stmt);
     public Object visitStmtPush(StmtPush stmt);
     public Object visitStmtReturn(StmtReturn stmt);
     public Object visitStmtSplit(StmtSplit stmt);

@@ -1,7 +1,7 @@
 /*
  * FENullVisitor.java: visitor implementation that always returns null
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FENullVisitor.java,v 1.2 2002-09-20 15:09:55 dmaze Exp $
+ * $Id: FENullVisitor.java,v 1.3 2003-01-10 18:22:01 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -50,6 +50,7 @@ public class FENullVisitor implements FEVisitor
     public Object visitStmtIfThen(StmtIfThen stmt) { return null; }
     public Object visitStmtJoin(StmtJoin stmt) { return null; }
     public Object visitStmtLoop(StmtLoop stmt) { return null; }
+    public Object visitStmtPhase(StmtPhase stmt) { return null; }
     public Object visitStmtPush(StmtPush stmt) { return null; }
     public Object visitStmtReturn(StmtReturn stmt) { return null; }
     public Object visitStmtSplit(StmtSplit stmt) { return null; }

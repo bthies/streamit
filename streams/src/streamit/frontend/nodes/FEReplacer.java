@@ -1,7 +1,7 @@
 /*
  * FEReplacer.java: run through a front-end tree and replace nodes
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: FEReplacer.java,v 1.11 2003-01-09 22:36:52 dmaze Exp $
+ * $Id: FEReplacer.java,v 1.12 2003-01-10 18:22:01 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -326,6 +326,17 @@ public class FEReplacer implements FEVisitor
             (StreamCreator)stmt.getCreator().accept(this);
         if (newCreator == stmt.getCreator()) return stmt;
         return new StmtLoop(stmt.getContext(), newCreator);
+    }
+
+    public Object visitStmtPhase(StmtPhase stmt)
+    {
+        Expression newFc = (Expression)stmt.getFunCall().accept(this);
+        if (newFc == stmt.getFunCall())
+            return stmt;
+        // We lose if the new expression isn't a function call.
+        if (!(newFc instanceof ExprFunCall))
+            return stmt;
+        return new StmtPhase(stmt.getContext(), (ExprFunCall)newFc);
     }
 
     public Object visitStmtPush(StmtPush stmt)

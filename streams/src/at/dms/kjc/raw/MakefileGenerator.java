@@ -43,9 +43,11 @@ public class MakefileGenerator
 	    Iterator tilesIterator = tiles.iterator();
 	    
 	    fw.write("#-*-Makefile-*-\n\n");
+	    /*
 	    if (KjcOptions.outputs < 0 &&
 		! (KjcOptions.numbers > 0 && NumberGathering.successful))
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
+	    */
             fw.write("ATTRIBUTES = IMEM_LARGE\n");
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
@@ -55,7 +57,8 @@ public class MakefileGenerator
 		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
 		fw.write("EXTRA_BTL_ARGS += -magic_instruction\n ");
 	    }
-	    fw.write("SIM-CYCLES = 500000\n\n");
+	    //fw.write("SIM-CYCLES = 500000\n\n");
+	    fw.write("\n");
 	    //if we are using the magic network, tell btl
 	    if (KjcOptions.magic_net)
 		fw.write("EXTRA_BTL_ARGS += " +
@@ -157,7 +160,7 @@ public class MakefileGenerator
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
 	
 	if (KjcOptions.outputs > 0) 
-	    fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
+	    fw.write("global gstreamitoutputs = " + KjcOptions.outputs + ";\n");
 	
 	if (KjcOptions.decoupled) {
 	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");

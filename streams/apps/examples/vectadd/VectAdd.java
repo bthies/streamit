@@ -106,7 +106,20 @@ class VectAdd extends StreamIt
   { 
     final int N = 10;  
 
-    this.add(new TwoVectSource(N)); 
+    //OptionA: Use a single source 
+    int I[]; 
+    I = new int[2*N];  
+    for (int i=0; i<N; i++) 
+    { 
+      I[2*i] = 2*i; 
+      I[2*i+1] = 2*i+1;  
+    }  
+    this.add(new VectSource(2*N, I));   
+   
+    //OptionB: Use a splitjoin of two sources  
+    //(the O/Ps are different in the two options) 
+    //this.add(new TwoVectSource(N));  
+
     this.add(new VectAddKernel()); 
     this.add(new VectPrinter()); 
   } 

@@ -870,10 +870,11 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	// return a constant if we have it
 	if (newExp.isConstant()) {
-	    if(newExp instanceof JDoubleLiteral) {
-		return ((JDoubleLiteral)newExp).convertType(type,null);
+	    if (type!=newExp.getType()) {
+		return ((JLiteral)newExp).convertType(type,null);
+	    } else {
+		return newExp;
 	    }
-	    return newExp;
 	    //} else {
 	    //return doPromote(expr,expr.convertType(type));
 	} else {
@@ -893,6 +894,8 @@ public class Propagator extends SLIRReplacingVisitor {
 	JExpression newExp = (JExpression)expr.accept(this);
 	if (newExp instanceof JIntLiteral) {
 	    return new JIntLiteral(newExp.intValue()*-1);
+	} else if(newExp instanceof JFloatLiteral) {
+	    return new JFloatLiteral(null,newExp.floatValue()*-1);
 	} else if(newExp instanceof JDoubleLiteral) {
 	    return new JDoubleLiteral(null,newExp.doubleValue()*-1);
 	} else {

@@ -367,7 +367,7 @@ public class StreamItDot implements AttributeStreamVisitor
      * pipelines and splitjoins in LinearDot.
      **/
     public String getClusterString(SIRStream self) {
-	return "subgraph cluster_" + getName() + " {\n label=\"" + self.getIdent() + "\";\n";
+	return "subgraph cluster_" + getName() + " {\n label=\"" + self.getName() + "\";\n";
     }
 
 

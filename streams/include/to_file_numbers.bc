@@ -18,10 +18,14 @@ global gMemCount = 0;
 global gBrCount = 0;
 global gAdminCount = 0;
 global gAluCount = 0;
-
+global gSSNumber = 0;
+global outputFile;
 
 if (FindFunctionInSymbolHash(gSymbolTable, "dev_data_transmitter_init",3) == NULL)
   include("<dev/data_transmitter.bc>");
+
+//open the file to dump the data to
+outputFile = fopen("results.out", "w");
 
 
 //type: 0 = int, 1 = float, can be extended
@@ -161,8 +165,6 @@ fn NG_update() {
     //get the cycle
     Proc_GetCycleCounter(proc, &time_hi, &time_lo);
     
-
-    
     //next print what we want to print 
     dif = time_lo - gNGlastSteady;
     //MFLOPS = 0;
@@ -173,13 +175,26 @@ fn NG_update() {
       //this will exit the thread
       exit_now(0);
     }
-    MFLOPS = (gMHz * gFpuCount) / dif; 
-    printf("SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 
-	   time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
+    if (gSSNumber > 0) {
+      MFLOPS = (gMHz * gFpuCount) / dif; 
+      printf("SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 	 
+	     time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
+      fprintf(outputFile, "SS: cycle = %d, dif = %d, MFLOPS = %d, Outputs = %d, Cycles/Output = %d\n", 	 
+	      time_lo, dif, MFLOPS, gTotalSteadyItems, dif/gTotalSteadyItems);
+    }
+    
+    if (gSSNumber == gTotalSS) {
+      gInterrupted = 1;
+      //this will exit the thread
+      exit_now(0);
+    }
+
     //reset the last steady state
     gNGlastSteady = time_lo;
     //reset the mflops counter
     gFpuCount = 0;
+    //increment the steady state number
+    gSSNumber++;
   }
 }
 

@@ -1,20 +1,39 @@
 #!/usr/local/bin/perl
 
-# > need to fix the memory layout; now the static and dynamic networks terminate at DRAMs (local memories)
-#   - do we connect the DRAMs to GMEM (global memory)?
-#   - what connects to the DMA device?
-# > need to add (virtual) FIFOs within a tile
+# this script creates 
+# - n x m tiles
+#   - each tile consists of a single FU
+#   - each tile is connected to a dcache and an icache
+#
+# - n x m dcache and icache
+#   - cache[i, j] is connected to tile[i, j]
+#   - each cache is connected to all local memories via dedicated network!
+#
+# - single dma processor
+#   - connected to global memory
+#   - connected to all local memories
+#
+# - single global memory
+#   - connected to dma processor
+#   - connected to all local memories
+#
+# - four local memories (north, south, east, west)
+#   - the local memories are connected to global memory
+#   - the routing network terminates with the local memories
+# 
+# xxx {
+# > tile[0,0] is currently designated as master
 # > need to make more parametric
 # > need to verify some of the values used
+# } xxx
 
 $num_rows = 4;
 $num_cols = 4;
 
 $netype[0] = "STATIC";
-$netype[1] = "DYNAMIC";
+#$netype[1] = "DYNAMIC";
 $netnum[0] = "A";
-$netnum[1] = "B";
-
+#$netnum[1] = "B";
 
 
 print "<Root>\n";
@@ -31,14 +50,26 @@ print "\t<AlignmentDouble>32</AlignmentDouble>\n";
 print "\t<BitfieldCrossWord>false</BitfieldCrossWord>\n";
 print "\n";
 
+# declare $num_rowx x $num_cols tiles
+# each tile declares a single functional unit and
+# access to a dedicate cache (data and instruction)
 print "\t<Proc>\n";
 print "\t\t<Name>TILE</Name>\n";
 print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
-print "\t\t<Master><Name></Name></Master>\n";
+# xxx {
+# although in Raw each tile is its own master
+# tile[0, 0] is designated the master for now
+print "\t\t<Master>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>0 0</Index>\n";
+print "\t\t</Master>\n";
+# } xxx
 print "\t\t<SupportsUserCode>false</SupportsUserCode>\n";
 print "\t\t<ContextSwitch>0</ContextSwitch>\n";
 print "\t\t<Multiplexing>0</Multiplexing>\n";
 print "\n";
+# xxx {
+# verify parameters
 print "\t\t<Freq>420</Freq>\n";
 print "\t\t<SupportsChar>true</SupportsChar>\n";
 print "\t\t<SupportsShort>true</SupportsShort>\n";
@@ -64,15 +95,20 @@ print "\t\t\t<LatencyStore>3</LatencyStore>\n";
 print "\t\t\t<LatencyPeek>3</LatencyPeek>\n";
 print "\t\t\t<LatencyPop>3</LatencyPop>\n";
 print "\t\t\t<LatencyPush>3</LatencyPush>\n";
+# } xxx
 print "\n";
 print "\t\t\t<AccessesMem>\n";
 print "\t\t\t\t<Name>DCACHE</Name>\n";
 print "\t\t\t\t<Index>+0 +0</Index>\n";
 print "\t\t\t</AccessesMem>\n";
+# xxx {
+# not consistent with Raw since the architecture 
+# does not have a physical icache and uses softcaching
 print "\t\t\t<AccessesMem>\n";
 print "\t\t\t\t<Name>ICACHE</Name>\n";
 print "\t\t\t\t<Index>+0 +0</Index>\n";
 print "\t\t\t</AccessesMem>\n";
+# }
 print "\t\t</FU>\n";
 print "\n";
 print "\t\t<BranchMispredict>2</BranchMispredict>\n";
@@ -83,138 +119,335 @@ print "\t\t<SIMDSubword>false</SIMDSubword>\n";
 print "\t</Proc>\n";
 print "\n";
 
-print"\t<Proc>\n";
-print"\t\t<Name>DMA</Name>\n";
-print"\t\t<Dimension>1</Dimension>\n";
-print"\t\t<Master>\n";
-print"\t\t\t<Name>TILE</Name>\n";
-print"\t\t\t<Index>*</Index>\n";
-print"\t\t</Master>\n";
-print"\t\t<SupportsUserCode>false</SupportsUserCode>\n";
-print"\t\t<SupportedKernel>\n";
-print"\t\t\t<Name>Move</Name>\n";
-print"\t\t\t<PrologueTime>2</PrologueTime>\n";
-print"\t\t\t<EpilogueTime>2</EpilogueTime>\n";
-print"\t\t\t<InitiationInterval>5</InitiationInterval>\n";
-print"\t\t\t<Latency>10</Latency>\n";
-print"\t\t</SupportedKernel>\n";
-print"\t\t<SupportedKernel>\n";
-print"\t\t\t<Name>StridedScatter</Name>\n";
-print"\t\t\t<PrologueTime>2</PrologueTime>\n";
-print"\t\t\t<EpilogueTime>2</EpilogueTime>\n";
-print"\t\t\t<InitiationInterval>5</InitiationInterval>\n";
-print"\t\t\t<Latency>10</Latency>\n";
-print"\t\t</SupportedKernel>\n";
-print"\t\t<SupportedKernel>\n";
-print"\t\t\t<Name>StridedGather</Name>\n";
-print"\t\t\t<PrologueTime>2</PrologueTime>\n";
-print"\t\t\t<EpilogueTime>2</EpilogueTime>\n";
-print"\t\t\t<InitiationInterval>5</InitiationInterval>\n";
-print"\t\t\t<Latency>10</Latency>\n";
-print"\t\t</SupportedKernel>\n";
-print"\t\t<SupportedKernel>\n";
-print"\t\t\t<Name>IndexScatter</Name>\n";
-print"\t\t\t<PrologueTime>2</PrologueTime>\n";
-print"\t\t\t<EpilogueTime>2</EpilogueTime>\n";
-print"\t\t\t<InitiationInterval>5</InitiationInterval>\n";
-print"\t\t\t<Latency>10</Latency>\n";
-print"\t\t</SupportedKernel>\n";
-print"\t\t<SupportedKernel>\n";
-print"\t\t\t<Name>IndexGather</Name>\n";
-print"\t\t\t<PrologueTime>2</PrologueTime>\n";
-print"\t\t\t<EpilogueTime>2</EpilogueTime>\n";
-print"\t\t\t<InitiationInterval>5</InitiationInterval>\n";
-print"\t\t\t<Latency>10</Latency>\n";
-print"\t\t</SupportedKernel>\n";
-print"\t\t<ContextSwitch>1000</ContextSwitch>\n";
-print"\t\t<Multiplexing>2</Multiplexing>\n";
-print"\t\t<Freq>500</Freq>\n";
-print"\t\t<SupportsChar>false</SupportsChar>\n";
-print"\t\t<SupportsInt>false</SupportsInt>\n";
-print"\t\t<SupportsLong>false</SupportsLong>\n";
-print"\t\t<SupportsFloat>false</SupportsFloat>\n";
-print"\t\t<SupportsDouble>false</SupportsDouble>\n";
-print"\t</Proc>\n";
+print "\t<Proc>\n";
+print "\t\t<Name>DMA</Name>\n";
+print "\t\t<Dimension>1</Dimension>\n";
+print "\t\t<Master>\n";
+# xxx {
+# for now there is a single title designated as master
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>0 0</Index>\n";
+print "\t\t</Master>\n";
+# } xxx
+# xxx {
+# verify parameters
+print "\t\t<SupportsUserCode>false</SupportsUserCode>\n";
+print "\t\t<SupportedKernel>\n";
+print "\t\t\t<Name>Move</Name>\n";
+print "\t\t\t<PrologueTime>2</PrologueTime>\n";
+print "\t\t\t<EpilogueTime>2</EpilogueTime>\n";
+print "\t\t\t<InitiationInterval>5</InitiationInterval>\n";
+print "\t\t\t<Latency>10</Latency>\n";
+print "\t\t</SupportedKernel>\n";
+print "\t\t<SupportedKernel>\n";
+print "\t\t\t<Name>StridedScatter</Name>\n";
+print "\t\t\t<PrologueTime>2</PrologueTime>\n";
+print "\t\t\t<EpilogueTime>2</EpilogueTime>\n";
+print "\t\t\t<InitiationInterval>5</InitiationInterval>\n";
+print "\t\t\t<Latency>10</Latency>\n";
+print "\t\t</SupportedKernel>\n";
+print "\t\t<SupportedKernel>\n";
+print "\t\t\t<Name>StridedGather</Name>\n";
+print "\t\t\t<PrologueTime>2</PrologueTime>\n";
+print "\t\t\t<EpilogueTime>2</EpilogueTime>\n";
+print "\t\t\t<InitiationInterval>5</InitiationInterval>\n";
+print "\t\t\t<Latency>10</Latency>\n";
+print "\t\t</SupportedKernel>\n";
+print "\t\t<SupportedKernel>\n";
+print "\t\t\t<Name>IndexScatter</Name>\n";
+print "\t\t\t<PrologueTime>2</PrologueTime>\n";
+print "\t\t\t<EpilogueTime>2</EpilogueTime>\n";
+print "\t\t\t<InitiationInterval>5</InitiationInterval>\n";
+print "\t\t\t<Latency>10</Latency>\n";
+print "\t\t</SupportedKernel>\n";
+print "\t\t<SupportedKernel>\n";
+print "\t\t\t<Name>IndexGather</Name>\n";
+print "\t\t\t<PrologueTime>2</PrologueTime>\n";
+print "\t\t\t<EpilogueTime>2</EpilogueTime>\n";
+print "\t\t\t<InitiationInterval>5</InitiationInterval>\n";
+print "\t\t\t<Latency>10</Latency>\n";
+print "\t\t</SupportedKernel>\n";
+print "\t\t<ContextSwitch>1000</ContextSwitch>\n";
+print "\t\t<Multiplexing>2</Multiplexing>\n";
+print "\t\t<Freq>500</Freq>\n";
+print "\t\t<SupportsChar>false</SupportsChar>\n";
+print "\t\t<SupportsInt>false</SupportsInt>\n";
+print "\t\t<SupportsLong>false</SupportsLong>\n";
+print "\t\t<SupportsFloat>false</SupportsFloat>\n";
+print "\t\t<SupportsDouble>false</SupportsDouble>\n";
+# } xxx
+print "\t</Proc>\n";
 print "\n";
 
-print"\t<Mem>\n";
-print"\t\t<Name>DCACHE</Name>\n";
-print"\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
-print"\t\t<Subtype>CACHE</Subtype>\n";
-print"\t\t<Size>32768</Size>\n";
+# xxx {
+# declare one FIFO per tile (for now) to emulate inter-processor
+# communication via static routing network in Raw
+print "\t<Mem>\n";
+print "\t\t<Name>VIRTUAL_FIFO</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+print "\t\t<Subtype>FIFO</Subtype>\n";
+print "\t\t<Size>256</Size>\n";
+print "\t\t<FIFOPeek>256</FIFOPeek>\n";
+print "\t</Mem>\n";
 print "\n";
-print"\t\t<CacheContent>DATA</CacheContent>\n";
-print"\t\t<CacheCoherent>false</CacheCoherent>\n";
-print"\t\t<CacheLinesize>32</CacheLinesize>\n";
-print"\t\t<CacheAssociativity>2</CacheAssociativity>\n";
-print"\t\t<CacheWriteback>true</CacheWriteback>\n";
-print"\t</Mem>\n";
+# } xxx
+
+# declare one dcache per tile
+print "\t<Mem>\n";
+print "\t\t<Name>DCACHE</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+print "\t\t<Subtype>CACHE</Subtype>\n";
+print "\t\t<Size>32768</Size>\n";
+print "\n";
+print "\t\t<CacheContent>DATA</CacheContent>\n";
+print "\t\t<CacheCoherent>false</CacheCoherent>\n";
+print "\t\t<CacheLinesize>32</CacheLinesize>\n";
+print "\t\t<CacheAssociativity>2</CacheAssociativity>\n";
+print "\t\t<CacheWriteback>true</CacheWriteback>\n";
+print "\t</Mem>\n";
 print "\n";
 
-print"\t<Mem>\n";
-print"\t\t<Name>ICACHE</Name>\n";
-print"\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
-print"\t\t<Subtype>CACHE</Subtype>\n";
-print"\t\t<Size>32768</Size>\n";
+# xxx {
+# declare one icache per tile although this is not
+# stricly consistent with Raw 
+print "\t<Mem>\n";
+print "\t\t<Name>ICACHE</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+print "\t\t<Subtype>CACHE</Subtype>\n";
+print "\t\t<Size>32768</Size>\n";
 print "\n";
-print"\t\t<CacheContent>INSTRUCTIONS</CacheContent>\n";
-print"\t\t<CacheCoherent>false</CacheCoherent>\n";
-print"\t\t<CacheLinesize>32</CacheLinesize>\n";
-print"\t\t<CacheAssociativity>2</CacheAssociativity>\n";
-print"\t</Mem>\n";
+print "\t\t<CacheContent>INSTRUCTIONS</CacheContent>\n";
+print "\t\t<CacheCoherent>false</CacheCoherent>\n";
+print "\t\t<CacheLinesize>32</CacheLinesize>\n";
+print "\t\t<CacheAssociativity>2</CacheAssociativity>\n";
+print "\t</Mem>\n";
+print "\n";
+# } xxx
+
+# xxx {
+# need terminations for the Raw static and dynamic routing
+# network so use four local memory banks at north (0) east (1)
+# south (2) and west (4)
+print "\t<Mem>\n";
+print "\t\t<Name>LMEM</Name>\n";
+print "\t\t<Dimension>4</Dimension>\n";
+print "\t\t<Subtype>RAM</Subtype>\n";
+print "\t\t<Size>1048576</Size>\n";
+print "\t\t<RAMCoherence>INCOHERENT</RAMCoherence>\n";
+print "\t</Mem>\n";
+print "\n";
+# } xxx
+
+print "\t<Mem>\n";
+print "\t\t<Name>GMEM</Name>\n";
+print "\t\t<Dimension>1</Dimension>\n";
+print "\t\t<Subtype>RAM</Subtype>\n";
+print "\t\t<Size>33554432</Size>\n";
+print "\t\t<RAMCoherence>INCOHERENT</RAMCoherence>\n";
+print "\t</Mem>\n";
 print "\n";
 
-print"\t<Mem>\n";
-print"\t\t<Name>DRAM</Name>\n";
-print"\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
-print"\t\t<Subtype>RAM</Subtype>\n";
-print"\t\t<Size> 1048576</Size>\n";
-print"\t\t<RAMCoherence>INCOHERENT</RAMCoherence>\n";
-print"\t</Mem>\n";
+print "\t<Net>\n";
+print "\t\t<Name>DCACHE_TILE_LINK</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+print "\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>DCACHE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>DCACHE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>1</Latency>\n";
+print "\t\t<Bw>1</Bw>\n";
+# } xxx
+print "\t</Net>\n";
 print "\n";
 
-print"\t<Mem>\n";
-print"\t\t<Name>GMEM</Name>\n";
-print"\t\t<Dimension>1</Dimension>\n";
-print"\t\t<Subtype>RAM</Subtype>\n";
-print"\t\t<Size>33554432</Size>\n";
-print"\t\t<RAMCoherence>INCOHERENT</RAMCoherence>\n";
-print"\t</Mem>\n";
+print "\t<Net>\n";
+print "\t\t<Name>ICACHE_TILE_LINK</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+print "\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>ICACHE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>ICACHE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>1</Latency>\n";
+print "\t\t<Bw>1</Bw>\n";
+# } xxx
+print "\t</Net>\n";
 print "\n";
 
-print"\t<Net>\n";
-print"\t\t<Name>DCACHE_INTRA_TILE_LINK</Name>\n";
-print"\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+
+print "\t<Net>\n";
+print "\t\t<Name>VIRTUAL_FIFO_TILE_LINK</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
 print "\n";
-print"\t\t<Sender>\n";
-print"\t\t\t<Name>ALU</Name>\n";
-print"\t\t\t<Index>+0 +0</Index>\n";
-print"\t\t</Sender>\n";
-print"\t\t<Receiver>\n";
-print"\t\t\t<Name>DCACHE</Name>\n";
-print"\t\t\t<Index>+0 +0</Index>\n";
-print"\t\t</Receiver>\n";
-print"\t\t<Latency>0</Latency>\n";
-print"\t\t<Bw>32</Bw>\n";
-print"\t</Net>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>TILE</Name>\n";
+print "\t\t\t<Index>+0 +0</Index>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>1</Latency>\n";
+print "\t\t<Bw>1</Bw>\n";
+# } xxx
+print "\t</Net>\n";
 print "\n";
 
-print"\t<Net>\n";
-print"\t\t<Name>ICACHE_INTRA_TILE_LINK</Name>\n";
-print"\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
+
+print "\t<Net>\n";
+print "\t\t<Name>CACHE_LMEM_LINK</Name>\n";
+print "\t\t<Dimension>$num_rows $num_cols</Dimension>\n";
 print "\n";
-print"\t\t<Sender>\n";
-print"\t\t\t<Name>ALU</Name>\n";
-print"\t\t\t<Index>+0 +0</Index>\n";
-print"\t\t</Sender>\n";
-print"\t\t<Receiver>\n";
-print"\t\t\t<Name>ICACHE</Name>\n";
-print"\t\t\t<Index>+0 +0</Index>\n";
-print"\t\t</Receiver>\n";
-print"\t\t<Latency>0</Latency>\n";
-print"\t\t<Bw>32</Bw>\n";
-print"\t</Net>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>DCACHE</Name>\n";
+print "\t\t\t<Index>*</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>ICACHE</Name>\n";
+print "\t\t\t<Index>*</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>*</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>DCACHE</Name>\n";
+print "\t\t\t<Index>*</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>ICACHE</Name>\n";
+print "\t\t\t<Index>*</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>*</Index>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>1</Latency>\n";
+print "\t\t<Bw>32</Bw>\n";
+# } xxx
+print "\t</Net>\n";
 print "\n";
+
+
+print "\t<Net>\n";
+print "\t\t<Name>GMEM_DMA_LINK</Name>\n";
+print "\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>GMEM</Name>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>DMA</Name>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>DMA</Name>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>GMEM</Name>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>32</Latency>\n";
+print "\t\t<Bw>16</Bw>\n";
+# } xxx
+print "\t</Net>\n";
+print "\n";
+
+print "\t<Net>\n";
+print "\t\t<Name>GMEM_LMEM_LINK</Name>\n";
+print "\t\t<Dimension>4</Dimension>\n";
+print "\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>GMEM</Name>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>+0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>+0</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>GMEM</Name>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>32</Latency>\n";
+print "\t\t<Bw>16</Bw>\n";
+# } xxx
+print "\t</Net>\n";
+print "\n";
+
+print "\t<Net>\n";
+print "\t\t<Name>LMEM_DMA_LINK</Name>\n";
+print "\t\t<Dimension>4</Dimension>\n";
+print "\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>+0</Index>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Sender>\n";
+print "\t\t\t<Name>DMA</Name>\n";
+print "\t\t</Sender>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>DMA</Name>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>LMEM</Name>\n";
+print "\t\t\t<Index>+0</Index>\n";
+print "\t\t</Receiver>\n";
+print "\t\t<Receiver>\n";
+print "\t\t\t<Name>GMEM</Name>\n";
+print "\t\t</Receiver>\n";
+# xxx {
+# verify parameters
+print "\t\t<Latency>32</Latency>\n";
+print "\t\t<Bw>16</Bw>\n";
+# } xxx
+print "\t</Net>\n";
+print "\n";
+
 
 for ($n = 0; $n < @netnum; $n++) {
     for ($t = 0; $t < @netype; $t++) {
@@ -245,10 +478,19 @@ foreach $key (sort keys %vnet) {
     print "\t\t<Dimension>1</Dimension>\n";
     print "\n";
 
+    # make connection to fifo within a tile
+    print "\t\t<Sender>\n";
+    print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t</Sender>\n";
+
+    # make connection to link or if at the boundary
+    # then link to a local memory
     print "\t\t<Sender>\n";
     if ($sid < 0) {
-	  print "\t\t\t<Name>DRAM</Name>\n";
-	  print "\t\t\t<Index>$j</Index>\n";
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>0</Index>\n";
+#	  print "\t\t\t<Index>"; print $j; print "</Index>\n";
     }
     else {
 	  print "\t\t\t<Name>V_$type"; print "_$id"; print "_$sid"; print "_$j"; print "</Name>\n";
@@ -256,14 +498,45 @@ foreach $key (sort keys %vnet) {
     }
     print "\t\t</Sender>\n";
 
-
-    print "\t\t<Receiver>\n";
+    # these links are two way links
+    print "\t\t<Sender>\n";
     if ($rid >= $num_rows) {
-	  print "\t\t\t<Name>DRAM</Name>\n";
-	  print "\t\t\t<Index>"; print $num_cols + $j; print "</Index>\n";
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>2</Index>\n";
+#	  print "\t\t\t<Index>"; print $num_cols + $j; print "</Index>\n";
     }
     else {
 	  print "\t\t\t<Name>V_$type"; print "_$id"; print "_$rid"; print "_$j"; print "</Name>\n";
+	  print "\t\t\t<Index>0</Index>\n";
+    }
+    print "\t\t</Sender>\n";
+
+    # repeat process for receivers 
+    print "\t\t<Receiver>\n";
+    print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t</Receiver>\n";
+
+    print "\t\t<Receiver>\n";
+    if ($rid >= $num_rows) {
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>2</Index>\n";
+#	  print "\t\t\t<Index>"; print $num_cols + $j; print "</Index>\n";
+    }
+    else {
+	  print "\t\t\t<Name>V_$type"; print "_$id"; print "_$rid"; print "_$j"; print "</Name>\n";
+	  print "\t\t\t<Index>0</Index>\n";
+    }
+    print "\t\t</Receiver>\n";
+
+    print "\t\t<Receiver>\n";
+    if ($sid < 0) {
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>0</Index>\n";
+#	  print "\t\t\t<Index>"; print $j; print "</Index>\n";
+    }
+    else {
+	  print "\t\t\t<Name>V_$type"; print "_$id"; print "_$sid"; print "_$j"; print "</Name>\n";
 	  print "\t\t\t<Index>0</Index>\n";
     }
     print "\t\t</Receiver>\n";
@@ -290,24 +563,59 @@ foreach $key (sort keys %hnet) {
     print "\n";
 
     print "\t\t<Sender>\n";
+    print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t</Sender>\n";
+
+    print "\t\t<Sender>\n";
     if ($sid < 0) {
-	  print "\t\t\t<Name>DRAM</Name>\n";
-	  print "\t\t\t<Index>"; print 2 * $num_cols + $i; print "</Index>\n";
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>3</Index>\n";
+#	  print "\t\t\t<Index>"; print 2 * $num_cols + $i; print "</Index>\n";
     }
     else {
-	  print "\t\t\t<Name>V_$type"; print "_$id"; print "_$i"; print "_$sid"; print "</Name>\n";
+	  print "\t\t\t<Name>H_$type"; print "_$id"; print "_$i"; print "_$sid"; print "</Name>\n";
 	  print "\t\t\t<Index>0</Index>\n";
     }
     print "\t\t</Sender>\n";
 
+    print "\t\t<Sender>\n";
+    if ($rid >= $num_rows) {
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>1</Index>\n";
+#	  print "\t\t\t<Index>"; print 2 * $num_cols + $num_rows + $i; print "</Index>\n";
+    }
+    else {
+	  print "\t\t\t<Name>H_$type"; print "_$id"; print "_$i"; print "_$rid"; print "</Name>\n";
+	  print "\t\t\t<Index>0</Index>\n";
+    }
+    print "\t\t</Sender>\n";
+
+    print "\t\t<Receiver>\n";
+    print "\t\t\t<Name>VIRTUAL_FIFO</Name>\n";
+    print "\t\t\t<Index>+$i +$j</Index>\n";
+    print "\t\t</Receiver>\n";
 
     print "\t\t<Receiver>\n";
     if ($rid >= $num_rows) {
-	  print "\t\t\t<Name>DRAM</Name>\n";
-	  print "\t\t\t<Index>"; print 2 * $num_cols + $num_rows + $i; print "</Index>\n";
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>1</Index>\n";
+#	  print "\t\t\t<Index>"; print 2 * $num_cols + $num_rows + $i; print "</Index>\n";
     }
     else {
-	  print "\t\t\t<Name>V_$type"; print "_$id"; print "_$i"; print "_$rid"; print "</Name>\n";
+	  print "\t\t\t<Name>H_$type"; print "_$id"; print "_$i"; print "_$rid"; print "</Name>\n";
+	  print "\t\t\t<Index>0</Index>\n";
+    }
+    print "\t\t</Receiver>\n";
+
+    print "\t\t<Receiver>\n";
+    if ($sid < 0) {
+	  print "\t\t\t<Name>LMEM</Name>\n";
+	  print "\t\t\t<Index>3</Index>\n";
+#	  print "\t\t\t<Index>"; print 2 * $num_cols + $i; print "</Index>\n";
+    }
+    else {
+	  print "\t\t\t<Name>H_$type"; print "_$id"; print "_$i"; print "_$sid"; print "</Name>\n";
 	  print "\t\t\t<Index>0</Index>\n";
     }
     print "\t\t</Receiver>\n";

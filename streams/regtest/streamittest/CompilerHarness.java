@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.4 2002-06-28 22:18:38 aalamb Exp $
+ * $Id: CompilerHarness.java,v 1.5 2002-07-01 21:55:57 aalamb Exp $
  **/
 package streamittest;
 
@@ -42,6 +42,15 @@ public class CompilerHarness extends Harness {
 
 	// expand input streamit files
 	String[] expandedFileNames = expandFileName(inFileName);
+
+	// if no filenames returned, signal error via stderr and return false
+	if (expandedFileNames.length < 1) {
+	    ResultPrinter.printError(":filename " + inFileName +
+				     " did not expand");
+	    ResultPrinter.flushFileWriter();
+	    return false;
+	}
+		
 	
 	// new array for options and for filename
 	String[] cmdLineArgs = getJavaCommandArray(options, root, expandedFileNames);

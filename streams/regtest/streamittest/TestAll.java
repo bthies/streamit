@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.5 2002-07-01 19:17:46 aalamb Exp $
+ * $Id: TestAll.java,v 1.6 2002-07-01 21:55:57 aalamb Exp $
  **/
 package streamittest;
 
@@ -51,32 +51,34 @@ public class TestAll extends TestCase {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.CONSTPROP |
 				       CompilerInterface.FUSION));
-
-	// const prop, unrolling, fusion, partitioning
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.CONSTPROP |
-				       CompilerInterface.UNROLL |
-				       CompilerInterface.FUSION |
-				       CompilerInterface.PARTITION));
-
     }
     
     /**
      * add the raw tests to the test suite framework.
      **/
     public static void addRawTests(TestSuite allTests) {
-	// raw with 4 tiles, 8 tiles
-	// raw with 4 partitioning
-	// const prop on/off for all three
-
-	// raw with 4 tiles
-	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       CompilerInterface.RAW4));
-
-	// raw with 4 tiles, constprop
+	// raw with 4 tiles, partition
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW4 |
+				       CompilerInterface.PARTITION));
+
+	// raw with 4 tiles, partition, constprop
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW4 |
+				       CompilerInterface.PARTITION |
 				       CompilerInterface.CONSTPROP));
+	// raw 4 with fusion
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW4 |
+				       CompilerInterface.FUSION));
+	// raw 4 with fusion
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW4 |
+				       CompilerInterface.FUSION |
+				       CompilerInterface.CONSTPROP));
+
+	// test raw with 8 tiles to see if problem are being introduced by
+	// the above optimizations
 				       
 	// raw with 8 tiles
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |

@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.6 2002-07-01 19:17:46 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.7 2002-07-01 21:55:57 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
@@ -39,7 +39,8 @@ class StreamITTestCase extends TestCase {
     public void doCompileTest(String root,
 			      String filename) {
 	
-    	assertTrue("Compile " + root + filename + "(" + compiler.getOptionsString() + ")",
+    	assertTrue("Compile " + root + filename +
+		   "(" + compiler.getOptionsString() + ")",
 		   compiler.streamITCompile(root,
 					    filename));
     }

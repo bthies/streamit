@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.4 2002-07-01 19:17:46 aalamb Exp $
+ * $Id: TestExamples.java,v 1.5 2002-07-01 21:55:57 aalamb Exp $
  **/
 package streamittest;
 
@@ -37,8 +37,8 @@ public class TestExamples extends StreamITTestCase {
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 	
-	suite.addTest(new TestExamples("testArrayTest", flags));
-	suite.addTest(new TestExamples("testBitonicSort", flags));
+	//suite.addTest(new TestExamples("testArrayTest", flags));
+	//suite.addTest(new TestExamples("testBitonicSort", flags));
 	suite.addTest(new TestExamples("testFFT", flags));
 	suite.addTest(new TestExamples("testFusion", flags));
 	suite.addTest(new TestExamples("testFib", flags));
@@ -55,9 +55,9 @@ public class TestExamples extends StreamITTestCase {
 	suite.addTest(new TestExamples("testFieldProp", flags));
 	suite.addTest(new TestExamples("testFieldProp2", flags));
 	suite.addTest(new TestExamples("testLattice", flags));
-	suite.addTest(new TestExamples("testMergeSort", flags));
+	//suite.addTest(new TestExamples("testMergeSort", flags));
 	//suite.addTest(new TestExamples("testUpDown", flags));
-	suite.addTest(new TestExamples("testVectAdd", flags));
+	//suite.addTest(new TestExamples("testVectAdd", flags));
 	suite.addTest(new TestExamples("testWeightedRR", flags));
 	return suite;
     }

@@ -1,6 +1,30 @@
 7/30/02 -- AAL 
 got rid of the code that writes 4 outputs, now only writes 1 "done" when it is finished with a 2x2 matrix.
 
+7/30/2002 -- with jasper's mad improvements
+(K,N,Q,W) = (2,2,2,2)
+first  iteration done at 0x00000558c (21900 cycles)
+second iteration done at 0x000006272 (25202 cycles) (delta=3302)
+third  iteration done at 0x000006fad (28589 cycles) (delta=3387)
+
+
+==> iter takes 3302/3387 cycles (average = 3344.5)
+
+we are producing a 4 element output array, 3344.5 cycles, so normalized to 10^5 cycles, 4*(100000/3344.5) = 119.59934
+
+flops reported are 583 flops, which is (583/3344.5) * 250 = 43.57901 MFLOPS
+
+workCount = 37766 / 350400 = 0.17431604
+workCount = 9331 / 52832   = 0.17661644
+workCount = 9440 / 54192   = 0.17419545
+
+
+
+
+
+----------- Old one without improvements ------
+
+
 first  iteration done at 0x0000000000016ffd (94205 cycles)
 second iteration done at 0x0000000000018e71 (102001 cycles) (delta=7796)
 third  iteration done at 0x000000000001ace5 (109797 cycles) (delta=7796)

@@ -10,7 +10,6 @@ BTL-ARGS += $(SPEC-IMEM-SIZE) $(SPEC-SMEM-SIZE)
 
 Got new version from ali, changed the parameters to (K,N,Q,W) = (4,5,10,7)
 
-
 7/30/2002
 (K,N,Q,W) = (2,2,2,2)
 

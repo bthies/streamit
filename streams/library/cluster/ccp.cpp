@@ -69,6 +69,8 @@ int ccp::run_ccp() {
   int flag;
   int fd;
 
+  int last_latest_chkpt = 0;
+
   read_config_file();
 
   struct sockaddr_in serveraddr;
@@ -212,10 +214,16 @@ int ccp::run_ccp() {
       any = true;
     }
 
-    //printf("latest chkpt is: [%d]", latest_chkpt);
-    //fflush(stdout);
+    if (latest_chkpt > last_latest_chkpt) {
 
-    delete_chkpts::set_max_iter(latest_chkpt);
+      printf("latest chkpt is: [%d]", latest_chkpt);
+      fflush(stdout);
+
+      delete_chkpts::set_max_iter(latest_chkpt);
+
+    }
+
+    last_latest_chkpt = latest_chkpt;
 
     /*** afters select querry threads if they are alive ***/
 

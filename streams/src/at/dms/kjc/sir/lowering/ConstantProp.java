@@ -180,6 +180,12 @@ public class ConstantProp {
 	    recurseInto(self.getTarget(), self.getArgs(), constants);
 	    return self;
 	}
+
+	public Object visitAssignmentExpression(JAssignmentExpression self,
+						JExpression left,
+						JExpression right) {
+	    return self;
+	}
     }
     
     /**

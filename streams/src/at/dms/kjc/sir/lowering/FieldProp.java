@@ -8,7 +8,7 @@ import java.util.*;
 /**
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
- * $Id: FieldProp.java,v 1.23 2003-07-25 19:35:34 dmaze Exp $
+ * $Id: FieldProp.java,v 1.24 2003-08-04 21:35:23 janiss Exp $
  */
 public class FieldProp implements Constants
 {
@@ -35,7 +35,7 @@ public class FieldProp implements Constants
         arrays = new HashMap();
         noarrays = new HashMap();
     }
-    
+
     /**
      * Performs a depth-first traversal of an SIRStream tree, and
      * calls propagate() on any SIRSplitJoins as a post-pass.

@@ -112,6 +112,17 @@ public class Propagator extends SLIRReplacingVisitor {
     // STATEMENT
     // ----------------------------------------------------------------------
 
+    public Object visitRegReceiverStatement(SIRRegReceiverStatement self, JExpression portal, SIRStream receiver, JMethodDeclaration[] methods) {
+	JExpression expr = self.getPortal();
+	if (expr instanceof JLocalVariableExpression) {
+	    Object obj = constants.get(((JLocalVariableExpression)expr).getVariable());
+	    if (obj instanceof SIRPortal) {
+		((SIRPortal)obj).addReceiver(receiver);
+	    }
+	}
+	return self;
+    }
+
     /**
      * Visits a while statement
      */
@@ -801,6 +812,17 @@ public class Propagator extends SLIRReplacingVisitor {
 	    } else if(!(expr instanceof JFieldAccessExpression)&&!(expr instanceof JArrayAccessExpression))
 		System.err.println("WARNING:Cannot Propagate Array Prefix "+expr);
 	}
+
+	if (newRight instanceof SIRCreatePortal) {
+		JLocalVariableExpression var=(JLocalVariableExpression)left;
+		if (!constants.containsKey(var.getVariable())) {
+
+		    //System.out.println("Adding portal to constants, variable is: "+var.getVariable().getIdent()+" constants: "+constants);
+
+		    constants.put(var.getVariable(), new SIRPortal());
+		}
+	}
+
         return self;
     }
 

@@ -1,4 +1,4 @@
-package at.dms.kjc.linear;
+package at.dms.kjc.sir.linear;
 
 //import java.io.*;
 //import at.dms.compiler.JavaStyleComment;
@@ -19,7 +19,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.2 2002-08-12 19:07:27 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.3 2002-08-12 20:15:51 aalamb Exp $
  **/
 
 public class FilterMatrix {

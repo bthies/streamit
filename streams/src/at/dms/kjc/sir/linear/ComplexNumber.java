@@ -1,4 +1,4 @@
-package at.dms.kjc.linear;
+package at.dms.kjc.sir.linear;
 
 /**
  * This class represents a complex number in the Linear filter
@@ -8,6 +8,8 @@ package at.dms.kjc.linear;
  *
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
+ *
+ * $Id: ComplexNumber.java,v 1.2 2002-08-12 20:15:51 aalamb Exp $
  **/
 public class ComplexNumber {
     private final double realPart;

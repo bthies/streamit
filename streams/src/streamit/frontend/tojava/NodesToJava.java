@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.15 2002-08-06 15:43:53 thies Exp $
+ * $Id: NodesToJava.java,v 1.16 2002-08-13 21:11:24 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -141,6 +141,44 @@ public class NodesToJava implements FEVisitor
             prefix = "(" + convertType(type) + ")";
         }
         return prefix + name + suffix;
+    }
+
+    // Return a representation of lhs = rhs, with no trailing semicolon.
+    public String doAssignment(Expression lhs, Expression rhs,
+                               SymbolTable symtab)
+    {
+        // If the left-hand-side is a complex variable, we need to
+        // properly decompose the right-hand side.
+        // We can use a null stream type here since the left-hand
+        // side shouldn't contain pushes, pops, or peeks.
+        GetExprType eType = new GetExprType(symtab, st);
+        Type lhsType = (Type)lhs.accept(eType);
+        if (lhsType.isComplex())
+        {
+            Expression real = new ExprField(lhs, "real");
+            Expression imag = new ExprField(lhs, "imag");
+            // If the right hand side is complex too (at this point
+            // just test the run-time type of the expression), then we
+            // should do field copies; otherwise we only have a real part.
+            if (rhs instanceof ExprComplex)
+            {
+                ExprComplex cplx = (ExprComplex)rhs;
+                return real.accept(this) + " = " +
+                    cplx.getReal().accept(this) + ";\n" +
+                    imag.accept(this) + " = " +
+                    cplx.getImag().accept(this);
+            }
+            else
+                return real.accept(this) + " = " +
+                    rhs.accept(this) + ";\n" +
+                    imag.accept(this) + " = 0.0";
+        }
+        else
+        {
+            // Might want to special-case structures and arrays;
+            // ignore for now.
+            return lhs.accept(this) + " = " + rhs.accept(this);
+        }
     }
 
     public Object visitExprArray(ExprArray exp)

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.25 2002-08-13 19:28:20 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.26 2002-08-13 21:11:22 dmaze Exp $
  */
 
 header {
@@ -142,7 +142,7 @@ filter_body returns [String t]
 		{
 			t += getIndent() + "public void work() " + work.body + "\n";
 			t += init.getText(indent, cur_class_params, cur_class_fields,
-					cur_type, work, n2j);
+					cur_type, work, n2j, symTab);
 			t += init.getConstructor(indent, cur_class_params, cur_class_name, n2j);
 		}
 	;
@@ -205,7 +205,7 @@ struct_stream_decl2[String superclass] returns [String t]
 				t = t + getIndent () + "}\n";
 				indent--;
 			}
-			t += init.getText(indent+1, cur_class_params, null, null, null, n2j);
+			t += init.getText(indent+1, cur_class_params, null, null, null, n2j, symTab);
 			t += init.getConstructor(indent+1, cur_class_params,
 				name.getText(), n2j);
 			t += getIndent() + "}\n";
@@ -519,37 +519,7 @@ print_statement returns [String t] {t = null;}
 
 assign_statement returns [String t] {t=null; Expression l, x;}
 	: #(ASSIGN l=value_expression x=expression_reduced)
-		{
-			String lhs = (String)l.accept(n2j);
-			// Check to see if the left-hand side is complex.
-			Type type = (Type)l.accept(new GetExprType(symTab, cur_type));
-			if (type != null && type.isComplex())
-			{
-				if (x instanceof ExprComplex)
-				{
-					ExprComplex cplx = (ExprComplex)x;
-					t = lhs + ".real = " +
-						(String)cplx.getReal().accept(n2j) + ";\n";
-					t += lhs + ".imag = " +
-						(String)cplx.getImag().accept(n2j);
-				}
-				else if (((Type)x.accept(new GetExprType(symTab, cur_type))).isComplex())
-				{
-					t = lhs + " = " + (String)x.accept(n2j);
-				}
-				else
-				{
-					t = lhs + ".real = " +
-						(String)x.accept(n2j) + ";\n";
-					t += lhs + ".imag = 0";
-				}
-			}
-			else
-			{
-				// Assert that RHS is purely real.
-				t = lhs + " = " + (String)x.accept(n2j);
-			}
-		}
+		{ t = n2j.doAssignment(l, x, symTab); }
 	;
 
 variable_decl returns [String t]
@@ -561,20 +531,19 @@ variable_decl returns [String t]
 }
 	: #(name:ID type=data_type (#(ASSIGN init=expression_reduced))?)
 		{
-			// Possibly overwrite init_value.
+			symTab.register(name.getText(), type);
 			t = n2j.convertType(type) + " " + name.getText ();
 			if (type.isComplex() || !(type instanceof TypePrimitive))
 			{
 				t += " = " + n2j.makeConstructor(type);
 				if (init != null)
-					t += ";\n" + getIndent() + name.getText() + " = " +
-						init.accept(n2j);
+					t += ";\n" + getIndent() +
+						n2j.doAssignment(new ExprVar(name.getText()), init,
+										 symTab);
 			}
 			else if (init != null)
-			/* NB: this really doesn't do the right thing, particularly
-             * if the thing being initialized is a complex variable. */
-				t +=  " = " + init.accept(n2j);
-			symTab.register(name.getText(), type);
+			// CLAIM: init is real-valued.
+				t += " = " + init.accept(n2j);
 		}
 	;
 

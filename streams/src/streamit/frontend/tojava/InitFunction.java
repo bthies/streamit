@@ -1,14 +1,16 @@
 /*
  * InitFunction.java: container class to represent an init function
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InitFunction.java,v 1.7 2002-08-13 19:28:22 dmaze Exp $
+ * $Id: InitFunction.java,v 1.8 2002-08-13 21:11:24 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
 
 import java.util.Iterator;
 import java.util.List;
+import streamit.frontend.nodes.ExprVar;
 import streamit.frontend.nodes.StreamType;
+import streamit.frontend.nodes.SymbolTable;
 import streamit.frontend.nodes.Type;
 import streamit.frontend.nodes.TypePrimitive;
 
@@ -18,7 +20,7 @@ public class InitFunction
 
     public String getText(int indent, List params, List fields,
                           StreamType type, WorkFunction work,
-                          NodesToJava n2j)
+                          NodesToJava n2j, SymbolTable symtab)
     {
         String paramAssigns = "";
         String t = getIndent(indent) + "public void init(";
@@ -46,12 +48,11 @@ public class InitFunction
                     paramAssigns += getIndent(indent+1) + "this." +
                         param.name + " = " +
                         n2j.makeConstructor(param.type) + ";\n";
-                // Again, not necessarily correct, notably if
-                // param.type.isComplex().
+                // Add a variable assignment, if we have an initializer:
                 if (param.init != null)
-                    paramAssigns += getIndent(indent+1) + "this." +
-                        param.name + " = " +
-                        param.init.accept(n2j) + ";\n"; 
+                    paramAssigns += getIndent(indent+1) +
+                        n2j.doAssignment(new ExprVar(param.name),
+                                         param.init, symtab) + ";\n";
             }
         }
         t += ") ";

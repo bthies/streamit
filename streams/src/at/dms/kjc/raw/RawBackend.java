@@ -26,6 +26,8 @@ public class RawBackend {
 			interfaceTables) {
 	System.out.println("Entry to RAW Backend");
 
+	Renamer.renameAll(str);
+	
 	// move field initializations into init function
 	System.out.print("Moving initializers into init functions... ");
 	FieldInitMover.moveStreamInitialAssignments(str);

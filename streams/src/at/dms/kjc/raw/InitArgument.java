@@ -24,6 +24,15 @@ public class InitArgument {
 
 	// convert to string
 	for (int i = 0; i < params.size(); i++) {
+	    if (params.get(i) instanceof JFieldAccessExpression ||
+		params.get(i) instanceof JLocalVariableExpression) {
+		if (((JExpression)params.get(i)).getType().isArrayType()) {
+		    buf.append("0/*array*/,");
+		    continue;
+		}
+		else
+		    System.err.println("Found a non-constant in an init function call");
+	    }
 	    FlatIRToC ftoc = new FlatIRToC();
 	    ((JExpression)params.get(i)).accept(ftoc);
 	    buf.append(ftoc.getString() + ",");

@@ -60,16 +60,16 @@ STREAMIT_GENERATED = \
 # these are used by some streamit applications, but not called
 # from the library directly
 STREAMIT_LIBRARIES = \
-  $(STREAMIT_HOME)/library/java/streamit/io/DataPrinter.class \
-  $(STREAMIT_HOME)/library/java/streamit/io/FileReader.class \
-  $(STREAMIT_HOME)/library/java/streamit/io/FileWriter.class \
-  $(STREAMIT_HOME)/library/java/streamit/Structure.class
+  ../library/java/streamit/io/DataPrinter.class \
+  ../library/java/streamit/io/FileReader.class \
+  ../library/java/streamit/io/FileWriter.class \
+  ../library/java/streamit/Structure.class
 
 JAVA_TARGET = \
   $(KOPI_TARGET) \
   $(KOPI_TOOL_TARGET) \
   $(STREAMIT_LIBRARIES) \
-  $(STREAMIT_HOME)/library/java/streamit/StreamIt.class \
+  ../library/java/streamit/StreamIt.class \
   streamit/frontend/ToJava.class
 
 JAVA_SRCS = \
@@ -77,7 +77,7 @@ JAVA_SRCS = \
   $(KOPI_GENERATED) \
   $(KOPI_TOOL_SRCS) \
   $(STREAMIT_GENERATED) \
-  $(STREAMIT_HOME)/library/java/streamit/StreamIt.java
+  ../library/java/streamit/StreamIt.java
 
 DEBUG_OPT = -g
 

@@ -28,9 +28,14 @@ endif
 
 all: compile test-all
 
-# test run all applications, with all combos of optimizations (takes a looong time)
+# test run all applications, with all combos of optimizations (takes a looong time -- like ~20 hours)
 test-all: compile
 	$(TESTER) streamittest.TestAll
+
+# runs the nightly regtest (doesn't do raw 8 so it takes a lot less time)
+test-nightly: compile
+	$(TESTER) streamittest.TestNightly
+
 
 # create a report (with performance numbers) from last regression run
 report:

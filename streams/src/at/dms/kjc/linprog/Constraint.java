@@ -7,7 +7,7 @@ import java.util.*;
  * Representation of a constraint for linprog package.
  */
 
-class Constraint {
+class Constraint implements Serializable {
     public final ConstraintType type;
     public final double[] lhs;
     public final double rhs;

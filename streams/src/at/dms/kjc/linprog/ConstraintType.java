@@ -7,7 +7,7 @@ import java.util.*;
  * Representation of a constraint type for linprog package.
  */
 
-class ConstraintType {
+class ConstraintType implements Serializable {
     // for objective function only
     public static final ConstraintType OBJ = new ConstraintType("OBJ");
     // for GE
@@ -22,5 +22,10 @@ class ConstraintType {
 
     public String toString() {
 	return "Constraint type: " + name;
+    }
+
+    public boolean equals(Object o) {
+	return (o instanceof ConstraintType &&
+		((ConstraintType)o).name.equals(this.name));
     }
 }

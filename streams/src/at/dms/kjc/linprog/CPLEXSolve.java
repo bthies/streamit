@@ -13,13 +13,19 @@ import java.io.*;
  * 1. Not making use of double variable bounds.  Just saying between
  *     MIN_VALUE, MAX_VALUE
  */
-public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolver {
+public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolver, Serializable {
     /**
-     * The timeout for the solver in this.
+     * The optimal and gap timeouts for this.
      */
-    private long timeout;
+    private long optTimeout;
+    private long gapTimeout;
     /**
-     * The max timeout.
+     * The maximum allowable gap (for times between optTimeout and
+     * gapTimeout)
+     */
+    private double gapTolerance;
+    /**
+     * Maximum possible timeout value.
      */
     private static final long MAX_TIMEOUT = Long.MAX_VALUE;
 
@@ -27,16 +33,21 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
      * Create one of these with <numVars> variables with a timeout of
      * <timeout> for the solving process.
      */
-    public CPLEXSolve(int numVars, long timeout) {
+    public CPLEXSolve(int numVars, 
+		      long optTimeout,
+		      double gapTolerance,
+		      long gapTimeout) {
 	super(numVars);
-	this.timeout = timeout;
+	this.optTimeout = optTimeout;
+	this.gapTolerance = gapTolerance;
+	this.gapTimeout = gapTimeout;
     }
 
     /**
      * Create one of these with <numVars> variables with no timeout.
      */
     public CPLEXSolve(int numVars) {
-	this(numVars, MAX_TIMEOUT);
+	this(numVars, MAX_TIMEOUT, 0, MAX_TIMEOUT);
     }
 
     /**
@@ -50,7 +61,7 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
 	// if there's any timeout, put emphasis on finding a feasible
 	// solution quickly instead of proving the optimality of the
 	// solution.
-	if (this.timeout!=MAX_TIMEOUT) {
+	if (this.optTimeout!=MAX_TIMEOUT) {
 	    model.setParam(IloCplex.IntParam.MIPEmphasis, IloCplex.MIPEmphasis.Feasibility);
 	}
 	
@@ -63,7 +74,6 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
 		types[i] = IloNumVarType.Float;
 	    }
 	}
-
 	// construct bounds for vars
 	double[] lb = new double[numVars];
 	double[] ub = new double[numVars];
@@ -89,9 +99,10 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
 	// add constraints
 	Constraint[] con = (Constraint[])constraints.toArray(new Constraint[0]);
 	for (int i=0; i<con.length; i++) {
-	    if (con[i].type==ConstraintType.GE) {
+	    // use .equals instead of object equality because of serialization issues
+	    if (con[i].type.equals(ConstraintType.GE)) {
 		model.add(model.addGe(model.scalProd(x, con[i].lhs), con[i].rhs));
-	    } else if (con[i].type==ConstraintType.EQ) {
+	    } else if (con[i].type.equals(ConstraintType.EQ)) {
 		model.add(model.addEq(model.scalProd(x, con[i].lhs), con[i].rhs));
 	    } else {
 		Utils.fail("Unrecognized constraint type: " + con[i].type);
@@ -121,19 +132,27 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
 	// try solving model
 	double[] result;
 	// add a callback to keep track of timeout
-	TimeoutCallback tc = new TimeoutCallback(this.timeout, x);
+	TimeoutCallback tc = new TimeoutCallback(this.optTimeout, this.gapTolerance, this.gapTimeout, x);
 	try {
 	    model.use(tc);
+	    // export for sake of debugging
+	    model.exportModel("partitions.lp");
 
+	    System.err.println("trying to solve model");
 	    if (model.solve()) {
+		System.err.println("done (true)");
 		result = model.getValues(x);
+		System.err.println("Objective function in optimum: " + model.getObjValue());
 	    } else {
+		System.err.println("done (false)");
 		throw new LPSolverFailedException("CPLEX returned false from IloCplex.solve()");
 	    }
 	} catch (IloException e) {
+		System.err.println("done (exception)");
 	    // we end up here if we aborted the solution for a
 	    // timeout.  See if this is the case and fail if it isn't.
 	    result = tc.getBestSolution();
+	    System.err.println("Objective function of best solution: " + tc.getBestObjective());
 	    // if we hadn't found one yet, then there's still a problem
 	    if (result==null) {
 		throw new LPSolverFailedException("CPLEX solver failed due to its own exception: " + e);
@@ -163,9 +182,14 @@ class ModelAndVars {
 
 class TimeoutCallback extends IloCplex.MIPCallback {
     /**
-     * Timeout for this (in millis).
+     * Optimal  and  Absolute  timeout  for this  (in  millis).
      */
-    private long timeoutMillis;
+    private long optTimeoutMillis;
+    private long gapTimeoutMillis;
+    /**
+     * Gap tolerance. (see ILPPartitioner)
+     */
+    private double gapTolerance;
     /**
      * Starting time of this, in milliseconds.  (Before set, should be
      * -1).
@@ -180,12 +204,20 @@ class TimeoutCallback extends IloCplex.MIPCallback {
      * we've found a solution.
      */
     private double[] sol;
+    /**
+     * The best value of the objective function that we've found so
+     * far.
+     */
+    private double obj;
 
-    public TimeoutCallback(long timeout, IloNumVar[] x) {
-	this.timeoutMillis = 1000*timeout;
+    public TimeoutCallback(long optTimeout, double gapTolerance, long gapTimeout, IloNumVar[] x) {
+	this.optTimeoutMillis = 1000*optTimeout;
+	this.gapTolerance = gapTolerance;
+	this.gapTimeoutMillis = 1000*gapTimeout;
 	this.x = x;
 	this.startMillis = -1;
 	this.sol = null;
+	this.obj = -1;
     }
 
     protected void main() {
@@ -193,22 +225,51 @@ class TimeoutCallback extends IloCplex.MIPCallback {
 	if (!hasIncumbent()) {
 	    return;
 	}
-	// otherwise, see if we've timed out.  if so, keep track of
-	// the best solution and abort.
-	if (hasTimedOut()) {
-	    System.err.println("Found a solution, but will stop looking due to " + 
-			       (timeoutMillis/1000) + "-sec timeout.  " +
-			       "Spent " + (getElapsedMillis()/1000) + " secs.");
+	// otherwise, see if we're satisfied. if so, keep track of the
+	// best solution and abort.
+	if (satisfied()) {
 	    sol = getIncumbentValues(x);
+	    obj = getIncumbentObjValue();
 	    abort();
 	}
     }
 
     /**
-     * Returns whether or not this has timed out.
+     * Given that this has some solution, returns whether or not this
+     * has a "satisfactory" solution.  This will be the case if
+     * either:
+     *
+     * 1) Elapsed time exceeds optTimeout and the gap is better than
+     * gap_tolerance
+     *
+     * 2) Elapsed time exceeds gapTimeout.
+     *
      */
-    private boolean hasTimedOut() {
-	return getElapsedMillis() > timeoutMillis;
+    private boolean satisfied() {
+	long elapsed = getElapsedMillis();
+	if (elapsed < optTimeoutMillis) {
+	    return false;
+	} else if (getGap() < gapTolerance) {
+	    System.err.println("Stopping search because GAP of " + Utils.asPercent(getGap()) + 
+			       " is less than tolerance of " + Utils.asPercent(gapTolerance));
+	    return true;
+	} else if (elapsed > gapTimeoutMillis) {
+	    System.err.println("Stopping search because elapsed time exceeded limit of " + 
+			       (gapTimeoutMillis/1000) + " secs.");
+	    return true;
+	} else {
+	    return false;
+	}
+    }
+
+    /**
+     * Returns current gap between best integer solution and solver's
+     * lower bound on the best possible solution.
+     */
+    private double getGap() {
+	double best = getBestObjValue();
+	double cur  = getIncumbentObjValue();
+	return (cur - best) / cur;
     }
 
     private long getElapsedMillis() {
@@ -225,6 +286,14 @@ class TimeoutCallback extends IloCplex.MIPCallback {
      */
     public double[] getBestSolution() {
 	return sol;
+    }
+
+    /**
+     * Returns best objective value found in solving process, or -1 if
+     * none was found.
+     */
+    public double getBestObjective() {
+	return obj;
     }
 
 }

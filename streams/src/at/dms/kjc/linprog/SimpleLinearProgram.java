@@ -7,7 +7,7 @@ import java.util.*;
  * A simple implementation of the LinearProgram interface; keeps track
  * of all the information that has been passed in with local fields.
  */
-public class SimpleLinearProgram implements LinearProgram {
+public class SimpleLinearProgram implements LinearProgram, Serializable {
     /**
      * Number of variables.
      */
@@ -25,7 +25,7 @@ public class SimpleLinearProgram implements LinearProgram {
      * constrained to be zero-one.
      */
     protected boolean[] boolVar;
-        
+   
     /**
      * Create one of these with <numVars> variables.
      */

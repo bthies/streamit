@@ -1,0 +1,35 @@
+7/30/02 -- AAL 
+Ripped out the stuff in fmref to fmref_raw to make it only output at the end.
+
+first  iteration done at 0x0000134c9 (79049 cycles)
+second iteration done at 0x000024551 (148817 cycles) (delta=69768)
+third  iteration done at 0x0000355d9 (218585 cycles) (delta=69768)
+
+
+==> iter takes 69768/69768 cycles (average = 69768)
+
+since we are producing a 12 element output vector, we are producing 
+12 outputs every 69768 cycles, so normalized to 10^5 cycles, 12*(100000/69768) = 17.199862
+
+flops reported are 4626 flops, which is (4626/69768) * 250 = 16.576367 MFLOPS
+
+workCount = 1231651 / 1264784 = 0.97380343
+workCount = 1088243 / 1116288 = 0.97487656
+workCount = 1088243 / 1116288 = 0.97487656
+
+
+
+
+Uniprocessor (7/30/2002):
+(Xenon 2.2 GHz, 512MB cache)
+10 million iterations (12 outputs/iteration)
+99.9% utilization
+runtime for 10^7 iterations = 127.270 seconds
+
+We want cycles/iteration:
+10^7 iterations/ 127.270 sec * 
+12 outputs/1 iteration
+1 second /2.2x10^9 cycles
+* 10^5 cycles 
+
+= 42.858061 outputs/10^5 cycles

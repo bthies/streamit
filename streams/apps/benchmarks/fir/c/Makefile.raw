@@ -4,7 +4,7 @@
 
 LIMIT = TRUE
 SIM-CYCLES = 5000000
-SIM-COMMAND = step(10000); count_FLOPS(10000);
+SIM-COMMAND = sv(79049); sv(69768); sv(69768);
 
 BTL-MACHINE-FILE = fileio.bc
 
@@ -17,7 +17,7 @@ ifndef TOPDIR
 $(error TOPDIR not defined, make sure to include Makefile.include)
 endif
 
-OBJECT_FILES_00 = firref.o
+OBJECT_FILES_00 = firref_raw.o
 
 
 include $(COMMONDIR)/Makefile.all

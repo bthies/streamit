@@ -156,6 +156,12 @@ public class Channel extends streamit.misc.DestroyedClass
 
         enqueue (new Short (s));
     }
+    //push a bit
+    public void pushBit(int i)
+    {
+	ASSERT (type == Bit.TYPE);
+	enqueue(new Integer(i));
+    }
 
     // push a char
     public void pushChar(char c)
@@ -266,6 +272,14 @@ public class Channel extends streamit.misc.DestroyedClass
 
         return c.charValue ();
     }
+    //pop a bit
+    public int popBit(){
+	ASSERT(type == Bit.TYPE);
+	Integer data;
+	data = (Integer)pop();
+	ASSERT(data !=null);
+	return data.intValue();
+    }
 
     // pop a double
     public double popDouble()
@@ -337,6 +351,15 @@ public class Channel extends streamit.misc.DestroyedClass
 
         return data.intValue ();
     }
+    //peek a bit
+    public int peekBit(int index){
+	ASSERT(type == Bit.TYPE);
+	Integer data;
+	data = (Integer) peek(index);
+	ASSERT(data!=null);
+	return data.intValue();
+    }
+
 
     // peek at a short
     public short peekShort (int index)

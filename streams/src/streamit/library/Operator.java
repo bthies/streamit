@@ -191,6 +191,33 @@ public class Operator extends DestroyedClass
             .add("e", copyFloatArray2D(e));
     }
 
+    public Operator(int a, int b, float[][] c, float[] d) {
+        initParams = new ParameterContainer("int-int-float[][]-float[]")
+            .add("a", a)
+            .add("b", b)
+            .add("c", copyFloatArray2D(c))
+            .add("d", copyFloatArray1D(d));
+    }
+
+    public Operator(int a, int b, int c, float[][] d, float[] e) {
+        initParams = new ParameterContainer("int-int-int-float[][]-float[]")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+            .add("d", copyFloatArray2D(d))
+            .add("e", copyFloatArray1D(e));
+    }
+
+    public Operator(int a, boolean b, float c, float d, float[][] e, float[] f) {
+        initParams = new ParameterContainer("int-boolean-float-float-float[][]-float[]")
+            .add("a", a)
+            .add("b", b)
+            .add("c", c)
+            .add("d", d)
+            .add("e", copyFloatArray2D(e))
+            .add("f", copyFloatArray1D(f));
+    }
+
     public Operator(int a, int b, int c, int d, float[][] e, float[][] f)
     {
         initParams = new ParameterContainer("int-int-int-int-float[][]-float[][]")
@@ -643,6 +670,14 @@ public class Operator extends DestroyedClass
     // initializatoin functions, to be over-ridden
     public void init(int a, float b[], float c[]) { invalidInitError (); }
 
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, float[][] c, float[] d) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, int b, int c, float[][] d, float[] e) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int a, boolean b, float c, float d, float[][] e, float[] f) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(int a, int b, int c, float[] d) { invalidInitError (); }
@@ -1287,6 +1322,27 @@ public class Operator extends DestroyedClass
             init (initParams.getIntParam("a"),
                   initParams.getIntParam("b"),
                   (float[][])initParams.getObjParam("c"));
+    else
+	if(initParams.getParamName().equals("int-int-float[][]-float[]"))
+	    init(initParams.getIntParam("a"),
+		 initParams.getIntParam("b"),
+		 (float[][])initParams.getObjParam("c"),
+		 (float[])initParams.getObjParam("d"));
+    else
+	if(initParams.getParamName().equals("int-int-int-float[][]-float[]"))
+	    init(initParams.getIntParam("a"),
+		 initParams.getIntParam("b"),
+		 initParams.getIntParam("c"),
+		 (float[][])initParams.getObjParam("d"),
+		 (float[])initParams.getObjParam("e"));
+    else
+	if(initParams.getParamName().equals("int-boolean-float-float-float[][]-float[]"))
+	    init(initParams.getIntParam("a"),
+		 initParams.getBoolParam("b"),
+		 initParams.getFloatParam("c"),
+		 initParams.getFloatParam("d"),
+		 (float[][])initParams.getObjParam("e"),
+		 (float[])initParams.getObjParam("f"));
     else
 	if(initParams.getParamName().equals("int-int-int-float"))
 	    init(initParams.getIntParam("i1"),

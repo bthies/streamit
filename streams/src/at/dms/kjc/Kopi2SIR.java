@@ -240,6 +240,19 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	printMe("attribute_visit" + str +"\n");
     }
 
+    /**
+     * Returns true if there is a function of the given name in <clazz>.
+     */
+    private boolean hasMethod(JClassDeclaration clazz, String methodName) {
+	JMethodDeclaration[] methods = clazz.getMethods();
+	for (int i=0; i<methods.length; i++) {
+	    if (methods[i].getName().equals(methodName)) {
+		return true;
+	    }
+	}
+	return false;
+    }
+
     /* creates a new SIROperator setting parentStream to this object
        also, if the SIROperator is one to one, parentStream is set */
     private SIROperator newSIROP(JClassDeclaration clazz)  {
@@ -261,7 +274,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
             return current;
         }
 	if (TYPE.equals("Filter") || TYPE.equals("StreamItFilter")) {
-	    SIRFilter current = new SIRFilter();
+	    SIRFilter current;
+	    if (hasMethod(clazz, "prework")) {
+		// this is a two-stage filter
+		current = new SIRTwoStageFilter();
+	    } else {
+		// this is a uni-stage (normal) filter
+		current = new SIRFilter();
+	    }
 	    current.setParent((SIRContainer)parentStream);
 	    current.setIdent(clazz.getIdent());
 	    current.setInputType(CStdType.Void);
@@ -270,6 +290,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    return current;
 	}
         if (TYPE.equals("PhasedFilter") || TYPE.equals("StreamItPhasedFilter")) {
+	    if (hasMethod(clazz, "prework")) {
+		// we don't yet support both stages and phases in the same filter
+		Utils.fail("Don't yet support filters that have both stages (prework/work) and phases (phase1, phase2, etc.)");
+	    }
             SIRPhasedFilter current = new SIRPhasedFilter();
             current.setParent((SIRContainer)parentStream);
             current.setIdent(clazz.getIdent());
@@ -772,7 +796,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	if (exceptions.length == 0)
 	    exceptions = CClassType.EMPTY;
 
-	/*Install work functio*/
+	/*Install work function*/
 	if (ident.equals("work")) {
 	    if (parentStream instanceof SIRFilter ||
                 parentStream instanceof SIRPhasedFilter) {
@@ -789,6 +813,24 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	    else
 		at.dms.util.Utils.fail(printLine(self) +
 				       "Work Function Declared for Non-Filter");
+	}
+
+	// install prework function
+	else if (ident.equals("prework")) {
+	    if (parentStream instanceof SIRTwoStageFilter) {
+		((SIRTwoStageFilter)parentStream).setInitWork(new JMethodDeclaration(null,
+										     modifiers,
+										     returnType,
+										     ident,
+										     parameters,
+										     exceptions,
+										     body,
+										     null,
+										     null));
+	    }
+	    else
+		at.dms.util.Utils.fail(printLine(self) +
+				       "Prework Function Declared for Non-Filter");
 	}
 	
 	/*Install init function for filter*/

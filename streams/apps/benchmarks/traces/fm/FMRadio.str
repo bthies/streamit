@@ -237,9 +237,9 @@ float->float pipeline FMRadioCore {
 
 void->void pipeline FMRadio {
 
-    //add FloatOneSource();
-    add FileReader<float>("input");
+    add FloatOneSource();
+    //add FileReader<float>("input");
     add FMRadioCore();
-    //add FloatPrinter();
-    add FileWriter<float>("output");
+    add FloatPrinter();
+    //add FileWriter<float>("output");
 }

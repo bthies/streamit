@@ -147,11 +147,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
         print("};\n");
     }
     */
+
+    private int selfID;
     
     public void visitFilter(SIRFilter self,
 			    SIRFilterIter iter) {
 
-	int selfID = NodeEnumerator.getSIROperatorId(self);
+	selfID = NodeEnumerator.getSIROperatorId(self);
 
 	SIRPortal outgoing[] = SIRPortal.getPortalsWithSender(self);
 	SIRPortal incoming[] = SIRPortal.getPortalsWithReceiver(self);
@@ -196,6 +198,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	//Entry point of the visitor
 
 	print("#include <stdlib.h>\n");
+	print("#include <unistd.h>\n");
 	print("#include <math.h>\n\n");	
 
 	//if there are structures in the code, include
@@ -244,14 +247,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	{
 	    Iterator i = sends_to.iterator();
 	    while (i.hasNext()) {
-		print("mysocket msg_sock_"+selfID+"_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"out;\n");
+		print("mysocket *__msg_sock_"+selfID+"_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"out;\n");
 	    }
 	}
 
 	{
 	    Iterator i = receives_from.iterator();
 	    while (i.hasNext()) {
-		print("mysocket msg_sock_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"_"+selfID+"in;\n");
+		print("mysocket *__msg_sock_"+NodeEnumerator.getSIROperatorId((SIRStream)i.next())+"_"+selfID+"in;\n");
 	    }
 	}
 
@@ -317,6 +320,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 
 	//////////////////////////////////////////////
+	// Handle Message Method
+
+	
+	print("\nvoid handle_message_"+selfID+"(mysocket *sock) {\n");
+	print("  int data = sock->read_int();\n");
+	print("  printf(\"Message receieved! thread: "+selfID+", data: %d\\n\", data);\n");
+	print("}\n");
+
+	//////////////////////////////////////////////
 	// The Run Method
 
 
@@ -333,10 +345,37 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+"));\n");
 	}
 
+	{
+	    Iterator i = sends_to.iterator();
+	    while (i.hasNext()) {
+		int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+		print("  __msg_sock_"+selfID+"_"+dst+"out = new mysocket(init_instance::get_outgoing_socket("+(-selfID-1)+","+(-dst-1)+"));\n");
+	    }
+	}
+
+	{
+	    Iterator i = receives_from.iterator();
+	    while (i.hasNext()) {
+		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+		print("  __msg_sock_"+src+"_"+selfID+"in = new mysocket(init_instance::get_incoming_socket("+(-src-1)+","+(-selfID-1)+"));\n");
+	    }
+	}
+
+
 	print("  "+self.getInit().getName()+"();\n");
 	print("  for (i = 0; i < __number_of_iterations; i++) { \n");
+
+	{
+	    Iterator i = receives_from.iterator();
+	    while (i.hasNext()) {
+		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
+		print("    if (__msg_sock_"+src+"_"+selfID+"in->data_available()) {\n      handle_message_"+selfID+"(__msg_sock_"+src+"_"+selfID+"in);\n    }\n");
+	    }
+	}
+
 	print("    "+self.getWork().getName()+"();\n");
 	print("  } \n");
+	print("  sleep(3); // so that sockets dont get closed\n");
 	print("}\n");
        
 	createFile(selfID);
@@ -1482,6 +1521,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                       JExpression[] params,
                                       SIRLatency latency)
     {
+	/*
 	print("//send_" + iname + "_" + ident + "(");
         portal.accept(this);
         print(", ");
@@ -1494,6 +1534,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                     params[i].accept(this);
                 }
         print(");");
+	*/
+
+	if (portal instanceof SIRPortal) {
+	    SIRStream receivers[] = ((SIRPortal)portal).getReceivers();
+	    for (int i = 0; i < receivers.length; i++) {
+		int dst = NodeEnumerator.getSIROperatorId(receivers[i]);
+		print("__msg_sock_"+selfID+"_"+dst+"out->write_int(43);");	
+	    }
+	}
     }
 
     public void visitPeekExpression(SIRPeekExpression self,

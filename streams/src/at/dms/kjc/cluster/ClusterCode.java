@@ -371,6 +371,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.print("#include <pthread.h>\n");
 	p.print("#include <unistd.h>\n");
+	p.print("#include <string.h>\n");
 	p.print("#include <stdio.h>\n");
 	p.println();
 	p.print("#include <mysocket.h>\n");
@@ -392,7 +393,14 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
-	p.print("int main(void) {\n");
+	p.print("int main(int argc, char **argv) {\n");
+
+	p.print("  if (argc > 2 && strcmp(argv[1], \"-i\") == 0) {\n"); 
+	p.print("     int tmp;\n");
+	p.print("     sscanf(argv[2], \"%d\", &tmp);\n");
+	p.print("     printf(\"Argument is: %d\\n\", tmp);"); 
+	p.print("     __number_of_iterations = tmp;"); 
+	p.print("  }\n");
 
 	p.print("  pthread_t id;\n");
 

@@ -16,14 +16,37 @@ public class DataEstimate {
     public static int getTypeSize(CType type) {
 
 	if (type.getTypeID() == CType.TID_VOID) return 0;
+
+	if (type.getTypeID() == CType.TID_BYTE) return 1;
+	if (type.getTypeID() == CType.TID_SHORT) return 2;
+	if (type.getTypeID() == CType.TID_CHAR) return 1;
+
 	if (type.getTypeID() == CType.TID_INT) return 4;
+	if (type.getTypeID() == CType.TID_LONG) return 4;
+
 	if (type.getTypeID() == CType.TID_FLOAT) return 4;
 	if (type.getTypeID() == CType.TID_DOUBLE) return 8;
+
 	if (type.getTypeID() == CType.TID_BOOLEAN) return 1;
+	if (type.getTypeID() == CType.TID_BIT) return 1;
 
-	System.out.println("DataEstimate: unknown type ["+type+"]");
+	if (type.isClassType()) {
+	    CClass c = ((CClassType)type).getCClass();
+	    CField f[] = c.getFields();
+	    int size = 0;
 
-	//assert (1 == 0);
+	    for (int y = 0; y < f.length; y++) {
+		size += getTypeSize(f[y].getType());
+	    }
+
+	    //System.out.println("Class type: ["+type+"] size: "+size);
+	    
+	    return size;
+	}
+
+	System.out.println("DataEstimate: unknown type ["+type+" TID: "+type.getTypeID()+" stack_size: "+type.getSize()+"]");
+
+	assert (1 == 0);
 
 	return 0;
     }
@@ -121,9 +144,14 @@ public class DataEstimate {
 		String dims[] = ArrayDim.findDim((SIRFilter)filter, ident);
 		CType base = ((CArrayType)type).getBaseType();
 		
-		if (dims != null && dims[0] != null) {
-		    size = getTypeSize(base) * Integer.valueOf(dims[0]).intValue();
+		if (dims != null) {
+		    size = getTypeSize(base);
+		    for (int y = 0; y < dims.length; y++) {
+			if (dims[y] == null) break;
+			size *= Integer.valueOf(dims[y]).intValue();
+		    }
 		}
+
 	    } else {
 
 		size = getTypeSize(type);

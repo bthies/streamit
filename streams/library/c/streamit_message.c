@@ -1,4 +1,5 @@
 #include <malloc.h>
+#include <stdio.h>
 
 #include "streamit.h"
 #include "streamit_internal.h"

@@ -1,0 +1,133 @@
+void->void pipeline Test3 {
+    portal<Counter> p;
+    add Source(p);
+    add BlockRate(2);
+    add Counter to p;
+    add Output;
+}
+
+void->int filter Source(portal<Counter> p) {
+    int i=100;
+    int j=0;
+    work push 1 {
+	i++;
+	push(i);
+	if (i==110) {
+	    i = 100;
+	    j++;
+	    p.setVal(j) [0:0];
+	}
+    }
+}
+
+int->int splitjoin BlockRate(int N) {
+    split duplicate;
+    add Identity<int>;
+    add Identity<int>;
+    join roundrobin(N);
+}
+
+int->int filter Counter {
+    int val = 0;
+    
+    work push 2 pop 1 {
+	push(pop());
+	push(val);
+    }
+
+    handler setVal(int v) {
+	val = v;
+    }
+}
+
+int->void filter Output {
+  work pop 1 {
+    print(pop());
+  }
+}
+
+/* OUTPUT
+cagfarm-44 % strc -library Test3.str | & more
+101
+0
+102
+0
+101
+0
+102
+0
+103
+0
+104
+0
+103
+0
+104
+0
+105
+0
+106
+0
+105
+0
+106
+0
+107
+0
+108
+0
+107
+0
+108
+0
+Delivering message setVal to Counter
+109
+1
+110
+1
+109
+1
+110
+1
+101
+1
+102
+1
+101
+1
+102
+1
+103
+1
+104
+1
+103
+1
+104
+1
+105
+1
+106
+1
+105
+1
+106
+1
+107
+1
+108
+1
+107
+1
+108
+1
+Delivering message setVal to Counter
+109
+2
+110
+2
+109
+2
+110
+2
+*/

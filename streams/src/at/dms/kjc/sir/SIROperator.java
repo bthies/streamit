@@ -228,7 +228,7 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIROperator other) {
-  other.parent = (at.dms.kjc.sir.SIRContainer)at.dms.kjc.AutoCloner.cloneToplevel(this.parent);
+  other.parent = this.parent;
   other.serializationHandle = this.serializationHandle;
 }
 

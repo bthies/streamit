@@ -85,9 +85,9 @@ public class MakefileGenerator
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
 	    if (streamGraph.getFileVisitor().foundReader || streamGraph.getFileVisitor().foundWriter)
-		createBCFile(true, TileCode.realTiles);
+		createBCFile(true, tiles);
             else
-                createBCFile(false, TileCode.realTiles);
+                createBCFile(false, tiles);
 	    if (rawChip.getYSize() > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 	    }
@@ -158,7 +158,7 @@ public class MakefileGenerator
 	}
     }
 
-    private static void createBCFile(boolean hasIO, HashSet mappedTiles) throws Exception 
+    private static void createBCFile(boolean hasIO, HashSet tiles) throws Exception 
     {
 	FileWriter fw = new FileWriter("fileio.bc");
 
@@ -181,14 +181,15 @@ public class MakefileGenerator
 
 	 //create the function to tell the simulator what tiles are mapped
 	fw.write("fn mapped_tile(tileNumber) {\n");
-	fw.write("if (");
-	Iterator tilesIterator = mappedTiles.iterator();
+	fw.write("if (0 ");
+	Iterator tilesIterator = tiles.iterator();
 	//generate the if statement with all the tile numbers of mapped tiles
 	while (tilesIterator.hasNext()) {
-	    fw.write("tileNumber == " + 
-		     ((RawTile)tilesIterator.next()).getTileNumber());
-	    if (tilesIterator.hasNext())
-		fw.write(" ||\n");
+	    RawTile tile = (RawTile)tilesIterator.next();
+	    if (layout.isAssigned(tile)) {
+		fw.write("|| tileNumber == " + 
+			 tile.getTileNumber() + "\n"); 
+	    }
 	}
 	fw.write(") {return 1; }\n");
 	fw.write("return 0;\n");

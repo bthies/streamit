@@ -26,8 +26,7 @@ class DiscoverSchedule implements FlatVisitor {
 	    phases.put(oper, new Integer(0));
 	    current_ops.add(oper);
 
-	    System.out.println("Operator: "+oper+
-			       " assigned to phase: 0");
+	    //System.out.println("Operator: "+oper+" assigned to phase: 0");
 
 	}
     }
@@ -102,9 +101,9 @@ class DiscoverSchedule implements FlatVisitor {
 		    if (can_be_scheduled) {
 			phases.put(next, new Integer(number_of_phases+1));
 			next_ops.add(next);
-			System.out.println("Operator: "+next+
-					   " assigned to phase: "+
-					   (number_of_phases+1));
+			//System.out.println("Operator: "+next+
+			//		   " assigned to phase: "+
+			//		   (number_of_phases+1));
 		    }
 		}
 	    }

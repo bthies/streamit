@@ -1,6 +1,6 @@
 /*
  * StreamItParser.g: A grammar for StreamIt
- * $Id: StreamItParser.g,v 1.11 2002-08-15 19:21:30 dmaze Exp $
+ * $Id: StreamItParser.g,v 1.12 2002-08-15 19:34:29 dmaze Exp $
  */
 
 header {
@@ -222,6 +222,7 @@ minic_statement
 	|	TK_return^ (right_expr)? SEMI!
 	|	if_else_statement
 	|	TK_while^ LPAREN! right_expr RPAREN! statement
+	|	TK_do^ statement TK_while! LPAREN! right_expr RPAREN!
 	|	TK_for^ LPAREN! for_init_statement SEMI! right_expr SEMI!
 		for_incr_statement RPAREN! statement
 	;

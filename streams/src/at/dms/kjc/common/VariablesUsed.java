@@ -108,8 +108,8 @@ public class VariablesUsed extends SLIREmptyVisitor
 	if (countComplexAss) {
 	    //there are no side effects, so never
 	    //count it as a use for the left
-	    if (!HasSideEffect.hasSideEffects(right) &&
-		!HasSideEffect.hasSideEffects(left))
+	    if (!HasSideEffects.hasSideEffects(right) &&
+		!HasSideEffects.hasSideEffects(left))
 		visitLValue(left);
 	    else  //otherwise a use for the left
 		left.accept(this);
@@ -133,8 +133,8 @@ public class VariablesUsed extends SLIREmptyVisitor
 	if (countComplexAss) {
 	    //there are no side effects, so never
 	    //count it as a use for the left
-	    if (!HasSideEffect.hasSideEffects(right) && 
-		!HasSideEffect.hasSideEffects(left))
+	    if (!HasSideEffects.hasSideEffects(right) && 
+		!HasSideEffects.hasSideEffects(left))
 		visitLValue(left);
 	    else  //otherwise a use for the left
 		left.accept(this);

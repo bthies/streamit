@@ -17,7 +17,7 @@ import at.dms.util.Utils;
  * @author Michael Gordon
  */
 
-public class HasSideEffect extends SLIREmptyVisitor 
+public class HasSideEffects extends SLIREmptyVisitor 
 {
     private boolean sideEffect;
 
@@ -35,13 +35,13 @@ public class HasSideEffect extends SLIREmptyVisitor
      */
     public static boolean hasSideEffects(JExpression entry) 
     {
-	HasSideEffect hse = new HasSideEffect();
+	HasSideEffects hse = new HasSideEffects();
 	entry.accept(hse);
 	return hse.sideEffect;
     }
     
 
-    private HasSideEffect() 
+    private HasSideEffects() 
     {
 	sideEffect = false;
     }

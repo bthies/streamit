@@ -74,13 +74,13 @@ public class RemoveUnusedVars extends SLIRReplacingVisitor implements FlatVisito
 	//remove an assignment expression if it 
 	if (left instanceof JFieldAccessExpression) {
 	    if (!varsUsed.contains(((JFieldAccessExpression)left).getIdent()) &&
-		!HasSideEffect.hasSideEffects(right) &&
-		!HasSideEffect.hasSideEffects(left))
+		!HasSideEffects.hasSideEffects(right) &&
+		!HasSideEffects.hasSideEffects(left))
 		return null;
 	} else if (left instanceof JLocalVariableExpression) {
 	    if (!varsUsed.contains(((JLocalVariableExpression)left).getVariable()) &&
-		!HasSideEffect.hasSideEffects(right) &&
-		!HasSideEffect.hasSideEffects(left))
+		!HasSideEffects.hasSideEffects(right) &&
+		!HasSideEffects.hasSideEffects(left))
 		return null;
 	}
 	

@@ -11,7 +11,7 @@ class AdapTest extends StreamIt {
     public void init() {
 	float[][] C=
       {
-       	{1 , 2,3},
+       	{1,2,3},
   	{0,0,0},
   	{0,0,0}
 	};
@@ -44,6 +44,7 @@ class Sink extends Filter{
     public void init(){
 	setInput(Float.TYPE);
 	setPop(3*3*(3*3+1));
+	A = new float[10][9];
      }
     public void work() {
 	for (int i=0; i< 3*3+1;i++)

@@ -1,12 +1,17 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.2 2002-07-10 21:02:25 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.3 2002-07-15 20:45:36 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
 // it can move.  --dzm
 package streamit.frontend.nodes;
+
+import java.util.Iterator;
+import java.util.List;
+
+import java.util.ArrayList;
 
 /**
  * A pass to propagate complex values upwards in expression trees.
@@ -245,6 +250,56 @@ public class ComplexProp extends FEReplacer
         ExprComplex cplx = makeComplex(expr);
         Expression real = new ExprUnary(exp.getOp(), cplx.getReal());
         Expression imag = new ExprUnary(exp.getOp(), cplx.getImag());
+        return new ExprComplex(real, imag);
+    }
+
+    public Object visitExprFunCall(ExprFunCall exp)
+    {
+        // Start by resolving all of the parameters.
+        List params = new ArrayList();
+        Iterator iter = exp.getParams().iterator();
+        while (iter.hasNext())
+        {
+            Expression expr = (Expression)iter.next();
+            params.add(expr.accept(this));
+        }
+        
+        // Lots of special cases here.  We care about a function if
+        // it matches the conditions in isEligibleFunCall().
+        if (isEligibleFunCall(exp, params, "exp"))
+            return fcExp(exp, (ExprComplex)params.get(0));
+        
+        return new ExprFunCall(exp.getName(), params);
+    }
+
+    private boolean isEligibleFunCall(ExprFunCall exp, List params, String fn)
+    {
+        System.err.println("Checking if " + exp.getName() + " is eligible");
+        // A function call is eligible if:
+        // -- Its name is exactly fn;
+        // -- It has exactly one parameter;
+        // -- That parameter is complex.
+        if (!(exp.getName().equals(fn)))
+            return false;
+        if (params.size() != 1)
+            return false;
+        Expression param = (Expression)params.get(0);
+        if (!(param instanceof ExprComplex))
+            return false;
+        return true;
+    }
+
+    public Expression fcExp(ExprFunCall fc, ExprComplex param)
+    {
+        // e^(a+bi)
+        // e^a e^bi
+        // e^a cis b
+        Expression eToA = new ExprFunCall("exp", param.getReal());
+        Expression cosB = new ExprFunCall("cos", param.getImag());
+        Expression sinB = new ExprFunCall("sin", param.getImag());
+        
+        Expression real = new ExprBinary(ExprBinary.BINOP_MUL, eToA, cosB);
+        Expression imag = new ExprBinary(ExprBinary.BINOP_MUL, eToA, sinB);
         return new ExprComplex(real, imag);
     }
 }

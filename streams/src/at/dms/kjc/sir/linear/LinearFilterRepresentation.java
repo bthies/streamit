@@ -14,7 +14,7 @@ import java.util.*;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.11 2002-10-23 21:12:44 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.12 2002-10-25 13:23:12 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -38,10 +38,10 @@ public class LinearFilterRepresentation {
      **/
     public LinearFilterRepresentation(FilterMatrix matrixA,
 				      FilterVector vectorb,
-				      int pc) {
+				      int popc) {
 	this.A = matrixA.copy();
 	this.b = (FilterVector)vectorb.copy();
-	this.popCount = pc;
+	this.popCount = popc;
     }
 
     /** Get the A matrix. **/
@@ -127,4 +127,70 @@ public class LinearFilterRepresentation {
 	return ((this.getPopCount() == 1) &&
 		(this.getPushCount() == 1));
     }
+
+    /**
+     * returns a LinearCost object that represents the number
+     * of multiplies and adds that are necessary to implement this
+     * linear filter representation.
+     **/
+    public LinearCost getCost() {
+	// add up multiplies and adds that are necessary for each column of the matrix. 
+	int muls = 0;
+	int adds = 0;
+
+	int matRows = A.getRows();
+	int matCols = A.getCols();
+	
+	for (int col=0; col<matCols; col++) {
+	    // counters for the colums (# muls, adds)
+	    int rowAdds = 0;
+	    int rowMuls =  0;
+	    for (int row=0; row<matRows; row++) {
+		ComplexNumber currentElement = A.getElement(row,col);
+		if (!currentElement.isReal()) {
+		    throw new RuntimeException("Non real matrix elements are not supported in cost .");
+		}
+		// flags on whether or not to increment the counters
+		boolean incAdd = true;
+		boolean incMul = true;
+		// if it is zero, no add or mult is necessary
+		if (currentElement.equals(ComplexNumber.ZERO)) {
+		    incAdd = false;
+		    incMul = false;
+		// if one, no need to do a multiplication.
+		} else if (currentElement.equals(ComplexNumber.ONE)) {
+		    incMul = false;
+		}
+		// now, increment if our increment flags are set.
+		if (incAdd) {rowAdds++;}
+		if (incMul) {rowMuls++;}
+	    }
+	    // now, add in the contribution from the constant vector
+	    ComplexNumber currentElement = b.getElement(0,col);
+	    if (!currentElement.isReal()) {
+		throw new RuntimeException("Non real vector elements are not supported in cost .");
+	    }
+
+	    // nothing for zero, inc add for one, and inc both for anything else.
+	    if (currentElement.equals(ComplexNumber.ZERO)) {
+	    } else if (currentElement.equals(ComplexNumber.ONE)) {
+		rowAdds++;
+	    } else {
+		rowAdds++;
+		rowMuls++;
+	    }
+
+	    // basically, we need one less add per row because adds take two operands
+	    // however, we don't want to blindly subtract one, because that might give
+	    // us a negative number
+	    if (rowAdds > 0) {rowAdds--;}
+	    // stick row counters onto overall counters
+	    muls += rowMuls;
+	    adds += rowAdds;
+	}
+	    
+
+		
+	return new LinearCost(muls, adds);
+    }	    
 }

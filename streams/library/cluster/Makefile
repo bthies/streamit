@@ -1,6 +1,6 @@
 
 CC =		gcc
-CFLAGS = 	-g -O2 -I.
+CFLAGS = 	-O2 -I.
 AR =            ar
 RANLIB =        ranlib
 LIBRARY =       libcluster.a
@@ -27,6 +27,8 @@ NAMES =		sock_dscr \
 		mysocket \
 		netsocket \
 		memsocket \
+		producer2 \
+		consumer2
 
 #               data_consumer
 #               data_producer

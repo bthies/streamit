@@ -107,7 +107,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                        && !bodyExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;
-                    steadySchedule.add (getLoopBody ());
+                    steadySchedule.add (((SimpleSchedStream)getLoopBody ()).getSteadySchedule ());
                     bodyBuffer = bodyBuffer.subtract (BigInteger.valueOf (getLoopBody ().getConsumption ()));
                     splitBuffer = splitBuffer.add (BigInteger.valueOf (getLoopBody ().getProduction ()));
 
@@ -151,7 +151,7 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
                        && !loopExecutions.equals (BigInteger.ZERO))
                 {
                     movedForward = true;
-                    steadySchedule.add (getLoopFeedbackPath ());
+                    steadySchedule.add (((SimpleSchedStream)getLoopFeedbackPath ()).getSteadySchedule ());
                     loopBuffer = loopBuffer.subtract (BigInteger.valueOf (getLoopFeedbackPath ().getConsumption ()));
                     joinBuffer = joinBuffer.add (BigInteger.valueOf (getLoopFeedbackPath ().getProduction ()));
 

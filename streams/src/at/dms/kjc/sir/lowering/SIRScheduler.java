@@ -3,7 +3,7 @@ package at.dms.kjc.sir.lowering;
 import streamit.scheduler2.iriter.Iterator;
 import streamit.scheduler2.Scheduler;
 import streamit.scheduler2.Schedule;
-import streamit.StreamIt;
+import streamit.library.StreamIt;
 
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;

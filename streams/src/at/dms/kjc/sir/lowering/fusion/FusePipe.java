@@ -212,12 +212,12 @@ public class FusePipe {
 	// make the initial work function
 	JMethodDeclaration initWork =  makeWork(filterInfo, true);
 	
-	if(pipe.get(0) instanceof SIRTwoStageFilter) {
+	/*if(pipe.get(0) instanceof SIRTwoStageFilter) {
 	    if (initWork!=null) {
 		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter (don't fully support 2-stage fusion yet)");
 	    }
 	    initWork = ((SIRTwoStageFilter)pipe.get(0)).getInitWork();
-	}
+	    }*/
 	
 	// make the steady-state work function
 	JMethodDeclaration steadyWork = makeWork(filterInfo, false);
@@ -547,8 +547,9 @@ public class FusePipe {
 		if (!init) {
 		    statements.addStatement(makePeekRestore(cur, curPhase));
 		}
+		SIRFilter filter=cur.filter;
 		// get the filter's work function
-		JMethodDeclaration work = cur.filter.getWork();
+		JMethodDeclaration work = filter.getWork();
 		// take a deep breath and clone the body of the work function
 		JBlock oldBody = new JBlock(null, work.getStatements(), null);
 		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
@@ -563,12 +564,38 @@ public class FusePipe {
 		     it.hasNext() ; ) {
 		    ((JStatement)it.next()).accept(fuser);
 		}
-		// get <body> into a loop in <statements>
-		statements.addStatement(makeForLoop(body,
-						    curPhase.loopCounter,
-						    new 
-						    JIntLiteral(curPhase.num))
-					);
+		if(init&&(filter instanceof SIRTwoStageFilter)) {
+		    JMethodDeclaration initWork = ((SIRTwoStageFilter)filter).getInitWork();
+		    // take a deep breath and clone the body of the work function
+		    JBlock oldInitBody = new JBlock(null, initWork.getStatements(), null);
+		    JBlock initBody = (JBlock)ObjectDeepCloner.deepCopy(oldInitBody);
+		    // move variable declarations from front of <body> to
+		    // front of <statements>
+		    moveVarDecls(initBody, statements);
+		    // mutate <statements> to make them fit for fusion
+		    fuser = 
+			new FusingVisitor(curPhase, nextPhase, i!=0,
+					  i!=filterInfo.size()-1);
+		    for (ListIterator it = initBody.getStatementIterator(); 
+			 it.hasNext() ; ) {
+			((JStatement)it.next()).accept(fuser);
+		    }
+		    statements.addStatement(initBody);
+		    if(curPhase.num-1>0)
+			statements.addStatement(makeForLoop(body,
+							    curPhase.loopCounter,
+							    new 
+								JIntLiteral(curPhase.num-1))
+					    );
+		} else {
+		    
+		    // get <body> into a loop in <statements>
+		    statements.addStatement(makeForLoop(body,
+							curPhase.loopCounter,
+							new 
+							    JIntLiteral(curPhase.num))
+					    );
+		}
 	    }
 	    // if there's any peek buffer, store items to it
 	    if (cur.peekBufferSize>0) {

@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.80 2003-12-16 21:44:02 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.81 2004-01-26 21:35:18 dmaze Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -997,7 +997,8 @@ public class NodesToJava implements FEVisitor
                 TypePrimitive.TYPE_VOID)
             {
                 result += "public class " + spec.getName() +
-                    " extends StreamIt" + spec.getTypeString() + ifaces + "\n";
+                    " extends StreamIt" + spec.getTypeString() + ifaces +
+                    " // " + spec.getContext() + "\n";
                 result += indent + "{\n";
                 addIndent();
                 result += indent + "public static void main(String[] args) {\n";
@@ -1035,7 +1036,8 @@ public class NodesToJava implements FEVisitor
                         result += "FeedbackLoop";
                         break;
                     }
-                result += ifaces + "\n" + indent + "{\n";
+                result += ifaces + " // " + spec.getContext() + "\n" +
+                    indent + "{\n";
                 addIndent();
                 // If we're in the library backend, we need a construct()
                 // method too; in the compiler backend, a constructor.

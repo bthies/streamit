@@ -91,7 +91,8 @@ typedef struct pipeline_type_data {
   stream_context_list *last_child;
 } pipeline_type_data;
 typedef struct splitjoin_type_data {
-  stream_context_list *children;
+  stream_context_list *first_child;
+  stream_context_list *last_child;
   one_to_many splitter;
   one_to_many joiner;
 } splitjoin_type_data;

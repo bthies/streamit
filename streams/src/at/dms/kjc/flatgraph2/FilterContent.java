@@ -16,11 +16,14 @@ import java.util.*;
  */
 public class FilterContent {
     private String name;
-    private SIRWorkFunction[] init,work;
+    private SIRWorkFunction[] init,steady;
     private CType inputType,outputType;
     private int initMult, steadyMult;
     private JMethodDeclaration[] methods;
     private List paramList;
+    private JMethodDeclaration initFunction;
+    private boolean is2stage;
+    private JFieldDeclaration[] fields;
 
     /*public FilterContent(String name,SIRWorkFunction[] init,SIRWorkFunction[] work,CType inputType,CType outputType,int initMult,int steadyMult,JMethodDeclaration[] methods,List paramList) {
       this.name=name;
@@ -37,7 +40,7 @@ public class FilterContent {
     public FilterContent(SIRPhasedFilter filter,HashMap[] execCounts) {
 	name=filter.getName();
 	init=filter.getInitPhases();
-	work=filter.getPhases();
+	steady=filter.getPhases();
 	inputType=filter.getInputType();
 	outputType=filter.getOutputType();
 	int[] ans=(int[])execCounts[0].get(filter);
@@ -47,9 +50,18 @@ public class FilterContent {
 	if(ans!=null)
 	    steadyMult=ans[0];
 	methods=filter.getMethods();
+	fields = filter.getFields();
 	paramList=filter.getParams();
+	initFunction = filter.getInit();
+	is2stage = steady.length > 1;
     }
     
+    public boolean isTwoStage() 
+    {
+	return is2stage;
+    }
+    
+
     public String toString() {
 	return name;
     }
@@ -66,8 +78,8 @@ public class FilterContent {
 	return outputType;
     }
 
-    public SIRWorkFunction[] getWorkList() {
-	return work;
+    public SIRWorkFunction[] getSteadyList() {
+	return steady;
     }
     
     public SIRWorkFunction[] getInitList() {
@@ -75,11 +87,11 @@ public class FilterContent {
     }
 
     public JMethodDeclaration getWork() {
-	return work[0].getWork();
+	return steady[0].getWork();
     }
 
     public JMethodDeclaration getInit() {
-	return init[0].getWork();
+	return initFunction;
     }
 
     public int getInitMult() {
@@ -91,15 +103,15 @@ public class FilterContent {
     }
 
     public int getPushInt() {
-	return work[0].getPushInt();
+	return steady[0].getPushInt();
     }
 
     public int getPopInt() {
-	return work[0].getPopInt();
+	return steady[0].getPopInt();
     }
 
     public int getPeekInt() {
-	return work[0].getPeekInt();
+	return steady[0].getPeekInt();
     }
 
     public int getInitPush() {
@@ -118,6 +130,12 @@ public class FilterContent {
 	return methods;
     }
     
+    public JFieldDeclaration[] getFields() 
+    {
+	return fields;
+    }
+    
+
     public JMethodDeclaration getInitWork() {
         return init[0].getWork();
     }

@@ -181,8 +181,8 @@ public class RefactorSplitJoin {
 	    }
 	}
 	// set the splitter and joiner types according to the new weights
-	result.setSplitter(SIRSplitter.create(sj,sj.getSplitter().getType(),newSplit));
-	result.setJoiner(SIRJoiner.create(sj,sj.getJoiner().getType(),newJoin));
+	result.setSplitter(SIRSplitter.create(result,sj.getSplitter().getType(),newSplit));
+	result.setJoiner(SIRJoiner.create(result,sj.getJoiner().getType(),newJoin));
 
 	// return new sj
 	return result;
@@ -247,10 +247,10 @@ public class RefactorSplitJoin {
 	    // cases, this is the same as for <sj>; otherwise it's
 	    // the template RR splits and joins
 	    SIRSplitter split = (i==0 ? 
-				 sj.getSplitter() : 
+				 SIRSplitter.createWeightedRR(newSJ, (JExpression[])sj.getSplitter().getInternalWeights().clone()) :
 				 SIRSplitter.createUniformRR(newSJ, new JIntLiteral(1)));
 	    SIRJoiner join = (i==partition.size()-1 ? 
-			      sj.getJoiner() : 
+			      SIRJoiner.createWeightedRR(newSJ, (JExpression[])sj.getJoiner().getInternalWeights().clone()) :
 			      SIRJoiner.createUniformRR(newSJ, new JIntLiteral(1)));
 	    newSJ.setSplitter(split);
 	    newSJ.setJoiner(join);

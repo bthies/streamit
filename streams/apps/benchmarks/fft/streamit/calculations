@@ -1,0 +1,21 @@
+7/26/02 -- AAL 
+I couln't change the FFT (eg get rid of io) because then it won't fit on the tiles
+
+I instumented the round-robin joiner to print "done" after it has outputted 256 outputs  (keep a counter in the round robin joiner). However, this was slightly misleading because it seems as though the steady state schedule does two iterations, so I had to take this into account. Therefore, there are two x 64 complex numbers produced --> 256 outputs per steady state cycle. 
+
+first  iteration done at 0x8d8f (36239 cycles)
+second iteration done at 0xbc3f (48191 cycles) (delta=11952)
+third  iteration done at 0xeb9d (60317 cycles) (delta=12126)
+
+
+==> iter takes 11952/12126 cycles (average = 12039)
+
+
+since we are producing a FFT-64 twice, we are producing 2*64 complex numbers, for 
+256 outputs every 11952 cycles, so normalized to 10^5 cycles, 256*(100000/11952) = 2141.9009
+
+flops reported are 8558/8806 flops(avg=8682), which is (8682/11952) * 250 = 181.60141 MFLOPS
+
+workCount = 157684 / 579824 = 0.27195149
+workCount = 79886 / 191232  = 0.41774389
+workCount = 81066 / 194016  = 0.41783152

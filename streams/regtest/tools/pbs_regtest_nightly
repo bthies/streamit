@@ -3,6 +3,7 @@
 #PBS -o /dev/null
 #PBS -e /dev/null
 #PBS -m n
+#PBS -M nobody@cag.lcs.mit.edu
 #PBS -q long
 #PBS -v STREAMIT_HOME=/u/dmaze/src/streams
 #PBS -N streamitnightly

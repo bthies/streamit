@@ -19,8 +19,7 @@ import at.dms.kjc.sir.lowering.*;
 public class InitArgument {
     public static String getInitArguments(SIRFilter tar) {
 	// get parameters from parent
-	SIRContainer parent = tar.getParent();
-	List params = parent.getParams(parent.indexOf(tar));
+	List params = tar.getParams();
 	StringBuffer buf = new StringBuffer();
 
 	// convert to string

@@ -271,7 +271,7 @@ public class Operator extends DestroyedClass
         } else
         if (type == Short.TYPE)
         {
-            int data = from.popShort ();
+            short data = from.popShort ();
 
             int indx;
             for (indx = to.length - 1; indx >= 0; indx--)

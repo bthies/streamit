@@ -5,11 +5,20 @@ Contents of this directory:
 
 FIRBank.str - Bank of FIR filters from PCA kernel apps.
 
-input.txt   - Input for benchmark in text form.
+FIRBankRowMajor.str - Same as above but assume row-major array layout
+		on input and output.  This allows the computation to be
+		expressed naturally as a single pipeline (and no 
+		transposes).
 
-input.dat   - Input used by benchmark in binary form.  This represents
-		two cycles of the textual input to correspond to a
-		single steady state.
+input.txt - Input for benchmark in text form (column-major array layout).
 
-output.txt  - Output of Matlab code (might have different rounding
+input.dat - Input used by benchmark in binary form (column-major array
+		layout).  This represents two cycles of the textual input 
+		to correspond to a single steady state 
+
+input-rowmajor.dat - Same as above in row-major layout.
+
+output.txt - Output of Matlab code (might have different rounding
 		than StreamIt code).
+
+output-rowmajor.dat - Same as above in row-major format.

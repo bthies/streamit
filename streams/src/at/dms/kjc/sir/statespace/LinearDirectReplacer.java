@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.<br>
  * 
- * $Id: LinearDirectReplacer.java,v 1.14 2004-04-28 19:50:58 sitij Exp $
+ * $Id: LinearDirectReplacer.java,v 1.15 2004-04-29 21:49:56 sitij Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -91,13 +91,20 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 
 	/********** test print for optimization *********/
 	LinearPrinter.println("Before optimization: " + linearRep);
-	//LinearFilterRepresentation testRep = LinearOptimizer.getObservableRep(linearRep);
-	//LinearPrinter.println("After optimization: " + testRep);
+	LinearCost oldCost = linearRep.getCost();
 
-	//LinearPrinter.println("Before optimization, old states = " + linearRep.getStateCount());
-	//LinearPrinter.println("After optimization, new states = " + testRep.getStateCount());
+	LinearOptimizer opt = new LinearOptimizer(linearRep);
+	LinearFilterRepresentation newRep = opt.optimize();
+	LinearCost newCost = newRep.getCost();
 
-	//linearRep = testRep;
+	LinearPrinter.println("After optimization: " + newRep);
+	linearRep = newRep;
+	
+	LinearPrinter.println("Before Optimization (multiplies, adds) " 
+			      + oldCost.getMultiplies() + " " + oldCost.getAdds());
+	
+	LinearPrinter.println("After Optimization (multiplies, adds) " 
+			      + newCost.getMultiplies() + " " + newCost.getAdds());
 	
 	/***********************************************/
 

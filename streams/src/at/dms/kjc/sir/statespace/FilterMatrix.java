@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.11 2004-04-21 17:34:17 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.12 2004-04-29 21:49:56 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -412,7 +412,7 @@ public class FilterMatrix {
 	    throw new IllegalArgumentException("Parameter val exceeds col bounds = " + val);
 	
 	this.multiplyRow(val,scalar);
-	this.multiplyCol(val,scalar);
+	this.multiplyCol(val,1/scalar);
     }
 
 

@@ -1,6 +1,6 @@
 package streamit.scheduler2.print;
 
-/* $Id: PrintProgram.java,v 1.2 2003-03-22 22:24:47 thies Exp $ */
+/* $Id: PrintProgram.java,v 1.3 2003-04-02 03:43:51 thies Exp $ */
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -159,9 +159,9 @@ public class PrintProgram extends streamit.misc.AssertedClass
                         + filter.getInitPopStage(nInitPhase)
                         + ", "
                         + filter.getInitPushStage(nInitPhase)
-                        + ", "
+                        + ", \""
                         + getName(filter.getInitFunctionStage(nInitPhase))
-                        + ");\n");
+                        + "\");\n");
                 map.insert(
                     filter.getInitFunctionStage(nInitPhase),
                     new Pair(new Integer(nInitPhase), new Boolean(true)));

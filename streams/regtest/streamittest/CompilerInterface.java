@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.11 2002-10-21 18:52:38 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.12 2002-11-07 22:40:58 dmaze Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -71,6 +71,16 @@ public class CompilerInterface {
 	super();
 	this.compilerFlags = flags;
 	this.compilerOptions = options;
+    }
+
+    /**
+     * Runs the streamit syntax converter from the input file
+     * to the output file, passing the return value from the
+     * compiler back to the caller.
+     */
+    boolean streamITConvert(String root, String filein, String fileout)
+    {
+        return CompilerHarness.streamITConvert(root, filein, fileout);
     }
     
     /**

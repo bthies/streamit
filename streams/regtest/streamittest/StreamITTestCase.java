@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.16 2002-10-04 00:35:34 thies Exp $
+ * $Id: StreamITTestCase.java,v 1.17 2002-11-07 22:40:58 dmaze Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "apps/examples/";
@@ -34,6 +34,28 @@ class StreamITTestCase extends TestCase {
 	// create a compiler interface for the test case to use (set up the compiler options)
 	this.compiler = CompilerInterface.createCompilerInterface(flags);
     }
+
+    /**
+     * Converts new syntax to old syntax in root using the streamit
+     * frontend.
+     */
+    public void doSyntaxConvertTest(String root,
+                                    String filein,
+                                    String fileout)
+    {
+        // actually do the conversion
+        boolean result = compiler.streamITConvert(root, filein, fileout);
+        // assemble the id of this test
+        String idMessage = ("Convert " + root + filein + " to " + fileout);
+
+	// if the compilation was successful, print a success message
+	if (result == true) {
+	    ResultPrinter.printSuccess(idMessage);
+	}
+
+	// use JUnit framework to assert that the test was ok
+    	assertTrue(idMessage, result);
+    }        
 
     /**
      * Compiles the specified filename in root using

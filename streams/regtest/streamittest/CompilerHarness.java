@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.7 2002-11-05 22:54:45 aalamb Exp $
+ * $Id: CompilerHarness.java,v 1.8 2002-11-07 22:40:58 dmaze Exp $
  **/
 package streamittest;
 
@@ -20,6 +20,8 @@ public class CompilerHarness extends Harness {
 
     // main compiler java class
     static final String JAVA_MAIN = "at.dms.kjc.Main";
+    // syntax converter java class
+    static final String JAVA_CONVERTER = "streamit.frontend.ToJava";
     // java memory option
     static final String JAVA_OPTION_MEM = "-Xmx1700M";
 
@@ -27,6 +29,43 @@ public class CompilerHarness extends Harness {
     static final String C_LIBRARY_PATH = "library/c/";
     static final String C_LIBRARY_FILES = C_LIBRARY_PATH + "stream*.c";
     
+    /**
+     * Converts new syntax to old syntax.  Returns true if successful,
+     * false otherwise.
+     */
+    static boolean streamITConvert(String root,
+                                   String filein,
+                                   String fileout)
+    {
+        // result of running the syntax converter
+        boolean converterResult = false;
+        
+        // expand input streamit files
+        String[] expandedFileNames = expandFileName(filein);
+        
+	// if no filenames returned, signal error via stderr and return false
+	if (expandedFileNames.length < 1) {
+	    ResultPrinter.printError(":filename " + filein +
+				     " did not expand");
+	    ResultPrinter.flushFileWriter();
+	    return false;
+	}
+
+        // assemble command line
+	String[] cmdLineArgs = getConverterCommandArray(fileout, root, expandedFileNames);
+
+	try {
+	    // execute natively
+	    converterResult = executeNative(cmdLineArgs);
+	} catch (Exception e) {
+	    ResultPrinter.printError("Caught exception in syntax converter : " + e.getMessage());
+	    e.printStackTrace();
+	    return false;
+	}
+
+	return converterResult;
+    }
+
     /**
      * Run the streamit compiler with the options specified in the 
      * passed array. Returns true if compliation is successful
@@ -142,6 +181,30 @@ public class CompilerHarness extends Harness {
 			  JAVA_OPTION_MEM + " " +
 			  JAVA_MAIN + " " +
 			  flattenCommandArray(options) +  // compiler options
+			  flattenCommandArray(expandedFileNames));
+
+	return cmdLineArgs;
+    }
+
+    /**
+     * Get command line options for running the streamit syntax converter
+     * with the specified options and the specified file names.
+     * root path is needed to change dir so raw stuff ends up in the correct place
+     **/
+    public static String[] getConverterCommandArray(String outfile,
+                                                    String root, 
+                                                    String[] expandedFileNames) {
+	// expand the filename that was passed in to multiple filenames
+	// if that is necessary
+	String[] cmdLineArgs = new String[3];
+
+	cmdLineArgs[0] = "csh";
+	cmdLineArgs[1] = "-c";
+	cmdLineArgs[2] = ("cd " + root + ";" + // cd to the correct directory
+			  JAVA_COMMAND + " " +
+			  JAVA_OPTION_MEM + " " +
+			  JAVA_CONVERTER + " " +
+                          "--output " + outfile + " " +
 			  flattenCommandArray(expandedFileNames));
 
 	return cmdLineArgs;

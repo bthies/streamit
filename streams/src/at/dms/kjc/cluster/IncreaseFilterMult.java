@@ -218,7 +218,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	if (KjcOptions.peekratio == -1) { 
 	    return 1; 
 	} else {
-	    while (pop * mult * KjcOptions.peekratio < extra) { 
+	    while (pop * mult / KjcOptions.peekratio < extra) { 
 		mult = mult + 1;
 	    }
 	}

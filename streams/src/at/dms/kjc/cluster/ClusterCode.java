@@ -341,9 +341,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  int i;\n");
 	
 	for (int i = 0; i < in.size(); i++) {
-		NetStream s = (NetStream)in.elementAt(i);
+	    NetStream s = (NetStream)in.elementAt(i);
 		
-		p.print("  "+s.name()+"in = new mysocket(init_instance::get_incoming_socket("+s.getSource()+","+s.getDest()+"));\n");
+	    p.print("  "+s.name()+"in = new mysocket(init_instance::get_incoming_socket("+s.getSource()+","+s.getDest()+"));\n");
 	}
 
 	p.print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+"));\n");
@@ -539,25 +539,25 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 
 	/*
-	String me = new String();
+	  String me = new String();
 
-	try {
+	  try {
 
-	    Runtime run = Runtime.getRuntime();
-	    Process proc = run.exec("uname -n");
-	    proc.waitFor();
+	  Runtime run = Runtime.getRuntime();
+	  Process proc = run.exec("uname -n");
+	  proc.waitFor();
 	    
-	    InputStream in = proc.getInputStream();
+	  InputStream in = proc.getInputStream();
 	    
-	    int len = in.available() - 1;
+	  int len = in.available() - 1;
 	    
-	    for (int i = 0; i < len; i++) {
-		me += (char)in.read();
-	    }
-	} catch (Exception ex) {
+	  for (int i = 0; i < len; i++) {
+	  me += (char)in.read();
+	  }
+	  } catch (Exception ex) {
 
-	    ex.printStackTrace();
-	}
+	  ex.printStackTrace();
+	  }
 	*/
 
 	for (int i = 0; i < threadNumber; i++) {
@@ -595,24 +595,64 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		// if we hit the top (a null splitter), assign to partition 0
 		return "1";
 	    } else {
-		// otherwise, integrate splitters into their source.
-		// We are guaranteed that they have only one incoming
-		// edge; otherwise they'd be a joiner.
-		Utils.assert(node.incoming!=null && node.incoming.length>=1 && node.incoming[0]!=null, "Unexpected representation of incoming nodes in flatgraph.");
-		return getPartition(node.incoming[0], partitionMap);
+		// integrate forwards to partition that is communicating
+		// most with this one.
+		SIRSplitter split = (SIRSplitter)op;
+		HashMap map = new HashMap(); // String partition->Integer sum
+		int[] weights = split.getWeights();
+		for (int i=0; i<weights.length; i++) {
+		    String part = getPartition(node.edges[i], partitionMap);
+		    Integer _oldSum = (Integer)map.get(part);
+		    int oldSum = 0;
+		    if (_oldSum!=null) {
+			oldSum = _oldSum.intValue();
+		    }
+		    map.put(part.intern(), new Integer(oldSum+weights[i]));
+		}
+		
+		int max = -1;
+		String result = null;
+		Iterator it = map.keySet().iterator();
+		while (it.hasNext()) {
+		    String part = (String)it.next();
+		    int sum = ((Integer)map.get(part)).intValue();
+		    if (sum>max) {
+			max = sum;
+			result = part;
+		    }
+		}
+		Utils.assert(result!=null);
+		return result;
 	    }
 	} else if (op instanceof SIRJoiner) {
-	    // if we have one outgoing node and it's a filter, then
-	    // integrate into that filter's partition.  Otherwise
-	    // (since after us would be a splitter or multiple nodes)
-	    // integrate into our first child stream by default (could
-	    // be more intelligent to minimize communication, etc.)
-	    if (node.edges!=null && node.edges.length==1 && (node.edges[0].contents instanceof SIRFilter)) {
-		return getPartition(node.edges[0], partitionMap);
-	    } else {
-		Utils.assert(node.incoming!=null && node.incoming.length>=1 && node.incoming[0]!=null, "Unexpected representation of incoming nodes in flatgraph.");
-		return getPartition(node.incoming[0], partitionMap);
+	    // integrate backwards to partition that is communicating
+	    // most with this one.
+	    SIRJoiner join = (SIRJoiner)op;
+	    HashMap map = new HashMap(); // String partition->Integer sum
+	    int[] weights = join.getWeights();
+	    for (int i=0; i<weights.length; i++) {
+		String part = getPartition(node.incoming[i], partitionMap);
+		Integer _oldSum = (Integer)map.get(part);
+		int oldSum = 0;
+		if (_oldSum!=null) {
+		    oldSum = _oldSum.intValue();
+		}
+		map.put(part.intern(), new Integer(oldSum+weights[i]));
 	    }
+	    
+	    int max = -1;
+	    String result = null;
+	    Iterator it = map.keySet().iterator();
+	    while (it.hasNext()) {
+		String part = (String)it.next();
+		int sum = ((Integer)map.get(part)).intValue();
+		if (sum>max) {
+		    max = sum;
+		    result = part;
+		}
+	    }
+	    Utils.assert(result!=null);
+	    return result;
 	} else if (op instanceof SIRIdentity) {
 	    // if we find identity that wasn't assigned, integrate it
 	    // into its destination (arbitrarily -- could just as well
@@ -623,6 +663,6 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	    return null;
 	}
     }
-
 }
 
+    

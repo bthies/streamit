@@ -14,7 +14,7 @@ float->float filter FIRSmoothingFilter(int DFTLen) {
     cosWin[12] = 0.5556; cosWin[13] = 0.3827; cosWin[14] = 0.1951; 
   }
 
-  work push DFTLen pop DFTLen {
+  work push DFTLen pop DFTLen peek cosWinLength {
 
     //note that h[k] = h[i + off]
     for(int n=0; n < DFTLen; n++) {
@@ -206,9 +206,10 @@ float->float splitjoin TransformBank(int channels, int window) {
     float range;
 
     split duplicate();
-    for(int k=0; k<channels; k++)
+    for(int k=0; k<channels; k++) {
 	range = pi*k/channels;
-    add DFTChannel(window,range);
+	add DFTChannel(window,range);
+    }
     join roundrobin(2);
 }
 
@@ -265,10 +266,10 @@ float->float filter Adder(int length) {
 
 
 float->float filter Subtractor {
-
     work push 1 pop 2 {
-
 	push(peek(0) - peek(1));
+	pop();
+	pop();
     }
 }
 
@@ -567,7 +568,7 @@ float->float filter Delay(int N) {
 
     work push 1 pop 1 {
 	push(delay[0]);
-	for(int i=0; i<N; i++)
+	for(int i=0; i<N-1; i++)
 	    delay[i] = delay[i+1];
 	delay[N-1] = pop();
     }
@@ -576,7 +577,7 @@ float->float filter Delay(int N) {
 
 float->float filter InvDelay(int N) {
 
-    work push 1 pop 1 peek N {
+    work push 1 pop 1 peek N+1 {
 	push(peek(N));
 	pop();
     }

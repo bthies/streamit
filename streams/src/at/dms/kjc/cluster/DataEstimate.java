@@ -21,7 +21,10 @@ public class DataEstimate {
 	if (type.getTypeID() == CType.TID_DOUBLE) return 8;
 	if (type.getTypeID() == CType.TID_BOOLEAN) return 1;
 
-	assert (1 == 0);
+	System.out.println("DataEstimate: unknown type ["+type+"]");
+
+	//assert (1 == 0);
+
 	return 0;
     }
 

@@ -57,6 +57,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     //Needed to pass info from assignment to visitNewArray
     JExpression lastLeft;
 
+    int PRINT_MSG_PARAM = -1;
+
     private static int byteSize(CType type) {
 	if (type instanceof CIntType) return 4;
 	if (type instanceof CFloatType) return 4;
@@ -262,6 +264,33 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	for (int i = 0; i < pre.size(); i++) {
 	    print(pre.elementAt(i).toString());
 	}
+
+
+	//  +=============================+
+	//  | Method Declarations         |
+	//  +=============================+
+
+	JMethodDeclaration work = self.getWork();
+
+	//visit methods of filter, print the declaration first
+	declOnly = true;
+	JMethodDeclaration[] methods = self.getMethods();
+	for (int i =0; i < methods.length; i++) {
+	    if (!methods[i].equals(work)) methods[i].accept(this);
+	}
+
+	print("\n");
+	print("inline void check_status__"+selfID+"();\n");
+	print("void check_messages__"+selfID+"();\n");
+	print("void handle_message__"+selfID+"(netsocket *sock);\n");
+	print("void send_credits__"+selfID+"();\n");
+
+	print("\n");
+
+	//  +=============================+
+	//  | Push / Pop                  |
+	//  +=============================+
+
 
 	CType input_type = self.getInputType();
 	CType output_type = self.getOutputType();
@@ -575,10 +604,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	    print("    for (_tmp = 0; _tmp < "+out_pop_num_iters+"; _tmp++) {\n");
 	    print("      //check_status__"+selfID+"();\n");
-	    print("      //check_messages__"+selfID+"();\n");
+	    print("      check_messages__"+selfID+"();\n");
 	    print("      __update_pop_buf__"+selfID+"();\n");
 	    print("      "+self.getWork().getName()+"__"+selfID+"(1);\n");
-	    print("      //send_credits_"+selfID+"();\n");
+	    print("      //send_credits__"+selfID+"();\n");
 	    print("    }\n");
 
 	    print("    "+out.pop_index()+" = 0;\n");
@@ -600,27 +629,6 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("}\n");
 	    print("\n");
 	}
-
-	//  +=============================+
-	//  | Method Declarations         |
-	//  +=============================+
-
-	JMethodDeclaration work = self.getWork();
-
-	//visit methods of filter, print the declaration first
-	declOnly = true;
-	JMethodDeclaration[] methods = self.getMethods();
-	for (int i =0; i < methods.length; i++) {
-	    if (!methods[i].equals(work)) methods[i].accept(this);
-	}
-
-	print("\n");
-	print("inline void check_status__"+selfID+"();\n");
-	print("void check_messages__"+selfID+"();\n");
-	print("void handle_message__"+selfID+"(netsocket *sock);\n");
-	print("void send_credits__"+selfID+"();\n");
-
-	print("\n");
 
 	//  +=============================+
 	//  | Method Bodies               |
@@ -647,17 +655,31 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 				    0, 
 				    CStdType.Integer,
 				    "____n",
+				    new JIntLiteral(0));
+
+	JVariableDefinition tmp = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    "____tmp",
+				    new JLocalVariableExpression(null, counter)); // int ____tmp = ____n;
+
+	JVariableDefinition iter_counter = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    "__counter_"+selfID,
 				    null);
 	
 
-	JStatement init = new JEmptyStatement(null, null);
+	JStatement init = new JVariableDeclarationStatement(null, tmp, null);
 
 
 	JExpression decrExpr = 
 	    new JPostfixExpression(null, 
 				   Constants.OPE_POSTDEC, 
 				   new JLocalVariableExpression(null,
-								   counter));
+								   tmp));
 
 	JStatement decr = 
 	    new JExpressionStatement(null, decrExpr, null);
@@ -666,11 +688,28 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    new JRelationalExpression(null,
 				      Constants.OPE_LT,
 				      new JIntLiteral(0),
-				      new JLocalVariableExpression(null,counter));
+				      new JLocalVariableExpression(null,tmp));
 
 
 	block.addStatement(new JForStatement(null, init, cond, decr, work.getBody(),
 					     null));
+
+	// __counter_X = __counter_X + ____n;
+	block.addStatement(new JExpressionStatement(
+						    null,
+						    new JAssignmentExpression
+							(null,
+							 new JLocalVariableExpression
+							     (null, iter_counter),
+							 new JAddExpression(null,
+									    new JLocalVariableExpression
+										(null, iter_counter),
+									    new JLocalVariableExpression
+										(null, counter))),
+						    null));
+	
+							       
+
 	
 	
 	JFormalParameter param = new JFormalParameter(null, 0, CStdType.Integer, "____n", true);
@@ -910,7 +949,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("\n");
 	}
 	
-	print("\nvoid send_credits__"+selfID+"() {\n");
+	print("\ninline void send_credits__"+selfID+"() {\n");
 
 	print("  int tmp;\n");
 
@@ -1706,6 +1745,15 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	  if (init != null) {
 	  init.accept(this);
 	  }*/
+	
+	// only print message parameter 
+	if (PRINT_MSG_PARAM > -1) {
+	    if (init != null) {
+		init.accept(this);
+	    }
+	    return;
+	}
+
 	print("("+ type);
 	for (int y=0; y<dims.length;y++) {print("*");}
 	print(")calloc(");
@@ -1782,6 +1830,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
                                           JExpression prefix,
                                           String ident,
                                           JExpression[] args) {
+
+	if (PRINT_MSG_PARAM > -1) {
+	    visitArgs(args, 0);
+	    return;
+	}
+
         /*
           if (ident != null && ident.equals(JAV_INIT)) {
           return; // we do not want generated methods in source code
@@ -2200,7 +2254,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     public void visitMessageStatement(SIRMessageStatement self,
                                       JExpression portal,
                                       String iname,
-                                      String ident,
+                                      String __ident,
                                       JExpression[] params,
                                       SIRLatency latency)
     {
@@ -2219,13 +2273,57 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
         print(");");
 	*/
 
+	String ident;
+	int num_params = 0;
+
 	if (portal instanceof SIRPortal) {
 	    SIRStream receivers[] = ((SIRPortal)portal).getReceivers();
 	    for (int i = 0; i < receivers.length; i++) {
 		int dst = NodeEnumerator.getSIROperatorId(receivers[i]);
 
-		//print("/* iname: "+iname+" ident: "+ident+" type: "+((SIRPortal)portal).getPortalType().getCClass()+"*/\n");
+		System.out.println("/* iname: "+iname+" ident: "+self.getMessageName()+" type: "+((SIRPortal)portal).getPortalType().getCClass()+"*/\n");
 
+		System.out.println("params size: "+params.length);
+
+		ident = ((JStringLiteral)params[1]).stringValue();
+
+		print("/*");
+
+		for (int y = 0;; y++) {
+		    // this causes only msg param to be output
+		    PRINT_MSG_PARAM = y;
+		    params[2].accept(this);
+		    if (PRINT_MSG_PARAM == -1) break; // no more params!
+		    num_params++;
+		    print(",");
+		}
+
+		print(" num_params: "+num_params+"*/\n");
+
+		/*
+		try {
+
+		    print(((JStringLiteral)params[1]).stringValue());
+
+		    // params[1].accept(this); // name of the portal method! 
+		    
+		    print("\n");
+
+		    for (int y = 0;; y++) {
+
+			// this causes only msg param to be output
+			PRINT_MSG_PARAM = y; 
+			params[2].accept(this);
+			if (PRINT_MSG_PARAM == -1) break; // no more params!
+		    }
+
+		    return;
+
+		} catch (Exception ex) {
+		    ex.printStackTrace();
+		}
+		*/
+		
 		CClass pclass = ((SIRPortal)portal).getPortalType().getCClass();
 		CMethod methods[] = pclass.getMethods();
 
@@ -2233,27 +2331,31 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 		int size = 12; // size:4 mindex:4 exec_at:4
 
+		// int and float have size of 4 bytes
+		size += num_params * 4;
+
 		for (int t = 0; t < methods.length; t++) {
+
+		    System.out.println("/* has method: "+methods[t]+" */\n");
 
 		    if (methods[t].getIdent().equals(ident)) {
 			index = t;
 			break;
 		    }
-		    //print("/* has method: "+methods[t]+" */\n");
 		}
 
 		CType method_params[] = methods[index].getParameters();
 
+		/*
 		if (params != null) {
-
-		    // in C++ int and float have size of 4 bytes
-
+		    // int and float have size of 4 bytes
 		    size += params.length * 4; 
 		}
+		*/
 
-		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+size+");");
+		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+size+");\n");
 
-		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");");
+		print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+index+");\n");
 
 		if (latency instanceof SIRLatencyMax) {
 
@@ -2266,35 +2368,36 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 		    if (LatencyConstraints.isMessageDirectionDownstream(sender, receiver)) {
 			
-			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));");
+			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getDstPhase4SrcPhase(__counter_"+selfID+"+"+max+"));\n");
 
 		    } else {
 		    
 					    
-			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(__counter_"+selfID+"+"+max+"));");
+			print("__msg_sock_"+selfID+"_"+dst+"out->write_int(sdep_"+selfID+"_"+dst+"->getSrcPhase4DstPhase(__counter_"+selfID+"+"+max+"));\n");
 		    
 		    }
 
 		} else {
 
-		    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(-1);");
+		    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(-1);\n");
 		}
-
+		
 		if (params != null) {
-		    for (int t = 0; t < params.length; t++) {
-			if (params[t] != null) {
+		    for (int t = 0; t < method_params.length; t++) {
 
-			    if (method_params[t].toString().equals("int")) {
-				print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
-				params[t].accept(this);
-				print(");");
-			    }
-			    if (method_params[t].toString().equals("float")) {
-				print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
-				params[t].accept(this);
-				print(");");
-			    }
+			if (method_params[t].toString().equals("int")) {
+			    print("__msg_sock_"+selfID+"_"+dst+"out->write_int(");
 			}
+			if (method_params[t].toString().equals("float")) {
+			    print("__msg_sock_"+selfID+"_"+dst+"out->write_float(");
+			}
+
+			// print out the parameter!
+			PRINT_MSG_PARAM = t;
+			params[2].accept(this);
+			PRINT_MSG_PARAM = -1;
+
+			print(");\n");
 		    }
 		}
 		
@@ -2681,6 +2784,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
     public void visitArrayInitializer(JArrayInitializer self,
                                       JExpression[] elems)
     {
+
+	// only print message param
+	if (PRINT_MSG_PARAM > -1) {
+	    if (PRINT_MSG_PARAM < elems.length) {
+		elems[PRINT_MSG_PARAM].accept(this);
+	    } else {
+		PRINT_MSG_PARAM = -1;
+	    }
+	    return;
+	}
+
         newLine();
         print("{");
         for (int i = 0; i < elems.length; i++) {

@@ -210,13 +210,13 @@ class ClusterCodeGenerator {
 	i = msg_from.iterator();
 	while (i.hasNext()) {
 	    int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-	    r.add("mysocket *__msg_sock_"+src+"_"+id+"in;\n");	
+	    r.add("netsocket *__msg_sock_"+src+"_"+id+"in;\n");	
 	}
 
 	i = msg_to.iterator();
 	while (i.hasNext()) {
 	    int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-	    r.add("mysocket *__msg_sock_"+id+"_"+dst+"out;\n");
+	    r.add("netsocket *__msg_sock_"+id+"_"+dst+"out;\n");
 	}
 	
 	r.add("\n");
@@ -521,14 +521,14 @@ class ClusterCodeGenerator {
 	i = msg_from.iterator();
 	while (i.hasNext()) {
 	    int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-	    r.add("  __msg_sock_"+src+"_"+id+"in = init_instance::get_incoming_socket("+src+","+id+",MESSAGE_SOCKET);\n");
+	    r.add("  __msg_sock_"+src+"_"+id+"in = (netsocket*)init_instance::get_incoming_socket("+src+","+id+",MESSAGE_SOCKET);\n");
 	    r.add("\n");
 	}
 
 	i = msg_to.iterator();
 	while (i.hasNext()) {
 	    int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-	    r.add("  __msg_sock_"+id+"_"+dst+"out = init_instance::get_outgoing_socket("+id+","+dst+",MESSAGE_SOCKET);\n");
+	    r.add("  __msg_sock_"+id+"_"+dst+"out = (netsocket*)init_instance::get_outgoing_socket("+id+","+dst+",MESSAGE_SOCKET);\n");
 	    r.add("\n");
 	}
 
@@ -664,7 +664,7 @@ class ClusterCodeGenerator {
 	//  +=============================+
 
 	r.add("void __main__"+id+"() {\n");
-	r.add("  int _tmp;\n");
+	r.add("  int _tmp; // modified\n");
 	r.add("  int _steady = __steady_"+id+";\n");
 	r.add("  int _number = __max_iteration;\n");
 	r.add("\n");
@@ -685,12 +685,16 @@ class ClusterCodeGenerator {
 	    r.add("    for (_tmp = 0; _tmp < "+init_counts+"; _tmp++) {\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //check_status__"+id+"();\n");
-		r.add("      //check_messages__"+id+"();\n");
+		if (msg_from.size() > 0) {
+		    r.add("      check_messages__"+id+"();\n");
+		}
 		r.add("      __update_pop_buf__"+id+"();\n");
 	    }
 	    r.add("      "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
-		r.add("      //send_credits_"+id+"();\n");
+		if (msg_to.size() > 0) {
+		    r.add("      send_credits__"+id+"();\n");
+		}
 	    }
 	    r.add("    }\n");
 	    r.add("  }\n");
@@ -705,12 +709,16 @@ class ClusterCodeGenerator {
 	    r.add("    for (_tmp = 0; _tmp < "+steady_counts+"; _tmp++) {\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //check_status__"+id+"();\n");
-		r.add("      //check_messages__"+id+"();\n");
+		if (msg_from.size() > 0) {
+		    r.add("      check_messages__"+id+"();\n");
+		}
 		r.add("      __update_pop_buf__"+id+"();\n");
 	    }
 	    r.add("      "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
-		r.add("      //send_credits_"+id+"();\n");
+		if (msg_to.size() > 0) {
+		    r.add("      send_credits__"+id+"();\n");
+		}
 	    }
 	    r.add("    }\n");
 
@@ -718,12 +726,16 @@ class ClusterCodeGenerator {
 
 	    if (oper instanceof SIRFilter) {
 		r.add("    //check_status__"+id+"();\n");
-		r.add("    //check_messages__"+id+"();\n");
+		if (msg_from.size() > 0) {
+		    r.add("    check_messages__"+id+"();\n");
+		}
 		r.add("    __update_pop_buf__"+id+"();\n");
 	    }
 	    r.add("    "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
-		r.add("    //send_credits_"+id+"();\n");
+		if (msg_to.size() > 0) {
+		    r.add("    send_credits__"+id+"();\n");
+		}
 	    }
 	}
 	

@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.21 2003-10-05 00:39:04 thies Exp $
+ * $Id: TestAll.java,v 1.22 2003-10-05 00:39:30 thies Exp $
  **/
 package streamittest;
 
@@ -58,8 +58,7 @@ public class TestAll extends TestCase {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW[8]));
 
-	// try one without partitioning just in case we want to
-	// compare with original performance
+	// try dynamic programming partitioner
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW[4] | 
 				       CompilerInterface.DPPARTITION));

@@ -500,11 +500,41 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 					  String ident,
 					  JExpression[] args) {
 	super.visitMethodCallExpression(self, prefix, ident, args);
-        JMethodDeclaration target = findMethod(ident);
-        if (target != null)
-            target.accept(this);
+        // Known values from profiling RAW code:
+        if (ident.equals("acos")) work += 515;
+        else if (ident.equals("acosh")) work += 665;
+        else if (ident.equals("acosh")) work += 665;
+        else if (ident.equals("asin")) work += 536;
+        else if (ident.equals("asinh")) work += 578;
+        else if (ident.equals("atan")) work += 195;
+        else if (ident.equals("atan2")) work += 272;
+        else if (ident.equals("atanh")) work += 304;
+        else if (ident.equals("ceil")) work += 47;
+        else if (ident.equals("cos")) work += 120;
+        else if (ident.equals("cosh")) work += 368;
+        else if (ident.equals("exp")) work += 162;
+        else if (ident.equals("expm1")) work += 220;
+        else if (ident.equals("floor")) work += 58;
+        else if (ident.equals("fmod")) work += 147;
+        else if (ident.equals("frexp")) work += 60;
+        else if (ident.equals("log")) work += 146;
+        else if (ident.equals("log10")) work += 212;
+        else if (ident.equals("log1p")) work += 233;
+        else if (ident.equals("modf")) work += 41;
+        else if (ident.equals("pow")) work += 554;
+        else if (ident.equals("sin")) work += 97;
+        else if (ident.equals("sinh")) work += 303;
+        else if (ident.equals("sqrt")) work += 297;
+        else if (ident.equals("tan")) work += 224;
+        else if (ident.equals("tanh")) work += 288;
         else
-            work += METHOD_CALL;
+        {
+            JMethodDeclaration target = findMethod(ident);
+            if (target != null)
+                target.accept(this);
+            else
+                work += METHOD_CALL;
+        }
     }
 
     /**

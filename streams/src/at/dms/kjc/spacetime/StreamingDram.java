@@ -13,6 +13,8 @@ public class StreamingDram extends IODevice
     private Address index;
     private static Address size;
 
+    
+
     public static void setSize(RawChip chip)
     {
 	size = Address.MAX_ADDRESS.div(2*chip.getXSize() +
@@ -22,7 +24,16 @@ public class StreamingDram extends IODevice
     StreamingDram(RawChip chip, int port)
     {
 	super(chip, port);
-	//	tile.addIODevice(this, dir);
+	if (Y == -1)
+	    chip.getTile(X, 0).addIODevice(this);
+	else if (X == -1)
+	    chip.getTile(0, Y).addIODevice(this);
+	else if (X == rawChip.getXSize())
+	    chip.getTile(X - 1, Y).addIODevice(this);
+	else if (Y == rawChip.getYSize())
+	    chip.getTile(X, Y -1).addIODevice(this);
+	else 
+	    assert false : "invalid x, y coordinate for streaming dram";
     }
 
     public static StreamingDram getStrDram(Address addr, RawChip chip) 

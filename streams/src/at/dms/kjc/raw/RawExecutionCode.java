@@ -221,6 +221,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 	     bottomPeek + 
 	     Math.max((initFire - 2), 0) * pop);
 	
+	//System.out.println(remaining);
     }
     
     /* node is not directly connected upstream to a splitter, this function
@@ -301,11 +302,14 @@ public class RawExecutionCode extends at.dms.util.Utils
 	int currentUpStreamItems = getUpStreamItems(RawBackend.initExecutionCounts,
 						 current.edges[0]);
 
-	//	if (getUpStreamItems(RawBackend.initExecutionCounts, node) != 
-	//    ((int)(currentUpStreamItems * roundRobinMult)))
-	//    System.out.println
-	//	("***** CORRECTING FOR INCOMING SPLITTER BUFFER IN INIT SCHEDULE (" + 
-	//	 node.contents.getName() + ") *****\n");
+	/*
+	  if (getUpStreamItems(RawBackend.initExecutionCounts, node) != 
+	  ((int)(currentUpStreamItems * roundRobinMult)))
+	    System.out.println
+		("***** CORRECTING FOR INCOMING SPLITTER BUFFER IN INIT SCHEDULE (" + 
+		 node.contents.getName() + " " + ((int)(currentUpStreamItems * roundRobinMult))
+		 + " vs. " + getUpStreamItems(RawBackend.initExecutionCounts, node) + ") *****\n");
+	*/
 	
 	//return the number of items passed from current to node thru the splitters
 	//(some may be roundrobin so we must use the weight multiplier.
@@ -406,10 +410,17 @@ public class RawExecutionCode extends at.dms.util.Utils
 						       simpleIndexVar,
 						       null));
 	    }
-	    else 
-		buffersize = CalcBufferSize.getConsBufSize(Layout.getNode(Layout.getTile(filter)));
-	    
+	    else { //filter with remaing items on the buffer after initialization 
+		//see Mgordon's thesis for explanation (Code Generation Section)
+		int maxpeek = filter.getPeekInt();
 
+		if (filter instanceof SIRTwoStageFilter &&
+		    (((SIRTwoStageFilter)filter).getInitPeek() > maxpeek))
+		    maxpeek = ((SIRTwoStageFilter)filter).getInitPeek();
+
+		buffersize = Util.nextPow2(maxpeek + remaining);
+	    }
+	    
 	    JVariableDefinition recvBufVar = 
 		new JVariableDefinition(null, 
 					at.dms.kjc.Constants.ACC_FINAL, //?????????
@@ -745,23 +756,10 @@ public class RawExecutionCode extends at.dms.util.Utils
     JStatement generateSteadyStateLoop(SIRFilter filter, 
 				       LocalVariables localVariables) 
     {
-	int unrollFactor = 1;
-	
-	//if this filter has a buffer, 
-	//the unroll factor is equal to the lcm of pop
-	//and the buffersize
-	if (filter.getPeekInt() > 0) {
-	    unrollFactor = 
-		lcm(filter.getPopInt(),
-		    CalcBufferSize.getConsBufSize
-		    (Layout.getNode(Layout.getTile(filter))));
-	}
 	
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
 	//clone and inline the work function
-	//	for (int i = 0; i < unrollFactor; i++) {	
-	//if a simple filter, reset the simpleIndex
 	if (isSimple(filter)){
 	    block.addStatement
 		(new JExpressionStatement(null,

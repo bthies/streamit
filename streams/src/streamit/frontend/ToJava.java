@@ -144,6 +144,7 @@ class ToJava
                 outWriter = new FileWriter(outputFile);
             else
                 outWriter = new OutputStreamWriter(System.out);
+            outWriter.write("import streamit.*;\n");
 
             for (Iterator iter = inputFiles.iterator(); iter.hasNext(); )
             {

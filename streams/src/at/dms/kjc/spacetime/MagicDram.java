@@ -132,8 +132,8 @@ public class MagicDram extends IODevice
 	    while (bufs.hasNext()) {
 		Buffer current = (Buffer)bufs.next();
 		String bufferIdent = getBufferIdent(current.out, current.in);
-		fw.write("\tlocal " + bufferIdent + "_size = " + 
-			 Util.magicBufferSize(current.in, current.out) + ";\n");
+		//fw.write("\tlocal " + bufferIdent + "_size = " + 
+		//	 Util.magicBufferSize(current.in, current.out) + ";\n");
 		fw.write("\tlocal " + bufferIdent + "_buffer = malloc(" + bufferIdent + "_size);\n");
 	    }
 	    //Before we can start this device, receive one item from the tile

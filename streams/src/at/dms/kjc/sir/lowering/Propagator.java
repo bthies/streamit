@@ -7,6 +7,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 import at.dms.compiler.JavaStyleComment;
 import at.dms.compiler.JavadocComment;
+import java.lang.Math;
 
 /**
  * This class propagates constants and partially evaluates all
@@ -170,6 +171,21 @@ class Propagator extends SLIRReplacingVisitor {
     // ----------------------------------------------------------------------
     // EXPRESSION
     // ----------------------------------------------------------------------
+
+    /**
+     * Visits an assignment expression
+     */
+    public Object visitAssignmentExpression(JAssignmentExpression self,
+                                            JExpression left,
+                                            JExpression right)
+    {
+        left.accept(this);
+        JExpression newRight = (JExpression)right.accept(this);
+        if (newRight.isConstant()) {
+            self.setRight(newRight);
+        }
+        return self;
+    }
 
     /**
      * Visits an unary plus expression
@@ -392,6 +408,9 @@ class Propagator extends SLIRReplacingVisitor {
 						JExpression right) {
 	JExpression newLeft = (JExpression)left.accept(this);
 	JExpression newRight = (JExpression)right.accept(this);
+        // promote constants if needed
+        newLeft = doPromote(newLeft, newRight);
+        newRight = doPromote(newRight, newLeft);
 	// set any constants that we have (just to save at runtime)
 	if (newLeft.isConstant()) {
 	    self.setLeft(newLeft);
@@ -418,15 +437,8 @@ class Propagator extends SLIRReplacingVisitor {
 	JExpression newLeft = (JExpression)left.accept(this);
 	JExpression newRight = (JExpression)right.accept(this);
         // promote constants if needed
-        if (newLeft instanceof JFloatLiteral &&
-            newRight instanceof JDoubleLiteral)
-            newLeft = new JDoubleLiteral(newLeft.getTokenReference(),
-                                         newLeft.floatValue());
-        else if (newLeft instanceof JDoubleLiteral &&
-                 newRight instanceof JFloatLiteral)
-            newRight = new JDoubleLiteral(newRight.getTokenReference(),
-                                          newRight.floatValue());
-        
+        newLeft = doPromote(newLeft, newRight);
+        newRight = doPromote(newRight, newLeft);
 	// set any constants that we have (just to save at runtime)
 	if (newLeft.isConstant()) {
 	    self.setLeft(newLeft);
@@ -441,6 +453,46 @@ class Propagator extends SLIRReplacingVisitor {
 	    // otherwise, return self
 	    return self;
 	}
+    }
+
+    private JExpression doPromote(JExpression from, JExpression to)
+    {
+        if (from instanceof JFloatLiteral && to instanceof JDoubleLiteral)
+            return new JDoubleLiteral(from.getTokenReference(),
+                                      from.floatValue());
+        if (from instanceof JIntLiteral && to instanceof JFloatLiteral)
+            return new JFloatLiteral(from.getTokenReference(),
+                                     from.intValue());
+        return from;
+    }
+
+    /**
+     * Visits a method call expression.  Simplifies known idempotent
+     * functions.
+     */
+    public Object visitMethodCallExpression(JMethodCallExpression self,
+                                            JExpression prefix,
+                                            String ident,
+                                            JExpression[] args)
+    {
+        prefix.accept(this);
+        for (int i = 0; i < args.length; i++)
+            args[i] = (JExpression)args[i].accept(this);
+
+        // Look for known idempotent functions.
+        if (args.length == 1 && args[0].isConstant())
+        {
+            JExpression narg = doPromote(args[0],
+                                         new JDoubleLiteral(null, 0.0));
+            double darg = narg.doubleValue();
+            if (ident.equals("sin"))
+                return new JDoubleLiteral(self.getTokenReference(),
+                                          Math.sin(darg));
+            if (ident.equals("cos"))
+                return new JDoubleLiteral(self.getTokenReference(),
+                                          Math.cos(darg));
+        }
+        return self;
     }
 
     /**

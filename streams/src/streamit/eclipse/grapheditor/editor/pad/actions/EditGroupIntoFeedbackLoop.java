@@ -91,242 +91,30 @@ public class EditGroupIntoFeedbackLoop extends AbstractActionDefault {
 			return;
 		}
 		
-		/** Bring out the dialog to select the body and the loop */
-		GEFeedbackLoopGroupingDialog dialog = new GEFeedbackLoopGroupingDialog(new JFrame(), 
-																	graphpad.getCurrentDocument(),
-																	succList);
-		dialog.setVisible(true);
 		
-		/** Clicked cancel in the dialog */	
-		if (dialog.canceled()) 
-		{
-			return;
-		}
-		/** Clicked OK in the dialog */
-		else
-		{
-			/** Get the properties (body, loop) selected in the dialog. */
-			Properties properties = dialog.getPropertiesInDialog();
-			String bodyName = properties.getProperty(GEProperties.KEY_FLOOP_BODY);
-			String loopName = properties.getProperty(GEProperties.KEY_FLOOP_LOOP);
-			
-			/** No loop was selected for the GEFeedbackLoop to be constructed */
-			if (loopName == "")
-			{
-				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_LOOP_IN_FLOOP);
-			}
-			/** No body was selected for the GEFeedbackLoop to be constructed */
-			if (bodyName =="")
-			{
-				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_BODY_IN_FLOOP);
-			}
-			
-			/** Cannot have the body and the loop be the same */
-			if (bodyName == loopName)
-			{
-				ErrorCode.handleErrorCode(ErrorCode.CODE_SAME_BODY_AND_LOOP);	
-				return;
-			}
-		
-			
-			GEStreamNode body = null;
-			GEStreamNode loop = null;
-			
-			/** Get the GEStreamNodes corresponding to the body and loop names. */
-			for (Iterator nodeIter = succList.iterator(); nodeIter.hasNext();)
-			{
-				GEStreamNode node = (GEStreamNode) nodeIter.next();
-				if (node.getName() == bodyName)
-				{
-					body = node;
-				}
-				else if (node.getName() == loopName)
-				{
-					loop = node;
-				}
-			}
-		
-			/** Must have selected a valid loop for the feedbackloop */	
-			if (loop == null)
-			{
-				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_LOOP_IN_FLOOP);	
-				return;
-			}
-			
-			/** Must have selected a valid body for the feedbackloop */
-			if (body == null)
-			{
-				ErrorCode.handleErrorCode(ErrorCode.CODE_NO_BODY_IN_FLOOP);
-				return;				
-			}
-		
-			//TODO: Might be problem if removing node not in succesor list (i.e. splitter, joiner in splitjoin)
-			loop.getEncapsulatingNode().removeNodeFromContainer(loop);
-			body.getEncapsulatingNode().removeNodeFromContainer(body);
-			splitter.getEncapsulatingNode().removeNodeFromContainer(splitter);
-			joiner.getEncapsulatingNode().removeNodeFromContainer(joiner);
-						
-			GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure(); 
-			
-			/** Create the GEFeedbackLoop that will hold the selected components */
-			GEFeedbackLoop floop = new GEFeedbackLoop("FeedbackLoop_"+ GEProperties.id_count++, 
-														splitter, joiner, body, loop);
-			toplevel.addNodeToContainer(floop);
-			floop.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
-			
-			/** Update hierarchy panel */
-			EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
-											get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
-			ac.actionPerformed(null);
-		}		
-	}
-	
-	/**
-	 * The dialog used to select the body and loop of the GEFeedbackLoop.
-	 * @author jcarlos
-	 */
-	private class GEFeedbackLoopGroupingDialog extends GEStreamNodeConfigurationDialog
-	{
-		protected String dialogName = "FeedbackLoop Grouping";
-		protected boolean canceled;
-
-		protected JPanel jPanel1;
-		protected JPanel toolBar;
-		protected JButton cancelButton;
-		protected JButton finishedButton;
-
-		protected JLabel bodyLabel = new JLabel();
-		protected JLabel loopLabel = new JLabel();
-
-		protected JComboBox bodyJComboBox;
-		protected JComboBox loopJComboBox;
-	
-		protected GPDocument document;
-		protected ArrayList cells;
-		
-		/**
-		 * Default constructor
-		 * @param parent Frame 
-		 * @param document GPDocumnet
-		 * @param succList ArrayList with the cells that can be selected as body or loop.
-		 */	
-		public GEFeedbackLoopGroupingDialog(Frame parent, GPDocument document, ArrayList succList)
-		{
-			super(parent, document);
-			this.document = document;
-			this.cells = succList;
-			
-			initComponents();
-			setTitle(dialogName);
-
-			setPosition();
-		}
-		
-		/**
-		 * Get the properties selected in the dialog.
-		 * @return Properties.
-		 */
-		public Properties getPropertiesInDialog()
-		{
-			Properties properties = new Properties();
-			properties.put(GEProperties.KEY_FLOOP_LOOP, this.getLoopName());
-			properties.put(GEProperties.KEY_FLOOP_BODY, this.getBodyName());
-			return properties;
-		}
-		
-		/**
-		 * Returns the value of the "Loop" field as text.
-		 */
-		public String getLoopName()
-		{
-			if (loopJComboBox.getSelectedItem() == null)
-			{
-				return "";
-			}
-			else
-			{
-				return loopJComboBox.getSelectedItem().toString();
-			}
-		}
-		
-		/**
-		 * Returns the value of the "Body" field as text.
-		 */
-		public String getBodyName()
-		{
-			if (bodyJComboBox.getSelectedItem() == null)
-			{
-				return "";
-			}
-			else
-			{
-				return bodyJComboBox.getSelectedItem().toString();
-			}
-		}
-		
-		
-		/** 
-		 * Initialize the Swing Components in the dialog.
-		 */   
-		protected void initComponents() 
-		{
-			
-			jPanel1 = new JPanel(new GridLayout(3,3));
-			toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT ));
-			cancelButton = new JButton();
-			finishedButton = new JButton();
-		
-			bodyLabel = new JLabel();
-			loopLabel = new JLabel();
-		
-			Object [] names = GEStreamNode.getNodeNames(cells);
-			loopJComboBox = new JComboBox(names);
-			bodyJComboBox = new JComboBox(names);
-		
-		
-			addWindowListener(new java.awt.event.WindowAdapter() {
-				public void windowClosing(java.awt.event.WindowEvent evt) {
-					closeDialog(evt);
-				}
-			});
-		
-			finishedButton.setText(Translator.getString("OK"));
-			finishedButton.setName(Translator.getString("OK"));
-				
-			finishedButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent evt) {
-					finishedButtonActionPerformed(evt);
-				}
-			});
-			
-			toolBar.add(finishedButton);
-			getRootPane().setDefaultButton(finishedButton);
-			
-			cancelButton.setText(Translator.getString("Cancel"));
-			cancelButton.setName(Translator.getString("Cancel"));
-			cancelButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent evt) {
-					cancelButtonActionPerformed(evt);
-				}
-			});
-			toolBar.add(cancelButton);
-			
-			getContentPane().add(toolBar, BorderLayout.SOUTH );        
-			
-			loopLabel.setText("Loop");
-			loopLabel.setName("Loop");
-			jPanel1.add(loopLabel);
-			jPanel1.add(loopJComboBox);
-			
-			bodyLabel.setText("Body");
-			bodyLabel.setName("Body");
-			jPanel1.add(bodyLabel);
-			jPanel1.add(bodyJComboBox);
-			
+		splitter.getEncapsulatingNode().removeNodeFromContainer(splitter);
+		joiner.getEncapsulatingNode().removeNodeFromContainer(joiner);
 					
-			getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
+		GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure(); 
 		
-			pack();
-		}	
-	}
+		/** Create the GEFeedbackLoop that will hold the selected components */
+		GEFeedbackLoop floop = new GEFeedbackLoop("FeedbackLoop_"+ GEProperties.id_count++, 
+													splitter, joiner, null, null);
+		toplevel.addNodeToContainer(floop);
+		floop.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
+
+		
+		for (Iterator succListIter = succList.iterator(); succListIter.hasNext();)
+		{
+			((GEStreamNode) succListIter.next()).changeParentTo(floop);	
+		}
+
+
+		
+		/** Update hierarchy panel */
+		EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
+										get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
+		ac.actionPerformed(null);
+	}		
 }
+	

@@ -24,7 +24,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Font;
-import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -42,7 +41,6 @@ import java.util.Properties;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
@@ -62,15 +60,12 @@ import streamit.eclipse.grapheditor.editor.controllers.Controller;
 import streamit.eclipse.grapheditor.editor.controllers.GEFilterController;
 import streamit.eclipse.grapheditor.editor.controllers.GEJoinerController;
 import streamit.eclipse.grapheditor.editor.controllers.GESplitterController;
-import streamit.eclipse.grapheditor.editor.controllers.StreamTypeDialog;
 import streamit.eclipse.grapheditor.editor.pad.actions.EditUpdateHierarchy;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.ErrorCode;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
-import streamit.eclipse.grapheditor.graph.NodeCreator;
 import streamit.eclipse.grapheditor.graph.NodeTemplateGenerator;
-import streamit.eclipse.grapheditor.graph.RelativePosition;
 
 /**
  * MarqueeHandler that can insert cells.
@@ -97,8 +92,7 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 	protected transient JToggleButton buttonFilter = new JToggleButton();
 	protected transient JToggleButton buttonSplitter = new JToggleButton();
 	protected transient JToggleButton buttonJoiner = new JToggleButton();
-	
-	protected transient JToggleButton buttonNode = new JToggleButton();
+
 	protected transient JToggleButton buttonEdge = new JToggleButton();
 	protected transient JToggleButton buttonZoomArea = new JToggleButton();
 	
@@ -118,7 +112,6 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 		grp.add(buttonFilter);
 		grp.add(buttonSplitter);
 		grp.add(buttonJoiner);
-		grp.add(buttonNode);
 		grp.add(buttonEdge);
 		grp.add(buttonZoomArea);
 	}
@@ -438,19 +431,15 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 				{
 	
 					Properties _controlProperties = _control.getConfiguration();
-					NodeCreator.nodeCreate(_controlProperties,
-											graphpad.getCurrentDocument().getGraph(),
-											bounds,
-											graphpad.getCurrentDocument().getGraphStructure());
+					graphpad.getCurrentDocument().getGraphStructure().nodeCreate(_controlProperties,
+																		graphpad.getCurrentDocument().getGraph(),
+																		bounds);
 					
 					/** Update the hierarchy panel */
 					EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().
 																get(Utilities.getClassNameWithoutPackage(EditUpdateHierarchy.class));
 					ac.actionPerformed(null);
 					
-					/** Write the template code for the newly created node in the source code */
-					String template = NodeTemplateGenerator.createTemplateCode(_controlProperties);
-					writeTemplateCodeToFile(template);
 				}
 				else 
 				{
@@ -458,29 +447,8 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 				}		
 				//graphpad.getCurrentGraph().startEditingAtCell(cell);
 			}			
-			else if (buttonNode.isSelected()) 
-			{
-				Frame f = JOptionPane.getFrameForComponent(graphpad);
-				final StreamTypeDialog std = new StreamTypeDialog(f,graphpad.getCurrentDocument());
-				std.show();
-				
-				if (std.isCanceled())
-				{
-					graphpad.getCurrentGraph().getModel().insert(null,null,null,null,null);	
-				}
-				else 
-				{
-					Properties newNodeProperties = std.getConfiguration();
-					System.out.println("Properties : " + newNodeProperties.toString());
-					NodeCreator.nodeCreate(newNodeProperties, 
-										   graphpad.getCurrentDocument().getGraph(),
-										   bounds,
-										   graphpad.getCurrentDocument().getGraphStructure());
-					
-					String template = NodeTemplateGenerator.createTemplateCode(newNodeProperties);
-					writeTemplateCodeToFile(template);		
-				}									
-			} 
+		
+		
 			/** Create a connection between two nodes */
 			else if (buttonEdge.isSelected()) 
 			{
@@ -492,26 +460,9 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 				
 				if ((nodeStart != null) && (nodeEnd !=null) && (nodeStart != nodeEnd))
 				{
-					int relativePos = RelativePosition.BOTH_PRESENT;
-					if ((!nodeStart.isNodeConnected()) && (!nodeEnd.isNodeConnected()))
-					{
-						relativePos = RelativePosition.NONE_PRESENT;
-					}
-					else if ((!nodeStart.isNodeConnected()) && (nodeEnd.isNodeConnected()))
-					{
-						relativePos = RelativePosition.END_PRESENT;
-					}
-					else if ((nodeStart.isNodeConnected()) && (!nodeEnd.isNodeConnected()))
-					{
-						relativePos = RelativePosition.START_PRESENT;	
-					}
-					else if ((nodeStart.isNodeConnected()) && (nodeEnd.isNodeConnected()))
-					{
-						relativePos = RelativePosition.BOTH_PRESENT;						
-					}
-					
+										
 					/** Connect the selected nodes */
-					int connectErrorCode = graphpad.getCurrentDocument().getGraphStructure().connect(nodeStart,nodeEnd, relativePos); 
+					int connectErrorCode = graphpad.getCurrentDocument().getGraphStructure().connect(nodeStart,nodeEnd); 
 					if (connectErrorCode == 0)
 					{
 						/** Update the hierarchy panel */
@@ -608,74 +559,14 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 	}
 
 	/**
-	 * Add a GEStreamnode vertex to GraphStructure so that it can be made visible. 
-	 * @param type The type of the GEStreamNode vertex to be added.
-	 * @param name The name of the GEStreamNode vertex to be added.
-	 * @param bounds The bound (location) at which the vertext will be placed.
-	 * @param properties The Protperties that need to be applied .
-	 * @return
+	 * Cell creation 
+	 * @param type int
+	 * @param userObject Object
+	 * @param bounds Rectangle 
+	 * @param autosize boolean
+	 * @param border Color
+	 * @return Object
 	 */
-	/*
-	public Object createNode(Properties properties, Rectangle bounds)
-	{
-		GPGraph ggg = graphpad.getCurrentGraph();
-		GraphLayoutCache glc = ggg.getGraphLayoutCache();
-		GEStreamNode node = null;
-		
-		String name = properties.getProperty(GEProperties.KEY_NAME);
-		
-		//CAnged to Test
-		String type = properties.getProperty(GEProperties.KEY_TYPE);
-	//	String type = GEType.PHASED_FILTER;
-		
-		if (GEType.PIPELINE == type)
-		{
-			node = new GEPipeline(name);
-		}
-		else if (GEType.PHASED_FILTER == type)
-		{
-			node = new GEPhasedFilter(name);
-		}
-		else
-		{
-			System.out.println("Invalid type for GEStreamNode vertex");
-			return null;
-		}
-		
-		node.setOutputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));
-		node.setInputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
-		
-		GEStreamNode parentNode = graphpad.getCurrentDocument().getGraphStructure().
-			 getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT));
-		node.setEncapsulatingNode(parentNode);
-		
-		
-		Map map = GraphConstants.createMap();
-		GraphConstants.setBounds(map, bounds);
-		GraphConstants.setBorderColor(map, Color.BLACK);
-		GraphConstants.setAutoSize(map, true);		
-		
-		node.setAttributes(map);				
-		DefaultPort port = new DefaultPort();
-		node.add(port);
-		node.setPort(port);
-		
-		glc.insert(new Object[] {node}, null, null, null, null);
-		ggg.getModel().insert(new Object[] {node}, null, null, null, null);
-		glc.setVisible(node, false);
-		glc.setVisible(node, true);
-		
-		return null;
-	}
-*/
-
-
-
-
-	//
-	// Cell Creation
-	//
-
 	public Object addVertex(
 		int type,
 		Object userObject,
@@ -1067,27 +958,6 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 			null);
 	}
 
-	public void writeTemplateCodeToFile(String template)
-	{
-		try 
-		{
-			IFile ifile = graphpad.getCurrentDocument().getIFile();
-			if (ifile != null)
-			{
-				ByteArrayInputStream bais = new ByteArrayInputStream(template.getBytes());
-				ifile.appendContents(bais, false, false, null);
-				ifile.getParent().refreshLocal(IResource.DEPTH_ONE, null);
-			}
-	
-		} 
-		catch (Exception exception) 
-		{
-			exception.printStackTrace();
-		}		
-	}
-
-
-
 	/**
 	 * Returns the buttonFilter.
 	 * @return JToggleButton
@@ -1110,15 +980,6 @@ public class GPMarqueeHandler extends BasicMarqueeHandler {
 	 */
 	public JToggleButton getButtonJoiner() {
 		return buttonJoiner;
-	}
-
-	
-	/**
-	 * Returns the buttonNode.
-	 * @return JToggleButton
-	 */
-	public JToggleButton getButtonNode() {
-		return buttonNode;
 	}
 
 	/**

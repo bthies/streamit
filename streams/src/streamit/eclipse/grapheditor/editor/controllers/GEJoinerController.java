@@ -71,6 +71,7 @@ public class GEJoinerController extends GEStreamNodeController
 		setPropertiesInDialog(propert);
 		dialog.setVisible(true);
 		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
+		dialog.saveConnected(propert.getProperty(GEProperties.KEY_IS_CONNECTED));
 		
 		if (dialog.canceled()) return false;
 		getPropertiesInDialog();
@@ -88,10 +89,9 @@ public class GEJoinerController extends GEStreamNodeController
 	{
 		dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
-		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
-		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));		 
 		dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
-		dialog.setJoinerWeights(propert.getProperty(GEProperties.KEY_JOINER_WEIGHTS));       
+		dialog.setJoinerWeights(propert.getProperty(GEProperties.KEY_JOINER_WEIGHTS));
+		dialog.setIndexInSJ(Integer.parseInt(propert.getProperty(GEProperties.KEY_INDEX_IN_SJ)));       
 	}
 	
 	/**
@@ -101,11 +101,9 @@ public class GEJoinerController extends GEStreamNodeController
 	public void getPropertiesInDialog()
 	{
 		properties.put(GEProperties.KEY_NAME, dialog.getName());
-		properties.put(GEProperties.KEY_INPUT_TAPE, dialog.getInputTape());
-		properties.put(GEProperties.KEY_OUTPUT_TAPE, dialog.getOutputTape());
-		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
-		
+		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());		
 		properties.put(GEProperties.KEY_JOINER_WEIGHTS, dialog.getJoinerWeights());
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, dialog.getIndexInSJ());
 	}
 
 
@@ -117,14 +115,13 @@ public class GEJoinerController extends GEStreamNodeController
 	  */
 	 public void setDefaultProperties()
 	 {
-		properties.put(GEProperties.KEY_NAME, "Joiner_"+ GEProperties.id_count++);
-		properties.put(GEProperties.KEY_INPUT_TAPE, "void");
-		properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
+		properties.put(GEProperties.KEY_NAME, "StrJoiner"+ GEProperties.id_count++);
 		properties.put(GEProperties.KEY_PARENT, "Toplevel");
 		properties.put(GEProperties.KEY_TYPE, GEType.JOINER);
 		properties.put(GEProperties.KEY_JOINER_WEIGHTS, "1");
-		
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, "0");
 	 }
+	
 	
 	/**
 	 * Get the default properties for a GEJoinerController.

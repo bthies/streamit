@@ -107,6 +107,8 @@ public final class Utilities {
 	 *
 	 *  @return array with the float value for each token
 	 */
+	
+	/*
 	public static float[] parsePattern(String pattern) {
 		StringTokenizer st = new StringTokenizer(pattern, ",");
 		float[] f = new float[st.countTokens()];
@@ -117,6 +119,7 @@ public final class Utilities {
 		}
 		return f;
 	}
+	*/
 	/** Returns the classname without the package.
 	 *  Example: If the input class is java.lang.String
 	 *  than the return value is String.

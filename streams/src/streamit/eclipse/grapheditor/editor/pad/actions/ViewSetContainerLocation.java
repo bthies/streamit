@@ -6,6 +6,7 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 import java.awt.event.ActionEvent;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
+import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 
 /**
@@ -30,10 +31,12 @@ public class ViewSetContainerLocation extends AbstractActionDefault {
 	 */
 	public void actionPerformed(ActionEvent e) 
 	{	
-		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
-		if (!(ViewContainerVisibility.HIDE))
+		GPDocument doc = graphpad.getCurrentDocument();
+		GraphStructure graphStruct = doc.getGraphStructure();
+		if (!(doc.areContainersInvisible()))
 		{
-			graphStruct.containerNodes.setLocationContainersAtLevel(graphStruct);
+			graphStruct.containerNodes.setLocationOfContainersAtLevel(graphStruct);
+			
 		}
 	}
 }

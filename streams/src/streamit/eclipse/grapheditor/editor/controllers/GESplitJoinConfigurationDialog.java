@@ -4,19 +4,19 @@
  */
 package streamit.eclipse.grapheditor.editor.controllers;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
+import java.util.ArrayList;
 
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import streamit.eclipse.grapheditor.editor.pad.GPDocument;
-import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.graph.Constants;
+import streamit.eclipse.grapheditor.graph.GEProperties;
+import streamit.eclipse.grapheditor.graph.GEStreamNode;
 
 /**
  * Dialog used to view and set the properties of a GESplitJoin.
@@ -49,32 +49,45 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 	 * Checks that the properties that were entered by the user in the configuration
 	 * dialog are valid.
 	 */ 
-/*
-	protected void action_ok() {
-		try {
-			/*
-			StringTokenizer strToken = new StringTokenizer(splitterWeightsTextField.getText().trim(), ",");
-			while(strToken.hasMoreTokens())
-			{
-				String token = strToken.nextToken();
-				System.out.println("TOKEN " + token);
-				Integer.parseInt(token);
-			}*/
-			//GEProperties.weightsToInt(splitterWeightsTextField.getText().trim()) ;
-/*			
-		} catch (Exception e) {
-			String message = "The weights must be separated by a comma and no spaces in between";
-			JOptionPane.showMessageDialog(this, message, Translator.getString("Error"), JOptionPane.INFORMATION_MESSAGE);
-			return;
+	protected boolean action_ok() 
+	{
+		/** Check to see if  no other node has the same name as the name that this one is going to get.*/
+		if ( ! (checkSameNameOK()))
+		{
+			return false;
+		}
+
+		/** If some of the properties specific to a container are not satisfied, then return false.**/
+		if ( ! (checkContainersOK()))
+		{
+			return false;
 		}
 		
-		setVisible(false);
-		dispose();
-		canceled = false;
+		/** If the properties of the GESplitjoin are changed and there is another GESplitjoin with
+		 * 	the same name, then we have to change the name of this pipeline. This is so since it 
+		 * 	is no longer an equivalent instance of the 
+		 */		
+		if ((savedOutputTape != null) && (savedInputTape != null) && (savedParent != null))
+		{
+			if ((savedOutputTape != this.getOutputTape()) || (savedInputTape != this.getInputTape()) ||
+				(savedParent != this.getImmediateParent()))
+				{
+					ArrayList list = GEStreamNode.getNodeNamesWithID(this.document.getGraphStructure().allNodesInGraph());
+					if (list.indexOf(this.getName()) != list.lastIndexOf(this.getName()))
+					{
+						this.setName(this.getName() + GEProperties.id_count++);
+					}
+				}				
+		}
+		
+		
+		/** Check the properties that are common to all nodes */
+		if ( ! (super.action_ok()))
+		{
+			return false;
+		}
+		return true;
 	}
-*/	
-
-	
 	
 	/**
 	 * Initialize the graphical components of the configuration dialog.
@@ -84,10 +97,8 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 	 */
 	protected void initComponents()
 	{
+		super.initComponents();
 		jPanel1 = new JPanel(new GridLayout(5,5));
-		toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT ));
-		cancelButton = new JButton();
-		finishedButton = new JButton();
 
 		nameLabel = new JLabel();
 		parentLabel = new JLabel();
@@ -95,39 +106,10 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		outputTapeLabel = new JLabel();
 	
 		nameTextField = new JTextField();
-		inputTapeTextField = new JTextField();
-		outputTapeTextField = new JTextField();
+		inputTapeJComboBox = new JComboBox(Constants.TAPE_VALUES);
+		outputTapeJComboBox = new JComboBox(Constants.TAPE_VALUES);
 		
-		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
-
-		addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent evt) {
-				closeDialog(evt);
-			}
-		});
-
-		finishedButton.setText(Translator.getString("OK"));
-		finishedButton.setName(Translator.getString("OK"));
-		
-		finishedButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				finishedButtonActionPerformed(evt);
-			}
-		});
-
-		toolBar.add(finishedButton);
-		getRootPane().setDefaultButton(finishedButton);
-
-		cancelButton.setText(Translator.getString("Cancel"));
-		cancelButton.setName(Translator.getString("Cancel"));
-		cancelButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				cancelButtonActionPerformed(evt);
-			}
-		});
-		toolBar.add(cancelButton);
-
-		getContentPane().add(toolBar, BorderLayout.SOUTH );        
+		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNamesWithID());
 
 		nameLabel.setText("Name");
 		nameLabel.setName("Name");
@@ -142,12 +124,12 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		inputTapeLabel.setText("Input Tape");
 		inputTapeLabel.setName("Input Tape");
 		jPanel1.add(inputTapeLabel);
-		jPanel1.add(inputTapeTextField);
+		jPanel1.add(inputTapeJComboBox);
 		
 		outputTapeLabel.setText("Output Tape");
 		outputTapeLabel.setName("Output Tape");
 		jPanel1.add(outputTapeLabel);
-		jPanel1.add(outputTapeTextField);
+		jPanel1.add(outputTapeJComboBox);
 
 		getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
 

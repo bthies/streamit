@@ -98,7 +98,7 @@ public class EditGroupIntoSplitJoin extends AbstractActionDefault {
 			 * toplevel pipeline. */
 			if (node.getEncapsulatingNode() == toplevel)
 			{
-				GEProperties.setParentProperty(node, splitjoin);	
+				node.changeParentTo(splitjoin);	
 			}
 			/** If the encapsulating node is not toplevel, then we must change the 
 			 *  encapsulating node of the oldest ancestor that is not the toplevel. */
@@ -108,7 +108,7 @@ public class EditGroupIntoSplitJoin extends AbstractActionDefault {
 				if ( ! (containersToGroup.contains(container)))
 				{
 					containersToGroup.add(container);
-					GEProperties.setParentProperty(container, splitjoin);
+					container.changeParentTo(splitjoin);
 				}	
 			}
 			
@@ -118,11 +118,11 @@ public class EditGroupIntoSplitJoin extends AbstractActionDefault {
 		for (Iterator contToGroupIter= containersToGroup.iterator(); contToGroupIter.hasNext();)
 		{
 			GEStreamNode container = (GEStreamNode)contToGroupIter.next();
-			GEProperties.setParentProperty(container, splitjoin);
+			container.changeParentTo(splitjoin);
 		}
 
 		/** Initialize the splitjoin propreties and add the splitjoin to the toplevel container */
-		splitjoin.initiliazeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
+		splitjoin.initializeNode(graphStruct, graphStruct.containerNodes.getCurrentLevelView());
 				
 		/** Update the hierarchy panel */
 		EditUpdateHierarchy ac = (EditUpdateHierarchy) graphpad.getCurrentActionMap().

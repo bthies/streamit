@@ -3,12 +3,9 @@
  */
 package streamit.eclipse.grapheditor.editor.controllers;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
 
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -16,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import streamit.eclipse.grapheditor.editor.pad.GPDocument;
-import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.graph.Constants;
 import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
 
 /**
@@ -30,8 +27,9 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 
 	private String dialogType = "Splitter Configuration";
 	
-	protected JLabel splitterWeightsLabel = new JLabel();
-	protected JTextField splitterWeightsTextField;
+	private JLabel splitterWeightsLabel = new JLabel();
+	private JTextField splitterWeightsTextField;
+	private JComboBox nameJComboBox;
 	
 	
 	/**
@@ -71,7 +69,7 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 	 * Checks that the properties that were entered by the user in the configuration
 	 * dialog are valid.
 	 */ 
-	protected void action_ok() 
+	protected boolean action_ok() 
 	{
 		try
 		{		
@@ -81,13 +79,29 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 		{
 			String message = "Please enter a legal weight";
 			JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.INFORMATION_MESSAGE);
-			return;	
+			return false;	
 		}
-		setVisible(false);
-		dispose();
-		canceled = false;
-	}
 		
+		if ( ! (super.action_ok()))
+		{
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Returns the value of the "Name" field as text.
+	 */
+	public String getName() {
+		return nameJComboBox.getSelectedItem().toString();
+	}
+
+	/**
+	 * Set the value of the "Name" text field.
+	 */
+	public void setName(String text) {
+		nameJComboBox.setSelectedItem(text);
+	}
 		
 	/**
 	 * Initialize the graphical components of the configuration dialog.
@@ -97,73 +111,28 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 	 */ 
 	protected void initComponents() 
 	{
-		jPanel1 = new JPanel(new GridLayout(7,7));
-		toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT ));
-		cancelButton = new JButton();
-		finishedButton = new JButton();
-
+		super.initComponents();
+		jPanel1 = new JPanel(new GridLayout(5,5));
+		
 		nameLabel = new JLabel();
 		parentLabel = new JLabel();
-		inputTapeLabel = new JLabel();
-		outputTapeLabel = new JLabel();
 		splitterWeightsLabel = new JLabel();
-
 		nameTextField = new JTextField();
-		inputTapeTextField = new JTextField();
-		outputTapeTextField = new JTextField();
+		nameJComboBox = new JComboBox(Constants.SPLITTER_TYPE_NAMES);
+		
 		splitterWeightsTextField = new JTextField();
-		
-		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
-
-		addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent evt) {
-				closeDialog(evt);
-			}
-		});
-
-		finishedButton.setText(Translator.getString("OK"));
-		finishedButton.setName(Translator.getString("OK"));
-		
-		finishedButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				finishedButtonActionPerformed(evt);
-			}
-		});
-
-		toolBar.add(finishedButton);
-		getRootPane().setDefaultButton(finishedButton);
-
-		cancelButton.setText(Translator.getString("Cancel"));
-		cancelButton.setName(Translator.getString("Cancel"));
-		cancelButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				cancelButtonActionPerformed(evt);
-			}
-		});
-		toolBar.add(cancelButton);
-
-		getContentPane().add(toolBar, BorderLayout.SOUTH );        
+		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNamesWithID());
 
 		nameLabel.setText("Name");
 		nameLabel.setName("Name");
 		jPanel1.add(nameLabel);
-		jPanel1.add(nameTextField);
+		jPanel1.add(nameJComboBox);
 
 		parentLabel.setText("Parent");
 		parentLabel.setName("Parent");
 		jPanel1.add(parentLabel);
 		jPanel1.add(parentsJComboBox);
-		
-		inputTapeLabel.setText("Input Tape");
-		inputTapeLabel.setName("Input Tape");
-		jPanel1.add(inputTapeLabel);
-		jPanel1.add(inputTapeTextField);
-		
-		outputTapeLabel.setText("Output Tape");
-		outputTapeLabel.setName("Output Tape");
-		jPanel1.add(outputTapeLabel);
-		jPanel1.add(outputTapeTextField);
-		
+				
 		splitterWeightsLabel.setText("Splitter Weights");
 		splitterWeightsLabel.setName("Splitter Weights");
 		jPanel1.add(splitterWeightsLabel);
@@ -175,7 +144,6 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 		jPanel1.add(weightParseReqLabel);
 		
 		getContentPane().add(jPanel1, java.awt.BorderLayout.CENTER);
-
 		pack();
 	}
 }

@@ -25,6 +25,8 @@ public class GEFilterController extends GEStreamNodeController{
 	
 	GEFilterConfigurationDialog dialog = null;
 	
+	
+	
 	/**
 	  * Constructor. Set the default properties for the GEPhasedFilter. 
 	  */
@@ -71,11 +73,19 @@ public class GEFilterController extends GEStreamNodeController{
 	public boolean configure(GPDocument document, Properties props) 
 	{
 	       	
-	   dialog = new GEFilterConfigurationDialog(new JFrame(), document);
+	  	dialog = new GEFilterConfigurationDialog(new JFrame(), document);
         
-	   setPropertiesInDialog(props);
-	   dialog.saveInitialLevel(props.getProperty(GEProperties.KEY_LEVEL));
-		 
+		setPropertiesInDialog(props);
+	   	
+		/** Save the initial values of the properties (before any modifications are made */
+	   	dialog.saveInitialLevel(props.getProperty(GEProperties.KEY_LEVEL));
+		dialog.saveInitialParent(props.getProperty(GEProperties.KEY_PARENT));
+		dialog.saveInitialOutputTape(props.getProperty(GEProperties.KEY_OUTPUT_TAPE));
+		dialog.saveInitialInputTape(props.getProperty(GEProperties.KEY_INPUT_TAPE));
+		dialog.saveInitialPushRate(props.getProperty(GEProperties.KEY_PUSH_RATE));
+	    dialog.saveInitialPopRate(props.getProperty(GEProperties.KEY_POP_RATE));
+		dialog.saveInitialPeekRate(props.getProperty(GEProperties.KEY_PEEK_RATE));
+		dialog.saveConnected(props.getProperty(GEProperties.KEY_IS_CONNECTED));
 		
 	   dialog.setVisible(true);
 	   if (dialog.canceled()) return false;
@@ -99,6 +109,7 @@ public class GEFilterController extends GEStreamNodeController{
 		dialog.setPushRate(propert.getProperty(GEProperties.KEY_PUSH_RATE));
 		dialog.setPopRate(propert.getProperty(GEProperties.KEY_POP_RATE));
 		dialog.setPeekRate(propert.getProperty(GEProperties.KEY_PEEK_RATE));
+		dialog.setIndexInSJ(Integer.parseInt(propert.getProperty(GEProperties.KEY_INDEX_IN_SJ)));
 	}
 	
 	/**
@@ -114,6 +125,7 @@ public class GEFilterController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_PUSH_RATE, dialog.getPushRate());
 		properties.put(GEProperties.KEY_POP_RATE, dialog.getPopRate());
 		properties.put(GEProperties.KEY_PEEK_RATE, dialog.getPeekRate());
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, dialog.getIndexInSJ());
 	}
 	
 	 /**
@@ -124,16 +136,22 @@ public class GEFilterController extends GEStreamNodeController{
 	  */
 	 public void setDefaultProperties()
 	 {
-		 properties.put(GEProperties.KEY_NAME, "Filter_"+ GEProperties.id_count++);
-		 properties.put(GEProperties.KEY_INPUT_TAPE, "void");
-		 properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
+		 properties.put(GEProperties.KEY_NAME, "StrFilter"+ GEProperties.id_count++);
+		 properties.put(GEProperties.KEY_INPUT_TAPE, "int");
+		 properties.put(GEProperties.KEY_OUTPUT_TAPE, "int");
 		 properties.put(GEProperties.KEY_PARENT, "Toplevel");
 		 properties.put(GEProperties.KEY_TYPE, GEType.PHASED_FILTER);
 		 properties.put(GEProperties.KEY_POP_RATE, "0");
 		 properties.put(GEProperties.KEY_PUSH_RATE, "0");
 		 properties.put(GEProperties.KEY_PEEK_RATE, "0");
+		 properties.put(GEProperties.KEY_INDEX_IN_SJ, "0");
 	 }
 	
+	
+	
+	
+	
+
 	/**
 	 * Get the default properties for a GEFilterController.
 	 * @return Properties the default properties of a GEFilterController.

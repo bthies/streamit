@@ -20,6 +20,8 @@
  */
 package streamit.eclipse.grapheditor.editor.pad.actions;
 
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
@@ -29,14 +31,17 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import org.jgraph.graph.CellView;
 import org.jgraph.graph.DefaultGraphCell;
+
+import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.pad.EllipseCell;
 import streamit.eclipse.grapheditor.editor.pad.GPConverter;
+import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.GPGraph;
 import streamit.eclipse.grapheditor.editor.pad.GPUserObject;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.graph.Constants;
 
 /**
  *
@@ -86,7 +91,7 @@ public class FileExportImageMap extends AbstractActionFile {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		try {
-
+			GPDocument doc = graphpad.getCurrentDocument();
 			if (getCurrentDocument().getModel().getRootCount() > 0) {
 				// JPG Image
 				String fileType = "jpg";
@@ -99,7 +104,9 @@ public class FileExportImageMap extends AbstractActionFile {
 				if (imageFile == null)
 					return;
 				BufferedImage img = null;
-				img = GPConverter.toImage(getCurrentGraph());
+				img = GPConverter.toImage(getCurrentGraph(), 
+										  doc.getGraphStructure().getTopLevel().getDimension(),
+										  doc.areContainersInvisible());
 				ImageIO.write(img, fileType.toLowerCase(), new File(imageFile));
 				// HTML File
 				if (img != null) {
@@ -124,7 +131,20 @@ public class FileExportImageMap extends AbstractActionFile {
 					fos.write(imageTag.getBytes());
 					fos.write("<map NAME=\"map\">\n".getBytes());
 					GPGraph graph = super.getCurrentGraph();
+					
 					Rectangle bounds = graph.getCellBounds(graph.getRoots());
+					
+					if (doc.areContainersInvisible())
+					{
+						Dimension dim = doc.getGraphStructure().getTopLevel().getDimension();
+						bounds = new Rectangle (new Point(Constants.TOPLEVEL_LOC_X, Constants.TOPLEVEL_LOC_Y),
+												new Dimension(dim.width, dim.height));
+					}
+					else
+					{
+						bounds = graph.getCellBounds(graph.getRoots());
+					}
+					
 					Object[] vertices = graph.getVertices(graph.getAll());
 					for (int i = 0; i < vertices.length; i++) {
 						String alt = getLabel(graph, vertices[i]);

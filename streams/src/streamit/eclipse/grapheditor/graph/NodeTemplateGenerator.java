@@ -9,6 +9,7 @@ import java.util.Properties;
 /**
  * Generate a StreamIt source code template for the node whose 
  * properties were passed as a parameter.
+ * 
  * @author jcarlos
  *
  */

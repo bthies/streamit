@@ -10,7 +10,9 @@ import org.jgraph.JGraph;
 
   
 /**
- * MouseAdapter for a given JGraph 
+ * MouseAdapter for a given JGraph.
+ * Have mouse event listeners affecting the jgraph.
+ * 
  * @author jcarlos
  */
 public class JGraphMouseAdapter extends MouseAdapter {
@@ -24,7 +26,12 @@ public class JGraphMouseAdapter extends MouseAdapter {
 		this.graphStruct = graphStruct;
 		
 	}
-  /* 
+ 
+ 	/**
+ 	 * Activated when there is a mouse pressed event.
+ 	 * @param e MouseEvent
+ 	 */
+ 	/*
 	public void mousePressed(MouseEvent e)
 	{
 		int x = e.getX(), y = e.getY();

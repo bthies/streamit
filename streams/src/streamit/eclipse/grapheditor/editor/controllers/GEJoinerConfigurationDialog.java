@@ -3,12 +3,9 @@
  */
 package streamit.eclipse.grapheditor.editor.controllers;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridLayout;
 
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -16,7 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import streamit.eclipse.grapheditor.editor.pad.GPDocument;
-import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.graph.Constants;
 import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
 
 /**
@@ -30,8 +27,9 @@ public class GEJoinerConfigurationDialog  extends GEStreamNodeConfigurationDialo
 
 	private String dialogType = "Joiner Configuration";
 
-	protected JLabel joinerWeightsLabel = new JLabel();
-	protected JTextField joinerWeightsTextField;
+	private JLabel joinerWeightsLabel = new JLabel();
+	private JTextField joinerWeightsTextField;
+	private JComboBox nameJComboBox;
  
 	
 	/**
@@ -71,23 +69,42 @@ public class GEJoinerConfigurationDialog  extends GEStreamNodeConfigurationDialo
 	 * Checks that the properties that were entered by the user in the configuration
 	 * dialog are valid.
 	 */ 
-	protected void action_ok() 
+	protected boolean action_ok() 
 	{
 		try
 		{		
 			StringTranslator.weightsToInt(this.getJoinerWeights());
+			
 		}
 		catch(Exception e)
 		{
 			String message = "Please enter a legal weight";
 			JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.INFORMATION_MESSAGE);
-			return;	
+			return false;	
 		}
-		setVisible(false);
-		dispose();
-		canceled = false;
+		
+		if ( ! (super.action_ok()))
+		{
+			return false;
+		}
+		return true;
+
 	}
 
+
+	/**
+	 * Returns the value of the "Name" field as text.
+	 */
+	public String getName() {
+		return nameJComboBox.getSelectedItem().toString();
+	}
+
+	/**
+	 * Set the value of the "Name" text field.
+	 */
+	public void setName(String text) {
+		nameJComboBox.setSelectedItem(text);
+	}
 	/**
 	 * Initialize the graphical components of the configuration dialog.
 	 * The initial values in the dialog will be the current values for the 
@@ -96,74 +113,27 @@ public class GEJoinerConfigurationDialog  extends GEStreamNodeConfigurationDialo
 	 */ 
 	protected void initComponents() 
 	{
-		jPanel1 = new JPanel(new GridLayout(7,7));
-		toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT ));
-		cancelButton = new JButton();
-		finishedButton = new JButton();
+		super.initComponents();
+		jPanel1 = new JPanel(new GridLayout(5,5));
 
 		nameLabel = new JLabel();
 		parentLabel = new JLabel();
-		inputTapeLabel = new JLabel();
-		outputTapeLabel = new JLabel();
 		joinerWeightsLabel = new JLabel();
 
-	
-		nameTextField = new JTextField();
-		inputTapeTextField = new JTextField();
-		outputTapeTextField = new JTextField();
-		joinerWeightsTextField = new JTextField();
-		
-		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
-
-		addWindowListener(new java.awt.event.WindowAdapter() {
-			public void windowClosing(java.awt.event.WindowEvent evt) {
-				closeDialog(evt);
-			}
-		});
-
-		finishedButton.setText(Translator.getString("OK"));
-		finishedButton.setName(Translator.getString("OK"));
-		
-		finishedButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				finishedButtonActionPerformed(evt);
-			}
-		});
-
-		toolBar.add(finishedButton);
-		getRootPane().setDefaultButton(finishedButton);
-
-		cancelButton.setText(Translator.getString("Cancel"));
-		cancelButton.setName(Translator.getString("Cancel"));
-		cancelButton.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				cancelButtonActionPerformed(evt);
-			}
-		});
-		toolBar.add(cancelButton);
-
-		getContentPane().add(toolBar, BorderLayout.SOUTH );        
+		nameJComboBox = new JComboBox(Constants.JOINER_TYPE_NAMES);
+		joinerWeightsTextField = new JTextField();		
+		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNamesWithID());
 
 		nameLabel.setText("Name");
 		nameLabel.setName("Name");
 		jPanel1.add(nameLabel);
-		jPanel1.add(nameTextField);
+		jPanel1.add(nameJComboBox);
 
 		parentLabel.setText("Parent");
 		parentLabel.setName("Parent");
 		jPanel1.add(parentLabel);
 		jPanel1.add(parentsJComboBox);
 		
-		inputTapeLabel.setText("Input Tape");
-		inputTapeLabel.setName("Input Tape");
-		jPanel1.add(inputTapeLabel);
-		jPanel1.add(inputTapeTextField);
-		
-		outputTapeLabel.setText("Output Tape");
-		outputTapeLabel.setName("Output Tape");
-		jPanel1.add(outputTapeLabel);
-		jPanel1.add(outputTapeTextField);
-
 		joinerWeightsLabel.setText("Joiner Weights");
 		joinerWeightsLabel.setName("JoinerWeights");
 		jPanel1.add(joinerWeightsLabel);

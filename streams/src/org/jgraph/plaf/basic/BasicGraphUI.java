@@ -2308,8 +2308,31 @@ public class BasicGraphUI extends GraphUI implements Serializable {
 			}
 		}
 
+	
+	
+		public Map cloneCells(Object[] cells)
+		{
+	
+			CellView[] all = graphLayoutCache.getAllDescendants(views);
+			cells = graphLayoutCache.order(graph.getDescendantList(cells));
+			ConnectionSet cs =
+				ConnectionSet.create(graphModel, cells, false);
+			ParentMap pm = ParentMap.create(graphModel, cells, false, true);
+			Map attributes =
+				GraphConstants.createAttributes(all, null);
+			Map cellMap = graph.cloneCells(cells);
+			attributes = GraphConstants.replaceKeys(cellMap, attributes);
+			insertCells(
+						cells,
+						attributes,
+						cs,
+						pm,
+						true,
+						0,
+						0);
+			return cellMap;
+		}
 	}
-
 	/**
 	 * PropertyChangeListener for the graph. Updates the appropriate
 	 * variable and takes the appropriate actions, based on what changes.

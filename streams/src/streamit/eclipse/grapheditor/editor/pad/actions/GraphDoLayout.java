@@ -6,6 +6,7 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 import java.awt.event.ActionEvent;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
+import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
@@ -29,10 +30,11 @@ public class GraphDoLayout extends AbstractActionDefault {
 	 */
 	public void actionPerformed(ActionEvent e) 
 	{
-		GraphStructure graphStruct = graphpad.getCurrentDocument().getGraphStructure();
+		GPDocument doc = graphpad.getCurrentDocument();
+		GraphStructure graphStruct = doc.getGraphStructure();
 		
 		/** If the containers are visible, we must hide them in order to do layout */
-		if (!(ViewContainerVisibility.HIDE))
+		if (!(doc.areContainersInvisible()))
 		{
 			for (int i = graphStruct.containerNodes.getCurrentLevelView(); i >= 0; i--)
 			{
@@ -41,11 +43,11 @@ public class GraphDoLayout extends AbstractActionDefault {
 		}
 		
 		/** Perform the layout algorithm */
-		JGraphLayoutManager manager = new JGraphLayoutManager(graphpad.getCurrentDocument().getGraphStructure());
+		JGraphLayoutManager manager = new JGraphLayoutManager(graphStruct);
 		manager.arrange();
 		
 		/** Make the containers visible again after the layout algorithm */
-		if (!(ViewContainerVisibility.HIDE))
+		if (!(doc.areContainersInvisible()))
 		{
 			ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
 															get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));

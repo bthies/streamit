@@ -13,6 +13,7 @@ import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEPipeline;
 import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
+import streamit.eclipse.grapheditor.graph.GEType;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 
 /**
@@ -60,7 +61,7 @@ public class EditGroupIntoPipeline extends AbstractActionDefault {
 			
 			/** The encapsulating node of all newly created containers is initially the toplevel container.*/
 			toplevel.addNodeToContainer(pipeline);
-			pipeline.initializeNode(graphStruct, pipeline.getEncapsulatingNode().getDepthLevel() + 1);
+			
 			
 			/** Go through the selected cells ...*/
 			ArrayList containersToGroup = new ArrayList ();
@@ -76,9 +77,15 @@ public class EditGroupIntoPipeline extends AbstractActionDefault {
 					 */
 					if (node.getEncapsulatingNode() == toplevel)
 					{
-						GEProperties.setParentProperty(node, pipeline);
+						node.changeParentTo(pipeline);
 					}
-
+					
+					else if (node.getEncapsulatingNode().getType() == GEType.SPLIT_JOIN)
+					{
+						GEContainer savedParent = node.getEncapsulatingNode();
+						node.changeParentTo(pipeline);	
+						pipeline.changeParentTo(savedParent);
+					}
 					/** If the encapsulating node is not toplevel, then we must change the 
 					 *  encapsulating node of the oldest ancestor that is not the toplevel. */
 					else
@@ -95,11 +102,12 @@ public class EditGroupIntoPipeline extends AbstractActionDefault {
 				}
 			} 
 			
+			pipeline.initializeNode(graphStruct, pipeline.getEncapsulatingNode().getDepthLevel() + 1);
 			/** Set the newly created pipeline as the parent of the oldest ancestors from the selected nodes.*/
 			for (Iterator contToGroupIter= containersToGroup.iterator(); contToGroupIter.hasNext();)
 			{
 				GEStreamNode container = (GEStreamNode)contToGroupIter.next();
-				GEProperties.setParentProperty(container, pipeline);
+				container.changeParentTo(pipeline);
 			}
 			
 			/** Update the hierarchy panel */

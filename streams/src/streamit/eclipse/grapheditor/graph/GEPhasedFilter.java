@@ -7,8 +7,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -21,6 +20,9 @@ import streamit.eclipse.grapheditor.graph.resources.ImageLoader;
 
 /**
  *  GEPhasedFilter is the graph editor's internal representation of a phased filter.
+ * 	A GEPhasedFilter has a single input and a single output.
+ * 	GEPhasedFilters contain work work functions. 
+ * 
  *  @author jcarlos
  */
 public class GEPhasedFilter extends GEStreamNode implements Serializable{
@@ -34,6 +36,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 * The work functions of the GEPhasedFilter.
 	 */
 	private ArrayList workFunctions;
+	
 	
 	private GraphStructure localGraphStruct;
 	
@@ -60,9 +63,10 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 
 	}
 	
-	
 	/**
-	 *	Returns true if wf was added to collection of init work functions
+	 *	Returns true if the work function was added to collection of init work functions
+	 *	@param GEWorkFunction 
+	 *	@return true if the work function was added succesfully; otherwise, return false.
 	 */
 	public boolean addInitWorkFunction(GEWorkFunction wf)
 	{
@@ -70,7 +74,9 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	}
 
 	/**
-	 *Returns true if wf was added to collection of work functions
+	 * Returns true if the work function was added to collection of work functions
+	 * @param GEWorkFunction
+	 * @return true if the work function was added succesfully; otherwise, return false.
 	 */
 	public boolean addWorkFunction(GEWorkFunction wf)
 	{
@@ -78,7 +84,9 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	}
 	
 	/**
-	 * Returns the work function at the given index
+	 * Returns the work function at the given index.
+	 * @param int 
+	 * @return GEWorkFunction at the given index.
 	 */
 	public GEWorkFunction getWorkFunction(int index)
 	{
@@ -87,6 +95,8 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		
 	/**
 	 * Return the init work function at the given index
+	 * @param int
+	 * @return GEWorkFunction 
 	 */
 	public GEWorkFunction getInitWorkFunction(int index)
 	{
@@ -94,7 +104,8 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	}
 	
 	/** 
-	 * Returns the number of init work functions
+	 * Returns the number of init work functions.
+	 * @return int that represents the number of init work functions.
 	 */
 	public int getNumberOfInitWFs()
 	{
@@ -103,6 +114,7 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	
 	/**
 	 * Returns the number of work functions
+	 * @return int that represents the number of init work functions.
 	 */
 	public int getNumberOfWFs()
 	{
@@ -110,7 +122,8 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	}
 	
 	/**
-	 * Get the first work function of the filter.
+	 * Gets the first work function of the filter.
+	 * @throws ArrayIndexOutOfBoundsException
 	 * @return GEWorkFunction.
 	 */
 	public GEWorkFunction getWorkFunction() throws ArrayIndexOutOfBoundsException
@@ -142,14 +155,15 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	
 	
 	/**
-	 * Contructs the filter and returns this..
+	 * Contructs the filter by setting its draw attributes.
 	 * @return GEStreamNode 
 	 */
 	public GEStreamNode construct(GraphStructure graphStruct, int lvl)
 	{
-		System.out.println("Constructing the filter " +this.getName());
 		//TODO: Do we need to set a localGraphStruct ?? (1/28/04)
-		this.level = lvl;
+		// (3/7/04) It seems we do in order to deal with cloning.
+		this.localGraphStruct = graphStruct;
+	
 		
 		if (this.getNumberOfWFs() > 0) 
 		{
@@ -166,17 +180,13 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		return this;
 	}
 	/**
-	 * Change the display information of the GEPhasedFilter
-	 * @param jgraph
+	 * Change the display information of the GEPhasedFilter.
+	 * @param jgraph JGraph
 	 */
 	public void setDisplay(JGraph jgraph)
 	{
 		this.setInfo(this.getWFAsString(0));
-		Map change = GraphConstants.createMap();
-		GraphConstants.setValue(change, this.getInfoLabel());
-		Map nest = new Hashtable ();
-		nest.put(this, change);
-		jgraph.getModel().edit(nest, null, null, null);
+		super.setDisplay(jgraph);
 	}
 	
 	/**
@@ -185,14 +195,17 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	 */	
 	public void initDrawAttributes(GraphStructure graphStruct, Rectangle bounds)
 	{
+		/** Add the port to the GEPhasedFilter */
 		this.port = new DefaultPort();
 		this.add(this.port);
 		
+		/** Set the attributes corresponding to the GEPhasedFilter */
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
 		GraphConstants.setBounds(this.attributes, bounds);
 	
+		/** Set the image representation the GEPhasedFilter */
 		try 
 		{
 			ImageIcon icon = ImageLoader.getImageIcon("filter.GIF");
@@ -201,17 +214,23 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 		{
 			ex.printStackTrace();
 		}
-		
-	//	graphStruct.getJGraph().getGraphLayoutCache().setVisible(new Object[] {this}, true);
-		
+
+		/** Insert the GEPhasedFilter into the graph model */		
 		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
 		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 
 	}
 	
-	
+	/** Set the push, pop and seek rates for the GEPhasedFilter's work function.
+	 *  If the GEPhasedFilter contains no work function, one will be added with the
+	 * given rates. The object is updated to reflect the changes in the rates.
+	 * @param push int representation of push rate.
+	 * @param pop int representation of pop rate.
+	 * @param peek intrepresentation of peek rate.
+	 */
 	public void setPushPopPeekRates(int push, int pop, int peek)
 	{
+		/** Set the rates for an existing work function (the first one) */
 		if (this.workFunctions.size() != 0)
 		{
 			GEWorkFunction wf = (GEWorkFunction) this.workFunctions.get(0);
@@ -219,110 +238,139 @@ public class GEPhasedFilter extends GEStreamNode implements Serializable{
 			wf.setPopValue(pop);
 			wf.setPeekValue(peek);
 		}
+		/** If there is no existing work function, add one with the given rates */
 		else
 		{
 			this.workFunctions.add(new GEWorkFunction("work function", push, pop, peek));
 									
 		}
+		/** Set the object to reflect these changes. */
 		this.setInfo(this.getWFAsString(0));
 		this.setUserObject(this.getInfoLabel());
-
-
-		
 	}
 
 	/**
-	 * Expand or collapse the GEPhasedFilter depending on wheter it was already 
-	 * collapsed or expanded. 
-	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
+	 * Get a clone that of this instance of the GEPhasedFilter.
+	 * @return Object that is a clone of this instance of the GEPhasedFilter
 	 */
-	public void collapseExpand()
+	public Object clone() 
 	{
-		if (this.isInfoDisplayed)
+		/** Call the clone method for the supertypes of the GEPhasedFilter and
+		 * create new instances of the mutable fields belonging to this object */
+		GEPhasedFilter clonedFilter = (GEPhasedFilter) super.clone();
+		clonedFilter.initWorkFunctions = new ArrayList (this.initWorkFunctions);
+		clonedFilter.workFunctions = new ArrayList (this.workFunctions);
+		
+		//TODO: remove
+		clonedFilter.removeAllChildren();
+		DefaultPort newPort = new DefaultPort();
+		clonedFilter.setPort(newPort);
+		clonedFilter.add(newPort);
+				
+	//	clonedFilter.setUserObject("<HTML>" + Constants.HTML_TSIZE_BEGIN + clonedFilter.name + Constants.HTML_TSIZE_END+ "</html>");
+		/*
+		if ( ! (clonedFilter.getEncapsulatingNode() instanceof GEPipeline))
 		{
-			Map change = GraphConstants.createMap();
-			GraphConstants.setValue(change, this.getNameLabel());
-			Map nest = new Hashtable ();
-			nest.put(this, change);
-			this.localGraphStruct.getJGraph().getModel().edit(nest, null, null, null);
-						
-			this.isInfoDisplayed = false;
-		}
-		else
-		{
-			Map change = GraphConstants.createMap();
-			GraphConstants.setValue(change, this.getInfoLabel());
-			Map nest = new Hashtable ();
-			nest.put(this, change);
-			this.localGraphStruct.getJGraph().getModel().edit(nest, null, null, null);
-																	
-			this.isInfoDisplayed = true;
-		}
-		System.out.println("The user object is " +this.getUserObject().toString());
-		System.out.println(this.localGraphStruct.getJGraph().convertValueToString(this)); 
+			NodeCreator.construct(clonedFilter, clonedFilter.encapsulatingNode, 
+								  clonedFilter.localGraphStruct, new Rectangle(new Point(10,10)));
+		}*/
+		return clonedFilter;
 	}
-
+	
+	/**
+	 * Get the properties of the GEPhasedFilter.
+	 * @return Properties of this GEPhasedFilter.
+	 */
+	public Properties getNodeProperties()
+	{
+		Properties properties =  super.getNodeProperties();
+		try
+		{
+			GEWorkFunction wf = this.getWorkFunction();
+			properties.put(GEProperties.KEY_PUSH_RATE, Integer.toString(wf.getPushValue())  );
+			properties.put(GEProperties.KEY_POP_RATE, Integer.toString(wf.getPopValue()));
+			properties.put(GEProperties.KEY_PEEK_RATE, Integer.toString(wf.getPeekValue()));
+		}
+		catch(ArrayIndexOutOfBoundsException e)
+		{
+			properties.put(GEProperties.KEY_PUSH_RATE, "0");
+			properties.put(GEProperties.KEY_POP_RATE, "0");
+			properties.put(GEProperties.KEY_PEEK_RATE, "0");
+		}
+		return properties;
+	}
+	
+	/**
+	 * Set the properties of the GEStreamNode.  
+	 * @param properties Properties
+	 * @param jgraph JGraph 
+	 * @param containerNodes ContainerNodes
+	 */
+	public void setNodeProperties(Properties properties, JGraph jgraph, ContainerNodes containerNodes)
+	{
+		super.setNodeProperties(properties, jgraph, containerNodes);
+		GEWorkFunction wf = this.getWorkFunction();
+		wf.setPushValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_PUSH_RATE)));
+		wf.setPopValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_POP_RATE)));
+		wf.setPeekValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_PEEK_RATE)));
+			
+		this.setDisplay(jgraph);	
+	}
+	
+	
+	
+	
+	
 	
 	/**
 	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
 	 * In this case, the textual representation corresponds to the the StreamIt source code 
 	 * equivalent of the GEStreamNode. 
-	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
+	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.
+	 * @param nameList List of the names of the nodes that have already been added to the template code.  
 	 */
-	public void outputCode(StringBuffer strBuff)
+	public void outputCode(StringBuffer strBuff, ArrayList nameList)
 	{
-		String tab = "     ";
-		String newLine = "\n";
-		
-		/** Create the basic definition for the GEStreamNode */
-		strBuff.append(newLine + this.inputTape)
-					.append("->")
-					.append(this.outputTape + " ")
-					.append(GEType.GETypeToString(this.type)+" ")
-					.append(this.name + this.outputArgs() + " {" + newLine + newLine);
-		
-		/** add the "init" declaration */
-		strBuff.append(tab + "init {" + newLine + newLine);
-		strBuff.append(tab + "}" + newLine + newLine);
-	
-		/** add the "work" declaration */
-		int pop = 0;
-		int push = 0;
-		int peek = 0;
-		try
+		if ( ! (nameList.contains(this.getName())))
 		{
-			GEWorkFunction wf = this.getWorkFunction();
-			pop = wf.getPopValue();
-			push = wf.getPushValue();
-			peek = wf.getPeekValue();
-		}
-		catch (Exception e)
-		{
-			 
-		}
-		strBuff.append(tab + "work ")
-				.append(pop > 0 ? "pop " + pop + " " : "")
-				.append(push > 0 ? "push " + push + " " : "")
-				.append(peek > 0 ? "peek " + peek + " " : "")
-				.append("{" + newLine + newLine + tab +"}" + newLine);
-
-		strBuff.append("}" + newLine);		
+			nameList.add(this.getName());
+			String tab = "     ";
+			String newLine = "\n";
 			
-/*
+			/** Create the basic definition for the GEStreamNode */
+			strBuff.append(newLine + this.inputTape)
+						.append("->")
+						.append(this.outputTape + " ")
+						.append(GEType.GETypeToString(this.type)+" ")
+						.append(this.getName() + this.outputArgs() + " {" + newLine + newLine);
+			
+			/** add the "init" declaration */
+			strBuff.append(tab + "init {" + newLine + newLine);
+			strBuff.append(tab + "}" + newLine + newLine);
 		
-		//TODO: Handle the case when there are more than one work functions
-		if (this.getNumberOfWFs() > 0 )
-		{
-			GEWorkFunction wf = this.getWorkFunction(0);
-			out.print(tab + "work ");
-			out.print(wf.getPopValue() > 0 ? "pop " + wf.getPopValue() + " " : "");
-			out.print(wf.getPushValue() > 0 ? "push " + wf.getPushValue() + " " : "");
-			out.print(wf.getPeekValue() > 0 ? "peek " + wf.getPeekValue() + " " : "");
-			out.println("{");
-			//TODO: Initialization code specific to the filter
-			out.println(tab+ "}");
-		}
-*/
+			/** add the "work" declaration */
+			int pop = 0;
+			int push = 0;
+			int peek = 0;
+			try
+			{
+				GEWorkFunction wf = this.getWorkFunction();
+				pop = wf.getPopValue();
+				push = wf.getPushValue();
+				peek = wf.getPeekValue();
+			}
+			catch (Exception e)
+			{
+				 
+			}
+			strBuff.append(tab + "work ")
+					.append(pop > 0 ? "pop " + pop + " " : "")
+					.append(push > 0 ? "push " + push + " " : "")
+					.append(peek > 0 ? "peek " + peek + " " : "")
+					.append("{" + newLine + newLine + tab +"}" + newLine);
+	
+			strBuff.append("}" + newLine);	
 				
+		}				
 	}
 }

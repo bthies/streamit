@@ -1,8 +1,5 @@
 /*
  * Created on Jan 17, 2004
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package streamit.eclipse.grapheditor.graph;
 
@@ -15,26 +12,38 @@ import java.util.ArrayList;
  */
 public interface GEContainerInterface {
 
-	public void calculateDimension();
-	public void layoutChildren();
 
+	/**
+	 * Get the first node in the container. 
+	 * @return GEStreamNode first node in the container.
+	 */
 	public GEStreamNode getFirstNodeInContainer();
 	
-	
-	
-	/** Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
+	/** 
+	 * Returns a list of nodes that are contained by this GEStreamNode. If this GEStreamNode is
 	 * not a container node (can't have any contained elements), then null is returned.
 	 * @return ArrayList of contained elements. If <this> is not a container, return null.
 	 */
 	public ArrayList getContainedElements();
 	
+	/**
+	 * Add the node to this container only if this container does not container the node already.
+	 * @param node GEStreamNode
+	 */
+	public void addNodeToContainer(GEStreamNode node);
+	
+	/**
+	 * Remove the node from the container (if it is contained by the container).
+	 * @param node GEStreamNode
+	 */
+	public void removeNodeFromContainer(GEStreamNode node);
 	
 	/**
 	 * Expand or collapse the GEStreamNode structure depending on wheter it was already 
 	 * collapsed or expanded. 
 	 * @param jgraph The JGraph that will be modified to allow the expanding/collapsing.
 	 */	
-	public void collapseExpand();
+
 	public void collapse();
 	public void expand();
 	public boolean isExpanded();
@@ -54,9 +63,6 @@ public interface GEContainerInterface {
 	public boolean unhide();
 
 	public void moveNodePositionInContainer(GEStreamNode startNode, GEStreamNode endNode, int position);
-	public void removeNodeFromContainer(GEStreamNode node);
-	
-	
-	public void addNodeToContainer(GEStreamNode node);
-	
+	public void calculateDimension();
+	public void layoutChildren();
 }

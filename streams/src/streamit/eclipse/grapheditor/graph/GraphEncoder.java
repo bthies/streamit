@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
 import at.dms.kjc.CType;
 import at.dms.kjc.JExpression;
 import at.dms.kjc.JFieldDeclaration;
@@ -27,7 +28,8 @@ import at.dms.kjc.sir.SIRWorkFunction;
 
 /**
  * GraphEncoder "visits" the nodes SIRStream structures in order to build a GraphStructure
- * representation of the StreamIt program. 
+ * representation of the StreamIt program.
+ *  
  * @author jcarlos
  */
 public class GraphEncoder implements AttributeStreamVisitor {
@@ -92,7 +94,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 			 System.out.println("The children of the toplevel are " + ((GEStreamNode) topChildren.get(i)).getName());
 			 	  
 		}
-		System.out.println("#########################################################");
+	
 		//graph.constructGraph();
 	
 		System.out.println("End of Test");
@@ -125,11 +127,14 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               JMethodDeclaration work,
                               CType inputType, CType outputType) 
    {
-
-		System.out.println("***** Entering visitFilter for filter " + self.getName());
 		
 		/** Create a GEPhasedFilter that will represent the current filter.*/                              	
-		GEPhasedFilter phFilter = new GEPhasedFilter(self.getName());					
+		GEPhasedFilter phFilter = new GEPhasedFilter(StringTranslator.removeUnderscore(self.getName()));
+		
+		/** Must set the output/intput tape of the filter */
+		phFilter.setInputTape(self.getInputType().toString());
+		phFilter.setOutputTape(self.getOutputType().toString());
+						
 		try 
 		{
 			
@@ -160,7 +165,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 
 			/* ***********************************************************
 			 * DEBUGGING CODE BEGIN
-			 */
+			 
 			for (int i = 0; i < phFilter.getNumberOfInitWFs() ; i++)
 			{
 				System.out.println("Init Function "+ i +" for Filter "+ phFilter.getName());
@@ -203,10 +208,13 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType)
 	{
-		System.out.println("***** Entering visitPhasedFilter");
-    	
+		
 		/** Create a GEPhasedFilter that will represent the current filter.*/
-    	GEPhasedFilter phFilter = new GEPhasedFilter(self.getName());
+    	GEPhasedFilter phFilter = new GEPhasedFilter(StringTranslator.removeUnderscore(self.getName()));
+		
+		/** Must set the output/intput tape of the filter */
+		phFilter.setInputTape(self.getInputType().toString());
+		phFilter.setOutputTape(self.getOutputType().toString());
     	
 		/** Walk through each of the phases. */
 		if (initPhases != null)
@@ -230,7 +238,6 @@ public class GraphEncoder implements AttributeStreamVisitor {
 						
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
-		 */
 				for (int i = 0; i < phFilter.getNumberOfInitWFs() ; i++)
 				{
 					System.out.println("Init Function "+ i +" for Filter "+ phFilter.getName());
@@ -267,15 +274,14 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 SIRSplitType type,
                                 JExpression[] expWeights) 
 	{
-		System.out.println("***** Entering visitSplitter");
 		try 
 		{
 			/** Create a GESplitter that will represent the current splitter.*/
-			GESplitter splitter = new GESplitter(self.getName(), self.getWeights());
+			GESplitter splitter = new GESplitter(StringTranslator.removeUnderscore(self.getName()), 
+												 self.getWeights());
 			
 			/* ***********************************************************
 			 * DEBUGGING CODE BEGIN
-			 */	
 			System.out.println("Reached the start of the debugging code");
 			int[] weights = splitter.getWeights();
 			System.out.println("The number of weights for Splitter " + splitter.getName() + " = " + weights.length);
@@ -306,15 +312,15 @@ public class GraphEncoder implements AttributeStreamVisitor {
                               SIRJoinType type,
                               JExpression[] expWeights) 
     {
-		System.out.println("***** Entering visitJoiner");
 		try 
 		{
 			/** Create a GEJoiner that will represent the current joiner.	*/
-			GEJoiner joiner = new GEJoiner(self.getName(), self.getWeights());
+			GEJoiner joiner = new GEJoiner(StringTranslator.removeUnderscore(self.getName()), 
+										   self.getWeights());
 			
 			/* ***********************************************************
 			 * DEBUGGING CODE BEGIN
-			 */	
+			 	
 			int[] weights = joiner.getWeights();
 			System.out.println("The number of weights for Joiner " + joiner.getName() + " = " + weights.length);
 			System.out.println("The weights for Joiner " + joiner.getName()); 		
@@ -345,7 +351,6 @@ public class GraphEncoder implements AttributeStreamVisitor {
     public Object visitWorkFunction(SIRWorkFunction self,
                                     JMethodDeclaration work) 
     {
-		System.out.println("***** Entering visitWorkFunction");
 		try 
 		{
 			return new GEWorkFunction(work.getName(), self.getPushInt(), self.getPopInt(),self.getPeekInt());
@@ -366,12 +371,13 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                 JFieldDeclaration[] fields,
                                 JMethodDeclaration[] methods,
                                 JMethodDeclaration init) {                 	
-		
-		System.out.println("***** Entering visitPipeline "+ self.getName());
-		
 		/** Create a GEPipeline that will represent the current pipeline.*/
-		GEPipeline pipeline = new GEPipeline(self.getName()); 
-        
+		GEPipeline pipeline = new GEPipeline(StringTranslator.removeUnderscore(self.getName()));
+		
+		/** Must set the output/intput tape of the pipeline */
+		pipeline.setInputTape(self.getInputType().toString());
+		pipeline.setOutputTape(self.getOutputType().toString());
+		
 		/** Add the elements in the pipeline to the GEPipeline*/ 
 		Iterator iter = self.getChildren().iterator();
 		while (iter.hasNext())
@@ -383,7 +389,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		  		
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
-		*/
+		
 		System.out.println("The pipeline "+ pipeline.getName() + " has the following children");
 		ArrayList pipeChildren = pipeline.getContainedElements();
 		for (int i = 0; i < pipeChildren.size(); i++)
@@ -415,23 +421,26 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		GEJoiner join = (GEJoiner) joiner.accept(this);
 	
 		/** Create a GESplitJoin that will represent the current splitjoin.	*/
-		GESplitJoin splitjoin =  new GESplitJoin(self.getName(), split, join);
+		GESplitJoin splitjoin =  new GESplitJoin(StringTranslator.removeUnderscore(self.getName()), 
+												 split, join);
+												 
+		/** Must set the output/intput tape of the splitjoin */
+		splitjoin.setInputTape(self.getInputType().toString());
+		splitjoin.setOutputTape(self.getOutputType().toString());
 	
 		/** Add the inner nodes (the ones branching out of the splitter) to the splitjoin*/
 		Iterator iter = self.getParallelStreams().iterator();
 		while (iter.hasNext()) 
 		{	
 			SIROperator oper = (SIROperator)iter.next();
-			GEStreamNode strNode = (GEStreamNode)oper.accept(this);		
-	 		
-			//1/20/04 Removed since it affected layout algorithm strNode.addChild(join);		
+			GEStreamNode strNode = (GEStreamNode)oper.accept(this);				
 			splitjoin.addNodeToContainer(strNode);	
 		}
 
 		
 		/* ***********************************************************
 	     * DEBUGGING CODE BEGIN
-		*/
+		
 		System.out.println("SplitJoin "+ splitjoin.getName() + " has the following children");
 		System.out.println("\t Split = "+ splitjoin.getSplitter().getName());
 		System.out.println("\t Join = "+ splitjoin.getJoiner().getName());
@@ -444,10 +453,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		 * DEBUGGING CODE END
 	 	*********************************************************** */		
 			
-		return splitjoin;
-
-		
-                               
+		return splitjoin;                       
     }
 
     /**
@@ -471,11 +477,13 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		GEStreamNode loop = (GEStreamNode) self.getLoop().accept(this);
 	
 		/** Create a GEFeedbackLoop that will represent the current feedbackloop.*/
-		GEFeedbackLoop floop = new GEFeedbackLoop(self.getName(), split, join, body, loop);
+		GEFeedbackLoop floop = new GEFeedbackLoop(StringTranslator.removeUnderscore(self.getName()), split, join, body, loop);
+		floop.setInputTape(self.getInputType().toString());
+		floop.setOutputTape(self.getOutputType().toString());
+		
 
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN
-	   	 */
 		System.out.println("FeedbackLoop "+ floop.getName() + " has the following children");
 		System.out.println("\t Split = "+ floop.getSplitter().getName());
 		System.out.println("\t Join = "+ floop.getJoiner().getName());

@@ -15,12 +15,11 @@ import org.jgraph.graph.GraphLayoutCache;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
-import streamit.eclipse.grapheditor.graph.GEJoiner;
-import streamit.eclipse.grapheditor.graph.GEPhasedFilter;
-import streamit.eclipse.grapheditor.graph.GESplitter;
+import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GEType;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
+import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 
 /**
  * Action to expand a GEStreamNode. 
@@ -47,7 +46,10 @@ public class ViewExpand extends AbstractActionDefault {
 		
 		/** Expand the containers at the current level */
 		int currentLevelView = graphStruct.containerNodes.getCurrentLevelView();
+		
 		graphStruct.containerNodes.expandContainersAtLevel(currentLevelView);
+		JGraphLayoutManager manager = new JGraphLayoutManager(graphStruct);
+		manager.arrange();
 		
 		/** Set the container locations (layout the containers) now that they
 		 * have been expanded in the currentLevel view */
@@ -66,7 +68,7 @@ public class ViewExpand extends AbstractActionDefault {
 		}
 	
 		/** Layout the graph so that the graph is centered */
-		centerLayout();
+//		centerLayout();
 	}	
 
 	/**
@@ -99,10 +101,9 @@ public class ViewExpand extends AbstractActionDefault {
 					{	
 						GEStreamNode strNode = (GEStreamNode) cells[i];
 						
-						/** Move the GEStreamNode inside a container away from the top border. **/
-						if ((strNode instanceof GEPhasedFilter ) || 
-							(strNode instanceof GESplitter) ||
-							(strNode instanceof GEJoiner))
+						/** Move the GEStreamNode inside a container away from the top border if
+						 * it is not a container. **/
+						if ( ! (strNode instanceof GEContainer)) 
 							{
 								yOffset = 40;
 							}
@@ -117,7 +118,12 @@ public class ViewExpand extends AbstractActionDefault {
 							{
 								doCenterLayout = false;	
 								
-							}						
+							}	
+							
+							/** If  the immediate parent is a feedbackloop, then */
+							
+							
+												
 						}			
 						if (doCenterLayout)
 						{

@@ -12,7 +12,6 @@ import streamit.eclipse.grapheditor.editor.pad.GPGraph;
 import streamit.eclipse.grapheditor.editor.pad.GPSelectProvider;
 import streamit.eclipse.grapheditor.editor.pad.GraphModelProvider;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
-import streamit.eclipse.grapheditor.graph.NodeCreator;
 
 /**
  * Action that creates a new document in the Graph Editor to allow the editing of a new graph structure.
@@ -59,7 +58,7 @@ public class FileNew extends AbstractActionDefault {
 		
 		/** Create a default toplevel pipeline for the graph editor. There should always be a toplevel
 		 * node present. */
-		NodeCreator.createDefaultToplevelPipeline(graphStruct); 
+		graphStruct.createDefaultToplevelPipeline(); 
 
 		/** Create the hierarchy panel using the graphstructure */
 		graphpad.getCurrentDocument().treePanel.setGraphStructure(graphpad.getCurrentDocument().getGraphStructure());		

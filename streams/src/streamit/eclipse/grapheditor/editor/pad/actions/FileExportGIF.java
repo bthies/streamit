@@ -31,6 +31,7 @@ import java.io.IOException;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.pad.GPConverter;
+import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 import streamit.eclipse.grapheditor.editor.utils.encoders.GifEncoder;
 import streamit.eclipse.grapheditor.editor.utils.encoders.Web216ColorsFilter;
@@ -64,20 +65,27 @@ public class FileExportGIF extends AbstractActionFile {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		try {
+			GPDocument doc = graphpad.getCurrentDocument();
 			String file =
 				saveDialog(
 					Translator.getString("FileSaveAsLabel") + " "+fileType.toUpperCase(),
 					fileType.toLowerCase(),
 					fileType.toUpperCase()+" Image");
-			if (getCurrentDocument().getModel().getRootCount() > 0) {
-				BufferedImage img = GPConverter.toImage(getCurrentGraph());
-				
-				FileOutputStream fos = new FileOutputStream(file);
-				fos.write(convertToGif(img));
+			if (file != null)
+			{
 
-				// Write to file
-				fos.flush();
-				fos.close();
+				if (getCurrentDocument().getModel().getRootCount() > 0) {
+					BufferedImage img = GPConverter.toImage(getCurrentGraph(), 
+															doc.getGraphStructure().getTopLevel().getDimension(),
+															doc.areContainersInvisible());
+					
+					FileOutputStream fos = new FileOutputStream(file);
+					fos.write(convertToGif(img));
+	
+					// Write to file
+					fos.flush();
+					fos.close();
+				}
 			};
 		} catch (IOException ex) {
 			graphpad.error(ex.getMessage());

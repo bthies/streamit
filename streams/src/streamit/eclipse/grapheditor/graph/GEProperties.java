@@ -6,10 +6,12 @@ package streamit.eclipse.grapheditor.graph;
 
 import java.util.Properties;
 
-import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
-
 
 /**
+ * Class that contains the keys for the property maps of a GEStreamNode.
+ * Also provides static methods to get the default properties of certain 
+ * types of GEStreamNodes.
+ * 
  * @author jcarlos
  *
  */
@@ -22,7 +24,6 @@ public class GEProperties
 	 */
 	public static int id_count = 0;
 
-	
 	/**
 	 * Key for the name property. The name of the GEStreamNode.
 	 */
@@ -87,16 +88,26 @@ public class GEProperties
 	 */
 	public static final String KEY_FLOOP_BODY = "FeedbackLoop Body";
 	
-	
 	/**
 	 * Key for the loop of a FeedbackLoop.
 	 */
 	public static final String KEY_FLOOP_LOOP = "FeedbackLoop Loop";
 	
+	/**
+	 * Key for the index within a splitjoin. 
+	 */
+	public static final String KEY_INDEX_IN_SJ = "Index in Splitjoin";
 	
 	/**
-	 * Get the default properties of a Splitter.
-	 * @return Default Properties of Splitter.
+	 * Key that determines wheter or not a Node is connected
+	 */
+	public static final String KEY_IS_CONNECTED = "Is Node Connected";
+	
+	
+	
+	/**
+	 * Get the default properties of a GESplitter.
+	 * @return Properties Default Properties of GESplitter.
 	 */
 	public static Properties getDefaultSplitterProperties()
 	{
@@ -113,8 +124,8 @@ public class GEProperties
 	}
 	
 	/**
-	 * Get the default properties of a Joiner.
-	 * @return Default Properties of Joiner. 
+	 * Get the default properties of a GEJoiner.
+	 * @return Properties Default Properties of GEJoiner. 
 	 */
 	public static Properties getDefaultJoinerProperties()
 	{
@@ -129,132 +140,6 @@ public class GEProperties
 		
 		return joinerProperties;
 	}
-	
-	/**
-	 * Get the Properties of the GEStreamNode.
-	 * @param node GEStreamNode
-	 * @return Properties of GeStreamNode. 
-	 */
-	public static Properties getNodeProperties(GEStreamNode node)
-	{
-		String type = node.getType();
-		Properties properties = new Properties();
-		
-		properties.put(GEProperties.KEY_NAME, node.getName());
-		properties.put(GEProperties.KEY_TYPE, type);
-		properties.put(GEProperties.KEY_INPUT_TAPE, node.getInputTape());
-		properties.put(GEProperties.KEY_OUTPUT_TAPE, node.getOutputTape());
-		properties.put(GEProperties.KEY_LEVEL, Integer.toString(node.getDepthLevel()));
-		
-		GEStreamNode container = node.getEncapsulatingNode();
-		if (container != null)
-		{
-			properties.put(GEProperties.KEY_PARENT, ((GEStreamNode) container).getName());
-		}
-		
-		if (type == GEType.PHASED_FILTER)
-		{
-			try
-			{
-				GEWorkFunction wf = ((GEPhasedFilter) node).getWorkFunction();
-				properties.put(GEProperties.KEY_PUSH_RATE, Integer.toString(wf.getPushValue())  );
-				properties.put(GEProperties.KEY_POP_RATE, Integer.toString(wf.getPopValue()));
-				properties.put(GEProperties.KEY_PEEK_RATE, Integer.toString(wf.getPeekValue()));
-			}
-			catch(ArrayIndexOutOfBoundsException e)
-			{
-				properties.put(GEProperties.KEY_PUSH_RATE, "0");
-				properties.put(GEProperties.KEY_POP_RATE, "0");
-				properties.put(GEProperties.KEY_PEEK_RATE, "0");
-			}
-		}
-		else if (type == GEType.SPLIT_JOIN)
-		{
-			properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, ((GESplitJoin)node).getSplitter().getWeightsAsString());
-			properties.put(GEProperties.KEY_JOINER_WEIGHTS, ((GESplitJoin)node).getJoiner().getWeightsAsString());
-		}
-		else if (type == GEType.FEEDBACK_LOOP)
-		{
-			//TODO implement the case for feedbackloop in getNodeProperties()
-			properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, ((GEFeedbackLoop)node).getSplitter().getWeightsAsString());
-			properties.put(GEProperties.KEY_JOINER_WEIGHTS, ((GEFeedbackLoop)node).getJoiner().getWeightsAsString());
-			
-		}
-		else if (type == GEType.JOINER)
-		{
-			properties.put(GEProperties.KEY_JOINER_WEIGHTS, ((GEJoiner)node).getWeightsAsString());
-		}
-		
-		else if (type == GEType.SPLITTER)
-		{
-			properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, ((GESplitter)node).getWeightsAsString());
-		}
-		
-		return properties;
-	}
-	
-	/**
-	 * Set the properties of the GEStreamNode. The proeperties that cannot be changed
-	 * are the type and the parent of the GEStreamNode. 
-	 * @param properties
-	 */
-	public static void setNodeProperties(GEStreamNode node, Properties properties, GraphStructure graphStruct)
-	{
-		String type = node.getType();
-		
-		node.setName(properties.getProperty(GEProperties.KEY_NAME));
-		node.setOutputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
-		node.setInputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));
-		setParentProperty(node, graphStruct.containerNodes.
-												getContainerNodeFromName(properties.getProperty(GEProperties.KEY_PARENT)));
-					
-		if (type == GEType.PHASED_FILTER)
-		{
-			GEWorkFunction wf = ((GEPhasedFilter) node).getWorkFunction();
-			wf.setPushValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_PUSH_RATE)));
-			wf.setPopValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_POP_RATE)));
-			wf.setPeekValue(Integer.parseInt(properties.getProperty(GEProperties.KEY_PEEK_RATE)));
-			
-			((GEPhasedFilter) node).setDisplay(graphStruct.getJGraph());						
-		}
-		else if (type == GEType.JOINER)
-		{
-			String joinerWeights = properties.getProperty(GEProperties.KEY_JOINER_WEIGHTS);
-			((GEJoiner)node).setWeights(StringTranslator.weightsToInt(joinerWeights));
-			((GEJoiner)node).setDisplay(graphStruct.getJGraph());
-		}
-			
-		else if (type == GEType.SPLITTER)
-		{
-			String splitWeights = properties.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS);
-			((GESplitter)node).setWeights(StringTranslator.weightsToInt(splitWeights));
-			((GESplitter)node).setDisplay(graphStruct.getJGraph());
-		}				
-	}
-	
 
-	/**
-	 * Set the container as the parent of the GEStreamNode child. 
-	 * @param child GEStreamNode
-	 * @param container GEContainer
-	 */
-	public static void setParentProperty(GEStreamNode child, GEContainer container)
-	{
-		
-		if (child.getEncapsulatingNode() !=null)
-		{
-			child.getEncapsulatingNode().removeNodeFromContainer(child);
-		}
-		
-		container.addNodeToContainer(child);
-		
-		
-//		
-/*		child.setEncapsulatingNode(container);
-		if (child.getEncapsulatingNode() !=null)
-		{
-			child.getEncapsulatingNode().addNodeToContainer(child);
-		}*/		
-	}	
 }
 

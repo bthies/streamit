@@ -60,5 +60,24 @@ public class StringTranslator {
 	}
 
 
+	/**
+	 * Return the string up to the last place where an underscore appears
+	 * @param str String 
+	 * @return String up to the last ocurrence of a string.
+	 */
+	public static String removeUnderscore(String str)
+	{
+		int indexUnderscore = str.lastIndexOf("_");
+		if (indexUnderscore != -1)
+		{
+			return str.substring(0,indexUnderscore); 
+		}
+		else
+		{
+			return str;
+		
+		}	
+	}
+
 
 }

@@ -14,9 +14,9 @@ import streamit.eclipse.grapheditor.editor.controllers.GEJoinerController;
 import streamit.eclipse.grapheditor.editor.controllers.GEPipelineController;
 import streamit.eclipse.grapheditor.editor.controllers.GESplitJoinController;
 import streamit.eclipse.grapheditor.editor.controllers.GESplitterController;
-import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GEType;
+import streamit.eclipse.grapheditor.graph.GraphStructure;
 
 /**
  * Action to edit the properties of a GEStreamNode.
@@ -76,12 +76,11 @@ public class EditProperties extends AbstractActionFile {
 			
 			/** Display the configuration dialog. If the user presses OK and the properties 
 			 *  that were selected are valid .... */
-			if (_control.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
+			if (_control.configure(graphpad.getCurrentDocument(), cell.getNodeProperties()))
 			{
+				GraphStructure graphStruct =  graphpad.getCurrentDocument().getGraphStructure();
 				/** Set the properties of the GEStreamNode */
-				GEProperties.setNodeProperties(cell, 
-											   _control.getConfiguration(),
-											   graphpad.getCurrentDocument().getGraphStructure());
+				cell.setNodeProperties(_control.getConfiguration(), graphStruct.getJGraph(), graphStruct.containerNodes);
 				graphpad.getCurrentDocument().getTreePanel().update();
 				graphpad.getCurrentDocument().updateUI();
 				graphpad.update();			

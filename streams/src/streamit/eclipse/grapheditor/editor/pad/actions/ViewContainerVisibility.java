@@ -7,6 +7,7 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 import java.awt.event.ActionEvent;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
+import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
 
 
@@ -23,7 +24,7 @@ public class ViewContainerVisibility extends AbstractActionCheckBox {
 
 	/** Static variable that determines if the containers are visible or not*/
 	//TODO: change this variable to non-static and put it in GPDocument
-	static boolean HIDE = true;
+//	public static boolean HIDE = true;
 
 
 	/**
@@ -38,9 +39,18 @@ public class ViewContainerVisibility extends AbstractActionCheckBox {
 	 * @see org.jgraph.pad.actions.AbstractActionToggle#isSelected(String)
 	 */
 	public boolean isSelected(String actionCommand) {
+		GPDocument doc = graphpad.getCurrentDocument();
 		if (getCurrentGraph() == null)
 			return false;
-		return (!ViewContainerVisibility.HIDE);
+		if (doc.areContainersInvisible())
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+		
 	}
 
 	/**
@@ -50,11 +60,12 @@ public class ViewContainerVisibility extends AbstractActionCheckBox {
 	{
 		/** Clear selections to avoid any issues when the selected nodes will disappear */
 		getCurrentGraph().clearSelection();
+		GPDocument doc = graphpad.getCurrentDocument();
 		
 		/** Case when the containers are not visible */
-		if (ViewContainerVisibility.HIDE)
+		if (doc.areContainersInvisible())
 		{
-			ViewContainerVisibility.HIDE = false;
+			doc.setContainersInvisible(false);
 			
 			/** Make the containers visible */
 			ViewContainersUnhide ac = (ViewContainersUnhide) graphpad.getCurrentActionMap().
@@ -64,7 +75,7 @@ public class ViewContainerVisibility extends AbstractActionCheckBox {
 		/** Case when the containers are visible */
 		else
 		{
-			ViewContainerVisibility.HIDE = true;
+			doc.setContainersInvisible(true);
 			
 			/** Make the containers invisible */
 			ViewContainersHide ac = (ViewContainersHide) graphpad.getCurrentActionMap().

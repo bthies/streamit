@@ -26,12 +26,10 @@ public class GEStreamNodeControllerRegistry {
 	 */
 	static {
 		System.out.println("*##*#*#*#*#*#*#*#*#*#* INSIDE STATIC INITIALIZER");
-		streamNodeControllers.add(new GEPipelineController());
 		streamNodeControllers.add(new GEFilterController());
 		streamNodeControllers.add(new GESplitterController());
-		streamNodeControllers.add(new GESplitJoinController());
 		streamNodeControllers.add(new GEJoinerController());
-		streamNodeControllers.add(new GEFeedbackLoopController());
+	
 		
 		sort();
 	}

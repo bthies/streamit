@@ -6,11 +6,11 @@ package streamit.eclipse.grapheditor.graph;
 
 /**
  * GEType contains the possible type values that a GEStreamNode can obtain.
+ * 
  * @author jcarlos 
  */
-public class GEType {
-	
-		//public static final String FILTER = "FILTER";
+public class GEType 
+{
 		public static final String PHASED_FILTER = "PHASED_FILTER"; 
 		public static final String SPLITTER =  "SPLITTER";
 		public static final String JOINER = "JOINER";
@@ -18,6 +18,7 @@ public class GEType {
 		public static final String SPLIT_JOIN = "SPLIT_JOIN";
 		public static final String FEEDBACK_LOOP = "FEEDBACK_LOOP";
  
+ 		
  		public static final String[] ALL_STREAM_TYPES = {"PHASED_FILTER", 
 														 "SPLITTER",
 														 "JOINER",
@@ -25,7 +26,11 @@ public class GEType {
 														 "SPLIT_JOIN", 
 														 "FEEDBACK_LOOP"};
 														 
-														 
+		/**
+		 * Convert the type to a name representation of the GEType.
+		 * @param type GEType 
+		 * @return String representation of the type.
+		 */										 
 		public static String GETypeToString(String type)
 		{
 			System.out.println("Type: "+type);
@@ -57,8 +62,5 @@ public class GEType {
 			{
 				return "NON EXISTANT TYPE";
 			}
-		}
-		
-		
-		
+		}		
 }

@@ -53,6 +53,7 @@ public class GraphOptionsCloneable extends AbstractActionCheckBox {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		getCurrentGraph().setCloneable(!getCurrentGraph().isCloneable());
+	
 	}
 
 }

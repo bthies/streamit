@@ -71,6 +71,7 @@ public class GESplitterController extends GEStreamNodeController{
 		dialog = new GESplitterConfigurationDialog(new JFrame(), document);
 		setPropertiesInDialog(propert);
 		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
+		dialog.saveConnected(propert.getProperty(GEProperties.KEY_IS_CONNECTED));
 		
 		dialog.setVisible(true);
 		if (dialog.canceled()) return false;
@@ -88,10 +89,9 @@ public class GESplitterController extends GEStreamNodeController{
 	{
        	dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
-		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
-		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
 		dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
 		dialog.setSplitterWeights(propert.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS));
+		dialog.setIndexInSJ(Integer.parseInt(propert.getProperty(GEProperties.KEY_INDEX_IN_SJ)));
 	}
 	
 	/**
@@ -101,10 +101,9 @@ public class GESplitterController extends GEStreamNodeController{
 	public void getPropertiesInDialog()
 	{
 		properties.put(GEProperties.KEY_NAME, dialog.getName());
-		properties.put(GEProperties.KEY_INPUT_TAPE, dialog.getInputTape());
-		properties.put(GEProperties.KEY_OUTPUT_TAPE, dialog.getOutputTape());
 		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
 		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, dialog.getSplitterWeights());
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, dialog.getIndexInSJ());
 	}
 	
 	 /**
@@ -115,14 +114,17 @@ public class GESplitterController extends GEStreamNodeController{
 	  */
 	 public void setDefaultProperties()
 	 {
-		 properties.put(GEProperties.KEY_NAME, "Splitter_"+ GEProperties.id_count++);
-		 properties.put(GEProperties.KEY_INPUT_TAPE, "void");
-		 properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
-		 properties.put(GEProperties.KEY_PARENT, "Toplevel");
-		 properties.put(GEProperties.KEY_TYPE, GEType.SPLITTER);
+		properties.put(GEProperties.KEY_NAME, "StrSplitter"+ GEProperties.id_count++);
+		properties.put(GEProperties.KEY_PARENT, "Toplevel");
+		properties.put(GEProperties.KEY_TYPE, GEType.SPLITTER);
 		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, "0");
 	 }
 	
+	
+	
+	
+
 	/**
 	 * Get the default properties for a GESplitterController.
 	 * @return Properties the default properties of a GESplitterController.

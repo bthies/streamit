@@ -9,10 +9,15 @@ import org.eclipse.core.resources.IFile;
 
 /**
  * IFileMappings maintains the mapping between a GEStreamNode and an IFile. 
+ * 
  * @author jcarlos
  */
 public class IFileMappings {
 
+	/**
+	 * HashMap that contains the mapping between the GEStreamNodes and their corresponding IFiles.
+	 * The keys in the HashMap are the GEStreamNodes and the values are going to be the IFiles. 
+	 */
 	public static HashMap IFileMappings = new HashMap();
 
 	/**
@@ -25,8 +30,7 @@ public class IFileMappings {
 		for (int i = 0; i < cells.length; i++)
 		{
 			if (cells[i] instanceof GEStreamNode)
-			{
-				System.out.println("Adding mapping " + i + " : "+ ((GEStreamNode)cells[i]).getName()); 
+			{ 
 				IFileMappings.put(cells[i], ifile);
 			}
 		}

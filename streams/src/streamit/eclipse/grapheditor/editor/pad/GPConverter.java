@@ -23,6 +23,7 @@ package streamit.eclipse.grapheditor.editor.pad;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.text.DateFormat;
@@ -32,6 +33,10 @@ import java.util.Iterator;
 
 import org.jgraph.graph.GraphModel;
 
+import streamit.eclipse.grapheditor.graph.Constants;
+import streamit.eclipse.grapheditor.graph.GEContainer;
+import streamit.eclipse.grapheditor.graph.GEStreamNode;
+
 public class GPConverter {
 
 	//
@@ -39,19 +44,30 @@ public class GPConverter {
 	//
 
 	// Create a buffered image of the specified graph.
-	public static BufferedImage toImage(GPGraph graph) {
+	public static BufferedImage toImage(GPGraph graph, Dimension dim, boolean contInvisible) {
 		Object[] cells = graph.getRoots();
 
 		if (cells.length > 0) {
-			Rectangle bounds = graph.getCellBounds(cells);
+			
+			Rectangle bounds = null;
+			
+			if (contInvisible)
+			{
+				bounds = new Rectangle (new Point(Constants.TOPLEVEL_LOC_X, Constants.TOPLEVEL_LOC_Y),
+			 						    new Dimension(dim.width, dim.height));
+			}
+			else
+			{
+				bounds = graph.getCellBounds(cells);
+			}
 			graph.toScreen(bounds);
 
 			// Create a Buffered Image
 			Dimension d = bounds.getSize();
 			BufferedImage img =
 				new BufferedImage(
-					d.width + 10,
-					d.height + 10,
+					d.width,
+					d.height,
 					BufferedImage.TYPE_INT_RGB);
 			Graphics2D graphics = img.createGraphics();
 			graphics.setColor(graph.getBackground());
@@ -218,7 +234,15 @@ public class GPConverter {
 
 	private static String vertexGraphviz(GPGraph graph, Object id, Object vertex) {
 		if (id==null) return "";
-		String label = graph.convertValueToString(vertex);
+		GEStreamNode node = ((GEStreamNode)vertex);
+		if ( ! (graph.getGraphLayoutCache().isVisible(vertex))) return "";
+		if (node instanceof GEContainer)
+		{
+			//if ( ! ((GEContainer)node).isExpanded())return "";
+			return ""; 
+		}
+		
+		String label = node.getName();
 		if (label==null) label = "";
 		return "\n\t" +
 		       id.toString() +
@@ -248,6 +272,9 @@ public class GPConverter {
 //					to = graph.convertValueToString(model.getParent(et));
 			}
 
+			
+			
+			
 			if (from != null && to != null)
 				return "\n\t" + from + " -> " + to + ";";
 		}

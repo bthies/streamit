@@ -7,7 +7,9 @@ package streamit.eclipse.grapheditor.graph;
 import java.io.Serializable;
 
 /**
- * GEWorkFunction is representation of a work function.
+ * GEWorkFunction is the graph representation of a work function.
+ * A work function has push, pop, and peek value rates. 
+ * 
  * @author jcarlos
  */
 public class GEWorkFunction implements Serializable
@@ -48,7 +50,7 @@ public class GEWorkFunction implements Serializable
 	}
 	
 	/**
-	 * Get the name of <this>.
+	 * Get the name of GEWorkFunction.
 	 * @return name of GEWorkFunction. 
 	 */
 	public String getName()
@@ -57,7 +59,7 @@ public class GEWorkFunction implements Serializable
 	}
 
 	/**
-	 * Get the push value of <this>.
+	 * Get the push value of GEWorkFunction.
 	 * @return Push value of GEWorkFunction.
 	 */
 	public int getPushValue()
@@ -66,7 +68,7 @@ public class GEWorkFunction implements Serializable
 	}
 	 
 	/**
-	 * Get the pop value of <this>.
+	 * Get the pop value of GEWorkFunction.
 	 * @return Pop value of GEWorkFunction.
 	 */
 	public int getPopValue()
@@ -75,7 +77,7 @@ public class GEWorkFunction implements Serializable
 	}
 	
 	/**
-	 * Get the peek value of <this>
+	 * Get the peek value of GEWorkFunction.
 	 * @return Peek value of GEWorkFunction
 	 */
 	public int getPeekValue()
@@ -84,7 +86,7 @@ public class GEWorkFunction implements Serializable
 	}
 	 
 	/**
-	 * Set the name of <this>.
+	 * Set the name of the GEWorkFunction.
 	 * @param name Name of GEWorkFunction.
 	 */
 	public void setName(String name)
@@ -93,7 +95,7 @@ public class GEWorkFunction implements Serializable
 	}
 	 
 	/**
-	 * Set the push value of <this>.
+	 * Set the push value of the GEWorkFunction.
 	 * @param push Push value of GEWorkFunction.
 	 */
 	public void setPushValue(int push)
@@ -102,7 +104,7 @@ public class GEWorkFunction implements Serializable
 	}
 
 	/**
-	 * Set the pop value of <this>
+	 * Set the pop value of the GEWorkFunction
 	 * @param pop Pop value of GEWorkFunction
 	 */	
 	public void setPopValue(int pop)
@@ -111,7 +113,7 @@ public class GEWorkFunction implements Serializable
 	}
 	
 	/**
-	 * Set the peek value of <this>.
+	 * Set the peek value of the GEWorkFunction.
 	 * @param peek Peek value of GEWorkFunction.
 	 */
 	public void setPeekValue(int peek)

@@ -5,6 +5,7 @@ package streamit.eclipse.grapheditor.editor.pad;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 
 /**
@@ -38,6 +39,14 @@ public class TreeNode extends DefaultMutableTreeNode{
 	 */
 	public String toString()
 	{
-		return node.getName();
+		if (node instanceof GEContainer)
+		{
+			return node.getNameWithID();
+		}
+		else
+		{
+			return node.getName();
+		}
+		
 	}
 }

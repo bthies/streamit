@@ -4,12 +4,15 @@
 
 package streamit.eclipse.grapheditor.graph;
 
-import java.io.PrintWriter;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.swing.JScrollPane;
 
@@ -19,9 +22,11 @@ import org.jgraph.graph.ConnectionSet;
 import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.GraphConstants;
+import org.jgraph.graph.GraphLayoutCache;
 
 import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
-//import com.sun.rsasign.t;
+import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
+
 
 /**
  * Graph data structure that has GEStreamNode objects as its nodes. Relies on JGraph 
@@ -88,13 +93,18 @@ public class GraphStructure implements Serializable{
 	}
 
 	/**
-	 * Get all of the nodes in the graph
+	 * Get all of the nodes in the graph (including the toplevel node ).
 	 * @return ArrayList with all of the nodes in the graph.
 	 */
 	public ArrayList allNodesInGraph()
 	{
 		ArrayList allNodes = new ArrayList();
+		/** add the toplevel node to the list */
 		allNodes.add(this.topLevel);
+		
+		/** All the nodes are added since all containers are contained by some 
+		 *  other container, except for the toplevel node (that is why we had to
+		 * 	add the toplevel explicitly*/
 		Iterator containerIter = this.containerNodes.getAllContainers().iterator();
 		while(containerIter.hasNext())
 		{
@@ -108,416 +118,290 @@ public class GraphStructure implements Serializable{
 	}
 	
 	/**
-	 * Connect startNode to endNode if it is a valid connection.
-	 * @param startNode 
-	 * @param endNode
-	 * @param nodesConnected Determines which of the nodes are already connected (present)
-	 * in the graph.
-	 * @return 0 if it was possible to connect the nodes, otherwise, return a negative integer.
+	 * Get all of the nodes in the graph that are not containers.
+	 * @return ArrayList with all of the nodes in the graph that are not containers.
 	 */
-	public int connect (GEStreamNode startNode, GEStreamNode endNode, int nodesConnected)
+	public ArrayList allNonContainerNodesInGraph()
 	{
-		
-		GEContainer startParent = startNode.getEncapsulatingNode();
-		GEContainer endParent = endNode.getEncapsulatingNode();
-		
-		/** Do not connect if we are connecting the node to itself or if two nodes were not specified */
-		if ((startParent == endNode) || (endParent == startNode) || (startParent == null) || (endParent == null))
+		ArrayList allNodes = new ArrayList();
+		Iterator containerIter = this.containerNodes.getAllContainers().iterator();
+		while(containerIter.hasNext())
 		{
-			return ErrorCode.CODE_CONNECT_TO_SELF;
+			Iterator iterChild = ((GEContainer)containerIter.next()).getContainedElements().iterator();
+			while(iterChild.hasNext())
+			{
+				GEStreamNode node = (GEStreamNode)iterChild.next();
+				/** Only add to the list if it is not a container */
+				if (! (node instanceof GEContainer))
+				{
+					allNodes.add(node);
+				}	
+			}			
 		}
-		
-		/** Enforce the correct amount of edges coming in/out of a node. 
-		 * GEPhasedFilter - source/target at most one connection.
-		 * GESplitter - at most one target edge. GEJoiner - at most one source edge*/
-		if ((!(startNode.getType() == GEType.SPLITTER)) && (startNode.getSourceEdges().size() == 1))
-		{
-			return ErrorCode.CODE_EDGES_OUT;
-		}
-		if ((!(endNode.getType() == GEType.JOINER)) && (endNode.getTargetEdges().size() == 1)) 
-		{
-			return ErrorCode.CODE_EDGES_IN;
-		}
-		
-		/** Do not allow connections to an expanded container */
-		if (startNode instanceof GEContainer)
-		{
-			if (((GEContainer) startNode).isExpanded())
-			{
-				return ErrorCode.CODE_CONTAINER_CONNECTION;	
-			}
-		}
-		if (endNode instanceof GEContainer)
-		{
-			if (((GEContainer) endNode).isExpanded())
-			{
-				return ErrorCode.CODE_CONTAINER_CONNECTION;	
-			}
-		}
-
-		/** Case when the parent of the start node is a GEPipeline */
-		if (startParent.getType() == GEType.PIPELINE)
-		{
-			ArrayList endParentChildren = endParent.getContainedElements();
-			ArrayList startParentChildren = startParent.getContainedElements();
-			GEStreamNode endNodeActual = null;
-			
-			/** If the parent of the start and end nodes are not equal, then
-			 *  we must deal with an ancestor of the end node that is contained
-			 *  by the GEPipeline. */
-			//TODO: Should we make the non-first nodes the first nodes.
-			if (endParent != startParent)
-			{
-				GEStreamNode pNode = endNode;
-				boolean containsAncestorInPipe = false;
-				while (pNode != this.getTopLevel())
-				{
-					if (startParentChildren.contains(pNode.getEncapsulatingNode()))
-					{
-						containsAncestorInPipe = true;
-						endNodeActual = pNode.getEncapsulatingNode();
-						break;
-					}
-					pNode = pNode.getEncapsulatingNode();
-				}				
-				if ( ! (containsAncestorInPipe))
-				{
-					GEStreamNode lastNodeInCont = ((GEPipeline)startParent).getLastNodeInContainer();
-					if ((lastNodeInCont == null) || ( ! (lastNodeInCont == startNode)))
-					{
-						return ErrorCode.CODE_NO_ANCESTOR_CONNECTION;	
-					}		
-					else
-					{
-						endNodeActual = startNode.getOldestContainerAncestor(this.topLevel);
-						connectDraw(startNode, endNode);
-						return 0;		
-					}
-				}
-			}
-			else
-			{
-				endNodeActual = endNode;
-			}
-			
-			switch (nodesConnected)
-			{
-				case RelativePosition.BOTH_PRESENT:
-				case RelativePosition.START_PRESENT:
-				case RelativePosition.NONE_PRESENT:
-				{
-					((GEContainer) startParent).moveNodePositionInContainer(startNode, endNodeActual, RelativePosition.AFTER);
-					break;
-				}
-				case RelativePosition.END_PRESENT:
-				{
-					((GEContainer) startParent).moveNodePositionInContainer(startNode, endNodeActual, RelativePosition.BEFORE);
-					break;
-				}
-			}
-			connectDraw(startNode, endNode);
-	}
-			
-		/** Case when the parent of the start node is a GEPipeline */
-		else if (startParent.getType() == GEType.SPLIT_JOIN)
-		{
-			GESplitJoin splitjoin = (GESplitJoin) startParent;
-			GESplitter splitter = splitjoin.getSplitter();
-			GEJoiner joiner =  splitjoin.getJoiner();
-			ArrayList splitjoinSuccesors = splitjoin.getSuccesors();
-			
-			/** In order to make connections, we must have a valid splitjoin with a splitter */
-			if (splitter == null)
-			{ 
-				return ErrorCode.CODE_NO_SPLITTER;
-			}
-			/** In order to make connections, we must have a valid splitjoin with a joiner */
-			if (joiner == null)
-			{
-				return ErrorCode.CODE_NO_JOINER;
-			}
-			
-			/** The splitter of the splitjoin can never be the endNode */
-			if (splitter == endNode)
-			{
-				return ErrorCode.CODE_SPLITTER_ENDNODE_SJ;
-			}
-							
-			/** Cannot connect the splitter to the joiner (in either direction)*/
-			//TODO: should we be using .equals ????
-			if ((startNode == splitter) && (endNode == joiner) ||
-				(startNode == joiner) && (endNode == splitter))
-				{
-					return ErrorCode.CODE_SPLITTER_JOINER_CONNECT_SJ;	
-				} 	
-			
-			/** Cannot connect the joiner to an endNode that is inside the same splitjoin */
-			/* Does not seem necessary 
-			if ((startNode == joiner) && (endNode.getEncapsulatingNode() == splitjoin))
-			{
-				return ErrorCode.ERRORCODE_JOINER_SAME_PARENT_CONNECT_SJ;
-			}*/
-			
-			/** The inner nodes of the splitjoin can only connect to the joiner */
-			if ((startNode != splitter) && (startNode != joiner) && (endNode != joiner))
-			{
-				return ErrorCode.CODE_INNERNODES_SJ;
-			}
-			
-			/** Connecting splitter to something inside the same parent */
-			if (startNode == splitter) 
-			{
-				GEStreamNode pNode = endNode;
-				boolean containsAncestorInPipe = false;
-				while (pNode != this.getTopLevel())
-				{
-					if (splitjoinSuccesors.contains(pNode))
-					{
-						containsAncestorInPipe = true;
-						break;
-					}
-					pNode = pNode.getEncapsulatingNode();
-				}
-				if ( ! (containsAncestorInPipe))
-				{
-					return ErrorCode.CODE_NO_ANCESTOR_CONNECTION;	
-				}
-				connectDraw(startNode, endNode);
-			}
-		
-			/** Connecting joiner to something inside the same parent */
-			else if (endNode == joiner)
-			{
-				connectDraw(startNode, joiner);
-			}
-			/** Connecting the joiner to something in a different parent */
-			else if (startNode == joiner) 
-			{
-				GEStreamNode pNode = endNode;
-				boolean containsAncestorInPipe = false;
-				while (pNode != this.getTopLevel())
-				{
-					if (splitjoinSuccesors.contains(pNode))
-					{
-						return ErrorCode.CODE_JOINER_SAME_PARENT_CONNECT_SJ;
-					}
-					pNode = pNode.getEncapsulatingNode();
-				}
-				connectDraw(startNode, endNode);
-			}
-			/** Other alternatives are not allowed (or possible) */
-			else 
-			{ 
-				return -999;
-			}
-		
-		}
-		else if (startParent.getType() == GEType.FEEDBACK_LOOP)
-		{
-			GEFeedbackLoop floop = (GEFeedbackLoop) startParent;
-			GESplitter splitter = floop.getSplitter();
-			GEJoiner joiner =  floop.getJoiner();
-
-			/** In order to make connections, we must have a valid feedbackloop with a joiner */
-			if (joiner == null)
-			{
-				return ErrorCode.CODE_NO_JOINER;	
-			}
-			/** In order to make connections, we must have a valid feedbackloop with a splitter */
-			if (splitter == null)
-			{
-				return ErrorCode.CODE_NO_SPLITTER;
-			}
-		
-			/** Cannot connect the splitter to the joiner (in either direction)*/
-			//TODO: should we be using .equals ????
-			if ((startNode == splitter) && (endNode == joiner) ||
-				(startNode == joiner) && (endNode == splitter))
-			{
-					return ErrorCode.CODE_SPLITTER_JOINER_CONNECT_SJ;	
-			} 	
-			
-			/** Cannot connect the joiner to an endNode that is outside the feedbackloop */
-			if ((startNode == joiner) && ( ! (endNode.getEncapsulatingNode() == floop)))
-			{
-				return ErrorCode.CODE_JOINER_NO_SAME_PARENT_CONNECT;
-			}
-			connectDraw(startNode, endNode);
-		}
-			
-			
-			
-			
-			
-			/*
-			
-			
-			
-			switch(nodesConnected)
-			{
-				case RelativePosition.START_PRESENT:
-				{	
-					if (endParent == startParent)
-					{
-						//TODO Add all of the nodes that are connected after endNode
-						startParentChildren.add(endNode);
-					}
-					else
-					{
-						int startIndex =  startParentChildren.indexOf(startNode);
-						startParentChildren.add(startIndex + 1, endNode);
-						
-					}
-					
-					break;
-				}
-				case RelativePosition.END_PRESENT:
-				{
-					if (endParent == startParent)
-					{
-						//TODO Add all of the nodes that are connected before startNode
-						int endNodeIndex = startParentChildren.indexOf(endNode);
-						int addedAtIndex = endNodeIndex == 0 ? 0 : endNodeIndex - 1;
-						startParentChildren.add(addedAtIndex, startNode);
-					}
-					else
-					{
-						//TODO
-						int endNodeIndex = startParentChildren.indexOf(endParent);
-						int addedAtIndex = endNodeIndex == 0 ? 0 : endNodeIndex - 1;
-						startParentChildren.add(addedAtIndex, startNode);
-											
-					}
-					break;
-				}
-				case RelativePosition.BOTH_PRESENT:
-				{
-					if (endParent == startParent)
-					{
-						if (startParentChildren.contains(startNode))
-						{
-							
-						}
-					}
-					
-					
-					
-					if ((endParent.getType() == GEType.PIPELINE) || 
-						(endParent.getType() == GEType.FEEDBACK_LOOP) ||
-						(endParent.getType() == GEType.SPLIT_JOIN))
-						{
-							int startNodeIndex = startParentChildren.indexOf(startNode);
-						// 2/14/04 stackoverflow	startParentChildren.add(startNodeIndex + 1, endParent);
-						startParentChildren.add(startNodeIndex + 1, endNode);
-						}
-					break;
-				}
-				
-				case RelativePosition.NONE_PRESENT:
-				{
-					startParentChildren.add(endNode);
-					startParentChildren.add(startNode);
-					break;
-				}
-			}
-			connectDraw(startNode, endNode);
-			*/
-		
-		
-		/*
-
-		else if (startParent.getType() == GEType.FEEDBACK_LOOP)
-		{
-			return false;
-		}
-		*/
-		else
-		{
-			
-			return ErrorCode.CODE_INVALID_PARENT_TYPE;
-		}
-
-		return 0;
-		
+		return allNodes;
 	}
 
 	/**
-	 * Construct graph representation.
+	 * Connect startNode to endNode if it is a valid connection.
+	 * @param startNode GEStreamNode
+	 * @param endNode GEStreamNode
+	 * @return 0 if it was possible to connect the nodes, otherwise, return a negative integer (error code).
+	 */
+	public int connect(GEStreamNode startNode, GEStreamNode endNode)
+	{
+		int errorCode = startNode.getEncapsulatingNode().connect(startNode, endNode);
+		return errorCode;
+	}
+	
+	/**
+	 * Construct graph representation of the streamIt source code and make it visible on the pane.
+	 * @param pane JScrollPane where the graph will be constructed.
 	 */	
 	public void constructGraph(JScrollPane pane)
 	{
 		System.out.println("Constructor with pane as an argument");
 		this.panel = pane;
 		this.topLevel.construct(this, 0);
-		//model.insert(cells.toArray(), globalAttributes, cs, null, null);
-		
+		this.topLevel.setLocation(new Point(Constants.TOPLEVEL_LOC_X, Constants.TOPLEVEL_LOC_Y));
+				
 		model.edit(globalAttributes, cs, null, null);
 		
+		/** Set all the nodes visible (except for the container nodes) */
 		this.jgraph.getGraphLayoutCache().setVisible(jgraph.getRoots(), true);
 		this.jgraph.getGraphLayoutCache().setVisible(this.containerNodes.getAllContainers().toArray(), false);
-				
+
+		/** Set the current level to the max level view available */				
 		this.containerNodes.setCurrentLevelView(this.containerNodes.getMaxLevelView());
 		System.out.println("THE CURRENT LEVEL IS " + this.containerNodes.getCurrentLevelView());
 		
-		
+		/** Layout the graph */		
 		JGraphLayoutManager manager = new JGraphLayoutManager(this);
-		manager.arrange();	
-
-		//******************************************
-		// TEST CODE BEGIN
-		//******************************************	
-		/*	
-		Iterator keyIter = this.levelContainers.keySet().iterator();
-		Iterator valIter = this.levelContainers.values().iterator();
-		while(keyIter.hasNext()) {
-			System.out.println("Key = " + keyIter.next());	
-		}
-		int x =0;
-		while(valIter.hasNext()) {
-			Iterator  listIter = ((ArrayList) valIter.next()).iterator();
-			while (listIter.hasNext()){
-				System.out.println("Iter = " + x + " value = "+listIter.next());
-			}
-			x++;	
-		}*/
-		//******************************************
-		// TEST CODE END
-		//******************************************									
+		manager.arrange();									
 	}
 	
 	/**
-	 * Establishes a connection between <lastNode> and <currentNode>.
+	 * Create the TopLevel GEPipeline for a corresponding to graphStruct.
+	 * @param graphStruct GraphStructure.
+	 */
+	public void createDefaultToplevelPipeline()
+	{
+		String name  = "TopLevelPipeline";
+			
+		//TODO: Fix this hack (come up with different way to set graphStruct
+		GEContainer node = new GEPipeline(name, this);
+		this.setTopLevel(node);
+		
+		this.containerNodes.addContainerToLevel(0, node);
+		IFileMappings.addIFileMappings(node, this.getIFile());
+		
+		node.initDrawAttributes(this, new Rectangle(30, 30, 700, 700));
+		this.getJGraph().getGraphLayoutCache().setVisible(node, true);
+		this.getGraphModel().edit(this.getAttributes(), this.getConnectionSet(), null, null);
+		
+		//		glc.insert(new Object[] {node}, null, null, null, null);
+		//		glc.setVisible(node, true);	
+	}
+	
+	/**
+	 * Create a GEStreamNode.
+	 * @param properties Properties
+	 * @param jgraph JGraph
+	 * @param bounds Rectangle
+	 * @param graphStruct GraphStructure
+	 * @return GEStreamNode
+	 */
+	public GEStreamNode nodeCreate(Properties properties, JGraph jgraph, Rectangle bounds)
+	{
+		if ((properties != null) && (jgraph != null) && (bounds != null) && (this != null))
+		{
+	//		GraphLayoutCache glc = jgraph.getGraphLayoutCache();
+			GEStreamNode node = null;
+		
+			String name = properties.getProperty(GEProperties.KEY_NAME);
+			String type = properties.getProperty(GEProperties.KEY_TYPE);
+			
+			if (GEType.PHASED_FILTER == type)
+			{
+				node = new GEPhasedFilter(name, this);
+				((GEPhasedFilter)node).setPushPopPeekRates(Integer.parseInt(properties.getProperty(GEProperties.KEY_PUSH_RATE)),
+														   Integer.parseInt(properties.getProperty(GEProperties.KEY_POP_RATE)),
+														   Integer.parseInt(properties.getProperty(GEProperties.KEY_PEEK_RATE)));
+			}
+			else if (GEType.SPLITTER == type)
+			{
+				node = new GESplitter(name, 
+									  StringTranslator.weightsToInt(properties.getProperty(GEProperties.KEY_SPLITTER_WEIGHTS)));	
+				((GESplitter) node).setDisplay(jgraph);	
+			}
+			else if (GEType.JOINER == type)
+			{
+				node = new GEJoiner(name, 
+									StringTranslator.weightsToInt(properties.getProperty(GEProperties.KEY_JOINER_WEIGHTS)));
+				((GEJoiner) node).setDisplay(jgraph);	
+			}
+			else
+			{
+				throw new IllegalArgumentException("Invalid type for GEStreamNode vertex (NodeCreator.java)");
+			}
+
+			node.setOutputTape(properties.getProperty(GEProperties.KEY_OUTPUT_TAPE));
+			node.setInputTape(properties.getProperty(GEProperties.KEY_INPUT_TAPE));
+			GEContainer parentNode = this.containerNodes.getContainerNodeFromNameWithID(properties.getProperty(GEProperties.KEY_PARENT));
+			
+			//parentNode.addNodeToContainer(node);
+			/** Add the node to its encapsulating node */
+			if (parentNode instanceof GESplitJoin)
+			{
+				GESplitJoin splitjoin = ((GESplitJoin)parentNode); 
+				splitjoin.addInnerNodeAtIndex(
+												Integer.parseInt(properties.getProperty(GEProperties.KEY_INDEX_IN_SJ)), node);
+				parentNode.setDisplay(jgraph);
+			}
+			else
+			{
+				parentNode.addNodeToContainer(node);
+			}
+
+			/** The node that we are adding is a container, must add it to container list 
+			 * at corresponding level **/
+			if (node instanceof GEContainer)
+			{	
+				this.containerNodes.addContainerToLevel(parentNode.getDepthLevel() + 1, node);	
+			}
+	
+			this.constructANode(node,  bounds);
+			return node;
+		}
+		else 
+		{
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	
+	
+	/**
+	 * Construct a the GEStreamNode specified by the properties.
+	 * @param node GEStreamNode to be constructed.
+	 * @param parentNode GEContainer of the node
+	 * @param graphStruct GraphStructure
+	 * @param bounds Rectangle
+	 */
+	public  void constructANode(GEStreamNode node, Rectangle bounds)
+	{
+		GraphLayoutCache glc = this.getJGraph().getGraphLayoutCache();
+	
+//		/** Add the node to its encapsulating node */
+//		parentNode.addNodeToContainer(node);		
+//	
+//
+//		/** The node that we are adding is a container, must add it to container list 
+//		 * at corresponding level **/
+//		if (node instanceof GEContainer)
+//			{	
+//				this.containerNodes.addContainerToLevel(parentNode.getDepthLevel() + 1, node);	
+//			}
+
+		/** Add the mapping of the node to its corresponding IFile */
+		IFileMappings.addIFileMappings(node, this.getIFile());
+
+		/** Set the draw attributes of the node */
+		node.initDrawAttributes(this, bounds);
+		
+		if (node.getEncapsulatingNode() instanceof GESplitJoin)
+		{
+			GESplitJoin splitjoin = ((GESplitJoin)node.getEncapsulatingNode());
+			GESplitter splitter = splitjoin.getSplitter();
+			GEJoiner joiner = splitjoin.getJoiner();
+			
+			
+			/** Make the connection between the splitter of the splitjoin and the node */
+			if ((splitter != null) && (node != splitter) && (node != joiner))
+			{
+				this.connectDraw(splitjoin.getSplitter(), node);
+			}
+			/** Make the connection between the node and the joiner of the splitjoin */
+			if ((joiner != null) && (node != joiner) && (node != splitter))
+			{
+				this.connectDraw(node, splitjoin.getJoiner());	
+			}
+			
+			
+		} 
+		
+		/** Edit the model to reflect the changes made */
+		glc.setVisible(node, true);
+		this.getGraphModel().edit(this.getAttributes(), this.getConnectionSet(), null, null);
+	}
+	
+	/**
+	 * Construct all the nodes in the Collection of nodes passed as an argument.
+	 * @param nodes Collection of nodes to be constructed.
+	 * @param parentNode GEContainer
+	 * @param graphStruct GraphStructure
+	 * @param bounds Rectangle
+	 */
+	public void constructNodes(Collection nodes, GEContainer parentNode, Rectangle bounds)
+	{
+		GraphLayoutCache glc = this.getJGraph().getGraphLayoutCache();
+		
+		/** Add the nodes to its encapsulating node */
+		parentNode.addNodesToContainer(nodes, this.containerNodes, this.getIFile());		
+
+		/** Set the draw attributes of the nodes */
+		for (Iterator nodeIter = nodes.iterator(); nodeIter.hasNext();)
+		{
+			((GEStreamNode) nodeIter.next()).initDrawAttributes(this, bounds);
+		}
+		
+		/** Edit the model to reflect the changes made */
+		glc.setVisible(nodes.toArray(), true);
+		this.getGraphModel().edit(this.getAttributes(), this.getConnectionSet(), null, null);
+	}
+		
+	/**
+	 * Establishes a connection between lastNode and currentNode .
 	 * @param lastNode GEStreamNode that is source of connection.
 	 * @param currentNode GEStreamNode that is targetr of connection.
 	 */
 	public void connectDraw(GEStreamNode lastNode, GEStreamNode currentNode)
 	{
-		System.out.println("Connecting " + lastNode.getName()+  " to "+ currentNode.getName());
+		/** Create the edge */
 		DefaultEdge edge = new DefaultEdge(); 
 			
 		Map edgeAttrib = GraphConstants.createMap();
 		globalAttributes.put(edge, edgeAttrib);
 		
+		/** Set the attributes for the edge */
 		GraphConstants.setLineEnd(edgeAttrib, GraphConstants.ARROW_CLASSIC);
 		GraphConstants.setLineWidth(edgeAttrib, 6);
 		GraphConstants.setEndFill(edgeAttrib, true);
 		GraphConstants.setDashPattern(edgeAttrib, new float[] {2,4});
 	
+		/** Establish the connection */
 		cs.connect(edge, lastNode.getPort(), currentNode.getPort());
 		
+		/** Add the edge as a source edge for the source node */
 		lastNode.addSourceEdge(edge);
+		
+		/** Add the edge as a target edge for the target node */
 		currentNode.addTargetEdge(edge);		
 		
+		/** Add the edge to the graph model */
 		this.getGraphModel().insert(new Object[] {edge}, null, null, null, null);
+		
+		/** Edit the changes in the attributes and connection set of the model */
 		this.getGraphModel().edit(globalAttributes, cs, null, null);
 	}
 	
 	/**
-	 * Highlight the GEStreamNode. 
-	 * @param strNode GEStreamNode to be highlighted. 
+	 * Highlight all the GEStreamNodes in the ArrayList passed as a parameter. All other GEStreamNodes 
+	 * that were highlighted, cease to be hightlighted (they become "unhighlighted").
+	 * @param nodesToHighlight ArrayList of the nodes to be highlighted. 
 	 */
 	public void highlightNodes(ArrayList nodesToHighLight)
 	{
+		/** "Unhighlight" all nodes that might have been highlighted */
 		if (highlightedNodes != null)
 		{
 			Iterator hlIter = highlightedNodes.iterator();
@@ -527,7 +411,8 @@ public class GraphStructure implements Serializable{
 			}
 			
 		}
-				
+		
+		/** Highlight all the nodes in the list passed as a parameter */
 		Iterator hIter = nodesToHighLight.iterator();
 		while (hIter.hasNext())
 		{
@@ -547,8 +432,8 @@ public class GraphStructure implements Serializable{
 	}
 	
 	/**
- 	 * Set the JGraph of GraphStructure to <jgraph>.
-	 * @param jgraph
+ 	 * Set the JGraph of GraphStructure to jgraph.
+	 * @param jgraph JGraph
  	 */
 	public void setJGraph(JGraph jgraph)
 	{
@@ -558,7 +443,7 @@ public class GraphStructure implements Serializable{
 	
 	/**
 	 * Gets the graph model of the GraphStructure.
-	 * @return this.model
+	 * @return DefaultGraphModel
 	 */
 	public DefaultGraphModel getGraphModel()
 	{
@@ -567,7 +452,7 @@ public class GraphStructure implements Serializable{
 
 	/**
 	 * Sets the graph model to model..
-	 * @param model
+	 * @param model DefaultGraphModel
 	 */
 	public void setGraphModel(DefaultGraphModel model)
 	{
@@ -576,7 +461,7 @@ public class GraphStructure implements Serializable{
 
 	/**
 	 * Gets the toplevel node.
-	 * @return this.topLevel
+	 * @return GEContainer that is the toplevel node.
 	 */
 	public GEContainer getTopLevel ()
 	{
@@ -585,7 +470,7 @@ public class GraphStructure implements Serializable{
 
 	/** 
 	 * Sets the toplevel node to strNode.
-	 * @param strNode
+	 * @param strNode GEContainer
 	 */
 	public void setTopLevel(GEContainer strNode)
 	{
@@ -595,7 +480,7 @@ public class GraphStructure implements Serializable{
 
 	/**
 	 * Get the global attributes of the GraphStructure.
-	 * @return this.globalAttributes
+	 * @return Hashtable containing the global attributes.
 	 */
 	public Hashtable getAttributes()
 	{
@@ -604,7 +489,7 @@ public class GraphStructure implements Serializable{
 	
 	/**
 	 * Get the connection set of GraphStructure.
-	 * @return this.cs;
+	 * @return ConnectionSet
 	 */
 	public ConnectionSet getConnectionSet()
 	{
@@ -633,19 +518,8 @@ public class GraphStructure implements Serializable{
 	 * Output the code representation of the GraphStructure.
 	 * @param out
 	 */
-	public void outputCode(StringBuffer strBuff)
+	public void outputCode(StringBuffer strBuff, ArrayList nameList)
 	{
-	    this.topLevel.outputCode(strBuff);
-	    
-	    
-/*	    
-	    ArrayList childList = this.topLevel.succesors;
-	    Iterator childIter = childList.iterator();
-	    
-	    while (childIter.hasNext())
-	    {
-	   		((GEStreamNode) childIter.next()).outputCode(out); 	
-	    }
-	    */	    
+	    this.topLevel.outputCode(strBuff, nameList);   
 	}
 }

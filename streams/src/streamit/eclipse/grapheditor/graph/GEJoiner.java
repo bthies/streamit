@@ -6,10 +6,8 @@ package streamit.eclipse.grapheditor.graph;
 
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.io.PrintWriter;
 import java.io.Serializable;
-import java.util.Hashtable;
-import java.util.Map;
+import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -19,18 +17,16 @@ import org.jgraph.graph.DefaultPort;
 import org.jgraph.graph.GraphConstants;
 
 import streamit.eclipse.grapheditor.graph.resources.ImageLoader;
+import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
 
 /**
  * GEJoiner is the graph editor's internal representation of a joiner.
+ * A GEJoiner can have more than one input coming into it. 
  * @author jcarlos
  */
-public class GEJoiner extends GEStreamNode implements Serializable{
+public class GEJoiner extends GEMultiIONode implements Serializable{
 	
-	/**
-	 * The weights corresponding to the splitter.
-	 */	
-	private int[] weights;
-
+	
 	/**
 	 * GEJoiner constructor.
 	 * @param name The name of the GEJoiner.
@@ -38,68 +34,34 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 	 */
 	public GEJoiner (String name, int[] weights)
 	{
-		super(GEType.JOINER, name);
-		this.name = name;
-		this.weights = weights;
+		super(GEType.JOINER, joinerNameType(name), weights);		
 	}
+	
 	/**
 	 * GEJoiner constructor (used when the weights information is not available).
-	 * @param name The name of the GEJoiner.
+	 * @param name String name of the GEJoiner.
 	 */
 	public GEJoiner(String name)
 	{
-		super(GEType.JOINER, name);
-		this.name = name;
-		weights = null;
+		super(GEType.JOINER, joinerNameType(name));
 	}
 	
 	/**
-	 * Get the weights of this 
-	 * @return The weights corresponding to the GEJoiner
+	 * Get the name of the type of the splitter. A splitter can either be a duplicate or a roundrobin.
+	 * @return String name of the type of the splitter (either a duplicate or a roundrobin)
 	 */
-	public int[] getWeights()
+	public static String joinerNameType(String name)
 	{
-		return this.weights;
+		return "roundrobin";
 	}
-	
+
 	/**
-	 * Set the weights of the GESplitter
-	 * @param weigths 
-	 */
-	public void setWeights(int[] weights)
-	{
-		this.weights = weights;
-	}
-	
-	
-	/**
-	 * Get the weight as a string of the form: "(weight1, weight2, weight3,... , weightN)".
-	 * @return String representation of the weights of the GEJoiner.
-	 */
-	public String getWeightsAsString()
-	{
-		String strWeight = "(";
-		for(int i = 0; i < this.weights.length; i++)
-		{
-			if (i != 0)
-			{
-				strWeight += ", ";
-			}
-			strWeight += this.weights[i];
-		}
-		strWeight += ")";
-		return strWeight;
-	}
-	
-	/**
-	 * Contructs the joiner and returns <this>.
-	 * @return <this>
+	 * Contructs the GEJoiner by setting its label and its draw attributes..
+	 * @return GEStreamNode (the GEJoiner).
 	 */
 	public GEStreamNode construct(GraphStructure graphStruct, int lvl)
 	{
-		System.out.println("Constructing the Joiner " +this.getName());
-		this.level = lvl;
-				
+		/** Set the label for the GEJoiner */				
 		if (weights != null)
 		{
 			this.setInfo(this.getWeightsAsString());
@@ -110,6 +72,7 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 			this.setUserObject(this.getNameLabel());
 		}
 		
+		/** Initialize the draw attributes of the GEJoiner */
 		this.initDrawAttributes(graphStruct, new Rectangle(new Point(100, 100)));
 		return this;
 	}
@@ -117,14 +80,18 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 	/**
 	 * Initialize the default attributes that will be used to draw the GEJoiner.
 	 * @param graphStruct The GraphStructure that will have its attributes set.
+	 * @param bounds Rectangle that establishes the rectangular bounds where the
+	 * GEJoiner will be drawn.
 	 */	
 	public void initDrawAttributes(GraphStructure graphStruct, Rectangle bounds)
 	{
+		/** Set the attributes corresponding to the GEJoiner */
 		(graphStruct.getAttributes()).put(this, this.attributes);
 		GraphConstants.setAutoSize(this.attributes, true);
 		GraphConstants.setBounds(this.attributes, bounds);
 		GraphConstants.setVerticalTextPosition(this.attributes, JLabel.CENTER);
-				
+		
+		/** Set the image representation the GEJoiner */
 		try 
 		{
 			ImageIcon icon = ImageLoader.getImageIcon("joiner.GIF");
@@ -135,32 +102,49 @@ public class GEJoiner extends GEStreamNode implements Serializable{
 			ex.printStackTrace();
 		}
 		
-		
+		/** Add the port to the GEJoiner */
 		this.port = new DefaultPort();
 		this.add(this.port);
 		
-		
+		/** Insert the GEJoiner into the graph model */
 		graphStruct.getGraphModel().insert(new Object[] {this}, null, null, null, null);
 		graphStruct.getGraphModel().edit(graphStruct.getAttributes(), graphStruct.getConnectionSet(), null, null);
 	}
+
 	
-	public void setDisplay(JGraph jgraph)
+	/**
+	 * Get the properties of the GEJoiner.
+	 * @return Properties of this GEJoiner.
+	 */
+	public Properties getNodeProperties()
 	{
-		this.setInfo(this.getWeightsAsString());
-		
-		Map change = GraphConstants.createMap();
-		GraphConstants.setValue(change, this.getInfoLabel());
-		Map nest = new Hashtable ();
-		nest.put(this, change);
-		jgraph.getModel().edit(nest, null, null, null);
+		Properties properties =  super.getNodeProperties();
+		properties.put(GEProperties.KEY_JOINER_WEIGHTS, this.getWeightsAsString());
+		return properties;
 	}
 	
 	/**
-	 * Writes the textual representation of the GEStreamNode to the StringBuffer. 
-	 * In this case, the textual representation corresponds to the the StreamIt source code 
-	 * equivalent of the GEStreamNode. 
-	 * @param strBuff StringBuffer that is used to output the textual representation of the graph.  
+	 * Set the properties of the GEStreamNode.  
+	 * @param properties Properties
+	 * @param jgraph JGraph 
+	 * @param containerNodes ContainerNodes
 	 */
-	public void outputCode(StringBuffer strBuff){};
+	public void setNodeProperties(Properties properties, JGraph jgraph, ContainerNodes containerNodes)
+	{
+		super.setNodeProperties(properties, jgraph, containerNodes);
+		String joinerWeights = properties.getProperty(GEProperties.KEY_JOINER_WEIGHTS);
+		this.setWeights(StringTranslator.weightsToInt(joinerWeights));
+		this.setDisplay(jgraph);
+	}
+	
+	/**
+	 * Get a clone that of this instance of the GEJoiner.
+	 * @return Object that is a clone of this instance of the GEJoiner.
+	 */
+	public Object clone() 
+	{
+		GEJoiner clonedJoiner = (GEJoiner) super.clone();
+		return clonedJoiner;
+	}
 	
 }

@@ -29,6 +29,7 @@ import javax.imageio.ImageIO;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
 import streamit.eclipse.grapheditor.editor.pad.GPConverter;
+import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 
 /**
@@ -60,15 +61,21 @@ public class FileExportJPG extends AbstractActionFile {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		try {
+			GPDocument doc = graphpad.getCurrentDocument();
 			String file =
 				saveDialog(
 					Translator.getString("FileSaveAsLabel") + " "+fileType.toUpperCase(),
 					fileType.toLowerCase(),
 					fileType.toUpperCase()+" Image");
-			if (getCurrentDocument().getModel().getRootCount() > 0) {
-				BufferedImage img = GPConverter.toImage(getCurrentGraph());
-				ImageIO.write(img, fileType.toLowerCase(), new File(file));
-			};
+			if (file != null)
+			{
+				if (getCurrentDocument().getModel().getRootCount() > 0) {
+					BufferedImage img = GPConverter.toImage(getCurrentGraph(), 
+															doc.getGraphStructure().getTopLevel().getDimension(),
+															doc.areContainersInvisible());
+					ImageIO.write(img, fileType.toLowerCase(), new File(file));
+				};
+			}
 		} catch (IOException ex) {
 			graphpad.error(ex.getMessage());
 		}

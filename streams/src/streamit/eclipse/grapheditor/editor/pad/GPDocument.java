@@ -3,7 +3,6 @@ package streamit.eclipse.grapheditor.editor.pad;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,7 +12,6 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -40,7 +38,6 @@ import org.jgraph.event.GraphModelEvent;
 import org.jgraph.event.GraphModelListener;
 import org.jgraph.event.GraphSelectionEvent;
 import org.jgraph.event.GraphSelectionListener;
-import org.jgraph.graph.CellView;
 import org.jgraph.graph.DefaultGraphModel;
 import org.jgraph.graph.GraphConstants;
 import org.jgraph.graph.GraphLayoutCache;
@@ -48,10 +45,11 @@ import org.jgraph.graph.GraphModel;
 import org.jgraph.graph.GraphUndoManager;
 
 import streamit.eclipse.grapheditor.editor.GPGraphpad;
-import streamit.eclipse.grapheditor.editor.pad.actions.FileSave;
+import streamit.eclipse.grapheditor.editor.pad.actions.GraphCreateTemplate;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.editor.utils.gui.GPSplitPane;
+import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 
 /**
@@ -113,14 +111,6 @@ public class GPDocument
 	 */
 	protected JDialog overviewDialog;
 
-	/** The column rule for the graph
-	 */
-	protected Rule columnRule;
-
-	/** The row rule for the graph
-	 */
-	protected Rule rowRule;
-
 	/** The graphUndoManager manager for the joint graph.
 	 *
 	 *  @see #graph
@@ -128,28 +118,14 @@ public class GPDocument
 	protected GraphUndoManager graphUndoManager;
 
 
-	/** On the fly layout
-	 *
-	 */
-	protected Touch touch;
-
 	/** True if this documents graph model
 	 *  was modified since last save. */
 	protected boolean modified = false;
-
-	/** true if the current graph is Metric.
-	 *  default is true.
-	 */
-	protected static boolean isMetric = true;
 
 	/** true if the library expand is expanded
 	 *  default is true
 	 */
 	protected static boolean libraryExpanded = true;
-
-	/** true if the ruler show is activated
-	 */
-	protected static boolean showRuler = true;
 
 	/** Action used for fitting the size
 	 */
@@ -187,9 +163,19 @@ public class GPDocument
 	 */
 	protected IFile ifile;
 	
-	protected File fileF;
+	protected GEStreamNode clonedNode = null;
 	
+	/**
+	 * The hierarchy panel of the document.
+	 */
 	public TreePanel treePanel;
+	
+	/**
+	 * Boolean that specifies wheter or not the containers in the 
+	 * document are visible
+	 */
+	public boolean containersInvisible = true; 
+	
 	
 
 	/** Static initializer.
@@ -198,9 +184,6 @@ public class GPDocument
 	static {
 		libraryExpanded =
 			new Boolean(Translator.getString("LibraryExpanded")).booleanValue();
-		isMetric = new Boolean(Translator.getString("IsMetric")).booleanValue();
-		showRuler =
-			new Boolean(Translator.getString("ShowRuler")).booleanValue();
 	}
 
 	/**
@@ -227,7 +210,7 @@ public class GPDocument
 
 		// create the graph
 		graph = gpGraph;
-		touch = new Touch(graph);
+	
 		registerListeners(graph);
 
 
@@ -255,12 +238,8 @@ public class GPDocument
 		GraphUndoManager undo) {
 		super(true);
 
-		System.out.println("GPDocument: %%% Inside wrong constructor");
-
 		this.graphStruct = graphStruct;
 		
-		System.out.println("GPDocument: %%% graphStruct" +graphStruct.getAttributes().toString());
-
 		this.file = file;
 		this.graphpad = graphpad;
 		this.graphModelProvider = graphModelProvider;
@@ -273,7 +252,7 @@ public class GPDocument
 
 		// create the graph
 		graph = gpGraph;
-		touch = new Touch(graph);
+		
 		registerListeners(graph);
 
 	
@@ -358,12 +337,6 @@ public class GPDocument
 		} catch (MissingResourceException mre) {
 			// just use the viewport default
 		}
-		columnRule = new Rule(Rule.HORIZONTAL, isMetric, graph);
-		rowRule = new Rule(Rule.VERTICAL, isMetric, graph);
-		if (showRuler) {
-			scrollPane.setColumnHeaderView(columnRule);
-			scrollPane.setRowHeaderView(rowRule);
-		}
 		return scrollPane;
 	}
 
@@ -404,18 +377,46 @@ public class GPDocument
 	{
 		this.ifile = ifile;
 	}
-
-	public File getFile()
+	
+	/**
+	 * Determine wheter or not the containers in this 
+	 * document are invisible.
+	 * @return True if the containers are invisible,; false, otherwise.
+	 */
+	public boolean areContainersInvisible()
 	{
-		return this.fileF;
+		return this.containersInvisible;
 	}
 	
-	public void setFile(File fileF)
+	/**
+	 * Set the boolean that specifies wheter or not the containers are
+	 * invisible
+	 * @param vis boolean
+	 */
+	public void setContainersInvisible(boolean vis)
 	{
-		this.fileF = fileF;
+		this.containersInvisible =  vis;
 	}
 	
+	
+	/** 
+	 * Get the node that has been cloned (or null if there is no clonedNode)
+	 * @return GEStreamNode The node that has been cloned. 
+	 */
+	public GEStreamNode getClonedNode()
+	{
+		return this.clonedNode;
+	}
 
+	/**
+	 * Set the node that has been cloned
+	 * @param node GEStreamNode node that has been cloned. 
+	 */
+	public void setClonedNode(GEStreamNode node)
+	{
+		this.clonedNode = node;
+	}
+	
 	/**
 	 * Fetch the editor contained in this panel
 	 */
@@ -431,7 +432,7 @@ public class GPDocument
 
 	/** returns the GPGraph UI
 	 */
-	protected GPGraphUI getGraphUI() {
+	public GPGraphUI getGraphUI() {
 		return (GPGraphUI) graph.getUI();
 	}
 
@@ -526,83 +527,6 @@ public class GPDocument
 		graph.getGraphLayoutCache().edit(nested, null, null, null);
 	}
 
-	/* Sets the attributes of the selected cells. */
-	public void setFontSizeForSelection(float size) {
-		Object[] cells =
-			DefaultGraphModel
-				.getDescendants(graph.getModel(), graph.getSelectionCells())
-				.toArray();
-		//Filter ports out
-		java.util.List list = new ArrayList();
-		for (int i = 0; i < cells.length; i++)
-			if (!graph.isPort(cells[i]))
-				list.add(cells[i]);
-		cells = list.toArray();
-
-		Map nested = new Hashtable();
-		for (int i = 0; i < cells.length; i++) {
-			CellView view = graph.getGraphLayoutCache().getMapping(cells[i], false);
-			if (view != null) {
-				Font font = GraphConstants.getFont(view.getAllAttributes());
-				Map attr = GraphConstants.createMap();
-				GraphConstants.setFont(attr, font.deriveFont(size));
-				nested.put(cells[i], attr);
-			}
-		}
-		graph.getGraphLayoutCache().edit(nested, null, null, null);
-	}
-
-	/* Sets the attributes of the selected cells. */
-	public void setFontStyleForSelection(int style) {
-		Object[] cells =
-			DefaultGraphModel
-				.getDescendants(graph.getModel(), graph.getSelectionCells())
-				.toArray();
-		//Filter ports out
-		java.util.List list = new ArrayList();
-		for (int i = 0; i < cells.length; i++)
-			if (!graph.isPort(cells[i]))
-				list.add(cells[i]);
-		cells = list.toArray();
-
-		Map nested = new Hashtable();
-		for (int i = 0; i < cells.length; i++) {
-			CellView view = graph.getGraphLayoutCache().getMapping(cells[i], false);
-			if (view != null) {
-				Font font = GraphConstants.getFont(view.getAllAttributes());
-				Map attr = GraphConstants.createMap();
-				GraphConstants.setFont(attr, font.deriveFont(style));
-				nested.put(cells[i], attr);
-			}
-		}
-		graph.getGraphLayoutCache().edit(nested, null, null, null);
-	}
-
-	/* Sets the attributes of the selected cells. */
-	public void setFontNameForSelection(String name) {
-		Object[] cells =
-			DefaultGraphModel
-				.getDescendants(graph.getModel(), graph.getSelectionCells())
-				.toArray();
-		//Filter ports out
-		java.util.List list = new ArrayList();
-		for (int i = 0; i < cells.length; i++)
-			if (!graph.isPort(cells[i]))
-				list.add(cells[i]);
-		cells = list.toArray();
-
-		Map nested = new Hashtable();
-		for (int i = 0; i < cells.length; i++) {
-			CellView view = graph.getGraphLayoutCache().getMapping(cells[i], false);
-			if (view != null) {
-				Font font = GraphConstants.getFont(view.getAllAttributes());
-				Map attr = GraphConstants.createMap();
-				GraphConstants.setFont(attr, new Font(name, font.getStyle(), font.getSize()));
-				nested.put(cells[i], attr);
-			}
-		}
-		graph.getGraphLayoutCache().edit(nested, null, null, null);
-	}
 
 	//-----------------------------------------------------------------
 	// Component Listener
@@ -640,10 +564,6 @@ public class GPDocument
 	 */
 	public void updatePageFormat() {
 		PageFormat f = graph.getPageFormat();
-		columnRule.setActiveOffset((int) (f.getImageableX()));
-		rowRule.setActiveOffset((int) (f.getImageableY()));
-		columnRule.setActiveLength((int) (f.getImageableWidth()));
-		rowRule.setActiveLength((int) (f.getImageableHeight()));
 		if (graph.isPageVisible()) {
 			int w = (int) (f.getWidth());
 			int h = (int) (f.getHeight());
@@ -686,21 +606,22 @@ public class GPDocument
 	// GraphSelectionListener
 	public void valueChanged(GraphSelectionEvent e) {
 		if (!graph.isSelectionEmpty())
-			touch.setDamper(0);
+		{
+		}
 		update();
 	}
 
 	// View Observer
 	public void update(Observable obs, Object arg) {
 		modified = true;
-		touch.resetDamper();
+		
 		update();
 	}
 
 	// GraphModelListener
 	public void graphChanged(GraphModelEvent e) {
 		modified = true;
-		touch.resetDamper();
+		
 		update();
 		//System.out.println("Change:\n"+buttonEdge.getChange().getStoredAttributeMap());
 	}
@@ -750,21 +671,7 @@ public class GPDocument
 		this.graphpad = graphpad;
 	}
 
-	/**
-	 * Returns the touch.
-	 * @return Touch
-	 */
-	public Touch getTouch() {
-		return touch;
-	}
-
-	/**
-	 * Sets the touch.
-	 * @param touch The touch to set
-	 */
-	public void setTouch(Touch touch) {
-		this.touch = touch;
-	}
+	
 
 	/**
 	 * Returns true if the user really wants to close.
@@ -778,7 +685,7 @@ public class GPDocument
 			if (showConfirmDialog)
 				r = JOptionPane.showConfirmDialog(
 					graphpad.getFrame(),
-					Translator.getString("SaveChangesDialog"),
+					Translator.getString("CreateTemplateDialog"),
 					Translator.getString("Title"),
 					JOptionPane.YES_NO_CANCEL_OPTION);
 
@@ -786,7 +693,7 @@ public class GPDocument
 			if (r == JOptionPane.YES_OPTION) {
 				graphpad
 					.getCurrentActionMap()
-					.get(Utilities.getClassNameWithoutPackage(FileSave.class))
+					.get(Utilities.getClassNameWithoutPackage(GraphCreateTemplate.class))
 					.actionPerformed(null);
 				return true;
 			}
@@ -916,37 +823,6 @@ public class GPDocument
 		this.scrollPane = scrollPane;
 	}
 
-	/**
-	 * Returns the columnRule.
-	 * @return Rule
-	 */
-	public Rule getColumnRule() {
-		return columnRule;
-	}
-
-	/**
-	 * Returns the rowRule.
-	 * @return Rule
-	 */
-	public Rule getRowRule() {
-		return rowRule;
-	}
-
-	/**
-	 * Sets the columnRule.
-	 * @param columnRule The columnRule to set
-	 */
-	public void setColumnRule(Rule columnRule) {
-		this.columnRule = columnRule;
-	}
-
-	/**
-	 * Sets the rowRule.
-	 * @param rowRule The rowRule to set
-	 */
-	public void setRowRule(Rule rowRule) {
-		this.rowRule = rowRule;
-	}
 
 	/**
 	 * Returns the enableTooltips.
@@ -1013,4 +889,87 @@ public class GPDocument
 	 */
 
 
+	/* Sets the attributes of the selected cells. */
+/*	Removed by jcarlos
+	public void setFontSizeForSelection(float size) {
+		Object[] cells =
+			DefaultGraphModel
+				.getDescendants(graph.getModel(), graph.getSelectionCells())
+				.toArray();
+		//Filter ports out
+		java.util.List list = new ArrayList();
+		for (int i = 0; i < cells.length; i++)
+			if (!graph.isPort(cells[i]))
+				list.add(cells[i]);
+		cells = list.toArray();
+
+		Map nested = new Hashtable();
+		for (int i = 0; i < cells.length; i++) {
+			CellView view = graph.getGraphLayoutCache().getMapping(cells[i], false);
+			if (view != null) {
+				Font font = GraphConstants.getFont(view.getAllAttributes());
+				Map attr = GraphConstants.createMap();
+				GraphConstants.setFont(attr, font.deriveFont(size));
+				nested.put(cells[i], attr);
+			}
+		}
+		graph.getGraphLayoutCache().edit(nested, null, null, null);
+	}
+*/	
+
+
+	/* Sets the attributes of the selected cells. */
+/* Removed by jcarlos
+	public void setFontStyleForSelection(int style) {
+		Object[] cells =
+			DefaultGraphModel
+				.getDescendants(graph.getModel(), graph.getSelectionCells())
+				.toArray();
+		//Filter ports out
+		java.util.List list = new ArrayList();
+		for (int i = 0; i < cells.length; i++)
+			if (!graph.isPort(cells[i]))
+				list.add(cells[i]);
+		cells = list.toArray();
+
+		Map nested = new Hashtable();
+		for (int i = 0; i < cells.length; i++) {
+			CellView view = graph.getGraphLayoutCache().getMapping(cells[i], false);
+			if (view != null) {
+				Font font = GraphConstants.getFont(view.getAllAttributes());
+				Map attr = GraphConstants.createMap();
+				GraphConstants.setFont(attr, font.deriveFont(style));
+				nested.put(cells[i], attr);
+			}
+		}
+		graph.getGraphLayoutCache().edit(nested, null, null, null);
+	}
+*/
+	/* Sets the attributes of the selected cells. */
+/*	Removed by jcarlos
+	public void setFontNameForSelection(String name) {
+		Object[] cells =
+			DefaultGraphModel
+				.getDescendants(graph.getModel(), graph.getSelectionCells())
+				.toArray();
+		//Filter ports out
+		java.util.List list = new ArrayList();
+		for (int i = 0; i < cells.length; i++)
+			if (!graph.isPort(cells[i]))
+				list.add(cells[i]);
+		cells = list.toArray();
+
+		Map nested = new Hashtable();
+		for (int i = 0; i < cells.length; i++) {
+			CellView view = graph.getGraphLayoutCache().getMapping(cells[i], false);
+			if (view != null) {
+				Font font = GraphConstants.getFont(view.getAllAttributes());
+				Map attr = GraphConstants.createMap();
+				GraphConstants.setFont(attr, new Font(name, font.getStyle(), font.getSize()));
+				nested.put(cells[i], attr);
+			}
+		}
+		graph.getGraphLayoutCache().edit(nested, null, null, null);
+	}
+*/
 }

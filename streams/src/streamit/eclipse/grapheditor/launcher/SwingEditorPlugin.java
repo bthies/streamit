@@ -23,8 +23,8 @@ import streamit.eclipse.grapheditor.editor.pad.actions.FileNew;
 import streamit.eclipse.grapheditor.editor.pad.actions.FileOpen;
 import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
+import streamit.eclipse.grapheditor.graph.IFileMappings;
 import streamit.eclipse.grapheditor.graph.LogFile;
-import streamit.eclipse.grapheditor.graph.NodeCreator;
 
 /**
  * The main plugin class used to mediate the communications to and 
@@ -49,42 +49,54 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 	 */
 	private static GPGraphpad graphpad;
 
+	/** 
+	 * Boolean that specifies if the workspace has changed. 
+	 */
 	private boolean workSpaceChanged = false;
 
 	/**
-	 * The constructor.
+	 * Default Constructor for SwingEditorPlugin. 
 	 */
-	public SwingEditorPlugin(IPluginDescriptor descriptor) {
+	public SwingEditorPlugin(IPluginDescriptor descriptor) 
+	{
 		super(descriptor);
 		plugin = this;
-		try {
-			resourceBundle =
-				ResourceBundle.getBundle(
-					"com.ibm.lab.soln.swing.internalLaunch.extras.SwingEditorPluginResources");
-		} catch (MissingResourceException x) {
+		try 
+		{
+			resourceBundle = ResourceBundle.getBundle(
+								"com.ibm.lab.soln.swing.internalLaunch.extras.SwingEditorPluginResources");
+		} catch (MissingResourceException x) 
+		{
 			resourceBundle = null;
 		}
 	}
 
 	/**
 	 * Returns the shared instance of the plug-in.
+	 * @return SwingEditorPlugin
 	 */
-	public static SwingEditorPlugin getDefault() {
+	public static SwingEditorPlugin getDefault() 
+	{
 		return plugin;
 	}
 
 	/**
 	 * Returns the workspace instance.
+	 * @return IWorkspace
 	 */
-	public static IWorkspace getWorkspace() {
+	public static IWorkspace getWorkspace() 
+	{
 		return ResourcesPlugin.getWorkspace();
 	}
 
 	/**
 	 * Returns the string from the plugin's resource bundle,
 	 * or 'key' if not found.
+	 * @param key String
+	 * @return String
 	 */
-	public static String getResourceString(String key) {
+	public static String getResourceString(String key) 
+	{
 		ResourceBundle bundle =
 			SwingEditorPlugin.getDefault().getResourceBundle();
 		try {
@@ -95,27 +107,65 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 	}
 
 	/**
-	 * Returns the plugin's resource bundle,
+	 * Returns the plugin's resource bundle.
+	 * @return ResourceBundle
 	 */
 	public ResourceBundle getResourceBundle() {
 		return resourceBundle;
 	}
 
+	/** 
+	 * Determine whether or not the file that was received as a parameter 
+	 * is a new (empty) file
+	 * @param file
+	 * @return
+	 */
+	private boolean isInputFileNew(IFile file)
+	{
+		try 
+		{
+			InputStream is = file.getContents();
+			System.out.println("File has this much in it: " + is.available());
+			if (is.available() == 0)
+			{
+				return true;
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		return false;
+		
+	}
+
 	/**
-	 * Open an instance of the GraphEditor 
+	 * Set the file in the current document and the graph structure. Also, add the mappings
+	 * between the nodes and the file.
+	 * @param file IFile
+	 */
+	private void setIFileFields(IFile file)
+	{
+		graphpad.getCurrentDocument().setIFile(file);
+	
+		
+		System.out.println("The IFile " + graphpad.getCurrentDocument().getIFile().toString());
+			
+		//code to handle the log file
+		graphpad.getCurrentDocument().getGraphStructure().setIFile(file);
+		Object[] cells = graphpad.getCurrentGraph().getVertices(graphpad.getCurrentGraph().getAll());
+		IFileMappings.addIFileMappings(cells, file);		
+	}
+
+	/**
+	 * Open an instance of the GraphEditor. 
 	 * @param file The file (*.str) that should be opened by the editor.
 	 */
 	public void launchGraph(IFile file)
 	{
-		try { 
-		
-		boolean isFileNew = false;
-		InputStream is = file.getContents();
-		System.out.println("File has this much in it: "+is.available());
-		if (is.available() == 0)
-		{
-			isFileNew = true;
-		}
+		/** Determine if the file passed as an argument is new (empty). */
+		boolean isFileNew = isInputFileNew(file);
 
 		System.out.println("Entered launchGraph");
 		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
@@ -123,45 +173,34 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 							+";C:\\Program Files\\eclipse\\workspace\\streamit.eclipse.grapheditor.graph\\graph.jar" 
 							+";C:\\Program Files\\eclipse\\workspace\\streamit.eclipse.grapheditor.jgraph\\jgraph.jar");
 
+		/** Open an instance of the graph editor if there is none open already */
 		if (graphpad == null)
 		{
 			//JGraphpad.main(new String[]{""});
 			graphpad = JGraphpad.run();
 		}
 
-		
+		/** If the file is new, we have to execute the FileNew action */
 		if (isFileNew)
 		{
 			ActionMap actMap = graphpad.getCurrentActionMap();
 			FileNew ac = (FileNew) actMap.get(Utilities.getClassNameWithoutPackage(FileNew.class));
 			ac.actionPerformed(null);
-			graphpad.getCurrentDocument().setIFile(file);
-			graphpad.getCurrentDocument().setFile(new File(file.getLocation().toString()));
-			
-			//code to handle the log file
-			graphpad.getCurrentDocument().getGraphStructure().setIFile(file);
-			Object[] cells = graphpad.getCurrentGraph().getVertices(graphpad.getCurrentGraph().getAll());
-			NodeCreator.addIFileMappings(cells, file);
+			this.setIFileFields(file);
 		}
+		/** If the file is not new, then we have to execute the FileOpen action */
 		else
 		{
 			ActionMap actMap = graphpad.getCurrentActionMap();
 			FileOpen ac = (FileOpen) actMap.get(Utilities.getClassNameWithoutPackage(FileOpen.class));
 			
+			/** We are able to open the file ... */
 			if (ac.open(new File(file.getLocation().toString())))
 			{
-			
-				graphpad.getCurrentDocument().setIFile(file);
-				graphpad.getCurrentDocument().setFile(new File(file.getLocation().toString()));
-				System.out.println("The IFile " + graphpad.getCurrentDocument().getIFile().toString());
-				
-				//code to handle the log file
-				graphpad.getCurrentDocument().getGraphStructure().setIFile(file);
-				Object[] cells = graphpad.getCurrentGraph().getVertices(graphpad.getCurrentGraph().getAll());
-				NodeCreator.addIFileMappings(cells, file);
-				
+				this.setIFileFields(file);			
 			}
 		}
+		/*
 		}
 		catch (Exception e)
 		{
@@ -170,10 +209,11 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 				openNewGraphFile(file);
 				
 			}
+			System.out.println("message : "+ e.getMessage());
 			System.out.println("An Exception has been caught while trying to launch graph");
 		}
 		
-		
+		*/
 		/* *******************************************************
 		** TEST CODE *********************************************
 		**********************************************************/
@@ -236,7 +276,7 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 	}
 	
 	/**
-	 * Hightlight a node in the graph
+	 * Hightlight a node in the graph.
 	 * @param ifile IFile corresponding to the graph.
 	 * @param nodeName String name of the node.
 	 * @return True if it was possible to highlight the node, false otherwise.
@@ -252,12 +292,12 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 			{
 				
 				GEStreamNode currNode = (GEStreamNode) nodes[i];
-	//			System.out.println("Vertex "+ i+ " "+ currNode.getName());
+				//System.out.println("Vertex "+ i+ " "+ currNode.getName());
 				int nodeNameIndex = currNode.getName().indexOf(nodeName);
 				if (nodeNameIndex == 0)
 				{
-				//	System.out.println("The node name index is" + nodeNameIndex);
-				//	System.out.println("Node to be highlighted" + currNode.getName());
+					//System.out.println("The node name index is" + nodeNameIndex);
+					//System.out.println("Node to be highlighted" + currNode.getName());
 					//doc.getGraphStructure().highlightNode(currNode);
 					nodesToHighlight.add(currNode);
 
@@ -282,14 +322,7 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 		ActionMap actMap = graphpad.getCurrentActionMap();
 		FileNew ac = (FileNew) actMap.get(Utilities.getClassNameWithoutPackage(FileNew.class));
 		ac.actionPerformed(null);
-		graphpad.getCurrentDocument().setIFile(ifile);
-		graphpad.getCurrentDocument().setFile(new File(ifile.getLocation().toString())); // should the normal file also be set ???
-
-		//code to handle the log file
-		graphpad.getCurrentDocument().getGraphStructure().setIFile(ifile);
-		Object[] cells = graphpad.getCurrentGraph().getVertices(graphpad.getCurrentGraph().getAll());
-		NodeCreator.addIFileMappings(cells, ifile);
-	
+		this.setIFileFields(ifile);
 	}
 
 	
@@ -303,7 +336,8 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 	}
 	
 	/**
-	 * Method used to communicate workspace updates to Eclipse 
+	 * Method used to communicate workspace updates to Eclipse
+	 * @param file Ifile 
 	 */
 	public void updateWorkspace(IFile file) {
 		try {
@@ -317,7 +351,8 @@ public class SwingEditorPlugin extends AbstractUIPlugin {
 	}
 
 	/**
-	 * A method to save the workspace
+	 * Save the workspace.
+	 * @throws CoreException
 	 */
 	public void saveWorkspace() throws CoreException {
 		if (workSpaceChanged) {

@@ -10,6 +10,7 @@ import streamit.eclipse.grapheditor.editor.utils.Utilities;
 import streamit.eclipse.grapheditor.graph.GEContainer;
 import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
+import streamit.eclipse.grapheditor.graph.utils.JGraphLayoutManager;
 
 /**
  * Action to collapse a GEStreamNode.
@@ -48,6 +49,8 @@ public class ViewCollapse extends AbstractActionDefault {
 			if (cells.length == 0)
 			{
 				graphStruct.containerNodes.collapseContainersAtLevel(currentLevelView);
+				JGraphLayoutManager manager = new JGraphLayoutManager(graphStruct);
+				manager.arrange();
 				graphStruct.containerNodes.setCurrentLevelView(--currentLevelView);
 				
 			}
@@ -73,11 +76,20 @@ public class ViewCollapse extends AbstractActionDefault {
 					// TODO: make sure we are getting the right max level
 					System.out.println("Current Level View is " + graphStruct.containerNodes.getCurrentLevelView());
 					System.out.println("Node to collapse is in level "+ currentLevelView);
+					
+					//TODO: not sure if this is right -only do this for containers contained by this
+					
 					for (int j = graphStruct.containerNodes.getCurrentLevelView(); j > currentLevelView; j--)
 					{
 						graphStruct.containerNodes.collapseContainersAtLevel(j);
 					}
+			
 					container.collapse();
+					JGraphLayoutManager manager = new JGraphLayoutManager(graphStruct);
+					manager.arrange();
+					
+					/** Need to update the current level view so that if a global expand/collapse
+					 * occurs, the node can be updated accordingly */
 					graphStruct.containerNodes.setCurrentLevelView(currentLevelView);
 					
 	
@@ -95,6 +107,8 @@ public class ViewCollapse extends AbstractActionDefault {
 						graphStruct.containerNodes.collapseContainersAtLevel(j);
 					}
 					container.collapse();
+					JGraphLayoutManager manager = new JGraphLayoutManager(graphStruct);
+					manager.arrange();
 					graphStruct.containerNodes.setCurrentLevelView(currentLevelView);
 					
 					
@@ -107,20 +121,18 @@ public class ViewCollapse extends AbstractActionDefault {
 				return;
 			}
 	
-			/** Set the container nodes in their correspoding locations **/
-			ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
-											get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
-			ac.actionPerformed(null);
-			/*
-			for (int i = currentLevelView; i >= 0; i--)
-			{
-				graphStruct.containerNodes.setLocationContainersAtLevel(i, graphStruct);
-			}*/	
-			/** Set the current level **/
+			/** Set the current level to zero in case that it becomes negative**/
 			if (currentLevelView < 0 )
 			{
 				graphStruct.containerNodes.setCurrentLevelView(0);
 			}
+	
+			/** Set the container nodes in their correspoding locations **/
+			ViewSetContainerLocation ac = (ViewSetContainerLocation) graphpad.getCurrentActionMap().
+											get(Utilities.getClassNameWithoutPackage(ViewSetContainerLocation.class));
+			ac.actionPerformed(null);
+	
+	
 			
 			/** Zoom into the newly collapsed graph **/
 			graphpad.getCurrentDocument().setScale(graphpad.getCurrentGraph().getScale() * 1.2);

@@ -19,6 +19,8 @@ abstract class GEStreamNodeController implements Controller {
 	 * Properties of the GEStreamNode. 
 	 */
 	protected Properties properties;
+	
+
     
 	/**
 	 * Constructor. Set the default properties for the GEStreamNodeController. 
@@ -45,6 +47,8 @@ abstract class GEStreamNodeController implements Controller {
 	{
 		return properties;
 	}
+	
+
 }
 
 

@@ -51,6 +51,8 @@ public class GEPipelineController extends GEStreamNodeController {
     	setDefaultProperties();
     	
 		dialog = new GEPipelineConfigurationDialog(new JFrame(), document);
+		
+		/** Set the properties to the default properties */
         setPropertiesInDialog(this.properties);
         		
         dialog.setVisible(true);
@@ -64,8 +66,16 @@ public class GEPipelineController extends GEStreamNodeController {
 	public boolean configure(GPDocument document, Properties propert)
 	{
 		dialog = new GEPipelineConfigurationDialog(new JFrame(), document);
+		
+		/** Set the properties to the property passed as a parameter */
 		setPropertiesInDialog(propert);
+		
+		/** Save the initial values of the properties (before any modifications are made */
 		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
+		dialog.saveInitialParent(propert.getProperty(GEProperties.KEY_PARENT));
+		dialog.saveInitialOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
+		dialog.saveInitialInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
+		dialog.saveConnected(propert.getProperty(GEProperties.KEY_IS_CONNECTED));
         		
 		dialog.setVisible(true);
 		if (dialog.canceled()) return false;
@@ -88,6 +98,7 @@ public class GEPipelineController extends GEStreamNodeController {
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));	
 		dialog.setImmediateParent(propert.getProperty(GEProperties.KEY_PARENT));
+		dialog.setIndexInSJ(Integer.parseInt(propert.getProperty(GEProperties.KEY_INDEX_IN_SJ)));
 	}
 	
 	/**
@@ -100,7 +111,7 @@ public class GEPipelineController extends GEStreamNodeController {
 		properties.put(GEProperties.KEY_INPUT_TAPE, dialog.getInputTape());
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, dialog.getOutputTape());
 		properties.put(GEProperties.KEY_PARENT, dialog.getImmediateParent());
-		
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, dialog.getIndexInSJ());
 	}
 
 	/**
@@ -111,13 +122,19 @@ public class GEPipelineController extends GEStreamNodeController {
 	 */
 	public void setDefaultProperties()
 	{
-		properties.put(GEProperties.KEY_NAME, "Pipeline_"+ GEProperties.id_count++);
+		properties.put(GEProperties.KEY_NAME, "StrPipeline"+ GEProperties.id_count++);
 		properties.put(GEProperties.KEY_INPUT_TAPE, "void");
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
 		properties.put(GEProperties.KEY_PARENT, "Toplevel");
 		properties.put(GEProperties.KEY_TYPE, GEType.PIPELINE);
+		properties.put(GEProperties.KEY_INDEX_IN_SJ, "0");
 	}
 	
+	
+	
+	
+	
+
 	/**
 	 * Get the default properties for a GEPipelineController.
 	 * @return Properties the default properties of a GEPipelineController.

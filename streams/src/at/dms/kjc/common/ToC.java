@@ -546,9 +546,17 @@ public abstract class ToC extends SLIREmptyVisitor
                                         JExpression[] dims,
                                         JArrayInitializer init)
     {
-	print("calloc(");
+	//the memory allocator to use
+	String memory_alloc = KjcOptions.malloczeros ? 
+	    "malloc" : "calloc";
+	//malloc takes one arg, calloc two, so use a different sep between
+	//size and elements
+	String mem_alloc_sep = KjcOptions.malloczeros ? 
+	    " * " : ", ";
+
+	print(memory_alloc + "(");
         dims[0].accept(this);
-        print(", sizeof(");
+        print(mem_alloc_sep + "sizeof(");
         print(type);
 	if(dims.length>1)
 	    print("*");
@@ -562,9 +570,9 @@ public abstract class ToC extends SLIREmptyVisitor
 		    print(",\n");
 		    //If lastLeft null then didn't come right after an assignment
 		    lastLeft.accept(this);
-		    print("["+i+"]=calloc(");
+		    print("["+i+"]=" + memory_alloc + "(");
 		    dims[off+1].accept(this);
-		    print(", sizeof(");
+		    print(mem_alloc_sep + "sizeof(");
 		    print(type);
 		    if(off<(dims.length-2))
 			print("*");

@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.12 2003-10-09 07:53:11 thies Exp $
+ * $Id: fmref.c,v 1.13 2003-10-29 16:14:34 dmaze Exp $
  */
 
 #ifdef raw
@@ -71,11 +71,18 @@ static int numiters = -1;
 #ifndef raw
 int main(int argc, char **argv)
 {
-  int i;
-  for (i=0; i<1000; i++) {
-    begin();
+  int option;
+
+  while ((option = getopt(argc, argv, "i:")) != -1)
+  {
+    switch(option)
+    {
+    case 'i':
+      numiters = atoi(optarg);
+    }
   }
-  
+
+  begin();
   return 0;
 }
 #endif
@@ -88,9 +95,6 @@ void begin(void)
   FloatBuffer fb1, fb2, fb3, fb4;
   LPFData lpf_data;
   EqualizerData eq_data;
-
-  // set up number of iterations
-  numiters = 10000;
 
   fb1.rpos = fb1.rlen = 0;
   fb2.rpos = fb2.rlen = 0;

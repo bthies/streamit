@@ -591,6 +591,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 									       body,
 									       null,
 									       null)); 
+	}             //Ignore Main Method of class
+       	else if (ident.equals("main") && CModifier.contains(CModifier.ACC_STATIC, modifiers)
+		 && CModifier.contains(CModifier.ACC_PUBLIC, modifiers)) {
+	    printMe("Main ignored");
 	}
 	else if (!ignoreMethodDeclaration(ident) && (parentStream instanceof SIRStream))
 	    ((SIRStream)parentStream).addMethod(new JMethodDeclaration(null,
@@ -1232,7 +1236,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		 at.dms.util.Utils.fail("setSplitter called on non-FeedbackLoop");
 	     ((SIRFeedbackLoop)parentStream).setJoiner(buildJoiner(args[0]));
 	}
-	else {             //Not an SIR call
+      	else {             //Not an SIR call
 	    for (int i = 0; i < args.length; i++)
 		args[i] = (JExpression) args[i].accept(this);
 	}

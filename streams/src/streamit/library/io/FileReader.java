@@ -37,6 +37,14 @@ public class FileReader extends Filter
     {
         try
         {
+            if (fileType == Integer.TYPE)
+            {
+                output.pushInt (inputStream.readInt ());
+            } else
+            if (fileType == Short.TYPE)
+            {
+                output.pushShort (inputStream.readShort ());
+            } else
             if (fileType == Character.TYPE)
             {
                 output.pushChar (inputStream.readChar ());
@@ -44,10 +52,6 @@ public class FileReader extends Filter
             if (fileType == Float.TYPE)
             {
                 output.pushFloat (inputStream.readFloat ());
-            } else
-            if (fileType == Integer.TYPE)
-            {
-                output.pushInt (inputStream.readInt ());
             } else
             if (Class.forName ("java.io.Serializable").isAssignableFrom (fileType))
             {

@@ -37,6 +37,14 @@ public class FileWriter extends Filter
     {
         try
         {
+            if (fileType == Integer.TYPE)
+            {
+                outputStream.writeInt (input.popInt ());
+            } else
+            if (fileType == Short.TYPE)
+            {
+                outputStream.writeShort (input.popShort ());
+            } else
             if (fileType == Character.TYPE)
             {
                 outputStream.writeChar (input.popChar ());
@@ -44,10 +52,6 @@ public class FileWriter extends Filter
             if (fileType == Float.TYPE)
             {
                 outputStream.writeFloat (input.popFloat ());
-            } else
-            if (fileType == Integer.TYPE)
-            {
-                outputStream.writeInt (input.popInt ());
             } else
             if (Class.forName ("java.io.Serializable").isAssignableFrom (fileType))
             {

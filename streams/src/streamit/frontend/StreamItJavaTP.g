@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.36 2002-08-20 20:04:24 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.37 2002-09-04 15:10:05 dmaze Exp $
  */
 
 header {
@@ -238,8 +238,8 @@ stream_type returns [StreamType type]
 	type = null;
 	Type ft, tt;
 }
-	: #(ARROW ft=data_type tt=data_type)
-		{ type = new StreamType(ft, tt); }
+	: #(t:ARROW ft=data_type tt=data_type)
+		{ type = new StreamType(getContext(t), ft, tt); }
 	;
 
 stream_param_list returns [List lst]

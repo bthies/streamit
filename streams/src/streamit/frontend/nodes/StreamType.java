@@ -1,7 +1,7 @@
 /*
  * StreamType.java: record the I/O type of a stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamType.java,v 1.1 2002-07-16 18:12:02 dmaze Exp $
+ * $Id: StreamType.java,v 1.2 2002-09-04 15:10:07 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -22,14 +22,15 @@ package streamit.frontend.nodes;
  * In these cases it can be useful to know the loop type separately
  * from the input or output type.)
  */
-public class StreamType
+public class StreamType extends FENode
 {
     private Type in, out;
     
     /** Creates a new StreamType with the specified input and output
      * types. */
-    public StreamType(Type in, Type out)
+    public StreamType(FEContext context, Type in, Type out)
     {
+        super(context);
         this.in = in;
         this.out = out;
     }
@@ -44,5 +45,12 @@ public class StreamType
     public Type getOut()
     {
         return out;
+    }
+
+    /** Accepts a front-end visitor. */
+    public Object accept(FEVisitor v)
+    {
+        // return v.visitStreamType(this);
+        return null;
     }
 }

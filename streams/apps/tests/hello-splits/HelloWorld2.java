@@ -22,8 +22,6 @@ public class HelloWorld2 extends Stream
     	new HelloWorld2().Run();
     }
     
-    public void InitIO () { }
-    
     // this is the defining part of the stream
     public void Init() 
     {

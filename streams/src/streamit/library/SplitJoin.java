@@ -9,7 +9,7 @@ public class SplitJoin extends Stream
     Splitter splitter;
     Joiner joiner;
     
-    LinkedList outputStreams;
+    List outputStreams;
 
     public SplitJoin() 
     {
@@ -90,10 +90,19 @@ public class SplitJoin extends Stream
             ASSERT (newInput == null);
         }
 
-        if (newOutput != null) outputStreams.add (s);
+        if (newOutput != null) 
+        {
+            if (outputStreams == null)
+            {
+                outputStreams = new LinkedList ();
+            }
+            outputStreams.add (s);
+        }
+            
+        
     }
     
-    void ConnectGraph ()
+    public void ConnectGraph ()
     {
         // connect the SplitJoin with the Split and the Join
         if (input != null)

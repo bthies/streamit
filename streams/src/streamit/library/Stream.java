@@ -4,7 +4,7 @@ import java.util.*;
 import java.lang.reflect.*;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
-public abstract class Stream extends Operator
+public class Stream extends Operator
 {
 
     // CONSTRUCTORS --------------------------------------------------------------------
@@ -58,6 +58,8 @@ public abstract class Stream extends Operator
         InitIO ();
         streamElements = new LinkedList ();
     }
+    
+    public void InitIO () { }
     
     // RESET FUNCTIONS (need to just call init functions) ---------------------------------
 

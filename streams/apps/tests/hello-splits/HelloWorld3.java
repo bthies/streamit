@@ -19,26 +19,32 @@
 
 import streamit.*;
 
-public class HelloWorld3 extends Stream {
+public class HelloWorld3 extends Stream
+{
 
     // presumably some main function invokes the stream
-    public static void main(String args[]) {
-	new HelloWorld3().run();
+    public static void main(String args[])
+    {
+        new HelloWorld3().Run();
     }
 
     // this is the defining part of the stream
-    public void init() {
-	add(new CharGenerator(".....Hello World!.....\0"));
-	add(new XORLoop());
-	add(new SplitJoin() {
-		public void init() {
-		    splitter(Splitter.DUPLICATE_SPLITTER);
-		    add(new BufferedCharPrinter());
-		    add(new XORLoop());
-		    joiner(Joiner.WEIGHTED_ROUND_ROBIN(0,1));
-		}
-	    });
-	add(new BufferedCharPrinter());
+    public void Init ()
+    {
+        Add(new CharGenerator(".....Hello World!.....\0"));
+        //Add(new XORLoop());
+        Add(new SplitJoin() 
+            {
+                public void Init() 
+                {
+                    UseSplitter(Splitter.DUPLICATE_SPLITTER);
+                    Add(new BufferedCharPrinter());
+                    //Add(new XORLoop());
+                    Add(new ChannelConnectFilter (new char [1]));
+                    UseJoiner(Joiner.WEIGHTED_ROUND_ROBIN(0,1));
+                }
+            });
+        Add(new BufferedCharPrinter());
     }
 
     /* here is an alternative way to write the above code:
@@ -64,48 +70,58 @@ public class HelloWorld3 extends Stream {
 
 }
 
-class XORLoop extends FeedbackLoop {
-    public void init() {
-	setDelay(3);
-	header(Joiner.ROUND_ROBIN_JOINER);
-	add(new XORFilter());
+class XORLoop extends FeedbackLoop 
+{
+    public void Init() {
+        SetDelay(3);
+        Header(Joiner.ROUND_ROBIN_JOINER);
+        Add(new XORFilter());
     }
 }
 
 // outputs xor of successive items in stream
-class XORFilter extends Filter {
+class XORFilter extends Filter
+{
+    public void InitIO ()
+    {
+        input = new Channel(new char[0]);
+        output = new Channel(new char[0]);
+    }
 
-    private Channel input = new Channel(new char[0]);
-    private Channel output = new Channel(new char[0]);
-
-    public void work() {
-	char c1 = input.popChar();
-	char c2 = input.popChar();
-	output.pushChar((char)((int)c1 ^ (int)c2));
+    public void Work()
+    {
+        char c1 = input.PopChar();
+        char c2 = input.PopChar();
+        output.PushChar((char)((int)c1 ^ (int)c2));
     }
 }
 
 // buffers input until it gets a null-terminated string, then prints it
 // to the screen
-class BufferedCharPrinter extends Filter {
-
-    private Channel input = new Channel(new char[0]);
-    private Channel output = null;
+class BufferedCharPrinter extends Filter 
+{
+    public void InitIO ()
+    {
+        input = new Channel(new char[0]);
+    }
 
     // string it's queueing up
     private StringBuffer sb;
 
-    public void init() {
-	sb = new StringBuffer();
+    public void Init() 
+    {
+        sb = new StringBuffer();
     }
 
-    public void work() {
-	char c = input.popChar();
-	sb.append(c);
-	// flush the buffer if we hit null-terminated string
-	if (c=='\0') {
-	    System.out.println(sb);
-	    sb = new StringBuffer();
-	}
+    public void Work()
+    {
+        char c = input.PopChar();
+        sb.append(c);
+        // flush the buffer if we hit null-terminated string
+        if (c=='\0')
+        {
+            System.out.println(sb);
+            sb = new StringBuffer();
+        }
     }
 }

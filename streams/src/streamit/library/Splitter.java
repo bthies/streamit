@@ -3,10 +3,10 @@ package streamit;
 import java.util.*;
 
 // 1 input, many output
-public class Splitter extends Operator
+public abstract class Splitter extends Operator
 {
-    public static final Splitter ROUND_ROBIN_SPLITTER = new Splitter ();
-    public static final Splitter DUPLICATE_SPLITTER = new Splitter ();
+    public static final Splitter ROUND_ROBIN_SPLITTER = new RoundRobinSplitter ();
+    public static final Splitter DUPLICATE_SPLITTER = new DuplicateSplitter ();
     
     List dest = new ArrayList ();
     List destWeight = new ArrayList ();
@@ -16,22 +16,7 @@ public class Splitter extends Operator
     
     public void InitIO () { }
     
-    public void Work ()
-    {
-        if (outputCount == ((Integer)destWeight.get (outputIndex)).intValue ())
-        {
-            outputCount = 0;
-            outputIndex++;
-        }
-        
-        if (outputIndex == dest.size ())
-        {
-            outputIndex = 0;
-        }
-        
-        PassOneData (input, output [outputIndex]);
-        outputCount++;
-    }
+    public abstract void Work ();
     
     void Add (Stream s)
     {

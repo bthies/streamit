@@ -25,7 +25,7 @@ class Operator extends DestroyedClass
     public static MessageStub MESSAGE_STUB;
     
     // initialize the MESSAGE_STUB
-    {
+    static {
         MESSAGE_STUB = MessageStub.STUB;
     }
     
@@ -108,6 +108,51 @@ class Operator extends DestroyedClass
             to.PushDouble (from.PopDouble ());
         } else {
             to.Push (from.Pop ());
+        }
+    }
+
+    public static void DuplicateOneData (Channel from, Channel [] to)
+    {
+        Class type = from.GetType ();
+        ASSERT (to != null && type == to[0].GetType ());
+        
+        if (type == Integer.TYPE)
+        {
+            int data = from.PopInt ();
+            
+            int indx;
+            for (indx = to.length - 1; indx >= 0; indx--)
+            {
+                to [indx] .PushInt (data);
+            }
+        } else
+        if (type == Character.TYPE)
+        {
+            char data = from.PopChar ();
+            
+            int indx;
+            for (indx = to.length - 1; indx >= 0; indx--)
+            {
+                to [indx] .PushChar (data);
+            }
+        } else
+        if (type == Double.TYPE)
+        {
+            double data = from.PopDouble ();
+            
+            int indx;
+            for (indx = to.length - 1; indx >= 0; indx--)
+            {
+                to [indx] .PushDouble (data);
+            }
+        } else {
+            Object data = from.Pop ();
+            
+            int indx;
+            for (indx = to.length - 1; indx >= 0; indx--)
+            {
+                to [indx] .Push (data);
+            }
         }
     }
 

@@ -99,7 +99,6 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 		currentNode = node;
 		top = node;
 	    }
-	    
 	    currentNode.addEdges(node);
 	    currentNode = node;
 	}
@@ -691,6 +690,8 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    
 	    currentNode = joinerNode;
 	    createGraph(loop.getBody());
+
+
 	    FlatNode.addEdges(currentNode, splitterNode);
 	    
 	    //here is the hack!
@@ -699,12 +700,14 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	    currentNode = splitterNode;
 	    createGraph(loop.getLoop());
 	    FlatNode.addEdges(currentNode, joinerNode);
+	    /*
 	    //Add dummy identity on the output splitter so splitters are always followed by a filter (making analysis simple)
 	    FlatNode ident=new FlatNode(new SIRIdentity(Util.getOutputType(splitterNode.edges[0])));
 	    FlatNode.addEdges(splitterNode, ident);
 	    currentNode = ident;
-	    
-	    
+	    */
+	    currentNode = splitterNode;
+
 	    //Save Weight of Joiner
 	    int sumWeights=0;
 	    int[] oldWeights=joinerNode.incomingWeights;

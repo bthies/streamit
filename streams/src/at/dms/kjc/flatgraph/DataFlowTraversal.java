@@ -39,8 +39,11 @@ public class DataFlowTraversal
 	    //to keep the order of the nodes of a splitjoin in the correct order
 	    //(the order defined by the joiner) add to the queue in the reverse order
 	    for (int i = 0; i < node.ways; i++) {
-		if (!added.contains(node.edges[i])) {
-		    FlatNode downstream = node.edges[i];
+		FlatNode downstream = node.edges[i];
+		if (downstream == null)
+		    continue;
+		
+		if (!added.contains(downstream)) {
 		    //see if we can add the edge
 		    boolean canAdd = true;
 		    for (int j = 0; j < downstream.inputs; j++) {

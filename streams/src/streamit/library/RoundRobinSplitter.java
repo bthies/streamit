@@ -30,6 +30,6 @@ public class RoundRobinSplitter extends Splitter
             weights.add (one);
         }
 
-        return new SchedSplitType (SchedSplitType.ROUND_ROBIN, weights);
+        return new SchedSplitType (SchedSplitType.ROUND_ROBIN, weights, this);
     }
 }

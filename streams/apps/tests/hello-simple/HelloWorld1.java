@@ -6,7 +6,7 @@
 
 import streamit.*;
 
-public class HelloWorld1 extends Stream
+public class HelloWorld1 extends Pipeline
 {
     public void initIO () { }
     // presumably some main function invokes the stream

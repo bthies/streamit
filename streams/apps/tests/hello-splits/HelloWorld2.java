@@ -13,7 +13,7 @@
 
 import streamit.*;
 
-public class HelloWorld2 extends Stream
+public class HelloWorld2 extends Pipeline
 {
 
     // presumably some main function invokes the stream

@@ -45,6 +45,6 @@ public class WeightedRoundRobinJoiner extends Joiner {
 
     SchedJoinType getSchedType ()
     {
-        return new SchedJoinType (SchedJoinType.WEIGHTED_ROUND_ROBIN, srcsWeight);
+        return new SchedJoinType (SchedJoinType.WEIGHTED_ROUND_ROBIN, srcsWeight, this);
     }
 }

@@ -13,13 +13,16 @@ public class SchedJoinType extends AssertedClass
     final int type;
     int roundProduction;
     List joinWeights;
+    Object joinObject;
 
-    public SchedJoinType (int type, List joinWeights)
+    public SchedJoinType (int type, List joinWeights, Object joinObject)
     {
         ASSERT (type > -1 && type < LAST);
         ASSERT (joinWeights);
+        ASSERT (joinObject);
         this.type = type;
         this.joinWeights = joinWeights;
+        this.joinObject = joinObject;
 
         switch (this.type)
         {
@@ -55,5 +58,11 @@ public class SchedJoinType extends AssertedClass
     public int getRoundProduction ()
     {
         return roundProduction;
+    }
+
+    public Object getJoinObject ()
+    {
+        ASSERT (joinObject);
+        return joinObject;
     }
 }

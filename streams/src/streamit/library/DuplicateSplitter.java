@@ -36,6 +36,6 @@ public class DuplicateSplitter extends Splitter
             }
         }
 
-        return new SchedSplitType (SchedSplitType.DUPLICATE, weights);
+        return new SchedSplitType (SchedSplitType.DUPLICATE, weights, this);
     }
 }

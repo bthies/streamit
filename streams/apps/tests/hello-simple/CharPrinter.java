@@ -10,7 +10,7 @@ public class CharPrinter extends Filter
 
     public void work()
     {
-           System.out.print(streamInput.popChar());
+           System.out.print(input.popChar());
     }
 
 }

@@ -48,6 +48,6 @@ public class WeightedRoundRobinSplitter extends Splitter
 
     SchedSplitType getSchedType ()
     {
-        return new SchedSplitType (SchedSplitType.WEIGHTED_ROUND_ROBIN, destWeight);
+        return new SchedSplitType (SchedSplitType.WEIGHTED_ROUND_ROBIN, destWeight, this);
     }
 }

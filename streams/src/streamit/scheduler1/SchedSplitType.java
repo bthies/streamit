@@ -13,13 +13,16 @@ public class SchedSplitType extends AssertedClass
     final int type;
     int roundConsumption;
     List splitWeights;
+    Object splitObject;
 
-    public SchedSplitType (int type, List splitWeights)
+    public SchedSplitType (int type, List splitWeights, Object splitObject)
     {
         ASSERT (type > -1 && type < LAST);
         ASSERT (splitWeights);
+        ASSERT (splitObject);
         this.type = type;
         this.splitWeights = splitWeights;
+        this.splitObject = splitObject;
 
         switch (this.type)
         {
@@ -60,5 +63,11 @@ public class SchedSplitType extends AssertedClass
     public int getRoundConsumption ()
     {
         return roundConsumption;
+    }
+
+    public Object getSplitObject ()
+    {
+        ASSERT (splitObject);
+        return splitObject;
     }
 }

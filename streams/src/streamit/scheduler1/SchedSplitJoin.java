@@ -13,6 +13,11 @@ public class SchedSplitJoin extends SchedStream
 
     final List allChildren = new LinkedList ();
 
+    public List getChildren ()
+    {
+        return allChildren;
+    }
+
     public void addChild (SchedStream stream)
     {
         ASSERT (stream);
@@ -28,12 +33,38 @@ public class SchedSplitJoin extends SchedStream
 
     public void setSplitType (SchedSplitType type)
     {
+        ASSERT (type);
         splitType = type;
+    }
+
+    public SchedSplitType getSplitType ()
+    {
+        ASSERT (splitType);
+        return splitType;
     }
 
     public void setJoinType (SchedJoinType type)
     {
+        ASSERT (type);
         joinType = type;
+    }
+
+    public SchedJoinType getJoinType ()
+    {
+        ASSERT (joinType);
+        return joinType;
+    }
+
+    public BigInteger getNumSplitExecutions ()
+    {
+        ASSERT (numSplitExecutions);
+        return numSplitExecutions;
+    }
+
+    public BigInteger getNumJoinExecutions ()
+    {
+        ASSERT (numJoinExecutions);
+        return numJoinExecutions;
     }
 
     void computeSteadySchedule ()

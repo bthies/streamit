@@ -15,11 +15,12 @@ void MatchFilt(int m, int n, float *r, float *Ahr, float A[Q*N+W-1][K*N]);
 void SelfMult(int m, int n,float A[Q*N+W-1][K*N],float AhA[K*N][K*N]);
 void Forw(int n, float *Ahr, float *u, float L[K*N][K*N]);
 void Backs(int n, float *v, float *u, float L[K*N][K*N]);
-void CompSigma(int n,float sigma, float *a, float *b);
+void CompSigma(int n,float &sigma, float *a, float *b);
 void DelMat(float B[Q+W-1][K], float A[Q*N+W-1][K*N]);
 void chold(float A[Q*N+W-1][K*N],float L[K*N][K*N],int n);
 void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K]);
 void PrintD(int n, float *d);
+void Print2D(int m,int n, float Mat[n][n]);
 
 
 main() {
@@ -73,20 +74,31 @@ void Decode(float C[Q][K], float h[W][K], float *r)
   float AhAsig[n][n];
   
   ConvMat(C,B,h);
-
+ 
   DelMat(B,A);
-
+ 
   MatchFilt(m,n,r,Ahr,A);
 
-  SelfMult(m,n,A,AhA);
+  //PrintD(n,Ahr);
+  
+
+  SelfMult(Q*N+W-1,K*N,A,AhA);
+
+  //Print2D(Q*N+W-1,K*N,A);
 
   chold(AhA,L,n);
+
+  //Print2D(n,n,L);
 
   Forw(n,Ahr,u,L);
 
   Backs(n,v,u,L);
 
+  //PrintD(n,Ahr);
+
   CompSigma(n,sigma,v,Ahr);
+  
+  //cout<< sigma<< endl;
 
   AddSigma(n,sigma,AhA,AhAsig);
 
@@ -101,6 +113,18 @@ void Decode(float C[Q][K], float h[W][K], float *r)
 
   
 
+
+
+
+void Print2D(int m,int n, float Mat[n][n]){
+  int i;
+  int j;
+  for (i=0; i <m;i++)
+    for (j=0;j<n;j++){
+      
+      cout<<i<<","<<j<<":"<<Mat[i][j] <<endl;
+    }
+}
 
 
 
@@ -160,7 +184,7 @@ void SelfMult(int m, int n,float A[Q*N+W-1][K*N],float AhA[K*N][K*N])
       {
 	AhA[i][j]=0;
 	for ( k=0; k<m;k++)
-	  AhA[i][j]+=A[i][k]*A[j][k];
+	  AhA[i][j]+=A[k][i]*A[k][j];
 	AhA[j][i]=AhA[i][j];
       }
 }
@@ -195,13 +219,13 @@ void Backs(int n, float *v, float *u, float L[K*N][K*N])
 
 
 // this function calculates the avarage distance between two vectors
-void CompSigma(int n,float sigma, float *a, float *b)
+void CompSigma(int n,float &sigma, float *a, float *b)
 {
   int i;
   float sum=0;
   for (i=0; i<n;i++)
     sum+=(a[i]-b[i])*(a[i]-b[i]);
-  sigma=sqrt(sum)/n;
+  sigma=sum/n;
 }
 
       
@@ -217,11 +241,12 @@ void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K])
 {
   int i,j,l;
 
-  for (i=0; i < K ; i++)
-    for (j=0; j < W+Q-1; j++){
+  for (i=0; i < K ; i++){
+    for (j=0; j < W+Q-1; j++)
       B[j][i]=0;
-      for (l=0;((l < W) & ((j-l)>0) );l++)
-	B[j][i]+=h[l][i]*C[j-l][i];
+    for (j=0;j < W ;j++)
+      for (l=0;l<Q;l++)
+	B[j+l][i]+=h[l][i]*C[j][i];
     }
 }
 
@@ -230,6 +255,10 @@ void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K])
 void DelMat(float B[Q+W-1][K], float A[Q*N+W-1][K*N])
 {
   int i,j,l;
+  for (i=0;i<K*N;i++)
+    for (j=0;j<Q*N+W-1;j++)
+      A[j][i]=0;
+  
   for (i=0; i <K; i++)
     for (j=0; j<N; j++)
       for (l=0; l<Q+W-1; l++)
@@ -249,7 +278,11 @@ void chold(float A[Q*N+W-1][K*N],float L[K*N][K*N],int n)
       if (i==j) {
 	L[j][i]=sqrt(sum);
       }
-      else L[j][i]=sum/L[i][i];
+      else {
+	L[j][i]=sum/L[i][i];
+	L[i][j]=0;
+      }
+      
     }
   }
 }

@@ -138,8 +138,8 @@ public class Flattener {
 	    new BlockFlattener().flattenBlocks(str);
 	    System.err.println("done.");
 	    //Analyze Branches
-	    System.err.print("Analyzing branches... ");
-	    new BranchAnalyzer().analyzeBranches(str);
+	    //System.err.print("Analyzing branches... ");
+	    //new BranchAnalyzer().analyzeBranches(str);
 	    System.err.println("done.");
 	}
 	//Destroys arrays into local variables if possible

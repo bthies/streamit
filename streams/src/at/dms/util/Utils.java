@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.2 2001-09-27 18:49:16 thies Exp $
+ * $Id: Utils.java,v 1.3 2001-10-12 10:28:06 thies Exp $
  */
 
 package at.dms.util;
@@ -64,6 +64,18 @@ public abstract class Utils {
   public static final void fail(String str) {
       throw new InconsistencyException(str);
   }
+
+    
+    /**
+     * Returns a list of Integers containing same elements as <arr>
+     */
+    public static List intArrayToList(int[] arr) {
+	LinkedList result = new LinkedList();
+	for (int i=0; i<arr.length; i++) {
+	    result.add(new Integer(arr[i]));
+	}
+	return result;
+    }
 
   /**
    * Creates a vector and fills it with the elements of the specified array.

@@ -21,6 +21,8 @@ public class OSetIterator extends AssertedClass
 
     public Object get()
     {
+        // make sure that node != NULL
+        ASSERT (node.right != null);
         return node.getData ();
     }
 

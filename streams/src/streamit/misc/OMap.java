@@ -1,6 +1,6 @@
 package streamit.misc;
 
-/* $Id: OMap.java,v 1.2 2003-03-19 15:22:38 karczma Exp $ */
+/* $Id: OMap.java,v 1.3 2003-05-15 21:21:12 karczma Exp $ */
 
 public class OMap extends AssertedClass
 {
@@ -27,7 +27,7 @@ public class OMap extends AssertedClass
             ASSERT(left instanceof Pair);
             ASSERT(right instanceof Pair);
 
-            return comparator.isLess(((Pair)left).first, ((Pair)right).second);
+            return comparator.isLess(((Pair)left).first, ((Pair)right).first);
         }
     }
 

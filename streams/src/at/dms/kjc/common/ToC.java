@@ -65,7 +65,9 @@ public abstract class ToC extends SLIREmptyVisitor
      * do the recursive call.
      */
     protected void declareInitializedArray(CType type, String ident, JExpression expr) {
-	print(((CArrayType)type).getBaseType()); // note this calls print(CType), not print(String)
+	// note this calls print(CType), not print(String)
+	print(((CArrayType)type).getBaseType()); 
+	
 	print(" " + ident);
 	JArrayInitializer init = (JArrayInitializer)expr;
 	while (true) {

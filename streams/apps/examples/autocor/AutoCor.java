@@ -21,43 +21,38 @@ public class AutoCor extends StreamIt {
 
     public void init() {
 	add(new OneSource());
-	add(new Cor1());
+	add(new Cor1(32, 8));
 	add(new FloatPrinter());
     }
 
 }
 
 // this puts each inner loop in a filter
-class Cor1 extends Pipeline {
-    public void init() {
-	final int N = 32;
-	final int NLAGS = 8;
-	add(new SplitJoin() {
-		public void init() {
-		    setSplitter(DUPLICATE());
-		    for (int l=0; l<NLAGS; l++) {
-			final int lag = l;
-			add(new Filter() {
-				public void init() {
-				    input = new Channel(Float.TYPE, N);
-				    output = new Channel(Float.TYPE, 1);
-				}
-				public void work() {
-				    float sum = 0;
-				    for (int i=0; i<(N-lag); i++)
-					sum += input.peekFloat(i)
-					    *input.peekFloat(i+lag);
-				    for (int i=0; i<N; i++)
-					input.popFloat();
-				    output.pushFloat(sum);
-				}
-			    });
-		    }
-		    setJoiner(ROUND_ROBIN());
-		}
-	    });
-	add(new Adder(NLAGS));
-    }
+class Cor1 extends SplitJoin {
+    public void init(final int N, final int NFLAGS) {
+	public void init() {
+	    setSplitter(DUPLICATE());
+	    for (int l=0; l<NLAGS; l++) {
+		final int lag = l;
+		add(new Filter() {
+			public void init() {
+			    input = new Channel(Float.TYPE, N);
+			    output = new Channel(Float.TYPE, 1);
+			}
+			public void work() {
+			    float sum = 0;
+			    for (int i=0; i<(N-lag); i++)
+				sum += input.peekFloat(i)
+				    *input.peekFloat(i+lag);
+			    for (int i=0; i<N; i++)
+				input.popFloat();
+			    output.pushFloat(sum);
+			}
+		    });
+	    }
+	    setJoiner(ROUND_ROBIN());
+	}
+    });
 }
 
 class Adder extends Filter {

@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.9 2002-07-11 13:51:12 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.10 2002-07-15 21:42:04 aalamb Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "docs/examples/hand/";
@@ -105,9 +105,9 @@ class StreamITTestCase extends TestCase {
 
     /**
      * Performs streamit compile, gcc compile, execution, and comparison.
-     * root is root directory path.
-     * filename is the streamit program file.
-     * datafile is the file with known correct data.
+     * @param root is root directory path.
+     * @param filename is the streamit program file.
+     * @param datafile is the file with known correct data.
      **/
     public void doCompileRunVerifyTest(String root,
 				       String filename,

@@ -22,7 +22,7 @@ public class RuntimeHarness extends Harness {
 
     
     /**
-     * executes the specified program streamit program
+     * executes the specified streamit program
      * for ITER_COUNT iterations, and redirects its output to the
      * file named FILE_STREAMIT_OUTPUT. Returns true if successful execution
      * false otherwise with information going through ResultPrinter.

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.9 2002-07-13 17:22:37 jasperln Exp $
+ * $Id: TestExamples.java,v 1.10 2002-07-15 21:42:04 aalamb Exp $
  **/
 package streamittest;
 
@@ -257,8 +257,11 @@ public class TestExamples extends StreamITTestCase {
     }
 
     public void testNokiaFine() {
-	doCompileRunVerifyTest(EXAMPLE_ROOT + "nokia-fine/",
-			       "*.java",
+	String nokiaRoot = EXAMPLE_ROOT + "nokia-fine/";
+	// create a linked version (and also bring in Delay.java)
+	doMake(nokiaRoot, "link");
+	doCompileRunVerifyTest(nokiaRoot,
+			       "Linkeddcalc.java",
 			       "NokiaFine.out");
     }
 }

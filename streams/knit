@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.15 2002-12-11 20:19:24 dmaze Exp $
+# $Id: knit,v 1.16 2003-03-06 12:54:59 thies Exp $
 #
 
 use strict;
@@ -19,6 +19,10 @@ if ($opts{help})
   }
 my $fns = \@ARGV;
 $fns = new_to_old($fns) unless $opts{java};
+if ($opts{'library'}) {
+    run_in_library($fns);
+    exit(0);
+}
 $fns = old_to_c($fns);
 c_to_out($fns, $opts{output}) unless $opts{raw};
 exit(0);
@@ -37,6 +41,7 @@ Options:
   --output filename   Write a binary to filename
   --raw n             Compile for RAW, with an n-by-n grid
   --verbose           Print commands as they are executed
+  --library           Run in the Java library instead of compiling
 
 Options available for all backends:
   --constprop, -c     Turns on StreamIt Field Prop
@@ -55,7 +60,8 @@ Options available for all backends:
 Options specific to RAW backend:
   --dppartition, -y   Use the dynamic programming partitioner
   --ilppartition      Use the integer linear programming partitioner
-  --noanneal, -N      Do not run simulated annealing for layout
+  --noanneal, -W      Do not run simulated annealing for layout
+  --numbers, -N       Automatically gather numbers and put in results.out
   --partition, -a     Automatically partition stream graph
   --ptraccess, -Q     Access buffers through a pointer
   --ratematch, -x     Turn on rate matching
@@ -83,9 +89,11 @@ sub get_options
 	       "frequencyreplacement|F=i",
 	       "fusion|f",
 	       "ilppartition|A",
+	       "library",
 	       "linearanalysis|i",
 	       "linearreplacement|I",
-	       "noanneal|N",
+	       "noanneal|W",
+	       "numbers|N=i",
 	       "partition|a",
 	       "poptopeek|P",
 	       "profile",
@@ -113,6 +121,14 @@ sub change_extension
     my $fn = $old;
     $fn =~ s/.$from$//;
     $fn .= ".$to";
+    return $fn;
+  }
+
+sub remove_extension
+  {
+    my ($old, $from) = @_;
+    my $fn = $old;
+    $fn =~ s/.$from$//;
     return $fn;
   }
 
@@ -157,6 +173,18 @@ sub old_to_c
     return \@out;
   }
 
+sub run_in_library
+  {
+    my ($fns) = @_;
+    my @out = ();
+    foreach my $java (@$fns)
+      {
+	  my $class = remove_extension($java, "java");
+	  call("javac $java");
+	  call("java $class");
+      }
+  }
+
 sub c_to_out
   {
     my ($fns, $target) = @_;
@@ -189,7 +217,8 @@ sub get_kjc_opts
     $opts{ilppartition} && ($kjcopts .= " -A");
     $opts{linearanalysis} && ($kjcopts .= " -i");
     $opts{linearreplacement} && ($kjcopts .= " -I");
-    $opts{noanneal} && ($kjcopts .= " -N");
+    $opts{noanneal} && ($kjcopts .= " -W");
+    $opts{numbers} && ($kjcopts .= " -N" . $opts{numbers});
     $opts{partition} && ($kjcopts .= " -a");
     $opts{poptopeek} && ($kjcopts .= " -P");
     $opts{ptraccess} && ($kjcopts .= " -Q");

@@ -581,7 +581,7 @@ class DecoderFeedback extends FeedbackLoop
     }
 }
 
-class LTPLoopStream extends Stream
+class LTPLoopStream extends Pipeline
 {
     public void init()
     {
@@ -596,7 +596,7 @@ class LTPInputSplitJoin extends SplitJoin
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
 	this.add(new LTPInputFilter());
-	this.add(IDENTITY());
+	this.add(new Identity(Float.TYPE));
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
     }
 }
@@ -607,7 +607,7 @@ class LARInputSplitJoin extends SplitJoin
     public void init()
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));  //we don't care about it going to in2
-	this.add(IDENTITY());
+	this.add(new Identity(Float.TYPE));
 	this.add(new LARInputFilter());	
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
     }

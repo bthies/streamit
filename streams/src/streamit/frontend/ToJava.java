@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.48 2003-10-09 19:50:53 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.49 2003-10-10 22:34:18 thies Exp $
  */
 public class ToJava
 {
@@ -183,7 +183,6 @@ public class ToJava
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
         prog = (Program)prog.accept(new NoRefTypes());
-        prog = (Program)prog.accept(new RenameBitVars());
         prog = (Program)prog.accept(new FindFreeVariables());
         if (!libraryFormat)
             prog = (Program)prog.accept(new NoticePhasedFilters());
@@ -227,6 +226,7 @@ public class ToJava
             return;
         }
 
+        prog = (Program)prog.accept(new RenameBitVars());
         if (!SemanticChecker.check(prog))
             return;
         prog = (Program)prog.accept(new AssignLoopTypes());

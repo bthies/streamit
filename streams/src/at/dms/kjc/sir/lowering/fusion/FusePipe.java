@@ -182,50 +182,26 @@ public class FusePipe {
 	List filterList = parent.getChildrenBetween(first, last);
 	// fuse the filters
 	SIRFilter fused = fuse(filterList);
-	// insert the fused filter in the parent
-	replace(parent, fused, filterList);
 	// return the fused filter
 	return fused;
     }
 
     /**
-     * In <parent>, replace <filterList> with <fused>
+     * In <parent>, replace <filterList> with <fused>, and add
+     * arguments <initArgs> to call to <fused>'s init function.
      */
     private static void replace(SIRPipeline parent, 
-				final SIRFilter fused,
-				final List filterList) {
+				List filterList, 
+				SIRFilter fused,
+				List initArgs) {
 	// have to get the first and last list items this way since we
 	// only know it's a list. 
 	final SIRStream first = (SIRStream)filterList.get(0);
 	SIRStream last = (SIRStream)filterList.get(filterList.size()-1);
 	// replace <filterList> with <fused>
 	parent.replace(first, last, fused);
-
-	// replace the SIRInitStatements in the parent
-	parent.getInit().accept(new SLIRReplacingVisitor() {
-		public Object visitInitStatement(SIRInitStatement oldSelf,
-						 JExpression[] oldArgs,
-						 SIRStream oldTarget) {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-		    
-		    // if we're the first filter, change target to be
-		    // <fused>.  Otherwise, if we're in one of the
-		    // fused filters, replace with an empty statement
-		    if (self.getTarget()==first) {
-			self.setTarget(fused);
-			return self;
-		    } else if (filterList.contains(self.getTarget())) {
-			// if we're another filter, remove the init statement
-			return new JEmptyStatement(null, null);
-		    } else {
-			// otherwise, return self
-			return self;
-		    }
-		}
-	    });
+	// add args to <fused>'s init
+	parent.setParams(parent.indexOf(fused), initArgs);
     }
 				
     /*
@@ -263,13 +239,17 @@ public class FusePipe {
 	JMethodDeclaration steadyWork =  makeWork(filterInfo, false);
 
 	// make the fused init functions
-	JMethodDeclaration init = makeInitFunction(filterInfo, 
+	InitFuser initFuser = makeInitFunction(filterInfo, 
 						   initWork, 
 						   result);
 
 	// fuse all other fields and methods
-	makeFused(filterInfo, init, initWork, steadyWork, result);
+	makeFused(filterInfo, initFuser.getInitFunction(), initWork, steadyWork, result);
 	
+	// insert the fused filter in the parent
+	replace((SIRPipeline)result.getParent(), filters,
+		result, initFuser.getInitArgs());
+
 	// return result
 	return result;
     }
@@ -783,21 +763,17 @@ public class FusePipe {
      * <result> will be the resulting fused filter.
      */
     private static 
-	JMethodDeclaration makeInitFunction(List filterInfo,
+	InitFuser makeInitFunction(List filterInfo,
 					    JMethodDeclaration initWork,
 					    SIRFilter result) {
-	// get init function of parent
-	JMethodDeclaration parentInit = 
-	    ((FilterInfo)filterInfo.get(0)).filter.getParent().getInit();
-	
 	// make an init function builder out of <filterList>
 	InitFuser initFuser = new InitFuser(filterInfo, initWork, result);
 	
-	// traverse <parentInit> with initFuser
-	parentInit.accept(initFuser);
+	// do the work on the parent
+	initFuser.doit((SIRPipeline)((FilterInfo)filterInfo.get(0)).filter.getParent());
 
-	// make the actual function
-	return initFuser.getInitFunction();
+	// make the finished initfuser
+	return initFuser;
     }
 
     /**
@@ -1197,33 +1173,14 @@ class InitFuser extends SLIRReplacingVisitor {
 	this.numFused = 0;
     }
 
-    /**
-     * Visits an init statement.
-     */
-    public Object visitInitStatement(SIRInitStatement self,
-				     JExpression[] args,
-				     SIRStream target) {
-	// if <target> is a filter that we're fusing, then incorporate
-	// this init statement into the fused work function, and
-	// replace it with an empty statement in the parent.
+    public void doit(SIRPipeline parent) {
 	for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
+	    // process the arguments to a filter being fused
 	    FilterInfo info = (FilterInfo)it.next();
-	    if (info.filter == target) {
-		processArgs(info, args);
-		// if this is the last one, replace it with call to
-		// fused init function
-		if (!it.hasNext()) {
-		    makeInitFunction();
-		    return makeInitCall(filterInfo);
-		} else {
-		    // otherwise, just return an empty statement
-		    return new JEmptyStatement(null, null);
-		}
-	    }
+	    int index = parent.indexOf(info.filter);
+	    processArgs(info, parent.getParams(index));
 	}
-
-	// otherwise, just leave it the way it was
-	return self;
+	makeInitFunction();
     }
 
     /**
@@ -1231,16 +1188,15 @@ class InitFuser extends SLIRReplacingVisitor {
      * incorporate this info into the init function of the fused
      * filter.
      */
-    private void processArgs(FilterInfo info, 
-			     JExpression[] args) {
+    private void processArgs(FilterInfo info, List args) {
 	// make parameters for <args>, and build <newArgs> to pass
 	// to new init function call
-	JExpression[] newArgs = new JExpression[args.length];
-	for (int i=0; i<args.length; i++) {
+	JExpression[] newArgs = new JExpression[args.size()];
+	for (int i=0; i<args.size(); i++) {
 	    JFormalParameter param = 
 		new JFormalParameter(null,
 				     0,
-				     args[i].getType(),
+				     ((JExpression)args.get(i)).getType(),
 				     FusePipe.INIT_PARAM_NAME + 
 				     "_" + i + "_" + numFused,
 				     false);
@@ -1253,7 +1209,7 @@ class InitFuser extends SLIRReplacingVisitor {
 	}
 
 	// add the arguments to the list
-	fusedArgs.addAll(Arrays.asList(args));
+	fusedArgs.addAll(args);
 
 	// make a call to the init function of <info> with <params>
 	fusedBlock.addStatement(new JExpressionStatement(
@@ -1262,19 +1218,6 @@ class InitFuser extends SLIRReplacingVisitor {
 					new JThisExpression(null),
 					info.filter.getInit().getName(),
 					newArgs), null));
-    }
-
-    /**
-     * Fabricates a call to this init function.
-     */
-    private JStatement makeInitCall(List filterInfo) {
-	return new SIRInitStatement(null, 
-				    null, 
-				    /* args */
-				    (JExpression[])
-				    fusedArgs.toArray(new JExpression[0]),
-				    /* target */
-				    fusedFilter);
     }
 
     /**
@@ -1325,4 +1268,13 @@ class InitFuser extends SLIRReplacingVisitor {
 	Utils.assert(initFunction!=null);
 	return initFunction;
     }
+
+    /**
+     * Returns the list of arguments that should be passed to init
+     * function.
+     */
+    public List getInitArgs() {
+	return fusedArgs;
+    }
+    
 }

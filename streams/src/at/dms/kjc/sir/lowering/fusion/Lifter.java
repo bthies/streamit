@@ -35,31 +35,14 @@ public class Lifter {
 	// rename the contents of <filter>
 	new RenameAll().renameFilterContents(filter);
 
-	// replace call from <pipe's> init to <filter> with a method call
-        pipe.getInit().accept(new SLIRReplacingVisitor() {
-                public Object visitInitStatement(SIRInitStatement oldSelf,
-                                                 JExpression[] oldArgs,
-                                                 SIRStream oldTarget)
-                {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-
-		    // change the sir init statement into a call to
-		    // the init function
-		    if (self.getTarget()==filter) {
-			return new JExpressionStatement(null,
-							new JMethodCallExpression(null, 
-						     new JThisExpression(null),
-						     self.getTarget().getInit().getName(),
-									      self.getArgs()),
-							null);
-		    } else {
-			return self;
-		    }
-		}
-	    });
+	// add a method call to filter's <init> from <pipe's> init function
+	pipe.getInit().addStatement(
+		    new JExpressionStatement(null,
+			     new JMethodCallExpression(null, 
+			     new JThisExpression(null),
+			     filter.getInit().getName(),
+			     (JExpression[])pipe.getParams(pipe.indexOf(filter)).toArray(new JExpression[0])),
+				     null));
 
 	// add all the methods and fields of <pipe> to <filter>
 	filter.addFields(pipe.getFields());
@@ -70,27 +53,5 @@ public class Lifter {
 
 	// in parent, replace <pipe> with <filter>
 	pipe.getParent().replace(pipe, filter);
-
-	// in parent, replace initialization of <pipe> with initialization of <filter>
-	pipe.getParent().getInit().accept(new SLIRReplacingVisitor() {
-		public Object visitInitStatement(SIRInitStatement oldSelf,
-						 JExpression[] oldArgs,
-						 SIRStream oldTarget) {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-		    
-		    // if we're the target pipe, change target to be
-		    // <filter>.
-		    if (self.getTarget()==pipe) {
-			self.setTarget(filter);
-			return self;
-		    } else {
-			// otherwise, return self
-			return self;
-		    }
-		}
-	    });
     }
 }

@@ -209,58 +209,7 @@ public class FuseSplit {
 	    parent.add(index, splitFilter);
 	}
 
-	// we also have <newfilter> replacing <sj>
-        replaceParentInit(sj, newFilter, splitFilter, joinFilter);
-
         return newFilter;
-    }
-
-
-    /**
-     * Replaces parent init function calls to <oldStr> with calls to
-     * <newStr>, adding calls to <preStr> and <postStr> with no args.
-     */
-    private static void replaceParentInit(final SIRSplitJoin oldStr,
-					  final SIRStream newStr,
-					  final SIRStream preStr,
-					  final SIRStream postStr) {
-
-        SIRStream parent = oldStr.getParent();
-	// replace the SIRInitStatements in the parent
-	parent.getInit().accept(new SLIRReplacingVisitor() {
-		public Object visitInitStatement(SIRInitStatement oldSelf,
-						 JExpression[] oldArgs,
-						 SIRStream oldTarget) {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-
-		    // if we're not <oldstr>, just return <self>
-		    if (self.getTarget()!=oldStr) {
-			return self;
-		    }
-
-		    // otherwise, start by making target of <self> to <newStr>
-		    self.setTarget(newStr);
-
-		    // then make a jblock initializing newStr, preStr, postStr
-		    LinkedList statements = new LinkedList();
-
-		    // ignore the preStr if we don't have one
-		    if (preStr!=null) {
-			statements.add(new SIRInitStatement(null, null, new JExpression[0], preStr));
-		    }
-		    statements.add(self);
-		    // ignore the postStr if we don't have one
-		    if (postStr!=null) {
-			statements.add(new SIRInitStatement(null, null, new JExpression[0], postStr));
-		    }
-
-		    // return a block
-		    return new JBlock(null, statements, null);
-		}
-	    });
     }
 
     /**
@@ -398,29 +347,19 @@ public class FuseSplit {
     private static JMethodDeclaration makeInitFunction(SIRSplitJoin sj,
 						       List children) { 
         // Start with the init function from the split/join.
-	JMethodDeclaration md = sj.getInit();
-	// replace init statements with calls to the init function
-        md.accept(new SLIRReplacingVisitor() {
-                public Object visitInitStatement(SIRInitStatement oldSelf,
-                                                 JExpression[] oldArgs,
-                                                 SIRStream oldTarget)
-                {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-
-		    // change the sir init statement into a call to
-		    // the init function
-		    return new JExpressionStatement(null,
-						    new JMethodCallExpression(null, 
+	JMethodDeclaration init = sj.getInit();
+	// add calls to init functions
+	for (int i=0; i<sj.size(); i++) {
+	    SIRStream child = sj.get(i);
+	    List params = sj.getParams(i);
+	    init.addStatement(new JExpressionStatement(null,
+						   new JMethodCallExpression(null, 
 						     new JThisExpression(null),
-						     self.getTarget().getInit().getName(),
-									      self.getArgs()),
-						    null);
-                }
-            });
-        return md;
+						     child.getInit().getName(),
+						     (JExpression[])params.toArray(new JExpression[0])),
+						       null));
+	}
+        return init;
     }
 
     private static JMethodDeclaration makeWorkFunction(SIRSplitJoin sj,

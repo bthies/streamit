@@ -113,7 +113,7 @@ public class ClusterFusion
 	    /*
 	    if (node.edges[0] != null && node.edges[0].contents instanceof SIRJoiner) {
 		
-		fuseTo(node.edges[0], node);
+	        fuseTo(node.edges[0], node);
 		
 	    }
 	    */

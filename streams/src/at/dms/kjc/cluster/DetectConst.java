@@ -21,8 +21,6 @@ import java.util.Vector;
 import at.dms.kjc.raw.*;
 
 /**
- * This class dumps the tile code for each filter into a file based 
- * on the tile number assigned 
  */
 public class DetectConst extends SLIREmptyVisitor {
 

@@ -2,7 +2,7 @@
 
 void->void pipeline chol() {
     int N=2;
-    add sourcer(N);
+    add source(N);
     add rchol(N);
     add sink(N);
 }
@@ -21,7 +21,7 @@ float->float pipeline rchol( int N) {
     add divises(N); // this filter does the divisions corresponding to the first column
     add updates(N); // this filter performes the updates corresponding to the first column
     if (N>1)
-	add break(N);   // this splitjoin takes apart the first column and performes the chol(N-1) on the resulting matrix it is where the actual recursion occurs.
+	add break1(N);   // this splitjoin takes apart the first column and performes the chol(N-1) on the resulting matrix it is where the actual recursion occurs.
 }
 
 
@@ -29,15 +29,21 @@ float->float pipeline rchol( int N) {
 
 
 
-float->float splitjoin break(int N) {
+float->float splitjoin break1(int N) {
     split roundrobin(N,N*(N-1)/2);
-    add identity(Float.TYPE);
+    add FloatIdentity();
     add rchol(N-1);
     join roundrobin(N,(N*(N-1)/2));
 
-
 }
 
+
+// the name says it all
+float->float filter FloatIdentity() {
+    work pop 1 push 1 {
+	push(pop());
+    }
+}
 
 // performs the first column divisions
 
@@ -47,7 +53,7 @@ float->float filter divises(int N) {
     work push (N*(N+1)/2) pop N*(N+1)/2  {
 	float temp1;
 	temp1=pop();
-	temp1=sqrt(temp1);
+	temp1=(float) sqrt(temp1);
 	push(temp1);
 
 	for(int i=1; i<N; i++)
@@ -106,11 +112,11 @@ float->void filter sink (int N) {
 	for (int i=0;i<N;i++)
 	    for (int j=i;j<N;j++)
 		{
-		    print("col: ");
+		    //print("col: ");
 		    print(i);
-		    print("  row: ");
+		    //print("  row: ");
 		    print(j);
-		    print(" = ");
+		    //print(" = ");
 		    println(pop());
 		}
     }

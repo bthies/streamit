@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.kjc.sir.*;
 import at.dms.kjc.*;
+import at.dms.kjc.flatgraph2.*;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import at.dms.kjc.iterator.*;
@@ -69,8 +70,14 @@ public class SpaceTimeBackend
 	Lifter.liftAggressiveSync(str);
        	StreamItDot.printGraph(str, "before.dot");
 
-	//we need stuff here! Jasper?
-
+	//Jasperln's Stuff
+	FlattenGraph.flattenGraph(str);
+	UnflatFilter[] topNodes=FlattenGraph.getTopLevelNodes();
+	System.out.println("Top Nodes:");
+	for(int i=0;i<topNodes.length;i++)
+	    System.out.println(topNodes[i]);
+	//System.out.println(FlattenGraph.getFilterCount());
+	
 	//this is here just to test things!!
 	Trace[] init = new Trace[2];
 	Trace[] steady = new Trace[2];
@@ -92,3 +99,5 @@ public class SpaceTimeBackend
 }
 
     
+
+

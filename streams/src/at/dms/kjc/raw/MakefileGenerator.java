@@ -66,9 +66,10 @@ public class MakefileGenerator
                 createBCFile(false, tiles);
 	    if (RawBackend.rawRows > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
-		//fix for snake boot race condition
-		fw.write("MULTI_SNAKEBOOT = 0\n\n");
 	    }
+	    //fix for snake boot race condition
+	    fw.write("MULTI_SNAKEBOOT = 0\n\n");
+	    
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {
 		int tile = 

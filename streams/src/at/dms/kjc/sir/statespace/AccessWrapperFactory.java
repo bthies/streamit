@@ -12,7 +12,7 @@ import at.dms.kjc.iterator.*;
  * This class has also been pressed into service to perform manipulations on
  * hashtable mappings that involve creating access wrappers.<br>
  *
- * $Id: AccessWrapperFactory.java,v 1.2 2004-02-11 19:12:02 thies Exp $
+ * $Id: AccessWrapperFactory.java,v 1.3 2004-02-12 22:32:57 sitij Exp $
  **/
 class AccessWrapperFactory {
     /**
@@ -51,6 +51,12 @@ class AccessWrapperFactory {
 	}
     }
 
+    // this addition is for JFieldDeclaration, which should be wrapped as JFieldAccessExpression
+
+    public static AccessWrapper wrapAccess(JFieldDeclaration decl) {
+	    return new FieldAccessWrapper(decl.getVariable().getIdent());
+    }
+
     /** Returns true if the passed access wrapper wraps a field. **/
     public static boolean isFieldWrapper(Object o) {
 	if (o == null) {
@@ -68,10 +74,12 @@ class AccessWrapperFactory {
      * all zero'd).<p>
      * formSize is the size of the [0..]+[0] linear forms to add 
      **/
+    
     public static void addInitialArrayMappings(JExpression var,
 					       int arraySize,
 					       HashMap mappings,
-					       int formSize) {
+					       int formSize,
+					       int stateSize) {
 	// try and create a wrapper for the base array expression
 	AccessWrapper prefixWrapper = wrapAccess(var);
 	// if we couldn't wrap successfully, complain loudly.
@@ -83,7 +91,7 @@ class AccessWrapperFactory {
 	    // make an access wrapper for this array access
 	    AccessWrapper key = new ArrayAccessWrapper(prefixWrapper, i);
 	    // make the zero linear form
-	    LinearForm value  = new LinearForm(formSize);
+	    LinearForm value  = new LinearForm(formSize, stateSize);
 	    // sanity check -- if we already have this mapping something is wrong
 	    if (mappings.containsKey(key)) {
 		throw new RuntimeException("Mapping already contains array initializer.");
@@ -92,7 +100,7 @@ class AccessWrapperFactory {
 	    mappings.put(key,value);
 	}
     }
-	
+    
     ///////////////////////////////////////////
     //////// Inner Classes
     ///////////////////////////////////////////    

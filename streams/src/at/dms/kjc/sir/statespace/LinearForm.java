@@ -2,36 +2,39 @@ package at.dms.kjc.sir.statespace;
 
 /**
  * A LinearForm is the representation of a variable inside
- * the linear dataflow analysis. It is comprised of a vector v and a value c.
- * The vector corresponds to the combinations of inputs used to compute the value,
- * and the value corresponds to a constant that is added to compute the value.<br>
+ * the linear dataflow analysis. It is comprised of vectors v and w.
+ * The vector v corresponds to the combinations of inputs used to compute the value,
+ * and the vector w corresponds to the combinations of state variables that are used to compute the value.<br>
  *
  * The basic gist of the dataflow analysis is to determine for all variables 
  * what the corresponding LinearForm is. Armed with this knowledge, we can
  * propage LinearForm information throughout the body of the filter and
  * construct a LinearFilterRepresentation from the filter.<br>
  *
- * $Id: LinearForm.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearForm.java,v 1.2 2004-02-12 22:32:57 sitij Exp $
+ * Modified to state space form by Sitij Agrawal  2/9/04
  **/
+
 public class LinearForm {
     /** weights of inputs **/
-    private FilterVector weights;
-    /** offset that is added later **/
-    private ComplexNumber offset;
+    private FilterVector v;
+    /** weights of states **/
+    private FilterVector w;
 
     /** Construct a new LinearForm with vector size size with all elements zero. **/
-    public LinearForm(int size) {
-	this.weights = new FilterVector(size);
-	this.offset = ComplexNumber.ZERO;
+    public LinearForm(int inputs, int states) {
+	this.v = new FilterVector(inputs);
+	this.w = new FilterVector(states);
     }
 
-    /** returns true if this linear form's offset is an integer **/
+    /** returns true if this linear form's offset is an integer **/   
     public boolean isIntegerOffset() {
-	if (!this.offset.isReal()) {
+        ComplexNumber off = this.getOffset();
+	if (!off.isReal()) {
 	    // offset is a complex number, not an integer
 	    return false;
 	}
-	return this.offset.isIntegral();
+	return off.isIntegral();
     }
 
     /** Get the constant offset of this linear form. **/
@@ -39,64 +42,103 @@ public class LinearForm {
 	if (!(this.isIntegerOffset())) {
 	    throw new RuntimeException("you can't get the integer offset of a non integer!");
 	}
-	return ((int)this.offset.getReal());
+        ComplexNumber off = this.getOffset();
+	return ((int)off.getReal());
     }
-    /** Get the constant offset of this linear form. **/
+
+    /** Get the constant offset of this linear form. **/    
     public ComplexNumber getOffset() {
-	return this.offset;
+        if(this.w.getSize() > 0)
+	  return this.w.getElement(this.w.getSize()-1);
+        else
+	    return new ComplexNumber(0,0);
     }
+    
     /** Set the offset with an integer. **/
-    public void setOffset(int val) {this.setOffset(new ComplexNumber(val, 0));}
+     public void setOffset(int val) {this.setOffset(new ComplexNumber(val, 0));} 
     /** Set the offset with a double. **/
-    public void setOffset(double val) {this.setOffset(new ComplexNumber(val, 0));}
+     public void setOffset(double val) {this.setOffset(new ComplexNumber(val, 0));} 
     /** Set the offset with a ComplexNumber. **/
-    public void setOffset(ComplexNumber val) {this.offset = val;}
+     public void setOffset(ComplexNumber val) {w.setElement(w.getSize()-1,val);}
     
     /**
      * Returns true if this LinearForm contains only a constant offset
-     * and a vector of all zeros.
+     * This means the inputs vector is all zeros, and the states vector is all zeros except for the last weight
      **/
+    
     public boolean isOnlyOffset() {
-	for (int i=0; i<this.weights.getSize(); i++) {
-	    if (!(ComplexNumber.ZERO.equals(this.weights.getElement(i)))) {
+	for (int i=0; i<this.v.getSize(); i++) {
+	    if (!(ComplexNumber.ZERO.equals(this.v.getElement(i)))) {
 		// if the element was non zero, return false because there
-		// was something in the weights vector
+		// was something in the inputs vector
 		return false;
 	    }
 	}
+	for (int i=0; i<this.w.getSize()-1; i++) {
+	    if (!(ComplexNumber.ZERO.equals(this.w.getElement(i)))) {
+		// if the element was non zero, return false because there
+		// was something in the states vector before the last entry
+		return false;
+	    }
+	}       
 	return true;
     }    
+    
 
-    /** Sets the weight of a particular item in the linear form. **/
-    public void setWeight(int index, ComplexNumber weight) {
-	// try and set the item in the weights vector -- it takes
+    /** Sets the weight of a particular item in the inputs vector. **/
+    public void setInputWeight(int index, ComplexNumber weight) {
+	// try and set the item in the appropriate vector -- it takes
 	// care of all of the error handling
-	this.weights.setElement(index, weight);
+       this.v.setElement(index, weight);
     }
-    /** Gets a speficied weight. **/
-    public ComplexNumber getWeight(int index) {
+
+
+    /** Sets the weight of a particular item in the states vector. **/
+    public void setStateWeight(int index, ComplexNumber weight) {
+	// try and set the item in the appropriate vector -- it takes
+	// care of all of the error handling
+       this.w.setElement(index, weight);
+    }
+
+    /** Gets a specified input weight. **/
+    public ComplexNumber getInputWeight(int index) {
 	// let the internal matrix rep handle the error bounds checking
-	return this.weights.getElement(index);
+	return this.v.getElement(index);
     }
-    /** Gets the internal size of the vecotr of this linear form (i.e. the peek amount). **/
-    public int getWeightsSize() {
-	return this.weights.getSize();
+
+    /** Gets a specified state weight. **/
+    public ComplexNumber getStateWeight(int index) {
+	// let the internal matrix rep handle the error bounds checking
+	return this.w.getElement(index);
+    }
+
+    /** Gets the internal size of the input vector of this linear form **/
+    public int getInputWeightsSize() {
+	return this.v.getSize();
+    }
+
+   /** Gets the internal size of the state vector of this linear form **/
+    public int getStateWeightsSize() {
+	return this.w.getSize();
     }
 
     /**
-     * Negate the LinearForm. To do this, we reverse the sign of the
-     * offset reverse the sign of each element in the array.
+     * Negate the LinearForm. To do this, we reverse the sign of each element each vector.
      * This method creates a new LinearForm, and returns that as the
      * the result.
      **/
     public LinearForm negate() {
 	// make a new linear form with the same size as this
-	LinearForm negatedForm = new LinearForm(this.weights.getSize());
-	// negate the offset
-	negatedForm.setOffset(this.getOffset().negate());
-	// for each element, negate the offset
-	for (int i=0; i<this.weights.getSize(); i++) {
-	    negatedForm.setWeight(i, this.getWeight(i).negate());
+	LinearForm negatedForm = new LinearForm(this.v.getSize(), this.w.getSize());
+
+	// for each element in inputs vector, negate the value
+	for (int i=0; i<this.v.getSize(); i++) {
+	    negatedForm.setInputWeight(i, this.getInputWeight(i).negate());
+	}
+
+	// for each element in states vector, negate the value
+	for (int i=0; i<this.w.getSize(); i++) {
+	    negatedForm.setStateWeight(i, this.getStateWeight(i).negate());
 	}
 	// return the negated form
 	return negatedForm;
@@ -104,7 +146,7 @@ public class LinearForm {
 
     /**
      * Add two linear forms together. To add two forms, you add each element in
-     * the weights vector element-wise, and you add the offset.
+     * each vector element-wise.
      * Returns a new linear form.
      **/
     public LinearForm plus(LinearForm other) {
@@ -112,15 +154,18 @@ public class LinearForm {
 	if (other == null) {throw new IllegalArgumentException("null argument");}
 	// check to make sure that this linear form is the same
 	// size as this (otherwise don't allow the add)
-	if (other.weights.getSize() != this.weights.getSize()) {
+	if ((other.v.getSize() != this.v.getSize())||(other.w.getSize() != this.w.getSize())) {
 	    throw new IllegalArgumentException("sizes of linear forms don't match while adding.");
 	}
-	LinearForm summedForm = new LinearForm(this.weights.getSize());
-	// sum the offsets
-	summedForm.setOffset(this.getOffset().plus(other.getOffset()));
-	// for each of the weights, sum the weights
-	for(int i=0; i<this.weights.getSize(); i++) {
-	    summedForm.setWeight(i,this.getWeight(i).plus(other.getWeight(i)));
+	LinearForm summedForm = new LinearForm(this.v.getSize(), this.w.getSize());
+	
+	// for each of the weights, sum the input weights
+	for(int i=0; i<this.v.getSize(); i++) {
+	    summedForm.setInputWeight(i,this.getInputWeight(i).plus(other.getInputWeight(i)));
+	}
+	// for each of the state weights, sum the input weights
+	for(int i=0; i<this.w.getSize(); i++) {
+	    summedForm.setStateWeight(i,this.getStateWeight(i).plus(other.getStateWeight(i)));
 	}
 	// return the summed linear form
 	return summedForm;
@@ -128,20 +173,20 @@ public class LinearForm {
 
     /**
      * Scale a linear form by a constant. This is used for multiplications
-     * in the code by a constant factor. All of the vector entries as well
-     * as the constant of the linear form are scaled by this constant.
+     * in the code by a constant factor. All of the vector entries
+     * of the linear form are scaled by this constant.
      **/
     public LinearForm multiplyByConstant(ComplexNumber scaleFactor) {
 	if (scaleFactor == null) {
 	    throw new IllegalArgumentException("null scale factor");
 	}
-	LinearForm scaledForm = new LinearForm(this.getWeightsSize());
+	LinearForm scaledForm = new LinearForm(this.v.getSize(), this.w.getSize());
 	// copy the weights from this
-	scaledForm.weights = (FilterVector)this.weights.copy();
+	scaledForm.v = (FilterVector)this.v.copy();
+	scaledForm.w = (FilterVector)this.w.copy();
 	// actually scale the weights 
-	scaledForm.weights.scale(scaleFactor);
-	// scale the offset
-	scaledForm.offset = this.offset.times(scaleFactor);
+	scaledForm.v.scale(scaleFactor);
+	scaledForm.w.scale(scaleFactor);
 	return scaledForm;
     }
 
@@ -153,56 +198,77 @@ public class LinearForm {
 	    throw new IllegalArgumentException("null divide factor");
 	}
 	// make a new linear form
-	LinearForm dividedForm = new LinearForm(this.getWeightsSize());
+	LinearForm dividedForm = new LinearForm(this.v.getSize(),this.w.getSize());
 	// copy over the weights, one by one, dividing each one
-	for (int i=0; i<this.getWeightsSize(); i++) {
-	    dividedForm.setWeight(i,this.getWeight(i).dividedby(divideFactor));
+	for (int i=0; i<this.v.getSize(); i++) {
+	    dividedForm.setInputWeight(i,this.getInputWeight(i).dividedby(divideFactor));
 	}
-	// copy over the divided offset.
-	dividedForm.setOffset(this.getOffset().dividedby(divideFactor));
+	for (int i=0; i<this.w.getSize(); i++) {
+	    dividedForm.setStateWeight(i,this.getStateWeight(i).dividedby(divideFactor));
+	}
 
 	return dividedForm;
     }
 
     /**
-     * Add all of the weights in this linear form to the specified column in
+     * Add all of the weights in this linear form to the specified row in
      * the passed FilterMatrix. Weights are copied from index 0 to index n of
-     * the linear form, and from index (0,col) to index (n,col) of the filter matrix.
-     * eg from left to right in linear form becomes top to bottom in
+     * the linear form, and from index (row,0) to index (row,n) of the filter matrix.
+     * eg from left to right in linear form becomes left to right in
      * filter matrix. One more way -- copy the row vector in this linear form into the
-     * col column of the filter matrix.<br>
-     *
-     * Note that the offset of the linear form is <b>not</b> copied anywhere.
+     * row row of the filter matrix.<br>
+     * 
      **/
-    public void copyToColumn(FilterMatrix fm, int col) {
-	if (fm==null) {throw new IllegalArgumentException("null to copyToColumn");}
-	// check to make sure that the column is valid
-	if (fm.getCols() <= col) {
-	    throw new IllegalArgumentException("column " + col +
-					       " is an invalid column in filter matrix " + fm);
+    
+    public void copyInputsToRow(FilterMatrix fm, int row) {
+	if (fm==null) {throw new IllegalArgumentException("null to copyToRow");}
+	// check to make sure that the row is valid
+	if (fm.getRows() <= row) {
+	    throw new IllegalArgumentException("row " + row +
+					       " is an invalid row in filter matrix " + fm);
 	}
-	// make sure that we are the same size as the column we are trying to copy into.
-	if (this.getWeightsSize() != fm.getRows()) {
-	    throw new IllegalArgumentException("cols of filter matrix aren't the same as this linear form");
+	// make sure that we are the same size as the row we are trying to copy into.
+	if (this.getInputWeightsSize() != fm.getCols()) {
+	    throw new IllegalArgumentException("rows of filter matrix aren't the same as this linear form");
 	}
 
 	// just copy the elements in weights, element-wise
-	int size = this.getWeightsSize();
+	int size = this.getInputWeightsSize();
 	for (int i=0; i<size; i++) {
-	    fm.setElement(i,col, this.weights.getElement(i));
+	    fm.setElement(row, i, this.v.getElement(i));
 	}
 	// and we are done
     }
+
+    public void copyStatesToRow(FilterMatrix fm, int row) {
+	if (fm==null) {throw new IllegalArgumentException("null to copyToRow");}
+	// check to make sure that the row is valid
+	if (fm.getRows() <= row) {
+	    throw new IllegalArgumentException("row " + row +
+					       " is an invalid row in filter matrix " + fm);
+	}
+	// make sure that we are the same size as the row we are trying to copy into.
+	if (this.getStateWeightsSize() != fm.getCols()) {
+	    throw new IllegalArgumentException("rows of filter matrix aren't the same as this linear form");
+	}
+
+	// just copy the elements in weights, element-wise
+	int size = this.getStateWeightsSize();
+	for (int i=0; i<size; i++) {
+	    fm.setElement(row, i, this.w.getElement(i));
+	}
+	// and we are done
+    }
+    
 
     /** Returns true if this object is equal in value to this linear form. **/
     public boolean equals(Object o) {
 	if (o == null) {return false;}
 	if (!(o instanceof LinearForm)) {return false;}
 	LinearForm other = (LinearForm)o;
-	// compare both the weights and the
-	// offset
-	return ((this.offset.equals(other.offset)) &&
-		(this.weights.equals(other.weights)));
+	// compare both vectors
+	return ((this.v.equals(other.v)) &&
+		(this.w.equals(other.w)));
     }
 
     /** Preserve equals() semantics. **/
@@ -213,8 +279,8 @@ public class LinearForm {
     /** Pretty print this linear form. **/
     public String toString() {
 	return ("Linear Form: (" +
-		this.weights.toString() +
-		" + " + this.offset + ")");
+		this.v.toString() +
+		" + " + this.w.toString() + ")");
     }
 }
 

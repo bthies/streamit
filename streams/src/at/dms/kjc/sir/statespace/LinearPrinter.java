@@ -19,13 +19,13 @@ public class LinearPrinter {
     /** Prints message to stdout if flag is set to true. **/
     public static void println(String message) {
 	if (outputEnabled) {
-	    System.out.println(message);
+	    System.err.println(message);
 	}
     }
     /** Prints message to stdout if flag is set to true. **/
     public static void print(String message) {
 	if (outputEnabled) {
-	    System.out.print(message);
+	    System.err.print(message);
 	}
     }
     /** Prints message with WARNING: prefix to stdout if flag is set to true. **/

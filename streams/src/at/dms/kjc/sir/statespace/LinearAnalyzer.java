@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.2 2004-02-12 22:32:57 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -112,7 +112,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
     }
 
     /**
-     * Writes <rep> to files, names of <key>_A, <key>_b
+     * Writes <rep> to files, names of <key>_A, <key>_B, <key>_C, <key>_D
      */
     private void writeToFile(SIRStream key, LinearFilterRepresentation rep) {
 	String base = key.getName().replace(' ','_');
@@ -122,9 +122,19 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    outA.write(rep.getA().toTabSeparatedString());
 	    outA.close();
 	    
-	    FileWriter outB = new FileWriter(base + "_b.tsv");
-	    outB.write(rep.getb().toTabSeparatedString());
+
+	    FileWriter outB = new FileWriter(base + "_B.tsv");
+	    outB.write(rep.getB().toTabSeparatedString());
 	    outB.close();
+
+	    FileWriter outC = new FileWriter(base + "_C.tsv");
+	    outC.write(rep.getC().toTabSeparatedString());
+	    outC.close();
+
+	    FileWriter outD = new FileWriter(base + "_D.tsv");
+	    outA.write(rep.getD().toTabSeparatedString());
+	    outD.close();
+	
 	} catch (Exception e) {
 	    e.printStackTrace();
 	}
@@ -132,7 +142,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
     /**
      * Main entry point -- searches the passed stream for linear
-     * filters and calculates their associated matricies.  Uses a
+     * filters and calculates their associated matrices.  Uses a
      * fresh linear analyzer.<br>
      *
      * If the debug flag is set, then we print a lot of debugging information.<br>
@@ -192,9 +202,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    return;
 	}
 
-	LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),
-								 peekRate, pushRate, popRate);
+	//	LinearFilterVisitor theVisitor = new LinearFilterVisitor(self.getIdent(),peekRate, pushRate, popRate);
 	
+	LinearFilterVisitor theVisitor = new LinearFilterVisitor(self);
+
 	// if we haven't unrolled this node yet, then do it here, by cloning
 	SIRFilter unrolledSelf;
 	if (KjcOptions.unroll>=100000) {
@@ -210,6 +221,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	//  field prop is supposed to take care of this.)
 	try {
 	    unrolledSelf.getWork().accept(theVisitor);
+	    theVisitor.complete();
 	} catch (NonLinearException e) {
 	    LinearPrinter.println("  caught a non-linear exception -- eg the filter is non linear.");
 	    theVisitor.setNonLinear(); // throw the flag that says the filter is non linear
@@ -221,8 +233,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // don't even generate the string.
 	    if (LinearPrinter.getOutput()) {
 		LinearPrinter.println("Linear filter found: " + self +
-				      "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
-				      "\n-->Constant Vector:\n" + theVisitor.getConstantVector());
+				      "\n-->MatrixA:\n" + theVisitor.getA() + 
+				      "\n-->MatrixB:\n" + theVisitor.getB() +
+				      "\n-->MatrixC:\n" + theVisitor.getC() +
+				      "\n-->MatrixD:\n" + theVisitor.getD());
 	    }
 	    // add a mapping from the filter to its linear form.
 	    addLinearRepresentation(self, theVisitor.getLinearRepresentation());
@@ -392,8 +406,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    // because printing this takes a loooooong time for big matrices) 
 	    if (LinearPrinter.getOutput()) {
 		LinearPrinter.println("Linear pipeline found: " + overallPipe +
-				      "\n-->Matrix:\n" + newRep.getA() +
-				      "\n-->Constant Vector:\n" + newRep.getb());
+				      "\n-->MatrixA:\n" + newRep.getA() +
+				      "\n-->MatrixB:\n" + newRep.getB() +
+				      "\n-->MatrixC:\n" + newRep.getC() +
+				      "\n-->MatrixD:\n" + newRep.getD());
 	    }
 	} catch (NoTransformPossibleException e) {
 	    // otherwise something bad happened in the combination process.
@@ -521,8 +537,10 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// check for debugging so we don't waste time producing output if not needed
 	if (LinearPrinter.getOutput()) {
 	    LinearPrinter.println("Linear splitjoin found: " + self +
-				  "\n-->Matrix:\n" + newRep.getA() +
-				  "\n-->Constant Vector:\n" + newRep.getb());
+				  "\n-->MatrixA:\n" + newRep.getA() +
+				  "\n-->MatrixB:\n" + newRep.getB() +
+				  "\n-->MatrixC:\n" + newRep.getC() +
+				  "\n-->MatrixD:\n" + newRep.getD());
 	}
 	// add a mapping from this split join to the new linear representation
 	addLinearRepresentation(self, newRep);
@@ -623,8 +641,17 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	    newA.setElement(vTot - vSum_k1 + i, i, ComplexNumber.ONE);
 	}
 
+
+	/************************* need to CHANGE! **************************/
+
 	// make a new decimator rep out of the new A and b
-	return new LinearFilterRepresentation(newA, newb, vTot); // pop==peek
+	//	return new LinearFilterRepresentation(newA, newb, vTot); // pop==peek
+
+	return null;
+
+
+	/**********************************************************************/
+
     }
     
     ///////////////////////
@@ -732,3 +759,5 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	}
     }
 }
+
+

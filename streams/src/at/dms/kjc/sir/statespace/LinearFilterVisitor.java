@@ -7,10 +7,8 @@ import at.dms.kjc.sir.*;
 
 /**
  * The visitor that goes through all of the expressions of a work function
- * of a filter to determine if the filter is linear and if it is what matrix
- * corresponds to the filter. This class implements almost verbatim the dataflow
- * algorithm presented in http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf <br>
- *
+ * of a filter to determine if the filter is in linear state space form and if it is what matrices
+ * corresponds to the filter. 
  * This main workings of this class are as follows: it is an AttributeVisitor,
  * which means (in plain English), that its methods return objects. For the
  * LinearFilterVisitor, each method analyzes a IR node. It returns one of two
@@ -19,10 +17,12 @@ import at.dms.kjc.sir.*;
  * Returning null indicates that that particular IR node does not compute a
  * linear function. Otherwise, a LinearForm is returned, which corresponds to
  * the linear function that is computed by that IR node. LinearForms are
- * used to represent linear combinations of the input plus a constant.<br>
+ * used to represent linear combinations of the inputs and states.<br>
  *
- * $Id: LinearFilterVisitor.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearFilterVisitor.java,v 1.2 2004-02-12 22:32:57 sitij Exp $
+ * Modified to state space form by Sitij Agrawal  2/9/04
  **/
+
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
      * Mappings from JLocalVariables and JFieldAccessExpressons
@@ -33,22 +33,37 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private HashMap variablesToLinearForms;
 
     /**
-     * Number of items that are peeked at. Therefore this is also the same
-     * size of the vector that must be used to represent each affine combination.
+     * Number of items that are peeked at. This information is needed for
+     * later stages of analysis and is passed on to the LinearFilterRepresentation.
      **/
     private int peekSize;
 
     /**
-     * Number of items that are pused. Therefore it also represents the
-     * number of columns that are in the matrix representation.
+     * Number of items that are pushed. Therefore it also represents the
+     * number of rows that are in the matrices C, D.
      **/
     private int pushSize;
 
     /**
-     * Number of items that are poped. This information is needed for
-     * later stages of analysis and is passed on to the LinearFilterRepresentation.
+     * Number of items that are popped. Therefore this is also the same
+     * size of the vector that must be used to represent each affine combination of inputs.
      **/
     private int popSize;
+
+    /**
+     * Number of (global) fields
+     **/
+    private int fieldSize;
+
+    /**
+     * Fields enumerated in an array
+     **/
+    private JFieldDeclaration[] fieldArray;
+
+    /**
+     * Number of states. There are peekSize-popSize buffer states, one state for each global      * field declaration, and one state used as a constant.
+     **/
+    private int stateSize;
 
     /**
      * The current offset to add to a peeked value. Eg if we execute
@@ -71,14 +86,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      **/
     private boolean nonLinearFlag;
 
-    /** The matrix which represents this filter. **/
-    private FilterMatrix representationMatrix;
-
-    /**
-     * A vector of offsets (eg constants that need to be added
-     * to the combo of inputs to produce the output).
-     **/
-    private FilterVector representationVector;
+    /** The matrices which represents this filter. **/
+    private FilterMatrix A;
+    private FilterMatrix B;
+    private FilterMatrix C;
+    private FilterMatrix D;
 
     /**
      * String which represents the name of the filter being visited -- this is used
@@ -87,24 +99,101 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     private String filterName;
 
     
+    private SIRFilter filt;
+
+
+
     /**
      * Create a new LinearFilterVisitor which is looking to figure out 
      * how to compute, for all variables, linear forms from the input.
      * Also creates a LinearFilterRepresentation if the
      * filter computes a linear function.
      **/
-    public LinearFilterVisitor(String name, int numPeeks, int numPushes, int numPops) {
-	this.peekSize = numPeeks;
-	this.pushSize = numPushes;
-	this.popSize  = numPops;
+    public LinearFilterVisitor(SIRFilter Self) {
+        this.filt = Self;
+	this.peekSize = Self.getPeekInt();
+	this.pushSize = Self.getPushInt();
+	this.popSize  = Self.getPopInt();
+	this.fieldArray = Self.getFields();
+        this.fieldSize = this.fieldArray.length;
+
+	// one state for each buffered item, one state for each field, one constant state
+        this.stateSize = (this.peekSize - this.popSize) + this.fieldSize + 1;
+
 	this.variablesToLinearForms = new HashMap();
 	this.peekOffset = 0;
 	this.pushOffset = 0;
-	this.representationMatrix = new FilterMatrix(numPeeks, numPushes);
-	this.representationVector = new FilterVector(numPushes);
+
+	// create mappings for each global variable
+
+        AccessWrapper fieldWrapper;
+        LinearForm fieldForm;
+        int offset = this.peekSize - this.popSize;
+
+	for(int i = 0; i < this.fieldSize; i++) {
+	    fieldWrapper = AccessWrapperFactory.wrapAccess(this.fieldArray[i]);
+	    fieldForm = new LinearForm(this.popSize,this.stateSize);
+	    fieldForm.setStateWeight(offset+i, ComplexNumber.ONE);
+	    this.variablesToLinearForms.put(fieldWrapper,fieldForm);
+	}
+
+	// create matrices
+
+        this.A = new FilterMatrix(this.stateSize, this.stateSize);
+	this.B = new FilterMatrix(this.stateSize, this.popSize);
+	this.C = new FilterMatrix(this.pushSize, this.stateSize);        
+	this.D = new FilterMatrix(this.pushSize, this.popSize);
+
 	this.nonLinearFlag = false;
-	this.filterName = name;
+	this.filterName = Self.getIdent();
 	checkRep();
+
+    }
+
+
+    /**
+     * This is the final clean-up code
+     * It finds the final assignments to state-variables (which go to matrices A and B)
+     */
+
+    public void complete() {
+
+	AccessWrapper fieldWrapper;
+        LinearForm fieldForm;
+        int offset = this.peekSize - this.popSize;
+        int rowVal;
+
+	for(int i = 0; i < this.fieldSize; i++) {
+
+	  fieldWrapper =  AccessWrapperFactory.wrapAccess( this.fieldArray[i]);
+
+	  if (this.variablesToLinearForms.containsKey(fieldWrapper)) {
+	    LinearPrinter.println("   (found mapping for " + fieldWrapper + ")");
+	    fieldForm = (LinearForm)this.variablesToLinearForms.get(fieldWrapper);
+	    rowVal = offset+i;
+	    // we have a linear form, so we update the matrix representation
+	    fieldForm.copyInputsToRow(this.B, rowVal);
+	    fieldForm.copyStatesToRow(this.A, rowVal);
+	  } 
+	  else {
+	    LinearPrinter.println("   (no mapping found for " + fieldWrapper + ")");
+	    this.nonLinearFlag = true;
+	  }
+	}
+
+	// this loop updates the peek states
+	LinearForm peekLinear;
+	for(int i=0; i < offset; i++) {
+	    peekLinear = new LinearForm(this.popSize, this.stateSize);
+	    if(i+this.popSize < offset) {   // the ith peek state is updated by a state
+		peekLinear.setStateWeight(i+this.popSize,ComplexNumber.ONE);
+	    }
+	    else {   // the ith peek state is updated by an input
+		peekLinear.setInputWeight(i+this.popSize - offset,ComplexNumber.ONE);
+	    }
+	    peekLinear.copyInputsToRow(this.B, i);
+	    peekLinear.copyStatesToRow(this.A, i);
+	}
 
     }
 
@@ -113,24 +202,25 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * data structures are copied, but the things that they point to are not.
      * Used at program split points (eg if statements).
      **/
+    
     private LinearFilterVisitor copy() {
 	// first, make the copy using the default constructors
-	LinearFilterVisitor otherVisitor = new LinearFilterVisitor(this.filterName,
-								   this.peekSize,
-								   this.pushSize,
-								   this.popSize);
+	LinearFilterVisitor otherVisitor = new LinearFilterVisitor(this.filt);
 
 	// now, copy the other data structures.
 	otherVisitor.variablesToLinearForms = new HashMap(this.variablesToLinearForms);
 	otherVisitor.peekOffset = this.peekOffset;
 	otherVisitor.pushOffset = this.pushOffset;
-	otherVisitor.representationMatrix = this.representationMatrix.copy();
-	otherVisitor.representationVector = (FilterVector)this.representationVector.copy();
+	otherVisitor.A = this.A.copy();
+	otherVisitor.B = this.B.copy();
+	otherVisitor.C = this.C.copy();
+	otherVisitor.D = this.D.copy();	
 	otherVisitor.nonLinearFlag = this.nonLinearFlag;
 
 	// and I think that that is all the state that we need.
 	return otherVisitor;
     }
+    
 
     /**
      * Recconcile the differences between two LinearFilterVisitors after
@@ -149,6 +239,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * we complain loudly, and bomb with an exception. If the reps are not different,
      * then we do a set union on the variables to linear forms (like const prop).
      **/
+    
     public void applyConfluence(LinearFilterVisitor other) {
 	// first thing that we need to do is to check both non linear flags.
 	if (this.nonLinearFlag || other.nonLinearFlag) {
@@ -156,8 +247,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    throw new NonLinearException("One side of an if branch is non-linear");
 	}
 	// now, check the linear representations
-	if ((!this.representationMatrix.equals(other.representationMatrix)) ||
-	    (!this.representationVector.equals(other.representationVector))) {
+	if ((!this.A.equals(other.A)) || (!this.B.equals(other.B)) ||
+            (!this.C.equals(other.C)) || (!this.D.equals(other.D))) {
 	    this.nonLinearFlag = true;
 	    throw new NonLinearException("Different branches compute different functions. Nonlinear!");
 	}
@@ -182,6 +273,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// make sure we are still good from a representation invariant point of view
 	checkRep();
     }
+    
 
     /**
      * Implements set union for the confluence operation.
@@ -189,6 +281,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * a HashMap that contains only mappings from the same
      * key to the same value in both map1 and map2.
      **/
+    
     private HashMap setUnion(HashMap map1,
 			     HashMap map2) {
 	HashMap unionMap = new HashMap();
@@ -207,8 +300,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 	return unionMap;
     }      
+    
 
-    /** Returns true of the filter computes a linear function. **/
+    /** Returns true if the filter computes a linear state space function. **/
     public boolean computesLinearFunction() {
 	// check the flag (which is set when we hit a non linear function in a push expression)
 	// and check that we have seen the correct number of pushes.
@@ -217,22 +311,29 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// if both the non linear flag is unset and there are enough pushes, return true
 	return ((!this.nonLinearFlag) && enoughPushesSeen);
     }
+
     /** Sets the non linear flag to true. Used when a non linear exception is thrown. **/
     public void setNonLinear() {
 	this.nonLinearFlag = true;
     }
 	   
-    /** Get the matrix representing this filter. **/
-    public FilterMatrix getMatrixRepresentation() {
-	return this.representationMatrix;
+    /** Get the matrices representing this filter. **/
+    public FilterMatrix getA() {
+	return this.A;
     }
-    /**
-     * Get the vector representing the constants that this filter
-     * adds/subtracts to produce output.
-     **/
-    public FilterVector getConstantVector() {
-	return this.representationVector;
+
+    public FilterMatrix getB() {
+	return this.B;
     }
+
+    public FilterMatrix getC() {
+	return this.C;
+    }
+
+    public FilterMatrix getD() {
+	return this.D;
+    }
+
     /** Get the linear representation of this filter. **/
     public LinearFilterRepresentation getLinearRepresentation() {
 	// throw exception if this filter is not linear, becase therefore we
@@ -240,9 +341,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	if (!this.computesLinearFunction()) {
 	    throw new RuntimeException("Can't get the linear form of a non linear filter!");
 	}
-	return new LinearFilterRepresentation(this.getMatrixRepresentation(),
-					      this.getConstantVector(),
-					      this.popSize);
+	return new LinearFilterRepresentation(this.getA(), this.getB(),
+					      this.getC(), this.getD(),
+					      this.peekSize);
     }
 
 
@@ -274,7 +375,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     //     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
 
     /**
-     * Visit's an assignment statement. If the LHS is a variable (local or field)
+     * Visits an assignment statement. If the LHS is a variable (local or field)
      * and the RHS becomes a linear form, then we add a mapping from
      * the variable (JLocalVariableExpression or JFieldAccessExpression)
      * to the linear form in the variablesToLinearForm map.
@@ -317,7 +418,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 		AccessWrapperFactory.addInitialArrayMappings(left,
 							     arraySize,
 							     this.variablesToLinearForms,
-							     this.peekSize);
+							     this.popSize,
+							     this.stateSize);
 	    } else {
 		LinearPrinter.warn("Ignoring JNewArrayExpression: " + right);
 	    }
@@ -346,8 +448,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 				  //" to " + rightLinearForm);
 				  " to a linear form");
 	    // add the mapping from the local variable to the linear form
-	    this.variablesToLinearForms.put(leftWrapper, rightLinearForm);
-				  
+	    this.variablesToLinearForms.put(leftWrapper, rightLinearForm);  
 	}
 
 	// make sure that we didn't screw up our state
@@ -916,8 +1017,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Visit a push expression. When we visit a push expression, we are basically going to try and
      * resolve the argument expression into linear form. If the argument
      * resolves into linear form, then we are golden -- we make a note of the fact
-     * by copying the linear form into the appropriate column of A and the
-     * appropriate location in b.
+     * by copying the linear form into the appropriate row of C and the
+     * appropriate row of D.
      **/
     public Object visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
 	LinearPrinter.println("  visiting push expression: " +
@@ -934,13 +1035,12 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    LinearPrinter.println("  push argument wasn't linear: " + arg);
 	    throw new NonLinearException("push argument wasn't linear");
 	} else {
-	    // (note that the first push ends up in the rightmost column)
-	    // so we calculate which column that this push statement corresponds to
-	    int pushColumn = this.pushSize - this.pushOffset -1;
+	    // (note that the first push ends up in the topmost row)
+	    // so we calculate which row that this push statement corresponds to
+	    int pushRow = this.pushOffset;
 	    // we have a linear form, so we update the matrix representation
-	    argLinearForm.copyToColumn(this.representationMatrix, pushColumn);
-	    // update the constant vector with the offset from the linear form
-	    this.representationVector.setElement(pushColumn, argLinearForm.getOffset());
+	    argLinearForm.copyInputsToRow(this.D, pushRow);
+	    argLinearForm.copyStatesToRow(this.C, pushRow);
 	}
 
 	// increment the push offset (for the next push statement)
@@ -959,7 +1059,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * A pop expression generates a linear form based on the current offset, and then
      * updates the current offset. The basic idea is that a pop expression represents using one
      * one of the input values from the tapes, and therefore should correspond to a linear form
-     * with a "1" at the appropriate place in the weights vector.
+     * with a "1" at the appropriate place in either the inputs or states vector.
+     * if peekOffset >= peekSize - popSize, then it is an input
+     * otherwise, it is a state
      **/
     public Object visitPopExpression(SIRPopExpression self, CType tapeType) {
 	LinearPrinter.println("  visiting pop expression: " + self);
@@ -967,18 +1069,22 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// the pop expression will creates a linear form that corresponds to using
 	// a peek at the current offset, which in turn corresponds to a
 	// use of the element at size-peekoffset-1 in the input vector
-	int inputIndex = this.peekSize - this.peekOffset - 1;
 
-	if (inputIndex < 0) {
+	if (this.peekSize - this.peekOffset < 0) {
 	    LinearPrinter.warn("Too many pops detected!");
 	    this.nonLinearFlag = true;
 	    throw new NonLinearException("too many pops detected");
 	}
 	
-	
 	LinearForm currentForm = this.getBlankLinearForm();
-	currentForm.setWeight(inputIndex, ComplexNumber.ONE);
-	
+
+        if(this.peekOffset >= this.peekSize - this.popSize) {
+	  int inputIndex = this.peekOffset - (this.peekSize - this.popSize);
+  	  currentForm.setInputWeight(inputIndex, ComplexNumber.ONE);
+        } 
+        else	
+	    currentForm.setStateWeight(this.peekOffset, ComplexNumber.ONE);
+
 	// when we hit a pop expression, all further peek expressions have their
 	// indicies incremented by one compared to the previous expressions
 	this.peekOffset++;
@@ -993,8 +1099,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Visit a peek expression.
      * Peek expressions are also base expressions that generate linear forms.
      * The peek index is transformed into a "1" in the appropriate place in
-     * the weights vector of the returned linear form. We also have to keep track of
-     * the case when there haev been previous pops which change the relative position of the
+     * the appropriate vector of the returned linear form. We also have to keep track of
+     * the case when there have been previous pops which change the relative position of the
      * index we are processing.
      **/
     public Object visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
@@ -1018,7 +1124,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 
 	// if the offset is not an integer, something is very wrong. Well, not wrong
-	// but unesolable because the index is computed with input data.
+	// but unresolvable because the index is computed with input data.
 	if (!exprLinearForm.isIntegerOffset()) {
 	    return null;
 	}
@@ -1029,8 +1135,16 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// except for a 1 in the index corresponding to the data item that this peek expression
 	// accesses	
 	LinearForm peekExprLinearForm = this.getBlankLinearForm();
-	peekExprLinearForm.setWeight(this.peekSize - 1 - exprLinearForm.getIntegerOffset() - this.peekOffset,
-				     ComplexNumber.ONE);
+
+        int currPeek = exprLinearForm.getIntegerOffset();
+        
+        if(currPeek + this.peekOffset >= this.peekSize - this.popSize) {
+	    int inputIndex = currPeek + this.peekOffset - (this.peekSize - this.popSize);
+	    peekExprLinearForm.setInputWeight(inputIndex, ComplexNumber.ONE);
+        }
+        else
+	    peekExprLinearForm.setStateWeight(currPeek + this.peekOffset, ComplexNumber.ONE);
+
 	LinearPrinter.println("  returning linear form from peek expression.");
 	//LinearPrinter.println("  returning linear form from peek expression: " + peekExprLinearForm);
 	return peekExprLinearForm;
@@ -1107,7 +1221,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      **/
     private LinearForm getBlankLinearForm() {
 	checkRep();
-	return new LinearForm(this.peekSize);
+	return new LinearForm(this.popSize, this.stateSize);
     }
 
     /** Creates a blank linear form that has the specified offset. **/
@@ -1123,15 +1237,30 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Check the representation invariants of the LinearFilterVisitor.
      **/
     private void checkRep() {
-	// make sure that the representation matrix is the correct size
-	if (this.peekSize != this.representationMatrix.getRows()) {
-	    throw new RuntimeException("Inconsistent matrix representation, rows");
+	// make sure that the matrices is the correct size
+	if (this.stateSize != this.A.getRows()) {
+	    throw new RuntimeException("Inconsistent matrix A representation, rows");
 	}
-	if (this.pushSize != this.representationMatrix.getCols()) {
-	    throw new RuntimeException("Inconsistent matrix representation, cols");
+	if (this.stateSize != this.A.getCols()) {
+	    throw new RuntimeException("Inconsistent matrix A representation, cols");
 	}
-	if (this.pushSize != this.representationVector.getCols()) {
-	    throw new RuntimeException("Inconsistent vector representation, cols");
+	if (this.stateSize != this.B.getRows()) {
+	    throw new RuntimeException("Inconsistent matrix B representation, rows");
+	}
+	if (this.popSize != this.B.getCols()) {
+	    throw new RuntimeException("Inconsistent matrix B representation, cols");
+	}
+	if (this.pushSize != this.C.getRows()) {
+	    throw new RuntimeException("Inconsistent matrix C representation, rows");
+	}
+        if (this.stateSize != this.C.getCols()) {
+	    throw new RuntimeException("Inconsistent matrix C representation, cols");
+	}
+	if (this.popSize != this.D.getCols()) {
+	    throw new RuntimeException("Inconsistent matrix D representation, cols");
+	}
+	if (this.pushSize != this.D.getRows()) {
+	    throw new RuntimeException("Inconsistent matrix D representation, rows");
 	}
 
 	// check that the only values in the HashMap are LinearForm objects
@@ -1161,10 +1290,14 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 	// make sure that the number of pushes that we have seen doesn't go past the end of
 	// the matrix/vector that represents this filter.
-	if (this.pushOffset > this.representationMatrix.getCols()) {
+	if (this.pushOffset > this.D.getRows()) {
 	    throw new RuntimeException("Filter (" + this.filterName +
 				       ") pushes more items " + 
-				       "than is declared (" + this.representationMatrix.getRows());
+				       "than is declared (" + this.D.getRows());
 	}	    
     }    
 }
+
+
+
+

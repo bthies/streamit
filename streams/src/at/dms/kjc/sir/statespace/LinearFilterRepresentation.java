@@ -2,43 +2,52 @@ package at.dms.kjc.sir.statespace;
 
 /**
  * A LinearFilterRepresentation represents the computations performed by a filter
- * on its input values as a matrix and a vector. The matrix represents
- * the combinations of inputs used to create various outputs. The vector corresponds
- * to constants that are added to the combination of inputs to produce the outputs.<br>
+ * on its input values as four matrices. 
  *
- * This class holds the A and b in the equation y = xA+b which calculates the output
- * vector y using the input vector x. A is a matrix, b is a (column) vector.<br>
+ * This class holds the A, B, C, D in the equations y = Ax+Bu, x' = Cx + Du which calculates the output
+ * vector y and new state vector x' using the input vector u and the old state vector x.<br>
  *
- * $Id: LinearFilterRepresentation.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.2 2004-02-12 22:32:57 sitij Exp $
+ * Modified to state space form by Sitij Agrawal  2/9/04
  **/
+
+
 public class LinearFilterRepresentation {
-    /** the A in y=Ax+b. **/
+    /** the A in y=Ax+Bu. **/
     private FilterMatrix A;
-    /** the b in y=Ax+b. **/
-    private FilterVector b;
+    /** the B in y=Ax+Bu. **/
+    private FilterMatrix B;
+    /** the C in x'=Cx+Du. **/
+    private FilterMatrix C;
+    /** the D in x'=Cx+Du. **/
+    private FilterMatrix D;
     /** the cost of this node */
     private LinearCost cost;
 
     /**
-     * The pop count of the filter. This is necessary for doing pipeline combinations
+     * The peek count of the filter. This is necessary for doing pipeline combinations
      * and it is information not stored in the dimensions of the
      * representation matrix or vector.
      **/
-    private int popCount;
+    private int peekCount;
 
     /**
-     * Create a new linear filter representation with matrix A and vector b.
-     * Note that we use a copy of both matrix A and vector b so that we don't end up with
-     * an aliasing problem. popc is the pop count of the filter that this represenation is for,
+     * Create a new linear filter representation with matrices A, B, C, and D.
+     * Note that we use a copy of all matrices so that we don't end up with
+     * an aliasing problem. peekc is the peek count of the filter that this represenation is for,
      * which we need for combining filters together (because the difference between
      * the peek count and the pop count tells us about the buffers that the program is using.
      **/
     public LinearFilterRepresentation(FilterMatrix matrixA,
-				      FilterVector vectorb,
-				      int popc) {
+				      FilterMatrix matrixB,
+				      FilterMatrix matrixC,
+				      FilterMatrix matrixD,
+				      int peekc) {
 	this.A = matrixA.copy();
-	this.b = (FilterVector)vectorb.copy();
-	this.popCount = popc;
+	this.B = matrixB.copy();
+	this.C = matrixC.copy();
+	this.D = matrixD.copy();	
+	this.peekCount = peekc;
 	// we calculate cost on demain (with the linear partitioner)
 	this.cost = null;
     }
@@ -46,15 +55,19 @@ public class LinearFilterRepresentation {
     
     /** Get the A matrix. **/
     public FilterMatrix getA() {return this.A;}
-    /** Get the b vector. **/
-    public FilterVector getb() {return this.b;}
+    /** Get the B matrix. **/
+    public FilterMatrix getB() {return this.B;}
+    /** Get the C matrix. **/
+    public FilterMatrix getC() {return this.C;}
+    /** Get the D matrix. **/
+    public FilterMatrix getD() {return this.D;}
 
-    /** Get the peek count. (#rows of A) **/
-    public int getPeekCount() {return this.A.getRows();}
-    /** Get the push count. (#cols of A) **/
-    public int getPushCount() {return this.A.getCols();}
-    /** Get the pop count. **/
-    public int getPopCount() {return this.popCount;}
+    /** Get the peek count.  **/
+    public int getPeekCount() {return this.peekCount;}
+    /** Get the push count. (#rows of D or C) **/
+    public int getPushCount() {return this.D.getRows();}
+    /** Get the pop count. (#cols of D) **/
+    public int getPopCount() {return this.D.getCols();}
 
 
     //////////////// Utility Functions  ///////////////////
@@ -62,7 +75,9 @@ public class LinearFilterRepresentation {
     /**
      * Returns true if at least one element of the constant vector b is zero.
      **/
+    
     public boolean hasConstantComponent() {
+	/*
 	// go over all elements in b and if one is non zero, return true
 	// otherwise return false.
 	int bSize = b.getSize();
@@ -75,7 +90,12 @@ public class LinearFilterRepresentation {
 	// seen only non-zero terms, therefore we don't have a
 	// constant component.
 	return false;
+	*/
+
+	return false;
+
     }
+    
 
     /**
      * Expands this linear representation to have the new peek, pop and push rates.
@@ -83,6 +103,7 @@ public class LinearFilterRepresentation {
      * the "Linear Analysis and Optimization of Stream Programs" paper:
      * http://cag.lcs.mit.edu/commit/papers/03/pldi-linear.pdf
      **/
+    /*
     public LinearFilterRepresentation expand(int newPeek, int newPop, int newPush) {
 	// do some argument checks
 	if (newPeek < this.getPeekCount()) {
@@ -163,32 +184,39 @@ public class LinearFilterRepresentation {
 	newRep = new LinearFilterRepresentation(newMatrix, newVector, newPop);
 	return newRep;
     }
-						
+    */	
+					
     /**
      * Returns true if this filter is an FIR filter. A linear filter is FIR  
      * if push=pop=1 and no constant component.
      **/
+    /*
     public boolean isFIR() {
 	return ((this.getPopCount() == 1) &&
 		(this.getPushCount() == 1) &&
 		(this.getb().getElement(0,0).equals(ComplexNumber.ZERO)));
     }
+    */
 
     /**
      * returns a LinearCost object that represents the number
      * of multiplies and adds that are necessary to implement this
      * linear filter representation.
      **/
+
+    /*
     public LinearCost getCost() {
 	if (this.cost==null) {
 	    this.cost = calculateCost();
 	}
 	return this.cost;
     }
+    */
 
     /**
      * Calculates cost of this.
      */
+    /*
     private LinearCost calculateCost() {
 	// add up multiplies and adds that are necessary for each column of the matrix. 
 	int muls = 0;
@@ -246,6 +274,7 @@ public class LinearFilterRepresentation {
 	}
 	return new LinearCost(muls, adds, matRows, matCols, popCount);
     }	    
+    */
 
     /** Returns true if and only if all coefficients in this filter rep are real valued. **/
     public boolean isPurelyReal() {
@@ -257,13 +286,35 @@ public class LinearFilterRepresentation {
 		}
 	    }
 	}
-	// check the vector(b), element by element
-	for (int i=0; i<b.getSize(); i++) {
-	    if (!b.getElement(i).isReal()) {
-		return false;
+	// check the matrix(B), element by element.
+	for (int i=0; i<B.getRows(); i++) {
+	    for (int j=0; j<B.getCols(); j++) {
+		if (!B.getElement(i,j).isReal()) {
+		    return false;
+		}
 	    }
 	}
+	// check the matrix(C), element by element.
+	for (int i=0; i<C.getRows(); i++) {
+	    for (int j=0; j<C.getCols(); j++) {
+		if (!C.getElement(i,j).isReal()) {
+		    return false;
+		}
+	    }
+	}
+	// check the matrix(D), element by element.
+	for (int i=0; i<D.getRows(); i++) {
+	    for (int j=0; j<D.getCols(); j++) {
+		if (!D.getElement(i,j).isReal()) {
+		    return false;
+		}
+	    }
+	}	
+
 	// if we get here, there are only real elemets in this rep
 	return true;
     }
 }
+
+
+

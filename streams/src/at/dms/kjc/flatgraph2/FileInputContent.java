@@ -8,7 +8,7 @@ import at.dms.kjc.sir.linear.*;
 
 public class FileInputContent extends InputContent {
     private String filename;
-
+    
     public FileInputContent(FileInputContent content) {
 	super(content);
 	filename=content.filename;
@@ -26,5 +26,10 @@ public class FileInputContent extends InputContent {
 
     public String getFileName() {
 	return filename;
+    }
+    
+    public boolean isFP() 
+    {
+	return getOutputType().isFloatingPoint();
     }
 }

@@ -41,4 +41,9 @@ public class FileOutputContent extends OutputContent {
     public String getFileName() {
 	return filename;
     }
+
+    public boolean isFP() 
+    {
+	return getInputType().isFloatingPoint();
+    }
 }

@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.30 2003-10-16 17:10:28 dmaze Exp $
+# $Id: release.sh,v 1.31 2003-10-16 17:32:41 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -111,7 +111,6 @@ for f in COPYING COPYING.GPL INSTALL NEWS OPTIONS README REGTEST; do
   mv $WORKING/streams/docs/release/$f $WORKING/streams
 done
 $WORKING/streams/misc/build-bench-doc
-mv $WORKING/streams/apps/benchmarks.html $WORKING/streams/docs
 rm $WORKING/streams/apps/benchall.xml
 
 # Make stable copies for all of the trees.  Clean the binary tree a little

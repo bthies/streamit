@@ -24,9 +24,10 @@ public class AdjustGranularity {
 	}
 	if (app.equals("fm")) {
 	    // do custom transforms for FM radio
-	    if (num==16) {
-		doFM16_2(str);
+	    if (num==-1) {
+		Namer.assignNames(str);
 	    }
+	    doFM16_2(str);
 	} else if (app.equals("fft")) {
 	    // do custom transforms for fft
 	    if (num==16) {
@@ -279,6 +280,8 @@ public class AdjustGranularity {
 	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
 			   " tiles");
 	WorkEstimate.getWorkEstimate(str).printWork();
+
+	StreamItDot.printGraph(str, "1.dot");
 
 	SJFlatten.doFlatten(str);
 	// get the inner splitjoin and fuse its pipes

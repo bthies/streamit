@@ -748,8 +748,10 @@ public class Propagator extends SLIRReplacingVisitor {
 					    JExpression expr)
     {
 	JExpression newExp = (JExpression)expr.accept(this);
-	if (newExp.isConstant()) {
+	if (newExp instanceof JIntLiteral) {
 	    return new JIntLiteral(newExp.intValue()*-1);
+	} else if(newExp instanceof JDoubleLiteral) {
+	    return new JDoubleLiteral(null,newExp.doubleValue()*-1);
 	} else {
 	    return self;
 	}

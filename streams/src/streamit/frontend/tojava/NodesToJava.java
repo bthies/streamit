@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.38 2002-11-04 18:29:03 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.39 2003-01-08 22:01:07 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -677,6 +677,8 @@ public class NodesToJava implements FEVisitor
                 case StreamSpec.STREAM_SPLITJOIN: result += "SplitJoin";
                     break;
                 case StreamSpec.STREAM_FEEDBACKLOOP: result += "FeedbackLoop";
+                    break;
+                case StreamSpec.STREAM_PHASEDFILTER: result += "PhasedFilter";
                     break;
                 }
                 result += "\n" + indent + "{\n";

@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.21 2002-07-22 19:13:00 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.22 2002-07-22 19:56:32 dmaze Exp $
  */
 
 header {
@@ -29,6 +29,7 @@ options {
 	int indent = 0;
 	StreamType cur_type = null;
 	List cur_class_params = null;
+	List cur_class_fields = null;
 	String cur_class_name = null;
 	Map structs = new HashMap();
 	NodesToJava n2j = new NodesToJava(null);
@@ -93,6 +94,7 @@ filter_decl returns [String t]
 				t += getIndent() + "{\n";
 				indent++;
 				cur_class_name = name.getText();
+				cur_class_fields = new ArrayList();
 			}
 			(params=stream_param_list
 				{
@@ -113,6 +115,7 @@ filter_decl returns [String t]
 				cur_type = last_type;
 				n2j = last_n2j;
 				cur_class_params = null;
+				cur_class_fields = null;
 				cur_class_name = null;
 				symTab = symTab.getParent();
 				t += body + getIndent() + "}\n";
@@ -125,18 +128,21 @@ filter_body returns [String t]
 	t = "";
 	InitFunction init = new InitFunction();
 	WorkFunction work = null;
+	VariableDeclaration var;
 	String dcl;
 }
 	: ( init=init_func_decl
 		| work=work_func_decl
-		| (variable_decl) => dcl=variable_decl
-			{ t += (getIndent () + dcl + ";" + "\n") ; }
+		| (stream_param) => var=stream_param
+			{	t += var.getField(n2j, getIndent());
+				cur_class_fields.add(var); }
 		| (function_decl) => dcl=function_decl
 			{ t += (getIndent () + dcl); }
 		)*
 		{
 			t += getIndent() + "public void work() " + work.body + "\n";
-			t += init.getText(indent, cur_class_params, null, cur_type, work, n2j);
+			t += init.getText(indent, cur_class_params, cur_class_fields,
+					cur_type, work, n2j);
 			t += init.getConstructor(indent, cur_class_params, cur_class_name, n2j);
 		}
 	;
@@ -545,20 +551,12 @@ variable_decl returns [String t]
 }
 	:	 #(name:ID
 			type=data_type
-			(array_dim=array_modifiers
-				{type = new TypeArray(type, array_dim);})*
 			(init_value=variable_init)?
 		)
 		{
 			// Possibly overwrite init_value.
-			if (type.isComplex() || (type instanceof TypeStruct))
-				init_value = "= new " + n2j.convertType(type) + "()";
-			if (type instanceof TypeArray)
-			{
-				TypeArray ta = (TypeArray)type;
-				init_value = "= new " + n2j.convertType(ta.getBase()) +
-					"[" + ta.getLength().accept(n2j) + "]";
-				}
+			if (type.isComplex() || !(type instanceof TypePrimitive))
+				init_value = "= " + n2j.makeConstructor(type);
 			t = n2j.convertType(type) + " " + name.getText () +
 				" " + init_value;
 			symTab.register(name.getText(), type);

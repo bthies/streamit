@@ -1,0 +1,21 @@
+2normal::CoarseSerializedBeamFormer
+2unroll::CoarseSerializedBeamFormer
+
+2linearnc:--linearreplacement --nolinearcollapse:CoarseSerializedBeamFormer
+2linearnc2:--linearreplacement2 --nolinearcollapse:CoarseSerializedBeamFormer
+2linearnc3:--linearreplacement3 --nolinearcollapse:CoarseSerializedBeamFormer
+
+2freqnc:--frequencyreplacement --nolinearcollapse:CoarseSerializedBeamFormer
+2freq:--frequencyreplacement:CoarseSerializedBeamFormer
+
+2linear:--linearreplacement:CoarseSerializedBeamFormer
+2linearfreq:--linearreplacement --frequencyreplacement:CoarseSerializedBeamFormer
+
+2part:--linearpartition:CoarseSerializedBeamFormer
+2partatlas:--linearpartition --atlas:CoarseSerializedBeamFormer
+
+2linear3: --linearreplacement3:CoarseSerializedBeamFormer
+2linearfreq3: --linearreplacement3 --frequencyreplacement:CoarseSerializedBeamFormer
+
+2atlas: --atlas:CoarseSerializedBeamFormer
+2atlasfreq: --atlas --frequencyreplacement:CoarseSerializedBeamFormer

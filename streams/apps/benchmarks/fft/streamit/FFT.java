@@ -135,7 +135,7 @@ class FloatPrinter extends Filter
 
 public class FFT extends StreamIt {
     public static void main(String args[]) {
-        new FFT().run();
+        new FFT().run(args);
     }
 
     public void init() {

@@ -23,7 +23,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
   }
   
   public void debug(String s) {
-    System.err.print(s);
+      // System.err.print(s);
   }
   
     private Type getType(Expression expr)
@@ -581,9 +581,7 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
   public Object visitExprField(ExprField exp) {
     debug("In visitExprField\n");
-    System.err.println("  lhs: " + exp.getLeft());
     Type lhsType = getType(exp.getLeft());
-    System.err.println("  type: " + lhsType);
     // ASSERT: this is a structure type.
     TypeStruct ts = (TypeStruct)lhsType;
     CClass ccs = (CClass)cclassTable.get(ts.getName());

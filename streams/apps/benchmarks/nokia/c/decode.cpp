@@ -2,27 +2,35 @@
 #include <stdio.h>
 #include <iostream.h>
 
-void Decode(int Q,int N, int W, int K, float **C, float **h, float *r);
-void AddSigma(int n,float sigma,float **AhA,float **AhAsig);
-void MatchFilt(int m, int n, float *r, float *Ahr, float **A);
-void SelfMult(int m, int n,float **A,float **AhA);
-void Forw(int n, float *Ahr, float *u, float **L);
-void Backs(int n, float *v, float *u, float **L);
+const int K=2;
+const int N=2;
+const int Q=2;
+const int W=2;
+const int m=N*Q+W-1;
+const int n=K*N;
+
+void Decode(float C[Q][K], float h[W][K], float *r);
+void AddSigma(int n,float sigma,float AhA[K*N][K*N],float AhAsig[K*N][K*N]);
+void MatchFilt(int m, int n, float *r, float *Ahr, float A[Q*N+W-1][K*N]);
+void SelfMult(int m, int n,float A[Q*N+W-1][K*N],float AhA[K*N][K*N]);
+void Forw(int n, float *Ahr, float *u, float L[K*N][K*N]);
+void Backs(int n, float *v, float *u, float L[K*N][K*N]);
 void CompSigma(int n,float sigma, float *a, float *b);
-void DelMat(int K, int W, int Q, int N, float **B, float **A);
-void chold(float **A,float **L,int n);
-void ConvMat(int K,int W, int Q,  float* C[], float* B[], float* h[]);
+void DelMat(float B[Q+W-1][K], float A[Q*N+W-1][K*N]);
+void chold(float A[Q*N+W-1][K*N],float L[K*N][K*N],int n);
+void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K]);
 void PrintD(int n, float *d);
 
+
 main() {
-	int K;
-	int N;
-	int Q;
-	int W;
-	K=2;
-	N=2;
-	Q=2;
-	W=2;
+//  	int K;
+//  	int N;
+//  	int Q;
+//  	int W;
+//  	K=2;
+//  	N=2;
+//  	Q=2;
+//  	W=2;
 	float h[W][K];
 	float C[Q][K];
 	float  r[Q*N+W-1];    
@@ -39,7 +47,7 @@ main() {
 	r[2]=3;
 	r[3]=4;
 	r[4]=5;
-	Decode(Q,N,W,K,C,h,r);
+	Decode(C,h,r);
 
 
   return 0;
@@ -52,11 +60,8 @@ main() {
 
 
 // This function performes the complete decoding.
-void Decode(int Q,int N, int W, int K, float **C, float **h, float *r)
+void Decode(float C[Q][K], float h[W][K], float *r)
 {
-  int m=N*Q+W-1;
-  int n=K*N;
-  
   float B[Q+W-1][K];
   float A[Q*N+W-1][K*N];
   float Ahr[K*N];
@@ -67,9 +72,9 @@ void Decode(int Q,int N, int W, int K, float **C, float **h, float *r)
   float sigma;
   float AhAsig[n][n];
   
-  ConvMat(K,W,Q,C,B,h);
+  ConvMat(C,B,h);
 
-  DelMat(K,W,Q,N,B,A);
+  DelMat(B,A);
 
   MatchFilt(m,n,r,Ahr,A);
 
@@ -112,7 +117,7 @@ void PrintD(int n, float *d){
 
 
 //Adds sigma to the diagonal elements
-void AddSigma(int n,float sigma,float **AhA,float **AhAsig)
+void AddSigma(int n,float sigma,float AhA[K*N][K*N],float AhAsig[K*N][K*N])
 {
   int i,j;
 
@@ -132,7 +137,7 @@ void AddSigma(int n,float sigma,float **AhA,float **AhAsig)
 
 
 // this does the match filtering, clear from its name!
-void MatchFilt(int m, int n, float *r, float *Ahr, float **A)
+void MatchFilt(int m, int n, float *r, float *Ahr, float A[Q*N+W-1][K*N])
 {
   int i,j,k;
 
@@ -140,13 +145,13 @@ void MatchFilt(int m, int n, float *r, float *Ahr, float **A)
     {
       Ahr[i]=0;
       for (j=0; j<m;j++)
-	Ahr[i]+=A[j,i]*r[j];
+	Ahr[i]+=A[j][i]*r[j];
     }
 }
 
 
 // This multiplies the matrix A by itself
-void SelfMult(int m, int n,float **A,float **AhA)
+void SelfMult(int m, int n,float A[Q*N+W-1][K*N],float AhA[K*N][K*N])
 {
   int i,j,k;
 
@@ -162,7 +167,7 @@ void SelfMult(int m, int n,float **A,float **AhA)
 
 
 // This performs the Forward subtituion
-void Forw(int n, float *Ahr, float *u, float **L)
+void Forw(int n, float *Ahr, float *u, float L[K*N][K*N])
 {
   int i,j;
   float sum;
@@ -176,7 +181,7 @@ void Forw(int n, float *Ahr, float *u, float **L)
 }
 
 // This performes the Back substituiton
-void Backs(int n, float *v, float *u, float **L)
+void Backs(int n, float *v, float *u, float L[K*N][K*N])
 {
   int i,j;
   float sum;
@@ -208,7 +213,7 @@ void CompSigma(int n,float sigma, float *a, float *b)
 // h is a W by K matrix of channel responses,
 // B is a W+Q-1 by K matrix of channel responses,
 // C is a Q by K matirx of Channel Signitures
-void ConvMat(int K,int W, int Q,  float* C[], float* B[], float* h[])
+void ConvMat(float C[Q][K], float B[Q+W-1][K], float h[W][K])
 {
   int i,j,l;
 
@@ -222,7 +227,7 @@ void ConvMat(int K,int W, int Q,  float* C[], float* B[], float* h[])
 
 //B is a Q+W-1 By K matrix
 //A is a N*Q+W-1 By N*K matrix
-void DelMat(int K, int W, int Q, int N, float **B, float **A)
+void DelMat(float B[Q+W-1][K], float A[Q*N+W-1][K*N])
 {
   int i,j,l;
   for (i=0; i <K; i++)
@@ -232,7 +237,7 @@ void DelMat(int K, int W, int Q, int N, float **B, float **A)
 }
 
 //A is an n by n matrix, so is L
-void chold(float **A,float **L,int n)
+void chold(float A[Q*N+W-1][K*N],float L[K*N][K*N],int n)
 {
   int i,j,k;
   float sum;

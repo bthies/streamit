@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.53 2004-01-30 19:50:28 dmaze Exp $
+ * $Id: KjcOptions.opt,v 1.54 2004-02-09 17:53:16 thies Exp $
  */
 
 prefix Kjc
@@ -209,6 +209,11 @@ longname		"linearanalysis"
 	type		boolean
 	default		"false"
 	help		"Perform linear analysis"
+
+longname		"statespace"
+	type		boolean
+	default		"false"
+	help		"Perform linear state-space analysis"
 
 longname		"nolinearcollapse"
 	type		boolean

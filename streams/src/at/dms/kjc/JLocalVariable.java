@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.2 2001-10-29 10:26:02 thies Exp $
+ * $Id: JLocalVariable.java,v 1.3 2002-02-22 13:20:55 thies Exp $
  */
 
 package at.dms.kjc;
@@ -95,6 +95,10 @@ public abstract class JLocalVariable extends JPhylum {
   public String getIdent() {
     return name;
   }
+
+    public void setIdent(String name) {
+	this.name = name;
+    }
 
   /**
    * @return the type of this variable

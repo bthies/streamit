@@ -809,7 +809,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
     /**
-     * visits a variable declaration statement
+     * visits a variable declaration statement.  Instead of creating a
+     * new variable definition, we mutate the old one and return it so
+     * that all of the local variable references that have been
+     * resolved to this variable def. will still hold.
      */
     public Object visitVariableDefinition(JVariableDefinition self,
                                         int modifiers,
@@ -833,7 +836,10 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		//Portal Definition , SIRCreatePortal add to symbol Table
 		//make the SIRCreatePortal the new expression in the definition
 		SIRCreatePortal cp = new SIRCreatePortal();
-		return new JVariableDefinition(null, modifiers, type, ident, cp);
+		// mutate and return self
+		self.setExpression(cp);
+		return self;
+		//return new JVariableDefinition(null, modifiers, type, ident, cp);
 	    }
 	    //defining a variable to be a named stream
 	    //If the class of this variable is in the SIR table then
@@ -872,7 +878,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    return null;
 	}
 
-	return new JVariableDefinition(null, modifiers, type, ident, (JExpression)retObj);
+	self.setExpression((JExpression)retObj);
+	return self;
+	//return new JVariableDefinition(null, modifiers, type, ident, (JExpression)retObj);
     }
     
     /**

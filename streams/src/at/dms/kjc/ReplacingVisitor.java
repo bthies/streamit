@@ -214,6 +214,21 @@ public class ReplacingVisitor extends EmptyAttributeVisitor {
     /**
      * prints a variable declaration statement
      */
+    public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
+						    JVariableDefinition[] vars) {
+	for (int i = 0; i < vars.length; i++) {
+	    JVariableDefinition result = 
+		(JVariableDefinition)vars[i].accept(this);
+	    if (result != null && result!=vars[i]) {
+		vars[i] = result;;
+	    }
+	}
+	return self;
+    }
+
+    /**
+     * prints a variable declaration statement
+     */
     public Object visitVariableDefinition(JVariableDefinition self,
 					  int modifiers,
 					  CType type,

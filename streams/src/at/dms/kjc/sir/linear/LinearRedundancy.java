@@ -59,14 +59,14 @@ public class LinearRedundancy {
 					// with a graphic.
 					LinearComputationTuple tuple =
 						new LinearComputationTuple(
-							rowsUp + (peekCount - 1 - row),
+							rowsUp + (peekCount - 1 - row),	
 							A.getElement(row, col));
 					addUse(tuple, currentExecution);
 				}
 			}
 		}
 
-		checkRep();
+//		checkRep();
 	}
 
     /** add an entry for the specified execution use to this tuple **/
@@ -82,32 +82,110 @@ public class LinearRedundancy {
 		// now, add the specified use to the list that the tuple
 		// maps to.
 		 ((List) this.tuplesToUses.get(tuple)).add(new Integer(use));
-		checkRep();
+		//checkRep();
 	}
 
 	/** make a nice human readable string for this LinearRedundancy. **/
 	public String toString() {
-		checkRep();
-		String returnString = "";
-		Iterator listIter = this.tuplesToUses.keySet().iterator();
-		while (listIter.hasNext()) {
-			LinearComputationTuple currentTuple =
-				(LinearComputationTuple) listIter.next();
-			List tupleList = (List) this.tuplesToUses.get(currentTuple);
-			Iterator useIter = tupleList.iterator();
-			// build the return string using this 
-			returnString += currentTuple.toString() + ":";
-			String useString = "";
-			while (useIter.hasNext()) {
-				useString += useIter.next() + ",";
+//		checkRep();
+//		String returnString = "";
+//		Iterator listIter = this.tuplesToUses.keySet().iterator();
+//		while (listIter.hasNext()) {
+//			LinearComputationTuple currentTuple =
+//				(LinearComputationTuple) listIter.next();
+//			List tupleList = (List) this.tuplesToUses.get(currentTuple);
+//			Iterator useIter = tupleList.iterator();
+//			// build the return string using this 
+//			returnString += currentTuple.toString() + ":";
+//			String useString = "";
+//			while (useIter.hasNext()) {
+//				useString += useIter.next() + ",";
+//			}
+//			// chop off the trailing comma, and add parenthesis
+//			useString = "(" + useString.substring(0, useString.length() - 1) + ")";
+//			returnString += useString + "\n";
+//						
+//		}
+//		returnString += this.calculateRedundancyString();	
+//		return returnString;
+		return this.calculateRedundancyString();
+	}
+	
+	/** 
+	 * Returns a number between zero and one that represents the amount of 
+	 * redundant computation that this LinearRedundancy does. For now,
+	 * we define the linear redundancy to be the number of tuples that are
+	 * reused in subsequent firings over the total tuples used in the first
+	 * iteration (eg size of the filter matrix minus the number of zero entries
+	 */
+	public String calculateRedundancyString() {
+		// set to keep track of the tuples calculated in the first invocation
+		HashSet originalTuples = new HashSet(); 
+		// the total number of tuples that are calculated in the first invocation
+		int totalOriginalTuples = 0;
+		// the number of times that an original tuple is reused.
+		int reusedTuples = 0;
+		// the number of times that an original tuple is reused in subsequent firings
+		int crossFiringReusedTuples = 0;
+		Iterator tupleIter = this.tuplesToUses.keySet().iterator();
+		while(tupleIter.hasNext()) {
+			LinearComputationTuple currentTuple = (LinearComputationTuple)tupleIter.next();
+			// if this tuple is zero, go to the next iteration.
+			if (currentTuple.getCoefficient().equals(ComplexNumber.ZERO)) {
+				// do nothing this iteration
+			} else {
+				List useList = (List)this.tuplesToUses.get(currentTuple);
+				// now, for each use, update the tuple counts appropriately
+				Iterator useIter = useList.iterator();
+				// flag that is set when we have 
+				//seen the first use of this tuple (so we can begin counting redundancy)
+				boolean seenFirstUse = false; 
+				while(useIter.hasNext()) {
+					int currentUse = ((Integer)useIter.next()).intValue();
+				 	// if this tuple is used in the initial execution, add it to the
+				 	// total original tuple count
+				 	if (currentUse == 0) {
+				 		totalOriginalTuples++;
+				 		// if we have already seen the first use of this tuple, add
+				 		// a little something on to the redundant tuple count.
+				 		if (seenFirstUse) {
+				 			reusedTuples++;
+				 		}
+				 		seenFirstUse = true;
+				 		originalTuples.add(currentTuple);
+				 	} else {
+				 		// this tuple is used in a subsequen execution.
+				 		// if it was calculated in the initial exeuciton, add
+				 		// a count to the redundant tuple count.
+				 		if (originalTuples.contains(currentTuple)) {
+				 			reusedTuples++;
+				 			crossFiringReusedTuples++;
+				 		}
+				 	}
+				}
 			}
-			// chop off the trailing comma, and add parenthesis
-			useString = "(" + useString.substring(0, useString.length() - 1) + ")";
-			returnString += useString + "\n";
-		}
+		}		
+		String returnString = "original tuples:" + totalOriginalTuples + "\n";
+		returnString +=       "reused tuples:" + reusedTuples + "\n";
+		returnString +=       "reused tuples in subsequent firings:" + crossFiringReusedTuples+ "\n";
+		returnString +=       "overall redundancy: "; 
+		returnString +=       100 * ((float)reusedTuples)/((float)totalOriginalTuples);
+		returnString +=       "%\n";
+		returnString +=       "subsequent redundancy: "; 
+		returnString +=       100 * ((float)crossFiringReusedTuples)/((float)totalOriginalTuples);
+		returnString +=       "%";
+		
+		// for the moment, enumerate the original tuples (to check algorithm)
+//		returnString += 	 "\noriginal tuples:\n";
+//		Iterator origIter = originalTuples.iterator();
+//		while(origIter.hasNext()) {
+//			returnString += " " + origIter.next() + "\n";			
+//		}
+		
 		return returnString;
 	}
-
+	
+	
     /** check that the rep invariant holds. **/
     private void checkRep() {
 	Iterator tupleIter = this.tuplesToUses.keySet().iterator();
@@ -137,6 +215,10 @@ public class LinearRedundancy {
 	    }
 	}
     }
+    
+    
+    
+    
 
     /**
      * Gets the ceiling of the division of two integers. Eg

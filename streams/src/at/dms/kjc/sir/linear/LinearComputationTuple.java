@@ -22,6 +22,20 @@ public class LinearComputationTuple {
 		this.position = inputPosition;
 		this.coefficient = computationCoefficient;
 	}
+
+	/////////////////////
+	/// Accessors	
+	/////////////////////
+	/** return the coefficient of this tuple. **/
+	public ComplexNumber getCoefficient() {
+		// complex numbers are immutable, so no problem with sharing.
+		return this.coefficient;
+	}
+	/** returns the input position of the data that this tuple uses. **/
+	public int getPosition() {
+		return this.position;
+	}
+
 	/** two tuples are equal if their position and coefficient are equal. **/
 	public boolean equals(Object o) {
 		if (!(o instanceof LinearComputationTuple)) {

@@ -80,10 +80,10 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	FileWriter fw = new FileWriter("sw" + Layout.getTile(node.contents) + ".s");
 	
 	fw.write("#  Switch code for a filter with no pushes or pops\n");
-	fw.write(".swtext\n");
-	fw.write(".global sw_begin\n\n");
-	fw.write("sw_begin:\n");
+	fw.write(getHeader());
 	fw.write("\tnop\n");
+	fw.write("\tj\tsw_begin\n\n");
+	fw.write(getTrailer());
 	fw.close();
     }
     
@@ -93,9 +93,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	FileWriter fw = new FileWriter("sw" + Layout.getTile(node.contents) + ".s");
 	
 	fw.write("#  Switch code for a filter with no peeks\n");
-	fw.write(".swtext\n");
-	fw.write(".global sw_begin\n\n");
-	fw.write("sw_begin:\n");
+	fw.write(getHeader());
 	
 	SwitchScheduleNode current = (SwitchScheduleNode)switchSendCode.get(node);
 	while (current.next != null) {
@@ -103,6 +101,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	    current = current.next;
 	}
 	fw.write("\tj\tsw_begin\n\n");
+	fw.write(getTrailer());
 	fw.close();	
     }
     
@@ -112,9 +111,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	FileWriter fw = new FileWriter("sw" + Layout.getTile(node.contents) + ".s");
 	
 	fw.write("#  Switch code for a filter with no pushes\n");
-	fw.write(".swtext\n");
-	fw.write(".global sw_begin\n\n");
-	fw.write("sw_begin:\n");
+	fw.write(getHeader());
 	
 	SwitchScheduleNode current = (SwitchScheduleNode)switchReceiveCode.get(node);
 	while (current.next != null) {
@@ -122,6 +119,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	    current = current.next;
 	}
 	fw.write("\tj\tsw_begin\n\n");
+	fw.write(getTrailer());
 	fw.close();
     }
     
@@ -130,6 +128,33 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
     {
     }
     
+
+    private static String getHeader() 
+    {
+	StringBuffer buf = new StringBuffer();
+	
+	buf.append("#include \"module_test.h\"\n\n");
+	buf.append(".swtext\n");
+	buf.append(".global sw_begin\n");
+	buf.append(".global raw_init\n\n");
+	buf.append("sw_begin:\n");
+	
+	return buf.toString();
+    }
+    
+    private static String getTrailer() 
+    {
+	StringBuffer buf = new StringBuffer();
+	
+	buf.append(".text\n\n");
+	buf.append("raw_init:\n");
+	buf.append("\tmtsri	SW_PC, %lo(sw_begin)\n");
+	buf.append("\tmtsri	SW_FREEZE, 0\n");
+	buf.append("\tjr $31\n");
+	return buf.toString();
+    }
+    
+
 
     public static void dumpCode() {
 	System.out.println("============== Push Schedules ==============");

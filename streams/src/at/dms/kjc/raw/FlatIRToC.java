@@ -78,8 +78,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 			    CType inputType, CType outputType) {
 	
 	//Entry point of the visitor
-	print("#include \"/projects/raw/rgcc/raw.h\"\n");
+	print("#include <raw.h>\n\n");
 	
+	//print the extern for the function to init the 
+	//switch
+	print("void raw_init();\n");
+	    
 	//Visit fields declared in the filter class
 	for (int i = 0; i < fields.length; i++)
 	   fields[i].accept(this);
@@ -93,7 +97,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	for (int i =0; i < methods.length; i++)
 	    methods[i].accept(this);	
 	
-	print("int main() {\n");
+	print("void begin(void) {\n");
+	print("  raw_init();\n");
 	print("  init();\n");
 	print("  work();\n");
 	print("}");

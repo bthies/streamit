@@ -78,6 +78,8 @@ public class DirectCommunication extends at.dms.util.Utils
 	    (JBlock)ObjectDeepCloner.
 	    deepCopy(filter.getWork().getBody());
 
+	//if we are in decoupled mode do not put the work function in a for loop
+	//and add the print statements
 	if (KjcOptions.decoupled) {
 	    workBlock.addStatementFirst
 		(new SIRPrintStatement(null, 
@@ -87,13 +89,15 @@ public class DirectCommunication extends at.dms.util.Utils
 				    new SIRPrintStatement(null, 
 							  new JIntLiteral(1),
 							  null));
+	    statements.addStatement(workBlock);
 	}
-
-	statements.addStatement
-	    (new JWhileStatement(null, 
-				 new JBooleanLiteral(null, true),
-				 workBlock, 
-				 null));
+	else {
+	    statements.addStatement
+		(new JWhileStatement(null, 
+				     new JBooleanLiteral(null, true),
+				     workBlock, 
+				     null));
+	}
 	
 	JMethodDeclaration rawMainFunct = 
 	    new JMethodDeclaration(null, 

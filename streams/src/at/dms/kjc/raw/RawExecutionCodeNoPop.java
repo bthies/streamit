@@ -732,7 +732,9 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 	//	}
 		
 	//	return block;
-	
+
+	//if we are in decoupled mode do not put the work function in a for loop
+	//and add the print statements
 	if (KjcOptions.decoupled) {
 	    block.addStatementFirst
 		(new SIRPrintStatement(null, 
@@ -742,6 +744,7 @@ public class RawExecutionCodeNoPop extends at.dms.util.Utils
 				new SIRPrintStatement(null, 
 						      new JIntLiteral(1),
 						      null));
+	    return block;
 	}
 	    
 	//return the infinite loop

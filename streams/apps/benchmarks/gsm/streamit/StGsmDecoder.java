@@ -493,6 +493,57 @@ class ShortTermSynthFilter extends Filter
     }
 }
 
+class LARInputFilter extends Filter
+{
+    //order of output: mLarParameters[0...8]
+    short[] mdata;
+    short[] single_frame;
+    boolean donepushing;
+
+#include "DecoderInput.java"
+
+    public void init()
+    {
+	mdata = new short[151840];
+	single_frame = new short[260];
+	input = new Channel(Short.TYPE, 151840);
+	output = new Channel(Short.TYPE, 8); 
+	donepushing = false;
+    }
+
+    public void work()
+    {
+	for (int i = 0; i < mdata.length; i++)
+	    {
+		mdata[i] = input.popShort();
+	    }
+
+	if (donepushing)
+	    {
+		//AssertedClass.SERROR("Done Pushing at LARInputFilter!");
+	    }
+	int frame_index = 0;
+	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	    {
+		for (int k = 0; k < single_frame.length; k++)
+		    {
+			single_frame[k] = mdata[frame_index + k];
+		    }
+		getParameters(single_frame);
+		frame_index += 260;
+	  
+	
+		//now, push the stuff on!
+		for (int i = 0; i < 8; i++)
+		    {
+			output.pushShort(mLarParameters[i]);
+		    }
+		donepushing = true;
+	    }
+	//System.err.println("LARinputFilter gooo!");
+
+    }
+}
 class PostProcessingFilter extends Filter 
 {
     short[] mSr;  //input
@@ -551,6 +602,94 @@ class PostProcessingFilter extends Filter
     }
 }
 
+class LTPInputFilter extends Filter
+{
+    //order of output: mLtpGain[4], mLtpOffset[4]
+    short[] mdata;
+    short[] single_frame;
+    boolean donepushing;
+
+#include "DecoderInput.java"
+
+    public void init()
+    {
+	mdata = new short[151840];
+	single_frame = new short[260];
+	input = new Channel(Short.TYPE, 151840);
+	output = new Channel(Short.TYPE, 8);
+	donepushing = false;
+    }
+
+    public void work()
+    {
+	for (int i = 0; i < mdata.length; i++)
+	    {
+		mdata[i] = input.popShort();
+	    }
+
+	if (donepushing)
+	    {
+		//AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
+	    }
+	int frame_index = 0;
+	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	    {
+		for (int k = 0; k < single_frame.length; k++)
+		    {
+			single_frame[k] = mdata[frame_index + k];
+		    }
+		getParameters(single_frame);
+		frame_index += 260;
+	  	  
+	  
+		//now, push the stuff on!
+		for (int i = 0; i < 4; i++)
+		    {
+			output.pushShort(mLtpGain[i]);
+			output.pushShort(mLtpOffset[i]);
+		    }
+	    }
+	donepushing = true;
+	//System.err.println("LTP Input filter gooooo!");
+    }
+}
+class LTPPipeline extends Pipeline
+{
+    public void init()
+    {
+	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
+	this.add(new LTPInputFilter());
+    }
+}
+class LARPipeline extends Pipeline
+{
+    public void init()
+    {
+	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
+	this.add(new LARInputFilter());
+    }
+}
+
+class LTPInputSplitJoin extends SplitJoin
+{
+    public void init()
+    {
+	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
+	this.add(new LTPPipeline());
+	this.add(new ShortIdentity());
+	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
+    }
+}
+
+class LTPLoopStream extends Pipeline
+{
+    public void init()
+    {
+	this.add(new LTPInputSplitJoin());
+	this.add(new LTPFilter());
+    }
+}
+
 class DecoderFeedback extends FeedbackLoop
 {
     public void init()
@@ -572,26 +711,6 @@ class DecoderFeedback extends FeedbackLoop
 	
 }
 
-class LTPLoopStream extends Pipeline
-{
-    public void init()
-    {
-	this.add(new LTPInputSplitJoin());
-	this.add(new LTPFilter());
-    }
-}
-
-class LTPInputSplitJoin extends SplitJoin
-{
-    public void init()
-    {
-	this.setSplitter(WEIGHTED_ROUND_ROBIN (0, 1));
-	this.add(new LTPPipeline());
-	this.add(new ShortIdentity());
-	this.setJoiner(WEIGHTED_ROUND_ROBIN(2, 160)); //bcr, ncr, drp[0...159]
-    }
-}
-
 
 class LARInputSplitJoin extends SplitJoin
 {
@@ -601,23 +720,6 @@ class LARInputSplitJoin extends SplitJoin
 	this.add(new ShortIdentity());
 	this.add(new LARPipeline());	
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
-    }
-}
-
-class LTPPipeline extends Pipeline
-{
-    public void init()
-    {
-	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
-	this.add(new LTPInputFilter());
-    }
-}
-class LARPipeline extends Pipeline
-{
-    public void init()
-    {
-	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
-	this.add(new LARInputFilter());
     }
 }
 
@@ -676,108 +778,6 @@ class RPEInputFilter extends Filter
 		donepushing = true;
 	    }
 	//System.err.println("RPE Input Filter yeah!");
-    }
-}
-class LARInputFilter extends Filter
-{
-    //order of output: mLarParameters[0...8]
-    short[] mdata;
-    short[] single_frame;
-    boolean donepushing;
-
-#include "DecoderInput.java"
-
-    public void init()
-    {
-	mdata = new short[151840];
-	single_frame = new short[260];
-	input = new Channel(Short.TYPE, 151840);
-	output = new Channel(Short.TYPE, 8); 
-	donepushing = false;
-    }
-
-    public void work()
-    {
-	for (int i = 0; i < mdata.length; i++)
-	    {
-		mdata[i] = input.popShort();
-	    }
-
-	if (donepushing)
-	    {
-		//AssertedClass.SERROR("Done Pushing at LARInputFilter!");
-	    }
-	int frame_index = 0;
-	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
-	    {
-		for (int k = 0; k < single_frame.length; k++)
-		    {
-			single_frame[k] = mdata[frame_index + k];
-		    }
-		getParameters(single_frame);
-		frame_index += 260;
-	  
-	
-		//now, push the stuff on!
-		for (int i = 0; i < 8; i++)
-		    {
-			output.pushShort(mLarParameters[i]);
-		    }
-		donepushing = true;
-	    }
-	//System.err.println("LARinputFilter gooo!");
-
-    }
-}
-class LTPInputFilter extends Filter
-{
-    //order of output: mLtpGain[4], mLtpOffset[4]
-    short[] mdata;
-    short[] single_frame;
-    boolean donepushing;
-
-#include "DecoderInput.java"
-
-    public void init()
-    {
-	mdata = new short[151840];
-	single_frame = new short[260];
-	input = new Channel(Short.TYPE, 151840);
-	output = new Channel(Short.TYPE, 8);
-	donepushing = false;
-    }
-
-    public void work()
-    {
-	for (int i = 0; i < mdata.length; i++)
-	    {
-		mdata[i] = input.popShort();
-	    }
-
-	if (donepushing)
-	    {
-		//AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
-	    }
-	int frame_index = 0;
-	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
-	    {
-		for (int k = 0; k < single_frame.length; k++)
-		    {
-			single_frame[k] = mdata[frame_index + k];
-		    }
-		getParameters(single_frame);
-		frame_index += 260;
-	  	  
-	  
-		//now, push the stuff on!
-		for (int i = 0; i < 4; i++)
-		    {
-			output.pushShort(mLtpGain[i]);
-			output.pushShort(mLtpOffset[i]);
-		    }
-	    }
-	donepushing = true;
-	//System.err.println("LTP Input filter gooooo!");
     }
 }
 

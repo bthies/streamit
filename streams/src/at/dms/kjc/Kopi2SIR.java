@@ -89,7 +89,48 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	return false;
     }
+
+
+    /* given a string of the form push*, pop*, or peek*.  This method
+       returns the CType of corresponding to the *. */
+    private CType getTapeType(String exp) {
+	// based on the string type, set the type
+	
+	String type = "";
+
+	// Extract type
+	if (exp.startsWith("push") || exp.startsWith("push"))
+	    type = exp.substring(4);
+	else if(exp.startsWith("pop"))
+	    type = exp.substring(3);
+	else
+	    at.dms.util.Utils.fail("SIR Expression Expected");
+	//Return CType based on extracted Type String
+	if (type.equals("Integer"))
+	    return CStdType.Integer;
+	else if (type.equals("Character"))
+	    return CStdType.Char;
+	else if (type.equals("Boolean"))
+	    return CStdType.Boolean;
+	else if (type.equals("Byte"))
+	    return CStdType.Byte;
+	else if (type.equals("Double"))
+	    return CStdType.Double;
+	else if (type.equals("Float"))
+	    return CStdType.Float;
+	else if (type.equals("Short"))
+	    return CStdType.Short;
+	else if (type.equals("String"))
+	    return CStdType.String;	
+	else if (type.equals("Long"))
+	    return CStdType.Long;
+	else
+	    at.dms.util.Utils.fail("Non-Supported Type for SIR Push/Pop/Peek");
+	return null;
+    }
    
+    /* Given a method call expression, this function will create/return a 
+       SIR Expression if the method call orignally denoted one. */
     private JPhylum newSIRExp(JMethodCallExpression exp, JExpression[] args) {
 	JPhylum newExp = null;
 	printMe("In newSIRExp");
@@ -103,12 +144,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	
 	if (exp.getIdent().startsWith("push")) {
 	    newExp = new SIRPushExpression(args[0]);
+	    ((SIRPushExpression)newExp).setTapeType(getTapeType(exp.getIdent()));
 	}
 	if (exp.getIdent().startsWith("pop")) {
 	    newExp = new SIRPopExpression();
+	    ((SIRPopExpression)newExp).setTapeType(getTapeType(exp.getIdent()));
 	}
 	if (exp.getIdent().startsWith("peek")) {
 	    newExp = new SIRPeekExpression(args[0]);
+	    ((SIRPeekExpression)newExp).setTapeType(getTapeType(exp.getIdent())); 
 	}
 	if (exp.getIdent().startsWith("println")) {
 	    newExp = new SIRPrintStatement(null, args[0], null);
@@ -377,13 +421,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    Vector v = (Vector)expr.accept(this);
 	    setInputType(filter, (String)v.elementAt(0));
 	    filter.setPop(((Integer)v.elementAt(1)).intValue());
+	    //If a peek value is given, and it is greater than pops
+	    //set the peek
 	    if (v.size() > 2) {
 		if (((Integer)v.elementAt(2)).intValue() < 
 		    ((Integer)v.elementAt(1)).intValue())
 		    at.dms.util.Utils.fail("Peeks less than Pops!");
 		filter.setPeek(((Integer)v.elementAt(2)).intValue());
 	    }
-	    else
+	    else  //Otherwise set the peeks to the number of pops
 		filter.setPeek(((Integer)v.elementAt(1)).intValue());
 	    return self;
 	}

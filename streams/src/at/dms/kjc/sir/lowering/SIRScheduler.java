@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
 import streamit.scheduler.*;
+import streamit.scheduler.simple.*;
 
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
@@ -61,7 +62,7 @@ public class SIRScheduler {
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
 	// make work function implementing the schedule
-	JMethodDeclaration work = makeWork(schedule.getSchedule(), 
+	JMethodDeclaration work = makeWork(schedule.getSteadySchedule(), 
 					   toplevel);
 	// set <work> as the work function of <toplevel>
 	toplevel.setWork(work);

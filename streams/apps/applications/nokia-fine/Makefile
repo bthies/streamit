@@ -22,6 +22,8 @@ MAIN	  = 	dcalc
 MAIN_FILE = 	${MAIN}.java
 LINKED_FILE =   Linked${MAIN_FILE};
 
+STREAMIT_MAKEFILE = Makefile.streamit 
+
 all: clean
 	javac *.java ../delay/Delay.java && cp ../delay/Delay*.class .
 
@@ -53,4 +55,5 @@ link: clean
 	#javac $(LINKED_FILE)
 
 more-cycles:
-
+	# change the simulator to run for 5Million cycles
+	perl -pi -e "s/SIM-CYCLES = .*/SIM-CYCLES = 5000000/g" $(STREAMIT_MAKEFILE); 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.31 2003-04-06 23:32:38 thies Exp $
+ * $Id: KjcOptions.opt,v 1.32 2003-04-08 09:47:25 thies Exp $
  */
 
 prefix Kjc
@@ -248,6 +248,12 @@ longname		"linearreplacement3"
 	type		boolean
 	default		"false"
 	help		"Perform linear transformation using diagonal replacement (for contiguous non-zero regions of matrix.)"
+
+longname		"atlas"
+	shortcut	"E"
+	type		boolean
+	default		"false"
+	help		"Perform linear transformation using ATLAS library for matrix multiplies."
 
 longname		"frequencyreplacement"
 	shortcut	"F"

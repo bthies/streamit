@@ -356,13 +356,27 @@ abstract class DPConfigContainer extends DPConfig {
 		if (rec.get(i) instanceof SIRFilter) {
 		    SIRFilter filter = (SIRFilter)rec.get(i);
 		    numFilters++;
+		    // see if filter is not fusable in general
 		    if (!isFusable(filter)) {
+			fusable = false;
+		    }
+		    // if we are fusing horizontally, see if filter is
+		    // prohibited from fusing horizontally
+		    boolean fusingHorizontally = (x1<x2);
+		    boolean filterCannotFuseHorizontally = partitioner.getNoHorizFuse().contains(filter);
+		    if (fusingHorizontally && filterCannotFuseHorizontally) {
 			fusable = false;
 		    }
 		}
 	    }
 	    if (!fusable && numFilters>1) {
-		return new DPCost(Integer.MAX_VALUE/2, Integer.MAX_VALUE/2, partitioner.ICODE_THRESHOLD+1);
+		DPCost cost = new DPCost(Integer.MAX_VALUE/2, Integer.MAX_VALUE/2, partitioner.ICODE_THRESHOLD+1);
+
+		A[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getMaxCost();
+		B[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getSumCost();
+		I[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost.getICodeSize();
+
+		return cost;
 	    }
 
 	    // we could divide the rectangle into 4 pieces to promote

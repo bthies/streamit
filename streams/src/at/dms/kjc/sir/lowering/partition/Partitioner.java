@@ -15,23 +15,33 @@ import at.dms.kjc.flatgraph.*;
 
 public class Partitioner {
     /**
-     * Tries to adjust <str> into <targetCount> pieces of equal work, and
-     * return new stream.
+     * Tries to adjust <str> into <targetCount> pieces of equal work,
+     * and return new stream. Indicate whether or not
+     * <joinersNeedTiles> in the graph, or if they count for free.
      */
     public static SIRStream doit(SIRStream str, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
 	// detect number of tiles we have
 	int curCount = new GraphFlattener(str).getNumTiles();
 	return doit(str, curCount, targetCount, joinersNeedTiles, limitICode);
     }
-
-
     /**
-     * Tries to adjust <str> into <targetCount> pieces of equal work,
-     * given that <str> currently requires <curCount> tiles.  Indicate
-     * whether or not <joinersNeedTiles> in the graph, or if they
-     * count for free.  Return new stream.
+     * As above, with <curCount> indicating the number of tiles that
+     * <str> currently requires.
      */
     public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode) {
+	return doit(str, curCount, targetCount, joinersNeedTiles, limitICode, new HashSet());
+    }
+    /**
+     * As above, with <noHorizFuse> denoting a set of SIRFilters that
+     * cannot be fused horizontally.
+     */
+    public static SIRStream doit(SIRStream str, int curCount, int targetCount, boolean joinersNeedTiles, boolean limitICode, HashSet noHorizFuse) {
+	// horizontal fusion constraints only respected by dynamic programming partitioner
+	if (!KjcOptions.partition_dp) {
+	    System.err.println("WARNING:  The partitioner you are using (greedy?) does not support horizontal\n" + 
+			       "          fusion constraints.  To respect these, use dynamic programming partitioner.");
+	}
+
 	// Lift filters out of pipelines if they're the only thing in
 	// the pipe
 	Lifter.lift(str);
@@ -58,7 +68,7 @@ public class Partitioner {
 	       SIRStream str2 = (SIRStream)ObjectDeepCloner.deepCopy(str);
 	       new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
 	    */
-	    str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode).toplevel();
+	    str = new DynamicProgPartitioner(str, work, targetCount, joinersNeedTiles, limitICode, noHorizFuse).toplevel();
 	} else if(KjcOptions.partition_greedier) {
 	    str=new GreedierPartitioner(str,work,targetCount,joinersNeedTiles).toplevel();
 	} else if (KjcOptions.partition_greedy) {

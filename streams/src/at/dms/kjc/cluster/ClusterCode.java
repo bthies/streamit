@@ -1141,6 +1141,11 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
         p = new TabbedPrintWriter(str);
 	
 	p.println();
+
+	p.print("CC=gcc");
+	p.println();
+
+	p.println();
 	
 	if (KjcOptions.standalone) {
 	    p.print("all: fusion");
@@ -1173,7 +1178,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
-	p.print("\tgcc -O3 -o run_cluster master.o");
+	p.print("\t$(CC) -O3 -o run_cluster master.o");
 	
 	for (int i = 0; i < threadNumber; i++) {
 	    p.print(" thread"+i+".o");
@@ -1194,7 +1199,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.println();
 
-	p.print("\tgcc -O3 -o fusion fusion.o");
+	p.print("\t$(CC) -O3 -o fusion fusion.o");
 	
 	for (int i = 0; i < threadNumber; i++) {
 	    p.print(" thread"+i+".o");
@@ -1210,7 +1215,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("master.o: fusion.h master.cpp");
 	p.println();
-	p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
+	p.print("\t$(CC) -O3 -I$(STREAMIT_HOME)/library/cluster -c master.cpp");
 	p.println();
 
 	// ================= fusion.o
@@ -1219,7 +1224,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("fusion.o: fusion.h fusion.cpp");
 	p.println();
-	p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c fusion.cpp");
+	p.print("\t$(CC) -O3 -I$(STREAMIT_HOME)/library/cluster -c fusion.cpp");
 	p.println();
 
 	p.println();
@@ -1229,7 +1234,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    p.print("thread"+i+".o: fusion.h thread"+i+".cpp");
 	    p.println();
-	    p.print("\tgcc -O3 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
+	    p.print("\t$(CC) -O3 -I$(STREAMIT_HOME)/library/cluster -c thread"+i+".cpp");
 	    p.println();
 	    p.println();
 

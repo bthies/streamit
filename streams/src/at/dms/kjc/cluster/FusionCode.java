@@ -363,7 +363,7 @@ class FusionCode {
 
 	p.println();
 
-	p.print("void main(int argc, char **argv) {\n");
+	p.print("int main(int argc, char **argv) {\n");
 	p.print("  ");
 
 	p.print("  read_setup::read_setup_file();\n");
@@ -373,7 +373,7 @@ class FusionCode {
 	p.print("    if (argc > a + 1 && strcmp(argv[a], \"-i\") == 0) {\n");
 	p.print("      int tmp;\n");
 	p.print("      sscanf(argv[a + 1], \"%d\", &tmp);\n");
-	p.print("      printf(\"Number of Iterations: %d\n\", tmp);\n");
+	p.print("      printf(\"Number of Iterations: %d\\n\", tmp);\n");
 	p.print("      __max_iteration = tmp;\n");
 	p.print("    }\n");
 	p.print("  }\n");
@@ -573,6 +573,7 @@ class FusionCode {
 	p.print("  }\n");
 
 
+	p.print("  return 0;");
 	p.print("}");
 	p.println();
 

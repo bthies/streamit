@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.22 2003-08-01 17:49:54 dmaze Exp $
+ * $Id: CompilerInterface.java,v 1.23 2003-08-01 18:23:25 dmaze Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -142,6 +142,43 @@ public class CompilerInterface {
 	return (streamITResult && targetResult);
     }
 
+    /**
+     * Runs the streamit compiler via the front-end-to-SIR converter
+     * on the filename provided, passing the return value from the
+     * compiler back to the caller.
+     **/
+    boolean streamItToSIRCompile(String root, String filename) {
+
+
+	boolean streamItResult;
+	boolean targetResult;
+
+
+	streamItResult =
+            CompilerHarness.streamItToSIRCompile(this.compilerOptions,
+                                                 root,
+                                                 root + filename,
+                                                 root + filename + SUFFIX_C);
+
+	// if we didn't correctly compile for streamit, abort here
+	if (streamItResult == false) {
+	    return false;
+	}
+
+	// if we are executing on raw
+	if (rawTarget(this.compilerFlags)) {
+	    // run the raw compile (via make)
+	    targetResult = CompilerHarness.rawCompile(root,
+						      at.dms.kjc.raw.MakefileGenerator.MAKEFILE_NAME);
+	} else {
+	    // run uniprocessor compile
+	    targetResult =  CompilerHarness.gccCompile(root + filename + SUFFIX_C,    // output c file
+						       root + filename + SUFFIX_EXE); // executable
+	}
+
+	// return true if we passed both tests
+	return (streamItResult && targetResult);
+    }
 
     /**
      * Runs the last compiled streamit program. Returns true if execution goes well,
@@ -309,12 +346,6 @@ public class CompilerInterface {
 	    options[numOptions] = OPTION_LINEARPARTITION;
 	    numOptions++;
 	}
-
-        // frontend-to-SIR direct conversion
-        if ((flags & TOKOPI) == TOKOPI) {
-            options[numOptions] = OPTION_TOKOPI;
-            numOptions++;
-        }
 
 	// copy over the options that were used into an options
 	// array that is the correct size

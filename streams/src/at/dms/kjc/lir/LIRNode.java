@@ -60,7 +60,7 @@ public class LIRNode extends JStatement {
 
     public Object accept(AttributeVisitor p) {
 	// no action is defined for attribute visitors on lir nodes
-	return null;
+	return this;
     }
 
     /**

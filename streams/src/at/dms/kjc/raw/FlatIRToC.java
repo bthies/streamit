@@ -199,6 +199,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 		    body.accept(this);
 		    printWorkTrailer();
 		}
+		else 
+		    body.accept(this);
 	    }
 	    else //not the work function
 		body.accept(this);

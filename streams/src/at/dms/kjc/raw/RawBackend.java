@@ -21,7 +21,6 @@ public class RawBackend {
 	// DEBUGGING PRINTING
 	System.out.println("Entry to RAW Backend");
 
-	
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);

@@ -34,10 +34,12 @@ public class PushSimulator extends at.dms.util.Utils
 	    //Since top is guaranteed to be a filter, it has
 	    //only one connection
 	    simulateDataItem(top.edges[0], current);
+	    if (counters.checkAllZero())
+		break;
 	    temp = new SwitchScheduleNode();
 	    current.next = temp;
 	    current = temp;
-	}while(!counters.checkAllZero());
+	}while(true);
 	
 	return first;
     }

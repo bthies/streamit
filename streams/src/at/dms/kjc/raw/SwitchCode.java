@@ -96,7 +96,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	fw.write(getHeader());
 	
 	SwitchScheduleNode current = (SwitchScheduleNode)switchSendCode.get(node);
-	while (current.next != null) {
+	while (current != null) {
 	    fw.write(current.toAssembly(node, true));
 	    current = current.next;
 	}
@@ -114,7 +114,7 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 	fw.write(getHeader());
 	
 	SwitchScheduleNode current = (SwitchScheduleNode)switchReceiveCode.get(node);
-	while (current.next != null) {
+	while (current != null) {
 	    fw.write(current.toAssembly(node, false));
 	    current = current.next;
 	}
@@ -126,6 +126,78 @@ public class SwitchCode extends at.dms.util.Utils implements FlatVisitor
 
     private static void generalSchedule(FlatNode node) throws Exception
     {
+	FileWriter fw = new FileWriter("sw" + Layout.getTile(node.contents) + 
+				       ".s");
+	SIRFilter filter = (SIRFilter)node.contents;
+	int peek, pop, push, receive;
+	//must get peek items from the upstream node on the first invocation
+	boolean first = true;
+	
+	peek = filter.getPeekInt();
+	pop = filter.getPopInt();
+	push = filter.getPushInt();
+	
+	fw.write("#  Switch code for a filter with pushes and pops\n");
+	fw.write(getHeader());
+	
+	SwitchScheduleNode currentReceive, firstReceive; 
+	currentReceive = firstReceive = 
+	    (SwitchScheduleNode)switchReceiveCode.get(node);
+	SwitchScheduleNode currentSend, firstSend;
+	currentSend = firstSend = 
+	    (SwitchScheduleNode)switchSendCode.get(node);
+	
+	//The first schedule with peek receives as the 
+	//first quantum for receives
+	while (currentReceive != null && currentSend != null) {
+	    //receives first, for the first receive burst
+	    //the first must receive peek items
+	    //all others are pop items
+	    if (first) {
+		first  = false;
+		receive = peek;
+	    }
+	    else 
+		receive = pop;
+	    for (int i = 0; i < receive; i++) {
+		if (currentReceive == null)
+		    currentReceive = firstReceive;
+		fw.write(currentReceive.toAssembly(node, false));
+		currentReceive = currentReceive.next;
+	    }
+	    //sends, just send in push intervals
+	    for (int i = 0; i < push; i++) {
+		if (currentSend == null)
+		    currentSend = firstSend;
+		fw.write(currentReceive.toAssembly(node, true));
+		currentSend = currentSend.next;
+	    }
+	}
+	
+	fw.write("sw_loop:\n");
+	//now the steady state schedule
+	//pop receives followed by peek sends
+	//finish when they both end at that same time...
+	while (currentReceive != null && currentSend != null) {
+	    for (int i = 0; i < pop; i++) {
+		if (currentReceive == null)
+		    currentReceive = firstReceive;
+		fw.write(currentReceive.toAssembly(node, false));
+		currentReceive = currentReceive.next;
+	    }
+	    //sends, just send in push intervals
+	    for (int i = 0; i < push; i++) {
+		if (currentSend == null)
+		    currentSend = firstSend;
+		fw.write(currentReceive.toAssembly(node, true));
+		currentSend = currentSend.next;
+	    }
+	}
+	//loop to the steady state schedule
+	fw.write("\tj\tsw_loop\n\n");
+	fw.write(getTrailer());
+	fw.close();
+	
     }
     
 

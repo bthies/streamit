@@ -17,21 +17,18 @@ public class SwitchScheduleNode
     public SwitchScheduleNode next;
     /* destination filters for this data item */
     private Vector destinations;
-    private int size;
-        
+           
     public SwitchScheduleNode() {
 	destinations = new Vector();
-	size = 0;
     }
 
     public void addDest(FlatNode to) {
 	destinations.add(to);
-	size++;
     }
     
     public int getSize() 
     {
-	return size;
+	return destinations.size();
     }
     
     public FlatNode getDest(int i) 

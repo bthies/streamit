@@ -198,7 +198,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     {
 	print("{\n");
 	if (filter.getPeekInt() > 0) {
-	    print("int i, count = 0, buffer[" + filter.getPeekInt() + "];\n");
+	    print("int i, count = 0;\n");
+	    print(filter.getInputType() + 
+		  " buffer[" + filter.getPeekInt() + "];\n");
 	    print(" for (i = 0; i < " + filter.getPeekInt() + "; i++)\n");
 	    print("   buffer[i] = ");
 	    if (filter.getInputType().equals(CStdType.Float))
@@ -1104,7 +1106,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     JExpression val)
     {
 	if (tapeType.equals(CStdType.Float))
-	    print("(static_send_f(");
+	    print("(static_send(");
+	//	    print("(static_send_f(");
 	else
 	    print("(static_send(");
 	val.accept(this);

@@ -182,14 +182,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
     }
 
     /**
-     * Returns the index of <str> in this pipeline, or -1 if <str>
-     * does not appear in this.
-     */
-    public int indexOf(SIRStream str) {
-	return myChildren().indexOf(str);
-    }
-
-    /**
      * Accepts visitor <v> at this node.
      */
     public void accept(StreamVisitor v) {

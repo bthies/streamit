@@ -9,6 +9,13 @@ import java.util.*;
 public class EmptyStreamVisitor implements StreamVisitor {
 
     /**
+     * This is called before all visits to a stream structure (Filter,
+     * Pipeline, SplitJoin, FeedbackLoop)
+     */
+    public void visitStream(SIRStream self) {
+    }
+
+    /**
      * PLAIN-VISITS 
      */
 	    
@@ -26,6 +33,7 @@ public class EmptyStreamVisitor implements StreamVisitor {
 			    JMethodDeclaration init,
 			    JMethodDeclaration work,
 			    CType inputType, CType outputType) {
+	visitStream(self);
     }
   
     /* visit a splitter */
@@ -52,6 +60,7 @@ public class EmptyStreamVisitor implements StreamVisitor {
 				 JFieldDeclaration[] fields,
 				 JMethodDeclaration[] methods,
 				 JMethodDeclaration init) {
+	visitStream(self);
     }
 
     /* pre-visit a splitjoin */
@@ -60,6 +69,7 @@ public class EmptyStreamVisitor implements StreamVisitor {
 				  JFieldDeclaration[] fields,
 				  JMethodDeclaration[] methods,
 				  JMethodDeclaration init) {
+	visitStream(self);
     }
 
     /* pre-visit a feedbackloop */
@@ -70,6 +80,7 @@ public class EmptyStreamVisitor implements StreamVisitor {
 				     JMethodDeclaration init,
 				     int delay,
 				     JMethodDeclaration initPath) {
+	visitStream(self);
     }
 
     /**

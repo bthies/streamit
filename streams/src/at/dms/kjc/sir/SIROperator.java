@@ -55,17 +55,23 @@ public abstract class SIROperator extends Utils implements Finalizable {
     
     private void writeObject(ObjectOutputStream oos) throws IOException {
 	this.serializationHandle = ObjectDeepCloner.getHandle(parent);
+	
 	if (((Integer)serializationHandle).intValue()>=0) {
-	    // if we got a handle, erase our parent for now
+	    // if we got a handle, erase our parent for the write object call
+	    SIRContainer temp = this.parent;
 	    this.parent = null;
-	} 
-	oos.defaultWriteObject();
+	    oos.defaultWriteObject();
+	    this.parent = temp;
+	} else {
+	    // otherwise just write the parent
+	    oos.defaultWriteObject();
+	}
     }
     
     protected Object readResolve() throws Exception {
 	Object o = ObjectDeepCloner.getInstance(serializationHandle, this);
 	if (o!=this) {
-	    // if we had a handle, reset parent before returning
+ 	    // if we had a handle, reset parent before returning
 	    this.parent = (SIRContainer)o;
 	}
 	return this;

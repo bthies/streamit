@@ -15,7 +15,7 @@ public interface StreamVisitor {
     /**
      * PLAIN-VISITS 
      */
-	    
+    
     /* visit a structure */
     void visitStructure(SIRStructure self,
                         SIRStream parent,

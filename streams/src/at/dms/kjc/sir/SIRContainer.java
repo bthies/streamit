@@ -62,9 +62,17 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
+     * Returns the index of <str> in this, or -1 if <str> does not
+     * appear in this.
+     */
+    public int indexOf(SIRStream str) {
+	return children.indexOf(str);
+    }
+
+    /**
      * Clears the child/param lists.
      */
-    protected void clear() {
+    public void clear() {
 	children.clear();
 	params.clear();
     }
@@ -77,16 +85,35 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
-     * Add a <child> with null parameters.
+     * Add a <child> with empty parameters.
      */
     public void add(SIRStream str) {
 	children.add(str);
-	params.add(null);
+	params.add(new LinkedList());
     }
 
+    /**
+     * Adds <str> at index <index> with empty parameters.
+     */
     public void add(int index, SIRStream str) {
 	children.add(index, str);
-	params.add(index, null);
+	params.add(index, new LinkedList());
+    }
+
+    /**
+     * Adds <str> at index <index> with parameters <param>.
+     */
+    public void add(int index, SIRStream str, List param) {
+	children.add(index, str);
+	params.add(index, param);
+    }
+
+    /**
+     * Adds <str> at the end of this with parameters <param>.
+     */
+    public void add(SIRStream str, List param) {
+	this.children.add(str);
+	this.params.add(param);
     }
 
     /**
@@ -106,6 +133,14 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
+     * Removes <str> from this.
+     */
+    public void remove(SIRStream str) {
+	Utils.assert(this.contains(str));
+	remove(indexOf(str));
+    }
+
+    /**
      * Set child at index <index> to <str>
      */
     public void set(int index, SIRStream str) {
@@ -113,12 +148,19 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
+     * Set parameters for <i>'th child to <params>
+     */
+    public void setParams(int index, List params) {
+	this.params.set(index, params);
+    }
+
+    /**
      * Returns a list of the parameters (JExpressions) that are being
      * passed to the i'th child of this, or null if the parameters
      * have not been resolved yet.
      */
-    public LinkedList getParams(int i) {
-	return (LinkedList)params.get(i);
+    public List getParams(int i) {
+	return (List)params.get(i);
     }
 
     /**
@@ -141,7 +183,8 @@ public abstract class SIRContainer extends SIRStream {
      * <oldStr> is an immediate child of this.  (It does not do a
      * deep-replacement.)  Also, it sets the parent of <newStr> to be
      * this, but does NOT mend the calls in the init function to call
-     * the init function of newStr.
+     * the init function of newStr (if there are any SIRInitStatments
+     * remaining.)
      */
     public abstract void replace(SIRStream oldStr, SIRStream newStr);
 

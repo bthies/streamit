@@ -26,6 +26,10 @@ public class SIRSplitter extends SIROperator {
      */
     private boolean uniform;
 
+    private SIRSplitter() {
+	new RuntimeException("calling no-arg constructor").printStackTrace();
+    }
+
     private SIRSplitter(SIRContainer parent, 
 			SIRSplitType type, 
 			JExpression[] weights,

@@ -1,5 +1,6 @@
 package at.dms.kjc.sir;
 
+import java.util.*;
 import at.dms.kjc.*;
 import at.dms.compiler.*;
 
@@ -14,9 +15,9 @@ import at.dms.compiler.*;
 public class SIRInitStatement extends JStatement {
 
     /**
-     * The arguments to the init function.
+     * The arguments to the init function. (all are JExpressions)
      */
-    protected JExpression[] args;
+    protected List args;
     /**
      * The stream structure to initialize.
      */
@@ -29,14 +30,16 @@ public class SIRInitStatement extends JStatement {
     /**
      * Construct a node in the parsing tree
      */
-    public SIRInitStatement(TokenReference where, 
-			    JavaStyleComment[] comments, 
-			    JExpression[] args, 
+    public SIRInitStatement(List args, 
 			    SIRStream str) {
-	super(where, comments);
+	super(null, null);
 
 	this.args = args;
 	this.target = str;
+    }
+    
+    public SIRInitStatement(SIRStream str) {
+	this(null, str);
     }
     
     /**
@@ -49,11 +52,11 @@ public class SIRInitStatement extends JStatement {
 	this.target = null;
     }
     
-    public void setArgs(JExpression[] a) {
-	this.args = a;
+    public void setArgs(LinkedList args) {
+	this.args = args;
     }
 
-    public JExpression[] getArgs() {
+    public List getArgs() {
 	return this.args;
     }
 
@@ -85,11 +88,11 @@ public class SIRInitStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	if (p instanceof SLIRVisitor) {
-	    ((SLIRVisitor)p).visitInitStatement(this, args, target);
+	    ((SLIRVisitor)p).visitInitStatement(this, target);
 	} else {
 	    // otherwise, visit children
-	    for (int i=0; i<args.length; i++) {
-		args[i].accept(p);
+	    for (int i=0; i<args.size(); i++) {
+		((JExpression)args.get(i)).accept(p);
 	    }
 	}
     }
@@ -102,7 +105,6 @@ public class SIRInitStatement extends JStatement {
     public Object accept(AttributeVisitor p) {
 	if (p instanceof SLIRAttributeVisitor) {
 	    return ((SLIRAttributeVisitor)p).visitInitStatement(this, 
-								args,
 								target);
 	} else {
 	    return this;

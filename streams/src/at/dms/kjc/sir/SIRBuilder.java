@@ -160,8 +160,8 @@ public class SIRBuilder {
 
 	/* set init function to initialize components */
 	JStatement[] initStatements = 
- 	  { new SIRInitStatement(null, null, JExpression.EMPTY, f1),
-	    new SIRInitStatement(null, null, JExpression.EMPTY, f2)};
+ 	  { new SIRInitStatement(f1),
+	    new SIRInitStatement(f2)};
 	toplevel.setInit(new JMethodDeclaration( /* tokref     */ null,
 				    /* modifiers  */ at.dms.kjc.
 				                    Constants.ACC_PUBLIC,

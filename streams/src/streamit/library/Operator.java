@@ -34,6 +34,13 @@ public class Operator extends DestroyedClass
             .add("b", b);
     }
 
+    public Operator(float a, float b)
+    {
+        initParams = new ParameterContainer("float-float")
+            .add("a", a)
+            .add("b", b);
+    }
+
     public Operator(float a, float b, float c)
     {
         initParams = new ParameterContainer("float-float-float")

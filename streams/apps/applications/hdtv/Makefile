@@ -1,7 +1,19 @@
-SOURCES  = HDTV.java TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java ConvolutionalInterleaver.java ConvolutionalDeinterleaver.java TrellisDecoderPipeline.java TrellisEncoderPipeline.java SymbolMapper.java SymbolUnMapper.java DelayPipeline.java DataReorder.java Bitifier.java UnBitifier.java NoiseSource.java
+LIB_FILES = TrellisEncoder.java TrellisDecoder.java PreCoder.java PreDecoder.java UngerboeckEncoder.java UngerboeckDecoder.java ReedSolomonEncoder.java ReedSolomonDecoder.java ConvolutionalInterleaver.java ConvolutionalDeinterleaver.java TrellisDecoderPipeline.java TrellisEncoderPipeline.java SymbolMapper.java SymbolUnMapper.java DelayPipeline.java DataReorder.java Bitifier.java UnBitifier.java NoiseSource.java
+
+SOURCES = HDTV.java $(LIB_FILES)
 
 COMPILER = java -Xmx512M  at.dms.kjc.Main -s
 LINKER   = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
+
+IMPORTS   = 	"import streamit.*; \
+	         import streamit.io.*; \
+		 import java.lang.Math;"
+
+MAIN	  = 	HDTV
+
+MAIN_FILE = 	${MAIN}.java
+
+
 
 all: clean java uni raw
 
@@ -56,3 +68,25 @@ doc: stream-graph-generate
 	gv hdtv_writeup.ps
 
 
+
+link:
+	# put all the libraries in one file
+	cat ${LIB_FILES} > ${MAIN_FILE}.tmp
+	# make all library classes non-public
+	perl -pi -e "s/public class/class/g" ${MAIN_FILE}.tmp
+	# add the main file
+	cat ${MAIN_FILE}.tmp ${MAIN_FILE} > ${MAIN_FILE}.1.tmp
+	# remove all the import statements
+	perl -pi -e "s/import .*;//g" ${MAIN_FILE}.1.tmp
+	# convert main file name into linked file name
+	perl -pi -e "s/class ${MAIN}/class Linked${MAIN}/g" ${MAIN_FILE}.1.tmp
+	perl -pi -e "s/new ${MAIN}/new Linked${MAIN}/g" ${MAIN_FILE}.1.tmp
+	perl -pi -e "s/${MAIN}\./Linked${MAIN}\./g" ${MAIN_FILE}.1.tmp
+	# add the imports that we care about into the final file
+	echo ${IMPORTS} > Linked${MAIN_FILE}
+	# add the source code to the final file
+	cat ${MAIN_FILE}.1.tmp >> Linked${MAIN_FILE}
+	# remove temporaries
+	rm -f ${MAIN_FILE}.tmp ${MAIN_FILE}.1.tmp
+	# compile
+	#javac Linked${MAIN_FILE}

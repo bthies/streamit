@@ -1,6 +1,6 @@
 /**
  * Class which runs defines which tests are run using the nightly regtest.
- * $Id: TestNightly.java,v 1.1 2003-03-07 23:53:52 aalamb Exp $
+ * $Id: TestNightly.java,v 1.2 2003-06-27 16:13:54 dmaze Exp $
  **/
 package streamittest;
 
@@ -31,7 +31,7 @@ public class TestNightly extends TestCase {
     public static Test suite() {
 	TestSuite allTests = new TestSuite();
 
-	addUniprocessorTests(allTests);
+	// addUniprocessorTests(allTests);
 	addRawTests(allTests);
 
 	return allTests;

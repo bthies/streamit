@@ -40,8 +40,8 @@ public class DirectCommunication extends RawExecutionCode
 	    return false;
 	}
 	if (fi.remaining > 0) {
-	    SpaceTimeBackend.println(filter + " can't use direct comm: Remaining: " +
-				     fi.remaining + " or BottomPeek " + fi.bottomPeek);
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Remaining = " +
+				     fi.remaining);
 	    return false;
 	}
 	if (fi.peek > fi.pop) {

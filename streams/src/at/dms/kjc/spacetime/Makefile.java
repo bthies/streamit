@@ -85,6 +85,8 @@ public class Makefile
 	    //	("\nRGCC=/home/bits7/NO_BACKUP/streamit/install/slgcc/bin/raw-gcc\n");
 	    buf.append
 		("\nRGCC=/home/pkg/brave_new_linux/0196.slgcc/install/slgcc/bin/raw-gcc\n");
+	    //	    buf.append
+	    //	("\nRAS=/home/pkg/brave_new_linux/0198.rbinutils/install/rbinutils/bin/ras\n");
 	    buf.append("\nDMEM_PORTS  = 1\n");
 	    buf.append("ISSUE_WIDTH = 1\n\n");
 	    buf.append("EXTRA_BTL_ARGS += -issue_width $(ISSUE_WIDTH) -dmem_ports $(DMEM_PORTS)\n");

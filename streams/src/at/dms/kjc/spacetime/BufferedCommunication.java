@@ -327,21 +327,16 @@ public class BufferedCommunication extends RawExecutionCode
 		(filter.getInitWork().getBody());
 
 	    //add the code to receive the items into the buffer from the network
-	    //but only if its upstream neighbor is a filter trace node...
-	    if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
-		statements.addStatement
-		    (makeForLoop(receiveCode(filter, filter.getInputType(), 
-					     generatedVariables),
-				 generatedVariables.exeIndex,
-				 new JIntLiteral(filterInfo.peek)));
-	    }
+	    statements.addStatement
+		(makeForLoop(receiveCode(filter, filter.getInputType(), 
+					 generatedVariables),
+			     generatedVariables.exeIndex,
+			     new JIntLiteral(filterInfo.prePeek)));
 	    
 	    //now inline the init work body
 	    statements.addStatement(body);
 	    //if a simple filter, reset the simpleIndex
-	    if (filterInfo.isSimple() && 
-		(KjcOptions.magicdram ||
-		 filterInfo.traceNode.getPrevious().isFilterTrace())) {
+	    if (filterInfo.isSimple()) {
 		statements.addStatement
 		    (new JExpressionStatement(null,
 					      (new JAssignmentExpression
@@ -357,9 +352,7 @@ public class BufferedCommunication extends RawExecutionCode
 	//add the code to collect enough data necessary to fire the 
 	//work function for the first time
 	    
-	    if (filterInfo.bottomPeek > 0 && 
-		(KjcOptions.magicdram ||
-		filterInfo.traceNode.getPrevious().isFilterTrace())) {
+	    if (filterInfo.bottomPeek > 0) {
 		statements.addStatement
 		    (makeForLoop(receiveCode(filter, filter.getInputType(),
 					     generatedVariables),
@@ -374,10 +367,8 @@ public class BufferedCommunication extends RawExecutionCode
 
 	//add the code to collect all data produced by the upstream filter 
 	//but not consumed by this filter in the initialization stage
-	if (filterInfo.remaining > 0 &&
-	    (KjcOptions.magicdram ||
-	    filterInfo.traceNode.getPrevious().isFilterTrace())) {
-	   statements.addStatement
+	if (filterInfo.remaining > 0) {
+	    statements.addStatement
 		(makeForLoop(receiveCode(filter, filter.getInputType(),
 					 generatedVariables),
 			     generatedVariables.exeIndex,
@@ -391,21 +382,6 @@ public class BufferedCommunication extends RawExecutionCode
 				       null));
 	}
 	
-	//reset the simple index if we are receiving from another trace
-	//to allow it to write to the buffer in the correct index
-	//IS THIS STILL CORRECT?
-	if (!KjcOptions.magicdram && filterInfo.isSimple() && 
-		filterInfo.traceNode.getPrevious().isInputTrace()) {
-		statements.addStatement
-		    (new JExpressionStatement(null,
-					      (new JAssignmentExpression
-					       (null,
-						new JFieldAccessExpression
-						(null, new JThisExpression(null),
-						 generatedVariables.simpleIndex.getIdent()),
-						new JIntLiteral(-1))), null));
-	}
-
 	//add the calls to the work function for the priming of the pipeline
 	statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));
 
@@ -447,9 +423,7 @@ public class BufferedCommunication extends RawExecutionCode
 	    deepCopy(filter.getWork().getBody());
 
 	//reset the simple index
-	if (filterInfo.isSimple() && 
-	    (KjcOptions.magicdram || 
-	    filterInfo.traceNode.getPrevious().isFilterTrace())) {
+	if (filterInfo.isSimple()) {
 	    block.addStatement
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -460,15 +434,13 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
-	if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
-	    //add the statements to receive pop * steady mult items into the buffer
-	    //execute this before the for loop that has the work function
-	    block.addStatement
-		(makeForLoop(receiveCode(filter, filter.getInputType(),
-					 generatedVariables),
-			     generatedVariables.exeIndex,
-			     new JIntLiteral(filterInfo.pop)));
-	}
+	//add the statements to receive pop into the buffer
+	//execute this before the for loop that has the work function
+	block.addStatement
+	    (makeForLoop(receiveCode(filter, filter.getInputType(),
+				     generatedVariables),
+			 generatedVariables.exeIndex,
+			 new JIntLiteral(filterInfo.pop)));
 
 	//if we are in debug mode, print out that the filter is firing
 	if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
@@ -509,47 +481,7 @@ public class BufferedCommunication extends RawExecutionCode
 								 null));
 	    block.addStatement(loop);
 	}
-	
-	//reset the simple index outside of the loop if this filter is the first
-	//in the trace because it uses the buffer that for the entire steady state
-	if (!KjcOptions.magicdram && filterInfo.isSimple() && 
-	    filterInfo.traceNode.getPrevious() != null &&
-	    filterInfo.traceNode.getPrevious().isInputTrace()) {
-	    block.addStatementFirst
-		(new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JFieldAccessExpression
-					    (null, new JThisExpression(null),
-					     generatedVariables.simpleIndex.getIdent()),
-					    new JIntLiteral(-1))), null));
-	}
-	
-	//reset the simple index if we are receiving from another trace
-	//to allow it to write to the buffer in the correct index
-	/*
-	  if (filterInfo.isSimple() && 
-	    filterInfo.traceNode.getPrevious().isInputTrace()) {
-	    block.addStatement
-		(new JExpressionStatement(null,
-					  (new JAssignmentExpression
-					   (null,
-					    new JFieldAccessExpression
-					    (null, new JThisExpression(null),
-					     generatedVariables.simpleIndex.getIdent()),
-					    new JIntLiteral(-1))), null));
-	}
-	*/
-	/*
-	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void,
-				      steadyStage + uniqueID,
-				      JFormalParameter.EMPTY,
-				      CClassType.EMPTY,
-				      block,
-				      null,
-				      null);
-	*/
+
 	return block;
     }
 
@@ -561,10 +493,8 @@ public class BufferedCommunication extends RawExecutionCode
     {
 	JBlock block = new JBlock(null, new JStatement[0], null);
 	
-	//if a simple filter and the previous trace is a filter , reset the simpleIndex
-	if (filterInfo.isSimple() && 
-	    (KjcOptions.magicdram ||
-	    filterInfo.traceNode.getPrevious().isFilterTrace())) {
+	//if a simple filter, reset the simpleIndex
+	if (filterInfo.isSimple()) {
 	    block.addStatement
 		(new JExpressionStatement(null,
 					  (new JAssignmentExpression
@@ -575,30 +505,28 @@ public class BufferedCommunication extends RawExecutionCode
 					    new JIntLiteral(-1))), null));
 	}
 	
-	if (KjcOptions.magicdram || filterInfo.traceNode.getPrevious().isFilterTrace()) {
-	    JStatement innerReceiveLoop = 
-		makeForLoop(receiveCode(filter, filter.getInputType(),
-					generatedVariables),
-			    generatedVariables.exeIndex,
-			    new JIntLiteral(filter.getPopInt()));
-	    
-	    JExpression isFirst = 
-		new JEqualityExpression(null,
+	JStatement innerReceiveLoop = 
+	    makeForLoop(receiveCode(filter, filter.getInputType(),
+				    generatedVariables),
+			generatedVariables.exeIndex,
+			new JIntLiteral(filter.getPopInt()));
+	
+	JExpression isFirst = 
+	    new JEqualityExpression(null,
 				    false,
-					new JFieldAccessExpression
-					(null, new JThisExpression(null),
-					 generatedVariables.exeIndex1.getIdent()),
-					new JIntLiteral(0));
-	    JStatement ifStatement = 
-		new JIfStatement(null,
-				 isFirst,
-				 innerReceiveLoop,
-				 null, 
-				 null);
-	    
-	    //add the if statement
-	    block.addStatement(ifStatement);
-	}
+				    new JFieldAccessExpression
+				    (null, new JThisExpression(null),
+				     generatedVariables.exeIndex1.getIdent()),
+				    new JIntLiteral(0));
+	JStatement ifStatement = 
+	    new JIfStatement(null,
+			     isFirst,
+			     innerReceiveLoop,
+			     null, 
+			     null);
+	
+	//add the if statement
+	block.addStatement(ifStatement);
 	
 	//clone the work function and inline it
 	JBlock workBlock = 

@@ -21,7 +21,7 @@ public class FrequencyReplacer extends EmptyStreamVisitor implements Constants{
     public static final int UNKNOWN = -1;
     public static final int STUPID  =  0;
     public static final int SMARTER =  1;
-    public static final int FFTW    =  3;
+    public static final int FFTW    =  2;
     
     /**
      * start the process of replacement on str using the Linearity information in lfa.

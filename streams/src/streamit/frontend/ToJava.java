@@ -152,7 +152,16 @@ class ToJava
                 StreamItLex lexer = new StreamItLex(dis);
                 parser = new StreamItParserFE(lexer);
                 prog = parser.program();
+                /* What's the right order for these?  Clearly generic
+                 * things like MakeBodiesBlocks need to happen first.
+                 * I don't think there's actually a problem running
+                 * MoveStreamParameters after DoComplexProp, since
+                 * this introduces only straight assignments which the
+                 * Java front-end can handle.  OTOH,
+                 * MoveStreamParameters introduces references to
+                 * "this", which doesn't exist. */
                 prog = (Program)prog.accept(new MakeBodiesBlocks());
+                prog = (Program)prog.accept(new DoComplexProp());
                 prog = (Program)prog.accept(new MoveStreamParameters());
                 prog = (Program)prog.accept(new NameAnonymousFunctions());
                 String javaOut = (String)prog.accept(new NodesToJava(null));

@@ -294,9 +294,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
 	}
 	if (TYPE.equals("SplitJoin")) {
 	    SIRSplitJoin current = new SIRSplitJoin((SIRContainer)parentStream,
-						    clazz.getIdent(),
-						    JFieldDeclaration.EMPTY(),
-						    JMethodDeclaration.EMPTY());
+						    clazz.getIdent());
 	    parentStream = current;
 	    return current;
 	}

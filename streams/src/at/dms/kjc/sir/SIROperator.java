@@ -153,20 +153,20 @@ public abstract class SIROperator extends Utils implements Finalizable {
   // ----------------------------------------------------------------------
 
     /**
-     * Returns a UNIQUE name for this.  That is, if a given stream
-     * operator was added in multiple positions of the stream graph,
-     * then this will return a different name for each instantiation.
-     */
-    public String getName() {
-	return Namer.getName(this);
-    }
-
-    /**
      * Returns an identifier for this which is NOT unique.  This will
      * return the same string for a given type of filter that was
      * added to the stream graph.
      */
     public abstract String getIdent();
+
+    /**
+     * Returns a UNIQUE name for this.  That is, if a given stream
+     * operator was added in multiple positions of the stream graph,
+     * then this will return a different name for each instantiation.
+     */
+    public String getName() {
+	return getIdent() + "_" + myNumber;
+    }
 
     /**
      * Returns the parent of this.

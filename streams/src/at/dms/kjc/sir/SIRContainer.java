@@ -246,10 +246,7 @@ public abstract class SIRContainer extends SIRStream {
 	// wrapper.add below changes the parent of str, so grab the
 	// old parent now.
 	SIRContainer oldParent = str.getParent();
-	SIRPipeline wrapper = new SIRPipeline(oldParent,
-					      "wrapper_" + str.getName(), 
-					      JFieldDeclaration.EMPTY(), 
-					      JMethodDeclaration.EMPTY());
+	SIRPipeline wrapper = new SIRPipeline(oldParent, str.getIdent());
 	wrapper.setInit(SIRStream.makeEmptyInit());
 	wrapper.add(str);
 	if (oldParent.getParent()!=null) {

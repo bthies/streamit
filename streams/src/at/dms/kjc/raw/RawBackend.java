@@ -91,10 +91,6 @@ public class RawBackend {
 
 	Flattener.doLinearAnalysis(str);
 
-	AdjustGranularity.doit(str, 
-			       RawBackend.rawRows * 
-			       RawBackend.rawColumns);
-
 	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");
 	    FuseAll.fuse(str);

@@ -20,7 +20,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * The maximum amount to fiss (before network takes over).
      */
-    static final int MAX_FISSION_FACTOR = 3;
+    static final int MAX_FISSION_FACTOR = 2;
     /**
      * The overhead of work estimated for horizontal fission of
      * containers (could calculate more precisely; only doing

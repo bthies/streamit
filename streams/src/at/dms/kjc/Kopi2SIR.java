@@ -361,6 +361,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    //the second arg will be turned into string by visitFieldExpression because it is a type
 	    if (!(args[1] instanceof JStringLiteral))
 		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileReader must be a type");
+	    ((SIRFileReader)stream).setInputType(CStdType.Null);
 	    ((SIRFileReader)stream).setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
 	    return;
 	}
@@ -374,6 +375,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    if (!(args[1] instanceof JStringLiteral))
 		at.dms.util.Utils.fail(lineNumber + ": Second argument to FileWriter must be a type");
 	    ((SIRFileWriter)stream).setInputType(getType(((JStringLiteral)args[1]).stringValue()));
+	    ((SIRFileWriter)stream).setOutputType(CStdType.Null);
 	    return;
 	}
     }

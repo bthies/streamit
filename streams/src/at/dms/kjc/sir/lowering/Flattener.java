@@ -72,7 +72,7 @@ public class Flattener {
 
 	AdjustGranularity.doit(str, -1);
 
-	if (KjcOptions.partition) {
+	if (KjcOptions.partition || KjcOptions.ilppartition) {
 	    System.err.println("Partitioning...");
 	    Partitioner.doit(str, 
 			     KjcOptions.raw * KjcOptions.raw);

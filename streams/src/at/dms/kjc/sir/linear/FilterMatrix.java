@@ -17,14 +17,17 @@ import java.util.*;
  * a matrix multiply operation on the input vector which
  * produces an output vector.
  *
- * $Id: FilterMatrix.java,v 1.1 2002-08-09 16:45:37 aalamb Exp $
+ * Each element of the FilterMatrix is a ComplexNumber
+ *
+ * $Id: FilterMatrix.java,v 1.2 2002-08-12 19:07:27 aalamb Exp $
  **/
 
 public class FilterMatrix {
     /** Internal representation of the matrix **/ 
-    private float internalMatrix[][] = null;
+    private ComplexNumber internalMatrix[][] = null;
     private int internalSizeRows = -1;
     private int internalSizeCols = -1;
+
     /**
      * Create FilterMatrix of size (rows,cols) and initialize all
      * elements to the value 0.
@@ -35,14 +38,13 @@ public class FilterMatrix {
 	    throw new IllegalArgumentException("Illegal dimensions:("+rows+","+cols+")");
 	}
 	// instantiate the internal matrix, and save the dimensions
-	this.internalMatrix = new float[rows][cols];
+ 	this.internalMatrix = new ComplexNumber[rows][cols];
 	this.internalSizeRows = rows;
 	this.internalSizeCols = cols;
-	// initialize all to 0 (I think that java does this for you, but
-	// best to make sure
+	// initialize all to 0 
 	for (int i=0; i<rows; i++) {
 	    for (int j=0; j<cols; j++) {
-		this.internalMatrix[i][j] = 0;
+		this.internalMatrix[i][j] = new ComplexNumber(0,0);
 	    }
 	}
 	checkRep();
@@ -53,7 +55,7 @@ public class FilterMatrix {
      * Accessor: returns the value of the matrix at the specified position,
      * and bombs an exception if the value is out of range.
      **/
-    public float getElement(int row, int col) {
+    public ComplexNumber getElement(int row, int col) {
 	checkRep();
 	// do bounds checking
 	validateBounds(row,col);
@@ -80,10 +82,15 @@ public class FilterMatrix {
     /**
      * Sets the element in (row,col) to be value.
      **/
-    public void setElement(int row, int col, float value) {
+    public void setElement(int row, int col, ComplexNumber value) {
 	// check bounds
 	validateBounds(row, col);
+	// make sure that we aren't putting in null
+	if (value == null) {throw new IllegalArgumentException("Null arguments are not allowed"); }
+	// finally, set the value correctly
 	this.internalMatrix[row][col] = value;
+	// make sure that we haven't foobared the rep
+	checkRep();
     }
 
     /**
@@ -124,6 +131,14 @@ public class FilterMatrix {
 	if (this.internalSizeCols != this.internalMatrix[0].length) {
 	    throw new RuntimeException("Col size mismatch");
 	}
+	// make sure that all of the elements are not null
+	for (int i=0; i<this.internalSizeRows; i++) {
+	    for (int j=0; j<this.internalSizeCols; j++) {
+		if (this.internalMatrix[i][j] == null) {
+		    throw new RuntimeException("Null matrix entry");
+		}
+	    }
+	}	
     }	
     
 

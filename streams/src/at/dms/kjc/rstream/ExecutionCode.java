@@ -92,7 +92,8 @@ public class ExecutionCode extends at.dms.util.Utils
 				   block,
 				   null,
 				   null);
-	filter.addMethod(mainFunct);
+	//make the main the new work function
+	filter.setWork(mainFunct);
     }
 
     /**
@@ -133,12 +134,14 @@ public class ExecutionCode extends at.dms.util.Utils
 	//is a two stage..
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    JBlock body = 
-		(JBlock)ObjectDeepCloner.deepCopy
-		(two.getInitWork().getBody());
-
-	    //now inline the init work body
-	    statements.addStatement(body);
+	    statements.addStatement
+		(new JExpressionStatement(null,
+					  new JMethodCallExpression
+					  (null,
+					   new JThisExpression(null),
+					   two.getInitWork().getName(),
+					   new JExpression[0]),
+					  null));
 	}
 
 	

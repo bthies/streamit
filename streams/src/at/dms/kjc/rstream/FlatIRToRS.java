@@ -18,85 +18,88 @@ import java.util.Hashtable;
 import at.dms.util.SIRPrinter;
 
 /**
- * This class dumps the tile code for each filter into a file based 
- * on the tile number assigned 
+ * This class converts the Stream IR (which references the Kopi Java IR)
+ * to C code and dumps it to a file, str.c.    
+ *
+ *
+ * @author Michael Gordon
  */
 public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 {
+    /** tabbing / spacing variables **/
     protected int TAB_SIZE = 2;
+    /** tabbing / spacing variables **/
     protected int WIDTH = 80;
+    /** tabbing / spacing variables **/
     protected int pos;
-
+    /** Some output classes **/
     protected TabbedPrintWriter p;
-    protected StringWriter str; 
-    public boolean declOnly = true;
-    public SIRFilter filter;
-    
-
-    //true if we are currently visiting the init function
+    protected StringWriter str;
+    /** set to true to only print declarations of methods when visiting them **/
+    private boolean declOnly = true;
+    /** the single fused filter of the application we are generating code for **/
+    private SIRFilter filter;
+    /** true if we are currently visiting the init function **/
     private boolean isInit = false;
+    /** Needed to pass info from assignment to visitNewArray **/
+    private JExpression lastLeft;
+
     
-
-    //Needed to pass info from assignment to visitNewArray
-    JExpression lastLeft;
-
+    /**
+     * The entry method to this C conversion pass.  Given a flatnode containing
+     * the single fused filter of the application, optimize the SIR code, if
+     * enabled, and then generate then convert to C code and dump to a file.
+     *
+     * @param node The flatnode containing the single filter of the application.
+     *
+     */
     public static void generateCode(FlatNode node) 
     {
 	FlatIRToRS toC = new FlatIRToRS((SIRFilter)node.contents);
-	//FieldInitMover.moveStreamInitialAssignments((SIRFilter)node.contents);
-	//FieldProp.doPropagate((SIRFilter)node.contents);
-
-	//Optimizations
-	
-	
+		
+	//optimizations...
 	if(!KjcOptions.nofieldprop)
 	    System.out.println
 		("Optimizing "+
 		 ((SIRFilter)node.contents).getName()+"...");
 
 	ArrayDestroyer arrayDest=new ArrayDestroyer();
+	//iterate over all the methods, calling the magic below...
+
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 	    JMethodDeclaration method=((SIRFilter)node.contents).getMethods()[i];
-	    
-	    if(!(method.getName().startsWith("work")||method.getName().startsWith("initWork"))) { 
-		//Already in __RAWMAIN__
-		if (!KjcOptions.nofieldprop) {
-		    Unroller unroller;
+	    if (!KjcOptions.nofieldprop) {
+		Unroller unroller;
+		do {
 		    do {
-			do {
-			    //System.out.println("Unrolling..");
-			    unroller = new Unroller(new Hashtable());
-			    method.accept(unroller);
-			} while(unroller.hasUnrolled());
-			//System.out.println("Constant Propagating..");
-			method.accept(new Propagator(new Hashtable()));
-			//System.out.println("Unrolling..");
 			unroller = new Unroller(new Hashtable());
 			method.accept(unroller);
-		    } while(unroller.hasUnrolled());
-		    //System.out.println("Flattening..");
-		    method.accept(new BlockFlattener());
-		    //System.out.println("Analyzing Branches..");
-		    //method.accept(new BranchAnalyzer());
-		    //System.out.println("Constant Propagating..");
+		    } while (unroller.hasUnrolled());
+		    
 		    method.accept(new Propagator(new Hashtable()));
-		} else
-		    method.accept(new BlockFlattener());
-		method.accept(arrayDest);
-		method.accept(new VarDeclRaiser());
-	    }
+		    unroller = new Unroller(new Hashtable());
+		    method.accept(unroller);
+		} while(unroller.hasUnrolled());
+		
+		method.accept(new BlockFlattener());
+		method.accept(new Propagator(new Hashtable()));
+	    } else
+		method.accept(new BlockFlattener());
+	    method.accept(arrayDest);
+	    method.accept(new VarDeclRaiser());
 	}
+	
 	if(KjcOptions.destroyfieldarray)
 	   arrayDest.destroyFieldArrays((SIRFilter)node.contents);
 	   /*	
-	  try {
-	    SIRPrinter printer1 = new SIRPrinter();
-	    IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
-	    printer1.close();
-	}
-	catch (Exception e) 
-	    {
-	    }
+	     try {
+	     SIRPrinter printer1 = new SIRPrinter();
+	     IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(printer1);
+	     printer1.close();
+	     }
+	     catch (Exception e) 
+	     {
+	     }
 	*/
         IterFactory.createFactory().createIter((SIRFilter)node.contents).accept(toC);
     }
@@ -106,17 +109,10 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
     }
-    
 
-    public FlatIRToRS(TabbedPrintWriter p) {
-        this.p = p;
-        this.str = null;
-        this.pos = 0;
-    }
     
     public FlatIRToRS(SIRFilter f) {
 	this.filter = f;
-	//	circular = false;
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
     }
@@ -273,16 +269,6 @@ public class FlatIRToRS extends SLIREmptyVisitor implements StreamVisitor
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
-	//System.out.println(ident);
-	
-	//in the raw path we do not want to print the 
-	//prework or work function definition
-	if (filter != null && 
-	    (filter.getWork().equals(self) ||
-	     (filter instanceof SIRTwoStageFilter &&
-	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
-	    return;
-
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);

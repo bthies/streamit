@@ -196,5 +196,38 @@ public class OutputTraceNode extends TraceNode
     {
 	return (FilterTraceNode)getPrevious();
     }
+
+    public double ratio(Edge edge) 
+    {
+	if (totalWeights() == 0)
+	    return 0.0;
+	return ((double)getWeight(edge) /
+		(double)totalWeights());
+    }
+
+    public String debugString() 
+    {
+	StringBuffer buf = new StringBuffer();
+	buf.append("***** " + this.toString() + " *****\n");
+	for (int i = 0; i < weights.length; i++) {
+	    buf.append("* Weight = " + weights[i] + "\n");
+	    for (int j = 0; j < dests[i].length; j++)
+		buf.append("  " + dests[i][j] + "\n");
+	}
+	buf.append("**********\n");
+	return buf.toString();
+    }
     
+
+    /*
+    public int itemsReceived(boolean init, boolean primepump) 
+    {
+	return FilterInfo.getFilterInfo(getPrevFilter()).totalItemsSent(init, primepump);
+    }
+    
+    public int itemsSent(boolean init, boolean primepump) 
+    {
+	
+    }
+    */
 }

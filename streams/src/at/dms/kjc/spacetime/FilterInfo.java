@@ -24,6 +24,8 @@ public class FilterInfo
     //so here primepump is the number of times
     //the filter executes in the primepump stage
     public int primePump;
+    //the primepump in terms of steady
+    public int primePumpTrue;
     public int peek;
 
     private boolean linear;
@@ -61,7 +63,8 @@ public class FilterInfo
 	//multiply the primepump number by the
 	//steady state multiplicity to get the true 
 	//primepump multiplicity
-	this.primePump = traceNode.getParent().getPrimePump() * this.steadyMult;
+	this.primePumpTrue = traceNode.getParent().getPrimePump();
+	this.primePump = primePumpTrue * this.steadyMult;
 	prePeek = 0;
 	prePush = 0;
 	prePop = 0;
@@ -176,21 +179,20 @@ public class FilterInfo
 	    return 0;
 
 	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
-	int itemsSent = primePump * push;
-	int itemsConsumed = 0;
-	    
-	Iterator it = out.getDestSet().iterator();
-	while (it.hasNext()) {
-	    Edge edge = (Edge)it.next();
-	    FilterInfo downstream = 
-		FilterInfo.getFilterInfo(((FilterTraceNode)edge.getDest().getNext()));
-	    double currentItems = ((downstream.primePump * downstream.pop) * 
-		(double)((double)edge.getDest().getWeight(edge) / (double)edge.getDest().totalWeights()));
-	    assert (currentItems == (double)((int)currentItems)) :
-		"items on edge not a whole number";
-	    itemsConsumed += (int)currentItems;
-	}
 	
+	//if there is a downstream, true outputtrace node, let it deal
+	//with the primepump items not consumed
+	if (!OffChipBuffer.unnecessary(out))
+	    return 0;
+
+	int itemsSent = primePump * push;
+	InputTraceNode input = out.getSingleEdge().getDest();
+	FilterInfo downstream = 
+	    FilterInfo.getFilterInfo(input.getNextFilter());
+	int itemsConsumed = 
+	    (int) ((double)downstream.totalItemsReceived(false, true) * 
+	    ((double) (input.getWeight(out.getSingleEdge()) / (double) input.totalWeights())));
+
 	assert (itemsSent - itemsConsumed >= 0) :
 	    "negative primepump items not consumed";
 	

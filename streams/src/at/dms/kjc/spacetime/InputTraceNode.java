@@ -117,4 +117,11 @@ public class InputTraceNode extends TraceNode
     {
 	return sources.length == 0;
     }
+    
+    public double ratio(Edge edge) 
+    {
+	if (totalWeights() == 0)
+	    return 0.0;
+	return ((double)getWeight(edge)/(double)totalWeights());
+    }
 }

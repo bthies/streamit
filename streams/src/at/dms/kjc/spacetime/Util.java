@@ -159,102 +159,15 @@ public class Util {
     //the size of the buffer between in, out for the steady state
     public static int steadyBufferSize(Edge edge)
     {
-	int itemsReceived, itemsSent;
-	InputTraceNode in = edge.getDest();
-	OutputTraceNode out = edge.getSrc();
-	
-	//calculate the items the input trace receives
-	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
-	itemsSent = (int)((next.steadyMult * next.pop) *
-	    ((double)in.getWeight(edge) / in.totalWeights()));
-	
-	//	System.out.println(in.getWeight(edge) + "/" +  in.totalWeights());
-
-	//calculate the items the output trace sends
-	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
-	itemsReceived = (int)((prev.steadyMult * prev.push) *
-	    ((double)out.getWeight(edge) / out.totalWeights()));
-	/*
-	System.out.println("Steady Buffer: " + edge + ", sent " +
-			   itemsSent + ", received = " + itemsReceived);
-	System.out.println(out);
-	for (int i = 0; i < out.getWeights().length; i++) {
-	    System.out.println(" ---- Weight = " + out.getWeights()[i]);
-	    for (int j = 0; j < out.getDests()[i].length; j++) 
-		System.out.println(out.getDests()[i][j] + " " + out.getDests()[i][j].hashCode());
-	     System.out.println(" ---- ");
-	}
-	//	System.out.println(out.getWeight(edge)+ " / "   + out.totalWeights());
-	//System.out.println(((double)out.getWeight(edge) / out.totalWeights()));	
-
-	System.out.println(in);
-	//System.out.println(in.getWeights().length + " " + in.getWeights()[0]);
-	System.out.println("-------");
-	for (int i = 0; i < in.getWeights().length; i++) {
-	    System.out.println(in.getSources()[i] + " " + in.getWeights()[i] + " " + in.getSources()[i].hashCode());
-	}
-	System.out.println("-------");
-	*/
-	//see if they are different
-	assert (itemsSent == itemsReceived) :
-	    "Calculating steady state: items received != items send on buffer";
-	
-	return itemsSent * getTypeSize(next.filter.getInputType());
+	return edge.steadyItems() * 
+	    getTypeSize(edge.getType());
     }
     
     //the size of the buffer between in / out for the init stage
     public static int initBufferSize(Edge edge)
     {
-	int itemsReceived, itemsSent;
-	InputTraceNode in = edge.getDest();
-	OutputTraceNode out = edge.getSrc();
-
-	//calculate the items the input trace receives
-	FilterInfo next = FilterInfo.getFilterInfo((FilterTraceNode)in.getNext());
-	itemsSent =  (int)(next.initItemsReceived() *
-	    ((double)in.getWeight(edge) / in.totalWeights()));
-	
-	System.out.println("Sent from buffer: " + next.initItemsReceived() + " * " + 
-			   in.getWeight(edge) + " / " +  in.totalWeights());
-	System.out.println(next + ": " + next.initMult + " " + next.prePeek + " " + 
-			   next.prePop + " " + next.peek + " " + next.pop);
-	
-	//calculate the items the output trace sends
-	FilterInfo prev = FilterInfo.getFilterInfo((FilterTraceNode)out.getPrevious());
-	itemsReceived = (int)(prev.initItemsSent() *
-	    ((double)out.getWeight(edge) / out.totalWeights()));
-
-	System.out.println("Received into buffer: " + prev.initItemsSent() + " * " + 
-			   out.getWeight(edge) + " / " +  out.totalWeights());
-	System.out.println(prev + ": " + prev.initMult + " " + prev.prePush + " " +
-			   prev.push);
-	
-	System.out.println("Init Buffer: " + edge + ", sent " +
-			   itemsSent + ", received = " + itemsReceived);
-	/*
-	System.out.println(out);
-	for (int i = 0; i < out.getWeights().length; i++) {
-	    System.out.println(" ---- Weight = " + out.getWeights()[i]);
-	    for (int j = 0; j < out.getDests()[i].length; j++) 
-		System.out.println(out.getDests()[i][j] + " " + out.getDests()[i][j].hashCode());
-	     System.out.println(" ---- ");
-	}
-	//System.out.println(out.getWeight(edge)+ " / "   + out.totalWeights());
-	//System.out.println(((double)out.getWeight(edge) / out.totalWeights()));	
-
-	System.out.println(in);
-	//System.out.println(in.getWeights().length + " " + in.getWeights()[0]);
-	System.out.println("-------");
-	for (int i = 0; i < in.getWeights().length; i++) {
-	    System.out.println(in.getSources()[i] + " " + in.getWeights()[i] + " " + in.getSources()[i].hashCode());
-	}
-	System.out.println("-------");
-	*/
-	//see if they are different
-	assert (itemsSent == itemsReceived) :
-	    "Calculating steady state: items received != items send on buffer";
-	
-	return itemsSent * getTypeSize(next.filter.getInputType()); 
+	return edge.initItems() * 
+	    getTypeSize(edge.getType());
     }
 
     //the size of the buffer between in / out for the prime pump stage

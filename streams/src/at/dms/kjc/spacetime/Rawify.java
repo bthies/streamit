@@ -27,7 +27,7 @@ public class Rawify
 	    //iterate over the TraceNodes
 	    TraceNode traceNode = trace.getHead();
 	    while (traceNode != null) {
-		System.out.println("Rawify: " + traceNode);
+		SpaceTimeBackend.println("Rawify: " + traceNode);
 		//do the appropiate code generation
 		if (traceNode.isFilterTrace()) {
 		    FilterTraceNode filterNode = (FilterTraceNode)traceNode;
@@ -152,80 +152,74 @@ public class Rawify
 	int writeBytes = items * typeSize * 4;
 	writeBytes = Util.cacheLineDiv(writeBytes);
 	destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
-							      writeBytes, destBuffer, true);
+							      writeBytes, destBuffer, false);
     }
 
     private static void outputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
     {
 	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
-	//don't do anything for a redundant buffer
-	if (output.oneOutput() && 
-	    InterTraceBuffer.getBuffer(output.getSingleEdge()).redundant())
-	    return;
-	//if we are in the init or primepump, set to zero
-	//if steady set to 3, used for addDRAMCommand(...)
-	int stage = 0;
-	if (!init && !primepump)
-	    stage = 3;
-
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
-	//calculate the number of items sent
-	int items = filterInfo.totalItemsSent(init, primepump);
-	
-	if (primepump)
-	    items -= filterInfo.primePumpItemsNotConsumed();
-	
-	generateOutputDRAMCommands(output, init, primepump, filter, items, stage);
-	//take care of the primepump items not consumed in the primepump stage
-	//place them in the steady buffer.
-	if (primepump) {
-	    SpaceTimeBackend.println("PrimePump steady buffer outputs for " + output + " = " +
-				     filterInfo.primePumpItemsNotConsumed());
-	    
-	    generateOutputDRAMCommands(output, init, primepump, filter, 
-				       filterInfo.primePumpItemsNotConsumed(), 2);
-	}
-	
-    }
-    
-    private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, 
-					      boolean primepump, FilterTraceNode filter,
-					      int items, int stage)
-    {
-	if (items == 0)
-	    return;
-	int iterations, typeSize;
 
-	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
+	//don't do anything for a redundant buffer
+	if (output.noOutputs() || (output.oneOutput() && 
+	    InterTraceBuffer.getBuffer(output.getSingleEdge()).redundant()))
+	    return;
+	//if we are in the init set to zero, 1 to primepump
+	//if steady set to 3, used for addDRAMCommand(...)
+	int stage;
+	if (init)
+	    stage = 0;
+	else if (primepump)
+	    stage = 1;
+	else //if (!init && !primepump)
+	    stage = 3;
 	
-	//the numbers of times we should cycle thru this "splitter"
-	assert items % output.totalWeights() == 0: 
-	    "weights on output trace node does not divide evenly with items sent";
-	iterations = items / output.totalWeights();
-	
-	//generate the command to read from the src of the output trace node
 	OffChipBuffer srcBuffer = IntraTraceBuffer.getBuffer(filter, output);
 	int readBytes = FilterInfo.getFilterInfo(filter).totalItemsSent(init, primepump) *
 	    Util.getTypeSize(filter.getFilter().getOutputType()) * 4;
 	readBytes = Util.cacheLineDiv(readBytes);
-	SpaceTimeBackend.println("Generating the read command for " + output + " on " +
-				 srcBuffer.getOwner() + (primepump ? "(primepump)" : ""));
-	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, stage,
-							     readBytes, srcBuffer, true);
- 
-	//generate the commands to write the o/i temp buffer dest
+	if (readBytes > 0) {
+	    SpaceTimeBackend.println("Generating the read command for " + output + " on " +
+				     srcBuffer.getOwner() + (primepump ? "(primepump)" : ""));
+	    //in the primepump stage a real output trace always reads from the init buffers
+	    //never use stage 2 for reads
+	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, (stage < 3 ? 0 : 3),
+								 readBytes, srcBuffer, true);
+	}
+	
+	
+	//now generate the store drm command
 	Iterator dests = output.getDestSet().iterator();
-	while (dests.hasNext()){
+	while (dests.hasNext()) {
 	    Edge edge = (Edge)dests.next();
 	    OffChipBuffer destBuffer = InterTraceBuffer.getBuffer(edge);
-	    int writeBytes = iterations * typeSize *
-		output.getWeight(edge) * 4;
+	    int typeSize = Util.getTypeSize(edge.getType());
+	    int writeBytes = 4 * typeSize;
+	    //do steady-state
+	    if (stage == 3) 
+		writeBytes *= edge.steadyItems();
+	    else if (stage == 0)
+		writeBytes *= edge.initItems();
+	    else 
+		writeBytes *= edge.primePumpInitItems();
+	    //make write bytes cache line div
 	    writeBytes = Util.cacheLineDiv(writeBytes);
-	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
-								  writeBytes, destBuffer, true);
+	    if (writeBytes > 0)
+		destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
+								      writeBytes, destBuffer, false);
+	    //generate the dram commands to write into the steady buffer in the primepump stage
+	    if (primepump) {
+		writeBytes = Util.cacheLineDiv(4 * typeSize * 
+					       (edge.primePumpItems() - edge.primePumpInitItems()));
+		//generate the dram command in stage 2 (init schedule, with steady buffers...)
+		if (writeBytes > 0)
+		    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, 2,
+									  writeBytes, destBuffer, false);
+	    }
+	    
 	}
     }
-    
+  
     //generate the dram commands for the input for a filter and the output from a filter
     //after it is joined and before it is split, respectively
     private static void generateFilterDRAMCommand(FilterTraceNode filterNode, FilterInfo filterInfo,
@@ -423,15 +417,18 @@ public class Rawify
 	//disregard remainder of inputs coming from temp offchip buffers
 	for (int i = 0; i < traceNode.getSources().length; i++) {
 	    Edge edge = traceNode.getSources()[i];
-	    int remainder = RawChip.cacheLineWords - 
+	    int remainder =
 		((iterations * typeSize * 
 		 traceNode.getWeight(edge)) % RawChip.cacheLineWords);
 	    if (remainder > 0)
 		SwitchCodeStore.disregardIncoming(InterTraceBuffer.getBuffer(edge).getDRAM(),
-						  remainder, init || primepump);
+						  RawChip.cacheLineWords - remainder, 
+						  init || primepump);
 	}
     }
     
+    //generate the switch code to split the output trace 
+    //be careful about the primepump stage
     private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump)
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
@@ -443,35 +440,74 @@ public class Rawify
 	//calculate the number of items sent
 	int items = filterInfo.totalItemsSent(init, primepump);
 	
-	//subtract the items from the primepump that are not consumed
-	//they are handled below
-	if (primepump)
-	    items -= filterInfo.primePumpItemsNotConsumed();
+	//the numbers of times we should cycle thru this "splitter"
+	assert items % traceNode.totalWeights() == 0: 
+	    "weights on output trace node does not divide evenly with items sent";
+	int iterations = items / traceNode.totalWeights();
+	//number of iterations that we store into the steady buffer during pp
+	int ppSteadyIt = 0;
 	
-	performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, items);
+	//adjust iterations to first be only the iterations of the splitter that are
+	//stored in the init buffer and set ppSteadyIt to be the remaining iterations
+	if (primepump) {
+	    Iterator dests = traceNode.getDestSet().iterator();
+	    assert dests.hasNext() :
+		"Output should have at least one dest";
+	    Edge edge = (Edge)dests.next();
+	    FilterInfo downstream = FilterInfo.getFilterInfo(edge.getDest().getNextFilter());
+	    //the number of times the source filter fires in the pp while feeding the steady buffer
+	    int ppFilterIt = 
+		(filterInfo.primePumpTrue - downstream.primePumpTrue) * filterInfo.steadyMult;
+	    assert ((ppFilterIt * filterInfo.push) % traceNode.totalWeights() == 0) :
+		"Error: Inconsistent primepump stats for output trace node";
+	    ppSteadyIt = (ppFilterIt * filterInfo.push) / traceNode.totalWeights();
+	    //subtract from the iterations
+	    iterations -= ppSteadyIt;
+	    //check the sanity of the primepump stage
+	    while (dests.hasNext()){
+		edge = (Edge)dests.next();
+		assert ppFilterIt == filterInfo.steadyMult * (filterInfo.primePumpTrue - 
+				 FilterInfo.getFilterInfo(edge.getDest().getNextFilter()).primePumpTrue) :
+		    "Error: Inconsistent primepump stats for output trace node";
+	    }
+	}
 	
-	if (primepump)
-	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, 
-				    filterInfo.primePumpItemsNotConsumed());
+	//	SpaceTimeBackend.println("Split Output Trace: " + traceNode + "it: " + iterations + " ppSteadyIt: " + 
+	//ppSteadyIt);
+    //	System.out.println(traceNode.debugString());
+	performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations);
+	
+	if (primepump && ppSteadyIt > 0)
+	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt);
+	
+	//because transfers must be cache line size divisible...
+	//disregard the dummy values coming out of the dram
+	//for the primepump we always read out of the init buffer for real output tracenodes
+	int typeSize = Util.getTypeSize(filterInfo.filter.getOutputType());
+	StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
+	int mod = 
+		(((iterations + ppSteadyIt) * traceNode.totalWeights() * typeSize) % RawChip.cacheLineWords);
+	if (mod > 0) {
+	    int remainder = RawChip.cacheLineWords - mod;
+	    //System.out.println("Remainder for disregarding input on split trace: " + remainder);
+	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
+	}
+	
     }
+
     private static void performSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,
 						FilterInfo filterInfo, boolean init, boolean primepump,
-						int items)
+						int iterations)
     {
-	if (items > 0) {
-	    int iterations, stage = 1, typeSize;
+	if (iterations > 0) {
+	    int stage = 1, typeSize;
 	    //the stage we are generating code for as used below for generateSwitchCode()
 	    if (!init && !primepump) 
 		stage = 2;
 	    
 	    typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 	    
-	    //the numbers of times we should cycle thru this "splitter"
-	    assert items % traceNode.totalWeights() == 0: 
-		"weights on output trace node does not divide evenly with items sent";
-	    iterations = items / traceNode.totalWeights();
-	    
-	    SpaceTimeBackend.println("Generating Switch Code for " + traceNode + " items " + items +
+	    SpaceTimeBackend.println("Generating Switch Code for " + traceNode +
 				     " iterations " + iterations);
 	    
 	    //is there a load immediate in the switch instruction set?!
@@ -491,21 +527,17 @@ public class Rawify
 		    }
 		}
 	    }
-	    //because transfers must be cache line size divisible...
-	    //disregard the dummy values coming out of the dram
-	    if ((items * typeSize) % RawChip.cacheLineWords != 0) {
-		int remainder = RawChip.cacheLineWords - (items * typeSize) % RawChip.cacheLineWords;
-		SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
-	    }
+	    
 	    //write dummy values into each temp buffer with a remainder
 	    Iterator it = traceNode.getDestSet().iterator();
 	    while (it.hasNext()) {
 		Edge edge = (Edge)it.next();
-		int remainder = RawChip.cacheLineWords - ((typeSize * iterations * traceNode.getWeight(edge)) %
-							  RawChip.cacheLineWords);
+		int remainder = ((typeSize * iterations * traceNode.getWeight(edge)) %
+				 RawChip.cacheLineWords);
 		if (remainder > 0)
 		    SwitchCodeStore.dummyOutgoing(InterTraceBuffer.getBuffer(edge).getDRAM(),
-						  remainder, init || primepump);
+						  RawChip.cacheLineWords - remainder, 
+						  init || primepump);
 	    }   
 	}
     }
@@ -1055,5 +1087,47 @@ public class Rawify
 				       TraceBufferSchedule.getInputBuffers(node)));
 	*/
     }
+
+      /*
+    private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, 
+					      boolean primepump, FilterTraceNode filter,
+					      int items, int stage)
+    {
+	if (items == 0)
+	    return;
+	int iterations, typeSize;
+
+	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
+	
+	//the numbers of times we should cycle thru this "splitter"
+	assert items % output.totalWeights() == 0: 
+	    "weights on output trace node does not divide evenly with items sent";
+	iterations = items / output.totalWeights();
+	
+	//generate the command to read from the src of the output trace node
+	OffChipBuffer srcBuffer = IntraTraceBuffer.getBuffer(filter, output);
+	int readBytes = FilterInfo.getFilterInfo(filter).totalItemsSent(init, primepump) *
+	    Util.getTypeSize(filter.getFilter().getOutputType()) * 4;
+	readBytes = Util.cacheLineDiv(readBytes);
+	SpaceTimeBackend.println("Generating the read command for " + output + " on " +
+				 srcBuffer.getOwner() + (primepump ? "(primepump)" : ""));
+	//in the primepump stage a real output trace always reads from the init buffers
+	//never use stage 2 for reads
+	srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, (stage < 3 ? 1 : 3),
+							     readBytes, srcBuffer, true);
+ 
+	//generate the commands to write the o/i temp buffer dest
+	Iterator dests = output.getDestSet().iterator();
+	while (dests.hasNext()){
+	    Edge edge = (Edge)dests.next();
+	    OffChipBuffer destBuffer = InterTraceBuffer.getBuffer(edge);
+	    int writeBytes = iterations * typeSize *
+		output.getWeight(edge) * 4;
+	    writeBytes = Util.cacheLineDiv(writeBytes);
+	    destBuffer.getOwner().getComputeCode().addDRAMCommand(false, stage,
+								  writeBytes, destBuffer, false);
+	}
+    }
+    */    
 }
 

@@ -76,6 +76,8 @@ public class ComputeCodeStore {
     public void addDRAMCommand(boolean read, int stage,
 			       int bytes, OffChipBuffer buffer, boolean presynched) 
     {
+	assert bytes > 0 : "trying to generate a dram command of size 0";
+	
 	parent.setComputes();
 	String functName = "raw_streaming_dram_request_" +
 	    (read ? "read" : "write") + (presynched ? "_presynched" : "");

@@ -58,10 +58,14 @@ public class StreamingDram extends IODevice
     //drams
     public static boolean differentDRAMs(InputTraceNode in) 
     {
+	System.out.println(in);
+	System.out.println(in.getSources().length);
 	HashSet drams = new HashSet();
 	for (int i = 0; i < in.getSources().length; i++) {
 	    //System.out.println(in.getSources()[i] + " -> " + in + "(" + 
 	    //		       OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM() + ")");				       
+	    System.out.println(in.getSources()[i] + " " + 
+			      InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM());
 	    if (drams.contains(InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM()))
 		return false;
 	    drams.add(InterTraceBuffer.getBuffer(in.getSources()[i]).getDRAM());

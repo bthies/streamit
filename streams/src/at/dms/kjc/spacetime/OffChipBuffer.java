@@ -97,7 +97,7 @@ public abstract class OffChipBuffer
     
     public String getIdent(boolean init) 
     {
-	assert !redundant();
+	assert !redundant() : this.toString() + " is redundant";
 	return ident + (init ? "_init__" : "_steady__");
     }
     

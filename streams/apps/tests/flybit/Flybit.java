@@ -1,7 +1,7 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.3 2001-10-10 19:58:55 dmaze Exp $
+ * $Id: Flybit.java,v 1.4 2001-10-12 22:29:16 karczma Exp $
  */
 
 import streamit.*;
@@ -14,6 +14,10 @@ class IntSource extends Filter
     {
         this.x = 0;
     }
+    public void initIO ()
+    {
+        streamOutput = output;
+    }
     public void work()
     {
         output.pushInt(x++);
@@ -24,6 +28,11 @@ class IntSub extends Filter
 {
     Channel input = new Channel(Integer.TYPE, 2);
     Channel output = new Channel(Integer.TYPE, 1);
+    public void initIO ()
+    {
+        streamInput = input;
+        streamOutput = output;
+    }
     public void work()
     {
         output.pushInt(input.popInt() - input.popInt());
@@ -34,6 +43,11 @@ class IntAdd extends Filter
 {
     Channel input = new Channel(Integer.TYPE, 2);
     Channel output = new Channel(Integer.TYPE, 1);
+    public void initIO ()
+    {
+        streamInput = input;
+        streamOutput = output;
+    }
     public void work()
     {
         output.pushInt(input.popInt() + input.popInt());
@@ -42,7 +56,7 @@ class IntAdd extends Filter
 
 class IntFly extends Pipeline // SplitJoin
 {
-    public void init() 
+    public void init()
     {
         // setSplitter(DUPLICATE());
         add(new IntSub());
@@ -54,6 +68,10 @@ class IntFly extends Pipeline // SplitJoin
 class IntPrinter extends Filter
 {
     Channel input = new Channel(Integer.TYPE, 1);
+    public void initIO ()
+    {
+        streamInput = input;
+    }
     public void work ()
     {
         System.out.println (input.popInt ());
@@ -67,7 +85,7 @@ public class Flybit extends Pipeline
         Flybit test = new Flybit();
         test.run();
     }
-    
+
     public void init()
     {
         add(new IntSource());
@@ -76,4 +94,4 @@ public class Flybit extends Pipeline
     }
 }
 
-        
+

@@ -92,7 +92,7 @@ float->void pipeline calculate_single_position(int num_mics, boolean hamming,
 	  }
     }
 
-    add process_signal(num_mics, num_beams, (int)max_delay, delays, weights);
+    add process_signal(num_mics, num_beams, (int) max_delay, delays_floor, delays_diff, weights);
 
     add float->void filter {
 	  float time_index, time_index_increment;
@@ -119,16 +119,17 @@ float->void pipeline calculate_single_position(int num_mics, boolean hamming,
 // start outputting  beamformed results (delay each  microphone by the
 // appropriate amount by reading that amount into the future)
 float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
-				     float[num_beams][num_mics] delays,
-				     float[num_mics] weights)
+						 int  [num_beams][num_mics] delays_floor,
+						 float[num_beams][num_mics] delays_diff,
+						 float[num_mics] weights)
 {
-    add distribute_samples(num_mics, num_beams, max_delay, delays, weights);
+    add distribute_samples(num_mics, num_beams, max_delay, delays_floor, weights);
     
     add float->float splitjoin {
 	  split roundrobin(2 * num_mics);
 	  
         for (int beam = 0; beam < num_beams; beam++) {
-		add do_beamforming(num_mics, beam, delays, weights);
+		add do_beamforming(num_mics, beam, delays_diff, weights);
         }
 	  
 	  join roundrobin;
@@ -137,7 +138,7 @@ float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
 
 
 float->float filter distribute_samples(int num_mics, int num_beams, int max_delay,
-						   float[num_beams][num_mics] delays,
+						   int  [num_beams][num_mics] delays_floor,
 						   float[num_mics] weights)
 {
     int   queue_head;
@@ -169,7 +170,7 @@ float->float filter distribute_samples(int num_mics, int num_beams, int max_dela
 	
 	for (int beam = 0; beam < num_beams; beam++) {
 	    for (int mic = 0; mic < num_mics; mic++) {
-		  int   delay_floor = delay_floor[beam][mic];
+		  int delay_floor = delay_floor[beam][mic];
 		  
 		  // low index gets index of sample right before desired sample
 		  low_index = queue_head + delay_floor;
@@ -195,7 +196,7 @@ float->float filter distribute_samples(int num_mics, int num_beams, int max_dela
 // beamformed  one-channel  sample,  incorporating timing  information
 // from max_delay previous samples
 float->float pipeline do_beamforming(int num_mics, int beam, 
-						 float[num_beams][num_mics] delays, 
+						 float[num_beams][num_mics] delays_diff, 
 						 float[num_mics] weights)
 {
     add float->float splitjoin {
@@ -206,7 +207,7 @@ float->float pipeline do_beamforming(int num_mics, int beam,
 		    work pop 2 push 1{
 			  float sample_low_index   = pop();
 			  float sample_high_index  = pop();
-			  int   delay_offset       = delays_diff[beam][mic];
+			  float delay_offset       = delays_diff[beam][mic];
 			  float interpolated_value = (((sample_high_index - sample_low_index) * 
 								 delay_offset) + 
 								sample_low_index);

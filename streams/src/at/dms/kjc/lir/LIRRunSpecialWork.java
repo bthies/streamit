@@ -10,10 +10,6 @@ import at.dms.compiler.*;
 public class LIRRunSpecialWork extends LIRNode {
 
     /**
-     * The stream context of the unit to run.
-     */
-    private JExpression childContext;
-    /**
      * The type of work function to run
      */
     private LIRSpecialWorkType workType;
@@ -23,18 +19,13 @@ public class LIRRunSpecialWork extends LIRNode {
     // ----------------------------------------------------------------------
 
     /**
-     * Construct a node.
+     * Construct a node.  The streamContext should be the stream
+     * context of the node that is being executed.
      */
     public LIRRunSpecialWork(JExpression streamContext,
-			     JExpression childContext,
 			     LIRSpecialWorkType workType) {
 	super(streamContext);
-	this.childContext = childContext;
 	this.workType = workType;
-    }
-
-    public JExpression getChildContext() {
-	return childContext;
     }
 
     public void accept(SLIRVisitor v)

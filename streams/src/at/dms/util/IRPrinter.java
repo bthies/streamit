@@ -1944,9 +1944,6 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrStart("streamContext");
 	self.getStreamContext().accept(this);
 	attrEnd();
-        attrStart("childContext");
-        self.getChildContext().accept(this);
-        attrEnd();
 	attrPrint("type", self.getType().toString());
 	blockEnd();
     }

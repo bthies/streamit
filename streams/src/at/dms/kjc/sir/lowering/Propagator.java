@@ -205,6 +205,10 @@ public class Propagator extends SLIRReplacingVisitor {
 		constants.put(self, newExp);
 		added=true;
 		changed.put(self,Boolean.TRUE);
+	    } else if(newExp instanceof SIRCreatePortal) {
+		if (!constants.containsKey(self)) {
+		    constants.put(self, new SIRPortal(type));
+		}
 	    }
 	}
 	return self;

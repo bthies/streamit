@@ -168,7 +168,7 @@ public class ConstructSIRTree {
      * constant-propped, but we haven't bothered with this yet.)
      */
     private boolean isConstantArg (JExpression arg) {
-	return (arg instanceof JLiteral) || isArrayArg(arg);
+	return (arg instanceof JLiteral) || isArrayArg(arg) || arg.getType().toString().endsWith("Portal");
     }
 
     private boolean isArrayArg(JExpression arg) {

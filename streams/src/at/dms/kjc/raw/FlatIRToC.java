@@ -197,10 +197,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	}
 	
 	if (KjcOptions.decoupled) {
-	    print("float " + Util.CSTOFPVAR + ";\n");
-	    print("float " + Util.CSTIFPVAR + ";\n");
-	    print("int " + Util.CSTOINTVAR + ";\n");
-	    print("int " + Util.CSTIINTVAR + ";\n");
+	    print("volatile float " + Util.CSTOFPVAR + ";\n");
+	    print("volatile float " + Util.CSTIFPVAR + ";\n");
+	    print("volatile int " + Util.CSTOINTVAR + ";\n");
+	    print("volatile int " + Util.CSTIINTVAR + ";\n");
 	}
 	
 	if (RawBackend.FILTER_DEBUG_MODE &&

@@ -61,7 +61,8 @@ push(@result_lines,
      "Program\ttarget output size\t" .
      "normal flops\tnormal fadds\tnormal fmuls\tnormal outputs\t" .
      "linear flops\tlinear fadds\tlinear fmuls\tlinear outputs\t" .
-     "freq flops\tfreq fadds\tfreq fmuls\tfreq outputs\t" .
+     "freq 0 flops\tfreq 0 fadds\tfreq 0 fmuls\tfreq 0 outputs\t" .
+     "freq 1 flops\tfreq 1 fadds\tfreq 1 fmuls\tfreq 1 outputs\t" .
      "both flops\tboth fadds\tboth fmuls\tboth outputs\t");
 
 # determine the next available results directory (eg results0, results1, etc.)
@@ -84,78 +85,49 @@ foreach $current_program (@programs) {
     $path = $results_dir;
     
     # compile normally without frequency replacement
-    print "$base_filename(normal):";
-    do_compile($path, $base_filename, "--constprop --unroll 100000 --debug");
-    
-    # figure out how many outputs are produced
-    my $normal_outputs = get_output_count($path, $base_filename) * $NUM_ITERS;
-    
-    # run the dynamo rio test and get back the results
-    my $report = run_test($path, $base_filename, "normal", $NUM_ITERS);
-    print "\n";
-    
-    # extract the flops, fadds and fmul count from the report
-    my ($normal_flops) =  $report =~ m/saw (.*) flops/;
-    my ($normal_fadds) =  $report =~ m/saw (.*) fadds/;
-    my ($normal_fmuls) =  $report =~ m/saw (.*) fmuls/;
+   my ($normal_outputs, $normal_flops, 
+       $normal_fadds, $normal_fmuls) = do_test($path, $base_filename,
+					       "--constprop --unroll 100000 --debug", 
+					       "$base_filename(normal)");
+   save_output($path, $base_filename, "normal");
 
-    # compile with linear replacement
-    print "$base_filename(linear):";
-    do_compile($path, $base_filename, "--constprop --unroll 100000 --debug --linearreplacement");
-    
-    # figure out how many outputs are produced
-    my $linear_outputs = get_output_count($path, $base_filename) * $NUM_ITERS;
-    
-    # run the dynamo rio test and get back the results
-    $report = run_test($path, $base_filename, "linear", $NUM_ITERS);
-    print "\n";
-    
-    # extract the flops, fadds and fmul count from the report
-    my ($linear_flops) =  $report =~ m/saw (.*) flops/;
-    my ($linear_fadds) =  $report =~ m/saw (.*) fadds/;
-    my ($linear_fmuls) =  $report =~ m/saw (.*) fmuls/;
-
-    
+   # compile with linear replacement
+   my ($linear_outputs, $linear_flops, 
+       $linear_fadds, $linear_fmuls) = do_test($path, $base_filename, 
+					       "--constprop --unroll 100000 --debug --linearreplacement", 
+					       "$base_filename(linear)");
+   save_output($path, $base_filename, "linear");
+   
     # for various sizes of target FFT length
     my $targetFFTSize;
     for ($targetFFTSize=1; $targetFFTSize<($max_target_size+1); $targetFFTSize*=2) {
-	
-        # now, do the compilation with the frequency replacement
-	print "$base_filename(freq, $targetFFTSize):";
-	do_compile($path, $base_filename, "--constprop --unroll 100000 --debug --frequencyreplacement --targetFFTSize $targetFFTSize");
-	
-	# figure out how many outputs are produced 
-	my $freq_outputs = get_output_count($path, $base_filename) * $NUM_ITERS;
-	
-	# run the dynamo rio test and get back the results
-	$report = run_test($path, $base_filename, "freq$targetFFTSize", $NUM_ITERS);
-	print "\n";
-	
-	# extract the flops, fadds and fmul count from the report
-	my ($freq_flops) =  $report =~ m/saw (.*) flops/;
-	my ($freq_fadds) =  $report =~ m/saw (.*) fadds/;
-	my ($freq_fmuls) =  $report =~ m/saw (.*) fmuls/;
 
-        # now, do the compilation with linear replacement followed by frequency replacement
-	print "$base_filename(both, $targetFFTSize):";
-	do_compile($path, $base_filename, "--constprop --unroll 100000 --debug --linearreplacement --frequencyreplacement --targetFFTSize $targetFFTSize");
-	
-	# figure out how many outputs are produced 
-	my $both_outputs = get_output_count($path, $base_filename) * $NUM_ITERS;
-	
-	# run the dynamo rio test and get back the results
-	$report = run_test($path, $base_filename, "both$targetFFTSize", $NUM_ITERS);
-	print "\n";
-	
-	# extract the flops, fadds and fmul count from the report
-	my ($both_flops) =  $report =~ m/saw (.*) flops/;
-	my ($both_fadds) =  $report =~ m/saw (.*) fadds/;
-	my ($both_fmuls) =  $report =~ m/saw (.*) fmuls/;
+        # now, do the compilation with (stupid) frequency replacement
+	my ($freq0_outputs, $freq0_flops, 
+	    $freq0_fadds, $freq0_fmuls) = do_test($path, $base_filename, 
+						  "--constprop --unroll 100000 --debug --frequencyreplacement 0 --targetFFTSize $targetFFTSize",
+						  "$base_filename(freq 0, $targetFFTSize)");
+	save_output($path, $base_filename, "freq0-$targetFFTSize");
 
+        # now, do the compilation with (smart) frequency replacement
+	my ($freq1_outputs, $freq1_flops, 
+	    $freq1_fadds, $freq1_fmuls) = do_test($path, $base_filename, 
+						  "--constprop --unroll 100000 --debug --frequencyreplacement 1 --targetFFTSize $targetFFTSize",
+						  "$base_filename(freq 1, $targetFFTSize)");
+	save_output($path, $base_filename, "freq1-$targetFFTSize");
+	
+        # now, run with both optimizations
+	my ($both_outputs, $both_flops, 
+	    $both_fadds, $both_fmuls) = do_test($path, $base_filename, 
+					       "--constprop --unroll 100000 --debug --linearreplacement --frequencyreplacement 1 --targetFFTSize $targetFFTSize",
+					       "base_filename(both, $targetFFTSize)");
+	save_output($path, $base_filename, "both-$targetFFTSize");
+	
 	my $new_data_line = 	     ("$base_filename\t$targetFFTSize\t".
 				      "$normal_flops\t$normal_fadds\t$normal_fmuls\t$normal_outputs\t" .
 				      "$linear_flops\t$linear_fadds\t$linear_fmuls\t$linear_outputs\t" .
-				      "$freq_flops\t$freq_fadds\t$freq_fmuls\t$freq_outputs\t" .
+				      "$freq0_flops\t$freq0_fadds\t$freq0_fmuls\t$freq0_outputs\t" .
+				      "$freq1_flops\t$freq1_fadds\t$freq1_fmuls\t$freq1_outputs\t" .
 				      "$both_flops\t$both_fadds\t$both_fmuls\t$both_outputs\t");
 
 	open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"results mail: ($path,$base_filename,$targetFFTSize)\"");
@@ -165,23 +137,6 @@ foreach $current_program (@programs) {
 	push(@result_lines, $new_data_line);
 
     }
-
-    # now, we should compare all of the output files against the normal output
-    # and die horribly if there are any errors.
-#    my @output_files = split("\n", `ls *.output`);
-#    my $current_output_file;
-#    foreach $current_output_file (@output_files) {
-#	chomp($current_output_file);
-#	my $result = `$CMP $base_filename-normal.output $current_output_file`;
-#	if ($result) {
-#	    die ("Error comparing $base_filename-normal.outout and $current_output_file: $result");
-#	} else {
-#	    print "(verified $current_output_file)";
-#	}
-#    }
-#    print "\n";
-#    # now, remove all of the output files
-#    `rm -f *.output`;
 }
 
 
@@ -198,6 +153,56 @@ open (MHMAIL, "|mhmail aalamb\@mit.edu -s \"Overall results mail\"");
 print MHMAIL join("\n", @result_lines);
 close(MHMAIL);
 print "(done)\n";
+
+
+#########
+# subroutine to do a compile test, and parse results.
+# Return value is (outputs, flops, fadds, fmuls).
+# do_test($path, $base_filename, $options, $descr)
+#########
+sub do_test {
+    my $path = shift || die ("no flops");
+    my $base_filename = shift || die ("no base");
+    my $options = shift || die("no options");
+    my $descr = shift || die ("no description");
+    
+    # compile with specified options
+    print "$descr:";
+    do_compile($path, $base_filename, $options);
+    
+    # figure out how many outputs are produced
+    my $outputs = get_output_count($path, $base_filename) * $NUM_ITERS;
+    
+    # run the dynamo rio test and get back the results
+    my $report = run_rio($path, $base_filename, $descr, $NUM_ITERS);
+    print "\n";
+    
+    # extract the flops, fadds and fmul count from the report
+    my ($flops) =  $report =~ m/saw (.*) flops/;
+    my ($fadds) =  $report =~ m/saw (.*) fadds/;
+    my ($fmuls) =  $report =~ m/saw (.*) fmuls/;
+
+    return ($outputs, $flops, $fadds, $fmuls);
+}
+
+#############
+# This subroutine saves the current c and exe file in path
+# by appending the tag to their names.
+#############
+sub save_output {
+    my $path          = shift || die("no path");
+    my $base_filename = shift || die("no base filename");
+    my $tag           = shift || die("no tag");
+    
+    print "(saving $tag)\n";
+    # copy c file
+    print `cp $path/$base_filename.c $path/$base_filename-$tag.c`;
+    # copy exe file
+    print `cp $path/$base_filename.exe $path/$base_filename-$tag.exe`;
+}
+
+
+
 
 
 ########
@@ -220,7 +225,7 @@ sub do_compile {
 
 #######
 # Subroutine to execute the program with dynamo
-sub run_test {
+sub run_rio {
     my $new_path      = shift || die ("no new path passed");
     my $filename_base = shift || die ("no filename base passed");
     my $postfix       = shift || die ("no postfix specified.");

@@ -1,0 +1,15 @@
+This code was based off of a Matlab precursor provided by a third
+party; see ../matlab for details.
+
+Contents of this directory:
+
+FIRBank.str - Bank of FIR filters from PCA kernel apps.
+
+input.txt   - Input for benchmark in text form.
+
+input.dat   - Input used by benchmark in binary form.  This represents
+		two cycles of the textual input to correspond to a
+		single steady state.
+
+output.txt  - Output of Matlab code (might have different rounding
+		than StreamIt code).

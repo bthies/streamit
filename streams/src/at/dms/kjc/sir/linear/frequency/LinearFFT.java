@@ -1,4 +1,4 @@
-package at.dms.kjc.sir.linear;
+package at.dms.kjc.sir.linear.frequency;
 
 /**
  * This class contains the same code, "javafied", do take the FFT

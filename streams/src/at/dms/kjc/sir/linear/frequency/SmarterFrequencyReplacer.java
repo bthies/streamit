@@ -1,4 +1,4 @@
-package at.dms.kjc.sir.linear;
+package at.dms.kjc.sir.linear.frequency;
 
 import java.util.*;
 import at.dms.kjc.*;
@@ -18,9 +18,9 @@ import at.dms.compiler.*;
  *
  * This frequency replacer is used to generate the 
  * 
- * $Id: SmarterFrequencyReplacer.java,v 1.1 2002-11-20 18:38:42 aalamb Exp $
+ * $Id: SmarterFrequencyReplacer.java,v 1.2 2002-11-20 19:12:40 aalamb Exp $
  **/
-public class SmarterFrequencyReplacer extends EmptyStreamVisitor implements Constants{
+public class SmarterFrequencyReplacer extends FrequencyReplacer {
     /** the name of the function in the C library that does fast convolution via the frequency domain. **/
     public static final String FAST_CONV_EXTERNAL = "do_fast_convolution_std";
     /** the name of the buffer in which to place the input data. */
@@ -46,7 +46,7 @@ public class SmarterFrequencyReplacer extends EmptyStreamVisitor implements Cons
     /** the target number of outputs to produce each firing of FIR filters. */
     int targetNumberOfOutputs;
     
-    private SmarterFrequencyReplacer(LinearAnalyzer lfa, int targetSize) {
+    SmarterFrequencyReplacer(LinearAnalyzer lfa, int targetSize) {
 	if (lfa == null){
 	    throw new IllegalArgumentException("Null linear filter analyzer!");
 	}
@@ -55,21 +55,6 @@ public class SmarterFrequencyReplacer extends EmptyStreamVisitor implements Cons
 	}
 	this.linearityInformation = lfa;
 	this.targetNumberOfOutputs = targetSize;
-    }
-
-    /**
-     * start the process of replacement on str using the Linearity information in lfa.
-     * targetSize is the targeted number of outputs to produce per steady state iteration
-     * for each filter that is transformed using the frequency conversion. The actual number of
-     * outputs produced will always be targetSize or greater (because the FFT we are doing only
-     * operates on inputs that are powers of two long.
-     **/
-    public static void doReplace(LinearAnalyzer lfa, SIRStream str, int targetSize) {
-	LinearPrinter.println("Beginning frequency replacement...");
-	// make a new replacer with the information contained in the analyzer
-	SmarterFrequencyReplacer replacer = new SmarterFrequencyReplacer(lfa, targetSize);
-	// pump the replacer through the stream graph.
-	IterFactory.createIter(str).accept(replacer);
     }
 
     public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {}

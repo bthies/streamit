@@ -48,9 +48,15 @@ public class Flattener {
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
-
+	
 	// propagate constants and unroll loops
 	System.err.print("Expanding graph... ");
+	ConstantProp.propagateAndUnroll(str);
+	System.err.println("done.");
+
+	// Convert Peeks to Pops
+	System.err.print("Converting pop to peek... ");
+	PopToPeek.removeAllPops(str);
 	ConstantProp.propagateAndUnroll(str);
 	System.err.println("done.");
 
@@ -178,7 +184,7 @@ public class Flattener {
 	printer.close();
 	*/
 
-	System.err.print("Generating code...");
+	System.err.println("Generating code...");
 	LIRToC.generateCode(flatClass);
 	//System.err.println("done.");
     }

@@ -385,13 +385,13 @@ public class Operator extends DestroyedClass
     }
 
     public Operator(Object o1, Object o2) {
-	initParams = new ParameterContainer("Object")
+	initParams = new ParameterContainer("Object-Object")
 	    .add("o1", o1)
 	    .add("o2", o2);
     }
 
     public Operator(Object o1, Object o2, Object o3) {
-	initParams = new ParameterContainer("Object")
+	initParams = new ParameterContainer("Object-Object-Object")
 	    .add("o1", o1)
 	    .add("o2", o2)
 	    .add("o3", o3);
@@ -999,13 +999,13 @@ public class Operator extends DestroyedClass
                   initParams.getIntParam("a2"));
         else if(initParams.getParamName().equals("Object"))
 	    init(initParams.getObjectParam("o1"));
-	else if(initParams.getParamName().equals("Object"))
+	else if(initParams.getParamName().equals("Object-Object"))
 	    init(initParams.getObjectParam("o1"),
 		 initParams.getObjectParam("o2"));
-	else if(initParams.getParamName().equals("Object"))
+	else if(initParams.getParamName().equals("Object-Object-Object"))
 	    init(initParams.getObjectParam("o1"),
 		 initParams.getObjectParam("o2"),
-		 initParams.getObjectParam("o3"));
+		 initParams.getObjectParam("o3")); else
         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
         if (initParams.getParamName ().equals("int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z")); else
         if (initParams.getParamName ().equals("int-int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z"), initParams.getIntParam ("a")); else

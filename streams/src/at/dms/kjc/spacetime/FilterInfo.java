@@ -171,6 +171,10 @@ public class FilterInfo
     {
 	assert traceNode.getNext() instanceof OutputTraceNode :
 	    "Need to call primePumpItemsNotConsumed() on last filter of trace";
+
+	if (push == 0)
+	    return 0;
+
 	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
 	int itemsSent = primePump * push;
 	int itemsConsumed = 0;
@@ -180,8 +184,15 @@ public class FilterInfo
 	    Edge edge = (Edge)it.next();
 	    FilterInfo downstream = 
 		FilterInfo.getFilterInfo(((FilterTraceNode)edge.getDest().getNext()));
-	    itemsConsumed += (downstream.primePump * downstream.pop);
+	    double currentItems = ((downstream.primePump * downstream.pop) * 
+		(double)((double)edge.getDest().getWeight(edge) / (double)edge.getDest().totalWeights()));
+	    assert (currentItems == (double)((int)currentItems)) :
+		"items on edge not a whole number";
+	    itemsConsumed += (int)currentItems;
 	}
+	
+	assert (itemsSent - itemsConsumed >= 0) :
+	    "negative primepump items not consumed";
 	
 	assert ((itemsSent - itemsConsumed) % push == 0) :
 	    "primepump items not consumed is not multiple of push!";

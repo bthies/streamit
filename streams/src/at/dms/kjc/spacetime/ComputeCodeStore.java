@@ -71,14 +71,20 @@ public class ComputeCodeStore {
 
     //add a dram command to the compute code at the current time
     //if read is false, then it is a write
-    //if init is true use the init buffer and write to the init stage
-    //if primepump is true, write to the init stage
-    public void addDRAMCommand(boolean read, boolean init, boolean primepump,
+    //stage 0 = init, 1 = primepump init buffers, 2 = primepump steady buffers
+    //3 = steady
+    public void addDRAMCommand(boolean read, int stage,
 			       int bytes, OffChipBuffer buffer, boolean presynched) 
     {
 	parent.setComputes();
 	String functName = "raw_streaming_dram_request_" +
 	    (read ? "read" : "write") + (presynched ? "_presynched" : "");
+
+	String bufferName;
+	if (stage < 2) 
+	    bufferName = buffer.getIdent(true);
+	else
+	    bufferName = buffer.getIdent(false);
 
 	//the args for the streaming dram command
 	
@@ -89,7 +95,7 @@ public class ComputeCodeStore {
 	int cacheLines = bytes / RawChip.cacheLineBytes;
 	JExpression[] args = {new JFieldAccessExpression(null, 
 							 new JThisExpression(null),
-							 buffer.getIdent(init)),
+							 bufferName),
 			      new JIntLiteral(1),
 			      new JIntLiteral(cacheLines)};
 
@@ -104,14 +110,14 @@ public class ComputeCodeStore {
 	
 	JFieldAccessExpression bufAccess = 
 	    new JFieldAccessExpression(null, new JThisExpression(null),
-				       buffer.getIdent(init));
+				       bufferName);
 	
 	JAssignmentExpression assExp = 
 	    new JAssignmentExpression(null, dynNetSend, bufAccess);
 	
 	SpaceTimeBackend.println("Adding DRAM Command to " + parent + " " + buffer + " " + cacheLines);
 	//add the statements to the appropriate stage
-	if (init || primepump) {
+	if (stage < 3) {
 	    initBlock.addStatement(new JExpressionStatement(null, call, null));
 	    initBlock.addStatement(new JExpressionStatement(null, assExp, null));
 	}

@@ -95,8 +95,8 @@ public class CommunicateAddrs
 		 buffer.getType() + ")));\n");
 	    //align the buffer
 	    ((StringBuffer)functions.get(allocatingTile)).append
-		("  " + buffer.getIdent(true) + " = ((u_int32_t)" + buffer.getIdent(true) +
-		 ") & 0xffffff00;\n");
+		("  " + buffer.getIdent(true) + " = ((u_int32_t)((char*)" + buffer.getIdent(true) +
+		 ") + 31) & 0xffffffe0;\n");
 	    //generate the free statement for the free function
 	    ((StringBuffer)freeFunctions.get(allocatingTile)).append
 		("  free(" + buffer.getIdent(true) + ");\n");
@@ -108,8 +108,8 @@ public class CommunicateAddrs
 		 buffer.getType() + ")));\n");
 	    //align the buffer
 	    ((StringBuffer)functions.get(allocatingTile)).append
-		("  " + buffer.getIdent(false) + " = ((u_int32_t)" + buffer.getIdent(false) +
-		 ") & 0xffffff00;\n");
+		("  " + buffer.getIdent(false) + " = ((u_int32_t)((char*)" + buffer.getIdent(false) +
+		 ") + 31) & 0xffffffe0;\n");
 
 	    //if allocator != neighbor, create declaration of 
 	    //pointer on neighbor and communicate the address for both init and steady...

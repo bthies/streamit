@@ -12,6 +12,8 @@ static void build_tape_cache(one_to_many *p);
 void set_splitter(stream_context *c, splitjoin_type type, int n, ...)
 {
   assert(c);
+  assert(c->type == SPLIT_JOIN ||
+         c->type == FEEDBACK_LOOP);
   set_splitjoin(&c->splitter, type, n);
   if (type == ROUND_ROBIN)
   {
@@ -25,6 +27,8 @@ void set_splitter(stream_context *c, splitjoin_type type, int n, ...)
 void set_joiner(stream_context *c, splitjoin_type type, int n, ...)
 {
   assert(c);
+  assert(c->type == SPLIT_JOIN ||
+         c->type == FEEDBACK_LOOP);
   set_splitjoin(&c->joiner, type, n);
   if (type == ROUND_ROBIN)
   {
@@ -46,9 +50,9 @@ static void set_splitjoin(one_to_many *p, splitjoin_type type, int n)
   p->fan = n;
   p->ratio = NULL;
   p->slots = 0;
+  p->one_tape = NULL;
   p->tape = malloc(n * sizeof(tape *));
   p->tcache = NULL;
-  p->slot_pos = 0;
 }
 
 static void set_splitjoin_rr(one_to_many *p, va_list ap)
@@ -65,34 +69,64 @@ static void set_splitjoin_rr(one_to_many *p, va_list ap)
   p->slots = total;
 }
 
-void create_split_tape(stream_context *container, int slot,
-                       stream_context *dst,
-                       int data_size, int tape_length)
+void create_splitjoin_tape(stream_context *container,
+                           split_or_join sj, in_or_out io, int slot,
+                           stream_context *other,
+                           int data_size, int tape_length)
 {
+  one_to_many *om;
   tape *new_tape;
-  
+
   assert(container);
-  assert(slot >= 0 && slot < container->splitter.fan);
-  assert(dst);
+  assert(container->type == SPLIT_JOIN ||
+         container->type == FEEDBACK_LOOP);
+  assert(other);
 
-  new_tape = create_tape_internal(data_size, tape_length);
-  container->splitter.tape[slot] = new_tape;
-  dst->input_tape = new_tape;
-}
-
-void create_join_tape(stream_context *src,
-                      stream_context *container, int slot,
-                      int data_size, int tape_length)
-{
-  tape *new_tape;
+  /* Sanity check: don't allow explicit connections to block-external
+   * slots. */
+  assert(!(container->type == SPLIT_JOIN &&
+           sj == SPLITTER &&
+           io == INPUT));
+  assert(!(container->type == SPLIT_JOIN &&
+           sj == JOINER &&
+           io == OUTPUT));
+  assert(!(container->type == FEEDBACK_LOOP &&
+           sj == JOINER &&
+           io == INPUT &&
+           slot == 0));
+  assert(!(container->type == FEEDBACK_LOOP &&
+           sj == SPLITTER &&
+           io == OUTPUT &&
+           slot == 0));
   
-  assert(src);
-  assert(container);
-  assert(slot >= 0 && slot < container->joiner.fan);
-
+  if (sj == SPLITTER)
+    om = &container->splitter;
+  else
+    om = &container->joiner;
+  
   new_tape = create_tape_internal(data_size, tape_length);
-  src->output_tape = new_tape;
-  container->joiner.tape[slot] = new_tape;
+  
+  /* Figure out if this is on the one side or the many side. */
+  if ((sj == SPLITTER && io == INPUT) ||
+      (sj == JOINER && io == OUTPUT))
+  {
+    /* One side. */
+    om->one_tape = new_tape;
+  }
+  else
+  {
+    /* Many side. */
+    assert(slot >= 0 && slot < om->fan);
+    om->tape[slot] = new_tape;
+  }
+  
+  /* Attach the tape to the other object.  If io is INPUT, then
+   * we're attaching to the input of the splitter/joiner, and therefore
+   * to the output of the other object. */
+  if (io == INPUT)
+    other->output_tape = new_tape;
+  else
+    other->input_tape = new_tape;
 }
 
 static void build_tape_cache(one_to_many *p)
@@ -120,13 +154,20 @@ void run_splitter(stream_context *c)
   int slot;
   
   assert(c);
-  assert(c->type == SPLIT_JOIN);
+  assert(c->type == SPLIT_JOIN ||
+         c->type == FEEDBACK_LOOP);
 
-  // Make the splitter tape cache valid if it's needed.
+  if (c->type == SPLIT_JOIN)
+    input_tape = c->input_tape;
+  else if (c->type == FEEDBACK_LOOP)
+  {
+    input_tape = c->splitter.one_tape;
+    c->splitter.tape[0] = c->output_tape;
+  }
+
+  /* Make the splitter tape cache valid if it's needed. */
   if (c->splitter.type == ROUND_ROBIN && !c->splitter.tcache)
     build_tape_cache(&c->splitter);
-
-  input_tape = c->input_tape;
 
   switch(c->splitter.type)
   {
@@ -163,13 +204,20 @@ void run_joiner(stream_context *c)
   int slot;
   
   assert(c);
-  assert(c->type == SPLIT_JOIN);
+  assert(c->type == SPLIT_JOIN ||
+         c->type == FEEDBACK_LOOP);
 
-  // Make the splitter tape cache valid if it's needed.
+  if (c->type == SPLIT_JOIN)
+    output_tape = c->output_tape;
+  else if (c->type == FEEDBACK_LOOP)
+  {
+    output_tape = c->joiner.one_tape;
+    c->joiner.tape[0] = c->input_tape;
+  }
+
+  /* Make the splitter tape cache valid if it's needed. */
   if (c->joiner.type == ROUND_ROBIN && !c->joiner.tcache)
     build_tape_cache(&c->joiner);
-
-  output_tape = c->output_tape;
 
   switch (c->joiner.type)
   {

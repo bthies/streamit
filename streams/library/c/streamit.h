@@ -14,6 +14,14 @@ typedef enum splitjoin_type {
   COMBINE,
   NULL_SJ
 } splitjoin_type;
+typedef enum split_or_join {
+  SPLITTER,
+  JOINER
+} split_or_join;
+typedef enum in_or_out {
+  INPUT,
+  OUTPUT
+} in_or_out;
 typedef struct latency_list {
   int val;
   struct latency_list *next;
@@ -84,8 +92,7 @@ typedef struct one_to_many {
   int fan;
   int *ratio;
   int slots;
-  tape **tape, **tcache;
-  int slot_pos;
+  tape *one_tape, **tape, **tcache;
 } one_to_many;
 typedef struct stream_context {
   void *stream_data;
@@ -116,12 +123,12 @@ void set_to_canon(stream_context *c, streamit_handler f);
 void set_from_canon(stream_context *c, streamit_handler f);
 void set_splitter(stream_context *c, splitjoin_type type, int n, ...);
 void set_joiner(stream_context *c, splitjoin_type type, int n, ...);
-void create_split_tape(stream_context *container, int slot,
-                       stream_context *dst,
-                       int data_size, int tape_length);
-void create_join_tape(stream_context *src,
-                      stream_context *container, int slot,
-                      int data_size, int tape_length);
+void create_splitjoin_tape(stream_context *container,
+                           split_or_join sj,
+                           in_or_out io,
+                           int slot,
+                           stream_context *other,
+                           int data_size, int tape_length);
 void run_splitter(stream_context *c);
 void run_joiner(stream_context *c);
 portal *create_portal(void);

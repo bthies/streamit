@@ -1,7 +1,7 @@
 /*
  * NameAnonymousFunctions.java: replace anonymous functions with named ones
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NameAnonymousFunctions.java,v 1.2 2002-09-23 20:30:07 dmaze Exp $
+ * $Id: NameAnonymousFunctions.java,v 1.3 2003-01-09 19:48:37 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -32,7 +32,7 @@ public class NameAnonymousFunctions extends FEReplacer
     {
         func = (FuncWork)super.visitFuncWork(func);
         if (func.getName() != null) return func;
-        return new FuncWork(func.getContext(), "work",
+        return new FuncWork(func.getContext(), func.getCls(), "work",
                             func.getBody(), func.getPeekRate(),
                             func.getPopRate(), func.getPushRate());
     }

@@ -176,8 +176,10 @@ public class RawBackend {
 		    strOrig = null;
 		    System.gc();
 		} else if (KjcOptions.unroll<=1) {
-		    // if we have reached bottom of unrolling, fail
-		    Utils.fail("A filter overflows IMEM even though there is no unrolling.");
+		    // if we have reached bottom of unrolling, print warning
+		    System.out.println("WARNING:  A filter overflows IMEM even though there is no unrolling.");
+		    // so that we exit the loop
+		    fitsInIMEM=true;
 		} else {
 		    // otherwise, cut unrolling in half and recurse
 		    System.out.println("Cutting unroll factor from " + KjcOptions.unroll + " to " + (KjcOptions.unroll/2) + " to try to fit in IMEM...");

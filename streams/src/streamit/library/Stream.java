@@ -62,34 +62,6 @@ public class Stream extends Operator
         return MESSAGE_STUB;
     }
 
-    // just a runtime hook to run the stream
-    public void run()
-    {
-        setupOperator ();
-
-        // setup the scheduler
-        {
-            scheduler = new SimpleHierarchicalScheduler ();
-
-            SchedStream stream;
-            stream = (SchedStream) constructSchedule ();
-            ASSERT (stream);
-
-            scheduler.useStream (stream);
-            scheduler.computeSchedule ();
-        }
-
-        ASSERT (streamInput == null);
-        ASSERT (streamOutput == null);
-
-        // execute the stream here
-        while (true)
-        {
-            runSinks ();
-            drainChannels ();
-        }
-    }
-
     // ------------------------------------------------------------------
     //                  graph handling functions
     // ------------------------------------------------------------------

@@ -10,7 +10,7 @@ import at.dms.kjc.iterator.*;
 
 /**
  * RedundantReplacer.
- * $Id: LinearRedundancyReplacer.java,v 1.6 2003-03-08 21:14:45 aalamb Exp $
+ * $Id: LinearRedundancyReplacer.java,v 1.7 2003-03-12 15:59:25 aalamb Exp $
  **/
 public class LinearRedundancyReplacer extends LinearReplacer implements Constants{
     /** The prefix to use to name fields. **/
@@ -84,9 +84,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	LinearRedundancy redundancy = this.redundancyInformation.getRedundancy(self);
 	tupleData = new RedundancyReplacerData(redundancy,linearRep.getPopCount());
 	    
-	System.err.println("\n\nRedundancy information calculated:");
-	System.err.println(tupleData);
-	System.err.println("\n");
+	//System.err.println("\n\nRedundancy information calculated:");
+	//System.err.println(tupleData);
+	//System.err.println("\n");
 	
 	// since we need a two stage filter to implement this
 	// transformation, we need to make a whole new SIRStream and
@@ -556,9 +556,9 @@ public class LinearRedundancyReplacer extends LinearReplacer implements Constant
 	RedundancyReplacerData(LinearRedundancy redundancy, int popCount) {
 	    super();
 
-	    LinearPrinter.println("Linear redundancy:\n" + redundancy);
-	    LinearPrinter.println("Linear Redundnacy tuples:\n" +
-				  redundancy.getTupleString());
+	    //LinearPrinter.println("Linear redundancy:\n" + redundancy);
+	    //LinearPrinter.println("Linear Redundnacy tuples:\n" +
+	                            //redundancy.getTupleString());
 	    minUse       = new HashMap();
 	    maxUse       = new HashMap();
 	    nameMap      = new HashMap();

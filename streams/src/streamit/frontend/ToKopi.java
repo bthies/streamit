@@ -16,7 +16,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.3 2003-07-09 20:08:55 dmaze Exp $
+ * @version $Id: ToKopi.java,v 1.4 2003-07-10 15:12:55 dmaze Exp $
  */
 public class ToKopi
 {
@@ -66,6 +66,7 @@ public class ToKopi
          * MoveStreamParameters introduces references to
          * "this", which doesn't exist. */
         TempVarGen varGen = new TempVarGen();
+        prog = (Program)prog.accept(new CreateInitFunctions());
         prog = (Program)prog.accept(new MakeBodiesBlocks());
         prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));

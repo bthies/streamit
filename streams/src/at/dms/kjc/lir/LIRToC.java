@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.37 2001-10-30 19:58:38 thies Exp $
+ * $Id: LIRToC.java,v 1.38 2001-10-31 17:10:57 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1375,6 +1375,13 @@ public class LIRToC
                                    SIRStream stream)
     {
         print("/* InitStatement */");
+    }
+
+    public void visitInterfaceTable(SIRInterfaceTable self)
+    {
+        JMethodDeclaration[] methods = self.getMethods();
+        // TODO: actually print this, deal with some of the other cases.
+        print("{ }");
     }
     
     public void visitLatency(SIRLatency self)

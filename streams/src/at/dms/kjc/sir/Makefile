@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.15 2001-10-29 10:26:53 thies Exp $
+## $Id: Makefile,v 1.16 2001-11-06 18:36:27 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -60,6 +60,8 @@ JAVAFILES +=	StreamVisitor \
 		SIRInitStatement \
 		SIRStream \
 		AttributeStreamVisitor \
+		SIRFileWriter \
+		SIRFileReader \
 		lowering/LoweringConstants \
 		lowering/Structurer \
 		lowering/Namer \

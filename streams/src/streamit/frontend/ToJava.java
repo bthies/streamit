@@ -15,7 +15,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.33 2003-07-02 19:38:01 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.34 2003-07-08 21:05:10 dmaze Exp $
  */
 public class ToJava
 {
@@ -180,6 +180,9 @@ public class ToJava
             System.err.println("Compilation didn't generate a parse tree.");
             return;
         }
+
+        if (!SemanticChecker.check(prog))
+            return;
 
         prog = lowerIRToJava(prog, libraryFormat);
 

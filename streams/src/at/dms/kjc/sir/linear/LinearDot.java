@@ -88,9 +88,9 @@ public class LinearDot extends StreamItDot {
 	// code from StreamItDot
 	String label = self.getIdent();
 	try {
-	    label += "\\npush=" + self.getPushInt();
-	    label += "\\npop=" + self.getPopInt();
-	    label += "\\npeek=" + self.getPeekInt();
+	    label += "\\npush=" + self.getPushString();
+	    label += "\\npop=" + self.getPopString();
+	    label += "\\npeek=" + self.getPeekString();
 	    label += "\\n" + this.makeRedundancyString(self);
 	    if (self instanceof SIRTwoStageFilter) {
 		SIRTwoStageFilter two = (SIRTwoStageFilter)self;

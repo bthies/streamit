@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestTests.java,v 1.4 2002-09-26 00:15:24 thies Exp $
+ * $Id: TestTests.java,v 1.5 2002-12-11 23:32:28 thies Exp $
  **/
 package streamittest;
 
@@ -58,6 +58,8 @@ public class TestTests extends StreamITTestCase {
 	suite.addTest(new TestTests("testFieldInit3", flags));
 	suite.addTest(new TestTests("testFieldInit4", flags));
 
+	suite.addTest(new TestTests("testLifter", flags));
+
 	suite.addTest(new TestTests("testWeightedRR", flags));
 	suite.addTest(new TestTests("testTwoWeightedRR", flags));
 	
@@ -93,6 +95,14 @@ public class TestTests extends StreamITTestCase {
 			       "Flybit.java",
 			       "Flybit.out",
 			       0,4);
+	
+    }
+
+    public void testLifter() {
+	doCompileRunVerifyTest(TESTS_ROOT + "lifter/",
+			       "TestLifter.java",
+			       "TestLifter.out",
+			       0,8);
 	
     }
 

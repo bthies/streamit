@@ -1,0 +1,77 @@
+void->void pipeline ComparisonCounting {
+  int SIZE = 16;
+  add IntSource(SIZE);
+  add CountSortSplit(SIZE);
+  add RearrangeIndices(SIZE);
+  add IntPrinter();
+}
+
+void->int filter IntSource(int SIZE) {
+  int [SIZE]data;
+  int index = 0;
+  init {
+    data[0] = 503; data[1] = 087; data[2] = 512;
+    data[3] = 061; data[4] = 908; data[5] = 170;
+    data[6] = 897; data[7] = 275; data[8] = 653;
+    data[9] = 426; data[10] = 154; data[11] = 509;
+    data[12] = 612; data[13] = 677; data[14] = 765;
+    data[15] = 703;
+  }
+
+  work push 1 {
+    push(data[index++]);
+    if (index == SIZE)
+      index = 0;
+  }
+}
+    
+int->int splitjoin CountSortSplit(int SIZE) {
+  split duplicate;
+  add CountSplit(SIZE);
+  add IntIdentity();
+  join roundrobin(SIZE);
+}
+
+int->int filter IntIdentity() {
+  work push 1 pop 1 {
+    push(pop());
+  }
+}
+
+int->int splitjoin CountSplit(int SIZE) {
+  split duplicate;
+  for(int i=0; i < SIZE; i++)
+    add Counter(i,SIZE);
+  join roundrobin();
+}
+
+int->int filter Counter(int index, int SIZE) {
+  work push 1 pop SIZE peek SIZE {
+    int mine = peek(index);
+    int count = 0;
+    for(int i=0; i < SIZE; i++) {
+      if (peek(i) < mine) {
+	count++;
+      }
+    }
+    push(count);
+  }
+}
+
+int->int filter RearrangeIndices(int SIZE) {
+  work push SIZE pop SIZE * 2 {
+    int [SIZE]outputArray;
+    for(int i=0; i < SIZE; i++)
+      outputArray[peek(i)] = peek(i+SIZE);
+    for(int i=0; i < SIZE; i++) {
+      push(outputArray[i]);
+      pop(); pop();
+    }
+  }
+}
+
+int->void filter IntPrinter() {
+  work pop 1 {
+    print(pop());
+  }
+}

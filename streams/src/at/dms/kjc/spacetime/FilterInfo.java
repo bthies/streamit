@@ -196,7 +196,7 @@ public class FilterInfo
 	    //add all the upstream filters items that reach this filter
 	    for (int i = 0; i < in.getWeights().length; i++) {
 		Edge incoming = in.getSources()[i];
-		upStreamItems =
+		upStreamItems +=
 		    (int)(FilterInfo.getFilterInfo((FilterTraceNode)incoming.getSrc().getPrevious()).initItemsSent() *
 			  ((double)incoming.getSrc().getWeight(incoming) / incoming.getSrc().totalWeights()));
 		//upStreamItems += (int)(FilterInfo.getFilterInfo(previous[i]).initItemsSent() *
@@ -261,6 +261,12 @@ public class FilterInfo
 	
 	return items;
     }
+
+    public String toString() 
+    {
+	return traceNode.toString();
+    }
+    
 
 /*  Not needed now, but needed for magic crap
       public FilterTraceNode[] getNextFilters() 

@@ -3,12 +3,18 @@ JAVA    = java -Xmx1700M -classpath $(CP) -Dstreamit_home=$(STREAMIT_HOME)
 TEXTTEST= $(JAVA) junit.textui.TestRunner
 GUITEST = $(JAVA) junit.swingui.TestRunner
 COMPILER= jikes -classpath $(CP)
+UI	= text
 
 # set up which tester gets used
-#TESTER  = $(GUITEST)
+ifeq ($(UI),gui)
+TESTER  = $(GUITEST)
+else
+ifeq ($(UI),swing)
+TESTER	= $(GUITEST)
+else
 TESTER  = $(TEXTTEST)
-
-
+endif
+endif
 
 # if automatic_test is definied (by another makefile or the cron job script
 # make sure that the text tester is always used

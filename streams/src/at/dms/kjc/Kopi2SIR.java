@@ -388,9 +388,12 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	else if (stream instanceof SIRIdentity) {
 	    if (args.length != 1)
 		at.dms.util.Utils.fail(lineNumber + ": Exactly 1 arg required for Identity");
-	    if (!(args[0] instanceof JStringLiteral))
-		at.dms.util.Utils.fail(lineNumber + ": Argument to Identity must be a type");
-	    ((SIRIdentity)stream).setType(getType(((JStringLiteral)args[0]).stringValue()));
+	    if (args[0] instanceof JStringLiteral)
+		((SIRIdentity)stream).setType(getType(((JStringLiteral)args[0]).stringValue()));
+	    else if (args[0] instanceof JMethodCallExpression)
+		((SIRIdentity)stream).setType(((JMethodCallExpression)args[0]).getPrefix().getType());
+	    else 
+		Utils.fail(lineNumber + "Illegal arg to Identity");
 	}
     }
 

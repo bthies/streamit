@@ -138,6 +138,20 @@ public class SplitJoin
         return latencySplitter;
     }
 
+    // override getSplitPhase so I can ask for any phase > 0
+    public PhasingSchedule getSplitPhase(int nPhase)
+    {
+        return super.getSplitPhase (nPhase % getNumSplitPhases ());
+    }
+
+    // override getJoingPhase so I can ask for any phase > 0
+    public PhasingSchedule getJoinPhase(int nPhase)
+    {
+        return super.getJoinPhase (nPhase % getNumJoinPhases ());
+    }
+
+
+
     public void computeSchedule()
     {
         ERROR("Not implemented yet.");

@@ -3,7 +3,11 @@ float->float pipeline DCTcore(int N)
 
 
 // this filter performs the combinations at the output
-// of the DCT (look at Rao, Yim 61)
+// of the second DCT (look at Rao, Yim 61)
+float->float filter outmix(int N){
+    work push N pop N {
+	float[] N
+
 
 
 

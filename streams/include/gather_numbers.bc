@@ -149,7 +149,7 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	//we are done getting the numbers, deregister the handler.
 	EventManager_DeRegisterHandler("issued_instruction", "__event_instr_count");
 	//now get the blood graph	   
-//	setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
+	setup_bloodgraph("bloodgraph.ppm", totalCycles/quitAfter);
 	
 	//this should exit!!!!!
 	gInterrupted = 1;

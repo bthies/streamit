@@ -93,7 +93,8 @@ public class FuseSplit {
 	    // aren't dealing with how to fuse their initWork
 	    // functions.
             if (filter instanceof SIRTwoStageFilter &&
-		filter.getPeekInt() > filter.getPopInt()) {
+		((SIRTwoStageFilter)filter).getInitPop() > 0) {
+//		filter.getPeekInt() > filter.getPopInt()) {
                 return sj;
 	    }
         }
@@ -144,9 +145,10 @@ public class FuseSplit {
         iter = children.iterator();
 	int maxPeek = 0;
         while (iter.hasNext()) {
+	    SIRFilter filter = (SIRFilter)iter.next();
 	    maxPeek = Math.max(maxPeek, 
-			       ((SIRFilter)iter.next()).getPeekInt()-
-			       ((SIRFilter)iter.next()).getPopInt());
+			       filter.getPeekInt()-
+			       filter.getPopInt());
 	}
 	// calculate the peek as the amount we'll look into the input
 	// during execution

@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.29 2003-05-28 20:40:50 dmaze Exp $
+# $Id: knit,v 1.30 2003-05-28 20:55:28 thies Exp $
 #
 
 use strict;
@@ -62,8 +62,6 @@ Options:
 Options available for all backends:
 * --clone-with-serialization, -K
 *                     Use old serialization code to copy objects
-  --frequencyreplacement, -F
-                      Convert FIR filters to frequency
 * --fusion, -f        Fuse entire program to a single filter
   --linearreplacement, -I
                       Perform linear transformations based on analysis
@@ -71,8 +69,6 @@ Options available for all backends:
 *                     Do linear replacement using a level of indirection
 * --linearreplacement3, -R
 *                     Do linear replacement using diagonal replacement
-* --linearpartition, -B
-*                     Automatically selecting targets of linear analyses
   --memory, -Xmx      Specify Java runtime heap limit
   --nofieldprop, -L   Do not propagate constant field values
   --nolinearcollapse, -H
@@ -88,23 +84,27 @@ Options available for all backends:
   --unroll, -u        Specify loop unrolling limit
 
 Options specific to RAW backend:
+  --partition, -a     Automatically partition stream graph (greedy)
+  --dppartition, -y   Use the dynamic programming partitioner
 * --altcodegen, -z    Alternate RAW communication code generation
 * --decoupled, -X     Generate dummy communication code
-  --dppartition, -y   Use the dynamic programming partitioner
 * --dpscaling, -Y     Collect theoretical scaling statistics
 * --ilppartition, -A  Use the integer linear programming partitioner
-* --magic-net, -M     Generate RAW "magic network" code
+  --magic-net, -M     Generate RAW "magic network" code
 * --noanneal, -W      Do not run simulated annealing for layout
   --numbers n, -N     Automatically gather numbers and put in results.out
-  --partition, -a     Automatically partition stream graph
-  --ptraccess, -Q     Access buffers through a pointer
+* --ptraccess, -Q     Access buffers through a pointer
 * --ratematch, -x     Turn on rate matching
-* --rawcol, -q        Specify number of columns; --raw has number of rows
+  --rawcol, -q        Specify number of columns; --raw has number of rows
   --raw-uni, -U       Use RAW backend to generate uniprocessor code
-  --removeglobals, -G Inline all functions and turn globals into locals
+* --removeglobals, -G Inline all functions and turn globals into locals
   --simulatework, -T  Use simulator for work estimation
 
 Options specific to uniprocessor backend:
+  --frequencyreplacement, -F
+                      Convert FIR filters to frequency
+  --linearpartition, -B
+                      Automatically selecting targets of linear analyses
 * --atlas, -E         Use ATLAS for generated matrix multiplies
   --poptopeek, -P     Convert all pop expressions into peeks
   --profile           Compile with profiling information

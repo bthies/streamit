@@ -128,10 +128,14 @@ void SIRPipeline_2_init(SIRPipeline_2 data) {
   SIRFilter_2_2_init(data->stream2);
   set_splitter(data->context, DUPLICATE, 2);
   set_joiner(data->context, ROUND_ROBIN, 2, 1, 1);
-  create_split_tape(data->context, 0, data->stream1->context, sizeof(int), 2);
-  create_split_tape(data->context, 1, data->stream2->context, sizeof(int), 2);
-  create_join_tape(data->stream1->context, data->context, 0, sizeof(int), 1);
-  create_join_tape(data->stream2->context, data->context, 1, sizeof(int), 1);  
+  create_splitjoin_tape(data->context, SPLITTER, OUTPUT, 0,
+		        data->stream1->context, sizeof(int), 2);
+  create_splitjoin_tape(data->context, SPLITTER, OUTPUT, 1,
+		        data->stream2->context, sizeof(int), 2);
+  create_splitjoin_tape(data->context, JOINER, INPUT, 0,
+		        data->stream1->context, sizeof(int), 1);
+  create_splitjoin_tape(data->context, JOINER, INPUT, 1,
+		        data->stream2->context, sizeof(int), 1);  
 }
 
 void SIRFilter_3_work(SIRFilter_3 data) {

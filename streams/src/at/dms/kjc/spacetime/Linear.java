@@ -43,17 +43,28 @@ public class Linear extends RawExecutionCode implements Constants {
     }
     
     public JBlock getSteadyBlock() {
+	JStatement[] body;
+	if(begin)
+	    body=new JStatement[array.length+3];
+	else
+	    body=new JStatement[array.length+2];
 	InlineAssembly inline=new InlineAssembly();
-	JStatement[] body=new JStatement[]{inline};
 	inline.add(".set noat");
+	body[0]=inline;
 	for(int i=0;i<array.length;i++) {
-	    inline.add("lw "+regs[i]+", %"+i);
+	    inline=new InlineAssembly();
+	    inline.add("lw "+regs[i]+", %0");
 	    inline.addInput("\"m\"("+getWeight(i)+")");
+	    body[1+i]=inline;
 	}
 	if(begin) {
-	    inline.add("lw "+regs[regs.length-1]+", %"+array.length);
+	    inline=new InlineAssembly();
+	    inline.add("lw "+regs[regs.length-1]+", %0");
 	    inline.addInput("\"m\"("+getConstant()+")");
+	    body[body.length-2]=inline;
 	}
+	inline=new InlineAssembly();
+	body[body.length-1]=inline;
 	for(int i=0;i<idx.length-1;i++)
 	    for(int k=0;k<popCount;k++)
 		for(int j=i;j>=0;j--) {
@@ -141,7 +152,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+1];
 	for(int i=0;i<array.length;i++)
 	    try {
-		fields[i]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getWeight(i),new JFloatLiteral(null,Float.toString((float)array[array.length-i-1]))),null,null);
+		fields[i]=new JFieldDeclaration(null,new JVariableDefinition(null,0,CStdType.Float,getWeight(i),new JFloatLiteral(null,Float.toString((float)array[i]))),null,null);
 	    } catch(PositionedError e) {
 		Utils.fail("Couldn't convert weight "+i+": "+array[i]);
 	    }

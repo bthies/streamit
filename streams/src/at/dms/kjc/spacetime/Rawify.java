@@ -197,12 +197,15 @@ public class Rawify
 		code.appendIns(newIns, init||primePump);
 	    }
 	}
-	for(int i = 0;i<numTimes;i++) {
-	    FullIns newIns = new FullIns(tile);
-	    newIns.addRoute(SwitchIPort.CSTO, dest);
-	    code.appendIns(newIns, init||primePump);
-	}	    
-	code.appendIns(new JumpIns(label.getLabel()), init||primePump);
+	for(int i=0;i<numTimes-1;i++) {
+	    FullIns newIns=new FullIns(tile);
+	    newIns.addRoute(SwitchIPort.CSTO,dest);
+	    code.appendIns(newIns,init||primePump);
+	}
+	FullIns newIns=new FullIns(tile,new JumpIns(label.getLabel()));
+	newIns.addRoute(SwitchIPort.CSTO,dest);
+	code.appendIns(newIns,init||primePump);
+	//code.appendIns(new JumpIns(label.getLabel()),init||primePump);
     }
 
     private static void createSwitchCode(FilterTraceNode node, Trace parent, 

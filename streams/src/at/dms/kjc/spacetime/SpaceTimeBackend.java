@@ -113,8 +113,9 @@ public class SpaceTimeBackend
 	for(int i=0;i<topNodes.length;i++)
 	    System.out.println(topNodes[i]);
 	Trace[] traces=null;
+	Trace[] traceGraph=null; //used if REAL
 	if(!REAL&&TEST_BEAMFORMER) { //Test for simple one join-split (beamformer)
-	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
+	    traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
 	    System.out.println("Traces: "+traceGraph.length);
 	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	    Trace first=null;
@@ -293,9 +294,9 @@ public class SpaceTimeBackend
 		//System.out.println(((Trace)traceList.get(i)).getHead());
 	    }
 	} else if(REAL) {
-	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
+	    traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
 	    System.out.println("Traces: "+traceGraph.length);
-	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
+	    /*TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	    //TEMP
 	    ArrayList traceList=new ArrayList();
 	    UnflatFilter currentFilter=topNodes[0];
@@ -364,7 +365,7 @@ public class SpaceTimeBackend
 		    }
 		    head = head.getNext();
 		}
-	    }
+		}*/
 	}
 	
 
@@ -393,6 +394,46 @@ public class SpaceTimeBackend
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
 
+	if(REAL) {
+	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
+	    System.out.println("TracesGraph: "+traceGraph.length);
+	    for(int i=0;i<traceGraph.length;i++)
+		System.out.println(traceGraph[i]);
+	    FilterTraceNode currentNode=(FilterTraceNode)traceGraph[0].getHead();
+	    currentNode.setXY(0,0);
+	    int curX=1;
+	    int curY=0;
+	    int forward=1;
+	    int downward=1;
+	    ArrayList traceList=new ArrayList();
+	    traceList.add(new Trace(currentNode));
+	    TraceNode nextNode=currentNode.getNext();
+	    while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
+		currentNode=(FilterTraceNode)nextNode;
+		currentNode.setXY(curX,curY);
+		if(curX>=rawColumns-1&&forward>0) {
+		    forward=-1;
+		    curY+=downward;
+		} else if(curX<=0&&forward<0) {
+		    if(curY==0)
+			downward=1;
+		    if(curY==rawRows-1)
+			downward=-1;
+		    if((curY==0)||(curY==rawRows-1)) {
+		    } else
+			curY+=downward;
+		} else
+		    curX+=forward;
+		nextNode=currentNode.getNext();
+	    }
+	    traces=new Trace[traceList.size()];
+	    traceList.toArray(traces);
+	    for(int i=1;i<traces.length;i++) {
+		traces[i-1].setEdges(new Trace[]{traces[i]});
+		traces[i].setDepends(new Trace[]{traces[i-1]});
+	    }
+	    System.out.println(traceList);
+	}
 
 	//traceList=null;
 	//content=null;

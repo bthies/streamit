@@ -36,17 +36,19 @@ class DataEstimate {
 	}
 	
 	if (oper instanceof SIRJoiner) {
-	    SIRJoiner joiner = (SIRJoiner)oper;
-	    CType baseType = Util.getBaseType(Util.getJoinerType(node));
-	    int sum = joiner.getSumOfWeights();
-	    return DataEstimate.getTypeSize(baseType) * sum; 
+	    //SIRJoiner joiner = (SIRJoiner)oper;
+	    //CType baseType = Util.getBaseType(Util.getJoinerType(node));
+	    //int sum = joiner.getSumOfWeights();
+	    //return DataEstimate.getTypeSize(baseType) * sum; 
+	    return 32;
 	}
 
 	if (oper instanceof SIRSplitter) {
-	    SIRSplitter splitter = (SIRSplitter)oper;
-	    CType baseType = Util.getBaseType(Util.getOutputType(node));
-	    int sum = splitter.getSumOfWeights();
-	    return DataEstimate.getTypeSize(baseType) * sum; 
+	    //SIRSplitter splitter = (SIRSplitter)oper;
+	    //CType baseType = Util.getBaseType(Util.getOutputType(node));
+	    //int sum = splitter.getSumOfWeights();
+	    //return DataEstimate.getTypeSize(baseType) * sum; 
+	    return 32;
 	}
 
 	return 0;

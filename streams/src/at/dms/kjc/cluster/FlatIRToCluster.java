@@ -515,12 +515,16 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("\n");
 	}
 
+	print("\n");
+
 	if (out != null) {
 	    
-	    print("void "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    //print("void "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
+	    print("void "+self.getWork().getName()+"__"+selfID+"(int);\n\n");
 
 	    print(output_type.toString()+" "+out.pop_name()+"() {\n");
-
+	    print("  int _tmp;\n");
+	    
 	    /*
 	    print("  if ("+out.pop_index()+" == "+push_n+") {\n");
 	    print("    int tmp = __number_of_iterations_"+selfID+";\n");
@@ -531,12 +535,28 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("    "+out.pop_index()+" = 0;\n");
 	    */
 	    print("  if ("+out.pop_index()+" == "+(out_pop_num_iters*push_n)+") {\n");
+
+	    print("    "+out.pop_index()+" = 0;\n");
+
+	    print("    for (_tmp = 0; _tmp < "+out_pop_num_iters+"; _tmp++) {\n");
+	    print("      //check_status__"+selfID+"();\n");
+	    print("      //check_messages__"+selfID+"();\n");
+	    print("      __update_pop_buf__"+selfID+"();\n");
+	    print("      "+self.getWork().getName()+"__"+selfID+"(1);\n");
+	    print("      //send_credits_"+selfID+"();\n");
+	    print("    }\n");
+
+	    print("    "+out.pop_index()+" = 0;\n");
+
+
+	    /*
 	    print("    int tmp = __number_of_iterations_"+selfID+";\n");
 	    print("    __number_of_iterations_"+selfID+" = "+out_pop_num_iters+";\n");
 	    print("    "+out.pop_index()+" = 0;\n");
             print("    "+ClusterExecutionCode.rawMain+"__"+selfID+"();\n");
 	    print("    __number_of_iterations_"+selfID+" = tmp - "+out_pop_num_iters+";\n");
 	    print("    "+out.pop_index()+" = 0;\n");
+	    */
 
 	    print("  }\n");
 
@@ -573,18 +593,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	declOnly = false;
 	for (int i =0; i < methods.length; i++) {
-	    //if (!methods[i].equals(work)) methods[i].accept(this);
-
-	    methods[i].accept(this);
+	    if (!methods[i].equals(work)) methods[i].accept(this);
+	    //methods[i].accept(this);
 	}
 
 
 
 	//  +=============================+
-	//  | Work N Function (int ____n) |
+	//  | Work Function (int ____n)   |
 	//  +=============================+
 
-	/*
+	
 
        	JBlock block = new JBlock(null, new JStatement[0], null);
 
@@ -627,7 +646,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    new JMethodDeclaration(null, 
 				   at.dms.kjc.Constants.ACC_PUBLIC,
 				   CStdType.Void,
-				   work.getName()+"__n",
+				   work.getName(),
 				   params,
 				   CClassType.EMPTY,
 				   block,
@@ -636,7 +655,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	work_n.accept(this);
 
-	*/
+	
 
 	//  +=============================+
 	//  | Check Messages              |
@@ -909,16 +928,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("}\n");
 
 	//  +=============================+
-	//  | Run Method                  |
+	//  | Cluster Main                |
 	//  +=============================+
 
-
-	Vector run = gen.generateRunFunction(filter.getInit().getName()+"__"+selfID, ClusterExecutionCode.rawMain+"__"+selfID);
+	Vector run = gen.generateRunFunction(filter.getInit().getName()+"__"+selfID, filter.getWork().getName()+"__"+selfID);
 
 	for (int i = 0; i < run.size(); i++) {
 	    print(run.elementAt(i).toString());
 	}
-
        
 	createFile(selfID);
     }

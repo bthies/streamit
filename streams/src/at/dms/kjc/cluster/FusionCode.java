@@ -11,31 +11,47 @@ import at.dms.kjc.sir.*;
 class FusionCode {
 
 
-    public static int minMult(int cache_size) {
+    public static int bestMult(int data_cache1, int data_cache2) {
 
 	int threadCount = NodeEnumerator.getNumberOfNodes();
-	int min_mult = cache_size;
+	int min_mult;// = cache_size;
+
+	int histogram[] = new int[threadCount];
 
 	for (int t = 0; t < threadCount; t++) {
 	    
 	    SIROperator oper = NodeEnumerator.getOperator(t);
 	    int dws = DataEstimate.estimateDWS(oper);
 	    int io = DataEstimate.estimateIOSize(oper);
-	    int avail = cache_size - dws;
+	    int avail = 0;
+
+	    // if dws < .8 * data_cahce1
+
+	    if (dws / 8 * 10 < data_cache1) {
+		avail = data_cache1 - dws;
+	    } else {
+		avail = data_cache2 - dws;
+	    }
 
 	    if (io == 0) io = 1;
 	    int mult = avail / io;
 
-	    System.out.println("DWS: "+dws+" Avail: "+avail+" IO: "+io+" Mult: "+mult);
+	    //System.out.println("DWS: "+dws+" Avail: "+avail+" IO: "+io+" Mult: "+mult);
 
-	    if (mult < min_mult) {
-		min_mult = mult;
-	    }
+	    histogram[t] = mult;
+
+	    //if (mult < min_mult) { min_mult = mult; }
 	}	    
 	
+	Arrays.sort(histogram);
+
+	System.out.println("[bestMult] min: "+histogram[0]+" max: "+histogram[threadCount-1]+" 10th-precentile: "+histogram[threadCount/10]);
+
+	min_mult = histogram[threadCount/10];
+
 	if (min_mult > 100) min_mult = 100;	
 	if (min_mult < 0) min_mult = 1;	
-	System.out.println("Min Multiplicity: "+min_mult);
+	System.out.println("[bestMult] returning multiplicity : "+min_mult);
 
 	return min_mult;
     }
@@ -52,16 +68,18 @@ class FusionCode {
 
 	p.print("#ifndef __FUSION_H\n");
 	p.print("#define __FUSION_H\n");
-
 	p.println();
+	
+	p.print("#define pow2ceil(A) ((A<=256)?(256):(((A<=1024)?(1024):(((A<=4096)?(4096):(((A<=16384)?(16384):(((A<=65536)?(65536):(((A<=131072)?(131072):(((A<=262144)?(262144):(524288))))))))))))))\n");
+	p.println();
+
 	//p.print("#define __ITERS 10000\n");
 
-	int min_mult = minMult(16000); // estimating minimum multiplicity 
-	                               // such that for all operators DWS 
-	                               // fits cache
+	int mult = bestMult(16000,65000); // estimating best multiplicity 
 
-	p.print("#define __MULT "+min_mult+"\n");
+	p.print("#define __MULT "+mult+"\n");
 	p.println();
+
 
 	//p.print("/*\n");
 
@@ -92,7 +110,8 @@ class FusionCode {
 
 		if (no_peek) p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
 
-		p.print("#define __BUF_SIZE_MASK_"+src+"_"+dst+" 8191\n");
+		int source_size = 0, dest_size = 0, max_size;
+
 
 		if (src_oper instanceof SIRFilter) {
 		    SIRFilter f = (SIRFilter)src_oper;
@@ -102,6 +121,8 @@ class FusionCode {
 		    int push_n = f.getPushInt();
 		    int total = (steady_int * push_n);
 		    p.print("//source pushes: "+steady_int+" * "+push_n+" = ("+total+" items)\n");
+
+		    source_size = total;
 		}
 
 		if (dst_oper instanceof SIRFilter) {
@@ -121,7 +142,13 @@ class FusionCode {
 		    int total = (steady_int * pop_n) + (peek_n - pop_n);
 
 		    p.print(" = ("+total+" items)\n");
+
+		    dest_size = total;
 		}
+
+		if (source_size > dest_size) max_size = source_size; else max_size = dest_size;
+
+		p.print("#define __BUF_SIZE_MASK_"+src+"_"+dst+" (pow2ceil("+max_size+"*__MULT)-1)\n");
 
 		p.print("\n");
 
@@ -208,11 +235,14 @@ class FusionCode {
 		//p.print("extern void __update_pop_buf__"+i+"();\n");
 		p.print("extern void "+((SIRFilter)node.contents).getInit().getName()+"__"+id+"();\n");
 	    }
-	    p.print("extern void "+get_work_function(node.contents)+"();\n");
+	    p.print("extern void "+get_work_function(node.contents)+"(int);\n");
+
+	    /*
 	    String work_n = get_work_n_function(node.contents);
 	    if (work_n != null) {
 		p.print("extern void "+work_n+"(int n);\n");
 	    }
+	    */
 	}
 
 	p.println();
@@ -302,7 +332,10 @@ class FusionCode {
 			    p.print("  ");
 			}
 			
-			p.print(get_loop(init_int, get_work_function(oper)+"();"));
+
+			p.print("  "+get_work_function(oper)+"("+init_int+");");
+
+			//p.print(get_loop(init_int, get_work_function(oper)+"();"));
 			p.println();
 			
 		    } else {
@@ -359,14 +392,11 @@ class FusionCode {
 			p.print("    #endif\n");
 		    }
 		    
-		    String work_n = get_work_n_function(oper);
+		    //String work_n = get_work_n_function(oper);
 
-		    if (work_n != null) {
-			p.print("    "+work_n+"("+steady_int+"*__MULT);");
+		    p.print("    "+get_work_function(oper)+"("+steady_int+"*__MULT);");
 
-		    } else {
-			p.print("    for (int i=0; i<("+steady_int+"*__MULT); i++) { "+get_work_function(oper)+"(); }");
-		    }
+		    //p.print("    for (int i=0; i<("+steady_int+"*__MULT); i++) { "+get_work_function(oper)+"(); }");
 		}
 
 		//p.print("    "+get_loop(steady_int * 100, get_work_function(oper)+"();"));

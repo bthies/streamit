@@ -662,7 +662,7 @@ class ClusterCodeGenerator {
 		r.add("      //check_messages__"+id+"();\n");
 		r.add("      __update_pop_buf__"+id+"();\n");
 	    }
-	    r.add("      "+work_function+"();\n");
+	    r.add("      "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //send_credits_"+id+"();\n");
 	    }
@@ -682,7 +682,7 @@ class ClusterCodeGenerator {
 		r.add("      //check_messages__"+id+"();\n");
 		r.add("      __update_pop_buf__"+id+"();\n");
 	    }
-	    r.add("      "+work_function+"();\n");
+	    r.add("      "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("      //send_credits_"+id+"();\n");
 	    }
@@ -695,7 +695,7 @@ class ClusterCodeGenerator {
 		r.add("    //check_messages__"+id+"();\n");
 		r.add("    __update_pop_buf__"+id+"();\n");
 	    }
-	    r.add("    "+work_function+"();\n");
+	    r.add("    "+work_function+"(1);\n");
 	    if (oper instanceof SIRFilter) {
 		r.add("    //send_credits_"+id+"();\n");
 	    }

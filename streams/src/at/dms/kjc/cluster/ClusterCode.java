@@ -257,7 +257,9 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
-	p.print("void __splitter_"+thread_id+"_work() {\n");
+	p.print("void __splitter_"+thread_id+"_work(int ____n) {\n");
+	p.print("  for (;____n > 0; ____n--) {\n");
+	
 	FlatNode source = NodeEnumerator.getFlatNode(in.getSource());
 
 	if (splitter.getType().equals(SIRSplitType.DUPLICATE)) {
@@ -309,6 +311,76 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	} else if (splitter.getType().equals(SIRSplitType.ROUND_ROBIN) ||
 		   splitter.getType().equals(SIRSplitType.WEIGHTED_RR)) {
 
+	    
+	    int sum = splitter.getSumOfWeights();
+	    int offs = 0;
+
+	    int _s1 = in.getSource();
+	    int _d1 = in.getDest();
+	    
+	    for (int i = 0; i < out.size(); i++) {
+		int num = splitter.getWeight(i);
+		NetStream s = (NetStream)out.elementAt(i);		
+
+		int _s2 = s.getSource();
+		int _d2 = s.getDest();
+
+		for (int y = 0; y < num; y++) {
+		    
+		    // Destination
+	    
+		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+		    p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
+		    p.print("    #else\n");
+		    p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
+		    p.print("    #endif\n");
+		    p.print("  #else\n");
+		    p.print("    "+s.producer_name()+".push(\n");
+		    p.print("  #endif\n");
+
+		    // Source
+
+		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+		    p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
+		    p.print("    #else\n");
+		    p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
+		    p.print("    #endif\n");
+		    p.print("  #else\n");
+
+		    if (ClusterFusion.fusedWith(node).contains(source)) {
+			p.print("    "+in.pop_name()+"()\n");
+		    } else {	    
+			p.print("    "+in.consumer_name()+".pop()\n");
+		    }
+		    
+		    p.print("  #endif\n");
+
+		    // Close Assignement to Dest or Push Operator
+
+		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+		    p.print("    ; // assignement\n");
+		    p.print("  #else\n");		    
+		    p.print("    ); // push()\n");
+		    p.print("  #endif\n");
+		    		    
+		    offs++;
+		}
+
+		p.print("  HEAD_"+_s2+"_"+_d2+" += "+num+";\n");
+		p.print("  #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		p.print("  HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		p.print("  #endif\n");
+
+	    }
+
+	    p.print("  TAIL_"+_s1+"_"+_d1+" += "+sum+";\n");
+	    p.print("  #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+	    p.print("  TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+	    p.print("  #endif\n");
+	    
+	    /*
 	    int sum = splitter.getSumOfWeights();
 	    int offs = 0;
 		
@@ -370,8 +442,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 		offs += num;
 	    }
+	    */
 	}
 
+	p.print("  }\n");
 	p.print("}\n");
 	p.print("\n");
 
@@ -394,7 +468,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	} else {
 	*/	
 	
-	p.print("  for (int i = 0; i < 1000 * "+steady_counts+"; i++) __splitter_"+thread_id+"_work();\n");
+	p.print("  for (int i = 0; i < 1000 * "+steady_counts+"; i++) __splitter_"+thread_id+"_work(1);\n");
 	
 	p.print("}\n");
 	p.print("\n");
@@ -410,7 +484,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  if (__steady_"+thread_id+" == 0) {\n");
 	p.print("    for (i = 0; i < "+init_counts+"; i++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("      __splitter_"+thread_id+"_work();\n");
+	p.print("      __splitter_"+thread_id+"_work(1);\n");
 	p.print("    }\n");
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
@@ -426,7 +500,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+steady_counts+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("      __splitter_"+thread_id+"_work();\n");
+	p.print("      __splitter_"+thread_id+"_work(1);\n");
 	p.print("    }\n");
 
 	p.print("    if (__frequency_of_chkpts != 0 && __steady_"+thread_id+" % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
@@ -573,12 +647,19 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	p.print("\n");
 
-	p.print("void __joiner_"+thread_id+"_work() {\n");
+	p.print("void __joiner_"+thread_id+"_work(int ____n) {\n");
+	p.print("  for (;____n > 0; ____n--) {\n");
+
+	FlatNode dest_flat = NodeEnumerator.getFlatNode(out.getSource());
 
 	if (joiner.getType().equals(SIRJoinType.ROUND_ROBIN) || 
 	    joiner.getType().equals(SIRJoinType.WEIGHTED_RR)) {
 
 	    if (joiner.getParent() instanceof SIRFeedbackLoop) {
+		
+		//
+		// Joiner is a part of feedback Loop
+		//
 
 		p.print("  "+baseType.toString()+" tmp;\n");
 		
@@ -608,6 +689,83 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		}
 
 	    } else {
+
+
+		//
+		// Joiner is NOT a part of feedback Loop
+		//
+
+
+		int sum = joiner.getSumOfWeights();
+		int offs = 0;
+
+		int _s2 = out.getSource();
+		int _d2 = out.getDest();
+
+		for (int i = 0; i < in.size(); i++) {
+		    int num = joiner.getWeight(i);
+		    NetStream s = (NetStream)in.elementAt(i);		
+
+		    int _s1 = s.getSource();
+		    int _d1 = s.getDest();
+
+		    for (int y = 0; y < num; y++) {
+
+			// Destination
+	    
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+
+			if (ClusterFusion.fusedWith(node).contains(dest_flat)) {
+			    p.print("    "+out.push_name()+"(\n");
+			} else {
+			    p.print("    "+out.producer_name()+".push(\n");
+			}
+
+			p.print("  #endif\n");
+			
+			// Source
+			
+			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			p.print("    "+s.consumer_name()+".pop()\n");
+			p.print("  #endif\n");
+			
+			// Close Assignement to Dest or Push Operator
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    ; // assignement\n");
+			p.print("  #else\n");		    
+			p.print("    ); // push()\n");
+			p.print("  #endif\n");
+			
+			offs++;
+		    }
+		    
+		    p.print("  TAIL_"+_s1+"_"+_d1+" += "+num+";\n");
+		    p.print("  #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("  TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+		    p.print("  #endif\n");
+		    
+		}
+		
+		p.print("  HEAD_"+_s2+"_"+_d2+" += "+sum+";\n");
+		p.print("  #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		p.print("  HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		p.print("  #endif\n");
+
+		/*
+
 
 		int sum = joiner.getSumOfWeights();
 		int offs = 0;
@@ -666,9 +824,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		p.print("  "+out.producer_name()+".push_items(tmp, "+sum+");\n");
 		p.print("  #endif\n");
 
+
+		*/
 	    }
 	}
 
+	p.print("  }\n");
 	p.print("}\n");
 
 	p.print("\n");
@@ -683,7 +844,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  if (__steady_"+thread_id+" == 0) {\n");
 	p.print("    for (i = 0; i < "+init_counts+"; i++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("      __joiner_"+thread_id+"_work();\n");
+	p.print("      __joiner_"+thread_id+"_work(1);\n");
 	p.print("    }\n");
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
@@ -691,7 +852,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  for (i = 1; i <= __number_of_iterations_"+thread_id+"; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+steady_counts+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
-	p.print("      __joiner_"+thread_id+"_work();\n");
+	p.print("      __joiner_"+thread_id+"_work(1);\n");
 	p.print("    }\n");
 
 	p.print("    if (__frequency_of_chkpts != 0 && i % __frequency_of_chkpts == 0) save_state::save_to_file(__thread_"+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");

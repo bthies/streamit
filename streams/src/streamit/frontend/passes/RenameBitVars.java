@@ -2,6 +2,8 @@ package streamit.frontend.passes;
 
 import streamit.frontend.nodes.*;
 
+import java.util.Iterator;
+
 /**
  * Front-end visitor passes that renames variables of type
  * <code>bit</code> to have "_bit_" on the front of their names.  This
@@ -9,7 +11,7 @@ import streamit.frontend.nodes.*;
  * infrastructure to understand bit types.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: RenameBitVars.java,v 1.1 2003-04-04 20:38:02 dmaze Exp $
+ * @version $Id: RenameBitVars.java,v 1.2 2003-04-05 16:11:38 dmaze Exp $
  */
 public class RenameBitVars extends FEReplacer
 {
@@ -76,6 +78,11 @@ public class RenameBitVars extends FEReplacer
     {
         SymbolTable oldSymTab = symtab;
         symtab = new SymbolTable(symtab);
+        for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
+        {
+            Parameter param = (Parameter)iter.next();
+            symtab.registerVar(param.getName(), param.getType());
+        }
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;
         return result;

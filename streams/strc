@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.24 2003-10-13 23:17:02 dmaze Exp $
+# $Id: strc,v 1.25 2003-10-15 10:49:32 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -97,9 +97,9 @@ Options:
   --standalone, -S    Generate C file without library dependencies
 * --cluster           Compile for a networked cluster
 * --viram             Compile for VIRAM, a vector uniprocessor
-  --verbose           Print commands as they are executed
   --library           Run in the Java library instead of compiling
   --memory, -Xmx      Specify Java runtime heap limit
+  --verbose           Print commands as they are executed
 
 Options available for all backends:
   -O0, -O1, -O2       Use predefined optimization sets

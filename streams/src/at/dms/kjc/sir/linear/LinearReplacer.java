@@ -23,28 +23,61 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.3 2002-10-18 18:12:10 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.4 2002-10-25 17:08:37 aalamb Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
+    /** the linear analyzier which keeps mappings from filters-->linear representations**/
     LinearAnalyzer linearityInformation;
-    public LinearReplacer(LinearAnalyzer lfa) {
+    /** the cost calculator which guides us in whether or not we should stream constructs with direct implementations. **/
+    LinearReplaceCalculator replaceGuide;
+    
+    private LinearReplacer(LinearAnalyzer lfa, LinearReplaceCalculator costs) {
 	if (lfa == null){
-	    throw new IllegalArgumentException("Null linear filter analyzer passed to constructor!");
+	    throw new IllegalArgumentException("Null linear filter analyzer!");
+	}
+	if (costs == null) {
+	    throw new IllegalArgumentException("Null linear replace calculator!");
 	}
 	this.linearityInformation = lfa;
+	this.replaceGuide = costs;
+    }
+
+    /** start the process of replacement on str using the Linearity information in lfa. **/
+    public static void doReplace(LinearAnalyzer lfa, SIRStream str) {
+	// calculate the best way to replace linear components.
+	LinearReplaceCalculator replaceCosts = new LinearReplaceCalculator(lfa);
+	str.accept(replaceCosts);
+	LinearPrinter.println("starting replacement pass. Will replace " + replaceCosts.getDoReplace().keySet().size() + " filters:");
+	Iterator keyIter = replaceCosts.getDoReplace().keySet().iterator();
+	while(keyIter.hasNext()) {
+	    Object key = keyIter.next();
+	    LinearPrinter.println(" " + key);
+	}
+	// make a new replacer with the information contained in the analyzer and the costs
+	LinearReplacer replacer = new LinearReplacer(lfa, replaceCosts);
+	// pump the replacer through the stream graph.
+	IterFactory.createIter(str).accept(replacer);
     }
 
 
-    public void postVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {makeReplacement(self, iter);}
-    public void postVisitPipeline(SIRPipeline self, SIRPipelineIter iter){makeReplacement(self, iter);}
-    public void postVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){makeReplacement(self, iter);}
+    
+
+    public void preVisitFeedbackLoop(SIRFeedbackLoop self, SIRFeedbackLoopIter iter) {makeReplacement(self, iter);}
+    public void preVisitPipeline(SIRPipeline self, SIRPipelineIter iter){makeReplacement(self, iter);}
+    public void preVisitSplitJoin(SIRSplitJoin self, SIRSplitJoinIter iter){makeReplacement(self, iter);}
     public void visitFilter(SIRFilter self, SIRFilterIter iter){makeReplacement(self, iter);}
 
     /**
      * Visit a pipeline, splitjoin or filter, replacing them with a new filter
-     * that directly implements the linear representation that.
+     * that directly implements the linear representation. This only
+     * occurs if the replace calculator says that this stream should be replaced.
      **/
     private void makeReplacement(SIRStream self, SIRIterator iter) {
+	if (!this.replaceGuide.shouldReplace(self)) {
+	    LinearPrinter.println(self + ": replacement doesn't decrease cost.");
+	    LinearPrinter.println(" stop.");
+	    return;
+	}
 	LinearPrinter.println("Creating linear replacement for " + self);
 	SIRContainer parent = self.getParent();
 	if (parent == null) {
@@ -69,6 +102,7 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 	// remove the mappings from all of the children of this stream in our linearity information
 	// first, we need to find them all, and then we need to remove them all
 	HashSet oldKeys = getAllChildren(self);
+
 	// now, remove the keys from the linear representation (self is also a "child")
 	Iterator keyIter = oldKeys.iterator();
 	while(keyIter.hasNext()) {
@@ -276,11 +310,6 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 		}
 	    }
 	    
-	    for (int q=0; q<combinationExpressions.size(); q++) {
-		LinearPrinter.println("comb expr: " +
-				      combinationExpressions.get(q));
-	    }
-	    
 	    // now, we need to create the appropriate constant to represent the offset
 	    ComplexNumber currentOffset = representation.getb().getElement(currentPushIndex);
 	    if (!currentOffset.isReal()) {throw new RuntimeException("Non real complex number in offset vector");}
@@ -344,4 +373,130 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     }
 
     
+
+    /**
+     * This visitor calculates the best way to replace filters in a stream
+     * graph with direct implementations. Specifically, it calculates the
+     * the replacement that has the lowest cost.
+     **/
+    static class LinearReplaceCalculator extends EmptyAttributeStreamVisitor {
+	/**
+	 * Maps SIRStreams-->Boolean. If the value is true, we want to replace this member, and
+	 * if the value is false, we do not want to do the replacement.
+	 **/
+	HashMap doReplace;
+	LinearAnalyzer linearInformation;
+	public LinearReplaceCalculator(LinearAnalyzer la) {
+	    doReplace = new HashMap();
+	    linearInformation = la;
+	}
+	/**
+	 * visiting a filter is easy. There are no children, and by assumption we want to
+	 * replace the generic code given with our matrix code. Stick in the appropriate
+	 * mapping in doReplace and then return.
+	 **/
+	public Object visitFilter(SIRFilter self,
+				  JFieldDeclaration[] fields,
+				  JMethodDeclaration[] methods,
+				  JMethodDeclaration init,
+				  JMethodDeclaration work,
+				  CType inputType, CType outputType) {
+	    if (linearInformation.hasLinearRepresentation(self)) {
+		doReplace.put(self, new Boolean(true));
+	    } 
+	    return self;
+	}
+
+	public Object visitFeedbackLoop(SIRFeedbackLoop self,
+					JFieldDeclaration[] fields,
+					JMethodDeclaration[] methods,
+					JMethodDeclaration init,
+					JMethodDeclaration initPath) {
+	    // we don't really care about feedback loops because we don't include them in our analysis
+	    return self;
+	}
+	    /* pre-visit a pipeline */
+	public Object visitPipeline(SIRPipeline self,
+				    JFieldDeclaration[] fields,
+				    JMethodDeclaration[] methods,
+				    JMethodDeclaration init) {
+	    return visitContainer(self);
+	}
+	public Object visitSplitJoin(SIRSplitJoin self,
+				     JFieldDeclaration[] fields,
+				     JMethodDeclaration[] methods,
+				     JMethodDeclaration init,
+				     SIRSplitter splitter,
+				     SIRJoiner joiner) {
+	    return visitContainer(self);
+	}
+	
+	/**
+	 * generic method for visiting container streams:<p>
+	 * If we have linear information for the container, we calculate the cost
+	 * of using the linear representation of the container, and recursively
+	 * calculate the cost of using the linear information of the children.
+	 * We then use the solution which generates minimal cost.
+	 **/
+	public Object visitContainer(SIRContainer self) {
+	    LinearPrinter.println(" calculating cost of: " + self);
+	    // if we don't know anything about this container, we are done, though we need
+	    // to do the recursion to the children
+	    if (!linearInformation.hasLinearRepresentation(self)) {
+		Iterator childIter = self.getChildren().iterator();
+		while (childIter.hasNext()) {
+		    ((SIRStream)childIter.next()).accept(this);
+		}
+		return self;
+	    }
+
+	    // calcuate the cost of doing a direct replacement of this container
+	    LinearCost containerCost = linearInformation.getLinearRepresentation(self).getCost();
+
+	    // calculate the cost of doing the optimal replacement of the children.
+	    LinearReplaceCalculator childCalculator = new LinearReplaceCalculator(linearInformation);
+	    Iterator childIter = self.getChildren().iterator();
+	    while(childIter.hasNext()) {
+		((SIROperator)childIter.next()).accept(childCalculator);
+	    }
+	    LinearCost childCost = childCalculator.getTotalCost();
+
+	    // now, if the container cost is less than the child cost, use the
+	    // container, otherwise use the child
+	    if (containerCost.lessThan(childCost)) {
+		doReplace.put(self, new Boolean(true));
+	    } else {
+		doReplace.putAll(childCalculator.getDoReplace()); // remember which children were used
+	    }
+	    return self;
+	}
+
+	/** get the mappings from streams to true if we want to replace them. **/
+	HashMap getDoReplace() {return this.doReplace;}
+
+	/** calculate the total cost of doing the replacements that is described in doReplace. **/
+	LinearCost getTotalCost() {
+	    LinearCost currentCost = LinearCost.ZERO;
+	    
+	    Iterator keyIter = this.doReplace.keySet().iterator();
+	    while(keyIter.hasNext()) {
+		// the only mappings that we have in the map are the streams we want to include
+		SIRStream currentStream = (SIRStream)keyIter.next();
+		LinearFilterRepresentation currentChildRep = linearInformation.getLinearRepresentation(currentStream);
+		LinearCost currentChildCost = currentChildRep.getCost();
+		currentCost = currentCost.plus(currentChildCost);
+	    }
+	    return currentCost;
+	}
+
+	/**
+	 * returns true if we should replace this filter with a direct implementation (eg if
+	 * we have a mapping from the stream to Boolean(true) in doReplace.
+	 **/
+	public boolean shouldReplace(SIRStream str) {
+	    return this.doReplace.containsKey(str);
+	}
+    }
 }
+
+

@@ -15,7 +15,9 @@ public class LinearCost {
     private int multiplyCount;
     /** the number of adds **/
     private int addCount;
-
+    /** LinearCost with 0 multiplies and 0 adds. **/
+    public static final LinearCost ZERO = new LinearCost(0,0);
+    
     public LinearCost(int muls, int adds) {
 	this.multiplyCount = muls;
 	this.addCount = adds;
@@ -24,11 +26,30 @@ public class LinearCost {
 
     public int getMultiplies() {return this.multiplyCount;}
     public int getAdds()       {return this.addCount;}
+
+    /** returns true if this represents less computation than other. **/
+    public boolean lessThan(LinearCost other) {
+	this.checkRep();
+	other.checkRep();
+	// use a simple sum of the number of operations for now
+	int thisSum  = this.getMultiplies()  + this.getAdds();
+	int otherSum = other.getMultiplies() + other.getAdds();
+	return (thisSum < otherSum);
+    }
+
+    /** returns a new LinearCost that represents the sum (element wise) of this and other. **/
+    public LinearCost plus(LinearCost other) {
+	return new LinearCost(this.getMultiplies() + other.getMultiplies(), // muls
+			      this.getAdds() + other.getAdds()); // adds
+    }
+
     
     private void checkRep() {
 	if (this.multiplyCount < 0) {throw new RuntimeException("negative multiply count!");}
 	if (this.addCount < 0) {throw new RuntimeException("negative add count!");}
     }
+
+
 }
 	
 	

@@ -1,0 +1,21 @@
+include("<dev/basic.bc>");
+global gFLOPS = 0;
+fn __clock_handler(hms)
+{
+  local i;
+  for (i = 0; i < gNumProc; i++)
+    {
+    gFLOPS += imem_instr_is_fpu(get_imem_instr(i, get_pc_for_proc(i)));
+    }
+}
+
+EventManager_RegisterHandler("clock", "__clock_handler");
+
+fn count_FLOPS(steps)
+{
+  gFLOPS = 0;
+  step(steps);
+  printf("// **** count_FLOPS: %4d FLOPS, %4d mFLOPS",
+	 gFLOPS, (250*gFLOPS)/steps);
+}
+

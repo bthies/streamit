@@ -1,0 +1,27 @@
+# -*- Makefile -*-
+# this performs linking, packaging, symbol creation for a one-tile
+# version of fft.
+#
+
+LIMIT = TRUE
+SIM-CYCLES = 5000000
+SIM-COMMAND = step(0x0880e); count_FLOPS(36000);
+
+BTL-MACHINE-FILE = fileio.bc
+
+ROOT = bitonic
+TILES = 00
+
+include $(TOPDIR)/Makefile.include
+
+ifndef TOPDIR
+$(error TOPDIR not defined, make sure to include Makefile.include)
+endif
+
+OBJECT_FILES_00 = bitonic.o
+
+
+include $(COMMONDIR)/Makefile.all
+
+DEFS += -Draw
+BTL-ARGS += -host

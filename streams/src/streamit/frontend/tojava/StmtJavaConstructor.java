@@ -1,7 +1,7 @@
 /*
  * StmtJavaConstructor.java: IR node for constructors
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StmtJavaConstructor.java,v 1.1 2002-09-20 17:08:45 dmaze Exp $
+ * $Id: StmtJavaConstructor.java,v 1.2 2003-06-25 15:18:38 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -20,19 +20,19 @@ import streamit.frontend.nodes.*;
  */
 class StmtJavaConstructor extends streamit.frontend.nodes.Statement
 {
-    private String varName;
+    private Expression lhs;
     private Type type;
     
-    public StmtJavaConstructor(FEContext context, String varName, Type type)
+    public StmtJavaConstructor(FEContext context, Expression lhs, Type type)
     {
         super(context);
-        this.varName = varName;
+        this.lhs = lhs;
         this.type = type;
     }
     
-    public String getVarName()
+    public Expression getLHS()
     {
-        return varName;
+        return lhs;
     }
 
     public Type getType()

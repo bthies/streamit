@@ -4,7 +4,7 @@
  * 2. Add an entry in AllTests.java for this new suite
  * 3. Add test code in void methods like testSimple
  * 4. Add a line in suite() with the new test method name
- * $Id: TestFieldInit.java,v 1.1 2002-06-20 21:19:56 aalamb Exp $
+ * $Id: TestFieldInit.java,v 1.2 2002-06-21 20:03:54 aalamb Exp $
  **/
 package streamittest;
 
@@ -13,7 +13,7 @@ import junit.framework.*;
 
 public class TestFieldInit extends StreamITTestCase {
 
-    static String CODE_ROOT = null;
+    static String STREAM_ROOT = null;
 
     /**
      * Creates a new TestFieldInit which will use the compiler options
@@ -21,37 +21,29 @@ public class TestFieldInit extends StreamITTestCase {
      **/
     public TestFieldInit(String name, int flags) {
 	super (name,flags);
-	if (CODE_ROOT == null) {
-	    CODE_ROOT = getStreamITRoot() + EXAMPLE_PATH + "field-init/";
+	if (STREAM_ROOT == null) {
+	    STREAM_ROOT = getStreamITRoot() + EXAMPLE_PATH + "field-init/";
 	}
     }
 
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
-	suite.addTest(new TestFieldInit("testSimple", flags));
 	suite.addTest(new TestFieldInit("testFieldInit", flags));
 	suite.addTest(new TestFieldInit("testFieldInit2", flags));
 	
 	return suite;
     }
     
-    public void testSimple() {
-	assertTrue("was true", true);
-    }
-
     public void testFieldInit() {
-	doTests(CODE_ROOT,
+	doCompileRunVerifyTest(STREAM_ROOT,
 		"FieldInit.java",
 		"FieldInit.out");
 				       
     }
     public void testFieldInit2() {
-	doTests(CODE_ROOT,
+	doCompileRunVerifyTest(STREAM_ROOT,
 		"FieldInit2.java",
 		"FieldInit2.out");
-				       
-	
     }
-
 	
 }

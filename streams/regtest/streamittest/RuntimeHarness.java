@@ -7,12 +7,15 @@ import java.io.*;
  * its output with an expected output file.
  **/
 
-public class RuntimeHarness {
+public class RuntimeHarness extends Harness {
     public static final int ITER_COUNT = 1000;
-    public static final String ITER_OPTION = "-i";
+    public static final String ITER_OPTION     = "-i";
 
-    public static final String CMP_COMMAND = "cmp";
+    public static final String CMP_COMMAND     = "cmp";
 
+    public static final String MAKE_COMMAND    = "make";
+    public static final String MAKE_DIR_OPTION = "-C";
+    
     /**
      * executes the specified program streamit program
      * for ITER_COUNT iterations, and redirects its output to the
@@ -22,36 +25,19 @@ public class RuntimeHarness {
     static boolean execute(String program,
 			   String outfile) {
 	try {
-	    Process sProcess;
-	    // execute the stream program for ITER count iterations
-	    sProcess = Runtime.getRuntime().exec(program + " " + 
-						 ITER_OPTION + " " + ITER_COUNT);
-
-	    // get hooks into the output that is generated
-	    BufferedReader sOutStream = new BufferedReader(new InputStreamReader(sProcess.getInputStream()));
-	    BufferedReader sErrorStream =  new BufferedReader(new InputStreamReader(sProcess.getErrorStream()));
+	    boolean result;
 	    
-	    // wait for the process to complete
-	    sProcess.waitFor();
+	    // set up file to dump results to
+	    FileOutputStream fout =  new FileOutputStream(outfile);	    
 
-	    // if the return value was not 0, or if 
-	    // there is anything in the error stream, something bad happened
-	    if ((sProcess.exitValue() != 0) || (sErrorStream.ready())) {
-		ResultPrinter.printError("Runtime Error for running streamit program: stderr");
-		while (sErrorStream.ready()) {
-		    ResultPrinter.printError(":" + sErrorStream.readLine());
-		}
-		return false;
-	    } else {
-		// things seem to have terminated normally, so dump the stream output into a
-		// file so that we can compare later
-		BufferedWriter fout = new BufferedWriter(new FileWriter(outfile));
-		while(sOutStream.ready()) {
-		    fout.write(sOutStream.read());
-		}
-		fout.close();
-		return true;
-	    }
+	    // execute streamit program
+	    result =  executeNative(getRuntimeCommandArray(program),
+				    fout);
+
+	    // close the output stream
+	    fout.close();
+
+	    return result;
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while executing streamit program: " +
 				     e.getMessage());
@@ -67,30 +53,7 @@ public class RuntimeHarness {
      **/
     static boolean compare(String file1, String file2) {
 	try {
-	    Process cmpProcess;
-	    // execute the cmp program on the two files
-	    cmpProcess = Runtime.getRuntime().exec(CMP_COMMAND + " " +
-						 file1 + " " +
-						 file2);
-
-	    // get hooks into the output that is generated
-	    BufferedReader cmpOutStream = new BufferedReader(new InputStreamReader(cmpProcess.getInputStream()));
-	    BufferedReader cmpErrorStream =  new BufferedReader(new InputStreamReader(cmpProcess.getErrorStream()));
-	    
-	    // wait for the process to complete
-	    cmpProcess.waitFor();
-
-	    // if the return value was not 0, or if 
-	    // there is anything in the error stream, something bad happened
-	    if ((cmpProcess.exitValue() != 0) || (cmpErrorStream.ready())) {
-		ResultPrinter.printError("Results not the same: ");
-		while (cmpErrorStream.ready()) {
-		    ResultPrinter.printError(":" + cmpErrorStream.readLine());
-		}
-		return false;
-	    } else {
-		return true;
-	    }
+	    return executeNative(getCompareCommandArray(file1, file2));
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing output: " +
 				     e.getMessage());
@@ -98,4 +61,49 @@ public class RuntimeHarness {
 	    return false;
 	}
     }
+
+
+    /**
+     * Runs make in the root directory specified.
+     **/
+    static boolean make(String root) {
+	try {
+	    return executeNative(getMakeCommandArray(root));
+	} catch (Exception e) {
+	    ResultPrinter.printError("Caught an exception while running make: " +
+				     e.getMessage());
+	    e.printStackTrace();
+	    return false;
+	}
+    }
+    
+    /** Get a command line argument array for running the compiler streamit program **/
+    public static String[] getRuntimeCommandArray(String program) {
+	String[] cmdLineArgs = new String[2];
+	cmdLineArgs[0] = program;
+	cmdLineArgs[1] = ITER_OPTION + " " + ITER_COUNT;
+	return cmdLineArgs;
+    }
+
+    /** Get a command line argument array for comparing two files **/
+    public static String[] getCompareCommandArray(String file1, String file2) {
+	String[] cmdLineArgs = new String[3];
+	cmdLineArgs[0] = CMP_COMMAND;
+	cmdLineArgs[1] = file1;
+	cmdLineArgs[2] = file2;
+	return cmdLineArgs;
+    }
+
+    /** Get a command line argument array for running make **/
+    public static String[] getMakeCommandArray(String root) {
+	String[] cmdLineArgs = new String[3];
+	cmdLineArgs[0] = MAKE_COMMAND;
+	cmdLineArgs[1] = MAKE_DIR_OPTION;
+	cmdLineArgs[2] = root;
+	return cmdLineArgs;
+    }
+
+    
+	
+	
 }

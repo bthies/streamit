@@ -8,6 +8,19 @@ package streamittest;
 public class ResultPrinter {
     static final boolean DOPRINT = true;
 
+    /**
+     * Print the current test being performed.
+     **/
+    public static void printTest(String testclass,
+				 String testname,
+				 String message) {
+	if (DOPRINT) {
+	    System.out.println(testclass + ":" +
+			       testname + "-->" +
+			       message);
+	}
+    }
+				 
 
 
     /**

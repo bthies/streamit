@@ -1,0 +1,18 @@
+7/29/02 -- AAL 
+
+
+** Note: I am assuming that processing the file short_step.wav counts as 1 output, where this is probably far from the truth. 
+
+Uniprocessor (7/29/2002):
+(Xenon 2.2 GHz, 512MB cache)
+10,000 iterations (1 outputs/iteration)
+87.0% utilization
+runtime for 10000 iterations = 97.310 seconds
+
+We want cycles/iteration:
+10000 iterations/97.310 sec * 
+1  outputs/1 iteration
+1 second /2.2x10^9 cycles
+* 10^5 cycles 
+
+=0.0046711073  outputs/10^5 cycles

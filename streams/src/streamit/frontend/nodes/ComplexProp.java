@@ -1,7 +1,7 @@
 /*
  * ComplexProp.java: cause complex values to bubble upwards
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: ComplexProp.java,v 1.5 2002-07-19 14:11:25 dmaze Exp $
+ * $Id: ComplexProp.java,v 1.6 2002-07-19 14:39:26 dmaze Exp $
  */
 
 // Does this actually belong here?  If we evolve more front-end passes,
@@ -272,6 +272,12 @@ public class ComplexProp extends FEReplacer
             return fcArg(exp, (ExprComplex)params.get(0));
         if (isEligibleFunCall(exp, params, "exp"))
             return fcExp(exp, (ExprComplex)params.get(0));
+        if (isEligibleFunCall(exp, params, "log"))
+            return fcLog(exp, (ExprComplex)params.get(0));
+        if (isEligibleFunCall(exp, params, "sin"))
+            return fcSin(exp, (ExprComplex)params.get(0));
+        if (isEligibleFunCall(exp, params, "cos"))
+            return fcCos(exp, (ExprComplex)params.get(0));
 
         // sqrt() is special; sqrt() of a real can return a complex
         // answer if its argument is negative, but we don't always
@@ -333,6 +339,69 @@ public class ComplexProp extends FEReplacer
         
         Expression real = new ExprBinary(ExprBinary.BINOP_MUL, eToA, cosB);
         Expression imag = new ExprBinary(ExprBinary.BINOP_MUL, eToA, sinB);
+        return new ExprComplex(real, imag);
+    }
+
+    public Expression fcLog(ExprFunCall fc, ExprComplex param)
+    {
+        // log |z| + i arg(z)
+        Expression absZ = new ExprFunCall("abs", param);
+        absZ = (Expression)absZ.accept(this);
+        Expression logAbsZ = new ExprFunCall("log", absZ);
+        
+        Expression argZ = new ExprFunCall("arg", param);
+        argZ = (Expression)argZ.accept(this);
+        
+        return new ExprComplex(logAbsZ, argZ);
+    }
+
+    public Expression fcSin(ExprFunCall fc, ExprComplex param)
+    {
+        // (e^(iz)-e^(-iz))/(2i)
+        // (e^-b+e^b)/2 sin a + i(e^b-e^-b)/2 cos a
+        Expression a = param.getReal();
+        Expression b = param.getImag();
+        Expression minusB = new ExprUnary(ExprUnary.UNOP_NEG, b);
+        Expression eB = new ExprFunCall("exp", b);
+        Expression eMinusB = new ExprFunCall("exp", minusB);
+        Expression sinA = new ExprFunCall("sin", a);
+        Expression cosA = new ExprFunCall("cos", a);
+        
+        Expression rNum = new ExprBinary(ExprBinary.BINOP_ADD, eB, eMinusB);
+        Expression rMag = new ExprBinary(ExprBinary.BINOP_DIV, rNum,
+                                         new ExprConstInt(2));
+        Expression real = new ExprBinary(ExprBinary.BINOP_MUL, rMag, sinA);
+        
+        Expression iNum = new ExprBinary(ExprBinary.BINOP_SUB, eB, eMinusB);
+        Expression iMag = new ExprBinary(ExprBinary.BINOP_DIV, iNum,
+                                         new ExprConstInt(2));
+        Expression imag = new ExprBinary(ExprBinary.BINOP_MUL, iMag, cosA);
+        
+        return new ExprComplex(real, imag);
+    }
+    
+    public Expression fcCos(ExprFunCall fc, ExprComplex(param)
+    {
+        // (e^(iz)+e^(-iz))/(2)
+        // (e^-b+e^b)/2 cos a + i(e^-b-e^b)/2 sin a
+        Expression a = param.getReal();
+        Expression b = param.getImag();
+        Expression minusB = new ExprUnary(ExprUnary.UNOP_NEG, b);
+        Expression eB = new ExprFunCall("exp", b);
+        Expression eMinusB = new ExprFunCall("exp", minusB);
+        Expression sinA = new ExprFunCall("sin", a);
+        Expression cosA = new ExprFunCall("cos", a);
+        
+        Expression rNum = new ExprBinary(ExprBinary.BINOP_ADD, eMinusB, eB);
+        Expression rMag = new ExprBinary(ExprBinary.BINOP_DIV, rNum,
+                                         new ExprConstInt(2));
+        Expression real = new ExprBinary(ExprBinary.BINOP_MUL, rMag, cosA);
+        
+        Expression iNum = new ExprBinary(ExprBinary.BINOP_SUB, eMinusB, eB);
+        Expression iMag = new ExprBinary(ExprBinary.BINOP_DIV, iNum,
+                                         new ExprConstInt(2));
+        Expression imag = new ExprBinary(ExprBinary.BINOP_MUL, iMag, sinA);
+        
         return new ExprComplex(real, imag);
     }
 

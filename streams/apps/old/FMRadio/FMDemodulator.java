@@ -27,7 +27,7 @@ class FMDemodulator extends Filter {
   float sampleRate;
   float maxAmplitude;
   float modulationBandwidth;
-    
+
     public FMDemodulator (float sampRate, float max, float bandwidth)
     {
 	super ();
@@ -36,18 +36,12 @@ class FMDemodulator extends Filter {
 	modulationBandwidth = bandwidth;
     }
 
-    Channel input = new Channel (Float.TYPE, 1);
-    Channel output = new Channel (Float.TYPE, 1);
-
-    public void initIO ()
-    {
-	streamInput = input;
-	streamOutput = output;
-    }
-
     public void init()
     {
-      mGain = maxAmplitude*(sampleRate
+	Channel input = new Channel (Float.TYPE, 1);
+	Channel output = new Channel (Float.TYPE, 1);
+
+	mGain = maxAmplitude*(sampleRate
 			    /(modulationBandwidth*(float)Math.PI));
     }
 

@@ -6,23 +6,22 @@ import streamit.*;
 
 public class FMRadio extends Pipeline
 {
-    static public void main(String[] t)
+    public FMRadio()
     {
-        FMRadio test = new FMRadio();
-        test.run();
+	super();
     }
-    
     public void init()
     {
 	//this is junk data... for example only
-	float samplingRate = 200; //no clue as to real sampling rate. Just for an example.
-	float cutoffFrequency = 200; //ditto
-	int numberOfTaps = 50;
-	float maxAmplitude = 200;
-	float bandwidth = 1000;
-        add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps));
+	float samplingRate = 200000; //200khz sampling rate according to jeff at vanu
+	float cutoffFrequency = 108000000; //guess... doesn't FM freq max at 108 Mhz? 
+	int numberOfTaps = 100;
+	float maxAmplitude = 27000;
+	float bandwidth = 10000;
+	//decimate 4 samples after outputting 1
+        add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps, 4));
 	add(new FMDemodulator(samplingRate, maxAmplitude, bandwidth));
-	//need somewhere for the last stuff to go...
+	add(new Equalizer(samplingRate));
     }
 }
 

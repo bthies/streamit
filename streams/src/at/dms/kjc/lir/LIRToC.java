@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.82 2003-04-20 13:27:09 thies Exp $
+ * $Id: LIRToC.java,v 1.83 2003-08-26 20:46:11 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -601,7 +601,7 @@ public class LIRToC
     protected void printLocalType(CType s) 
     {
 	if (s instanceof CArrayType){
-	    print(((CArrayType)s).getElementType());
+	    print(((CArrayType)s).getBaseType());
 	}
         else if (s.getTypeID() == TID_BOOLEAN)
             print("int");
@@ -1844,9 +1844,9 @@ public class LIRToC
                                      JExpression pop,
                                      JExpression push)
     {
-        print("/* phase invocation: */ ");
+        print("/* phase invocation: ");
         call.accept(this);
-        print(";");
+        print("; */");
     }
 
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,

@@ -209,6 +209,10 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    print("volatile float " + Util.CSTIFPVAR + ";\n");
 	    print("volatile int " + Util.CSTOINTVAR + ";\n");
 	    print("volatile int " + Util.CSTIINTVAR + ";\n");
+	    print("volatile float " + Util.CGNOFPVAR + ";\n");
+	    print("volatile float " + Util.CGNIFPVAR + ";\n");
+	    print("volatile int " + Util.CGNOINTVAR + ";\n");
+	    print("volatile int " + Util.CGNIINTVAR + ";\n");
 	}
 	
 	if (SpaceDynamicBackend.FILTER_DEBUG_MODE) {
@@ -823,23 +827,18 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Byte) ||
 		 type.equals(CStdType.Integer) ||
-		 type.equals(CStdType.Short))
+		 type.equals(CStdType.Short) ||
+		 type.equals(CStdType.Char) ||
+		 type.equals(CStdType.Long))
 	    {
-		if (!KjcOptions.standalone)
-		    print("raw_test_pass_reg(");
-		else
+		if (KjcOptions.standalone)
 		    print("printf(\"%d\\n\", "); 
-		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
-		exp.accept(this);
-		print(");");
-	    }
-	else if (type.equals(CStdType.Char))
-	    {
-		if (!KjcOptions.standalone)
-		    print("raw_test_pass_reg(");
+		else if (KjcOptions.decoupled)
+		    print("print_int(");
 		else
-		    print("printf(\"%d\\n\", "); 
+		    print("raw_test_pass_reg(");
+
+		    
 		//print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
@@ -847,32 +846,26 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	    }
 	else if (type.equals(CStdType.Float))
 	    {
-		if (!KjcOptions.standalone)
-		    print("raw_test_pass_reg(");
-		else 
+		if (KjcOptions.standalone)
 		    print("printf(\"%f\\n\", "); 
-		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
-		//print("gdn_send(");
-		exp.accept(this);
-		print(");");
-	    }
-        else if (type.equals(CStdType.Long))
-	    {
-		if (!KjcOptions.standalone)
+		else if (KjcOptions.decoupled)
+		    print("print_float(");
+		else 
 		    print("raw_test_pass_reg(");
-		else
-		    print("printf(\"%d\\n\", "); 
-		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
+		    
+		//print("gdn_send(" + FLOAT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);
 		print(");");
 	    }
 	else if (type.equals(CStdType.String)) 
 	    {
-		if (!KjcOptions.standalone)
+		if (KjcOptions.standalone)
+		    print("printf(\"%s\\n\", "); 
+		else if (KjcOptions.decoupled)
 		    print("print_string(");
 		else
-		    print("printf(\"%s\\n\", "); 
+		    assert false : "Can't print strings in the raw simulator without using printf";
 		//		print("gdn_send(" + INT_HEADER_WORD + ");\n");
 		//print("gdn_send(");
 		exp.accept(this);

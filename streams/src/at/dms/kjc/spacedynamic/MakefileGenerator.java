@@ -47,7 +47,7 @@ public class MakefileGenerator
 		fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
 	    */
 	    
-	    if (!IMEMEstimation.TESTING_IMEM) {
+	    if (!IMEMEstimation.TESTING_IMEM && !KjcOptions.decoupled) {
 		//old settings
 		//fw.write("BTL-DEVICES += -dram_freq 100\n");
 		//turn off hardware icaching for now
@@ -195,6 +195,36 @@ public class MakefileGenerator
 	fw.write("return 0;\n");
 	fw.write("}\n");
 	
+	if (KjcOptions.decoupled) {
+	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");
+	    fw.write("global gFilterNames;\n");
+	   
+	    fw.write("{\n");
+	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("  gFilterNames = listi_new();\n");
+	    Iterator it = tiles.iterator();
+	    for (int i = 0; i < rawChip.getTotalTiles(); i++) {
+		if (tiles.contains(rawChip.getTile(i))) {
+		    fw.write("  listi_add(gFilterNames, \"" +
+			     layout.getNode(rawChip.getTile(i)).getName() + "\");\n");
+		}
+	    }
+	    fw.write("  sprintf(workestpath, \"%s%s\", streamit_home, \"/include/work_est.bc\");\n");
+	    //include the number gathering code and install the device file
+	    fw.write("  include(workestpath);\n");
+	     // add print service to the south of the SE tile
+	    fw.write("  {\n");
+	    fw.write("    local str = malloc(256);\n");
+	    fw.write("    local result;\n");
+	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
+	    fw.write("    result = dev_work_est_init(\"/dev/null\", gXSize+gYSize);\n");
+	    fw.write("    if (result == 0)\n");
+	    fw.write("      exit(-1);\n");
+	    fw.write("  }\n");
+	    fw.write("}\n");
+	    
+	}
+
 
 	//number gathering code
 	if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {

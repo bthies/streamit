@@ -103,6 +103,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 
 	try {
 	    //copy the files 
+	    System.out.println("Copy the files ...");
 	    {
 		String[] cmdArray = new String[5];
 		cmdArray[0] = "cp";
@@ -113,7 +114,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
 		jProcess.waitFor();
 	    }
-	    
+	    System.out.println("Run the simulator ...");
 	    //run the simulator
 	    {
 		String[] cmdArray = new String[6];
@@ -124,12 +125,24 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 		cmdArray[4] = "Makefile.streamit";
 		cmdArray[5] = "run";
 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		//dump the output so that the process does not hang on it
+		InputStream output = jProcess.getInputStream();
+		try {
+		    InputStreamReader isr = new InputStreamReader(output);
+		    BufferedReader br = new BufferedReader(isr);
+		    String line = null;
+		    while ((line = br.readLine()) != null) {
+		    }
+		}
+		catch (Exception e) {
+		    e.printStackTrace();
+		}
 		jProcess.waitFor();
 	    }
-	    
+	    System.out.println("Read the work_est.out ...");
 	    //open the results file and return the stats
 	    work = readCycleCount(dir);
-	    
+	    System.out.println("Remove the tmp dir ...");
 	    //remove the directory
  	    {
  		String[] cmdArray = new String[3];
@@ -139,7 +152,7 @@ public class RawWorkEstimator extends EmptyStreamVisitor
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
  	    }
-	    
+	    System.out.println("Done (work = " + work + ").");
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: PhasingSchedule.java,v 1.7 2003-04-06 06:54:51 karczma Exp $ */
+/* $Id: PhasingSchedule.java,v 1.8 2003-04-06 19:19:01 karczma Exp $ */
 
 import java.util.Vector;
 import streamit.scheduler2.Schedule;
@@ -239,6 +239,7 @@ public class PhasingSchedule extends DestroyedClass
             }
 
             phasingPreComputedSchedule = sched;
+
 
             return sched;
         }

@@ -3,7 +3,7 @@ package streamit.scheduler2.hierarchical;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.SplitFlow;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.JoinFlow;
 
-/* $Id: StreamAlgorithmWithSnJ.java,v 1.3 2002-12-02 23:54:09 karczma Exp $ */
+/* $Id: StreamAlgorithmWithSnJ.java,v 1.4 2003-04-06 19:19:02 karczma Exp $ */
 
 /**
  * This class provides an implementation for StreamInterface.
@@ -47,7 +47,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         ASSERT(numPhases > 0);
         nJoinPhase += numPhases;
     }
-
+    
     /**
      * Get a phase  for the stream's Splitter.  This phase is computed relative
      * to how much of the split's schedule has already been consumed.
@@ -70,6 +70,84 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         ASSERT(nPhase >= 0);
         int phase = (nJoinPhase + nPhase) % stream.getNumJoinPhases();
         return stream.getJoinPhase(phase);
+    }
+
+    /**
+     * Get a number of phases of either splitter or joiner.
+     * This function will use duplicatePhase function to
+     * compress the phases so this construction will be fairly
+     * quick and resulting schedule fairly efficient. 
+     */
+    private PhasingSchedule getSJPhases(int nPhases, boolean isSplitter)
+    {
+        PhasingSchedule phase = new PhasingSchedule (stream);
+        
+        int numSteadyPhases = (isSplitter ? stream.getNumSplitPhases() : stream.getNumJoinPhases());
+        
+        // round up to a steady-state:
+        // if there aren't enough executions here to make it worth
+        // to do the smart compression, just append the lot
+        // of phases to the phase.
+        {
+            int mod = nPhases % numSteadyPhases;
+            
+            if (nPhases / numSteadyPhases < 4) mod = nPhases;
+            
+            nPhases -= mod;
+            
+            for(;mod > 0; mod--)
+            {
+                if (isSplitter){
+                    phase.appendPhase(getSplitSteadyPhase(0));
+                    advanceSplitSchedule(1);
+                } else {
+                    phase.appendPhase(getJoinSteadyPhase(0));
+                    advanceJoinSchedule(1);
+                }
+            }
+        }
+        
+        // if I'm not actually adding more phases, quit early
+        if (nPhases == 0) return phase;
+                
+        // create a steady-state phase:
+        PhasingSchedule steadyState = new PhasingSchedule(stream);
+        for (int nPhase = 0; nPhase < numSteadyPhases;nPhase++)
+        {
+            if (isSplitter)
+            {
+                phase.appendPhase(getSplitSteadyPhase(nPhase));
+            } else{
+                phase.appendPhase(getJoinSteadyPhase(nPhase));
+            }
+        }
+        
+        phase.appendPhase(duplicatePhase(steadyState, nPhases/numSteadyPhases));
+
+        if(isSplitter)
+        {
+            advanceSplitSchedule(nPhases);
+        } else {
+            advanceJoinSchedule(nPhases);
+        }
+        
+        return phase;
+    }
+    
+    /**
+     * Create a schedule consisting of nPhases of the splitter.
+     */
+    public PhasingSchedule getSplitterPhases(int nPhases)
+    {
+        return getSJPhases(nPhases, true);
+    }
+
+    /**
+     * Create a schedule consisting of nPhases of the joiner.
+     */
+    public PhasingSchedule getJoinerPhases(int nPhases)
+    {
+        return getSJPhases(nPhases, false);
     }
 
     /**

@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: SplitJoin.java,v 1.8 2003-04-06 06:54:51 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.9 2003-04-06 19:19:01 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
@@ -114,6 +114,16 @@ abstract public class SplitJoin
         return joinPhases[nPhase];
     }
 
+    public PhasingSchedule getSplitterPhases(int nPhases)
+    {
+        return algorithm.getSplitterPhases(nPhases);
+    }
+    
+    public PhasingSchedule getJoinerPhases(int nPhases)
+    {
+        return algorithm.getJoinerPhases(nPhases);
+    }
+    
     public streamit.scheduler2.base.StreamInterface getTop()
     {
         return this;

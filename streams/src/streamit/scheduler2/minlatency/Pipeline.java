@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.13 2003-04-06 06:54:54 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.14 2003-04-06 19:19:06 karczma Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -124,7 +124,7 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
      * create the init schedule according to whatever limits
      * I am passed
      */
-    public void computeMinLatencySchedule(
+    public int computeMinLatencySchedule(
         PipelineSchedulingUtility utility,
         int childrenExecs[],
         int dataInBuffers[],
@@ -259,6 +259,8 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 utility.addSchedulePhase(phase);
             }
         }
+        
+        return extraChildrenExecs;
     }
 
     public void computeSchedule()
@@ -367,11 +369,13 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 }
             }
 
-            computeMinLatencySchedule(
+            int extraExecs = computeMinLatencySchedule(
                 new PipelineSteadySchedulingUtility(this),
                 numChildPhases,
                 dataInBuffers,
                 lastChildNumExecPerPhase);
+                
+            ASSERT (extraExecs == 0);
         }
     }
 }

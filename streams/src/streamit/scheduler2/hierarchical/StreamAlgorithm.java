@@ -1,14 +1,11 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.6 2003-04-06 06:54:51 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.7 2003-04-06 19:19:02 karczma Exp $ */
 
 import streamit.scheduler2.Schedule;
 import streamit.misc.DestroyedClass;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Vector;
 
 /**
  * This class provides an implementation for StreamInterface.
@@ -238,6 +235,30 @@ public class StreamAlgorithm extends DestroyedClass
         return child.getSteadySchedulePhase(realPhase);
     }
     
+    PhasingSchedule duplicatePhase (PhasingSchedule phase, int numTimes)
+    {
+        PhasingSchedule duplicatedPhase = new PhasingSchedule (phase.getStream());
+        
+        final int multiplier = 10;
+        for(;numTimes > 0;numTimes = numTimes / multiplier)
+        {
+            for(int nPhase = numTimes % multiplier;nPhase > 0;nPhase--)
+            {
+                duplicatedPhase.appendPhase(phase);
+            }
+            
+            PhasingSchedule newSteadyPhase = new PhasingSchedule(phase.getStream());
+            for (int nPhase = 0; nPhase < multiplier; nPhase++)
+            {
+                newSteadyPhase.appendPhase(phase);
+            }
+            
+            phase = newSteadyPhase;
+        }
+        
+        return duplicatedPhase;
+    }
+    
     /**
      * Append a number of phases of a particular child.
      * This function will make sure that if the child has multiple
@@ -277,35 +298,34 @@ public class StreamAlgorithm extends DestroyedClass
         }
         
         // figure out how many times we'll go through an entire
-        // rotation of the schedule. if less than 10, then just
+        // rotation of the schedule. if less than 4, then just
         // do this in the dumb way 
-        if (nPhases / nPhasesPeriod < 10)
+        if (nPhases / nPhasesPeriod < 4)
         {
             for (int nPhase=0;nPhase < nPhases;nPhase++)
             {
-                phase.appendPhase(getChildInitStage(child, nPhase));
+                phase.appendPhase(getChildInitStage(child, 0));
+                advanceChildInitSchedule(child, 1);
             }
-            advanceChildInitSchedule(child, nPhases);
             return phase;
         }
         
-        // okay, I have to do this more than 10 times
+        // okay, I have to do this more than 4 times
         // construct a "smart" schedule. Note that since I'm going to 
-        // execute at least 10 rotations of the schedule, I must be
+        // execute at least 4 rotations of the schedule, I must be
         // in steady state schedule - init schedules can only be
         // executed once through!
-        int power = 10;
-        
         // start with rounding execution up to a steady state
         {
             int mod = nPhases % nPhasesPeriod;
+            nPhases -= mod;
+            
             for(;mod > 0; mod--)
             {
                 phase.appendPhase(getChildSteadyPhase(child, 0));
                 advanceChildSteadySchedule(child, 1);
             }
             
-            nPhases -= mod;
         }
         
         // construct a steady state phase
@@ -317,24 +337,9 @@ public class StreamAlgorithm extends DestroyedClass
             }
         }
         
-        advanceChildSteadySchedule(child, nPhases);
+        phase.appendPhase(duplicatePhase(steadyState, nPhases/child.getNumSteadyPhases()));
         
-        int multiplier = power;
-        for(;nPhases > 0;nPhases = nPhases / multiplier)
-        {
-            for(int nPhase = nPhases % multiplier;nPhase > 0;nPhase--)
-            {
-                phase.appendPhase(steadyState);
-            }
-            
-            PhasingSchedule newSteadyPhase = new PhasingSchedule(child);
-            for (int nPhase = 0; nPhase < multiplier; nPhase++)
-            {
-                newSteadyPhase.appendPhase(steadyState);
-            }
-            
-            steadyState = newSteadyPhase;
-        }
+        advanceChildSteadySchedule(child, nPhases);
         
         return phase;
     }

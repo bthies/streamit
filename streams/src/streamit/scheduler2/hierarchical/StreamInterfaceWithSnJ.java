@@ -1,8 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamInterfaceWithSnJ.java,v 1.3 2002-12-02 23:54:09 karczma Exp $ */
-
-import streamit.scheduler2.Schedule;
+/* $Id: StreamInterfaceWithSnJ.java,v 1.4 2003-04-06 19:19:02 karczma Exp $ */
 
 /**
  * This interface provides the required functional interface for
@@ -46,6 +44,16 @@ public interface StreamInterfaceWithSnJ
      */
     public PhasingSchedule getJoinPhase(int nPhase);
 
+    /**
+     * Create a schedule consisting of nPhases of the splitter.
+     */
+    public PhasingSchedule getSplitterPhases(int nPhases);
+    
+    /**
+     * Create a schedule consisting of nPhases of the joiner.
+     */
+    public PhasingSchedule getJoinerPhases(int nPhases);
+    
     /**
      * Get the appropriate phase flow for the split of this SplitJoin.
      * @return phase flow of the split

@@ -537,6 +537,7 @@ class Detector extends Filter
 		if( val >= thresh ) {
 		    System.out.println(0);
 		} else {
+			System.out.println(-1);
 		    //System.out.println("OK not found on beam " + myBeam);
 		}
 	    }

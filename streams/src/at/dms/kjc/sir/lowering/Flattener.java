@@ -189,7 +189,7 @@ public class Flattener {
 		System.err.print("Running " +
 				 "(" + FrequencyReplacer.getName(replacementType) + ")" +
 				 " frequency replacement...");
-		FrequencyReplacer.doReplace(lfa, str, KjcOptions.targetFFTSize, replacementType);
+		FrequencyReplacer.doReplace(lfa, str, replacementType);
 		System.err.println("done.");
 		LinearDot.printGraph(str, ("linear-frequency"+replacementType+".dot"), lfa);
 	    }

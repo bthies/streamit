@@ -16,8 +16,10 @@ public class Linear extends RawExecutionCode implements Constants {
     private static final String WEIGHT_PREFIX="w_";
     private static final String CONSTANT_PREFIX="w_c_";
     private static final String LABEL_PREFIX="lin_";
+    private static final String zeroReg="$0";
     private static final String[] tempRegs=new String[]{"$1","$2","$3","$4"};
-    private static final String[] regs=new String[]{"$5","$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17","$18","$19","$20","$21","$22","$23","$28","$30","$31"};
+    private static final String loopReg="$5";
+    private static final String[] regs=new String[]{"$6","$7","$8","$9","$10","$11","$12","$13","$14","$15","$16","$17","$18","$19","$20","$21","$22","$23","$28","$30","$31"};
     private static long guin=0;
     private double[] array;
     private boolean begin;
@@ -50,9 +52,9 @@ public class Linear extends RawExecutionCode implements Constants {
     public JBlock getSteadyBlock() {
 	JStatement[] body;
 	if(begin)
-	    body=new JStatement[array.length+3];
+	    body=new JStatement[array.length+4];
 	else
-	    body=new JStatement[array.length+2];
+	    body=new JStatement[array.length+3];
 	//Filling register with Constants
 	InlineAssembly inline=new InlineAssembly();
 	inline.add(".set noat");
@@ -67,8 +69,12 @@ public class Linear extends RawExecutionCode implements Constants {
 	    inline=new InlineAssembly();
 	    inline.add("lw "+regs[regs.length-1]+", %0");
 	    inline.addInput("\"m\"("+getConstant()+")");
-	    body[body.length-2]=inline;
+	    body[body.length-3]=inline;
 	}
+	//Loop Counter
+	inline=new InlineAssembly();
+	body[body.length-2]=inline;
+	inline.add("addiu "+loopReg+",\\t"+zeroReg+",\\t-"+filterInfo.steadyMult);
 	//Start Template
 	inline=new InlineAssembly();
 	body[body.length-1]=inline;
@@ -120,7 +126,8 @@ public class Linear extends RawExecutionCode implements Constants {
 	    if(turn==pos-1)
 		inline.add(getLabel()+": #LOOP");
 	}
-	inline.add("j "+getLabel());
+	//inline.add("j "+getLabel());
+	inline.add("bnea "+loopReg+",\\t"+zeroReg+",\\t"+getLabel());
 	inline.add(".set at");
 	return new JBlock(null,body,null);
     }

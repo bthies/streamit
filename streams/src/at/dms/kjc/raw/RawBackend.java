@@ -105,6 +105,14 @@ public class RawBackend {
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
 
+	if (KjcOptions.poptopeek) {
+	    PopToPeek.removeAllPops(str);
+	}
+	
+	//VarDecl Raise to move peek index up so
+	//constant prop propagates the peek buffer index
+	new VarDeclRaiser().raiseVars(str);
+
        	System.out.println("Flattener Begin...");
 	executionCounts = SIRScheduler.getExecutionCounts(str);
 	RawFlattener rawFlattener = new RawFlattener(str);
@@ -128,8 +136,15 @@ public class RawBackend {
 	SwitchCode.generate(rawFlattener.top);
 	//	SwitchCode.dumpCode();
 	System.out.println("Switch Code End.");
+
 	//Generate the tile code
-	RawExecutionCode.doit(rawFlattener.top);
+	//run the specific class depending
+	//on if pops have been removed
+	if (KjcOptions.poptopeek) 
+	    RawExecutionCodeNoPop.doit(rawFlattener.top);
+	else 
+	    RawExecutionCode.doit(rawFlattener.top);
+
 	System.out.println("Tile Code begin...");
 	TileCode.generateCode(rawFlattener.top);
 	System.out.println("Tile Code End.");

@@ -1,7 +1,7 @@
 /*
  * SymbolTable.java: symbol table for StreamIt programs
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: SymbolTable.java,v 1.1 2002-07-15 19:14:15 dmaze Exp $
+ * $Id: SymbolTable.java,v 1.2 2002-08-12 18:48:39 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -47,7 +47,7 @@ public class SymbolTable
             return type;
         if (parent != null)
             return parent.lookup(name);
-        return null;
+        throw new UnrecognizedVariableException(name);
     }
 
     /** Returns the parent of this, or null if this has no parent. */

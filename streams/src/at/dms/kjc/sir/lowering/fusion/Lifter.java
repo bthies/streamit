@@ -127,6 +127,33 @@ public class Lifter implements StreamVisitor {
     }
 
     /**
+     * If <str> is a splitjoin that contains only one child, then
+     * eliminate it (adjusting splitjoin's parent appropriately.)
+     * Returns whether or not the lifting was done.
+     */
+    public static boolean eliminateSJ(final SIRSplitJoin str) {
+	// get parent
+	SIRContainer parent = str.getParent();
+
+	if (parent!=null && str.size()==1) {
+	    // this assumes that we're not worrying about fields and
+	    // methods in containers -- otherwise we need renaming and
+	    // better handling of possible init function arguments?
+	    Utils.assert(str.getFields()==null || str.getFields().length==0,
+			 "Not expecting to find fields in container in Lifter.");
+	    Utils.assert(str.getMethods()==null || str.getMethods().length==0 ||
+			 (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()),
+			 "Not expecting to find methods in container in Lifter, but found " + str.getMethods().length + " in " + str.getName() + ":\n" 
+			 + str.getMethods()[0]);
+	    
+	    parent.replace(str, str.get(0));
+	    return true;
+	} else {
+	    return false;
+	}
+    }
+
+    /**
      * Returns whether or not something changed.
      */
     private boolean liftPipelineChildren(SIRContainer str) {
@@ -138,6 +165,8 @@ public class Lifter implements StreamVisitor {
 		SIROperator child = (SIROperator)str.get(i);
 		if (child instanceof SIRPipeline) {
 		    changing = eliminatePipe((SIRPipeline)child) || changing;
+		} else if (child instanceof SIRSplitJoin) {
+		    changing = eliminateSJ((SIRSplitJoin)child) || changing;
 		}
 	    }
 	    anyChange = anyChange || changing;

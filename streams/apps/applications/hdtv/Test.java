@@ -1,0 +1,67 @@
+import streamit.*;
+
+public class Test extends StreamIt 
+{
+    //include variables for parsing here!
+    public static void main(String args[]) 
+    {
+	new Test().run(args); 
+    }
+
+    public void init() {
+	// add a data source
+	this.add(new TestDataSource());
+
+	// add a reed solomon encoder
+	//this.add(new ReedSolomonEncoder());
+
+	//this.add(new PreCoder());
+	//this.add(new PreDecoder());
+
+	this.add(new UngerboeckEncoder());
+	
+	//this.add(new TrellisEncoder());
+	//this.add(new TrellisDecoder());
+
+	
+	//add a data sink
+	this.add(new TestDataSink());
+
+    }
+}
+
+
+
+
+
+class TestDataSource extends Filter {
+    int[] x = new int[10];
+    int i = 0;
+    public void init() {
+	output = new Channel(Integer.TYPE,1);
+	x[0] = 0;
+	x[1] = 1;
+	x[2] = 1;
+	x[3] = 0;
+	x[4] = 1;
+	x[5] = 0;
+	x[6] = 1;
+	x[7] = 1;
+	x[8] = 1;
+	x[9] = 0;
+	
+    }
+    public void work() {
+	output.pushInt(this.x[this.i]);
+	this.i = (this.i + 1) % 10;
+    }
+}
+class TestDataSink extends Filter {
+    public void init() {
+	input = new Channel(Integer.TYPE,1);
+    }
+    public void work() {
+	System.out.println(input.popInt());
+    }
+}
+

@@ -19,7 +19,7 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.awt.BorderLayout;
 
-public class LiveJGraphDemo extends JFrame {
+public class GraphEditorFrame extends JFrame {
   private JDesktopPane _desktopPane = null;
   private FrameSelectionListener _fsl = null;
   private FrameComponentListener _fcl = null;
@@ -32,9 +32,9 @@ public class LiveJGraphDemo extends JFrame {
   private DefaultGraphModel model = null;
 
 
-  public LiveJGraphDemo()
+  public GraphEditorFrame()
   {
-    super("Live JGraph Demo");
+    super("Graph Editor");
     
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     _fsl = new FrameSelectionListener();

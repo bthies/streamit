@@ -186,10 +186,13 @@ public class LiveJGraphInternalFrame extends JInternalFrame
 		LiveJGraphInternalFrame frame = (LiveJGraphInternalFrame)ce.getComponent();
 		
 		//GraphConstants.setBounds(atts,frame.getBounds());
-		GraphConstants.setBounds(graphStruct.getAttributes(),frame.getBounds());
+		//GraphConstants.setBounds(graphStruct.getAttributes(),frame.getBounds());
+		GraphConstants.setBounds(frame.getGraphCell().getAttributes(),frame.getBounds());
+		
 		
 		//map.put(frame.getGraphCell(),atts);
-		map.put(frame.getGraphCell(),graphStruct.getAttributes());
+		//map.put(frame.getGraphCell(),graphStruct.getAttributes());
+		map.put(frame.getGraphCell(),frame.getGraphCell().getAttributes());
 		
 		model.edit(map,null,null,null);
 	  }

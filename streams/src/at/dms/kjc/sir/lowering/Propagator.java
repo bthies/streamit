@@ -212,6 +212,9 @@ class Propagator extends SLIRReplacingVisitor {
 	    constants.remove(((JLocalVariableExpression)left).getVariable());
 	else
 	    System.err.println("WARNING: Compound Assignment of nonvariable: "+left);
+	JExpression newRight = (JExpression)right.accept(this);
+	if (newRight.isConstant())
+            self.setRight(newRight);
 	return self;
     }
     

@@ -15,6 +15,10 @@ public class Router
 	//route x then y
 	route.add(src);
 
+	//we cannot route between IODevices so first route to neighbor
+	if (src instanceof IODevice)
+	    src = ((IODevice)src).getNeighboringTile();
+
 	if (src == null || dst == null)
 	    Utils.fail("Trying to route from/to null");
 
@@ -53,8 +57,7 @@ public class Router
     
     public static int distance(ComputeNode src, ComputeNode dst) 
     {  //return the manhattan distance for the simple router above
-	return Math.abs(src.getX() - dst.getX()) + 
-	    Math.abs(src.getY() - dst.getY());
+	return getRoute(src, dst).size();
     }
     
 }

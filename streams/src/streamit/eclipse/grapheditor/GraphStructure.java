@@ -1,3 +1,5 @@
+package grapheditor;
+
 /*
  * Created on Jun 18, 2003
  *
@@ -16,5 +18,8 @@ public class GraphStructure {
 
 public GraphStructure()
 	{}
+	
+	
+	
 }
 

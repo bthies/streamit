@@ -136,6 +136,23 @@ public class IMEMEstimation extends EmptyStreamVisitor
 		jProcess.waitFor();
 	    }
 	    
+	    //now see if the compile succeeds
+	    {
+		String[] cmdArray = new String[6];
+		cmdArray[0] = "make";
+		cmdArray[1] = "-C";
+		cmdArray[2] = dir;
+		cmdArray[3] = "-f";
+		cmdArray[4] = "Makefile.streamit";
+		cmdArray[5] = "tile0.s";
+		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+		jProcess.waitFor();
+
+		//set the return value based on the exit code of the make 
+		assert (jProcess.exitValue() == 0) : 
+		    "Failure to build C file for IMEM estimation";
+	    }
+
 	    //now determine if the filter fit in IMEM
 	    {
 		System.out.println("Checking IMEM Size...");	     
@@ -154,6 +171,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	    }
 
 	    //remove the directory
+	    /*
 	    {
  		String[] cmdArray = new String[3];
  		cmdArray[0] = "rm";
@@ -162,7 +180,7 @@ public class IMEMEstimation extends EmptyStreamVisitor
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
 	    }
-	  
+	    */
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

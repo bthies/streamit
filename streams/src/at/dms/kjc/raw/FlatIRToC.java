@@ -281,7 +281,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//call the raw_init() function for the static network
 	//only if we are not using a uniprocessor or the
 	//magic network
-	if (!KjcOptions.standalone && !KjcOptions.magic_net && !KjcOptions.decoupled) {
+	if (!(KjcOptions.standalone || KjcOptions.magic_net || KjcOptions.decoupled ||
+	      IMEMEstimation.TESTING_IMEM)) {
 	    print("  raw_init();\n");
 	    print("  raw_init2();\n");
 	}
@@ -383,9 +384,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	      ((SIRTwoStageFilter)filter).getInitWork().equals(self))))
 	    return;
 
-	
-	
-	   
         newLine();
 	// print(CModifier.toString(modifiers));
 	print(returnType);
@@ -410,6 +408,13 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//print the declaration then return
 	if (declOnly) {
 	    print(";");
+	    return;
+	}
+
+	if (IMEMEstimation.TESTING_IMEM && 
+	    self.getName().startsWith("init")) {
+	    //just print a null method
+	    print("{}\n");
 	    return;
 	}
 	

@@ -37,7 +37,7 @@ public class MakefileGenerator
 
 	    //remove joiners from the hashset if we are in decoupled mode, 
 	    //we do not want to simulate joiners
-	    if (KjcOptions.decoupled) 
+	    if (KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM) 
 		removeJoiners(tiles);
 
 	    Iterator tilesIterator = tiles.iterator();
@@ -114,7 +114,7 @@ public class MakefileGenerator
 			 "tile" + tile + ".o ");
 		//if we are using the magic net, we do not create 
 		//the switch assembly files, same if we are running decoupledxx
-		if (!KjcOptions.magic_net && !KjcOptions.decoupled) 
+		if (!(KjcOptions.magic_net || KjcOptions.decoupled || IMEMEstimation.TESTING_IMEM)) 
 		    fw.write("sw" + tile + ".o");
 		fw.write("\n");
 	    }

@@ -61,7 +61,7 @@ abstract class DPConfigContainer extends DPConfig {
 	    A[x1][x2][y1][y2][tileLimit] = childCost;
 	    //System.err.println("Returning " + childCost + " from descent into child.");
 	    return childCost;
-	}	    
+	}
 
 	// otherwise, if <tileLimit> is 1, then just sum the work
 	// of our components
@@ -132,9 +132,9 @@ abstract class DPConfigContainer extends DPConfig {
 	    if (A.length==1 && A[0][0].length==1) {
 		StreamTransform result = new IdentityTransform();
 		result.addSucc(child);
-		return result;
+		return result.reduce();
 	    } else {
-		return child;
+		return child.reduce();
 	    }
 	}
 	
@@ -156,7 +156,7 @@ abstract class DPConfigContainer extends DPConfig {
 		    result.addPred(traceback(partitions, curPartition, x1, x2, y, y, tileLimit));
 		}
 	    }
-	    return result;
+	    return result.reduce();
 	}
 
 	// otherwise, see if we made a vertical cut (breaking into left/right pieces)
@@ -176,7 +176,7 @@ abstract class DPConfigContainer extends DPConfig {
 		    partitions.add(curPartition);
 		    result.addSucc(traceback(partitions, curPartition, xPivot+1, x2, y1, y2, tileLimit-tPivot));
 		    // all done
-		    return result;
+		    return result.reduce();
 		}
 	    }
 	}
@@ -198,7 +198,7 @@ abstract class DPConfigContainer extends DPConfig {
 		    partitions.add(curPartition);
 		    result.addSucc(traceback(partitions, curPartition, x1, x2, yPivot+1, y2, tileLimit-tPivot));
 		    // all done
-		    return result;
+		    return result.reduce();
 		}
 	    }
 	}

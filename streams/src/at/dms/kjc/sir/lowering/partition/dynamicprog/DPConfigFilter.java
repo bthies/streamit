@@ -46,9 +46,6 @@ class DPConfigFilter extends DPConfig {
 
     // see how many tiles we can devote to fissed filters;
     // depends on if we need a separate tile for a joiner.
-    // This is a conservative approximation (joiner disappears
-    // if next downstream filter is a joiner, even if parent
-    // is not sj)
     private int tilesForFission(int tileLimit) {
 	return (filter.getParent()!=null && 
 		filter.getParent().getSuccessor(filter) instanceof SIRJoiner ?

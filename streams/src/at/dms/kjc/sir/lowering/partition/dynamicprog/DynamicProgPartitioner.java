@@ -57,7 +57,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
     /**
      * This is the toplevel call for doing partitioning.
      */
-    public void toplevel() {
+    public SIRStream toplevel() {
 	// debug setup
 	long start = System.currentTimeMillis();
 	LinkedList partitions = new LinkedList();
@@ -74,7 +74,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 			   (System.currentTimeMillis()-start)/1000 + " secs to calculate partitions.");
 
 	// perform partitioning transformations
-	st.doTransform(str);
+	return st.doTransform(str);
     }
 
     /**
@@ -86,9 +86,20 @@ public class DynamicProgPartitioner extends ListPartitioner {
     private StreamTransform calcPartitions(LinkedList partitions) {
 	// build stream config
 	DPConfig topConfig = buildStreamConfig();
-	// build up tables
+	// build up tables.
 	int bottleneck = topConfig.get(numTiles);
-	//System.err.println("Found bottleneck work is " + bottleneck + ".  Tracing back...");
+	int tilesUsed = numTiles;
+	// decrease the number of tiles to the fewest that we need for
+	// a given bottleneck.  This is in an attempt to decrease
+	// synchronization and improve utilization.
+	/*
+	  while (tilesUsed>1 && bottleneck==topConfig.get(tilesUsed-1)) {
+	  tilesUsed--;
+	  }
+	  if (tilesUsed<numTiles) {
+	  System.err.println("Decreased tile usage from " + numTiles + " to " + tilesUsed + " without increasing bottleneck.");
+	  }
+	*/
 	// expand config stubs that were shared for symmetry optimizations
 	if (SHARING_CONFIGS) {
 	    expandSharedConfigs();
@@ -99,7 +110,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	PartitionRecord curPartition = new PartitionRecord();
 	partitions.add(curPartition);
 
-	StreamTransform result = topConfig.traceback(partitions, curPartition, numTiles);
+	StreamTransform result = topConfig.traceback(partitions, curPartition, tilesUsed);
 
 	Utils.assert(bottleneck==PartitionUtil.getMaxWork(partitions),
 		     "bottleneck=" + bottleneck + " but PartitionUtil.getMaxWork(partitions)=" + PartitionUtil.getMaxWork(partitions));

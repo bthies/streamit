@@ -42,9 +42,7 @@ class DPConfigSplitJoin extends DPConfigContainer {
 	  } else {
 	*/
 	// otherwise, use normal procedure
-	if (tileLimit==1 || 
-	    (cont.getParent()!=null && 
-	     cont.getParent().getSuccessor(cont) instanceof SIRJoiner)) {
+	if (tileLimit==1 || needsJoiner()) {
 	    // if the tileLimit is 1 or joiner will be collapsed,
 	    // then all tiles are available for the splitjoin
 	    return super.get(tileLimit);
@@ -54,6 +52,16 @@ class DPConfigSplitJoin extends DPConfigContainer {
 	    // account for the joiner tiles
 	    return super.get(tileLimit-1);
 	}
+    }
+
+    /**
+     * Return if we need to leave space for a joiner tile.  (If not,
+     * it's because there's a joiner downstream that our joiner would
+     * be merged with.)
+     */
+    private boolean needJoiner(int tileLimit) {
+	return (cont.getParent()!=null && 
+		cont.getParent().getSuccessor(cont) instanceof SIRJoiner);
     }
 
     /**
@@ -89,8 +97,7 @@ class DPConfigSplitJoin extends DPConfigContainer {
 	  } else {
 	*/
 	StreamTransform result = null;
-	if (tileLimit==1 || (cont.getParent()!=null && 
-			     cont.getParent().getSuccessor(cont) instanceof SIRJoiner)) {
+	if (tileLimit==1 || needJoiner()) {
 	    result = super.traceback(partitions, curPartition, tileLimit);
 	} else {
 	    // if we're not fusing into a single tile, need to:

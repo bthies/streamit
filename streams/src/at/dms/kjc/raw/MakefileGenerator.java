@@ -37,6 +37,10 @@ public class MakefileGenerator
 	    fw.write("#-*-Makefile-*-\n\n");
 	    fw.write("LIMIT = TRUE\n"); // need to define limit for SIMCYCLES to matter
             fw.write("ATTRIBUTES = IMEM_LARGE\n");
+	    //if we are generating number gathering code, 
+	    //we do not want to use the default print service...
+	    if (KjcOptions.numbers > 0 && NumberGathering.successful)
+		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
@@ -95,6 +99,8 @@ public class MakefileGenerator
     private static void createBCFile(boolean hasIO) throws Exception 
     {
 	FileWriter fw = new FileWriter("fileio.bc");
+
+	fw.write("include(\"<dev/basic.bc>\");\n");
 	
 	//number gathering code
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {
@@ -102,15 +108,24 @@ public class MakefileGenerator
 	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
 	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n\n");
 	    
-	    fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");	
-	    fw.write("global path = malloc(strlen(streamit_home) + 30);\n");
-	    fw.write("sprintf(path, \"%s%s\", streamit_home, \"/include/basic_mod.bc\");\n");
-	    //include the modified basic.bc file
-	    fw.write("include(path);\n");
+	    fw.write("{\n");
+	    fw.write("  local streamit_home = getenv(\"STREAMIT_HOME\");\n");	
+	    fw.write("  local numberpath = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/gather_numbers.bc\");\n");
+	    //include the number gathering code and install the device file
+	    fw.write("  include(numberpath);\n");
+	     // add print service to the south of the SE tile
+	    fw.write("  {\n");
+	    fw.write("    local str = malloc(256);\n");
+	    fw.write("    local result;\n");
+	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
+	    fw.write("    result = dev_gather_numbers_init(\"/dev/null\", gXSize+gYSize);\n");
+	    fw.write("    if (result == 0)\n");
+	    fw.write("      exit(-1);\n");
+	    fw.write("  }\n");
+	    fw.write("}\n");
 	}
-	else
-	    fw.write("include(\"<dev/basic.bc>\");\n");
-	
+
 	fw.write
             ("global gAUTOFLOPS = 0;\n" +
              "fn __clock_handler(hms)\n" +

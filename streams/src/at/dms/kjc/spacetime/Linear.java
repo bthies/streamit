@@ -304,11 +304,126 @@ public class Linear extends RawExecutionCode implements Constants {
 
 	generatedVariables.exeIndex1 = exeIndex1Var;
 	fields[array.length+2]=new JFieldDeclaration(null, exeIndex1Var, null, null);
+	//convert the communication
+	//all the communication is in the work function
+	FilterContent filter = filterInfo.filter;
+	filter.getWork().accept(new DirectConvertCommunication());
 	//End Gordo's Code
 	return fields;
     }
+    
+    //Copied from Gordo
+    static class DirectConvertCommunication extends SLIRReplacingVisitor 
+    {
+	public Object visitAssignmentExpression(JAssignmentExpression oldself,
+						JExpression oldleft,
+						JExpression oldright) 
+	{
+	    //a little optimization, use the pointer version of the 
+	    //structure's pop in struct.h to avoid copying		
+	    if (oldright instanceof JCastExpression && 
+		(((JCastExpression)oldright).getExpr() instanceof SIRPopExpression)) {
+		SIRPopExpression pop = (SIRPopExpression)((JCastExpression)oldright).getExpr();
+	    
+		if (pop.getType().isClassType()) {
+		    JExpression left = (JExpression)oldleft.accept(this);
+		
+		    JExpression[] arg = 
+			{left};
+		
+		    return new JMethodCallExpression(null, new JThisExpression(null), 
+						     structReceiveMethodPrefix + 
+						     pop.getType(),
+						     arg);
+		} 
+		if (pop.getType().isArrayType()) {
+		    return null;
+		}
+	    }
+
+	    //otherwise do the normal thing
+	    JExpression self = (JExpression)super.visitAssignmentExpression(oldself,
+									    oldleft, 
+									    oldright);
+	    return self;
+	}
+    
+
+	public Object visitPopExpression(SIRPopExpression oldSelf,
+					 CType oldTapeType) {
+	
+	    // do the super
+	    SIRPopExpression self = 
+		(SIRPopExpression)
+		super.visitPopExpression(oldSelf, oldTapeType);  
+
+	    //if this is a struct, use the struct's pop method, generated in struct.h
+	    if (self.getType().isClassType()) {
+		return new JMethodCallExpression(null, new JThisExpression(null), 
+						 "pop" + self.getType(), 
+						 new JExpression[0]);
+	    }
+	    else if (self.getType().isArrayType()) {
+		return null;
+	    }
+	    else {
+		//I am keeping it the was it is because we should use static_receive
+		//instead of receiving to memory as in the code in Util
+		if (KjcOptions.altcodegen || KjcOptions.decoupled) 
+		    return altCodeGen(self);
+		else
+		    return normalCodeGen(self);
+	    }
+	}
+    
+    
+	private Object altCodeGen(SIRPopExpression self) {
+	    //direct communcation is only generated if the input/output types are scalar
+	    if (self.getType().isFloatingPoint())
+		return 
+		    new JLocalVariableExpression(null,
+						 new JGeneratedLocalVariable(null, 0, 
+									     CStdType.Float, 
+									     Util.CSTIFPVAR,
+									     null));
+	    else 
+		return 
+		    new JLocalVariableExpression(null,
+						 new JGeneratedLocalVariable(null, 0, 
+									     CStdType.Integer,
+									     Util.CSTIINTVAR,
+									     null));
+	}
+    
+	private Object normalCodeGen(SIRPopExpression self) {
+	    String floatSuffix;
+	
+	    floatSuffix = "";
+
+	    //append the _f if this pop expression pops floats
+	    if (self.getType().isFloatingPoint())
+		floatSuffix = "_f";
+	
+	    //create the method call for static_receive()
+	    JMethodCallExpression static_receive = 
+		new JMethodCallExpression(null, new JThisExpression(null),
+					  "static_receive" + floatSuffix, 
+					  new JExpression[0]);
+	    //store the type in a var that I added to methoddeclaration
+	    static_receive.setTapeType(self.getType());
+	
+	    return static_receive;
+	}
+
+	public Object visitPeekExpression(SIRPeekExpression oldSelf,
+					  CType oldTapeType,
+					  JExpression oldArg) {
+	    Utils.fail("Should not see a peek expression when generating " +
+		       "direct communication");
+	    return null;
+	}
+    }
+    //End Copy
 }
-
-
 
 

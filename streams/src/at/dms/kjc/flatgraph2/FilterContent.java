@@ -69,7 +69,7 @@ public class FilterContent {
 	begin=content.begin;
 	end=content.end;
 	pos=content.pos;
-	total=1;
+	total=content.total;
     }
 
     public FilterContent(SIRPhasedFilter filter) {

@@ -34,7 +34,8 @@ public class Harness {
     }
 
     /** run command natively, ignoring stdout (eg for gcc, make) **/
-    public static boolean executeNative(String[] cmdArray, String cwd) throws Exception {
+    public static boolean executeNative(String[] cmdArray, String cwd)
+        throws IOException, InterruptedException {
         File cwdf = null;
         if (cwd != null) cwdf = new File(cwd);
 	return executeNative(cmdArray, null, cwdf);
@@ -48,7 +49,10 @@ public class Harness {
      *
      * Writes standard output from program to outStream.
      **/
-    public static boolean executeNative(String[] cmdArray, OutputStream outStream, File cwd) throws Exception {
+    public static boolean executeNative(String[] cmdArray,
+                                        OutputStream outStream,
+                                        File cwd)
+        throws IOException, InterruptedException {
 	// add a hook to the command array that will limit the execution time
 	cmdArray = addTimeLimit(cmdArray);
 	
@@ -153,7 +157,7 @@ public class Harness {
             br.close();
             pw.close();
             return true;
-	} catch (Exception e) {
+	} catch (IOException e) {
 	    ResultPrinter.printError("appending file caused exception (?): " + e);
 	    e.printStackTrace();
 	    return false;
@@ -193,7 +197,9 @@ public class Harness {
         ByteArrayOutputStream lsBuff = new ByteArrayOutputStream();
 	try {
 	    executeNative(getLsCommandOpts(fileName), lsBuff, null);
-        } catch (Exception e) {
+        } catch (IOException e) {
+            throw new RuntimeException("Caught exception expanding filenames: " + e);
+        } catch (InterruptedException e) {
             throw new RuntimeException("Caught exception expanding filenames: " + e);
         }
 	    

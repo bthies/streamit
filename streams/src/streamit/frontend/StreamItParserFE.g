@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.34 2003-07-03 19:55:38 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.35 2003-07-03 20:13:00 dmaze Exp $
  */
 
 header {
@@ -192,7 +192,7 @@ loop_statement returns [Statement s] { s = null; StreamCreator sc; }
 	;
 
 stream_creator returns [StreamCreator sc] { sc = null; }
-	: (ID ARROW | ~ID) => sc=anonymous_stream (TK_to ID)? (SEMI)?
+	: (ID ARROW | ~ID) => sc=anonymous_stream ((TK_to ID)? SEMI)?
 	| sc=named_stream (TK_to ID)? SEMI
 	;
 

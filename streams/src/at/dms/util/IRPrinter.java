@@ -1584,6 +1584,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
         attrPrint("peek", peek);
         attrPrint("pop", pop);
         attrPrint("push", push);
+        blockEnd();
     }
 
     /**

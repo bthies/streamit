@@ -1958,7 +1958,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
      * toplevel stream
      */
     public JInterfaceDeclaration[] getInterfaces() {
-	JInterfaceDeclaration[] ret = (JInterfaceDeclaration[])interfaceList.toArray();
+	JInterfaceDeclaration[] ret = (JInterfaceDeclaration[])interfaceList.toArray(new JInterfaceDeclaration[0]);
 	return ret;
     }
     

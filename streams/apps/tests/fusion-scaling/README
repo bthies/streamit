@@ -1,0 +1,22 @@
+This directory contains some scripts used to evaluate different fusion
+policies for the LCTES'05 paper.
+
+The Scaling.str file in this directory is the template that is used
+for all the results.  DO NOT EDIT IT if you want the scripts to keep
+working.
+
+The scripts evaluate fusino performance for different peek values.
+
+To use the scaling scripts, choose your favorite architecture:
+
+ia64
+p3-gcc2.9
+p3-gcc3.4
+
+Go into the appropriate directory and type "make".  This will produce
+two scripts:
+
+docompile.sh -- a script for compiling the benchmarks.
+dorun.sh     -- a script for running the benchmarks.
+
+The results will be put in "results.csv" in the appropriate directory.

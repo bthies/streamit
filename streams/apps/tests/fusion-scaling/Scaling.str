@@ -1,0 +1,29 @@
+void->void pipeline Scaling {
+    int E = 64;
+    int e = E;
+    int o = 1;
+    int u = 1;
+
+    add Source(u);
+    add Sink(o,e);
+}
+
+void->int filter Source(int u) {
+    int i=0;
+    work push u {
+	push(i++);
+    }
+}
+
+int->void filter Sink(int o, int e) {
+    work pop o peek e {
+	int result = 0;
+	for (int i=0; i<e; i++) {
+	    result += i*peek(i);
+	}
+	for (int i=0; i<o; i++) {
+	    pop();
+	}
+	print(result);
+    }
+}

@@ -23,13 +23,14 @@ class ConstMultiplier extends Filter {
   }
 
   public void work() {
-    if (first) {
-      output.pushFloat(input.popFloat());
-      first = false;
-    }
-    else {
+    //you are within the work function of doubler
+//      if (first) {
+//        output.pushFloat(input.popFloat());
+//        first = false;
+//      }
+//      else {
       output.pushFloat(input.popFloat() * c);
-    }
+//      }
   }
 
   ConstMultiplier(float c) {
@@ -59,7 +60,9 @@ class Doubler extends Filter {
   }
 
   public void work() {
-    output.pushFloat(input.peekFloat(0) + input.popFloat());
+    //you are within the work function of doubler
+    output.pushFloat(input.peekFloat(0) + input.peekFloat(0));
+    input.popFloat();
   }
 }
 
@@ -108,6 +111,7 @@ class Subtractor extends Filter {
   }
 
   public void work() {
-    output.pushFloat(input.popFloat() - input.popFloat());
+    output.pushFloat(input.peekFloat(0) - input.peekFloat(1));
+    input.popFloat();input.popFloat();
   }
 }

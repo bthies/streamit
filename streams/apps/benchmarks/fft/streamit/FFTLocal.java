@@ -32,8 +32,8 @@ class Filter1 extends Filter {
         int i;
         this.W = W;
         //this.weights = new float[W];
-	//        for (i=0; i<W; i+=1)
-	//            weights[i] = calcWeight(i, N, W);
+        //        for (i=0; i<W; i+=1)
+        //            weights[i] = calcWeight(i, N, W);
         curr = 0;
     }
 
@@ -79,6 +79,7 @@ class Butterfly2 extends SplitJoin {
                     this.streamInput = input;
                     this.streamOutput = output;
                 }
+                public void init () { }
 
                 public void work() {
                     output.pushFloat(input.popFloat() +
@@ -94,6 +95,7 @@ class Butterfly2 extends SplitJoin {
                     this.streamInput = input;
                     this.streamOutput = output;
                 }
+                public void init () { }
 
                 public void work() {
                     output.pushFloat(input.popFloat() -
@@ -172,6 +174,7 @@ class FloatPrinterLocal extends Filter
     {
         this.streamInput = input;
     }
+    public void init () { }
     public void work ()
     {
         System.out.println(input.popFloat ());

@@ -1,6 +1,6 @@
 import streamit.*;
 
-class Identity extends Filter {
+class IdentityFloat extends Filter {
     Channel input = new Channel(Float.TYPE, 1);
     Channel output = new Channel(Float.TYPE, 1);
 
@@ -50,7 +50,7 @@ class Butterfly extends Pipeline {
                             }
 
                         });
-                    this.add(new Identity());
+                    this.add(new IdentityFloat());
                     this.setJoiner(ROUND_ROBIN());
                 }});
 
@@ -109,8 +109,8 @@ class FFTKernel extends Pipeline {
                         this.add(new SplitJoin() {
                                 public void init() {
                                     this.setSplitter(ROUND_ROBIN());
-                                    this.add(new Identity());
-                                    this.add(new Identity());
+                                    this.add(new IdentityFloat());
+                                    this.add(new IdentityFloat());
                                     this.setJoiner(WEIGHTED_ROUND_ROBIN((int)
                                                                         N/4,
                                                                         (int)

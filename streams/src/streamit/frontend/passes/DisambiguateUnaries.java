@@ -27,7 +27,7 @@ import java.util.List;
  * a temporary variable.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DisambiguateUnaries.java,v 1.6 2003-10-09 19:51:01 dmaze Exp $
+ * @version $Id: DisambiguateUnaries.java,v 1.7 2003-10-14 15:30:33 dmaze Exp $
  */
 public class DisambiguateUnaries extends SymbolTableVisitor
 {
@@ -127,6 +127,22 @@ public class DisambiguateUnaries extends SymbolTableVisitor
             return stmt;
         return new StmtFor(stmt.getContext(), newInit, stmt.getCond(),
                            stmt.getIncr(), newBody);
+    }
+
+    public Object visitStmtIfThen(StmtIfThen stmt)
+    {
+        // Need to reset successors list in between visiting children.
+        Statement newCons = (Statement)stmt.getCons().accept(this);
+        successors = new java.util.ArrayList();
+        Statement newAlt = stmt.getAlt();
+        if (newAlt != null) newAlt = (Statement)newAlt.accept(this);
+        successors = new java.util.ArrayList();
+        Expression newCond = (Expression)stmt.getCond().accept(this);
+        if (newCons == stmt.getCons() &&
+            newAlt == stmt.getAlt() &&
+            newCond == stmt.getCond())
+            return stmt;
+        return new StmtIfThen(stmt.getContext(), newCond, newCons, newAlt);
     }
 
     public Object visitStmtWhile(StmtWhile stmt)

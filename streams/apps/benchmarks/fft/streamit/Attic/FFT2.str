@@ -1,36 +1,20 @@
-import streamit.StreamIt;
-import streamit.Filter;
-import streamit.Channel;
-import streamit.Pipeline;
-import streamit.SplitJoin;
-// This is the same implementation by Michal, I only modiefied it to the new syntax
-
 complex->complex Filter CombineDFT(int n)
 {  
-
-    complex[] results;
-    complex[] Ws;
+    complex[n] Ws;
 
     init
     {
-	
-	complex wn;
-        wn.real = (float) Math.cos(2 * 3.141592654 / ((double) n));
-        wn.imag = (float) Math.sin(2 * 3.141592654 / ((double) n));
-        results = new complex[n];
-	Ws= new complex[n];
+	complex wn = exp(2i * pi / n);	
 	Ws[0].real=1;
 	Ws[0].imag=0;
 	for (int i=1; i < n; i++)
-	    Ws[i]=Ws[i-1]*wn;
-	
+	    Ws[i]=Ws[i-1]*wn;	
     }
-
 
     work push n peek n pop n 
     {
         int i;
-	
+	complex[n] results;
 
 	for (i = 0; i < n/2; i ++)
         {
@@ -51,26 +35,15 @@ complex->complex Filter CombineDFT(int n)
 
         for (i = 0; i < n; i++)
         {
-            input.popFloat ();
-            output.pushFloat(results[i]);
+	    pop();
+	    push(results[i]);
         }
     }
 }
 
-
-
-
-
-complex->complex Filter FFTReorderSimple(int n)
+complex->complex filter FFTReorderSimple(int n)
 {
-    int totalData;
-    
-    init 
-    {
-        
-    }
-    
-work peek n push n pop n
+    work peek n push n pop n
     {
         int i;
         
@@ -84,30 +57,24 @@ work peek n push n pop n
             push(peek(i));
         }
         
-        for (i=0;i<nWay;i++)
+        for (i=0;i<n;i++)
         {
             pop();
         }
     }
 }
 
-
-
-
-complex->complex Pipeline  FFTReorder(int nWay) 
+complex->complex pipeline FFTReorder(int nWay) 
 {
-    while (nWay > 2)
+    int n = nWay;
+    while (n > 2)
     {
-            add (new FFTReorderSimple (nWay));
-            nWay = nWay / 2;
-    }
-    
+        add (new FFTReorderSimple (n));
+	n /= 2;
+    }    
 }
 
-
-
-
-complex->complex Pipeline FFT2 (int nWay)
+complex->complex pipeline FFT2 (int nWay)
 {
         add (new FFTReorder (nWay));
         int n = 2;

@@ -25,6 +25,11 @@ public class FeedbackLoopIter
         return new Iterator(feedback);
     }
     
+    public int getDelaySize()
+    {
+        return feedback.getDelay();
+    }
+    
     public streamit.scheduler.iriter.Iterator getBodyChild ()
     {
         return new Iterator (feedback.getBody ());

@@ -47,7 +47,7 @@ public class StreamIt extends Pipeline
             Operator oper = (Operator) schedule;
             if (oper instanceof Filter)
                 oper.work();
-            else if (oper instanceof SplitJoin)
+            else if (oper instanceof SplitJoin || oper instanceof FeedbackLoop)
             {
                 ASSERT(function instanceof Operator);
                 ((Operator) function).work();

@@ -17,7 +17,7 @@ import streamit.scheduler.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.4 2002-07-02 03:37:42 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.5 2002-07-06 06:06:07 karczma Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -160,9 +160,7 @@ public class ScheduleBuffers extends DestroyedClass
                     bufferSizes.put(pair, buffer);
 
                     // buffer after:
-                    targetBufferAfter.put(
-                        getLastStream(childBefore),
-                        buffer);
+                    targetBufferAfter.put(getLastStream(childBefore), buffer);
 
                     // buffer before:
                     targetBufferBefore.put(
@@ -228,9 +226,7 @@ public class ScheduleBuffers extends DestroyedClass
                         bufferSizes.put(pair, buffer);
 
                         // buffer before the child:
-                        targetBufferBefore.put(
-                            getFirstStream(child),
-                            buffer);
+                        targetBufferBefore.put(getFirstStream(child), buffer);
 
                         // buffer after the splitter:
                         // don't store this data, as it will be ambiguous
@@ -249,9 +245,7 @@ public class ScheduleBuffers extends DestroyedClass
                         bufferSizes.put(pair, buffer);
 
                         // buffer after the child:
-                        targetBufferAfter.put(
-                            getLastStream(child),
-                            buffer);
+                        targetBufferAfter.put(getLastStream(child), buffer);
 
                         // buffer before the joiner:
                         // don't store this data, as it will be ambiguous
@@ -263,8 +257,129 @@ public class ScheduleBuffers extends DestroyedClass
         }
         else if (stream.isFeedbackLoop() != null)
         {
-            // not done yet
-            ASSERT(false);
+            FeedbackLoopIter feedbackLoop = stream.isFeedbackLoop();
+            Iterator body = feedbackLoop.getBodyChild();
+            Iterator loop = feedbackLoop.getLoopChild();
+
+            // traverse the children
+            {
+                traverseStream(body);
+                traverseStream(loop);
+            }
+
+            // store all the split's work functions
+            {
+                int nPhase = 0;
+                for (; nPhase < feedbackLoop.getSplitterNumWork(); nPhase++)
+                {
+                    workFunctions.put(
+                        pairs.getPair(
+                            feedbackLoop.getSplitterWork(nPhase),
+                            stream),
+                        new Integer(nPhase));
+                }
+            }
+
+            // store all the join's work functions
+            {
+                int nPhase = 0;
+                for (; nPhase < feedbackLoop.getJoinerNumWork(); nPhase++)
+                {
+                    workFunctions.put(
+                        pairs.getPair(
+                            feedbackLoop.getJoinerWork(nPhase),
+                            stream),
+                        new Integer(nPhase));
+                }
+            }
+
+            // store the body's buffers
+            {
+
+                // create a buffer between feedbackLoop and the body
+                // (the one at the top of the feedbackLoop, 
+                // above body, below joiner
+                {
+                    Pair pair = pairs.getPair(stream, body);
+                    BufferStatus buffer = new BufferStatus();
+
+                    // buffer pair:
+                    bufferSizes.put(pair, buffer);
+
+                    // buffer before the body:
+                    targetBufferBefore.put(getFirstStream(body), buffer);
+
+                    // buffer after the joiner:
+                    // don't store this data, as it will be ambiguous
+                    // handle this as a special case when actually running
+                    // the schedule
+                }
+
+                // create a buffer between feedbackLoop and the body
+                // (the one at the bottom of the feedbackLoop, 
+                // below body, above splitter)
+                {
+                    Pair pair = pairs.getPair(body, stream);
+                    BufferStatus buffer = new BufferStatus();
+
+                    // buffer pair:
+                    bufferSizes.put(pair, buffer);
+
+                    // buffer after the body:
+                    targetBufferAfter.put(getLastStream(body), buffer);
+
+                    // buffer before the splitter:
+                    // don't store this data, as it will be ambiguous
+                    // handle this as a special case when actually running
+                    // the schedule
+                }
+            }
+
+            // store the loop's buffers
+            {
+
+                // create a buffer between feedbackLoop and the loop
+                // (the one at the top of the feedbackLoop, 
+                // above loop, below joiner
+                {
+                    Pair pair = pairs.getPair(loop, stream);
+                    BufferStatus buffer = new BufferStatus();
+                    
+                    // initialize the buffer with amount of data pushed
+                    // due to delay initialization!
+                    buffer.pushData(feedbackLoop.getDelaySize());
+
+                    // buffer pair:
+                    bufferSizes.put(pair, buffer);
+
+                    // buffer before the loop:
+                    targetBufferAfter.put(getLastStream(loop), buffer);
+
+                    // buffer after the joiner:
+                    // don't store this data, as it will be ambiguous
+                    // handle this as a special case when actually running
+                    // the schedule
+                }
+
+                // create a buffer between feedbackLoop and the loop
+                // (the one at the bottom of the feedbackLoop, 
+                // below loop, above splitter)
+                {
+                    Pair pair = pairs.getPair(stream, loop);
+                    BufferStatus buffer = new BufferStatus();
+
+                    // buffer pair:
+                    bufferSizes.put(pair, buffer);
+
+                    // buffer after the loop:
+                    targetBufferBefore.put(getFirstStream(loop), buffer);
+
+                    // buffer before the splitter:
+                    // don't store this data, as it will be ambiguous
+                    // handle this as a special case when actually running
+                    // the schedule
+                }
+            }
         }
         else
             ERROR("stream variable is not a known stream type!");
@@ -318,8 +433,7 @@ public class ScheduleBuffers extends DestroyedClass
                 // no - this is a bona-fide work function
                 Object workFunc = schedule.getWorkFunc();
                 Iterator workStream =
-                    (Iterator) user2persistent.get(
-                        schedule.getWorkStream());
+                    (Iterator) user2persistent.get(schedule.getWorkStream());
 
                 // figure out what object contributed this work function:
                 Pair workInfo = pairs.getPair(workFunc, workStream);
@@ -344,8 +458,7 @@ public class ScheduleBuffers extends DestroyedClass
                     {
                         // init function
                         ASSERT(
-                            filter.getInitFunctionStage(numWork)
-                                == workFunc);
+                            filter.getInitFunctionStage(numWork) == workFunc);
 
                         peekAmount = filter.getInitPeekStage(numWork);
                         popAmount = filter.getInitPushStage(numWork);
@@ -358,8 +471,7 @@ public class ScheduleBuffers extends DestroyedClass
                     if (peekAmount > 0)
                     {
                         BufferStatus bufferBefore =
-                            (BufferStatus) targetBufferBefore.get(
-                                workStream);
+                            (BufferStatus) targetBufferBefore.get(workStream);
                         bufferBefore.peekData(peekAmount);
                         bufferBefore.popData(popAmount);
                     }
@@ -368,8 +480,7 @@ public class ScheduleBuffers extends DestroyedClass
                     if (pushAmount > 0)
                     {
                         BufferStatus bufferAfter =
-                            (BufferStatus) targetBufferAfter.get(
-                                workStream);
+                            (BufferStatus) targetBufferAfter.get(workStream);
 
                         bufferAfter.pushData(pushAmount);
                     }
@@ -391,28 +502,40 @@ public class ScheduleBuffers extends DestroyedClass
                         // splitter function
                         popAmount = sj.getSplitPop(numWork);
                         pushAmount = 0;
-                        
+
                         // push data into the internal splitter buffers
                         int nChild;
                         int pushWeights[] = sj.getSplitPushWeights(numWork);
-                        for (nChild = 0; nChild < sj.getNumChildren(); nChild++)
+                        for (nChild = 0;
+                            nChild < sj.getNumChildren();
+                            nChild++)
                         {
-                            Iterator firstChild = getFirstStream(sj.getChild(nChild));
-                            BufferStatus bufferBefore = (BufferStatus) targetBufferBefore.get(firstChild);
+                            Iterator firstChild =
+                                getFirstStream(sj.getChild(nChild));
+                            BufferStatus bufferBefore =
+                                (BufferStatus) targetBufferBefore.get(
+                                    firstChild);
                             bufferBefore.pushData(pushWeights[nChild]);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         // joiner function
                         popAmount = 0;
                         pushAmount = sj.getJoinPush(numWork);
-                        
+
                         // push data into the internal joiner buffers
                         int nChild;
                         int popWeights[] = sj.getJoinPopWeights(numWork);
-                        for (nChild = 0; nChild < sj.getNumChildren(); nChild++)
+                        for (nChild = 0;
+                            nChild < sj.getNumChildren();
+                            nChild++)
                         {
-                            Iterator lastChild = getLastStream(sj.getChild(nChild));
-                            BufferStatus bufferAfter = (BufferStatus) targetBufferAfter.get(lastChild);
+                            Iterator lastChild =
+                                getLastStream(sj.getChild(nChild));
+                            BufferStatus bufferAfter =
+                                (BufferStatus) targetBufferAfter.get(
+                                    lastChild);
                             bufferAfter.popData(popWeights[nChild]);
                         }
                     }
@@ -421,8 +544,7 @@ public class ScheduleBuffers extends DestroyedClass
                     if (popAmount > 0)
                     {
                         BufferStatus bufferBefore =
-                            (BufferStatus) targetBufferBefore.get(
-                                workStream);
+                            (BufferStatus) targetBufferBefore.get(workStream);
                         bufferBefore.popData(popAmount);
                     }
 
@@ -430,16 +552,87 @@ public class ScheduleBuffers extends DestroyedClass
                     if (pushAmount > 0)
                     {
                         BufferStatus bufferAfter =
-                            (BufferStatus) targetBufferAfter.get(
-                                workStream);
+                            (BufferStatus) targetBufferAfter.get(workStream);
 
                         bufferAfter.pushData(pushAmount);
                     }
                 }
                 else if (workStream.isFeedbackLoop() != null)
                 {
-                    // not done yet
-                    ASSERT(false);
+                    FeedbackLoopIter feedbackLoop =
+                        workStream.isFeedbackLoop();
+                    Iterator body = feedbackLoop.getBodyChild();
+                    Iterator loop = feedbackLoop.getLoopChild();
+
+                    int popAmount, pushAmount;
+
+                    // check if the function is a splitter or joiner function
+                    // and get appropriate pop/push values
+                    // also update the internal buffers!
+                    if (feedbackLoop.getSplitterWork(numWork) == workFunc)
+                    {
+                        // splitter function
+                        popAmount = 0;
+                        pushAmount =
+                            feedbackLoop.getSplitPushWeights(numWork)[0];
+
+                        // pop data from the internal body-splitter buffer
+                        {
+                            BufferStatus bodyBuffer =
+                                (BufferStatus) targetBufferAfter.get(body);
+                            bodyBuffer.popData(
+                                feedbackLoop.getSplitPop(numWork));
+                        }
+                        
+                        // push data to the internal splitter-loop buffer
+                        {
+                            BufferStatus loopBuffer =
+                                (BufferStatus) targetBufferBefore.get(loop);
+                            loopBuffer.pushData(
+                                feedbackLoop.getSplitPushWeights(numWork)[1]);
+                        }
+                        
+                    }
+                    else
+                    {
+                        // joiner function
+                        popAmount =
+                            feedbackLoop.getJoinPopWeights(numWork)[0];
+                        pushAmount = 0;
+
+                        // push data to the internal joiner-body buffer
+                        {
+                            BufferStatus bodyBuffer =
+                                (BufferStatus) targetBufferBefore.get(body);
+                            bodyBuffer.pushData(
+                                feedbackLoop.getJoinPush(numWork));
+                        }
+                        
+                        // pop data from the internal loop-joiner buffer
+                        {
+                            BufferStatus loopBuffer =
+                                (BufferStatus) targetBufferAfter.get(loop);
+                            loopBuffer.popData(
+                                feedbackLoop.getJoinPopWeights(numWork)[1]);
+                        }
+                    }
+
+                    // update buffer before, only if it's used
+                    if (popAmount > 0)
+                    {
+                        BufferStatus bufferBefore =
+                            (BufferStatus) targetBufferBefore.get(workStream);
+                        bufferBefore.popData(popAmount);
+                    }
+
+                    // update buffer after only if it's used
+                    if (pushAmount > 0)
+                    {
+                        BufferStatus bufferAfter =
+                            (BufferStatus) targetBufferAfter.get(workStream);
+
+                        bufferAfter.pushData(pushAmount);
+                    }
                 }
                 else
                     ERROR("stream variable is not a known stream type!");

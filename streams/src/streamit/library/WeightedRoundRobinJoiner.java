@@ -2,75 +2,80 @@ package streamit;
 
 import java.util.*;
 
-public class WeightedRoundRobinJoiner extends Joiner {
-    List srcsWeight = new ArrayList ();
+public class WeightedRoundRobinJoiner extends Joiner
+{
+    List srcsWeight = new ArrayList();
 
-    void addWeight (Integer weight)
+    void addWeight(Integer weight)
     {
-        ASSERT (weight != null && weight.intValue () >= 0);
+        ASSERT(weight != null && weight.intValue() >= 0);
 
-        srcsWeight.add (weight);
+        srcsWeight.add(weight);
     }
 
-    public boolean isInputUsed (int index)
+    public boolean isInputUsed(int index)
     {
-        ASSERT (index < srcsWeight.size ());
-        return ((Integer)srcsWeight.get(index)).intValue () != 0;
+        ASSERT(index < srcsWeight.size());
+        return ((Integer) srcsWeight.get(index)).intValue() != 0;
     }
 
-    public void connectGraph ()
+    public void connectGraph()
     {
         // do I even have anything to do?
-        ASSERT (srcs.size () == srcsWeight.size ());
-        super.connectGraph ();
+        ASSERT(srcs.size() == srcsWeight.size());
+        super.connectGraph();
     }
 
-    public void work ()
+    public void work()
     {
-        ASSERT (srcsWeight.size () == srcs.size ());
+        ASSERT(srcsWeight.size() == srcs.size());
 
         int inputIndex;
-        for (inputIndex = 0; inputIndex < srcs.size (); inputIndex++)
+        for (inputIndex = 0; inputIndex < srcs.size(); inputIndex++)
         {
             int inputCount;
-            for (inputCount = ((Integer)srcsWeight.get (inputIndex)).intValue (); inputCount > 0 ; inputCount--)
+
+            for (inputCount =
+                ((Integer) srcsWeight.get(inputIndex)).intValue();
+                inputCount > 0;
+                inputCount--)
             {
-                passOneData (input [inputIndex], output);
+                passOneData(input[inputIndex], output);
             }
         }
     }
 
-    public int [] getWeights ()
+    public int[] getWeights()
     {
-        int numChildren = srcs.size ();
-        int [] weights = new int [numChildren];
-        
+        int numChildren = srcs.size();
+        int[] weights = new int[numChildren];
+
         int i;
-        for (i=0;i<numChildren;i++)
+        for (i = 0; i < numChildren; i++)
         {
-            if (((Stream)srcs.get (i)).input != null)
+            if (srcs.get(i) != null && ((Stream) srcs.get(i)).input != null)
             {
-                weights [i] = ((Integer)srcsWeight.get (i)).intValue ();
+                weights[i] = ((Integer) srcsWeight.get(i)).intValue();
             }
         }
-        
+
         return weights;
     }
-    
-    public int getProduction ()
+
+    public int getProduction()
     {
-        int numChildren = srcs.size ();
+        int numChildren = srcs.size();
         int outputTotal = 0;
-        
+
         int i;
-        for (i=0;i<numChildren;i++)
+        for (i = 0; i < numChildren; i++)
         {
-            if (((Stream)srcs.get (i)).input != null)
+            if (srcs.get(i) != null && ((Stream) srcs.get(i)).input != null)
             {
-                outputTotal += ((Integer)srcsWeight.get (i)).intValue ();
+                outputTotal += ((Integer) srcsWeight.get(i)).intValue();
             }
         }
-        
+
         return outputTotal;
     }
 }

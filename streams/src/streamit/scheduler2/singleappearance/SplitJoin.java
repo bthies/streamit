@@ -1,6 +1,6 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: SplitJoin.java,v 1.1 2002-07-02 03:37:49 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.2 2002-07-06 06:06:15 karczma Exp $ */
 
 import streamit.scheduler.iriter./*persistent.*/
 SplitJoinIter;
@@ -29,7 +29,9 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
         {
             splitSched = new PhasingSchedule(this);
             int nPhase;
-            for (nPhase = 0; nPhase < super.getNumSplitPhases(); nPhase++)
+            for (nPhase = 0;
+                nPhase < super.getNumSplitPhases();
+                nPhase++)
             {
                 splitSched.appendPhase(super.getSplitPhase(nPhase));
             }
@@ -111,13 +113,15 @@ public class SplitJoin extends streamit.scheduler.hierarchical.SplitJoin
                 child.computeSchedule();
 
                 // get the amount of data needed to initilize this child
-                int childInitDataConsumption = child.getInitPop();
+                int childInitDataConsumption = child.getInitPeek();
 
-                // add the amount of data needed to allow for peeking
-                // this is the total amount needed to intialize this path
-                // of the split join
+                // this child may need more data in order to safely enter
+                // the steady state computation model (as per notes 02/07/02)
                 childInitDataConsumption
-                    += (child.getSteadyPeek() - child.getSteadyPop());
+                    += MAX(
+                        (child.getSteadyPeek() - child.getSteadyPop())
+                            - (child.getInitPeek() - child.getInitPop()),
+                        0);
 
                 // now figure out how many times the split needs to be run in
                 // initialization to accomodate this child

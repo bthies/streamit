@@ -1,10 +1,11 @@
 package streamit.scheduler.singleappearance;
 
-/* $Id: Pipeline.java,v 1.2 2002-06-30 04:01:20 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.3 2002-07-06 06:06:15 karczma Exp $ */
 
 import java.util.Map;
 import java.util.HashMap;
-import streamit.scheduler.iriter./*persistent.*/PipelineIter;
+import streamit.scheduler.iriter./*persistent.*/
+PipelineIter;
 import streamit.scheduler.hierarchical.StreamInterface;
 import streamit.scheduler.base.StreamFactory;
 import streamit.scheduler.Schedule;
@@ -45,8 +46,9 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
         // number of elements that each child needs to produce
         int numExecutionsForInit[] = new int[getNumChildren()];
         {
-            int consumedByNext = 0;
+            int neededByNext = 0;
 
+            // go through the children from last to first
             int nChild = getNumChildren() - 1;
             for (; nChild >= 0; nChild--)
             {
@@ -60,7 +62,7 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                     // this child actually produces some data - this is
                     // the common case
                     numItersInit =
-                        ((consumedByNext - producesForInit)
+                        ((neededByNext - producesForInit)
                             + producesPerIter
                             - 1)
                             / producesPerIter;
@@ -73,7 +75,7 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                     // make sure that consumedByPrev is 0 (otherwise
                     // I cannot execute the next child, 'cause it will
                     // never get any input)
-                    ASSERT(consumedByNext == 0);
+                    ASSERT(neededByNext == 0);
 
                     // there will be no cycles executed for initialization
                     // of children downstream
@@ -85,14 +87,36 @@ public class Pipeline extends streamit.scheduler.hierarchical.Pipeline
                 numExecutionsForInit[nChild] = numItersInit;
 
                 // and figure out how many data this particular child
-                // needs to initialize the pipeline;  that is:
-                //  + number of iters * steady pop
-                //  + (steady peek - steady pop)
-                //  + init peek (data needed for init of this child only)
-                consumedByNext =
-                    numItersInit * child.getSteadyPop()
-                        + (child.getSteadyPeek() - child.getSteadyPop())
-                        + child.getInitPeek();
+                // needs to initialize the pipeline.  this is complicated
+                // by the fact that there are essentially two separate
+                // init stages, and because the extra peek on one of these 
+                // might be different from the steady-state peek
+                // explanation in notebook, 02/07/02
+                {
+                    // compute the two-stage-init peek and pop values
+                    int pop_i =
+                        child.getInitPop()
+                            + numItersInit * child.getSteadyPop();
+                    int peek_i =
+                        MAX(
+                            child.getInitPeek(),
+                            child.getInitPop()
+                                + numItersInit * child.getSteadyPop()
+                                + (child.getSteadyPeek()
+                                    - child.getSteadyPop()));
+
+                    // now save how much data is needed before peek adjust:
+                    neededByNext = peek_i;
+
+                    // and perform the peek adjust
+                    neededByNext
+                        += MAX(
+                            (child.getSteadyPeek()
+                                - child.getSteadyPop())
+                                - (peek_i - pop_i),
+                            0);
+
+                }
             }
         }
 

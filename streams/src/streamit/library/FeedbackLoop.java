@@ -31,6 +31,8 @@ public class FeedbackLoop extends Stream
     {
         this.delay = delay;
     }
+    
+    public int getDelay() { return delay; }
 
     // specifies the header
     public void setJoiner(SplitJoin.SplitJoinType type)

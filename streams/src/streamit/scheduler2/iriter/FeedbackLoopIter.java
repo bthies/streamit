@@ -1,6 +1,6 @@
 package streamit.scheduler.iriter;
 
-/* $Id: FeedbackLoopIter.java,v 1.6 2002-06-30 04:01:13 karczma Exp $ */
+/* $Id: FeedbackLoopIter.java,v 1.7 2002-07-06 06:06:13 karczma Exp $ */
 
 /**
  * <dl>
@@ -35,4 +35,10 @@ public interface FeedbackLoopIter extends IteratorBase, SplitterNJoinerIter
      * @return iterator for the loop of the FeedbackLoop
      */
     public Iterator getLoopChild ();
+    
+    /**
+     * Returns the delay size for this feedback loop.
+     * @return delay size
+     */
+    public int getDelaySize();
 }

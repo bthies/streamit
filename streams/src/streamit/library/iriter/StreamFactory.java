@@ -1,6 +1,6 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.2 2002-07-02 03:37:41 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.3 2002-07-06 06:06:05 karczma Exp $ */
 
 import streamit.misc.DestroyedClass;
 import streamit.scheduler.iriter.Iterator;
@@ -8,6 +8,7 @@ import streamit.scheduler.base.StreamInterface;
 import streamit.scheduler.singleappearance.Filter;
 import streamit.scheduler.singleappearance.Pipeline;
 import streamit.scheduler.singleappearance.SplitJoin;
+import streamit.scheduler.singleappearance.FeedbackLoop;
 
 /**
  * This class basically implements the StreamFactory interface.  In the 
@@ -34,6 +35,11 @@ public class StreamFactory
         if (streamIter.isSplitJoin() != null)
         {
             return new SplitJoin(streamIter.isSplitJoin(), this);
+        }
+
+        if (streamIter.isFeedbackLoop() != null)
+        {
+            return new FeedbackLoop(streamIter.isFeedbackLoop(), this);
         }
 
         // not implemented yet

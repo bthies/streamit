@@ -65,8 +65,7 @@ public class MakefileGenerator
 	    if (RawBackend.rawRows > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 		//fix for snake boot race condition
-		//this should not be needed anymore
-		//fw.write("MULTI_SNAKEBOOT = 0\n\n");
+		fw.write("MULTI_SNAKEBOOT = 0\n\n");
 	    }
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {

@@ -1,4 +1,4 @@
-7/29/02 -- AAL 
+7/29/02 -- AAL
 Basically did nothing to the c code. It seems as though it only does 1 output per steady state cycle, so I just let it be and calculated with the cycles that the outputs were produced from.
 
 

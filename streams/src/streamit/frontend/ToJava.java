@@ -5,7 +5,6 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import antlr.BaseAST;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -21,35 +20,6 @@ class ToJava
         String r = "";
         while (x-- > 0) r = r + "  ";
         return r;
-    }
-
-    public String toStringTree(BaseAST t) {
-        String ts=getIndent ();
-        ts += t.toString() + "\n";
-        if ( t.getFirstChild()!=null ) indent ++;
-        if ( t.getFirstChild()!=null ) {
-            ts += (toStringTree ((BaseAST)t.getFirstChild()));
-        }
-        if ( t.getFirstChild()!=null ) indent--;
-        if ( t.getNextSibling()!=null ) {
-            ts += (toStringTree ((BaseAST)t.getNextSibling()));
-        }
-        return ts;
-    }
-
-    /** Print out a child-sibling tree in LISP notation */
-    public String toStringList(BaseAST t) {
-        String ts="";
-        if ( t.getFirstChild()!=null ) ts+=" <#";
-        ts += " "+t.toString();
-        if ( t.getFirstChild()!=null ) {
-            ts += (toStringList ((BaseAST)t.getFirstChild()));
-        }
-        if ( t.getFirstChild()!=null ) ts+=" #>";
-        if ( t.getNextSibling()!=null ) {
-            ts += (toStringList ((BaseAST)t.getNextSibling()));
-        }
-        return ts;
     }
 
     public void printUsage()

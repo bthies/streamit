@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBlock.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JBlock.java,v 1.2 2001-09-27 18:47:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -117,6 +117,13 @@ public class JBlock extends JStatement {
  // ----------------------------------------------------------------------
   // DATA MEMBERS
   // ----------------------------------------------------------------------
+
+    /**
+     * Returns array (internal representation) of body of this.  
+     */
+    public JStatement[] getStatements() {
+	return body;
+    }
 
   protected final JStatement[]		body;
 }

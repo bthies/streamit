@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.2 2001-09-25 22:52:38 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.3 2001-09-27 18:47:51 thies Exp $
  */
 
 package at.dms.kjc;
@@ -348,6 +348,13 @@ public class JMethodDeclaration extends JMemberDeclaration {
   // ----------------------------------------------------------------------
   // DATA MEMBERS
   // ----------------------------------------------------------------------
+
+    /**
+     * Returns array (internal representation) of statements in this.  
+     */
+    public JStatement[] getStatements() {
+	return body.getStatements();
+    }
 
   // $$$ MOVE TO BE PRIVATE
   protected int				modifiers;

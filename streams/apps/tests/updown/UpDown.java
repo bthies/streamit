@@ -1,6 +1,6 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
- * $Id: UpDown.java,v 1.7 2001-10-31 16:59:47 dmaze Exp $
+ * $Id: UpDown.java,v 1.8 2001-10-31 20:40:58 dmaze Exp $
  */
 
 import streamit.*;
@@ -22,7 +22,7 @@ class UpDownGen extends Filter implements UpDownMsg
     int x;
     public void init()
     {
-        streamOutput = new Channel(Integer.TYPE, 1);
+        output = new Channel(Integer.TYPE, 1);
         up = true;
         x = 0;
     }
@@ -30,7 +30,7 @@ class UpDownGen extends Filter implements UpDownMsg
     {
         if (up) x++;
         else x--;
-        streamOutput.pushInt(x);
+        output.pushInt(x);
     }
     public void setUp(boolean up)
     {
@@ -46,19 +46,19 @@ class Limiter extends Filter
 
     public void init(UpDownMsgPortal p)
     {
-        streamInput = new Channel(Integer.TYPE, 1);
-        streamOutput = new Channel(Integer.TYPE, 1);
+        input = new Channel(Integer.TYPE, 1);
+        output = new Channel(Integer.TYPE, 1);
         this.p = p;
 	p.regSender(this);
     }
     public void work()
     {
-        int val = streamInput.popInt();
+        int val = input.popInt();
         if (val <= 0)
             p.setUp(true);
         if (val >= 10)
             p.setUp(false);
-        streamOutput.pushInt(val);
+        output.pushInt(val);
     }
 }
 
@@ -66,11 +66,11 @@ class IntPrinter extends Filter
 {
     public void init()
     {
-        streamInput = new Channel(Integer.TYPE, 1);
+        input = new Channel(Integer.TYPE, 1);
     }
     public void work()
     {
-        System.out.println(streamInput.popInt());
+        System.out.println(input.popInt());
     }
 }
 

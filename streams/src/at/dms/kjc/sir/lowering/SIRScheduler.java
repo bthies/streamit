@@ -147,13 +147,17 @@ public class SIRScheduler {
 	} else if (schedObject==null) {
 	    // fail
 	    Utils.fail("SIRScheduler found a null component in the schedule " +
-		       "(expected List or SIRFilter)");
+		       "returned from the scheduling library.  The library " + 
+		       "is only supposed to return Lists and SIRFilters.");
 	    // return value doesn't matter
 	    return null;
 	} else {
 	    // othwerise, fail
-	    Utils.fail("SIRScheduler expected List or SIRFilter, but found " + 
-		       schedObject.getClass());
+	    Utils.fail("SIRScheduler found a component of type " + 
+		       schedObject.getClass() +
+		       " in the schedule " +
+		       "returned from the scheduling library.  The library " + 
+		       "is only supposed to return Lists and SIRFilters.");
 	    // return value doesn't matter
 	    return null;
 	}

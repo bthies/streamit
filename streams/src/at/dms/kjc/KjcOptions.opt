@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.37 2003-05-28 17:01:43 thies Exp $
+ * $Id: KjcOptions.opt,v 1.38 2003-05-28 17:03:49 thies Exp $
  */
 
 prefix Kjc
@@ -31,6 +31,12 @@ longname		"beautify"
 	type		boolean
 	default		"false"
 	help		"Beautifies the source code"
+
+longname		"help"
+	shortcut	"h"
+	type		boolean
+	default		"false"
+	help		"Provides help on using compiler"
 
 longname		"verbose"
 	shortcut	"v"

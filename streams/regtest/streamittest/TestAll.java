@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.10 2002-09-27 22:16:35 aalamb Exp $
+ * $Id: TestAll.java,v 1.11 2002-09-30 17:50:41 thies Exp $
  **/
 package streamittest;
 
@@ -48,7 +48,11 @@ public class TestAll extends TestCase {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.CONSTPROP));
 
-	// const prop, unrolling, fusion
+	// fusion
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.FUSION));
+
+	// const prop and fusion
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.CONSTPROP |
 				       CompilerInterface.FUSION));
@@ -68,6 +72,13 @@ public class TestAll extends TestCase {
 				       CompilerInterface.RAW4 |
 				       CompilerInterface.PARTITION |
 				       CompilerInterface.CONSTPROP));
+
+	/* don't worry about raw 4 with fusion, because now fusion is
+	 * likely to produce such big code that it won't fit on a
+	 * single raw tile, or it breaks the raw assembler.  Raw with
+	 * partitioning should test it instead; fusion will be tested
+	 * on uniproc. path.
+
 	// raw 4 with fusion
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW4 |
@@ -77,6 +88,7 @@ public class TestAll extends TestCase {
 				       CompilerInterface.RAW4 |
 				       CompilerInterface.FUSION |
 				       CompilerInterface.CONSTPROP));
+	*/
 
 	// test raw with 8 tiles to see if problem are being introduced by
 	// the above optimizations

@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.Vector;
 import java.util.Iterator;
 import java.util.Collection;
+import java.util.LinkedList;
 import at.dms.util.Utils;
 
 /** 
@@ -28,6 +29,8 @@ public class SimulationCounter {
     private HashMap joinerBufferCounts;
     
     private HashMap joinerInitPathCalls;
+
+    private HashMap joinerReceiveBuffer;
     
     static 
     {
@@ -35,6 +38,7 @@ public class SimulationCounter {
     }
     
     public SimulationCounter(HashMap joinerSchedules) {
+	joinerReceiveBuffer = new HashMap();
 	arcCountsIncoming = new HashMap();
 	arcCountsOutgoing = new HashMap();
 	joinerInitPathCalls = new HashMap();
@@ -43,6 +47,24 @@ public class SimulationCounter {
 	currentJoinerScheduleNode = (HashMap)joinerSchedules.clone();
 	joinerBufferCounts = new HashMap();
     }
+
+    public String getJoinerReceiveBuffer(FlatNode node) {
+	LinkedList list = (LinkedList)joinerReceiveBuffer.get(node);
+	if (list == null)
+	    Utils.fail("trying to pop an empty joiner receive buffer");
+	return (String)list.removeFirst();
+    }
+    
+    public void addJoinerReceiveBuffer(FlatNode node, String buffer) 
+    {
+	LinkedList list = (LinkedList)joinerReceiveBuffer.get(node);
+	if (list == null) {
+	    list = new LinkedList();
+	    joinerReceiveBuffer.put(node, list);
+	}
+	list.add(buffer);
+    }
+    
 
     public String getJoinerBuffer(FlatNode node) 
     {

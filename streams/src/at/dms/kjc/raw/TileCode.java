@@ -37,7 +37,7 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	tiles = new HashSet();
 	tiles.addAll(Simulator.initSchedules.keySet());
 	tiles.addAll(Simulator.steadySchedules.keySet());
-	
+
 	Iterator tileIterator = tiles.iterator();
 	while(tileIterator.hasNext()) {
 	    Coordinate tile = (Coordinate)tileIterator.next();
@@ -254,10 +254,10 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	while (!(joiner == null || joiner.contents instanceof SIRFilter)) {
 	    found = false;
 	    for (int i = 0; i < joiner.inputs; i++) {
-		if (joiner.incomingWeights[i] > 0) {
+		//	if (joiner.incomingWeights[i] > 0) {
 		    joiner = joiner.incoming[i];
 		    found = true;
-		}
+		    //}
 	    }
 	    if (!found)
 		Utils.fail("cannot find any upstream filter from " + Namer.getName(joiner.contents));
@@ -271,6 +271,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 
     private static int nextPow2(Integer i, FlatNode node) 
     {
+	if (i == null) return 0;
+
 	System.out.println(Namer.getName(node.contents) + " BufferSize = " + i);
 	
 	//	return 1024;
@@ -321,6 +323,8 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    joinerCode(node);
 	}
 	if (node.contents instanceof SIRFilter) {
+	    if (FileReaderVisitor.fileReaders.contains(node))
+		return;
 	    realTiles.add(Layout.getTile(node.contents));
 	    FlatIRToC.generateCode(node);
 	}

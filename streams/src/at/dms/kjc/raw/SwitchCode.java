@@ -96,7 +96,7 @@ public class SwitchCode extends at.dms.util.Utils
 		    System.out.print("Found Seqeunces of: " +
 				     threeBiggest[0].repetitions + " " + 
 				     threeBiggest[1].repetitions + " " + 
-				     threeBiggest[3].repetitions + "\n");
+				     threeBiggest[2].repetitions + "\n");
 		} 
 
 		System.out.println("sw" + Layout.getTileNumber(tile) 

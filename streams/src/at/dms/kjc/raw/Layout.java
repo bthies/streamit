@@ -214,6 +214,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	random = new Random(17);
 	//random placement
 	randomPlacement();
+	/*
 	System.out.println("Initial Cost: " + placementCost());
 	for (j = 0; j < ANNEALITERATIONS; j++) {
 	    nsucc = 0;
@@ -231,7 +232,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    break;
 	}
 	System.out.println("Final Cost: " + placementCost() + " in  " + j + " iterations.");
+      */
 	dumpLayout();
+
     }
     
     private static void randomPlacement() 
@@ -560,11 +563,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    return;
 	}
 	if (node.contents instanceof SIRJoiner) {
-	    if (!(node.edges[0].contents instanceof SIRJoiner)) {
+	    if (node.edges[0] == null || !(node.edges[0].contents instanceof SIRJoiner)) {
 		joiners.add(node);
 		assigned.add(node);
 		return;
-	    }
+	    } 
 	}
     }
    

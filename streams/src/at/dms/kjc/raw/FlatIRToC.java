@@ -33,6 +33,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     //true if we are using the second buffer management scheme 
     //circular buffers with anding
     public boolean circular;
+    public boolean debug = false;//true;
+    
+    private static int filterID = 0;
 
     public static void generateCode(FlatNode node) 
     {
@@ -89,6 +92,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	if (self.getPeekInt() > 4 * self.getPopInt()) 
 	    circular = false;
       
+	//System.out.println(Namer.getName(self));
+
 	//Entry point of the visitor
 	print("#include <raw.h>\n");
 	print("#include <math.h>\n\n");
@@ -289,6 +294,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	}
 	print(" while (1) {\n");
+	if (debug) print("   print_int("+ Layout.getTileNumber(filter) + ");\n");
     }
     
     private void printCircularWorkTrailer() 
@@ -360,6 +366,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    }
 	}
 	print(" while (1) {\n");
+	if (debug) print("   print_int("+   Layout.getTileNumber(filter) + ");\n");
     }
     
     private void printWorkTrailer() 

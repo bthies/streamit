@@ -166,14 +166,22 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		       "\"];");
 	}
 	
+	if (node.contents instanceof SIRJoiner) {
+	    for (int i = 0; i < node.inputs; i++) {
+		buf.append(Namer.getName(node.incoming[i].contents) + " -> " 
+			   + Namer.getName(node.contents));
+		buf.append("[label=\"" + node.incomingWeights[i] + "\"];\n");
+	    }
+      
+	}
 	for (int i = 0; i < node.ways; i++) {
+	    if (node.edges[i].contents instanceof SIRJoiner)
+		continue;
 	    buf.append(Namer.getName(node.contents) + " -> " 
 		       + Namer.getName(node.edges[i].contents));
 	    buf.append("[label=\"" + node.weights[i] + "\"];\n");
-	    
 	}
     }
 }
-
 
 

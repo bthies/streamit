@@ -36,6 +36,8 @@ public class FlatNode {
 	if (op instanceof SIRFilter) {
 	    ways = 0;
 	    inputs = 0;
+	    edges = new FlatNode[1];
+	    edges[0] = null;
 	}
 		   
 	if (op instanceof SIRJoiner) {
@@ -44,6 +46,8 @@ public class FlatNode {
 	    inputs = joiner.getWays();
 	    incoming = new FlatNode[inputs];
 	    incomingWeights = joiner.getWeights();
+	    edges = new FlatNode[1];
+	    edges[0] = null;
 	}
 	if (op instanceof SIRSplitter) {
 	    SIRSplitter splitter = (SIRSplitter)op;

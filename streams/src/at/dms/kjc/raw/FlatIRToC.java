@@ -164,8 +164,8 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    print("register float csto asm(\"$csto\");\n");
-	    print("register float csti asm(\"$csti\");\n");
+	    print("register float " + Util.CSTOVAR + " asm(\"$csto\");\n");
+	    print("register float " + Util.CSTIVAR + " asm(\"$csti\");\n");
 	}
 	
 
@@ -220,9 +220,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//initialize the dummy network receive value
 	if (KjcOptions.decoupled) {
 	    if (self.getInputType().isFloatingPoint()) 
-		print("  csti = 1.0;\n");
+		print("  " + Util.CSTIVAR + " = 1.0;\n");
 	    else 
-		print("  csti = 1;\n");
+		print("  " + Util.CSTIVAR + " = 1;\n");
 	}
 
 	//call the raw_init() function for the static network
@@ -1497,7 +1497,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
 	    print("{\n");
-	    print("csto = ");
+	    print(Util.CSTOVAR + " = ");
 	    val.accept(this);
 	    for (int i = 0; i < dims.length; i++) {
 		print("[" + RawExecutionCode.ARRAY_INDEX + i + "]");

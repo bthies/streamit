@@ -182,16 +182,11 @@ class DirectConvertCommunication extends SLIRReplacingVisitor
 	String variable = "integer";
 	CType type = CStdType.Integer;
 
-	if (self.getType().isFloatingPoint()) {
-	    type = CStdType.Float;
-	    variable = "fp";
-	}	
-
 	//hopefully this works: the "." in the var name
 	JLocalVariableExpression csti = 
 	    new JLocalVariableExpression(null,
 					 new JGeneratedLocalVariable(null, 0, type, 
-							    "csti",
+							    Util.CSTIVAR,
 							    null));
 							    
 	return csti;

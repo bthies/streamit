@@ -17,6 +17,9 @@ import java.io.*;
  * This class contains various function used by multiple passes
  */
 public class Util extends at.dms.util.Utils {
+    public static String CSTOVAR = "__csto__";
+    public static String CSTIVAR = "__csti__";
+
 
     //returns true if this filter is mapped
     public static boolean countMe(SIRFilter filter) {
@@ -169,7 +172,7 @@ public class Util extends at.dms.util.Utils {
 
     public static String staticNetworkReceiveSuffix(CType tapeType) {
 	if(KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    return "= csti;";
+	    return "= " + CSTIVAR + ";";
 	}
 	else 
 	    return "));";
@@ -179,7 +182,7 @@ public class Util extends at.dms.util.Utils {
 	StringBuffer buf = new StringBuffer();
 	
 	if (KjcOptions.altcodegen || KjcOptions.decoupled) {
-	    buf.append("csto = ");
+	    buf.append(CSTOVAR + " = ");
 	    //temporary fix for type changing filters
 	    buf.append("(" + tapeType + ")");
 	} 

@@ -1,108 +1,89 @@
-#!/bin/sh
+#!/bin/csh
 # AAL 6/25/2002 Script that runs regression tests every evening
-# (gets called from cron job on cagfram-46.lcs.mit.edu user
+# (gets called from cron job on cagfarm-47.lcs.mit.edu user
 # aalamb).
-# $Id: run_reg_tests.sh,v 1.14 2002-10-02 14:56:37 dmaze Exp $
+# $Id: run_reg_tests.sh,v 1.15 2002-10-07 05:05:34 aalamb Exp $
 
 # Environmental Variables
 # home directory for CVS
-echo CVSROOT: ${CVSROOT:=/projects/raw/cvsroot} >/dev/null
-echo STREAMIT_HOME: ${STREAMIT_HOME:=$HOME/streams} >/dev/null
+setenv CVSROOT /projects/raw/cvsroot
+setenv STREAMIT_HOME /u/aalamb/streams/
 # path for RAW tools
-echo TOPDIR: ${TOPDIR:=/home/bits6/$USER/starsearch} >/dev/null
-CLASSPATH=.:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi/3rdparty/JFlex/lib:$STREAMIT_HOME/compiler/kopi/3rdparty/getopt:$STREAMIT_HOME/compiler/kopi/classes:$STREAMIT_HOME/apps/libraries:$STREAMIT_HOME/misc/java:$STREAMIT_HOME/scheduler/v1/java:/usr/uns/java/antlr-2.7.1:$STREAMIT_HOME/compiler/frontend:$STREAMIT_HOME/scheduler/v2/java
-export CVSROOT STREAMIT_HOME CLASSPATH
+setenv TOPDIR /home/bits6/aalamb/starsearch
+setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi/3rdparty/JFlex/lib:$STREAMIT_HOME/compiler/kopi/3rdparty/getopt:$STREAMIT_HOME/compiler/kopi/classes:$STREAMIT_HOME/apps/libraries:$STREAMIT_HOME/misc/java:$STREAMIT_HOME/scheduler/v1/java:/usr/uns/java/antlr-2.7.1:$STREAMIT_HOME/compiler/frontend:$STREAMIT_HOME/scheduler/v2/java
 
 # the script to use for 
 
 # set up automatic testing so that the text tester gets used
-AUTOMATIC_TEST=true
-export AUTOMATIC_TEST
+setenv AUTOMATIC_TEST true
 
 # temporary file use to generate body of the messages
-TEMP=/tmp/regtest.temp
+setenv TEMP /tmp/regtest.temp
 # directory where the log files should be stored
-LOG_DIR=$STREAMIT_HOME/regtest/logs/
+setenv LOG_DIR $STREAMIT_HOME/regtest/logs/
 
 # log file for the all results
-REG_LOG=$STREAMIT_HOME/regtest/regtest_log.txt
+setenv REG_LOG $STREAMIT_HOME/regtest/regtest_log.txt
 # file where error messages are printed
-REG_ERR=$STREAMIT_HOME/regtest/regtest_errors.txt
+setenv REG_ERR $STREAMIT_HOME/regtest/regtest_errors.txt
 # file where success messages are printed
-SUCCESS=$STREAMIT_HOME/regtest/regtest_success.txt
+setenv SUCCESS $STREAMIT_HOME/regtest/regtest_success.txt
 # file where performance messages are stored
-RESULTS=$STREAMIT_HOME/regtest/regtest_results.txt
+setenv RESULTS $STREAMIT_HOME/regtest/regtest_results.txt
 
 
 
 #delete old error file
 rm -rf $REG_ERR
 
-# We'll be bouncing these around for convenience's sake; save old
-# stdout and stderr.
-exec 3>&1 4>&2
 
 ######### Do the acutal regression test run ####################
 # (date/time stamp for this regression test run)
-exec 1>$REG_LOG 2>&1
-echo "**********"
-echo "Starting Regression Test Run"
-/bin/date
-echo "**********"
+echo "**********" >& $REG_LOG
+echo "Starting Regression Test Run" >>& $REG_LOG
+/bin/date >>& $REG_LOG
+echo "**********" >>& $REG_LOG
 # get the latest copy from 
 cd $STREAMIT_HOME
-cvs update -dP
+cvs update -dP >>& $REG_LOG
 cd compiler
 cd kopi
-./compile
+./compile >>& $REG_LOG
 # run the makefile which executes the regression test
-/usr/local/bin/make -C $STREAMIT_HOME/regtest
+/usr/local/bin/make -C $STREAMIT_HOME/regtest >>& $REG_LOG
 # (date/time stamp the end of the run)
-echo "**********"
-echo "Regression Test Run Done"
-/bin/date
-echo "**********"
-exec 1>&3 2>&4
+echo "**********" >>& $REG_LOG
+echo "Regression Test Run Done" >>& $REG_LOG
+/bin/date >>& $REG_LOG
+echo "**********" >>& $REG_LOG
 # touch error file so cat won't complain
 touch $REG_ERR
 
 
 ############# Assemble the Emails 
-LOG_FILENAME=$($STREAMIT_HOME/regtest/tools/make_daily_log.pl $TEMP $LOG_DIR)
+setenv LOG_FILENAME `$STREAMIT_HOME/regtest/tools/make_daily_log.pl $TEMP $LOG_DIR `
 
 
 # create an executive message that doesn't contain performance numbers
-exec 1>$TEMP 2>&1
-echo "Logfile: "
-echo
-echo $LOG_FILENAME
-echo
-echo
-echo
-$STREAMIT_HOME/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS
-exec 1>&3 2>&4
+echo "Logfile: \n" > $TEMP
+echo $LOG_FILENAME >> $TEMP
+echo "\n\n" >> $TEMP
+$STREAMIT_HOME/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS >> $TEMP
 
 # append a tally of which applications are in and out of the regtest
-/bin/sh $STREAMIT_HOME/regtest/tools/apps_directory.sh $TEMP | mail -s "Which applications are in regtest" thies@mit.edu
+/bin/sh apps_directory.sh $TEMP | mail -s "Which applications are in regtest" thies@mit.edu aalamb@mit.edu
 # send mail to with the results of the test to the streamit mailing list
-cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu commit-stream@cag.lcs.mit.edu nmani@cag.lcs.mit.edu
+cat $TEMP | mail -s "StreamIT Regression Test Summary" commit-stream@cag.lcs.mit.edu nmani@cag.lcs.mit.edu
 #cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu 
 
 
 
 ## Send stuff to Andrew
 # collect all output and send it to andrew
-rm -f $TEMP
-exec 1>$TEMP 2>&1
-echo "Regression Run Output:"
-cat $REG_LOG
-echo
-echo
-echo "####################"
-echo
-echo "Error Messages:"
-cat $REG_ERR
-exec 1>&3 2>&4
+echo "Regression Run Output:" > $TEMP;
+cat $REG_LOG >> $TEMP
+echo "\n\n####################\nError Messages:" >> $TEMP;
+cat $REG_ERR >> $TEMP
 # send the log file as a mail message to Andrew
 cat $TEMP | mail -s "Full StreamIT Regression Test Output" aalamb@mit.edu
 
@@ -115,4 +96,4 @@ cat $TEMP | mail -s "StreamIT Regression Test Summary (with performance)" aalamb
 # the results are generated by a separate cron job on cagfarm-48 at 11PM
 
 # clean up temp file
-rm -f $TEMP
+rm -rf $TEMP

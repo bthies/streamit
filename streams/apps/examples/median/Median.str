@@ -15,7 +15,7 @@ float[M]->float[M] filter VectSorter(int M) {
 	for (int i = 0; i< M-1; i++) {
 	    for (int j = i+1; j < M; j++) {
 		if(tmp[i] > tmp[j]) {
-		    int x = tmp[i];
+		    float x = tmp[i];
 		    tmp[i] = tmp[j];
 		    tmp[j] = x;
 		}
@@ -38,7 +38,7 @@ float[M]->float filter FindMedian(int K, int M) {
 	for (i = 0; i < M*M-1; i++) {
 	    for (j=i+1; j<M*M; j++) {
 		if (tmp[i] > tmp[j]) {
-		    int x = tmp[i];
+		    float x = tmp[i];
 		    tmp[i] = tmp[j];
 		    tmp[j] = x;
 		}

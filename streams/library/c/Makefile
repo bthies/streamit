@@ -1,6 +1,6 @@
 #
 # Makefile: Build the StreaMIT C runtime library
-# $Id: Makefile,v 1.4 2001-10-18 15:37:35 dmaze Exp $
+# $Id: Makefile,v 1.5 2001-10-18 16:45:36 dmaze Exp $
 #
 
 CC =		cc
@@ -19,6 +19,7 @@ clean:
 
 $(LIBRARY): $(OBJS)
 	$(AR) r $@ $^
+	$(RANLIB) $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $@ $<

@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 import at.dms.kjc.lir.LIRStreamType;
 import java.util.List;
 import java.util.LinkedList;
@@ -22,8 +23,6 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      * corresponds to the i'th tape in the splitter and joiner.  
      */
     private LinkedList elements;
-
-    
 
     /**
      * Return a shallow clone of the SIRSplitJoin
@@ -121,6 +120,17 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 	elements.add(str);
     }
     
+    /**
+     * See documentation in SIRContainer.
+     */
+    public void replace(SIRStream oldStr, SIRStream newStr) {
+	int index = elements.indexOf(oldStr);
+	Utils.assert(index!=-1,
+		     "Trying to replace with bad parameters, since " + this
+		     + " doesn't contain " + oldStr);
+	elements.set(index, newStr);
+    }
+
     /**
      * Returns the type of this stream.
      */

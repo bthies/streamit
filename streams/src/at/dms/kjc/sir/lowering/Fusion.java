@@ -70,7 +70,7 @@ public class Fusion {
 	    // we can only clone JPhylum objects; can't just clone the
 	    // list of statements in the function.)
 	    JMethodDeclaration oldClone 
-		= (JMethodDeclaration)ObjectDeepCloner.deepCopy(old, false);
+		= (JMethodDeclaration)ObjectDeepCloner.deepCopy(old);
 	    // add these statements to new body
 	    newStatements.addAllStatements(0, oldClone.getStatements());
 	}
@@ -130,7 +130,7 @@ public class Fusion {
 	    // we can only clone JPhylum objects; can't just clone the
 	    // list of statements in the function.)
 	    JMethodDeclaration oldClone 
-		= (JMethodDeclaration)ObjectDeepCloner.deepCopy(old, false);
+		= (JMethodDeclaration)ObjectDeepCloner.deepCopy(old);
 	    // add these statements to new body
 	    newConsumers.addAllStatements(0, oldClone.getStatements());
 	}

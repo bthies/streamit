@@ -17,30 +17,7 @@ public abstract class SIROperator extends at.dms.util.Utils {
      * toplevel stream.
      */
     protected SIRContainer parent;
-    
-    //cloning stuff
-    protected Integer serializationIndex;
-    
-    private void writeObject(ObjectOutputStream oos) 
-	throws IOException {
-	// remember our parent unless it's on the outside
-	if (parent==ObjectDeepCloner.outsideParent) {
-	    this.serializationIndex = SerializationVector.addObject(parent);
-	} else {
-	    this.serializationIndex = null;
-	}
-	oos.defaultWriteObject();
-    }
-    
-    protected Object readResolve() throws Exception {
-	// restore our parent if it wasn't on the outside
-	if (serializationIndex!=null) {
-	    this.parent = (SIRContainer)
-		SerializationVector.getObject(serializationIndex);
-	}
-	return this;
-    }
-    
+
     /**
      * Constructs and operator with parent <parent>.
      */

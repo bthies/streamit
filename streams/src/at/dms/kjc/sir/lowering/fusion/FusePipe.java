@@ -441,8 +441,7 @@ public class FusePipe {
 		JMethodDeclaration work = cur.filter.getWork();
 		// take a deep breath and clone the body of the work function
 		JBlock oldBody = new JBlock(null, work.getStatements(), null);
-		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody, 
-								false);
+		JBlock body = (JBlock)ObjectDeepCloner.deepCopy(oldBody);
 		// move variable declarations from front of <body> to
 		// front of <statements>
 		moveVarDecls(body, statements);

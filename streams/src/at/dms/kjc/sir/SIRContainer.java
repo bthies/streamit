@@ -1,7 +1,9 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 import java.util.List;
+import java.io.*;
 
 /**
  * This represents a 1-to-1 stream that can contain other streams as a
@@ -19,6 +21,23 @@ public abstract class SIRContainer extends SIRStream {
 			   JMethodDeclaration[] methods) {
       super(parent, ident, fields, methods);
     }
+
+  // ----------------------------------------------------------------------
+  // CLONING STUFF
+  // ----------------------------------------------------------------------
+
+    private Object serializationHandle;
+    
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+	this.serializationHandle = ObjectDeepCloner.getHandle(this);
+	oos.defaultWriteObject();
+    }
+    
+    protected Object readResolve() throws Exception {
+	return ObjectDeepCloner.getInstance(serializationHandle, this);
+    }
+
+  // ----------------------------------------------------------------------
 
     /**
      * Returns the relative name by which this object refers to child
@@ -38,6 +57,14 @@ public abstract class SIRContainer extends SIRStream {
      * second.
      */
      public abstract List getTapePairs();
+    
+    /**
+     * Replaces <oldStr> with <newStr> in this.  Requires that
+     * <oldStr> is an immediate child of this.  (It does not do a
+     * deep-replacement.)  Also, it does not mend the calls in the
+     * init function to the newStr.
+     */
+    public abstract void replace(SIRStream oldStr, SIRStream newStr);
     
 }
 

@@ -15,13 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JLocalVariable.java,v 1.4 2002-02-27 22:07:24 mgordon Exp $
+ * $Id: JLocalVariable.java,v 1.5 2002-03-07 01:45:42 thies Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.compiler.TokenReference;
 import at.dms.compiler.CWarning;
+import java.io.*;
 
 /**
  * This class represents a local variable declaration
@@ -58,6 +59,22 @@ public abstract class JLocalVariable extends JPhylum {
     this.expr = expr;
   }
 
+  // ----------------------------------------------------------------------
+  // CLONING STUFF
+  // ----------------------------------------------------------------------
+
+    private Object serializationHandle;
+    
+    private void writeObject(ObjectOutputStream oos)
+	throws IOException {
+	this.serializationHandle = ObjectDeepCloner.getHandle(this);
+	oos.defaultWriteObject();
+    }
+    
+    protected Object readResolve() throws Exception {
+	return ObjectDeepCloner.getInstance(serializationHandle, this);
+    }
+    
   // ----------------------------------------------------------------------
   // ACCESSORS
   // ----------------------------------------------------------------------

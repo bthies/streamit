@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcEmptyVisitor.java,v 1.6 2001-10-30 17:32:36 thies Exp $
+ * $Id: KjcEmptyVisitor.java,v 1.7 2002-03-07 01:45:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -167,6 +167,8 @@ public class KjcEmptyVisitor implements Constants, KjcVisitor {
     if (expr != null) {
       expr.accept(this);
     }
+    // also descend into the vardef
+    self.getVariable().accept(this);
   }
 
   /**

@@ -1,6 +1,7 @@
 package at.dms.kjc.sir;
 
 import at.dms.kjc.*;
+import at.dms.util.*;
 import at.dms.kjc.lir.LIRStreamType;
 import java.util.Arrays;
 import java.util.List;
@@ -121,6 +122,20 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	} else {
 	    // otherwise, <str> is not a child--return null
 	    return null;
+	}
+    }
+
+    /**
+     * See documentation in SIRContainer.
+     */
+    public void replace(SIRStream oldStr, SIRStream newStr) {
+	if (body==oldStr) {
+	    body = newStr;
+	} else if (loop==newStr) {
+	    loop = newStr;
+	} else {
+	    Utils.fail("Trying to replace child " + oldStr + " of " + this
+		       + " but this doesn't contain the child.");
 	}
     }
 

@@ -12,61 +12,101 @@
 package at.dms.kjc;
 
 import at.dms.kjc.sir.*;
+import at.dms.util.*;
 import java.io.*;
 import java.util.*;
-import java.awt.*;
-
 
 /**
  * This class implements general deep cloning using the serializable interface
  */
 public class ObjectDeepCloner
 {
-    public static boolean deepCloneVars;
+    /**
+     * List of things that should be cloned on the current pass.
+     */
+    private static LinkedList toBeCloned;
 
     /**
-     * This is the first enclosing stream operator that is *outside*
-     * the current region of cloning.  References to outside parent
-     * should *not* be cloned, while references to other parents
-     * should be.
+     * List of objects we're preserving across a cloning operation.
      */
-    public static SIROperator outsideParent;
+    private static LinkedList preserved;
 
     // so that nobody can accidentally create an ObjectCloner object
     private ObjectDeepCloner(){}
 
     /**
-     * Deep copy a KJC structure.
+     * Deep copy a stream structure.
      */
-    static public Object deepCopy(JPhylum oldObj, 
-				  boolean cloneVars) {
-	setOutsideParent(oldObj);
-	return doCopy(oldObj, cloneVars);
+    static public Object deepCopy(SIROperator oldObj) {
+	// set the list of what we should clone
+	CloningVisitor visitor = new CloningVisitor();
+	oldObj.accept(visitor);
+	toBeCloned = visitor.getToBeCloned();
+	return doCopy(oldObj);
     }
 
     /**
-     * Deep copy a stream structure.
+     * Deep copy a KJC structure.
      */
-    static public Object deepCopy(SIROperator oldObj, 
-				  boolean cloneVars) {
-	setOutsideParent(oldObj);
-	return doCopy(oldObj, cloneVars);
+    static public Object deepCopy(JPhylum oldObj) {
+	// set the list of what we should clone
+	CloningVisitor visitor = new CloningVisitor();
+	oldObj.accept(visitor);
+	toBeCloned = visitor.getToBeCloned();
+	return doCopy(oldObj);
+    }
+
+    /**
+     * Return a handle for <oldInstance> that it can store to protect
+     * its identity across a serialization operation.
+     */
+    static public Object getHandle(Object oldInstance) {
+	if (toBeCloned.contains(oldInstance)) {
+	    return new Integer(-1);
+	} else {
+	    preserved.add(oldInstance);
+	    return new Integer(preserved.size() - 1);
+	}
+    }
+
+    /**
+     * Given that <newInstance> finds itself being unserialized, this
+     * method returns what its new representation should be given that
+     * it was handed <handle> prior to the serialization.
+     */
+    static public Object getInstance(Object handle, Object newInstance) {
+	Utils.assert(handle instanceof Integer,
+		     "DeepObjectCloner being called with a handle it didn't "
+		     + " give out:  handle is " + handle + " of type " +
+		     handle.getClass());
+	int index = ((Integer)handle).intValue();
+	// if the instance was not preserved, then return current instance
+	if (index==-1) {
+	    /*
+	    System.err.println("Cloning container " + newInstance);
+	    */
+	    return newInstance;
+	} else {
+	    /*
+	    System.err.println("Preserving container " + preserved.get(index));
+	    */
+	    // otherwise, return our old preserved version
+	    return preserved.get(index);
+	}
     }
 
     /**
      * Returns the deep clone of an object, if <cloneVars> is true
      * then clone vars also...
      */ 
-    static private Object doCopy(Object oldObj, boolean cloneVars)
+    static private Object doCopy(Object oldObj)
     {
-	deepCloneVars = cloneVars;
-       
 	ObjectOutputStream oos = null;
 	ObjectInputStream ois = null;
 	try
 	    {
-		// clear the serialization vector
-		SerializationVector.clear();
+		// clear the list of objects we're preserving
+		preserved = new LinkedList();
 		// get an output stream ready
 		ByteArrayOutputStream bos = 
 		    new ByteArrayOutputStream();
@@ -91,26 +131,215 @@ public class ObjectDeepCloner
 	    }
 	return null;
     }
+}
+
+class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 
     /**
-     * Finds the outside parent of <str>.
+     * A list of things that *should* be cloned.  Currently the
+     * following types should not be cloned unless they are an
+     * element of this list:
+     *   - SIRContainer
+     *   - JLocalVariable
      */
-    static private void setOutsideParent(SIROperator str) {
-	outsideParent = str.getParent();
+    private LinkedList toBeCloned;
+
+    public CloningVisitor() {
+	this.toBeCloned = new LinkedList();
     }
 
     /**
-     * Finds the outside parent of KjcObject <obj>.
+     * Return the list of what should be cloned.
      */
-    static private void setOutsideParent(JPhylum obj) {
-	// to find the parent of <obj>, we create an SLIRVisitor that
-	// looks for stream objects and finds their parents.
-	obj.accept(new SLIREmptyVisitor() {
-		// visit init statements, where sub-streams are defined
-		public void visitInitStatement(SIRInitStatement self,
-					       JExpression[] args,
-					       SIRStream target) {
-		    ObjectDeepCloner.outsideParent = target.getParent();
-		}});
+    public LinkedList getToBeCloned() {
+	return toBeCloned;
     }
+
+    /**
+     * Right now the super doesn't visit the variable in a jlocal var,
+     * but make sure we don't, either.
+     */
+    public void visitLocalVariableExpression(JLocalVariableExpression self,
+					     String ident) {
+    }
+
+    /**
+     * Visits a variable decl.
+     */
+    public void visitVariableDefinition(JVariableDefinition self,
+					int modifiers,
+					CType type,
+					String ident,
+					JExpression expr) {
+	super.visitVariableDefinition(self, modifiers, type, ident, expr);
+	// record that we should clone this, since we reached it
+	toBeCloned.add(self);
+    }
+    
+    /**
+     * visits a formal param.
+     */
+    public void visitFormalParameters(JFormalParameter self,
+				      boolean isFinal,
+				      CType type,
+				      String ident) {
+	super.visitFormalParameters(self, isFinal, type, ident);
+	// record that we should clone this, since we reached it
+	toBeCloned.add(self);
+    }
+
+    /**
+     * Visits an init statement (recurses into the target stream)
+     */
+    public void visitInitStatement(SIRInitStatement self,
+				   JExpression[] args,
+				   SIRStream target) {
+	super.visitInitStatement(self, args, target);
+	// also recurse into the stream target
+	target.accept(this);
+    }
+
+    /**
+     * PLAIN-VISITS 
+     */
+
+    /**
+     * For visiting all fields and methods of SIRStreams.
+     */
+    private void visitStream(SIRStream stream) {
+	// visit the methods
+	JMethodDeclaration[] methods = stream.getMethods();
+	for (int i=0; i<methods.length; i++) {
+	    methods[i].accept(this);
+	}
+	// visit the fields
+	JFieldDeclaration[] fields = stream.getFields();
+	for (int i=0; i<fields.length; i++) {
+	    fields[i].accept(this);
+	}
+    }
+	    
+    /* visit a filter */
+    public void visitFilter(SIRFilter self,
+			    SIRStream parent,
+			    JFieldDeclaration[] fields,
+			    JMethodDeclaration[] methods,
+			    JMethodDeclaration init,
+			    JMethodDeclaration work,
+			    CType inputType, CType outputType) {
+	// visit node
+	visitStream(self);
+    }
+  
+    /* visit a splitter */
+    public void visitSplitter(SIRSplitter self,
+			      SIRStream parent,
+			      SIRSplitType type,
+			      JExpression[] weights) {
+	// don't do anything since a filter isn't an sir stream
+    }
+	
+    /* visit a joiner -- don't do anything since a joiner isn't an
+     * SIRStream.  */
+    public void visitJoiner(SIRJoiner self,
+			    SIRStream parent,
+			    SIRJoinType type,
+			    JExpression[] weights) {
+	// don't do anything since a filter isn't an sir stream
+    }
+
+    /**
+     * PRE-VISITS 
+     */
+	    
+    /* pre-visit a pipeline */
+    public void preVisitPipeline(SIRPipeline self,
+				 SIRStream parent,
+				 JFieldDeclaration[] fields,
+				 JMethodDeclaration[] methods,
+				 JMethodDeclaration init,
+				 List elements) {
+	// record this container as one that should be cloned
+	toBeCloned.add(self);
+	// visit node
+	visitStream(self);
+	// visit children
+	for (int i=0; i<elements.size(); i++) {
+	    ((SIRStream)elements.get(i)).accept(this);
+	}
+    }
+
+    /* pre-visit a splitjoin */
+    public void preVisitSplitJoin(SIRSplitJoin self,
+				  SIRStream parent,
+				  JFieldDeclaration[] fields,
+				  JMethodDeclaration[] methods,
+				  JMethodDeclaration init) {
+	// record this container as one that should be cloned
+	toBeCloned.add(self);
+	// visit node
+	visitStream(self);
+	// visit splitter
+	self.getSplitter().accept(this);
+	// visit children
+	for (int i=0; i<self.size(); i++) {
+	    ((SIRStream)self.get(i)).accept(this);
+	}
+	// visit joiner
+	self.getJoiner().accept(this);
+    }
+
+    /* pre-visit a feedbackloop */
+    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+				     SIRStream parent,
+				     JFieldDeclaration[] fields,
+				     JMethodDeclaration[] methods,
+				     JMethodDeclaration init,
+				     int delay,
+				     JMethodDeclaration initPath) {
+	// record this container as one that should be cloned
+	toBeCloned.add(self);
+	// visit node
+	visitStream(self);
+	// visit joiner
+	self.getJoiner().accept(this);
+	// visit body stream
+	self.getBody().accept(this);
+	// visit splitter
+	self.getSplitter().accept(this);
+	// visit loop stream
+	self.getLoop().accept(this);
+    }
+
+    /**
+     * POST-VISITS 
+     */
+	    
+    /* post-visit a pipeline -- do nothing, visit on way down */
+    public void postVisitPipeline(SIRPipeline self,
+				  SIRStream parent,
+				  JFieldDeclaration[] fields,
+				  JMethodDeclaration[] methods,
+				  JMethodDeclaration init,
+				  List elements) {
+    }
+
+    /* post-visit a splitjoin -- do nothing, visit on way down */
+    public void postVisitSplitJoin(SIRSplitJoin self,
+				   SIRStream parent,
+				   JFieldDeclaration[] fields,
+				   JMethodDeclaration[] methods,
+				   JMethodDeclaration init) {
+    }
+
+    /* post-visit a feedbackloop -- do nothing, visit on way down */
+    public void postVisitFeedbackLoop(SIRFeedbackLoop self,
+				      SIRStream parent,
+				      JFieldDeclaration[] fields,
+				      JMethodDeclaration[] methods,
+				      JMethodDeclaration init,
+				      int delay,
+				      JMethodDeclaration initPath) {
+    }
+    
 }

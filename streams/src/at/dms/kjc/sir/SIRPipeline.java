@@ -6,6 +6,7 @@ import at.dms.kjc.lir.LIRStreamType;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.io.*;
 
 /**
  * This represents a pipeline of stream structures, as would be
@@ -48,7 +49,6 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	}
 	return p;
     }
-    
 
     /**
      * Returns the output type of this.
@@ -156,6 +156,17 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public void add(SIRStream str) {
 	elements.add(str);
+    }
+
+    /**
+     * See documentation in SIRContainer.
+     */
+    public void replace(SIRStream oldStr, SIRStream newStr) {
+	int index = elements.indexOf(oldStr);
+	Utils.assert(index!=-1,
+		     "Trying to replace with bad parameters, since " + this
+		     + " doesn't contain " + oldStr);
+	elements.set(index, newStr);
     }
 
     /**

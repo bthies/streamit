@@ -238,7 +238,7 @@ public class SJFlatten
             // instead of the list at this point.)
             JMethodDeclaration old = filter.getWork();
             JMethodDeclaration oldClone = 
-		(JMethodDeclaration)ObjectDeepCloner.deepCopy(old, false);
+		(JMethodDeclaration)ObjectDeepCloner.deepCopy(old);
 	    // get the new statements
 	    List statements = oldClone.getStatements();
             // Add a block containing these statements.

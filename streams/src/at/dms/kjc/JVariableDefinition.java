@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JVariableDefinition.java,v 1.4 2002-02-27 22:07:24 mgordon Exp $
+ * $Id: JVariableDefinition.java,v 1.5 2002-03-07 01:45:42 thies Exp $
  */
 
 package at.dms.kjc;
@@ -29,22 +29,6 @@ import java.io.*;
  * This class represents a local variable definition in the syntax tree
  */
 public class JVariableDefinition extends JLocalVariable {
-     private Integer serializationIndex;
-    
-    private void writeObject(ObjectOutputStream oos)
-	throws IOException {
-	this.serializationIndex = SerializationVector.addObject(this);
-	oos.defaultWriteObject();
-    }
-    
-    private Object readResolve() throws Exception {
-	//if we want to deep clone the vars then just return this
-	if (ObjectDeepCloner.deepCloneVars)
-	    return this;
-	else      //otherwise find the original object in the vector
-	    return SerializationVector.getObject(serializationIndex);
-    }
-    
   // ----------------------------------------------------------------------
   // CONSTRUCTORS
   // ----------------------------------------------------------------------

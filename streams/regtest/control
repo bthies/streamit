@@ -1,10 +1,10 @@
-test fft {
+test fft-inlined {
   directory docs/examples/hand/fft
   source FFT_inlined.java
-  disabled
+  output FFT.out
 }
 
-test fft-local {
+test fft {
   directory docs/examples/hand/fft
   source FFT.java
   output FFT.out

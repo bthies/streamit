@@ -63,14 +63,16 @@ STREAMIT_LIBRARIES = \
   ../library/java/streamit/io/DataPrinter.class \
   ../library/java/streamit/io/FileReader.class \
   ../library/java/streamit/io/FileWriter.class \
-  ../library/java/streamit/Structure.class
+  ../library/java/streamit/Structure.class \
+  ../library/java/streamit/Portal.class
 
 JAVA_TARGET = \
   $(KOPI_TARGET) \
   $(KOPI_TOOL_TARGET) \
   $(STREAMIT_LIBRARIES) \
   ../library/java/streamit/StreamIt.class \
-  streamit/frontend/ToJava.class
+  streamit/frontend/ToJava.class \
+  streamit/frontend/ToKopi.class
 
 JAVA_SRCS = \
   $(KOPI_SRCS) \

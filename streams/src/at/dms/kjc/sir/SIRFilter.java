@@ -12,7 +12,7 @@ import java.util.HashMap;
  * (no prework function or phases), and only a single phase in its
  * work stage.
  *
- * @version $Id: SIRFilter.java,v 1.29 2003-05-16 18:37:55 dmaze Exp $
+ * @version $Id: SIRFilter.java,v 1.30 2003-05-16 20:45:04 dmaze Exp $
  */
 public class SIRFilter extends SIRPhasedFilter implements Cloneable {
     /* Internal invariant: the init phases array is null or has zero
@@ -46,6 +46,9 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
               null, inputType, outputType);
         // Create a single phase corresponding to the work function.
         getPhases()[0] = new SIRWorkFunction(peek, pop, push, work);
+        // Confirm that the work function is in the methods array.
+        if (work != null)
+            addReplacementMethod(work, work);
     }
 
     /**
@@ -139,12 +142,30 @@ public class SIRFilter extends SIRPhasedFilter implements Cloneable {
         return getPhases()[0].getPushInt();
     }
 
+    /* Overridden from SIRStream: */
+    public JMethodDeclaration getWork() 
+    {
+        return getPhases()[0].getWork();
+    }
+    
+    /* Overridden from SIRStream: */
+    public void setWork(JMethodDeclaration work)
+    {
+        addReplacementMethod(work, getWork());
+        getPhases()[0].setWork(work);
+    }
+
     /* Overridden from SIRPhasedFilter: */
+    /* This seems like a good idea, but it breaks SIRTwoStageFilter
+     * being derived from SIRFilter.  Changing that is a Big Change,
+     * since it involves making the entire world phase-aware.  Not
+     * that this is actually a bad thing, but...
     public void setInitPhases(SIRWorkFunction[] initPhases) 
     {
         throw new UnsupportedOperationException
             ("SIRFilters can't have init phases");
     }
+    */
 
     /* Overridden from SIRPhasedFilter: */
     public void setPhases(SIRWorkFunction[] phases)

@@ -116,6 +116,33 @@ public class GenerateCCode
     /** Concatenate everything into a main method and some helper functions **/
     private void setUpSIR() 
     {
+	// RMR { declare iteration counter for top level driver (to allow command line control)
+	JExpression[] args = new JExpression[2];
+
+	JVariableDefinition argc = new JVariableDefinition(null, 0,
+									   CStdType.Integer,
+									   MAINMETHOD_ARGC,
+									   null);
+
+	JVariableDefinition argv = new JVariableDefinition(null, 0,
+									   CStdType.Integer,
+									   MAINMETHOD_ARGV,
+									   null);
+
+	args[0] = new JLocalVariableExpression(null, argc);
+	args[1] = new JLocalVariableExpression(null, argv);
+
+	JMethodCallExpression iterationCounterInitializer =
+	    new JMethodCallExpression(null, ARGHELPER_COUNTER, args);
+
+	JVariableDefinition iterationCounter = new JVariableDefinition(null, 0,
+											   CStdType.Integer,
+											   MAINMETHOD_COUNTER,
+											   iterationCounterInitializer);
+
+	main.addStatement(new JVariableDeclarationStatement(null, iterationCounter, null));
+	// } RMR
+
 	//place any field (that are converted to locals of main) 
 	//array inits into assignment statements and place them at the beginning
 	//of main
@@ -137,6 +164,13 @@ public class GenerateCCode
 	
 	//add the init schedule 
 	main.addStatement(init);
+
+	// RMR { create expression to decrement the iteration counter for top level driver
+	JExpression mainLoopCounter =
+	    new JPostfixExpression(null, 
+					   Constants.OPE_POSTDEC, 
+					   new JLocalVariableExpression(null, iterationCounter));
+	// } RMR
 	
 	//add the steady state
 	if (KjcOptions.absarray || KjcOptions.doloops) {
@@ -145,14 +179,20 @@ public class GenerateCCode
 	    JBlock whileBlock = new JBlock(null, new JStatement[0], null);
 	    whileBlock.addStatement(rstream_pr);
 	    main.addStatement(new JWhileStatement(null,
-						  new JBooleanLiteral(null, true),
+						  // RMR { use conditional while loop to allow command line control
+						  // new JBooleanLiteral(null, true),
+						  mainLoopCounter,
+						  // } RMR
 						  whileBlock,
 						  null));
 	}
 	else {
 	    //add the steady schedule
 	    main.addStatement(new JWhileStatement(null,
-						  new JBooleanLiteral(null, true),
+						  // RMR { use conditional while loop to allow command line control
+						  // new JBooleanLiteral(null, true),
+						  mainLoopCounter,
+						  // } RMR
 						  steady, null));
 	}
 	//add the return statement
@@ -162,11 +202,29 @@ public class GenerateCCode
 
 	//convert all fields to locals of main function
 	convertFieldsToLocals();
+
+	// RMR { construct the parameters to the main driver method of the app
+	JFormalParameter[] mainParams = new JFormalParameter[2];
+
+	mainParams[0] = new JFormalParameter(null, 0, 
+							 CStdType.Integer, 
+							 MAINMETHOD_ARGC, 
+							 true);
+
+	mainParams[1] = new JFormalParameter(null, 0, 
+							 new CArrayType(CStdType.Char, 2), 
+							 MAINMETHOD_ARGV,
+							 true);
+	// } RMR
+
 	//construct the main driver method of the app
 	mainMethod = 
 	    new JMethodDeclaration(null, 0, CStdType.Integer,
 				   MAINMETHOD,
-				   new JFormalParameter[0],
+				   // RMR { use mainParms instead of
+				   // new JFormalParameter[0],
+				   mainParams,
+				   // } RMR
 				   new CClassType[0],
 				   main, null, null);
     }
@@ -223,6 +281,19 @@ public class GenerateCCode
 	newArrayExprs = NewArrayExprs.doit(functions, mainMethod);
 	
 	toRS = new FlatIRToRS(newArrayExprs);
+
+	// RMR { add helper C routine to parse arguments passed to top level driver
+	str.append("\n/* helper routines to parse command line arguments */\n");
+	str.append("#include <unistd.h>\n\n");
+
+	str.append("/* retrieve iteration count for top level driver */\n");
+	str.append("static int " + ARGHELPER_COUNTER + "(int argc, char** argv) {\n");
+	str.append("    int flag;\n");
+	str.append("    while ((flag = getopt(argc, argv, \"i:\")) != -1)\n");
+	str.append("       if (flag == \'i\') return atoi(optarg);\n");
+	str.append("    return -1; /* default iteration count (run indefinitely) */\n");
+	str.append("}\n\n\n");
+	// } RMR
 
 	//if there are structures in the code, include
 	//the structure definition header files
@@ -315,7 +386,7 @@ public class GenerateCCode
 	StringBuffer buf = new StringBuffer();
 	
 	buf.append("#define EXTERNC \n\n");
-	buf.append("extern EXTERNC int printf(char[], ...);\n");
+	buf.append("extern EXTERNC int printf(const char[], ...);\n");
 	buf.append("extern EXTERNC int fprintf(int, char[], ...);\n");
 	buf.append("extern EXTERNC int fopen(char[], char[]);\n");
 	buf.append("extern EXTERNC int fscanf(int, char[], ...);\n");
@@ -343,7 +414,6 @@ public class GenerateCCode
 	buf.append("extern EXTERNC float tanf(float);\n");
 	return buf.toString();
     }
-
 
     /**
      * Returns a for loop that uses local variable *var* to count
@@ -494,6 +564,12 @@ public class GenerateCCode
 	}
     }
 
-    
-    private static String MAINMETHOD = "main";
+    // RMR { allow command arguments and top level iteration counter
+    private static String MAINMETHOD_ARGC    = "argc";
+    private static String MAINMETHOD_ARGV    = "argv";
+    private static String MAINMETHOD_COUNTER = "iterationCounter";
+    private static String ARGHELPER_COUNTER  = "getIterationCounter";
+    // } RMR
+
+    public static String MAINMETHOD = "main";
 }

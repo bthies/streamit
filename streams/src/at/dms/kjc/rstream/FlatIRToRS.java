@@ -179,7 +179,6 @@ public class FlatIRToRS extends ToC
      **/
     private int handleArrayDecl(String ident, CType type)
     {
-	
 	String brackets = KjcOptions.absarray ? "[[" : "";
 	int dim = 1;
 
@@ -376,7 +375,15 @@ public class FlatIRToRS extends ToC
     public void visitBlockStatement(JBlock self,
                                     JavaStyleComment[] comments) {
 	if (self instanceof Jrstream_pr)
-	    print("rstream_pr ");
+	    // RMR { did the rstream C language extensions change?
+	    // replace rstream_pr with a pragma so that rstream 2.1 doesn't barf
+	    //print("rstream_pr ");
+	    {
+		  print("#pragma res parallel");
+		  newLine();
+	    }
+	    // } RMR
+
         print("{");
         pos += TAB_SIZE;
         visitCompoundStatement(self.getStatementArray());
@@ -415,6 +422,14 @@ public class FlatIRToRS extends ToC
 	print("(");
 	int count = 0;
 	
+	// RMR { for the main function, do not use abstract array syntax
+	// (maybe there is a better way to do this)
+	boolean savedKjcOption_absarray = KjcOptions.absarray;
+	if (KjcOptions.absarray)
+	    if (ident == GenerateCCode.MAINMETHOD)
+		  KjcOptions.absarray = false;
+	// } RMR
+
 	for (int i = 0; i < parameters.length; i++) {
 	    if (count != 0) {
 		print(", ");
@@ -423,7 +438,10 @@ public class FlatIRToRS extends ToC
 	    count++;
 	}
 	print(")");
-	
+
+	// RMR { restore saved KjcOption for abstract arrays
+	KjcOptions.absarray = savedKjcOption_absarray;
+	// } RMR
 	//print the declaration then return
 	if (declOnly) {
 	    print(";");
@@ -464,8 +482,20 @@ public class FlatIRToRS extends ToC
 	print(" = ");
 	self.getInitValue().accept(this);
 	print("; ");
+	// RMR { did the rstream C language extensions change?
+	// the following were added so that rstream 2.1 doesn't barf
+	// the output will now more closely resemble a for loop
+	print(self.getInduction().getIdent());
+	// note assumption: always less than
+	print(" < ");
+	// } RMR
 	self.getCondValue().accept(this);
 	print("; ");
+	// RMR { added so that rstream 2.1 doesn't barf; see note above
+	print(self.getInduction().getIdent());
+	// note assumption: always increment
+	print(" += ");
+	// } RMR
 	self.getIncrValue().accept(this);
 	print(") ");
 

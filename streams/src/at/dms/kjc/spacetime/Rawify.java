@@ -780,7 +780,7 @@ public class Rawify
       
 	if (primePump)
 	    mult = filterInfo.primePump - (filterInfo.push == 0 ? 0 :
-		(filterInfo.primePumpItemsNotConsumed() / filterInfo.push));
+					   (filterInfo.primePumpItemsNotConsumed() / filterInfo.push));
 	else if (init)
 	    mult = filterInfo.initMult;
 	else 
@@ -877,21 +877,21 @@ public class Rawify
 	for(int i = 0; i<numPop-1; i++)
 	    for(int j = 0; j<pop; j++) {
 		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		if (KjcOptions.magicdram && node.getPrevious() != null &&
-		    node.getPrevious().isInputTrace())
-		    createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					node, (init || primePump), rawChip);
+		/*if (KjcOptions.magicdram && node.getPrevious() != null &&
+		  node.getPrevious().isInputTrace())
+		  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		  node, (init || primePump), rawChip);*/
 		ins.addRoute(src, SwitchOPort.CSTI);
 		//if(!first) {
 		if(!end) {
-		    if (KjcOptions.magicdram && node.getPrevious() != null &&
-			node.getPrevious().isInputTrace())
-			createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					    node, (init || primePump), rawChip);
-		    if (KjcOptions.magicdram && node.getNext() != null &&
-			node.getNext().isOutputTrace())
-			createMagicDramStore((OutputTraceNode)node.getNext(), 
-					     node, (init || primePump), rawChip);
+		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
+		      node.getPrevious().isInputTrace())
+		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		      node, (init || primePump), rawChip);
+		      if (KjcOptions.magicdram && node.getNext() != null &&
+		      node.getNext().isOutputTrace())
+		      createMagicDramStore((OutputTraceNode)node.getNext(), 
+		      node, (init || primePump), rawChip);*/
 		    ins.addRoute(src,dest);
 		    //}
 		}
@@ -904,39 +904,39 @@ public class Rawify
 		FullIns newIns=null;
 		if(!begin) {
 		    newIns=new FullIns(tile);
-		    if (KjcOptions.magicdram && node.getPrevious() != null &&
-			node.getPrevious().isInputTrace())
-			createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					    node, (init || primePump), rawChip);
+		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
+		      node.getPrevious().isInputTrace())
+		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		      node, (init || primePump), rawChip);*/
 		    newIns.addRoute(src2, SwitchOPort.CSTI2);
 		    code.appendIns(newIns, init||primePump);
 		}
 		/*if(!first) {
-		    newIns = new FullIns(tile);
-		    newIns.addRoute(SwitchIPort.CSTO,dest);
-		    code.appendIns(newIns, init||primePump);
-		}
-		first=false;*/
+		  newIns = new FullIns(tile);
+		  newIns.addRoute(SwitchIPort.CSTO,dest);
+		  code.appendIns(newIns, init||primePump);
+		  }
+		  first=false;*/
 	    }
 	final int turns=content.getPos();
 	for(int turn=0;turn<turns;turn++)
 	    for(int j = 0; j<pop; j++) {
 		FullIns ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		if (KjcOptions.magicdram && node.getPrevious() != null &&
-		    node.getPrevious().isInputTrace())
-		    createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					node, (init || primePump), rawChip);
+		/*if (KjcOptions.magicdram && node.getPrevious() != null &&
+		  node.getPrevious().isInputTrace())
+		  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		  node, (init || primePump), rawChip);*/
 		ins.addRoute(src, SwitchOPort.CSTI);
 		if(!first) {
 		    if(!end) {
-			if (KjcOptions.magicdram && node.getPrevious() != null &&
-			    node.getPrevious().isInputTrace())
-			    createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-						node, (init || primePump), rawChip);
-			if (KjcOptions.magicdram && node.getNext() != null &&
-			    node.getNext().isOutputTrace())
-			    createMagicDramStore((OutputTraceNode)node.getNext(), 
-						 node, (init || primePump), rawChip);
+			/*if (KjcOptions.magicdram && node.getPrevious() != null &&
+			  node.getPrevious().isInputTrace())
+			  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+			  node, (init || primePump), rawChip);
+			  if (KjcOptions.magicdram && node.getNext() != null &&
+			  node.getNext().isOutputTrace())
+			  createMagicDramStore((OutputTraceNode)node.getNext(), 
+			  node, (init || primePump), rawChip);*/
 			ins.addRoute(src,dest);
 		    }
 		}
@@ -949,19 +949,19 @@ public class Rawify
 		FullIns newIns=null;
 		if(!begin) {
 		    newIns=new FullIns(tile);
-		    if (KjcOptions.magicdram && node.getPrevious() != null &&
-			node.getPrevious().isInputTrace())
-			createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					    node, (init || primePump), rawChip);
+		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
+		      node.getPrevious().isInputTrace())
+		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		      node, (init || primePump), rawChip);*/
 		    newIns.addRoute(src2, SwitchOPort.CSTI2);
 		    code.appendIns(newIns, init||primePump);
 		}
 		if(!first) {
 		    newIns = new FullIns(tile);
-		    if (KjcOptions.magicdram && node.getNext() != null &&
-			node.getNext().isOutputTrace())
-			createMagicDramStore((OutputTraceNode)node.getNext(), 
-					     node, (init || primePump), rawChip);
+		    /*if (KjcOptions.magicdram && node.getNext() != null &&
+		      node.getNext().isOutputTrace())
+		      createMagicDramStore((OutputTraceNode)node.getNext(), 
+		      node, (init || primePump), rawChip);*/
 		    newIns.addRoute(SwitchIPort.CSTO,dest2);
 		    code.appendIns(newIns, init||primePump);
 		}
@@ -979,135 +979,135 @@ public class Rawify
 	for(int turn=0;turn<turns2+4;turn++) {
 	    if(turn==turns2)
 		code.appendIns(label, init||primePump);
-	for(int i = 0;i<numTimes;i++) {
-	    for(int j=0;j<pop;j++) {
-		if(numPop==1&&j==0)
-		    pendingSends++;
-		times++;
-		ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		if (KjcOptions.magicdram && node.getPrevious() != null &&
-		    node.getPrevious().isInputTrace())
-		    createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					node, (init || primePump), rawChip);
-		ins.addRoute(src, SwitchOPort.CSTI);
-		if(!end) {
-		    if (KjcOptions.magicdram && node.getPrevious() != null &&
-			node.getPrevious().isInputTrace())
-			createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-					    node, (init || primePump), rawChip);
-		    if (KjcOptions.magicdram && node.getNext() != null &&
-			node.getNext().isOutputTrace())
-			createMagicDramStore((OutputTraceNode)node.getNext(), 
-					     node, (init || primePump), rawChip);
-		    ins.addRoute(src,dest);
-		}
-
-		if(turn>0&&times>1) {
-		    if(!end)
-			ins.addRoute(SwitchIPort.CSTO,dest2);
-		    else
-			ins.addRoute(SwitchIPort.CSTO,dest);
-		}
-		
-		/*if(times>2) {
-		  if(!begin) {
-		  if (KjcOptions.magicdram && node.getPrevious() != null &&
-		  node.getPrevious().isInputTrace())
-		  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		  node, (init || primePump), rawChip);
-		  ins.addRoute(src2,SwitchOPort.CSTI2);
-		  }
-		  pendingSends--;
-		  }*/
-		/*if(turn>1) {
-		  if(!begin) {
-		  if (KjcOptions.magicdram && node.getPrevious() != null &&
-		  node.getPrevious().isInputTrace())
-		  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-		  node, (init || primePump), rawChip);
-		  ins.addRoute(src2,SwitchOPort.CSTI2);
-		  }
-		  }*/
-		code.appendIns(ins, init||primePump);
-		if(times==4) {
-		    times=0;
-		    if(true||!begin) {
-		    //if(turn==0)
-		    //pendingSends++;
-		    if(pendingSends>0) {
-			for(int l=0;l<pendingSends;l++) {
-			    ins=new FullIns(tile);
-			    if(/*turn>0&&*/!begin) {
-				if (KjcOptions.magicdram && node.getPrevious() != null &&
-				    node.getPrevious().isInputTrace())
-				    createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-							node, (init || primePump), rawChip);
-				ins.addRoute(src2,SwitchOPort.CSTI2);
-			    }
-			    if (KjcOptions.magicdram && node.getNext() != null &&
-				node.getNext().isOutputTrace())
-				createMagicDramStore((OutputTraceNode)node.getNext(), 
-						     node, (init || primePump), rawChip);
-			    
-			    if(turn>0&&l<1) {
-				if(!end)
-				    ins.addRoute(SwitchIPort.CSTO,dest2);
-				else
-				    ins.addRoute(SwitchIPort.CSTO,dest);
-			      }
-			    
-			    //if(!begin)
-			    code.appendIns(ins,init||primePump);
-			}
-			pendingSends=0;
-		    }
-		    }
-		}
-		for(int k = 1;k<numPop;k++) {
-		    if(j==0&&k==numPop-1)
+	    for(int i = 0;i<numTimes;i++) {
+		for(int j=0;j<pop;j++) {
+		    if(numPop==1&&j==0)
 			pendingSends++;
 		    times++;
-		    ins=new FullIns(tile);
-		    ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+		    ins = new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
+		      node.getPrevious().isInputTrace())
+		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		      node, (init || primePump), rawChip);*/
+		    ins.addRoute(src, SwitchOPort.CSTI);
+		    if(!end) {
+			/*if (KjcOptions.magicdram && node.getPrevious() != null &&
+			  node.getPrevious().isInputTrace())
+			  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+			  node, (init || primePump), rawChip);
+			  if (KjcOptions.magicdram && node.getNext() != null &&
+			  node.getNext().isOutputTrace())
+			  createMagicDramStore((OutputTraceNode)node.getNext(), 
+			  node, (init || primePump), rawChip);*/
+			ins.addRoute(src,dest);
+		    }
+
+		    if(turn>0&&times>1) {
+			if(!end)
+			    ins.addRoute(SwitchIPort.CSTO,dest2);
+			else
+			    ins.addRoute(SwitchIPort.CSTO,dest);
+		    }
+		
+		    /*if(times>2) {
+		      if(!begin) {
+		      if (KjcOptions.magicdram && node.getPrevious() != null &&
+		      node.getPrevious().isInputTrace())
+		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		      node, (init || primePump), rawChip);
+		      ins.addRoute(src2,SwitchOPort.CSTI2);
+		      }
+		      pendingSends--;
+		      }*/
+		    /*if(turn>1) {
+		      if(!begin) {
+		      if (KjcOptions.magicdram && node.getPrevious() != null &&
+		      node.getPrevious().isInputTrace())
+		      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+		      node, (init || primePump), rawChip);
+		      ins.addRoute(src2,SwitchOPort.CSTI2);
+		      }
+		      }*/
 		    code.appendIns(ins, init||primePump);
 		    if(times==4) {
 			times=0;
 			if(true||!begin) {
-			//if(turn==0)
-			//pendingSends++;
-			if(pendingSends>0) {
-			    for(int l=0;l<pendingSends;l++) {
-				ins=new FullIns(tile);
-				if(/*turn>0&&*/!begin) {
-				    if (KjcOptions.magicdram && node.getPrevious() != null &&
-					node.getPrevious().isInputTrace())
-					createMagicDramLoad((InputTraceNode)node.getPrevious(), 
-							    node, (init || primePump), rawChip);
-				    ins.addRoute(src2,SwitchOPort.CSTI2);
+			    //if(turn==0)
+			    //pendingSends++;
+			    if(pendingSends>0) {
+				for(int l=0;l<pendingSends;l++) {
+				    ins=new FullIns(tile);
+				    if(/*turn>0&&*/!begin) {
+				/*if (KjcOptions.magicdram && node.getPrevious() != null &&
+				  node.getPrevious().isInputTrace())
+				  createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+				  node, (init || primePump), rawChip);*/
+					ins.addRoute(src2,SwitchOPort.CSTI2);
+				    }
+				    /*if (KjcOptions.magicdram && node.getNext() != null &&
+				      node.getNext().isOutputTrace())
+				      createMagicDramStore((OutputTraceNode)node.getNext(), 
+				      node, (init || primePump), rawChip);*/
+			    
+				    if(turn>0&&l<1) {
+					if(!end)
+					    ins.addRoute(SwitchIPort.CSTO,dest2);
+					else
+					    ins.addRoute(SwitchIPort.CSTO,dest);
+				    }
+			    
+				    //if(!begin)
+				    code.appendIns(ins,init||primePump);
 				}
-				if (KjcOptions.magicdram && node.getNext() != null &&
-				    node.getNext().isOutputTrace())
-				    createMagicDramStore((OutputTraceNode)node.getNext(), 
-							 node, (init || primePump), rawChip);
+				pendingSends=0;
+			    }
+			}
+		    }
+		    for(int k = 1;k<numPop;k++) {
+			if(j==0&&k==numPop-1)
+			    pendingSends++;
+			times++;
+			ins=new FullIns(tile);
+			ins.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+			code.appendIns(ins, init||primePump);
+			if(times==4) {
+			    times=0;
+			    if(true||!begin) {
+				//if(turn==0)
+				//pendingSends++;
+				if(pendingSends>0) {
+				    for(int l=0;l<pendingSends;l++) {
+					ins=new FullIns(tile);
+					if(/*turn>0&&*/!begin) {
+					    /*if (KjcOptions.magicdram && node.getPrevious() != null &&
+					      node.getPrevious().isInputTrace())
+					      createMagicDramLoad((InputTraceNode)node.getPrevious(), 
+					      node, (init || primePump), rawChip);*/
+					    ins.addRoute(src2,SwitchOPort.CSTI2);
+					}
+				/*if (KjcOptions.magicdram && node.getNext() != null &&
+				  node.getNext().isOutputTrace())
+				  createMagicDramStore((OutputTraceNode)node.getNext(), 
+				  node, (init || primePump), rawChip);*/
 				
-				if(turn>0&&l<1) {
-				    if(!end)
-					ins.addRoute(SwitchIPort.CSTO,dest2);
-				    else
-					ins.addRoute(SwitchIPort.CSTO,dest);
-				}
+					if(turn>0&&l<1) {
+					    if(!end)
+						ins.addRoute(SwitchIPort.CSTO,dest2);
+					    else
+						ins.addRoute(SwitchIPort.CSTO,dest);
+					}
 
 				//if(!begin)
-				code.appendIns(ins,init||primePump);
+					code.appendIns(ins,init||primePump);
+				    }
+				    pendingSends=0;
+				}
 			    }
-			    pendingSends=0;
-			}
 			}
 		    }
-		    }
-	    }
+		}
 	    
-	}
+	    }
 	}
 	/*for(int i=0;i<numTimes-1;i++) {
 	  FullIns newIns=new FullIns(tile);
@@ -1206,7 +1206,7 @@ public class Rawify
       
 	if (primePump)
 	    mult = filterInfo.primePump - (filterInfo.push == 0 ? 0 :
-		(filterInfo.primePumpItemsNotConsumed() / filterInfo.push));
+					   (filterInfo.primePumpItemsNotConsumed() / filterInfo.push));
 	else if (init)
 	    mult = filterInfo.initMult;
 	else 
@@ -1236,10 +1236,10 @@ public class Rawify
 	if (primePump)
 	    assert (sentItems == (filterInfo.totalItemsSent(init, primePump) - 
 				  filterInfo.primePumpItemsNotConsumed())) :
-		"insane";
+	    "insane";
 	else
 	    assert (sentItems == filterInfo.totalItemsSent(init, primePump)) :
-		"insane";
+	    "insane";
 
 	//generate code to fill the remainder of the cache line
 	if (!KjcOptions.magicdram && node.getNext().isOutputTrace() && 
@@ -1270,8 +1270,8 @@ public class Rawify
     }
         
     private static void createReceiveCode(int iteration, FilterTraceNode node, Trace parent, 
-				   FilterInfo filterInfo, boolean init, boolean primePump, RawTile tile,
-				   RawChip rawChip) 
+					  FilterInfo filterInfo, boolean init, boolean primePump, RawTile tile,
+					  RawChip rawChip) 
     {
 	//if this is the init and it is the first time executing
 	//and a twostage filter, use initpop and multiply this

@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.38 2001-10-31 17:10:57 dmaze Exp $
+ * $Id: LIRToC.java,v 1.39 2001-10-31 21:25:38 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -144,13 +144,15 @@ public class LIRToC
         pos += TAB_SIZE;
         if (body != null) {
             for (int i = 0; i < body.length ; i++) {
-                if (body[i] instanceof JFieldDeclaration) {
+                if (body[i] instanceof JFieldDeclaration &&
+                    !isFieldInterfaceTable((JFieldDeclaration)body[i])) {
                     body[i].accept(this);
                 }
             }
         }
         for (int i = 0; i < fields.length; i++) {
-            fields[i].accept(this);
+            if (!isFieldInterfaceTable(fields[i]))
+                fields[i].accept(this);
         }    
 
         pos -= TAB_SIZE;
@@ -163,10 +165,87 @@ public class LIRToC
             methods[i].accept(this);
         }
 
+        // Print any interface tables there might be.
+        if (body != null) {
+            for (int i = 0; i < body.length ; i++) {
+                if (body[i] instanceof JFieldDeclaration &&
+                    isFieldInterfaceTable((JFieldDeclaration)body[i])) {
+                    expandInterfaceTable((JFieldDeclaration)body[i]);
+                }
+            }
+        }
+        for (int i = 0; i < fields.length; i++) {
+            if (isFieldInterfaceTable(fields[i])) {
+                expandInterfaceTable(fields[i]);
+            }
+        }        
+
         declOnly = false;
         for (int i = 0; i < methods.length ; i++) {
             methods[i].accept(this);
         }
+    }
+
+    /**
+     * Checks to see whether or not a field declaration is initialized
+     * to an SIRInterfaceTable.
+     */
+    private boolean isFieldInterfaceTable(JFieldDeclaration field)
+    {
+        JVariableDefinition vardef = field.getVariable();
+        if (!vardef.hasInitializer()) return false;
+        JExpression init = vardef.getValue();
+        return (init instanceof SIRInterfaceTable);
+    }
+
+    /**
+     * Prints the functions needed for an interface table.  This
+     * writes out the actual code for the receiver wrapper; it
+     * unpackages the structure argument and calls the specified
+     * function with the correct parameters.
+     */
+    private void expandInterfaceTable(JFieldDeclaration field)
+    {
+        JVariableDefinition vardef = field.getVariable();
+        JExpression init = vardef.getValue();
+        SIRInterfaceTable self = (SIRInterfaceTable)init;
+        CClassType iface = self.getIface();
+        CMethod[] imethods = iface.getCClass().getMethods();
+        String iname = iface.getIdent();
+        JMethodDeclaration[] methods = self.getMethods();
+        for (int i = 0; i < methods.length; i++)
+        {
+            newLine();
+            print("void " + iname + "_" + methods[i].getName() +
+                  "(void *data, void *params)");
+            newLine();
+            print("{");
+            pos += TAB_SIZE;
+            newLine();
+            // The method matches the corresponding method in the
+            // interface.
+            CMethod im = imethods[i];
+            String imName = iname + "_" + im.getIdent();
+            // Cast the parameters struct...
+            print(imName + "_params q = params;");
+            // Call the actual function.
+            newLine();
+            print(methods[i].getName() + "(data");
+            for (int j = 0; j < im.getParameters().length; j++)
+                print(", q->p" + j);
+            print(");");
+            pos -= TAB_SIZE;
+            newLine();
+            print("}");
+        }
+        // Print the actual variable definition, too.  We can
+        // just print the left-hand side explicitly and let the
+        // visitor deal with the right.  Using the visitor for
+        // the whole thing gets the wrong type (void).
+        newLine();
+        print("interface_table " + vardef.getIdent() + " = ");
+        self.accept(this);
+        print(";");
     }
 
     /**
@@ -1379,9 +1458,18 @@ public class LIRToC
 
     public void visitInterfaceTable(SIRInterfaceTable self)
     {
+        String iname = self.getIface().getIdent();
         JMethodDeclaration[] methods = self.getMethods();
-        // TODO: actually print this, deal with some of the other cases.
-        print("{ }");
+        boolean first = true;
+        
+        print("{ ");
+        for (int i = 0; i < methods.length; i++)
+        {
+            if (!first) print(", ");
+            first = false;
+            print(iname + "_" + methods[i].getName());
+        }
+        print("}");
     }
     
     public void visitLatency(SIRLatency self)

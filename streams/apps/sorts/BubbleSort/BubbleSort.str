@@ -43,6 +43,7 @@ int->int filter Bubble(int SIZE) {
       push(previous);
       pop();
       keep = 0;
+      first++;
     } else {
       first++;
     }

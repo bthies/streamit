@@ -41,7 +41,6 @@ public class RawBackend {
 
 	structures = structs;
 	
-	Flattener.enableUnrollIfLinear();
 	StructureIncludeFile.doit(structures);
 
 	// set number of columns/rows

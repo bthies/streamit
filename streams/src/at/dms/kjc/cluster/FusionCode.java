@@ -334,6 +334,12 @@ class FusionCode {
 		//p.print("extern void __update_pop_buf__"+i+"();\n");
 		p.print("extern void "+((SIRFilter)node.contents).getInit().getName()+"__"+id+"();\n");
 	    }
+
+	    if (node.contents instanceof SIRTwoStageFilter) {
+		String initWork = ((SIRTwoStageFilter)node.contents).getInitWork().getName()+"__"+id;
+		p.print("extern void "+initWork+"();\n");
+	    }
+
 	    p.print("extern void "+get_work_function(node.contents)+"(int);\n");
 
 	    /*
@@ -432,7 +438,19 @@ class FusionCode {
 			}
 			
 
-			p.print("  "+get_work_function(oper)+"("+init_int+");");
+			if (oper instanceof SIRTwoStageFilter) {
+
+			    String initWork = ((SIRTwoStageFilter)node.contents).getInitWork().getName()+"__"+id;
+			    p.print("  "+initWork+"();");
+
+			    if (init_int > 1) {
+				p.print("  "+get_work_function(oper)+"("+
+					(init_int-1)+");");
+			    }
+			    
+			} else {
+			    p.print("  "+get_work_function(oper)+"("+init_int+");");
+			}
 
 			//p.print(get_loop(init_int, get_work_function(oper)+"();"));
 			p.println();

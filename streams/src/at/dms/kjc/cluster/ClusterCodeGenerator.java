@@ -227,8 +227,28 @@ class ClusterCodeGenerator {
 
 	for (int f = 0; f < fields.length; f++) {
 	    CType type = fields[f].getType();
+
+	    if (type.toString().endsWith("Portal")) continue;
+
+	    JExpression init_val = fields[f].getVariable().getValue();
 	    String ident = fields[f].getVariable().getIdent();
-	    r.add(TypeToC(type)+" "+ident+"__"+id+";\n");
+
+	    r.add(TypeToC(type)+" "+ident+"__"+id);
+
+	    if (init_val == null) {
+		if (type.isOrdinal()) r.add(" = 0");
+		if (type.isFloatingPoint()) r.add(" = 0.0f");
+	    }
+
+	    if (init_val != null && init_val instanceof JIntLiteral) {
+		r.add(" = "+((JIntLiteral)init_val).intValue());
+	    }
+
+	    if (init_val != null && init_val instanceof JFloatLiteral) {
+		r.add(" = "+((JFloatLiteral)init_val).floatValue());
+	    }
+
+	    r.add(";\n");
 	}
 
 	r.add("\n");

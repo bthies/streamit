@@ -12,7 +12,7 @@ import java.util.Collections;
  * false copies.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GenerateCopies.java,v 1.2 2003-07-31 20:36:34 dmaze Exp $
+ * @version $Id: GenerateCopies.java,v 1.3 2003-08-01 13:20:10 dmaze Exp $
  */
 public class GenerateCopies extends SymbolTableVisitor
 {
@@ -118,15 +118,17 @@ public class GenerateCopies extends SymbolTableVisitor
         // addStatement(); visiting a StmtBlock will save this.
         // So, create a block containing a shallow copy, then
         // visit:
+        Expression fel = new ExprArray(null, from, index);
+        Expression tel = new ExprArray(null, to, index);
         Statement body =
             new StmtBlock(null,
                           Collections.singletonList(new StmtAssign(null,
-                                                                   to,
-                                                                   from)));
+                                                                   tel,
+                                                                   fel)));
         body = (Statement)body.accept(this);
 
         // Now generate the loop, we have all the parts.
-        addStatement(new StmtFor(null, incr, cond, incr, body));
+        addStatement(new StmtFor(null, init, cond, incr, body));
     }
 
     private void makeCopyStruct(Expression from, Expression to,

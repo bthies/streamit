@@ -53,15 +53,15 @@ public class FuseSplit {
     }
 
 
-    //Uses partition to partion children according to <group>
-    public static SIRStream fuse(SIRSplitJoin sj, PartitionGroup group) {
+    //Uses partition to partion children according to <partition>
+    public static SIRStream fuse(SIRSplitJoin sj, PartitionGroup partition) {
 	{//Quick check
-	    Utils.assert(group.getNumChildren()==sj.size(),
+	    Utils.assert(partition.getNumChildren()==sj.size(),
 			 "More children in partitioning than in splitjoin " + sj);
-	    for(int i=0;i<group.size();i++) {
+	    for(int i=0;i<partition.size();i++) {
 		// if we're trying to fuse something that's not a filter, just return
-		if (group.get(i)>1) {
-		    for (int j=group.getFirst(i); j<=group.getLast(i); j++) {
+		if (partition.get(i)>1) {
+		    for (int j=partition.getFirst(i); j<=partition.getLast(i); j++) {
 			if (!(sj.get(j) instanceof SIRFilter)) {
 			    System.err.println("Tried to fuse non-filter in SJ; returning original SJ.");
 			    return sj;
@@ -71,7 +71,7 @@ public class FuseSplit {
 	    }
 	}
 
-	int numParts = group.size();
+	int numParts = partition.size();
 	if (numParts==1) {
 	    // if fusing whole thing
 	    return fuse(sj);
@@ -88,48 +88,19 @@ public class FuseSplit {
 	
 	System.err.println("Fusing " + (sj.size()) + " SplitJoin filters into " + numParts + " filters..."); 
 
-	int[] oldSplit=sj.getSplitter().getWeights();
-	int[] oldJoin=sj.getJoiner().getWeights();
-	JExpression[] newSplit=new JExpression[numParts];
-	JExpression[] newJoin=new JExpression[numParts];
-	SIRSplitJoin newSplitJoin=new SIRSplitJoin();
-	newSplitJoin.setParent(sj.getParent());
-	newSplitJoin.setIdent(sj.getIdent());
-	newSplitJoin.setFields(sj.getFields());
-	newSplitJoin.setMethods(sj.getMethods());
-	for(int i=0,j=0;i<numParts;i++) {
-	    int incr=group.get(i);
-	    if(incr==1) {
-		newSplitJoin.add(sj.get(j));
-		newSplit[i]=new JIntLiteral(oldSplit[j]);
-		newJoin[i]=new JIntLiteral(oldJoin[j]);
-	    } else {
-		int sumSplit=0;
-		int sumJoin=0;
-		JExpression[] childSplit=new JExpression[incr];
-		JExpression[] childJoin=new JExpression[incr];
-		SIRSplitJoin childSplitJoin=new SIRSplitJoin();
-		for(int k=incr,l=j,m=0;k>0;k--,l++,m++) {
-		    sumSplit+=oldSplit[l];
-		    sumJoin+=oldJoin[l];
-		    childSplit[m]=new JIntLiteral(oldSplit[l]);
-		    childJoin[m]=new JIntLiteral(oldJoin[l]);
-		    childSplitJoin.add(sj.get(l));
-		}
-		newSplit[i]=new JIntLiteral(sumSplit);
-		newJoin[i]=new JIntLiteral(sumJoin);
-		childSplitJoin.setSplitter(SIRSplitter.create(childSplitJoin,sj.getSplitter().getType(),childSplit));
-		childSplitJoin.setJoiner(SIRJoiner.create(childSplitJoin,sj.getJoiner().getType(),childJoin));
-		newSplitJoin.add(childSplitJoin);
-		fuse(childSplitJoin);
-	    }
-	    j+=incr;
-	}
-	newSplitJoin.setSplitter(SIRSplitter.create(newSplitJoin,sj.getSplitter().getType(),newSplit));
-	newSplitJoin.setJoiner(SIRJoiner.create(newSplitJoin,sj.getJoiner().getType(),newJoin));
-	// replace in parent
-	sj.getParent().replace(sj,newSplitJoin);
-	return newSplitJoin;
+
+        // first refactor the splitjoin so we can do partial fusing
+        SIRSplitJoin factored = RefactorSplitJoin.addHierarchicalChildren(sj, partition);
+        // then fuse the eligible components
+        for (int i=0; i<partition.size(); i++) {
+            // leave the 1-way components alone, since they weren't
+            // getting fused originally
+            if (partition.get(i)>1) {
+                fuse((SIRSplitJoin)factored.get(i));
+            }
+        }
+
+	return factored;
     }
 
     public static SIRStream fuse(SIRSplitJoin sj)

@@ -90,6 +90,7 @@ public class RawBackend {
 	    //new BranchAnalyzer().analyzeBranches(str);
 	}
 
+	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "before.dot");
 
 	// gather application-characterization statistics

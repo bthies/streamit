@@ -68,6 +68,7 @@ public class Flattener {
 	ConstructSIRTree.doit(str);
 	INIT_STATEMENTS_RESOLVED = true;
 
+	Lifter.liftAggressiveSync(str);
 	// dump the original graph to a dot format
 	StreamItDot.printGraph(str, "before.dot");
 
@@ -313,7 +314,7 @@ public class Flattener {
 	    }
 
 	}
-	Lifter.lift(str);
+	Lifter.liftAggressiveSync(str);
 	StreamItDot.printGraph(str, "linear-total-post-lift.dot");
 	return str;
     }

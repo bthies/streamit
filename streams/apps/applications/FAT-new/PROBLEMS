@@ -1,0 +1,37 @@
+-*- text -*-
+Specific Problems With the New-Syntax FAT Implementation
+$Id: PROBLEMS,v 1.1 2002-10-21 22:18:08 dmaze Exp $
+
+-- WideBand is a splitjoin with N_sub BandProc children.  The output
+   type of BandProc is complex[N_dop][N_rg/N_dn][N_dop], but the
+   output type of WideBand is complex[N_dop][N_rg][N_dop].  This works
+   only if N_dn exactly equals N_sub, which the comment in
+   FAT-test.str suggests should be the case; a unification step still
+   needs to happen.
+
+-- The ElAnal splitjoin in SubAnalysis.str does useless explicit
+   parallelization over AnalTd.  SubAnalysis can trivially dump its
+   array-passing if it wanted to.
+
+-- AdapBeam is a *BIG HONKING FILTER*.  It also does
+   N_bm*N_srg*N_pri+N_bm+1 pushes, where its declared push rate is 1.
+   ("Something's wrong with its pushing.")  Looking at what Block45
+   does, though, this is actually correct (save the +1), the I/O rate
+   and push at the end just need to be fixed.
+
+-- Similarly to ElAnal, ParaFFT in DopFilt.str is just a "parallel
+   FFT", which invokes several identical FFTVects in parallel.
+
+-- FFTVect depends on (presumably our stock) FFT2, which doesn't exist
+   here.
+
+-- STAP is only a moderately big quacking filter.  But it also calls
+   the LQ pipe, which might want to become a filter.
+
+-- In SubSynth.str, ElSynth once again does explicit parallelization.
+   There are also duplicate definitions of FreqShift and DownSamp.
+   SynthTd would appdar to output an array complex[N_srg/N_dn], when
+   it really wants an up-sampled array.  Probably want to replace
+   DownSamp with UpSamp at the start of the pipeline.
+
+

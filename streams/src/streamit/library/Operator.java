@@ -20,6 +20,12 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer ("int").add ("n", n);
     }
 
+    public Operator(int n1, int n2)
+    {
+        initParams = new ParameterContainer ("int").add ("n1", n1)
+	    .add ("n2", n2);
+    }
+
     public Operator(float f)
     {
         initParams = new ParameterContainer ("float").add ("f", f);

@@ -25,6 +25,11 @@ public class Stream extends Operator
         super (n);
     }
 
+    public Stream(int n1, int n2)
+    {
+        super (n1, n2);
+    }
+
     public Stream(float f)
     {
         super (f);

@@ -355,11 +355,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
             print("\t= ");
 	    expr.accept(this);
         }   //initialize all fields to 0
-	else if (type.isOrdinal())
-	    print (" = 0");
-	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
-
+	else {
+	    if (type.isOrdinal())
+		print (" = 0");
+	    else if (type.isFloatingPoint())
+		print(" = 0.0f");
+	}
         print(";");
     }
 
@@ -529,11 +530,21 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
         if (expr != null) {
 	    print(" = ");
 	    expr.accept(this);
+	} else if (RawWorkEstimator.SIMULATING_WORK && ident.indexOf(RawExecutionCode.recvBuffer)!=-1) {
+	    // this is to prevent partial evaluation of inputs to
+	    // filter by C compiler if we are trying to simulate work
+	    // in a node
+	    if (type.isOrdinal())
+		print (" = " + ((int)Math.random()));
+	    else if (type.isFloatingPoint()) {
+		print(" = " + ((float)Math.random()) + "f");
+	    }
+	} else {
+	    if (type.isOrdinal())
+		print (" = 0");
+	    else if (type.isFloatingPoint())
+		print(" = 0.0f");
 	}
-	else if (type.isOrdinal())
-	    print (" = 0");
-	else if (type.isFloatingPoint())
-	    print(" = 0.0f");
 
         print(";\n");
 

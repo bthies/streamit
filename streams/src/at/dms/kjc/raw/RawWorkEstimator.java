@@ -18,6 +18,11 @@ import java.io.*;
 
 public class RawWorkEstimator extends EmptyStreamVisitor
 {
+    /**
+     * Global indicator that we're in the process of simulating work.
+     * Avoids threading some information through multiple levels.
+     */
+    public static boolean SIMULATING_WORK = false;
    /** 
      * Given a filter, run the work function on raw
      * and return the number of cycles for the work function
@@ -91,7 +96,9 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	    RemoveGlobals.doit(top);
 	}
 
+	SIMULATING_WORK = true;
 	TileCode.generateCode(top);
+	SIMULATING_WORK = false;
 	MakefileGenerator.createMakefile();
 
 	try {
@@ -124,14 +131,14 @@ public class RawWorkEstimator extends EmptyStreamVisitor
 	    work = readCycleCount(dir);
 	    
 	    //remove the directory
-	    {
-		String[] cmdArray = new String[3];
-		cmdArray[0] = "rm";
-		cmdArray[1] = "-rf";
-		cmdArray[2] = dir;
-		Process jProcess = Runtime.getRuntime().exec(cmdArray);
-		jProcess.waitFor();
-	    }
+ 	    {
+ 		String[] cmdArray = new String[3];
+ 		cmdArray[0] = "rm";
+ 		cmdArray[1] = "-rf";
+ 		cmdArray[2] = dir;
+ 		Process jProcess = Runtime.getRuntime().exec(cmdArray);
+ 		jProcess.waitFor();
+ 	    }
 	    
 	}
 	catch (Exception e) {

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.10 2002-07-22 14:34:08 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.11 2002-07-22 18:45:14 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -110,6 +110,10 @@ public class NodesToJava implements FEVisitor
                 break;
             case TypePrimitive.TYPE_DOUBLE:
                 suffix = "Double";
+                break;
+            case TypePrimitive.TYPE_COMPLEX:
+                if (name.startsWith("input"))
+                    prefix  = "(Complex)";
                 break;
             }
         }

@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.2 2002-12-06 18:17:29 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.3 2002-12-06 19:48:01 aalamb Exp $
 
 use strict;
 
@@ -86,7 +86,7 @@ close(MHMAIL);
 `/bin/date >> $REG_LOG`;
 
 ## run the makefile which executes the regression test
-`/usr/local/bin/make -C $streamit_home/regtest test-bed >& $REG_LOG`;
+`/usr/local/bin/make -C $streamit_home/regtest test-all >& $REG_LOG`;
 
 ## (date/time stamp the end of the run)
 `echo \"Regression Test Run Done\" >> $REG_LOG`;
@@ -95,10 +95,13 @@ close(MHMAIL);
 
 # set the results to the admins
 `cat $REG_LOG | mhmail $ADMINS -s \"Streamit Regression Test Log\"`; 
+# set the errors to the admins
+`cat $REG_ERR | mhmail $ADMINS -s \"Streamit Regression Test Errors\"`; 
+
 
 # open the mhmail program to print the execuative summary to
-#open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
-open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
+open(MHMAIL, "|mhmail $USERS -s \"Streamit Regression Test Summary\"");
+#open(MHMAIL, "|mhmail $ADMINS -s \"Streamit Regression Test Summary\"");
 my $email_body = saved_execute("$streamit_home/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS");
 print MHMAIL $email_body;
 print MHMAIL "\n-----------------\n";

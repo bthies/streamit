@@ -28,9 +28,9 @@ public class StreaMITMain {
 	    System.exit(-1);
 	}
 	
-	System.out.println("*/");
-	
 	if (StreamItOptions.raw) {
+	    System.out.println("*/");
+	
 	    /* Compiling for raw */
 	    RawBackend.run(stream, 
 			   k2s.getInterfaces(),
@@ -42,6 +42,7 @@ public class StreaMITMain {
 	    JClassDeclaration flat = Flattener.flatten(stream, 
 						       k2s.getInterfaces(),
 						       k2s.getInterfaceTables());
+	    System.out.println("*/");
 	
 	    System.out.println("#include \"streamit.h\"");
 	    System.out.println("#include <stdio.h>");

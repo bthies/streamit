@@ -210,10 +210,10 @@ public class LowerInitFunctions implements StreamVisitor {
 							   str.getJoiner() 
 							   ).intValue();
 	    // register an LIR node to <init>
-	    if (child.getInputType()==null) {
-		System.out.println("null child: " + child.getName() + " " +
-				   child.getIdent());
-	    }
+	    Utils.assert(child.getInputType()!=null,
+			 "null child: " + child.getName() + " " +
+			 child.getIdent());
+	    
 	    init.addStatement(new LIRSetParallelStream(parentContext,
                                                        childContext,
 						       i,
@@ -310,7 +310,7 @@ public class LowerInitFunctions implements StreamVisitor {
 			    CType inputType, CType outputType) {
 	// only worry about actual SIRFilter's, not special cases like
 	// FileReader's and FileWriter's
-	if (!self.getClass().toString().endsWith("at.dms.kjc.sir.SIRFilter")) {
+	if (!self.needsWork()) {
 	    return;
 	}
 

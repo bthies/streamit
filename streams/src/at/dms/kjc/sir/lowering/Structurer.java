@@ -311,7 +311,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 			    CType inputType, CType outputType) {
 	// only worry about actual SIRFilter's, not special cases like
 	// FileReader's and FileWriter's
-	if (!self.getClass().toString().endsWith("at.dms.kjc.sir.SIRFilter")) {
+	if (!self.needsWork()) {
 	    return;
 	}
 	// create struct type

@@ -194,11 +194,10 @@ public class RenameAll extends SLIRReplacingVisitor
                                         CType type,
                                         String ident)
     {
-        return new JFormalParameter(self.getTokenReference(),
-                                    0, //desc?
-                                    type,
-                                    symtab.nameFor(ident),
-                                    isFinal);
+	// have to mutate this instead of replacing it, since some
+	// local vars refer to the object.
+	self.setIdent(symtab.nameFor(ident));
+	return self;
     }
 
     public Object visitVariableDefinition(JVariableDefinition self,
@@ -207,12 +206,14 @@ public class RenameAll extends SLIRReplacingVisitor
                                           java.lang.String ident,
                                           JExpression expr)
     {
-        return new JVariableDefinition(self.getTokenReference(),
-                                       modifiers, type,
-                                       symtab.nameFor(ident),
-                                       expr != null ?
-                                         (JExpression)expr.accept(this) :
-                                         null);
+	// need to mutate this instead of returning a new one, since
+	// there are local variable expressions lingering around which
+	// reference it.
+	self.setIdent(symtab.nameFor(ident));
+	if (expr!=null) {
+	    self.setExpression((JExpression)expr.accept(this));
+	}
+	return self;
     }
 
     // Hmm.  Are there anonymous creations at this point?  Ignore for now.

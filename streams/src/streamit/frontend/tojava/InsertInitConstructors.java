@@ -1,7 +1,7 @@
 /*
  * InsertInitConstructors.java: insert object field constructors
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InsertInitConstructors.java,v 1.3 2002-09-23 16:06:56 dmaze Exp $
+ * $Id: InsertInitConstructors.java,v 1.4 2002-09-23 19:11:57 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -22,6 +22,8 @@ public class InsertInitConstructors extends InitMunger
 {
     public Object visitStreamSpec(StreamSpec spec)
     {
+        spec = (StreamSpec)super.visitStreamSpec(spec);
+
         // Stop if there are no fields.
         if (spec.getVars().isEmpty())
             return spec;

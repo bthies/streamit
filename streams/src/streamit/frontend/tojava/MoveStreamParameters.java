@@ -1,7 +1,7 @@
 /*
  * MoveStreamParameters.java: make constructors and init functions
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MoveStreamParameters.java,v 1.2 2002-09-23 14:52:22 dmaze Exp $
+ * $Id: MoveStreamParameters.java,v 1.3 2002-09-23 19:11:57 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -72,6 +72,8 @@ public class MoveStreamParameters extends InitMunger
 
     public Object visitStreamSpec(StreamSpec spec)
     {
+        spec = (StreamSpec)super.visitStreamSpec(spec);
+        
         if (spec.getParams().size() > 0)
         {
             // Okay, we have some parameters.  We need to add this

@@ -1,7 +1,7 @@
 /*
  * InsertIODecls.java: insert rate declarations in init functions
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InsertIODecls.java,v 1.1 2002-09-23 17:00:11 dmaze Exp $
+ * $Id: InsertIODecls.java,v 1.2 2002-09-23 19:11:57 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -40,6 +40,8 @@ public class InsertIODecls extends InitMunger
 
     public Object visitStreamSpec(StreamSpec spec)
     {
+        spec = (StreamSpec)super.visitStreamSpec(spec);
+
         // Only visit filters.
         if (spec.getType() != StreamSpec.STREAM_FILTER)
             return spec;

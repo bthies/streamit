@@ -17,6 +17,7 @@
 package streamit.scheduler2.constrained;
 
 import streamit.scheduler2.iriter.Iterator;
+import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 /**
  * streamit.scheduler2.constrained.StreamInteraface is an interface for 
@@ -27,8 +28,35 @@ import streamit.scheduler2.iriter.Iterator;
 public interface StreamInterface
     extends streamit.scheduler2.hierarchical.StreamInterface
 {
-    public LatencyNode getBottomLatencyNode ();
-    public LatencyNode getTopLatencyNode ();
+    public StreamInterface getTopConstrainedStream ();
+    public StreamInterface getBottomConstrainedStream ();
     
-    public void initiateConstrained ();
+    public LatencyNode getBottomLatencyNode();
+    public LatencyNode getTopLatencyNode();
+
+    public void initiateConstrained();
+    
+    /**
+     * Initialize this stream for all of its restrictions. This function
+     * will create initial restrictions for this stream, and call this 
+     * same function for all children of this stream.
+     */
+    public void initializeRestrictions (Restrictions restrictions);
+
+    /**
+     * Check if the stream is done initializing all the portals that are
+     * inside it. This will recursively check all the children.
+     */
+    public boolean isDoneInitializing ();
+    
+    /**
+     * Get notification that the initialization of a particular portal
+     * is complete. Probably should create new, steady-state restrictions.
+     */
+    public void initRestrictionsCompleted(P2PPortal portal);
+
+
+    public PhasingSchedule getNextPhase(
+        Restrictions restrs,
+        int nDataAvailable);
 }

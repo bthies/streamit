@@ -21,6 +21,8 @@ SplitJoinIter;
 import streamit.scheduler2.iriter./*persistent.*/
 Iterator;
 
+import streamit.scheduler2.hierarchical.PhasingSchedule;
+
 /**
  * streamit.scheduler2.constrained.Pipeline is the pipeline constrained 
  * scheduler. It assumes that all streams in the program use the constrained
@@ -98,6 +100,16 @@ public class SplitJoin
         return (StreamInterface)child;
     }
 
+    public StreamInterface getTopConstrainedStream()
+    {
+        return this;
+    }
+
+    public StreamInterface getBottomConstrainedStream()
+    {
+        return this;
+    }
+
     public LatencyNode getBottomLatencyNode()
     {
         return latencyJoiner;
@@ -113,4 +125,30 @@ public class SplitJoin
         ERROR("Not implemented yet.");
 
     }
+
+
+    public void initRestrictionsCompleted(P2PPortal portal)
+    {
+        ERROR ("not implemented");
+    }
+    
+    public void initializeRestrictions(Restrictions _restrictions)
+    {
+        ERROR ("not implemented");
+    }
+    
+    public boolean isDoneInitializing ()
+    {
+        ERROR ("not implemented");
+        return false;
+    }
+
+    public PhasingSchedule getNextPhase(
+        Restrictions restrs,
+        int nDataAvailable)
+    {
+        ERROR("not implemented");
+        return null;
+    }
+
 }

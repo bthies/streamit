@@ -33,6 +33,12 @@ public class ConstrainedStreamFactory
     extends DestroyedClass
     implements streamit.scheduler2.constrained.StreamFactory
 {
+    final Scheduler scheduler;
+    ConstrainedStreamFactory (Scheduler _scheduler)
+    {
+        scheduler = _scheduler;
+    }
+    
     private LatencyGraph latencyGraph = new LatencyGraph();
 
     private final Map iter2stream = new HashMap();
@@ -77,5 +83,10 @@ public class ConstrainedStreamFactory
     public LatencyGraph getLatencyGraph()
     {
         return latencyGraph;
+    }
+    
+    public Scheduler getScheduler ()
+    {
+        return scheduler;
     }
 }

@@ -391,7 +391,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                 {
                     SplitFlow splitFlow =
                         utility.getSplitSteadyPhaseFlow(
-                            splitterPhases);
+                            nPhase);
                     for (nChild = 0; nChild < getNumChildren();nChild++)
                     {
                         splitterOverallPush [nChild] += splitFlow.getPushWeight(nChild);

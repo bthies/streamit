@@ -23,12 +23,13 @@ import streamit.scheduler2.SDEPData;
 public class Scheduler extends streamit.scheduler2.Scheduler
 {
     final StreamInterface rootStream;
-    StreamFactory factory = new ConstrainedStreamFactory();
+    final StreamFactory factory;
 
     public Scheduler(Iterator _root)
     {
         super(_root);
 
+        factory =  new ConstrainedStreamFactory(this);
         rootStream = factory.newFrom(root, null);
     }
 
@@ -43,7 +44,8 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         steadySchedule = rootStream.getSteadySchedule();
     }
 
-    public SDEPData computeSDEP(Iterator src, Iterator dst) throws NoPathException
+    public SDEPData computeSDEP(Iterator src, Iterator dst)
+        throws NoPathException
     {
         LatencyGraph graph = factory.getLatencyGraph();
         LatencyNode srcNode =
@@ -51,5 +53,23 @@ public class Scheduler extends streamit.scheduler2.Scheduler
         LatencyNode dstNode =
             ((Filter)factory.newFrom(dst, null)).getLatencyNode();
         return graph.computeSDEP(srcNode, dstNode);
+    }
+
+    public void addDownstreamConstraint(
+        Iterator src,
+        Iterator dst,
+        int min,
+        int max)
+    {
+        ERROR("Not implemented");
+    }
+
+    public void addUpstreamConstraint(
+        Iterator src,
+        Iterator dst,
+        int min,
+        int max)
+    {
+        ERROR("Not implemented");
     }
 }

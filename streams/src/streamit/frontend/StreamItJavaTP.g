@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.13 2002-07-16 18:11:59 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.14 2002-07-16 18:15:55 dmaze Exp $
  */
 
 header {
@@ -498,7 +498,7 @@ assign_statement returns [String t] {t=null; Expression l, x;}
 		{
 			String lhs = (String)l.accept(n2j);
 			// Check to see if the left-hand side is complex.
-			Type type = (Type)l.accept(new GetExprType(symTab));
+			Type type = (Type)l.accept(new GetExprType(symTab, cur_type));
 			if (type != null && type.isComplex())
 			{
 				if (x instanceof ExprComplex)
@@ -585,7 +585,7 @@ expr returns [String t] {t=null; Expression x;}
 expression_reduced returns [Expression x] {x=null;}
 	: x=expression
 		{
-			x = (Expression)x.accept(new VarToComplex(symTab));
+			x = (Expression)x.accept(new VarToComplex(symTab, cur_type));
 			x = (Expression)x.accept(cplx_prop);
 		}
 	;

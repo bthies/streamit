@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.2 2002-07-15 19:59:46 dmaze Exp $
+ * $Id: GetExprType.java,v 1.3 2002-07-16 18:15:59 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -14,10 +14,12 @@ package streamit.frontend.nodes;
 public class GetExprType implements FEVisitor
 {
     private SymbolTable symTab;
+    private StreamType streamType;
     
-    public GetExprType(SymbolTable st)
+    public GetExprType(SymbolTable symTab, StreamType streamType)
     {
-        symTab = st;
+        this.symTab = symTab;
+        this.streamType = streamType;
     }
     
     public Object visitExprArray(ExprArray exp)
@@ -80,13 +82,12 @@ public class GetExprType implements FEVisitor
     
     public Object visitExprPeek(ExprPeek exp)
     {
-        // Umm, and need the stream type for this and pop.
-        return null;
+        return streamType.getIn();
     }
     
     public Object visitExprPop(ExprPop exp)
     {
-        return null;
+        return streamType.getIn();
     }
     
     public Object visitExprTernary(ExprTernary exp)

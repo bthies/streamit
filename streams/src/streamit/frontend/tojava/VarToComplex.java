@@ -1,7 +1,7 @@
 /*
  * VarToComplex.java: split variables into separate real/complex parts
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: VarToComplex.java,v 1.4 2002-07-16 15:06:11 dmaze Exp $
+ * $Id: VarToComplex.java,v 1.5 2002-07-16 18:16:00 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -17,10 +17,10 @@ public class VarToComplex extends FEReplacer
     private SymbolTable symtab;
     private GetExprType getExprType;
     
-    public VarToComplex(SymbolTable st)
+    public VarToComplex(SymbolTable st, StreamType strt)
     {
         symtab = st;
-        getExprType = new GetExprType(st);
+        getExprType = new GetExprType(st, strt);
     }
     
     public Object visitExprVar(ExprVar exp)

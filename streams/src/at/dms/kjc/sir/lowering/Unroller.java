@@ -153,7 +153,7 @@ class Unroller extends SLIRReplacingVisitor {
 	// get the initial value of the counter
 	int counter = info.initVal;
 	// simulate execution of the loop...
-	while (counter < info.finalVal) {
+	while (done(counter,info)) {
 	    // create new for statement, just to replace the variable
 	    JForStatement newSelf
 		= (JForStatement)ObjectDeepCloner.deepCopy(self);
@@ -184,6 +184,22 @@ class Unroller extends SLIRReplacingVisitor {
 			  null);
     }
     
+    private static boolean done(int counter, UnrollInfo info) {
+	switch(info.oper) {
+	case OPE_PLUS: 
+        case OPE_POSTINC:
+        case OPE_PREINC:
+	case OPE_STAR: 
+	    return counter < info.finalVal;
+	case OPE_SLASH:
+	    return counter > info.finalVal;
+	default: 
+	    Utils.fail("Can only unroll add/mul increments for now.");
+	    // dummy value
+	    return false;
+	}
+    }
+    
     /**
      * Given the UnrollInfo <info> and that <counter> was the old
      * value of the count, returns the new value of the count.
@@ -196,6 +212,8 @@ class Unroller extends SLIRReplacingVisitor {
 	    return counter + info.incrVal;
 	case OPE_STAR: 
 	    return counter * info.incrVal;
+	case OPE_SLASH:
+	    return counter / info.incrVal;
 	default: 
 	    Utils.fail("Can only unroll add/mul increments for now.");
 	    // dummy value

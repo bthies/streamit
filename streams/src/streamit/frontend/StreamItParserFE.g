@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.36 2003-07-07 15:48:05 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.37 2003-07-07 19:10:04 dmaze Exp $
  */
 
 header {
@@ -156,6 +156,9 @@ msg_statement returns [Statement s] { s = null; List l;
   Expression minl = null, maxl = null; }
 	:	p:ID DOT m:ID l=func_call_params
 		(LSQUARE (minl=right_expr)? COLON (maxl=right_expr)? RSQUARE)?
+		{ s = new StmtSendMessage(getContext(p),
+				new ExprVar(getContext(p), p.getText()),
+				m.getText(), l, minl, maxl); }
 	;
 
 statement returns [Statement s] { s = null; }

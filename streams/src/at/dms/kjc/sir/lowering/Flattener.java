@@ -41,7 +41,7 @@ public class Flattener {
 	printer1.close();
 
 	// move field initializations into init function
-	FieldProp.moveStreamInitialAssignments(str);
+	FieldInitMover.moveStreamInitialAssignments(str);
 	
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);

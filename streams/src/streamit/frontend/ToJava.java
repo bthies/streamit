@@ -5,11 +5,6 @@ import java.util.Iterator;
 import streamit.frontend.nodes.*;
 import streamit.frontend.passes.*;
 import streamit.frontend.tojava.*;
-import at.dms.kjc.*;
-import at.dms.kjc.sir.*;
-import at.dms.kjc.sir.lowering.*;
-import at.dms.kjc.iterator.*;
-import at.dms.util.*;
 
 /**
  * Convert StreamIt programs to legal Java code.  This is the main
@@ -20,7 +15,7 @@ import at.dms.util.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.32 2003-07-02 19:24:13 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.33 2003-07-02 19:38:01 dmaze Exp $
  */
 public class ToJava
 {
@@ -40,7 +35,6 @@ public class ToJava
     private boolean printHelp = false;
     private boolean libraryFormat = false;
     private String outputFile = null;
-    private boolean straightToSIR = false;
     private List inputFiles = new java.util.ArrayList();
 
     public void doOptions(String[] args)
@@ -61,8 +55,6 @@ public class ToJava
                 outputFile = args[++i];
             else if (args[i].equals("--library"))
                 libraryFormat = true;
-	    else if (args[i].equals("--ziggy"))
-	      straightToSIR = true;
             else
                 // Maybe check for unrecognized options.
                 inputFiles.add(args[i]);
@@ -206,16 +198,8 @@ public class ToJava
                             "  public float imag;\n" +
                             "}\n");
 
-            if (straightToSIR) {
-                SIRStream s = (SIRStream) prog.accept(new FEIRToSIR());
-                SIRPrinter sirPrinter = new SIRPrinter();
-                IterFactory.createIter(s).accept(sirPrinter);
-                sirPrinter.close();
-                Flattener.flatten(s, new JInterfaceDeclaration[0], new SIRInterfaceTable[0], new SIRStructure[0]);
-            } else {
-                String javaOut = (String)prog.accept(new NodesToJava(null));
-                outWriter.write(javaOut);
-            }
+            String javaOut = (String)prog.accept(new NodesToJava(null));
+            outWriter.write(javaOut);
             outWriter.flush();
         }
         catch (java.io.IOException e) {e.printStackTrace(System.err);}

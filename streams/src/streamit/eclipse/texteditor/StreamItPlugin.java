@@ -66,25 +66,36 @@ public class StreamItPlugin extends AbstractUIPlugin {
 			switch (i) {
 				case 0: 
 					toUse = IStreamItConstants.PRE_KEYWORD;
-					toIter = IStreamItConstants.FG_KEYWORD_DEFAULTS; break;
+					toIter = StreamItCodeScanner.getFGKeywords(); break;
 				case 1:
 					toUse = IStreamItConstants.PRE_STR_KEYWORD;
 					toIter = IStreamItConstants.FG_STR_KEYWORD_DEFAULTS; break;
 				case 2:
 					toUse = IStreamItConstants.PRE_TYPE;
-					toIter = IStreamItConstants.FG_TYPE_DEFAULTS; break;
+					toIter = StreamItCodeScanner.getFGTypes(); break;
 				case 3: 
 					toUse = IStreamItConstants.PRE_CONSTANT;
-					toIter = IStreamItConstants.FG_CONSTANT_DEFAULTS; break;
+					toIter = StreamItCodeScanner.getFGConstants(); break;
 				default: 
 					toUse = IStreamItConstants.PRE_STR_COMMON;
 					toIter = IStreamItConstants.FG_STR_COMMON_DEFAULTS; break;
-			} 
+			}
+			
 			for (int j = 0; j < toIter.length; j++) {
 				temp.append(toIter[j]);
 				if (j != toIter.length - 1)
 					temp.append("\n");
     		}
+			if (toUse.equals(IStreamItConstants.PRE_TYPE)) {
+				toIter = IStreamItConstants.FG_STR_TYPE_DEFAULTS;
+				temp.append("\n");
+				for (int j = 0; j < toIter.length; j++) {
+					temp.append(toIter[j]);
+					if (j != toIter.length - 1)
+						temp.append("\n");
+				}	
+			}    		
+    		
 			store.setDefault(toUse, temp.toString());
 		}	
     }

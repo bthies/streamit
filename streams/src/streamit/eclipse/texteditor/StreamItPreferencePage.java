@@ -392,6 +392,7 @@ public class StreamItPreferencePage extends PreferencePage
      */
     protected void performDefaults() {
 		super.performDefaults();
+		StreamItPlugin.getDefault().initializeDefaultPreferences(getPreferenceStore());
 		initializeDefaults();
     }
 

@@ -29,6 +29,9 @@ import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.TextOperationAction;
 import org.eclipse.ui.views.contentoutline.IContentOutlinePage;
 
+//import org.eclipse.jdt.ui.PreferenceConstants;
+//import org.eclipse.jdt.ui.text.*;
+
 /**
  * StreamIt specific text editor.
  */
@@ -41,7 +44,7 @@ public class StreamItEditor extends TextEditor {
      * Default constructor.
      */
     public StreamItEditor() {
-	super();
+		super();
     }
 	
     /** The <code>StreamItEditor</code> implementation of this 
@@ -49,28 +52,28 @@ public class StreamItEditor extends TextEditor {
      * actions to add those specific to the receiver
      */
     protected void createActions() {
-	super.createActions();
-	
-	IAction a = 
-	    new TextOperationAction(
-				    StreamItEditorMessages.getResourceBundle(),
-				    "ContentAssistProposal.", 
-				    this, 
-				    ISourceViewer.CONTENTASSIST_PROPOSALS); 
-	                            //$NON-NLS-1$
-	a.setActionDefinitionId(ITextEditorActionDefinitionIds.
-				CONTENT_ASSIST_PROPOSALS);
-	setAction("ContentAssistProposal", a); //$NON-NLS-1$
-	
-	a = 
-	    new TextOperationAction(StreamItEditorMessages.getResourceBundle(),
-				    "ContentAssistTip.", this, 
-				    ISourceViewer.
-				    CONTENTASSIST_CONTEXT_INFORMATION);
-	                            //$NON-NLS-1$
-	a.setActionDefinitionId(ITextEditorActionDefinitionIds.
-				CONTENT_ASSIST_CONTEXT_INFORMATION);
-	setAction("ContentAssistTip", a); //$NON-NLS-1$
+		super.createActions();
+		
+		IAction a = 
+		    new TextOperationAction(
+					    StreamItEditorMessages.getResourceBundle(),
+					    "ContentAssistProposal.", 
+					    this, 
+					    ISourceViewer.CONTENTASSIST_PROPOSALS); 
+		                            //$NON-NLS-1$
+		a.setActionDefinitionId(ITextEditorActionDefinitionIds.
+					CONTENT_ASSIST_PROPOSALS);
+		setAction("ContentAssistProposal", a); //$NON-NLS-1$
+		
+		a = 
+		    new TextOperationAction(StreamItEditorMessages.getResourceBundle(),
+					    "ContentAssistTip.", this, 
+					    ISourceViewer.
+					    CONTENTASSIST_CONTEXT_INFORMATION);
+		                            //$NON-NLS-1$
+		a.setActionDefinitionId(ITextEditorActionDefinitionIds.
+					CONTENT_ASSIST_CONTEXT_INFORMATION);
+		setAction("ContentAssistTip", a); //$NON-NLS-1$
     }
 	
     /** The <code>StreamItEditor</code> implementation of this 
@@ -78,10 +81,9 @@ public class StreamItEditor extends TextEditor {
      * disposal actions required by the StreamIt editor.
      */
     public void dispose() {
-	StreamItEditorEnvironment.disconnect(this);
-	if (fOutlinePage != null)
-	    fOutlinePage.setInput(null);
-	super.dispose();
+		if (fOutlinePage != null)
+		    fOutlinePage.setInput(null);
+		super.dispose();
     }
     
     /** The <code>StreamItEditor</code> implementation of this 
@@ -89,9 +91,9 @@ public class StreamItEditor extends TextEditor {
      * revert behavior required by the StreamIt editor.
      */
     public void doRevertToSaved() {
-	super.doRevertToSaved();
-	if (fOutlinePage != null)
-	    fOutlinePage.update();
+		super.doRevertToSaved();
+		if (fOutlinePage != null)
+		    fOutlinePage.update();
     }
 	
     /** The <code>StreamItEditor</code> implementation of this 
@@ -99,9 +101,9 @@ public class StreamItEditor extends TextEditor {
      * save behavior required by the StreamIt editor.
      */
     public void doSave(IProgressMonitor monitor) {
-	super.doSave(monitor);
-	if (fOutlinePage != null)
-	    fOutlinePage.update();
+		super.doSave(monitor);
+		if (fOutlinePage != null)
+		    fOutlinePage.update();
     }
     
     /** The <code>StreamItEditor</code> implementation of this 
@@ -109,9 +111,9 @@ public class StreamItEditor extends TextEditor {
      * save as behavior required by the StreamIt editor.
      */
     public void doSaveAs() {
-	super.doSaveAs();
-	if (fOutlinePage != null)
-	    fOutlinePage.update();
+		super.doSaveAs();
+		if (fOutlinePage != null)
+		    fOutlinePage.update();
     }
     
     /** The <code>StreamItEditor</code> implementation of this 
@@ -119,9 +121,9 @@ public class StreamItEditor extends TextEditor {
      * input of the outline page after AbstractTextEditor has set input.
      */ 
     public void doSetInput(IEditorInput input) throws CoreException {
-	super.doSetInput(input);
-	if (fOutlinePage != null)
-	    fOutlinePage.setInput(input);
+		super.doSetInput(input);
+		if (fOutlinePage != null)
+		    fOutlinePage.setInput(input);
     }
     
     /** The <code>StreamItEditor</code> implementation of this 
@@ -129,9 +131,9 @@ public class StreamItEditor extends TextEditor {
      * JavaEditor specific entries.
      */ 
     public void editorContextMenuAboutToShow(MenuManager menu) {
-	super.editorContextMenuAboutToShow(menu);
-	addAction(menu, "ContentAssistProposal"); //$NON-NLS-1$
-	addAction(menu, "ContentAssistTip"); //$NON-NLS-1$
+		super.editorContextMenuAboutToShow(menu);
+		addAction(menu, "ContentAssistProposal"); //$NON-NLS-1$
+		addAction(menu, "ContentAssistTip"); //$NON-NLS-1$
     }
 	
     /** The <code>StreamItEditor</code> implementation of this 
@@ -140,26 +142,26 @@ public class StreamItEditor extends TextEditor {
      * outline page.
      */ 
     public Object getAdapter(Class required) {
-	if (IContentOutlinePage.class.equals(required)) {
-	    if (fOutlinePage == null) {
-		fOutlinePage = new 
-		    StreamItContentOutlinePage(getDocumentProvider(), this);
-		if (getEditorInput() != null)
-		    fOutlinePage.setInput(getEditorInput());
-	    }
-	    return fOutlinePage;
-	}
-	return super.getAdapter(required);
+		if (IContentOutlinePage.class.equals(required)) {
+		    if (fOutlinePage == null) {
+			fOutlinePage = new 
+			    StreamItContentOutlinePage(getDocumentProvider(), this);
+			if (getEditorInput() != null)
+			    fOutlinePage.setInput(getEditorInput());
+		    }
+		    return fOutlinePage;
+		}
+		return super.getAdapter(required);
     }
 		
     /* (non-StreamItdoc)
      * Method declared on AbstractTextEditor
      */
     protected void initializeEditor() {
-	super.initializeEditor();
-	StreamItEditorEnvironment.connect(this);
-	setSourceViewerConfiguration(new StreamItSourceViewerConfiguration());
-	setEditorContextMenuId("#JavaEditorContext"); //$NON-NLS-1$
-	setRulerContextMenuId("#JavaRulerContext"); //$NON-NLS-1$
+		super.initializeEditor();
+		//setSourceViewerConfiguration(new JavaSourceViewerConfiguration(new JavaTextTools(PreferenceConstants.getPreferenceStore()), this));		
+		setSourceViewerConfiguration(new StreamItSourceViewerConfiguration(this));
+		setEditorContextMenuId("#JavaEditorContext"); //$NON-NLS-1$
+		setRulerContextMenuId("#JavaRulerContext"); //$NON-NLS-1$
     }
 }

@@ -14,7 +14,6 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package texteditor;
-
 import java.text.MessageFormat;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;

@@ -16,10 +16,12 @@
    <requires>
       <import plugin="org.eclipse.ui"/>
       <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.jdt.ui"/>
+      <import plugin="org.eclipse.jdt.core"/>
    </requires>
 
    <runtime>
-      <library name="streamiteditor.jar">
+      <library name="texteditor.jar">
          <export name="*"/>
       </library>
    </runtime>
@@ -37,18 +39,6 @@
          class="texteditor.StreamItEditor"
          id="StreamItEditor">
       </editor>
-   </extension>
-
-   <!-- ================================================================== -->
-   <!-- Extension point: org.eclipse.ui.documentProviders                  -->
-   <!-- ================================================================== -->
-   <extension
-        point="org.eclipse.ui.documentProviders">
-      <provider
-         extensions="%streamItFileExtension"
-         class="texteditor.StreamItDocumentProvider"
-         id="texteditor.StreamItDocumentProvider">
-      </provider>
    </extension>
 
    <!-- ================================================================== -->

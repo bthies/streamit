@@ -33,6 +33,8 @@ import org.eclipse.ui.views.contentoutline.ContentOutlinePage;
  */
 public class StreamItContentOutlinePage extends ContentOutlinePage {
 
+//org.eclipse.jdt.internal.ui.javaeditor.JavaOutlinePage
+
     /**
      * A segment element.
      */

@@ -2,8 +2,10 @@
 
 package streamit;
 
-public class Channel {
+public class Channel extends DestroyedClass 
+{
     Class type;
+    Operator source, sink;
     
     // the channel should be constructed with a 0-length array
     // indicating the type that will be held in this channel.
@@ -69,4 +71,13 @@ public class Channel {
     
     Class GetType () { return type; }
 
+    // ------------------------------------------------------------------
+    //                  graph keeping functions
+    // ------------------------------------------------------------------
+
+    Operator GetSource () { return source; }
+    Operator GetSink () { return sink; }
+    
+    void SetSource (Operator _source) { source = _source; }
+    void SetSink (Operator _sink) { sink = _sink; }
 }

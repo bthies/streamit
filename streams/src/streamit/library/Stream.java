@@ -127,7 +127,8 @@ public class Stream extends Operator {
     void ConnectGraph ()
     {
         // get my source.  If I don't have one, I'm a source.
-        Channel currentSource = GetIOField ("input");
+        Stream source = this;
+        Channel currentSourceChannel = GetIOField ("input");
         
         // a Stream should have a list of elements that it
         // contains serially.  Go through this list and
@@ -140,40 +141,47 @@ public class Stream extends Operator {
         
             while (childIter.hasNext ())
             {
-                Stream currentStream = (Stream) childIter.next ();
+                // advance the iterator:
+                Stream sink = (Stream) childIter.next ();
                 
                 // get the next stream:
-                Channel currentDest = currentStream.GetIOField ("input");
+                Channel currentDestChannel = sink.GetIOField ("input");
                 
                 // make sure that the channels use the same data types
-                ASSERT (currentSource == null ^ currentDest != null);
-                ASSERT (currentSource == null || currentDest == null ||
-                        currentSource.GetType ().getName ().equals (currentDest.GetType ().getName ()));
+                ASSERT (currentSourceChannel == null ^ currentDestChannel != null);
+                ASSERT (currentSourceChannel == null || currentDestChannel == null ||
+                        currentSourceChannel.GetType ().getName ().equals (currentDestChannel.GetType ().getName ()));
                 
                 // now copy the currentInput into the currentOutput
-                if (currentDest != null)
+                if (currentDestChannel != null)
                 {
-                    currentStream.SetIOField ("input", currentSource);
+                    sink.SetIOField ("input", currentSourceChannel);
+                    
+                    // tell the channels what their sources and sinks are:
+                    if (currentSourceChannel.GetSource () == null)
+                        currentSourceChannel.SetSource (source);
+                    currentSourceChannel.SetSink (sink);
                 }
                 
                 // connect the subgraph
-                currentStream.ConnectGraph ();
+                sink.ConnectGraph ();
 
                 // and setup for the next iteration
-                currentSource = currentStream.GetIOField ("output");
+                source = sink;
+                currentSourceChannel = source.GetIOField ("output");
             }
             
-            if (currentSource != null)
+            if (currentSourceChannel != null)
             {
                 // get the next stream:
-                Channel currentDest = GetIOField ("output");
+                Channel currentDestChannel = GetIOField ("output");
                 
                 // make sure that the channels use the same data types
-                ASSERT (currentDest != null);
-                ASSERT (currentSource.GetType ().getName ().equals (currentDest.GetType ().getName ()));
+                ASSERT (currentDestChannel != null);
+                ASSERT (currentSourceChannel.GetType ().getName ().equals (currentDestChannel.GetType ().getName ()));
                 
                 // now copy the currentInput into the currentOutput
-                SetIOField ("input", currentSource);
+                SetIOField ("input", currentSourceChannel);
             }
         }
         catch (NoSuchElementException error)

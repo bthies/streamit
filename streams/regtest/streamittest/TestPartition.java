@@ -1,7 +1,7 @@
 /**
  * Runs the compiler on the all of the tests with no optimizations
  * turned on.
- * $Id: TestPartition.java,v 1.2 2002-12-13 23:17:58 thies Exp $
+ * $Id: TestPartition.java,v 1.3 2003-01-26 12:34:23 thies Exp $
  **/
 package streamittest;
 
@@ -18,75 +18,40 @@ public class TestPartition extends StreamITTestCase {
 	
 	int baseFlags = (CompilerInterface.NONE |
 			 CompilerInterface.UNROLL | 
-			 CompilerInterface.REMOVE_GLOBALS);
+			 CompilerInterface.REMOVE_GLOBALS |
+			 CompilerInterface.NUMBERS);
 
-	// generate dp_scaling.txt files for theoretical scaling results
-	
-	suite.addTest(new TestBenchmarks("testFir", 
-					 baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE | 
-					 CompilerInterface.RAW[2]));
+	int[] opts = { baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE,
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[8],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[2],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[4],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[6],
+		       baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[8]};
 
-	suite.addTest(new TestBenchmarks("testFm", 
-					 baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE | 
-					 CompilerInterface.RAW[2]));
+	for (int i=0; i<opts.length; i++) {
+	    suite.addTest(new TestBenchmarks("testFir", opts[i]));
+	    suite.addTest(new TestBenchmarks("testFm", opts[i]));
+	    suite.addTest(new TestBenchmarks("testBitonicSort", opts[i]));
+	    suite.addTest(new TestBenchmarks("testBeamFormer", opts[i]));
+	    suite.addTest(new TestBenchmarks("testFft", opts[i]));
+	    suite.addTest(new TestBenchmarks("testVocoder", opts[i]));
+	    suite.addTest(new TestBenchmarks("testFilterbank", opts[i]));
+	    suite.addTest(new TestBenchmarks("testNokia", opts[i]));
+	    suite.addTest(new TestBenchmarks("testMatMulBlock", opts[i]));
+	    suite.addTest(new TestBenchmarks("testCFAR", opts[i]));
+	    suite.addTest(new TestBenchmarks("testPerftest4", opts[i]));
 
-	suite.addTest(new TestBenchmarks("testBitonicSort", 
-					 baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE | 
-					 CompilerInterface.RAW[2]));
+	    suite.addTest(new TestApps("testCrc", opts[i]));
+	    suite.addTest(new TestApps("testMP3Simple", opts[i]));
+	    suite.addTest(new TestApps("testNokiaFine", opts[i]));
 
-	suite.addTest(new TestBenchmarks("testBeamFormer", 
-					 baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE | 
-					 CompilerInterface.RAW[2]));
-
-	suite.addTest(new TestBenchmarks("testFft", 
-					 baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.DPSCALE | 
-					 CompilerInterface.RAW[2]));
-
-	// generate the rest for both greedy and dp partition
-
-	for (int i=2; i<=8; i+=2) {
-		suite.addTest(new TestBenchmarks("testFir", 
-						 baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[i]));
-	}
-	for (int i=4; i<=8; i+=2) {
-		suite.addTest(new TestBenchmarks("testFir", 
-						 baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[i]));
-	}
-	
-	for (int i=2; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testFm", 
-					     baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[i]));
-	}
-	for (int i=4; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testFm", 
-					     baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[i]));
-	}
-	
-	for (int i=2; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testBitonicSort", 
-					     baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[i]));
-	}
-	for (int i=4; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testBitonicSort", 
-					     baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[i]));
-	}
-	
-	for (int i=2; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testBeamFormer", 
-					     baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[i]));
-	}
-	for (int i=4; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testBeamFormer", 
-					     baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[i]));
-	}
-	
-	for (int i=2; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testFft", 
-					     baseFlags | CompilerInterface.PARTITION | CompilerInterface.RAW[i]));
-	}
-	for (int i=4; i<=8; i+=2) {
-	    suite.addTest(new TestBenchmarks("testFft", 
-					     baseFlags | CompilerInterface.DPPARTITION | CompilerInterface.RAW[i]));
+	    suite.addTest(new TestExamples("testMatrixMult", opts[i]));
+	    suite.addTest(new TestExamples("testMergeSort", opts[i]));
+	    suite.addTest(new TestExamples("testMergeSort16", opts[i]));
+	    suite.addTest(new TestExamples("testLattice", opts[i]));
 	}
 	
 	return suite;	

@@ -11,17 +11,19 @@ import java.awt.GridLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
+import streamit.eclipse.grapheditor.graph.utils.StringTranslator;
 
 /**
+ * Dialog used to view and set the properties of a GESplitter.
+ * Valid values must be entered for all the properties.
+ * 
  * @author jcarlos
- *
- * To change the template for this generated type comment go to
- * Window>Preferences>Java>Code Generation>Code and Comments
  */
 public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDialog{
 
@@ -31,8 +33,11 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 	protected JLabel splitterWeightsLabel = new JLabel();
 	protected JTextField splitterWeightsTextField;
 	
+	
 	/**
-	 * Creates new form GEJoinerConfigurationDialog
+	 * Constructor for the GESplitterConfigurationDialog.
+	 * @param parent Frame The parent of the configuration dialog.
+	 * @param document GPDocument
 	 */
 	public GESplitterConfigurationDialog(Frame parent, GPDocument document) 
 	{    
@@ -43,32 +48,9 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 		setPosition();
 	}
 
-	/** 
-	 * Called by pressing the ok button.
-	 */
-	protected void action_ok() {
-		
-		/*
-		try {
-			Integer.parseInt(nameTextField.getText());
-			Integer.parseInt(parentTextField.getText());
-			Integer.parseInt(inputTapeTextField.getText());
-			Integer.parseInt(outputTapeTextField.getText());
-			Integer.parseInt(argumentsTextField.getText());
-		} catch (Exception e) {
-			String message = Translator.getString("Error.SpacingMustBeNumbers");
-			JOptionPane.showMessageDialog(this, message, Translator.getString("Error"), JOptionPane.INFORMATION_MESSAGE);
-			return;
-		}*/
-		
-		setVisible(false);
-		dispose();
-		canceled = false;
-	}
-    
 	/**
-	 * Set the value of the "Push Rate" text field.
-	 * @param push Text value for "Push Rate"
+	 * Set the value of the "Splitter Weights" text field.
+	 * @param weights Text value for "Splitter Weights"
 	 */
 	public void setSplitterWeights(String weights)
 	{
@@ -76,17 +58,43 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 	}
 	
 	/**
-	 * Set the value of the "Pop Rate" text field.
-	 * @param push Text value for "Pop Rate"
+	 * Get the value of the "Splitter Weights" text field.
+	 * @return String value of the "Splitter Weights" text field. 
 	 */
 	public String getSplitterWeights()
 	{
 		return splitterWeightsTextField.getText().trim();
 	}
 	
-	/** 
-	 * Initialize the Swing Components
-	 */   
+	
+	/**
+	 * Checks that the properties that were entered by the user in the configuration
+	 * dialog are valid.
+	 */ 
+	protected void action_ok() 
+	{
+		try
+		{		
+			StringTranslator.weightsToInt(this.getSplitterWeights());
+		}
+		catch(Exception e)
+		{
+			String message = "Please enter a legal weight";
+			JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.INFORMATION_MESSAGE);
+			return;	
+		}
+		setVisible(false);
+		dispose();
+		canceled = false;
+	}
+		
+		
+	/**
+	 * Initialize the graphical components of the configuration dialog.
+	 * The initial values in the dialog will be the current values for the 
+	 * properties of the GEStreamNode or the default values if the GEStreamNode 
+	 * was just created. 
+	 */ 
 	protected void initComponents() 
 	{
 		jPanel1 = new JPanel(new GridLayout(7,7));
@@ -170,6 +178,4 @@ public class GESplitterConfigurationDialog extends GEStreamNodeConfigurationDial
 
 		pack();
 	}
-
-
 }

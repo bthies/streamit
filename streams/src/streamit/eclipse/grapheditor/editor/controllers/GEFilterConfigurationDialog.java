@@ -20,8 +20,10 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 
 /**
+ * Dialog used to view and set the properties of a GEPhasedFilter.
+ * Valid values must be entered for all the properties.
+ * 
  * @author jcarlos
- *
  */
 public class GEFilterConfigurationDialog extends GEStreamNodeConfigurationDialog
 {
@@ -35,6 +37,11 @@ public class GEFilterConfigurationDialog extends GEStreamNodeConfigurationDialog
 	protected JTextField popTextField;
 	protected JTextField peekTextField;
 	
+	/**
+	 * Constructor for the GEFilterConfigurationDialog.
+	 * @param parent Frame The parent of the configuration dialog.
+	 * @param document GPDocument
+	*/
 	public GEFilterConfigurationDialog(Frame parent, GPDocument document)
 	{
 		super(parent, document);
@@ -45,10 +52,11 @@ public class GEFilterConfigurationDialog extends GEStreamNodeConfigurationDialog
 		setName(dialogType);
 		setPosition();
 	}
-
-	/** 
-	 * Called by pressing the ok button.
-	 */
+	
+	/**
+	 * Checks that the properties that were entered by the user in the configuration
+	 * dialog are valid.
+	 */ 
 	protected void action_ok() {
 		
 		
@@ -66,6 +74,7 @@ public class GEFilterConfigurationDialog extends GEStreamNodeConfigurationDialog
 		dispose();
 		canceled = false;
 	}
+	
 	/**
 	 * Set the value of the "Push Rate" text field.
 	 * @param push Text value for "Push Rate"
@@ -120,6 +129,12 @@ public class GEFilterConfigurationDialog extends GEStreamNodeConfigurationDialog
 		return popTextField.getText().trim();
 	}
 		
+	/**
+	 * Initialize the graphical components of the configuration dialog.
+	 * The initial values in the dialog will be the current values for the 
+	 * properties of the GEStreamNode or the default values if the GEStreamNode 
+	 * was just created. 
+	 */	
 	protected void initComponents()
 	{
 		jPanel1 = new JPanel(new GridLayout(7,7));

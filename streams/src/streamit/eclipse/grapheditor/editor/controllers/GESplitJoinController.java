@@ -13,8 +13,11 @@ import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEType;
 
 /**
+ * The GESplitJoinController class allows the user to administrate
+ * the property values for a GEPipeline. The values that can be set 
+ * are the name, input tape, output tape, arguments, and parent.
+ * 
  * @author jcarlos
- *
  */
 public class GESplitJoinController extends GEStreamNodeController{
 	
@@ -22,7 +25,7 @@ public class GESplitJoinController extends GEStreamNodeController{
 	GESplitJoinConfigurationDialog dialog = null;
 	
 	/**
-	  * Constructor. Set the default properties for the GEPhasedFilter. 
+	  * Constructor. Set the default properties for the GESplitJoinController. 
 	  */
 	 public GESplitJoinController() 
 	 {    	
@@ -69,6 +72,7 @@ public class GESplitJoinController extends GEStreamNodeController{
 		dialog = new GESplitJoinConfigurationDialog(new JFrame(), document);
 		
 		setPropertiesInDialog(propert);
+		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
 
 		dialog.setVisible(true);	
 		if (dialog.canceled()) return false;
@@ -84,6 +88,7 @@ public class GESplitJoinController extends GEStreamNodeController{
 	 */
 	public void setPropertiesInDialog(Properties propert)
 	{
+		dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
@@ -103,8 +108,8 @@ public class GESplitJoinController extends GEStreamNodeController{
 	}
 
 	 /**
-	  * Set the default properties of the GEPipelineController. If the default properties
-	  * are not set again, then the values that are changed in the GEPipelineController, will
+	  * Set the default properties of the GESplitJoinController. If the default properties
+	  * are not set again, then the values that are changed in the GESplitJoinController, will
 	  * remain stored. 
 	  *
 	  */
@@ -117,7 +122,10 @@ public class GESplitJoinController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_TYPE, GEType.SPLIT_JOIN);
 	 }
 	
-
+	/**
+	 * Get the default properties for a GESplitJoinController.
+	 * @return Properties the default properties of a GESplitJoinController.
+	 */
 	 public Properties getDefaultConfiguration()
 	 {
 		 setDefaultProperties();

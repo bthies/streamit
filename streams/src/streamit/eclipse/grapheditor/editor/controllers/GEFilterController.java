@@ -13,13 +13,18 @@ import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEType;
 
 /**
+ * The GEFilterController class allows the user to administrate
+ * the property values for a GEPipeline. The values that can be set 
+ * are the name, input tape, output tape, parent, push rate, pop rate, 
+ * and peek rate.
+ * 
  * @author jcarlos
- *
  */
 public class GEFilterController extends GEStreamNodeController{
 	
 	
 	GEFilterConfigurationDialog dialog = null;
+	
 	/**
 	  * Constructor. Set the default properties for the GEPhasedFilter. 
 	  */
@@ -29,15 +34,15 @@ public class GEFilterController extends GEStreamNodeController{
 		 setDefaultProperties();
 	 }
 
-	 /**
-	  * Return the type of the controller.
-	  */
+	/**
+	 * Return the type of the controller.
+	 * @return String type of the controller
+	 */
 	 public String toString() 
 	 {
 		 return GEType.GETypeToString(GEType.PHASED_FILTER);
 	 }
 
-	
 	/**
 	 * Display the dialog that allows the user to configure the values for the filter. 
 	 * @return True if the properties clicked were accepted and valid, false otherwise.
@@ -69,6 +74,7 @@ public class GEFilterController extends GEStreamNodeController{
 	   dialog = new GEFilterConfigurationDialog(new JFrame(), document);
         
 	   setPropertiesInDialog(props);
+	   dialog.saveInitialLevel(props.getProperty(GEProperties.KEY_LEVEL));
 		 
 		
 	   dialog.setVisible(true);
@@ -85,6 +91,7 @@ public class GEFilterController extends GEStreamNodeController{
 	 */
 	public void setPropertiesInDialog(Properties propert)
 	{
+		dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));		 
@@ -110,8 +117,8 @@ public class GEFilterController extends GEStreamNodeController{
 	}
 	
 	 /**
-	  * Set the default properties of the GEPipelineController. If the default properties
-	  * are not set again, then the values that are changed in the GEPipelineController, will
+	  * Set the default properties of the GEFilterController. If the default properties
+	  * are not set again, then the values that are changed in the GEFilterController, will
 	  * remain stored. 
 	  *
 	  */
@@ -127,7 +134,10 @@ public class GEFilterController extends GEStreamNodeController{
 		 properties.put(GEProperties.KEY_PEEK_RATE, "0");
 	 }
 	
-
+	/**
+	 * Get the default properties for a GEFilterController.
+	 * @return Properties the default properties of a GEFilterController.
+	 */
 	 public Properties getDefaultConfiguration()
 	 {
 		 setDefaultProperties();

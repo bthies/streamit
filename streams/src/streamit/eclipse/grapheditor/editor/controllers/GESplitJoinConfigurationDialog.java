@@ -12,7 +12,6 @@ import java.awt.GridLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -20,13 +19,21 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 
 /**
+ * Dialog used to view and set the properties of a GESplitJoin.
+ * Valid values must be entered for all the properties.
+ * 
  * @author jcarlos
- *
  */
 public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDialog
 {
 	private String dialogType = "SplitJoin Configuration";
 
+
+	/**
+	 * Constructor for the GESplitJoinConfigurationDialog.
+	 * @param parent Frame The parent of the configuration dialog.
+	 * @param document GPDocument
+	*/
 	public GESplitJoinConfigurationDialog(Frame parent, GPDocument document)
 	{
 		super(parent, document);
@@ -38,12 +45,12 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		setPosition();
 	}
 
-	/** 
-	 * Called by pressing the ok button.
-	 */
+	/**
+	 * Checks that the properties that were entered by the user in the configuration
+	 * dialog are valid.
+	 */ 
+/*
 	protected void action_ok() {
-		
-		
 		try {
 			/*
 			StringTokenizer strToken = new StringTokenizer(splitterWeightsTextField.getText().trim(), ",");
@@ -54,8 +61,7 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 				Integer.parseInt(token);
 			}*/
 			//GEProperties.weightsToInt(splitterWeightsTextField.getText().trim()) ;
-			
-			
+/*			
 		} catch (Exception e) {
 			String message = "The weights must be separated by a comma and no spaces in between";
 			JOptionPane.showMessageDialog(this, message, Translator.getString("Error"), JOptionPane.INFORMATION_MESSAGE);
@@ -66,11 +72,16 @@ public class GESplitJoinConfigurationDialog extends GEStreamNodeConfigurationDia
 		dispose();
 		canceled = false;
 	}
-	
+*/	
 
 	
 	
-			
+	/**
+	 * Initialize the graphical components of the configuration dialog.
+	 * The initial values in the dialog will be the current values for the 
+	 * properties of the GEStreamNode or the default values if the GEStreamNode 
+	 * was just created. 
+	 */
 	protected void initComponents()
 	{
 		jPanel1 = new JPanel(new GridLayout(5,5));

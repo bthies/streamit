@@ -65,6 +65,7 @@ public class GEPipelineController extends GEStreamNodeController {
 	{
 		dialog = new GEPipelineConfigurationDialog(new JFrame(), document);
 		setPropertiesInDialog(propert);
+		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
         		
 		dialog.setVisible(true);
 		if (dialog.canceled()) return false;
@@ -82,6 +83,7 @@ public class GEPipelineController extends GEStreamNodeController {
 	 */
 	public void setPropertiesInDialog(Properties propert)
 	{
+		dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));	
@@ -116,7 +118,10 @@ public class GEPipelineController extends GEStreamNodeController {
 		properties.put(GEProperties.KEY_TYPE, GEType.PIPELINE);
 	}
 	
-
+	/**
+	 * Get the default properties for a GEPipelineController.
+	 * @return Properties the default properties of a GEPipelineController.
+	 */
     public Properties getDefaultConfiguration()
     {
     	setDefaultProperties();

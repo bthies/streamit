@@ -1,3 +1,6 @@
+/*
+ * Created on Nov 26, 2003
+ */
 package streamit.eclipse.grapheditor.editor.controllers;
 
 import java.util.Properties;
@@ -8,18 +11,20 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEType;
 
-/*
- * Created on Nov 26, 2003
- *
+/**
+ * The GEFeedbackLoopController class allows the user to administrate
+ * the property values for a GEPipeline. The values that can be set 
+ * are the name, input tape, output tape, and parent.
+ * 
+ * @author jcarlos
  */
- 
 public class GEFeedbackLoopController extends GEStreamNodeController{
 	
-	//TODO create a GEFeedbackLoopConfigurationDialog
+
 	GESplitJoinConfigurationDialog dialog = null;
 	
 	/**
-	  * Constructor. Set the default properties for the GEPhasedFilter. 
+	  * Constructor. Set the default properties for a GEFeedbackLoop. 
 	  */
 	 public GEFeedbackLoopController() 
 	 {    	
@@ -29,6 +34,7 @@ public class GEFeedbackLoopController extends GEStreamNodeController{
 
 	 /**
 	  * Return the type of the controller.
+	  * @return String type of the controller
 	  */
 	 public String toString() 
 	 {
@@ -37,10 +43,9 @@ public class GEFeedbackLoopController extends GEStreamNodeController{
 
 
 	/**
-	 * Display the dialog that allows the user to configure the values for the splitjoin. 
+	 * Display the dialog that allows the user to configure the values for the GEFeedbackLoop. 
 	 * @return True if the properties clicked were accepted and valid, false otherwise.
 	 */
-
 	 public boolean configure(GPDocument document) 
 	 {
 		setDefaultProperties();
@@ -56,16 +61,16 @@ public class GEFeedbackLoopController extends GEStreamNodeController{
 	 }
 
 	/**
-	 * Display the dialog that allows the user to configure the values for the splitjoin. 
+	 * Display the dialog that allows the user to configure the values for the GEFeedbackLoop. 
 	 * @return True if the properties clicked were accepted and valid, false otherwise.
 	 */
-
 	 public boolean configure(GPDocument document, Properties propert) 
 	 {
 		
 		dialog = new GESplitJoinConfigurationDialog(new JFrame(), document);
 		
 		setPropertiesInDialog(propert);
+		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
 
 		dialog.setVisible(true);	
 		if (dialog.canceled()) return false;
@@ -81,6 +86,7 @@ public class GEFeedbackLoopController extends GEStreamNodeController{
 	 */
 	public void setPropertiesInDialog(Properties propert)
 	{
+		dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
@@ -107,6 +113,7 @@ public class GEFeedbackLoopController extends GEStreamNodeController{
 	  */
 	 public void setDefaultProperties()
 	 {
+	 	
 		properties.put(GEProperties.KEY_NAME, "FeedbackLoop_"+ GEProperties.id_count++);
 		properties.put(GEProperties.KEY_INPUT_TAPE, "void");
 		properties.put(GEProperties.KEY_OUTPUT_TAPE, "void");
@@ -116,7 +123,10 @@ public class GEFeedbackLoopController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
 	 }
 	
-
+	/**
+	 * Get the default properties for a GEFeedbackLoopController.
+	 * @return Properties the default properties of a GEFeedbackLoopController.
+	 */
 	 public Properties getDefaultConfiguration()
 	 {
 		 setDefaultProperties();

@@ -13,15 +13,18 @@ import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEType;
 
 /**
+ * The GESplitterController class allows the user to administrate
+ * the property values for a GEPipeline. The values that can be set 
+ * are the name, input tape, output tape, arguments, and parent.
+ * 
  * @author jcarlos
- *
  */
 public class GESplitterController extends GEStreamNodeController{
 	
 	GESplitterConfigurationDialog dialog = null;
 	
 	/**
-	  * Constructor. Set the default properties for the GEPhasedFilter. 
+	  * Constructor. Set the default properties for the GESplitterController. 
 	  */
 	 public GESplitterController() 
 	 {    	
@@ -64,9 +67,10 @@ public class GESplitterController extends GEStreamNodeController{
 	 public boolean configure(GPDocument document, Properties propert) 
 	 {
 		setDefaultProperties();
-    	
+
 		dialog = new GESplitterConfigurationDialog(new JFrame(), document);
 		setPropertiesInDialog(propert);
+		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
 		
 		dialog.setVisible(true);
 		if (dialog.canceled()) return false;
@@ -82,7 +86,7 @@ public class GESplitterController extends GEStreamNodeController{
 	 */
 	public void setPropertiesInDialog(Properties propert)
 	{
-       
+       	dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));
@@ -104,8 +108,8 @@ public class GESplitterController extends GEStreamNodeController{
 	}
 	
 	 /**
-	  * Set the default properties of the GEPipelineController. If the default properties
-	  * are not set again, then the values that are changed in the GEPipelineController, will
+	  * Set the default properties of the GESplitterController. If the default properties
+	  * are not set again, then the values that are changed in the GESplitterController, will
 	  * remain stored. 
 	  *
 	  */
@@ -119,7 +123,10 @@ public class GESplitterController extends GEStreamNodeController{
 		properties.put(GEProperties.KEY_SPLITTER_WEIGHTS, "1");
 	 }
 	
-
+	/**
+	 * Get the default properties for a GESplitterController.
+	 * @return Properties the default properties of a GESplitterController.
+	 */
 	 public Properties getDefaultConfiguration()
 	 {
 		 setDefaultProperties();

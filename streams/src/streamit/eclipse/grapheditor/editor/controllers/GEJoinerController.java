@@ -13,8 +13,11 @@ import streamit.eclipse.grapheditor.graph.GEProperties;
 import streamit.eclipse.grapheditor.graph.GEType;
 
 /**
+ * The GEJoinerController class allows the user to administrate
+ * the property values for a GEPipeline. The values that can be set 
+ * are the name, input tape, output tape, weights, and parent.
+ * 
  * @author jcarlos
- *
  */
 public class GEJoinerController extends GEStreamNodeController
 {
@@ -22,7 +25,7 @@ public class GEJoinerController extends GEStreamNodeController
 	GEJoinerConfigurationDialog dialog  = null;
 
 	/**
-	  * Constructor. Set the default properties for the GEPhasedFilter. 
+	  * Constructor. Set the default properties for the GEJoinerController. 
 	  */
 	 public GEJoinerController() 
 	 {    	
@@ -67,6 +70,7 @@ public class GEJoinerController extends GEStreamNodeController
 		dialog = new GEJoinerConfigurationDialog(new JFrame(), document);
 		setPropertiesInDialog(propert);
 		dialog.setVisible(true);
+		dialog.saveInitialLevel(propert.getProperty(GEProperties.KEY_LEVEL));
 		
 		if (dialog.canceled()) return false;
 		getPropertiesInDialog();
@@ -82,6 +86,7 @@ public class GEJoinerController extends GEStreamNodeController
 	 */
 	public void setPropertiesInDialog(Properties propert)
 	{
+		dialog.saveInitialName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setName(propert.getProperty (GEProperties.KEY_NAME));
 		dialog.setInputTape(propert.getProperty(GEProperties.KEY_INPUT_TAPE));
 		dialog.setOutputTape(propert.getProperty(GEProperties.KEY_OUTPUT_TAPE));		 
@@ -105,8 +110,8 @@ public class GEJoinerController extends GEStreamNodeController
 
 
 	 /**
-	  * Set the default properties of the GEPipelineController. If the default properties
-	  * are not set again, then the values that are changed in the GEPipelineController, will
+	  * Set the default properties of the GEJoinerController. If the default properties
+	  * are not set again, then the values that are changed in the GEJoinerController, will
 	  * remain stored. 
 	  *
 	  */
@@ -121,7 +126,10 @@ public class GEJoinerController extends GEStreamNodeController
 		
 	 }
 	
-
+	/**
+	 * Get the default properties for a GEJoinerController.
+	 * @return Properties the default properties of a GEJoinerController.
+	 */
 	 public Properties getDefaultConfiguration()
 	 {
 		 setDefaultProperties();

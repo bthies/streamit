@@ -19,6 +19,8 @@ import streamit.eclipse.grapheditor.editor.pad.GPDocument;
 import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 
 /**
+ * Dialog used to view and set the properties of a GEPipeline.
+ * Valid values must be entered for all the properties.
  * 
  * @author jcarlos
  */
@@ -27,10 +29,11 @@ public class GEPipelineConfigurationDialog extends GEStreamNodeConfigurationDial
 
 	private String dialogType = "Pipeline Configuration";
  
-	
 	/**
-	 * Creates new form GEPipelineConfigurationDialog
-	 */
+	 * Constructor for the GEPipelineConfigurationDialog.
+	 * @param parent Frame The parent of the configuration dialog.
+	 * @param document GPDocument
+	*/
 	public GEPipelineConfigurationDialog(Frame parent, GPDocument document) {
         
 		super(parent, document);
@@ -42,36 +45,13 @@ public class GEPipelineConfigurationDialog extends GEStreamNodeConfigurationDial
 		
 		setPosition();
 	}
-   
-
-    
-	/** 
-	 * Called by pressing the ok button.
+	
+	/**
+	 * Initialize the graphical components of the configuration dialog.
+	 * The initial values in the dialog will be the current values for the 
+	 * properties of the GEStreamNode or the default values if the GEStreamNode 
+	 * was just created. 
 	 */
-	protected void action_ok() {
-		
-		/*
-		try {
-			Integer.parseInt(nameTextField.getText());
-			Integer.parseInt(parentTextField.getText());
-			Integer.parseInt(inputTapeTextField.getText());
-			Integer.parseInt(outputTapeTextField.getText());
-			Integer.parseInt(argumentsTextField.getText());
-		} catch (Exception e) {
-			String message = Translator.getString("Error.SpacingMustBeNumbers");
-			JOptionPane.showMessageDialog(this, message, Translator.getString("Error"), JOptionPane.INFORMATION_MESSAGE);
-			return;
-		}*/
-		
-		setVisible(false);
-		dispose();
-		canceled = false;
-	}
-    
-
-
-	/** Initialize the Swing Components
-	 */   
 	protected void initComponents() 
 	{
 		jPanel1 = new JPanel(new GridLayout(5,5));
@@ -89,9 +69,7 @@ public class GEPipelineConfigurationDialog extends GEStreamNodeConfigurationDial
 		inputTapeTextField = new JTextField();
 		outputTapeTextField = new JTextField();
 
-		
 		System.out.println(this.document.getGraphStructure().containerNodes.getAllContainers().toString());
-		
 		
 		parentsJComboBox = new JComboBox(this.document.getGraphStructure().containerNodes.getAllContainerNames());
 
@@ -148,8 +126,6 @@ public class GEPipelineConfigurationDialog extends GEStreamNodeConfigurationDial
 
 		pack();
 	}
-
-
 }
 
 

@@ -6,61 +6,48 @@ package streamit.eclipse.grapheditor.editor.controllers;
 
 import java.util.Properties;
 
-import streamit.eclipse.grapheditor.editor.pad.GPDocument;
-
 /**
+ * The GEStreamNodeController class allows the user to administrate
+ * the property values for a GEPipeline. The values that can be set 
+ * are the name, input tape, output tape, arguments, and parent.
+ * 
  * @author jcarlos
- *
  */
-
 abstract class GEStreamNodeController implements Controller {
     
-
 	/**
-	 * Properties of the pipeline. 
+	 * Properties of the GEStreamNode. 
 	 */
 	protected Properties properties;
     
-	
 	/**
-	 * Constructor. Set the default properties for the GEPipeline. 
+	 * Constructor. Set the default properties for the GEStreamNodeController. 
 	 */
 	public GEStreamNodeController() 
 	{    	
 		properties = new Properties();
 	}
 
-
-
 	/**
-	 * The properties of the pipeline are configurable.
-	 */
-	
+	 * The properties of the GEStreamNode are configurable.
+	 * @param boolean
+	 */	
 	public boolean isConfigurable() 
 	{
 		return true;
 	}
 
-
 	/**
-	 * Get the configuration values for the pipeline. 
+	 * Get the configuration values for the GEStreamNode.
+	 * @param Properties
 	 */
-	
 	public Properties getConfiguration() 
 	{
 		return properties;
 	}
-    
-
-
 }
 
 
-
-
-
-
-	
 	/**
 	 * Implement this method to specify the name of the GEStreamNode.
 	 */

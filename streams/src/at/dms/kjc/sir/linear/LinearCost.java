@@ -63,7 +63,7 @@ public class LinearCost {
      * Must be comparable to values returned by getDirectCost().
      */
     public int getFrequencyCost() {
-	return getDirectCost() / 2;
+	return getDirectCost() / 3;
     }
     
 

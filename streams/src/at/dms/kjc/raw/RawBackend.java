@@ -109,6 +109,7 @@ public class RawBackend {
 	}
 
 	str = Flattener.doLinearAnalysis(str);
+	str = Flattener.doStateSpaceAnalysis(str);
 
 	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");

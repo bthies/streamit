@@ -125,7 +125,8 @@ public class ClusterBackend implements FlatVisitor {
 	    StatisticsGathering.doit(str);
 	}
 
-	Flattener.doLinearAnalysis(str);
+	str = Flattener.doLinearAnalysis(str);
+	str = Flattener.doStateSpaceAnalysis(str);
 
 	/* for cluster backend, fusion means to fuse segments on same cluster
 	if (KjcOptions.fusion) {

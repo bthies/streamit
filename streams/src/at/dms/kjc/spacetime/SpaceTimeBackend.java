@@ -394,11 +394,20 @@ public class SpaceTimeBackend
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
 
+	Trace[] traceForrest = new Trace[1];
+	//traceForrest[0] = traces[0];
+
 	if(REAL) {
 	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	    System.out.println("TracesGraph: "+traceGraph.length);
 	    for(int i=0;i<traceGraph.length;i++)
 		System.out.println(traceGraph[i]);
+	    traces=traceGraph;
+	    int index=0;
+	    traceForrest[0]=traceGraph[0];
+	    Trace realTrace=traceGraph[0];
+	    while(((FilterTraceNode)realTrace.getHead().getNext()).isPredefined())
+		realTrace=traceGraph[++index];
 	    TraceNode node=traceGraph[0].getHead();
 	    FilterTraceNode currentNode=null;
 	    if(node instanceof InputTraceNode)
@@ -410,8 +419,8 @@ public class SpaceTimeBackend
 	    int curY=0;
 	    int forward=1;
 	    int downward=1;
-	    ArrayList traceList=new ArrayList();
-	    traceList.add(new Trace(currentNode));
+	    //ArrayList traceList=new ArrayList();
+	    //traceList.add(new Trace(currentNode));
 	    TraceNode nextNode=currentNode.getNext();
 	    while(nextNode!=null&&nextNode instanceof FilterTraceNode) {
 		currentNode=(FilterTraceNode)nextNode;
@@ -431,22 +440,19 @@ public class SpaceTimeBackend
 		    curX+=forward;
 		nextNode=currentNode.getNext();
 	    }
-	    traces=new Trace[traceList.size()];
-	    traceList.toArray(traces);
+	    //traces=new Trace[traceList.size()];
+	    //traceList.toArray(traces);
 	    for(int i=1;i<traces.length;i++) {
 		traces[i-1].setEdges(new Trace[]{traces[i]});
 		traces[i].setDepends(new Trace[]{traces[i-1]});
 	    }
-	    System.out.println(traceList);
+	    //System.out.println(traceList);
 	}
 
 	//traceList=null;
 	//content=null;
 	//executionCounts=null;
 	if(true||REAL) {
-	    Trace[] traceForrest = new Trace[1];
-	    traceForrest[0] = traces[0];
-
 	    //mgordon's stuff
 	    System.out.println("Building Trace Traversal");
 	    ListIterator initTrav = TraceTraversal.getTraversal(traceForrest).listIterator();    

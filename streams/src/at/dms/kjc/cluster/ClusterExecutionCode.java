@@ -452,6 +452,9 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 				 LocalVariables localVariables) 
     {
 	SIRFilter filter = (SIRFilter)node.contents;
+	// don't support file readers, file writers yet
+	Utils.assert(!(filter instanceof SIRPredefinedFilter), 
+		     "Found a " + filter.getName() + ", but cluster backend doesn't yet support pre-defined filters.");
 	
 	//generate the code to define the local variables
 	//defineLocalVars(statements, localVariables);

@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.21 2002-09-04 20:41:08 aalamb Exp $
+ * $Id: TestExamples.java,v 1.22 2002-09-26 00:15:24 thies Exp $
  **/
 package streamittest;
 
@@ -47,11 +47,13 @@ public class TestExamples extends StreamITTestCase {
 	    suite.addTest(new TestExamples("testFFT_inlined", flags));
 	}
 
-	suite.addTest(new TestExamples("testAutoCor", flags));
+	// overflows instruction memory on raw if there is fusion
+	if (!(flagsContainRaw(flags) && flagsContainFusion(flags))) {
+	    suite.addTest(new TestExamples("testAutoCor", flags));
+	}
 
 	// contains mutually recursive definitions, and is only in new syntax
 	//suite.addTest(new TestExamples("testChol", flags)); 
-	
 
 	suite.addTest(new TestExamples("testFib", flags));
 	suite.addTest(new TestExamples("testFib2", flags));

@@ -5,7 +5,7 @@ import junit.framework.*;
 /**
  * StreamITTestCase is the base class for all streamit
  * test cases. This class provides some useful methods.
- * $Id: StreamITTestCase.java,v 1.14 2002-08-09 21:00:48 aalamb Exp $
+ * $Id: StreamITTestCase.java,v 1.15 2002-09-26 00:15:24 thies Exp $
  **/
 class StreamITTestCase extends TestCase {
     static final String EXAMPLE_PATH  = "apps/examples/";
@@ -208,6 +208,15 @@ class StreamITTestCase extends TestCase {
      **/
     public static boolean flagsContainPartition(int flags) {
  	return ((flags & CompilerInterface.PARTITION) == CompilerInterface.PARTITION);
+    }
+
+    /**
+     * Returns true if the compiler flags contain the option to
+     * compile with maximal fusion. This is used to add tests
+     * conditionally to a test suite.
+     **/
+    public static boolean flagsContainFusion(int flags) {
+ 	return ((flags & CompilerInterface.FUSION) == CompilerInterface.FUSION);
     }
 }
 	    

@@ -2,7 +2,7 @@
  * For running the 
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestBenchmarks.java,v 1.1 2002-08-09 21:00:48 aalamb Exp $
+ * $Id: TestBenchmarks.java,v 1.2 2002-09-26 00:15:24 thies Exp $
  **/
 package streamittest;
 
@@ -27,7 +27,6 @@ public class TestBenchmarks extends StreamITTestCase {
     public static Test suite(int flags) {
 	TestSuite suite = new TestSuite();
 	suite.addTest(new TestBenchmarks("testSimple", flags));
-	suite.addTest(new TestBenchmarks("testFir", flags));
 	// can't fit on raw 4 without partition
 	if (!(flagsContainRaw4(flags) && !flagsContainPartition(flags))) {
 	    suite.addTest(new TestBenchmarks("testFm", flags));
@@ -41,17 +40,8 @@ public class TestBenchmarks extends StreamITTestCase {
 	assertTrue("was true", true);
     }
 
-        public void testFir() {
-	String root = BENCH_ROOT + "fir/";
-	doMake(root);
-	doCompileRunVerifyTest(root,
-			       "LinkedFirTest.java",
-			       "LinkedFirTest.out",
-			       0,1);
-    }
-
     public void testFm() {
-	String root = BENCH_ROOT + "fm/"; 
+	String root = BENCH_ROOT + "fm/streamit/"; 
 	doMake(root);
 	doCompileTest(root,
 		      "LinkedFMTest.java");

@@ -163,7 +163,9 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
     /* registers the SIR construct with its parent based on
-       the type of the parentStream */
+       the type of the parentStream,  called only during a class declaration
+       or anonymous creation
+    */
     private void registerWithParent(SIRStream me) {
 	if (me.getParent() == null)
 	    return;
@@ -173,13 +175,17 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    ((SIRPipeline)me.getParent()).add(me);
 	}
 	else if (me.getParent() instanceof SIRFeedbackLoop) {
-	    //Can only add using setBody in Feedbackloop
 	    if (currentMethod.equals("setBody"))
 		((SIRFeedbackLoop)me.getParent()).setBody(me);
 	    else if (currentMethod.equals("setLoop"))
 		((SIRFeedbackLoop)me.getParent()).setLoop(me);
 	    else 
 		at.dms.util.Utils.fail("Anonymous Stream Creation not in setBody() in FeedbackLoop");
+	}
+	else if (me.getParent() instanceof SIRSplitJoin) {
+	    if (!currentMethod.equals("add"))
+		at.dms.util.Utils.fail("Anonymous Stream Creation not in add() in SplitJoin");
+	    ((SIRSplitJoin)me.getParent()).add(me);
 	}
 	else
 	    at.dms.util.Utils.fail("Unimplemented SIRStream (cannot register)");
@@ -300,7 +306,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
                                      JClassImport[] importedClasses,
                                      JTypeDeclaration[] typeDeclarations)
     {
-	/* The beginnin of the visit! */
+	/* The beginning of the visit! */
 	
 	blockStart("CompilationUnit");
 

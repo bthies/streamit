@@ -111,6 +111,16 @@ class Propagator extends SLIRReplacingVisitor {
 	if (newExp.isConstant()) {
 	    self.setCondition(newExp);
 	}
+        if (newExp instanceof JBooleanLiteral)
+        {
+            JBooleanLiteral bval = (JBooleanLiteral)newExp;
+            if (bval.booleanValue())
+                return thenClause.accept(this);
+            else if (elseClause != null)
+                return elseClause.accept(this);
+            else
+                return new JEmptyStatement(self.getTokenReference(), null);
+        }
 	thenClause.accept(this);
 	if (elseClause != null) {
 	    elseClause.accept(this);

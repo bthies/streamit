@@ -917,15 +917,15 @@ class HoldFilter extends Filter
 class ShortPrinter extends Filter
 {
     char c;
-    ShortPrinter (char c)
+    ShortPrinter (char c2)
     {
-	super (c);
+	super (c2);
     }
-    public void init(char c)
+    public void init(char c2)
     {  
 	input = new Channel(Short.TYPE, 1);
 	output = new Channel(Short.TYPE, 1);
-	this.c = c;
+	this.c = c2;
     }
 
     public void work()

@@ -12,12 +12,11 @@
  * V(s) is *computed during the initialization part;
 */
 
-complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_pri] pipeline PulseCmp( int N_bm,int N_srg, int N_pri,int N_pc, complex[] h_pc) {
+complex[N_bm][N_srg][N_pri]->complex[N_bm][N_srg][N_pri] pipeline PulseCmp( int N_bm,int N_srg, int N_pri,int N_pc, complex[N_pc] h_pc) {
       add FormChg20(N_bm,N_srg,N_pri);
       add arrayFIR(N_srg,N_pc,h_pc);
       add FormChg21(N_bm,N_srg,N_pri);	       
     }
-}
 	
     
 	

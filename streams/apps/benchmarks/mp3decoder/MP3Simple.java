@@ -9,7 +9,7 @@ public class MP3Simple extends StreamIt
 {
     static public void main(String[] args)
     {
-        new MP3Decoder().run(args);
+        new MP3Simple ().run(args);
     }
 
     public void init()

@@ -1,0 +1,48 @@
+/*
+ * PTest2.str: a portal messaging test
+ */
+
+void->void pipeline PTest2 {
+    portal<IntPrinter> pp;
+    add IntSource(pp);
+    add AddTwice();
+    add IntPrinter() to pp;
+}
+
+void->int filter IntSource(portal<IntPrinter> pp) {
+    int x;
+    init {
+        x = 0;
+    }
+    work push 1 {
+        push(x++);
+	if (x == 12) pp.addBase(1000) [-4:-4];
+    }
+}
+
+int->int splitjoin AddTwice() {
+    split roundrobin;
+    add IntAdder();
+    add IntAdder();
+    join roundrobin;
+}
+
+int->int filter IntAdder() {
+    work pop 2 push 1 {
+        push(pop()+pop());
+    }
+}
+
+int->void filter IntPrinter {
+    int base;
+    work pop 1 {
+        print(pop()+base);
+    }
+    handler addBase(int b) {
+        base += b;
+    }
+}
+
+
+
+

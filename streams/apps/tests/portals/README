@@ -1,0 +1,9 @@
+
+to build the tests do:
+
+strc --cluster Ptest1.str
+make -f Makefile.cluster
+./run_cluster
+
+must have compiled the:
+       streamit/library/cluster

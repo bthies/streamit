@@ -9,5 +9,5 @@ public class StreamItOptions
     public static int rawRows = -1;
     public static int rawColumns = -1;
     public static boolean sync = false;
-    
+    public static boolean ratematch = false;
 }

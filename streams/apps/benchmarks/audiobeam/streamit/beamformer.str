@@ -19,7 +19,7 @@ void->void pipeline beamformer
   source_location[2] = 1;
     
   //  add FileReader<float>("/home/streamit/compiler-static/audiobeam/data/near-field/data2");
-  add FileReader<float>("bindata");
+  add FileReader<float>("../data/data2.binary");
 
   //  add float->float filter { work pop 1 push 1 { float val = pop(); print(val); push(val); } } 
 

@@ -1,0 +1,21 @@
+<benchmark>
+  <name>vectadd</name>
+  <desc>Add two vectors</desc>
+  <description>
+Perform simple vector-vector adds.  In StreamIt, a vector is
+frequently just a series of consecutive elements on a single channel;
+two vectors can be added by generating elements in a split-join (or
+using a split-join to interleave the elements of the inputs), and then
+doing an elementwise add on the output.
+  </description>
+  <implementations>
+    <impl lang="StreamIt">
+      <desc>Generate two input vectors and add them</desc>
+      <file>VectAdd.str</file>
+    </impl>
+    <impl lang="StreamIt">
+      <desc>Same, but with different input generator</desc>
+      <file>VectAdd1.str</file>
+    </impl>
+  </implementations>
+</benchmark>

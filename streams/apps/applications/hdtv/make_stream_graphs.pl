@@ -30,14 +30,16 @@ foreach $current_file (@files) {
     my $dot_command = "dot -Tps $current_file.dot > $current_file.ps";
     # set up the command to convert the ps file to eps
     my $convert_command = "ps2epsi $current_file.ps $current_file.eps";
+    my $convert_command_2 = "ps2pdf $current_file.ps $current_file.pdf";
     # command to cleanup the current directory, and put the files into the streamgraph directory
-    my $cleanup_command = "mv $current_file.eps streamgraphs; rm $current_file.ps $current_file.dot";
-
+    my $cleanup_command = "mv $current_file.eps streamgraphs; mv $current_file.pdf streamgraphs; rm $current_file.ps $current_file.dot";
+    
     # now, execute them
     print "processing $current_file:";
     print "(java)"    . `$java_command`;
     print "(dot)"     . `$dot_command`;
     print "(ps2epsi)" . `$convert_command`;
+    print "(ps2pdf)"  . `$convert_command_2`;
     print "(clean)"   . `$cleanup_command`;
     print "done.\n";
 }

@@ -1,15 +1,73 @@
+\subsection{Overview}
+Reed-Solomon codes are a type of forward error correcting code that are used in everything from CDs to
+satellite communications. The theoretical foundations for these codes were published in the 
+in 1960\cite{reed-solomon}. The authors, Irving S. Reed and Gustave Solomon, were researchers
+at MIT's Lincoln Labs, and they were interested in the newly created field of information theory
+and information coding. For an
+interesting history of the reed-solomon codes, an excellent overview and brief history can be
+found in \cite{reed-solomon-overview}.
+
+In coding parlance, the sender is the person who has data that they want to protect by means
+of the code. The sender encodes their data with the code, which results in a codeword.
+The codeword is then sent over a (possibly) noisy channel which has the potential to 
+add errors to the code word. The reciever is the person who recieves (imagine that)
+the codeword from the channel, and can then use the code and the recieved codeword to
+try and figure out the data that the sender originally intended to send.
+
+Note that the sender/channel/receiver model is applicable to a wide set of scenarios, not
+just communication systems where you really do have a sender, a channel (eg radio waves), and
+a recieved. For instance, a CD also falls under this model. The sender is the record publisher
+who wants to send digital audio. They encode their audio data onto a CD, which then acts as 
+the channel between the record company and you. When you buy a CD and give it a scratch or two,
+the distortions to the CD can be thought of as a channel adding noise. It is then up to your CD 
+player, as the receiver, to take the scratched CD and produce the original audio that the
+record company placed there.
+
+If a code is ``Forward Error Correcting,'' or FEC, it means that the person who is trying to figure out
+what the encoded data represents is not allowed to communicate with the sender. For example, when you
+have a scratch on your CD, your CD player can't ask the CD's publisher what byte number 2243532 was supposed
+to be if there were too many errors. However, if your computer wants to recieve a web page, and one of the packets
+from the webserver gets lost in transit, it \textbf{can} request that the webserver resend that particular
+packet.
+
+Because an FEC has to make do with one way communication, redundancy is added to the original data to form the
+code word. The hope is that even if some of the codeword is changed in transit over the channel the
+added redundancy will let the receiver figure out what was supposed to be sent. Reed-Solmon codes are
+especially cool because 
+
 \subsection{RS Encoding}
 
 \subsection{RS Decoding}
 
 
+
 \subsection{StreamIT Implementation}
 \begin{figure}
 \center
-\epsfxsize=3.0in
+\epsfxsize=2.5in
 \epsfbox{streamgraphs/SGRSEncoder.eps}
-\epsfxsize=3.0in
+\epsfxsize=2.5in
 \epsfbox{streamgraphs/SGRSDecoder.eps}
 \caption{StreamGraphs of the ReedSolomonEncoder(left) and the ReedSolomonDecoder(right).}
 \label{fig:sg-reed-solomon}
 \end{figure}
+
+Reed-Solomon encoders and decoders are far from trivial to implement. 
+They need implementations of Galois (finite field) arithemetic, generator polynomials, 
+and other exotic mathematics that are not in the repitoire of most programmers.
+
+To implement the Reed-Solomon coders for HDTV, we pressed an open
+source implementation of Reed-Solomon encoding, RSCODE\cite{rscode}
+ into service. RSCODE was written in C, but converting the C implementation
+to the Java like syntax of StreamIT was fairly straightforward. Some global variables 
+needed to be converted into fields, and we needed to change the data types of some 
+of the internal arrays so that they would compile successfully. It seems as though
+Java and C have differing symantics on what values a \texttt{char} character
+can take on.
+
+Figure~\ref{sg-reed-solomon} shows the StreamIT stream graph of the Reed-Solomon
+decoder. Since the code was originally a C library, the easiest (and the only obvious)
+way to implement the encoder and decoder in streamit was to have a monolothic filter
+which did everything in one go. While this doesn't expose much parallelism to the
+StreamIT compiler, it is not clear that there really is all that much parallelism in the
+application to expose. 

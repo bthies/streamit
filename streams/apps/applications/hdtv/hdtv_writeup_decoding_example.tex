@@ -16,7 +16,7 @@ out our chart for $c[s,1]$ accordingly.
 
 \begin{table}
 \center
-\textbf{Possible Transitions}
+\textbf{Possible Transitions t=1}
 \begin{tabular}{l|l|l|l|l}
 (input)$s0 \rightarrow s1$ & hamming distance between   & accumulated error  & Choice & Action \\
               (output)     & output and received symbol & if this transition &        &        \\
@@ -33,38 +33,9 @@ $(1) 11\rightarrow10 (11)$ & $ham(00, 11) = 2$ & $c[11][0] + 0 = \infty + 2 = \i
 $(0) 11\rightarrow11 (01)$ & $ham(00, 01) = 1$ & $c[11][0] + 0 = \infty + 1 = \infty + 1$ & $*$ & $c[11][1] \leftarrow \infty + 1$ \\
 $(1) 01\rightarrow11 (11)$ & $ham(00, 11) = 2$ & $c[01][0] + 0 = \infty + 2 = \infty + 2$ &     & $psh[11][1] \leftarrow 11$ \\
 \end{tabular}
-\caption{Decoding \texttt{00101101110011111000} at time = 1.}
-\label{tbl:decode_time1}
-\end{table}
-
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-decode-1.eps}
-\caption{Path traced through the trellis for input sequence 00101101110011111000, time = 1}
-\label{fig:decode_time1}
-\end{figure}
 
 
-
-
-Table~\ref{tbl:decode_time1} demonstrates the calculations that we go through to 
-determine the next row of the c table. The ``Choice'' column represents the choice of
-$min(c[q^0,t-1] + e^0, c[q^1,t-1] + e^1)$ from the algorithm, and the right most column
-represents the updates that we make to both tables.
-
-Figure~\ref{fig:decode_time1} represents the path through the trellis	 
-that we have started to explore. Paths with accumulated errors of $\infty$ are ignored.
-
-
-
- 
-
-\paragraph{Time 2, received Symbol = 10}
-
-\begin{table}
-\center
-\textbf{Possible Transitions}
+\textbf{Possible Transitions t=2}
 \begin{tabular}{l|l|l|l|l}
 (input)$s0 \rightarrow s1$ & hamming distance between   & accumulated error  & Choice & Action \\
               (output)     & output and received symbol & if this transition &        &        \\
@@ -81,26 +52,8 @@ $(1) 11\rightarrow10 (11)$ & $ham(10, 11) = 1$ & $c[11][0] + 1 = (\infty + 1) + 
 $(0) 11\rightarrow11 (01)$ & $ham(10, 01) = 2$ & $c[11][0] + 2 = (\infty + 1) + 2 = \infty + 3$ &     & $c[11][2] \leftarrow 2$ \\
 $(1) 01\rightarrow11 (11)$ & $ham(10, 11) = 1$ & $c[01][0] + 1 = 1 + 1 = 2                    $ & $*$ & $psh[11][2] \leftarrow 01$ \\
 \end{tabular}
-\caption{Decoding \texttt{00101101110011111000} at time = 2.}
-\label{tbl:decode_time2}
-\end{table}
 
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-decode-2.eps}
-\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 2}
-\label{fig:decode_time2}
-\end{figure}
-
-
-
-
-
-\paragraph{Time 3, received Symbol = 11}
-\begin{table}
-\center
-\textbf{Possible Transitions}
+\textbf{Possible Transitions, t=3}
 \begin{tabular}{l|l|l|l|l}
 (input)$s0 \rightarrow s1$ & hamming distance between   & accumulated error  & Choice & Action \\
               (output)     & output and received symbol & if this transition &        &        \\
@@ -117,24 +70,8 @@ $(1) 11\rightarrow10 (11)$ & $ham(11, 11) = 0$ & $c[11][0] + 0 = 2 + 0 = 2$ &   
 $(0) 11\rightarrow11 (01)$ & $ham(11, 01) = 1$ & $c[11][0] + 1 = 2 + 1 = 3$ &     & $c[11][2] \leftarrow 0$ \\
 $(1) 01\rightarrow11 (11)$ & $ham(11, 11) = 0$ & $c[01][0] + 0 = 0 + 0 = 2$ & $*$ & $psh[11][2] \leftarrow 01$ \\
 \end{tabular}
-\caption{Decoding \texttt{00101101110011111000} at time = 3.}
-\label{tbl:decode_time3}
-\end{table}
 
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-decode-3.eps}
-\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 3}
-\label{fig:decode_time3}
-\end{figure}
-
-
-
-\paragraph{Time 4, received Symbol = 01}
-\begin{table}
-\center
-\textbf{Possible Transitions}
+\textbf{Possible Transitions, t=4}
 \begin{tabular}{l|l|l|l|l}
 (input)$s0 \rightarrow s1$ & hamming distance between   & accumulated error  & Choice & Action \\
               (output)     & output and received symbol & if this transition &        &        \\
@@ -151,24 +88,9 @@ $(1) 11\rightarrow10 (11)$ & $ham(01, 11) = 1$ & $c[11][0] + 1 = 0 + 1 = 1$ & $*
 $(0) 11\rightarrow11 (01)$ & $ham(01, 01) = 0$ & $c[11][0] + 0 = 0 + 0 = 0$ & $*$ & $c[11][2] \leftarrow 0$ \\
 $(1) 01\rightarrow11 (11)$ & $ham(01, 11) = 1$ & $c[01][0] + 1 = 1 + 1 = 2$ &     & $psh[11][2] \leftarrow 11$ \\
 \end{tabular}
-\caption{Decoding \texttt{00101101110011111000} at time = 4.}
-\label{tbl:decode_time4}
-\end{table}
-
-\begin{figure}
-\center
-\epsfxsize=5.5in
-\epsfbox{images/trellis-decode-4.eps}
-\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 4}
-\label{fig:decode_time4}
-\end{figure}
 
 
-\paragraph{Time 5, received Symbol = 11}
-
-\begin{table}
-\center
-\textbf{Possible Transitions}
+\textbf{Possible Transitions, t=5}
 \begin{tabular}{l|l|l|l|l}
 (input)$s0 \rightarrow s1$ & hamming distance between   & accumulated error  & Choice & Action \\
               (output)     & output and received symbol & if this transition &        &        \\
@@ -185,39 +107,77 @@ $(1) 11\rightarrow10 (11)$ & $ham(11, 11) = 0$ & $c[11][0] + 0 = 0 + 0 = 0$ & $*
 $(0) 11\rightarrow11 (01)$ & $ham(11, 01) = 1$ & $c[11][0] + 1 = 0 + 1 = 1$ & $*$ & $c[11][2] \leftarrow 1$ \\
 $(1) 01\rightarrow11 (11)$ & $ham(11, 11) = 0$ & $c[01][0] + 0 = 2 + 0 = 2$ &     & $psh[11][2] \leftarrow 11$ \\
 \end{tabular}
-\caption{Decoding \texttt{00101101110011111000} at time = 5.}
-\label{tbl:decode_time5}
+\label{tbl:trellis-decode}
 \end{table}
+
 
 \begin{figure}
 \center
 \epsfxsize=5.5in
+\epsfbox{images/trellis-decode-1.eps}
+\caption{Path traced through the trellis for input sequence 00101101110011111000, time = 1}
+
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-2.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 2}
+
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-3.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 3}
+\label{fig:trellis-decode-1}
+\end{figure}
+
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-4.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 4}
+
+\epsfxsize=5.5in
 \epsfbox{images/trellis-decode-5.eps}
 \caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 5}
-\label{fig:decode_time5}
+
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-6.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 6}
+
+\label{fig:trellis-decode-2}
+\end{figure}
+
+\begin{figure}
+\center
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-7.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 7}
+
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-8.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 8}
+
+\epsfxsize=5.5in
+\epsfbox{images/trellis-decode-9.eps}
+\caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 9}
+
+\label{fig:trellis-decode-3}
 \end{figure}
 
 
-\paragraph{Time 6, received Symbol = 00}
-(...)
-\paragraph{Time 7, received Symbol = 11}
-(...)
-\paragraph{Time 8, received Symbol = 11}
-(...)
-\paragraph{Time 9, received Symbol = 10}
-(...)
-\paragraph{Time 10, received Symbol = 00}
 \begin{figure}
 \center
 \epsfxsize=5.5in
 \epsfbox{images/trellis-decode-10.eps}
 \caption{Decode paths traced through the trellis for input sequence 00101101110011111000, time = 10}
-\label{fig:decode_time10}
+\label{fig:trellis-decode-3}
 \end{figure}
 
 
+demonstrates the calculations that we go through to 
+determine the next row of the c table. The ``Choice'' column represents the choice of
+$min(c[q^0,t-1] + e^0, c[q^1,t-1] + e^1)$ from the algorithm, and the right most column
+represents the updates that we make to both tables.
 
-
+represents the path through the trellis	 
+that we have started to explore. Paths with accumulated errors of $\infty$ are ignored.
 
 \begin{figure}
 \center

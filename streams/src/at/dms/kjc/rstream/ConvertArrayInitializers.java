@@ -200,8 +200,7 @@ public class ConvertArrayInitializers extends SLIRReplacingVisitor
 		assert varAccess instanceof String || varAccess instanceof JLocalVariable;
 		
 		if (varAccess instanceof String)
-		    prefix = new JFieldAccessExpression(null, 
-							(String)varAccess);
+		    prefix = new JFieldAccessExpression((String)varAccess);
 		else 
 		    prefix = new JLocalVariableExpression(null,
 							  (JLocalVariable)varAccess);

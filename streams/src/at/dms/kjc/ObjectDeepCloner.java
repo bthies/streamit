@@ -31,7 +31,6 @@ public class ObjectDeepCloner
    {
       ObjectOutputStream oos = null;
       ObjectInputStream ois = null;
-      System.out.println("Deep Copying");
       try
       {
          ByteArrayOutputStream bos = 

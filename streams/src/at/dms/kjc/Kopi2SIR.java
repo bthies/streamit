@@ -54,6 +54,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     public Kopi2SIR() {
 	parentStream = null;
 	topLevel = null;
+
 	currentMethod = null;
 	visitedSIROps = new Hashtable(100);
 	symbolTable = new Hashtable(300);

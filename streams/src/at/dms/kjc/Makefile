@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.8 2001-10-11 18:07:11 thies Exp $
+## $Id: Makefile,v 1.9 2001-10-25 01:38:16 mgordon Exp $
 ##
 
 TOPDIR =	..
@@ -116,7 +116,7 @@ JAVAFILES +=	JAddExpression JArrayAccessExpression			\
 		JUnqualifiedAnonymousCreation				\
 		JUnqualifiedInstanceCreation				\
 		JVariableDeclarationStatement JVariableDefinition	\
-		JWhileStatement Kopi2SIR
+		JWhileStatement Kopi2SIR ObjectDeepCloner
 
 MESSAGES =	KjcMessages
 

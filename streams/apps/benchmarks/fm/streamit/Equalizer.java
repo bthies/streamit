@@ -124,17 +124,15 @@ class EqualizerInnerSplitJoin extends SplitJoin
     public void init(final float rate, final float low, final float high,
                      final int bands)
     {
-        float incr =
-            (float)java.lang.Math.exp((java.lang.Math.log(high) -
-                                       java.lang.Math.log(low)) / bands);
-        float freq = low;
         int i;
         setSplitter(DUPLICATE());
-        for (i = 1; i < bands; i++)
-        {
-            freq = freq * incr;
-            add(new EqualizerInnerPipeline(rate, freq));
-        }
+        for (i = 0; i < bands - 1; i++)
+            add(new EqualizerInnerPipeline
+                (rate,
+                 (float)java.lang.Math.exp
+                 ((i+1) *
+                  (java.lang.Math.log(high) - java.lang.Math.log(low)) /
+                  bands + java.lang.Math.log(low))));
         setJoiner(ROUND_ROBIN(2));
     }
 }

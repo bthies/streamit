@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.11 2002-11-15 15:44:18 dmaze Exp $
+# $Id: knit,v 1.12 2002-11-15 16:05:01 dmaze Exp $
 #
 
 use strict;
@@ -38,18 +38,29 @@ Options:
   --raw n             Compile for RAW, with an n-by-n grid
   --verbose           Print commands as they are executed
 
-Options passed to Kopi:
+Options available for all backends:
   --constprop, -c     Turns on StreamIt Field Prop
+  --frequencyreplacement (0|1)
+                      Convert FIR filters to frequency; 1 is efficient
   --fusion, -f        Perform filter fusion
   --linearanalysis    Perform linear analysis
   --linearreplacement Perform linear transformations based on analysis
-  --noanneal, -N      Do not run simulated annealing for layout
-  --partition, -a     Automatically partition stream graph
-  --ratematch, -x     Turn on rate matching for RAW
+  --poptopeek, -P     Convert all pop expressions into peeks
   --simplesjfusion    Revert to the old, simple SplitJoin fusion algorithm
   --sync, -k          Turn on sync removal
+  --targetfftsize n   Target number of outputs for frequency replacement
   --unroll, -u        StreamIt Unroll
   --viram, -V         Compile for VIRAM, a vector uniprocessor
+
+Options specific to RAW backend:
+  --dppartition, -y   Use the dynamic programming partitioner
+  --ilppartition      Use the integer linear programming partitioner
+  --noanneal, -N      Do not run simulated annealing for layout
+  --partition, -a     Automatically partition stream graph
+  --ptraccess, -Q     Access buffers through a pointer
+  --ratematch, -x     Turn on rate matching
+  --removeglobals, -G Inline all functions and turn globals into locals
+  --sketchycodegen    Avoid volatile assembly
 EOT
 }
 
@@ -65,14 +76,22 @@ sub get_options
 	       "raw|r=i",
 	       "verbose|v",
 	       "constprop|c",
+	       "dppartition|y",
+	       "frequencyreplacement|F=i",
 	       "fusion|f",
+	       "ilppartition|A",
 	       "linearanalysis|i",
 	       "linearreplacement|I",
 	       "noanneal|N",
 	       "partition|a",
+	       "poptopeek|P",
+	       "ptraccess|Q",
 	       "ratematch|x",
+	       "removeglobals|G",
 	       "simplesjfusion|S",
+	       "sketchycodegen|z",
 	       "sync|k",
+	       "targetfftsize|t=i",
 	       "unroll|u=i",
 	       "viram|V");
   }
@@ -147,14 +166,23 @@ sub get_kjc_opts
     my $kjcopts = "";
     $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
     $opts{constprop} && ($kjcopts .= " -c");
+    $opts{dppartition} && ($kjcopts .= " -y");
+    $opts{frequencyreplacement} &&
+      ($kjcopts .= " -F" . $opts{frequencyreplacement});
     $opts{fusion} && ($kjcopts .= " -o");
+    $opts{ilppartition} && ($kjcopts .= " -A");
     $opts{linearanalysis} && ($kjcopts .= " -i");
     $opts{linearreplacement} && ($kjcopts .= " -I");
     $opts{noanneal} && ($kjcopts .= " -N");
     $opts{partition} && ($kjcopts .= " -a");
+    $opts{poptopeek} && ($kjcopts .= " -P");
+    $opts{ptraccess} && ($kjcopts .= " -Q");
     $opts{ratematch} && ($kjcopts .= " -x");
+    $opts{removeglobals} && ($kjcopts .= " -G");
     $opts{simplesjfusion} && ($kjcopts .= " -S");
+    $opts{sketchycodegen} && ($kjcopts .= " -z");
     $opts{sync} && ($kjcopts .= " -k");
+    $opts{targetfftsize} && ($kjcopts .= " -t" . $opts{targetfftsize});
     $opts{unroll} && ($kjcopts .= " -u " . $opts{unroll});
     $opts{viram} && ($kjcopts .= " -V");
     return $kjcopts;

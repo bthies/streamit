@@ -116,12 +116,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("\n");
 	p.print("void __declare_sockets_"+thread_id+"() {\n");
 
-	p.print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+");\n");
+	p.print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+",DATA_SOCKET);\n");
 
 	for (int i = 0; i < out.size(); i++) {
 	    NetStream s = (NetStream)out.elementAt(i);
 		
-	    p.print("  init_instance::add_outgoing("+s.getSource()+","+s.getDest()+",lookup_ip(init_instance::get_node_name("+s.getDest()+")));\n");
+	    p.print("  init_instance::add_outgoing("+s.getSource()+","+s.getDest()+",DATA_SOCKET);\n");
 	    
 	}
 	
@@ -173,12 +173,12 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("void run_"+thread_id+"() {\n");
 	p.print("  int i;\n");
 	
-	p.print("  "+in.name()+"in = new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+"));\n");
+	p.print("  "+in.name()+"in = new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET));\n");
 	
 	for (int i = 0; i < out.size(); i++) {
 	    NetStream s = (NetStream)out.elementAt(i);
 	    
-	    p.print("  "+s.name()+"out = new mysocket(init_instance::get_outgoing_socket("+s.getSource()+","+s.getDest()+"));\n");
+	    p.print("  "+s.name()+"out = new mysocket(init_instance::get_outgoing_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET));\n");
 	}
 
 	// get int init count
@@ -257,10 +257,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	for (int i = 0; i < in.size(); i++) {
 	    NetStream s = (NetStream)in.elementAt(i);	    
-	    p.print("  init_instance::add_incoming("+s.getSource()+","+s.getDest()+");\n");    
+	    p.print("  init_instance::add_incoming("+s.getSource()+","+s.getDest()+",DATA_SOCKET);\n");    
 	}
 
-	p.print("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+",lookup_ip(init_instance::get_node_name("+out.getDest()+")));\n");
+	p.print("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+",DATA_SOCKET);\n");
 	
 	p.print("}\n");
 	
@@ -343,10 +343,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	for (int i = 0; i < in.size(); i++) {
 	    NetStream s = (NetStream)in.elementAt(i);
 		
-	    p.print("  "+s.name()+"in = new mysocket(init_instance::get_incoming_socket("+s.getSource()+","+s.getDest()+"));\n");
+	    p.print("  "+s.name()+"in = new mysocket(init_instance::get_incoming_socket("+s.getSource()+","+s.getDest()+",DATA_SOCKET));\n");
 	}
 
-	p.print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+"));\n");
+	p.print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET));\n");
 
 
 	// get int init count

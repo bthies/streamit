@@ -285,11 +285,11 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("\nvoid __declare_sockets_"+selfID+"() {\n");
 
 	if (in != null) {
-	    print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+");\n");
+	    print("  init_instance::add_incoming("+in.getSource()+","+in.getDest()+", DATA_SOCKET);\n");
 	}
 
 	if (out != null) {
-	    print("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+",lookup_ip(init_instance::get_node_name("+out.getDest()+")));\n");
+	    print("  init_instance::add_outgoing("+out.getSource()+","+out.getDest()+", DATA_SOCKET);\n");
 	}
 
 
@@ -297,7 +297,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    Iterator i = sends_to.iterator();
 	    while (i.hasNext()) {
 		int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  init_instance::add_outgoing("+(-selfID-1)+","+(-dst-1)+",lookup_ip(init_instance::get_node_name("+dst+")));\n");
+		print("  init_instance::add_outgoing("+selfID+","+dst+",MESSAGE_SOCKET);\n");
 	    }
 	}
 
@@ -305,7 +305,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    Iterator i = receives_from.iterator();
 	    while (i.hasNext()) {
 		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  init_instance::add_incoming("+(-src-1)+","+(-selfID-1)+");\n");
+		print("  init_instance::add_incoming("+src+","+selfID+",MESSAGE_SOCKET);\n");
 	    }
 	}
 
@@ -620,18 +620,18 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("  int i;\n");
 
 	if (in != null) {
-	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+")));\n");
+	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET)));\n");
 	}
 
 	if (out != null) {
-	    print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+"));\n");
+	    print("  "+out.name()+"out = new mysocket(init_instance::get_outgoing_socket("+out.getSource()+","+out.getDest()+",DATA_SOCKET));\n");
 	}
 
 	{
 	    Iterator i = sends_to.iterator();
 	    while (i.hasNext()) {
 		int dst = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  __msg_sock_"+selfID+"_"+dst+"out = new mysocket(init_instance::get_outgoing_socket("+(-selfID-1)+","+(-dst-1)+"));\n");
+		print("  __msg_sock_"+selfID+"_"+dst+"out = new mysocket(init_instance::get_outgoing_socket("+selfID+","+dst+",MESSAGE_SOCKET));\n");
 	    }
 	}
 
@@ -639,7 +639,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    Iterator i = receives_from.iterator();
 	    while (i.hasNext()) {
 		int src = NodeEnumerator.getSIROperatorId((SIRStream)i.next());
-		print("  __msg_sock_"+src+"_"+selfID+"in = new mysocket(init_instance::get_incoming_socket("+(-src-1)+","+(-selfID-1)+"));\n");
+		print("  __msg_sock_"+src+"_"+selfID+"in = new mysocket(init_instance::get_incoming_socket("+src+","+selfID+",MESSAGE_SOCKET));\n");
 	    }
 	}
 

@@ -443,10 +443,16 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    at.dms.util.Utils.fail("Cannot declare fields static");
 
 	/* Output declaration set the fields for the current
-	   stream */ 
+	   stream */
 
-	if (expr != null)
-	    expr = (JExpression)expr.accept(this);
+	if (expr != null) {
+	    Object o = expr.accept(this);
+	    if (o instanceof JExpression) {
+		expr = (JExpression)expr.accept(this);
+	    } else {
+		at.dms.util.Utils.fail("Found a Channel declaration as a field -- new StreamIt syntax requires definition in init function instead.");
+	    }
+	}
 	parentStream.addField(new JFieldDeclaration(null, new JVariableDefinition(null,
 										  modifiers,
 										  type,

@@ -1,6 +1,7 @@
 #ifndef STREAMIT_H
 #define STREAMIT_H
 
+typedef struct stream_context stream_context;
 typedef enum stream_type {
   INVALID_STREAM_TYPE,
   FILTER,
@@ -48,6 +49,9 @@ typedef void (*streamit_handler)(void *);
 typedef void (*work_fn)(void *);
 typedef void (*message_fn)(void *data, void *params);
 typedef message_fn *interface_table;
+typedef struct ContextContainer {
+  stream_context *context;
+} _ContextContainer, *ContextContainer;
 typedef struct tape {
   void *data;
   int read_pos;
@@ -119,7 +123,7 @@ typedef union stream_type_data {
   pipeline_type_data pipeline_data;
   splitjoin_type_data splitjoin_data;
 } stream_type_data;
-typedef struct stream_context {
+struct stream_context {
   void *stream_data;
   stream_type type;
   int peek_size, pop_size, push_size;
@@ -128,7 +132,7 @@ typedef struct stream_context {
   tape *input_tape;
   tape *output_tape;
   stream_type_data type_data;
-} stream_context;
+};
 stream_context *create_context(void *p);
 typedef struct portal_receiver {
   struct portal_receiver *next;
@@ -166,9 +170,9 @@ void register_receiver(portal p, stream_context *receiver,
 /* void register_sender(portal p, stream_context *sender, latency l); */
 void send_message(portal p, int msgid, latency l, void *params);
 stream_context *streamit_filereader_create(char *filename);
-void streamit_filereader_work(stream_context *c);
+void streamit_filereader_work(ContextContainer c);
 stream_context *streamit_filewriter_create(char *filename);
-void streamit_filewriter_work(stream_context *c);
+void streamit_filewriter_work(ContextContainer c);
 void connect_tapes(stream_context *c);
 void streamit_run(stream_context *c, int argc, char **argv);
 

@@ -151,9 +151,9 @@ issue_commands() {
     #change to the working dir
     command="$command cd $working_dir;"
     #compile
-    command="$nice $command java -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file;"
+    command="$command $nice java -cp $CLASSPATH -Xmx1509M at.dms.kjc.Main -s -raw $config $options $bench_file;"
     #run
-    command="$nice $command gmake -f Makefile.streamit run;"
+    command="$command $nice gmake -f Makefile.streamit run;"
     
     echo -ne "\033[1m\e[32;40mCompiling/Running $bench_file (${config}x${config}) on $machine...\033[0m\n"; tput sgr0
     ssh $current_machine "$command" &> "$working_dir/command"

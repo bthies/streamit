@@ -26,7 +26,7 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	this.elements = new LinkedList();
     }
 
-/*
+    /**
      * Return a shallow clone of the SIRPipeline
      */
     public Object clone() {

@@ -41,8 +41,8 @@ class BeamFormer extends Filter
     beamFormingWeights = new float [numberOfBeams*numberOfChannels];
     inputData          = new float [numberOfChannels*numberOfSamples];
 
-    input = new Channel (Float.TYPE, numberOfChannels*numberOfSamples);
-    output = new Channel (Float.TYPE, numberOfBeams*numberOfSamples);
+    input = new Channel (Float.TYPE, nChannels*nSamples);
+    output = new Channel (Float.TYPE, nBeams*nSamples);
 
     // NEED TO GENERATE BF WEIGHTS HERE
   }

@@ -53,7 +53,7 @@ public class MakefileGenerator
 	    //if we are using the magic network, tell btl
 	    if (KjcOptions.magic_net)
 		fw.write("EXTRA_BTL_ARGS += " +
-			 "-magic_instruction -magic_crossbar C1H2\n");
+			 "-magic_instruction -magic_crossbar C1H1\n");
 	    fw.write("include $(TOPDIR)/Makefile.include\n\n");
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");

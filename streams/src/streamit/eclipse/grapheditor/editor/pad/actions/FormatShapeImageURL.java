@@ -1,5 +1,5 @@
 /*
- * @(#)FileLibraryOpen.java	1.2 29.01.2003
+ * @(#)FormatShapeImageURL.java	1.2 29.01.2003
  *
  * Copyright (C) 2003 sven.luzar
  *
@@ -41,7 +41,7 @@ import streamit.eclipse.grapheditor.editor.pad.resources.Translator;
 public class FormatShapeImageURL extends AbstractActionFile {
 
 	/**
-	 * Constructor for FileLibraryOpen.
+	 * Constructor for FormatShapeImageURL.
 	 * @param graphpad
 	 * @param name
 	 */

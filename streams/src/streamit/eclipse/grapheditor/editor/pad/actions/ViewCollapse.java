@@ -30,7 +30,7 @@ public class ViewCollapse extends AbstractActionDefault {
 	/**
 	 * Collapse a GEStreamNode. Only allowed to collapse a single GEStreamNode at 
 	 * a time. If the GEStreamNode to be collapsed is a GEContainer, then everything
-	 * inside the node will be collapsed. If the selected node is a non-GEContainer,
+	 * inside the node will be collapsed. If the selected node is a GEContainer,
 	 * then the encapsulating node (which is a GEContainer) will be the one that is 
 	 * collapsed.
 	 */
@@ -69,7 +69,7 @@ public class ViewCollapse extends AbstractActionDefault {
 				if (cells[firstCell] instanceof GEContainer)
 				{
 					container =  (GEContainer) cells[firstCell];
-					currentLevelView = ((GEStreamNode)container).getDepthLevel();
+					currentLevelView = container.getDepthLevel();
 					
 					// TODO: make sure we are getting the right max level
 					System.out.println("Current Level View is " + graphStruct.containerNodes.getCurrentLevelView());
@@ -87,7 +87,7 @@ public class ViewCollapse extends AbstractActionDefault {
 				{
 					GEStreamNode node = (GEStreamNode) cells[firstCell];
 					container = ((GEContainer) node.getEncapsulatingNode());
-					currentLevelView = ((GEStreamNode)container).getDepthLevel();
+					currentLevelView = container.getDepthLevel();
 					
 					// TODO: make sure we are getting the right level
 					for (int j = graphStruct.containerNodes.getCurrentLevelView(); j > currentLevelView ; j--)

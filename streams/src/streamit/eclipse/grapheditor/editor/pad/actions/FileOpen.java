@@ -94,7 +94,6 @@ public class FileOpen extends AbstractActionFile {
 		{
 			return false;
 		}
-		
 		if (name != null) 
 		{
 			// get all open files to test against
@@ -104,24 +103,12 @@ public class FileOpen extends AbstractActionFile {
 				for (int i = 0; i < docs.length; i++) 
 				{
 					URL docname = docs[i].getFilename();
+		
 					// check if names are the same
 					if (docname != null && name.equals(docname)) 
 					{
-					//	int r = JOptionPane.showConfirmDialog(graphpad, Translator.getString("FileAlreadyOpenWarning"), "Warning", JOptionPane.YES_NO_OPTION);
-					
-						// if YES then user wants to revert to previously saved version
-					//	if (r == JOptionPane.YES_OPTION)  {
-							// close existing internal frame without saving
-							graphpad.removeGPInternalFrame(
-								docs[i].getInternalFrame());
-
-							// open old version to revert to
-							//openStreamItFile(file);
+							graphpad.removeGPInternalFrame(docs[i].getInternalFrame());
 							return false;
-
-						//}
-						// doesn't want to revert and already open so cancel open
-						//return true;
 					}
 				}
 			}
@@ -141,8 +128,7 @@ public class FileOpen extends AbstractActionFile {
 		selectProvider.show() ;
 		if (selectProvider.getAnswer() == GPSelectProvider.OPTION_CANCEL )
 			return false;
-		
-		
+				
 		GraphModelProvider graphModelProvider = selectProvider.getSelectedGraphModelProvider() ;
 		if (graphModelProvider == null)
 			return false;
@@ -176,66 +162,20 @@ public class FileOpen extends AbstractActionFile {
 		
 		GPGraph gGraph = new GPGraph(GraphEncoder.graph.getGraphModel());
 		gGraph.setGraphLayoutCache(new GraphLayoutCache(gGraph.getModel(), gGraph, false, true));
+		gGraph.setEditable(false);
+		gGraph.setDisconnectable(false);
 		
-		//GPDocument doc= graphpad.addDocument(null, graphModelProvider, gGraph , GraphEncoder.graph.getGraphModel(), null);
 		GPDocument doc= graphpad.addDocument(fileURL, graphModelProvider, gGraph , gGraph.getModel(), GraphEncoder.graph, null);
-
+		//GPDocument doc= graphpad.addDocument(null, graphModelProvider, gGraph , GraphEncoder.graph.getGraphModel(), null);
+	
 		GraphEncoder.graph.setJGraph(gGraph);
 		GraphEncoder.graph.constructGraph(doc.getScrollPane());
-		//gGraph.getGraphLayoutCache().setVisible(gGraph.getRoots(), true);
+
+		graphpad.getCurrentDocument().treePanel.setGraphStructure(graphpad.getCurrentDocument().getGraphStructure());		
+		graphpad.getCurrentDocument().treePanel.createJTree();
+		graphpad.getCurrentDocument().updateUI();
 		graphpad.update();	
-		
-		
-		/* Removed since the code the code that expanded the Graph at the beginning was removed
-		ViewExpand ve = (ViewExpand) graphpad.getCurrentActionMap().get(Utilities.getClassNameWithoutPackage(ViewExpand.class));
-		ve.centerLayout();		
-		graphpad.update();*/
 		return true;
-	}
-
-	protected void addDocument(GPFileChooser chooser) 
-	{
-		final File file = chooser.getSelectedFile();
-		
-		GPSelectProvider selectProvider = new GPSelectProvider(graphpad.getFrame() );
-		selectProvider.show() ;
-		if (selectProvider.getAnswer() == GPSelectProvider.OPTION_CANCEL )
-			return;
-		
-		
-		GraphModelProvider graphModelProvider = selectProvider.getSelectedGraphModelProvider() ;
-		if (graphModelProvider == null)
-			return;
-
-		String fileName = "";
-		try 
-		{
-			fileName = file.getPath().toString();
-		}
-		catch (Exception ex){}
-
-		System.out.println("FILE NAME = " + fileName);
-		System.out.println("Path == "+ System.getProperties().getProperty("java.class.path"));
-		System.out.println("JAVA FILE: "+ fileName.substring(0, fileName.indexOf(".")+ 1 )+"java");
-		
-		streamit.frontend.ToJava.main(new String[] {"--output", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java", fileName});
-		at.dms.kjc.Main.compile(new String[] {"--streamit", "--graph", "--verbose", fileName.substring(0, fileName.indexOf(".")+ 1 )+"java"});
-		
-		//graphpad.addDocument(graphModelProvider);
-		GPGraph gGraph = new GPGraph(GraphEncoder.graph.getGraphModel());
-		gGraph.setGraphLayoutCache(new GraphLayoutCache(gGraph.getModel(), gGraph, false, true));
-		GPDocument doc= graphpad.addDocument(null, graphModelProvider, gGraph , GraphEncoder.graph.getGraphModel(), null);
-		
-		doc.getGraphStructure().setJGraph(gGraph);
-		doc.getGraphStructure().constructGraph(doc.getScrollPane());
-		
-		//gGraph.getGraphLayoutCache().setVisible(gGraph.getRoots(), true);
-		graphpad.update();
-		
-		/* Removed since the code the code that expanded the Graph at the beginning was removed
-		ViewExpand ve = (ViewExpand) graphpad.getCurrentActionMap().get(Utilities.getClassNameWithoutPackage(ViewExpand.class));
-		ve.centerLayout();
-		*/
 	}
 
 	/** Empty implementation.

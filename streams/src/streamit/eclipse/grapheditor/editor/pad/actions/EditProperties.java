@@ -70,13 +70,17 @@ public class EditProperties extends AbstractActionFile {
 			{
 				_control = new GEFeedbackLoopController();
 			}
+			
 			if (_control.configure(graphpad.getCurrentDocument(), GEProperties.getNodeProperties(cell)))
 			{
 				GEProperties.setNodeProperties(cell, 
 											   _control.getConfiguration(),
 											   //graphpad.getCurrentGraph())
 											   //graphpad.getCurrentDocument().getGraphStructure().getJGraph()
-											   graphpad.getCurrentDocument().getGraphStructure());		
+											   graphpad.getCurrentDocument().getGraphStructure());
+				graphpad.getCurrentDocument().getTreePanel().update();
+				graphpad.getCurrentDocument().updateUI();
+				graphpad.update();			
 			}
 		}
 	}

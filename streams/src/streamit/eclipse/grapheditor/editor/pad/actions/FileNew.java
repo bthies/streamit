@@ -67,6 +67,8 @@ public class FileNew extends AbstractActionDefault {
 
 		GraphStructure graphStruct = new GraphStructure();
 		GPGraph gGraph = new GPGraph(graphStruct.getGraphModel());
+		gGraph.setEditable(false);
+		gGraph.setDisconnectable(false);
 		gGraph.setGraphLayoutCache(new GraphLayoutCache(graphStruct.getGraphModel(), gGraph, false, true));
 		graphStruct.setJGraph(gGraph);
 	

@@ -21,7 +21,7 @@ public class ViewContainerVisibility extends AbstractActionCheckBox {
 
 
 	/**
-	 * Constructor for GraphOptionsDisconnectable.
+	 * Constructor for ViewContainerVisibility.
 	 * @param graphpad
 	 */
 	public ViewContainerVisibility(GPGraphpad graphpad) {

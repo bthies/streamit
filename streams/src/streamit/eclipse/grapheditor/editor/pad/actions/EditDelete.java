@@ -22,6 +22,7 @@ package streamit.eclipse.grapheditor.editor.pad.actions;
 
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import org.jgraph.graph.DefaultEdge;
 import org.jgraph.graph.DefaultGraphModel;
@@ -33,7 +34,7 @@ import streamit.eclipse.grapheditor.graph.GEStreamNode;
 import streamit.eclipse.grapheditor.graph.GraphStructure;
 
 /**
- * 
+ * Action to delete a GEStreamNode or an edge in the GraphStructure.
  * @author jcarlos
  */
 public class EditDelete extends AbstractActionDefault {
@@ -48,10 +49,9 @@ public class EditDelete extends AbstractActionDefault {
 	}
 
 	/**
-	 * @see java.awt.event.ActionListener#actionPerformed(ActionEvent)
+	 * Delete a GEStreamNode or an edge in the GraphStructure. When a Container 
+	 * node is deleted, 
 	 */
-	
-	
 	public void actionPerformed(ActionEvent e) 
 	{	
 		Object[] cells = getCurrentGraph().getSelectionCells();
@@ -64,22 +64,66 @@ public class EditDelete extends AbstractActionDefault {
 				if (cells[i] instanceof GEStreamNode)
 				{
 					GEStreamNode node = (GEStreamNode) cells[i];
-					GEStreamNode parent = node.getEncapsulatingNode();
+					GEContainer parent = node.getEncapsulatingNode();
+					
 					if (parent != null)
 					{
-						((GEContainer) parent).removeNodeFromContainer(node);
+						 parent.removeNodeFromContainer(node);
 					}
 					
+					Iterator sourceIter = node.getSourceEdges().iterator();
+					Iterator targetIter = node.getTargetEdges().iterator();
+
+					ArrayList edgesToRemove = new ArrayList();					
+					while (sourceIter.hasNext())
+					{
+						DefaultEdge edge = (DefaultEdge) sourceIter.next();
+						edgesToRemove.add(edge);	
+					}
+					
+					Iterator edgeIter = edgesToRemove.iterator();
+					while (edgeIter.hasNext())
+					{
+						DefaultEdge edge = (DefaultEdge) edgeIter.next();
+						if ((((DefaultPort)edge.getTarget()).getParent()) != null)
+						{
+							((GEStreamNode) ((DefaultPort)edge.getTarget()).getParent()).getTargetEdges().remove(edge);
+						}
+					//	getCurrentGraph().getModel().remove(node.getSourceEdges().toArray());	
+					}
+					getCurrentGraph().getModel().remove(edgesToRemove.toArray());
+					edgesToRemove = new ArrayList();	
+					while (targetIter.hasNext())
+					{
+						DefaultEdge edge = (DefaultEdge) targetIter.next();
+						edgesToRemove.add(edge);
+					}
+					
+					edgeIter = edgesToRemove.iterator();
+					
+					while (edgeIter.hasNext())
+					{
+						DefaultEdge edge = (DefaultEdge) edgeIter.next();
+						if ((((DefaultPort)edge.getSource()).getParent()) != null)
+						{
+							((GEStreamNode) ((DefaultPort)edge.getSource()).getParent()).getSourceEdges().remove(edge);
+						}	
+					}
+					
+					getCurrentGraph().getModel().remove(edgesToRemove.toArray());
+					
 					getCurrentGraph().getModel().remove(node.getSourceEdges().toArray());
-					getCurrentGraph().getModel().remove(node.getTargetEdges().toArray());;
+					getCurrentGraph().getModel().remove(node.getTargetEdges().toArray());
+					
+					
 					
 					/** special case when the node is a GEContainer */
 					if (node instanceof GEContainer)
 					{
-						
+						GEContainer container = (GEContainer) node;
 						GraphStructure graphStruct  = graphpad.getCurrentDocument().getGraphStructure();
 						ArrayList innerNodesList = new ArrayList();
-						if (!(graphStruct.containerNodes.removeContainer(node, innerNodesList))) 
+						if (!(graphStruct.containerNodes.removeContainer(container, innerNodesList))) 
 						{
 							//TODO: Add warning popup for when it was not possible to delete the node
 							System.err.println("UNABLE TO DELETE THE CONTAINER NODE");
@@ -91,13 +135,10 @@ public class EditDelete extends AbstractActionDefault {
 						{
 							getCurrentGraph().getModel().remove(((GEStreamNode)containedCells[j]).getSourceEdges().toArray());
 							getCurrentGraph().getModel().remove(((GEStreamNode)containedCells[j]).getTargetEdges().toArray());;							
-						}
-						
-						
+						}	
 						containedCells = DefaultGraphModel.getDescendants(getCurrentGraph().getModel(), containedCells)
 															.toArray();
-									getCurrentGraph().getModel().remove(containedCells);			
-						
+						getCurrentGraph().getModel().remove(containedCells);			
 					}
 				}
 				/** Case when we are deleting a DefaultEdge */
@@ -127,33 +168,15 @@ public class EditDelete extends AbstractActionDefault {
 			cells = DefaultGraphModel.getDescendants(getCurrentGraph().getModel(), cells)
 									.toArray();
 			getCurrentGraph().getModel().remove(cells);
+			
+			graphpad.getCurrentDocument().getTreePanel().update();
+			graphpad.getCurrentDocument().updateUI();
+			graphpad.update();	
 		}
-	
 	}
-	
+}
 	/*
 	public void actionPerformed(ActionEvent e) {
-
 		if (getCurrentDocument().getLibraryPanel().hasFocus()) {
-			int r =
-				JOptionPane.showConfirmDialog(
-					null,
-					Translator.getString("DeleteFromLibMessage"),
-					Translator.getString("DeleteFromLibTitle"),
-					JOptionPane.YES_NO_OPTION);
-			if (r == JOptionPane.YES_OPTION)
 				getCurrentDocument().getLibraryPanel().delete();
-		} else {
-			Object[] cells = getCurrentGraph().getSelectionCells();
-			if (cells != null) {
-				cells =
-					DefaultGraphModel
-						.getDescendants(getCurrentGraph().getModel(), cells)
-						.toArray();
-			
-				getCurrentGraph().getModel().remove(cells);
-			}
-		}
-	}*/
-
-}
+*/

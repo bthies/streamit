@@ -2,7 +2,7 @@
 #
 # make-dot-in.pl: convert file to file.in magically
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: make-dot-in.pl,v 1.1 2003-09-25 17:53:36 dmaze Exp $
+# $Id: make-dot-in.pl,v 1.2 2003-09-25 19:56:09 dmaze Exp $
 #
 # This script generates .in files from useful files, so that autoconf
 # can replace some values at build time.  It does two things:
@@ -64,7 +64,7 @@ foreach my $fname (@ARGV)
 		my $var = undef;
 		my $caps = 0; # -1 if lowercase, 1 if uppercase, 0 if exact
 	      FIELD:
-		for (my $i = 0; $i < $#fields; $i++)
+		for (my $i = 0; $i <= $#fields; $i++)
 		  {
 		    my $field = $fields[$i];
 		    my $part = $parts[$i];
@@ -123,7 +123,7 @@ foreach my $fname (@ARGV)
 		my $lcvar = lc($var);
 		my $ucvar = uc($var);
 		# Replace parts with the right variable.
-		for (my $i = 0; $i < $#fields; $i++)
+		for (my $i = 0; $i <= $#fields; $i++)
 		  {
 		    my $field = $fields[$i];
 		    if ($field =~ /@?(var)@?/i)

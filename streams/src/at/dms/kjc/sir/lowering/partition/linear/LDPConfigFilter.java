@@ -99,13 +99,16 @@ class LDPConfigFilter extends LDPConfig {
 	    int[] options = { LinearPartitioner.COLLAPSE_FREQ, 
 			      LinearPartitioner.COLLAPSE_LINEAR, 
 			      LinearPartitioner.COLLAPSE_NONE };
+	    int min = Integer.MAX_VALUE;
+	    int minOption = -1;
 	    for (int i=0; i<options.length; i++) {
-		if (A[collapse] == get(options[i])) {
-		    return traceback(options[i]);
+		if (get(options[i])<min) {
+		    min = options[i];
+		    minOption = i;
 		}
 	    }
-	    Utils.fail("Didn't find traceback; was looking for ANY.");
-	    break;
+	    Utils.assert(minOption!=-1, "Didn't find traceback; was looking for ANY, A[ANY]=" + A[LinearPartitioner.COLLAPSE_ANY] + " for " + filter.getName());
+	    return traceback(options[minOption]);
 	}
 	    
 	case LinearPartitioner.COLLAPSE_FREQ: {

@@ -28,10 +28,22 @@ abstract class LDPConfigContainer extends LDPConfig {
      * y1..y2) of stream s given collapse policy <c>.
      */
     private int[][][][][] A;
+    /**  
+     * Streams we've created for a given sub-segment.  Lowest-order
+     * dimension is just for aliasing.
+     */
+    private SIRStream[][][][][] strCache;
     /**
-     * Specifies the width of the y_i'th component of this
+     * Specifies the width of i'th row of this.
      */
     private int[] width;
+    /**
+     * Whether or not the i'th row of this is uniform -- that is,
+     * whether each entry computes a matrix that has zero's and ones
+     * at the same location (or computes no matrix at all... is
+     * non-linear).
+     */
+    boolean[] uniform;
     
     /**
      * <width>[] and <height> represent the dimensions of the stream.
@@ -50,15 +62,63 @@ abstract class LDPConfigContainer extends LDPConfig {
 	for (int i=0; i<height; i++) {
 	    maxWidth = Math.max(maxWidth, width[i]);
 	}
+	// calculate uniform
+	this.uniform = new boolean[height];
+	initUniform();
 	// for simplicity, allocate the bounding box for A
 	this.A = new int[maxWidth][maxWidth][height][height][4];
-	initA();
+	this.strCache = new SIRStream[maxWidth][maxWidth][height][height][1];
+	initCaches();
+	starttime = System.currentTimeMillis();
     }
 
     /**
-     * Initialize elements of this.A to -1
+     * Initialize <uniform> array.
      */
-    private void initA() {
+    private void initUniform() {
+	// find linear parts
+	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
+	LinearAnalyzer.findLinearFilters(cont, KjcOptions.debug, lfa);
+	for (int i=0; i<uniform.length; i++) {
+	    FilterMatrix A = null, b = null;
+	    // get A and b of first column
+	    if (lfa.hasLinearRepresentation(childConfig(0, i).getStream())) {
+		LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(childConfig(0, i).getStream());
+		A = linearRep.getA();
+		b = linearRep.getb();
+	    }
+	    // will try disproving this
+	    uniform[i] = true;
+	    search:
+	    for (int j=1; j<width[i]; j++) {
+		// get A and b of j'th column
+		FilterMatrix A2 = null, b2 = null;
+		if (lfa.hasLinearRepresentation(childConfig(j, i).getStream())) {
+		    LinearFilterRepresentation linearRep = lfa.getLinearRepresentation(childConfig(j, i).getStream());
+		    A2 = linearRep.getA();
+		    b2 = linearRep.getb();
+		}
+		// it's not uniform if only one of A/A2 is null, or if
+		// they are different in position of zero's.  Same
+		// with b/b2, although they should be zero in exactly
+		// the same cases as A.
+		if ( ((A==null) != (A2==null)) || (A!=null && (!A.hasEqualZeroOneElements(A2))) || (b!=null &&  (!b.hasEqualZeroOneElements(b2))) ) {
+		    uniform[i] = false;
+		    break search;
+		}
+	    }
+	}
+	for (int i=0; i<uniform.length; i++) {
+	    if (uniform[i]) {
+		debugMessage("Found row " + i + "/" + (uniform.length-1) + " of " + cont.getIdent() + " to be uniform.");
+	    }
+	}
+    }
+
+    /**
+     * Initialize elements of this.A to -1.  Setup sharing in A and strCache
+     */
+    private void initCaches() {
 	for (int i1=0; i1<A.length; i1++) {
 	    for (int i2=0; i2<A[0].length; i2++) {
 		for (int i3=0; i3<A[0][0].length; i3++) {
@@ -69,6 +129,30 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    }
 		}
 	    }
+	}
+	// now find maximal uniform regions with the same width, and alias their memoization tables
+	int low=0;
+	while (low<uniform.length) {
+	    while (low<uniform.length && !uniform[low]) {
+		low++;
+	    }
+	    if (low<uniform.length) {
+		int high = low;
+		while (high+1<uniform.length && uniform[high+1] && (width[high+1]==width[low])) {
+		    high++;
+		}
+		// alias low..high across the board, to point to values in 0'th column
+		for (int i1=low; i1<=high; i1++) {
+		    // only aliasing from i2=i1..high matters, but we'd just as well go i2=low...high
+		    for (int i2=low; i2<=high; i2++) {
+			for (int i3=0; i3<width[low]; i3++) {
+			    A[i3][i3][i1][i2] = A[0][0][i1][i2];
+			    strCache[i3][i3][i1][i2] = strCache[0][0][i1][i2];
+			}
+		    }
+		}
+	    }
+	    low++;
 	}
     }
 
@@ -102,12 +186,22 @@ abstract class LDPConfigContainer extends LDPConfig {
 	return get(0, A.length-1, 0, A[0][0].length-1, collapse, this.cont);
     }
 
+    /** debugging fields */
+    private static long elapsed = 0;
+    private static long starttime = 0;
     /**
      * <str> is a stream object representing the current sub-segment that we're operating on
      */
-    protected int get(int x1, int x2, int y1, int y2, int collapse, SIRStream str) {
+    protected int get(int x1, int x2, int y1, int y2, int collapse, SIRStream _str) {
 	indent++;
-	String callStr = "get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ", " + LinearPartitioner.COLLAPSE_STRING(collapse) + ", " + (str==null ? "null" : str.getIdent());
+	String callStr = "get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ", " + LinearPartitioner.COLLAPSE_STRING(collapse) + ", " + (_str==null ? "null" : _str.getIdent());
+	/*
+	if (x1==0 && x2==A.length-1) { 
+	    for (int i=0; i<indent; i++) {System.err.print(" ");} 
+	    System.err.println(callStr + " (spent " + (elapsed/1000) + " secs, or " + 
+			       (((float)(100*elapsed))/((float)(System.currentTimeMillis()-starttime))) + "% in LinearAnalyzer.findLinearFilters)");
+	}
+	*/
 	debugMessage("calling " + callStr); 
 
 	// if we've exceeded the width of this node, then trim down to actual width
@@ -127,27 +221,42 @@ abstract class LDPConfigContainer extends LDPConfig {
 	    return A[x1][x2][y1][y2][collapse];
 	}
 
+	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
+
+	SIRStream str;
+	// always prefer ones that have a linear representation
+	if (lfa.hasLinearRepresentation(_str) || lfa.isNonLinear(_str)) {
+	    strCache[x1][x2][y1][y2][0] = _str;
+	    str = _str;
+	} else if (strCache[x1][x2][y1][y2][0]!=null ) {
+	    str = strCache[x1][x2][y1][y2][0];
+	} else if (_str!=null) {
+	    strCache[x1][x2][y1][y2][0] = _str;
+	    str = _str;
+	} else {
+	    str = null;
+	    Utils.fail("null stream argument and no stream in cache.");
+	}
+
 	// if we are down to one child, then descend into child
 	if (x1==x2 && y1==y2) {
 	    int childCost = childConfig(x1, y1).get(collapse); 
 	    A[x1][x2][y1][y2][collapse] = childCost;
-	    System.err.println(" returning child cost, " + callStr + " = " + childCost);
+	    debugMessage(" returning child cost, " + callStr + " = " + childCost);
 	    indent--;
 	    return childCost;
 	}
-
-	// otherwise, going to do some analysis...
-	LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
-	lfa.findLinearFilters(str, KjcOptions.debug, lfa);
 
 	int cost;
 	switch(collapse) {
 	case LinearPartitioner.COLLAPSE_ANY: {
 	    // if we still have flexibility, do better out of
-	    // collapsing or not
-	    cost = Math.min(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str),
-			       Math.min(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_FREQ, str),
-					get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_NONE, str)));
+	    // collapsing or not.  Important to do none first here
+	    // because it will setup the linear information.
+	    int none = get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_NONE, str);
+	    cost = Math.min(none,
+			    Math.min(get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_LINEAR, str),
+				     get(x1, x2, y1, y2, LinearPartitioner.COLLAPSE_FREQ, str)));
 	    break;
 	}
 
@@ -191,32 +300,6 @@ abstract class LDPConfigContainer extends LDPConfig {
 		}
 	    }
 
-	    // then, that there's a non-linear child stream, or a row
-	    // that contains a mixture of linear and non-linear
-	    // streams, or linear streams with different costs.  In
-	    // this case, we might want to treat the children
-	    // differently.
-	    if (tryVertical && y1<y2) {
-		tryVertical = false;
-		search: 
-		for (int y=y1; y<=y2; y++) {
-		    int rowCost = -1;
-		    if (lfa.hasLinearRepresentation(childConfig(x1, y).getStream())) {
-			rowCost = lfa.getLinearRepresentation(childConfig(x1, y).getStream()).getCost().getDirectCost();
-		    } 
-		    for (int x=x1+1; x<=x2; x++) {
-			int childCost = -1;
-			if (lfa.hasLinearRepresentation(childConfig(x, y).getStream())) {
-			    childCost = lfa.getLinearRepresentation(childConfig(x, y).getStream()).getCost().getDirectCost();
-			}
-			if (childCost!=rowCost) {
-			    tryVertical = true;
-			    break search;
-			}
-		    }
-		}
-	    }
-	    
 	    // get the object we're doing vertical cuts on, and try to
 	    // remove any synchronization
 	    SIRSplitJoin verticalObj = null;
@@ -248,14 +331,29 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	    // try a vertical cut if possible
 	    if (tryVertical) {
-		for (int xPivot=x1; xPivot<x2; xPivot++) {
-		    // break along <xPivot>
-		    int[] arr = { 1 + (xPivot-x1), x2-xPivot };
-		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
-		    cost = Math.min( cost, 
-				     get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
-				     get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
+		// if uniform, do a uniform partition
+		boolean allUniform = true;
+		for (int i=y1; i<=y2; i++) {
+		    allUniform = allUniform && uniform[i];
+		}
+		if (allUniform) {
+		    debugMessage(" Trying uniform vertical cut.");
+		    // don't even need to partition it... it has its own pieces already
+		    int sum = 0;
+		    for (int i=0; i<x2-x1+1; i++) {
+			sum += get(x1+i, x1+i, y1, y2, LinearPartitioner.COLLAPSE_ANY, verticalObj.get(i));
+		    }
+		    cost = Math.min( cost, sum );
+		} else {
+		    for (int xPivot=x1; xPivot<x2; xPivot++) {
+			// break along <xPivot>
+			int[] arr = { 1 + (xPivot-x1), x2-xPivot };
+			PartitionGroup pg = PartitionGroup.createFromArray(arr);
+			SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
+			cost = Math.min( cost, 
+					 get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
+					 get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
+		    }
 		}
 	    } else {
 		debugMessage(" Not trying vertical cut.");
@@ -291,13 +389,13 @@ abstract class LDPConfigContainer extends LDPConfig {
 		}
 	    }
 
+	    SIRContainer factored = null;
 	    if (tryHoriz) {
 		// try a horizontal cut
 		for (int yPivot=y1; yPivot<y2; yPivot++) {
 		    // break along <yPivot>
 		    int[] arr = { 1 + (yPivot-y1), y2-yPivot };
 		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		    SIRContainer factored;
 		    // might have either pipeline or splitjoin at this point...
 		    if (str instanceof SIRSplitJoin) {
 			factored = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
@@ -318,6 +416,54 @@ abstract class LDPConfigContainer extends LDPConfig {
 		}
 	    } else {
 		debugMessage(" Not trying vertical cut.");
+	    }
+
+	    // do linear analysis here, now that children have been
+	    // done.  In this way, we should never have to calculate
+	    // for a set of children... only two children factoring
+	    // into our own linear analysis.
+	    if (lfa.hasLinearRepresentation(str)) {
+		if (!lfa.hasLinearRepresentation(_str)) {
+		    lfa.addLinearRepresentation(_str, lfa.getLinearRepresentation(str));
+		}
+	    } else if (lfa.hasLinearRepresentation(_str)) {
+		if (!lfa.hasLinearRepresentation(str)) {
+		    lfa.addLinearRepresentation(str, lfa.getLinearRepresentation(_str));
+		}
+	    } else if (lfa.isNonLinear(str)) {
+		lfa.addNonLinear(_str);
+	    } else if (lfa.isNonLinear(_str)) {
+		lfa.addNonLinear(str);
+	    } else if (factored!=null) {
+		long time = System.currentTimeMillis();
+		debugMessage("Getting linear rep for <factored> for first time:  [" + x1 + "][" + x2 + "][" + y1 + "][" + y2 + "] ... ");
+		LinearAnalyzer.findLinearFilters(factored, KjcOptions.debug, lfa);
+		elapsed += System.currentTimeMillis() - time;
+		if (lfa.hasLinearRepresentation(factored)) {
+		    lfa.addLinearRepresentation(str, lfa.getLinearRepresentation(factored));
+		    if (!lfa.hasLinearRepresentation(_str)) {
+			lfa.addLinearRepresentation(_str, lfa.getLinearRepresentation(factored));
+		    }
+		} else {
+		    lfa.addNonLinear(str);
+		    lfa.addNonLinear(_str);
+		}
+	    } else {
+		long time = System.currentTimeMillis();
+		debugMessage("Getting linear rep for <factored> for first time:  [" + x1 + "][" + x2 + "][" + y1 + "][" + y2 + "] ... ");
+		LinearAnalyzer.findLinearFilters(str, KjcOptions.debug, lfa);
+		elapsed += System.currentTimeMillis() - time;
+
+		if (lfa.hasLinearRepresentation(str)) {
+		    if (!lfa.hasLinearRepresentation(_str)) {
+			lfa.addLinearRepresentation(_str, lfa.getLinearRepresentation(factored));
+		    }
+		} else {
+		    lfa.addNonLinear(str);
+		    if (!lfa.isNonLinear(_str)) {
+			lfa.addNonLinear(_str);
+		    }
+		}
 	    }
 	    break;
 	}
@@ -347,17 +493,20 @@ abstract class LDPConfigContainer extends LDPConfig {
     /**
      * Traceback helper function.
      */
-    protected StreamTransform traceback(int x1, int x2, int y1, int y2, int collapse, SIRStream str) {
-
+    protected StreamTransform traceback(int x1, int x2, int y1, int y2, int collapse, SIRStream _str) {
 	// if we've exceeded the width of this node, then trim down to actual width
 	int maxWidth = width[y1];
 	for (int i=y1+1; i<=y2; i++) {
 	    maxWidth = Math.max(maxWidth, width[i]);
 	}
 	if (x2>maxWidth-1) {
-	    if (LinearPartitioner.DEBUG) { System.err.println("  scaling x2 back to " + (maxWidth-1)); }
+	    debugMessage("  scaling x2 back to " + (maxWidth-1));
 	    x2 = maxWidth-1;
 	}
+
+	// when tracing back, everything should be cached
+	SIRStream str = strCache[x1][x2][y1][y2][0];
+	Utils.assert(str!=null);
 
 	// if we're down to one node, then descend into it
 	if (x1==x2 && y1==y2) {
@@ -414,33 +563,6 @@ abstract class LDPConfigContainer extends LDPConfig {
 		}
 	    }
 
-	    // then, that there's a non-linear child stream, or a row
-	    // that contains a mixture of linear and non-linear
-	    // streams, or linear streams with different costs.  In
-	    // this case, we might want to treat the children
-	    // differently.
-	    LinearAnalyzer lfa = partitioner.getLinearAnalyzer();
-	    if (tryVertical && y1<y2) {
-		tryVertical = false;
-		search: 
-		for (int y=y1; y<=y2; y++) {
-		    int rowCost = -1;
-		    if (lfa.hasLinearRepresentation(childConfig(x1, y).getStream())) {
-			rowCost = lfa.getLinearRepresentation(childConfig(x1, y).getStream()).getCost().getDirectCost();
-		    } 
-		    for (int x=x1+1; x<=x2; x++) {
-			int childCost = -1;
-			if (lfa.hasLinearRepresentation(childConfig(x, y).getStream())) {
-			    childCost = lfa.getLinearRepresentation(childConfig(x, y).getStream()).getCost().getDirectCost();
-			}
-			if (childCost!=rowCost) {
-			    tryVertical = true;
-			    break search;
-			}
-		    }
-		}
-	    }
-	    
 	    // get the object we're doing vertical cuts on, and try to
 	    // remove any synchronization
 	    SIRSplitJoin verticalObj = null;
@@ -472,26 +594,58 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	    // try a vertical cut if possible
 	    if (tryVertical) {
-		// try a vertical cut
-		for (int xPivot=x1; xPivot<x2; xPivot++) {
-		    // break along <xPivot>
-		    if (A[x1][x2][y1][y2][collapse] == (get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
-							    /* dummy arg since get operation should just be lookup now */ null) +
-							get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
-							    /* dummy arg since get operation should just be lookup now */ null)) ) {
-			// found the optimum
-			int[] arr = { 1 + (xPivot-x1), x2-xPivot };
-			PartitionGroup pg = PartitionGroup.createFromArray(arr);
-			SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
-			
+		// if uniform, do a uniform partition
+		boolean allUniform = true;
+		for (int i=y1; i<=y2; i++) {
+		    allUniform = allUniform && uniform[i];
+		}
+		if (allUniform) {
+		    // get the sum of components to compare it to memoized value
+		    int sum = 0;
+		    for (int i=x1; i<=x2; i++) {
+			sum += get(i, i, y1, y2, LinearPartitioner.COLLAPSE_ANY, null);
+		    }
+		    if (sum==A[x1][x2][y1][y2][collapse]) {
+			// found the optimum...
+			debugMessage(" Found uniform cut on traceback.");
 			// generate transform
-			StreamTransform result = new VerticalCutTransform(xPivot-x1);
-			// recurse left and right, adding transforms as post-ops
-			result.addSucc(traceback(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)));
-			result.addSucc(traceback(x1+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)));
-			
+			StreamTransform result = new IdentityTransform();
+			// recurse
+			for (int i=x1; i<=x2; i++) {
+			    result.addSucc(traceback(i, i, y1, y2, LinearPartitioner.COLLAPSE_ANY, verticalObj.get(i)));
+			}
 			// all done
 			return result.reduce();
+		    }
+		} else {
+		    // try a vertical cut
+		    for (int xPivot=x1; xPivot<x2; xPivot++) {
+			// break along <xPivot>
+			if (A[x1][x2][y1][y2][collapse] == (get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
+								/* dummy arg since get operation should just be lookup now */ null) +
+							    get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, 
+								/* dummy arg since get operation should just be lookup now */ null)) ) {
+			    // found the optimum
+			    int[] arr = { 1 + (xPivot-x1), x2-xPivot };
+			    PartitionGroup pg = PartitionGroup.createFromArray(arr);
+			    SIRSplitJoin sj = RefactorSplitJoin.addHierarchicalChildren((SIRSplitJoin)verticalObj, pg);
+			    
+			    // generate transform
+			    StreamTransform result = new VerticalCutTransform(xPivot-x1);
+			    // recurse left and right, adding transforms as post-ops
+			    result.addSucc(traceback(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)));
+			    result.addSucc(traceback(x1+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)));
+			    
+			    // if <str> is a pipeline, we first need to remove matching sync points
+			    if (str instanceof SIRPipeline) {
+				StreamTransform newResult = new RemoveSyncTransform();
+				newResult.addSucc(result);
+				result = newResult;
+			    }
+
+			    // all done
+			    return result.reduce();
+			}
 		    }
 		}
 	    }

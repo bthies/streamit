@@ -169,6 +169,8 @@ public class IterFactory {
 	Utils.assert(parent!=null);
 	if (obj instanceof SIRFilter) {
 	    return new SIRFilterIter((SIRFilter)obj, parent, pos);
+        } else if (obj instanceof SIRPhasedFilter) {
+            return new SIRPhasedFilterIter((SIRPhasedFilter)obj, parent, pos);
 	} else if (obj instanceof SIRPipeline) {
 	    return new SIRPipelineIter((SIRPipeline)obj, parent, pos);
 	} else if (obj instanceof SIRSplitJoin) {

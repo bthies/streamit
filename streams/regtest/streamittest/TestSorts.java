@@ -1,12 +1,12 @@
 /**
  * Template framework for writing test cases using JUnit.
- * 1. Copy to new java file, and find/replace TestExamples with new name.
+ * 1. Copy to new java file, and find/replace TestSorts with new name.
  * 2. Add an entry in AllTests.java for this new suite
  * 3. Add test code in void methods like testSimple
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestSorts.java,v 1.1 2003-10-15 18:59:01 dmaze Exp $
+ * $Id: TestSorts.java,v 1.2 2003-10-15 19:01:28 dmaze Exp $
  **/
 package streamittest;
 
@@ -42,13 +42,13 @@ public class TestSorts extends StreamITTestCase {
             CompilerInterface.createCompilerInterface(flags);
 	TestSuite suite = new TestSuite("Sorts " + cif.getOptionsString());
 	
-	suite.addTest(new TestExamples("testBatcherSort", flags));
-	suite.addTest(new TestExamples("testRadixSort", flags));
-	suite.addTest(new TestExamples("testComparisonCounting", flags));
-	suite.addTest(new TestExamples("testAutoBatcherSort", flags));
-	suite.addTest(new TestExamples("testBubbleSort", flags));
-	suite.addTest(new TestExamples("testInsertionSort", flags));
-	suite.addTest(new TestExamples("testMergeSort", flags));
+	suite.addTest(new TestSorts("testBatcherSort", flags));
+	suite.addTest(new TestSorts("testRadixSort", flags));
+	suite.addTest(new TestSorts("testComparisonCounting", flags));
+	suite.addTest(new TestSorts("testAutoBatcherSort", flags));
+	suite.addTest(new TestSorts("testBubbleSort", flags));
+	suite.addTest(new TestSorts("testInsertionSort", flags));
+	suite.addTest(new TestSorts("testMergeSort", flags));
 	
 	return suite;
     }

@@ -117,6 +117,13 @@ public class RawBackend {
 	    System.out.println("Done FuseAll...");
 	}
 
+	if (KjcOptions.fission>1) {
+	    System.out.println("Running Vertical Fission...");
+	    FissionReplacer.doit(str, KjcOptions.fission);
+	    Lifter.lift(str);
+	    System.out.println("Done Vertical Fission...");
+	}
+
 	if (KjcOptions.partition || KjcOptions.ilppartition || KjcOptions.dppartition) {
 	    System.err.println("Running Partitioning...");
 	    str = Partitioner.doit(str,

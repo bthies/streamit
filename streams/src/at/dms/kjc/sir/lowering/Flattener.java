@@ -83,8 +83,15 @@ public class Flattener {
 	}
 
 	if (KjcOptions.fusion) {
-	    System.err.print("Running FuseAll...");
+	    System.err.print("Running FuseAll... ");
 	    str = FuseAll.fuse(str);
+	    Lifter.lift(str);
+	    System.err.println("done.");
+	}
+
+	if (KjcOptions.fission>1) {
+	    System.err.print("Running vertical fission... ");
+	    FissionReplacer.doit(str, KjcOptions.fission);
 	    Lifter.lift(str);
 	    System.err.println("done.");
 	}

@@ -1,22 +1,17 @@
-/*
- * InsertInitConstructors.java: insert object field constructors
- * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: InsertInitConstructors.java,v 1.4 2002-09-23 19:11:57 dmaze Exp $
- */
-
 package streamit.frontend.tojava;
 
 import streamit.frontend.nodes.*;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
 import java.util.ArrayList;
 
 /**
- * Visitor class to insert statements in init functions that call
- * constructors for field declarations that map to Java objects.
+ * Inserts statements in init functions to call member object constructors.
+ * 
+ * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
+ * @version $Id: InsertInitConstructors.java,v 1.5 2003-02-10 17:27:37 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {

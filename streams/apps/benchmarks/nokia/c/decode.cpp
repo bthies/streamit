@@ -1,5 +1,18 @@
 #include <math.h>
-#define 
+#include <stdio.h>
+#include <iostream.h>
+
+void Decode(int Q,int N, int W, int K, float **C, float **h, float *r);
+void AddSigma(int n,float sigma,float **AhA,float **AhAsig);
+void MatchFilt(int m, int n, float *r, float *Ahr, float **A);
+void SelfMult(int m, int n,float **A,float **AhA);
+void Forw(int n, float *Ahr, float *u, float **L);
+void Backs(int n, float *v, float *u, float **L);
+void CompSigma(int n,float sigma, float *a, float *b);
+void DelMat(int K, int W, int Q, int N, float **B, float **A);
+void chold(float **A,float **L,int n);
+void ConvMat(int K,int W, int Q,  float* C[], float* B[], float* h[]);
+void PrintD(int n, float *d);
 
 main() {
 	int K;
@@ -10,12 +23,9 @@ main() {
 	N=2;
 	Q=2;
 	W=2;
-	float h[Q][K];
-	float C[W][K];
+	float h[W][K];
+	float C[Q][K];
 	float  r[Q*N+W-1];    
-	h=new float[2][2];
-	C=new float[2][2];
-	r=new float[5];
 	h[0][0]=1;
 	h[0][1]=3;
 	h[1][0]=2;
@@ -57,7 +67,7 @@ void Decode(int Q,int N, int W, int K, float **C, float **h, float *r)
   float sigma;
   float AhAsig[n][n];
   
-  ConvMat(K,W,Q,C,B,H);
+  ConvMat(K,W,Q,C,B,h);
 
   DelMat(K,W,Q,N,B,A);
 
@@ -73,7 +83,7 @@ void Decode(int Q,int N, int W, int K, float **C, float **h, float *r)
 
   CompSigma(n,sigma,v,Ahr);
 
-  AddSigma(n,Sigma,AhA,AhAsig);
+  AddSigma(n,sigma,AhA,AhAsig);
 
   chold(AhAsig,L,n);
 
@@ -198,15 +208,15 @@ void CompSigma(int n,float sigma, float *a, float *b)
 // h is a W by K matrix of channel responses,
 // B is a W+Q-1 by K matrix of channel responses,
 // C is a Q by K matirx of Channel Signitures
-void ConvMat(int K,int W, int Q,  float **C, float **B, float **h)
+void ConvMat(int K,int W, int Q,  float* C[], float* B[], float* h[])
 {
   int i,j,l;
 
   for (i=0; i < K ; i++)
     for (j=0; j < W+Q-1; j++){
-      B[j][k]=0;
-      for (l=0;((l < w) & ((j-l)>0) );l++)
-	B[j][k]+=h[l][k]*C[j-l][k];
+      B[j][i]=0;
+      for (l=0;((l < W) & ((j-l)>0) );l++)
+	B[j][i]+=h[l][i]*C[j-l][i];
     }
 }
 
@@ -234,7 +244,7 @@ void chold(float **A,float **L,int n)
       if (i==j) {
 	L[j][i]=sqrt(sum);
       }
-      else L[j][i]=sum/p[i];
+      else L[j][i]=sum/L[i][i];
     }
   }
 }

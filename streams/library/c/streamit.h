@@ -1,36 +1,74 @@
 #ifndef STREAMIT_H
 #define STREAMIT_H
 
-typedef struct stream_context {
-} stream_context;
-stream_context *create_context(void *p);
-typedef struct portal {
-} portal;
 typedef struct tape {
   void *data;
   int read_pos;
   int write_pos;
-  int len;
-  int size;
+  int data_size;
+  int tape_length;
 } tape;
-#define PUSH(t, type, d) { if (++(t)->write_pos >= (t)->len ) \
+
+#define PUSH(t, type, d) { if (++(t)->write_pos >= (t)->tape_length ) \
                              (t)->write_pos = 0; \
                            ((type *)(t)->data)[(t)->write_pos] = (d); }
-#define PEEK(t, type, n) (((type *)t->data)[(t->read_pos+n)%t->len])
-#define POP(t, type) ((((++t->read_pos) >= t->len) ? (t->read_pos = 0) : 0), \
+#define PEEK(t, type, n) (((type *)t->data)[(t->read_pos+n)%t->tape_length])
+#define POP(t, type) ((((++t->read_pos) >= t->tape_length) ? (t->read_pos = 0) : 0), \
                       ((type *)t->data)[t->read_pos])
+
+typedef void (*work_fn)(void *, tape *in, tape *out);
+
 typedef enum stream_type {
+  INVALID_STREAM_TYPE,
   FILTER,
   PIPELINE,
   SPLIT_JOIN,
   FEEDBACK_LOOP
 } stream_type;
+
+struct stream_context;
+
+typedef struct stream_context_list
+{
+    struct stream_context *context;
+    struct stream_context_list *next;
+} stream_context_list;
+
+typedef struct pipeline_type_data
+{
+    stream_context_list *first_child;
+    stream_context_list *last_child;
+} pipeline_type_data;
+
+typedef union stream_type_data
+{
+    pipeline_type_data pipeline_data;
+} stream_type_data;
+
+
+typedef struct stream_context 
+{
+    void *stream_data;
+    stream_type type;
+    int peek_size, pop_size, push_size;
+    work_fn work_function;
+    struct stream_context *parent;
+    tape *input_tape;
+    tape *output_tape;
+    stream_type_data type_data;
+} stream_context;
+
+typedef struct portal {
+    stream_context_list *destinations;
+} portal;
+
 typedef enum splitjoin_type {
   ROUND_ROBIN,
   DUPLICATE,
   COMBINE,
   NULL_SJ
 } splitjoin_type;
+
 typedef struct latency_list {
   int val;
   struct latency_list *next;
@@ -55,6 +93,9 @@ typedef union latency {
 typedef void (*streamit_handler)(void *);
 typedef void (*work_fn)(void *, tape *in, tape *out);
 typedef streamit_handler *interface_table;
+
+stream_context *create_context(void *p);
+void create_tape (stream_context *src, stream_context *dst, int data_size, int tape_length);
 void set_stream_type(stream_context *c, stream_type type);
 void set_peek(stream_context *c, int peeks);
 void set_pop(stream_context *c, int pops);
@@ -70,5 +111,6 @@ void register_receiver(portal *p, stream_context *receiver,
                        interface_table *vtbl, latency *l);
 void register_sender(portal *p, stream_context *sender, latency *l);
 void send_message(portal *p, int msgid, latency *l, ...);
+void streamit_run (stream_context *c);
 
 #endif /* STREAMIT_H */

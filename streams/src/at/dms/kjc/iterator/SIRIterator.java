@@ -2,7 +2,7 @@ package at.dms.kjc.iterator;
 
 import java.util.LinkedList;
 import at.dms.kjc.sir.*;
-import streamit.scheduler.iriter.*;
+import streamit.scheduler2.iriter.*;
 
 public abstract class SIRIterator implements Iterator {
     /**

@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler.ScheduleBuffers;
+import streamit.scheduler2.ScheduleBuffers;
 import streamit.iriter.Iterator;
 
 // the feedback loop

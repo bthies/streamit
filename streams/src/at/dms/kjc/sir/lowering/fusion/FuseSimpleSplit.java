@@ -11,8 +11,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import streamit.*;
-import streamit.scheduler.*;
-import streamit.scheduler.simple.*;
+import streamit.scheduler1.*;
+import streamit.scheduler1.simple.*;
 
 /**
  * This flattens certain cases of split/joins into a single filter.

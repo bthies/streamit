@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler.iriter.SplitJoinIter;
+import streamit.scheduler2.iriter.SplitJoinIter;
 import java.util.ArrayList;
 import java.util.Iterator;
 

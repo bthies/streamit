@@ -1,7 +1,7 @@
 package at.dms.kjc.iterator; 
 
 import at.dms.kjc.sir.*;
-import streamit.scheduler.iriter.*;
+import streamit.scheduler2.iriter.*;
 
 public class SIRRecursiveStubIter extends SIRIterator implements IteratorBase {
 

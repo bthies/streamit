@@ -1,6 +1,6 @@
 package at.dms.kjc.raw;
 
-import streamit.scheduler.*;
+import streamit.scheduler1.*;
 
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;

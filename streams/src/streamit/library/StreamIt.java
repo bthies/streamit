@@ -3,11 +3,11 @@ package streamit;
 import java.util.List;
 import java.util.ListIterator;
 import java.lang.reflect.Array;
-import streamit.scheduler.iriter.Iterator;
+import streamit.scheduler2.iriter.Iterator;
 import streamit.iriter.StreamFactory;
-import streamit.scheduler.base.StreamInterface;
-import streamit.scheduler.ScheduleBuffers;
-import streamit.scheduler.Schedule;
+import streamit.scheduler2.base.StreamInterface;
+import streamit.scheduler2.ScheduleBuffers;
+import streamit.scheduler2.Schedule;
 import streamit.misc.UniquePairContainer;
 import streamit.misc.Pair;
 
@@ -112,7 +112,7 @@ public class StreamIt extends Pipeline
                 if (repSchedule.isBottomSchedule())
                 {
                     runSchedule(
-                        repSchedule.getWorkStream().getObject(),
+                        repSchedule.getStream().getObject(),
                         repSchedule.getWorkFunc());
                 }
                 else

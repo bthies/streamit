@@ -2,7 +2,7 @@ package at.dms.kjc.iterator;
 
 import at.dms.kjc.sir.*;
 import at.dms.util.*;
-import streamit.scheduler.iriter.*;
+import streamit.scheduler2.iriter.*;
 
 public class SIRFeedbackLoopIter extends SIRIterator implements FeedbackLoopIter {
 

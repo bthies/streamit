@@ -4,7 +4,7 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 import java.io.Serializable;
 
-import streamit.scheduler.SchedSplitType;
+import streamit.scheduler1.SchedSplitType;
 
 /**
  * This class enumerates the types of splitters.

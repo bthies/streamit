@@ -10,8 +10,8 @@ import at.dms.kjc.sir.lowering.partition.*;
 import java.util.*;
 
 import streamit.*;
-import streamit.scheduler.*;
-import streamit.scheduler.simple.*;
+import streamit.scheduler1.*;
+import streamit.scheduler1.simple.*;
 
 /**
  * This flattens any set of filters into a single splitjoin.

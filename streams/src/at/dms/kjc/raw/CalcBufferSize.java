@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Iterator;
-import streamit.scheduler.*;
-import streamit.scheduler.simple.*;
+import streamit.scheduler1.*;
+import streamit.scheduler1.simple.*;
 
 public class CalcBufferSize extends at.dms.util.Utils implements FlatVisitor
 {

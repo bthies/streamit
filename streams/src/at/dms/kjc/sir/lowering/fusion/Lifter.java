@@ -1,7 +1,7 @@
 package at.dms.kjc.sir.lowering.fusion;
 
-import streamit.scheduler.*;
-import streamit.scheduler.simple.*;
+import streamit.scheduler1.*;
+import streamit.scheduler1.simple.*;
 
 import at.dms.util.IRPrinter;
 import at.dms.util.Utils;

@@ -1,6 +1,6 @@
 package at.dms.kjc.sir.lowering;
 
-import streamit.scheduler.*;
+import streamit.scheduler1.*;
 
 import at.dms.kjc.sir.lowering.partition.*;
 import at.dms.kjc.sir.lowering.fusion.*;

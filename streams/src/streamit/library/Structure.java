@@ -1,6 +1,6 @@
 package streamit;
 
-import streamit.scheduler.*;
+import streamit.scheduler2.*;
 
 public abstract class Structure extends Stream
 {

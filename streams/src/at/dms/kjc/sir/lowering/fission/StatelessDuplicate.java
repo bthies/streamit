@@ -77,7 +77,7 @@ public class StatelessDuplicate {
 		return false;
 	    }
 	}
-	// We don't yet support fission of two-stage filters that peek.
+ 	// We don't yet support fission of two-stage filters that peek.
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;
 	    if (twoStage.getInitPop()>0) {

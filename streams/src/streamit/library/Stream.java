@@ -3,7 +3,7 @@ package streamit;
 import java.util.*;
 import java.lang.reflect.*;
 
-import streamit.scheduler.ScheduleBuffers;
+import streamit.scheduler2.ScheduleBuffers;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
 public abstract class Stream extends Operator

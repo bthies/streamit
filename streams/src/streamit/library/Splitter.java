@@ -1,7 +1,7 @@
 package streamit;
 
 import java.util.*;
-import streamit.scheduler.iriter.SplitJoinIter;
+import streamit.scheduler2.iriter.SplitJoinIter;
 
 // 1 input, many output
 abstract public class Splitter extends Operator

@@ -4,7 +4,7 @@ import at.dms.kjc.*;
 import at.dms.util.Utils;
 import java.io.Serializable;
 
-import streamit.scheduler.SchedJoinType;
+import streamit.scheduler1.SchedJoinType;
 
 /**
  * This class enumerates the types of joiners.

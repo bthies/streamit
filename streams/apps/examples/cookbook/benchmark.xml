@@ -33,5 +33,9 @@ These are the examples in the StreamIt Cookbook.
       <desc>Fibonacci number generator, section 2.7</desc>
       <file>FibProgram.str</file>
     </impl>
+    <impl lang="StreamIt">
+      <desc>FMRadio with equalizer, section 3</desc>
+      <file>FMRadio.str</file>
+    </impl>
   </implementations>
 </benchmark>

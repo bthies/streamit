@@ -21,7 +21,7 @@ LINEAR-REG-TEST = linear_regtest.pl
 COMPARE = perl -I$(STREAMIT_HOME)/regtest/tools $(STREAMIT_HOME)/regtest/tools/compare_uni.pl 
 
 # current test
-CURRENT-TEST = regtests/LinearTest34
+CURRENT-TEST = regtests/LinearTest32
 
 
 all: clean java-compile uni-compile raw-compile
@@ -85,7 +85,7 @@ linear-regtest: linear-compile
 
 
 clean:
-	rm -f *.class
+	rm -f *.class *.out
 	rm -f *.dot *.dot.ps *.output
 	rm -f regtests/*.output regtests/*.parsed  regtests/*.dot
 	rm -f regtests/*~ regtests/*.exe regtests/*.run regtests/*.c

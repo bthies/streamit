@@ -9,8 +9,7 @@ use strict;
 # java(streamit) --> c
 my $S = "java -Xmx512M at.dms.kjc.Main -s --unroll 100000 --debug ";
 # c --> exe
-my $SL = "gcc -O2 -I/u/aalamb/streams/library/c -L/u/aalamb/streams/library/c/";
-my $SL_POST = " -lstreamit -lsrfftw -lsfftw -lm ";
+my $SL = "sl";
 # compare output
 my $CMP = "/u/aalamb/streams/regtest/tools/compare_uni.pl";
 my $CMP_PATH = "/u/aalamb/streams/regtest/tools/";
@@ -47,6 +46,9 @@ my @tests = (
 	     "regtests/LinearTest29.str",
 	     "regtests/LinearTest30.str",
 	     "regtests/LinearTest31.str",
+	     "regtests/LinearTest32.str",
+	     "regtests/LinearTest33.str",
+	     #"regtests/LinearTest31.str",
 	     );
 
 #@tests = (
@@ -87,14 +89,23 @@ foreach $current_test (@tests) {
     $command = ("$S --linearreplacement " .
 		"$base.java >& $base.replaced.c");
     `$command`;
+
+    # now, compile the test again, this time with frequency replacement enabled
+    $command = ("$S --frequencyreplacement 3 " .
+		"$base.java >& $base.freq.c");
+    `$command`;
+
     
-    # now, compile the c to an exe for both the original program and the replaced prgram
-    print `$SL $base.c -o $base.exe $SL_POST`;
-    print `$SL $base.replaced.c -o $base.replaced.exe $SL_POST`;
+    # now, compile the c to an exe for both the original, replaced, and freq programs
+    `$SL $base.c -o $base.exe`;
+    `$SL $base.replaced.c -o $base.replaced.exe `;
+    `$SL $base.freq.c -o $base.freq.exe `;
     # execute both the original and the replaced program 100 iterations
     print `$base.exe -i 100 > $base.run`;
     print `$base.replaced.exe -i 100 > $base.replaced.run`;
-    # now, compare the outputs
+    print `$base.freq.exe -i 100 > $base.freq.run`;
+
+    # now, compare replacement to normal
     $result = `perl -I$CMP_PATH $CMP $base.run $base.replaced.run`;
     chomp($result);
     if ($result ne "") {
@@ -102,6 +113,16 @@ foreach $current_test (@tests) {
 	print "  $result\n";
     } else {
 	print "$base(replace):  success\n";
+    }
+
+    # now, compare frequency to normal
+    $result = `perl -I$CMP_PATH $CMP $base.run $base.freq.run`;
+    chomp($result);
+    if ($result ne "") {
+	print "$base(freq):     failure\n";
+	print "  $result\n";
+    } else {
+	print "$base(freq):     success\n";
     }
 
     

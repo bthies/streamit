@@ -15,11 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JStatement.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JStatement.java,v 1.3 2002-02-20 16:26:50 thies Exp $
  */
 
 package at.dms.kjc;
 
+import at.dms.util.*;
 import at.dms.compiler.PositionedError;
 import at.dms.compiler.TokenReference;
 import at.dms.compiler.JavaStyleComment;
@@ -113,12 +114,7 @@ public abstract class JStatement extends JPhylum {
    * Accepts the specified attribute visitor
    * @param	p		the visitor
    */
-  public Object accept(AttributeVisitor p) {
-     if (comments != null) {
-      return p.visitComments(comments);
-    }
-     return null;
-  }
+  public abstract Object accept(AttributeVisitor p);
 
   /**
    * Returns the comments

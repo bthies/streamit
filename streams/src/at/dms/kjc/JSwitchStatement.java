@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JSwitchStatement.java,v 1.3 2001-10-29 10:26:02 thies Exp $
+ * $Id: JSwitchStatement.java,v 1.4 2002-02-20 16:26:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -160,7 +160,6 @@ public class JSwitchStatement extends JStatement {
    * @param	p		the visitor
    */
   public Object accept(AttributeVisitor p) {
-      Object trash = super.accept(p);
       return p.visitSwitchStatement(this, expr, groups);
   }
 

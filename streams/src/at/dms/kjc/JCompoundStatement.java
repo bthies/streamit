@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JCompoundStatement.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JCompoundStatement.java,v 1.2 2002-02-20 16:26:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -76,7 +76,11 @@ public class JCompoundStatement extends JStatement {
   public void accept(KjcVisitor p) {
     p.visitCompoundStatement(this, body);
   }
-
+    
+    public Object accept(AttributeVisitor p) {
+	return p.visitCompoundStatement(this, body);
+    }
+    
   /**
    * Generates a sequence of bytescodes
    * @param	code		the code list

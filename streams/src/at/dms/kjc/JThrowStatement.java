@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JThrowStatement.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JThrowStatement.java,v 1.3 2002-02-20 16:26:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -88,7 +88,6 @@ public class JThrowStatement extends JStatement {
    * @param	p		the visitor
    */
     public Object accept(AttributeVisitor p) {
-	Object trash = super.accept(p);
 	return p.visitThrowStatement(this, expr);
     }
 

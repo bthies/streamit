@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayAccessExpression.java,v 1.5 2001-11-15 23:28:33 dmaze Exp $
+ * $Id: JArrayAccessExpression.java,v 1.6 2002-02-20 16:26:50 thies Exp $
  */
 
 package at.dms.kjc;
@@ -48,6 +48,10 @@ public class JArrayAccessExpression extends JExpression {
 
     this.prefix = prefix;
     this.accessor = accessor;
+
+    // inserted as part of StreamIt pass so that we can resolve types
+    // of local arrays that we're referencing
+    tryToResolveType();
   }
 
   // ----------------------------------------------------------------------
@@ -221,7 +225,29 @@ public class JArrayAccessExpression extends JExpression {
 	prefix = p;
     }
 
-  // ----------------------------------------------------------------------
+    /**
+     * In the case when the prefix of this is a one-dimensional array
+     * that is a local variable, resolves the type of this by looking
+     * at the type of that variable.  This is for the StreamIt pass so
+     * we can add references to array locals and have them be typed in
+     * the IR.  A more general pass would call the top-level analyse()
+     * function again, but this looked like it might be tricky.  Could
+     * extend this function to be more sophisticated in the future.
+     */
+    private void tryToResolveType() {
+	// get the var reference
+	if (prefix instanceof JLocalVariableExpression) {
+	    // get the variable type
+	    CType type = 
+		((JLocalVariableExpression)prefix).getVariable().getType();
+	    // if we have an array type, set our type to the base type
+	    if (type instanceof CArrayType) {
+		this.type = ((CArrayType)type).getBaseType();
+	    }
+	}
+    }
+
+    // ----------------------------------------------------------------------
   // DATA MEMBERS
   // ----------------------------------------------------------------------
 

@@ -38,15 +38,15 @@ public class QuadratureDemod extends Filter {
 	    (float)(Math.asin(b/(Math.sqrt(Math.pow(a,2) + Math.pow(b,2)))));
     }
 
-    public QuadratureDemod ()
+    public QuadratureDemod (int firingRate, float g)
     {
         super ();
     }
 
-    public void init(int firingRate, float g) {
+    public void init(final int firingRate, float g) {
 
-        input = new Channel (Float.TYPE, 2*firing);
-        output = new Channel (Float.TYPE, firing);
+        input = new Channel (Float.TYPE, 2*firingRate, 2*firingRate);
+        output = new Channel (Float.TYPE, firingRate);
 
 	firing = firingRate;
 	gain = g;
@@ -55,15 +55,15 @@ public class QuadratureDemod extends Filter {
     public void work() {
 	float lastValReal, productReal, valReal;
 	float lastValImag, productImag, valImag;
+	int i;
 
 	lastValReal = input.peekFloat(1);
 	lastValImag = input.peekFloat(0);
 
-	for (int i = 0; i < firing; i++) {
+	for (i = 0; i < firing; i++) {
 	    valImag = input.popFloat();
 	    valReal = input.popFloat();
 	    
-	    //product = val * conj(lastVal);
 	    productReal = multiplyReal(valReal, valImag, lastValReal, -lastValImag);
 	    productImag = multiplyImag(valReal, valImag, lastValReal, -lastValImag);
 
@@ -74,3 +74,4 @@ public class QuadratureDemod extends Filter {
 	}
     }
 }
+

@@ -19,8 +19,8 @@ public class RealFIRFilter extends Filter {
         super (sampleFreq, dec, c, t, g);
     }
 
-    public void init(int sampleFreq, int dec, float c, int t, float g) {
-        input = new Channel (Float.TYPE, dec, numTaps);
+    public void init(int sampleFreq, final int dec, float c, final int t, float g) {
+        input = new Channel (Float.TYPE, dec, t);
         output = new Channel (Short.TYPE, 1);
 	
 	inSampFreq = sampleFreq;
@@ -35,29 +35,29 @@ public class RealFIRFilter extends Filter {
     public void buildFilter_real() {
 	float arg;
 	float N = (float)numTaps;
-	float M = N-1; /* filter Order */
-	float M_PI = (float)java.lang.Math.PI;
+	float M = N-1;
+	float C_PI = (float)java.lang.Math.PI;
 	int index;
 	
 	if (cutoff == 0.0) {
 	    for (index=0;index < numTaps; index++) {
 		taps[index] =  ((float)(gain*(0.54-0.46*((float)java.lang.Math.cos
-						(2*M_PI*((float)index)/(M))))));
+						(2*C_PI*((float)index)/(M))))));
 	    }
 	}
 	else {
-	    arg = 2*M_PI*cutoff/((float)inSampFreq);
+	    arg = 2*C_PI*cutoff/((float)inSampFreq);
 	    for (index=0;index < numTaps;index++) {
 		if (((float)index)-(M/2.0) != 0){     
 		    taps[index] =  ((float)
 			(gain*(((float)java.lang.Math.sin(arg*(index-(M/2.0))))/
-			      M_PI/(((float)index)-(M/2.0))*
-			      (0.54-0.46*((float)java.lang.Math.cos(2.0*M_PI*
+			      C_PI/(((float)index)-(M/2.0))*
+			      (0.54-0.46*((float)java.lang.Math.cos(2.0*C_PI*
 								    ((float)index)/M))))));
 		}
 	    }
 	    if ( (((int)M)/2)*2 == (int)M ){ 
-		taps[(int)M/2] =  gain*arg/M_PI;
+		taps[(int)M/2] =  gain*arg/C_PI;
 	    }
 	}
     }

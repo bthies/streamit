@@ -72,6 +72,13 @@ typedef struct tape {
 #define PUSH(c, type, d) PUSH_TAPE((c)->output_tape, type, d)
 #define PEEK(c, type, n) PEEK_TAPE((c)->input_tape, type, n)
 #define POP(c, type) POP_TAPE((c)->input_tape, type)
+typedef struct one_to_many {
+  splitjoin_type type;
+  int fan;
+  int *ratio;
+  int slots;
+  tape *one_tape, **tape, **tcache;
+} one_to_many;
 struct stream_context;
 
 typedef struct stream_context_list {
@@ -83,17 +90,16 @@ typedef struct pipeline_type_data {
   stream_context_list *first_child;
   stream_context_list *last_child;
 } pipeline_type_data;
+typedef struct splitjoin_type_data {
+  stream_context_list *children;
+  one_to_many splitter;
+  one_to_many joiner;
+} splitjoin_type_data;
 
 typedef union stream_type_data {
   pipeline_type_data pipeline_data;
+  splitjoin_type_data splitjoin_data;
 } stream_type_data;
-typedef struct one_to_many {
-  splitjoin_type type;
-  int fan;
-  int *ratio;
-  int slots;
-  tape *one_tape, **tape, **tcache;
-} one_to_many;
 typedef struct stream_context {
   void *stream_data;
   stream_type type;
@@ -103,7 +109,6 @@ typedef struct stream_context {
   tape *input_tape;
   tape *output_tape;
   stream_type_data type_data;
-  one_to_many splitter, joiner;
 } stream_context;
 stream_context *create_context(void *p);
 typedef struct portal {

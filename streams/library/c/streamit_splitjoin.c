@@ -14,12 +14,12 @@ void set_splitter(stream_context *c, splitjoin_type type, int n, ...)
   assert(c);
   assert(c->type == SPLIT_JOIN ||
          c->type == FEEDBACK_LOOP);
-  set_splitjoin(&c->splitter, type, n);
+  set_splitjoin(&c->type_data.splitjoin_data.splitter, type, n);
   if (type == ROUND_ROBIN)
   {
     va_list ap;
     va_start(ap, n);
-    set_splitjoin_rr(&c->splitter, ap);
+    set_splitjoin_rr(&c->type_data.splitjoin_data.splitter, ap);
     va_end(ap);
   }
 }
@@ -29,12 +29,12 @@ void set_joiner(stream_context *c, splitjoin_type type, int n, ...)
   assert(c);
   assert(c->type == SPLIT_JOIN ||
          c->type == FEEDBACK_LOOP);
-  set_splitjoin(&c->joiner, type, n);
+  set_splitjoin(&c->type_data.splitjoin_data.joiner, type, n);
   if (type == ROUND_ROBIN)
   {
     va_list ap;
     va_start(ap, n);
-    set_splitjoin_rr(&c->joiner, ap);
+    set_splitjoin_rr(&c->type_data.splitjoin_data.joiner, ap);
     va_end(ap);
   }
 }
@@ -100,9 +100,9 @@ void create_splitjoin_tape(stream_context *container,
            slot == 0));
   
   if (sj == SPLITTER)
-    om = &container->splitter;
+    om = &container->type_data.splitjoin_data.splitter;
   else
-    om = &container->joiner;
+    om = &container->type_data.splitjoin_data.joiner;
   
   new_tape = create_tape_internal(data_size, tape_length);
   
@@ -161,22 +161,23 @@ void run_splitter(stream_context *c)
     input_tape = c->input_tape;
   else if (c->type == FEEDBACK_LOOP)
   {
-    input_tape = c->splitter.one_tape;
-    c->splitter.tape[0] = c->output_tape;
+    input_tape = c->type_data.splitjoin_data.splitter.one_tape;
+    c->type_data.splitjoin_data.splitter.tape[0] = c->output_tape;
   }
 
   /* Make the splitter tape cache valid if it's needed. */
-  if (c->splitter.type == ROUND_ROBIN && !c->splitter.tcache)
-    build_tape_cache(&c->splitter);
+  if (c->type_data.splitjoin_data.splitter.type == ROUND_ROBIN &&
+      !c->type_data.splitjoin_data.splitter.tcache)
+    build_tape_cache(&c->type_data.splitjoin_data.splitter);
 
-  switch(c->splitter.type)
+  switch(c->type_data.splitjoin_data.splitter.type)
   {
   case DUPLICATE:
     /* Read one item and distribute it. */
     INCR_TAPE_READ(input_tape);
-    for (slot = 0; slot < c->splitter.fan; slot++)
+    for (slot = 0; slot < c->type_data.splitjoin_data.splitter.fan; slot++)
     {
-      output_tape = c->splitter.tape[slot];
+      output_tape = c->type_data.splitjoin_data.splitter.tape[slot];
       INCR_TAPE_WRITE(output_tape);
       COPY_TAPE_ITEM(input_tape, output_tape);
     }
@@ -184,9 +185,9 @@ void run_splitter(stream_context *c)
       
   case ROUND_ROBIN:
     /* Read enough items to make one loop around. */
-    for (slot = 0; slot < c->splitter.slots; slot++)
+    for (slot = 0; slot < c->type_data.splitjoin_data.splitter.slots; slot++)
     {
-      output_tape = c->splitter.tcache[slot];
+      output_tape = c->type_data.splitjoin_data.splitter.tcache[slot];
       INCR_TAPE_READ(input_tape);
       INCR_TAPE_WRITE(output_tape);
       COPY_TAPE_ITEM(input_tape, output_tape);
@@ -211,20 +212,21 @@ void run_joiner(stream_context *c)
     output_tape = c->output_tape;
   else if (c->type == FEEDBACK_LOOP)
   {
-    output_tape = c->joiner.one_tape;
-    c->joiner.tape[0] = c->input_tape;
+    output_tape = c->type_data.splitjoin_data.joiner.one_tape;
+    c->type_data.splitjoin_data.joiner.tape[0] = c->input_tape;
   }
 
   /* Make the splitter tape cache valid if it's needed. */
-  if (c->joiner.type == ROUND_ROBIN && !c->joiner.tcache)
-    build_tape_cache(&c->joiner);
+  if (c->type_data.splitjoin_data.joiner.type == ROUND_ROBIN &&
+      !c->type_data.splitjoin_data.joiner.tcache)
+    build_tape_cache(&c->type_data.splitjoin_data.joiner);
 
-  switch (c->joiner.type)
+  switch (c->type_data.splitjoin_data.joiner.type)
   {
   case ROUND_ROBIN:
-    for (slot = 0; slot < c->joiner.slots; slot++)
+    for (slot = 0; slot < c->type_data.splitjoin_data.joiner.slots; slot++)
     {
-      input_tape = c->joiner.tcache[slot];
+      input_tape = c->type_data.splitjoin_data.joiner.tcache[slot];
       INCR_TAPE_READ(input_tape);
       INCR_TAPE_WRITE(output_tape);
       COPY_TAPE_ITEM(input_tape, output_tape);

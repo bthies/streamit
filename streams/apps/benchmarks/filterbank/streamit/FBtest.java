@@ -43,7 +43,7 @@ class FBtest extends StreamIt {
    
 
     public void init() {
-	int N_sim=1024*2;
+	final int N_sim=1024*2;
 	int N_samp=/* 32 */ 8;
 	int N_ch=N_samp;
 	int N_col=32;

@@ -23,7 +23,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearReplacer.java,v 1.2 2002-09-30 21:22:11 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.3 2002-10-18 18:12:10 aalamb Exp $
  **/
 public class LinearReplacer extends EmptyStreamVisitor implements Constants{
     LinearAnalyzer linearityInformation;
@@ -264,7 +264,7 @@ public class LinearReplacer extends EmptyStreamVisitor implements Constants{
 			if (currentWeight.isRealInteger()) {
 			    weightNode = new JIntLiteral(null, (int)currentWeight.getReal());
 			} else {
-			    weightNode = new JDoubleLiteral(null, currentWeight.getReal());
+			    weightNode = new JFloatLiteral(null, (float)currentWeight.getReal());
 			}
 			// make a JMultExpression with weight*peekExpression
 			exprNode = new JMultExpression(null,        // tokenReference

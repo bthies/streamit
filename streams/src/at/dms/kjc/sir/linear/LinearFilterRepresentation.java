@@ -9,12 +9,12 @@ import java.util.*;
  * to constants that are added to the combination of inputs to produce the outputs.<p>
  *
  * This class holds the A and b in the equation y = Ax+b which calculates the output
- * vector y using the input vector x. A is a matrix, b is a vector.<p>
+ * vector y using the input vector x. A is a matrix, b is a (column) vector.<p>
  *
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.9 2002-09-27 16:17:10 aalamb Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.10 2002-10-18 18:12:10 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -88,7 +88,7 @@ public class LinearFilterRepresentation {
 	int oldPeek = this.getPeekCount();
 	int oldPop  = this.getPopCount();
 	int newPush = oldPush * factor;
-	int newPeek = oldPeek + (factor -1)*oldPop;
+	int newPeek = oldPeek + (factor-1)*oldPop;
 	int newPop  = oldPop * factor;
 	FilterMatrix oldMatrix = this.getA();
 	FilterMatrix newMatrix = new FilterMatrix(newPeek, newPush);

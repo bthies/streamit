@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * Contains the code for merging all the filters from a split join
  * into a single monolithic matrix.
- * $Id: LinearTransformSplitJoin.java,v 1.3 2002-10-01 21:42:47 aalamb Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.4 2002-10-18 18:12:10 aalamb Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -103,9 +103,13 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    startOffset += this.roundRobinJoinerWeights[i];
 	}
 
+	// calculate what the new pop rate is (it needs to the the same for all filters)
+	int newPopCount = (this.linearRepresentations[0].getPopCount() *
+			   this.filterExpansionFactors[0]);
+
 	// now, return a new LinearRepresentation that represents the transformed
-	// splitjoin. (remember peek=pop)
-	return new LinearFilterRepresentation(expandedA, expandedb, expandedA.getRows());
+	// splitjoin. 
+	return new LinearFilterRepresentation(expandedA, expandedb, newPopCount);
     }
 
 
@@ -121,19 +125,14 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	LinearFilterRepresentation[] filterReps;
 	filterReps = new LinearFilterRepresentation[representationList.size()];
 
-	// for each rep, check the peek=pop condition and grab peek rates
+	// for each rep, stuff it into the array
 	Iterator repIter = representationList.iterator();
 	int currentIndex = 0;
 	while(repIter.hasNext()) {
 	    LinearFilterRepresentation currentRep = (LinearFilterRepresentation)repIter.next();
-	    if (currentRep.getPopCount() != currentRep.getPeekCount()) {
-		return null;
-	    } else {
-		filterReps[currentIndex] = currentRep;
-		currentIndex++;
-	    }
+	    filterReps[currentIndex] = currentRep;
+	    currentIndex++;
 	}
-	LinearPrinter.println("  all filters have peek=pop");
 	return filterReps;
     }
 
@@ -156,12 +155,17 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 	// calculate the rep list from the passed in list
 	LinearFilterRepresentation[] filterReps = parseRepList(representationList);
-	if (filterReps == null) { return new LinearTransformNull("Peek didn't match pop rate."); }
-	// do the actual work
 	return calculateDuplicate(filterReps, joinerWeights);
     }
 
-    /** the function that does the actual work. **/
+    /**
+     * the function that does the actual work of calculating the
+     * expansion factors for the filters and the joiner.
+     * basiclly, it takes as input an array of filter reps and an array of joiner weights
+     * and (if all checks pass) calculates the weights necessary to expand each filter
+     * by and the factor necessary to expand the roundrobin joiner by. It then returns a
+     * LinearTransformSplitjoin which has that information embedded in it.
+     **/
     private static LinearTransform calculateDuplicate(LinearFilterRepresentation[] filterReps,
 						      int[] joinerWeights) {
 	int filterCount = filterReps.length;
@@ -207,14 +211,25 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	// now, we need to verify that the total # of rows (eg the size of each column) is
 	// is the same after the appropriate expansions so that the schedule works out. If
 	// not, then the graph is unschedulable.
+	// We also need to check that the peek rate for each of the filters
+	// after expansion is the same.
 	int totalInputData = overallFilterWeights[0]*filterReps[0].getPeekCount();
+	int totalPeekRate  = (filterReps[0].getPeekCount() +  // old peek
+			      (overallFilterWeights[0] - 1)*filterReps[0].getPopCount()); // (factor-1)*pop
 	for (int i=0; i<filterCount; i++) {
-	    // if total peeked at
+	    // if total peeked at is not the same for the current filter, we are done.
 	    if ((overallFilterWeights[i]*filterReps[i].getPeekCount()) != totalInputData) {
 		LinearPrinter.println("  graph is unschedulable. aborting combination.");
 		return new LinearTransformNull("Unscheduable Graph");
 	    }
+	    // if the peek rate is not the same for the current filter, we are also done.
+	    if (totalPeekRate !=
+		(filterReps[i].getPeekCount() + (overallFilterWeights[i] - 1)*filterReps[i].getPopCount())) {
+		LinearPrinter.println("filer " + i + " doesn't have same peek rate after expansion.");
+		return new LinearTransformNull("Peek Rates don't match.");
+	    }
 	}
+
 		    
 	
 
@@ -246,7 +261,6 @@ public class LinearTransformSplitJoin extends LinearTransform{
 
 	// calculate the rep list from the passed in list
 	LinearFilterRepresentation[] filterReps = parseRepList(representationList);
-	if (filterReps == null) { return new LinearTransformNull("Peek didn't match pop rate."); }
 	int filterCount = filterReps.length;
 
 	// first, we are going to figure out how many times the roundrobin splitter
@@ -322,8 +336,6 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    }
 	    // update the current offset (from the top) where we copy data to
 	    currentOffset += splitterWeights[i];
-	    //LinearPrinter.println("  new A: \n" + newA);
-	    //LinearPrinter.println("  new b: \n" + newb);
 	    duplicateReps[i] = new LinearFilterRepresentation(newA, newb, newRows);
 	}
 	// now we are ready to try duplicating

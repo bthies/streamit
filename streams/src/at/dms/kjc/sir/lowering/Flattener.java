@@ -47,27 +47,7 @@ public class Flattener {
 	printer1.close();
 	*/
 
-	enableUnrollIfLinear();
-
-	// move field initializations into init function
-	FieldInitMover.moveStreamInitialAssignments(str);
-	
-	// propagate constants and unroll loops
-	System.err.print("Running Constant Prop and Unroll... ");
-	ConstantProp.propagateAndUnroll(str);
-	System.err.println("done.");
-
-	// Convert Peeks to Pops
-	if (KjcOptions.poptopeek) {
-	    System.err.print("Converting pop to peek... ");
-	    PopToPeek.removeAllPops(str);
-	    ConstantProp.propagateAndUnroll(str);
-	    System.err.println("done.");
-	}
-	
-	// construct stream hierarchy from SIRInitStatements
-	ConstructSIRTree.doit(str);
-	INIT_STATEMENTS_RESOLVED = true;
+	flattenBeforePartition(str);
 
 	// dump the original graph to a dot format
 	StreamItDot.printGraph(str, "before.dot");
@@ -89,19 +69,79 @@ public class Flattener {
 	    SJToPipe.doit(str);
 	}
 
-	/* Not general code: Just a test for sync-removal on TwoWeightedRR.java */ 
-	/* StreamItDot.printGraph(str, "before-syncremov.dot");
-	SIRPipeline parentPipe = (SIRPipeline)str; 
-	SyncRemovalSJPair.diffuseSJPair((SIRSplitJoin)parentPipe.get(1), (SIRSplitJoin)parentPipe.get(2)); 
-	StreamItDot.printGraph(str, "after-syncremov.dot"); */ 
+	str = doLinearAnalysis(str);
 
-	/*
-	SIRFilter toDuplicate = ((SIRFilter)
-				 ((SIRPipeline)
-				  ((SIRPipeline)str).get(1)).get(0));
-	System.err.println("Trying to duplicate " + toDuplicate);
-	StatelessDuplicate.doit(toDuplicate, 2);
+	// dump the partitioned graph to a dot format
+	StreamItDot.printGraph(str, "after.dot");
+
+	// if we have don't have a container, wrap it in a pipeline
+	// for the sake of SIRScheduler.
+	if (!(str instanceof SIRContainer)) {
+	    str = SIRContainer.makeWrapper(str);
+	}
+
+	// make single structure
+	SIRIterator iter = IterFactory.createIter(str);
+	System.err.print("Structuring... ");
+	JClassDeclaration flatClass = Structurer.structure(iter,
+							   interfaces,
+							   interfaceTables,
+                                                           structs);
+	System.err.println("done.");
+
+	// optionally print a version of the source code that we're
+	// sending to the scheduler
+	if (KjcOptions.print_partitioned_source) {
+	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
+	}
+
+	// build schedule as set of higher-level work functions
+	System.err.print("Scheduling... ");
+	SIRSchedule schedule = SIRScheduler.buildWorkFunctions((SIRContainer)str, flatClass);
+	System.err.println("done.");
+	// add LIR hooks to init and work functions
+	System.err.print("Annotating IR for uniprocessor... ");
+	LowerInitFunctions.lower(iter, schedule);
+        LowerWorkFunctions.lower(iter);
+	System.err.println("done.");
+
+	/* DEBUGGING PRINTING
+	System.out.println("----------- AFTER FLATTENER ------------------");
+	IRPrinter printer = new IRPrinter();
+	flatClass.accept(printer);
+	printer.close();
 	*/
+
+	System.err.println("Generating code...");
+	LIRToC.generateCode(flatClass);
+	//System.err.println("done.");
+    }
+
+    /**
+     * Does all flattening involved before partitioning.  Could be
+     * called by other classes if they want to flatten part of a
+     * stream with different global options (E.g. unrolling).
+     */
+    public static void flattenBeforePartition(SIRStream str) {
+	// move field initializations into init function
+	FieldInitMover.moveStreamInitialAssignments(str);
+	
+	// propagate constants and unroll loops
+	System.err.print("Running Constant Prop and Unroll... ");
+	ConstantProp.propagateAndUnroll(str);
+	System.err.println("done.");
+
+	// Convert Peeks to Pops
+	if (KjcOptions.poptopeek) {
+	    System.err.print("Converting pop to peek... ");
+	    PopToPeek.removeAllPops(str);
+	    ConstantProp.propagateAndUnroll(str);
+	    System.err.println("done.");
+	}
+	
+	// construct stream hierarchy from SIRInitStatements
+	ConstructSIRTree.doit(str);
+	INIT_STATEMENTS_RESOLVED = true;
 
 	//Raise NewArray's up to top
 	System.err.print("Raising variable declarations... ");
@@ -155,73 +195,6 @@ public class Flattener {
 	System.err.print("Raising variables... ");
 	new VarDeclRaiser().raiseVars(str);
 	System.err.println("done.");
-
-	str = doLinearAnalysis(str);
-
-	// dump the partitioned graph to a dot format
-	StreamItDot.printGraph(str, "after.dot");
-
-	// if we have don't have a container, wrap it in a pipeline
-	// for the sake of SIRScheduler.
-	if (!(str instanceof SIRContainer)) {
-	    str = SIRContainer.makeWrapper(str);
-	}
-
-	// make single structure
-	SIRIterator iter = IterFactory.createIter(str);
-	System.err.print("Structuring... ");
-	JClassDeclaration flatClass = Structurer.structure(iter,
-							   interfaces,
-							   interfaceTables,
-                                                           structs);
-	System.err.println("done.");
-
-	// optionally print a version of the source code that we're
-	// sending to the scheduler
-	if (KjcOptions.print_partitioned_source) {
-	    new streamit.scheduler2.print.PrintProgram().printProgram(IterFactory.createIter(str));
-	}
-
-	// build schedule as set of higher-level work functions
-	System.err.print("Scheduling... ");
-	SIRSchedule schedule = SIRScheduler.buildWorkFunctions((SIRContainer)str, flatClass);
-	System.err.println("done.");
-	// add LIR hooks to init and work functions
-	System.err.print("Annotating IR for uniprocessor... ");
-	LowerInitFunctions.lower(iter, schedule);
-        LowerWorkFunctions.lower(iter);
-	System.err.println("done.");
-
-	/* DEBUGGING PRINTING
-	System.out.println("----------- AFTER FLATTENER ------------------");
-	IRPrinter printer = new IRPrinter();
-	flatClass.accept(printer);
-	printer.close();
-	*/
-
-	System.err.println("Generating code...");
-	LIRToC.generateCode(flatClass);
-	//System.err.println("done.");
-    }
-
-    /**
-     * If we're doing linear analysis, then we require maximal
-     * unrolling to occur before the linear stage.  However, the
-     * unrolling can be turned back to normal after the linear stuff
-     * is done (this is important for code size).  So we swap the
-     * unroll factor here and then restore it at the end of the linear
-     * analysis.
-     */
-    private static int origUnroll = -1;
-    public static void enableUnrollIfLinear () {
-	if (KjcOptions.linearanalysis ||
-	    KjcOptions.linearreplacement ||
-	    KjcOptions.linearpartition ||
-	    KjcOptions.frequencyreplacement ||
-	    KjcOptions.redundantreplacement) {
-	    origUnroll = KjcOptions.unroll;
-	    KjcOptions.unroll=100000;
-	}
     }
 
     /**
@@ -237,16 +210,14 @@ public class Flattener {
 	    KjcOptions.linearpartition ||
 	    KjcOptions.frequencyreplacement ||
 	    KjcOptions.redundantreplacement) {
-	    // restore unroll to original value
-	    KjcOptions.unroll = origUnroll;
 
 	    // run the linear analysis and stores the information garnered in the lfa
-	    System.err.print("Running linear analysis... ");
+	    System.err.println("Running linear analysis... ");
 	    // only refactor linear children if we're NOT doing the linear partitioner
 	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str,
 								  KjcOptions.debug,
 								  !KjcOptions.linearpartition);
-	    System.err.println("done.");
+	    System.err.println("done with linear analysis.");
 
 	    // now, print out the graph using the LinearPrinter which colors the graph
 	    // nodes based on their linearity.

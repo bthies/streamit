@@ -160,7 +160,9 @@ public class Unroller extends SLIRReplacingVisitor {
 				    JExpression cond,
 				    JStatement incr,
 				    JStatement body) {
-	if(!self.unrolled) { //Ignore if already unrolled
+	// to do the right thing if someone set an unroll factor of 0
+	// (or 1, which means to do nothing)
+	if((KjcOptions.unroll>1 || inInit) && !self.getUnrolled()) { //Ignore if already unrolled
 	    // first recurse into body
 	    Hashtable saveModified=currentModified;
 	    currentModified=new Hashtable();
@@ -393,7 +395,7 @@ public class Unroller extends SLIRReplacingVisitor {
 					       makeIncr(info,KjcOptions.unroll*info.incrVal),
 					       body,
 					       null);
-	newFor.unrolled=true;
+	newFor.setUnrolled(true);
 	newStatements[newStatements.length-1]=newFor;
 	return new JBlock(null,
 			  newStatements,

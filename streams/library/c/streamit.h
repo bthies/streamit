@@ -134,6 +134,7 @@ typedef struct tape {
   ((rt ? (rt->read_pos=rp) : 0), (wt ? (wt->write_pos=wp) : 0))
 #define PUSH_DEFAULTB(type, v) PUSH_TAPE_LOCALB(__wd, __wp, __wm, type, v)
 #define POP_DEFAULTB(type) POP_TAPE_LOCALB(__rd, __rp, __rm, type)
+#define POP_DEFAULTB_N(type, _n) INCR_TAPE_LOCALB(__rp, __rm, (_n*sizeof(type)))
 #define PEEK_DEFAULTB(type, n) PEEK_TAPE_LOCALB(__rd, __rp, __rm, type, n)
 #define VARS_DEFAULTB() void *__rd, *__wd; int __rp, __rm, __wp, __wm
 #define LOCALIZE_DEFAULTB(c) \

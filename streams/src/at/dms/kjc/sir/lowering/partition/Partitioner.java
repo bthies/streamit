@@ -209,7 +209,6 @@ public class Partitioner {
 		//boolean tried=false;
 		// get the containers in the order of work for filters
 		// immediately contained
-		StreamItDot.printGraph(str, "partition.dot");
 		WorkList list = WorkEstimate.getWorkEstimate(str).getSortedContainerWork();
 		//System.out.println(list);
 		// work up through this list until we fuse something
@@ -269,6 +268,8 @@ public class Partitioner {
 			System.out.println("trying to fuse " + (count-target) + " from " 
 					   + cont.size() + "-long pipe " + ((SIRPipeline)cont).getName());
 			int num = FusePipe.fuse((SIRPipeline)cont, count-target);
+			// try lifting
+			Lifter.eliminatePipe((SIRPipeline)cont);
 			if (num!=0) {
 			    aggressive=0;
 			    break;

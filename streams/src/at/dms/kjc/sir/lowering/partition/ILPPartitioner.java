@@ -1,5 +1,7 @@
 package at.dms.kjc.sir.lowering;
 
+import java.rmi.RemoteException;
+
 import java.util.*;
 import java.io.*;
 import lpsolve.*;
@@ -15,9 +17,23 @@ import at.dms.kjc.sir.lowering.fission.*;
 
 public class ILPPartitioner {
     /**
-     * The timeout of the ILP solver (in seconds).
+     * The following two parameters control when the ILPPartitioner
+     * will terminate.  It terminates as soon as one of the following
+     * three conditions are met:
+     *
+     * 1) An optimal solution is found.
+     *
+     * 2) The elapsed time (in secs) exceeds OPTIMAL_TIMEOUT and a gap
+     * value of GAP_TOLERANCE is found.  The gap is the percent by
+     * which the current best integer solution exceeds the lower bound
+     * that the solver has established on the optimal solution.
+     *
+     * 3) The elapsed time (in secs) exceeds GAP_TIMEOUT.
      */
-    protected static final long SOLVER_TIMEOUT = 15;
+    protected static final long OPTIMAL_TIMEOUT = 30;    // stop looking for opt. solution
+    protected static final double GAP_TOLERANCE = 0.20;  // fractional gap to be satisfied with
+    protected static final long GAP_TIMEOUT = 30*60;     // stop looking for solution within gap_tolerance
+
     /**
      * The work estimate that is given to joiner nodes.
      */
@@ -67,7 +83,7 @@ public class ILPPartitioner {
 	    Partitioner.doit(str, numTiles);
 	    return;
 	} else {
-	    fuseAll();
+	    partitionAndFuse();
 	}
 
 	// dump the final graph
@@ -75,10 +91,146 @@ public class ILPPartitioner {
 	System.err.println("Done with ILP Partitioner.");
     }
     
-    private void fuseAll() {
-	CalcPartitions.doit(str, numTiles);
+    private void partitionAndFuse() {
+	HashMap partitions = CalcPartitions.doit(str, numTiles);
+	str.accept(new ILPFuser(partitions));
     }
 
+}
+
+/*
+  This is the class that performs the fusion dictated by the
+  partitioner.  The general strategy is this:
+
+  1. make copy of children so you can look them up later
+  
+  2. visit each of children and replace any of them with what they returned
+  
+  3. fuse yourself (or pieces of yourself) according to hashmap for your original kids
+
+  4. return the new version of yourself
+*/
+class ILPFuser extends EmptyAttributeStreamVisitor {
+    /**
+     * The partition mapping.
+     */
+    private HashMap partitions;
+
+    public ILPFuser(HashMap partitions) {
+	this.partitions = partitions;
+    }
+
+    /******************************************************************/
+    // local methods for the ILPFuser
+
+    /**
+     * Visits/replaces the children of <cont>
+     */
+    private void replaceChildren(SIRContainer cont) {
+	// visit children
+	for (int i=0; i<cont.size(); i++) {
+	    SIRStream newChild = (SIRStream)cont.get(i).accept(this);
+	    cont.set(i, newChild);
+	    // if we got a pipeline, try lifting it.  note that this
+	    // will mutate the children array and the init function of
+	    // <self>
+	    if (newChild instanceof SIRPipeline) {
+		Lifter.eliminatePipe((SIRPipeline)newChild);
+	    }
+	}
+    }
+
+    /**
+     * Returns an array suitable for the fusers that indicates the
+     * groupings of children into partitions, according to
+     * this.partitions.  For instance, if input is:
+     *
+     *  <children> = {0, 0, 5, 7, 7, 7}
+     *
+     * then output is {2, 1, 3}
+     */
+    private int[] calcChildPartitions(List children) {
+	List resultList = new LinkedList();
+	int pos = 0;
+	while (pos<children.size()) {
+	    int count = 0;
+	    int cur = getPartition(children.get(pos));
+	    do {
+		pos++;
+		count++;
+	    } while (pos<children.size() && 
+		     getPartition(children.get(pos))==cur && 
+		     // don't conglomerate -1 children, as they are
+		     // containers with differing tile content
+		     cur!=-1);
+	    resultList.add(new Integer(count));
+	}
+	// copy results into int array
+	int[] result = new int[resultList.size()];
+	for (int i=0; i<result.length; i++) {
+	    result[i] = ((Integer)resultList.get(i)).intValue();
+	}
+	return result;
+    }
+
+    /******************************************************************/
+    // these are methods of empty attribute visitor
+
+    /* visit a pipeline */
+    public Object visitPipeline(SIRPipeline self,
+			 JFieldDeclaration[] fields,
+			 JMethodDeclaration[] methods,
+			 JMethodDeclaration init) {
+	//System.err.println("visiting " + self);
+	// build partition array based on orig children
+	int[] childPart = calcChildPartitions(self.getChildren());
+	// replace children
+	replaceChildren(self);
+	// fuse children internally
+	FusePipe.fuse(self, childPart);
+	return self;
+    }
+
+    /* visit a splitjoin */
+    public Object visitSplitJoin(SIRSplitJoin self,
+			  JFieldDeclaration[] fields,
+			  JMethodDeclaration[] methods,
+			  JMethodDeclaration init,
+			  SIRSplitter splitter,
+			  SIRJoiner joiner) {
+	//System.err.println("visiting " + self);
+	// build partition array based on orig children
+	int[] childPart = calcChildPartitions(self.getParallelStreams());
+	// replace children
+	replaceChildren(self);
+	// fuse
+	return FuseSplit.fuse(self, childPart);
+    }
+
+    /* visit a feedbackloop */
+    public Object visitFeedbackLoop(SIRFeedbackLoop self,
+			     JFieldDeclaration[] fields,
+			     JMethodDeclaration[] methods,
+			     JMethodDeclaration init,
+			     JMethodDeclaration initPath) {
+	//System.err.println("visiting " + self);
+	// fusing a whole feedback loop isn't supported yet
+	Utils.assert(getPartition(self)==-1);
+	// replace children
+	replaceChildren(self);
+	return self;
+    }
+
+    /******************************************************************/
+
+    /**
+     * Returns int partition for <str>
+     */
+    private int getPartition(Object str) {
+	Utils.assert(partitions.containsKey(str), 
+		     "No partition recorded for: " + str);
+	return ((Integer)partitions.get(str)).intValue();
+    }
 }
 
 class CalcPartitions {
@@ -150,7 +302,8 @@ class CalcPartitions {
 	for (int i=0; i<numTiles; i++) {
 	    tileContents[i] = "";
 	}
-	
+
+	int maxWork = -1;
 	for (int i=1; i<nodes.size()-1; i++) {
 	    Object node = nodes.get(i);
 	    int tile = ((Integer)partitions.get(node)).intValue();
@@ -162,11 +315,32 @@ class CalcPartitions {
 		// for joiners, add JOINER_WORK_ESTIMATE
 		tileWork[tile] += ILPPartitioner.JOINER_WORK_ESTIMATE;
 	    }
+	    // keep track of max work
+	    if (tileWork[tile]>maxWork) {
+		maxWork = tileWork[tile];
+	    }
 	}
+
+	// print each tile's work
+	double totalUtil = 0;
 	for (int i=0; i<tileWork.length; i++) {
-	    System.err.println("tile " + i + " has work:\t" + tileWork[i]);
+	    double util = ((double)tileWork[i]) / ((double)maxWork);
+	    totalUtil += util / ((double)tileWork.length);
+	    System.err.println("tile " + i + " has work:\t" + tileWork[i] 
+			       + "\t Estimated utilization:\t" + Utils.asPercent(util));
 	    System.err.print(tileContents[i]);
 	}
+
+	System.err.println("Estimated total utilization: " + Utils.asPercent(totalUtil));
+    }
+
+    /**
+     * Returns whether or not <val1> and <val2> are separated by less
+     * than TOLERANCE.
+     */
+    private static final double TOLERANCE = 0.001;
+    private boolean almostEqual(double val1, double val2) {
+	return Math.abs(val1 - val2) < TOLERANCE;
     }
 
     /**
@@ -178,11 +352,14 @@ class CalcPartitions {
 	for (int i=1; i<nodes.size()-1; i++) {
 	    // find tile that node <i> is assigned to
 	    int tile = -1;
+	    //System.err.println("Looking for tile for node #" + i + ": " + nodes.get(i));
 	    for (int j=0; j<numTiles; j++) {
-		if (sol[pNum(i,j)]==1) {
-		    //System.err.println("Node " + nodes.get(i) + " assigned to tile " + j);
+		if (almostEqual(sol[pNum(i,j)],1)) {
+		    Utils.assert(tile==-1, 
+				 "This node is assigned to both tile #" + tile + " and tile #" + j + 
+				 " (and possibly others): " + nodes.get(i));
+		    //System.err.println("  assigned to tile " + j);
 		    tile = j;
-		    break;
 		}
 	    }
 	    Utils.assert(tile!=-1, "This node is without a tile assigment: " + nodes.get(i));
@@ -300,7 +477,10 @@ class CalcPartitions {
 	System.err.println("nodes.size()=" + nodes.size());
 	//System.err.println("numVars = " + numVars);
 	//System.err.println("numConstraints <= " + numConstraints);
-	LinearProgramSolver lp = new CPLEXSolve(numVars, ILPPartitioner.SOLVER_TIMEOUT);
+	LinearProgramSolver lp = new CPLEXSolve(numVars, 
+						ILPPartitioner.OPTIMAL_TIMEOUT,
+						ILPPartitioner.GAP_TOLERANCE,
+						ILPPartitioner.GAP_TIMEOUT);
 	
 	setupObjective(lp);
 	setupConstraints(lp);
@@ -308,11 +488,8 @@ class CalcPartitions {
 	// get solution, including objective function
 	System.err.println("Solving integer linear program...");
 	double[] sol = null;
-	try {
-	    sol = lp.solve();
-	} catch (LPSolverFailedException e) {
-	    e.printStackTrace();
-	}
+	sol = CPLEXClient.solveOverRMI((CPLEXSolve)lp);
+	Utils.assert(sol!=null, "Got a null value back from solver.");
 	return sol;
     }
 
@@ -434,7 +611,7 @@ class CalcPartitions {
 	    // ignore filters
 	    if (!(s instanceof SIRFilter)) {
 		int begin = ((Integer)first.get(s)).intValue();
-		int end = ((Integer)first.get(s)).intValue();
+		int end = ((Integer)last.get(s)).intValue();
 		for (int t=0; t<numTiles; t++) {
 		    // forall s, forall t, P_L[first(s)],t = P_L[first(s)-1],t = 1 ==> P_L[last(s)],t = 1
 		    addEqualImplication(lp, pNum(begin,t), pNum(begin-1,t), pNum(end,t));
@@ -541,6 +718,28 @@ class PartitionDot extends StreamItDot {
 	return new NamePair(makeLabelledNode(label));
     }
 
+    /* visit a joiner */
+    public Object visitJoiner(SIRJoiner self,
+                              SIRJoinType type,
+                              JExpression[] expWeights)
+    {
+	String label = type.toString();
+	// try to add weights to label
+	try {
+	    int[] weights = self.getWeights();
+	    label += "(";
+	    for (int i=0; i<weights.length; i++) {
+		label += weights[i];
+		if (i!=weights.length-1) {
+		    label+=",";
+		}
+	    }
+	    label += ")";
+	} catch (Exception e) {}
+	label += "\\ntile=" + ((Integer)partitions.get(self)).intValue();
+        return new NamePair(makeLabelledNode(label));
+    }
+    
     /**
      * Override to show partitions.
      */
@@ -575,7 +774,4 @@ class PartitionDot extends StreamItDot {
 	    e.printStackTrace();
 	}
     }
-
-
-    
 }

@@ -173,6 +173,10 @@ class FusionCode {
 		p.print("extern void "+((SIRFilter)node.contents).getInit().getName()+"__"+id+"();\n");
 	    }
 	    p.print("extern void "+get_work_function(node.contents)+"();\n");
+	    String work_n = get_work_n_function(node.contents);
+	    if (work_n != null) {
+		p.print("extern void "+work_n+"(int n);\n");
+	    }
 	}
 
 	p.println();
@@ -306,10 +310,15 @@ class FusionCode {
 			p.print("    HEAD_"+_s+"_"+_d+" = 0; TAIL_"+_s+"_"+_d+" = 0;\n");
 			p.print("    #endif\n");
 		    }
+		    
+		    String work_n = get_work_n_function(oper);
 
+		    if (work_n != null) {
+			p.print("    "+work_n+"("+steady_int+"*__MULT);");
 
-		    p.print("    for (int i=0; i<("+steady_int+"*__MULT); i++) { "+get_work_function(oper)+"(); }");
-
+		    } else {
+			p.print("    for (int i=0; i<("+steady_int+"*__MULT); i++) { "+get_work_function(oper)+"(); }");
+		    }
 		}
 
 		//p.print("    "+get_loop(steady_int * 100, get_work_function(oper)+"();"));
@@ -373,6 +382,20 @@ class FusionCode {
 	}
 
 	assert (1 == 0);
+	return null;
+    }
+
+
+    private static String get_work_n_function(SIROperator oper) {
+
+	int id = NodeEnumerator.getSIROperatorId(oper);	
+
+	/*
+	if (oper instanceof SIRFilter) {   
+	   return ((SIRFilter)oper).getWork().getName()+"__n__"+id;
+	}
+	*/
+
 	return null;
     }
 

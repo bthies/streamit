@@ -573,6 +573,66 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    methods[i].accept(this);
 	}
 
+
+
+	//  +=============================+
+	//  | Work N Function (int ____n) |
+	//  +=============================+
+
+	/*
+
+       	JBlock block = new JBlock(null, new JStatement[0], null);
+
+	JVariableDefinition counter = 
+	    new JVariableDefinition(null, 
+				    0, 
+				    CStdType.Integer,
+				    "____n",
+				    null);
+	
+
+	JStatement init = new JEmptyStatement(null, null);
+
+
+	JExpression decrExpr = 
+	    new JPostfixExpression(null, 
+				   Constants.OPE_POSTDEC, 
+				   new JLocalVariableExpression(null,
+								   counter));
+
+	JStatement decr = 
+	    new JExpressionStatement(null, decrExpr, null);
+
+	JExpression cond = 
+	    new JRelationalExpression(null,
+				      Constants.OPE_LT,
+				      new JIntLiteral(0),
+				      new JLocalVariableExpression(null,counter));
+
+
+	block.addStatement(new JForStatement(null, init, cond, decr, work.getBody(),
+					     null));
+	
+	
+	JFormalParameter param = new JFormalParameter(null, 0, CStdType.Integer, "____n", true);
+	JFormalParameter params[] = new JFormalParameter[1];
+	params[0] = param;
+
+	JMethodDeclaration work_n = 
+	    new JMethodDeclaration(null, 
+				   at.dms.kjc.Constants.ACC_PUBLIC,
+				   CStdType.Void,
+				   work.getName()+"__n",
+				   params,
+				   CClassType.EMPTY,
+				   block,
+				   null,
+				   null);
+
+	work_n.accept(this);
+
+	*/
+
 	//  +=============================+
 	//  | Check Messages              |
 	//  +=============================+

@@ -562,6 +562,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 	print("  int tmp;\n");
 
+	    
+
 	//HashSet sendsCreditsTo = LatencyConstraints.getOutgoingConstraints(self);
 	//boolean restrictedExecution = LatencyConstraints.isRestricted(self); 
 	//boolean sendsCredits;
@@ -569,20 +571,40 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	constrIter = sendsCreditsTo.iterator();
 	while (constrIter.hasNext()) {
 	    LatencyConstraint constraint = (LatencyConstraint)constrIter.next();
+
 	    int receiver = NodeEnumerator.getSIROperatorId(constraint.getReceiver());
 
-	    print("  if (__counter_"+selfID+" > __init_"+selfID+"_"+receiver+") {\n");
-	    print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
+	    if (LatencyConstraints.isMessageDirectionDownstream(self, constraint.getReceiver())) {
 
-	    print("    if (tmp > 0) {\n");
+		// message and credit is sent downstream
 
+		print("  if (__counter_"+selfID+" > __init_"+selfID+"_"+receiver+") {\n");
+		print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
+		print("    if (tmp > 0) {\n");
+		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
+		print("    }\n");
+		print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
+		print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
+		print("  }\n");   
+	    } else {
 
-	    print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
-	    print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
-	    print("    }\n");
-	    print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
-	    print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
-	    print("  }\n");   
+		// message and credit is sent upstream
+	    
+		print("  if (__counter_"+selfID+" == 0) {\n");
+		print("    __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+		print("    __msg_sock_"+selfID+"_"+receiver+"out->write_int(__init_"+selfID+"_"+receiver+");\n");
+		print("  } else {\n");   
+		print("    tmp = __dependency_"+selfID+"_"+receiver+"[__current_"+selfID+"_"+receiver+"];\n");
+		print("    if (tmp > 0) {\n");
+		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(-1);\n");
+		print("      __msg_sock_"+selfID+"_"+receiver+"out->write_int(tmp + __dest_offset_"+selfID+"_"+receiver+");\n");
+		print("    }\n");   
+		print("    __current_"+selfID+"_"+receiver+" = (__current_"+selfID+"_"+receiver+" + 1) % __source_phase_"+selfID+"_"+receiver+";\n");
+		print("    if (__current_"+selfID+"_"+receiver+" == 0) __dest_offset_"+selfID+"_"+receiver+" += __dest_phase_"+selfID+"_"+receiver+";\n");
+		print("  }\n");   
+	    
+	    }
 	}
 
 

@@ -84,6 +84,8 @@ public class LatencyConstraints {
 	    HashSet visited_senders = new HashSet();
 	    
 	    int min_latency = 0;
+	    
+	    boolean any_latency_found = false;
 
 	    System.out.println("\n    Portal: "+portals[t]);
 
@@ -107,7 +109,7 @@ public class LatencyConstraints {
 		    for (int y = i; y < senders.length; y++) {
 			if (senders[y].getStream().equals(sender)) {
 			
-			    int this_min = 0;
+			    int this_max = 0;
 
 			    SIRLatency latency = senders[y].getLatency();
 
@@ -117,17 +119,24 @@ public class LatencyConstraints {
 			    // as possible.
 
 			    if (latency instanceof SIRLatencyMax) {
-				this_min = ((SIRLatencyMax)latency).getMax();
+				this_max = ((SIRLatencyMax)latency).getMax();
 			    }
 
 			    if (latency instanceof SIRLatencyRange) {
-				this_min = ((SIRLatencyRange)latency).getMax();
+				this_max = ((SIRLatencyRange)latency).getMax();
 			    }
 
 			    System.out.println("          detect Latency: "+
-					       this_min);
+					       this_max);
+
+			    if (!any_latency_found) {
+				min_latency = this_max;
+				any_latency_found = true;
+			    }
 			    
-			    if (this_min < min_latency) min_latency = this_min;
+			    if (this_max < min_latency) {
+				min_latency = this_max;
+			    }
 			}
 		    } 
 
@@ -224,8 +233,8 @@ public class LatencyConstraints {
 		    System.out.println("      Upstream Steady Phases: "+sdep2.getNumSrcSteadyPhases());
 		    System.out.println("      Downstr. Steady Phases: "+sdep2.getNumDstSteadyPhases());
 		    
-		    int sourceSteady = sdep2.getNumSrcSteadyPhases();
-		    int destSteady = sdep2.getNumDstSteadyPhases();
+		    int upstreamSteady = sdep2.getNumSrcSteadyPhases();
+		    int downstreamSteady = sdep2.getNumDstSteadyPhases();
 		    
 		    for (int t2 = 0; t2 < 20; t2++) {
 			int phase = sdep2.getSrcPhase4DstPhase(t2);
@@ -253,11 +262,13 @@ public class LatencyConstraints {
 				break;
 			    }
 			}
+
+			//System.out.println("iter: "+iter+" last_dep: "+last_dep);
 			
 			LatencyConstraint constraint = 
 			    new LatencyConstraint(iter-min_latency-1,
-						  sourceSteady,
-						  destSteady,
+						  upstreamSteady,
+						  downstreamSteady,
 						  (SIRFilter)receiver);
 			
 			
@@ -268,9 +279,7 @@ public class LatencyConstraints {
 			
 			last_dep = 1;
 			
-			int ss = sdep2.getNumSrcSteadyPhases();
-			
-			for (int inc = 0; inc < ss; inc++) {
+			for (int inc = 0; inc < upstreamSteady; inc++) {
 			    int current = sdep2.getDstPhase4SrcPhase(iter + inc);
 			    if (current > last_dep) {
 				
@@ -294,11 +303,61 @@ public class LatencyConstraints {
 
 		    // take care of upstream messages
 
-		    if (upstream) {
-		    
+		    if (upstream && any_latency_found && min_latency <= 0) {
+
+			AssertedClass.ASSERT(topStreamIter, false, "Error: an upstream message is being sent with a non-positive latency.");
 			
+		    }
+		    
+		    if (upstream && any_latency_found && min_latency > 0) {
+		    
+			int init_credit;
+			int iter = 1;
+			
+			// add receiver to set of restricted filters
+			
+			restrictedExecutionFilters.add(receiver);
+			
+			init_credit = sdep2.getSrcPhase4DstPhase(1 + min_latency) - 1;
 
+			System.out.println("Init credit: "+init_credit);
 
+			if (init_credit < sdep2.getSrcPhase4DstPhase(iter)) {
+			    // a deadlock
+
+			}
+
+			LatencyConstraint constraint = 
+			    new LatencyConstraint(init_credit,
+						  downstreamSteady,
+						  upstreamSteady,
+						  (SIRFilter)receiver);
+
+			constraints.add(constraint);
+
+			int credit_sent = 0;
+
+			for (int offset = 0; offset < downstreamSteady; offset++) {
+			    
+			    int credit = sdep2.getSrcPhase4DstPhase(offset + 2 + min_latency) - 1;
+			    if (credit > credit_sent) { 
+
+				constraint.setDependencyData(offset, 
+							     credit); 
+
+				System.out.println("At end of iter: "+(offset+1)+" can send credit: "+credit); 
+			    } else {
+
+				constraint.setDependencyData(offset, 
+							     0); 
+
+				System.out.println("At end of iter: "+(offset+1)+" no additional credit."); 
+			    }
+
+			    credit_sent = credit;
+			}
+		    
+			constraint.output();
 		    }
 
 		    // for loop closes

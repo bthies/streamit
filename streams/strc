@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.40 2004-02-09 17:53:10 thies Exp $
+# $Id: strc,v 1.41 2004-02-17 18:29:47 dmaze Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -81,6 +81,16 @@ if (!exists $opts{java})
   }
 $fns = new_to_old($fns) unless ($opts{java} || $opts{tokopi});
 exit(1) if !$fns;
+if ($opts{streamit}) {
+  $fns = streamit_to_streamit($fns);
+  exit(1) if !$fns;
+  # Stop now if no other backends were requested.
+  exit(0) unless $opts{'library'} || $opts{'uni'} || $opts{raw} ||
+    $opts{cluster};
+  # Well, okay, get old syntax again.
+  $fns = new_to_old($fns) unless $opts{tokopi};
+}
+exit(1) if !$fns;
 if ($opts{'library'}) {
     run_in_library($fns);
     exit(0);
@@ -107,8 +117,10 @@ Options:
 * --much-more-help    Include internal-only options
 + --java              Input file is "old" syntax (in Java)
   --output, -o file   Write a binary to given filename
+  --uni               Compile for uniprocessor with C library (default)
   --raw n, -r n       Compile for RAW, with an n-by-n grid
   --standalone, -S    Generate C file without library dependencies
+* --streamit          Output of the compiler is a StreamIt program
 * --cluster n         Compile for a networked cluster with n nodes
 * --viram             Compile for VIRAM, a vector uniprocessor
 * --backend class     Explicitly specify the backend class
@@ -249,8 +261,10 @@ sub get_options
 			    "magicdram!",
 			    "standalone|S",
 			    "stats!",
+			    "streamit",
 			    "sync",
 			    "tokopi!",
+			    "uni",
 			    "unroll|u=i",
 			    "viram",
 			    "wbs!",
@@ -337,6 +351,23 @@ sub new_to_old
     $libflag = "--library" if $opts{library};
     my $result = call("$java streamit.frontend.ToJava --output $target " .
 		      "$libflag " . join(' ', @$fns));
+    return undef if $result != 0;
+    return [$target];
+  }
+
+sub streamit_to_streamit
+  {
+    my ($fns) = @_;
+    return [] if !@$fns;
+    my $kjcopts = get_kjc_opts();
+    my $xmx = "-Xmx" . $opts{memory};
+    my $jfiles = join(' ', @$fns);
+    my $target = change_extension($fns->[0], "java", "str");
+    # Add "_c" to the basename.
+    $target =~ s/^([^.]*)/$1_c/;
+    my $result = call("$java $xmx at.dms.kjc.Main --streamit " .
+		      "--backend at.dms.kjc.sir.SIRToStreamIt " .
+		      "$kjcopts $jfiles > $target");
     return undef if $result != 0;
     return [$target];
   }

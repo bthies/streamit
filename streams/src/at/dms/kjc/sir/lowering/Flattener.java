@@ -262,6 +262,9 @@ public class Flattener {
 	// resolve phases in phased filters
 	FilterPhaser.resolvePhasedFilters(str);    
         
+	// expand array initializers loaded from a file
+	ArrayInitExpander.doit(str);
+
 	/* DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();

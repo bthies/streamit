@@ -868,14 +868,30 @@ public class StGsmDecoder extends StreamIt
 	this.add(new ReflectionCoeff());
 	this.add(new ShortTermSynth());
 	this.add(new PostProcessingFilter());
-	//this.add(new ShortPrinter());
-	this.add(new FileWriter("BinaryDecoderOutput1", Short.TYPE));	
+	this.add(new ShortPrint());
+	//this.add(new FileWriter("BinaryDecoderOutput1", Short.TYPE));	
     }
 }
  
 
 
+class ShortPrint extends Filter
+{
+    ShortPrint ()
+    {
+	super ();
+    }
+    public void init()
+    {  
+	input = new Channel(Short.TYPE, 1);
+    }
 
+    public void work()
+    {
+	short a = input.popShort();
+	System.out.println(a);
+    }
+}
 
 
 

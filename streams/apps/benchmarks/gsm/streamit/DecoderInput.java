@@ -5,17 +5,28 @@
 //{
 
 //member variables!
-public short[] mLarParameters = new short[8];
-public short[] mLtpOffset = new short[4];
-public short[] mLtpGain = new short[4];
-public short[] mRpeGridPosition = new short[4];
-public short[] mRpeMagnitude = new short[4];
-public short[][] mSequence = new short[4][13];
+public short[] mLarParameters;
+public short[] mLtpOffset;
+public short[] mLtpGain;
+public short[] mRpeGridPosition;
+public short[] mRpeMagnitude;
+public short[] mSequence;
+
+public void initInputArrays() {
+    mLarParameters = new short[8];
+    mLtpOffset = new short[4];
+    mLtpGain = new short[4];
+    mRpeGridPosition = new short[4];
+    mRpeMagnitude = new short[4];
+    mSequence = new short[4*13];
+}
 
 public void getParameters(short[] input)
 {
     int input_index = 0;
     int num_bits = 0;
+
+    initInputArrays();
     for(int i = 0; i < 8; i++)
 	{
 	
@@ -72,10 +83,10 @@ public void getParameters(short[] input)
 		}
 	    for(int l = 0; l < 13; l++)
 		{
-		    mSequence[k][l] = 0;
+		    mSequence[k+4*l] = 0;
 		    for (int m = 0; m < 3; m++)
 			{
-			    mSequence[k][l] |= input[input_index] << (2 - m);
+			    mSequence[k+4*l] |= input[input_index] << (2 - m);
 			    input_index++;
 			}
 	    

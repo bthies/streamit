@@ -38,7 +38,7 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	    necessary = true;
 	    return;
 	}
-	//for now only SIR Identities with 0 remaining are necessary
+	//for now only SIR Identities with 0 remaining are unnecessary
 	if (filter instanceof SIRIdentity &&
 	    remaining[0] == 0) {
 	    System.out.println("Found unnecessary identity");
@@ -315,8 +315,6 @@ public class FFSNoPeekBuffer extends FilterFusionState
 							filter.getPopInt() * 
 							StrToRStream.getMult(node, isInit),
 							remaining[0]));
-	    //statements.addStatement(peekMoveLoop(loopCounterBackup,
-	    //isInit));
 	}
 
 	return statements.getStatementArray();

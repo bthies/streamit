@@ -370,6 +370,25 @@ public class FlatIRToRS extends ToC
 	return dims;
     }
     
+    /**
+     * prints an expression statement
+     */
+    public void visitBlockStatement(JBlock self,
+                                    JavaStyleComment[] comments) {
+	if (self instanceof Jrstream_pr)
+	    print("rstream_pr ");
+        print("{");
+        pos += TAB_SIZE;
+        visitCompoundStatement(self.getStatementArray());
+        if (comments != null) {
+            visitComments(comments);
+        }
+        pos -= TAB_SIZE;
+        newLine();
+        print("}");
+    }
+
+
 
     /**
      * prints a method declaration

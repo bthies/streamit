@@ -137,11 +137,24 @@ public class GenerateCCode
 	
 	//add the init schedule 
 	main.addStatement(init);
-	//add the steady schedule
-	main.addStatement(new JWhileStatement(null,
-					      new JBooleanLiteral(null, true),
-					      steady, null));
-
+	
+	//add the steady state
+	if (KjcOptions.absarray || KjcOptions.doloops) {
+	    //nest inside of an rstream_pr if we are generating absarray or doloops
+	    Jrstream_pr rstream_pr = new Jrstream_pr(null, steady.getStatementArray(), null);
+	    JBlock whileBlock = new JBlock(null, new JStatement[0], null);
+	    whileBlock.addStatement(rstream_pr);
+	    main.addStatement(new JWhileStatement(null,
+						  new JBooleanLiteral(null, true),
+						  whileBlock,
+						  null));
+	}
+	else {
+	    //add the steady schedule
+	    main.addStatement(new JWhileStatement(null,
+						  new JBooleanLiteral(null, true),
+						  steady, null));
+	}
 	//add the return statement
 	main.addStatement(new JReturnStatement(null, 
 					       new JIntLiteral(0),

@@ -148,7 +148,7 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
 		throw new LPSolverFailedException("CPLEX returned false from IloCplex.solve()");
 	    }
 	} catch (IloException e) {
-		System.err.println("done (exception)");
+	    System.err.println("done (exception)");
 	    // we end up here if we aborted the solution for a
 	    // timeout.  See if this is the case and fail if it isn't.
 	    result = tc.getBestSolution();
@@ -162,139 +162,139 @@ public class CPLEXSolve extends SimpleLinearProgram implements LinearProgramSolv
 	model.end();
 	return result;
     }
-}
 
-class ModelAndVars {
-    /**
-     * The cplex model.
-     */
-    public final IloCplex model;
-    /**
-     * The variables.
-     */
-    public final IloNumVar[] x;
-
-    public ModelAndVars(IloCplex model, IloNumVar[] x) {
-	this.model = model;
-	this.x = x;
-    }
-}
-
-class TimeoutCallback extends IloCplex.MIPCallback {
-    /**
-     * Optimal  and  Absolute  timeout  for this  (in  millis).
-     */
-    private long optTimeoutMillis;
-    private long gapTimeoutMillis;
-    /**
-     * Gap tolerance. (see ILPPartitioner)
-     */
-    private double gapTolerance;
-    /**
-     * Starting time of this, in milliseconds.  (Before set, should be
-     * -1).
-     */
-    private long startMillis;
-    /**
-     * The variables we're solving for.
-     */
-    private IloNumVar[] x;
-    /**
-     * The best solution we've found so far.  This will be null before
-     * we've found a solution.
-     */
-    private double[] sol;
-    /**
-     * The best value of the objective function that we've found so
-     * far.
-     */
-    private double obj;
-
-    public TimeoutCallback(long optTimeout, double gapTolerance, long gapTimeout, IloNumVar[] x) {
-	this.optTimeoutMillis = 1000*optTimeout;
-	this.gapTolerance = gapTolerance;
-	this.gapTimeoutMillis = 1000*gapTimeout;
-	this.x = x;
-	this.startMillis = -1;
-	this.sol = null;
-	this.obj = -1;
-    }
-
-    protected void main() {
-	// if we haven't found a solution, keep looking
-	if (!hasIncumbent()) {
-	    return;
-	}
-	// otherwise, see if we're satisfied. if so, keep track of the
-	// best solution and abort.
-	if (satisfied()) {
-	    sol = getIncumbentValues(x);
-	    obj = getIncumbentObjValue();
-	    abort();
+    static class ModelAndVars {
+	/**
+	 * The cplex model.
+	 */
+	public final IloCplex model;
+	/**
+	 * The variables.
+	 */
+	public final IloNumVar[] x;
+	
+	public ModelAndVars(IloCplex model, IloNumVar[] x) {
+	    this.model = model;
+	    this.x = x;
 	}
     }
 
-    /**
-     * Given that this has some solution, returns whether or not this
-     * has a "satisfactory" solution.  This will be the case if
-     * either:
-     *
-     * 1) Elapsed time exceeds optTimeout and the gap is better than
-     * gap_tolerance
-     *
-     * 2) Elapsed time exceeds gapTimeout.
-     *
-     */
-    private boolean satisfied() {
-	long elapsed = getElapsedMillis();
-	if (elapsed < optTimeoutMillis) {
-	    return false;
-	} else if (getGap() < gapTolerance) {
-	    System.err.println("Stopping search because GAP of " + Utils.asPercent(getGap()) + 
-			       " is less than tolerance of " + Utils.asPercent(gapTolerance));
-	    return true;
-	} else if (elapsed > gapTimeoutMillis) {
-	    System.err.println("Stopping search because elapsed time exceeded limit of " + 
-			       (gapTimeoutMillis/1000) + " secs.");
-	    return true;
-	} else {
-	    return false;
+    static class TimeoutCallback extends IloCplex.MIPCallback {
+	/**
+	 * Optimal  and  Absolute  timeout  for this  (in  millis).
+	 */
+	private long optTimeoutMillis;
+	private long gapTimeoutMillis;
+	/**
+	 * Gap tolerance. (see ILPPartitioner)
+	 */
+	private double gapTolerance;
+	/**
+	 * Starting time of this, in milliseconds.  (Before set, should be
+	 * -1).
+	 */
+	private long startMillis;
+	/**
+	 * The variables we're solving for.
+	 */
+	private IloNumVar[] x;
+	/**
+	 * The best solution we've found so far.  This will be null before
+	 * we've found a solution.
+	 */
+	private double[] sol;
+	/**
+	 * The best value of the objective function that we've found so
+	 * far.
+	 */
+	private double obj;
+
+	public TimeoutCallback(long optTimeout, double gapTolerance, long gapTimeout, IloNumVar[] x) {
+	    this.optTimeoutMillis = 1000*optTimeout;
+	    this.gapTolerance = gapTolerance;
+	    this.gapTimeoutMillis = 1000*gapTimeout;
+	    this.x = x;
+	    this.startMillis = -1;
+	    this.sol = null;
+	    this.obj = -1;
 	}
-    }
 
-    /**
-     * Returns current gap between best integer solution and solver's
-     * lower bound on the best possible solution.
-     */
-    private double getGap() {
-	double best = getBestObjValue();
-	double cur  = getIncumbentObjValue();
-	return (cur - best) / cur;
-    }
-
-    private long getElapsedMillis() {
-	// check start time
-	if (startMillis==-1) {
-	    startMillis = System.currentTimeMillis();
+	protected void main() {
+	    // if we haven't found a solution, keep looking
+	    if (!hasIncumbent()) {
+		return;
+	    }
+	    // otherwise, see if we're satisfied. if so, keep track of the
+	    // best solution and abort.
+	    if (satisfied()) {
+		sol = getIncumbentValues(x);
+		obj = getIncumbentObjValue();
+		abort();
+	    }
 	}
-	return System.currentTimeMillis() - startMillis;
-    }
 
-    /**
-     * Returns best solution found in solving process, or null if none
-     * was found.
-     */
-    public double[] getBestSolution() {
-	return sol;
-    }
+	/**
+	 * Given that this has some solution, returns whether or not this
+	 * has a "satisfactory" solution.  This will be the case if
+	 * either:
+	 *
+	 * 1) Elapsed time exceeds optTimeout and the gap is better than
+	 * gap_tolerance
+	 *
+	 * 2) Elapsed time exceeds gapTimeout.
+	 *
+	 */
+	private boolean satisfied() {
+	    long elapsed = getElapsedMillis();
+	    if (elapsed < optTimeoutMillis) {
+		return false;
+	    } else if (getGap() < gapTolerance) {
+		System.err.println("Stopping search because GAP of " + Utils.asPercent(getGap()) + 
+				   " is less than tolerance of " + Utils.asPercent(gapTolerance));
+		return true;
+	    } else if (elapsed > gapTimeoutMillis) {
+		System.err.println("Stopping search because elapsed time exceeded limit of " + 
+				   (gapTimeoutMillis/1000) + " secs.");
+		return true;
+	    } else {
+		return false;
+	    }
+	}
 
-    /**
-     * Returns best objective value found in solving process, or -1 if
-     * none was found.
-     */
-    public double getBestObjective() {
-	return obj;
-    }
+	/**
+	 * Returns current gap between best integer solution and solver's
+	 * lower bound on the best possible solution.
+	 */
+	private double getGap() {
+	    double best = getBestObjValue();
+	    double cur  = getIncumbentObjValue();
+	    return (cur - best) / cur;
+	}
 
+	private long getElapsedMillis() {
+	    // check start time
+	    if (startMillis==-1) {
+		startMillis = System.currentTimeMillis();
+	    }
+	    return System.currentTimeMillis() - startMillis;
+	}
+
+	/**
+	 * Returns best solution found in solving process, or null if none
+	 * was found.
+	 */
+	public double[] getBestSolution() {
+	    return sol;
+	}
+
+	/**
+	 * Returns best objective value found in solving process, or -1 if
+	 * none was found.
+	 */
+	public double getBestObjective() {
+	    return obj;
+	}
+
+    }
 }
 

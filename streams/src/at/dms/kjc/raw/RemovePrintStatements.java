@@ -30,18 +30,18 @@ public class RemovePrintStatements implements FlatVisitor {
 		filter.getMethods()[i].accept(new RemovePrintStatementsHelper());
 	}
     }
-}
 
-class RemovePrintStatementsHelper extends SLIRReplacingVisitor {
+    static class RemovePrintStatementsHelper extends SLIRReplacingVisitor {
 
 
-    public Object visitPrintStatement(SIRPrintStatement oldself,
-					   JExpression exp) {
+	public Object visitPrintStatement(SIRPrintStatement oldself,
+					  JExpression exp) {
 
-	SIRPrintStatement self = (SIRPrintStatement)
-	    super.visitPrintStatement(oldself, exp);
+	    SIRPrintStatement self = (SIRPrintStatement)
+		super.visitPrintStatement(oldself, exp);
 	
-	return new JExpressionStatement(null, self.getArg(), null);
-    }
+	    return new JExpressionStatement(null, self.getArg(), null);
+	}
     
+    }
 }

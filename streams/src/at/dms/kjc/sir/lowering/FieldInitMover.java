@@ -18,7 +18,7 @@ import java.util.*;
  * int i;
  * i = 5;
  * </pre>
- * $Id: FieldInitMover.java,v 1.6 2002-10-05 05:27:11 thies Exp $
+ * $Id: FieldInitMover.java,v 1.7 2003-05-12 16:27:06 thies Exp $
  **/
 public class FieldInitMover extends EmptyStreamVisitor {
   
@@ -34,7 +34,7 @@ public class FieldInitMover extends EmptyStreamVisitor {
      * declaration into the body of the init.
      */
     public void preVisitStream(SIRStream self,
-			    SIRIterator iter) {
+			       SIRIterator iter) {
 	//System.out.println("!!visiting stream: " + self);
 	
 	moveFieldInitializations(self);
@@ -69,38 +69,35 @@ public class FieldInitMover extends EmptyStreamVisitor {
 	}
     }
 
-}
-
-
-/**
- * A visitor class that goes throught the field declarations
- * of a filter removing any initialization statements
- * and generating a list of equivalent statements to add
- * to the start of the init function.
- **/
-
-class FieldInitMoverVisitor extends SLIRReplacingVisitor {
-    /** Assignments that need to be added to the initializations statements **/
-    Vector assignmentStatements;
-
-    FieldInitMoverVisitor() {
-	super();
-	this.assignmentStatements = new Vector();
-    }
-
-    public Vector getAssignmentStatements() {
-	return this.assignmentStatements;
-    }
-
     /**
-     * Visit a field declaration. Mutates the initialization expr if
-     * present and creates the appropriate initialization statement instead.
+     * A visitor class that goes throught the field declarations
+     * of a filter removing any initialization statements
+     * and generating a list of equivalent statements to add
+     * to the start of the init function.
      **/
-    public Object visitFieldDeclaration(JFieldDeclaration self,
-					int modifiers,
-					CType type,
-					String ident,
-					JExpression expr)
+
+    static class FieldInitMoverVisitor extends SLIRReplacingVisitor {
+	/** Assignments that need to be added to the initializations statements **/
+	Vector assignmentStatements;
+
+	FieldInitMoverVisitor() {
+	    super();
+	    this.assignmentStatements = new Vector();
+	}
+
+	public Vector getAssignmentStatements() {
+	    return this.assignmentStatements;
+	}
+
+	/**
+	 * Visit a field declaration. Mutates the initialization expr if
+	 * present and creates the appropriate initialization statement instead.
+	 **/
+	public Object visitFieldDeclaration(JFieldDeclaration self,
+					    int modifiers,
+					    CType type,
+					    String ident,
+					    JExpression expr)
 	{
 	    //System.out.println("!!Visiting field: " + self);
 	    // if this field declaration has an initial value,
@@ -135,4 +132,6 @@ class FieldInitMoverVisitor extends SLIRReplacingVisitor {
 	    }
 	    return self;
 	}
+    }
+
 }

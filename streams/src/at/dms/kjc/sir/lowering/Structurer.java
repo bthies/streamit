@@ -451,32 +451,32 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
         // deal with initPath, too
         //flattenMethod(self.getTypeNameInC(), initPath);
     }
-}
-
-/**
- * This class replaces all references to local fields with a reference
- * to a state object that is passed as a parameter.
- */
-class FieldResolver extends SLIREmptyVisitor {
 
     /**
-     * visits a field expression
+     * This class replaces all references to local fields with a reference
+     * to a state object that is passed as a parameter.
      */
-    public void visitFieldExpression(JFieldAccessExpression self,
-				     JExpression left,
-				     String ident) {
-	// for <this> expressions, replace the LHS with a refernce to
-	// the structure
-	if (self.isThisAccess()) {
-	    self.setPrefix(new JNameExpression(/* tokref */ 
-					       null,
-					       /* ident */
-					       LoweringConstants.
-					       STATE_PARAM_NAME));
-	    if (left.getType()==null) {
-		new RuntimeException("found null type of field in structurer for field " + self);
+    static class FieldResolver extends SLIREmptyVisitor {
+
+	/**
+	 * visits a field expression
+	 */
+	public void visitFieldExpression(JFieldAccessExpression self,
+					 JExpression left,
+					 String ident) {
+	    // for <this> expressions, replace the LHS with a refernce to
+	    // the structure
+	    if (self.isThisAccess()) {
+		self.setPrefix(new JNameExpression(/* tokref */ 
+						   null,
+						   /* ident */
+						   LoweringConstants.
+						   STATE_PARAM_NAME));
+		if (left.getType()==null) {
+		    new RuntimeException("found null type of field in structurer for field " + self);
+		}
 	    }
 	}
-    }
     
+    }
 }

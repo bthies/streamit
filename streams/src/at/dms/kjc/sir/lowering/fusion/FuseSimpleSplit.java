@@ -265,9 +265,9 @@ public class FuseSimpleSplit {
 	}
 	// pop the right number of items at the end
 	list.add(Utils.makeForLoop(new JExpressionStatement(null,
-						      new SIRPopExpression(type),
-						      null),
-			     sumOfWeights * rep.splitter));
+							    new SIRPopExpression(type),
+							    null),
+				   sumOfWeights * rep.splitter));
 	return new JBlock(null, list, null);
     }
 
@@ -303,9 +303,9 @@ public class FuseSimpleSplit {
 	}
 	// pop the right number of items at the end
 	list.add(Utils.makeForLoop(new JExpressionStatement(null,
-						      new SIRPopExpression(type),
-						      null),
-			     sumOfWeights * rep.joiner));
+							    new SIRPopExpression(type),
+							    null),
+				   sumOfWeights * rep.joiner));
 	return new JBlock(null, list, null);
     }
 
@@ -340,22 +340,22 @@ public class FuseSimpleSplit {
         Iterator childIter = children.iterator();
 	int i=0; 
         while (childIter.hasNext())
-        {
-            SIRFilter filter = (SIRFilter)childIter.next();
-            // Get the statements of the old work function
-            JBlock statements = filter.getWork().getBody();
-            // Make a for loop that repeats these statements according
-	    // to reps
-	    JStatement loop = Utils.makeForLoop(statements, rep.child[i]);
-	    // if we have a duplicating splitter, we need to make
-	    // pops into peeks
-	    if (isDup) {
-		loop = popToPeek(loop);
+	    {
+		SIRFilter filter = (SIRFilter)childIter.next();
+		// Get the statements of the old work function
+		JBlock statements = filter.getWork().getBody();
+		// Make a for loop that repeats these statements according
+		// to reps
+		JStatement loop = Utils.makeForLoop(statements, rep.child[i]);
+		// if we have a duplicating splitter, we need to make
+		// pops into peeks
+		if (isDup) {
+		    loop = popToPeek(loop);
+		}
+		// add the loop to the new work function
+		newStatements.addStatement(loop);
+		i++;
 	    }
-	    // add the loop to the new work function
-            newStatements.addStatement(loop);
-	    i++;
-        }
 
 	// add a pop loop to statements that pops the right number of
 	// times for the splitjoin
@@ -404,37 +404,37 @@ public class FuseSimpleSplit {
 
 	// adjust the contents of <orig> to be relative to <var>
 	orig.accept(new SLIRReplacingVisitor() {
-                    public Object visitPopExpression(SIRPopExpression oldSelf,
-                                                     CType oldTapeType) {
-                        // Recurse into children.
-                        SIRPopExpression self = (SIRPopExpression)
-                            super.visitPopExpression(oldSelf,
-                                                     oldTapeType);
-			// reference our var
-			JLocalVariableExpression ref = new JLocalVariableExpression(null,
-										    var);
-                        // Return new peek expression.
-                        return new SIRPeekExpression(new JPostfixExpression(null,
-									   OPE_POSTINC,
-									   ref),
-						     oldTapeType);
-                    }
-                    public Object visitPeekExpression(SIRPeekExpression oldSelf,
-						      CType oldTapeType,
-						      JExpression arg) {
-                        // Recurse into children.
-                        SIRPeekExpression self = (SIRPeekExpression)
-                            super.visitPeekExpression(oldSelf,
-                                                     oldTapeType,
-						     arg);
-			// reference our var
-			JLocalVariableExpression ref = new JLocalVariableExpression(null,
-										    var);
-                        // Return new peek expression.
-                        return new SIRPeekExpression(new JAddExpression(null, ref, arg),
-						     oldTapeType);
-                    }
-                });
+		public Object visitPopExpression(SIRPopExpression oldSelf,
+						 CType oldTapeType) {
+		    // Recurse into children.
+		    SIRPopExpression self = (SIRPopExpression)
+			super.visitPopExpression(oldSelf,
+						 oldTapeType);
+		    // reference our var
+		    JLocalVariableExpression ref = new JLocalVariableExpression(null,
+										var);
+		    // Return new peek expression.
+		    return new SIRPeekExpression(new JPostfixExpression(null,
+									OPE_POSTINC,
+									ref),
+						 oldTapeType);
+		}
+		public Object visitPeekExpression(SIRPeekExpression oldSelf,
+						  CType oldTapeType,
+						  JExpression arg) {
+		    // Recurse into children.
+		    SIRPeekExpression self = (SIRPeekExpression)
+			super.visitPeekExpression(oldSelf,
+						  oldTapeType,
+						  arg);
+		    // reference our var
+		    JLocalVariableExpression ref = new JLocalVariableExpression(null,
+										var);
+		    // Return new peek expression.
+		    return new SIRPeekExpression(new JAddExpression(null, ref, arg),
+						 oldTapeType);
+		}
+	    });
 
 	// return the block
 	JStatement[] statements = {varDecl, orig};
@@ -442,7 +442,7 @@ public class FuseSimpleSplit {
     }	
         
     private static JFieldDeclaration[] makeFields(SIRSplitJoin sj,
-                                                 List children)
+						  List children)
     {
         Iterator childIter;
         
@@ -450,10 +450,10 @@ public class FuseSimpleSplit {
         int numFields = 0;
         childIter = children.iterator();
         while (childIter.hasNext())
-        {
-            SIRFilter filter = (SIRFilter)childIter.next();
-            numFields += filter.getFields().length;
-        }
+	    {
+		SIRFilter filter = (SIRFilter)childIter.next();
+		numFields += filter.getFields().length;
+	    }
         
         // Now make the field array...
         JFieldDeclaration[] newFields = new JFieldDeclaration[numFields];
@@ -462,19 +462,19 @@ public class FuseSimpleSplit {
         numFields = 0;
         childIter = children.iterator();
         while (childIter.hasNext())
-        {
-            SIRFilter filter = (SIRFilter)childIter.next();
-            for (int i = 0; i < filter.getFields().length; i++)
-                newFields[numFields + i] = filter.getFields()[i];
-            numFields += filter.getFields().length;
-        }
+	    {
+		SIRFilter filter = (SIRFilter)childIter.next();
+		for (int i = 0; i < filter.getFields().length; i++)
+		    newFields[numFields + i] = filter.getFields()[i];
+		numFields += filter.getFields().length;
+	    }
         
         // All done.
         return newFields;
     }
 
     private static JMethodDeclaration[] makeMethods(SIRSplitJoin sj,
-                                                   List children)
+						    List children)
     {
         // Just copy all of the methods into an array.
         Iterator childIter;
@@ -484,10 +484,10 @@ public class FuseSimpleSplit {
         int numMethods = 0;
         childIter = children.iterator();
         while (childIter.hasNext())
-        {
-            SIRFilter filter = (SIRFilter)childIter.next();
-            numMethods += filter.getMethods().length - 1;
-        }
+	    {
+		SIRFilter filter = (SIRFilter)childIter.next();
+		numMethods += filter.getMethods().length - 1;
+	    }
         
         // Now make the method array...
         JMethodDeclaration[] newMethods = new JMethodDeclaration[numMethods];
@@ -496,123 +496,120 @@ public class FuseSimpleSplit {
         numMethods = 0;
         childIter = children.iterator();
         while (childIter.hasNext())
-        {
-            SIRFilter filter = (SIRFilter)childIter.next();
-            for (int i = 0; i < filter.getMethods().length; i++)
-            {
-                JMethodDeclaration method = filter.getMethods()[i];
-                if (method != filter.getWork()) {
-                    newMethods[numMethods++] = method;
-		}
-            }
-        }
+	    {
+		SIRFilter filter = (SIRFilter)childIter.next();
+		for (int i = 0; i < filter.getMethods().length; i++)
+		    {
+			JMethodDeclaration method = filter.getMethods()[i];
+			if (method != filter.getWork()) {
+			    newMethods[numMethods++] = method;
+			}
+		    }
+	    }
         
         // All done.
         return newMethods;
     }
-}
-
-/**
- * Represents how many times the components of a splitjoin should
- * execute in the steady state.
- */
-class SRepInfo {
-
-    public int[] child;
-    public int joiner;
-    public int splitter;
-
-    private SRepInfo(int numChildren) {
-	this.child = new int[numChildren];
-    }
 
     /**
-     * Returns repInfo giving number of repetitions of streams in <sj>
-     * Requires that all children of <sj> be filters.
+     * Represents how many times the components of a splitjoin should
+     * execute in the steady state.
      */
-    public static SRepInfo calcReps(SIRSplitJoin sj) {
-	for (int i=0; i<sj.size(); i++) {
-	    Utils.assert(sj.get(i) instanceof SIRFilter);
-	}
-	SRepInfo result = new SRepInfo(sj.size());
-	result.compute(sj);
-	return result;
-    }
+    static class SRepInfo {
 
-    /**
-     * Makes the weights valid for the given <sj>
-     */
-    private void compute(SIRSplitJoin sj) {
+	public int[] child;
+	public int joiner;
+	public int splitter;
 
-	// fill in the execution count info for this
-	HashMap[] execCount = SIRScheduler.getExecutionCounts(sj);
-	for (int i=0; i<sj.size(); i++) {
-	    // get the steady-state count
-	    int[] count = (int[])execCount[1].get(sj.get(i));
-	    if (count==null) {
-		this.child[i] = 0;
-	    } else {
-		this.child[i] = count[0];
-	    }
+	private SRepInfo(int numChildren) {
+	    this.child = new int[numChildren];
 	}
 
-	// infer how many times the splitter, joiner runs
-	int[] splitWeights = sj.getSplitter().getWeights();
-	int[] joinWeights = sj.getJoiner().getWeights();
-
-	// infer how many times the splitter, joiner runs
-	
-	// beware of sources in splits
-	int index = -1;
-	boolean nullSplit = false, nullJoin = false;
-	for (int i=0; i<child.length;i++) {
-	    if (child[i]!=0 && splitWeights[i]!=0 && joinWeights[i]!=0) {
-		index = i;
-		break;
+	/**
+	 * Returns repInfo giving number of repetitions of streams in <sj>
+	 * Requires that all children of <sj> be filters.
+	 */
+	public static SRepInfo calcReps(SIRSplitJoin sj) {
+	    for (int i=0; i<sj.size(); i++) {
+		Utils.assert(sj.get(i) instanceof SIRFilter);
 	    }
-	    if (i==child.length-1) {
-		// trying to fuse null split or join -- assume weight
-		// on opposite is okay
-		index = i;
-		if (splitWeights[i]==0) {
-		    nullSplit = true;
+	    SRepInfo result = new SRepInfo(sj.size());
+	    result.compute(sj);
+	    return result;
+	}
+
+	/**
+	 * Makes the weights valid for the given <sj>
+	 */
+	private void compute(SIRSplitJoin sj) {
+
+	    // fill in the execution count info for this
+	    HashMap[] execCount = SIRScheduler.getExecutionCounts(sj);
+	    for (int i=0; i<sj.size(); i++) {
+		// get the steady-state count
+		int[] count = (int[])execCount[1].get(sj.get(i));
+		if (count==null) {
+		    this.child[i] = 0;
 		} else {
-		    nullJoin = true;
+		    this.child[i] = count[0];
 		}
-		//		Utils.fail("Think we're trying to fuse a null split or something--error");
+	    }
+
+	    // infer how many times the splitter, joiner runs
+	    int[] splitWeights = sj.getSplitter().getWeights();
+	    int[] joinWeights = sj.getJoiner().getWeights();
+
+	    // infer how many times the splitter, joiner runs
+	
+	    // beware of sources in splits
+	    int index = -1;
+	    boolean nullSplit = false, nullJoin = false;
+	    for (int i=0; i<child.length;i++) {
+		if (child[i]!=0 && splitWeights[i]!=0 && joinWeights[i]!=0) {
+		    index = i;
+		    break;
+		}
+		if (i==child.length-1) {
+		    // trying to fuse null split or join -- assume weight
+		    // on opposite is okay
+		    index = i;
+		    if (splitWeights[i]==0) {
+			nullSplit = true;
+		    } else {
+			nullJoin = true;
+		    }
+		    //		Utils.fail("Think we're trying to fuse a null split or something--error");
+		}
+	    }
+	    if (nullSplit) {
+		this.splitter = 0;
+	    } else {
+		this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
+		// make sure we came out even
+		Utils.assert(this.splitter * splitWeights[index] == 
+			     this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
+	    }
+	    // now for joiner
+	    if (nullJoin) {
+		this.joiner = 0;
+	    } else {
+		this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
+		// make sure we come out even
+		Utils.assert(this.joiner * joinWeights[index] == 
+			     this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
 	    }
 	}
-	if (nullSplit) {
-	    this.splitter = 0;
-	} else {
-	    this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
-	    // make sure we came out even
-	    Utils.assert(this.splitter * splitWeights[index] == 
-			 this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
-	}
-	// now for joiner
-	if (nullJoin) {
-	    this.joiner = 0;
-	} else {
-	    this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
-	    // make sure we come out even
-	    Utils.assert(this.joiner * joinWeights[index] == 
-			 this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
+    }
+
+    static class SRate {
+	public int push;
+	public int pop;
+	public int peek;
+
+	public SRate(int push, int pop, int peek) {
+	    this.push = push;
+	    this.pop = pop;
+	    this.peek = peek;
 	}
     }
 }
-
-class SRate {
-    public int push;
-    public int pop;
-    public int peek;
-
-    public SRate(int push, int pop, int peek) {
-	this.push = push;
-	this.pop = pop;
-	this.peek = peek;
-    }
-}
-
-
-

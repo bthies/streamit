@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: ClassPath.java,v 1.1 2001-08-30 16:32:26 thies Exp $
+ * $Id: ClassPath.java,v 1.2 2003-05-12 16:26:44 thies Exp $
  */
 
 package at.dms.classfile;
@@ -36,346 +36,346 @@ import at.dms.util.Utils;
  */
 public class ClassPath {
 
-  // ----------------------------------------------------------------------
-  // CONSTRUCTORS
-  // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------------
+    // CONSTRUCTORS
+    // ----------------------------------------------------------------------
 
-  /**
-   * Constructs a class path object.
-   *
-   * @param	path		the directory names defining the class path
-   */
-  public ClassPath(String path) {
-    if (path == null) {
-      // no path specified, use default
-      path = System.getProperty("java.class.path");
-    }
-    if (path == null) {
-      // last resort, use current directory
-      path = ".";
-    }
-
-    this.dirs = loadClassPath(path);
-  }
-
-  /**
-   * Loads the conceptual directories defining the class path.
-   *
-   * @param	classPath	the directory names defining the class path
-   */
-  private static ClassDirectory[] loadClassPath(String classPath) {
-    Vector		container = new Vector();
-
-    // load specified class directories
-    StringTokenizer	entries;
-
-    entries = new StringTokenizer(classPath, File.pathSeparator);
-    while (entries.hasMoreTokens()) {
-      ClassDirectory	dir;
-
-      dir = loadClassDirectory(entries.nextToken());
-      if (dir != null) {
-	container.addElement(dir);
-      }
-    }
-
-    // add system directories
-    if (System.getProperty("sun.boot.class.path") != null) {
-      // ??? graf 010508 : can there be more than one entry
-      entries = new StringTokenizer(System.getProperty("sun.boot.class.path"),
-				    File.pathSeparator);
-      while (entries.hasMoreTokens()) {
-	ClassDirectory	dir;
-
-	dir = loadClassDirectory(entries.nextToken());
-	if (dir != null) {
-	  container.addElement(dir);
+    /**
+     * Constructs a class path object.
+     *
+     * @param	path		the directory names defining the class path
+     */
+    public ClassPath(String path) {
+	if (path == null) {
+	    // no path specified, use default
+	    path = System.getProperty("java.class.path");
 	}
-      }
-    } else {
-      String	version = System.getProperty("java.version");
-
-      if (version.startsWith("1.2") || version.startsWith("1.3")) {
-	ClassDirectory	dir;
-
-	dir = loadClassDirectory(System.getProperty("java.home")
-				 + File.separatorChar + "lib"
-				 + File.separatorChar + "rt.jar");
-	if (dir != null) {
-	  container.addElement(dir);
+	if (path == null) {
+	    // last resort, use current directory
+	    path = ".";
 	}
-      }
+
+	this.dirs = loadClassPath(path);
     }
 
-    return (ClassDirectory[])Utils.toArray(container, ClassDirectory.class);
-  }
+    /**
+     * Loads the conceptual directories defining the class path.
+     *
+     * @param	classPath	the directory names defining the class path
+     */
+    private static ClassDirectory[] loadClassPath(String classPath) {
+	Vector		container = new Vector();
 
-  /**
-   * Loads a conceptual class directory.
-   *
-   * @param	name		the name of the directory
-   */
-  private static ClassDirectory loadClassDirectory(String name) {
-    try {
-      File	file = new File(name);
+	// load specified class directories
+	StringTokenizer	entries;
 
-      if (file.isDirectory()) {
-	return new DirClassDirectory(file);
-      } else if (file.isFile()) {
-	// check if file is zipped (.zip or .jar)
-	if (file.getName().endsWith(".zip") || file.getName().endsWith(".jar")) {
-	  try {
-	    return new ZipClassDirectory(new ZipFile(file));
-	  } catch (ZipException e) {
-	    // it was not a zip file, ignore it
-	    return null;
-	  } catch (IOException e) {
-	    // ignore it
-	    return null;
-	  }
+	entries = new StringTokenizer(classPath, File.pathSeparator);
+	while (entries.hasMoreTokens()) {
+	    ClassDirectory	dir;
+
+	    dir = loadClassDirectory(entries.nextToken());
+	    if (dir != null) {
+		container.addElement(dir);
+	    }
+	}
+
+	// add system directories
+	if (System.getProperty("sun.boot.class.path") != null) {
+	    // ??? graf 010508 : can there be more than one entry
+	    entries = new StringTokenizer(System.getProperty("sun.boot.class.path"),
+					  File.pathSeparator);
+	    while (entries.hasMoreTokens()) {
+		ClassDirectory	dir;
+
+		dir = loadClassDirectory(entries.nextToken());
+		if (dir != null) {
+		    container.addElement(dir);
+		}
+	    }
 	} else {
-	  // wrong suffix, ignore it
-	  return null;
+	    String	version = System.getProperty("java.version");
+
+	    if (version.startsWith("1.2") || version.startsWith("1.3")) {
+		ClassDirectory	dir;
+
+		dir = loadClassDirectory(System.getProperty("java.home")
+					 + File.separatorChar + "lib"
+					 + File.separatorChar + "rt.jar");
+		if (dir != null) {
+		    container.addElement(dir);
+		}
+	    }
 	}
-      } else {
-	// wrong file type, ignore it
+
+	return (ClassDirectory[])Utils.toArray(container, ClassDirectory.class);
+    }
+
+    /**
+     * Loads a conceptual class directory.
+     *
+     * @param	name		the name of the directory
+     */
+    private static ClassDirectory loadClassDirectory(String name) {
+	try {
+	    File	file = new File(name);
+
+	    if (file.isDirectory()) {
+		return new DirClassDirectory(file);
+	    } else if (file.isFile()) {
+		// check if file is zipped (.zip or .jar)
+		if (file.getName().endsWith(".zip") || file.getName().endsWith(".jar")) {
+		    try {
+			return new ZipClassDirectory(new ZipFile(file));
+		    } catch (ZipException e) {
+			// it was not a zip file, ignore it
+			return null;
+		    } catch (IOException e) {
+			// ignore it
+			return null;
+		    }
+		} else {
+		    // wrong suffix, ignore it
+		    return null;
+		}
+	    } else {
+		// wrong file type, ignore it
+		return null;
+	    }
+	} catch (SecurityException e) {
+	    // unreadable file, ignore it
+	    return null;
+	}
+    }
+
+
+    // ----------------------------------------------------------------------
+    // CLASS LOADING
+    // ----------------------------------------------------------------------
+
+    /**
+     * Loads the class with specified name.
+     *
+     * @param	name		the qualified name of the class
+     * @param	interfaceOnly	do not load method code ?
+     * @return	the class info for the specified class,
+     *		or null if the class cannot be found
+     */
+    public ClassInfo loadClass(String name, boolean interfaceOnly) {
+	for (int i = 0; i < dirs.length; i++) {
+	    ClassInfo		info;
+
+	    info = dirs[i].loadClass(name, interfaceOnly);
+	    if (info != null) {
+		return info;
+	    }
+	}
+
 	return null;
-      }
-    } catch (SecurityException e) {
-      // unreadable file, ignore it
-      return null;
-    }
-  }
-
-
-  // ----------------------------------------------------------------------
-  // CLASS LOADING
-  // ----------------------------------------------------------------------
-
-  /**
-   * Loads the class with specified name.
-   *
-   * @param	name		the qualified name of the class
-   * @param	interfaceOnly	do not load method code ?
-   * @return	the class info for the specified class,
-   *		or null if the class cannot be found
-   */
-  public ClassInfo loadClass(String name, boolean interfaceOnly) {
-    for (int i = 0; i < dirs.length; i++) {
-      ClassInfo		info;
-
-      info = dirs[i].loadClass(name, interfaceOnly);
-      if (info != null) {
-	return info;
-      }
     }
 
-    return null;
-  }
+    // ----------------------------------------------------------------------
+    // SINGLETON
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // SINGLETON
-  // ----------------------------------------------------------------------
+    /**
+     * initialization from a string that represents the class path
+     * @param path		the classpath
+     */
+    public static void init(String path) {
+	self = new ClassPath(path);
+    }
 
-  /**
-   * initialization from a string that represents the class path
-   * @param path		the classpath
-   */
-  public static void init(String path) {
-    self = new ClassPath(path);
-  }
+    /**
+     * @return a class file that contain the class named name
+     * @param name the name of the class file
+     */
+    public static ClassInfo getClassInfo(String name, boolean interfaceOnly) {
+	return self.loadClass(name, interfaceOnly);
+    }
 
-  /**
-   * @return a class file that contain the class named name
-   * @param name the name of the class file
-   */
-  public static ClassInfo getClassInfo(String name, boolean interfaceOnly) {
-    return self.loadClass(name, interfaceOnly);
-  }
+    // ----------------------------------------------------------------------
+    // DATA MEMBERS
+    // ----------------------------------------------------------------------
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+    private static ClassPath	self = null;
 
-  private static ClassPath	self = null;
+    private ClassDirectory[]	dirs;	// list of directories in class path
 
-  private ClassDirectory[]	dirs;	// list of directories in class path
-}
+    /**
+     * This class represents a conceptual directory which may hold
+     * Java class files. Since Java can use archived class files found in
+     * a compressed ("zip") file, this entity may or may not correspond to
+     * an actual directory on disk.
+     */
+    abstract static class ClassDirectory {
 
-/**
- * This class represents a conceptual directory which may hold
- * Java class files. Since Java can use archived class files found in
- * a compressed ("zip") file, this entity may or may not correspond to
- * an actual directory on disk.
- */
-abstract class ClassDirectory {
+	/**
+	 * Loads the class with specified name from this directory.
+	 *
+	 * @param	name		the qualified name of the class
+	 * @param	interfaceOnly	do not load method code ?
+	 * @return	the class info for the specified class,
+	 *		or null if the class cannot be found in this directory
+	 */
+	public abstract ClassInfo loadClass(String name, boolean interfaceOnly);
+    }
 
-  /**
-   * Loads the class with specified name from this directory.
-   *
-   * @param	name		the qualified name of the class
-   * @param	interfaceOnly	do not load method code ?
-   * @return	the class info for the specified class,
-   *		or null if the class cannot be found in this directory
-   */
-  public abstract ClassInfo loadClass(String name, boolean interfaceOnly);
-}
-
-class DirClassDirectory extends ClassDirectory {
-  /**
-   * Constructs a class directory representing a real directory
-   */
-  public DirClassDirectory(File dir) {
-    this.dir = dir;
-  }
-
-  /**
-   * Loads the class with specified name from this directory.
-   *
-   * @param	name		the qualified name of the class
-   * @param	interfaceOnly	do not load method code ?
-   * @return	the class info for the specified class,
-   *		or null if the class cannot be found in this directory
-   */
-  public ClassInfo loadClass(String name, boolean interfaceOnly) {
-    File		file;
-
-    file = new File(dir.getPath(),
-		    name.replace('/', File.separatorChar) + ".class");
-    if (!file.canRead()) {
-      return null;
-    } else {
-      try {
-	Data		data = new Data(new FileInputStream(file));
-
-	try {
-	  return new ClassInfo(data.getDataInput(), interfaceOnly);
-	} catch (ClassFileFormatException e) {
-	  e.printStackTrace();
-	  return null;
-	} catch (IOException e) {
-	  e.printStackTrace();
-	  return null;
-	} finally {
-	  data.release();
+    static class DirClassDirectory extends ClassDirectory {
+	/**
+	 * Constructs a class directory representing a real directory
+	 */
+	public DirClassDirectory(File dir) {
+	    this.dir = dir;
 	}
-      } catch (FileNotFoundException e) {
-	return null; // really bad : file exists but is not accessible
-      }
-    }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+	/**
+	 * Loads the class with specified name from this directory.
+	 *
+	 * @param	name		the qualified name of the class
+	 * @param	interfaceOnly	do not load method code ?
+	 * @return	the class info for the specified class,
+	 *		or null if the class cannot be found in this directory
+	 */
+	public ClassInfo loadClass(String name, boolean interfaceOnly) {
+	    File		file;
 
-  private File		dir;		// non null iff is a real directory
-}
+	    file = new File(dir.getPath(),
+			    name.replace('/', File.separatorChar) + ".class");
+	    if (!file.canRead()) {
+		return null;
+	    } else {
+		try {
+		    Data		data = new Data(new FileInputStream(file));
 
-class ZipClassDirectory extends ClassDirectory {
-  /**
-   * Constructs a class directory representing a zipped file
-   */
-  public ZipClassDirectory(ZipFile zip) {
-    this.zip = zip;
-  }
-
-  /**
-   * Loads the class with specified name from this directory.
-   *
-   * @param	name		the qualified name of the class
-   * @param	interfaceOnly	do not load method code ?
-   * @return	the class info for the specified class,
-   *		or null if the class cannot be found in this directory
-   */
-  public ClassInfo loadClass(String name, boolean interfaceOnly) {
-    ZipEntry		entry;
-
-    entry = zip.getEntry(name + ".class");
-    if (entry == null) {
-      return null;
-    } else {
-      try {
-	Data		data = new Data(zip.getInputStream(entry));
-
-	try {
-	  return new ClassInfo(data.getDataInput(), interfaceOnly);
-	} catch (ClassFileFormatException e) {
-	  e.printStackTrace();
-	  return null;
-	} catch (IOException e) {
-	  e.printStackTrace();
-	  return null;
-	} finally {
-	  data.release();
+		    try {
+			return new ClassInfo(data.getDataInput(), interfaceOnly);
+		    } catch (ClassFileFormatException e) {
+			e.printStackTrace();
+			return null;
+		    } catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		    } finally {
+			data.release();
+		    }
+		} catch (FileNotFoundException e) {
+		    return null; // really bad : file exists but is not accessible
+		}
+	    }
 	}
-      } catch (IOException e) {
-	return null; // really bad : file exists but is not accessible
-      }
-    }
-  }
 
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
+	// ----------------------------------------------------------------------
+	// DATA MEMBERS
+	// ----------------------------------------------------------------------
 
-  private ZipFile	zip;		// non null iff is a zip or jar file
-}
-
-// optimization
-class Data {
-  public Data(InputStream is) {
-    this.is = is;
-  }
-
-  public DataInput getDataInput() throws IOException {
-    ba = getByteArray();
-    int		n = 0;
-    int		available;
-    while (true) {
-      int count = is.read(ba, n, ba.length - n);
-      if (count < 0) {
-	break;
-      }
-      available = is.available();
-      n += count;
-      if (n + available > ba.length) {
-	byte[] temp = new byte[ba.length * 2];
-	System.arraycopy(ba, 0, temp, 0, ba.length);
-	ba = temp;
-      } else if (available == 0) {
-	break;
-      }
+	private File		dir;		// non null iff is a real directory
     }
 
-    is.close();
-    is = null;
+    static class ZipClassDirectory extends ClassDirectory {
+	/**
+	 * Constructs a class directory representing a zipped file
+	 */
+	public ZipClassDirectory(ZipFile zip) {
+	    this.zip = zip;
+	}
 
-    return new DataInputStream(new ByteArrayInputStream(ba, 0, n));
-  }
+	/**
+	 * Loads the class with specified name from this directory.
+	 *
+	 * @param	name		the qualified name of the class
+	 * @param	interfaceOnly	do not load method code ?
+	 * @return	the class info for the specified class,
+	 *		or null if the class cannot be found in this directory
+	 */
+	public ClassInfo loadClass(String name, boolean interfaceOnly) {
+	    ZipEntry		entry;
 
-  public void release() {
-    release(ba);
-  }
+	    entry = zip.getEntry(name + ".class");
+	    if (entry == null) {
+		return null;
+	    } else {
+		try {
+		    Data		data = new Data(zip.getInputStream(entry));
 
-  private static byte[] getByteArray() {
-    if (!Constants.ENV_USE_CACHE || stack.empty()) {
-      return new byte[10000];
+		    try {
+			return new ClassInfo(data.getDataInput(), interfaceOnly);
+		    } catch (ClassFileFormatException e) {
+			e.printStackTrace();
+			return null;
+		    } catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		    } finally {
+			data.release();
+		    }
+		} catch (IOException e) {
+		    return null; // really bad : file exists but is not accessible
+		}
+	    }
+	}
+
+	// ----------------------------------------------------------------------
+	// DATA MEMBERS
+	// ----------------------------------------------------------------------
+
+	private ZipFile	zip;		// non null iff is a zip or jar file
     }
-    return (byte[])stack.pop();
-  }
 
-  private static void release(byte[] arr) {
-    if (Constants.ENV_USE_CACHE) {
-      stack.push(arr);
+    // optimization
+    static class Data {
+	public Data(InputStream is) {
+	    this.is = is;
+	}
+
+	public DataInput getDataInput() throws IOException {
+	    ba = getByteArray();
+	    int		n = 0;
+	    int		available;
+	    while (true) {
+		int count = is.read(ba, n, ba.length - n);
+		if (count < 0) {
+		    break;
+		}
+		available = is.available();
+		n += count;
+		if (n + available > ba.length) {
+		    byte[] temp = new byte[ba.length * 2];
+		    System.arraycopy(ba, 0, temp, 0, ba.length);
+		    ba = temp;
+		} else if (available == 0) {
+		    break;
+		}
+	    }
+
+	    is.close();
+	    is = null;
+
+	    return new DataInputStream(new ByteArrayInputStream(ba, 0, n));
+	}
+
+	public void release() {
+	    release(ba);
+	}
+
+	private static byte[] getByteArray() {
+	    if (!Constants.ENV_USE_CACHE || stack.empty()) {
+		return new byte[10000];
+	    }
+	    return (byte[])stack.pop();
+	}
+
+	private static void release(byte[] arr) {
+	    if (Constants.ENV_USE_CACHE) {
+		stack.push(arr);
+	    }
+	}
+
+	// ----------------------------------------------------------------------
+	// DATA MEMBERS
+	// ----------------------------------------------------------------------
+
+	private InputStream	is;
+	private byte[]	ba;
+	private static Stack	stack = new Stack();
     }
-  }
-
-  // ----------------------------------------------------------------------
-  // DATA MEMBERS
-  // ----------------------------------------------------------------------
-
-  private InputStream	is;
-  private byte[]	ba;
-  private static Stack	stack = new Stack();
 }

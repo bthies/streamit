@@ -173,30 +173,29 @@ public abstract class SIRIterator implements Iterator {
 	return o instanceof SIRIterator && ((SIRIterator)o).getStream()==this.getStream();
     } 
 
-}
-
-/**
- * A root object in the iterator tree, which is just a stub that can
- * be invalidated once an iterator tree is obsolete.
- */
-class Root {
-    private boolean valid;
-
-    public Root() {
-	this.valid = true;
-    }
-
     /**
-     * Invalidates this root, since it's been replaced by something.
+     * A root object in the iterator tree, which is just a stub that can
+     * be invalidated once an iterator tree is obsolete.
      */
-    public void invalidate() {
-	this.valid = false;
-    }
+    static class Root {
+	private boolean valid;
 
-    /**
-     * Return whether or not this is valid.
-     */
-    public boolean isValid() {
-	return this.valid;
+	public Root() {
+	    this.valid = true;
+	}
+
+	/**
+	 * Invalidates this root, since it's been replaced by something.
+	 */
+	public void invalidate() {
+	    this.valid = false;
+	}
+
+	/**
+	 * Return whether or not this is valid.
+	 */
+	public boolean isValid() {
+	    return this.valid;
+	}
     }
 }

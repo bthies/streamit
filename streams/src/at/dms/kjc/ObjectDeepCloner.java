@@ -194,52 +194,51 @@ public class ObjectDeepCloner
 	    }
 	return null;
     }
-}
 
-class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
+    static class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
 
-    /**
-     * A list of things that *should* be cloned.  Currently the
-     * following types should not be cloned unless they are an
-     * element of this list:
-     *   - SIRContainer
-     *   - JLocalVariable
-     */
-    private LinkedList toBeCloned;
+	/**
+	 * A list of things that *should* be cloned.  Currently the
+	 * following types should not be cloned unless they are an
+	 * element of this list:
+	 *   - SIRContainer
+	 *   - JLocalVariable
+	 */
+	private LinkedList toBeCloned;
 
-    public CloningVisitor() {
-	this.toBeCloned = new LinkedList();
-    }
-    
-    /**
-     * Used by deepCopy(int offset,JBlock oldObj) above
-     */
-    public void visitBlockStatement(int offset,
-				    JBlock self,
-				    JavaStyleComment[] comments) {
-	for(;offset<self.size();offset++) {
-	    self.getStatement(offset).accept(this);
+	public CloningVisitor() {
+	    this.toBeCloned = new LinkedList();
 	}
-    }
+    
+	/**
+	 * Used by deepCopy(int offset,JBlock oldObj) above
+	 */
+	public void visitBlockStatement(int offset,
+					JBlock self,
+					JavaStyleComment[] comments) {
+	    for(;offset<self.size();offset++) {
+		self.getStatement(offset).accept(this);
+	    }
+	}
 
-    /**
-     * Return the list of what should be cloned.
-     */
-    public LinkedList getToBeCloned() {
-	return toBeCloned;
-    }
+	/**
+	 * Return the list of what should be cloned.
+	 */
+	public LinkedList getToBeCloned() {
+	    return toBeCloned;
+	}
 
-    /**
-     * Right now the super doesn't visit the variable in a jlocal var,
-     * but make sure we don't, either.
-     */
-    public void visitLocalVariableExpression(JLocalVariableExpression self,
-					     String ident) {
-    }
+	/**
+	 * Right now the super doesn't visit the variable in a jlocal var,
+	 * but make sure we don't, either.
+	 */
+	public void visitLocalVariableExpression(JLocalVariableExpression self,
+						 String ident) {
+	}
 
-    /**
-     * Visits a variable decl.
-     */
+	/**
+	 * Visits a variable decl.
+	 */
     public void visitVariableDefinition(JVariableDefinition self,
 					int modifiers,
 					CType type,
@@ -368,5 +367,6 @@ class CloningVisitor extends SLIREmptyVisitor implements StreamVisitor {
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
     }
+}
 }
 

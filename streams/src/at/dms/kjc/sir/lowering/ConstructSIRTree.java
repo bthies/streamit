@@ -46,53 +46,52 @@ public class ConstructSIRTree {
 		}
 	    });
     }
-}
 
-class InitializationHoister extends SLIRReplacingVisitor {
-    /**
-     * The immediate parent.
-     */
-    private SIRContainer parent;
+    static class InitializationHoister extends SLIRReplacingVisitor {
+	/**
+	 * The immediate parent.
+	 */
+	private SIRContainer parent;
 
-    /**
-     * Make a hoister with parent <parent>.
-     */
-    public InitializationHoister(SIRContainer parent) {
-	this.parent = parent;
-    }
-
-    public Object visitInitStatement(SIRInitStatement oldSelf,
-				     SIRStream oldTarget) {
-	// visit children
-	SIRInitStatement self = 
-	    (SIRInitStatement)
-	    super.visitInitStatement(oldSelf, oldTarget);
-
-	// Since all of the args seem to be constant for now (and I
-	// think the RAW backend assumes it), this is a nice place to
-	// check it.  Check that we have either literals or array
-	// references.
-	for (int i=0; i<self.getArgs().size(); i++) {
-	    JExpression arg = (JExpression)self.getArgs().get(i);
-	    Utils.assert(isConstantArg(arg),
-			 "Expected constant arguments to init, but found non-constant " +
-			 self.getArgs().get(i) + " in parent " + parent + "\n");
+	/**
+	 * Make a hoister with parent <parent>.
+	 */
+	public InitializationHoister(SIRContainer parent) {
+	    this.parent = parent;
 	}
+
+	public Object visitInitStatement(SIRInitStatement oldSelf,
+					 SIRStream oldTarget) {
+	    // visit children
+	    SIRInitStatement self = 
+		(SIRInitStatement)
+		super.visitInitStatement(oldSelf, oldTarget);
+
+	    // Since all of the args seem to be constant for now (and I
+	    // think the RAW backend assumes it), this is a nice place to
+	    // check it.  Check that we have either literals or array
+	    // references.
+	    for (int i=0; i<self.getArgs().size(); i++) {
+		JExpression arg = (JExpression)self.getArgs().get(i);
+		Utils.assert(isConstantArg(arg),
+			     "Expected constant arguments to init, but found non-constant " +
+			     self.getArgs().get(i) + " in parent " + parent + "\n");
+	    }
 	
-	// to simplify compilation, remove constant arguments.
-	if (self.getTarget().needsInit()) {
-	    removeConstantArgs(self);
-	}
+	    // to simplify compilation, remove constant arguments.
+	    if (self.getTarget().needsInit()) {
+		removeConstantArgs(self);
+	    }
 				
-	// add <child, params> to parent
-	parent.add(self.getTarget(), self.getArgs());
+	    // add <child, params> to parent
+	    parent.add(self.getTarget(), self.getArgs());
 
-	// return an empty statement to eliminate the init
-	// statement
-	return new JEmptyStatement(null, null);
-    }
+	    // return an empty statement to eliminate the init
+	    // statement
+	    return new JEmptyStatement(null, null);
+	}
 
-    /**
+	/**
      * Removes constant args from <self>.
      */
     private void removeConstantArgs(SIRInitStatement self) {
@@ -157,3 +156,4 @@ class InitializationHoister extends SLIRReplacingVisitor {
     }
 }
 
+}

@@ -201,9 +201,8 @@ public class WorkEstimate {
 	    }
 	}
     }
-}
 
-class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
+static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     /**
      * An estimate of the amount of work found by this filter.
      */
@@ -683,6 +682,4 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     }
 
 }
-
-
-
+}

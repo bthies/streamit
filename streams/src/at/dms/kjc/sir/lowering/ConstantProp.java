@@ -221,52 +221,52 @@ public class ConstantProp {
 	// recurse into sub-stream
 	propagateAndUnroll(str, constants);
     }
-}
 
-/**
- * This class is for rebuilding the list of children in a parent
- * stream following unrolling that could have modified the stream
- * structure.
- */
-class GetChildren extends SLIREmptyVisitor {
     /**
-     * List of children of parent stream.
+     * This class is for rebuilding the list of children in a parent
+     * stream following unrolling that could have modified the stream
+     * structure.
      */
-    private LinkedList children;
-    /**
-     * The parent stream.
-     */
-    private SIRStream parent;
+    static class GetChildren extends SLIREmptyVisitor {
+	/**
+	 * List of children of parent stream.
+	 */
+	private LinkedList children;
+	/**
+	 * The parent stream.
+	 */
+	private SIRStream parent;
         
-    /**
-     * Makes a new one of these.
-     */
-    private GetChildren(SIRStream str) {
-	this.children = new LinkedList();
-	this.parent = str;
-    }
-
-    /**
-     * Re-inspects the init function of <str> to see who its children
-     * are.
-     */
-    public static LinkedList getChildren(SIRStream str) {
-	GetChildren gc = new GetChildren(str);
-	if (str.getInit()!=null) {
-	    str.getInit().accept(gc);
+	/**
+	 * Makes a new one of these.
+	 */
+	private GetChildren(SIRStream str) {
+	    this.children = new LinkedList();
+	    this.parent = str;
 	}
-	return gc.children;
+
+	/**
+	 * Re-inspects the init function of <str> to see who its children
+	 * are.
+	 */
+	public static LinkedList getChildren(SIRStream str) {
+	    GetChildren gc = new GetChildren(str);
+	    if (str.getInit()!=null) {
+		str.getInit().accept(gc);
+	    }
+	    return gc.children;
+	}
+
+	/**
+	 * Visits an init statement -- adds <target> to list of children.
+	 */
+	public void visitInitStatement(SIRInitStatement self,
+				       SIRStream target) {
+	    // remember <target> as a child
+	    children.add(target);
+	    // reset parent of <target> 
+	    target.setParent((SIRContainer)parent);
+	}
     }
 
-    /**
-     * Visits an init statement -- adds <target> to list of children.
-     */
-    public void visitInitStatement(SIRInitStatement self,
-				   SIRStream target) {
-	// remember <target> as a child
-	children.add(target);
-	// reset parent of <target> 
-	target.setParent((SIRContainer)parent);
-    }
 }
-

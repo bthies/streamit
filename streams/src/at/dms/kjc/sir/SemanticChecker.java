@@ -28,31 +28,29 @@ public class SemanticChecker {
 	    IterFactory.createIter(str).accept(new StreamSemanticChecker(out));
 	}
     }
-}
 
-/**
- * Checks the high-level structure of streams.  A statement-level
- * checker should also be written.
- */
-class StreamSemanticChecker extends EmptyStreamVisitor {
     /**
-     * Where to send output.
+     * Checks the high-level structure of streams.  A statement-level
+     * checker should also be written.
      */
-    private PrintStream out;
+    static class StreamSemanticChecker extends EmptyStreamVisitor {
+	/**
+	 * Where to send output.
+	 */
+	private PrintStream out;
 
-    public StreamSemanticChecker(PrintStream out) {
-	this.out = out;
-    }
+	public StreamSemanticChecker(PrintStream out) {
+	    this.out = out;
+	}
     
-    /* pre-visit a feedbackloop */
-    public void preVisitFeedbackLoop(SIRFeedbackLoop self,
-				     SIRFeedbackLoopIter iter) {
-	if (self.getLoop()==null) {
-	    out.println("ERROR:  Loop stream is null in " + iter + ";\n" +
-			"  should be set with setLoop(...) until we have internal" +
-			"  support for compiler-recognized Identity filters");
+	/* pre-visit a feedbackloop */
+	public void preVisitFeedbackLoop(SIRFeedbackLoop self,
+					 SIRFeedbackLoopIter iter) {
+	    if (self.getLoop()==null) {
+		out.println("ERROR:  Loop stream is null in " + iter + ";\n" +
+			    "  should be set with setLoop(...) until we have internal" +
+			    "  support for compiler-recognized Identity filters");
+	    }
 	}
     }
 }
-
-

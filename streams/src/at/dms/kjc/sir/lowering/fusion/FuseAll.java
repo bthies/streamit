@@ -104,15 +104,15 @@ public class FuseAll implements StreamVisitor {
     public void postVisitFeedbackLoop(SIRFeedbackLoop self,
 				      SIRFeedbackLoopIter iter) {
     }
-}
 
-/**
- * This exists only for the sake of efficiency, to do a long jump back
- * up to the top of the fusion loop.  For some reason we only get
- * maximal fusion if we always consider fusing things from the very
- * top; fusing within the visitor doesn't quite do the right thing.
- */
-class SuccessfulFuseException extends RuntimeException {
-    public SuccessfulFuseException() { super(); }
-    public SuccessfulFuseException(String str) { super(str); }
+    /**
+     * This exists only for the sake of efficiency, to do a long jump back
+     * up to the top of the fusion loop.  For some reason we only get
+     * maximal fusion if we always consider fusing things from the very
+     * top; fusing within the visitor doesn't quite do the right thing.
+     */
+    static class SuccessfulFuseException extends RuntimeException {
+	public SuccessfulFuseException() { super(); }
+	public SuccessfulFuseException(String str) { super(str); }
+    }
 }

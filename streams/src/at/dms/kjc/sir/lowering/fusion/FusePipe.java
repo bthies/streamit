@@ -111,9 +111,9 @@ public class FusePipe {
     public static int fuseTwo(SIRPipeline pipe, int start) {
 	if (isFusable(pipe.get(start)) &&
 	    isFusable(pipe.get(start+1))) {
-		fuse((SIRFilter)pipe.get(start),
-		     (SIRFilter)pipe.get(start+1));
-		return 1;
+	    fuse((SIRFilter)pipe.get(start),
+		 (SIRFilter)pipe.get(start+1));
+	    return 1;
 	} else {
 	    return 0;
 	}
@@ -223,11 +223,11 @@ public class FusePipe {
 	JMethodDeclaration initWork =  makeWork(filterInfo, true);
 	
 	/*if(pipe.get(0) instanceof SIRTwoStageFilter) {
-	    if (initWork!=null) {
-		Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter (don't fully support 2-stage fusion yet)");
-	    }
-	    initWork = ((SIRTwoStageFilter)pipe.get(0)).getInitWork();
-	    }*/
+	  if (initWork!=null) {
+	  Utils.fail("WARNING: InitWork Already Needed when fusing SIRTwoStageFilter (don't fully support 2-stage fusion yet)");
+	  }
+	  initWork = ((SIRTwoStageFilter)pipe.get(0)).getInitWork();
+	  }*/
 	
 	// make the steady-state work function
 	JMethodDeclaration steadyWork = makeWork(filterInfo, false);
@@ -276,12 +276,12 @@ public class FusePipe {
     private static boolean isFusable(SIRStream str) {
 	// don't allow two-stage filters that peek
 	/*if (str instanceof SIRTwoStageFilter) {
-	    // can fuse in this specific case
-	    if ((str.getParent().indexOf(str)==0) && (((SIRTwoStageFilter)str).getInitPush()==0)) {
-		return true;
-		}
-	    return false;
-	    }*/
+	// can fuse in this specific case
+	if ((str.getParent().indexOf(str)==0) && (((SIRTwoStageFilter)str).getInitPush()==0)) {
+	return true;
+	}
+	return false;
+	}*/
 	if ((str instanceof SIRFilter) && ((SIRFilter)str).getWork()!=null) {
 	    return true;
 	} else {
@@ -322,7 +322,7 @@ public class FusePipe {
 		new JVariableDefinition(null,
 					at.dms.kjc.Constants.ACC_FINAL,
 					new CArrayType(Utils.voidToInt(filter.
-						       getInputType()), 
+								       getInputType()), 
 						       1 /* dimension */ ),
 					PEEK_BUFFER_NAME + "_" + i,
 					null);
@@ -456,7 +456,7 @@ public class FusePipe {
 	return new JVariableDefinition(null,
 				       at.dms.kjc.Constants.ACC_FINAL,
 				       new CArrayType(Utils.voidToInt(filter.
-						      getInputType()), 
+								      getInputType()), 
 						      1 /* dimension */ ),
 				       POP_BUFFER_NAME + "_" + pos,
 				       initializer);
@@ -491,7 +491,7 @@ public class FusePipe {
 					  CStdType.Void,
 					  init ? INIT_WORK_NAME : "work",
 					  JFormalParameter.EMPTY,
-				      CClassType.EMPTY,
+					  CClassType.EMPTY,
 					  statements,
 					  null,
 					  null);
@@ -595,15 +595,15 @@ public class FusePipe {
 			statements.addStatement(makeForLoop(body,
 							    curPhase.loopCounter,
 							    new 
-								JIntLiteral(curPhase.num-1))
-					    );
+							    JIntLiteral(curPhase.num-1))
+						);
 		} else {
 		    
 		    // get <body> into a loop in <statements>
 		    statements.addStatement(makeForLoop(body,
 							curPhase.loopCounter,
 							new 
-							    JIntLiteral(curPhase.num))
+							JIntLiteral(curPhase.num))
 					    );
 		}
 	    } else {
@@ -763,14 +763,14 @@ public class FusePipe {
 			   new JAddExpression(null, new JIntLiteral(1),
 					      new JLocalVariableExpression(null,
 									   phaseInfo.popCounter)));
-					      /*
+	/*
 	// need to subtract the difference in peek and pop counts to
 	// see what we have to backup
 	JExpression sourceRhs =
-	    new JMinusExpression(null,
-				 sourceRhs1,
-				 new JIntLiteral(filterInfo.peekBufferSize));
-					      */
+	new JMinusExpression(null,
+	sourceRhs1,
+	new JIntLiteral(filterInfo.peekBufferSize));
+	*/
 
 	// the expression that copies items from the pop buffer to the
 	// peek buffer
@@ -967,9 +967,9 @@ public class FusePipe {
 				   new JIntLiteral(steadyPush),
 				   steadyWork,
 				   Utils.voidToInt(first.filter.
-					     getInputType()),
+						   getInputType()),
 				   Utils.voidToInt(last.filter.
-					     getOutputType()));
+						   getOutputType()));
 	} else {
 	    // calculate the peek, pop, and push count for the fused
 	    // filter in the INITIAL state
@@ -1005,374 +1005,373 @@ public class FusePipe {
 					   initPush,
 					   initWork,
 					   Utils.voidToInt(first.filter.
-						     getInputType()),
+							   getInputType()),
 					   Utils.voidToInt(last.filter.
-						     getOutputType()));
+							   getOutputType()));
 	}
 	
 	// set init function of fused filter
 	result.setInit(init);
 	return result;
     }
-}
     
-/**
- * Contains information that is relevant to a given filter's
- * inclusion in a fused pipeline.
- */
-class FilterInfo {
     /**
-     * The filter itself.
+     * Contains information that is relevant to a given filter's
+     * inclusion in a fused pipeline.
      */
-    public final SIRFilter filter;
+    static class FilterInfo {
+	/**
+	 * The filter itself.
+	 */
+	public final SIRFilter filter;
 
-    /**
-     * The persistent buffer for holding peeked items
-     */
-    public final JFieldDeclaration peekBuffer;
+	/**
+	 * The persistent buffer for holding peeked items
+	 */
+	public final JFieldDeclaration peekBuffer;
 
-    /**
-     * The size of the peek buffer
-     */
-    public final int peekBufferSize;
+	/**
+	 * The size of the peek buffer
+	 */
+	public final int peekBufferSize;
 
-    /**
-     * The info on the initial execution.
-     */
-    public final PhaseInfo init;
+	/**
+	 * The info on the initial execution.
+	 */
+	public final PhaseInfo init;
 	
-    /**
-     * The info on the steady-state execution.
-     */
-    public final PhaseInfo steady;
+	/**
+	 * The info on the steady-state execution.
+	 */
+	public final PhaseInfo steady;
 
-    public FilterInfo(SIRFilter filter, JFieldDeclaration peekBuffer,
-		      int peekBufferSize, PhaseInfo init, PhaseInfo steady) {
-	this.filter = filter;
-	this.peekBuffer = peekBuffer;
-	this.peekBufferSize = peekBufferSize;
-	this.init = init;
-	this.steady = steady;
+	public FilterInfo(SIRFilter filter, JFieldDeclaration peekBuffer,
+			  int peekBufferSize, PhaseInfo init, PhaseInfo steady) {
+	    this.filter = filter;
+	    this.peekBuffer = peekBuffer;
+	    this.peekBufferSize = peekBufferSize;
+	    this.init = init;
+	    this.steady = steady;
+	}
     }
-}
 
-class PhaseInfo {
-    /**
-     * The number of times this filter is executed in the parent.
-     */ 
-    public final int num;
+    static class PhaseInfo {
+	/**
+	 * The number of times this filter is executed in the parent.
+	 */ 
+	public final int num;
 
-    /**
-     * The buffer for holding popped items.
-     */
-    public final JVariableDefinition popBuffer;
+	/**
+	 * The buffer for holding popped items.
+	 */
+	public final JVariableDefinition popBuffer;
 
-    /**
-     * The counter for popped items.
-     */
-    public final JVariableDefinition popCounter;
+	/**
+	 * The counter for popped items.
+	 */
+	public final JVariableDefinition popCounter;
 
-    /*
-     * The counter for pushed items (of the CURRENT phase)
-     */
-    public final JVariableDefinition pushCounter;
+	/*
+	 * The counter for pushed items (of the CURRENT phase)
+	 */
+	public final JVariableDefinition pushCounter;
 
-    /**
-     * The counter for keeping track of executions of the whole block.
-     */
-    public final JVariableDefinition loopCounter;
+	/**
+	 * The counter for keeping track of executions of the whole block.
+	 */
+	public final JVariableDefinition loopCounter;
     
-    public PhaseInfo(int num, 
-		     JVariableDefinition popBuffer,
-		     JVariableDefinition popCounter,
-		     JVariableDefinition pushCounter,
-		     JVariableDefinition loopCounter) {
-	this.num = num;
-	this.popBuffer = popBuffer;
-	this.popCounter = popCounter;
-	this.pushCounter = pushCounter;
-	this.loopCounter = loopCounter;
-    }
-
-    /**
-     * Returns list of JVariableDefinitions of all var defs in here.
-     */
-    public List getVariables() {
-	List result = new LinkedList();
-	result.add(popBuffer);
-	result.add(popCounter);
-	result.add(pushCounter);
-	result.add(loopCounter);
-	return result;
-    }
-}
-
-class FusingVisitor extends SLIRReplacingVisitor {
-    /**
-     * The info for the current filter.
-     */
-    private final PhaseInfo curInfo;
-
-    /**
-     * The info for the next filter in the pipeline.
-     */
-    private final PhaseInfo nextInfo;
-
-    /**
-     * Whether or not peek and pop expressions should be fused.
-     */
-    private final boolean fuseReads;
-
-    /**
-     * Whether or not push expressions should be fused.
-     */
-    private final boolean fuseWrites;
-
-    public FusingVisitor(PhaseInfo curInfo, PhaseInfo nextInfo,
-			 boolean fuseReads, boolean fuseWrites) {
-	this.curInfo = curInfo;
-	this.nextInfo = nextInfo;
-	this.fuseReads = fuseReads;
-	this.fuseWrites = fuseWrites;
-    }
-
-    public Object visitPopExpression(SIRPopExpression self,
-				     CType tapeType) {
-	// leave it alone not fusing reads
-	if (!fuseReads) {
-	    return super.visitPopExpression(self, tapeType);
+	public PhaseInfo(int num, 
+			 JVariableDefinition popBuffer,
+			 JVariableDefinition popCounter,
+			 JVariableDefinition pushCounter,
+			 JVariableDefinition loopCounter) {
+	    this.num = num;
+	    this.popBuffer = popBuffer;
+	    this.popCounter = popCounter;
+	    this.pushCounter = pushCounter;
+	    this.loopCounter = loopCounter;
 	}
 
-	// build ref to pop array
-	JLocalVariableExpression lhs = 
-	    new JLocalVariableExpression(null, curInfo.popBuffer);
-
-	// build increment of index to array
-	JExpression rhs =
-	    new JPrefixExpression(null, 
-				  Constants.OPE_PREINC, 
-				  new JLocalVariableExpression(null,
-							       curInfo.
-							       popCounter));
-	// return a new array access expression
-	return new JArrayAccessExpression(null, lhs, rhs);
+	/**
+	 * Returns list of JVariableDefinitions of all var defs in here.
+	 */
+	public List getVariables() {
+	    List result = new LinkedList();
+	    result.add(popBuffer);
+	    result.add(popCounter);
+	    result.add(pushCounter);
+	    result.add(loopCounter);
+	    return result;
+	}
     }
 
-    public Object visitPeekExpression(SIRPeekExpression oldSelf,
-				      CType oldTapeType,
-				      JExpression oldArg) {
-	// leave it alone not fusing reads
-	if (!fuseReads) {
-	    return super.visitPeekExpression(oldSelf, oldTapeType, oldArg);
+    static class FusingVisitor extends SLIRReplacingVisitor {
+	/**
+	 * The info for the current filter.
+	 */
+	private final PhaseInfo curInfo;
+
+	/**
+	 * The info for the next filter in the pipeline.
+	 */
+	private final PhaseInfo nextInfo;
+
+	/**
+	 * Whether or not peek and pop expressions should be fused.
+	 */
+	private final boolean fuseReads;
+
+	/**
+	 * Whether or not push expressions should be fused.
+	 */
+	private final boolean fuseWrites;
+
+	public FusingVisitor(PhaseInfo curInfo, PhaseInfo nextInfo,
+			     boolean fuseReads, boolean fuseWrites) {
+	    this.curInfo = curInfo;
+	    this.nextInfo = nextInfo;
+	    this.fuseReads = fuseReads;
+	    this.fuseWrites = fuseWrites;
 	}
 
-	// do the super
-	SIRPeekExpression self = 
-	    (SIRPeekExpression)
-	    super.visitPeekExpression(oldSelf, oldTapeType, oldArg);
+	public Object visitPopExpression(SIRPopExpression self,
+					 CType tapeType) {
+	    // leave it alone not fusing reads
+	    if (!fuseReads) {
+		return super.visitPopExpression(self, tapeType);
+	    }
+
+	    // build ref to pop array
+	    JLocalVariableExpression lhs = 
+		new JLocalVariableExpression(null, curInfo.popBuffer);
+
+	    // build increment of index to array
+	    JExpression rhs =
+		new JPrefixExpression(null, 
+				      Constants.OPE_PREINC, 
+				      new JLocalVariableExpression(null,
+								   curInfo.
+								   popCounter));
+	    // return a new array access expression
+	    return new JArrayAccessExpression(null, lhs, rhs);
+	}
+
+	public Object visitPeekExpression(SIRPeekExpression oldSelf,
+					  CType oldTapeType,
+					  JExpression oldArg) {
+	    // leave it alone not fusing reads
+	    if (!fuseReads) {
+		return super.visitPeekExpression(oldSelf, oldTapeType, oldArg);
+	    }
+
+	    // do the super
+	    SIRPeekExpression self = 
+		(SIRPeekExpression)
+		super.visitPeekExpression(oldSelf, oldTapeType, oldArg);
 	
-	// build ref to pop array
-	JLocalVariableExpression lhs = 
-	    new JLocalVariableExpression(null, curInfo.popBuffer);
+	    // build ref to pop array
+	    JLocalVariableExpression lhs = 
+		new JLocalVariableExpression(null, curInfo.popBuffer);
 
-	// build subtraction of peek index from current pop index (add
-	// one to the pop index because of our pre-inc convention)
-	JExpression rhs =
-	    new JAddExpression(null,
-			      new JAddExpression(null,
-						 new JIntLiteral(1),
-						 new JLocalVariableExpression(null,
-									      curInfo.
-									      popCounter)),
-			      self.getArg());
+	    // build subtraction of peek index from current pop index (add
+	    // one to the pop index because of our pre-inc convention)
+	    JExpression rhs =
+		new JAddExpression(null,
+				   new JAddExpression(null,
+						      new JIntLiteral(1),
+						      new JLocalVariableExpression(null,
+										   curInfo.
+										   popCounter)),
+				   self.getArg());
 
-	// return a new array access expression
-	return new JArrayAccessExpression(null, lhs, rhs);
-    }
-
-    public Object visitPushExpression(SIRPushExpression oldSelf,
-				      CType oldTapeType,
-				      JExpression oldArg) {
-	// leave it alone not fusing writes
-	if (!fuseWrites) {
-	    return super.visitPushExpression(oldSelf, oldTapeType, oldArg);
+	    // return a new array access expression
+	    return new JArrayAccessExpression(null, lhs, rhs);
 	}
 
-	// do the super
-	SIRPushExpression self = 
-	    (SIRPushExpression)
-	    super.visitPushExpression(oldSelf, oldTapeType, oldArg);
+	public Object visitPushExpression(SIRPushExpression oldSelf,
+					  CType oldTapeType,
+					  JExpression oldArg) {
+	    // leave it alone not fusing writes
+	    if (!fuseWrites) {
+		return super.visitPushExpression(oldSelf, oldTapeType, oldArg);
+	    }
+
+	    // do the super
+	    SIRPushExpression self = 
+		(SIRPushExpression)
+		super.visitPushExpression(oldSelf, oldTapeType, oldArg);
 	
-	// build ref to push array
-	JLocalVariableExpression lhs = 
-	    new JLocalVariableExpression(null, nextInfo.popBuffer);
+	    // build ref to push array
+	    JLocalVariableExpression lhs = 
+		new JLocalVariableExpression(null, nextInfo.popBuffer);
 
-	// build increment of index to array
-	JExpression rhs =
-	    new JPrefixExpression(null,
-				  Constants.OPE_PREINC, 
-				  new JLocalVariableExpression(null,
-							       nextInfo.
-							       pushCounter));
-	// return a new array assignment to the right spot
-	return new JAssignmentExpression(
-		  null,
-		  new JArrayAccessExpression(null, lhs, rhs),
-		  self.getArg());
-    }
-}
-
-/**
- * This builds up the init function of the fused class by traversing
- * the init function of the parent.
- */
-class InitFuser {
-    /**
-     * The info on the filters we're trying to fuse.
-     */
-    private final List filterInfo;
-
-    /**
-     * The block of the resulting fused init function.
-     */
-    private JBlock fusedBlock;
-    
-    /**
-     * A list of the parameters of the fused block, all of type
-     * JFormalParameter.
-     */
-    private List fusedParam;
-    
-    /**
-     * A list of the arguments to the init function of the fused
-     * block, all of type JExpression.
-     */
-    private List fusedArgs;
-
-    /**
-     * Cached copy of the method decl for the init function.
-     */
-    private JMethodDeclaration initFunction;
-
-    /**
-     * The number of filter's we've fused.
-     */
-    private int numFused;
-
-    /**
-     * <fusedFilter> represents what -will- be the result of the
-     * fusion.  It has been allocated, but is not filled in with
-     * correct values yet.
-     */
-    public InitFuser(List filterInfo) {
-	this.filterInfo = filterInfo;
-	this.fusedBlock = new JBlock(null, new JStatement[0], null);
-	this.fusedParam = new LinkedList();
-	this.fusedArgs = new LinkedList();
-	this.numFused = 0;
-    }
-
-    public void doit(SIRPipeline parent) {
-	for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
-	    // process the arguments to a filter being fused
-	    FilterInfo info = (FilterInfo)it.next();
-	    int index = parent.indexOf(info.filter);
-	    processArgs(info, parent.getParams(index));
+	    // build increment of index to array
+	    JExpression rhs =
+		new JPrefixExpression(null,
+				      Constants.OPE_PREINC, 
+				      new JLocalVariableExpression(null,
+								   nextInfo.
+								   pushCounter));
+	    // return a new array assignment to the right spot
+	    return new JAssignmentExpression(
+					     null,
+					     new JArrayAccessExpression(null, lhs, rhs),
+					     self.getArg());
 	}
-	makeInitFunction();
     }
-
     /**
-     * Given that we found <args> in an init call to <info>,
-     * incorporate this info into the init function of the fused
-     * filter.
+     * This builds up the init function of the fused class by traversing
+     * the init function of the parent.
      */
-    private void processArgs(FilterInfo info, List args) {
-	// make parameters for <args>, and build <newArgs> to pass
-	// to new init function call
-	JExpression[] newArgs = new JExpression[args.size()];
-	for (int i=0; i<args.size(); i++) {
-	    JFormalParameter param = 
-		new JFormalParameter(null,
-				     0,
-				     ((JExpression)args.get(i)).getType(),
-				     FusePipe.INIT_PARAM_NAME + 
-				     "_" + i + "_" + numFused,
-				     false);
-	    // add to list
-	    fusedParam.add(param);
-	    // make a new arg
-	    newArgs[i] = new JLocalVariableExpression(null, param);
-	    // increment fused count
-	    numFused++;
+    static class InitFuser {
+	/**
+	 * The info on the filters we're trying to fuse.
+	 */
+	private final List filterInfo;
+
+	/**
+	 * The block of the resulting fused init function.
+	 */
+	private JBlock fusedBlock;
+    
+	/**
+	 * A list of the parameters of the fused block, all of type
+	 * JFormalParameter.
+	 */
+	private List fusedParam;
+    
+	/**
+	 * A list of the arguments to the init function of the fused
+	 * block, all of type JExpression.
+	 */
+	private List fusedArgs;
+
+	/**
+	 * Cached copy of the method decl for the init function.
+	 */
+	private JMethodDeclaration initFunction;
+
+	/**
+	 * The number of filter's we've fused.
+	 */
+	private int numFused;
+
+	/**
+	 * <fusedFilter> represents what -will- be the result of the
+	 * fusion.  It has been allocated, but is not filled in with
+	 * correct values yet.
+	 */
+	public InitFuser(List filterInfo) {
+	    this.filterInfo = filterInfo;
+	    this.fusedBlock = new JBlock(null, new JStatement[0], null);
+	    this.fusedParam = new LinkedList();
+	    this.fusedArgs = new LinkedList();
+	    this.numFused = 0;
 	}
 
-	// add the arguments to the list
-	fusedArgs.addAll(args);
-
-	// make a call to the init function of <info> with <params>
-	fusedBlock.addStatement(new JExpressionStatement(
-              null,
-	      new JMethodCallExpression(null,
-					new JThisExpression(null),
-					info.filter.getInit().getName(),
-					newArgs), null));
-    }
-
-    /**
-     * Prepares the init function for the fused block once the
-     * traversal of the parent's init function is complete.
-     */
-    private void makeInitFunction() {
-	// add allocations for peek buffers
-	for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
-	    // get the next info
-	    FilterInfo info = (FilterInfo)it.next();
-	    // calculate dimensions of the buffer
-	    JExpression[] dims = { new JIntLiteral(null, 
-						   info.peekBufferSize) };
-	    // add a statement initializeing the peek buffer
-	    fusedBlock.addStatementFirst(new JExpressionStatement(null,
-	      new JAssignmentExpression(
-		  null,
-		  new JFieldAccessExpression(null,
-					     new JThisExpression(null),
-					     info.peekBuffer.
-					     getVariable().getIdent()),
-		  new JNewArrayExpression(null,
-					  Utils.voidToInt(info.filter.
-					  getInputType()),
-					  dims,
-					  null)), null));
+	public void doit(SIRPipeline parent) {
+	    for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
+		// process the arguments to a filter being fused
+		FilterInfo info = (FilterInfo)it.next();
+		int index = parent.indexOf(info.filter);
+		processArgs(info, parent.getParams(index));
+	    }
+	    makeInitFunction();
 	}
-	// now we can make the init function
-	this.initFunction = new JMethodDeclaration(null,
-				      at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void,
-				      "init",
-				      (JFormalParameter[])
-				      fusedParam.toArray(new 
-							 JFormalParameter[0]),
-				      CClassType.EMPTY,
-				      fusedBlock,
-				      null,
-				      null);
-    }
-    
-    /**
-     * Returns fused init function of this.
-     */
-    public JMethodDeclaration getInitFunction() {
-	Utils.assert(initFunction!=null);
-	return initFunction;
-    }
 
-    /**
-     * Returns the list of arguments that should be passed to init
-     * function.
-     */
-    public List getInitArgs() {
-	return fusedArgs;
-    }
+	/**
+	 * Given that we found <args> in an init call to <info>,
+	 * incorporate this info into the init function of the fused
+	 * filter.
+	 */
+	private void processArgs(FilterInfo info, List args) {
+	    // make parameters for <args>, and build <newArgs> to pass
+	    // to new init function call
+	    JExpression[] newArgs = new JExpression[args.size()];
+	    for (int i=0; i<args.size(); i++) {
+		JFormalParameter param = 
+		    new JFormalParameter(null,
+					 0,
+					 ((JExpression)args.get(i)).getType(),
+					 FusePipe.INIT_PARAM_NAME + 
+					 "_" + i + "_" + numFused,
+					 false);
+		// add to list
+		fusedParam.add(param);
+		// make a new arg
+		newArgs[i] = new JLocalVariableExpression(null, param);
+		// increment fused count
+		numFused++;
+	    }
+
+	    // add the arguments to the list
+	    fusedArgs.addAll(args);
+
+	    // make a call to the init function of <info> with <params>
+	    fusedBlock.addStatement(new JExpressionStatement(
+							     null,
+							     new JMethodCallExpression(null,
+										       new JThisExpression(null),
+										       info.filter.getInit().getName(),
+										       newArgs), null));
+	}
+
+	/**
+	 * Prepares the init function for the fused block once the
+	 * traversal of the parent's init function is complete.
+	 */
+	private void makeInitFunction() {
+	    // add allocations for peek buffers
+	    for (ListIterator it = filterInfo.listIterator(); it.hasNext(); ) {
+		// get the next info
+		FilterInfo info = (FilterInfo)it.next();
+		// calculate dimensions of the buffer
+		JExpression[] dims = { new JIntLiteral(null, 
+						       info.peekBufferSize) };
+		// add a statement initializeing the peek buffer
+		fusedBlock.addStatementFirst(new JExpressionStatement(null,
+								      new JAssignmentExpression(
+												null,
+												new JFieldAccessExpression(null,
+															   new JThisExpression(null),
+															   info.peekBuffer.
+															   getVariable().getIdent()),
+												new JNewArrayExpression(null,
+															Utils.voidToInt(info.filter.
+																	getInputType()),
+															dims,
+															null)), null));
+	    }
+	    // now we can make the init function
+	    this.initFunction = new JMethodDeclaration(null,
+						       at.dms.kjc.Constants.ACC_PUBLIC,
+						       CStdType.Void,
+						       "init",
+						       (JFormalParameter[])
+						       fusedParam.toArray(new 
+									  JFormalParameter[0]),
+						       CClassType.EMPTY,
+						       fusedBlock,
+						       null,
+						       null);
+	}
     
+	/**
+	 * Returns fused init function of this.
+	 */
+	public JMethodDeclaration getInitFunction() {
+	    Utils.assert(initFunction!=null);
+	    return initFunction;
+	}
+
+	/**
+	 * Returns the list of arguments that should be passed to init
+	 * function.
+	 */
+	public List getInitArgs() {
+	    return fusedArgs;
+	}
+    
+    }
 }

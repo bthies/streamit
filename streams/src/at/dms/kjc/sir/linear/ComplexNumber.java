@@ -9,7 +9,7 @@ package at.dms.kjc.sir.linear;
  * Complex numbers are immutable -- eg their value can't change after
  * they are instantiated.
  *
- * $Id: ComplexNumber.java,v 1.9 2003-04-11 19:54:04 aalamb Exp $
+ * $Id: ComplexNumber.java,v 1.10 2003-05-12 16:27:02 thies Exp $
  **/
 public class ComplexNumber {
     private final double realPart;
@@ -140,29 +140,25 @@ public class ComplexNumber {
     public String toString() {
 	return (this.getReal() + "+" + this.getImaginary() + "i");
     }	    
-}
 
-
-/* This class represents a root of unity of the form e^((-2*pi/k)*n) where n and k are parameters. */
-class RootOfUnity extends ComplexNumber {
-    int nInternal;
-    int kInternal;
+    /* This class represents a root of unity of the form e^((-2*pi/k)*n) where n and k are parameters. */
+    static class RootOfUnity extends ComplexNumber {
+	int nInternal;
+	int kInternal;
     
-    RootOfUnity(int n, int k) {
-	super(0,0); /* don't use the internal fields of ComplexNumber. */
-	this.nInternal = n;
-	this.kInternal = k;
+	RootOfUnity(int n, int k) {
+	    super(0,0); /* don't use the internal fields of ComplexNumber. */
+	    this.nInternal = n;
+	    this.kInternal = k;
+	}
+	/** override the real part to return cos(2*pi*k/n) **/
+	public double getReal() {return Math.cos((2*Math.PI*nInternal)/kInternal);}
+	/** override the imaginary part to return -sin(2*pi*k/n) **/
+	public double getImaginary() {return -1*Math.sin((2*Math.PI*nInternal)/kInternal);}
+    
+	/* get k */
+	public int getK() {return this.kInternal;}
+	/* get n */
+	public int getN() {return this.nInternal;}
     }
-    /** override the real part to return cos(2*pi*k/n) **/
-    public double getReal() {return Math.cos((2*Math.PI*nInternal)/kInternal);}
-    /** override the imaginary part to return -sin(2*pi*k/n) **/
-    public double getImaginary() {return -1*Math.sin((2*Math.PI*nInternal)/kInternal);}
-    
-    /* get k */
-    public int getK() {return this.kInternal;}
-    /* get n */
-    public int getN() {return this.nInternal;}
 }
-	
-
-

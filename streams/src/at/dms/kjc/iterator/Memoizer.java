@@ -101,29 +101,29 @@ public class Memoizer {
      * Returns a "shallow clone" of <o> -- that is, an instance of the
      * same type of <o> that is instantiated with a no-argument
      * constructor, and which has all the same fields as <o>.
-    static Object shallowClone(Object o) {
-	// create an instance of the same type as <o>
-	Class c = o.getClass();
-	Object result = c.newInstance();
+     static Object shallowClone(Object o) {
+     // create an instance of the same type as <o>
+     Class c = o.getClass();
+     Object result = c.newInstance();
 
-	// for all the superclasses <c> of <o>...
-	for ( ; c!=null; c = c.getSuperclass()) {
-	    // for all the fields of <c>...
-	    Field[] field = c.getDeclaredFields();
-	    for (int i=0; i<field.length; i++) {
-		// get the value for the field
-		field[i].setAccessible(true);
-		try {
-		    // copy the value over to <result>
-		    Object value = field[i].get(o);
-		    field[i].set(result, value);
-		} catch (IllegalAccessException e) {
-		    e.printStackTrace();
-		}
-	    }
-	}
+     // for all the superclasses <c> of <o>...
+     for ( ; c!=null; c = c.getSuperclass()) {
+     // for all the fields of <c>...
+     Field[] field = c.getDeclaredFields();
+     for (int i=0; i<field.length; i++) {
+     // get the value for the field
+     field[i].setAccessible(true);
+     try {
+     // copy the value over to <result>
+     Object value = field[i].get(o);
+     field[i].set(result, value);
+     } catch (IllegalAccessException e) {
+     e.printStackTrace();
+     }
+     }
+     }
 	
-    }
+     }
     */
 
     /*******************************************************************/
@@ -262,44 +262,44 @@ public class Memoizer {
 	// the following doesn't work -- not comparing the right thing, somehow
 	//	return o.getClass().isPrimitive();
     }
-}
 
-/**
- * Represents the signature of an object -- that is, the object
- * identity of all its fields.
- */
-class Signature {
     /**
-     * Hash code for this.
+     * Represents the signature of an object -- that is, the object
+     * identity of all its fields.
      */
-    private int hashCode;
-    /**
-     * Object for which this is a signature for.
-     */
-    private Object obj;
+    static class Signature {
+	/**
+	 * Hash code for this.
+	 */
+	private int hashCode;
+	/**
+	 * Object for which this is a signature for.
+	 */
+	private Object obj;
     
-    /**
-     * Create a signature for Object <o>
-     */
-    public Signature(Object obj) {
-	this.hashCode = 0;
-	this.obj = obj;
-    }
+	/**
+	 * Create a signature for Object <o>
+	 */
+	public Signature(Object obj) {
+	    this.hashCode = 0;
+	    this.obj = obj;
+	}
 
-    public void add(Object o) {
-	hashCode ^= o.hashCode();
-    }
+	public void add(Object o) {
+	    hashCode ^= o.hashCode();
+	}
 
-    /**
-     * Return true iff s.obj and this.obj have identical structures
-     * with identical primitive values at the leaves.  (This returns
-     * structural equality between s.obj and this.obj).
-     */
-    public boolean equals(Signature s) {
-	return Memoizer.compareStructure(s.obj, this.obj);
-    }
+	/**
+	 * Return true iff s.obj and this.obj have identical structures
+	 * with identical primitive values at the leaves.  (This returns
+	 * structural equality between s.obj and this.obj).
+	 */
+	public boolean equals(Signature s) {
+	    return Memoizer.compareStructure(s.obj, this.obj);
+	}
 
-    public int hashCode() {
-	return hashCode;
+	public int hashCode() {
+	    return hashCode;
+	}
     }
 }

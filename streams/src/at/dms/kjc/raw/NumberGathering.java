@@ -79,304 +79,302 @@ public class NumberGathering extends at.dms.util.Utils
 	printsPerSteady = prints * steady;
 	return true;
     }
-}
 
-
-
-class Sink implements FlatVisitor 
-{
-    private static FlatNode sink;
-    //used if there are multiple sinks, to analyze them...
-    private static HashSet possibleSinks;
-    private static boolean multipleSinks;
-    private static boolean printOutsideSink;
-    private static FlatNode toplevel;
-
-    public static FlatNode getSink(FlatNode top) 
+    static class Sink implements FlatVisitor 
     {
-	toplevel = top;
-	sink = null;
-	possibleSinks = new HashSet();
-	multipleSinks = false;
-	top.accept(new Sink(), null, true);
-	//if more than one sink return null
-	//we do not handle this case now
-	if (multipleSinks) {
-	    FlatNode ancestor = getLeastCommonAncestor();
-	    System.out.println("The LCA is " + ancestor.contents.getName());
+	private static FlatNode sink;
+	//used if there are multiple sinks, to analyze them...
+	private static HashSet possibleSinks;
+	private static boolean multipleSinks;
+	private static boolean printOutsideSink;
+	private static FlatNode toplevel;
+
+	public static FlatNode getSink(FlatNode top) 
+	{
+	    toplevel = top;
+	    sink = null;
+	    possibleSinks = new HashSet();
+	    multipleSinks = false;
+	    top.accept(new Sink(), null, true);
+	    //if more than one sink return null
+	    //we do not handle this case now
+	    if (multipleSinks) {
+		FlatNode ancestor = getLeastCommonAncestor();
+		System.out.println("The LCA is " + ancestor.contents.getName());
 	    
+		Iterator sinksIt = possibleSinks.iterator();
+		while (sinksIt.hasNext()) {
+		    FlatNode current = (FlatNode)sinksIt.next();
+		    //traverse the path from the current sink to the ancestor
+		    //and check to see if any of the filter have a pop(peek) rate
+		    //equal to 0, if so, then the sinks are not synchronized
+		    //how to check then?
+		    if (!isSynchronized(ancestor, current)) {    
+			System.out.println("Cannot generate number gathering code: " + 
+					   "Multiple sinks that are not synchronized");
+			return null;
+		    }
+		}
+	    }
+	    //now pick a sink, we will just pick the first one in possibleSinks
+	    return (FlatNode)possibleSinks.iterator().next();
+	}
+    
+	private static FlatNode getLeastCommonAncestor() 
+	{
+	    //a vector of hashsets of all the ancestors of 
+	    //each sink
+	    Vector ancestors = new Vector();
 	    Iterator sinksIt = possibleSinks.iterator();
+	    //get all the ancestor for each sink
 	    while (sinksIt.hasNext()) {
-		FlatNode current = (FlatNode)sinksIt.next();
-		//traverse the path from the current sink to the ancestor
-		//and check to see if any of the filter have a pop(peek) rate
-		//equal to 0, if so, then the sinks are not synchronized
-		//how to check then?
-		if (!isSynchronized(ancestor, current)) {    
-		    System.out.println("Cannot generate number gathering code: " + 
-				       "Multiple sinks that are not synchronized");
-		    return null;
+		ancestors.add(getAllAncestors((FlatNode)sinksIt.next()));
+	    }
+	    //get the set representing the intersection of all
+	    //the ancestor sets...this is the common ancestors
+	    HashSet commonAncestors = (HashSet)ancestors.get(0);
+
+	    for (int i = 1; i < ancestors.size(); i++)
+		commonAncestors = intersection(commonAncestors, (HashSet)ancestors.get(i));    
+	    
+	    //find the most downstream ancestor...
+	    FlatNode lca = null;
+	    Iterator bft = BreadthFirstTraversal.getTraversal(toplevel).listIterator();
+	    while (bft.hasNext()) {
+		FlatNode current = (FlatNode)bft.next();
+		if (commonAncestors.contains(current))
+		    lca = current;
+	    }
+	
+	    //this is not the best way of doing it, but it was easy to code up!
+	    return lca;
+	}
+
+	private static HashSet getAllAncestors(FlatNode node) 
+	{
+	    HashSet ret = new HashSet();
+	    //add self
+	    ret.add(node);
+	    //add the upstream
+	    if (node == null || node.incoming == null ) 
+		return ret;
+	
+	    for (int i = 0; i < node.incoming.length; i++)
+		RawBackend.addAll(ret, getAllAncestors(node.incoming[i]));
+	    return ret;
+	}
+
+	private static HashSet intersection(HashSet x, HashSet y) 
+	{
+	    HashSet ret = new HashSet();
+	
+	    Iterator xit = x.iterator();
+	    while (xit.hasNext()) {
+		Object current = xit.next();
+		if (y.contains(current))
+		    ret.add(current);
+	    }
+	    return ret;
+	}
+    
+	    
+
+	//returns true if every filter on every path from current to ancestor (following
+	//back edges) has pop > 0, meaning it is synchronized to the upstream
+	private static boolean isSynchronized(FlatNode ancestor, FlatNode current) 
+	{
+	    if (ancestor == current) 
+		return true;
+
+	    ///check the pop rate
+	    if (current.isFilter())
+		if (((SIRFilter)current.contents).getPopInt() == 0)
+		    return false;
+
+	    //check all the incoming arcs of the joiner return 
+	    //true if all of them are true...
+	    for (int i = 0; i < current.incoming.length; i++)
+		if (!isSynchronized(ancestor, current.incoming[i]))
+		    return false;
+
+	    return true;    
+	}
+    
+
+	public void visitNode(FlatNode node) 
+	{
+	    if (node.isFilter()) {
+		SIRFilter filter = (SIRFilter)node.contents;
+		if (filter.getPushInt() == 0) {
+		    //sink
+		    if (sink != null)
+			multipleSinks = true;
+		    //add this to the hash map of sinks
+		    possibleSinks.add(node);
+		    //if this is the only sink, record it here
+		    sink = node;
 		}
 	    }
 	}
-	//now pick a sink, we will just pick the first one in possibleSinks
-	return (FlatNode)possibleSinks.iterator().next();
     }
+
+    static class ExistsPrint extends SLIREmptyVisitor 
+    {
+	private static boolean found;
     
-    private static FlatNode getLeastCommonAncestor() 
-    {
-	//a vector of hashsets of all the ancestors of 
-	//each sink
-	Vector ancestors = new Vector();
-	Iterator sinksIt = possibleSinks.iterator();
-	//get all the ancestor for each sink
-	while (sinksIt.hasNext()) {
-	    ancestors.add(getAllAncestors((FlatNode)sinksIt.next()));
-	}
-	//get the set representing the intersection of all
-	//the ancestor sets...this is the common ancestors
-	HashSet commonAncestors = (HashSet)ancestors.get(0);
-
-	for (int i = 1; i < ancestors.size(); i++)
-	    commonAncestors = intersection(commonAncestors, (HashSet)ancestors.get(i));    
-	    
-	//find the most downstream ancestor...
-	FlatNode lca = null;
-	Iterator bft = BreadthFirstTraversal.getTraversal(toplevel).listIterator();
-	while (bft.hasNext()) {
-	    FlatNode current = (FlatNode)bft.next();
-	    if (commonAncestors.contains(current))
-		lca = current;
-	}
+	public static boolean exists(SIRFilter filter) 
+	{
+	    ExistsPrint existPrint = new ExistsPrint();
+	    found = false;
 	
-	//this is not the best way of doing it, but it was easy to code up!
-	return lca;
-    }
-
-    private static HashSet getAllAncestors(FlatNode node) 
-    {
-	HashSet ret = new HashSet();
-	//add self
-	ret.add(node);
-	//add the upstream
-	if (node == null || node.incoming == null ) 
-	    return ret;
-	
-	for (int i = 0; i < node.incoming.length; i++)
-	    RawBackend.addAll(ret, getAllAncestors(node.incoming[i]));
-	return ret;
-    }
-
-    private static HashSet intersection(HashSet x, HashSet y) 
-    {
-	HashSet ret = new HashSet();
-	
-	Iterator xit = x.iterator();
-	while (xit.hasNext()) {
-	    Object current = xit.next();
-	    if (y.contains(current))
-		ret.add(current);
-	}
-	return ret;
-    }
-    
-	    
-
-    //returns true if every filter on every path from current to ancestor (following
-    //back edges) has pop > 0, meaning it is synchronized to the upstream
-    private static boolean isSynchronized(FlatNode ancestor, FlatNode current) 
-    {
-	if (ancestor == current) 
-	    return true;
-
-	///check the pop rate
-	if (current.isFilter())
-	    if (((SIRFilter)current.contents).getPopInt() == 0)
-		return false;
-
-	//check all the incoming arcs of the joiner return 
-	//true if all of them are true...
-	for (int i = 0; i < current.incoming.length; i++)
-	    if (!isSynchronized(ancestor, current.incoming[i]))
-		return false;
-
-	return true;    
-    }
-    
-
-    public void visitNode(FlatNode node) 
-    {
-	if (node.isFilter()) {
-	    SIRFilter filter = (SIRFilter)node.contents;
-	    if (filter.getPushInt() == 0) {
-		//sink
-		if (sink != null)
-		    multipleSinks = true;
-		//add this to the hash map of sinks
-		possibleSinks.add(node);
-		//if this is the only sink, record it here
-		sink = node;
+	    for (int i = 0; i < filter.getMethods().length; i++) {
+		filter.getMethods()[i].accept(existPrint);
+		if (found)
+		    return true;
 	    }
+	    return false;
+	}
+	public void visitPrintStatement(SIRPrintStatement self,
+					JExpression arg) {
+	    found = true;
 	}
     }
-}
 
-class ExistsPrint extends SLIREmptyVisitor 
-{
-    private static boolean found;
-    
-    public static boolean exists(SIRFilter filter) 
+    static class CheckPrint extends SLIREmptyVisitor 
     {
-	ExistsPrint existPrint = new ExistsPrint();
-	found = false;
-	
-	for (int i = 0; i < filter.getMethods().length; i++) {
-	    filter.getMethods()[i].accept(existPrint);
-	    if (found)
-		return true;
-	}
-	return false;
-    }
-    public void visitPrintStatement(SIRPrintStatement self,
-				    JExpression arg) {
-	found = true;
-    }
-}
-
-class CheckPrint extends SLIREmptyVisitor 
-{
     
-    private static int prints;
-    private static int controlFlow;
-    private static boolean printInControlFlow;
+	private static int prints;
+	private static int controlFlow;
+	private static boolean printInControlFlow;
     
-    //returns true if we find communication statements/expressions
-    //outside of the work function (i.e. in a helper function)
-    //or a print is embedded inside control flow
-    public static int check(SIRFilter filter) 
-    {
-	prints = 0;
-	printInControlFlow = false;
+	//returns true if we find communication statements/expressions
+	//outside of the work function (i.e. in a helper function)
+	//or a print is embedded inside control flow
+	public static int check(SIRFilter filter) 
+	{
+	    prints = 0;
+	    printInControlFlow = false;
 	
-	for (int i = 0; i < filter.getMethods().length; i++) {
-	    //skip the work function
-	    if (filter.getMethods()[i].equals(filter.getWork()))
-		continue;
+	    for (int i = 0; i < filter.getMethods().length; i++) {
+		//skip the work function
+		if (filter.getMethods()[i].equals(filter.getWork()))
+		    continue;
 
-	    //visit method
+		//visit method
 
-	    filter.getMethods()[i].accept(new CheckPrint());
+		filter.getMethods()[i].accept(new CheckPrint());
 	    
-	    //print not in work function
-	    if (prints > 0) {
-		System.out.println("Cannot generate number gathering code: Print outside work()");
+		//print not in work function
+		if (prints > 0) {
+		    System.out.println("Cannot generate number gathering code: Print outside work()");
+		    return -1;
+		}
+	    
+		if (controlFlow != 0)
+		    Utils.fail("Error in CheckPrint Visitor in NumberGathering");
+	    }
+	
+	    filter.getWork().accept(new CheckPrint());
+	    if (printInControlFlow) {
 		return -1;
 	    }
-	    
-	    if (controlFlow != 0)
+	    return prints;
+	}
+    
+	/**
+	 * Visits a print statement.
+	 */
+	public void visitPrintStatement(SIRPrintStatement self,
+					JExpression arg) {
+	    prints++;
+	    if (controlFlow > 0)
+		printInControlFlow = true;
+	    if (controlFlow < 0)
 		Utils.fail("Error in CheckPrint Visitor in NumberGathering");
 	}
-	
-	filter.getWork().accept(new CheckPrint());
-	if (printInControlFlow) {
-	    return -1;
-	}
-	return prints;
-    }
-    
-     /**
-     * Visits a print statement.
-     */
-    public void visitPrintStatement(SIRPrintStatement self,
-				    JExpression arg) {
-	prints++;
-	if (controlFlow > 0)
-	    printInControlFlow = true;
-	if (controlFlow < 0)
-	    Utils.fail("Error in CheckPrint Visitor in NumberGathering");
-    }
 
 
-    public void visitWhileStatement(JWhileStatement self,
-				    JExpression cond,
-				    JStatement body) {
-	controlFlow++;
-	cond.accept(this);
-	body.accept(this);
-	controlFlow--;
-    }
-
-    /**
-     * prints a switch statement
-     */
-    public void visitSwitchStatement(JSwitchStatement self,
-				     JExpression expr,
-				     JSwitchGroup[] body) {
-	expr.accept(this);
-	controlFlow++;
-	for (int i = 0; i < body.length; i++) {
-	    body[i].accept(this);
-	}
-	controlFlow--;
-    }
-    
-    public void visitIfStatement(JIfStatement self,
-				 JExpression cond,
-				 JStatement thenClause,
-				 JStatement elseClause) {
-	cond.accept(this);
-	controlFlow++;
-	thenClause.accept(this);
-	if (elseClause != null) {
-	    elseClause.accept(this);
-	}
-	controlFlow--;
-    }
-    
-    public void visitForStatement(JForStatement self,
-				  JStatement init,
-				  JExpression cond,
-				  JStatement incr,
-				  JStatement body) {
-	if (init != null) {
-	    init.accept(this);
-	}
-	controlFlow++;
-	if (cond != null) {
+	public void visitWhileStatement(JWhileStatement self,
+					JExpression cond,
+					JStatement body) {
+	    controlFlow++;
 	    cond.accept(this);
-	}
-	if (incr != null) {
-	    incr.accept(this);
-	}
-	// see if we can already infer the number of times this loop executes
-	int numExec = Unroller.getNumExecutions(init, cond, incr, body);
-	if (numExec!=-1) {
-	    // if so, just multiply the prints by the execution count
+	    body.accept(this);
 	    controlFlow--;
-	    int origPrints = prints;
-	    prints = 0;
-	    body.accept(this);
-	    prints = prints * numExec + origPrints;
-	} else {
-	    // if not, see if there are any prints in the loop anyway
-	    int origPrints = prints;
-	    body.accept(this);
-	    // mark the loop for unrolling if so
-	    if (origPrints<prints) {
-		self.setUnrolled(false);
+	}
+
+	/**
+	 * prints a switch statement
+	 */
+	public void visitSwitchStatement(JSwitchStatement self,
+					 JExpression expr,
+					 JSwitchGroup[] body) {
+	    expr.accept(this);
+	    controlFlow++;
+	    for (int i = 0; i < body.length; i++) {
+		body[i].accept(this);
 	    }
 	    controlFlow--;
 	}
-    }
     
-    public void visitDoStatement(JDoStatement self,
-				 JExpression cond,
-				 JStatement body) {
-	controlFlow++;
-	body.accept(this);
-	cond.accept(this);
-	controlFlow--;
-    }
+	public void visitIfStatement(JIfStatement self,
+				     JExpression cond,
+				     JStatement thenClause,
+				     JStatement elseClause) {
+	    cond.accept(this);
+	    controlFlow++;
+	    thenClause.accept(this);
+	    if (elseClause != null) {
+		elseClause.accept(this);
+	    }
+	    controlFlow--;
+	}
+    
+	public void visitForStatement(JForStatement self,
+				      JStatement init,
+				      JExpression cond,
+				      JStatement incr,
+				      JStatement body) {
+	    if (init != null) {
+		init.accept(this);
+	    }
+	    controlFlow++;
+	    if (cond != null) {
+		cond.accept(this);
+	    }
+	    if (incr != null) {
+		incr.accept(this);
+	    }
+	    // see if we can already infer the number of times this loop executes
+	    int numExec = Unroller.getNumExecutions(init, cond, incr, body);
+	    if (numExec!=-1) {
+		// if so, just multiply the prints by the execution count
+		controlFlow--;
+		int origPrints = prints;
+		prints = 0;
+		body.accept(this);
+		prints = prints * numExec + origPrints;
+	    } else {
+		// if not, see if there are any prints in the loop anyway
+		int origPrints = prints;
+		body.accept(this);
+		// mark the loop for unrolling if so
+		if (origPrints<prints) {
+		    self.setUnrolled(false);
+		}
+		controlFlow--;
+	    }
+	}
+    
+	public void visitDoStatement(JDoStatement self,
+				     JExpression cond,
+				     JStatement body) {
+	    controlFlow++;
+	    body.accept(this);
+	    cond.accept(this);
+	    controlFlow--;
+	}
 
+    }
 }
 

@@ -12,7 +12,7 @@ import at.dms.kjc.iterator.*;
  * This class has also been pressed into service to perform manipulations on
  * hashtable mappings that involve creating access wrappers.<p>
  *
- * $Id: AccessWrapperFactory.java,v 1.2 2002-09-11 17:04:43 aalamb Exp $
+ * $Id: AccessWrapperFactory.java,v 1.3 2003-05-12 16:27:02 thies Exp $
  **/
 class AccessWrapperFactory {
     /**
@@ -97,83 +97,78 @@ class AccessWrapperFactory {
 	}
     }
 	
-	
-	
+    ///////////////////////////////////////////
+    //////// Inner Classes
+    ///////////////////////////////////////////    
 
-}
+    /** Wraps an integer. **/
+    static class IntegerAccessWrapper extends AccessWrapper {
+	JIntLiteral value;
+	public IntegerAccessWrapper(JIntLiteral val) {
+	    super("integer"); this.value=val;
+	}
+	public boolean equals(Object o) {
+	    if (!super.equals(o)) {return false;}
+	    if (!(o instanceof IntegerAccessWrapper)) {return false;}
+	    IntegerAccessWrapper other = (IntegerAccessWrapper)o;
+	    return (other.value.equals(this.value));
+	}
+    }
 
+    /** Wraps a this expression **/
+    static class ThisAccessWrapper extends AccessWrapper {
+	public ThisAccessWrapper() {
+	    super("this");
+	}
+	public boolean equals(Object o) {
+	    if (!super.equals(o)) {return false;}
+	    if (!(o instanceof ThisAccessWrapper)) {return false;}
+	    return true;
+	}
+    }
 
-///////////////////////////////////////////
-//////// Inner Classes
-///////////////////////////////////////////    
+    /** Wraps a local variable. **/
+    static class LocalVariableAccessWrapper extends AccessWrapper {
+	JLocalVariable variable;
+	public LocalVariableAccessWrapper(JLocalVariable var) {
+	    super(var.getIdent());
+	    this.variable = var;
+	}
+	// the local variable is completely described by its name, so just
+	// use the equals method from AccessWrapper.
+    }
 
-/** Wraps an integer. **/
-class IntegerAccessWrapper extends AccessWrapper {
-    JIntLiteral value;
-    public IntegerAccessWrapper(JIntLiteral val) {
-	super("integer"); this.value=val;
+    /** Wraps a field access expression. **/
+    static class FieldAccessWrapper extends AccessWrapper {
+	AccessWrapper prefix;
+	public FieldAccessWrapper(AccessWrapper pre, String f) {
+	    super(pre.getIdent() + "." + f);
+	    this.prefix = pre;
+	}
+	public boolean equals(Object o) {
+	    if (!super.equals(o)) {return false;}
+	    if (!(o instanceof FieldAccessWrapper)) {return false;}
+	    FieldAccessWrapper other = (FieldAccessWrapper)o;
+	    return (other.prefix.equals(this.prefix));
+	}
     }
-    public boolean equals(Object o) {
-	if (!super.equals(o)) {return false;}
-	if (!(o instanceof IntegerAccessWrapper)) {return false;}
-	IntegerAccessWrapper other = (IntegerAccessWrapper)o;
-	return (other.value.equals(this.value));
-    }
-}
 
-/** Wraps a this expression **/
-class ThisAccessWrapper extends AccessWrapper {
-    public ThisAccessWrapper() {
-	super("this");
+    /** Wraps an array access. Index must be a compile time known constant. **/
+    static class ArrayAccessWrapper extends AccessWrapper {
+	AccessWrapper base;
+	int index;
+	public ArrayAccessWrapper(AccessWrapper b, int i) {
+	    super(b.getIdent() + "[" + i + "]");
+	    this.base = b;
+	    this.index = i;
+	}
+	public boolean equals(Object o) {
+	    if (!super.equals(o)) {return false;}
+	    if (!(o instanceof ArrayAccessWrapper)) {return false;}
+	    ArrayAccessWrapper other = (ArrayAccessWrapper)o;
+	    return (other.base.equals(this.base) &&
+		    (other.index == this.index));
+	}
+	public AccessWrapper getPrefix() {return this.base;}
     }
-    public boolean equals(Object o) {
-	if (!super.equals(o)) {return false;}
-	if (!(o instanceof ThisAccessWrapper)) {return false;}
-	return true;
-    }
-}
-
-/** Wraps a local variable. **/
-class LocalVariableAccessWrapper extends AccessWrapper {
-    JLocalVariable variable;
-    public LocalVariableAccessWrapper(JLocalVariable var) {
-	super(var.getIdent());
-	this.variable = var;
-    }
-    // the local variable is completely described by its name, so just
-    // use the equals method from AccessWrapper.
-}
-
-/** Wraps a field access expression. **/
-class FieldAccessWrapper extends AccessWrapper {
-    AccessWrapper prefix;
-    public FieldAccessWrapper(AccessWrapper pre, String f) {
-	super(pre.getIdent() + "." + f);
-	this.prefix = pre;
-    }
-    public boolean equals(Object o) {
-	if (!super.equals(o)) {return false;}
-	if (!(o instanceof FieldAccessWrapper)) {return false;}
-	FieldAccessWrapper other = (FieldAccessWrapper)o;
-	return (other.prefix.equals(this.prefix));
-    }
-}
-
-/** Wraps an array access. Index must be a compile time known constant. **/
-class ArrayAccessWrapper extends AccessWrapper {
-    AccessWrapper base;
-    int index;
-    public ArrayAccessWrapper(AccessWrapper b, int i) {
-	super(b.getIdent() + "[" + i + "]");
-	this.base = b;
-	this.index = i;
-    }
-    public boolean equals(Object o) {
-	if (!super.equals(o)) {return false;}
-	if (!(o instanceof ArrayAccessWrapper)) {return false;}
-	ArrayAccessWrapper other = (ArrayAccessWrapper)o;
-	return (other.base.equals(this.base) &&
-		(other.index == this.index));
-    }
-    public AccessWrapper getPrefix() {return this.base;}
 }

@@ -96,6 +96,8 @@ public class Flattener {
 	str.accept(printer1);
 	printer1.close();
 
+	//Destroys arrays into local variables if possible
+	new ArrayDestroyer().destroyArrays(str);
 	//Raise variables to the top of their block
 	new VarDeclRaiser().raiseVars(str);
 

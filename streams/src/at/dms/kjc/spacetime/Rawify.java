@@ -20,14 +20,25 @@ public class Rawify
     {
 	Iterator traces;
 	
-	if (init)
+	if (init) {
 	    traces = scheduler.getInitSchedule().iterator();
-	else
+	    iterate(traces, true, false, rawChip);
+	    traces = scheduler.getInitSchedule().iterator();
+	    iterate(traces, false, true, rawChip);
+	}
+	else {
 	    traces = scheduler.getSchedule().iterator();
-
+	    iterate(traces, false, false, rawChip);
+	}
+	
 	//iterate over the traces in the given order and generate the 
 	//switch code, the tile code, and the off chip stuff for 
 	//each TraceNode
+
+    }
+    
+    private static void iterate(Iterator traces, boolean init, boolean primepump,RawChip rawChip) 
+    {
 	Trace trace;
 	
 	while (traces.hasNext()) {
@@ -46,36 +57,24 @@ public class Rawify
 		    //create the filter info class
 		    FilterInfo filterInfo = FilterInfo.getFilterInfo(filterNode);
 			//add the dram command if this filter trace is an endpoint...
-		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, false);
+		    generateFilterDRAMCommand(filterNode, filterInfo, tile, init, primepump);
 		    
 		    if (filterInfo.isLinear()) {
 			assert FilterInfo.getFilterInfo(filterNode).remaining == 0 :
 			    "Items remaining on buffer for init for linear filter";
 			createSwitchCodeLinear(filterNode,
-					       trace,filterInfo,init,false,tile,rawChip);
+					       trace,filterInfo,init,primepump,tile,rawChip);
 		    }
-		    
 		    else 
 			createSwitchCode(filterNode, 
-					 trace, filterInfo, init, false, tile, rawChip);
+					 trace, filterInfo, init, primepump, tile, rawChip);
 		    //used for debugging, nothing more
 		    tile.addFilterTrace(init, false, filterNode);
-		    //do every again for the primepump if it is the init stage and add the
-		    //compute code for the init stage
-		    if (init) {
-			//add the dram command if this filter trace is an endpoint...
-			generateFilterDRAMCommand(filterNode, filterInfo, tile, false, true);
-			//create the prime pump stage switch code 
-			//after the initialization switch code
-			createSwitchCode(filterNode, 
-					 trace, filterInfo, false, true, tile, rawChip);
-			//generate the compute code for the trace and place it in
-			//the tile			
+		    //generate the init/primepump code for the trace
+		    if (primepump) {
 			tile.getComputeCode().addTraceInit(filterInfo);
-			//used for debugging
-			tile.addFilterTrace(false, true, filterNode);
 		    }
-		    else {
+		    else if (!primepump && !init) {
 			//generate the compute code for the trace and place it in
 			//the tile
 			tile.getComputeCode().addTraceSteady(filterInfo);
@@ -84,36 +83,22 @@ public class Rawify
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
 		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :
 			"inputs for a single InputTraceNode coming from same DRAM";
-		    handleFileInput((InputTraceNode)traceNode, init, false, 
+		    handleFileInput((InputTraceNode)traceNode, init, primepump, 
 					rawChip);
 		    //create the switch code to perform the joining
-		    joinInputTrace((InputTraceNode)traceNode, init, false);
+		    joinInputTrace((InputTraceNode)traceNode, init, primepump);
 		    //generate the dram command to execute the joining
-		    generateInputDRAMCommands((InputTraceNode)traceNode, init, false);
-		    //now create the primepump code
-		    if (init) {
-			handleFileInput((InputTraceNode)traceNode, false, true, 
-					rawChip);
-			joinInputTrace((InputTraceNode)traceNode, false, true);
-			generateInputDRAMCommands((InputTraceNode)traceNode, false, true);
-		    }
+		    generateInputDRAMCommands((InputTraceNode)traceNode, init, primepump);
 		}
 		else if (traceNode.isOutputTrace() && !KjcOptions.magicdram) {
 		    assert StreamingDram.differentDRAMs((OutputTraceNode)traceNode) :
 			"outputs for a single OutputTraceNode going to same DRAM";
-		    handleFileOutput((OutputTraceNode)traceNode, init, false,
+		    handleFileOutput((OutputTraceNode)traceNode, init, primepump,
 				     rawChip);
 		    //create the switch code to perform the splitting
-		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
+		    splitOutputTrace((OutputTraceNode)traceNode, init, primepump);
 		    //generate the DRAM command
-		    outputDRAMCommands((OutputTraceNode)traceNode, init, false);
-		    //now create the primepump code
-		    if (init) {
-			handleFileOutput((OutputTraceNode)traceNode, false, true,
-					 rawChip);
-			splitOutputTrace((OutputTraceNode)traceNode, false, true);
-			outputDRAMCommands((OutputTraceNode)traceNode, false, true);
-		    }
+		    outputDRAMCommands((OutputTraceNode)traceNode, init, primepump);
 		}
 		//get the next tracenode
 		traceNode = traceNode.getNext();

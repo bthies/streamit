@@ -168,10 +168,11 @@ public class SimpleScheduler
 	    //find the first trace we can schedule
 	    Iterator traces = sortedTraces.iterator();
 	    while (traces.hasNext()) {
-		trace = (Trace)traces.next();
-		if (canScheduleTrace(trace))
+	    	trace = (Trace)traces.next();
+	    	if (canScheduleTrace(trace))
 		    break;
 	    }
+
 	    assert trace != null;
 	    //System.out.println("Trying to schedule " + trace);
 	    while (true) {
@@ -301,7 +302,7 @@ public class SimpleScheduler
 	    Trace trace = (Trace)it.next();
 	    //see if we can legally schedule the trace
 	    if (!canScheduleTrace(trace))
-		continue;
+	    	continue;
 	    //	    System.out.println("   (Trying to schedule smaller trace " + trace + ")");
 	    //see when it will finish, if smaller than finishBefore
 	    if ((currentTime + partitioner.getTraceBNWork(trace)) <= 

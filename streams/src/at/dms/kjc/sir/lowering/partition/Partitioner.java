@@ -57,8 +57,9 @@ public class Partitioner {
 	       new DynamicProgPartitioner(str2, WorkEstimate.getWorkEstimate(str2), targetCount).calcPartitions();
 	    */
 	    str = new DynamicProgPartitioner(str, work, targetCount).toplevel();
-	}
-	else if (KjcOptions.partition_greedy) {
+	} else if(KjcOptions.partition_greedier) {
+	    str=new GreedierPartitioner(str,work,targetCount).toplevel();
+	} else if (KjcOptions.partition_greedy) {
 	    if (curCount < targetCount) {
 		// need fission
 		new GreedyPartitioner(str, work, targetCount).toplevelFission(curCount);

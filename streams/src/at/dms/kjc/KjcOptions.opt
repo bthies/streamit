@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.65 2005-02-23 20:27:41 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.66 2005-03-21 23:42:02 mgordon Exp $
  */
 
 prefix Kjc
@@ -465,3 +465,8 @@ longname 		"spacedynamic"
 	type		boolean
 	default		"false"
 	help		"Use the space multiplexing Raw backend with dynamic rate support"
+
+longname		"malloczeros"
+	type		boolean
+	default		"false"
+	help 		"Use mallocs instead of callocs to initial memory (malloc will zero memory)"

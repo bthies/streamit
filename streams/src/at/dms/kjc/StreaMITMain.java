@@ -35,6 +35,9 @@ public class StreaMITMain {
 	    KjcOptions.raw = 1;
 	    KjcOptions.partition_dp = true;
 	}
+
+	if (KjcOptions.malloczeros) 
+	    System.out.println("\n***  --malloczeros enabled, make sure your raw simulator initializes memory with zeros ***\n");
 	
 	if (KjcOptions.altcodegen &&
 	    KjcOptions.standalone)

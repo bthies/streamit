@@ -6,7 +6,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Vector;
 import java.util.Iterator;
-
+import java.util.LinkedList;
+import java.util.List;
 
 /** 
  *
@@ -19,8 +20,9 @@ public class OutputTraceNode extends TraceNode
     private static int unique = 0;
     private static int[] EMPTY_WEIGHTS=new int[0];
     private static InputTraceNode[][] EMPTY_DESTS=new InputTraceNode[0][0];
-    private Iterator sortedOutputs;
-    
+    private List sortedOutputs;
+    private Set destSet;
+
     public OutputTraceNode(int[] weights,
 			   InputTraceNode[][] dests) {
 	//this.parent = parent;
@@ -138,12 +140,14 @@ public class OutputTraceNode extends TraceNode
      * inputtracenodes in descending order of the number
      *  of items sent to the inputtracenode
      **/
-    public Iterator getSortedOutputs() 
+    public List getSortedOutputs() 
     {
 	if (sortedOutputs == null) {
 	    //if there are no dest just return an empty iterator
-	    if (weights.length == 0) 
-		sortedOutputs = getDestSet().iterator();
+	    if (weights.length == 0) {
+		sortedOutputs = new LinkedList();
+		return sortedOutputs;
+	    }
 	    //just do a simple linear insert over the dests
 	    //only has to be done once
 	    Vector sorted = new Vector();
@@ -152,18 +156,25 @@ public class OutputTraceNode extends TraceNode
 	    sorted.add(dests.next());
 	    while (dests.hasNext()) {
 		InputTraceNode current = (InputTraceNode)dests.next();
-		for (int i = 0; i < sorted.size(); i++) {
-		    //if this is the correct place to insert it, 
-		    //add it and break
-		    if (getWeight(current) > 
-			getWeight((InputTraceNode)sorted.get(i))) {
-			sorted.add(i, current);
-			break;
+		//add to end if it is less then everything
+		if (getWeight(current) <= 
+		    getWeight((InputTraceNode)sorted.get(sorted.size() - 1))) 		  
+		    sorted.add(current);
+		else {  //otherwise find the correct place to add it
+		    for (int i = 0; i < sorted.size(); i++) {
+			//if this is the correct place to insert it, 
+			//add it and break
+			if (getWeight(current) > 
+			    getWeight((InputTraceNode)sorted.get(i))) {
+			    sorted.add(i, current);
+			    break;
+			}
 		    }
-		    
 		}
 	    }
-	    sortedOutputs = sorted.iterator();
+	    assert sorted.size() == getDestSet().size() :
+		"error " + sorted.size() + "!= " + getDestSet().size();
+	    sortedOutputs = sorted.subList(0, sorted.size());
 	}
 	return sortedOutputs;
     }

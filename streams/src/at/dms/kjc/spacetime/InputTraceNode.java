@@ -76,7 +76,7 @@ public class InputTraceNode extends TraceNode
 	for (int i = 0; i < sources.length; i++)
 	    if (sources[i] == out)
 		return weights[i];
-	Utils.fail("Cannot find weight for OutputTraceNode");
+	Utils.fail(this + " cannot find weight for OutputTraceNode " + out);
 	return -1;
     }
     
@@ -84,9 +84,9 @@ public class InputTraceNode extends TraceNode
     {
 	return (sources.length == 1);
     }
+    
     public boolean noInputs() 
     {
 	return sources.length == 0;
     }
-    
 }

@@ -86,6 +86,7 @@ public class Rawify
 		    
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
+		    System.out.println("Length: " + ((InputTraceNode)traceNode).getSources().length);
 		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :
 			"inputs for a single InputTraceNode coming from same DRAM";
 		    //create the switch code to perform the joining
@@ -138,7 +139,7 @@ public class Rawify
 		input.getWeight(input.getSources()[i]) * 4;
 	    readBytes = Util.cacheLineDiv(readBytes);
 	    srcBuffer.getOwner().getComputeCode().addDRAMCommand(true, init || primepump,
-										     readBytes, srcBuffer);
+								 readBytes, srcBuffer);
 	}
 
 	//generate the command to write to the dest of the input trace node
@@ -152,8 +153,10 @@ public class Rawify
     private static void generateOutputDRAMCommands(OutputTraceNode output, boolean init, boolean primepump) 
     {
 	FilterTraceNode filter = (FilterTraceNode)output.getPrevious();
-	//don't do anything for redundant buffers
-	if (OffChipBuffer.getBuffer(filter, output).redundant())
+	
+	//don't do anything for a redundant buffer
+	if (output.oneOutput() && 
+	    OffChipBuffer.getBuffer(output, output.getDests()[0][0]).redundant())
 	    return;
 	
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
@@ -196,8 +199,11 @@ public class Rawify
 	//only generate a DRAM command for filters connected to input or output trace nodes
 	if (filterNode.getPrevious() != null &&
 	    filterNode.getPrevious().isInputTrace()) {
-	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode.getPrevious(), 
+	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode.getPrevious(),
 							   filterNode);
+	    //don't generate code for redundant buffers
+	    if (buffer.redundant())
+		return;
 	    //get the number of items received
 	    int items = filterInfo.totalItemsReceived(init, primepump); 
 	    
@@ -212,6 +218,10 @@ public class Rawify
 		 filterNode.getNext().isOutputTrace()) {
 	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode,
 							   filterNode.getNext());
+	    
+	    //don't generate code for redundant buffers
+	    if (buffer.redundant())
+		return;
 	    //get the number of items sent
 	    int items = filterInfo.totalItemsSent(init, primepump);	    
 
@@ -335,7 +345,8 @@ public class Rawify
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
 	
 	//check to see if the splitting is necessary (the buffer exists)
-	if (OffChipBuffer.getBuffer(traceNode, traceNode.getParent().getHead()).redundant())
+	if (traceNode.oneOutput() &&
+	    OffChipBuffer.getBuffer(traceNode, traceNode.getDests()[0][0]).redundant())
 	    return;
 				    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);

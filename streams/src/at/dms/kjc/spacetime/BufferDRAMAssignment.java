@@ -61,10 +61,16 @@ public class BufferDRAMAssignment
 		if (traceNode.isOutputTrace()) {
 		    //get the assignment for each input trace node
 		    HashMap ass = assignment((OutputTraceNode)traceNode, chip);
+		    System.out.println(traceNode + " outputs = " + 
+				       ((OutputTraceNode)traceNode).getWeights().length);
 		    Iterator inputTs = ass.keySet().iterator();
+
 		    //commit the assignment
 		    while (inputTs.hasNext()) {
 			InputTraceNode inputT = (InputTraceNode)inputTs.next();
+			System.out.println("Assigning (" + (OutputTraceNode)traceNode + "->" + 
+					   inputT + ") to " + ass.get(inputT));
+			
 			OffChipBuffer.getBuffer((OutputTraceNode)traceNode,
 						inputT).setDRAM((StreamingDram)ass.get(inputT));
 		    }
@@ -116,32 +122,53 @@ public class BufferDRAMAssignment
     public static HashMap assignment(OutputTraceNode output, RawChip chip) 
     {
 	HashMap assign = new HashMap();
-	Iterator inputTs = output.getSortedOutputs();
+	Iterator inputTs = output.getSortedOutputs().iterator();
 	HashSet unassignedPorts = new HashSet();
 	//populate the unassigned ports set
 	for (int i = 0; i < chip.getDevices().length; i++) 
 	    unassignedPorts.add(chip.getDevices()[i]);
 	
 	while (inputTs.hasNext()) {
+	    System.out.println("Input");
+	    
 	    //make sure we have enough ports for the outputs
-	    assert !unassignedPorts.isEmpty() : "Split width exceeds number of ports on the chip";
+
 	    InputTraceNode inputT = (InputTraceNode)inputTs.next();
 	    //now assign the buffer to the first available port that show up 
 	    //in the iterator
 	    Iterator portOrder = assignmentOrder(output, inputT, chip);
+	    boolean assigned = false;
 	    while (portOrder.hasNext()) {
 		StreamingDram current = ((PortDistance)portOrder.next()).dest;
 		//assign the current dram to this input trace node
-		//and exit the inner loop
-		if (unassignedPorts.contains(current)) {
+		//and exit the inner loop if the port has not 
+		//been used by this output trace and the corresponding input trace
+		if (unassignedPorts.contains(current) && 
+		    !assignedInputDRAMs(inputT).contains(current)) {
 		    unassignedPorts.remove(current);
 		    assign.put(inputT, current);
+		    assigned = true;
 		    break;
 		}
 	    }
+	    assert assigned : "Split/join width exceeds number of ports on the chip";
 	}
 	return assign;
     }
+    
+    //return the set of drams already assigned to incoming buffers of this input
+    //trace node.
+    private static Set assignedInputDRAMs(InputTraceNode input) 
+    {
+	HashSet set = new HashSet();
+	for (int i = 0; i < input.getSources().length; i++) {
+	    if (OffChipBuffer.getBuffer(input.getSources()[i], input).isAssigned())
+		set.add(OffChipBuffer.getBuffer(input.getSources()[i], input).getDRAM());
+	}
+	return set;
+    }
+    
+    
     
     /**
      * given an output trace node and an assignment of inputtracenodes to streaming drams

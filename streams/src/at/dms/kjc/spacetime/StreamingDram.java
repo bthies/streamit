@@ -46,6 +46,7 @@ public class StreamingDram extends IODevice
 	Iterator outputs = out.getDestSet().iterator();
 	while(outputs.hasNext()) {
 	    InputTraceNode in = (InputTraceNode)outputs.next();
+	    //System.out.println(out + "->" + in);
 	    if (drams.contains(OffChipBuffer.getBuffer(out, in).getDRAM()))
 		return false;
 	    drams.add(OffChipBuffer.getBuffer(out, in).getDRAM());
@@ -59,6 +60,8 @@ public class StreamingDram extends IODevice
     {
 	HashSet drams = new HashSet();
 	for (int i = 0; i < in.getSources().length; i++) {
+	    //System.out.println(in.getSources()[i] + " -> " + in + "(" + 
+	    //		       OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM() + ")");				       
 	    if (drams.contains(OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM()))
 		return false;
 	    drams.add(OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM());
@@ -250,4 +253,10 @@ public class StreamingDram extends IODevice
 	    ((StreamingDram)chip.getDevices()[i]).printDramSetup();
 	}
     }
+    
+    public String toString() 
+    {
+	return  "StreamingDRAM (" + port + ")";
+    }
+
 }

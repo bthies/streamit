@@ -52,14 +52,12 @@ public class OffChipBuffer
 	    if (((InputTraceNode)source).noInputs()) {
 		System.out.println("source: " + source + ", dest: " + dest + " size: " + size);
 		return true;
-	    }
-	    
+	    }	    
 	    //if only one source to the input and the dram for the
 	    //previous buffer is the same then redunant
-	    
-	    OutputTraceNode out = ((InputTraceNode)source).getParent().getDepends()[0].getTail();
+
 	    if (((InputTraceNode)source).oneInput() &&
-		OffChipBuffer.getBuffer(out, source).getDRAM() == dram)
+		OffChipBuffer.getBuffer(((InputTraceNode)source).getSources()[0], source).getDRAM() == dram)
 		return true;	    
 	} else if (source.isOutputTrace() && dest.isInputTrace()) {
 	    //one output and the dram is the same as the previous 
@@ -80,6 +78,11 @@ public class OffChipBuffer
 	this.dram = DRAM;
     }
     
+    public boolean isAssigned() 
+    {
+	return dram != null;
+    }
+    
     public StreamingDram getDRAM() 
     {
 	assert dram != null: "need to assign buffer to streaming dram";
@@ -89,6 +92,7 @@ public class OffChipBuffer
     
     public String getIdent() 
     {
+	assert !redundant();
 	return ident;
     }
     

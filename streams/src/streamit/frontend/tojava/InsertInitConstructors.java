@@ -11,10 +11,22 @@ import java.util.ArrayList;
  * Inserts statements in init functions to call member object constructors.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: InsertInitConstructors.java,v 1.10 2003-06-27 19:45:50 dmaze Exp $
+ * @version $Id: InsertInitConstructors.java,v 1.11 2003-07-09 15:55:06 dmaze Exp $
  */
 public class InsertInitConstructors extends InitMunger
 {
+    private TempVarGen varGen;
+    
+    /**
+     * Create a new pass to insert constructors.
+     *
+     * @param varGen  global object to generate variable names
+     */
+    public InsertInitConstructors(TempVarGen varGen)
+    {
+        this.varGen = varGen;
+    }
+    
     /**
      * Returns true if this type needs a constructor generated.
      * This happens if the type is complex, or if it is not a
@@ -30,8 +42,8 @@ public class InsertInitConstructors extends InitMunger
      * Return an ordered list of all of the constructors that need to
      * be generated to initialize a particular variable.
      */
-    static private List stmtsForConstructor(FEContext ctx,
-                                            Expression name, Type type)
+    private List stmtsForConstructor(FEContext ctx,
+                                     Expression name, Type type)
     {
         List result = new java.util.ArrayList();
 
@@ -60,6 +72,42 @@ public class InsertInitConstructors extends InitMunger
                     // Get child constructors and add them:
                     result.addAll(stmtsForConstructor(ctx, lhs, ftype));
                 }
+            }
+        }
+        // Or, if this is an array of structures, we might need to
+        // recursively generate constructors.
+        if (type instanceof TypeArray)
+        {
+            TypeArray ta = (TypeArray)type;
+            Type base = ta.getBase();
+            if (needsConstructor(base))
+            {
+                // The length might be non-constant.  This means that
+                // we need to do this by looping through the array.
+                String tempVar = varGen.varName(varGen.nextVar(null));
+                Expression varExp = new ExprVar(ctx, tempVar);
+                Statement decl =
+                    new StmtVarDecl(ctx,
+                                    new TypePrimitive(TypePrimitive.TYPE_INT),
+                                    tempVar,
+                                    new ExprConstInt(ctx, 0));
+                Expression cond =
+                    new ExprBinary(ctx,
+                                   ExprBinary.BINOP_LT,
+                                   varExp,
+                                   ta.getLength());
+                Statement incr =
+                    new StmtExpr(ctx,
+                                 new ExprUnary(ctx,
+                                               ExprUnary.UNOP_POSTINC,
+                                               varExp));
+                Expression lhs = new ExprArray(ctx, name, varExp);
+                Statement body =
+                    new StmtBlock(ctx,
+                                  stmtsForConstructor(ctx, lhs, base));
+                Statement loop =
+                    new StmtFor(ctx, decl, cond, incr, body);
+                result.add(loop);
             }
         }
         

@@ -27,7 +27,7 @@ import java.util.List;
  * method actually returns a String.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NodesToJava.java,v 1.83 2004-02-13 21:25:17 dmaze Exp $
+ * @version $Id: NodesToJava.java,v 1.84 2004-04-23 23:59:12 rabbah Exp $
  */
 public class NodesToJava implements FEVisitor
 {
@@ -952,7 +952,7 @@ public class NodesToJava implements FEVisitor
             }
             result.append(indent + "return __obj;\n");
             unIndent();
-            result.append("}\n");
+            result.append(indent + "}\n");
             
             // Generate a callInit() method.
             result.append(indent + "protected void callInit()\n" +
@@ -969,7 +969,7 @@ public class NodesToJava implements FEVisitor
             }
             result.append(");\n");
             unIndent();
-            result.append("}\n");
+            result.append(indent + "}\n");
         }
         // In the compiler path, generate an empty constructor.
         else // (!libraryFormat)

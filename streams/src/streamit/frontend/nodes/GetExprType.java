@@ -17,6 +17,7 @@
 package streamit.frontend.nodes;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Visitor that returns the type of an expression.  This needs to be
@@ -24,17 +25,20 @@ import java.util.List;
  * All of the visitor methods return <code>Type</code>s.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: GetExprType.java,v 1.13 2004-01-06 13:53:25 dmaze Exp $
+ * @version $Id: GetExprType.java,v 1.14 2004-02-13 21:25:06 dmaze Exp $
  */
 public class GetExprType extends FENullVisitor
 {
     private SymbolTable symTab;
     private StreamType streamType;
+    private Map structsByName;
     
-    public GetExprType(SymbolTable symTab, StreamType streamType)
+    public GetExprType(SymbolTable symTab, StreamType streamType,
+                       Map structsByName)
     {
         this.symTab = symTab;
         this.streamType = streamType;
+        this.structsByName = structsByName;
     }
     
     public Object visitExprArray(ExprArray exp)
@@ -103,8 +107,20 @@ public class GetExprType extends FENullVisitor
         // If the base is a complex type, a field of it is float.
         if (base.isComplex())
             return new TypePrimitive(TypePrimitive.TYPE_FLOAT);
-        // ASSERT: base is a TypeStruct.
-        return ((TypeStruct)base).getType(exp.getName());
+        else if (base instanceof TypeStruct)
+            return ((TypeStruct)base).getType(exp.getName());
+        else if (base instanceof TypeStructRef)
+        {
+            String name = ((TypeStructRef)base).getName();
+            TypeStruct str = (TypeStruct)structsByName.get(name);
+            assert str != null : base;
+            return str.getType(exp.getName());
+        }
+        else
+        {
+            assert false : base;
+            return null;
+        }
     }
 
     public Object visitExprFunCall(ExprFunCall exp)

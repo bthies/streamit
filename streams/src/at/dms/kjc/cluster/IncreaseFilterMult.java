@@ -215,7 +215,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	// make sure that filter's pop rate is at least 25% of
 	// of what it peeks beyond consumed items.
 
-	if (KjcOptions.peekratio == -1) { 
+	if (KjcOptions.peekratio <= 0) { 
 	    return 1; 
 	} else {
 	    while (pop * mult / KjcOptions.peekratio < extra) { 
@@ -317,7 +317,7 @@ class IncreaseFilterMult implements StreamVisitor {
 	int code_size = CodeEstimate.estimateCode(filter)*_mult;
 
 	if ( (_mult <= 4 && code_size < CODE_CACHE_SIZE*10/8) || 
-	     (code_size < CODE_CACHE_SIZE/3) ) {
+	     (code_size < CODE_CACHE_SIZE/2) ) {
 
 	    for_stmt.setUnrolled(false); // allow unrolling
 

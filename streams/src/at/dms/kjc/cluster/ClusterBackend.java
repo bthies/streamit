@@ -58,6 +58,17 @@ public class ClusterBackend implements FlatVisitor {
 	filter2Node.put(node.contents, node);
     }
 
+
+    // this provides a way for cache partitioner to access filter execution counts!!
+
+    static HashMap filter_steady_counts;
+
+    public static int getExecCounts(SIROperator oper) {
+	int c[] = (int[])filter_steady_counts.get(oper);
+	if (c == null) { assert(1 == 0); }
+	return c[0];
+    }
+
     public static void run(SIRStream str,
 			   JInterfaceDeclaration[] 
 			   interfaces,
@@ -157,8 +168,11 @@ public class ClusterBackend implements FlatVisitor {
 	StreamItDot.printGraph(str, "before-peekmult.dot");
 	exec_counts1 = SIRScheduler.getExecutionCounts(str);
 
+	// sets filter steady counts, which are needed by cache partitioner
+	filter_steady_counts = exec_counts1[1]; 
+
 	// Increasing filter Multiplicity
-	if ( doCacheOptimization ) {
+	if ( doCacheOptimization && KjcOptions.peekratio != 1024) {
 	    IncreaseFilterMult.inc(str, 1, code_cache);
 	    //}
 
@@ -185,16 +199,22 @@ public class ClusterBackend implements FlatVisitor {
 	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
 	    decreased = IncreaseFilterMult.decreaseMult(partitionMap);
 
+
+	    /*
 	    if (decreased) {
 		// Repartition second time
 		str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
 		decreased = IncreaseFilterMult.decreaseMult(partitionMap);
 	    }
+	    */
 	}
 
 	// Calculate SIRSchedule after increasing multiplicity
 	StreamItDot.printGraph(str, "after-peekmult.dot");
 	exec_counts2 = SIRScheduler.getExecutionCounts(str);
+
+	// sets filter steady counts, which are needed by cache partitioner
+	filter_steady_counts = exec_counts2[1]; 
 
 	//exec_counts2 = SIRScheduler.getExecutionCounts(str);
 
@@ -239,6 +259,10 @@ public class ClusterBackend implements FlatVisitor {
 
 	if ( doCacheOptimization ) {
 	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0, code_cache, data_cache).calcPartitions(partitionMap);
+
+	    str.setParent(null); 
+	    str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
+
 	} else {
 	    // Fix up a bug that might be caused by previous 
 	    // pass of partitioner
@@ -344,7 +368,7 @@ public class ClusterBackend implements FlatVisitor {
 	ClusterCode.setPartitionMap(partitionMap);
 	ClusterCode.generateCode(graphFlattener.top);
 
-	FusionCode.generateFusionHeader();
+	FusionCode.generateFusionHeader(str);
 	FusionCode.generateFusionFile(d_sched, implicit_mult);
 
 	ClusterCode.generateMasterFile();

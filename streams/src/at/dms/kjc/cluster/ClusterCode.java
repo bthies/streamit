@@ -317,72 +317,208 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    int _s1 = in.getSource();
 	    int _d1 = in.getDest();
-	    
-	    for (int i = 0; i < out.size(); i++) {
-		int num = splitter.getWeight(i);
-		NetStream s = (NetStream)out.elementAt(i);		
 
-		int _s2 = s.getSource();
-		int _d2 = s.getDest();
+	    if (sum > 256) {
 
-		for (int y = 0; y < num; y++) {
+		// big weight do not unroll everything!!
+
+		for (int i = 0; i < out.size(); i++) {
+		    int num = splitter.getWeight(i);
+		    NetStream s = (NetStream)out.elementAt(i);		
 		    
-		    // Destination
-	    
-		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-		    p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
-		    p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
-		    p.print("    #else\n");
-		    p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
-		    p.print("    #endif\n");
-		    p.print("  #else\n");
-		    p.print("    "+s.producer_name()+".push(\n");
-		    p.print("  #endif\n");
-
-		    // Source
-
-		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
-		    p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
-		    p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+offs+"]\n");
-		    p.print("    #else\n");
-		    p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+offs+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
-		    p.print("    #endif\n");
-		    p.print("  #else\n");
-
-		    if (ClusterFusion.fusedWith(node).contains(source)) {
-			p.print("    "+in.pop_name()+"()\n");
-		    } else {	    
-			p.print("    "+in.consumer_name()+".pop()\n");
+		    int _s2 = s.getSource();
+		    int _d2 = s.getDest();
+		
+		    p.print("  for (int k = 0; k < "+num/32+"; k++) {\n");
+			
+		    for (int y = 0; y < 32; y++) {
+			
+			// Destination
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			p.print("    "+s.producer_name()+".push(\n");
+			p.print("  #endif\n");
+			
+			// Source
+			
+			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			
+			if (ClusterFusion.fusedWith(node).contains(source)) {
+			    p.print("    "+in.pop_name()+"()\n");
+			} else {	    
+			    p.print("    "+in.consumer_name()+".pop()\n");
+			}
+			
+			p.print("  #endif\n");
+			
+			// Close Assignement to Dest or Push Operator
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    ; // assignement\n");
+			p.print("  #else\n");		    
+			p.print("    ); // push()\n");
+			p.print("  #endif\n");
+		    
 		    }
 		    
-		    p.print("  #endif\n");
-
-		    // Close Assignement to Dest or Push Operator
-
 		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-		    p.print("    ; // assignement\n");
-		    p.print("  #else\n");		    
-		    p.print("    ); // push()\n");
+		    p.print("    HEAD_"+_s2+"_"+_d2+" += 32;\n");
+		    p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		    p.print("    #endif\n");
 		    p.print("  #endif\n");
-		    		    
-		    offs++;
-		}
+		    
+		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+		    p.print("    TAIL_"+_s1+"_"+_d1+" += 32;\n");
+		    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+		    p.print("    #endif\n");
+		    p.print("  #endif\n");
 
-		p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
-		p.print("    HEAD_"+_s2+"_"+_d2+" += "+num+";\n");
-		p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
-		p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		    p.print("  }\n");
+
+		    // remainder
+
+		    int rem = num % 32;
+
+		    for (int y = 0; y < rem; y++) {
+			
+			// Destination
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			p.print("    "+s.producer_name()+".push(\n");
+			p.print("  #endif\n");
+			
+			// Source
+			
+			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+y+"]\n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+y+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			
+			if (ClusterFusion.fusedWith(node).contains(source)) {
+			    p.print("    "+in.pop_name()+"()\n");
+			} else {	    
+			    p.print("    "+in.consumer_name()+".pop()\n");
+			}
+			
+			p.print("  #endif\n");
+			
+			// Close Assignement to Dest or Push Operator
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    ; // assignement\n");
+			p.print("  #else\n");		    
+			p.print("    ); // push()\n");
+			p.print("  #endif\n");
+		    
+		    }
+		    
+		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+		    p.print("    HEAD_"+_s2+"_"+_d2+" += "+rem+";\n");
+		    p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		    p.print("    #endif\n");
+		    p.print("  #endif\n");
+		    
+		    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+		    p.print("    TAIL_"+_s1+"_"+_d1+" += "+rem+";\n");
+		    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
+		    p.print("    #endif\n");
+		    p.print("  #endif\n");
+		}
+	    
+	    } else {
+
+	    
+
+		for (int i = 0; i < out.size(); i++) {
+		    int num = splitter.getWeight(i);
+		    NetStream s = (NetStream)out.elementAt(i);		
+		    
+		    int _s2 = s.getSource();
+		    int _d2 = s.getDest();
+		    
+		    for (int y = 0; y < num; y++) {
+			
+			// Destination
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s2+"_"+_d2+"\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[HEAD_"+_s2+"_"+_d2+" + "+y+"] = \n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s2+"_"+_d2+"[(HEAD_"+_s2+"_"+_d2+" + "+y+") & __BUF_SIZE_MASK_"+_s2+"_"+_d2+"] = \n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			p.print("    "+s.producer_name()+".push(\n");
+			p.print("  #endif\n");
+			
+			// Source
+			
+			p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+			p.print("    #ifdef __NOPEEK_"+_s1+"_"+_d1+"\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[TAIL_"+_s1+"_"+_d1+" + "+offs+"]\n");
+			p.print("    #else\n");
+			p.print("      BUFFER_"+_s1+"_"+_d1+"[(TAIL_"+_s1+"_"+_d1+" + "+offs+") & __BUF_SIZE_MASK_"+_s1+"_"+_d1+"]\n");
+			p.print("    #endif\n");
+			p.print("  #else\n");
+			
+			if (ClusterFusion.fusedWith(node).contains(source)) {
+			    p.print("    "+in.pop_name()+"()\n");
+			} else {	    
+			    p.print("    "+in.consumer_name()+".pop()\n");
+			}
+			
+			p.print("  #endif\n");
+			
+			// Close Assignement to Dest or Push Operator
+			
+			p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+			p.print("    ; // assignement\n");
+			p.print("  #else\n");		    
+			p.print("    ); // push()\n");
+			p.print("  #endif\n");
+			
+			offs++;
+		    }
+		    
+		    p.print("  #ifdef __FUSED_"+_s2+"_"+_d2+"\n");
+		    p.print("    HEAD_"+_s2+"_"+_d2+" += "+num+";\n");
+		    p.print("    #ifndef __NOPEEK_"+_s2+"_"+_d2+"\n");
+		    p.print("    HEAD_"+_s2+"_"+_d2+" &= __BUF_SIZE_MASK_"+_s2+"_"+_d2+";\n");
+		    p.print("    #endif\n");
+		    p.print("  #endif\n");
+		    
+		}
+		
+		p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
+		p.print("    TAIL_"+_s1+"_"+_d1+" += "+sum+";\n");
+		p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
+		p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
 		p.print("    #endif\n");
 		p.print("  #endif\n");
-
-	    }
-
-	    p.print("  #ifdef __FUSED_"+_s1+"_"+_d1+"\n");
-	    p.print("    TAIL_"+_s1+"_"+_d1+" += "+sum+";\n");
-	    p.print("    #ifndef __NOPEEK_"+_s1+"_"+_d1+"\n");
-	    p.print("    TAIL_"+_s1+"_"+_d1+" &= __BUF_SIZE_MASK_"+_s1+"_"+_d1+";\n");
-	    p.print("    #endif\n");
-	    p.print("  #endif\n");
 	    
 	    /*
 	    int sum = splitter.getSumOfWeights();
@@ -447,6 +583,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		offs += num;
 	    }
 	    */
+	    }
 	}
 
 	p.print("  }\n");
@@ -1142,7 +1279,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	
 	p.println();
 	
-	p.print("CC = gcc");
+	p.print("CC = gcc34"); // gcc34
 	p.println();
 
 	p.print("CC_IA64 = ecc");
@@ -1153,7 +1290,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("CCFLAGS = -O3");
 	p.println();
 
-	p.print("CCFLAGS_IA64 = -O3");
+	p.print("CCFLAGS_IA64 = -O1");
 	p.println();
 
 	p.println();

@@ -83,12 +83,12 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
 
 	    // do not optimize init work function
-	    //if (node.contents instanceof SIRTwoStageFilter) {
-	    //	JMethodDeclaration init_work = ((SIRTwoStageFilter)node.contents).getInitWork();
-	    //	if (((SIRFilter)node.contents).getMethods()[i].equals(init_work)) {
-	    //	    continue;
-	    //	}
-	    //}
+	    if (node.contents instanceof SIRTwoStageFilter) {
+	    	JMethodDeclaration init_work = ((SIRTwoStageFilter)node.contents).getInitWork();
+	    	if (((SIRFilter)node.contents).getMethods()[i].equals(init_work)) {
+	    	    continue;
+	    	}
+	    }
 
 	    if (!KjcOptions.nofieldprop) {
 		
@@ -420,8 +420,13 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    print("\n");
 
 	    print("  extern "+input_type.toString()+" BUFFER_"+s+"_"+d+"[];\n");
-	    print("  extern int HEAD_"+s+"_"+d+";\n");
-	    print("  extern int TAIL_"+s+"_"+d+";\n");
+
+	    print("  extern volatile int HEAD_"+s+"_"+d+";\n");
+	    print("  extern volatile int TAIL_"+s+"_"+d+";\n");
+
+	    //print("  extern int HEAD_"+s+"_"+d+";\n");
+	    //print("  extern int TAIL_"+s+"_"+d+";\n");
+
 	    print("\n");
 
 	    // pop from fusion buffer

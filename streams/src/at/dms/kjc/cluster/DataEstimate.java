@@ -75,8 +75,9 @@ public class DataEstimate {
 	    int pop_n = filter.getPopInt();
 	    int peek_n = filter.getPeekInt();
 	    int push_n = filter.getPushInt();
-	    return (steady_int*pop_n+(peek_n-pop_n))*getTypeSize(input_type)+
-		steady_int*push_n*getTypeSize(output_type);
+	    return steady_int*pop_n*getTypeSize(input_type)+
+		    //(peek_n-pop_n)*getTypeSize(input_type)+
+		    steady_int*push_n*getTypeSize(output_type);
 	}
 	
 	if (oper instanceof SIRJoiner) {

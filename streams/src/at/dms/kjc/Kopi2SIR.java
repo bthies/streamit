@@ -74,6 +74,11 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     //Array of names of the parameters
     private String[] paramNames;
 
+    //List of lists of final vars encountered to allow propagation into anonymous classes
+    //Each element of finalVars represents the list of finalvars encountered for a method
+    //in stack of methods being parsed
+    private LinkedList finalVars;
+
     //Keeps track if current class is anonymous
     private boolean anonCreation;
 
@@ -95,6 +100,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	searchList = new LinkedList();
 	application = null;
 	initBuiltinFilters();
+	finalVars=new LinkedList();
     }
 
     public Kopi2SIR(JCompilationUnit[] app) {
@@ -110,6 +116,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	searchList = new LinkedList();
 	this.application = app;
 	initBuiltinFilters();
+	finalVars=new LinkedList();
     }
 
     private String printLine(JPhylum l) {
@@ -690,6 +697,13 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    return self;
 	}
 
+	LinkedList newList=new LinkedList();
+	finalVars.add(newList);
+	for(int i=0;i<parameters.length;i++) {
+	    JFormalParameter param=parameters[i];
+	    if(param.isFinal())
+		newList.add(param);
+	}
 	JFormalParameter[] saveParams=params;
 	String[] saveNames=paramNames;
 	if(!anonCreation) {
@@ -701,6 +715,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	for (int i = 0; i < parameters.length; i++) {
             trash = parameters[i].accept(this);
 	}
+
         
 	body = (JBlock)body.accept(this);
 	
@@ -764,6 +779,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 
 	params=saveParams;
 	paramNames=saveNames;
+	finalVars.removeLast();
 	return self;
     }
     
@@ -818,7 +834,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
         blockStart("VariableDeclarationStatement", self);
 	for (int i = 0; i < vars.length; i++) {
-            vars[i] = (JVariableDefinition)vars[i].accept(this);	
+            vars[i] = (JVariableDefinition)vars[i].accept(this);
 	}
 	for (int i = 0; i < vars.length; i++)
 	    if (vars[i] != null)
@@ -840,7 +856,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     {
         blockStart("VariableDefinition: " + self.getIdent(), self);
 	printMe(type.toString());
-
+	if(self.isFinal())
+	    ((List)finalVars.getLast()).add(self);
 	//The attribute returned from visiting the expression of the variable def
 	Object retObj = null;
 	//visit the expression
@@ -1908,6 +1925,22 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 		    return new JLocalVariableExpression(params[i].getTokenReference(),params[i]);
 		}
 	    }
+	    if(ident.equals("var$numbflies")) {
+		System.err.println("Trying to match var$numbflies");
+		for(int i=finalVars.size()-1;i>=0;i--) {
+		    System.err.println("Recursing...");
+		    List vars=(List)finalVars.get(i);
+		    for(int j=0;j<vars.size();j++) {
+			JLocalVariable var=(JLocalVariable)vars.get(j);
+			System.err.println("Trying:"+var);
+			if(CSourceClass.varName(var).equals(ident)) {
+			    System.err.println("Success!");
+			    return new JLocalVariableExpression(var.getTokenReference(),var);
+			}
+		    }
+		}
+	    }
+	    
 	}
 	if (supportedType(left.getType().getCClass().getIdent())) {
 	    return new JStringLiteral(null, left.getType().getCClass().getIdent());

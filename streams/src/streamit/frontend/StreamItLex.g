@@ -16,7 +16,7 @@
 
 /*
  * StreamItLex.g: Lexical tokens for StreamIt
- * $Id: StreamItLex.g,v 1.18 2005-02-01 05:07:54 rabbah Exp $
+ * $Id: StreamItLex.g,v 1.19 2005-02-01 19:09:23 rabbah Exp $
  */
 
 header {
@@ -184,6 +184,10 @@ ESC	:	'\\'
 protected
 DIGIT
 	:	'0'..'9'
+	;
+
+HEXNUMBER
+	:	 "0x" ( (DIGIT) | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'a' | 'b' | 'c' | 'd' | 'e' | 'f')+ 
 	;
 
 NUMBER

@@ -16,7 +16,7 @@
 
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.50 2005-02-01 05:07:54 rabbah Exp $
+ * $Id: StreamItParserFE.g,v 1.51 2005-02-01 19:09:23 rabbah Exp $
  */
 
 header {
@@ -609,7 +609,14 @@ value returns [Expression x] { x = null; Expression array; }
 	;
 
 constantExpr returns [Expression x] { x = null; }
-	:	n:NUMBER
+	:	h:HEXNUMBER
+			{  String tmp = h.getText().substring(2);
+			   Integer iti = new Integer(
+	 (int ) ( ( Long.parseLong(tmp, 16) - (long) Integer.MIN_VALUE ) 
+		  % ( (long)Integer.MAX_VALUE - (long) Integer.MIN_VALUE + 1) 
+		  + Integer.MIN_VALUE) );
+				x = ExprConstant.createConstant(getContext(h), iti.toString() ); }
+	|	n:NUMBER
 			{ x = ExprConstant.createConstant(getContext(n), n.getText()); }
 	|	c:CHAR_LITERAL
 			{ x = new ExprConstChar(getContext(c), c.getText()); }

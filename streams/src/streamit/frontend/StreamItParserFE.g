@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.11 2002-09-30 22:05:41 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.12 2002-10-18 15:30:35 dmaze Exp $
  */
 
 header {
@@ -297,8 +297,9 @@ for_incr_statement returns [Statement s] { s = null; }
 
 expr_statement returns [Statement s] { s = null; Expression x; }
 	:	(incOrDec) => x=incOrDec { s = new StmtExpr(x); }
-	|	(assign_expr) => s=assign_expr
-	|	(func_call) => x=func_call { s = new StmtExpr(x); }
+	|   (left_expr (ASSIGN | PLUS_EQUALS | MINUS_EQUALS | STAR_EQUALS |
+				DIV_EQUALS)) => s=assign_expr
+	|	(ID LPAREN) => x=func_call { s = new StmtExpr(x); }
 	|	x=streamit_value_expr { s = new StmtExpr(x); }
 	;
 

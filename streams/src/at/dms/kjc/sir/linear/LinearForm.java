@@ -13,7 +13,7 @@ import java.util.*;
  * propage LinearForm information throughout the body of the filter and
  * hopefully construct a LinearFilterRepresentation from the filter.
  *
- * $Id: LinearForm.java,v 1.2 2002-08-15 20:38:04 aalamb Exp $
+ * $Id: LinearForm.java,v 1.3 2002-08-16 21:16:49 aalamb Exp $
  **/
 public class LinearForm {
     /** weights of inputs **/
@@ -82,6 +82,10 @@ public class LinearForm {
 	// let the internal matrix rep handle the error bounds checking
 	return this.weights.getElement(index);
     }
+    /** gets the internal size of this linear form **/
+    public int getWeightsSize() {
+	return this.weights.getSize();
+    }
 
     /**
      * Negate the LinearForm -- to do this, we reverse the sign of the
@@ -126,6 +130,36 @@ public class LinearForm {
 	return summedForm;
     }
 
+
+    /**
+     * Add all of the weights in this linear form to the specified column in
+     * the passed FilterMatrix. Weights are copied from index 0 to index n of
+     * the linear form, and from index (0,col) to index (n,col) of the filter matrix.
+     * eg from left to right in linear form becomes top to bottom in
+     * filter matrix. One more way -- copy the row vector in this linear form into the
+     * col column of the filter matrix.<p>
+     *
+     * Note that the offset of the linear form is <b>not</b> copied anywhere.
+     **/
+    public void copyToColumn(FilterMatrix fm, int col) {
+	if (fm==null) {throw new IllegalArgumentException("null to copyToColumn");}
+	// check to make sure that the column is valid
+	if (fm.getCols() <= col) {
+	    throw new IllegalArgumentException("column " + col +
+					       " is an invalid column in filter matrix " + fm);
+	}
+	// make sure that we are the same size as the column we are trying to copy into.
+	if (this.getWeightsSize() != fm.getRows()) {
+	    throw new IllegalArgumentException("cols of filter matrix aren't the same as this linear form");
+	}
+
+	// just copy the elements in weights, element-wise
+	int size = this.getWeightsSize();
+	for (int i=0; i<size; i++) {
+	    fm.setElement(i,col, this.weights.getElement(i));
+	}
+	// and we are done
+    }
     
 
     /** Pretty print this linear form **/

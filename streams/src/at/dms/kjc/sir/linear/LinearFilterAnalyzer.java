@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearFilterAnalyzer.java,v 1.2 2002-08-15 20:38:04 aalamb Exp $
+ * $Id: LinearFilterAnalyzer.java,v 1.3 2002-08-16 21:16:49 aalamb Exp $
  **/
 public class LinearFilterAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear forms. never would have guessed that, would you? **/
@@ -43,14 +43,30 @@ public class LinearFilterAnalyzer extends EmptyStreamVisitor {
 
 	// set up the visitor that will actually collect the data
 	int peekRate = extractInteger(self.getPeek());
+	int pushRate = extractInteger(self.getPush());
 	System.out.println("  Peek rate: " + peekRate);
-	LinearFilterVisitor theVisitor = new LinearFilterVisitor(peekRate);
+	System.out.println("  Push rate: " + pushRate);
+	// if we have a peek or push rate of zero, this isn't a linear filter that we care about,
+	// so only try and visit the filter if both are non-zero
+	if ((peekRate != 0) && (pushRate != 0)) {
+	    LinearFilterVisitor theVisitor = new LinearFilterVisitor(peekRate, pushRate);
 
-	// pump the visitor through the work function
-	// (we might need to send it thought the init function as well so that
-	//  we can determine the initial values of fields. However, I think that
-	//  field prop is supposed to take care of this.)
-	self.getWork().accept(theVisitor);
+	    // pump the visitor through the work function
+	    // (we might need to send it thought the init function as well so that
+	    //  we can determine the initial values of fields. However, I think that
+	    //  field prop is supposed to take care of this.)
+	    self.getWork().accept(theVisitor);
+
+	    // print out the results of pumping the visitor
+	    if (theVisitor.computesLinearFunction()) {
+		System.out.println("Linear filter found: " + self +
+				   "\n-->Matrix:\n" + theVisitor.getMatrixRepresentation() +
+				   "\n-->Constant Vector:" + theVisitor.getConstantVector());
+	    }
+		
+	} else {
+	    System.out.println("  " + self.getIdent() + " is source/sink.");
+	}
     }
 
     /** extract the actual value from a JExpression that is actually a literal... **/
@@ -107,6 +123,12 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      **/
     private int peekOffset;
 
+    /**
+     * The current push offset. This keeps track of which colimn in the Linear representation
+     * of the current filter should be updated with the linear form.
+     **/
+    private int pushOffset;
+    
 
     /**
      * Flag that is set when we detect that something blatently non-linear is
@@ -115,6 +137,14 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * makes the filter non-linear.
      **/
     private boolean nonLinearFlag;
+
+    /** The matrix which represents this filter. **/
+    private FilterMatrix representationMatrix;
+    /**
+     * A vector of offsets (eg constants that need to be added
+     * to the combo of inputs to produce the output).
+     **/
+    private FilterVector representationVector;
     
     /**
      * Create a new LinearFilterVisitor which is looking to figure out 
@@ -122,26 +152,50 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * Also creates a LinearFilterRepresentation if the
      * filter computes a linear function.
      **/
-    public LinearFilterVisitor(int numPeeks) {
+    public LinearFilterVisitor(int numPeeks, int numPushes) {
 	this.peekSize = numPeeks;
 	this.expressionsToLinearForms = new HashMap();
 	this.peekOffset = 0;
+	this.pushOffset = 0;
+	this.representationMatrix = new FilterMatrix(numPeeks, numPushes);
+	this.representationVector = new FilterVector(numPeeks);
 	this.nonLinearFlag = false;
 	checkRep();
+
     }
 
+    /** Returns true of the filter computes a linear function. **/
+    public boolean computesLinearFunction() {
+	return !this.nonLinearFlag;
+    }
+    /** get the matrix representing this filter. **/
+    public FilterMatrix getMatrixRepresentation() {
+	return this.representationMatrix;
+    }
+    /** get the vector representing the constants that this filter adds/subtracts to produce output. **/
+    public FilterVector getConstantVector() {
+	return this.representationVector;
+    }
+    
 
 
     /////// So the deal with this attribute visitor is that all of its methods that visit
     /////// expressions that are some sort of linear (or affine) calculation on the inputs
     /////// the method returns a LinearForm. They return null otherwise.
-    
+
+
+
+//     public Object visitArgs(JExpression[] args) {return null;}
+//     public Object visitArrayAccessExpression(JArrayAccessExpression self,
+// 					     JExpression prefix,
+// 					     JExpression accessor) {return null;}
+//     public Object visitArrayInitializer(JArrayInitializer self, JExpression[] elems){return null;}
+//     public Object visitArrayLengthExpression(JArrayLengthExpression self, JExpression prefix) {return null;}
 
     public Object visitAssignmentExpression(JAssignmentExpression self, JExpression left, JExpression right) {
 	System.out.println("  visiting assignment expression: " + self);
 	return super.visitAssignmentExpression(self, left, right);
     }
-
 
     /**
      * visits a binary expression: eg add, sub, etc.
@@ -193,24 +247,164 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	return combinedLinearForm;
     }
 
-    
-    public Object visitMethodCallExpression(JMethodCallExpression self,
-					    JExpression prefix,
-					    String ident,
-					    JExpression[] args) {
-	System.out.println("  visiting method call expression: " + self);
-	return super.visitMethodCallExpression(self, prefix, ident, args);
-    }
+//     public Object visitBitwiseComplementExpression(JUnaryExpression self, JExpression expr){return null;}
+//     public Object visitBitwiseExpression(JBitwiseExpression self,
+// 					 int oper,
+// 					 JExpression left,
+// 					 JExpression right){return null;}
+//     public Object visitBlockStatement(JBlock self, JavaStyleComment[] comments){return null;}
+//     public Object visitBreakStatement(JBreakStatement self, String label){return null;}
+//     public Object visitCastExpression(JCastExpression self, JExpression expr, CType type){return null;}
+//     public Object visitCatchClause(JCatchClause self, JFormalParameter exception, JBlock body){return null;}
+//     public Object visitClassBody(JTypeDeclaration[] decls,
+// 				 JFieldDeclaration[] fields,
+// 				 JMethodDeclaration[] methods,
+// 				 JPhylum[] body){return null;}
+//     public Object visitClassDeclaration(JClassDeclaration self, int modifiers,
+// 					String ident, String superName,
+// 					CClassType[] interfaces, JPhylum[] body,
+// 					JFieldDeclaration[] fields, JMethodDeclaration[] methods,
+// 					JTypeDeclaration[] decls){return null;}
+//     public Object visitClassExpression(JClassExpression self, CType type){return null;}
+//     public Object visitClassImport(String name){return null;}
+//     public Object visitComment(JavaStyleComment self){return null;}
+//     public Object visitComments(JavaStyleComment[] self){return null;}
+//     public Object visitCompilationUnit(JCompilationUnit self, JPackageName packageName,
+// 						 JPackageImport[] importedPackages,
+// 				       JClassImport[] importedClasses,
+// 				       JTypeDeclaration[] typeDeclarations){return null;}
+//     public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
+// 						    int oper, JExpression left,
+// 						    JExpression right){return null;}
+//     public Object visitCompoundStatement(JCompoundStatement self, JStatement[] body){return null;}
+//     public Object visitConditionalExpression(JConditionalExpression self, JExpression cond,
+// 					     JExpression left, JExpression right){return null;}
+//     public Object visitConstructorCall(JConstructorCall self, boolean functorIsThis, JExpression[] params){return null;}
+//     public Object visitConstructorDeclaration(JConstructorDeclaration self, int modifiers,
+// 					      String ident, JFormalParameter[] parameters,
+// 					      CClassType[] exceptions, JConstructorBlock body){return null;}
+//     public Object visitContinueStatement(JContinueStatement self, String label){return null;}
+//     public Object visitDoStatement(JDoStatement self, JExpression cond, JStatement body){return null;}
+//     public Object visitEmptyStatement(JEmptyStatement self){return null;}
+//     public Object visitEqualityExpression(JEqualityExpression self, boolean equal,
+// 					  JExpression left, JExpression right){return null;}
+//     public Object visitExpressionListStatement(JExpressionListStatement self, JExpression[] expr){return null;}
+//     public Object visitExpressionStatement(JExpressionStatement self, JExpression expr){return null;}
+//     public Object visitFieldDeclaration(JFieldDeclaration self, int modifiers,
+// 					CType type, String ident, JExpression expr){return null;}
+//     public Object visitFieldExpression(JFieldAccessExpression self, JExpression left, String ident){return null;}
+//     public Object visitFormalParameters(JFormalParameter self, boolean isFinal,
+// 					CType type, String ident){return null;}
+//     public Object visitForStatement(JForStatement self, JStatement init,
+// 				    JExpression cond, JStatement incr, JStatement body){return null;}
+//     public Object visitIfStatement(JIfStatement self, JExpression cond,
+// 				   JStatement thenClause, JStatement elseClause){return null;}
+//     public Object visitInnerClassDeclaration(JClassDeclaration self, int modifiers,
+// 					     String ident, String superName,
+// 					     CClassType[] interfaces, JTypeDeclaration[] decls,
+// 					     JPhylum[] body, JFieldDeclaration[] fields,
+// 					     JMethodDeclaration[] methods){return null;}
+//     public Object visitInstanceofExpression(JInstanceofExpression self, JExpression expr, CType dest){return null;}
+//     public Object visitInterfaceDeclaration(JInterfaceDeclaration self, int modifiers,
+// 					    String ident, CClassType[] interfaces,
+// 					    JPhylum[] body, JMethodDeclaration[] methods){return null;}
+//     public Object visitJavadoc(JavadocComment self){return null;}
+//     public Object visitLabeledStatement(JLabeledStatement self, String label,
+// 					JStatement stmt){return null;}
+//     public Object visitLocalVariableExpression(JLocalVariableExpression self, String ident){return null;}
+//     public Object visitLogicalComplementExpression(JUnaryExpression self, JExpression expr){return null;}
+//     public Object visitMethodCallExpression(JMethodCallExpression self, JExpression prefix,
+// 					    String ident, JExpression[] args){return null;}
+//     public Object visitMethodDeclaration(JMethodDeclaration self, int modifiers,
+// 					 CType returnType, String ident,
+// 					 JFormalParameter[] parameters, CClassType[] exceptions,
+// 					 JBlock body){return null;}
+//     public Object visitNameExpression(JNameExpression self, JExpression prefix, String ident){return null;}
+//     public Object visitNewArrayExpression(JNewArrayExpression self, CType type,
+// 					  JExpression[] dims, JArrayInitializer init){return null;}
+//     public Object visitPackageImport(String name){return null;}
+//     public Object visitPackageName(String name){return null;}
+//     public Object visitParenthesedExpression(JParenthesedExpression self, JExpression expr){return null;}
+//     public Object visitPostfixExpression(JPostfixExpression self, int oper, JExpression expr){return null;}
+//     public Object visitPrefixExpression(JPrefixExpression self, int oper, JExpression expr){return null;}
+//     public Object visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self,
+// 						  JExpression prefix, String ident,
+// 						  JExpression[] params, JClassDeclaration decl){return null;}
+//     public Object visitQualifiedInstanceCreation(JQualifiedInstanceCreation self,
+// 						 JExpression prefix, String ident,
+// 						 JExpression[] params){return null;}
+//     public Object visitRelationalExpression(JRelationalExpression self, int oper,
+// 					    JExpression left, JExpression right){return null;}
+//     public Object visitReturnStatement(JReturnStatement self, JExpression expr){return null;}
+//     public Object visitShiftExpression(JShiftExpression self, int oper, JExpression left, JExpression right){return null;}
+//     public Object visitShortLiteral(JShortLiteral self, short value){return null;}
+//     public Object visitSuperExpression(JSuperExpression self){return null;}
+//     public Object visitSwitchGroup(JSwitchGroup self, JSwitchLabel[] labels, JStatement[] stmts){return null;}
+//     public Object visitSwitchLabel(JSwitchLabel self, JExpression expr){return null;}
+//     public Object visitSwitchStatement(JSwitchStatement self, JExpression expr, JSwitchGroup[] body){return null;}
+//     public Object visitSynchronizedStatement(JSynchronizedStatement self, JExpression cond, JStatement body){return null;}
+//     public Object visitThisExpression(JThisExpression self, JExpression prefix){return null;}
+//     public Object visitThrowStatement(JThrowStatement self, JExpression expr){return null;}
+//     public Object visitTryCatchStatement(JTryCatchStatement self, JBlock tryClause, JCatchClause[] catchClauses){return null;}
+//     public Object visitTryFinallyStatement(JTryFinallyStatement self, JBlock tryClause, JBlock finallyClause){return null;}
+//     public Object visitTypeDeclarationStatement(JTypeDeclarationStatement self, JTypeDeclaration decl){return null;}
+//     public Object visitTypeNameExpression(JTypeNameExpression self, CType type){return null;}
+//     public Object visitUnaryMinusExpression(JUnaryExpression self, JExpression expr){return null;}
+//     public Object visitUnaryPlusExpression(JUnaryExpression self, JExpression expr){return null;}
+//     public Object visitUnaryPromoteExpression(JUnaryPromote self, JExpression expr, CType type){return null;}
+//     public Object visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self,
+// 						    CClassType type, JExpression[] params,
+// 						    JClassDeclaration decl){return null;}
+//     public Object visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self, CClassType type,
+// 						   JExpression[] params){return null;}
+//     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
+// 						    JVariableDefinition[] vars){return null;}
+//     public Object visitVariableDefinition(JVariableDefinition self, int modifiers,
+// 					  CType type, String ident, JExpression expr){return null;}
+//     public Object visitWhileStatement(JWhileStatement self, JExpression cond, JStatement body){return null;}
 
+
+
+    ///// SIR Constructs that are interesting for linear analysis (eg push, pop, and peek expressions)
+    
+    /**
+     * when we visit a push expression, we are basically going to try and
+     * resolve the argument expression into linear form. If the argument
+     * resolves into linear form, then we are golden -- we make a note of the 
+     **/
     public Object visitPushExpression(SIRPushExpression self, CType tapeType, JExpression arg) {
 	System.out.println("  visiting push expression: " +
 			   "argument: " + arg);
-	return super.visitPushExpression(self, tapeType, arg);
+	// try and resolve the argument to a LinearForm by munging the argument
+	LinearForm argLinearForm = (LinearForm)arg.accept(this);
+
+	// if we get null, it means we don't know that this push expression will
+	// yield a linear form, so therefore we can't characterize the filter as
+	// a whole as having linear form.
+	if (argLinearForm == null) {
+	    // set the flag that says this filter isn't linear
+	    this.nonLinearFlag = true;
+	} else {
+	    // we have a linear form, so we update the matrix representation
+	    argLinearForm.copyToColumn(this.representationMatrix, this.pushOffset);
+	    // update the constant vector with the offset from the linear form
+	    this.representationVector.setElement(this.pushOffset, argLinearForm.getOffset());
+	    // increment the push offset (for the next push statement)
+	    this.pushOffset++;
+	}
+	// make sure we didn't screw up anything.
+	checkRep();
+	// push expressions don't return values, so they also certainly don't return linear forms
+	return null;
     }
-
+    /**
+     * A pop expression generates a linear form based on the current offset, and then
+     * updates the current offset. The basic idea is that a pop expression represents using one
+     * one of the input values from the tapes, and therefore should correspond to a linear form
+     * with a "1" at the appropriate place in the weights vector.
+     **/
     public Object visitPopExpression(SIRPopExpression self, CType tapeType) {
-	System.out.println("  visitng pop expression: " + self);
-
+	System.out.println("  visiting pop expression: " + self);
 	// A pop expression is one of the base cases for creating LinearForms
 	// the pop expression will creates a linear form that corresponds to using
 	// a peek at the current offset.
@@ -225,7 +419,13 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	System.out.println("  returning " + currentForm + " from pop expression");
 	return currentForm;
     }
-
+    /**
+     * Peek expressions are also base expressions that generate linear forms.
+     * The peek index is transformed into a "1" in the appropriate place in
+     * the weights vector of the returned linear form. We also have to keep track of
+     * the case when there haev been previous pops which change the relative position of the
+     * index we are processing.
+     **/
     public Object visitPeekExpression(SIRPeekExpression self, CType tapeType, JExpression arg) {
 	System.out.println("  visiting peek expression" +
 			   " peek index: " + arg);
@@ -264,6 +464,20 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     }
 
 
+    
+
+
+
+    public Object visitMethodCallExpression(JMethodCallExpression self,
+					    JExpression prefix,
+					    String ident,
+					    JExpression[] args) {
+	System.out.println("  visiting method call expression: " + self);
+	return super.visitMethodCallExpression(self, prefix, ident, args);
+    }
+    ////// Literal processing handlers
+
+    
     /** boolean logic falls outside the realm of linear filter analysis -- return null**/
     public Object visitBooleanLiteral(JBooleanLiteral self,boolean value) {return null;}
     /** create the appropriate valued offset **/
@@ -309,7 +523,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 
 
 
-
+    
 
     /**
      * Creates a blank linear form that is appropriate for this filter (eg
@@ -344,11 +558,16 @@ private LinearForm getOffsetLinearForm(double offset) {
 	if (this.peekOffset < 0) {throw new RuntimeException("Peekoffset < 0");}
 	// if the filter doesn't peek at any data, the following is incorrect.
 	if (peekSize != 0) {
-	    if (this.peekOffset >= this.peekSize) {
+	    if (this.peekOffset > this.peekSize) {
 		throw new RuntimeException("Filter pops more than peeks:" +
 					   "peekSize: " + this.peekSize + " " +
 					   "peekOffset: " + this.peekOffset);
 	    }
+	}
+	// make sure that the number of pushes that we have seen doesn't go past the end of
+	// the matrix/vector that represents this filter.
+	if (this.pushOffset > this.representationMatrix.getRows()) {
+	    throw new RuntimeException("Filter pushes more items than is decalred");
 	}
 	    
     }

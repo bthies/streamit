@@ -50,15 +50,15 @@ class AdapBeam extends Filter {//
 	A_ext= new Complex[N_ch][6*N_ch];
 	// are the initial values zero? no they are not
 	for (int i=0; i < N_ch; i++)
-	    for (int j=5*N_ch ; j<6*N-ch; j++){
-		if (i=j) {
+	    for (int j=5*N_ch ; j<6*N_ch; j++){
+		if (i==j) {
 		A_ext[i][j]=Comp.Make(alpha,0);
 		}
 		else A_ext[i][j]=Comp.Make(0,0);
 		
 	    }
-	input=new Channel(new Complex[0][0][0].class(),1);
-	output=new Channel(new MatCub(N_bm,N_srg,N_pri,N_ch,N_bm).getclass(),1);
+	input=new Channel(new Complex[0][0][0].getClass(),1);
+	output=new Channel(new MatCub(N_bm,N_srg,N_pri,N_ch,N_bm).getClass(),1);
        
     }
 

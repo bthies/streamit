@@ -11,8 +11,8 @@ class LQ {// This class performs the LQ decomposition of its input matrix, the o
 		}*/
     
   public static float[][] LQcalc(int m,int n,Complex [][] A){
-	float[][] B;
-	float[]   x;
+	complex[][] B;
+	complex[]   x;
 	float[]   w;
 	float[]   v;
 	float normx;

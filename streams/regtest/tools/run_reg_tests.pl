@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.6 2002-12-11 19:18:47 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.7 2002-12-11 19:29:24 aalamb Exp $
 
 use strict;
 
@@ -15,7 +15,7 @@ my $DEBUG = 0;
 # admin email addresses where we want the crazy emails to go (space separated)
 my $ADMINS = "aalamb\@mit.edu mgordon\@cag.lcs.mit.edu";
 # user email addresses who want to get regtest-results
-my $USERS = "commit-stream\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
+my $USERS = "streamit-regtest\@cag.lcs.mit.edu nmani\@cag.lcs.mit.edu";
 
 # Set up necessary environmental variables so that programs will run
 # automatic testing so that the text tester gets used all of the time.

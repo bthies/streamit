@@ -52,6 +52,11 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer ("int-int").add ("x", x).add ("y", y);
     }
 
+    public Operator (int x, int y, int z)
+    {
+        initParams = new ParameterContainer ("int-int-int").add ("x", x).add ("y", y).add("z", z);
+    }
+
     public Operator(float f)
     {
         initParams = new ParameterContainer ("float").add ("f", f);
@@ -91,6 +96,9 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(int x, int y) { invalidInitError (); }
+
+    // initializatoin functions, to be over-ridden
+    public void init(int x, int y, int z) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(float f) { invalidInitError (); }
@@ -314,6 +322,7 @@ public class Operator extends DestroyedClass
         else
 
         if (initParams.getParamName ().equals("int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y")); else
+        if (initParams.getParamName ().equals("int-int-int")) init (initParams.getIntParam ("x"), initParams.getIntParam ("y"), initParams.getIntParam ("z")); else
         if (initParams.getParamName ().equals("")) init (); else
         if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
         if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f")); else

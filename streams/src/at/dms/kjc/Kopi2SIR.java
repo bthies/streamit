@@ -2738,7 +2738,7 @@ protected void deepCloneInto(at.dms.kjc.Kopi2SIR other) {
   other.application = (at.dms.kjc.JCompilationUnit[])at.dms.kjc.AutoCloner.cloneToplevel(this.application, other);
   other.parentStream = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.parentStream, other);
   other.topLevel = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.topLevel, other);
-  other.trash = (java.lang.Object)at.dms.kjc.AutoCloner.cloneToplevel(this.trash, other);
+  other.trash = this.trash;
   other.num = this.num;
   other.lineNumber = this.lineNumber;
   other.currentMethod = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.currentMethod, other);

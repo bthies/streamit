@@ -8,6 +8,22 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.io.IOException;
 
+/**
+ * This class will generate code to clone fields that it thinks should
+ * be cloned in the target classes, and to copy other fields directly
+ * over.
+ *
+ * If you have a class with some fields that the CloneGenerator is
+ * cloning but you do NOT want to be cloned, you can specify this by
+ * creating the following field in your class, and filling it with the
+ * names of the fields that you do not want to be cloned, e.g.:
+ *
+ *  public static final String[] DO_NOT_CLONE_THESE_FIELDS = { "mySpecialParent" }
+ *
+ * If this field is not present in your class, then all fields of your
+ * class will be considered for cloning.
+ *
+ */
 public class CloneGenerator {
 
     /** header for cloning methods in files */
@@ -102,25 +118,29 @@ public class CloneGenerator {
 	    }
 	    sb.append("  super.deepCloneInto(other);\n");
 	}
-	// copy all fields over, calling clone on them only if they are DeepCloneable
+	// get list of fields that should NOT be cloned (as specified
+	// by DO_NOT_CLONE_THESE_FIELDS array in class).
+	HashSet doNotClone = getProhibitedFields(c);
+	// copy all fields over, calling clone on them only if they
+	// are DeepCloneable and not a member of <doNotClone>
 	Field[] field = c.getDeclaredFields();
 	for (int i=0; i<field.length; i++) {
 	    // get the value for the field
 	    field[i].setAccessible(true);
 	    // get the name, type of field
-	    String name = field[i].getName();
+	    String name = field[i].getName().intern();
 	    Class type = field[i].getType();
 	    if (Modifier.isStatic(field[i].getModifiers())) {
 		// do nothing for static fields
-	    } else if (type.isPrimitive()) {
-		// for primitives, copy them straight over
-		sb.append("  other." + name + " = this." + name + ";\n");
-	    } else if (name.equals("serializationHandle")) {
-		// for now, ignore serialization handles.  To be
-		// changed once we get complete new cloning framework.
-		sb.append("  other." + name + " = this." + name + ";\n");
-	    } else if  (name.equals("parent") && c.getName().equals("at.dms.kjc.sir.SIROperator")) {
-		// ignore SIROperator.parent, because this clones the entire tree
+	    } else if (// for primitives, copy them straight over
+		       type.isPrimitive() ||
+		       // for now, ignore serialization handles.  To be
+		       // changed once we get complete new cloning framework.
+		       name.equals("serializationHandle") ||
+		       // ignore SIROperator.parent, because this clones the entire tree
+		       name.equals("parent") && c.getName().equals("at.dms.kjc.sir.SIROperator") ||
+		       // ignore fields that we should not not clone
+		       doNotClone.contains(name)) {
 		sb.append("  other." + name + " = this." + name + ";\n");
 	    } else {
 		// otherwise call toplevel cloning method
@@ -129,6 +149,49 @@ public class CloneGenerator {
 	}
 	sb.append("}\n");
 	return sb.toString();
+    }
+
+    /**
+     * Returns a hashset of string names of any fields in <c> that
+     * should NOT be cloned (they should be directly copied instead).
+     * The set is constructed from the following field of <c>:
+     * 
+     *   public static final String[] DO_NOT_CLONE_THESE_FIELDS
+     *
+     * If the preceding field is not present, then an empty hashset is
+     * returned.
+     */
+    private static final String PROHIBITED_FIELD_NAME = "DO_NOT_CLONE_THESE_FIELDS";
+    private static HashSet getProhibitedFields(Class c) {
+	// prohibited fields
+	HashSet result = new HashSet();
+	// all fields
+	HashSet fields = new HashSet();
+	Field[] field = c.getDeclaredFields();
+	String[] namesToIgnore = null;
+	// look for list of prohibited fields
+	for (int i=0; i<field.length; i++) {
+	    String name = field[i].getName().intern();
+	    fields.add(name);
+	    if (name.equals(PROHIBITED_FIELD_NAME)) {
+		try {
+		    namesToIgnore = (String[])field[i].get(null);
+		} catch (Exception e) {
+		    Utils.fail("Could not retrieve value of " + PROHIBITED_FIELD_NAME + " field.");
+		    e.printStackTrace();
+		}
+	    }
+	}
+	// if we found names to ignore, add them to result
+	if (namesToIgnore!=null) {
+	    for (int i=0; i<namesToIgnore.length; i++) {
+		String name = namesToIgnore[i].intern();
+		Utils.assert(fields.contains(name),
+			     "The class " + c.getName() + " tries to prohibit the cloning of a field named \"" + name + "\", but no such field exists.");
+		result.add(name);
+	    }
+	}
+	return result;
     }
 
     /**

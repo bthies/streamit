@@ -1,7 +1,7 @@
 # Command to run the streamit compiler
 STREAMIT-COMPILER = java -Xmx512M at.dms.kjc.Main -s 
 # command to compile uniprocessor streamit programs
-UNI-COMPILER      = gcc -O2 -lm -I/u/aalamb/streams/library/c /u/aalamb/streams/library/c/stream*.c 
+UNI-COMPILER      = sl
 # front end for converting new syntax to java
 NEW-FRONTEND = java streamit.frontend.ToJava --full 
 
@@ -18,7 +18,7 @@ BOTH-OPTIONS      =  --unroll 100000 --linearanalysis --linearreplacement --freq
 LINEAR-REG-TEST = linear_regtest.pl
 
 # current test
-CURRENT-TEST = regtests/LinearTest28
+CURRENT-TEST = regtests/LinearTest14
 
 all: clean java-compile uni-compile raw-compile
 
@@ -29,8 +29,11 @@ linear-compile:
 
 test-current-replace: linear-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
-	$(STREAMIT-COMPILER) $(LINTRANS-OPTIONS) $(CURRENT-TEST).java > current.output
-	./parse_linear_output.pl current.output
+	$(STREAMIT-COMPILER) $(ANALYSIS-OPTIONS) $(CURRENT-TEST).java > test-normal.c
+	$(STREAMIT-COMPILER) $(LINTRANS-OPTIONS) $(CURRENT-TEST).java > test-replace.c
+	$(UNI-COMPILER) test-normal.c -o test-normal.exe
+	$(UNI-COMPILER) test-replace.c -o test-replace.exe
+
 
 test-current-freq: linear-compile
 	$(NEW-FRONTEND) $(CURRENT-TEST).str > $(CURRENT-TEST).java
@@ -68,7 +71,7 @@ clean:
 	rm -f *.dot *.dot.ps *.output
 	rm -f regtests/*.output regtests/*.parsed  regtests/*.dot
 	rm -f regtests/*~ regtests/*.exe regtests/*.run regtests/*.c
-	rm -f test-freq* test-normal*
+	rm -f test-freq* test-normal* test-replace*
 	rm -f regtests/LinearTest9.java
 	rm -f regtests/LinearTest10.java regtests/LinearTest11.java regtests/LinearTest12.java regtests/LinearTest13.java 
 	rm -f regtests/LinearTest14.java regtests/LinearTest15.java regtests/LinearTest16.java regtests/LinearTest17.java 

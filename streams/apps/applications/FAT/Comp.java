@@ -7,6 +7,9 @@ public class Comp {
 
     /*    public static void main(String[] args) {
 	Complex d= new Complex();
+	Complex a= new Complex();
+	a.real=3;
+	a.imag=2;
 	d.imag=1;
 	d.real=2;
 	Comp.Println(d);
@@ -14,6 +17,8 @@ public class Comp {
 	Comp.Println(Comp.Mult(d,d));
 	Comp.Println(Comp.RoutN(8));
 	Comp.Println(Comp.Exp(d,3));
+	Comp.Println(Comp.Div(a,b));
+	
 	
     }*/
 
@@ -45,6 +50,42 @@ public class Comp {
 	return(c);
     }
 
+    static public Complex etoj(float x) {
+	Complex c= new Complex();
+	c.real=(float) Math.cos(x);
+	c.imag=(float) Math.sin(x);
+	return(c);
+    }
+
+    static public Complex Mult(float r, Complex c) {
+	Complex res = new Complex();
+	res.real=c.real*r;
+	res.imag=c.imag*r;
+	return(res);
+    }
+
+    static public Complex Conj(Complex a) {
+	Complex c= new Complex();
+	c.real=a.real;
+	c.imag=-a.imag;
+	return(c);
+    }
+
+    static public Complex Div(Complex a, Complex b){
+	Complex c= new Complex();
+	float aux;
+	aux=b.real*b.real+b.imag*b.imag;
+	c=Comp.Mult(1/aux,Comp.Mult(a,Comp.Conj(b)));
+	return(c);
+    }
+
+    static public float Norm2(Complex a) {
+	float x;
+	x=a.real*a.real+a.imag*a.imag;
+	return(x);
+    }
+ 
+
     static public Complex Exp(Complex a,int N) {
 	Complex c= new Complex();
 	c.real=1;
@@ -63,6 +104,8 @@ public class Comp {
     }
     
 }
+
+
 
 
 

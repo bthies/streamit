@@ -1,20 +1,5 @@
-/* This is the subband analysis block, the input is a N_ch*N_rg*N_pri block, the output is a data cube of size N_ch*N_srg*N_pri,that has been multiplied by e^(j....) and then lowpass filtered, a down sapmling is done to make it of the size N_srg*N_dn=N_rg */
-
-import streamit.*;
-
-class LQ extends Filter {//This Filter performs the Frequency shifting, each time it is invoked, elements of a sequence of length N_rg are read and they are multiplied by W^n Where n is the index.
-    /* public FreqShift(int N_rg,Complex W) {super(N_rg,W);}
-                int        N_rg; //the lenghth of the string;
-                Complex W= new Complex();
-		Complex X;
-		float y;
-                public void init(int N_rg, Complex W) {
-		    input = new Channel(Float.TYPE, N_rg);
-		    output = new Channel(new Complex().getClass(), N_rg);
-		    this.N_rg=N_rg;
-		    this.W=W;
-		    } */
-    public static void main(String[] s){
+class LQ {// This class performs the LQ decomposition of its input matrix, the out put is a float[][]
+  public static void main(String[] s){
 	float[][] A={
 	    {1,2,2},
 	    {-8,-1,14}
@@ -25,8 +10,8 @@ class LQ extends Filter {//This Filter performs the Frequency shifting, each tim
 		System.out.println(A[i][j]);
     }
     
-  public static float[][] LQcalc(int m,int n,float[][] B){
-	float[][] A;
+  public static float[][] LQcalc(int m,int n,float[][] A){
+	float[][] B;
 	float[]   x;
 	float[]   w;
 	float[]   v;
@@ -37,8 +22,8 @@ class LQ extends Filter {//This Filter performs the Frequency shifting, each tim
 	v=new float[n];
 	w=new float[m];
 	
-	A=new float[m][n];
-	A=B;
+	B=new float[m][m];
+
 	for (int row=0;row <m; row ++){
 	    normx=0;
 	    for (int i=row; i <n; i++)
@@ -69,7 +54,11 @@ class LQ extends Filter {//This Filter performs the Frequency shifting, each tim
 		for (int j=row; j <n ; j++)
 		    A[i][j]=A[i][j]+w[i]*v[j];
        	}
-	return(A);
+	for (int i=0 ; i <m ; i++)
+	    for (int j=0 ; j <=i ; j++)
+		B[i][j]=A[i][j];
+	
+	return(B);
     }
 
 
@@ -79,21 +68,53 @@ class LQ extends Filter {//This Filter performs the Frequency shifting, each tim
 	  else y=-1;
 	return(y);
     }
-			
-	    
+
+
+
+    public Complex[] forw(int m, float[][] L, Complex[] v){ // this part perfomes the forw sub, L is a lower traingular m by n(m) matrix that will be used for back substituting for v, the out put is the result of the forward sub, Lu=v
+	Complex sum=new Complex(); // sum is just a dummy variable
+	Complex[] u;
+	u=new Complex[m]; // u will have only m nonzero variables
+
+	for (int i=0 ; i<m; i++)
+	    {
+	        sum.real=0;
+		sum.imag=0;
+
+		for (int j=0; j < i; j++)
+		    sum=Comp.Add(sum,Comp.Mult(L[i][j],u[j]));		
+		u[i]=Comp.Make((v[i].real-sum.real)/L[i][i],(v[i].imag-sum.imag)/L[i][i]);
 		
-	    
-	
-                public void work() {
-
-		    
-	  
-
-
-		}
+	    }
+	return(u);
 }
 
 
+
+
+    
+    public Complex[] back(int m, float [][] L, Complex[] u) {// this part performs the back sub algorith, L is a lowe traingular matrix, LTw=u, the out put is w
+
+	Complex sum=new Complex(); // sum is just a dummy variable
+	Complex[] w;
+	w=new Complex[m];
+	
+
+	for (int i=m-1; i >=0; i--)
+	    {
+		sum.real=0;
+		sum.imag=0;
+
+		for (int j=m-1;j >=0; j--)
+		      sum=Comp.Add(sum,Comp.Mult(L[j][i],w[j]));
+
+		w[i]=Comp.Make((u[i].real-sum.real)/L[i][i],(v[i].imag-sum.imag)/L[i][i]);
+		  
+	    }
+	return(w);
+    }
+
+}
 
 
 

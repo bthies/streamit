@@ -110,7 +110,7 @@ public class FuseSplit {
 	// revert to the older version of fusion if either:
 	//   - the simplesjfusion tag is specified
 	//   - there are no two stage filters AND there is no round-robin with peeking
-	if (StreamItOptions.simplesjfusion) {
+	if (KjcOptions.simplesjfusion) {
 	    return FuseSimpleSplit.fuse(sj);
 	} else {
 	    boolean noTwoStage = true;

@@ -2,6 +2,8 @@ package streamit.scheduler2;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Vector;
 import streamit.misc.AssertedClass;
 import streamit.scheduler2.iriter.Iterator;
@@ -18,12 +20,16 @@ public class ScheduleOptimizer extends AssertedClass
     Schedule optimizedInit = null;
     Schedule optimizedSteady = null;
 
+    final private Scheduler scheduler;
+
     public ScheduleOptimizer(
         Schedule _unoptimizedInit,
-        Schedule _unoptimizedSteady)
+        Schedule _unoptimizedSteady,
+        Scheduler _scheduler)
     {
         unoptimizedInit = _unoptimizedInit;
         unoptimizedSteady = _unoptimizedSteady;
+        scheduler = _scheduler;
     }
 
     Integer symbolicUnoptimizedInit = null;
@@ -41,9 +47,13 @@ public class ScheduleOptimizer extends AssertedClass
         {
             oldUnoptimizedInit = symbolicUnoptimizedInit;
             oldUnoptimizedSteady = symbolicUnoptimizedSteady;
+            printSymbolicSchedule(symbolicUnoptimizedSteady);
             collectRepeats();
+            printSymbolicSchedule(symbolicUnoptimizedSteady);
             liftSingles();
+            printSymbolicSchedule(symbolicUnoptimizedSteady);
             liftSingles2();
+            printSymbolicSchedule(symbolicUnoptimizedSteady);
         }
         while (oldUnoptimizedInit.intValue()
             != symbolicUnoptimizedInit.intValue()
@@ -73,17 +83,17 @@ public class ScheduleOptimizer extends AssertedClass
 
         return optimizedSteady;
     }
-    
-    public Schedule getUnoptimizedInitSched ()
+
+    public Schedule getUnoptimizedInitSched()
     {
         return unoptimizedInit;
     }
-    
-    public Schedule getUnoptimizedSteadySched ()
+
+    public Schedule getUnoptimizedSteadySched()
     {
         return unoptimizedSteady;
     }
-    
+
     // ---------------- Beef of the class ----------------
 
     Map integers = new HashMap();
@@ -127,7 +137,7 @@ public class ScheduleOptimizer extends AssertedClass
             }
         }
 
-        Integer symbolicIdx = getInteger(sched2symbolicIdx.size());
+        Integer symbolicIdx = getInteger(symbolicIdx2symbolic.size());
 
         // create a vector version of self
         Vector self = new Vector();
@@ -275,7 +285,7 @@ public class ScheduleOptimizer extends AssertedClass
         }
         else
         {
-            newSymbolicIdx = getInteger(integers.size());
+            newSymbolicIdx = getInteger(symbolicIdx2symbolic.size());
             symbolic2symbolicIdx.put(newSymbolicSched, newSymbolicIdx);
             symbolicIdx2symbolic.put(newSymbolicIdx, newSymbolicSched);
             symbolicIdx2stream.put(
@@ -364,7 +374,7 @@ public class ScheduleOptimizer extends AssertedClass
         }
         else
         {
-            newSymbolicIdx = getInteger(integers.size());
+            newSymbolicIdx = getInteger(symbolicIdx2symbolic.size());
             symbolic2symbolicIdx.put(newSymbolicSched, newSymbolicIdx);
             symbolicIdx2symbolic.put(newSymbolicIdx, newSymbolicSched);
             symbolicIdx2stream.put(
@@ -494,7 +504,7 @@ public class ScheduleOptimizer extends AssertedClass
         }
         else
         {
-            newSymbolicIdx = getInteger(integers.size());
+            newSymbolicIdx = getInteger(symbolicIdx2symbolic.size());
             symbolic2symbolicIdx.put(newSymbolicSched, newSymbolicIdx);
             symbolicIdx2symbolic.put(newSymbolicIdx, newSymbolicSched);
             symbolicIdx2stream.put(
@@ -504,5 +514,59 @@ public class ScheduleOptimizer extends AssertedClass
 
         symbolicIdxSubstitionsChain.put(symbolicIdx, newSymbolicIdx);
         return newSymbolicIdx;
+    }
+
+    private void printSymbolicSchedule(Integer symbolicIdx)
+    {
+        System.out.println("[");
+        printSymbolicSchedule(symbolicIdx, new HashSet());
+        System.out.println("]");
+    }
+
+    private void printSymbolicSchedule(
+        Integer symbolicIdx,
+        Set printedScheds)
+    {
+        if (printedScheds.contains(symbolicIdx))
+            return;
+
+        System.out.print("$" + symbolicIdx + " = ");
+
+        Vector self = (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+
+        if (self.size() == 1)
+        {
+            Schedule sched = (Schedule)symbolicIdx2sched.get(symbolicIdx);
+            System.out.println(
+                sched.getStream().getObject() + "." + sched.getWorkFunc());
+        }
+        else
+        {
+            Integer scheds[] = new Integer[self.size() / 2];
+            System.out.print("{ ");
+
+            Vector symbolicSched =
+                (Vector)symbolicIdx2symbolic.get(symbolicIdx);
+
+            for (int i = 0; i < symbolicSched.size(); i += 2)
+            {
+                int times = ((Integer)symbolicSched.get(i)).intValue();
+                int idx = ((Integer)symbolicSched.get(i + 1)).intValue();
+                scheds[i / 2] = (Integer)symbolicSched.get(i + 1);
+                if (times > 1)
+                    System.out.print("{" + times + " $" + idx + "} ");
+                else
+                    System.out.print("$" + idx + " ");
+            }
+
+            System.out.println("}");
+
+            printedScheds.add(symbolicIdx);
+
+            for (int i = 0; i < symbolicSched.size() / 2; i++)
+            {
+                printSymbolicSchedule(scheds[i], printedScheds);
+            }
+        }
     }
 }

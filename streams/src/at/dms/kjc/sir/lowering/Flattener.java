@@ -17,7 +17,7 @@ import java.util.*;
 
 /**
  * This is the main class for decomposing the high SIR into
- * lower-level function calls.
+ * lower-level function calls for the uniprocessor backend.
  */
 public class Flattener {
     /**
@@ -209,16 +209,11 @@ public class Flattener {
 	// if we are supposed to transform the graph
 	// by replacing work functions with their linear forms, do so now 
 	if (transform == true) {
-	    LinearReplacer replacer;
-	    // make a new replacer with the information contained in the analyzer
-	    replacer = new LinearReplacer(lfa);
-	    // pump the replacer through the stream graph.
-	    IterFactory.createIter(str).accept(replacer);
+	    LinearReplacer.doReplace(lfa, str);
 	    // print out the stream graph after linear replacement
 	    LinearDot.printGraph(str, "linear-replace.dot", lfa);
 	}
 	
     }
-
     
 }

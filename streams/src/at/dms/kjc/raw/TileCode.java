@@ -69,11 +69,18 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	    if (RawBackend.structures.length > 0) 
 		fw.write("#include \"structs.h\"\n");
 	    
-	    if(KjcOptions.altcodegen || KjcOptions.decoupled) {
+	    if(KjcOptions.altcodegen) {
 		fw.write("register float " + Util.CSTOFPVAR + " asm(\"$csto\");\n");
 		fw.write("register float " + Util.CSTIFPVAR + " asm(\"$csti\");\n");
 		fw.write("register int " + Util.CSTOINTVAR + " asm(\"$csto\");\n");
 		fw.write("register int " + Util.CSTIINTVAR + " asm(\"$csti\");\n");
+	    }
+	    
+	    if (KjcOptions.decoupled) {
+		fw.write("float " + Util.CSTOFPVAR + ";\n");
+		fw.write("float " + Util.CSTIFPVAR + ";\n");
+		fw.write("int " + Util.CSTOINTVAR + ";\n");
+		fw.write("int " + Util.CSTIINTVAR + ";\n");
 	    }
 	    
 	    if (joiner.contents.getParent() instanceof SIRFeedbackLoop)

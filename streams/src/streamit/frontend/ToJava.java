@@ -31,7 +31,7 @@ import streamit.frontend.tojava.*;
  * parameter.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: ToJava.java,v 1.53 2004-01-14 22:52:18 dmaze Exp $
+ * @version $Id: ToJava.java,v 1.54 2004-02-12 21:36:27 dmaze Exp $
  */
 public class ToJava
 {
@@ -245,7 +245,7 @@ public class ToJava
         if (prog == null)
             return 1;
 
-        TempVarGen varGen = new TempVarGen();
+        TempVarGen varGen = new TempVarGen(prog);
         prog = lowerIRToJava(prog, libraryFormat, varGen);
 
         try

@@ -18,6 +18,12 @@ public class ParameterContainer extends AssertedClass
             primitive = false;
         }
         
+        ParamData (char c)
+        {
+            data = new Character (c);
+            primitive = true;
+        }
+        
         ParamData (int d)
         {
             data = new Integer (d);
@@ -44,6 +50,16 @@ public class ParameterContainer extends AssertedClass
             ASSERT (intData != null);
             
             return intData.intValue ();
+        }
+
+        char getChar ()
+        {
+            ASSERT (primitive);
+            
+            Character charData = (Character) data;
+            ASSERT (charData != null);
+            
+            return charData.charValue ();
         }
 
         float getFloat ()
@@ -86,6 +102,13 @@ public class ParameterContainer extends AssertedClass
         return this;
     }
 
+    public ParameterContainer add (String paramName, char charParam)
+    {
+        ParamData data = new ParamData (charParam);
+        parameters.put (paramName, data);
+        return this;
+    }
+    
     public ParameterContainer add (String paramName, int intParam)
     {
         ParamData data = new ParamData (intParam);
@@ -109,6 +132,16 @@ public class ParameterContainer extends AssertedClass
     
     public String getParamName () { return paramName; }
     
+    public char getCharParam (String paramName)
+    {
+        ASSERT (parameters.containsKey (paramName));
+        
+        ParamData paramData = (ParamData) parameters.get (paramName);
+        ASSERT (paramData != null);
+        
+        return paramData.getChar ();
+    }
+
     public int getIntParam (String paramName)
     {
         ASSERT (parameters.containsKey (paramName));

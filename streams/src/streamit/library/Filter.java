@@ -31,6 +31,11 @@ public abstract class Filter extends Stream
         super();
     }
 
+    public Filter(char c)
+    {
+        super(c);
+    }
+
     public Filter(int i)
     {
         super(i);

@@ -64,6 +64,11 @@ public class Operator extends DestroyedClass
         initParams = new ParameterContainer ("int").add ("n", n);
     }
 
+    public Operator(char c)
+    {
+        initParams = new ParameterContainer ("char").add ("c", c);
+    }
+
     public Operator (int x, int y)
     {
         initParams = new ParameterContainer ("int-int").add ("x", x).add ("y", y);
@@ -142,6 +147,9 @@ public class Operator extends DestroyedClass
 
     // initializatoin functions, to be over-ridden
     public void init(float f) { invalidInitError (); }
+
+    // initialization functions, to be over-ridden
+    public void init(char c) { invalidInitError (); }
 
     // initializatoin functions, to be over-ridden
     public void init(String str) { invalidInitError (); }
@@ -402,6 +410,7 @@ public class Operator extends DestroyedClass
         if (initParams.getParamName ().equals("")) init (); else
         if (initParams.getParamName ().equals("int")) init (initParams.getIntParam ("n")); else
         if (initParams.getParamName ().equals("float")) init (initParams.getFloatParam ("f")); else
+        if (initParams.getParamName ().equals("char")) init (initParams.getCharParam ("c")); else
         if (initParams.getParamName ().equals("String")) init (initParams.getStringParam ("str")); else
         if (initParams.getParamName ().equals("ParameterContainer")) init ((ParameterContainer) initParams.getObjParam ("params"));
         else {

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.10 2002-11-07 07:56:15 thies Exp $
+ * $Id: Utils.java,v 1.11 2002-11-07 23:17:57 thies Exp $
  */
 
 package at.dms.util;
@@ -27,6 +27,7 @@ import java.util.Vector;
 import java.util.List;
 import java.util.LinkedList;
 import java.io.Serializable;
+import java.math.BigInteger;
 
 /**
  * This class defines severals utilities methods used in source code
@@ -76,6 +77,16 @@ public abstract class Utils implements Serializable {
     public static String asPercent(double val) {
 	String result = "" + (100*val);
 	return result.substring(0, Math.min(5, result.length())) + "%";
+    }
+
+    /**
+     * Returns a power of 2 that is greater than or equal to <val>.
+     */
+    public static int nextPow2(int val) {
+	if (val==0) { return val; }
+	BigInteger bigVal = BigInteger.valueOf(val);
+	int shiftAmount = bigVal.subtract (BigInteger.valueOf (1)).bitLength ();
+	return BigInteger.ONE.shiftLeft (shiftAmount).intValue ();
     }
 
     /**

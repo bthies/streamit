@@ -1,3 +1,9 @@
+/* Delay element implemented as a feedback loop.  Inputs are delayed
+ * for N executions before being output.  This isn't necessarily
+ * a good implementation of a delay, since analysis of feedback loops
+ * within the compiler is tricky; to be efficient, this would need
+ * to be fused into a single filter.
+ * $Id: Delay.str,v 1.2 2003-10-10 18:55:19 dmaze Exp $ */
 float->float feedbackloop delay(int N) {
     join roundrobin;
     body Identity<float>();

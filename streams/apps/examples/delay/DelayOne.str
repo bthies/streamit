@@ -1,3 +1,7 @@
+/* Single-element delay in a single filter.  The work function pushes
+ * the item it received on the previous iteration, and then saves
+ * the input item for the next iteration.
+ * $Id: DelayOne.str,v 1.2 2003-10-10 18:55:19 dmaze Exp $ */
 float->float filter DelayOne {
     float last;
     init { 

@@ -1,3 +1,8 @@
+/* Multiple-element delay in a single filter.  This uses a circular
+ * queue (in saved) to save past elements.  On the uniprocessor
+ * backend, tapes between filters are also implemented as circular
+ * queues, but this has fewer queues than the feedback loop implementation.
+ * $Id: DelayMany.str,v 1.2 2003-10-10 18:55:19 dmaze Exp $ */
 float->float filter DelayMany(int N) {
     float[N] saved;
     int pos;

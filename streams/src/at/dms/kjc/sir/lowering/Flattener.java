@@ -84,6 +84,10 @@ public class Flattener {
 	    System.err.println("...done with Partitioning.");
 	}
 
+	if (KjcOptions.sjtopipe) {
+	    SJToPipe.doit(str);
+	}
+
 	// dump the partitioned graph to a dot format
 	StreamItDot.printGraph(str, "after.dot");
 

@@ -94,6 +94,10 @@ public class RawBackend {
 			     RawBackend.rawColumns);
 	}
 
+	if (KjcOptions.sjtopipe) {
+	    SJToPipe.doit(str);
+	}
+
 	StreamItDot.printGraph(str, "after.dot");
 
 	//VarDecl Raise to move array assignments up

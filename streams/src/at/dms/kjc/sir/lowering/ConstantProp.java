@@ -39,6 +39,8 @@ public class ConstantProp {
 	    Propagator propagator = new Propagator(constants);
 	    // propagate constants within init function of <str>
 	    str.getInit().accept(propagator);
+	    // Raise Vars
+	    str.getInit().accept(new VarDeclRaiser());	
 	    // propagate constants within work function of <str>
 	    JMethodDeclaration work= str.getWork();
 	    if(work!=null)

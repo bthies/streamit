@@ -2,6 +2,7 @@ import streamit.*;
 import streamit.io.*;
 
 class FIRSmoothingFilter extends Filter {
+//    final float cosWin[] = { 0.25f, 0.5f, 0.75f, 1.0f, 0.75f, 0.5f, 0.25f};
   final float cosWin[] = { 0.1951f, 0.3827f, 0.5556f, 0.7071f, 0.8315f, 
 			   0.9239f, 0.9808f, 1, 0.9808f, 0.9239f, 0.8315f,
 			   0.7071f, 0.5556f, 0.3827f, 0.1951f};
@@ -37,6 +38,48 @@ class FIRSmoothingFilter extends Filter {
   }
 }
 
+class HanningWindow extends Filter {
+  private int length;
+
+  public HanningWindow(int DFTLen) {
+    super(DFTLen);
+  }
+  public void init(int DFTLen) {
+    this.length = DFTLen;
+    input = new Channel(Float.TYPE, 2 * DFTLen);
+    output = new Channel(Float.TYPE, 2 * DFTLen);
+  }
+
+  public void work() {
+    //convolution with the series {-1/4, 1/2, -1/4}
+    //first and last have to be dealt with specially
+    /** Note that everything is doubled (real and imag) **/
+    output.pushFloat(input.peekFloat(0)/2 - 
+	    (input.peekFloat(2) + input.peekFloat(length * 2 - 2))/4f);
+    output.pushFloat(input.peekFloat(1)/2 - 
+	    (input.peekFloat(3) + input.peekFloat(length * 2 - 1))/4f);
+
+    for(int i=1; i < length - 1; i++) {
+      int n = i << 1;
+      float real = input.peekFloat(n)/2f;
+      real -= (input.peekFloat(n-2)+input.peekFloat(n+2))/4f;
+      output.pushFloat(real);
+      float imag = input.peekFloat(n+1)/2f;
+      imag -= (input.peekFloat(n-1)+input.peekFloat(n+3))/4f;
+      output.pushFloat(imag);
+    }
+
+    output.pushFloat(input.peekFloat(length * 2 - 2)/2f -
+		(input.peekFloat(length * 2 - 4) + input.peekFloat(0))/4f);
+    output.pushFloat(input.peekFloat(length * 2 - 1)/2f -
+		(input.peekFloat(length * 2 - 3) + input.peekFloat(1))/4f);
+    for(int i=0; i < length; i++) {
+      input.popFloat(); input.popFloat();
+    }
+  }    
+}
+  
+
 class Deconvolve extends Filter {
   public void init() {
     input = new Channel(Float.TYPE, 2);
@@ -46,8 +89,11 @@ class Deconvolve extends Filter {
   public void work() {
     float den = input.popFloat();
     float num = input.popFloat();
-    output.pushFloat(num / den);
     output.pushFloat(den);
+    if (den == 0)
+      output.pushFloat(0f);
+    else
+      output.pushFloat(num / den);
   }
 }
 

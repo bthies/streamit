@@ -1,126 +1,96 @@
 /** @author: clleger
  *
+ * This is the main file for the phase VOice enCODER.
  **/
 import streamit.*;
 import streamit.io.*;
 
-class MagnitudeStuff extends Pipeline {
-  public void init(final int DFTLen, final int newLen) {
-    add(new SplitJoin() {
-	public void init() {
-	  setSplitter(DUPLICATE());
-	  add(new FIRSmoothingFilter(DFTLen));
-	  add(new IdentityFloat());
-	  setJoiner(ROUND_ROBIN());
-	}
-      });
-    add(new Deconvolve());
-    add(new SplitJoin() {
-	public void init() {
-	  setSplitter(ROUND_ROBIN());
-	  add(new Remapper(DFTLen, newLen));
-	  add(new Remapper(DFTLen, newLen));
-	  setJoiner(ROUND_ROBIN());
-	}
-      });
-    add(new Multiplier());
-  }
-
-  MagnitudeStuff(final int DFTLen, final int newLen) {
-    super(DFTLen, newLen);
-  }
-}
-
-class PhaseUnwrapper extends Filter {
-  int DFTLen;
-  float estimate;
-
-  public void init(int DFTLen) {
-    this.DFTLen = DFTLen;
-    input = new Channel(Float.TYPE, 1, DFTLen+1);
-    output = new Channel(Float.TYPE, 1);
-    estimate = (float) (-0.05 * (Math.PI * 2));
-  }
-
-  public void work() {
-    float unwrapped = input.popFloat();
-    float delta = unwrapped + estimate - input.peekFloat(DFTLen);
-    while (delta > 2 * Math.PI) {
-      unwrapped -= 2 * Math.PI;
-      delta = unwrapped + estimate - input.peekFloat(DFTLen);
-    }
-    while (delta < -2 * Math.PI) {
-      unwrapped += 2 * Math.PI;
-      delta = unwrapped + estimate - input.peekFloat(DFTLen);
-    }
-    output.pushFloat(unwrapped);
-  }
-
-  PhaseUnwrapper(int DFTLen) {
-    super(DFTLen);
-  }
-}
-    
-class PhaseStuff extends Pipeline {
-
-  public void init(int DFTLen, int newLen, float c) {
-    add(new PhaseUnwrapper(DFTLen));
-    add(new ConstMultiplier(c));
-    add(new Remapper(DFTLen, newLen));
-  }
-
-  PhaseStuff(int DFTLen, int newLen, float c) {
-    super(DFTLen, newLen, c);
-  }
-}
-
 class VocoderSystem extends SplitJoin
 {
-  public void init(int DFTLen, int newLen, float c) {
-    //if I can't send two from each stream above in ____, then I have
-    //to send the first DFTLen to Magnitude and then the next DFTLen
-    //to phase.  If I can start sending two at a time above, then I
-    //can revert to a normal ROUND_ROBIN
+  public void init(int DFTLen, int newLen, float c, float speed) {
+    setSplitter(ROUND_ROBIN());
 
-    //setSplitter(ROUND_ROBIN());
-    setSplitter(WEIGHTED_ROUND_ROBIN(DFTLen, DFTLen));
-
-    add(new MagnitudeStuff(DFTLen, newLen));
-    add(new PhaseStuff(DFTLen, newLen, c));
+    add(new MagnitudeStuff(DFTLen, newLen, speed));
+    add(new PhaseStuff(DFTLen, newLen, c, speed));
 
     setJoiner(ROUND_ROBIN());
   }
 
-  VocoderSystem(int DFTLen, int newLen, float c) {
-    super(DFTLen, newLen, c);
+  VocoderSystem(int DFTLen, int newLen, float c, float speed) {
+    super(DFTLen, newLen, c, speed);
   }
 }
 
-class IntPrinter extends Filter {
-    public void work() { System.out.println(input.popInt()); }
-    public void init() { input = new Channel(Integer.TYPE, 1); }
+abstract class Constants extends StreamIt {
+  protected static final int DFT_LENGTH = 4;
+  protected static final int NEW_LENGTH = 4;
+  protected static final float FREQUENCY_FACTOR = 1f;
+  protected static final float SPEED_FACTOR = 1f;
+
+//    protected static final int LARGE = 2147480000;
+  protected static final int LARGE = 852524;
+  protected static final int HEADER_S = 22; //
+
+  protected static final String FILE_IN = "test2.wav";
+  protected static final String FILE_OUT = "test3.wav";
 }
 
-class FloatPrinter extends Filter {
-    public void work() { System.out.println(input.popFloat()); }
-    public void init() { input = new Channel(Float.TYPE, 1); }
-}
-
-class Vocoder extends StreamIt {
+class Vocoder extends Constants {
   //  final int DFT_LENGTH = 100;
-  final int DFT_LENGTH = 10;
-  final int NEW_LENGTH = 10;
-  final float FREQUENCY_FACTOR = 3.45f;
-
   public static void main(String args[]) {
     new Vocoder().run(args);
   }
 
   public void init() {
-    add(new StepSource()); //add(new AudioSource());
+//      add(new StepSource(6)); //add(new AudioSource());
+//      add(new IntPrinter("\t(orig)\n"));
+//      add(new IntToFloat());
     add(new FilterBank(DFT_LENGTH));
-    add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR));
-    //    add(new SumReal(DFT_LENGTH));
-    add(new FloatPrinter());
+    add(new HanningWindow(DFT_LENGTH));
+    add(new RectangularToPolar());
+    add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR));
+    add(new PolarToRectangular());
+    add(new SumReals(NEW_LENGTH));
+
+//      add(new FloatToShort());
+//      add(new ShortPrinter("(mod)\n"));
+//      add(new ShortVoid());
+
+//      add(new FloatPrinter("(mod)\n"));
+//      add(new FloatVoid());
   }
 }    
+
+class Main extends Constants {
+  public static void main(String args[]) {
+    new Main().run(args);
+  }
+
+  public void init() {
+    add(new FileReader(FILE_IN, Short.TYPE));
+    add(new WaveReader());
+    add(new SplitJoin() {
+	public void init() {
+	  setSplitter(WEIGHTED_ROUND_ROBIN(HEADER_S, LARGE));
+	  add(new WaveHeader(FREQUENCY_FACTOR, SPEED_FACTOR));
+	  add(new Pipeline() {
+	      public void init() {
+		add(new ShortToFloat());
+		add(new SplitJoin() {
+		    public void init() {
+		      setSplitter(ROUND_ROBIN());
+		      add(new Vocoder());
+		      add(new Vocoder());
+		      setJoiner(ROUND_ROBIN());
+		    }
+		  });
+		add(new FloatToShort());
+	      }
+	    });
+	  setJoiner(WEIGHTED_ROUND_ROBIN(HEADER_S, LARGE));
+	}
+      });
+    add(new ShortPrinter());
+    add(new FileWriter(FILE_OUT, Short.TYPE));
+  }
+}

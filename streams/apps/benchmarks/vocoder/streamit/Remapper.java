@@ -15,11 +15,11 @@ class LinearInterpolator extends Filter {
   public void work() {
     float base = input.popFloat();
     float diff = input.peekFloat(0) - base;
-    final int goal = interp - 1;
+    final int goal = interp;
 
     output.pushFloat(base);
     //already pushed 1, so just push another (interp - 1) floats
-    for(int i = 0; i < goal; i++)
+    for(int i = 1; i < goal; i++)
       output.pushFloat(base + ((float) i / interp) * diff);
   }
 
@@ -76,3 +76,36 @@ class Remapper extends Pipeline {
   }
 }
 
+class Duplicator extends Filter {
+  int oldLen, newLen;
+
+  Duplicator(int oldLen, int newLen) {
+    super(oldLen, newLen);
+  }
+
+  public void init(int oldLen, int newLen) {
+    this.oldLen = oldLen;
+    this.newLen = newLen;
+    output = new Channel(Float.TYPE, newLen);
+    input = new Channel(Float.TYPE, oldLen);
+  }
+
+  public void work() {
+    if (newLen <= oldLen) {
+      int i;
+      for(i=0; i < newLen; i++)
+	output.pushFloat(input.popFloat());
+      for(; i < oldLen; i++) {
+	input.popFloat();
+//  	output.pushFloat(0);
+      }
+    } else {
+      float orig[] = new float[oldLen];
+      for(int i=0; i < oldLen; i++)
+	orig[i] = input.popFloat();
+      for(int i=0; i < newLen; i++)
+	output.pushFloat(orig[i%oldLen]);
+    }
+  }
+}
+    

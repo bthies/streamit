@@ -14,6 +14,7 @@ class Multiplier extends Filter {
 
 class ConstMultiplier extends Filter {
   float c;
+  boolean first = true;
 
   public void init(float c) {
     this.c = c;
@@ -22,7 +23,13 @@ class ConstMultiplier extends Filter {
   }
 
   public void work() {
-    output.pushFloat(input.popFloat() * c);
+    if (first) {
+      output.pushFloat(input.popFloat());
+      first = false;
+    }
+    else {
+      output.pushFloat(input.popFloat() * c);
+    }
   }
 
   ConstMultiplier(float c) {
@@ -30,3 +37,16 @@ class ConstMultiplier extends Filter {
   }
 }
 
+class Accumulator extends Filter {
+  float val = 0;
+  public Accumulator() {}
+  public void init() {
+    input = new Channel(Float.TYPE, 1);
+    output = new Channel(Float.TYPE, 1);
+  }
+
+  public void work() {
+    val += input.popFloat();
+    output.pushFloat(val);
+  }
+}

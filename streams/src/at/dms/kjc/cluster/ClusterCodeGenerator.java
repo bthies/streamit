@@ -472,6 +472,14 @@ class ClusterCodeGenerator {
 	    r.add("  if (__timer_enabled) t1.output(stderr);\n");
 	}
 
+	i = data_out.iterator();
+	while (i.hasNext()) {
+	    NetStream out = (NetStream)i.next();
+
+	    r.add("  "+out.producer_name()+".flush();\n");
+	    r.add("  "+out.producer_name()+".get_socket()->close();\n");
+	}
+
 	r.add("  sleep(3);\n");
 
 	r.add("}\n");

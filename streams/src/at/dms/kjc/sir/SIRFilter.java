@@ -141,6 +141,9 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * getPop.
      */
     public int getPopInt() {
+      if (pop instanceof JFloatLiteral) { //clleger
+	pop = new JIntLiteral(null, (int) ((JFloatLiteral)pop).floatValue());
+      }
 	// need int literal to get number
 	if (!(pop instanceof JIntLiteral)) {
 	    Utils.fail("Trying to get integer value for pop value in filter " + this.getName() + ", but the constant hasn't been resolved yet. " + pop);
@@ -155,6 +158,9 @@ public class SIRFilter extends SIRStream implements Cloneable {
      * getPeek.
      */
     public int getPeekInt() {
+      if (peek instanceof JFloatLiteral) { //clleger
+	peek = new JIntLiteral(null, (int) ((JFloatLiteral)peek).floatValue());
+      }
 	// need int literal to get number
 	if (!(peek instanceof JIntLiteral)) {
 	    Utils.fail("Trying to get integer value for peek value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet. " + peek);
@@ -170,6 +176,10 @@ public class SIRFilter extends SIRStream implements Cloneable {
      */
     public int getPushInt() {
 	// need int literal to get number
+      if (push instanceof JFloatLiteral) { //clleger
+	push = new JIntLiteral(null, (int) ((JFloatLiteral)push).floatValue());
+      }
+
 	if (!(push instanceof JIntLiteral)) {
 	    Utils.fail("Trying to get integer value for push value in filter " + this.getIdent() + ", but the constant hasn't been resolved yet. " + push);
 	}

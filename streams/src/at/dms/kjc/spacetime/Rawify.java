@@ -7,6 +7,7 @@ import at.dms.kjc.*;
 import at.dms.kjc.spacetime.switchIR.*;
 import at.dms.util.Utils;
 import java.util.LinkedList;
+import java.util.Vector;
 import at.dms.kjc.flatgraph2.*;
 
 /** This class will rawify the SIR code and it creates the 
@@ -89,14 +90,14 @@ public class Rawify
 		    handleFileOutput((OutputTraceNode)traceNode, init, false,
 				     rawChip);
 		    //create the switch code to perform the splitting
-		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
+		    splitOutputTrace((OutputTraceNode)traceNode, init, false, true);
 		    //generate the DRAM command
 		    outputDRAMCommands((OutputTraceNode)traceNode, init, false);
 		    //now create the primepump code
 		    if (init) {
 			handleFileOutput((OutputTraceNode)traceNode, false, true,
 					 rawChip);
-			splitOutputTrace((OutputTraceNode)traceNode, false, true);
+			splitOutputTrace((OutputTraceNode)traceNode, false, true, true);
 			outputDRAMCommands((OutputTraceNode)traceNode, false, true);
 		    }
 		}
@@ -114,6 +115,52 @@ public class Rawify
 	//if there are no files, do nothing
 	if (!input.hasFileInput())
 	    return;
+	//output trace nodes that are file readers
+	Vector fileInputs = new Vector();
+	for (int i = 0; i < input.getSources().length; i++) {
+	    if (input.getSources()[i].getSrc().isFileReader())
+		fileInputs.add(input.getSources()[i].getSrc());
+	}
+	
+	//for all the file inputs that we have not visited in this stage, 
+	//generate the crap
+	for (int i = 0; i < fileInputs.size(); i++) {
+	    OutputTraceNode fileO = (OutputTraceNode)fileInputs.get(i);
+
+	    IntraTraceBuffer buf = IntraTraceBuffer.getBuffer(fileO.getPrevFilter(),
+							      fileO);
+	    assert fileO.getPrevFilter().getFilter() instanceof FileInputContent :
+		"FileReader should be a FileInputContent";
+	    
+	    FileInputContent fileIC = (FileInputContent)fileO.getPrevFilter().getFilter();
+	    FilterInfo filterInfo = FilterInfo.getFilterInfo(fileO.getPrevFilter());
+
+	    //do nothing if we have already generated the code for this file reader 
+	    //for this stage
+	    if (buf.getDRAM().isFileReader() &&
+		buf.getDRAM().getFileReader().isVisited(init, primepump))
+		continue;
+	    //create the file reader if it is not attached to the dram
+	    if (!buf.getDRAM().isFileReader()) {
+		buf.getDRAM().setFileReader(fileIC);
+	    }	    
+	    else
+		assert buf.getDRAM().getFileReader().getContent() == fileIC : 
+		    "Trying to add a different file reader to DRAM";
+	    
+	    //now generate the code, both the dram commands and the switch code
+	    //to perform the splitting, if there is only one output, do nothing
+	    if (!fileO.oneOutput()) {
+		//generate the dram command 
+		buf.getOwner().getComputeCode().addFileCommand(true, init || primepump, 
+			       //the total words sent
+			       Util.getTypeSize(fileIC.getOutputType()) * 
+			       filterInfo.totalItemsSent(init, primepump),
+			       buf);
+		//perform the splitting
+		splitOutputTrace(fileO, init, primepump, false);
+	    }
+	}
     }
     
     private static void handleFileOutput(OutputTraceNode output, boolean init, boolean primepump, 
@@ -447,7 +494,9 @@ public class Rawify
     
     //generate the switch code to split the output trace 
     //be careful about the primepump stage
-    private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump)
+    //set cacheAlign to true if we must transfers to cache line
+    private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump, 
+					 boolean cacheAlign)
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
 	//check to see if the splitting is necessary
@@ -495,10 +544,10 @@ public class Rawify
 	//	SpaceTimeBackend.println("Split Output Trace: " + traceNode + "it: " + iterations + " ppSteadyIt: " + 
 	//ppSteadyIt);
     //	System.out.println(traceNode.debugString());
-	performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations);
+	performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, iterations, cacheAlign);
 	
 	if (primepump && ppSteadyIt > 0)
-	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt);
+	    performSplitOutputTrace(traceNode, filter, filterInfo, init, primepump, ppSteadyIt, cacheAlign);
 	
 	//because transfers must be cache line size divisible...
 	//disregard the dummy values coming out of the dram
@@ -507,7 +556,7 @@ public class Rawify
 	StreamingDram sourcePort = IntraTraceBuffer.getBuffer(filter, traceNode).getDRAM();
 	int mod = 
 		(((iterations + ppSteadyIt) * traceNode.totalWeights() * typeSize) % RawChip.cacheLineWords);
-	if (mod > 0) {
+	if (mod > 0 && cacheAlign) {
 	    int remainder = RawChip.cacheLineWords - mod;
 	    //System.out.println("Remainder for disregarding input on split trace: " + remainder);
 	    SwitchCodeStore.disregardIncoming(sourcePort, remainder, init || primepump);
@@ -517,7 +566,7 @@ public class Rawify
 
     private static void performSplitOutputTrace(OutputTraceNode traceNode, FilterTraceNode filter,
 						FilterInfo filterInfo, boolean init, boolean primepump,
-						int iterations)
+						int iterations, boolean cacheAlign)
     {
 	if (iterations > 0) {
 	    int stage = 1, typeSize;
@@ -554,7 +603,7 @@ public class Rawify
 		Edge edge = (Edge)it.next();
 		int remainder = ((typeSize * iterations * traceNode.getWeight(edge)) %
 				 RawChip.cacheLineWords);
-		if (remainder > 0)
+		if (remainder > 0 && cacheAlign)
 		    SwitchCodeStore.dummyOutgoing(InterTraceBuffer.getBuffer(edge).getDRAM(),
 						  RawChip.cacheLineWords - remainder, 
 						  init || primepump);

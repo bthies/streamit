@@ -1,10 +1,11 @@
 package at.dms.kjc.spacetime;
 
+import at.dms.kjc.flatgraph2.*;
+
 public class FileState 
 {
-    private boolean reader;
     private StreamingDram parent;
-    private String file;
+    private PredefinedContent file;
 
     //determines if this filereader/writer
     //has been visited by rawify in the various stages
@@ -12,14 +13,18 @@ public class FileState
     private boolean visitedPP = false;
     private boolean visitedSteady = false;
 
-    public FileState(boolean reader, StreamingDram parent,
-		     String file) 
+    public FileState(PredefinedContent file, StreamingDram parent)
     {
-	this.reader = reader;
 	this.parent = parent;
 	this.file = file;
     }
     
+    public PredefinedContent getContent() 
+    {
+	return file;
+    }
+    
+
     public void setVisited(boolean init, boolean primepump) 
     {
 	if (init)
@@ -42,6 +47,15 @@ public class FileState
     
     public boolean isReader() 
     {
-	return reader;
+	return (file instanceof FileInputContent);
     }
+
+    public String getFileName() 
+    {
+	if (isReader())
+	    return ((FileInputContent)file).getFileName();
+	else
+	    return ((FileOutputContent)file).getFileName();
+    }
+    
 }

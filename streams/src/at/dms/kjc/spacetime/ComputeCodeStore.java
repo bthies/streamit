@@ -69,11 +69,32 @@ public class ComputeCodeStore {
 	addMethod(rawMain);
     }
 
-    public void addFileCommand(boolean read, int stage, int words,
+    public void addFileCommand(boolean read, boolean init, int words,
 			       OffChipBuffer buffer) 
     {
+	assert words > 0 : "trying to generate a file dram command of size 0";
 	
+	parent.setComputes();
+	String functName = "raw_streaming_dram_request_bypass_" + 
+	    (read ? "read" : "write");
+	String bufferName = buffer.getIdent(init);
+	
+	JExpression[] args = {new JFieldAccessExpression(null, 
+							 new JThisExpression(null),
+							 bufferName),
+			      new JIntLiteral(words)};
+
+	//the dram command
+	JMethodCallExpression call = 
+	    new JMethodCallExpression(null, functName, args);
+	
+	if (init)
+	    initBlock.addStatement(new JExpressionStatement(null, call, null));
+	else 
+	    steadyLoop.addStatement(steadyIndex ++, 
+				    new JExpressionStatement(null, call, null));
     }
+    
     
 
     //add a dram command to the compute code at the current time

@@ -3,6 +3,7 @@ package at.dms.kjc.spacetime;
 import at.dms.util.Utils;
 import java.util.HashSet;
 import java.util.Iterator;
+import at.dms.kjc.flatgraph2.*;
 
 public class StreamingDram extends IODevice 
 {
@@ -265,16 +266,16 @@ public class StreamingDram extends IODevice
 	return  "StreamingDRAM (" + port + ")";
     }
 
-    public void setFileReader(String file) 
+    public void setFileReader(FileInputContent file) 
     {
 	assert fileReader == null: this.toString() + " already reads a file";
-	fileReader = new FileState(true, this, file);
+	fileReader = new FileState(file, this);
     }
 
-    public void setFileWriter(String file) 
+    public void setFileWriter(FileOutputContent file) 
     {
 	assert fileWriter == null: this.toString() + " already writes a file";
-	fileWriter = new FileState(false, this, file);
+	fileWriter = new FileState(file, this);
     }
     
     public FileState getFileReader() 

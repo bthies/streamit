@@ -230,6 +230,11 @@ public class RawChip {
 	return sum;
     }
     
+    public int getNumDev() 
+    {
+	return devices.length;
+    }
+
     public IODevice[] getDevices() 
     {
 	return devices;

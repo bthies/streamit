@@ -33,18 +33,13 @@ class DataSource extends Filter
   float steeringVectors[];
   float predecPulseShape[];
 
-  public DataSource (int nBeams, int nChannels, int nSamples,
+  public DataSource (int nChannels, int nSamples, int nBeams,
 		     int tarBeam, int tarSample, int predecPulseSize)
   {
     super (nBeams, nChannels, nSamples, tarBeam, tarSample, predecPulseSize);
   }
 
-  public void initIO()
-  {
-    streamOutput = output;
-  }
-
-  public void init(int nBeams, int nChannels, int nSamples,
+  public void init(int nChannels, int nSamples, int nBeams,
 		   int tarBeam, int tarSample, int predecPulseSize)
   {
     numberOfBeams      = nBeams;
@@ -65,6 +60,21 @@ class DataSource extends Filter
   {
     // Outer product of target beam and predec pulse shape
     // into sub matrix of output.
+    int i, j;
+    for(i = 0; i < numChannels; i++)
+    {
+      for(j = 0; j < numSamples; j++ )
+      {
+	if( j < targetSample || j > targetSample+predecPulseSize )
+	{
+	  output.pushFloat(0.0);
+	}
+	else // outer prod of target beam and predec pulse shape
+	{
+	  output.pushFloat(predecPulseShape[j-targetSample]*steeringVectors[targetBeam+i*numBeams]);
+	}
+      }
+    }
   }
 
 }

@@ -4,7 +4,7 @@
 # in perl because I don't know how to use all of the crazy unix command
 # line utilities necessary to do this stuff.
 #
-# $Id: run_reg_tests.pl,v 1.7 2002-12-11 19:29:24 aalamb Exp $
+# $Id: run_reg_tests.pl,v 1.8 2002-12-12 15:15:23 thies Exp $
 
 use strict;
 
@@ -117,14 +117,14 @@ if ($DEBUG) {
 print MHMAIL "(Working directory: $streamit_home)\n";
 
 my $email_body = saved_execute("$streamit_home/regtest/tools/parse_results.pl $REG_LOG $REG_ERR $SUCCESS");
+# write the email body to a file so that we can run the "which apps are in regtest" script
+write_file($email_body, "$streamit_home/parsed_results.txt");
 # remove the full paths from the email (to make it easier to read)
 $email_body =~ s/$streamit_home//gi;
 print MHMAIL $email_body;
 
 print MHMAIL "\n-----------------\n";
 
-# write the email body to a file so that we can run the "which apps are in regtest" script
-write_file($email_body, "$streamit_home/parsed_results.txt");
 # figure out what applications are in and out of the regtest
 my $apps_executed = saved_execute("/bin/sh $streamit_home/regtest/tools/apps_directory.sh $streamit_home/parsed_results.txt");
 # remove the full path (and leave only the relative paths) (so it is easier to see what apps are missing)

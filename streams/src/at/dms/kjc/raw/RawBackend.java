@@ -154,7 +154,7 @@ public class RawBackend {
 
 	    if (partitioning) {
 		System.err.println("Running Partitioning...");
-		str = Partitioner.doit(str, count, numTiles, true);
+		str = Partitioner.doit(str, count, numTiles, true, false);
 		System.err.println("Done Partitioning...");
 	    }
 

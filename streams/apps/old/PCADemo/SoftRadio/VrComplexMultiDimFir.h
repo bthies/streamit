@@ -55,6 +55,7 @@ public:
   
   virtual void work(int n) 
     {
+
       for (int j = 0; j < n; j++) { 
 	int i, j;
 	float sumReal = 0;

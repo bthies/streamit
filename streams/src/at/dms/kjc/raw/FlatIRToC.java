@@ -1388,11 +1388,10 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
                                     CType tapeType,
                                     JExpression val)
     {
-	if (tapeType.equals(CStdType.Float))
-	    print("(static_send(");
-	//	    print("(static_send_f(");
-	else
-	    print("(static_send(");
+	print("(static_send(");
+	//temporary fix for type changing filters
+	print("(" + tapeType + ")");
+	
 	val.accept(this);
         print("))");
     }

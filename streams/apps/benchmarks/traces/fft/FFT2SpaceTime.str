@@ -1,23 +1,10 @@
 
 void->void pipeline FFT2SpaceTime() {
-    add splitjoin {
-	split roundrobin(0);
-	add pipeline {
-	    add FileReader<float>("input0");
-	    add FFTReorder(64);
-	    for(int j=2; j<=64; j*=2)
-		add CombineDFT(j);
-	    add FileWriter<float>("output0");
-	}
-	add pipeline {
-	    add FileReader<float>("input1");
-	    add FFTReorder(64);
-	    for(int j=2; j<=64; j*=2)
-		add CombineDFT(j);
-	    add FileWriter<float>("output1");
-	}
-	join roundrobin(0);
-    }
+    add FileReader<float>("input1");
+    add FFTReorder(64);
+    for(int j=2; j<=64; j*=2)
+	add CombineDFT(j);
+    add FileWriter<float>("output1");
 }
 
 

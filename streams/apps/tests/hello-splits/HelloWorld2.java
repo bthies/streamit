@@ -27,13 +27,9 @@ public class HelloWorld2 extends Stream
     // this is the defining part of the stream
     public void Init() 
     {
-    	Add(new CharGenerator("Hello World2!\n"));
+    	Add(new CharGenerator("Hello World2!"));
     	Add(new SplitJoin() 
     	{
-            public void InitIO ()
-            {
-                this.input = new Channel (new char [1]);
-            }
     		public void Init()
     	    {
     		    UseSplitter(Splitter.ROUND_ROBIN_SPLITTER);

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.16 2003-10-07 03:19:20 thies Exp $
+# $Id: strc,v 1.17 2003-10-07 15:48:55 dmaze Exp $
 #
 
 use strict;
@@ -17,7 +17,7 @@ $have_fftw = "1";
 # END AUTOCONFISCATE
 
 use Getopt::Long;
-Getopt::Long::Configure("bundling", "no_ignore_case");
+Getopt::Long::Configure("bundling", "bundling_override", "no_ignore_case");
 
 get_options() or die "Error parsing options";
 if ($opts{'much-more-help'})
@@ -117,9 +117,9 @@ Options available for all backends:
 
 Options specific to RAW backend:
   --partition, -p     Automatically partition stream graph
-+   --partition=dp      Dynamic programming partitioner (default)
-+   --partition=greedy  Greedy partitioner
-*   --partition=ilp     Integer linear programming partitioner
++   --partition-dp      Dynamic programming partitioner (default)
++   --partition-greedy  Greedy partitioner
+*   --partition-ilp     Integer linear programming partitioner
 * --altcodegen, -z    Alternate RAW communication code generation
 * --decoupled, -X     Generate dummy communication code
 * --dpscaling, -Y     Collect theoretical scaling statistics
@@ -192,7 +192,10 @@ sub get_options
 			    "norun",
 			    "nosched",
 			    "numbers|N=i",
-			    "partition|p:s",
+			    "partition|p",
+			    "partition-dp|pdp",
+			    "partition-greedy|pgreedy",
+			    "partition-ilp|pilp",
 			    "poptopeek|P",
 			    "marksteady!",
 			    "printsched!",
@@ -240,18 +243,14 @@ sub get_options
 	    $opts{unroll} = 0 unless exists $opts{unroll};
 	  }
       }
-    # Validate partitioning:
-    if (exists $opts{partition})
-      {
-	$opts{partition} = "dp" if $opts{partition} eq "";
-	$opts{partition} = "dp" if $opts{partition} eq "dynamic";
-	if (!grep {$opts{partition} eq $_} ('dp', 'greedy', 'ilp'))
-	  {
-	    print STDERR "Unsupported --partition option $opts{partition};" .
-	      " run strc --more-help for valid options";
-	    return 0;
-	  }
-      }
+    # Figure out which partitioning is in use, if any:
+    $opts{partition} = "ilp" if $opts{'partition-ilp'};
+    $opts{partition} = "greedy" if $opts{'partition-greedy'};
+    $opts{partition} = "dp" if $opts{'partition-dp'};
+    # Default to DP partitioning, if we've selected partitioning
+    # but none of these options.
+    $opts{partition} = "dp" if $opts{partition} &&
+      !grep {$opts{partition} eq $_} ('dp', 'greedy', 'ilp');
     return 1;
   }
 

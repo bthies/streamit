@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.6 2002-05-13 17:45:23 dmaze Exp $
+ * $Id: fmref.c,v 1.7 2002-05-13 17:48:06 dmaze Exp $
  */
 
 #ifdef raw
@@ -109,7 +109,7 @@ void begin(void)
   /* run_demod needs 1 input, OK here. */
   /* run_equalizer needs 51 inputs (same reason as for LPF).  This means
    * running the pipeline up to demod 50 times in advance: */
-  for (i = 0; i < 49; i++)
+  for (i = 0; i < 64; i++)
   {
     if (fb1.rlen - fb1.rpos < NUM_TAPS + 1)
       get_floats(&fb1);    

@@ -69,6 +69,17 @@ public class SwitchCode extends at.dms.util.Utils
 	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.initSchedules.keySet());
 	    SpaceDynamicBackend.addAll(tiles, ssg.simulator.steadySchedules.keySet());
 	    
+	    //now add any tiles that don't perform any switching and were assigned filters
+	    FlatNode node;
+	    Iterator flatNodes = ssg.getFlatNodes().iterator(); 
+	    while (flatNodes.hasNext()) {
+		node = (FlatNode)flatNodes.next();
+		if (node.isFilter() && !tiles.contains(layout.getTile(node)))
+		    tiles.add(layout.getTile(node));
+	    }
+	    
+	    
+
 	    //do not generate switchcode for Tiles assigned to file readers/writers
 	    //they are just dummy tiles
 	    Iterator fs = streamGraph.getFileVisitor().fileNodes.iterator();

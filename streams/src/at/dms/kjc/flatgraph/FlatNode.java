@@ -254,7 +254,7 @@ public class FlatNode {
      * doesn't change just because ones ways, etc changes
      */
     public int hashCode() {
-	return uin;
+	return label;
     }
     
     public String getName() {

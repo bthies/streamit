@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.44 2003-09-22 07:07:55 jasperln Exp $
+ * $Id: KjcOptions.opt,v 1.45 2003-09-30 18:22:07 thies Exp $
  */
 
 prefix Kjc
@@ -167,7 +167,7 @@ longname		"fusion"
 longname		"unroll"
 	shortcut	"u"
 	type		int
-	default		"16"
+	default		"0"
 	requireArgument
 	help		"Maximum number of loop iterations to unroll"
 

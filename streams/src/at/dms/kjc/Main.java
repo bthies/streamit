@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.6 2002-02-15 06:21:59 mgordon Exp $
+ * $Id: Main.java,v 1.7 2002-02-21 21:54:01 mgordon Exp $
  */
 
 package at.dms.kjc;
@@ -165,7 +165,7 @@ public class Main extends Compiler {
 	StreamItOptions.unroll = options.unroll;
 	StreamItOptions.fusion = options.fusion;
 	StreamItOptions.constprop = options.constprop;
-	StreamItOptions.raw = options.raw;
+	StreamItOptions.rawRows = StreamItOptions.rawColumns = options.raw;
 
 	StreaMITMain.compile(tree);
 	/*	

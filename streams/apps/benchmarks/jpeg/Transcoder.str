@@ -1,71 +1,171 @@
-// TODO - Figure out DCT rounding error
-// TODO - Add support for markers in compressed data stream
-// Right now this only handles 8x8 JPEG blocks
+// TODO - use faster DCT
+// TODO - i2b and b2i wrappers
+// TODO - try breaking up output encoding into chunks
+
+// --- The Main Loop ---
 
 void->void pipeline Transcoder {
-	add FileReader<int>("./input.jpg.int");
-	add JPEGIntFile_to_RGB8xBlockStream;
-	add RGB8xBlockStream_to_JpegIntFile;
-	add FileWriter<int>("./output.jpg.int");	
+    add FileReader<int>("./input.jpg.int");
+    add JPEGByteStream_Parser;
+    add ChannelUnencoding;
+    add YCbCrtoRGB;
+    add RGBtoYCbCr;
+    add ChannelEncoding;
+    add JPEGByteStream_Creator;
+    add FileWriter<int>("./output.jpg.int");
 }
 
-int->int pipeline JPEGIntFile_to_RGB8xBlockStream {
-	add JPEGByteStream_Parser;
-//	add ChannelUnencoding;
-//	add YCbCrtoRGB;
+// --- The Channel Coding ---
+
+int->float splitjoin ChannelUnencoding {
+    split roundrobin(64);
+    add ChannelUnencoder_Y;
+    add ChannelUnencoder_C; // Cb
+    add ChannelUnencoder_C; // Cr
+    join roundrobin(1);
 }
 
-int->int pipeline RGB8xBlockStream_to_JpegIntFile {
-//	add RGBtoYCbCr;
-//	add ChannelEncoding;
-	add JPEGByteStream_Creator;
+float->int splitjoin ChannelEncoding {
+    split roundrobin(1);
+    add ChannelEncoder_Y;
+    add ChannelEncoder_C; // Cb
+    add ChannelEncoder_C; // Cr
+    join roundrobin(64);	
 }
 
-float->float filter FloatOutputter {
-	work pop 1 push 1 {
-		float temp = pop();
-		print("THE FLOAT OUTPUTTER: " + temp);
-		push(temp);
-	}
+int->float pipeline ChannelUnencoder_Y {
+    add ZigZagUnordering;
+    add BlockDCDifferenceDecoder;
+    add staticLuminanceDeQuantization;
+    add iDCT_2D(8);
+    add Add(128);
 }
 
-int->int filter IntOutputter {
-	work pop 1 push 1 {
-		int temp = pop();
-		print("THE INT OUTPUTTER: " + temp);
-		push(temp);
-	}
+float->int pipeline ChannelEncoder_Y {
+    add Add(-128);
+    add DCT_2D(8);
+    add staticLuminanceQuantization;
+    add BlockDCDifferenceEncoder;
+    add ZigZagOrdering;
 }
 
-int->float filter RGBtoYCbCr {
-  work pop 3 push 3 {
-	int R = pop();
-	int G = pop();
-	int B = pop();
-	float Y = 0.299*R+0.587*G+0.114*B;
-	float Cb = 128 - 0.168736*R - 0.331264*G + 0.5*B;
-	float Cr = 128 + 0.5*R - 0.41869*G - 0.08131*B;
-	push(Y);
-	push(Cb);
-	push(Cr);
-  }
+int->float pipeline ChannelUnencoder_C {
+    add ZigZagUnordering;
+    add BlockDCDifferenceDecoder;
+    add staticChrominanceDeQuantization;	
+    add iDCT_2D(8);
+    add Add(128);
 }
 
-float->int filter YCbCrtoRGB {
-  work pop 3 push 3 {
-    float Y = pop();
-    float Cb = pop();
-    float Cr = pop(); 	
-    float R_float = Y + 1.402*(Cr-128);
-    float G_float = Y - (0.33414*(Cb-128)) - (0.71414*(Cr-128));
-    float B_float = Y + 1.772*(Cb-128);
-    int R = (int) R_float;
-    int G = (int) G_float;
-    int B = (int) B_float;
-    push(R);
-    push(G);
-    push(B);
-  }
+float->int pipeline ChannelEncoder_C {
+    add Add(-128);
+    add DCT_2D(8);
+    add staticChrominanceQuantization;
+    add BlockDCDifferenceEncoder;
+    add ZigZagOrdering;	
+}
+
+float->float filter Add(float n) {
+    work pop 1 push 1 {
+        push(pop() + n);
+    }
+}
+
+/* Parameters: quantizationTable is an array containing the quantization constants 
+               which the input data will be scaled by.
+   Input: A 64 entry array of floats representing an 8x8 array of DCT frequency values.
+   Output: The frequencies divided by the values in the quantizationTable and then rounded
+           to the nearest integer. */
+float->int filter staticQuantization(int[64] quantizationTable) {
+    work pop 64 push 64 {
+        for (int i = 0; i < 64; i++) {
+            float val = pop() / quantizationTable[i];
+            push((int) (round(val)));
+        }
+    }
+}
+
+/* Parameters: quantizationTable is an array containing the quantization constants 
+               which the input data will be scaled by.
+   Input: A 64 entry array of floats representing an 8x8 array of normalized DCT frequency values.
+   Output: The frequencies multiplied by the values in the quantizationTable and then rounded
+           to the nearest integer. */
+int->float filter staticDeQuantization(int[64] quantizationTable) {
+    work pop 64 push 64 {
+        for (int i = 0; i < 64; i++) {
+            int val = pop() * quantizationTable[i];
+            push((float) val);
+        }
+    }
+}
+
+// Works for this particular image
+int->float pipeline staticLuminanceDeQuantization {
+	/* 06 04 04 06 0a 10 14 18
+	   05 05 06 08 0a 17 18 16
+	   06 05 06 0a 10 17 1c 16
+	   06 07 09 0c 14 23 20 19
+	   07 09 0f 16 1b 2c 29 1f
+	   0a 0e 16 1a 20 2a 2d 25
+	   14 1a 1f 23 29 30 30 28
+	   1d 25 26 27 2d 28 29 28 */
+    int[64] table_LuminanceQuantizationTable = 
+        {6, 4, 4, 6, 10, 16, 20, 24,
+         5, 5, 6, 8, 10, 23, 24, 22,
+         6, 5, 6, 10, 16, 23, 28, 22,
+         6, 7, 9, 12, 20, 35, 32, 25,
+         7, 9, 15, 22, 27, 44, 41, 31,
+         10, 14, 22, 26, 32, 42, 45, 37,
+         20, 26, 31, 35, 41, 48, 48, 40,
+         29, 37, 38, 39, 45, 40, 41, 40};
+    add staticDeQuantization(table_LuminanceQuantizationTable);	
+}
+
+float->int pipeline staticLuminanceQuantization {
+    int[64] table_LuminanceQuantizationTable = 
+        {6, 4, 4, 6, 10, 16, 20, 24,
+         5, 5, 6, 8, 10, 23, 24, 22,
+         6, 5, 6, 10, 16, 23, 28, 22,
+         6, 7, 9, 12, 20, 35, 32, 25,
+         7, 9, 15, 22, 27, 44, 41, 31,
+         10, 14, 22, 26, 32, 42, 45, 37,
+         20, 26, 31, 35, 41, 48, 48, 40,
+         29, 37, 38, 39, 45, 40, 41, 40};
+    add staticQuantization(table_LuminanceQuantizationTable);
+}
+												
+int->float pipeline staticChrominanceDeQuantization {
+    /* 07 07 0a 13 28 28 28 28
+       07 08 0a 1a 28 28 28 28 
+       0a 0a 16 28 28 28 28 28
+       13 1a 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28
+       28 28 28 28 28 28 28 28 */
+    int[64] table_ChrominanceQuantizationTable = 
+        {7, 7, 10, 19, 40, 40, 40, 40,
+         7, 8, 10, 26, 40, 40, 40, 40,
+         10, 10, 23, 40, 40, 40, 40, 40,
+         19, 26, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40};
+    add staticDeQuantization(table_ChrominanceQuantizationTable);	
+}
+
+float->int pipeline staticChrominanceQuantization {
+    int[64] table_ChrominanceQuantizationTable = 
+        {7, 7, 10, 19, 40, 40, 40, 40,
+         7, 8, 10, 26, 40, 40, 40, 40,
+         10, 10, 23, 40, 40, 40, 40, 40,
+         19, 26, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40,
+         40, 40, 40, 40, 40, 40, 40, 40};
+    add staticQuantization(table_ChrominanceQuantizationTable);
 }
 
 /* Input: An 8x8 integer block represented by 64 integers.
@@ -90,42 +190,33 @@ int->int splitjoin BlockDCDifferenceDecoder {
 /* Input: A series of integers.
    Output: The first integer input is output unchanged. Each subsequent 
 		   value output is the difference between the input and the previous
-		   input. */
-int->int filter IntegerDifferenceEncoder {
-  boolean first;
-  int previous;
-  init {
-	first = true;
+		   input. Repeats every 64 integers. */
+int->int feedbackloop IntegerDifferenceEncoder{
+  join roundrobin;
+  body int->int filter {
+    work pop 2 push 2 {
+      push(peek(0) - peek(1));
+      push(peek(0));
+      pop(); pop();
+    }
   }
-  work pop 1 push 1 {
-	int temp = pop();
-	if (first) {
-	  first = false;
-	  push(temp);
-	} else {
-	  push(temp - previous);
-	}
-	previous = temp;
-  }
+  loop Identity<int>;
+  split roundrobin;
+  enqueue 0;
 }
 
-/* Performs the reverse operation as BlockDCDifferenceEncoder */
-int->int filter IntegerDifferenceDecoder {
-  boolean first;
-  int previous;
-  init {
-	first = true;
+/* Performs the reverse operation as IntegerDifferenceEncoder */
+int->int feedbackloop IntegerDifferenceDecoder {
+  join roundrobin;
+  body int->int filter {
+    work pop 2 push 2 {
+      push(peek(0) + peek(1));
+      pop(); pop();
+    }
   }
-  work pop 1 push 1 {
-	int temp = pop();
-	if (first) {
-	  first = false;
-	  push(temp);
-	} else {
-	  push(temp + previous);
-	}
-	previous = temp;
-  }
+  loop Identity<int>;
+  split duplicate;
+  enqueue 0;
 }
 
 /* Input: A sequence of 64 integers representing an 8x8 block.
@@ -169,107 +260,40 @@ int->int filter ZigZagUnordering {
   }
 }
 
-/* Parameters: quantizationTable is an array containing the quantization constants 
-			   which the input data will be scaled by.
-   Input: A 64 entry array of floats representing an 8x8 array of DCT frequency values.
-   Output: The frequencies divided by the values in the quantizationTable and then rounded
-		   to the nearest integer. */
-float->int filter staticQuantization(int[64] quantizationTable) {
-  work pop 64 push 64 {
-	for (int i = 0; i < 64; i++) {
-	  float val = pop() / quantizationTable[i];
-	  push((int) (round(val)));
-	}
+// --- Colorspace Conversions ---
+
+int->float filter RGBtoYCbCr {
+  work pop 3 push 3 {
+	int R = pop();
+	int G = pop();
+	int B = pop();
+	float Y = 0.299*R+0.587*G+0.114*B;
+	float Cb = 128 - 0.168736*R - 0.331264*G + 0.5*B;
+	float Cr = 128 + 0.5*R - 0.41869*G - 0.08131*B;
+	push(Y);
+	push(Cb);
+	push(Cr);
   }
 }
 
-/* Parameters: quantizationTable is an array containing the quantization constants 
-			   which the input data will be scaled by.
-   Input: A 64 entry array of floats representing an 8x8 array of normalized DCT frequency values.
-   Output: The frequencies multiplied by the values in the quantizationTable and then rounded
-		   to the nearest integer. */
-int->float filter staticDeQuantization(int[64] quantizationTable) {
-  work pop 64 push 64 {
-	for (int i = 0; i < 64; i++) {
-	  int val = pop() * quantizationTable[i];
-	  push((float) val);
-	}
+float->int filter YCbCrtoRGB {
+  work pop 3 push 3 {
+    float Y = pop();
+    float Cb = pop();
+    float Cr = pop(); 	
+    float R_float = Y + 1.402*(Cr-128);
+    float G_float = Y - (0.33414*(Cb-128)) - (0.71414*(Cr-128));
+    float B_float = Y + 1.772*(Cb-128);
+    int R = (int) R_float;
+    int G = (int) G_float;
+    int B = (int) B_float;
+    push(R);
+    push(G);
+    push(B);
   }
 }
 
-// Works for this particular image
-int->float pipeline staticLuminanceDeQuantization {
-	/* 06 04 04 06 0a 10 14 18
-	   05 05 06 08 0a 17 18 16
-	   06 05 06 0a 10 17 1c 16
-	   06 07 09 0c 14 23 20 19
-	   07 09 0f 16 1b 2c 29 1f
-	   0a 0e 16 1a 20 2a 2d 25
-	   14 1a 1f 23 29 30 30 28
-	   1d 25 26 27 2d 28 29 28 */
-  int[64] table_LuminanceQuantizationTable = {6, 4, 4, 6, 10, 16, 20, 24,
-  											  5, 5, 6, 8, 10, 23, 24, 22,
-  											  6, 5, 6, 10, 16, 23, 28, 22,
-  											  6, 7, 9, 12, 20, 35, 32, 25,
-  											  7, 9, 15, 22, 27, 44, 41, 31,
-  											  10, 14, 22, 26, 32, 42, 45, 37,
-  											  20, 26, 31, 35, 41, 48, 48, 40,
-  											  29, 37, 38, 39, 45, 40, 41, 40};
-  add staticDeQuantization(table_LuminanceQuantizationTable);	
-}
-float->int pipeline staticLuminanceQuantization {
- 	int[64] table_LuminanceQuantizationTable = {6, 4, 4, 6, 10, 16, 20, 24,
-												5, 5, 6, 8, 10, 23, 24, 22,
-												6, 5, 6, 10, 16, 23, 28, 22,
-												6, 7, 9, 12, 20, 35, 32, 25,
-												7, 9, 15, 22, 27, 44, 41, 31,
-												10, 14, 22, 26, 32, 42, 45, 37,
-												20, 26, 31, 35, 41, 48, 48, 40,
-												29, 37, 38, 39, 45, 40, 41, 40};
-    add staticQuantization(table_LuminanceQuantizationTable);
-}												
-int->float pipeline staticChrominanceDeQuantization {
-    /* 07 07 0a 13 28 28 28 28
-       07 08 0a 1a 28 28 28 28 
-	   0a 0a 16 28 28 28 28 28
-	   13 1a 28 28 28 28 28 28
-	   28 28 28 28 28 28 28 28
-	   28 28 28 28 28 28 28 28
-	   28 28 28 28 28 28 28 28
-	   28 28 28 28 28 28 28 28 */
-  int[64] table_ChrominanceQuantizationTable = {7, 7, 10, 19, 40, 40, 40, 40,
-  											    7, 8, 10, 26, 40, 40, 40, 40,
-  											    10, 10, 23, 40, 40, 40, 40, 40,
-  											    19, 26, 40, 40, 40, 40, 40, 40,
-  											    40, 40, 40, 40, 40, 40, 40, 40,
-												40, 40, 40, 40, 40, 40, 40, 40,
-												40, 40, 40, 40, 40, 40, 40, 40,
-												40, 40, 40, 40, 40, 40, 40, 40};
-  add staticDeQuantization(table_ChrominanceQuantizationTable);	
-}
-float->int pipeline staticChrominanceQuantization {
-	int[64] table_ChrominanceQuantizationTable = {7, 7, 10, 19, 40, 40, 40, 40,
-												  7, 8, 10, 26, 40, 40, 40, 40,
-												  10, 10, 23, 40, 40, 40, 40, 40,
-												  19, 26, 40, 40, 40, 40, 40, 40,
-												  40, 40, 40, 40, 40, 40, 40, 40,
-												  40, 40, 40, 40, 40, 40, 40, 40,
-												  40, 40, 40, 40, 40, 40, 40, 40,
-												  40, 40, 40, 40, 40, 40, 40, 40};
-	add staticQuantization(table_ChrominanceQuantizationTable);
-}
-
-float->int filter Float2Int {
-  work pop 1 push 1 {
-	push((int) round(pop()));
-  }
-}
-
-int->float filter Int2Float {
-  work pop 1 push 1 {
-	push((float) pop());
-  }
-}
+// -- DCT Functions ---
 
 /* Parameters: size means that the DCT will assume the input will be 
 			   interpreted as a size * size array of values.
@@ -279,6 +303,16 @@ int->float filter Int2Float {
 float->float pipeline DCT_2D(int size) {
   add helper_Parallel_8_DCT_1D_X(size);
   add helper_Parallel_8_DCT_1D_Y(size); 
+}
+
+/* Parameters: size means that the iDCT will assume the input will be 
+			   interpreted as a size * size array of values.
+/* Input:      size * size floating point values which represent
+			   the 2-D DCT of the signal.
+/* Output:     size * size floating point values representing the signal.*/
+float->float pipeline iDCT_2D(int size) {
+  add helper_Parallel_8_iDCT_1D_Y(size);
+  add helper_Parallel_8_iDCT_1D_X(size);
 }
 
 /* Parameters: size means that the iDCT will assume the input will be 
@@ -306,16 +340,6 @@ float->float filter iDCT_1D(int size) {
   }
 }
 
-/* Parameters: size means that the iDCT will assume the input will be 
-			   interpreted as a size * size array of values.
-/* Input:      size * size floating point values which represent
-			   the 2-D DCT of the signal.
-/* Output:     size * size floating point values representing the signal.*/
-float->float pipeline iDCT_2D(int size) {
-  add helper_Parallel_8_iDCT_1D_X(size);
-  add helper_Parallel_8_iDCT_1D_Y(size); 
-}
-
 float->float filter DCT_1D(int size) {
   work pop size push size {
 	float Cu;
@@ -335,7 +359,6 @@ float->float filter DCT_1D(int size) {
 	}
   }
 }
-
 
 /* -- Internally Used Function -- */
 float->float splitjoin helper_Parallel_8_DCT_1D_X(int size) {
@@ -373,59 +396,7 @@ float->float splitjoin helper_Parallel_8_iDCT_1D_Y(int size) {
   join roundrobin(1);
 }
 
-float->float filter Add(float n) {
-  work pop 1 push 1 {
-	push(pop() + n);
-  }
-}
-
-int->float pipeline ChannelUnencoder_Y {
-	add ZigZagUnordering;
-	add BlockDCDifferenceDecoder;
-	add staticLuminanceDeQuantization;
-	add iDCT_2D(8);
-	add Add(128);
-}
-
-float->int pipeline ChannelEncoder_Y {
-	add Add(-128);
-	add DCT_2D(8);
-	add staticLuminanceQuantization;
-	add BlockDCDifferenceEncoder;
-	add ZigZagOrdering;
-}
-
-int->float pipeline ChannelUnencoder_C {
-	add ZigZagUnordering;
-	add BlockDCDifferenceDecoder;
-	add staticChrominanceDeQuantization;	
-	add iDCT_2D(8);
-	add Add(128);
-}
-
-float->int pipeline ChannelEncoder_C {
-	add Add(-128);
-	add DCT_2D(8);
-	add staticChrominanceQuantization;
-	add BlockDCDifferenceEncoder;
-	add ZigZagOrdering;	
-}
-
-int->float splitjoin ChannelUnencoding {
-	split roundrobin(64);
-	add ChannelUnencoder_Y;
-	add ChannelUnencoder_C; // Cb
-	add ChannelUnencoder_C; // Cr
-	join roundrobin(1);
-}
-
-float->int splitjoin ChannelEncoding {
-	split roundrobin(1);
-	add ChannelEncoder_Y;
-	add ChannelEncoder_C; // Cb
-	add ChannelEncoder_C; // Cr
-	join roundrobin(64);	
-}
+// --- JPEG File Format Reading/Writing
 
 int->int filter JPEGByteStream_Creator {
 	boolean ran;
@@ -490,8 +461,8 @@ int->int filter JPEGByteStream_Creator {
 			push(23);
 			for (int i = 0; i < 21; i++) {
 				push(comment_body[i]);	
-			}			
-			
+			}
+						
 			// Then comes the DQT Header
 			for (int i = 0; i < 2; i++)
 				push(DQTHeader[i]);
@@ -554,15 +525,15 @@ int->int filter JPEGByteStream_Creator {
 			
 			// The next two bytes are the image's height
 			// TODO TEMPORARY HACK
-			int image_height = 8;
-			push(0);
-			push(8);
+			int image_height = 480;
+			push(1);
+			push(224);
 			
 			// The next two bytes are the image's width
 			// TODO TEMPORARY HACK
-			int image_width = 8;
-			push(0);
-			push(8);
+			int image_width = 640;
+			push(2);
+			push(128);
 			
 			// The next byte represents the number of components in an image.
 			int num_components = 3;
@@ -690,9 +661,7 @@ int->int filter JPEGByteStream_Creator {
 							lastsymbol = 0;
 						} else {
 							int cursymbol = lastsymbol + 1;
-							if (huffman_table_bits_in_symbol[i][j][k] == 1 + huffman_table_bits_in_symbol[i][j][k-1]) {
-								cursymbol *= 2;	
-							}
+							cursymbol *= ((int) pow(2, huffman_table_bits_in_symbol[i][j][k] - huffman_table_bits_in_symbol[i][j][k-1]));
 							huffman_table_symbol[i][j][k] = cursymbol;
 							lastsymbol = cursymbol;
 						}
@@ -742,9 +711,6 @@ int->int filter JPEGByteStream_Creator {
 			for (int i = 0; i < (image_width / 8); i++) {
 				for (int j = 0; j < (image_height / 8); j++) {
 					for (int c = 0; c < 3; c++) {
-						print("I: " + i);
-						print("J: " + j);
-						print("C: " + c);
 						int table = -1;
 						if (c > 0) {
 							table = 1;
@@ -752,10 +718,8 @@ int->int filter JPEGByteStream_Creator {
 							table = 0;	
 						}
 						
-						print("GOT HEREA");
 						// DC portion
 						int DCval = pop();
-						print("GOT HEREB");
 							// should be a function
 							int temp = DCval;
 							int temp2 = DCval;
@@ -781,12 +745,14 @@ int->int filter JPEGByteStream_Creator {
 								buffer_pos--;
 								if (buffer_pos == -1) {
 									push(buffer);
+									if (buffer == 255) {
+										push(0);	
+									}
 									buffer = 0;
 									buffer_pos = 7;	
 								}
 							}							
 						
-						print("GOT HERE2");						
 						writebuffer = temp2;
 						writebits = nbits;
 							//	should be a function - to write bits
@@ -798,14 +764,16 @@ int->int filter JPEGByteStream_Creator {
 								buffer += thebit * ((int) pow(2, buffer_pos));
 								buffer_pos--;
 								if (buffer_pos == -1) {
-									push(buffer);
+	 								push(buffer);
+									if (buffer == 255) {
+										push(0);	
+									}
 									buffer = 0;
 									buffer_pos = 7;	
 								}
 							}							
 						// AC portion
 						int zeroes = 0;
-						print("GOT HERE3");
 						for (int k = 1; k < 64; k++) {
 							int ACval = pop();
 							if (ACval == 0) {
@@ -824,6 +792,9 @@ int->int filter JPEGByteStream_Creator {
 										buffer_pos--;
 										if (buffer_pos == -1) {
 											push(buffer);
+											if (buffer == 255) {
+												push(0);	
+											}
 											buffer = 0;
 											buffer_pos = 7;	
 										}
@@ -842,6 +813,7 @@ int->int filter JPEGByteStream_Creator {
 									temp = temp / 2;
 								}
 								int n = (zeroes * 16) + nbits;
+								zeroes = 0;
 								writebuffer = huffman_table_ordered_symbols[table][1][n];
 								writebits = huffman_table_ordered_bits_in_symbol[table][1][n];
 								//	should be a function - to write bits
@@ -854,6 +826,9 @@ int->int filter JPEGByteStream_Creator {
 										buffer_pos--;
 										if (buffer_pos == -1) {
 											push(buffer);
+											if (buffer == 255) {
+												push(0);	
+											}
 											buffer = 0;
 											buffer_pos = 7;	
 										}
@@ -871,13 +846,16 @@ int->int filter JPEGByteStream_Creator {
 										buffer_pos--;
 										if (buffer_pos == -1) {
 											push(buffer);
+											if (buffer == 255) {
+												push(0);	
+											}
 											buffer = 0;
 											buffer_pos = 7;	
 										}
 									}
 							}
 						}
-						print("GOT HERE5");
+
 						if (zeroes > 0) {
 							writebuffer = huffman_table_ordered_symbols[table][1][0];
 							writebits = huffman_table_ordered_bits_in_symbol[table][1][0];
@@ -891,6 +869,9 @@ int->int filter JPEGByteStream_Creator {
 									buffer_pos--;
 									if (buffer_pos == -1) {
 										push(buffer);
+										if (buffer == 255) {
+											push(0);	
+										}
 										buffer = 0;
 										buffer_pos = 7;	
 									}
@@ -903,6 +884,9 @@ int->int filter JPEGByteStream_Creator {
 			
 			if (buffer_pos != 7) {
 				push(buffer);
+				if (buffer == 255) {
+					push(0);	
+				}
 			}
 				
 			for (int i = 0; i < 2; i++)
@@ -1133,9 +1117,10 @@ int->int filter JPEGByteStream_Parser {
 							lastsymbol = 0;
 						} else {
 							int cursymbol = lastsymbol + 1;
-							if (huffman_table_bits_in_symbol[i][j][k] == 1 + huffman_table_bits_in_symbol[i][j][k-1]) {
+							cursymbol *= ((int) pow(2, huffman_table_bits_in_symbol[i][j][k] - huffman_table_bits_in_symbol[i][j][k-1]));
+/*							if (huffman_table_bits_in_symbol[i][j][k] == 1 + huffman_table_bits_in_symbol[i][j][k-1]) {
 								cursymbol *= 2;	
-							}
+							} */
 							huffman_table_symbol[i][j][k] = cursymbol;
 							lastsymbol = cursymbol;
 						}
@@ -1192,8 +1177,7 @@ int->int filter JPEGByteStream_Parser {
 			int curcomponent = 0;
 			int curcell = 0;
 			while (num_found < num_expected) {
-				print("num expected: " + num_expected);
-				print("num found: " + num_found);			
+
 				int curACDC = 0;
 				if (curcell == 0) {
 					curACDC = 0;
@@ -1210,9 +1194,14 @@ int->int filter JPEGByteStream_Parser {
 				while (notfound) {
 					int somebit = 0;
 					if (readbit_position == 8) {
-						print("trying to pop");
 						readbit_int = pop();
-						print("done popping");
+						if (readbit_int == 255) {
+							int temppop = pop();
+							if (temppop != 0) {
+								print("Error - Don't know how to handle markers");	
+								print("Marker Symbol Detected: " + temppop);
+							}	
+						}
 						readbit_position = 1;							
 					} else {
 						readbit_position++;
@@ -1259,9 +1248,14 @@ int->int filter JPEGByteStream_Parser {
 								for (int z = 0; z < bits_in_number; z++) {
 									int anotherbit = 0;
 									if (readbit_position == 8) {
-										print("trying to pop");
 										readbit_int = pop();
-										print("done popping");
+										if (readbit_int == 255) {
+											int temppop = pop();
+											if (temppop != 0) {
+												print("Error - Don't know how to handle markers");	
+												print("Marker Symbol Detected: " + temppop);
+											}	
+										}
 										readbit_position = 1;							
 									} else {
 										readbit_position++;

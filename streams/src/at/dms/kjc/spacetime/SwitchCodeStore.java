@@ -7,6 +7,8 @@ public class SwitchCodeStore {
     protected RawTile parent;
     Vector steadySwitchIns;
     Vector initSwitchIns;
+    private static final String LABEL_PREFIX="L_";
+    private static int labelId=0;
 
     public SwitchCodeStore(RawTile parent) {
 	this.parent = parent;
@@ -30,5 +32,9 @@ public class SwitchCodeStore {
     public SwitchIns getIns(int i, boolean init) {
 	return (init) ? (SwitchIns)initSwitchIns.get(i) : 
 	    (SwitchIns)steadySwitchIns.get(i);
+    }
+
+    public Label getFreshLabel() {
+	return new Label(LABEL_PREFIX+(labelId++));
     }
 }

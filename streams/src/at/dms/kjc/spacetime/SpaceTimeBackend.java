@@ -26,7 +26,7 @@ public class SpaceTimeBackend
     public static SIRStructure[] structures;
     final private static boolean TEST_SOFT_PIPE = false; //Test Software Pipelining
     final private static boolean TEST_BEAMFORMER = false; //Test SplitJoins
-    final private static boolean REAL=false; //The Real Stuff
+    final private static boolean REAL=true; //The Real Stuff
     
     
     public static void run(SIRStream str,

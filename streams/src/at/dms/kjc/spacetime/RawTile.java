@@ -26,6 +26,10 @@ public class RawTile extends ComputeNode {
 	ioDevice = null;
     }
 
+    public String toString() {
+	return "Tile["+X+","+Y+"]";
+    }
+
     public boolean hasIODevice() 
     {
 	return (ioDevice != null);

@@ -101,7 +101,7 @@ public class Linear extends RawExecutionCode implements Constants {
 	return regs[array.length+popNum];
     }
     
-    private int getMult(int num) {
+    public static int getMult(int num) {
 	int mod=num%4;
 	if(mod==0)
 	    return 1;

@@ -2,6 +2,7 @@ package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
 import at.dms.kjc.*;
+import at.dms.kjc.spacetime.switchIR.*;
 
 public class RawChip {
     //the indices are x, y
@@ -71,6 +72,60 @@ public class RawChip {
 	
 	Utils.fail("calling getDirection on non-neighbors");
 	return "";
+    }
+    
+    //Same as getDirection(ComputeNode from, ComputeNode to) except returns SwitchOPort
+    public SwitchOPort getOPort(ComputeNode from, ComputeNode to) {
+	System.out.println("Get Out: "+from+" "+to);
+	if(from==to)
+	    return SwitchOPort.CSTI;
+	if(from.getX()==to.getX()) {
+	    int dir=from.getY()-to.getY();
+	    if(dir==-1)
+		return SwitchOPort.S;
+	    else if (dir == 1)
+		return SwitchOPort.N;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	if(from.getY()==to.getY()) {
+	    int dir=from.getX()-to.getX();
+	    if(dir==-1) 
+		return SwitchOPort.E;
+	    else if (dir == 1)
+		return SwitchOPort.W;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	Utils.fail("calling getDirection on non-neighbors");
+	return null;
+    }
+
+    //Same as getDirection(ComputeNode from, ComputeNode to) except returns SwitchIPort
+    public SwitchIPort getIPort(ComputeNode from, ComputeNode to) {
+	System.out.println("Get In: "+from+" "+to);
+	if(from==to)
+	    return SwitchIPort.CSTO;
+	if(from.getX()==to.getX()) {
+	    int dir=from.getY()-to.getY();
+	    if(dir==-1)
+		return SwitchIPort.N;
+	    else if (dir == 1)
+		return SwitchIPort.S;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	if(from.getY()==to.getY()) {
+	    int dir=from.getX()-to.getX();
+	    if(dir==-1) 
+		return SwitchIPort.W;
+	    else if (dir == 1)
+		return SwitchIPort.E;
+	    else
+		Utils.fail("calling getDirection on non-neighbors");
+	}
+	Utils.fail("calling getDirection on non-neighbors");
+	return null;
     }
     
     /**

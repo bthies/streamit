@@ -38,9 +38,9 @@ public class MakefileGenerator
 	    while(tiles.hasNext()) {
 		int tile = ((Integer)tiles.next()).intValue();
 		if (tile < 10) 
-		    fw.write("OBJECT_FILE_0");
+		    fw.write("OBJECT_FILES_0");
 		else
-		    fw.write("OBJECT_FILE_");
+		    fw.write("OBJECT_FILES_");
 		fw.write(tile + " = " +
 			 "tile" + tile + ".o " +
 			 "sw" + tile + ".o\n");

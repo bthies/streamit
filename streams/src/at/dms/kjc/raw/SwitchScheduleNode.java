@@ -50,7 +50,7 @@ public class SwitchScheduleNode
 			   ",");
 	    else {
 		buf.append(getHeading(node, (FlatNode)destinations.get(i), send) + 
-			   "-> $csti, ");
+			   "->$csti, ");
 	    }
 	}
 	//erase the trailing ,

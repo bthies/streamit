@@ -2,13 +2,15 @@
 # AAL 6/25/2002 Script that runs regression tests every evening
 # (gets called from cron job on cagfram-46.lcs.mit.edu user
 # aalamb.
-# $Id: run_reg_tests.sh,v 1.3 2002-06-28 22:23:26 aalamb Exp $
+# $Id: run_reg_tests.sh,v 1.4 2002-07-01 19:18:08 aalamb Exp $
 
-# Vars so that java compiles correctly
-setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:/u/aalamb/streams//compiler/kopi/3rdparty/JFlex/lib:/u/aalamb/streams//compiler/kopi/3rdparty/getopt:/u/aalamb/streams//compiler/kopi/classes:/u/aalamb/streams//apps/libraries:/u/aalamb/streams//misc/java:/u/aalamb/streams//scheduler/v1/java:/usr/uns/java/antlr-2.7.1:/u/aalamb/streams//compiler/frontend:/u/aalamb/streams//scheduler/v2/java
+# Environmental Variables
+# home directory for CVS
+setenv CVSROOT /projects/raw/cvsroot
 setenv STREAMIT_HOME /u/aalamb/streams/
+# path for RAW tools
 setenv TOPDIR /home/bits6/aalamb/starsearch
-
+setenv CLASSPATH .:/usr/local/jdk1.3/jre/lib/rt.jar:$STREAMIT_HOME/compiler/kopi/3rdparty/JFlex/lib:$STREAMIT_HOME/compiler/kopi/3rdparty/getopt:$STREAMIT_HOME/compiler/kopi/classes:$STREAMIT_HOME/apps/libraries:$STREAMIT_HOME/misc/java:$STREAMIT_HOME/scheduler/v1/java:/usr/uns/java/antlr-2.7.1:$STREAMIT_HOME/compiler/frontend:$STREAMIT_HOME/scheduler/v2/java
 
 # the script to use for 
 
@@ -25,6 +27,7 @@ setenv TEMP /tmp/regtest.temp
 setenv REG_LOG /u/aalamb/streams/regtest/regtest_log.txt
 
 
+
 #delete old error file
 rm -rf $REG_ERR
 
@@ -33,6 +36,13 @@ echo "**********" >& $REG_LOG
 echo "Starting Regression Test Run" >>& $REG_LOG
 /bin/date >>& $REG_LOG
 echo "**********" >>& $REG_LOG
+
+# get the latest copy from 
+cd $STREAMIT_HOME
+cvs update >>& $REG_LOG
+cd compiler
+cd kopi
+./compile >>& $REG_LOG
 
 # run the makefile which executes the regression test
 /usr/local/bin/make -C $STREAMIT_HOME/regtest >>& $REG_LOG
@@ -60,11 +70,11 @@ $STREAMIT_HOME/regtest/tools/parse_results.pl $STREAMIT_HOME/regtest/regtest_log
 cat $TEMP | mail -s "Full StreamIT Regression Test Summary" aalamb@mit.edu
 
 
-# create an executive message that contains performance numbers
+# create an executive message that doesn't contain performance numbers
 $STREAMIT_HOME/regtest/tools/parse_results.pl $STREAMIT_HOME/regtest/regtest_log.txt $STREAMIT_HOME/regtest/regtest_errors.txt > $TEMP
 
-# send mail to with the results of the test
-cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu
+# send mail to with the results of the test to the streamit mailing list
+cat $TEMP | mail -s "StreamIT Regression Test Summary" aalamb@mit.edu commit-stream@cag.lcs.mit.edu
 
 
 

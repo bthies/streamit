@@ -2,13 +2,14 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.7 2002-09-25 17:43:11 dmaze Exp $
+# $Id: knit,v 1.8 2002-10-03 20:20:04 dmaze Exp $
 #
 
 use strict;
 use vars qw(%opts);
 
 use Getopt::Long;
+Getopt::Long::Configure("bundling", "no_ignore_case");
 
 get_options() or die "Error parsing options";
 if ($opts{help})
@@ -39,7 +40,7 @@ Options:
 
 Options passed to Kopi:
   --constprop, -c     Turns on StreamIt Field Prop
-  --fusion, -o        Perform filter fusion
+  --fusion, -f        Perform filter fusion
   --linearanalysis    Perform linear analysis
   --linearreplacement Perform linear transformations based on analysis
   --noanneal, -N      Do not run simulated annealing for layout
@@ -64,7 +65,7 @@ sub get_options
 	       "raw|r=i",
 	       "verbose|v",
 	       "constprop|c!",
-	       "fusion|o!",
+	       "fusion|f!",
 	       "linearanalysis|i!",
 	       "linearreplacement|I!",
 	       "noanneal|N!",

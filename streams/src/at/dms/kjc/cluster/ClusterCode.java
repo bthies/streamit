@@ -14,6 +14,7 @@ import at.dms.kjc.sir.lowering.*;
 import java.util.ListIterator;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.HashMap;
 import java.util.TreeSet;
 import java.util.HashSet;
 import java.io.*;
@@ -524,7 +525,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
     }
 
 
-    public static void generateConfigFile() {
+    /**
+     * partitionMap is SIROperator->Integer denoting partition #
+     */
+    public static void generateConfigFile(HashMap partitionMap) {
 
 	int threadNumber = NodeEnumerator.getNumberOfNodes();
 
@@ -534,6 +538,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	str = new StringWriter();
         p = new TabbedPrintWriter(str);
 
+	/*
 	String me = new String();
 
 	try {
@@ -553,9 +558,10 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    ex.printStackTrace();
 	}
+	*/
 
 	for (int i = 0; i < threadNumber; i++) {
-	    p.print(i+" "+me+"\n");
+	    p.print(i+" "+"machine-"+getPartition(NodeEnumerator.getFlatNode(i), partitionMap)+"\n");
 	}
 
 	try {
@@ -566,6 +572,51 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	catch (Exception e) {
 	    System.err.println("Unable to write cluster configuration file");
 	}	
+    }
+
+    /**
+     * Returns partition that <thread> should execute on.
+     */
+    private static String getPartition(FlatNode node, HashMap partitionMap) {
+	SIROperator op = node.contents;
+	Integer partition = (Integer)partitionMap.get(op);
+
+	if (partition!=null) {
+	    // if we assigned it to a partition, then return it.  Add
+	    // 1 for sake of clusters that start with machine "1"
+	    // instead of "0".
+	    int val = (((Integer)partition).intValue()+1);
+	    return ""+val;
+	} else if (op instanceof SIRSplitter) {
+	    // note that splitters/joiners collapsed in a fused node
+	    // should have been assigned a partition by the
+	    // partitioner; the ones remaining are "border cases".
+	    if (node.incoming[0]==null) {
+		// if we hit the top (a null splitter), assign to partition 0
+		return "1";
+	    } else {
+		// otherwise, integrate splitters into their source.
+		// We are guaranteed that they have only one incoming
+		// edge; otherwise they'd be a joiner.
+		Utils.assert(node.incoming!=null && node.incoming.length>=1 && node.incoming[0]!=null, "Unexpected representation of incoming nodes in flatgraph.");
+		return getPartition(node.incoming[0], partitionMap);
+	    }
+	} else if (op instanceof SIRJoiner) {
+	    // if we have one outgoing node and it's a filter, then
+	    // integrate into that filter's partition.  Otherwise
+	    // (since after us would be a splitter or multiple nodes)
+	    // integrate into our first child stream by default (could
+	    // be more intelligent to minimize communication, etc.)
+	    if (node.edges!=null && node.edges.length==1 && (node.edges[0].contents instanceof SIRFilter)) {
+		return getPartition(node.edges[0], partitionMap);
+	    } else {
+		Utils.assert(node.incoming!=null && node.incoming.length>=1 && node.incoming[0]!=null, "Unexpected representation of incoming nodes in flatgraph.");
+		return getPartition(node.incoming[0], partitionMap);
+	    }
+	} else {
+	    Utils.fail("No partition was assigned to " + op + " of type " + op.getClass());
+	    return null;
+	}
     }
 
 }

@@ -647,7 +647,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    Iterator i = sends_to.iterator();
 	    while (i.hasNext()) {
 
-		SIRFilter sender = (SIRFilter)NodeEnumerator.getNode(selfID);
+		SIRFilter sender = (SIRFilter)NodeEnumerator.getOperator(selfID);
   		SIRFilter receiver = (SIRFilter)i.next();
 
 		int fromID = selfID;
@@ -1952,8 +1952,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 		    //print("__msg_sock_"+selfID+"_"+dst+"out->write_int("+max+");");
 
-		    SIRFilter sender = (SIRFilter)NodeEnumerator.getNode(selfID);
-		    SIRFilter receiver = (SIRFilter)NodeEnumerator.getNode(dst);
+		    SIRFilter sender = (SIRFilter)NodeEnumerator.getOperator(selfID);
+		    SIRFilter receiver = (SIRFilter)NodeEnumerator.getOperator(dst);
 
 		    if (LatencyConstraints.isMessageDirectionDownstream(sender, receiver)) {
 			

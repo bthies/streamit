@@ -12,6 +12,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.stats.StatisticsGathering;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.sir.lowering.partition.*;
+import at.dms.kjc.sir.lowering.partition.dynamicprog.*;
 import at.dms.kjc.sir.lowering.fusion.*;
 import at.dms.kjc.sir.lowering.fission.*;
 import at.dms.kjc.lir.*;
@@ -130,14 +131,11 @@ public class ClusterBackend implements FlatVisitor {
 	    System.out.println("Done FuseAll...");
 	}
 
-	if (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_ilp) {
-
-	    int threads = KjcOptions.cluster;
-	    
-	    System.err.println("Running Partitioning... target number of threads: "+threads);
-	    str = Partitioner.doit(str, threads);
-	    System.err.println("Done Partitioning...");
-	}
+	int threads = KjcOptions.cluster;
+	System.err.println("Running Partitioning... target number of threads: "+threads);
+	HashMap partitionMap = new HashMap();
+	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
+	System.err.println("Done Partitioning...");
 
 	if (KjcOptions.sjtopipe) {
 	    SJToPipe.doit(str);
@@ -224,7 +222,7 @@ public class ClusterBackend implements FlatVisitor {
 	ClusterCode.generateCode(graphFlattener.top);
 	ClusterCode.generateMasterFile();
 	ClusterCode.generateMakeFile();
-	ClusterCode.generateConfigFile();
+	ClusterCode.generateConfigFile(partitionMap);
 
 	System.out.println("Cluster Code End.");	
 

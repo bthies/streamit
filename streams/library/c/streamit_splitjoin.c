@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "streamit.h"
 #include "streamit_internal.h"
@@ -139,7 +140,7 @@ static void build_tape_cache(one_to_many *p)
   p->tcache = malloc(p->slots * sizeof(tape *));
   for (i = 0, j = 0, slot = 0; slot < p->slots; j++, slot++)
   {
-    if (j >= p->ratio[i])
+    while (j >= p->ratio[i])
     {
       j = 0;
       i++;

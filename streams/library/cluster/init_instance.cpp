@@ -50,6 +50,21 @@ static void *accept_thread(void *param) {
 
 }
 
+void init_instance::reset_all() {
+
+  thread_machines.clear();
+  thread_start_iter.clear();
+
+  in_connections.clear();
+  out_connections.clear();
+
+  in_done.clear();
+  out_done.clear();
+ 
+  in_sockets.clear();
+  out_sockets.clear();
+}
+
 
 void init_instance::read_config_file() {
   
@@ -225,6 +240,7 @@ void init_instance::initialize_sockets() {
   }  
 
   LOCK(&bind_lock);
+  UNLOCK(&bind_lock);
 
   // make connections to other hosts etc.
 

@@ -27,6 +27,8 @@ class mysocket {
   mysocket() {}
   mysocket(int s, void (*check_thread_status_during_io)() = NULL);
 
+  void check_thread_status();
+
   int eof();
   void close();
   

@@ -2,6 +2,8 @@
 #ifndef __DATA_CONSUMER_H
 #define __DATA_CONSUMER_H
 
+#include <unistd.h>
+
 #include <socket_holder.h>
 #include <serializable.h>
 #include <mysocket.h>

@@ -19,6 +19,10 @@
 int mysocket::total_data_received = 0;
 int mysocket::total_data_sent = 0;
 
+void mysocket::check_thread_status() {
+  if (check_thread_fptr != NULL) check_thread_fptr();    
+}
+
 int mysocket::get_total_data_received() {
   return total_data_received;
 }

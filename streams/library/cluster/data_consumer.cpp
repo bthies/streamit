@@ -24,7 +24,19 @@ void data_consumer::set_socket(mysocket *socket) {
 }
 
 void data_consumer::read_item(void *buf, int size) {  
-  socket->read_chunk((char*)buf, size);
+  int retval;
+
+  do {
+    retval = socket->read_chunk((char*)buf, size);
+
+    if (retval == -1) {
+      printf("data_consumer: could not read data!");
+      fflush(stdout);
+      socket->check_thread_status();
+      sleep(1);
+    }
+  } while (retval == -1);
+    
   items_read++;
 }
 
@@ -39,3 +51,11 @@ float data_consumer::read_float() {
   read_item(&result, sizeof(float));
   return result;
 }
+
+
+
+
+
+
+
+

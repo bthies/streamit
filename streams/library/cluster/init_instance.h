@@ -29,6 +29,8 @@ class init_instance {
 
  public:
 
+  static void reset_all();
+
   static void read_config_file();
 
   static void set_thread_ip(int thread, unsigned ip); 

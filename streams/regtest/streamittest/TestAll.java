@@ -1,6 +1,6 @@
 /**
  * Class which runs all of the test suites
- * $Id: TestAll.java,v 1.8 2002-09-03 15:10:32 aalamb Exp $
+ * $Id: TestAll.java,v 1.9 2002-09-13 14:37:43 aalamb Exp $
  **/
 package streamittest;
 
@@ -89,6 +89,12 @@ public class TestAll extends TestCase {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.RAW8 |
 				       CompilerInterface.CONSTPROP));
+
+	// try linear replacement (replace linear filters with a direct implementation).
+	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.CONSTPROP |
+				       CompilerInterface.LINEAR_REPLACEMENT));
+	
     }
 
 

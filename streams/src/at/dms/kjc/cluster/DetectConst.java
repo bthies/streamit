@@ -56,8 +56,8 @@ public class DetectConst extends SLIREmptyVisitor {
 
     public void visitFilter(SIRFilter self) {
 
-	System.out.println();
-	System.out.println("DetectConst: visiting filter "+self.getIdent());
+	//System.out.println();
+	//System.out.println("DetectConst: visiting filter "+self.getIdent());
 
 	JMethodDeclaration work = self.getWork();
 	JMethodDeclaration init = self.getInit();
@@ -102,7 +102,7 @@ public class DetectConst extends SLIREmptyVisitor {
                                        CClassType[] exceptions,
                                        JBlock body) {
 
-	System.out.println("DetectConst: visiting method "+ident);
+	//System.out.println("DetectConst: visiting method "+ident);
 	this.visitBlockStatement(body, null);
     }
 
@@ -126,7 +126,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
 	if (expr instanceof JFieldAccessExpression) {
 	    JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-	    System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a prefix expression");
+	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a prefix expression");
 	    fieldIsModified.add(f_expr.getIdent());
 	}
     }
@@ -137,7 +137,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
 	if (expr instanceof JFieldAccessExpression) {
 	    JFieldAccessExpression f_expr = (JFieldAccessExpression)expr;
-	    System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a postfix expression");
+	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a postfix expression");
 	    fieldIsModified.add(f_expr.getIdent());	    
 	}
     }
@@ -149,7 +149,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
 	if (left instanceof JFieldAccessExpression) {
 	    JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-	    System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
+	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
 	    fieldIsModified.add(f_expr.getIdent());
 	}
 
@@ -158,7 +158,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
 	    if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
 		JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-		System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
+		//System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by an assignement expression");
 		fieldIsModified.add(f_expr.getIdent());
 	    }
 	}
@@ -173,7 +173,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
 	if (left instanceof JFieldAccessExpression) {
 	    JFieldAccessExpression f_expr = (JFieldAccessExpression)left;
-	    System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
+	    //System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
 	    fieldIsModified.add(f_expr.getIdent());
 	}
 
@@ -182,7 +182,7 @@ public class DetectConst extends SLIREmptyVisitor {
 
 	    if (a_expr.getPrefix() instanceof JFieldAccessExpression) {
 		JFieldAccessExpression f_expr = (JFieldAccessExpression)a_expr.getPrefix();
-		System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
+		//System.out.println("DetectConst: field "+f_expr.getIdent()+" changed by a compound assignement expression");
 		fieldIsModified.add(f_expr.getIdent());
 	    }
 	}

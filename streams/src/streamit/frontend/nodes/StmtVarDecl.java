@@ -25,7 +25,7 @@ import java.util.List;
  * optional initialization value.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: StmtVarDecl.java,v 1.5 2003-10-09 19:51:00 dmaze Exp $
+ * @version $Id: StmtVarDecl.java,v 1.6 2004-01-16 21:43:59 dmaze Exp $
  */
 public class StmtVarDecl extends Statement
 {
@@ -171,5 +171,47 @@ public class StmtVarDecl extends Statement
     public Object accept(FEVisitor v)
     {
         return v.visitStmtVarDecl(this);
+    }
+
+    public boolean equals(Object other)
+    {
+        if (!(other instanceof StmtVarDecl))
+            return false;
+        StmtVarDecl svd = (StmtVarDecl)other;
+        if (svd.types.size() != types.size())
+            return false;
+        for (int i = 0; i < types.size(); i++)
+        {
+            if (!(types.get(i).equals(svd.types.get(i))))
+                return false;
+            if (!(names.get(i).equals(svd.names.get(i))))
+                return false;
+            if (inits.get(i) == null && svd.inits.get(i) != null)
+                return false;
+            if (inits.get(i) != null &&
+                !(inits.get(i).equals(svd.inits.get(i))))
+                return false;
+        }
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        // just use the first type and name.
+        return types.get(0).hashCode() ^ names.get(0).hashCode();
+    }
+
+    public String toString()
+    {
+        StringBuffer result = new StringBuffer();
+        for (int i = 0; i < types.size(); i++)
+        {
+            if (i != 0)
+                result.append("; ");
+            result.append(types.get(i) + " " + names.get(i));
+            if (inits.get(i) != null)
+                result.append("=" + inits.get(i));
+        }
+        return result.toString();
     }
 }

@@ -128,6 +128,9 @@ public class Flattener {
 	    runLinearAnalysis(str);
 	}
 
+	// DEBUGGING PRINTING
+	System.out.println("--------- AFTER Linear Analysis --------");
+
 	
 	// make single structure
 	SIRIterator iter = IterFactory.createIter(str);
@@ -154,13 +157,15 @@ public class Flattener {
     /** Runs linear analysis (and associated optimizations) on the passed stream. **/
     static void runLinearAnalysis(SIRStream str) {
 	System.out.println("Running Linear Analysis");
-	//Destroys arrays into local variables if possible
- 
+	// run the linear analysis and stores the information garnered in the lfa
 	LinearFilterAnalyzer lfa = LinearFilterAnalyzer.findLinearFilters(str,
 									  StreamItOptions.debug);
+
+	// now, print out the graph using the LinearPrinter which colors the graph
+	// nodes based on their linearity.
+	LinearDot.printGraph(str, "linear.dot", lfa);
+
 	
-	// DEBUGGING PRINTING
-	System.out.println("--------- AFTER Linear Analysis --------");
     }
 
     

@@ -485,16 +485,18 @@ class Propagator extends SLIRReplacingVisitor {
         // Look for known idempotent functions.
         if (args.length == 1 && args[0].isConstant())
         {
-            JExpression narg = doPromote(args[0],
-                                         new JDoubleLiteral(null, 0.0));
-            double darg = narg.doubleValue();
-            if (ident.equals("sin"))
-                return new JDoubleLiteral(self.getTokenReference(),
-                                          Math.sin(darg));
-            if (ident.equals("cos"))
-                return new JDoubleLiteral(self.getTokenReference(),
-                                          Math.cos(darg));
-        }
+            if (ident.equals("sin") || ident.equals("cos")) {
+		JExpression narg = doPromote(args[0],
+					     new JDoubleLiteral(null, 0.0));
+		double darg = narg.doubleValue();
+		if (ident.equals("sin"))
+		    return new JDoubleLiteral(self.getTokenReference(),
+					      Math.sin(darg));
+		if (ident.equals("cos"))
+		    return new JDoubleLiteral(self.getTokenReference(),
+					      Math.cos(darg));
+	    }
+	}
         return self;
     }
 

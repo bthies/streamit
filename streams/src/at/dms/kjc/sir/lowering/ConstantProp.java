@@ -34,6 +34,13 @@ public class ConstantProp {
     private void propagateAndUnroll(SIRStream str, Hashtable constants) {
 	Unroller unroller;
 	do {
+	    if(KjcOptions.struct&&!Flattener.INIT_STATEMENTS_RESOLVED) {
+		StructDestroyer dest=new StructDestroyer();
+		JMethodDeclaration[] methods=str.getMethods();
+		for(int i=0;i<methods.length;i++)
+		    methods[i].accept(dest);
+		dest.addFields(str);
+	    }
 	    // make a propagator
 	    Propagator propagator = new Propagator(constants);
 	    // propagate constants within init function of <str>
@@ -68,7 +75,7 @@ public class ConstantProp {
 		}
 	    }
 	    // iterate until nothing unrolls
-	} while (unroller.hasUnrolled());
+	} while (unroller.hasUnrolled());	
 	// if <str> is a container, recurse from it to its sub-streams
 	if (str instanceof SIRContainer) {
 	    recurseFrom((SIRContainer)str, constants);
@@ -177,8 +184,11 @@ public class ConstantProp {
 	    SIRInitStatement self=(SIRInitStatement)super.visitInitStatement(oldSelf,oldTarget);
 	    SIRStream target = self.getTarget();
 	    // if the target is a recursive stub, then expand it one level
+	    //System.err.println("Expanding: "+self.getTarget());
+	    //System.err.println(self.getArgs());
 	    if (target instanceof SIRRecursiveStub) {
-		self.setTarget(((SIRRecursiveStub)target).expand());
+		target=((SIRRecursiveStub)target).expand();
+		self.setTarget(target);
 	    }
 	    recurseInto(self.getTarget(), self.getArgs(), constants);
 	    return self;
@@ -205,6 +215,7 @@ public class ConstantProp {
 	}
 	//List argCopy=(List)args.clone();
 	JFormalParameter[] parameters = initMethod.getParameters();
+	//System.err.println("Recursing into "+str+" "+args+" "+parameters.length);
 	// build new constants
 	int size=args.size();
 	for (int i=0; i<size; i++) {

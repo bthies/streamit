@@ -168,10 +168,18 @@ public class Flattener {
 	    System.err.print("Running linear analysis... ");
 	    LinearAnalyzer lfa = LinearAnalyzer.findLinearFilters(str, KjcOptions.debug);
 	    System.err.println("done.");
-
+	    
+	    System.err.print("Running redundancy analysis... ");	    
+	    // now, run a redundancy analysis pass and print the results
+	    LinearRedundancyAnalyzer lra = new LinearRedundancyAnalyzer(lfa);
+	    System.err.println("done.");	    
+	    
 	    // now, print out the graph using the LinearPrinter which colors the graph
 	    // nodes based on their linearity.
 	    LinearDot.printGraph(str, "linear.dot", lfa);
+	    // and another for redundancy information
+	    LinearDot.printGraph(str, "linear-redundant.dot", lfa, lra);
+
 	    
 	    // if we are supposed to transform the graph
 	    // by replacing work functions with their linear forms, do so now 

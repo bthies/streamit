@@ -190,7 +190,7 @@ public class FilterContent {
 	if(array==null)
 	    return name;
 	else {
-	    if(false)
+	    if(true)
 		return name+" ["+array.length+","+popCount+"]";
 	    else {
 		StringBuffer out=new StringBuffer(name);

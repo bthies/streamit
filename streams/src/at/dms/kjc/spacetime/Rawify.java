@@ -1275,12 +1275,13 @@ public class Rawify
 		    if(!end)
 			ins.addRoute(src,dest);
 		    code.appendIns(ins, false);
-		    //Repeat first value
-		    for(int k=numPop-2;k>i;k--) {
-			FullIns newIns = new FullIns(tile);
-			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-			code.appendIns(newIns, false);
-		    }
+		    //Don't Repeat first value
+		    //Buffered in tile
+		    /*for(int k=numPop-2;k>i;k--) {
+		      FullIns newIns = new FullIns(tile);
+		      newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+		      code.appendIns(newIns, false);
+		      }*/
 		    if(j==0) {
 			FullIns newIns=new FullIns(tile);
 			if(end)

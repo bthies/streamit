@@ -11,7 +11,7 @@ import java.util.Iterator;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.7 2003-05-21 16:18:55 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.8 2003-06-24 21:00:28 dmaze Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -42,6 +42,19 @@ public class SymbolTableVisitor extends FEReplacer
     {
         this.symtab = symtab;
         this.streamType = null;
+    }
+
+    /**
+     * Create a new symbol table visitor.
+     *
+     * @param symtab  Symbol table to use if no other is available,
+     *                can be null
+     * @param st      Prevailing stream type, can be null
+     */
+    public SymbolTableVisitor(SymbolTable symtab, StreamType st)
+    {
+        this.symtab = symtab;
+        this.streamType = st;
     }
 
     /**

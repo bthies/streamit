@@ -1015,11 +1015,10 @@ new JEmptyStatement(null, null);
 
 	JExpression s_params[] = new JExpression[3];
 
-	s_params[0] = new JIntLiteral(nodeID);
 
+	s_params[0] = new JLocalVariableExpression(null, new JVariableDefinition(null, 0, (CType)CStdType.Integer, "__thread_"+nodeID, new JIntLiteral(0)));
 	s_params[1] = new JLocalVariableExpression(null, new JVariableDefinition(null, 0, (CType)CStdType.Integer, "__steady_"+nodeID, new JIntLiteral(0)));
 	s_params[2] = new JLocalVariableExpression(null, new JVariableDefinition(null, 0, (CType)CStdType.Integer, "__write_thread__"+nodeID, new JIntLiteral(0)));
-
 
 
 	sss[1] = new JIfStatement(null,

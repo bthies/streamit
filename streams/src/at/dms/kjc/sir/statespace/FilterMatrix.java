@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.7 2004-03-12 23:48:28 sitij Exp $
+ * $Id: FilterMatrix.java,v 1.8 2004-03-15 21:36:02 sitij Exp $
  **/
 
 public class FilterMatrix {
@@ -50,6 +50,19 @@ public class FilterMatrix {
     }
 
 
+    public static FilterMatrix getIdentity(int n) {
+
+	if(n<=0)
+	    throw new IllegalArgumentException("Can't have matrix of dimension " + n);
+
+	FilterMatrix Identity = new FilterMatrix(n,n);
+	for(int i=0; i<n; i++)
+	    Identity.setElement(i,i,ComplexNumber.ONE);
+
+	return Identity;
+
+    }
+
     /**
      * Accessor: returns the value of the matrix at the specified position,
      * and bombs an exception if the value is out of range.
@@ -68,6 +81,7 @@ public class FilterMatrix {
     public int getRows() {
 	return this.internalSizeRows;
     }
+
     /**
      * Accessor: Return the number of columns in this matrix.
      **/

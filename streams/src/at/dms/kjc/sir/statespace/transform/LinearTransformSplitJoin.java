@@ -15,7 +15,7 @@ import java.util.*;
  * <a href="http://cag.lcs.mit.edu/commit/papers/03/aalamb-meng-thesis.pdf">
  * thesis</a> for more information.<br>
  *
- * $Id: LinearTransformSplitJoin.java,v 1.5 2004-03-12 23:48:40 sitij Exp $
+ * $Id: LinearTransformSplitJoin.java,v 1.6 2004-03-15 21:36:12 sitij Exp $
  **/
 public class LinearTransformSplitJoin extends LinearTransform{
     LinearFilterRepresentation[] linearRepresentations;
@@ -114,13 +114,6 @@ public class LinearTransformSplitJoin extends LinearTransform{
 	    expandedPreB = new FilterMatrix(totalStates, peekVal-totalInputs);
 	}
 
-	// just do a little paranoia check and ensure that all of the pop counts are the same
-
-	for (int i=0; i<filterCount; i++) {
-	    if (expandedB.getCols() != expandedReps[i].getPopCount()) {
-		throw new RuntimeException("inconsistency -- expanded reps don't all have the same pop!");
-	    }
-	}
 	
 	// now, copy the rows of the matrices into the expanded versions
 	// for each expanded matrix, copy joinWeight[i] rows into the new matrix

@@ -6,13 +6,13 @@ import java.util.Iterator;
 import at.dms.kjc.sir.statespace.*;
 
 /**
- * Represents a pipeline combination transform. Combines two filter that
+ * Represents a pipeline combination transform. Combines two filters that
  * come one after another in a pipeline into a single filter that does
  * the same work. This combination might require each of the individual
  * filters to be expanded by some factor, and then a matrix multiplication
  * can be performed.
  * 
- * $Id: LinearTransformPipeline.java,v 1.9 2004-03-08 18:39:50 sitij Exp $
+ * $Id: LinearTransformPipeline.java,v 1.10 2004-03-15 21:36:12 sitij Exp $
  **/
 
 public class LinearTransformPipeline extends LinearTransform {
@@ -51,7 +51,6 @@ public class LinearTransformPipeline extends LinearTransform {
 	FilterMatrix preworkA1, preworkB1, preworkA2, preworkB2, preworkAprime, preworkBprime;
 	
 	int preworkPop1, preworkPop2;
-	//	int newPop1_init, newPush1_init, newPop2_init, newPush2_init;
 
 	Iterator repIter = this.repList.iterator();
 	
@@ -116,17 +115,17 @@ public class LinearTransformPipeline extends LinearTransform {
 
 		preworkAprime = null;
 		preworkBprime = null;
-
 	    }
-
 	    else {
 		combinedPreWorkNeeded = true;
 
 		//the easy case, just set the overall prework to be the first filter's prework
 
 		if(rep2.preworkNeeded()==false) {
-		    preworkAprime = rep1.getPreWorkA().copy();
-		    preworkBprime = rep1.getPreWorkB().copy();
+		    preworkAprime = new FilterMatrix(state1+state2,state1+state2);
+		    preworkAprime.copyAt(0,0,rep1.getPreWorkA());
+		    preworkBprime = new FilterMatrix(state1+state2,rep1.getPreWorkB().getCols());
+		    preworkBprime.copyAt(0,0,rep1.getPreWorkB());
 		}
 
 		else {
@@ -175,6 +174,7 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    LinearFilterRepresentation rep1MoreExpanded = rep1Expanded.expand_with_prework(n);
 		    FilterMatrix preworkA1_new = rep1MoreExpanded.getA();
 		    FilterMatrix preworkB1_new = rep1MoreExpanded.getB();
+		    LinearPrinter.println("Rows: " + preworkB1_new.getRows() + " Cols: " + preworkB1_new.getCols());
 		    FilterMatrix C1_temp = rep1MoreExpanded.getC();
 		    FilterMatrix D1_temp = rep1MoreExpanded.getD();
  
@@ -184,6 +184,10 @@ This is due to the fact that push1 = pop2, and peek2 > pop2
 		    preworkAprime.copyAt(state1,state1,preworkA2_new);
 
 		    preworkBprime = new FilterMatrix(state1+newVar2Total,preworkB1_new.getCols());
+
+		    if(preworkBprime.getCols() > preworkBprime.getRows())
+			LinearPrinter.println("!!!!!");
+
 		    preworkBprime.copyAt(0,0,preworkB1_new);
 		    preworkBprime.copyAt(state1,0,preworkB2_new.times(D1_temp));
 

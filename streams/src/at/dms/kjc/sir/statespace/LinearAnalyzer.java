@@ -17,7 +17,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.<br> 
  *
- * $Id: LinearAnalyzer.java,v 1.10 2004-03-12 23:48:28 sitij Exp $
+ * $Id: LinearAnalyzer.java,v 1.11 2004-03-15 21:36:02 sitij Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     private final static boolean CHECKREP=false; //Whether to checkrep or not
@@ -634,7 +634,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	LinearPrinter.println(" transform successful.");
 	// check for debugging so we don't waste time producing output if not needed
 	if (LinearPrinter.getOutput()) {
-	    	    LinearPrinter.println("Linear splitjoin found: " + self +
+	        	    LinearPrinter.println("Linear splitjoin found: " + self +
 				  "\n-->MatrixA:\n" + newRep.getA() +
 				  "\n-->MatrixB:\n" + newRep.getB() +
 				  "\n-->MatrixC:\n" + newRep.getC() +
@@ -722,7 +722,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
      * to a splitjoins with a duplicate splitter.
      **/
     private LinearFilterRepresentation makeDecimator(int vTot, int[] splitWeights, int childPos) {
-	// make matrix (A starts out all zeros)
+	// make matrix 
 	// we want to input vSum items and output as many items as the
 	// child would have gotten in the original splitter (eg splitWeights[childPos])
 	// which implies the new matrix has vSum rows and splitWeights[childPos] cols
@@ -749,7 +749,7 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 
 
 	// make a new decimator rep out of the new A,B,C,D
-	return new LinearFilterRepresentation(newA, newB, newC, newD, newInit, vTot); // pop==peek
+	return new LinearFilterRepresentation(newA, newB, newC, newD, newInit, vTot);
 
     }
     

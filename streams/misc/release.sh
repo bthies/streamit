@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.10 2003-05-28 19:14:30 dmaze Exp $
+# $Id: release.sh,v 1.11 2003-05-28 21:56:07 dmaze Exp $
 #
 
 # Interesting/configurable variables:
@@ -70,6 +70,7 @@ cvs export -r $TAG -d $SRCDIR streams/docs/release
 # Some benchmarks we can't (or won't) export; trim those here.
 rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
 rm -rf $WORKING/streams/apps/benchmarks/cfar
+rm -rf $WORKING/streams/apps/benchmarks/gsm/c
 rm -rf $WORKING/streams/apps/benchmarks/nokia
 rm -rf $WORKING/streams/apps/benchmarks/perftest4
 

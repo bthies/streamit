@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JNameExpression.java,v 1.10 2003-11-13 10:46:10 thies Exp $
+ * $Id: JNameExpression.java,v 1.11 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -44,8 +44,8 @@ public class JNameExpression extends JExpression {
 	super(where);
 
 	this.ident = ident;
-	assert(ident.indexOf('.') == -1); // $$$
-	assert(ident.indexOf('/') == -1);
+	assert ident.indexOf('.') == -1; // $$$
+	assert ident.indexOf('/') == -1;
     }
 
     /**
@@ -57,8 +57,8 @@ public class JNameExpression extends JExpression {
 
 	this.prefix = prefix;
 	this.ident = ident;
-	assert(ident.indexOf('.') == -1); // $$$
-	assert(ident.indexOf('/') == -1);
+	assert ident.indexOf('.') == -1; // $$$
+	assert ident.indexOf('/') == -1;
     }
 
     /**
@@ -188,7 +188,7 @@ public class JNameExpression extends JExpression {
 		}
 	    }
 
-	    assert(prefix != null);
+	    assert prefix != null;
 
 	    try {
 		prefix = prefix.analyse(context);

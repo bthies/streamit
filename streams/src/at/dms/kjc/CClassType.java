@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: CClassType.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -169,7 +169,7 @@ public class CClassType extends CType {
   public CClass getCClass() {
     // !!! graf 000213
     // !!! should have been checked (see JFieldAccessExpression)
-    assert(clazz != BAC_CLASS);
+    assert clazz != BAC_CLASS;
     // !!! graf 000213
     if (clazz == null) {
       if (this == CStdType.Object) {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CArrayType.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: CArrayType.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -44,8 +44,8 @@ public class CArrayType extends CClassType {
     super();
 
     type = TID_ARRAY;
-    assert(baseType != null);
-    assert(arrayBound > 0);
+    assert baseType != null;
+    assert arrayBound > 0;
 
     if (baseType.isArrayType()) {
       this.arrayBound = arrayBound + ((CArrayType)baseType).arrayBound;
@@ -115,8 +115,8 @@ public class CArrayType extends CClassType {
    * @return	the base class of this type
    */
   public CType getBaseType() {
-    assert(baseType != null);
-    assert(!(baseType instanceof CArrayType));
+    assert baseType != null;
+    assert !(baseType instanceof CArrayType);
     return baseType;
   }
 
@@ -124,8 +124,8 @@ public class CArrayType extends CClassType {
    * Returns the type of the elements of an array of this type.
    */
   public CType getElementType() {
-    assert(baseType != null);
-    assert(!(baseType instanceof CArrayType));
+    assert baseType != null;
+    assert !(baseType instanceof CArrayType);
     if (arrayBound == 1) {
       return baseType;
     } else {

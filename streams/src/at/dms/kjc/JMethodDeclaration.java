@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.20 2003-11-13 10:46:10 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.21 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -74,8 +74,8 @@ public class JMethodDeclaration extends JMemberDeclaration {
 
     this.parameters = parameters;
     this.exceptions = exceptions;
-    assert(parameters != null);
-    assert(exceptions != null);
+    assert parameters != null;
+    assert exceptions != null;
   }
 
     /**

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedInstanceCreation.java,v 1.8 2003-11-13 10:46:11 thies Exp $
+ * $Id: JUnqualifiedInstanceCreation.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -112,7 +112,7 @@ public class JUnqualifiedInstanceCreation extends JExpression {
     for (int i = 0; i < argsType.length; i++) {
       params[i] = params[i].analyse(context);
       argsType[i] = params[i].getType();
-      assert(argsType[i] != null);
+      assert argsType[i] != null;
     }
 
     //!!! review and create test cases

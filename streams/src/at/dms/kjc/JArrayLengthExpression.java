@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayLengthExpression.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JArrayLengthExpression.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -67,7 +67,7 @@ public class JArrayLengthExpression extends JExpression {
    * @exception	PositionedError	the analysis detected an error
    */
   public JExpression analyse(CExpressionContext context) throws PositionedError {
-    assert(prefix != null);
+    assert prefix != null;
     prefix = prefix.analyse(context);
     check(context, prefix.getType().isArrayType(), KjcMessages.ARRAY_LENGTH_BADTYPE);
 

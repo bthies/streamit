@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.5 2003-11-13 10:46:10 thies Exp $
+ * $Id: CodeSequence.java,v 1.6 2004-01-28 16:55:35 dmaze Exp $
  */
 
 /**
@@ -126,7 +126,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
   public final void plantPopInstruction(CType type) {
     switch (type.getSize()) {
     case 0:
-      assert(type == CStdType.Void);
+      assert type == CStdType.Void;
       break;
     case 1:
       plantNoArgInstruction(opc_pop);
@@ -135,7 +135,7 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
       plantNoArgInstruction(opc_pop2);
       break;
     default:
-      assert(false);
+      assert false;
     }
   }
 
@@ -356,7 +356,8 @@ public final class CodeSequence extends at.dms.util.Utils implements Constants {
    * Checks that contexts match.
    */
   public final void popContext(JStatement stmt) {
-    assert((JStatement)contexts.pop() == stmt);
+      JStatement popped = (JStatement)contexts.pop();
+      assert popped == stmt;
   }
 
 

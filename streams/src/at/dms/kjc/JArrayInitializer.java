@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JArrayInitializer.java,v 1.7 2003-11-13 10:46:10 thies Exp $
+ * $Id: JArrayInitializer.java,v 1.8 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -65,7 +65,7 @@ public class JArrayInitializer extends JExpression {
    * @param	type		the type of this array
    */
   public void setType(CArrayType type) {
-    assert(type.checked());
+    assert type.checked();
     this.type = type;
   }
 
@@ -76,7 +76,7 @@ public class JArrayInitializer extends JExpression {
    * @exception	PositionedError	the analysis detected an error
    */
   public JExpression analyse(CExpressionContext context) throws PositionedError {
-    assert(type != null);
+    assert type != null;
 
     CType	elementType = type.getElementType();
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: MethodSignatureParser.java,v 1.2 2003-05-28 05:58:45 thies Exp $
+ * $Id: MethodSignatureParser.java,v 1.3 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -99,7 +99,7 @@ public class MethodSignatureParser implements DeepCloneable {
    * For methods, the return type is the last element of the array
    */
   public synchronized CType[] parseMethodSignature(String signature) {
-    // assert(sig.charAt(0) == '(');
+    // assert sig.charAt(0) == '(';
 
     Vector	container = new Vector();
     char[]	sig = signature.toCharArray();

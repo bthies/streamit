@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CTopLevel.java,v 1.2 2003-05-28 05:58:42 thies Exp $
+ * $Id: CTopLevel.java,v 1.3 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -60,7 +60,7 @@ public final class CTopLevel extends at.dms.util.Utils {
    * @param CClass a class to add (must be a CSourceClass)
    */
   public static boolean addSourceClass(CClass cl) {
-    assert(cl instanceof CSourceClass);
+    assert cl instanceof CSourceClass;
 
     CClass	last = (CClass)allLoadedClasses.put(cl.getQualifiedName(), cl);
     return (last == null) ||
@@ -83,7 +83,7 @@ public final class CTopLevel extends at.dms.util.Utils {
       allLoadedClasses.put(name, cl);
     }
 
-    assert(cl != null);
+    assert cl != null;
     return cl != CClass.CLS_UNDEFINED;
   }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClass.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: CClass.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -75,7 +75,7 @@ public abstract class CClass extends CMember {
     this.interfaces = interfaces;
     this.fields = fields;
     this.methods = methods;
-    assert(interfaces != null);
+    assert interfaces != null;
   }
 
   // ----------------------------------------------------------------------
@@ -684,7 +684,7 @@ public abstract class CClass extends CMember {
    * @return the short name of this class
    */
   protected static String getIdent(String qualifiedName) {
-    assert(qualifiedName != null);
+    assert qualifiedName != null;
     String	syntheticName;
 
     int		cursor = qualifiedName.lastIndexOf('/');

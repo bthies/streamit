@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CNumericType.java,v 1.2 2003-05-28 05:58:42 thies Exp $
+ * $Id: CNumericType.java,v 1.3 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -132,7 +132,7 @@ public abstract class CNumericType extends CType {
    * @return the corresponding type or null
    */
   public static CType binaryPromote(CType t1, CType t2) {
-    assert(t1.isNumeric() && t2.isNumeric());
+    assert t1.isNumeric() && t2.isNumeric();
     if (t1 == CStdType.Double) {
       return CStdType.Double;
     } else if (t2 == CStdType.Double) {

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBlockContext.java,v 1.6 2003-11-13 10:46:10 thies Exp $
+ * $Id: CBlockContext.java,v 1.7 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -163,7 +163,8 @@ public class CBlockContext extends CBodyContext {
     var.setIndex(localsIndex + parentIndex);
 
     localVars.addElement(var);
-    assert(++localsIndex == localVars.size()); // $$$ 2 infos
+    ++localsIndex;
+    assert localsIndex == localVars.size(); // $$$ 2 infos
     localsPosition += var.getType().getSize();
   }
 

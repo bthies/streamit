@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConstructorCall.java,v 1.8 2003-11-13 10:46:10 thies Exp $
+ * $Id: JConstructorCall.java,v 1.9 2004-01-28 16:55:35 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -93,7 +93,7 @@ public class JConstructorCall extends JExpression {
 	    arguments[i] = arguments[i].analyse(context);
 
 	    argsType[i] = arguments[i].getType();
-	    assert(argsType[i] != null);
+	    assert argsType[i] != null;
 	}
 	inClass = context.getClassContext().getCClass();
 
@@ -103,7 +103,7 @@ public class JConstructorCall extends JExpression {
 	    clazz = context.getClassContext().getCClass().getSuperClass();
 	}
 
-	assert(clazz != null);
+	assert clazz != null;
 	try {
 	    method = clazz.lookupMethod(context.getClassContext().getCClass(), JAV_CONSTRUCTOR, argsType);
 	} catch (UnpositionedError e) {

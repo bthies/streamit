@@ -11,45 +11,45 @@ package at.dms.kjc.sir.linear;
  * as explained in LinearRedundancy.
  */
 public class LinearComputationTuple {
-	private int position;
-	private ComplexNumber coefficient;
-	/** make a new tuple with the specified input position and coefficient. **/
-	LinearComputationTuple(
-		int inputPosition,
-		ComplexNumber computationCoefficient) {
-		this.position = inputPosition;
-		this.coefficient = computationCoefficient;
+    private int position;
+    private ComplexNumber coefficient;
+    /** make a new tuple with the specified input position and coefficient. **/
+    LinearComputationTuple(int inputPosition,
+			   ComplexNumber computationCoefficient) {
+	this.position = inputPosition;
+	this.coefficient = computationCoefficient;
+    }
+    
+    /////////////////////
+    /// Accessors	
+    /////////////////////
+    /** return the coefficient of this tuple. **/
+    public ComplexNumber getCoefficient() {
+	// complex numbers are immutable, so no problem with sharing.
+	return this.coefficient;
+    }
+    /** returns the input position of the data that this tuple uses. **/
+    public int getPosition() {
+	return this.position;
+    }
+    
+    /** two tuples are equal if their position and coefficient are equal. **/
+    public boolean equals(Object o) {
+	if (!(o instanceof LinearComputationTuple)) {
+	    return false;
 	}
-
-	/////////////////////
-	/// Accessors	
-	/////////////////////
-	/** return the coefficient of this tuple. **/
-	public ComplexNumber getCoefficient() {
-		// complex numbers are immutable, so no problem with sharing.
-		return this.coefficient;
-	}
-	/** returns the input position of the data that this tuple uses. **/
-	public int getPosition() {
-		return this.position;
-	}
-
-	/** two tuples are equal if their position and coefficient are equal. **/
-	public boolean equals(Object o) {
-		if (!(o instanceof LinearComputationTuple)) {
-			return false;
-		}
-		LinearComputationTuple other = (LinearComputationTuple) o;
-		return ((this.position == other.position)
-				&& (this.coefficient.equals(other.coefficient)));
-	}
-	/** reimplement hashcode so that if two tuples are equal, their
-	 * hashcodes are also equal. **/
-	public int hashCode() {
-		return this.position;
-	}
-	/** pretty print **/
-	public String toString() {
-		return ("<" + this.position + "," + this.coefficient + ">");
-	}
+	LinearComputationTuple other = (LinearComputationTuple) o;
+	return ((this.position == other.position)
+		&& (this.coefficient.equals(other.coefficient)));
+    }
+    
+    /** reimplement hashcode so that if two tuples are equal, their
+     * hashcodes are also equal. **/
+    public int hashCode() {
+	return this.position + (int)this.coefficient.getReal();
+    }
+    /** pretty print **/
+    public String toString() {
+	return ("<" + this.position + "," + this.coefficient + ">");
+    }
 }

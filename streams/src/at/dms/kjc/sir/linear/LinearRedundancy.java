@@ -84,6 +84,18 @@ public class LinearRedundancy {
 	((List) this.tuplesToUses.get(tuple)).add(new Integer(use));
 	//checkRep();
     }
+
+    /**
+     * Accessor into the internal tuples to uses map. Sure this
+     * violates encapsulation, but what are you going to do?
+     * The the tuples to uses maps LinearComputationTuples to
+     * lists of Integers, which represent the execution of the work function
+     * after the current one that the tuple is used in.
+     **/
+    public HashMap getTuplesToUses() {
+	return this.tuplesToUses;
+    }
+
     
     /** make a nice human readable string for this LinearRedundancy. **/
     public String toString() {
@@ -192,7 +204,32 @@ public class LinearRedundancy {
 	
 	return returnString;
     }
-	
+
+
+    /**
+     * Returns a string version of the tuple -> list mapping.
+     * This is used for debugging.
+     **/
+    public String getTupleString() {
+	String str = "";
+	// iterate through tuples, each tuple iterate through list
+	Iterator tupleIter = this.tuplesToUses.keySet().iterator();
+	while(tupleIter.hasNext()) {
+	    Object tuple = tupleIter.next();
+	    str += tuple + "-->(";
+	    Iterator listIter = ((List)this.tuplesToUses.get(tuple)).iterator();
+	    while(listIter.hasNext()) {
+		str += listIter.next() + ",";
+	    }
+	    // chop off trailing comma
+	    str = str.substring(0, str.length()-1) + ")\n";
+	}
+	return str;
+    }
+	    
+    
+
+    
 	
     /** check that the rep invariant holds. **/
     private void checkRep() {

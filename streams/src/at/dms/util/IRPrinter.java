@@ -1481,7 +1481,19 @@ public class IRPrinter extends Utils implements SLIRVisitor
 				      int index,
 				      JExpression[] args,
 				      SIRLatency latency) {
-	Utils.fail("Printing message statements unimplemented");
+	blockStart("SIRMessageStatement");
+	attrStart("portal");
+	portal.accept(this);
+	attrEnd();
+	attrPrint("index", String.valueOf(index));
+	attrStart("args");
+	for (int i = 0; i < args.length; i++)
+	    args[i].accept(this);
+	attrEnd();
+	attrStart("latency");
+	latency.accept(this);
+	attrEnd();
+	blockEnd();
     }
 
 
@@ -1548,7 +1560,15 @@ public class IRPrinter extends Utils implements SLIRVisitor
 					  JExpression portal,
 					  SIRStream receiver,
 					  JMethodDeclaration[] methods) {
-	Utils.fail("Printing reg. receiver statements unimplemented");
+	blockStart("SIRRegReceiveStatement");
+	attrStart("portal");
+	portal.accept(this);
+	attrEnd();
+	attrStart("methods");
+	for (int i = 0; i < methods.length; i++)
+	    methods[i].accept(this);
+	attrEnd();
+	blockEnd();
     }
 
 

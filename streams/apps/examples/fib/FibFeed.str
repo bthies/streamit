@@ -1,0 +1,21 @@
+void->void feedbackloop FibFeed {
+  join roundrobin(0, 1);
+  body PeekAdd();
+  loop IntPrinter();
+  split roundrobin (0, 1);
+  enqueue 0;
+  enqueue 1;
+}
+
+int->int filter PeekAdd {
+  work push 1 pop 1 peek 2 {
+    push(peek(1) + pop());
+  }
+}
+
+int->int filter IntPrinter {
+  work pop 1 push 1 {
+    print(peek((0)));
+    push(pop());
+  }
+}

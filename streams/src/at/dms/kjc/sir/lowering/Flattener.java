@@ -216,6 +216,7 @@ public class Flattener {
     public static void enableUnrollIfLinear () {
 	if (KjcOptions.linearanalysis ||
 	    KjcOptions.linearreplacement ||
+	    KjcOptions.linearpartition ||
 	    (KjcOptions.frequencyreplacement != -1) ||
 	    KjcOptions.redundantreplacement) {
 	    origUnroll = KjcOptions.unroll;
@@ -280,14 +281,14 @@ public class Flattener {
 		}
 	    }
 
-	    System.err.print("Running redundancy analysis... ");	    
-	    // now, run a redundancy analysis pass and print the results
-	    LinearRedundancyAnalyzer lra = new LinearRedundancyAnalyzer(lfa);
-	    System.err.println("done.");
-	    // print dot graph for redundancy information
-	    LinearDot.printGraph(str, "linear-redundant.dot", lfa, lra);
-
 	    if (KjcOptions.redundantreplacement) {
+		System.err.print("Running redundancy analysis... ");	    
+		// now, run a redundancy analysis pass and print the results
+		LinearRedundancyAnalyzer lra = new LinearRedundancyAnalyzer(lfa);
+		System.err.println("done.");
+		// print dot graph for redundancy information
+		LinearDot.printGraph(str, "linear-redundant.dot", lfa, lra);
+		
 		// do the redundancy replacement
 		System.err.print("Running anti-redundant replacement...");
 		LinearRedundancyReplacer.doReplace(lfa, lra, str);
@@ -295,7 +296,6 @@ public class Flattener {
 		// print out the stream graph after linear redundant replacement
 		LinearDot.printGraph(str, "linear-redundant-replace.dot", lfa);
 	    }
-	    
 
 	}
 	return str;

@@ -61,7 +61,7 @@ public class MP3Decoder extends StreamIt
             add(new SoundOutput(sampling_rate, nChannels));
         } catch (Throwable t)
         {
-            ERROR(t);
+            //ERROR(t);
         }
     }
 }

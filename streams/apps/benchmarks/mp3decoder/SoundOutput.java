@@ -25,7 +25,7 @@ public class SoundOutput extends Filter
             audio.setOpen(true);
         } catch (Throwable t)
         {
-            ERROR(t);
+            //ERROR(t);
         }
 
         buffer = new short[INPUT_DATA];
@@ -46,7 +46,7 @@ public class SoundOutput extends Filter
             audio.write(buffer, 0, INPUT_DATA);
         } catch (Throwable t)
         {
-            ERROR(t);
+            //ERROR(t);
         }
     }
 }

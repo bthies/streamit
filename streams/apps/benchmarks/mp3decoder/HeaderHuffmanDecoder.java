@@ -47,14 +47,14 @@ public class HeaderHuffmanDecoder extends Filter
         try
         {
             Header h = bitstream.readFrame();
-            if (h == null) ERROR ("done");
+            //if (h == null) ERROR ("done");
             
             SampleBuffer outputBuffer = (SampleBuffer) decoder.decodeFrame (h, bitstream);
             
         	bitstream.closeFrame();
         } catch (Throwable t)
         {
-        	ERROR (t);
+	    //ERROR (t);
         }
     }
 }

@@ -51,7 +51,7 @@ public class Antialias extends Filter
             sb18lim = (18 + 1) * 31;
         } else
 		{
-		    ERROR ("invalid type");
+		    //ERROR ("invalid type");
 		}
 		
 		{

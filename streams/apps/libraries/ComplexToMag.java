@@ -13,6 +13,7 @@
  */
 
 import streamit.*;
+import java.lang.Math;
 
 /**
  * Class ComplexToMag
@@ -29,13 +30,13 @@ class ComplexToMag extends Filter
 
   public void init()
   {
-    input = new Channel (Float.TYPE, 1);
+    input = new Channel (Float.TYPE, 2);
     output = new Channel (Float.TYPE, 1);
   }
 
   public void work()
   {
-    System.out.println("Running the Complex to Mag converter...");
-    output.pushFloat(input.popFloat());
+    //System.out.println("Running the Complex to Mag converter...");
+    output.pushFloat((float) Math.sqrt(input.popFloat()*input.popFloat()));
   }
 }

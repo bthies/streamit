@@ -168,8 +168,8 @@ public class SIRScheduler implements Constants {
 	// compute a schedule
 	Schedule result = (Schedule)scheduler.computeSchedule();
 	// debugging output
-	//printSchedule(result.getSteadySchedule(), "steady state");
-	//printSchedule(result.getInitSchedule(), "initialization");
+	printSchedule(result.getSteadySchedule(), "sirscheduler steady state");
+	printSchedule(result.getInitSchedule(), "sirscheduler initialization");
 	// return schedule
 	return result;
     }
@@ -260,7 +260,10 @@ public class SIRScheduler implements Constants {
 	} else if (schedObject instanceof SIRFilter) {
 	    // print name and ident
 	    System.out.println(((SIRFilter)schedObject).getName() + " / " +
-			       ((SIRFilter)schedObject).getIdent());
+			       ((SIRFilter)schedObject).getIdent() + 
+			       " pop=" + ((SIRFilter)schedObject).getPopInt() + 
+			       " peek=" + ((SIRFilter)schedObject).getPeekInt() +
+			       " push=" + ((SIRFilter)schedObject).getPushInt());
 	} else {
 	    // print out an SIR component
 	    System.out.println(((SIROperator)schedObject).getName());
@@ -673,13 +676,24 @@ class SIRSchedBuilder implements AttributeStreamVisitor {
 	filter2.setPeek(twoStage.getInitPop() + twoStage.getPopInt());
 	filter2.setPop(twoStage.getPopInt());
 	filter2.setPush(twoStage.getPushInt());
-	// if we have a source, munge filter 2 so that it basically
-	// disappears
-	if (twoStage.getInitPeek() == 0 &&
+	// if we have a source, munge the filters so that it outputs
+	// the source granularity
+	if (twoStage.getInitPeek()== 0 &&
 	    twoStage.getPeekInt() == 0) {
+	    /*
+	    System.err.println("found twostage source with: " + 
+			       "\n  initpeek=" + twoStage.getInitPeek() +
+			       "\n  initpop=" + twoStage.getInitPop() +
+			       "\n  initpush=" + twoStage.getInitPush() +
+			       "\n  peek=" + twoStage.getPeekInt() +
+			       "\n  pop=" + twoStage.getPopInt() +
+			       "\n  push=" + twoStage.getPushInt());
+	    */
+	    filter1.setPop(0);
+	    filter1.setPeek(0);
+	    filter1.setPush(1);
 	    filter2.setPop(1);
-	    filter2.setPeek(1);
-	    filter2.setPush(1);
+	    filter2.setPeek(2);
 	}
 	// make a pipeline containing <filter1> and <filter2>
 	SIRPipeline pipe = new SIRPipeline(twoStage.getParent(), 

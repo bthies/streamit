@@ -46,6 +46,7 @@ public class Flattener {
 
 	if (StreamItOptions.fusion) {
 	    System.out.println("Running Fusion");
+	    FuseSplit.doFlatten(str);
 	    FuseAll.fuse(str);
 	    // DEBUGGING PRINTING
 	    System.out.println("--------- AFTER FUSION ------------");

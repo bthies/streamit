@@ -26,6 +26,9 @@ public class AdjustGranularity {
 	    if (num==16) {
 		doFM16_2(str);
 	    }
+	} else if (app.equals("fft")) {
+	    // do custom transforms for fft
+	    doFFT(str);
 	} else {
 	    Utils.fail("no custom procedure for app \"" + app + "\" on " +
 		       "granularity of " + num + ".");
@@ -65,6 +68,26 @@ public class AdjustGranularity {
 	SIRPrinter printer1 = new SIRPrinter();
 	str.accept(printer1);
 	printer1.close();
+    }
+
+    private static void doFFT(SIRStream str) {
+	RawFlattener rawFlattener;
+
+	System.err.println("Working on FFT...");
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+
+	SJFlatten.doFlatten(str);
+
+	Namer.assignNames(str);
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
     }
 
     private static void doFM16_2(SIRStream str) {

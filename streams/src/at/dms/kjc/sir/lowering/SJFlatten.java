@@ -175,7 +175,7 @@ public class SJFlatten
         newFilter.setInit(newInit);
 
         // Replace the init function in the parent.
-        RenameAll.replaceParentInit(sj, newFilter);
+	//        RenameAll.replaceParentInit(sj, newFilter);
 
         return newFilter;
     }

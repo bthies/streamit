@@ -279,33 +279,4 @@ public class RenameAll extends SLIRReplacingVisitor
                                           (JExpression)left.accept(this),
                                           symtab.nameFor(ident));
     }
-
-    /**
-     * Replaces parent init function calls to <oldStr> with calls to <newStr>
-     */
-    public static void replaceParentInit(final SIRStream oldStr,
-					 final SIRStream newStr)
-    {
-        SIRStream parent = oldStr.getParent();
-	// replace the SIRInitStatements in the parent
-	parent.getInit().accept(new SLIRReplacingVisitor() {
-		public Object visitInitStatement(SIRInitStatement oldSelf,
-						 JExpression[] oldArgs,
-						 SIRStream oldTarget) {
-		    // do the super
-		    SIRInitStatement self = 
-			(SIRInitStatement)
-			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
-		    
-		    // if we're f1, change target to be <fused>
-		    if (self.getTarget()==oldStr) {
-			self.setTarget(newStr);
-			return self;
-		    } else {
-			// otherwise, return self
-			return self;
-		    }
-		}
-	    });
-    }
 }

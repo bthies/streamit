@@ -16,6 +16,8 @@ fi
 # Set some defaults
 # The directory where we run the crap
 rootdir="/home/bits6/NO_BACKUP/$USER/results"
+# The directory where we started, to put results
+origdir=`pwd`
 
 #the tmp directory where we store the results before colascing
 tmpdir="/tmp/results$$"
@@ -132,6 +134,7 @@ for benchmark in "${benchmarks[@]}"; do
      done
 done
 
+cd $origdir
 #call condense
 echo -en "\033[1m\e[32;40mCondensing the various numbers into $outputfile...\033[0m\n"; tput sgr0
 $STREAMIT_HOME/misc/scripts/number-gathering/condense -i "$tmpdir" -o "$outputfile"
@@ -142,4 +145,3 @@ rm -rf "$tmpdir"
 end_time=$(date "+%s")
 
 echo -en "\033[1m\e[32;40mFinished ($((end_time-start_time)) seconds).\033[0m\n"; tput sgr0
-

@@ -42,6 +42,24 @@ public class LowerWorkFunctions implements StreamVisitor
                 }
             });
     }
+
+    private void removeStructureNew(JMethodDeclaration method)
+    {
+        method.accept(new SLIRReplacingVisitor() {
+                public Object visitExpressionStatement(JExpressionStatement self,
+                                                       JExpression expr)
+                {
+                    if (!(expr instanceof JAssignmentExpression))
+                        return self;
+                    JAssignmentExpression assn = (JAssignmentExpression)expr;
+                    JExpression right = assn.getRight();
+                    if (right instanceof JUnqualifiedInstanceCreation)
+                        return new JEmptyStatement(self.getTokenReference(),
+                                                   self.getComments());
+                    return self;
+                }
+            });
+    }
     
     /**
      * PLAIN-VISITS 
@@ -57,9 +75,12 @@ public class LowerWorkFunctions implements StreamVisitor
 	}
         // add entry/exit nodes to work function
         addEntryExit(self.getWork());
+        // prune structure creation statements
+        removeStructureNew(self.getWork());
 	// add entry/exit nodes to initial work function, if there is one
 	if (self instanceof SIRTwoStageFilter) {
 	    addEntryExit(((SIRTwoStageFilter)self).getInitWork());
+            removeStructureNew(((SIRTwoStageFilter)self).getInitWork());
 	}
     }
   

@@ -11,6 +11,12 @@ public class FeedbackLoop extends Stream
     Stream body, loop;
 
     // constructor with delay left unspecified
+    public FeedbackLoop(int N)
+    {
+        super(N);
+    }
+
+    // constructor with delay left unspecified
     public FeedbackLoop()
     {
         super();

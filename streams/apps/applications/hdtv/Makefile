@@ -34,13 +34,11 @@ clean:
 	rm -rf images/hdtv-stream-graph.*;
 	rm -rf streamgraphs/*.eps
 	rm -rf images/*.tiff
-	rm -rf *.pdf images/*.pdf streamgraphs/*.pdf 
-	rm -rf *-pdf.*
 
 java-compile: 
 	jikes HDTV.java
 
-java:
+java: java-compile
 	java HDTV -i 1000
 
 uni-compile:
@@ -83,8 +81,6 @@ link:
 tiff-files:
 	./images/convert_to_tiff.pl
 
-stream-graphs: hdtv-stream-graph individual-stream-graphs
-
 individual-stream-graphs:
 	./make_stream_graphs.pl
 
@@ -94,25 +90,19 @@ hdtv-stream-graph: java-compile
 	ps2epsi hdtv-stream-graph.ps hdtv-stream-graph.eps
 	cp hdtv-stream-graph.eps images
 
-latex: 
+stream-graphs: hdtv-stream-graph individual-stream-graphs
+
+ps: stream-graphs
 	latex hdtv_writeup.tex
 	bibtex hdtv_writeup
 	latex hdtv_writeup.tex
 	latex hdtv_writeup.tex
 	dvips hdtv_writeup.dvi -o hdtv_writeup.ps
-	gv hdtv_writeup.ps &
 
-pdf: 
-	rm -rf hdtv_writeup.dvi hdtv_writeup.log 
-	rm -rf hdtv_writeup.ps hdtv_writeup.pdf
-	rm -rf hdtv_writeup.bbl hdtv_writeup.blg
-	./make_pdf_docs.pl
-	pdflatex hdtv_writeup-pdf.tex
-	bibtex hdtv_writeup-pdf
-	pdflatex hdtv_writeup-pdf.tex
-	pdflatex hdtv_writeup-pdf.tex
-	pdflatex hdtv_writeup-pdf.tex
-	mv hdtv_writeup-pdf.pdf hdtv_writeup.pdf
-	acroread hdtv_writeup.pdf &
+pdf: ps
+	dvipdf hdtv_writeup.dvi
 
-doc: clean stream-graphs latex pdf
+doc: stream-graphs ps pdf
+
+doc-view: clean latex
+	gv hdvt_writeup.ps &

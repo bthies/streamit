@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.12 2002-11-14 01:07:46 aalamb Exp $
+ * $Id: KjcOptions.opt,v 1.13 2002-11-14 03:31:20 mgordon Exp $
  */
 
 prefix Kjc
@@ -266,6 +266,7 @@ longname		"streamit"
 
 longname		"numbers"
 	shortcut	"N"
-	type		boolean
-	default		"false"
-	help		"Attempt Generate Raw code that gathers performance numbers."
+	type		int
+	default		"-1"
+	requireArgument
+	help		"Attempt Generate Raw code that gathers performance numbers, with <n> steady state cycles."

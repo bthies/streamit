@@ -155,8 +155,8 @@ public class Flattener {
     static void runLinearAnalysis(SIRStream str) {
 	System.out.println("Running Linear Analysis");
 	//Destroys arrays into local variables if possible
-
-	LinearMatrixAnalyzer lma = LinearMatrixAnalyzer.findLinearFilters(str);
+ 
+	LinearFilterAnalyzer lfa = LinearFilterAnalyzer.findLinearFilters(str);
 	
 	// DEBUGGING PRINTING
 	System.out.println("--------- AFTER Linear Analysis --------");

@@ -1,7 +1,7 @@
 /*
  * MoveStreamParameters.java: make constructors and init functions
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: MoveStreamParameters.java,v 1.3 2002-09-23 19:11:57 dmaze Exp $
+ * $Id: MoveStreamParameters.java,v 1.4 2002-12-11 19:20:09 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -70,28 +70,24 @@ public class MoveStreamParameters extends InitMunger
                             init.getReturnType(), params, newBody);
     }
 
+    // Return a function just like init, but with params as its
+    // parameter list, doing no special work.
+    private Function addInitParamsOnly(Function init, List params)
+    {
+        // As noted above, the init function has no parameters coming
+        // in.  This makes this trivial:
+        return new Function(init.getContext(), init.getCls(), init.getName(),
+                            init.getReturnType(), params, init.getBody());
+    }
+
     public Object visitStreamSpec(StreamSpec spec)
     {
         spec = (StreamSpec)super.visitStreamSpec(spec);
         
         if (spec.getParams().size() > 0)
         {
-            // Okay, we have some parameters.  We need to add this
-            // to the list of variables, create a constructor, and add
-            // the parameters to the init function.
-            List newVars = new ArrayList(spec.getVars());
-            // The parameters are Parameter objects, but the variables
-            // are Statements (StmtVarDecls).  Convert.
-            for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
-            {
-                Parameter param = (Parameter)iter.next();
-                Statement varDecl = new StmtVarDecl(spec.getContext(),
-                                                    param.getType(),
-                                                    param.getName(), null);
-                newVars.add(varDecl);
-            }
-            
             List newFuncs = new ArrayList(spec.getFuncs());
+            List newVars = new ArrayList(spec.getVars());
 
             // Create a constructor:
             Function constructor = makeConstructor(spec.getContext(),
@@ -99,11 +95,39 @@ public class MoveStreamParameters extends InitMunger
                                                    spec.getParams());
             newFuncs.add(constructor);
             
-            // Rewrite the init function:
-            Function init = findInit(spec.getContext(), spec.getFuncs());
-            newFuncs.remove(init);
-            init = addInitParams(init, spec.getParams());
-            newFuncs.add(init);
+            if (spec.getType() == StreamSpec.STREAM_FILTER)
+            {
+                // Okay, we have some parameters.  We need to add this
+                // to the list of variables and add the parameters to
+                // the init function.
+                // The parameters are Parameter objects, but the variables
+                // are Statements (StmtVarDecls).  Convert.
+                for (Iterator iter = spec.getParams().iterator();
+                     iter.hasNext(); )
+                {
+                    Parameter param = (Parameter)iter.next();
+                    Statement varDecl = new StmtVarDecl(spec.getContext(),
+                                                        param.getType(),
+                                                        param.getName(), null);
+                    newVars.add(varDecl);
+                }
+            
+                // Rewrite the init function:
+                Function init = findInit(spec.getContext(), spec.getFuncs());
+                newFuncs.remove(init);
+                init = addInitParams(init, spec.getParams());
+                newFuncs.add(init);
+            }
+            else
+            {
+                // Composite stream; the stream parameters only exist
+                // within the context of the init function, no need to
+                // create fields.  (In fact, this actively hurts.)
+                Function init = findInit(spec.getContext(), spec.getFuncs());
+                newFuncs.remove(init);
+                init = addInitParamsOnly(init, spec.getParams());
+                newFuncs.add(init);
+            }
 
             // And create the new stream spec.
             spec = new StreamSpec(spec.getContext(), spec.getType(),

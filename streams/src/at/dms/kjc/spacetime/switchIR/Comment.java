@@ -13,6 +13,6 @@ public class Comment implements SwitchIns {
     
     public String toString() 
     {
-	return "; " + comment;
+	return "# " + comment;
     }
 }

@@ -27,6 +27,12 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      */
     protected JMethodDeclaration work;
     /**
+     * The initial work function.  This is the instance of the work
+     * function that is run the first time, and called from init.  Can
+     * be null for any SIRStream (is fabricated during lowering).
+     */
+    protected JMethodDeclaration initWork;
+    /**
      * The name of the class in the StreamIt source file corresponding
      * to this stream.
      */
@@ -99,6 +105,21 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	return this.work;
     }
 
+    /**
+     * Gets the initial work function.
+     */
+    public JMethodDeclaration getInitWork() {
+	return this.initWork;
+    }
+
+    /**
+     * Sets the initial work function of this.
+     */
+    public void setInitWork (JMethodDeclaration newWork) {
+	addReplacementMethod(newWork, this.initWork);
+	this.initWork = newWork;
+    }
+    
     /*
      * Set the methods member variable 
      */
@@ -129,7 +150,16 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public boolean needsInit() {
 	return true;
     }
-    
+
+    /**
+     * Returns whether or not this class needs a call to a work
+     * function to be generated.  Special library functions like
+     * FileReader's and FileWriter's do not need a work call at the
+     * level of the Kopi IR (it is generated in C).
+     */
+    public boolean needsWork() {
+	return true;
+    }
 
     /**
      * sets the init function

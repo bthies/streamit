@@ -68,6 +68,16 @@ public class SIRFileWriter extends SIRFilter implements Cloneable {
     }
 
     /**
+     * Returns whether or not this class needs a call to a work
+     * function to be generated.  Special library functions like
+     * FileReader's and FileWriter's do not need a work call at the
+     * level of the Kopi IR (it is generated in C).
+     */
+    public boolean needsWork() {
+	return false;
+    }
+
+    /**
      * Returns the C type of the object, which is always a stream_context.
      */
     public String getName() {

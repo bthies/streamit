@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.19 2002-02-15 23:34:05 thies Exp $
+## $Id: Makefile,v 1.20 2002-02-20 16:28:17 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -62,6 +62,7 @@ JAVAFILES +=	StreamVisitor \
 		AttributeStreamVisitor \
 		SIRFileWriter \
 		SIRFileReader \
+		EmptyStreamVisitor \
 		lowering/LoweringConstants \
 		lowering/Structurer \
 		lowering/Namer \
@@ -71,7 +72,9 @@ JAVAFILES +=	StreamVisitor \
 		lowering/ConstantProp \
 		lowering/Fusion \
 		lowering/fusion/FusePipe \
-		lowering/RenameAll
+		lowering/fusion/FuseAll \
+		lowering/RenameAll \
+		lowering/LowerWorkFunctions
 
 MESSAGES =	../KjcMessages
 

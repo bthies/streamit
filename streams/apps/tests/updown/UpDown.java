@@ -1,6 +1,6 @@
 /*
  * UpDown.java: a counter that counts between 0 and 10, and back
- * $Id: UpDown.java,v 1.6 2001-10-24 17:58:12 thies Exp $
+ * $Id: UpDown.java,v 1.7 2001-10-31 16:59:47 dmaze Exp $
  */
 
 import streamit.*;
@@ -18,11 +18,11 @@ class UpDownMsgPortal implements UpDownMsg {
 
 class UpDownGen extends Filter implements UpDownMsg
 {
-    Channel output = new Channel(Integer.TYPE, 1);
     boolean up;
     int x;
     public void init()
     {
+        streamOutput = new Channel(Integer.TYPE, 1);
         up = true;
         x = 0;
     }
@@ -30,57 +30,47 @@ class UpDownGen extends Filter implements UpDownMsg
     {
         if (up) x++;
         else x--;
-        output.pushInt(x);
+        streamOutput.pushInt(x);
     }
     public void setUp(boolean up)
     {
         this.up = up;
     }
-    public void initIO()
-    {
-        streamOutput = output;
-    }
 }
 
 class Limiter extends Filter
 {
-    Channel input = new Channel(Integer.TYPE, 1);
-    Channel output = new Channel(Integer.TYPE, 1);
     UpDownMsgPortal p;
 
     public Limiter(UpDownMsgPortal p) {}
 
     public void init(UpDownMsgPortal p)
     {
+        streamInput = new Channel(Integer.TYPE, 1);
+        streamOutput = new Channel(Integer.TYPE, 1);
         this.p = p;
 	p.regSender(this);
     }
     public void work()
     {
-        int val = input.popInt();
+        int val = streamInput.popInt();
         if (val <= 0)
             p.setUp(true);
         if (val >= 10)
             p.setUp(false);
-        output.pushInt(val);
-    }
-    public void initIO()
-    {
-        streamInput = input;
-        streamOutput = output;
+        streamOutput.pushInt(val);
     }
 }
 
 class IntPrinter extends Filter
 {
-    Channel input = new Channel(Integer.TYPE, 1);
+    public void init()
+    {
+        streamInput = new Channel(Integer.TYPE, 1);
+    }
     public void work()
     {
-        System.out.println(input.popInt());
-    }
-    public void initIO()
-    {
-        streamInput = input;
+        System.out.println(streamInput.popInt());
     }
 }
 

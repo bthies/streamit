@@ -1,6 +1,8 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.util.Utils;
+import java.util.HashSet;
+import java.util.Iterator;
 
 public class StreamingDram extends IODevice 
 {
@@ -32,6 +34,34 @@ public class StreamingDram extends IODevice
 	}
 	Utils.fail("Cannot find a streaming dram for this address");
 	return null;
+    }
+    
+    //check to see that all the outputs for an output trace go to different
+    //drams
+    public static boolean differentDRAMs(OutputTraceNode out) 
+    {
+	HashSet drams = new HashSet();
+	Iterator outputs = out.getDestSet().iterator();
+	while(outputs.hasNext()) {
+	    InputTraceNode in = (InputTraceNode)outputs.next();
+	    if (drams.contains(OffChipBuffer.getBuffer(out, in).getDRAM()))
+		return false;
+	    drams.add(OffChipBuffer.getBuffer(out, in).getDRAM());
+	}
+	return true;
+    }
+    
+    //check to see that all the inputs for an input trace come from different
+    //drams
+    public static boolean differentDRAMs(InputTraceNode in) 
+    {
+	HashSet drams = new HashSet();
+	for (int i = 0; i < in.getSources().length; i++) {
+	    if (drams.contains(OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM()))
+		return false;
+	    drams.add(OffChipBuffer.getBuffer(in.getSources()[i], in).getDRAM());
+	}
+	return true;
     }
     
     

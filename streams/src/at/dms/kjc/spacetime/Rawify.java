@@ -74,6 +74,8 @@ public class Rawify
 		    
 		}
 		else if (traceNode.isInputTrace() && !KjcOptions.magicdram) {
+		    assert StreamingDram.differentDRAMs((InputTraceNode)traceNode) :
+			"inputs for a single InputTraceNode coming from same DRAM";
 		    //create the switch code to perform the joining
 		    joinInputTrace((InputTraceNode)traceNode, init, false);
 		    //now create the primepump code
@@ -81,6 +83,8 @@ public class Rawify
 			joinInputTrace((InputTraceNode)traceNode, init, true);
 		}
 		else if (traceNode.isOutputTrace() && !KjcOptions.magicdram) {
+		    assert StreamingDram.differentDRAMs((OutputTraceNode)traceNode) :
+			"outputs for a single OutputTraceNode going to same DRAM";
 		    //create the switch code to perform the splitting
 		    splitOutputTrace((OutputTraceNode)traceNode, init, false);
 		    //now create the primepump code
@@ -114,6 +118,7 @@ public class Rawify
     private static void handleUnneededInput(FilterTraceNode traceNode, boolean init, boolean primepump) 
     {
 	InputTraceNode in = (InputTraceNode)traceNode.getPrevious();
+
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(traceNode);
 	int items, typeSize;
 	
@@ -139,6 +144,7 @@ public class Rawify
     //dram 
     private static void fillCacheLine(FilterTraceNode traceNode, boolean init, boolean primepump) 
     {
+
 	OutputTraceNode out = (OutputTraceNode)traceNode.getNext();
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(traceNode);
 	
@@ -165,6 +171,11 @@ public class Rawify
     private static void joinInputTrace(InputTraceNode traceNode, boolean init, boolean primepump)
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getNext();
+	
+	//do not generate the switch code if it is not necessary
+	if (OffChipBuffer.getBuffer(traceNode, filter).redundant())
+	    return;
+	    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 	//calculate the number of items sent
 	int items, iterations, stage = 1, typeSize;
@@ -216,6 +227,11 @@ public class Rawify
     private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump)
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
+	
+	//check to see if the splitting is necessary (the buffer exists)
+	if (OffChipBuffer.getBuffer(traceNode, traceNode.getParent().getHead()).redundant())
+	    return;
+				    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
 	//calculate the number of items sent
 	int items, iterations, stage = 1, typeSize;

@@ -48,12 +48,12 @@ public class OffChipBuffer
 	if (source.isInputTrace() && dest.isFilterTrace()) {
 	    //if only one source to the input and the dram for the
 	    //previous buffer is the same then redunant
+	    OutputTraceNode out = ((InputTraceNode)source).getParent().getDepends()[0].getTail();
 	    if (((InputTraceNode)source).oneInput() &&
-		OffChipBuffer.getBuffer
-		(((InputTraceNode)source).getParent().getDepends()[0].getTail(), 
-		 source).getDRAM() == dram)
-		return true;
+		OffChipBuffer.getBuffer(out, source).getDRAM() == dram)
+		return true;	    
 	} else if (source.isOutputTrace() && dest.isInputTrace()) {
+	    //one output and the dram is the same as the previous 
 	    if (((OutputTraceNode)source).oneOutput() &&
 		OffChipBuffer.getBuffer(source.getPrevious(), source).getDRAM() == dram)
 		return true;

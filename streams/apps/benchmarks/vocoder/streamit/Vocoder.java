@@ -5,7 +5,7 @@
 import streamit.*;
 import streamit.io.*;
 
-class VocoderSystem extends SplitJoin
+class VocodeSystem extends SplitJoin
 {
   public void init(int DFTLen, int newLen, float c, float speed) {
     setSplitter(ROUND_ROBIN());
@@ -16,7 +16,7 @@ class VocoderSystem extends SplitJoin
     setJoiner(ROUND_ROBIN());
   }
 
-  VocoderSystem(int DFTLen, int newLen, float c, float speed) {
+  VocodeSystem(int DFTLen, int newLen, float c, float speed) {
     super(DFTLen, newLen, c, speed);
   }
 }
@@ -109,7 +109,7 @@ class Vocoder extends Pipeline implements Constants {
 
     add(new RectangularToPolar());
 
-    add(new VocoderSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR));
+    add(new VocodeSystem(DFT_LENGTH, NEW_LENGTH, FREQUENCY_FACTOR, SPEED_FACTOR));
 
 
     add(new PolarToRectangular());

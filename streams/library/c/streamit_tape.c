@@ -2,6 +2,7 @@
 #include <assert.h>
 
 #include "streamit.h"
+#include "streamit_internal.h"
 
 void create_tape (stream_context *src, stream_context *dst, int data_size, int tape_length)
 {

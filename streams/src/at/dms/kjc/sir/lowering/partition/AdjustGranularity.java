@@ -20,7 +20,11 @@ public class AdjustGranularity {
 	// for unknown app, do nothing
 	if (app.equals("unknown")) {
 	    return;
-	} else if (app.equals("fm")) {
+	}
+	// do field prop on the stream
+	FieldProp.doPropagate(str);
+
+	if (app.equals("fm")) {
 	    // do custom transforms for FM radio
 	    if (num==16) {
 		doFM16_2(str);

@@ -35,14 +35,104 @@ public class AdjustGranularity {
 		doFFT1(str);
 	    }
 	} else if (app.equals("gsm")) {
-	    doGSM(str);
+	    if (num==16) {
+		doGSM16(str);
+	    }
+	} else if (app.equals("pca")) {
+	    doPCA(str);
+	} else if (app.equals("mp3")) {
+	    if (num==64) {
+		doMP3_64(str);
+	    } else {
+		doMP3_16(str);
+	    }
 	} else {
 	    Utils.fail("no custom procedure for app \"" + app + "\" on " +
 		       "granularity of " + num + ".");
 	}
     }
 
-    private static void doGSM(SIRStream str) {
+    private static void doMP3_16(SIRStream str) {
+	RawFlattener rawFlattener;
+
+	System.err.println("Working on MP3...");
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+
+	//	FieldProp.doPropagate(str);
+	//	ConstantProp.propagateAndUnroll(str);
+
+	WorkEstimate.getWorkEstimate(str).printWork();
+
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+
+	Namer.assignNames(str);
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+    }
+
+    private static void doMP3_64(SIRStream str) {
+	RawFlattener rawFlattener;
+
+	System.err.println("Working on MP3...");
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+
+	//	FieldProp.doPropagate(str);
+	//	ConstantProp.propagateAndUnroll(str);
+
+	WorkEstimate.getWorkEstimate(str).printWork();
+
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+	FuseAll.fuse(str);
+	FuseSplit.doFlatten(str);
+
+	Namer.assignNames(str);
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+    }
+
+    private static void doPCA(SIRStream str) {
+	RawFlattener rawFlattener;
+
+	System.err.println("Working on PCA...");
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("before-adjust.dot");
+	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+
+	//	FieldProp.doPropagate(str);
+	//	ConstantProp.propagateAndUnroll(str);
+
+	WorkEstimate.getWorkEstimate(str).printWork();
+
+	Namer.assignNames(str);
+	rawFlattener = new RawFlattener(str);
+	rawFlattener.dumpGraph("after-adjust.dot");
+	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
+			   " tiles");
+	WorkEstimate.getWorkEstimate(str).printWork();
+    }
+
+    private static void doGSM16(SIRStream str) {
 	RawFlattener rawFlattener;
 
 	System.err.println("Working on GSM...");
@@ -50,7 +140,22 @@ public class AdjustGranularity {
 	rawFlattener.dumpGraph("before-adjust.dot");
 	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
 			   " tiles");
+
+	//	FieldProp.doPropagate(str);
+	//	ConstantProp.propagateAndUnroll(str);
+
 	WorkEstimate.getWorkEstimate(str).printWork();
+
+	// fuse shortonesource, rpeinputfilter
+	SIRFilter source = (SIRFilter)Namer.getStream("ShortOneSource_1");
+	SIRFilter rpeInput = (SIRFilter)Namer.getStream("RPEInputFilter_2");
+	//	SIRFilter rpeDecode = Namer.getStream("RPEDecodeFilter_3");
+	FusePipe.fuse(source, rpeInput);
+
+	// fose post-processing filter, short sink
+	SIRFilter postProc = (SIRFilter)Namer.getStream("PostProcessingFilter_8");
+	SIRFilter sink = (SIRFilter)Namer.getStream("ShortPrinterSink_9");
+	FusePipe.fuse(postProc, sink);
 
 	Namer.assignNames(str);
 	rawFlattener = new RawFlattener(str);

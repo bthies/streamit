@@ -15,7 +15,7 @@ import java.util.List;
  * type.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: NoRefTypes.java,v 1.1 2003-06-24 21:39:46 dmaze Exp $
+ * @version $Id: NoRefTypes.java,v 1.2 2003-06-25 15:43:30 dmaze Exp $
  */
 public class NoRefTypes extends FEReplacer
 {
@@ -103,5 +103,12 @@ public class NoRefTypes extends FEReplacer
             newTypes.add(remapType(stmt.getType(i)));
         return new StmtVarDecl(stmt.getContext(), newTypes,
                                stmt.getNames(), stmt.getInits());
+    }
+
+    public Object visitStreamType(StreamType st)
+    {
+        return new StreamType(st.getContext(),
+                              remapType(st.getIn()),
+                              remapType(st.getOut()));
     }
 }

@@ -5,13 +5,12 @@ The Scaling.str file in this directory is the template that is used
 for all the results.  DO NOT EDIT IT if you want the scripts to keep
 working.
 
-The scripts evaluate fusino performance for different peek values.
+The scripts evaluate fusion performance for different peek values.
 
 To use the scaling scripts, choose your favorite architecture:
 
 ia64
-p3-gcc2.9
-p3-gcc3.4
+p3
 
 Go into the appropriate directory and type "make".  This will produce
 two scripts:
@@ -20,3 +19,9 @@ docompile.sh -- a script for compiling the benchmarks.
 dorun.sh     -- a script for running the benchmarks.
 
 The results will be put in "results.csv" in the appropriate directory.
+
+One quirk: the ia64 script keeps a separate directory for each
+benchmark and builds it right before timing because the build must be
+done on an Itanium.  For the P3, the build can be done on another
+machine, so it is done during the compile script to save space and
+runtime.

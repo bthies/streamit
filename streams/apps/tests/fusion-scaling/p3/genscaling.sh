@@ -10,13 +10,17 @@ echo "perl -pi -e 's/\n//g' address"
 echo export LD_LIBRARY_PATH=/home/linux/encap/gcc-3.4.3/lib/
 echo export STREAMIT_HOME=/u/thies/research/streams/streams
 echo . $STREAMIT_HOME/include/dot-bashrc
-echo rm results.csv
+echo rm -f results.csv
 echo "echo 'Peek,MODULATION,,,,,,,,COPY-SHIFT,,,,,,,,COPY-SHIFT + PEEK-SCALING,,,,,,,,COPY-SHIFT + SCALAR REPLACE,,,,,,,,COPY-SHIFT + SCALAR-REPLACE + PEEK-SCALING' > results.csv"
 echo "echo ',Outputs,Runtime1,,Runtime2,,Runtime3,,Outputs,Runtime1,,Runtime2,,Runtime3,,Outputs,Runtime1,,Runtime2,,Runtime3,,Outputs,Runtime1,,Runtime2,,Runtime3,,Outputs,Runtime1,,Runtime2,,Runtime3,' >> results.csv"
 echo "echo ',,min,sec,min,sec,min,sec,,min,sec,min,sec,min,sec,,min,sec,min,sec,min,sec,,min,sec,min,sec,min,sec,,min,sec,min,sec,min,sec' >> results.csv"
 if [ "$MODE" = "1" ]
     then
 echo rm -rf fusion*
+# setup p3
+echo cd $STREAMIT_HOME/library/cluster
+echo make -f Makefile
+echo cd -
 fi
 for i in 1 `seq 8 8 128`;
 do
@@ -70,7 +74,6 @@ do
     # do cluster-config
     echo "echo -n '0 ' > cluster-config.txt"
     echo cat address >> cluster-config.txt
-    echo perl -pi -e \'s/gcc/gcc34/g\' Makefile.cluster
     echo make -f Makefile.cluster clean
     echo make -f Makefile.cluster fusion
     echo cp fusion fusion-count-$i-$j
@@ -81,7 +84,7 @@ do
     if [ "$MODE" = "2" ]
 	then
     # count outputs
-    echo "./fusion-count-$i-$j -i $calibrate_iters | wc -l > outputs"
+    echo "sh -c './fusion-count-$i-$j -i $calibrate_iters | wc -l > outputs' 2> /dev/null"
     echo perl -pi -e \'s/ //g\' outputs
     echo perl -pi -e \'s/\\n/,/g\' outputs
     echo "cat outputs >> results.csv"
@@ -101,7 +104,7 @@ do
     for k in `seq 1 3`;
       do
       echo "sh -c 'time ./fusion-$i-$j -i $run_iters' 2> thetime1"
-      echo "grep user thetime1 > thetime"
+      echo "grep user thetime1 | grep -v sys > thetime"
       echo perl -pi -e 's/\\t//g' thetime
       echo perl -pi -e \'s/\\ //g\' thetime
       echo perl -pi -e \'s/user//g\' thetime

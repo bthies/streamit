@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.40 2001-10-31 21:56:11 dmaze Exp $
+ * $Id: LIRToC.java,v 1.41 2001-10-31 22:43:38 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -243,7 +243,7 @@ public class LIRToC
         // visitor deal with the right.  Using the visitor for
         // the whole thing gets the wrong type (void).
         newLine();
-        print("interface_table " + vardef.getIdent() + " = ");
+        print("message_fn " + vardef.getIdent() + "[] = ");
         self.accept(this);
         print(";");
         // While we're at it, save the variable definition in the

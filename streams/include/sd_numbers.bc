@@ -14,6 +14,11 @@ global gBloodCycles;
 global gTraceWidth = 7 + (64 / gNumProc);
 global bg_current_cycle = 0;
 
+//this is set to 1 as soon as we register the deadlock 
+//detection event, it could also be used to tell if we are
+//done booting, when == 1 we are done booting.
+global gRegDLDet = 0;
+
 global gSteadyState = 0;
 //record the total number of prints for each steady 
 //state, not just for the sink we are interested in
@@ -119,6 +124,7 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
       reset_steady_counts(time_lo);
     }
   }
+  //we handled this magic instruction
   return 1;
 }
 
@@ -249,7 +255,14 @@ fn gather_numbers_init()
 {
   local i;
 
-  //register the magic instruction
+  //register the magic instruction handler the records the end of booting
+  //and installs the deadlock detection event
+  listi_add(gMagicInstrHMS.theList, & fn (procNum, rs, imm, result_ptr)
+  {
+    return reg_deadlock_detection(procNum, rs, imm, result_ptr);
+  });
+  
+  //register the magic instruction for the output instruction
   listi_add(gMagicInstrHMS.theList, & fn (procNum, rs, imm, result_ptr)
   {
     return gather_numbers_calc(procNum, rs, imm, result_ptr);
@@ -280,8 +293,7 @@ fn gather_numbers_init()
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
   //register the cache miss counter
   EventManager_RegisterHandler("clock", "__event_clock_cache_miss");
-  //register the deadlock detection event
-  //EventManager_RegisterHandler("clock", "__check_deadlock");
+
   return 1;
 }
 
@@ -448,3 +460,24 @@ fn __event_instr_count(hms)
   }  
 }
 
+//this function is a magic instruction handler that is called to 
+//register the deadlock detection event.  One of the filters
+//has the magc as its first ins in begin()
+fn reg_deadlock_detection(procNum, rs, imm, result_ptr) {
+  //check if this magic instruction is for us...
+  if (!((rs == 0) && (imm == 5)))
+    return 0;
+  
+  if (gRegDLDet == 1) {
+    printf("Error: magc that denotes end of booting executed twice.");
+  }
+
+  //printf("Done booting, register deadlock detection event...\n");
+  
+  //register the deadlock detection event
+  EventManager_RegisterHandler("clock", "__check_deadlock");
+  gRegDLDet = 1;
+
+  //we handled this magic instruction
+  return 1;
+}

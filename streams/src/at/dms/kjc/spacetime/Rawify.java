@@ -199,11 +199,13 @@ public class Rawify
 	//only generate a DRAM command for filters connected to input or output trace nodes
 	if (filterNode.getPrevious() != null &&
 	    filterNode.getPrevious().isInputTrace()) {
+	    //get this buffer or this first upstream non-redundant buffer
 	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode.getPrevious(),
-							   filterNode);
-	    //don't generate code for redundant buffers
-	    if (buffer.redundant())
+							   filterNode).getNonRedundant();
+	    
+	    if (buffer == null)
 		return;
+	    
 	    //get the number of items received
 	    int items = filterInfo.totalItemsReceived(init, primepump); 
 	    
@@ -216,12 +218,13 @@ public class Rawify
 	} 
 	else if (filterNode.getNext() != null &&
 		 filterNode.getNext().isOutputTrace()) {
+	    //get this buffer or null if there are no outputs
 	    OffChipBuffer buffer = OffChipBuffer.getBuffer(filterNode,
-							   filterNode.getNext());
-	    
-	    //don't generate code for redundant buffers
-	    if (buffer.redundant())
+							   filterNode.getNext()).getNonRedundant();
+
+	    if (buffer == null)
 		return;
+	    
 	    //get the number of items sent
 	    int items = filterInfo.totalItemsSent(init, primepump);	    
 
@@ -293,7 +296,7 @@ public class Rawify
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getNext();
 	
 	//do not generate the switch code if it is not necessary
-	if (OffChipBuffer.getBuffer(traceNode, filter).redundant())
+	if (!OffChipBuffer.necessary(traceNode))
 	    return;
 	    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);
@@ -316,8 +319,9 @@ public class Rawify
 	for (int i = 0; i < iterations; i++) {
 	    for (int j = 0; j < traceNode.getWeights().length; j++) {
 		for (int k = 0; k < traceNode.getWeights()[j]; k++) {
+		    //get the source buffer, pass thru redundant buffer(s)
 		    StreamingDram source = OffChipBuffer.getBuffer(traceNode.getSources()[j],
-								   traceNode).getDRAM();
+								   traceNode).getNonRedundant().getDRAM();
 		    for (int q = 0; q < typeSize; q++)
 			SwitchCodeStore.generateSwitchCode(source, dest, stage);
 		}
@@ -344,9 +348,8 @@ public class Rawify
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
 	
-	//check to see if the splitting is necessary (the buffer exists)
-	if (traceNode.oneOutput() &&
-	    OffChipBuffer.getBuffer(traceNode, traceNode.getDests()[0][0]).redundant())
+	//check to see if the splitting is necessary
+	if (!OffChipBuffer.necessary(traceNode))
 	    return;
 				    
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(filter);

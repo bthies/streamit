@@ -251,7 +251,7 @@ public class FilterInfo
 
     public int totalItemsReceived(boolean init, boolean primepump) 
     {
-	assert (!init == primepump) :
+	assert !((init) && (init && primepump)) :
 	    "incorrect usage";
 	int items = 0;
 	//get the number of items received
@@ -267,7 +267,7 @@ public class FilterInfo
     
     public int totalItemsSent(boolean init, boolean primepump) 
     {
-	assert (!init == primepump) :
+	assert !((init) && (init && primepump)) :
 	    "incorrect usage";
 	int items = 0;
 	if (init) 

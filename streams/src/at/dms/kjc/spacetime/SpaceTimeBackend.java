@@ -414,12 +414,6 @@ public class SpaceTimeBackend
 		
 	    //assign the buffers not assigned by Jasp to drams
 	    BufferDRAMAssignment.run(steadyList, rawChip);
-	    //create the raw execution code and switch code for the initialization phase
-	    System.out.println("Creating Initialization Stage");
-	    Rawify.run(initList.listIterator(), rawChip, true); 
-	    //create the raw execution code and switch for the steady-state
-	    System.out.println("Creating Steady-State Stage");
-	    Rawify.run(steadyList.listIterator(), rawChip, false);
 	    //communicate the addresses for the off-chip buffers
 	    if (!KjcOptions.magicdram) {
 		//so right now, this pass does not communicate addresses
@@ -427,6 +421,12 @@ public class SpaceTimeBackend
 		//on the corresponding tile.
 		CommunicateAddrs.doit(rawChip);
 	    }
+	    //create the raw execution code and switch code for the initialization phase
+	    System.out.println("Creating Initialization Stage");
+	    Rawify.run(initList.listIterator(), rawChip, true); 
+	    //create the raw execution code and switch for the steady-state
+	    System.out.println("Creating Steady-State Stage");
+	    Rawify.run(steadyList.listIterator(), rawChip, false);
 	    //generate the switch code assembly files...
 	    GenerateSwitchCode.run(rawChip);
 	    //generate the compute code from the SIR

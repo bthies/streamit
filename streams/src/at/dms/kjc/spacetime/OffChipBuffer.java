@@ -3,6 +3,9 @@ package at.dms.kjc.spacetime;
 import at.dms.util.Utils;
 import java.util.Vector;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Iterator;
 import at.dms.kjc.*;
 
 public class OffChipBuffer 
@@ -47,34 +50,81 @@ public class OffChipBuffer
 
     public boolean redundant() 
     {
-	if (source.isInputTrace() && dest.isFilterTrace()) {
-	    //if this is a input->filter and no inputs then unnecessary
-	    if (((InputTraceNode)source).noInputs()) {
-		System.out.println("source: " + source + ", dest: " + dest + " size: " + size);
-		return true;
-	    }	    
-	    //if only one source to the input and the dram for the
-	    //previous buffer is the same then redunant
-
-	    if (((InputTraceNode)source).oneInput() &&
-		OffChipBuffer.getBuffer(((InputTraceNode)source).getSources()[0], source).getDRAM() == dram)
-		return true;	    
-	} else if (source.isOutputTrace() && dest.isInputTrace()) {
-	    //one output and the dram is the same as the previous 
-	    if (((OutputTraceNode)source).oneOutput() &&
-		OffChipBuffer.getBuffer(source.getPrevious(), source).getDRAM() == dram)
-		return true;
-	} else if (source.isFilterTrace() && dest.isOutputTrace()) {
+	if (source.isInputTrace() && dest.isFilterTrace())
+	    return !necessary((InputTraceNode)source);
+	else if (source.isOutputTrace() && dest.isInputTrace())
+	     return !necessary((OutputTraceNode)source);
+	else {//(source.isFilterTrace() && dest.isOutputTrace())
 	    //if this a filter->outputtrace and the output has no outputs
 	    if (((OutputTraceNode)dest).noOutputs())
 		return true;
 	}
-	return false;	
+	return false;
+    }
+
+    /**
+     * if this buffer is redundant return the first upstream buffer
+     * that is not redundant, return null if this is a input->filter 
+     * buffer with no input or a filter->output buffer with no output
+     **/
+    public OffChipBuffer getNonRedundant() 
+    {
+	if (source.isInputTrace() && dest.isFilterTrace()) {
+	    //if no inputs return null
+	    if (((InputTraceNode)source).noInputs())
+		return null;
+	    //if redundant get the previous buffer and call getNonRedundant
+	    if (redundant())
+		return OffChipBuffer.getBuffer(((InputTraceNode)source).getSources()[0],
+					       source).getNonRedundant();
+	    //otherwise return this...
+	    return this;
+	}
+	else if (source.isOutputTrace() && dest.isInputTrace()) {
+	    //if this buffer is redundant, return the upstream buffer
+	    //it may be a buffer with no input so call getNonRedundant on that shit
+	    if (redundant())
+		return OffChipBuffer.getBuffer(source, source.getPrevious()).getNonRedundant();
+	    return this;
+	}
+	else { //(source.isFilterTrace() && dest.isOutputTrace())
+	    //if no outputs return null
+	    if (((OutputTraceNode)dest).noOutputs())
+		return null;
+	    //the only way it could be redundant (unnecesary) is for there to be no outputs
+	    return this;
+	}
+	
     }
     
+    
+    //return true if the inputtracenode does anything necessary
+    public static boolean necessary(InputTraceNode input) 
+    {
+	if (input.noInputs())
+	    return false;
+	if (input.oneInput() &&
+	    (OffChipBuffer.getBuffer(input.getSources()[0], input).getDRAM() ==
+	     OffChipBuffer.getBuffer(input, input.getNext()).getDRAM()))
+	    return false;
+	return true;
+    }
+    
+    //return true if outputtracenode does anything
+    public static boolean necessary(OutputTraceNode output) 
+    {
+	if (output.noOutputs())
+	    return false;
+	if (output.oneOutput() && 
+	    (OffChipBuffer.getBuffer(output.getPrevious(), output).getDRAM() ==
+	     OffChipBuffer.getBuffer(output, output.getDests()[0][0]).getDRAM()))
+	    return false;
+	return true;
+    }
 
     public void setDRAM(StreamingDram DRAM) 
     {
+	assert !redundant() : "calling setDRAM() on redundant buffer";
 	this.dram = DRAM;
     }
     
@@ -86,6 +136,7 @@ public class OffChipBuffer
     public StreamingDram getDRAM() 
     {
 	assert dram != null: "need to assign buffer to streaming dram";
+	assert !redundant() : "calling getDRAM() on redundant buffer";
 	return dram;
     }
     
@@ -130,7 +181,24 @@ public class OffChipBuffer
 	
 	return buf;
     }
+
+
+    //return of the buffers of this stream program    
+    public static Set getBuffers() 
+    {
+	HashSet set = new HashSet();
+	Iterator sources = bufferStore.keySet().iterator();
+	while (sources.hasNext()) {
+	    HashMap bufs = (HashMap)bufferStore.get(sources.next());
+	    Iterator dests = bufs.keySet().iterator();
+	    while (dests.hasNext()) {
+		set.add(bufs.get(dests.next()));
+	    }
+	}
+	return set;
+    }
     
+
     public Address getSize() 
     {
 	return size;

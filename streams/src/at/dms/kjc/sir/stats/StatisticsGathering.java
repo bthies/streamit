@@ -55,9 +55,9 @@ class CountStatements extends FilterWorkVisitor {
     void report() {
 	System.err.println("For filter " + filter.getName() + ", found:");
 	for (int i=0; i<3; i++) {
-	    if (peek[i]>0) System.err.println("  " + peek[i] + " peek statements wrapped in " + i + " level" + (i==1 ? "" : "s") + " of control flow.");
-	    if (pop[i]>0) System.err.println("  " + pop[i] + " pop statements wrapped in " + i + " level" + (i==1 ? "" : "s") + " of control flow.");
-	    if (push[i]>0) System.err.println("  " + push[i] + " push statements wrapped in " + i + " level" + (i==1 ? "" : "s") + " of control flow.");
+	    if (peek[i]>0) System.err.println("  " + peek[i] + " peek statements wrapped in " + i + " level" + (i==1 ? "" : "s") + (i==2 ? " (or more)" : "") + " of control flow.");
+	    if (pop[i]>0) System.err.println("  " + pop[i] + " pop statements wrapped in " + i + " level" + (i==1 ? "" : "s") + (i==2 ? " (or more)" : "") + " of control flow.");
+	    if (push[i]>0) System.err.println("  " + push[i] + " push statements wrapped in " + i + " level" + (i==1 ? "" : "s") + (i==2 ? " (or more)" : "") + " of control flow.");
 	}
     }
 

@@ -1,8 +1,8 @@
-package streamit.scheduler.simple;
+package streamit.scheduler1.simple;
 
-import streamit.scheduler.SchedStream;
-import streamit.scheduler.SchedPipeline;
-import streamit.scheduler.SchedRepSchedule;
+import streamit.scheduler1.SchedStream;
+import streamit.scheduler1.SchedPipeline;
+import streamit.scheduler1.SchedRepSchedule;
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;

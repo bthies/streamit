@@ -1,6 +1,6 @@
-package streamit.scheduler.simple;
+package streamit.scheduler1.simple;
 
-import streamit.scheduler.*;
+import streamit.scheduler1.*;
 import java.util.*;
 import java.math.BigInteger;
 

@@ -1,6 +1,6 @@
-package streamit.scheduler.simple;
+package streamit.scheduler1.simple;
 
-import streamit.scheduler.SchedStreamInterface;
+import streamit.scheduler1.SchedStreamInterface;
 
 interface SimpleSchedStream extends SchedStreamInterface
 {

@@ -1,7 +1,7 @@
-package streamit.scheduler.simple;
+package streamit.scheduler1.simple;
 
-import streamit.scheduler.simple.SimpleHierarchicalScheduler;
-import streamit.scheduler.Schedule;
+import streamit.scheduler1.simple.SimpleHierarchicalScheduler;
+import streamit.scheduler1.Schedule;
 import java.math.BigInteger;
 
 public class SimpleHierarchicalSchedulerPow2 extends SimpleHierarchicalScheduler

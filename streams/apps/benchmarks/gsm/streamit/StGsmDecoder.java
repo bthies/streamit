@@ -15,17 +15,6 @@ import java.lang.*;
 
 import java.lang.reflect.*;
 import streamit.io.*;
-
-class ShortIdentity extends Filter {
-    public ShortIdentity() { super(); }
-    public void init() {
-	input = new Channel(Short.TYPE, 1);
-	output = new Channel(Short.TYPE, 1);
-    }
-    public void work() {
-	output.pushShort(input.popShort());
-    }
-}
         
 class RPEDecodeFilter extends Filter 
 {
@@ -814,7 +803,7 @@ class LARInputSplitJoin extends SplitJoin
     public void init()
     {
 	this.setSplitter(WEIGHTED_ROUND_ROBIN (1, 0));  //we don't care about it going to in2
-	this.add(new ShortIdentity());
+	this.add(new Identity(Short.TYPE));
 	this.add(new LARPipeline());	
 	this.setJoiner(WEIGHTED_ROUND_ROBIN(160, 8));  //drp[0...160], LARc[0...7];
     }

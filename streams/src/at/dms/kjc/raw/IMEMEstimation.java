@@ -200,7 +200,6 @@ public class IMEMEstimation extends EmptyStreamVisitor
 	    }
 
 	    //remove the directory
-	    /*
 	    {
  		String[] cmdArray = new String[3];
  		cmdArray[0] = "rm";
@@ -209,7 +208,6 @@ public class IMEMEstimation extends EmptyStreamVisitor
  		Process jProcess = Runtime.getRuntime().exec(cmdArray);
  		jProcess.waitFor();
 	    }
-	    */
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

@@ -49,7 +49,7 @@ public class FusePipe {
     /**
      * The name of the initial work function.
      */
-    private static final String INIT_WORK_NAME = "___initWork";
+    public static final String INIT_WORK_NAME = "___initWork";
 
     /**
      * Prefix for name of parameters in fused init function.

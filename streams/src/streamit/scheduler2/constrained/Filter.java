@@ -99,6 +99,11 @@ public class Filter
         ERROR("Should not be used for Filters in Constrained Scheduling!");
     }
 
+    public void registerConstraint(P2PPortal portal)
+    {
+        ERROR ("not implemented");
+    }
+    
     public LatencyNode getBottomLatencyNode()
     {
         return latencyNode;

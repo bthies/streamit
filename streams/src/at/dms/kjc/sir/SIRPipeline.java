@@ -74,5 +74,18 @@ public class SIRPipeline extends SIRStream {
 			    init,
 			    elements);
     }
+
+
+    /**
+     * Accepts attribute visitor <v> at this node.
+     */
+    public Object accept(AttributeStreamVisitor v) {
+	return v.visitPipeline(this,
+			       parent,
+			       fields,
+			       methods,
+			       init,
+			       elements);
+    }
 }
 

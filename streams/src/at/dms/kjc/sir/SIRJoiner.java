@@ -76,5 +76,15 @@ public class SIRJoiner extends SIROperator {
 		      type,
 		      weights);
     }
+
+    /**
+     * Accepts attribute visitor <v> at this node.
+     */
+    public Object accept(AttributeStreamVisitor v) {
+	return v.visitJoiner(this,
+			     parent,
+			     type,
+			     weights);
+    }
 }
 

@@ -78,4 +78,14 @@ public class SIRSplitter extends SIROperator {
 			type,
 			weights);
     }
+
+    /**
+     * Accepts attribute visitor <v> at this node.
+     */
+    public Object accept(AttributeStreamVisitor v) {
+	return v.visitSplitter(this,
+			       parent,
+			       type,
+			       weights);
+    }
 }

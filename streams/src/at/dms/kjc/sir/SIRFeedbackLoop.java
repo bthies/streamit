@@ -77,4 +77,17 @@ public class SIRFeedbackLoop extends SIRStream {
 				delay,
 				initPath);
     }
+
+    /**
+     * Accepts attribute visitor <v> at this node.
+     */
+    public Object accept(AttributeStreamVisitor v) {
+	return v.visitFeedbackLoop(this,
+				   parent,
+				   fields,
+				   methods,
+				   init,
+				   delay,
+				   initPath);
+    }
 }

@@ -43,6 +43,17 @@ public class SIRSplitJoin extends SIRStream {
     }
 
     /**
+     * Accepts attribute visitor <v> at this node.
+     */
+    public Object accept(AttributeStreamVisitor v) {
+	return v.visitSplitJoin(this,
+				parent,
+				fields,
+				methods,
+				init);
+    }
+
+    /**
      * Construct a new SIRPipeline with the given fields and methods.
      */
     public SIRSplitJoin(SIRStream parent,

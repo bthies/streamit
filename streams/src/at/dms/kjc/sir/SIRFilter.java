@@ -69,6 +69,21 @@ public class SIRFilter extends SIRStream {
     }
 
 
+    /**
+     * Accepts attribute visitor <v> at this node.
+     */
+    public Object accept(AttributeStreamVisitor v) {
+	return v.visitFilter(this,
+			     parent,
+			     fields,
+			     methods,
+			     init,
+			     peek, pop, push,
+			     work,
+			     inputType, outputType);
+    }
+
+
     public void setPeek(int p) {
 	this.peek = p;
     }

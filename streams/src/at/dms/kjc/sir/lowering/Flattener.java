@@ -38,6 +38,9 @@ public class Flattener {
 	ConstantProp.propagateAndUnroll(str);
 	//FieldProp.doPropagate(str);
 
+	//Raise Variable Declaration to front of blocks
+	str.getInit().accept(new VarDeclRaiser());	
+	
 	AdjustGranularity.doit(str, -1);
 
 	if (StreamItOptions.partition) {

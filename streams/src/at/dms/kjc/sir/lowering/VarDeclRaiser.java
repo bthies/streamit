@@ -1,0 +1,114 @@
+package at.dms.kjc.sir.lowering;
+
+import java.util.*;
+import at.dms.kjc.*;
+import at.dms.util.*;
+import at.dms.kjc.sir.*;
+import at.dms.kjc.lir.*;
+import at.dms.compiler.JavaStyleComment;
+import at.dms.compiler.JavadocComment;
+import java.lang.Math;
+import at.dms.compiler.TokenReference;
+
+/**
+ * This class raises Variable Declaration to the beginning
+ * of blocks for C friendly code
+ * Use visitBlockStatement to move Var Decls to top of block or
+ * have it run on the method and have it recurse
+ */
+class VarDeclRaiser extends SLIRReplacingVisitor {
+    /**
+     * List of variableDeclarations to move to the front of the block
+     */
+    private LinkedList varDefs;
+
+    // ----------------------------------------------------------------------
+    // Moving VariableDeclarations to front of block
+    // ----------------------------------------------------------------------
+
+    public Object visitBlockStatement(JBlock self,
+				      JavaStyleComment[] comments) {
+	LinkedList saveDefs=varDefs;
+	varDefs=new LinkedList();
+	int size=self.size();
+	for (int i=0;i<size;i++) {
+	    JStatement oldBody = (JStatement)self.getStatement(i);
+	    Object newBody = oldBody.accept(this);
+	    if (!(newBody instanceof JStatement))
+		continue;
+	    if(newBody instanceof JVariableDeclarationStatement) {
+		self.removeStatement(i);
+		varDefs.add(newBody);
+		JVariableDefinition[] vars=((JVariableDeclarationStatement)newBody).getVars();
+		for(int j=vars.length-1;j>=0;j--) {
+		    JVariableDefinition def=(JVariableDefinition)vars[j];
+		    JExpression val=def.getValue();
+		    if(val!=null) {
+			def.setValue(null);
+			TokenReference ref=((JVariableDeclarationStatement)newBody).getTokenReference();
+			self.addStatement(i,new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null));
+			size++;
+		    }
+		}
+		i--;
+		size--;
+	    } else if (newBody!=null && newBody!=oldBody) {
+		self.setStatement(i,(JStatement)newBody);
+	    }
+	}
+	for(int i=varDefs.size()-1;i>=0;i--)
+	    self.addStatementFirst((JStatement)varDefs.get(i));
+	varDefs=saveDefs;
+	visitComments(comments);
+	return self;
+    }
+
+    /**
+     * Visits a for statement
+     */
+    public Object visitForStatement(JForStatement self,
+				    JStatement init,
+				    JExpression cond,
+				    JStatement incr,
+				    JStatement body) {
+	// cond should never be a constant, or else we have an
+	// infinite or empty loop.  Thus I won't check for it... 
+	// recurse into init
+	JStatement newInit = (JStatement)init.accept(this);
+	if (newInit!=null && newInit!=init) {
+	    self.setInit(newInit);
+	}
+	
+	// recurse into incr
+	JStatement newIncr = (JStatement)incr.accept(this);
+	if (newIncr!=null && newIncr!=incr) {
+	    self.setIncr(newIncr);
+	}
+
+	JExpression newExp = (JExpression)cond.accept(this);
+	if (newExp!=null && newExp!=cond) {
+	    self.setCond(newExp);
+	}
+	
+	// recurse into body
+	JStatement newBody = (JStatement)body.accept(this);
+	if (newBody!=null && newBody!=body) {
+	    self.setBody(newBody);
+	}
+	if(newInit instanceof JVariableDeclarationStatement) {
+	    JVariableDefinition[] vars=((JVariableDeclarationStatement)newInit).getVars();
+	    if(vars.length>1)
+		System.err.println("Warning: Compound Variable Declaration in for loop"); //Not handled
+	    JVariableDefinition def=(JVariableDefinition)vars[0];
+	    JExpression val=def.getValue();
+	    varDefs.add(newInit);
+	    if(val!=null) {
+		def.setValue(null);
+		TokenReference ref=((JVariableDeclarationStatement)newInit).getTokenReference();
+		self.setInit(new JExpressionListStatement(ref,new JExpression[] {new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val)},null));
+	    } else
+		self.setInit(null);
+	}
+	return self;
+    }
+}

@@ -16,10 +16,6 @@ import at.dms.compiler.TokenReference;
  */
 class Propagator extends SLIRReplacingVisitor {
     /**
-     * List of variableDeclarations to move to the front of the block
-     */
-    private LinkedList varDefs;
-    /**
      * Map of known constants (JLocalVariable -> JLiteral)
      */
     private Hashtable constants;
@@ -34,47 +30,6 @@ class Propagator extends SLIRReplacingVisitor {
 	this.constants = constants;
     }
     
-    // ----------------------------------------------------------------------
-    // Moving VariableDeclarations to front of block
-    // ----------------------------------------------------------------------
-
-    public Object visitBlockStatement(JBlock self,
-				      JavaStyleComment[] comments) {
-	LinkedList saveDefs=varDefs;
-	varDefs=new LinkedList();
-	int size=self.size();
-	for (int i=0;i<size;i++) {
-	    JStatement oldBody = (JStatement)self.getStatement(i);
-	    Object newBody = oldBody.accept(this);
-	    if (!(newBody instanceof JStatement))
-		continue;
-	    if(newBody instanceof JVariableDeclarationStatement) {
-		self.removeStatement(i);
-		varDefs.add(newBody);
-		JVariableDefinition[] vars=((JVariableDeclarationStatement)newBody).getVars();
-		for(int j=vars.length-1;j>=0;j--) {
-		    JVariableDefinition def=(JVariableDefinition)vars[j];
-		    JExpression val=def.getValue();
-		    if(val!=null) {
-			def.setValue(null);
-			TokenReference ref=((JVariableDeclarationStatement)newBody).getTokenReference();
-			self.addStatement(i,new JExpressionStatement(ref,new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val),null));
-			size++;
-		    }
-		}
-		i--;
-		size--;
-	    } else if (newBody!=null && newBody!=oldBody) {
-		self.setStatement(i,(JStatement)newBody);
-	    }
-	}
-	for(int i=varDefs.size()-1;i>=0;i--)
-	    self.addStatementFirst((JStatement)varDefs.get(i));
-	varDefs=saveDefs;
-	visitComments(comments);
-	return self;
-    }
-
     // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------
@@ -206,20 +161,6 @@ class Propagator extends SLIRReplacingVisitor {
 	JStatement newBody = (JStatement)body.accept(this);
 	if (newBody!=null && newBody!=body) {
 	    self.setBody(newBody);
-	}
-	if(newInit instanceof JVariableDeclarationStatement) {
-	    JVariableDefinition[] vars=((JVariableDeclarationStatement)newInit).getVars();
-	    if(vars.length>1)
-		System.err.println("Warning: Compound Variable Declaration in for loop"); //Not handled
-	    JVariableDefinition def=(JVariableDefinition)vars[0];
-	    JExpression val=def.getValue();
-	    varDefs.add(newInit);
-	    if(val!=null) {
-		def.setValue(null);
-		TokenReference ref=((JVariableDeclarationStatement)newInit).getTokenReference();
-		self.setInit(new JExpressionListStatement(ref,new JExpression[] {new JAssignmentExpression(ref,new JLocalVariableExpression(ref,def),val)},null));
-	    } else
-		self.setInit(null);
 	}
 	return self;
     }

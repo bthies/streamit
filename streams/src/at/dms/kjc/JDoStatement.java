@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoStatement.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JDoStatement.java,v 1.3 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -129,6 +129,13 @@ public class JDoStatement extends JLoopStatement {
       Object trash = super.accept(p);
       return p.visitDoStatement(this, cond, body);
   }
+
+    /**
+     * Sets the condition.
+     */
+    public void setCondition(JExpression cond) {
+	this.cond = cond;
+    }
 
   /**
    * Generates a sequence of bytescodes

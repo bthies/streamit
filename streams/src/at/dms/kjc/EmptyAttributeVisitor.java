@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: EmptyAttributeVisitor.java,v 1.2 2001-10-29 04:40:54 thies Exp $
+ * $Id: EmptyAttributeVisitor.java,v 1.3 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -450,6 +450,9 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     public Object visitBlockStatement(JBlock self,
 				      JStatement[] body,
 				      JavaStyleComment[] comments) {
+	for (int i=0; i<body.length; i++) {
+	    body[i].accept(this);
+	}
 	return self;
     }
 
@@ -1041,9 +1044,7 @@ public class EmptyAttributeVisitor implements Constants, AttributeVisitor {
     public Object visitArrayInitializer(JArrayInitializer self,
 					JExpression[] elems)
     {
-	for (int i = 0; i < elems.length; i++) {
-	    elems[i].accept(this);
-	}
+	visitArgs(elems);
 	return self;
     }
 }

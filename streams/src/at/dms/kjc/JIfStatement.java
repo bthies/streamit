@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIfStatement.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JIfStatement.java,v 1.3 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -113,6 +113,13 @@ public class JIfStatement extends JStatement {
      Object trash = super.accept(p);
     return p.visitIfStatement(this, cond, thenClause, elseClause);
   }        
+
+    /**
+     * Sets condition of this.
+     */
+    public void setCondition(JExpression cond) {
+	this.cond = cond;
+    }
 
 
   /**

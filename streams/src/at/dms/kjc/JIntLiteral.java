@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JIntLiteral.java,v 1.3 2001-10-29 04:40:54 thies Exp $
+ * $Id: JIntLiteral.java,v 1.4 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -80,6 +80,10 @@ public class JIntLiteral extends JLiteral {
     super(where);
     this.value = value;
     this.invert = false;
+  }
+
+  public JIntLiteral(int value) {
+      this(null, value);
   }
 
   // ----------------------------------------------------------------------

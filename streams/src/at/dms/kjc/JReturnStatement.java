@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JReturnStatement.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JReturnStatement.java,v 1.3 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -106,6 +106,13 @@ public class JReturnStatement extends JStatement {
   public Object accept(AttributeVisitor p) {
       return    super.accept(p);
   }
+    
+    /**
+     * Sets expression of this.
+     */
+    public void setExpression(JExpression expr) {
+	this.expr = expr;
+    }
 
 
   /**

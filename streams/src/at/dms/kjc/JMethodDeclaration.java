@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodDeclaration.java,v 1.9 2001-10-12 10:23:42 thies Exp $
+ * $Id: JMethodDeclaration.java,v 1.10 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -427,6 +427,13 @@ public class JMethodDeclaration extends JMemberDeclaration {
      */
     public List getStatementList() {
 	return body.getStatementList();
+    }
+
+    /**
+     * Gets parameters of this.
+     */
+    public JFormalParameter[] getParameters() {
+	return parameters;
     }
 
     // bft:  added for streamit passes

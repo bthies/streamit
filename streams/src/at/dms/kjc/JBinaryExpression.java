@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JBinaryExpression.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: JBinaryExpression.java,v 1.2 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -107,6 +107,20 @@ public abstract class JBinaryExpression extends JExpression {
     genCode(code, false);
     code.plantJumpInstruction(cond ? opc_ifne : opc_ifeq, label);
   }
+
+    /**
+     * Set what appears on the left of this.
+     */
+    public void setLeft(JExpression left) {
+	this.left = left;
+    }
+
+    /**
+     * Set what appears on the right of this.
+     */
+    public void setRight(JExpression right) {
+	this.right = right;
+    }
 
   // ----------------------------------------------------------------------
   // DATA MEMBERS

@@ -15,18 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeLabel.java,v 1.1 2001-08-30 16:32:51 thies Exp $
+ * $Id: CodeLabel.java,v 1.2 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
 
 import at.dms.classfile.AbstractInstructionAccessor;
+import java.io.Serializable;
 
 /**
  * This class represents a position in the code array where the associated
  * instruction has not yet been generated.
  */
-class CodeLabel extends AbstractInstructionAccessor {
+class CodeLabel extends AbstractInstructionAccessor implements Serializable {
 
   // --------------------------------------------------------------------
   // CONSTRUCTORS

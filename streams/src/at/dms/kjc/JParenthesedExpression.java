@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JParenthesedExpression.java,v 1.2 2001-10-02 19:25:05 mgordon Exp $
+ * $Id: JParenthesedExpression.java,v 1.3 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -51,6 +51,13 @@ public class JParenthesedExpression extends JExpression {
   public CType getType() {
     return expr.getType();
   }
+
+    /**
+     * Sets the expression.
+     */
+    public void setExpression(JExpression expr) {
+	this.expr = expr;
+    }
 
   /**
    * Returns a string representation of this literal.

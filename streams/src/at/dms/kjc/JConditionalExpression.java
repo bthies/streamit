@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConditionalExpression.java,v 1.2 2001-10-02 19:25:04 mgordon Exp $
+ * $Id: JConditionalExpression.java,v 1.3 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -62,6 +62,14 @@ public class JConditionalExpression extends JExpression {
   public CType getType() {
     return type;
   }
+
+    public void setLeft(JExpression left) {
+	this.left = left;
+    }
+
+    public void setRight(JExpression right) {
+	this.right = right;
+    }
 
   /**
    * Returns a string representation of this literal.

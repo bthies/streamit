@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcEmptyVisitor.java,v 1.4 2001-10-29 04:09:18 thies Exp $
+ * $Id: KjcEmptyVisitor.java,v 1.5 2001-10-29 10:26:02 thies Exp $
  */
 
 package at.dms.kjc;
@@ -421,6 +421,9 @@ public class KjcEmptyVisitor implements Constants, KjcVisitor {
   public void visitBlockStatement(JBlock self,
 				  JStatement[] body,
 				  JavaStyleComment[] comments) {
+      for (int i=0; i<body.length; i++) {
+	  body[i].accept(this);
+      }
   }
 
   /**

@@ -30,7 +30,9 @@ public class CodeEstimate extends SLIREmptyVisitor {
     static int FIELD_EXPR = 4;
     static int ARRAY_ACCESS = 10;
 
-    /// Also count Literals and Local Variables
+    // returns the size of code, if you also need the size of 
+    // local varaibles construct your own CodeEstimate 
+    // instance and call visitFilter.
     
     public static int estimate(SIRFilter filter) {
 	int result;
@@ -41,7 +43,9 @@ public class CodeEstimate extends SLIREmptyVisitor {
 	return result;
     }
 
-    private int code_size;
+    private int code_size;        // size of code
+    private int locals_size;      // size of local variables
+
     SIRFilter filter;
 
     private HashMap methodsToVisit;
@@ -52,7 +56,14 @@ public class CodeEstimate extends SLIREmptyVisitor {
     CodeEstimate(SIRFilter filter) {
 	this.filter = filter;
 	code_size = 0;
+	locals_size = 0;
 	code_at_level = new int[64];
+    }
+
+
+    public int getLocalsSize() {
+	
+	return locals_size;
     }
 
     public int getCodeSize() {
@@ -101,8 +112,10 @@ public class CodeEstimate extends SLIREmptyVisitor {
 
 
 
-
-
+    ///
+    ///
+    /// Increase the size of local variables
+    ///
 
 
     public void visitVariableDefinition(JVariableDefinition self,
@@ -128,16 +141,16 @@ public class CodeEstimate extends SLIREmptyVisitor {
 	}
 	
 	//System.out.println("filter: "+filter+" variable: "+ident+" size: "+size);
-	code_size += size;
+	locals_size += size;
 	
     }
 
 
     
-
-
-
-
+    ///
+    ///
+    /// All of the following methods increase the estimated code size
+    ///
 
 
     public void visitMethodCallExpression(JMethodCallExpression self,

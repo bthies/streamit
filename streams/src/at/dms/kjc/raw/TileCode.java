@@ -37,9 +37,11 @@ public class TileCode extends at.dms.util.Utils implements FlatVisitor {
 	realTiles = new HashSet();
 	topLevel.accept(new TileCode(), new HashSet(), true);
 	tiles = new HashSet();
-	tiles.addAll(RawBackend.simulator.initSchedules.keySet());
-	tiles.addAll(RawBackend.simulator.steadySchedules.keySet());
-
+	//for decoupled execution the scheduler does not run
+	if (!KjcOptions.decoupled) {
+	    tiles.addAll(RawBackend.simulator.initSchedules.keySet());
+	    tiles.addAll(RawBackend.simulator.steadySchedules.keySet());
+	}
 	Iterator tileIterator = tiles.iterator();
 	while(tileIterator.hasNext()) {
 	    Coordinate tile = (Coordinate)tileIterator.next();

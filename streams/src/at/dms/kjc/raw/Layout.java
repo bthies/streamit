@@ -239,7 +239,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    currentCost = placementCost();
 	    System.out.println("Initial Cost: " + currentCost);
 	    
-	    if (KjcOptions.noanneal) {
+	    if (KjcOptions.noanneal || KjcOptions.decoupled) {
 		dumpLayout("noanneal.dot");
 		return;
 	    }

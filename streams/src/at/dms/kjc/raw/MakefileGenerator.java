@@ -14,6 +14,7 @@ import java.io.*;
 public class MakefileGenerator 
 {
     public static final String MAKEFILE_NAME = "Makefile.streamit";
+    
     public static void createMakefile() 
     {
 	try {
@@ -44,7 +45,8 @@ public class MakefileGenerator
             fw.write("ATTRIBUTES = IMEM_LARGE\n");
 	    //if we are generating number gathering code, 
 	    //we do not want to use the default print service...
-	    if (KjcOptions.numbers > 0 && NumberGathering.successful)
+	    if (KjcOptions.numbers > 0 && NumberGathering.successful ||
+		KjcOptions.decoupled)
 		fw.write("ATTRIBUTES += NO_PRINT_SERVICE\n");
 	    fw.write("SIM-CYCLES = 500000\n\n");
 	    //if we are using the magic network, tell btl
@@ -55,16 +57,16 @@ public class MakefileGenerator
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
 	    if (FileVisitor.foundReader || FileVisitor.foundWriter)
-		createBCFile(true);
+		createBCFile(true, tiles);
             else
-                createBCFile(false);
+                createBCFile(false, tiles);
 	    if (RawBackend.rawRows > 4)
 		fw.write("TILE_PATTERN=8x8\n\n");
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {
 		int tile = 
 		    Layout.getTileNumber((Coordinate)tilesIterator.next());
-		
+
 		if (tile < 10)
 		    fw.write("0" + tile + " ");
 		else 
@@ -115,7 +117,7 @@ public class MakefileGenerator
 	}
     }
 
-    private static void createBCFile(boolean hasIO) throws Exception 
+    private static void createBCFile(boolean hasIO, HashSet tiles) throws Exception 
     {
 	FileWriter fw = new FileWriter("fileio.bc");
 
@@ -130,7 +132,34 @@ public class MakefileGenerator
 	fw.write("global gStreamItTiles = " + RawBackend.rawRows * RawBackend.rawColumns +
 		 ";\n");
 	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
-	
+	if (KjcOptions.decoupled) {
+	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");
+	    fw.write("global gFilterNames;\n");
+	    fw.write("{\n");
+	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
+	    fw.write("  gFilterNames = listi_new();\n");
+	    Iterator it = tiles.iterator();
+	    for (int i = 0; i < RawBackend.rawRows * RawBackend.rawColumns; i++) {
+		if (tiles.contains(Layout.getTile(i))) {
+		    fw.write("  listi_add(gFilterNames, \"" +
+			     Layout.getNode(Layout.getTile(i)).getName() + "\");\n");
+		}
+	    }
+	    fw.write("  sprintf(workestpath, \"%s%s\", streamit_home, \"/include/work_est.bc\");\n");
+	    //include the number gathering code and install the device file
+	    fw.write("  include(workestpath);\n");
+	     // add print service to the south of the SE tile
+	    fw.write("  {\n");
+	    fw.write("    local str = malloc(256);\n");
+	    fw.write("    local result;\n");
+	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
+	    fw.write("    result = dev_work_est_init(\"/dev/null\", gXSize+gYSize);\n");
+	    fw.write("    if (result == 0)\n");
+	    fw.write("      exit(-1);\n");
+	    fw.write("  }\n");
+	    fw.write("}\n");
+	    
+	}
 
 	//number gathering code
 	if (KjcOptions.numbers > 0 && NumberGathering.successful) {

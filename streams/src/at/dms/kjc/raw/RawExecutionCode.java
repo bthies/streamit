@@ -85,8 +85,8 @@ public class RawExecutionCode extends at.dms.util.Utils
 	       filter instanceof SIRFileWriter ||
 	       filter instanceof SIRFileReader)
 		return;
-	    
-	    calculateItems(filter);
+	    if (!KjcOptions.decoupled)
+		calculateItems(filter);
 	    System.out.print("Generating Raw Code: " + 
 			     node.contents.getName() + " ");
 	    
@@ -317,7 +317,7 @@ public class RawExecutionCode extends at.dms.util.Utils
 						       simpleIndexVar,
 						       null));
 	    }
-	    else
+	    else 
 		buffersize = CalcBufferSize.getConsBufSize(Layout.getNode(Layout.getTile(filter)));
 	    
 

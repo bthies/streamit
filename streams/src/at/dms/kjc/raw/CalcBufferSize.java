@@ -58,7 +58,12 @@ public class CalcBufferSize extends at.dms.util.Utils implements FlatVisitor
     }
     
     public static int getConsBufSize(FlatNode node) {
-	return ((Integer)consBufferSize.get(node)).intValue();
+	//this will not be calculated in decoupled execution mode
+	//so just return the peek value
+	if (KjcOptions.decoupled) 
+	    return ((SIRFilter)node.contents).getPeekInt();
+	else 
+	    return ((Integer)consBufferSize.get(node)).intValue();
     }
     
 

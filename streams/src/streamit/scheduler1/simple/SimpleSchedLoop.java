@@ -201,4 +201,10 @@ class SimpleSchedLoop extends SchedLoop implements SimpleSchedStream
         ASSERT (initSchedule);
         return initSchedule;
     }
+
+    public int getInitDataCount ()
+    {
+        ASSERT (false);
+        return 0;
+    }
 }

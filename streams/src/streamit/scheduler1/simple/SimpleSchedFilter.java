@@ -2,6 +2,7 @@ package streamit.scheduler.simple;
 
 import streamit.scheduler.SchedFilter;
 import streamit.scheduler.Scheduler;
+import java.math.BigInteger;
 
 public class SimpleSchedFilter extends SchedFilter implements SimpleSchedStream
 {
@@ -27,5 +28,10 @@ public class SimpleSchedFilter extends SchedFilter implements SimpleSchedStream
     public Object getInitSchedule ()
     {
         return null;
+    }
+
+    public int getInitDataCount ()
+    {
+        return 0;
     }
 }

@@ -7,4 +7,10 @@ interface SimpleSchedStream extends SchedStreamInterface
     public void computeSchedule ();
     public Object getSteadySchedule ();
     public Object getInitSchedule ();
+
+    /**
+     * This will return number of data that this stream consumes in order to
+     * initialize itself.
+     */
+    public int getInitDataCount ();
 }

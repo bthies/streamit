@@ -119,5 +119,11 @@ public class SimpleSchedSplitJoin extends SchedSplitJoin implements SimpleSchedS
         ASSERT (initSchedule);
         return initSchedule;
     }
+
+    public int getInitDataCount ()
+    {
+        ASSERT (false);
+        return 0;
+    }
 }
 

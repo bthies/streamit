@@ -19,7 +19,7 @@ public class AssertedClass
         // print an error and exit.
 
         System.err.println ("An ASSERT has failed.  Exiting.\n\n");
-	new RuntimeException().printStackTrace();
+        new RuntimeException().printStackTrace();
         System.exit (0);
     }
 

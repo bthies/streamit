@@ -168,7 +168,7 @@ public class ClusterBackend implements FlatVisitor {
 	HashMap partitionMap = new HashMap();
 
 	if ( doCacheOptimization ) {
-	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
+	    str = new CachePartitioner(str, WorkEstimate.getWorkEstimate(str), 0).calcPartitions(partitionMap);
 	} else {
 	    str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads, false, false).calcPartitions(partitionMap);	
 	}

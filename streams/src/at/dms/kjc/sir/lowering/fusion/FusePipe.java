@@ -344,8 +344,7 @@ public class FusePipe {
 		    new JVariableDefinition(null, 0, CStdType.Integer,
 					    POP_INDEX_NAME + "_" + j + "_" + i,
 					    new
-					    JIntLiteral(filter.getPeekInt() - filter.getPopInt()
-							//							- 1
+					    JIntLiteral(//filter.getPeekInt() - filter.getPopInt()
 							- 1 /* this is since we're starting
 							       at -1 and doing pre-inc 
 							       instead of post-inc */ ));

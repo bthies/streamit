@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.18 2003-11-11 07:35:04 thies Exp $
+ * $Id: Utils.java,v 1.19 2004-01-27 23:12:13 dmaze Exp $
  */
 
 package at.dms.util;
@@ -45,10 +45,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
    *
    * @exception	RuntimeException	the entire token reference
    */
-  public static final void assert(boolean b) {
-    if (!b) {
-      throw new InconsistencyException();
-    }
+  public static final void kopi_assert(boolean b) {
+      assert b;
   }
 
   /**
@@ -56,10 +54,8 @@ public abstract class Utils implements Serializable, DeepCloneable {
    *
    * @exception	RuntimeException	the entire token reference
    */
-  public static final void assert(boolean b, String str) {
-    if (!b) {
-      throw new InconsistencyException(str);
-    }
+  public static final void kopi_assert(boolean b, String str) {
+      assert b : str;
   }
 
   /**
@@ -68,8 +64,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
    * @exception	RuntimeException	the entire token reference
    */
   public static final void fail(String str) {
-      new InconsistencyException(str).printStackTrace();
-      System.exit(1);
+      assert false : str;
   }
 
     

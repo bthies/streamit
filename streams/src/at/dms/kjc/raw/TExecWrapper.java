@@ -13,6 +13,9 @@ public class TExecWrapper
 	while (jInStream.ready())
 	    System.out.println(jInStream.readLine());
 
+	BufferedReader jErrStream =  new BufferedReader(new InputStreamReader(jProcess.getErrorStream()));
+	while (jErrStream.ready())
+	    System.out.println(jErrStream.readLine());
 	System.exit(0);
     }
 }

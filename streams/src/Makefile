@@ -88,13 +88,27 @@ MAKEFILE_DEPS = \
 
 include $(STREAMIT_HOME)/misc/Makefile.std
 
+jar:
+	rm -f streamit.jar streamit-lib.jar
+	$(MAKE) streamit.jar streamit-lib.jar
+
 streamit.jar: $(JAVA_TARGET)
 	rm -rf classes
 	mkdir classes
-	find . -name '*.class' | cpio -p -d -v classes
+	find . -name '*.class' | cpio -p -d -V classes
 	cd $(STREAMIT_HOME)/library/java && \
 		find . -name '*.class' | \
-		cpio -p -d -v $(STREAMIT_HOME)/compiler/classes
+		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
+	jar cf $@ -C classes .
+	rm -rf classes
+
+streamit-lib.jar: $(JAVA_TARGET)
+	rm -rf classes
+	mkdir classes
+	find streamit -name '*.class' | cpio -d -p -V classes
+	cd $(STREAMIT_HOME)/library/java && \
+		find . -name '*.class' | \
+		cpio -p -d -V $(STREAMIT_HOME)/compiler/classes
 	jar cf $@ -C classes .
 	rm -rf classes
 

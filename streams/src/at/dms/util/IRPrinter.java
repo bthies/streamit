@@ -1547,7 +1547,7 @@ public class IRPrinter extends Utils implements SLIRVisitor
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
 					  JExpression portal,
 					  SIRStream receiver,
-					  CMethod[] methods) {
+					  JMethodDeclaration[] methods) {
 	Utils.fail("Printing reg. receiver statements unimplemented");
     }
 

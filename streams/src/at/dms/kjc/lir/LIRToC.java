@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.24 2001-10-25 21:02:41 mgordon Exp $
+ * $Id: LIRToC.java,v 1.25 2001-10-25 22:31:33 mgordon Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1482,7 +1482,7 @@ public class LIRToC
     public void visitRegReceiverStatement(SIRRegReceiverStatement self,
                                           JExpression portal,
 					  SIRStream receiver, 
-					  CMethod[] methods)
+					  JMethodDeclaration[] methods)
     {
 	/*        print("register_receiver(this->context, ");
         print(fn);

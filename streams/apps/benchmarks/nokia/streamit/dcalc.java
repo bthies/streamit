@@ -142,7 +142,7 @@ class AhrdAhA extends SplitJoin{// the input is r, L,AhA, the output is Ahr,d,Ah
  class Sourcer extends Filter {
      int N;
      float[] r;
-     public Sourcer(int N) {super(N, r);}
+     public Sourcer(int N) {super(N);}
      public void init(int N){
 	 r = new float[6];
 	 r[0]=1;
@@ -373,8 +373,8 @@ class dcalc extends StreamIt {
 	add(new Ahrchold(K*N));
 	add(new LrL(K*N));
 	add(new backs(K*N));
-	//add(new SinkD(K*N));
-	add(new FileWriter("out",Float.TYPE));
+	add(new SinkD(K*N));
+	//add(new FileWriter("out",Float.TYPE));
     }
 }
 

@@ -6,19 +6,18 @@
  */
 package grapheditor;
 
+import java.io.*;
 import java.util.ArrayList;
 
 /**
  *  GEPhasedFilter is the graph editor's internal representation of a phased filter.
  *  @author jcarlos
  */
-public class GEPhasedFilter extends GEStreamNode{
+public class GEPhasedFilter extends GEStreamNode implements Serializable{
 	
 	private ArrayList initWorkFunctions;
 	private ArrayList workFunctions;
-	
-	
-	
+
 	public GEPhasedFilter()
 	{
 		super("PHASED_FILTER", "");

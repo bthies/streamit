@@ -1,6 +1,7 @@
 package grapheditor;
 
 import java.util.*;
+import java.io.*;
 
 import com.sun.rsasign.t;
 
@@ -18,7 +19,7 @@ import com.sun.rsasign.t;
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class GraphStructure {
+public class GraphStructure implements Serializable{
 	
 	private HashMap graph;
 	private GEStreamNode parent;

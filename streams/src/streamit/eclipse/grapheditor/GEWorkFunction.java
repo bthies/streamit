@@ -6,11 +6,12 @@
  */
 package grapheditor;
 
+import java.io.*;
 /**
  * GEWorkFunction is the graph editor's internal representation of a work function.
  * @author jcarlos
  */
-public class GEWorkFunction 
+public class GEWorkFunction implements Serializable
 {
 	private String name;
 	private int pushValue;

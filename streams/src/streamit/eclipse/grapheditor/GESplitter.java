@@ -6,13 +6,14 @@
  */
 package grapheditor;
 
+import java.io.*;
 /**
  * @author jcarlos
  *
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
-public class GESplitter extends GEStreamNode{
+public class GESplitter extends GEStreamNode implements Serializable{
 	
 	private String label;
 	private int[] weights;

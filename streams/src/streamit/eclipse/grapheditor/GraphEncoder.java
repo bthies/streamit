@@ -5,44 +5,11 @@ import at.dms.kjc.*;
 import java.io.*;
 import java.util.*;
 
-//import java.util.*;
-
 public class GraphEncoder implements AttributeStreamVisitor {
+ 
     //May Want outputStream or stdout. Not sure
     private PrintStream outputStream;
     private GraphStructure graph;
-
-    //ADDED TO COMPILE
-
-    private GEStreamNode lastNode;
-
-    public void print(String f) 
-    {
-	outputStream.print(f);
-    }
-
-    void printEdge(String from, String to)
-    {
-        if (from == null || to == null)
-            return;
-        print(from + " -> " + to + "\n");
-    }
-
-    /**
-     * Prints out the subgraph cluser line that is needed in to make clusters. This method is overridden to make colored
-     * pipelines and splitjoins in LinearDot.
-     **/
-    public String getClusterString(SIRStream self) {
-	return "subgraph cluster_" + getName() + " {\n label=\"" + self.getName() + "\";\n";
-    }
-    
-    public String getName()
-    {
-    
-        return "node" + lastNode;
-    }
-
-    //END ADDED
 
     public GraphEncoder() 
     {
@@ -63,7 +30,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
     }
     
 	/**
-	 * Prints out a dot graph for the program being compiled.
+	 * Creates graph structure for the program being compiled.
 	 */
 	public void compile(JCompilationUnit[] app) 
 	{
@@ -87,7 +54,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	}
     
 	/**
-	 * Prints dot graph of <str> to System.out
+	 * creates graph structure of <str> to System.out
 	 */
 	public static void printGraph(SIRStream str) 
 	{
@@ -95,7 +62,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 	}
 
 	/**
-	 * Prints dot graph of <str> to <filename>
+	 * Creates grapg structure of <str> in <filename>
 	 */
 	public static void printGraph(SIRStream str, String filename) 
 	{
@@ -176,12 +143,6 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType)
 	{
-		
-        
-		//###
-	   	// Establish this is a subgraph cluster
-		//###
-		print(getClusterString(self));
      
     	GEPhasedFilter phFilter = new GEPhasedFilter();
 		// Walk through each of the phases.
@@ -231,9 +192,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		}
 		catch (Exception e) {
 			return null;
-		}
-	  
-	
+		} 
     }
     
     /* visit a work function */
@@ -252,9 +211,7 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		
 	}
 		
-    
-    
-    /* Pre-visit a pipeline
+        /* Pre-visit a pipeline
      */
     public Object visitPipeline(SIRPipeline self,
                                 JFieldDeclaration[] fields,
@@ -287,24 +244,29 @@ public class GraphEncoder implements AttributeStreamVisitor {
                                  SIRSplitter splitter,
                                  SIRJoiner joiner) {
                                  	
-	// Visit the splitter and joiner 
-	GESplitter split = (GESplitter)splitter.accept(this);
-	GEJoiner join = (GEJoiner) joiner.accept(this);
-	
-	// ...and walk through the body.
-	Iterator iter = self.getParallelStreams().iterator();
-	while (iter.hasNext()) {
-		SIROperator oper = (SIROperator)iter.next();
-		GEStreamNode strNode = (GEStreamNode)oper.accept(this);
-		split.addChild(strNode);
-		strNode.addChild(join);		
+		// Visit the splitter and joiner 
+		GESplitter split = (GESplitter)splitter.accept(this);
+		GEJoiner join = (GEJoiner) joiner.accept(this);
 		
-	}
+		
 	
-	// CREATE splitjoin class	
-//	return new GESplitJoin(split,join);
+		// ...and walk through the body.
+		Iterator iter = self.getParallelStreams().iterator();
+		while (iter.hasNext()) {
+			
+			SIROperator oper = (SIROperator)iter.next();
+			GEStreamNode strNode = (GEStreamNode)oper.accept(this);		
+			split.addChild(strNode);
+			strNode.addChild(join);		
+		
+		}
+		
+		GESplitJoin splitjoin =  new GESplitJoin(split, join);
+		graph.addHierarchy(splitjoin, splitjoin.getChildren());
+			
+		return splitjoin;
 
-	return null;
+		
                                
     }
 
@@ -320,20 +282,14 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		GESplitter split = (GESplitter) self.getSplitter().accept(this);
 		GEJoiner join = (GEJoiner) self.getJoiner().accept(this);
 
-/*
+		GEStreamNode body = (GEStreamNode) self.getBody().accept(this);
+		GEStreamNode loop = (GEStreamNode) self.getLoop().accept(this);
 
-		// Visit the body and the loop part.
-		np = (NamePair)self.getBody().accept(this);
-		printEdge(joinName, np.first);
-		printEdge(np.last, splitName);
-		np = (NamePair)self.getLoop().accept(this);
-	
-		printEdge(splitName, np.first);
-		printEdge(np.last, joinName);
-
-
-		return new NamePair(joinName, splitName);*/
+		join.addChild(body);
+		body.addChild(split);
+		split.addChild(loop);
+		loop.addChild(join);
 		
-		return null;
+		return new GEFeedbackLoop(split, join, body, loop);
     }
 }

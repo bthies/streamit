@@ -6,12 +6,13 @@
  */ 
 package grapheditor;
 import java.util.*;
+import java.io.*;
 
 /**
  * GEStremaNode is the graph internal representation of a node. .
  * @author jcarlos
  */
-public class GEStreamNode {
+public class GEStreamNode implements Serializable{
 	
 	protected ArrayList children;
 	protected String type;

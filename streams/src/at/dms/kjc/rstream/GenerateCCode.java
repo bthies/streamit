@@ -34,7 +34,9 @@ public class GenerateCCode
     private JBlock initFunctionCalls;
     private JBlock steady;
     private JBlock init;
-
+    /** map string (variable name) to JVariableDefinition for fields, 
+	set up in convertFieldsToLocals()**/
+    HashMap stringVarDef = new HashMap();
     private FlatIRToRS toRS;
 
     private static String FNAME = "str.c";
@@ -101,6 +103,10 @@ public class GenerateCCode
 	main.addStatement(new JReturnStatement(null, 
 					       new JIntLiteral(0),
 					       null));
+
+	//convert all fields to locals of main function
+	convertFieldsToLocals();
+	
 	mainMethod = 
 	    new JMethodDeclaration(null, 0, CStdType.Integer,
 				   MAINMETHOD,
@@ -108,6 +114,41 @@ public class GenerateCCode
 				   new CClassType[0],
 				   main, null, null);
     }
+    
+    /** convert all fields to locals of main function **/
+    private void convertFieldsToLocals() 
+    {
+	//add all fields to the main method as locals
+	for(int i = 0; i < fields.size(); i++) {
+	    JFieldDeclaration field = 
+		(JFieldDeclaration)fields.get(i);
+	    main.addStatementFirst
+		(new JVariableDeclarationStatement(null,
+						   field.getVariable(),
+						   null));
+	    //remember the vardef
+	    stringVarDef.put(field.getVariable().getIdent(), field.getVariable());
+	}
+	
+	//convert all field accesses to local accesses
+	main.accept(new SLIRReplacingVisitor() {
+		public Object visitFieldExpression(JFieldAccessExpression self,
+						   JExpression left,
+						   String ident)
+		{
+		    assert left instanceof JThisExpression : 
+			"Non-JThisExpression for prefix of field expression";
+		    
+		    assert (stringVarDef.containsKey(ident)) &&
+			(stringVarDef.get(ident) instanceof JVariableDefinition) :
+			"Error converting fields to locals, name not found";
+		    
+		    return new JLocalVariableExpression(null, 
+							((JVariableDefinition)stringVarDef.get(ident)));
+		}
+	    });
+    }
+    
    
 
     private void writeCompleteFile() 
@@ -116,8 +157,9 @@ public class GenerateCCode
 
 
 	//remember all new array expression
-	newArrayExprs = NewArrayExprs.doit(fields, functions, mainMethod);
-
+	//newArrayExprs = NewArrayExprs.doit(fields, functions, mainMethod);
+	newArrayExprs = NewArrayExprs.doit(functions, mainMethod);
+	
 	toRS = new FlatIRToRS(newArrayExprs);
 
 	//if there are structures in the code, include
@@ -127,14 +169,15 @@ public class GenerateCCode
 
 	str.append(getExterns());
 
-	for(int i = 0; i < fields.size(); i++) 
-	    ((JFieldDeclaration)fields.get(i)).accept(toRS);
+	//fields are now added as locals to main method...
+	//	for(int i = 0; i < fields.size(); i++) 
+	//    ((JFieldDeclaration)fields.get(i)).accept(toRS);
 
 	//initially just print the function decls
 	toRS.declOnly = true;
 	for (int i = 0; i < functions.size(); i++) 
 	    ((JMethodDeclaration)functions.get(i)).accept(toRS);
-
+	//print the main method decl
 	mainMethod.accept(toRS);
 
 	//now print the method bodies...
@@ -142,9 +185,9 @@ public class GenerateCCode
 	for (int i = 0; i < functions.size(); i++) 
 	    ((JMethodDeclaration)functions.get(i)).accept(toRS);
 
-
+	//main method body
 	mainMethod.accept(toRS);
-
+	//append the string for the c code
 	str.append(toRS.getString());
 	
 	System.out.println("Static doloops/doloop: " + toRS.staticDoLoops + " / " +

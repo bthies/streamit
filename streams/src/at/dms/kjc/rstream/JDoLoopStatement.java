@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JDoLoopStatement.java,v 1.4 2004-08-19 21:42:21 mgordon Exp $
+ * $Id: JDoLoopStatement.java,v 1.5 2004-08-23 14:36:27 mgordon Exp $
  */
 
 package at.dms.kjc.rstream;
@@ -172,7 +172,8 @@ new JLocalVariableExpression(null, induction),
 	
 	int tripCount = (int)java.lang.Math.round((((double)(cond  - init) / (double)incr)));
 	
-	assert tripCount >= 0;
+	if (tripCount < 0)
+	    return 0;
 	
 	return tripCount;
     }

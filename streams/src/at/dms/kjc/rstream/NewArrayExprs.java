@@ -70,6 +70,20 @@ public class NewArrayExprs extends SLIRReplacingVisitor implements FlatVisitor
     }
     
 
+    public static NewArrayExprs doit(Vector functions, 
+				     JMethodDeclaration main) 
+    {
+	NewArrayExprs newArrayExprs = new NewArrayExprs();
+
+	for (int i = 0; i < functions.size(); i++)
+	    ((JMethodDeclaration)functions.get(i)).accept(newArrayExprs);
+	
+	main.accept(newArrayExprs);
+	
+	return newArrayExprs;
+    }
+    
+
     public void visitNode(FlatNode node) 
     {
 	if (node.isFilter()) {

@@ -172,6 +172,16 @@ public class Util extends at.dms.util.Utils {
 	return new JMultExpression(null,
 				  left, right);
     }
+
+    public static JExpression newIntSubExpr(JExpression left,
+					    JExpression right) 
+    {
+	if (isIntZero(right))
+	    return (JExpression)ObjectDeepCloner.deepCopy(left);
+	
+	return new JMinusExpression(null, left, right);
+    }
+    
     
     public static boolean isIntZero(JExpression exp) 
     {

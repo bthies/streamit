@@ -92,6 +92,25 @@ public abstract class FilterFusionState extends FusionState
     
     public abstract JStatement[] getWork(JBlock enclosingBlock, boolean isInit);
     
+    /** 
+	Check helper function <meth> (not init or work) for field accesses.
+	Field accesses in helper functions are not supported at this time.
+    **/
+    protected void checkHelperFunction(JMethodDeclaration meth) 
+    {
+	//check the method for field accessed
+	meth.accept(new SLIREmptyVisitor() {
+		public void visitFieldExpression(JFieldAccessExpression self,
+						 JExpression left,
+						 String ident)
+		{
+		    assert false : "Field accesses in helper functions not supported at this time.";
+		}
+		
+	    });
+    }
+    
+
     public SIRFilter getFilter() 
     {
 	return filter;

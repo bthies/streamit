@@ -61,12 +61,19 @@ public class ConvertChannelExprsMIV {
 	Phase1 phase1 = new Phase1(top);
 	boolean passed = phase1.run();
 	if (passed) {
+	    //assert that the calculated rates match the declared rates...
+	    assert fusionState.getFilter().getPushInt() == phase1.getTopLevelPushCount() :
+		"Declared push rate does not match calculated rated for ConvertChannelExprMIV";
+	    
+	    assert fusionState.getFilter().getPopInt() == phase1.getTopLevelPopCount() :
+		"Declared pop rate does not match calculated rated for ConvertChannelExprMIV";
+
 	    Phase2 phase2 = new Phase2(top, phase1, 
 				       popBuffer, pushBuffer, pushOffset);
 	    phase2.run();
 	}
 	else 
-	    System.out.println("failed");
+	    System.out.println("** Could not generate MIVs for " + fusionState.getNode().contents);
 	
 	return passed;
     }    
@@ -188,10 +195,13 @@ class Phase2 extends SLIRReplacingVisitor
 
 	while (enclosing != null) {	    
 	    assert loopExpr.containsKey(enclosing);
+	    //this term in the access (induction - initValue)*(number_of_buffer_increment)
 	    access = 
 		Util.newIntAddExpr(access,
-				   Util.newIntMultExpr(new JLocalVariableExpression(null,
-									   enclosing.getInduction()),
+				   Util.newIntMultExpr(Util.newIntSubExpr(new JLocalVariableExpression
+									    (null,
+									     enclosing.getInduction()),
+									    enclosing.getInitValue()),
 						       new JIntLiteral(((Integer)loopExpr.get(enclosing)).intValue())));
 	    assert phase1.enclosingLoop.containsKey(enclosing);
 	    enclosing = (JDoLoopStatement)phase1.enclosingLoop.get(enclosing);
@@ -276,7 +286,17 @@ class Phase1 extends SLIREmptyVisitor
 	
     }
     
-
+    public int getTopLevelPopCount() 
+    {
+	return ((Integer)loopPop.get(topLevel)).intValue();
+    }
+    
+    public int getTopLevelPushCount() 
+    {
+	return ((Integer)loopPush.get(topLevel)).intValue();
+    }
+    
+    
     public boolean run()
     {
 	if (!StrToRStream.GENERATE_MIVS)
@@ -288,6 +308,7 @@ class Phase1 extends SLIREmptyVisitor
 	    assert doLoopLevel == 0;
 	}
 	catch (MIVException e) {
+	    //e.printStackTrace();
 	    return false;
 	}
 	return true;
@@ -301,11 +322,15 @@ class Phase1 extends SLIREmptyVisitor
 				  JExpression cond,
 				  JStatement incr,
 				  JStatement body) {
-	if (self instanceof JDoLoopStatement) {
-	    visitDoLoopStatement((JDoLoopStatement)self);
+	//if this is a do loop try to visit it with visitdoloopstatement
+	//this method will return true if the doloop is analyzable and it was
+	//visited with that method, otherwise assume that it is a normal for loop
+	//and visit it
+	if (self instanceof JDoLoopStatement && visitDoLoopStatement((JDoLoopStatement)self)) {
 	    return;
 	}
-
+	//we cannot see a channel expression inside 
+	//non-analyzable control flow
 	insideControlFlow++;
 	if (init != null) {
 	    init.accept(this);
@@ -321,7 +346,9 @@ class Phase1 extends SLIREmptyVisitor
     }
 
 
-    public void visitDoLoopStatement(JDoLoopStatement doloop) 
+    //return true if we passed the tests for an analyzable do loop
+    //other wise visit for loop will visit this loop
+    public boolean visitDoLoopStatement(JDoLoopStatement doloop) 
     {
 	int oldCurrentPop, oldTopLevelPop;
 	int oldCurrentPush, oldTopLevelPush;
@@ -329,12 +356,16 @@ class Phase1 extends SLIREmptyVisitor
 	JDoLoopStatement oldCurrentLoop;
 	
 	//make sure we have static bounds
-	if (!doloop.staticBounds())
-	    throw new MIVException();
+	if (!doloop.staticBounds()) {
+	    return false;
+	    //throw new MIVException();
+	}
+	
 	
 	if (doloop.getIncrInt() != 1) {
-	    System.out.println("**** Can't generate MIV because loop does not have 1 increment");
-	    throw new MIVException();
+	    //System.out.println("**** Can't generate MIV because loop does not have 1 increment");
+	    return false;
+	    //throw new MIVException();
 	}
 	
 	enclosingLoop.put(doloop, currentLoop);
@@ -395,6 +426,7 @@ class Phase1 extends SLIREmptyVisitor
 		
 	doLoopLevel--;
 	currentLoop = oldCurrentLoop;
+	return true;
     }
 
     /**
@@ -406,9 +438,10 @@ class Phase1 extends SLIREmptyVisitor
 	//don't want this is a header to for!!
 	if (doHeader > 0)
 	    throw new MIVException();
-	//can't see a channel expr inside non-doloop control flow
-	if (insideControlFlow > 0)
-	    throw new MIVException();
+
+
+	//if (insideControlFlow > 0)
+	//    throw new MIVException();
 
 	arg.accept(this);
 	
@@ -499,8 +532,9 @@ class Phase1 extends SLIREmptyVisitor
 	if (thenCurrentTopLevelPush != currentTopLevelPush || 
 	    thenCurrentLoopPush != currentLoopPush ||
 	    thenCurrentTopLevelPop != currentTopLevelPop ||
-	    thenCurrentLoopPop != currentLoopPop)
+	    thenCurrentLoopPop != currentLoopPop) {
 	    throw new MIVException();
+	}
     }
 
     

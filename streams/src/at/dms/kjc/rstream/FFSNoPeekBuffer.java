@@ -234,8 +234,14 @@ public class FFSNoPeekBuffer extends FilterFusionState
 	//add helper functions
 	for (int i = 0; i < filter.getMethods().length; i++) {
 	    if (filter.getMethods()[i] != filter.getInit() &&
-		filter.getMethods()[i] != filter.getWork())
+		filter.getMethods()[i] != filter.getWork()) {
+		//check the helper function for accesses to Fields
+		//we do not support helper function field access at this time..
+		checkHelperFunction(filter.getMethods()[i]);
+		//add the function
 		functions.add(filter.getMethods()[i]);
+
+	    }
 	}
 
 	//add fields 

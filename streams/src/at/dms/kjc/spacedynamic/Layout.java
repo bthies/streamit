@@ -675,9 +675,6 @@ public class Layout extends at.dms.util.Utils implements
 			    nsucc++;
 			}
 
-			//this will be the final layout
-			if (currentCost == 0.0)
-			    break;
 			//keep the layout with the minimum cost
 			if (currentCost < minCost) {
 			    minCost = currentCost;
@@ -685,6 +682,10 @@ public class Layout extends at.dms.util.Utils implements
 			    sirMin = (HashMap)SIRassignment.clone();
 			    tileMin = (HashMap)tileAssignment.clone();
 			}
+
+			//this will be the final layout
+			if (currentCost == 0.0)
+			    break;
 		    }
 		    
 		    t *= TFACTR;

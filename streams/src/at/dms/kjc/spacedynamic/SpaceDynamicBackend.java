@@ -233,20 +233,6 @@ public class SpaceDynamicBackend {
 		 now we can use the flatgraph representation **/
 		ssg.scheduleAndFlattenGraph();
 
-		/*
-		//Generate number gathering simulator code
-		if (KjcOptions.numbers > 0) {
-		    assert false : "Number gathering doesn't work yet!";
-		    
-		    // do this on demand from NumberGathering
-		    //SinkUnroller.doit(ssg.getTopLevel());
-		    if (!NumberGathering.doit(ssg.getTopLevel())) {
-			System.err.println("Could not generate number gathering code.  Exiting...");
-			System.exit(1);
-		    }
-		}
-		*/
-		
 		// see if we are going to overflow IMEM
 		if (scaleUnrollFactor) {
 		    System.out.println("Trying unroll factor " + KjcOptions.unroll);

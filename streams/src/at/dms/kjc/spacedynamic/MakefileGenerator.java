@@ -85,9 +85,9 @@ public class MakefileGenerator
 	    fw.write("RGCCFLAGS += -O3\n\n");
             fw.write("BTL-MACHINE-FILE = fileio.bc\n\n");
 	    if (streamGraph.getFileVisitor().foundReader || streamGraph.getFileVisitor().foundWriter)
-		createBCFile(true, tiles);
+		createBCFile(true, TileCode.realTiles);
             else
-                createBCFile(false, tiles);
+                createBCFile(false, TileCode.realTiles);
 	    if (rawChip.getYSize() > 4) {
 		fw.write("TILE_PATTERN = 8x8\n\n");
 	    }
@@ -158,7 +158,7 @@ public class MakefileGenerator
 	}
     }
 
-    private static void createBCFile(boolean hasIO, HashSet tiles) throws Exception 
+    private static void createBCFile(boolean hasIO, HashSet mappedTiles) throws Exception 
     {
 	FileWriter fw = new FileWriter("fileio.bc");
 
@@ -177,45 +177,12 @@ public class MakefileGenerator
 	fw.write("global gStreamItTiles = " + rawChip.getTotalTiles() +
 		 ";\n");
 	fw.write("global gStreamItUnrollFactor = " + KjcOptions.unroll + ";\n");
-	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");      
-	
-	if (KjcOptions.outputs > 0) 
-	    fw.write("global gStreamItOutputs = " + KjcOptions.outputs + ";\n");
-	
-	if (KjcOptions.decoupled) {
-	    fw.write("global gStreamItFilterTiles = " + tiles.size()+ ";\n");
-	    fw.write("global gFilterNames;\n");
-	   
-	    fw.write("{\n");
-	    fw.write("  local workestpath = malloc(strlen(streamit_home) + 30);\n");
-	    fw.write("  gFilterNames = listi_new();\n");
-	    Iterator it = tiles.iterator();
-	    for (int i = 0; i < rawChip.getTotalTiles(); i++) {
-		if (tiles.contains(rawChip.getTile(i))) {
-		    fw.write("  listi_add(gFilterNames, \"" +
-			     layout.getNode(rawChip.getTile(i)).getName() + "\");\n");
-		}
-	    }
-	    fw.write("  sprintf(workestpath, \"%s%s\", streamit_home, \"/include/work_est.bc\");\n");
-	    //include the number gathering code and install the device file
-	    fw.write("  include(workestpath);\n");
-	     // add print service to the south of the SE tile
-	    fw.write("  {\n");
-	    fw.write("    local str = malloc(256);\n");
-	    fw.write("    local result;\n");
-	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
-	    fw.write("    result = dev_work_est_init(\"/dev/null\", gXSize+gYSize);\n");
-	    fw.write("    if (result == 0)\n");
-	    fw.write("      exit(-1);\n");
-	    fw.write("  }\n");
-	    fw.write("}\n");
-	    
-	}
+	fw.write("global streamit_home = getenv(\"STREAMIT_HOME\");\n");
 
 	 //create the function to tell the simulator what tiles are mapped
 	fw.write("fn mapped_tile(tileNumber) {\n");
 	fw.write("if (");
-	Iterator tilesIterator = tiles.iterator();
+	Iterator tilesIterator = mappedTiles.iterator();
 	//generate the if statement with all the tile numbers of mapped tiles
 	while (tilesIterator.hasNext()) {
 	    fw.write("tileNumber == " + 
@@ -227,91 +194,21 @@ public class MakefileGenerator
 	fw.write("return 0;\n");
 	fw.write("}\n");
 	
-	if (KjcOptions.outputs > 0) {
-	    fw.write("{\n");
-	    fw.write("  local outputpath = malloc(strlen(streamit_home) + 30);\n");
-	    fw.write("  sprintf(outputpath, \"%s%s\", streamit_home, \"/include/output.bc\");\n");
-	    //include the number gathering code and install the device file
-	    fw.write("  include(outputpath);\n");
-	    //call the number gathering initialization function
-	    fw.write("  {\n");
-	    fw.write("    local str = malloc(256);\n");
-	    fw.write("    local result;\n");
-	    fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
-	    fw.write("    result = dev_output_init(\"/dev/null\", gXSize+gYSize);\n");
-	    fw.write("    if (result == 0)\n");
-	    fw.write("      exit(-1);\n");
-	    fw.write("  }\n");
-	    fw.write("}\n");
-	}
-	
 
 	//number gathering code
 	if (KjcOptions.numbers > 0 && !IMEMEstimation.TESTING_IMEM) {
-	    assert false;
-	    /*
-	    fw.write("global printsPerSteady = " + NumberGathering.printsPerSteady + ";\n");
-	    fw.write("global calculatedPrintsPerSteady = " + NumberGathering.totalPrintsPerSteady + ";\n");
-	    fw.write("global skipPrints = " + NumberGathering.skipPrints + ";\n");
-	    fw.write("global quitAfter = " + KjcOptions.numbers + ";\n");
-	    fw.write("global gSinkX = " + 
-		     layout.getTile(NumberGathering.sink).getX() +
-		     ";\n");
-	    fw.write("global gSinkY = " + 
-		     layout.getTile(NumberGathering.sink).getY() +
-		     ";\n");
-	    
+	    fw.write("global printsPerCycle = " + KjcOptions.numbers + ";\n");
+	    fw.write("global quitAfter = " + 10 + ";\n");
 	    fw.write("{\n");
 	    fw.write("  local numberpath = malloc(strlen(streamit_home) + 30);\n");
-	    fw.write("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/gather_numbers.bc\");\n");
+	    fw.write("  sprintf(numberpath, \"%s%s\", streamit_home, \"/include/sd_numbers.bc\");\n");
 	    //include the number gathering code and install the device file
 	    fw.write("  include(numberpath);\n");
 	    //call the number gathering initialization function
 	    fw.write("  gather_numbers_init();\n");
-	    */
-	    
-	    /*  only number gathering crap ****** This was commentted out before
-	    // add print service to the south of the SE tile
-	      fw.write("  {\n");
-	      fw.write("    local str = malloc(256);\n");
-	      fw.write("    local result;\n");
-	      fw.write("    sprintf(str, \"/tmp/%s.log\", *int_EA(gArgv,0));\n");
-	      fw.write("    result = dev_gather_numbers_init(\"/dev/null\", gXSize+gYSize);\n");
-	      fw.write("    if (result == 0)\n");
-	      fw.write("      exit(-1);\n");
-	      fw.write("  }\n");
-	    */
 	    fw.write("}\n");
 	}
-
-	//magic network code
-	if (KjcOptions.magic_net) {
-	    fw.write("include(\"magic_schedules.bc\");\n");
-	    
-	    fw.write("fn addMagicNetwork() {\n");
-	    fw.write("  local magicpath = malloc(strlen(streamit_home) + 30);\n");
-	    fw.write("  sprintf(magicpath, \"%s%s\", streamit_home, \"/include/magic_net.bc\");\n");
-	    //include the number gathering code and install the device file
-	    fw.write("  include(magicpath);\n");  
-	    //add the function to catch the magic instructions
-	    fw.write("  addMagicFIFOs();\n");
-	    fw.write("  create_schedules();\n");
-	    fw.write("}\n");
-	}
-
-// 	    ("global gAUTOFLOPS = 0;\n" +
-// 	     "fn __clock_handler(hms)\n" +
-//              "{\n" +
-//              "  local i;\n" +
-//              "  for (i = 0; i < gNumProc; i++)\n" +
-//              "  {\n" +
-//              "    gAUTOFLOPS += imem_instr_is_fpu(get_imem_instr(i, get_pc_for_proc(i)));\n" +
-//              "  }\n" +
-//              "}\n" +
-//              "\n" +
-//              "EventManager_RegisterHandler(\"clock\", \"__clock_handler\");\n" +
-//              "\n" +
-
+	
 	fw.write
 	    ("global gAUTOFLOPS = 0;\n" +
 	     "fn __event_fpu_count(hms)\n" +
@@ -329,7 +226,7 @@ public class MakefileGenerator
              "{\n" +
              "  gAUTOFLOPS = 0;\n" +
              "  step(steps);\n" +
-             "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\n\",\n" +
+             "  printf(\"// **** count_FLOPS: %4d FLOPS, %4d mFLOPS\\n\",\n" +
              "         gAUTOFLOPS, (250*gAUTOFLOPS)/steps);\n" +
              "}\n" +
              "\n");

@@ -462,22 +462,6 @@ public class FlatIRToC extends ToC implements StreamVisitor
 	method = null;
     }
 
-    private void dummyWork(int push) {
-	print("{\n");
-	print("  int i;\n");
-	print("  for(i = 0; i < " + push + "; i++)\n");
-	print("    static_send(i);\n");
-	print("}\n");
-    }
-
-    private int nextPow2(int i) {
-	String str = Integer.toBinaryString(i);
-	if  (str.indexOf('1') == -1)
-	    return 0;
-	int bit = str.length() - str.indexOf('1');
-	return (int)Math.pow(2, bit);
-    }
-    
     // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------

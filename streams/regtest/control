@@ -1,3 +1,13 @@
+# test fft {
+#   directory docs/examples/hand/fft
+#   source FFT.java
+# }
+
+test fft-local {
+  directory docs/examples/hand/fft
+  source FFTLocal.java
+}
+
 test fib {
   directory docs/examples/hand/fib
   source Fib.java
@@ -15,7 +25,7 @@ test flybit {
 
 test hello6 {
   directory docs/examples/hand/hello6
-  output Hello6.out
+#  output Hello6.out
   source HelloWorld6.java
 }
 

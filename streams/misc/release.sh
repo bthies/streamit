@@ -2,7 +2,7 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.34 2003-10-17 16:10:06 thies Exp $
+# $Id: release.sh,v 1.35 2003-10-17 16:19:48 thies Exp $
 #
 
 # Interesting/configurable variables:
@@ -103,6 +103,9 @@ rm -rf $WORKING/streams/src/at/dms/kjc/spacetime
 rm -rf $WORKING/streams/src/com
 rm -rf $WORKING/streams/src/streamit/eclipse
 rm -rf $WORKING/streams/src/streamit/stair
+
+# remove cluster library
+rm -rf $WORKING/streams/library/cluster
 
 # Some parts of the language notes we don't want to be visible
 rm -f $WORKING/streams/docs/syntax/02-04-24-additions

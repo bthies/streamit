@@ -47,6 +47,13 @@ public class SIRFeedbackLoop extends SIRStream {
     }
 
     /**
+     * Construct a new SIRPipeline null fields, parent, and methods
+     */
+    public SIRFeedbackLoop() {
+	super();
+    }
+
+    /**
      * Accepts visitor <v> at this node.
      */
     public void accept(StreamVisitor v) {

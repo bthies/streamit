@@ -24,6 +24,17 @@ public class SIRPushExpression extends JExpression {
 	this.arg = arg;
     }
 
+    /**
+     * Construct a node in the parsing tree
+     * @param	where		the line of this node in the source code
+     * @param	arg		the argument of the call
+     */
+    public SIRPushExpression(JExpression arg)
+    {
+	super(null);
+	this.arg = arg;
+    }
+
     // ----------------------------------------------------------------------
     // ACCESSORS
     // ----------------------------------------------------------------------
@@ -66,6 +77,16 @@ public class SIRPushExpression extends JExpression {
 	at.dms.util.Utils.fail("Visitors to SIRE nodes not supported yet.");
 	//    p.visitMethodCallExpression(this, prefix, ident, args);
     }
+
+    /**
+     * Accepts the specified attribute visitor.  NOT SUPPORTED YET.
+     * @param	p		the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	at.dms.util.Utils.fail("Visitors to SIRE nodes not supported yet.");
+	return null;
+    }
+ 
 
     /**
      * Generates JVM bytecode to evaluate this expression.  NOT SUPPORTED YET.

@@ -38,6 +38,23 @@ public class SIRInitStatement extends JStatement {
 	this.args = args;
 	this.target = target;
     }
+    
+    /**
+     * Construct a node in the parsing tree
+     */
+    public SIRInitStatement() {
+	super(null, null);
+
+	this.args = null;
+	this.target = null;
+    }
+    
+    public void setArgs(JExpression[] a) {
+	this.args = a;
+    }
+    public void setTarget(SIRStream s) {
+	this.target = s;
+    }
 
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
@@ -59,6 +76,14 @@ public class SIRInitStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+    }
+
+    /**
+     * Accepts the specified attribute visitor - NOT SUPPORTED YET.
+     */
+    public Object accept(AttributeVisitor p) {
+	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+	return null;
     }
 
     /**

@@ -30,7 +30,20 @@ public class SIRRegReceiverStatement extends JStatement {
 
 	this.portal = portal;
     }
+    
+    /**
+     * Construct a node in the parsing tree
+     */
+    public SIRRegReceiverStatement() {
+	super(null, null);
 
+	this.portal = null;
+    }
+    
+    public void setPortal(String p) {
+	this.portal = p;
+    }
+    
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
     // ----------------------------------------------------------------------
@@ -51,6 +64,14 @@ public class SIRRegReceiverStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+    }
+
+        /**
+     * Accepts the specified attribute visitor - NOT SUPPORTED YET.
+     */
+    public Object accept(AttributeVisitor p) {
+	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+	return null;
     }
 
     /**

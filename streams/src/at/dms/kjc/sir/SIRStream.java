@@ -33,6 +33,27 @@ public abstract class SIRStream extends SIROperator {
       this.methods = methods;
     }
 
+    protected SIRStream() {
+	super(null);
+	this.fields = null;
+	this.methods = null;
+    }
+
+
+    /*
+     * Set the fields member variable 
+     */
+    protected void setFields (JFieldDeclaration[] f) {
+	this.fields = f;
+    }
+
+    /*
+     * Set the methods member variable 
+     */
+    protected void setMethods (JMethodDeclaration[] m) {
+	this.methods = m;
+    }
+
     /**
      * sets the init function
      */

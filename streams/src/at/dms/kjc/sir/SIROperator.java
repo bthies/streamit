@@ -20,6 +20,17 @@ public abstract class SIROperator extends at.dms.util.Utils {
 	this.parent = parent;
     }
 
+    protected SIROperator() {
+	parent = null;
+    }
+
+    /**
+     * Sets parent SIRStream
+     */
+    public void setParent(SIRStream p){
+	this.parent = p;
+    }
+
     /**
      * Accepts <v> at this node.
      */

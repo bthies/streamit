@@ -25,6 +25,16 @@ public class SIRPeekExpression extends JExpression {
 	this.arg = arg;
     }
 
+    /**
+     * Construct a node in the parsing tree with null TokenReference
+     * @param	arg		the argument of the call
+     */
+    public SIRPeekExpression(JExpression arg)
+    {
+	super(null);
+	this.arg = arg;
+    }
+
     // ----------------------------------------------------------------------
     // ACCESSORS
     // ----------------------------------------------------------------------
@@ -67,6 +77,16 @@ public class SIRPeekExpression extends JExpression {
 	at.dms.util.Utils.fail("Visitors to custom nodes not supported yet.");
 	//    p.visitMethodCallExpression(this, prefix, ident, args);
     }
+
+    /**
+     * Accepts the specified Attribute visitor.  NOT SUPPORTED YET.
+     * @param	p		the visitor
+     */
+    public Object accept(AttributeVisitor p) {
+	at.dms.util.Utils.fail("Visitors to custom nodes not supported yet.");
+	return null;
+    }
+
 
     /**
      * Generates JVM bytecode to evaluate this expression.  NOT SUPPORTED YET.

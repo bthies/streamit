@@ -37,6 +37,24 @@ public class SIRRegSenderStatement extends JStatement {
 	this.latency = latency;
     }
 
+     /**
+     * Construct a node in the parsing tree
+     */
+    public SIRRegSenderStatement() {
+	super(null, null);
+
+	this.portal = null;
+	this.latency = null;
+    }
+
+    public void setPortal(String p) {
+	this.portal = p;
+    }
+    
+    public void setLatency (SIRLatency l) {
+	this.latency = l;
+    }
+
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
     // ----------------------------------------------------------------------
@@ -57,6 +75,14 @@ public class SIRRegSenderStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+    }
+
+    /**
+     * Accepts the specified visitor - NOT SUPPORTED YET.
+     */
+    public Object accept(AttributeVisitor p) {
+	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+	return null;
     }
 
     /**

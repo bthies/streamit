@@ -49,5 +49,12 @@ public class SIRSplitJoin extends SIRStream {
 			JFieldDeclaration[] fields,
 			JMethodDeclaration[] methods) {
 	super(parent, fields, methods);
+
+    }
+     /**
+     * Construct a new SIRPipeline with null fields, parent, and methods.
+     */
+    public SIRSplitJoin() {
+	super();
     }
 }

@@ -47,6 +47,13 @@ public class SIRFilter extends SIRStream {
 	this.outputType = outputType;
     }
 
+     /**
+     * Constructs a SIRFilter with null variables (use set*)
+     */
+    public SIRFilter() {
+	super();
+    }
+
     /**
      * Accepts visitor <v> at this node.
      */
@@ -60,6 +67,28 @@ public class SIRFilter extends SIRStream {
 		      work,
 		      inputType, outputType);
     }
+
+
+    public void setPeek(int p) {
+	this.peek = p;
+    }
+    public void setPop(int p) {
+	this.pop = p;
+    }
+    public void setPush(int p) {
+	this.push = p;
+    }
+    public void setWork (JMethodDeclaration w) {
+	this.work = w;
+    }
+    public void setInputType(CType t){
+	this.inputType = t;
+    }
+    public void setOutputType(CType t) {
+	this.outputType = t;
+    }
+    
+
 }
 
 

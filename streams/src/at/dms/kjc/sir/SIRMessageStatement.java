@@ -43,6 +43,37 @@ public class SIRMessageStatement extends JStatement {
 	this.latency = latency;
     }
 
+    
+    /**
+     * Construct a node in the parsing tree
+     */
+    public SIRMessageStatement() {
+	super(null, null);
+
+	this.portal = null;
+	this.ident = null;
+	this.args = null;
+	this.latency = null;
+    }
+
+    public void setPortal (SIRPortal p) {
+	this.portal = p;
+    }
+
+    public void setIdent (String i) {
+	this.ident = i;
+    }
+    
+    public void setArgs (JExpression[] a) {
+	this.args = a;
+    }
+
+    public void setLatency (SIRLatency l) {
+	this.latency = l;
+    }
+    
+
+
     // ----------------------------------------------------------------------
     // SEMANTIC ANALYSIS
     // ----------------------------------------------------------------------
@@ -63,6 +94,14 @@ public class SIRMessageStatement extends JStatement {
      */
     public void accept(KjcVisitor p) {
 	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+    }
+
+    /**
+     * Accepts the specified attributed visitor - NOT SUPPORTED YET.
+     */
+    public Object accept(AttributeVisitor p) {
+	at.dms.util.Utils.fail("Visitors to SIR nodes not supported yet.");
+	return null;
     }
 
     /**

@@ -5,9 +5,10 @@ import java.io.FileWriter;
 import at.dms.kjc.sir.*;
 import at.dms.util.Utils;
 import at.dms.kjc.flatgraph2.*;
+import at.dms.kjc.sir.linear.LinearAnalyzer;
 
 public class TraceExtractor {
-    public static Trace[] extractTraces(UnflatFilter[] topFilters,HashMap[] execCounts) {
+    public static Trace[] extractTraces(UnflatFilter[] topFilters,HashMap[] execCounts,LinearAnalyzer lfa) {
 	LinkedList Q=new LinkedList();
 	HashMap visited=new HashMap();
 	LinkedList traces=new LinkedList();
@@ -17,7 +18,8 @@ public class TraceExtractor {
 	    Q.add(topFilters[i]);
 	while(Q.size()>0) {
 	    UnflatFilter filter=(UnflatFilter)Q.removeFirst();
-	    FilterContent content=new FilterContent(filter.filter,execCounts);
+	    FilterContent content=new FilterContent(filter.filter,execCounts,lfa);
+	    boolean linear=content.getLinear()!=null;
 	    TraceNode node;
 	    Trace trace;
 	    if(!visited.containsKey(filter)) {
@@ -36,18 +38,18 @@ public class TraceExtractor {
 		    trace=new Trace(node);
 		}
 		traces.add(trace);
-		while(filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
-		    //System.err.println("Filter: "+filter);
-		    filter=filter.out[0][0].dest;
-		    //UnflatFilter dest=filter.out[0][0].dest;
-		    //if(dest.in.length<2) {
-		    //filter=dest;
-		    content=new FilterContent(filter.filter,execCounts);
-		    FilterTraceNode filterNode=new FilterTraceNode(content);
-		    node.setNext(filterNode);
-		    filterNode.setPrevious(node);
-		    node=filterNode;
-		    //}
+		boolean cont=true;
+		while(cont&&filter.out!=null&&filter.out.length==1&&filter.out[0].length==1&&filter.out[0][0].dest.in.length<2) {
+		    UnflatFilter newFilter=filter.out[0][0].dest;
+		    content=new FilterContent(newFilter.filter,execCounts,lfa);
+		    if((content.getLinear()!=null)==linear) {
+			FilterTraceNode filterNode=new FilterTraceNode(content);
+			node.setNext(filterNode);
+			filterNode.setPrevious(node);
+			node=filterNode;
+			filter=newFilter;
+		    } else
+			cont=false;
 		}
 		if(filter.out!=null&&filter.out.length>0) {
 		    OutputTraceNode outNode=new OutputTraceNode(filter.outWeights);
@@ -169,6 +171,10 @@ public class TraceExtractor {
 	return new Trace[0];
     }
 }
+
+
+
+
 
 
 

@@ -26,7 +26,7 @@ public class SpaceTimeBackend
     public static SIRStructure[] structures;
     final private static boolean TEST_SOFT_PIPE = false; //Test Software Pipelining
     final private static boolean TEST_BEAMFORMER = false; //Test SplitJoins
-
+    final private static boolean REAL=true; //The Real Stuff
     
     
     public static void run(SIRStream str,
@@ -110,8 +110,8 @@ public class SpaceTimeBackend
 	for(int i=0;i<topNodes.length;i++)
 	    System.out.println(topNodes[i]);
 	Trace[] traces=null;
-	if(TEST_BEAMFORMER) { //Test for simple one join-split (beamformer)
-	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts);
+	if(!REAL&&TEST_BEAMFORMER) { //Test for simple one join-split (beamformer)
+	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
 	    System.out.println("Traces: "+traceGraph.length);
 	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	    Trace first=null;
@@ -197,11 +197,11 @@ public class SpaceTimeBackend
 		else
 		    trace=null;
 	    }
-	} else { //Test Code with traces (Just for pipelines on raw greater than 4x4)
+	} else if(!REAL) { //Test Code with traces (Just for pipelines on raw greater than 4x4)
 	    ArrayList traceList=new ArrayList();
 	    //HashMap[] executionCounts=SIRScheduler.getExecutionCounts(str);
 	    UnflatFilter currentFilter=topNodes[0];
-	    FilterContent content=new FilterContent(currentFilter.filter,executionCounts);
+	    FilterContent content=new FilterContent(currentFilter.filter,executionCounts,lfa);
 	    if(TEST_SOFT_PIPE)
 		content.setPrimePump(1);
 	    TraceNode currentNode=new FilterTraceNode(content,0,0);
@@ -213,7 +213,7 @@ public class SpaceTimeBackend
 	    while(currentFilter!=null&&currentFilter.out!=null&&currentFilter.outWeights.length>0) {
 		currentFilter=currentFilter.out[0][0].dest;
 		if(currentFilter!=null) {
-		    content=new FilterContent(currentFilter.filter,executionCounts);
+		    content=new FilterContent(currentFilter.filter,executionCounts,lfa);
 		    if(TEST_SOFT_PIPE)
 			content.setPrimePump(1);
 		    TraceNode newNode=new FilterTraceNode(content,curX,curY);
@@ -289,9 +289,15 @@ public class SpaceTimeBackend
 		
 		//System.out.println(((Trace)traceList.get(i)).getHead());
 	    }
+	} else if(REAL) {
+	    Trace[] traceGraph=TraceExtractor.extractTraces(topNodes,executionCounts,lfa);
+	    System.out.println("Traces: "+traceGraph.length);
+	    TraceExtractor.dumpGraph(traceGraph,"traces.dot");
 	}
+	
 
-
+	/*System.gc();
+	  System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));*/
 	StreaMITMain.clearParams();
 	FlattenGraph.clear();
 	AutoCloner.clear();
@@ -306,6 +312,11 @@ public class SpaceTimeBackend
 	executionCounts=null;
 	topNodes=null;
 	System.gc();
+	/*System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));
+	  System.gc();
+	  System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));
+	  System.gc();
+	  System.out.println("MEM: "+(Runtime.getRuntime().totalMemory()-Runtime.getRuntime().freeMemory()));*/
 	//----------------------- This Is The Line -----------------------
 	//No Structure, No SIRStreams, Old Stuff Restricted Past This Point
 	//Violators Will Be Garbage Collected
@@ -315,7 +326,7 @@ public class SpaceTimeBackend
 	//content=null;
 	//executionCounts=null;
 
-	Trace[] traceForrest = new Trace[1];
+	/*Trace[] traceForrest = new Trace[1];
 	traceForrest[0] = traces[0];
 
 	//mgordon's stuff
@@ -339,7 +350,7 @@ public class SpaceTimeBackend
 	    MagicDram.GenerateCode(rawChip);
 	}
 	Makefile.generate(rawChip);
-	BCFile.generate(rawChip);
+	BCFile.generate(rawChip);*/
     }
 }
 

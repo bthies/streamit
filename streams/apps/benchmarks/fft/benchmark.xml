@@ -2,18 +2,50 @@
   <name>fft</name>
   <desc>Fast Fourier Transform kernel</desc>
   <description>
-A medium-grained implementation of the fast Fourier transform.  There
-is a reordering stage, followed by a series of DFT stages.  Each DFT
-is implemented as a single StreamIt filter.
+  We have a number of different implementations of the Fast Fourier
+  Transform.  Each is written at a different level of granularity.
+  The coarse-grained implementations are better for obtaining high
+  performance, while the fine-grained implementations are intended to
+  demonstrate the expressiveness of the language.
   </description>
-  <reference>(none)</reference>
   <implementations>
-    <impl lang="C" dir="c">
+    <impl lang="C" dir="c/fft2">
+      <desc>
+        Reference implementation for FFT2.
+      </desc>
+      <file>driver.c</file>
+      <file>fft.c</file>
+    </impl>
+    <impl lang="C" dir="c/fft3">
+      <desc>
+        Reference implementation for FFT3.
+      </desc>
       <file>driver.c</file>
       <file>fft.c</file>
     </impl>
     <impl lang="StreamIt" dir="streamit">
-      <file>FFT.str</file>
+      <desc>
+      Blocked, coarse-grained version for use as a benchmark.  Conceptually it is a single pipeline, but the main path is duplicated into a splitjoin to expose parallelism.  Inputs in natural order, outputs in natural order.
+      </desc>
+      <file>FFT2.str</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <desc>
+      More fine-grained than FFT2.  Inputs in natural order, outputs in bit-reversed order (does NOT include bit-reversal stage).
+      </desc>
+      <file>FFT3.str</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <desc>
+      More fine-grained than FFT3.  Derived from original example in CC'02 paper, and intended only to demonstrate language features (has dummy weights; does not compute real FFT).  Inputs in bit-reversed order, outputs in natural order (does NOT include bit-reversal stage).
+      </desc>
+      <file>FFT4.str</file>
+    </impl>
+    <impl lang="StreamIt" dir="streamit">
+      <desc>
+      Fine-grained version, more elegant than FFT4.  Inputs in natural order, outputs in natural order.
+      </desc>
+      <file>FFT5.str</file>
     </impl>
   </implementations>
 </benchmark>

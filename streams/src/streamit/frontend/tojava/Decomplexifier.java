@@ -1,7 +1,7 @@
 /*
  * Decomplexifier.java: convert complex expressions to real arithmetic
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: Decomplexifier.java,v 1.2 2002-07-11 20:57:26 dmaze Exp $
+ * $Id: Decomplexifier.java,v 1.3 2002-07-16 18:48:29 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -40,25 +40,33 @@ public class Decomplexifier
      * a Result, whose statements need to be executed before the
      * current statement and whose expression should replace exp. */
     public static Result decomplexify(Expression exp, TempVarGen varGen,
-                                      NodesToJava n2j)
+                                      NodesToJava n2j, GetExprType eType)
     {
         // If the expression is complex, generate a temporary,
         // generate the appropriate assign statements, and return
         // the temporary.
-        if (exp instanceof ExprComplex)
+        if (((Type)exp.accept(eType)).isComplex())
         {
             int num = varGen.nextVar("Complex");
             String varName = varGen.varName(num);
             Expression varExpr = new ExprVar(varName);
             Result result = new Result(varExpr);
-            Expression lhsr = new ExprField(varExpr, "real");
-            Expression lhsi = new ExprField(varExpr, "imag");
-            ExprComplex cplx = (ExprComplex)exp;
+            if (exp instanceof ExprComplex)
+            {
+                Expression lhsr = new ExprField(varExpr, "real");
+                Expression lhsi = new ExprField(varExpr, "imag");
+                ExprComplex cplx = (ExprComplex)exp;
             
-            result.statements += (String)lhsr.accept(n2j) + " = " +
-                (String)cplx.getReal().accept(n2j) + ";\n";
-            result.statements += (String)lhsi.accept(n2j) + " = " +
-                (String)cplx.getImag().accept(n2j) + ";\n";
+                result.statements += (String)lhsr.accept(n2j) + " = " +
+                    (String)cplx.getReal().accept(n2j) + ";\n";
+                result.statements += (String)lhsi.accept(n2j) + " = " +
+                    (String)cplx.getImag().accept(n2j) + ";\n";
+            }
+            else
+            {
+                result.statements += (String)varExpr.accept(n2j) + " = " +
+                    (String)exp.accept(n2j);
+            }
             return result;
         }
         

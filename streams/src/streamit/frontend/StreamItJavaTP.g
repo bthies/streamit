@@ -1,7 +1,7 @@
 /*
  * StreamItJavaTP.g: ANTLR TreeParser for StreamIt->Java conversion
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamItJavaTP.g,v 1.14 2002-07-16 18:15:55 dmaze Exp $
+ * $Id: StreamItJavaTP.g,v 1.15 2002-07-16 18:48:27 dmaze Exp $
  */
 
 header {
@@ -471,7 +471,8 @@ enqueue_statement returns [String t] {t=""; Expression x; String v;}
 	: #(TK_enqueue x=expression_reduced)
 		{
 			Decomplexifier.Result result;
-			result = Decomplexifier.decomplexify(x, varGen, n2j);
+			result = Decomplexifier.decomplexify(x, varGen, n2j,
+				new GetExprType(symTab, cur_type));
 			v = (String)result.exp.accept(n2j);
 			t = result.statements;
 			t += "enqueue(" + v + ")";
@@ -482,7 +483,8 @@ push_statement returns [String t] {t = null; Expression x; String v;}
 	: #(TK_push x=expression_reduced)
 		{
 			Decomplexifier.Result result;
-			result = Decomplexifier.decomplexify(x, varGen, n2j);
+			result = Decomplexifier.decomplexify(x, varGen, n2j,
+				new GetExprType(symTab, cur_type));
 			v = (String)result.exp.accept(n2j);
 			t = result.statements;
 			t += n2j.pushFunction(cur_type) + "(" + v + ")";
@@ -499,6 +501,7 @@ assign_statement returns [String t] {t=null; Expression l, x;}
 			String lhs = (String)l.accept(n2j);
 			// Check to see if the left-hand side is complex.
 			Type type = (Type)l.accept(new GetExprType(symTab, cur_type));
+			if (type == null)
 			if (type != null && type.isComplex())
 			{
 				if (x instanceof ExprComplex)

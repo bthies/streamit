@@ -109,7 +109,7 @@ public class FreeTileRouter implements Router
 	
 	//get the best route
 	RouteAndOccupiedCount bestRoute = 
-	    takeX.occupied < takeY.occupied ? takeX : takeY;
+	    takeX.occupied <= takeY.occupied ? takeX : takeY;
 	
 	//if the source of this route is an occupied tile, then add one 
 	//to the count

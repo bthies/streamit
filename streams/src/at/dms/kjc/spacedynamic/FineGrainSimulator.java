@@ -275,7 +275,7 @@ public class FineGrainSimulator extends Simulator
     */
 
     //generate the switch code for 1 data item given the list of destinations
-    //we do not want to duplicate items until necesary, so we have to keep track 
+    //we do not want to duplicate items until neccessary, so we have to keep track 
     //of all the routes and then generate the switch code
     //this way we can route multiple dests per route instruction
     private void generateSwitchCode(FlatNode fire, List dests) 
@@ -286,16 +286,21 @@ public class FineGrainSimulator extends Simulator
 	HashMap prev = new HashMap();
 	HashMap next = new HashMap();
 
+	//System.out.println("Firing: " + fire + " " + layout.getTile(fire));
+
 	ListIterator destsIt = dests.listIterator();
 	while (destsIt.hasNext()) {
  	    FlatNode dest = (FlatNode)destsIt.next();
+	    assert dest != null;
 	    assert !(layout.getIdentities().contains(dest));
-	    //	    System.out.println("Dest: " + dest.getName());
-	    if (dest == null) 
-		System.out.println("Yup dest is null");
+	    //System.out.println("  Dest: " + dest + " " + layout.getTile(dest));
  	    RawTile[] hops = 
  		(RawTile[])layout.router.
 		getRoute(ssg, layout.getTile(fire), layout.getTile(dest)).toArray(new RawTile[0]);
+
+	    //for (int i = 0; i < hops.length; i++)
+	    //System.out.println("     " + hops[i]);
+	    
 	    //add to fire's next
 	    if (!next.containsKey(layout.getTile(fire))) 
 		next.put(layout.getTile(fire), new HashSet());

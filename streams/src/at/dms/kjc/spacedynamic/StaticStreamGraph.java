@@ -468,6 +468,9 @@ public class StaticStreamGraph
     /** Given the current toplevel flatnode, create the SIR graph, also regenerating the flatgraph **/
     public void createSIRGraph() 
     {
+	(new DumpGraph()).dumpGraph(topLevel,
+				    SpaceDynamicBackend.makeDotFileName("beforeFGtoSIR", topLevelSIR),
+				    initExecutionCounts, steadyExecutionCounts);
 	//do we want this here?!!
 	setTopLevelSIR((new FlatGraphToSIR(topLevel)).getTopLevelSIR());
 	//topLevelSIR = (new FlatGraphToSIR(topLevel)).getTopLevelSIR();
@@ -528,8 +531,9 @@ public class StaticStreamGraph
     public void dumpFlatGraph() 
     {
 	//dump the flatgraph of the application, must be called after createExecutionCounts
-	graphFlattener.dumpGraph(SpaceDynamicBackend.makeDotFileName("flatgraph", topLevelSIR), initExecutionCounts,
-				 steadyExecutionCounts);
+	(new DumpGraph()).dumpGraph(graphFlattener.top,
+				    SpaceDynamicBackend.makeDotFileName("flatgraph", topLevelSIR),
+				    initExecutionCounts, steadyExecutionCounts);
     }
     
     

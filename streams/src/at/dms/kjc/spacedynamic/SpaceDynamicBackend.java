@@ -4,6 +4,7 @@ import at.dms.kjc.common.*;
 import at.dms.kjc.flatgraph.FlatNode;
 import at.dms.kjc.flatgraph.FlatGraphToSIR;
 import at.dms.kjc.flatgraph.GraphFlattener;
+import at.dms.kjc.flatgraph.DumpGraph;
 import at.dms.util.IRPrinter;
 import at.dms.util.SIRPrinter;
 import at.dms.kjc.*;
@@ -93,7 +94,7 @@ public class SpaceDynamicBackend {
 	//	FlatGraphToSIR flatToSIR = new FlatGraphToSIR(graphFlattener.top);
 	
 	streamGraph = new StreamGraph(graphFlattener.top, rawChip);
-	graphFlattener.dumpGraph("pre-SSG-FG.dot", null, null);
+	(new DumpGraph()).dumpGraph(graphFlattener.top, "pre-SSG-FG.dot", null, null);
 
 	//create the static stream graphs cutting at dynamic rate boundaries
 	streamGraph.createStaticStreamGraphs();

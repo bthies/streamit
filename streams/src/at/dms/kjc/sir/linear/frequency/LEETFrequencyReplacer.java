@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.5 2003-02-04 19:07:38 aalamb Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.6 2003-02-06 21:55:53 aalamb Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -35,6 +35,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     public static final String INPUT_BUFFER_NAME = "inputBuffer";
     /** the field to use as the output buffer for the filter. **/
     public static final String OUTPUT_BUFFER_NAME = "outputBuffer";
+    /** the field to use as the output buffer for the filter. **/
+    public static final String TEMP_BUFFER_NAME = "tempBuffer";
     /** the prefix for the fields that we will store the transform of the filters in. **/
     public static final String FILTER_WEIGHTS_PREFIX = "freqWeightField";
     /** the prefix for the fields that will store the partial results between filter executions. **/
@@ -143,10 +145,12 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	    newFields = appendFieldDeclaration(newFields, partialFields[i]);
 	}
 
-	/* make the input buffer field. */
+	/* make the input and temp buffer fields. */
 	JVariableDefinition inputBufferField  = makeWeightField(INPUT_BUFFER_NAME);
 	newFields = appendFieldDeclaration(newFields, inputBufferField);
-
+	JVariableDefinition tempBufferField  = makeWeightField(TEMP_BUFFER_NAME);
+	newFields = appendFieldDeclaration(newFields, tempBufferField);
+ 
 	/** make enough output buffers to hold the appropriate outputs. **/
 	JVariableDefinition outputBufferFields[] = new JVariableDefinition[numWeightFields];
 	for (int i=0; i<numWeightFields; i++) {
@@ -159,19 +163,22 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	/* make a new init function */
 	JMethodDeclaration freqInit = makeNewInit(linearRep,
 						  weightFields, partialFields,
-						  inputBufferField, outputBufferFields,
+						  inputBufferField, tempBufferField,
+						  outputBufferFields,
 						  filterSize, x);
 	
 	/* make the init work function */
 	JMethodDeclaration freqInitWork = makeNewWork(INITWORK,
 						      weightFields, partialFields,
-						      inputBufferField, outputBufferFields,
+						      inputBufferField, tempBufferField,
+						      outputBufferFields,
 						      filterSize, x, N);
 	
 	/* make a new work function */
 	JMethodDeclaration freqWork = makeNewWork(WORK,
 						  weightFields, partialFields,
-						  inputBufferField, outputBufferFields,
+						  inputBufferField, tempBufferField,
+						  outputBufferFields,
 						  filterSize, x, N);
 	
 	
@@ -248,6 +255,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					  JVariableDefinition[] weightFields,
 					  JVariableDefinition[] partialFields,
 					  JVariableDefinition inputBufferField,
+					  JVariableDefinition tempBufferField,
 					  JVariableDefinition[] outputBufferFields,
 					  int filterSize, int x) {
 	
@@ -274,6 +282,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	/** allocate space for the input data on each execution. **/
 	body.addStatement(makeFieldAllocation(inputBufferField.getIdent(), filterSize,
 					      "field to store the input each execution."));
+	/** allocate space for the temp data on each execution (eg Y[k]). **/
+	body.addStatement(makeFieldAllocation(tempBufferField.getIdent(), filterSize,
+					      "field to store the temp product on each execution."));
 
 	/** Allocate space for each of the output buffers. **/
 	for (int i=0; i<numFIRs; i++) {
@@ -427,6 +438,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 					  JVariableDefinition[] weightFields,
 					  JVariableDefinition[] partialFields,
 					  JVariableDefinition inputBufferField,
+					  JVariableDefinition tempBufferField,
 					  JVariableDefinition[] outputBufferFields,
 					  int filterSize, int x, int N) {
 	// parameter check
@@ -450,7 +462,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	    body.addStatement(makeArrayAssignment(inputBufferField, i, 0.0f));
 	}
 
-	// now, convert the input buffer to frequency
+	// now, convert the input buffer to frequency (we only have to do this for each set of inputs once)
 	body.addStatement(makeTimeToFrequencyConversion(inputBufferField, filterSize));
 		
 	// now, this is where things get complicated by the fact that we could have
@@ -464,7 +476,7 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	for (int i=0; i<numFIRs; i++) {
 	    JExpression[] externalArgs = new JExpression[4];
 	    externalArgs[0] = new JFieldAccessExpression(null, new JThisExpression(null),
-							 outputBufferFields[i].getIdent());
+							 tempBufferField.getIdent());
 	    externalArgs[1] = new JFieldAccessExpression(null, new JThisExpression(null),
 							 inputBufferField.getIdent());
 	    externalArgs[2] = new JFieldAccessExpression(null, new JThisExpression(null),
@@ -478,23 +490,23 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 							     " to calculate Y[k] = X[k].*H[k](" +
 							     i + ")."); 
 	    body.addStatement(new JExpressionStatement(null,externalCall,externalComment)); /* comments */
-	}
-	
-	
-	// make a callout to the inverse transform routine to convert from Y[k]
-	// to y[n] for each of the FIR filters represented in this linear form
-	for (int i=0; i<numFIRs; i++) {
-	    JExpression[] externalArgs = new JExpression[2];
+	    
+	    // make a callout to the inverse transform routine to convert from Y[k]
+	    // to y[n] for each of the FIR filters represented in this linear form
+	    // prototype: void convert_from_freq(float* input_buff, float* output_buff, int size)
+	    externalArgs = new JExpression[3];
 	    externalArgs[0] = new JFieldAccessExpression(null, new JThisExpression(null),
+							 tempBufferField.getIdent());
+	    externalArgs[1] = new JFieldAccessExpression(null, new JThisExpression(null),
 							 outputBufferFields[i].getIdent());
-	    externalArgs[1] = new JIntLiteral(filterSize);
-	    JExpression externalCall = new JMethodCallExpression(null,           /* token reference */
-								 null,               /* prefix */
-								 FROM_FREQ_EXTERNAL, /* ident */
-								 externalArgs);      /* args */
-	    JavaStyleComment[] externalComment = makeComment("callout to " + FROM_FREQ_EXTERNAL +
-							     " to calculate y[n] = IFFT(Y[k]) (" +
-							     i + ")"); 
+	    externalArgs[2] = new JIntLiteral(filterSize);
+	    externalCall = new JMethodCallExpression(null,           /* token reference */
+						     null,               /* prefix */
+						     FROM_FREQ_EXTERNAL, /* ident */
+						     externalArgs);      /* args */
+	    externalComment = makeComment("callout to " + FROM_FREQ_EXTERNAL +
+					  " to calculate y[n] = IFFT(Y[k]) (" +
+					  i + ")"); 
 	    body.addStatement(new JExpressionStatement(null,externalCall,externalComment));
 	}
 	

@@ -94,6 +94,11 @@ public class Pipeline extends Stream
 	super(i1, i2, i3, i4, i5, i6, f);
     }
 
+     // allow access to the children of this pipeline
+     
+    public int getNumChildren () { return streamElements.size (); }
+    public Stream getChildN (int n) { return (Stream) streamElements.get (n); }
+    
     // connectGraph will walk the entire subgraph (so it should be called
     // on the "master", encapsulating Stream) and give each element
     // this function works in the following way:

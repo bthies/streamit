@@ -170,14 +170,16 @@ public class BCFile
 	    MagicDram dram = (MagicDram)rawChip.getDevices()[i];
 	    if (dram == null) 
 		continue;
-	    buf.append("\tinclude(\"magicdram" + dram.getPort()+ ".bc\");\n");
+	    if (dram.hasCode())
+		buf.append("\tinclude(\"magicdram" + dram.getPort()+ ".bc\");\n");
 	}
 	//install devices
 	for (int i = 0; i < rawChip.getDevices().length; i++) {
 	    MagicDram dram = (MagicDram)rawChip.getDevices()[i];
 	    if (dram == null) 
 		continue;
-	    buf.append("\tdev_magic_dram" + dram.getPort() + "_init(" + dram.getPort() + ");\n");
+	    if (dram.hasCode())
+		buf.append("\tdev_magic_dram" + dram.getPort() + "_init(" + dram.getPort() + ");\n");
 	}
 	buf.append("}\n");
     }

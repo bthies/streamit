@@ -39,12 +39,22 @@ public class MagicDram extends IODevice
     public static void GenerateCode(RawChip chip)
     {
 	for (int i = 0; i < chip.getDevices().length; i++) {
-	    if (chip.getDevices()[i] == null) 
+	    if (chip.getDevices()[i] == null)
 		continue;
-	    ((MagicDram)chip.getDevices()[i]).bcCode();
+	    if (((MagicDram)chip.getDevices()[i]).hasCode())
+		((MagicDram)chip.getDevices()[i]).bcCode();
 	}
     }
     
+    public boolean hasCode() 
+    {
+	if (inputFiles.size() > 0 ||
+	    outputFiles.size() > 0 ||
+	    buffers.size() > 0 ||
+	    indices.size() > 0)
+	    return true;
+	return false;
+    }
     
     private void bcCode() 
     {

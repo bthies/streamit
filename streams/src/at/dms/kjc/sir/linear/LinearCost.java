@@ -1,6 +1,8 @@
 package at.dms.kjc.sir.linear;
 
 import at.dms.util.Utils;
+import at.dms.kjc.sir.lowering.partition.linear.LinearPartitioner;
+import at.dms.kjc.sir.linear.frequency.*;
 
 /**
  * This class represents the cost (variously defined) of computing
@@ -11,9 +13,11 @@ import at.dms.util.Utils;
  * Obviously, all of the multiplies and adds refer to floating point operations.int cols
  **/
 public class LinearCost {
-    /** the factor by which operations are more expensive in time than
-     * frequency (from empirical observations) **/
-    private static final int FREQUENCY_BENEFIT = 50;
+    /** the factor by which we scale up all our costs -- work with
+     * integers instead of floats so we can do quick and accurate
+     * comparison in traceback.
+     */
+    private static final long SCALE_FACTOR = 10000;
     /** the number of multiplies. **/
     private int multiplyCount;
     /** the number of adds **/
@@ -82,8 +86,10 @@ public class LinearCost {
      * We scale up by FREQ_BENEFIT here instead of dividing in
      * getFrequencyCost so that eveverything stays integral.
      */
-    public int getDirectCost() {
-	return 1 + FREQUENCY_BENEFIT * (3 * multiplyCount + addCount);
+    public long getDirectCost() {
+	// add the push count now to estimate copying overhead, even
+	// if you're not adding/multiplying.
+	return SCALE_FACTOR * (1l + 2l*cols + (3l * ((long)multiplyCount) + ((long)addCount)));
     }
 
     /**
@@ -92,16 +98,55 @@ public class LinearCost {
      *
      * Must be comparable to values returned by getDirectCost().
      */
-    public int getFrequencyCost() {
+    public long getFrequencyCost() {
 	// Multiply by factor of 4 because above we count multilies 3
 	// times and adds once.  Even though we only add N-1 times for
 	// a column of N, we add again for the constant vector, so
 	// it's not off by one.  Then add the rows to represent the
 	// overhead of copying input items, and of doing the FFT (it
-	// might actually be cols*log(cols) or something, but
+	// might actually be rows*log(rows) or something, but
 	// disregard this.)  Finally, multiply by the pop count since
 	// we have to duplicate the whole effort for every item that
 	// we pop.
-	return (4 * rows * cols + rows) * popCount;
+
+	// okay.  this works by taking the fft cost, adding 1 as a
+	// constant overhead per node, adding a small percentage of
+	// the rows cost to indicate copying overhead (if you don't
+	// divide by 100, then this completely dominates and will
+	// distort the partitioning), then multiply by popcount since
+	// the node has to be repeated, redundantly, if some of its
+	// outputs are useless.
+	double nodeCost = ((double)SCALE_FACTOR) * (getFrequencyComputationCost() + 1.0 + ((float)(2*cols))) * ((double)Math.max(popCount,1));
+	// just count the pushing since popping is almost free, all at
+	// once.  count it twice since you have to read it and write
+	// it.
+	long decimatorCost = SCALE_FACTOR * (popCount > 1 ? 4 * cols : 0);
+	if (LinearPartitioner.DEBUG) { System.err.println("Returning linear cost of " + ((long)nodeCost + decimatorCost) + " with: \n"
+							  + "  frequencyComputationCost=" + getFrequencyComputationCost() + "\n"
+							  + "  nodeCost=" + nodeCost + "\n"
+							  + "  decimatorCost=" + decimatorCost + "\n"
+							  + "  rows=" + rows + "\n"
+							  + "  cols=" + cols + "\n"
+							  + "  popCount=" + popCount); }
+	return (long)nodeCost + decimatorCost;
+    }
+
+    /**
+     * Gives an estimate of the cost of the actual FFT operation.
+     *
+     * This is based on a regression of execution time for a program
+     * in frequency and in time for varying sizes (taps) of FIR's.
+     * The regression result is:
+     *
+     * time_in_freq(taps) = 0.65 + ln(1+ (time_in_time(taps)-time_in_time(0)) / (1 + taps/50))
+     *
+     * The offset 0.65 was obtained experimentally.
+     */
+    private double getFrequencyComputationCost() {
+	// add one to cols because we have <cols>+1 FFT's that we do
+	// per iteration: one for the input, and one for what we push.
+	// but then divide by two, so that the base case is correct
+	// for what we measured.
+	return ((double)cols) * Math.log( 1.0 + ((float)(4*rows)) / (1.0 + ((float)LEETFrequencyReplacer.calculateN(rows))/50.0));
     }
 }

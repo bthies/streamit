@@ -1,6 +1,7 @@
 package at.dms.kjc.sir.linear;
 
 import java.util.*;
+import at.dms.util.Utils;
 
 /**
  * A FilterMatrix contains a matrix representation of a
@@ -15,7 +16,7 @@ import java.util.*;
  * though the internal representation was changed to arrays of floats
  * for performance reasons.
  *
- * $Id: FilterMatrix.java,v 1.19 2003-04-11 19:54:04 aalamb Exp $
+ * $Id: FilterMatrix.java,v 1.20 2003-04-20 13:30:36 thies Exp $
  **/
 
 public class FilterMatrix {
@@ -107,6 +108,42 @@ public class FilterMatrix {
 	validateBounds(row, col);
 	// finally, set the value correctly
 	this.internalMatrixReal[row][col] = realNumber;
+    }
+
+    /**
+     * Returns a "trimmed" version of this, in which unused (0) peek
+     * values are cut off.  However, guarantees to preserve at least
+     * <minRows>, since some things seem to depend on the rows being
+     * at least as big as the pop count.
+     */
+    public FilterMatrix trim(int minRows) {
+	Utils.assert(this.isReal());
+	int zeroRows = 0;
+	boolean allZero = true;
+	while (allZero && (internalSizeRows-zeroRows>minRows)) {
+	    allZero = true;
+	    for (int j=0; j<internalSizeCols; j++) {
+		if (internalMatrixReal[zeroRows][j]!=0) {
+		    allZero = false;
+		    break;
+		}
+	    }
+	    if (allZero) { zeroRows++; }
+	    // figure if we found an all-zero matrix, then there was a reason for it...
+	}
+	/*
+	if (zeroRows>0) {
+	    System.err.println("Eliminated " + zeroRows + " / " + internalSizeRows + " rows in trim operation.");
+	}
+	*/
+	// return new matrix
+	FilterMatrix result = new FilterMatrix(internalSizeRows-zeroRows, internalSizeCols);
+	for (int i=zeroRows; i<internalSizeRows; i++) {
+	    for (int j=0; j<internalSizeCols; j++) {
+		result.setElement(i-zeroRows, j, internalMatrixReal[i][j]);
+	    }
+	}
+	return result;
     }
 	
 

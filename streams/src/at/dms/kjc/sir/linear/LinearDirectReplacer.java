@@ -24,7 +24,7 @@ import at.dms.compiler.*;
  * It also can replace splitjoins and pipelines with linear representations
  * with a single filter that computes the same function.
  * <p>
- * $Id: LinearDirectReplacer.java,v 1.6 2003-04-08 09:49:15 thies Exp $
+ * $Id: LinearDirectReplacer.java,v 1.7 2003-04-20 13:30:36 thies Exp $
  **/
 public class LinearDirectReplacer extends LinearReplacer implements Constants{
     /** the linear analyzier which keeps mappings from filters-->linear representations**/
@@ -170,24 +170,12 @@ public class LinearDirectReplacer extends LinearReplacer implements Constants{
 	Vector pushStatements = makePushStatementVector(representation, inputType, outputType);
 	// make a vector filled with the appropriate number of pop expressions
 	Vector popStatements  = new Vector();
-	// put in a loop if we have a lot of them
-	if (popCount>KjcOptions.unroll) {
-	    SIRPopExpression popExpr = new SIRPopExpression(inputType);
-	    // wrap the pop expression so it is a statement.
-	    JExpressionStatement popWrapper = new JExpressionStatement(null, // token reference,
-								       popExpr, // expr
-								       new JavaStyleComment[0]);  // comments
-	    popStatements.add(Utils.makeForLoop(popWrapper, popCount));
-	} else {
-	    for (int i=0; i<popCount; i++) {
-		SIRPopExpression popExpr = new SIRPopExpression(inputType);
-		// wrap the pop expression so it is a statement.
-		JExpressionStatement popWrapper = new JExpressionStatement(null, // token reference,
-									   popExpr, // expr
-									   new JavaStyleComment[0]);  // comments
-		popStatements.add(popWrapper);
-	    }
-	}
+	SIRPopExpression popExpr = new SIRPopExpression(inputType, popCount);
+	// wrap the pop expression so it is a statement.
+	JExpressionStatement popWrapper = new JExpressionStatement(null, // token reference,
+								   popExpr, // expr
+								   new JavaStyleComment[0]);  // comments
+	popStatements.add(popWrapper);
 
 	// now, generate the body of the new method, concatenating push then pop expressions
 	JBlock body = new JBlock();

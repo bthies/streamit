@@ -12,7 +12,7 @@ package at.dms.kjc.sir.linear;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.23 2003-04-19 00:17:43 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.24 2003-04-20 13:30:36 thies Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -45,7 +45,6 @@ public class LinearFilterRepresentation {
 	// will calculate cost on demand
 	this.cost = null;
     }
-
     //////////////// Accessors ///////////////////
     
     /** Get the A matrix. **/
@@ -123,8 +122,9 @@ public class LinearFilterRepresentation {
 	int numPartialRows = newPeek - numCompleteCopies*oldPop;
 	int numPartialCols = newPush - numCompleteCopies*oldPush;
 
-	// sanity checks
-	if (numPartialRows < 0) {throw new RuntimeException("partial rows < 0!");}
+	// sanity checks.
+	if (numPartialRows < 0) {throw new RuntimeException("partial rows < 0!  Partial rows = " + numPartialRows +
+							    " newPeek=" + newPeek + " numCompleteCopies=" + numCompleteCopies + " oldPop=" + oldPop);}
 	if (numPartialCols < 0) {throw new RuntimeException("partial cols < 0!");}
 
 	//System.err.println("--------");
@@ -197,8 +197,8 @@ public class LinearFilterRepresentation {
 	int muls = 0;
 	int adds = 0;
 
-	int matRows = A.getRows();
-	int matCols = A.getCols();
+	int matRows = A.trim(1).getRows();
+	int matCols = A.trim(1).getCols();
 	
 	for (int col=0; col<matCols; col++) {
 	    // counters for the colums (# muls, adds)

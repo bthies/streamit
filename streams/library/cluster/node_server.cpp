@@ -1,85 +1,127 @@
 
 #include <node_server.h>
 
-#include <mysocket.h>
-#include <open_socket.h>
-#include <thread_info.h>
-
-
 node_server::node_server(vector <thread_info*> list) {
   thread_list = list;
 }
 
-void node_server::run_server() {
+
+mysocket *node_server::wait_for_connection() {
 
   mysocket *sock;
-  int cmd, par1;
   
   for (;;) {
-
-    //printf("open_socket::listen()\n");
-
     sock = open_socket::listen(22223);
-    if (sock == NULL) return;
-    
-    for (;;) {
-      cmd = sock->read_int();
-      
-      if (sock->eof()) break;
-
-      vector<int> resp;
-     
-      if (cmd == LIST_COMMAND) {
-
-	resp = list();
-
-      }
-
-      if (cmd == PAUSE_PROPER_COMMAND) {
-
-	int thread_id = sock->read_int();
-	resp = pause_proper(thread_id);
-
-      }
-
-      if (cmd == PAUSE_ANY_COMMAND) {
-
-	int thread_id = sock->read_int();
-	resp = pause_any(thread_id);
-
-      }
-
-      if (cmd == RESUME_COMMAND) {
-      
-	int thread_id = sock->read_int();
-	resp = resume(thread_id);
-
-      }
-
-      if (cmd == LIST_INCOMING_DATA_LINKS) {
-      
-	int thread_id = sock->read_int();
-	resp = list_incoming_data_links(thread_id);
-
-      }
-
-      if (cmd == LIST_OUTGOING_DATA_LINKS) {
-      
-	int thread_id = sock->read_int();
-	resp = list_outgoing_data_links(thread_id);
-      }
-
-      for (vector<int>::iterator iter = resp.begin();
-	   iter < resp.end();
-	   ++iter) {
-	
-	sock->write_int(*iter);
-      }
-
-    }
+    if (sock != NULL) return sock;
   }
 }
 
+
+mysocket *node_server::connect_to_ccp(unsigned ccp_ip) {
+
+  mysocket *sock;
+  
+  for (;;) {
+    sock = open_socket::connect(ccp_ip, 3000);
+    if (sock != NULL) return sock;
+    sleep(1);
+  }
+}
+
+
+int node_server::read_cluster_config(mysocket *sock, int n_threads) {
+  
+  int tmp;
+
+  tmp = sock->read_int();
+  if (tmp != CLUSTER_CONFIG) {
+    printf("ERROR: reading cluster config (cmd)!\n");
+    return -1;
+  }
+
+  tmp = sock->read_int();
+  if (tmp != n_threads) {
+    printf("ERROR: reading cluster config (n_threads)!\n");
+    return -1;
+  }
+
+  int thread, iter;
+  unsigned ip;
+  
+  for (int i = 0; i < n_threads; i++) {
+  
+    thread = sock->read_int();
+    sock->read_chunk((char*)&ip, sizeof(unsigned));
+    iter = sock->read_int();
+    
+    init_instance::set_thread_ip(thread, ip);
+    init_instance::set_thread_start_iter(thread, iter);
+  }
+
+  return 0;
+}
+
+
+void node_server::run_server(mysocket *sock) {
+
+  int cmd, par1;
+    
+  for (;;) {
+    cmd = sock->read_int();
+    
+    if (sock->eof()) break;
+    
+    vector<int> resp;
+    
+    if (cmd == LIST_COMMAND) {
+      
+      resp = list();
+      
+    }
+    
+    if (cmd == PAUSE_PROPER_COMMAND) {
+      
+      int thread_id = sock->read_int();
+      resp = pause_proper(thread_id);
+      
+    }
+    
+    if (cmd == PAUSE_ANY_COMMAND) {
+      
+      int thread_id = sock->read_int();
+      resp = pause_any(thread_id);
+      
+    }
+    
+    if (cmd == RESUME_COMMAND) {
+      
+      int thread_id = sock->read_int();
+      resp = resume(thread_id);
+      
+    }
+    
+    if (cmd == LIST_INCOMING_DATA_LINKS) {
+      
+      int thread_id = sock->read_int();
+      resp = list_incoming_data_links(thread_id);
+      
+    }
+    
+    if (cmd == LIST_OUTGOING_DATA_LINKS) {
+      
+      int thread_id = sock->read_int();
+      resp = list_outgoing_data_links(thread_id);
+    }
+    
+    for (vector<int>::iterator iter = resp.begin();
+	 iter < resp.end();
+	 ++iter) {
+      
+      sock->write_int(*iter);
+    }
+    
+  }
+}
 
 
 vector<int> node_server::list() {

@@ -2,7 +2,10 @@
 #ifndef __NODE_SERVER_H
 #define __NODE_SERVER_H
 
+#include <mysocket.h>
+#include <open_socket.h>
 #include <thread_info.h>
+#include <init_instance.h>
 
 #include <vector>
 #include <unistd.h>
@@ -39,6 +42,11 @@
 // parameters: <thread_id>
 // sample response "1", "2", "-1"
 
+#define CLUSTER_CONFIG 60
+
+// params: <# of threads> 
+// <thread id>  <ip address>  <iteration>  (* number of threads)
+
 
 class node_server {
 
@@ -55,8 +63,13 @@ class node_server {
   
   node_server(vector <thread_info*> list);
 
-  void run_server();
+  mysocket *wait_for_connection();
 
+  void run_server(mysocket *sock);
+
+  static mysocket *connect_to_ccp(unsigned ip);
+  static int read_cluster_config(mysocket *sock, int n_threads);
+  
 };
 
 

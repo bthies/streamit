@@ -234,6 +234,32 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
     {
 	this.initPath= initPath;
     }
+
+    /**
+     * Returns body of this.
+     */
+    public SIRStream getBody() {
+	return body;
+    }
     
+    /**
+     * Returns loop of this.
+     */
+    public SIRStream getLoop() {
+	return loop;
+    }
     
+    /**
+     * Returns joiner of this.
+     */
+    public SIRJoiner getJoiner() {
+	return joiner;
+    }
+    
+    /**
+     * Returns splitter of this.
+     */
+    public SIRSplitter getSplitter() {
+	return splitter;
+    }
 }

@@ -144,15 +144,19 @@ public class FuseSplit {
         // Use the new init function.
         newFilter.setInit(newInit);
 
-	// make the other filters...
-	SIRFilter splitFilter = makeFilter(sj.getParent(),
-					   "Pre_" + sj.getIdent(),
-					   makeSplitFilterBody(sj.getSplitter(), 
-							       rep,
-							       sj.getInputType()), 
-					   pop, pop, pop,
-					   sj.getInputType());
-
+	// make a splitFilter only if it's not a duplicate
+	SIRFilter splitFilter = null;
+	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+	    splitFilter = makeFilter(sj.getParent(),
+				     "Pre_" + sj.getIdent(),
+				     makeSplitFilterBody(sj.getSplitter(), 
+							 rep,
+							 sj.getInputType()), 
+				     pop, pop, pop,
+				     sj.getInputType());
+	}
+	
+	// make the join filter
 	SIRFilter joinFilter = makeFilter(sj.getParent(),
 					  "Post_" + sj.getIdent(),
 					  makeJoinFilterBody(sj.getJoiner(), 
@@ -169,8 +173,10 @@ public class FuseSplit {
 	parent.replace(sj, newFilter);
 	// add <joinFilter> after <newFilter>
 	parent.add(index+1, joinFilter);
-	// add <splitFilter> before <newFilter>
-	parent.add(index, splitFilter);
+	// add <splitFilter> before <newFilter>, if it's not a duplicate
+	if (sj.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+	    parent.add(index, splitFilter);
+	}
 
 	// we also have <newfilter> replacing <sj>
         replaceParentInit(sj, newFilter, splitFilter, joinFilter);
@@ -183,7 +189,7 @@ public class FuseSplit {
      * Replaces parent init function calls to <oldStr> with calls to
      * <newStr>, adding calls to <preStr> and <postStr> with no args.
      */
-    private static void replaceParentInit(final SIRStream oldStr,
+    private static void replaceParentInit(final SIRSplitJoin oldStr,
 					  final SIRStream newStr,
 					  final SIRStream preStr,
 					  final SIRStream postStr) {
@@ -208,10 +214,14 @@ public class FuseSplit {
 		    self.setTarget(newStr);
 
 		    // then make a jblock initializing newStr, preStr, postStr
-		    JStatement[] statements =
-			{ new SIRInitStatement(null, null, new JExpression[0], preStr),
-			  self,
-			  new SIRInitStatement(null, null, new JExpression[0], postStr) } ;
+		    LinkedList statements = new LinkedList();
+
+		    // ignore the preStr if we have a duplicate
+		    if (oldStr.getSplitter().getType()!=SIRSplitType.DUPLICATE) {
+			statements.add(new SIRInitStatement(null, null, new JExpression[0], preStr));
+		    }
+		    statements.add(self);
+		    statements.add(new SIRInitStatement(null, null, new JExpression[0], postStr));
 
 		    // return a block
 		    return new JBlock(null, statements, null);
@@ -307,7 +317,7 @@ public class FuseSplit {
 	}
 	// pop the right number of items at the end
 	list.add(Utils.makeForLoop(new JExpressionStatement(null,
-						      new SIRPopExpression(),
+						      new SIRPopExpression(type),
 						      null),
 			     sumOfWeights * rep.splitter));
 	return new JBlock(null, list, null);
@@ -345,7 +355,7 @@ public class FuseSplit {
 	}
 	// pop the right number of items at the end
 	list.add(Utils.makeForLoop(new JExpressionStatement(null,
-						      new SIRPopExpression(),
+						      new SIRPopExpression(type),
 						      null),
 			     sumOfWeights * rep.joiner));
 	return new JBlock(null, list, null);
@@ -410,10 +420,13 @@ public class FuseSplit {
 	// add a pop loop to statements that pops the right number of
 	// times for the splitjoin
 	if (isDup) {
-	    newStatements.addStatement(Utils.makeForLoop(new JExpressionStatement(null,
-									   new SIRPopExpression(),
-									   null),
-						  rep.splitter * sj.getSplitter().getSumOfWeights()));
+	    newStatements.
+		addStatement(Utils.
+			     makeForLoop(new JExpressionStatement(null,
+								  new SIRPopExpression(sj.
+										       getInputType()),
+								  null),
+					 rep.splitter * sj.getSplitter().getSumOfWeights()));
 	}
 
         // Now make a new work function based on this.
@@ -463,7 +476,8 @@ public class FuseSplit {
                         // Return new peek expression.
                         return new SIRPeekExpression(new JPrefixExpression(null,
 									   OPE_PREINC,
-									   ref));
+									   ref),
+						     oldTapeType);
                     }
                     public Object visitPeekExpression(SIRPeekExpression oldSelf,
 						      CType oldTapeType,
@@ -477,7 +491,8 @@ public class FuseSplit {
 			JLocalVariableExpression ref = new JLocalVariableExpression(null,
 										    var);
                         // Return new peek expression.
-                        return new SIRPeekExpression(new JAddExpression(null, ref, arg));
+                        return new SIRPeekExpression(new JAddExpression(null, ref, arg),
+						     oldTapeType);
                     }
                 });
 

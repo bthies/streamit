@@ -81,6 +81,13 @@ public class FusePipe {
 	    }
 	    start = end + 1;
 	} while (start < pipe.size()-1);
+	// if pipe is down to a single filter and we're not at the
+	// toplevel already, then eliminate the pipeline
+	if (pipe.size()==1 && 
+	    pipe.get(0) instanceof SIRFilter &&
+	    pipe.getParent()!=null) {
+	    Lifter.eliminatePipe(pipe);
+	}
     }
 
     /**

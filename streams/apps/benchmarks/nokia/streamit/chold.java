@@ -11,10 +11,8 @@ class chold extends Filter // this Filter performs the cholesky decomposition th
     float    sum; // sum will be used as a buffer         
 public chold(int N){ super (N);}
           public void init (int N) {
-          setInput(Float.TYPE); 
-          setOutput(Float.TYPE);
-          setPush(N*(N+1)/2); 
-          setPop(N*(N+1)/2);
+	      input = new Channel(Float.TYPE, N*(N+1)/2);
+	      output = new Channel(Float.TYPE, N*(N+1)/2);
           A= new float[N][N];
           p=new float[N];
 	  this.N=N;

@@ -12,10 +12,8 @@ class multvect extends Filter // this Filter performs b=AHr
              
 public multvect(int M,int N) { super (M,N);}
           public void init (int M,int N) {
-          setInput(Float.TYPE); 
-          setOutput(Float.TYPE);
-          setPush(N); 
-          setPop(M+N*M);
+	      input = new Channel(Float.TYPE, M+N*M);
+	      output = new Channel(Float.TYPE, N);
           r=new float[M];
 	  AH=new float[N][M];
           this.N=N;

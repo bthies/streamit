@@ -14,10 +14,8 @@ float  prod; // this is a dummy variable used for calculating an element in matr
 
     public void init ( int M, int N) {
         A=new float[M][N];
-	setInput(Float.TYPE); 
-          setOutput(Float.TYPE);
-          setPush(N*(N+1)/2); 
-          setPop(N*M);
+	input = new Channel(Float.TYPE, N*M);
+	output = new Channel(Float.TYPE, N*(N+1)/2);
           
           this.M=M;
           this.N=N;

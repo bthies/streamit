@@ -5,8 +5,8 @@ class FloatIdentity extends Filter
 {
 	public void init ()
 	{
-		setInput (Float.TYPE); setOutput (Float.TYPE);
-		setPush (1); setPop (1);
+	    input = new Channel(Float.TYPE, 1);
+	    output = new Channel(Float.TYPE, 1);
 	}
 	public void work ()
 	{

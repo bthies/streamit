@@ -1,7 +1,7 @@
 import streamit.*;
 import streamit.io.*;
 
-class dcalc extends StreamIt {
+class dcalc extends Pipeline {
     int K=3;
     int N=3;
     int Q;
@@ -12,12 +12,20 @@ class dcalc extends StreamIt {
 
 	
     
+    /**
+     * If you want to test just this class, then uncomment this
+     * method, and change dcalc to extend StreamIt instead of
+     * Pipeline.  But the compiler assumes there is exactly 1 toplevel
+     * StreamIt class when it's compiling.
+     */
+    /*
     static public void main (String[] t)
-    
     {
 	dcalc test=new dcalc();
 	test.run(t);
     }
+    */
+
     public void init() {
 	float[][] AH=
       {
@@ -112,8 +120,7 @@ class SourceD extends Filter {
     float r[]={1,1,1};
     
     public void init(){
-	setOutput(Float.TYPE);
-	setPush(Q*N+W-1);
+	output = new Channel(Float.TYPE, Q*N+W-1);
     }
     public void work(){
 	for(int i=0;i<Q*N+W-1;i++)
@@ -124,8 +131,7 @@ class SourceD extends Filter {
 class SinkD extends Filter{
     
     public void init(){
-	setInput(Float.TYPE);
-	setPop(K*N);
+	input = new Channel(Float.TYPE, K*N);
      }
     public void work() {
 

@@ -73,8 +73,7 @@ class AddZeroBeg extends SplitJoin{// adds M zeros to the begining of a sequence
 
 class ZeroGen extends Filter{// this filter just generates a sequence of zeros
     public void init() {
-	setOutput(Float.TYPE);
-	setPush(1);
+	output = new Channel(Float.TYPE, 1);
     }
     public void work(){
 	output.pushFloat(0);

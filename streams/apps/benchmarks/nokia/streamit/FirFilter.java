@@ -31,13 +31,10 @@ public class FirFilter extends Filter {
     }
 
     public void init(float[] COEFF) {
-	setInput(Float.TYPE);
-	setOutput(Float.TYPE);
 	this.N=COEFF.length;
 	this.COEFF=COEFF;
-	setPush(1);
-	setPop(1);
-	setPeek(N);
+	input = new Channel(Float.TYPE, 1, N);
+	output = new Channel(Float.TYPE, 1);
     }
 
     public void work(){

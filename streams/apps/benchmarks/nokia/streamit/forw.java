@@ -11,10 +11,8 @@ class forw extends Filter // this Filter performs forward substition LY=b.
     float    sum ; //this will be used as a buffer variable
              
        public void init(int N) {
-          setInput(Float.TYPE); 
-          setOutput(Float.TYPE);
-          setPush(N*(N+1)/2); 
-          setPop(N+N*(N+1)/2);
+	   input = new Channel(Float.TYPE, N+N*(N+1)/2);
+	   output = new Channel(Float.TYPE, N*(N+1)/2);
           y=new float[N];
 	  L=new float[N][N];
           this.N=N;

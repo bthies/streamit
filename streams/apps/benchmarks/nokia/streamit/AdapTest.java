@@ -39,11 +39,11 @@ import streamit.io.*;
 
 
 class AdapTest extends StreamIt {
-    int K=3;
-    int N=3;
-    int W=2;
-    int Q=3;
-    int R=Q*N+W-1;
+    final int K=3;
+    final int N=3;
+    final int W=2;
+    final int Q=3;
+    final int R=Q*N+W-1;
     
     static public void main (String[] t)
     
@@ -75,8 +75,7 @@ class Source extends Filter {
 	{1,1,0}
     };
     public void init(){
-	setOutput(Float.TYPE);
-	setPush(K*W);
+	output = new Channel(Float.TYPE, K*W);
 	    }
     public void work(){
 	for(int i=0;i<K;i++)
@@ -89,8 +88,7 @@ class Sink extends Filter{
     
     float A[][];
     public void init(){
-	setInput(Float.TYPE);
-	setPop(K*N*(K*N+1)/2);
+	input = new Channel(Float.TYPE, K*N*(K*N+1)/2);
 	//setPop(10);
 	A = new float[R][R];
      }
@@ -119,8 +117,7 @@ class Sourceh extends Filter {
     int     W;
     public Sourceh(int W, int K, float[][] d){super(W,K,d);}
     public void init(int W, int K, float [][] d){
-	setOutput(Float.TYPE);
-	setPush(K*W);
+	output = new Channel(Float.TYPE, K*W);
 	this.W=W;
 	this.K=K;
 	

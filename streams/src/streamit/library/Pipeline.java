@@ -111,6 +111,13 @@ public class Pipeline extends Stream
     {
         super(x,y,z,a,b);
     }
+    /**
+     * Constructor with three floats, and an int.
+     */
+    public Pipeline (float x, float y, float z, int a)
+    {
+        super(x,y,z,a);
+    }
 
     /** 
      * Constructor with two integers followed by a float
@@ -177,6 +184,7 @@ public class Pipeline extends Stream
 		     float f) {
 	super(i1, i2, i3, i4, i5, i6, f);
     }
+
 
      // allow access to the children of this pipeline
      

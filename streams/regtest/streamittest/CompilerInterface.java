@@ -6,28 +6,29 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.9 2002-10-04 00:35:34 thies Exp $
+ * $Id: CompilerInterface.java,v 1.10 2002-10-07 05:18:47 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
-    public static final int NONE               = 0x0;
-    //public static final int RAW              = 0x1;
-    public static final int CONSTPROP          = 0x2;
-    public static final int UNROLL             = 0x4;
-    public static final int FUSION             = 0x8;
-    public static final int PARTITION          = 0x10;
-    public static final int[] RAW              = {0x00,   // ignore the 0 case
-						  0x20,   // RAW[1]
-						  0x40,   // RAW[2]
-						  0x80,   // RAW[3]
+    public static final int NONE               =    0x0;
+    //public static final int RAW              =    0x1;
+    public static final int CONSTPROP          =    0x2;
+    public static final int UNROLL             =    0x4;
+    public static final int FUSION             =    0x8;
+    public static final int PARTITION          =   0x10;
+    public static final int[] RAW              = { 0x00,   // ignore the 0 case
+						   0x20,   // RAW[1]
+						   0x40,   // RAW[2]
+						   0x80,   // RAW[3]
 						  0x100,  // RAW[4]
 						  0x200,  // RAW[5]
 						  0x400,  // RAW[6]
 						  0x800,  // RAW[7]
-						  0x1000};// RAW[8]
+						 0x1000};// RAW[8]
     public static final int LINEAR_ANALYSIS    = 0x2000;
     public static final int LINEAR_REPLACEMENT = 0x4000;
     public static final int DEBUG              = 0x8000;
+    public static final int POPTOPEEK          =0x10000;
     
 
 
@@ -44,6 +45,8 @@ public class CompilerInterface {
     public static final String OPTION_LINEAR_REPLACEMENT = "--linearreplacement";
 
     public static final String OPTION_DEBUG              = "--debug";
+    public static final String OPTION_POPTOPEEK          = "--poptopeek";
+       
     
     // suffix to add to the various pieces of compilation
     public static final String SUFFIX_C    = ".c";
@@ -214,6 +217,12 @@ public class CompilerInterface {
 	// if we want debugging output
 	if ((flags & DEBUG) == DEBUG) {
 	    options[numOptions] = OPTION_DEBUG;
+	    numOptions++;
+	}
+
+	// if we want to convert all pops to peeks
+	if ((flags & POPTOPEEK) == POPTOPEEK) {
+	    options[numOptions] = OPTION_POPTOPEEK;
 	    numOptions++;
 	}
 

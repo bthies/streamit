@@ -1519,12 +1519,36 @@ public class IRPrinter extends Utils implements SLIRVisitor
     }
 
 
+    public void visitRangeExpression(SIRRangeExpression self) {
+	blockStart("SIRRangeExpression");
+
+	// min
+	attrStart("min");
+	self.getMin().accept(this);
+	attrEnd();
+	// ave
+	attrStart("ave");
+	self.getAve().accept(this);
+	attrEnd();
+	// max
+	attrStart("max");
+	self.getMax().accept(this);
+	attrEnd();
+
+	blockEnd();
+    }
+
+    public void visitDynamicToken(SIRDynamicToken self) {
+        blockStart("DynamicToken");
+        blockEnd();
+    }
+
     /**
      * Visits a peek expression.
      */
     public void visitPeekExpression(SIRPeekExpression self,
                                     CType tapeType,
-			     JExpression arg) {
+				    JExpression arg) {
 	blockStart("SIRPeekExpression");
 	attrStart("arg");
 	arg.accept(this);

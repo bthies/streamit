@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.23 2004-08-18 14:37:41 mgordon Exp $
+ * $Id: Utils.java,v 1.24 2005-02-17 00:12:08 thies Exp $
  */
 
 package at.dms.util;
@@ -64,7 +64,7 @@ public abstract class Utils implements Serializable, DeepCloneable {
    * @exception	RuntimeException	the entire token reference
    */
   public static final void fail(String str) {
-      System.out.println("Failure: " + str);
+      new RuntimeException("Failure: " + str).printStackTrace();
       System.exit(1);
   }
 

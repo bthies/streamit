@@ -375,7 +375,7 @@ void ERROR (void *data, char *error_msg);
 
 
 /* Multiplies an FFTW halfcomplex array by a known set of
- * constants.
+ * complex constants, also in halfcomplex format.
  * output: Y (float array of size size)
  * input1: X (float array of size size)
  * input2: H (float array of size size)
@@ -393,30 +393,45 @@ void ERROR (void *data, char *error_msg);
 void do_halfcomplex_multiply(float *Y, float *X, float *H, int size);
 
 /**
- * Replaces the contents of input_buff with the value of its FFT
- * scaled by a factor of 1/size (because fftw does not do 
- * this scaling in the reverse FFT, we precompute the scaling now).
- * Since buff is a completly realarray, the corresponding complex
- * valued FFT(buff) is stored in the "half complex array" format of
+ * Replaces the contents of input_buff with the value of its FFT.
+ * input_buff: input (real format)/output (halfcomplex format)
+ *
+ * Since buff is a assumed completly real, the corresponding complex
+ * valued FFT(input_buff) is stored in the "half complex array" format of
  * fftw (see http://www.fftw.org/doc/fftw_2.html#SEC5)
  **/
 void convert_to_freq(float* input_buff, int size);
 
-/**
- * Replaces the contents of input_buff with the value of its IFFT
- * (doesn't include the 1/size scaling factor in the definition
- * -- that is an FFTW thing.
- * Since input_buff is in "half complex array" which corresponds to
- * a completely real valued inverse FFT.
- **/
-void convert_from_freq(float* input_buff, int size);
-
 /** 
- * Scales the passed buffer by 1/size. Used to renormalize the
- * filter coefficients when they have been converted into the
- * frequency domain (fftw does not do the scaling automatically).
+ * Scales each element of the passed array by 1/size. 
+ *
+ * buffer: input/output
+ * Since FFTW does not perform the 1/N scaling of the inverse
+ * DFT, the N point IFFT(FFT(x)) will result in x scaled by N.
+ * This function is used to pre-scale the coefficients of H
+ * by 1/N so we don't have to do it on each filter invocation.
  **/
 void scale_by_size(float* buffer, int size);
+
+
+/**
+ * Converts the contents of input_buff from the frequency domain
+ * to the time domain, omitting the 1/N factor.
+ *
+ * input_buff: input in half complex array format.
+ * output_buff: output of real values (because the IFFT of a 
+ *              halfcomplex (eg symmetric) sequency is purely real.
+ * 
+ * Since this function uses FFTW to compute the inverse FFT,
+ * the result is not scaled by the 1/N factor that it should be.
+ * In our implementation, the impulse response of the filter
+ * is prescaled scaled by 1/N so we get the correct answer.
+ *
+ * Note that this function trashes the values in input_buff.
+ **/
+void convert_from_freq(float* input_buff, float* output_buff, int size);
+
+
 
 
 

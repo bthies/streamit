@@ -1,7 +1,7 @@
 /*
  * interface to the fftw library to replace streamit_fft.c (which 
  * contians a simple non optimized implementation of fft)
- * $Id: streamit_fftw.c,v 1.5 2003-02-04 17:36:12 aalamb Exp $
+ * $Id: streamit_fftw.c,v 1.6 2003-02-06 21:52:29 aalamb Exp $
  */
 
 #include <sfftw.h>
@@ -49,7 +49,7 @@ static struct rfftw_plan_list *get_plan(int size)
 
 
 /* Multiplies an FFTW halfcomplex array by a known set of
- * constants.
+ * complex constants, also in halfcomplex format.
  * output: Y (float array of size size)
  * input1: X (float array of size size)
  * input2: H (float array of size size)
@@ -90,6 +90,7 @@ void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
   }
 }
 
+
 /* 
  * takes an input array of floats (in the time domain) 
  * and produces an output array of floats in the same array.
@@ -118,11 +119,11 @@ void do_halfcomplex_multiply(float *Y, float *X, float *H, int size)
 
 
 /**
- * Replaces the contents of input_buff with the value of its FFT
- * scaled by a factor of 1/size (because fftw does not do 
- * this scaling in the reverse FFT, we precompute the scaling now).
- * Since buff is a completly realarray, the corresponding complex
- * valued FFT(buff) is stored in the "half complex array" format of
+ * Replaces the contents of input_buff with the value of its FFT.
+ * input_buff: input (real format)/output (halfcomplex format)
+ *
+ * Since buff is a assumed completly real, the corresponding complex
+ * valued FFT(input_buff) is stored in the "half complex array" format of
  * fftw (see http://www.fftw.org/doc/fftw_2.html#SEC5)
  **/
 void convert_to_freq(float* input_buff, int size) 
@@ -133,7 +134,8 @@ void convert_to_freq(float* input_buff, int size)
   /* Start off by finding the plan pair, or creating one. */
   plan = get_plan(size);
 
-  /* Run the forward FFT on the input buffer. */
+  /* Run the forward FFT on the input buffer, saving the result
+     into the plan's buffer. */
   rfftw_one(plan->rtoc_plan, (fftw_real *)input_buff, (fftw_real *)plan->buff);
 
   /* copy the values from the plan buffer (eg the output) into the 
@@ -146,9 +148,13 @@ void convert_to_freq(float* input_buff, int size)
 }
 
 /** 
- * Scales the passed buffer by 1/size. Used to renormalize the
- * filter coefficients when they have been converted into the
- * frequency domain (fftw does not do the scaling automatically).
+ * Scales each element of the passed array by 1/size. 
+ *
+ * buffer: input/output
+ * Since FFTW does not perform the 1/N scaling of the inverse
+ * DFT, the N point IFFT(FFT(x)) will result in x scaled by N.
+ * This function is used to pre-scale the coefficients of H
+ * by 1/N so we don't have to do it on each filter invocation.
  **/
 void scale_by_size(float* buffer, int size) 
 {
@@ -160,22 +166,31 @@ void scale_by_size(float* buffer, int size)
 
 
 /**
- * Replaces the contents of input_buff with the value of its IFFT
- * (doesn't include the 1/size scaling factor in the definition
- * -- that is an FFTW thing.
- * Since input_buff is in "half complex array" which corresponds to
- * a completely real valued inverse FFT.
+ * Converts the contents of input_buff from the frequency domain
+ * to the time domain, omitting the 1/N factor.
+ *
+ * input_buff: input in half complex array format.
+ * output_buff: output of real values (because the IFFT of a 
+ *              halfcomplex (eg symmetric) sequency is purely real.
+ * 
+ * Since this function uses FFTW to compute the inverse FFT,
+ * the result is not scaled by the 1/N factor that it should be.
+ * In our implementation, the impulse response of the filter
+ * is prescaled scaled by 1/N so we get the correct answer.
+ *
+ * Note that this function trashes the values in input_buff.
  **/
-void convert_from_freq(float* input_buff, int size) 
+void convert_from_freq(float* input_buff, float* output_buff, int size) 
 {
   struct rfftw_plan_list *plan;
 
   /* Start off by finding the plan pair, or creating one. */
   plan = get_plan(size);
 
-  /* Run the backward FFT (trashing storage). */
+  /* Run the backward FFT (destroys the contents of input_buff) */
   // reverse is specified by the plan. Then comes input followed by output.
-  rfftw_one(plan->ctor_plan, (fftw_real *)input_buff, (fftw_real *)input_buff);
+  
+  rfftw_one(plan->ctor_plan, (fftw_real *)input_buff, (fftw_real *)output_buff);
   
   /** and we are done. Return value is the input_buffer parameter. **/
 }

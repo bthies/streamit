@@ -5,7 +5,7 @@ import at.dms.kjc.*;
 /**
  * This represents a SplitJoin construct.
  */
-public class SIRSplitJoin extends SIRStream {
+public class SIRSplitJoin extends SIRStream implements Cloneable{
     /**
      * The splitter at the top of this.
      */
@@ -19,6 +19,38 @@ public class SIRSplitJoin extends SIRStream {
      * corresponds to the i'th tape in the splitter and joiner.  
      */
     private SIRStream elements[];
+
+    
+
+    /**
+     * Return a shallow clone of the SIRSplitJoin
+     */
+    public Object clone() {
+	SIRSplitJoin s = new SIRSplitJoin(this.parent,
+				       this.fields,
+				       this.methods);
+	s.setInit(this.init);
+	s.setSplitter(this.splitter);
+	s.setJoiner(this.joiner);
+	return s;
+    }
+    
+    /**
+     * sets the splitter for this SplitJoin
+     */
+    public void setSplitter(SIRSplitter s) 
+    {
+	this.splitter = s;
+    }
+    
+    /**
+     * sets the joiner for this SplitJoin
+     */
+    public void setJoiner(SIRJoiner j) 
+    {
+	this.joiner = j;
+    }
+   
 
     /**
      * Returns the output type of this.

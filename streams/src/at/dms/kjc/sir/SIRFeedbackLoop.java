@@ -5,7 +5,7 @@ import at.dms.kjc.*;
 /**
  * This represents a feedback loop construct.
  */
-public class SIRFeedbackLoop extends SIRStream {
+public class SIRFeedbackLoop extends SIRStream implements Cloneable {
     /**
      * The body of this, which appears in the forward path through the
      * feedback loop.
@@ -52,6 +52,25 @@ public class SIRFeedbackLoop extends SIRStream {
     public SIRFeedbackLoop() {
 	super();
     }
+    
+    /**
+     * Return a shallow clone of the SIRFeedbackLoop
+     */
+    public Object clone() 
+    {
+	SIRFeedbackLoop f = new SIRFeedbackLoop(this.parent,
+						this.fields,
+						this.methods);
+	f.setInit(this.init);
+	f.setDelay(this.delay);
+	f.setBody(this.body);
+	f.setInitPath(this.initPath);
+	f.setJoiner(this.joiner);
+	f.setLoop(this.loop);
+	f.setSplitter(this.splitter);
+	return f;
+    }
+    
 
     /**
      * Returns the output type of this.

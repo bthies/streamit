@@ -7,7 +7,7 @@ import java.util.LinkedList;
  * This represents a pipeline of stream structures, as would be
  * declared with a Stream construct in StreaMIT.
  */
-public class SIRPipeline extends SIRStream {
+public class SIRPipeline extends SIRStream implements Cloneable {
     /**
      * The elements of the pipeline.  Each element should be an SIRStream.
      */
@@ -23,6 +23,19 @@ public class SIRPipeline extends SIRStream {
 	// initialize elements array
 	this.elements = new LinkedList();
     }
+
+    /**
+     * Return a shallow clone of the SIRPipeline
+     */
+    public Object clone() {
+	SIRPipeline p = new SIRPipeline(this.parent, this.fields,
+					this.methods);
+	p.setInit(this.init);
+	for(int i = 0; i < elements.size(); i++) 
+	    p.add((SIRStream)this.elements.get(i));
+	return p;
+    }
+    
 
     /**
      * Returns the output type of this.

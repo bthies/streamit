@@ -5,7 +5,7 @@ import at.dms.kjc.*;
 /**
  * This represents a StreaMIT filter.
  */
-public class SIRFilter extends SIRStream {
+public class SIRFilter extends SIRStream implements Cloneable {
     /**
      * The number of items that are peeked per invocation.  This
      * number includes the items that are popped; i.e. if a filter
@@ -45,6 +45,24 @@ public class SIRFilter extends SIRStream {
 	this.work = work;
 	this.inputType = inputType;
 	this.outputType = outputType;
+    }
+
+    /**
+      * Return a shallow clone of the SIRFilter
+     */
+    public Object clone() 
+    {
+	SIRFilter f = new SIRFilter(this.parent,
+				    this.fields,
+				    this.methods,
+				    this.peek,
+				    this.pop,
+				    this.push,
+				    this.work,
+				    this.inputType,
+				    this.outputType);
+	f.setInit(this.init);
+	return f;
     }
 
      /**

@@ -6,7 +6,7 @@ import at.dms.kjc.*;
  * This class represents a stream structure with one input and one
  * output.
  */
-public abstract class SIRStream extends SIROperator {
+public abstract class SIRStream extends SIROperator implements Cloneable{
     /**
      * The fields of this, not including the input and output channels.  */
     protected JFieldDeclaration[] fields;
@@ -150,5 +150,6 @@ public abstract class SIRStream extends SIROperator {
 	return init;
     }
 
+    abstract public Object clone();
 }
 

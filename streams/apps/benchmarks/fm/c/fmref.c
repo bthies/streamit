@@ -1,7 +1,7 @@
 /*
  * fmref.c: C reference implementation of FM Radio
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: fmref.c,v 1.5 2002-05-08 17:52:26 dmaze Exp $
+ * $Id: fmref.c,v 1.6 2002-05-13 17:45:23 dmaze Exp $
  */
 
 #ifdef raw
@@ -16,7 +16,7 @@
 
 #define SAMPLING_RATE 200000
 #define CUTOFF_FREQUENCY 108000000
-#define NUM_TAPS 100
+#define NUM_TAPS 64
 #define MAX_AMPLITUDE 27000.0
 #define BANDWIDTH 10000
 #define DECIMATION 4
@@ -50,11 +50,15 @@ void run_lpf(FloatBuffer *fbin, FloatBuffer *fbout, LPFData *data);
 
 void run_demod(FloatBuffer *fbin, FloatBuffer *fbout);
 
+#define EQUALIZER_BANDS 10
+float eq_cutoffs[EQUALIZER_BANDS + 1] =
+  { 55.00, 77.78, 110.00, 155.56, 220.00, 311.12,
+    440.00, 622.25, 880.00, 1244.50, 1760.00 };
 typedef struct EqualizerData
 {
-  LPFData lpf[5];
-  FloatBuffer fb[5];
-  float gain[4];
+  LPFData lpf[EQUALIZER_BANDS + 1];
+  FloatBuffer fb[EQUALIZER_BANDS + 1];
+  float gain[EQUALIZER_BANDS];
 } EqualizerData;
 void init_equalizer(EqualizerData *data);
 void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data);
@@ -219,28 +223,24 @@ void init_equalizer(EqualizerData *data)
 {
   int i;
   
-  /* Equalizer structure: there are four band-pass filters,
-   * with cutoffs at 1250 2500 5000 10000 20000.  The outputs of
-   * these filters get added together.  Each band-pass filter is
-   * LPF(high)-LPF(low). */
-  /* init_lpf_data(&data->lpf[0], 1250, 50, 0);
-     init_lpf_data(&data->lpf[1], 2500, 50, 0); */
-  init_lpf_data(&data->lpf[2], 5000, 50, 0);
-  init_lpf_data(&data->lpf[3], 10000, 50, 0);
-  init_lpf_data(&data->lpf[4], 20000, 50, 0);
+  /* Equalizer structure: there are ten band-pass filters, with
+   * cutoffs as shown below.  The outputs of these filters get added
+   * together.  Each band-pass filter is LPF(high)-LPF(low). */
+  for (i = 0; i < EQUALIZER_BANDS + 1; i++)
+    init_lpf_data(&data->lpf[i], eq_cutoffs[i], 64, 0);
 
   /* Also initialize member buffers. */
-  for (i = /* 0 */ 2; i < 5; i++)
+  for (i = 0; i < EQUALIZER_BANDS + 1; i++)
     data->fb[i].rpos = data->fb[i].rlen = 0;
 
-  for (i = /* 0 */ 2; i < 4; i++)
+  for (i = 0; i < EQUALIZER_BANDS; i++)
     data->gain[i] = 1.0;
 }
 
 void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data)
 {
   int i, rpos;
-  float lpf_out[5];
+  float lpf_out[EQUALIZER_BANDS + 1];
   float sum = 0.0;
 
   /* Save the input read location; we can reuse the same input data on all
@@ -248,7 +248,7 @@ void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data)
   rpos = fbin->rpos;
   
   /* Run the child filters. */
-  for (i = /* 0 */ 2; i < 5; i++)
+  for (i = 0; i < EQUALIZER_BANDS + 1; i++)
   {
     fbin->rpos = rpos;
     run_lpf(fbin, &data->fb[i], &data->lpf[i]);
@@ -257,7 +257,7 @@ void run_equalizer(FloatBuffer *fbin, FloatBuffer *fbout, EqualizerData *data)
 
   /* Now process the results of the filters.  Remember that each band is
    * output(hi)-output(lo). */
-  for (i = /* 0 */ 2; i < 4; i++)
+  for (i = 0; i < EQUALIZER_BANDS; i++)
     sum += (lpf_out[i+1] - lpf_out[i]) * data->gain[i];
 
   /* Write that result.  */

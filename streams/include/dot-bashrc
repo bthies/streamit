@@ -1,0 +1,26 @@
+# take care of classpath
+if [ -z "$CLASSPATH" ]
+then
+ export CLASSPATH=.
+fi
+
+# java classes
+CLASSPATH=${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
+## antlr classes
+CLASSPATH=${CLASSPATH}:/u/thies/temp/antlr.jar
+# streamit classes
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
+CLASSPATH=${CLASSPATH}:${STREAMIT_HOME}/library/java
+
+# the current version of starsearch we're using
+export TOPDIR=/home/bits6/NO_BACKUP/streamit/starsearch-11-1-02
+
+# add STREAMIT_HOME to the path in order to find "knit"
+if [ -z "$PATH" ]
+then
+  export PATH=${STREAMIT_HOME}
+else
+  PATH=${PATH}:${STREAMIT_HOME}
+fi

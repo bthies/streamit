@@ -1,0 +1,24 @@
+if ($?CLASSPATH) then
+else
+  setenv CLASSPATH .
+endif
+
+# java classes
+setenv CLASSPATH ${CLASSPATH}:/usr/uns/jdk1.3.1_01/jre/lib/rt.jar
+## antlr classes
+setenv CLASSPATH ${CLASSPATH}:/u/thies/temp/antlr.jar
+# streamit classes
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/compiler/3rdparty/cplex/cplex.jar
+setenv CLASSPATH ${CLASSPATH}:${STREAMIT_HOME}/library/java
+
+# the current version of starsearch we're using
+setenv TOPDIR /home/bits6/NO_BACKUP/streamit/starsearch-11-1-02
+
+# add STREAMIT_HOME to the path in order to find "knit"
+if ($?PATH) then
+  setenv PATH ${PATH}:${STREAMIT_HOME}
+else
+  setenv PATH ${STREAMIT_HOME}
+endif

@@ -43,7 +43,11 @@ public final class LinearReplaceTransform extends StreamTransform {
 	    if (lfa.getLinearRepresentation(str).getCost().getMultiplies()<=LinearPartitioner.MAX_MULT_TO_UNROLL) {
 		LinearDirectReplacer.doReplace(lfa, str);
 	    } else {
-		LinearDiagonalReplacer.doReplace(lfa, str);
+		if (KjcOptions.atlas) {
+		    LinearAtlasReplacer.doReplace(lfa, str);
+		} else {
+		    LinearDiagonalReplacer.doReplace(lfa, str);
+		}
 	    } /* TODO: else if sparse matrix {
 		 LinearIndirectReplacer.doReplace(lfa, str);
 		 }

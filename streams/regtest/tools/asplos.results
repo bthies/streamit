@@ -1,4 +1,4 @@
-/u/aalamb/streams/docs/examples/hand/fft:FFT2_opt.java:--raw 4 --partition:0:256
+/u/aalamb/streams/docs/examples/hand/fft:FFT2.java:--raw 4 --partition:0:256
 
 /u/aalamb/streams/docs/examples/hand/fm:LinkedFMTest.java:--raw 4 --partition:0:1
 

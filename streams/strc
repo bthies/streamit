@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.42 2004-04-01 17:07:37 thies Exp $
+# $Id: strc,v 1.43 2004-05-25 02:30:10 mgordon Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -177,6 +177,9 @@ Options specific to RAW backend:
 * --spacetime         Use space-time partitioner
 * --magicdram         Use magic DRAMs in the space-tile partitioner
   --wbs               Use work-based simulator for communication code
+  --steadymul n       For the SpaceTime RAW backend, multiply the steady-state multiplicities by n
+  --forceplacement    For the SpaceTime RAW backend, use try to minimize communication in layout
+  --scheduler         For the SpaceTime RAW backend, either work, dep, or comm
 
 Options specific to uniprocessor backend:
   --frequencyreplacement, -F
@@ -271,6 +274,9 @@ sub get_options
 			    "viram",
 			    "wbs!",
 			    "cluster=i",
+			    "steadymult=i",
+			    "forceplacement!",
+			    "scheduler=s",
 			    "destroyfieldarray!");
     return $result if !$result;
     # Figure out which partitioning is in use, if any:
@@ -515,6 +521,9 @@ sub get_kjc_opts
     $opts{wbs} && ($kjcopts .= " --wbs");
     $opts{spacetime} && ($kjcopts .= " --spacetime");
     $opts{magicdram} && ($kjcopts .= " --magicdram");
+    $opts{forceplacement} && ($kjcopts .= " --forceplacement");
+    $opts{steadymult} && ($kjcopts .= " --steadymult ". $opts{steadymult});
+    $opts{scheduler} && ($kjcopts .= " --scheduler ". $opts{scheduler});
     return $kjcopts;
 }
 

@@ -1,9 +1,14 @@
 /*
- * This version is the same as Beamformer, except that the top
- * splitjoin and bottom splitjoin are nested hierarchically into
- * smaller splitjoins so that the current version of the partitioner
- * can decrease the width of the splitjoin.  (Also some of the
- * parameters might be different, but not the structure of the code.)
+ * Early attempt at a beam former -- DARPA PCA DEMO 2
+ *
+ * Note that this app has no initialization, so it puts identity
+ * values in for all operations. That is why the # of beams == # of channels.
+ * This is a quick and dirty way to do auto-verification.
+ *
+ * For now, all complex's are passed over channels as a real followed
+ * by an imaginary component.
+ *
+ *
  */
 
 import streamit.*;
@@ -18,18 +23,13 @@ public class BeamFormer extends StreamIt
 
     public void init()
     {
-	// how many streams per hierarchical splitjoin in the detect phase
-	final int GENERATE_BLOCKING     = 1; 
-	// how many streams per hierarchical splitjoin in the detect phase
-	final int DETECT_BLOCKING       = 2;
-
-	final int numChannels           = 12;//48;
-	final int numSamples            = 64;//4096;
-	final int numBeams              = 4;//16;
-	final int numCoarseFilterTaps   = 16;//
-	final int numFineFilterTaps     = 64;//
-	final int coarseDecimationRatio = 2;
-	final int fineDecimationRatio   = 2;
+	final int numChannels           = 4;
+	final int numSamples            = 4096;
+	final int numBeams              = 4;
+	final int numCoarseFilterTaps   = 64;
+	final int numFineFilterTaps     = 16;
+	final int coarseDecimationRatio = 1;
+	final int fineDecimationRatio   = 1;
 	final int numSegments           = 1;
 	final int numPostDec1           = numSamples/coarseDecimationRatio;
 	final int numPostDec2           = numPostDec1/fineDecimationRatio;
@@ -50,8 +50,9 @@ public class BeamFormer extends StreamIt
 		public void init() {
 		    int i;
 		    setSplitter(NULL());
-		    for(i=0; i<numChannels; i+=GENERATE_BLOCKING) {
-			this.add (new GenerateSJWrapper(i,
+		    for(i=0; i<numChannels; i++) {
+			final int final_i = i;
+			this.add (new GeneratePipe(i,
 						   numSamples,
 						   targetBeam,
 						   targetSample,
@@ -60,10 +61,9 @@ public class BeamFormer extends StreamIt
 						   numFineFilterTaps,
 						   numPostDec1,
 						   fineDecimationRatio,
-							GENERATE_BLOCKING,
-							cfarThreshold));
+						   cfarThreshold));
 		    }
-		    setJoiner(ROUND_ROBIN(2*GENERATE_BLOCKING));
+		    setJoiner(ROUND_ROBIN(2));
 		}
 	    });
 
@@ -71,196 +71,18 @@ public class BeamFormer extends StreamIt
 		public void init() {
 		    int i;
 		    setSplitter(DUPLICATE());
-		    for(i=0; i<numBeams; i+=DETECT_BLOCKING) {
-			this.add (new DetectSJWrapper(i,
-						      numChannels,
-						      mfSize,
-						      numPostDec2,
-						      targetBeam,
-						      targetSamplePostDec,
-						      DETECT_BLOCKING,
-						      cfarThreshold));
+		    for(i=0; i<numBeams; i++) {
+			this.add (new DetectPipe(i,
+						 numChannels,
+						 mfSize,
+						 numPostDec2,
+						 targetBeam,
+						 targetSamplePostDec,
+						 cfarThreshold));
 		    }
 		    setJoiner(NULL());
 		}
 	    });
-    }
-}
-
-class GenerateSJWrapper extends Pipeline {
-    public GenerateSJWrapper(int i,
-			     int numSamples,
-			     int targetBeam,
-			     int targetSample,
-			     int numCoarseFilterTaps,
-			     int coarseDecimationRatio,
-			     int numFineFilterTaps,
-			     int numPostDec1,
-			     int fineDecimationRatio,
-			     int GENERATE_BLOCKING,
-			     float cfarThreshold) {
-	super(i, 
-	      numSamples, 
-	      targetBeam, 
-	      targetSample,
-	      numCoarseFilterTaps,
-	      coarseDecimationRatio,
-	      numFineFilterTaps,
-	      numPostDec1,
-	      fineDecimationRatio,
-	      GENERATE_BLOCKING,
-	      cfarThreshold);
-    }
-
-    public void init(int i,
-		     int numSamples,
-		     int targetBeam,
-		     int targetSample,
-		     int numCoarseFilterTaps,
-		     int coarseDecimationRatio,
-		     int numFineFilterTaps,
-		     int numPostDec1,
-		     int fineDecimationRatio,
-		     int GENERATE_BLOCKING,
-		     float cfarThreshold) {
-    
-	this.add (new GenerateSJ(i,
-				   numSamples,
-				   targetBeam,
-				   targetSample,
-				   numCoarseFilterTaps,
-				   coarseDecimationRatio,
-				   numFineFilterTaps,
-				   numPostDec1,
-				   fineDecimationRatio,
-				   GENERATE_BLOCKING,
-				   cfarThreshold));
-    }
-}
-
-class GenerateSJ extends SplitJoin {
-    public GenerateSJ(int i,
-			     int numSamples,
-			     int targetBeam,
-			     int targetSample,
-			     int numCoarseFilterTaps,
-			     int coarseDecimationRatio,
-			     int numFineFilterTaps,
-			     int numPostDec1,
-			     int fineDecimationRatio,
-			     int GENERATE_BLOCKING,
-			     float cfarThreshold) {
-	super(i, 
-	      numSamples, 
-	      targetBeam, 
-	      targetSample,
-	      numCoarseFilterTaps,
-	      coarseDecimationRatio,
-	      numFineFilterTaps,
-	      numPostDec1,
-	      fineDecimationRatio,
-	      GENERATE_BLOCKING,
-	      cfarThreshold);
-    }
-
-    public void init(int i,
-		     int numSamples,
-		     int targetBeam,
-		     int targetSample,
-		     int numCoarseFilterTaps,
-		     int coarseDecimationRatio,
-		     int numFineFilterTaps,
-		     int numPostDec1,
-		     int fineDecimationRatio,
-		     int GENERATE_BLOCKING,
-		     float cfarThreshold) {
-
-	int k;
-	setSplitter(NULL());
-	for (k=0; k<GENERATE_BLOCKING; k++) {
-	    this.add (new GeneratePipe(i+k,
-				       numSamples, 
-				       targetBeam, 
-				       targetSample,
-				       numCoarseFilterTaps,
-				       coarseDecimationRatio,
-				       numFineFilterTaps,
-				       numPostDec1,
-				       fineDecimationRatio,
-				       cfarThreshold));
-	}
-	setJoiner(ROUND_ROBIN(2));
-    }
-}
-
-class DetectSJWrapper extends Pipeline {
-    public DetectSJWrapper(int i,
-			   int numChannels,
-			   int mfSize,
-			   int numPostDec2,
-			   int targetBeam,
-			   int targetSamplePostDec,
-			   int DETECT_BLOCKING,
-			   float cfarThreshold) {
-	super(i, numChannels, mfSize, numPostDec2, 
-	      targetBeam, targetSamplePostDec, DETECT_BLOCKING,
-	      cfarThreshold);
-    }
-
-    public void init(int i, 
-		     int numChannels,
-		     int mfSize,
-		     int numPostDec2,
-		     int targetBeam,
-		     int targetSamplePostDec,
-		     int DETECT_BLOCKING,
-		     float cfarThreshold) {
-	this.add(new DetectSJ(i,
-			      numChannels,
-			      mfSize,
-			      numPostDec2,
-			      targetBeam,
-			      targetSamplePostDec,
-			      DETECT_BLOCKING,
-			      cfarThreshold));
-    }
-}
-
-class DetectSJ extends SplitJoin {
-
-    public DetectSJ(int i,
-		    int numChannels,
-		    int mfSize,
-		    int numPostDec2,
-		    int targetBeam,
-		    int targetSamplePostDec,
-		    int DETECT_BLOCKING,
-		    float cfarThreshold) {
-	super(i, numChannels, mfSize, numPostDec2, 
-	      targetBeam, targetSamplePostDec, DETECT_BLOCKING, 
-	      cfarThreshold);
-    }
-
-    public void init(int i, 
-		     int numChannels,
-		     int mfSize,
-		     int numPostDec2,
-		     int targetBeam,
-		     int targetSamplePostDec,
-		     int DETECT_BLOCKING,
-		     float cfarThreshold) {
-	int k;
-	setSplitter(DUPLICATE());
-	for (k=0; k<DETECT_BLOCKING; k++) {
-	    this.add (new DetectPipe(i+k,
-				     numChannels,
-				     mfSize,
-				     numPostDec2,
-				     targetBeam,
-				     targetSamplePostDec,
-				     cfarThreshold));
-	}
-	setJoiner(NULL());
     }
 }
 
@@ -323,7 +145,6 @@ class InputGenerate extends Filter
     int targetSample;
     int myChannel;
     float thresh;
-    //    int i2;
 
     public InputGenerate(int i, int n, int t1, int t2, float c) {
 	super(i, n, t1, t2, c);
@@ -343,7 +164,7 @@ class InputGenerate extends Filter
 	myChannel = i;
 
 	thresh = cfarThresh;
-	//	i2 = 0;
+
 	output = new Channel(Float.TYPE, 2);
     }
 
@@ -363,8 +184,6 @@ class InputGenerate extends Filter
 		// imag
 		output.pushFloat(0);
 	    }
-
-	//	System.out.println(i2++);
 
 	curSample++;
 
@@ -609,7 +428,7 @@ class BeamFirFilter extends Filter
 		imagBuffer[i] = 0;
 	    }
 	} else if (count>inputLength) {
-	    //System.out.println("ERROR:  don't expect count to exceed inputLength");
+	    System.out.println("ERROR:  dont expect count to exceed inputLength");
 	}
     }
 }
@@ -753,15 +572,20 @@ class Detector extends Filter
 	if(holdsTarget && targetSample == curSample)
 	    {
 		if( !(val >= thresh) ) {
-		    System.out.println(0);
+		    System.out.println("ERROR: Target not found in proper location on beam ");
+		    System.out.println(myBeam);
+		    System.out.println("; the value was ");
+		    System.out.println(val);
+		    System.out.println(" which is less than thresh ");
+		    System.out.println(thresh);
 		} else {
-		    System.out.println(1);
+		    System.out.println("Found target.");
 		}
 	    }
 	else
 	    {
 		if( val >= thresh ) {
-		    System.out.println(0);
+		    System.out.println("ERROR: Target found in wrong location on beam " + myBeam);
 		} else {
 		    //System.out.println("OK not found on beam " + myBeam);
 		}

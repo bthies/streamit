@@ -12,7 +12,7 @@ import at.dms.kjc.iterator.*;
  * This class has also been pressed into service to perform manipulations on
  * hashtable mappings that involve creating access wrappers.<br>
  *
- * $Id: AccessWrapperFactory.java,v 1.1 2004-02-09 17:55:01 thies Exp $
+ * $Id: AccessWrapperFactory.java,v 1.2 2004-02-11 19:12:02 thies Exp $
  **/
 class AccessWrapperFactory {
     /**
@@ -32,11 +32,7 @@ class AccessWrapperFactory {
 	    return new LocalVariableAccessWrapper(lve.getVariable());
 	} else if (expr instanceof JFieldAccessExpression) {
 	    JFieldAccessExpression accessExpr = (JFieldAccessExpression)expr;
-	    AccessWrapper prefixWrapper = AccessWrapperFactory.wrapAccess(accessExpr.getPrefix());
-	    // if we successfully wrapped the prefix, return a wrapper for the field
-	    if (prefixWrapper != null) {
-		return new FieldAccessWrapper(prefixWrapper, accessExpr.getIdent());
-	    } else {return null;}
+	    return new FieldAccessWrapper(accessExpr.getIdent());
 	} else if (expr instanceof JArrayAccessExpression) {
 	    JArrayAccessExpression aae = (JArrayAccessExpression)expr;
 	    // see if we can figure out if the index expression is a constant.
@@ -140,16 +136,12 @@ class AccessWrapperFactory {
 
     /** Wraps a field access expression. **/
     static class FieldAccessWrapper extends AccessWrapper {
-	AccessWrapper prefix;
-	public FieldAccessWrapper(AccessWrapper pre, String f) {
-	    super(pre.getIdent() + "." + f);
-	    this.prefix = pre;
+	public FieldAccessWrapper(String f) {
+	    super(f);
 	}
 	public boolean equals(Object o) {
-	    if (!super.equals(o)) {return false;}
 	    if (!(o instanceof FieldAccessWrapper)) {return false;}
-	    FieldAccessWrapper other = (FieldAccessWrapper)o;
-	    return (other.prefix.equals(this.prefix));
+	    return super.equals(o);
 	}
     }
 

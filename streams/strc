@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.38 2004-01-30 20:12:00 dmaze Exp $
+# $Id: strc,v 1.39 2004-01-31 22:55:16 thies Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -178,7 +178,8 @@ Options specific to Java library backend:
   --norun             Schedule but do not run the program
   --nosched           Run the program in pull mode, not under the scheduler
   --marksteady        Print * after each steady-state execution
-  --printsched        Dump the program schedule
+  --printreps         Print number of times filters execute in schedule
+  --printsched        Print the full program schedule
 EOT
     $text =~ s/^\*/ /mg if $more >= 2;
     $text =~ s/^\+/ /mg if $more >= 1;
@@ -230,6 +231,7 @@ sub get_options
 			    "partition-greedier|pgreedier",
 			    "poptopeek",
 			    "marksteady!",
+			    "printreps!",
 			    "printsched!",
 			    "print-partitioned-source|print_partitioned_source",
 			    "profile!",
@@ -487,5 +489,6 @@ sub get_lib_opts
     $opts{norun} && ($libopts .= " -norun");
     $opts{marksteady} && ($libopts .= " -marksteady");
     $opts{printsched} && ($libopts .= " -printsched");
+    $opts{printreps} && ($libopts .= " -printreps");
     return $libopts;
   }

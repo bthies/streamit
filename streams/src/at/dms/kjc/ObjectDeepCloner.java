@@ -29,6 +29,9 @@ public class ObjectDeepCloner
      */ 
    static public Object deepCopy(Object oldObj)
    {
+       if (oldObj instanceof JLocalVariable)
+       	   return oldObj;
+
       ObjectOutputStream oos = null;
       ObjectInputStream ois = null;
       try

@@ -125,7 +125,7 @@ public class RuntimeHarness extends Harness {
                 executeNative(getRawCompareCommandArray(rawOutputFile,
                                                         expectedFile),
                               outStream,
-                              new File(getStreamITRoot() + COMPARE_LIB_DIR);
+                              new File(getStreamITRoot() + COMPARE_LIB_DIR));
 	    return result;
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing raw output: " +

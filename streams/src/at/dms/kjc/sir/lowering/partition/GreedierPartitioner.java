@@ -40,15 +40,34 @@ public class GreedierPartitioner {
 			return 0;
 		    int work1=((Pair)o1).work;
 		    int work2=((Pair)o2).work;
-		    if(work1==work2)
-			if(o1.hashCode()<o2.hashCode())
-			    return -1;
-			else
-			    return 1;
-		    else if(work1<work2)
-			return -1;
-		    else
-			return 1;
+		    if(work1==work2) {
+			/*if(o1.hashCode()<o2.hashCode())
+			  return -1;
+			  else
+			  return 1;*/
+			return o1.hashCode()-o2.hashCode();
+			/*System.out.println("BLAH: "+((Pair)o1).n1+" "+((Pair)o1).n2+" "+((Pair)o2).n1+" "+((Pair)o2).n2);
+			  SIRContainer parent1=((Pair)o1).n1.filter.getParent();
+			  SIRContainer parent2=((Pair)o2).n1.filter.getParent();
+			  double half=((double)(parent1.size()-1))/2;
+			  double half2=((double)(parent2.size()-1))/2;
+			  double dist1=Math.abs(half-parent1.indexOf(((Pair)o1).n1.filter));
+			  double dist2=Math.abs(half2-parent2.indexOf(((Pair)o2).n1.filter));
+			  if(dist1==dist2)
+			  if(o1.hashCode()<o2.hashCode())
+			  return -1;
+			  else
+			  return 1;
+			  else if(dist1>dist2)
+			  return -1;
+			  else
+			  return 1;*/
+		    } else
+			return work1-work2;
+		    /*else if(work1<work2)
+		      return -1;
+		      else
+		      return 1;*/
 		}
 	    });
 	nodes=new TreeMap(new Comparator() {
@@ -121,13 +140,46 @@ public class GreedierPartitioner {
 	    }
 	    while(count>numTiles) { //Try Fuse
 		cont=true;
-		Pair smallest=(Pair)pairs.firstKey();
+		//Pair smallest=(Pair)pairs.firstKey();
+		Pair smallest=findSmallest();
 		fuse(smallest);
 		count=new GraphFlattener(str).getNumTiles();
 		System.out.println("  GreedierPartitioner detects " + count + " tiles.");
 	    }
 	} while(cont);
 	return str;
+    }
+
+    private Pair findSmallest() {
+	Pair smallest=(Pair)pairs.firstKey();
+	int work=smallest.work;
+	ArrayList temp=new ArrayList();
+	boolean cont;
+	do {
+	    cont=false;
+	    temp.add(smallest);
+	    pairs.remove(smallest);
+	    Pair newPair=(Pair)pairs.firstKey();
+	    int newWork=newPair.work;
+	    if(newWork==work) {
+		SIRContainer parent1=smallest.n1.filter.getParent();
+		SIRContainer parent2=newPair.n1.filter.getParent();
+		if(parent1==parent2) {
+		    double half=((double)(parent1.size()-1))/2;
+		    double dist1=Math.abs(half-parent1.indexOf(smallest.n1.filter));
+		    double dist2=Math.abs(half-parent1.indexOf(newPair.n1.filter));
+		    if(dist1<dist2) {
+			cont=true;
+			smallest=newPair;
+			work=newWork;
+		    }
+		}
+	    }
+	} while(cont);
+	Object[] fix=temp.toArray();
+	for(int i=0;i<fix.length;i++)
+	    pairs.put(fix[i],null);
+	return smallest;
     }
 
     private boolean shouldFiss() {
@@ -191,9 +243,9 @@ public class GreedierPartitioner {
 	    }
 	}
 	//Cleaning up
+	pairs.remove(p);
 	p.n1=null;
 	p.n2=null;
-	pairs.remove(p);
     }
 
     private void fiss(Node node) {

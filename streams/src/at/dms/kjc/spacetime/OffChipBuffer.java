@@ -122,6 +122,10 @@ public class OffChipBuffer
 
     private void calculateSize() 
     {
+	if (redundant()) {
+	    size = Address.ZERO;
+	    return;
+	}	    
 	//we'll make it 32 byte aligned
 	if (source.isFilterTrace()) {
 	    //the size is the max of the multiplicities

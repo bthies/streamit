@@ -50,6 +50,9 @@ public class CommunicateAddrs
 		Iterator bufs = owner.getBuffers().iterator();
 		while (bufs.hasNext()) {
 		    OffChipBuffer buf = (OffChipBuffer)bufs.next();
+		    //don't do anything for redundant buffers
+		    if (buf.redundant())
+			continue;
 		    //check if we need to send this buffer
 		    if (buf.getUsers().length == 0)
 			continue;

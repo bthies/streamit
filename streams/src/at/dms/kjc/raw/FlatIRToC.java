@@ -1271,6 +1271,23 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
     /**
      * prints a cast expression
      */
+    public void visitCastExpression(JCastExpression self,
+				    JExpression expr,
+				    CType type)
+    {
+	print("(");
+        print("(");
+        print(type);
+        print(")");
+        print("(");
+	expr.accept(this);
+	print(")");
+        print(")");
+    }
+    
+    /**
+     * prints a cast expression
+     */
     public void visitUnaryPromoteExpression(JUnaryPromote self,
                                             JExpression expr,
                                             CType type)

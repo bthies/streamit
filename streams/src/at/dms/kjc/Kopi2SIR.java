@@ -1830,6 +1830,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
         else if (ident.equals("setIOTypes")) {
             // Phased filter syntax for setting I/O types.  This has
             // two arguments, which are null or Class objects.
+            args[0] = (JExpression)args[0].accept(this);
+            args[1] = (JExpression)args[1].accept(this);
             if (parentStream instanceof SIRFilter)
             {
                 SIRFilter filter = (SIRFilter)parentStream;
@@ -1837,11 +1839,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                     filter.setInputType(((JClassExpression)args[0]).getClassType());
                 else if (args[0] instanceof JStringLiteral)
                     filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
+		else 
+		    Utils.fail(printLine(self) + "Malformed input type on I/O declaration");
 
                 if (args[1] instanceof JClassExpression)
                     filter.setOutputType(((JClassExpression)args[1]).getClassType());
                 else if (args[1] instanceof JStringLiteral)
                     filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+		else 
+		    Utils.fail(printLine(self) + "Malformed output type on I/O declaration");
             }
             else if (parentStream instanceof SIRPhasedFilter)
             {
@@ -1850,11 +1856,15 @@ public class Kopi2SIR extends Utils implements AttributeVisitor, Cloneable
                     filter.setInputType(((JClassExpression)args[0]).getClassType());
                 else if (args[0] instanceof JStringLiteral)
                     filter.setInputType(getType(((JStringLiteral)args[0]).stringValue()));
+		else 
+		    Utils.fail(printLine(self) + "Malformed input type on I/O declaration");
 
                 if (args[1] instanceof JClassExpression)
                     filter.setOutputType(((JClassExpression)args[1]).getClassType());
                 else if (args[1] instanceof JStringLiteral)
                     filter.setOutputType(getType(((JStringLiteral)args[1]).stringValue()));
+		else 
+		    Utils.fail(printLine(self) + "Malformed output type on I/O declaration");
             }
             else
                 at.dms.util.Utils.fail(printLine(self) +

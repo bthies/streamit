@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JConstructorBlock.java,v 1.5 2003-08-21 09:44:20 thies Exp $
+ * $Id: JConstructorBlock.java,v 1.6 2003-08-29 19:25:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -175,9 +175,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JConstructorBlock other) {
   super.deepCloneInto(other);
-  other.constructorCall = (at.dms.kjc.JConstructorCall)at.dms.kjc.AutoCloner.cloneToplevel(this.constructorCall, this);
-  other.initializerCall = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.initializerCall, this);
-  other.sourceClass = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceClass, this);
+  other.constructorCall = (at.dms.kjc.JConstructorCall)at.dms.kjc.AutoCloner.cloneToplevel(this.constructorCall, other);
+  other.initializerCall = (at.dms.kjc.JStatement)at.dms.kjc.AutoCloner.cloneToplevel(this.initializerCall, other);
+  other.sourceClass = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.sourceClass, other);
   other.paramsLength = this.paramsLength;
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JFieldAccessExpression.java,v 1.9 2003-08-21 09:44:20 thies Exp $
+ * $Id: JFieldAccessExpression.java,v 1.10 2003-08-29 19:25:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -459,9 +459,9 @@ public Object deepClone() {
 protected void deepCloneInto(at.dms.kjc.JFieldAccessExpression other) {
   super.deepCloneInto(other);
   other.constantPrefix = this.constantPrefix;
-  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix, this);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, this);
-  other.field = (at.dms.kjc.CField)at.dms.kjc.AutoCloner.cloneToplevel(this.field, this);
+  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix, other);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, other);
+  other.field = (at.dms.kjc.CField)at.dms.kjc.AutoCloner.cloneToplevel(this.field, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

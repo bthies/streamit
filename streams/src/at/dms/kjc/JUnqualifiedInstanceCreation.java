@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnqualifiedInstanceCreation.java,v 1.6 2003-08-21 09:44:21 thies Exp $
+ * $Id: JUnqualifiedInstanceCreation.java,v 1.7 2003-08-29 19:25:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -251,10 +251,10 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JUnqualifiedInstanceCreation other) {
   super.deepCloneInto(other);
-  other.params = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.params, this);
-  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
-  other.local = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.local, this);
-  other.constructor = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.constructor, this);
+  other.params = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.params, other);
+  other.type = (at.dms.kjc.CClassType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, other);
+  other.local = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.local, other);
+  other.constructor = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.constructor, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JParenthesedExpression.java,v 1.8 2003-08-21 09:44:20 thies Exp $
+ * $Id: JParenthesedExpression.java,v 1.9 2003-08-29 19:25:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -159,7 +159,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JParenthesedExpression other) {
   super.deepCloneInto(other);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr, this);
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassContext.java,v 1.4 2003-08-21 09:44:20 thies Exp $
+ * $Id: CClassContext.java,v 1.5 2003-08-29 19:25:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -387,13 +387,13 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CClassContext other) {
   super.deepCloneInto(other);
-  other.initializerInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.initializerInfo, this);
-  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo, this);
-  other.decl = (at.dms.kjc.JTypeDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl, this);
+  other.initializerInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.initializerInfo, other);
+  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo, other);
+  other.decl = (at.dms.kjc.JTypeDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.decl, other);
   other.hasInitializer = this.hasInitializer;
   other.index = this.index;
   other.anonymous = this.anonymous;
-  other.self = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.self, this);
+  other.self = (at.dms.kjc.CSourceClass)at.dms.kjc.AutoCloner.cloneToplevel(this.self, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

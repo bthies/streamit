@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CClassType.java,v 1.6 2003-08-21 09:44:20 thies Exp $
+ * $Id: CClassType.java,v 1.7 2003-08-29 19:25:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -290,7 +290,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CClassType other) {
   super.deepCloneInto(other);
-  other.clazz = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.clazz, this);
+  other.clazz = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.clazz, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

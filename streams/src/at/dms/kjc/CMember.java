@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CMember.java,v 1.5 2003-08-21 09:44:20 thies Exp $
+ * $Id: CMember.java,v 1.6 2003-08-29 19:25:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -240,9 +240,9 @@ public Object deepClone() {
 protected void deepCloneInto(at.dms.kjc.CMember other) {
   super.deepCloneInto(other);
   other.serializationHandle = this.serializationHandle;
-  other.owner = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.owner, this);
+  other.owner = (at.dms.kjc.CClass)at.dms.kjc.AutoCloner.cloneToplevel(this.owner, other);
   other.modifiers = this.modifiers;
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, this);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, other);
   other.deprecated = this.deprecated;
 }
 

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMemberDeclaration.java,v 1.6 2003-08-21 09:44:20 thies Exp $
+ * $Id: JMemberDeclaration.java,v 1.7 2003-08-29 19:25:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -152,9 +152,9 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JMemberDeclaration other) {
   super.deepCloneInto(other);
-  other.export = (at.dms.kjc.CMember)at.dms.kjc.AutoCloner.cloneToplevel(this.export, this);
-  other.javadoc = (at.dms.compiler.JavadocComment)at.dms.kjc.AutoCloner.cloneToplevel(this.javadoc, this);
-  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments, this);
+  other.export = (at.dms.kjc.CMember)at.dms.kjc.AutoCloner.cloneToplevel(this.export, other);
+  other.javadoc = (at.dms.compiler.JavadocComment)at.dms.kjc.AutoCloner.cloneToplevel(this.javadoc, other);
+  other.comments = (at.dms.compiler.JavaStyleComment[])at.dms.kjc.AutoCloner.cloneToplevel(this.comments, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

@@ -85,7 +85,7 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRLatencySet other) {
   super.deepCloneInto(other);
-  other.entries = (java.util.TreeSet)at.dms.kjc.AutoCloner.cloneToplevel(this.entries, this);
+  other.entries = (java.util.TreeSet)at.dms.kjc.AutoCloner.cloneToplevel(this.entries, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

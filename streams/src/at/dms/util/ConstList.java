@@ -122,7 +122,7 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.util.ConstList other) {
-  other.list = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.list, this);
+  other.list = (java.util.List)at.dms.kjc.AutoCloner.cloneToplevel(this.list, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

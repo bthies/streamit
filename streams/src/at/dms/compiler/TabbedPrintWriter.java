@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: TabbedPrintWriter.java,v 1.4 2003-08-21 09:44:16 thies Exp $
+ * $Id: TabbedPrintWriter.java,v 1.5 2003-08-29 19:25:33 thies Exp $
  */
 
 package at.dms.compiler;
@@ -153,7 +153,7 @@ public Object deepClone() {
 
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.compiler.TabbedPrintWriter other) {
-  other.p = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p, this);
+  other.p = (java.io.PrintWriter)at.dms.kjc.AutoCloner.cloneToplevel(this.p, other);
   other.pos = this.pos;
   other.line = this.line;
   other.column = this.column;

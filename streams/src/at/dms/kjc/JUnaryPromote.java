@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JUnaryPromote.java,v 1.7 2003-08-21 09:44:21 thies Exp $
+ * $Id: JUnaryPromote.java,v 1.8 2003-08-29 19:25:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -164,8 +164,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JUnaryPromote other) {
   super.deepCloneInto(other);
-  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr, this);
-  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, this);
+  other.expr = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.expr, other);
+  other.type = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.type, other);
   other.needCheck = this.needCheck;
 }
 

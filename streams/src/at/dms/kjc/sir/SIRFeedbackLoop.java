@@ -358,10 +358,10 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRFeedbackLoop other) {
   super.deepCloneInto(other);
-  other.joiner = (at.dms.kjc.sir.SIRJoiner)at.dms.kjc.AutoCloner.cloneToplevel(this.joiner, this);
-  other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter, this);
-  other.delay = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.delay, this);
-  other.initPath = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.initPath, this);
+  other.joiner = (at.dms.kjc.sir.SIRJoiner)at.dms.kjc.AutoCloner.cloneToplevel(this.joiner, other);
+  other.splitter = (at.dms.kjc.sir.SIRSplitter)at.dms.kjc.AutoCloner.cloneToplevel(this.splitter, other);
+  other.delay = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.delay, other);
+  other.initPath = (at.dms.kjc.JMethodDeclaration)at.dms.kjc.AutoCloner.cloneToplevel(this.initPath, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

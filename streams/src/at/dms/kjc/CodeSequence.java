@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CodeSequence.java,v 1.3 2003-08-21 09:44:20 thies Exp $
+ * $Id: CodeSequence.java,v 1.4 2003-08-29 19:25:36 thies Exp $
  */
 
 /**
@@ -517,14 +517,14 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CodeSequence other) {
   super.deepCloneInto(other);
-  other.instructions = (at.dms.classfile.Instruction[])at.dms.kjc.AutoCloner.cloneToplevel(this.instructions, this);
-  other.handlers = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.handlers, this);
-  other.lines = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.lines, this);
+  other.instructions = (at.dms.classfile.Instruction[])at.dms.kjc.AutoCloner.cloneToplevel(this.instructions, other);
+  other.handlers = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.handlers, other);
+  other.lines = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.lines, other);
   other.pc = this.pc;
   other.labelAtEnd = this.labelAtEnd;
   other.lineNumber = this.lineNumber;
   other.lastLine = this.lastLine;
-  other.contexts = (java.util.Stack)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts, this);
+  other.contexts = (java.util.Stack)at.dms.kjc.AutoCloner.cloneToplevel(this.contexts, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

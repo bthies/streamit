@@ -149,9 +149,9 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.sir.SIRRegReceiverStatement other) {
   super.deepCloneInto(other);
-  other.portal = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.portal, this);
-  other.receiver = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.receiver, this);
-  other.itable = (at.dms.kjc.sir.SIRInterfaceTable)at.dms.kjc.AutoCloner.cloneToplevel(this.itable, this);
+  other.portal = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.portal, other);
+  other.receiver = (at.dms.kjc.sir.SIRStream)at.dms.kjc.AutoCloner.cloneToplevel(this.receiver, other);
+  other.itable = (at.dms.kjc.sir.SIRInterfaceTable)at.dms.kjc.AutoCloner.cloneToplevel(this.itable, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

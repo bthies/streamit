@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CBodyContext.java,v 1.4 2003-08-21 09:44:20 thies Exp $
+ * $Id: CBodyContext.java,v 1.5 2003-08-29 19:25:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -578,9 +578,9 @@ public Object deepClone() { at.dms.util.Utils.fail("Error in auto-generated clon
 protected void deepCloneInto(at.dms.kjc.CBodyContext other) {
   super.deepCloneInto(other);
   other.flowState = this.flowState;
-  other.variableInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.variableInfo, this);
-  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo, this);
-  other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables, this);
+  other.variableInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.variableInfo, other);
+  other.fieldInfo = (at.dms.kjc.CVariableInfo)at.dms.kjc.AutoCloner.cloneToplevel(this.fieldInfo, other);
+  other.throwables = (java.util.Hashtable)at.dms.kjc.AutoCloner.cloneToplevel(this.throwables, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

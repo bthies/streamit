@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: CTryFinallyContext.java,v 1.4 2003-08-21 09:44:20 thies Exp $
+ * $Id: CTryFinallyContext.java,v 1.5 2003-08-29 19:25:36 thies Exp $
  */
 
 package at.dms.kjc;
@@ -131,8 +131,8 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.CTryFinallyContext other) {
   super.deepCloneInto(other);
-  other.breaks = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.breaks, this);
-  other.continues = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.continues, this);
+  other.breaks = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.breaks, other);
+  other.continues = (java.util.Vector)at.dms.kjc.AutoCloner.cloneToplevel(this.continues, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

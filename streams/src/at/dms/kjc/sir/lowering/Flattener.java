@@ -50,7 +50,7 @@ public class Flattener {
 
 	// move field initializations into init function
 	FieldInitMover.moveStreamInitialAssignments(str);
-	
+
 	// propagate constants and unroll loops
 	System.err.print("Running Constant Prop and Unroll... ");
 	ConstantProp.propagateAndUnroll(str);

@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JMethodCallExpression.java,v 1.14 2003-08-21 09:44:20 thies Exp $
+ * $Id: JMethodCallExpression.java,v 1.15 2003-08-29 19:25:37 thies Exp $
  */
 
 package at.dms.kjc;
@@ -337,11 +337,11 @@ public Object deepClone() {
 /** Clones all fields of this into <other> */
 protected void deepCloneInto(at.dms.kjc.JMethodCallExpression other) {
   super.deepCloneInto(other);
-  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix, this);
-  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, this);
-  other.args = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.args, this);
-  other.method = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.method, this);
-  other.tapeType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.tapeType, this);
+  other.prefix = (at.dms.kjc.JExpression)at.dms.kjc.AutoCloner.cloneToplevel(this.prefix, other);
+  other.ident = (java.lang.String)at.dms.kjc.AutoCloner.cloneToplevel(this.ident, other);
+  other.args = (at.dms.kjc.JExpression[])at.dms.kjc.AutoCloner.cloneToplevel(this.args, other);
+  other.method = (at.dms.kjc.CMethod)at.dms.kjc.AutoCloner.cloneToplevel(this.method, other);
+  other.tapeType = (at.dms.kjc.CType)at.dms.kjc.AutoCloner.cloneToplevel(this.tapeType, other);
 }
 
 /** THE PRECEDING SECTION IS AUTO-GENERATED CLONING CODE - DO NOT MODIFY! */

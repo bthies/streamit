@@ -392,28 +392,29 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("#include <unistd.h>\n");
 	p.print("#include <signal.h>\n");
 	p.print("#include <string.h>\n");
+	p.print("#include <stdlib.h>\n");
 	p.print("#include <stdio.h>\n");
 	p.println();
 	p.print("#include <mysocket.h>\n");
-	p.print("#include <open_socket.h>\n");
+	p.print("#include <node_server.h>\n");
 	p.print("#include <init_instance.h>\n");
 	p.print("#include <thread_list_element.h>\n");
 	p.println();
 
 	p.print("int __number_of_iterations = 20;\n");
 	p.print("thread_list_element *thread_list_top = NULL;\n");
+	p.print("int *current_thread_state_flag;\n");
 	p.println();
 
 	for (int i = 0; i < threadNumber; i++) {
 	    
 	    p.print("extern void __declare_sockets_"+i+"();\n");
-	    p.print("extern void run_"+i+"();\n");
+	    p.print("extern void run_"+i+"(int *state_ptr);\n");
 	    p.print("static void *run_thread_"+i+"(void *param) {\n");
-	    p.print("  run_"+i+"();\n");
+	    p.print("  run_"+i+"(current_thread_state_flag);\n");
 	    p.print("}\n");
 
 	}
-
 
 	p.println();
 
@@ -428,18 +429,6 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("}\n");
 
-	p.println();
-
-	p.print("void listern_for_server() {\n");
-	p.print("  mysocket *sock;\n");
-	p.print("  sock = open_socket::listen(22223);\n");
-        p.print("  if (sock == NULL) return;\n");
-
-	p.print("}\n");
-	p.println();
-
-	p.print("void handle_server_command(char *command) {\n");
-	p.print("}\n");
 	p.println();
 
 	p.print("int main(int argc, char **argv) {\n");
@@ -470,16 +459,23 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 
 	    p.print("  if (get_myip() == lookup_ip(init_instance::get_node_name("+i+"))) {\n");
 
+
+	    p.print("    current_thread_state_flag = (int*)malloc(sizeof(int));\n");
+	    p.print("    *current_thread_state_flag = RUN_STATE; // RUN\n");
 	    p.print("    pthread_create(&id, NULL, run_thread_"+i+", (void*)\"thread"+i+"\");\n");
 
-	    p.print("    thread_list_top = new thread_list_element("+i+", id, thread_list_top);\n");
+	    p.print("    thread_list_top = new thread_list_element("+i+", id, current_thread_state_flag, thread_list_top);\n");
+	    
 	
 	    p.print("  }\n");
 	}
 
 	p.print("\n  signal(3, sig_recv);\n\n");
 
-	p.print("  for (;;) {}\n");
+	p.print("  node_server *node = new node_server(thread_list_top);\n");
+	p.print("  node->run_server();\n");
+
+	//p.print("  for (;;) {}\n");
 	
 	//p.print("  init_instance::close_sockets();\n");
 	//p.print("  return 0;\n");

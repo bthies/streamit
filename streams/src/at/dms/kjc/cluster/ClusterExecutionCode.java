@@ -757,6 +757,8 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 
 	JBlock block = new JBlock(null, new JStatement[0], null);
 
+	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "check_status", new JExpression[0]), null));
+
 	block.addStatement(new JExpressionStatement(null, new JMethodCallExpression(null, "check_messages", new JExpression[0]), null));
 
 	//reset the simple index

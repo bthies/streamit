@@ -217,12 +217,14 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	p.print("#include <sdep.h>\n");
 	p.print("#include <message.h>\n");
 	p.print("#include <timer.h>\n");
+	p.print("#include <thread_list_element.h>\n");
 
 	p.print("\n");
 
 	p.print("extern int __number_of_iterations;\n");
 	p.print("message *__msg_stack_"+selfID+";\n");
 	p.print("int __counter_"+selfID+" = 0;\n");
+	p.print("int *state_flag_"+selfID+";\n");
 
 	if (restrictedExecution) {
 	    p.print("int __credit_"+selfID+" = 0;\n");
@@ -326,6 +328,7 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
 
+	print("\nvoid check_status__"+selfID+"();\n");
 	print("\nvoid check_messages__"+selfID+"();\n");
 	print("\nvoid handle_message__"+selfID+"(mysocket *sock);\n");
 	print("\nvoid send_credits__"+selfID+"();\n");
@@ -342,6 +345,17 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	for (int i =0; i < methods.length; i++) {
 	    if (!methods[i].equals(work)) methods[i].accept(this);
 	}
+
+	//////////////////////////////////////////////
+	// Check Status
+
+	print("\nvoid check_status__"+selfID+"() {\n");
+	print("  if (*state_flag_"+selfID+" == RUN_STATE) return;\n");
+	print("  for(;;) {\n");
+	print("    if (*state_flag_"+selfID+" == RUN_STATE) return;\n");
+	print("  }\n");
+	print("}\n");
+
 
 	//////////////////////////////////////////////
 	// Check Messages
@@ -615,9 +629,10 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 
 
 	//now the run function
-	print("\nvoid run_"+selfID+"() {\n");
+	print("\nvoid run_"+selfID+"(int *state_ptr) {\n");
 
 	print("  int i;\n");
+	print("  state_flag_"+selfID+" = state_ptr;\n");
 
 	if (in != null) {
 	    print("  "+in.name()+"in = new peek_stream<"+self.getInputType().toString()+">(new mysocket(init_instance::get_incoming_socket("+in.getSource()+","+in.getDest()+",DATA_SOCKET)));\n");

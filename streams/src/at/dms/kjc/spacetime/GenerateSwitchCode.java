@@ -31,7 +31,7 @@ public class GenerateSwitchCode {
 			    }
 			}
 			
-			fw.write("; End of Address Communication\n");
+			fw.write("# End of Address Communication\n");
 			//write the initialization code
 			for (int i = 0; i < tile.getSwitchCode().size(true); i++) {
 			    fw.write("\t" + 

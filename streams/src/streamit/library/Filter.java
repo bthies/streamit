@@ -241,8 +241,10 @@ public abstract class Filter extends Stream
 
     public void setIOTypes(Class in, Class out)
     {
-        inType = in;
-        outType = out;
+        if (in != Void.TYPE)
+            inType = in;
+        if (out != Void.TYPE)
+            outType = out;
         multiPhaseStyle = true;
     }
 

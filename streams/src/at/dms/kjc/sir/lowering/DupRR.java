@@ -159,6 +159,9 @@ public class DupRR
         // Copy the init function from the split/join.
         newFilter.setInit(newInit);
 
+        // Replace the init function in the parent.
+        replaceParentInit(sj, newFilter);
+
         return newFilter;
     }
 
@@ -332,6 +335,32 @@ public class DupRR
         
         // All done.
         return newMethods;
+    }
+
+    private static void replaceParentInit(final SIRSplitJoin sj,
+                                          final SIRFilter nf)
+    {
+        SIRStream parent = sj.getParent();
+	// replace the SIRInitStatements in the parent
+	parent.getInit().accept(new SLIRReplacingVisitor() {
+		public Object visitInitStatement(SIRInitStatement oldSelf,
+						 JExpression[] oldArgs,
+						 SIRStream oldTarget) {
+		    // do the super
+		    SIRInitStatement self = 
+			(SIRInitStatement)
+			super.visitInitStatement(oldSelf, oldArgs, oldTarget);
+		    
+		    // if we're f1, change target to be <fused>
+		    if (self.getTarget()==sj) {
+			self.setTarget(nf);
+			return self;
+		    } else {
+			// otherwise, return self
+			return self;
+		    }
+		}
+	    });
     }
 }
 

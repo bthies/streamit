@@ -90,8 +90,42 @@ public class MakefileGenerator
 	
 	fw.write("include(\"<dev/basic.bc>\");\n");
 	
+	// create preamble
+	fw.write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\n");
+	fw.write("include(\"<dev/data_transmitter.bc>\");\n\n");
+
+	// create the instrumentation function
+	fw.write("// instrumentation code\n");
+	fw.write("fn streamit_instrument(val){\n");
+	fw.write("  local a;\n"); 
+	fw.write("  local b;\n");
+	fw.write("  Proc_GetCycleCounter(Machine_GetProc(machine,0), &a, &b);\n");
+	fw.write("  //printf(\"cycleHi %X, cycleLo %X\\n\", a, b);\n");
+	// use the same format string that generating a printf causes so we can use
+	// the same results script;
+	fw.write("  printf(\"[00: %08x%08x]: %d\\n\", a, b, val);\n");
+	fw.write("}\n\n");
+
+
 	//create the function to write the data
-	fw.write("if (FindFunctionInSymbolHash(gSymbolTable, \"dev_data_transmitter_init\",3) == NULL)\ninclude(\"<dev/data_transmitter.bc>\");\n\nfn dev_st_port_to_file_size(filename, size, port)\n{\n  local receive_device_descriptor = hms_new();\n  // open the file\n  receive_device_descriptor.fileName = filename;\n  receive_device_descriptor.theFile = fopen(receive_device_descriptor.fileName,\"w\");\n  verify(receive_device_descriptor.theFile != NULL,\n         \"### Failed to open output file\");\n  receive_device_descriptor.calc =\n    & fn(this)\n  {\n    local theFile = this.theFile;\n    while (1)\n    {\n      local value = this.receive();\n      fwrite(&value, size, 1, theFile);\n      fflush(theFile);\n    }\n  };\n  return dev_data_transmitter_init(\"st_port_to_file\",\n                                      port,\n                                      0,\n                                      receive_device_descriptor);\n}");
+	fw.write("fn dev_st_port_to_file_size(filename, size, port)\n{\n");
+	fw.write("local receive_device_descriptor = hms_new();\n");
+	fw.write("// open the file\n  ;");
+	fw.write("receive_device_descriptor.fileName = filename;\n  ");
+	fw.write("receive_device_descriptor.theFile = fopen(receive_device_descriptor.fileName,\"w\");\n");
+	fw.write("verify(receive_device_descriptor.theFile != NULL, \"### Failed to open output file\");\n");
+	fw.write("receive_device_descriptor.calc =\n");
+	fw.write("& fn(this)\n  {\n");
+	fw.write("local theFile = this.theFile;\n");
+	fw.write("while (1)\n {\n");
+	fw.write("     local value = this.receive();\n");
+	fw.write("     fwrite(&value, size, 1, theFile);\n");
+	fw.write("     streamit_instrument(value);\n");
+	fw.write("     fflush(theFile);\n");
+	fw.write("}\n");
+	fw.write("};\n");
+	fw.write("return dev_data_transmitter_init(\"st_port_to_file\", port,0,receive_device_descriptor);\n");
+	fw.write("}");
 
 	fw.write("\n{\n");
 

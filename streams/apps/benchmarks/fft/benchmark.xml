@@ -1,0 +1,21 @@
+<benchmark>
+  <name>fft</name>
+  <desc>Fast Fourier Transform kernel</desc>
+  <description>
+A medium-grained implementation of the fast Fourier transform.  There
+is a reordering stage, followed by a series of DFT stages.  Each DFT
+is implemented as a single StreamIt filter.
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="C" dir="c">
+      <file>driver.c</file>
+      <file>fft.c</file>
+    </impl>
+    <impl lang="Java" dir="streamit">
+      <file toplevel="FFT2">FFT2.java</file>
+      <file>FFTTestSource.java</file>
+      <file>FloatPrinter.java</file>
+    </impl>
+  </implementations>
+</benchmark>

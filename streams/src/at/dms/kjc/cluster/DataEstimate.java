@@ -12,7 +12,6 @@ public class DataEstimate {
 
     // SIRFilter -> Integer (size of global fields)
     private static HashMap saved_globals = new HashMap();
-    private static HashMap saved_locals = new HashMap();
 
     public static int getTypeSize(CType type) {
 
@@ -39,16 +38,7 @@ public class DataEstimate {
 
 	    SIRFilter filter = (SIRFilter)oper;
 	    globals = DataEstimate.filterGlobalsSize(filter);
-
-	    if (saved_locals.containsKey(filter)) {
-		locals = ((Integer)saved_locals.get(filter)).intValue();
-	    } else {
-		CodeEstimate est = new CodeEstimate(filter);
-		est.visitFilter(filter);
-		locals = est.getLocalsSize();
-		saved_locals.put(filter, new Integer(locals));
-	    }
-
+	    locals = CodeEstimate.estimateLocals(filter);
 	    return globals + locals;
 	}
 	

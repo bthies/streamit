@@ -219,10 +219,8 @@ public class FlatIRToCluster extends SLIREmptyVisitor implements StreamVisitor
 	print("\n");
 
 	int data = DataEstimate.filterGlobalsSize(self);
-	CodeEstimate est = new CodeEstimate(self);
-	est.visitFilter(self);
-	int code = est.getCodeSize();
-	int locals = est.getLocalsSize();
+	int code = CodeEstimate.estimateCode(self);
+	int locals = CodeEstimate.estimateLocals(self);
 	System.out.println("[globals: "+data+" locals: "+locals+" code: "+code+"]");
 
 	ClusterCodeGenerator gen = new ClusterCodeGenerator(self, self.getFields());

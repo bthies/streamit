@@ -8,6 +8,9 @@ import java.util.HashMap;
 
 public class CodeEstimate extends SLIREmptyVisitor {
 
+    private static HashMap saved_locals = new HashMap();
+    private static HashMap saved_code = new HashMap();
+
     static int METHOD_CALL_EXPR = 16;
     static int METHOD_CALL_PER_PARAM = 4;
 
@@ -33,14 +36,31 @@ public class CodeEstimate extends SLIREmptyVisitor {
     // returns the size of code, if you also need the size of 
     // local varaibles construct your own CodeEstimate 
     // instance and call visitFilter.
-    
-    public static int estimate(SIRFilter filter) {
-	int result;
+
+    private static CodeEstimate estimate(SIRFilter filter) {
 	CodeEstimate est = new CodeEstimate(filter);
 	est.visitFilter(filter);
-	result = est.getCodeSize();
-    	//System.out.println("Filter: "+filter.getName()+" code size: "+result);
-	return result;
+	saved_code.put(filter, new Integer(est.code_size));
+	saved_locals.put(filter, new Integer(est.locals_size));
+	return est;
+    }
+    
+    public static int estimateCode(SIRFilter filter) {
+
+	if (saved_code.containsKey(filter)) {
+	    return ((Integer)saved_code.get(filter)).intValue(); 
+	}
+
+	return estimate(filter).getCodeSize();
+    }
+
+    public static int estimateLocals(SIRFilter filter) {
+
+	if (saved_locals.containsKey(filter)) {
+	    return ((Integer)saved_locals.get(filter)).intValue(); 
+	}
+
+	return estimate(filter).getLocalsSize();
     }
 
     private int code_size;        // size of code

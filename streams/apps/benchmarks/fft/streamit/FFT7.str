@@ -1,5 +1,5 @@
 
-void->void pipeline FFT6() {
+void->void pipeline FFT7() {
 
   int N = 64;
 

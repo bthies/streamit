@@ -18,7 +18,7 @@ import at.dms.compiler.*;
  * In so doing, this also increases the peek, pop and push rates to take advantage of
  * the frequency transformation.
  * 
- * $Id: LEETFrequencyReplacer.java,v 1.16 2003-04-16 19:51:22 thies Exp $
+ * $Id: LEETFrequencyReplacer.java,v 1.17 2003-04-18 22:32:25 thies Exp $
  **/
 public class LEETFrequencyReplacer extends FrequencyReplacer{
     /** the name of the function in the C library that converts a buffer of real data from the time
@@ -239,9 +239,9 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	freqFilter.setInit(freqInit);
 
 	// do unrolling on the new filter.  (Unrolling is part of
-	// field prop; will get field prop as added bonus, shouldn't
-	// hurt except for exec. time.)
-	FieldProp.doPropagate(freqFilter);
+	// filter loweing; will get field propagation and stuff node
+	// optimization, etc., as added bonus.)
+	Flattener.lowerFilterContents(freqFilter, false);
 	
 	// now replace the current filter (self) with the frequency version
 	self.getParent().replace(self, freqFilter);
@@ -408,7 +408,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
 	JArrayAccessExpression arrAccessExpr;
 	arrAccessExpr = new JArrayAccessExpression(null,                    /* token reference */
 						   fldAccessExpr,           /* prefix */
-						   index); /* accessor */
+						   index,
+						   field.getType()); /* accessor */
 	/* now, make the assignment expression */
 	JAssignmentExpression assignExpr;
 	assignExpr = new JAssignmentExpression(null,          /* token reference */
@@ -695,8 +696,8 @@ public class LEETFrequencyReplacer extends FrequencyReplacer{
     public JStatement makeConstantForLoop(JVariableDefinition loopVar,
 					  int initVal, int maxVal,
 					  JStatement forBody) {
-	JStatement  forInit = makeAssignmentStatement(makeLocalVarExpression(loopVar),
-						      new JIntLiteral(initVal));  //i=initVal
+       JStatement  forInit = makeAssignmentStatement(makeLocalVarExpression(loopVar),
+						     new JIntLiteral(initVal));  //i=initVal
 	JExpression forCond = makeLessThanExpression(makeLocalVarExpression(loopVar),
 						     new JIntLiteral(maxVal));  //i<maxVal
 	JStatement  forIncr = makeIncrementStatement(makeLocalVarExpression(loopVar));  //i++

@@ -1,6 +1,6 @@
 /**
  * Class which runs defines which tests are run using the nightly regtest.
- * $Id: TestNightly.java,v 1.4 2003-07-10 18:04:12 dmaze Exp $
+ * $Id: TestNightly.java,v 1.5 2003-09-23 20:42:45 dmaze Exp $
  **/
 package streamittest;
 
@@ -49,6 +49,23 @@ public class TestNightly extends TestCase {
 	// standard and fusion
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
 				       CompilerInterface.FUSION));
+
+        // -O1
+        allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+                                       CompilerInterface.ALTCODEGEN |
+                                       CompilerInterface.DESTROYFIELDARRAY |
+                                       CompilerInterface.RATEMATCH |
+                                       CompilerInterface.WBS));
+
+        // -O2
+        allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+                                       CompilerInterface.UNROLL |
+                                       CompilerInterface.ALTCODEGEN |
+                                       CompilerInterface.DESTROYFIELDARRAY |
+                                       CompilerInterface.RATEMATCH |
+                                       CompilerInterface.REMOVE_GLOBALS |
+                                       CompilerInterface.SIMULATEWORK |
+                                       CompilerInterface.WBS));
     }
     
     /**
@@ -57,21 +74,28 @@ public class TestNightly extends TestCase {
     public static void addRawTests(TestSuite allTests) {
 	// note : we only run with raw 4 and partition now.
 	
-	// try one without partitioning just in case we want to
-	// compare with original performance
-	//allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-	//			       CompilerInterface.RAW[8]));
-
-	// try all configurations of raw with constprop and partition
-	// This was causing the regtest to go crazy, so I am removing
-	// all but 4
-	//for (int i=4; i<=8; i+=4) {
 	allTests.addTest(makeTestSuite(CompilerInterface.NONE |
-				       //CompilerInterface.RAW[i] |
 				       CompilerInterface.RAW[4] |
 				       CompilerInterface.PARTITION));
-	//}
 
+        // -O1
+        allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW[4] |
+                                       CompilerInterface.ALTCODEGEN |
+                                       CompilerInterface.DESTROYFIELDARRAY |
+                                       CompilerInterface.RATEMATCH |
+                                       CompilerInterface.WBS));
+
+        // -O2
+        allTests.addTest(makeTestSuite(CompilerInterface.NONE |
+				       CompilerInterface.RAW[4] |
+                                       CompilerInterface.UNROLL |
+                                       CompilerInterface.ALTCODEGEN |
+                                       CompilerInterface.DESTROYFIELDARRAY |
+                                       CompilerInterface.RATEMATCH |
+                                       CompilerInterface.REMOVE_GLOBALS |
+                                       CompilerInterface.SIMULATEWORK |
+                                       CompilerInterface.WBS));
     }
 
 

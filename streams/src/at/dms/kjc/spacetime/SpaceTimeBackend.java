@@ -40,10 +40,8 @@ public class SpaceTimeBackend
 	RenameAll.renameAllFilters(str);
 	
 	// move field initializations into init function
-	System.out.print("Moving initializers into init functions... ");
 	FieldInitMover.moveStreamInitialAssignments(str);
-	System.out.println("done.");
-	
+		
 	// propagate constants and unroll loop
 	System.out.println("Running Constant Prop and Unroll...");
 	ConstantProp.propagateAndUnroll(str);
@@ -51,10 +49,6 @@ public class SpaceTimeBackend
 
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
-
-	//SIRPrinter printer1 = new SIRPrinter();
-	//str.accept(printer1);
-	//printer1.close();
 
 	//VarDecl Raise to move array assignments up
 	new VarDeclRaiser().raiseVars(str);
@@ -65,9 +59,6 @@ public class SpaceTimeBackend
 	    System.out.println("Running Constant Field Propagation...");
 	    FieldProp.doPropagate(str);
 	    System.out.println("Done Constant Field Propagation...");
-	    //System.out.println("Analyzing Branches..");
-	    //new BlockFlattener().flattenBlocks(str);
-	    //new BranchAnalyzer().analyzeBranches(str);
 	}
 
 	Lifter.liftAggressiveSync(str);
@@ -81,9 +72,13 @@ public class SpaceTimeBackend
 
 	//mgordon's stuff
 	ListIterator initTrav = TraceTraversal.getTraversal(init).listIterator();    
-	ListIterator steadyTrav = TraceTraversal.getTraversal(steady).listIterator();    
+	ListIterator steadyTrav = TraceTraversal.getTraversal(steady).listIterator();
 
+	//create the raw execution code for the initialization phase
+	Rawify.run(initTrav, rawChip, true);
 	
+	//create the raw execution code for the steady-state
+	Rawify.run(initTrav, rawChip, false);
     }
 }
 

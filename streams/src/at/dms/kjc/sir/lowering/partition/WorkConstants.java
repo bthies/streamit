@@ -4,8 +4,11 @@ package at.dms.kjc.sir.lowering.partition;
  * This interface contains estimates of work for various operations.
  */
 interface WorkConstants {
-    // measured delay between consecutive constant print statements
-    int PRINT = 17;
+    // measured delay between consecutive constant print statements.
+    // Note that this is only in results-gathering mode, when printing
+    // is magic!  If running under the simulator, then it takes 23
+    // cycles.
+    int PRINT = 3;
     // tape operations -- have some overhead for index adjustment,
     // plus memory ops usually
     int PEEK = 3;

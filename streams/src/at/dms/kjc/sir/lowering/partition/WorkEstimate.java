@@ -169,6 +169,11 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
      */
     private int work;
 
+    /**
+     * The filter we're looking at.
+     */
+    private SIRFilter theFilter;
+
     private WorkVisitor() {
 	this.work = 0;
     }
@@ -184,8 +189,21 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 	    System.err.println("this filter has null work function: " + filter);
 	    return 0;
 	}
+        visitor.theFilter = filter;
 	filter.getWork().accept(visitor);
 	return visitor.work;
+    }
+
+    private JMethodDeclaration findMethod(String name) 
+    {
+        JMethodDeclaration[] methods = theFilter.getMethods();
+        for (int i = 0; i < methods.length; i++)
+        {
+            JMethodDeclaration method = methods[i];
+            if (method.getName().equals(name))
+                return method;
+        }
+        return null;
     }
 
     /* still need to handle:
@@ -482,7 +500,12 @@ class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 					  String ident,
 					  JExpression[] args) {
 	super.visitMethodCallExpression(self, prefix, ident, args);
-	work += METHOD_CALL;
+        System.err.println("Calling " + ident);
+        JMethodDeclaration target = findMethod(ident);
+        if (target != null)
+            target.accept(this);
+        else
+            work += METHOD_CALL;
     }
 
     /**

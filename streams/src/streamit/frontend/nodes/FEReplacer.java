@@ -1,5 +1,6 @@
 package streamit.frontend.nodes;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,7 +36,7 @@ import java.util.ArrayList;
  * perform some custom action.
  * 
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: FEReplacer.java,v 1.23 2003-05-21 16:03:29 dmaze Exp $
+ * @version $Id: FEReplacer.java,v 1.24 2003-06-25 15:29:27 dmaze Exp $
  */
 public class FEReplacer implements FEVisitor
 {
@@ -59,6 +60,23 @@ public class FEReplacer implements FEVisitor
     protected void addStatement(Statement stmt)
     {
         newStatements.add(stmt);
+    }
+
+    /**
+     * Adds a sequence of statements to the list of statements that
+     * replace the current one.  This should be called inside a
+     * statement visitor (and possibly inside a recursively called
+     * expression visitor, but take care).  Statements added go before
+     * the statement returned by the visitor, if any.  For example, it
+     * is legitimate to use <code>addStatement</code> to add a
+     * declaration for a variable that is used inside a rewritten
+     * statement, and return the statement from the visitor function.
+     * 
+     * @param stmt The statement to add
+     */ 
+    protected void addStatements(Collection stmts)
+    {
+        newStatements.addAll(stmts);
     }
 
     /**

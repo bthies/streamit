@@ -152,6 +152,8 @@ abstract class LDPConfigContainer extends LDPConfig {
 		    childCost = ( getScalingFactor(l[0], pipe.get(0)) * l[0].getCost().getDirectCost() + 
 				  getScalingFactor(l[1], pipe.get(1)) * l[1].getCost().getDirectCost() );
 		}
+		// put children back in <str>
+		((SIRContainer)str).reclaimChildren();
 
 		// get cost of self
 		LinearFilterRepresentation l = lfa.getLinearRepresentation(str);
@@ -176,23 +178,57 @@ abstract class LDPConfigContainer extends LDPConfig {
 				    get(x1, xPivot, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(0)) +
 				    get(xPivot+1, x2, y1, y2, LinearPartitioner.COLLAPSE_ANY, sj.get(1)) );
 	    }
-	    
-	    // try a horizontal cut
-	    for (int yPivot=y1; yPivot<y2; yPivot++) {
-		// break along <yPivot>
-		int[] arr = { 1 + (yPivot-y1), y2-yPivot };
-		PartitionGroup pg = PartitionGroup.createFromArray(arr);
-		SIRContainer factored;
-		// might have either pipeline or splitjoin at this point...
-		if (str instanceof SIRSplitJoin) {
-		    factored = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+
+	    // optimization: don't both with a horizontal cut if we're
+	    // dealing with a splitjoin, and all the children under
+	    // consideration are linear.  This is because combining
+	    // some subsegment of linear splitjoin children will never
+	    // lead to a performance improvemnt; instead, we should
+	    // consider each pipeline individually.
+	    boolean tryHoriz = false;
+	    if (x1==x2) {
+		// if we have a pipeline, try the horizontal cut always
+		tryHoriz = true;
+	    } else {
+		// if we're in 2-D cut mode, then see if there's a chance to try it
+		if (LinearPartitioner.ENABLE_TWO_DIMENSIONAL_CUTS) {
+		    // if we have a splijtoin, only try horiz if one of
+		    // children is non-linear
+		    search: 
+		    for (int x=x1; x<=x2; x++) {
+			for (int y=y1; y<=y2; y++) {
+			    if (!lfa.hasLinearRepresentation(childConfig(x, y).getStream())) {
+				tryHoriz = true;
+				break search;
+			    }
+			}
+		    }
 		} else {
-		    factored = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		    tryHoriz = false;
 		}
-		savings = Math.max( savings, 
-				    get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
-				    get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
 	    }
+
+	    if (tryHoriz) {
+		// try a horizontal cut
+		for (int yPivot=y1; yPivot<y2; yPivot++) {
+		    // break along <yPivot>
+		    int[] arr = { 1 + (yPivot-y1), y2-yPivot };
+		    PartitionGroup pg = PartitionGroup.createFromArray(arr);
+		    SIRContainer factored;
+		    // might have either pipeline or splitjoin at this point...
+		    if (str instanceof SIRSplitJoin) {
+			factored = RefactorSplitJoin.addSyncPoints((SIRSplitJoin)str, pg);
+		    } else {
+			factored = RefactorPipeline.addHierarchicalChildren((SIRPipeline)str, pg);
+		    }
+		    savings = Math.max( savings, 
+					get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, factored.get(0)) +
+					get(x1, x2, yPivot+1, y2, LinearPartitioner.COLLAPSE_ANY, factored.get(1)) );
+		}
+	    }
+	    // put children back in <str>
+	    ((SIRContainer)str).reclaimChildren();
+
 	    break;
 	}
 	    
@@ -285,7 +321,10 @@ abstract class LDPConfigContainer extends LDPConfig {
 		}
 	    }
 
-	    // try a horizontal cut
+	    // try a horizontal cut -- note that we should never get
+	    // this far if we skipped the horizontal cut above, as we
+	    // should've found the traceback in the vertical cut
+	    // section
 	    for (int yPivot=y1; yPivot<y2; yPivot++) {
 		// break along <yPivot>
 		if (A[x1][x2][y1][y2][collapse] == (get(x1, x2, y1, yPivot, LinearPartitioner.COLLAPSE_ANY, str) +

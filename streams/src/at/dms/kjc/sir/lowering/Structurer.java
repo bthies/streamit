@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.Arrays;
 
 /**
  * This creates structures (inner classes) to encapsulate the state of
@@ -49,6 +50,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * that was traversed.
      */
     private JClassDeclaration toFlatClass(JInterfaceDeclaration[] inners) {
+	// add <inners> to <structs>
+	structs.addAll(Arrays.asList(inners));
 	// construct resulting class
 	return new JClassDeclaration(/* TokenReference where */
 				     null,
@@ -67,7 +70,8 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				     flatMethods.toArray(JMethodDeclaration.
 							 EMPTY),
 				     /* JTypeDeclaration[] inners */
-				     inners,
+				     (JTypeDeclaration[])
+				     structs.toArray(new JTypeDeclaration[0]),
 				     /* JPhylum[] initializers */
 				     null,
 				     /* JavadocComment javadoc */

@@ -8,6 +8,8 @@ import at.dms.kjc.sir.lowering.*;
 import at.dms.compiler.*;
 import java.util.*;
 
+import at.dms.kjc.cluster.CodeEstimate;
+
 /**
  * Provides a means for estimating the amount of work in a stream graph.
  *
@@ -135,14 +137,17 @@ public class WorkEstimate {
      * Returns estimate of instruction code for <filter>
      */
     public int getICodeSize(SIRFilter filter) {
+
 	/* -- Uncomment this code for beamformer, and it will
               demonstrate that the "Magnitude" filters are not fused
-              with anyone because their icode is too big.
+              with anyone because their icode is too big.	
 	if (filter.getIdent().startsWith("Mag")) {
 	    return 101;
 	}
+	return 1;
 	*/
-	return 0;
+
+	return CodeEstimate.estimate(filter);
     }
 
     /**

@@ -170,13 +170,13 @@ public class FusePipe {
     private static boolean isFusable(SIRStream str,List pipelineElems) {
 	// don't allow two-stage filters that peek
 	if (str instanceof SIRTwoStageFilter) {
-	    //System.err.println("Couldn't fuse " + str + " because it is 2-stage filter");
 	    //Can fuse in this specific case
 	    if((pipelineElems.get(0)==str)&&(((SIRTwoStageFilter)str).getInitPush()==0))
 		return true;
+	    //System.err.println("Couldn't fuse " + str.getName() + " in pipeline because it is 2-stage filter");
 	    return false;
 	}
-	if ((str instanceof SIRFilter) && ((SIRFilter)str).needsWork()) {
+	if ((str instanceof SIRFilter) && ((SIRFilter)str).getWork()!=null) {
 	    return true;
 	} else {
 	    //System.err.println("Couldn't fuse " + str + " because it isn't filter or doesn't need work");
@@ -205,6 +205,10 @@ public class FusePipe {
 	for (int i=0; i<partitions.length; i++) {
 	    // only need to fuse for partitions[i]>1
 	    if (partitions[i]!=1) {
+		Utils.assert(first[i].getParent()==pipe, "Parent/child inconsistency with parent=" 
+			     + first[i].getParent() + " and pipe=" + pipe + " and (first) child=" + first[i]);
+		Utils.assert(last[i].getParent()==pipe, "Parent/child inconsistency with parent=" 
+			     + last[i].getParent() + " and pipe=" + pipe + " and (last) child=" + last[i]);
 		fuse(first[i], last[i]);
 	    }
 	}

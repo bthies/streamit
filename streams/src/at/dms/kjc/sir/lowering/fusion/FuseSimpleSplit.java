@@ -63,7 +63,7 @@ public class FuseSimpleSplit {
 	// replace in parent
 	replaceInParent(sj, fused);
 
-        return newFilter;
+        return fused;
     }
 
     /**

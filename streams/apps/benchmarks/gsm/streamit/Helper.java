@@ -92,6 +92,7 @@ short gsm_mult_r(short a, short b)
 short gsm_abs(short a)
 {
     short answer;
+    int temp;
     if (a < 0)
 	{
 	    if (a == -32768)
@@ -100,7 +101,7 @@ short gsm_abs(short a)
 		}
 	    else
 		{
-		    int temp = a * -1;
+		    temp = a * -1;
 		    if (temp >= 32767)
 			{
 			    answer = 32767;

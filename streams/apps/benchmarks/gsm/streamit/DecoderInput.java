@@ -23,11 +23,12 @@ public void initInputArrays() {
 
 public void getParameters(short[] input)
 {
+    int i, j, k, l, m;
     int input_index = 0;
     int num_bits = 0;
 
     initInputArrays();
-    for(int i = 0; i < 8; i++)
+    for(i = 0; i < 8; i++)
 	{
 	
 	    switch(i)
@@ -48,43 +49,43 @@ public void getParameters(short[] input)
 	
 	  
 	    mLarParameters[i] = 0;
-	    for (int j = 0; j < num_bits; j++, input_index++)
+	    for (j = 0; j < num_bits; j++, input_index++)
 		{
 		    mLarParameters[i] |= input[input_index] << (num_bits - 1 - i);
 		}
 	}
     
     //Sub-frames 1 through 4!
-    for (int k = 0; k < 4; k++)
+    for (k = 0; k < 4; k++)
 	{
 	    mLtpOffset[k] = 0;
-	    for (int l = 0; l < 7; l++)
+	    for (l = 0; l < 7; l++)
 		{
 		    mLtpOffset[k] |= input[input_index] << (6 - l);
 		    input_index++;
 		}
 	    mLtpGain[k] = 0;
-	    for (int l = 0; l < 2; l++)
+	    for (l = 0; l < 2; l++)
 		{
 		    mLtpGain[k] |= input[input_index] << (1 - l);
 		    input_index++;
 		}
 	    mRpeGridPosition[k] = 0;
-	    for (int l = 0; l < 2; l++)
+	    for (l = 0; l < 2; l++)
 		{
 		    mRpeGridPosition[k] |= input[input_index] << (1 - l);
 		    input_index++;
 		}
 	    mRpeMagnitude[k] = 0;
-	    for (int l = 0; l < 6; l++)
+	    for (l = 0; l < 6; l++)
 		{
 		    mRpeMagnitude[k] |= input[input_index] << (5 - l);
 		    input_index++;
 		}
-	    for(int l = 0; l < 13; l++)
+	    for(l = 0; l < 13; l++)
 		{
 		    mSequence[k+4*l] = 0;
-		    for (int m = 0; m < 3; m++)
+		    for (m = 0; m < 3; m++)
 			{
 			    mSequence[k+4*l] |= input[input_index] << (2 - m);
 			    input_index++;

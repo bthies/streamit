@@ -31,6 +31,7 @@ class RPEDecodeFilter extends Filter
     short[] ep;
 
 #include "Helper.java"
+#define EP_LENGTH 40
 
     public void init() 
     {
@@ -39,7 +40,7 @@ class RPEDecodeFilter extends Filter
 	mXmc = new short[13];   //mSequence
 	//others are in work() method	
 	xmp = new short[13]; //intermediary
-	ep = new short[40];  //output
+	ep = new short[EP_LENGTH];  //output
 
 	////////////////////////////////////////////
 	// assign the members of the FAC array
@@ -57,28 +58,29 @@ class RPEDecodeFilter extends Filter
 
     public void work() 
     {
+	short i, k, xmaxc, mc, exp, mant, temp, temp1, temp2, temp3;
 	/**
 	 *  Inputs to RPEDecodeFilter: Xmaxc - Maximum value of the 13 bits, 
 	 *                     Xmc - 13 bit sample
 	 *                     Mc - 2 bit grid positioning
 	 */
 	
-	for (short i = 0; i < 13; i++)
+	for (i = 0; i < 13; i++)
 	    {
 		mXmc[i] = input.popShort();
 	    }
-	short xmaxc = input.popShort();    //mRpeMagnitude
-	short mc = input.popShort();       //mRpeGridPosition
+	xmaxc = input.popShort();    //mRpeMagnitude
+	mc = input.popShort();       //mRpeGridPosition
 
 	 
 	//Get the exponent, mantissa of Xmaxc:
        
-	short exp = 0;
+	exp = 0;
 	if (xmaxc > 15)
 	    {
 		exp = gsm_sub(shortify(xmaxc >> 3), (short) 1);
 	    }
-	short mant = gsm_sub(xmaxc, shortify(exp << 3));
+	mant = gsm_sub(xmaxc, shortify(exp << 3));
 	
 	//normalize mantissa 0 <= mant <= 7;
 	
@@ -103,12 +105,11 @@ class RPEDecodeFilter extends Filter
 	 *  the mantissa of xmaxc (FAC[0..7]).
 	 */
 	
-	short temp;
-	short temp1 = FAC[mant];
-	short temp2 = gsm_sub((short) 6, exp);
-	short temp3 = shortify(1 << gsm_sub(temp2, (short) 1));
+	temp1 = FAC[mant];
+	temp2 = gsm_sub((short) 6, exp);
+	temp3 = shortify(1 << gsm_sub(temp2, (short) 1));
 
-	for (short i = 0; i < 13; i++)
+	for (i = 0; i < 13; i++)
 	    {
 		temp = gsm_sub(shortify(mXmc[i] << 1), (short) 7);    //3 bit unsigned
 		temp <<= 12;                 //16 bit signed
@@ -126,17 +127,17 @@ class RPEDecodeFilter extends Filter
 	 */
 	//output!
 
-	for(short k = 0; k < 40; k++)
+	for(k = 0; k < 40; k++)
 	    {
 		ep[k] = 0;
 	    }
-	for(short i = 0; i < 12; i++)
+	for(i = 0; i < 12; i++)
 	    {
 		//System.out.println("accessing " + (mc+(3*i)));
 		ep[mc + (3 * i)] = xmp[i];
 	    } 
 	//output the sucker!
-	for (short i = 0; i < ep.length; i++)
+	for (i = 0; i < EP_LENGTH; i++)
 	    {
 		output.pushShort(ep[i]);
 	    }
@@ -171,14 +172,15 @@ class LTPFilter extends Filter
 
     public void work()  //output:  drpp
     {
+	short i, nr, brp, drpp;
 	short mBcr = input.popShort();  //mLtpGain
 	short mNcr = input.popShort();  //mLtpOffset
 	//do it!
-	for (short i = 0; i < 160; i++)
+	for (i = 0; i < 160; i++)
 	    {
 		drp[i] = input.popShort(); //drp from AdditionUpdateFilter
 	    }
-	short nr = mNcr;
+	nr = mNcr;
 	if ((mNcr < 40) || (mNcr > 120))
 	    {
 		nr = nrp;
@@ -186,9 +188,9 @@ class LTPFilter extends Filter
 	nrp = nr;
 
 	//Decoding of the LTP gain mBcr
-	short brp = QLB[mBcr];
-	short drpp = 1;
-	for (short i = 121; i < 161; i++)
+	brp = QLB[mBcr];
+	drpp = 1;
+	for (i = 121; i < 161; i++)
 	    {
 		drpp = gsm_mult_r(brp, drp[i - nr]);   //delay and multiply operations
 	    } 
@@ -204,14 +206,16 @@ class AdditionUpdateFilter extends Filter
     short[] drp;
 
 #include "Helper.java"
+#define DRP_LENGTH 160
 
     public void init() 
     {
+	short i;
 	input = new Channel(Short.TYPE, 41);
 	output = new Channel(Short.TYPE, 160);
 	ep = new short[40]; //input
-	drp = new short[160];  //output
-	for (short i = 0; i < drp.length; i++)
+	drp = new short[DRP_LENGTH];  //output
+	for (i = 0; i < DRP_LENGTH; i++)
 	    {
 		drp[i] = 0;   //initial conditions
 	    }
@@ -219,23 +223,24 @@ class AdditionUpdateFilter extends Filter
 
     public void work() 
     {
+	short i, j, k, drpp;
 	//get inputs:
-	for (short i = 0; i < 40; i++)
+	for (i = 0; i < 40; i++)
 	    {
 		ep[i] = input.popShort();
 	    }
-	short drpp = input.popShort();
+	drpp = input.popShort();
 
-	for (short j = 121; j < 160; j++)  //add part!
+	for (j = 121; j < 160; j++)  //add part!
 	    {
 		drp[j] = gsm_add(ep[j - 121], drpp);
 	    }
-	for (short k = 0; k < 120; k++)    //update part!
+	for (k = 0; k < 120; k++)    //update part!
 	    {
 		drp[k] = drp[k + 40];
 	    }
 	
-	for (short i = 0; i < drp.length; i++)  //output!
+	for (i = 0; i < DRP_LENGTH; i++)  //output!
 	    {
 		output.pushShort(drp[i]);
 	    }
@@ -262,29 +267,37 @@ class ShortTermSynthFilter extends Filter
     short[] sr; //output!
 
 #include "Helper.java"
+#define MPREVLARPP_LENGTH 8
+#define V_LENGTH 9
+#define MDRPIN_LENGTH 160
+#define MDRP_LENGTH 40
+#define MLARC_LENGTH 8
+#define MLARPP_LENGTH 8
+#define SR_LENGTH 160
 
     public void init() 
     {
+	short i;
 	input = new Channel(Short.TYPE, 168);
 	output = new Channel(Short.TYPE, 160);
-	mdrpin = new short[160];
-	mdrp = new short[40];
-	mLARc = new short[8];
-	mLARpp = new short[8];
-	mprevLARpp = new short[8];
-	for(short i = 0; i < mprevLARpp.length; i++)
+	mdrpin = new short[MDRPIN_LENGTH];
+	mdrp = new short[MDRP_LENGTH];
+	mLARc = new short[MLARC_LENGTH];
+	mLARpp = new short[MLARPP_LENGTH];
+	mprevLARpp = new short[MPREVLARPP_LENGTH];
+	for(i = 0; i < MPREVLARPP_LENGTH; i++)
 	    {
 		mprevLARpp[i] = 0;
 	    }
 	mLARp = new short[8];
 	mrrp = new short[8];
 	wt = new short[160];
-	v = new short[9];
-	for (short i = 0; i < v.length; i++)
+	v = new short[V_LENGTH];
+	for (i = 0; i < V_LENGTH; i++)
 	    {
 		v[i] = 0;
 	    }
-	sr = new short[160];
+	sr = new short[SR_LENGTH];
 
 	//////////////////////////////////////////////////
 	// assign elements of INVA array
@@ -328,26 +341,28 @@ class ShortTermSynthFilter extends Filter
 
     public void work() 
     {
-	for (short i = 0; i < mdrpin.length; i++)
+	int i;
+	short j, temp, temp1, temp2, k, sri;
+	for (i = 0; i < MDRPIN_LENGTH; i++)
 	    {
 		mdrpin[i] = input.popShort();
 	    }
 	//truncate to only get mdrpin[120...159]
-	for (int i = 0; i < mdrp.length; i++)
+	for (i = 0; i < MDRP_LENGTH; i++)
 	    {
 		mdrp[i] = mdrpin[i + 120];
 	    }
-	for (short i = 0; i < mLARc.length; i++)
+	for (i = 0; i < MLARC_LENGTH; i++)
 	    {
 		mLARc[i] = input.popShort();   //fix inputs!!
 	    }
 	
 	
 	//Decoding of the coded Log-Area ratios:
-	for (short i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	    {
-		short temp1 = shortify((gsm_add(mLARc[i], MIC[i])) << 10);
-		short temp2 = shortify(B[i] << 10);
+		temp1 = shortify((gsm_add(mLARc[i], MIC[i])) << 10);
+		temp2 = shortify(B[i] << 10);
 		temp1 = gsm_sub(temp1, temp2);
 		temp1 = gsm_mult_r(INVA[i], temp1);
 		mLARpp[i] = gsm_add(temp1, temp1);
@@ -355,46 +370,46 @@ class ShortTermSynthFilter extends Filter
 	//Computation of the quantized reflection coefficients
 
 	//Interpolation of mLARpp to get mLARp:
-	for (short k = 0; k < 13; k++)
+	for (k = 0; k < 13; k++)
 	    {
-		for(short i = 0; i < 8; i++)
+		for(i = 0; i < 8; i++)
 		    {
 			mLARp[i] = gsm_add(shortify(mprevLARpp[i] >> 2), shortify(mLARpp[i] >> 2));
 			mLARp[i] = gsm_add(mLARp[i],  shortify(mprevLARpp[i] >> 1));
 		    }
 	    }
-	for (short k = 13; k < 27; k++)
+	for (k = 13; k < 27; k++)
 	    {
-		for (short i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		    {
 			mLARp[i] = gsm_add(shortify(mprevLARpp[i] >> 1), shortify(mLARpp[i] >> 1));
 		    }
 	    }
-	for (short k = 27; k < 39; k++)
+	for (k = 27; k < 39; k++)
 	    {
-		for (short i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		    {
 			mLARp[i] = gsm_add(shortify(mprevLARpp[i] >> 2), shortify(mLARpp[i] >> 2));
 			mLARp[i] = gsm_add(mLARp[i], shortify(mLARpp[i] >> 1));
 		    }
 	    }
-	for (short k = 40; k < 160; k++)
+	for (k = 40; k < 160; k++)
 	    {
-		for (short i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		    {
 			mLARp[i] = mLARpp[i];
 		    }
 	    }
 	//set current LARpp to previous:
-	for (short j = 0; j < mprevLARpp.length; j++)
+	for (j = 0; j < MPREVLARPP_LENGTH; j++)
 	    {
 		mprevLARpp[j] = mLARpp[j];
 	    }
 
 	//Compute mrrp[0..7] from mLARp[0...7]
-	for (short i = 0; i < 8; i++)
+	for (i = 0; i < 8; i++)
 	    {
-		short temp = gsm_abs(mLARp[i]);
+		temp = gsm_abs(mLARp[i]);
 		if (temp < 11059)
 		    {
 			temp = shortify(temp << 1);
@@ -419,28 +434,28 @@ class ShortTermSynthFilter extends Filter
 
 	//Short term synthesis filtering:  uses drp[0..39] and rrp[0...7] 
 	// to produce sr[0...159].  A temporary array wt[0..159] is used.
-	for (short k = 0; k < 40; k++)
+	for (k = 0; k < 40; k++)
 	    {
 		wt[k] = mdrp[k];
 	    }
-	for (short k = 0; k < 40; k++)
+	for (k = 0; k < 40; k++)
 	    {
 		wt[40+k] = mdrp[k];
 	    }
-	for (short k = 0; k < 40; k++)
+	for (k = 0; k < 40; k++)
 	    {
 		wt[80+k] = mdrp[k];
 	    }
-	for (short k = 0; k < 40; k++)
+	for (k = 0; k < 40; k++)
 	    {
 		wt[120+k] = mdrp[k];
 	    }
 	//below is supposed to be from index_start to index_end...how is
 	//this different from just 0 to 159?
-	for (short k = 0; k < 13; k++)
+	for (k = 0; k < 13; k++)
 	    {
-		short sri = wt[k];
-		for (short i = 1; i < 8; i++)
+		sri = wt[k];
+		for (i = 1; i < 8; i++)
 		    {
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
@@ -449,10 +464,10 @@ class ShortTermSynthFilter extends Filter
 		v[0] = sri;
 	    }
 
-	for (short k = 13; k < 27; k++)
+	for (k = 13; k < 27; k++)
 	    {
-		short sri = wt[k];
-		for (short i = 1; i < 8; i++)
+		sri = wt[k];
+		for (i = 1; i < 8; i++)
 		    {
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
@@ -461,10 +476,10 @@ class ShortTermSynthFilter extends Filter
 		v[0] = sri;
 	    }
 
-	for (short k = 27; k < 40; k++)
+	for (k = 27; k < 40; k++)
 	    {
-		short sri = wt[k];
-		for (short i = 1; i < 8; i++)
+		sri = wt[k];
+		for (i = 1; i < 8; i++)
 		    {
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
@@ -473,10 +488,10 @@ class ShortTermSynthFilter extends Filter
 		v[0] = sri;
 	    }	
 
-	for (short k = 40; k < 160; k++)
+	for (k = 40; k < 160; k++)
 	    {
-		short sri = wt[k];
-		for (short i = 1; i < 8; i++)
+		sri = wt[k];
+		for (i = 1; i < 8; i++)
 		    {
 			sri = gsm_sub(sri, gsm_mult(mrrp[8-i], v[8-i]));
 			v[9-i] = gsm_add(v[8-i], gsm_mult_r(mrrp[8-i], sri));
@@ -485,7 +500,7 @@ class ShortTermSynthFilter extends Filter
 		v[0] = sri;
 	    }
 
-	for (short j = 0; j < sr.length; j++)
+	for (j = 0; j < SR_LENGTH; j++)
 	    {
 		output.pushShort(sr[j]);
 	    }
@@ -501,11 +516,13 @@ class LARInputFilter extends Filter
     boolean donepushing;
 
 #include "DecoderInput.java"
+#define MDATA_LENGTH 151840
+#define SINGLE_FRAME_LENGTH 260
 
     public void init()
     {
-	mdata = new short[151840];
-	single_frame = new short[260];
+	mdata = new short[MDATA_LENGTH];
+	single_frame = new short[SINGLE_FRAME_LENGTH];
 	input = new Channel(Short.TYPE, 151840);
 	output = new Channel(Short.TYPE, 8); 
 	donepushing = false;
@@ -513,7 +530,9 @@ class LARInputFilter extends Filter
 
     public void work()
     {
-	for (int i = 0; i < mdata.length; i++)
+	int i, j, k;
+	int frame_index = 0;
+	for (i = 0; i < MDATA_LENGTH; i++)
 	    {
 		mdata[i] = input.popShort();
 	    }
@@ -522,10 +541,9 @@ class LARInputFilter extends Filter
 	    {
 		//AssertedClass.SERROR("Done Pushing at LARInputFilter!");
 	    }
-	int frame_index = 0;
-	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	    {
-		for (int k = 0; k < single_frame.length; k++)
+		for (k = 0; k < SINGLE_FRAME_LENGTH; k++)
 		    {
 			single_frame[k] = mdata[frame_index + k];
 		    }
@@ -534,7 +552,7 @@ class LARInputFilter extends Filter
 	  
 	
 		//now, push the stuff on!
-		for (int i = 0; i < 8; i++)
+		for (i = 0; i < 8; i++)
 		    {
 			output.pushShort(mLarParameters[i]);
 		    }
@@ -552,48 +570,53 @@ class PostProcessingFilter extends Filter
     short msr;
 
 #include "Helper.java"
+#define MSR_LENGTH 160
+#define SRO_LENGTH 160
+#define SROP_LENGTH 160
 
     public void init() 
     {
 	input = new Channel(Short.TYPE, 160);
 	output = new Channel(Short.TYPE, 160);
-	mSr = new short[160];
-	sro = new short[160];
-	srop = new short[160];
+	mSr = new short[MSR_LENGTH];
+	sro = new short[SRO_LENGTH];
+	srop = new short[SROP_LENGTH];
 	msr = 0; //initial condition
     }
 
     public void work() 
     {
-	for (short i = 0; i < mSr.length; i++)
+	int a;
+	short i, k, temp;
+	for (i = 0; i < MSR_LENGTH; i++)
 	    {
 		mSr[i] = input.popShort();
 	    }
 
 	//De-emphasis filtering!
-	for (short k = 0; k < mSr.length; k++)
+	for (k = 0; k < MSR_LENGTH; k++)
 	    {
-		short temp = gsm_add(mSr[k], gsm_mult_r(msr, (short) 28180));
+		temp = gsm_add(mSr[k], gsm_mult_r(msr, (short) 28180));
 		msr = temp;
 		sro[k] = msr;
 	    }
 
 	//upscaling of output signal:
-	for (short k = 0; k < srop.length; k++)
+	for (k = 0; k < SROP_LENGTH; k++)
 	    {
 		srop[k] = gsm_add(sro[k], sro[k]);
 	    }
 
 	//truncation of the output variable:
-	for (short k = 0; k < srop.length; k++)
+	for (k = 0; k < SROP_LENGTH; k++)
 	    {
 		srop[k] = shortify(srop[k] / 8);
 		srop[k] = gsm_mult(srop[k], (short) 8);
 	    }
 	
-	for (int a = 0; a < srop.length; a++)
+	for (a = 0; a < SROP_LENGTH; a++)
 	    {
-		if(a == srop.length - 1)
+		if(a == SROP_LENGTH - 1)
 		    {
 			//System.out.println("Running last iteration of PostProcess!");
 		    }
@@ -610,11 +633,12 @@ class LTPInputFilter extends Filter
     boolean donepushing;
 
 #include "DecoderInput.java"
+#define MDATA_LENGTH 151840
 
     public void init()
     {
-	mdata = new short[151840];
-	single_frame = new short[260];
+	mdata = new short[MDATA_LENGTH];
+	single_frame = new short[SINGLE_FRAME_LENGTH];
 	input = new Channel(Short.TYPE, 151840);
 	output = new Channel(Short.TYPE, 8);
 	donepushing = false;
@@ -622,7 +646,9 @@ class LTPInputFilter extends Filter
 
     public void work()
     {
-	for (int i = 0; i < mdata.length; i++)
+	int i, j, k;
+	int frame_index = 0;
+	for (i = 0; i < MDATA_LENGTH; i++)
 	    {
 		mdata[i] = input.popShort();
 	    }
@@ -631,10 +657,9 @@ class LTPInputFilter extends Filter
 	    {
 		//AssertedClass.SERROR("Done Pushing at LTPInputFilter!");
 	    }
-	int frame_index = 0;
-	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	    {
-		for (int k = 0; k < single_frame.length; k++)
+		for (k = 0; k < SINGLE_FRAME_LENGTH; k++)
 		    {
 			single_frame[k] = mdata[frame_index + k];
 		    }
@@ -643,7 +668,7 @@ class LTPInputFilter extends Filter
 	  	  
 	  
 		//now, push the stuff on!
-		for (int i = 0; i < 4; i++)
+		for (i = 0; i < 4; i++)
 		    {
 			output.pushShort(mLtpGain[i]);
 			output.pushShort(mLtpOffset[i]);
@@ -734,8 +759,8 @@ class RPEInputFilter extends Filter
     
     public void init()
     {
-	mdata = new short[151840];
-	single_frame = new short[260];
+	mdata = new short[MDATA_LENGTH];
+	single_frame = new short[SINGLE_FRAME_LENGTH];
 	input = new Channel(Short.TYPE, 151840);
 	output = new Channel(Short.TYPE, 60); 
 	donepushing = false;
@@ -743,8 +768,10 @@ class RPEInputFilter extends Filter
 
     public void work()
     {
+	int i, j, k, a;
+	int frame_index = 0;
 	//System.err.println("I get here!!!");
-	for (int i = 0; i < mdata.length; i++)
+	for (i = 0; i < MDATA_LENGTH; i++)
 	    {
 		mdata[i] = input.popShort();
 	    }
@@ -754,10 +781,9 @@ class RPEInputFilter extends Filter
 		//AssertedClass.SERROR("Done Pushing at RPEInputFilter!");
 	    }
 
-	int frame_index = 0;
-	for (int j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
+	for (j = 0; j < 584; j++)  //only pushing one in for now, should be 0 to 584
 	    {
-		for (int k = 0; k < single_frame.length; k++)
+		for (k = 0; k < SINGLE_FRAME_LENGTH; k++)
 		    {
 			single_frame[k] = mdata[frame_index + k];
 		    }
@@ -766,9 +792,9 @@ class RPEInputFilter extends Filter
 	  
 	  
 		//now, push the stuff on!
-		for (int i = 0; i < 4; i++)
+		for (i = 0; i < 4; i++)
 		    {
-			for (int a = 0; a < 13; a++)
+			for (a = 0; a < 13; a++)
 			    {
 				output.pushShort(mSequence[i+4*a]);
 			    }
@@ -789,22 +815,25 @@ class RPEInputFilter extends Filter
  */
 class HoldFilter extends Filter
 {
-    short[] mDrp;    
+    short[] mDrp;
+
+#define MDRP_LONG_LENGTH 160
 
     public void init()
     {
 	input = new Channel(Short.TYPE, 160);
 	output = new Channel(Short.TYPE, 40);
-	mDrp = new short[160];
+	mDrp = new short[MDRP_LONG_LENGTH];
     }
 
     public void work()
     {
-	for (int i = 0; i < mDrp.length; i++)
+	int i, j;
+	for (i = 0; i < MDRP_LONG_LENGTH; i++)
 	    {
 		mDrp[i] = input.popShort();
 	    }
-	for (int j = 0; j < 40; j++)
+	for (j = 0; j < 40; j++)
 	    {
 		output.pushShort(mDrp[j + 120]);
 	    }

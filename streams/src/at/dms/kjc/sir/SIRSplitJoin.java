@@ -135,12 +135,17 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
 
     public int getPopForSchedule(HashMap[] counts) {
 	// the splitjoin pops everything that children pop in a
-	// steady-state
-	int sum = 0;
-	for (int i=0; i<size(); i++) {
-	    sum += get(i).getPopForSchedule(counts);
+	// steady-state.  Unless it's a duplicate splitter, in which
+	// case it pops only what one child pops.
+	if (splitter.getType()==SIRSplitType.DUPLICATE) {
+	    return get(0).getPopForSchedule(counts);
+	} else {
+	    int sum = 0;
+	    for (int i=0; i<size(); i++) {
+		sum += get(i).getPopForSchedule(counts);
+	    }
+	    return sum;
 	}
-	return sum;
     }
 
     /**

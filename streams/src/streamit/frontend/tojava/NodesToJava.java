@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.33 2002-09-23 21:26:00 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.34 2002-09-24 21:19:08 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -169,7 +169,7 @@ public class NodesToJava implements FEVisitor
     }
 
     // Return a representation of a list of Parameter objects.
-    public String doParams(List params)
+    public String doParams(List params, String prefix)
     {
         String result = "(";
         boolean first = true;
@@ -177,6 +177,7 @@ public class NodesToJava implements FEVisitor
         {
             Parameter param = (Parameter)iter.next();
             if (!first) result += ", ";
+            if (prefix != null) result += prefix + " ";
             result += convertType(param.getType());
             result += " ";
             result += param.getName();
@@ -387,7 +388,9 @@ public class NodesToJava implements FEVisitor
         if (!func.getName().equals(streamName))
             result += convertType(func.getReturnType()) + " ";
         result += func.getName();
-        result += doParams(func.getParams()) + " ";
+        String prefix = null;
+        if (func.getCls() == Function.FUNC_INIT) prefix = "final";
+        result += doParams(func.getParams(), prefix) + " ";
         result += (String)func.getBody().accept(this);
         result += "\n";
         inFunction = wasInFunction;

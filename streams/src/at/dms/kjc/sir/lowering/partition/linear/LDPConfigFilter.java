@@ -115,7 +115,10 @@ class LDPConfigFilter extends LDPConfig {
 		    minOption = i;
 		}
 	    }
-	    Utils.assert(minOption!=-1, "Didn't find traceback; was looking for ANY, A[ANY]=" + A[LinearPartitioner.COLLAPSE_ANY] + " for " + filter.getName());
+	    assert minOption!=-1:
+                "Didn't find traceback; was looking for ANY, A[ANY]=" +
+                A[LinearPartitioner.COLLAPSE_ANY] + " for " +
+                filter.getName();
 	    return traceback(options[minOption]);
 	}
 	    
@@ -147,7 +150,7 @@ class LDPConfigFilter extends LDPConfig {
      * Requires <str> is a filter.
      */
     protected void setStream(SIRStream str) {
-	Utils.assert(str instanceof SIRFilter);
+	assert str instanceof SIRFilter;
 	this.filter = (SIRFilter)str;
     }
 

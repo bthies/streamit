@@ -302,7 +302,7 @@ public class SIRScheduler implements Constants {
 	if (schedule.isBottomSchedule()) {
 	    /* This is true, except if we're printing schedules during fusion's mangling.
 	    if (getTarget(schedule) instanceof SIRFilter) {
-		Utils.assert(((SIRStream)getTarget(schedule)).getWork()==schedule.getWorkFunc());
+		assert ((SIRStream)getTarget(schedule)).getWork()==schedule.getWorkFunc();
 	    }
 	    */
 	    System.err.println("Repeat " + numExecs + ": " + getTarget(schedule).getName() + " (BOTTOM)");
@@ -451,7 +451,7 @@ public class SIRScheduler implements Constants {
 	// otherwise, we have a bottom schedule that isn't a filter.
 	// This must be a splitter or joiner with <str> as its
 	// container.
-	Utils.assert(str instanceof SIRSplitJoin || str instanceof SIRFeedbackLoop);
+	assert str instanceof SIRSplitJoin || str instanceof SIRFeedbackLoop;
 	// test for splitter
 	if (schedule.getWorkFunc()==SIRSplitter.WORK_FUNCTION) {
 	    if (str instanceof SIRSplitJoin) {

@@ -16,7 +16,8 @@ class LDPConfigSplitJoin extends LDPConfigContainer {
 
     public LDPConfigSplitJoin(SIRSplitJoin sj, LinearPartitioner partitioner) {
 	super(sj, partitioner, wrapInArray(sj.size()), 1);
-	Utils.assert(sj.getRectangularHeight()==1, "Require sj's with height of 1 now.");
+	assert sj.getRectangularHeight()==1:
+            "Require sj's with height of 1 now.";
     }
     
     /**
@@ -28,7 +29,7 @@ class LDPConfigSplitJoin extends LDPConfigContainer {
     }
 
     protected LDPConfig childConfig(int x, int y) {
-	Utils.assert(y==0, "Looking for y=" + y + " in LDPConfigSplitJoin.get");
+	assert y==0: "Looking for y=" + y + " in LDPConfigSplitJoin.get";
 	return partitioner.getConfig(cont.get(x));
     }
 }

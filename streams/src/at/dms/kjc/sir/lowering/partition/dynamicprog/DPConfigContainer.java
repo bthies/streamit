@@ -261,7 +261,7 @@ abstract class DPConfigContainer extends DPConfig {
      * Requires <str> is a container.
      */
     protected void setStream(SIRStream str) {
-	Utils.assert(str instanceof SIRContainer);
+	assert str instanceof SIRContainer;
 	this.cont = (SIRContainer)str;
     }
 
@@ -284,8 +284,12 @@ abstract class DPConfigContainer extends DPConfig {
 	String callStr = cont.getName() + ".get(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
 	debugMessage("calling " + callStr); 
 
-	Utils.assert(x1<maxWidth[y1][y2], "x1=" + x1 + " <= maxWidth[y1][y2]= " + maxWidth[y1][y2] + " with x2=" + x2 + " with y1= " + y1 + " and y2=" + y2 + " in " + cont);
-	Utils.assert(x1<=x2, "x1=" + x1 + " > x2= " + x2 + " with y1= " + y1 + " and y2=" + y2 + " in " + cont);
+	assert x1<maxWidth[y1][y2]:
+            "x1=" + x1 + " <= maxWidth[y1][y2]= " + maxWidth[y1][y2] +
+            " with x2=" + x2 + " with y1= " + y1 + " and y2=" + y2 + " in " +
+            cont;
+	assert x1<=x2: "x1=" + x1 + " > x2= " + x2 + " with y1= " + y1 +
+            " and y2=" + y2 + " in " + cont;
 
 	// if we've exceeded the width of this node, then trim down to actual width
 	if (x2>maxWidth[y1][y2]-1) {
@@ -294,7 +298,8 @@ abstract class DPConfigContainer extends DPConfig {
 
 	// if we've memoized the value before, return it
 	if (A[x1][x2][y1][y2][tileLimit][nextToJoiner]!=NOT_MEMOIZED) {
-	    Utils.assert(B[x1][x2][y1][y2][tileLimit][nextToJoiner]!=NOT_MEMOIZED, "Memoized A but not B.");
+	    assert B[x1][x2][y1][y2][tileLimit][nextToJoiner]!=NOT_MEMOIZED:
+                "Memoized A but not B.";
 	    /*
 	      System.err.println("Found memoized A[" + child1 + "][" + child2 + "][" + tileLimit + "] = " + 
 	      A[child1][child2][tileLimit] + " for " + cont.getName());
@@ -375,7 +380,7 @@ abstract class DPConfigContainer extends DPConfig {
 			yPivot++;
 		    }
 		}
-		Utils.assert(yPivot<y2);
+		assert yPivot<y2;
 		
 		DPCost cost1 = get(x1, x2, y1, yPivot, tileLimit, nextToJoiner);
 		DPCost cost2 = get(x1, x2, yPivot+1, y2, tileLimit, nextToJoiner);
@@ -410,8 +415,8 @@ abstract class DPConfigContainer extends DPConfig {
 	boolean needsJoiner = (width[y2]>1) && (nextToJoiner!=1);
 	int tilesAvail = needsJoiner ? tileLimit - 1 : tileLimit;
 	// if there is only one tile available, then recurse
-	Utils.assert(tilesAvail>0);
-	Utils.assert(tileLimit>1);
+	assert tilesAvail>0;
+	assert tileLimit>1;
 	// only force a cut if it's impossible to make a horizontal cut
 	if (tilesAvail==1 && y1==y2) {
 	    // must have added a joiner if you've gotten to this point
@@ -492,7 +497,8 @@ abstract class DPConfigContainer extends DPConfig {
 	    }
 	}
 
-	Utils.assert(minCost!=Integer.MAX_VALUE, "Failed to make cut on container: " + cont.getName());
+	assert minCost!=Integer.MAX_VALUE:
+            "Failed to make cut on container: " + cont.getName();
 
 	A[x1][x2][y1][y2][tileLimit][nextToJoiner] = minCost;
 	B[x1][x2][y1][y2][tileLimit][nextToJoiner] = minSum;
@@ -581,8 +587,14 @@ abstract class DPConfigContainer extends DPConfig {
 	String callStr = cont.getName() + ".traceback(" + x1 + ", " + x2 + ", " + y1 + ", " + y2 + ")[" + tileLimit + "][" + nextToJoiner +"]";
 	debugMessage("calling " + callStr); 
 
-	Utils.assert(x1<maxWidth[y1][y2], "x1=" + x1 + " <= maxWidth[y1][y2]= " + maxWidth[y1][y2] + " with x2=" + x2 + " with y1= " + y1 + " and y2=" + y2 + " in " + cont);
-	Utils.assert(x1<=x2, "x1=" + x1 + " > x2= " + x2 + " with y1= " + y1 + " and y2=" + y2 + " in " + cont);
+	assert x1<maxWidth[y1][y2]:
+            "x1=" + x1 + " <= maxWidth[y1][y2]= " + maxWidth[y1][y2] +
+            " with x2=" + x2 + " with y1= " + y1 + " and y2=" + y2 +
+            " in " + cont;
+	assert x1<=x2:
+            "x1=" + x1 + " > x2= " + x2 +
+            " with y1= " + y1 + " and y2=" + y2 + " in " + cont;
+
 	// if we've exceeded the width of this node, then trim down to actual width
 	if (x2>maxWidth[y1][y2]-1) {
 	    x2 = maxWidth[y1][y2]-1;
@@ -618,7 +630,10 @@ abstract class DPConfigContainer extends DPConfig {
 		Lifter.eliminatePipe(wrapper2);
 		Lifter.lift(wrapper);
 		// make sure we've fused
-		Utils.assert(wrapper.size()==1 && wrapper.get(0) instanceof SIRFilter, "Wrapper contains " + wrapper.size() + " entries, with get(0)==" + wrapper.get(0));
+		assert wrapper.size()==1 &&
+                    wrapper.get(0) instanceof SIRFilter:
+                    "Wrapper contains " + wrapper.size() +
+                    " entries, with get(0)==" + wrapper.get(0);
 		// return child
 		Lifter.eliminatePipe(wrapper);
 		SIRStream result = wrapper.get(0);
@@ -632,8 +647,8 @@ abstract class DPConfigContainer extends DPConfig {
 	boolean needsJoiner = (width[y2]>1) && (nextToJoiner!=1);
 	int tilesAvail = needsJoiner ? tileLimit - 1 : tileLimit;
 	// if there is only one tile available, then recurse
-	Utils.assert(tilesAvail>0);
-	Utils.assert(tileLimit>1);
+	assert tilesAvail>0;
+	assert tileLimit>1;
 	if (tilesAvail==1 && y1==y2) {
 	    // must have added a joiner if you've gotten to this point
 	    SIRStream result = traceback(partitions, curPartition, x1, x2, y1, y2, tilesAvail, 1, str);
@@ -779,7 +794,7 @@ abstract class DPConfigContainer extends DPConfig {
 		Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
 	    }    
 	}
-	Utils.assert(!(tryVertical && verticalObj==null));
+	assert !(tryVertical && verticalObj==null);
 	
 	// return obj if it's possible to do vert cut
 	if (tryVertical) {

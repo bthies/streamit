@@ -32,7 +32,8 @@ public final class HorizontalCutTransform extends IdempotentTransform {
 	if (str instanceof SIRPipeline) {
 	    // represents a cut in the immediate children of a pipeline
 	    SIRPipeline pipe = (SIRPipeline)str;
-	    Utils.assert(pipe.size() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    assert pipe.size() - cutPos - 1 > 0:
+                "Don't allow cuts with zero items on one side";
 	    // add one because of indexing convention in partitiongroup
 	    int[] partitions = { cutPos + 1 , pipe.size() - cutPos - 1 };
 	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
@@ -40,13 +41,16 @@ public final class HorizontalCutTransform extends IdempotentTransform {
 	} else if (str instanceof SIRSplitJoin) {
 	    // represents a cut in the children's children, since we are cutting each pipeline
 	    SIRSplitJoin sj = (SIRSplitJoin)str;
-	    Utils.assert(sj.getRectangularHeight() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    assert sj.getRectangularHeight() - cutPos - 1 > 0:
+                "Don't allow cuts with zero items on one side";
 	    // add one because of indexing convention in partitiongroup
 	    int[] partitions = { cutPos + 1 , sj.getRectangularHeight() - cutPos - 1 };
 	    PartitionGroup group = PartitionGroup.createFromArray(partitions);
 	    return RefactorSplitJoin.addSyncPoints(sj, group);
 	} else if (str instanceof SIRFeedbackLoop) {
-	    Utils.assert(cutPos==0, "Trying to horizontal cut a feedbackloop at position " + cutPos);
+	    assert cutPos==0:
+                "Trying to horizontal cut a feedbackloop at position " +
+                cutPos;
 	    // a feedbackloop already has a single cut, so just return it
 	    return str;
 	} else {

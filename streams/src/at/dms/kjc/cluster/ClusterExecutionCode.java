@@ -453,8 +453,10 @@ public class ClusterExecutionCode extends at.dms.util.Utils
     {
 	SIRFilter filter = (SIRFilter)node.contents;
 	// don't support file readers, file writers yet
-	Utils.assert(!(filter instanceof SIRPredefinedFilter) || (filter instanceof SIRIdentity), 
-		     "Found a " + filter.getName() + ", but cluster backend doesn't yet support pre-defined filters.");
+	assert !(filter instanceof SIRPredefinedFilter) ||
+            (filter instanceof SIRIdentity):
+            "Found a " + filter.getName() +
+            ", but cluster backend doesn't yet support pre-defined filters.";
 	
 	//generate the code to define the local variables
 	//defineLocalVars(statements, localVariables);
@@ -1363,9 +1365,10 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 	} else {
 	    // otherwise, we should be doing this only for work
 	    // estimation--check that the filter is the only thing in the graph
-	    Utils.assert(filter.getParent()==null ||
-			 filter.getParent().size()==1 && filter.getParent().getParent()==null,
-			 "Found null pointer where unexpected.");
+	    assert filter.getParent()==null ||
+                filter.getParent().size()==1 &&
+                filter.getParent().getParent()==null:
+                "Found null pointer where unexpected.";
 	}
 	
 	//if this is not a twostage, fake it by adding to initFire,

@@ -85,8 +85,10 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      * in this, and that <first> comes before <last>.
      */
     public List getChildrenBetween(SIROperator first, SIROperator last) {
-	Utils.assert(myChildren().contains(first), "first=" + first.getName() + " is not a child of " + this);
-	Utils.assert(myChildren().contains(last), "last=" + last.getName() + " is not a child of " + this);
+	assert myChildren().contains(first):
+            "first=" + first.getName() + " is not a child of " + this;
+	assert myChildren().contains(last):
+            "last=" + last.getName() + " is not a child of " + this;
 	// make result
 	LinkedList result = new LinkedList();
 	// start iterating through children at <first>
@@ -137,9 +139,9 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
      */
     public void replace(SIRStream oldStr, SIRStream newStr) {
 	int index = myChildren().indexOf(oldStr);
-	Utils.assert(index!=-1,
-		     "Trying to replace with bad parameters, since " + this
-		     + " doesn't contain " + oldStr);
+	assert index!=-1:
+            "Trying to replace with bad parameters, since " + this +
+            " doesn't contain " + oldStr;
 	myChildren().set(index, newStr);
 	// set parent of new stream
 	newStr.setParent(this);
@@ -154,9 +156,9 @@ public class SIRPipeline extends SIRContainer implements Cloneable {
 	// get positions of start and ending streams
 	int index1 = myChildren().indexOf(start);
 	int index2 = myChildren().indexOf(end);
-	Utils.assert(index1!=-1 && index1!=-1 && index1 <= index2,
-		     "Trying to replace with bad parameters, from start at "
-		     + "position " + index1 + " to end at position " + index2);
+	assert index1!=-1 && index1!=-1 && index1 <= index2:
+            "Trying to replace with bad parameters, from start at " +
+            "position " + index1 + " to end at position " + index2;
 	// remove the old streams
 	for (int i=index1; i<=index2; i++) {
 	    remove(index1);

@@ -93,7 +93,8 @@ public class PartitionDot extends StreamItDot {
                               JMethodDeclaration work,
                               CType inputType, CType outputType)
     {
-	Utils.assert(partitions.containsKey(self), "Not assigned to tile: " + self.getName());
+	assert partitions.containsKey(self):
+            "Not assigned to tile: " + self.getName();
 	return new NamePair(makeLabelledNode(makePartitionLabel(self, self.getName())));
     }
 

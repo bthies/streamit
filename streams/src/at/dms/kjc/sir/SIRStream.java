@@ -157,7 +157,8 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
     public void setMethods (JMethodDeclaration[] m) {
 	if(m!=null)
 	    for (int i=0; i<m.length; i++) {
-		Utils.assert(m[i]!=null, "Detected a null method in SIRStream.setMethods");
+		assert m[i]!=null:
+                    "Detected a null method in SIRStream.setMethods";
 	    }
 	this.methods = m;
     }
@@ -271,7 +272,7 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
      * as a method of this.  Requires that <method> is non-null.
      */
     public void addMethod(JMethodDeclaration method) {
-	Utils.assert(method!=null);
+	assert method!=null;
 	// see if we already have <method> in this
 	for (int i=0; i<methods.length; i++) {
 	    if (methods[i]==method) {
@@ -369,16 +370,16 @@ public abstract class SIRStream extends SIROperator implements Cloneable{
 	boolean foundWork = false;
 	for (int i=0; i<methods.length; i++) {
 	    if (methods[i]==getInit()) {
-		Utils.assert(!foundInit);
+		assert !foundInit;
 		foundInit = true;
 	    }
 	    if (methods[i]==getWork()) {
-		Utils.assert(!foundWork);
+		assert !foundWork;
 		foundWork = true;
 	    }
 	}
-	Utils.assert(foundInit || !needsInit() || getInit()==null);
-	Utils.assert(foundWork || !needsWork() || getWork()==null);
+	assert foundInit || !needsInit() || getInit()==null;
+	assert foundWork || !needsWork() || getWork()==null;
     }
 
     /**

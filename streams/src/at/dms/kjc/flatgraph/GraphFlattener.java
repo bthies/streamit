@@ -769,7 +769,7 @@ public class GraphFlattener extends at.dms.util.Utils implements FlatVisitor
 	if (node.contents instanceof SIRFilter) {
 	    filterCount++;
 	    SIRFilter filter = (SIRFilter)node.contents;
-	    Utils.assert(buf!=null);
+	    assert buf!=null;
 
 	    buf.append(node.getName() + "[ label = \"" +
 		       node.getName() + 

@@ -26,7 +26,9 @@ class DPConfigPipeline extends DPConfigContainer {
 	} else {
 	    // otherwise, we're looking inside a hierarchical unit -- must
 	    // be a splitjoin
-	    Utils.assert(c1 instanceof SIRSplitJoin, "Trying to get (" + x + ", " + y  + "), which is " + c1.getName());
+	    assert c1 instanceof SIRSplitJoin:
+                "Trying to get (" + x + ", " + y  + "), which is " +
+                c1.getName();
 	    c2 = ((SIRSplitJoin)c1).get(x);
 	}
 	return partitioner.getConfig(c2);

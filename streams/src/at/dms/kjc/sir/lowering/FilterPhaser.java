@@ -194,7 +194,7 @@ public class FilterPhaser extends EmptyStreamVisitor
 					break;
 				}
 			}
-			at.dms.util.Utils.assert(decl != null);
+			assert decl != null;
 			SIRWorkFunction wf =
 				new SIRWorkFunction(invocation.getPeek(), invocation.getPop(),
 								    invocation.getPush(), decl);

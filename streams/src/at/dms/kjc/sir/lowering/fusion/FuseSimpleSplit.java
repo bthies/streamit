@@ -86,7 +86,9 @@ public class FuseSimpleSplit {
 	}
 	
 	int index = sj.getParent().indexOf(sj);
-	Utils.assert(index>-1, "Couldn't find " + sj.getName() + " in " + sj.getParent().getIdent());
+	assert index>-1:
+            "Couldn't find " + sj.getName() + " in " +
+            sj.getParent().getIdent();
 	pipe.add(newFilter, new LinkedList(sj.getParent().getParams(index)));
 	
 	// make a joinFilter only if it's not a not a null join
@@ -531,7 +533,7 @@ public class FuseSimpleSplit {
 	 */
 	public static SRepInfo calcReps(SIRSplitJoin sj) {
 	    for (int i=0; i<sj.size(); i++) {
-		Utils.assert(sj.get(i) instanceof SIRFilter);
+		assert sj.get(i) instanceof SIRFilter;
 	    }
 	    SRepInfo result = new SRepInfo(sj.size());
 	    result.compute(sj);
@@ -586,8 +588,9 @@ public class FuseSimpleSplit {
 	    } else {
 		this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
 		// make sure we came out even
-		Utils.assert(this.splitter * splitWeights[index] == 
-			     this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
+		assert this.splitter * splitWeights[index] == 
+                    this.child[index] *
+                    ((SIRFilter)sj.get(index)).getPopInt();
 	    }
 	    // now for joiner
 	    if (nullJoin) {
@@ -595,8 +598,9 @@ public class FuseSimpleSplit {
 	    } else {
 		this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
 		// make sure we come out even
-		Utils.assert(this.joiner * joinWeights[index] == 
-			     this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
+		assert this.joiner * joinWeights[index] == 
+                    this.child[index] *
+                    ((SIRFilter)sj.get(index)).getPushInt();
 	    }
 	}
     }

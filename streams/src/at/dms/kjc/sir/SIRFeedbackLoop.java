@@ -96,8 +96,9 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	} else {
 	    int[] weights = splitter.getWeights();
 	    // scale by what is passed out of construct
-	    Utils.assert((bodyPush * weights[0]) % (weights[0] + weights[1]) == 0,
-			 "Found non-integral splitting ratio in steady-state feedbackloop schedule.");
+	    assert (bodyPush * weights[0]) % (weights[0] + weights[1]) == 0:
+                "Found non-integral splitting ratio in " +
+                "steady-state feedbackloop schedule.";
 	    return bodyPush * weights[0] / (weights[0] + weights[1]);
 	}
     }
@@ -108,8 +109,9 @@ public class SIRFeedbackLoop extends SIRContainer implements Cloneable {
 	// scale it by what is channeled through the joiner
 	int[] weights = joiner.getWeights();
 	// scale by what is passed out of construct
-	Utils.assert((bodyPop * weights[0]) % (weights[0] + weights[1]) == 0,
-		     "Found non-integral joining ratio in steady-state feedbackloop schedule.");
+	assert (bodyPop * weights[0]) % (weights[0] + weights[1]) == 0:
+            "Found non-integral joining ratio in " +
+            "steady-state feedbackloop schedule.";
 	return bodyPop * weights[0] / (weights[0] + weights[1]);
     }
 

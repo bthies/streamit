@@ -640,7 +640,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 			result = part;
 		    }
 		}
-		Utils.assert(result!=null);
+		assert result!=null;
 		return result;
 	    }
 	} else if (op instanceof SIRJoiner) {
@@ -670,7 +670,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 		    result = part;
 		}
 	    }
-	    Utils.assert(result!=null);
+	    assert result!=null;
 	    return result;
 	} else if (op instanceof SIRIdentity) {
 	    // if we find identity that wasn't assigned, integrate it

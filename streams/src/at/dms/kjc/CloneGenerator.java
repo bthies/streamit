@@ -186,8 +186,10 @@ public class CloneGenerator {
 	if (namesToIgnore!=null) {
 	    for (int i=0; i<namesToIgnore.length; i++) {
 		String name = namesToIgnore[i].intern();
-		Utils.assert(fields.contains(name),
-			     "The class " + c.getName() + " tries to prohibit the cloning of a field named \"" + name + "\", but no such field exists.");
+		assert fields.contains(name):
+                    "The class " + c.getName() +
+                    " tries to prohibit the cloning of a field named \"" +
+                    name + "\", but no such field exists.";
 		result.add(name);
 	    }
 	}
@@ -268,7 +270,9 @@ public class CloneGenerator {
 	    // make sure we only have one of them
 	    int nextHeader = contentsStr.indexOf(HEADER, start+1);
 	    int nextFooter = contentsStr.indexOf(FOOTER, end+1);
-	    Utils.assert(nextHeader==-1 && nextFooter==-1, "Found multiple headers/footers per file -- can't deal with this.");
+	    assert nextHeader==-1 && nextFooter==-1:
+                "Found multiple headers/footers per file -- " +
+                "can't deal with this.";
 	    // replace old cloner with new
 	    String oldCode = contentsStr.substring(start, end+FOOTER.length());
 	    newContents = Utils.replaceAll(contentsStr, oldCode, newCode);

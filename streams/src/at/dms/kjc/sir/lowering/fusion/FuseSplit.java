@@ -58,8 +58,8 @@ public class FuseSplit {
 	    // clear possible wrapper pipelines in children
 	    Lifter.lift(sj);
 	    //Quick check
-	    Utils.assert(partition.getNumChildren()==sj.size(),
-			 "More children in partitioning than in splitjoin " + sj);
+	    assert partition.getNumChildren()==sj.size():
+                "More children in partitioning than in splitjoin " + sj;
 	    for(int i=0;i<partition.size();i++) {
 		// if we're trying to fuse something that's not a filter, just return
 		if (partition.get(i)>1) {
@@ -929,7 +929,7 @@ public class FuseSplit {
 	 */
 	public static RepInfo calcReps(SIRSplitJoin sj) {
 	    for (int i=0; i<sj.size(); i++) {
-		Utils.assert(sj.get(i) instanceof SIRFilter);
+		assert sj.get(i) instanceof SIRFilter;
 	    }
 	    RepInfo result = new RepInfo(sj.size());
 	    result.compute(sj);
@@ -982,8 +982,8 @@ public class FuseSplit {
 	    } else {
 		this.splitter = child[index] * ((SIRFilter)sj.get(index)).getPopInt() / splitWeights[index];
 		// make sure we came out even
-		Utils.assert(this.splitter * splitWeights[index] == 
-			     this.child[index] * ((SIRFilter)sj.get(index)).getPopInt());
+		assert this.splitter * splitWeights[index] == 
+                    this.child[index] * ((SIRFilter)sj.get(index)).getPopInt();
 	    }
 	    // now for joiner
 	    if (nullJoin) {
@@ -991,8 +991,9 @@ public class FuseSplit {
 	    } else {
 		this.joiner = this.child[index] * ((SIRFilter)sj.get(index)).getPushInt() / joinWeights[index];
 		// make sure we come out even
-		Utils.assert(this.joiner * joinWeights[index] == 
-			     this.child[index] * ((SIRFilter)sj.get(index)).getPushInt());
+		assert this.joiner * joinWeights[index] == 
+                    this.child[index] *
+                    ((SIRFilter)sj.get(index)).getPushInt();
 	    }
 	}
     }

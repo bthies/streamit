@@ -241,7 +241,7 @@ public class RefactorSplitJoin {
     public static SIRPipeline addSyncPoints(SIRSplitJoin sj, PartitionGroup partition) {
 	// check what we're getting
 	checkSymmetry(sj);
-	Utils.assert(partition.getNumChildren()==((SIRPipeline)sj.get(0)).size());
+	assert partition.getNumChildren()==((SIRPipeline)sj.get(0)).size();
 
 	// get execution counts for <sj>
 	HashMap[] sched = SIRScheduler.getExecutionCounts(sj);
@@ -511,13 +511,13 @@ public class RefactorSplitJoin {
      */
     private static void checkSymmetry(SIRSplitJoin sj) {
 	SIRStream child_0 = sj.get(0);
-	Utils.assert(child_0 instanceof SIRPipeline);
+	assert child_0 instanceof SIRPipeline;
 	
 	int size_0 = ((SIRPipeline)child_0).size();
 	for (int i=1; i<sj.size(); i++) {
 	    SIRStream child_i = sj.get(i);
-	    Utils.assert(child_i instanceof SIRPipeline &&
-			 ((SIRPipeline)child_i).size() == size_0);
+	    assert child_i instanceof SIRPipeline &&
+                ((SIRPipeline)child_i).size() == size_0;
 	}
     }
 

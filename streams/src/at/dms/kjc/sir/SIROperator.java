@@ -100,8 +100,9 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
 		    return "body";
 		}
 	    } else {
-		Utils.assert(parent.indexOf((SIRStream)this)!=-1, 
-			     "Stream's parent doesn't contain it.  Stream is " + this + ", parent is " + parent);
+		assert parent.indexOf((SIRStream)this)!=-1:
+                    "Stream's parent doesn't contain it.  Stream is " +
+                    this + ", parent is " + parent;
 		return "child_" + parent.indexOf((SIRStream)this);
 	    }
 	}
@@ -181,8 +182,8 @@ public abstract class SIROperator implements Finalizable, Serializable, DeepClon
      * This should be called in every mutator.
      */
     public void assertMutable() {
-	Utils.assert(!IterFactory.isFinalized(this), 
-		     "A mutability check failed.");
+	assert !IterFactory.isFinalized(this):
+            "A mutability check failed.";
     }
 
     /**

@@ -54,8 +54,7 @@ public class Memoizer {
      */
     Object finalize(Object o) {
 	// assert <o> is non-null
-	Utils.assert(o!=null,
-		     "Memoizer.finalize requires non-null argument");
+	assert o!=null: "Memoizer.finalize requires non-null argument";
 	// mark <o> and all of its components to be finalized
 	deepFinalize(o);
 	// get a hash for the structure of <o>

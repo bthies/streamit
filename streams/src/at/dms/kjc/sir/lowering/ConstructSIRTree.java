@@ -85,9 +85,10 @@ public class ConstructSIRTree {
 	    try {
 		for (int i=0; i<self.getArgs().size(); i++) {
 		    JExpression arg = (JExpression)self.getArgs().get(i);
-		    Utils.assert(isConstantArg(arg),
-				 "Expected constant arguments to init, but found non-constant " +
-				 self.getArgs().get(i) + " in parent " + parent + "\n");
+		    assert isConstantArg(arg):
+                        "Expected constant arguments to init, " +
+                        "but found non-constant " + self.getArgs().get(i) +
+                        " in parent " + parent + "\n";
 		}
 		
 		// to simplify compilation, remove constant arguments.

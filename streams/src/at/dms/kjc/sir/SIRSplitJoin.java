@@ -61,7 +61,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public SIRSplitter getSplitter() 
     {
-	Utils.assert(this.splitter!=null);
+	assert this.splitter!=null;
 	return this.splitter;
     }
     
@@ -80,7 +80,7 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public SIRJoiner getJoiner() 
     {
-	Utils.assert(this.joiner!=null);
+	assert this.joiner!=null;
 	return this.joiner;
     }
     
@@ -169,9 +169,9 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
      */
     public void replace(SIRStream oldStr, SIRStream newStr) {
 	int index = myChildren().indexOf(oldStr);
-	Utils.assert(index!=-1,
-		     "Trying to replace with bad parameters, since " + this
-		     + " doesn't contain " + oldStr);
+	assert index!=-1:
+            "Trying to replace with bad parameters, since " + this +
+            " doesn't contain " + oldStr;
 	myChildren().set(index, newStr);
 	// set parent of <newStr> to be this
 	newStr.setParent(this);

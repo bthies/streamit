@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.9 2003-10-30 11:58:40 jasperln Exp $
+ * $Id: JPhylum.java,v 1.10 2004-01-27 23:13:13 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -67,8 +67,7 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
   // ----------------------------------------------------------------------
 
     public void assertMutable() {
-	Utils.assert(!IterFactory.isFinalized(this), 
-		     "A mutability check failed.");
+	assert !IterFactory.isFinalized(this): "A mutability check failed.";
     }
 
   // ----------------------------------------------------------------------

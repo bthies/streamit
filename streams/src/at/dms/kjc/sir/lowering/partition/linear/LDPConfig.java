@@ -86,15 +86,19 @@ abstract class LDPConfig implements Cloneable {
 	int pushRatio = strPush / linPush;
 	int popRatio = strPop / linPop;
 	// see if we can get away with this being an integer
-	Utils.assert(strPush % linPush == 0, "Have non-integral scaling factor of " + strPush + " / " + linPush + " for stream " + str.getName());
+	assert strPush % linPush == 0:
+            "Have non-integral scaling factor of " +
+            strPush + " / " + linPush + " for stream " + str.getName();
 	// make sure ratios are same
-	Utils.assert(pushRatio==popRatio, "Found unequal push and pop ratios when computing scaling factor" +
-		     "\n  str=" + str +
-		     "\n  strPush=" + strPush +
-		     "\n  strPop=" + strPush +
-		     "\n  linPush=" + linPush +
-		     "\n  linPop=" + linPop);
-	Utils.assert(pushRatio>0, "Found non-positive scaling factor:" + pushRatio);
+	assert pushRatio==popRatio:
+            "Found unequal push and pop ratios when computing scaling factor" +
+            "\n  str=" + str +
+            "\n  strPush=" + strPush +
+            "\n  strPop=" + strPush +
+            "\n  linPush=" + linPush +
+            "\n  linPop=" + linPop;
+	assert pushRatio>0:
+            "Found non-positive scaling factor:" + pushRatio;
 	return pushRatio;
     }
 }

@@ -30,7 +30,7 @@ public class SIRSchedule  {
      */
     public int getBufferSizeBetween(SIROperator op1, SIROperator op2) {
 	// shouldn't have two splitters or joiners
-	Utils.assert(op1 instanceof SIRStream || op2 instanceof SIRStream);
+	assert op1 instanceof SIRStream || op2 instanceof SIRStream;
 	// if we have a splitter or joiner, the scheduler interface
 	// takes its parent for this function call
 	if (op1 instanceof SIRSplitter || op1 instanceof SIRJoiner) {

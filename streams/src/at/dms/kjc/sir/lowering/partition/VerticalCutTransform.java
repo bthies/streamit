@@ -29,7 +29,8 @@ public final class VerticalCutTransform extends IdempotentTransform {
     public SIRStream doMyTransform(SIRStream str) {
 	if (str instanceof SIRSplitJoin) {
 	    SIRSplitJoin sj = (SIRSplitJoin)str;
-	    Utils.assert(sj.size() - cutPos - 1 > 0, "Don't allow cuts with zero items on one side");
+	    assert sj.size() - cutPos - 1 > 0:
+                "Don't allow cuts with zero items on one side";
 	    
 	    // add one because of indexing convention in partitiongroup
 	    int[] partitions = { cutPos + 1, sj.size() - cutPos - 1};
@@ -47,7 +48,8 @@ public final class VerticalCutTransform extends IdempotentTransform {
 	    }
 	    return factored;
 	} else if (str instanceof SIRFeedbackLoop) {
-	    Utils.assert(cutPos==0, "Trying to vertical cut feedbackloop at position " + cutPos);
+	    assert cutPos==0:
+                "Trying to vertical cut feedbackloop at position " + cutPos;
 	    // a cut at pos 1 is equivalent to breaking this guy in half
 	    return str;
 	} else {

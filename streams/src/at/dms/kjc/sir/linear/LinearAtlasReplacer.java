@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * This replacer works by calling the matrix multiply routines in the
  * ATLAS package, which it assumes are installed in $ATLAS_HOME.<br>
  *
- * $Id: LinearAtlasReplacer.java,v 1.3 2003-10-24 22:03:59 thies Exp $
+ * $Id: LinearAtlasReplacer.java,v 1.4 2004-01-27 23:13:25 dmaze Exp $
  **/
 public class LinearAtlasReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -62,8 +62,9 @@ public class LinearAtlasReplacer extends LinearDirectReplacer implements Constan
     protected SIRFilter makeEfficientImplementation(SIRStream oldStream,
 						    LinearFilterRepresentation linearRep) {
 	// only deal with real things for now
-	Utils.assert(linearRep.getA().isReal() && linearRep.getb().isReal(),
-		     "Don't support linear replacement of complex coefficients for now.");
+	assert linearRep.getA().isReal() && linearRep.getb().isReal():
+            "Don't support linear replacement of " +
+            "complex coefficients for now.";
 	// make coefficient and index fields
 	makeFields(linearRep);
 	// make actual filter

@@ -104,7 +104,7 @@ class WorkInfo {
      * Only intended for incrementing container work.
      */
     public void incrementWork(int work) {
-	Utils.assert(str instanceof SIRContainer);
+	assert str instanceof SIRContainer;
 	this.workExact += work;
     }
 

@@ -58,7 +58,7 @@ class DPConfigFilter extends DPConfig {
      * Requires <str> is a filter.
      */
     protected void setStream(SIRStream str) {
-	Utils.assert(str instanceof SIRFilter);
+	assert str instanceof SIRFilter;
 	this.filter = (SIRFilter)str;
     }
 

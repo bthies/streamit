@@ -25,8 +25,8 @@ public class PartitionGroup {
 	this.partitions = partitions;
 	// make sure that all weights in <partitions> are positive
 	for (int i=0; i<partitions.length; i++) {
-	    Utils.assert(partitions[i]>=1, 
-			 "Trying to create partitioning with zero-element partition.");
+	    assert partitions[i]>=1:
+                "Trying to create partitioning with zero-element partition.";
 	}
     }
 

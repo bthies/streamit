@@ -26,7 +26,7 @@ class LDPConfigPipeline extends LDPConfigContainer {
 	} else {
 	    // otherwise, we're looking inside a hierarchical unit -- must
 	    // be a splitjoin
-	    Utils.assert(c1 instanceof SIRSplitJoin);
+	    assert c1 instanceof SIRSplitJoin;
 	    c2 = ((SIRSplitJoin)c1).get(x);
 	}
 	return partitioner.getConfig(c2);

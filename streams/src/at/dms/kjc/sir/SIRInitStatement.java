@@ -37,7 +37,7 @@ public class SIRInitStatement extends JStatement {
             this.args = new LinkedList(args);
         else
             this.args = new LinkedList();
-        assert(str != null, "SIRInitStatement created with null target");
+        assert str != null: "SIRInitStatement created with null target";
 	this.target = str;
     }
     

@@ -44,7 +44,10 @@ public class SIRLatencyMax extends SIRLatency implements Comparable {
      * Returns the maximum of this latency.
      */
     public int getMax() {
-	Utils.assert(max instanceof JIntLiteral, "Haven't resolved the max latency expression to a constant.  It is: " + max);
+	assert max instanceof JIntLiteral:
+            "Haven't resolved the max latency expression to a constant.  " +
+            "It is: " + max;
+
 	return ((JIntLiteral)max).intValue();
     }
 

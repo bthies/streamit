@@ -182,9 +182,10 @@ public class RawExecutionCode extends at.dms.util.Utils
 	} else {
 	    // otherwise, we should be doing this only for work
 	    // estimation--check that the filter is the only thing in the graph
-	    Utils.assert(filter.getParent()==null ||
-			 filter.getParent().size()==1 && filter.getParent().getParent()==null,
-			 "Found null pointer where unexpected.");
+	    assert filter.getParent()==null ||
+                filter.getParent().size()==1 &&
+                filter.getParent().getParent()==null:
+                "Found null pointer where unexpected.";
 	}
 	
 	//if this is not a twostage, fake it by adding to initFire,

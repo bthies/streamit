@@ -20,9 +20,9 @@ public final class RemoveSyncTransform extends IdempotentTransform {
      * Perform the transform on <str> and return new stream.
      */
     public SIRStream doMyTransform(SIRStream str) {
-	Utils.assert(str instanceof SIRPipeline);
+	assert str instanceof SIRPipeline;
 	boolean ok = RefactorSplitJoin.removeMatchingSyncPoints((SIRPipeline)str);
-	Utils.assert(ok, "Remove matching sync failed.");
+	assert ok: "Remove matching sync failed.";
 	return str;
     }
 

@@ -35,7 +35,7 @@ public class PartitionRecord {
      * Requires that this does not already contain <op>.
      */
     public void add(SIROperator op, int k) {
-	Utils.assert(!this.contains(op));
+	assert !this.contains(op);
 	contents.add(op);
 	work += k;
     }
@@ -45,7 +45,7 @@ public class PartitionRecord {
      * already contain <cont>.
      */
     public void add(SIRContainer cont) {
-	Utils.assert(!this.contains(cont));
+	assert !this.contains(cont);
 	add(cont, 0);
     }
 

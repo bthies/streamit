@@ -126,8 +126,10 @@ public abstract class StreamTransform {
     private void doChildTransforms(SIRContainer cont, List transforms) {
 	// make sure we have the same number of transforms to apply as
 	// we have children
-	Utils.assert(transforms.size() == cont.size(),
-		     "Have " + transforms.size() + " transforms but " + cont.size() + " children for " + cont.getName() + ".  Transforms are children of " + this);
+	assert transforms.size() == cont.size():
+            "Have " + transforms.size() + " transforms but " +
+            cont.size() + " children for " + cont.getName() +
+            ".  Transforms are children of " + this;
 	
 	// visit transforms
 	for (int i=0; i<cont.size(); i++) {

@@ -20,7 +20,7 @@ class DPConfigFeedbackLoop extends DPConfigContainer {
     }
 
     protected DPConfig childConfig(int x, int y) {
-	Utils.assert(x==0);
+	assert x==0;
 	return partitioner.getConfig(cont.get(y));
     }
 

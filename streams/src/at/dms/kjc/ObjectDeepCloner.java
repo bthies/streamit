@@ -150,10 +150,11 @@ public class ObjectDeepCloner
      * it was handed <handle> prior to the serialization.
      */
     static public Object getInstance(Object handle, Object newInstance) {
-	Utils.assert(handle instanceof Integer,
-		     "DeepObjectCloner being called with a handle it didn't "
-		     + " give out:  handle is " + handle + " of type " +
-		     handle.getClass());
+	assert handle instanceof Integer:
+            "DeepObjectCloner being called with a handle it didn't "
+            + " give out:  handle is " + handle + " of type " +
+            handle.getClass();
+
 	int index = ((Integer)handle).intValue();
 	// if the instance was not preserved, then return current instance
 	if (index==-1) {

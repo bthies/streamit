@@ -16,7 +16,7 @@ import at.dms.compiler.*;
  * splitjoins and pipelines with linear representations with a single
  * filter that computes the same function.<br>
  *
- * $Id: LinearIndirectReplacer.java,v 1.5 2003-10-24 22:04:00 thies Exp $
+ * $Id: LinearIndirectReplacer.java,v 1.6 2004-01-27 23:13:25 dmaze Exp $
  **/
 public class LinearIndirectReplacer extends LinearDirectReplacer implements Constants{
     // names of fields
@@ -75,8 +75,9 @@ public class LinearIndirectReplacer extends LinearDirectReplacer implements Cons
     protected SIRFilter makeEfficientImplementation(SIRStream oldStream,
 						    LinearFilterRepresentation linearRep) {
 	// only deal with real things for now
-	Utils.assert(linearRep.getA().isReal() && linearRep.getb().isReal(),
-		     "Don't support linear replacement of complex coefficients for now.");
+	assert linearRep.getA().isReal() && linearRep.getb().isReal():
+            "Don't support linear replacement of " +
+            "complex coefficients for now.";
 	// make coefficient and index fields
 	makeFields(linearRep);
 	// make actual filter

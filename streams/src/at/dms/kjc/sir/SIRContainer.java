@@ -203,7 +203,7 @@ public abstract class SIRContainer extends SIRStream {
      * Removes <str> from this.
      */
     public void remove(SIRStream str) {
-	Utils.assert(this.contains(str));
+	assert this.contains(str);
 	remove(indexOf(str));
     }
 

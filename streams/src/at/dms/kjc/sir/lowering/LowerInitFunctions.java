@@ -113,10 +113,10 @@ public class LowerInitFunctions implements StreamVisitor {
 	    // to do this in case we're connecting a splitter or
 	    // joiner, since the splitters and joiners don't know
 	    // about their types.
-	    Utils.assert(pair[0] instanceof SIRStream ||
-			 pair[1] instanceof SIRStream,
-			 "Two many-to-1 or 1-to-many operators connected? " +
-			 "Can't determine type of tape in between");
+	    assert pair[0] instanceof SIRStream ||
+                pair[1] instanceof SIRStream:
+                "Two many-to-1 or 1-to-many operators connected? " +
+                "Can't determine type of tape in between";
 	    CType tapeType;
 	    // assign type to either output of source or input of
 	    // sink, depending on which we can determine
@@ -233,9 +233,9 @@ public class LowerInitFunctions implements StreamVisitor {
 						    str.getJoiner());
 
 	    // register an LIR node to <init>
-	    Utils.assert(child.getInputType()!=null,
-			 "null child: " + child.getName() + " " +
-			 child.getIdent());
+	    assert child.getInputType()!=null:
+                "null child: " + child.getName() + " " +
+                child.getIdent();
 	    
 	    init.addStatement(new LIRSetParallelStream(parentContext,
                                                        childContext,

@@ -76,10 +76,10 @@ public class WorkEstimate {
 	WorkList result = new WorkList(treeMap.entrySet());
 	// make sure our sizes our right - was a problem at one point
 	// due to improper comparator function (should preserve .equals)
-	Utils.assert(map.size()==treeMap.size(),
-		     "map.size=" + map.size() + "; treemap.size=" + treeMap.size());
-	Utils.assert(map.size()==result.size(),
-		     "map.size=" + map.size() + "; result.size=" + result.size());
+	assert map.size()==treeMap.size():
+            "map.size=" + map.size() + "; treemap.size=" + treeMap.size();
+	assert map.size()==result.size():
+            "map.size=" + map.size() + "; result.size=" + result.size();
 	return result;
     }
 
@@ -127,7 +127,7 @@ public class WorkEstimate {
      * <obj> was present in the original graph used to construct this.
      */
     public int getWork(SIRFilter obj) {
-	Utils.assert(workMap.containsKey(obj), "Don't have work for " + obj);
+	assert workMap.containsKey(obj): "Don't have work for " + obj;
 	return ((WorkInfo)workMap.get(obj)).getTotalWork();
     }
 
@@ -137,7 +137,7 @@ public class WorkEstimate {
      * graph used to construct this.
      */
     public int getReps(SIRFilter obj) {
-	Utils.assert(workMap.containsKey(obj), "Don't have work for " + obj);
+	assert workMap.containsKey(obj): "Don't have work for " + obj;
 	return ((WorkInfo)workMap.get(obj)).getReps();
     }
 

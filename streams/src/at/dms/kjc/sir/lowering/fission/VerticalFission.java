@@ -44,7 +44,7 @@ public class VerticalFission {
      */
     public static SIRPipeline fissMaximal(SIRFilter filter) {
 	int num = getMaxFiss(filter);
-	Utils.assert(num<2, "Tried to fiss filter that is not fissable.");
+	assert num<2: "Tried to fiss filter that is not fissable.";
 	return fiss(filter, num);
     }
     /**
@@ -54,7 +54,8 @@ public class VerticalFission {
      * components.
      */
     public static SIRPipeline fiss(SIRFilter filter, int numTargets) {
-	Utils.assert(numTargets<=getMaxFiss(filter), "Trying to fiss filter too far.");
+	assert numTargets<=getMaxFiss(filter):
+            "Trying to fiss filter too far.";
 
 	// extract linear components
 	FilterMatrix A = lfa.getLinearRepresentation(filter).getA();

@@ -177,10 +177,11 @@ public class FusePipe {
 	    }
 	    // if we found anything to fuse
 	    if (end > start) {
-		Utils.assert(pipe.get(start).getParent()==pipe,
-			     "This stream (" + pipe.get(start) + " thinks its parent is " + pipe.get(start).getParent() + 
-			     " even though it should be " + pipe);
-		Utils.assert(pipe.get(start).getParent()==pipe);
+		assert pipe.get(start).getParent()==pipe:
+                    "This stream (" + pipe.get(start) +
+                    " thinks its parent is " + pipe.get(start).getParent() + 
+                    " even though it should be " + pipe;
+		assert pipe.get(start).getParent()==pipe;
 		fuse((SIRFilter)pipe.get(start),
 		     (SIRFilter)pipe.get(end));
 		numEliminated += end-start;
@@ -207,9 +208,9 @@ public class FusePipe {
 
 	// check that all the filters are fusable
 	for (int i=0; i<pipe.size(); i++) {
-	    Utils.assert(isFusable(pipe.get(i)),
-			 "Trying to fuse a filter that is unfusable: " + 
-			 pipe.get(i) + " " + pipe.get(i).getName());
+	    assert isFusable(pipe.get(i)):
+                "Trying to fuse a filter that is unfusable: " + 
+                pipe.get(i) + " " + pipe.get(i).getName();
 	}
 
 	// rename filter contents
@@ -379,9 +380,13 @@ public class FusePipe {
 		// the peek buffer is the difference between what the
 		// previous one produces and this one consumes
 		peekBufferSize = lastProduce - myConsume;
-		Utils.assert(peekBufferSize>=0, 
-			     "Pipeline fusion trying to create a negative peek buffer of " + peekBufferSize + " when fusing between " + last.filter + " and " + filter + "\n" +
-			     "  peekBufferSize = lastProduce - myConsume = " + lastProduce + " - " + myConsume);
+		assert peekBufferSize>=0:
+                    "Pipeline fusion trying to create " +
+                    "a negative peek buffer of " + peekBufferSize +
+                    " when fusing between " + last.filter + " and " +
+                    filter + "\n" +
+                    "  peekBufferSize = lastProduce - myConsume = " +
+                    lastProduce + " - " + myConsume;
 	    }
 
 	    // get ready to make rest of phase-specific info
@@ -1365,7 +1370,7 @@ public class FusePipe {
 	 * Returns fused init function of this.
 	 */
 	public JMethodDeclaration getInitFunction() {
-	    Utils.assert(initFunction!=null);
+	    assert initFunction!=null;
 	    return initFunction;
 	}
 

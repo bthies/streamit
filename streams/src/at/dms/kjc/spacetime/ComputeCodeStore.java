@@ -176,7 +176,7 @@ public class ComputeCodeStore {
      * as a method of this.  Requires that <method> is non-null.
      */
     public void addMethod(JMethodDeclaration method) {
-	Utils.assert(method!=null);
+	assert method!=null;
 	// see if we already have <method> in this
 	for (int i=0; i<methods.length; i++) {
 	    if (methods[i]==method) {

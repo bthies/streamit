@@ -92,7 +92,10 @@ public class Lifter implements StreamVisitor {
     public static boolean eliminatePipe(final SIRPipeline str) {
 	// get parent
 	SIRContainer parent = str.getParent();
-	Utils.assert(parent==null || parent.contains(str), "Inconsistency in IR:  this stream has a parent which doesn't contain it:\n  stream: " + str + "\n  parent: " + parent);
+	assert parent==null || parent.contains(str):
+            "Inconsistency in IR: " +
+            "this stream has a parent which doesn't contain it:\n" +
+            "stream: " + str + "\n  parent: " + parent;
 
 	// consider only if we have have a parent that's a pipe or if
 	// we only have a single child
@@ -101,8 +104,8 @@ public class Lifter implements StreamVisitor {
 	    // this assumes that we're not worrying about fields and
 	    // methods in containers -- otherwise we need renaming and
 	    // better handling of possible init function arguments?
-	    Utils.assert(str.getFields()==null || str.getFields().length==0,
-			 "Not expecting to find fields in container in Lifter.");
+	    assert str.getFields()==null || str.getFields().length==0:
+                "Not expecting to find fields in container in Lifter.";
 	    if (!(str.getMethods()==null || str.getMethods().length==0 ||
 		  (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()))) {
 		System.err.println("Not expecting to find methods in container in Lifter, but found " + 
@@ -117,7 +120,7 @@ public class Lifter implements StreamVisitor {
 	    int index = parent.indexOf(str);
 	    for (int i=0; i<str.size(); i++) {
 		parent.add(index+1+i, str.get(i), str.getParams(i));
-		Utils.assert(str.get(i).getParent()==parent);
+		assert str.get(i).getParent()==parent;
 	    }
 
 	    parent.remove(index);
@@ -141,15 +144,17 @@ public class Lifter implements StreamVisitor {
 	    // this assumes that we're not worrying about fields and
 	    // methods in containers -- otherwise we need renaming and
 	    // better handling of possible init function arguments?
-	    Utils.assert(str.getFields()==null || str.getFields().length==0,
-			 "Not expecting to find fields in container in Lifter.");
-	    Utils.assert(str.getMethods()==null || str.getMethods().length==0 ||
-			 (str.getMethods().length==1 && str.getMethods()[0]==str.getInit()),
-			 "Not expecting to find methods in container in Lifter, but found " + str.getMethods().length + " in " + str.getName() + ":\n" 
-			 + str.getMethods()[0]);
+	    assert str.getFields()==null || str.getFields().length==0:
+                "Not expecting to find fields in container in Lifter.";
+	    assert str.getMethods()==null || str.getMethods().length==0 ||
+                (str.getMethods().length==1 &&
+                 str.getMethods()[0]==str.getInit()):
+                "Not expecting to find methods in container in Lifter, " +
+                "but found " + str.getMethods().length + " in " +
+                str.getName() + ":\n" + str.getMethods()[0];
 	    
 	    parent.replace(str, str.get(0));
-	    Utils.assert(str.get(0).getParent()==parent);
+	    assert str.get(0).getParent()==parent;
 	    return true;
 	} else {
 	    return false;
@@ -294,10 +299,10 @@ public class Lifter implements StreamVisitor {
 				ok[0] = false;
 			    }
 			});
-		    Utils.assert(ok[0], 
-				 "\nDetected peek expression from an initWork function that doesn't" +
-				 "\npop anything.  This isn't supported right now because the Raw backend" + 
-				 "\ndoesn't fire the node even if it is scheduled for execution (as of 2/7/03).");
+		    assert ok[0]:
+                        "\nDetected peek expression from an initWork function that doesn't" +
+                        "\npop anything.  This isn't supported right now because the Raw backend" + 
+                        "\ndoesn't fire the node even if it is scheduled for execution (as of 2/7/03).";
 		    // then we're going to change it
 		    changed = true;
 		    // construct replacement

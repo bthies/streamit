@@ -166,7 +166,7 @@ abstract class LDPConfigContainer extends LDPConfig {
      * Requires <str> is a container.
      */
     protected void setStream(SIRStream str) {
-	Utils.assert(str instanceof SIRContainer);
+	assert str instanceof SIRContainer;
 	this.cont = (SIRContainer)str;
     }
 
@@ -246,7 +246,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	// if we are down to one child, then descend into child
 	if (x1==x2 && y1==y2) {
 	    long childCost = childConfig(x1, y1).get(collapse); 
-	    Utils.assert(childCost>=0, "childCost = " + childCost);
+	    assert childCost>=0: "childCost = " + childCost;
 	    A[x1][x2][y1][y2][collapse] = childCost;
 	    debugMessage(" returning child cost, " + callStr + " = " + childCost);
 	    indent--;
@@ -450,7 +450,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 	}
 	
 	A[x1][x2][y1][y2][collapse] = cost;
-	Utils.assert(cost>=0, "cost = " + cost);
+	assert cost>=0: "cost = " + cost;
 	debugMessage(" returning " + callStr + " = " + cost);
 	indent--;
 	return cost;
@@ -502,7 +502,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 		Utils.fail("Didn't expect " + str.getClass() + " as object of vertical cut.");
 	    }    
 	}
-	Utils.assert(!(tryVertical && verticalObj==null));
+	assert !(tryVertical && verticalObj==null);
 	
 	// return obj if it's possible to do vert cut
 	if (tryVertical) {
@@ -537,7 +537,7 @@ abstract class LDPConfigContainer extends LDPConfig {
 
 	// when tracing back, everything should be cached
 	SIRStream str = strCache[x1][x2][y1][y2][0];
-	Utils.assert(str!=null);
+	assert str!=null;
 
 	// if we're down to one node, then descend into it
 	if (x1==x2 && y1==y2) {

@@ -32,7 +32,7 @@ public class FuseAll implements StreamVisitor {
 	boolean hasFused = true;
 	while (hasFused) {
 	    try {
-		Utils.assert(wrapper.get(0).getParent() == wrapper);
+		assert wrapper.get(0).getParent() == wrapper;
 		Lifter.lift(wrapper);
 		if (wrapper.size()>1) {
 		    wrapper = SIRContainer.makeWrapper(wrapper);
@@ -89,7 +89,9 @@ public class FuseAll implements StreamVisitor {
     public void postVisitPipeline(SIRPipeline self,
 				  SIRPipelineIter iter) {
 	int elim = FusePipe.fuse(self);
-	Utils.assert(elim>0, "Tried to fuse " + self + " that has " + self.size() + " components, but didn't eliminate anything.");
+	assert elim>0:
+            "Tried to fuse " + self + " that has " + self.size() +
+            " components, but didn't eliminate anything.";
 	throw new SuccessfulFuseException();
     }
 

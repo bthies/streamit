@@ -244,7 +244,8 @@ public class DynamicProgPartitioner extends ListPartitioner {
 	} else if (str instanceof SIRSplitJoin) {
 	    return new DPConfigSplitJoin((SIRSplitJoin)str, this);
 	} else {
-	    Utils.assert(str instanceof SIRFeedbackLoop, "Unexpected stream type: " + str);
+	    assert str instanceof SIRFeedbackLoop:
+                "Unexpected stream type: " + str;
 	    return new DPConfigFeedbackLoop((SIRFeedbackLoop)str, this);
 	}
     }
@@ -258,7 +259,7 @@ public class DynamicProgPartitioner extends ListPartitioner {
 				     SIRSplitter splitter,
 				     SIRJoiner joiner) {
 	    // shouldn't have 0-sized SJ's
-	    Utils.assert(self.size()!=0, "Didn't expect SJ with no children.");
+	    assert self.size()!=0: "Didn't expect SJ with no children.";
 	    super.visitSplitJoin(self, fields, methods, init, splitter, joiner);
 	    // if parent is a pipeline, don't need a config for this splitjoin
 	    if (self.getParent() instanceof SIRPipeline) {

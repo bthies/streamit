@@ -20,7 +20,7 @@ import at.dms.util.Utils;
  * actually start using FilterMatrices for imaginary entries, then
  * someone should implement an imaginary entry counting scheme. -- AAL<br>
  *
- * $Id: FilterMatrix.java,v 1.22 2003-10-20 06:37:55 thies Exp $
+ * $Id: FilterMatrix.java,v 1.23 2004-01-27 23:13:25 dmaze Exp $
  **/
 
 public class FilterMatrix {
@@ -115,7 +115,7 @@ public class FilterMatrix {
      * filters without changing the semantics.
      **/
     public FilterMatrix trim(int minRows) {
-	Utils.assert(this.isReal());
+	assert this.isReal();
 	int zeroRows = 0;
 	boolean allZero = true;
 	while (allZero && (internalSizeRows-zeroRows>minRows)) {

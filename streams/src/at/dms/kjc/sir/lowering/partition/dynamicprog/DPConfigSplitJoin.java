@@ -16,7 +16,8 @@ class DPConfigSplitJoin extends DPConfigContainer {
 
     public DPConfigSplitJoin(SIRSplitJoin sj, DynamicProgPartitioner partitioner) {
 	super(sj, partitioner, wrapInArray(sj.size()), 1);
-	Utils.assert(sj.getRectangularHeight()==1, "Require sj's with height of 1 now.");
+	assert sj.getRectangularHeight()==1:
+            "Require sj's with height of 1 now.";
     }
     
     /**
@@ -28,7 +29,7 @@ class DPConfigSplitJoin extends DPConfigContainer {
     }
 
     protected DPConfig childConfig(int x, int y) {
-	Utils.assert(y==0, "Looking for y=" + y + " in DPConfigSplitJoin.get");
+	assert y==0: "Looking for y=" + y + " in DPConfigSplitJoin.get";
 	return partitioner.getConfig(cont.get(x));
     }
 }

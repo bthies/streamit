@@ -86,7 +86,7 @@ public class IterFactory {
      * top-level iterator, use methods above.)
      */
     SIRIterator createIter(SIRStream obj, SIRIterator parent, int pos) { 
-	Utils.assert(parent!=null);
+	assert parent!=null;
 	if (obj instanceof SIRFilter) {
 	    return createIter((SIRFilter)obj, parent, pos);
         } else if (obj instanceof SIRPhasedFilter) {

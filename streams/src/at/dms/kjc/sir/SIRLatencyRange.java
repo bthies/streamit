@@ -46,7 +46,9 @@ public class SIRLatencyRange extends SIRLatencyMax {
      * Returns the minimum of this range.
      */
     public int getMin() {
-	Utils.assert(min instanceof JIntLiteral, "Haven't resolved the min latency expression to a constant.  It is: " + min);
+	assert min instanceof JIntLiteral:
+            "Haven't resolved the min latency expression to a constant.  " +
+            "It is: " + min;
 	return ((JIntLiteral)min).intValue();
     }
 

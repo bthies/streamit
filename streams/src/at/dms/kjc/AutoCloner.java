@@ -156,7 +156,9 @@ public class AutoCloner {
 	// other kjc classes, do deep cloning
 	else if (CloneGenerator.inTargetClasses(typeName)) {
 	    // first pass:  output deep cloning for everything in at.dms
-	    Utils.assert(o instanceof DeepCloneable, "Should declare " + o.getClass() + " to implement DeepCloneable.");
+	    assert o instanceof DeepCloneable:
+                "Should declare " + o.getClass() +
+                " to implement DeepCloneable.";
 	    result = ((DeepCloneable)o).deepClone();
 	}
 	// hashtables -- clone along with contents

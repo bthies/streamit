@@ -168,9 +168,10 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 	    String typeName = ((SIRStream)children.get(i)).getTypeNameInC();
 	    // the name for the variable in the structure
 	    String varName = ((SIRStream)children.get(i)).getRelativeName();
-	    Utils.assert(varName!=null, "Relative name null for " + 
-			 children.get(i) + " ; might be a child with a " + 
-			 "wrong parent field?");
+	    assert varName!=null:
+                "Relative name null for " + 
+                children.get(i) + " ; might be a child with a " + 
+                "wrong parent field?";
 	    // define a variable of the structure
 	    JVariableDefinition var = 
 		new JVariableDefinition(/* tokenref */ null, 

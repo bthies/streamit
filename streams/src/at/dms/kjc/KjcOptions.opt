@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.18 2002-12-30 19:22:38 mgordon Exp $
+ * $Id: KjcOptions.opt,v 1.19 2003-01-09 21:58:01 mgordon Exp $
  */
 
 prefix Kjc
@@ -275,3 +275,9 @@ longname		"raw_uni"
 	type		boolean
 	default		"false"
 	help		"Use the Raw backend to produce uniprocessor C code."
+
+longname		"magic_net"
+	shortcut	"M"
+	type		boolean
+	default		"false"
+	help		"Generate Magic Network Code."

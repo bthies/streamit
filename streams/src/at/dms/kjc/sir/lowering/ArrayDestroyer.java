@@ -93,7 +93,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	if (body != null) {
 	    final Hashtable targets=new Hashtable();
 	    final Hashtable safe=new Hashtable();
-	    body.accept(new ReplacingVisitor() {
+	    body.accept(new SLIRReplacingVisitor() {
 		    /**
 		     * If arrays used in any way except in array access then remove from targets
 		     */
@@ -166,7 +166,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 		    replaced.put(index,var);
 		    return new JVariableDeclarationStatement(null,var,null);
 		} else {
-		    return new JAssignmentExpression(null,new JLocalVariableExpression(null,var),right);
+		    return new JAssignmentExpression(null,new JLocalVariableExpression(null,var),newRight);
 		}
 	    }
 	}
@@ -205,8 +205,9 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	    self.setAccessor(newExp);
 	}
 	
-	if((prefix instanceof JLocalVariableExpression)&&(accessor instanceof JIntLiteral)&&replaced.get(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue()))!=null)
-	    return new JLocalVariableExpression(self.getTokenReference(),(JLocalVariable)replaced.get(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue())));
+	if((prefix instanceof JLocalVariableExpression)&&(accessor instanceof JIntLiteral)&&replaced.get(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue()))!=null) {
+	    return new JLocalVariableExpression(null,(JLocalVariable)replaced.get(new VarIndex(((JLocalVariableExpression)prefix).getVariable(),((JIntLiteral)accessor).intValue())));
+	}
 	return self;
     }
 
@@ -214,4 +215,6 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
 	return new JVariableDefinition(array.getTokenReference(),0,array.getType(),array.getPrefix().getIdent()+"__destroyed_"+((JIntLiteral)array.getAccessor()).intValue(),init);
     }
 }
+
+
 

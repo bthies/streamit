@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.34 2001-10-29 20:43:59 dmaze Exp $
+ * $Id: LIRToC.java,v 1.35 2001-10-30 16:58:12 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -297,32 +297,34 @@ public class LIRToC
                                        JFormalParameter[] parameters,
                                        CClassType[] exceptions,
                                        JBlock body) {
-        /*
-          if (ident.equals(JAV_STATIC_INIT) || ident.equals(JAV_INIT)) {
-          return; // we do not want to generate this methods in source code
-          }
-        */
-
         newLine();
-        // print(CModifier.toString(modifiers));
-        print(returnType);
-        print(" ");
-        print(ident);
-        print("(");
-        int count = 0;
-
-        for (int i = 0; i < parameters.length; i++) {
-            if (count != 0) {
-                print(", ");
-            }
-
-            // if (!parameters[i].isGenerated()) {
-            parameters[i].accept(this);
-            count++;
-            // }
+        // Treat main() specially.
+        if (ident.equals("main"))
+        {
+            print("int main(int argc, char **argv)");
         }
-        print(")");
-
+        else
+        {
+            // print(CModifier.toString(modifiers));
+            print(returnType);
+            print(" ");
+            print(ident);
+            print("(");
+            int count = 0;
+            
+            for (int i = 0; i < parameters.length; i++) {
+                if (count != 0) {
+                    print(", ");
+                }
+                
+                // if (!parameters[i].isGenerated()) {
+                parameters[i].accept(this);
+                count++;
+                // }
+            }
+            print(")");
+        }
+        
         if (declOnly)
         {
             print(";");
@@ -1781,7 +1783,7 @@ public class LIRToC
         while (iter.hasNext())
             ((JStatement)(iter.next())).accept(this);
         newLine();
-        print("streamit_run(data->context);");
+        print("streamit_run(data->context, argc, argv);");
     }
 
     /**

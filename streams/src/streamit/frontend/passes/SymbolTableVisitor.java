@@ -28,7 +28,7 @@ import java.util.Map;
  * symbol table as each node is visited.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SymbolTableVisitor.java,v 1.14 2004-02-13 21:22:28 dmaze Exp $
+ * @version $Id: SymbolTableVisitor.java,v 1.15 2004-05-04 15:00:21 thies Exp $
  */
 public class SymbolTableVisitor extends FEReplacer
 {
@@ -158,7 +158,6 @@ public class SymbolTableVisitor extends FEReplacer
                                param,
                                SymbolTable.KIND_FUNC_PARAM);
         }
-	if (func!=null) { symtab.registerFn(func); }
         Object result = super.visitFunction(func);
         symtab = oldSymTab;
         return result;
@@ -209,6 +208,7 @@ public class SymbolTableVisitor extends FEReplacer
         SymbolTable oldSymTab = symtab;
         symtab = new SymbolTable(symtab);
         streamType = spec.getStreamType();
+	// register parameters
         for (Iterator iter = spec.getParams().iterator(); iter.hasNext(); )
         {
             Parameter param = (Parameter)iter.next();
@@ -217,6 +217,12 @@ public class SymbolTableVisitor extends FEReplacer
                                param,
                                SymbolTable.KIND_STREAM_PARAM);
         }
+	// register functions
+        for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+        {
+	    Function func = (Function)iter.next();
+	    symtab.registerFn(func);
+	}
         Object result = super.visitStreamSpec(spec);
         symtab = oldSymTab;
         streamType = oldStreamType;

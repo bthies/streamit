@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: JPhylum.java,v 1.5 2002-06-25 08:07:19 thies Exp $
+ * $Id: JPhylum.java,v 1.6 2002-07-29 00:45:05 thies Exp $
  */
 
 package at.dms.kjc;
@@ -33,13 +33,14 @@ import at.dms.kjc.iterator.*;
 public abstract class JPhylum extends at.dms.compiler.Phylum implements Constants, Finalizable {
     static Vector registry = new Vector (200);
     
-    public static void add(JPhylum j) {
-	registry.add(j);
+    public static void addTokenReference(JPhylum j) {
+    	registry.add(j);
     }
     
-    public static JPhylum get(int index) {
+    public static JPhylum getTokenReference(int index) {
 	return ((JPhylum) registry.get(index));
     }
+
     public static int regSize() {
 	return registry.size();
     }
@@ -55,7 +56,7 @@ public abstract class JPhylum extends at.dms.compiler.Phylum implements Constant
   public JPhylum(TokenReference where) {
     super(where);
 
-    this.add(this);
+    this.addTokenReference(this);
   }
 
 

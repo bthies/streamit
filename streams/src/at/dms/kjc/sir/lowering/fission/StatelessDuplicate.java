@@ -54,6 +54,15 @@ public class StatelessDuplicate {
 	if (!isStateless(filter)) {
 	    return false;
 	}
+	// don't split a filter with a feedbackloop as a parent, just
+	// as a precaution, since feedbackloops are hard to schedule
+	// when stuff is blowing up in the body
+	SIRContainer[] parents = filter.getParents();
+	for (int i=0; i<parents.length; i++) {
+	    if (parents[i] instanceof SIRFeedbackLoop) {
+		return false;
+	    }
+	}
 	// We don't yet support fission of two-stage filters that peek.
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter twoStage = (SIRTwoStageFilter)filter;

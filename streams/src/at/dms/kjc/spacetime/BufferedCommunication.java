@@ -62,23 +62,27 @@ public class BufferedCommunication extends RawExecutionCode
 	
 	JMethodDeclaration[] methods = filterInfo.filter.getMethods();
 
-	for (int i = 0; i < methods.length; i++) {
-	    //iterate over the statements and call the ConvertCommunication
-	    //class to convert peek, pop
-	    for (ListIterator it = methods[i].getStatementIterator();
-		 it.hasNext(); ){
-		((JStatement)it.next()).accept(convert);
+	if(methods!=null)
+	    for (int i = 0; i < methods.length; i++) {
+		//iterate over the statements and call the ConvertCommunication
+		//class to convert peek, pop
+		for (ListIterator it = methods[i].getStatementIterator();
+		     it.hasNext(); ){
+		    ((JStatement)it.next()).accept(convert);
+		}
 	    }
-	}
     }
 
     public JFieldDeclaration[] getVarDecls() 
     {
 	Vector decls = new Vector();
 	FilterContent filter = filterInfo.filter;
+
+	JFieldDeclaration[] fields=filter.getFields();
 	
-	for (int i = 0; i < filter.getFields().length; i++) 
-	    decls.add(filter.getFields()[i]);
+	if(fields!=null)
+	    for (int i = 0; i < fields.length; i++) 
+		decls.add(fields[i]);
 	
 	//index variable for certain for loops
 	JVariableDefinition exeIndexVar = 
@@ -512,7 +516,7 @@ public class BufferedCommunication extends RawExecutionCode
     }
 
 
-    private JStatement getWorkFunctionCall(FilterContent filter) 
+    protected JStatement getWorkFunctionCall(FilterContent filter) 
     {
 	//inline
 	//return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
@@ -757,6 +761,7 @@ public class BufferedCommunication extends RawExecutionCode
 	    receiveMethodName = structReceiveMethodPrefix  + type.toString();
 	}
 
+	System.out.println(generatedVariables.recvBuffer);
 	//create the array access expression to access the buffer 
 	JArrayAccessExpression arrayAccess = 
 	    new JArrayAccessExpression(null,

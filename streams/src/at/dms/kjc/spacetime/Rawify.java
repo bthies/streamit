@@ -1324,6 +1324,12 @@ public class Rawify
 	else 
 	    mult = filterInfo.steadyMult;
 
+	if(linear)
+	    if(init)
+		System.out.println("GENERATING INIT: "+node+" "+mult);
+	    else if(primePump)
+		System.out.println("GENERATING PRIMEPUMP: "+node+" "+mult);
+
 	if(!(init||primePump||!linear)) { //Linear switch code in steadystate
 	    createLinearSwitchCode(node,init,primePump,mult,tile,rawChip);
 	    sentItems+=mult;

@@ -9,7 +9,7 @@ import java.util.ArrayList;
 
 //If filter is linear
 
-public class Linear extends RawExecutionCode implements Constants {
+public class Linear extends BufferedCommunication implements Constants {
     private static final JMethodDeclaration linearInit=new JMethodDeclaration(null,0,CStdType.Void,"linearInit",new JFormalParameter[0],new CClassType[0],new JBlock(null,new JStatement[]{new InlineAssembly("mtsri BR_INCR,1")},null),null,null);
     private static final JMethodDeclaration[] emptyMethods=new JMethodDeclaration[0];
     //private static final JFieldDeclaration[] emptyFields=new JFieldDeclaration[0];
@@ -176,118 +176,38 @@ public class Linear extends RawExecutionCode implements Constants {
 	return LABEL_PREFIX+uin;
     }
     
-    public JMethodDeclaration getPrimePumpMethod() {
-	JBlock statements = new JBlock(null, new JStatement[0], null);
-	FilterContent filter = filterInfo.filter;
-	
-	//add the calls to the work function in the prime pump stage
-	//statements.addStatement(getSteadyBlock());//getWorkFunctionBlock(filterInfo.primePump));	
-
-	return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-				      CStdType.Void,
-				      primePumpStage + uniqueID,
-				      JFormalParameter.EMPTY,
-				      CClassType.EMPTY,
-				      statements,
-				      null,
-				      null);
-    }
+    /*public JMethodDeclaration getPrimePumpMethod() {
+      JBlock statements = new JBlock(null, new JStatement[0], null);
+      FilterContent filter = filterInfo.filter;
+      
+      //add the calls to the work function in the prime pump stage
+      //statements.addStatement(getSteadyBlock());//getWorkFunctionBlock(filterInfo.primePump));	
+      
+      return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
+      CStdType.Void,
+      primePumpStage + uniqueID,
+      JFormalParameter.EMPTY,
+      CClassType.EMPTY,
+      statements,
+      null,
+      null);
+      }*/
     
-    public JMethodDeclaration getInitStageMethod() {
-	return linearInit;
-	/*
-	  //Copied From DirectCommunication
-	  JBlock statements = new JBlock(null, new JStatement[0], null);
-	  FilterContent filter = filterInfo.filter;
-	  
-	  //add the calls for the work function in the initialization stage
-	  //statements.addStatement(generateInitWorkLoop(filter));
-	  //add the calls to the work function in the prime pump stage
-	  //statements.addStatement(getWorkFunctionBlock(filterInfo.primePump));	
-	  
-	  return new JMethodDeclaration(null, at.dms.kjc.Constants.ACC_PUBLIC,
-	  CStdType.Void,
-	  initStage + uniqueID,
-	  JFormalParameter.EMPTY,
-	  CClassType.EMPTY,
-	  statements,
-	  null,
-	  null);*/
-    }
+    /*public JMethodDeclaration getInitStageMethod() {
+      return linearInit;
+      }*/
     
     public JMethodDeclaration[] getHelperMethods() {
 	return emptyMethods;
-	
-	/*
-	  //Copied From DirectCommunication
-	  ArrayList methods = new ArrayList();
-	  
-	  //add all helper methods, except work function
-	  for (int i = 0; i < filterInfo.filter.getMethods().length; i++) 
-	  if (!(filterInfo.filter.getMethods()[i].equals(filterInfo.filter.getWork())))
-	  methods.add(filterInfo.filter.getMethods()[i]);
-	  
-	  return (JMethodDeclaration[])methods.toArray(new JMethodDeclaration[0]);	*/
     }
 
-    /*
-      //Copied from DirectCommunication
-      JStatement generateInitWorkLoop(FilterContent filter)
-      {
-      JBlock block = new JBlock(null, new JStatement[0], null);
-      
-      //clone the work function and inline it
-      JBlock workBlock = 
-      (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
-      
-      //if we are in debug mode, print out that the filter is firing
-      if (SpaceTimeBackend.FILTER_DEBUG_MODE) {
-      block.addStatement
-      (new SIRPrintStatement(null,
-      new JStringLiteral(null, filter.getName() + " firing (init)."),
-      null));
-      }
-      
-      block.addStatement(workBlock);
-      
-      //return the for loop that executes the block init - 1
-      //times
-      return makeForLoop(block, generatedVariables.exeIndex1, 
-      new JIntLiteral(filterInfo.initMult));
-      }*/
-
-    //Copied From DirectCommunication
-    /*private JBlock getWorkFunctionBlock(int mult)
-      {
-      JBlock block = new JBlock(null, new JStatement[0], null);
-      FilterContent filter = filterInfo.filter;
-      //inline the work function in a while loop
-      JBlock workBlock = 
-      (JBlock)ObjectDeepCloner.
-      deepCopy(filter.getWork().getBody());
-      
-      //create the for loop that will execute the work function
-      //local variable for the work loop
-      JVariableDefinition loopCounter = new JVariableDefinition(null,
-      0,
-      CStdType.Integer,
-      workCounter,
-      null);
-      
-      
-      
-      JStatement loop = 
-      makeForLoop(workBlock, loopCounter, new JIntLiteral(mult));
-      block.addStatement(new JVariableDeclarationStatement(null,
-      loopCounter,
-      null));
-      block.addStatement(loop);
-      return block;
-      }*/
-    
     public JFieldDeclaration[] getVarDecls() {
+	//Get varDecls from BufferedCommunication
+	JFieldDeclaration[] superVarDecls=super.getVarDecls();
 	FilterContent filter = filterInfo.filter;
-	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+1/*3 + filter.getFields().length*/];
+	JFieldDeclaration[] fields=new JFieldDeclaration[array.length+1+superVarDecls.length];
+	//Fill in BufferedCommunication varDecls
+	System.arraycopy(superVarDecls,0,fields,array.length+1,superVarDecls.length);
 	
 	for(int i=0;i<array.length;i++)
 	    try {
@@ -301,157 +221,13 @@ public class Linear extends RawExecutionCode implements Constants {
 	    Utils.fail("Couldn't convert constant: "+constant);
 	}
 
-	/*
-	  //Adapted from Gordo's Code
-	  //index variable for certain for loops
-	  JVariableDefinition exeIndexVar = 
-	  new JVariableDefinition(null, 
-	  0, 
-	  CStdType.Integer,
-	  exeIndex + uniqueID,
-	  null);
-	  
-	  //remember the JVarDef for latter (in the raw main function)
-	  generatedVariables.exeIndex = exeIndexVar;
-	  fields[array.length+1]=new JFieldDeclaration(null, exeIndexVar, null, null);
-	  
-	  //index variable for certain for loops
-	  JVariableDefinition exeIndex1Var = 
-	  new JVariableDefinition(null, 
-	  0, 
-	  CStdType.Integer,
-	  exeIndex1 + uniqueID,
-	  null);
-	  
-	  generatedVariables.exeIndex1 = exeIndex1Var;
-	  fields[array.length+2]=new JFieldDeclaration(null, exeIndex1Var, null, null);
-	  
-	  //add the fields of the non-linear filter, because we call the non-linear work function in the
-	  //init and primepump stage
-	  for (int i = 0; i < filter.getFields().length; i++) 
-	  fields[i + array.length + 3] = filter.getFields()[i];
-	  
-	  //convert the communication
-	  //all the communication is in the work function
-	  //filter.getWork().accept(new DirectConvertCommunication());
-	  //End Gordo's Code.
-	*/
 	return fields;
     }
-    
-    //Copied from Gordo
-    /*static class DirectConvertCommunication extends SLIRReplacingVisitor 
-      {
-      public Object visitAssignmentExpression(JAssignmentExpression oldself,
-      JExpression oldleft,
-      JExpression oldright) 
-      {
-      //a little optimization, use the pointer version of the 
-      //structure's pop in struct.h to avoid copying		
-      if (oldright instanceof JCastExpression && 
-      (((JCastExpression)oldright).getExpr() instanceof SIRPopExpression)) {
-      SIRPopExpression pop = (SIRPopExpression)((JCastExpression)oldright).getExpr();
-      
-      if (pop.getType().isClassType()) {
-      JExpression left = (JExpression)oldleft.accept(this);
-      
-      JExpression[] arg = 
-      {left};
-      
-      return new JMethodCallExpression(null, new JThisExpression(null), 
-      structReceiveMethodPrefix + 
-      pop.getType(),
-      arg);
-      } 
-      if (pop.getType().isArrayType()) {
-      return null;
-      }
-      }
-      
-      //otherwise do the normal thing
-      JExpression self = (JExpression)super.visitAssignmentExpression(oldself,
-      oldleft, 
-      oldright);
-      return self;
-      }
-      
-      
-      public Object visitPopExpression(SIRPopExpression oldSelf,
-      CType oldTapeType) {
-      
-      // do the super
-      SIRPopExpression self = 
-      (SIRPopExpression)
-      super.visitPopExpression(oldSelf, oldTapeType);  
-      
-      //if this is a struct, use the struct's pop method, generated in struct.h
-      if (self.getType().isClassType()) {
-      return new JMethodCallExpression(null, new JThisExpression(null), 
-      "pop" + self.getType(), 
-      new JExpression[0]);
-      }
-      else if (self.getType().isArrayType()) {
-      return null;
-      }
-      else {
-      //I am keeping it the was it is because we should use static_receive
-      //instead of receiving to memory as in the code in Util
-      if (KjcOptions.altcodegen || KjcOptions.decoupled) 
-      return altCodeGen(self);
-      else
-      return normalCodeGen(self);
-      }
-      }
-      
-      
-      private Object altCodeGen(SIRPopExpression self) {
-      //direct communcation is only generated if the input/output types are scalar
-      if (self.getType().isFloatingPoint())
-      return 
-      new JLocalVariableExpression(null,
-      new JGeneratedLocalVariable(null, 0, 
-      CStdType.Float, 
-      Util.CSTIFPVAR,
-      null));
-      else 
-      return 
-      new JLocalVariableExpression(null,
-      new JGeneratedLocalVariable(null, 0, 
-      CStdType.Integer,
-      Util.CSTIINTVAR,
-      null));
-      }
-      
-      private Object normalCodeGen(SIRPopExpression self) {
-      String floatSuffix;
-      
-      floatSuffix = "";
-      
-      //append the _f if this pop expression pops floats
-      if (self.getType().isFloatingPoint())
-      floatSuffix = "_f";
-      
-      //create the method call for static_receive()
-      JMethodCallExpression static_receive = 
-      new JMethodCallExpression(null, new JThisExpression(null),
-      "static_receive" + floatSuffix, 
-      new JExpression[0]);
-      //store the type in a var that I added to methoddeclaration
-      static_receive.setTapeType(self.getType());
-      
-      return static_receive;
-      }
-      
-      public Object visitPeekExpression(SIRPeekExpression oldSelf,
-      CType oldTapeType,
-      JExpression oldArg) {
-      Utils.fail("Should not see a peek expression when generating " +
-      "direct communication");
-      return null;
-      }
-      }
-      //End Copy
-    */
+
+    protected JStatement getWorkFunctionCall(FilterContent filter) {
+	return new JEmptyStatement(null,null);
+    }
 }
+
 
 

@@ -233,7 +233,10 @@ public class FilterContent {
     }
 
     public JMethodDeclaration getWork() {
-	return steady[0].getWork();
+	if(steady!=null)
+	    return steady[0].getWork();
+	else
+	    return null;
     }
 
     public JMethodDeclaration getInit() {
@@ -249,7 +252,6 @@ public class FilterContent {
 	steadyMult *= mult;
     }
     
-
     public int getSteadyMult() {
 	return steadyMult;
     }
@@ -291,7 +293,6 @@ public class FilterContent {
 	return fields;
     }
     
-
     public JMethodDeclaration getInitWork() {
         return init[0].getWork();
     }

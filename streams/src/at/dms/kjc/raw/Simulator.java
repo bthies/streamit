@@ -56,11 +56,11 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    new SimulationCounter(JoinerSimulator.schedules);
 
 	joinerCode = initJoinerCode;
-	initSchedules = (new Simulator(top, true)).go(RawBackend.initExecutionCounts, counters, top);
+	initSchedules = (new Simulator(top, true)).go(RawBackend.initExecutionCounts, counters, null);
 	System.out.println("End of init simulation");
        
 	joinerCode = steadyJoinerCode;
-	steadySchedules = (new Simulator(top, false)).go(RawBackend.steadyExecutionCounts, counters, top);
+	steadySchedules = (new Simulator(top, false)).go(RawBackend.steadyExecutionCounts, counters, null);
     }
     
    
@@ -76,6 +76,7 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	bottom = null;
 	initSimulation = init;
 	//toplevel.accept(this, new HashSet(), false);
+
 	//System.out.println("Bottom node " + Namer.getName(bottom.contents));
     }
 
@@ -102,10 +103,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    //simulate the firings
 	    //1 item for a joiner, push items for a filter
 	    	    
-	    //System.out.println(Namer.getName(fire.contents) + " pushing " + items);
-	    
 
 	    for (int i = 0; i < items; i++) {
+		//System.out.println(Namer.getName(fire.contents) + " pushing " + items);
 		//get the destinations of this item
 		//could be multiple dests with duplicate splitters
 		//a filter always has one outgoing arc, so sent to way 0
@@ -113,8 +113,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 							counters, "", 
 							fire));
 		//see if anyone downstream can fire
-		if (fire != lastToFire)
-		    go(counts, counters, fire);
+		//if (fire != lastToFire)
+		go(counts, counters, fire);
 	    }
 	    
 	}
@@ -400,10 +400,13 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 
     //for now, find the most-downstream filter to fire
     //from the starting node
-    private FlatNode whoShouldFire(FlatNode start, HashMap executionCounts, 
+    private FlatNode whoShouldFire(FlatNode current, HashMap executionCounts, 
 				    SimulationCounter counters) 
     {
+	FlatNode start = current;
 	//breadth first search from bottom
+	if (start == null)
+	    start = toplevel;
 	HashSet visited = new HashSet();
 	Vector queue = new Vector();
 	FlatNode node;
@@ -425,6 +428,8 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 	    }
 	}
 	//no node can fire
+	if (mostDownStream == current)
+	    return null;
 	return mostDownStream;
     }
    

@@ -67,6 +67,9 @@ test-examples: compile
 # run benchmark tests
 test-benchmarks: compile
 	$(TESTER) streamittest.TestOnlyBenchmarks
+# run sorting tests
+test-sorts: compile
+	$(TESTER) streamittest.TestOnlySorts
 
 
 #checkin tests

@@ -7,6 +7,7 @@ import at.dms.util.IRPrinter;
 import at.dms.util.Utils;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
+import at.dms.kjc.lir.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,13 +62,56 @@ public class SIRScheduler {
 	scheduler.useStream(schedStream);
 	// compute a schedule
 	Schedule schedule = (Schedule)scheduler.computeSchedule();
-	// make work function implementing the schedule
-	JMethodDeclaration work = makeWork(schedule.getSteadySchedule(), 
-					   toplevel);
+	// make work function implementing the steady-state schedule
+	JMethodDeclaration steadyWork = makeWork(schedule.getSteadySchedule(), 
+						 toplevel);
 	// set <work> as the work function of <toplevel>
-	toplevel.setWork(work);
+	toplevel.setWork(steadyWork);
+	// make an initialization schedule
+	Object schedObject = schedule.getInitSchedule(); 
+	Utils.assert(schedObject!=null, 
+		     "Got a null init. schedule from the scheduling library");
+	JMethodDeclaration initWork = makeWork(schedObject, toplevel);
+	// make the main function in <flatClass>, containing call to <initWork>
+	addMainFunction(toplevel, initWork);
 	// return schedule for future reference
 	return schedule;
+    }
+
+    /**
+     * Adds a main function to <flatClass>, with the information
+     * necessary to call the toplevel init function in <toplevel> and
+     * the init schedule that's executed in <initWork>
+     */
+    private void addMainFunction(SIRStream toplevel, 
+				 JMethodDeclaration initWork) {
+	// make a call to <initWork> from within the main function
+	LinkedList statementList = new LinkedList();
+	statementList.add(makeWorkStatement(toplevel, 
+					    initWork.getName(),
+					    toplevel));
+
+	// construct LIR node
+	LIRMainFunction[] main 
+	    = {new LIRMainFunction(toplevel.getName(),
+				   new LIRFunctionPointer(toplevel.
+							  getInit().
+							  getName()),
+				   statementList)};
+	JBlock mainBlock = new JBlock(null, main, null);
+
+	// add a method to <flatClass>
+	flatClass.addMethod(
+		new JMethodDeclaration( /* tokref     */ null,
+				    /* modifiers  */ at.dms.kjc.
+				                     Constants.ACC_PUBLIC,
+				    /* returntype */ CStdType.Void,
+				    /* identifier */ "main",
+				    /* parameters */ JFormalParameter.EMPTY,
+				    /* exceptions */ CClassType.EMPTY,
+				    /* body       */ mainBlock,
+				    /* javadoc    */ null,
+				    /* comments   */ null));
     }
 
     /**
@@ -100,6 +144,12 @@ public class SIRScheduler {
 	} else if (schedObject instanceof SIRFilter) {
 	    // if we have a filter, just return filter's work function
 	    return ((SIRFilter)schedObject).getWork();
+	} else if (schedObject==null) {
+	    // fail
+	    Utils.fail("SIRScheduler found a null component in the schedule " +
+		       "(expected List or SIRFilter)");
+	    // return value doesn't matter
+	    return null;
 	} else {
 	    // othwerise, fail
 	    Utils.fail("SIRScheduler expected List or SIRFilter, but found " + 
@@ -152,7 +202,7 @@ public class SIRScheduler {
     }
 
     /**
-     * Returns a list of statements corresponding to a sequence of
+     * Returns a list of JStatements corresponding to a sequence of
      * calls to the work functions corresponding to the elements of
      * <list> with top-level stream <toplevel>
      */
@@ -165,29 +215,41 @@ public class SIRScheduler {
 	    Object next = it.next();
 	    // get name of work function associated with <next>
 	    String workName = getWorkName(next, toplevel);
-	    // build the parameter to the work function, depending on
-	    // whether we're calling a filter work function or a
-	    // hierarchical list-work function
-	    JExpression[] arguments
-		= {makeWorkArgument(next, toplevel)} ;
-	    // get method call to work function of <filter>
-	    JMethodCallExpression workExpr = 
-		new JMethodCallExpression(/* tokref */
-					  null,
-					  /* prefix -- ok to be null? */
-					  null,
-					  /* ident */
-					  workName,
-					  /* args */
-					  arguments);
-	    // make a statement from the call expression
-	    JExpressionStatement workStatement =
-		new JExpressionStatement(null, workExpr, null);
+	    // make the work statement
+	    JStatement workStatement = makeWorkStatement(next, 
+							 workName, 
+							 toplevel);
 	    // add call to filter work to our statement list
 	    statementList.add(workStatement);
 	}
 	// return list
 	return (JStatement[])statementList.toArray(new JStatement[0]);
+    }
+
+    /**
+     * Generates a statement that calls the work function named <workName>
+     * on sched object <schedObject>.
+     */
+    private JStatement makeWorkStatement(Object schedObject, 
+					 String workName,
+					 SIRStream toplevel) {
+	// build the parameter to the work function, depending on
+	// whether we're calling a filter work function or a
+	// hierarchical list-work function
+	JExpression[] arguments
+	    = {makeWorkArgument(schedObject, toplevel)} ;
+	// get method call to work function of <filter>
+	JMethodCallExpression workExpr = 
+	    new JMethodCallExpression(/* tokref */
+				      null,
+				      /* prefix -- ok to be null? */
+				      null,
+				      /* ident */
+				      workName,
+				      /* args */
+				      arguments);
+	// make a statement from the call expression
+	return new JExpressionStatement(null, workExpr, null);
     }
 
     /**

@@ -31,8 +31,6 @@ public class Flattener {
 	Schedule schedule = SIRScheduler.schedule(str, flatClass);
 	// add LIR hooks to init functions
 	LowerInitFunctions.lower(str, schedule);
-	// add main function
-	addMainFunction(str, flatClass);
 
 	// DEBUGGING PRINTING
 	IRPrinter printer = new IRPrinter();
@@ -41,34 +39,5 @@ public class Flattener {
 
 	return flatClass;
     }
-
-    /**
-     * Adds a main function to <flatClass>, with the information
-     * necessary to call the toplevel init function in <toplevel>.
-     */
-    private static void addMainFunction(SIRStream toplevel, 
-					JClassDeclaration flatClass) {
-	// construct LIR node
-	LIRMainFunction[] main 
-	    = {new LIRMainFunction(toplevel.getName(),
-				   new LIRFunctionPointer(toplevel.
-							  getInit().
-							  getName()),
-				   null)};
-	JBlock mainBlock = new JBlock(null, main, null);
-
-	// add a method to <flatClass>
-	flatClass.addMethod(
-		new JMethodDeclaration( /* tokref     */ null,
-				    /* modifiers  */ at.dms.kjc.
-				                     Constants.ACC_PUBLIC,
-				    /* returntype */ CStdType.Void,
-				    /* identifier */ "main",
-				    /* parameters */ JFormalParameter.EMPTY,
-				    /* exceptions */ CClassType.EMPTY,
-				    /* body       */ mainBlock,
-				    /* javadoc    */ null,
-				    /* comments   */ null));
-    }
-    
+   
 }

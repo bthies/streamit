@@ -95,7 +95,10 @@ class LDPConfigFilter extends LDPConfig {
 	switch(collapse) {
 	    
 	case LinearPartitioner.COLLAPSE_ANY: {
-	    // take min of other three options
+	    // take min of other three options.  Do this explicitly
+	    // instead of referencing A array, since the symmetry
+	    // optimizations could have caused this to not be
+	    // evaluated with calls to get().
 	    int[] options = { LinearPartitioner.COLLAPSE_FREQ, 
 			      LinearPartitioner.COLLAPSE_LINEAR, 
 			      LinearPartitioner.COLLAPSE_NONE };

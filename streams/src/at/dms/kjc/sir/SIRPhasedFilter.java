@@ -110,6 +110,13 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
 	return this.outputType;
     }
 
+    public SIRWorkFunction[] getPhases() {
+        return phases;
+    }
+    public void setPhases(SIRWorkFunction[] phases) {
+        this.phases = phases;
+    }
+
     public String toString() {
 	return "SIRPhasedFilter name=" + getName() + " ident=" + getIdent();
     }

@@ -301,6 +301,19 @@ abstract class DPConfigContainer extends DPConfig {
 	    return sum;
 	}
 
+	// otherwise, we're going to try making a cut... but first see
+	// if there will be any tiles left after accounting for the joiner
+	int tilesAvail = tileLimit - (1-nextToJoiner);
+	// if there is only one tile available, then recurse
+	Utils.assert(tilesAvail>0);
+	Utils.assert(tileLimit>1);
+	if (tilesAvail==1) {
+	    // must have added a joiner if you've gotten to this point
+	    int cost = get(x1, x2, y1, y2, tilesAvail, 1);
+	    A[x1][x2][y1][y2][tileLimit][nextToJoiner] = cost;
+	    return cost;
+	}
+
 	// otherwise, try making a vertical cut...
 	// see if we can do a vertical cut -- first, that there
 	// are two streams to cut between
@@ -333,7 +346,6 @@ abstract class DPConfigContainer extends DPConfig {
 	// argument for children will be true (1), and 2) A tile is
 	// used by the joiner.  We represent #2 by tilesAvail, the
 	// number of tailes available after the joiner is taken.
-	int tilesAvail = tileLimit - (1-nextToJoiner);
 	int min = Integer.MAX_VALUE;
 	if (tryVertical) {
 	    for (int xPivot=x1; xPivot<x2; xPivot++) {
@@ -363,6 +375,8 @@ abstract class DPConfigContainer extends DPConfig {
 		}
 	    }
 	}
+
+	Utils.assert(min!=Integer.MAX_VALUE, "Failed to make cut on container: " + cont.getName());
 	
 	A[x1][x2][y1][y2][tileLimit][nextToJoiner] = min;
 	return min;
@@ -473,13 +487,25 @@ abstract class DPConfigContainer extends DPConfig {
 	    return result;
 	}
 
+	// otherwise, we're going to try making a cut... but first see
+	// if there will be any tiles left after accounting for the joiner
+	int tilesAvail = tileLimit - (1-nextToJoiner);
+	// if there is only one tile available, then recurse
+	Utils.assert(tilesAvail>0);
+	Utils.assert(tileLimit>1);
+	if (tilesAvail==1) {
+	    // must have added a joiner if you've gotten to this point
+	    SIRStream result = traceback(partitions, curPartition, tilesAvail, 1, str);
+	    indent--;
+	    return result;
+	}
+
 	SIRSplitJoin verticalObj = getVerticalObj(x1, x2, y1, y2, str);
 
 	if (verticalObj!=null) {
 	    // otherwise, see if we made a vertical cut (breaking into
 	    // left/right pieces).  As with get procedure, pass
 	    // nextToJoiner as true and adjust tileLimit around the call.
-	    int tilesAvail = tileLimit - (1-nextToJoiner);
 	    for (int xPivot=x1; xPivot<x2; xPivot++) {
 		for (int tPivot=1; tPivot<tilesAvail; tPivot++) {
 		    int cost = Math.max(getWithFusionOverhead(x1, xPivot, y1, y2, tPivot, 1, tilesAvail),

@@ -849,6 +849,11 @@ public class ClusterExecutionCode extends at.dms.util.Utils
 				    "__tmp2_"+nodeID, 
 				    new JIntLiteral(0));
 
+	JVariableDefinition var_freq = 
+	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
+				    "__frequency_of_chkpts", 
+				    new JIntLiteral(0));
+
 	JVariableDefinition var2 = 
 	    new JVariableDefinition(null, 0, (CType)CStdType.Integer, 
 				    "__number_of_iterations", 
@@ -917,10 +922,10 @@ new JEmptyStatement(null, null);
 					   (null,
 					    new JLocalVariableExpression
 					    (null, var_tmp2),
-					    new JIntLiteral(0))), null);
+					    new JIntLiteral(1))), null);
 
 
-	JExpression relation2 = new JRelationalExpression(null, Constants.OPE_LT, new JLocalVariableExpression(null, var_tmp2), new JLocalVariableExpression(null, var2));
+	JExpression relation2 = new JRelationalExpression(null, Constants.OPE_LE, new JLocalVariableExpression(null, var_tmp2), new JLocalVariableExpression(null, var2));
 
 
 
@@ -1015,8 +1020,17 @@ new JEmptyStatement(null, null);
 	s_params[1] = new JLocalVariableExpression(null, new JVariableDefinition(null, 0, (CType)CStdType.Integer, "__steady_"+nodeID, new JIntLiteral(0)));
 	s_params[2] = new JLocalVariableExpression(null, new JVariableDefinition(null, 0, (CType)CStdType.Integer, "__write_thread__"+nodeID, new JIntLiteral(0)));
 
-	sss[1] = new JExpressionStatement(null, new JMethodCallExpression(null, "save_state::save_to_file", s_params), null);
 
+
+	sss[1] = new JIfStatement(null,
+				  
+				  new JRelationalExpression(null, Constants.OPE_LE, new JModuloExpression(null, new JLocalVariableExpression(null, var_tmp2), new JLocalVariableExpression(null, var_freq)), new JIntLiteral(0)),
+				 
+				  new JExpressionStatement(null, new JMethodCallExpression(null, "save_state::save_to_file", s_params), null),
+				  
+				  new JEmptyStatement(null, null),
+				  
+				  null);
 	
 	JBlock steady_state = new JBlock(null, sss, null);
 

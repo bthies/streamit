@@ -120,6 +120,7 @@ class ClusterCodeGenerator {
 	r.add("\n");
 
 	r.add("extern int __number_of_iterations;\n");
+	r.add("extern int __frequency_of_chkpts;\n");
 	r.add("message *__msg_stack_"+id+";\n");
 	r.add("int __counter_"+id+" = 0;\n");
 	r.add("int __steady_"+id+" = 0;\n");

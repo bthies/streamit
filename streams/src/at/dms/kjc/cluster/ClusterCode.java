@@ -176,13 +176,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
 
-	p.print("  for (i = 0; i < __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
+	p.print("  for (i = 1; i <= __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __splitter_"+thread_id+"_work();\n");
 	p.print("    }\n");
 
-	p.print("    save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("    if (i % __frequency_of_chkpts == 0) save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
 
 	p.print("  }\n");
 
@@ -327,13 +327,13 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.print("  }\n");
 	p.print("  __steady_"+thread_id+"++;\n");
 
-	p.print("  for (i = 0; i < __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
+	p.print("  for (i = 1; i <= __number_of_iterations; i++, __steady_"+thread_id+"++) {\n");	
 	p.print("    for (ii = 0; ii < "+ClusterBackend.steadyExecutionCounts.get(node)+"; ii++) {\n");
 	p.print("      check_thread_status(__state_flag_"+thread_id+",__thread_"+thread_id+");\n");
 	p.print("      __joiner_"+thread_id+"_work();\n");
 	p.print("    }\n");
 
-	p.print("    save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
+	p.print("    if (i % __frequency_of_chkpts == 0) save_state::save_to_file("+thread_id+", __steady_"+thread_id+", __write_thread__"+thread_id+");\n");
 
 	p.print("  }\n");
 
@@ -397,6 +397,7 @@ public class ClusterCode extends at.dms.util.Utils implements FlatVisitor {
 	p.println();
 
 	p.print("int __number_of_iterations = 20;\n");
+	p.print("int __frequency_of_chkpts =  1;\n");
 	p.print("vector <thread_info*> thread_list;\n");
 	p.print("mysocket *server = NULL;\n");
 	p.print("unsigned __ccp_ip = 0;\n");

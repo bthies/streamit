@@ -167,9 +167,7 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	if (parent == null)
 	    printData("null");
 	attrEnd();
-	attrStart("init");
-	init.accept(this);
-	attrEnd();
+
 	for (int i = 0; i < fields.length; i++)
 	    fields[i].accept(this);
 	for (int i = 0; i < methods.length; i++)
@@ -191,9 +189,6 @@ public class SIRPrinter extends IRPrinter implements StreamVisitor {
 	    printData("null");
 	attrEnd();
 	attrPrint("delay", (new Integer(delay)).toString());
-	attrStart("init");
-	init.accept(this);
-	attrEnd();
 	attrStart("InitPath");
 	initPath.accept(this);
 	attrEnd();

@@ -15,7 +15,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Utils.java,v 1.3 2001-10-12 10:28:06 thies Exp $
+ * $Id: Utils.java,v 1.4 2001-10-22 21:58:37 mgordon Exp $
  */
 
 package at.dms.util;
@@ -24,11 +24,12 @@ import java.lang.reflect.Array;
 import java.util.Vector;
 import java.util.List;
 import java.util.LinkedList;
+import java.io.Serializable;
 
 /**
  * This class defines severals utilities methods used in source code
  */
-public abstract class Utils {
+public abstract class Utils implements Serializable {
 
   // ----------------------------------------------------------------------
   // UTILITIES

@@ -4,6 +4,8 @@ global gGenerate_BloodGraph = 1;
 //how often (in cycles) would we like to update the bloodgraph
 global bg_update_cycles = 1;
 
+//the MHz of the processor
+global gMHz_streamit = 250;
 
 //Number gathering bc code
 //the blood graph variables
@@ -171,8 +173,8 @@ fn steady_state_boundary(dif) {
   gCacheMissCountTotal += gCacheMissCount;
   
   printf("Cycles: %d,  MFLOPS: %d, Cache Misses: %d, Outputs: %d\n", 
-	 dif, (250*gFpuCount)/dif, gCacheMissCount, printsPerCycle);
-  fprintf(outputFile, "%d %d %d %d ", dif, (250*gFpuCount)/dif, gCacheMissCount, gWorkCount);
+	 dif, (gMHz_streamit*gFpuCount)/dif, gCacheMissCount, printsPerCycle);
+  fprintf(outputFile, "%d %d %d %d ", dif, (gMHz_streamit*gFpuCount)/dif, gCacheMissCount, gWorkCount);
   for (i = 0; i < gNumProc; i++) {
     fprintf(outputFile, "%d ", ins_fired_per_tile[i]);
   }
@@ -217,7 +219,7 @@ fn print_final_stats() {
 	  gWorkCountTotal, 
 	  //- ((gNumProc - gStreamItTilesUsed) * totalCycles)), 
 	  gStreamItTilesUsed*totalCycles); 
-  fprintf(outputFile, "Avg MFLOPS: %d\n", (250*gFpuCountTotal)/totalCycles);	    
+  fprintf(outputFile, "Avg MFLOPS: %d\n", (gMHz_streamit*gFpuCountTotal)/totalCycles);	    
   fprintf(outputFile, "* Note: the numerator is the total non-blocked cycles\n"); 
   fprintf(outputFile, "  for *assigned* tiles in the configuration.\n"); 
   fprintf(outputFile, "  The denominator is the total number of cycles\n"); 
@@ -236,7 +238,7 @@ fn print_final_stats() {
 	  gMaxCyclesPerSteady, gMinCyclesPerSteady, 
 	  (gLastFiveCycles/5),  
 	  ((100000) / (totalCycles/gSteadyStatePrints)), 
-	  (250*gFpuCountTotal)/totalCycles, 
+	  (gMHz_streamit*gFpuCountTotal)/totalCycles, 
 	  gWorkCountTotal, // - ((gNumProc - gStreamItTilesUsed) * totalCycles)), 
 	  gFpuCountTotal, gMemCountTotal,  
 	  gBrCountTotal, //- ((gNumProc - gStreamItTilesUsed) * totalCycles), 

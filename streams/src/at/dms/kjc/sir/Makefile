@@ -15,7 +15,7 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 ##
-## $Id: Makefile,v 1.7 2001-09-27 23:28:48 thies Exp $
+## $Id: Makefile,v 1.8 2001-10-02 02:52:06 thies Exp $
 ##
 
 TOPDIR =	../..
@@ -55,6 +55,7 @@ JAVAFILES +=	SIRVisitor \
 		SIRSplitJoin \
 		SIRSplitType \
 		SIRSplitter \
+		SIRInitStatement \
 		SIRStream \
 		lowering/LoweringConstants \
 		lowering/Structurer \

@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.7 2003-10-04 23:33:34 thies Exp $
+# $Id: strc,v 1.8 2003-10-05 02:07:46 thies Exp $
 #
 
 use strict;
@@ -279,7 +279,6 @@ sub new_to_old
     my ($fns) = @_;
     return [] if !@$fns;
     my $target = change_extension($fns->[0], "str", "java");
-    $target = $opts{output} . ".java" if $opts{output};
     my $libflag = "";
     $libflag = "--library" if $opts{library};
     my $result = call("$java streamit.frontend.ToJava --output $target " .

@@ -46,7 +46,7 @@ public class StreaMITMain {
 	
 	if(KjcOptions.graph) {
 	    System.err.println("Dumping Graph..");
-	    stream.accept(new GraphEncoder());
+	    new GraphEncoder().encode(stream);
 	} else if (KjcOptions.raw != -1) {
 	    System.out.println("*/");
 	    

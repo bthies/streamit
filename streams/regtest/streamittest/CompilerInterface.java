@@ -6,7 +6,7 @@ import java.util.*;
  * Interface for compiling streamIT programs 
  * programatically from the regression testing framework, and
  * automatically comparing output from the two files
- * $Id: CompilerInterface.java,v 1.19 2003-03-10 15:52:13 aalamb Exp $
+ * $Id: CompilerInterface.java,v 1.20 2003-03-31 16:25:03 aalamb Exp $
  **/
 public class CompilerInterface {
     // flags for the various compiler options
@@ -47,7 +47,7 @@ public class CompilerInterface {
 
     public static final String OPTION_LINEAR_ANALYSIS    = "--linearanalysis";
     public static final String OPTION_LINEAR_REPLACEMENT = "--linearreplacement";
-    public static final String OPTION_FREQ_REPLACEMENT   = "--frequencyreplacement 3";
+    public static final String OPTION_FREQ_REPLACEMENT   = "--frequencyreplacement";
     public static final String OPTION_REDUND_REPLACEMENT = "--redundantreplacement";
 
     public static final String OPTION_DEBUG              = "--debug";

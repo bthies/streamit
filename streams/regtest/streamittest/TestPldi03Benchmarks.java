@@ -1,6 +1,6 @@
 /**
  * Interface for the PLDI 02 benchmarks in the 
- * $Id: TestPldi03Benchmarks.java,v 1.3 2003-03-10 15:52:13 aalamb Exp $
+ * $Id: TestPldi03Benchmarks.java,v 1.4 2003-03-31 16:25:03 aalamb Exp $
  **/
 package streamittest;
 
@@ -50,11 +50,11 @@ public class TestPldi03Benchmarks extends StreamITTestCase {
 	TestSuite suite = new TestSuite();
 	suite.addTest(new TestPldi03Benchmarks("testSimple", flags));
 	suite.addTest(new TestPldi03Benchmarks("testFIR", flags));
-	suite.addTest(new TestPldi03Benchmarks("testTarget", flags));
-	suite.addTest(new TestPldi03Benchmarks("testFilterBank", flags));
-	suite.addTest(new TestPldi03Benchmarks("testSamplingRate", flags));
-	suite.addTest(new TestPldi03Benchmarks("testFM", flags));	
-	suite.addTest(new TestPldi03Benchmarks("testBeamformer", flags));
+	//suite.addTest(new TestPldi03Benchmarks("testTarget", flags));
+	//suite.addTest(new TestPldi03Benchmarks("testFilterBank", flags));
+	//suite.addTest(new TestPldi03Benchmarks("testSamplingRate", flags));
+	//suite.addTest(new TestPldi03Benchmarks("testFM", flags));	
+	//suite.addTest(new TestPldi03Benchmarks("testBeamformer", flags));
 	return suite;
     }
 

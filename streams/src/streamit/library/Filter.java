@@ -87,6 +87,11 @@ public abstract class Filter extends Stream
         super(x, y, a, b, c, d);
     }
 
+    public Filter(float x, float y, int a, int b, int c, int d, int e)
+    {
+        super(x, y, a, b, c, d, e);
+    }
+
     public Filter(int a, int b, float c, int d, float e)
     {
         super(a, b, c, d, e);
@@ -222,6 +227,9 @@ public abstract class Filter extends Stream
         final public String name;
         public PhaseInfo(int _e, int _o, int _u, String _name)
         {
+	    // might be passing in a peek rate that is less than the
+	    // pop rate; remember it as the pop rate instead.
+	    if (_e < _o) { _e = _o; }
             e = _e;
             o = _o;
             u = _u;

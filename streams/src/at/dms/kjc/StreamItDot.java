@@ -135,17 +135,11 @@ public class StreamItDot implements AttributeStreamVisitor
         return new NamePair(makeLabelledInvisNode(self.getIdent()));
     }
 
-    /* visit a filter */
-    public Object visitFilter(SIRFilter self,
-                              JFieldDeclaration[] fields,
-                              JMethodDeclaration[] methods,
-                              JMethodDeclaration init,
-                              JMethodDeclaration work,
-                              CType inputType, CType outputType)
-    {
-        // Return a name pair with both ends pointing to this.
-	//        return new NamePair(makeLabelledNode(self.getRelativeName()));
-	String label = self.getName();
+    /**
+     * Returns the rate information for a filter.
+     */
+    protected static String makeFilterLabel(SIRFilter self) {
+	String label = "";
 	try {
 	    label += "\\npush=" + self.getPushInt();
 	    label += "\\npop=" + self.getPopInt();
@@ -159,8 +153,18 @@ public class StreamItDot implements AttributeStreamVisitor
 	} catch (Exception e) {
 	    // if constants not resolved for the ints, will get an exception
 	}
-	
-	return new NamePair(makeLabelledNode(label));
+	return label;
+    }
+
+    /* visit a filter */
+    public Object visitFilter(SIRFilter self,
+                              JFieldDeclaration[] fields,
+                              JMethodDeclaration[] methods,
+                              JMethodDeclaration init,
+                              JMethodDeclaration work,
+                              CType inputType, CType outputType)
+    {
+	return new NamePair(makeLabelledNode(self.getName() + makeFilterLabel(self)));
     }
 
     /* visit a phased filter */

@@ -8,9 +8,8 @@ void init_array(int n, double *A_re, double *A_im);
 void compute_W(int n, double *W_re, double *W_im); 
 void output_array(int n, double *A_re, double *A_im, char *outfile); 
 void permute_bitrev(int n, double *A_re, double *A_im); 
-int bitrev(int inp, int numbits); 
-int log_2(int n);  
-void doComputation(void);
+int  bitrev(int inp, int numbits); 
+int  log_2(int n);  
 void fft(int n, double *A_re, double *A_im, double *W_re, double *W_im);
 
 /************************************************************************************/
@@ -23,35 +22,34 @@ void fft(int n, double *A_re, double *A_im, double *W_re, double *W_im);
  */ 
 int main(int argc, char *argv[])
 {
-  doComputation();
-}
-
-
-/* Computes the actual fft **/
-void doComputation(void) {
-  int n; 
+  int n;
+  int i;
   double *A_re, *A_im, *W_re, *W_im; 
   
   n = 64;
- 
+
   A_re = (double*)malloc(sizeof(double)*n); 
   A_im = (double*)malloc(sizeof(double)*n); 
   W_re = (double*)malloc(sizeof(double)*n/2); 
   W_im = (double*)malloc(sizeof(double)*n/2); 
   assert(A_re != NULL && A_im != NULL && W_re != NULL && W_im != NULL); 
-
-  init_array(n, A_re, A_im); 
-  compute_W(n, W_re, W_im); 
-  fft(n, A_re, A_im, W_re, W_im);
-  permute_bitrev(n, A_re, A_im);        
-  //output_array(n, A_re, A_im, argv[2]);  
   
+  for (i=0; i<3; i++) {
+    init_array(n, A_re, A_im); 
+    compute_W(n, W_re, W_im); 
+    fft(n, A_re, A_im, W_re, W_im);
+    permute_bitrev(n, A_re, A_im);        
+    //output_array(n, A_re, A_im, argv[2]);  
+    
+    print_string("done");
+  }
+    
   free(A_re); 
   free(A_im); 
   free(W_re); 
   free(W_im); 
+  exit(0);
 
-  print_string("done");
 }
 
 

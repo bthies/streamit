@@ -30,4 +30,9 @@ public class MagicDramLoop extends MagicDramInstruction
     {
 	tripCount = tc;
     }
+
+    public String toC() 
+    {
+	return "";
+    }
 }

@@ -2,7 +2,6 @@ package at.dms.kjc.sir;
 
 import at.dms.kjc.lir.LIRStreamType;
 import at.dms.kjc.*;
-import at.dms.util.*;
 
 /**
  * A StreamIt phased filter.  Like SIRFilter, this has constant
@@ -24,7 +23,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
     /**
      * Array of phases run by the filter.
      */
-    private SIRWorkFunction[] phases;
+    private SIRWorkFunction[] initPhases, phases;
 
     public SIRPhasedFilter() 
     {
@@ -40,12 +39,14 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
                            String ident,
                            JFieldDeclaration[] fields,
                            JMethodDeclaration[] methods,
+                           SIRWorkFunction[] initPhases,
                            SIRWorkFunction[] phases,
                            JMethodDeclaration work,
                            CType inputType,
                            CType outputType)
     {
         super(parent, ident, fields, methods);
+        this.initPhases = initPhases;
         this.phases = phases;
         this.inputType = inputType;
         this.outputType = outputType;
@@ -77,6 +78,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
         this.parent = other.parent;
         this.fields = other.fields;
         this.methods = other.methods;
+        this.initPhases = other.initPhases;
         this.phases = other.phases;
         this.ident = other.ident;
     }
@@ -91,6 +93,7 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
                                    methods,
                                    init,
                                    work,
+                                   initPhases,
                                    phases,
                                    inputType,
                                    outputType);
@@ -110,9 +113,18 @@ public class SIRPhasedFilter extends SIRStream implements Cloneable
 	return this.outputType;
     }
 
+	public SIRWorkFunction[] getInitPhases() {
+		return initPhases;
+	}
+
+	public void setInitPhases(SIRWorkFunction[] initPhases) {
+		this.initPhases = initPhases;
+	}
+	
     public SIRWorkFunction[] getPhases() {
         return phases;
     }
+
     public void setPhases(SIRWorkFunction[] phases) {
         this.phases = phases;
     }

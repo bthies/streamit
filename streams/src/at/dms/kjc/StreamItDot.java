@@ -169,6 +169,7 @@ public class StreamItDot implements AttributeStreamVisitor
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration work,
+                                    SIRWorkFunction[] initPhases,
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType)
     {
@@ -178,6 +179,17 @@ public class StreamItDot implements AttributeStreamVisitor
         print(getClusterString(self));
         
         // Walk through each of the phases.
+        if (initPhases != null)
+			for (int i = 0; i < initPhases.length; i++)
+			{
+				NamePair p2 = (NamePair)initPhases[i].accept(this);
+				printEdge(pair.last, p2.first);
+				// Update the known edges.
+				if (pair.first == null)
+					pair.first = p2.first;
+				pair.last = p2.last;
+			}
+		
         if (phases != null)
             for (int i = 0; i < phases.length; i++)
             {

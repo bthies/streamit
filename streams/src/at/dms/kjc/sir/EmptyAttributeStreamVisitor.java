@@ -31,6 +31,7 @@ public class EmptyAttributeStreamVisitor implements AttributeStreamVisitor {
                                     JMethodDeclaration[] methods,
                                     JMethodDeclaration init,
                                     JMethodDeclaration work,
+                                    SIRWorkFunction[] initPhases,
                                     SIRWorkFunction[] phases,
                                     CType inputType, CType outputType)
     {

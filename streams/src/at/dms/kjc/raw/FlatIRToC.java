@@ -87,7 +87,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	//Optimizations
 	for (int i = 0; i < ((SIRFilter)node.contents).getMethods().length; i++) {
-	    if (StreamItOptions.constprop) {
+	    if (KjcOptions.constprop) {
 		System.out.println("Optimizing "+((SIRFilter)node.contents).getMethods()[i].getName()+"..");
 		Unroller unroller;
 		do {
@@ -135,7 +135,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	circular = false;
 	this.str = new StringWriter();
         this.p = new TabbedPrintWriter(str);
-	ratematch = StreamItOptions.ratematch && !f.insideFeedbackLoop();
+	ratematch = KjcOptions.ratematch && !f.insideFeedbackLoop();
     }
 
     public String getString() {

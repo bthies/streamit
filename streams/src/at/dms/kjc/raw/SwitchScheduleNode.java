@@ -69,7 +69,7 @@ public class SwitchScheduleNode
 	StringBuffer buf = new StringBuffer();
 	int toTile = Layout.getTile(to.contents);
 	int fromTile = Layout.getTile(from.contents);
-	if (StreamItOptions.raw == 16) {
+	if (KjcOptions.raw == 16) {
 	    if (fromTile - 4 == toTile)
 		buf.append("$cN");
 	    if (fromTile -1 == toTile) 
@@ -81,7 +81,7 @@ public class SwitchScheduleNode
 	    if (buf.toString().equals(""))
 		Utils.fail("Nodes not directly connected");
 	}
-	else if (StreamItOptions.raw == 4) {
+	else if (KjcOptions.raw == 4) {
 	    if (fromTile - 2 == toTile)
 		buf.append("$cN");
 	    if (fromTile -1 == toTile) 

@@ -12,7 +12,7 @@ public class JoinerRemoval implements FlatVisitor
     public static void run(FlatNode top) 
     {
 	unnecessary = new HashSet();
-	if (!StreamItOptions.ratematch)
+	if (!KjcOptions.ratematch)
 	    return;
 
 	System.out.println("Looking for Joiners to remove...");
@@ -44,7 +44,7 @@ public class JoinerRemoval implements FlatVisitor
 	    }
 	    
 	    //now check if there is no buffering
-	    if (StreamItOptions.ratematch) {
+	    if (KjcOptions.ratematch) {
 		if (node.inputs < 1)
 		    return;
 

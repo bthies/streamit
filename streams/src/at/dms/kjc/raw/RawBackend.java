@@ -15,6 +15,10 @@ import java.util.*;
 import at.dms.util.Utils;
 
 public class RawBackend {
+    // number of rows and columns that we're compiling for
+    public static int rawRows = -1;
+    public static int rawColumns = -1;
+
     //given a flatnode map to the execution count
     public static HashMap initExecutionCounts;
     public static HashMap steadyExecutionCounts;
@@ -24,13 +28,17 @@ public class RawBackend {
     public static HashMap[] executionCounts;
 
     public static void run(SIRStream str,
-			JInterfaceDeclaration[] 
-			interfaces,
-			SIRInterfaceTable[]
-			interfaceTables) {
+			   JInterfaceDeclaration[] 
+			   interfaces,
+			   SIRInterfaceTable[]
+			   interfaceTables) {
 	System.out.println("Entry to RAW Backend");
 
-	if (StreamItOptions.ratematch)
+	// set number of columns/rows
+	RawBackend.rawColumns = KjcOptions.raw;
+	RawBackend.rawRows = KjcOptions.raw;
+
+	if (KjcOptions.ratematch)
 	    simulator = new RateMatchSim();
 	else 
 	    simulator = new FineGrainSimulator();
@@ -57,7 +65,7 @@ public class RawBackend {
 
 	StreamItDot.printGraph(str, "before.dot");
 	
-	if (StreamItOptions.fusion) {
+	if (KjcOptions.fusion) {
 	    System.out.println("Running FuseAll...");
 	    FuseAll.fuse(str);
 	    System.out.println("Done FuseAll...");
@@ -67,7 +75,7 @@ public class RawBackend {
 	new VarDeclRaiser().raiseVars(str);
 
         // do constant propagation on fields
-        if (StreamItOptions.constprop) {
+        if (KjcOptions.constprop) {
 	    System.out.println("Running Constant Propagation of Fields");
 	    FieldProp.doPropagate(str);
 	    //System.out.println("Analyzing Branches..");
@@ -76,13 +84,13 @@ public class RawBackend {
 	}
 
 	AdjustGranularity.doit(str, 
-			       StreamItOptions.rawRows * 
-			       StreamItOptions.rawColumns);
+			       RawBackend.rawRows * 
+			       RawBackend.rawColumns);
 	
-	if (StreamItOptions.partition) {
+	if (KjcOptions.partition) {
 	    Partitioner.doit(str,
-			     StreamItOptions.rawRows *
-			     StreamItOptions.rawColumns);
+			     RawBackend.rawRows *
+			     RawBackend.rawColumns);
 	}
 
 	StreamItDot.printGraph(str, "after.dot");

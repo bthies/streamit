@@ -48,8 +48,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     private static void init(FlatNode top) 
     {
 	toplevel = top;
-	int rows = StreamItOptions.rawRows;
-	int columns = StreamItOptions.rawColumns;
+	int rows = RawBackend.rawRows;
+	int columns = RawBackend.rawColumns;
 		
 	//determine if there is a file reader/writer in the graph
 	//call init() to traverse the graph 
@@ -76,10 +76,10 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	System.out.println("Tiles assigned: " + assigned.size());
 
 	if (assigned.size() > 
-	    (StreamItOptions.rawRows * StreamItOptions.rawColumns)) {
+	    (RawBackend.rawRows * RawBackend.rawColumns)) {
 	    System.err.println("\nLAYOUT ERROR: Need " + assigned.size() +
 			       " tiles, have " + 
-			       (StreamItOptions.rawRows * StreamItOptions.rawColumns) +
+			       (RawBackend.rawRows * RawBackend.rawColumns) +
 			       " tiles.");
 	    System.exit(-1);
 	}
@@ -118,11 +118,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 
     public static Coordinate getTile(int tileNumber) 
     {
-	if (!(tileNumber / StreamItOptions.rawColumns < StreamItOptions.rawRows))
+	if (!(tileNumber / RawBackend.rawColumns < RawBackend.rawRows))
 	    Utils.fail("tile number too high");
 	
-	return coordinates[tileNumber / StreamItOptions.rawColumns]
-	    [tileNumber % StreamItOptions.rawColumns];
+	return coordinates[tileNumber / RawBackend.rawColumns]
+	    [tileNumber % RawBackend.rawColumns];
     }
 	    
     public static String getDirection(Coordinate from,
@@ -177,7 +177,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	//because the simulator only simulates 4x4 or 8x8 we
 	//have to translate the tile number according to these layouts
 	int columns = 4;
-	if (StreamItOptions.rawColumns > 4)
+	if (RawBackend.rawColumns > 4)
 	    columns = 8;
 	int row = tile.getRow();
 	int column = tile.getColumn();
@@ -222,7 +222,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int nsucc =0, j = 0;
 	double currentCost = 0.0, minCost = 0.0;
 	//number of paths tried at an iteration
-	int nover = 100; //* StreamItOptions.rawRows * StreamItOptions.rawColumns;
+	int nover = 100; //* RawBackend.rawRows * RawBackend.rawColumns;
 
 	try {
 	    init(node);
@@ -235,7 +235,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    currentCost = placementCost();
 	    System.out.println("Initial Cost: " + currentCost);
 	    
-	    if (StreamItOptions.noanneal) {
+	    if (KjcOptions.noanneal) {
 		dumpLayout("noanneal.dot");
 		return;
 	    }
@@ -251,7 +251,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    }
 	    //run the annealing twice.  The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
-	    for (int two = 0; two < StreamItOptions.rawRows ; two++) {
+	    for (int two = 0; two < RawBackend.rawRows ; two++) {
 		double t = annealMaxTemp(); 
 		double tFinal = annealMinTemp();
 		while (true) {
@@ -374,17 +374,17 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    //check to see if there are less then
 	    //file readers/writers the number of columns
 	    if (FileVisitor.fileReaders.size() + 
-		FileVisitor.fileWriters.size() > StreamItOptions.rawRows)
+		FileVisitor.fileWriters.size() > RawBackend.rawRows)
 		Utils.fail("Too many file readers/writers (must be less than rows.");
 	    //assign the file streams to the added column starting at the top
 	    //row
 	    while (frs.hasNext()) {
-		assign(coordinates[row][StreamItOptions.rawColumns], 
+		assign(coordinates[row][RawBackend.rawColumns], 
  		       (FlatNode)frs.next());
 		row++;
 	    }
 	    while (fws.hasNext()) {
-		assign(coordinates[row][StreamItOptions.rawColumns],
+		assign(coordinates[row][RawBackend.rawColumns],
 		       (FlatNode)fws.next());
 		row++;
 	    }
@@ -394,9 +394,9 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int row = 0;
 	int column = 0;
 
-	for (row = 0; row < StreamItOptions.rawRows; row ++) {
+	for (row = 0; row < RawBackend.rawRows; row ++) {
 	    if (row % 2 == 0) {
-		for (column = 0; column < StreamItOptions.rawColumns;) {
+		for (column = 0; column < RawBackend.rawColumns;) {
 		    if (!dfTraversal.hasNext())
 			break;
 		    FlatNode node = (FlatNode)dfTraversal.next();
@@ -407,7 +407,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		}
 	    }
 	    else {
-		for (column = StreamItOptions.rawColumns -1; column >= 0;) {
+		for (column = RawBackend.rawColumns -1; column >= 0;) {
 		    if (!dfTraversal.hasNext())
 			break; 
 		    FlatNode node = (FlatNode)dfTraversal.next();
@@ -560,8 +560,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     
     private static int getRandom() 
     {
-	return random.nextInt(StreamItOptions.rawRows*
-			      StreamItOptions.rawColumns);
+	return random.nextInt(RawBackend.rawRows*
+			      RawBackend.rawColumns);
     }
     
     public static void dumpLayout(String fileName) {
@@ -570,15 +570,15 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	buf.append("digraph Layout {\n");
 	buf.append("size = \"8, 10.5\"");
 	buf.append("node [shape=box,fixedsize=true,width=2.5,height=1];\nnodesep=.5;\nranksep=\"2.0 equally\";\nedge[arrowhead=dot, style=dotted]\n");
-	for (int i = 0; i < StreamItOptions.rawRows; i++) {
+	for (int i = 0; i < RawBackend.rawRows; i++) {
 	    buf.append("{rank = same;");
-	    for (int j = 0; j < StreamItOptions.rawColumns; j++) {
+	    for (int j = 0; j < RawBackend.rawColumns; j++) {
 		buf.append("tile" + getTileNumber(getTile(i, j)) + ";");
 	    }
 	    buf.append("}\n");
 	}
-	for (int i = 0; i < StreamItOptions.rawRows; i++) {
-	    for (int j = 0; j < StreamItOptions.rawColumns; j++) {
+	for (int i = 0; i < RawBackend.rawRows; i++) {
+	    for (int j = 0; j < RawBackend.rawColumns; j++) {
 		Iterator neighbors = getNeighbors(getTile(i, j)).iterator();
 		while (neighbors.hasNext()) {
 		    Coordinate n = (Coordinate)neighbors.next();
@@ -712,12 +712,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	//get east west neighbor
 	//if (column - 1 >= 0)
 	//    neighbors.add(getTile(row, column - 1));
-	if (column + 1 < StreamItOptions.rawColumns) 
+	if (column + 1 < RawBackend.rawColumns) 
 	    neighbors.add(getTile(row, column + 1));	
 	
 	//if (row - 1 >= 0)
 	//    neighbors.add(getTile(row - 1, column));
-	if (row + 1 < StreamItOptions.rawRows) 
+	if (row + 1 < RawBackend.rawRows) 
 	    neighbors.add(getTile(row + 1, column));
 
 	return neighbors;
@@ -751,7 +751,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (row.intValue() > (StreamItOptions.rawRows -1)) {
+		if (row.intValue() > (RawBackend.rawRows -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}
@@ -762,7 +762,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    System.err.println("Negative Value: Try again.");
 		    continue;
 		}
-		if (column.intValue() > (StreamItOptions.rawColumns -1)) {
+		if (column.intValue() > (RawBackend.rawColumns -1)) {
 		    System.err.println("Value Too Large: Try again.");
 		    continue;
 		}

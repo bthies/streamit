@@ -67,7 +67,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		    count++;
 	    }
 	    else if (entry.getKey() instanceof SIRJoiner) {
-		if(StreamItOptions.sync)
+		if(KjcOptions.sync)
 		    //Sync removal should give an accurate count of joiners
 		    //(Adjacent Joiners Coalesced)
 		    count++;
@@ -132,7 +132,7 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 		sumWeights+=oldWeights[i];
 	    ((SIRJoiner)joinerNode.contents).oldSumWeights=sumWeights;
 	    
-	    if(StreamItOptions.sync) {
+	    if(KjcOptions.sync) {
 		//Coalesce Splitters
 		//And Joiner-Splitter destruction
 		if((((SIRSplitter)splitterNode.contents).getType()==SIRSplitType.ROUND_ROBIN)||

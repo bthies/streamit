@@ -44,7 +44,7 @@ public class MakefileGenerator
 		createBCFile(true);
             else
                 createBCFile(false);
-	    if (StreamItOptions.rawRows > 4)
+	    if (RawBackend.rawRows > 4)
 		fw.write("TILE_PATTERN=8x8\n\n");
 	    fw.write("TILES = ");
 	    while (tilesIterator.hasNext()) {
@@ -298,7 +298,7 @@ public class MakefileGenerator
 
 private static int getIOPort(Coordinate tile) 
 {
-    return StreamItOptions.rawColumns + 
+    return RawBackend.rawColumns + 
 	+ tile.getRow();
 }
 

@@ -10,7 +10,7 @@
 #  results_file contains the results (eg speed) of running the various 
 #   different configurations of the compiler.)
 #
-# $Id: parse_results.pl,v 1.2 2002-06-28 22:23:26 aalamb Exp $
+# $Id: parse_results.pl,v 1.3 2002-07-01 01:59:24 aalamb Exp $
 use strict;
 
 # entry point
@@ -49,6 +49,9 @@ sub generate_executive_summary {
     my @parsed   = $log =~ m/Time: (.*)\n(.*)/gi;
     my $run_time = shift(@parsed);
     my $result   = shift(@parsed);
+
+    # remove any commas in the runtime
+    $run_time =~ s/,//gi;
 
     print "StreamIT Regression Test Results\n";
     print `date`;

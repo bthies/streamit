@@ -349,7 +349,7 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
     public void visitReturnStatement(JReturnStatement self,
 				     JExpression expr) {
 	super.visitReturnStatement(self, expr);
-	work += RETURN;
+	// overhead of returns is folded into method call overhead
     }
 
     /**
@@ -602,10 +602,11 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
                 target.accept(this);
             else {
 		System.err.println("Warning:  Work estimator couldn't find target method \"" + ident + "\"" + "\n" + 
-				   "   Will assume constant work overhead of " + WorkConstants.METHOD_CALL);
-                work += METHOD_CALL;
+				   "   Will assume constant work overhead of " + WorkConstants.UNKNOWN_METHOD_CALL);
+                work += UNKNOWN_METHOD_CALL;
 	    }
         }
+	work += METHOD_CALL_OVERHEAD;
     }
 
     /**
@@ -638,7 +639,8 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 						  JExpression left,
 						  JExpression right) {
 	super.visitCompoundAssignmentExpression(self, oper, left, right);
-	work += ASSIGN;
+	// no work count for assignments, as most arith ops, memory
+	// ops, etc., have a destination that takes care of the assign
     }
 
     /**
@@ -672,9 +674,9 @@ static class WorkVisitor extends SLIREmptyVisitor implements WorkConstants {
 	if (!(left instanceof JLocalVariableExpression &&
 	      ((JLocalVariableExpression)left).getVariable().getIdent().indexOf(Propagator.TEMP_VARIABLE_BASE)!=-1)) {
 	    super.visitAssignmentExpression(self, left, right);
-	    work += ASSIGN;
 	}
-	work += ASSIGN;
+	// no work count for assignments, as most arith ops, memory
+	// ops, etc., have a destination that takes care of the assign
     }
 
     /**

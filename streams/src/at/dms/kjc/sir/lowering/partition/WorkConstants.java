@@ -12,14 +12,8 @@ interface WorkConstants {
     int PUSH = 4;
     int SWITCH = 4;
 
-    int ASSIGN = 1;
-
     int INT_ARITH_OP = 1;
     int FLOAT_ARITH_OP = 4;
-
-    // treat a return like an assignment, since you might have to
-    // remove something into a return register?
-    int RETURN = ASSIGN;
 
     // how many times we assume a loop executes if we encounter one
     int LOOP_COUNT = 5;
@@ -32,5 +26,9 @@ interface WorkConstants {
 
     // NEED TO VERIFY THE FOLLOWING
     int MEMORY_OP = 3;
-    int METHOD_CALL = 60;
+    // overhead for any method call
+    int METHOD_CALL_OVERHEAD = 10;
+    // the amount of work estimated for a method that we can't find
+    // the source for
+    int UNKNOWN_METHOD_CALL = 60;
 }

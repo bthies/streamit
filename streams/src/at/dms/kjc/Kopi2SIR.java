@@ -1648,7 +1648,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    	    
 	    //reset currentMethod on all returns
 	    currentMethod = parentMethod;
-	    //create the init statement to return
+	    //create the init statement 
 	    return createInitStatement(SIROp, ident);
 	    
 	} else if (ident.equals("setDelay")) {

@@ -1,6 +1,6 @@
 /*
  * StreamItParserFE.g: StreamIt parser producing front-end tree
- * $Id: StreamItParserFE.g,v 1.15 2002-11-06 22:01:43 dmaze Exp $
+ * $Id: StreamItParserFE.g,v 1.16 2002-11-06 22:28:05 dmaze Exp $
  */
 
 header {
@@ -63,21 +63,28 @@ stream_decl returns [StreamSpec ss] { ss = null; StreamType st; }
 	;
 
 filter_decl[StreamType st] returns [StreamSpec ss]
-{ ss = null; List params = Collections.EMPTY_LIST;
-	List vars = new ArrayList(); List funcs = new ArrayList();
-	Function fn; Statement decl; }
-	:	TK_filter
+{ ss = null; List params = Collections.EMPTY_LIST; FEContext context = null; }
+	:	tf:TK_filter
+		{ if (st != null) context = st.getContext();
+			else context = getContext(tf); }
 		id:ID
 		(params=param_decl_list)?
-		LCURLY
+		ss=filter_body[context, st, id.getText(), params]
+	;
+
+filter_body[FEContext context, StreamType st, String name, List params]
+returns [StreamSpec ss]
+{ ss = null; List vars = new ArrayList(); List funcs = new ArrayList();
+	Function fn; Statement decl; }
+	:	LCURLY
 		( fn=init_decl { funcs.add(fn); }
 		| fn=work_decl { funcs.add(fn); }
 		| (function_decl) => fn=function_decl { funcs.add(fn); }
 		| decl=variable_decl SEMI { vars.add(decl); }
 		)*
 		RCURLY
-		{ ss = new StreamSpec(st.getContext(), StreamSpec.STREAM_FILTER,
-				st, id.getText(), params, vars, funcs); }
+		{ ss = new StreamSpec(context, StreamSpec.STREAM_FILTER,
+				st, name, params, vars, funcs); }
 	;
 
 stream_type_decl returns [StreamType st] { st = null; Type in, out; }
@@ -152,17 +159,19 @@ loop_statement returns [Statement s] { s = null; StreamCreator sc; }
 	;
 
 stream_or_inline returns [StreamCreator sc]
-{ sc = null; StreamType st; List params = new ArrayList(); Statement body;
-List types = new ArrayList(); Type t; }
-	: (stream_type_decl TK_filter) =>
-		st=stream_type_decl tf:TK_filter body=block
-		// (Is this even right?  What's the syntax for inline filter decls?)
-	| tp:TK_pipeline body=block
-		{ sc = new SCAnon(getContext(tp), StreamSpec.STREAM_PIPELINE, body); }
-	| ts:TK_splitjoin body=block
-		{ sc = new SCAnon(getContext(ts), StreamSpec.STREAM_SPLITJOIN, body); }
-	| tl:TK_feedbackloop body=block
-		{ sc = new SCAnon(getContext(tl), StreamSpec.STREAM_FEEDBACKLOOP, body); }
+{ sc = null; StreamType st = null; List params = new ArrayList();
+Statement body; List types = new ArrayList(); Type t; StreamSpec ss = null; }
+	: (ID ARROW | ~ID) => (st=stream_type_decl)?
+		( tf:TK_filter
+			ss=filter_body[getContext(tf), st, null, Collections.EMPTY_LIST]
+			{ sc = new SCAnon(getContext(tf), ss); }
+		| tp:TK_pipeline body=block
+			{ sc = new SCAnon(getContext(tp), StreamSpec.STREAM_PIPELINE, body); }
+		| ts:TK_splitjoin body=block
+			{ sc = new SCAnon(getContext(ts), StreamSpec.STREAM_SPLITJOIN, body); }
+		| tl:TK_feedbackloop body=block
+			{ sc = new SCAnon(getContext(tl), StreamSpec.STREAM_FEEDBACKLOOP, body); }
+		)
 	| id:ID
 		(LESS_THAN t=data_type MORE_THAN { types.add(t); })?
 		(params=func_call_params)?

@@ -7,4 +7,50 @@ should be compilable against the respective run-time libraries.
 The StreaMIT code should be compilable to something structurally
 similar to the provided C and Java source.
 
-$Id: README,v 1.1 2001-09-25 15:03:57 dmaze Exp $
+Here's a short description of each of them:
+
+autocor			A kernel from the auto-correlation EEMBC benchmark.
+
+delay			A delay element that outputs 0 for the first N 
+			elements and then outputs whatever is flowing 
+			through the stream.
+
+fft			A few implementations of FFT.
+
+fib			Fibonacci implemented with peeking.
+	
+fib2			Fibonacci implemented without peeking
+
+file			Just tests a FileWriter.
+
+fir			Pieces together FIRFilter from library into pipeline.
+
+flybit			A piece of the Butterfly from FFT.
+
+fm			The FMRadio we've been using in our benchmark suite.
+
+fuse			Two-filter fusion test.
+
+fuse-test		UpSampling/MovingAverage fusion test.
+
+hello6			Hello world.
+
+hello-separate		Hello world, but naming components before adding them.
+
+lattice			N-deep lattice filter.
+
+mergesort		N-element merge sort.
+	
+peek-pipe		Something that peeks into a pipeline.
+
+script-ratios		Tests scripted rates.
+
+simple-split		Good test case of a splitjoin.
+
+unroll			Tests unrolling.
+
+updown			Tests messaging.
+
+weighted-rr		Tests weighted round robins.
+
+$Id: README,v 1.2 2002-06-10 09:19:02 thies Exp $

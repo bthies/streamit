@@ -70,13 +70,13 @@ STREAMIT_LIBRARIES = \
 # these are invoked by reflection from StreaMITMain
 STREAMIT_BACKENDS = \
   at/dms/kjc/raw/RawBackend.class \
+  at/dms/kjc/rstream/StrToRStream.class \
   at/dms/kjc/sir/lowering/Flattener.class
 ifeq ($(CAG_BUILD),1)
 STREAMIT_BACKENDS += \
-  streamit/eclipse/grapheditor/graph/GraphEncoder.class \
   at/dms/kjc/spacetime/SpaceTimeBackend.class \
   at/dms/kjc/cluster/ClusterBackend.class \
-  at/dms/kjc/sir/SIRToStreamIt.class
+  at/dms/kjc/sir/SIRToStreamIt.class 
 endif
 
 JAVA_TARGET = \

@@ -60,12 +60,6 @@ int->int filter Bubble(int SIZE) {
   }
 }
 
-int->int filter IntIdentity() {
-  work push 1 pop 1 {
-    push(pop());
-  }
-}
-
 int->void filter IntPrinter() {
   work pop 1 {
     print(pop());

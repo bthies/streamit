@@ -107,13 +107,6 @@ void->int filter IntSource(int SIZE) {
   }
 }
 
-
-int->int filter IntIdentity() {
-  work push 1 pop 1 {
-    push(pop());
-  }
-}
-
 int->int filter IntIdentityPrinter() {
   work push 1 pop 1 {
     int i = pop();

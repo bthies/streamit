@@ -84,15 +84,6 @@ int->int pipeline Sorter (int N) {
   }
 }
 
-/** IntIdentity since Identity<int> still seems to fail in the
- * uniprocessor
- **/
-int->int filter IntIdentity() {
-  work push 1 pop 1 {
-    push(pop());
-  }
-}
-
 /** IntPrinter utility
  **/
 int->void filter IntPrinter() {

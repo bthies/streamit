@@ -14,8 +14,11 @@ public class FloatFileTest extends StreamIt
 
     public void init()
     {
+	float samplingRate = 10;
+	float cutoffFrequency = 200;
+	int numberOfTaps = 30;
         add(new FloatFileReader("floats5000"));
-        add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps,0));
+        add(new LowPassFilter(samplingRate, cutoffFrequency, numberOfTaps, 0));
         add(new FloatFileWriter("filteroutput"));
     }
 }

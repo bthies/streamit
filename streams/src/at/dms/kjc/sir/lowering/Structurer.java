@@ -455,6 +455,9 @@ class FieldResolver extends SLIREmptyVisitor {
 					       /* ident */
 					       LoweringConstants.
 					       STATE_PARAM_NAME));
+	    if (left.getType()==null) {
+		new RuntimeException("found null type of field in structurer for field " + self);
+	    }
 	}
     }
     

@@ -275,8 +275,9 @@ public class RenameAll extends SLIRReplacingVisitor
                                        JExpression left,
                                        String ident)
     {
-        return new JFieldAccessExpression(self.getTokenReference(),
-                                          (JExpression)left.accept(this),
-                                          symtab.nameFor(ident));
+	return new JFieldAccessExpression(self.getTokenReference(),
+					  (JExpression)left.accept(this),
+                                          symtab.nameFor(ident),
+					  self.getField());
     }
 }

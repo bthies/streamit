@@ -44,7 +44,7 @@ void->float filter source(int N, float[N] r) {
     push(r[pos++]);
     if (pos >= N) pos = 0;
   }
-  void handleMessage() {}
+  handler handleMessage() {}
 }
 
 float->void filter sink(int N, portal<source> port) {

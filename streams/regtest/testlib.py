@@ -1,6 +1,6 @@
 #
 # testlib.py: Run StreamIt tests or benchmarks
-# $Id: testlib.py,v 1.1 2001-11-16 18:54:36 dmaze Exp $
+# $Id: testlib.py,v 1.2 2002-02-19 19:02:39 thies Exp $
 #
 
 import os
@@ -18,6 +18,7 @@ class StreamItOptions:
         self.run = 1
         self.all = 0
         self.cases = []
+        self.sflags = ""
         self.cflags = '-g -O2'
         self.set_root(os.environ['STREAMIT_HOME'])
 
@@ -31,6 +32,8 @@ class StreamItOptions:
         return "%s -L%s" % (self.cflags, self.libdir)
     def get_cflags(self):
         return "%s -I%s -L%s" % (self.cflags, self.libdir, self.libdir)
+    def get_sflags(self):
+        return "%s" % (self.sflags)
     def regout_name(self):
         if self.profile: return "reg-out_p"
         return "reg-out"
@@ -99,8 +102,8 @@ class StreamItTest:
         if (self.make):
             self.runCommand("Precompilation", "make")
         self.runCommand("StreamIt compilation",
-                        "java at.dms.kjc.Main -s %s > reg-out.c" %
-                        string.join(self.sources))
+                        "java at.dms.kjc.Main -s %s %s > reg-out.c" %
+                        (opts.get_sflags(), string.join(self.sources)))
         if (opts.profile):
             self.runCommand("gcc compilation (with profiling)",
                             "gcc -o reg-out_p.o -c %s -pg -a reg-out.c" %

@@ -14,7 +14,7 @@ def get_options(args):
                                    'run', 'norun',
                                    'root=', 'libdir=', 'control=',
                                    'debug', 'profile', 'cflags=',
-                                   'case=', 'all'])
+                                   'sflags=', 'case=', 'all'])
     for (opt, val) in optlist:
         if opt == '--nocheckout': opts.checkout = 0
         if opt == '--checkout':   opts.checkout = 1
@@ -30,6 +30,7 @@ def get_options(args):
         if opt == '--debug':      opts.cflags = '-g'
         if opt == '--profile':    opts.profile = 1
         if opt == '--cflags':     opts.cflags = val
+        if opt == '--sflags':     opts.sflags = val
         if opt == '--case':       opts.cases.append(val)
         if opt == '--all':        opts.all = 1
     return args

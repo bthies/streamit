@@ -9,8 +9,10 @@ import java.util.*;
  * This class propagates constant assignments to field variables from
  * the init function into other functions.
  */
-public class FieldProp
+public class FieldProp implements Constants
 {
+    /** Maps field names to CTypes. */
+    private HashMap types;
     /** Maps field names to JExpression values. */
     private HashMap fields;
     /** List of field names that can't be propagated. */
@@ -26,6 +28,7 @@ public class FieldProp
     
     private FieldProp()
     {
+        types = new HashMap();
         fields = new HashMap();
         nofields = new HashSet();
         arrays = new HashMap();
@@ -69,8 +72,14 @@ public class FieldProp
         // Having recursed, do the flattening, if it's appropriate.
         if (str instanceof SIRFilter)
         {
-            // Run propagate/unroll twice, just to be sure.
+            // Run propagate twice, just to be sure.
             new FieldProp().propagate((SIRFilter)str);
+            new FieldProp().propagate((SIRFilter)str);
+            // Run the unroller...
+            Unroller unroller = new Unroller(new Hashtable());
+            for (int i = 0; i < str.getMethods().length; i++)
+                str.getMethods()[i].accept(unroller);
+            // Then try to propagatate again.
             new FieldProp().propagate((SIRFilter)str);
         }
         
@@ -175,6 +184,20 @@ public class FieldProp
         return exprs[slot];
     }
 
+    /** Force a literal JExpression type to a particular other type. */
+    private JExpression forceLiteralType(JExpression expr, CType type)
+    {
+        switch(type.getTypeID())
+        {
+        case TID_FLOAT:
+            if (expr instanceof JDoubleLiteral)
+                return new JFloatLiteral(expr.getTokenReference(),
+                                         (float)expr.doubleValue());
+            return expr;
+        }
+        return expr;
+    }
+
     /** Notice that a field variable has a constant assignment. */
     private void noticeFieldAssignment(String name, JExpression value)
     {
@@ -187,6 +210,7 @@ public class FieldProp
             return;
         }
         // Otherwise, add the name/value pair to the hash table.
+        value = forceLiteralType(value, (CType)types.get(name));
         fields.put(name, value);
     }
 
@@ -203,6 +227,8 @@ public class FieldProp
         }
         // Okay, populate the array slot.  The expression array
         // needs to already exist.
+        CType atype = (CType)types.get(name);
+        value = forceLiteralType(value, ((CArrayType)atype).getBaseType());
         JExpression[] exprs = (JExpression[])arrays.get(name);
         exprs[slot] = value;
     }
@@ -221,6 +247,21 @@ public class FieldProp
     /** Look for candidate fields in a filter. */
     private void findCandidates(SIRFilter filter)
     {
+        JFieldDeclaration[] fields = filter.getFields();
+        for (int i = 0; i < fields.length; i++)
+        {
+            fields[i].accept(new SLIREmptyVisitor() {
+                    public void visitFieldDeclaration(JFieldDeclaration self,
+                                                      int modifiers,
+                                                      CType type,
+                                                      String ident,
+                                                      JExpression expr)
+                    {
+                        types.put(ident, type);
+                    }
+                });
+        }
+
         JMethodDeclaration[] meths = filter.getMethods();
         for (int i = 0; i < meths.length; i++)
         {
@@ -388,10 +429,92 @@ public class FieldProp
                             return orig;
                     }
                 });
-            // Also run some simple algebraic simplification and loop
-            // unrolling now.
-            meths[i].accept(new Propagator(new Hashtable()));
-            meths[i].accept(new Unroller(new Hashtable()));
+            // Also run some simple algebraic simplification now.
+            meths[i].accept(new Propagator(findLocals(meths[i])));
         }
+    }
+
+    private Hashtable findLocals(JMethodDeclaration meth)
+    {
+        final Hashtable yes = new Hashtable();
+        
+        // This looks a lot like the thing we had for fields, except
+        // that it looks for local variables.
+        meth.accept(new SLIREmptyVisitor() {
+                private HashSet no = new HashSet();
+                
+                public void visitAssignmentExpression
+                    (JAssignmentExpression self,
+                     JExpression left,
+                     JExpression right)
+                {
+                        super.visitAssignmentExpression(self, left, right);
+                        if (left instanceof JLocalVariableExpression)
+                        {
+                            JLocalVariableExpression lve =
+                                (JLocalVariableExpression)left;
+                            JLocalVariable lv = lve.getVariable();
+                            if (no.contains(lv)) return;
+                            if (yes.containsKey(lv))
+                            {
+                                yes.remove(lv);
+                                no.add(lv);
+                                return;
+                            }
+                            if (right instanceof JLiteral)
+                                yes.put(lv, right);
+                            else
+                                no.add(lv);
+                        }
+                }
+                public void visitCompoundAssignmentExpression
+                    (JCompoundAssignmentExpression self,
+                     int oper,
+                     JExpression left,
+                     JExpression right)
+                {
+                    super.visitCompoundAssignmentExpression
+                        (self, oper, left, right);
+                    // Instant death.
+                    if (left instanceof JLocalVariableExpression)
+                    {
+                        JLocalVariable lv =
+                            ((JLocalVariableExpression)left).getVariable();
+                        yes.remove(lv);
+                        no.add(lv);
+                    }
+                }
+                public void visitPrefixExpression
+                    (JPrefixExpression self,
+                     int oper,
+                     JExpression expr)
+                {
+                    super.visitPrefixExpression(self, oper, expr);
+                    // Again, instant death.
+                    if (expr instanceof JLocalVariableExpression)
+                    {
+                        JLocalVariable lv =
+                            ((JLocalVariableExpression)expr).getVariable();
+                        yes.remove(lv);
+                        no.add(lv);
+                    }
+                }
+                public void visitPostfixExpression
+                    (JPostfixExpression self,
+                     int oper,
+                     JExpression expr)
+                {
+                    super.visitPostfixExpression(self, oper, expr);
+                    // Again, instant death.
+                    if (expr instanceof JLocalVariableExpression)
+                    {
+                        JLocalVariable lv =
+                            ((JLocalVariableExpression)expr).getVariable();
+                        yes.remove(lv);
+                        no.add(lv);
+                    }
+                }
+            });
+        return yes;
     }
 }

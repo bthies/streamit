@@ -167,7 +167,7 @@ public class SpaceTimeBackend
 	//create the raw execution code and switch code for the initialization phase
 	Rawify.run(initTrav, rawChip, true); 
 	//create the raw execution code and switch for the steady-state
-	Rawify.run(initTrav, rawChip, false);
+	Rawify.run(steadyTrav, rawChip, false);
 	//generate the switch code assembly files...
 	GenerateSwitchCode.run(rawChip);
 	//generate the compute code from the SIR

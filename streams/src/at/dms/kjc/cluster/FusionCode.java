@@ -69,7 +69,8 @@ class FusionCode {
 	p.print("#ifndef __FUSION_H\n");
 	p.print("#define __FUSION_H\n");
 	p.println();
-	
+
+	p.print("#define max(A,B) (((A)>(B))?(A):(B))\n");
 	p.print("#define pow2ceil(A) ((A<=256)?(256):(((A<=1024)?(1024):(((A<=4096)?(4096):(((A<=16384)?(16384):(((A<=65536)?(65536):(((A<=131072)?(131072):(((A<=262144)?(262144):(524288))))))))))))))\n");
 	p.println();
 
@@ -110,7 +111,13 @@ class FusionCode {
 
 		if (no_peek) p.print("#define __NOPEEK_"+src+"_"+dst+"\n");
 
-		int source_size = 0, dest_size = 0, max_size;
+		int source_init_items = 0;
+		int source_steady_items = 0;
+		int dest_init_items = 0;
+		int dest_steady_items = 0;
+		int dest_peek = 0;
+
+		// steady state, source
 		
 		if (src_oper instanceof SIRJoiner) {
 		    SIRJoiner j = (SIRJoiner)src_oper;
@@ -119,9 +126,9 @@ class FusionCode {
 		    if (steady != null) { steady_int = (steady).intValue(); }
 		    int push_n = j.getSumOfWeights();
 		    int total = (steady_int * push_n);
-		    p.print("//source pushes: "+steady_int+" * "+push_n+" = ("+total+" items)\n");
+		    p.print("//source pushes: "+total+" items during steady state\n");
 
-		    source_size = total;
+		    source_steady_items = total;
 		}
 
 		if (src_oper instanceof SIRFilter) {
@@ -131,30 +138,61 @@ class FusionCode {
 		    if (steady != null) { steady_int = (steady).intValue(); }
 		    int push_n = f.getPushInt();
 		    int total = (steady_int * push_n);
-		    p.print("//source pushes: "+steady_int+" * "+push_n+" = ("+total+" items)\n");
+		    p.print("//source pushes: "+total+" items during steady state\n");
 
-		    source_size = total;
+		    source_steady_items = total;
 		}
+
+		// init sched, source
+
+		if (src_oper instanceof SIRJoiner) {
+		    SIRJoiner j = (SIRJoiner)src_oper;
+		    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(src));
+		    int init_int = 0;
+		    if (init != null) { init_int = (init).intValue(); }
+		    int push_n = j.getSumOfWeights();
+		    int total = (init_int * push_n);
+		    p.print("//source pushes: "+total+" items during init schedule\n");
+
+		    source_init_items = total;
+		}
+
+		if (src_oper instanceof SIRFilter) {
+		    SIRFilter f = (SIRFilter)src_oper;
+		    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(src));
+		    int init_int = 0;
+		    if (init != null) { init_int = (init).intValue(); }
+		    int push_n = f.getPushInt();
+		    int total = (init_int * push_n);
+		    p.print("//source pushes: "+total+" items during init schedule\n");
+
+		    source_init_items = total;
+		}
+
+
+		// destination peek
+
+		if (dst_oper instanceof SIRFilter) {
+		    SIRFilter f = (SIRFilter)dst_oper;
+		    int pop_n = f.getPopInt();
+		    int peek_n = f.getPeekInt();
+		    if (peek_n > pop_n) {
+			dest_peek = peek_n - pop_n;
+			p.print("//destination peeks: "+(peek_n - pop_n)+" extra items\n");
+		    }
+		}
+
+		// steady state, dest
 
 		if (dst_oper instanceof SIRFilter) {
 		    SIRFilter f = (SIRFilter)dst_oper;
 		    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
 		    int steady_int = 0;
 		    if (steady != null) { steady_int = (steady).intValue(); }
-
 		    int pop_n = f.getPopInt();
-		    int peek_n = f.getPeekInt();
-
-		    p.print("//destination pops: "+steady_int+" * "+pop_n+" ");		    
-		    if (peek_n > pop_n) {
-			p.print("peeks: "+(peek_n-pop_n)+" ");		    
-		    }
-
-		    int total = (steady_int * pop_n) + (peek_n - pop_n);
-
-		    p.print(" = ("+total+" items)\n");
-
-		    dest_size = total;
+		    int total = (steady_int * pop_n);
+		    p.print("//destination pops: "+total+" items during steady state\n");    
+		    dest_steady_items = total;
 		}
 
 		if (dst_oper instanceof SIRSplitter) {
@@ -162,20 +200,54 @@ class FusionCode {
 		    Integer steady = (Integer)ClusterBackend.steadyExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
 		    int steady_int = 0;
 		    if (steady != null) { steady_int = (steady).intValue(); }
-
 		    int pop_n = s.getSumOfWeights();
 		    if (s.getType().isDuplicate()) pop_n = 1;
-		    p.print("//destination pops: "+steady_int+" * "+pop_n+" ");		    
-
 		    int total = (steady_int * pop_n);
-		    p.print(" = ("+total+" items)\n");
-
-		    dest_size = total;
+		    p.print("//destination pops: "+total+" items during steady state\n");
+		    dest_steady_items = total;
 		}
 
-		if (source_size > dest_size) max_size = source_size; else max_size = dest_size;
+		// init sched, dest
 
-		p.print("#define __BUF_SIZE_MASK_"+src+"_"+dst+" (pow2ceil("+max_size+"*__MULT)-1)\n");
+		if (dst_oper instanceof SIRFilter) {
+		    SIRFilter f = (SIRFilter)dst_oper;
+		    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
+		    int init_int = 0;
+		    if (init != null) { init_int = (init).intValue(); }
+		    int pop_n = f.getPopInt();
+		    int total = (init_int * pop_n);
+		    p.print("//destination pops: "+total+" items during init schedule\n");    
+		    dest_init_items = total;
+		}
+
+		if (dst_oper instanceof SIRSplitter) {
+		    SIRSplitter s = (SIRSplitter)dst_oper;
+		    Integer init = (Integer)ClusterBackend.initExecutionCounts.get(NodeEnumerator.getFlatNode(dst));
+		    int init_int = 0;
+		    if (init != null) { init_int = (init).intValue(); }
+		    int pop_n = s.getSumOfWeights();
+		    if (s.getType().isDuplicate()) pop_n = 1;
+		    int total = (init_int * pop_n);
+		    p.print("//destination pops: "+total+" items during init_schedule\n");
+		    dest_init_items = total;
+		}
+
+		int steady_items = 0;
+		int init_items = 0;
+
+		if (source_steady_items > dest_steady_items) {
+		    steady_items = source_steady_items;
+		} else {
+		    steady_items = dest_steady_items;
+		}
+
+		if (source_init_items > dest_init_items) {
+		    init_items = source_init_items;
+		} else {
+		    init_items = dest_init_items;
+		}
+		
+		p.print("#define __BUF_SIZE_MASK_"+src+"_"+dst+" (pow2ceil(max("+init_items+","+steady_items+"*__MULT)+"+dest_peek+")-1)\n");
 
 		p.print("\n");
 

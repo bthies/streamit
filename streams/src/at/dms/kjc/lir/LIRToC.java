@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.22 2001-10-25 20:23:32 mgordon Exp $
+ * $Id: LIRToC.java,v 1.23 2001-10-25 19:39:11 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1342,6 +1342,7 @@ public class LIRToC
     // ----------------------------------------------------------------------
 
     public void visitCreatePortalExpression() {
+        print("create_portal()");
     }
 
     public void visitInitStatement(SIRInitStatement self,

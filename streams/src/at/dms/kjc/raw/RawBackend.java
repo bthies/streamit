@@ -135,9 +135,10 @@ public class RawBackend {
 	System.out.println("Switch Code End.");
 	
 	//Generate number gathering simulator code
-	if (KjcOptions.numbers > 0)
+	if (KjcOptions.numbers > 0) {
+	    SinkUnroller.doit(rawFlattener.top);
 	    NumberGathering.doit(rawFlattener.top);
-	
+	}
 	//Generate the tile code
 	//run the specific class depending
 	//on if pops have been removed

@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: SplitJoin.java,v 1.9 2003-04-07 05:26:37 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.10 2003-05-06 10:23:55 thies Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;
@@ -18,9 +18,11 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
 {
-    public SplitJoin(SplitJoinIter iterator, StreamFactory factory)
+    final float phaseFrac;
+    public SplitJoin(SplitJoinIter iterator, float _phaseFrac, StreamFactory factory)
     {
         super(iterator, factory);
+        phaseFrac = _phaseFrac;
     }
 
     private abstract class SJSchedulingUtility

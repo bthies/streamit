@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Pipeline.java,v 1.15 2003-04-07 02:19:01 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.16 2003-05-06 10:23:55 thies Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;
@@ -18,9 +18,14 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
 {
-    public Pipeline(PipelineIter iterator, StreamFactory factory)
+    final float phaseFracSS;
+    public Pipeline(
+        PipelineIter iterator,
+        float _phaseFracSS,
+        StreamFactory factory)
     {
         super(iterator, factory);
+        phaseFracSS = _phaseFracSS;
     }
 
     private abstract class PipelineSchedulingUtility
@@ -373,6 +378,14 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 }
             }
 
+            // execute the last child the pre-arranged fraction of times
+            /*
+            lastChildNumExecPerPhase =
+                (int)Math.ceil(
+                    phaseFracSS
+                        * ((float)numChildPhases[getNumChildren() - 1]));
+            */
+            
             int extraExecs =
                 computeMinLatencySchedule(
                     new PipelineSteadySchedulingUtility(this),

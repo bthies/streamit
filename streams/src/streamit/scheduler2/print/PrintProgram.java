@@ -1,6 +1,6 @@
 package streamit.scheduler2.print;
 
-/* $Id: PrintProgram.java,v 1.5 2003-04-06 20:07:20 karczma Exp $ */
+/* $Id: PrintProgram.java,v 1.6 2003-05-06 10:24:00 thies Exp $ */
 
 import java.io.File;
 import java.io.FileOutputStream;

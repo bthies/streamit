@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamAlgorithm.java,v 1.8 2003-04-07 02:04:45 karczma Exp $ */
+/* $Id: StreamAlgorithm.java,v 1.9 2003-05-06 10:23:51 thies Exp $ */
 
 import streamit.scheduler2.Schedule;
 import streamit.misc.DestroyedClass;

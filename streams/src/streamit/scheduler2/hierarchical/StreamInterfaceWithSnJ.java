@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: StreamInterfaceWithSnJ.java,v 1.4 2003-04-06 19:19:02 karczma Exp $ */
+/* $Id: StreamInterfaceWithSnJ.java,v 1.5 2003-05-06 10:23:51 thies Exp $ */
 
 /**
  * This interface provides the required functional interface for

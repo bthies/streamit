@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: SplitJoin.java,v 1.9 2003-04-06 19:19:01 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.10 2003-05-06 10:23:50 thies Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 SplitJoinIter;

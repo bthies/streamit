@@ -1,6 +1,6 @@
 package streamit.iriter;
 
-/* $Id: StreamFactory.java,v 1.11 2003-04-01 22:38:33 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.12 2003-05-06 10:24:11 thies Exp $ */
 
 import streamit.misc.DestroyedClass;
 
@@ -32,26 +32,26 @@ public class StreamFactory
     extends DestroyedClass
     implements streamit.scheduler2.base.StreamFactory
 {
-    public StreamInterface newFrom(Iterator streamIter)
+    public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         if (streamIter.isFilter() != null)
         {
-            return new Filter(streamIter.isFilter());
+            return new Filter(streamIter.isFilter(), 0);
         }
 
         if (streamIter.isPipeline() != null)
         {
-            return new Pipeline(streamIter.isPipeline(), this);
+            return new Pipeline(streamIter.isPipeline(), 0, this);
         }
         
         if (streamIter.isSplitJoin() != null)
         {
-            return new SplitJoin(streamIter.isSplitJoin(), this);
+            return new SplitJoin(streamIter.isSplitJoin(), 0, this);
         }
 
         if (streamIter.isFeedbackLoop() != null)
         {
-            return new FeedbackLoop(streamIter.isFeedbackLoop(), this);
+            return new FeedbackLoop(streamIter.isFeedbackLoop(), 0, this);
         }
 
         ERROR ("Unsupported type passed to StreamFactory!");

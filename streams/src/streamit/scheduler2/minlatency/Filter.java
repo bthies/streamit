@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: Filter.java,v 1.3 2002-12-02 23:54:12 karczma Exp $ */
+/* $Id: Filter.java,v 1.4 2003-05-06 10:23:55 thies Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 FilterIter;
@@ -17,9 +17,11 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 
 public class Filter extends streamit.scheduler2.hierarchical.Filter
 {
-    public Filter(FilterIter iterator)
+    final float phaseFrac;
+    public Filter(FilterIter iterator, float _phaseFrac)
     {
         super(iterator);
+        phaseFrac = _phaseFrac;
     }
 
     public void computeSchedule()

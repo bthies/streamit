@@ -5,7 +5,7 @@ SplitJoinIter;
 import java.math.BigInteger;
 import streamit.misc.Fraction;
 
-/* $Id: SplitJoin.java,v 1.10 2003-04-16 21:10:58 karczma Exp $ */
+/* $Id: SplitJoin.java,v 1.11 2003-05-06 10:23:44 thies Exp $ */
 
 /**
  * Computes some basic steady state data for SplitJoins.
@@ -43,7 +43,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             {
                 // create a new object for the child
                 children[nChild] =
-                    factory.newFrom(splitjoin.getChild(nChild));
+                    factory.newFrom(splitjoin.getChild(nChild), splitjoin.getUnspecializedIter());
             }
 
             // compute my steady schedule

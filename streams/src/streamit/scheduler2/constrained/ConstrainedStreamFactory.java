@@ -1,6 +1,6 @@
 package streamit.scheduler2.constrained;
 
-/* $Id: ConstrainedStreamFactory.java,v 1.1 2003-04-01 22:36:34 karczma Exp $ */
+/* $Id: ConstrainedStreamFactory.java,v 1.2 2003-05-06 10:23:47 thies Exp $ */
 
 import streamit.misc.DestroyedClass;
 import streamit.scheduler2.iriter.Iterator;
@@ -18,7 +18,7 @@ public class ConstrainedStreamFactory
 {
     private LatencyGraph latencyGraph = new LatencyGraph();
 
-    public StreamInterface newFrom(Iterator streamIter)
+    public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         if (streamIter.isFilter() != null)
         {

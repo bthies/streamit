@@ -2,7 +2,7 @@ package streamit.scheduler2.base;
 
 import streamit.scheduler2.iriter./*persistent.*/Iterator;
 
-/* $Id: StreamFactory.java,v 1.3 2002-12-02 23:54:07 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.4 2003-05-06 10:23:45 thies Exp $ */
 
 /**
  * The StreamFactory interface provides a factory interface for
@@ -22,6 +22,6 @@ public interface StreamFactory
      * 
      * @return A stream corresponding to streamIter
      */
-    public StreamInterface newFrom (Iterator streamIter);
+    public StreamInterface newFrom (Iterator streamIter, Iterator parent);
 }
 

@@ -1,6 +1,6 @@
 package streamit.scheduler2.minlatency;
 
-/* $Id: FeedbackLoop.java,v 1.3 2002-12-02 23:54:12 karczma Exp $ */
+/* $Id: FeedbackLoop.java,v 1.4 2003-05-06 10:23:55 thies Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
@@ -19,9 +19,11 @@ import streamit.scheduler2.hierarchical.PhasingSchedule;
 public class FeedbackLoop
     extends streamit.scheduler2.hierarchical.FeedbackLoop
 {
-    public FeedbackLoop(FeedbackLoopIter iterator, StreamFactory factory)
+    final float phaseFrac;
+    public FeedbackLoop(FeedbackLoopIter iterator, float _phaseFrac, StreamFactory factory)
     {
         super(iterator, factory);
+        phaseFrac = _phaseFrac;
     }
 
     private interface FLoopSchedulingUtility

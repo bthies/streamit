@@ -1,6 +1,6 @@
 package streamit.scheduler2.hierarchical;
 
-/* $Id: Pipeline.java,v 1.6 2003-04-06 06:54:51 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.7 2003-05-06 10:23:50 thies Exp $ */
 
 import streamit.scheduler2.iriter./*persistent.*/
 PipelineIter;

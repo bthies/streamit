@@ -19,7 +19,7 @@ import streamit.scheduler2.iriter./*persistent.*/
 FeedbackLoopIter;
 import streamit.scheduler2.Schedule;
 
-/* $Id: ScheduleBuffers.java,v 1.11 2003-04-06 22:51:24 karczma Exp $ */
+/* $Id: ScheduleBuffers.java,v 1.12 2003-05-06 10:23:41 thies Exp $ */
 
 /**
  * This class uses a valid schedule and an iterator to determine 
@@ -161,7 +161,9 @@ public class ScheduleBuffers extends DestroyedClass
                     bufferSizes.put(pair, buffer);
 
                     // buffer after:
-                    targetBufferAfter.put(getLastStream(childBefore), buffer);
+                    targetBufferAfter.put(
+                        getLastStream(childBefore),
+                        buffer);
 
                     // buffer before:
                     targetBufferBefore.put(
@@ -227,7 +229,9 @@ public class ScheduleBuffers extends DestroyedClass
                         bufferSizes.put(pair, buffer);
 
                         // buffer before the child:
-                        targetBufferBefore.put(getFirstStream(child), buffer);
+                        targetBufferBefore.put(
+                            getFirstStream(child),
+                            buffer);
 
                         // buffer after the splitter:
                         // don't store this data, as it will be ambiguous
@@ -271,7 +275,9 @@ public class ScheduleBuffers extends DestroyedClass
             // store all the split's work functions
             {
                 int nPhase = 0;
-                for (; nPhase < feedbackLoop.getSplitterNumWork(); nPhase++)
+                for (;
+                    nPhase < feedbackLoop.getSplitterNumWork();
+                    nPhase++)
                 {
                     workFunctions.put(
                         pairs.getPair(
@@ -495,21 +501,22 @@ public class ScheduleBuffers extends DestroyedClass
 
     public void computeBuffersFor(Schedule schedule)
     {
-        Map map = computeBuffersMap(schedule);
-        
-        Set buffers = (Set)map.get(null);
+        Map map = computeBuffersMap(schedule, 1);
+
+        Set buffers = (Set) map.get(null);
         java.util.Iterator iter = buffers.iterator();
         while (iter.hasNext())
         {
             BufferStatus buffer = (BufferStatus) iter.next();
             BufferDelta delta = (BufferDelta) map.get(buffer);
-            
+
             buffer.pushData(delta.getBufferExpansion());
-            buffer.popData(delta.getBufferExpansion() - delta.getBufferDelta());
+            buffer.popData(
+                delta.getBufferExpansion() - delta.getBufferDelta());
         }
     }
 
-    Map computeBuffersMap(Schedule schedule)
+    Map computeBuffersMap(Schedule schedule, int numExecs)
     {
         Map deltas = (Map) phase2deltaMap.get(schedule);
 
@@ -531,7 +538,9 @@ public class ScheduleBuffers extends DestroyedClass
                     for (; schedNum < schedule.getNumPhases(); schedNum++)
                     {
                         Map subDeltas =
-                            computeBuffersMap(schedule.getSubSched(schedNum));
+                            computeBuffersMap(
+                                schedule.getSubSched(schedNum),
+                                schedule.getSubSchedNumExecs(schedNum));
                         combineBufferExecutions(deltas, subDeltas);
                     }
                 }
@@ -555,7 +564,8 @@ public class ScheduleBuffers extends DestroyedClass
 
                         // check if the function is a work or init function
                         // and get appropriate peek/pop/push values
-                        if (filter.getWorkFunctionPhase(numWork) == workFunc)
+                        if (filter.getWorkFunctionPhase(numWork)
+                            == workFunc)
                         {
                             // work function
                             peekAmount = filter.getPeekPhase(numWork);
@@ -663,7 +673,8 @@ public class ScheduleBuffers extends DestroyedClass
 
                             // push data into the internal joiner buffers
                             int nChild;
-                            int popWeights[] = sj.getJoinPopWeights(numWork);
+                            int popWeights[] =
+                                sj.getJoinPopWeights(numWork);
                             for (nChild = 0;
                                 nChild < sj.getNumChildren();
                                 nChild++)
@@ -740,7 +751,8 @@ public class ScheduleBuffers extends DestroyedClass
                             // splitter function
                             popAmount = 0;
                             pushAmount =
-                                feedbackLoop.getSplitPushWeights(numWork)[0];
+                                feedbackLoop.getSplitPushWeights(
+                                    numWork)[0];
 
                             // pop data from the internal body-splitter buffer
                             {
@@ -874,14 +886,14 @@ public class ScheduleBuffers extends DestroyedClass
             }
 
             // add deltas to itself schedule.getNumReps times
-            if (schedule.getNumReps () > 1)
+            if (numExecs > 1)
             {
                 Map newDeltas = new HashMap();
                 newDeltas.put(null, new HashSet());
                 ASSERT(newDeltas.get(null) != null);
 
-                int numExecs = schedule.getNumReps();
-                for (; numExecs > 0; numExecs--)
+                int n = numExecs;
+                for (; n > 0; n--)
                 {
                     combineBufferExecutions(newDeltas, deltas);
                 }

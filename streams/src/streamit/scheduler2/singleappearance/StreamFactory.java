@@ -1,6 +1,6 @@
 package streamit.scheduler2.singleappearance;
 
-/* $Id: StreamFactory.java,v 1.1 2003-04-01 22:36:40 karczma Exp $ */
+/* $Id: StreamFactory.java,v 1.2 2003-05-06 10:24:03 thies Exp $ */
 
 import streamit.misc.DestroyedClass;
 import streamit.scheduler2.iriter.Iterator;
@@ -16,7 +16,7 @@ public class StreamFactory
     extends DestroyedClass
     implements streamit.scheduler2.base.StreamFactory
 {
-    public StreamInterface newFrom(Iterator streamIter)
+    public StreamInterface newFrom(Iterator streamIter, Iterator parent)
     {
         if (streamIter.isFilter() != null)
         {

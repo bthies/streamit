@@ -3,7 +3,7 @@ package streamit.scheduler2.base;
 import streamit.scheduler2.iriter./*persistent.*/PipelineIter;
 import java.math.BigInteger;
 
-/* $Id: Pipeline.java,v 1.9 2003-04-16 21:10:58 karczma Exp $ */
+/* $Id: Pipeline.java,v 1.10 2003-05-06 10:23:44 thies Exp $ */
 
 /**
  * Computes some basic data for Pipelines.  
@@ -41,7 +41,7 @@ abstract public class Pipeline extends Stream
             {
                 // create a new child object
                 children[nChild] =
-                    factory.newFrom(pipeline.getChild(nChild));
+                    factory.newFrom(pipeline.getChild(nChild), pipeline.getUnspecializedIter());
             }
             
             // compute my steady schedule

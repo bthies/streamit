@@ -24,8 +24,11 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
     private Set destroyedVars;
     
+    private Random random;
+
     private RenameDestroyedVars(Set vars) {
 	destroyedVars = vars;
+	random = new Random();
     }
 
     private HashMap live_vars; // CType -> Integer
@@ -50,6 +53,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
     
     private HashMap var_alias; // assigned alias of variable Var -> New var
     private HashMap available_names; // type -> Stack (stack of available names for a type)
+    private HashMap renamed_vars; // type -> LinkedList
 
     private LinkedList for_stmts; 
 
@@ -74,6 +78,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 	    rename.live_vars = new HashMap();
 	    rename.max_live_vars = new HashMap();
 	    rename.available_names = new HashMap();
+	    rename.renamed_vars = new HashMap();
 	    rename.var_alias = new HashMap();
 
 	    // initalize first_assign_for_loop and
@@ -90,14 +95,19 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 		int num = ((Integer)rename.max_live_vars.get(type)).intValue();
 		System.out.println("[Function: "+methods[i].getName()+" Type: "+type+" Max-live-destroyed-vars: "+num+"]");
 
-
 		JBlock body = methods[i].getBody();
 		Stack alias_stack = (Stack)rename.available_names.get(type);
 		JVariableDefinition var;
+		
+		LinkedList vars = (LinkedList)rename.renamed_vars.get(type);
+		ListIterator li = vars.listIterator();
 
 		for (int y = 0; y < num; y++) {
-		    assert (!alias_stack.empty());
-		    var = (JVariableDefinition)alias_stack.pop();
+		    //assert (!alias_stack.empty());
+		    //var = (JVariableDefinition)alias_stack.pop();
+
+		    assert(li.hasNext());
+		    var = (JVariableDefinition)li.next();
 		    body.addStatementFirst(new JVariableDeclarationStatement(null, var, null));
 		}
 	    }
@@ -306,6 +316,7 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 	if (!live_vars.containsKey(type)) live_vars.put(type, new Integer(0));
 	if (!max_live_vars.containsKey(type)) max_live_vars.put(type, new Integer(0));
 	if (!available_names.containsKey(type)) available_names.put(type, new Stack());
+	if (!renamed_vars.containsKey(type)) renamed_vars.put(type, new LinkedList());
 
 	JVariableDefinition alias;
 
@@ -320,6 +331,13 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 	    max_live_vars.put(type, new Integer(live));
 	    alias = new JVariableDefinition(null, 0, type, 
 					    "__destroyed_"+type.toString()+"_"+live, null);
+
+	    // add renamed variable to the linked list (into random position)
+	    LinkedList vars = (LinkedList)renamed_vars.get(type);
+	    int index = random.nextInt()%(vars.size()+1);
+	    if (index < 0) index = -index;
+	    vars.add(index,alias); 
+
 	} else {
 
 	    // get a free variable from the available variable stack

@@ -93,6 +93,11 @@ public class Flattener {
 	    System.err.println("done.");
 	}
 
+	// move field initializations into init function
+	System.err.print("Moving initial assignments... ");
+	FieldInitMover.moveStreamInitialAssignments(str);
+	System.err.println("done.");
+
 	if (KjcOptions.sjtopipe) {
 	    SJToPipe.doit(str);
 	}
@@ -188,11 +193,6 @@ public class Flattener {
 	// resolve phases in phased filters
 	FilterPhaser.resolvePhasedFilters(str);    
         
-	// move field initializations into init function
-	if (printStatus) { System.err.print("Moving initial assignments... "); }
-	FieldInitMover.moveStreamInitialAssignments(str);
-	if (printStatus) { System.err.println("done."); }
-
 	/* DEBUGGING PRINTING
 	System.out.println("--------- AFTER CONSTANT PROP / FUSION --------");
 	printer1 = new SIRPrinter();

@@ -112,26 +112,31 @@ public class FindVarDecls extends SLIREmptyVisitor {
 
 public class ReplaceVarDecls extends SLIRReplacingVisitor {
     
-    HashMap var_names; // String (Ident) -> Integer
-    FindVarDecls find_obj;
+    private HashMap var_names; // String (Ident) -> Integer
+    private FindVarDecls find_obj;
 
     ReplaceVarDecls(HashMap var_names, FindVarDecls find_obj) {
 	this.var_names = var_names;
 	this.find_obj = find_obj;
     }
-    
+
     public Object visitVariableDeclarationStatement(JVariableDeclarationStatement self,
 						    JVariableDefinition[] vars) 
     {
 	
+	LinkedList new_vars = new LinkedList();
 	LinkedList new_statements = new LinkedList();
-
+	
 	for (int i = 0; i < vars.length; i++) {
 
 	    if (!var_names.containsKey(vars[i])) {
-		
 		// the variable has not been eliminated
-		new_statements.add(new JVariableDeclarationStatement(null, vars[i], null));
+
+		// if statement declares only one variable return the statement
+		if (vars.length == 1) return self;
+
+		// otherwise add the variable to the list
+		new_vars.add(vars[i]);
 
 	    } else {
 
@@ -143,7 +148,7 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
 			JVariableDefinition var = find_obj.getIntVar(name); 
 			JLocalVariableExpression var_expr = new JLocalVariableExpression(null, var); 
 			JExpression expr = new JAssignmentExpression(null, var_expr, vars[i].getValue());
-			new_statements.add(new JExpressionStatement(null, expr, null));
+			new_statements.addLast(new JExpressionStatement(null, expr, null));
 		    }
 		}
 		
@@ -155,21 +160,33 @@ public class ReplaceVarDecls extends SLIRReplacingVisitor {
 			JVariableDefinition var = find_obj.getFloatVar(name);
 			JLocalVariableExpression var_expr = new JLocalVariableExpression(null, var); 
 			JExpression expr = new JAssignmentExpression(null, var_expr, vars[i].getValue());
-			new_statements.add(new JExpressionStatement(null, expr, null));
+			new_statements.addLast(new JExpressionStatement(null, expr, null));
 		    }
 		}
 	    }
 	    
 	}
 
-	JStatement new_array[] = new JStatement[new_statements.size()];
+	// make sure that all variables are either renamed or none is renamed
+	// this is because Unroller/VarDeclRaiser do not correctly handle
+	// varaible declarations inside of a JCompoundStatement, so
+	// we must return a JVariableDeclarationStatement or a JCompoundStatement
+	// that does not contain declarations.
+	
+	assert (new_vars.size() == 0 || new_statements.size() == 0);
 
-	int j = 0;
-	for (ListIterator li = new_statements.listIterator(); li.hasNext(); ) {
-	    new_array[j++] = (JStatement)li.next();
+	if (new_vars.size() > 0) {
+
+	    JVariableDefinition new_array[] = (JVariableDefinition[])new_vars.toArray(new JVariableDefinition[0]);
+	    self.setVars(new_array);
+	    return self;
+
+	} else {
+
+	    JExpressionStatement new_array[] = (JExpressionStatement[])new_statements.toArray(new JExpressionStatement[0]);
+	    return new JCompoundStatement(null, new_array);
+
 	}
-
-	return new JCompoundStatement(null, new_array);
     }
 
     

@@ -55,6 +55,8 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
     }
 
     private void addVisitedOp(String className, SIROperator sirop) {
+	if (visitedSIROps.get(className) != null)
+	    at.dms.util.Utils.fail("Duplicate Definition of " + className);
 	visitedSIROps.put(className, sirop);
     }
     private SIROperator getVisitedOp(String className) 
@@ -256,14 +258,14 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	blockStart("ClassDeclaration");
 	printMe("Class Name: " + ident);
 	if (self.getSourceClass() != null)
-	    printMe("In " + 
-		    self.getSourceClass().getSuperClass().getIdent());
+	    printMe(self.getSourceClass().getSuperClass().getIdent());
+
 
 	// if the name of the class being declared is the same
 	// as the name of the superclass then it is anonymous
-	if (ident == self.getSourceClass().getSuperClass().getIdent())
+	if (self.getSourceClass().getSuperClass().getIdent().equals(ident))
 	    anonCreation = true;
-	
+
 	// create a new SIROperator
 	current = newSIROP(self);
 

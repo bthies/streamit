@@ -5,12 +5,12 @@ all:
 	perl -pi -e 's/#.*\n//g' Gsm.java
 	# rename StGsmDecoder to Gsm
 	perl -pi -e 's/StGsmDecoder/Gsm/g' Gsm.java
+	# rename BinaryDecoder* to BinarySmallEndianDecoder
+	perl -pi -e 's/BinaryDecoder/BinarySmallEndianDecoder/g' Gsm.java
 	# compile with jikes
 	jikes Gsm.java
 
 a.out: Gsm.java
-	# rename BinaryDecoder* to BinarySmallEndianDecoder
-	perl -pi -e 's/BinaryDecoder/BinarySmallEndianDecoder/g' Gsm.java
 	# compile to a.out
 	java at.dms.kjc.Main -s Gsm.java > out.c
 	gcc -lm -I ${STREAMIT_HOME}/library/c out.c ~/streams/library/c/*.c

@@ -308,6 +308,10 @@ class Unroller extends SLIRReplacingVisitor {
 		    finalVal++;
 		else if(relation==OPE_GE)
 		    finalVal--;
+	    } else {
+		// if we can't get the upper limit, then we don't know
+		// how much to unroll, so fail
+		return null;
 	    }
 	    //else
 	    //System.err.println("Cond: "+((JFieldAccessExpression)condExpr.getRight()).isConstant());

@@ -1,0 +1,13 @@
+<benchmark>
+  <name>cfar</name>
+  <desc> </desc>
+  <description>
+
+  </description>
+  <reference>(none)</reference>
+  <implementations>
+    <impl lang="StreamIt">
+      <file>CFARtest.str</file>
+    </impl>
+  </implementations>
+</benchmark>

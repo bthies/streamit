@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.21 2003-01-30 02:54:11 thies Exp $
+ * $Id: KjcOptions.opt,v 1.22 2003-02-04 22:35:19 mgordon Exp $
  */
 
 prefix Kjc
@@ -177,11 +177,17 @@ longname		"dpscaling"
 	default		"false"
 	help		"Collect theoretical scaling statistics for dynamic programming partitioner."
 
-longname		"sketchycodegen"
+longname		"altcodegen"
 	shortcut	"z"
 	type		boolean
 	default		"false"
-	help		"Try to avoid volatile assembly"
+	help		"Alternate raw communication code generation for Sam."
+
+longname		"decoupled"
+	shortcut	"X"
+	type		boolean
+	default		"false"
+	help		"Generated dummy communcation code for raw."
 
 longname		"sync"
 	shortcut	"k"

@@ -25,7 +25,6 @@ LINKED_FILE =   Linked${MAIN_FILE};
 STREAMIT_MAKEFILE = Makefile.streamit 
 
 all: link
-	javac *.java 
 
 clean:
 	#remove liked file from dir
@@ -52,7 +51,7 @@ link: clean
 	# remove temporaries
 	rm -f ${MAIN_FILE}.tmp ${MAIN_FILE}.1.tmp
 	# compile
-	#javac $(LINKED_FILE)
+	javac $(LINKED_FILE)
 
 more-cycles:
 	# change the simulator to run for 5Million cycles

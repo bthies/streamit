@@ -59,9 +59,11 @@ public class FusePipe {
     /**
      * Fuses all candidate portions of <pipe>.  Candidates for fusion
      * are sequences of filters that do not have special,
-     * compiler-defined work functions.
+     * compiler-defined work functions.  Return how many filters were
+     * ELIMINATED from this pipeline..
      */
-    public static void fuse(SIRPipeline pipe) {
+    public static int fuse(SIRPipeline pipe) {
+	int numEliminated = 0;
 	int start = 0;
 	do {
 	    // find start of candidate stretch for fusion
@@ -77,6 +79,7 @@ public class FusePipe {
 	    if (end > start) {
 		fuse((SIRFilter)pipe.get(start),
 		     (SIRFilter)pipe.get(end));
+		numEliminated += end-start;
 		System.err.println("Fusing " + (end-start+1) + " Pipeline filters!");
 	    }
 	    start = end + 1;
@@ -88,6 +91,7 @@ public class FusePipe {
 	    pipe.getParent()!=null) {
 	    Lifter.eliminatePipe(pipe);
 	}
+	return numEliminated;
     }
 
     /**

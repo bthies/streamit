@@ -1,6 +1,6 @@
 /*
  * LIRVisitor.java: visit StreaMIT Low IR nodes
- * $Id: SLIRVisitor.java,v 1.11 2001-10-16 16:03:00 dmaze Exp $
+ * $Id: SLIRVisitor.java,v 1.12 2001-10-24 20:34:36 dmaze Exp $
  */
 
 package at.dms.kjc;
@@ -125,6 +125,15 @@ public interface SLIRVisitor extends KjcVisitor
     void visitSetDecode(LIRSetDecode self,
                         JExpression streamContext,
                         LIRFunctionPointer fp);
+
+    /**
+     * Visits a feedback loop delay node.
+     */
+    void visitSetDelay(LIRSetDelay self,
+                       JExpression streamContext,
+                       int delay,
+                       CType type,
+                       LIRFunctionPointer fp);
     
     /**
      * Visits an encoder registration node.

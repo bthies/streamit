@@ -59,8 +59,9 @@ public class Layout extends at.dms.util.Utils implements
 	int rows = rawChip.getYSize();
 	int columns = rawChip.getXSize();
 	
-	router = new YXRouter();
-
+	//router = new YXRouter();
+	router = new FreeTileRouter();
+	
 	if (streamGraph.getFileVisitor().foundReader || 
 	    streamGraph.getFileVisitor().foundWriter){
 	    assert false;
@@ -97,6 +98,15 @@ public class Layout extends at.dms.util.Utils implements
     public int getTilesAssigned() {
 	return assigned.size();
     }
+
+    public boolean isAssigned(RawTile tile) 
+    {
+	assert SIRassignment.values().contains(tile) == 
+	    tileAssignment.keySet().contains(tile);
+	
+	return tileAssignment.keySet().contains(tile);
+    }
+    
 
     public boolean isAssigned(FlatNode node) {
 	return assigned.contains(node);
@@ -160,6 +170,11 @@ public class Layout extends at.dms.util.Utils implements
 	}
 	tileAssignment.put(tile, node);
 	SIRassignment.put(node.contents, tile);
+    }
+
+    public RawChip getRawChip() 
+    {
+	return rawChip;
     }
 
     private void assign(HashMap sir, HashMap tileAss, RawTile tile, FlatNode node) 

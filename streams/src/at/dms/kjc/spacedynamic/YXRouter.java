@@ -31,7 +31,7 @@ public class YXRouter implements Router
 
 	int row = fromCoord.getY();
 	int column = fromCoord.getX();
-	//For now just route the packets in a stupid manner
+
 	//row then column
 	if (fromCoord.getY() != toCoord.getY()) {
 	    if (fromCoord.getY() < toCoord.getY()) {

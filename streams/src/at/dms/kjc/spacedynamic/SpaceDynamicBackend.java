@@ -79,6 +79,8 @@ public class SpaceDynamicBackend {
 	// construct stream hierarchy from SIRInitStatements
 	ConstructSIRTree.doit(str);
 
+	FieldProp.doPropagate(str);
+
 	/*
 	if (Flattener.hasDynamicRates(str)) {
 	    System.err.println("Failure: Dynamic rates are not yet supported in the Raw backend.");

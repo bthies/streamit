@@ -136,6 +136,11 @@ public class ClusterBackend implements FlatVisitor {
 
 	int threads = KjcOptions.cluster;
 	System.err.println("Running Partitioning... target number of threads: "+threads);
+	// actually fuse components if fusion flag is enabled
+	if (KjcOptions.fusion) {
+	    KjcOptions.partition_dp = true;
+	    str = Partitioner.doit(str, 0, threads);
+	}
 	HashMap partitionMap = new HashMap();
 	str = new DynamicProgPartitioner(str, WorkEstimate.getWorkEstimate(str), threads).calcPartitions(partitionMap);
 	System.err.println("Done Partitioning...");
@@ -166,7 +171,7 @@ public class ClusterBackend implements FlatVisitor {
 
 	//topStreamIter = IterFactory.createFactory().createIter(str);
 	topStreamIter = IterFactory.createFineGrainedFactory().createIter(str);
-	new streamit.scheduler2.print.PrintGraph().printProgram(topStreamIter);
+	//new streamit.scheduler2.print.PrintGraph().printProgram(topStreamIter);
 	//new streamit.scheduler2.print.PrintProgram().printProgram(topStreamIter);
 
 	if (KjcOptions.debug) {

@@ -4,7 +4,7 @@
 # become more general purpose (eg integrated into regtest).
 #
 # Usage: reap_results.pl [tests file]
-# $Id: reap_results.pl,v 1.6 2002-07-17 21:33:27 aalamb Exp $
+# $Id: reap_results.pl,v 1.7 2002-07-18 22:02:45 aalamb Exp $
 
 # The basic idea is for each directory and file, 
 # run the streamit compiler targeting raw, run the
@@ -278,6 +278,7 @@ sub save_dot_files {
     print `cp $temp_dir/before.dot $base_filename.before.dot`;
     print `cp $temp_dir/after.dot $base_filename.after.dot`;
     print `cp $temp_dir/layout.dot $base_filename.layout.dot`;
+    print `cp $temp_dir/flatgraph.dot $base_filename.flatgraph.dot`;
 }
 
 

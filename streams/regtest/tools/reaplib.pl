@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 # library routines for reaping performance data from
 # the streamit compiler.
-# $Id: reaplib.pl,v 1.5 2002-07-17 21:33:27 aalamb Exp $
+# $Id: reaplib.pl,v 1.6 2002-07-18 22:02:45 aalamb Exp $
 
 use strict;
 
@@ -210,7 +210,6 @@ sub generate_summary {
     # write out a gratitous tex file
     write_file(make_tex_table(@summary_table),
 	       "$summary_file.tex");
-	       
 }
 
 
@@ -265,6 +264,21 @@ sub generate_webpage {
 	my $bg_html_filename = "$web_relative_dir/$base_filename.bloodgraph.html";
 	write_file($bg_html, "$results_directory/$bg_html_filename");
 
+	# make a dot page for the layout
+	my $dot_base = "$filename$options";
+	$dot_base =~ s/ //g;
+	my $layout_html = make_dot_page($results_directory, $web_relative_dir,
+					$header, "$dot_base.layout.dot");
+	my $layout_html_filename = "$web_relative_dir/$base_filename.layout.dot.html";
+	write_file($layout_html, "$results_directory/$layout_html_filename");
+
+	# make a dot page for the stream graph
+	my $stream_graph_html = make_dot_page($results_directory, $web_relative_dir,
+					      $header, "$dot_base.flatgraph.dot");
+	my $stream_graph_html_filename = "$web_relative_dir/$base_filename.flatgraph.dot.html";
+	write_file($stream_graph_html, "$results_directory/$stream_graph_html_filename");
+
+
 	# make a results summary page
 	my $summary_html = make_summary_page($header, $original_contents);
 	my $summary_html_filename = "$web_relative_dir/$base_filename.summary.html";
@@ -274,11 +288,22 @@ sub generate_webpage {
 	my $entry = "<TR>\n";
 	$entry .= "   <TD>$filename</TD>\n";
 	$entry .= "   <TD>$options</TD>\n";
-	# put in a gratuitous thumbnail
+	# put in a gratuitous thumbnail of the blood graph
 	$entry .= "   <TD><a href=\"$bg_html_filename\">";
-	$entry .= "<img src=\"$web_relative_dir/" . make_blood_pic($results_directory, $web_relative_dir, $bg_filename, "64x48") . "\">";
+	$entry .= "<img src=\"$web_relative_dir/" . make_web_pic($results_directory, $web_relative_dir, 
+								 $bg_filename, "64x48") . "\">";
 	$entry .= "</a></TD>\n";
-	$entry .= "   <TD><a href=\"$summary_html_filename\">summary</a></TD>\n";
+	# same thing for the stream graph
+	$entry .= "   <TD><a href=\"$stream_graph_html_filename\">";
+	$entry .= "<img src=\"$web_relative_dir/" . make_web_pic($results_directory, $web_relative_dir, 
+								 "$results_directory/$dot_base.flatgraph.dot.ps", "64x48") . "\">";
+	$entry .= "</a></TD>\n";
+	# and for the layout
+	$entry .= "   <TD><a href=\"$layout_html_filename\">";
+	$entry .= "<img src=\"$web_relative_dir/" . make_web_pic($results_directory, $web_relative_dir, 
+								 "$results_directory/$dot_base.layout.dot.ps", "64x48") . "\">";
+	$entry .= "</a></TD>\n";
+	$entry .= "   <TD><a href=\"$summary_html_filename\">Summary</a></TD>\n";
 	$entry .= "</TR>\n";
 	push(@body_lines, $entry);
 	
@@ -291,6 +316,8 @@ sub generate_webpage {
     $main_body .= "   <TD>Filename</TD>\n";
     $main_body .= "   <TD>Options</TD>\n";
     $main_body .= "   <TD>Blood Graph</TD>\n";
+    $main_body .= "   <TD>Stream Graph</TD>\n";
+    $main_body .= "   <TD>Layout</TD>\n";
     $main_body .= "   <TD>Summary</TD>\n";
     $main_body .= "</TR>\n";
     $main_body .= join("\n", sort @body_lines);
@@ -316,34 +343,12 @@ sub make_bloodgraph_page {
     my $web_bg_filename = "../" . pop(@file_parts);
 
     # make a thumbnail
-    my $big_thumb_web_filename = make_blood_pic($results_dir, $web_dir, $bg_filename, "640x480");
+    my $big_thumb_web_filename = make_web_pic($results_dir, $web_dir, $bg_filename, "640x480");
     
     # set up the body 
     my $body  = $header . "\n\n" . "<a href=\"$web_bg_filename\"><img src=\"$big_thumb_web_filename\"></a>\n";
     # return the html
     return make_html_page("Bloodgraph", $body);
-}
-
-# makes scales the blood graph to the specified dimensions
-# (for convert) and , returns the filename (relative) 
-# of the image
-# usage: make_blood_pic($results_dir, $web_dir, $filename, $dimensions)
-sub make_blood_pic {
-    my $results_dir = shift || die ("No results dir passed to make_blood_thumbnail");
-    my $web_dir     = shift || die ("No web dir passed to make_blood_thumbnail");
-    my $bg_filename = shift || die ("No blood graph filename passed to make_blood_thumbnail");
-    my $dimensions  = shift || die ("No dimensions passed to make_blood_thumbnail");
-
-    # figure out what the web relative filename of the image will be
-    my @file_parts = split("/", $bg_filename);
-    my $web_bg_filename = "images/" . pop(@file_parts) . "$dimensions.gif";
-    
-    # now, use convert to make the image the specified dimensions
-    my $command = "convert -geometry $dimensions! $bg_filename $results_dir/$web_dir/$web_bg_filename";
-    #print "Command: $command\n\n";
-    `$command`;
-    
-    return $web_bg_filename;
 }
 
 # create a summary page from the contents of a .report file
@@ -366,6 +371,57 @@ sub make_summary_page {
 
     return make_html_page("Summary page", $body);
 }
+
+
+# create a dot page
+#usage make_dot_page($results_dir, $web_dir, $header, $dot_filename);
+sub make_dot_page {
+    my $results_dir  = shift || die ("no results_dir passed to make_dot_page");
+    my $web_dir      = shift || die ("no web dir passed to make_dot_page");
+    my $header       = shift || die ("no header passed to make_dot_page");
+    my $dot_filename = shift || die ("no dot filename passed to make_dot_page");
+    
+    # remove the absolute path from the bloodgraph filename to a relative path
+    my @file_parts = split("/", $dot_filename);
+    my $base_filename = pop(@file_parts);
+    my $web_dot_filename = "../" . $base_filename;
+
+    # make a ps of the dot file (that we will then convert)
+    `dot -Tps $results_dir/$dot_filename > $results_dir/$dot_filename.ps`;
+    
+    # make a gif of the file
+    my $web_filename = "images/$dot_filename.gif";
+    `convert -geometry 640x480 $results_dir/$dot_filename.ps $results_dir/$web_dir/$web_filename`;
+
+    
+    # set up the body 
+    my $body  = $header . "\n\n" . "<a href=\"../$base_filename\"><img src=\"$web_filename\"></a>\n";
+    # return the html
+    return make_html_page("Dot File", $body);
+}
+
+# makes and scales an image to the specified dimensions
+# (passed as a param to convert) and returns the filename (relative) 
+# of the image
+# usage: make_web_pic($results_dir, $web_dir, $filename, $dimensions)
+sub make_web_pic {
+    my $results_dir = shift || die ("No results dir passed to make_blood_thumbnail");
+    my $web_dir     = shift || die ("No web dir passed to make_blood_thumbnail");
+    my $bg_filename = shift || die ("No blood graph filename passed to make_blood_thumbnail");
+    my $dimensions  = shift || die ("No dimensions passed to make_blood_thumbnail");
+
+    # figure out what the web relative filename of the image will be
+    my @file_parts = split("/", $bg_filename);
+    my $web_bg_filename = "images/" . pop(@file_parts) . "$dimensions.gif";
+    
+    # now, use convert to make the image the specified dimensions
+    my $command = "convert -geometry $dimensions! $bg_filename $results_dir/$web_dir/$web_bg_filename";
+    #print "Command: $command\n\n";
+    `$command`;
+    
+    return $web_bg_filename;
+}
+
     
 
 # sticks in the appropriate tags to make a common look for pages

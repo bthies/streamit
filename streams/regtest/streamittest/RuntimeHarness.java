@@ -95,7 +95,8 @@ public class RuntimeHarness extends Harness {
      **/
     static boolean uniCompare(String file1, String file2) {
 	try {
-	    return executeNative(getUniCompareCommandArray(file1, file2), null);
+	    return executeNative(getUniCompareCommandArray(file1, file2),
+                                 getStreamITRoot() + COMPARE_LIB_DIR);
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing output: " +
 				     e.getMessage());
@@ -120,8 +121,11 @@ public class RuntimeHarness extends Harness {
 	    // the cycle count was.
 	    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 	    
-	    boolean result = executeNative(getRawCompareCommandArray(rawOutputFile, expectedFile),
-					   outStream, null);
+	    boolean result =
+                executeNative(getRawCompareCommandArray(rawOutputFile,
+                                                        expectedFile),
+                              outStream,
+                              new File(getStreamITRoot() + COMPARE_LIB_DIR);
 	    return result;
 	} catch (Exception e) {
 	    ResultPrinter.printError("Caught an exception while comparing raw output: " +
@@ -163,14 +167,12 @@ public class RuntimeHarness extends Harness {
     public static String[] getRawRuntimeCommandArray(String rootPath,
 						     String makefileName) {
 						     
-	String opts[] = new String[3];
+	String opts[] = new String[4];
+        opts[0] = "make";
+        opts[1] = "-f";
+        opts[2] = makefileName;
+        opts[3] = "run";
 	
-	// run via csh (which seems crazy, but necessary)
-	opts[0] = "csh";
-	opts[1] = "-c";
-	opts[2] = ("cd " + rootPath + ";" + // cd to the root path
-		   "make -f " + makefileName + " run");
-		   
 	return opts;
     }
 
@@ -181,24 +183,20 @@ public class RuntimeHarness extends Harness {
      **/
     public static String[] getUniCompareCommandArray(String file1, String file2) {
 	String[] cmdLineArgs = new String[3];
-	cmdLineArgs[0] = "csh";
-	cmdLineArgs[1] = "-c";
-	cmdLineArgs[2] = ("cd " + getStreamITRoot() + COMPARE_LIB_DIR + ";" +
-			  getStreamITRoot() + UNI_COMPARE_COMMAND + " " +
-			  file1 + " " +
-			  file2);
+        cmdLineArgs[0] = getStreamITRoot() + UNI_COMPARE_COMMAND;
+        cmdLineArgs[1] = file1;
+        cmdLineArgs[2] = file2;
+        
 	return cmdLineArgs;
     }
 
     /** Get a command line argument array for running the comparison perl script **/
     public static String[] getRawCompareCommandArray(String rawOutputFile, String expectedOutputFile) {
 	String[] cmdLineArgs = new String[3];
-	cmdLineArgs[0] = "csh";
-	cmdLineArgs[1] = "-c";
-	cmdLineArgs[2] = ("cd " + getStreamITRoot() + COMPARE_LIB_DIR + ";" +
-			  getStreamITRoot() + RAW_COMPARE_COMMAND + " " +
-			  rawOutputFile + " " +
-			  expectedOutputFile);
+        cmdLineArgs[0] = getStreamITRoot() + RAW_COMPARE_COMMAND;
+        cmdLineArgs[1] = rawOutputFile;
+        cmdLineArgs[2] = expectedOutputFile;
+
 	return cmdLineArgs;
     }
 

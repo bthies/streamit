@@ -1,7 +1,7 @@
 /**
  * Provides Java interface to the main StreamIT compiler, allowing
  * for easy regression testing.
- * $Id: CompilerHarness.java,v 1.12 2003-06-27 22:03:10 dmaze Exp $
+ * $Id: CompilerHarness.java,v 1.13 2003-06-30 14:59:23 dmaze Exp $
  **/
 package streamittest;
 
@@ -173,16 +173,16 @@ public class CompilerHarness extends Harness {
 					       String[] expandedFileNames) {
 	// expand the filename that was passed in to multiple filenames
 	// if that is necessary
-	String[] cmdLineArgs = new String[3];
+	String[] cmdLineArgs =
+            new String[3 + options.length + expandedFileNames.length];
 
-	cmdLineArgs[0] = "csh";
-	cmdLineArgs[1] = "-c";
-	cmdLineArgs[2] = ("cd " + root + ";" + // cd to the correct directory
-			  JAVA_COMMAND + " " +
-			  JAVA_OPTION_MEM + " " +
-			  JAVA_MAIN + " " +
-			  flattenCommandArray(options) +  // compiler options
-			  flattenCommandArray(expandedFileNames));
+        cmdLineArgs[0] = JAVA_COMMAND;
+        cmdLineArgs[1] = JAVA_OPTION_MEM;
+        cmdLineArgs[2] = JAVA_MAIN;
+        System.arraycopy(options, 0, cmdLineArgs, 3, options.length);
+        System.arraycopy(expandedFileNames, 0,
+                         cmdLineArgs, 3+options.length,
+                         expandedFileNames.length);
 
 	return cmdLineArgs;
     }
@@ -197,16 +197,15 @@ public class CompilerHarness extends Harness {
                                                     String[] expandedFileNames) {
 	// expand the filename that was passed in to multiple filenames
 	// if that is necessary
-	String[] cmdLineArgs = new String[3];
-
-	cmdLineArgs[0] = "csh";
-	cmdLineArgs[1] = "-c";
-	cmdLineArgs[2] = ("cd " + root + ";" + // cd to the correct directory
-			  JAVA_COMMAND + " " +
-			  JAVA_OPTION_MEM + " " +
-			  JAVA_CONVERTER + " " +
-                          "--output " + outfile + " " +
-			  flattenCommandArray(expandedFileNames));
+	String[] cmdLineArgs = new String[5+expandedFileNames.length];
+        cmdLineArgs[0] = JAVA_COMMAND;
+        cmdLineArgs[1] = JAVA_OPTION_MEM;
+        cmdLineArgs[2] = JAVA_CONVERTER;
+        cmdLineArgs[3] = "--output";
+        cmdLineArgs[4] = outfile;
+        System.arraycopy(expandedFileNames, 0,
+                         cmdLineArgs, 5,
+                         expandedFileNames.length);
 
 	return cmdLineArgs;
     }

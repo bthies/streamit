@@ -155,11 +155,16 @@ public class RawBackend {
 	//Generate the switch code	
 	CalcBufferSize.createBufferSizePow2(rawFlattener.top);
 
+	//if rate matching is requested, check if we can do it
+	//if we can, then keep KjcOptions.rateMatch as true, 
+	//otherwise set it to false
 	if (KjcOptions.ratematch) {
 	    if (RateMatch.doit(rawFlattener.top))
-		System.out.println("Rate Matching Test Successful");
-	    else 
-		System.out.println("Rate Matching Test Failed");
+		System.out.println("Rate Matching Test Successful.");
+	    else {
+		KjcOptions.ratematch = false;
+		System.out.println("Cannot perform Rate Matching.");
+	    }
 	}
 		
 	if (KjcOptions.magic_net) {

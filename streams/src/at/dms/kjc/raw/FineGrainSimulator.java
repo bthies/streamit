@@ -350,13 +350,22 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	}
     }
     
-    private int itemsNeededToFire(FlatNode fire, SimulationCounter counters) 
+    private int itemsNeededToFire(FlatNode fire, SimulationCounter counters,
+				  HashMap executionCounts) 
     {
 	//if this is the first time a two stage initpeek is needed to execute
 	if (initSimulation &&
 	    !counters.hasFired(fire) &&
 	    fire.contents instanceof SIRTwoStageFilter) {
 	    return ((SIRTwoStageFilter)fire.contents).getInitPeek();
+	}
+	else if (!initSimulation && KjcOptions.ratematch && 
+		 fire.contents instanceof SIRFilter) {
+	    //we are ratematching filters
+	    return (((SIRFilter)fire.contents).getPopInt() * 
+		((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue() +
+		(((SIRFilter)fire.contents).getPeekInt() -
+		 ((SIRFilter)fire.contents).getPopInt()));
 	}
 	//otherwise peek items are needed
 	return ((SIRFilter)fire.contents).getPeekInt();
@@ -368,15 +377,31 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	int oldVal = ((Integer)executionCounts.get(fire)).intValue();
 	if (oldVal - 1 < 0)
 	    Utils.fail("Executed too much");
-	executionCounts.put(fire, new Integer(oldVal - 1));
+	
+	//if we are ratematching the node only fires once but only do this
+	//for filters
+	if (!initSimulation && KjcOptions.ratematch && 
+	    fire.contents instanceof SIRFilter) { 
+	    executionCounts.put(fire, new Integer(0));
+	} 
+	else 
+	    executionCounts.put(fire, new Integer(oldVal - 1));
     }
     
-    private int consumedItems(FlatNode fire, SimulationCounter counters) {
+    private int consumedItems(FlatNode fire, SimulationCounter counters,
+			      HashMap executionCounts) {
 	//if this is the first time a two stage fires consume initpop
 	if (initSimulation &&
 	    !counters.hasFired(fire) &&
 	    fire.contents instanceof SIRTwoStageFilter)
 	    return ((SIRTwoStageFilter)fire.contents).getInitPop();
+	else if (!initSimulation && KjcOptions.ratematch &&
+		 fire.contents instanceof SIRFilter) {
+	    //we are ratematching on the filter
+	    //it consumes for the entire steady state
+	    return ((SIRFilter)fire.contents).getPopInt() *
+		((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+	}
 	//otherwise just consume pop
 	return ((SIRFilter)fire.contents).getPopInt();
     }
@@ -390,8 +415,8 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    
 	    //consume the date from the buffer
 	    counters.decrementBufferCount(fire, 
-					  consumedItems(fire, counters));
-	    
+					  consumedItems(fire, counters, executionCounts));	 
+
 	    //for a steady state execution return the normal push
 	    int ret = ((SIRFilter)fire.contents).getPushInt();
 	    
@@ -401,7 +426,10 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 		!counters.hasFired(fire) &&
 		fire.contents instanceof SIRTwoStageFilter)
 		ret = ((SIRTwoStageFilter)fire.contents).getInitPush();
-
+	    else if (!initSimulation && KjcOptions.ratematch) {
+		//we are ratematching so produce all the data on the one firing.
+		ret *= ((Integer)RawBackend.steadyExecutionCounts.get(fire)).intValue();
+	    }
 	    //now this node has fired
 	    counters.setFired(fire);
 	    return ret;
@@ -644,7 +672,7 @@ public class FineGrainSimulator extends Simulator  implements FlatVisitor
 	    if (count.intValue() == 0) {
 		return false;
 	    }
-	    if (counters.getBufferCount(node) >= itemsNeededToFire(node, counters)) {
+	    if (counters.getBufferCount(node) >= itemsNeededToFire(node, counters, executionCounts)) {
 		return true;
 	    }
 	    else

@@ -32,8 +32,6 @@ public class RateMatch extends at.dms.util.Utils
 	if (overlappingRoutes) 
 	    return false;
 	
-	//do something here
-	
 	return true;
     }
 

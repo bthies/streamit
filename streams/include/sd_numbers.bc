@@ -30,8 +30,10 @@ global gFpuCount = 0;
 global gMemCount = 0;
 global gBrCount = 0;
 global gAdminCount = 0;
+global gCacheMissCount= 0;
 global gAluCount = 0;
 
+global gCacheMissCountTotal = 0;
 global gFpuCountTotal = 0;
 global gMemCountTotal = 0;
 global gBrCountTotal = 0;
@@ -45,6 +47,10 @@ global gLastFiveCycles = 0;
 
 global gDEADLOCK_COUNT = 2000;
 global gLastInsCycle = 0;
+
+//this array store the pc for each processor if they are in a cache miss stall
+//used so we do not count cache misses multiple times
+global current_cache_miss_pc;
 
 fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 {
@@ -125,9 +131,11 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
 	gBrCountTotal += gBrCount;
 	gAdminCountTotal += gAdminCount;
 	gAluCountTotal += gAluCount;
+	gCacheMissCountTotal += gCacheMissCount;
 	
-	printf("Cycles: %d,  MFLOPS: %d, Outputs: %d\n", dif, (250*gFpuCount)/dif, printsPerCycle);
-	fprintf(outputFile, "%d %d %d\n", dif, (250*gFpuCount)/dif, gWorkCount);
+	printf("Cycles: %d,  MFLOPS: %d, Cache Misses: %d, Outputs: %d\n", 
+	       dif, (250*gFpuCount)/dif, gCacheMissCount, printsPerCycle);
+	fprintf(outputFile, "%d %d %d %d\n", dif, (250*gFpuCount)/dif, gCacheMissCount, gWorkCount);
       }	
       //set the last steady state time
       lastSteadyStartCycle = time_lo;
@@ -138,6 +146,7 @@ fn gather_numbers_calc(procNum, rs, imm, result_ptr)
       gAdminCount = 0;
       gAluCount = 0;
       gWorkCount = 0;
+      gCacheMissCount = 0;
     }
   }
   return 1;
@@ -170,6 +179,8 @@ fn print_final_stats() {
  	//   ((gNumProc - gStreamItTilesUsed) * totalCycles)); 
  	fprintf(outputFile, "ADMIN: %d\n", gAdminCountTotal); 
  	fprintf(outputFile, "ALU: %d\n\n", gAluCountTotal); 
+	
+	fprintf(outputFile, "Cache Misses: %d\n\n", gCacheMissCountTotal); 
 	      
  	//printf("gWorkCountTotal: %d\n", gWorkCountTotal); 
  	//printf("((gNumProc - gStreamItTilesUsed) * totalCycles): %d\n",  
@@ -209,12 +220,22 @@ fn print_final_stats() {
 
 fn gather_numbers_init()
 {
+  local i;
+
   //register the magic instruction
   listi_add(gMagicInstrHMS.theList, & fn (procNum, rs, imm, result_ptr)
   {
     return gather_numbers_calc(procNum, rs, imm, result_ptr);
   });
   
+
+  current_cache_miss_pc = malloc(4*gNumProc);
+  //init the cache miss pc's, no one is experiencing a cache miss
+  for (i = 0; i < gNumProc; i++)
+  {
+    current_cache_miss_pc[i] = -1;
+  }
+
   //open the file to dump the data to
   outputFile = fopen("results.out", "w");
  
@@ -224,12 +245,13 @@ fn gather_numbers_init()
   fprintf(outputFile, "Tiles assigned (to filters or joiners): %d\n", gStreamItTilesUsed);
   fprintf(outputFile, "Final unroll factor used: %d\n", gStreamItUnrollFactor);
   fprintf(outputFile, "With %d items outputted per steady state.\n\n", printsPerCycle);
-  fprintf(outputFile, "cycles MFLOPS work_count\n");
+  fprintf(outputFile, "cycles MFLOPS cache_misses work_count\n");
   fprintf(outputFile, "--------------------------\n");
 
   //register the workcount event
   EventManager_RegisterHandler("issued_instruction", "__event_instr_count");
-  //EventManager_RegisterHandler("clock", "__check_deadlock");
+  //register the cache miss counter
+  EventManager_RegisterHandler("clock", "__event_clock_cache_miss");
 
   return 1;
 }
@@ -320,6 +342,29 @@ fn __check_deadlock(hms) {
   }
 }
 
+//this event is called every clock cycle
+//it counts the number of cache miss cycles 
+fn __event_clock_cache_miss(hms) {
+  local i;
+
+  for (i = 0; i < gNumProc; i++) {
+    local proc = Machine_GetProc(machine,i);
+    local status = Proc_GetStallReason(proc);
+    
+    if (status & 64) { //a cache stall
+      local pc = Proc_GetPCInStage(proc, 5);  //get the pc 
+      //if we have not counted this pc before as a cache miss then count it
+      if (pc != current_cache_miss_pc[i]) {
+	gCacheMissCount++;
+	//set the last pc of this proc to remember that we counted this
+	current_cache_miss_pc[i] = pc;
+      }
+    }
+    else //we are not experiencing a cache miss on this processor
+      current_cache_miss_pc[i] = -1;
+  }
+}
+
 fn __event_instr_count(hms)
 {
   local instrDynamic = hms.instr_dynamic;
@@ -366,8 +411,6 @@ fn __event_instr_count(hms)
   else
   {
     AtomicIncrement(&gAluCount);
-  }
-  
-
+  }  
 }
 

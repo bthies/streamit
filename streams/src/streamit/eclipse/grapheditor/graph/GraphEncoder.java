@@ -470,12 +470,20 @@ public class GraphEncoder implements AttributeStreamVisitor {
 		GEStreamNode body = (GEStreamNode) self.getBody().accept(this);
 		GEStreamNode loop = (GEStreamNode) self.getLoop().accept(this);
 
+/* 1/20/04 The code below does not seem necessary
 		join.addChild(body);
 		body.addChild(split);
 		split.addChild(loop);
 		loop.addChild(join);
+		*/
 	
 		GEFeedbackLoop floop = new GEFeedbackLoop(self.getName(), split, join, body, loop);
+		
+		join.setEncapsulatingNode(floop);
+		body.setEncapsulatingNode(floop);
+		split.setEncapsulatingNode(floop);
+		loop.setEncapsulatingNode(floop);
+		
 	
 		/* ***********************************************************
 		 * DEBUGGING CODE BEGIN

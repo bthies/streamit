@@ -33,27 +33,46 @@ public class DirectCommunication extends RawExecutionCode
 	FilterContent filter = fi.filter;
 	//runs some tests to see if we can 
 	//generate code direct commmunication code
-	if (KjcOptions.ratematch)
+	//	if (KjcOptions.ratematch)
+	//    return false;
+	if (filter.isTwoStage()) {
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Two Stage");
 	    return false;
-	if (fi.isTwoStage())
+	}
+	if (fi.remaining > 0) {
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Remaining: " +
+				     fi.remaining + " or BottomPeek " + fi.bottomPeek);
 	    return false;
-	if (fi.bottomPeek > 0 ||
-	    fi.remaining > 0)
+	}
+	if (fi.peek > fi.pop) {
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Peeking");
+	    return false;     
+	}
+	
+	if (PeekFinder.findPeek(filter.getWork())) {
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Peek Statement");
 	    return false;
-	if (fi.peek > fi.pop)
+	}
+	
+	if (PushBeforePop.check(filter.getWork())) {
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Push before pop");
 	    return false;
-	if (PeekFinder.findPeek(filter.getWork()))
-	    return false;
-	if (PushBeforePop.check(filter.getWork())) 
-	    return false;
+	}
+	
 	//must popping a scalar
 	if (filter.getInputType().isClassType() ||
-	    filter.getInputType().isArrayType())
+	    filter.getInputType().isArrayType()) {
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Input not scalar");
 	    return false;
+	}
+	
 	//must be pushing a scalar
 	if (filter.getOutputType().isClassType() ||
-	    filter.getOutputType().isArrayType())
+	    filter.getOutputType().isArrayType()) {    
+	    SpaceTimeBackend.println(filter + " can't use direct comm: Output not scalar");
 	    return false;
+	}
+	
 	//all tests pass
 	return true;
     }

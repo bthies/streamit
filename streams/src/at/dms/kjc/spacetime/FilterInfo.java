@@ -115,7 +115,7 @@ public class FilterInfo
 	//if this is not a twostage, fake it by adding to initFire,
 	//so we always think the preWork is called
 	//if (!(filter instanceof SIRTwoStageFilter))
-	if(filter.isTwoStage())
+	if(!filter.isTwoStage())
 	    initFire++;
 	
 	//see my thesis for an explanation of this calculation

@@ -35,6 +35,10 @@ public class LowPassFilter extends Filter {
 
     public void init(float sampleRate, float cutFreq, int numTaps, int decimation)
     {
+        samplingRate = sampleRate;
+        cutoffFreq = cutFreq;
+        numberOfTaps = numTaps;
+
         float pi = (float)java.lang.Math.PI;
         //build the taps, and call super.init(taps[])
         float temptaps[] = new float[numberOfTaps];
@@ -47,9 +51,6 @@ public class LowPassFilter extends Filter {
         output = new Channel (Float.TYPE, 1);
 
         //all frequencies are in hz
-        samplingRate = sampleRate;
-        cutoffFreq = cutFreq;
-        numberOfTaps = numTaps;
         COEFF = new float[numTaps];
 
         if(cutoffFreq == 0.0)

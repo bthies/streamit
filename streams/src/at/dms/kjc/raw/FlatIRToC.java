@@ -787,9 +787,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 
 	print("));\n");
 	
-	//	print(" = ");
+	//print(" = ");
 	//if (baseType.equals(CStdType.Float))
-	//	print("static_receive_f();\n");
+	///	print("static_receive_f();\n");
 		//else 
 	//   print("static_receive();\n");
 	 print("}\n");

@@ -18,6 +18,12 @@ import java.io.*;
  */
 public class Util extends at.dms.util.Utils {
 
+    //returns true if this filter is mapped
+    public static boolean countMe(SIRFilter filter) {
+	return !(filter instanceof SIRIdentity ||
+		filter instanceof SIRFileWriter ||
+		filter instanceof SIRFileReader);
+    }
     	
     /*
       get the execution Count of the previous node

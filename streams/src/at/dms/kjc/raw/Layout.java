@@ -217,7 +217,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
     public static void simAnnealAssign(FlatNode node) 
     {
 	System.out.println("Simulated Annealing Assignment");
-	int nsucc =0, j = 0, currentCost = 0, minCost = 0;
+	int nsucc =0, j = 0;
+	double currentCost = 0.0, minCost = 0.0;
 	//number of paths tried at an iteration
 	int nover = 100; //* StreamItOptions.rawRows * StreamItOptions.rawColumns;
 
@@ -237,12 +238,12 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    HashMap tileMin = (HashMap)tileAssignment.clone();
 	    minCost = currentCost;
 	    
-	    if (currentCost == 0)
+	    if (currentCost == 0.0)
 		return;
 
 	    //run the annealing twice.  The first iteration is really just to get a 
 	    //good initial layout.  Some random layouts really kill the algorithm
-	    for (int two = 0; two < StreamItOptions.rawRows; two++) {
+	    for (int two = 0; two < StreamItOptions.rawRows ; two++) {
 		double t = annealMaxTemp(); 
 		double tFinal = annealMinTemp();
 		while (true) {
@@ -253,7 +254,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 			    //filew.write(placementCost() + "\n");
 			    nsucc++;
 			}
-			if (placementCost() == 0)
+			if (placementCost() == 0.0)
 			    break;
 		    }
 		    
@@ -411,14 +412,14 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	dumpLayout("initial.dot");
     }
     
-    private static int placementCost() 
+    private static double placementCost() 
     {
 	HashSet nodes = (HashSet)assigned.clone();
 	RawBackend.addAll(nodes, FileVisitor.fileReaders);
 	
 	Iterator nodesIt = nodes.iterator();
 	HashSet routers = new HashSet();
-	int sum = 0;
+	double sum = 0.0;
 	while(nodesIt.hasNext()) {
 	    FlatNode node = (FlatNode)nodesIt.next();
 	    sum += placementCostHelper(node, routers);
@@ -426,11 +427,11 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	return sum;
     }
 	
-    private static int placementCostHelper(FlatNode node, HashSet routers) 
+    private static double placementCostHelper(FlatNode node, HashSet routers) 
     {
 	//get all placed downstream nodes
 	Iterator downstream = getDownStream(node).iterator();
-	int sum = 0;
+	double sum = 0.0;
 	while (downstream.hasNext()) {
 	    FlatNode dest = (FlatNode)downstream.next();
 	    Coordinate[] route = 
@@ -439,7 +440,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	    double numAssigned = 0.0;
 	    for (int i = 1; i < route.length - 1; i++) {
 		if (getNode(route[i]) != null) 
-		    numAssigned += 2.0;
+		    numAssigned += 100.0;
 		else {
 		    //router tile
 		    if (routers.contains(route[i]))
@@ -486,8 +487,8 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 		    items = ((Integer)RawBackend.steadyExecutionCounts.get(node)).intValue() *
 			push;
 	    }
-	    sum += (items * hops) + (items * Util.getTypeSize(Util.getOutputType(node))) * 
-				     Math.pow(numAssigned * 4.0, 3.0);
+	    sum += ((items * hops) + (items * Util.getTypeSize(Util.getOutputType(node))) * 
+		    Math.pow(numAssigned /** 2.0*/, 3.0));
 	}
 	return sum;
     }
@@ -500,7 +501,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	int first;
 	int second;
 	
-	int e_old = placementCost();
+	double e_old = placementCost();
 	
 	//find 2 suitable nodes to swap
 	while (true) {
@@ -522,7 +523,7 @@ public class Layout extends at.dms.util.Utils implements FlatVisitor {
 	assign(getTile(second), firstNode);
 	
 	//DECIDE if we should keep the change
-	int e_new = placementCost();
+	double e_new = placementCost();
 	double P = 1.0;
 	double R = random.nextDouble();
 

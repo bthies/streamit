@@ -60,11 +60,11 @@ public class RawFlattener extends at.dms.util.Utils implements FlatVisitor
 	int count = 0;
 	for (Iterator it = SIRMap.entrySet().iterator(); it.hasNext(); ) {
 	    Map.Entry entry = (Map.Entry)it.next();
-	    if (entry.getKey() instanceof SIRFilter  &&
-		!(entry.getKey() instanceof SIRIdentity)) {
-		// always count filter
-		count++;
-	    } else if (entry.getKey() instanceof SIRJoiner) {
+	    if (entry.getKey() instanceof SIRFilter) {
+		if (Util.countMe((SIRFilter)entry.getKey()))
+		    count++;
+	    }
+	    else if (entry.getKey() instanceof SIRJoiner) {
 		if(StreamItOptions.sync)
 		    //Sync removal should give an accurate count of joiners
 		    //(Adjacent Joiners Coalesced)

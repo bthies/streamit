@@ -50,3 +50,52 @@ class Accumulator extends Filter {
     output.pushFloat(val);
   }
 }
+
+class Summation extends Pipeline {
+  public Summation(int length) {super(length);}
+  public void init(final int length) {
+    if (length == 1) {
+      add(new IdentityFloat());
+    } else {
+      add(new SplitJoin() {
+	  public void init() {
+	    setSplitter(ROUND_ROBIN());
+	    add(new Summation((length+1)/2));
+	    add(new Summation(length/2));
+	    setJoiner(ROUND_ROBIN());
+	  }
+	});
+      add(new Adder(2));
+    }
+  }
+
+}
+
+class Adder extends Filter {
+  int N;
+  public Adder(int length) {
+    super(length);
+  }
+  public void init(final int length) {
+    N = length;
+    input = new Channel(Float.TYPE, length);
+    output = new Channel(Float.TYPE, 1);
+  }
+  public void work() {
+    float val = 0;
+    for(int i=0; i < N; i++) 
+      val += input.popFloat();
+    output.pushFloat(val);
+  }
+}
+
+class Subtractor extends Filter {
+  public void init() {
+    input = new Channel(Float.TYPE, 2);
+    output = new Channel(Float.TYPE, 1);
+  }
+
+  public void work() {
+    output.pushFloat(input.popFloat() - input.popFloat());
+  }
+}

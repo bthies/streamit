@@ -217,9 +217,55 @@ class TransformBank extends SplitJoin {
 
 }
 
-class SumReals extends Filter {
+class SumReals extends SplitJoin {
+  public SumReals(int DFT_LENGTH) {
+    super(DFT_LENGTH);
+  }
+  public void init(final int DFT_LENGTH) {
+    setSplitter(ROUND_ROBIN());
+    add(new SumRealsRealHandler(DFT_LENGTH));
+    add(new FloatVoid());
+    setJoiner(WEIGHTED_ROUND_ROBIN(1,0));
+  }
+}
+
+class SumRealsRealHandler extends Pipeline {
+  public SumRealsRealHandler(int DFT_LENGTH) {
+    super(DFT_LENGTH);
+  }
+  public void init(final int DFT_LENGTH) {
+    add(new SplitJoin() {
+	public void init() {
+	  setSplitter(WEIGHTED_ROUND_ROBIN(1,DFT_LENGTH - 2, 1));
+	  add(new IdentityFloat());
+	  add(new Pipeline() {
+	      public void init() {
+		add(new ConstMultiplier(2.0f));
+		add(new FrontPadder(DFT_LENGTH - 2,1));
+		add(new SplitJoin() {
+		    public void init() {
+		      setSplitter(ROUND_ROBIN());
+		      add(new Adder((DFT_LENGTH - 1)/2));
+		      add(new Adder((DFT_LENGTH - 1)/2));
+		      setJoiner(ROUND_ROBIN());
+		    }
+		  });
+		add(new Subtractor());
+	      }
+	    });
+	  add(new IdentityFloat());
+	  setJoiner(WEIGHTED_ROUND_ROBIN(1, 1, 1));
+	}
+      });
+    add(new Adder(3));
+  }
+}
+
+
+/**/
+class SumReals2 extends Filter {
   int length;
-  public SumReals(int length) {
+  public SumReals2(int length) {
     super(length);
   }
 
@@ -266,3 +312,5 @@ class SumReals extends Filter {
 //      output.pushFloat(sum);
 //    }
 }
+
+/**/

@@ -44,6 +44,29 @@ class Delay extends Filter {
   }
 }
 
+class FrontPadder extends Filter {
+  int length, padding;
+
+    public FrontPadder(int N, int i) {
+	super(N, i);
+    }
+
+    public void init(int N, int i) {
+      length = N;
+      padding = i;
+      input = new Channel(Float.TYPE, N);
+      output = new Channel(Float.TYPE, N+i);
+    }
+
+  public void work() {
+    for(int i=0;i < padding; i++)
+      output.pushFloat(0f);
+
+    for(int i=0; i < length; i++)
+      output.pushFloat(output.popFloat());
+  }
+}
+
 class InvDelay extends Filter {
   float delay[];
   int length;

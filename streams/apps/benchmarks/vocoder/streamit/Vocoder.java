@@ -60,7 +60,7 @@ interface Constants {
    **/
 
 //    public static final int DFT_LENGTH = 128; //
-  public static final int DFT_LENGTH_NOM = 16; //
+  public static final int DFT_LENGTH_NOM = 8; //
   public static final int DFT_LENGTH = DFT_LENGTH_NOM/2+1; //
 //    public static final int DFT_LENGTH = DFT_LENGTH_NOM+1; //
   public static final float FREQUENCY_FACTOR = 1f;

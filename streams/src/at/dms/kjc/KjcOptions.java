@@ -18,6 +18,7 @@ public class KjcOptions extends at.dms.util.Options {
     public boolean constprop = false;
     public boolean unroll = false;
     public boolean fusion = false;
+    public boolean partition = false;
     public boolean streamit = false;
     public boolean beautify = false;
     public boolean verbose = false;
@@ -46,6 +47,8 @@ public class KjcOptions extends at.dms.util.Options {
 	    unroll = !false; return true;
 	case 'o':
 	    fusion = !false; return true;
+	case 'a':
+	    partition = !false; return true;
 	case 's':
 	    streamit = !false; return true;
 	case 'b':
@@ -87,7 +90,7 @@ public class KjcOptions extends at.dms.util.Options {
 
     public String[] getOptions() {
 	String[]	parent = super.getOptions();
-	String[]	total = new String[parent.length + 21];
+	String[]	total = new String[parent.length + 22];
 	System.arraycopy(parent, 0, total, 0, parent.length);
 	total[parent.length + 0] = "  --beautify, -b:       Beautifies the source code [false]";
 	total[parent.length + 1] = "  --verbose, -v:        Prints out information during compilation [false]";
@@ -111,12 +114,13 @@ public class KjcOptions extends at.dms.util.Options {
 	total[parent.length + 18] = "  --constprop, -c:       Turns on StreamIt Constant Prop";
 	total[parent.length + 19] = "  --unroll, -u:          StreamIt Unroll";
 	total[parent.length + 20] = "  --fusion, -o:          Perform filter fusion";
+	total[parent.length + 21] = "  --partition, -a:       Automatically partition stream graph";
 	return total;
     }
 
 
     public String getShortOptions() {
-	return "cuosbvje:nw::*O::mDp:d:C:gl:f:" + super.getShortOptions();
+	return "acuosbvje:nw::*O::mDp:d:C:gl:f:" + super.getShortOptions();
     }
 
 
@@ -171,6 +175,7 @@ public class KjcOptions extends at.dms.util.Options {
 	new LongOpt("constprop", LongOpt.NO_ARGUMENT, null, 'c'),
 	new LongOpt("unroll", LongOpt.NO_ARGUMENT, null, 'u'),
 	new LongOpt("fusion", LongOpt.NO_ARGUMENT, null, 'o'),
+	new LongOpt("partition", LongOpt.NO_ARGUMENT, null, 'a'),
 	new LongOpt("raw", LongOpt.REQUIRED_ARGUMENT, null, 'r')
-	    };
+    };
 }

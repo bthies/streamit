@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: Main.java,v 1.7 2002-02-21 21:54:01 mgordon Exp $
+ * $Id: Main.java,v 1.8 2002-05-08 10:01:58 thies Exp $
  */
 
 package at.dms.kjc;
@@ -164,6 +164,7 @@ public class Main extends Compiler {
     if (options.streamit) {
 	StreamItOptions.unroll = options.unroll;
 	StreamItOptions.fusion = options.fusion;
+	StreamItOptions.partition = options.partition;
 	StreamItOptions.constprop = options.constprop;
 	StreamItOptions.rawRows = StreamItOptions.rawColumns = options.raw;
 

@@ -162,19 +162,45 @@ public class StreamItDot implements AttributeStreamVisitor
     public Object visitSplitter(SIRSplitter self,
                                 SIRStream parent,
                                 SIRSplitType type,
-                                JExpression[] weights)
+                                JExpression[] expWeights)
     {
+	String label = type.toString();
+	// try to add weights to label
+	try {
+	    int[] weights = self.getWeights();
+	    label += "(";
+	    for (int i=0; i<weights.length; i++) {
+		label += weights[i];
+		if (i!=weights.length-1) {
+		    label+=",";
+		}
+	    }
+	    label += ")";
+	} catch (Exception e) {}
         // Create an empty node and return it.
-        return new NamePair(makeLabelledInvisNode(type.toString()));
+        return new NamePair(makeLabelledInvisNode(label));
     }
     
     /* visit a joiner */
     public Object visitJoiner(SIRJoiner self,
                               SIRStream parent,
                               SIRJoinType type,
-                              JExpression[] weights)
+                              JExpression[] expWeights)
     {
-        return new NamePair(makeLabelledInvisNode(type.toString()));
+	String label = type.toString();
+	// try to add weights to label
+	try {
+	    int[] weights = self.getWeights();
+	    label += "(";
+	    for (int i=0; i<weights.length; i++) {
+		label += weights[i];
+		if (i!=weights.length-1) {
+		    label+=",";
+		}
+	    }
+	    label += ")";
+	} catch (Exception e) {}
+        return new NamePair(makeLabelledInvisNode(label));
     }
     
     /* pre-visit a pipeline */

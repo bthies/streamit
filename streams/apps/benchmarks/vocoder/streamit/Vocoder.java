@@ -60,13 +60,13 @@ interface Constants {
    **/
 
 //    public static final int DFT_LENGTH = 128; //
-  public static final int DFT_LENGTH_NOM = 8; //
+  public static final int DFT_LENGTH_NOM = 28; //
   public static final int DFT_LENGTH = DFT_LENGTH_NOM/2+1; //
 //    public static final int DFT_LENGTH = DFT_LENGTH_NOM+1; //
   public static final float FREQUENCY_FACTOR_ARGS[] = {1f, 1f, 1f, 1.8f, 0.6f};
-  public static final float FREQUENCY_FACTOR = 1f;
+  public static final float FREQUENCY_FACTOR = 0.6f;
   public static final float GLOTTAL_EXPANSION_ARGS[] = {1f, 1f, 1f, 1.2f, 1/1.2f};
-  public static final float GLOTTAL_EXPANSION = 1f;
+  public static final float GLOTTAL_EXPANSION = 1/1.2f;
   public static final int NEW_LENGTH = (int) (DFT_LENGTH * GLOTTAL_EXPANSION / FREQUENCY_FACTOR);
 
 
@@ -82,12 +82,12 @@ interface Constants {
   //not finish completely each window, and the windows will no longer
   //be distinct.
   public static final int DFT_LENGTH_REDUCED_ARGS[] = {1,1,1,3,3};
-  public static final int DFT_LENGTH_REDUCED = 1;
+  public static final int DFT_LENGTH_REDUCED = 3;
   public static final int NEW_LENGTH_REDUCED_ARGS[] = {1,1,1,2,4};
-  public static final int NEW_LENGTH_REDUCED = 1;
+  public static final int NEW_LENGTH_REDUCED = 4;
 
   public static final float SPEED_FACTOR_ARGS[] = {1f, 2f, 0.5f, 1f, 1f};
-  public static final float SPEED_FACTOR = 2f;
+  public static final float SPEED_FACTOR = 1f;
 
   //n_LENGTH and m_LENGTH are similar to DFT_LENGTH_REDUCED and
   //NEW_LENGHT_REDUCED above.  The difference is that these should be
@@ -97,7 +97,7 @@ interface Constants {
   public static final int n_LENGTH_ARGS[] = {1,1,2,1,1};
   public static final int n_LENGTH = 1;
   public static final int m_LENGTH_ARGS[] = {1,2,1,1,1};
-  public static final int m_LENGTH = 2;
+  public static final int m_LENGTH = 1;
 
 }
 

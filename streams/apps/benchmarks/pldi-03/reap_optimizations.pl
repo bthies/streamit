@@ -3,11 +3,11 @@
 # this program executes the specified programs
 # Using the following options:
 # constprop and unroll 10000
-# Alone, with linearreplacement, with frequencyreplacement and with both
+# Alone, with linearreplacement, with frequencyreplacement, with both and with redundant replacement
 #
 # Then the script executes the program using a dynamo-rio program(module?)
 # which counts the number of flops, fadds and fmuls that occur 
-# in the program, recording it to a file for analysis.
+# in the program, recording it to a tsv file for analysis.
 #
 # This is the latest reincarnation of a continually mutating script
 # to gather numbers for linear analysis and replacement.

@@ -8,7 +8,15 @@ FM-HOME = $(STREAMIT_HOME)/apps/benchmarks/fm/streamit
 
 all: clean benchmarks
 
-benchmarks: FIRProgram.java SamplingRateConverter.java FilterBank.java TargetDetect.java Test.java CoarseSerializedBeamFormer.java LinkedFMTest.java OneBitDToA.java
+benchmarks: FIRProgram.java \
+	    SamplingRateConverter.java \
+	    FilterBank.java \
+	    TargetDetect.java \
+	    TimeTest.java \
+	    Test.java \
+	    CoarseSerializedBeamFormer.java \
+	    LinkedFMTest.java \
+	    OneBitDToA.java
 
 
 

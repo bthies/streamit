@@ -78,13 +78,39 @@ sub do_compile {
     my $options       = shift;
 
     # run streamit compiler to generate C code.
+    do_streamit_compile($new_path, $filename_base, $options);
+    # compile the C code to generate an executable
+    do_c_compile($new_path, $filename_base);
+}
+
+########
+# Subroutine to use the streamit compiler on the specified file
+# usage: do_streamit_compile($path, $filename, $compiler_options);
+########
+sub do_streamit_compile {
+    my $new_path      = shift || die ("no path passed to do_streamit_compile.");
+    my $filename_base = shift || die ("no filename passed to do_streamit_compile.");
+    my $options       = shift;
+
+    # run streamit compiler to generate C code.
     print "(java->c)";
     `cd $new_path; $STREAMIT_COMPILER $options $filename_base.java >& $filename_base.c`;
+}
+
+########
+# Subroutine to use the c compiler on a streamit compiler generated file
+# usage: do_c_compile($path, $filename, $compiler_options);
+########
+sub do_c_compile {
+    my $new_path      = shift || die ("no path passed to do_c_compile.");
+    my $filename_base = shift || die ("no filename passed to do_c_compile.");
+
     # compile the C code to generate an executable
     print "(c->exe)";
     `cd $new_path; $STREAMIT_GCC $filename_base.c -o $filename_base.exe $STREAMIT_GCC_POSTFIX`;
-
 }
+
+
 
 #######
 # Subroutine to execute the program with dynamo
@@ -113,7 +139,7 @@ sub run_rio {
 sub get_output_count {
     my $path = shift || die ("no path");
     my $filename_base = shift || die ("no filename base");
-    my $num_iters = shift || die ("no iter count ");
+    my $num_iters = shift || $NUM_ITERS;
 
     print "(output count)";
     
@@ -125,6 +151,8 @@ sub get_output_count {
 }
 
 # get the actual N of the output.
+# (N is a parameter that is calculated by the compiler when doing 
+# the frequency replacement optimization).
 sub get_N {
     my $path = shift || die ("no path");
     my $filename_base = shift || die ("no filename base");
@@ -132,6 +160,45 @@ sub get_N {
     my $contents = read_file("$path/$filename_base.c");
     my ($N) = $contents =~ m/N=(\d*)/gi;
     return $N;
+}
+
+# Time the execution of a program using "time"
+# returns time for execution
+# usage: time_execution($path, $program[, $num_iters]
+sub time_execution {
+    my $path = shift || die ("no path");
+    my $filename_base = shift || die ("no filename");
+    my $num_iters = shift || $NUM_ITERS;
+
+    # print out status
+    print "(time $num_iters)";
+    
+    #temp file
+    my $TEMP_FILE = "timing_output.txt";
+    # crazy redirect hack to get access to the output of the "time" command
+    `/usr/local/bin/bash -c \"time $filename_base.exe -i $num_iters\" >& $TEMP_FILE`;
+    my $time_result = read_file($TEMP_FILE);
+    `rm $TEMP_FILE`;
+
+    my ($real_m, $real_s) = $time_result =~ m/real\s*(\d*)m([\d\.]*)s/g;
+    my ($user_m, $user_s) = $time_result =~ m/user\s*(\d*)m([\d\.]*)s/g;
+    my ($sys_m,  $sys_s)  = $time_result =~ m/sys\s*(\d*)m([\d\.]*)s/g;
+    # calculate the overall execution time (using the "real" numbers)
+    my $execution_time = $real_m*60+$real_s;
+    
+    # return time and load averages.
+    return($execution_time);
+}
+
+# returns the load averages as reported by uptime
+# returns load averages for (1,5,15) minutes.
+sub get_load {
+    # "uptime" to get the work average numbers
+    my $uptime_result = `uptime`;
+    # pull out the numbers
+    my ($load_1, $load_5, $load_15) = $uptime_result =~ m/load average: ([\d\.]*), ([\d\.]*), ([\d\.]*)/g;
+    # return those bad boys
+    return ($load_1, $load_5, $load_15);
 }
 
 
@@ -184,6 +251,18 @@ sub set_fir_length {
     
     # write back the modified file
     write_file($contents, $filename);
+}
+
+# replaces all occurences of printf with //printf in the specified file
+sub remove_prints {
+    my $path = shift || die ("no path");
+    my $base_filename = shift || die ("no base");
+    # read in the c file
+    my $contents = read_file("$base_filename.c");
+    # replace printf with //printf
+    $contents =~ s/printf/\/\/printf/g;
+    # write the changes back to disk
+    write_file($contents, "$base_filename.c");
 }
 
 

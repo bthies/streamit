@@ -31,7 +31,7 @@ my $i;
 # for various FIR lengths
 my @fir_lengths;
 #for ($i=1; $i<32; $i*=sqrt(2)) {
-for ($i=1; $i<2; $i++) {
+for ($i=1; $i<128; $i++) {
     push(@fir_lengths, int($i));
 }
 

@@ -31,7 +31,7 @@ print `make $PROGRAM_NAME.java`;
 my $i;
 my @fir_lengths;
 # for various FIR lengths
-for ($i=1; $i<2; $i++) {
+for ($i=1; $i<128; $i++) {
     push(@fir_lengths, int($i));
 }
 
@@ -46,7 +46,7 @@ foreach $firLength (@fir_lengths) {
 						"$STANDARD_OPTIONS",
 						"normal($firLength)");
 
-    # compile with frequency replacement
+    # compile with redundant replacement
     my ($redu_outputs, $redu_flops, 
 	$redu_fadds, $redu_fmuls) = do_test(".", $PROGRAM_NAME, 
 						"$STANDARD_OPTIONS $REDU_OPTIONS",

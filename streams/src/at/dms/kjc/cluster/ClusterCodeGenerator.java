@@ -518,6 +518,26 @@ class ClusterCodeGenerator {
 	    }
 	}
 
+	i = data_out.iterator();
+	while (i.hasNext()) {
+	    NetStream out = (NetStream)i.next();
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(out.getDest());
+	    if (!fusedWith.contains(tmp)) {
+		r.add("  delete "+out.producer_name()+".get_socket();\n");
+	    }
+	}
+
+	i = data_in.iterator();
+	while (i.hasNext()) {
+	    NetStream in = (NetStream)i.next();
+
+	    FlatNode tmp = NodeEnumerator.getFlatNode(in.getSource());
+	    if (!fusedWith.contains(tmp)) {
+		r.add("  delete "+in.consumer_name()+".get_socket();\n");
+	    }
+	}
+
 	r.add("}\n");
 	r.add("\n");
 

@@ -8,9 +8,7 @@ LIBRARYP =      libcluster_p.a
 
 NAMES =		sock_dscr \
 		thread_info \
-		object_write_buffer \
 		connection_info \
-		service \
 		timer \
 		sdep \
 		mysocket \
@@ -21,11 +19,14 @@ NAMES =		sock_dscr \
 		init_instance \
 		node_server \
 		master_server \
+		ccp \
+		ccp_session \
+		object_write_buffer \
 		save_state \
 		save_manager \
 		delete_chkpts \
-		ccp_session \
-		ccp
+		service \
+		read_setup
 
 OBJS = 		$(NAMES:%=%.o)
 OBJSP =         $(NAMES:%=%_p.o)

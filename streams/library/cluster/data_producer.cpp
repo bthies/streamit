@@ -1,10 +1,12 @@
 
 #include <data_producer.h>
 
+extern int __out_data_buffer;
+
 data_producer::data_producer() {
   socket = NULL;
   items_sent = 0;
-  data_buffer = (char*)malloc(BUFFER_SIZE);;
+  data_buffer = (char*)malloc(2000);
   buf_offset = 0;
 }
 
@@ -26,26 +28,24 @@ void data_producer::set_socket(mysocket *socket) {
 
 void data_producer::write_item(void *data, int size) {
 
-  /*
-  socket->write_chunk((char*)buf, size);
-  items_sent++;
-  */
+  if (__out_data_buffer == 0) {
 
-  items_sent++;
+    socket->write_chunk((char*)data, size);
+    items_sent++;
 
-  memcpy(data_buffer + buf_offset, data, size);
-  buf_offset += size;
+  } else {
 
-  if (buf_offset == BUFFER_SIZE) {
+    items_sent++;
 
-    //data_sender::push_item(new data_info(socket, data_buffer, buf_offset));
-    //data_buffer = (char*)malloc(BUFFER_SIZE);;
-    //buf_offset = 0;
+    memcpy(data_buffer + buf_offset, data, size);
+    buf_offset += size;
 
-    socket->write_chunk((char*)data_buffer, buf_offset);
-    buf_offset = 0;
-  }		  
-  
+    if (buf_offset >= __out_data_buffer) {
+
+      socket->write_chunk((char*)data_buffer, buf_offset);
+      buf_offset = 0;
+    }		
+  }  
 }
 
 

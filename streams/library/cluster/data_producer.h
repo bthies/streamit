@@ -8,8 +8,6 @@
 
 #include <stdlib.h>
 
-#define BUFFER_SIZE 1400
-
 class data_producer : public socket_holder, public serializable {
 
   char *data_buffer;

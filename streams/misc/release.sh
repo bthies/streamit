@@ -2,12 +2,12 @@
 #
 # release.sh: assemble a StreamIt release
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: release.sh,v 1.9 2003-03-21 21:36:33 dmaze Exp $
+# $Id: release.sh,v 1.10 2003-05-28 19:14:30 dmaze Exp $
 #
 
 # Interesting/configurable variables:
-VERSION=0.0.20030322
-TAG=streamit-snapshot-20030322
+VERSION=0.0.20030528
+TAG=streamit-snapshot-20030528
 test -z "$TMPDIR" && TMPDIR=/tmp
 PRECIOUS=
 
@@ -60,12 +60,18 @@ builddirs() {
 mkdir $WORKING/streams
 DIRS="streams/knit streams/README.source"
 builddirs streams compiler library include misc
-builddirs streams/apps examples libraries sorts
+builddirs streams/apps benchmarks examples libraries sorts
 builddirs streams/docs cookbook implementation-notes manual runtime-interface
 builddirs streams/docs semantics syntax
 
 cvs export -r $TAG -d $WORKING $DIRS
 cvs export -r $TAG -d $SRCDIR streams/docs/release
+
+# Some benchmarks we can't (or won't) export; trim those here.
+rm -rf $WORKING/streams/apps/benchmarks/beamformer/c
+rm -rf $WORKING/streams/apps/benchmarks/cfar
+rm -rf $WORKING/streams/apps/benchmarks/nokia
+rm -rf $WORKING/streams/apps/benchmarks/perftest4
 
 # Make stable copies for all of the trees.  Clean the binary tree a little
 # in the process.

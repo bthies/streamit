@@ -54,17 +54,17 @@ public class Rawify
 			tile.getComputeCode().addTraceSteady(filterInfo);
 		}
 		else if (traceNode.isOutputTrace()) {
-		    if (KjcOptions.magicdram) 
-			createMagicDramOutput((OutputTraceNode)traceNode,
-					      trace, init, rawChip);
-		}
-		else {
-		    //input trace    
-		    if (KjcOptions.magicdram)
-			createMagicDramInput((InputTraceNode)traceNode, 
-					     trace, init, rawChip);
-		}
-		
+                    if (KjcOptions.magicdram)
+                        createMagicDramOutput((OutputTraceNode)traceNode,
+                                              trace, init, rawChip);
+                }
+                else {
+                    //input trace
+                    if (KjcOptions.magicdram)
+                        createMagicDramInput((InputTraceNode)traceNode,
+                                             trace, init, rawChip);
+                }
+
 		//get the next tracenode
 		traceNode = traceNode.getNext();
 	    }
@@ -100,11 +100,6 @@ public class Rawify
 	//get the multiplicity based on the init variable
 	int mult = (init) ? next.getInitMult() : next.getSteadyMult();
 	
-	//the current number of items that remain to get from the current output buffer
-	int currentWeight = node.getWeights()[0];
-	//the current buffer, index into the sources array
-	int currentBuffer = 0;
-	
 	//generate the magic dram statements
 	//iterate over the number of firings 
 	for (int i = 0; i < mult; i++) {
@@ -112,15 +107,8 @@ public class Rawify
 		Util.getTypeSize(next.getFilter().getInputType());
 	    //for each item generate an instruction
 	    for (int j = 0; j < itemsReceiving; j++) {
-		//keep track of the output buffer we are loading from
-		if (currentWeight <= 0) {
-		    currentBuffer = (currentBuffer + 1) % (node.getSources().length);
-		    //reset the round-robin weight
-		    currentWeight = node.getWeights()[currentBuffer];
-		}
-		
-		insList.add(new MagicDramLoad(node, node.getSources()[currentBuffer]));
-		currentWeight--;
+		insList.add(new MagicDramLoad(node, 
+					      TraceBufferSchedule.getOutputBuffer(node)));
 	    }
 	}
 
@@ -133,12 +121,8 @@ public class Rawify
 	    for (int i = 0; 
 		 i < items * Util.getTypeSize(next.getFilter().getInputType()); 
 		 i++) {
-		if (currentWeight <= 0) {
-		    currentBuffer = (currentBuffer + 1) % (node.getSources().length);
-		    currentWeight = node.getWeights()[currentBuffer];
-		}
-		insList.add(new MagicDramLoad(node, node.getSources()[currentBuffer]));
-		currentWeight--;
+		insList.add(new MagicDramLoad(node, 
+					      TraceBufferSchedule.getOutputBuffer(node)));
 	    }
 	}
 	
@@ -184,11 +168,6 @@ public class Rawify
 					      
     {
 	FilterInfo filterInfo = FilterInfo.getFilterInfo(prev);
-	//the current number of items that remain to get from the current output buffer
-	int currentWeight = node.getWeights()[0];
-	//the current buffer, index  into the sources array
-	int currentBuffer = 0;
-	
 	//generate the magic dram statements
 	//iterate over the number of firings 
 	for (int i = 0; i < mult; i++) {
@@ -196,15 +175,8 @@ public class Rawify
 	    int items = itemsFiring(filterInfo, i, init) * 
 		Util.getTypeSize(prev.getFilter().getOutputType());
 	    for (int j = 0; j < items; j++) {
-		//keep track of the output buffer we are loading from
-		if (currentWeight <= 0) {
-		    currentBuffer = (currentBuffer + 1) % (node.getDests().length);
-		    //reset the round-robin weight
-		    currentWeight = node.getWeights()[currentBuffer];
-		}
-		
-		insList.add(new MagicDramStore(node, node.getDests()[currentBuffer]));
-		currentWeight--;
+		insList.add(new MagicDramStore(node, 
+					       TraceBufferSchedule.getInputBuffers(node)));
 	    }
 	}
     }

@@ -28,7 +28,7 @@ import java.util.ArrayList;
  * -- Semantics of for loops (for(complex c = 1+1i; abs(c) < 5; c += 1i))
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: DoComplexProp.java,v 1.16 2003-07-01 13:39:19 dmaze Exp $
+ * @version $Id: DoComplexProp.java,v 1.17 2003-07-10 15:37:18 dmaze Exp $
  */
 public class DoComplexProp extends SymbolTableVisitor
 {
@@ -173,11 +173,13 @@ public class DoComplexProp extends SymbolTableVisitor
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
                                                       lhs, "real"),
-                                        cplx.getReal()));
+                                        cplx.getReal(),
+                                        stmt.getOp()));
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
                                                       lhs, "imag"),
-                                        cplx.getImag()));
+                                        cplx.getImag(),
+                                        stmt.getOp()));
             return null;
         }
         else if (getType(lhs).isComplex() && !(getType(rhs).isComplex()))
@@ -185,16 +187,18 @@ public class DoComplexProp extends SymbolTableVisitor
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
                                                      lhs, "real"),
-                                        rhs));
+                                        rhs,
+                                        stmt.getOp()));
             addStatement(new StmtAssign(stmt.getContext(),
                                         new ExprField(lhs.getContext(),
                                                       lhs, "imag"),
                                         new ExprConstInt(lhs.getContext(),
-                                                         0)));
+                                                         0),
+                                        stmt.getOp()));
             return null;
         }
         else if (rhs != stmt.getRHS())
-            return new StmtAssign(stmt.getContext(), lhs, rhs);
+            return new StmtAssign(stmt.getContext(), lhs, rhs, stmt.getOp());
         else
             return stmt;
     }

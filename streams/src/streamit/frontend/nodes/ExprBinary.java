@@ -26,6 +26,10 @@ public class ExprBinary extends Expression
     public static final int BINOP_LE = 11;
     public static final int BINOP_GT = 12;
     public static final int BINOP_GE = 13;
+    // These are bitwise AND/OR/XOR:
+    public static final int BINOP_BAND = 14;
+    public static final int BINOP_BOR = 15;
+    public static final int BINOP_BXOR = 16;
     
     private int op;
     private Expression left, right;

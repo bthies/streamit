@@ -222,23 +222,24 @@ public class FuseSplit {
 	if (KjcOptions.simplesjfusion) {
 	    return FuseSimpleSplit.fuse(sj);
 	} else {
-	    boolean noTwoStage = true;
-	    boolean noRRPeek = sj.getSplitter().getType()==SIRSplitType.WEIGHTED_RR || 
-		sj.getSplitter().getType()==SIRSplitType.ROUND_ROBIN;
+	    boolean twostage = false;
+	    boolean roundrobin = (sj.getSplitter().getType()==SIRSplitType.WEIGHTED_RR || 
+				  sj.getSplitter().getType()==SIRSplitType.ROUND_ROBIN);
+	    boolean peeking = false;
 	    for (int i=0; i<sj.size(); i++) {
 		if (sj.get(i) instanceof SIRFilter) {
 		    SIRFilter filter = (SIRFilter)sj.get(i);
 		    if (filter instanceof SIRTwoStageFilter) {
-			noTwoStage = false;
+			twostage = true;
 			break;
 		    }
 		    if (filter.getPeekInt() > filter.getPopInt()) {
-			noRRPeek = false;
+			peeking = true;
 			break;
 		    }
 		}
 	    }
-	    if (noTwoStage && noRRPeek) {
+	    if (!twostage && !(roundrobin && peeking)) {
 		return FuseSimpleSplit.fuse(sj);
 	    } else {
 		return null;

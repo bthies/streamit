@@ -2,7 +2,7 @@
 
   Hello World Program #2:
 
-  1) Generates the "Hello World!" string one character at a time
+  1) Generates the "Hello World2!" string one character at a time
 
   2) Splits the characters through a split/join, guaranteeing only a
   partial ordering on the order in which the characters are printed.
@@ -21,15 +21,21 @@ public class HelloWorld2 extends Stream
     {
     	new HelloWorld2().Run();
     }
-
+    
+    public void InitIO () { }
+    
     // this is the defining part of the stream
     public void Init() 
     {
-    	Add(new CharGenerator("Hello World!\n"));
+    	Add(new CharGenerator("Hello World2!\n"));
     	Add(new SplitJoin() 
     	{
-    		public void Init() 
-    		{
+            public void InitIO ()
+            {
+                this.input = new Channel (new char [1]);
+            }
+    		public void Init()
+    	    {
     		    UseSplitter(Splitter.ROUND_ROBIN_SPLITTER);
     		    Add(new CharPrinter());
     		    Add(new CharPrinter());

@@ -4,10 +4,13 @@ import java.util.*;
 import java.lang.reflect.*;
 
 // the basic stream class (pipe's).  has 1 input and 1 output.
-public class Stream extends Operator {
+public abstract class Stream extends Operator
+{
 
     // CONSTRUCTORS --------------------------------------------------------------------
 
+    public Channel input = null;
+    public Channel output = null;
     LinkedList streamElements;
     
     public Stream() 
@@ -52,9 +55,10 @@ public class Stream extends Operator {
     
     private void StreamInit ()
     {
+        InitIO ();
         streamElements = new LinkedList ();
     }
-
+    
     // RESET FUNCTIONS (need to just call init functions) ---------------------------------
 
     public MessageStub Reset() 

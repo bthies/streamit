@@ -5,8 +5,22 @@ import java.util.*;
 
 // an operator takes N inputs and produces N outputs.
 // Never explicitly instantiated
-abstract class Operator extends DestroyedClass
+class Operator extends DestroyedClass
 {
+    // I need a constructor to initialize the input/output members
+    public Operator ()
+    {
+        InitIO ();
+    }
+    
+    // InitIO initializes all input/output channels
+    // as required
+    public void InitIO () 
+    {
+        // You must provide an InitIO function
+        // to initialize 
+        ASSERT (false);
+    }
 
     public static MessageStub MESSAGE_STUB;
     
@@ -95,7 +109,7 @@ abstract class Operator extends DestroyedClass
     
     // a prototype work function
     void Work () { }
-    
+
     // ------------------------------------------------------------------
     // ------------------ all graph related functions -------------------
     // ------------------------------------------------------------------
@@ -116,15 +130,16 @@ abstract class Operator extends DestroyedClass
             Field ioField;
             ioField  = thisClass.getField (fieldName);
             
-            if ((Channel)ioField.get (this) != null)
+            Object fieldValue = ioField.get (this);
+            
+            if (ioField.getType ().isArray ())
             {
-                fieldsInstance = new Channel [1];
-                fieldsInstance [0] = (Channel) ioField.get (this);
-                
-                ASSERT (fieldsInstance [0] != null);
+                fieldsInstance = (Channel []) fieldValue;
             } else {
-                fieldsInstance = (Channel []) ioField.get (this);
-                ASSERT (fieldsInstance != null);
+                fieldsInstance = new Channel [1];
+                fieldsInstance [0] = (Channel) fieldValue;
+                
+                if (fieldsInstance [0] == null) fieldsInstance = null;
             }
         }
         catch (NoSuchFieldException noError)

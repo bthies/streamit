@@ -1,9 +1,7 @@
 import streamit.*;
 
-public class CharGenerator extends Filter {
-
-    public Channel output = new Channel(new char[1]);
-
+public class CharGenerator extends Filter 
+{
     public CharGenerator(String str) 
     {
         super(str);
@@ -14,6 +12,11 @@ public class CharGenerator extends Filter {
     // the string to output
     private String message;
 
+    public void InitIO () 
+    { 
+        output = new Channel (new char [1]);
+    }
+    
     // <message> is string to output, one char at a time
     public void Init(String message) 
     {

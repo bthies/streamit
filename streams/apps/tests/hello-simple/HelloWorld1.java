@@ -8,6 +8,7 @@ import streamit.*;
 
 public class HelloWorld1 extends Stream
 {
+    public void InitIO () { }
     // presumably some main function invokes the stream
     public static void main(String args[]) 
     {

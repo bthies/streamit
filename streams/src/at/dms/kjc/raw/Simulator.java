@@ -423,7 +423,9 @@ public class Simulator extends at.dms.util.Utils implements FlatVisitor
 		mostDownStream = node;
 	    }
 	    queue.remove(0);
-	    for (int i = 0; i < node.ways; i++) {
+	    //to keep the order of the nodes of a splitjoin in the correct order
+	    //(the order defined by the joiner) add to the queue in the reverse order
+	    for (int i = node.ways - 1; i >= 0; i--) {
 		if (!visited.contains(node.edges[i]))
 			queue.add(node.edges[i]);
 	    }

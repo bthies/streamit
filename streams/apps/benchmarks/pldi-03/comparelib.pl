@@ -3,13 +3,13 @@
 # Library routines for the comparison scripts (eg the functionality common
 # between them.
 #
-# $Id: comparelib.pl,v 1.1 2003-04-08 18:28:58 aalamb Exp $
+# $Id: comparelib.pl,v 1.2 2003-04-11 22:08:42 aalamb Exp $
 #####################
 
 use strict;
 
 # percent difference between expected output and actual output allowed
-my $TOLERANCE = .2;
+my $TOLERANCE = .02;
 # if the difference is below this number we attribute it to round off error
 # (needed for comparing 0 to 1.9E-19...)
 my $ZERO = 1E-6;

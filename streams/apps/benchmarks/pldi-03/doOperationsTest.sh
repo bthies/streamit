@@ -9,6 +9,7 @@
 ./do_operation_programs.pl scripts/bf.script
 ./do_operation_programs.pl scripts/vocoder.script
 ./do_operation_programs.pl scripts/oversamp.script
+./do_operation_programs.pl scripts/onebit.script
 
 
 

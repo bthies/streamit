@@ -32,10 +32,13 @@ foreach (@input_lines) {
     # if the files don't exist, then signal an error
     if (not (-e "$OUTPUTDIR/$filename-$postfix.exe")) {
 	print "$filename-$postfix.exe doesn't exist\n";
+	push(@result_lines, "$filename-$postfix\t$options\t0\t0\t0");
+	
 	next;
     }
     if (not (-e "$OUTPUTDIR/$filename-$postfix-np.exe")) {
 	print "$filename-$postfix-np.exe doesn't exist\n";
+	push(@result_lines, "$filename-$postfix\t$options\t0\t0\t0");
 	next;
     }
     

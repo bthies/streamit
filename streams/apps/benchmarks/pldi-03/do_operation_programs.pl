@@ -38,6 +38,14 @@ foreach (@input_lines) {
 	print "$filename-$postfix-np.exe doesn't exist\n";
 	next;
     }
+
+    # for now, if we compiled with the atlas option, don't get op counts
+    # because it breaks dynamo rio
+    if ($options =~ m/atlas/gi) {
+	print "atlas not supported by dynamorio yet:$options\n";
+	push(@result_lines, "$filename-$postfix\t$options\t0\t0\t0\t0");
+	next;
+    }
     
     print "$filename-$postfix:";
     # run the program for the specified number of iterations until we find a number of iterations

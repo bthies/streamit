@@ -67,9 +67,7 @@ void->float filter DataSource() {
 }
 
 /** 
- * evenutally, this will be a pitch detector. Now it is just squares
- * the input so that it doesn't get identified as a 
- * linear filter.
+ * Pitch detector.
  **/
 float->float pipeline PitchDetector(int winsize, int decimation) {
   add CenterClip();

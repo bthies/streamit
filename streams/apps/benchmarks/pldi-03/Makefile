@@ -11,11 +11,10 @@ SCRIPTS = scripts/fir.script \
 	  scripts/target.script \
 	  scripts/fm.script \
 	  scripts/fb.script \
-	  scripts/bf.script \
 	  scripts/vocoder.script \
 	  scripts/oversamp.script \
 	  scripts/onebit.script \
-
+	  scripts/bf.script \
 
 all: clean benchmarks
 

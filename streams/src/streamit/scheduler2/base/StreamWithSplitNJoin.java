@@ -173,13 +173,13 @@ abstract public class StreamWithSplitNJoin
 
     public SplitFlow getSplitFlow(int nPhase)
     {
-        ASSERT(nPhase >= 0);
+        assert nPhase >= 0;
         return splitFlow[nPhase];
     }
 
     public JoinFlow getJoinFlow(int nPhase)
     {
-        ASSERT(nPhase >= 0);
+        assert nPhase >= 0;
         return joinFlow[nPhase];
     }
 }

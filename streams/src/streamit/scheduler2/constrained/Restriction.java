@@ -29,7 +29,7 @@ abstract public class Restriction extends streamit.misc.AssertedClass
     
     public void useRestrictions (Restrictions _restrictions)
     {
-        ASSERT (_restrictions);
+        assert _restrictions != null;
         restrictions = _restrictions;
     }
 

@@ -106,7 +106,7 @@ public class PhasingSchedule extends DestroyedClass
     public int getPhaseNumPeek(int phase)
     {
         // phase must be within range
-        ASSERT(phase >= 0 && phase < nPhases);
+        assert phase >= 0 && phase < nPhases;
         return ((Integer) peekSize.get(phase)).intValue();
     }
 
@@ -117,7 +117,7 @@ public class PhasingSchedule extends DestroyedClass
     public int getPhaseNumPop(int phase)
     {
         // phase must be within range
-        ASSERT(phase >= 0 && phase < nPhases);
+        assert phase >= 0 && phase < nPhases;
         return ((Integer) popSize.get(phase)).intValue();
     }
 
@@ -128,7 +128,7 @@ public class PhasingSchedule extends DestroyedClass
     public int getPhaseNumPush(int phase)
     {
         // phase must be within range
-        ASSERT(phase >= 0 && phase < nPhases);
+        assert phase >= 0 && phase < nPhases;
         return ((Integer) pushSize.get(phase)).intValue();
     }
 
@@ -139,10 +139,10 @@ public class PhasingSchedule extends DestroyedClass
     public PhasingSchedule getPhase(int phase)
     {
         // phase must be within range
-        ASSERT(phase >= 0 && phase < nPhases);
+        assert phase >= 0 && phase < nPhases;
 
         // and this must be a phasing schedule
-        ASSERT(phases != null);
+        assert phases != null;
 
         return (PhasingSchedule) phases.get(phase);
     }

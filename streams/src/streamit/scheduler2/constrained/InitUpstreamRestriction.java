@@ -47,15 +47,15 @@ public class InitUpstreamRestriction extends Restriction
             else
             {
                 // downstream, negative latency
-                ASSERT(portal.getMinLatency() < 0);
+                assert portal.getMinLatency() < 0;
 
-                ERROR("not implemented");
+                assert false: "not implemented";
             }
         }
         else
         {
             // upstream, positive latency
-            ASSERT(portal.getMinLatency() >= 0);
+            assert portal.getMinLatency() >= 0;
 
             // this type of portal does not cause me to have to execute
             // the upstream filter a certain # of times before being

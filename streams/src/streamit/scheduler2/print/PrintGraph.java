@@ -37,7 +37,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
 
     public void printProgram(Iterator iter)
     {
-        ASSERT(iter.isPipeline());
+        assert iter.isPipeline() != null;
 
         File outputFile;
         FileOutputStream fileOutputStream;
@@ -235,7 +235,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
             for (int nChild = 0; nChild < pipeline.getNumChildren(); nChild++)
             {
                 Iterator child = pipeline.getChild(nChild);
-                ASSERT(child);
+                assert child != null;
 
                 String topChild = getUniqueTopStreamName(child);
                 String bottomChild = getUniqueBottomStreamName(child);
@@ -396,7 +396,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
             return getUniqueName(iter) + "_join";
         }
 
-        ASSERT(0);
+        assert false;
         return null;
     }
 
@@ -421,7 +421,7 @@ public class PrintGraph extends streamit.misc.AssertedClass
             return getUniqueName(iter) + "_split";
         }
 
-        ASSERT(0);
+        assert false;
         return null;
     }
 

@@ -71,7 +71,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
     public PhasingSchedule getSplitPhase(int nPhase)
     {
         // single appearance schedule has only one split phase
-        ASSERT(nPhase == 0);
+        assert nPhase == 0;
         return splitSched;
     }
 
@@ -91,7 +91,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
     public PhasingSchedule getJoinPhase(int nPhase)
     {
         // single appearance schedule has only one join phase
-        ASSERT(nPhase == 0);
+        assert nPhase == 0;
         return joinSched;
     }
 
@@ -118,7 +118,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
             {
                 // get the child
                 StreamInterface child = getHierarchicalChild(nChild);
-                ASSERT(child);
+                assert child != null;
 
                 // compute child's schedule
                 child.computeSchedule();
@@ -143,7 +143,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                     // per iteration of the split
                     int splitDataSent =
                         getSteadySplitFlow().getPushWeight(nChild);
-                    ASSERT(splitDataSent > 0);
+                    assert splitDataSent > 0;
 
                     splitRunCount =
                         (childInitDataConsumption + splitDataSent - 1)

@@ -102,9 +102,8 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                         // get the phase and check that I've enough 
                         // peek data in the buffer to run it
                         PhasingSchedule childPhase = getChildPhase(child, nPhase);
-                        ASSERT(
-                            postSplitBuffers[nChild]
-                                >= childPhase.getOverallPeek());
+                        assert postSplitBuffers[nChild]
+                            >= childPhase.getOverallPeek();
 
                         // update the buffers
                         postSplitBuffers[nChild] -= childPhase.getOverallPop();
@@ -123,7 +122,7 @@ public class SplitJoin extends streamit.scheduler2.hierarchical.SplitJoin
                     for (nChild = 0; nChild < getNumChildren(); nChild++)
                     {
                         preJoinBuffers[nChild] -= flow.getPopWeight(nChild);
-                        ASSERT(preJoinBuffers[nChild] >= 0);
+                        assert preJoinBuffers[nChild] >= 0;
                     }
                 }
             }

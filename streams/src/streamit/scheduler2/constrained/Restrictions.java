@@ -21,10 +21,9 @@ public class Restrictions extends streamit.misc.Misc
     {
         public boolean isLess(Object leftObj, Object rightObj)
         {
-            ASSERT(leftObj != null && rightObj != null);
-            ASSERT(
-                leftObj instanceof Restriction
-                    && rightObj instanceof Restriction);
+            assert leftObj != null && rightObj != null;
+            assert leftObj instanceof Restriction
+                   && rightObj instanceof Restriction;
 
             Restriction left = (Restriction)leftObj;
             Restriction right = (Restriction)rightObj;
@@ -43,10 +42,9 @@ public class Restrictions extends streamit.misc.Misc
     {
         public boolean isLess(Object leftObj, Object rightObj)
         {
-            ASSERT(leftObj != null && rightObj != null);
-            ASSERT(
-                leftObj instanceof Restriction
-                    && rightObj instanceof Restriction);
+            assert leftObj != null && rightObj != null;
+            assert leftObj instanceof Restriction
+                    && rightObj instanceof Restriction;
 
             Restriction left = (Restriction)leftObj;
             Restriction right = (Restriction)rightObj;
@@ -296,7 +294,7 @@ public class Restrictions extends streamit.misc.Misc
 
                 // better not have anything in there - that would be 
                 // a bug in the container or something
-                ASSERT(((Boolean)result.getSecond()).booleanValue());
+                assert ((Boolean)result.getSecond()).booleanValue();
                 nodeRestrictionsIter = (OMapIterator)result.getFirst();
             }
 
@@ -356,7 +354,7 @@ public class Restrictions extends streamit.misc.Misc
             allRestrictions.erase(restriction);
             OMapIterator nodeRestrictionsIter =
                 restrictions.find(restriction.getNode());
-            ASSERT(!nodeRestrictionsIter.equals(restrictions.end()));
+            assert !nodeRestrictionsIter.equals(restrictions.end());
             OSet nodeRestrictions = (OSet)nodeRestrictionsIter.getData();
             nodeRestrictions.erase(restriction);
         }

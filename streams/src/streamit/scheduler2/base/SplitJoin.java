@@ -39,7 +39,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
     {
         super(_splitjoin);
 
-        ASSERT(_splitjoin);
+        assert _splitjoin != null;
         splitjoin = _splitjoin;
 
         // fill up the children array
@@ -48,7 +48,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             nChildren = splitjoin.getNumChildren();
 
             // a pipeline must have some children
-            ASSERT(nChildren > 0);
+            assert nChildren > 0;
 
             children = new StreamInterface[nChildren];
 
@@ -82,7 +82,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
      */
     protected StreamInterface getChild(int nChild)
     {
-        ASSERT(nChild >= 0 && nChild < nChildren);
+        assert nChild >= 0 && nChild < nChildren;
         return children[nChild];
     }
     
@@ -121,7 +121,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
     protected int getChildNumExecs(int nChild)
     {
         // make sure nChild is in range
-        ASSERT(nChild >= 0 && nChild < getNumChildren());
+        assert nChild >= 0 && nChild < getNumChildren();
 
         return childrenNumExecs[nChild].intValue();
     }
@@ -183,7 +183,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             for (nChild = 0; nChild < nChildren; nChild++)
             {
                 StreamInterface child = children[nChild];
-                ASSERT(child);
+                assert child != null;
 
                 // the rate at which the child should be executed
                 Fraction childRate = null;
@@ -198,7 +198,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 {
                     // if the slitter is producing data, the child better
                     // be consuming it!
-                    ASSERT(numIn != 0);
+                    assert numIn != 0;
 
                     if (splitRate == null)
                     {
@@ -220,7 +220,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                     {
                         // if the child is producing data, the joiner
                         // better be consuming it!
-                        ASSERT(getSteadyJoinFlow().getPopWeight(nChild) != 0);
+                        assert getSteadyJoinFlow().getPopWeight(nChild) != 0;
 
                         int childOut = child.getSteadyPush();
                         int joinIn = getSteadyJoinFlow().getPopWeight(nChild);
@@ -245,7 +245,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             if (splitRate == null)
             {
                 // I better not have computed the join rate yet!
-                ASSERT(joinRate == null);
+                assert joinRate == null;
 
                 // okay, just set it to ONE/ONE
                 joinRate = new Fraction(BigInteger.ONE, BigInteger.ONE);
@@ -255,7 +255,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
             for (nChild = 0; nChild < nChildren; nChild++)
             {
                 StreamInterface child = children[nChild];
-                ASSERT(child);
+                assert child != null;
 
                 // get the child rate
                 Fraction childRate = childrenRates[nChild];
@@ -271,7 +271,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                     {
                         // yes
                         // the split better consume some data too!
-                        ASSERT(joinIn != 0);
+                        assert joinIn != 0;
 
                         // compute the rate at which the child should execute
                         // w.r.t. the splitter
@@ -284,7 +284,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                     {
                         // no
                         // the splitter better not consume any data either
-                        ASSERT(joinIn == 0);
+                        assert joinIn == 0;
                     }
                 }
 
@@ -293,7 +293,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 {
                     // I better have the rate here, or the child
                     // neither produces nor consumes any data!
-                    ASSERT(newChildRate != null);
+                    assert newChildRate != null;
 
                     // set the rate
                     childrenRates[nChild] = newChildRate;
@@ -329,10 +329,10 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 for (index = 0; index < nChildren; index++)
                 {
                     Fraction childRate = (Fraction) childrenRates[index];
-                    ASSERT(childRate);
+                    assert childRate != null;
 
                     BigInteger rateDenom = childRate.getDenominator();
-                    ASSERT(rateDenom);
+                    assert rateDenom != null;
 
                     BigInteger gcd = multiplier.gcd(rateDenom);
                     multiplier = multiplier.multiply(rateDenom).divide(gcd);
@@ -345,7 +345,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 if (splitRate != null)
                 {
                     splitRate = splitRate.multiply(multiplier);
-                    ASSERT(splitRate.getDenominator().equals(BigInteger.ONE));
+                    assert splitRate.getDenominator().equals(BigInteger.ONE);
                     splitNumRounds = splitRate.getNumerator();
                 }
                 else
@@ -356,7 +356,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                 if (joinRate != null)
                 {
                     joinRate = joinRate.multiply(multiplier);
-                    ASSERT(joinRate.getDenominator().equals(BigInteger.ONE));
+                    assert joinRate.getDenominator().equals(BigInteger.ONE);
                     joinNumRounds = joinRate.getNumerator();
                 }
                 else
@@ -373,13 +373,12 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
                     for (nChild = 0; nChild < nChildren; nChild++)
                     {
                         Fraction childRate = (Fraction) childrenRates[nChild];
-                        ASSERT(childRate);
+                        assert childRate != null;
 
                         Fraction newChildRate =
                             childRate.multiply(multiplier);
-                        ASSERT(
-                            newChildRate.getDenominator().equals(
-                                BigInteger.ONE));
+                        assert newChildRate.getDenominator()
+                            .equals(BigInteger.ONE);
 
                         // set the rate
                         childrenNumExecs[nChild] =
@@ -387,7 +386,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
 
                         // make sure that the child executes a positive
                         // number of times!
-                        ASSERT(childrenNumExecs[nChild].signum() == 1);
+                        assert childrenNumExecs[nChild].signum() == 1;
                     }
                 }
             }
@@ -414,7 +413,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         for (int nChild = 0; nChild < nChildren; nChild++)
         {
             StreamInterface child = children[nChild];
-            ASSERT(child);
+            assert child != null;
             
             nodes += child.getNumNodes ();
         }
@@ -429,7 +428,7 @@ abstract public class SplitJoin extends StreamWithSplitNJoin
         for (int nChild = 0; nChild < nChildren; nChild++)
         {
             StreamInterface child = children[nChild];
-            ASSERT(child);
+            assert child != null;
             
             firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
         }

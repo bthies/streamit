@@ -93,7 +93,7 @@ public class P2PPortal extends streamit.misc.AssertedClass
     }
     public PhasingSchedule getPortalMessageCheckPhase()
     {
-        ASSERT (messageCheckPhase);
+        assert messageCheckPhase != null;
         return messageCheckPhase;
     }
 }

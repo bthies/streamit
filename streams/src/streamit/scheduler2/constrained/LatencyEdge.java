@@ -347,7 +347,7 @@ public class LatencyEdge extends Misc implements SDEPData
         {
             // the two edges are in series
             // make sure they are, just in case though
-            ASSERT(edge1.getDst() == edge2.getSrc());
+            assert edge1.getDst() == edge2.getSrc();
 
             src = edge1.getSrc();
             dst = edge2.getDst();

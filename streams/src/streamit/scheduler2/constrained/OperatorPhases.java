@@ -72,9 +72,9 @@ public class OperatorPhases extends Misc
 
     public void setPhaseInput(int peek, int pop, int phase, int channel)
     {
-        ASSERT(channel >= 0 && channel < nInputChannels);
-        ASSERT(phase >= 0 && phase < nPhases);
-        ASSERT(pop >= 0 && peek >= pop);
+        assert channel >= 0 && channel < nInputChannels;
+        assert phase >= 0 && phase < nPhases;
+        assert pop >= 0 && peek >= pop;
 
         channelPeek[channel][phase] = peek;
         channelPop[channel][phase] = pop;
@@ -83,9 +83,9 @@ public class OperatorPhases extends Misc
 
     public void setPhaseOutput(int push, int phase, int channel)
     {
-        ASSERT(channel >= 0 && channel < nOutputChannels);
-        ASSERT(phase >= 0 && phase < nPhases);
-        ASSERT(push >= 0);
+        assert channel >= 0 && channel < nOutputChannels;
+        assert phase >= 0 && phase < nPhases;
+        assert push >= 0;
 
         channelPush[channel][phase] = push;
         overallValuesValid = false;
@@ -93,8 +93,8 @@ public class OperatorPhases extends Misc
 
     public void setOperatorPhase(PhasingSchedule phase, int nPhase)
     {
-        ASSERT(nPhase >= 0 && nPhase < nPhases);
-        ASSERT(phase != null);
+        assert nPhase >= 0 && nPhase < nPhases;
+        assert phase != null;
 
         phases[nPhase] = phase;
         overallValuesValid = false;
@@ -143,7 +143,7 @@ public class OperatorPhases extends Misc
 
     int getOverallPeek(int channel)
     {
-        ASSERT(channel < nInputChannels);
+        assert channel < nInputChannels;
 
         if (!overallValuesValid)
             calculateOverallThroughput();
@@ -152,7 +152,7 @@ public class OperatorPhases extends Misc
 
     int getOverallPop(int channel)
     {
-        ASSERT(channel < nInputChannels);
+        assert channel < nInputChannels;
 
         if (!overallValuesValid)
             calculateOverallThroughput();
@@ -161,7 +161,7 @@ public class OperatorPhases extends Misc
 
     int getOverallPush(int channel)
     {
-        ASSERT(channel < nOutputChannels);
+        assert channel < nOutputChannels;
 
         if (!overallValuesValid)
             calculateOverallThroughput();
@@ -175,24 +175,24 @@ public class OperatorPhases extends Misc
 
     int getPhasePeek(int nPhase, int channel)
     {
-        ASSERT(nPhase >= 0 && nPhase < nPhases);
-        ASSERT(channel >= 0 && channel < nInputChannels);
+        assert nPhase >= 0 && nPhase < nPhases;
+        assert channel >= 0 && channel < nInputChannels;
 
         return channelPeek[channel][nPhase];
     }
 
     int getPhasePop(int nPhase, int channel)
     {
-        ASSERT(nPhase >= 0 && nPhase < nPhases);
-        ASSERT(channel >= 0 && channel < nInputChannels);
+        assert nPhase >= 0 && nPhase < nPhases;
+        assert channel >= 0 && channel < nInputChannels;
 
         return channelPop[channel][nPhase];
     }
 
     int getPhasePush(int nPhase, int channel)
     {
-        ASSERT(nPhase >= 0 && nPhase < nPhases);
-        ASSERT(channel >= 0 && channel < nOutputChannels);
+        assert nPhase >= 0 && nPhase < nPhases;
+        assert channel >= 0 && channel < nOutputChannels;
 
         return channelPush[channel][nPhase];
     }

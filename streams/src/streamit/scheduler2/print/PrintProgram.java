@@ -33,7 +33,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
 {
     public void printProgram(Iterator iter)
     {
-        ASSERT(iter.isPipeline());
+        assert iter.isPipeline() != null;
 
         File outputFile;
         FileOutputStream fileOutputStream;
@@ -216,7 +216,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
                 if (peeks || pops)
                 {
                     // cannot peek or pop but not do the other!
-                    ASSERT(peeks && pops);
+                    assert peeks && pops;
                     outputStream.writeBytes("Integer.TYPE, ");
                 }
                 else
@@ -315,7 +315,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
         {
             outputStream.writeBytes("  public void init ()\n  {\n");
 
-            ASSERT(sj.getSplitterNumWork() == 1);
+            assert sj.getSplitterNumWork() == 1;
 
             if (sj.getSplitPop(0) == 0)
                 outputStream.writeBytes("    setSplitter (NULL ());\n");
@@ -369,7 +369,7 @@ public class PrintProgram extends streamit.misc.AssertedClass
         {
             outputStream.writeBytes("  public void init ()\n  {\n");
 
-            ASSERT(fl.getSplitterNumWork() == 1);
+            assert fl.getSplitterNumWork() == 1;
 
             if (fl.getSplitPop(0) == 1)
                 outputStream.writeBytes("    setSplitter (DUPLICATE ());\n");

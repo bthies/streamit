@@ -138,11 +138,10 @@ public class Pipeline
 
         // make sure that I'm actually the lowest common ancestor of
         // these two nodes!
-        ASSERT(
-            latencyGraph.findLowestCommonAncestor(
-                portal.getUpstreamNode(),
-                portal.getDownstreamNode())
-                == this);
+        assert latencyGraph.findLowestCommonAncestor
+            (portal.getUpstreamNode(),
+             portal.getDownstreamNode())
+            == this;
 
         // also get the SDEP function for this portal
         SDEPData sdep = null;

@@ -40,7 +40,7 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
     {
         super(_feedbackLoop);
 
-        ASSERT(_feedbackLoop);
+        assert _feedbackLoop != null;
         feedbackLoop = _feedbackLoop;
 
         // create new objects for the body and the loop
@@ -205,10 +205,10 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
             joinFrac = joinFrac.multiply(multiplier);
 
             // make sure that all the fractions are integers now
-            ASSERT(bodyFrac.getDenominator().equals(BigInteger.ONE));
-            ASSERT(loopFrac.getDenominator().equals(BigInteger.ONE));
-            ASSERT(joinFrac.getDenominator().equals(BigInteger.ONE));
-            ASSERT(splitFrac.getDenominator().equals(BigInteger.ONE));
+            assert bodyFrac.getDenominator().equals(BigInteger.ONE);
+            assert loopFrac.getDenominator().equals(BigInteger.ONE);
+            assert joinFrac.getDenominator().equals(BigInteger.ONE);
+            assert splitFrac.getDenominator().equals(BigInteger.ONE);
 
             // and now actually set the appropriate multipliers on body and loop
             // and split and join:
@@ -219,10 +219,10 @@ abstract public class FeedbackLoop extends StreamWithSplitNJoin
 
             // make sure that both children, splitter and joiner will
             // execute a positive # of times
-            ASSERT(bodyNumExecs > 0);
-            ASSERT(loopNumExecs > 0);
-            ASSERT(joinNumRounds > 0);
-            ASSERT(splitNumRounds > 0);
+            assert bodyNumExecs > 0;
+            assert loopNumExecs > 0;
+            assert joinNumRounds > 0;
+            assert splitNumRounds > 0;
             
         }
 

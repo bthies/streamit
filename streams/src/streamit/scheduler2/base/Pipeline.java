@@ -37,7 +37,7 @@ abstract public class Pipeline extends Stream
     {
         super(_pipeline.getUnspecializedIter());
         
-        ASSERT(_pipeline);
+        assert _pipeline != null;
         pipeline = _pipeline;
 
         // fill up the children array
@@ -46,7 +46,7 @@ abstract public class Pipeline extends Stream
             nChildren = pipeline.getNumChildren();
 
             // a pipeline must have some children
-            ASSERT(nChildren > 0);
+            assert nChildren > 0;
 
             children = new StreamInterface[nChildren];
 
@@ -80,7 +80,7 @@ abstract public class Pipeline extends Stream
      */
     protected StreamInterface getChild(int nChild)
     {
-        ASSERT(nChild >= 0 && nChild < nChildren);
+        assert nChild >= 0 && nChild < nChildren;
         return children[nChild];
     }
 
@@ -94,7 +94,7 @@ abstract public class Pipeline extends Stream
     protected int getChildNumExecs(int nChild)
     {
         // make sure nChild is in range
-        ASSERT(nChild >= 0 && nChild < getNumChildren());
+        assert nChild >= 0 && nChild < getNumChildren();
 
         return childrenNumExecs[nChild].intValue();
     }
@@ -120,7 +120,7 @@ abstract public class Pipeline extends Stream
             for (nChild = 0; nChild < nChildren; nChild++)
             {
                 StreamInterface child = children[nChild];
-                ASSERT(child);
+                assert child != null;
 
                 childrenNumExecs[nChild] = outProduct;
                 
@@ -140,7 +140,7 @@ abstract public class Pipeline extends Stream
             for (nChild = nChildren - 1; nChild >= 0; nChild--)
             {
                 StreamInterface child = children[nChild];
-                ASSERT(child);
+                assert child != null;
 
                 // continue computing the number of executions this child needs
                 childrenNumExecs[nChild] =
@@ -172,17 +172,16 @@ abstract public class Pipeline extends Stream
             for (nChild = 0; nChild < nChildren; nChild++)
             {
                 StreamInterface child = children[nChild];
-                ASSERT(child);
-                ASSERT(
-                    childrenNumExecs[nChild].mod(gcd).equals(
-                        BigInteger.ZERO));
+                assert child != null;
+                assert childrenNumExecs[nChild].mod(gcd)
+                    .equals(BigInteger.ZERO);
 
                 childrenNumExecs[nChild] =
                     childrenNumExecs[nChild].divide(gcd);
 
                 // make sure that the child executes a positive
                 // number of times!
-                ASSERT(childrenNumExecs[nChild].signum() == 1);
+                assert childrenNumExecs[nChild].signum() == 1;
             }
         }
 
@@ -211,7 +210,7 @@ abstract public class Pipeline extends Stream
         for (int nChild = 0; nChild < nChildren; nChild++)
         {
             StreamInterface child = children[nChild];
-            ASSERT(child);
+            assert child != null;
             
             nodes += child.getNumNodes ();
         }
@@ -224,7 +223,7 @@ abstract public class Pipeline extends Stream
         for (int nChild = 0; nChild < nChildren; nChild++)
         {
             StreamInterface child = children[nChild];
-            ASSERT(child);
+            assert child;
             
             firings += child.getNumNodeFirings () * getChildNumExecs(nChild);
         }

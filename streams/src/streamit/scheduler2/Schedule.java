@@ -96,20 +96,20 @@ public class Schedule extends AssertedClass
     public int getNumPhases()
     {
         // make sure that I'm not a bottom schedule
-        ASSERT(subScheds != null);
+        assert subScheds != null;
         return subScheds.size();
     }
 
     /**
      * Get a subschedule of this schedule.   If this is the final
      * (lowest level - one that references a work function) schedule,
-     * this function will ASSERT.
+     * this function will assert.
      * @return subschedules of this schedule
      */
     public Schedule getSubSched(int nSched)
     {
-        ASSERT(subScheds != null);
-        ASSERT(nSched >= 0 && nSched < subScheds.size());
+        assert subScheds != null;
+        assert nSched >= 0 && nSched < subScheds.size();
         return (Schedule) ((Pair)subScheds.get(nSched)).getFirst();
     }
 
@@ -119,8 +119,8 @@ public class Schedule extends AssertedClass
      */
     public int getSubSchedNumExecs(int nSched)
     {
-        ASSERT(subScheds != null);
-        ASSERT(nSched >= 0 && nSched < subScheds.size());
+        assert subScheds != null;
+        assert nSched >= 0 && nSched < subScheds.size();
         return ((Integer) ((Pair)subScheds.get(nSched)).getSecond()).intValue();
     }
 
@@ -132,7 +132,7 @@ public class Schedule extends AssertedClass
     public void addSubSchedule(Schedule subSchedule)
     {
         // make sure this is not a bottom schedule
-        ASSERT(subScheds != null);
+        assert subScheds != null;
 
         subScheds.add(new Pair(subSchedule, new Integer(1)));
     }
@@ -146,7 +146,7 @@ public class Schedule extends AssertedClass
     public void addSubSchedule(Schedule subSchedule, int numExecs)
     {
         // make sure this is not a bottom schedule
-        ASSERT(subScheds != null);
+        assert subScheds != null;
 
         subScheds.add(new Pair(subSchedule, new Integer(numExecs)));
     }
@@ -154,12 +154,12 @@ public class Schedule extends AssertedClass
     /**
      * Returns the work function associated with a schedule.
      * If the schedule isn't a bottom-level schedule, this
-     * function will ASSERT.
+     * function will assert.
      * @return work function associated with schedule
      */
     public Object getWorkFunc()
     {
-        ASSERT(isBottomSchedule());
+        assert isBottomSchedule();
         return workFunc;
     }
 

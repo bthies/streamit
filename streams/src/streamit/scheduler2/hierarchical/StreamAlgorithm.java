@@ -159,7 +159,7 @@ public class StreamAlgorithm extends DestroyedClass
         StreamInterface child,
         int numStages)
     {
-        ASSERT(numStages > 0);
+        assert numStages > 0;
 
         // get the shift I know about already
         int shift = getPhaseShift(child);
@@ -176,13 +176,13 @@ public class StreamAlgorithm extends DestroyedClass
         StreamInterface child,
         int numPhases)
     {
-        ASSERT(numPhases > 0);
+        assert numPhases > 0;
 
         // get the shift I know about already
         int shift = getPhaseShift(child);
 
         // make sure that I've gotten out of the init stage!
-        ASSERT(shift >= child.getNumInitStages());
+        assert shift >= child.getNumInitStages();
 
         // store shift + 1
         childPhaseShift.put(child, new Integer(shift + numPhases));
@@ -241,7 +241,7 @@ public class StreamAlgorithm extends DestroyedClass
         int consumedPhases = getPhaseShift(child);
 
         // the init schedule must have consumed all of the init stages already!
-        ASSERT(consumedPhases >= child.getNumInitStages());
+        assert consumedPhases >= child.getNumInitStages();
 
         int realPhase = consumedPhases + nPhase - child.getNumInitStages();
         realPhase = realPhase % child.getNumSteadyPhases();

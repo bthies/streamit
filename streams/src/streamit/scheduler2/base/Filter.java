@@ -34,7 +34,7 @@ abstract public class Filter extends Stream
     {
         super (_filterIter.getUnspecializedIter());
         
-        ASSERT(_filterIter);
+        assert _filterIter != null;
         filterIter = _filterIter;
 
         computeSteadyState();

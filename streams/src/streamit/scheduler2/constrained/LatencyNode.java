@@ -347,7 +347,7 @@ public class LatencyNode extends streamit.misc.Misc
         }
         else
         {
-            ASSERT(dependency.getDst() == this);
+            assert dependency.getDst() == this;
             dependsOn.pushBack(dependency);
         }
     }

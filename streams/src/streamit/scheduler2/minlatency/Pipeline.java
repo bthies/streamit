@@ -185,7 +185,7 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                 * (float)lastStreamMaxExecPerPhase
                 / (float)childrenExecs[getNumChildren()
                 - 1]);
-        ASSERT(firstStreamMaxExecPerPhase <= childrenExecs[0]);
+        assert firstStreamMaxExecPerPhase <= childrenExecs[0];
 
         // execute the children however many times is necessary
         // keep track of how many executions are "requested" and
@@ -224,7 +224,7 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                     {
                         nChild--;
                     }
-                    ASSERT (nChild >= 0);
+                    assert nChild >= 0;
                     
                     lastStreamMaxExecPerPhase = childrenExecs [nChild];
                 }
@@ -458,7 +458,7 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                     dataInBuffers,
                     lastChildNumExecPerPhase);
 
-            ASSERT(extraExecs == 0);
+            assert extraExecs == 0;
         }
     }
 }

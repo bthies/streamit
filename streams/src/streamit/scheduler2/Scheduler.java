@@ -74,7 +74,7 @@ abstract public class Scheduler extends AssertedClass
 
     public Schedule getOptimizedInitSchedule()
     {
-        ASSERT(initSchedule != null && steadySchedule != null);
+        assert initSchedule != null && steadySchedule != null;
 
         optimizeSchedule();
         return optimizedInitSchedule;
@@ -82,7 +82,7 @@ abstract public class Scheduler extends AssertedClass
 
     public Schedule getOptimizedSteadySchedule()
     {
-        ASSERT(initSchedule != null && steadySchedule != null);
+        assert initSchedule != null && steadySchedule != null;
 
         optimizeSchedule();
         return optimizedSteadySchedule;

@@ -86,7 +86,7 @@ public class Pipeline extends streamit.scheduler2.hierarchical.Pipeline
                     // make sure that consumedByPrev is 0 (otherwise
                     // I cannot execute the next child, 'cause it will
                     // never get any input)
-                    ASSERT(neededByNext == 0);
+                    assert neededByNext == 0;
 
                     // there will be no cycles executed for initialization
                     // of children downstream

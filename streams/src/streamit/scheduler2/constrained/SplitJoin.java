@@ -200,9 +200,9 @@ public class SplitJoin
 
     public void doneSteadyState(LatencyNode node)
     {
-        ASSERT(node == latencySplitter || node == latencyJoiner);
+        assert node == latencySplitter || node == latencyJoiner;
         numSteadyStateRestrictions--;
-        ASSERT(numSteadyStateRestrictions >= 0);
+        assert numSteadyStateRestrictions >= 0;
     }
 
     public void initRestrictionsCompleted(P2PPortal portal)
@@ -322,7 +322,7 @@ public class SplitJoin
                     maxExecs--;
                     int executedTimes =
                         restrictions.execute(latencySplitter, 1);
-                    ASSERT(executedTimes == 1);
+                    assert executedTimes == 1;
 
                     nDataAvailable -= flow.getPopWeight();
                     for (int nChild = 0;
@@ -386,7 +386,7 @@ public class SplitJoin
                 maxExecs--;
                 int executedTimes =
                     restrictions.execute(latencyJoiner, 1);
-                ASSERT(executedTimes == 1);
+                assert executedTimes == 1;
 
             }
         }

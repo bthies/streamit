@@ -68,7 +68,7 @@ public interface StreamInterfaceWithSnJ extends StreamInterface
             // if this function throws an out-of-bounds exception, the
             // problem is with the nChild being too large (already 
             // checking for negative values below)
-            ASSERT(nChild >= 0);
+            assert nChild >= 0;
 
             return pushWeights[nChild];
         }
@@ -109,7 +109,7 @@ public interface StreamInterfaceWithSnJ extends StreamInterface
             // if this function throws an out-of-bounds exception, the
             // problem is with the nChild being too large (already 
             // checking for negative values below)
-            ASSERT(nChild >= 0);
+            assert nChild >= 0;
 
             return popWeights[nChild];
         }

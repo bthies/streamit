@@ -34,7 +34,7 @@ abstract class Stream extends DestroyedClass implements StreamInterface
     
     protected Stream (Iterator _streamIter)
     {
-        ASSERT (_streamIter != null);
+        assert _streamIter != null;
         streamIter = _streamIter;
     }
     

@@ -72,7 +72,7 @@ public class FeedbackLoop
     public PhasingSchedule getSplitPhase(int nPhase)
     {
         // single appearance schedule has only one split phase
-        ASSERT(nPhase == 0);
+        assert nPhase == 0;
         return splitSched;
     }
 
@@ -92,7 +92,7 @@ public class FeedbackLoop
     public PhasingSchedule getJoinPhase(int nPhase)
     {
         // single appearance schedule has only one join phase
-        ASSERT(nPhase == 0);
+        assert nPhase == 0;
         return joinSched;
     }
 
@@ -195,8 +195,8 @@ public class FeedbackLoop
             int nInitRunBody;
             int nInitRunJoin;
 
-            ASSERT(body);
-            ASSERT(feedback);
+            assert body != null;
+            assert feedback != null;
 
             // figure out how many times the split needs to run:
             // and initDataProduction for the entire loop
@@ -442,9 +442,9 @@ public class FeedbackLoop
 
         // make sure that after execution of this schedule, the size of buffers
         // left over is SAME as when we started!
-        ASSERT(bodyBuffer == startBodyBuffer);
-        ASSERT(splitBuffer == startSplitBuffer);
-        ASSERT(loopBuffer == startLoopBuffer);
-        ASSERT(joinBuffer == startJoinBuffer);
+        assert bodyBuffer == startBodyBuffer;
+        assert splitBuffer == startSplitBuffer;
+        assert loopBuffer == startLoopBuffer;
+        assert joinBuffer == startJoinBuffer;
     }
 }

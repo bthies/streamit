@@ -42,7 +42,7 @@ public interface SplitJoinIter extends IteratorBase, SplitterNJoinerIter
     /**
      * Returns the n-th child of the SplitJoin.
      * If the SplitJoin doesn't have enough children (n is too large),
-     * this function ASSERTS and throws a RuntimeException.
+     * this function asserts and throws an AssertionError.
      * @return n-th child of the SplitJoin
      */
     public Iterator getChild(int nChild);

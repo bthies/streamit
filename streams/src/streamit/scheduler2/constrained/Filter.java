@@ -172,7 +172,7 @@ public class Filter
 
             int executed =
                 restrictions.execute(getLatencyNode(), nExecutions);
-            ASSERT(executed == nExecutions);
+            assert executed == nExecutions;
         }
         
         return phase;
@@ -217,7 +217,7 @@ public class Filter
 
     public void doneSteadyState(LatencyNode node)
     {
-        ASSERT(node == getLatencyNode());
+        assert node == getLatencyNode();
         isFilterDoneSteadyState = true;
     }
 

@@ -121,7 +121,7 @@ abstract public class SplitJoin
 
     public PhasingSchedule getSplitPhase(int nPhase)
     {
-        ASSERT(nPhase >= 0 && nPhase < getNumSplitPhases());
+        assert nPhase >= 0 && nPhase < getNumSplitPhases();
         return splitPhases[nPhase];
     }
 
@@ -132,7 +132,7 @@ abstract public class SplitJoin
 
     public PhasingSchedule getJoinPhase(int nPhase)
     {
-        ASSERT(nPhase >= 0 && nPhase < getNumJoinPhases());
+        assert nPhase >= 0 && nPhase < getNumJoinPhases();
         return joinPhases[nPhase];
     }
 

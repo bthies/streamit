@@ -420,12 +420,12 @@ public class ScheduleBuffers extends DestroyedClass
         void popData(int numData)
         {
             bufferCurrent -= numData;
-            ASSERT(bufferCurrent >= 0);
+            assert bufferCurrent >= 0;
         }
 
         void peekData(int numData)
         {
-            ASSERT(bufferCurrent >= numData);
+            assert bufferCurrent >= numData;
         }
 
         public int getBufferSize()
@@ -441,14 +441,14 @@ public class ScheduleBuffers extends DestroyedClass
 
         void pushData(int numData)
         {
-            ASSERT(numData >= 0);
+            assert numData >= 0;
             bufferCurrent += numData;
             bufferMax = MAX(bufferMax, bufferCurrent);
         }
 
         void popData(int numData)
         {
-            ASSERT(numData >= 0);
+            assert numData >= 0;
             bufferCurrent -= numData;
         }
 
@@ -492,7 +492,7 @@ public class ScheduleBuffers extends DestroyedClass
     void combineBufferExecutions(Map left, Map right)
     {
         Set buffers = (Set) (right.get(null));
-        ASSERT(buffers != null);
+        assert buffers != null;
 
         java.util.Iterator iter = buffers.iterator();
         while (iter.hasNext())
@@ -540,7 +540,7 @@ public class ScheduleBuffers extends DestroyedClass
             deltas = new HashMap();
             Set buffers = new HashSet();
             deltas.put(null, buffers);
-            ASSERT(deltas.get(null) == buffers);
+            assert deltas.get(null) == buffers;
 
             // put the original code here
             {
@@ -588,9 +588,8 @@ public class ScheduleBuffers extends DestroyedClass
                         else
                         {
                             // init function
-                            ASSERT(
-                                filter.getInitFunctionStage(numWork)
-                                    == workFunc);
+                            assert filter.getInitFunctionStage(numWork)
+                                == workFunc;
 
                             peekAmount = filter.getInitPeekStage(numWork);
                             popAmount = filter.getInitPopStage(numWork);
@@ -894,7 +893,7 @@ public class ScheduleBuffers extends DestroyedClass
                     }
                     else
                         ERROR("stream variable is not a known stream type!");
-                    ASSERT(deltas.get(null) != null);
+                    assert deltas.get(null) != null;
                 }
             }
 
@@ -912,15 +911,15 @@ public class ScheduleBuffers extends DestroyedClass
             {
                 deltasNumExecs = new HashMap();
                 deltasNumExecs.put(null, new HashSet());
-                ASSERT(deltasNumExecs.get(null) != null);
+                assert deltasNumExecs.get(null) != null;
 
                 for (int n = 0; n < numExecs; n++)
                 {
                     combineBufferExecutions(deltasNumExecs, deltas);
                 }
 
-                ASSERT(deltas.get(null) != null);
-                ASSERT(deltasNumExecs.get(null) != null);
+                assert deltas.get(null) != null;
+                assert deltasNumExecs.get(null) != null;
 
                 phase2deltaMap.put(schedNumExecs, deltasNumExecs);
             }
@@ -928,7 +927,7 @@ public class ScheduleBuffers extends DestroyedClass
             deltas = deltasNumExecs;
         }
 
-        ASSERT(deltas != null);
+        assert deltas != null;
 
         return deltas;
 

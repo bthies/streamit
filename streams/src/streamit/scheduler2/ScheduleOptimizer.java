@@ -493,7 +493,7 @@ public class ScheduleOptimizer extends AssertedClass
                 phaseSymbolicSched =
                     (Vector)symbolicIdx2symbolic.get(newPhaseSymbolicIdx);
 
-                ASSERT(phaseSymbolicSched.size() != 1);
+                assert phaseSymbolicSched.size() != 1;
 
                 for (int j = 0; j < phaseSymbolicSched.size(); j++)
                 {

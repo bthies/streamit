@@ -47,10 +47,10 @@ public class LatencyGraph extends streamit.misc.AssertedClass
     DLList getAncestorList(StreamInterface stream)
     {
         OMapIterator listIter = ancestorLists.find(stream);
-        ASSERT(!listIter.equals(ancestorLists.end()));
+        assert !listIter.equals(ancestorLists.end());
 
         DLList ancestors = (DLList)listIter.getData();
-        ASSERT(ancestors != null);
+        assert ancestors != null;
 
         return ancestors;
     }
@@ -69,7 +69,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         DLListIterator lastDstIter = dstAncestors.end();
 
         StreamInterface lowestAncestor = (StreamInterface)srcIter.get();
-        ASSERT((StreamInterface)dstIter.get() == lowestAncestor);
+        assert (StreamInterface)dstIter.get() == lowestAncestor;
 
         for (;
             (!srcIter.equals(lastSrcIter))
@@ -218,12 +218,12 @@ public class LatencyGraph extends streamit.misc.AssertedClass
             }
 
             // make sure that there are SOME edges between the two nodes
-            // if this ASSERT fails, then either the srcIsUpstream is reversed
+            // if this assert fails, then either the srcIsUpstream is reversed
             // or there is no path between upstreamNode and downstreamNode
             // within their lowest common ancestor.
             // if you don't understand this, or think it's wrong, ask karczma 
             // (03/07/15)
-            //ASSERT(!edgesToTraverse.empty());
+            //assert !edgesToTraverse.empty();
             if (edgesToTraverse.empty())
             {
                 throw new NoPathException();
@@ -312,9 +312,8 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                     {
                         OMapIterator upstreamNode2srcIter =
                             nodes2latencyEdges.find(edgeSrc);
-                        ASSERT(
-                            !upstreamNode2srcIter.equals(
-                                lastNodes2latencyEdgesIter));
+                        assert !upstreamNode2srcIter.equals
+                            (lastNodes2latencyEdgesIter);
 
                         newEdge =
                             new LatencyEdge(
@@ -354,7 +353,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                     nodes2numEdges.find(edge.getDst());
                 int nodeNumEdges =
                     ((Integer)nodeNumEdgesIter.getData()).intValue();
-                ASSERT(nodeNumEdges > 0);
+                assert nodeNumEdges > 0;
 
                 // decrease the number of edges that need to lead to this node
                 // by one
@@ -382,7 +381,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
         boolean visitNodes,
         boolean visitEdges)
     {
-        ASSERT(startNode);
+        assert startNode != null;
         DLList nodesToExplore = new DLList();
         nodesToExplore.pushBack(startNode);
         OSet nodesVisited = new OSet();
@@ -408,7 +407,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 for (; !edgeIter.equals(lastEdgeIter); edgeIter.next())
                 {
                     LatencyEdge edge = (LatencyEdge)edgeIter.get();
-                    ASSERT(edge.getDst() == node);
+                    assert edge.getDst() == node;
 
                     LatencyNode upstreamNode = edge.getSrc();
 
@@ -447,7 +446,7 @@ public class LatencyGraph extends streamit.misc.AssertedClass
                 for (; !edgeIter.equals(lastEdgeIter); edgeIter.next())
                 {
                     LatencyEdge edge = (LatencyEdge)edgeIter.get();
-                    ASSERT(edge.getSrc() == node);
+                    assert edge.getSrc() == node;
 
                     LatencyNode downstreamNode = edge.getDst();
 

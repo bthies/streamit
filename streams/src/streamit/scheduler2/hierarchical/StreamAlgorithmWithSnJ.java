@@ -49,7 +49,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
      */
     public void advanceSplitSchedule(int numPhases)
     {
-        ASSERT(numPhases > 0);
+        assert numPhases > 0;
         nSplitPhase += numPhases;
     }
 
@@ -58,7 +58,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
      */
     public void advanceJoinSchedule(int numPhases)
     {
-        ASSERT(numPhases > 0);
+        assert numPhases > 0;
         nJoinPhase += numPhases;
     }
     
@@ -69,7 +69,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
      */
     public PhasingSchedule getSplitSteadyPhase(int nPhase)
     {
-        ASSERT(nPhase >= 0);
+        assert nPhase >= 0;
         int phase = (nSplitPhase + nPhase) % stream.getNumSplitPhases();
         return stream.getSplitPhase(phase);
     }
@@ -81,7 +81,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
      */
     public PhasingSchedule getJoinSteadyPhase(int nPhase)
     {
-        ASSERT(nPhase >= 0);
+        assert nPhase >= 0;
         int phase = (nJoinPhase + nPhase) % stream.getNumJoinPhases();
         return stream.getJoinPhase(phase);
     }
@@ -102,7 +102,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         // steady phases - don't even try to create a phase for it!
         if (numSteadyPhases == 0) 
         {
-            ASSERT (nPhases == 0);
+            assert nPhases == 0;
             return phase;
         } 
         
@@ -178,7 +178,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
      */
     public SplitFlow getSplitSteadyPhaseFlow (int nPhase)
     {
-        ASSERT (nPhase >=0);
+        assert nPhase >=0;
         int phase = (nSplitPhase + nPhase) % stream.getNumSplitPhases();
         return getSplitFlow(phase);
     }
@@ -189,7 +189,7 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
      */
     public JoinFlow getJoinSteadyPhaseFlow (int nPhase)
     {
-        ASSERT (nPhase >=0);
+        assert nPhase >=0;
         int phase = (nJoinPhase + nPhase) % stream.getNumJoinPhases();
         return getJoinFlow(phase);
     }

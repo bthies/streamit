@@ -16,11 +16,15 @@ public class Flattener {
 
     /**
      * Flattens <str> into a low IR representation, given that <interfaces>
-     * are all the top-level interfaces declared in the program.
+     * are all the top-level interfaces declared in the program and 
+     * <interfaceTables> represents the mapping from interfaces to methods
+     * that implement a given interface in a given class.
      */
     public static JClassDeclaration flatten(SIRStream str,
 					    JInterfaceDeclaration[] 
-					    interfaces) {
+					    interfaces,
+					    SIRInterfaceTable[]
+					    interfaceTables) {
 	// DEBUGGING PRINTING
 	SIRPrinter printer1 = new SIRPrinter();
 	str.accept(printer1);
@@ -38,7 +42,9 @@ public class Flattener {
 	// name the components
 	Namer.assignNames(str);
 	// make single structure
-	JClassDeclaration flatClass = Structurer.structure(str, interfaces);
+	JClassDeclaration flatClass = Structurer.structure(str, 
+							   interfaces,
+							   interfaceTables);
 	// build schedule as set of higher-level work functions
 	Schedule schedule = SIRScheduler.schedule(str, flatClass);
 	// add LIR hooks to init functions

@@ -62,6 +62,30 @@ public class LoweringConstants {
     private static int workFunctionCounter = 1;
 
     /**
+     * Counts the interface table fields that have been assigned;
+     */
+    private static int interfaceTableCounter = 1;
+
+    /**
+     * Given the <initializer> for a field that corresponds to an
+     * interface table, returns a variable definition for that field.
+     */
+    public static JVariableDefinition 
+	getInterfaceTableVariable(JExpression initializer) {
+	return new JVariableDefinition(/* tokref */ null,
+				       /* modifiers - emulate a constant */
+				       at.dms.kjc.Constants.ACC_PUBLIC |
+				       at.dms.kjc.Constants.ACC_STATIC | 
+				       at.dms.kjc.Constants.ACC_FINAL,
+				       /* type--doesn't matter, so try void */ 
+				       CStdType.Void,
+				       /* ident - number them */
+				       "interfaceTable" + 
+				       interfaceTableCounter++, 
+				       /* init exp */ initializer);
+    }
+
+    /**
      * Returns a field access to <child>, as for use within an init
      * function referencing a child.  
      */

@@ -36,22 +36,35 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
      * stream structure within <toplevel> so that each function within
      * a stream takes its state as the first parameter, and references
      * fields via the state.  Finally, puts interface declarations
-     * <inners> in toplevel structure.
+     * <inners> and interface tables <tables> in toplevel structure.
      */
     public static JClassDeclaration structure(SIROperator toplevel,
-					      JInterfaceDeclaration[] inners) {
+					      JInterfaceDeclaration[] inners,
+					      SIRInterfaceTable[] tables) {
 	Structurer structurer = new Structurer();
 	toplevel.accept(structurer);
-	return structurer.toFlatClass(inners);
+	return structurer.toFlatClass(inners, tables);
     }
 
     /**
      * Returns a flattened class representing the stream structure
      * that was traversed.
      */
-    private JClassDeclaration toFlatClass(JInterfaceDeclaration[] inners) {
+    private JClassDeclaration toFlatClass(JInterfaceDeclaration[] inners,
+					  SIRInterfaceTable[] tables) {
 	// add <inners> to <structs>
 	structs.addAll(Arrays.asList(inners));
+	// create a field declaration that is initialized to each interface
+	// table in <tables>
+	JFieldDeclaration[] fields = new JFieldDeclaration[tables.length];
+	for (int i=0; i<fields.length; i++) {
+	    fields[i] 
+		= new JFieldDeclaration(/* tokref */ null,
+					/* variable */ LoweringConstants.
+					getInterfaceTableVariable(tables[i]),
+					/* javadoc comment */ null,
+					/* comments */ null);
+	}
 	// construct resulting class
 	return new JClassDeclaration(/* TokenReference where */
 				     null,
@@ -64,7 +77,7 @@ public class Structurer extends at.dms.util.Utils implements StreamVisitor {
 				    /* CClassType[] interfaces */
 				     CClassType.EMPTY,
 				     /* JFieldDeclaration[] fields */
-				     JFieldDeclaration.EMPTY,
+				     fields,
 				     /* JMethodDeclaration[] methods */
 				     (JMethodDeclaration[])
 				     flatMethods.toArray(JMethodDeclaration.

@@ -16,7 +16,7 @@ import at.dms.util.*;
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;,
  *          David Ziegler &lt;dziegler@cag.lcs.mit.edu&gt;
- * @version $Id: ToKopi.java,v 1.2 2003-07-02 21:44:37 dmaze Exp $
+ * @version $Id: ToKopi.java,v 1.3 2003-07-09 20:08:55 dmaze Exp $
  */
 public class ToKopi
 {
@@ -67,14 +67,16 @@ public class ToKopi
          * "this", which doesn't exist. */
         TempVarGen varGen = new TempVarGen();
         prog = (Program)prog.accept(new MakeBodiesBlocks());
+        prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new DisambiguateUnaries(varGen));
         prog = (Program)prog.accept(new NoRefTypes());
         prog = (Program)prog.accept(new RenameBitVars());
         prog = (Program)prog.accept(new FindFreeVariables());
         prog = (Program)prog.accept(new NoticePhasedFilters());
         prog = (Program)prog.accept(new DoComplexProp(varGen));
+        prog = (Program)prog.accept(new SeparateInitializers());
         prog = (Program)prog.accept(new TranslateEnqueue());
-        prog = (Program)prog.accept(new InsertInitConstructors());
+        prog = (Program)prog.accept(new InsertInitConstructors(varGen));
         prog = (Program)prog.accept(new MoveStreamParameters());
         prog = (Program)prog.accept(new NameAnonymousFunctions());
         prog = (Program)prog.accept(new TrimDumbDeadCode());

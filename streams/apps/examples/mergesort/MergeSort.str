@@ -59,10 +59,10 @@ int->int pipeline Sorter (int N) {
     // if we have more than two items, then sort in parallel
     if (N>2) {
 	add splitjoin {
-	    split RoundRobin();
+	    split roundrobin();
 	    add Sorter(N/2);
 	    add Sorter(N/2);
-	    join RoundRobin();
+	    join roundrobin();
         }
         add Merger(N);
     }
@@ -72,7 +72,7 @@ int->int pipeline Sorter (int N) {
  * Repeatedly pushes a sequence of <N> items in reverse order.
  */
 void->int filter SortInput (int N) {
-    work push 1 {
+    work push N {
         for (int i=0; i<N; i++) {
 	    push(N-i);
         }
@@ -81,6 +81,6 @@ void->int filter SortInput (int N) {
 
 int->void filter IntPrinter {
     work pop 1 {
-	System.out.println(pop());
+	print pop();
     }
 }

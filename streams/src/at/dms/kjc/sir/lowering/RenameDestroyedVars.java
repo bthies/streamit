@@ -10,6 +10,15 @@ import at.dms.compiler.JavadocComment;
 import java.lang.Math;
 import at.dms.compiler.TokenReference;
 
+// Given a filter and a set of variables created by ArrayDestroyer rename
+// and reduce number of the variables by analyzing live ranges.
+
+// If variable is first assigned in a nest of ForStatements, assume its
+// live range starts at the beginning of the outmost ForStatement
+
+// If variable is last used in a nest of ForStatements, assume its
+// live range ends at the end of the outmost ForStatement
+
 
 public class RenameDestroyedVars extends SLIRReplacingVisitor {
 
@@ -25,11 +34,24 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
     private boolean RENAME = false;
     private boolean assign = false;
 
-    private HashMap first_assign; // first assign expression of a destroyed var
-    private HashMap last_usage;   // last usage expresion of a destroyed var
+    // first assign expression of a destroyed variable 
+    // JLocalVariable -> JLocalVariableExpression or JForStatement
+    private HashMap first_assign; 
+    
+    // last usage expresion of a destroyed varibale
+    // JLocalVariable -> JLocalVariableExpression or JForStatement
+    private HashMap last_usage;   
+
+    // JForStatement -> LinkedList of JLocalVariables
+    private HashMap first_assign_for_loop;
+
+    // JForStatement -> LinkedList of JLocalVariables
+    private HashMap last_usage_for_loop;
     
     private HashMap var_alias; // assigned alias of variable Var -> New var
     private HashMap available_names; // type -> Stack (stack of available names for a type)
+
+    private LinkedList for_stmts; 
 
     public static void renameDestroyedVars(SIRFilter filter, Set destroyed_vars) {
 
@@ -38,8 +60,11 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 	JMethodDeclaration methods[] = filter.getMethods();
 	for (int i = 0; i < methods.length; i++) {
 
+	    rename.for_stmts = new LinkedList();
 	    rename.first_assign = new HashMap();
 	    rename.last_usage = new HashMap();
+	    rename.first_assign_for_loop = new HashMap();
+	    rename.last_usage_for_loop = new HashMap();
 
 	    rename.RENAME = false;
 	    methods[i].accept(rename);
@@ -51,6 +76,10 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 	    rename.available_names = new HashMap();
 	    rename.var_alias = new HashMap();
 
+	    // initalize first_assign_for_loop and
+	    // last_usage_for_loop hash maps.
+	    rename.init_for_hash_maps();
+	    
 	    methods[i].accept(rename);
 
 	    Set types = rename.max_live_vars.keySet();
@@ -74,6 +103,82 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 	    }
 	}
     }
+
+
+    // initalize first_assign_for_loop and
+    // last_usage_for_loop hash maps.
+
+    private void init_for_hash_maps() {
+
+	    Set keySet = first_assign.keySet();
+	    Iterator iter = keySet.iterator();
+	    while (iter.hasNext()) {
+		JLocalVariable var = (JLocalVariable)iter.next();
+		Object obj = first_assign.get(var);
+
+		if (obj instanceof JForStatement) {
+		    JForStatement for_stmt = (JForStatement)obj;
+		    if (!first_assign_for_loop.containsKey(for_stmt)) {
+			first_assign_for_loop.put(for_stmt, new LinkedList());
+		    }
+		    LinkedList list = (LinkedList)first_assign_for_loop.get(for_stmt);
+		    list.addLast(var);
+		}
+	    }
+	    
+	    keySet = last_usage.keySet();
+	    iter = keySet.iterator();
+	    while (iter.hasNext()) {
+		JLocalVariable var = (JLocalVariable)iter.next();
+		Object obj = last_usage.get(var);
+
+		if (obj instanceof JForStatement) {
+		    JForStatement for_stmt = (JForStatement)obj;
+		    if (!last_usage_for_loop.containsKey(for_stmt)) {
+			last_usage_for_loop.put(for_stmt, new LinkedList());
+		    }
+		    LinkedList list = (LinkedList)last_usage_for_loop.get(for_stmt);
+		    list.addLast(var);
+		}
+	    }
+    }
+
+    public Object visitForStatement(JForStatement self,
+				    JStatement init,
+				    JExpression cond,
+				    JStatement incr,
+				    JStatement body) {
+	Object result;
+	for_stmts.addLast(self); // add for loop to the stack of for statements
+
+	if (RENAME) {
+	    if (first_assign_for_loop.containsKey(self)) {
+		LinkedList list = (LinkedList)first_assign_for_loop.get(self);
+		ListIterator li = list.listIterator();
+		while (li.hasNext()) {
+		    JLocalVariable var = (JLocalVariable)li.next();
+		    liveRangeStart(var);
+		}
+	    }
+	}
+
+	result = super.visitForStatement(self,init,cond,incr,body);
+	assert (for_stmts.removeLast() == self); // make sure we remove self from stack
+
+	if (RENAME) {
+	    if (last_usage_for_loop.containsKey(self)) {
+		LinkedList list = (LinkedList)last_usage_for_loop.get(self);
+		ListIterator li = list.listIterator();
+		while (li.hasNext()) {
+		    JLocalVariable var = (JLocalVariable)li.next();
+		    liveRangeEnd(var);
+		}
+	    }
+	}
+
+	return result;
+    }
+
 
     public Object visitAssignmentExpression(JAssignmentExpression self,
 					    JExpression left,
@@ -143,76 +248,104 @@ public class RenameDestroyedVars extends SLIRReplacingVisitor {
 		if (assign) {
 		    //System.out.println("destroyed variable: "+ident+" assigned to!");
 		    if (!first_assign.containsKey(var)) {
-			first_assign.put(var,self);
+
+			if (for_stmts.size() == 0) {
+			    first_assign.put(var,self);
+			} else {
+
+			    //System.out.println("Destroyed variable "+var.getIdent()+" first assigned in a for loop!");
+			    first_assign.put(var,for_stmts.getFirst());
+			}
 		    }
 		} else {
 		    //System.out.println("destroyed variable: "+ident+" used.");
-		    last_usage.put(var,self);
+
+		    if (for_stmts.size() == 0) {
+			last_usage.put(var,self);
+		    } else {
+
+			//System.out.println("Destroyed variable "+var.getIdent()+" used in a for loop!");
+			last_usage.put(var,for_stmts.getFirst());
+		    }
 		}
 
 	    } else {
 
 		// rename variables and find max number of live variables of each type
 
-		CType type = self.getVariable().getType();
-
 		Object o1 = first_assign.get(self.getVariable());
 		Object o2 = last_usage.get(self.getVariable());
 
 		if (self == o1) {
 
-		    //System.out.println("live_vars++");
-
-		    JVariableDefinition alias;
-
-		    if (!live_vars.containsKey(type)) live_vars.put(type, new Integer(0));
-		    if (!max_live_vars.containsKey(type)) max_live_vars.put(type, new Integer(0));
-		    if (!available_names.containsKey(type)) available_names.put(type, new Stack());
-
-		    int live = ((Integer)live_vars.get(type)).intValue() + 1;
-		    live_vars.put(type, new Integer(live));
-
-		    if (live > ((Integer)max_live_vars.get(type)).intValue()) {
-			max_live_vars.put(type, new Integer(live));
-			alias = new JVariableDefinition(null, 0, type, 
-				     "__destroyed_"+type.toString()+"_"+live, null);
-		    } else {
-			Stack alias_stack = (Stack)available_names.get(type);
-			assert (!alias_stack.empty());
-			alias = (JVariableDefinition)alias_stack.pop();
-		    }
-
-		    var_alias.put(self.getVariable(), alias);
+		    liveRangeStart(var);
 
 		    if (o2 == null) {
 			// variable is never used so we can reuse its alias
-			Stack alias_stack = (Stack)available_names.get(type);
-			alias_stack.push(alias);
+			liveRangeEnd(var);
 		    }
 		}
 
 		if (self == o2) {
-		    //System.out.println("live_vars--");
-
-		    assert (live_vars.containsKey(type));
-		    int live = ((Integer)live_vars.get(type)).intValue() - 1;
-		    
-		    assert (live >= 0);
-		    live_vars.put(type, new Integer(live));
-
-		    Stack alias_stack = (Stack)available_names.get(type);
-		    alias_stack.push(var_alias.get(self.getVariable()));
+		    liveRangeEnd(var);
 		}
-
 
 		JVariableDefinition defn = (JVariableDefinition)var_alias.get(self.getVariable());
 		return new JLocalVariableExpression(null, defn);
-
 	    }
 	}
 
 	return self;
     }
+
+    private void liveRangeStart(JLocalVariable var) {
+	
+	CType type = var.getType();
+
+	// if we see the type first time create objects
+	if (!live_vars.containsKey(type)) live_vars.put(type, new Integer(0));
+	if (!max_live_vars.containsKey(type)) max_live_vars.put(type, new Integer(0));
+	if (!available_names.containsKey(type)) available_names.put(type, new Stack());
+
+	JVariableDefinition alias;
+
+	// increase number of live variables
+	int live = ((Integer)live_vars.get(type)).intValue() + 1;
+	live_vars.put(type, new Integer(live));
+
+	if (live > ((Integer)max_live_vars.get(type)).intValue()) {
+	
+	    // if this is biggest number of live variables we have 
+	    // seen so far then create a new variable
+	    max_live_vars.put(type, new Integer(live));
+	    alias = new JVariableDefinition(null, 0, type, 
+					    "__destroyed_"+type.toString()+"_"+live, null);
+	} else {
+
+	    // get a free variable from the available variable stack
+	    Stack alias_stack = (Stack)available_names.get(type);
+	    assert (!alias_stack.empty());
+	    alias = (JVariableDefinition)alias_stack.pop();
+	}
+
+	// save the alias of the variable
+	var_alias.put(var, alias);
+    }
+
+    private void liveRangeEnd(JLocalVariable var) {
+
+	CType type = var.getType();
+	
+	assert (live_vars.containsKey(type));
+	int live = ((Integer)live_vars.get(type)).intValue() - 1;
+	
+	assert (live >= 0);
+	live_vars.put(type, new Integer(live));
+	
+	Stack alias_stack = (Stack)available_names.get(type);
+	alias_stack.push(var_alias.get(var));	
+    }
 }
+
 
 

@@ -1,13 +1,13 @@
-void->void pipeline main_single_position
+void->void pipeline beamformer
 {
-    int   num_mics = 15;
-    bool  hamming  = false;
-    float sound_speed   = 342;
-    float sampling_rate = 1600;
-
-    float mic_locations[num_mics][3];
-    float source_location[3];
-
+    int     num_mics = 15;
+    boolean hamming  = false;
+    float   sound_speed   = 342;
+    float   sampling_rate = 1600;
+    
+    float[num_mics][3] mic_locations;
+    float[3] source_location;
+    
     for (int i = 0; i < num_mics; i++) {
 	  mic_locations[i][0] = 1.5;
 	  mic_locations[i][1] = 2.79 + (i * 0.03);
@@ -16,29 +16,29 @@ void->void pipeline main_single_position
     source_location[0] = 1.5;
     source_location[0] = 3.0;
     source_location[0] = 0.0;
-
+    
     add FileReader<float>("beamformer-input.txt");
     add calculate_single_position(num_mics, hamming, sound_speed, sampling_rate, 
 					    mic_locations, source_location);
-
+    
 }
 
 
-float->void pipeline calculate_single_position(int num_mics, bool hamming,
+float->void pipeline calculate_single_position(int num_mics, boolean hamming,
 							     float sound_speed, float sampling_rate,
-							     float mic_locations[num_mics][3],
-							     float source_location[3])
+							     float[num_mics][3] mic_locations,
+							     float[3] source_location)
 {
     int   num_beams = 1;
-
-    float delays[num_beams][num_mics];
-    float distances[num_mics];
-    float weights[num_mics];
+    
+    float[num_beams][num_mics] delays;
+    float[num_mics] distances;
+    float[num_mics] weights;
     
     float min_delay = 999e999;
     float max_delay = 0;
     int   index     = 0;
-	  
+    
     for (int i = 0; i < num_mics; i++) {
 	  distances[i] = sqrt((mic_locations[i][0] - source_location[0]) *
 				    (mic_locations[i][0] - source_location[0]) + 
@@ -46,7 +46,7 @@ float->void pipeline calculate_single_position(int num_mics, bool hamming,
 				    (mic_locations[i][1] - source_location[1]) + 
 				    (mic_locations[i][2] - source_location[2]) * 
 				    (mic_locations[i][2] - source_location[2]));
-
+	  
 	  delays[0][i] = (distances[i] / sound_speed) * sampling_rate;
 	  
 	  if (delays[0][i] < min_delay) {
@@ -76,13 +76,13 @@ float->void pipeline calculate_single_position(int num_mics, bool hamming,
     else {
 	  int half = num_mics / 4;
 	  for (int z = 1; z >= -1; z -= 2) {
-		for (y = -half; y <= half; y++) {
+		for (int y = -half; y <= half; y++) {
 		    weights[index++] = 0.54 + 0.46 * cos(pi * y / half);
 		}
 	  }
     }
 
-    add process_signal(num_mics, num_beams, max_delay, delays, weights);
+    add process_signal(num_mics, num_beams, (int)max_delay, delays, weights);
 
     add float->void filter {
 	  float time_index, time_index_increment;
@@ -102,13 +102,13 @@ float->void pipeline calculate_single_position(int num_mics, bool hamming,
 
 
 float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
-						 float delays[num_beams][num_mics]
-						 float weights[num_mics])
+						 float[num_beams][num_mics] delays,
+						 float[num_mics] weights)
 {
 
-    float->float filter {
+    add float->float filter {
 	  int   queue_head;
-	  float sample_queue[max_delay + 1][num_mics];
+	  float[max_delay + 1][num_mics] sample_queue;
 
 	  init {
 		queue_head = 0;
@@ -162,8 +162,8 @@ float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
 	  }
     }
 
-    float->float splitjoin {
-	  split rounrobin(2 * num_mics);
+    add float->float splitjoin {
+	  split roundrobin(2 * num_mics);
 	  
         for (int beam = 0; beam < num_beams; beam++) {
 		add do_beamforming(num_mics, beam, delays, weights);
@@ -175,8 +175,8 @@ float->float pipeline process_signal(int num_mics, int num_beams, int max_delay,
     
 
 float->float pipeline do_beamforming(int num_mics, int beam, 
-						 float delays[num_beams][num_mics], 
-						 float weights[num_mics])
+						 float[num_beams][num_mics] delays, 
+						 float[num_mics] weights)
 {
     add float->float splitjoin {
 	  split roundrobin(2);
@@ -200,7 +200,7 @@ float->float pipeline do_beamforming(int num_mics, int beam,
 		}
 	  }
 
-	  join rounrobin(2);
+	  join roundrobin(2);
     }
     
     add float->float filter {

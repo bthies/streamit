@@ -2,7 +2,7 @@
 #
 # knit: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: knit,v 1.14 2002-11-15 21:27:15 dmaze Exp $
+# $Id: knit,v 1.15 2002-12-11 20:19:24 dmaze Exp $
 #
 
 use strict;
@@ -165,12 +165,13 @@ sub c_to_out
     if ($opts{profile})
       {
 	$gcc = "gcc -pg -a";
-	$libs = "-nodefaultlibs -lstreamit_p -lm_p -lc_p -lgcc";
+	$libs = "-nodefaultlibs -lstreamit_p -lsrfftw -lssftw -lm_p " .
+	  "-lc_p -lgcc";
       }
     else
       {
 	$gcc = "gcc";
-	$libs = "-lstreamit -lm";
+	$libs = "-lstreamit -lsrfftw -lsfftw -lm";
       }
     call("$gcc -g -O2 -o$target -I$sh/library/c " . join(' ', @$fns) .
 	 " -L$sh/library/c $libs");

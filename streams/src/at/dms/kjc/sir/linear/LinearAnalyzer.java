@@ -16,7 +16,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.27 2003-04-09 20:49:08 thies Exp $
+ * $Id: LinearAnalyzer.java,v 1.28 2003-04-11 06:29:31 thies Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from streams to linear representations. never would have guessed that, would you? **/
@@ -199,7 +199,13 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 								 peekRate, pushRate, popRate);
 	
 	// if we haven't unrolled this node yet, then do it here, by cloning
-	SIRFilter unrolledSelf = getUnrolledFilter(self);
+	SIRFilter unrolledSelf;
+	if (KjcOptions.unroll<100000) {
+	    unrolledSelf = self;
+	} else {
+	    unrolledSelf = (SIRFilter)ObjectDeepCloner.deepCopy(self);
+	    Unroller.unrollFilter(unrolledSelf);
+	}
 
 	// pump the visitor through the work function
 	// (we might need to send it thought the init function as well so that

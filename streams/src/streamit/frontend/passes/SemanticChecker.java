@@ -11,7 +11,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.8 2003-07-09 19:32:36 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.9 2003-07-09 19:36:20 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -66,11 +66,19 @@ public class SemanticChecker
     public Map checkStreamNames(Program prog)
     {
         Map names = new HashMap(); // maps names to FEContexts
+
+        // Add built-in streams:
+        FEContext ctx = new FEContext("<built-in>");
+        names.put("Identity", ctx);
+        names.put("FileReader", ctx);
+        names.put("FileWriter", ctx);
+
         for (Iterator iter = prog.getStreams().iterator(); iter.hasNext(); )
         {
             StreamSpec spec = (StreamSpec)iter.next();
             checkAStreamName(names, spec.getName(), spec.getContext());
         }
+
         for (Iterator iter = prog.getStructs().iterator(); iter.hasNext(); )
         {
             TypeStruct ts = (TypeStruct)iter.next();
@@ -84,8 +92,8 @@ public class SemanticChecker
         if (map.containsKey(name))
         {
             FEContext octx = (FEContext)map.get(name);
-            report(octx, "Multiple declarations of '" + name + "'");
-            report(ctx, "as a stream or structure");
+            report(ctx, "Multiple declarations of '" + name + "'");
+            report(octx, "as a stream or structure");
         }
         else
         {
@@ -199,10 +207,7 @@ public class SemanticChecker
                 public Object visitSCSimple(SCSimple creator)
                 {
                     String name = creator.getName();
-                    if (!name.equals("Identity") &&
-                        !name.equals("FileReader") &&
-                        !name.equals("FileWriter") &&
-                        !streamNames.containsKey(creator.getName()))
+                    if (!streamNames.containsKey(creator.getName()))
                         report(creator, "no such stream '" +
                                creator.getName() + "'");
                     return super.visitSCSimple(creator);

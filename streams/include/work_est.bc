@@ -1,0 +1,264 @@
+/* print_service.bc
+ *
+ * This file describes the print service device
+ * 
+ * The print service device accepts requests from
+ * the tiles telling it to print various data.  It
+ * serves as a (very limited) replacement for being
+ * able to send data to stdout.
+ *
+ * This device waits for a message on the memory
+ * dynamic network of the format:
+ * first word is the header (a word with the following data:)
+ *      bits    field  
+ *
+ *      28:24   length
+ *      23:20   type           (should be 0xE for the print service)
+ *      19:15   sender_y_pos
+ *      14:10   sender_x_pos
+ *
+ * Second and third words are the time tag (hi and lo bits respectively)
+ * fourth word is the service request:
+ *      0xfff0: hex integer
+ *      0xfff1: signed decimal integer
+ *      0xffff: float
+ *      0xfabc: string
+ * An unknown request defaults to hex integer.
+ *
+ * For everything but strings, the fifth and following words until the end of 
+ * the message will all be printed using the current service request.
+ *
+ * Strings will have the standard header, but the fifth word of the 
+ * first message for a given string will contain the string's size in
+ * bytes (including terminating null).  Subsequent messages, which
+ * will be necessary if the string is too long for a single message,
+ * will not include the size.
+ *
+ * The address assignments to the particular ports are dependent on
+ * the size of the raw machine that you are running on.  In all cases
+ * addresses starting with 0x00 will go to the east of the north-east
+ * corner, addresses starting with 0xff will go to the south of the
+ * south-east corner (port gXSize+gYSize).
+ *
+ */
+
+/*
+
+Debugging Tips: 
+
+
+
+prompt> include("<dev/print_service.bc>");       // loads the file
+prompt> dev_print_service_init(0);               // creates the dynamic device
+prompt> SimListDevices() ;                      // list the installed devices
+
+  [ DEVICE NAME        RESET ROUTINE          CALC ROUTINE           PARAM    ]
+
+1 [ Dynamic Echo       dev_print_service_reset dev_print_service_calc  000658a0 ]
+0 [ Serial Rom         dev_serial_rom_reset   dev_serial_rom_calc    00065670 ]
+
+prompt> hms_print(0x65670);                // list the contents of the map you created
+ioPort                 00000003
+wordLength             00000143
+fileName               effff927
+data                   0005c910
+
+prompt> printf("%s\n", 0x65670.fileName);  // print out the filename of the serial rom
+dynamic_test.raw
+
+prompt> hms_print(0x658a0);
+ioPort                 00000000
+
+
+
+*/
+
+global gWorkArray;
+global gFinished;
+global outputFile;
+//*****************************************************************
+// dev_print_service_init()
+//
+// initializes the print service
+//
+
+fn dev_work_est_init(fileName, ioPort)
+{
+  // create hash_map
+  local printServiceStruct = hms_new();
+  local result;
+  local i;
+
+  // package up a descriptor for the reset and calc routines
+  // this takes advantage of the fact that bug has semantic
+  // sugar for string->UInt32 hashmaps
+
+  printServiceStruct.ioPort = ioPort;
+  printServiceStruct.fileName = fileName;
+  printServiceStruct.theFile = fopen(fileName, "a");
+  
+  //open the file to dump the data to
+  outputFile = fopen("work_est.out", "w");
+// local ntiles = gXSize*gYSize
+  //allocate some shit, gStreamItFilterTiles
+  gFinished = 0;
+  gWorkArray = malloc(gXSize*gYSize*4);
+  for (i = 0; i < gXSize*gYSize*4; i+=4) {
+    *(gWorkArray + i) = -1;
+  }
+
+  //print some shit
+  
+  // create the print service device
+  result = SimAddDevice("Work_est",// text name, for debugging
+                        "dev_work_est_reset", // routine called on machine reset
+                        "dev_work_est_calc", // routine called between calc and edge
+                        printServiceStruct); // parameter passed to both the above 
+  if (result == 0)
+  {
+    printf("// **** print_service: error adding device to port %d\n", ioPort);  
+    return 0;
+  }
+  
+  return 1;
+}
+
+
+//*****************************************************************
+// dev_print_service_reset(print_service_struct *printServiceStruct)
+//
+// called when the machine is reset
+// in this particular case, does nothing 
+//
+
+fn dev_work_est_reset(printServiceStruct)
+{
+}
+
+//*****************************************************************
+// dev_print_service_calc(print_service_struct *printServiceStruct)
+//
+// given time every cycle
+// repeatedly receives a request and prints it
+//
+//
+
+fn dev_work_est_calc(printServiceStruct)
+{
+  local value;
+  local port = printServiceStruct.ioPort;
+  local length;
+  local type_tag;
+  local sender_y;
+  local sender_x;
+  local time_hi;
+  local time_lo;
+  local print_type;
+  local key;
+  local str_len;
+  local str_mem;
+  local str_offs;
+  local stringTable = hm_new();
+  local theFile = printServiceStruct.theFile;
+  local junk;
+  local fBits;
+
+  while (1)
+  {
+    // arbitrate with other port clients
+    while (!memory_to_io_peek(machine, port, &value))
+      yield;
+
+    DecodeDynHdr(value, &fBits, &length, &type_tag, &sender_y, &sender_x, &junk, &junk);
+    if (type_tag != 0xE)
+    {
+      printf("warning: ignoring request %x received on print service port (hdr == %x (y,x)=(%x,%x) length = %x\n", 
+             type_tag, value, sender_y, sender_x, length);
+      yield;
+      continue;
+    }
+
+    // it's for us; let's use it.
+    value = threaded_memory_io_receive(machine, port);
+    yield;
+
+    if (length > 0) {
+      // get the high bits of the time stamp
+      length--;
+      time_hi = threaded_memory_io_receive(machine, port);
+      yield;
+    }
+    if (length > 0) {
+      // get the low bits of the time stamp
+      length--;
+      time_lo = threaded_memory_io_receive(machine, port);
+      yield;
+    }
+    if (length > 0) {
+      // get the type to print
+      length--;
+      print_type = threaded_memory_io_receive(machine, port);
+      yield;
+    }
+
+    if (print_type == 0xfabc) {
+      
+    } else {  //not a string type
+      while (length > 0)
+      {
+	//we are ignoring the high time bits for now
+	length--;
+	value = threaded_memory_io_receive(machine, port);
+        //print the cycle time
+	//printf("[%x%x: %x%08x]: ", sender_y, sender_x, time_hi, time_lo);
+	
+	if (print_type == 0xfff1) {		  
+	  local tileNum = getTileNum(sender_y, sender_x);
+	  //printf("%d\n", value);
+
+	  if (value == 0) {
+	    *(gWorkArray + (tileNum * 4)) = time_lo;
+	  }
+	  else if (value == 1) {
+	    local start_time = *(gWorkArray + (tileNum *4));
+	    
+	    gFinished++;
+	    *(gWorkArray + (tileNum * 4)) = time_lo - start_time;
+	    
+	    if (gFinished == gStreamItFilterTiles) {
+	      print_final_stats();
+	      //this should exit!!!!!
+	      gInterrupted = 1;
+	      //this will exit the thread
+	      exit(0);
+	    }
+	  }
+	  else 
+	    printf("Invalid value printed in decoupled mode\n");
+	}
+	else
+	  printf("Invalid Print-Type in decoupled mode\n");
+      }
+      yield;
+    }
+  }
+}
+
+fn print_final_stats() {
+  local i;
+  local tileNum = 0;
+  
+  listi_walk_begin(gFilterNames);
+  for (i = 0; i < gXSize*gYSize*4; i+=4) {
+    if (*(gWorkArray + i) != -1) {
+      fprintf(outputFile,"%d cycles for TileNum %d, %s\n", 
+	      *(gWorkArray +i),tileNum, listi_walk_current_val(gFilterNames));
+      listi_walk_next(gFilterNames);
+    }
+    tileNum++;
+  }
+}
+
+fn getTileNum(x, y) {
+  return (x*gYSize) + y;
+}

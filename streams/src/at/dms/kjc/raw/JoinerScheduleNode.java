@@ -78,11 +78,11 @@ public class JoinerScheduleNode
 	}
 	else if (type == RECEIVE) { //receive
 	    ret.append(receiveCode(ctype, arrayAccess, nextDup));
+	    ret.append("}\n");
 	    if (nextDup) {
 		ret.append(dupRecCode(arrayAccess));
 	    }
 	    else {
-		ret.append("}\n");
 		ret.append("__last" + buffer + " = __last" + buffer + " & __MINUSONE__;\n");
 	    }
 	}

@@ -1,7 +1,7 @@
 /*
  * StreamSpec.java: specification of a named or anonymous stream
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: StreamSpec.java,v 1.2 2002-09-04 21:03:10 dmaze Exp $
+ * $Id: StreamSpec.java,v 1.3 2002-09-06 16:01:15 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -86,13 +86,13 @@ public class StreamSpec extends FENode
         return params;
     }
     
-    /** Returns the variables declared in this. */
+    /** Returns the variables declared in this, as a list of Statements. */
     public List getVars()
     {
         return vars;
     }
     
-    /** Returns the functions declared in this. */
+    /** Returns the functions declared in this, as a list of Functions. */
     public List getFuncs()
     {
         return funcs;

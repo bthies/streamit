@@ -73,6 +73,21 @@ public class AutoCloner {
 	return result;
     }
 
+    /**
+     * Clone everything in a kopi2sir, useful for recursive stream
+     * definitions.
+     */
+    static public Object deepCopy(Kopi2SIR kopi2sir) {
+	// not sure what toBeCloned should be in this case... for now
+	// make it empty.
+	toBeCloned = new LinkedList();
+
+	registry = new HashMap();
+	Object result = cloneToplevel(kopi2sir);
+	registry = null;
+	return result;
+    }
+
     /*************************************************************
      * The following methods are all callbacks that should only be
      * called from the cloning process, not by the user.

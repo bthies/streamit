@@ -436,7 +436,7 @@ public class CloneGenerator {
 	//"at.dms.kjc.KjcMessages", -- interface
 	"at.dms.kjc.KjcPrettyPrinter",
 	//"at.dms.kjc.KjcVisitor", -- interface
-	//"at.dms.kjc.Kopi2SIR", -- shouldn't have references to this
+	"at.dms.kjc.Kopi2SIR",
 	//"at.dms.kjc.Main", -- shouldn't have references to this
 	"at.dms.kjc.MethodSignatureParser",
 	//"at.dms.kjc.ObjectDeepCloner", -- shouldn't have references to this

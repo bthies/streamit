@@ -847,7 +847,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 	    else if (getVisitedOp(type.toString()) != null) {
 		
 		SIRStream ST = (SIRStream)ObjectDeepCloner.
-		    deepCopy(getVisitedOp(type.toString()));
+		    deepCopy(getVisitedOp(type.toString()), true);
 		printMe("Adding " + ident + " to symbol table");
 		
 		//If this a builtin filter set its args
@@ -1541,7 +1541,7 @@ public class Kopi2SIR extends Utils implements AttributeVisitor
 				       ": cannot find declaration of stream " +
 				       ((JUnqualifiedInstanceCreation)SIROp).
 				       getType().getCClass().getIdent());
-	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st);
+	    newST = (SIRStream) ObjectDeepCloner.deepCopy(st, true);
 	    //if this is a builtin filter, set the args
 	    setBuiltinArgs(newST, ((JUnqualifiedInstanceCreation)SIROp).getParams());
 	    newST.setParent((SIRContainer)parentStream);

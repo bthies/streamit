@@ -26,10 +26,6 @@ public class ObjectDeepCloner
     // so that nobody can accidentally create an ObjectCloner object
     private ObjectDeepCloner(){}
     
-    static public Object deepCopy(Object oldObj) {
-	return deepCopy(oldObj, false);
-    }
-
     /**
      * Returns the deep clone of an object, if <cloneVars> is true
      * then clone vars also...

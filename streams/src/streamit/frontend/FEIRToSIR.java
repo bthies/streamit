@@ -129,54 +129,40 @@ public class FEIRToSIR implements FEVisitor, Constants {
 
     debug("In visitStreamSpec\n");
     
-    if (spec.getName() != null) {
-      /* Not an anonymous stream */
-      StreamType st = spec.getStreamType();
-      
-      if (st != null
-	  && st.getIn() instanceof TypePrimitive
-	  && ((TypePrimitive) st.getIn()).getType() == TypePrimitive.TYPE_VOID
-	  && st.getOut() instanceof TypePrimitive
-	  && ((TypePrimitive) st.getOut()).getType() == TypePrimitive.TYPE_VOID) {
-	/* This it the top-level pipeline */
-	SIRPipeline result = (SIRPipeline) visitPipelineSpec(spec);
-	topLevel = result;
-	current = result;
-      } else {
-	switch (spec.getType()) {
-	case StreamSpec.STREAM_FILTER:
-	  current = (SIRStream) visitFilterSpec(spec);
-	  break;
-	case StreamSpec.STREAM_PIPELINE:
-	  current = (SIRStream) visitPipelineSpec(spec);
-	  break;
-	case StreamSpec.STREAM_SPLITJOIN:
-	  current = (SIRStream) visitSplitJoinSpec(spec);
-	  break;
-	case StreamSpec.STREAM_FEEDBACKLOOP:
-	  current = (SIRStream) visitFeedbackLoopSpec(spec);
-	  break;
-	}
-      }
+    switch (spec.getType())
+    {
+    case StreamSpec.STREAM_FILTER:
+        current = (SIRStream) visitFilterSpec(spec);
+        break;
+    case StreamSpec.STREAM_PIPELINE:
+        current = (SIRStream) visitPipelineSpec(spec);
+        break;
+    case StreamSpec.STREAM_SPLITJOIN:
+        current = (SIRStream) visitSplitJoinSpec(spec);
+        break;
+    case StreamSpec.STREAM_FEEDBACKLOOP:
+        current = (SIRStream) visitFeedbackLoopSpec(spec);
+        break;
+    }
 
-      debug("Adding " + spec.getName() + " to symbol table\n");
-      classTable.put(spec.getName(), current);
-    } else {
-      /* Anonymous stream */
-      switch (spec.getType()) {
-      case StreamSpec.STREAM_FILTER:
-	current = (SIRStream) visitFilterSpec(spec);
-	break;
-      case StreamSpec.STREAM_PIPELINE:
-	current = (SIRStream) visitPipelineSpec(spec);
-	break;
-      case StreamSpec.STREAM_SPLITJOIN:
-	current = (SIRStream) visitSplitJoinSpec(spec);
-	break;
-      case StreamSpec.STREAM_FEEDBACKLOOP:
-	current = (SIRStream) visitFeedbackLoopSpec(spec);
-	break;
-      }
+    if (spec.getName() != null)
+    {      
+        /* Not an anonymous stream */
+        debug("Adding " + spec.getName() + " to symbol table\n");
+        classTable.put(spec.getName(), current);
+
+        // Is it the top-level stream? (being void->void)
+        StreamType st = spec.getStreamType();
+        if (st != null &&
+            st.getIn() instanceof TypePrimitive &&
+            ((TypePrimitive) st.getIn()).getType() ==
+            TypePrimitive.TYPE_VOID &&
+            st.getOut() instanceof TypePrimitive &&
+            ((TypePrimitive) st.getOut()).getType() ==
+            TypePrimitive.TYPE_VOID)
+        {
+            topLevel = current;
+        }
     }
 
     symtab = oldSymTab;

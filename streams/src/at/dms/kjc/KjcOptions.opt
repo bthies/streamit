@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
- * $Id: KjcOptions.opt,v 1.41 2003-08-11 06:51:15 thies Exp $
+ * $Id: KjcOptions.opt,v 1.42 2003-09-16 16:27:00 jasperln Exp $
  */
 
 prefix Kjc
@@ -381,3 +381,8 @@ longname		"wbs"
 	type		boolean
 	default 	"false"
 	help 		"Uses the work based simulator for laying out the communication instructions."
+
+longname		"spacetime"
+	type		boolean
+	default		"false"
+	help		"Uses the spacetime partitioner."

@@ -4,6 +4,7 @@ import at.dms.kjc.sir.*;
 import at.dms.kjc.sir.lowering.*;
 import at.dms.kjc.lir.*;
 import at.dms.kjc.raw.*;
+import at.dms.kjc.spacetime.*;
 import at.dms.kjc.cluster.*;
 import grapheditor.GraphEncoder;
 
@@ -50,6 +51,13 @@ public class StreaMITMain {
 	    new GraphEncoder().encode(stream);
 	} else if (KjcOptions.raw != -1) {
 	    System.out.println("*/");
+	    
+	    if(KjcOptions.spacetime) {
+		SpaceTimeBackend.run(stream, 
+				     k2s.getInterfaces(),
+				     k2s.getInterfaceTables(),
+				     k2s.getStructures());
+	    }
 	    
 	    /* Compiling for raw */
 	    RawBackend.run(stream, 

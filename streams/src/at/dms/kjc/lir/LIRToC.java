@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.41 2001-10-31 22:43:38 dmaze Exp $
+ * $Id: LIRToC.java,v 1.42 2001-11-01 16:02:29 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1865,6 +1865,8 @@ public class LIRToC
             ((JStatement)(iter.next())).accept(this);
         newLine();
         print("streamit_run(data->context, argc, argv);");
+        newLine();
+        print("return 0;");
     }
 
     /**

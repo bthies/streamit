@@ -29,7 +29,9 @@ class FloatSubtract extends Filter
 
     public void work() {
         //subtract one from the other, round robin.
-        output.pushFloat((float)(input.popFloat()-input.popFloat()));
+        output.pushFloat((float)(input.peekFloat(0)-input.peekFloat(1)));
+	input.popFloat();
+	input.popFloat();
     }
 }
 

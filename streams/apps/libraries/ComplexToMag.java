@@ -37,6 +37,8 @@ class ComplexToMag extends Filter
   public void work()
   {
     //System.out.println("Running the Complex to Mag converter...");
-    output.pushFloat((float) Math.sqrt(input.popFloat()*input.popFloat()));
+    output.pushFloat((float) Math.sqrt(input.peekFloat(0)*input.peekFloat(1)));
+    input.popFloat();
+    input.popFloat();
   }
 }

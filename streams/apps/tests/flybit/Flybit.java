@@ -1,7 +1,7 @@
 /*
  * Flybit.java: an interesting piece of the Butterfly example
  * (to demonstrate split/joins)
- * $Id: Flybit.java,v 1.9 2002-06-12 07:06:52 thies Exp $
+ * $Id: Flybit.java,v 1.10 2002-07-11 16:51:05 thies Exp $
  */
 
 import streamit.*;
@@ -24,7 +24,9 @@ class IntSub extends Filter
 {
     public void work()
     {
-        output.pushInt(input.popInt() - input.popInt());
+        output.pushInt(input.peekInt(0) - input.peekInt(1));
+	input.popInt();
+	input.popInt();
     }
     public void init ()
     {

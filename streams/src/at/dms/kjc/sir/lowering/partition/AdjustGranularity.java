@@ -29,7 +29,6 @@ public class AdjustGranularity {
 	} else if (app.equals("fft")) {
 	    // do custom transforms for fft
 	    if (num!=1) {
-		doFFT16(str);
 	    } else {
 		doFFT1(str);
 	    }
@@ -245,13 +244,9 @@ public class AdjustGranularity {
 	//	WorkEstimate.getWorkEstimate(str).printWork();
 
 	SIRPipeline pipe = (SIRPipeline)((SIRPipeline)str).get(0);
-	FuseSplit.doFlatten(pipe);
 	FuseAll.fuse(pipe);
 
 	StreamItDot.printGraph(str, "balanced_0.dot");
-
-	FuseSplit.doFlatten(pipe);
-	FuseAll.fuse(pipe);
 
 	// fuse magnitude and detector
 	for (int i=0; i<2; i++) {
@@ -546,12 +541,7 @@ public class AdjustGranularity {
 		SIRPipeline channel = (SIRPipeline)(((SIRSplitJoin)((((SIRPipeline)(((SIRPipeline)str).get (1))).get (0)))).get (ch));
 
 		FuseAll.fuse ((SIRSplitJoin)channel.get (3));
-		FuseSplit.doFlatten ((SIRSplitJoin)channel.get(3));
 		StreamItDot.printGraph(str, "fused1.dot");
-
-		FuseAll.fuse ((SIRSplitJoin)channel.get (3));
-		FuseSplit.doFlatten ((SIRSplitJoin)channel.get(3));
-		StreamItDot.printGraph(str, "fused2.dot");
 
 		FusePipe.fuse ((SIRFilter)channel.get (3), (SIRFilter)channel.get (4));
 		FusePipe.fuse ((SIRFilter)channel.get (3), (SIRFilter)channel.get (4));
@@ -559,7 +549,6 @@ public class AdjustGranularity {
 		StreamItDot.printGraph (str, "fused3.dot");
 
 		FuseAll.fuse ((SIRSplitJoin)(((SIRPipeline)channel.get (4))).get(3));
-		FuseSplit.doFlatten ((SIRSplitJoin)(((SIRPipeline)channel.get (4))).get(3));
 
 		StreamItDot.printGraph (str, "fused4.dot");
 	}
@@ -612,9 +601,6 @@ public class AdjustGranularity {
 	WorkEstimate.getWorkEstimate(str).printWork();
 
 	FuseAll.fuse(str);
-	FuseSplit.doFlatten(str);
-	FuseAll.fuse(str);
-	FuseSplit.doFlatten(str);
 
         ConstantProp.propagateAndUnroll(str);
 
@@ -689,7 +675,6 @@ public class AdjustGranularity {
 	    SIRSplitJoin sj = (SIRSplitJoin)s;
 
             FuseAll.fuse(sj.get (0));
-            FuseSplit.doFlatten(sj.get (0));
 
             ConstantProp.propagateAndUnroll(s);
         }
@@ -747,7 +732,6 @@ public class AdjustGranularity {
 	    SIRStream s = ((SIRPipeline)str).get (4);
 
             FuseAll.fuse(s);
-            FuseSplit.doFlatten(s);
 
             ConstantProp.propagateAndUnroll(s);
 	}
@@ -774,7 +758,6 @@ public class AdjustGranularity {
 	    SIRPipeline pipe = (SIRPipeline)loop.getLoop ();
 	    SIRSplitJoin sj = (SIRSplitJoin)pipe.get (0);
 	    FuseAll.fuse (sj);
-            FuseSplit.doFlatten (sj);
         }
 
         ConstantProp.propagateAndUnroll(str);
@@ -939,9 +922,6 @@ public class AdjustGranularity {
 	//FuseSplit.fuse((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get(1)).get(2));
 	//	FuseSplit.fuse((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get(1)).get(1));
 
-	FuseSplit.doFlatten(str);
-	FuseAll.fuse(str);
-	FuseSplit.doFlatten(str);
 	FuseAll.fuse(str);
 	ConstantProp.propagateAndUnroll(str);
 
@@ -950,77 +930,6 @@ public class AdjustGranularity {
 	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
 			   " tiles");
 	WorkEstimate.getWorkEstimate(str).printWork();
-	StreamItDot.printGraph(str, "after.dot");
-    }
-
-    private static void doFFT16(SIRStream str) {
-	RawFlattener rawFlattener;
-
-	StreamItDot.printGraph(str, "before.dot");
-	System.err.println("Working on FFT...");
-	rawFlattener = new RawFlattener(str);
-	rawFlattener.dumpGraph("before-adjust.dot");
-	System.err.println("\nBEFORE: " + rawFlattener.getNumTiles() + 
-			   " tiles");
-	WorkEstimate.getWorkEstimate(str).printWork();
-
-	// fuse the splits
-	FuseSplit.doFlatten(str);
-	FuseSplit.doFlatten(str);
-	StreamItDot.printGraph (str, "bill-fft.dot");
-
-	/*FusePipe.fuse((SIRPipeline)
-		      ((SIRSplitJoin)
-		       ((SIRPipeline)
-			((SIRPipeline)str).get(1)).get(0)).get(0));
-	FusePipe.fuse((SIRPipeline)
-		      ((SIRSplitJoin)
-		       ((SIRPipeline)
-			((SIRPipeline)str).get(1)).get(0)).get(1));
-	*/
-	// now take the leftovers from the splitjoin fusion and fuse them, too
-	SIRPipeline pipe = (SIRPipeline)((SIRPipeline)str).get(1);
-	for (int i=0; i<3; i++) {
-	    FusePipe.fuse((SIRFilter)pipe.get(i+1), (SIRFilter)pipe.get(i+5));
-	}
-	FusePipe.fuse((SIRFilter)pipe.get(4), (SIRFilter)pipe.get(5));
-	FusePipe.fuse((SIRFilter)pipe.get(8), (SIRFilter)pipe.get(9));
-	
-       
-	FusePipe.fuse( (SIRPipeline)
-		       ((SIRSplitJoin)
-			((SIRPipeline)
-			 ((SIRPipeline)
-			 ((SIRPipeline)str).get(1)).get(0)).get(0)).get(0));
-
-	FusePipe.fuse( (SIRPipeline)
-		       ((SIRSplitJoin)
-			((SIRPipeline)
-			 ((SIRPipeline)
-			 ((SIRPipeline)str).get(1)).get(0)).get(0)).get(1));
-	
-	/*FuseSplit.doFlatten(str);
-	FusePipe.fuse( (SIRPipeline)
-		       ((SIRPipeline)
-		       ((SIRPipeline)
-			((SIRPipeline)str).get(1)).get(0)));
-	*/
-	/*
-	StatelessDuplicate.doit ((SIRFilter)((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get (1)).get(0)).get(0),2);
-	StatelessDuplicate.doit ((SIRFilter)((SIRSplitJoin)((SIRPipeline)((SIRPipeline)str).get (1)).get(0)).get(1),2);
-	*/
-	
-	StreamItDot.printGraph (str, "test.dot");
-
-	// constant-prop through new filters
-	ConstantProp.propagateAndUnroll(str);
-	FieldProp.doPropagate(str);
-
-	rawFlattener = new RawFlattener(str);
-	rawFlattener.dumpGraph("after-adjust.dot");
-	System.err.println("\nAFTER: " + rawFlattener.getNumTiles() + 
-			   " tiles");
-	//WorkEstimate.getWorkEstimate(str).printWork();
 	StreamItDot.printGraph(str, "after.dot");
     }
 }

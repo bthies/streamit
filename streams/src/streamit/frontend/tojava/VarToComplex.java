@@ -8,7 +8,7 @@ import streamit.frontend.passes.SymbolTableVisitor;
  * parts.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: VarToComplex.java,v 1.9 2003-06-30 20:01:09 dmaze Exp $
+ * @version $Id: VarToComplex.java,v 1.10 2003-06-30 22:01:48 dmaze Exp $
  */
 public class VarToComplex extends SymbolTableVisitor
 {
@@ -26,8 +26,7 @@ public class VarToComplex extends SymbolTableVisitor
     
     public Object visitExprVar(ExprVar exp)
     {
-        Type type = (Type)exp.accept(new GetExprType(symtab, streamType));
-        if (type.isComplex())
+        if (getType(exp).isComplex())
             return makeComplexPair(exp);
         else
             return exp;
@@ -37,13 +36,10 @@ public class VarToComplex extends SymbolTableVisitor
     {
         // If the expression is already visiting a field of a Complex
         // object, don't recurse further.
-        GetExprType get = new GetExprType(symtab, streamType);
-        Type type = (Type)(exp.getLeft().accept(get));
-        if (type.isComplex())
+        if (getType(exp.getLeft()).isComplex())
             return exp;
         // Perhaps this field is complex.
-        type = (Type)(exp.accept(get));
-        if (type.isComplex())
+        if (getType(exp).isComplex())
             return makeComplexPair(exp);
         // Otherwise recurse normally.
         return super.visitExprField(exp);
@@ -53,8 +49,7 @@ public class VarToComplex extends SymbolTableVisitor
     {
         // If the type of the expression is complex, decompose it;
         // otherwise, move on.
-        Type type = (Type)exp.accept(new GetExprType(symtab, streamType));
-        if (type.isComplex())
+        if (getType(exp).isComplex())
             return makeComplexPair(exp);
         else
             return exp;

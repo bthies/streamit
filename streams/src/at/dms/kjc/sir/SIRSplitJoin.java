@@ -40,6 +40,13 @@ public class SIRSplitJoin extends SIRContainer implements Cloneable {
     }
 
     /**
+     * Returns whether or not this pipeline contains child <child>
+     */
+    public boolean contains(SIROperator child) {
+	return elements.contains(child);
+    }
+
+    /**
      * returns i'th child of this.
      */
     public SIRStream get(int i) {

@@ -16,7 +16,7 @@ public abstract class SIROperator extends at.dms.util.Utils {
      * The stream structure containing this, or NULL if this is the
      * toplevel stream.
      */
-    transient protected SIRContainer parent;
+    protected SIRContainer parent;
     
     //cloning stuff
     protected Integer serializationIndex;
@@ -24,7 +24,7 @@ public abstract class SIROperator extends at.dms.util.Utils {
     private void writeObject(ObjectOutputStream oos) 
 	throws IOException {
 	// remember our parent unless it's on the outside
-	if (parent!=ObjectDeepCloner.outsideParent) {
+	if (parent==ObjectDeepCloner.outsideParent) {
 	    this.serializationIndex = SerializationVector.addObject(parent);
 	} else {
 	    this.serializationIndex = null;

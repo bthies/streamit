@@ -179,7 +179,7 @@ public class Linear extends BufferedCommunication implements Constants {
 	    inline.addInput("\"i\"("+generatedVariables.recvBuffer.getIdent()+")");
 	    inline.add("la "+tempReg+", %0");
 	    int index=0;
-	    for(int i=0;i<=topPopNum;i++)
+	    for(int i=0;i<topPopNum;i++)
 		for(int j=0;j<popCount;j++) {
 		    inline.add("lw    "+tempRegs[0]+",\\t"+index+"("+tempReg+")");
 		    index+=4;
@@ -202,13 +202,14 @@ public class Linear extends BufferedCommunication implements Constants {
 			    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[1]);
 			}
 		    }
-		//TODO: Handle Remaining Items
-		for(int j=0;j<popCount;j++)
-		    for(int k=topPopNum;k>=0;k--) {
-			inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
-			inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
-		    }
 	    }
+	    //TODO: Handle Remaining Items
+	    for(int j=0;j<popCount;j++)
+		for(int k=topPopNum;k>=0;k--) {
+		    inline.add("mul.s "+tempRegs[0]+",\\t$csti,\\t"+regs[idx[k]+j]);
+		    inline.add("add.s "+getInterReg(false,k,j)+",\\t"+getInterReg(true,k,j)+",\\t"+tempRegs[0]);
+		}
+	    //}
 	} else {
 	    for(int i=0;i<=topPopNum;i++)
 		for(int j=0;j<popCount;j++)

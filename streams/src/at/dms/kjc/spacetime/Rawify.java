@@ -1026,29 +1026,30 @@ public class Rawify
 		    ins.addRoute(SwitchReg.R1,dest);
 		    code.appendIns(ins,false);
 		}
-		//Order back to normal
-		for(int j = 0; j<pop; j++) {
-		    //Pass first value
-		    FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
-		    ins.addRoute(src, SwitchOPort.CSTI);
-		    //if(!end)
-		    ins.addRoute(src,dest);
-		    code.appendIns(ins, false);
-		    //Repeat first value
-		    for(int k = numPop-2; k>= 0; k--) {
-			FullIns newIns = new FullIns(tile);
-			newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
-			code.appendIns(newIns, false);
-		    }
-		    //Pass out partial sum to next filter
-		    if(j==0) {
-			FullIns newIns=new FullIns(tile);
-			//newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
-			newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
-			code.appendIns(newIns, false);
-		    }
+	    }
+	    //Order back to normal
+	    for(int j = 0; j<pop; j++) {
+		//Pass first value
+		FullIns ins=new FullIns(tile, new MoveIns(SwitchReg.R1, src));
+		ins.addRoute(src, SwitchOPort.CSTI);
+		//if(!end)
+		ins.addRoute(src,dest);
+		code.appendIns(ins, false);
+		//Repeat first value
+		for(int k = numPop-2; k>= 0; k--) {
+		    FullIns newIns = new FullIns(tile);
+		    newIns.addRoute(SwitchReg.R1, SwitchOPort.CSTI);
+		    code.appendIns(newIns, false);
+		}
+		//Pass out partial sum to next filter
+		if(j==0) {
+		    FullIns newIns=new FullIns(tile);
+		    //newIns.addRoute(src, SwitchOPort.CSTI); //Used to be src2,csti2
+		    newIns.addRoute(SwitchIPort.CSTO,dest); //Used to be dest2
+		    code.appendIns(newIns, false);
 		}
 	    }
+	    //}
 	} else {
 
 	    //Test: passing start down

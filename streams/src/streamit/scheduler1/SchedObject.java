@@ -6,11 +6,16 @@ import java.io.PrintStream;
 public abstract class SchedObject extends AssertedClass
 {
     private Object streamObject = null;
+    final private String uniqueStreamName;
+    final private String streamName;
 
     protected SchedObject (Object streamObject)
     {
         ASSERT (streamObject);
         this.streamObject = streamObject;
+
+        streamName = this.getStreamObject ().getClass ().getName ();
+        uniqueStreamName = this.getStreamObject ().getClass ().getName ().replace ('.', '_').replace ('$', '_') + "_" + hashCode ();
     }
 
     /**
@@ -27,7 +32,7 @@ public abstract class SchedObject extends AssertedClass
      */
     public String getUniqueStreamName ()
     {
-        return this.getStreamObject ().getClass ().getName () + "_" + hashCode ();
+        return uniqueStreamName;
     }
 
     /**
@@ -36,7 +41,7 @@ public abstract class SchedObject extends AssertedClass
      */
     public String getStreamName ()
     {
-        return this.getStreamObject ().getClass ().getName ();
+        return streamName;
     }
 
     /**

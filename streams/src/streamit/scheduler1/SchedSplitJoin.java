@@ -295,6 +295,7 @@ public class SchedSplitJoin extends SchedStream
 
         // Create a subgraph again...
         print("subgraph cluster_" + getUniqueStreamName () + " {\n", outputStream);
+        print("label = \"" + getStreamName () + "\";\n", outputStream);
 
         // Visit the splitter and joiner to get their node names...
         getSplitType ().printDot (outputStream);
@@ -311,7 +312,7 @@ public class SchedSplitJoin extends SchedStream
             oper.printDot (outputStream);
 
             printEdge(splitName, oper.getFirstChild ().getUniqueStreamName (), outputStream);
-            printEdge(joinName, oper.getLastChild ().getUniqueStreamName (), outputStream);
+            printEdge(oper.getLastChild ().getUniqueStreamName (), joinName, outputStream);
         }
 
         print("}\n", outputStream);

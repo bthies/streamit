@@ -162,6 +162,7 @@ public class SchedPipeline extends SchedStream
 
         // Print this within a subgraph.
         print("subgraph cluster_" + getUniqueStreamName () + " {\n", outputStream);
+        print("label = \"" + getStreamName () + "\";\n", outputStream);
 
         // Walk through each of the elements in the pipeline.
         Iterator iter = allChildren.iterator();

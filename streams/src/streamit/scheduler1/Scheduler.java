@@ -35,7 +35,9 @@ public abstract class Scheduler extends DestroyedClass
     public void print (PrintStream outputStream)
     {
         ASSERT (stream);
+        outputStream.println ("digraph streamit {\nsize=\"7.5,10\";");
         stream.printDot (outputStream);
+        outputStream.println ("}");
     }
 
     /**

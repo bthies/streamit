@@ -2,6 +2,7 @@ package streamit;
 
 import streamit.Pipeline;
 import streamit.scheduler.simple.SimpleHierarchicalSchedulerPow2;
+import streamit.scheduler.simple.SimpleHierarchicalScheduler;
 import streamit.scheduler.SchedStream;
 
 import java.util.List;
@@ -12,10 +13,17 @@ import java.util.ListIterator;
  */
 public class StreamIt extends Pipeline
 {
+    int numExecutions = 0;
     void runSchedule (Object schedule)
     {
         if (schedule instanceof Operator)
         {
+            numExecutions ++;
+            if (numExecutions == 10000)
+            {
+                System.out.print (".");
+                numExecutions = 0;
+            }
             ((Operator) schedule).work ();
         } else
         if (schedule instanceof List)
@@ -41,6 +49,8 @@ public class StreamIt extends Pipeline
     public void run(String args [])
     {
         boolean scheduledRun = true;
+        boolean printGraph = false;
+        boolean doRun = true;
 
         // read the args:
         if (args != null)
@@ -52,6 +62,14 @@ public class StreamIt extends Pipeline
                 if (args [index].equals ("-nosched"))
                 {
                     scheduledRun = false;
+                } else
+                if (args [index].equals ("-printgraph"))
+                {
+                    printGraph = true;
+                } else
+                if (args [index].equals ("-norun"))
+                {
+                    doRun = false;
                 } else {
                     ERROR ("Unrecognized argument: " + args [index] + ".");
                 }
@@ -62,6 +80,21 @@ public class StreamIt extends Pipeline
 
         ASSERT (getInputChannel () == null);
         ASSERT (getOutputChannel () == null);
+
+        // setup the scheduler
+        if (printGraph)
+        {
+            scheduler = new SimpleHierarchicalScheduler ();
+
+            SchedStream stream;
+            stream = (SchedStream) constructSchedule ();
+            ASSERT (stream);
+
+            scheduler.useStream (stream);
+            scheduler.print (System.out);
+        }
+
+        if (!doRun) System.exit (0);
 
         // setup the scheduler
         if (scheduledRun)

@@ -196,6 +196,7 @@ public class SchedLoop extends SchedStream
     {
         // Create a subgraph again...
         print("subgraph cluster_" + getUniqueStreamName () + " {\n", outputStream);
+        print("label = \"" + getStreamName () + "\";\n", outputStream);
 
         // Visit the splitter and joiner.
         getLoopSplit ().printDot (outputStream);

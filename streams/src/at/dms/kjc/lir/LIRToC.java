@@ -1,6 +1,6 @@
 /*
  * LIRToC.java: convert StreaMIT low IR to C
- * $Id: LIRToC.java,v 1.11 2001-10-15 18:40:32 thies Exp $
+ * $Id: LIRToC.java,v 1.12 2001-10-16 13:26:51 dmaze Exp $
  */
 
 package at.dms.kjc.lir;
@@ -1699,6 +1699,44 @@ public class LIRToC
         print("streamit_run(s->context);");
     }
 
+    /**
+     * Visits a set body of feedback loop.
+     */
+    public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+				       JExpression streamContext,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {
+	at.dms.util.Utils.fail("not implemented");
+    }
+
+    /**
+     * Visits a set loop of feedback loop.
+     */
+    public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+				       JExpression streamContext,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {
+	at.dms.util.Utils.fail("not implemented");
+    }
+
+    /**
+     * Visits a set a parallel stream.
+     */
+    public void visitSetParallelStream(LIRSetParallelStream self,
+				       JExpression streamContext,
+				       int position,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {
+	at.dms.util.Utils.fail("not implemented");
+    }
+
+
     // ----------------------------------------------------------------------
     // UTILS
     // ----------------------------------------------------------------------
@@ -1929,44 +1967,6 @@ public class LIRToC
     }
 
     
-    /**
-     * Visits a set body of feedback loop.
-     */
-    public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
-				       JExpression streamContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	at.dms.util.Utils.fail("not implemented");
-    }
-
-    /**
-     * Visits a set loop of feedback loop.
-     */
-    public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
-				       JExpression streamContext,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	at.dms.util.Utils.fail("not implemented");
-    }
-
-    /**
-     * Visits a set a parallel stream.
-     */
-    public void visitSetParallelStream(LIRSetParallelStream self,
-				       JExpression streamContext,
-				       int position,
-				       CType inputType,
-				       CType outputType,
-				       int inputSize,
-				       int outputSize) {
-	at.dms.util.Utils.fail("not implemented");
-    }
-
-
     // ----------------------------------------------------------------------
     // PROTECTED METHODS
     // ----------------------------------------------------------------------

@@ -162,7 +162,10 @@ public class Rawify
 	//calculate the number of items sent
 	int items = filterInfo.totalItemsSent(init, primepump), 
 	    iterations, typeSize;
-	
+	//noting to do for this stage
+	if (items == 0)
+	    return;
+
 	typeSize = Util.getTypeSize(filter.getFilter().getOutputType());
 	
 	//the numbers of times we should cycle thru this "splitter"
@@ -334,6 +337,10 @@ public class Rawify
 	int items = filterInfo.totalItemsReceived(init, primepump),
 	    iterations, stage = 1, typeSize;
 
+	//noting to do for this stage
+	if (items == 0)
+	    return;
+
 	//the stage we are generating code for as used below for generateSwitchCode()
 	if (!init && !primepump) 
 	    stage = 2;
@@ -369,15 +376,15 @@ public class Rawify
 	    int remainder = RawChip.cacheLineWords - 
 		((iterations * typeSize * 
 		 traceNode.getWeight(source)) % RawChip.cacheLineWords);
-	    SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(source, traceNode).getDRAM(),
-					      remainder, init || primepump);
+	    if (remainder > 0)
+		SwitchCodeStore.disregardIncoming(OffChipBuffer.getBuffer(source, traceNode).getDRAM(),
+						  remainder, init || primepump);
 	}
     }
     
     private static void splitOutputTrace(OutputTraceNode traceNode, boolean init, boolean primepump)
     {
 	FilterTraceNode filter = (FilterTraceNode)traceNode.getPrevious();
-	
 	//check to see if the splitting is necessary
 	if (!OffChipBuffer.necessary(traceNode))
 	    return;
@@ -386,6 +393,10 @@ public class Rawify
 	//calculate the number of items sent
 	int items = filterInfo.totalItemsSent(init, primepump), 
 	    iterations, stage = 1, typeSize;
+	
+	//nothing to do in this stage!
+	if (items == 0)
+	    return;
 	
 	//the stage we are generating code for as used below for generateSwitchCode()
 	if (!init && !primepump) 
@@ -433,8 +444,9 @@ public class Rawify
 	    InputTraceNode in = (InputTraceNode)it.next();
 	    int remainder = RawChip.cacheLineWords - ((typeSize * iterations * traceNode.getWeight(in)) %
 		RawChip.cacheLineWords);
-	    SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, in).getDRAM(),
-					  remainder, init || primepump);
+	    if (remainder > 0)
+		SwitchCodeStore.dummyOutgoing(OffChipBuffer.getBuffer(traceNode, in).getDRAM(),
+					      remainder, init || primepump);
 	}   
     }
     

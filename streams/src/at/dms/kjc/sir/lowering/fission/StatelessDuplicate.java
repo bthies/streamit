@@ -112,7 +112,6 @@ public class StatelessDuplicate {
 							   JExpression left,
 							   String ident) {
 			    out[0]=false;
-			    System.out.println(self);
 			    return self;
 			}
 		    });

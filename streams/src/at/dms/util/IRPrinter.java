@@ -1788,4 +1788,66 @@ public class IRPrinter extends Utils implements SLIRVisitor
 	attrEnd();
 	blockEnd();
     }
+
+    /**
+     * Visits a set body of feedback loop.
+     */
+    public void visitSetBodyOfFeedback(LIRSetBodyOfFeedback self,
+				       JExpression streamContext,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {
+	blockStart("LIRSetBodyOfFeedback");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrPrint("input type", inputType.toString());
+	attrPrint("output type", outputType.toString());
+	attrPrint("input size", String.valueOf(inputSize));
+	attrPrint("output size", String.valueOf(outputSize));
+	blockEnd();
+    }
+
+    /**
+     * Visits a set loop of feedback loop.
+     */
+    public void visitSetLoopOfFeedback(LIRSetLoopOfFeedback self,
+				       JExpression streamContext,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {
+	blockStart("LIRSetLoopOfFeedback");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrPrint("input type", inputType.toString());
+	attrPrint("output type", outputType.toString());
+	attrPrint("input size", String.valueOf(inputSize));
+	attrPrint("output size", String.valueOf(outputSize));
+	blockEnd();
+    }
+
+    /**
+     * Visits a set a parallel stream.
+     */
+    public void visitSetParallelStream(LIRSetParallelStream self,
+				       JExpression streamContext,
+				       int position,
+				       CType inputType,
+				       CType outputType,
+				       int inputSize,
+				       int outputSize) {
+	blockStart("LIRSetParallelStream");
+	attrStart("streamContext");
+	streamContext.accept(this);
+	attrEnd();
+	attrPrint("position", String.valueOf(position));
+	attrPrint("input type", inputType.toString());
+	attrPrint("output type", outputType.toString());
+	attrPrint("input size", String.valueOf(inputSize));
+	attrPrint("output size", String.valueOf(outputSize));
+	blockEnd();
+    }
 }

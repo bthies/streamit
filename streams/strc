@@ -2,7 +2,7 @@
 #
 # strc: StreamIt compiler wrapper
 # David Maze <dmaze@cag.lcs.mit.edu>
-# $Id: strc,v 1.18 2003-10-09 19:59:30 dmaze Exp $
+# $Id: strc,v 1.19 2003-10-10 14:49:39 dmaze Exp $
 #
 # Copyright 2003 by the Massachusetts Institute of Technology.
 #
@@ -406,9 +406,14 @@ sub get_kjc_opts
   {
     my $kjcopts = "";
     $opts{raw} && ($kjcopts .= " -raw " . $opts{raw});
-    (exists $opts{partition}) && $opts{partition} eq 'dp' && ($kjcopts .= " -y");
-    (exists $opts{partition}) && $opts{partition} eq 'greedy' && ($kjcopts .= " -a");
-    (exists $opts{partition}) && $opts{partition} eq 'ilp' && ($kjcopts .= " -A");
+    $opts{raw} && $opts{iterations} &&
+      ($kjcopts .= " --outputs " . $opts{iterations});
+    if (exists $opts{partition})
+      {
+	$opts{partition} eq 'dp' && ($kjcopts .= " -y");
+	$opts{partition} eq 'greedy' && ($kjcopts .= " -a");
+	$opts{partition} eq 'ilp' && ($kjcopts .= " -A");
+      }
     $opts{altcodegen} && ($kjcopts .= " -z");
     $opts{atlas} && ($kjcopts .= " -E");
     $opts{'clone-with-serialization'} && ($kjcopts .= " -K");

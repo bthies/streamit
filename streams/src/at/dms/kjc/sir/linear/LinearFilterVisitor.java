@@ -149,29 +149,26 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	// first thing that we need to do is to check both non linear flags.
 	if (this.nonLinearFlag || other.nonLinearFlag) {
 	    this.nonLinearFlag = true;
-	    return;
+	    throw new NonLinearException("One side of an if branch is non-linear");
 	}
 	// now, check the linear representations
 	if ((!this.representationMatrix.equals(other.representationMatrix)) ||
 	    (!this.representationVector.equals(other.representationVector))) {
-	    LinearPrinter.println("Different branches compute different functions. Nonlinear!");
 	    this.nonLinearFlag = true;
-	    return;
+	    throw new NonLinearException("Different branches compute different functions. Nonlinear!");
 	}
 	// now, check the peek offset
-	if (!(this.peekOffset == other.peekOffset)) {
-	    LinearPrinter.println("Different branches have diff num of pops. " +
-				  "this = " + this.peekOffset +
-				  " other= " + other.peekOffset +
-				  ")  Nonlinear!");
+	if (!(this.peekOffset == other.peekOffset)) {	    
 	    this.nonLinearFlag = true;
-	    return;
+	    throw new NonLinearException("Different branches have diff num of pops. " +
+					 "this = " + this.peekOffset +
+					 " other= " + other.peekOffset +
+					 ")  Nonlinear!");
 	}	    
 	// now, check the push offset
-	if (!(this.pushOffset == other.pushOffset)) {
-	    LinearPrinter.println("Different branches have diff num of pushes. Nonlinear!");
+	if (!(this.pushOffset == other.pushOffset)) {	   
 	    this.nonLinearFlag = true;
-	    return;
+	    throw new NonLinearException("Different branches have diff num of pushes. Nonlinear!");
 	}
 	// now, do a set union on the two variable mappings and set
 	// that union as the variable mapping for this
@@ -613,8 +610,8 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      public Object visitForStatement(JForStatement self, JStatement init,
 				     JExpression cond, JStatement incr, JStatement body){
 	 this.nonLinearFlag = true;
-	 LinearPrinter.warn("Not yet implemented -- for loops are not handled yet.");
-	 return null;
+	 LinearPrinter.warn("Not yet implemented -- for loops are not handled yet (use --unroll 100000).");
+	 throw new NonLinearException("For loops are not implemented yet. Use --unroll 1000000 option.");
      }
     /**
      * Visit an if statement -- push this down the
@@ -682,12 +679,23 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
      * simply ignore them (eg return null signifying that they do not generate linear things).
      **/
     public Object visitMethodCallExpression(JMethodCallExpression self, JExpression prefix,
- 					    String ident, JExpression[] args){
+ 					    String ident, JExpression[] args){	
 	LinearPrinter.warn("Assuming method call expression non linear(" +
 			   ident + "). Also removing all field mappings.");
 	this.removeAllFieldMappings();
 	return null;
     }
+    
+    public Object visitPrintStatement(SIRPrintStatement self,
+				      JExpression arg) {
+	/* if this method call is to a method with side effects,
+	   mark the whole expression as non-linear. */
+	String message = " printing is a non-linear operation.";
+	LinearPrinter.println(message);
+	this.nonLinearFlag = true;
+	throw new NonLinearException(message);
+    }
+
 
     /**
      * Removes all of the mappings from fields to linear forms. We do this on a method call
@@ -875,9 +883,9 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 //     public Object visitVariableDefinition(JVariableDefinition self, int modifiers,
 // 					  CType type, String ident, JExpression expr){return null;}
     public Object visitWhileStatement(JWhileStatement self, JExpression cond, JStatement body){
-	this.nonLinearFlag = true;
+	this.nonLinearFlag = true;	
 	LinearPrinter.warn("Not yet implemented -- while statements are not yet implemented");
-	return null;
+	throw new NonLinearException("While statements are not implemented.");
     }
 
 
@@ -902,6 +910,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	    // set the flag that says this filter isn't linear
 	    this.nonLinearFlag = true;
 	    LinearPrinter.println("  push argument wasn't linear: " + arg);
+	    throw new NonLinearException("push argument wasn't linear");
 	} else {
 	    // (note that the first push ends up in the rightmost column)
 	    // so we calculate which column that this push statement corresponds to
@@ -939,7 +948,7 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	if (inputIndex < 0) {
 	    LinearPrinter.warn("Too many pops detected!");
 	    this.nonLinearFlag = true;
-	    return null;
+	    throw new NonLinearException("too many pops detected");
 	}
 	
 	
@@ -1134,5 +1143,5 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
 	}
 	    
     }
-
+    
 }

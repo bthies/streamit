@@ -13,7 +13,7 @@ import at.dms.kjc.iterator.*;
  * functions of their inputs, and for those that do, it keeps a mapping from
  * the filter name to the filter's matrix representation.
  *
- * $Id: LinearAnalyzer.java,v 1.9 2002-10-23 21:12:44 aalamb Exp $
+ * $Id: LinearAnalyzer.java,v 1.10 2002-11-08 03:43:46 aalamb Exp $
  **/
 public class LinearAnalyzer extends EmptyStreamVisitor {
     /** Mapping from filters to linear representations. never would have guessed that, would you? **/
@@ -120,7 +120,11 @@ public class LinearAnalyzer extends EmptyStreamVisitor {
 	// (we might need to send it thought the init function as well so that
 	//  we can determine the initial values of fields. However, I think that
 	//  field prop is supposed to take care of this.)
-	self.getWork().accept(theVisitor);
+	try {
+	    self.getWork().accept(theVisitor);
+	} catch (NonLinearException e) {
+	    LinearPrinter.println("  caught a non-linear exception -- eg the filter is non linear.");
+	}
 	
 	// print out the results of pumping the visitor
 	// incidentally, this output is parsed by some perl scripts to verify results,

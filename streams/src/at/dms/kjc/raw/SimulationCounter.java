@@ -91,9 +91,8 @@ public class SimulationCounter {
 	    FlatNode node = (FlatNode)it.next();
 	    if (node.contents instanceof SIRFilter) {
 		SIRFilter filter = (SIRFilter)node.contents;
-		bufferCount.put(node,new Integer(0));
-		
-				//				new Integer(filter.getPeekInt() - filter.getPopInt()));
+		bufferCount.put(node,
+				new Integer(filter.getPeekInt() - filter.getPopInt()));
 	    }
 	}
 	

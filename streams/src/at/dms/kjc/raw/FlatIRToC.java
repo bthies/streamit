@@ -777,7 +777,7 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//work function is called in the init Schedule
 	if (filter instanceof SIRTwoStageFilter) {
 	    SIRTwoStageFilter two = (SIRTwoStageFilter)filter;
-	    if (!(two.getInitPeek() == 0 && two.getInitPush() == 0 &&
+	    if (!(two.getInitPush() == 0 &&
 		  two.getInitPop() == 0))
 		initCount--;
 	}
@@ -809,7 +809,9 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	
 	//if the previous node is a two stage filter then count its initWork
 	//in the initialItemsTo Receive
-	if (previous != null && previous.contents instanceof SIRTwoStageFilter) {
+	if (previous != null && previous.contents instanceof SIRTwoStageFilter &&
+	    ((SIRTwoStageFilter)previous.contents).getInitPop() != 0 &&
+	    ((SIRTwoStageFilter)previous.contents).getInitPush() != 0) {
 	    remainingItemsToReceive -= ((SIRTwoStageFilter)previous.contents).getPushInt();
 	    remainingItemsToReceive += ((SIRTwoStageFilter)previous.contents).getInitPush();
 	}
@@ -827,6 +829,22 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    remainingItemsToReceive -= (peek -pop);
 	
 	remainingItemsToReceive -= (initCount * pop);
+
+	int bottomPeek; 
+	//fill the peek buffer 
+	if (filter instanceof SIRTwoStageFilter) {
+            bottomPeek = ((SIRTwoStageFilter)filter).getInitPeek();
+        } 
+	else {
+            bottomPeek = 0;
+        }
+        if (bottomPeek < peek) {
+            print(" for (" + exeIndex + " = " + bottomPeek + "; " + exeIndex + " < " + 
+                  peek + "; " + exeIndex + "++) {\n");
+            printReceive();
+	    print(" }\n");
+        }
+
 
 	//execute the work function
 	if (initCount > 0) {

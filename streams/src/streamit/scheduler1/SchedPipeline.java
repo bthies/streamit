@@ -43,6 +43,15 @@ public class SchedPipeline extends SchedStream
             }
         }
 
+        // copy the peek of the first child into my peek value
+        // this is the correct peek value to have in a pipeline
+        {
+            SchedStream firstChild = (SchedStream) allChildren.get (0);
+            ASSERT (firstChild);
+
+            setPeekConsumption (firstChild.getPeekConsumption ());
+        }
+
         // multiply the children's num of executions
         // by the appropriate output factors
         {

@@ -1,7 +1,7 @@
 /*
  * NodesToJava.java: traverse a front-end tree and produce Java objects
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: NodesToJava.java,v 1.65 2003-07-23 18:42:10 dmaze Exp $
+ * $Id: NodesToJava.java,v 1.66 2003-07-23 21:08:12 dmaze Exp $
  */
 
 package streamit.frontend.tojava;
@@ -19,11 +19,13 @@ public class NodesToJava implements FEVisitor
     private StreamSpec ss;
     // A string consisting of an even number of spaces.
     private String indent;
+    private TempVarGen varGen;
     
-    public NodesToJava(StreamSpec ss)
+    public NodesToJava(StreamSpec ss, TempVarGen varGen)
     {
         this.ss = ss;
         this.indent = "";
+        this.varGen = varGen;
     }
 
     // Add two spaces to the indent.
@@ -53,9 +55,11 @@ public class NodesToJava implements FEVisitor
 	{
 	    return ((TypeStruct)type).getName();
 	}
-	else if(type instanceof TypeStructRef) {
+	else if (type instanceof TypeStructRef)
+        {
 	    return ((TypeStructRef)type).getName();
-        } else if (type instanceof TypePrimitive)
+        }
+        else if (type instanceof TypePrimitive)
         {
             switch (((TypePrimitive)type).getType())
             {
@@ -67,6 +71,10 @@ public class NodesToJava implements FEVisitor
             case TypePrimitive.TYPE_COMPLEX: return "Complex";
             case TypePrimitive.TYPE_VOID: return "void";
             }
+        }
+        else if (type instanceof TypePortal)
+        {
+            return ((TypePortal)type).getName() + "Portal";
         }
         return null;
     }
@@ -522,9 +530,32 @@ public class NodesToJava implements FEVisitor
         return result;
     }
 
+    public Object doStreamCreator(String how, StreamCreator sc)
+    {
+        // If the stream creator involves registering with a portal,
+        // we need a temporary variable.
+        List portals = sc.getPortals();
+        if (portals.isEmpty())
+            return how + "(" + (String)sc.accept(this) + ")";
+        String tempVar = varGen.varName(varGen.nextVar(null));
+        // Need run-time type of the creator.  Assert that only
+        // named streams can be added to portals.
+        SCSimple scsimple = (SCSimple)sc;
+        String result = scsimple.getName() + " " + tempVar + " = " +
+            (String)sc.accept(this);
+        result += ";\n" + indent + how + "(" + tempVar + ")";
+        for (Iterator iter = portals.iterator(); iter.hasNext(); )
+        {
+            Expression portal = (Expression)iter.next();
+            result += ";\n" + indent + (String)portal.accept(this) +
+                ".regReceiver(" + tempVar + ")";
+        }
+        return result;
+    }
+    
     public Object visitStmtAdd(StmtAdd stmt)
     {
-        return "add(" + (String)stmt.getCreator().accept(this) + ")";
+        return doStreamCreator("add", stmt.getCreator());
     }
     
     public Object visitStmtAssign(StmtAssign stmt)
@@ -569,7 +600,7 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtBody(StmtBody stmt)
     {
-        return "setBody(" + (String)stmt.getCreator().accept(this) + ")";
+        return doStreamCreator("setBody", stmt.getCreator());
     }
     
     public Object visitStmtBreak(StmtBreak stmt)
@@ -641,7 +672,7 @@ public class NodesToJava implements FEVisitor
     
     public Object visitStmtLoop(StmtLoop stmt)
     {
-        return "setLoop(" + (String)stmt.getCreator().accept(this) + ")";
+        return doStreamCreator("setLoop", stmt.getCreator());
     }
 
     public Object visitStmtPhase(StmtPhase stmt)
@@ -682,9 +713,20 @@ public class NodesToJava implements FEVisitor
 
     public Object visitStmtSendMessage(StmtSendMessage stmt)
     {
-        // Hmm, shouldn't be in Java code.
-        return "sendMessage(" + (String)stmt.getReceiver().accept(this) +
-            ", " + stmt.getName() + ", ...)";
+        // Ignore the message latency until we have support for it
+        // in the Java syntax.
+        String result = (String)stmt.getReceiver().accept(this) + "." +
+            stmt.getName() + "(";
+        boolean first = true;
+        for (Iterator iter = stmt.getParams().iterator(); iter.hasNext(); )
+        {
+            Expression param = (Expression)iter.next();
+            if (!first) result += ", ";
+            first = false;
+            result += (String)param.accept(this);
+        }
+        result += ")";
+        return result;
     }
 
     public Object visitStmtSplit(StmtSplit stmt)
@@ -717,6 +759,61 @@ public class NodesToJava implements FEVisitor
             ") " + (String)stmt.getBody().accept(this);
     }
 
+    /**
+     * For a non-anonymous StreamSpec, check to see if it has any
+     * message handlers.  If it does, then generate a Java interface
+     * containing the handlers named (StreamName)Interface, and
+     * a portal class named (StreamName)Portal.
+     */
+    private String maybeGeneratePortal(StreamSpec spec)
+    {
+        List handlers = new java.util.ArrayList();
+        for (Iterator iter = spec.getFuncs().iterator(); iter.hasNext(); )
+        {
+            Function func = (Function)iter.next();
+            if (func.getCls() == Function.FUNC_HANDLER)
+                handlers.add(func);
+        }
+        if (handlers.isEmpty())
+            return null;
+        
+        // Okay.  Assemble the interface:
+        StringBuffer result = new StringBuffer();
+        result.append(indent + "interface " + spec.getName() +
+                      "Interface {\n");
+        addIndent();
+        for (Iterator iter = handlers.iterator(); iter.hasNext(); )
+        {
+            Function func = (Function)iter.next();
+            result.append(indent + "public ");
+            result.append(convertType(func.getReturnType()) + " ");
+            result.append(func.getName());
+            result.append(doParams(func.getParams(), null));
+            result.append(";\n");
+        }
+        unIndent();
+        result.append(indent + "}\n");
+        
+        // Assemble the portal:
+        result.append(indent + "class " + spec.getName() +
+                      "Portal extends Portal implements " + spec.getName() +
+                      "Interface {\n");
+        addIndent();
+        for (Iterator iter = handlers.iterator(); iter.hasNext(); )
+        {
+            Function func = (Function)iter.next();
+            result.append(indent + "public ");
+            result.append(convertType(func.getReturnType()) + " ");
+            result.append(func.getName());
+            result.append(doParams(func.getParams(), null));
+            result.append(" { }\n");
+        }
+        unIndent();
+        result.append(indent + "}\n");
+
+        return result.toString();
+    }
+
     public Object visitStreamSpec(StreamSpec spec)
     {
         String result = "";
@@ -725,7 +822,15 @@ public class NodesToJava implements FEVisitor
         // stream; (b) in an anonymous stream creator (SCAnon).
         if (spec.getName() != null)
         {
-            // Non-anonymous stream:
+            // Non-anonymous stream.  Maybe it has interfaces.
+            String ifaces = maybeGeneratePortal(spec);
+            if (ifaces == null)
+                ifaces = "";
+            else
+            {
+                result += ifaces;
+                ifaces = " implements " + spec.getName() + "Interface";
+            }
             result += indent;
             // This is only public if it's the top-level stream,
             // meaning it has type void->void.
@@ -739,7 +844,7 @@ public class NodesToJava implements FEVisitor
                 TypePrimitive.TYPE_VOID)
             {
                 result += "public class " + spec.getName() +
-                    " extends StreamIt\n";
+                    " extends StreamIt" + ifaces + "\n";
                 result += indent + "{\n";
                 addIndent();
                 result += indent + "public static void main(String[] args) {\n";
@@ -777,7 +882,7 @@ public class NodesToJava implements FEVisitor
                         result += "FeedbackLoop";
                         break;
                     }
-                result += "\n" + indent + "{\n";
+                result += ifaces + "\n" + indent + "{\n";
                 addIndent();
             }
         }

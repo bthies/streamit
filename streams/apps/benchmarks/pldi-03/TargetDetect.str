@@ -9,30 +9,41 @@ void->void pipeline TargetDetect {
   /* N is the length of the filters */
   int N = 100;
   add TargetSource(N);
-  //add MatchedFilterFour(N);
-  add TargetDetectSplitJoin(N);
+  add TargetDetectSplitJoin(N,8);
   /* there are four matched filters */
-  add ThresholdDetectSplitJoin(4, 8);
+  //add ThresholdDetectSplitJoin(4, 8);
   add FloatPrinter();
 }
 
-float->float splitjoin TargetDetectSplitJoin(int N) {
+float->float splitjoin TargetDetectSplitJoin(int N, float thresh) {
   split duplicate;
-  add MatchedFilterOne(N);
-  add MatchedFilterTwo(N);
-  add MatchedFilterThree(N);
-  add MatchedFilterFour(N);
+  add pipeline {
+    add MatchedFilterOne(N);
+    add ThresholdDetector(1,thresh);
+  };
+  add pipeline {
+    add MatchedFilterTwo(N);
+    add ThresholdDetector(2, thresh);
+  };
+  add pipeline {
+    add MatchedFilterThree(N);
+    add ThresholdDetector(3,thresh);
+  };
+  add pipeline {
+    add MatchedFilterFour(N);
+    add ThresholdDetector(4,thresh);
+  };
   join roundrobin;
 }
 
 /* one target detector for the number of interleaved elements on the tape. */
-float->float splitjoin ThresholdDetectSplitJoin(int num, float thresh) {
-  split roundrobin;
-  for (int i=0; i<num; i++) {
-    add ThresholdDetector(i+1,thresh);
-  }
-  join roundrobin;
-}
+//float->float splitjoin ThresholdDetectSplitJoin(int num, float thresh) {
+//  split roundrobin;
+//  for (int i=0; i<num; i++) {
+//    add ThresholdDetector(i+1,thresh);
+//  }
+//  join roundrobin;
+//}
 
 /* a threshold detector. Prints its number when the input
  * goes above the threshold.

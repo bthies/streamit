@@ -3,7 +3,7 @@ package at.dms.kjc.iterator;
 import at.dms.kjc.sir.*;
 import streamit.scheduler.iriter.*;
 
-abstract class SIRIterator implements Iterator {
+public abstract class SIRIterator implements Iterator {
     /**
      * The root of this iterator.
      */

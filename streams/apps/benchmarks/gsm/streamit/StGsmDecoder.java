@@ -684,6 +684,7 @@ class LTPPipeline extends Pipeline
     {
 	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
 	this.add(new LTPInputFilter());
+	//this.add(new ShortPrinter());
     }
 }
 class LARPipeline extends Pipeline
@@ -692,6 +693,7 @@ class LARPipeline extends Pipeline
     {
 	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
 	this.add(new LARInputFilter());
+	//this.add(new ShortPrinter());
     }
 }
 
@@ -712,6 +714,7 @@ class LTPLoopStream extends Pipeline
     {
 	this.add(new LTPInputSplitJoin());
 	this.add(new LTPFilter());
+	this.add(new ShortPrinter('b')); 
     }
 }
 
@@ -721,7 +724,8 @@ class DecoderFeedback extends FeedbackLoop
     {
 	this.setDelay(1);
 	this.setJoiner(WEIGHTED_ROUND_ROBIN (40, 1));  //sequence: ep[0....39], drpp
-  	this.setBody(new AdditionUpdateFilter());
+  	//this.setBody(new AdditionUpdateFilter());
+	this.setBody(new StupidStream()); //debug 
 	this.setSplitter(DUPLICATE ());   
 	//note:  although drp[120...159] are all that are
 	//       required for ShortTermSynth, this is currently
@@ -736,6 +740,16 @@ class DecoderFeedback extends FeedbackLoop
 	
 }
 
+
+class StupidStream extends Pipeline
+{
+    public void init()
+    {
+	this.add(new ShortPrinter('a'));
+	this.add(new AdditionUpdateFilter());
+	
+    }
+}
 
 class LARInputSplitJoin extends SplitJoin
 {
@@ -841,6 +855,31 @@ class HoldFilter extends Filter
     }
     
 }
+
+class ShortPrinter extends Filter
+{
+    char c;
+    ShortPrinter (char c)
+    {
+	super (c);
+    }
+    public void init(char c)
+    {  
+	input = new Channel(Short.TYPE, 1);
+	output = new Channel(Short.TYPE, 1);
+	this.c = c;
+    }
+
+    public void work()
+    {
+	short a = input.popShort();
+	System.out.println(c);
+	System.out.println(a);
+	output.pushShort(a);
+    }
+}
+
+
 public class StGsmDecoder extends StreamIt 
 {
     //include variables for parsing here!
@@ -853,13 +892,17 @@ public class StGsmDecoder extends StreamIt
     public void init() {
 	
 	this.add(new FileReader("BinaryDecoderInput1", Short.TYPE));
+	//this.add(new ShortPrinter());
 	this.add(new RPEInputFilter());
+	//this.add(new ShortPrinter());
 	this.add(new RPEDecodeFilter());
 	this.add(new DecoderFeedback());
+	//this.add(new ShortPrinter());
 	this.add(new HoldFilter());
 	this.add(new LARInputSplitJoin());
 	this.add(new ShortTermSynthFilter());
 	this.add(new PostProcessingFilter());
+	//this.add(new ShortPrinter());
 	this.add(new streamit.io.FileWriter("BinaryDecoderOutput1", Short.TYPE));	
     }
 }

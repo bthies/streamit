@@ -110,7 +110,8 @@ sub print_matrix {
     # if there are more than $MAX_COLS cols, print out a placeholder instead
     if (@first_row_elems > $MAX_COLS) {
 	print "c}\n";
-	print "TooBig";
+	# print out (rows,cols) for any matrix that is too big.
+	print "Too big(" . @$list_ref . "," . @first_row_elems . ")";
     } else {
 	# print out the format command (eg the number of columns) c's
 	my $i;

@@ -78,7 +78,8 @@ class RegTest:
                                 "gcc -o reg-out_p.o -c %s -pg -a reg-out.c" %
                                 opts.get_cppflags())
                 self.runCommand("gcc linking (with profiling)",
-                                ("gcc -o %s -nodefaultlibs %s reg-out_p.o " +
+                                ("gcc -o %s -pg -nodefaultlibs " +
+                                 "%s reg-out_p.o " +
                                  "-lstreamit_p -lc_p -lm_p -lgcc") %
                                 (opts.regout_name(), opts.get_ldflags()))
             else:

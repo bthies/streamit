@@ -11,6 +11,7 @@
 		<import plugin="org.eclipse.core.resources"/>
 		<import plugin="org.eclipse.debug.core"/>
 		<import plugin="org.eclipse.debug.ui"/>
+		<import plugin="org.eclipse.jdt.debug"/>
 		<import plugin="org.eclipse.jdt.debug.ui"/>
 		<import plugin="org.eclipse.jdt.launching"/>
 		<import plugin="org.eclipse.jdt.core"/>
@@ -93,5 +94,30 @@
 			<perspective id="org.eclipse.debug.ui.DebugPerspective"/>
 		</shortcut>
 	</extension>
+
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.ui.views								-->
+	<!-- ================================================================== -->
+	<extension point="org.eclipse.ui.views">
+		<view
+			id="launcher.FilterView"
+			name="%displayViewName"
+			category="org.eclipse.debug.ui"
+		   	icon="icons/full/ctool16/disp_sbook.gif"
+		   	class="launcher.FilterView">
+		</view>
+	</extension>
 	
+	<!-- ================================================================== -->
+	<!-- Extension point: org.eclipse.ui.perspectiveExtensions				-->
+	<!-- ================================================================== -->
+	<extension point="org.eclipse.ui.perspectiveExtensions">
+		<perspectiveExtension
+			targetID="org.eclipse.debug.ui.DebugPerspective">
+			<view id="launcher.FilterView" 
+				relative="org.eclipse.ui.views.TaskList"
+				relationship="stack"
+				visible="false"/>
+		</perspectiveExtension> 
+	</extension>
 </plugin>

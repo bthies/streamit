@@ -44,7 +44,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 import launcher.StreamItApplicationLaunchShortcut;
-import launcher.StreamItDebugEventSetListener;
 import launcher.StreamItLauncherPlugin;
 import launcher.StreamItLocalApplicationLaunchConfigurationDelegate;
 import org.eclipse.core.resources.IProject;
@@ -56,6 +55,8 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.debug.ui.actions.ActionMessages;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.ui.IEditorPart;
+
+import launcher.StreamItDebugEventSetListener;
 
 public class EnableDisableBreakpointRulerAction extends AbstractBreakpointRulerAction {
 	

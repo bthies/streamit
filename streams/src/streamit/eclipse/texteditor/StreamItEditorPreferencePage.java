@@ -417,28 +417,6 @@ public class StreamItEditorPreferencePage extends PreferencePage
 		StringBuffer temp;
 		Iterator i;
 		String toUse;
-		
-		/*
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-		System.out.println("asdf1");
-		String[] args = new String[3];
-		args[0] = "--output";
-		args[1] = "HelloWorld.java";
-		args[2] = "HelloWorld.str";
-		ToJava.main(args);
-		System.out.println("asdf2");
-
-		Thread.currentThread().setContextClassLoader(loader);
-		
-		String[] args = new String[1];
-		args[0] = "";
-		HelloWorld.main(args);
-		
-		System.out.println("test0:  " + System.getProperty("java.class.path", "."));
-		*/
-		
-		
 				
 		for (int j = 0; j < 5; j++) {
 			temp = new StringBuffer();

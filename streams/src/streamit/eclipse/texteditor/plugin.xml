@@ -1,156 +1,124 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- File written by PDE 1.0 -->
-
-<!-- ======================================================================= -->
-<!-- The StreamItEditor is a plugin adapted from the Java editor and Readme  -->
-<!-- Tool examples.                                                          -->
-<!-- ======================================================================= -->
 <plugin
-	id="texteditor"
-	name="%pluginName"
-	version="2.1.0"
-	provider-name="%providerName"
-	class="texteditor.StreamItEditorPlugin">
+   id="texteditor"
+   name="%pluginName"
+   version="2.1.0"
+   provider-name="%providerName"
+   class="texteditor.StreamItEditorPlugin">
 
-	<requires>
-		<import plugin="launcher"/>
-		<import plugin="org.eclipse.ui"/>
-		<import plugin="org.eclipse.core.runtime"/>
-		<import plugin="org.eclipse.core.resources"/>
-		<import plugin="org.eclipse.debug.core"/>
-		<import plugin="org.eclipse.debug.ui"/>
-		<import plugin="org.eclipse.jdt.core"/>
-		<import plugin="org.eclipse.jdt.debug.ui"/>
-		<import plugin="org.eclipse.jdt.debug"/>
-		<import plugin="org.eclipse.jdt.launching"/>
-		<import plugin="org.eclipse.jdt.ui"/>
-		<import plugin="org.eclipse.jface"/>
-		<import plugin="org.eclipse.jface.text"/>
-	</requires>
+   <runtime>
+      <library name="texteditor.jar">
+         <export name="*"/>
+      </library>
+   </runtime>
+   <requires>
+      <import plugin="launcher"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.debug.core"/>
+      <import plugin="org.eclipse.debug.ui"/>
+      <import plugin="org.eclipse.jdt.core"/>
+      <import plugin="org.eclipse.jdt.debug.ui"/>
+      <import plugin="org.eclipse.jdt.debug"/>
+      <import plugin="org.eclipse.jdt.launching"/>
+      <import plugin="org.eclipse.jdt.ui"/>
+      <import plugin="org.eclipse.jface"/>
+      <import plugin="org.eclipse.jface.text"/>
+   </requires>
 
-	<runtime>
-		<library name="texteditor.jar">
-			<export name="*"/>
-		</library>
-	</runtime>
 
+<!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.editors                            -->
+<!-- ================================================================== -->
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="%streamItEditorName"
+            icon="icons/obj16/java.gif"
+            extensions="str"
+            contributorClass="org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditorActionContributor"
+            class="texteditor.StreamItEditor"
+            id="StreamItEditor">
+      </editor>
+   </extension>
+<!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.preferencePages                    -->
+<!-- ================================================================== -->
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            name="%streamItPreferencePage"
+            class="texteditor.StreamItEditorPreferencePage"
+            id="texteditor.Page1">
+      </page>
+   </extension>
+<!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.documentProviders                   -->
+<!-- ================================================================== -->
+   <extension
+         point="org.eclipse.ui.documentProviders">
+      <provider
+            extensions="str"
+            class="texteditor.StreamItDocumentProvider"
+            id="texteditor.StreamItDocumentProvider">
+      </provider>
+   </extension>
+<!-- ================================================================== -->
+<!-- Extension point: org.eclipse.ui.popupMenus			                -->
+<!-- ================================================================== -->
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <viewerContribution
+            targetID="#StreamItRulerContext"
+            id="texteditor.StreamItEditorPopupActions">
+         <action
+               label="%StreamItBreakpointProperties.label"
+               class="texteditor.StreamItBreakpointPropertiesRulerActionDelegate"
+               menubarPath="debug"
+               id="texteditor.StreamItBreakpointPropertiesRulerActionDelegate">
+         </action>
+         <action
+               label="%AddWatchpoint.label"
+               class="texteditor.ManageWatchpointRulerActionDelegate"
+               menubarPath="debug"
+               id="texteditor.ManageWatchpointRulerActionDelegate">
+         </action>
+         <action
+               label="%AddMethodBreakpoint.label"
+               class="texteditor.ManageMethodBreakpointRulerActionDelegate"
+               menubarPath="debug"
+               id="texteditor.ManageMethodBreakpointRulerActionDelegate">
+         </action>
+         <action
+               label="%EnableBreakpoint.label"
+               class="texteditor.EnableDisableBreakpointRulerActionDelegate"
+               menubarPath="debug"
+               id="texteditor.EnableDisableBreakpointRulerActionDelegate">
+         </action>
+         <action
+               label="%AddBreakpoint.label"
+               class="texteditor.ManageBreakpointRulerActionDelegate"
+               menubarPath="debug"
+               id="texteditor.ManageBreakpointRulerActionDelegate">
+         </action>
+         <action
+               label="%AddTask.label"
+               helpContextId="org.eclipse.ui.AddTask_action_context"
+               tooltip="%AddTask.tooltip"
+               class="org.eclipse.ui.texteditor.TaskRulerAction"
+               menubarPath="add"
+               id="org.eclipse.ui.texteditor.TaskRulerAction">
+         </action>
+         <action
+               label="%AddBookmark.label"
+               helpContextId="org.eclipse.ui.bookmark_action_context"
+               tooltip="%AddBookmark.tooltip"
+               class="org.eclipse.ui.texteditor.BookmarkRulerAction"
+               menubarPath="add"
+               id="org.eclipse.ui.texteditor.BookmarkRulerAction">
+         </action>
+      </viewerContribution>
+   </extension>
 
-	<!-- ================================================================== -->
-	<!-- Extension point: org.eclipse.ui.editors                            -->
-	<!-- ================================================================== -->
-	<extension point="org.eclipse.ui.editors">
-		<editor
-			id="StreamItEditor"
-			name="%streamItEditorName"
-			icon="icons/obj16/java.gif"
-			extensions="str"
-			class="texteditor.StreamItEditor"
-			contributorClass="org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditorActionContributor">			
-		</editor>
-	</extension>
-
-	<!-- ================================================================== -->
-	<!-- Extension point: org.eclipse.ui.preferencePages                    -->
-	<!-- ================================================================== -->
-	<extension point = "org.eclipse.ui.preferencePages">
-		<page 
-			id="texteditor.Page1"
-         	name="%streamItPreferencePage"
-			class="texteditor.StreamItEditorPreferencePage">
-		</page>
-	</extension>
-
-	<!-- ================================================================== -->
-	<!-- Extension point: org.eclipse.ui.documentProviders                   -->
-	<!-- ================================================================== -->
-	<extension point="org.eclipse.ui.documentProviders">
-		<provider
-			id="texteditor.StreamItDocumentProvider"		
-			class="texteditor.StreamItDocumentProvider"	
-			extensions="str">
-		</provider>
-	</extension>
-
-	<!-- ================================================================== -->
-	<!-- Extension point: org.eclipse.ui.popupMenus			                -->
-	<!-- ================================================================== -->
-	<extension point="org.eclipse.ui.popupMenus">   
-		<viewerContribution 
-			id="texteditor.StreamItEditorPopupActions" 
-			targetID="#StreamItRulerContext">
-			<action
-				id="texteditor.StreamItBreakpointPropertiesRulerActionDelegate"
-				label="%StreamItBreakpointProperties.label"
-				menubarPath="debug"
-				class="texteditor.StreamItBreakpointPropertiesRulerActionDelegate">
-			</action>
-			<action
-				id="texteditor.ManageWatchpointRulerActionDelegate"
-				label="%AddWatchpoint.label"
-				menubarPath="debug"
-				class="texteditor.ManageWatchpointRulerActionDelegate">
-			</action>
-			<action
-				id="texteditor.ManageMethodBreakpointRulerActionDelegate"
-				label="%AddMethodBreakpoint.label"
-				menubarPath="debug"
-				class="texteditor.ManageMethodBreakpointRulerActionDelegate">
-			</action>		
-			<action
-				id="texteditor.EnableDisableBreakpointRulerActionDelegate"
-				label="%EnableBreakpoint.label"
-				menubarPath="debug"
-				class="texteditor.EnableDisableBreakpointRulerActionDelegate">
-			</action>
-			<action
-				id="texteditor.ManageBreakpointRulerActionDelegate"
-				label="%AddBreakpoint.label"
-				menubarPath="debug"
-				class="texteditor.ManageBreakpointRulerActionDelegate">
-			</action>			
-			<action
-				id="org.eclipse.ui.texteditor.TaskRulerAction"
-				menubarPath="add"
-				label="%AddTask.label"
-				tooltip="%AddTask.tooltip"
-				helpContextId="org.eclipse.ui.AddTask_action_context"
-				class="org.eclipse.ui.texteditor.TaskRulerAction">
-			</action>
-			<action
-				id="org.eclipse.ui.texteditor.BookmarkRulerAction"
-				menubarPath="add"
-				label="%AddBookmark.label"
-				tooltip="%AddBookmark.tooltip"
-				helpContextId="org.eclipse.ui.bookmark_action_context"
-				class="org.eclipse.ui.texteditor.BookmarkRulerAction">
-			</action>
-		</viewerContribution>
-<!--	
-		<objectContribution 
-			id="texteditor.MethodBreakpointActions"
-			objectClass="org.eclipse.jdt.core.IMethod">
-			<filter name="MethodActionFilter" value="isNotAbstract"/>
-			<action id="texteditor.MethodBreakpoint"
-				label="%manageMethodBreakpointAction.label"
-				helpContextId="manage_method_breakpoint_action_context"
-				menubarPath="additions"
-				class="texteditor.ManageMethodBreakpointActionDelegate"
-				enablesFor="1">
-			</action>
-		</objectContribution>
-
-	
-		<objectContribution 
-			id="texteditor.WatchpointActions"
-			objectClass="org.eclipse.jdt.core.IField">
-			<action id="texteditor.Watchpoint"
-				label="%manageWatchpointAction.label"
-  				helpContextId="manage_watchpoint_action_context"
-  				menubarPath="additions"
-  				class="texteditor.ManageWatchpointActionDelegate"
-				enablesFor="1">
-			</action> 
-		</objectContribution>
--->
-	</extension>
 </plugin>

@@ -203,10 +203,12 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	    print("volatile int " + Util.CSTIINTVAR + ";\n");
 	}
 	
-	if (RawBackend.FILTER_DEBUG_MODE &&
-	    self.getOutputType().isNumeric()) {
+	if (RawBackend.FILTER_DEBUG_MODE) {
 	    print("void static_send_print(");
-	    print(self.getOutputType() + " f) {\n");
+	    if (self.getOutputType() == CStdType.Void)
+		print("int f) {\n");		
+	    else 
+		print(self.getOutputType() + " f) {\n");
 	    if (self.getOutputType().isFloatingPoint()) 
 		print("print_float(f);\n");
 	    else 
@@ -1692,7 +1694,6 @@ public class FlatIRToC extends SLIREmptyVisitor implements StreamVisitor
 	//	if (tapeType != val.getType()) {
 	//    Utils.fail("type of push argument does not match filter output type");
 	//	}
-	
 	print(Util.staticNetworkSendPrefix(tapeType));
 	//if the type of the argument to the push statement does not 
 	//match the filter output type, print a cast.

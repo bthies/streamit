@@ -1059,7 +1059,7 @@ public class Operator extends DestroyedClass
         if (initParams.getParamName ().equals("ParameterContainer")) init ((ParameterContainer) initParams.getObjParam ("params"));
         else {
             // labels don't match - print an error
-            ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.");
+            ERROR ("You didn't provide a correct if-else statement in setupOperator.\nPlease read streams/docs/implementation-notes/library-init-functions.txt for instructions.\n(paramName=" + initParams.getParamName() + ")");
         }
 
         connectGraph ();

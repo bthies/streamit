@@ -12,8 +12,7 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.Iterator;
-import streamit.scheduler1.*;
-import streamit.scheduler1.simple.*;
+
 
 /**
  * This class generates a schedule for the switch code by simulating the 

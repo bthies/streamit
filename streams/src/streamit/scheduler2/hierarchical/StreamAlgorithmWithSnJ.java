@@ -3,7 +3,7 @@ package streamit.scheduler2.hierarchical;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.SplitFlow;
 import streamit.scheduler2.base.StreamInterfaceWithSnJ.JoinFlow;
 
-/* $Id: StreamAlgorithmWithSnJ.java,v 1.4 2003-04-06 19:19:02 karczma Exp $ */
+/* $Id: StreamAlgorithmWithSnJ.java,v 1.5 2003-04-06 19:40:34 karczma Exp $ */
 
 /**
  * This class provides an implementation for StreamInterface.
@@ -116,9 +116,9 @@ public class StreamAlgorithmWithSnJ extends StreamAlgorithm
         {
             if (isSplitter)
             {
-                phase.appendPhase(getSplitSteadyPhase(nPhase));
+                steadyState.appendPhase(getSplitSteadyPhase(nPhase));
             } else{
-                phase.appendPhase(getJoinSteadyPhase(nPhase));
+                steadyState.appendPhase(getJoinSteadyPhase(nPhase));
             }
         }
         

@@ -157,7 +157,7 @@ public class ArrayDestroyer extends SLIRReplacingVisitor {
     }
 
     private JVariableDefinition toVar(JLocalVariable var,int idx) {
-	return new JVariableDefinition(null,0,var.getType(),var.getIdent()+"__destroyed_"+idx,null);
+	return new JVariableDefinition(null,0,((CArrayType)var.getType()).getBaseType(),var.getIdent()+"__destroyed_"+idx,null);
     }
 
     public Object visitArrayAccessExpression(JArrayAccessExpression self,

@@ -16,6 +16,7 @@
 
 package streamit.frontend.passes;
 
+import streamit.frontend.controlflow.*;
 import streamit.frontend.nodes.*;
 import java.util.*;
 
@@ -27,7 +28,7 @@ import java.util.*;
  * semantic errors.
  *
  * @author  David Maze &lt;dmaze@cag.lcs.mit.edu&gt;
- * @version $Id: SemanticChecker.java,v 1.15 2004-01-06 13:50:13 dmaze Exp $
+ * @version $Id: SemanticChecker.java,v 1.16 2004-01-21 21:14:55 dmaze Exp $
  */
 public class SemanticChecker
 {
@@ -51,6 +52,7 @@ public class SemanticChecker
         checker.checkVariableUsage(prog);
         checker.checkBasicTyping(prog);
         checker.checkStreamConnectionTyping(prog);
+        checker.checkStatementCounts(prog);
         checker.checkIORates(prog);
         return checker.good;
     }
@@ -737,6 +739,85 @@ public class SemanticChecker
      */
     public void checkStreamConnectionTyping(Program prog)
     {
+    }
+
+    /**
+     * Checks that statements that must be invoked some number
+     * of times in fact are.  This includes checking that split-join
+     * and feedback loop init functions have exactly one splitter
+     * and exactly one joiner.
+     *
+     * @param prog  parsed program object to check
+     */
+    public void checkStatementCounts(Program prog)
+    {
+        // Look for init functions in split-joins and feedback loops:
+        prog.accept(new FEReplacer() {
+                public Object visitStreamSpec(StreamSpec ss)
+                {
+                    if (ss.getType() == StreamSpec.STREAM_SPLITJOIN ||
+                        ss.getType() == StreamSpec.STREAM_FEEDBACKLOOP)
+                    {
+                        exactlyOneStatement
+                            (ss, "split",
+                             new StatementCounter() {
+                                 public boolean
+                                     statementQualifies(Statement stmt)
+                                 { return stmt instanceof StmtSplit; }
+                             });
+                        exactlyOneStatement
+                            (ss, "join",
+                             new StatementCounter() {
+                                 public boolean
+                                     statementQualifies(Statement stmt)
+                                 { return stmt instanceof StmtJoin; }
+                             });
+                    }
+
+                    if (ss.getType() == StreamSpec.STREAM_FEEDBACKLOOP)
+                    {
+                        exactlyOneStatement
+                            (ss, "body",
+                             new StatementCounter() {
+                                 public boolean
+                                     statementQualifies(Statement stmt)
+                                 { return stmt instanceof StmtBody; }
+                             });
+                        exactlyOneStatement
+                            (ss, "loop",
+                             new StatementCounter() {
+                                 public boolean
+                                     statementQualifies(Statement stmt)
+                                 { return stmt instanceof StmtLoop; }
+                             });
+                    }
+                    return super.visitStreamSpec(ss);
+                }
+            });
+    }
+
+    private void exactlyOneStatement(StreamSpec ss, String stype,
+                                     StatementCounter sc)
+    {
+        Function init = ss.getInitFunc();
+        // ASSERT: init != null; this mostly implies you're not
+        // calling this on a filter.
+        CFG cfg = CFGBuilder.buildCFG(init);
+        Map splitCounts = sc.run(cfg);
+        // TODO: modularize this analysis; report the first place
+        // where there's a second split/join, and/or the first place
+        // where there's ambiguity (bottom).  This would be easier if
+        // Java had lambdas.
+        CountLattice exitVal = (CountLattice)splitCounts.get(cfg.getExit());
+        if (exitVal.isTop())
+            report(init, "weird failure: " + stype + " exit value is top");
+        else if (exitVal.isBottom())
+            report(init, "couldn't determine number of " + stype +
+                   " statements");
+        else if (exitVal.getValue() == 0)
+            report(init, "no " + stype + " statements");
+        else if (exitVal.getValue() > 1)
+            report(init, "more than one " + stype + " statement");
     }
 
     /**

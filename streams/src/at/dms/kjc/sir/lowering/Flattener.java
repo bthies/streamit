@@ -25,6 +25,13 @@ public class Flattener {
 
 	// propagate constants and unroll loops
 	ConstantProp.propagateAndUnroll(str);
+
+	// DEBUGGING PRINTING
+	System.out.println("-----------------------------------");
+	printer1 = new SIRPrinter();
+	str.accept(printer1);
+	printer1.close();
+
 	// name the components
 	Namer.assignNames(str);
 	// make single structure

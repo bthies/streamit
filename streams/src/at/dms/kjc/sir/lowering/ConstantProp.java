@@ -4,6 +4,7 @@ import streamit.scheduler.*;
 
 import java.util.*;
 import at.dms.kjc.*;
+import at.dms.util.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.lir.*;
 
@@ -35,6 +36,63 @@ public class ConstantProp {
 	// unroll loops within init function of <str>
 	//str.getInit().accept(new Unroller(constants));
 	// recurse into sub-streams
+	recurse(str, constants);
+    }
+
+    /**
+     * Recurses from <str> into all its substreams.
+     */
+    private void recurse(SIRStream str, Hashtable constants) {
+	// if we're at the bottom, we're done
+	if (str.getInit()==null) {
+	    return;
+	}
+	// iterate through statements of init function, looking for SIRInit's
+	List statementList = str.getInit().getStatementList();
+	for (ListIterator it = statementList.listIterator(); it.hasNext(); ) {
+	    JStatement next = (JStatement)it.next();
+	    // if we found a sub-stream, recurse into it
+	    if (next instanceof SIRInitStatement) {
+		recurse((SIRInitStatement)next, constants);
+	    }
+	}
+    }
+
+    /**
+     * Recurses using <init> given that <constants> were built for
+     * the parent.
+     */
+    private void recurse(SIRInitStatement initStatement, Hashtable constants) {
+	// get the init function of the target--this is where analysis
+	// will continue
+	JMethodDeclaration initMethod = initStatement.getTarget().getInit();
+	// if there is no init function, we're done
+	if (initMethod==null) {
+	    return;
+	}
+	// otherwise, augment the hashtable mapping the parameters of
+	// the init function to any constants that appear in the call...
+	// get args to init function
+	JExpression[] args = initStatement.getArgs();
+	// get parameters of init function
+	JFormalParameter[] parameters = initMethod.getParameters();
+	// build new constants
+	for (int i=0; i<args.length; i++) {
+	    // if we are passing an arg to the init function...
+	    if (args[i] instanceof JLiteral) {
+		// if it's already a literal, just record it
+		constants.put(parameters[i], args[i]);
+		System.out.println("recognizing that " + parameters[i] +
+				   " is " + args[i]);
+	    } else if (constants.get(args[i])!=null) {
+		// otherwise if it's associated w/ a literal, then record that
+		constants.put(parameters[i], constants.get(args[i]));
+		System.out.println("recognizing that " + parameters[i] +
+				   " is " + constants.get(args[i]));
+	    }
+	}
+	// recurse into sub-stream
+	propagateAndUnroll(initStatement.getTarget(), constants);
     }
 }
 
@@ -59,24 +117,6 @@ class Propagator extends EmptyAttributeVisitor {
     }
 
     // ----------------------------------------------------------------------
-    // METHODS AND FIELDS
-    // ----------------------------------------------------------------------
-
-    /**
-     * Visits a field declaration
-     */
-    public Object visitFieldDeclaration(JFieldDeclaration self,
-					int modifiers,
-					CType type,
-					String ident,
-					JExpression expr) {
-	if (expr != null) {
-	    expr.accept(this);
-	}
-	return self;
-    }
-
-    // ----------------------------------------------------------------------
     // STATEMENT
     // ----------------------------------------------------------------------
 
@@ -86,7 +126,11 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitWhileStatement(JWhileStatement self,
 				      JExpression cond,
 				      JStatement body) {
-	cond.accept(this);
+	JExpression newExp = (JExpression)cond.accept(this);
+	// reset if we found a constant
+	if (newExp.isConstant()) {
+	    self.setCondition(newExp);
+	}
 	body.accept(this);
 	return self;
     }
@@ -100,7 +144,15 @@ class Propagator extends EmptyAttributeVisitor {
 					  String ident,
 					  JExpression expr) {
 	if (expr != null) {
-	    expr.accept(this);
+	    JExpression newExp = (JExpression)expr.accept(this);
+	    // if we have a constant AND it's a final variable...
+	    if (newExp.isConstant() && CModifier.contains(modifiers,
+							  ACC_FINAL)) {
+		// reset the value
+		self.setExpression(newExp);
+		// remember the value for the duration of our visiting
+		constants.put(self, newExp);
+	    }
 	}
 	return self;
     }
@@ -111,7 +163,11 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitSwitchStatement(JSwitchStatement self,
 				       JExpression expr,
 				       JSwitchGroup[] body) {
-	expr.accept(this);
+	JExpression newExp = (JExpression)expr.accept(this);
+	// reset if constant
+	if (newExp.isConstant()) {
+	    self.setExpression(newExp);
+	}
 	for (int i = 0; i < body.length; i++) {
 	    body[i].accept(this);
 	}
@@ -124,7 +180,10 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitReturnStatement(JReturnStatement self,
 				       JExpression expr) {
 	if (expr != null) {
-	    expr.accept(this);
+	    JExpression newExp = (JExpression)expr.accept(this);
+	    if (newExp.isConstant()) {
+		self.setExpression(newExp);
+	    }
 	}
 	return self;
     }
@@ -136,7 +195,10 @@ class Propagator extends EmptyAttributeVisitor {
 				   JExpression cond,
 				   JStatement thenClause,
 				   JStatement elseClause) {
-	cond.accept(this);
+	JExpression newExp = (JExpression)cond.accept(this);
+	if (newExp.isConstant()) {
+	    self.setCondition(newExp);
+	}
 	thenClause.accept(this);
 	if (elseClause != null) {
 	    elseClause.accept(this);
@@ -152,17 +214,9 @@ class Propagator extends EmptyAttributeVisitor {
 				    JExpression cond,
 				    JStatement incr,
 				    JStatement body) {
-	if (init != null) {
-	    init.accept(this);
-	}
-	if (cond != null) {
-	    cond.accept(this);
-	}
-	if (incr != null) {
-	    incr.accept(this);
-	}
-	body.accept(this);
-	return self;
+	// cond should never be a constant, or else we have an
+	// infinite or empty loop.  Thus I won't check for it... 
+	return super.visitForStatement(self, init, cond, incr, body);
     }
 
     /**
@@ -170,7 +224,10 @@ class Propagator extends EmptyAttributeVisitor {
      */
     public Object visitExpressionStatement(JExpressionStatement self,
 					   JExpression expr) {
-	expr.accept(this);
+	JExpression newExp = (JExpression)expr.accept(this);
+	if (newExp.isConstant()) {
+	    self.setExpression(newExp);
+	}
 	return self;
     }
 
@@ -181,7 +238,10 @@ class Propagator extends EmptyAttributeVisitor {
 				   JExpression cond,
 				   JStatement body) {
 	body.accept(this);
-	cond.accept(this);
+	JExpression newExp = (JExpression)cond.accept(this);
+	if (newExp.isConstant()) {
+	    self.setCondition(newExp);
+	}
 	return self;
     }
 
@@ -195,8 +255,27 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitUnaryPlusExpression(JUnaryExpression self,
 					   JExpression expr)
     {
-	expr.accept(this);
-	return self;
+	JExpression newExp = (JExpression)expr.accept(this);
+	if (newExp.isConstant()) {
+	    return new JIntLiteral(newExp.intValue()+1);
+	} else {
+	    return self;
+	}
+    }
+
+    /**
+     * visits a cast expression
+     */
+    public Object visitCastExpression(JCastExpression self,
+				      JExpression expr,
+				      CType type) {
+	JExpression newExp = (JExpression)expr.accept(this);
+	// return a constant if we have it
+	if (newExp.isConstant()) {
+	    return newExp;
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -205,8 +284,12 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitUnaryMinusExpression(JUnaryExpression self,
 					    JExpression expr)
     {
-	expr.accept(this);
-	return self;
+	JExpression newExp = (JExpression)expr.accept(this);
+	if (newExp.isConstant()) {
+	    return new JIntLiteral(newExp.intValue()-1);
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -215,8 +298,12 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitBitwiseComplementExpression(JUnaryExpression self,
 						   JExpression expr)
     {
-	expr.accept(this);
-	return self;
+	JExpression newExp = (JExpression)expr.accept(this);
+	if (newExp.isConstant()) {
+	    return new JIntLiteral(~newExp.intValue());
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -225,8 +312,12 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitLogicalComplementExpression(JUnaryExpression self,
 						   JExpression expr)
     {
-	expr.accept(this);
-	return self;
+	JExpression newExp = (JExpression)expr.accept(this);
+	if (newExp.isConstant()) {
+	    return new JBooleanLiteral(null, !newExp.booleanValue());
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -236,41 +327,25 @@ class Propagator extends EmptyAttributeVisitor {
 				       int oper,
 				       JExpression left,
 				       JExpression right) {
-	left.accept(this);
-	right.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a shift expressiona
-     */
-    public Object visitRelationalExpression(JRelationalExpression self,
-					    int oper,
-					    JExpression left,
-					    JExpression right) {
-	left.accept(this);
-	right.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a prefix expression
-     */
-    public Object visitPrefixExpression(JPrefixExpression self,
-					int oper,
-					JExpression expr) {
-	expr.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a postfix expression
-     */
-    public Object visitPostfixExpression(JPostfixExpression self,
-					 int oper,
-					 JExpression expr) {
-	expr.accept(this);
-	return self;
+	JExpression newLeft = (JExpression)left.accept(this);
+	JExpression newRight = (JExpression)right.accept(this);
+	if (newLeft.isConstant() && newRight.isConstant()) {
+	    switch (oper) {
+	    case OPE_SL:
+		return new JIntLiteral(newLeft.intValue() << 
+				       newRight.intValue());
+	    case OPE_SR:
+		return new JIntLiteral(newLeft.intValue() >>
+				       newRight.intValue());
+	    case OPE_BSR:
+		return new JIntLiteral(newLeft.intValue() >>>
+				       newRight.intValue());
+	    default:
+		throw new InconsistencyException();
+	    }
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -278,57 +353,10 @@ class Propagator extends EmptyAttributeVisitor {
      */
     public Object visitParenthesedExpression(JParenthesedExpression self,
 					     JExpression expr) {
-	expr.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits an unqualified anonymous class instance creation expression.
-     */
-    public Object visitQualifiedAnonymousCreation(JQualifiedAnonymousCreation self,
-						  JExpression prefix,
-						  String ident,
-						  JExpression[] params,
-						  JClassDeclaration decl)
-    {
-	prefix.accept(this);
-	visitArgs(params);
-	return self;
-    }
-
-    /**
-     * Visits an unqualified instance creation expression.
-     */
-    public Object visitQualifiedInstanceCreation(JQualifiedInstanceCreation self,
-						 JExpression prefix,
-						 String ident,
-						 JExpression[] params)
-    {
-	prefix.accept(this);
-	visitArgs(params);
-	return self;
-    }
-
-    /**
-     * Visits an unqualified anonymous class instance creation expression.
-     */
-    public Object visitUnqualifiedAnonymousCreation(JUnqualifiedAnonymousCreation self,
-						    CClassType type,
-						    JExpression[] params,
-						    JClassDeclaration decl)
-    {
-	visitArgs(params);
-	return self;
-    }
-
-    /**
-     * Visits an unqualified instance creation expression.
-     */
-    public Object visitUnqualifiedInstanceCreation(JUnqualifiedInstanceCreation self,
-						   CClassType type,
-						   JExpression[] params)
-    {
-	visitArgs(params);
+	JExpression newExp = (JExpression)expr.accept(this);
+	if (newExp.isConstant()) {
+	    self.setExpression(newExp);
+	}
 	return self;
     }
 
@@ -342,7 +370,10 @@ class Propagator extends EmptyAttributeVisitor {
     {
 	for (int i = 0; i < dims.length; i++) {
 	    if (dims[i] != null) {
-		dims[i].accept(this);
+		JExpression newExp = (JExpression)dims[i].accept(this);
+		if (newExp.isConstant()) {
+		    dims[i] = newExp;
+		}
 	    }
 	}
 	if (init != null) {
@@ -352,70 +383,37 @@ class Propagator extends EmptyAttributeVisitor {
     }
 
     /**
-     * Visits a name expression
-     */
-    public Object visitNameExpression(JNameExpression self,
-				      JExpression prefix,
-				      String ident) {
-	if (prefix != null) {
-	    prefix.accept(this);
-	}
-	return self;
-    }
-
-    /**
-     * Visits an array allocator expression
-     */
-    public Object visitBinaryExpression(JBinaryExpression self,
-					String oper,
-					JExpression left,
-					JExpression right) {
-	left.accept(this);
-	right.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a method call expression
-     */
-    public Object visitMethodCallExpression(JMethodCallExpression self,
-					    JExpression prefix,
-					    String ident,
-					    JExpression[] args) {
-	if (prefix != null) {
-	    prefix.accept(this);
-	}
-	visitArgs(args);
-	return self;
-    }
-
-    /**
      * Visits a local variable expression
      */
     public Object visitLocalVariableExpression(JLocalVariableExpression self,
 					       String ident) {
-	return self;
+	// if we know the value of the variable, return a literal.
+	// otherwise, just return self
+	System.out.println("visiting variable " + self.getVariable());
+	Object constant = constants.get(self.getVariable());
+	if (constant!=null) {
+	    System.out.println("return const " + constant);
+	    return constant;
+	} else {
+	    return self;
+	}
     }
 
     /**
-     * Visits an instanceof expression
+     * Visits a relational expression
      */
-    public Object visitInstanceofExpression(JInstanceofExpression self,
-					    JExpression expr,
-					    CType dest) {
-	expr.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits an equality expression
-     */
-    public Object visitEqualityExpression(JEqualityExpression self,
-					  boolean equal,
-					  JExpression left,
-					  JExpression right) {
-	left.accept(this);
-	right.accept(this);
+    public Object visitRelationalExpression(JRelationalExpression self,
+					    int oper,
+					    JExpression left,
+					    JExpression right) {
+	JExpression newLeft = (JExpression) left.accept(this);
+	JExpression newRight = (JExpression) right.accept(this);
+	if (newLeft.isConstant()) {
+	    self.setLeft(newLeft);
+	}
+	if (newRight.isConstant()) {
+	    self.setRight(newRight);
+	}
 	return self;
     }
 
@@ -427,54 +425,32 @@ class Propagator extends EmptyAttributeVisitor {
 					     JExpression left,
 					     JExpression right) {
 	cond.accept(this);
-	left.accept(this);
-	right.accept(this);
+	JExpression newLeft = (JExpression)left.accept(this);
+	if (newLeft.isConstant()) {
+	    self.setLeft(newLeft);
+	}
+	JExpression newRight = (JExpression)right.accept(this);
+	if (newRight.isConstant()) {
+	    self.setRight(newRight);
+	}
 	return self;
     }
 
     /**
-     * Visits a compound expression
+     * Visits a binary expression
      */
-    public Object visitCompoundAssignmentExpression(JCompoundAssignmentExpression self,
-						    int oper,
-						    JExpression left,
-						    JExpression right) {
-	left.accept(this);
-	right.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a field expression
-     */
-    public Object visitFieldExpression(JFieldAccessExpression self,
-				       JExpression left,
-				       String ident)
-    {
-	left.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a cast expression
-     */
-    public Object visitCastExpression(JCastExpression self,
-				      JExpression expr,
-				      CType type)
-    {
-	expr.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits a cast expression
-     */
-    public Object visitUnaryPromoteExpression(JUnaryPromote self,
-					      JExpression expr,
-					      CType type)
-    {
-	expr.accept(this);
-	return self;
+    public Object visitBinaryExpression(JBinaryExpression self,
+					String oper,
+					JExpression left,
+					JExpression right) {
+	if (self instanceof JBinaryArithmeticExpression) {
+	    return doBinaryArithmeticExpression((JBinaryArithmeticExpression)
+						self, 
+						left, 
+						right);
+	} else {
+	    return self;
+	}
     }
 
     /**
@@ -484,29 +460,32 @@ class Propagator extends EmptyAttributeVisitor {
 					 int oper,
 					 JExpression left,
 					 JExpression right) {
-	left.accept(this);
-	right.accept(this);
-	return self;
+	return doBinaryArithmeticExpression(self, left, right);
     }
 
     /**
-     * Visits an assignment expression
+     * For processing BinaryArithmeticExpressions.  
      */
-    public Object visitAssignmentExpression(JAssignmentExpression self,
-					    JExpression left,
-					    JExpression right) {
-	left.accept(this);
-	right.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits an array length expression
-     */
-    public Object visitArrayLengthExpression(JArrayLengthExpression self,
-					     JExpression prefix) {
-	prefix.accept(this);
-	return self;
+    private Object doBinaryArithmeticExpression(JBinaryArithmeticExpression 
+						self,
+						JExpression left,
+						JExpression right) {
+	JExpression newLeft = (JExpression)left.accept(this);
+	JExpression newRight = (JExpression)right.accept(this);
+	// set any constants that we have (just to save at runtime)
+	if (newLeft.isConstant()) {
+	    self.setLeft(newLeft);
+	}
+	if (newRight.isConstant()) {
+	    self.setLeft(newRight);
+	}
+	// do constant-prop if we have both as constants
+	if (newLeft.isConstant() && newRight.isConstant()) {
+	    return self.constantFolding();
+	} else {
+	    // otherwise, return self
+	    return self;
+	}
     }
 
     /**
@@ -516,7 +495,10 @@ class Propagator extends EmptyAttributeVisitor {
 					     JExpression prefix,
 					     JExpression accessor) {
 	prefix.accept(this);
-	accessor.accept(this);
+	JExpression newExp = (JExpression)accessor.accept(this);
+	if (newExp.isConstant()) {
+	    self.setAccessor(accessor);
+	}
 	return self;
     }
 
@@ -530,56 +512,29 @@ class Propagator extends EmptyAttributeVisitor {
     public Object visitSwitchLabel(JSwitchLabel self,
 				   JExpression expr) {
 	if (expr != null) {
-	    expr.accept(this);
+	    JExpression newExp = (JExpression)expr.accept(this);
+	    if (newExp.isConstant()) {
+		self.setExpression(newExp);
+	    }
 	}
 	return self;
     }
 
     /**
-     * Visits an array length expression
-     */
-    public Object visitCatchClause(JCatchClause self,
-				   JFormalParameter exception,
-				   JBlock body) {
-	exception.accept(this);
-	body.accept(this);
-	return self;
-    }
-
-    /**
-     * Visits an array length expression
+     * Visits a set of arguments
      */
     public Object visitArgs(JExpression[] args) {
 	if (args != null) {
 	    for (int i = 0; i < args.length; i++) {
-		args[i].accept(this);
+		JExpression newExp = (JExpression)args[i].accept(this);
+		if (newExp.isConstant()) {
+		    args[i] = newExp;
+		}
 	    }
 	}
 	return null;
     }
 
-    /**
-     * Visits an array length expression
-     */
-    public Object visitConstructorCall(JConstructorCall self,
-				       boolean functorIsThis,
-				       JExpression[] params)
-    {
-	visitArgs(params);
-	return self;
-    }
-
-    /**
-     * Visits an array initializer expression
-     */
-    public Object visitArrayInitializer(JArrayInitializer self,
-					JExpression[] elems)
-    {
-	for (int i = 0; i < elems.length; i++) {
-	    elems[i].accept(this);
-	}
-	return self;
-    }
 }
 
 /**
@@ -605,15 +560,5 @@ class Unroller extends EmptyAttributeVisitor {
     // METHODS AND FIELDS
     // ----------------------------------------------------------------------
 
-    /**
-     * Visits a while statement
-     */
-    public Object visitWhileStatement(JWhileStatement self,
-				      JExpression cond,
-				      JStatement body) {
-	cond.accept(this);
-	body.accept(this);
-	return self;
-    }
 }
 

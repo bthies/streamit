@@ -56,6 +56,35 @@ public class LatencyConstraints {
 	}
     }
 
+    private static int MaxLatency(SIRLatency latency) {
+    
+	if (latency instanceof SIRLatencyMax) {
+	    return ((SIRLatencyMax)latency).getMax();
+	}
+
+	if (latency instanceof SIRLatencyRange) {
+	    return ((SIRLatencyRange)latency).getMax();
+	}
+	
+	if (latency instanceof SIRLatencySet) {
+	    Iterator it = ((SIRLatencySet)latency).iterator();
+
+	    int max = -1000000;
+
+	    while (it.hasNext()) {
+		Integer i = (Integer)it.next();
+
+		if (i.intValue() > max) max = i.intValue();
+	    }
+
+	    return max;
+	}
+
+	// this should never be reached!
+
+	return 0;
+    }
+
     public static boolean isMessageDirectionDownstream(SIRFilter sender,
 						       SIRFilter receiver) {
 	Vector v = new Vector();
@@ -113,18 +142,12 @@ public class LatencyConstraints {
 
 			    SIRLatency latency = senders[y].getLatency();
 
-			    // we are interested in the least of the upper bounds.
-			
-			    // in each case we will send the message with as large latency
+			    // we are interested in the least of the
+			    // upper bounds. in each case we will send 
+			    // the message with as large latency
 			    // as possible.
 
-			    if (latency instanceof SIRLatencyMax) {
-				this_max = ((SIRLatencyMax)latency).getMax();
-			    }
-
-			    if (latency instanceof SIRLatencyRange) {
-				this_max = ((SIRLatencyRange)latency).getMax();
-			    }
+			    this_max = MaxLatency(latency);
 
 			    System.out.println("          detect Latency: "+
 					       this_max);

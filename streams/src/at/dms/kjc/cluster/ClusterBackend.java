@@ -65,6 +65,7 @@ public class ClusterBackend implements FlatVisitor {
 			   structs) {
 
 	System.out.println("Entry to Cluster Backend");
+	System.out.println("  --cluster parameter is: "+KjcOptions.cluster);
 
 	structures = structs;
 	
@@ -130,8 +131,11 @@ public class ClusterBackend implements FlatVisitor {
 	}
 
 	if (KjcOptions.partition_dp || KjcOptions.partition_greedy || KjcOptions.partition_ilp) {
-	    System.err.println("Running Partitioning...");
-	    	    str = Partitioner.doit(str, 4);
+
+	    int threads = KjcOptions.cluster;
+	    
+	    System.err.println("Running Partitioning... target number of threads: "+threads);
+	    str = Partitioner.doit(str, threads);
 	    System.err.println("Done Partitioning...");
 	}
 

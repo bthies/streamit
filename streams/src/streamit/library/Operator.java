@@ -38,7 +38,11 @@ abstract class Operator extends DestroyedClass
     {
         ASSERT (fieldName == "input" || fieldName == "output");
         
-        Channel fieldInstance[] = null;
+        // BUGBUG this should be an array, as should
+        // input/output fields - unfortunately I don't
+        // know how to compile that, and I don't know if
+        // this would even be possible
+        Channel fieldInstance []= new Channel [1];
         
         try
         {
@@ -48,12 +52,28 @@ abstract class Operator extends DestroyedClass
             Field fields;
             fields  = thisClass.getField (fieldName);
             
-            fieldInstance = (Channel[]) fields.get (this);
+            fieldInstance [0] = (Channel) fields.get (this);
             ASSERT (fieldInstance != null);
         }
         catch (NoSuchFieldException noError)
         {
             // do not do anything here, this is NOT an error!
+        }
+        catch (IllegalAccessException error)
+        {
+            // BUGBUG remove me when debugged
+            error.getClass ();
+            ASSERT (false);
+        }
+        catch (IllegalArgumentException error)
+        {
+            // BUGBUG remove me when debugged
+            ASSERT (false);
+        }
+        catch (ExceptionInInitializerError error)
+        {
+            // BUGBUG remove me when debugged
+            ASSERT (false);
         }
         catch (Throwable error)
         {

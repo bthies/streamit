@@ -89,7 +89,7 @@ public class Edge {
 	*/
 	//see if they are different
 	assert (itemsSent == itemsReceived) :
-	    "Calculating steady state: items received != items send on buffer";
+	    "Calculating steady state: items received != items send on buffer: " + src + " -> " + dest;
 	
 	return itemsSent;
     }

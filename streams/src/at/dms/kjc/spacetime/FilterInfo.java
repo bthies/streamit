@@ -162,13 +162,18 @@ public class FilterInfo
 		    upstreamInitItems -= filterC.getPushInt();
 		    upstreamInitItems += filterC.getInitPush();
 		}
-		initItemsRec = (int)((double)upstreamInitItems * incoming.getSrc().ratio(incoming));
+		initItemsRec += (int)((double)upstreamInitItems * incoming.getSrc().ratio(incoming));
 	    }
 	}
 	remaining = initItemsRec -
 	    (prePeek + 
 	     bottomPeek + 
 	     Math.max((initFire - 2), 0) * pop);
+	
+	assert remaining >= 0 : filter.getName() + ": Error calculating remaining " + 
+	    initItemsRec + " < " + (prePeek + 
+				    bottomPeek + 
+				    Math.max((initFire - 2), 0) * pop);
 	return remaining;
     }
 

@@ -19,7 +19,6 @@ public class BufferDRAMAssignment
     {
 	rand = new Random(17);
     }
-    
 
     /** 
      * Assign the buffers to ports

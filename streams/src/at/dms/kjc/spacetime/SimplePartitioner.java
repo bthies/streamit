@@ -11,8 +11,10 @@ import at.dms.kjc.sir.lowering.partition.*;
 public class SimplePartitioner extends Partitioner
 {
     //trace work threshold, higher number, more restrictive, smaller traces
-    private static final double TRASHOLD = 0.8;
-    
+    private static final double TRASHOLD = 0.1;
+    //if true, make traces as long as possible ignoring the work balancing (TRASHOLD)
+    private static final boolean IGNORE_WORK_EST = true;
+
     public SimplePartitioner(UnflatFilter[] topFilters, HashMap[] exeCounts,LinearAnalyzer lfa,
 			     WorkEstimate work, RawChip rawChip) 
     {
@@ -229,8 +231,8 @@ public class SimplePartitioner extends Partitioner
     }
     
 
-    //given <unflatFilter> determine if we should continue the current race we are
-    //building
+    /** given <unflatFilter> determine if we should continue the current race we are
+	building */
     private boolean continueTrace(UnflatFilter unflatFilter, boolean isLinear, 
 				  int bottleNeckWork, int newTotalFilters) 
     {
@@ -263,7 +265,7 @@ public class SimplePartitioner extends Partitioner
 	    ratio = Math.abs(ratio);
 	    //System.out.println("bottleNeckWork = " + bottleNeckWork + " / " + 
 	    //		       "next = " + destEst + " = " + ratio);
-	    if (ratio < TRASHOLD) 
+	    if (!IGNORE_WORK_EST && ratio < TRASHOLD) 
 		return false;
 	    
 	    //everything passed 

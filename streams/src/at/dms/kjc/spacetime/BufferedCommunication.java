@@ -119,6 +119,7 @@ public class BufferedCommunication extends RawExecutionCode
 	    maxpeek = (filterInfo.prePeek > maxpeek) ? filterInfo.prePeek : maxpeek;
 	    
 	    
+	    System.out.println(filterInfo.filter.getName() + " remaining: " + filterInfo.remaining);
 	    if (filterInfo.isSimple()) {
 		//simple filter (no remaining items)
 		if (KjcOptions.ratematch) {
@@ -518,14 +519,15 @@ public class BufferedCommunication extends RawExecutionCode
 
     protected JStatement getWorkFunctionCall(FilterContent filter) 
     {
-	//inline
-	//return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
-	return new JExpressionStatement(null, 
-					new JMethodCallExpression(null,
-								  new JThisExpression(null),
-								  filter.getWork().getName(),
-								  new JExpression[0]),
-					null);
+	if (INLINE_WORK)
+	    return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	else 
+	    return new JExpressionStatement(null, 
+					    new JMethodCallExpression(null,
+								      new JThisExpression(null),
+								      filter.getWork().getName(),
+								      new JExpression[0]),
+					    null);
     }
     
 

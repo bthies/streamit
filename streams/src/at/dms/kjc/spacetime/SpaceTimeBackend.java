@@ -22,6 +22,7 @@ import at.dms.util.SIRPrinter;
 public class SpaceTimeBackend 
 {
     public static boolean FILTER_DEBUG_MODE = false;
+    public static boolean FISSION = true;
     
     public static SIRStructure[] structures;
     final private static boolean TEST_SOFT_PIPE = false; //Test Software Pipelining
@@ -81,6 +82,22 @@ public class SpaceTimeBackend
 	}
 
 	Lifter.liftAggressiveSync(str);
+
+	if (KjcOptions.fission>1) {	
+	    str = Flattener.doLinearAnalysis(str);
+	    str = Flattener.doStateSpaceAnalysis(str);
+	    
+	    
+	    System.out.println("Running Vertical Fission...");
+	    FissionReplacer.doit(str, KjcOptions.fission);
+	    Lifter.lift(str);
+	    System.out.println("Done Vertical Fission...");
+	}
+	
+	if (KjcOptions.sjtopipe) {
+	    SJToPipe.doit(str);
+	}
+
        	StreamItDot.printGraph(str, "before-partition.dot");
 
 	//	str = Partitioner.doit(str, 32);

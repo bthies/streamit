@@ -21,6 +21,9 @@ import at.dms.kjc.flatgraph2.FilterContent;
 
 public abstract class RawExecutionCode 
 {
+    //if true, inline the work function in the init and steady-state
+    protected static final boolean INLINE_WORK = false;//true;
+    
      /*** fields for the var names we introduce ***/
     public static String recvBuffer = "__RECVBUFFER__";
     public static String recvBufferSize = "__RECVBUFFERSIZE__";

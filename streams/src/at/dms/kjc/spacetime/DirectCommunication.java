@@ -143,16 +143,15 @@ public class DirectCommunication extends RawExecutionCode
     
     private JStatement getWorkFunctionCall(FilterContent filter) 
     {
-	//inline
-	//return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
-		
-	return new JExpressionStatement(null, 
-					new JMethodCallExpression(null,
-								  new JThisExpression(null),
-								  filter.getWork().getName(),
-								  new JExpression[0]),
-					null);
-	
+	if (INLINE_WORK)	
+	    return (JBlock)ObjectDeepCloner.deepCopy(filter.getWork().getBody());
+	else 
+	    return new JExpressionStatement(null, 
+					    new JMethodCallExpression(null,
+								      new JThisExpression(null),
+								      filter.getWork().getName(),
+								      new JExpression[0]),
+					    null);
     }
 
     public JMethodDeclaration getInitStageMethod() 

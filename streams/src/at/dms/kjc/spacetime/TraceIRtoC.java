@@ -50,7 +50,7 @@ public class TraceIRtoC extends ToC
 	
 	//write header 
 	generateHeader();
-
+	
 	//generate the fields
 	for (int i = 0; i < tile.getComputeCode().getFields().length; i++)
 	    tile.getComputeCode().getFields()[i].accept(this);
@@ -98,7 +98,9 @@ public class TraceIRtoC extends ToC
 	    print("  " + CommunicateAddrs.functName + "();\n");
 	
 	//print(tile.getComputeCode().getMainFunction().getName() + "();\n");
+	method = mainMethod;
 	mainMethod.getBody().accept(this); //Inline Main method
+	method = null;
 	print("};\n");
     }
 	

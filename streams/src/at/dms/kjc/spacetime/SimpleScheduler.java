@@ -15,7 +15,7 @@ public class SimpleScheduler
     private int currentTime;
     //the time when a tile is available
     private int[] tileAvail;
-    
+    private static Random rand;
     //for right now just place one file reader and writer on
     //a tile, I know the corner tiles can support 2
 
@@ -29,6 +29,12 @@ public class SimpleScheduler
     private LinkedList initSchedule;
     //the io that has been laid out so far (traces)
     private HashSet laidOutIO;
+
+    static 
+    {
+	rand = new Random(16);
+    }
+    
 
     public SimpleScheduler(Partitioner partitioner, RawChip rawChip) 
     {
@@ -534,6 +540,8 @@ public class SimpleScheduler
 	Iterator sources = trace.getHead().getSourceSet().iterator();
 	while (sources.hasNext()) {
 	    Trace current = ((Edge)sources.next()).getSrc().getParent();
+	    if (!(current.getTail().getDestSet().size() == 1))
+		continue;
 	    //now if the source is already scheduled or if it is io try its tile
 	    if (schedule.contains(current)) {
 		//get the endpoint of the trace
@@ -553,6 +561,7 @@ public class SimpleScheduler
 	    }
 	}
 	
+	/*
 	Iterator dests = trace.getTail().getDestSet().iterator();
 	while (dests.hasNext()) {
 	    Trace current = ((Edge)dests.next()).getDest().getParent();
@@ -573,11 +582,13 @@ public class SimpleScheduler
 		    tiles.remove(tile);
 	    }
 	}
-	
+	*/
+	Collections.shuffle(tiles, new Random(rand.nextInt()));
 	Iterator tilesIt = tiles.iterator();
 	while (tilesIt.hasNext()) {
 	    RawTile tile = (RawTile)tilesIt.next();
 	    HashMap layout = new HashMap();
+	    System.out.println("  ************ trying " + tile  + " *********** for " + trace);
 	    //System.out.println("     (for " + trace + " trying " + tile + " at " + currentTime + ")");
 	    //if successful, return layout
 	    if (getLayout(trace.getHead().getNextFilter(), tile,

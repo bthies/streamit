@@ -1,7 +1,7 @@
 /*
  * GetExprType.java: get the type of an expression
  * David Maze <dmaze@cag.lcs.mit.edu>
- * $Id: GetExprType.java,v 1.9 2003-07-31 18:44:34 dmaze Exp $
+ * $Id: GetExprType.java,v 1.10 2003-10-06 20:02:11 dmaze Exp $
  */
 
 package streamit.frontend.nodes;
@@ -55,6 +55,11 @@ public class GetExprType extends FENullVisitor
         return new TypePrimitive(TypePrimitive.TYPE_COMPLEX);
     }
     
+    public Object visitExprConstBoolean(ExprConstBoolean exp)
+    {
+        return new TypePrimitive(TypePrimitive.TYPE_BOOLEAN);
+    }
+
     public Object visitExprConstChar(ExprConstChar exp)
     {
         // return new TypePrimitive(TypePrimitive.TYPE_CHAR);

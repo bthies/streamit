@@ -21,7 +21,7 @@ import at.dms.kjc.sir.*;
  * the linear function that is computed by that IR node. LinearForms are
  * used to represent linear combinations of the input plus a constant.<br>
  *
- * $Id: LinearFilterVisitor.java,v 1.14 2003-06-02 18:19:23 aalamb Exp $
+ * $Id: LinearFilterVisitor.java,v 1.15 2003-09-17 08:29:07 thies Exp $
  **/
 class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     /**
@@ -478,11 +478,11 @@ class LinearFilterVisitor extends SLIREmptyAttributeVisitor {
     
     
 
-//     public Object visitBitwiseComplementExpression(JUnaryExpression self, JExpression expr){return null;}
-//     public Object visitBitwiseExpression(JBitwiseExpression self,
-// 					 int oper,
-// 					 JExpression left,
-// 					 JExpression right){return null;}
+     public Object visitBitwiseComplementExpression(JUnaryExpression self, JExpression expr){return null;}
+     public Object visitBitwiseExpression(JBitwiseExpression self,
+ 					 int oper,
+ 					 JExpression left,
+ 					 JExpression right){return null;}
 //     public Object visitBlockStatement(JBlock self, JavaStyleComment[] comments){return null;}
 //     public Object visitBreakStatement(JBreakStatement self, String label){return null;}
     /**

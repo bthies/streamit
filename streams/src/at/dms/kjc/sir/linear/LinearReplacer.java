@@ -12,7 +12,7 @@ import at.dms.compiler.*;
  * A LinearReplacer is the base class that all replacers that make
  * use of linear information inherit from.<br>
  *
- * $Id: LinearReplacer.java,v 1.18 2003-06-02 18:19:23 aalamb Exp $
+ * $Id: LinearReplacer.java,v 1.19 2003-09-17 08:29:07 thies Exp $
  **/
 public abstract class LinearReplacer extends EmptyStreamVisitor implements Constants{
     // in visitors of containers, only make a replacement if we're
@@ -69,7 +69,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
      * Returns an array that is a field declaration for (newField)
      * appended to the original field declarations.
      **/
-    public JFieldDeclaration[] appendFieldDeclaration(JFieldDeclaration[] originals,
+    public static JFieldDeclaration[] appendFieldDeclaration(JFieldDeclaration[] originals,
 						      JVariableDefinition newField) {
 	
 	/* really simple -- make a new array, copy the elements from the
@@ -85,12 +85,12 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
 
 
     /** Returns the type to use for buffers. In this case float[]. **/
-    public CType getArrayType() {
+    public static CType getArrayType() {
 	return new CArrayType(CStdType.Float, 1);
     }
     
     /** Appends two arrays of field declarations and returns the result. **/
-    public JFieldDeclaration[] appendFieldDeclarations(JFieldDeclaration[] decl1,
+    public static JFieldDeclaration[] appendFieldDeclarations(JFieldDeclaration[] decl1,
 						       JFieldDeclaration[] decl2) {
 	JFieldDeclaration[] allDecls = new JFieldDeclaration[decl1.length + decl2.length];
 	// copy delc1
@@ -105,7 +105,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
     /** Make an array of one java comments from a string. **/
-    public JavaStyleComment[] makeComment(String c) {
+    public static JavaStyleComment[] makeComment(String c) {
 	JavaStyleComment[] container = new JavaStyleComment[1];
 	container[0] = new JavaStyleComment(c,
 					    true,   /* isLineComment */
@@ -118,7 +118,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
      * Create an array allocation expression. Allocates a one dimensional array of floats
      * for the field of name fieldName of fieldSize.
      **/
-    public JStatement makeFieldAllocation(String fieldName, int fieldSize, String commentString) {
+    public static JStatement makeFieldAllocation(String fieldName, int fieldSize, String commentString) {
 	JExpression fieldExpr = makeFieldAccessExpression(fieldName);
 	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr, getNewArrayExpression(fieldSize));
 	JavaStyleComment[] comment = makeComment(commentString); 
@@ -128,29 +128,29 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     /**
      * Create a field access expression for the field named "name"
      **/
-    public JExpression makeFieldAccessExpression(String name) {
+    public static JExpression makeFieldAccessExpression(String name) {
 	return new JFieldAccessExpression(null, new JThisExpression(null), name);
     }
 
     /**
      * Creates a statement assigning "right" to "left".
      **/
-    public JStatement makeAssignmentStatement(JExpression left, JExpression right) {
+    public static JStatement makeAssignmentStatement(JExpression left, JExpression right) {
 	return new JExpressionStatement(null, new JAssignmentExpression(null, left, right), null);
     }
     
     /** Creates a local variable expression. **/
-    public JExpression makeLocalVarExpression(JLocalVariable var) {
+    public static JExpression makeLocalVarExpression(JLocalVariable var) {
 	return new JLocalVariableExpression(null, var);
     }
 
     /** Creates a less than expression: left &lt; right. **/
-    public JExpression makeLessThanExpression(JExpression left, JExpression right) {
+    public static JExpression makeLessThanExpression(JExpression left, JExpression right) {
 	return new JRelationalExpression(null, OPE_LT, left, right);
     }
 
     /** Creates a post increment statement: expr++. **/
-    public JStatement makeIncrementStatement(JExpression expr) {
+    public static JStatement makeIncrementStatement(JExpression expr) {
 	JExpression incExpr = new JPostfixExpression(null, OPE_POSTINC, expr);
 	return new JExpressionStatement(null, incExpr, null);
     }
@@ -159,7 +159,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     /**
      * Initializes a field to a particular integer value.
      **/
-    public JStatement makeFieldInitialization(String name, int initValue, String commentString) {
+    public static JStatement makeFieldInitialization(String name, int initValue, String commentString) {
 	JExpression fieldExpr = new JFieldAccessExpression(null, new JThisExpression(null), name);
 	JExpression fieldAssign = new JAssignmentExpression(null, fieldExpr,
 							    new JIntLiteral(null,initValue));
@@ -168,7 +168,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
     /** make a JNewArrayStatement that allocates size elements of a float array. */
-    public JNewArrayExpression getNewArrayExpression(int size) {
+    public static JNewArrayExpression getNewArrayExpression(int size) {
 	/* make the size array. */
 	JExpression[] arrayDims = new JExpression[1];
 	arrayDims[0] = new JIntLiteral(size);
@@ -179,7 +179,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
     /* Makes a field array access expression of the form this.arrField[index]. */
-    public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
+    public static JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, int index) {
 	return makeArrayFieldAccessExpr(arrField, new JIntLiteral(index));
     }
 
@@ -189,7 +189,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
      * example, prefix could be "this", or another array access
      * expression.)
      **/
-    public JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, JExpression index) {
+    public static JExpression makeArrayFieldAccessExpr(JLocalVariable arrField, JExpression index) {
 	/* first, make the prefix-arr1[index] expression */
 	JExpression fieldAccessExpr;
 	fieldAccessExpr = new JFieldAccessExpression(null,
@@ -205,7 +205,7 @@ public abstract class LinearReplacer extends EmptyStreamVisitor implements Const
     }
 
     /* Makes a field array access expression of the form this.arrField[index]. */
-    public JExpression makeArrayFieldAccessExpr(String arrFieldName, int index) {
+    public static JExpression makeArrayFieldAccessExpr(String arrFieldName, int index) {
 	JExpression fieldAccessExpr = makeFieldAccessExpression(arrFieldName);
 	JExpression arrayIndex = new JIntLiteral(index);
 	JExpression arrayAccessExpression = new JArrayAccessExpression(null,

@@ -88,6 +88,16 @@ MAKEFILE_DEPS = \
 
 include $(STREAMIT_HOME)/misc/Makefile.std
 
+streamit.jar: $(JAVA_TARGET)
+	rm -rf classes
+	mkdir classes
+	find . -name '*.class' | cpio -p -d -v classes
+	cd $(STREAMIT_HOME)/library/java && \
+		find . -name '*.class' | \
+		cpio -p -d -v $(STREAMIT_HOME)/compiler/classes
+	jar cf $@ -C classes .
+	rm -rf classes
+
 at/dms/kjc/KjcScanner.java : at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex $(KOPI_JFLEX_TARGET)
 	@rm -f at/dms/kjc/KjcScanner.java
 	java JFlex.Main -d at/dms/kjc/ -skel at/dms/compiler/resource/skeleton.shared at/dms/kjc/Kjc.flex

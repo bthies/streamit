@@ -1,0 +1,3 @@
+all:
+	$(MAKE) -C compiler
+	$(MAKE) -C library/c

@@ -37,7 +37,7 @@ public class FileReader extends Filter
         }
         catch(Throwable e)
         {
-            System.err.println (e.getMessage ());
+            System.err.println (e.toString ());
             ERROR ("Could not open file " + fileName + " for reading (see above).");
         }
     }
@@ -76,7 +76,7 @@ public class FileReader extends Filter
             }
             catch (Throwable e)
             {
-                System.err.println (e.getMessage ());
+                System.err.println (e.toString ());
                 ERROR ("There was an error reading from a file (See above)");
             }
         }

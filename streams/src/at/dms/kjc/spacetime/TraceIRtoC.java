@@ -1,7 +1,6 @@
 package at.dms.kjc.spacetime;
 
 import at.dms.kjc.common.*;
-import at.dms.kjc.rstream.*;
 import at.dms.kjc.*;
 import at.dms.kjc.sir.*;
 import at.dms.kjc.iterator.*;
@@ -457,20 +456,20 @@ public class TraceIRtoC extends ToC
 	    print("int ");
 	    //print the index var decls
 	    for (int i = 0; i < dims.length -1; i++)
-		print(Names.ARRAY_COPY + i + ", ");
-	    print(Names.ARRAY_COPY + (dims.length - 1));
+		print(RawExecutionCode.ARRAY_COPY + i + ", ");
+	    print(RawExecutionCode.ARRAY_COPY + (dims.length - 1));
 	    print(";\n");
 	    for (int i = 0; i < dims.length; i++) {
-		print("for (" + Names.ARRAY_COPY + i + " = 0; " + Names.ARRAY_COPY + i +  
-		      " < " + dims[i] + "; " + Names.ARRAY_COPY + i + "++)\n");
+		print("for (" + RawExecutionCode.ARRAY_COPY + i + " = 0; " + RawExecutionCode.ARRAY_COPY + i +  
+		      " < " + dims[i] + "; " + RawExecutionCode.ARRAY_COPY + i + "++)\n");
 	    }
 	    left.accept(this);
 	    for (int i = 0; i < dims.length; i++)
-		print("[" + Names.ARRAY_COPY + i + "]");
+		print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
 	    print(" = ");
 	    right.accept(this);
 	    for (int i = 0; i < dims.length; i++)
-		print("[" + Names.ARRAY_COPY + i + "]");
+		print("[" + RawExecutionCode.ARRAY_COPY + i + "]");
 	    print(";\n}\n");
 	    return;
 	}

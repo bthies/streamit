@@ -12,7 +12,7 @@ package at.dms.kjc.sir.linear;
  * While this is not the clearest of descriptions, as this class is fleshed out
  * I hope to make the description more concise.<p>
  *
- * $Id: LinearFilterRepresentation.java,v 1.20 2003-04-09 11:13:20 thies Exp $
+ * $Id: LinearFilterRepresentation.java,v 1.21 2003-04-11 00:14:30 aalamb Exp $
  **/
 public class LinearFilterRepresentation {
     /** the A in y=Ax+b. **/
@@ -120,20 +120,38 @@ public class LinearFilterRepresentation {
 	// do housecleaning for any fractional copies of A that we need to make
 	// (first, calculate the number of rows and columns that need to be filled with
 	// parts of the old matrix).
-	int numPartialRows = newPeek - oldPeek - (numCompleteCopies - 1)*oldPop;
-	int numPartialCols = newPush - numCompleteCopies * oldPush;
+	int numPartialRows = newPeek - numCompleteCopies*oldPop;
+	int numPartialCols = newPush - numCompleteCopies*oldPush;
 
 	// sanity checks
 	if (numPartialRows < 0) {throw new RuntimeException("partial rows < 0!");}
 	if (numPartialCols < 0) {throw new RuntimeException("partial cols < 0!");}
 
+	//System.err.println("--------");
+	//System.err.println("new rows: " + newPeek);
+	//System.err.println("new cols: " + newPush);
+	//System.err.println("new pop: "  + newPop);
+	//System.err.println("old rows: " + oldPeek);
+	//System.err.println("old cols: " + oldPush);
+	//System.err.println("old pop: "  + oldPop);
+	//System.err.println("num copies: " + numCompleteCopies);
+	//System.err.println("partial rows: " + numPartialRows);
+	//System.err.println("partial cols: " + numPartialCols);
+
 	// now, copy over the missing parts of A
-	for (int i=0; i<numPartialRows; i++) {
-	    for (int j=0; j<numPartialCols; j++) {
-		newMatrix.setElement(i,j,oldMatrix.getElement(oldPeek-numPartialRows+i,
-							      oldPush-numPartialCols+j));
+	for (int j=0; j<numPartialCols; j++) {
+	    // now, we copy from top down
+	    for (int i=0; i<numPartialRows;i++) {
+		//System.err.println("i: " + i + ", j: " + j);
+		int oldRow = oldPeek-(numPartialRows-i);
+		int oldCol = oldPush-(numPartialCols-j);
+		//System.err.println("oldRow: " + oldRow + " oldCol: " + oldCol);
+		newMatrix.setElement(i,j,oldMatrix.getElement(oldRow, oldCol));
+				     
+				     
 	    }
 	}
+
 	
 	// now copy all elements of the new vector
 	FilterVector oldVector = this.getb();

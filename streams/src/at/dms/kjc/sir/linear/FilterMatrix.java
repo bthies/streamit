@@ -1,11 +1,5 @@
 package at.dms.kjc.sir.linear;
 
-//import java.io.*;
-//import at.dms.compiler.JavaStyleComment;
-//import at.dms.compiler.JavadocComment;
-//import at.dms.util.Utils;
-//import at.dms.kjc.sir.*;
-//import at.dms.util.*;
 import java.util.*;
 
 /**
@@ -19,7 +13,7 @@ import java.util.*;
  *
  * Each element of the FilterMatrix is a ComplexNumber
  *
- * $Id: FilterMatrix.java,v 1.17 2003-04-09 20:49:08 thies Exp $
+ * $Id: FilterMatrix.java,v 1.18 2003-04-11 00:14:30 aalamb Exp $
  **/
 
 public class FilterMatrix {
@@ -28,6 +22,12 @@ public class FilterMatrix {
     private int internalSizeRows = -1;
     private int internalSizeCols = -1;
     
+    /** empty constructor so that I can subclass with FilterMatrixReal. **/
+    FilterMatrix() {
+	super();
+    }
+
+
     /**
      * Create FilterMatrix of size (rows,cols) and initialize all
      * elements to the value 0.
@@ -103,22 +103,28 @@ public class FilterMatrix {
      * Ensure that the specified row and col are within the
      * internal matrix's size. Throw an exception if they are not.
      **/
-    private void validateBounds(int row, int col) {
-     	if (row < 0) {
+    void validateBounds(int row, int col) {
+	validateBounds(row, col, this.internalSizeRows, this.internalSizeCols);
+    }
+    /**
+     * Function that does the actual work of validate bounds.
+     **/
+    void validateBounds(int row, int col, int numRows, int numCols) {
+	if (row < 0) {
 	    throw new IllegalArgumentException("Row " + row + " is less than one.");
 	}
 	if (col < 0) {
 	    throw new IllegalArgumentException("Column " + col + " is less than one.");
 	}
-	if (row >= this.internalSizeRows) {
+	if (row >= numRows) {
 	    throw new IllegalArgumentException("Row " + row + " is greater than size:" +
-					       "(" + this.internalSizeRows + "," +
-					       this.internalSizeCols + ")");
+					       "(" + numRows + "," +
+					       numCols + ")");
 	}
-	if (col >= this.internalSizeCols) {
+	if (col >= numCols) {
 	    throw new IllegalArgumentException("Column " + col + " is greater than size:" +
-					       "(" + this.internalSizeRows + "," +
-					       this.internalSizeCols + ")");
+					       "(" + numRows + "," +
+					       numCols + ")");
 	}
 
     }
@@ -140,7 +146,7 @@ public class FilterMatrix {
     }
 
     /**
-     * Copies the internal matrix into this FilterMatrix such that the
+     * Copies the source matrix into this FilterMatrix such that the
      * specified ofset is the top left hand corner of the small matrix.
      * Throws (horrible) exceptions when the bounds of the smaller
      * matrix at the offset overrun the boundaries of this matrix.

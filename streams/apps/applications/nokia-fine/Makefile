@@ -4,7 +4,7 @@ IMPORTS   = 	"import streamit.*; \
 	         import streamit.io.*; \
 		 import java.lang.Math;"
 
-LIB_FILES =	../../examples/delay/Delay.java \
+LIB_FILES =	../nokia/streamit/Delay.java \
 		AdapTest.java \
 		forw.java \
 		multvect.java \
@@ -25,7 +25,7 @@ LINKED_FILE =   Linked${MAIN_FILE};
 STREAMIT_MAKEFILE = Makefile.streamit 
 
 all: clean
-	javac *.java ../../examples/delay/Delay.java && cp ../../examples/delay/Delay*.class .
+	javac *.java ../nokia/streamit/Delay.java && cp ../nokia/streamit/Delay*.class .
 	@echo
 	@echo "Note:  You just made a version to run in the library.  To make a version"
 	@echo "       for StreamIt, type \"make link\" and then use Linkeddcalc.java"

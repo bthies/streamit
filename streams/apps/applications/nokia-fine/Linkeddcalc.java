@@ -1,33 +1,37 @@
 import streamit.*; import streamit.io.*; import java.lang.Math;
+/**
+ * Simple parameterized delay filter.
+ **/
 
 
-class Delay extends FeedbackLoop {
-
-    public Delay(int N) {
-	super(N);
+class Delay extends Pipeline {
+    public Delay(int delay) {
+	super(delay);
     }
-
-    public void init(int N) {
-	setSplitter(ROUND_ROBIN());
-	setDelay(N);
-	setBody(new Filter() {
-                public void init() {
-		    input = new Channel(Float.TYPE, 2);
-		    output = new Channel(Float.TYPE, 2);
-                }
-                public void work() {
-		    this.output.pushFloat(this.input.peekFloat(1));
-		    this.output.pushFloat(this.input.peekFloat(0));
-		    this.input.popFloat();
-		    this.input.popFloat();
-                }
-	    });
-	setLoop(new FloatIdentity());
-	setJoiner(ROUND_ROBIN());
+    public void init(int delay) {
+	// basically, just add a bunch of unit delay filters
+	for (int i=0; i<delay; i++) {
+	    this.add(new Delay_one());
+	}
     }
+}
 
-    public float initPathFloat(int index) {
-	return 0.0f;
+
+
+/** Character Unit delay **/
+class Delay_one extends Filter {
+    float state;
+    public void init() {
+	// initial state of delay is 0
+	this.state = 0;
+	input = new Channel(Float.TYPE,1);
+	output = new Channel(Float.TYPE,1);
+    }
+    public void work() {
+	// push out the state and then update it with the input
+	// from the channel
+	output.pushFloat(this.state);
+	this.state = input.popFloat();
     }
 }
 

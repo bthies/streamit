@@ -50,6 +50,17 @@ public abstract class SIRContainer extends SIRStream {
     }
 
     /**
+     * Returns copy of list of parameters passed to children of this.
+     */
+    public List getParams() {
+	List result = new LinkedList();
+	for (int i=0; i<size(); i++) {
+	    result.add(getParams(i));
+	}
+	return result;
+    }
+
+    /**
      * So subclasses can view parameter list.
      */
     protected ConstList myParams() {

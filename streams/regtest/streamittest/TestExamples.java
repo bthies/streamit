@@ -6,7 +6,7 @@
  * 4. Add a line in suite() with the new test method name
  *
  * You can then use the CompilerInterface compiler to run compiler sessions.
- * $Id: TestExamples.java,v 1.19 2002-09-03 15:10:32 aalamb Exp $
+ * $Id: TestExamples.java,v 1.20 2002-09-04 19:06:55 aalamb Exp $
  **/
 package streamittest;
 
@@ -48,7 +48,10 @@ public class TestExamples extends StreamITTestCase {
 	}
 
 	suite.addTest(new TestExamples("testAutoCor", flags));
-	suite.addTest(new TestExamples("testChol", flags)); // contains mutually recursive definitions
+
+	// contains mutually recursive definitions, and is only in new syntax
+	//suite.addTest(new TestExamples("testChol", flags)); 
+	
 
 	suite.addTest(new TestExamples("testFib", flags));
 	suite.addTest(new TestExamples("testFib2", flags));

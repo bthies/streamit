@@ -33,6 +33,10 @@ public class IterFactory {
 	return new SIRFeedbackLoopIter(obj);
     }
 
+    public static SIRRecursiveStubIter createIter(SIRRecursiveStub obj) {
+	return new SIRRecursiveStubIter(obj);
+    }
+
     public static SIRIterator createIter(SIRStream obj) { 
 	if (obj instanceof SIRFilter) {
 	    return createIter((SIRFilter)obj);
@@ -42,6 +46,8 @@ public class IterFactory {
 	    return createIter((SIRSplitJoin)obj);
 	} else if (obj instanceof SIRFeedbackLoop) {
 	    return createIter((SIRFeedbackLoop)obj);
+	} else if (obj instanceof SIRRecursiveStub) {
+	    return createIter((SIRRecursiveStub)obj);
 	} else {
 	    Utils.fail("Unexpected iterator " + obj + " of type " 
 		       + (obj==null ? "" : obj.getClass().toString()));
@@ -163,6 +169,8 @@ public class IterFactory {
 	    return new SIRSplitJoinIter((SIRSplitJoin)obj, parent, pos);
 	} else if (obj instanceof SIRFeedbackLoop) {
 	    return new SIRFeedbackLoopIter((SIRFeedbackLoop)obj, parent, pos);
+	} else if (obj instanceof SIRRecursiveStub) {
+	    return new SIRRecursiveStubIter((SIRRecursiveStub)obj, parent, pos);
 	} else {
 	    Utils.fail("Unexpected iterator " + obj + " of type " 
 		       + (obj==null ? "" : obj.getClass().toString()));
